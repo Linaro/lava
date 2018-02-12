@@ -45,7 +45,7 @@ from lava_scheduler_app.dbutils import parse_job_description
 from lava_scheduler_app.models import TestJob, Worker
 from lava_scheduler_app.scheduler import schedule
 from lava_scheduler_app.utils import mkdir
-from lava_server.cmdutils import LAVADaemonCommand
+from lava_server.cmdutils import LAVADaemonCommand, watch_directory
 
 if sys.version_info[0] == 2:
     from lzma import error as LZMAError
@@ -159,10 +159,12 @@ class Command(LAVADaemonCommand):
 
     def __init__(self, *args, **options):
         super(Command, self).__init__(*args, **options)
+        self.auth = None
         self.controler = None
         self.event_socket = None
         self.poller = None
         self.pipe_r = None
+        self.inotify_fd = None
         # List of logs
         # List of known dispatchers. At startup do not load this from the
         # database. This will help to know if the slave as restarted or not.
@@ -554,7 +556,6 @@ class Command(LAVADaemonCommand):
                 worker.go_state_offline()
                 worker.save()
 
-        auth = None
         # Create the sockets
         context = zmq.Context()
         self.controler = context.socket(zmq.ROUTER)
@@ -568,19 +569,24 @@ class Command(LAVADaemonCommand):
         if options['encrypt']:
             self.logger.info("[INIT] Starting encryption")
             try:
-                auth = ThreadAuthenticator(context)
-                auth.start()
+                self.auth = ThreadAuthenticator(context)
+                self.auth.start()
                 self.logger.debug("[INIT] Opening master certificate: %s", options['master_cert'])
                 master_public, master_secret = zmq.auth.load_certificate(options['master_cert'])
                 self.logger.debug("[INIT] Using slaves certificates from: %s", options['slaves_certs'])
-                auth.configure_curve(domain='*', location=options['slaves_certs'])
+                self.auth.configure_curve(domain='*', location=options['slaves_certs'])
             except IOError as err:
                 self.logger.error(err)
-                auth.stop()
+                self.auth.stop()
                 return
             self.controler.curve_publickey = master_public
             self.controler.curve_secretkey = master_secret
             self.controler.curve_server = True
+
+            self.logger.debug("[INIT] Watching %s", options["slaves_certs"])
+            self.inotify_fd = watch_directory(options["slaves_certs"])
+            if self.inotify_fd is None:
+                self.logger.error("[INIT] Unable to start inotify")
 
         self.controler.setsockopt(zmq.IDENTITY, b"master")
         # TODO: remove when Jessie is not supported
@@ -600,6 +606,8 @@ class Command(LAVADaemonCommand):
         self.poller = zmq.Poller()
         self.poller.register(self.controler, zmq.POLLIN)
         self.poller.register(self.event_socket, zmq.POLLIN)
+        if self.inotify_fd is not None:
+            self.poller.register(os.fdopen(self.inotify_fd), zmq.POLLIN)
 
         # Translate signals into zmq messages
         (self.pipe_r, _) = self.setup_zmq_signal_handler()
@@ -619,7 +627,7 @@ class Command(LAVADaemonCommand):
             self.controler.close(linger=0)
             self.event_socket.close(linger=0)
             if options['encrypt']:
-                auth.stop()
+                self.auth.stop()
             context.term()
 
     def main_loop(self, options):
@@ -663,6 +671,13 @@ class Command(LAVADaemonCommand):
                     # If we are too fast, the database object won't be
                     # available (or in the right state) yet.
                     continue
+
+                # Inotify socket
+                if sockets.get(self.inotify_fd) == zmq.POLLIN:
+                    os.read(self.inotify_fd, 4096)
+                    self.logger.debug("[AUTH] Reloading certificates from %s",
+                                      options['slaves_certs'])
+                    self.auth.configure_curve(domain='*', location=options['slaves_certs'])
 
                 # Check dispatchers status
                 now = time.time()

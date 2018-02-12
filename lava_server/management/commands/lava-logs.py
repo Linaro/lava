@@ -32,7 +32,7 @@ from zmq.auth.thread import ThreadAuthenticator
 from django.db import connection, transaction
 from django.db.utils import OperationalError, InterfaceError
 
-from lava_server.cmdutils import LAVADaemonCommand
+from lava_server.cmdutils import LAVADaemonCommand, watch_directory
 from lava_scheduler_app.models import TestJob
 from lava_scheduler_app.utils import mkdir
 from lava_results_app.dbutils import map_scanned_results, create_metadata_store
@@ -68,10 +68,12 @@ class Command(LAVADaemonCommand):
         super(Command, self).__init__(*args, **options)
         self.logger = logging.getLogger("lava-logs")
         self.log_socket = None
+        self.auth = None
         self.controler = None
+        self.inotify_fd = None
         self.pipe_r = None
         self.poller = None
-        self.options = None
+        self.cert_dir_path = None
         # List of logs
         self.jobs = {}
         # Master status
@@ -109,7 +111,6 @@ class Command(LAVADaemonCommand):
             self.logger.error("[INIT] Unable to drop privileges")
             return
 
-        auth = None
         # Create the sockets
         context = zmq.Context()
         self.log_socket = context.socket(zmq.PULL)
@@ -131,15 +132,15 @@ class Command(LAVADaemonCommand):
         if options['encrypt']:
             self.logger.info("[INIT] Starting encryption")
             try:
-                auth = ThreadAuthenticator(context)
-                auth.start()
+                self.auth = ThreadAuthenticator(context)
+                self.auth.start()
                 self.logger.debug("[INIT] Opening master certificate: %s", options['master_cert'])
                 master_public, master_secret = zmq.auth.load_certificate(options['master_cert'])
                 self.logger.debug("[INIT] Using slaves certificates from: %s", options['slaves_certs'])
-                auth.configure_curve(domain='*', location=options['slaves_certs'])
+                self.auth.configure_curve(domain='*', location=options['slaves_certs'])
             except IOError as err:
                 self.logger.error("[INIT] %s", err)
-                auth.stop()
+                self.auth.stop()
                 return
             self.log_socket.curve_publickey = master_public
             self.log_socket.curve_secretkey = master_secret
@@ -147,6 +148,12 @@ class Command(LAVADaemonCommand):
             self.controler.curve_publickey = master_public
             self.controler.curve_secretkey = master_secret
             self.controler.curve_serverkey = master_public
+
+        self.logger.debug("[INIT] Watching %s", options["slaves_certs"])
+        self.cert_dir_path = options["slaves_certs"]
+        self.inotify_fd = watch_directory(options["slaves_certs"])
+        if self.inotify_fd is None:
+            self.logger.error("[INIT] Unable to start inotify")
 
         self.log_socket.bind(options['socket'])
         self.controler.connect(options['master_socket'])
@@ -156,6 +163,8 @@ class Command(LAVADaemonCommand):
         self.poller = zmq.Poller()
         self.poller.register(self.log_socket, zmq.POLLIN)
         self.poller.register(self.controler, zmq.POLLIN)
+        if self.inotify_fd is not None:
+            self.poller.register(os.fdopen(self.inotify_fd), zmq.POLLIN)
 
         # Translate signals into zmq messages
         (self.pipe_r, _) = self.setup_zmq_signal_handler()
@@ -193,7 +202,7 @@ class Command(LAVADaemonCommand):
             self.logger.info("[EXIT] Closing the logging socket: the queue is empty")
             self.log_socket.close()
             if options['encrypt']:
-                auth.stop()
+                self.auth.stop()
             context.term()
 
     def main_loop(self):
@@ -244,6 +253,14 @@ class Command(LAVADaemonCommand):
             elif sockets.get(self.controler) == zmq.POLLIN:
                 self.controler_socket()
                 return True
+
+            # Inotify socket
+            if sockets.get(self.inotify_fd) == zmq.POLLIN:
+                os.read(self.inotify_fd, 4096)
+                self.logger.debug("[AUTH] Reloading certificates from %s",
+                                  self.cert_dir_path)
+                self.auth.configure_curve(domain='*',
+                                          location=self.cert_dir_path)
 
             # Nothing received
             else:
