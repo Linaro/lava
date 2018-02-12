@@ -196,6 +196,13 @@ class Command(BaseCommand):
         public = options['public']
         online = options['online']
         tags = options['tags']
+
+        try:
+            Device.objects.get(hostname=hostname)
+            raise CommandError("Device '%s' already exists" % hostname)
+        except Device.DoesNotExist:
+            pass
+
         try:
             dt = DeviceType.objects.get(name=device_type)
         except DeviceType.DoesNotExist:
