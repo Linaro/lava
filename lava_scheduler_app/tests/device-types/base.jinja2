@@ -288,6 +288,8 @@ timeouts:
       minutes: {{ action_timeout_boot_qemu_image | default(2) }}
     boot-image-retry:
       minutes: {{ action_timeout_boot_image_retry | default(2) }}
+    flash-uboot-ums:
+      minutes: {{ action_timeout_flash_uboot_ums | default(20) }}
   connections:
     dd-image:
       minutes: {{ connection_timeout_dd_image | default(10) }}
