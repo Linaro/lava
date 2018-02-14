@@ -43,6 +43,8 @@ from lava_dispatcher.connections.lxc import ConnectLxc
 from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.utils.strings import map_kernel_uboot
+from lava_dispatcher.utils.storage import FlashUBootUMSAction
+from lava_dispatcher.utils.udev import WaitDevicePathAction
 
 
 class UBoot(Boot):
@@ -109,10 +111,18 @@ class UBootRetry(BootAction):
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.method_params = self.job.device['actions']['boot']['methods']['u-boot']['parameters']
+        self.usb_mass_device = self.method_params.get('uboot_mass_storage_device', None)
         # establish a new connection before trying the reset
         self.internal_pipeline.add_action(ResetDevice())
         self.internal_pipeline.add_action(BootloaderInterruptAction())
-        self.internal_pipeline.add_action(BootloaderCommandsAction())
+        if self.method_params.get('uboot_ums_flash', False):
+            self.internal_pipeline.add_action(BootloaderCommandsAction(expect_final=False))
+            self.internal_pipeline.add_action(WaitDevicePathAction(self.usb_mass_device))
+            self.internal_pipeline.add_action(FlashUBootUMSAction(self.usb_mass_device))
+            self.internal_pipeline.add_action(ResetDevice())
+        else:
+            self.internal_pipeline.add_action(BootloaderCommandsAction())
         if self.has_prompts(parameters):
             self.internal_pipeline.add_action(AutoLoginAction())
             if self.test_has_shell(parameters):
