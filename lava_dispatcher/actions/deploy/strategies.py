@@ -33,4 +33,5 @@ from lava_dispatcher.actions.deploy.nbd import Nbd
 from lava_dispatcher.actions.deploy.nfs import Nfs
 from lava_dispatcher.actions.deploy.ssh import Ssh
 from lava_dispatcher.actions.deploy.tftp import Tftp
+from lava_dispatcher.actions.deploy.uboot_ums import UBootUMS
 from lava_dispatcher.actions.deploy.vemsd import VExpressMsd

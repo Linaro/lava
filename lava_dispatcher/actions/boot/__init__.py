@@ -666,11 +666,12 @@ class BootloaderCommandsAction(Action):
     description = "send commands to bootloader"
     summary = "interactive bootloader"
 
-    def __init__(self):
+    def __init__(self, expect_final=True):
         super(BootloaderCommandsAction, self).__init__()
         self.params = None
         self.timeout = Timeout(self.name, BOOTLOADER_DEFAULT_CMD_TIMEOUT)
         self.method = ""
+        self.expect_final = expect_final
 
     def validate(self):
         super(BootloaderCommandsAction, self).validate()
@@ -704,7 +705,7 @@ class BootloaderCommandsAction(Action):
                     raise InfrastructureError('matched a bootloader error message')
                 i += 1
 
-        if final_message:
+        if final_message and self.expect_final:
             connection.prompt_str = final_message
             self.wait(connection, max_end_time)
 
