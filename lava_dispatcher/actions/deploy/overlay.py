@@ -88,7 +88,7 @@ class OverlayAction(DeployAction):
             return
         lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
         lava_test_results_dir = lava_test_results_dir % self.job.job_id
-        self.set_namespace_data(action='test', label='shared', key='lava_test_results_dir',
+        self.set_namespace_data(action='test', label='results', key='lava_test_results_dir',
                                 value=lava_test_results_dir)
         lava_test_sh_cmd = self.parameters['deployment_data']['lava_test_sh_cmd']
         self.set_namespace_data(action='test', label='shared', key='lava_test_sh_cmd',
