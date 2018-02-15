@@ -106,14 +106,15 @@ class CallDockerAction(Action):
 
     def run(self, connection, max_end_time, args=None):
         location = self.get_namespace_data(action='test', label='shared', key='location')
-        overlay = self.get_namespace_data(action='test', label='results', key='lava_test_results_dir')
         docker_image = self.get_namespace_data(action='deploy-docker', label='image', key='name')
 
         # Build the command line
         # The docker image is safe to be included in the command line
         cmd = "docker run --interactive --tty --hostname lava"
         cmd += " --name %s" % self.container
-        cmd += " --volume %s:%s" % (os.path.join(location, overlay.strip("/")), overlay)
+        if self.test_needs_overlay(self.parameters):
+            overlay = self.get_namespace_data(action='test', label='results', key='lava_test_results_dir')
+            cmd += " --volume %s:%s" % (os.path.join(location, overlay.strip("/")), overlay)
         cmd += self.extra_options
         cmd += " %s %s" % (docker_image, self.parameters["command"])
 
