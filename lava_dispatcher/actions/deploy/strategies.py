@@ -28,9 +28,10 @@ from lava_dispatcher.actions.deploy.image import DeployImages
 from lava_dispatcher.actions.deploy.iso import DeployIso
 from lava_dispatcher.actions.deploy.fastboot import Fastboot
 from lava_dispatcher.actions.deploy.lxc import Lxc
-from lava_dispatcher.actions.deploy.removable import MassStorage
+from lava_dispatcher.actions.deploy.overlay import Overlay
 from lava_dispatcher.actions.deploy.nbd import Nbd
 from lava_dispatcher.actions.deploy.nfs import Nfs
+from lava_dispatcher.actions.deploy.removable import MassStorage
 from lava_dispatcher.actions.deploy.ssh import Ssh
 from lava_dispatcher.actions.deploy.tftp import Tftp
 from lava_dispatcher.actions.deploy.uboot_ums import UBootUMS

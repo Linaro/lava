@@ -34,12 +34,33 @@ from lava_dispatcher.actions.deploy.testdef import (
     TestDefinitionAction,
     get_test_action_namespaces,
 )
+from lava_dispatcher.logical import Deployment
 from lava_dispatcher.utils.contextmanager import chdir
 from lava_dispatcher.utils.filesystem import check_ssh_identity_file
 from lava_dispatcher.utils.shell import infrastructure_error
 from lava_dispatcher.utils.network import rpcinfo_nfs
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
 from lava_dispatcher.protocols.vland import VlandProtocol
+
+
+class Overlay(Deployment):
+    compatibility = 4
+    name = "overlay"
+
+    def __init__(self, parent, parameters):
+        super(Overlay, self).__init__(parent)
+        self.action = OverlayAction()
+        self.action.section = self.action_type
+        self.action.job = self.job
+        parent.add_action(self.action, parameters)
+
+    @classmethod
+    def accepts(cls, device, parameters):
+        if 'overlay' not in device['actions']['deploy']['methods']:
+            return False, "'overlay' not in the device configuration deploy methods"
+        if parameters['to'] != 'overlay':
+            return False, '"to" parameter is not "overlay"'
+        return True, 'accepted'
 
 
 # pylint: disable=too-many-instance-attributes
