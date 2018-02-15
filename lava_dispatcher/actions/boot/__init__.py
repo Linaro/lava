@@ -556,15 +556,6 @@ class OverlayUnpack(Action):
     description = 'transfer and unpack overlay to persistent rootfs after login'
     summary = 'transfer and unpack overlay'
 
-    def __init__(self):
-        super(OverlayUnpack, self).__init__()
-        self.url = None
-
-    def cleanup(self, connection):
-        super(OverlayUnpack, self).cleanup(connection)
-        if self.url:
-            os.unlink(self.url)
-
     def validate(self):
         super(OverlayUnpack, self).validate()
         if 'transfer_overlay' not in self.parameters:
@@ -580,15 +571,15 @@ class OverlayUnpack(Action):
         if not connection:
             raise LAVABug("Cannot transfer overlay, no connection available.")
         ip_addr = dispatcher_ip(self.job.parameters['dispatcher'])
-        overlay_file = self.get_namespace_data(action='compress-overlay', label='output', key='file')
-        if not overlay_file:
+        overlay_full_path = self.get_namespace_data(action='compress-overlay', label='output', key='file')
+        if not overlay_full_path:
             raise JobError("No overlay file identified for the transfer.")
-        overlay = os.path.basename(overlay_file).strip()
-        self.url = os.path.join(DISPATCHER_DOWNLOAD_DIR, overlay)
-        shutil.copy(overlay_file, self.url)
-        self.logger.debug("Moved %s to %s", overlay_file, self.url)
+        if not overlay_full_path.startswith(DISPATCHER_DOWNLOAD_DIR):
+            raise ConfigurationError("overlay should already be in DISPATCHER_DOWNLOAD_DIR")
+        overlay_path = overlay_full_path[len(DISPATCHER_DOWNLOAD_DIR) + 1:]
+        overlay = os.path.basename(overlay_path)
         dwnld = self.parameters['transfer_overlay']['download_command']
-        dwnld += " http://%s/tmp/%s" % (ip_addr, overlay)
+        dwnld += " http://%s/tmp/%s" % (ip_addr, overlay_path)
         unpack = self.parameters['transfer_overlay']['unpack_command']
         unpack += ' ' + overlay
         connection.sendline("rm %s; %s && %s" % (overlay, dwnld, unpack))

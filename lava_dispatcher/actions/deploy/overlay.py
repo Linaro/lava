@@ -413,8 +413,7 @@ class CompressOverlay(Action):
     summary = "Compress the lava overlay files"
 
     def run(self, connection, max_end_time, args=None):
-        output = os.path.join(self.job.parameters['output_dir'],
-                              "overlay-%s.tar.gz" % self.level)
+        output = os.path.join(self.mkdtemp(), "overlay-%s.tar.gz" % self.level)
         location = self.get_namespace_data(action='test', label='shared', key='location')
         lava_test_results_dir = self.get_namespace_data(action='test', label='results', key='lava_test_results_dir')
         self.set_namespace_data(action='test', label='shared', key='output', value=output)
