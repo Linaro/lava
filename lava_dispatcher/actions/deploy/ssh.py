@@ -83,9 +83,6 @@ class ScpOverlay(DeployAction):
         if not self.test_has_shell(self.parameters):
             self.errors = "Scp overlay needs a test action."
             return
-        lava_test_results_base = self.parameters['deployment_data']['lava_test_results_dir']
-        lava_test_results_dir = lava_test_results_base % self.job.job_id
-        self.set_namespace_data(action='test', label='results', key='lava_test_results_dir', value=lava_test_results_dir)
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -118,9 +115,6 @@ class PrepareOverlayScp(Action):
 
     def validate(self):
         super(PrepareOverlayScp, self).validate()
-        lava_test_results_base = self.parameters['deployment_data']['lava_test_results_dir']
-        lava_test_results_dir = lava_test_results_base % self.job.job_id
-        self.set_namespace_data(action='test', label='results', key='lava_test_results_dir', value=lava_test_results_dir)
         environment = self.get_namespace_data(
             action='deploy-device-env',
             label='environment',

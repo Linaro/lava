@@ -278,10 +278,6 @@ class MassStorage(DeployAction):  # pylint: disable=too-many-instance-attributes
         if not self.valid:
             return
 
-        if self.test_needs_deployment(self.parameters):
-            lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
-            self.set_namespace_data(action='test', label='results', key='lava_test_results_dir', value=lava_test_results_dir % self.job.job_id)
-
         self.set_namespace_data(action=self.name, label='u-boot', key='device', value=self.parameters['device'])
         suffix = os.path.join(*self.image_path.split('/')[-2:])
         self.set_namespace_data(action=self.name, label='storage', key='suffix', value=suffix)

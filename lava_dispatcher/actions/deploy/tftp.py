@@ -87,10 +87,6 @@ class TftpAction(DeployAction):  # pylint:disable=too-many-instance-attributes
             self.errors = "Use a persistent_nfs dictionary instead of nfs_url"
         if 'nfsrootfs' in self.parameters and 'persistent_nfs' in self.parameters:
             self.errors = "Only one of nfsrootfs or persistent_nfs can be specified"
-        if self.test_needs_deployment(self.parameters):
-            lava_test_results_base = self.parameters['deployment_data']['lava_test_results_dir']
-            lava_test_results_dir = lava_test_results_base % self.job.job_id
-            self.set_namespace_data(action='test', label='results', key='lava_test_results_dir', value=lava_test_results_dir)
         # Extract the 3 last path elements. See action.mkdtemp()
         suffix = os.path.join(*self.tftp_dir.split('/')[-2:])
         self.set_namespace_data(action=self.name, label='tftp', key='suffix', value=suffix)

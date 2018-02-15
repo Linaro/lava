@@ -93,11 +93,6 @@ class NbdAction(DeployAction):  # pylint:disable=too-many-instance-attributes
         if 'ramdisk' in self.parameters:
             self.errors = "ramdisk cannot be used with NBD deployment, use a e.g. ext3/4 filesystem as 'initrd' parameter"
 
-        if self.test_needs_deployment(self.parameters):
-            lava_test_results_base = self.parameters['deployment_data']['lava_test_results_dir']
-            lava_test_results_dir = lava_test_results_base % self.job.job_id
-            self.set_namespace_data(action='test', label='results', key='lava_test_results_dir', value=lava_test_results_dir)
-
         # Extract the 3 last path elements. See action.mkdtemp()
         suffix = os.path.join(*self.tftp_dir.split('/')[-2:])
         self.set_namespace_data(action="tftp-deploy", label='tftp', key='suffix', value=suffix)

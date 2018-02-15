@@ -94,11 +94,6 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
         super(FastbootAction, self).validate()
         if not self.test_needs_deployment(self.parameters):
             return
-        lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
-        lava_test_results_dir = lava_test_results_dir % self.job.job_id
-        self.set_namespace_data(action='test', label='results', key='lava_test_results_dir', value=lava_test_results_dir)
-        lava_test_sh_cmd = self.parameters['deployment_data']['lava_test_sh_cmd']
-        self.set_namespace_data(action=self.name, label='shared', key='lava_test_sh_cmd', value=lava_test_sh_cmd)
         protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name]
         if not protocol:
             self.errors = "No LXC device requested"

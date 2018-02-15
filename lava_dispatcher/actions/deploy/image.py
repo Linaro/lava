@@ -144,9 +144,6 @@ class ExtractNfsAction(Action):
         super(ExtractNfsAction, self).validate()
         if not self.valid:
             return
-        lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
-        lava_test_results_dir = lava_test_results_dir % self.job.job_id
-        self.set_namespace_data(action='test', label='results', key='lava_test_results_dir', value=lava_test_results_dir)
         if not self.parameters['images'].get(self.param_key, None):  # idempotency
             return
         if not self.get_namespace_data(

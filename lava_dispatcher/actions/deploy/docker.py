@@ -57,20 +57,6 @@ class DockerAction(DeployAction):
         except OSError:
             raise InfrastructureError("Command 'docker' does not exist")
 
-        # Add the lava_test_results_dir to the right namespace
-        if self.test_needs_deployment(self.parameters):
-            lava_test_results_dir = self.parameters['deployment_data'][
-                'lava_test_results_dir']
-            lava_test_results_dir = lava_test_results_dir % self.job.job_id
-            self.set_namespace_data(action='test', label='results',
-                                    key='lava_test_results_dir',
-                                    value=lava_test_results_dir)
-            lava_test_sh_cmd = self.parameters['deployment_data'][
-                'lava_test_sh_cmd']
-            self.set_namespace_data(action=self.name, label='shared',
-                                    key='lava_test_sh_cmd',
-                                    value=lava_test_sh_cmd)
-
         # check docker image name
         # The string should be safe for command line inclusion
         image_name = self.parameters["image"]
