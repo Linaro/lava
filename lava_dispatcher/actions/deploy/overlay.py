@@ -102,8 +102,6 @@ class OverlayAction(DeployAction):
 
         if not self.scripts_to_copy:
             self.errors = "Unable to locate lava_test_shell support scripts."
-        if self.job.parameters.get('output_dir', None) is None:
-            self.errors = "Unable to use output directory."
         if 'parameters' in self.job.device:
             if 'interfaces' in self.job.device['parameters']:
                 if 'target' in self.job.device['parameters']['interfaces']:

@@ -22,7 +22,6 @@ import os
 import unittest
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
-from lava_dispatcher.utils.filesystem import mkdtemp
 from lava_dispatcher.action import JobError
 from lava_dispatcher.test.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.actions.deploy import DeployAction
@@ -36,13 +35,12 @@ class DownloadFactory(Factory):  # pylint: disable=too-few-public-methods
     of any database objects.
     """
 
-    def create_download_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
+    def create_download_job(self, filename):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/db410c-01.yaml'))
         download_yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(download_yaml) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "",
-                               output_dir=output_dir)
+            job = parser.parse(sample_job_data, device, 4212, None, "")
         return job
 
 
@@ -51,8 +49,7 @@ class TestDownloadDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
     def setUp(self):
         super(TestDownloadDeploy, self).setUp()
         self.factory = DownloadFactory()
-        self.job = self.factory.create_download_job('sample_jobs/download.yaml',
-                                                    mkdtemp())
+        self.job = self.factory.create_download_job('sample_jobs/download.yaml')
 
     def test_deploy_job(self):
         self.assertEqual(self.job.pipeline.job, self.job)

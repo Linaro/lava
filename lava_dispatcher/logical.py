@@ -354,7 +354,7 @@ class PipelineContext(object):  # pylint: disable=too-few-public-methods
     loopback mount action will be needed by the umount action later.
 
     Data which does not change for the lifetime of the job must be kept as a
-    parameter of the job, e.g. output_dir and target.
+    parameter of the job, e.g. dispatcher_config and target.
 
     Do NOT store data here which is not relevant to ALL pipelines, this is NOT
     the place for any configuration relating to devices or device types. The

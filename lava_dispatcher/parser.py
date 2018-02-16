@@ -117,7 +117,7 @@ class JobParser(object):
 
     # pylint: disable=too-many-locals,too-many-statements
     def parse(self, content, device, job_id, logger, dispatcher_config,
-              output_dir=None, env_dut=None):
+              env_dut=None):
         self.loader = yaml.Loader(content)
         self.loader.compose_node = self.compose_node
         self.loader.construct_mapping = self.construct_mapping
@@ -125,7 +125,6 @@ class JobParser(object):
         job = Job(job_id, data, logger)
         test_counts = {}
         job.device = device
-        job.parameters['output_dir'] = output_dir
         job.parameters['env_dut'] = env_dut
         # Load the dispatcher config
         job.parameters['dispatcher'] = {}
@@ -200,7 +199,6 @@ class JobParser(object):
         finalize = FinalizeAction()
         pipeline.add_action(finalize)
         finalize.populate(None)
-        data['output_dir'] = output_dir
         job.pipeline = pipeline
         if 'compatibility' in data:
             try:

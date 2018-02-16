@@ -19,7 +19,6 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 from lava_dispatcher.test.test_basic import Factory, StdoutTestCase
-from lava_dispatcher.utils.filesystem import mkdtemp
 
 
 class TestCommand(StdoutTestCase):
@@ -27,7 +26,7 @@ class TestCommand(StdoutTestCase):
     def setUp(self):
         super(TestCommand, self).setUp()
         factory = Factory()
-        self.job = factory.create_kvm_job('sample_jobs/kvm-command.yaml', mkdtemp())
+        self.job = factory.create_kvm_job('sample_jobs/kvm-command.yaml')
 
     def test_pipeline(self):
         description_ref = self.pipeline_reference('kvm-command.yaml')

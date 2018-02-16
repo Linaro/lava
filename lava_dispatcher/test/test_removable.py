@@ -39,13 +39,12 @@ class RemovableFactory(Factory):  # pylint: disable=too-few-public-methods
     of any database objects.
     """
 
-    def create_job(self, sample_job, device_file, output_dir='/tmp/'):  # pylint: disable=no-self-use
+    def create_job(self, sample_job, device_file):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), device_file))
         yaml = os.path.join(os.path.dirname(__file__), sample_job)
         with open(yaml) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "",
-                               output_dir=output_dir)
+            job = parser.parse(sample_job_data, device, 4212, None, "")
         job.logger = DummyLogger()
         return job
 
@@ -78,7 +77,7 @@ class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
         job_parser = JobParser()
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/{}'.format(test_file))
         with open(sample_job_file) as sample_job_data:
-            job = job_parser.parse(sample_job_data, device, 4212, None, "", output_dir='/tmp/')
+            job = job_parser.parse(sample_job_data, device, 4212, None, "")
         job.logger = DummyLogger()
         try:
             job.validate()
@@ -238,7 +237,7 @@ class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
         bbb = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/uboot-ramdisk.yaml')
         with open(sample_job_file) as sample_job_data:
-            job = job_parser.parse(sample_job_data, bbb, 4212, None, "", output_dir='/tmp/')
+            job = job_parser.parse(sample_job_data, bbb, 4212, None, "")
         job.logger = DummyLogger()
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
@@ -256,7 +255,7 @@ class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
         cubie = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/cubie1.yaml'))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/cubietruck-removable.yaml')
         with open(sample_job_file) as sample_job_data:
-            job = job_parser.parse(sample_job_data, cubie, 4212, None, "", output_dir='/tmp/')
+            job = job_parser.parse(sample_job_data, cubie, 4212, None, "")
         job.logger = DummyLogger()
         job.validate()
         boot_params = [

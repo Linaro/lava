@@ -139,7 +139,7 @@ class TestDeviceEnvironment(StdoutTestCase):  # pylint: disable=too-many-public-
         with open(sample_job_file) as sample_job_data:
             job = job_parser.parse(
                 sample_job_data, device, 4212, None, "",
-                output_dir='/tmp', env_dut=data)
+                env_dut=data)
         self.assertEqual(
             job.parameters['env_dut'],
             None
@@ -163,7 +163,7 @@ overrides:
         with open(sample_job_file) as sample_job_data:
             job = job_parser.parse(
                 sample_job_data, device, 4212, None, "",
-                output_dir='/tmp', env_dut=data)
+                env_dut=data)
         job.logger = DummyLogger()
         self.assertEqual(
             job.parameters['env_dut'],
@@ -186,7 +186,7 @@ overrides:
         with open(sample_job_file) as sample_job_data:
             job = job_parser.parse(
                 sample_job_data, device, 4212, None, "",
-                output_dir='/tmp', env_dut=data)
+                env_dut=data)
         job.logger = DummyLogger()
         self.assertEqual(
             job.parameters['env_dut'],

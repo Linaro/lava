@@ -21,7 +21,6 @@
 
 from lava_dispatcher.actions.boot.qemu import BootQEMUImageAction
 from lava_dispatcher.actions.test.shell import TestShellRetry
-from lava_dispatcher.utils.filesystem import mkdtemp
 from lava_dispatcher.test.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.actions.deploy.testdef import get_deployment_testdefs
 from lava_dispatcher.test.test_defs import allow_missing_path
@@ -34,7 +33,7 @@ class TestRepeatBootTest(StdoutTestCase):  # pylint: disable=too-many-public-met
     def setUp(self):
         super(TestRepeatBootTest, self).setUp()
         factory = Factory()
-        self.job = factory.create_kvm_job('sample_jobs/kvm-repeat.yaml', mkdtemp())
+        self.job = factory.create_kvm_job('sample_jobs/kvm-repeat.yaml')
 
     def test_basic_structure(self):
         self.assertIsNotNone(self.job)

@@ -32,7 +32,6 @@ from lava_dispatcher.logical import (
 )
 from lava_dispatcher.power import FinalizeAction
 from lava_dispatcher.job import Job
-from lava_dispatcher.utils.filesystem import mkdtemp
 from lava_dispatcher.test.test_basic import StdoutTestCase
 from lava_dispatcher.test.utils import DummyLogger
 
@@ -154,7 +153,6 @@ class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         super(TestAction, self).setUp()
         self.parameters = {
             "job_name": "fakejob",
-            'output_dir': mkdtemp(),
             "actions": [
                 {
                     'deploy': {
@@ -406,7 +404,6 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
         super(TestTimeout, self).setUp()
         self.parameters = {
             "job_name": "fakejob",
-            'output_dir': mkdtemp(),
             'timeouts': {
                 'job': {
                     'seconds': 3

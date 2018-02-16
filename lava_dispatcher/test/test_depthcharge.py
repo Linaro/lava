@@ -42,14 +42,13 @@ class DepthchargeFactory(object):
     Factory objects are dispatcher based classes, independent
     of any database objects.
     """
-    def create_jaq_job(self, filename, output_dir='/tmp/'):
+    def create_jaq_job(self, filename):
         device = NewDevice(os.path.join(
             os.path.dirname(__file__), '../devices/jaq-01.yaml'))
         yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(yaml) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "",
-                               output_dir=output_dir)
+            job = parser.parse(sample_job_data, device, 4212, None, "")
             job.logger = DummyLogger()
         return job
 

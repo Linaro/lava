@@ -33,23 +33,21 @@ class Cmsis_Factory(Factory):  # pylint: disable=too-few-public-methods
     Factory objects are dispatcher based classes, independent
     of any database objects.
     """
-    def create_k64f_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
+    def create_k64f_job(self, filename):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/frdm-k64f-01.yaml'))
         y_file = os.path.join(os.path.dirname(__file__), filename)
         with open(y_file) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4999, None, "",
-                               output_dir=output_dir)
+            job = parser.parse(sample_job_data, device, 4999, None, "")
         job.logger = DummyLogger()
         return job
 
-    def create_k64f_job_with_power(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
+    def create_k64f_job_with_power(self, filename):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/frdm-k64f-01-with-power.yaml'))
         y_file = os.path.join(os.path.dirname(__file__), filename)
         with open(y_file) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 5999, None, "",
-                               output_dir=output_dir)
+            job = parser.parse(sample_job_data, device, 5999, None, "")
         job.logger = DummyLogger()
         return job
 

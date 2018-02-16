@@ -24,7 +24,6 @@ from lava_dispatcher.action import Pipeline, Timeout
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.job import Job
 from lava_dispatcher.device import NewDevice
-from lava_dispatcher.utils.filesystem import mkdtemp
 from lava_dispatcher.test.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.test.utils import DummyLogger
 from lava_dispatcher.utils.strings import substitute
@@ -32,13 +31,13 @@ from lava_dispatcher.utils.strings import substitute
 
 class InstallerFactory(Factory):  # pylint: disable=too-few-public-methods
 
-    def create_qemu_installer_job(self, output_dir=None):  # pylint: disable=no-self-use
+    def create_qemu_installer_job(self):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/kvm01.yaml'))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/qemu-debian-installer.yaml')
         parser = JobParser()
         try:
             with open(sample_job_file) as sample_job_data:
-                job = parser.parse(sample_job_data, device, 4212, None, "", output_dir=output_dir)
+                job = parser.parse(sample_job_data, device, 4212, None, "")
             job.logger = DummyLogger()
         except NotImplementedError:
             # some deployments listed in basics.yaml are not implemented yet
@@ -51,7 +50,7 @@ class TestIsoJob(StdoutTestCase):
     def setUp(self):
         super(TestIsoJob, self).setUp()
         factory = InstallerFactory()
-        self.job = factory.create_qemu_installer_job(mkdtemp())
+        self.job = factory.create_qemu_installer_job()
         self.assertIsNotNone(self.job)
         self.assertIsInstance(self.job, Job)
         self.assertIsInstance(self.job.pipeline, Pipeline)

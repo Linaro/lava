@@ -36,7 +36,6 @@ from lava_dispatcher.test.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.test.utils import DummyLogger
 from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.shell import infrastructure_error
-from lava_dispatcher.utils.filesystem import mkdtemp
 from lava_dispatcher.utils.strings import substitute
 
 
@@ -47,13 +46,12 @@ class X86Factory(Factory):  # pylint: disable=too-few-public-methods
     of any database objects.
     """
 
-    def create_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
+    def create_job(self, filename):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/x86-01.yaml'))
         y_file = os.path.join(os.path.dirname(__file__), filename)
         with open(y_file) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "",
-                               output_dir=output_dir)
+            job = parser.parse(sample_job_data, device, 4212, None, "")
         job.logger = DummyLogger()
         return job
 
@@ -137,7 +135,6 @@ class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-m
             'job_timeout': '15m',
             'action_timeout': '5m',
             'priority': 'medium',
-            'output_dir': mkdtemp(),
             'actions': {
                 'boot': {
                     'method': 'ipxe',
@@ -258,8 +255,7 @@ class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-m
         boot = [item['boot'] for item in sample_job_data['actions'] if 'boot' in item][0]
         self.assertIsNotNone(boot)
         sample_job_string = yaml.dump(sample_job_data)
-        job = parser.parse(sample_job_string, device, 4212, None, "",
-                           output_dir='/tmp')
+        job = parser.parse(sample_job_string, device, 4212, None, "")
         job.logger = DummyLogger()
         job.validate()
         bootloader = [action for action in job.pipeline.actions if action.name == 'bootloader-action'][0]

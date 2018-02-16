@@ -25,7 +25,6 @@ import unittest
 import logging
 import yaml
 
-from lava_dispatcher.utils.filesystem import mkdtemp
 from lava_dispatcher.action import Pipeline, Action, JobError, LAVABug, LAVAError
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.job import Job
@@ -99,7 +98,7 @@ class TestJobParser(StdoutTestCase):  # pylint: disable=too-many-public-methods
     def setUp(self):
         super(TestJobParser, self).setUp()
         factory = Factory()
-        self.job = factory.create_kvm_job('sample_jobs/basics.yaml', mkdtemp())
+        self.job = factory.create_kvm_job('sample_jobs/basics.yaml')
 
     def test_parser_creates_a_job_with_a_pipeline(self):  # pylint: disable=invalid-name
         if not self.job:
@@ -153,27 +152,25 @@ class Factory(object):
         logger.disabled = True
         logger.propagate = False
 
-    def create_fake_qemu_job(self, output_dir=None):  # pylint: disable=no-self-use
+    def create_fake_qemu_job(self):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/kvm01.yaml'))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/basics.yaml')
         parser = JobParser()
         try:
             with open(sample_job_file) as sample_job_data:
-                job = parser.parse(sample_job_data, device, 4212, None, "",
-                                   output_dir=output_dir)
+                job = parser.parse(sample_job_data, device, 4212, None, "")
         except LAVAError:
             # some deployments listed in basics.yaml are not implemented yet
             return None
         return job
 
-    def create_kvm_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
+    def create_kvm_job(self, filename):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/kvm01.yaml'))
         kvm_yaml = os.path.join(os.path.dirname(__file__), filename)
         parser = JobParser()
         try:
             with open(kvm_yaml) as sample_job_data:
-                job = parser.parse(sample_job_data, device, 4212, None, "",
-                                   output_dir=output_dir)
+                job = parser.parse(sample_job_data, device, 4212, None, "")
             job.logger = DummyLogger()
         except LAVAError as exc:
             print(exc)
@@ -316,14 +313,14 @@ class TestPipeline(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def test_simulated_action(self):
         factory = Factory()
-        job = factory.create_kvm_job('sample_jobs/basics.yaml', mkdtemp())
+        job = factory.create_kvm_job('sample_jobs/basics.yaml')
         if not job:
             return unittest.skip("not all deployments have been implemented")
         self.assertIsNotNone(job)
 
     def test_describe(self):
         factory = Factory()
-        job = factory.create_kvm_job('sample_jobs/kvm.yaml', mkdtemp())
+        job = factory.create_kvm_job('sample_jobs/kvm.yaml')
         self.assertIsNotNone(job)
         pipe = job.pipeline.describe()
         for item in pipe:
@@ -340,7 +337,7 @@ class TestPipeline(StdoutTestCase):  # pylint: disable=too-many-public-methods
         is related to the change which caused the compatibility to be modified.
         """
         factory = Factory()
-        job = factory.create_kvm_job('sample_jobs/kvm.yaml', mkdtemp())
+        job = factory.create_kvm_job('sample_jobs/kvm.yaml')
         pipe = job.describe()
         self.assertEqual(pipe['compatibility'], DeployImages.compatibility)
         self.assertEqual(job.compatibility, DeployImages.compatibility)
@@ -351,21 +348,18 @@ class TestPipeline(StdoutTestCase):  # pylint: disable=too-many-public-methods
         parser = JobParser()
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/kvm01.yaml'))
         try:
-            job = parser.parse(yaml.dump(job_def), device, 4212, None, "",
-                               output_dir=mkdtemp())
+            job = parser.parse(yaml.dump(job_def), device, 4212, None, "")
         except NotImplementedError:
             # some deployments listed in basics.yaml are not implemented yet
             pass
         self.assertIsNotNone(job)
         job_def['compatibility'] = job.compatibility + 1
         self.assertRaises(
-            JobError, parser.parse, yaml.dump(job_def), device, 4212, None, "",
-            mkdtemp()
+            JobError, parser.parse, yaml.dump(job_def), device, 4212, None, ""
         )
         job_def['compatibility'] = 0
         try:
-            job = parser.parse(yaml.dump(job_def), device, 4212, None, "",
-                               output_dir=mkdtemp())
+            job = parser.parse(yaml.dump(job_def), device, 4212, None, "")
         except NotImplementedError:
             # some deployments listed in basics.yaml are not implemented yet
             pass
@@ -373,7 +367,7 @@ class TestPipeline(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def test_pipeline_actions(self):
         factory = Factory()
-        job = factory.create_kvm_job('sample_jobs/kvm.yaml', mkdtemp())
+        job = factory.create_kvm_job('sample_jobs/kvm.yaml')
         self.assertEqual(
             ['deploy', 'boot', 'test', 'finalize'],
             [action.section for action in job.pipeline.actions]
@@ -381,7 +375,7 @@ class TestPipeline(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def test_namespace_data(self):
         factory = Factory()
-        job = factory.create_kvm_job('sample_jobs/kvm.yaml', mkdtemp())
+        job = factory.create_kvm_job('sample_jobs/kvm.yaml')
         self.assertIsNotNone(job)
         test_action = job.pipeline.actions[0]
         test_action.validate()

@@ -39,7 +39,7 @@ from lava_dispatcher.test.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.test.utils import DummyLogger
 from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.shell import infrastructure_error
-from lava_dispatcher.utils.filesystem import mkdtemp, tftpd_dir
+from lava_dispatcher.utils.filesystem import tftpd_dir
 from lava_dispatcher.utils.strings import substitute
 
 
@@ -49,43 +49,39 @@ class UBootFactory(Factory):  # pylint: disable=too-few-public-methods
     Factory objects are dispatcher based classes, independent
     of any database objects.
     """
-    def create_bbb_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
+    def create_bbb_job(self, filename):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
         bbb_yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(bbb_yaml) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "",
-                               output_dir=output_dir)
+            job = parser.parse(sample_job_data, device, 4212, None, "")
             job.logger = DummyLogger()
         return job
 
-    def create_x15_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
+    def create_x15_job(self, filename):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/x15-01.yaml'))
         bbb_yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(bbb_yaml) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "",
-                               output_dir=output_dir)
+            job = parser.parse(sample_job_data, device, 4212, None, "")
             job.logger = DummyLogger()
         return job
 
-    def create_juno_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
+    def create_juno_job(self, filename):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/juno-01.yaml'))
         juno_yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(juno_yaml) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "",
-                               output_dir=output_dir)
+            job = parser.parse(sample_job_data, device, 4212, None, "")
             job.logger = DummyLogger()
         return job
 
-    def create_zcu102_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
+    def create_zcu102_job(self, filename):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/xilinx-zcu102.yaml'))
         zcu_yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(zcu_yaml) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "",
-                               output_dir=output_dir)
+            job = parser.parse(sample_job_data, device, 4212, None, "")
             job.logger = DummyLogger()
         return job
 
@@ -205,7 +201,6 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
             'job_timeout': '15m',
             'action_timeout': '5m',
             'priority': 'medium',
-            'output_dir': mkdtemp(),
             'actions': {
                 'boot': {
                     'method': 'u-boot',
@@ -393,8 +388,7 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         cubie = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/cubie1.yaml'))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/cubietruck-removable.yaml')
         sample_job_data = open(sample_job_file)
-        job = job_parser.parse(sample_job_data, cubie, 4212, None, "",
-                               output_dir='/tmp/')
+        job = job_parser.parse(sample_job_data, cubie, 4212, None, "")
         job.logger = DummyLogger()
         job.validate()
         sample_job_data.close()
@@ -469,7 +463,7 @@ class TestKernelConversion(StdoutTestCase):
 
     def test_zimage_bootz(self):
         self.deploy_block['kernel']['type'] = 'zimage'
-        job = self.parser.parse(yaml.dump(self.base_data), self.device, 4212, None, "", output_dir=mkdtemp())
+        job = self.parser.parse(yaml.dump(self.base_data), self.device, 4212, None, "")
         job.logger = DummyLogger()
         job.validate()
         deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
@@ -482,7 +476,7 @@ class TestKernelConversion(StdoutTestCase):
 
     def test_image(self):
         self.deploy_block['kernel']['type'] = 'image'
-        job = self.parser.parse(yaml.dump(self.base_data), self.device, 4212, None, "", output_dir=mkdtemp())
+        job = self.parser.parse(yaml.dump(self.base_data), self.device, 4212, None, "")
         job.logger = DummyLogger()
         job.validate()
         deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
@@ -496,7 +490,7 @@ class TestKernelConversion(StdoutTestCase):
 
     def test_uimage(self):
         self.deploy_block['kernel']['type'] = 'uimage'
-        job = self.parser.parse(yaml.dump(self.base_data), self.device, 4212, None, "", output_dir=mkdtemp())
+        job = self.parser.parse(yaml.dump(self.base_data), self.device, 4212, None, "")
         job.logger = DummyLogger()
         job.validate()
         deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
@@ -511,7 +505,7 @@ class TestKernelConversion(StdoutTestCase):
         # drop bootz from the device for this part of the test
         del self.device['parameters']['bootz']
         self.deploy_block['kernel']['type'] = 'zimage'
-        job = self.parser.parse(yaml.dump(self.base_data), self.device, 4212, None, "", output_dir=mkdtemp())
+        job = self.parser.parse(yaml.dump(self.base_data), self.device, 4212, None, "")
         job.logger = DummyLogger()
         job.validate()
         deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
@@ -526,7 +520,7 @@ class TestKernelConversion(StdoutTestCase):
         # uimage in boot type
         del self.deploy_block['kernel']['type']
         self.boot_block['type'] = 'bootm'
-        job = self.parser.parse(yaml.dump(self.base_data), self.device, 4212, None, "", output_dir=mkdtemp())
+        job = self.parser.parse(yaml.dump(self.base_data), self.device, 4212, None, "")
         job.logger = DummyLogger()
         job.validate()
         deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]

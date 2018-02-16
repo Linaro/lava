@@ -129,8 +129,7 @@ class TestVland(StdoutTestCase):  # pylint: disable=too-many-public-methods
         vprotocol.set_up()
         with open(self.filename) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, self.device, 4212, None, "",
-                               output_dir='/tmp/')
+            job = parser.parse(sample_job_data, self.device, 4212, None, "")
         ret = vprotocol.configure(self.device, job)
         if not ret:
             print(vprotocol.errors)
@@ -176,8 +175,7 @@ class TestVland(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertIn(VlandProtocol.name, alpha_data['protocols'])
         with open(self.filename) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, self.device, 4212, None, "",
-                               output_dir='/tmp/')
+            job = parser.parse(sample_job_data, self.device, 4212, None, "")
         job.logger = DummyLogger()
         description_ref = self.pipeline_reference('bbb-group-vland-alpha.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
@@ -222,7 +220,7 @@ class TestVland(StdoutTestCase):  # pylint: disable=too-many-public-methods
             {'vlan_one': {'tags': []}}
         )
         parser = JobParser()
-        job = parser.parse(yaml.dump(alpha_data), self.device, 4212, None, "", output_dir='/tmp/')
+        job = parser.parse(yaml.dump(alpha_data), self.device, 4212, None, "")
         job.logger = DummyLogger()
         job.validate()
         tftp_deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
@@ -246,7 +244,7 @@ class TestVland(StdoutTestCase):  # pylint: disable=too-many-public-methods
             {'vlan_one': {'tags': []}}
         )
         parser = JobParser()
-        job = parser.parse(yaml.dump(alpha_data), self.device, 4212, None, "", output_dir='/tmp/')
+        job = parser.parse(yaml.dump(alpha_data), self.device, 4212, None, "")
         job.logger = DummyLogger()
         job.validate()
         vprotocol = [vprotocol for vprotocol in job.protocols if vprotocol.name == VlandProtocol.name][0]
@@ -274,7 +272,7 @@ class TestVland(StdoutTestCase):  # pylint: disable=too-many-public-methods
             {'vlan_one': {'tags': ['spurious']}}
         )
         parser = JobParser()
-        job = parser.parse(yaml.dump(alpha_data), self.device, 4212, None, "", output_dir='/tmp/')
+        job = parser.parse(yaml.dump(alpha_data), self.device, 4212, None, "")
         job.logger = DummyLogger()
         self.assertRaises(JobError, job.validate)
 
@@ -286,7 +284,7 @@ class TestVland(StdoutTestCase):  # pylint: disable=too-many-public-methods
             if self.device['parameters']['interfaces'][interface]['tags'] == []:
                 self.device['parameters']['interfaces'][interface]['tags'] = None
         parser = JobParser()
-        job = parser.parse(yaml.dump(alpha_data), self.device, 4212, None, "", output_dir='/tmp/')
+        job = parser.parse(yaml.dump(alpha_data), self.device, 4212, None, "")
         deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
         prepare = [action for action in deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
         overlay = [action for action in prepare.internal_pipeline.actions if action.name == 'lava-overlay'][0]

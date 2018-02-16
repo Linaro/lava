@@ -77,7 +77,7 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
             data = yaml.load(sample_job_data)
         data['actions'][2]['test']['definitions'][0]['from'] = 'unusable-handler'
         try:
-            job = parser.parse(yaml.dump(data), device, 4212, None, "", output_dir='/tmp')
+            job = parser.parse(yaml.dump(data), device, 4212, None, "")
             job.logger = DummyLogger()
         except JobError:
             pass
@@ -101,13 +101,12 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
 
 class X86Factory(Factory):
 
-    def create_x86_job(self, filename, device, output_dir='/tmp/'):  # pylint: disable=no-self-use
+    def create_x86_job(self, filename, device):  # pylint: disable=no-self-use
         kvm_yaml = os.path.join(os.path.dirname(__file__), filename)
         parser = JobParser()
         try:
             with open(kvm_yaml) as sample_job_data:
-                job = parser.parse(sample_job_data, device, 4212, None, "",
-                                   output_dir=output_dir)
+                job = parser.parse(sample_job_data, device, 4212, None, "")
             job.logger = DummyLogger()
         except LAVAError as exc:
             print(exc)

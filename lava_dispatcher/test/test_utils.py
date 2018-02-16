@@ -198,7 +198,7 @@ class TestConstants(StdoutTestCase):  # pylint: disable=too-many-public-methods
     def setUp(self):
         super(TestConstants, self).setUp()
         factory = UBootFactory()
-        self.job = factory.create_bbb_job('sample_jobs/uboot-ramdisk.yaml', mkdtemp())
+        self.job = factory.create_bbb_job('sample_jobs/uboot-ramdisk.yaml')
         self.assertIsNotNone(self.job)
 
     def test_action_parameters(self):

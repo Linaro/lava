@@ -27,7 +27,6 @@ from lava_dispatcher.action import Pipeline, Timeout
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
-from lava_dispatcher.utils.filesystem import mkdtemp
 from lava_dispatcher.test.test_uboot import UBootFactory
 from lava_dispatcher.test.utils import DummyLogger
 
@@ -115,7 +114,6 @@ class TestMultiDeploy(StdoutTestCase):
         device = TestMultiDeploy.FakeDevice()
         self.assertIsNotNone(device)
         job.device = device
-        job.parameters['output_dir'] = mkdtemp()
         job.logger = DummyLogger()
         job.pipeline = pipeline
         counts = {}
@@ -166,8 +164,7 @@ class TestMultiDefinition(StdoutTestCase):  # pylint: disable=too-many-public-me
         self.assertEqual(len(block['definitions']), 2)
         self.assertEqual(block['definitions'][1], block['definitions'][0])
         parser = JobParser()
-        job = parser.parse(yaml.dump(self.job_data), self.device, 4212, None, "",
-                           output_dir='/tmp/')
+        job = parser.parse(yaml.dump(self.job_data), self.device, 4212, None, "")
         self.assertIsNotNone(job)
         deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
         tftp = [action for action in deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]

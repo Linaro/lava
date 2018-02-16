@@ -29,13 +29,12 @@ from lava_dispatcher.test.utils import DummyLogger
 
 class UefiFactory(Factory):  # pylint: disable=too-few-public-methods
 
-    def create_job(self, filename, output_dir='/tmp'):  # pylint: disable=no-self-use
+    def create_job(self, filename):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/juno-uefi.yaml'))
         y_file = os.path.join(os.path.dirname(__file__), filename)
         with open(y_file) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "",
-                               output_dir=output_dir)
+            job = parser.parse(sample_job_data, device, 4212, None, "")
         job.logger = DummyLogger()
         return job
 

@@ -23,7 +23,6 @@ import yaml
 import unittest
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
-from lava_dispatcher.utils.filesystem import mkdtemp
 from lava_dispatcher.utils.shell import infrastructure_error
 from lava_dispatcher.action import JobError
 from lava_dispatcher.test.test_basic import Factory, StdoutTestCase
@@ -40,47 +39,43 @@ class LxcFactory(Factory):  # pylint: disable=too-few-public-methods
     of any database objects.
     """
 
-    def create_lxc_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
+    def create_lxc_job(self, filename):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__),
                                         '../devices/lxc-01.yaml'))
         lxc_yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(lxc_yaml) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4577, None, "",
-                               output_dir=output_dir)
+            job = parser.parse(sample_job_data, device, 4577, None, "")
         job.logger = DummyLogger()
         return job
 
-    def create_bbb_lxc_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
+    def create_bbb_lxc_job(self, filename):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__),
                                         '../devices/bbb-01.yaml'))
         lxc_yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(lxc_yaml) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4577, None, "",
-                               output_dir=output_dir)
+            job = parser.parse(sample_job_data, device, 4577, None, "")
         job.logger = DummyLogger()
         return job
 
-    def create_adb_nuc_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
+    def create_adb_nuc_job(self, filename):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__),
                                         '../devices/adb-nuc-01.yaml'))
         job_yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(job_yaml) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4577, None, "",
-                               output_dir=output_dir)
+            job = parser.parse(sample_job_data, device, 4577, None, "")
         job.logger = DummyLogger()
         return job
 
-    def create_hikey_aep_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
+    def create_hikey_aep_job(self, filename):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__),
                                         '../devices/hi6220-hikey-01.yaml'))
         job_yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(job_yaml) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4577, None, "",
-                               output_dir=output_dir)
+            job = parser.parse(sample_job_data, device, 4577, None, "")
         job.logger = DummyLogger()
         return job
 
@@ -90,7 +85,7 @@ class TestLxcDeploy(StdoutTestCase):  # pylint: disable=too-many-public-methods
     def setUp(self):
         super(TestLxcDeploy, self).setUp()
         factory = LxcFactory()
-        self.job = factory.create_lxc_job('sample_jobs/lxc.yaml', mkdtemp())
+        self.job = factory.create_lxc_job('sample_jobs/lxc.yaml')
 
     def test_deploy_job(self):
         self.assertEqual(self.job.pipeline.job, self.job)
@@ -149,7 +144,7 @@ class TestLxcWithDevices(StdoutTestCase):
     def setUp(self):
         super(TestLxcWithDevices, self).setUp()
         self.factory = LxcFactory()
-        self.job = self.factory.create_bbb_lxc_job('sample_jobs/bbb-lxc.yaml', mkdtemp())
+        self.job = self.factory.create_bbb_lxc_job('sample_jobs/bbb-lxc.yaml')
 
     def test_lxc_feedback(self):  # pylint: disable=too-many-locals
         self.assertIsNotNone(self.job)
@@ -203,8 +198,7 @@ class TestLxcWithDevices(StdoutTestCase):
         parser = JobParser()
         device = NewDevice(os.path.join(os.path.dirname(__file__),
                                         '../devices/bbb-01.yaml'))
-        job = parser.parse(yaml.dump(data), device, 4577, None, "",
-                           output_dir=mkdtemp())
+        job = parser.parse(yaml.dump(data), device, 4577, None, "")
         job.logger = DummyLogger()
         job.validate()
         lxc_deploy = [action for action in self.job.pipeline.actions if action.name == 'lxc-deploy'][0]
@@ -215,7 +209,7 @@ class TestLxcWithDevices(StdoutTestCase):
         self.assertIsNotNone(runner.testdef_levels)
 
     def test_lxc_with_static_device(self):  # pylint: disable=too-many-locals
-        self.job = self.factory.create_hikey_aep_job('sample_jobs/hi6220-hikey.yaml', mkdtemp())
+        self.job = self.factory.create_hikey_aep_job('sample_jobs/hi6220-hikey.yaml')
         self.job.validate()
         lxc_boot = [action for action in self.job.pipeline.actions if action.name == 'lxc-boot'][0]
         lxc_static = [action for action in lxc_boot.internal_pipeline.actions if action.name == 'lxc-add-static'][0]
@@ -234,8 +228,7 @@ class TestLxcWithDevices(StdoutTestCase):
         parser = JobParser()
         device = NewDevice(os.path.join(os.path.dirname(__file__),
                                         '../devices/bbb-01.yaml'))
-        job = parser.parse(yaml.dump(data), device, 4577, None, "",
-                           output_dir=mkdtemp())
+        job = parser.parse(yaml.dump(data), device, 4577, None, "")
         job.logger = DummyLogger()
         job.validate()
         lxc_deploy = [action for action in job.pipeline.actions if action.name == 'lxc-deploy'][0]
@@ -267,7 +260,6 @@ class TestLxcWithDevices(StdoutTestCase):
 
     def test_adb_nuc_job(self):
         self.factory = LxcFactory()
-        job = self.factory.create_adb_nuc_job('sample_jobs/adb-nuc.yaml',
-                                              mkdtemp())
+        job = self.factory.create_adb_nuc_job('sample_jobs/adb-nuc.yaml')
         description_ref = self.pipeline_reference('adb-nuc.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))

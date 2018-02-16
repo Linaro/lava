@@ -53,7 +53,7 @@ class TestBasicJob(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def test_basic_actions(self):
         factory = Factory()
-        job = factory.create_fake_qemu_job(mkdtemp())
+        job = factory.create_fake_qemu_job()
         if not job:
             return unittest.skip("not all deployments have been implemented")
         self.assertIsInstance(job, Job)
@@ -159,7 +159,7 @@ class TestKVMBasicDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
     def setUp(self):
         super(TestKVMBasicDeploy, self).setUp()
         factory = Factory()
-        self.job = factory.create_kvm_job('sample_jobs/kvm.yaml', mkdtemp())
+        self.job = factory.create_kvm_job('sample_jobs/kvm.yaml')
 
     def test_deploy_job(self):
         self.assertEqual(self.job.pipeline.job, self.job)
@@ -227,7 +227,7 @@ class TestKVMQcow2Deploy(StdoutTestCase):  # pylint: disable=too-many-public-met
     def setUp(self):
         super(TestKVMQcow2Deploy, self).setUp()
         factory = Factory()
-        self.job = factory.create_kvm_job('sample_jobs/kvm-qcow2.yaml', mkdtemp())
+        self.job = factory.create_kvm_job('sample_jobs/kvm-qcow2.yaml')
 
     def test_deploy_job(self):
         self.assertEqual(self.job.pipeline.job, self.job)
@@ -253,7 +253,7 @@ class TestKVMDownloadLocalDeploy(StdoutTestCase):  # pylint: disable=too-many-pu
     def setUp(self):
         super(TestKVMDownloadLocalDeploy, self).setUp()
         factory = Factory()
-        self.job = factory.create_kvm_job('sample_jobs/kvm-local.yaml', mkdtemp())
+        self.job = factory.create_kvm_job('sample_jobs/kvm-local.yaml')
 
     def test_deploy_job(self):
         self.assertEqual(self.job.pipeline.job, self.job)
@@ -280,7 +280,7 @@ class TestKVMInlineTestDeploy(StdoutTestCase):  # pylint: disable=too-many-publi
     def setUp(self):
         super(TestKVMInlineTestDeploy, self).setUp()
         factory = Factory()
-        self.job = factory.create_kvm_job('sample_jobs/kvm-inline.yaml', mkdtemp())
+        self.job = factory.create_kvm_job('sample_jobs/kvm-inline.yaml')
 
     def test_deploy_job(self):
         self.assertEqual(self.job.pipeline.job, self.job)
@@ -313,8 +313,7 @@ class TestKVMInlineTestDeploy(StdoutTestCase):  # pylint: disable=too-many-publi
                   """)
         self.assertIsInstance(device['actions']['boot']['methods']['qemu']['parameters']['extra'][1], int)
         parser = JobParser()
-        job = parser.parse(yaml.dump(job_data), device, 4212, None, "",
-                           output_dir='/tmp/')
+        job = parser.parse(yaml.dump(job_data), device, 4212, None, "")
         job.logger = DummyLogger()
         job.validate()
         boot_image = [action for action in job.pipeline.actions if action.name == 'boot-image-retry'][0]
@@ -380,7 +379,7 @@ class TestAutoLogin(StdoutTestCase):
     def setUp(self):
         super(TestAutoLogin, self).setUp()
         factory = Factory()
-        self.job = factory.create_kvm_job('sample_jobs/kvm-inline.yaml', mkdtemp())
+        self.job = factory.create_kvm_job('sample_jobs/kvm-inline.yaml')
         self.job.logger = DummyLogger()
         self.max_end_time = time.time() + 30
 
@@ -540,7 +539,7 @@ class TestChecksum(StdoutTestCase):
     def setUp(self):
         super(TestChecksum, self).setUp()
         factory = Factory()
-        self.job = factory.create_kvm_job('sample_jobs/kvm-inline.yaml', mkdtemp())
+        self.job = factory.create_kvm_job('sample_jobs/kvm-inline.yaml')
 
     def test_download_checksum_match_success(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
@@ -642,7 +641,7 @@ class TestChecksum(StdoutTestCase):
         bbb_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/bbb-ramdisk-nfs.yaml')
         with open(bbb_yaml) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "", output_dir='/tmp/')
+            job = parser.parse(sample_job_data, device, 4212, None, "")
         deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
         download = [action for action in deploy.internal_pipeline.actions if action.name == 'download-retry'][0]
         helper = [action for action in download.internal_pipeline.actions if action.name == 'file-download'][0]
@@ -658,7 +657,7 @@ class TestKvmGuest(StdoutTestCase):  # pylint: disable=too-many-public-methods
     def setUp(self):
         super(TestKvmGuest, self).setUp()
         factory = Factory()
-        self.job = factory.create_kvm_job('sample_jobs/kvm-local.yaml', mkdtemp())
+        self.job = factory.create_kvm_job('sample_jobs/kvm-local.yaml')
 
     def test_guest_size(self):
         self.assertIn('guest', self.job.device['actions']['deploy']['methods']['image']['parameters'])
@@ -670,7 +669,7 @@ class TestKvmUefi(StdoutTestCase):  # pylint: disable=too-many-public-methods
     def setUp(self):
         super(TestKvmUefi, self).setUp()
         factory = Factory()
-        self.job = factory.create_kvm_job('sample_jobs/kvm-uefi.yaml', mkdtemp())
+        self.job = factory.create_kvm_job('sample_jobs/kvm-uefi.yaml')
 
     @unittest.skipIf(infrastructure_error('qemu-system-x86_64'),
                      'qemu-system-x86_64 not installed')
@@ -702,8 +701,7 @@ class TestQemuNFS(StdoutTestCase):
         parser = JobParser()
         try:
             with open(kvm_yaml) as sample_job_data:
-                job = parser.parse(sample_job_data, device, 4212, None, "",
-                                   output_dir=mkdtemp())
+                job = parser.parse(sample_job_data, device, 4212, None, "")
         except NotImplementedError as exc:
             print(exc)
             # some deployments listed in basics.yaml are not implemented yet
@@ -762,7 +760,7 @@ class TestMonitor(StdoutTestCase):  # pylint: disable=too-many-public-methods
     def setUp(self):
         super(TestMonitor, self).setUp()
         factory = Factory()
-        self.job = factory.create_kvm_job('sample_jobs/qemu-monitor.yaml', mkdtemp())
+        self.job = factory.create_kvm_job('sample_jobs/qemu-monitor.yaml')
 
     def test_qemu_monitor(self):
         self.assertIsNotNone(self.job)

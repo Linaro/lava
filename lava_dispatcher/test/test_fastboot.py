@@ -23,7 +23,6 @@ import glob
 import unittest
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
-from lava_dispatcher.utils.filesystem import mkdtemp
 from lava_dispatcher.utils.shell import (
     infrastructure_error,
     infrastructure_error_multi_paths,
@@ -44,73 +43,66 @@ class FastBootFactory(Factory):  # pylint: disable=too-few-public-methods
     of any database objects.
     """
 
-    def create_fastboot_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
+    def create_fastboot_job(self, filename):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/nexus4-01.yaml'))
         fastboot_yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(fastboot_yaml) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "",
-                               output_dir=output_dir)
+            job = parser.parse(sample_job_data, device, 4212, None, "")
             job.logger = DummyLogger()
         return job
 
-    def create_db410c_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
+    def create_db410c_job(self, filename):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/db410c-01.yaml'))
         fastboot_yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(fastboot_yaml) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "",
-                               output_dir=output_dir)
+            job = parser.parse(sample_job_data, device, 4212, None, "")
             job.logger = DummyLogger()
         return job
 
-    def create_x15_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
+    def create_x15_job(self, filename):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/x15-01.yaml'))
         fastboot_yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(fastboot_yaml) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "",
-                               output_dir=output_dir)
+            job = parser.parse(sample_job_data, device, 4212, None, "")
             job.logger = DummyLogger()
         return job
 
-    def create_hikey_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
+    def create_hikey_job(self, filename):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/hi6220-hikey-01.yaml'))
         fastboot_yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(fastboot_yaml) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "",
-                               output_dir=output_dir)
+            job = parser.parse(sample_job_data, device, 4212, None, "")
             job.logger = DummyLogger()
         return job
 
-    def create_hikey960_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
+    def create_hikey960_job(self, filename):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/hikey960-01.yaml'))
         y_file = os.path.join(os.path.dirname(__file__), filename)
         with open(y_file) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "",
-                               output_dir=output_dir)
+            job = parser.parse(sample_job_data, device, 4212, None, "")
         job.logger = DummyLogger()
         return job
 
-    def create_nexus5x_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
+    def create_nexus5x_job(self, filename):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/nexus5x-01.yaml'))
         fastboot_yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(fastboot_yaml) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "",
-                               output_dir=output_dir)
+            job = parser.parse(sample_job_data, device, 4212, None, "")
             job.logger = DummyLogger()
         return job
 
-    def create_pixel_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
+    def create_pixel_job(self, filename):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/pixel-01.yaml'))
         fastboot_yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(fastboot_yaml) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "",
-                               output_dir=output_dir)
+            job = parser.parse(sample_job_data, device, 4212, None, "")
             job.logger = DummyLogger()
         return job
 
@@ -120,8 +112,7 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
     def setUp(self):
         super(TestFastbootDeploy, self).setUp()
         self.factory = FastBootFactory()
-        self.job = self.factory.create_fastboot_job('sample_jobs/fastboot.yaml',
-                                                    mkdtemp())
+        self.job = self.factory.create_fastboot_job('sample_jobs/fastboot.yaml')
 
     def test_deploy_job(self):
         self.assertEqual(self.job.pipeline.job, self.job)
@@ -138,8 +129,7 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
         ['lxc-info', 'img2simg', 'simg2img']),
         "lxc or img2simg or simg2img not installed")
     def test_lxc_api(self):
-        job = self.factory.create_hikey_job('sample_jobs/hikey-oe.yaml',
-                                            mkdtemp())
+        job = self.factory.create_hikey_job('sample_jobs/hikey-oe.yaml')
         description_ref = self.pipeline_reference('hikey-oe.yaml', job=job)
         job.validate()
         self.assertEqual(description_ref, job.pipeline.describe(False))
@@ -178,8 +168,7 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
 
     @unittest.skipIf(infrastructure_error('lxc-info'), "lxc-info not installed")
     def test_fastboot_lxc(self):
-        job = self.factory.create_hikey_job('sample_jobs/hi6220-hikey.yaml',
-                                            mkdtemp())
+        job = self.factory.create_hikey_job('sample_jobs/hi6220-hikey.yaml')
         description_ref = self.pipeline_reference('hi6220-hikey.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
         uefi_menu = [action for action in job.pipeline.actions if action.name == 'uefi-menu-action'][0]
@@ -252,7 +241,7 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
 
     def test_udev_actions(self):
         self.factory = FastBootFactory()
-        job = self.factory.create_db410c_job('sample_jobs/db410c.yaml', mkdtemp())
+        job = self.factory.create_db410c_job('sample_jobs/db410c.yaml')
         self.assertTrue(job.device.get('fastboot_via_uboot', True))
         self.assertEqual('', self.job.device.power_command)
         description_ref = self.pipeline_reference('db410c.yaml', job=job)
@@ -261,7 +250,7 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
 
     def test_x15_job(self):
         self.factory = FastBootFactory()
-        job = self.factory.create_x15_job('sample_jobs/x15.yaml', mkdtemp())
+        job = self.factory.create_x15_job('sample_jobs/x15.yaml')
         job.validate()
         description_ref = self.pipeline_reference('x15.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
@@ -288,24 +277,21 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
 
     def test_nexus5x_job(self):
         self.factory = FastBootFactory()
-        job = self.factory.create_nexus5x_job('sample_jobs/nexus5x.yaml',
-                                              mkdtemp())
+        job = self.factory.create_nexus5x_job('sample_jobs/nexus5x.yaml')
         # do not run job.validate() - urls no longer exist.
         description_ref = self.pipeline_reference('nexus5x.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
 
     def test_pixel_job(self):
         self.factory = FastBootFactory()
-        job = self.factory.create_pixel_job('sample_jobs/pixel.yaml',
-                                            mkdtemp())
+        job = self.factory.create_pixel_job('sample_jobs/pixel.yaml')
         # do not run job.validate() - urls no longer exist.
         description_ref = self.pipeline_reference('pixel.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
 
     def test_flash_cmds_order(self):
         self.factory = FastBootFactory()
-        job = self.factory.create_db410c_job('sample_jobs/db410c.yaml',
-                                             mkdtemp())
+        job = self.factory.create_db410c_job('sample_jobs/db410c.yaml')
         # The expected_flash_cmds list ensures the following:
         # 1. Order of flash commands.
         # 2. Number / Count of flash commands.

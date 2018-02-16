@@ -24,7 +24,6 @@ import yaml
 import logging
 import unittest
 from lava_dispatcher.action import JobError
-from lava_dispatcher.utils.filesystem import mkdtemp
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.action import Timeout
 from lava_dispatcher.parser import JobParser
@@ -43,23 +42,21 @@ class ConnectionFactory(Factory):  # pylint: disable=too-few-public-methods
     of any database objects.
     """
 
-    def create_ssh_job(self, filename, output_dir=None):  # pylint: disable=no-self-use
+    def create_ssh_job(self, filename):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/ssh-host-01.yaml'))
         kvm_yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(kvm_yaml) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 0, None, dispatcher_config="",
-                               output_dir=output_dir)
+            job = parser.parse(sample_job_data, device, 0, None, dispatcher_config="")
             job.logger = DummyLogger()
         return job
 
-    def create_bbb_job(self, filename, output_dir='/tmp/'):  # pylint: disable=no-self-use
+    def create_bbb_job(self, filename):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
         kvm_yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(kvm_yaml) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "",
-                               output_dir=output_dir)
+            job = parser.parse(sample_job_data, device, 4212, None, "")
             job.logger = DummyLogger()
         return job
 
@@ -69,8 +66,8 @@ class TestConnection(StdoutTestCase):  # pylint: disable=too-many-public-methods
     def setUp(self):
         super(TestConnection, self).setUp()
         factory = ConnectionFactory()
-        self.job = factory.create_ssh_job('sample_jobs/ssh-deploy.yaml', mkdtemp())
-        self.guest_job = factory.create_bbb_job('sample_jobs/bbb-ssh-guest.yaml', mkdtemp())
+        self.job = factory.create_ssh_job('sample_jobs/ssh-deploy.yaml')
+        self.guest_job = factory.create_bbb_job('sample_jobs/bbb-ssh-guest.yaml')
         logging.getLogger('dispatcher').addHandler(logging.NullHandler())
 
     @unittest.skipIf(infrastructure_error('schroot'), "schroot not installed")
@@ -191,7 +188,7 @@ class TestConnection(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def test_primary_ssh(self):
         factory = ConnectionFactory()
-        job = factory.create_ssh_job('sample_jobs/primary-ssh.yaml', mkdtemp())
+        job = factory.create_ssh_job('sample_jobs/primary-ssh.yaml')
         job.validate()
         overlay = [action for action in job.pipeline.actions if action.name == 'scp-overlay'][0]
         self.assertIsNotNone(overlay.parameters['deployment_data'])
@@ -289,8 +286,8 @@ class TestConsoleConnections(StdoutTestCase):
     def setUp(self):
         super(TestConsoleConnections, self).setUp()
         factory = ConnectionFactory()
-        self.job = factory.create_ssh_job('sample_jobs/ssh-deploy.yaml', mkdtemp())
-        self.guest_job = factory.create_bbb_job('sample_jobs/bbb-ssh-guest.yaml', mkdtemp())
+        self.job = factory.create_ssh_job('sample_jobs/ssh-deploy.yaml')
+        self.guest_job = factory.create_bbb_job('sample_jobs/bbb-ssh-guest.yaml')
         logging.getLogger('dispatcher').addHandler(logging.NullHandler())
 
     def test_device_commands(self):
@@ -344,11 +341,10 @@ class TestTimeouts(StdoutTestCase):
     Test action and connection timeout parsing.
     """
 
-    def create_custom_job(self, data, output_dir='/tmp/'):  # pylint: disable=no-self-use
+    def create_custom_job(self, data):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
         parser = JobParser()
-        job = parser.parse(data, device, 4212, None, "",
-                           output_dir=output_dir)
+        job = parser.parse(data, device, 4212, None, "")
         return job
 
     def test_action_timeout(self):

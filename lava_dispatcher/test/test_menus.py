@@ -22,7 +22,6 @@
 import os
 import re
 import logging
-from lava_dispatcher.utils.filesystem import mkdtemp
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.action import Timeout, JobError
@@ -81,13 +80,12 @@ class MenuFactory(Factory):  # pylint: disable=too-few-public-methods
     Factory objects are dispatcher based classes, independent
     of any database objects.
     """
-    def create_uefi_job(self, filename, output_dir=None):  # pylint: disable=no-self-use
+    def create_uefi_job(self, filename):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/mustang-uefi.yaml'))
         mustang_yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(mustang_yaml) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 0, None, dispatcher_config="",
-                               output_dir=output_dir)
+            job = parser.parse(sample_job_data, device, 0, None, dispatcher_config="")
             job.logger = DummyLogger()
         return job
 
@@ -97,7 +95,7 @@ class TestUefi(StdoutTestCase):  # pylint: disable=too-many-public-methods
     def setUp(self):
         super(TestUefi, self).setUp()
         factory = MenuFactory()
-        self.job = factory.create_uefi_job('sample_jobs/mustang-menu-ramdisk.yaml', mkdtemp())
+        self.job = factory.create_uefi_job('sample_jobs/mustang-menu-ramdisk.yaml')
 
     def test_check_char(self):
         shell = ShellCommand("%s\n" % 'ls', Timeout('fake', 30), logger=logging.getLogger())

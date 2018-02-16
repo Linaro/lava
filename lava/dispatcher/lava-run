@@ -134,7 +134,6 @@ def parse_job_file(logger, options):
                         device, options.job_id,
                         logger=logger,
                         dispatcher_config=dispatcher_config,
-                        output_dir=options.output_dir,
                         env_dut=env_dut)
 
 
