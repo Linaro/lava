@@ -582,7 +582,8 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         if not log and allow_silent:
             return self.errors == []
         else:
-            self.logger.debug('command output %s', log)
+            for line in log.split("\n"):
+                self.logger.debug('output: %s', line)
             return log
 
     def call_protocols(self):
