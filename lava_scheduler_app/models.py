@@ -1538,7 +1538,6 @@ class TestJob(models.Model):
         if self.state >= TestJob.STATE_SCHEDULING:
             return
         self.state = TestJob.STATE_SCHEDULING
-        # TODO: check that device is locked
         self.actual_device = device
         self.actual_device.testjob_signal("go_state_scheduling", self)
         self.actual_device.save()
@@ -1564,7 +1563,6 @@ class TestJob(models.Model):
         self.state = TestJob.STATE_SCHEDULED
         # dynamic connection does not have any device
         if not dynamic_connection:
-            # TODO: check that device is locked
             self.actual_device = device
             self.actual_device.testjob_signal("go_state_scheduled", self)
             self.actual_device.save()
@@ -1577,11 +1575,10 @@ class TestJob(models.Model):
             return
         self.state = TestJob.STATE_RUNNING
         self.start_time = timezone.now()
-        # TODO: check that self.actual_device is locked by the
-        # select_for_update on the TestJob
         if not self.dynamic_connection:
-            self.actual_device.testjob_signal("go_state_running", self)
-            self.actual_device.save()
+            device = Device.objects.select_for_update().get(pk=self.actual_device.pk)
+            device.testjob_signal("go_state_running", self)
+            device.save()
 
     def go_state_canceling(self, sub_cancel=False):
         """
@@ -1596,11 +1593,10 @@ class TestJob(models.Model):
             return
 
         self.state = TestJob.STATE_CANCELING
-        # TODO: check that self.actual_device is locked by the
-        # select_for_update on the TestJob
         if not self.dynamic_connection:
-            self.actual_device.testjob_signal("go_state_canceling", self)
-            self.actual_device.save()
+            device = Device.objects.select_for_update().get(pk=self.actual_device.pk)
+            device.testjob_signal("go_state_canceling", self)
+            device.save()
 
         # For multinode, cancel all sub jobs if the current job is essential
         if not sub_cancel and self.essential_role:
@@ -1640,10 +1636,9 @@ class TestJob(models.Model):
         # select_for_update on the TestJob
         # Skip non-scheduled jobs and dynamic_connections
         if self.actual_device is not None:
-            self.actual_device.testjob_signal(
-                "go_state_finished", self, infrastructure_error
-            )
-            self.actual_device.save()
+            device = Device.objects.select_for_update().get(pk=self.actual_device.pk)
+            device.testjob_signal("go_state_finished", self, infrastructure_error)
+            device.save()
 
         # For multinode, cancel all sub jobs if the current job is essential
         # and it was a failure.
