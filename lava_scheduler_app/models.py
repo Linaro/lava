@@ -1806,7 +1806,7 @@ class TestJob(RestrictedResource):
         """
         if self._can_admin(user, resubmit=False):
             return True
-        device_type = self.job_device_type()
+        device_type = self.requested_device_type
         if device_type and device_type.owners_only:
             if not device_type.some_devices_visible_to(user):
                 return False
@@ -1872,14 +1872,6 @@ class TestJob(RestrictedResource):
         return self.is_pipeline and \
             (user.is_superuser or
              user.has_perm('lava_scheduler_app.cancel_resubmit_testjob'))
-
-    def job_device_type(self):
-        device_type = None
-        if self.actual_device:
-            device_type = self.actual_device.device_type
-        elif self.requested_device_type:
-            device_type = self.requested_device_type
-        return device_type
 
     def _generate_summary_mail(self):
         domain = '???'

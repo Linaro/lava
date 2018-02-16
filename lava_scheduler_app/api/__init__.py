@@ -926,10 +926,10 @@ class SchedulerAPI(ExposedAPI):
             Q(id__in=job_id_list) | Q(sub_id__in=job_id_list)).select_related(
                 'actual_device', 'requested_device_type')
         for job in jobs:
-            device_type = job.job_device_type()
+            device_type = job.requested_device_type
             if not job.can_view(self.user) or not job.is_accessible_by(self.user) and not self.user.is_superuser:
                 continue
-            if device_type.owners_only:
+            if device_type and device_type.owners_only:
                 # do the more expensive check second and only for a hidden device type
                 if not device_type.some_devices_visible_to(self.user):
                     continue
