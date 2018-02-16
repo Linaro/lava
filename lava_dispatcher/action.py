@@ -515,7 +515,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         """
         pass
 
-    def run_command(self, command_list, allow_silent=False, allow_fail=False):  # pylint: disable=too-many-branches
+    def run_command(self, command_list, allow_silent=False, allow_fail=False, cwd=None):  # pylint: disable=too-many-branches
         """
         Single location for all external command operations on the
         dispatcher, without using a shell and with full structured logging.
@@ -544,7 +544,8 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         command_list = ['nice'] + [str(s) for s in command_list]
         self.logger.debug("%s", ' '.join(command_list))
         try:
-            log = subprocess.check_output(command_list, stderr=subprocess.STDOUT)
+            log = subprocess.check_output(command_list, stderr=subprocess.STDOUT,
+                                          cwd=cwd)
             log = log.decode('utf-8', errors="replace")  # pylint: disable=redefined-variable-type
         except subprocess.CalledProcessError as exc:
             # the errors property doesn't support removing errors
