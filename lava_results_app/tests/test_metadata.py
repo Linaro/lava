@@ -58,7 +58,7 @@ class TestMetaTypes(TestCaseWithFactory):
         device_config = device.load_configuration(job_ctx)  # raw dict
         parser = JobParser()
         obj = PipelineDevice(device_config)
-        pipeline_job = parser.parse(job.definition, obj, job.id, None, "", output_dir='/tmp')
+        pipeline_job = parser.parse(job.definition, obj, job.id, None, "")
         allow_missing_path(pipeline_job.pipeline.validate_actions, self,
                            'qemu-system-x86_64')
         pipeline = pipeline_job.describe()
@@ -194,7 +194,7 @@ class TestMetaTypes(TestCaseWithFactory):
         device_config = device.load_configuration(job_ctx)  # raw dict
         parser = JobParser()
         obj = PipelineDevice(device_config)
-        pipeline_job = parser.parse(job.definition, obj, job.id, None, "", output_dir='/tmp')
+        pipeline_job = parser.parse(job.definition, obj, job.id, None, "")
         allow_missing_path(pipeline_job.pipeline.validate_actions, self,
                            'qemu-system-x86_64')
         pipeline = pipeline_job.describe()
@@ -247,7 +247,7 @@ class TestMetaTypes(TestCaseWithFactory):
         device_config = device.load_configuration(job_ctx)  # raw dict
         parser = JobParser()
         obj = PipelineDevice(device_config)
-        pipeline_job = parser.parse(job.definition, obj, job.id, None, "", output_dir='/tmp')
+        pipeline_job = parser.parse(job.definition, obj, job.id, None, "")
         allow_missing_path(pipeline_job.pipeline.validate_actions, self,
                            'qemu-system-x86_64')
         pipeline = pipeline_job.describe()
@@ -280,7 +280,7 @@ class TestMetaTypes(TestCaseWithFactory):
         device_config = device.load_configuration(job_ctx)  # raw dict
         parser = JobParser()
         obj = PipelineDevice(device_config)
-        pipeline_job = parser.parse(job.definition, obj, job.id, None, "", output_dir='/tmp')
+        pipeline_job = parser.parse(job.definition, obj, job.id, None, "")
         allow_missing_path(pipeline_job.pipeline.validate_actions, self,
                            'qemu-system-x86_64')
         pipeline = pipeline_job.describe()
@@ -320,7 +320,7 @@ class TestMetaTypes(TestCaseWithFactory):
         device_config = device.load_configuration(job_ctx)  # raw dict
         parser = JobParser()
         obj = PipelineDevice(device_config)
-        pipeline_job = parser.parse(job.definition, obj, job.id, None, "", output_dir='/tmp')
+        pipeline_job = parser.parse(job.definition, obj, job.id, None, "")
         allow_missing_path(pipeline_job.pipeline.validate_actions, self,
                            'qemu-system-x86_64')
         pipeline = pipeline_job.describe()

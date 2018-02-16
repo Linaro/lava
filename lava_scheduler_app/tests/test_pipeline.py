@@ -500,10 +500,9 @@ class TestPipelineSubmit(TestCaseWithFactory):
 
         parser_device = device_object
         try:
-            # pass (unused) output_dir just for validation as there is no zmq socket either.
             pipeline_job = parser.parse(
                 job.definition, parser_device,
-                job.id, None, "", output_dir=job.output_dir)
+                job.id, None, "")
         except (AttributeError, JobError, NotImplementedError, KeyError, TypeError) as exc:
             self.fail('[%s] parser error: %s' % (job.sub_id, exc))
         description = pipeline_job.describe()
@@ -671,20 +670,18 @@ class TestYamlMultinode(TestCaseWithFactory):
         self.assertIsNotNone(device_object)
         parser_device = device_object
         try:
-            # pass (unused) output_dir just for validation as there is no zmq socket either.
             pipeline_job = parser.parse(
                 host_job.definition, parser_device,
-                host_job.id, DummyLogger(), "", output_dir=host_job.output_dir)
+                host_job.id, DummyLogger(), "")
         except (AttributeError, JobError, NotImplementedError, KeyError, TypeError) as exc:
             self.fail('[%s] parser error: %s' % (host_job.sub_id, exc))
         pipeline_job._validate(False)
         self.assertEqual([], pipeline_job.pipeline.errors)
 
         try:
-            # pass (unused) output_dir just for validation as there is no zmq socket either.
             pipeline_job = parser.parse(
                 guest_job.definition, parser_device,
-                guest_job.id, DummyLogger(), "", output_dir=guest_job.output_dir)
+                guest_job.id, DummyLogger(), "")
         except (AttributeError, JobError, NotImplementedError, KeyError, TypeError) as exc:
             self.fail('[%s] parser error: %s' % (guest_job.sub_id, exc))
         pipeline_job._validate(False)
@@ -934,11 +931,9 @@ class TestYamlMultinode(TestCaseWithFactory):
             for check_job in validate_list:
                 parser_device = None if job.dynamic_connection else device_object
                 try:
-                    # pass (unused) output_dir just for validation as there is no zmq socket either.
                     pipeline_job = parser.parse(
                         check_job.definition, parser_device,
-                        check_job.id, None, "",
-                        output_dir=check_job.output_dir)
+                        check_job.id, None, "")
                 except (AttributeError, JobError, NotImplementedError, KeyError, TypeError) as exc:
                     self.fail('[%s] parser error: %s' % (check_job.sub_id, exc))
                 with TestCase.assertRaises(self, (JobError, InfrastructureError)) as check:
@@ -1070,7 +1065,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         parser = JobParser()
         pipeline_job = parser.parse(
             yaml.dump(client_submission), parser_device,
-            4212, None, "", output_dir='/tmp/test')
+            4212, None, "")
         pipeline = pipeline_job.describe()
         from lava_results_app.dbutils import _get_job_metadata
         meta_dict = _get_job_metadata(pipeline['job']['actions'])
@@ -1154,11 +1149,9 @@ class TestYamlMultinode(TestCaseWithFactory):
             self.assertNotEqual(job.device_role, 'Error')
             parser_device = None if job.dynamic_connection else device_object
             try:
-                # pass (unused) output_dir just for validation as there is no zmq socket either.
                 pipeline_job = parser.parse(
                     job.definition, parser_device,
-                    job.id, None, "",
-                    output_dir=job.output_dir)
+                    job.id, None, "")
             except (AttributeError, JobError, NotImplementedError, KeyError, TypeError) as exc:
                 self.fail('[%s] parser error: %s' % (job.sub_id, exc))
             pipeline_job.pipeline.validate_actions()

@@ -1145,8 +1145,7 @@ class TestTemplates(unittest.TestCase):
         lxc_yaml = os.path.join(os.path.dirname(__file__), 'devices', 'panda-lxc-aep.yaml')
         with open(lxc_yaml) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, panda, 4577, None, "",
-                               output_dir='/tmp')
+            job = parser.parse(sample_job_data, panda, 4577, None, "")
         os.close(fdesc)
         job.logger = DummyLogger()
         job.logger.disabled = True
