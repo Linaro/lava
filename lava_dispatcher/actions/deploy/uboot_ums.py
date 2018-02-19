@@ -66,9 +66,6 @@ class UBootUMSAction(DeployAction):  # pylint:disable=too-many-instance-attribut
     description = "download image and deploy using uboot mass storage emulation"
     summary = "uboot-ums deployment"
 
-    def __init__(self):
-        super(UBootUMSAction, self).__init__()
-
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         path = self.mkdtemp()

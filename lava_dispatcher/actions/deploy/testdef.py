@@ -525,9 +525,6 @@ class TarRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
         super(TarRepoAction, self).__init__()
         self.vcs_binary = "/bin/tar"
 
-    def validate(self):
-        super(TarRepoAction, self).validate()
-
     @classmethod
     def accepts(cls, repo_type):
         return repo_type == 'tar'

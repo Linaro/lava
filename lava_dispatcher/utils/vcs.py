@@ -191,9 +191,6 @@ class TarHelper(VCSHelper):
         super(TarHelper, self).__init__(url)
         self.binary = None
 
-    def clone(self, dest_path, revision=None, branch=None):
-        super(TarHelper, self).clone(dest_path, revision, branch)
-
 
 class URLHelper(VCSHelper):
     # TODO: implement URLHelper
@@ -201,6 +198,3 @@ class URLHelper(VCSHelper):
     def __init__(self, url):
         super(URLHelper, self).__init__(url)
         self.binary = None
-
-    def clone(self, dest_path, revision=None, branch=None):
-        super(URLHelper, self).clone(dest_path, revision, branch)
