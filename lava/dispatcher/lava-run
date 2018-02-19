@@ -46,7 +46,6 @@ from lava_dispatcher.parser import JobParser
 
 def parser():
     """ Configure the parser """
-    # Configure the parser
     p_obj = argparse.ArgumentParser()
 
     p_obj.add_argument("--job-id", required=True, metavar="ID",
@@ -55,7 +54,8 @@ def parser():
     p_obj.add_argument("--output-dir", required=True, metavar="DIR",
                        help="Directory for temporary ressources")
     p_obj.add_argument("--validate", action="store_true", default=False,
-                       help="validate the job file, do not execute any steps")
+                       help="validate the job file, do not execute any steps. "
+                            "The description is saved into description.yaml")
 
     group = p_obj.add_argument_group("logging")
     group.add_argument("--logging-url", metavar="URL", default=None,
@@ -194,7 +194,7 @@ def main():
         job = parse_job_file(logger, options)
         description = yaml.dump(job.describe())
 
-        job.validate(simulate=options.validate)
+        job.validate()
         if not options.validate:
             job.run()
 

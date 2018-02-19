@@ -27,7 +27,6 @@ import time
 import pytz
 import traceback
 import os
-import yaml
 
 from lava_dispatcher.action import (
     LAVABug,
@@ -159,11 +158,10 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         os.chmod(tmp_dir, 0o755)
         return tmp_dir
 
-    def _validate(self, simulate):
+    def _validate(self):
         """
         Validate the pipeline and raise an exception (that inherit from
         LAVAError) if it fails.
-        If simulate is True, then print the pipeline description.
         """
         self.logger.info("Start time: %s (UTC)", pytz.utc.localize(datetime.datetime.utcnow()))
         for protocol in self.protocols:
@@ -182,10 +180,6 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
                 self.logger.exception(msg)
                 raise JobError(msg)
 
-        if simulate:
-            # output the content and then any validation errors (python3 compatible)
-            print(yaml.dump(self.describe()))  # pylint: disable=superfluous-parens
-
         # Check that namespaces are used in all actions or none
         namespaces = set()
         for action in self.parameters["actions"]:
@@ -203,7 +197,7 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         # validate the pipeline
         self.pipeline.validate_actions()
 
-    def validate(self, simulate=False):
+    def validate(self):
         """
         Public wrapper for the pipeline validation.
         Send a "fail" results if needed.
@@ -215,7 +209,7 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
 
         success = False
         try:
-            self._validate(simulate)
+            self._validate()
         except LAVAError as exc:
             raise
         except Exception as exc:
