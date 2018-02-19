@@ -666,7 +666,7 @@ class TestYamlMultinode(TestCaseWithFactory):
                 host_job.id, DummyLogger(), "")
         except (AttributeError, JobError, NotImplementedError, KeyError, TypeError) as exc:
             self.fail('[%s] parser error: %s' % (host_job.sub_id, exc))
-        pipeline_job._validate(False)
+        pipeline_job._validate()
         self.assertEqual([], pipeline_job.pipeline.errors)
 
         try:
@@ -675,7 +675,7 @@ class TestYamlMultinode(TestCaseWithFactory):
                 guest_job.id, DummyLogger(), "")
         except (AttributeError, JobError, NotImplementedError, KeyError, TypeError) as exc:
             self.fail('[%s] parser error: %s' % (guest_job.sub_id, exc))
-        pipeline_job._validate(False)
+        pipeline_job._validate()
         self.assertEqual([], pipeline_job.pipeline.errors)
 
     def test_multinode_tags(self):
