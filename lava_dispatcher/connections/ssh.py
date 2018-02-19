@@ -152,7 +152,7 @@ class ConnectSsh(Action):
             self.logger.info("%s Connecting to device %s using '%s'", self.name, self.host, command_str)
             command.append("%s@%s" % (self.ssh_user, self.host))
         else:
-            raise JobError("Unable to identify host address. Primary? %s", self.primary)
+            raise JobError("Unable to identify host address. Primary? %s" % self.primary)
         command_str = " ".join(str(item) for item in command)
         shell = ShellCommand("%s\n" % command_str, self.timeout, logger=self.logger)
         if shell.exitstatus:

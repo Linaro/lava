@@ -291,7 +291,7 @@ class MountVExpressMassStorageDevice(Action):
                 self.logger.debug("Creating mount point '%s'", mount_point)
                 os.makedirs(mount_point, 0o755)
             except OSError:
-                raise InfrastructureError("Failed to create mount point %s", mount_point)
+                raise InfrastructureError("Failed to create mount point %s" % mount_point)
 
         mount_cmd = ['mount', device_path, mount_point]
         if not self.run_command(mount_cmd, allow_silent=True):

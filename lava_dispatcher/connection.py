@@ -77,7 +77,7 @@ class SignalMatch(InternalObject):  # pylint: disable=too-few-public-methods
                 try:
                     res['measurement'] = decimal.Decimal(data['measurement'])
                 except decimal.InvalidOperation:
-                    raise TestError("Invalid measurement %s", data['measurement'])
+                    raise TestError("Invalid measurement %s" % data['measurement'])
 
             # and 'result'
             elif key == 'result':
@@ -94,12 +94,12 @@ class SignalMatch(InternalObject):  # pylint: disable=too-few-public-methods
 
         if 'test_case_id' not in res:
             raise TestError("Test case results without test_case_id (probably a sign of an "
-                            "incorrect parsing pattern being used): %s", res)
+                            "incorrect parsing pattern being used): %s" % res)
 
         if 'result' not in res:
             res['result'] = 'unknown'
             raise TestError("Test case results without result (probably a sign of an "
-                            "incorrect parsing pattern being used): %s", res)
+                            "incorrect parsing pattern being used): %s" % res)
 
         return res
 

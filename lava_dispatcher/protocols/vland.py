@@ -251,7 +251,7 @@ class VlandProtocol(Protocol):
         if ret:
             values = list(ret.values())[0]
             return (values['vlan_name'], values['vlan_tag'],)
-        raise JobError("Waiting for vlan creation failed: %s", ret)
+        raise JobError("Waiting for vlan creation failed: %s" % ret)
 
     def _delete_vlan(self, friendly_name, vlan_id):
         msg = {
@@ -277,7 +277,7 @@ class VlandProtocol(Protocol):
         self.logger.debug({"lookup_switch": msg})
         response = self._call_vland(msg)
         if not response or response == '':
-            raise JobError("Switch_id for switch name: %s not found", switch_name)
+            raise JobError("Switch_id for switch name: %s not found" % switch_name)
         reply = json.loads(response)
         return reply['data']
 
@@ -293,7 +293,7 @@ class VlandProtocol(Protocol):
         self.logger.debug({"lookup_port_id": msg})
         response = self._call_vland(msg)
         if not response or response == '':
-            raise JobError("Port_id for port: %s not found", port)
+            raise JobError("Port_id for port: %s not found" % port)
         reply = json.loads(response)
         return reply['data']
 
@@ -440,7 +440,7 @@ class VlandProtocol(Protocol):
                 self.vlans[friendly_name], tag = self._create_vlan(friendly_name)
                 self.logger.debug("vlan name: %s vlan tag: %s", self.vlans[friendly_name], tag)
                 if not tag:  # error state from create_vlan
-                    raise JobError("Unable to create vlan %s", friendly_name)
+                    raise JobError("Unable to create vlan %s" % friendly_name)
                 self._declare_created(friendly_name, tag)
         for friendly_name, _ in self.names.items():
             params = self.params[friendly_name]
@@ -478,7 +478,7 @@ class VlandProtocol(Protocol):
             raise JobError("Bad API call over protocol - missing request")
         if data['request'] == 'deploy_vlans':
             if duration < VLAND_DEPLOY_TIMEOUT:
-                raise JobError("Timeout of %s is insufficient for deploy_vlans", duration)
+                raise JobError("Timeout of %s is insufficient for deploy_vlans" % duration)
             self.logger.info("Setting vland base timeout to %s seconds", duration)
             self.poll_timeout.duration = duration
             return True
