@@ -816,7 +816,7 @@ Results from any test suite can be tracked using :term:`queries <query>`,
 .. _best_practices:
 
 Best practices for writing a LAVA test job
-******************************************
+##########################################
 
 A test job may consist of several LAVA test definitions and multiple
 deployments, but this flexibility needs to be balanced against the complexity
@@ -825,7 +825,7 @@ of the job and the ways to analyse the results.
 .. _test_definition_portability:
 
 Write portable test definitions
-===============================
+*******************************
 
 ``lava-test-shell`` is a useful helper but that can become a limitation. Avoid
 relying upon the helper for anything more than the automation by putting the
@@ -865,8 +865,10 @@ results - that's about all it should be doing outside of the
 
 .. seealso:: :ref:`custom_scripts` and :ref:`portability_terminology`
 
+.. _less_reliance_on_install:
+
 Rely less on install: steps
-===========================
+***************************
 
 To make your test portable, the goal of the ``install`` block of any test
 definition should be to get the raw LAVA environment up to the point where a
@@ -887,21 +889,21 @@ job, a test writer can setup a similar environment and simply call exactly the
 same script.
 
 Use different test definitions for different test areas
-=======================================================
+*******************************************************
 
 Follow the standard UNIX model of *Make each program do one thing well*. Make a
 set of separate test definitions. Each definition should concentrate on one
 area of functionality and test that one area thoroughly.
 
 Use different jobs for different test environments
-==================================================
+**************************************************
 
 While it is supported to reboot from one distribution and boot into a different
 one, the usefulness of this is limited. If the first environment fails, the
 subsequent tests might not run at all.
 
 Use a limited number of test definitions per job
-================================================
+************************************************
 
 While LAVA tries to ensure that all tests are run, adding more and more test
 repositories to a single LAVA job increases the risk that one test will fail in
@@ -914,7 +916,7 @@ Splitting a large job into smaller chunks also means that the device can run
 other jobs for other users in between the smaller jobs.
 
 Retain at least some debug output in the final test definitions
-===============================================================
+***************************************************************
 
 Information about which commit or version of any third-party code is and will
 remain useful when debugging failures. When cloning such code, call a script in
@@ -928,7 +930,7 @@ exists in the test job log output, it will still be useful when comparing the
 log files of other similar jobs.
 
 Check for specific support as a test case
-=========================================
+*****************************************
 
 If a particular package, service, script or utility **must** exist and / or
 function for the rest of your test definition to operate, **test** for this
@@ -947,7 +949,7 @@ simple script which returns the exit code of the command.
 .. _controlling_tool_output:
 
 Control the amount of output from scripts and tools
-===================================================
+***************************************************
 
 Many tools available in distributions have ways to control the amount of output
 during operation. A balance is needed and test writers are recommended to check
@@ -961,7 +963,12 @@ script uses a conditional that can be affected by parameters from within the
 test job.
 
 Specific tools
---------------
+==============
+
+Progress bars, in general, are a particular problem. Instead of overwriting a
+single line of output, every iteration of the bar creates a complete new line
+over the serial connection and in the logs. Wherever possible, disable the
+progress bar behaviour of all operations.
 
 * **apt** - When calling ``apt update`` or ``apt-get update``, **always** use
   the ``-q`` option to avoid filling the log file with repeated progress output
@@ -973,3 +980,119 @@ Specific tools
   downloads as this reduces the total amount of progress information during the
   operation.
 
+* **git clone** - consider using ``-q`` on git clone operations to silence the
+  progress bars.
+
+.. _large_output_issues:
+
+Problems with output
+====================
+
+LAVA uses `pexpect` to monitor the output over the serial connection for
+patterns which are used to pick up test cases and other test shell support.
+Each time a match is found, the buffer is cleared. If there is a lot of output
+with no pattern matches, the processing can slow down.
+
+Large log files also have a few implications for the user interface and triage.
+More content makes loading links to a test job take longer and finding the
+right line to make that link becomes more and more difficult. Eventually, very
+large log files can be disabled by the admin, so that the log file can only be
+downloaded.
+
+.. seealso:: :ref:`log_size_limit`
+
+The size of the log output needs to be balanced against the need to have enough
+information in the logs to be able to triage the test successfully.
+
+Although the total size of the test job log file is important, there can also
+be issues when a smaller log file contains large sections where none of the
+patterns match and this can cause the test to run more slowly.
+
+.. important:: It is **only** the content sent over the serial connection which
+   needs to be managed. Redirecting to files will be unaffected, subject to
+   filesystem performance on the DUT or LXC. However, remember that at least
+   some of the content of such files will be useful in triage or contain
+   results directly. Therefore, it is important to manage the output of test
+   operations to achieve the balance of sufficient information for triage and
+   avoiding a flood of too much information causing performance issues.
+
+   Very large amounts of output can also be :ref:`published
+   <publishing_artifacts>` for later analysis, e.g. if the original output is
+   redirected to a file. Consider using ``tee`` here (or similar functionality)
+   to retain some output into the logs because if the test operation fails
+   early for any reason, the file might not be uploaded at all.
+
+When performance is important, for example benchmarking, use a wrapper script
+to optimise your test shell output.
+
+* If a progress bar is used and cannot be turned off without losing other
+  useful content, wrap the output of the command in a script which omits the
+  lines generated by the progress bar. Check existing test logs for example
+  lines and print all the other lines. Avoid the simplistic approach of
+  redirecting to ``/dev/null``.
+
+  For a progress bar which outputs lines looking like: ``[ 98%]
+  /data/art-test/arm64/core.oat: 95%``
+
+  Use something like this:
+
+  .. code-block:: python
+
+    #!/usr/bin/env python
+
+    import fileinput
+
+    def main(args):
+        for line in fileinput.input('-'):
+            line = line.strip()
+            if line.startswith('[') and line.endswith('%'):
+                continue
+            print(line)
+        return 0
+
+    if __name__ == '__main__':
+        import sys
+        sys.exit(main(sys.argv))
+
+  Adapted from https://git.linaro.org/lava-team/refactoring.git/tree/functional/unittests.py
+
+  The same script can be used to drop other noise from the output.
+
+* Add LAVA Test Cases - avoid the habit of reporting results at the very end of
+  a test operation or (worse) test job. This risks getting no results at all
+  when things go wrong, as well as creating large amounts of output without any
+  pattern matches. Most tests run many small test operations, it can be helpful
+  to have records of which tests completed. Remember that a :term:`test set`
+  can be used to identify groups of test cases, isolating them from later test
+  cases.
+
+  Example: :ref:`less_reliance_on_install` means that after all of the output
+  of installing dependencies, a lava-test-case should be reported that the
+  dependencies installed correctly which also clears the buffer of the extra
+  output.
+
+  Example: If the test operation involves iterations over a test condition,
+  report a lava test case every few iterations.
+
+:: _too_many_test_cases:
+
+Control the number of test cases reported
+*****************************************
+
+Creating a lava-test-case involves a database operation on the master. LAVA
+tries to optimise these calls to allow test jobs to report several tens of
+thousands of test cases per test job, including supporting streaming of test
+cases exported through the API. However, there will always be a practical limit
+to the total number of test cases per test job.
+
+Groups of test cases should be separated into :term:`test sets <test set>` and
+then into test suites (by using separate LAVA Test Shell Definition paths) to
+make it easier to find the relevant test case.
+
+When writing the test shell definition, always try to report results on-the-fly
+instead of waiting until the test operation has written all the data to a file.
+This insulates you from early failures where the file is not written or cannot
+be parsed after being written. Wrapper scripts can be used to report LAVA test
+cases during the creation of the file.
+
+.. seealso:: https://git.linaro.org/lava-team/refactoring.git/tree/functional/unittests.py
