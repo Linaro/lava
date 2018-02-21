@@ -3,6 +3,7 @@
 {% set base_ip_args = 'ip=:::::eth0:dhcp' %}
 {% set console_device = console_device | default('ttyS0') -%}
 {% set baud_rate = baud_rate | default(115200) -%}
+{% set action_timeout_power_off = 20 %}
 
 {# method is 'pxe-grub' or 'grub' currently - see menu uefi-menu block #}
 {% set grub_efi_method = grub_efi_method|default('pxe-grub') %}
