@@ -430,7 +430,7 @@ def export_testcase(testcase, with_buglinks=False):
     metadata = dict(testcase.action_metadata) if testcase.action_metadata else {}
     extra_source = []
     extra_data = metadata.get('extra', None)
-    if extra_data and isinstance(extra_data, str) and os.path.exists(extra_data):
+    if isinstance(extra_data, basestring) and os.path.exists(extra_data):
         with open(metadata['extra'], 'r') as extra_file:
             items = yaml.load(extra_file, Loader=yaml.CLoader)
         # hide the !!python OrderedDict prefix from the output.
