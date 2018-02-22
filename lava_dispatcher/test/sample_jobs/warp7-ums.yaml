@@ -17,7 +17,7 @@ actions:
     to: u-boot-ums
     os: oe
     image:
-      url: http://snapshots.linaro.org/openembedded/mbl/linaro-master/imx7s-warp/70/rpb/rpb-console-image-imx7s-warp-20180131170405-70.rootfs.sdcard.gz
+      url: http://images.validation.linaro.org/snapshots.linaro.org/openembedded/mbl/linaro-master/imx7s-warp/70/rpb/rpb-console-image-imx7s-warp-20180131170405-70.rootfs.sdcard.gz
       compression: gz
       root_partition: 1
 
