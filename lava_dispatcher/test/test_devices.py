@@ -55,11 +55,9 @@ class TestDeviceParser(StdoutTestCase):  # pylint: disable=too-many-public-metho
 
 class FakeAction(Action):
 
-    def __init__(self):
-        super(FakeAction, self).__init__()
-        self.name = "fake"
-        self.description = "fake action for unit tests"
-        self.summary = "fake action"
+    name = "fake"
+    description = "fake action for unit tests"
+    summary = "fake action"
 
 
 class TestJobDeviceParameters(StdoutTestCase):  # pylint: disable=too-many-public-methods

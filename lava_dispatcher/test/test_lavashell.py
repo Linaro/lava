@@ -179,12 +179,13 @@ class TestShellResults(StdoutTestCase):   # pylint: disable=too-many-public-meth
         Isolated Action which can be used to generate artificial exceptions.
         """
 
+        name = "fake-action"
+        description = "fake, do not use outside unit tests"
+        summary = "fake action for unit tests"
+
         def __init__(self):
             super(TestShellResults.FakeAction, self).__init__()
             self.count = 1
-            self.name = "fake-action"
-            self.summary = "fake action for unit tests"
-            self.description = "fake, do not use outside unit tests"
 
         def run(self, connection, max_end_time, args=None):
             self.count += 1

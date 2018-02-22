@@ -92,11 +92,9 @@ class TestMultiDeploy(StdoutTestCase):
 
     class TestDeployAction(DeployAction):
 
-        def __init__(self):
-            super(TestMultiDeploy.TestDeployAction, self).__init__()
-            self.name = "fake-deploy"
-            self.summary = "fake deployment"
-            self.description = "fake for tests only"
+        name = "fake-deploy"
+        description = "fake for tests only"
+        summary = "fake deployment"
 
         def validate(self):
             super(TestMultiDeploy.TestDeployAction, self).validate()

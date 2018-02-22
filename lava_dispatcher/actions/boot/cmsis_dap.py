@@ -63,11 +63,9 @@ class CMSIS(Boot):
 
 class BootCMSIS(BootAction):
 
-    def __init__(self):
-        super(BootCMSIS, self).__init__()
-        self.name = 'boot-cmsis'
-        self.description = "boot cmsis usb image"
-        self.summary = "boot cmsis usb image"
+    name = "boot-cmsis"
+    description = "boot cmsis usb image"
+    summary = "boot cmsis usb image"
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -76,11 +74,9 @@ class BootCMSIS(BootAction):
 
 class BootCMSISRetry(RetryAction):
 
-    def __init__(self):
-        super(BootCMSISRetry, self).__init__()
-        self.name = 'boot-cmsis-retry'
-        self.description = "boot cmsis usb image with retry"
-        self.summary = "boot cmsis usb image with retry"
+    name = "boot-cmsis-retry"
+    description = "boot cmsis usb image with retry"
+    summary = "boot cmsis usb image with retry"
 
     def validate(self):
         super(BootCMSISRetry, self).validate()
@@ -105,11 +101,12 @@ class BootCMSISRetry(RetryAction):
 
 class FlashCMSISAction(Action):
 
+    name = "flash-cmsis"
+    description = "flash cmsis to usb mass storage"
+    summary = "flash cmsis to usb mass storage"
+
     def __init__(self):
         super(FlashCMSISAction, self).__init__()
-        self.name = "flash-cmsis"
-        self.description = "flash cmsis to usb mass storage"
-        self.summary = "flash cmsis to usb mass storage"
         self.filelist = []
         self.usb_mass_device = None
 

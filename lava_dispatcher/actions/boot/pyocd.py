@@ -58,11 +58,9 @@ class PyOCD(Boot):
 
 class BootPyOCD(BootAction):
 
-    def __init__(self):
-        super(BootPyOCD, self).__init__()
-        self.name = 'boot-pyocd-image'
-        self.description = "boot pyocd image with retry"
-        self.summary = "boot pyocd image with retry"
+    name = 'boot-pyocd-image'
+    description = "boot pyocd image with retry"
+    summary = "boot pyocd image with retry"
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -71,11 +69,9 @@ class BootPyOCD(BootAction):
 
 class BootPyOCDRetry(RetryAction):
 
-    def __init__(self):
-        super(BootPyOCDRetry, self).__init__()
-        self.name = 'boot-pyocd-image'
-        self.description = "boot pyocd image using the command line interface"
-        self.summary = "boot pyocd image"
+    name = 'boot-pyocd-image'
+    description = "boot pyocd image using the command line interface"
+    summary = "boot pyocd image"
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -88,11 +84,12 @@ class BootPyOCDRetry(RetryAction):
 
 class FlashPyOCDAction(Action):
 
+    name = "flash-pyocd"
+    description = "flash pyocd to boot the image"
+    summary = "flash pyocd to boot the image"
+
     def __init__(self):
         super(FlashPyOCDAction, self).__init__()
-        self.name = "flash-pyocd"
-        self.description = "flash pyocd to boot the image"
-        self.summary = "flash pyocd to boot the image"
         self.base_command = []
         self.exec_list = []
 

@@ -57,11 +57,10 @@ class BootKexecAction(BootAction):
     """
     Provide for auto_login parameters in this boot stanza and re-establish the connection after boot
     """
-    def __init__(self):
-        super(BootKexecAction, self).__init__()
-        self.name = "kexec-boot"
-        self.summary = "kexec a new kernel"
-        self.description = "replace current kernel using kexec"
+
+    name = "kexec-boot"
+    summary = "kexec a new kernel"
+    description = "replace current kernel using kexec"
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -80,11 +79,12 @@ class KexecAction(Action):
     attempts to reestablish the shell connection after boot.
     """
 
+    name = "call-kexec"
+    summary = "attempt to kexec new kernel"
+    description = "call kexec with specified arguments"
+
     def __init__(self):
         super(KexecAction, self).__init__()
-        self.name = "call-kexec"
-        self.summary = "attempt to kexec new kernel"
-        self.description = "call kexec with specified arguments"
         self.command = ''
         self.load_command = ''
 

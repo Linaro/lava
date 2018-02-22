@@ -43,6 +43,8 @@ from lava_dispatcher.connections.lxc import ConnectLxc
 from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.utils.strings import map_kernel_uboot
+from lava_dispatcher.utils.storage import FlashUBootUMSAction
+from lava_dispatcher.utils.udev import WaitDevicePathAction
 
 
 class UBoot(Boot):
@@ -81,11 +83,10 @@ class UBootAction(BootAction):
     Wraps the Retry Action to allow for actions which precede
     the reset, e.g. Connect.
     """
-    def __init__(self):
-        super(UBootAction, self).__init__()
-        self.name = "uboot-action"
-        self.description = "interactive uboot action"
-        self.summary = "pass uboot commands"
+
+    name = "uboot-action"
+    description = "interactive uboot action"
+    summary = "pass uboot commands"
 
     def validate(self):
         super(UBootAction, self).validate()
@@ -104,18 +105,24 @@ class UBootAction(BootAction):
 
 class UBootRetry(BootAction):
 
-    def __init__(self):
-        super(UBootRetry, self).__init__()
-        self.name = "uboot-retry"
-        self.description = "interactive uboot retry action"
-        self.summary = "uboot commands with retry"
+    name = "uboot-retry"
+    description = "interactive uboot retry action"
+    summary = "uboot commands with retry"
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.method_params = self.job.device['actions']['boot']['methods']['u-boot']['parameters']
+        self.usb_mass_device = self.method_params.get('uboot_mass_storage_device', None)
         # establish a new connection before trying the reset
         self.internal_pipeline.add_action(ResetDevice())
         self.internal_pipeline.add_action(BootloaderInterruptAction())
-        self.internal_pipeline.add_action(BootloaderCommandsAction())
+        if self.method_params.get('uboot_ums_flash', False):
+            self.internal_pipeline.add_action(BootloaderCommandsAction(expect_final=False))
+            self.internal_pipeline.add_action(WaitDevicePathAction(self.usb_mass_device))
+            self.internal_pipeline.add_action(FlashUBootUMSAction(self.usb_mass_device))
+            self.internal_pipeline.add_action(ResetDevice())
+        else:
+            self.internal_pipeline.add_action(BootloaderCommandsAction())
         if self.has_prompts(parameters):
             self.internal_pipeline.add_action(AutoLoginAction())
             if self.test_has_shell(parameters):
@@ -144,11 +151,10 @@ class UBootSecondaryMedia(BootloaderSecondaryMedia):
     Idempotent action which sets the static data only used when this is a boot of secondary media
     already deployed.
     """
-    def __init__(self):
-        super(UBootSecondaryMedia, self).__init__()
-        self.name = "uboot-from-media"
-        self.summary = "set uboot strings for deployed media"
-        self.description = "let uboot know where to find the kernel in the image on secondary media"
+
+    name = "uboot-from-media"
+    description = "let uboot know where to find the kernel in the image on secondary media"
+    summary = "set uboot strings for deployed media"
 
     def validate(self):
         if 'media' not in self.job.device.get('parameters', []):
@@ -189,11 +195,12 @@ class UBootSecondaryMedia(BootloaderSecondaryMedia):
 
 class UBootEnterFastbootAction(BootAction):
 
+    name = "uboot-enter-fastboot"
+    description = "interactive uboot enter fastboot action"
+    summary = "uboot commands to enter fastboot mode"
+
     def __init__(self):
         super(UBootEnterFastbootAction, self).__init__()
-        self.name = "uboot-enter-fastboot"
-        self.description = "interactive uboot enter fastboot action"
-        self.summary = "uboot commands to enter fastboot mode"
         self.params = {}
 
     def populate(self, parameters):

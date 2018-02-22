@@ -57,11 +57,9 @@ class Minimal(Boot):
 
 class MinimalBoot(BootAction):
 
-    def __init__(self):
-        super(MinimalBoot, self).__init__()
-        self.name = 'minimal-boot'
-        self.description = "connect and reset device"
-        self.summary = "connect and reset device"
+    name = 'minimal-boot'
+    description = "connect and reset device"
+    summary = "connect and reset device"
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)

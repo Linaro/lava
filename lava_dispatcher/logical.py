@@ -94,17 +94,15 @@ class RetryAction(Action):
 
 
 class DiagnosticAction(Action):
+    """
+    Base class for actions which are run only if a failure is detected.
+    Diagnostics have no level and are not intended to be added to Pipeline.
+    """
 
-    def __init__(self):
-        """
-        Base class for actions which are run only if a failure is detected.
-        Diagnostics have no level and are not intended to be added to Pipeline.
-        """
-        super(DiagnosticAction, self).__init__()
-        self.name = "diagnose"
-        self.section = 'diagnostic'
-        self.summary = "diagnose action failure"
-        self.description = "action-specific diagnostics in case of failure"
+    section = 'diagnostic'
+    name = "diagnose"
+    description = "action-specific diagnostics in case of failure"
+    summary = "diagnose action failure"
 
     @classmethod
     def trigger(cls):

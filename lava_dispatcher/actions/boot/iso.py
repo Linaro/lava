@@ -61,11 +61,9 @@ class BootIsoInstaller(Boot):
 
 class BootIsoInstallerAction(BootAction):
 
-    def __init__(self):
-        super(BootIsoInstallerAction, self).__init__()
-        self.name = 'boot-installer-iso'
-        self.description = "boot installer with preseed"
-        self.summary = "boot installer iso image"
+    name = 'boot-installer-iso'
+    description = "boot installer with preseed"
+    summary = "boot installer iso image"
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -88,11 +86,9 @@ class IsoCommandLine(Action):  # pylint: disable=too-many-instance-attributes
     -append "\"${BASE} ${LOCALE} ${CONSOLE} ${KEYMAPS} ${NETCFG} preseed/url=${PRESEED_URL} --- ${CONSOLE}\"" \
     """
 
-    def __init__(self):
-        super(IsoCommandLine, self).__init__()
-        self.name = 'execute-installer-command'
-        self.summary = 'include downloaded locations and call qemu'
-        self.description = 'add dynamic data values to command line and execute'
+    name = 'execute-installer-command'
+    description = 'add dynamic data values to command line and execute'
+    summary = 'include downloaded locations and call qemu'
 
     def run(self, connection, max_end_time, args=None):
         # substitutions
@@ -136,13 +132,14 @@ class MonitorInstallerSession(Action):
     The shell connection can be over any particular connection,
     all that is needed is a prompt.
     """
+
     compatibility = 3
+    name = "monitor-installer-connection"
+    description = "Monitor installer operation"
+    summary = "Watch for error strings or end of install"
 
     def __init__(self):
         super(MonitorInstallerSession, self).__init__()
-        self.name = "monitor-installer-connection"
-        self.summary = "Watch for error strings or end of install"
-        self.description = "Monitor installer operation"
         self.force_prompt = True
 
     def validate(self):
@@ -158,11 +155,12 @@ class MonitorInstallerSession(Action):
 
 class IsoRebootAction(Action):
 
+    name = 'reboot-into-installed'
+    description = 'reboot and login to the new system'
+    summary = 'reboot into installed image'
+
     def __init__(self):
         super(IsoRebootAction, self).__init__()
-        self.name = 'reboot-into-installed'
-        self.summary = 'reboot into installed image'
-        self.description = 'reboot and login to the new system'
         self.sub_command = None
 
     def validate(self):

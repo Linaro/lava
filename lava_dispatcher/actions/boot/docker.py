@@ -55,11 +55,9 @@ class BootDocker(Boot):
 
 class BootDockerAction(BootAction):
 
-    def __init__(self):
-        super(BootDockerAction, self).__init__()
-        self.name = 'boot-docker'
-        self.description = "boot docker image"
-        self.summary = "boot docker image"
+    name = 'boot-docker'
+    description = "boot docker image"
+    summary = "boot docker image"
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -72,11 +70,9 @@ class BootDockerAction(BootAction):
 
 class BootDockerRetry(RetryAction):
 
-    def __init__(self):
-        super(BootDockerRetry, self).__init__()
-        self.name = 'boot-docker-retry'
-        self.description = "boot docker image with retry"
-        self.summary = "boot docker image"
+    name = 'boot-docker-retry'
+    description = "boot docker image with retry"
+    summary = "boot docker image"
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -85,11 +81,12 @@ class BootDockerRetry(RetryAction):
 
 class CallDockerAction(Action):
 
+    name = "docker-run"
+    description = "call docker run on the image"
+    summary = "call docker run"
+
     def __init__(self):
         super(CallDockerAction, self).__init__()
-        self.name = "docker-run"
-        self.description = "call docker run on the image"
-        self.summary = "call docker run"
         self.cleanup_required = False
         self.extra_options = ''
 

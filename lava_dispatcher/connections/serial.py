@@ -39,11 +39,12 @@ class ConnectDevice(Action):
     Inherit from this class and change the session_class and/or shell_class for different behaviour.
     """
 
+    name = "connect-device"
+    description = "use the configured command to connect serial to the device"
+    summary = "run connection command"
+
     def __init__(self):
         super(ConnectDevice, self).__init__()
-        self.name = "connect-device"
-        self.summary = "run connection command"
-        self.description = "use the configured command to connect serial to the device"
         self.session_class = ShellSession  # wraps the pexpect and provides prompt_str access
         self.shell_class = ShellCommand  # runs the command to initiate the connection
         self.command = ''

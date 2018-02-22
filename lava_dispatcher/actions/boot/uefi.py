@@ -66,11 +66,13 @@ class UefiShell(Boot):
 
 
 class UefiShellAction(BootAction):
+
+    name = "uefi-shell-main-action"
+    description = "UEFI shell boot action"
+    summary = "run UEFI shell to system"
+
     def __init__(self):
         super(UefiShellAction, self).__init__()
-        self.name = "uefi-shell-main-action"
-        self.description = "UEFI shell boot action"
-        self.summary = "run UEFI shell to system"
         self.shell_menu = []
 
     def _skip_menu(self, parameters):
@@ -122,11 +124,13 @@ class UefiShellAction(BootAction):
 
 
 class UefiShellMenuInterrupt(UEFIMenuInterrupt):
+
+    name = 'uefi-shell-menu-interrupt'
+    description = 'interrupt default boot and to menu'
+    summary = 'interrupt default boot and to menu'
+
     def __init__(self):
         super(UefiShellMenuInterrupt, self).__init__()
-        self.name = 'uefi-shell-menu-interrupt'
-        self.summary = 'interrupt default boot and to menu'
-        self.description = 'interrupt default boot and to menu'
         # Take parameters from the uefi method, not uefi menu.
         self.method = 'uefi'
 
@@ -143,11 +147,10 @@ class UefiShellInterrupt(MenuInterrupt):
     """
     Support for interrupting the UEFI menu and dropping to the shell.
     """
-    def __init__(self):
-        super(UefiShellInterrupt, self).__init__()
-        self.name = 'uefi-shell-interrupt'
-        self.summary = 'first uefi interrupt'
-        self.description = 'interrupt uefi menu to get to a shell'
+
+    name = 'uefi-shell-interrupt'
+    description = 'interrupt uefi menu to get to a shell'
+    summary = 'first uefi interrupt'
 
     def run(self, connection, max_end_time, args=None):
         if not connection:
@@ -167,11 +170,13 @@ class UefiShellMenuSelector(UefiMenuSelector):
     """
     Special version of the UefiMenuSelector configured to drop to the shell
     """
+
+    name = 'uefi-shell-menu-selector'
+    description = 'select uefi menu items to drop to a uefi shell'
+    summary = 'use uefi menu to drop to shell'
+
     def __init__(self):
         super(UefiShellMenuSelector, self).__init__()
-        self.name = 'uefi-shell-menu-selector'
-        self.summary = 'use uefi menu to drop to shell'
-        self.description = 'select uefi menu items to drop to a uefi shell'
         # Take parameters from the uefi method, not uefi menu.
         self.method_name = 'uefi'
         # Default menu command name: drop to shell

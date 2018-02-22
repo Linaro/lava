@@ -143,11 +143,12 @@ def get_test_action_namespaces(parameters=None):
 
 class RepoAction(Action):
 
+    name = "repo-action"
+    description = "apply tests to the test image"
+    summary = "repo base class"
+
     def __init__(self):
         super(RepoAction, self).__init__()
-        self.name = "repo-action"
-        self.description = "apply tests to the test image"
-        self.summary = "repo base class"
         self.vcs = None
         self.runner = None
         self.default_pattern = DEFAULT_V1_PATTERN
@@ -280,12 +281,9 @@ class GitRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
     """
 
     priority = 1
-
-    def __init__(self):
-        super(GitRepoAction, self).__init__()
-        self.name = "git-repo-action"
-        self.description = "apply git repository of tests to the test image"
-        self.summary = "clone git test repo"
+    name = "git-repo-action"
+    description = "apply git repository of tests to the test image"
+    summary = "clone git test repo"
 
     def validate(self):
         if 'repository' not in self.parameters:
@@ -410,12 +408,12 @@ class BzrRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
     """
 
     priority = 1
+    name = "bzr-repo-action"
+    description = "apply bazaar repository of tests to the test image"
+    summary = "branch a bzr test repo"
 
     def __init__(self):
         super(BzrRepoAction, self).__init__()
-        self.name = "bzr-repo-action"
-        self.description = "apply bazaar repository of tests to the test image"
-        self.summary = "branch a bzr test repo"
         self.testdef = None
 
     def validate(self):
@@ -470,12 +468,9 @@ class BzrRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
 class InlineRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
 
     priority = 1
-
-    def __init__(self):
-        super(InlineRepoAction, self).__init__()
-        self.name = "inline-repo-action"
-        self.description = "apply inline test defintion to the test image"
-        self.summary = "exctract inline test definition"
+    name = "inline-repo-action"
+    description = "apply inline test defintion to the test image"
+    summary = "exctract inline test definition"
 
     def validate(self):
         if 'repository' not in self.parameters:
@@ -522,12 +517,12 @@ class InlineRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
 class TarRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
 
     priority = 0  # FIXME: increase priority once this is working
+    name = "tar-repo-action"
+    description = "apply a tarball of tests to the test image"
+    summary = "unpack tar test repo"
 
     def __init__(self):
         super(TarRepoAction, self).__init__()
-        self.name = "tar-repo-action"
-        self.description = "apply a tarball of tests to the test image"
-        self.summary = "unpack tar test repo"
         self.vcs_binary = "/bin/tar"
 
     def validate(self):
@@ -576,12 +571,12 @@ class TarRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
 class UrlRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
 
     priority = 0  # FIXME: increase priority once this is working
+    name = "url-repo-action"
+    description = "apply a single test file to the test image"
+    summary = "download file test"
 
     def __init__(self):
         super(UrlRepoAction, self).__init__()
-        self.name = "url-repo-action"
-        self.description = "apply a single test file to the test image"
-        self.summary = "download file test"
         self.tmpdir = None  # FIXME: needs to be a /mntpoint/lava-%hostname/ directory.
         self.testdef = None
 
@@ -625,6 +620,10 @@ class UrlRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
 
 class TestDefinitionAction(TestAction):
 
+    name = "test-definition"
+    description = "load test definitions into image"
+    summary = "loading test definitions"
+
     def __init__(self):
         """
         The TestDefinitionAction installs each test definition into
@@ -636,9 +635,6 @@ class TestDefinitionAction(TestAction):
         to handle parts of the overlay which are test definition dependent.
         """
         super(TestDefinitionAction, self).__init__()
-        self.name = "test-definition"
-        self.description = "load test definitions into image"
-        self.summary = "loading test definitions"
         self.test_list = None
         self.stages = 0
         self.run_levels = {}
@@ -784,6 +780,10 @@ class TestDefinitionAction(TestAction):
 
 class TestOverlayAction(TestAction):  # pylint: disable=too-many-instance-attributes
 
+    name = "test-overlay"
+    description = "overlay test support files onto image"
+    summary = "applying LAVA test overlay"
+
     def __init__(self):
         """
         TestOverlayAction is a simple helper to do the same routine boilerplate
@@ -796,9 +796,6 @@ class TestOverlayAction(TestAction):  # pylint: disable=too-many-instance-attrib
         always executed immediately after the relevant handler.
         """
         super(TestOverlayAction, self).__init__()
-        self.name = "test-overlay"
-        self.description = "overlay test support files onto image"
-        self.summary = "applying LAVA test overlay"
         self.test_uuid = None  # Match the overlay to the handler
 
     def validate(self):
@@ -890,6 +887,10 @@ class TestOverlayAction(TestAction):  # pylint: disable=too-many-instance-attrib
 
 class TestInstallAction(TestOverlayAction):
 
+    name = "test-install-overlay"
+    description = "overlay dependency installation support files onto image"
+    summary = "applying LAVA test install scripts"
+
     def __init__(self):
         """
         This Action will need a run check that the file does not exist
@@ -903,9 +904,6 @@ class TestInstallAction(TestOverlayAction):
         """
         super(TestInstallAction, self).__init__()
         self.test_uuid = None  # Match the overlay to the handler
-        self.name = "test-install-overlay"
-        self.description = "overlay dependency installation support files onto image"
-        self.summary = "applying LAVA test install scripts"
         self.skip_list = ['keys', 'sources', 'deps', 'steps', 'git-repos',
                           'all']  # keep 'all' as the last item
         self.skip_options = []
@@ -1053,14 +1051,15 @@ class TestInstallAction(TestOverlayAction):
 
 class TestRunnerAction(TestOverlayAction):
 
+    # This name is used to tally the submitted definitions
+    # to the definitions which actually reported results.
+    # avoid changing the self.name of this class.
+    name = "test-runscript-overlay"
+    description = "overlay run script onto image"
+    summary = "applying LAVA test run script"
+
     def __init__(self):
         super(TestRunnerAction, self).__init__()
-        # This name is used to tally the submitted definitions
-        # to the definitions which actually reported results.
-        # avoid changing the self.name of this class.
-        self.name = "test-runscript-overlay"
-        self.description = "overlay run script onto image"
-        self.summary = "applying LAVA test run script"
         self.testdef_levels = {}  # allow looking up the testname from the level of this action
 
     def validate(self):

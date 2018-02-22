@@ -30,11 +30,12 @@ class DeployDeviceEnvironment(Action):
     Create environment found in job parameters 'env_dut' and set it in common_data.
     """
 
+    name = "deploy-device-env"
+    description = "deploy device environment"
+    summary = "deploy device environment"
+
     def __init__(self):
         super(DeployDeviceEnvironment, self).__init__()
-        self.name = "deploy-device-env"
-        self.summary = "deploy device environment"
-        self.description = "deploy device environment"
         self.env = ""
 
     def validate(self):

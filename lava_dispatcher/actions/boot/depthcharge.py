@@ -77,9 +77,11 @@ class DepthchargeCommandOverlay(BootloaderCommandOverlay):
     """
     Create the cmdline file and substitute {CMDLINE} with the TFTP path.
     """
+
+    name = "depthcharge-overlay"
+
     def __init__(self):
         super(DepthchargeCommandOverlay, self).__init__()
-        self.name = "depthcharge-overlay"
         self.cmdline = None
 
     def validate(self):
@@ -151,11 +153,10 @@ class DepthchargeAction(BootAction):
     Wraps the Retry Action to allow for actions which precede the reset,
     e.g. Connect.
     """
-    def __init__(self):
-        super(DepthchargeAction, self).__init__()
-        self.name = "depthcharge-action"
-        self.description = "interactive Depthcharge action"
-        self.summary = "sets up boot with Depthcharge"
+
+    name = "depthcharge-action"
+    description = "interactive Depthcharge action"
+    summary = "sets up boot with Depthcharge"
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(
@@ -167,11 +168,9 @@ class DepthchargeAction(BootAction):
 
 class DepthchargeRetry(BootAction):
 
-    def __init__(self):
-        super(DepthchargeRetry, self).__init__()
-        self.name = "depthcharge-retry"
-        self.description = "interactive depthcharge retry action"
-        self.summary = "depthcharge commands with retry"
+    name = "depthcharge-retry"
+    description = "interactive depthcharge retry action"
+    summary = "depthcharge commands with retry"
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(
@@ -199,11 +198,13 @@ class DepthchargeStart(Action):
     """
     Wait for the Depthcharge command line interface prompt.
     """
+
+    name = "depthcharge-start"
+    description = "wait for Depthcharge to start"
+    summary = "Depthcharge start"
+
     def __init__(self):
         super(DepthchargeStart, self).__init__()
-        self.name = "depthcharge-start"
-        self.description = "wait for Depthcharge to start"
-        self.summary = "Depthcharge start"
         self.start_message = None
 
     def validate(self):
