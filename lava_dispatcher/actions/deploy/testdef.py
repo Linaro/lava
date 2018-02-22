@@ -207,6 +207,8 @@ class RepoAction(Action):
             raise LAVABug("RepoAction run called via super without parameters as arguments")
         location = self.get_namespace_data(action='test', label='shared', key='location')
         lava_test_results_dir = self.get_namespace_data(action='test', label='results', key='lava_test_results_dir')
+        if not lava_test_results_dir:
+            raise LAVABug("Unable to identify top level test shell directory")
         self.logger.debug("Using %s at stage %s", lava_test_results_dir, self.stage)
         if not location:
             raise LAVABug("Missing lava overlay location")

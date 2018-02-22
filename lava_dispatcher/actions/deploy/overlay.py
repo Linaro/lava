@@ -139,6 +139,8 @@ class OverlayAction(DeployAction):
                 return connection
         self.set_namespace_data(action='test', label='shared', key='location', value=tmp_dir)
         lava_test_results_dir = self.get_namespace_data(action='test', label='results', key='lava_test_results_dir')
+        if not lava_test_results_dir:
+            raise LAVABug("Unable to identify top level lava test directory")
         shell = self.get_namespace_data(action='test', label='shared', key='lava_test_sh_cmd')
         self.logger.debug("[%s] Preparing overlay tarball in %s", namespace, tmp_dir)
         lava_path = os.path.abspath("%s/%s" % (tmp_dir, lava_test_results_dir))
