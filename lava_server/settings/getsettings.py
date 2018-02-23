@@ -210,10 +210,10 @@ class Settings(object):
 
         By default it produces the string:
 
-            ``"/var/lib/lava-server/media/"``
+            ``"/var/lib/lava-server/default/media/"``
 
         """
-        return self._settings.get("MEDIA_ROOT", "/var/lib/lava-server/media/")
+        return self._settings.get("MEDIA_ROOT", "/var/lib/lava-server/default/media/")
 
     @property
     def LOG_SIZE_LIMIT(self):
@@ -229,10 +229,10 @@ class Settings(object):
 
         By default it produces the string:
 
-            ``"/var/lib/lava-server/static/"``
+            ``"/usr/share/lava-server/static"``
 
         """
-        return self._settings.get("STATIC_ROOT", "/var/lib/lava-server/static/")
+        return self._settings.get("STATIC_ROOT", "/usr/share/lava-server/static")
 
     @property
     def STATIC_URL(self):
@@ -321,7 +321,7 @@ class Settings(object):
 
         By default it produces the string:
 
-            ``"/var/lib/lava-server/archive/"``
+            ``"/var/lib/lava-server/default/archive/"``
 
         """
-        return self._settings.get("ARCHIVE_ROOT", "/var/lib/lava-server/archive/")
+        return self._settings.get("ARCHIVE_ROOT", "/var/lib/lava-server/default/archive/")
