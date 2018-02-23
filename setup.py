@@ -97,11 +97,10 @@ setup(
           'etc/logrotate.d/lava-publisher-log',
           'etc/logrotate.d/lava-server-gunicorn-log']),
         ('/usr/share/lava-server',
-         ['instance.template']),
-        ('/usr/share/lava-server',
          ['etc/lava-master.service',
           'etc/lava-publisher.service',
           'etc/lava-logs.service',
+          'etc/instance.conf.template',
           'share/render-template.py']),
     ].extend(DEVICE_TYPE_TEMPLATES),
     tests_require=[
