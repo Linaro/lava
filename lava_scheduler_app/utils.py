@@ -31,9 +31,8 @@ import yaml
 from collections import OrderedDict
 
 from django.contrib.sites.models import Site
+from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-
-from lava_server.settings.getsettings import Settings
 
 from lava_scheduler_app.schema import SubmissionException
 
@@ -386,12 +385,11 @@ def get_ldap_user_properties(ldap_user):
 
     If given ldap_user does not exist, then raise ldap.NO_SUCH_OBJECT
     """
-    settings = Settings("lava-server")
-    server_uri = settings.get_setting("AUTH_LDAP_SERVER_URI", None)
-    bind_dn = settings.get_setting("AUTH_LDAP_BIND_DN", None)
-    bind_password = settings.get_setting("AUTH_LDAP_BIND_PASSWORD", None)
-    user_dn_template = settings.get_setting("AUTH_LDAP_USER_DN_TEMPLATE", None)
-    user_search = settings.get_setting("AUTH_LDAP_USER_SEARCH", None)
+    server_uri = settings.AUTH_LDAP_SERVER_URI
+    bind_dn = settings.AUTH_LDAP_BIND_DN
+    bind_password = settings.AUTH_LDAP_BIND_PASSWORD
+    user_dn_template = settings.AUTH_LDAP_USER_DN_TEMPLATE
+    user_search = settings.AUTH_LDAP_USER_SEARCH
 
     search_scope = ldap.SCOPE_SUBTREE
     # Attributes should be byte strings

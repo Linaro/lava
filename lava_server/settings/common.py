@@ -24,8 +24,16 @@ import imp
 from lava_scheduler_app.settings import *
 
 
+# List of people who get code error notifications
+# https://docs.djangoproject.com/en/1.8/ref/settings/#admins
+ADMINS = [['lava-server Administrator', 'root@localhost']]
+# List of people who get broken link notifications
+# https://docs.djangoproject.com/en/1.8/ref/settings/#managers
+MANAGERS = ADMINS
+
 # Allow only the connection through the reverse proxy
 ALLOWED_HOSTS = ['[::1]', '127.0.0.1', 'localhost']
+INTERNAL_IPS = []
 
 # Application definition
 INSTALLED_APPS = [
@@ -99,10 +107,27 @@ USE_L10N = True
 USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
+# URL that handles the media served from STATIC_ROOT. Make sure to use a
+# trailing slash if there is a path component (optional in other cases).
+# Examples: "http://static.lawrence.com", "http://example.com/static/"
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
+STATIC_URL = "/static/"
 
-STATIC_URL = '/static/'
+# Absolute filesystem path to the directory that will hold static, read only
+# files collected from all applications.
+STATIC_ROOT = "/usr/share/lava-server/static"
 
+# Absolute filesystem path to the directory that will hold user-uploaded files.
+MEDIA_ROOT = "/var/lib/lava-server/default/media/"
+
+# Absolute filesystem path to the directory that will hold archived files.
+ARCHIVE_ROOT = "/var/lib/lava-server/default/archive/"
+
+# LOG_SIZE_LIMIT in megabytes
+LOG_SIZE_LIMIT = 25
+
+# Default URL after login
+LOGIN_REDIRECT_URL = "/"
 
 # Automatically install some applications
 available_modules = list()
@@ -140,3 +165,37 @@ CSRF_COOKIE_SECURE = True
 CSRF_COOKIE_HTTPONLY = True
 X_FRAME_OPTIONS = 'DENY'
 HTTPS_XML_RPC = True
+
+# Branding support
+BRANDING_ALT = "Linaro logo"
+BRANDING_ICON = "lava_server/images/logo.png"
+BRANDING_URL = "http://www.linaro.org"
+BRANDING_HEIGHT = 22
+BRANDING_WIDTH = 22
+BRANDING_BUG_URL = "static/docs/v2/development-intro.html#report-a-bug"
+BRANDING_SOURCE_URL = "https://git.linaro.org/lava"
+BRANDING_MESSAGE = ""
+
+# Custom documentation
+CUSTOM_DOCS = {}
+
+# Logging
+DJANGO_LOGFILE = "/var/log/lava-server/django.log"
+
+# Django debug toolbar
+USE_DEBUG_TOOLBAR = False
+
+# Template caching
+USE_TEMPLATE_CACHE = False
+
+# LDAP support
+AUTH_LDAP_SERVER_URI = None
+AUTH_LDAP_BIND_DN = None
+AUTH_LDAP_BIND_PASSWORD = None
+AUTH_LDAP_USER_DN_TEMPLATE = None
+AUTH_LDAP_USER_SEARCH = None
+AUTH_LDAP_GROUP_SEARCH = None
+AUTH_LDAP_GROUP_TYPE = None
+
+# Debian SSO is of be default
+AUTH_DEBIAN_SSO = None
