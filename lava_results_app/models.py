@@ -950,10 +950,9 @@ class Query(models.Model):
                     try:
                         condition.value = choices_reverse[condition.value]
                     except KeyError:
-                        logger.error(
-                            'skip condition %s due to unsupported choice'
-                            % condition)
-                        continue
+                        logger.info('invalid choice supported for field "%s"'
+                                    % condition.field)
+                        condition.value = -1
 
                 # Handle boolean conditions.
                 if condition_field_obj.__class__ == models.BooleanField:

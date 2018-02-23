@@ -115,8 +115,8 @@ class ResultsAPI(ExposedAPI):
         conditions = Query.parse_conditions(content_type, conditions)
 
         try:
-            results = Query.get_queryset(content_type, conditions).visible_by_user(
-                self.user)
+            results = Query.get_queryset(content_type,
+                                         conditions).visible_by_user(self.user)
         except FieldDoesNotExist:
             raise xmlrpclib.Fault(400,
                                   "Conditions URL incorrect: Field does not exist. "
