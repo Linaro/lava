@@ -394,7 +394,9 @@ def get_ldap_user_properties(ldap_user):
     user_search = settings.get_setting("AUTH_LDAP_USER_SEARCH", None)
 
     search_scope = ldap.SCOPE_SUBTREE
-    attributes = ['uid', 'givenName', 'sn', 'mail']
+    # Attributes should be byte strings
+    # (see https://github.com/pyldap/pyldap/issues/68)
+    attributes = [b'uid', b'givenName', b'sn', b'mail']
     search_filter = "cn=*"
 
     if user_dn_template:
