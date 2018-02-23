@@ -7,7 +7,7 @@ from lava_server.settings.production import *
 from lava_server.settings.config_file import ConfigFile
 
 # Load application settings from lava_server.settings integration package
-distro_settings = Settings("lava-server")
+distro_settings = Settings()
 
 # Load the mount point from settings file
 MOUNT_POINT = distro_settings.mount_point

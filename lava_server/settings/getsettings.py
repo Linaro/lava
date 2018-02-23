@@ -54,7 +54,7 @@ class Settings(object):
 
         from lava_server.settings import Settings
 
-        DISTRO_SETTINGS = Settings("yourappname")
+        DISTRO_SETTINGS = Settings()
         DATABASES = {"default": DISTRO_SETTINGS.default_database}
         SECRET_KEY = DISTRO_SETTINGS.SECRET_KEY
         # Other settings
@@ -64,10 +64,10 @@ class Settings(object):
     normally out-of-the-box.
 
     The settings file is constructed with the SETTINGS_TEMPLATE, the filename
-    attribute is "settings" the appname attribute depends on the application.
-    For example django-hello application the pathname would be:
+    attribute is "settings".
+    For example the settings pathname would be:
 
-        ``/etc/django-hello/settings.conf``
+        ``/etc/lava-server/settings.conf``
 
     Note: The secret key value CANNOT be redefined using that file
     (it is stored in a separate, application-writable file).
@@ -75,18 +75,13 @@ class Settings(object):
 
     # Template used to generate pathnames to various files this class uses
     # e.g. /etc/lava-server/settings.conf
-    SETTINGS_TEMPLATE = "/etc/{appname}/{filename}.conf"
+    SETTINGS_TEMPLATE = "/etc/lava-server/{filename}.conf"
 
-    def __init__(self, appname, template=None, mount_point=None):
+    def __init__(self, template=None, mount_point="lava-server/"):
         # FIXME: make this template distro-agnostic
         if template is None:
             template = os.environ.get("DJANGO_DEBIAN_SETTINGS_TEMPLATE", self.SETTINGS_TEMPLATE)
-        if mount_point is None:
-            mount_point = "{appname}/".format(appname=appname)
-        else:
-            mount_point = mount_point
         self._settings_template = template
-        self._appname = appname
         self._settings = self._load_settings()
         self._mount_point = self._settings.get(
             "MOUNT_POINT", mount_point)
@@ -101,7 +96,7 @@ class Settings(object):
         """
         Calculate the pathname of the specified configuration file
         """
-        return self._settings_template.format(appname=self._appname, filename=filename)
+        return self._settings_template.format(filename=filename)
 
     def _load_settings(self):
         """
@@ -215,11 +210,10 @@ class Settings(object):
 
         By default it produces the string:
 
-            ``"/var/lib/{appname}/media/"``
+            ``"/var/lib/lava-server/media/"``
 
         """
-        default = "/var/lib/{appname}/media/".format(appname=self._appname)
-        return self._settings.get("MEDIA_ROOT", default)
+        return self._settings.get("MEDIA_ROOT", "/var/lib/lava-server/media/")
 
     @property
     def LOG_SIZE_LIMIT(self):
@@ -235,11 +229,10 @@ class Settings(object):
 
         By default it produces the string:
 
-            ``"/var/lib/{appname}/static/"``
+            ``"/var/lib/lava-server/static/"``
 
         """
-        default = "/var/lib/{appname}/static/".format(appname=self._appname)
-        return self._settings.get("STATIC_ROOT", default)
+        return self._settings.get("STATIC_ROOT", "/var/lib/lava-server/static/")
 
     @property
     def STATIC_URL(self):
@@ -270,10 +263,10 @@ class Settings(object):
 
         By default it produces only one value
 
-            ``("{appname} Administrator", "root@localhost')``
+            ``("lava-server Administrator", "root@localhost')``
         """
         default = [
-            ['{appname} Administrator'.format(appname=self._appname), 'root@localhost'],
+            ['lava-server Administrator', 'root@localhost'],
         ]
 
         value = self._settings.get("ADMINS", default)
@@ -328,8 +321,7 @@ class Settings(object):
 
         By default it produces the string:
 
-            ``"/var/lib/{appname}/archive/"``
+            ``"/var/lib/lava-server/archive/"``
 
         """
-        default = "/var/lib/{appname}/archive/".format(appname=self._appname)
-        return self._settings.get("ARCHIVE_ROOT", default)
+        return self._settings.get("ARCHIVE_ROOT", "/var/lib/lava-server/archive/")
