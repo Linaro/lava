@@ -100,18 +100,6 @@ class LxcAction(DeployAction):  # pylint:disable=too-many-instance-attributes
                               LxcProtocol.name, protocols)
             self.errors = "Missing protocol '%s'" % LxcProtocol.name
         self.errors = infrastructure_error('lxc-create')
-        if self.test_needs_deployment(self.parameters):
-            lava_test_results_dir = self.parameters['deployment_data'][
-                'lava_test_results_dir']
-            lava_test_results_dir = lava_test_results_dir % self.job.job_id
-            self.set_namespace_data(action='test', label='results',
-                                    key='lava_test_results_dir',
-                                    value=lava_test_results_dir)
-            lava_test_sh_cmd = self.parameters['deployment_data'][
-                'lava_test_sh_cmd']
-            self.set_namespace_data(action=self.name, label='shared',
-                                    key='lava_test_sh_cmd',
-                                    value=lava_test_sh_cmd)
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job,

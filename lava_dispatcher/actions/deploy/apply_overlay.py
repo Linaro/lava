@@ -71,9 +71,6 @@ class ApplyOverlayGuest(Action):
     def validate(self):
         super(ApplyOverlayGuest, self).validate()
         self.set_namespace_data(action=self.name, label='guest', key='name', value=self.guest_filename)
-        lava_test_results_base = self.parameters['deployment_data']['lava_test_results_dir']
-        lava_test_results_dir = lava_test_results_base % self.job.job_id
-        self.set_namespace_data(action='test', label='results', key='lava_test_results_dir', value=lava_test_results_dir)
         if 'guest' not in self.job.device['actions']['deploy']['methods']['image']['parameters']:
             self.errors = "Device configuration does not specify size of guest filesystem."
 
