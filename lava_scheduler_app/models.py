@@ -2208,7 +2208,8 @@ class TestJob(RestrictedResource):
                     try:
                         logger.info("[%d] sending email notification to %s",
                                     self.id, recipient.email_address)
-                        title = "LAVA notification for Test Job %s" % self.id
+                        title = "LAVA notification for Test Job %s %s" % (
+                            self.id, self.description[:200])
                         kwargs["user"] = self.get_recipient_args(recipient)
                         body = self.create_notification_body(
                             notification.template, **kwargs)
