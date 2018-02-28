@@ -88,9 +88,12 @@ class BootFastbootAction(BootAction):
         super(BootFastbootAction, self).validate()
         sequences = self.job.device['actions']['boot']['methods'].get(
             'fastboot', [])
-        for sequence in sequences:
-            if not _fastboot_sequence_map(sequence):
-                self.errors = "Unknown boot sequence '%s'" % sequence
+        if sequences is not None:
+            for sequence in sequences:
+                if not _fastboot_sequence_map(sequence):
+                    self.errors = "Unknown boot sequence '%s'" % sequence
+        else:
+            self.errors = "fastboot_sequence undefined"
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job,
