@@ -367,7 +367,9 @@ class Command(LAVADaemonCommand):
                     health_msg = "Incomplete"
                 self.logger.info("[%s] job status: %s", job_id, health_msg)
 
-                infrastructure_error = (message_msg.get("error_type") == "Infrastructure")
+                infrastructure_error = (message_msg.get("error_type") in ["Bug",
+                                                                          "Configuration",
+                                                                          "Infrastructure"])
                 if infrastructure_error:
                     self.logger.info("[%s] Infrastructure error", job_id)
 
