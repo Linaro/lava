@@ -44,33 +44,23 @@ class PipelineDevice(dict):
 
     @property
     def hard_reset_command(self):
-        if 'commands' in self and 'hard_reset' in self['commands']:
-            return self['commands']['hard_reset']
-        return ''
+        return self.get('commands', {}).get('hard_reset', '')
 
     @property
     def soft_reset_command(self):
-        if 'commands' in self and 'soft_reset' in self['commands']:
-            return self['commands']['soft_reset']
-        return ''
+        return self.get('commands', {}).get('soft_reset', '')
 
     @property
     def pre_os_command(self):
-        if 'commands' in self and 'pre_os_command' in self['commands']:
-            return self['commands']['pre_os_command']
-        return None
+        return self.get('commands', {}).get('pre_os_command')
 
     @property
     def pre_power_command(self):
-        if 'commands' in self and 'pre_power_command' in self['commands']:
-            return self['commands']['pre_power_command']
-        return None
+        return self.get('commands', {}).get('pre_power_command')
 
     @property
     def power_command(self):
-        if 'commands' in self and 'power_on' in self['commands']:
-            return self['commands']['power_on']
-        return ''
+        return self.get('commands', {}).get('power_on', '')
 
     @property
     def connect_command(self):
