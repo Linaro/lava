@@ -183,9 +183,12 @@ def testjob_csv(request, job):
     check_request_auth(request, job)
 
     def testjob_stream(suites, pseudo_buffer):
+        fieldnames = testcase_export_fields()
         writer = csv.DictWriter(pseudo_buffer,
-                                fieldnames=testcase_export_fields())
-        yield pseudo_buffer.write(testcase_export_fields())
+                                fieldnames=fieldnames)
+        # writer.writeheader does not return the string while writer.writerow
+        # does. Copy writeheader code from csv.py and yield the value.
+        yield writer.writerow(dict(zip(fieldnames, fieldnames)))
 
         for test_suite in suites:
             for test_case in test_suite.testcase_set.all():
