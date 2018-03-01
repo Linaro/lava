@@ -53,8 +53,7 @@ actions:
       u-boot-ums: null
     parameters: {add_header: u-boot, append_dtb: false, mkimage_arch: arm64, use_xip: false}
 commands: {connect: telnet lava-dev 7008, hard_reset: /root/reboot_port.sh 1, power_off: 'curl
-    -s -o /dev/null http://192.168.25.38/30000/00', power_on: 'curl -s -o /dev/null
-    http://192.168.25.38/30000/01'}
+    -s -o /dev/null http://192.168.25.38/30000/00'}
 constants:
   default-shell-prompt: 'lava-test: # '
   grub: {interrupt-character: c, interrupt-prompt: Press enter to boot the selected

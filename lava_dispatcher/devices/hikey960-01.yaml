@@ -36,7 +36,6 @@ commands:
     soft_reset: fastboot -u -s 4932A6C603284698 reboot
     soft_reboot: adb -s 4932A6C603284698 reboot bootloader
     power_off: /usr/bin/pduclient --daemon tweetypie --hostname pdu --command off --port 02
-    power_on: /usr/bin/pduclient --daemon tweetypie --hostname pdu --command on --port 02
     pre_power_command: /home/neil/lava-lab/shared/lab-scripts/usb_hub_control -u 5 -p 4000 -m sync
     pre_os_command: /home/neil/lava-lab/shared/lab-scripts/usb_hub_control -u 5 -p 4000 -m off
 device_info: [{'board_id': '4932A6C603284698'}]

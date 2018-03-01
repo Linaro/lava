@@ -1,8 +1,8 @@
-device_type: arduino101
+device_type: stm32-carbon
 
 commands:
   connect: telnet ratchet 7001
-  power_on: 'make this how to get into dfu'
+  hard_reset: 'make this how to get into dfu'
 
 board_id: '3896387A3234'
 usb_vendor_id: '0483'

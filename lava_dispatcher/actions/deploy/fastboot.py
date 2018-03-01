@@ -108,7 +108,7 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
         if self.job.device.get('fastboot_via_uboot', False):
             self.internal_pipeline.add_action(ConnectDevice())
             self.internal_pipeline.add_action(UBootEnterFastbootAction())
-        elif self.job.device.power_command:
+        elif self.job.device.hard_reset_command:
             self.force_prompt = True
             self.internal_pipeline.add_action(ConnectDevice())
             self.internal_pipeline.add_action(ResetDevice())

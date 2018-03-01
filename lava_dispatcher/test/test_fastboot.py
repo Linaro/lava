@@ -243,7 +243,6 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
         self.factory = FastBootFactory()
         job = self.factory.create_db410c_job('sample_jobs/db410c.yaml')
         self.assertTrue(job.device.get('fastboot_via_uboot', True))
-        self.assertEqual('', self.job.device.power_command)
         description_ref = self.pipeline_reference('db410c.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
         boot = [action for action in job.pipeline.actions if action.name == 'fastboot-boot'][0]

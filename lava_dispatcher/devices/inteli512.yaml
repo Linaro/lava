@@ -6,7 +6,6 @@ device_type: intel-d1521
 commands:
   connect: ssh
   power_off: /homes/drio/ELTF/scripturiDiverse/lava/inteld1521_wrapper.sh off
-  power_on: /homes/drio/ELTF/scripturiDiverse/lava/inteld1521_wrapper.sh on
 
 actions:
   deploy:

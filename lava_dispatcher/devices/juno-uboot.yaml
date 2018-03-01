@@ -13,7 +13,6 @@ commands:
         - primary
     hard_reset: /usr/local/lab-scripts/snmp_pdu_control --hostname pdu14 --command reboot --port 02 --delay 10
     power_off: /usr/local/lab-scripts/snmp_pdu_control --hostname pdu14 --command off --port 02 --delay 10
-    power_on: /usr/local/lab-scripts/snmp_pdu_control --hostname pdu14 --command on --port 02 --delay 10
 
 parameters:
   booti:

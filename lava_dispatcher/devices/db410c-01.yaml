@@ -6,7 +6,6 @@ commands:
         - primary
     hard_reset: /usr/local/lab-scripts/snmp_pdu_control --hostname pdu18 --command reboot --port 19 --delay 20
     power_off: /usr/local/lab-scripts/snmp_pdu_control --hostname pdu18 --command off --port 19 --delay 20
-    power_on: /usr/local/lab-scripts/snmp_pdu_control --hostname pdu18 --command on --port 19 --delay 20
     pre_power_command: /usr/local/lab-scripts/usb_hub_control -p 7110 -m sync -u 12
     pre_os_command: /usr/local/lab-scripts/usb_hub_control -p 7110 -m off -u 12
 device_info: [{'board_id': 'c2e02318'}]

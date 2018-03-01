@@ -112,11 +112,8 @@ class TestJobDeviceParameters(StdoutTestCase):  # pylint: disable=too-many-publi
     def test_device_power(self):
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
         self.assertNotEqual(device.hard_reset_command, '')
-        self.assertNotEqual(device.power_command, '')
-        self.assertIn('on', device.power_command)
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/kvm01.yaml'))
         self.assertEqual(device.hard_reset_command, '')
-        self.assertEqual(device.power_command, '')
 
     def test_device_constants(self):
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))

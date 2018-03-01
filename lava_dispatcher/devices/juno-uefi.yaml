@@ -18,7 +18,6 @@ commands:
       - primary
   hard_reset: /usr/local/lab-scripts/pduclient --daemon services --hostname pdu14 --command off --port 02; sleep 10; /usr/local/lab-scripts/pduclient --daemon services --hostname pdu14 --command on --port 02
   power_off: /usr/local/lab-scripts/pduclient --daemon services --hostname pdu14 --command off --port 02
-  power_on: /usr/local/lab-scripts/pduclient --daemon services --hostname pdu14 --command on --port 02
 
 character-delays:
   boot: 50

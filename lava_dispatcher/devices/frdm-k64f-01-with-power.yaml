@@ -8,7 +8,6 @@ commands:
       - primary
   hard_reset: echo example hard_reset
   power_off: echo example power_off
-  power_on: echo example power_on
 
 board_id: '024002015F511E4CA2AFE3F4'
 usb_vendor_id: '0d28'

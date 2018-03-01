@@ -18,7 +18,6 @@ commands:
       - primary
   hard_reset: /usr/bin/pduclient --hostname pdu02 --daemon ironhide --port 03 --command reboot --delay 5
   power_off: /usr/bin/pduclient --hostname pdu02 --daemon ironhide --port 03 --command off
-  power_on: /usr/bin/pduclient --hostname pdu02 --daemon ironhide --port 03 --command on
 
 timeouts:
   actions:

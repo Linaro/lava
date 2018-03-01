@@ -10,7 +10,6 @@ commands:
         connect: telnet localhost 7020
     hard_reset: /usr/bin/pduclient --daemon services --hostname pdu09 --command reboot --port 08
     power_off: /usr/bin/pduclient --daemon services --hostname pdu09 --command off --port 08
-    power_on: /usr/bin/pduclient --daemon services --hostname pdu09 --command on --port 08
     pre_power_command: /usr/local/lab-scripts/usb_hub_control -p 8000 -m sync -u 06
 device_type: hi6220-hikey
 adb_serial_number: 0123456789

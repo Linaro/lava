@@ -8,7 +8,6 @@ commands:
       - primary
   hard_reset: /usr/bin/pduclient --daemon services --hostname pdu09 --command reboot --port 05
   power_off: /usr/bin/pduclient --daemon services --hostname pdu09 --command off --port 05
-  power_on: /usr/bin/pduclient --daemon services --hostname pdu09 --command on --port 05
 
 character_delays:
       boot: 10

@@ -48,7 +48,6 @@ commands:
             - telnet
     hard_reset: ['/usr/local/lab-scripts/snmp_pdu_control --hostname pdu18 --command reboot --port 9 --delay 20', '/usr/local/lab-scripts/eth008_control -a 10.0.9.2 -r 3 -s onoff']
     power_off: /usr/local/lab-scripts/snmp_pdu_control --hostname pdu18 --command off --port 9
-    power_on: ['/usr/local/lab-scripts/snmp_pdu_control --hostname pdu18 --command on --port 9', '/usr/local/lab-scripts/eth008_control -a 10.0.9.2 -r 3 -s onoff']
 device_info: [{'board_id': '100040061d1e00e2'}]
 flash_cmds_order: ['update', 'ptable', 'partition', 'hyp', 'modem', 'rpm', 'sbl1', 'sbl2', 'sec', 'tz', 'aboot', 'boot', 'rootfs', 'vendor', 'system', 'cache', 'userdata']
 parameters:
