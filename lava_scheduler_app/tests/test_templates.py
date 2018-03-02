@@ -326,7 +326,7 @@ class TestTemplates(unittest.TestCase):
 {% set power_on_command = '/usr/bin/pduclient --daemon localhost --port 02 --hostname lngpdu01 --command on' %}
 {% set connection_command = 'telnet localhost 7302' %}"""
         self.assertTrue(self.validate_data('staging-x86-01', data))
-        test_template = prepare_jinja_template('staging-qemu-01', data)
+        test_template = prepare_jinja_template('staging-x86-01', data)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
         for _, value in template_dict['actions']['boot']['methods']['ipxe'].items():
@@ -356,7 +356,7 @@ class TestTemplates(unittest.TestCase):
                                             if item.endswith(','):
                                                 self.fail("%s ends with a comma" % item)
         self.assertEqual(depth, 8)
-        test_template = prepare_jinja_template('staging-qemu-01', data)
+        test_template = prepare_jinja_template('staging-x86-01', data)
         job_ctx = {}
         rendered = test_template.render(**job_ctx)
         template_dict = yaml.load(rendered)
@@ -378,7 +378,7 @@ class TestTemplates(unittest.TestCase):
         # add device dictionary override
         # overrides the template default
         data += """{% set boot_character_delay = 400 %}"""
-        test_template = prepare_jinja_template('staging-qemu-01', data)
+        test_template = prepare_jinja_template('staging-x86-01', data)
         job_ctx = {}
         rendered = test_template.render(**job_ctx)
         template_dict = yaml.load(rendered)
@@ -399,7 +399,7 @@ class TestTemplates(unittest.TestCase):
 {% set power_on_command = '/usr/bin/pduclient --daemon localhost --port 02 --hostname lngpdu01 --command on' %}
 {% set connection_command = 'telnet localhost 7302' %}"""
         self.assertTrue(self.validate_data('staging-x86-01', data))
-        test_template = prepare_jinja_template('staging-qemu-01', data)
+        test_template = prepare_jinja_template('staging-x86-01', data)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
         for _, value in template_dict['actions']['boot']['methods']['ipxe'].items():
@@ -414,7 +414,7 @@ class TestTemplates(unittest.TestCase):
 {% set power_on_command = '/usr/bin/pduclient --daemon localhost --port 02 --hostname lngpdu01 --command on' %}
 {% set connection_command = 'telnet localhost 7302' %}"""
         self.assertTrue(self.validate_data('staging-x86-01', data))
-        test_template = prepare_jinja_template('staging-qemu-01', data)
+        test_template = prepare_jinja_template('staging-x86-01', data)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
         for _, value in template_dict['actions']['boot']['methods']['ipxe'].items():
@@ -480,7 +480,7 @@ class TestTemplates(unittest.TestCase):
     def test_b2260_template(self):
         data = """{% extends 'b2260.jinja2' %}"""
         self.assertTrue(self.validate_data('staging-b2260-01', data))
-        test_template = prepare_jinja_template('staging-qemu-01', data)
+        test_template = prepare_jinja_template('staging-b2260-01', data)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
         self.assertEqual({'seconds': 15}, template_dict['timeouts']['actions']['power-off'])
@@ -491,7 +491,7 @@ class TestTemplates(unittest.TestCase):
 {% set mac_addr = 'DE:AD:BE:EF:28:01' %}
 {% set memory = 512 %}"""
         job_ctx = {'arch': 'amd64', 'no_kvm': True}
-        self.assertTrue(self.validate_data('staging-x86-01', data, job_ctx))
+        self.assertTrue(self.validate_data('staging-qemu-01', data, job_ctx))
         test_template = prepare_jinja_template('staging-qemu-01', data)
         rendered = test_template.render(**job_ctx)
         template_dict = yaml.load(rendered)
@@ -1287,7 +1287,7 @@ class TestTemplates(unittest.TestCase):
         self.assertIn('overlay-unpack', methods)
 
     def test_juno_vexpress_template(self):
-        data = """{% extends 'vexpress.jinja2' %}
+        data = """{% extends 'juno.jinja2' %}
     {% set connection_command = 'telnet serial4 7001' %}
     {% set hard_reset_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu18 --command reboot --port 10 --delay 10' %}
     {% set power_off_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu18 --command off --port 10 --delay 10' %}
@@ -1305,6 +1305,14 @@ class TestTemplates(unittest.TestCase):
         self.assertIsNotNone(template_dict)
         self.assertEqual({'boot': 30}, template_dict['character_delays'])
         self.assertIn('error-messages', template_dict['constants']['u-boot'])
+        self.assertEqual('juno#', template_dict['actions']['boot']['methods']['uefi']['parameters']['bootloader_prompt'])
+
+        rendered = test_template.render(bootloader_prompt="vexpress>")
+        template_dict = yaml.load(rendered)
+        self.assertIsNotNone(template_dict)
+        self.assertEqual({'boot': 30}, template_dict['character_delays'])
+        self.assertIn('error-messages', template_dict['constants']['u-boot'])
+        self.assertEqual('vexpress>', template_dict['actions']['boot']['methods']['uefi']['parameters']['bootloader_prompt'])
 
     def test_db820c_template(self):
         data = """{% extends 'dragonboard-820c.jinja2' %}
