@@ -46,6 +46,7 @@ if sys.version_info[0] == 2:
 elif sys.version_info[0] == 3:
     # For Python 3.0 and later
     from urllib.parse import quote
+    basestring = str
 
 
 def _check_for_testset(result_dict, suite):

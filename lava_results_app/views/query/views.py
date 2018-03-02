@@ -20,6 +20,7 @@ import csv
 import os
 import shutil
 import simplejson
+import sys
 import tempfile
 
 from django.db import IntegrityError
@@ -84,6 +85,9 @@ from django_tables2 import (
 )
 
 from lava.utils.lavatable import LavaView
+
+if sys.version_info[0] == 3:
+    basestring = str
 
 
 class QueryViewDoesNotExistError(Exception):
