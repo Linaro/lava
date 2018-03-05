@@ -66,9 +66,9 @@
       <p>Not all methods may be available on all devices.</p>
       <dl class="dl-horizontal">
         <dt>Deployment</dt>
-        <dd>{{ dt|deploy_methods:'deploy'|join:", " }}</dd>
+        <dd>{{ dt|deploy_methods:'deploy'|join:", "|default:"<i>...</i>" }}</dd>
         <dt>Boot</dt>
-        <dd>{{ dt|deploy_methods:'boot'|join:", " }}</dd>
+        <dd>{{ dt|deploy_methods:'boot'|join:", "|default:"<i>...</i>" }}</dd>
       </dl>
       <h5 class="modal-header">Default timeouts</h5>
       <p>Classes named in the default timeouts can be part of the pipeline description which is available from a test job definition, depending on the deployment or boot methods used by that job. </p>
