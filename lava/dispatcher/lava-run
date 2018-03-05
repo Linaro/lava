@@ -117,8 +117,7 @@ def parse_job_file(logger, options):
     """
     # Prepare the pipeline from the file using the parser.
     device = None  # secondary connections do not need a device
-    if options.device is not None:
-        device = NewDevice(options.device)
+    device = NewDevice(options.device)
     parser = JobParser()
 
     # Load the configuration files (this should *not* fail)

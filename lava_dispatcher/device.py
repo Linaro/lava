@@ -114,9 +114,13 @@ class NewDevice(PipelineDevice):
         try:
             if isinstance(target, str):
                 with open(target) as f_in:
-                    self.update(yaml.load(f_in))
+                    data = f_in.read()
             else:
-                self.update(yaml.load(target.read()))
+                data = target.read()
+            data = yaml.load(data)
+            if data is None:
+                raise ConfigurationError("Missing device configuration")
+            self.update(data)
         except yaml.parser.ParserError:
             raise ConfigurationError("%s could not be parsed" % target)
 
