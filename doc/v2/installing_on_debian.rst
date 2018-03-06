@@ -603,3 +603,36 @@ user account without losing data, using the `mergeldapuser` command, provided
 the LDAP username does not already exist in the LAVA instance::
 
   $ sudo lava-server manage mergeldapuser --lava-user <lava_user> --ldap-user <ldap_user>
+
+Debugging the Installation
+==========================
+
+After your LAVA instance is successfully installed, if you face any problem
+consult :ref:`debugging_v2`
+
+.. _django_localhost:
+
+Using localhost or non HTTPS instance URL
+-----------------------------------------
+
+Newer versions of django include improved security features which can affect
+how LAVA is used as ``http://localhost``. By default, django enforces
+behaviour to ensure safe use of ``https://`` which can prevent attempts to
+sign in to a LAVA instance using ``http://localhost/``.
+
+To enable localhost, you may need to disable at least these security
+defaults by adding the following options to ``/etc/lava-server/settings.conf``::
+
+  "CSRF_COOKIE_SECURE": false,
+  "SESSION_COOKIE_SECURE": false
+
+.. note:: This is the reason, if you see issues regarding CSRF token while
+          trying to login with an username. The common error message reported
+          is ``CSRF verification failed. Request aborted.``
+
+Any changes made to ``/etc/lava-server/settings.conf`` will require a restart
+of `lava-server-gunicorn` service for the changes to get applied::
+
+  $ sudo service lava-server-gunicorn restart
+
+.. seealso:: :ref:`check_instance`
