@@ -280,6 +280,7 @@
           {% endif %}
           <li><a href="#bottom"><span class="glyphicon glyphicon-fast-forward"></span> End of log</a></li>
           <li><a href="{% url 'lava.scheduler.job.log_file.plain' job.pk %}"><span class="glyphicon glyphicon-save-file"></span> Plain log</a></li>
+          <li><a href="{% url 'lava.scheduler.job.configuration' job.pk %}"><span class="glyphicon glyphicon-book"></span> Configuration</a></li>
           <li role="separator" class="divider"></li>
           <li><a href="{% url 'lava.scheduler.job.toggle_favorite' job.pk %}"><span class="glyphicon glyphicon-star{% if not is_favorite %}-empty{% endif %}"></span> {{ is_favorite|yesno:"Remove from favorites,Add to favorites" }}</a></li>
           <li><a href="#" data-toggle="modal" data-target="#similar_jobs_modal"><span class="glyphicon glyphicon-search"></span> Similar jobs</a></li>

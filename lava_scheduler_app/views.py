@@ -4,14 +4,17 @@
 from __future__ import unicode_literals
 
 from collections import OrderedDict
-import yaml
+import contextlib
+import datetime
+import io
 import jinja2
 import logging
 import os
 import simplejson
-import datetime
-import re
 import sys
+import tarfile
+import re
+import yaml
 
 from django import forms
 from django.contrib.humanize.templatetags.humanize import naturaltime
@@ -1482,6 +1485,34 @@ def job_pipeline_timing(request, pk):
 
     return HttpResponse(simplejson.dumps(response_dict),
                         content_type='text/json')
+
+
+def job_configuration(request, pk):
+    def add_optional_file(tar, filename):
+        with contextlib.suppress(OSError):
+            tar.add(filename)
+
+    job = get_restricted_job(request.user, pk, request=request)
+    data = ""
+    pwd = os.getcwd()
+    try:
+        with contextlib.suppress(FileNotFoundError):
+            os.chdir(job.output_dir)
+            fileobj = io.BytesIO()
+            with tarfile.open(fileobj=fileobj, mode="w:bz2") as tar:
+                add_optional_file(tar, "job.yaml")
+                add_optional_file(tar, "device.yaml")
+                add_optional_file(tar, "dispatcher.yaml")
+                add_optional_file(tar, "env.yaml")
+                add_optional_file(tar, "env.dut.yaml")
+            fileobj.seek(0)
+            data = fileobj.read()
+            fileobj.close()
+    finally:
+        os.chdir(pwd)
+    response = HttpResponse(data, content_type="application/tar")
+    response['content-Disposition'] = "attachment; filename=configuration.tar.bz2"
+    return response
 
 
 def job_log_file_plain(request, pk):

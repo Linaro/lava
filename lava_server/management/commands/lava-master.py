@@ -28,6 +28,7 @@ import jinja2
 import simplejson
 import lzma
 import os
+import shutil
 import sys
 import time
 import yaml
@@ -410,6 +411,67 @@ class Command(LAVADaemonCommand):
         # no need for the dispatcher to retain comments
         return yaml.dump(job_def)
 
+    def save_job_config(self, job, worker, device_cfg, options):
+        output_dir = job.output_dir
+        mkdir(output_dir)
+        with open(os.path.join(output_dir, "job.yaml"), "w") as f_out:
+            f_out.write(self.export_definition(job))
+        with suppress(IOError):
+            shutil.copy(options["env"], os.path.join(output_dir, "env.yaml"))
+        with suppress(IOError):
+            shutil.copy(options["env_dut"], os.path.join(output_dir, "env.dut.yaml"))
+        with suppress(IOError):
+            shutil.copy(os.path.join(options["dispatchers_config"], "%s.yaml" % worker.hostname),
+                        os.path.join(output_dir, "dispatcher.yaml"))
+        with open(os.path.join(output_dir, "device.yaml"), "w") as f_out:
+            yaml.dump(device_cfg, f_out)
+
+    def start_job(self, job, options):
+        # Load job definition to get the variables for template
+        # rendering
+        job_def = yaml.load(job.definition)
+        job_ctx = job_def.get('context', {})
+
+        device = job.actual_device
+        worker = device.worker_host
+
+        # Load configurations
+        env_str = load_optional_yaml_file(options['env'])
+        env_dut_str = load_optional_yaml_file(options['env_dut'])
+        device_cfg = device.load_configuration(job_ctx)
+        dispatcher_cfg_file = os.path.join(options['dispatchers_config'],
+                                           "%s.yaml" % worker.hostname)
+        dispatcher_cfg = load_optional_yaml_file(dispatcher_cfg_file)
+
+        self.save_job_config(job, worker, device_cfg, options)
+        self.logger.info("[%d] START => %s (%s)", job.id,
+                         worker.hostname, device.hostname)
+        send_multipart_u(self.controler,
+                         [worker.hostname, 'START', str(job.id),
+                          self.export_definition(job),
+                          yaml.dump(device_cfg),
+                          dispatcher_cfg, env_str, env_dut_str])
+
+        # For multinode jobs, start the dynamic connections
+        parent = job
+        for sub_job in job.sub_jobs_list:
+            if sub_job == parent or not sub_job.dynamic_connection:
+                continue
+
+            # inherit only enough configuration for dynamic_connection operation
+            self.logger.info("[%d] Trimming dynamic connection device configuration.", sub_job.id)
+            min_device_cfg = parent.actual_device.minimise_configuration(device_cfg)
+
+            self.save_job_config(sub_job, worker, min_device_cfg, options)
+            self.logger.info("[%d] START => %s (connection)",
+                             sub_job.id, worker.hostname)
+            send_multipart_u(self.controler,
+                             [worker.hostname, 'START',
+                              str(sub_job.id),
+                              self.export_definition(sub_job),
+                              yaml.dump(min_device_cfg), dispatcher_cfg,
+                              env_str, env_dut_str])
+
     def start_jobs(self, options):
         """
         Loop on all scheduled jobs and send the START message to the slave.
@@ -429,49 +491,7 @@ class Command(LAVADaemonCommand):
         for job in query:
             msg = None
             try:
-                # Load job definition to get the variables for template
-                # rendering
-                job_def = yaml.load(job.definition)
-                job_ctx = job_def.get('context', {})
-
-                device = job.actual_device
-                worker = device.worker_host
-
-                # Load configurations
-                env_str = load_optional_yaml_file(options['env'])
-                env_dut_str = load_optional_yaml_file(options['env_dut'])
-                device_cfg = device.load_configuration(job_ctx)
-                dispatcher_cfg_file = os.path.join(options['dispatchers_config'],
-                                                   "%s.yaml" % worker.hostname)
-                dispatcher_cfg = load_optional_yaml_file(dispatcher_cfg_file)
-
-                self.logger.info("[%d] START => %s (%s)", job.id,
-                                 worker.hostname, device.hostname)
-                send_multipart_u(self.controler,
-                                 [worker.hostname, 'START', str(job.id),
-                                  self.export_definition(job),
-                                  yaml.dump(device_cfg),
-                                  dispatcher_cfg, env_str, env_dut_str])
-
-                # For multinode jobs, start the dynamic connections
-                parent = job
-                for sub_job in job.sub_jobs_list:
-                    if sub_job == parent or not sub_job.dynamic_connection:
-                        continue
-
-                    # inherit only enough configuration for dynamic_connection operation
-                    self.logger.info("[%d] Trimming dynamic connection device configuration.", sub_job.id)
-                    min_device_cfg = parent.actual_device.minimise_configuration(device_cfg)
-
-                    self.logger.info("[%d] START => %s (connection)",
-                                     sub_job.id, worker.hostname)
-                    send_multipart_u(self.controler,
-                                     [worker.hostname, 'START',
-                                      str(sub_job.id),
-                                      self.export_definition(sub_job),
-                                      yaml.dump(min_device_cfg), dispatcher_cfg,
-                                      env_str, env_dut_str])
-
+                self.start_job(job, options)
             except jinja2.TemplateNotFound as exc:
                 self.logger.error("[%d] Template not found: '%s'",
                                   job.id, exc.message)

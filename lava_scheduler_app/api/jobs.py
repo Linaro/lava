@@ -31,6 +31,14 @@ elif sys.version_info[0] == 3:
     import xmlrpc.client as xmlrpclib
 
 
+def load_optional_file(filename):
+    try:
+        with open(filename, "r") as f_in:
+            return f_in.read().encode("utf-8")
+    except IOError:
+        return None
+
+
 class SchedulerJobsAPI(ExposedV2API):
 
     def cancel(self, job_id):
@@ -54,6 +62,52 @@ class SchedulerJobsAPI(ExposedV2API):
         """
         cls = SchedulerAPI(self._context)
         return cls.cancel_job(job_id)
+
+    def configuration(self, job_id):
+        """
+        Name
+        ----
+        `scheduler.jobs.configuration` (`job_id`)
+
+        Description
+        -----------
+        Return the full job configuration
+
+        Arguments
+        ---------
+        `job_id`: string
+            Job id
+
+        Return value
+        ------------
+        Return an array with [job, device, dispatcher, env, env-dut] config.
+        Any of theses values might be None if the corresponding file hasn't
+        been used by the job.
+        If the job hasn't started yet, a 404 error will be returned.
+        """
+        try:
+            job = TestJob.get_by_job_number(job_id)
+        except TestJob.DoesNotExist:
+            raise xmlrpclib.Fault(
+                404, "Job '%s' was not found." % job_id)
+
+        if not job.can_view(self.user):
+            raise xmlrpclib.Fault(
+                403, "Job '%s' not available to user '%s'." %
+                (job_id, self.user))
+
+        if job.state not in [TestJob.STATE_RUNNING, TestJob.STATE_CANCELING, TestJob.STATE_FINISHED]:
+            raise xmlrpclib.Fault(
+                404, "Job '%s' has not started yet" % job_id)
+
+        output_dir = job.output_dir
+        definition = load_optional_file(os.path.join(output_dir, "job.yaml"))
+        device = load_optional_file(os.path.join(output_dir, "device.yaml"))
+        dispatcher = load_optional_file(os.path.join(output_dir,
+                                                     "dispatcher.yaml"))
+        env = load_optional_file(os.path.join(output_dir, "env.yaml"))
+        env_dut = load_optional_file(os.path.join(output_dir, "env.dut.yaml"))
+        return [definition, device, dispatcher, env, env_dut]
 
     def definition(self, job_id):
         """
