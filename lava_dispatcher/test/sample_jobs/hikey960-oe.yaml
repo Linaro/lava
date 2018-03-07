@@ -20,7 +20,7 @@ metadata:
   uefi-build: uefi 13
   uefi-url: http://images.validation.linaro.org/builds.96boards.org/snapshots/reference-platform/components/uefi-staging/23/hikey960/release/
   build: '71'
-  build-url: https://http://images.validation.linaro.org/builds.96boards.org/snapshots/reference-platform/openembedded/morty/hikey960/rpb/71/
+  build-url: http://images.validation.linaro.org/builds.96boards.org/snapshots/reference-platform/openembedded/morty/hikey960/rpb/71/
   series: tom-feedback
 
 protocols:

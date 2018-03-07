@@ -89,10 +89,10 @@ actions:
       aboot:
         url: http://images.validation.linaro.org/dragonboard410c/linaro/rescue/16.06/linux/emmc_appsboot.mbn
       boot:
-        url: http://builds.96boards.org/releases/dragonboard410c/linaro/debian/16.06/boot-linaro-jessie-qcom-snapdragon-arm64-20160630-110.img.gz
+        url: http://images.validation.linaro.org/builds.96boards.org/releases/dragonboard410c/linaro/debian/16.06/boot-linaro-jessie-qcom-snapdragon-arm64-20160630-110.img.gz
         compression: gz
       rootfs:
-        url: http://builds.96boards.org/releases/dragonboard410c/linaro/debian/16.06/linaro-jessie-developer-qcom-snapdragon-arm64-20160630-110.img.gz
+        url: http://images.validation.linaro.org/builds.96boards.org/releases/dragonboard410c/linaro/debian/16.06/linaro-jessie-developer-qcom-snapdragon-arm64-20160630-110.img.gz
         compression: gz
     os: debian
 
