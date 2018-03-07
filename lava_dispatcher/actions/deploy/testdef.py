@@ -18,7 +18,6 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import errno
 import os
 import io
 import re
@@ -27,7 +26,6 @@ import base64
 import hashlib
 import tarfile
 import shutil
-import sys
 from collections import OrderedDict
 from nose.tools import nottest
 from lava_dispatcher.action import (
@@ -47,11 +45,6 @@ from lava_dispatcher.utils.constants import (
     DEFAULT_TESTDEF_NAME_CLASS,
     DISPATCHER_DOWNLOAD_DIR,
 )
-
-if sys.version_info[0] == 2:
-    import urlparse as lavaurl
-elif sys.version_info[0] == 3:
-    import urllib.parse as lavaurl  # pylint: disable=no-name-in-module,import-error
 
 
 @nottest
@@ -227,8 +220,6 @@ class RepoAction(Action):
         self.runner = "%s\n" % runner_path
 
         overlay_base = self.get_namespace_data(action='test', label='test-definition', key='overlay_dir')
-        vcs_base_path = os.path.join(overlay_base, str(self.stage), 'repos')
-        self.set_namespace_data(action='uuid', label='vcs_base_path', key='vcs_base', value=vcs_base_path)
         overlay_path = os.path.join(overlay_base, str(self.stage), 'tests', args['test_name'])
         self.set_namespace_data(action='uuid', label='overlay_path', key=args['test_name'], value=overlay_path)
         self.set_namespace_data(
@@ -311,17 +302,6 @@ class GitRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
         # use the base class to populate the runner_path and overlay_path data into the context
         connection = super(GitRepoAction, self).run(connection, max_end_time, self.parameters)
 
-        vcs_base_path = self.get_namespace_data(action='uuid', label='vcs_base_path', key='vcs_base')
-
-        # Get the branch if specified.
-        branch = self.parameters.get('branch', None)
-        # Set shallow to False if revision is specified.
-        # Otherwise default to True if not specified as a parameter.
-        revision = self.parameters.get('revision', None)
-        shallow = False
-        if not revision:
-            shallow = self.parameters.get('shallow', True)
-
         # NOTE: the runner_path dir must remain empty until after the VCS clone, so let the VCS clone create the final dir
         runner_path = self.get_namespace_data(action='uuid', label='overlay_path', key=self.parameters['test_name'])
 
@@ -332,54 +312,25 @@ class GitRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
         if os.path.exists(runner_path):
             shutil.rmtree(runner_path)
 
-        # Use shared symlinks only for shallow clones
-        clone_exists = False
-        if shallow:
-            url = lavaurl.urlparse(self.parameters['repository'])
-            shared_repo_path = os.path.join(vcs_base_path,
-                                            url.netloc.lstrip("/"),
-                                            url.path.lstrip("/"))
-
-            # If directory is not empty then don't clone, only create link.
-            try:
-                os.makedirs(shared_repo_path)
-            except OSError as e:
-                if e.errno == errno.EEXIST and os.path.isdir(shared_repo_path):
-                    if os.listdir(shared_repo_path) != []:
-                        clone_exists = True
-                    else:
-                        pass
-                else:
-                    raise
-
-            # Create runner_path parent dir.
-            runner_parent_path = os.path.abspath(
-                os.path.join(runner_path, os.pardir))
-            try:
-                os.makedirs(runner_parent_path)
-            except OSError as e:
-                if e.errno == errno.EEXIST:
-                    pass
-                else:
-                    raise
-            self.logger.debug("Symlink used from: %s", shared_repo_path)
-            os.symlink(
-                os.path.relpath(shared_repo_path, runner_parent_path),
-                runner_path)
-
-        self.logger.info("Runner path: %s", runner_path)
         self.logger.info("Fetching tests from %s", self.parameters['repository'])
-        if clone_exists:
-            commit_id = self.vcs.get_commit_id(runner_path)
-        else:
-            commit_id = self.vcs.clone(
-                runner_path,
-                shallow=shallow,
-                revision=revision,
-                branch=branch)
-            if commit_id is None:
-                raise InfrastructureError("Unable to get test definition from %s (%s)" % (self.vcs.binary, self.parameters))
 
+        # Get the branch if specified.
+        branch = self.parameters.get('branch', None)
+
+        # Set shallow to False if revision is specified.
+        # Otherwise default to True if not specified as a parameter.
+        revision = self.parameters.get('revision', None)
+        shallow = False
+        if not revision:
+            shallow = self.parameters.get('shallow', True)
+
+        commit_id = self.vcs.clone(
+            runner_path,
+            shallow=shallow,
+            revision=revision,
+            branch=branch)
+        if commit_id is None:
+            raise InfrastructureError("Unable to get test definition from %s (%s)" % (self.vcs.binary, self.parameters))
         self.results = {
             'commit': commit_id,
             'repository': self.parameters['repository'],
