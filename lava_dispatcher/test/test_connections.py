@@ -28,9 +28,8 @@ from lava_dispatcher.device import NewDevice
 from lava_dispatcher.action import Timeout
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.actions.boot.ssh import SchrootAction
-from lava_dispatcher.utils.shell import infrastructure_error
 from lava_dispatcher.test.test_basic import Factory, StdoutTestCase
-from lava_dispatcher.test.utils import DummyLogger
+from lava_dispatcher.test.utils import DummyLogger, infrastructure_error
 from lava_dispatcher.utils.filesystem import check_ssh_identity_file
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
 

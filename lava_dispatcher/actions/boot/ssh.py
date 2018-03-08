@@ -26,7 +26,7 @@ from lava_dispatcher.action import Action, LAVABug, Pipeline, JobError
 from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.actions.boot import AutoLoginAction
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
-from lava_dispatcher.utils.shell import infrastructure_error
+from lava_dispatcher.utils.shell import which
 from lava_dispatcher.shell import ExpectShellSession
 from lava_dispatcher.connections.ssh import ConnectSsh
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
@@ -98,7 +98,7 @@ class Scp(ConnectSsh):
     def validate(self):
         super(Scp, self).validate()
         params = self._check_params()
-        self.errors = infrastructure_error('scp')
+        which('scp')
         if 'ssh' not in self.job.device['actions']['deploy']['methods']:
             self.errors = "Unable to use %s without ssh deployment" % self.name
         if 'ssh' not in self.job.device['actions']['boot']['methods']:
@@ -273,7 +273,7 @@ class SchrootAction(Action):
         if 'schroot' not in self.job.device['actions']['boot']['methods']:
             self.errors = "No schroot support in device boot methods"
             return
-        self.errors = infrastructure_error('schroot')
+        which('schroot')
         # device parameters are for ssh
         params = self.job.device['actions']['boot']['methods']
         if 'command' not in params['schroot']:

@@ -49,7 +49,7 @@ from lava_dispatcher.actions.deploy.testdef import (
 from lava_dispatcher.actions.boot import BootAction
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.actions.deploy.download import DownloaderAction
-from lava_dispatcher.utils.shell import infrastructure_error
+from lava_dispatcher.test.utils import infrastructure_error
 
 
 # pylint: disable=duplicate-code

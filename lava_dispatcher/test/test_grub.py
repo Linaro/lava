@@ -23,7 +23,7 @@ import os
 import unittest
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
-from lava_dispatcher.test.utils import DummyLogger
+from lava_dispatcher.test.utils import DummyLogger, infrastructure_error, infrastructure_error_multi_paths
 from lava_dispatcher.actions.boot.grub import GrubMainAction
 from lava_dispatcher.actions.boot import BootloaderCommandOverlay
 from lava_dispatcher.actions.deploy.tftp import TftpAction
@@ -31,10 +31,8 @@ from lava_dispatcher.job import Job
 from lava_dispatcher.action import JobError, Pipeline
 from lava_dispatcher.test.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.utils.network import dispatcher_ip
-from lava_dispatcher.utils.shell import infrastructure_error
 from lava_dispatcher.utils.filesystem import mkdtemp, tftpd_dir
 from lava_dispatcher.utils.strings import substitute
-from lava_dispatcher.utils.shell import infrastructure_error_multi_paths
 
 
 class GrubFactory(Factory):  # pylint: disable=too-few-public-methods

@@ -18,6 +18,11 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import os
+from stat import S_IXUSR
+
+from lava_dispatcher.utils.shell import _which_check
+
 
 class DummyLogger(object):
     def info(self, *args, **kwargs):
@@ -40,3 +45,28 @@ class DummyLogger(object):
 
     def target(self, *args, **kwargs):
         pass
+
+
+def infrastructure_error(path):
+    """
+    Extends which into a check which sets default messages for Action validation,
+    without needing to raise an Exception (which is slow).
+    Use for quick checks on whether essential tools are installed and usable.
+    """
+    exefile = _which_check(path, match=os.path.isfile)
+    if not exefile:
+        return "Cannot find command '%s' in $PATH" % path
+    # is the infrastructure call safe to make?
+    if exefile and os.stat(exefile).st_mode & S_IXUSR != S_IXUSR:
+        return "%s is not executable" % exefile
+    return None
+
+
+def infrastructure_error_multi_paths(path_list):
+    """
+    Similar to infrastructure_error, but accepts a list of paths.
+    """
+    for path in path_list:
+        if infrastructure_error(path):
+            return infrastructure_error(path)
+    return None

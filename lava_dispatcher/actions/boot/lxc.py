@@ -33,7 +33,7 @@ from lava_dispatcher.connections.lxc import (
     ConnectLxc,
 )
 from lava_dispatcher.shell import ExpectShellSession
-from lava_dispatcher.utils.shell import infrastructure_error
+from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.udev import get_udev_devices
 from lava_dispatcher.utils.udev import allow_fs_label
 
@@ -155,7 +155,7 @@ class LxcStartAction(Action):
 
     def validate(self):
         super(LxcStartAction, self).validate()
-        self.errors = infrastructure_error('lxc-start')
+        which('lxc-start')
 
     def run(self, connection, max_end_time, args=None):
         connection = super(LxcStartAction, self).run(connection, max_end_time, args)
@@ -198,7 +198,7 @@ class LxcStopAction(Action):
 
     def validate(self):
         super(LxcStopAction, self).validate()
-        self.errors = infrastructure_error('lxc-stop')
+        which('lxc-stop')
 
     def run(self, connection, max_end_time, args=None):
         connection = super(LxcStopAction, self).run(connection, max_end_time, args)

@@ -18,7 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from lava_dispatcher.utils.shell import infrastructure_error
+from lava_dispatcher.utils.shell import which
 from lava_dispatcher.action import (
     Action,
     JobError,
@@ -62,7 +62,7 @@ class ConnectLxc(Action):
         if 'lxc' not in self.job.device['actions']['boot']['methods']:
             return
         super(ConnectLxc, self).validate()
-        self.errors = infrastructure_error('lxc-attach')
+        which('lxc-attach')
 
     def run(self, connection, max_end_time, args=None):
         lxc_name = self.get_namespace_data(

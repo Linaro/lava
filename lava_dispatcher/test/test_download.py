@@ -25,7 +25,7 @@ from lava_dispatcher.parser import JobParser
 from lava_dispatcher.action import JobError
 from lava_dispatcher.test.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.actions.deploy import DeployAction
-from lava_dispatcher.utils.shell import infrastructure_error_multi_paths
+from lava_dispatcher.test.utils import infrastructure_error_multi_paths
 
 
 class DownloadFactory(Factory):  # pylint: disable=too-few-public-methods

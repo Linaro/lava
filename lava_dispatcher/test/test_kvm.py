@@ -42,8 +42,7 @@ from lava_dispatcher.parser import JobParser
 from lava_dispatcher.test.test_messages import FakeConnection
 from lava_dispatcher.utils.messages import LinuxKernelMessages
 from lava_dispatcher.test.test_defs import allow_missing_path, check_missing_path
-from lava_dispatcher.test.utils import DummyLogger
-from lava_dispatcher.utils.shell import infrastructure_error
+from lava_dispatcher.test.utils import DummyLogger, infrastructure_error
 from lava_dispatcher.utils.strings import substitute
 
 # pylint: disable=invalid-name

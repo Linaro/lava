@@ -26,7 +26,7 @@ from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.logical import Deployment
-from lava_dispatcher.utils.shell import infrastructure_error
+from lava_dispatcher.utils.shell import which
 
 
 class DockerAction(DeployAction):
@@ -37,10 +37,7 @@ class DockerAction(DeployAction):
 
     def validate(self):
         super(DockerAction, self).validate()
-        err = infrastructure_error("docker")
-        if err is not None:
-            self.errors = err
-            return
+        which("docker")
 
         # Print docker version
         try:

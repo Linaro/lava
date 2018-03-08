@@ -45,7 +45,7 @@ from lava_dispatcher.utils.filesystem import (
     copy_in_overlay,
     copy_overlay_to_sparse_fs,
 )
-from lava_dispatcher.utils.shell import infrastructure_error
+from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.compression import (
     compress_file,
     decompress_file,
@@ -134,10 +134,10 @@ class ApplyOverlaySparseImage(Action):
 
     def validate(self):
         super(ApplyOverlaySparseImage, self).validate()
-        self.errors = infrastructure_error('/usr/bin/simg2img')
-        self.errors = infrastructure_error('/bin/mount')
-        self.errors = infrastructure_error('/bin/umount')
-        self.errors = infrastructure_error('/usr/bin/img2simg')
+        which('simg2img')
+        which('mount')
+        which('umount')
+        which('img2simg')
 
     def run(self, connection, max_end_time, args=None):
         overlay_file = self.get_namespace_data(action='compress-overlay',
@@ -507,7 +507,7 @@ class CompressRamdisk(Action):
             self.add_header = self.job.device['actions']['deploy']['parameters'].get('add_header', None)
             if self.add_header is not None:
                 if self.add_header == 'u-boot':
-                    self.errors = infrastructure_error('mkimage')
+                    which('mkimage')
                     if 'mkimage_arch' not in self.job.device['actions']['deploy']['parameters']:
                         self.errors = "Missing architecture for uboot mkimage support (mkimage_arch in deploy parameters)"
                         return
@@ -603,7 +603,7 @@ class ApplyLxcOverlay(Action):
 
     def validate(self):
         super(ApplyLxcOverlay, self).validate()
-        self.errors = infrastructure_error('tar')
+        which('tar')
         if not os.path.exists(self.lava_test_dir):
             self.errors = "Missing lava-test-runner: %s" % self.lava_test_dir
 

@@ -37,7 +37,7 @@ from lava_dispatcher.actions.deploy.testdef import (
 from lava_dispatcher.logical import Deployment
 from lava_dispatcher.utils.contextmanager import chdir
 from lava_dispatcher.utils.filesystem import check_ssh_identity_file
-from lava_dispatcher.utils.shell import infrastructure_error
+from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.network import rpcinfo_nfs
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
 from lava_dispatcher.protocols.vland import VlandProtocol
@@ -564,7 +564,7 @@ class PersistentNFSOverlay(Action):
             self.errors = "Unrecognised NFS URL: '%s'" % self.parameters['persistent_nfs']['address']
             return
         nfs_server, dirname = persist['address'].split(':')
-        self.errors = infrastructure_error('rpcinfo')
+        which('rpcinfo')
         self.errors = rpcinfo_nfs(nfs_server)
         self.set_namespace_data(action=self.name, label='nfs_address', key='nfsroot', value=dirname)
         self.set_namespace_data(action=self.name, label='nfs_address', key='serverip', value=nfs_server)

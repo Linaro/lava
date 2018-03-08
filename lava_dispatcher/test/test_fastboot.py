@@ -23,14 +23,10 @@ import glob
 import unittest
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
-from lava_dispatcher.utils.shell import (
-    infrastructure_error,
-    infrastructure_error_multi_paths,
-)
 from lava_dispatcher.action import JobError
 from lava_dispatcher.protocols.lxc import LxcProtocol
 from lava_dispatcher.test.test_basic import Factory, StdoutTestCase
-from lava_dispatcher.test.utils import DummyLogger
+from lava_dispatcher.test.utils import DummyLogger, infrastructure_error, infrastructure_error_multi_paths
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.fastboot import FastbootFlashOrderAction
 from lava_dispatcher.actions.boot.fastboot import BootAction

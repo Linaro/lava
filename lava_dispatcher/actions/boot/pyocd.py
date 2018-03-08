@@ -26,7 +26,7 @@ from lava_dispatcher.action import (
 from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.actions.boot import BootAction
 from lava_dispatcher.connections.serial import ConnectDevice
-from lava_dispatcher.utils.shell import infrastructure_error
+from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.strings import substitute
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.utils.udev import WaitDeviceBoardID
@@ -97,7 +97,7 @@ class FlashPyOCDAction(Action):
         super(FlashPyOCDAction, self).validate()
         boot = self.job.device['actions']['boot']['methods']['pyocd']
         pyocd_binary = boot['parameters']['command']
-        self.errors = infrastructure_error(pyocd_binary)
+        which(pyocd_binary)
         self.base_command = [pyocd_binary]
         self.base_command.extend(boot['parameters'].get('options', []))
         if self.job.device['board_id'] == '0000000000':

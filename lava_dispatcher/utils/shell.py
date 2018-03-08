@@ -20,6 +20,7 @@
 
 import os
 from stat import S_IXUSR
+
 from lava_dispatcher.action import InfrastructureError
 
 
@@ -41,31 +42,11 @@ def _which_check(path, match):
 
 
 def which(path, match=os.path.isfile):
-    ret = _which_check(path, match)
-    if ret:
-        return ret
-    raise InfrastructureError("Cannot find command '%s' in $PATH" % path)
-
-
-def infrastructure_error(path):
-    """
-    Extends which into a check which sets default messages for Action validation,
-    without needing to raise an Exception (which is slow).
-    Use for quick checks on whether essential tools are installed and usable.
-    """
-    exefile = _which_check(path, match=os.path.isfile)
+    exefile = _which_check(path, match)
     if not exefile:
-        return "Cannot find command '%s' in $PATH" % path
-    # is the infrastructure call safe to make?
-    if exefile and os.stat(exefile).st_mode & S_IXUSR != S_IXUSR:
-        return "%s is not executable" % exefile
-    return None
+        raise InfrastructureError("Cannot find command '%s' in $PATH" % path)
 
+    if os.stat(exefile).st_mode & S_IXUSR != S_IXUSR:
+        raise InfrastructureError("Cannot execute '%s' at '%s'" % (path, exefile))
 
-def infrastructure_error_multi_paths(path_list):
-    """
-    Similar to infrastructure_error, but accepts a list of paths.
-    """
-    for path in path_list:
-        if infrastructure_error(path):
-            return infrastructure_error(path)
+    return exefile

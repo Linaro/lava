@@ -1,6 +1,7 @@
 import logging
-from lava_dispatcher.test.utils import DummyLogger
+
 from lava_dispatcher.shell import ShellCommand
+from lava_dispatcher.test.utils import DummyLogger
 
 
 logging.getLogger("requests").setLevel(logging.WARNING)

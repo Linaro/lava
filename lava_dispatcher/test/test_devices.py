@@ -25,10 +25,9 @@ from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.boot import BootAction
-from lava_dispatcher.utils.shell import infrastructure_error
 from lava_dispatcher.actions.boot.u_boot import BootloaderInterruptAction, UBootAction
 from lava_dispatcher.test.test_basic import StdoutTestCase
-from lava_dispatcher.test.utils import DummyLogger
+from lava_dispatcher.test.utils import DummyLogger, infrastructure_error
 
 # Test the loading of test definitions within the deploy stage
 

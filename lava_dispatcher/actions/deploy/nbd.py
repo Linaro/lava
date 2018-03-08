@@ -24,11 +24,11 @@
 import os
 import tempfile
 
-from lava_dispatcher.action import Pipeline
+from lava_dispatcher.action import Pipeline, JobError
 from lava_dispatcher.logical import Deployment
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.download import DownloaderAction
-from lava_dispatcher.utils.shell import infrastructure_error
+from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.filesystem import tftpd_dir
 from lava_dispatcher.utils.network import get_free_port
 from lava_dispatcher.utils.network import dispatcher_ip
@@ -98,8 +98,8 @@ class NbdAction(DeployAction):  # pylint:disable=too-many-instance-attributes
         suffix = os.path.join(*self.tftp_dir.split('/')[-2:])
         self.set_namespace_data(action="tftp-deploy", label='tftp', key='suffix', value=suffix)
         # we need tftp _and_ xnbd-server
-        self.errors = infrastructure_error('in.tftpd')
-        self.errors = infrastructure_error('xnbd-server')
+        which('in.tftpd')
+        which('xnbd-server')
 
         # Check that the tmp directory is in the nbdd_dir or in /tmp for the
         # unit tests
@@ -155,9 +155,6 @@ class XnbdAction(DeployAction):
         self.nbd_server_port = None
         self.nbd_server_ip = None
 
-    def validate(self):
-        pass
-
     def run(self, connection, max_end_time, args=None):
         connection = super(XnbdAction, self).run(connection, max_end_time, args)
         self.logger.debug("%s: starting xnbd-server", self.name)
@@ -174,6 +171,7 @@ class XnbdAction(DeployAction):
         command_output = self.run_command(nbd_cmd, allow_fail=False)
 
         if command_output and 'error' in command_output:
-            self.errors = infrastructure_error('xnbd-server: %s' % command_output)
-        self.logger.debug("%s: starting xnbd-server done", self.name)
+            raise JobError('xnbd-server: %s' % command_output)
+        else:
+            self.logger.debug("%s: starting xnbd-server done", self.name)
         return connection

@@ -35,7 +35,7 @@ from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.apply_overlay import PrepareOverlayTftp
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.utils.constants import TFTP_SIZE_LIMIT
-from lava_dispatcher.utils.shell import infrastructure_error
+from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.filesystem import tftpd_dir
 
 
@@ -91,7 +91,7 @@ class TftpAction(DeployAction):  # pylint:disable=too-many-instance-attributes
         # Extract the 3 last path elements. See action.mkdtemp()
         suffix = os.path.join(*self.tftp_dir.split('/')[-2:])
         self.set_namespace_data(action=self.name, label='tftp', key='suffix', value=suffix)
-        self.errors = infrastructure_error('in.tftpd')
+        which('in.tftpd')
 
         # Check that the tmp directory is in the tftpd_dir or in /tmp for the
         # unit tests

@@ -21,7 +21,7 @@
 
 from lava_dispatcher.action import JobError, InfrastructureError
 from lava_dispatcher.utils.filesystem import check_ssh_identity_file
-from lava_dispatcher.utils.shell import infrastructure_error
+from lava_dispatcher.utils.shell import which
 from lava_dispatcher.action import Action
 from lava_dispatcher.shell import ShellCommand, ShellSession
 
@@ -112,7 +112,7 @@ class ConnectSsh(Action):
     def validate(self):
         super(ConnectSsh, self).validate()
         params = self._check_params()
-        self.errors = infrastructure_error('ssh')
+        which('ssh')
         if 'host' in self.job.device['actions']['deploy']['methods']['ssh']:
             self.primary = True
             self.host = self.job.device['actions']['deploy']['methods']['ssh']['host']

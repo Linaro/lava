@@ -34,7 +34,7 @@ from lava_dispatcher.actions.boot.lxc import (
     LxcStartAction,
     LxcStopAction,
 )
-from lava_dispatcher.utils.shell import infrastructure_error
+from lava_dispatcher.utils.shell import which
 from lava_dispatcher.protocols.lxc import LxcProtocol
 from lava_dispatcher.utils.constants import (
     LXC_PATH,
@@ -99,7 +99,7 @@ class LxcAction(DeployAction):  # pylint:disable=too-many-instance-attributes
             self.logger.debug("Missing protocol '%s' in %s",
                               LxcProtocol.name, protocols)
             self.errors = "Missing protocol '%s'" % LxcProtocol.name
-        self.errors = infrastructure_error('lxc-create')
+        which('lxc-create')
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job,
@@ -221,7 +221,7 @@ class LxcCreateUdevRuleAction(DeployAction):
 
     def validate(self):
         super(LxcCreateUdevRuleAction, self).validate()
-        self.errors = infrastructure_error('udevadm')
+        which('udevadm')
         if 'device_info' in self.job.device \
            and not isinstance(self.job.device.get('device_info'), list):
             self.errors = "device_info unset"

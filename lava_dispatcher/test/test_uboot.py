@@ -36,9 +36,8 @@ from lava_dispatcher.actions.deploy.tftp import TftpAction
 from lava_dispatcher.job import Job
 from lava_dispatcher.action import Pipeline, JobError
 from lava_dispatcher.test.test_basic import Factory, StdoutTestCase
-from lava_dispatcher.test.utils import DummyLogger
+from lava_dispatcher.test.utils import DummyLogger, infrastructure_error
 from lava_dispatcher.utils.network import dispatcher_ip
-from lava_dispatcher.utils.shell import infrastructure_error
 from lava_dispatcher.utils.filesystem import tftpd_dir
 from lava_dispatcher.utils.strings import substitute
 
