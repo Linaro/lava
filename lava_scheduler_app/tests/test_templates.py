@@ -11,7 +11,7 @@ from lava_dispatcher.parser import JobParser
 from lava_dispatcher.device import NewDevice
 from lava_scheduler_app.schema import validate_device, SubmissionException
 from lava_dispatcher.action import Timeout
-from lava_dispatcher.utils.shell import infrastructure_error
+from lava_dispatcher.test.utils import infrastructure_error
 from lava_dispatcher.test.utils import DummyLogger
 from lava_scheduler_app.schema import (
     validate_submission,
