@@ -130,7 +130,7 @@ def device_type_summary(visible=None):
     return devices
 
 
-def load_devicetype_template(device_type_name):
+def load_devicetype_template(device_type_name, raw=False):
     """
     Loads the bare device-type template as a python dictionary object for
     representation within the device_type templates.
@@ -138,7 +138,7 @@ def load_devicetype_template(device_type_name):
     parts of the dictionary may be unexpectedly empty. Not to be used when
     rendering device configuration for a testjob.
     :param device_type_name: DeviceType.name (string)
-    :param path: optional alternative path to templates
+    :param raw: if True, return the raw yaml
     :return: None or a dictionary of the device type template.
     """
     path = os.path.dirname(Device.CONFIG_PATH)
@@ -148,8 +148,9 @@ def load_devicetype_template(device_type_name):
         trim_blocks=True)
     try:
         template = env.get_template("%s.jinja2" % device_type_name)
+        data = template.render()
+        if not data:
+            return None
+        return data if raw else yaml.load(data)
     except (jinja2.TemplateError, yaml.error.YAMLError):
         return None
-    if not template:
-        return None
-    return yaml.load(template.render())

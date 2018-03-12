@@ -2132,10 +2132,10 @@ def download_device_type_template(request, pk):
     if not device_type:
         raise Http404
     device_type = device_type[0]
-    data = load_devicetype_template(device_type.name)
+    data = load_devicetype_template(device_type.name, raw=True)
     if not data:
         raise Http404
-    response = HttpResponse(yaml.dump(data), content_type='text/plain; charset=utf-8')
+    response = HttpResponse(data, content_type='text/plain; charset=utf-8')
     response['Content-Transfer-Encoding'] = 'quoted-printable'
     response['Content-Disposition'] = "attachment; filename=%s_template.yaml" % device_type.name
     return response
