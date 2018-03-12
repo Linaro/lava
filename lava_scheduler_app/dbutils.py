@@ -148,7 +148,7 @@ def load_devicetype_template(device_type_name):
         trim_blocks=True)
     try:
         template = env.get_template("%s.jinja2" % device_type_name)
-    except jinja2.TemplateNotFound:
+    except (jinja2.TemplateError, yaml.error.YAMLError):
         return None
     if not template:
         return None

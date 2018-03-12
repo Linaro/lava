@@ -815,7 +815,8 @@ def device_type_detail(request, pk):
                    'devices_table_no_dt': no_dt_ptable,
                    'bread_crumb_trail': BreadCrumbTrail.leading_to(device_type_detail, pk=pk),
                    'context_help': BreadCrumbTrail.leading_to(device_type_detail, pk='help'),
-                   'health_freq': health_freq_str})
+                   'health_freq': health_freq_str,
+                   'invalid_template': load_devicetype_template(dt.name) is None})
 
 
 @BreadCrumb("Health history", parent=device_type_detail, needs=['pk'])
@@ -1772,16 +1773,11 @@ def device_detail(request, pk):
                                             prefix="device_log_")
     RequestConfig(request, paginate={"per_page": device_log_ptable.length}).configure(device_log_ptable)
 
-    mismatch = False
-
-    overrides = None
-    if device.is_pipeline:
-        overrides = []
-        extends = device.get_extends()
-        if extends:
-            path = os.path.dirname(device.CONFIG_PATH)
-            devicetype_file = os.path.join(path, 'device-types', '%s.jinja2' % extends)
-            mismatch = not os.path.exists(devicetype_file)
+    overrides = []
+    try:
+        mismatch = not bool(device.load_configuration())
+    except yaml.YAMLError:
+        mismatch = True
 
     template = loader.get_template("lava_scheduler_app/device.html")
     device_can_admin = device.can_admin(request.user)

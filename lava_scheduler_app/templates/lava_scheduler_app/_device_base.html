@@ -10,13 +10,11 @@
 </div>
 {% endif %}
 
-{% if can_admin and template_mismatch %}
-  <div class="alert alert-warning">
-    <strong>Configuration Error: template-mismatch.</strong>
-  <p>The '{{ device.device_type }}' device type has no matching jinja2 template.
-      Pipeline (V2) jobs requesting this device type will not be able to start until
-     a template is available on the master.
-  </p>
+{% if template_mismatch %}
+  <div class="alert alert-danger">
+    <strong>Configuration Error: missing or invalid template.</strong>
+    <p>Jobs requesting this device type ({{ device.device_type }}) will not be able to start until
+       a template is available on the master.</p>
   </div>
 {% endif %}
 

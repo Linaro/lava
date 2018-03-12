@@ -3,11 +3,19 @@
 {% load utils %}
 {% block content %}
 
-{% if device_type.owners_only %}
+{% if invalid_template %}
+<div class="alert alert-danger">
+  <strong>Configuration Error: missing or invalid template.</strong>
+  <p>Jobs requesting this device type will not be able to start until
+     a template is available on the master.</p>
+</div>
+{% endif %}
+
+{% if dt.owners_only %}
 <div class="alert alert-warning alert-dismissable">
   <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-  <p><strong><i>{{ device_type.name }}</i> is a hidden device type.</strong></p>
-  Only owners of one or more devices of type <i>{{ device_type }}</i> can see this information.
+  <p><strong><i>{{ dt.name }}</i> is a hidden device type.</strong></p>
+  Only owners of one or more devices of type <i>{{ dt }}</i> can see this information.
 </div>
 {% endif %}
 
@@ -104,7 +112,7 @@
 <h4 class="modal-header">Health Job Summary</h4>
 {% render_table health_job_summary_table %}
 
-<h4 class="modal-header">Jobs for devices of type {{ device_type }}</h4>
+<h4 class="modal-header">Jobs for devices of type {{ dt }}</h4>
 {% render_table device_type_jobs_table %}
 
 {% endblock %}
