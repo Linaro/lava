@@ -803,7 +803,7 @@ class Device(RestrictedResource):
                     self.log_admin_entry(None, "%s → %s" % (prev_health_display, self.get_health_display()))
             elif infrastructure_error:
                 self.health = Device.HEALTH_UNKNOWN
-                self.log_admin_entry(None, "%s → %s (Infrastructure error)" % (prev_health_display, self.get_health_display()))
+                self.log_admin_entry(None, "%s → %s (Infrastructure error after %s)" % (prev_health_display, self.get_health_display(), job.display_id))
 
         else:
             raise NotImplementedError("Unknown signal %s" % signal)

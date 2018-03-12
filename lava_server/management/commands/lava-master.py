@@ -41,6 +41,7 @@ from django.db import connection, transaction
 from django.db.utils import OperationalError, InterfaceError
 from django.utils import timezone
 
+from lava_results_app.models import TestCase, TestSuite
 from lava_scheduler_app.dbutils import parse_job_description
 from lava_scheduler_app.models import TestJob, Worker
 from lava_scheduler_app.scheduler import schedule
@@ -475,27 +476,31 @@ class Command(LAVADaemonCommand):
             except jinja2.TemplateNotFound as exc:
                 self.logger.error("[%d] Template not found: '%s'",
                                   job.id, exc.message)
-                msg = "Infrastructure error: Template not found: '%s'" % \
-                      exc.message
+                msg = "Template not found: '%s'" % exc.message
             except jinja2.TemplateSyntaxError as exc:
                 self.logger.error("[%d] Template syntax error in '%s', line %d: %s",
                                   job.id, exc.name, exc.lineno, exc.message)
-                msg = "Infrastructure error: Template syntax error in '%s', line %d: %s" % \
-                      (exc.name, exc.lineno, exc.message)
+                msg = "Template syntax error in '%s', line %d: %s" % (exc.name, exc.lineno, exc.message)
             except IOError as exc:
                 self.logger.error("[%d] Unable to read '%s': %s",
                                   job.id, exc.filename, exc.strerror)
-                msg = "Infrastructure error: cannot open '%s': %s" % \
-                      (exc.filename, exc.strerror)
+                msg = "Cannot open '%s': %s" % (exc.filename, exc.strerror)
             except yaml.YAMLError as exc:
                 self.logger.error("[%d] Unable to parse job definition: %s",
                                   job.id, exc)
-                msg = "Infrastructure error: cannot parse job definition: %s" % \
-                      exc
+                msg = "Cannot parse job definition: %s" % exc
 
             if msg:
-                # TODO: do something with the error. Maybe setting lava.job result
-                job.go_state_finished(TestJob.HEALTH_INCOMPLETE)
+                # Add the error as lava.job result
+                metadata = {"case": "job",
+                            "definition": "lava",
+                            "error_type": "Infrastructure",
+                            "error_msg": msg,
+                            "result": "fail"}
+                suite, _ = TestSuite.objects.get_or_create(name="lava", job=job)
+                TestCase.objects.create(name="job", suite=suite, result=TestCase.RESULT_FAIL,
+                                        metadata=yaml.dump(metadata))
+                job.go_state_finished(TestJob.HEALTH_INCOMPLETE, True)
                 job.save()
 
     def cancel_jobs(self, partial=False):
