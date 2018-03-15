@@ -99,9 +99,13 @@ class DownloaderAction(RetryAction):
 
         # Find the right action according to the url
         if 'images' in parameters and self.key in parameters['images']:
-            url = lavaurl.urlparse(parameters['images'][self.key]['url'])
+            url = parameters['images'][self.key].get('url')
         else:
-            url = lavaurl.urlparse(parameters[self.key]['url'])
+            url = parameters[self.key].get('url')
+        if url is None:
+            raise JobError("Invalid deploy action: 'url' is missing for '%s'" % self.key)
+
+        url = lavaurl.urlparse(url)
         if url.scheme == 'scp':
             action = ScpDownloadAction(self.key, self.path, url, self.uniquify)
         elif url.scheme == 'http' or url.scheme == 'https':
