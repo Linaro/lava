@@ -395,6 +395,12 @@ class TestShellAction(TestAction):
 
     @nottest
     def signal_test_case(self, params):
+        # If the STARTRUN signal was not received correctly, we cannot continue
+        # as the test_uuid is missing.
+        # This is only happening when the signal string is split by some kernel messages.
+        if self.signal_director.test_uuid is None:
+            self.logger.error("Unknown test uuid. The STARTRUN signal for this test action was not received correctly.")
+            raise TestError("Invalid TESTCASE signal")
         try:
             data = handle_testcase(params)
             # get the fixup from the pattern_dict
