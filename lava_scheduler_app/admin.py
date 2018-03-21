@@ -62,8 +62,13 @@ def cancel_action(modeladmin, request, queryset):  # pylint: disable=unused-argu
     with transaction.atomic():
         for testjob in queryset.select_for_update():
             if testjob.can_cancel(request.user):
-                testjob.go_state_canceling()
-                testjob.save()
+                if testjob.is_multinode:
+                    for job in testjob.sub_jobs_list:
+                        job.go_state_canceling()
+                        job.save()
+                else:
+                    testjob.go_state_canceling()
+                    testjob.save()
 
 
 cancel_action.short_description = 'cancel selected jobs'
