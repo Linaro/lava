@@ -201,6 +201,12 @@ class ShellSession(Connection):
 
     @prompt_str.setter
     def prompt_str(self, string):
+        """
+        pexpect allows the prompt to be a single string or a list of strings
+        this property simply replaces the previous value with the new one
+        whether that is a string or a list of strings.
+        To use + the instance of the existing prompt_str must be checked.
+        """
         # FIXME: Debug logging should show whenever this property is changed
         self.__prompt_str__ = string
 

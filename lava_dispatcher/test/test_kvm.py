@@ -405,6 +405,10 @@ class TestAutoLogin(StdoutTestCase):
 
         self.assertIn('lava-test: # ', conn.prompt_str)
         self.assertIn('root@debian:~#', conn.prompt_str)
+        conn.prompt_str = 'root@stretch:'
+        self.assertNotIn('lava-test: # ', conn.prompt_str)
+        self.assertNotIn('root@debian:~#', conn.prompt_str)
+        self.assertIn('root@stretch:', conn.prompt_str)
 
     def test_autologin_void_login_prompt(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)

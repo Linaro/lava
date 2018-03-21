@@ -250,6 +250,8 @@ class AutoLoginAction(Action):
 
             error_messages = self.job.device.get_constant('error-messages', prefix=self.method, missing_ok=True)
             if error_messages:
+                if isinstance(connection.prompt_str, str):
+                    connection.prompt_str = [connection.prompt_str]
                 connection.prompt_str = connection.prompt_str + error_messages
             res = self.wait(connection)
             if res != 0:
@@ -688,6 +690,8 @@ class BootloaderCommandsAction(Action):
         error_messages = self.job.device.get_constant('error-messages', prefix=self.method, missing_ok=True)
         final_message = self.job.device.get_constant('final-message', prefix=self.method, missing_ok=True)
         if error_messages:
+            if isinstance(connection.prompt_str, str):
+                connection.prompt_str = [connection.prompt_str]
             connection.prompt_str = connection.prompt_str + error_messages
 
         for line in commands:
