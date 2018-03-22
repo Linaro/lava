@@ -1585,11 +1585,11 @@ def job_resubmit(request, pk):
         response_data["is_authorized"] = True
 
         if is_resubmit:
-            original = job
-            job = testjob_submission(request.POST.get("definition-input"),
-                                     request.user, original_job=original)
             try:
 
+                original = job
+                job = testjob_submission(request.POST.get("definition-input"),
+                                         request.user, original_job=original)
                 if isinstance(job, type(list())):
                     response_data["job_list"] = [j.sub_id for j in job]
                     # Refer to first job in list for job info.
