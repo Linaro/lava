@@ -20,6 +20,7 @@ metadata:
   build-console: https://ci.linaro.org/view/lava-ci/job/lava-debian-stretch-armmp-armhf/3/console
   build-script: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/armhf/3/armmp-nfs.sh
 
+# ACTION_BLOCK
 actions:
 - deploy:
     timeout:
@@ -41,6 +42,7 @@ actions:
     dtb:
       url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/armhf/3/dtbs/am335x-boneblack.dtb
 
+# BOOT_BLOCK
 - boot:
     method: u-boot
     commands: ramdisk
@@ -51,6 +53,7 @@ actions:
     timeout:
       minutes: 2
 
+# TEST_BLOCK
 - test:
     timeout:
       minutes: 5

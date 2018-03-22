@@ -1074,7 +1074,7 @@ to optimise your test shell output.
   Example: If the test operation involves iterations over a test condition,
   report a lava test case every few iterations.
 
-:: _too_many_test_cases:
+_too_many_test_cases:
 
 Control the number of test cases reported
 *****************************************
