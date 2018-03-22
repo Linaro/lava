@@ -235,7 +235,11 @@ def can_view(record, user):
 
 @register.filter()
 def split_definition(data):
-    return data.split('\n')
+    # Get rid of python unicode object tags
+    data = yaml.safe_dump(yaml.load(data))
+
+    # rstrip() gets rid of the empty new line.
+    return data.rstrip().split('\n')
 
 
 @register.filter()

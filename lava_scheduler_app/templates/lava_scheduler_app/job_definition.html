@@ -111,9 +111,6 @@
 
   <div class="tab-pane active" id="YAML">
 <h4 class="modal-header">Definition</h4>
-{% if job.is_multinode %}
-<pre>{{ job.display_definition }}</pre>
-{% else %}
 <div class="pull-right"><small><a href="javascript: void(0);" id="copy_link"
    class="btn btn-xs btn-default"><span class="glyphicon glyphicon-copy"></span> Copy to clipboard</a></small></div><span
    style="display: none" id="job_definition_text">{{ job.display_definition }}</span><br/>
@@ -129,7 +126,6 @@
     </div>
 {% endfor %}
 {% endwith %}
-{% endif %}
  </div>
   <div class="tab-pane" id="pipeline">
       <h2>Pipeline Description <a
