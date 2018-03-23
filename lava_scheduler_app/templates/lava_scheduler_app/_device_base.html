@@ -25,6 +25,10 @@
     <dl class="dl-horizontal">
       <dt>Hostname</dt>
       <dd>{{ device.hostname }}
+          {% if user.is_superuser %}<a
+          href="{% url 'admin:lava_scheduler_app_device_change' device.hostname %}" title="admin this device"><span
+          class="glyphicon glyphicon-wrench"></span></a>
+          {% endif %}
           <a href="{% url 'lava.scheduler.device_report' device.pk %}"><span class="glyphicon glyphicon-stats"></span></a>
       </dd>
       <dt>Device-type</dt>
