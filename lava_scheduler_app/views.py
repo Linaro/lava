@@ -794,6 +794,19 @@ def device_type_detail(request, pk):
         health_freq_str = "one every %d jobs" % dt.health_frequency
     else:
         health_freq_str = "one every %d hours" % dt.health_frequency
+
+    invalid_template = load_devicetype_template(dt.name)
+    if invalid_template:
+        invalid_template = False
+        extends = set([device.get_extends() for device in Device.objects.filter(device_type=dt)])
+        for extend in extends:
+            if not extend:
+                # get_extends() can return None
+                invalid_template = True
+                break
+            invalid_template = load_devicetype_template(extend.replace('.jinja2', ''))
+            if invalid_template:
+                break
     return render(request, "lava_scheduler_app/device_type.html",
                   {'dt': dt,
                    'cores': core_string,
@@ -815,7 +828,7 @@ def device_type_detail(request, pk):
                    'bread_crumb_trail': BreadCrumbTrail.leading_to(device_type_detail, pk=pk),
                    'context_help': BreadCrumbTrail.leading_to(device_type_detail, pk='help'),
                    'health_freq': health_freq_str,
-                   'invalid_template': load_devicetype_template(dt.name) is None})
+                   'invalid_template': invalid_template})
 
 
 @BreadCrumb("Health history", parent=device_type_detail, needs=['pk'])
