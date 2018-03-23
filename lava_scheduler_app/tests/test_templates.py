@@ -1315,14 +1315,18 @@ class TestTemplates(unittest.TestCase):
         self.assertIsNotNone(template_dict)
         self.assertEqual({'boot': 30}, template_dict['character_delays'])
         self.assertIn('error-messages', template_dict['constants']['u-boot'])
-        self.assertEqual('juno#', template_dict['actions']['boot']['methods']['uefi']['parameters']['bootloader_prompt'])
+        self.assertEqual('juno#', template_dict['actions']['boot']['methods']['u-boot']['parameters']['bootloader_prompt'])
+        self.assertEqual('Shell>', template_dict['actions']['boot']['methods']['uefi']['parameters']['bootloader_prompt'])
+        self.assertEqual('Start:', template_dict['actions']['boot']['methods']['uefi-menu']['parameters']['bootloader_prompt'])
 
         rendered = test_template.render(bootloader_prompt="vexpress>")
         template_dict = yaml.load(rendered)
         self.assertIsNotNone(template_dict)
         self.assertEqual({'boot': 30}, template_dict['character_delays'])
         self.assertIn('error-messages', template_dict['constants']['u-boot'])
-        self.assertEqual('vexpress>', template_dict['actions']['boot']['methods']['uefi']['parameters']['bootloader_prompt'])
+        self.assertEqual('vexpress>', template_dict['actions']['boot']['methods']['u-boot']['parameters']['bootloader_prompt'])
+        self.assertEqual('Shell>', template_dict['actions']['boot']['methods']['uefi']['parameters']['bootloader_prompt'])
+        self.assertEqual('Start:', template_dict['actions']['boot']['methods']['uefi-menu']['parameters']['bootloader_prompt'])
 
     def test_db820c_template(self):
         data = """{% extends 'dragonboard-820c.jinja2' %}
