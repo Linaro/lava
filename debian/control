@@ -33,7 +33,7 @@ Depends: apache2, adduser, gunicorn, iproute2, python-tz, python-dateutil,
  postgresql, postgresql-client, postgresql-common, systemd-sysv,
  lava-dispatcher (>= 2018.1),
  ${python:Depends}, ${python3:Depends}, ${misc:Depends}
-Recommends: fuse, ntp, lava-coordinator, lava-server-doc, lavacli
+Recommends: fuse, ntp, lava-coordinator, lava-server-doc
 Suggests: python-django-hijack, python-django-debug-toolbar
 Description: Linaro Automated Validation Architecture server
  LAVA is a continuous integration system for deploying operating
@@ -59,7 +59,7 @@ Depends: lava-server (= ${binary:Version}), lava-server-doc,
  lava-dispatcher, lava-coordinator, lava-dev, lava-tool,
  lavapdu-client, ntp | ntpdate, tftpd-hpa, debootstrap (>= 1.0.86~),
  openssh-client, lxc (>= 1:2.0.6), rsync, bridge-utils, ${misc:Depends}
-Recommends: lavapdu-daemon, schroot,
+Recommends: lavapdu-daemon, schroot, lavacli,
  android-tools-fsutils | img2simg
 Suggests: vmdebootstrap
 Description: Linaro Automated Validation Architecture metapackage
