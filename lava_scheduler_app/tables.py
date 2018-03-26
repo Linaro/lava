@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+import yaml
 import django
 import logging
 import random
@@ -19,6 +20,7 @@ from lava_scheduler_app.models import (
     DeviceType,
     Worker,
 )
+from lava_results_app.models import TestCase
 from lava.utils.lavatable import LavaTable
 from django.db.models import Q
 from django.utils import timezone
@@ -303,13 +305,24 @@ class FailedJobTable(JobTable):
     duration = tables.Column(accessor='duration_sort')
     duration.orderable = False
     failure_tags = TagsColumn()
-    failure_comment = tables.Column()
+    failure_comment = tables.Column(empty_values=())
     submit_time = tables.DateColumn("Nd, g:ia")
     end_time = tables.DateColumn("Nd, g:ia")
 
     def __init__(self, *args, **kwargs):
         super(FailedJobTable, self).__init__(*args, **kwargs)
         self.length = 10
+
+    def render_failure_comment(self, record):
+        if record.failure_comment:
+            return record.failure_comment
+        try:
+            failure = TestCase.objects.get(suite__job=record, suite__name='lava', name='job')
+        except TestCase.DoesNotExist:
+            return ''
+        if failure.result == TestCase.RESULT_FAIL:
+            return yaml.dump(failure.action_metadata['error_msg'])
+        return None
 
     class Meta(JobTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
         fields = (
