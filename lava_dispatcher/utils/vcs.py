@@ -21,6 +21,7 @@
 import sys
 import logging
 import os
+import shutil
 import subprocess
 import yaml
 from lava_dispatcher.action import InfrastructureError
@@ -99,7 +100,7 @@ class GitHelper(VCSHelper):
         super(GitHelper, self).__init__(url)
         self.binary = '/usr/bin/git'
 
-    def clone(self, dest_path, shallow=False, revision=None, branch=None):
+    def clone(self, dest_path, shallow=False, revision=None, branch=None, history=True):
         logger = logging.getLogger('dispatcher')
         try:
             if branch is not None:
@@ -124,6 +125,11 @@ class GitHelper(VCSHelper):
             commit_id = subprocess.check_output([self.binary, '-C', dest_path,
                                                  'log', '-1', '--pretty=%H'],
                                                 stderr=subprocess.STDOUT).strip()
+
+            if not history:
+                logger.debug("Removing '.git' directory in %s", dest_path)
+                shutil.rmtree(os.path.join(dest_path, ".git"))
+
         except subprocess.CalledProcessError as exc:
             logger.error(str(exc))
             raise InfrastructureError("Unable to fetch git repository '%s'"

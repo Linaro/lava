@@ -328,7 +328,8 @@ class GitRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
             runner_path,
             shallow=shallow,
             revision=revision,
-            branch=branch)
+            branch=branch,
+            history=self.parameters.get('history', True))
         if commit_id is None:
             raise InfrastructureError("Unable to get test definition from %s (%s)" % (self.vcs.binary, self.parameters))
         self.results = {

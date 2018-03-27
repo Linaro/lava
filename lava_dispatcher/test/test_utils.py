@@ -122,6 +122,12 @@ class TestGit(StdoutTestCase):  # pylint: disable=too-many-public-methods
     def test_branch(self):
         git = vcs.GitHelper('git')
         self.assertEqual(git.clone('git.clone1', branch='testing'), 'f2589a1b7f0cfc30ad6303433ba4d5db1a542c2d')
+        self.assertTrue(os.path.exists(os.path.join(self.tmpdir, "git.clone1", ".git")))
+
+    def test_no_history(self):
+        git = vcs.GitHelper('git')
+        self.assertEqual(git.clone('git.clone1', history=False), 'a7af835862da0e0592eeeac901b90e8de2cf5b67')
+        self.assertFalse(os.path.exists(os.path.join(self.tmpdir, "git.clone1", ".git")))
 
 
 @unittest.skipIf(infrastructure_error('bzr'), "bzr not installed")
