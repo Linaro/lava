@@ -906,14 +906,19 @@ class Device(RestrictedResource):
             return None
 
         env = jinja2.Environment()
-        ast = env.parse(jinja_config)
-        extends = list(ast.find_all(jinja2.nodes.Extends))
-        if len(extends) != 1:
+        try:
+            ast = env.parse(jinja_config)
+            extends = list(ast.find_all(jinja2.nodes.Extends))
+            if len(extends) != 1:
+                logger = logging.getLogger('lava_scheduler_app')
+                logger.error("Found %d extends for %s", len(extends), self.hostname)
+                return None
+            else:
+                return os.path.splitext(extends[0].template.value)[0]
+        except jinja2.TemplateError as exc:
             logger = logging.getLogger('lava_scheduler_app')
-            logger.error("Found %d extends for %s", len(extends), self.hostname)
+            logger.error("Invalid template for %s: %s", self.hostname, str(exc))
             return None
-        else:
-            return os.path.splitext(extends[0].template.value)[0]
 
     @property
     def is_exclusive(self):
@@ -922,12 +927,15 @@ class Device(RestrictedResource):
             return False
 
         env = jinja2.Environment()
-        ast = env.parse(jinja_config)
+        try:
+            ast = env.parse(jinja_config)
 
-        for assign in ast.find_all(jinja2.nodes.Assign):
-            if assign.target.name == "exclusive":
-                return bool(assign.node.value)
-        return False
+            for assign in ast.find_all(jinja2.nodes.Assign):
+                if assign.target.name == "exclusive":
+                    return bool(assign.node.value)
+            return False
+        except jinja2.TemplateError:
+            return False
 
     def get_health_check(self):
         # Get the device dictionary
