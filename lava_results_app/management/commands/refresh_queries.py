@@ -64,10 +64,13 @@ class Command(BaseCommand):
                 sys.exit(1)
             self._refresh_query(query)
         else:
-            for query in Query.objects.all().filter(is_live=False):
+            for query in Query.objects.all().filter(is_live=False, is_archived=False):
                 self._refresh_query(query)
 
     def _refresh_query(self, query):
+        if query.is_archived:
+            self.stderr.write("Query with name %s owned by user %s is archived." % (query.name, query.owner.username))
+            return
         try:
             query.refresh_view()
         except QueryUpdatedError as e:
