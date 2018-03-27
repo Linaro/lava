@@ -29,6 +29,8 @@ class RestrictedTestJobQuerySet(RestrictedResourceQuerySet):
     def visible_by_user(self, user):
 
         from lava_scheduler_app.models import TestJob
+
+        conditions = Q()
         # Pipeline jobs.
         if not user or user.is_anonymous():
             conditions = Q(is_public=True)
@@ -48,9 +50,7 @@ class RestrictedTestJobQuerySet(RestrictedResourceQuerySet):
                   viewing_groups__in=user.groups.all())
             )
 
-        queryset = self.filter(conditions)
-
-        return queryset
+        return self.filter(conditions)
 
 
 class RestrictedTestCaseQuerySet(RestrictedResourceQuerySet):
