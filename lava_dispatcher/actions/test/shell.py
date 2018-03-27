@@ -43,10 +43,7 @@ from lava_dispatcher.logical import (
     LavaTest,
     RetryAction
 )
-from lava_dispatcher.connection import (
-    BaseSignalHandler,
-    SignalMatch
-)
+from lava_dispatcher.connection import SignalMatch
 from lava_dispatcher.protocols.lxc import LxcProtocol
 from lava_dispatcher.utils.constants import (
     DEFAULT_V1_PATTERN,
@@ -602,7 +599,6 @@ class TestShellAction(TestAction):
             SignalDirector is the link between the Action and the Connection. The Action uses
             the SignalDirector to interact with the I/O over the Connection.
             """
-            self._cur_handler = BaseSignalHandler(protocol)
             self.protocol = protocol  # communicate externally over the protocol API
             self.connection = None  # communicate with the device
             self.logger = logging.getLogger("dispatcher")
@@ -616,9 +612,6 @@ class TestShellAction(TestAction):
 
         def signal(self, name, params):
             handler = getattr(self, "_on_" + name.lower(), None)
-            if not handler and self._cur_handler:
-                handler = self._cur_handler.custom_signal
-                params = [name] + list(params)
             if handler:
                 try:
                     # The alternative here is to drop the getattr and have a long if:elif:elif:else.
@@ -634,34 +627,3 @@ class TestShellAction(TestAction):
                     self.logger.error("job error: handling signal %s failed: %s", name, exc)
                     return False
                 return True
-
-        def postprocess_bundle(self, bundle):
-            pass
-
-        def _on_testset_start(self, set_name):
-            pass
-
-        def _on_testset_stop(self):
-            pass
-
-        # noinspection PyUnusedLocal
-        def _on_startrun(self, test_run_id, uuid):  # pylint: disable=unused-argument
-            """
-            runsh.write('echo "<LAVA_SIGNAL_STARTRUN $TESTRUN_ID $UUID>"\n')
-            """
-            self._cur_handler = None
-            if self._cur_handler:
-                self._cur_handler.start()
-
-        # noinspection PyUnusedLocal
-        def _on_endrun(self, test_run_id, uuid):  # pylint: disable=unused-argument
-            if self._cur_handler:
-                self._cur_handler.end()
-
-        def _on_starttc(self, test_case_id):
-            if self._cur_handler:
-                self._cur_handler.starttc(test_case_id)
-
-        def _on_endtc(self, test_case_id):
-            if self._cur_handler:
-                self._cur_handler.endtc(test_case_id)

@@ -33,37 +33,6 @@ from lava_dispatcher.action import (
 # pylint: disable=unused-argument,no-self-use
 
 
-class BaseSignalHandler(object):
-    """
-    Used to extend the SignalDirector to allow protocols to respond to signals.
-    """
-
-    def __init__(self, protocol=None):
-        self.protocol = protocol
-
-    def __call__(self, *args, **kwargs):
-        pass
-
-    def start(self):
-        pass
-
-    def end(self):
-        pass
-
-    def starttc(self, test_case_id):
-        pass
-
-    def endtc(self, test_case_id):
-        pass
-
-    @callable
-    def custom_signal(self, signame, params):
-        pass
-
-    def postprocess_test_run(self, test_run):
-        pass
-
-
 class SignalMatch(InternalObject):  # pylint: disable=too-few-public-methods
 
     def match(self, data, fixupdict=None):  # pylint: disable=no-self-use
