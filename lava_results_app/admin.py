@@ -42,8 +42,8 @@ class ActionDataAdmin(admin.ModelAdmin):
 
 
 class QueryAdmin(admin.ModelAdmin):
-    list_display = ('name', 'owner', 'query_group', 'is_published', 'is_archived' )
-    ordering = ('name', 'owner', 'query_group', 'is_published', 'is_archived' )
+    list_display = ('name', 'owner', 'query_group', 'is_published', 'is_archived')
+    ordering = ('name', 'owner', 'query_group', 'is_published', 'is_archived')
     save_as = True
 
 
