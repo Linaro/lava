@@ -122,11 +122,9 @@ class Command(LAVADaemonCommand):
         self.controler.setsockopt(zmq.IDENTITY, b"lava-logs")
         # Limit the number of messages in the queue
         self.controler.setsockopt(zmq.SNDHWM, 2)
-        # TODO: remove when Jessie is not supported
-        if hasattr(zmq, "CONNECT_RID"):
-            # From http://api.zeromq.org/4-2:zmq-setsockopt#toc5
-            # "Immediately readies that connection for data transfer with the master"
-            self.controler.setsockopt(zmq.CONNECT_RID, b"master")
+        # From http://api.zeromq.org/4-2:zmq-setsockopt#toc5
+        # "Immediately readies that connection for data transfer with the master"
+        self.controler.setsockopt(zmq.CONNECT_RID, b"master")
 
         if options['ipv6']:
             self.logger.info("[INIT] Enabling IPv6")

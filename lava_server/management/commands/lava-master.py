@@ -563,13 +563,11 @@ class Command(LAVADaemonCommand):
                 self.logger.error("[INIT] Unable to start inotify")
 
         self.controler.setsockopt(zmq.IDENTITY, b"master")
-        # TODO: remove when Jessie is not supported
-        if hasattr(zmq, "ROUTER_HANDOVER"):
-            # From http://api.zeromq.org/4-2:zmq-setsockopt#toc42
-            # "If two clients use the same identity when connecting to a ROUTER
-            # [...] the ROUTER socket shall hand-over the connection to the new
-            # client and disconnect the existing one."
-            self.controler.setsockopt(zmq.ROUTER_HANDOVER, 1)
+        # From http://api.zeromq.org/4-2:zmq-setsockopt#toc42
+        # "If two clients use the same identity when connecting to a ROUTER
+        # [...] the ROUTER socket shall hand-over the connection to the new
+        # client and disconnect the existing one."
+        self.controler.setsockopt(zmq.ROUTER_HANDOVER, 1)
         self.controler.bind(options['master_socket'])
 
         self.event_socket.setsockopt(zmq.SUBSCRIBE, b(settings.EVENT_TOPIC))
