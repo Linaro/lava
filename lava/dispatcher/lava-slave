@@ -395,11 +395,9 @@ def create_context(options):
     sock.setsockopt(zmq.IDENTITY, b(options.hostname))
     # Limit the number of messages in the queue
     sock.setsockopt(zmq.SNDHWM, SEND_QUEUE)
-    # TODO: remove when Jessie is not supported
-    if hasattr(zmq, "CONNECT_RID"):
-        # From http://api.zeromq.org/4-2:zmq-setsockopt#toc5
-        # "Immediately readies that connection for data transfer with the master"
-        sock.setsockopt(zmq.CONNECT_RID, b"master")
+    # From http://api.zeromq.org/4-2:zmq-setsockopt#toc5
+    # "Immediately readies that connection for data transfer with the master"
+    sock.setsockopt(zmq.CONNECT_RID, b"master")
 
     if options.ipv6:
         LOG.info("[INIT] Enabling IPv6")
