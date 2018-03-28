@@ -74,6 +74,17 @@ def cancel_action(modeladmin, request, queryset):  # pylint: disable=unused-argu
 cancel_action.short_description = 'cancel selected jobs'
 
 
+def fail_action(modeladmin, request, queryset):
+    if request.user.is_superuser:
+        with transaction.atomic():
+            for testjob in queryset.select_for_update().filter(state=TestJob.STATE_CANCELING):
+                testjob.go_state_finished(TestJob.HEALTH_INCOMPLETE)
+                testjob.save()
+
+
+fail_action.short_description = 'fail selected jobs'
+
+
 class ActiveDevicesFilter(admin.SimpleListFilter):
     title = 'Active devices'
     parameter_name = 'state'
@@ -244,7 +255,7 @@ class TestJobAdmin(admin.ModelAdmin):
         return '' if obj.requested_device_type is None else obj.requested_device_type
     requested_device_type_name.short_description = 'Request device type'
     form = VisibilityForm
-    actions = [cancel_action]
+    actions = [cancel_action, fail_action]
     list_filter = ('state', RequestedDeviceTypeFilter, ActualDeviceFilter)
     fieldsets = (
         ('Owner', {

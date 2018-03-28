@@ -1081,6 +1081,7 @@ def job_detail(request, pk):
     data = {
         'job': job,
         'show_cancel': job.can_cancel(request.user),
+        'show_fail': job.state == TestJob.STATE_CANCELING and request.user.is_superuser,
         'show_failure': job.can_annotate(request.user),
         'show_resubmit': job.can_resubmit(request.user),
         'bread_crumb_trail': BreadCrumbTrail.leading_to(job_detail, pk=pk),
@@ -1570,6 +1571,21 @@ def job_cancel(request, pk):
         else:
             return HttpResponseForbidden(
                 "you cannot cancel this job", content_type="text/plain")
+
+
+def job_fail(request, pk):
+    if not request.user.is_superuser:
+        return HttpResponseForbidden("Only superusers can fail a job",
+                                     content_type="text/plain")
+
+    with transaction.atomic():
+        job = get_restricted_job(request.user, pk, request=request, for_update=True)
+        if job.state != TestJob.STATE_CANCELING:
+            return HttpResponseForbidden("Job should be canceled before behing failed",
+                                         content_type="text/plain")
+        job.go_state_finished(TestJob.HEALTH_INCOMPLETE)
+        job.save()
+        return redirect(job)
 
 
 def job_resubmit(request, pk):

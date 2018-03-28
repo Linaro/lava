@@ -262,6 +262,12 @@
         {% else %}
       <a class="btn btn-warning" id="cancel" href="{% url 'lava.scheduler.job.cancel' job.pk %}">Cancel</a>
         {% endif %}
+      {% elif show_fail %}
+        {% if job.is_multinode %}
+      <a class="btn btn-danger" id="fail" title="This should not be used if lava-run is still running" href="{% url 'lava.scheduler.job.fail' job.sub_id %}">Fail</a>
+        {% else %}
+      <a class="btn btn-danger" id="fail" title="This should not be used if lava-run is still running" href="{% url 'lava.scheduler.job.fail' job.pk %}">Fail</a>
+        {% endif %}
       {% endif %}
       {% if show_resubmit %}
       <a class="btn btn-primary" href="{% url 'lava.scheduler.job.resubmit' job.pk %}">Resubmit</a>
@@ -728,6 +734,7 @@
           }
           if ('X-JobState' in data) {
             $('#cancel').css('display', 'none');
+            $('#fail').css('display', 'none');
             poll_status = 0;
           }
           if (data['failure_comment'] != null) {
