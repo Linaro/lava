@@ -267,6 +267,26 @@ class TestTemplates(unittest.TestCase):
                 self.assertIn('ttyS2', command)
                 self.assertNotIn('console=ttyO2', command)
 
+    def test_sharkl2_template(self):
+        data = """{% extends 'sharkl2.jinja2' %}
+{% set adb_serial_number = 'R32D300FRYP' %}
+{% set fastboot_serial_number = 'R32D300FRYP' %}
+"""
+        self.assertTrue(self.validate_data('sharkl2-01', data))
+        test_template = prepare_jinja_template('sharkl2-01', data)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertEqual('sharkl2', template_dict['device_type'])
+        self.assertEqual('R32D300FRYP', template_dict['adb_serial_number'])
+        self.assertEqual('R32D300FRYP', template_dict['fastboot_serial_number'])
+        self.assertEqual([], template_dict['fastboot_options'])
+        self.assertIn('u-boot', template_dict['actions']['boot']['methods'])
+        self.assertIn('parameters', template_dict['actions']['boot']['methods']['u-boot'])
+        self.assertIn('interrupt_prompt', template_dict['actions']['boot']['methods']['u-boot']['parameters'])
+        # fastboot boot off eMMC
+        self.assertIn('fastboot', template_dict['actions']['boot']['methods'])
+        self.assertIn('reboot', template_dict['actions']['boot']['methods']['fastboot'])
+
     def test_armada375_template(self):
         """
         Test the armada-375 template as if it was a device dictionary
