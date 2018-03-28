@@ -1261,7 +1261,7 @@ def _pipeline_protocols(job_data, user, yaml_data=None):  # pylint: disable=too-
                 if not parent:
                     parent = job.id
                 job.sub_id = "%d.%d" % (parent, node_data['protocols']['lava-multinode']['sub_id'])
-                job.multinode_definition = yaml_data  # store complete submisison, inc. comments
+                job.multinode_definition = yaml_data  # store complete submission, inc. comments
                 job.save()
                 job_object_list.append(job)
 
