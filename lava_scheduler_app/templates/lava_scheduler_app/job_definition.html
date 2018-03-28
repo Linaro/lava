@@ -113,7 +113,7 @@
 <h4 class="modal-header">Definition</h4>
 <div class="pull-right"><small><a href="javascript: void(0);" id="copy_link"
    class="btn btn-xs btn-default"><span class="glyphicon glyphicon-copy"></span> Copy to clipboard</a></small></div><span
-   style="display: none" id="job_definition_text">{{ job.display_definition }}</span><br/>
+   style="display: none" id="job_definition_text">{{ job.display_definition|replace_python_unicode }}</span><br/>
 {% with job.display_definition|split_definition as definition_data %}
 {% for line in definition_data %}
     <div class="row">
@@ -121,7 +121,7 @@
     <a href="#defline{{ forloop.counter }}">{{ forloop.counter }}</a>
    </div>
    <div class="col-md-8">
-    <span style="font-family: monospace; white-space: pre;">{{ line.rstrip }}</span>
+    <span style="font-family: monospace; white-space: pre;">{{ line.rstrip|replace_python_unicode }}</span>
    </div>
     </div>
 {% endfor %}

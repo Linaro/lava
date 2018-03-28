@@ -248,3 +248,8 @@ def level_replace(level):
 @register.filter()
 def sort_items(items):
     return sorted(items)
+
+
+@register.filter()
+def replace_python_unicode(data):
+    return data.replace('!!python/unicode ', '')

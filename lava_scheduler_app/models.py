@@ -1134,8 +1134,9 @@ def _create_pipeline_job(job_data, user, taglist, device=None,
             viewing_groups.extend(known_groups)
 
     if not orig:
-        orig = yaml.dump(job_data)
-    job = TestJob(definition=yaml.dump(job_data), original_definition=orig,
+        orig = yaml.safe_dump(job_data)
+    job = TestJob(definition=yaml.safe_dump(job_data),
+                  original_definition=orig,
                   submitter=user,
                   requested_device_type=device_type,
                   target_group=target_group,
@@ -1193,7 +1194,7 @@ def _pipeline_protocols(job_data, user, yaml_data=None):  # pylint: disable=too-
         return device_list
 
     if not yaml_data:
-        yaml_data = yaml.dump(job_data)
+        yaml_data = yaml.safe_dump(job_data)
     role_dictionary = {}  # map of the multinode group
     if 'lava-multinode' in job_data['protocols']:
         # create target_group uuid, just a label for the coordinator.
