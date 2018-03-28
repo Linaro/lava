@@ -76,6 +76,8 @@ STALE_CHECK_INTERVAL = 3600
 STALE_CONFIG = {
     "/var/lib/lava/dispatcher/tmp": {"pattern": r"^(?P<job_id>[0-9]+)$"},
     "/var/lib/lava/dispatcher/slave/tmp": {"pattern": r"^(?P<job_id>[0-9]+)$"},
+    "/etc/udev/rules.d/": {"pattern": r"^100-lava-lxc-[\w-]+-(?P<job_id>[0-9]+)\.rules$",
+                           "post-action": ["udevadm", "control", "--reload-rules"]},
 }
 
 
@@ -537,6 +539,7 @@ def remove_stale_resources(jobs, last_stale_check):
         LOG.debug("-> %s", directory)
         pattern = re.compile(STALE_CONFIG[directory]["pattern"])
 
+        removed = 0
         for path in glob.iglob("%s/*" % directory):
             match = pattern.match(os.path.basename(path))
             if match is None:
@@ -548,7 +551,21 @@ def remove_stale_resources(jobs, last_stale_check):
                 continue
             if job_id not in job_ids:
                 LOG.debug("--> removing %s", path)
-                shutil.rmtree(path, ignore_errors=True)
+                try:
+                    # Try to remove a file
+                    os.remove(path)
+                except OSError:
+                    # If it fails, that because it's a directory
+                    shutil.rmtree(path, ignore_errors=True)
+                removed += 1
+        if removed:
+            action = STALE_CONFIG[directory].get("post-action")
+            if action is not None:
+                try:
+                    LOG.debug("---> calling '%s'", " ".join(action))
+                    subprocess.check_call(action)
+                except (OSError, subprocess.CalledProcessError) as exc:
+                    LOG.error("----> unable to run action: %s", str(exc))
 
     return time.time()
 
