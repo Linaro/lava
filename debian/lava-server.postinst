@@ -142,7 +142,7 @@ case "$1" in
         if [ -f /etc/lava-server/instance.conf ]; then
             . /etc/lava-server/instance.conf
         else
-            . /usr/share/lava-server/instance.template
+            . /usr/share/lava-server/instance.conf.template
         fi
         if [ -z "$LAVA_SYS_USER" ]; then
             LAVA_SYS_USER="lavaserver"
