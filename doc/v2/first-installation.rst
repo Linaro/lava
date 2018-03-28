@@ -29,10 +29,12 @@ Software Requirements
    directly from a git directory**. See :ref:`debian_installation` for
    detailed instructions.
 
-We currently recommend installing LAVA on `Debian`_ jessie, stretch or
+We currently recommend installing LAVA on `Debian`_ stretch, buster or
 unstable. Installations using stretch (the current Debian stable
-release) or jessie (the previous stable release) should use updates
-available in ``backports``.
+release) should use updates available in ``backports``.
+
+LAVA software has now moved to Python3 support. This also means that Jessie
+is no longer supported.
 
 Contributions to support other distributions are welcome as long as there is a
 commitment to maintain LAVA on those distributions.

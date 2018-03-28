@@ -43,14 +43,14 @@ if [ -z "$NAME" ]; then
     exit 1
 fi
 if [ -x ./version.py ]; then
-  VERSION=`python ./version.py`
+  VERSION=`python3 ./version.py`
 else
-  VERSION=`python setup.py --version`
+  VERSION=`python3 setup.py --version`
 fi
 if [ -d './dist/' ]; then
     rm -f ./dist/*
 fi
-python setup.py sdist
+python3 setup.py sdist
 if [ -d .git ]; then
   LOG=`git log -n1 --pretty=format:"Last change %h by %an, %ar. %s%n" --no-merges`
 fi

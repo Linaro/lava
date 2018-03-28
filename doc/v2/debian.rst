@@ -14,8 +14,9 @@ Packages for LAVA are available for:
 * Debian Sid (unstable)
 
 Packages will remain available for Debian Jessie (oldstable) with backports
-until June 2018 as security support for Jessie will end. Developers are
-recommended to use Debian Stretch or Buster for development.
+until June 2018 as security support for Jessie will end. The last production
+release with Jessie support was 2018.2. Developers need to use Debian Stretch
+or Buster for development.
 
 When using the packages to develop LAVA, there is a change to the workflow
 compared to the old lava-deployment-tool buildouts.
@@ -65,13 +66,10 @@ Developer package build
 .. seealso:: :ref:`developer_preparations` and
    :ref:`development_pre_requisites`
 
-.. note:: The recommended suite for LAVA development is now Stretch. The
-   developer package build now defaults to expecting Stretch and therefore
-   enables Python2 and Python3 support. If you are building on Jessie, use the
-   ``-b backports`` branch option to only build for Python2. When support for
-   Python2 is removed, the ``master`` branch will change to only building
-   Python3 and building on Jessie will be disabled. To install lava-server,
-   lava-dispatcher must also be built and installed with Python3 support. See
+.. note:: The supported suite for LAVA development is now Stretch. The
+   developer package build now defaults to expecting Stretch and therefore uses
+   Python3 exclusively. Support for building Python2 has been removed, the
+   ``master`` branch only builds Python3. See
    https://lists.linaro.org/pipermail/lava-announce/2018-January/000046.html
 
 The ``lava-dev`` package includes a helper script which is also present in the
@@ -86,12 +84,6 @@ from the directory containing the code for that package::
 
  $ /usr/share/lava-server/debian-dev-build.sh -p lava-server
 
-If you are building a package to be installed on Jessie, ensure that the
-``backports`` packaging branch is used so that the packaging scripts can allow
-for differences between unstable and jessie::
-
- $ /usr/share/lava-server/debian-dev-build.sh -p lava-server -b backports
-
 The packages will be built in a temporary directory using a version string
 based on the current git tag and the time of the build. The helper outputs the
 location of all the built packages at the end of a successful build, ready for
@@ -104,9 +96,7 @@ use with ``$ sudo dpkg -i``.
 To install any package, including the developer build packages, the
 corresponding package **must** already be installed at the current production
 release version (or better), on the same machine. This ensures that all of the
-runtime dependencies already exist on the system. (If you are building for
-installation on Jessie, you will need a fully installed Jessie VM to test the
-packages built for Jessie.)
+runtime dependencies already exist on the system.
 
 .. _devel_branches:
 
@@ -164,17 +154,6 @@ the short hash can be used to lookup the commit in the master branch, e.g.::
 
 Distribution differences
 ========================
-
-LAVA uses a date-based release scheme and PEP440_ imposes constraints on how
-local versions can be named and still work reliably with python-setuptools_,
-yet these constraints differ between jessie and unstable::
-
- jessie:   lava-server-2015.12-5451.f9304da
- unstable: lava-server-2015.12+5451.f9304da
-
-There are also changes internally in the *egg* information used by setuptools
-when built on jessie and when built on unstable. Binary packages built on
-unstable will fail to install on jessie.
 
 **Always** build packages on the suite you expect to use for installation.
 
@@ -235,40 +214,15 @@ number, in accordance with PEP440, so the git tag will be ``2015.8`` instead of
 Development using Python3
 *************************
 
-LAVA has been moving towards Python3 support as an integral part of the
-migration to V2 and with the completion of the migration and the removal of the
-V1 codebase, `the announcement has been made
-<https://lists.linaro.org/pipermail/lava-announce/2017-June/000032.html>`_ that
-all LAVA packages will move exclusively to Python3 support.
+LAVA has moved to exclusive Python3 support as the final stage of the
+migration to V2. See
+<https://lists.linaro.org/pipermail/lava-announce/2017-June/000032.html>`_
 
-Both lava-server and lava-dispatcher optionally support running the unit tests
-with Python3 using the ``-a`` option to ``./ci-run``.
+Both lava-server and lava-dispatcher only support running the unit tests with
+Python3. **All** reviews **must** pass the unit tests when run with Python3.
 
-In due course, the internal CI within LAVA (called ``lavabot``) will support
-running the Python3 unit tests for lava-server as well as lava-dispatcher. At
-this point, **all** reviews **must** pass the unit tests when run with Python3.
-
-Once builds for Debian Jessie cease, support for Python2 will be dropped and
-**only** Python3 will be supported.
-
-The 2018.2 release of LAVA will enable both Python2 and Python3, so that
-installations will bring in both sets of dependencies to allow both sets of
-unit tests to be run. At runtime, LAVA will still use Python2 for the 2018.1
-release but will switch over when support for Jessie ceases.
-
-In the meantime, the :ref:`dev_builds` can support Python3 by using the ``-b``
-option to specify the ``python3`` branch::
-
- $ /usr/share/lava-server/debian-dev-build.sh -p lava-server -b python3
-
- $ /usr/share/lava-server/debian-dev-build.sh -p lava-dispatcher -b python3
-
-.. note:: The first time you install a package built using the ``python3``
-   branch, you are likely to see dependency failures which block the install.
-   Check the information about the newly built packages and ensure that the
-   relevant dependencies are installed. In particular,
-   ``python3-django-auth-ldap`` will need to be installed from
-   ``stretch-backports``.
+Builds for Debian Jessie have ceased, support for Python2 has been dropped and
+**only** Python3 is be supported.
 
 Python3 dependencies include:
 
@@ -537,10 +491,6 @@ repository, changes to the packaging can be tested by pushing to a public
 branch and passing the ``-b`` option to :file:`debian-dev-build-sh`::
 
  $ /usr/share/lava-server/debian-dev-build.sh -p lava-server -b docs
-
-or for installation on jessie::
-
- $ /usr/share/lava-server/debian-dev-build.sh -p lava-server -b backports
 
 .. _architecture_builds:
 

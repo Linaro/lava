@@ -57,7 +57,7 @@ Ensure that you change the **metadata** to point at your local repository so
 that you can easily distinguish between the results with and without your
 modifications:
 
-.. include:: examples/test-jobs/qemu-amd64-standard-jessie.yaml
+.. include:: examples/test-jobs/qemu-amd64-standard-stretch.yaml
      :code: yaml
      :start-after: visibility: public
      :end-before: # CONTEXT_BLOCK

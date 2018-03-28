@@ -71,15 +71,15 @@ setup(
     """,
     url='https://www.linaro.org/initiatives/lava/',
     install_requires=[
-        'django >= 1.8',
-        'django-restricted-resource >= 2015.09',
+        'django >= 1.10',
+        'django-restricted-resource >= 2016.8',
         'django-tables2 >= 1.2',
         'docutils >= 0.6',
         'markdown >= 2.0.3',
         'psycopg2',
         'pyzmq',
         'jinja2',
-        'django-auth-ldap >= 1.1.8',
+        'django-auth-ldap >= 1.2.12',
         'voluptuous >= 0.8.8',
         # scheduler
         "lava-dispatcher",
@@ -104,7 +104,7 @@ setup(
           'share/render-template.py']),
     ].extend(DEVICE_TYPE_TEMPLATES),
     tests_require=[
-        'django-testscenarios >= 0.7.2',
+        'django-testscenarios >= 0.9.1',
     ],
     zip_safe=False,
     include_package_data=True)

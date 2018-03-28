@@ -1271,7 +1271,7 @@ class SchedulerAPI(ExposedAPI):
                 results[key] = {'Invalid': exc}
                 continue
             results[key] = {'Valid': None}
-        return xmlrpclib.Binary(yaml.dump(results))
+        return xmlrpclib.Binary(yaml.dump(results).encode('UTF-8'))
 
     def get_publisher_event_socket(self):
         """

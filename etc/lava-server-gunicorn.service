@@ -7,7 +7,7 @@ Type=simple
 Environment=LOGLEVEL=DEBUG WORKERS=4 LOGFILE=/var/log/lava-server/gunicorn.log RELOAD=
 EnvironmentFile=-/etc/default/lava-server-gunicorn
 EnvironmentFile=-/etc/lava-server/lava-server-gunicorn
-ExecStart=/usr/bin/gunicorn lava_server.wsgi --log-level $LOGLEVEL --log-file $LOGFILE -u lavaserver -g lavaserver --workers $WORKERS $RELOAD
+ExecStart=/usr/bin/python3 -m gunicorn.app.wsgiapp lava_server.wsgi --log-level $LOGLEVEL --log-file $LOGFILE -u lavaserver -g lavaserver --workers $WORKERS $RELOAD
 Restart=always
 
 [Install]
