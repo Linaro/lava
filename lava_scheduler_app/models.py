@@ -1101,13 +1101,19 @@ def _create_pipeline_job(job_data, user, taglist, device=None,
     if not taglist:
         taglist = []
 
-    priorities = dict([(j.upper(), i) for i, j in TestJob.PRIORITY_CHOICES])
+    # Handle priority
     priority = TestJob.MEDIUM
     if 'priority' in job_data:
-        priority_key = job_data['priority'].upper()
-        if priority_key not in priorities:
-            raise SubmissionException("Invalid job priority: %r" % priority_key)
-        priority = priorities[priority_key]
+        key = job_data['priority']
+        if isinstance(key, int):
+            priority = int(key)
+            if priority < TestJob.LOW or priority > TestJob.HIGH:
+                raise SubmissionException("Invalid job priority: %s. "
+                                          "Should be in [%d, %d]" % (key, TestJob.LOW, TestJob.HIGH))
+        else:
+            priority = {j.upper(): i for i, j in TestJob.PRIORITY_CHOICES}.get(key.upper())
+            if priority is None:
+                raise SubmissionException("Invalid job priority: %r" % key)
 
     public_state = True
     visibility = TestJob.VISIBLE_PUBLIC

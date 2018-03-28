@@ -312,7 +312,7 @@ class TestPriorities(TestCase):
         # Disable health checks
         Device.get_health_check = lambda cls: None
         jobs = []
-        for p in [TestJob.LOW, TestJob.MEDIUM, TestJob.HIGH, TestJob.MEDIUM, TestJob.LOW]:
+        for p in [TestJob.LOW, TestJob.MEDIUM, TestJob.HIGH, TestJob.MEDIUM, TestJob.LOW, 40]:
             j = TestJob.objects.create(requested_device_type=self.device_type01,
                                        user=self.user, submitter=self.user, is_public=True,
                                        definition=_minimal_valid_job(None), priority=p)
@@ -327,6 +327,7 @@ class TestPriorities(TestCase):
         self._check_job(jobs[2], TestJob.STATE_SCHEDULED, self.device01)
         self._check_job(jobs[3], TestJob.STATE_SUBMITTED)
         self._check_job(jobs[4], TestJob.STATE_SUBMITTED)
+        self._check_job(jobs[5], TestJob.STATE_SUBMITTED)
 
         jobs[2].go_state_finished(TestJob.HEALTH_COMPLETE)
         jobs[2].save()
@@ -340,6 +341,7 @@ class TestPriorities(TestCase):
         self._check_job(jobs[2], TestJob.STATE_FINISHED, self.device01)
         self._check_job(jobs[3], TestJob.STATE_SUBMITTED)
         self._check_job(jobs[4], TestJob.STATE_SUBMITTED)
+        self._check_job(jobs[5], TestJob.STATE_SUBMITTED)
 
         jobs[1].go_state_finished(TestJob.HEALTH_COMPLETE)
         jobs[1].save()
@@ -353,10 +355,25 @@ class TestPriorities(TestCase):
         self._check_job(jobs[2], TestJob.STATE_FINISHED, self.device01)
         self._check_job(jobs[3], TestJob.STATE_SCHEDULED, self.device01)
         self._check_job(jobs[4], TestJob.STATE_SUBMITTED)
+        self._check_job(jobs[5], TestJob.STATE_SUBMITTED)
 
         jobs[3].go_state_finished(TestJob.HEALTH_COMPLETE)
         jobs[3].save()
         self._check_job(jobs[3], TestJob.STATE_FINISHED, self.device01)
+
+        schedule(log)
+        self.device01.refresh_from_db()
+        self.assertEqual(self.device01.state, Device.STATE_RESERVED)
+        self._check_job(jobs[0], TestJob.STATE_SUBMITTED)
+        self._check_job(jobs[1], TestJob.STATE_FINISHED, self.device01)
+        self._check_job(jobs[2], TestJob.STATE_FINISHED, self.device01)
+        self._check_job(jobs[3], TestJob.STATE_FINISHED, self.device01)
+        self._check_job(jobs[4], TestJob.STATE_SUBMITTED)
+        self._check_job(jobs[5], TestJob.STATE_SCHEDULED, self.device01)
+
+        jobs[5].go_state_finished(TestJob.HEALTH_COMPLETE)
+        jobs[5].save()
+        self._check_job(jobs[5], TestJob.STATE_FINISHED, self.device01)
 
         schedule(log)
         self.device01.refresh_from_db()
@@ -366,6 +383,7 @@ class TestPriorities(TestCase):
         self._check_job(jobs[2], TestJob.STATE_FINISHED, self.device01)
         self._check_job(jobs[3], TestJob.STATE_FINISHED, self.device01)
         self._check_job(jobs[4], TestJob.STATE_SUBMITTED)
+        self._check_job(jobs[5], TestJob.STATE_FINISHED, self.device01)
 
         jobs[0].go_state_finished(TestJob.HEALTH_COMPLETE)
         jobs[0].save()
@@ -379,6 +397,7 @@ class TestPriorities(TestCase):
         self._check_job(jobs[2], TestJob.STATE_FINISHED, self.device01)
         self._check_job(jobs[3], TestJob.STATE_FINISHED, self.device01)
         self._check_job(jobs[4], TestJob.STATE_SCHEDULED, self.device01)
+        self._check_job(jobs[5], TestJob.STATE_FINISHED, self.device01)
 
     def test_low_medium_high_with_hc(self):
         # Enable health checks
