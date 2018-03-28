@@ -1799,7 +1799,6 @@ def device_detail(request, pk):
             'recent_job_table': recent_ptable,
             "device_log_table": device_log_ptable,
             'can_admin': device_can_admin,
-            'exclusive': device.is_exclusive,
             'edit_description': device_can_admin,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(device_detail, pk=pk),
             'context_help': BreadCrumbTrail.show_help(device_detail, pk="help"),
@@ -1852,9 +1851,6 @@ def device_dictionary(request, pk):
             vland[item] = yaml.dump(device_dict[item], default_flow_style=False)
     for item in set(device_dict.keys()) - set(sequence) - set(connect_sequence) - set(vlan_sequence):
         extra[item] = device_dict[item]
-    # Exclusive is ignored
-    if 'exclusive' in extra:
-        del extra['exclusive']
     template = loader.get_template("lava_scheduler_app/devicedictionary.html")
     return HttpResponse(template.render(
         {

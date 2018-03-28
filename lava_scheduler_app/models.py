@@ -920,23 +920,6 @@ class Device(RestrictedResource):
             logger.error("Invalid template for %s: %s", self.hostname, str(exc))
             return None
 
-    @property
-    def is_exclusive(self):
-        jinja_config = self.load_configuration(output_format="raw")
-        if not jinja_config:
-            return False
-
-        env = jinja2.Environment()
-        try:
-            ast = env.parse(jinja_config)
-
-            for assign in ast.find_all(jinja2.nodes.Assign):
-                if assign.target.name == "exclusive":
-                    return bool(assign.node.value)
-            return False
-        except jinja2.TemplateError:
-            return False
-
     def get_health_check(self):
         # Get the device dictionary
         extends = self.get_extends()

@@ -199,11 +199,6 @@ class DeviceAdmin(admin.ModelAdmin):
     valid_device.boolean = True
     valid_device.short_description = "V2 configuration"
 
-    def exclusive_device(self, obj):
-        return obj.is_exclusive
-    exclusive_device.boolean = True
-    exclusive_device.short_description = "v2 only"
-
     def device_dictionary_jinja(self, obj):
         return obj.load_configuration(output_format="raw")
 
@@ -223,7 +218,7 @@ class DeviceAdmin(admin.ModelAdmin):
     list_display = ('hostname', 'device_type', 'current_job', 'worker_host',
                     'state', 'health', 'has_health_check',
                     'health_check_enabled', 'is_public',
-                    'valid_device', 'exclusive_device')
+                    'valid_device')
     search_fields = ('hostname', 'device_type__name')
     ordering = ['hostname']
     actions = [device_health_good, device_health_unknown,

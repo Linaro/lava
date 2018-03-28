@@ -269,7 +269,7 @@ class LavaSystemAPI(SystemAPI):
         {'qemu':
             [
                 {'kvm014': {
-                    'exclusive': False,
+                    'exclusive': True,
                     'visible': True,
                     'is_pipeline': True
                     }
@@ -311,7 +311,7 @@ class LavaSystemAPI(SystemAPI):
                     hostname: {
                         'is_pipeline': True,
                         'visible': visible,
-                        'exclusive': device.is_exclusive
+                        'exclusive': True
                     }
                 })
             else:

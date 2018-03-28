@@ -57,10 +57,9 @@ class SchedulerDevicesAPI(ExposedV2API):
         Description
         -----------
         [superuser only]
-        Add a new device to the database, to support V1 and V2.
+        Add a new device to the database, to support V2.
 
-        Each device will also need a device dictionary which may include a
-        setting making the device exclusive to V2.
+        Each device will also need a device dictionary.
 
         Arguments
         ---------

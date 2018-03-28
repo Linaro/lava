@@ -455,8 +455,7 @@ class TestTemplates(unittest.TestCase):
 {% set hard_reset_command = '/usr/bin/pduclient --daemon localhost --hostname lngpdu01 --command reboot --port 19' %}
 {% set power_off_command = '/usr/bin/pduclient --daemon localhost --hostname lngpdu01 --command off --port 19' %}
 {% set power_on_command = '/usr/bin/pduclient --daemon localhost --hostname lngpdu01 --command on --port 19' %}
-{% set connection_command = 'telnet localhost 7333' %}
-{% set exclusive = 'True' %}"""
+{% set connection_command = 'telnet localhost 7333' %}"""
         self.assertTrue(self.validate_data('staging-thunderx-01', data))
         test_template = prepare_jinja_template('staging-thunderx-01', data)
         rendered = test_template.render()
@@ -481,8 +480,7 @@ class TestTemplates(unittest.TestCase):
 {% set power_off_command = '/usr/bin/pduclient --daemon localhost --hostname lngpdu01 --command off --port 19' %}
 {% set mac_addr = {'eth0': '90:59:af:5e:69:fd', 'eth1': '00:e0:4c:53:44:58'} %}
 {% set power_on_command = '/usr/bin/pduclient --daemon localhost --hostname lngpdu01 --command on --port 19' %}
-{% set connection_command = 'telnet localhost 7333' %}
-{% set exclusive = 'True' %}"""
+{% set connection_command = 'telnet localhost 7333' %}"""
         self.assertTrue(self.validate_data('staging-bbb-01', data))
         test_template = prepare_jinja_template('staging-bbb-01', data)
         rendered = test_template.render()
@@ -507,7 +505,6 @@ class TestTemplates(unittest.TestCase):
 
     def test_qemu_template(self):
         data = """{% extends 'qemu.jinja2' %}
-{% set exclusive = 'True' %}
 {% set mac_addr = 'DE:AD:BE:EF:28:01' %}
 {% set memory = 512 %}"""
         job_ctx = {'arch': 'amd64', 'no_kvm': True}
@@ -525,7 +522,6 @@ class TestTemplates(unittest.TestCase):
 
     def test_qemu_installer(self):
         data = """{% extends 'qemu.jinja2' %}
-{% set exclusive = 'True' %}
 {% set mac_addr = 'DE:AD:BE:EF:28:01' %}
 {% set memory = 512 %}"""
         job_ctx = {'arch': 'amd64'}
@@ -557,7 +553,6 @@ class TestTemplates(unittest.TestCase):
 
     def test_mustang_pxe_grub_efi_template(self):
         data = """{% extends 'mustang-grub-efi.jinja2' %}
-{% set exclusive = 'True' %}
 {% set hard_reset_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command reboot --port 05' %}
 {% set power_off_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command off --port 05' %}
 {% set power_on_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command on --port 05' %}
@@ -584,7 +579,6 @@ class TestTemplates(unittest.TestCase):
 
     def test_mustang_grub_efi_template(self):
         data = """{% extends 'mustang-grub-efi.jinja2' %}
-{% set exclusive = 'True' %}
 {% set grub_efi_method = 'grub' %}
 {% set hard_reset_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command reboot --port 05' %}
 {% set power_off_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command off --port 05' %}
@@ -608,7 +602,6 @@ class TestTemplates(unittest.TestCase):
 
     def test_mustang_secondary_media(self):
         data = """{% extends 'mustang-grub-efi.jinja2' %}
-{% set exclusive = 'True' %}
 {% set sata_label = 'ST500DM002' %}
 {% set sata_uuid = 'ata-ST500DM002-1BD142_S2AKYFSN' %}
 {% set grub_efi_method = 'pxe-grub' %}
@@ -1126,8 +1119,7 @@ class TestTemplates(unittest.TestCase):
 {% set power_off_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname lngpdu01 --command off --port 19' %}
 {% set mac_addr = {'iface0': '90:59:af:5e:69:fd', 'iface1': '00:e0:4c:53:44:58'} %}
 {% set power_on_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname lngpdu01 --command on --port 19' %}
-{% set connection_command = 'telnet localhost 7333' %}
-{% set exclusive = 'True' %}"""
+{% set connection_command = 'telnet localhost 7333' %}"""
         self.assertTrue(self.validate_data('staging-x86-01', data))
         test_template = prepare_jinja_template('staging-qemu-01', data)
         rendered = test_template.render()
@@ -1178,8 +1170,7 @@ class TestTemplates(unittest.TestCase):
 {% set power_off_command = '/usr/local/lab-scripts/snmp_pdu_control --port 14 --hostname pdu18 --command off' %}
 {% set connection_command = 'telnet localhost 7114' %}
 {% set power_on_command = '/usr/local/lab-scripts/snmp_pdu_control --port 14 --hostname pdu18 --command on' %}
-{% set uboot_mac_addr = '00:80:e1:12:81:30' %}
-{% set exclusive = 'True' %}"""
+{% set uboot_mac_addr = '00:80:e1:12:81:30' %}"""
         self.assertTrue(self.validate_data('staging-b2260-01', data))
         test_template = prepare_jinja_template('staging-b2260-01', data)
         rendered = test_template.render()
@@ -1283,7 +1274,6 @@ class TestTemplates(unittest.TestCase):
     def test_nuc_template(self):
         self.assertTrue(self.validate_data('staging-nuc-01', """{% extends 'adb-nuc.jinja2' %}
 {% set device_ip = '192.168.1.11' %}
-{% set exclusive = 'True' %}
 """))
 
     def test_ifc6410(self):

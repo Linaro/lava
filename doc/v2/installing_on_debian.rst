@@ -293,11 +293,10 @@ Ubuntu.
 In LAVA V2, behaviour has changed here. In whatever base directory is
 configured for ``tftpd-hpa``, LAVA will use temporary subdirectories for all
 TFTP operations; other LAVA operations will use the
-:file:`/var/lib/lava/dispatcher/tmp` directory. If **all** of your devices are
-:term:`exclusive`, to V2 (:term:`pipeline`), then the ``tftpd-hpa``
-configuration can be set to the tftpd original value (``/srv/tftp``), the LAVA
-historical value (``/var/lib/lava/dispatcher/tmp``) or any other directory
-specified by the admin.
+:file:`/var/lib/lava/dispatcher/tmp` directory.
+The ``tftpd-hpa`` configuration can be set to the tftpd original value
+(``/srv/tftp``), the LAVA historical value (``/var/lib/lava/dispatcher/tmp``)
+or any other directory specified by the admin.
 
 Extra dependencies
 ------------------

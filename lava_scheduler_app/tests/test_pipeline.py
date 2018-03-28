@@ -251,12 +251,6 @@ class TestPipelineSubmit(TestCaseWithFactory):
         self.assertEqual(user, job.submitter)
         self.assertFalse(job.health_check)
 
-    def test_exclusivity(self):
-        device = Device.objects.get(hostname="fakeqemu1")
-        self.assertFalse(device.is_exclusive)
-        device = Device.objects.get(hostname="fakeqemu3")
-        self.assertTrue(device.is_exclusive)
-
     def test_context(self):
         """
         Test overrides using the job context
