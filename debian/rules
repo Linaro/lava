@@ -40,8 +40,6 @@ override_dh_auto_install:
 	dh_installman -plava-dispatcher man/_build/man/lava-run.1
 	dh_installman -plava-dispatcher man/_build/man/lava-slave.8
 	python3 setup.py install --root=$(CURDIR)/debian/lava-dispatcher/ --install-layout=deb
-	mv -v debian/lava-dispatcher/usr/bin/lava-run debian/lava-dispatcher/usr/sbin/
-	mv -v debian/lava-dispatcher/usr/bin/lava-slave debian/lava-dispatcher/usr/sbin/
 	cp ./etc/lava-slave.service debian/
 	dh_systemd_enable --name lava-slave
 	dh_systemd_start --name lava-slave
