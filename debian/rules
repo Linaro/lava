@@ -27,41 +27,34 @@ export PYBUILD_DISABLE_python3.5=test
 export PYBUILD_DISABLE_python3.6=test
 
 %:
-	dh $@ --with systemd,python2,python3
+	dh $@ --with systemd,python3
+
+override_dh_python3:
+	dh_python3 --shebang=/usr/bin/python3
 
 override_dh_auto_build:
-	dh_auto_build
-	python setup.py build
 	python3 setup.py build
 	make -C man/ man SPHINXOPTS="-D today=\"$(BUILD_DATE)\""
 
 override_dh_auto_install:
-	dh_auto_install
 	dh_installman -plava-dispatcher man/_build/man/lava-run.1
 	dh_installman -plava-dispatcher man/_build/man/lava-slave.8
-	python setup.py install --root=$(CURDIR)/debian/lava-dispatcher/ --install-layout=deb
+	python3 setup.py install --root=$(CURDIR)/debian/lava-dispatcher/ --install-layout=deb
 	mv -v debian/lava-dispatcher/usr/bin/lava-run debian/lava-dispatcher/usr/sbin/
 	mv -v debian/lava-dispatcher/usr/bin/lava-slave debian/lava-dispatcher/usr/sbin/
 	cp ./etc/lava-slave.service debian/
 	dh_systemd_enable --name lava-slave
 	dh_systemd_start --name lava-slave
-	python3 setup.py install --root=$(CURDIR)/debian/lava-dispatcher/ --install-layout=deb
-	# not ready to run under python3 yet
-	${RM} debian/lava-dispatcher/usr/bin/lava-run
-	${RM} debian/lava-dispatcher/usr/bin/lava-slave
-	mv -v debian/lava-dispatcher/usr/sbin/lava-slave debian/lava-dispatcher/usr/bin/
 
 override_dh_fixperms:
-	dh_fixperms -X debian/lava-dispatcher/usr/lib/python2.7/dist-packages/lava_dispatcher/dynamic_vm_keys/lava
 	dh_fixperms -X debian/lava-dispatcher/usr/lib/python3/dist-packages/lava_dispatcher/dynamic_vm_keys/lava
 	# ssh connections use a shared private key - use the same location for debian & ubuntu
-	chmod 0600 debian/lava-dispatcher/usr/lib/python2.7/dist-packages/lava_dispatcher/dynamic_vm_keys/lava
-	chmod 0644 debian/lava-dispatcher/usr/lib/python2.7/dist-packages/lava_dispatcher/dynamic_vm_keys/lava.pub
 	chmod 0600 debian/lava-dispatcher/usr/lib/python3/dist-packages/lava_dispatcher/dynamic_vm_keys/lava
 	chmod 0644 debian/lava-dispatcher/usr/lib/python3/dist-packages/lava_dispatcher/dynamic_vm_keys/lava.pub
 
 override_dh_auto_clean:
-	dh_auto_clean
+	python3 setup.py clean -a
+	find . -path '*/__pycache__/*' -delete
 	$(RM) -r lava_dispatcher.egg-info setup.cfg .idea/ build/
 	$(RM) -r .eggs/ versiontools-*.egg/ doc/build/ doc/html/
 	$(RM) debian/lava-slave.service
