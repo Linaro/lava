@@ -105,6 +105,7 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
                 cwd=cwd,
                 logfile=ShellLogger(logger),
                 encoding='utf-8',
+                codec_errors='replace'
             )
         self.name = "ShellCommand"
         self.logger = logger

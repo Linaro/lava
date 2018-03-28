@@ -125,7 +125,7 @@ class PowerOn(Action):
 
     def run(self, connection, max_end_time, args=None):
         # to enable power to a device, either power_on or hard_reset are needed.
-        if self.job.device.power_command is '':
+        if self.job.device.power_command == '':
             self.logger.warning("Unable to power on the device")
             return connection
         connection = super(PowerOn, self).run(connection, max_end_time, args)

@@ -297,7 +297,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                     new_connection = action.run(connection,
                                                 action_max_end_time, args)
             except LAVAError as exc:
-                action.logger.error(str(exc))
+                action.logger.exception(exc)
                 # allows retries without setting errors, which make the job incomplete.
                 failed = True
                 action.results = {'fail': str(exc)}
