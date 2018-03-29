@@ -111,7 +111,7 @@ class Migration(migrations.Migration):
             name='ImageChartFilter',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('representation', models.CharField(default='lines', max_length=20, verbose_name='Representation', choices=[(b'lines', 'Lines'), (b'bars', 'Bars')])),
+                ('representation', models.CharField(default='lines', max_length=20, verbose_name='Representation', choices=[('lines', 'Lines'), ('bars', 'Bars')])),
             ],
             options={
             },
@@ -216,7 +216,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('name', models.CharField(max_length=100)),
                 ('description', models.TextField(null=True, blank=True)),
-                ('chart_type', models.CharField(default='pass/fail', max_length=20, verbose_name='Chart type', choices=[(b'pass/fail', 'Pass/Fail'), (b'measurement', 'Measurement')])),
+                ('chart_type', models.CharField(default='pass/fail', max_length=20, verbose_name='Chart type', choices=[('pass/fail', 'Pass/Fail'), ('measurement', 'Measurement')])),
                 ('target_goal', models.DecimalField(null=True, verbose_name='Target goal', max_digits=10, decimal_places=5, blank=True)),
                 ('is_interactive', models.BooleanField(default=False, verbose_name='Interactive')),
                 ('is_data_table_visible', models.BooleanField(default=False, verbose_name='Data table visible')),
@@ -350,7 +350,7 @@ class Migration(migrations.Migration):
                 ('version', models.CharField(help_text='Maximum length: 256 characters', max_length=256, verbose_name='Version')),
                 ('description', models.TextField(verbose_name='Description')),
                 ('format', models.CharField(help_text='Maximum length: 128 characters', max_length=128, verbose_name='Format')),
-                ('location', models.CharField(default='LOCAL', max_length=64, verbose_name='Location', choices=[(b'LOCAL', 'Local'), (b'URL', 'URL'), (b'GIT', 'GIT Repo'), (b'BZR', 'BZR Repo')])),
+                ('location', models.CharField(default='LOCAL', max_length=64, verbose_name='Location', choices=[('LOCAL', 'Local'), ('URL', 'URL'), ('GIT', 'GIT Repo'), ('BZR', 'BZR Repo')])),
                 ('url', models.CharField(help_text='Maximum length: 1024 characters', max_length=1024, verbose_name='URL')),
                 ('environment', models.CharField(help_text='Maximum length: 256 characters', max_length=256, verbose_name='Environment')),
                 ('target_os', models.CharField(help_text='Maximum length: 512 characters', max_length=512, verbose_name='Operating Systems')),
