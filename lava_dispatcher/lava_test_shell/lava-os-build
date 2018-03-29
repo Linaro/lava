@@ -2,7 +2,7 @@
 
 if [ -f /etc/issue ]
 then
-    cat /etc/issue | sed -e 's/\\n.\\l//' | tr -s '\n' '\n' | dd bs=100 count=1
+    cat /etc/issue | sed -e 's/\\n.\\l//' | tr -s '\n' '\n' | dd bs=100 count=1 2>/dev/null
     exit 0
 fi
 
