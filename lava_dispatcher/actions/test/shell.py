@@ -410,9 +410,7 @@ class TestShellAction(TestAction):
         # prevent losing data in the update
         # FIXME: support parameters and retries
         if res["test_case_id"] in p_res:
-            raise JobError(
-                "Duplicate test_case_id in results: %s",
-                res["test_case_id"])
+            raise JobError("Duplicate test_case_id in results: %s" % res["test_case_id"])
         # turn the result dict inside out to get the unique
         # test_case_id/testset_name as key and result as value
         res_data = {
@@ -425,7 +423,7 @@ class TestShellAction(TestAction):
             try:
                 measurement = decimal.Decimal(res['measurement'])
             except decimal.InvalidOperation:
-                raise TestError("Invalid measurement %s", res['measurement'])
+                raise TestError("Invalid measurement %s" % res['measurement'])
             res_data['measurement'] = measurement
             if 'units' in res:
                 res_data['units'] = res['units']
@@ -516,7 +514,7 @@ class TestShellAction(TestAction):
                 try:
                     measurement = decimal.Decimal(res['measurement'])
                 except decimal.InvalidOperation:
-                    raise TestError("Invalid measurement %s", res['measurement'])
+                    raise TestError("Invalid measurement %s" % res['measurement'])
                 res_data['measurement'] = measurement
                 if 'units' in res:
                     res_data['units'] = res['units']
