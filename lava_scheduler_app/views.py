@@ -64,8 +64,8 @@ from lava_scheduler_app.models import (
 from lava_scheduler_app import utils
 from lava_scheduler_app.dbutils import (
     device_type_summary,
-    load_devicetype_template,
-    testjob_submission
+    testjob_submission,
+    invalid_template,
 )
 from lava_scheduler_app.templatetags.utils import udecode
 
@@ -795,18 +795,6 @@ def device_type_detail(request, pk):
     else:
         health_freq_str = "one every %d hours" % dt.health_frequency
 
-    d_template = bool(load_devicetype_template(dt.name))  # returns None on error ( == False)
-    if not d_template:
-        extends = set([device.get_extends() for device in Device.objects.filter(device_type=dt)])
-        for extend in extends:
-            if not extend:
-                break
-            d_template = bool(load_devicetype_template(extend.replace('.jinja2', '')))
-            if d_template:
-                break
-    else:
-        d_template = False  # template exists, invalid check is False
-
     return render(request, "lava_scheduler_app/device_type.html",
                   {'dt': dt,
                    'cores': core_string,
@@ -828,7 +816,7 @@ def device_type_detail(request, pk):
                    'bread_crumb_trail': BreadCrumbTrail.leading_to(device_type_detail, pk=pk),
                    'context_help': BreadCrumbTrail.leading_to(device_type_detail, pk='help'),
                    'health_freq': health_freq_str,
-                   'invalid_template': d_template})
+                   'invalid_template': invalid_template(dt)})
 
 
 @BreadCrumb("Health history", parent=device_type_detail, needs=['pk'])

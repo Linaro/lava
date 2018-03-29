@@ -10,7 +10,10 @@ from lava_scheduler_app.models import (
     Device,
     DeviceType,
 )
-from lava_scheduler_app.dbutils import load_devicetype_template
+from lava_scheduler_app.dbutils import (
+    load_devicetype_template,
+    invalid_template,
+)
 from django_testscenarios.ubertest import TestCase
 from django.contrib.auth.models import User
 
@@ -24,6 +27,9 @@ class ModelFactory(object):
 
     def __init__(self):
         self._int = 0
+
+        Device.CONFIG_PATH = os.path.abspath(os.path.join(
+            os.path.dirname(__file__), "..", "..", "lava_scheduler_app", "tests", "devices"))
 
     def getUniqueInteger(self):
         self._int += 1
@@ -83,6 +89,13 @@ class DeviceTest(TestCaseWithFactory):
 
 
 class DeviceTypeTest(TestCaseWithFactory):
+
+    def setUp(self):
+        super(DeviceTypeTest, self).setUp()
+        self.types_dir = os.path.join(Device.CONFIG_PATH, '..', 'device-types')
+        self.basedir = (os.path.abspath(os.path.join(
+            os.path.dirname(__file__))))
+
     """
     Test loading of device-type information
     """
@@ -117,3 +130,64 @@ class DeviceTypeTest(TestCaseWithFactory):
                 print(data)  # for easier debugging - use the online yaml parser
                 self.fail("%s: %s" % (template_name, exc))
             self.assertIsInstance(yaml_data, dict)
+
+    def test_bbb_valid_template(self):
+        name = "beaglebone-black"
+        dt = DeviceType(name=name)
+        dt.save()
+        dt.refresh_from_db()
+        device = Device(device_type=dt, hostname='bbb-01', health=Device.HEALTH_GOOD)
+        device.save()
+        device.refresh_from_db()
+        self.assertIsNotNone([d for d in Device.objects.filter(device_type=dt)])
+        self.assertTrue(Device.CONFIG_PATH.startswith(self.basedir))
+        found = False
+        for device_file in os.listdir(self.types_dir):
+            if device_file == '%s.jinja2' % name:
+                found = True
+                break
+        if not found:
+            self.fail("Configuration error - %s.jinja2 should exist in %s" % (name, self.types_dir))
+        self.assertIsNotNone([device in Device.objects.filter(device_type=dt)])
+        self.assertIsNotNone(device.load_configuration())
+        self.assertTrue(bool(load_devicetype_template(device.device_type.name)))
+        self.assertFalse(invalid_template(device.device_type))
+
+    def test_unknown_invalid_template(self):
+        name = "nowhere-never-skip"
+        dt = DeviceType(name=name)
+        dt.save()
+        dt.refresh_from_db()
+        device = Device(device_type=dt, hostname='test-01', health=Device.HEALTH_GOOD)
+        device.save()
+        device.refresh_from_db()
+        self.assertIsNotNone([d for d in Device.objects.filter(device_type=dt)])
+        self.assertTrue(Device.CONFIG_PATH.startswith(self.basedir))
+        found = False
+        for device_file in os.listdir(self.types_dir):
+            if device_file == '%s.jinja2' % name:
+                self.fail("Configuration error - %s.jinja2 should NOT exist in %s" % (name, self.types_dir))
+        self.assertIsNone(device.load_configuration())
+        self.assertIsNotNone([device in Device.objects.filter(device_type=dt)])
+        self.assertFalse(bool(load_devicetype_template(device.device_type.name)))
+        self.assertTrue(invalid_template(device.device_type))
+
+    def test_juno_vexpress_valid_template(self):
+        name = "juno-r2"
+        dt = DeviceType(name=name)
+        dt.save()
+        dt.refresh_from_db()
+        device = Device(device_type=dt, hostname='juno-r2-01', health=Device.HEALTH_GOOD)
+        device.save()
+        device.refresh_from_db()
+        self.assertIsNotNone([d for d in Device.objects.filter(device_type=dt)])
+        for device_file in os.listdir(self.types_dir):
+            if device_file == 'juno-r2.jinja2':
+                self.fail("Configuration error - %s.jinja2 should NOT exist in %s" % (name, self.types_dir))
+        self.assertTrue(Device.CONFIG_PATH.startswith(self.basedir))
+        self.assertEqual('juno-r2-01', device.hostname)
+        self.assertIsNotNone(device.load_configuration())
+        self.assertEqual([device], [device for device in Device.objects.filter(device_type=dt)])
+        self.assertEqual('juno', device.get_extends())
+        self.assertFalse(bool(load_devicetype_template(device.device_type.name)))
+        self.assertFalse(invalid_template(device.device_type))
