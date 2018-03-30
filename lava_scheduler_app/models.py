@@ -2229,9 +2229,20 @@ class TestJob(RestrictedResource):
             Notification.DEFAULT_IRC_TEMPLATE, **kwargs)
 
     def get_notification_args(self):
+        from lava_results_app.models import TestCase
+
         kwargs = {}
         kwargs["job"] = self
         kwargs["url_prefix"] = "http://%s" % utils.get_domain()
+        # Get lava.job result if available
+        try:
+            lava_job_obj = TestCase.objects.get(suite__job=self,
+                                                suite__name="lava",
+                                                name="job")
+            kwargs["lava_job_result"] = lava_job_obj.action_metadata
+        except TestCase.DoesNotExist:
+            pass
+
         kwargs["query"] = {}
         if self.notification.query_name or self.notification.entity:
             kwargs["query"]["results"] = self.notification.get_query_results()

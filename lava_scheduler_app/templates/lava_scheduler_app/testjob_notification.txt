@@ -12,6 +12,12 @@ Job details and log file: {{ url_prefix }}{{ job.get_absolute_url() }}
 {%- if job.state == job.STATE_FINISHED %}
 {%- if job.notification.verbosity < 2 %}
 
+{%- if job.health == job.HEALTH_INCOMPLETE %}
+{%- if lava_job_result %}
+{{ lava_job_result.error_type }} error: {{ lava_job_result.error_msg }}
+{%- endif %}
+{%- endif %}
+
 {% if job.actual_device %}
 Device details:
 Hostname: {{ job.actual_device.hostname }}
