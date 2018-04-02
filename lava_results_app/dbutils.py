@@ -21,6 +21,7 @@
 
 from __future__ import unicode_literals
 
+import hashlib
 import os
 import yaml
 import sys
@@ -203,15 +204,26 @@ def _add_parameter_metadata(prefix, definition, dictionary, label):
             dictionary['%s.%s.parameters.%s' % (prefix, label, paramkey)] = paramvalue
 
 
-def _get_job_metadata(data):  # pylint: disable=too-many-branches,too-many-nested-blocks,too-many-statements
-    if not isinstance(data, list):
-        return None
+def _get_job_metadata(job):
     retval = {}
+    # Add original_definition checksum to metadata
+    retval.update({
+        'definition-checksum': hashlib.md5(
+            job.original_definition.encode('utf-8')).hexdigest()
+    })
+    # Add lava-server-version to metadata
     packaged = debian_package_version()
     if packaged:
         retval.update({
             'lava-server-version': packaged
         })
+    return retval
+
+
+def _get_action_metadata(data):  # pylint: disable=too-many-branches,too-many-nested-blocks,too-many-statements
+    if not isinstance(data, list):
+        return None
+    retval = {}
     for action in data:
         deploy = [dict.get(action, 'deploy')]
         count = 0
@@ -381,11 +393,16 @@ def map_metadata(description, job):
     if 'job' not in description_data:
         logger.warning("[%s] skipping description without a job.", job.id)
         return
-    action_values = _get_job_metadata(description_data['job']['actions'])
+    action_values = _get_action_metadata(description_data['job']['actions'])
     for key, value in action_values.items():
         if not key or not value:
             logger.warning('[%s] Missing element in job. %s: %s', job.id, key, value)
             continue
+        testdata.attributes.create(name=key, value=value)
+
+    # get common job metadata
+    job_metadata = _get_job_metadata(job)
+    for key, value in job_metadata.items():
         testdata.attributes.create(name=key, value=value)
 
     # get metadata from device

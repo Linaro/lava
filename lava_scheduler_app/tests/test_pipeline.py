@@ -969,10 +969,8 @@ class TestYamlMultinode(TestCaseWithFactory):
             yaml.dump(client_submission), parser_device,
             4212, None, "")
         pipeline = pipeline_job.describe()
-        from lava_results_app.dbutils import _get_job_metadata
-        meta_dict = _get_job_metadata(pipeline['job']['actions'])
-        if 'lava-server-version' in meta_dict:
-            del meta_dict['lava-server-version']
+        from lava_results_app.dbutils import _get_action_metadata
+        meta_dict = _get_action_metadata(pipeline['job']['actions'])
         self.assertEqual(
             {
                 'test.0.common.definition.name': 'multinode-basic',
@@ -985,9 +983,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         # simulate dynamic connection
         dynamic = yaml.load(open(
             os.path.join(os.path.dirname(__file__), 'pipeline_refs', 'connection-description.yaml'), 'r'))
-        meta_dict = _get_job_metadata(dynamic['job']['actions'])
-        if 'lava-server-version' in meta_dict:
-            del meta_dict['lava-server-version']
+        meta_dict = _get_action_metadata(dynamic['job']['actions'])
         self.assertEqual(
             meta_dict,
             {
