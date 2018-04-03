@@ -51,6 +51,7 @@ class YamlFactory(ModelFactory):
 
     def __init__(self):
         super(YamlFactory, self).__init__()
+        Device.CONFIG_PATH = os.path.join(os.getcwd(), 'lava_scheduler_app', 'tests', 'devices')
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
         logger = logging.getLogger('unittests')
         logger.disabled = True
@@ -141,7 +142,6 @@ class PipelineDeviceTags(TestCaseWithFactory):
         self.assertEqual(TestJob.LOW, job.priority)
 
     def test_yaml_device_tags(self):
-        Device.CONFIG_PATH = os.path.join(os.getcwd(), 'lava_scheduler_app', 'tests', 'devices')
         Tag.objects.all().delete()
         tag_list = [
             self.factory.ensure_tag('usb'),
@@ -547,7 +547,6 @@ class TestExtendsSubmit(TestCaseWithFactory):
 
     def setUp(self):
         super(TestExtendsSubmit, self).setUp()
-        Device.CONFIG_PATH = os.path.join(os.getcwd(), 'lava_scheduler_app', 'tests', 'devices')
         Device.HEALTH_CHECK_PATH = os.path.join(os.getcwd(), 'lava_scheduler_app', 'tests', 'health-checks')
         self.factory = YamlFactory()
         self.device_type = self.factory.make_device_type(name='juno-r2')
