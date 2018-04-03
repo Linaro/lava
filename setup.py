@@ -4,11 +4,6 @@ import sys
 from setuptools import setup, find_packages
 from version import version_tag
 
-if sys.version_info[0] == 2:
-    lzma = 'pyliblzma >= 0.5.3'
-elif sys.version_info[0] == 3:
-    lzma = ''
-
 setup(
     name="lava-dispatcher",
     version=version_tag(),
@@ -22,7 +17,7 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)',
         'Operating System :: POSIX :: Linux',
-        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.5',
         'Topic :: Software Development :: Embedded Systems',
         'Topic :: Software Development :: Testing',
     ],
@@ -68,7 +63,6 @@ setup(
         'pexpect >= 4.2',
         'PyYAML',
         'pyserial >= 2.6',
-        '%s' % lzma,
         'requests',
         'netifaces >= 0.10.0',
         'nose',

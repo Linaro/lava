@@ -5,7 +5,7 @@ set -e
 
 PEP8=1
 PYTEST=0
-ALL=0
+ALL=1
 
 while getopts ":pya" opt; do
   case $opt in
@@ -18,14 +18,14 @@ while getopts ":pya" opt; do
       PYTEST=1
       ;;
     a)
-      # python3 and python2
+      # python3 unit tests
       ALL=1
       ;;
     \?)
       echo "Usage:"
       echo "-p - pep8 only"
       echo "-y - use py.test"
-      echo "-a - run all tests: pep8, python2 and python3"
+      echo "-a - run all tests: pep8 and python3"
       echo "Invalid option: -$OPTARG" >&2
       exit 1
       ;;
@@ -48,12 +48,6 @@ rm -rf ./.cache/
 
 echo "Starting unit tests"
 echo
-
-if [ ${PYTEST} = 1 ]; then
-  py.test -v lava_dispatcher/test
-else
-  python setup.py test
-fi
 
 if [ ${ALL} = 1 ]; then
   if [ ${PYTEST} = 1 ]; then
