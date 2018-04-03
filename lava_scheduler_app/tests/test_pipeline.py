@@ -747,6 +747,27 @@ class TestYamlMultinode(TestCaseWithFactory):
             else:
                 self.fail('Unrecognised role: %s' % role)
 
+    def test_multinode_nexus4(self):
+        submission = yaml.load(open(
+            os.path.join(os.path.dirname(__file__), 'sample_jobs', 'nexus4_multinode.yaml'), 'r'))
+        target_group = 'arbitrary-group-id'  # for unit tests only
+
+        jobs = split_multinode_yaml(submission, target_group)
+        device_protocol_data = {
+            'lava-lxc': {
+                'name': 'lxc-nexus4', 'template': 'debian', 'release': 'sid',
+                'distribution': 'debian'}
+        }
+        for role, _ in jobs.items():
+            if role == 'device':
+                for job in jobs[role]:
+                    self.assertIn('lava-lxc', job['protocols'])
+                    self.assertEqual(job['protocols']['lava-lxc'], device_protocol_data['lava-lxc'])
+                    self.assertIn('reboot_to_fastboot', job)
+                    self.assertEqual(job['reboot_to_fastboot'], False)
+            else:
+                self.fail('Unrecognised role: %s' % role)
+
     def test_multinode_protocols(self):
         user = self.factory.make_user()
         device_type = self.factory.make_device_type()

@@ -155,6 +155,7 @@ def split_multinode_yaml(submission, target_group):  # pylint: disable=too-many-
         'visibility',
         'notify',
         'metadata',
+        'reboot_to_fastboot',
     ]
     skip = ['role', 'roles']
     scheduling = ['device_type', 'connection', 'host_role', 'context']  # top level values to be preserved
@@ -261,7 +262,8 @@ def split_multinode_yaml(submission, target_group):  # pylint: disable=too-many-
             if role not in submission['protocols']['lava-lxc']:
                 continue
             # populate the lava-lxc protocol metadata
-            jobs[role][0]['protocols'].update({'lava-lxc': submission['protocols']['lava-lxc'][role]})
+            for job in jobs[role]:
+                job['protocols'].update({'lava-lxc': submission['protocols']['lava-lxc'][role]})
 
     return jobs
 
