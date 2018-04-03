@@ -49,8 +49,7 @@ from lava_dispatcher.utils.constants import (
     DEFAULT_V1_PATTERN,
     DEFAULT_V1_FIXUP,
 )
-if sys.version > '3':
-    from functools import reduce  # pylint: disable=redefined-builtin
+from functools import reduce
 
 # pylint: disable=too-many-branches,too-many-statements,too-many-instance-attributes,logging-not-lazy
 

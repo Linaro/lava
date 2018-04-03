@@ -65,10 +65,7 @@ from lava_dispatcher.utils.constants import (
 from lava_dispatcher.actions.boot.fastboot import EnterFastbootAction
 from lava_dispatcher.actions.boot.u_boot import UBootEnterFastbootAction
 
-if sys.version_info[0] == 2:
-    import urlparse as lavaurl
-elif sys.version_info[0] == 3:
-    import urllib.parse as lavaurl  # pylint: disable=no-name-in-module,import-error
+import urllib.parse as lavaurl
 
 # pylint: disable=logging-not-lazy
 
@@ -209,7 +206,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
                         error_message = str(eof_exc)
                         self.logger.exception(error_message)
                         raise JobError(error_message)
-                except (IOError, lzma.error, zlib.error) as exc:  # pylint: disable=no-member
+                except (IOError, lzma.LZMAError, zlib.error) as exc:  # pylint: disable=no-member
                     error_message = str(exc)
                     self.logger.exception(error_message)
                     raise JobError(error_message)

@@ -262,9 +262,6 @@ class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-m
                  if action.name == 'bootloader-retry'][0]
         expect = [action for action in retry.internal_pipeline.actions
                   if action.name == 'expect-shell-connection'][0]
-        if sys.version < '3':
-            # skipping in 3 due to "RecursionError: maximum recursion depth exceeded in comparison"
-            self.assertNotEqual(check, expect.parameters)
 
     def test_xz_nfs(self):
         job = self.factory.create_job('sample_jobs/ipxe-nfs.yaml')

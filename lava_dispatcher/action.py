@@ -21,6 +21,7 @@
 import logging
 import sys
 import copy
+from functools import reduce  # pylint: disable=redefined-builtin
 import time
 import types
 import signal
@@ -37,9 +38,6 @@ from lava_dispatcher.utils.constants import (
     OVERRIDE_CLAMP_DURATION
 )
 from lava_dispatcher.utils.strings import seconds_to_str
-
-if sys.version > '3':
-    from functools import reduce  # pylint: disable=redefined-builtin
 
 
 class LAVAError(Exception):
@@ -551,23 +549,12 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         except subprocess.CalledProcessError as exc:
             # the errors property doesn't support removing errors
             errors = []
-            if sys.version > '3':
-                if exc.output:
-                    errors.append(exc.output.strip().decode('utf-8'))
-                else:
-                    errors.append(str(exc))
-                msg = '[%s] command %s\nmessage %s\noutput %s\n' % (
-                    self.name, [i.strip() for i in exc.cmd], str(exc), str(exc).split('\n'))
+            if exc.output:
+                errors.append(exc.output.strip().decode('utf-8'))
             else:
-                if exc.output:
-                    errors.append(exc.output.strip())
-                elif exc.message:
-                    errors.append(exc.message)
-                else:
-                    errors.append(str(exc))
-                msg = "[%s] command %s\nmessage %s\noutput %s\nexit code %s" % (
-                    self.name, [i.strip() for i in exc.cmd], [i.strip() for i in exc.message],
-                    exc.output.split('\n'), exc.returncode)
+                errors.append(str(exc))
+            msg = '[%s] command %s\nmessage %s\noutput %s\n' % (
+                self.name, [i.strip() for i in exc.cmd], str(exc), str(exc).split('\n'))
 
             # the exception is raised due to a non-zero exc.returncode
             if allow_fail:

@@ -44,11 +44,6 @@ from zmq.utils.strtypes import b, u
 
 from lava_dispatcher.job import ZMQConfig
 
-if sys.version >= '3':
-    LZMAError = lzma.LZMAError
-else:
-    LZMAError = lzma.error
-
 # pylint: disable=no-member
 # pylint: disable=too-few-public-methods
 # pylint: disable=too-many-arguments
@@ -235,7 +230,7 @@ class Job(object):
             filename = os.path.join(self.base_dir, "description.yaml")
             data = open(filename, 'r').read()
             return lzma.compress(b(data))
-        except (IOError, LZMAError) as exc:
+        except (IOError, lzma.LZMAError) as exc:
             LOG.error("[%d] Unable to read 'description.yaml'", self.job_id)
             LOG.exception(exc)
             return None

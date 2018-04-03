@@ -69,12 +69,8 @@ class BzrHelper(VCSHelper):
 
         except subprocess.CalledProcessError as exc:
             exc_command = [i.strip() for i in exc.cmd]
-            if sys.version > '3':
-                exc_message = str(exc)  # pylint: disable=redefined-variable-type
-                exc_output = str(exc).split('\n')
-            else:
-                exc_message = [i.strip() for i in exc.message],  # pylint: disable=redefined-variable-type
-                exc_output = exc.output.split('\n')
+            exc_message = str(exc)  # pylint: disable=redefined-variable-type
+            exc_output = str(exc).split('\n')
             logger.exception(yaml.dump({
                 'command': exc_command,
                 'message': exc_message,
@@ -129,10 +125,7 @@ class GitHelper(VCSHelper):
                                                  'log', '-1', '--pretty=%H'],
                                                 stderr=subprocess.STDOUT).strip()
         except subprocess.CalledProcessError as exc:
-            if sys.version > '3':
-                logger.error(str(exc))
-            else:
-                logger.error(exc.output)
+            logger.error(str(exc))
             raise InfrastructureError("Unable to fetch git repository '%s'"
                                       % (self.url))
 

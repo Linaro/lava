@@ -196,10 +196,7 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
             scripts_to_copy.append(script)
         check_list = list(set([os.path.basename(scr) for scr in scripts_to_copy]))
 
-        if sys.version_info[0] == 2:
-            self.assertItemsEqual(check_list, script_list)
-        elif sys.version_info[0] == 3:
-            self.assertCountEqual(check_list, script_list)  # pylint: disable=no-member
+        self.assertCountEqual(check_list, script_list)
         self.assertEqual(overlay.xmod, stat.S_IRWXU | stat.S_IXGRP | stat.S_IRGRP | stat.S_IXOTH | stat.S_IROTH)
 
 
@@ -508,10 +505,7 @@ test3a: skip
         match = re.search(re_pat, data)
         if match:
             self.assertEqual(match.groupdict(), {'test_case_id': 'test1a', 'result': 'pass'})
-        if sys.version_info[0] == 2:
-            child = pexpect.spawn('cat', [self.res_data])
-        elif sys.version_info[0] == 3:
-            child = pexpect.spawn('cat', [self.res_data], encoding='utf-8')
+        child = pexpect.spawn('cat', [self.res_data], encoding='utf-8')
         child.expect([re_pat, pexpect.EOF])
         self.assertEqual(child.after.encode('utf-8'), b'test1a: pass')
         child.expect([re_pat, pexpect.EOF])
