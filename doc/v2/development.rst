@@ -301,9 +301,9 @@ service to be restarted.
 
   .. code-block:: python
 
-    super(ThisClass, self).validate()
+    super().validate()
 
-    connection = super(ThisClass, self).run(connection, max_end_time, args)
+    connection = super().run(connection, max_end_time, args)
 
 * When adding or modifying ``run`` functions in subclasses of ``Action``,
   **always** ensure that each return point out of the ``run`` function returns

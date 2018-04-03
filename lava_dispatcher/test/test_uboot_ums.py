@@ -45,7 +45,7 @@ class UBootUMSFactory(Factory):  # pylint: disable=too-few-public-methods
 class TestUbootUMSAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestUbootUMSAction, self).setUp()
+        super().setUp()
         self.factory = UBootUMSFactory()
 
     @unittest.skipIf(infrastructure_error('dd'), "dd not installed")

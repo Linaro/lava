@@ -33,7 +33,7 @@ from lava_dispatcher.test.test_basic import StdoutTestCase
 class Kernel(object):  # pylint: disable=too-few-public-methods
 
     def __init__(self):
-        super(Kernel, self).__init__()
+        super().__init__()
         self.existing_prompt = None
 
     def run(self, prompt_list):
@@ -58,14 +58,14 @@ class Child(Kernel):  # pylint: disable=too-few-public-methods
         else:
             self.existing_prompt = prompt_list[:]
         prompt_list = LinuxKernelMessages.get_init_prompts()
-        super(Child, self).run(prompt_list)
+        super().run(prompt_list)
         return prompt_list
 
 
 class FakeConnection(object):  # pylint: disable=too-few-public-methods
 
     def __init__(self, child, prompt_str):
-        super(FakeConnection, self).__init__()
+        super().__init__()
         self.raw_connection = child
         self.prompt_str = prompt_str
         self.check_char = '#'
@@ -91,7 +91,7 @@ class FakeConnection(object):  # pylint: disable=too-few-public-methods
 class TestBootMessages(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestBootMessages, self).setUp()
+        super().setUp()
         self.max_end_time = time.time() + 30
 
     def test_existing_prompt(self):

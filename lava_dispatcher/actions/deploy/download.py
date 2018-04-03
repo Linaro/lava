@@ -84,7 +84,7 @@ class DownloaderAction(RetryAction):
     summary = "download-retry"
 
     def __init__(self, key, path, uniquify=True):
-        super(DownloaderAction, self).__init__()
+        super().__init__()
         self.max_retries = 3
         self.key = key  # the key in the parameters of what to download
         self.path = path  # where to download
@@ -131,7 +131,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
     summary = "download-action"
 
     def __init__(self, key, path, url, uniquify=True):
-        super(DownloadHandler, self).__init__()
+        super().__init__()
         self.url = url
         self.key = key
         # If uniquify is True, store the files in a sub-directory to keep the
@@ -147,7 +147,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
             self.logger.debug("Cleaning up download directory: %s", self.path)
             shutil.rmtree(self.path)
         self.set_namespace_data(action='download-action', label=self.key, key='file', value='')
-        super(DownloadHandler, self).cleanup(connection)
+        super().cleanup(connection)
 
     def _url_to_fname_suffix(self, path, modify):
         filename = os.path.basename(self.url.path)
@@ -162,7 +162,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
                     parts[-1])
 
     def validate(self):
-        super(DownloadHandler, self).validate()
+        super().validate()
         if 'images' in self.parameters and self.key in self.parameters['images']:
             image = self.parameters['images'][self.key]
             self.url = lavaurl.urlparse(image['url'])
@@ -214,7 +214,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
             return (condition, percent,
                     "progress %3d%% (%dMB)" % (percent, int(downloaded_sz / (1024 * 1024))) if condition else "")
 
-        connection = super(DownloadHandler, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         # self.cookies = self.job.context.config.lava_cookies  # FIXME: work out how to restore
         md5 = hashlib.md5()
         sha256 = hashlib.sha256()
@@ -412,7 +412,7 @@ class FileDownloadAction(DownloadHandler):
     summary = "local file copy"
 
     def validate(self):
-        super(FileDownloadAction, self).validate()
+        super().validate()
         try:
             self.size = os.stat(self.url.path).st_size
         except OSError:
@@ -443,7 +443,7 @@ class HttpDownloadAction(DownloadHandler):
     summary = "http download"
 
     def validate(self):
-        super(HttpDownloadAction, self).validate()
+        super().validate()
         res = None
         try:
             self.logger.debug("Validating that %s exists", self.url.geturl())
@@ -496,7 +496,7 @@ class ScpDownloadAction(DownloadHandler):
     summary = "scp download"
 
     def validate(self):
-        super(ScpDownloadAction, self).validate()
+        super().validate()
         try:
             size = subprocess.check_output(['nice', 'ssh',
                                             self.url.netloc,
@@ -539,21 +539,20 @@ class LxcDownloadAction(Action):
     summary = "lxc download"
 
     def __init__(self, key, path, url):
-        super(LxcDownloadAction, self).__init__()
+        super().__init__()
         self.key = key
         self.path = path
         self.url = url
 
     def validate(self):
-        super(LxcDownloadAction, self).validate()
+        super().validate()
         if self.url.scheme != 'lxc':
             self.errors = "lxc:/// url scheme is invalid"
         if not self.url.path:
             self.errors = "Invalid path in lxc:/// url"
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(LxcDownloadAction, self).run(connection,
-                                                        max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         # this is the device namespace - the lxc namespace is not accessible
         lxc_name = None
         protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
@@ -586,11 +585,11 @@ class QCowConversionAction(Action):
     summary = "qcow conversion"
 
     def __init__(self, key):
-        super(QCowConversionAction, self).__init__()
+        super().__init__()
         self.key = key
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(QCowConversionAction, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         fname = self.get_namespace_data(
             action='download-action',
             label=self.key,
@@ -627,7 +626,7 @@ class Download(Deployment):
     name = 'download'
 
     def __init__(self, parent, parameters):
-        super(Download, self).__init__(parent)
+        super().__init__(parent)
         self.action = DownloadAction()
         self.action.section = self.action_type
         self.action.job = self.job
@@ -649,11 +648,11 @@ class DownloadAction(DeployAction):  # pylint:disable=too-many-instance-attribut
     summary = "download deployment"
 
     def __init__(self):
-        super(DownloadAction, self).__init__()
+        super().__init__()
         self.download_dir = None
 
     def validate(self):
-        super(DownloadAction, self).validate()
+        super().validate()
         self.set_namespace_data(action=self.name, label='download-dir',
                                 key='dir', value=self.download_dir)
 
@@ -699,13 +698,12 @@ class CopyToLxcAction(DeployAction):
     summary = "copy to lxc"
 
     def __init__(self):
-        super(CopyToLxcAction, self).__init__()
+        super().__init__()
         self.retries = 3
         self.sleep = 10
 
     def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-locals
-        connection = super(CopyToLxcAction, self).run(connection, max_end_time,
-                                                      args)
+        connection = super().run(connection, max_end_time, args)
         # this is the device namespace - the lxc namespace is not accessible
         lxc_name = None
         protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]

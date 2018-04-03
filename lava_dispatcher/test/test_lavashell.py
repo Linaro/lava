@@ -46,7 +46,7 @@ from lava_dispatcher.actions.test.shell import TestShellRetry, TestShellAction
 class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestDefinitionHandlers, self).setUp()
+        super().setUp()
         factory = Factory()
         self.job = factory.create_kvm_job('sample_jobs/kvm.yaml')
 
@@ -118,7 +118,7 @@ class X86Factory(Factory):
 class TestMultiNodeOverlay(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestMultiNodeOverlay, self).setUp()
+        super().setUp()
         factory = X86Factory()
         lng1 = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/lng-generator-01.yaml'))
         lng2 = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/lng-generator-02.yaml'))
@@ -155,7 +155,7 @@ class TestShellResults(StdoutTestCase):   # pylint: disable=too-many-public-meth
     class FakeJob(Job):
 
         def __init__(self, parameters):
-            super(TestShellResults.FakeJob, self).__init__(parameters)
+            super().__init__(parameters)
 
     class FakeDeploy(object):
         """
@@ -171,7 +171,7 @@ class TestShellResults(StdoutTestCase):   # pylint: disable=too-many-public-meth
     class FakePipeline(Pipeline):
 
         def __init__(self, parent=None, job=None):
-            super(TestShellResults.FakePipeline, self).__init__(parent, job)
+            super().__init__(parent, job)
 
     class FakeAction(Action):
         """
@@ -183,7 +183,7 @@ class TestShellResults(StdoutTestCase):   # pylint: disable=too-many-public-meth
         summary = "fake action for unit tests"
 
         def __init__(self):
-            super(TestShellResults.FakeAction, self).__init__()
+            super().__init__()
             self.count = 1
 
         def run(self, connection, max_end_time, args=None):

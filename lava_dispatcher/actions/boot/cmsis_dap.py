@@ -38,7 +38,7 @@ class CMSIS(Boot):
     compatibility = 4  # FIXME: change this to 5 and update test cases
 
     def __init__(self, parent, parameters):
-        super(CMSIS, self).__init__(parent)
+        super().__init__(parent)
         self.action = BootCMSIS()
         self.action.section = self.action_type
         self.action.job = self.job
@@ -79,7 +79,7 @@ class BootCMSISRetry(RetryAction):
     summary = "boot cmsis usb image with retry"
 
     def validate(self):
-        super(BootCMSISRetry, self).validate()
+        super().validate()
         method_params = self.job.device['actions']['boot']['methods']['cmsis-dap']['parameters']
         usb_mass_device = method_params.get('usb_mass_device', None)
         if not usb_mass_device:
@@ -106,12 +106,12 @@ class FlashCMSISAction(Action):
     summary = "flash cmsis to usb mass storage"
 
     def __init__(self):
-        super(FlashCMSISAction, self).__init__()
+        super().__init__()
         self.filelist = []
         self.usb_mass_device = None
 
     def validate(self):
-        super(FlashCMSISAction, self).validate()
+        super().validate()
         if self.job.device['board_id'] == '0000000000':
             self.errors = "board_id unset"
         method_parameters = self.job.device['actions']['boot']['methods']['cmsis-dap']['parameters']
@@ -124,7 +124,7 @@ class FlashCMSISAction(Action):
             self.filelist.extend([action_arg])
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(FlashCMSISAction, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         dstdir = mkdtemp()
         mount_command = "mount -t vfat %s %s" % (self.usb_mass_device, dstdir)
         self.run_command(mount_command.split(' '), allow_silent=True)

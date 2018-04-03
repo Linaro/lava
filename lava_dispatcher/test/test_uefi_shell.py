@@ -42,7 +42,7 @@ class UefiFactory(Factory):  # pylint: disable=too-few-public-methods
 class TestUefiShell(StdoutTestCase):
 
     def setUp(self):
-        super(TestUefiShell, self).setUp()
+        super().setUp()
         self.factory = UefiFactory()
         self.job = self.factory.create_job("sample_jobs/juno-uefi-nfs.yaml")
 

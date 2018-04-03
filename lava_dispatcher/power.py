@@ -62,7 +62,7 @@ class SendRebootCommands(Action):
     summary = 'Issue a reboot command on the device'
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(SendRebootCommands, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         reboot_commands = self.parameters.get('soft_reboot', [])  # list
         if not self.parameters.get('soft_reboot', None):  # unit test
             self.logger.warning('No soft reboot command defined in the test job. Using defaults.')
@@ -96,11 +96,11 @@ class PDUReboot(Action):
     timeout_exception = InfrastructureError
 
     def __init__(self):
-        super(PDUReboot, self).__init__()
+        super().__init__()
         self.command = None
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(PDUReboot, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         if not self.job.device.hard_reset_command:
             raise InfrastructureError("Hard reset required but not defined.")
         command = self.job.device.hard_reset_command
@@ -128,7 +128,7 @@ class PowerOn(Action):
         if self.job.device.power_command == '':
             self.logger.warning("Unable to power on the device")
             return connection
-        connection = super(PowerOn, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         if self.job.device.pre_power_command:
             command = self.job.device.pre_power_command
             self.logger.info("Running pre power command")
@@ -160,7 +160,7 @@ class PowerOff(Action):
     timeout_exception = InfrastructureError
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(PowerOff, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         if not self.job.device.get('commands', None):
             return connection
         command = self.job.device['commands'].get('power_off', [])
@@ -184,7 +184,7 @@ class ReadFeedback(Action):
     summary = 'Read from other namespaces'
 
     def __init__(self, finalize=False, repeat=False):
-        super(ReadFeedback, self).__init__()
+        super().__init__()
         self.finalize = finalize
         self.parameters['namespace'] = 'common'
         self.duration = 1  # FIXME: needs to be a constant set in the base template.
@@ -213,7 +213,7 @@ class ReadFeedback(Action):
                 self.logger.info("Finalising connection for namespace '%s'", feedback[0])
                 # Finalize all connections associated with each namespace.
                 feedback[1].finalise()
-        super(ReadFeedback, self).run(connection, max_end_time, args)
+        super().run(connection, max_end_time, args)
         return connection
 
 
@@ -230,7 +230,7 @@ class FinalizeAction(Action):
         The tasks include finalising the connection (whatever is the last connection in the pipeline)
         and writing out the final pipeline structure containing the results as a logfile.
         """
-        super(FinalizeAction, self).__init__()
+        super().__init__()
         self.ran = False
 
     def populate(self, parameters):
@@ -246,7 +246,7 @@ class FinalizeAction(Action):
         """
         self.ran = True
         try:
-            connection = super(FinalizeAction, self).run(connection, max_end_time, args)
+            connection = super().run(connection, max_end_time, args)
             if connection:
                 connection.finalise()
 

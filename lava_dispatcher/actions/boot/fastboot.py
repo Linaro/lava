@@ -61,7 +61,7 @@ class BootFastboot(Boot):
     compatibility = 1
 
     def __init__(self, parent, parameters):
-        super(BootFastboot, self).__init__(parent)
+        super().__init__(parent)
         self.action = BootFastbootAction()
         self.action.section = self.action_type
         self.action.job = self.job
@@ -85,7 +85,7 @@ class BootFastbootAction(BootAction):
     summary = "fastboot boot"
 
     def validate(self):
-        super(BootFastbootAction, self).validate()
+        super().validate()
         sequences = self.job.device['actions']['boot']['methods'].get(
             'fastboot', [])
         if sequences is not None:
@@ -143,13 +143,13 @@ class WaitFastBootInterrupt(Action):
     summary = "watch output and try to interrupt fastboot"
 
     def __init__(self, type):
-        super(WaitFastBootInterrupt, self).__init__()
+        super().__init__()
         self.type = type
         self.prompt = None
         self.string = None
 
     def validate(self):
-        super(WaitFastBootInterrupt, self).validate()
+        super().validate()
         if 'fastboot_serial_number' not in self.job.device:
             self.errors = "device fastboot serial number missing"
         elif self.job.device['fastboot_serial_number'] == '0000000000':
@@ -168,7 +168,7 @@ class WaitFastBootInterrupt(Action):
     def run(self, connection, max_end_time, args=None):
         if not connection:
             raise LAVABug("%s started without a connection already in use" % self.name)
-        connection = super(WaitFastBootInterrupt, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         # device is to be put into a reset state, either by issuing 'reboot' or power-cycle
         connection.prompt_str = self.prompt
         self.logger.debug("Changing prompt to '%s'", connection.prompt_str)
@@ -188,7 +188,7 @@ class FastbootBootAction(Action):
     summary = "attempt to fastboot boot"
 
     def validate(self):
-        super(FastbootBootAction, self).validate()
+        super().validate()
         if 'fastboot_serial_number' not in self.job.device:
             self.errors = "device fastboot serial number missing"
         elif self.job.device['fastboot_serial_number'] == '0000000000':
@@ -199,7 +199,7 @@ class FastbootBootAction(Action):
             self.errors = "device fastboot options is not a list"
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(FastbootBootAction, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         # this is the device namespace - the lxc namespace is not accessible
         lxc_name = None
         protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
@@ -246,7 +246,7 @@ class FastbootRebootAction(Action):
     summary = "attempt to fastboot reboot"
 
     def validate(self):
-        super(FastbootRebootAction, self).validate()
+        super().validate()
         if 'fastboot_serial_number' not in self.job.device:
             self.errors = "device fastboot serial number missing"
         elif self.job.device['fastboot_serial_number'] == '0000000000':
@@ -257,7 +257,7 @@ class FastbootRebootAction(Action):
             self.errors = "device fastboot options is not a list"
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(FastbootRebootAction, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         # this is the device namespace - the lxc namespace is not accessible
         lxc_name = None
         protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
@@ -292,7 +292,7 @@ class EnterFastbootAction(Action):
     summary = "enter fastboot"
 
     def validate(self):
-        super(EnterFastbootAction, self).validate()
+        super().validate()
         if 'adb_serial_number' not in self.job.device:
             self.errors = "device adb serial number missing"
         elif self.job.device['adb_serial_number'] == '0000000000':
@@ -307,7 +307,7 @@ class EnterFastbootAction(Action):
             self.errors = "device fastboot options is not a list"
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(EnterFastbootAction, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         # this is the device namespace - the lxc namespace is not accessible
         lxc_name = None
         protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]

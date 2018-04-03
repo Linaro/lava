@@ -47,11 +47,11 @@ class OffsetAction(DeployAction):
     summary = "offset calculation"
 
     def __init__(self, key):
-        super(OffsetAction, self).__init__()
+        super().__init__()
         self.key = key
 
     def validate(self):
-        super(OffsetAction, self).validate()
+        super().validate()
         if not self.get_namespace_data(action='download-action', label=self.key, key='file'):
             self.errors = "no file specified to calculate offset"
 
@@ -59,7 +59,7 @@ class OffsetAction(DeployAction):
         if self.get_namespace_data(action='download-action', label=self.key, key='offset'):
             # idempotency
             return connection
-        connection = super(OffsetAction, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         image = self.get_namespace_data(action='download-action', label=self.key, key='file')
         if not os.path.exists(image):
             raise JobError("Not able to mount %s: file does not exist" % image)
@@ -96,11 +96,11 @@ class LoopCheckAction(DeployAction):
     summary = "check available loop back support"
 
     def __init__(self, key):
-        super(LoopCheckAction, self).__init__()
+        super().__init__()
         self.key = key
 
     def validate(self):
-        super(LoopCheckAction, self).validate()
+        super().validate()
         if len(glob.glob('/sys/block/loop*')) <= 0:
             raise InfrastructureError("Could not mount the image without loopback devices. "
                                       "Is the 'loop' kernel module activated?")
@@ -108,7 +108,7 @@ class LoopCheckAction(DeployAction):
         self.set_namespace_data(action=self.name, label=self.key, key='available_loops', value=available_loops)
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(LoopCheckAction, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         if not self.get_namespace_data(action=self.name, label=self.key, key='available_loops'):
             raise LAVABug("Unable to check available loop devices")
         args = ['/sbin/losetup', '-a']
@@ -137,14 +137,14 @@ class LoopMountAction(RetryAction):
     summary = "loopback mount"
 
     def __init__(self, key):
-        super(LoopMountAction, self).__init__()
+        super().__init__()
         self.retries = 10
         self.sleep = 10
         self.mntdir = None
         self.key = key
 
     def validate(self):
-        super(LoopMountAction, self).validate()
+        super().validate()
         lava_test_results_base = self.parameters['deployment_data']['lava_test_results_dir']
         lava_test_results_dir = lava_test_results_base % self.job.job_id
         self.set_namespace_data(action='test', label='results', key='lava_test_results_dir', value=lava_test_results_dir)
@@ -152,7 +152,7 @@ class LoopMountAction(RetryAction):
             self.errors = "no file specified to mount"
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(LoopMountAction, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         self.mntdir = mkdtemp(autoremove=False)
         lava_test_results_dir = self.get_namespace_data(action='test', label='results', key='lava_test_results_dir')
         test_mntdir = os.path.abspath("%s/%s" % (self.mntdir, lava_test_results_dir))
@@ -172,7 +172,7 @@ class LoopMountAction(RetryAction):
         return connection
 
     def cleanup(self, connection):
-        super(LoopMountAction, self).cleanup(connection)
+        super().cleanup(connection)
         self.logger.debug("%s cleanup", self.name)
         if self.mntdir:
             if os.path.ismount(self.mntdir):
@@ -193,7 +193,7 @@ class MountAction(DeployAction):
     summary = "mount loop"
 
     def __init__(self, key):
-        super(MountAction, self).__init__()
+        super().__init__()
         self.key = key
 
     def populate(self, parameters):
@@ -233,6 +233,6 @@ class Unmount(Action):
         """
         rmtree is not a cleanup action - it needs to be umounted first.
         """
-        connection = super(Unmount, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         # mntdir was never being set correctly
         return connection

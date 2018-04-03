@@ -30,11 +30,11 @@ class WaitUSBSerialDeviceAction(Action):
     summary = "wait for USB serial device"
 
     def __init__(self):
-        super(WaitUSBSerialDeviceAction, self).__init__()
+        super().__init__()
         self.serial_device = {}
 
     def validate(self):
-        super(WaitUSBSerialDeviceAction, self).validate()
+        super().validate()
         board_id = self.job.device.get('board_id', '')
         usb_vendor_id = self.job.device.get('usb_vendor_id', '')
         usb_product_id = self.job.device.get('usb_product_id', '')
@@ -51,7 +51,7 @@ class WaitUSBSerialDeviceAction(Action):
                               'ID_USB_DRIVER': str(usb_serial_driver)}
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(WaitUSBSerialDeviceAction, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         self.logger.debug("Waiting for usb serial device: %s", self.serial_device)
         wait_udev_event(action='add', match_dict=self.serial_device, subsystem='tty')
         return connection
@@ -64,11 +64,11 @@ class WaitDFUDeviceAction(Action):
     summary = "wait for DFU device"
 
     def __init__(self):
-        super(WaitDFUDeviceAction, self).__init__()
+        super().__init__()
         self.dfu_device = {}
 
     def validate(self):
-        super(WaitDFUDeviceAction, self).validate()
+        super().validate()
         board_id = self.job.device.get('board_id', '')
         usb_vendor_id = self.job.device.get('usb_vendor_id', '')
         usb_product_id = self.job.device.get('usb_product_id', '')
@@ -83,7 +83,7 @@ class WaitDFUDeviceAction(Action):
                            'ID_MODEL_ID': str(usb_product_id)}
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(WaitDFUDeviceAction, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         self.logger.debug("Waiting for DFU device: %s", self.dfu_device)
         wait_udev_event(action='add', match_dict=self.dfu_device, subsystem='usb', devtype='usb_device')
         return connection
@@ -96,18 +96,18 @@ class WaitUSBMassStorageDeviceAction(Action):
     summary = "wait for USB mass storage device"
 
     def __init__(self):
-        super(WaitUSBMassStorageDeviceAction, self).__init__()
+        super().__init__()
         self.ms_device = {}
 
     def validate(self):
-        super(WaitUSBMassStorageDeviceAction, self).validate()
+        super().validate()
         usb_fs_label = self.job.device.get('usb_filesystem_label', None)
         if not isinstance(usb_fs_label, str):
             self.errors = 'usb_fs_label unset'
         self.ms_device = {'ID_FS_LABEL': str(usb_fs_label)}
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(WaitUSBMassStorageDeviceAction, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         self.logger.debug("Waiting for USB mass storage device: %s", self.ms_device)
         wait_udev_event(action='add', match_dict=self.ms_device, subsystem='block', devtype='partition')
         return connection
@@ -120,16 +120,16 @@ class WaitDevicePathAction(Action):
     summary = "wait for udev device path"
 
     def __init__(self, path=None):
-        super(WaitDevicePathAction, self).__init__()
+        super().__init__()
         self.devicepath = path
 
     def validate(self):
-        super(WaitDevicePathAction, self).validate()
+        super().validate()
         if not isinstance(self.devicepath, str):
             self.errors = "invalid device path"
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(WaitDevicePathAction, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         self.logger.debug("Waiting for udev device path: %s", self.devicepath)
         wait_udev_event(action='add', devicepath=self.devicepath)
         return connection
@@ -142,20 +142,20 @@ class WaitDeviceBoardID(Action):
     summary = "wait for udev device with board ID"
 
     def __init__(self, board_id=None):
-        super(WaitDeviceBoardID, self).__init__()
+        super().__init__()
         if not board_id:
             self.board_id = self.job.device.get('board_id', None)
         else:
             self.board_id = board_id
 
     def validate(self):
-        super(WaitDeviceBoardID, self).validate()
+        super().validate()
         if not isinstance(self.board_id, str):
             self.errors = "invalid board_id"
         self.udev_device = {'ID_SERIAL_SHORT': str(self.board_id)}
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(WaitDeviceBoardID, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         self.logger.debug("Waiting for udev device with ID: %s", self.board_id)
         wait_udev_event(action='add', match_dict=self.udev_device)
         return connection

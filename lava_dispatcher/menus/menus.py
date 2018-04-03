@@ -42,7 +42,7 @@ class MenuInterrupt(Action):
     summary = "base menu interrupt action"
 
     def __init__(self):
-        super(MenuInterrupt, self).__init__()
+        super().__init__()
         self.interrupt_prompt = None
         self.interrupt_string = None
 
@@ -112,7 +112,7 @@ class MenuConnect(ConnectDevice):
     summary = "Customise connection for menu operations"
 
     def __init__(self):
-        super(MenuConnect, self).__init__()
+        super().__init__()
         self.session_class = MenuSession
 
     def validate(self):
@@ -120,7 +120,7 @@ class MenuConnect(ConnectDevice):
             self.errors = "Unable to connect to device"
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(MenuConnect, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         if not connection:
             raise LAVABug("%s needs a Connection")
         connection.check_char = '\n'
@@ -138,11 +138,11 @@ class MenuReset(ConnectDevice):
     summary = "reset to shell connection"
 
     def __init__(self):
-        super(MenuReset, self).__init__()
+        super().__init__()
         self.session_class = ShellSession
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(MenuReset, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         if not connection:
             raise LAVABug("%s needs a Connection")
 
@@ -158,13 +158,13 @@ class SelectorMenuAction(Action):
     summary = 'select options in a menu'
 
     def __init__(self):
-        super(SelectorMenuAction, self).__init__()
+        super().__init__()
         self.selector = SelectorMenu()
         self.items = []
         self.line_sep = None
 
     def validate(self):
-        super(SelectorMenuAction, self).validate()
+        super().validate()
         # check for allowed items, error if any are unrecognised
         item_keys = {}
         if not isinstance(self.items, list):
@@ -195,7 +195,7 @@ class SelectorMenuAction(Action):
         :param logger: Action logger
         :return: connection
         """
-        connection = super(SelectorMenuAction, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         if not connection:
             self.logger.error("%s called without a Connection", self.name)
             return connection
@@ -235,5 +235,5 @@ class SelectorMenuAction(Action):
 class DebianInstallerMenu(MovementMenu):
 
     def __init__(self):
-        super(DebianInstallerMenu, self).__init__()
+        super().__init__()
         self.down_command = '[1B'

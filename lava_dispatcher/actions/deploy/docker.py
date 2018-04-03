@@ -36,7 +36,7 @@ class DockerAction(DeployAction):
     summary = "deploy docker"
 
     def validate(self):
-        super(DockerAction, self).validate()
+        super().validate()
         which("docker")
 
         # Print docker version
@@ -75,7 +75,7 @@ class DockerAction(DeployAction):
             msg = "Unable to pull docker image '%s'" % self.parameters["image"]
             raise JobError(msg)
 
-        return super(DockerAction, self).run(connection, max_end_time, args)
+        return super().run(connection, max_end_time, args)
 
 
 class Docker(Deployment):
@@ -83,7 +83,7 @@ class Docker(Deployment):
     name = 'docker'
 
     def __init__(self, parent, parameters):
-        super(Docker, self).__init__(parent)
+        super().__init__(parent)
         self.action = DockerAction()
         self.action.section = self.action_type
         self.action.job = self.job

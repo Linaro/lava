@@ -39,7 +39,7 @@ class UBootUMS(Deployment):
     name = 'uboot-ums'
 
     def __init__(self, parent, parameters):
-        super(UBootUMS, self).__init__(parent)
+        super().__init__(parent)
         self.action = UBootUMSAction()
         self.action.section = self.action_type
         self.action.job = self.job

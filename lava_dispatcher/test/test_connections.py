@@ -63,7 +63,7 @@ class ConnectionFactory(Factory):  # pylint: disable=too-few-public-methods
 class TestConnection(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestConnection, self).setUp()
+        super().setUp()
         factory = ConnectionFactory()
         self.job = factory.create_ssh_job('sample_jobs/ssh-deploy.yaml')
         self.guest_job = factory.create_bbb_job('sample_jobs/bbb-ssh-guest.yaml')
@@ -283,7 +283,7 @@ class TestConnection(StdoutTestCase):  # pylint: disable=too-many-public-methods
 class TestConsoleConnections(StdoutTestCase):
 
     def setUp(self):
-        super(TestConsoleConnections, self).setUp()
+        super().setUp()
         factory = ConnectionFactory()
         self.job = factory.create_ssh_job('sample_jobs/ssh-deploy.yaml')
         self.guest_job = factory.create_bbb_job('sample_jobs/bbb-ssh-guest.yaml')

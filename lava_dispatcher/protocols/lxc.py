@@ -48,7 +48,7 @@ class LxcProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
     name = "lava-lxc"
 
     def __init__(self, parameters, job_id):
-        super(LxcProtocol, self).__init__(parameters, job_id)
+        super().__init__(parameters, job_id)
         self.system_timeout = Timeout('system', LAVA_LXC_TIMEOUT)
         self.persistence = parameters['protocols'][self.name].get('persist',
                                                                   False)

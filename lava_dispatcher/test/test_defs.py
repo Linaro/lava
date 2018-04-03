@@ -72,7 +72,7 @@ def check_missing_path(testcase, exception, path):
 class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestDefinitionHandlers, self).setUp()
+        super().setUp()
         factory = Factory()
         self.job = factory.create_kvm_job('sample_jobs/kvm.yaml')
         with open(os.path.join(os.path.dirname(__file__), 'testdefs', 'params.yaml'), 'r') as params:
@@ -203,7 +203,7 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
 class TestDefinitionSimple(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestDefinitionSimple, self).setUp()
+        super().setUp()
         factory = Factory()
         self.job = factory.create_kvm_job('sample_jobs/kvm-notest.yaml')
 
@@ -227,7 +227,7 @@ class TestDefinitionSimple(StdoutTestCase):  # pylint: disable=too-many-public-m
 class TestDefinitionParams(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestDefinitionParams, self).setUp()
+        super().setUp()
         self.factory = Factory()
         self.job = self.factory.create_kvm_job('sample_jobs/kvm-params.yaml')
 
@@ -310,7 +310,7 @@ class TestDefinitionParams(StdoutTestCase):  # pylint: disable=too-many-public-m
 class TestDefinitionRepeat(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestDefinitionRepeat, self).setUp()
+        super().setUp()
         factory = Factory()
         self.job = factory.create_kvm_job("sample_jobs/kvm-multi.yaml")
 
@@ -339,7 +339,7 @@ class TestDefinitionRepeat(StdoutTestCase):  # pylint: disable=too-many-public-m
 class TestSkipInstall(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestSkipInstall, self).setUp()
+        super().setUp()
         factory = UBootFactory()
         self.job = factory.create_bbb_job("sample_jobs/bbb-skip-install.yaml")
 
@@ -393,7 +393,7 @@ class TestDefinitions(StdoutTestCase):
     """
 
     def setUp(self):
-        super(TestDefinitions, self).setUp()
+        super().setUp()
         self.testdef = os.path.join(os.path.dirname(__file__), 'testdefs', 'params.yaml')
         self.res_data = os.path.join(os.path.dirname(__file__), 'testdefs', 'result-data.txt')
         factory = UBootFactory()

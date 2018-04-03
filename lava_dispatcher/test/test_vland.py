@@ -37,7 +37,7 @@ from lava_dispatcher.test.utils import DummyLogger
 class TestVland(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestVland, self).setUp()
+        super().setUp()
         self.filename = os.path.join(os.path.dirname(__file__), 'sample_jobs/bbb-group-vland-alpha.yaml')
         self.beta_filename = os.path.join(os.path.dirname(__file__), 'sample_jobs/bbb-group-vland-beta.yaml')
         self.device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))

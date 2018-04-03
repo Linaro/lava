@@ -45,7 +45,7 @@ class BootLxc(Boot):
     compatibility = 1
 
     def __init__(self, parent, parameters):
-        super(BootLxc, self).__init__(parent)
+        super().__init__(parent)
         self.action = BootLxcAction()
         self.action.section = self.action_type
         self.action.job = self.job
@@ -105,7 +105,7 @@ class LxcAddStaticDevices(Action):
         return usb_devices
 
     def validate(self):
-        super(LxcAddStaticDevices, self).validate()
+        super().validate()
         # If there are no USB devices under static_info then this action should be idempotent.
 
         # If we are allowed to use a filesystem label, we don't require a board_id
@@ -124,7 +124,7 @@ class LxcAddStaticDevices(Action):
             self.errors = "Invalid parameters for %s" % self.name
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(LxcAddStaticDevices, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         lxc_name = self.get_namespace_data(action='lxc-create-action', label='lxc', key='name')
         # If there are no USB devices under static_info then this action should be idempotent.
         if not self.get_usb_devices():
@@ -150,15 +150,15 @@ class LxcStartAction(Action):
     summary = "attempt to boot"
 
     def __init__(self):
-        super(LxcStartAction, self).__init__()
+        super().__init__()
         self.sleep = 10
 
     def validate(self):
-        super(LxcStartAction, self).validate()
+        super().validate()
         which('lxc-start')
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(LxcStartAction, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         lxc_name = self.get_namespace_data(action='lxc-create-action', label='lxc', key='name')
         lxc_cmd = ['lxc-start', '-n', lxc_name, '-d']
         command_output = self.run_command(lxc_cmd)
@@ -197,11 +197,11 @@ class LxcStopAction(Action):
     summary = "stop lxc"
 
     def validate(self):
-        super(LxcStopAction, self).validate()
+        super().validate()
         which('lxc-stop')
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(LxcStopAction, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         lxc_name = self.get_namespace_data(action='lxc-create-action',
                                            label='lxc', key='name')
         lxc_cmd = ['lxc-stop', '-k', '-n', lxc_name]

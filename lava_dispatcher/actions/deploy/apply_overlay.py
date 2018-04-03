@@ -65,11 +65,11 @@ class ApplyOverlayGuest(Action):
     summary = "build a guest filesystem with the overlay"
 
     def __init__(self):
-        super(ApplyOverlayGuest, self).__init__()
+        super().__init__()
         self.guest_filename = 'lava-guest.qcow2'
 
     def validate(self):
-        super(ApplyOverlayGuest, self).validate()
+        super().validate()
         self.set_namespace_data(action=self.name, label='guest', key='name', value=self.guest_filename)
         if 'guest' not in self.job.device['actions']['deploy']['methods']['image']['parameters']:
             self.errors = "Device configuration does not specify size of guest filesystem."
@@ -97,7 +97,7 @@ class ApplyOverlayImage(Action):
     summary = "apply overlay to test image"
 
     def __init__(self, image_key='image', use_root_partition=True):
-        super(ApplyOverlayImage, self).__init__()
+        super().__init__()
         self.image_key = image_key
         self.use_root_partition = use_root_partition
 
@@ -129,11 +129,11 @@ class ApplyOverlaySparseImage(Action):
     summary = "apply overlay to sparse image"
 
     def __init__(self, image_key):
-        super(ApplyOverlaySparseImage, self).__init__()
+        super().__init__()
         self.image_key = image_key  # the sparse image key in the parameters
 
     def validate(self):
-        super(ApplyOverlaySparseImage, self).validate()
+        super().validate()
         which('simg2img')
         which('mount')
         which('umount')
@@ -177,7 +177,7 @@ class PrepareOverlayTftp(Action):
             self.internal_pipeline.add_action(PrepareKernelAction())
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(PrepareOverlayTftp, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         ramdisk = self.get_namespace_data(
             action='download-action',
             label='file',
@@ -202,7 +202,7 @@ class ApplyOverlayTftp(Action):
     summary = "apply lava overlay test files"
 
     def validate(self):
-        super(ApplyOverlayTftp, self).validate()
+        super().validate()
         persist = self.parameters.get('persistent_nfs', None)
         if persist:
             if not isinstance(persist, dict):
@@ -211,7 +211,7 @@ class ApplyOverlayTftp(Action):
                 self.errors = "Missing address for persistent NFS"
 
     def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-branches
-        connection = super(ApplyOverlayTftp, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         directory = None
         nfs_address = None
         overlay_file = None
@@ -292,7 +292,7 @@ class ExtractRootfs(Action):  # pylint: disable=too-many-instance-attributes
     summary = "unpack rootfs, ready to apply lava overlay"
 
     def __init__(self):
-        super(ExtractRootfs, self).__init__()
+        super().__init__()
         self.param_key = 'rootfs'
         self.file_key = "root"
         self.extra_compression = ['xz']
@@ -302,7 +302,7 @@ class ExtractRootfs(Action):  # pylint: disable=too-many-instance-attributes
     def run(self, connection, max_end_time, args=None):
         if not self.parameters.get(self.param_key, None):  # idempotency
             return connection
-        connection = super(ExtractRootfs, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         root = self.get_namespace_data(action='download-action', label=self.param_key, key='file')
         root_dir = self.mkdtemp()
         untar_file(root, root_dir)
@@ -321,12 +321,12 @@ class ExtractNfsRootfs(ExtractRootfs):
     summary = "unpack nfsrootfs, ready to apply lava overlay"
 
     def __init__(self):
-        super(ExtractNfsRootfs, self).__init__()
+        super().__init__()
         self.param_key = 'nfsrootfs'
         self.file_key = "nfsroot"
 
     def validate(self):
-        super(ExtractNfsRootfs, self).validate()
+        super().validate()
         if not self.parameters.get(self.param_key, None):  # idempotency
             return
         if not self.get_namespace_data(
@@ -344,7 +344,7 @@ class ExtractNfsRootfs(ExtractRootfs):
     def run(self, connection, max_end_time, args=None):
         if not self.parameters.get(self.param_key, None):  # idempotency
             return connection
-        connection = super(ExtractNfsRootfs, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
 
         if 'prefix' in self.parameters[self.param_key]:
             prefix = self.parameters[self.param_key]['prefix']
@@ -377,7 +377,7 @@ class ExtractModules(Action):
     def run(self, connection, max_end_time, args=None):
         if not self.parameters.get('modules', None):  # idempotency
             return connection
-        connection = super(ExtractModules, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         modules = self.get_namespace_data(action='download-action', label='modules', key='file')
         if not self.parameters.get('ramdisk', None):
             if not self.parameters.get('nfsrootfs', None):
@@ -425,11 +425,11 @@ class ExtractRamdisk(Action):
     summary = "extract the ramdisk"
 
     def __init__(self):
-        super(ExtractRamdisk, self).__init__()
+        super().__init__()
         self.skip = False
 
     def validate(self):
-        super(ExtractRamdisk, self).validate()
+        super().validate()
         if not self.parameters.get('ramdisk', None):  # idempotency
             return
         if not self.parameters['ramdisk'].get('install_modules', True) and \
@@ -448,7 +448,7 @@ class ExtractRamdisk(Action):
             # declare the original ramdisk as the name to be used later.
             self.set_namespace_data(action='compress-ramdisk', label='file', key='ramdisk', value=filename)
             return
-        connection = super(ExtractRamdisk, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         ramdisk_dir = self.mkdtemp()
         extracted_ramdisk = os.path.join(ramdisk_dir, 'ramdisk')
         os.mkdir(extracted_ramdisk, 0o755)
@@ -490,13 +490,13 @@ class CompressRamdisk(Action):
     summary = "compress ramdisk with overlay"
 
     def __init__(self):
-        super(CompressRamdisk, self).__init__()
+        super().__init__()
         self.mkimage_arch = None
         self.add_header = None
         self.skip = False
 
     def validate(self):
-        super(CompressRamdisk, self).validate()
+        super().validate()
         if not self.parameters.get('ramdisk', None):  # idempotency
             return
         if not self.parameters['ramdisk'].get('install_modules', True) and \
@@ -520,7 +520,7 @@ class CompressRamdisk(Action):
             return connection
         if self.skip:
             return connection
-        connection = super(CompressRamdisk, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         ramdisk_dir = self.get_namespace_data(
             action='extract-overlay-ramdisk', label='extracted_ramdisk', key='directory')
         ramdisk_data = self.get_namespace_data(
@@ -597,19 +597,19 @@ class ApplyLxcOverlay(Action):
     summary = "apply overlay on the container"
 
     def __init__(self):
-        super(ApplyLxcOverlay, self).__init__()
+        super().__init__()
         self.lava_test_dir = os.path.realpath(
             '%s/../../lava_test_shell' % os.path.dirname(__file__))
         self.scripts_to_copy = ['lava-test-runner']
 
     def validate(self):
-        super(ApplyLxcOverlay, self).validate()
+        super().validate()
         which('tar')
         if not os.path.exists(self.lava_test_dir):
             self.errors = "Missing lava-test-runner: %s" % self.lava_test_dir
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(ApplyLxcOverlay, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         overlay_file = self.get_namespace_data(action='compress-overlay', label='output', key='file')
         if overlay_file is None:
             self.logger.debug("skipped %s", self.name)

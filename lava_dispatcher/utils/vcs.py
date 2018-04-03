@@ -41,7 +41,7 @@ class VCSHelper(object):
 class BzrHelper(VCSHelper):
 
     def __init__(self, url):
-        super(BzrHelper, self).__init__(url)
+        super().__init__(url)
         self.binary = '/usr/bin/bzr'
 
     def clone(self, dest_path, revision=None, branch=None):
@@ -96,7 +96,7 @@ class GitHelper(VCSHelper):
     """
 
     def __init__(self, url):
-        super(GitHelper, self).__init__(url)
+        super().__init__(url)
         self.binary = '/usr/bin/git'
 
     def clone(self, dest_path, shallow=False, revision=None, branch=None, history=True):
@@ -141,7 +141,7 @@ class TarHelper(VCSHelper):
     # TODO: implement TarHelper
 
     def __init__(self, url):
-        super(TarHelper, self).__init__(url)
+        super().__init__(url)
         self.binary = None
 
 
@@ -149,5 +149,5 @@ class URLHelper(VCSHelper):
     # TODO: implement URLHelper
 
     def __init__(self, url):
-        super(URLHelper, self).__init__(url)
+        super().__init__(url)
         self.binary = None

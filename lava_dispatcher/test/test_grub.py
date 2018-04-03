@@ -81,7 +81,7 @@ class GrubFactory(Factory):  # pylint: disable=too-few-public-methods
 class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestGrubAction, self).setUp()
+        super().setUp()
         self.factory = GrubFactory()
 
     @unittest.skipIf(infrastructure_error('mkimage'), "u-boot-tools not installed")

@@ -31,11 +31,11 @@ class ExportDeviceEnvironment(Action):
     summary = "Exports environment variables action"
 
     def __init__(self):
-        super(ExportDeviceEnvironment, self).__init__()
+        super().__init__()
         self.env = []
 
     def validate(self):
-        super(ExportDeviceEnvironment, self).validate()
+        super().validate()
         shell_file = self.get_namespace_data(action='deploy-device-env',
                                              label='environment', key='shell_file')
         environment = self.get_namespace_data(action='deploy-device-env',
@@ -53,7 +53,7 @@ class ExportDeviceEnvironment(Action):
         if not connection:
             return
 
-        connection = super(ExportDeviceEnvironment, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
 
         shell_file = self.get_namespace_data(
             action='deploy-device-env',

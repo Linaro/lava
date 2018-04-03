@@ -38,7 +38,7 @@ from lava_dispatcher.test.utils import DummyLogger
 class StdoutTestCase(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(StdoutTestCase, self).setUp()
+        super().setUp()
         logger = logging.getLogger('dispatcher')
         logger.disabled = True
         logger.propagate = False
@@ -73,7 +73,7 @@ class TestPipelineInit(StdoutTestCase):  # pylint: disable=too-many-public-metho
 
         def __init__(self):
             self.ran = False
-            super(TestPipelineInit.FakeAction, self).__init__()
+            super().__init__()
 
         def run(self, connection, max_end_time, args=None):
             self.ran = True
@@ -82,7 +82,7 @@ class TestPipelineInit(StdoutTestCase):  # pylint: disable=too-many-public-metho
             raise NotImplementedError("invalid")
 
     def setUp(self):
-        super(TestPipelineInit, self).setUp()
+        super().setUp()
         self.sub0 = TestPipelineInit.FakeAction()
         self.sub1 = TestPipelineInit.FakeAction()
 
@@ -96,7 +96,7 @@ class TestPipelineInit(StdoutTestCase):  # pylint: disable=too-many-public-metho
 class TestJobParser(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestJobParser, self).setUp()
+        super().setUp()
         factory = Factory()
         self.job = factory.create_kvm_job('sample_jobs/basics.yaml')
 
@@ -187,7 +187,7 @@ class TestPipeline(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
         def __init__(self):
             self.ran = False
-            super(TestPipeline.FakeAction, self).__init__()
+            super().__init__()
 
         def run(self, connection, max_end_time, args=None):
             time.sleep(1)
@@ -409,7 +409,7 @@ class TestFakeActions(StdoutTestCase):  # pylint: disable=too-many-public-method
             return new_connection
 
     def setUp(self):
-        super(TestFakeActions, self).setUp()
+        super().setUp()
         self.sub0 = TestPipeline.FakeAction()
         self.sub1 = TestPipeline.FakeAction()
 

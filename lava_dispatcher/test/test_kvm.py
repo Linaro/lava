@@ -156,7 +156,7 @@ class TestKVMSimulation(StdoutTestCase):  # pylint: disable=too-many-public-meth
 class TestKVMBasicDeploy(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestKVMBasicDeploy, self).setUp()
+        super().setUp()
         factory = Factory()
         self.job = factory.create_kvm_job('sample_jobs/kvm.yaml')
 
@@ -224,7 +224,7 @@ class TestKVMBasicDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
 class TestKVMQcow2Deploy(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestKVMQcow2Deploy, self).setUp()
+        super().setUp()
         factory = Factory()
         self.job = factory.create_kvm_job('sample_jobs/kvm-qcow2.yaml')
 
@@ -250,7 +250,7 @@ class TestKVMQcow2Deploy(StdoutTestCase):  # pylint: disable=too-many-public-met
 class TestKVMDownloadLocalDeploy(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestKVMDownloadLocalDeploy, self).setUp()
+        super().setUp()
         factory = Factory()
         self.job = factory.create_kvm_job('sample_jobs/kvm-local.yaml')
 
@@ -277,7 +277,7 @@ def prepare_test_connection():
 class TestKVMInlineTestDeploy(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestKVMInlineTestDeploy, self).setUp()
+        super().setUp()
         factory = Factory()
         self.job = factory.create_kvm_job('sample_jobs/kvm-inline.yaml')
 
@@ -376,7 +376,7 @@ class TestKVMInlineTestDeploy(StdoutTestCase):  # pylint: disable=too-many-publi
 class TestAutoLogin(StdoutTestCase):
 
     def setUp(self):
-        super(TestAutoLogin, self).setUp()
+        super().setUp()
         factory = Factory()
         self.job = factory.create_kvm_job('sample_jobs/kvm-inline.yaml')
         self.job.logger = DummyLogger()
@@ -540,7 +540,7 @@ class TestAutoLogin(StdoutTestCase):
 class TestChecksum(StdoutTestCase):
 
     def setUp(self):
-        super(TestChecksum, self).setUp()
+        super().setUp()
         factory = Factory()
         self.job = factory.create_kvm_job('sample_jobs/kvm-inline.yaml')
 
@@ -658,7 +658,7 @@ class TestChecksum(StdoutTestCase):
 class TestKvmGuest(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestKvmGuest, self).setUp()
+        super().setUp()
         factory = Factory()
         self.job = factory.create_kvm_job('sample_jobs/kvm-local.yaml')
 
@@ -670,7 +670,7 @@ class TestKvmGuest(StdoutTestCase):  # pylint: disable=too-many-public-methods
 class TestKvmUefi(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestKvmUefi, self).setUp()
+        super().setUp()
         factory = Factory()
         self.job = factory.create_kvm_job('sample_jobs/kvm-uefi.yaml')
 
@@ -698,7 +698,7 @@ class TestKvmUefi(StdoutTestCase):  # pylint: disable=too-many-public-methods
 class TestQemuNFS(StdoutTestCase):
 
     def setUp(self):
-        super(TestQemuNFS, self).setUp()
+        super().setUp()
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/kvm03.yaml'))
         kvm_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/qemu-nfs.yaml')
         parser = JobParser()
@@ -761,7 +761,7 @@ class TestQemuNFS(StdoutTestCase):
 class TestMonitor(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestMonitor, self).setUp()
+        super().setUp()
         factory = Factory()
         self.job = factory.create_kvm_job('sample_jobs/qemu-monitor.yaml')
 

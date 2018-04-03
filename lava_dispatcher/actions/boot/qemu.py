@@ -56,7 +56,7 @@ class BootQEMU(Boot):
     compatibility = 4
 
     def __init__(self, parent, parameters):
-        super(BootQEMU, self).__init__(parent)
+        super().__init__(parent)
         self.action = BootQEMUImageAction()
         self.action.section = self.action_type
         self.action.job = self.job
@@ -110,7 +110,7 @@ class CallQemuAction(Action):
     summary = "execute qemu to boot the image"
 
     def __init__(self):
-        super(CallQemuAction, self).__init__()
+        super().__init__()
         self.sub_command = []
         self.substitutions = {}
         self.commands = []
@@ -118,7 +118,7 @@ class CallQemuAction(Action):
         self.nfsrootfs = None
 
     def validate(self):
-        super(CallQemuAction, self).validate()
+        super().validate()
 
         # 'arch' must be defined in job definition context.
         try:
@@ -242,7 +242,7 @@ class CallQemuAction(Action):
         self.logger.debug("started a shell command")
 
         shell_connection = ShellSession(self.job, shell)
-        shell_connection = super(CallQemuAction, self).run(shell_connection, max_end_time, args)
+        shell_connection = super().run(shell_connection, max_end_time, args)
 
         self.set_namespace_data(action='shared', label='shared', key='connection', value=shell_connection)
         return shell_connection

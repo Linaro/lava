@@ -69,7 +69,7 @@ class LinuxKernelMessages(Action):
     )
 
     def __init__(self):
-        super(LinuxKernelMessages, self).__init__()
+        super().__init__()
         self.messages = self.get_kernel_prompts()
         self.existing_prompt = None
         for choice in self.MESSAGE_CHOICES:
@@ -189,7 +189,7 @@ class LinuxKernelMessages(Action):
         return results
 
     def validate(self):
-        super(LinuxKernelMessages, self).validate()
+        super().validate()
         if not self.messages:
             self.errors = "Unable to build a list of kernel messages to monitor."
 

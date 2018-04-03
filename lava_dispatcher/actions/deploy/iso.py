@@ -53,11 +53,11 @@ class DeployIsoAction(DeployAction):  # pylint: disable=too-many-instance-attrib
         Uses the tftp directory for easier cleanup and for parity
         with the non-QEMU Debian Installer support.
         """
-        super(DeployIsoAction, self).__init__()
+        super().__init__()
         self.preseed_path = None
 
     def validate(self):
-        super(DeployIsoAction, self).validate()
+        super().validate()
         suffix = os.path.join(*self.preseed_path.split('/')[-2:])
         self.set_namespace_data(action=self.name, label='iso', key='suffix', value=suffix)
         which('in.tftpd')
@@ -83,7 +83,7 @@ class DeployIso(Deployment):
     name = 'iso'
 
     def __init__(self, parent, parameters):
-        super(DeployIso, self).__init__(parent)
+        super().__init__(parent)
         self.action = DeployIsoAction()
         self.action.section = self.action_type
         self.action.job = self.job
@@ -111,11 +111,11 @@ class IsoEmptyImage(Action):
     summary = 'create destination image'
 
     def __init__(self):
-        super(IsoEmptyImage, self).__init__()
+        super().__init__()
         self.size = 0
 
     def validate(self):
-        super(IsoEmptyImage, self).validate()
+        super().validate()
         size_str = self.parameters['iso']['installation_size']
         if not isinstance(size_str, str):
             self.errors = "installation size needs to be a string, e.g. 2G or 800M"
@@ -158,11 +158,11 @@ class IsoPullInstaller(Action):
     FILE_KEYS = ['kernel', 'initrd']
 
     def __init__(self):
-        super(IsoPullInstaller, self).__init__()
+        super().__init__()
         self.files = {}
 
     def validate(self):
-        super(IsoPullInstaller, self).validate()
+        super().validate()
         for key in self.FILE_KEYS:
             if key in self.parameters['iso']:
                 filename = self.parameters['iso'][key]
@@ -208,7 +208,7 @@ class QemuCommandLine(Action):  # pylint: disable=too-many-instance-attributes
     summary = 'build qemu command line with kernel command string'
 
     def __init__(self):
-        super(QemuCommandLine, self).__init__()
+        super().__init__()
         self.sub_command = []
         self.command_line = ''
         self.console = None
@@ -217,7 +217,7 @@ class QemuCommandLine(Action):  # pylint: disable=too-many-instance-attributes
         self.preseed_url = None
 
     def validate(self):
-        super(QemuCommandLine, self).validate()
+        super().validate()
         boot = self.job.device['actions']['boot']['methods']['qemu']
         qemu_binary = which(boot['parameters']['command'])
         self.sub_command = [qemu_binary]

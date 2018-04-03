@@ -38,7 +38,7 @@ class DFU(Boot):
     compatibility = 4  # FIXME: change this to 5 and update test cases
 
     def __init__(self, parent, parameters):
-        super(DFU, self).__init__(parent)
+        super().__init__(parent)
         self.action = BootDFU()
         self.action.section = self.action_type
         self.action.job = self.job
@@ -89,7 +89,7 @@ class FlashDFUAction(Action):
     summary = "use dfu to flash the images"
 
     def __init__(self):
-        super(FlashDFUAction, self).__init__()
+        super().__init__()
         self.base_command = []
         self.exec_list = []
         self.board_id = '0000000000'
@@ -97,7 +97,7 @@ class FlashDFUAction(Action):
         self.usb_product_id = '0000'
 
     def validate(self):
-        super(FlashDFUAction, self).validate()
+        super().validate()
         try:
             boot = self.job.device['actions']['boot']['methods']['dfu']
             dfu_binary = which(boot['parameters']['command'])
@@ -138,7 +138,7 @@ class FlashDFUAction(Action):
             self.errors = "No DFU command to execute"
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(FlashDFUAction, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         count = 1
         for dfu_command in self.exec_list:
             if count == (len(self.exec_list)):

@@ -36,7 +36,7 @@ class FakeConnection(object):  # pylint: disable=too-few-public-methods
 class TestPatterns(StdoutTestCase):
 
     def setUp(self):
-        super(TestPatterns, self).setUp()
+        super().setUp()
         self.testdef = os.path.join(os.path.dirname(__file__), 'testdefs', 'params.yaml')
         self.res_data = os.path.join(os.path.dirname(__file__), 'testdefs', 'result-data.txt')
         factory = Factory()

@@ -37,7 +37,7 @@ from lava_dispatcher.menus.menus import SelectorMenu
 class TestSelectorMenu(StdoutTestCase):
 
     def setUp(self):
-        super(TestSelectorMenu, self).setUp()
+        super().setUp()
         self.menu = SelectorMenu()
         self.menu.item_markup = (r'\[', r'\]')
         self.menu.item_class = '0-9'
@@ -93,7 +93,7 @@ class MenuFactory(Factory):  # pylint: disable=too-few-public-methods
 class TestUefi(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestUefi, self).setUp()
+        super().setUp()
         factory = MenuFactory()
         self.job = factory.create_uefi_job('sample_jobs/mustang-menu-ramdisk.yaml')
 

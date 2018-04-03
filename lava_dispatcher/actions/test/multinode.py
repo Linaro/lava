@@ -37,7 +37,7 @@ class MultinodeTestShell(LavaTest):
     priority = 2
 
     def __init__(self, parent, parameters):
-        super(MultinodeTestShell, self).__init__(parent)
+        super().__init__(parent)
         self.action = MultinodeTestAction()
         self.action.job = self.job
         self.action.section = self.action_type
@@ -75,13 +75,13 @@ class MultinodeTestAction(TestShellAction):
     summary = "Multinode Lava Test Shell"
 
     def __init__(self):
-        super(MultinodeTestAction, self).__init__()
+        super().__init__()
         self.multinode_dict = {
             'multinode': r'<LAVA_MULTI_NODE> <LAVA_(\S+) ([^>]+)>',
         }
 
     def validate(self):
-        super(MultinodeTestAction, self).validate()
+        super().validate()
         # MultinodeProtocol is required, others can be optional
         if MultinodeProtocol.name not in [protocol.name for protocol in self.job.protocols]:
             self.errors = "Invalid job - missing protocol"
@@ -94,7 +94,7 @@ class MultinodeTestAction(TestShellAction):
         self.signal_director.setup(self.parameters)
 
     def _reset_patterns(self):
-        super(MultinodeTestAction, self)._reset_patterns()
+        super()._reset_patterns()
         self.patterns.update(self.multinode_dict)
 
     def populate(self, parameters):
@@ -108,7 +108,7 @@ class MultinodeTestAction(TestShellAction):
         """
         Calls the parent check_patterns first, then checks for subclass pattern.
         """
-        ret = super(MultinodeTestAction, self).check_patterns(event, test_connection, check_char)
+        ret = super().check_patterns(event, test_connection, check_char)
         if event == 'multinode':
             name, params = test_connection.match.groups()
             self.logger.debug("Received Multi_Node API <LAVA_%s>" % name)
@@ -135,7 +135,7 @@ class MultinodeTestAction(TestShellAction):
     class SignalDirector(TestShellAction.SignalDirector):
 
         def __init__(self, protocol):
-            super(MultinodeTestAction.SignalDirector, self).__init__(protocol)
+            super().__init__(protocol)
             self.base_message = {}
 
         def setup(self, parameters):

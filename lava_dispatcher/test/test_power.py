@@ -54,7 +54,7 @@ class PowerFactory(Factory):  # pylint: disable=too-few-public-methods
 class TestPowerAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestPowerAction, self).setUp()
+        super().setUp()
         self.factory = PowerFactory()
 
     def test_reset_nopower(self):

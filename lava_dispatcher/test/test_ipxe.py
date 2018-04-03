@@ -58,7 +58,7 @@ class X86Factory(Factory):  # pylint: disable=too-few-public-methods
 class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestBootloaderAction, self).setUp()
+        super().setUp()
         self.factory = X86Factory()
 
     def test_simulated_action(self):

@@ -48,7 +48,7 @@ class VlandProtocol(Protocol):
     level = 5
 
     def __init__(self, parameters, job_id):
-        super(VlandProtocol, self).__init__(parameters, job_id)
+        super().__init__(parameters, job_id)
         self.logger = logging.getLogger('dispatcher')
         self.vlans = {}
         self.ports = []
@@ -411,7 +411,7 @@ class VlandProtocol(Protocol):
         else:
             self.logger.info("[%s] Job will wait for VLANs to be deployed.", self.name)
         self.logger.debug("[%s] parameters: %s", self.name, self.params)
-        super(VlandProtocol, self).configure(device, job)
+        super().configure(device, job)
         return True
 
     def deploy_vlans(self):

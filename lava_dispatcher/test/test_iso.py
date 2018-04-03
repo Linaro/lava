@@ -48,7 +48,7 @@ class InstallerFactory(Factory):  # pylint: disable=too-few-public-methods
 class TestIsoJob(StdoutTestCase):
 
     def setUp(self):
-        super(TestIsoJob, self).setUp()
+        super().setUp()
         factory = InstallerFactory()
         self.job = factory.create_qemu_installer_job()
         self.assertIsNotNone(self.job)

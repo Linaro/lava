@@ -106,7 +106,7 @@ class FastBootFactory(Factory):  # pylint: disable=too-few-public-methods
 class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestFastbootDeploy, self).setUp()
+        super().setUp()
         self.factory = FastBootFactory()
         self.job = self.factory.create_fastboot_job('sample_jobs/fastboot.yaml')
 

@@ -55,7 +55,7 @@ class GrubSequence(Boot):
     compatibility = 3
 
     def __init__(self, parent, parameters):
-        super(GrubSequence, self).__init__(parent)
+        super().__init__(parent)
         self.action = GrubSequenceAction()
         self.action.section = self.action_type
         self.action.job = self.job
@@ -88,7 +88,7 @@ class Grub(Boot):
     compatibility = 3
 
     def __init__(self, parent, parameters):
-        super(Grub, self).__init__(parent)
+        super().__init__(parent)
         self.action = GrubMainAction()
         self.action.section = self.action_type
         self.action.job = self.job
@@ -133,11 +133,11 @@ class GrubSequenceAction(BootAction):
     summary = "run grub boot using specified sequence of actions"
 
     def __init__(self):
-        super(GrubSequenceAction, self).__init__()
+        super().__init__()
         self.expect_shell = False
 
     def validate(self):
-        super(GrubSequenceAction, self).validate()
+        super().validate()
         sequences = self.job.device['actions']['boot']['methods']['grub'].get(
             'sequence', [])
         for sequence in sequences:
@@ -145,7 +145,7 @@ class GrubSequenceAction(BootAction):
                 self.errors = "Unknown boot sequence '%s'" % sequence
 
     def populate(self, parameters):
-        super(GrubSequenceAction, self).populate(parameters)
+        super().populate(parameters)
         self.internal_pipeline = Pipeline(parent=self, job=self.job,
                                           parameters=parameters)
         sequences = self.job.device['actions']['boot']['methods']['grub'].get(
@@ -178,7 +178,7 @@ class GrubMainAction(BootAction):
     summary = "run grub boot from power to system"
 
     def __init__(self):
-        super(GrubMainAction, self).__init__()
+        super().__init__()
         self.expect_shell = True
 
     def populate(self, parameters):
@@ -214,7 +214,7 @@ class GrubMainAction(BootAction):
                 self.internal_pipeline.add_action(PowerOff())
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(GrubMainAction, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection
 
@@ -226,7 +226,7 @@ class GrubMenuSelector(UefiMenuSelector):  # pylint: disable=too-many-instance-a
     summary = 'select grub options in the efi menu'
 
     def __init__(self):
-        super(GrubMenuSelector, self).__init__()
+        super().__init__()
         self.selector.prompt = "Start:"
         self.commands = []
         self.boot_message = None
@@ -241,7 +241,7 @@ class GrubMenuSelector(UefiMenuSelector):  # pylint: disable=too-many-instance-a
             self.errors = "Missing entry for menu item to use for %s" % self.method_name
             return
         self.commands = self.params['menu_options']
-        super(GrubMenuSelector, self).validate()
+        super().validate()
 
     def run(self, connection, max_end_time, args=None):
         # Needs to get the interrupt_prompt from the bootloader device config
@@ -251,7 +251,7 @@ class GrubMenuSelector(UefiMenuSelector):  # pylint: disable=too-many-instance-a
         connection.prompt_str = interrupt_prompt
         # override base class behaviour to interact with grub.
         self.boot_message = None
-        connection = super(GrubMenuSelector, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         return connection
 
 
@@ -265,16 +265,16 @@ class InstallerWait(Action):
     summary = "wait for task to finish match arbitrary string"
 
     def __init__(self):
-        super(InstallerWait, self).__init__()
+        super().__init__()
         self.type = "grub"
 
     def validate(self):
-        super(InstallerWait, self).validate()
+        super().validate()
         if "boot_finished" not in self.parameters:
             self.errors = "Missing boot_finished string"
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(InstallerWait, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         wait_string = self.parameters['boot_finished']
         msg = wait_string if isinstance(wait_string, str) else ', '.join(wait_string)
         self.logger.debug("Not expecting a shell, so waiting for boot_finished: %s", msg)

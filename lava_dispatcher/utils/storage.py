@@ -36,12 +36,12 @@ class FlashUBootUMSAction(Action):
     summary = "USB Mass storage flash"
 
     def __init__(self, usb_mass_device):
-        super(FlashUBootUMSAction, self).__init__()
+        super().__init__()
         self.params = None
         self.usb_mass_device = usb_mass_device
 
     def validate(self):
-        super(FlashUBootUMSAction, self).validate()
+        super().validate()
         self.params = self.job.device['actions']['boot']['methods'][self.parameters['method']]['parameters']
         if self.params.get('uboot_mass_storage_device', False):
             self.ums_device = self.params['uboot_mass_storage_device']

@@ -38,7 +38,7 @@ class RetryAction(Action):
     """
 
     def __init__(self):
-        super(RetryAction, self).__init__()
+        super().__init__()
         self.sleep = 1
 
     def validate(self):
@@ -47,7 +47,7 @@ class RetryAction(Action):
         so that the retry logic only occurs once and applies equally to the entire pipeline
         of the retry.
         """
-        super(RetryAction, self).validate()
+        super().validate()
         if not self.internal_pipeline:
             raise LAVABug("Retry action %s needs to implement an internal pipeline" % self.name)
 

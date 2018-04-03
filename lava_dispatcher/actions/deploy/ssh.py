@@ -49,7 +49,7 @@ class Ssh(Deployment):
     name = 'ssh'
 
     def __init__(self, parent, parameters):
-        super(Ssh, self).__init__(parent)
+        super().__init__(parent)
         self.action = ScpOverlay()
         self.action.job = self.job
         parent.add_action(self.action, parameters)
@@ -74,11 +74,11 @@ class ScpOverlay(DeployAction):
     summary = "copy overlay to device"
 
     def __init__(self):
-        super(ScpOverlay, self).__init__()
+        super().__init__()
         self.items = []
 
     def validate(self):
-        super(ScpOverlay, self).validate()
+        super().validate()
         self.items = [
             'firmware', 'kernel', 'dtb', 'rootfs', 'modules'
         ]
@@ -113,11 +113,11 @@ class PrepareOverlayScp(Action):
     summary = "scp the overlay to the remote device"
 
     def __init__(self):
-        super(PrepareOverlayScp, self).__init__()
+        super().__init__()
         self.host_keys = []
 
     def validate(self):
-        super(PrepareOverlayScp, self).validate()
+        super().validate()
         environment = self.get_namespace_data(
             action='deploy-device-env',
             label='environment',
@@ -150,7 +150,7 @@ class PrepareOverlayScp(Action):
         self.internal_pipeline.add_action(ExtractModules())  # idempotent, checks for a modules parameter
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(PrepareOverlayScp, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         overlay_file = self.get_namespace_data(action='compress-overlay', label='output', key='file')
         self.logger.info("Preparing to copy: %s", os.path.basename(overlay_file))
         self.set_namespace_data(action=self.name, label='scp-deploy', key='overlay', value=overlay_file)

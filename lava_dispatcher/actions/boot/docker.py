@@ -38,7 +38,7 @@ class BootDocker(Boot):
     compatibility = 4
 
     def __init__(self, parent, parameters):
-        super(BootDocker, self).__init__(parent)
+        super().__init__(parent)
         self.action = BootDockerAction()
         self.action.section = self.action_type
         self.action.job = self.job
@@ -86,12 +86,12 @@ class CallDockerAction(Action):
     summary = "call docker run"
 
     def __init__(self):
-        super(CallDockerAction, self).__init__()
+        super().__init__()
         self.cleanup_required = False
         self.extra_options = ''
 
     def validate(self):
-        super(CallDockerAction, self).validate()
+        super().validate()
         self.container = "lava-%s-%s" % (self.job.job_id, self.level)
 
         options = self.job.device['actions']['boot']['methods']['docker']['options']
@@ -123,13 +123,13 @@ class CallDockerAction(Action):
         self.cleanup_required = True
 
         shell_connection = ShellSession(self.job, shell)
-        shell_connection = super(CallDockerAction, self).run(shell_connection, max_end_time, args)
+        shell_connection = super().run(shell_connection, max_end_time, args)
 
         self.set_namespace_data(action='shared', label='shared', key='connection', value=shell_connection)
         return shell_connection
 
     def cleanup(self, connection):
-        super(CallDockerAction, self).cleanup(connection)
+        super().cleanup(connection)
         if self.cleanup_required:
             self.logger.debug("Stopping container %s", self.container)
             self.run_command(["docker", "stop", self.container], allow_fail=True)

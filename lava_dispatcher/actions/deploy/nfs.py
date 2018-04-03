@@ -44,7 +44,7 @@ class Nfs(Deployment):
     name = 'nfs'
 
     def __init__(self, parent, parameters):
-        super(Nfs, self).__init__(parent)
+        super().__init__(parent)
         self.action = NfsAction()
         self.action.section = self.action_type
         self.action.job = self.job
@@ -70,7 +70,7 @@ class NfsAction(DeployAction):  # pylint:disable=too-many-instance-attributes
     summary = "NFS deployment"
 
     def validate(self):
-        super(NfsAction, self).validate()
+        super().validate()
         if not self.valid:
             return
         if 'nfsrootfs' in self.parameters and 'persistent_nfs' in self.parameters:

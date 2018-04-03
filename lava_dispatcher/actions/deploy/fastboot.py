@@ -57,7 +57,7 @@ class Fastboot(Deployment):
     name = 'fastboot'
 
     def __init__(self, parent, parameters):
-        super(Fastboot, self).__init__(parent)
+        super().__init__(parent)
         self.action = FastbootAction()
         self.action.section = self.action_type
         self.action.job = self.job
@@ -89,11 +89,11 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
     summary = "fastboot deployment"
 
     def __init__(self):
-        super(FastbootAction, self).__init__()
+        super().__init__()
         self.force_prompt = False
 
     def validate(self):
-        super(FastbootAction, self).validate()
+        super().validate()
         if not self.test_needs_deployment(self.parameters):
             return
         protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name]
@@ -146,7 +146,7 @@ class FastbootFlashOrderAction(DeployAction):
     summary = "Handle reset and options for each flash url."
 
     def __init__(self):
-        super(FastbootFlashOrderAction, self).__init__()
+        super().__init__()
         self.retries = 3
         self.sleep = 10
         self.interrupt_prompt = None
@@ -177,7 +177,7 @@ class FastbootFlashOrderAction(DeployAction):
                 self.internal_pipeline.add_action(ReadFeedback(repeat=True))
 
     def validate(self):
-        super(FastbootFlashOrderAction, self).validate()
+        super().validate()
         self.set_namespace_data(
             action=FastbootFlashAction.name, label='interrupt',
             key='reboot', value=self.reboot)
@@ -204,7 +204,7 @@ class FastbootFlashAction(Action):
     summary = "Execute fastboot flash command"
 
     def __init__(self, cmd=None):
-        super(FastbootFlashAction, self).__init__()
+        super().__init__()
         self.retries = 3
         self.sleep = 10
         self.command = cmd
@@ -212,7 +212,7 @@ class FastbootFlashAction(Action):
         self.interrupt_string = None
 
     def validate(self):
-        super(FastbootFlashAction, self).validate()
+        super().validate()
         if not self.command:
             self.errors = "Invalid configuration - missing flash command"
         device_methods = self.job.device['actions']['deploy']['methods']
@@ -221,7 +221,7 @@ class FastbootFlashAction(Action):
             self.interrupt_string = device_methods['fastboot'].get('interrupt_string')
 
     def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-locals
-        connection = super(FastbootFlashAction, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         # this is the device namespace - the lxc namespace is not accessible
         lxc_name = None
         protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
@@ -271,7 +271,7 @@ class FastbootReboot(Action):
 
     def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-locals
 
-        connection = super(FastbootReboot, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         # this is the device namespace - the lxc namespace is not accessible
         lxc_name = None
         protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
@@ -301,7 +301,7 @@ class FastbootRebootBootloader(Action):
 
     def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-locals
 
-        connection = super(FastbootRebootBootloader, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         # this is the device namespace - the lxc namespace is not accessible
         lxc_name = None
         protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]

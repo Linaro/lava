@@ -55,7 +55,7 @@ class TestMultinode(StdoutTestCase):  # pylint: disable=too-many-public-methods
         """
         Attempt to setup a valid group with clients and test the protocol
         """
-        super(TestMultinode, self).setUp()
+        super().setUp()
         factory = Factory()
         self.client_job = factory.create_kvm_job('sample_jobs/kvm-multinode-client.yaml')
         self.server_job = factory.create_kvm_job('sample_jobs/kvm-multinode-server.yaml')
@@ -78,7 +78,7 @@ class TestMultinode(StdoutTestCase):  # pylint: disable=too-many-public-methods
         Override the socket calls to simply pass messages directly to the TestCoordinator
         """
         def __init__(self, coord, parameters, job_id):
-            super(TestMultinode.TestClient, self).__init__(parameters, job_id)
+            super().__init__(parameters, job_id)
             self.coord = coord
             self.debug_setup()
             self.client_name = "fake"
@@ -531,7 +531,7 @@ class TestProtocol(StdoutTestCase):  # pylint: disable=too-many-public-methods
         """
         Unable to test actually sending messages - need a genuine group with clients and roles
         """
-        super(TestProtocol, self).setUp()
+        super().setUp()
         self.job_id = "100"
         parameters = {
             'target': 'kvm01',
@@ -617,7 +617,7 @@ class TestProtocol(StdoutTestCase):  # pylint: disable=too-many-public-methods
         def __init__(self, fake_coordinator, parameters, job_id):
             # set the name before passing in the parameters based on that name
             self.name = "fake-multinode"
-            super(TestProtocol.FakeProtocol, self).__init__(parameters, job_id)
+            super().__init__(parameters, job_id)
             self.sock = TestProtocol.FakeClient(fake_coordinator)
             self.debug_setup()
 
@@ -631,7 +631,7 @@ class TestProtocol(StdoutTestCase):  # pylint: disable=too-many-public-methods
             pass
 
         def __call__(self, *args, **kwargs):
-            super(TestProtocol.FakeProtocol, self).__call__(*args, **kwargs)
+            super().__call__(*args, **kwargs)
 
     def test_fake_protocol(self):
         self.protocol._connect(1)
@@ -698,7 +698,7 @@ class TestDelayedStart(StdoutTestCase):  # pylint: disable=too-many-public-metho
         """
         Unable to test actually sending messages - need a genuine group with clients and roles
         """
-        super(TestDelayedStart, self).setUp()
+        super().setUp()
         job_id = "100"
         client_parameters = {
             'target': 'kvm01',

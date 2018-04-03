@@ -47,7 +47,7 @@ class DownloadFactory(Factory):  # pylint: disable=too-few-public-methods
 class TestDownloadDeploy(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestDownloadDeploy, self).setUp()
+        super().setUp()
         self.factory = DownloadFactory()
         self.job = self.factory.create_download_job('sample_jobs/download.yaml')
 

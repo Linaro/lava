@@ -24,7 +24,7 @@ from lava_dispatcher.test.test_basic import Factory, StdoutTestCase
 class TestCommand(StdoutTestCase):
 
     def setUp(self):
-        super(TestCommand, self).setUp()
+        super().setUp()
         factory = Factory()
         self.job = factory.create_kvm_job('sample_jobs/kvm-command.yaml')
 

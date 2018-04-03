@@ -32,7 +32,7 @@ class PipelineDevice(dict):
     """
 
     def __init__(self, config):
-        super(PipelineDevice, self).__init__()
+        super().__init__()
         self.update(config)
 
     def check_config(self, job):
@@ -99,7 +99,7 @@ class NewDevice(PipelineDevice):
     """
 
     def __init__(self, target):
-        super(NewDevice, self).__init__({})
+        super().__init__({})
         # Parse the yaml configuration
         try:
             if isinstance(target, str):

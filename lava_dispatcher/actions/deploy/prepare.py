@@ -58,7 +58,7 @@ class UBootPrepareKernelAction(Action):
     summary = "prepare/convert kernel"
 
     def __init__(self):
-        super(UBootPrepareKernelAction, self).__init__()
+        super().__init__()
         self.bootcommand = None
         self.params = None
         self.kernel_type = None
@@ -92,7 +92,7 @@ class UBootPrepareKernelAction(Action):
             raise InfrastructureError("uImage creation failed")
 
     def validate(self):
-        super(UBootPrepareKernelAction, self).validate()
+        super().validate()
         if 'parameters' not in self.job.device['actions']['deploy']:
             return
         self.params = self.job.device['actions']['deploy']['parameters']
@@ -123,7 +123,7 @@ class UBootPrepareKernelAction(Action):
             key='bootcommand', value=self.bootcommand)
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(UBootPrepareKernelAction, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         if not self.kernel_type:
             return connection  # idempotency
         old_kernel = self.get_namespace_data(
@@ -172,12 +172,12 @@ class PrepareFITAction(Action):
     summary = "generate depthcharge FIT image"
 
     def __init__(self):
-        super(PrepareFITAction, self).__init__()
+        super().__init__()
         self.deploy_params = None
         self.device_params = None
 
     def validate(self):
-        super(PrepareFITAction, self).validate()
+        super().validate()
         which('mkimage')
 
         deploy_params = self.job.device['actions']['deploy'].get('parameters')
@@ -218,8 +218,7 @@ class PrepareFITAction(Action):
         return cmd
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(PrepareFITAction, self).run(
-            connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         params = {
             label: self.get_namespace_data(
                 action='download-action', label=label, key='file')

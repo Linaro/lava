@@ -38,7 +38,7 @@ class SShSession(ShellSession):
 
     def finalise(self):
         self.disconnect("closing")
-        super(SShSession, self).finalise()
+        super().finalise()
 
     def disconnect(self, reason=''):
         # FIXME: handle super if tags are present.
@@ -68,7 +68,7 @@ class ConnectSsh(Action):
     timeout_exception = InfrastructureError
 
     def __init__(self):
-        super(ConnectSsh, self).__init__()
+        super().__init__()
         self.command = None
         self.host = None
         self.ssh_port = ["-p", "22"]
@@ -110,7 +110,7 @@ class ConnectSsh(Action):
         return params['ssh']
 
     def validate(self):
-        super(ConnectSsh, self).validate()
+        super().validate()
         params = self._check_params()
         which('ssh')
         if 'host' in self.job.device['actions']['deploy']['methods']['ssh']:
@@ -161,7 +161,7 @@ class ConnectSsh(Action):
                 self.command, shell.exitstatus, shell.readlines()))
         # SshSession monitors the pexpect
         connection = SShSession(self.job, shell)
-        connection = super(ConnectSsh, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         connection.sendline('export PS1="%s"' % self.job.device.get_constant(
             'default-shell-prompt'))
         connection.prompt_str = [self.job.device.get_constant(

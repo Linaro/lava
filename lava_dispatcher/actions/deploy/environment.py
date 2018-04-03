@@ -35,11 +35,11 @@ class DeployDeviceEnvironment(Action):
     summary = "deploy device environment"
 
     def __init__(self):
-        super(DeployDeviceEnvironment, self).__init__()
+        super().__init__()
         self.env = ""
 
     def validate(self):
-        super(DeployDeviceEnvironment, self).validate()
+        super().validate()
         if 'lava_test_shell_file' not in \
            self.parameters['deployment_data'].keys():
             self.errors = "Invalid deployment data - missing lava_test_shell_file"

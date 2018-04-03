@@ -41,7 +41,7 @@ class TestMonitor(LavaTest):
     LavaTestMonitor Strategy object
     """
     def __init__(self, parent, parameters):
-        super(TestMonitor, self).__init__(parent)
+        super().__init__(parent)
         self.action = TestMonitorRetry()
         self.action.job = self.job
         self.action.section = self.action_type
@@ -96,14 +96,14 @@ class TestMonitorAction(TestAction):  # pylint: disable=too-many-instance-attrib
     summary = "Lava Test Monitor"
 
     def __init__(self):
-        super(TestMonitorAction, self).__init__()
+        super().__init__()
         self.test_suite_name = None
         self.report = {}
         self.fixupdict = {}
         self.patterns = {}
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(TestMonitorAction, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
 
         if not connection:
             raise InfrastructureError("Connection closed")

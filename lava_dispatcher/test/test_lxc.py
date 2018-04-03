@@ -82,7 +82,7 @@ class LxcFactory(Factory):  # pylint: disable=too-few-public-methods
 class TestLxcDeploy(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestLxcDeploy, self).setUp()
+        super().setUp()
         factory = LxcFactory()
         self.job = factory.create_lxc_job('sample_jobs/lxc.yaml')
 
@@ -141,7 +141,7 @@ class TestLxcDeploy(StdoutTestCase):  # pylint: disable=too-many-public-methods
 class TestLxcWithDevices(StdoutTestCase):
 
     def setUp(self):
-        super(TestLxcWithDevices, self).setUp()
+        super().setUp()
         self.factory = LxcFactory()
         self.job = self.factory.create_bbb_lxc_job('sample_jobs/bbb-lxc.yaml')
 

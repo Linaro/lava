@@ -45,7 +45,7 @@ class BootIsoInstaller(Boot):
     compatibility = 3
 
     def __init__(self, parent, parameters):
-        super(BootIsoInstaller, self).__init__(parent)
+        super().__init__(parent)
         self.action = BootIsoInstallerAction()
         self.action.section = self.action_type
         self.action.job = self.job
@@ -122,7 +122,7 @@ class IsoCommandLine(Action):  # pylint: disable=too-many-instance-attributes
         shell_connection = ShellSession(self.job, shell)
         shell_connection.prompt_str = self.get_namespace_data(
             action='prepare-qemu-commands', label='prepare-qemu-commands', key='prompts')
-        shell_connection = super(IsoCommandLine, self).run(shell_connection, max_end_time, args)
+        shell_connection = super().run(shell_connection, max_end_time, args)
         return shell_connection
 
 
@@ -139,11 +139,11 @@ class MonitorInstallerSession(Action):
     summary = "Watch for error strings or end of install"
 
     def __init__(self):
-        super(MonitorInstallerSession, self).__init__()
+        super().__init__()
         self.force_prompt = True
 
     def validate(self):
-        super(MonitorInstallerSession, self).validate()
+        super().validate()
         if 'prompts' not in self.parameters:
             self.errors = "Unable to identify test image prompts from parameters."
 
@@ -160,11 +160,11 @@ class IsoRebootAction(Action):
     summary = 'reboot into installed image'
 
     def __init__(self):
-        super(IsoRebootAction, self).__init__()
+        super().__init__()
         self.sub_command = None
 
     def validate(self):
-        super(IsoRebootAction, self).validate()
+        super().validate()
         if 'prompts' not in self.parameters:
             self.errors = "Unable to identify boot prompts from job definition."
         try:
@@ -203,7 +203,7 @@ class IsoRebootAction(Action):
         self.logger.debug("started a shell command")
 
         shell_connection = ShellSession(self.job, shell)
-        shell_connection = super(IsoRebootAction, self).run(shell_connection, max_end_time, args)
+        shell_connection = super().run(shell_connection, max_end_time, args)
         shell_connection.prompt_str = [INSTALLER_QUIET_MSG]
         self.wait(shell_connection)
         self.set_namespace_data(action='shared', label='shared', key='connection', value=shell_connection)

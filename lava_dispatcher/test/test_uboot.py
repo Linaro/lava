@@ -88,7 +88,7 @@ class UBootFactory(Factory):  # pylint: disable=too-few-public-methods
 class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestUbootAction, self).setUp()
+        super().setUp()
         self.factory = UBootFactory()
 
     @unittest.skipIf(infrastructure_error('mkimage'), "u-boot-tools not installed")
