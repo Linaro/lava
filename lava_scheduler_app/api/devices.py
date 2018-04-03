@@ -245,7 +245,8 @@ class SchedulerDevicesAPI(ExposedV2API):
                                "type": device.device_type.name,
                                "health": device.get_health_display(),
                                "state": device.get_state_display(),
-                               "current_job": current_job.pk if current_job else None}
+                               "current_job": current_job.pk if current_job else None,
+                               "pipeline": True}
                 ret.append(device_dict)
 
         return ret
@@ -290,6 +291,7 @@ class SchedulerDevicesAPI(ExposedV2API):
                        "health_job": bool(device.get_health_check()),
                        "description": device.description,
                        "public": device.is_public,
+                       "pipeline": True,
                        "has_device_dict": bool(device.load_configuration(output_format="raw")),
                        "worker": None,
                        "user": device.user.username if device.user else None,
