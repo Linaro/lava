@@ -287,17 +287,20 @@ class TestInstallers(StdoutTestCase):
         # Test adding new preseed/late_command line.
         extra_command = 'cmd1'
         installers.add_late_command(preseedfile, extra_command)
-        file_content = open('preseed.cfg').read()
-        self.assertTrue('d-i preseed/late_command string cmd1' in file_content)
+        with open('preseed.cfg') as f_in:
+            file_content = f_in.read()
+            self.assertTrue('d-i preseed/late_command string cmd1' in file_content)
 
         # Test appending the second command to existing presseed/late_command line.
         extra_command = 'cmd2 ;'
         installers.add_late_command(preseedfile, extra_command)
-        file_content = open('preseed.cfg').read()
-        self.assertTrue('d-i preseed/late_command string cmd1; cmd2 ;' in file_content)
+        with open('preseed.cfg') as f_in:
+            file_content = f_in.read()
+            self.assertTrue('d-i preseed/late_command string cmd1; cmd2 ;' in file_content)
 
         # Test if it strips off extra space and semi-colon.
         extra_command = 'cmd3'
         installers.add_late_command(preseedfile, extra_command)
-        file_content = open('preseed.cfg').read()
-        self.assertTrue('d-i preseed/late_command string cmd1; cmd2; cmd3' in file_content)
+        with open('preseed.cfg') as f_in:
+            file_content = f_in.read()
+            self.assertTrue('d-i preseed/late_command string cmd1; cmd2; cmd3' in file_content)
