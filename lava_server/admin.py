@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-#
 # Copyright (C) 2018 Linaro Limited
 #
 # Author: Remi Duraffort <remi.duraffort@linaro.org>
