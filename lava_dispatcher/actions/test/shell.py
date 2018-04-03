@@ -224,6 +224,8 @@ class TestShellAction(TestAction):
             # FIXME: This should be logged whenever prompt_str is changed, by the connection object.
             self.logger.debug("Setting default test shell prompt %s", connection.prompt_str)
         connection.timeout = self.connection_timeout
+        # force an initial prompt - not all shells will respond without an excuse.
+        connection.sendline(connection.check_char)
         self.wait(connection)
 
         # use the string instead of self.name so that inheriting classes (like multinode)
@@ -237,7 +239,6 @@ class TestShellAction(TestAction):
         if pre_command_list and running == 0:
             for command in pre_command_list:
                 connection.sendline(command, delay=self.character_delay)
-                self.wait(connection)
 
         if lava_test_results_dir is None:
             raise JobError("Nothing to run. Maybe the 'deploy' stage is missing, "
@@ -245,10 +246,8 @@ class TestShellAction(TestAction):
 
         self.logger.debug("Using %s" % lava_test_results_dir)
         connection.sendline('ls -l %s/' % lava_test_results_dir, delay=self.character_delay)
-        self.wait(connection)
         if lava_test_sh_cmd:
             connection.sendline('export SHELL=%s' % lava_test_sh_cmd, delay=self.character_delay)
-            self.wait(connection)
 
         try:
             feedbacks = []
@@ -292,7 +291,6 @@ class TestShellAction(TestAction):
                             if bytes_read > 1:
                                 self.logger.debug("Listened to connection for namespace '%s' done", feedback[0])
                         last_check = time.time()
-            self.wait(connection)
         finally:
             if self.current_run is not None:
                 self.logger.error("Marking unfinished test run as failed")
