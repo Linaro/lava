@@ -22,34 +22,32 @@ export BUILD_DATE=$(shell LC_ALL=C date -u "+%B %d, %Y" -d "$(LAST_CHANGE)")
 # This has to be exported to make some magic below work.
 export DH_OPTIONS
 
-PYTHONDIR=/usr/lib/python2.7/dist-packages/
-PYTHON3DIR=/usr/lib/python3/dist-packages/
+PYTHONDIR=/usr/lib/python3/dist-packages/
 
-PYTHON2:=$(shell pyversions -r)
-install_dir=$(call py_libdir, $(PYTHON2))
+PYTHON:=$(shell py3versions -r)
+install_dir=$(call py_libdir, $(PYTHON))
 
 %:
-	dh $@ --with sphinxdoc,systemd,python2,python3
+	dh $@ --with sphinxdoc,systemd,python3
+
+override_dh_python3:
+	dh_python3 --shebang=/usr/bin/python3
 
 override_dh_auto_build:
-	dh_auto_build
-	python setup.py build
+	python3 setup.py build
 	make -C doc/v2/ html SPHINXBUILD="/usr/share/sphinx/scripts/python3/sphinx-build" SPHINXOPTS="-j 4 -D today=\"$(BUILD_DATE)\""
 	make -C man/ man SPHINXBUILD="/usr/share/sphinx/scripts/python3/sphinx-build" SPHINXOPTS="-j 4 -D today=\"$(BUILD_DATE)\""
 
 override_dh_auto_install:
-	dh_auto_install
-	python setup.py install --root=$(CURDIR)/debian/lava-server/ --install-layout=deb
-	[ -f debian/lava-server/usr/bin/lava-server ] || cp debian/lava-server/$(PYTHONDIR)/lava_server/manage.py debian/lava-server/usr/bin/lava-server; chmod a+x debian/lava-server/usr/bin/lava-server
 	python3 setup.py install --root=$(CURDIR)/debian/lava-server/ --install-layout=deb
+	[ -f debian/lava-server/usr/bin/lava-server ] || cp debian/lava-server/$(PYTHONDIR)/lava_server/manage.py debian/lava-server/usr/bin/lava-server; chmod a+x debian/lava-server/usr/bin/lava-server
 	find . -path '*/__pycache__/*' -delete
 	find . -type d -name '__pycache__' -empty -delete
 	dh_installman -plava-server man/_build/man/lava-server.1
 	# skip unwanted licence file specified in copyright
 	$(RM) debian/lava-server/$(PYTHONDIR)/google_analytics/LICENSE
-	$(RM) debian/lava-server/$(PYTHON3DIR)/google_analytics/LICENSE
 	# handle embedded JS
-	python ./share/javascript.py -f ./share/javascript.yaml --remove
+	python3 ./share/javascript.py -f ./share/javascript.yaml --remove
 	# handle systemd services
 	cp ./etc/*.service debian/
 	dh_systemd_enable --name lava-server-gunicorn
@@ -70,7 +68,7 @@ override_dh_compress:
 	dh_compress -X.yaml
 
 override_dh_auto_clean:
-	dh_auto_clean
+	python3 setup.py clean -a
 	find . -path '*/__pycache__/*' -delete
 	find . -type d -name '__pycache__' -empty -delete
 	$(RM) -r lava_server.egg-info doc/_build dist/ .idea/ jquery.cookie.js
@@ -85,6 +83,6 @@ override_dh_auto_clean:
 VERSION:= $(shell dpkg-parsechangelog | grep '^Version: ' | sed -e 's/^Version: //' | sed -e 's/\-.*$$//')
 
 sdist-orig:
-	python setup.py sdist
+	python3 setup.py sdist
 	mv -v dist/lava-server-$(VERSION).tar.gz ../lava-server_$(VERSION).orig.tar.gz
 	$(RM) -r versiontools-*.egg/
