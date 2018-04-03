@@ -22,7 +22,7 @@
 
 from __future__ import unicode_literals
 
-from contextlib import contextmanager
+import contextlib
 import errno
 import jinja2
 import simplejson
@@ -49,11 +49,6 @@ from lava_scheduler_app.scheduler import schedule
 from lava_scheduler_app.utils import mkdir
 from lava_server.cmdutils import LAVADaemonCommand, watch_directory
 
-if sys.version_info[0] == 2:
-    from lzma import error as LZMAError
-else:
-    from lzma import LZMAError
-
 
 # pylint: disable=no-member,too-many-branches,too-many-statements,too-many-locals
 
@@ -70,15 +65,6 @@ SCHEDULE_INTERVAL = 20
 
 # Log format
 FORMAT = '%(asctime)-15s %(levelname)7s %(message)s'
-
-
-@contextmanager
-def suppress(kls):
-    """ Suppress the given exception """
-    try:
-        yield
-    except kls:
-        pass
 
 
 def send_multipart_u(sock, data):
@@ -123,7 +109,7 @@ class SlaveDispatcher(object):  # pylint: disable=too-few-public-methods
         if self.online:
             self.online = False
             # If the worker does not exist, just skip the update
-            with suppress(Worker.DoesNotExist), transaction.atomic():
+            with contextlib.suppress(Worker.DoesNotExist), transaction.atomic():
                 worker = Worker.objects.select_for_update().get(hostname=self.hostname)
                 worker.go_state_offline()
                 worker.save()
@@ -335,7 +321,7 @@ class Command(LAVADaemonCommand):
                     f_description.write(description.decode("utf-8"))
                 if description:
                     parse_job_description(job)
-            except (IOError, LZMAError) as exc:
+            except (IOError, lzma.LZMAError) as exc:
                 self.logger.error("[%d] Unable to dump 'description.yaml'",
                                   job_id)
                 self.logger.exception("[%d] %s", job_id, exc)
@@ -416,11 +402,11 @@ class Command(LAVADaemonCommand):
         mkdir(output_dir)
         with open(os.path.join(output_dir, "job.yaml"), "w") as f_out:
             f_out.write(self.export_definition(job))
-        with suppress(IOError):
+        with contextlib.suppress(IOError):
             shutil.copy(options["env"], os.path.join(output_dir, "env.yaml"))
-        with suppress(IOError):
+        with contextlib.suppress(IOError):
             shutil.copy(options["env_dut"], os.path.join(output_dir, "env.dut.yaml"))
-        with suppress(IOError):
+        with contextlib.suppress(IOError):
             shutil.copy(os.path.join(options["dispatchers_config"], "%s.yaml" % worker.hostname),
                         os.path.join(output_dir, "dispatcher.yaml"))
         with open(os.path.join(output_dir, "device.yaml"), "w") as f_out:
