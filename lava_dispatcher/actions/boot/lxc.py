@@ -135,7 +135,7 @@ class LxcAddStaticDevices(Action):
         for link in device_list:
             lxc_cmd = ['lxc-device', '-n', lxc_name, 'add', link]
             cmd_out = self.run_command(lxc_cmd, allow_silent=True)
-            if cmd_out:
+            if not isinstance(cmd_out, bool) and cmd_out:
                 self.logger.debug(cmd_out)
         return connection
 
