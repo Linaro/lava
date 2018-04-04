@@ -641,6 +641,28 @@ class TestTemplates(unittest.TestCase):
             template_dict['actions']['boot']['methods']['grub-efi']['sata']
         )
 
+    def test_hikey_r2_template(self):
+        with open(os.path.join(os.path.dirname(__file__), 'devices', 'hi6220-hikey-r2-01.jinja2')) as hikey:
+            data = hikey.read()
+        self.assertIsNotNone(data)
+        self.assertTrue(self.validate_data('hi6220-hikey-01', data))
+        test_template = prepare_jinja_template('staging-hikey-01', data)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertIsNotNone(template_dict)
+        self.assertIsInstance(template_dict['device_info'], list)
+        self.assertIsInstance(template_dict['static_info'], list)
+        self.assertEqual(template_dict['device_info'][0]['board_id'],
+                         '0123456789')
+        self.assertEqual(template_dict['static_info'][0]['board_id'],
+                         'S_N0123456')
+        self.assertIsInstance(template_dict['fastboot_options'], list)
+        self.assertEqual(template_dict['fastboot_options'], ['-S', '256M'])
+        order = template_dict['flash_cmds_order']
+        self.assertEqual(0, order.index('ptable'))
+        self.assertEqual(1, order.index('xloader'))
+        self.assertEqual(2, order.index('fastboot'))
+
     def test_hikey_template(self):
         with open(os.path.join(os.path.dirname(__file__), 'devices', 'hi6220-hikey-01.jinja2')) as hikey:
             data = hikey.read()
@@ -664,7 +686,7 @@ class TestTemplates(unittest.TestCase):
         self.assertIn('cache', order)
         self.assertIn('system', order)
         self.assertIn('userdata', order)
-
+        self.assertNotIn('xloader', order)
         # test support for retreiving MAC from device.
         data += "{% set device_mac = '00:E0:4C:53:44:58' %}"
         self.assertTrue(self.validate_data('hi6220-hikey-01', data))
