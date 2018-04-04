@@ -559,7 +559,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
             # the exception is raised due to a non-zero exc.returncode
             if allow_fail:
                 self.logger.info(msg)
-                log = exc.output.strip()
+                log = exc.output.strip().decode('utf-8')
             else:
                 for error in errors:
                     self.errors = error
