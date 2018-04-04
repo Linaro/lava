@@ -538,7 +538,7 @@ your new device type. For example, a new unit test function defined as
 
 .. code-block:: shell
 
- $ python -m unittest -vcf lava_scheduler_app.tests.test_templates.TestTemplates.test_foobar_template
+ $ python3 -m unittest -vcf lava_scheduler_app.tests.test_templates.TestTemplates.test_foobar_template
 
 Remember that device type templates are not just configuration files - the
 templates are processed as source code at runtime and can use various types of
