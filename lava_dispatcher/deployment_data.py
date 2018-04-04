@@ -173,6 +173,7 @@ debian_installer = deployment_data_dict({  # pylint: disable=invalid-name
     'base': 'auto=true install noshell debug verbose BOOT_DEBUG=1 DEBIAN_FRONTEND=text ',
     'prompts': [
         'ERROR: Installation step failed',
+        'ERROR: Failed to retrieve the preconfiguration file',
         'Press enter to continue',
         'reboot: Power down',
         'Requesting system poweroff'
