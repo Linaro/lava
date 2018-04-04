@@ -32,6 +32,7 @@ from lava_dispatcher.utils.filesystem import (
     copy_out_files
 )
 from lava_dispatcher.utils.shell import which
+from lava_dispatcher.utils.filesystem import tftpd_dir
 from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.constants import INSTALLER_IMAGE_MAX_SIZE
 
@@ -59,9 +60,10 @@ class DeployIsoAction(DeployAction):  # pylint: disable=too-many-instance-attrib
         super(DeployIsoAction, self).validate()
         suffix = os.path.join(*self.preseed_path.split('/')[-2:])
         self.set_namespace_data(action=self.name, label='iso', key='suffix', value=suffix)
+        which('in.tftpd')
 
     def populate(self, parameters):
-        self.preseed_path = self.mkdtemp()
+        self.preseed_path = self.mkdtemp(override=tftpd_dir())
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.internal_pipeline.add_action(IsoEmptyImage())
         # the preseed file needs to go into the dispatcher apache tmp directory.
