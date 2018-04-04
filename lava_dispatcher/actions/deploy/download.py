@@ -51,7 +51,10 @@ from lava_dispatcher.logical import (
     Deployment,
     RetryAction,
 )
-from lava_dispatcher.utils.compression import untar_file
+from lava_dispatcher.utils.compression import (
+    untar_file,
+    decompress_file,
+)
 from lava_dispatcher.utils.filesystem import (
     copy_to_lxc,
     lava_lxc_home,
@@ -186,8 +189,8 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
                 decompressor = zlib.decompressobj(16 + zlib.MAX_WBITS)
             elif compression == 'bz2':
                 decompressor = bz2.BZ2Decompressor()
-            elif compression == 'xz':
-                decompressor = lzma.LZMADecompressor()  # pylint: disable=no-member
+            else:
+                fname, _ = self._url_to_fname_suffix(self.path, None)
             self.logger.debug("Using %s decompression" % compression)
         else:
             self.logger.debug("No compression specified.")
@@ -219,6 +222,13 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
             msg = "Unable to open %s: %s" % (fname, exc.strerror)
             self.logger.error(msg)
             raise InfrastructureError(msg)
+        if compression and compression == 'xz':
+            start = time.time()
+            self.logger.info("Decompressing filename: %s using %s compression", fname, compression)
+            fname = decompress_file(fname, compression)
+            elapsed = time.time() - start
+            self.logger.info("Decompression required %.2f seconds", elapsed)
+        self.set_namespace_data(action='download-action', label=self.key, key='file', value=fname)
 
     def validate(self):
         super(DownloadHandler, self).validate()
@@ -326,7 +336,6 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
                               round(downloaded_size / (1024 * 1024 * (ending - beginning)), 2)))
 
         # set the dynamic data into the context
-        self.set_namespace_data(action='download-action', label=self.key, key='file', value=fname)
         self.set_namespace_data(action='download-action', label=self.key, key='md5', value=md5.hexdigest())
         self.set_namespace_data(action='download-action', label=self.key, key='sha256', value=sha256.hexdigest())
 
