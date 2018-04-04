@@ -40,6 +40,7 @@ import traceback
 import yaml
 import zmq
 import zmq.auth
+from urllib.parse import urlparse
 from zmq.utils.strtypes import b, u
 
 from lava_dispatcher.job import ZMQConfig
@@ -565,8 +566,35 @@ def remove_stale_resources(jobs, last_stale_check):
     return time.time()
 
 
-def connect_to_master(poller, pipe_r, sock):
-    LOG.info("[BTSP] Greeting the master => 'HELLO'")
+def verify_socket(sock, master_url, ipv6=False):
+    identity = sock.getsockopt(zmq.IDENTITY).decode('utf-8')
+    master = urlparse(master_url)
+    LOG.debug("[BTSP] Checking master [%s:%s] to create socket for %s", master.hostname, master.port, identity)
+    try:
+        # getaddrinfo handles ipv4 and ipv6 but
+        # returns a varying list of tuples which need extra parsing.
+        socket.getaddrinfo(master.hostname, master.port)
+        if not ipv6:
+            # for IPv4, get useful log info with gethostbyname
+            LOG.debug("[BTSP] socket IPv4 address: %s", socket.gethostbyname(master.hostname))
+    except socket.gaierror as exc:
+        LOG.error("[BTSP] Socket timeout error: %s", exc)
+        return False
+    except socket.timeout as exc:
+        LOG.error("[BTSP] Socket DNS error: %s", exc)
+        return False
+    except OSError as exc:
+        LOG.error("[BTSP] Socket error: %s", exc)
+        return False
+    except Exception as exc:
+        LOG.error("[BTSP] Socket error 2: %s", exc)
+        return False
+    return True
+
+
+def connect_to_master(poller, pipe_r, sock, master, ipv6):
+    LOG.info("[BTSP] Greeting the master [%s] => 'HELLO'", master)
+    verify_socket(sock, master, ipv6)
     send_multipart_u(sock, ["HELLO", str(PROTOCOL_VERSION)])
     (leaving, msg) = recv_from_master("[BTSP]", poller, pipe_r, sock)
 
@@ -575,17 +603,22 @@ def connect_to_master(poller, pipe_r, sock):
         try:
             message = u(msg[0])
             if message == "HELLO_OK":
-                LOG.info("[BTSP] Connection with master established")
+                LOG.info("[BTSP] Connection with master [%s] established", master)
                 return True
             else:
                 LOG.info("[BTSP] Unexpected message from master: %s", message)
+        except socket.gaierror as exc:
+            LOG.exception("[BTSP] Socket error: %s", message)
+            verify_socket(sock, master, ipv6)
         except (IndexError, TypeError):
             if msg is not None:
                 LOG.error("[BTSP] Invalid message from master: %s", msg)
-
-        LOG.info("[BTSP] Greeting master => 'HELLO_RETRY' (using the same version?)")
-        send_multipart_u(sock, ["HELLO_RETRY", str(PROTOCOL_VERSION)])
-        (leaving, msg) = recv_from_master("[BTSP]", poller, pipe_r, sock)
+        if verify_socket(sock, master, ipv6):
+            LOG.info("[BTSP] Greeting master => 'HELLO_RETRY' (using the same version?)")
+            send_multipart_u(sock, ["HELLO_RETRY", str(PROTOCOL_VERSION)])
+            (leaving, msg) = recv_from_master("[BTSP]", poller, pipe_r, sock)
+        else:
+            time.sleep(TIMEOUT)
 
     return False
 
@@ -906,8 +939,8 @@ def main():
 
     # Main loop
     try:
-        LOG.info("[BTSP] Connecting to master as <%s>", options.hostname)
-        if not connect_to_master(poller, pipe_r, sock):
+        LOG.info("[BTSP] Connecting to master [%s] as <%s>", options.master, options.hostname)
+        if not connect_to_master(poller, pipe_r, sock, options.master, options.ipv6):
             return 1
         master.received_msg()
 
