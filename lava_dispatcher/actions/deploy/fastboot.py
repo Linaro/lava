@@ -254,11 +254,10 @@ class FastbootFlashAction(Action):
                         dst] + fastboot_opts
         self.logger.info("Handling %s", self.command)
         command_output = self.run_command(fastboot_cmd)
-        if command_output and 'error' in command_output:
-            raise InfrastructureError("Unable to flash %s using fastboot: %s" %
-                                      (self.command, command_output))
+        if not command_output:
+            raise InfrastructureError("Unable to flash %s using fastboot" %
+                                      self.command)
         self.results = {'label': self.command}
-
         return connection
 
 
@@ -287,9 +286,8 @@ class FastbootReboot(Action):
                         'fastboot', '-s', serial_number,
                         'reboot'] + fastboot_opts
         command_output = self.run_command(fastboot_cmd)
-        if command_output and 'error' in command_output:
-            raise InfrastructureError("Unable to reboot: %s"
-                                      % (command_output))
+        if not command_output:
+            raise InfrastructureError("Unable to reboot")
         return connection
 
 
@@ -318,8 +316,6 @@ class FastbootRebootBootloader(Action):
                         'fastboot', '-s', serial_number,
                         'reboot-bootloader'] + fastboot_opts
         command_output = self.run_command(fastboot_cmd)
-        if command_output and 'error' in command_output:
-            raise InfrastructureError(
-                "Unable to reboot to bootloader: %s"
-                % (command_output))
+        if not command_output:
+            raise InfrastructureError("Unable to reboot to bootloader")
         return connection
