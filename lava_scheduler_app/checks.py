@@ -19,11 +19,14 @@
 from __future__ import unicode_literals
 
 import os
+from pwd import getpwuid
+import stat
 import subprocess
 
-from django.core.checks import Debug, Error, register
-from django.db.models import Q
-from lava_scheduler_app.models import Device, validate_job
+from django.core.checks import Error, register, Warning
+
+from lava_scheduler_app.dbutils import invalid_template
+from lava_scheduler_app.models import Device, DeviceType, validate_job
 from lava_scheduler_app.schema import SubmissionException
 # pylint: disable=unused-argument,missing-docstring,invalid-name
 
@@ -41,13 +44,13 @@ def check_health_checks(app_configs, **kwargs):
         if device.health == Device.HEALTH_RETIRED:
             continue
         if ht is None and not ht_disabled:
-            errors.append(Debug("No health check", obj=device.hostname))
+            errors.append(Warning("No health check", obj=device.hostname))
             continue
 
         # An empty file is an error, provided health checks are not disabled
         # for this device type.
         if not ht and not ht_disabled:
-            errors.append(Error("Empty health check", obj=device.hostname))
+            errors.append(Warning("Empty health check", obj=device.hostname))
             continue
 
         # Check that the health check job is valid
@@ -61,6 +64,7 @@ def check_health_checks(app_configs, **kwargs):
     return errors
 
 
+# Check device dict
 @register(deploy=True)
 def check_device_configuration(app_configs, **kwargs):
     errors = []
@@ -69,6 +73,35 @@ def check_device_configuration(app_configs, **kwargs):
         if not device.is_valid():
             errors.append(Error('Invalid configuration', obj=device.hostname))
 
+    return errors
+
+
+# Check device-type templates
+@register(deploy=True)
+def check_dt_templates(app_configs, **kwargs):
+    errors = []
+
+    for dt in DeviceType.objects.filter(display=True):
+        if invalid_template(dt):
+            errors.append(Error('Invalid template', obj=dt.name))
+
+    return errors
+
+
+# Check permissions
+@register(deploy=True)
+def check_permissions(app_configs, **kwargs):
+    files = ["/etc/lava-server/instance.conf",
+             "/etc/lava-server/secret_key.conf"]
+    errors = []
+    for filename in files:
+        st = os.stat(filename)
+        if stat.S_IMODE(st.st_mode) != 416:
+            errors.append(Error('Invalid permissions (should be 0o640)',
+                                obj=filename))
+        if getpwuid(st.st_uid).pw_name != "lavaserver":
+            errors.append(Error('Invalid owner (should be lavaserver)',
+                                obj=filename))
     return errors
 
 
@@ -109,11 +142,13 @@ def check_services(app_configs, **kwargs):
 
     errors = []
     services = [
+        'apache2',
         'lava-server-gunicorn',
         'lava-master',
         'lava-slave',
         'lava-publisher',
         'lava-logs',
+        'postgresql',
     ]
 
     for service in services:
