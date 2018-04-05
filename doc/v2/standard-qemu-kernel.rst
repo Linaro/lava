@@ -5,7 +5,7 @@
 Standard test job for QEMU - Sid arm64
 ######################################
 
-The :ref:`first standard QEMU job <standard_amd64_jessie_qemu>` uses a kernel,
+The :ref:`first standard QEMU job <standard_amd64_stretch_qemu>` uses a kernel,
 initramfs, modules and configuration. This is a simple boot test - a test shell
 is not supported as the ramdisk is not unpacked for QEMU.
 
