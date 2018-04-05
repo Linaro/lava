@@ -164,6 +164,9 @@ case "$1" in
             mkdir $LAVA_SYS_HOME
             chown $LAVA_SYS_USER:$LAVA_SYS_USER $LAVA_SYS_HOME
         fi
+        # Fix permissions of /etc/lava-server/instance.conf
+        chown $LAVA_SYS_USER:$LAVA_SYS_USER /etc/lava-server/instance.conf
+        chmod 0640 /etc/lava-server/instance.conf
         # Allow lavaserver to write to all the log files
         chmod u+rXs /var/log/lava-server/
         # Allow users in the adm group to read the scheduler logs
@@ -173,6 +176,7 @@ case "$1" in
         # Allow lava user to write the secret key
         touch /etc/lava-server/secret_key.conf
         chown $LAVA_SYS_USER:$LAVA_SYS_USER /etc/lava-server/secret_key.conf
+        chmod 0640 /etc/lava-server/secret_key.conf
         # Allow lavaserver to write device dictionary files
         chown $LAVA_SYS_USER:$LAVA_SYS_USER /etc/lava-server/dispatcher-config/devices/
         # install database only on the master
