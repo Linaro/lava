@@ -391,17 +391,16 @@ class BootloaderCommandOverlay(Action):
             self.commands = self.parameters['commands']
             self.logger.warning("WARNING: Using boot commands supplied in the job definition, NOT the LAVA device configuration")
         else:
-            if self.method not in self.job.device['actions']['boot']['methods']:
+            if self.method not in device_methods:
                 self.errors = "%s boot method not found" % self.method
-            if 'method' not in self.parameters:
-                self.errors = "missing method"
             elif 'commands' not in self.parameters:
                 self.errors = "missing commands"
-            elif self.parameters['commands'] not in device_methods[self.parameters['method']]:
+            elif self.parameters['commands'] not in device_methods[self.method]:
                 self.errors = "Command not found in supported methods"
-            elif 'commands' not in device_methods[self.parameters['method']][self.parameters['commands']]:
+            elif 'commands' not in device_methods[self.method][self.parameters['commands']]:
                 self.errors = "No commands found in parameters"
-            self.commands = device_methods[self.parameters['method']][self.parameters['commands']]['commands']
+            else:
+                self.commands = device_methods[self.method][self.parameters['commands']]['commands']
         # download-action will set ['dtb'] as tftp_path, tmpdir & filename later, in the run step.
         if 'use_bootscript' in self.parameters:
             self.use_bootscript = self.parameters['use_bootscript']
