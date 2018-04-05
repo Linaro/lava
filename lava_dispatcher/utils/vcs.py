@@ -66,7 +66,7 @@ class BzrHelper(VCSHelper):
                                         stderr=subprocess.STDOUT, env=env)
                 os.chdir(dest_path)
                 commit_id = subprocess.check_output(['bzr', 'revno'],
-                                                    env=env).strip().decode('utf-8')
+                                                    env=env).strip().decode('utf-8', errors="replace")
 
         except subprocess.CalledProcessError as exc:
             exc_command = [i.strip() for i in exc.cmd]
@@ -135,7 +135,7 @@ class GitHelper(VCSHelper):
             raise InfrastructureError("Unable to fetch git repository '%s'"
                                       % (self.url))
 
-        return commit_id.decode('utf-8')
+        return commit_id.decode('utf-8', errors="replace")
 
 
 class TarHelper(VCSHelper):

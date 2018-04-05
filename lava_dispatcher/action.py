@@ -545,12 +545,12 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         self.logger.debug("%s", ' '.join(command_list))
         try:
             log = subprocess.check_output(command_list, stderr=subprocess.STDOUT)
-            log = log.decode('utf-8')  # pylint: disable=redefined-variable-type
+            log = log.decode('utf-8', errors="replace")  # pylint: disable=redefined-variable-type
         except subprocess.CalledProcessError as exc:
             # the errors property doesn't support removing errors
             errors = []
             if exc.output:
-                errors.append(exc.output.strip().decode('utf-8'))
+                errors.append(exc.output.strip().decode('utf-8', errors="replace"))
             else:
                 errors.append(str(exc))
             msg = '[%s] command %s\nmessage %s\noutput %s\n' % (
@@ -559,7 +559,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
             # the exception is raised due to a non-zero exc.returncode
             if allow_fail:
                 self.logger.info(msg)
-                log = exc.output.strip().decode('utf-8')
+                log = exc.output.strip().decode('utf-8', errors="replace")
             else:
                 for error in errors:
                     self.errors = error

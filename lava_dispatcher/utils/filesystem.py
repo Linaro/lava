@@ -386,7 +386,7 @@ def debian_package_version(pkg='lava-dispatcher', split=True):
     if os.path.exists(changelog):
         deb_version = subprocess.check_output((
             'dpkg-query', '-W', "-f=${Version}\n",
-            "%s" % pkg)).strip().decode('utf-8')
+            "%s" % pkg)).strip().decode('utf-8', errors="replace")
         # example version returned would be '2016.11'
         if split:
             return deb_version.split('-')[0]

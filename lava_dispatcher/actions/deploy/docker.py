@@ -42,10 +42,10 @@ class DockerAction(DeployAction):
         # Print docker version
         try:
             out = subprocess.check_output(["docker", "version", "-f", "{{.Server.Version}}"])
-            out = out.decode("utf-8").strip("\n")
+            out = out.decode("utf-8", errors="replace").strip("\n")
             self.logger.debug("docker server, installed at version: %s", out)
             out = subprocess.check_output(["docker", "version", "-f", "{{.Client.Version}}"])
-            out = out.decode("utf-8").strip("\n")
+            out = out.decode("utf-8", errors="replace").strip("\n")
             self.logger.debug("docker client, installed at version: %s", out)
         except subprocess.CalledProcessError as exc:
             raise InfrastructureError("Unable to call '%s': %s" % (exc.cmd, exc.output))
