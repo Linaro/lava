@@ -79,10 +79,3 @@ override_dh_auto_clean:
 	[ ! -f doc/v2/Makefile ] || make -C doc/v2/ clean
 	[ ! -f man/Makefile ] || make -C man/ clean
 
-# get upstream version for get-orig-source target
-VERSION:= $(shell dpkg-parsechangelog | grep '^Version: ' | sed -e 's/^Version: //' | sed -e 's/\-.*$$//')
-
-sdist-orig:
-	python3 setup.py sdist
-	mv -v dist/lava-server-$(VERSION).tar.gz ../lava-server_$(VERSION).orig.tar.gz
-	$(RM) -r versiontools-*.egg/
