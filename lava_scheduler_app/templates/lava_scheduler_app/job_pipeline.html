@@ -299,12 +299,8 @@
     <div id="sectionlogs">
       {% for line in log_data %}
         {% if line.lvl == "debug" %}
-          {% if "sending" in line.msg.keys %}{% comment %}TODO: Should be removed in 2017.9{% endcomment %}
-      <code class="keyboard" id="L{{ forloop.counter0 }}" title="{{ line.dt }}"><kbd>{{ line.msg.sending }}</kbd></code>
-          {% else %}
-            {% get_action_id line.msg as act_id %}
+          {% get_action_id line.msg as act_id %}
       <code class="debug" title="{{ line.dt }}" id="{% if act_id %}action_{{ act_id }}{% else %}L{{ forloop.counter0 }}{% endif %}">{{ line.msg|udecode }}</code>
-          {% endif %}
         {% elif line.lvl == "input" %}
       <code class="keyboard" id="L{{ forloop.counter0 }}" title="{{ line.dt }}"><kbd>{{ line.msg|udecode }}</kbd></code>
         {% elif line.lvl == "target" %}
@@ -764,26 +760,18 @@
 
               var node;
               if(level == 'debug') {
-                // TODO: Should be removed in 2017.9
-                if(typeof(d['msg']) != 'string' && 'sending' in d['msg']) {
-                  $('<code class="keyboard" id="' + id + '"></code>')
-                    .append($('<kbd></kbd>')
-                    .text(d['msg']['sending']))
-                    .insertBefore(progressNode);
-                } else {
-                  var action_id = action_id_regexp.exec(d['msg']);
-                  if(action_id) {
-                    id = 'action_' + action_id[1].replace(/\./g, '-');
-                  }
-                  $('<code class="debug" id="' + id + '"></code>')
-                    .text(d['msg'])
-                    .insertBefore(progressNode);
+                var action_id = action_id_regexp.exec(d['msg']);
+                if(action_id) {
+                  id = 'action_' + action_id[1].replace(/\./g, '-');
                 }
+                $('<code class="debug" id="' + id + '"></code>')
+                  .text(d['msg'])
+                  .insertBefore(progressNode);
               } else if(level == 'input') {
-                 $('<code class="keyboard" id="' + id + '"></code>')
-                    .append($('<kbd></kbd>')
-                    .text(d['msg']))
-                    .insertBefore(progressNode);
+                $('<code class="keyboard" id="' + id + '"></code>')
+                  .append($('<kbd></kbd>')
+                  .text(d['msg']))
+                  .insertBefore(progressNode);
               } else if(level == 'target') {
                 $('<code class="target bg-success" id="' + id + '"></code>')
                   .text(d['msg'])
