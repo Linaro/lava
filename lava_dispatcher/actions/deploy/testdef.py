@@ -1109,7 +1109,9 @@ class TestRunnerAction(TestOverlayAction):
                     'echo "<0><LAVA_SIGNAL_STARTRUN $TESTRUN_ID $UUID>" > /dev/kmsg\n'
                 )
             else:
-                runsh.write('echo "<LAVA_SIGNAL_STARTRUN $TESTRUN_ID $UUID>"\n')
+                runsh.write(
+                    'echo $(date +%T,%N) "<LAVA_SIGNAL_STARTRUN $TESTRUN_ID $UUID>"\n'
+                )
             runsh.write("set -x\n")
             steps = testdef.get("run", {}).get("steps", [])
             for cmd in [step for step in steps if step is not None]:
@@ -1123,7 +1125,9 @@ class TestRunnerAction(TestOverlayAction):
                     'echo "<0><LAVA_SIGNAL_ENDRUN $TESTRUN_ID $UUID>" > /dev/kmsg\n'
                 )
             else:
-                runsh.write('echo "<LAVA_SIGNAL_ENDRUN $TESTRUN_ID $UUID>"\n')
+                runsh.write(
+                    'echo $(date +%T,%N) "<LAVA_SIGNAL_ENDRUN $TESTRUN_ID $UUID>"\n'
+                )
 
         self.results = {
             "uuid": self.test_uuid,

@@ -2,7 +2,7 @@ signal ()
 {
   if [ -z ${KMSG} ]
   then
-    echo "${1}"
+    echo $(date +%T,%N) "${1}"
   else
     echo "<0>${1}" > /dev/kmsg
   fi
