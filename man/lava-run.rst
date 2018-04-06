@@ -31,7 +31,7 @@ optional arguments:
   -h, --help          show this help message and exit
   --job-id ID         Job identifier. This alters process name for easier
                       debugging
-  --output-dir DIR    Directory for temporary ressources
+  --output-dir DIR    Directory for temporary resources
   --validate          validate the job file, do not execute any steps.
                       The description is saved into description.yaml
 
