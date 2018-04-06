@@ -1,5 +1,3 @@
-lava-dispatcher: binary-without-manpage usr/sbin/lava-run
-
 lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/fedora/lava-install-packages
 lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/fedora/lava-installed-packages
 lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/fedora/lava-os-build
@@ -13,16 +11,8 @@ lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispat
 lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/oe/lava-installed-packages
 lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-installed-packages
 lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-os-build
-lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lmp/lava-lmp-audio-jack
-lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lmp/lava-lmp-eth
-lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lmp/lava-lmp-hdmi
-lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lmp/lava-lmp-lsgpio
-lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lmp/lava-lmp-sata
-lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lmp/lava-lmp-usb
-lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lmp/lava-lmp.lib
 lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/multi_node/lava-group
 lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/multi_node/lava-multi-node.lib
-lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/multi_node/lava-network
 lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/multi_node/lava-role
 lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/multi_node/lava-self
 lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/multi_node/lava-send
@@ -35,19 +25,10 @@ lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispat
 lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-add-sources
 lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/ubuntu/lava-add-keys
 lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/ubuntu/lava-add-sources
-lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-vm-groups-setup-host
 lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/vland/lava-vland-self
 lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/vland/lava-vland-tags
 lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/vland/lava-vland-names
 lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/multi_node/lava-echo-config
-lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/pipeline/lava_test_shell/multi_node/lava-network
-lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/pipeline/lava_test_shell/multi_node/lava-send
-lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/pipeline/lava_test_shell/multi_node/lava-sync
-lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/pipeline/lava_test_shell/multi_node/lava-wait
-lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/pipeline/lava_test_shell/multi_node/lava-wait-all
-lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/pipeline/lava_test_shell/lava-target-ip
-lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/pipeline/lava_test_shell/lava-target-mac
-lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/pipeline/lava_test_shell/lava-test-reference
 lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-add-keys
 lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-add-sources
 lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-install-packages
