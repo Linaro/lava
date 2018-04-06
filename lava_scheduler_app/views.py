@@ -64,8 +64,9 @@ from lava_scheduler_app.models import (
 from lava_scheduler_app import utils
 from lava_scheduler_app.dbutils import (
     device_type_summary,
-    testjob_submission,
     invalid_template,
+    load_devicetype_template,
+    testjob_submission,
 )
 from lava_scheduler_app.templatetags.utils import udecode
 
