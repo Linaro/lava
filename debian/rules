@@ -16,8 +16,9 @@
 # Prevent setuptools/distribute from accessing the internet.
 export http_proxy = http://127.0.9.1:9
 
-export LAST_CHANGE=$(shell dpkg-parsechangelog -S Date)
-export BUILD_DATE=$(shell LC_ALL=C date -u "+%B %d, %Y" -d "$(LAST_CHANGE)")
+include /usr/share/dpkg/pkg-info.mk
+
+export BUILD_DATE=$(shell LC_ALL=C date -u "+%B %d, %Y" -d @"$(SOURCE_DATE_EPOCH)")
 
 # This has to be exported to make some magic below work.
 export DH_OPTIONS
