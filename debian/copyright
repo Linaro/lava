@@ -6,10 +6,8 @@ Files: *
 Copyright: 2010-2016, Linaro Limited
 License: AGPL-3.0
 
-Files: lava_server/lava-server/js/*
- lava_scheduler_app/static/lava_scheduler_app/js/*
+Files: lava_scheduler_app/static/lava_scheduler_app/js/*
  lava_scheduler_app/static/lava_scheduler_app/css/jquery-linedtextarea.css
- lava_server/lava-server/css/smoothness/jquery-ui-1.10.4.custom.min.css
 Copyright: 2014 Jörn Zaefferer
            2010 Alan Williamson
            2007-2011 Ariel Flesler - aflesler(at)gmail(dot)com
