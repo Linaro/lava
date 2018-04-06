@@ -428,10 +428,12 @@ def testcase(request, case_id, job=None, pk=None):
     for extra_case in test_cases:
         try:
             f_metadata = yaml.load(extra_case.metadata, Loader=yaml.CLoader)
+            if not f_metadata:
+                continue
         except TypeError:
             logger.info("Unable to load extra case metadata for %s", extra_case)
-            f_metadata = {}
-        extra_data = f_metadata.get('extra', None)
+            continue
+        extra_data = f_metadata.get('extra')
         try:
             if extra_data and os.path.exists(extra_data):
                 with open(f_metadata['extra'], 'r') as extra_file:
