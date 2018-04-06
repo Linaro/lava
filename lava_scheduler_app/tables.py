@@ -317,12 +317,15 @@ class FailedJobTable(JobTable):
         if record.failure_comment:
             return record.failure_comment
         try:
-            failure = TestCase.objects.get(suite__job=record, suite__name='lava', name='job')
+            failure = TestCase.objects.get(suite__job=record, result=TestCase.RESULT_FAIL,
+                                           suite__name='lava', name='job')
         except TestCase.DoesNotExist:
             return ''
-        if failure.result == TestCase.RESULT_FAIL:
+        action_metadata = failure.action_metadata
+        if action_metadata is not None and 'error_msg' in action_metadata:
             return yaml.dump(failure.action_metadata['error_msg'])
-        return None
+        else:
+            return ''
 
     class Meta(JobTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
         fields = (
