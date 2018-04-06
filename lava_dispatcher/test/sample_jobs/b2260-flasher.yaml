@@ -1,0 +1,41 @@
+device_type: b2260
+job_name: flasher test
+timeouts:
+  job:
+    minutes: 10
+  action:
+    minutes: 5
+  connection:
+    minutes: 2
+priority: medium
+visibility: public
+actions:
+- deploy:
+    timeout:
+      minutes: 4
+    to: flasher
+    images:
+      kernel:
+        url: https://images.validation.linaro.org/builds.96boards.org/snapshots/b2260/linaro/debian/21/uImage
+      ramdisk:
+        url: http://images.validation.linaro.org/storage.kernelci.org/images/rootfs/buildroot/armel/rootfs.cpio.gz
+      dtb:
+        url: https://images.validation.linaro.org/builds.96boards.org/snapshots/b2260/linaro/debian/21/stih410-b2260.dtb
+    os: debian
+- boot:
+    method: minimal
+    prompts:
+    - 'linaro-test'
+    - 'root@debian:~#'
+    - '/ #'
+    transfer_overlay:
+      download_command: cd /tmp ; wget
+      unpack_command: tar -C / -xzf
+- test:
+    timeout:
+      minutes: 5
+    definitions:
+    - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+      from: git
+      path: lava-test-shell/smoke-tests-basic.yaml
+      name: smoke-tests
