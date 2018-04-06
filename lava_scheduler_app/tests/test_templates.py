@@ -1434,3 +1434,27 @@ class TestTemplates(unittest.TestCase):
             self.assertNotIn('console=ttyO0', command)
             self.assertNotIn('115200n8', command)
             self.assertNotIn('n8', command)
+
+    def test_flasher(self):
+        data = """{% extends 'b2260.jinja2' %}
+{% set flasher_deploy_commands = ['flashing', 'something --else'] %}
+"""
+        self.assertTrue(self.validate_data('staging-b2260-01', data))
+        test_template = prepare_jinja_template('staging-b2260-01', data)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertEqual(['flashing', 'something --else'],
+                         template_dict['actions']['deploy']['methods']['flasher']['commands'])
+
+    def test_user_command(self):
+        data = """{% extends 'b2260.jinja2' %}
+{% set user_commands = {'set_boot_to_usb': {'do': '/bin/true', 'undo': '/bin/true'},
+                        'set_boot_to_sd': {'do': '/bin/true', 'undo': '/bin/true'}} %}
+"""
+        self.assertTrue(self.validate_data('staging-b2260-01', data))
+        test_template = prepare_jinja_template('staging-b2260-01', data)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertEqual({'set_boot_to_usb': {'do': '/bin/true', 'undo': '/bin/true'},
+                          'set_boot_to_sd': {'do': '/bin/true', 'undo': '/bin/true'}},
+                         template_dict['commands']['users'])
