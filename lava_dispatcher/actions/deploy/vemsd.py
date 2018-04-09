@@ -218,7 +218,7 @@ class EnterVExpressMCC(Action):
         # Interrupt autorun if enabled
         if connection.prompt_str[index] == self.autorun_prompt:
             self.logger.debug('Autorun enabled: interrupting..')
-            connection.sendline('%s\n' % self.interrupt_char)
+            connection.sendline(self.interrupt_char)
             connection.prompt_str = [self.mcc_prompt, self.mcc_reset_msg]
             index = self.wait(connection)
         elif connection.prompt_str[index] == self.mcc_prompt:
@@ -260,7 +260,7 @@ class EnableVExpressMassStorage(Action):
         connection = super().run(connection, max_end_time)
 
         # Issue command and check that you are returned to the prompt again
-        connection.sendline('%s\n' % self.mcc_cmd)
+        connection.sendline(self.mcc_cmd)
         self.logger.debug("Changing prompt to '%s'", self.mcc_prompt)
         connection.prompt_str = self.mcc_prompt
         self.wait(connection)
@@ -420,13 +420,13 @@ class VExpressFlashErase(Action):  # pylint: disable=too-many-instance-attribute
         connection = super().run(connection, max_end_time)
 
         # From Versatile Express MCC, enter flash menu
-        connection.sendline('%s\n' % self.flash_enter_cmd)
+        connection.sendline(self.flash_enter_cmd)
         self.logger.debug("Changing prompt to '%s'", self.flash_prompt)
         connection.prompt_str = self.flash_prompt
         self.wait(connection)
 
         # Issue flash erase command
-        connection.sendline('%s\n' % self.flash_erase_cmd)
+        connection.sendline(self.flash_erase_cmd)
         self.logger.debug("Changing prompt to '%s'", self.flash_erase_msg)
         connection.prompt_str = self.flash_erase_msg
         self.wait(connection)
@@ -437,7 +437,7 @@ class VExpressFlashErase(Action):  # pylint: disable=too-many-instance-attribute
         self.wait(connection)
 
         # If flash erase command has completed, return to MCC main menu
-        connection.sendline('%s\n' % self.flash_exit_cmd)
+        connection.sendline(self.flash_exit_cmd)
         self.logger.debug("Changing prompt to '%s'", self.mcc_prompt)
         connection.prompt_str = self.mcc_prompt
         self.wait(connection)
