@@ -142,13 +142,20 @@ def cancelling_handler(*_):
     The exception will go through all the stack frames cleaning and reporting
     the error.
     """
-    signal.signal(signal.SIGHUP, signal.default_int_handler)
-    signal.signal(signal.SIGINT, signal.default_int_handler)
-    signal.signal(signal.SIGQUIT, signal.default_int_handler)
-    signal.signal(signal.SIGTERM, signal.default_int_handler)
-    signal.signal(signal.SIGUSR1, signal.default_int_handler)
-    signal.signal(signal.SIGUSR2, signal.default_int_handler)
+    signal.signal(signal.SIGHUP, terminating_handler)
+    signal.signal(signal.SIGINT, terminating_handler)
+    signal.signal(signal.SIGQUIT, terminating_handler)
+    signal.signal(signal.SIGTERM, terminating_handler)
+    signal.signal(signal.SIGUSR1, terminating_handler)
+    signal.signal(signal.SIGUSR2, terminating_handler)
     raise JobCanceled("The job was canceled")
+
+
+def terminating_handler(*_):
+    """
+    Second signal handler to notify to the user that the job was canceled twice
+    """
+    raise JobCanceled("The job was canceled again (too long to cancel)")
 
 
 def main():

@@ -54,7 +54,7 @@ from lava_dispatcher.job import ZMQConfig
 ###########
 # Constants
 ###########
-FINISH_MAX_DURATION = 60
+FINISH_MAX_DURATION = 120
 JOBS_CHECK_INTERVAL = 5
 PROTOCOL_VERSION = 3
 SEND_QUEUE = 10  # zmq high water mark
@@ -518,6 +518,9 @@ def check_job_status(jobs, sock, last_jobs_check):
         elif time.time() - job.last_update > FINISH_MAX_DURATION:
             LOG.info("[%d] Job not finishing => killing", job.job_id)
             job.kill()
+        elif time.time() - job.last_update > FINISH_MAX_DURATION / 2:
+            LOG.info("[%d] Job not finishing => second signal", job.job_id)
+            job.terminate()
 
     return time.time()
 
