@@ -34,6 +34,7 @@ from lava_dispatcher.action import (
 )
 
 from lava_dispatcher.utils.contextmanager import chdir
+from lava_dispatcher.utils.shell import which
 
 
 # https://www.kernel.org/doc/Documentation/xz.txt
@@ -46,6 +47,9 @@ def compress_file(infile, compression):
         return infile
     if compression not in compress_command_map.keys():
         raise JobError("Cannot find shell command to compress: %s" % compression)
+
+    # Check that the command does exists
+    which(compress_command_map[compression])
 
     with chdir(os.path.dirname(infile)):
         cmd = "%s %s" % (compress_command_map[compression], infile)
@@ -62,6 +66,9 @@ def decompress_file(infile, compression):
         return infile
     if compression not in decompress_command_map.keys():
         raise JobError("Cannot find shell command to decompress: %s" % compression)
+
+    # Check that the command does exists
+    which(decompress_command_map[compression])
 
     with chdir(os.path.dirname(infile)):
         cmd = "%s %s" % (decompress_command_map[compression], infile)
