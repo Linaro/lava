@@ -1,5 +1,1 @@
 lava-dev: binary-package-depends-on-toolchain-package depends: debhelper (>= 9.20160709)
-# 818609
-lava-dev: python-script-but-no-python-dep usr/share/lava-server/download-test-suites-api.py
-lava-dev: python-script-but-no-python-dep usr/share/lava-server/render-template.py
-lava-dev: python-script-but-no-python-dep usr/share/lava-server/validate_devices.py
