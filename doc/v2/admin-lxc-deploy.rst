@@ -224,6 +224,42 @@ container.
 .. note:: To apply configurations system wide for all LXC devices attached to
   the dispatcher use ``/etc/lxc/default.conf`` file.
 
+.. index:: lxc on arm64 stretch
+
+.. _lxc_arch_distro:
+
+Architecture and distribution issues
+************************************
+
+If you are configuring a LAVA instance with a range of dispatchers, there can
+be issues if those dispatchers are both ``amd64`` and ``arm64`` architectures.
+
+On Debian Stretch, the ``lxc`` package does not support mapping the kernel 
+architecture name (``aarch64``) to the Debian release architecture name 
+(``arm64``). This mapping has been added to newer versions of LXC.
+
+::
+
+ $ sudo lxc-create  -t debian -n server-unittests -- --release stretch -a arm64
+
+Once the cache exists, test jobs do not need to specify the arch again:
+
+::
+
+ $ sudo lxc-create  -t debian -n server-unittests -- --release stretch
+
+However, the cache will invalidate from time to time, so this is an 
+administrative burden.
+
+To avoid this burden, admins can choose to have two LXC device-types defined 
+with slightly different health checks and test jobs to specify the 
+architecture.
+
+.. seealso:: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=895432
+
+If all dispatchers on a master are ``arm64``, simply change the ``lxc.jinja2``
+template to specify the architecture for all test jobs as ``arm64``.
+
 Other resources
 ***************
 
