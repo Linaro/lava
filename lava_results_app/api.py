@@ -667,8 +667,8 @@ class ResultsAPI(ExposedAPI):
                 raise xmlrpclib.Fault(
                     401, "Permission denied for user to job %s" % job_id)
             test_suite = job.testsuite_set.get(name=suite_name)
-            test_case = test_suite.testcase_set.get(name=case_name)
-            yaml_list = [export_testcase(test_case)]
+            test_cases = test_suite.testcase_set.filter(name=case_name)
+            yaml_list = [export_testcase(test_case) for test_case in test_cases]
 
         except TestJob.DoesNotExist:
             raise xmlrpclib.Fault(404, "Specified job not found.")
