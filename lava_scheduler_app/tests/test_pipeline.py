@@ -2,6 +2,7 @@ import os
 import sys
 import yaml
 import jinja2
+import unittest
 import logging
 from lava_scheduler_app.models import (
     Device,
@@ -31,6 +32,7 @@ from lava_dispatcher.test.test_defs import check_missing_path
 from lava_dispatcher.action import JobError, InfrastructureError
 from lava_dispatcher.actions.boot.qemu import BootQEMU
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
+from lava_dispatcher.utils.constants import SYS_CLASS_KVM
 from lava_dispatcher.test.utils import DummyLogger
 from django_restricted_resource.managers import RestrictedResourceQuerySet
 from unittest import TestCase
@@ -1017,6 +1019,7 @@ class TestYamlMultinode(TestCaseWithFactory):
             }
         )
 
+    @unittest.skipIf(not os.path.exists(SYS_CLASS_KVM), "Cannot use --enable-kvm")
     def test_multinode_mixed_deploy(self):
         user = self.factory.make_user()
         device_type = self.factory.make_device_type()
