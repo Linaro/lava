@@ -12,6 +12,8 @@
         <a href="{% url 'lava.scheduler.active_devices' %}">Active Devices</a></span></li>
     <li class="btn btn-sm"><span class="glyphicon glyphicon-check">
         <a href="{% url 'lava.scheduler.online_devices' %}">Online Devices</a></span></li>
+    <li class="btn btn-sm"><span class="glyphicon glyphicon-wrench">
+        <a href="{% url 'lava.scheduler.maintenance_devices' %}">Maintenance Devices</a></span></li>
 </ul>
 
 {% render_table active_devices_table %}

@@ -62,11 +62,27 @@ def cancel_action(modeladmin, request, queryset):  # pylint: disable=unused-argu
     with transaction.atomic():
         for testjob in queryset.select_for_update():
             if testjob.can_cancel(request.user):
-                testjob.go_state_canceling()
-                testjob.save()
+                if testjob.is_multinode:
+                    for job in testjob.sub_jobs_list:
+                        job.go_state_canceling()
+                        job.save()
+                else:
+                    testjob.go_state_canceling()
+                    testjob.save()
 
 
 cancel_action.short_description = 'cancel selected jobs'
+
+
+def fail_action(modeladmin, request, queryset):
+    if request.user.is_superuser:
+        with transaction.atomic():
+            for testjob in queryset.select_for_update().filter(state=TestJob.STATE_CANCELING):
+                testjob.go_state_finished(TestJob.HEALTH_INCOMPLETE)
+                testjob.save()
+
+
+fail_action.short_description = 'fail selected jobs'
 
 
 class ActiveDevicesFilter(admin.SimpleListFilter):
@@ -194,11 +210,6 @@ class DeviceAdmin(admin.ModelAdmin):
     valid_device.boolean = True
     valid_device.short_description = "V2 configuration"
 
-    def exclusive_device(self, obj):
-        return obj.is_exclusive
-    exclusive_device.boolean = True
-    exclusive_device.short_description = "v2 only"
-
     def device_dictionary_jinja(self, obj):
         return obj.load_configuration(output_format="raw")
 
@@ -206,7 +217,7 @@ class DeviceAdmin(admin.ModelAdmin):
         ('Properties', {
             'fields': (('device_type', 'hostname'), 'worker_host', 'device_version')}),
         ('Device owner', {
-            'fields': (('user', 'group'), ('physical_owner', 'physical_group'), 'is_public', 'is_pipeline')}),
+            'fields': (('user', 'group'), ('physical_owner', 'physical_group'), 'is_public')}),
         ('Status', {
             'fields': (('state', 'health'), ('last_health_report_job', 'current_job'))}),
         ('Advanced properties', {
@@ -217,8 +228,8 @@ class DeviceAdmin(admin.ModelAdmin):
     readonly_fields = ('device_dictionary_jinja', 'state', 'current_job')
     list_display = ('hostname', 'device_type', 'current_job', 'worker_host',
                     'state', 'health', 'has_health_check',
-                    'health_check_enabled', 'is_public', 'is_pipeline',
-                    'valid_device', 'exclusive_device')
+                    'health_check_enabled', 'is_public',
+                    'valid_device')
     search_fields = ('hostname', 'device_type__name')
     ordering = ['hostname']
     actions = [device_health_good, device_health_unknown,
@@ -244,7 +255,7 @@ class TestJobAdmin(admin.ModelAdmin):
         return '' if obj.requested_device_type is None else obj.requested_device_type
     requested_device_type_name.short_description = 'Request device type'
     form = VisibilityForm
-    actions = [cancel_action]
+    actions = [cancel_action, fail_action]
     list_filter = ('state', RequestedDeviceTypeFilter, ActualDeviceFilter)
     fieldsets = (
         ('Owner', {
@@ -256,7 +267,7 @@ class TestJobAdmin(admin.ModelAdmin):
         ('Current status', {
             'fields': ('actual_device', 'state', 'health')}),
         ('Results & Failures', {
-            'fields': ('failure_tags', 'failure_comment', '_results_link')}),
+            'fields': ('failure_tags', 'failure_comment')}),
     )
     readonly_fields = ('state', )
     list_display = ('id', 'state', 'health', 'submitter', 'requested_device_type_name',
@@ -323,10 +334,38 @@ class DeviceTypeAdmin(admin.ModelAdmin):
     ordering = ['name']
 
 
+def worker_health_active(ModelAdmin, request, queryset):
+    with transaction.atomic():
+        for worker in queryset.select_for_update():
+            worker.go_health_active(request.user)
+            worker.save()
+
+
+def worker_health_maintenance(ModelAdmin, request, queryset):
+    with transaction.atomic():
+        for worker in queryset.select_for_update():
+            worker.go_health_maintenance(request.user)
+            worker.save()
+
+
+def worker_health_retired(ModelAdmin, request, queryset):
+    with transaction.atomic():
+        for worker in queryset.select_for_update():
+            worker.go_health_retired(request.user)
+            worker.save()
+
+
+worker_health_active.short_description = "Update health of selected workers to Active"
+worker_health_maintenance.short_description = "Update health of selected workers to Maintenance"
+worker_health_retired.short_description = "Update health of selected workers to Retired"
+
+
 class WorkerAdmin(admin.ModelAdmin):
     list_display = ('hostname', 'state', 'health')
     readonly_fields = ('state', )
     ordering = ['hostname']
+    actions = [worker_health_active, worker_health_maintenance,
+               worker_health_retired]
 
 
 class TagLowerForm(forms.ModelForm):

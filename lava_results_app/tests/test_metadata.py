@@ -17,7 +17,7 @@ from lava_results_app.dbutils import (
     map_metadata,
     map_scanned_results,
     create_metadata_store,
-    _get_job_metadata, _get_device_metadata,  # pylint: disable=protected-access
+    _get_action_metadata, _get_device_metadata,  # pylint: disable=protected-access
     testcase_export_fields,
     export_testcase,
 )
@@ -58,7 +58,7 @@ class TestMetaTypes(TestCaseWithFactory):
         device_config = device.load_configuration(job_ctx)  # raw dict
         parser = JobParser()
         obj = PipelineDevice(device_config)
-        pipeline_job = parser.parse(job.definition, obj, job.id, None, "", output_dir='/tmp')
+        pipeline_job = parser.parse(job.definition, obj, job.id, None, "")
         allow_missing_path(pipeline_job.pipeline.validate_actions, self,
                            'qemu-system-x86_64')
         pipeline = pipeline_job.describe()
@@ -139,7 +139,7 @@ class TestMetaTypes(TestCaseWithFactory):
         self.assertIsNotNone(reverse('lava.results.testcase', args=[case.id]))
         self.assertIsNotNone(reverse('lava.results.testcase',
                                      args=[job.id, suite.name, case.id]))
-        self.assertTrue(map_scanned_results(test_dict, job, None))
+        self.assertIsNotNone(map_scanned_results(test_dict, job, None))
         # now break the reverse pattern
         test_dict['case'] = 'unit test'  # whitespace in the case name
         matches = re.search(pattern, test_dict['case'])
@@ -171,7 +171,9 @@ class TestMetaTypes(TestCaseWithFactory):
             # isolate from other unit tests
             os.unlink(meta_filename)
         self.assertEqual(meta_filename, create_metadata_store(results, job))
-        self.assertTrue(map_scanned_results(results, job, meta_filename))
+        ret = map_scanned_results(results, job, meta_filename)
+        self.assertIsNotNone(ret)
+        ret.save()
         self.assertEqual(TestCase.objects.filter(name='unit-test').count(), 1)
         test_data = yaml.load(TestCase.objects.filter(name='unit-test')[0].metadata, Loader=yaml.CLoader)
         self.assertEqual(test_data['extra'], meta_filename)
@@ -192,7 +194,7 @@ class TestMetaTypes(TestCaseWithFactory):
         device_config = device.load_configuration(job_ctx)  # raw dict
         parser = JobParser()
         obj = PipelineDevice(device_config)
-        pipeline_job = parser.parse(job.definition, obj, job.id, None, "", output_dir='/tmp')
+        pipeline_job = parser.parse(job.definition, obj, job.id, None, "")
         allow_missing_path(pipeline_job.pipeline.validate_actions, self,
                            'qemu-system-x86_64')
         pipeline = pipeline_job.describe()
@@ -212,9 +214,7 @@ class TestMetaTypes(TestCaseWithFactory):
             if not key or not value:
                 continue
             testdata.attributes.create(name=key, value=value)
-        retval = _get_job_metadata(pipeline['job']['actions'])
-        if 'lava-server-version' in retval:
-            del retval['lava-server-version']
+        retval = _get_action_metadata(pipeline['job']['actions'])
         self.assertEqual(
             retval,
             {
@@ -245,7 +245,7 @@ class TestMetaTypes(TestCaseWithFactory):
         device_config = device.load_configuration(job_ctx)  # raw dict
         parser = JobParser()
         obj = PipelineDevice(device_config)
-        pipeline_job = parser.parse(job.definition, obj, job.id, None, "", output_dir='/tmp')
+        pipeline_job = parser.parse(job.definition, obj, job.id, None, "")
         allow_missing_path(pipeline_job.pipeline.validate_actions, self,
                            'qemu-system-x86_64')
         pipeline = pipeline_job.describe()
@@ -258,7 +258,7 @@ class TestMetaTypes(TestCaseWithFactory):
             if not key or not value:
                 continue
             testdata.attributes.create(name=key, value=value)
-        retval = _get_job_metadata(pipeline['job']['actions'])
+        retval = _get_action_metadata(pipeline['job']['actions'])
         self.assertIn('test.0.common.definition.parameters.VARIABLE_NAME_2', retval)
         self.assertIn('test.0.common.definition.parameters.VARIABLE_NAME_1', retval)
         self.assertEqual(retval['test.0.common.definition.parameters.VARIABLE_NAME_1'], 'first variable value')
@@ -278,7 +278,7 @@ class TestMetaTypes(TestCaseWithFactory):
         device_config = device.load_configuration(job_ctx)  # raw dict
         parser = JobParser()
         obj = PipelineDevice(device_config)
-        pipeline_job = parser.parse(job.definition, obj, job.id, None, "", output_dir='/tmp')
+        pipeline_job = parser.parse(job.definition, obj, job.id, None, "")
         allow_missing_path(pipeline_job.pipeline.validate_actions, self,
                            'qemu-system-x86_64')
         pipeline = pipeline_job.describe()
@@ -318,7 +318,7 @@ class TestMetaTypes(TestCaseWithFactory):
         device_config = device.load_configuration(job_ctx)  # raw dict
         parser = JobParser()
         obj = PipelineDevice(device_config)
-        pipeline_job = parser.parse(job.definition, obj, job.id, None, "", output_dir='/tmp')
+        pipeline_job = parser.parse(job.definition, obj, job.id, None, "")
         allow_missing_path(pipeline_job.pipeline.validate_actions, self,
                            'qemu-system-x86_64')
         pipeline = pipeline_job.describe()

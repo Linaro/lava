@@ -370,7 +370,8 @@ class TestCase(models.Model, Queryable):
     result = models.PositiveSmallIntegerField(
         verbose_name=_(u"Result"),
         help_text=_(u"Result classification to pass/fail group"),
-        choices=RESULT_CHOICES
+        choices=RESULT_CHOICES,
+        db_index=True
     )
 
     measurement = models.DecimalField(
@@ -950,10 +951,9 @@ class Query(models.Model):
                     try:
                         condition.value = choices_reverse[condition.value]
                     except KeyError:
-                        logger.error(
-                            'skip condition %s due to unsupported choice'
-                            % condition)
-                        continue
+                        logger.info('invalid choice supported for field "%s"'
+                                    % condition.field)
+                        condition.value = -1
 
                 # Handle boolean conditions.
                 if condition_field_obj.__class__ == models.BooleanField:
@@ -1182,7 +1182,7 @@ class QueryCondition(models.Model):
         TestJob: [
             "submitter", "start_time", "end_time", "state", "health", "actual_device",
             "requested_device_type", "health_check", "user", "group",
-            "priority", "is_pipeline", "description"],
+            "priority", "description"],
         TestSuite: ["name"],
         TestCase: ["name", "result", "measurement"],
         NamedTestAttribute: []

@@ -51,6 +51,7 @@ class YamlFactory(ModelFactory):
 
     def __init__(self):
         super(YamlFactory, self).__init__()
+        Device.CONFIG_PATH = os.path.join(os.getcwd(), 'lava_scheduler_app', 'tests', 'devices')
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
         logger = logging.getLogger('unittests')
         logger.disabled = True
@@ -74,7 +75,7 @@ class YamlFactory(ModelFactory):
         if tags and not isinstance(tags, list):
             tags = []
         # a hidden device type will override is_public
-        device = Device(device_type=device_type, is_public=is_public, hostname=hostname, is_pipeline=True, **kw)
+        device = Device(device_type=device_type, is_public=is_public, hostname=hostname, **kw)
         if tags:
             device.tags = tags
         if DEBUG:
@@ -141,7 +142,6 @@ class PipelineDeviceTags(TestCaseWithFactory):
         self.assertEqual(TestJob.LOW, job.priority)
 
     def test_yaml_device_tags(self):
-        Device.CONFIG_PATH = os.path.join(os.getcwd(), 'lava_scheduler_app', 'tests', 'devices')
         Tag.objects.all().delete()
         tag_list = [
             self.factory.ensure_tag('usb'),
@@ -251,14 +251,6 @@ class TestPipelineSubmit(TestCaseWithFactory):
         self.assertEqual(user, job.submitter)
         self.assertFalse(job.health_check)
 
-    def test_exclusivity(self):
-        device = Device.objects.get(hostname="fakeqemu1")
-        self.assertTrue(device.is_pipeline)
-        self.assertFalse(device.is_exclusive)
-        device = Device.objects.get(hostname="fakeqemu3")
-        self.assertTrue(device.is_pipeline)
-        self.assertTrue(device.is_exclusive)
-
     def test_context(self):
         """
         Test overrides using the job context
@@ -293,7 +285,6 @@ class TestPipelineSubmit(TestCaseWithFactory):
         self.factory.make_device(device_type=mustang_type, hostname=hostname)
         device = Device.objects.get(hostname="fakemustang1")
         self.assertEqual('mustang-uefi', device.device_type.name)
-        self.assertTrue(device.is_pipeline)
         job_ctx = {
             'tftp_mac': 'FF:01:00:69:AA:CC',
             'extra_nfsroot_args': ',nolock',
@@ -500,10 +491,9 @@ class TestPipelineSubmit(TestCaseWithFactory):
 
         parser_device = device_object
         try:
-            # pass (unused) output_dir just for validation as there is no zmq socket either.
             pipeline_job = parser.parse(
                 job.definition, parser_device,
-                job.id, None, "", output_dir=job.output_dir)
+                job.id, None, "")
         except (AttributeError, JobError, NotImplementedError, KeyError, TypeError) as exc:
             self.fail('[%s] parser error: %s' % (job.sub_id, exc))
         description = pipeline_job.describe()
@@ -557,7 +547,6 @@ class TestExtendsSubmit(TestCaseWithFactory):
 
     def setUp(self):
         super(TestExtendsSubmit, self).setUp()
-        Device.CONFIG_PATH = os.path.join(os.getcwd(), 'lava_scheduler_app', 'tests', 'devices')
         Device.HEALTH_CHECK_PATH = os.path.join(os.getcwd(), 'lava_scheduler_app', 'tests', 'health-checks')
         self.factory = YamlFactory()
         self.device_type = self.factory.make_device_type(name='juno-r2')
@@ -671,23 +660,21 @@ class TestYamlMultinode(TestCaseWithFactory):
         self.assertIsNotNone(device_object)
         parser_device = device_object
         try:
-            # pass (unused) output_dir just for validation as there is no zmq socket either.
             pipeline_job = parser.parse(
                 host_job.definition, parser_device,
-                host_job.id, DummyLogger(), "", output_dir=host_job.output_dir)
+                host_job.id, DummyLogger(), "")
         except (AttributeError, JobError, NotImplementedError, KeyError, TypeError) as exc:
             self.fail('[%s] parser error: %s' % (host_job.sub_id, exc))
-        pipeline_job._validate(False)
+        pipeline_job._validate()
         self.assertEqual([], pipeline_job.pipeline.errors)
 
         try:
-            # pass (unused) output_dir just for validation as there is no zmq socket either.
             pipeline_job = parser.parse(
                 guest_job.definition, parser_device,
-                guest_job.id, DummyLogger(), "", output_dir=guest_job.output_dir)
+                guest_job.id, DummyLogger(), "")
         except (AttributeError, JobError, NotImplementedError, KeyError, TypeError) as exc:
             self.fail('[%s] parser error: %s' % (guest_job.sub_id, exc))
-        pipeline_job._validate(False)
+        pipeline_job._validate()
         self.assertEqual([], pipeline_job.pipeline.errors)
 
     def test_multinode_tags(self):
@@ -757,6 +744,27 @@ class TestYamlMultinode(TestCaseWithFactory):
             elif role == 'client':
                 self.assertIn('lava-lxc', jobs[role][0]['protocols'])
                 self.assertEqual(jobs[role][0]['protocols']['lava-lxc'], client_protocol_data['lava-lxc'])
+            else:
+                self.fail('Unrecognised role: %s' % role)
+
+    def test_multinode_nexus4(self):
+        submission = yaml.load(open(
+            os.path.join(os.path.dirname(__file__), 'sample_jobs', 'nexus4_multinode.yaml'), 'r'))
+        target_group = 'arbitrary-group-id'  # for unit tests only
+
+        jobs = split_multinode_yaml(submission, target_group)
+        device_protocol_data = {
+            'lava-lxc': {
+                'name': 'lxc-nexus4', 'template': 'debian', 'release': 'sid',
+                'distribution': 'debian'}
+        }
+        for role, _ in jobs.items():
+            if role == 'device':
+                for job in jobs[role]:
+                    self.assertIn('lava-lxc', job['protocols'])
+                    self.assertEqual(job['protocols']['lava-lxc'], device_protocol_data['lava-lxc'])
+                    self.assertIn('reboot_to_fastboot', job)
+                    self.assertEqual(job['reboot_to_fastboot'], False)
             else:
                 self.fail('Unrecognised role: %s' % role)
 
@@ -934,11 +942,9 @@ class TestYamlMultinode(TestCaseWithFactory):
             for check_job in validate_list:
                 parser_device = None if job.dynamic_connection else device_object
                 try:
-                    # pass (unused) output_dir just for validation as there is no zmq socket either.
                     pipeline_job = parser.parse(
                         check_job.definition, parser_device,
-                        check_job.id, None, "",
-                        output_dir=check_job.output_dir)
+                        check_job.id, None, "")
                 except (AttributeError, JobError, NotImplementedError, KeyError, TypeError) as exc:
                     self.fail('[%s] parser error: %s' % (check_job.sub_id, exc))
                 with TestCase.assertRaises(self, (JobError, InfrastructureError)) as check:
@@ -947,37 +953,6 @@ class TestYamlMultinode(TestCaseWithFactory):
         for job in job_object_list:
             job = TestJob.objects.get(id=job.id)
             self.assertNotEqual(job.sub_id, '')
-
-    def test_mixed_multinode(self):
-        user = self.factory.make_user()
-        device_type = self.factory.make_device_type()
-        self.factory.make_device(device_type, 'fakeqemu1')
-        self.factory.make_device(device_type, 'fakeqemu2')
-        self.factory.make_device(device_type, 'fakeqemu3')
-        self.factory.make_device(device_type, 'fakeqemu4')
-        submission = yaml.load(open(
-            os.path.join(os.path.dirname(__file__), 'sample_jobs', 'kvm-multinode.yaml'), 'r'))
-        role_list = submission['protocols'][MultinodeProtocol.name]['roles']
-        for role in role_list:
-            if 'tags' in role_list[role]:
-                del role_list[role]['tags']
-        job_list = TestJob.from_yaml_and_user(yaml.dump(submission), user)
-        self.assertEqual(len(job_list), 2)
-        # make the list mixed
-        fakeqemu1 = Device.objects.get(hostname='fakeqemu1')
-        fakeqemu1.is_pipeline = False
-        fakeqemu1.save(update_fields=['is_pipeline'])
-        fakeqemu3 = Device.objects.get(hostname='fakeqemu3')
-        fakeqemu3.is_pipeline = False
-        fakeqemu3.save(update_fields=['is_pipeline'])
-        device_list = Device.objects.filter(device_type=device_type, is_pipeline=True)
-        self.assertEqual(len(device_list), 2)
-        self.assertIsInstance(device_list, RestrictedResourceQuerySet)
-        self.assertIsInstance(list(device_list), list)
-        job_list = TestJob.from_yaml_and_user(yaml.dump(submission), user)
-        self.assertEqual(len(job_list), 2)
-        for job in job_list:
-            self.assertEqual(job.requested_device_type, device_type)
 
     def test_multinode_with_retired(self):  # pylint: disable=too-many-statements
         """
@@ -997,64 +972,6 @@ class TestYamlMultinode(TestCaseWithFactory):
                 del role_list[role]['tags']
         job_list = TestJob.from_yaml_and_user(yaml.dump(submission), user)
         self.assertEqual(len(job_list), 2)
-        # make the list mixed
-        fakeqemu1 = Device.objects.get(hostname='fakeqemu1')
-        fakeqemu1.is_pipeline = False
-        fakeqemu1.save(update_fields=['is_pipeline'])
-        fakeqemu2 = Device.objects.get(hostname='fakeqemu2')
-        fakeqemu3 = Device.objects.get(hostname='fakeqemu3')
-        fakeqemu4 = Device.objects.get(hostname='fakeqemu4')
-        device_list = Device.objects.filter(device_type=device_type, is_pipeline=True)
-        self.assertEqual(len(device_list), 3)
-        self.assertIsInstance(device_list, RestrictedResourceQuerySet)
-        self.assertIsInstance(list(device_list), list)
-        allowed_devices = []
-        for device in list(device_list):
-            if _check_submit_to_device([device], user):
-                allowed_devices.append(device)
-        self.assertEqual(len(allowed_devices), 3)
-        self.assertIn(fakeqemu3, allowed_devices)
-        self.assertIn(fakeqemu4, allowed_devices)
-        self.assertIn(fakeqemu2, allowed_devices)
-        self.assertNotIn(fakeqemu1, allowed_devices)
-
-        # set one candidate device to RETIRED to force the bug
-        fakeqemu4.health = Device.HEALTH_RETIRED
-        fakeqemu4.save(update_fields=['health'])
-        # refresh the device_list
-        device_list = Device.objects.filter(device_type=device_type, is_pipeline=True).order_by('hostname')
-        allowed_devices = []
-        # test the old code to force the exception
-        try:
-            # by looping through in the test *and* in _check_submit_to_device
-            # the retired device in device_list triggers the exception.
-            for device in list(device_list):
-                if _check_submit_to_device([device], user):
-                    allowed_devices.append(device)
-        except DevicesUnavailableException:
-            self.assertEqual(len(allowed_devices), 2)
-            self.assertIn(fakeqemu4, device_list)
-            self.assertEqual(fakeqemu4.health, Device.HEALTH_RETIRED)
-        else:
-            self.fail("Missed DevicesUnavailableException")
-        allowed_devices = []
-        allowed_devices.extend(_check_submit_to_device(list(device_list), user))
-        self.assertEqual(len(allowed_devices), 2)
-        self.assertIn(fakeqemu3, allowed_devices)
-        self.assertIn(fakeqemu2, allowed_devices)
-        self.assertNotIn(fakeqemu4, allowed_devices)
-        self.assertNotIn(fakeqemu1, allowed_devices)
-        allowed_devices = []
-
-        # test improvement as there is no point wasting memory with a Query containing Retired.
-        device_list = Device.objects.filter(
-            Q(device_type=device_type), Q(is_pipeline=True), ~Q(health=Device.HEALTH_RETIRED))
-        allowed_devices.extend(_check_submit_to_device(list(device_list), user))
-        self.assertEqual(len(allowed_devices), 2)
-        self.assertIn(fakeqemu3, allowed_devices)
-        self.assertIn(fakeqemu2, allowed_devices)
-        self.assertNotIn(fakeqemu4, allowed_devices)
-        self.assertNotIn(fakeqemu1, allowed_devices)
 
     def test_multinode_v2_metadata(self):
         device_type = self.factory.make_device_type()
@@ -1070,12 +987,10 @@ class TestYamlMultinode(TestCaseWithFactory):
         parser = JobParser()
         pipeline_job = parser.parse(
             yaml.dump(client_submission), parser_device,
-            4212, None, "", output_dir='/tmp/test')
+            4212, None, "")
         pipeline = pipeline_job.describe()
-        from lava_results_app.dbutils import _get_job_metadata
-        meta_dict = _get_job_metadata(pipeline['job']['actions'])
-        if 'lava-server-version' in meta_dict:
-            del meta_dict['lava-server-version']
+        from lava_results_app.dbutils import _get_action_metadata
+        meta_dict = _get_action_metadata(pipeline['job']['actions'])
         self.assertEqual(
             {
                 'test.0.common.definition.name': 'multinode-basic',
@@ -1088,9 +1003,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         # simulate dynamic connection
         dynamic = yaml.load(open(
             os.path.join(os.path.dirname(__file__), 'pipeline_refs', 'connection-description.yaml'), 'r'))
-        meta_dict = _get_job_metadata(dynamic['job']['actions'])
-        if 'lava-server-version' in meta_dict:
-            del meta_dict['lava-server-version']
+        meta_dict = _get_action_metadata(dynamic['job']['actions'])
         self.assertEqual(
             meta_dict,
             {
@@ -1154,11 +1067,9 @@ class TestYamlMultinode(TestCaseWithFactory):
             self.assertNotEqual(job.device_role, 'Error')
             parser_device = None if job.dynamic_connection else device_object
             try:
-                # pass (unused) output_dir just for validation as there is no zmq socket either.
                 pipeline_job = parser.parse(
                     job.definition, parser_device,
-                    job.id, None, "",
-                    output_dir=job.output_dir)
+                    job.id, None, "")
             except (AttributeError, JobError, NotImplementedError, KeyError, TypeError) as exc:
                 self.fail('[%s] parser error: %s' % (job.sub_id, exc))
             pipeline_job.pipeline.validate_actions()

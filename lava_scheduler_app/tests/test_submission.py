@@ -1,6 +1,7 @@
 # pylint: disable=invalid-name,logging-not-lazy
 import logging
 import sys
+import os
 import warnings
 import yaml
 
@@ -128,6 +129,12 @@ class ModelFactory(object):
     def make_job_yaml(self, **kw):
         return yaml.dump(self.make_job_data(**kw))
 
+    def make_job_data_from_file(self, sample_job_file):
+        sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs', sample_job_file)
+        with open(sample_job_file, 'r') as test_support:
+            data = test_support.read()
+        return data
+
     def make_notification(self, job):
         notification = Notification()
         notification.test_job = job
@@ -150,6 +157,31 @@ class TestCaseWithFactory(TestCase):  # pylint: disable=too-many-ancestors
 
 
 class TestTestJob(TestCaseWithFactory):  # pylint: disable=too-many-ancestors,too-many-public-methods
+
+    def test_preserve_comments(self):
+        """
+        TestJob.original_definition must preserve comments, if supplied.
+        """
+        definition = self.factory.make_job_data_from_file('qemu-pipeline-first-job.yaml')
+        for line in definition:
+            if line.startswith('#'):
+                break
+            self.fail('Comments have not been preserved')
+        dt = self.factory.make_device_type(name='qemu')
+        device = self.factory.make_device(device_type=dt, hostname='qemu-1')
+        device.save()
+        user = self.factory.make_user()
+        user.user_permissions.add(
+            Permission.objects.get(codename='add_testjob'))
+        user.save()
+        job = TestJob.from_yaml_and_user(
+            definition, user)
+        job.refresh_from_db()
+        self.assertEqual(user, job.submitter)
+        for line in job.original_definition:
+            if line.startswith('#'):
+                break
+            self.fail('Comments have not been preserved after submission')
 
     def test_user_permission(self):
         self.assertIn(
@@ -179,15 +211,12 @@ class TestTestJob(TestCaseWithFactory):  # pylint: disable=too-many-ancestors,to
         self.factory.cleanup()
         dt = self.factory.make_device_type(name='name')
         device = self.factory.make_device(device_type=dt, hostname='name-1')
-        device.is_pipeline = True
         device.save()
         definition = self.factory.make_job_data()
         definition['visibility'] = {'group': ['newgroup']}
         definition['job_name'] = 'unittest_visibility'
         self.assertIsNotNone(yaml.dump(definition))
         self.assertIsNotNone(list(Device.objects.filter(device_type=dt)))
-        self.assertIsNotNone(list(Device.objects.filter(
-            device_type=dt, is_pipeline=True)))
         user = self.factory.make_user()
         user.user_permissions.add(
             Permission.objects.get(codename='add_testjob'))

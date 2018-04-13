@@ -113,7 +113,7 @@ The submission schema for pipeline jobs can be represented as follows:
     days|hours|minutes|seconds: integer Required
   action: Required
     days|hours|minutes|seconds: integer Required
- priority: high|medium|low
+ priority: high|medium|low|integer ([0, 100])
  protocols:
    lava-multinode:
      timeout: days|hours|minutes|seconds: integer Required

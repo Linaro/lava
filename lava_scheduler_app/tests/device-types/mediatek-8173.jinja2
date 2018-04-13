@@ -1,29 +1,6 @@
-{% extends 'base.jinja2' %}
+{% extends 'base-fastboot.jinja2' %}
 
-{% block vland %}
-{#  #}
-{% endblock vland %}
-
-{% block body %}
-device_type: mediatek-8173
-adb_serial_number: '{{ adb_serial_number|default('0000000000') }}'
-fastboot_serial_number: '{{ fastboot_serial_number|default('0000000000') }}'
-fastboot_options: {{ fastboot_options|default([]) }}
-
-actions:
-  deploy:
-    methods:
-      lxc:
-      fastboot:
-    connections:
-      lxc:
-      serial:
-  boot:
-    connections:
-      lxc:
-      serial:
-    methods:
-      lxc:
-      fastboot:
-
-{% endblock body %}
+{% set device_type = 'mediatek-8173' %}
+{% set fastboot_sequence = [] %}
+{% set flash_cmds_order = ['partition', 'lk', 'boot0', 'TEE1', 'TEE2',
+                           'boot' ] %}

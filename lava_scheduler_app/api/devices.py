@@ -57,10 +57,9 @@ class SchedulerDevicesAPI(ExposedV2API):
         Description
         -----------
         [superuser only]
-        Add a new device to the database, to support V1 and V2.
+        Add a new device to the database, to support V2.
 
-        Each device will also need a device dictionary which may include a
-        setting making the device exclusive to V2.
+        Each device will also need a device dictionary.
 
         Arguments
         ---------
@@ -117,9 +116,8 @@ class SchedulerDevicesAPI(ExposedV2API):
         try:
             Device.objects.create(hostname=hostname, device_type=device_type,
                                   user=user, group=group, is_public=public,
-                                  worker_host=worker, is_pipeline=True,
                                   state=Device.STATE_IDLE, health=health_val,
-                                  description=description)
+                                  worker_host=worker, description=description)
 
         except (IntegrityError, ValidationError) as exc:
             raise xmlrpclib.Fault(
@@ -248,7 +246,7 @@ class SchedulerDevicesAPI(ExposedV2API):
                                "health": device.get_health_display(),
                                "state": device.get_state_display(),
                                "current_job": current_job.pk if current_job else None,
-                               "pipeline": device.is_pipeline}
+                               "pipeline": True}
                 ret.append(device_dict)
 
         return ret
@@ -293,7 +291,7 @@ class SchedulerDevicesAPI(ExposedV2API):
                        "health_job": bool(device.get_health_check()),
                        "description": device.description,
                        "public": device.is_public,
-                       "pipeline": device.is_pipeline,
+                       "pipeline": True,
                        "has_device_dict": bool(device.load_configuration(output_format="raw")),
                        "worker": None,
                        "user": device.user.username if device.user else None,

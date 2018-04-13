@@ -303,14 +303,3 @@ https://git.linaro.org/lava/lava-lab.git/tree/staging.validation.linaro.org/lava
 .. note:: It is recommended to keep the device dictionary jinja files under
    version control. The templates are configuration files, so if you modify the
    default templates, those need to be under version control as well.
-
-Migrating V1 devices to V2 devices
-**********************************
-
-If you have a working V1 configuration, this can be migrated to the V2
-requirements. Devices can support both models during the migration, admins can
-choose to make some devices :term:`exclusive` to V2 at any time before the V1
-code support is removed.
-
-.. seealso:: :ref:`migrating_known_device_example` and
-   :ref:`migrating_to_pipeline`.

@@ -344,7 +344,7 @@ colon. In the YAML, all values containing a colon **must** be quoted:
 .. code-block:: yaml
 
  persistent_nfs:
-   address: "127.0.0.1:/var/lib/lava/dispatcher/tmp/armhf/jessie"
+   address: "127.0.0.1:/var/lib/lava/dispatcher/tmp/armhf/stretch"
 
 .. index:: deploy to tmpfs
 
@@ -357,7 +357,7 @@ Used to support QEMU device types which run on a dispatcher. The file is
 downloaded to a temporary directory and made available as one or more images,
 appending specified arguments to a predetermined QEMU command line:
 
-.. include:: examples/test-jobs/qemu-amd64-standard-jessie.yaml
+.. include:: examples/test-jobs/qemu-amd64-standard-stretch.yaml
      :code: yaml
      :start-after: actions:
      :end-before: # BOOT_BLOCK
@@ -389,7 +389,7 @@ QEMU would include ``-drive format=raw,file=/tmp/tmp.rG542e/large-stable-6.img``
 .. note:: Take note of the syntax. Single brace before and after the label and
    **no whitespace**. This is test job syntax, not Jinja.
 
-.. include:: examples/test-jobs/qemu-amd64-standard-jessie.yaml
+.. include:: examples/test-jobs/qemu-amd64-standard-stretch.yaml
      :code: yaml
      :start-after: to: tmpfs
      :end-before: url:
@@ -475,7 +475,7 @@ potential problems such as misconfigured caching or corrupted downloads. If
 compression is used, the checksum to specify is the checksum of the compressed
 file, irrespective of whether that file is decompressed later.:
 
-.. include:: examples/test-jobs/qemu-amd64-standard-jessie.yaml
+.. include:: examples/test-jobs/qemu-amd64-standard-stretch.yaml
      :code: yaml
      :start-after: rootfs:
      :end-before: os: debian

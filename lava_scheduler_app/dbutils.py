@@ -130,7 +130,7 @@ def device_type_summary(visible=None):
     return devices
 
 
-def load_devicetype_template(device_type_name):
+def load_devicetype_template(device_type_name, raw=False):
     """
     Loads the bare device-type template as a python dictionary object for
     representation within the device_type templates.
@@ -138,7 +138,7 @@ def load_devicetype_template(device_type_name):
     parts of the dictionary may be unexpectedly empty. Not to be used when
     rendering device configuration for a testjob.
     :param device_type_name: DeviceType.name (string)
-    :param path: optional alternative path to templates
+    :param raw: if True, return the raw yaml
     :return: None or a dictionary of the device type template.
     """
     path = os.path.dirname(Device.CONFIG_PATH)
@@ -148,8 +148,32 @@ def load_devicetype_template(device_type_name):
         trim_blocks=True)
     try:
         template = env.get_template("%s.jinja2" % device_type_name)
-    except jinja2.TemplateNotFound:
+        data = template.render()
+        if not data:
+            return None
+        return data if raw else yaml.load(data)
+    except (jinja2.TemplateError, yaml.error.YAMLError):
         return None
-    if not template:
-        return None
-    return yaml.load(template.render())
+
+
+def invalid_template(dt):
+    """
+    Careful with the inverted logic here.
+    Return True if the template is invalid.
+    See unit tests in test_device.py
+    """
+    d_template = bool(load_devicetype_template(dt.name))  # returns None on error ( == False)
+    if not d_template:
+        extends = set([device.get_extends() for device in Device.objects.filter(device_type=dt)])
+        if not extends:
+            return True
+        for extend in extends:
+            if not extend:
+                return True
+            d_template = not bool(load_devicetype_template(extend.replace('.jinja2', '')))
+            # if d_template is False, template is valid, invalid_template returns False
+            if d_template:
+                return True
+    else:
+        d_template = False  # template exists, invalid check is False
+    return d_template

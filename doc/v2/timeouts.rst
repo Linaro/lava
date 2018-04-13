@@ -292,7 +292,7 @@ actions within that block. Action blocks are identified by the start of the
 
 .. include:: examples/test-jobs/standard-armmp-ramdisk-arndale.yaml
    :code: yaml
-   :start-after: build-script: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/armmp-nfs.sh
+   :start-after:   build-script: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/armhf/3/armmp-nfs.sh
    :end-before: to: tftp
 
 Unless individual actions within this block have overrides, the

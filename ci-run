@@ -4,7 +4,7 @@ set -x
 set -e
 
 PEP8=1
-ALL=0
+ALL=1
 
 while getopts ":pa" opt; do
   case $opt in
@@ -13,13 +13,13 @@ while getopts ":pa" opt; do
       PEP8=2
       ;;
     a)
-      # python3 and python2
+      # python3 - python2 support dropped
       ALL=1
       ;;
     \?)
       echo "Usage:"
       echo "-p - pep8 only"
-      echo "-a - run all tests: pep8, python2 and python3"
+      echo "-a - run all tests: pep8 and python3"
       echo "Invalid option: -$OPTARG" >&2
       exit 1
       ;;
@@ -49,15 +49,6 @@ fi
 
 if [[ (-z "$1") || (("$1" == -v*) && ($# -eq 1)) ]]; then
   VERBOSE=$1
-fi
-
-if [ -n "$NOINPUT" ] || [ -n "$VERBOSE" ]; then
-  ./lava_server/manage.py test $NOINPUT $VERBOSE \
-	lava_scheduler_app \
-	linaro_django_xmlrpc.tests \
-	lava_results_app
-else
-  ./lava_server/manage.py test "$@"
 fi
 
 if [ ${ALL} = 1 ]; then

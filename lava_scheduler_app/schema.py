@@ -317,7 +317,7 @@ def _job_schema():
             'device_type': All(str, Length(min=1)),  # not Required as some protocols encode it elsewhere
             Required('job_name'): All(str, Length(min=1, max=200)),
             Optional('include'): str,
-            Optional('priority'): Any('high', 'medium', 'low'),
+            Optional('priority'): Any('high', 'medium', 'low', int),
             Optional('protocols'): _job_protocols_schema(),
             Optional('context'): _context_schema(),
             Optional('metadata'): All({metadata_types: metadata_types}),

@@ -32,7 +32,8 @@ from zmq.auth.thread import ThreadAuthenticator
 from django.db import connection, transaction
 from django.db.utils import OperationalError, InterfaceError
 
-from lava_server.cmdutils import LAVADaemonCommand
+from lava_results_app.models import TestCase
+from lava_server.cmdutils import LAVADaemonCommand, watch_directory
 from lava_scheduler_app.models import TestJob
 from lava_scheduler_app.utils import mkdir
 from lava_results_app.dbutils import map_scanned_results, create_metadata_store
@@ -41,6 +42,7 @@ from lava_results_app.dbutils import map_scanned_results, create_metadata_store
 # Constants
 FORMAT = "%(asctime)-15s %(levelname)7s %(message)s"
 TIMEOUT = 10
+BULK_CREATE_TIMEOUT = 10
 FD_TIMEOUT = 60
 
 
@@ -68,12 +70,16 @@ class Command(LAVADaemonCommand):
         super(Command, self).__init__(*args, **options)
         self.logger = logging.getLogger("lava-logs")
         self.log_socket = None
+        self.auth = None
         self.controler = None
+        self.inotify_fd = None
         self.pipe_r = None
         self.poller = None
-        self.options = None
+        self.cert_dir_path = None
         # List of logs
         self.jobs = {}
+        # Keep test cases in memory
+        self.test_cases = []
         # Master status
         self.last_ping = 0
         self.ping_interval = TIMEOUT
@@ -109,7 +115,6 @@ class Command(LAVADaemonCommand):
             self.logger.error("[INIT] Unable to drop privileges")
             return
 
-        auth = None
         # Create the sockets
         context = zmq.Context()
         self.log_socket = context.socket(zmq.PULL)
@@ -117,11 +122,9 @@ class Command(LAVADaemonCommand):
         self.controler.setsockopt(zmq.IDENTITY, b"lava-logs")
         # Limit the number of messages in the queue
         self.controler.setsockopt(zmq.SNDHWM, 2)
-        # TODO: remove when Jessie is not supported
-        if hasattr(zmq, "CONNECT_RID"):
-            # From http://api.zeromq.org/4-2:zmq-setsockopt#toc5
-            # "Immediately readies that connection for data transfer with the master"
-            self.controler.setsockopt(zmq.CONNECT_RID, b"master")
+        # From http://api.zeromq.org/4-2:zmq-setsockopt#toc5
+        # "Immediately readies that connection for data transfer with the master"
+        self.controler.setsockopt(zmq.CONNECT_RID, b"master")
 
         if options['ipv6']:
             self.logger.info("[INIT] Enabling IPv6")
@@ -131,15 +134,15 @@ class Command(LAVADaemonCommand):
         if options['encrypt']:
             self.logger.info("[INIT] Starting encryption")
             try:
-                auth = ThreadAuthenticator(context)
-                auth.start()
+                self.auth = ThreadAuthenticator(context)
+                self.auth.start()
                 self.logger.debug("[INIT] Opening master certificate: %s", options['master_cert'])
                 master_public, master_secret = zmq.auth.load_certificate(options['master_cert'])
                 self.logger.debug("[INIT] Using slaves certificates from: %s", options['slaves_certs'])
-                auth.configure_curve(domain='*', location=options['slaves_certs'])
+                self.auth.configure_curve(domain='*', location=options['slaves_certs'])
             except IOError as err:
                 self.logger.error("[INIT] %s", err)
-                auth.stop()
+                self.auth.stop()
                 return
             self.log_socket.curve_publickey = master_public
             self.log_socket.curve_secretkey = master_secret
@@ -147,6 +150,12 @@ class Command(LAVADaemonCommand):
             self.controler.curve_publickey = master_public
             self.controler.curve_secretkey = master_secret
             self.controler.curve_serverkey = master_public
+
+        self.logger.debug("[INIT] Watching %s", options["slaves_certs"])
+        self.cert_dir_path = options["slaves_certs"]
+        self.inotify_fd = watch_directory(options["slaves_certs"])
+        if self.inotify_fd is None:
+            self.logger.error("[INIT] Unable to start inotify")
 
         self.log_socket.bind(options['socket'])
         self.controler.connect(options['master_socket'])
@@ -156,6 +165,8 @@ class Command(LAVADaemonCommand):
         self.poller = zmq.Poller()
         self.poller.register(self.log_socket, zmq.POLLIN)
         self.poller.register(self.controler, zmq.POLLIN)
+        if self.inotify_fd is not None:
+            self.poller.register(os.fdopen(self.inotify_fd), zmq.POLLIN)
 
         # Translate signals into zmq messages
         (self.pipe_r, _) = self.setup_zmq_signal_handler()
@@ -185,22 +196,42 @@ class Command(LAVADaemonCommand):
         # Empty the queue
         try:
             while self.wait_for_messages(True):
-                pass
+                # Flush test cases cache for every iteration because we might
+                # get killed soon.
+                self.flush_test_cases()
         except BaseException as exc:
             self.logger.error("[EXIT] Unknown exception raised, leaving!")
             self.logger.exception(exc)
         finally:
+            # Last flush
+            self.flush_test_cases()
             self.logger.info("[EXIT] Closing the logging socket: the queue is empty")
             self.log_socket.close()
             if options['encrypt']:
-                auth.stop()
+                self.auth.stop()
             context.term()
 
+    def flush_test_cases(self):
+        if self.test_cases:
+            self.logger.info("Saving %d test cases", len(self.test_cases))
+            TestCase.objects.bulk_create(self.test_cases)
+            self.test_cases = []
+
     def main_loop(self):
-        # Wait for messages
         last_gc = time.time()
+        last_bulk_create = time.time()
+
+        # Wait for messages
+        # TODO: fix timeout computation
         while self.wait_for_messages(False):
             now = time.time()
+
+            # Dump TestCase into the database
+            if now - last_bulk_create > BULK_CREATE_TIMEOUT:
+                last_bulk_create = now
+                self.flush_test_cases()
+
+            # Close old file handlers
             if now - last_gc > FD_TIMEOUT:
                 last_gc = now
                 # Iterate while removing keys is not compatible with iterator
@@ -210,6 +241,7 @@ class Command(LAVADaemonCommand):
                         self.jobs[job_id].close()
                         del self.jobs[job_id]
 
+            # Ping the master
             if now - self.last_ping > self.ping_interval:
                 self.logger.debug("PING => master")
                 self.last_ping = now
@@ -244,6 +276,14 @@ class Command(LAVADaemonCommand):
             elif sockets.get(self.controler) == zmq.POLLIN:
                 self.controler_socket()
                 return True
+
+            # Inotify socket
+            if sockets.get(self.inotify_fd) == zmq.POLLIN:
+                os.read(self.inotify_fd, 4096)
+                self.logger.debug("[AUTH] Reloading certificates from %s",
+                                  self.cert_dir_path)
+                self.auth.configure_curve(domain='*',
+                                          location=self.cert_dir_path)
 
             # Nothing received
             else:
@@ -303,13 +343,20 @@ class Command(LAVADaemonCommand):
                 self.logger.error("[%s] unknown job id", job_id)
                 return
             meta_filename = create_metadata_store(message_msg, job)
-            ret = map_scanned_results(results=message_msg, job=job, meta_filename=meta_filename)
-            if not ret:
-                self.logger.warning("[%s] unable to map scanned results: %s",
-                                    job_id, message)
+            new_test_case = map_scanned_results(results=message_msg, job=job,
+                                                meta_filename=meta_filename)
+            if new_test_case is None:
+                self.logger.warning(
+                    "[%s] unable to map scanned results: %s",
+                    job_id, message)
+            else:
+                self.test_cases.append(new_test_case)
 
             # Look for lava.job result
             if message_msg.get("definition") == "lava" and message_msg.get("case") == "job":
+                # Flush cached test cases
+                self.flush_test_cases()
+
                 if message_msg.get("result") == "pass":
                     health = TestJob.HEALTH_COMPLETE
                     health_msg = "Complete"
@@ -318,7 +365,9 @@ class Command(LAVADaemonCommand):
                     health_msg = "Incomplete"
                 self.logger.info("[%s] job status: %s", job_id, health_msg)
 
-                infrastructure_error = (message_msg.get("error_type") == "Infrastructure")
+                infrastructure_error = (message_msg.get("error_type") in ["Bug",
+                                                                          "Configuration",
+                                                                          "Infrastructure"])
                 if infrastructure_error:
                     self.logger.info("[%s] Infrastructure error", job_id)
 

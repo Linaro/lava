@@ -20,6 +20,7 @@ import csv
 import os
 import shutil
 import simplejson
+import sys
 import tempfile
 
 from django.db import IntegrityError
@@ -84,6 +85,9 @@ from django_tables2 import (
 )
 
 from lava.utils.lavatable import LavaView
+
+if sys.version_info[0] == 3:
+    basestring = str
 
 
 class QueryViewDoesNotExistError(Exception):
@@ -728,7 +732,7 @@ def _export_query(query_results, content_type, filename):
     # Remove non-relevant columns for CSV file.
     removed_fields = [
         # TestJob fields:
-        "_results_link", "user_id", "actual_device_id", "definition",
+        "user_id", "actual_device_id", "definition",
         "group_id", "id", "original_definition",
         "sub_id", "submitter_id", "testdata", "testsuite",
         # TestSuite fields:

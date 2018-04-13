@@ -1,0 +1,11 @@
+{% extends 'sharkl2.jinja2' %}
+{% set device_info = [{'board_id': 'SC98502K1006C310054'}] %}
+{% set adb_serial_number = 'SC98502K1006C310054' %}
+{% set fastboot_serial_number = 'SC98502K1006C310054' %}
+{% set fastboot_options = ['-u', '-S', '200M'] %}
+{% set power_on_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname 192.168.11.88 --command on --port 1' %}
+{% set power_off_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname 192.168.11.88 --command off --port 1' %}
+{% set hard_reset_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname 192.168.11.88 --command reboot --port 1 --delay 60' %}
+{% set connection_list = ['uart0'] %}
+{% set connection_commands = {'uart0': 'telnet localhost 7002'} %}
+{% set connection_tags = {'uart0': ['primary', 'telnet']} %}

@@ -196,6 +196,13 @@ class Command(BaseCommand):
         public = options['public']
         online = options['online']
         tags = options['tags']
+
+        try:
+            Device.objects.get(hostname=hostname)
+            raise CommandError("Device '%s' already exists" % hostname)
+        except Device.DoesNotExist:
+            pass
+
         try:
             dt = DeviceType.objects.get(name=device_type)
         except DeviceType.DoesNotExist:
@@ -209,9 +216,8 @@ class Command(BaseCommand):
         health = Device.HEALTH_GOOD if online else Device.HEALTH_MAINTENANCE
         device = Device.objects.create(hostname=hostname, device_type=dt,
                                        description=description,
-                                       worker_host=worker, is_pipeline=True,
                                        state=Device.STATE_IDLE, health=health,
-                                       is_public=public)
+                                       worker_host=worker, is_public=public)
 
         if tags is not None:
             for tag in tags:

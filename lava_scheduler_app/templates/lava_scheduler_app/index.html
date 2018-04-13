@@ -42,6 +42,8 @@
           </span>Running test jobs
           </a>
       </li>
+      <li><a href="{% url 'lava.scheduler.reports' %}"><span
+      class="glyphicon glyphicon-stats pull-right"></span> Reports</a></li>
     </ul>
   </div>
   <div class="col-md-4">
@@ -53,6 +55,8 @@
       class="glyphicon glyphicon-phone pull-right green"></span> Active Devices</a></li>
       <li><a href="{% url 'lava.scheduler.labhealth' %}"><span
       class="glyphicon glyphicon-heart pull-right"></span> Devices Health</a></li>
+      <li><a href="{% url 'lava.scheduler.maintenance_devices' %}"><span
+      class="glyphicon glyphicon-wrench pull-right"></span> Maintenance Devices</a></li>
     </ul>
   </div>
   <div class="col-md-4">
@@ -64,6 +68,8 @@
     class="glyphicon glyphicon-pause pull-right grey"></span>Queued Jobs</a></li>
     <li><a href="{% url 'lava.scheduler.job.active' %}"><span
     class="glyphicon glyphicon-play pull-right grey"></span>Active Jobs</a></li>
+    <li><a href="{% url 'lava.scheduler.job.errors' %}"><span
+    class="glyphicon glyphicon-flag pull-right grey"></span>Recent Job Errors</a></li>
     </ul>
   </div>
 </div>

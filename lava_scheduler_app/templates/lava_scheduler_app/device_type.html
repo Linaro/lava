@@ -3,125 +3,107 @@
 {% load utils %}
 {% block content %}
 
-{% if device_type.owners_only %}
+{% if invalid_template %}
+<div class="alert alert-danger">
+  <strong>Configuration Error: missing or invalid template.</strong>
+  <p>Jobs requesting this device type will not be able to start until
+     a template is available on the master.</p>
+</div>
+{% endif %}
+
+{% if dt.owners_only %}
 <div class="alert alert-warning alert-dismissable">
   <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-  <p><strong><i>{{ device_type.name }}</i> is a hidden device type.</strong></p>
-  Only owners of one or more devices of type <i>{{ device_type }}</i> can see this information.
+  <p><strong><i>{{ dt.name }}</i> is a hidden device type.</strong></p>
+  Only owners of one or more devices of type <i>{{ dt }}</i> can see this information.
 </div>
 {% endif %}
 
-<ul class="nav nav-tabs">
-  <li class="active"><a href="#status" data-toggle="tab">Status</a></li>
-  <li><a href="#information" data-toggle="tab">Information</a></li>
-{% if device_type|deploy_methods:'deploy' %}
-  <li><a href="#support" data-toggle="tab">Support</a></li>
-{% endif %}
-{% if user.is_superuser %}
-  <li><a href="{% url 'admin:lava_scheduler_app_devicetype_change' device_type %}" title="Admin this device type - {{ device_type.name }}"><span class="glyphicon glyphicon-wrench"></span> Admin</a></li>
-{% endif %}
-</ul>
-<div class="tab-content">
-  <div class="tab-pane" id="information">
-      <h2><i>{{ device_type }}</i> information
-  </h2>
-    <div class="row">
-    <h4 class="modal-header">Metadata</h4>
-    <div class="col-md-6">
-        <dl class="dl-horizontal">
-            <dt>Architecture version</dt>
-            <dd>{{ arch_version|default:'.' }}</dd>
-            <dt>Processor Family</dt>
-            <dd>{{ processor|default:'.' }}</dd>
-            <dt>CPU model</dt>
-            <dd>{{ cpu_model|default:'.' }}</dd>
-            <dt>Aliases</dt>
-            <dd>{{ aliases|default:'.' }}</dd>
-        </dl>
-    </div>
-    <div class="col-md-6">
-        <dl class="dl-horizontal">
-            <dt>Bit width</dt>
-            <dd>{{ arch_bits|default:'.' }}</dd>
-            <dt>Cores</dt>
-            <dd>{{ cores|default:'.' }}</dd>
-            <dt>Description</dt>
-            <dd>{{ description|default:'.' }}</dd>
-        </dl>
-    </div>
-    </div>
-    </div>
-  <div class="tab-pane active" id="status">
-<h2><i>{{device_type}}</i> status</h2>
-
 <div class="row">
-    <h4 class="modal-header">Current state</h4>
-  <div class="col-md-6">
-    <dl class="dl-horizontal">
-      <dt>Running jobs</dt>
-      <dd>{{ running_jobs_num }}</dd>
-      <dt>Queued jobs</dt>
-      <dd>{{ queued_jobs_num }}</dd>
-      <dt>Checks/failures</dt>
-      <dd><a href="{% url 'lava.scheduler.device_type_report' device_type %}">Graphical reports</a></dd>
+  <div class="col-md-4">
+    <div class="dl-horizontal">
+      <dt>Name</dt>
+      <dd>{{ dt.name }}
+        {% if user.is_superuser %}<a href="{% url 'admin:lava_scheduler_app_devicetype_change' dt %}" title="admin this device-type"><span class="glyphicon glyphicon-wrench"></span></a>{% endif %}
+        <a href="#templateModal" data-toggle="modal" data-target="#templateModal" title="show template details"><span class="glyphicon glyphicon-eye-open"></span></a>
+      </dd>
+      <dt>Description</dt>
+      <dd>{{ dt.description|default:"<i>...</i>" }}</dd>
       <dt>Health Checks</dt>
-     <dd>{{ health_freq }}</dd>
+     <dd>{{ health_freq }} <a href="{% url 'lava.scheduler.device_type_report' dt %}" title="device-type health report"><span class="glyphicon glyphicon-stats"></span></a></dd>
+      <dt>Aliases</dt>
+      <dd>{{ aliases|default:"<i>...</i>" }}</dd>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <dl class="dl-horizontal">
+      <dt>Available</dt>
+      <dd><span class="label label-{{ available_devices_label }}">{{ available_devices_count }} / {{ all_devices_count }}</span></dd>
+      <dt>Retired</dt>
+      <dd>{{ retired_devices_count }}</dd>
+      <dt>Queue</dt>
+      <dd><span class="label label-{% if queued_jobs_count > available_devices_count %}danger{% elif queued_jobs_count > 0 %}warning{{ queued_jobs_count }}{% else %}default{% endif %}">{{ queued_jobs_count }}</span></dd>
+      <dt>Running</dt>
+      <dd>{{ running_devices_count }}</dd>
     </dl>
   </div>
-  <div class="col-md-6">
-  <dl class="dl-horizontal">
-      <dt>Active devices</dt>
-      <dd>{{ active_num }}</dd>
-      <dt>Idle</dt>
-      <dd>{{ idle_num }}</dd>
-      <dt>Offline</dt>
-      <dd>{{ offline_num }}</dd>
-      <dt>Retired</dt>
-      <dd>{{ retired_num }}</dd>
-  </dl>
+  <div class="col-md-4">
+    <div class="dl-horizontal">
+      <dt>Architecture</dt>
+      <dd>{{ dt.architecture|default:"<i>...</i>" }}{% if dt.bits.width %} ({{ dt.bits.width }} bits){% endif %}</dd>
+      <dt>Processor Family</dt>
+      <dd>{{ dt.processor|default:"<i>...</i>" }}</dd>
+      <dt>CPU model</dt>
+      <dd>{{ dt.cpu_model|default:"<i>...</i>" }}</dd>
+      <dt>Cores</dt>
+      <dd>{{ cores|default:"<i>...</i>" }}</dd>
+    </div>
   </div>
 </div>
-</div>
 
-{% if device_type|deploy_methods:'deploy' %}
-<div class="tab-pane" id="support">
-<h2><i>{{ device_type }}</i> pipeline template
-    <a
-        class="btn btn-xs btn-info" href="{% url 'lava_scheduler_download_device_type_yaml' device_type %}"
-        title="Download template as YAML file"><span class="glyphicon glyphicon-download"></span> download</a>
-</h2>
-<p>The device-type template needs to be overridden by the device dictionary of each device of this type
-    and is <b>not</b> a valid template for an individual device of this type.</p>
-<div class="row">
-    <div class="col-md-6">
-    <h4 class="modal-header"><i>{{ device_type }}</i> methods</h4>
-        <p>Not all methods may be available on all devices.</p>
+<div class="modal fade" id="templateModal" tabindex="-1" role="dialog" aria-labelledby="templateModalLabel">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="templateModalLabel">{{ dt }} template <a href="{% url 'lava_scheduler_download_device_type_yaml' dt %}"><span class="glyphicon glyphicon-download-alt"></span></a></h4>
+      </div>
+      <div class="modal-body">
+      <p>The device-type template needs to be overridden by the device dictionary of each device of this type and is <b>not</b> a valid template for an individual device of this type.</p>
+      <h5 class="modal-header">Methods</h5>
+      <p>Not all methods may be available on all devices.</p>
+      <dl class="dl-horizontal">
+        <dt>Deployment</dt>
+        <dd>{{ dt|deploy_methods:'deploy'|join:", "|default:"<i>...</i>" }}</dd>
+        <dt>Boot</dt>
+        <dd>{{ dt|deploy_methods:'boot'|join:", "|default:"<i>...</i>" }}</dd>
+      </dl>
+      <h5 class="modal-header">Default timeouts</h5>
+      <p>Classes named in the default timeouts can be part of the pipeline description which is available from a test job definition, depending on the deployment or boot methods used by that job. </p>
+      {% device_type_timeouts dt as timeout_data %}
+      <ul>
+        {% for timeout_type, action_data in timeout_data.items %}
+        <li><i>{{ timeout_type }}</i>
         <dl class="dl-horizontal">
-            <dt>Deployment</dt>
-            <dd>{{ device_type|deploy_methods:'deploy'|join:", " }}</dd>
-            <dt>Boot</dt>
-            <dd>{{ device_type|deploy_methods:'boot'|join:", " }}</dd>
+        {% for key, value in action_data.items %}
+            <dt>{{ key }}</dt>
+            {% if value.seconds %}
+            <dd>{{ value.seconds }} seconds</dd>
+            {% else %}
+            <dd>{{ value.minutes }} minutes</dd>
+            {% endif %}
+        {% endfor %}
         </dl>
+        </li>
+        {% endfor %}
+      </ul>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
     </div>
-    <div class="col-md-6">
-    <h4 class="modal-header">Default <i>{{ device_type }}</i> timeouts</h4>
-    <p>Classes named in the default timeouts can be part of the pipeline
-        description which is available from a test job definition, depending
-        on the deployment or boot methods used by that job. </p>
-        {% device_type_timeouts device_type as timeout_data %}
-          <ul>
-              {% for timeout_type, action_data in timeout_data.items %}
-              <li><b>{{ timeout_type }}</b>
-              {% for key, value in action_data.items %}
-                  <ul><li>{{ key }}: {{ value.seconds }} seconds</li></ul>
-              {% endfor %}
-              </li>
-              {% endfor %}
-          </ul>
-    </div>
-</div>
-</div>
-{% endif %}
+  </div>
 </div>
 
 <h4 class="modal-header">Devices list</h4>
@@ -130,7 +112,7 @@
 <h4 class="modal-header">Health Job Summary</h4>
 {% render_table health_job_summary_table %}
 
-<h4 class="modal-header">Jobs for devices of type {{ device_type }}</h4>
+<h4 class="modal-header">Jobs for devices of type {{ dt }}</h4>
 {% render_table device_type_jobs_table %}
 
 {% endblock %}

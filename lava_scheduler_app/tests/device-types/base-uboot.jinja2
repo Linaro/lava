@@ -122,7 +122,12 @@ actions:
 {% if uboot_ums_flash %}
       u-boot-ums:
 {% endif %}
+{% if flasher_deploy_commands %}
+      flasher:
+        commands: {{ flasher_deploy_commands }}
+{% endif %}
       lxc:
+      overlay:
       tftp:
       nbd:
       ssh:

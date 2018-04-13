@@ -135,7 +135,7 @@ def dump_exception(entry):
 def deploy_methods(device_type, methods):
     data = load_devicetype_template(device_type)
     if not data or 'actions' not in data or methods not in data['actions']:
-        return None
+        return []
     methods = data['actions'][methods]['methods']
     if isinstance(methods, dict):
         return methods.keys()
@@ -235,7 +235,9 @@ def can_view(record, user):
 
 @register.filter()
 def split_definition(data):
-    return data.split('\n')
+    # preserve comments
+    # rstrip() gets rid of the empty new line.
+    return data.rstrip().split('\n')
 
 
 @register.filter()
@@ -246,3 +248,8 @@ def level_replace(level):
 @register.filter()
 def sort_items(items):
     return sorted(items)
+
+
+@register.filter()
+def replace_python_unicode(data):
+    return data.replace('!!python/unicode ', '')

@@ -7,3 +7,5 @@
 {% set vexpress_booti_kernel_addr = '0x80080000' %}
 {% set vexpress_booti_ramdisk_addr = '0x84000000' %}
 {% set vexpress_booti_dtb_addr = '0x83000000' %}
+{% set bootloader_prompt = bootloader_prompt|default('juno#') %}
+{% set action_timeout_power_off = 15 %}

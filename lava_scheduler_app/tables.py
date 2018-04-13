@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+import yaml
 import django
 import logging
 import random
@@ -13,12 +14,14 @@ from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from django.utils.timesince import timesince
 import django_tables2 as tables
+from lava_results_app.models import TestCase
 from lava_scheduler_app.models import (
     TestJob,
     Device,
     DeviceType,
     Worker,
 )
+from lava_results_app.models import TestCase
 from lava.utils.lavatable import LavaTable
 from django.db.models import Q
 from django.utils import timezone
@@ -139,6 +142,49 @@ def all_jobs_with_custom_sort():
     return jobs.order_by('-submit_time')
 
 
+class JobErrorsTable(LavaTable):
+
+    def __init__(self, *args, **kwargs):
+        super(LavaTable, self).__init__(*args, **kwargs)
+        self.length = 10
+
+    job = tables.Column(verbose_name="Job", empty_values=[""])
+    job.orderable = False
+    device = tables.Column(empty_values=[""])
+    device.orderable = False
+    error_type = tables.Column(empty_values=[""])
+    error_type.orderable = False
+    error_msg = tables.Column(empty_values=[""])
+    error_msg.orderable = False
+
+    def render_device(self, record):
+        if record.suite.job.actual_device is None:
+            return ""
+        else:
+            return mark_safe(
+                '<a href="%s" title="device details">%s</a>' % (
+                    record.suite.job.actual_device.get_absolute_url(),
+                    escape(record.suite.job.actual_device.hostname)))
+
+    def render_error_type(self, record):
+        return record.action_metadata["error_type"]
+
+    def render_error_msg(self, record):
+        return record.action_metadata["error_msg"]
+
+    def render_job(self, record):
+        return mark_safe('<a href="%s">%s</a>' % (record.suite.job.get_absolute_url(), record.suite.job.pk))
+
+    class Meta(LavaTable.Meta):
+        model = TestCase
+        fields = (
+            'job', 'device', 'error_type', 'error_msg',
+        )
+        sequence = (
+            'job', 'device', 'error_type', 'error_msg',
+        )
+
+
 class JobTable(LavaTable):
     """
     Common table for the TestJob model.
@@ -218,7 +264,6 @@ class JobTable(LavaTable):
             'original_definition',
             'multinode_definition',
             'admin_notifications',
-            '_results_link',
             'requested_device_type',
             'start_time',
             'log_file',
@@ -304,13 +349,27 @@ class FailedJobTable(JobTable):
     duration = tables.Column(accessor='duration_sort')
     duration.orderable = False
     failure_tags = TagsColumn()
-    failure_comment = tables.Column()
+    failure_comment = tables.Column(empty_values=())
     submit_time = tables.DateColumn("Nd, g:ia")
     end_time = tables.DateColumn("Nd, g:ia")
 
     def __init__(self, *args, **kwargs):
         super(FailedJobTable, self).__init__(*args, **kwargs)
         self.length = 10
+
+    def render_failure_comment(self, record):
+        if record.failure_comment:
+            return record.failure_comment
+        try:
+            failure = TestCase.objects.get(suite__job=record, result=TestCase.RESULT_FAIL,
+                                           suite__name='lava', name='job')
+        except TestCase.DoesNotExist:
+            return ''
+        action_metadata = failure.action_metadata
+        if action_metadata is not None and 'error_msg' in action_metadata:
+            return yaml.dump(failure.action_metadata['error_msg'])
+        else:
+            return ''
 
     class Meta(JobTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
         fields = (
@@ -553,7 +612,7 @@ class DeviceTable(LavaTable):
         exclude = [
             'user', 'group', 'is_public', 'device_version',
             'physical_owner', 'physical_group', 'description',
-            'current_job', 'last_health_report_job', 'is_pipeline'
+            'current_job', 'last_health_report_job'
         ]
         sequence = [
             'hostname', 'worker_host', 'device_type', 'state',
@@ -723,8 +782,7 @@ class PassingHealthTable(DeviceHealthTable):
 
     def render_last_health_report_job(self, record):  # pylint: disable=no-self-use
         report = record.last_health_report_job
-        base = "<a href='/scheduler/job/%s'>%s</a>" % (report.id, report)
-        return mark_safe(base)
+        return mark_safe('<a href="%s">%s</a>' % (report.get_absolute_url(), report))
 
     device_type = tables.Column()
 

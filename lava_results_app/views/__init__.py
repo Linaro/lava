@@ -183,9 +183,12 @@ def testjob_csv(request, job):
     check_request_auth(request, job)
 
     def testjob_stream(suites, pseudo_buffer):
+        fieldnames = testcase_export_fields()
         writer = csv.DictWriter(pseudo_buffer,
-                                fieldnames=testcase_export_fields())
-        yield pseudo_buffer.write(testcase_export_fields())
+                                fieldnames=fieldnames)
+        # writer.writeheader does not return the string while writer.writerow
+        # does. Copy writeheader code from csv.py and yield the value.
+        yield writer.writerow(dict(zip(fieldnames, fieldnames)))
 
         for test_suite in suites:
             for test_case in test_suite.testcase_set.all():
@@ -425,10 +428,12 @@ def testcase(request, case_id, job=None, pk=None):
     for extra_case in test_cases:
         try:
             f_metadata = yaml.load(extra_case.metadata, Loader=yaml.CLoader)
+            if not f_metadata:
+                continue
         except TypeError:
             logger.info("Unable to load extra case metadata for %s", extra_case)
-            f_metadata = {}
-        extra_data = f_metadata.get('extra', None)
+            continue
+        extra_data = f_metadata.get('extra')
         try:
             if extra_data and os.path.exists(extra_data):
                 with open(f_metadata['extra'], 'r') as extra_file:
