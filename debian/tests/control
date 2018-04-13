@@ -1,4 +1,4 @@
 Tests: testsuite
-Depends: lava-server, django-testscenarios, python-tz, tftpd-hpa, git,
- qemu-system-x86, nfs-kernel-server, u-boot-tools
+Depends: lava-server, python3-django-testscenarios, python3-tz,
+ tftpd-hpa, git, qemu-system-x86, nfs-kernel-server, u-boot-tools
 Restrictions: allow-stderr, needs-root
