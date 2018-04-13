@@ -1,3 +1,72 @@
+lava-dispatcher (2018.4-1) unstable; urgency=medium
+
+  * New production release
+    4dd73b76a Fix wrong infra error when compressing with xz
+    50a652a54 Add missing import and fix prospector warnings
+    817fe007d LAVA-1234 - Man page for lava-lxc-mocker
+    691041a1 compress: check that the tool does exists
+    84df8c5d LAVA-1264 improve handling of cancellation
+    02590e0b LAVA-1282 Only kill lava-slave
+    1cbebc39 fix typo in manpage
+    67a19da1 Add template testing for user-command and flasher
+    40a9a97b Do not crash when command output is not utf-8
+    73cd3623 LAVA-1266 - LAVA doesn't fail jobs that fail
+      to flash partitions
+    7340ad00 BootloaderCommandOverlay fix validate logic
+    99526367 Log str representation of exception objects
+    957cc171 LAVA-1278 use external decompression for .xz
+    ee0921ab LAVA-648 Slave needs to check DNS
+    896936c1 Update modprobe.d support (Closes: #888681)
+    67f49224 Extend installer error prompt list
+    43a29e4c Ensure QEMU iso method uses configured TFTP dir
+    e88d3cb4 Python3 update for QEMU installer support
+    a05f307d Decode returned log string to utf-8.
+    52babb39 LAVA-1274 do not log a boolean
+    15ba29b9 Fix shebang for python3
+    4c960c49 test: fix file descriptor leaks
+    a6fdafd9 Remove python2 specific code
+    3e7891d1 Drop Python2 support
+    8a7d655a Revert "shell: wait for prompt between each command"
+    d5e15af2 Fix lava-os-build output
+    303b3871 Remove deprecated lava-test-run-attach usage
+    8cb5f120 Remove leftover from v1 in android helpers
+    0e304335 shell: wait for prompt between each command
+    b67fb420 Fix raise format
+    351176ab Remove stale udev rules
+    8d6c5ec7 Python3 fixes
+    e8a757df LAVA-1167 allow removal of the .git directory
+    54ad1fbe Remove jessie specific code
+    f4784431 Remove v1 signal handler
+    bb910afd Fixup connection.prompt_str assumption
+    26897c46 LAVA-1257 do not crash when STARTRUN is missing
+    bd6c2526 LAVA-1256 raise a JobError when url is missing
+    0e255c3b Raise an Infra Error when an exe is not usable
+    294a2322 Fix URLs referred in unittests to point to permanent location.
+    a1474089 LAVA-1252 do not crash when device conf is missing
+    5179d1de Device: factorize code
+    c5645bc6 Remove power_on command as it's never used
+    bf57d6fe Fastboot boot method should have a sequence associated with it.
+    eab74bae Catch errors with lava_test_results_dir early
+    b4ac1dbe Use the permanent location for WaRP7 unit test
+    a41f73ee Remove empty class functions
+    30b84f20 Fix format string when raising
+    1854a1dd Do not print pipeline description to stdout
+    0512e6ce Remove unused output_dir
+    e5043cb3 run_command: split the output at the newline char
+    cadd2123 Add a new deploy method called "flasher"
+    00437106 Use job tmp directory for the compress overlay
+    1158c5e7 Add a deploy method that only create the overlay
+    eeac3e67 docker: only mount the overlay when available
+    6916519d Make the helpers faster
+    d8b205ee Specify the exception to raise when timing out
+    ad106451 LAVA-1146 lava-slave removes stale resources
+    67b18778 LAVA-777 make lava-slave restartable
+    b61a58e5 Refactor lava-slave code
+    cdd2ef54 Adding deployment action for MPS devices
+    b8e7dc13 xnbd: fix killing of old xnbd-server process
+
+ -- Neil Williams <codehelp@debian.org>  Fri, 13 Apr 2018 16:07:22 +0100
+
 lava-dispatcher (2018.2-1) unstable; urgency=medium
 
   * New production release
