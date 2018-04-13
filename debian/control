@@ -25,7 +25,7 @@ Depends: apache2, adduser, gunicorn3, iproute2, python3-tz, python3-dateutil,
  libjs-excanvas, libjs-jquery-cookie, libjs-jquery, libjs-jquery-ui,
  libjs-jquery-watermark, libjs-jquery-flot (>= 0.8.2), openssh-client,
  postgresql, postgresql-client, postgresql-common, systemd-sysv,
- lava-dispatcher (>= 2018.2),
+ lava-dispatcher (>= 2018.4),
  ${python3:Depends}, ${misc:Depends}
 Recommends: fuse, ntp, lava-coordinator, lava-server-doc,
 Suggests: python3-django-hijack, python3-django-debug-toolbar
