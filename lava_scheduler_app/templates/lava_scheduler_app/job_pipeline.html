@@ -230,9 +230,10 @@
 </div>
 
 <ul class="nav nav-tabs">
-  <li class="active"><a href="#Log" data-toggle="tab">Job summary</a></li>
-  <li><a href="#Description" data-toggle="tab">Job description</a></li>
+  <li class="active"><a href="#Log" data-toggle="tab">Summary</a></li>
+  <li><a href="#Description" data-toggle="tab">Description</a></li>
   <li><a href="#Timing" id="TimingButton" data-toggle="tab">Timing</a></li>
+  <li class="pull-right"><a href="#bottom">End of page <span class="glyphicon glyphicon-chevron-down"></span></a></li>
 </ul>
 
 <div class="tab-content">
@@ -278,7 +279,6 @@
           {% if job.is_multinode %}
           <li><a href="{% url 'lava.scheduler.job.definition' job.pk %}">Definition</a></li>
           {% endif %}
-          <li><a href="#bottom"><span class="glyphicon glyphicon-fast-forward"></span> End of log</a></li>
           <li><a href="{% url 'lava.scheduler.job.log_file.plain' job.pk %}"><span class="glyphicon glyphicon-save-file"></span> Plain log</a></li>
           <li><a href="{% url 'lava.scheduler.job.configuration' job.pk %}"><span class="glyphicon glyphicon-book"></span> Configuration</a></li>
           <li role="separator" class="divider"></li>
@@ -342,7 +342,7 @@
       {% endif %}
     </div>
     {% if not size_warning %}
-    <p class="pull-right"><a href="#top"><span class="glyphicon glyphicon-fast-backward"></span> Top of page</a></p>
+    <p class="pull-right"><a href="#top">Top of page <span class="glyphicon glyphicon-chevron-up"></span></a></p>
     {% if job.state == job.STATE_FINISHED %}
     <p><a href="{{ STATIC_URL }}docs/v2/debugging.html">Please read the triage guidelines</a> for help on debugging failures in the test job, test definitions or in individual test cases.</p>
     {% endif %}
