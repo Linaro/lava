@@ -41,6 +41,13 @@ override_dh_auto_install:
 	dh_installman -plava-dispatcher man/_build/man/lava-run.1
 	dh_installman -plava-dispatcher man/_build/man/lava-slave.8
 	dh_installman -plava-lxc-mocker man/_build/man/lava-lxc-mocker.7
+	dh_installman -plava-lxc-mocker man/_build/man/lxc-attach.1
+	dh_installman -plava-lxc-mocker man/_build/man/lxc-create.1
+	dh_installman -plava-lxc-mocker man/_build/man/lxc-destroy.1
+	dh_installman -plava-lxc-mocker man/_build/man/lxc-device.1
+	dh_installman -plava-lxc-mocker man/_build/man/lxc-info.1
+	dh_installman -plava-lxc-mocker man/_build/man/lxc-start.1
+	dh_installman -plava-lxc-mocker man/_build/man/lxc-stop.1
 	python3 setup.py install --root=$(CURDIR)/debian/lava-dispatcher/ --install-layout=deb
 	cp ./etc/lava-slave.service debian/
 	dh_systemd_enable --name lava-slave
