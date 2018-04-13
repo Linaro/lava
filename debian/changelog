@@ -1,3 +1,123 @@
+lava-server (2018.4-1) unstable; urgency=medium
+
+  * New production release
+    f60a5328 callback: fix crash in python3
+    e627f8ec Allow skipping one unit test if kvm not enabled
+    0208402f job: make the link to the bottom more visible
+    dd26e4fb Fix default BRANDING_BUG_URL
+    b2cc847b Adjust bootm addresses for panda
+    f25548b5 Make snow u-boot prompt more precise
+    6a209317 Misc beaglebone black fixes
+    1481ac98 Add note for bug in LXC templates on Stretch
+    4ed6a2f5 api: fix a crash when a test case is not unique
+    53c57de9 Fix crash when test case metadata is empty
+    99c32f4d Fix crash when action_metadata is None
+    b286b6bd Fix missing import
+    b708b038 Test user_command and flasher templates
+    c316e516 Update more scripts to use Python3
+    4be0dd49 fix sphinx warning in docs
+    458f470e Improve "lava-server manage check" coverage
+    30efadeb LAVA-1274 fix javascript exception
+    31764a52 job: only update if failure_comment isn't empty
+    24fe81e6 LAVA-1276 - Search functionality broken on staging job list page
+    938a90d8 Update documentation for Python3 change
+    d4f64157 Fix deprecation warning from Jinja2 with Python3
+    1a5c55e8 Add hi6220-hikey-r2 device-type template
+    13758edc Update development notes for Python3
+    8f0d5a94 Pass LXC/fastboot parameters to all jobs in split_multinode_yaml
+    f3d7a8ac Fix API breakage from 2d37b3
+    2658935c Fix Python2 syntax when creating secret key.
+    65a30238 Fix Device.CONFIG_PATH for individual unit tests
+    c5fbfa51 Use suppress from contextlib
+    60b50af3 Remove unused shebang
+    c9ff6e9f Fix shebang for python3
+    494ae3af Fix wrong import
+    33c5f72f LAVA-1269 - Store checksum of job.original_definition in metadata
+    f8124a8c Import infrastructure_error from the right module.
+    60ecef88 Add failure comment and error type to test job notifications.
+    4e313b45 Fix logic for template check warning
+    ab65a859 Fix the logic in e1f44097
+    b0c549bb Fix unicode error in migrations
+    ec01c5bf Replace "!!python/unicode" in job definitions.
+    f4386c08 LAVA-1147 Support more than 3 priorities
+    c169c287 Remove exclusive flag from device dict
+    d7cba2d1 LAVA-1250 Allow admin to finish a TestJob
+    3b54f8d2 Preserve comments in job definition display
+    66cd46bd LAVA-1167 document the 'history' feature
+    8d835d78 Python3 changes needed for lava-server
+    73fa8d2e device-types: add sharkl2
+    48f63bf9 Fix missing conditions variable in custom query manager.
+    bdb07a21 Fix pep8 errors
+    70614729 Fix crash when device dict is invalid
+    b00fde96 Remove jessie specific code
+    fa0418b7 Improve the Admin query view
+    7d8d94de Skip refresh of archived queries
+    926ba5af Use the TestCase job error message as failure comment
+    e1f44097 Fix invalid_template check
+    ea3d99ca LAVA-1263 separate vexpress bootloader_prompts
+    0ef60b0e Add admin link to device pages for superuser
+    bba64496 Cleanup some doc error messages
+    91c03b30 Fix multinode sub job definition display.
+    48bb281e Job resubmission shows Internal Server Error
+      on incorrect resubmission.
+    7b2201b5 Cancel subjobs from admin cancel action
+    aac25876 Fix a grub error message so python can compile it into an RE
+    3555256f device-types: add sun8i-h2-plus-orangepi-r1
+    1ae6dda0 device-types: add sun8i-h2-plus-orangepi-zero
+    f5e95c3a Save the error when the job fails to start
+    1fbd68fa allow load_devicetype_template to return raw yaml
+    2667881c dt: alert when the template is invalid or missing
+    75cf05ee Move infrastructure_error into test.utils
+    5819a2cd Add banana pi zero device-type config
+    d8f605c0 Add another possible failure message to grub
+    e5aca37a LAVA-1129 save job full configuration before start
+    f54c2acf Make some after installation debug doc more visible.
+    4bb83a63 Fix 500 when device-type template does not exist
+    e1371fef juno: allow override of bootloader_prompt
+    b33a3165 Make the code python3 compatible after 0d1e0a07
+    d73687c6 LAVA-1253 - CSV export headers are incorrect
+    14aa6477 Force device hc for ConfigurationError and LAVABug
+    02011867 Use base-fastboot jinja2 template for mediatek-8173 device type.
+    606ad8b0 LAVA-1240 - LAVA: add test job name to email notification subject
+    414edc4d Add the overlay deploy method to all uboot devices
+    f1c8d9c7 Add the flasher configuration to all uboot devices
+    fec9dfac settings: simplify and allow setting any variables
+    f2f6844d LAVA-1247 - Results API make_custom_query not working correctly
+    1a27b586 Remove unused variables from instance.conf
+    de0834d6 settings: remove most variables from settings.conf
+    24646594 settings: remove appname
+    3f69dd81 Fix lava-server manage addldapuser --username USER
+    5aebdfce admin: fix view_siet link when using MOUNT_POINT
+    f784db06 admin: use dynamic urls instead of static ones
+    0d1e0a07 Fix test for extra results metadata in callback data
+    356ba428 Move standard ARMMP tests to stretch
+    227caa82 LAVA-1249 address issues with large pexpect buffers
+    4bdb5d17 Allow time to drain capacitance
+    717a3387 Up power off timeout for juno
+    7a1260d4 Fix bootloader prompt for juno uboot
+    ca334c5c job.validate does not accept any parameter anymore
+    fa0855de Remove v1 leftover
+    5287d13d Remove unused output_dir
+    e9fc34f0 device-types: rk3399-puma-haikou: align booti_kernel_addr
+    33c8579b Add imx7s-warp device-type
+    416fb3e5 Do not crash when re-adding the same device (or dt)
+    18318d27 Add admin actions to update worker health
+    f57d683d master|logs: automatically reload certificates
+    390c8e2b lava-master: fix return values
+    2d37b341 Remove is_pipeline
+    45d5767a lava-master: record error message as failure_comment
+    74713edb Use STATIC_URL and get_absolute_url when needed
+    60283360 Remove TestJob._results_link
+    f9a36ee1 LAVA-1180 Refactor device-type page
+    3456b9ea LAVA-1128 Use bulk_create to create TestCases
+    cfcc0fc8 Move postgresql timeout to wsgi
+    4c61a59c LAVA-777 lava-slave is now restartable
+    806ac08b job api: allow filtering by state/health
+    fb0b700e device-types api: allow get/set health-checks
+    6eadfc62 List Infrastructure, Bug and Configuration errors
+
+ -- Neil Williams <codehelp@debian.org>  Fri, 13 Apr 2018 15:57:31 +0100
+
 lava-server (2018.2-1) unstable; urgency=medium
 
   * New production release
