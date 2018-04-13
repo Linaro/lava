@@ -172,7 +172,7 @@ BRANDING_ICON = "lava_server/images/logo.png"
 BRANDING_URL = "http://www.linaro.org"
 BRANDING_HEIGHT = 22
 BRANDING_WIDTH = 22
-BRANDING_BUG_URL = "static/docs/v2/development-intro.html#report-a-bug"
+BRANDING_BUG_URL = "/static/docs/v2/development-intro.html#report-a-bug"
 BRANDING_SOURCE_URL = "https://git.linaro.org/lava"
 BRANDING_MESSAGE = ""
 
