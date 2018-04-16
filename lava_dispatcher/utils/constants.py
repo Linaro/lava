@@ -41,9 +41,6 @@ HTTP_DOWNLOAD_CHUNK_SIZE = 32768
 # Size of the chunks when downloading over scp
 SCP_DOWNLOAD_CHUNK_SIZE = 32768
 
-# Clamp on the maximum timeout allowed for overrides
-OVERRIDE_CLAMP_DURATION = 300
-
 # dispatcher temporary directory
 # This is distinct from the TFTP daemon directory
 # Files here are for download using the Apache /tmp alias.
