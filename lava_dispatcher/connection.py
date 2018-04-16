@@ -150,17 +150,17 @@ class Connection(object):
         self.raw_connection = None
 
     def finalise(self):
-        logger = logging.getLogger('dispatcher')
+        # logger = logging.getLogger('dispatcher')
         if self.raw_connection:
             if self.tags or self.name == "LxcSession":
                 self.disconnect(reason='Finalise')
         if self.raw_connection:
             try:
                 os.killpg(self.raw_connection.pid, signal.SIGKILL)
-                # self.logger.debug("Finalizing child process group with PID %d" % self.raw_connection.pid)
+                # logger.debug("Finalizing child process group with PID %d" % self.raw_connection.pid)
             except OSError:
                 self.raw_connection.kill(9)
-                # self.logger.debug("Finalizing child process with PID %d" % self.raw_connection.pid)
+                # logger.debug("Finalizing child process with PID %d" % self.raw_connection.pid)
             else:
                 self.connected = False
                 self.raw_connection.close(force=True)
