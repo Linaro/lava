@@ -951,8 +951,8 @@ class Query(models.Model):
                     try:
                         condition.value = choices_reverse[condition.value]
                     except KeyError:
-                        logger.info('invalid choice supported for field "%s"'
-                                    % condition.field)
+                        logger.error(
+                            'Invalid choice supported for field "%s". Available choices are: "%s"' % (condition.field, ", ".join(choices_reverse.keys())))
                         condition.value = -1
 
                 # Handle boolean conditions.
