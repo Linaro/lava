@@ -269,7 +269,7 @@ class LavaSystemAPI(SystemAPI):
         {'qemu':
             [
                 {'kvm014': {
-                    'exclusive': False,
+                    'exclusive': True,
                     'visible': True,
                     'is_pipeline': True
                     }
@@ -309,9 +309,9 @@ class LavaSystemAPI(SystemAPI):
             if visible:
                 retval[device_type.name].append({
                     hostname: {
-                        'is_pipeline': device.is_pipeline,
+                        'is_pipeline': True,
                         'visible': visible,
-                        'exclusive': device.is_exclusive
+                        'exclusive': True
                     }
                 })
             else:
@@ -429,7 +429,7 @@ class LavaSystemAPI(SystemAPI):
         self._authenticate()
         # get all device dictionaries, build the entire map.
         dictionaries = [
-            (device.hostname, device.load_configuration()) for device in Device.objects.filter(is_pipeline=True)
+            (device.hostname, device.load_configuration()) for device in Device.objects.all()
         ]
         network_map = {'switches': {}}
         for (hostname, params) in dictionaries:

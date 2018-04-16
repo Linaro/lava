@@ -44,7 +44,8 @@ Top level elements of a test job
 
   .. seealso:: :ref:`timeouts`
 
-* **priority** - supports values if ``high``, ``medium`` or ``low``. The
+* **priority** - supports any integers in [0, 100]. Three shortcuts are also
+  available: ``high`` (100), ``medium`` (50) and ``low`` (0). The
   :term:`scheduler` considers the job priority when ordering the queue to
   consider which job should run next. **Do not abuse priority**.
 

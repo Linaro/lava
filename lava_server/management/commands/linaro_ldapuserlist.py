@@ -21,8 +21,8 @@ import os
 import csv
 import ldap
 
+from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
-from lava_server.settings.getsettings import Settings
 
 
 # It is a very rarely used management command, hence many parameters are
@@ -65,8 +65,7 @@ class Command(BaseCommand):
         if filename is None:
             self.stderr.write("filename not specified, writing to stdout.")
 
-        settings = Settings("lava-server")
-        server_uri = settings.get_setting("AUTH_LDAP_SERVER_URI", None)
+        server_uri = settings.AUTH_LDAP_SERVER_URI
         self.stdout.write("Trying to access %s ..." % server_uri)
         if LDAP_SERVER_HOST not in server_uri:
             raise CommandError("This is a very rarely used management command, "
@@ -76,8 +75,8 @@ class Command(BaseCommand):
                                "work with other LDAP systems."
                                % _get_script_path())
 
-        bind_dn = settings.get_setting("AUTH_LDAP_BIND_DN", None)
-        bind_password = settings.get_setting("AUTH_LDAP_BIND_PASSWORD", None)
+        bind_dn = settings.AUTH_LDAP_BIND_DN
+        bind_password = settings.AUTH_LDAP_BIND_PASSWORD
 
         user_dn = USER_DN
         search_scope = SEARCH_SCOPE

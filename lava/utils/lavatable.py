@@ -21,7 +21,8 @@ class LavaView(tables.SingleTableView):
         """
         bespoke time-based field handling
         """
-        q = query
+        local_namespace = locals()
+        local_namespace["q"] = query
         time_queries = {}
         if hasattr(self.table_class.Meta, 'times'):
             # filter the possible list by the request
@@ -38,11 +39,11 @@ class LavaView(tables.SingleTableView):
                     continue
                 args = 'q = q.__and__(Q({0}__gte=datetime.now()-timedelta({1}={2})))'.format(key, value, match)
                 try:
-                    exec(args)  # sets the value of q
+                    exec(args, globals(), local_namespace)  # sets the value of q
                 except SyntaxError:
                     # should log the exception somewhere...
                     continue  # just skip this term - results in a query matching All.
-        return q
+        return local_namespace["q"]
 
     def get_table_data(self, prefix=None):
         """
@@ -103,14 +104,16 @@ class LavaView(tables.SingleTableView):
             self.discrete = sorted(self.discrete, key=lambda s: s.lower())
         if not self.request:
             return data
-        q = Q()
+
+        local_namespace = locals()
+        local_namespace["q"] = Q()
         self.terms = {}
         # discrete searches
         for key, val in distinct.items():
             if key in self.table_class.Meta.searches:
                 args = 'q = q.__and__(Q({0}__contains="{1}"))'.format(key, val)
                 try:
-                    exec(args)  # sets the value of q
+                    exec(args, globals(), local_namespace)  # sets the value of q
                 except SyntaxError:
                     # should log exception somewhere...
                     continue  # just skip this term - results in a query matching All.
@@ -118,7 +121,7 @@ class LavaView(tables.SingleTableView):
                 # note that this calls the function 'key' with the argument from the search
                 args = 'q = q.__and__(self.{0}("{1}"))'.format(key, val)
                 try:
-                    exec(args)
+                    exec(args, globals(), local_namespace)
                 except SyntaxError:
                     # should log exception somewhere...
                     continue
@@ -133,7 +136,7 @@ class LavaView(tables.SingleTableView):
                 # so every simple search column in the table is queried at the same time with OR
                 args = 'q = q.__or__(Q({0}__{1}=self.terms["search"]))'.format(key, val)
                 try:
-                    exec(args)  # sets the value of q
+                    exec(args, globals(), local_namespace)  # sets the value of q
                 except SyntaxError:
                     # should log exception somewhere...
                     continue  # just skip this term - results in a query matching All.
@@ -143,13 +146,13 @@ class LavaView(tables.SingleTableView):
                     # note that this calls the function 'key' with the argument from the search
                     args = 'q = q.__or__(self.{0}("{1}"))'.format(key, self.terms["search"].encode("utf-8"))
                     try:
-                        exec(args)
+                        exec(args, globals(), local_namespace)
                     except SyntaxError:
                         # should log exception somewhere...
                         continue
         # now add "class specials" - from an iterable hash
         # datetime uses (start_time__lte=datetime.now()-timedelta(days=3)
-        data = data.filter(self._time_filter(q))
+        data = data.filter(self._time_filter(local_namespace["q"]))
         return data
 
 

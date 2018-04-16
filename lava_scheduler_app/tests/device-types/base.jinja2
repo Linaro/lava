@@ -43,7 +43,7 @@
 ) -%}
 {% set base_item_class = '0-9' -%}
 {% set base_item_separator = ' ' -%}
-{% set base_label_class = 'a-zA-Z0-9\s\:' -%}
+{% set base_label_class = 'a-zA-Z0-9\\s\\:' -%}
 {% set base_menu_bootloader_prompt = 'Start:' -%}
 {% set base_menu_boot_message = "Loaded: LinuxImage" -%}
 {% set base_menu_dictionary = {} -%}
@@ -79,12 +79,15 @@ constants:
   grub:
     interrupt-prompt: '{{ grub_autoboot_prompt | default("Press enter to boot the selected OS") }}'
     interrupt-character: '{{ grub_interrupt_character | default ("c") }}'
+    error-messages:
+      - "error: missing (.*) symbol."
   grub-efi:
     interrupt-prompt: '{{ grub_autoboot_prompt | default("Press enter to boot the selected OS") }}'
     interrupt-character: '{{ grub_interrupt_character | default ("c") }}'
     error-messages:
       - 'Undefined OpCode Exception PC at'
       - 'Synchronous Exception at'
+      - "error: missing (.*) symbol."
   ipxe:
     interrupt-prompt: '{{ ipxe_autoboot_prompt  | default("Press Ctrl-B for the iPXE command line") }}'
     interrupt_ctrl_list: {{ ipxe_interrupt_ctrl_list  | default(['b']) }}
@@ -288,6 +291,8 @@ timeouts:
       minutes: {{ action_timeout_boot_qemu_image | default(2) }}
     boot-image-retry:
       minutes: {{ action_timeout_boot_image_retry | default(2) }}
+    flash-uboot-ums:
+      minutes: {{ action_timeout_flash_uboot_ums | default(20) }}
   connections:
     dd-image:
       minutes: {{ connection_timeout_dd_image | default(10) }}

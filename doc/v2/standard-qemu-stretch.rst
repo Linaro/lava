@@ -1,18 +1,18 @@
-.. index:: standard jessie qemu
+.. index:: standard stretch qemu
 
-.. _standard_amd64_jessie_qemu:
+.. _standard_amd64_stretch_qemu:
 
-Standard test job for QEMU - Jessie amd64
-#########################################
+Standard test job for QEMU - Stretch amd64
+##########################################
 
 The first standard job to look at is a small step on from the first example
 job:
 
-.. include:: examples/test-jobs/qemu-amd64-standard-jessie.yaml
+.. include:: examples/test-jobs/qemu-amd64-standard-stretch.yaml
      :code: yaml
      :end-before: metadata:
 
-`Download / view full job definition <examples/test-jobs/qemu-amd64-standard-jessie.yaml>`_
+`Download / view full job definition <examples/test-jobs/qemu-amd64-standard-stretch.yaml>`_
 
 Context
 =======
@@ -23,7 +23,7 @@ test job submission to dictate how the test job is executed. The first example
 test job included the use of ``context`` and the standard test job for QEMU
 extends this:
 
-.. include:: examples/test-jobs/qemu-amd64-standard-jessie.yaml
+.. include:: examples/test-jobs/qemu-amd64-standard-stretch.yaml
      :code: yaml
      :start-after: CONTEXT_BLOCK
      :end-before: # ACTIONS_BLOCK
@@ -55,7 +55,7 @@ This is also familiar from the first job. The addition here is that the
 standard image build exports the SHA256sum of the prepared files to allow the
 checksum to be passed to LAVA to verify that the download is the correct file:
 
-.. include:: examples/test-jobs/qemu-amd64-standard-jessie.yaml
+.. include:: examples/test-jobs/qemu-amd64-standard-stretch.yaml
      :code: yaml
      :start-after: ACTIONS_BLOCK
      :end-before: # BOOT_BLOCK
@@ -67,7 +67,7 @@ Here is another small change from the first example job. The standard build
 also outputs details of the prompts which will be output by the image upon
 boot. This information is then used in the test job submission:
 
-.. include:: examples/test-jobs/qemu-amd64-standard-jessie.yaml
+.. include:: examples/test-jobs/qemu-amd64-standard-stretch.yaml
      :code: yaml
      :start-after: BOOT_BLOCK
      :end-before: # TEST_BLOCK
@@ -75,10 +75,10 @@ boot. This information is then used in the test job submission:
 Test
 ====
 
-The standard QEMU test job for jessie adds an :term:`inline` test definition as
+The standard QEMU test job for stretch adds an :term:`inline` test definition as
 the only change from the example first job:
 
-.. include:: examples/test-jobs/qemu-amd64-standard-jessie.yaml
+.. include:: examples/test-jobs/qemu-amd64-standard-stretch.yaml
      :code: yaml
      :start-after: TEST_BLOCK
 

@@ -23,8 +23,6 @@ Glossary of terms
 [ :term:`dispatcher` ] [ :term:`distributed deployment` ] [ :term:`DTB` ]
 [ :term:`DUT` ]
 
-**E** [ :term:`exclusive` ]
-
 **F** [ :term:`frontend` ]
 
 **H** [ :term:`hacking session` ] [ :term:`health check` ]
@@ -186,15 +184,6 @@ Glossary of terms
 
   DUT
     Device Under Test - a quick way to refer to the :term:`device` in LAVA.
-
-  exclusive
-    The Pipeline (V2) migration is complete, so this field is now ignored.
-
-    Device dictionaries no longer need to include this setting:
-
-    .. code-block:: jinja
-
-     {% set exclusive = "True" %}
 
   frontend
     ``lava-server`` provides a generic `frontend` consisting of the Results,

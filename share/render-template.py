@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/python3
 
 """
 This script is particularly intended for those adding new devices to LAVA

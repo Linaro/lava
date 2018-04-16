@@ -124,7 +124,7 @@
   {% block breadcrumb_container %}
     {% if context_help %}
        <span style="float: right; padding-right: 1em; padding-top: 0.5em"><a target="_blank"
-           href="/static/docs/v2/{{ context_help|join:'-'|slugify }}.html"
+           href="{{ STATIC_URL }}docs/v2/{{ context_help|join:'-'|slugify }}.html"
            ><b>Help</b></a></span>
     {% endif %}
   <ol class="breadcrumb">

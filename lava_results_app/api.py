@@ -115,8 +115,8 @@ class ResultsAPI(ExposedAPI):
         conditions = Query.parse_conditions(content_type, conditions)
 
         try:
-            results = Query.get_queryset(content_type, conditions).visible_by_user(
-                self.user)
+            results = Query.get_queryset(content_type,
+                                         conditions).visible_by_user(self.user)
         except FieldDoesNotExist:
             raise xmlrpclib.Fault(400,
                                   "Conditions URL incorrect: Field does not exist. "
@@ -667,8 +667,8 @@ class ResultsAPI(ExposedAPI):
                 raise xmlrpclib.Fault(
                     401, "Permission denied for user to job %s" % job_id)
             test_suite = job.testsuite_set.get(name=suite_name)
-            test_case = test_suite.testcase_set.get(name=case_name)
-            yaml_list = [export_testcase(test_case)]
+            test_cases = test_suite.testcase_set.filter(name=case_name)
+            yaml_list = [export_testcase(test_case) for test_case in test_cases]
 
         except TestJob.DoesNotExist:
             raise xmlrpclib.Fault(404, "Specified job not found.")

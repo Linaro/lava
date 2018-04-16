@@ -20,7 +20,7 @@ These instructions cover installation on Debian. The supported versions are:
 +---------------+------------------------+--------+----------------------+
 | Debian        | Stretch (stable)       | 9.0    | Yes [#f2]_           |
 +---------------+------------------------+--------+----------------------+
-| Debian        | Jessie (oldstable)     | 8.0    | Deprecated [#f3]_    |
+| Debian        | Jessie (oldstable)     | 8.0    | **No** [#f3]_        |
 +---------------+------------------------+--------+----------------------+
 
 Debian uses codenames for releases (buster, stretch, jessie, wheezy,
@@ -57,17 +57,14 @@ that codename in the table.
          :ref:`lava_repositories`.
 
 .. [#f3] Jessie was released on April 25th, 2015 and security support for
-         Jessie is expected to terminate in June 2018. All instances using
-         Jessie are recommended to upgrade to Debian Stretch as soon as
-         possible. Remaining updates to LAVA packages for Jessie will be made
-         using `jessie-backports`_.
+         Jessie is expected to terminate in June 2018. LAVA software has
+         removed support for building and installing in Jessie as part of the
+         move to Python3.
 
 .. [#f4] `buster` is the name of the next Debian release after Stretch, which
          is supported automatically via uploads to Sid (unstable).
 
 .. _experimental: https://wiki.debian.org/DebianExperimental
-
-.. _jessie-backports: http://backports.debian.org/
 
 .. _stretch-backports: http://backports.debian.org/
 
@@ -91,9 +88,8 @@ repository.
 .. _production-repo: https://images.validation.linaro.org/production-repo/
 
 In times when the current production release has not made it into either
-``stretch-backports`` or  ``jessie-backports`` (e.g. due to a migration issue
-or a pre-release package freeze in Debian), this repository can be used
-instead.
+``stretch-backports`` (e.g. due to a migration issue or a pre-release package
+freeze in Debian), this repository can be used instead.
 
 The :file:`services-trace.txt` file in the repository shows the latest update
 timestamp and is accompanied by a GnuPG signature of the trace file, signed
@@ -104,13 +100,7 @@ repository, using the same suites::
 
  deb https://images.validation.linaro.org/staging-repo stretch-backports main
 
- deb https://images.validation.linaro.org/staging-repo jessie-backports main
-
 This repository uses the same key as the production repository.
-
-There are differences in how the packages are built between
-``jessie-backports`` and ``stretch-backports`` but the contents are otherwise
-the same for the same upstream version.
 
 Stretch users
 -------------
@@ -124,14 +114,8 @@ Stretch users
 Jessie users
 -------------
 
-.. caution:: Deprecated - please upgrade Jessie systems to Stretch.
-
-::
-
- deb https://images.validation.linaro.org/production-repo jessie-backports main
-
-.. note:: The packages formerly in the ``sid`` suite in the repository are
-   not being updated after 2017.6.
+.. caution:: Unsupported - please upgrade Jessie systems to Stretch. No new
+   releases or developer builds are available for Jessie.
 
 .. _archive_repository:
 
@@ -156,7 +140,7 @@ usable backup of the postgresql database exists from the period
 For the sake of users needing this archive functionality, packages of
 the 2017.10 LAVA release will also remain available in a dedicated
 LAVA repository. The archive machine will need to be configured
-**not** to use the default apt sources for either stretch or jessie
+**not** to use the default apt sources for stretch or jessie
 above. The archive **must instead use** the archive repository, for
 stretch or jessie respectively::
 
@@ -293,11 +277,10 @@ Ubuntu.
 In LAVA V2, behaviour has changed here. In whatever base directory is
 configured for ``tftpd-hpa``, LAVA will use temporary subdirectories for all
 TFTP operations; other LAVA operations will use the
-:file:`/var/lib/lava/dispatcher/tmp` directory. If **all** of your devices are
-:term:`exclusive`, to V2 (:term:`pipeline`), then the ``tftpd-hpa``
-configuration can be set to the tftpd original value (``/srv/tftp``), the LAVA
-historical value (``/var/lib/lava/dispatcher/tmp``) or any other directory
-specified by the admin.
+:file:`/var/lib/lava/dispatcher/tmp` directory.
+The ``tftpd-hpa`` configuration can be set to the tftpd original value
+(``/srv/tftp``), the LAVA historical value (``/var/lib/lava/dispatcher/tmp``)
+or any other directory specified by the admin.
 
 Extra dependencies
 ------------------
@@ -369,60 +352,16 @@ require updates from backports.
 Installing on Debian Jessie
 ===========================
 
-.. caution:: Deprecated - new LAVA instances should no longer use Debian
-   Jessie.
+.. caution:: Unsupported - Instances using Jessie must upgrade to Stretch
 
 Debian Jessie was released on April 25th, 2015, containing a full set of
 packages to install LAVA at version 2014.9. Debian stable releases of LAVA do
 not receive updates to LAVA directly, so a simple install on Jessie will only
 get you ``2014.9``. All admins of LAVA instances are **strongly** advised to
-update all software on the instance on a regular basis to receive security
-updates to the base system.
+upgrade the instance to Stretch to receive security updates to the base system
+and to be able to install LAVA.
 
-For packages which need larger changes, the official Debian method is to
-provide those updates using ``backports``. Backports **do not install
-automatically** even after the apt source is added - this is because backports
-are rebuilt from the current ``testing`` suite, so automatic upgrades would
-move the base system to testing as well. Instead, the admin selects which
-backported packages to add to the base stable system. Only those packages (and
-dependencies, if not available in stable already) will then be installed from
-backports.
-
-The ``lava-server`` backports and dependencies are **fully supported** by the
-LAVA software team and admins of **all** LAVA instances need to update the base
-``2014.9`` to the version available in current backports. Subscribe to the
-:ref:`lava_announce` mailing list for details of when new releases are made.
-Backports will be available about a week after the initial release.
-
-Updates for LAVA on Debian Jessie are uploaded to `jessie-backports
-<http://backports.debian.org/>`_
-
-Create an apt source for backports, either by editing ``/etc/apt/sources.list``
-or adding a file with a ``.list`` suffix into ``/etc/apt/sources.list.d/``.
-Create a line like the one below (using your preferred Debian mirror)::
-
- deb http://deb.debian.org/debian jessie-backports main
-
-Remember to update your apt cache whenever add a new apt source::
-
- $ sudo apt update
-
-Then install ``lava-server`` from ``jessie-backports`` using the ``-t`` option::
-
- $ sudo apt -t jessie-backports install lava-server
- $ sudo a2dissite 000-default
- $ sudo a2enmod proxy
- $ sudo a2enmod proxy_http
- $ sudo a2ensite lava-server.conf
- $ sudo service apache2 restart
-
-Once backports are enabled, the packages which the admin has selected from
-backports (using the ``-t`` switch) will continue to upgrade using backports.
-Other packages will only be added from backports if the existing backports
-require updates from backports. For example, when ``lava-server 2016.8`` moved
-to requiring Django1.8, new installations and updates to ``2016.8`` using
-backports automatically bring in Django1.8 and associated support, also from
-backports.
+.. seealso:: :ref:`install_debian_stretch`
 
 Installing just lava-server
 ===========================
@@ -514,16 +453,8 @@ support for some time and will be dropping Python2 support in the next LTS.
 (The current non-LTS release of django, version 2.0, has already dropped
 support for Python2.)
 
-LAVA has been moving towards Python3 support as an integral part of the
-migration to V2 and with the completion of the migration and the removal of the
-V1 codebase, `the announcement has been made
-<https://lists.linaro.org/pipermail/lava-announce/2017-June/000032.html>`_ that
-all LAVA packages will move exclusively to Python3 support.
-
-Supporting LAVA with Python3 on Debian Jessie is awkward and as Jessie is now
-deprecated and will have security support dropped in 2018, the decision has
-been taken to **not** support Python3 in Jessie for LAVA packages. The move to
-Python3 will therefore happen with the move to Stretch.
+LAVA has moved to exclusive Python3 support as the completion of the
+migration to V2.
 
 Setting up a reverse proxy
 ==========================
@@ -603,3 +534,36 @@ user account without losing data, using the `mergeldapuser` command, provided
 the LDAP username does not already exist in the LAVA instance::
 
   $ sudo lava-server manage mergeldapuser --lava-user <lava_user> --ldap-user <ldap_user>
+
+Debugging the Installation
+==========================
+
+After your LAVA instance is successfully installed, if you face any problem
+consult :ref:`debugging_v2`
+
+.. _django_localhost:
+
+Using localhost or non HTTPS instance URL
+-----------------------------------------
+
+Newer versions of django include improved security features which can affect
+how LAVA is used as ``http://localhost``. By default, django enforces
+behaviour to ensure safe use of ``https://`` which can prevent attempts to
+sign in to a LAVA instance using ``http://localhost/``.
+
+To enable localhost, you may need to disable at least these security
+defaults by adding the following options to ``/etc/lava-server/settings.conf``::
+
+  "CSRF_COOKIE_SECURE": false,
+  "SESSION_COOKIE_SECURE": false
+
+.. note:: This is the reason, if you see issues regarding CSRF token while
+          trying to login with an username. The common error message reported
+          is ``CSRF verification failed. Request aborted.``
+
+Any changes made to ``/etc/lava-server/settings.conf`` will require a restart
+of `lava-server-gunicorn` service for the changes to get applied::
+
+  $ sudo service lava-server-gunicorn restart
+
+.. seealso:: :ref:`check_instance`

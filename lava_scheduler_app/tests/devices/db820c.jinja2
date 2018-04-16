@@ -1,5 +1,4 @@
 {% extends 'dragonboard-820c.jinja2' %}
-{% set exclusive = 'True' %}
 {% set hard_reset_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu14 --command reboot --port 8 --delay 20' %}
 {% set pre_os_command = '/usr/local/lab-scripts/usb_hub_control -p 8000 -m off -u 8' %}
 {% set pre_power_command = '/usr/local/lab-scripts/usb_hub_control -p 8000 -m sync -u 8' %}

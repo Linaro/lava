@@ -86,7 +86,7 @@ First steps using LAVA
    explain_first_job
    lava-tool
    standard-test-jobs
-   standard-qemu-jessie
+   standard-qemu-stretch
    standard-qemu-kernel
    standard-armmp-ramdisk-bbb
 

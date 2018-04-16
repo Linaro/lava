@@ -126,6 +126,12 @@ class Command(BaseCommand):
     def handle_add(self, device_type, alias, health_denominator,
                    health_frequency):
         """ Add a device type """
+        try:
+            DeviceType.objects.get(name=device_type)
+            raise CommandError("Device-type '%s' already exists" % device_type)
+        except DeviceType.DoesNotExist:
+            pass
+
         aliases = []
         alias_item = None
         if device_type == "*":

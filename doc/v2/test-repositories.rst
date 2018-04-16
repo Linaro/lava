@@ -124,6 +124,30 @@ will fail.
           shallow: False
 
 
+Removing git history
+********************
+
+The size of the overlay can be an issue for jobs running on small devices.
+By default, when cloning test definition from a git repository, LAVA will keep
+the **.git** directory.
+If needed, this directory can be removed from the overlay by setting
+``history`` to **false**.
+
+.. code-block:: yaml
+
+ - test:
+    failure_retry: 3
+    timeout:
+      minutes: 10
+    name: kvm-basic-singlenode
+    definitions:
+        - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+          from: git
+          path: lava-test-shell/single-node/singlenode03.yaml
+          name: singlenode-advanced
+          history: False
+
+
 Sharing the contents of test definitions
 ****************************************
 

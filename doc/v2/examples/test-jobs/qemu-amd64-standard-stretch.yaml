@@ -1,6 +1,6 @@
-# Standard Jessie amd64 JOB definition for QEMU
+# Standard Stretch amd64 JOB definition for QEMU
 device_type: qemu
-job_name: qemu amd64 standard build, Debian Jessie
+job_name: qemu amd64 standard build, Debian Stretch
 
 timeouts:
   job:
@@ -14,10 +14,10 @@ visibility: public
 
 metadata:
   source: https://git.linaro.org/lava-team/refactoring.git
-  path: doc/v2/examples/test-jobs/qemu-amd64-standard-jessie.yaml
-  build-readme: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/amd64/7/debian-jessie-amd64-readme.html
-  build-console: https://ci.linaro.org/view/lava-ci/job/lava-debian-stable-amd64-vm/7/console
-  build-log: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/amd64/7/vmdebootstrap.log
+  path: doc/v2/examples/test-jobs/qemu-amd64-standard-stretch.yaml
+  build-readme: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/amd64/2/debian-stretch-amd64-readme.html
+  build-console: https://ci.linaro.org/view/lava-ci/job/lava-debian-stretch-amd64-vm/console
+  build-log: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/amd64/2/vmdebootstrap.log
 
 # CONTEXT_BLOCK
 context:
@@ -34,8 +34,8 @@ actions:
     images:
         rootfs:
           image_arg: -drive format=raw,file={rootfs}
-          url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/amd64/7/large-stable.img.gz
-          sha256sum: 4ab50cc69fc61faa9bf48edada8bc1a317247f77ced5a815f40e75cef1d62cc7
+          url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/amd64/2/stretch.img.gz
+          sha256sum: b5cdb3b9e65fec2d3654a05dcdf507281f408b624535b33375170d1e852b982c
           compression: gz
     os: debian
     root_partition: 1

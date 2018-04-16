@@ -88,14 +88,14 @@ lava-dispatcher
 
 ::
 
- $ python -m unittest discover lava_dispatcher/
+ $ python3 -m unittest discover lava_dispatcher/
 
 To run a single test, use the test class name as output by a failing test,
 without the call to ``discover``::
 
- $ python -m unittest lava_dispatcher.test.test_basic.TestPipelineInit.test_pipeline_init
+ $ python3 -m unittest lava_dispatcher.test.test_basic.TestPipelineInit.test_pipeline_init
 
- $ python -m unittest -v -c -f lava_dispatcher.test.test_basic.TestPipelineInit.test_pipeline_init
+ $ python3 -m unittest -v -c -f lava_dispatcher.test.test_basic.TestPipelineInit.test_pipeline_init
 
 The call references the path to the python module, the class and then the test
 function within that class. To run all tests in a class, omit the function. To
@@ -106,10 +106,11 @@ of ``lava-dispatcher`` as well::
 
  $ ./ci-run --test-suite lava_dispatcher.test.test_basic.TestPipelineInit.test_pipeline_init
 
-Also, install the updated ``lava-dispatcher`` package and use it to inspect the
-output of the pipeline using the ``--validate`` switch to ``lava-dispatch``::
+Also, install the updated ``lava-dispatcher`` package and use it to write out
+the pipeline to a ``description.yaml`` file in the specified output directory
+using the ``--validate`` switch to ``lava-run``::
 
- $ sudo lava-dispatch --validate --target ./devices/kvm01.yaml ./sample_jobs/kvm.yaml --output-dir=/tmp/test
+ $ sudo lava-run --validate --target ./devices/kvm01.yaml ./sample_jobs/kvm.yaml --output-dir=/tmp/test --job-id=6
 
 .. note:: The refactoring has changed the behaviour of ``target`` - the value
    **must** be a path to a YAML file, not a hostname. This is because the
@@ -845,7 +846,7 @@ statements in the device configuration or job submission show up inside the
 classes is to use a unit test. To run a single unit-test, for example
 test_function in a class called TestExtra in a file called test_extra.py, use::
 
- $ python -m unittest -v -c -f lava_dispatcher.test.test_extra.TestExtra.test_function
+ $ python3 -m unittest -v -c -f lava_dispatcher.test.test_extra.TestExtra.test_function
 
 Example python code:
 

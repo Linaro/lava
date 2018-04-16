@@ -649,12 +649,6 @@ class Device(RestrictedResource):
         on_delete=models.SET_NULL,
     )
 
-    is_pipeline = models.BooleanField(
-        verbose_name="Pipeline device?",
-        default=False,
-        editable=True
-    )
-
     def clean(self):
         """
         Complies with the RestrictedResource constraints
@@ -750,8 +744,6 @@ class Device(RestrictedResource):
         return self.is_owned_by(user)
 
     def is_valid(self, system=True):
-        if not self.is_pipeline:
-            return False  # V1 config cannot be checked
         rendered = self.load_configuration()
         try:
             validate_device(rendered)
@@ -803,7 +795,7 @@ class Device(RestrictedResource):
                     self.log_admin_entry(None, "%s → %s" % (prev_health_display, self.get_health_display()))
             elif infrastructure_error:
                 self.health = Device.HEALTH_UNKNOWN
-                self.log_admin_entry(None, "%s → %s (Infrastructure error)" % (prev_health_display, self.get_health_display()))
+                self.log_admin_entry(None, "%s → %s (Infrastructure error after %s)" % (prev_health_display, self.get_health_display(), job.display_id))
 
         else:
             raise NotImplementedError("Unknown signal %s" % signal)
@@ -914,34 +906,21 @@ class Device(RestrictedResource):
             return None
 
         env = jinja2.Environment()
-        ast = env.parse(jinja_config)
-        extends = list(ast.find_all(jinja2.nodes.Extends))
-        if len(extends) != 1:
+        try:
+            ast = env.parse(jinja_config)
+            extends = list(ast.find_all(jinja2.nodes.Extends))
+            if len(extends) != 1:
+                logger = logging.getLogger('lava_scheduler_app')
+                logger.error("Found %d extends for %s", len(extends), self.hostname)
+                return None
+            else:
+                return os.path.splitext(extends[0].template.value)[0]
+        except jinja2.TemplateError as exc:
             logger = logging.getLogger('lava_scheduler_app')
-            logger.error("Found %d extends for %s", len(extends), self.hostname)
+            logger.error("Invalid template for %s: %s", self.hostname, str(exc))
             return None
-        else:
-            return os.path.splitext(extends[0].template.value)[0]
-
-    @property
-    def is_exclusive(self):
-        jinja_config = self.load_configuration(output_format="raw")
-        if not jinja_config:
-            return False
-
-        env = jinja2.Environment()
-        ast = env.parse(jinja_config)
-
-        for assign in ast.find_all(jinja2.nodes.Assign):
-            if assign.target.name == "exclusive":
-                return bool(assign.node.value)
-        return False
 
     def get_health_check(self):
-        # Do not submit any new v1 job
-        if not self.is_pipeline:
-            return None
-
         # Get the device dictionary
         extends = self.get_extends()
         if not extends:
@@ -1122,13 +1101,19 @@ def _create_pipeline_job(job_data, user, taglist, device=None,
     if not taglist:
         taglist = []
 
-    priorities = dict([(j.upper(), i) for i, j in TestJob.PRIORITY_CHOICES])
+    # Handle priority
     priority = TestJob.MEDIUM
     if 'priority' in job_data:
-        priority_key = job_data['priority'].upper()
-        if priority_key not in priorities:
-            raise SubmissionException("Invalid job priority: %r" % priority_key)
-        priority = priorities[priority_key]
+        key = job_data['priority']
+        if isinstance(key, int):
+            priority = int(key)
+            if priority < TestJob.LOW or priority > TestJob.HIGH:
+                raise SubmissionException("Invalid job priority: %s. "
+                                          "Should be in [%d, %d]" % (key, TestJob.LOW, TestJob.HIGH))
+        else:
+            priority = {j.upper(): i for i, j in TestJob.PRIORITY_CHOICES}.get(key.upper())
+            if priority is None:
+                raise SubmissionException("Invalid job priority: %r" % key)
 
     public_state = True
     visibility = TestJob.VISIBLE_PUBLIC
@@ -1149,8 +1134,9 @@ def _create_pipeline_job(job_data, user, taglist, device=None,
             viewing_groups.extend(known_groups)
 
     if not orig:
-        orig = yaml.dump(job_data)
-    job = TestJob(definition=yaml.dump(job_data), original_definition=orig,
+        orig = yaml.safe_dump(job_data)
+    job = TestJob(definition=yaml.safe_dump(job_data),
+                  original_definition=orig,
                   submitter=user,
                   requested_device_type=device_type,
                   target_group=target_group,
@@ -1158,8 +1144,7 @@ def _create_pipeline_job(job_data, user, taglist, device=None,
                   health_check=False,
                   user=user, is_public=public_state,
                   visibility=visibility,
-                  priority=priority,
-                  is_pipeline=True)
+                  priority=priority)
     job.save()
     # need a valid job before the tags can be assigned, then it needs to be saved again.
     for tag in Tag.objects.filter(name__in=taglist):
@@ -1209,7 +1194,7 @@ def _pipeline_protocols(job_data, user, yaml_data=None):  # pylint: disable=too-
         return device_list
 
     if not yaml_data:
-        yaml_data = yaml.dump(job_data)
+        yaml_data = yaml.safe_dump(job_data)
     role_dictionary = {}  # map of the multinode group
     if 'lava-multinode' in job_data['protocols']:
         # create target_group uuid, just a label for the coordinator.
@@ -1238,7 +1223,7 @@ def _pipeline_protocols(job_data, user, yaml_data=None):  # pylint: disable=too-
 
                 allowed_devices = []
                 device_list = Device.objects.filter(
-                    Q(device_type=device_type), Q(is_pipeline=True), ~Q(health=Device.HEALTH_RETIRED))
+                    Q(device_type=device_type), ~Q(health=Device.HEALTH_RETIRED))
                 allowed_devices.extend(_check_submit_to_device(list(device_list), user))
 
                 if len(allowed_devices) < params['count']:
@@ -1283,7 +1268,7 @@ def _pipeline_protocols(job_data, user, yaml_data=None):  # pylint: disable=too-
                 if not parent:
                     parent = job.id
                 job.sub_id = "%d.%d" % (parent, node_data['protocols']['lava-multinode']['sub_id'])
-                job.multinode_definition = yaml_data  # store complete submisison, inc. comments
+                job.multinode_definition = yaml_data  # store complete submission, inc. comments
                 job.save()
                 job_object_list.append(job)
 
@@ -1381,7 +1366,7 @@ class TestJob(RestrictedResource):
         (Enhanced version of vmgroups.)
         A Primary connection needs a real device (persistence).
         """
-        if not self.is_pipeline or not self.is_multinode or not self.definition:
+        if not self.is_multinode or not self.definition:
             return False
         job_data = yaml.load(self.definition)
         return 'connection' in job_data
@@ -1430,6 +1415,14 @@ class TestJob(RestrictedResource):
         (STATE_CANCELING, "Canceling"),
         (STATE_FINISHED, "Finished"),
     )
+    STATE_REVERSE = {
+        "Submitted": STATE_SUBMITTED,
+        "Scheduling": STATE_SCHEDULING,
+        "Scheduled": STATE_SCHEDULED,
+        "Running": STATE_RUNNING,
+        "Canceling": STATE_CANCELING,
+        "Finished": STATE_FINISHED
+    }
     state = models.IntegerField(choices=STATE_CHOICES,
                                 default=STATE_SUBMITTED,
                                 editable=False)
@@ -1441,6 +1434,12 @@ class TestJob(RestrictedResource):
         (HEALTH_INCOMPLETE, "Incomplete"),
         (HEALTH_CANCELED, "Canceled"),
     )
+    HEALTH_REVERSE = {
+        "Unknown": HEALTH_UNKNOWN,
+        "Complete": HEALTH_COMPLETE,
+        "Incomplete": HEALTH_INCOMPLETE,
+        "Canceled": HEALTH_CANCELED
+    }
     health = models.IntegerField(choices=HEALTH_CHOICES,
                                  default=HEALTH_UNKNOWN)
 
@@ -1612,12 +1611,6 @@ class TestJob(RestrictedResource):
         blank=True
     )
 
-    is_pipeline = models.BooleanField(
-        verbose_name="Pipeline job?",
-        default=False,
-        editable=False
-    )
-
     # calculated by the master validation process.
     pipeline_compatibility = models.IntegerField(
         default=0,
@@ -1649,8 +1642,7 @@ class TestJob(RestrictedResource):
                             str(self.id))
 
     def output_file(self):
-        filename = 'output.yaml' if self.is_pipeline else 'output.txt'
-        output_path = os.path.join(self.output_dir, filename)
+        output_path = os.path.join(self.output_dir, "output.yaml")
         if os.path.exists(output_path):
             return open(output_path, encoding='utf-8', errors='replace')
         else:
@@ -1674,15 +1666,9 @@ class TestJob(RestrictedResource):
         JobFailureTag, blank=True, related_name='failure_tags')
     failure_comment = models.TextField(null=True, blank=True)
 
-    _results_link = models.CharField(
-        max_length=400, default=None, null=True, blank=True, db_column="results_link")
-
     @property
     def results_link(self):
-        if self.is_pipeline:
-            return reverse("lava.results.testjob", args=[self.id])
-        else:
-            return None
+        return reverse("lava.results.testjob", args=[self.id])
 
     @property
     def essential_role(self):  # pylint: disable=too-many-return-statements
@@ -1759,14 +1745,14 @@ class TestJob(RestrictedResource):
         # singlenode only
         device_type = _get_device_type(user, job_data['device_type'])
         allow = _check_submit_to_device(list(Device.objects.filter(
-            device_type=device_type, is_pipeline=True)), user)
+            device_type=device_type)), user)
         if not allow:
             raise DevicesUnavailableException("No devices of type %s have pipeline support." % device_type)
         taglist = _get_tag_list(job_data.get('tags', []), True)
         if taglist:
             supported = _check_tags(taglist, device_type=device_type)
             _check_tags_support(supported, allow)
-        if original_job and original_job.is_pipeline:
+        if original_job:
             # Add old job absolute url to metadata for pipeline jobs.
             job_url = str(original_job.get_absolute_url())
             try:
@@ -1785,16 +1771,11 @@ class TestJob(RestrictedResource):
         Implement the schema constraints for visibility for pipeline jobs so that
         admins cannot set a job into a logically inconsistent state.
         """
-        if self.is_pipeline:
-            # public settings must match
-            if self.is_public and self.visibility != TestJob.VISIBLE_PUBLIC:
-                raise ValidationError("is_public is set but visibility is not public.")
-            elif not self.is_public and self.visibility == TestJob.VISIBLE_PUBLIC:
-                raise ValidationError("is_public is not set but visibility is public.")
-        else:
-            if self.visibility != TestJob.VISIBLE_PUBLIC:
-                raise ValidationError("Only pipeline jobs support any value of visibility except the default "
-                                      "PUBLIC, even if the job and bundle are private.")
+        # public settings must match
+        if self.is_public and self.visibility != TestJob.VISIBLE_PUBLIC:
+            raise ValidationError("is_public is set but visibility is not public.")
+        elif not self.is_public and self.visibility == TestJob.VISIBLE_PUBLIC:
+            raise ValidationError("is_public is not set but visibility is public.")
         return super(TestJob, self).clean()
 
     def can_view(self, user):
@@ -1809,15 +1790,12 @@ class TestJob(RestrictedResource):
         """
         if self._can_admin(user, resubmit=False):
             return True
-        device_type = self.job_device_type()
+        device_type = self.requested_device_type
         if device_type and device_type.owners_only:
             if not device_type.some_devices_visible_to(user):
                 return False
         if self.is_public:
             return True
-        if not self.is_pipeline:
-            # old jobs will be private, only pipeline extends beyond this level
-            return self.is_accessible_by(user)
         logger = logging.getLogger('lava_scheduler_app')
         if self.visibility == self.VISIBLE_PUBLIC:
             # logical error
@@ -1872,17 +1850,8 @@ class TestJob(RestrictedResource):
         return self._can_admin(user) and self.state in states
 
     def can_resubmit(self, user):
-        return self.is_pipeline and \
-            (user.is_superuser or
-             user.has_perm('lava_scheduler_app.cancel_resubmit_testjob'))
-
-    def job_device_type(self):
-        device_type = None
-        if self.actual_device:
-            device_type = self.actual_device.device_type
-        elif self.requested_device_type:
-            device_type = self.requested_device_type
-        return device_type
+        return (user.is_superuser or
+                user.has_perm('lava_scheduler_app.cancel_resubmit_testjob'))
 
     def _generate_summary_mail(self):
         domain = '???'
@@ -2219,7 +2188,8 @@ class TestJob(RestrictedResource):
                     try:
                         logger.info("[%d] sending email notification to %s",
                                     self.id, recipient.email_address)
-                        title = "LAVA notification for Test Job %s" % self.id
+                        title = "LAVA notification for Test Job %s %s" % (
+                            self.id, self.description[:200])
                         kwargs["user"] = self.get_recipient_args(recipient)
                         body = self.create_notification_body(
                             notification.template, **kwargs)
@@ -2266,9 +2236,20 @@ class TestJob(RestrictedResource):
             Notification.DEFAULT_IRC_TEMPLATE, **kwargs)
 
     def get_notification_args(self):
+        from lava_results_app.models import TestCase
+
         kwargs = {}
         kwargs["job"] = self
         kwargs["url_prefix"] = "http://%s" % utils.get_domain()
+        # Get lava.job result if available
+        try:
+            lava_job_obj = TestCase.objects.get(suite__job=self,
+                                                suite__name="lava",
+                                                name="job")
+            kwargs["lava_job_result"] = lava_job_obj.action_metadata
+        except TestCase.DoesNotExist:
+            pass
+
         kwargs["query"] = {}
         if self.notification.query_name or self.notification.entity:
             kwargs["query"]["results"] = self.notification.get_query_results()
@@ -2678,10 +2659,10 @@ class Notification(models.Model):
         if callback_data:
             headers['Authorization'] = callback_data['token']
             if self.callback_content_type == Notification.JSON:
-                callback_data = simplejson.dumps(callback_data)
+                callback_data = simplejson.dumps(callback_data).encode("utf-8")
                 headers['Content-Type'] = 'application/json'
             else:
-                callback_data = urlencode(callback_data)
+                callback_data = urlencode(callback_data).encode("utf-8")
                 headers['Content-Type'] = 'application/x-www-form-urlencoded'
 
         if self.callback_url:
@@ -2714,7 +2695,6 @@ class Notification(models.Model):
                 "start_time": str(self.test_job.start_time),
                 "end_time": str(self.test_job.end_time),
                 "submitter_username": self.test_job.submitter.username,
-                "is_pipeline": self.test_job.is_pipeline,
                 "failure_comment": self.test_job.failure_comment,
                 "priority": self.test_job.priority,
                 "description": self.test_job.description,
@@ -2868,7 +2848,7 @@ def process_notifications(sender, **kwargs):
     notification_state = [TestJob.STATE_RUNNING, TestJob.STATE_FINISHED]
     # Send only for pipeline jobs.
     # If it's a new TestJob, no need to send notifications.
-    if new_job.is_pipeline and new_job.id:
+    if new_job.id:
         old_job = TestJob.objects.get(pk=new_job.id)
         if new_job.state in notification_state and \
            old_job.state != new_job.state:

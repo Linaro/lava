@@ -119,7 +119,15 @@ actions:
       lxc:
       serial:
     methods:
+{% if uboot_ums_flash %}
+      u-boot-ums:
+{% endif %}
+{% if flasher_deploy_commands %}
+      flasher:
+        commands: {{ flasher_deploy_commands }}
+{% endif %}
       lxc:
+      overlay:
       tftp:
       nbd:
       ssh:
@@ -153,11 +161,18 @@ actions:
           # character needed to interrupt u-boot, single whitespace by default
           interrupt_char: "{{ interrupt_char|default('') }}"
           needs_interrupt: {{ uboot_needs_interrupt|default(True) }}
+{% if uboot_ums_flash %}
+          uboot_ums_flash: {{ uboot_ums_flash }}
+          uboot_mass_storage_device: {{ uboot_mass_storage_device|default(None) }}
+{% endif %}
 {% if fastboot_boot_uboot %}
 {{- fastboot_boot_uboot }}
 {{- fastboot_boot_grub }}
 {% endif %}
           # method specific stanza
+        ums:
+          commands:
+          - {{ ums_command|default('ums 0 mmc 0')}}
         nfs:
           commands:
 {% if uboot_needs_usb %}

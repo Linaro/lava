@@ -21,6 +21,7 @@
 
 from __future__ import unicode_literals
 
+import hashlib
 import os
 import yaml
 import sys
@@ -46,6 +47,7 @@ if sys.version_info[0] == 2:
 elif sys.version_info[0] == 3:
     # For Python 3.0 and later
     from urllib.parse import quote
+    basestring = str
 
 
 def _check_for_testset(result_dict, suite):
@@ -116,17 +118,18 @@ def map_scanned_results(results, job, meta_filename):  # pylint: disable=too-man
     :param results: results logged via the slave
     :param job: the current test job
     :param meta_filename: YAML store for results metadata
-    :return: False on error, else True
+    :return: the TestCase object that should be saved to the database.
+             None on error.
     """
     logger = logging.getLogger('lava-master')
 
     if not isinstance(results, dict):
         append_failure_comment(job, "[%d] %s is not a dictionary" % (job.id, results))
-        return False
+        return None
 
     if not {"definition", "case", "result"}.issubset(set(results.keys())):
         append_failure_comment(job, "Missing some keys (\"definition\", \"case\" or \"result\") in %s" % results)
-        return False
+        return None
 
     if 'extra' in results:
         results['extra'] = meta_filename
@@ -143,25 +146,26 @@ def map_scanned_results(results, job, meta_filename):  # pylint: disable=too-man
 
     name = results["case"].strip()
 
+    test_case = None
     if suite.name == "lava":
         try:
             result_val = TestCase.RESULT_MAP[results['result']]
         except KeyError:
             logger.error("[%d] Unable to MAP result \"%s\"", job.id, results['result'])
-            return False
+            return None
 
         measurement = None
         units = ''
         if 'duration' in results:
             measurement = results['duration']
             units = 'seconds'
-        TestCase.objects.create(name=name,
-                                suite=suite,
-                                test_set=testset,
-                                metadata=metadata,
-                                measurement=measurement,
-                                units=units,
-                                result=result_val)
+        test_case = TestCase(name=name,
+                             suite=suite,
+                             test_set=testset,
+                             metadata=metadata,
+                             measurement=measurement,
+                             units=units,
+                             result=result_val)
 
     else:
         result = results["result"]
@@ -180,17 +184,16 @@ def map_scanned_results(results, job, meta_filename):  # pylint: disable=too-man
             logger.warning("[%d] Unrecognised result: '%s' for test case '%s'", job.id, result, name)
             return False
         try:
-            TestCase.objects.create(
-                name=name,
-                suite=suite,
-                test_set=testset,
-                result=TestCase.RESULT_MAP[result],
-                metadata=metadata,
-                measurement=measurement,
-                units=units)
+            test_case = TestCase(name=name,
+                                 suite=suite,
+                                 test_set=testset,
+                                 result=TestCase.RESULT_MAP[result],
+                                 metadata=metadata,
+                                 measurement=measurement,
+                                 units=units)
         except decimal.InvalidOperation:
             logger.exception("[%d] Unable to create test case %s", job.id, name)
-    return True
+    return test_case
 
 
 def _add_parameter_metadata(prefix, definition, dictionary, label):
@@ -201,15 +204,26 @@ def _add_parameter_metadata(prefix, definition, dictionary, label):
             dictionary['%s.%s.parameters.%s' % (prefix, label, paramkey)] = paramvalue
 
 
-def _get_job_metadata(data):  # pylint: disable=too-many-branches,too-many-nested-blocks,too-many-statements
-    if not isinstance(data, list):
-        return None
+def _get_job_metadata(job):
     retval = {}
+    # Add original_definition checksum to metadata
+    retval.update({
+        'definition-checksum': hashlib.md5(
+            job.original_definition.encode('utf-8')).hexdigest()
+    })
+    # Add lava-server-version to metadata
     packaged = debian_package_version()
     if packaged:
         retval.update({
             'lava-server-version': packaged
         })
+    return retval
+
+
+def _get_action_metadata(data):  # pylint: disable=too-many-branches,too-many-nested-blocks,too-many-statements
+    if not isinstance(data, list):
+        return None
+    retval = {}
     for action in data:
         deploy = [dict.get(action, 'deploy')]
         count = 0
@@ -379,11 +393,16 @@ def map_metadata(description, job):
     if 'job' not in description_data:
         logger.warning("[%s] skipping description without a job.", job.id)
         return
-    action_values = _get_job_metadata(description_data['job']['actions'])
+    action_values = _get_action_metadata(description_data['job']['actions'])
     for key, value in action_values.items():
         if not key or not value:
             logger.warning('[%s] Missing element in job. %s: %s', job.id, key, value)
             continue
+        testdata.attributes.create(name=key, value=value)
+
+    # get common job metadata
+    job_metadata = _get_job_metadata(job)
+    for key, value in job_metadata.items():
         testdata.attributes.create(name=key, value=value)
 
     # get metadata from device
@@ -430,7 +449,7 @@ def export_testcase(testcase, with_buglinks=False):
     metadata = dict(testcase.action_metadata) if testcase.action_metadata else {}
     extra_source = []
     extra_data = metadata.get('extra', None)
-    if extra_data and isinstance(extra_data, str) and os.path.exists(extra_data):
+    if isinstance(extra_data, basestring) and os.path.exists(extra_data):
         with open(metadata['extra'], 'r') as extra_file:
             items = yaml.load(extra_file, Loader=yaml.CLoader)
         # hide the !!python OrderedDict prefix from the output.

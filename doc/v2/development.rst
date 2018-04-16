@@ -96,10 +96,8 @@ Static code analysis
 ====================
 
 It is essential to run ``pep8 --ignore E501`` routinely on your local
-changes as ``./ci-run`` will fail on any PEP8 errors.
-
-.. note:: There can be differences in behaviour between ``pep8`` in Jessie
-   and in Stretch or unstable. All reviews are tested using Jessie.
+changes as ``./ci-run`` will fail on any PEP8 errors. All automated tests
+occur using Debian Stretch.
 
 It is important to run tools like :ref:`pylint <pylint_tool>`, particularly
 when adding new files, to check for missing or unused imports. Other analysis
@@ -700,7 +698,7 @@ Python3 support in LAVA is related to a number of factors:
 
 * Forthcoming LTS releases of django which will remove support for python2.7
 
-* Deprecating Debian Jessie and moving development support to Stretch.
+* Debian Jessie is now unsupported and development has moved to Stretch.
 
 * Transition within Debian to full python3 support.
 
@@ -712,10 +710,8 @@ lava-dispatcher and lava-server now support python3 testing. Code changes to
 either codebase **must** be Python3 compatible to not break the unit tests when
 run using python3.
 
-LAVA is not yet ready to use python 3.x support at runtime.
-
 All reviews run the ``lava-dispatcher`` and ``lava-server`` unit tests against
-python 3.x and changes must pass without breaking compatibility with python 2.x
+python 3.x and changes must pass all unit tests.
 
 The ``./ci-run`` script for ``lava-dispatcher`` and ``lava-server`` can run
 the unit tests using Python3::
@@ -723,8 +719,8 @@ the unit tests using Python3::
  ./ci-run -a
 
 Some additional Python3 dependencies will be required. In particular,
-``python3-django-auth-ldap`` will need to be installed from
-``stretch-backports``.
+``python3-django-auth-ldap`` and ``python3-django-testscenarios`` will need to
+be installed from ``stretch-backports``.
 
 .. warning:: Django wil be dropping python2.7 support with the 2.2LTS release,
    *frozen* instances of LAVA will not be able to use django updates after that

@@ -95,7 +95,7 @@ class TestSchedulerAPI(TestCaseWithFactory):  # pylint: disable=too-many-ancesto
         server = self.server_proxy('test', 'test')
         self.assertEqual(
             {'status': 'idle', 'job': None, 'offline_since': None, 'hostname': 'black01',
-                'offline_by': None, 'is_pipeline': False},
+                'offline_by': None, 'is_pipeline': True},
             server.scheduler.get_device_status('black01'))
 
     def test_type_aliases(self):

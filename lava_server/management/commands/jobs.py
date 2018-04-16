@@ -81,9 +81,6 @@ class Command(BaseCommand):
                         help="Filter jobs by submitter")
         rm.add_argument("--dry-run", default=False, action="store_true",
                         help="Do not remove any data, simulate the output")
-        rm.add_argument("--v1", default=False, action="store_true",
-                        help="Remove only v1 jobs. "
-                             "If this is the only filtering option, all v1 jobs will be removed.")
         rm.add_argument("--slow", default=False, action="store_true",
                         help="Be nice with the system by sleeping regularly")
 
@@ -91,8 +88,7 @@ class Command(BaseCommand):
         """ forward to the right sub-handler """
         if options["sub_command"] == "rm":
             self.handle_rm(options["older_than"], options["submitter"],
-                           options["state"], options["v1"],
-                           options["dry_run"], options["slow"])
+                           options["state"], options["dry_run"], options["slow"])
         elif options["sub_command"] == "fail":
             self.handle_fail(options["job_id"])
 
@@ -105,7 +101,7 @@ class Command(BaseCommand):
         except TestJob.DoesNotExist:
             raise CommandError("TestJob '%d' does not exists" % job_id)
 
-    def handle_rm(self, older_than, submitter, state, v1_only, simulate, slow):
+    def handle_rm(self, older_than, submitter, state, simulate, slow):
         if not older_than and not submitter and not state and not v1_only:
             raise CommandError("You should specify at least one filtering option")
 
@@ -134,9 +130,6 @@ class Command(BaseCommand):
 
         if state is not None:
             jobs = jobs.filter(state=self.job_state[state])
-
-        if v1_only:
-            jobs = jobs.filter(is_pipeline=False)
 
         self.stdout.write("Removing %d jobs:" % jobs.count())
 

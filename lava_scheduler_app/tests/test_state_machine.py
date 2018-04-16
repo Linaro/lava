@@ -32,6 +32,18 @@ from lava_scheduler_app.models import (
 )
 
 
+minimal_valid_job = yaml.dump("""
+job_name: minimal valid job
+visibility: public
+timeouts:
+  job:
+    minutes: 10
+  action:
+    minutes: 5
+actions: []
+""")
+
+
 class TestTestJobStateMachine(TestCase):
 
     def setUp(self):
@@ -41,7 +53,8 @@ class TestTestJobStateMachine(TestCase):
                                             worker_host=self.worker)
         self.user = User.objects.create(username="user-01")
         self.job = TestJob.objects.create(requested_device_type=self.device_type,
-                                          submitter=self.user, user=self.user)
+                                          submitter=self.user, user=self.user, is_public=True,
+                                          definition=minimal_valid_job)
 
     def check_device(self, state, health):
         self.device.refresh_from_db()
@@ -224,13 +237,13 @@ class TestTestJobStateMachine(TestCase):
         self.job.save()
         self.sub_job1 = TestJob.objects.create(requested_device_type=self.device_type,
                                                submitter=self.user, user=self.user,
-                                               target_group="target_group")
+                                               target_group="target_group", is_public=True)
         self.sub_job1.definition = yaml.dump({"protocols": {"lava-multinode": {"role": "worker", "essential": False}}})
         self.sub_job1.actual_device = self.device2
         self.sub_job1.save()
         self.sub_job2 = TestJob.objects.create(requested_device_type=self.device_type,
                                                submitter=self.user, user=self.user,
-                                               target_group="target_group")
+                                               target_group="target_group", is_public=True)
         self.sub_job2.definition = yaml.dump({"protocols": {"lava-multinode": {"role": "worker", "essential": False}}})
         self.sub_job2.actual_device = self.device3
         self.sub_job2.save()
@@ -456,13 +469,13 @@ class TestTestJobStateMachine(TestCase):
         self.job.save()
         self.sub_job1 = TestJob.objects.create(requested_device_type=self.device_type,
                                                submitter=self.user, user=self.user,
-                                               target_group="target_group")
+                                               target_group="target_group", is_public=True)
         self.sub_job1.definition = yaml.dump({"protocols": {"lava-multinode": {"role": "worker", "essential": False}}})
         self.sub_job1.actual_device = self.device2
         self.sub_job1.save()
         self.sub_job2 = TestJob.objects.create(requested_device_type=self.device_type,
                                                submitter=self.user, user=self.user,
-                                               target_group="target_group")
+                                               target_group="target_group", is_public=True)
         self.sub_job2.definition = yaml.dump({"protocols": {"lava-multinode": {"role": "worker", "essential": False}}})
         self.sub_job2.actual_device = self.device3
         self.sub_job2.save()
@@ -616,7 +629,7 @@ class TestWorkerStateMachine(TestCase):
                                             worker_host=self.worker)
         self.user = User.objects.create(username="user-01")
         self.job = TestJob.objects.create(requested_device_type=self.device_type,
-                                          submitter=self.user, user=self.user)
+                                          submitter=self.user, user=self.user, is_public=True)
 
     def check_device(self, state, health):
         self.device.refresh_from_db()

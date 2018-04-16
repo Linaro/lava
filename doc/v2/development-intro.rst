@@ -126,7 +126,7 @@ be configured. This test can be run directly from a git checkout of
 
 .. code-block:: shell
 
- $ python -m unittest -vcf lava_scheduler_app.tests.test_templates.TestTemplates.test_all_templates
+ $ python3 -m unittest -vcf lava_scheduler_app.tests.test_templates.TestTemplates.test_all_templates
 
 Individual templates have their own unit tests to test for specific elements of
 the rendered device configuration.

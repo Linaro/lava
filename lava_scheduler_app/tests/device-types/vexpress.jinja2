@@ -188,7 +188,7 @@ actions:
           item_class: '{{ item_class|default('0-9') }}'
           separator: '{{ separator|default(' ') }}'
           label_class: '{{ label_class|default('a-zA-Z0-9 \s\:') }}'
-          bootloader_prompt: '{{ bootloader_prompt|default('Start:') }}'
+          bootloader_prompt: '{{ uefi_menu_bootloader_prompt|default('Start:') }}'
           boot_message: '{{ boot_message|default('Linux version') }}'
         tftp:
         - select:
@@ -253,7 +253,7 @@ actions:
               - LAVA TEST TFTP
       uefi:
         parameters:
-           bootloader_prompt: '{{ bootloader_prompt|default('Shell>') }}'
+           bootloader_prompt: '{{ uefi_shell_prompt|default('Shell>') }}'
            shell_interrupt_prompt: '{{ shell_interrupt_prompt|default('any other key to continue') }}'
            shell_interrupt_string: '{{ shell_interrupt_string|default(' ') }}'
            boot_message: '{{ boot_message|default('Linux version') }}'
