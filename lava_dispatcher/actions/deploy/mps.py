@@ -25,12 +25,11 @@ import os
 import shutil
 from lava_dispatcher.action import (
     Action,
-    JobError,
+    InfrastructureError,
     Pipeline,
 )
 from lava_dispatcher.logical import Deployment
 from lava_dispatcher.actions.deploy import DeployAction
-from lava_dispatcher.actions.deploy.lxc import LxcCreateUdevRuleAction
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.power import ResetDevice

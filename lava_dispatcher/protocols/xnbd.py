@@ -23,8 +23,9 @@ import pexpect
 import logging
 from lava_dispatcher.connection import Protocol
 from lava_dispatcher.action import (
-    Timeout,
     JobError,
+    TestError,
+    Timeout,
 )
 from lava_dispatcher.shell import ShellCommand
 from lava_dispatcher.utils.constants import XNBD_SYSTEM_TIMEOUT
@@ -101,7 +102,7 @@ class XnbdProtocol(Protocol):
         action.set_namespace_data('nbd-deploy', label='nbd', key='nbd_server_port', value=nbd_port, parameters=action.parameters)
         nbd_ip = dispatcher_ip(self.parameters['dispatcher'])
         action.set_namespace_data('nbd-deploy', label='nbd', key='nbd_server_ip', value=nbd_ip, parameters=action.parameters)
-        self.logger.debug("Set_port %d" % nbd_port)
+        self.logger.debug("Set_port %d", nbd_port)
         return msg['data']
 
     def finalise_protocol(self, device=None):
@@ -112,7 +113,7 @@ class XnbdProtocol(Protocol):
         try:
             self.logger.debug("%s cleanup", self.name)
             for port in self.ports:
-                self.logger.debug("clean NBD port %s" % port)
+                self.logger.debug("clean NBD port %s", port)
                 nbd_cmd = "pkill -f xnbd-server.*%s" % (port)
                 shell = ShellCommand("%s\n" % nbd_cmd, self.system_timeout,
                                      logger=self.logger)
