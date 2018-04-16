@@ -22,9 +22,7 @@
 # imported by the parser to populate the list of subclasses.
 
 from lava_dispatcher.action import (
-    Action,
     ConfigurationError,
-    LAVABug,
     Pipeline,
 )
 from lava_dispatcher.logical import Boot

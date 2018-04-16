@@ -22,7 +22,6 @@
 # imported by the parser to populate the list of subclasses.
 
 from lava_dispatcher.action import (
-    Action,
     LAVABug,
     Pipeline,
 )

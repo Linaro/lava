@@ -22,10 +22,8 @@ from lava_dispatcher.action import (
     Action,
     InfrastructureError,
     JobError,
-    ConfigurationError,
-    Timeout)
-from lava_dispatcher.utils.constants import BOOTLOADER_DEFAULT_CMD_TIMEOUT
-import time
+    ConfigurationError
+)
 
 
 class FlashUBootUMSAction(Action):

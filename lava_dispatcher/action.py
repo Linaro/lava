@@ -19,7 +19,6 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import logging
-import sys
 import copy
 from functools import reduce  # pylint: disable=redefined-builtin
 import time
@@ -33,10 +32,7 @@ from contextlib import contextmanager
 from nose.tools import nottest
 
 from lava_dispatcher.log import YAMLLogger
-from lava_dispatcher.utils.constants import (
-    ACTION_TIMEOUT,
-    OVERRIDE_CLAMP_DURATION
-)
+from lava_dispatcher.utils.constants import ACTION_TIMEOUT
 from lava_dispatcher.utils.strings import seconds_to_str
 
 

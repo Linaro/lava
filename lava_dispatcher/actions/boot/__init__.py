@@ -20,7 +20,6 @@
 
 import os
 import re
-import shutil
 from lava_dispatcher.action import (
     Action,
     Pipeline,

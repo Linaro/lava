@@ -25,7 +25,6 @@
 import errno
 import math
 import os
-import sys
 import shutil
 import time
 import hashlib

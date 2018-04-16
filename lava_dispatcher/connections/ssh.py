@@ -133,7 +133,7 @@ class ConnectSsh(Action):
             return connection
         # ShellCommand executes the connection command
 
-        params = self._check_params()
+        self._check_params()
         command = self.command[:]  # local copy for idempotency
         overrides = None
         if self.key:
