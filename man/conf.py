@@ -228,5 +228,21 @@ man_pages = [
     ('lava-run', 'lava-run', u'run jobs on LAVA devices',
      [u'Linaro Validation Team'], 1),
     ('lava-slave', 'lava-slave', u'manage connections to lava master',
-     [u'Linaro Validation Team'], 8)
+     [u'Linaro Validation Team'], 8),
+    ('lava-lxc-mocker', 'lava-lxc-mocker', u'mock LXC commands used by LAVA',
+     [u'Senthil Kumaran S <senthil.kumaran@linaro.org>'], 7),
+    ('lxc-attach', 'lxc-attach', u'mock lxc-attach command used by LAVA',
+     [u'Senthil Kumaran S <senthil.kumaran@linaro.org>'], 1),
+    ('lxc-create', 'lxc-create', u'mock lxc-create command used by LAVA',
+     [u'Senthil Kumaran S <senthil.kumaran@linaro.org>'], 1),
+    ('lxc-destroy', 'lxc-destroy', u'mock lxc-destroy command used by LAVA',
+     [u'Senthil Kumaran S <senthil.kumaran@linaro.org>'], 1),
+    ('lxc-device', 'lxc-device', u'mock lxc-device command used by LAVA',
+     [u'Senthil Kumaran S <senthil.kumaran@linaro.org>'], 1),
+    ('lxc-info', 'lxc-info', u'mock lxc-info command used by LAVA',
+     [u'Senthil Kumaran S <senthil.kumaran@linaro.org>'], 1),
+    ('lxc-start', 'lxc-start', u'mock lxc-start command used by LAVA',
+     [u'Senthil Kumaran S <senthil.kumaran@linaro.org>'], 1),
+    ('lxc-stop', 'lxc-stop', u'mock lxc-stop command used by LAVA',
+     [u'Senthil Kumaran S <senthil.kumaran@linaro.org>'], 1)
 ]
