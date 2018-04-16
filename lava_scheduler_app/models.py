@@ -2659,10 +2659,10 @@ class Notification(models.Model):
         if callback_data:
             headers['Authorization'] = callback_data['token']
             if self.callback_content_type == Notification.JSON:
-                callback_data = simplejson.dumps(callback_data)
+                callback_data = simplejson.dumps(callback_data).encode("utf-8")
                 headers['Content-Type'] = 'application/json'
             else:
-                callback_data = urlencode(callback_data)
+                callback_data = urlencode(callback_data).encode("utf-8")
                 headers['Content-Type'] = 'application/x-www-form-urlencoded'
 
         if self.callback_url:
