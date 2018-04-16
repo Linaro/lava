@@ -2657,7 +2657,8 @@ class Notification(models.Model):
         headers = {}
 
         if callback_data:
-            headers['Authorization'] = callback_data['token']
+            if callback_data.get('token') is not None:
+                headers['Authorization'] = callback_data['token']
             if self.callback_content_type == Notification.JSON:
                 callback_data = simplejson.dumps(callback_data).encode("utf-8")
                 headers['Content-Type'] = 'application/json'
@@ -2701,8 +2702,10 @@ class Notification(models.Model):
                 "actual_device_id": self.test_job.actual_device_id,
                 "definition": self.test_job.definition,
                 "metadata": self.test_job.get_metadata_dict(),
-                "token": self.callback_token
             }
+            # Only add the token if it's not empty
+            if self.callback_token is not None:
+                data["token"] = self.callback_token
 
             # Logs.
             output_file = self.test_job.output_file()
