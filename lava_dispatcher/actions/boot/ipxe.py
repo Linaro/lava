@@ -39,9 +39,6 @@ from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.shell import ExpectShellSession
 from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.power import ResetDevice
-from lava_dispatcher.utils.constants import (
-    IPXE_BOOT_PROMPT,
-)
 
 
 class IPXE(Boot):
