@@ -106,28 +106,17 @@ def help(
         scheme = "https"
     else:
         scheme = request.META.get("REQUEST_SCHEME", "http")
-    dashboard_methods = []
     scheduler_methods = []
     results_methods = []
     system_methods = []
     for method in system.listMethods():
-        if "dashboard" in method:
-            dashboard_methods.append(method)
-        elif "scheduler" in method:
+        if "scheduler" in method:
             scheduler_methods.append(method)
         elif "results" in method:
             results_methods.append(method)
         else:
             system_methods.append(method)
     methods = {
-        "dashboard": [
-            {
-                "name": method,
-                "signature": system.methodSignature(method),
-                "help": system.methodHelp(method),
-            }
-            for method in dashboard_methods
-        ],
         "scheduler": [
             {
                 "name": method,

@@ -27,7 +27,6 @@ from linaro_django_xmlrpc.views import handler as linaro_django_xmlrpc_views_han
 from linaro_django_xmlrpc.views import help as linaro_django_xmlrpc_views_help
 from django.views.i18n import javascript_catalog
 
-from dashboard_app.xmlrpc import DashboardAPI
 from lava_results_app.api import ResultsAPI
 from lava_scheduler_app.api import SchedulerAPI
 from lava_scheduler_app.api.aliases import SchedulerAliasesAPI
@@ -52,7 +51,6 @@ admin.autodiscover()
 # Create the XMLRPC mapper
 mapper = LavaMapper()
 mapper.register_introspection_methods()
-mapper.register(DashboardAPI, "dashboard")
 mapper.register(ResultsAPI, "results")
 mapper.register(SchedulerAPI, "scheduler")
 mapper.register(SchedulerAliasesAPI, "scheduler.aliases")

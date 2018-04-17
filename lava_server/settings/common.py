@@ -43,7 +43,6 @@ INTERNAL_IPS = []
 INSTALLED_APPS = [
     # Add LAVA applications
     "lava_server",
-    "dashboard_app",
     "lava_results_app",
     "lava_scheduler_app",
     "lava_rest_app",

@@ -24,7 +24,6 @@ class Migration(migrations.Migration):
         ("auth", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ("linaro_django_xmlrpc", "__first__"),
-        ("dashboard_app", "__first__"),
     ]
 
     operations = [
@@ -365,16 +364,6 @@ class Migration(migrations.Migration):
                         null=True,
                         db_column="results_link",
                         blank=True,
-                    ),
-                ),
-                (
-                    "_results_bundle",
-                    models.OneToOneField(
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        db_column="results_bundle_id",
-                        blank=True,
-                        to="dashboard_app.Bundle",
                     ),
                 ),
                 (
