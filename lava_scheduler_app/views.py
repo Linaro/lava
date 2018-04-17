@@ -1199,8 +1199,8 @@ def job_detail(request, pk):
                 if line["lvl"] == "results":
                     case_id = TestCase.objects.filter(
                         suite__job=job,
-                        suite__name=line["msg"]["definition"],
-                        name=line["msg"]["case"]).values_list(
+                        suite__name=line["msg"].get("definition"),
+                        name=line["msg"].get("case")).values_list(
                             "id", flat=True)
                     if case_id:
                         line["msg"]["case_id"] = case_id[0]
