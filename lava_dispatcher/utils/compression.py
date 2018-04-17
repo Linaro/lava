@@ -49,7 +49,7 @@ def compress_file(infile, compression):
         raise JobError("Cannot find shell command to compress: %s" % compression)
 
     # Check that the command does exists
-    which(compress_command_map[compression])
+    which(compress_command_map[compression].split(" ")[0])
 
     with chdir(os.path.dirname(infile)):
         cmd = "%s %s" % (compress_command_map[compression], infile)
