@@ -755,8 +755,13 @@ class TestOverlayAction(TestAction):  # pylint: disable=too-many-instance-attrib
             self.errors = "Missing path in parameters"
 
     def handle_parameters(self, testdef):
+        def raise_if_not_dict(data, key):
+            if not isinstance(data[key], dict):
+                raise TestError("Test definition item '%s' should be a dictionary" % key)
+
         ret_val = ['###default parameters from test definition###\n']
         if 'params' in testdef:
+            raise_if_not_dict(testdef, 'params')
             for def_param_name, def_param_value in list(testdef['params'].items()):
                 if def_param_name is 'yaml_line':
                     continue
@@ -764,6 +769,7 @@ class TestOverlayAction(TestAction):  # pylint: disable=too-many-instance-attrib
                     def_param_value = ''
                 ret_val.append('%s=\'%s\'\n' % (def_param_name, def_param_value))
         if 'parameters' in testdef:
+            raise_if_not_dict(testdef, 'parameters')
             for def_param_name, def_param_value in list(testdef['parameters'].items()):
                 if def_param_name is 'yaml_line':
                     continue
@@ -773,7 +779,8 @@ class TestOverlayAction(TestAction):  # pylint: disable=too-many-instance-attrib
         ret_val.append('######\n')
         # inject the parameters that were set in job submission.
         ret_val.append('###test parameters from job submission###\n')
-        if 'parameters' in self.parameters and self.parameters['parameters'] != '':
+        if 'parameters' in self.parameters:
+            raise_if_not_dict(self.parameters, 'parameters')
             # turn a string into a local variable.
             for param_name, param_value in list(self.parameters['parameters'].items()):
                 if param_name is 'yaml_line':
@@ -782,7 +789,8 @@ class TestOverlayAction(TestAction):  # pylint: disable=too-many-instance-attrib
                     param_value = ''
                 ret_val.append('%s=\'%s\'\n' % (param_name, param_value))
                 self.logger.debug("%s='%s'", param_name, param_value)
-        if 'params' in self.parameters and self.parameters['params'] != '':
+        if 'params' in self.parameters:
+            raise_if_not_dict(self.parameters, 'params')
             # turn a string into a local variable.
             for param_name, param_value in list(self.parameters['params'].items()):
                 if param_name is 'yaml_line':
