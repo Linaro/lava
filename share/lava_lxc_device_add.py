@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2017 Linaro Limited
@@ -104,6 +104,7 @@ def main():
     lxc_cmd = ['lxc-device', '-n', lxc_name, 'add', device]
     try:
         output = subprocess.check_output(lxc_cmd, stderr=subprocess.STDOUT)
+        output = output.decode("utf-8", errors="replace")
         logger.debug(output)
         logger.info("[%s] device %s added", uniq_str, device)
     except subprocess.CalledProcessError as exc:
@@ -111,6 +112,7 @@ def main():
                      uniq_str, device, exc)
 
     logger.close(linger=LINGER)  # pylint: disable=no-member
+    return 0
 
 
 if __name__ == '__main__':
