@@ -549,6 +549,7 @@ class CompressRamdisk(Action):
             try:
                 # safe to use shell=True here, no external arguments
                 log = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT)
+                log = log.decode("utf-8", errors="replace")
             except OSError as exc:
                 raise InfrastructureError('Unable to create cpio filesystem: %s' % exc)
             # lazy-logging would mean that the quoting of cmd causes invalid YAML
