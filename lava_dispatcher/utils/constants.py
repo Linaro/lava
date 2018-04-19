@@ -94,8 +94,6 @@ KERNEL_TRACE_MSG = 'Stack:\s+(.*\s+-+\[ end trace (\w*) \]-+)'
 KERNEL_FAULT_MSG = '(Unhandled fault.*)\r\n'
 # panic
 KERNEL_PANIC_MSG = "Kernel panic - (.*) end Kernel panic"
-# init dropping to a shell - often needs a sendline
-KERNEL_INIT_ALERT = 'ALERT! .* does not exist.\s+Dropping to a shell!'
 
 # Login incorrect message
 LOGIN_INCORRECT_MSG = 'Login incorrect'
