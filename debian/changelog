@@ -1,3 +1,10 @@
+lava (2018.4.post1-1) unstable; urgency=medium
+
+  * New production release
+  * Combined lava-dispatcher and lava-server source package
+
+ -- Neil Williams <codehelp@debian.org>  Thu, 19 Apr 2018 09:28:43 +0100
+
 lava-dispatcher (2018.4-1) unstable; urgency=medium
 
   * New production release
@@ -805,11 +812,1209 @@ lava-dispatcher (2016.12-1) unstable; urgency=medium
 
  -- Neil Williams <codehelp@debian.org>  Thu, 22 Dec 2016 11:48:13 +0000
 
-lava-dispatcher (2016.11-1) unstable; urgency=medium
+lava-server (2018.4-1) unstable; urgency=medium
 
-  * New production release aimed at Stretch.
-    Release details available at:
-    https://projects.linaro.org/browse/LAVA-789?filter=12078
+  * New production release
+    f60a5328 callback: fix crash in python3
+    e627f8ec Allow skipping one unit test if kvm not enabled
+    0208402f job: make the link to the bottom more visible
+    dd26e4fb Fix default BRANDING_BUG_URL
+    b2cc847b Adjust bootm addresses for panda
+    f25548b5 Make snow u-boot prompt more precise
+    6a209317 Misc beaglebone black fixes
+    1481ac98 Add note for bug in LXC templates on Stretch
+    4ed6a2f5 api: fix a crash when a test case is not unique
+    53c57de9 Fix crash when test case metadata is empty
+    99c32f4d Fix crash when action_metadata is None
+    b286b6bd Fix missing import
+    b708b038 Test user_command and flasher templates
+    c316e516 Update more scripts to use Python3
+    4be0dd49 fix sphinx warning in docs
+    458f470e Improve "lava-server manage check" coverage
+    30efadeb LAVA-1274 fix javascript exception
+    31764a52 job: only update if failure_comment isn't empty
+    24fe81e6 LAVA-1276 - Search functionality broken on staging job list page
+    938a90d8 Update documentation for Python3 change
+    d4f64157 Fix deprecation warning from Jinja2 with Python3
+    1a5c55e8 Add hi6220-hikey-r2 device-type template
+    13758edc Update development notes for Python3
+    8f0d5a94 Pass LXC/fastboot parameters to all jobs in split_multinode_yaml
+    f3d7a8ac Fix API breakage from 2d37b3
+    2658935c Fix Python2 syntax when creating secret key.
+    65a30238 Fix Device.CONFIG_PATH for individual unit tests
+    c5fbfa51 Use suppress from contextlib
+    60b50af3 Remove unused shebang
+    c9ff6e9f Fix shebang for python3
+    494ae3af Fix wrong import
+    33c5f72f LAVA-1269 - Store checksum of job.original_definition in metadata
+    f8124a8c Import infrastructure_error from the right module.
+    60ecef88 Add failure comment and error type to test job notifications.
+    4e313b45 Fix logic for template check warning
+    ab65a859 Fix the logic in e1f44097
+    b0c549bb Fix unicode error in migrations
+    ec01c5bf Replace "!!python/unicode" in job definitions.
+    f4386c08 LAVA-1147 Support more than 3 priorities
+    c169c287 Remove exclusive flag from device dict
+    d7cba2d1 LAVA-1250 Allow admin to finish a TestJob
+    3b54f8d2 Preserve comments in job definition display
+    66cd46bd LAVA-1167 document the 'history' feature
+    8d835d78 Python3 changes needed for lava-server
+    73fa8d2e device-types: add sharkl2
+    48f63bf9 Fix missing conditions variable in custom query manager.
+    bdb07a21 Fix pep8 errors
+    70614729 Fix crash when device dict is invalid
+    b00fde96 Remove jessie specific code
+    fa0418b7 Improve the Admin query view
+    7d8d94de Skip refresh of archived queries
+    926ba5af Use the TestCase job error message as failure comment
+    e1f44097 Fix invalid_template check
+    ea3d99ca LAVA-1263 separate vexpress bootloader_prompts
+    0ef60b0e Add admin link to device pages for superuser
+    bba64496 Cleanup some doc error messages
+    91c03b30 Fix multinode sub job definition display.
+    48bb281e Job resubmission shows Internal Server Error
+      on incorrect resubmission.
+    7b2201b5 Cancel subjobs from admin cancel action
+    aac25876 Fix a grub error message so python can compile it into an RE
+    3555256f device-types: add sun8i-h2-plus-orangepi-r1
+    1ae6dda0 device-types: add sun8i-h2-plus-orangepi-zero
+    f5e95c3a Save the error when the job fails to start
+    1fbd68fa allow load_devicetype_template to return raw yaml
+    2667881c dt: alert when the template is invalid or missing
+    75cf05ee Move infrastructure_error into test.utils
+    5819a2cd Add banana pi zero device-type config
+    d8f605c0 Add another possible failure message to grub
+    e5aca37a LAVA-1129 save job full configuration before start
+    f54c2acf Make some after installation debug doc more visible.
+    4bb83a63 Fix 500 when device-type template does not exist
+    e1371fef juno: allow override of bootloader_prompt
+    b33a3165 Make the code python3 compatible after 0d1e0a07
+    d73687c6 LAVA-1253 - CSV export headers are incorrect
+    14aa6477 Force device hc for ConfigurationError and LAVABug
+    02011867 Use base-fastboot jinja2 template for mediatek-8173 device type.
+    606ad8b0 LAVA-1240 - LAVA: add test job name to email notification subject
+    414edc4d Add the overlay deploy method to all uboot devices
+    f1c8d9c7 Add the flasher configuration to all uboot devices
+    fec9dfac settings: simplify and allow setting any variables
+    f2f6844d LAVA-1247 - Results API make_custom_query not working correctly
+    1a27b586 Remove unused variables from instance.conf
+    de0834d6 settings: remove most variables from settings.conf
+    24646594 settings: remove appname
+    3f69dd81 Fix lava-server manage addldapuser --username USER
+    5aebdfce admin: fix view_siet link when using MOUNT_POINT
+    f784db06 admin: use dynamic urls instead of static ones
+    0d1e0a07 Fix test for extra results metadata in callback data
+    356ba428 Move standard ARMMP tests to stretch
+    227caa82 LAVA-1249 address issues with large pexpect buffers
+    4bdb5d17 Allow time to drain capacitance
+    717a3387 Up power off timeout for juno
+    7a1260d4 Fix bootloader prompt for juno uboot
+    ca334c5c job.validate does not accept any parameter anymore
+    fa0855de Remove v1 leftover
+    5287d13d Remove unused output_dir
+    e9fc34f0 device-types: rk3399-puma-haikou: align booti_kernel_addr
+    33c8579b Add imx7s-warp device-type
+    416fb3e5 Do not crash when re-adding the same device (or dt)
+    18318d27 Add admin actions to update worker health
+    f57d683d master|logs: automatically reload certificates
+    390c8e2b lava-master: fix return values
+    2d37b341 Remove is_pipeline
+    45d5767a lava-master: record error message as failure_comment
+    74713edb Use STATIC_URL and get_absolute_url when needed
+    60283360 Remove TestJob._results_link
+    f9a36ee1 LAVA-1180 Refactor device-type page
+    3456b9ea LAVA-1128 Use bulk_create to create TestCases
+    cfcc0fc8 Move postgresql timeout to wsgi
+    4c61a59c LAVA-777 lava-slave is now restartable
+    806ac08b job api: allow filtering by state/health
+    fb0b700e device-types api: allow get/set health-checks
+    6eadfc62 List Infrastructure, Bug and Configuration errors
+
+ -- Neil Williams <codehelp@debian.org>  Fri, 13 Apr 2018 15:57:31 +0100
+
+lava-server (2018.2-1) unstable; urgency=medium
+
+  * New production release
+    9ef41db7 Fix missing failure comment
+    206e5c65 manage jobs: allow to force fail a job
+    42a3bc31 Save TestCases even when metadata is too large
+    5efb92c7 lava-logs: look for lava.job results in all cases
+    19937074 Use the named urls instead of static urls
+    e60afcbc Ensure uboot_extra_error_message is usable
+    843a49ed Use reverse() instead of a static url
+    7583bb09 device-types: add meson-gxbb-p200
+    40cbffc8 breadcrumb: keep the last element clickable
+    2d5f34d8 Update docs examples metadata
+    5a5548ad device-types: fix broken conditional in base-depthcharge
+    d663a9dc device-types: add rk3399-gru-kevin
+    21ac9eb2 LAVA-1230 include lava-logs in encryption docs
+    d57e9131 device-types: rpi3 32-bit: allow custom kernel cmdline
+    32312dc7 device-types: rpi3 32-bit: allow extra_kernel_args append
+    afa28d5a device-types: rpi-3 32-bit: fixup DT load address
+    0c9e227b Add missing change to the X15 template
+    968a00dd Fix fdt load command wrapping.
+    156f1e7b fix quoting of serial numbers
+    57610c06 lava-logs: simplify log format
+    5301ef66 breadcrumb: the last element should not be a link
+    08547de9 Fix api pages titles and breadcrumb
+    fc03f62b LAVA-1083 - Bug links can be managed only on list pages
+    35146e4c Remove distinct ON because it can't be used correctly with order by.
+    85f6bd67 Test shell helper support with base-fastboot
+    b86981ad master: do not send START to offline workers
+    b6cf83f8 admin: fix group cancelation
+    8890d270 Drop auto-login from hikey 620 template
+    5642e8cd Allow cancelation in Scheduling and Scheduled too.
+    bbf6c5bb LAVA-1220 - Update API calls and docs for scheduler changes.
+    742433b0 Drop invalid boot_message for hikey 6220
+    441919d7 Skip kernel-start-message for dynamic connections
+    8f4ecdcb Add a parameter to u-boot to override interrupting
+    8c093e7f Reorganise fastboot for multiple OS support
+    abb9fa5d Adding device-type config for MPS devices
+    240ffeda Add rk3399-puma-haikou device type and health check
+    bd0c7da7 TestCase: fix crash when accessing old test cases
+    4e22927e Set Unknown as the default option for changing health
+    078b6499 api: return the right http error code
+    e6b3ffdd Fix doc Unexpected indentation error.
+    b523e20f Fix the filename in header to the actual filename.
+    acf537fb Improve device tables
+    a0a87385 LAVA-1225 catch errors when creating health checks
+    ea8d5a72 Do not show Idle state when device is unavailable
+    dd4f25bd Allow custom tftp commands for loadfdt in U-Boot
+    a074403a LAVA-1219 allow unicode for job.original metadata
+    58d23f23 Python3 branch now merged into master
+    717c177c fix missing quote mark in docs
+    dcb8bd5a LAVA-1224 support for Xilinx-ZCU102 ZYNQ
+    fec11287 Improve python2 and 3 support
+    756d2e6a migrate-job-output: fix inverted logic for dry-run
+    fbeaa57f Add NotificationRecipient in the admin site
+    135654d6 Fix online devices listing
+    7007fda8 Fix change in 70cb792c7 to show extra_source
+    025bab80 LAVA-1221 change mouse pointer whenever needed
+    b28e4c7b LAVA-1222 use verbose names instead of constants
+    a281a6a7 Extend timeout to cover when dispatcher is busy
+    3985a0e1 Update development docs for Python3 plans
+    71374e3a migrate-job-output add --slow and --dry-run
+    9ce62f2d LAVA-1213 - move developer builds to Python3
+    81fbb4c4 Charts x-axis attribute should refer to job metadata
+    7af37d79 LAVA-1164 relicence some lava-server files
+    14604fb5 LAVA-1211 Document appending to kernel command line
+    e8eb6ec0 Add admin actions to update device health
+    b16e197b LAVA-1107 fix "device-types add" documentation
+    18be0e5b Set device health to unknown after an infra error
+    54ae8263 LAVA-950 use a ROUTER socket to connect to master
+    54ed49c2 Fix crash in lava.scheduler.jobs.logs
+    7a2b3a68 Change the flow of bootloader commands so they are executed individually
+  * Remove echo operations from postrm until debhelper support is removed.
+    (Closes: #887622)
+
+ -- Neil Williams <codehelp@debian.org>  Thu, 08 Feb 2018 15:25:01 +0000
+
+lava-server (2018.1.post1-1) unstable; urgency=medium
+
+  * API hot fix
+    b5502a4a API: restore legacy behavior
+    6320f017 API: fix old behavior for device status
+    688d9a9e Notification: allow to replace "state" in the url
+    fef5fcb1 Fixup 0e671139. The field is called "status"
+    19a8db1d Fix up unit test for changes since 6114d0f9b
+  * Remove echo statements which interfere with debconf.
+    (Closes: #887622)
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 05 Feb 2018 09:42:00 +0000
+
+lava-server (2018.1-1) unstable; urgency=medium
+
+  * New production release
+    d87ccc73 Restore Health and TestJob Reports calculations
+    6aa325e0 Add a reason when updating device and worker health
+    aaa1a959 Notifications: use email signature conventions
+    3f6770f4 Fix notifications and log the exception
+    fbe57d5f Only use get_change_message on Django > 1.10
+    832edcf8 fix pep8 error
+    ff1ef1c4 Disable high limits on ODROID-XU3
+    7ae61e90 Remove old sample job
+    4be662da LAVA-1206 - Improve docs for API chunking
+    6c717e49 LAVA-1207 - Add xmlrpc API call for test suite list.
+    d8d7ffdd Fix pep8 - E127 continuation line over-indented for visual indent.
+    81a2a6d1 Return state and health information as strings not numbers.
+    d2451a1d LAVA-1163 - Unify json library across lava-server.
+    d9ea9343 LAVA-1192 document use of static_info
+    824d9580 Deprecate Jessie in favour of Stretch
+    0791d8be LAVA-1198 - Make sure API covers retrieving the set of test suites
+    489b83da Add optional support for python3 unit tests
+    91782fac A sequence is required before excluding a field in table.
+    6be77f09 AUTHENTICATION_BACKENDS list is available in distro settings only.
+    938352ff Add documentation for the depthcharge boot method
+    f6172120 Ensure added blocks are wrapped in conditionals
+    7ca1a522 LogEntry: improve SQL queries
+    38c8c8e3 Improve LogEntry tables
+    e6bb9cf3 LAVA-1199 - Implement incremental result exports in XMLRPC
+    2945e5f7 Simplify TestJob and Device state display
+    2e6460bd LAVA-1197 - Document REST API chunking on test suite level.
+    2f7bc9ab Fix pep8 error
+    4f896471 LAVA-1197 - Implement incremental result exports in REST API
+    7a0854ac LAVA-1103 document user and group creation
+    4b7b353a lava-master: fix string serialization
+    1e9c1aa4 LAVA-1119 - users and groups for devices
+    4963ffa9 LAVA-1102 - add group support to manage commands
+    bf9dd4ec Add missing sub-command parser for device update
+    9a480bc0 Fix missing import for lava-master
+    39faeb5f fix crash when canceling a non-scheduled job
+    4f201dd6 master: use yaml.dump to dump a dictionary
+    045ed9ec schema: validate multinode
+    2d2963d9 Allow browsing LogEntry in the admin interface
+    ba37046c fix pep8 error
+    8c6b3c35 LAVA-1186 - Fix python3 unit test support
+    be8b1e5d Worker: record the last ping received
+    1f4157c1 lava-logs: fix issue when unbinding under python3
+    d64514fb Port linaro_django_xmlrpc to python3
+    4b04cc30 lava-server manage: make the sub command required
+    f49a1bd7 Port scheduler.jobs api to python3
+    320cb918 jobs: split the database requests in small chunks
+    babab5ce Prevent noise from apache2 for DocumentRoot
+    79cfc375 Add FIT parameters to base-depthcharge and rk3288-veyron-jaq
+    62dd2464 python3: port timing page
+    b52c84c6 Port BreadCrumb to python3
+    c4432f55 lava-master: sleep a bit when db connection drop
+    6b71a7e0 Port lava-master to python3
+    7f0a2ae5 Improve support for python3
+    e2182b3c Port lava-logs to python3
+    cc05ce30 All images that accepts compression will also accept archive.
+    2bb99530 Port lava daemons common functions to python3
+    1e84fdc9 Remove deprecated settings
+    c530a82e remove restrictions on worker health transitions
+    f66b7f6b workers.show now returns the list of devices
+    36239079 Print LogEntry messages on the admin main page
+    02f83e49 Test the Device and TestJob state machine
+    2d427a84 Remove unused job json functions.
+    70cb792c LAVA-963 - Support python3 -Wall unit tests
+    34d52727 Add base-depthcharge and rk3288-veyron-jaq device types
+    60f85e3e Derive protocol elements from sample jobs.
+    012034ef Update app_index.html from last django version
+    849aaa6c manage jobs rm: try to be nice by sleeping a bit
+    57a2356d Allow for instant canceling
+    bc754b3f Fix udecode crash when receiving unicode strings
+    6aad013a Generate an event when a job is submitted
+    ed9546fc master: improve scheduling regularity
+    698817ae Fix fastboot boot sequence for hi960-hikey device type.
+    107cea4b Fix 500: remove_broken_string has been removed
+    7c95d706 Extend base-fastboot template for fastboot device types.
+    d779a194 Python 3 support for cStringIO.
+    65e769d7 Update example test job with pre command
+    2467411b LAVA-1170 - Unicode literals port
+    3bf73425 Provide and Document the storage_info support.
+    270c90a4 Document the state machine and scheduler
+    87af6a56 LAVA-1169 - Support xmlrpc.client imports in python3
+    e24865f3 Update lxc fedora example
+    14792136 No need to save the object returned by get_or_create
+    6114d0f9 Rewrite from scratch the job scheduler
+    9da8d83f Fix broken line detection
+    af632f12 Add a test character delay to rpi3
+    a5163e61 LAVA-962 - Port lava-server to python3 exclusively - urllib
+    b7e7ec2a LAVA-1085 - First time 'run query' click does not
+      enable 'Results' button
+    a47c170e LAVA-1084 - Clicking on 'live query' tooltip will submit request
+    e50c2d03 LAVA-1082 - Results action link points to the same page
+    6705ec87 Refresh the setting files
+    e4b39c38 Store the lava_server static file in the right dir
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 08 Jan 2018 11:38:31 +0000
+
+lava-server (2017.12.post1-1) unstable; urgency=medium
+
+  * Hot fix release
+    2e00544f LAVA-1168 - LAVA job visibility bug
+    341f5dfa LAVA-1171 - Show 403 instead of 404
+    31b7b2a9 Fix "lava-server manage workers add"
+
+ -- Neil Williams <codehelp@debian.org>  Fri, 08 Dec 2017 14:32:43 +0000
+
+lava-server (2017.12-1) unstable; urgency=medium
+
+  * 2017.12 production release
+    de84f115 Move away from bugs.linaro.org
+    1aeb97ee Default extra_cpu_reset_message cannot be empty.
+    bd529d6c LAVA-1127 - Extend bootloader reset messages
+    1c510f12 Fix a data race between lava-logs and lava-master
+    41c63693 fix pep8 error in pylint comment
+    aea79d3d Fix authorization for testsuite and testcase views.
+    3587c07e LAVA-1151 - REST API for individual test case results
+    23912624 LAVA-1127 - Extend bootloader reset messages
+    0f523875 Add docs on configuring the services.
+    971c6bd8 lava-logs: allow setting master_socket and socket
+    f59e1ab1 LAVA-1123 Add check on active daemons.
+    da2751b6 Make sure refreshing query works when a migration removes a field.
+    3fb3272c Handle MultiNode sub_id with the REST API support
+    06b8797e LAVA-1104 document namespaces
+    a8e20ece Update device dictionary handling
+    12597e12 Fixup documentation examples
+    3682a7f5 device-types: add dra7-evm
+    c83894fe Fix timeout in query refresh/create because of
+      'distinct all' issue.
+    2498634b fix logging when lava-logs is going offline
+    549bab84 Send a signal when the worker state/health change
+    21d68083 Worker: improve main page and make updates atomic
+    9b6c3365 Worker: make state read only in the admin
+    fe39f6c3 Fix breadcrumb for devices, jobs and workers
+    f6ca007d LAVA-1132 document lava-test-raise
+    d77fec2f Remove unused template tag "linenumbers"
+    c62734ac LAVA-1125 - Separate results download link for a summary
+      of the test job
+    eaeefc82 LAVA-1047 health check issues
+    c9105768 Fix a typo in code comment.
+    64bb15c3 Modify apply-overlay and sparse parameter doc in
+      fastboot deploy action.
+    b362332f Fix web link to sparse_format.h in doc.
+    52520b58 Remove unused imports
+    7c0c1c6c Add a section of required config for UBoot
+    481c15ec LAVA-986 Poplar support using U-Boot TFTP
+    731d0419 Add Worker state and health
+    169bcb0b Fix typo and update URLs in example artifact conversion job in doc.
+    4a341866 Update various Debian references
+    8990fd7b Port template to python3
+    983bc763 Fix Report a bug and Support links.
+    9b688776 Take CUSTOM_DOCS into account for Help link.
+    c0cdd0eb Try to create a generator for yaml dumping
+    974b3a16 Fix help link on index page.
+    8d344d65 Point to LAVA docs directly without a dropdown for Help.
+    c7333bf0 Tweak v1 removal page for latest changes
+    ad8f556d Remove unused functions and dependencies
+    d6ea4293 Re-organize deploy action doc.
+    ee2b4dce Remove unused js lib jquery.formset.js.
+    6e8c08e4 Purge .pyc files on each unit test run.
+    8c1cc57e LAVA-737 make lava-master the job scheduler
+    94c1df3d master and logs: always close zmq sockets
+    e6e5e9da Fix a crash when parsing job description
+    84172121 Fix a crash when parsing job description
+    f5b7f16f LAVA-1124 - Adopt StreamingHttpResponse for large downloads
+    15060b06 Add a YAML syntax checker for static device configs
+    c98655fd Prevent MultipleObjectsReturned for jobs with many related TestData
+    2748e682 LAVA-1122 - skip retired devices in deploy check
+    db2aed27 LAVA-1126 - RESTAPI support for scheduler downloads
+    f721b3f1 master: improve logging
+    94a4adf8 Add a simple example for multi-uart test using BBB
+    c014613c master: schedule jobs only if lava-logs is pinging
+    7c4570b5 Remove unused file
+    4aeb14bb Remove daemonise helper
+    09b1c82c Document the group visibility setting.
+    e3bbbc5e Remove init.d scripts and use systemd directly
+    e12b6722 Fix chart query remove link.
+    09bdae2a Remove obsolete doc regarding test case dependencies.
+    edddbf9e master: job_status is not sent anymore by slaves
+    252e2c7a Send the ping interval to the slave.
+    17ba6914 Rename dispatcher-master to lava-master
+    2a07e4ea Mark a job as RUNNING only when not already done
+    7b1cd8c3 lava-master: improve behavior with duplicated END
+    39e78200 Factorize lava daemon functions
+    1def9370 jobs: allow removal of only v1 jobs
+    debec5da Remove unused models and fields
+    0583c4e2 Add hip07-d05 device type based on d03
+    3019e41b Move log handling into a separate process
+    05dbbb7f LAVA-1063 and LAVA-1064 - Drop dashboard app.
+    42bfd0e5 dispatcher-master: prevent growing message queue
+    611aaa13 Document the process of V1 test data removal
+  * Depend on python3-sphinx in preparation for python3 and django2
+  * Drop dependency on lsb-base with the move to systemd-sysv
+  * Add back a debconf prompt for removal of V1 test data - one time
+    only. Ignored if no V1 test data exists.
+  * Update copyright for removed files
+  * Update dependencies on debootstrap and python-pexpect in metapackage
+
+ -- Neil Williams <codehelp@debian.org>  Fri, 01 Dec 2017 19:07:47 +0000
+
+lava-server (2017.11-2) unstable; urgency=medium
+
+  * Fix error in postrm script
+
+ -- Neil Williams <codehelp@debian.org>  Sat, 11 Nov 2017 11:26:37 +0000
+
+lava-server (2017.11-1) unstable; urgency=medium
+
+  * New production release
+    a799fc6c Fix links back to the main instance
+    5b9656b6 Fix broken plural in header
+    b21f8c8f Fix crash in job_section_log
+    c9526f01 Document the LOG_SIZE_LIMIT setting in settings.conf
+    63b57c94 Remove lava-mount-masterfs
+    75b403f4 Remove add_device script
+    8ddea823 Add description about the disc space requirement
+        for pg_upgradecluster.
+    5c9dceb2 Remove TemporaryDevice imports
+    9b21ea48 Removed unused Worker functions
+    2accb4c3 Matching change to templates for directory change
+    1d384c4a Update docs regarding device-dictionary lava-server manage command.
+    32472fac Port 77fd10e2 to scheduler.devices.get_dictionary
+    114bbfa5 LAVA-1093 - Add a management command to drop all materialized views
+    8bc9d83a Update dashboard XML-RPC API help for api_version
+    bb090e96 LAVA-552 - add system.api_version support
+    77fd10e2 LAVA-1092 support passing a context to device_config
+    de7ad3aa Remove dashboard_app views and static files.
+    4bc68531 Remove templates from dashboard_app.
+    1a618c27 Remove unused functions
+    d50deca7 api: limit the number of jobs returned
+    59880e14 Fix HTTP 500 on devicetype health history
+    a39fecf5 Remove unused resources (css, js and images)
+    a32ac3b6 Rename base-bootstrap and content-bootstrap
+    7c108de1 job: print lava.job result in case of failure
+    b51c419f Remove old templates
+    a9139c1f Use bootstrap template
+    7915f18f Remove unused resources
+    7331901a scheduler.api.jobs.show: add failure_comment
+    71233bff Fix print syntax for python3 compatibility
+    936d5eca Remove unused tags
+    4ebb2a39 Remove unused sources
+    21a7eb18 Save more sql queries by caching values
+    4d0d867e Remove non pipeline jobs support
+    a6648dbd Retain docs on disabling V1 workers
+    8eac0d74 Revert "LAVA-950 set the master identity"
+    68573b1a Remove V1 dependencies
+    a8151559 timing: handle new start/end line format
+    26cc3ad0 Remove unnecessary js lib beautify.
+    c44009fa Simplify job view
+    e1da85d4 Fix loading of description.yaml
+    7b41f7ef Add documentation for secondary media writer parameters
+    1b4d3dd5 LAVA-1081 migrate instance name to settings
+    f3dc1987 Fix up typos from earlier changes
+    faa24f59 LAVA-1079 - remove HIDE_V1 and HIDE_V2 doc options
+    942b84c3 Remove unused functions and imports
+    e61a4831 LAVA-1056 Drop V1 documentation
+    126dce0c Fix crash introduced by 42451c9cc
+    f0b28214 Remove v1 codebase
+    31bb1bf0 Fix notification exception when query is used for data comparison.
+    a6cff700 Remove last references to lava_dispatcher v1
+    043690d9 Remove references to lava_dispatcher v1
+    4c9e493c Remove dashboard_app traces from rest of the codebase.
+    c371b8ca drop link to removed page
+    1b1b638e LAVA-876 - Return empty data stubs for dashboard API calls.
+    919c10c2 Remove links to dashboard_app in the scheduler_app
+    1483e9fb Remove leftover from job wizard
+    f7a1c976 docker: allow passing extra options
+    42451c9c Use all_jobs_with_custom_sort when applicable
+    cc4ffd64 Fix broken links in example test job
+    0ca5d75c Drop the migration status page.
+    b37fe944 Add a device-type config for the rpi-3b in armv7 32bit mode
+    9e904a18 Revert "LAVA-876 - Remove access to Dashboard"
+    f07e0950 Fix warning regarding naive datetime
+    e8348425 Remove more references to dashboard_app
+    103a44be LAVA-876 - Remove access to Dashboard
+    d33c9c98 LAVA-876 - Remove access to Dashboard
+    b6fc46aa Revert "LAVA-1038 add a settings to archive the instance"
+    f75a333d Do not run dashboard test anymore
+    d9163445 Remove references to v1 jobs
+    addb61d9 bug 3268: fix lava-master crash with invalid logs
+    febf91b1 Improve advice on api/help
+    ac8b7df3 fix pep8 error
+    64025cf3 LAVA-1072 test all template connection syntax
+    10d5fbe1 Adjust U-Boot load addresses for tegra124 devices
+        to allow bigger kernels
+    f30ef936 LAVA-1065 - Remove dashboard_app urls server wide.
+    096a2f1c LAVA-1049 - Allow for .yml as well as .yaml for healthchecks
+    918f0bc7 Fix logic so addldapuser and mergeldapuser work for
+        all LDAP configs
+    36fcb3c2 Documentation changes for multiple uarts
+    b1de8acf Update instructions for migrating postgres
+    0ff08373 LAVA-1053 Results limit does not work for queries
+    f9e64aa1 Fix SQL request storm when listing jobs
+    2d9c4757 No need to save after get_or_create or Create()
+    8988cb36 LAVA-896 fix level in result export
+    219fa3dd LAVA-1073 - support for a second UART on a device
+    c934bbbe master: fix database reconnection
+    4f0e0e62 LAVA-950 set the master identity
+    316d77fb Expand the device integration guidance.
+  * LAVA-1099 support old and new package versions
+  * Fix missing call to install_database
+  * Drop copyright references to removed files
+
+ -- Neil Williams <codehelp@debian.org>  Fri, 10 Nov 2017 13:16:01 +0000
+
+lava-server (2017.10-1) unstable; urgency=medium
+
+  * New production release
+    03fec0ea Fix out of date stretch reference
+    2c8a88d8 Include non https in title for security defaults configuration doc.
+    56185add Mark required parameters in left over deploy action reference.
+    b1de8acf Update instructions for migrating postgres
+    2b845967 Fix issues in the documentation build.
+    f9e64aa1 Fix SQL request storm when listing jobs
+    95b12c01 Fix missing import
+    0a63c2f3 Adjust U-Boot load addresses for imx6q-sabrelite to allow
+      bigger kernels
+    3a4cddf4 LAVA-341 Unicode issues in tables and queries
+    5bff2fd5 Mark required parameters in deploy action using an asterisk.
+    00b5044a LAVA-1035 Force all Dashboard objects into read-only mode
+      for users
+    7a006f64 Change load addresses for Jetson TK1 to allow bigger kci kernels
+    ca5e6834 Update commands for eMMC boot of OE on X15
+    0d17e797 Add docker device-type configuration
+    f0c2107c Remove doc references to lava-lxc-device-* commands.
+    715c6309 LAVA-771 - Support dragonboard-820c with lxc
+    7a4adb03 Fix the hierarchy of md5sum and sha256sum in nbdroot index.
+    576661f4 Make clear when to use lxc://
+    7c68e21b Document download deploy and explain about lxc:// url scheme.
+    8f4d7419 Rewrite fastboot deploy action reference doc.
+    11f5c222 archive: do not allow to force hc
+    9536450d logger: drop level and action name
+    771d0d93 Fix a typo in deploy to name.
+    0a2404fa Update command requires an alias argument
+    e7a704a1 Add V1 EOL summary to the index page for all docs
+    cdaa6376 LAVA-1003 do not lose logging messages
+    f09b6beb LAVA-1045 - document the archive setting
+    483fb1a7 LAVA-1038 add a settings to archive the instance
+    866afbf4 migration: v1 health-check are not used anymore
+    896db15b LAVA-1033 remove v1 job wizard
+    2eac055b LAVA-1043 fix handling of large log files
+    aef7d7b8 Add device-type disco-l475-iot1
+    399b9dbc Use the CDumper to export results
+    c9dc6a14 LAVA-1032 reject v1 submission at api level
+    65394986 Drop lookups to ActionData from testcase export
+    80d1a9fa Add support for the NextThing CHIP Pro
+    21c8fc52 Only write logs to output.yaml
+    01df9ce0 Improve job listing by fetching more data
+    436c220e Decrease SQL queries when listing test results
+    445b9c66 Add support for reading django settings for limiting
+      LDAP group access
+    a33b9c9f Only set the job status if lava-run crashed
+    581b616f Fix boot action doc for fastboot and lxc boot methods.
+    08393dbb Use new logging API
+    33a73bb3 device-types: panda: handle bigger kernels
+    746fe4c9 Allow override of prompt in device configuration
+    5932f9d1 LAVA-1048 Extend X15 to typical U-Boot support
+    affaa35d Fix error message in daemonise.py
+    e24db160 Fix lambda syntax
+    8fb16105 v2: Do not fall back to db for health-checks
+    bceecc64 Do not submit new health checks for v1 only device
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 04 Oct 2017 08:54:36 +0100
+
+lava-server (2017.9-1) unstable; urgency=medium
+
+  * New production release
+    6d1ff5c5 Improve the docs on lava-test-reference and metadata
+    2f11898f LAVA-997 - Invalidate primary connections setup when
+       power is configured.
+    ccfb3961 b2260: allow setting bootloader_prompt in device config
+    4a1b8f5f Prevent mistaken fixup of device reservation
+    5093f40c LAVA-1022 - V2 support for IFC6410
+    1f18eada LAVA-1021 - Document specifying branch for git
+    36513ec3 Change default source code URL after systems change
+    da49e558 Remove doc for unimplemented feature test-case-deps.
+    61dfd204 Document settings to enable authentication
+       in http://localhost
+    5cbf5b11 Allow vcs checks to skip monitor test actions
+    b85baa75 NBD kernel bootarg fixups
+    c089adb7 Add failure comment message via async update on the
+       job detail page.
+    5ca25620 Improve V1 doc build for Debian reproducibility
+    dccd1588 LAVA-998 - Default to shallow clones in overlay
+    250f27dd Fix warning of linaro.img not found.
+    938b3da1 Fix typos and warnings in deploy to nbd doc.
+    90c9ed74 LAVA-1013 improve performance of result export
+    0af80d19 LAVA-1008 Group visibility check
+    080dd10d LAVA-1007 Prevent NoneType crash in job duration
+    b2d90962 Fix typos in manage users which talk about devices
+    07e5fa19 Fix reference to smoke test
+    59340f70 Expand advice on good commit messages.
+    cfae2faa Skip some dashboard tests if django is too new
+    68b24fcc Revert "Move action fields templates to table files."
+    c9f65507 Add log file argument to dispatcher-master command.
+    dabaf74c LAVA-1002 - fix group label editing in query details page.
+    7398abd4 CTT-441 - lava-lxc-device-* don't work properly
+    f1cb7faf Decrease the number of SQL queries to list the groups
+    984f3b02 doc: fix example of zmq_client usage
+    f864696d Documentation build error tweaks
+    9aeff523 XMLRPC authentication: fix wrong logic
+    93572067 Basic integration advice for U-Boot devices
+    5b2d39d7 Support PyOCD for KW41Z and remove CMSIS boot method
+    3f8c8a93 Fix a typo in persistent container configuration doc.
+    d334642c Rename xmlrpc module to api
+    9f947433 Add ssh deployment support for secondary connections.
+    ce9f0da6 Document how to combine LXC and MultiNode
+    e2be8567 Allow documentation to be built with python3
+    cc6e9696 Add notes on writing new unit tests
+    c40ac0da Document option for device_type qemu to choose host audio handling
+    97eac4b6 Update lava-self documentation for change in output
+    7e0f6eca Fix PipelineDevice usage after last dispatcher commit
+    37d4eba4 Fix a typo - repeated usb_vendor_id parameter in
+       device_info example.
+    d4a80fc1 Improve the validation message when a role is not found in every
+    1a5aec5f Add a seealso for fresh installs of lava-tool
+    4707ff98 Check that the Debian package has been installed
+    72d30834 Mention cookie specific options for reverse proxy
+    716424a3 api: fix scheduler.jobs.submit's docstring
+    6dc1a966 Add sudo for the apache config copy command in V2 worker setup doc.
+    ae39d57b Add docs on calling protocols from actions
+    a49cc9c6 Expand the device integration guidance.
+    1fd5e964 Add Integration Stories for supported devices
+    620dcbf1 Move smoke-tests into functional test repository
+    ad2f57df device-type: update at91-sama5d4_xplained addresses
+    b6734844 device-type: update at91-sama5d2_xplained addresses
+    c4ead793 device-type: update sama53d addresses
+    1204f81c Skip links to secondary connections device-types
+    8b9068a3 Add Metadata output to verbose notifications.
+    2da8c076 LAVA-357 - Allow override of the nfsvers in base_nfs_root_args
+    5926b9a8 Catch TemplateError in notifications
+    98b3da07 Initial improvements for the Queries and Charts docs
+    092f56a5 device-type: update armada-xp-linksys-mamba addresses
+    0fdf33a8 device-type: update armada-388-gp addresses
+    5af8f640 device-type: update armada-370-db addresses
+    9f4c975f XMLRPC: self.user return an AnonymousUser instead of None
+    d7b34e2d Add an helper command to switch to a dev setup
+    9bedff1e Add option to enable listening on IPv6
+    8ff7c4f1 Extend secondary media docs
+    f132af4e Add support for secondary media for mustang
+    1fecd500 Integration of Hikey 960
+    b27f60c4 LAVA xnbd protocol support and documentation for nbd boot
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 04 Sep 2017 14:31:22 +0100
+
+lava-server (2017.7-1) unstable; urgency=medium
+
+  * New production release
+    a9390fc9a Remove debug hacking session from doc examples
+    13edd8f12 Skip certain V1 unit tests on django 1.11 and later
+    0577447fc Update query script for python3 and to output CSV
+    0b3b0beb7 device-type: addresses fix for armada-3720-espressobin
+    ed1e402e5 device-type: addresses fix for armada-3720-db
+    c382a5aa0 device-type: fix at91sam9m10g45ek
+    54a3b7a46 Apply change for distinct test case links to all results
+    1824a18fb Adding uefi-menu tftp method
+    71aac817e LAVA-363 - set the scheme in api/help from settings
+    2c840debc base-uboot.jinja2: don't load DTB if append_dtb is set
+    1b13a0e3e Fix extra keyword in api/help view
+    2882529bc Provide an example script for using queries
+    7f4cfe569 logs: continue to poll the log when canceling
+    25eaab176 XMLRPC: add offline_info argument to list endpoint
+    38f7570e3 XMLRPC: fix inconsistency between code and doc
+    8c134839d LAVA-972 test case should use ID in URL.
+    99725606c Remove references to OpenID and Crowd
+    95b959602 XMLRPC: add a function to download job definition
+    ebf80c266 XMLRPC: fix crash when device.worker_host is None
+    b1ec14c89 LAVA-861 separate base-fastboot.jinja2 template
+    c4fd79d57 Remove unused file
+    7c066195a Remove deprecated django configuration
+    520ac8778 XMLRPC: remove unused function
+    3b8ab7d61 XMLRPC: do not raise an error when canceling twice
+    cce1bdea6 XMLRPC: allow forcing a health check for a device
+    218408db6 Handle the new log level called "input"
+    b49d9fb96 Adding uefi parameters for vexpress
+    4a52ba861 Allow overriding django system check values from
+               settings as documented
+    d2067a5f3 LAVA-987 fix log parsing
+    bbc39489c results_app: API: add the 'run_query' function
+    8746edb6b results_app: API: add the 'make_custom_query' function
+    4fd429ac2 Add note on apache2 for V2-only workers
+    641e61dcb Explain the handling of measurements and Decimal
+    bf8f53bf5 Count going offline as busy in overview table
+    06febd188 Expand on essential roles, results and sync
+    815d41b52 Tighten advice on prompt strings in docs
+    351f6fe41 Add documentation for login_commands in auto_login
+    5a7d4be95 Avoid warning for health checks of retired devices.
+    5713f5295 Document transfer_overlay deployment differences
+    8f04c6097 Fix typo in multinode api documentation.
+    fe2093994 device-types: add meson-gxl-s905x-khadas-vim
+    853ee80e3 Move action fields templates to table files.
+    12de946eb Allow bare except and override pep8
+    dd4faacaf Enforce schema rules for metadata
+    352049204 Add missing check for null key|value in metadata
+    b77731b31 device-types: rcar-gen3-common: handle bigger kernels
+    d2acb94a5 LAVA-983 - Helper for DeviceStateTransition
+    b4208116c LAVA-980 - Fix django deployment warnings
+    778fd4a8b Fix link to glossary term
+    af85e5225 LAVA 931 - documentation.
+    212e98a3a LAVA-976 Use the Django system check framework
+    e9c7ad477 Adding commands for booting whatever the precanned defaults are
+    f78c58811 Added device type for Cavium ThunderX
+
+ -- Neil Williams <codehelp@debian.org>  Thu, 06 Jul 2017 18:21:32 +0100
+
+lava-server (2017.6-1) unstable; urgency=medium
+
+  * New production release
+    daf1e2a lava-master: fix init script
+    b6b5fe7 Reduce device configuration dynamic connections
+    ebf4463 Fix a crash in the migration when the db is empty
+    cdfeb12 Fix index out of range exception
+    33092ef Adding usb deployment method to vexpress device template
+    3257ee2 XML-RPC: remove unused imports
+    55dd014 XML-RPC: fix crash when called by anonymous users
+    a3d4718 XML-RPC: allow every user to get templates/dict
+    ddaf693 Add documentation of feedback support.
+    eaae89a Set a default connection timeout for lava-test-shell
+    f305e47 publisher: fix umask
+    c25686f logrotate: lava-master should be owned by lavaserver
+    2da8e74 logs: except more exceptions
+    14f5f6c Update docs for changes in 2017.6
+    a486d12 Tidy up of debian support docs
+    b05712d Preserve original comments when resubmitting
+    19bd2db XML-RPC: add an api to manage aliases
+    30973a0 Log an error when saving device configuration fails
+    763239d Use --arch for fedora LXC example
+    8f26102 XML-RPC: add a method to show tag details
+    19a69f7 fix location of example test job files
+    480a6f6 XML-RPC: add an api for handling jobs
+    356667d Update installation docs for Stretch release
+    da74ae5 XML-RPC: add a decorator for is_superuser check
+    49f370c XML-RPC: add a clean api for device-types and aliases
+    c6d503d commands/devices: extend devices command to add tags
+    1655dbf Move set commands outside body block
+    87b8c01 XML-RPC: add a clean api for workers and tags
+    351c16b XML-RPC: add a clean api for devices
+    c4dec1f device-types: add bcm2837-rpi-3-b
+    9ca0e0d Adding combined vexpress device template
+    67f531f Make lava_scheduler_app.api a module
+    d3021a3 xmlrpc: add a system.version function
+    3ef0157 linaro_django_xmlrpc: remove unused properties
+    e994852 Use render shortcut instead of the loader
+    e51ca21 linaro_django_xmlrpc: rework the application
+    4bbe17c LAVA-959 run lava-master as lavaserver user
+    b283288 Fix migrations from Debian Jessie to Stretch and ensure
+             smooth upgrade.
+    bc25204 LAVA 329 - Add old job URL to metadata when resubmitting a job.
+    271723d LAVA-782 - Change error type for incorrect handling of
+              custom queries.
+    368903e notify: Don't send verbose mails when the job is cancelled
+    71c514d Fix broken link in unit test.
+    1f48674 LAVA-955 - Remove 'arch' parameter from lxc protocol.
+    3b36ba0 Add auto_login test case in test_pipeline unit test
+    e23bb17 Fix typo which causes XML-RPC error when saving device dict
+    9a82aee XML-RPC: allow sub_modules
+    b0c7a5b Document reboot and apply-overlay elements for fastboot
+              deploy method.
+    8a93049 LAVA-935 - Provide feedback output from connections
+    d71f267 Fix typos in proxy configuration documentation.
+    c7227b3 Fix rebase error in grub hikey test
+    9253497 Only the master should create log directories
+    1ee736b Allow every u-boot devices to use minimal boot
+    e816c17 LAVA-832 allow to manage users from the command line
+    eb83cbe Add grub interrupt prompt and interrupt character to constants
+    ee79de2 LAVA-937 show job visibility and fix group visibility
+    73b6d86 Prevent key error in metadata handling.
+    f89e840 Improve job output migration helper
+    eb1ad02 device dict: do not show exclusive flag
+    3900276 Restore date-based subdirectories
+    1faa9f0 LAVA-855 - ART CI: Intel NUC device integration for LAVA v2
+    d195b01 Allow to revert (dummy) the migration
+    35f0802 Fix device dict export
+    da7ebe2 device dict: fix web rendering
+    4a3daa9 Allow override of root for installed mustang.
+    12c0508 Expand zmq_client to handle publisher socket
+    34f3625 Trivial whitespace changes in glossary
+    6246a5d Improve data export docs
+    2af8e72 Allow for non-Const values in device dictionary
+    59742fe Extend examples to use the DNS support for NFS
+    c514296 Fix change in import paths for V1 and V2 scheduling
+    765901e Add notes on advanced features for submission
+    fd0905c Remove deprecated commands
+    0237b85 Use CommandError whenever possible
+    a1cc08b Improve device-type templates
+    05123cc Missing conditional in device-type alias handling
+    17af14e Move commands to lava_server app
+    5bab54d Remove reference to unavailable boot method 'fastboot-boot-image'.
+    78e9048 Add mediatek dt for v2
+    49f27fa Allow in-place YAML include in V2 job submission.
+    c2be83f Grub support for HiKey
+    ae4d477 LAVA-757 Move device dictionaries to file system
+    52eb1e1 Remove unused model JobPipeline
+    9d0a5ae results: make the link unique
+    55bf39f Add a callback_url functionality to notification schema.
+    0324915 Add login_commands to the auto_login schema
+    ce6d0f7 Don't reload template from disk on each access
+
+ -- Neil Williams <codehelp@debian.org>  Thu, 15 Jun 2017 12:47:20 +0100
+
+lava-server (2017.5-1) unstable; urgency=medium
+
+  * New production release
+    8ec2d6736 Fix jinja2 templates for default string handling
+    eb39ec0fd Extend bbb template check for ssh_host support.
+    55a251b87 Fix documentation example test job and remove unused
+    7769be718 Update docs for change in submit behaviour.
+    c10bf6197 Add more index items and detail on namespaces
+    b9686e5b1 Mark V1 XML-RPC functions as deprecated.
+    a0ac9894b Prevent health check warning when disabled
+    78f796eee more silencing of unit test logging
+    064bfabb9 Add a template for frdm-kw41z and delete a duplicate for k64f
+    a08df108d Silence logging in more unit tests
+    97dbd95b1 Extend power-off timeout for b2260
+    0e39966d4 device-types: add Hardkernel meson8b-odroidc1 board
+    b6151b003 Add support for aliases in device-type management
+    15589b8d1 Fix some typos in development documentation.
+    f476a351c device-types: base-uboot: use run bootcmd
+    6911b8502 Expand notes on reviews
+    cbbdcfcf4 Expand notes on code analysis around reviews
+    970e52230 Drop confirmation page on job submit for V2 jobs.
+    4a5050691 Device commands are allowed to be lists
+    cc60805db Adjust hikey template to allow target_mac and ip support
+    9d4878c40 Avoid forcing the date path immediately
+    68497b557 Remove the character_delay block override for d03
+    5aeed4aef Tags: fix HTML syntax errors
+    a0ae8a62d Update doc for adding a pipeline worker.
+    2f6287e71 Add Raspberry pi devices
+    69a8f40c4 Add collection of Exynos 4 and 5 devices
+    e31953519 Add more Tegra124 based devices
+    b843bfaec Add more r-car generation 3 devices
+    24d21cdb0 Add a note on https repositories and apt-transport-https package.
+    c3b852798 Expand notes on portability
+    c57c9f111 Fix doc to explain unprivileged containers and DUT interaction.
+    2018f705c Show the requested device tags in the job log page
+    96999537e Fix Action names (use - instead of _)
+    f0a272b4b Extend recent job support to requested device type
+    9040de9ca Add XML-RPC call to obtain job level metadata
+    a04086dd7 api: add get_recent_jobs_for_device
+    8bbd298f7 Set the documented flash_cmds_order for hikey
+    c9b9453d1 Migrate many U-boot devices to v2 configuration
+    613d17fb5 Tweak the developer workflow to skip devices/
+    c59cc6c31 Add a unit test for some of the new UBoot support.
+    e43e244b0 Remove unused imports and unused variables.
+    e2b3784f4 Fix pep8 error
+    af3cc6d42 Schema: Allow boolean variables in parameters
+    4d5861607 Allow is_valid check to operate correctly.
+    294bb62bd ensure device_type is checked
+    b8ce5ba49 Add a note on developer branches
+    11725bc3e doc: fix a small gap about test suites
+    6280b94d7 Add "sd" for removable media
+    21a5ecf6e Add "command" action to schema and device template
+    8db43278a Add schema validation for test/monitor/name in job definition.
+    0a5b1eaa3 tweak gitignore
+    e3f003f63 templates: remove duplicated blocks
+    f1331ef2e Exclude retired devices from Device Health table
+    790b39b9d master: use yaml.CLoader that is way faster
+    749a1081c Add notes on load balancing different bootloaders
+    26b822d67 Add note on how pyudev replaces / with _
+    cc9e4ea2c Allow to override U-boot bootcmd command
+    9a007665c Fix 500 when output.yaml is invalid
+    b3c2d162b Make it easier to spot incomplete test jobs
+    fe6af63a7 Improve job and device schema validation
+    4a568e261 Fix directory and file permissions
+    f33661ae4 env: fix comments about default values
+    fd6fe12b6 Fix scheduling when putting a device into looping
+    99b35ba79 Export the full lava-server version
+    da87efaa6 base-uboot.jinja2: add support for append_dtb and use_xip
+    babaef51d lava_scheduler_app: api: Add pipeline information
+                to get_device_status
+    abe787872 Add a note on installing lava-dev
+    2b6ff1dca MASTER_CERT of lava-master should use secret key
+    d9e7e2c08 add recipients in notifications.yaml
+    44eb1b75b Move job outputs to sub-dirs based on submit-time
+    839b3ff19 Create directories with 0o755 by default
+    9459aae36 lava-master: call job.output_dir to get the path
+    8c9af4897 Fix description for devices and workers
+    541478930 Fix health-check tests by testing None and ''
+    68b33d572 Use job.output_dir whenever possible
+    d93df5f4f Add a management command to remove old jobs
+    bfd57121d Move unnecessary constants into base jinja template.
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 08 May 2017 10:33:39 +0100
+
+lava-server (2017.4-1) unstable; urgency=medium
+
+  * New production release
+    7e36443dd Restore UEFI boot method for HiKeys.
+    6679d548e Fix dragoboard410c boot sequence.
+    5082adc80 Move anchoring fix for navbar to base template.
+    187c8520a Allow to override U-boot tftp command
+    0d28de652 Handle OSError as well as IOError in metadata store
+    be04868ff Update migration status page for disabled healthchecks
+    5f689e930 Improve job page
+    ed4dee272 Expand the docs on arbitrary device_info elements
+    35a7378e0 Remove references to deprecated health_check_job
+    5e5e6890c Add a link to the migration page
+    84f88a4fc Allow to override U-boot usb command
+    043bfeea4 LAVA-916 - Restore adb connectivity with hikey in V2
+    4211de051 Don't force {BOOTX} macro in U-boot template
+    571d71313 Don't force dhcp in U-boot template
+    b0184585c Add a section on which file is what in /etc/
+    9701ad6a0 Adding timeouts to Juno template
+    b2b8d8851 Add content on developer workflow
+    e36889a81 Revert change for debug filter button
+    c06ed4a22 Fix bug 2927 - typo in OPTIONS for $MASTER_CERT
+    cfa0c02c5 Fix navbar problem with in-page anchors.
+    bd554a2c4 Add docs on boot commands.
+    624c79ee1 Fix bug #2925 - LDAP Configuration demo mismatch distro.py
+    1ddde696b Another parent timeout needed for qemu
+    c3f356c0b Allow boot_qemu_image action timeout to be overridden
+    b24fe09af Use standard paths to keep the unit tests running
+    7433bb4e4 Add note on installing developer builds
+    a0e7756c7 Add a migration status page
+    ce59699ad Tweak the device type docs
+    adf670e7d Update copyright year for the docs to 2017
+    b2428ad8c Small updates to the docs for test development
+    6610ce36f Allow to import token from another instance
+    d57e5217b Cleanups for advanced installation docs
+    0119fc57f Fix job submission page
+    0c4e68769 Dedupe the index page and add more entries
+    ec0aa40ad Improve device page
+    912c174b1 add notes on the new lava-tool features
+    a662f0ed6 Add a standard NFS test job for panda
+    e80ed1e13 Update docs on transfer_overlay
+    b0ae30b56 Update migration for job_status_trigger for
+                backwards compatibility.
+    f28af7fbe Fix mustang doc examples and add uefi-menu
+    a755b4b12 LAVA-768 allow to disable hc for a device type
+    7a05b7941 Add support for a branding message
+    b18e8d293 log: add a link to the top and to the doc
+    0fd8c985e fix typo in rst header
+    75d411f14 Do not send a spurious POST submit request
+    d7f8d6322 Update docs for change in behaviour of log file UI
+    acd068173 LAVA-112: display status and role for sub jobs
+    bf144047f Check V2 devices have valid config before reservation.
+    0a2da3f92 Skip retired and obsolete device types
+    c106b17c0 LAVA-913 - Documentation for lxc persistence
+    14c733d30 Add another index entry for the example first job definition
+    b8629e0e3 Expand simple admin to include administration outline
+    43bb9da87 V2 jinja2 template for armada-8040-db
+    ca05a93d0 Add a command to migrate health checks to the fs
+    ad55286d6 doc: fix label
+    0b17a0496 Add qemu NFS docs
+    a8bf524f4 Update of doc examples
+    7bc903e70 LAVA-736: move health checks to the file system
+    1de7ea5b3 LAVA-912 - Document verbose for lxc protocol
+    643c23efc Remove deprecated (and unused) functions
+    91cff154b Add notes on when to add more workers
+    69df43a50 LAVA-904: Improve job page layout
+    3e3075f2f Reorganise the scheduler app test files
+    639600952 LAVA-910 allow iteration if vland tag check fails
+    1ebe9d217 Improve readability of testcase results
+    b7792c56e fix typo in index syntax
+    143b5f742 Allow boot_interface override
+    b85bc07a6 Update default interrupt_* in hi6220-hikey device type
+                jinja2 template
+    a561326bc Add a test case for secondary connections
+    d6a441c16 Add Acer Chromebook 13 CB5-311
+    7ded576cb Add Rada Rock 2 Square
+    65e2b1e22 Add Renesas R-Car Starter Kit Pro
+    61edf0180 Add Samsung Chromebook 2
+    068005a9a Add i.mx6q sabre lite board
+    a84a509e4 Allow u-boot-interrupt timeouts to be overridden
+    b7a23dbfd Fix test job timeouts and fix doc
+    c94238613 Ensure extra_kernel_args is used from job context
+    77693f080 Clean up error handling in is_deprecated_json method.
+    8b5fa8130 Add a 'full docs' link to the front page
+    9ab49a8e9 Allow unit tests to run without kvm module
+    e47c5c005 Change job_status_trigger field type to a non-deprecated one.
+    6ec411a55 Tweak the authentication configuration docs
+    7ee493bb1 Tweak the authentication configuration docs
+    baa9f5ebb Update references for a permanent location.
+    da79c4be7 Add available architectures for qemu 'arch' validation.
+    65e4c35ec Prevent intermittent unit test failure.
+    7f9b8760d LAVA-215 QEMU NFS support (server side)
+    3f2f414e2 LAVA-619 document changes for bootz to zimage
+    8bbbd425f Ensure missing font is available for packaging.
+    0f2d8a4ff X-axis attribute in charts now use NamedTestAttribute table.
+    93cc20aa6 Fix export custom queries feature.
+    a8d6cab43 Display results sorted naturally by key in job logs.
+    e7aa614c5 Update the default length of the job result table.
+    e2c07c1ac Fix doc example YAML syntax to read from file
+    ce59d6b94 Fix sphinx build errors in manpage
+    63d5f6fa5 Add a check on all templates in source tree
+    d9eb3e1f3 Ensure character delays are supported by overdrive
+    75efcb00b Allow repeating test cases
+    93d620a53 Explain how connection-namespace parameter works.
+    9041b0dc0 Begin a section on common YAML syntax errors.
+    6521cc0f8 LAVA-894 - Document lava lxc device add / wait command
+    ee3e5964f Fix documentation - punctuations, links, bullets.
+    988d89a34 Add server side support for mustang EFI Grub.
+    525d9ed47 Fix code blocks in Boot Action documentation.
+    106f7f4fc LAVA-890 - Allow DUT to stay in Android OS
+    887175d82 Remove unused images
+    9f9e8d304 Fix unknown test case handling in tables
+    bff6ea8ff LAVA-888 - Download button in Device Dictionary page
+    3314966de LAVA-887 - Introduce fastboot sequence in device type templates
+    1a1be1ff2 LAVA-867 - Allow fastboot options in device dictionary
+    d876d1463 Remove legacy nexus deploy document from V2 docs.
+    2750804af Updating Juno jinja2 template to accommodate vemsd deploy action
+    2b6d3d277 Deprecate "pipeline-worker" in favor of "workers"
+    587bc8931 Add a "details" command to "device-type" and "workers"
+    96761e533 Add a command to manage devices
+    3b2f27ee0 Encode maintenance state machine in unit tests
+    730b57b81 Do not put into maintenance retired devices
+    c0adfd2c2 Add a command to go into maintenance
+    49abd8bf7 Fix state transition when OFFLINING a device
+    f337d7d1c Go from OFFLINING to RUNNING when a job exists
+    39b50ec15 Extend docs on simplistic testing
+    8e56315eb Workers: allow to set properties
+    944caa4fd pylint improvements
+    c42629220 Use continue in a loop, not return
+    61b6886f9 add notes on debugging multinode as admin
+    2ed1f35c7 Device tables: add more fields to select_related
+    d95ad2d5b job logs: Highlight all failing results
+    ace40b01a Generate less database queries
+    7fcbd7c68 Allow to use last version of Django Debug Toolbar
+    61069528d LAVA-862 - Integrate Google Pixel into LAVA V2
+    e7925e7a1 Update docs on publishing and attaching to tests
+    da99f08f0 Fix a typo in nexus5x device template used for unit test.
+    ba5a106db More stdout changes to clean up the test output
+    c84741460 Skip panda_lxc template check if lxc not installed
+    6a0a73d36 Fix a typo in documentation.
+    79ea7cedd Fix looping bug in template
+    466f1506a LAVA-841 - Document device_info attribute
+    d420b9d5f LAVA-856 - Integrate nexus5x into LAVA V2
+    de33008ec Autologin doc update.
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 10 Apr 2017 13:49:35 +0100
+
+lava-server (2017.2-1) unstable; urgency=medium
+
+  * New production release
+    9df8b354b Remove whitespace from case names
+    9354cd585 Uboot parameters fixes
+    297f27900 Fix documentation for auto_login
+    64b549e9a Fix group visibility and hidden device types
+    b211434de Document the use of a list for bug 2870
+    eb8a7bec3 LAVA-854 - Device type template for x15
+    ad81f33fb Add device template for renesas r8a7791-porter board
+    8c4d44ae4 Add device template for nucleo-l476rg
+    112ec6487 Remove send_char, and fix some broken character_delay settings
+    8f615cd6b Update reviewers handling
+    0fe482ffb b2260: remove duplicate ip_args from extra_kernel_args
+    a72c86732 LAVA-847 protect metadata store IOError
+    53a3c778e If a text_offset is used, quote it to ensure it is a string.
+    51351e18c Add documentation of the dispatcher-config support
+    7a1bfb649 Tidy up the Device-type templates for IoT devices
+    0b5de4dcb Allow lava_scheduler_app to unittest logs to stdout
+    bc807def4 Fix sizelimit warning handling for V2
+    13b691615 Summarise job timeouts with example and notes
+    b5c2ea1a7 Improve notes on portability.
+    65ae7d644 Fix internal server error due to unpacking TestJobUser.
+    83e8fa075 Migration doc improvements
+    9eb145050 Add a unit test for the ethaddr support in b2260
+    91eb07a36 Creating and restoring backups for V2
+    479a6295f Add support for setting ethaddr
+    52b5cf06d Add triage documentation for power failures
+    526a6e298 LAVA-840 - Remove documentation for USB_DEVICE_WAIT
+    3415d5319 Allow .py files in examples/sources to be packaged
+    be33389bf Allow notifications for jobs in Running status.
+    4d6afd607 Fix blacklisted bug in notifications.
+    58b48a8f0 Catch all errors during resubmission.
+    40b010238 Tag admin clean support must return name
+    14b15f40b LAVA-734 compatibility docs
+    dd18c26e1 scheduler: do not cascade deletion for some objects
+    5415eafa7 Do not create unused TestJobUser
+    2f3cd8389 Bug 2796. Add submitter username to job_details API.
+    08cd6c01f Revert "master: set the master identity"
+    be28c8c7b LAVA-814 - Explore pyudev for usb device wait
+    9150c9973 LAVA-832: Rework device-types management command
+    70e81493e LAVA-762 link level in timing to pipeline definition
+    c276df83f LAVA-728 extend ZMQ example to submit and wait
+    f6a0456a1 LAVA-731 document remote worker issues
+    41c67ae3b Add device template for NXP-ls2088
+    ee8964c7b Remove spurious call to save()
+    2a79a622d Ensure base_ip_args can be overridden
+    affa68b23 Add a command to add and list workers
+    10e6ea970 tokens: allow format as CSV
+    b0b5a1d30 Remove unused config value LAVA_CONFIG_VERSION
+    69138ac89 Add a command to manage tokens
+    e09beb1a4 Remove unused custom commands
+    905a0f9be Fix multinode job definition page
+    bb0fdc7a8 job logs: Highlight failing results
+    e1a125aa8 master: set the master identity
+    b7cb28e49 Fix device schema and test for arduino template
+    d411416bf LAVA-707 update result case and metadata views
+    15fc5c62f LAVA-140 - update running job calculation
+    9fcf92cfd LAVA-515 restore line numbers to YAML definitions
+    b7266712b LAVA-824 skip unused device types in running table
+    de6a141aa Expand docs on namespace
+    c54a5e262 events: fix documentation
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 08 Feb 2017 13:34:41 +0000
+
+lava-server (2017.1-1) unstable; urgency=medium
+
+  * New production release
+    266b2e633 LAVA-795 - Expose lava-publisher event socket settings.
+    f4b76e48e Fix ordereddict failure
+    9d3ae86cc Use dpkg-query which is available on all systems
+    080c3184f Update the device-type context help page
+    46a055a3b Fixup some jinja2 templates
+    cecefbfef Timing: improve the description
+    5bef1d877 LAVA-821 - add support for lava-test-reference
+    3b26fb234 LAVA-820 record lava-server version in job metadata
+    ff71a42a6 Append to existing metadata store results
+    0c9abf643 Fix RST whitespace typo.
+    05b96af3c Merge timing page into the job page
+    edc4431f1 Restore access to chart Action buttons
+    69709881e Improve the timing page and port to the new log format
+    a00c02aa8 LAVA-535 Make devicetags case-insensitive
+    36617b955 LAVA-743 - handling complex test operations
+    50084f1b5 Omit summary button for V2 definitions.
+    5c8bf4643 Upgrade the dispatcher v2 parser interface.
+    22409d543 master: send the dispatcher config to the slave
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 11 Jan 2017 13:56:58 +0000
+
+lava-server (2016.12-2) unstable; urgency=medium
+
+  * Add a patch to fix jessie to stretch migration (Closes: #847277)
+
+ -- Senthil Kumaran S (stylesen) <stylesen@gmail.com>  Thu, 01 Jun 2017 22:23:12 +0530
+
+lava-server (2016.12-1) unstable; urgency=medium
+
+  * New production release
+    541ba7b0a Enable ssh secondary connections on juno-uboot
+    2d6bb2fcc Handle errors which cause invalid description data
+    b19b9648a Fix template_mismatch check to use extends
+    d7f71eae3 Update ipxe x86 nfs to use base_ip_args
+    fa6b8b3ab Add a note on release-notes on lava-announce
+    d46d6e4fd Protect against invalid parameter submissions
+    431fd2fc0 Allow pipeline jobs to be used with XML-RPC job_output
+    f3bf855ba Add Copy to clipboard functionality to MultiNode
+    86950e985 LAVA-745 - expose device_path for all types
+    083d67d54 Add device-type template for arduino101
+    fd99c576e Fix UI submission error.
+    708a38a23 Add SSH support for overdrive
+    e838de3ba Update Linaro lab links to actual site
+    d8e127b74 Allow flash_cmds_order to be set
+    92eefe4aa Adding extra boot commands for secondary media on Juno
+    8f860a1e9 Keep result blocks on a single line with MultiNode
+    3b1d6654e LAVA-499 - Device type template for dragonboard-410c
+    5c46ea4ab Provide a default fastboot flash commands order.
+    a61ab2501 Download results XMLRPC support.
+    347fb3fd3 Allow forwardng messages to additional sockets
+    4d0753c3a Allow validate_pipeline devices to filter by device type name.
+    a859e5ede publisher: improve logging and fix logfile owner
+    9f9bd71b9 Correctly expose TestSet data in results
+    c6f9b1df8 Handle decimal conversion error in test case
+    1769d8b6b Expand hints on new device-types
+    eec1ca1d0 master: expect a protocol version with HELLO messages
+    cd8d109f7 master: add the job id to the log messages
+    a0ac2d66a Add absolute_url to job_details API.
+    951ab9f68 master: device configuration is empty for secondary media
+    c0575503d master: improve error reporting when reading env file
+    f551daa49 Add notes on unattended upgrades
+    1d2e25d1d Allow override of nfsroot options, not arguments
+    edaad5419 Update docs to reflect reality of from: support
+    09503a482 Manually revert d31a8462: errors are already saved
+    3516b856d add some notes on packages needed for LXC usage
+    b5ee513bb Rename 'usb-showup' to 'usb-device-wait'
+    406832582 Drop misleading hostname from device metadata
+    6a6ee6f4d Handle change to git.linaro.org frontend
+    d85f99e1b Fix crash when description.yaml is empty
+    080499d18 Remove references to wsgi
+    267d22302 Paste job definition to clipboard as text and not as HTML.
+    ef09a9698 add a link to the device tag glossary entry
+    08bd011a4 Update aliases migration for review change
+    7010775b6 Move metadata extra content to files
+    95ed9a3ba Expand notes on debugging test jobs and test cases
+    6d772bb0d Update for pycodestyle pep8 failures
+    dd58a1182 LAVA-798 - lookup device-types by alias
+    104feb593 Enable LXC for existing device-types.
+    376a80021 LAVA-797 - Document changing USB_SHOW_UP_TIMEOUT in job
+    3e8dbfeca all_devices() api call to do one big query instead of
+     many small ones.
+    d27f7a4d5 Fix for Debian reproducible builds.
+    ac8bb8e2a Fix bug #2596 - No result collected for multinode jobs
+    7b3adad0a All jobs will have a definition, so show it by default.
+    1e6992f6b Set boot_character_delay in x86 template
+    5cc0a4746 Extend x86 unit test to check character_delay support
+    ad4f8780f Combine interfaces block for juno and vland
+    bb2ecf716 Allow changing the timeout for u-boot-interrupt
+    19de59978 Add stm32-carbon jinja2
+
+ -- Neil Williams <codehelp@debian.org>  Thu, 22 Dec 2016 11:50:17 +0000
+
+lava-server (2016.11-1) unstable; urgency=medium
+
   * Update compat
   * Highlights of upstream changes:
     Ensure namespace is available to the test shell.
@@ -1049,6 +2254,514 @@ lava-dispatcher (2015.11-1) unstable; urgency=medium
  -- Neil Williams <codehelp@debian.org>  Mon, 02 Nov 2015 13:35:50 +0000
 
 lava-dispatcher (2015.9-1) unstable; urgency=medium
+
+  * Drop dependency on libapache2-mod-uwsgi and libapache2-mod-wsgi.
+    Replaced by dependency on gunicorn.
+  * Require sphinx 1.4 or later for correct theme support.
+  * Downgrade linaro-image-tools and fuse to Recommends
+  * Update compat version.
+  * Highlights of upstream changes:
+    Note about removing adb and fastboot packages in LXC admin doc.
+    LAVA-789 - Document LXC support in V2
+    LAVA-788 - link to sub_jobs_list from results
+    Expand user notification documentation.
+    Move jinja template tests to unittest
+    Adding target interface entries to juno-uboot.jinja2
+    Add docs on notifications
+    Update home page documentation links
+    Improve documentation on metadata and job_name
+    Fix up glossary page
+    Tweak docs handling standard test jobs
+    Example jobs need auto_login support
+    Fix missing create_device_database ref
+    Port the documentation change for essential roles
+    Tweak the doc build options
+    Add notes on multiple hacking sessions
+    Update debugging docs for tmp file changes
+    LAVA-65 document recording measurements
+    LAVA-780 stop referring to wheezy images
+    Avoid crash in master on early failure
+    Remove beautify.js and fix yaml URL submission.
+    Update screenshot for cancel button fix
+    Fix visibility of the Cancel and Admin buttons
+    Update docs to reinstate web UI submission
+    Add a helper to add devices from cmd line
+    Remove old link about LAVA packaging which contains stale information.
+    LAVA-749 - Add actions column to results pages.
+    Ensure lava-server-gunicorn restarts cleanly
+    results: do not crash if the description is empty
+    Job submission UI for v2.
+    Add copy to clipboard button for job definition.
+    Turn all action durations into result measurements
+    Updating juno-uboot.jinja2
+    Add a log file for gunicorn logs.
+    Fix the LAVA logo
+    Ensure the V2 layout is included on jessie.
+    bootstrap: do not use the minified CSS
+    Results: fix HTML syntax
+    Use sensible default for interrupt string in HiKey jinja.
+    LAVA-749 - Improve query pages
+    Fix unit test to have unique test definition names
+    Add pre_* commands to base.jinja2 that will be applied conditionally.
+    Remove unused dependendies on lava_dispatcher
+    Fix a variable redefinition in list comprehension
+    Update contents and organise toctree
+    Allow changing the timeouts for auto-login-action
+    Add documentation on QEMU standard kernel tests
+    Remove old mention of JSON
+    master: set the failure_comment
+    Add a template for highbank using base-uboot
+    Remove hardcoded values from base
+    Fix profile page error due to wrong device health history url reference.
+    metadata: fix a crash if the description is invalid
+    Cover lava-coordinator in changes for V1 workers
+    LAVA-522 Link in existing docs on replacing vmgroups
+    Extend the qemu options docs
+    Fix index links and debugging doc links
+    LAVA-735 describe anonymous access to JIRA
+    qemu.jinja2: use qemu-system-i386 for i386
+    Extend docs for disabling V1 on a master.
+    Fix HTTP 500 on query views when a group is used.
+    LAVA-765 V1 MultiNode sub_id correction
+    Fix jinja2 syntax issues in base-uboot
+    Fix sub_id assignment in V2
+    Improved debugging docs
+    Add content for growing your lab.
+    Improve first device and first job pages
+    Update apache docs for gunicorn
+    Update hacking sessions and lava-network docs
+    Enable vland for overdrive
+    Fix uWSGI configuration file
+    Add notes on removing V1 from dispatchers
+    Add a helper to add device types from cmd line
+    DeviceType admin: fix has_health_check computation
+    Replace ip=dhcp with {{ base_ip_args }}
+    timing: add the corresponding timeout
+    Fix typo in the title of the result download link
+    Add ip=dhcp for juno with a base default
+    Fix page to show health history of my devices and not my device type.
+    Fix error on 'Devices Health History' page in django 1.10
+    Fix user profile page error in django 1.10
+    Create a base uboot jinja template
+    Use Gunicorn instead of uWSGI
+    wsgi: use the Django public API
+    index: add the missing title
+    Mark support for LAVA in Debian testing.
+    Expand the context schema for extra_options
+    Add the new LAVA logo to the front page of the V2 docs
+    Warn if a pipeline device does not have a template
+    master: don't generate the description
+    Add nxp-k64f jinja2
+    Add nrf52-nitrogen jinja2
+    Add drafts of new logos with SVG.
+    Extend base timeouts and convert to minutes
+    Handle inline definitions using only install steps
+    job details: removed unused template variable
+    master: don't print too many logs in debug
+    Fix build errors and simplify index pages
+    Add support for overdrive device type
+    Fix bad lookups into the glossary
+    Switch ASCII art to the existing SVG
+    Update dispatcher actions
+    Improve timing warning message
+    Document the principles of a CI Loop
+    master: remove the need for the ERROR message
+    Expand job_details doc string with available keys
+    Replace 1.10 deprecated get_field_by_name with get_field method.
+    Add support for extra QEMU options
+    LAVA-747 - Report parameters as result metadata
+    Switch from using png to svg for the architecture diagram
+    Add a page to display the pipeline timings
+    Expand glossary and add sections on parameters
+    Add D03 device type to pipeline
+    Add an introduction to results in LAVA.
+    Add docs on the standard test jobs
+    Simplify and clarify the "first install" docs
+    LAVA-584 - expand for  sub-types of device-types
+    LAVA-706 - codebase structure
+    Port submission priority support to V2
+    Adopt a similar contents layout to the django docs
+    Device dictionary output
+    Extend qemu jinja template for cortex-m3
+    Pipeline log: use a better icon for download
+    Update bootstrap from 3.1.1 to 3.3.7
+    Fix relative url for suite results
+    Add nbdroot as optional parameter to the schema
+    Update qemu/kvm templates to allow overriding of guestfs interface
+    LAVA-93 mark some roles as essential
+
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 09 Nov 2016 11:49:24 +0000
+
+lava-server (2016.9-1) unstable; urgency=medium
+
+  * 2016.9 production release
+    Show measurements and units of testcase detail page
+    Drop lxc schema - no support for alternatives
+    Configure logging for linaro_django_xmlpc calls
+    Fix link to lava-tool context-help
+    Fix the "Debian-based distribution" link grammar
+    Improve monitor test type, allow multiple tests
+    LAVA-494 allow searching for device tags in tables
+    Add support for LXC with multinode
+    Fix broken ref link for unit_test
+    Fix NoReverseMatch from ImageReports2.0 editing.
+    Fix typo in ./share/validate.py --hostname
+    Update hikey jinja2 templates for LXC
+    Fix occasionally failing multinode tests.
+    Add a configuration file for lava-master
+    Update lava-slave and lava-master docs
+    LAVA-374 - drop versiontools
+    Tidy up some build errors and reformat consistently.
+    Improve documentation describing inline test definitions
+    Major improvements for the "Writing MultiNode" page
+    Add docs for the lava-vland-names change
+    Using BOOTX in Juno bootcmds
+    Correcting default uboot commands in juno device template
+    Document the code locations for developers
+    Ensure multinode description is generated correctly
+    Allowing overrides to connection and action timeouts
+    master: Fix log rotations
+    Remove filtering by filter id for available testcases in image reports.
+    Init: remove the right lock file and simplify
+    Adding uboot jinja2 templates for all Juno flavours
+    LAVA-739 - declare sub_id and job.id for multinode
+    master: don't validate jobs on the master
+    select_device only accepts pipeline jobs
+    Remove legacy SyntaxHighlighter from job definition pages.
+    lava-master: simplify log file handling
+    Fix title disappearance on image reports.
+    Ignore retired devices in validate call
+    Don't add anchors to logs for running jobs
+    Don't crash when log contains invalid test names
+    Schema: accept 'parse' for inline test definitions
+    Use libYAML when loading logs
+    LAVA queries use cases.
+    Bug link fix for url regex.
+    Add LogEntry for BugLinks.
+    Update the init scripts
+    Remove the entry point as it's no longer needed
+    Ensure test-case name is valid
+    Extend vland unit tests to cover assignment
+    Expand on the device dictionary and templates
+    Expand the notes on using jessie-backports
+    Add a Contents page
+    Rewrite lava-server command line from scratch
+    events: set umask to a restrictive value
+    Bug links port.
+    LAVA-200 - track admin actions made in the UI
+    Add device tags support to V2
+    Allow the monitor test type
+    Update qemu command line options for arm64
+  * Add support for lava-master options
+  * Ensure examples are not compressed
+    YAML Files in lava-server-doc/html/v2/examples/ are provided as
+    download links and are intended to be viewable in the browser
+    alongside the help. Prevent all yaml files being compressed.
+  * Handle rewrite of lava-server/manage.py
+    With the removal of entrypoints, the /usr/bin/lava-server script
+    will not be created by setuptools. Adjust packaging to replace
+    entrypoints handling with the actual lava-server/manage.py script.
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 07 Sep 2016 07:30:16 +0100
+
+lava-server (2016.8-1) unstable; urgency=medium
+
+  * 2016.8-1 New production release
+    lava-master: use also get_env_string for multinode
+    Handle unrecognised result messages.
+    Publisher: drop privileges at startup
+    Add lava-publisher init scripts
+    Update mustang jinja template
+    Similar jobs feature.
+    Django1.10 fixes
+    v2: include a 'secrets' field in the job def
+    Adding device-type templates for juno
+    Fix a deprecation warning with render_to_string
+    events: add more details and use a useful username
+    Ensure failed health checks go directly to offline.
+    Faster loading of yaml logs
+    Add a u-boot-commands timeout just for panda
+    Improve error handling in result metadata
+    use job.id inside a not job.is_multinode conditional
+    Fix multinode link from definition back to the job.
+    Allow parentheses in test case names
+    Allow the d02 debian installer grub device to be overridden
+     in device-dictionary
+    Allow for creating devices already offline.
+    Device state transition validation.
+    Open context-sensitive help in a new browser tab
+    Unavailable qemu command should not fail unit tests.
+    LAVA-719 - support branding of source and bugs URL
+    Ensure logging to django logs is info or higher
+    Fix e1d66f to use pk when not multinode.
+    Create and display measurements with units
+    result: don't crash when parsing an invalid result
+    Implement notification blacklist.
+    results: handle skip result
+    Simple notification list.
+    Add 'name' to testcase export.
+    Use the right syntax for character delays
+    First device configuration for ST b2120h410
+    Fix bug #2278 - inconsistent multinode job id / alias usage
+    Fix HTTP500 by allowing for + in test case names
+    Show job sub_id for multinode jobs.
+    Implement IRC notifications.
+    Fix bug #2263 - parameters and params reference in job def and test def
+    LAVA-708 - Device path should be a list
+    Fix a crash when viewing a query for the first time
+    result: show the metadata as a list (and sublists)
+    Rename conflicting notification properties.
+    log: don't show 'extra' result data
+    log: add a link to each line using AnchorJS
+    log: skip broken strings
+    log: add an icon for the download button
+    log: add link from the result page back to the log
+    Results: improve admin page
+    TestResults: order by job_ids then name
+    Simplify a bit the result page
+    Remove unnecessary loading of django-tables
+    log: redirect complete_log to the job_detail page
+    log: add a link to the result page for each result
+    log: fix HTML syntax errors
+    log: improve rendering of errors and exceptions
+    Update load addresses for larger multiplatform kernels
+    Fix result table
+    log: fix a bug when the page is reloaded
+    Protect from admin error in health check submission
+    Fix default value for device_path to be None and not 'None'.
+    Add missing device_path to nexus jinja templates.
+    log: adapt the result parser to the new log stream
+    mustang UBoot needs 32bit header
+    logs: update job status and device information
+    log: change the arrow when clicking on the affix
+    Fix handling of context with multinode
+    Fix metadata handling for multinode and dynamic connections
+    Fix hidden-device-type listings in JobTable
+    job: remove redudant information
+    Events: add a monitoring thread
+    Initial notifications for v2.
+    lava-master: save the logs in output.yaml
+    job: add a new template for the new log format
+    LAVA-262 Allow admins to expire user accounts
+    log: better formatting of tracebacks
+    Remove support for Django < 1.8
+    Improve scheduler debug with device details.
+    .
+    Documentation updates
+    Add links and notes to developer branch guide
+    Add notes on making Lava Test Shell portable
+    Add notes on running lava-server unit tests
+    Add timeout documentation.
+    Update the developer guide
+    Document the 'secrets' dictionary
+    Ensure V2 documentation examples are available.
+    update local user account image
+    tidy up api docs
+    Remove multinode use cases
+    tidy up the writing-multinode page
+    expand simple-admin for admin roles
+    tidy up hidden toctree listings for previous/next markup
+    Update chapters for theme
+    Switch to the bootstrap theme
+    updates for multinode and simple administration
+    Major update to the docs for writing multinode tests
+    move all examples into one directory and add test definitions
+    move lava tool issues to a separate file
+    fold the FAQ into the lava-tool docs
+    update the multinode use cases
+    port the mustang example to a separate yaml file
+    use rst macros for see also
+    Add publishing API ref doc
+    initial content for a results intro
+    Move doc yaml to a directory
+    WIP rewrite of the multinode doc
+    Start thinking about how to grow a lab
+    Re-org some early admin stuff
+    Split out the completed YAML jobs
+    Query omit documentation updates.
+    Fix documentation for test definition name handling
+    add instruction for -t jessie-backports
+    move example YAML to an rtsi for easier checking
+    add notes on setting up the first device and device type
+    fix whitespace in migration example
+    Update the scheduling ordering with links
+    Add notes on LAVA being developer focused
+    Update other examples for deploy change
+    fixup deploy action
+    add example of first qemu V2 device
+    start the pipeline design page
+    Minor wording tweaks
+    Rework the hacking session doc
+    expand notes on first installation
+    tweaks and updates for writing tests
+    Fix definition link to log for pipeline
+    Updates for test repositories
+    update multinode docs for V2
+    fix build messages and errors
+    update examples of params support and custom scripts for parsing
+    complete fixme in advanced-installation
+    add background on CI and LAVA
+    add notes and images for first job submission and results
+    explain the first job and tidy up the example YAML
+    Clean up health check docs
+    add notes for first job
+    Significant cleanup of wording around lava-test-shell
+    Add lots of code-block:: yaml directives
+    Add details of features and architecture.
+    Add content to the what-is section
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 08 Aug 2016 08:16:14 +0100
+
+lava-server (2016.6-2) unstable; urgency=medium
+
+  * Add git to the test suite dependencies
+  * Add rsync to lava dependencies for lxc support.
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 08 Jun 2016 16:43:20 +0100
+
+lava-server (2016.6-1) unstable; urgency=medium
+
+  * New production release
+  * Update V1 docs for Ubuntu changes - lava-server no longer
+    migrates into Ubuntu and was removed from Xenial.
+  * Drop heartbeat support
+  * Prevent scheduler ValueError in reservation
+  * scheduler: reduce the number of SQL queries
+  * Expose DISALLOWED_USER_AGENTS to handle search bots
+  * Add a page for listing Pipeline Devices.
+  * Add Auth support in REST API for more functions
+  * Remove device status glyphicons everywhere, since heartbeat is dead.
+  * Create metadata on the number of test definitions
+  * Remove the need for extensions
+  * Remove deprecated lava_projects
+  * Update docs for guestfs and resulting issues.
+  * Enable job definition metadata.
+  * dispatcher-master: support zmq CURVE encryption
+  * Add documentation on using ZMQ curve
+
+ -- Neil Williams <codehelp@debian.org>  Tue, 07 Jun 2016 07:49:43 +0100
+
+lava-server (2016.4-1) unstable; urgency=medium
+
+  * New production release
+    Add support for python-django-debug-toolbar
+    Deleting V1 filters now cascade delete image chart filters.
+    Reduce the number of SQL queries used on common pages.
+    Improve scheduler iterative performance.
+    Add support for deleting unused tokens
+    Stop runaway healthchecks in V2.
+    Migrate option_list to argparse for django 1.8 and later.
+    Allow authentication with result export in V2
+    Drop references to Ubuntu beyond 2016.9.post1
+    Implement omitting individual results from queries in V2
+    Indicate omitted results and allow including them back in.
+    Add a management command for refreshing queries
+    Change V1 measurement field to be float only.
+    Clean up top-level documentation
+    Introduce limit to queries in V2.
+  * Suggest python-django-debug-tooolbar
+  * Refresh all V2 queries during package postinst to ensure
+    materialized views are available.
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 18 Apr 2016 14:56:47 +0100
+
+lava-server (2016.3.post1-1) unstable; urgency=medium
+
+  * Hot fix release
+  * Fix bug in JSON multinode submissions over XMLRPC.
+  * Fix missing test support file
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 21 Mar 2016 08:56:44 +0000
+
+lava-server (2016.3-4) unstable; urgency=medium
+
+  * Remove debian patches which is not required anymore.
+
+ -- Senthil Kumaran S (stylesen) <stylesen@gmail.com>  Thu, 10 Mar 2016 13:36:45 +0530
+
+lava-server (2016.3-3) unstable; urgency=medium
+
+  * Add pep8 | python-pep8 dependency for lava-dev
+
+ -- Senthil Kumaran S (stylesen) <stylesen@gmail.com>  Tue, 08 Mar 2016 16:16:47 +0530
+
+lava-server (2016.3-2) unstable; urgency=medium
+
+  * Add missing support file for autopkgtest
+
+ -- Neil Williams <codehelp@debian.org>  Tue, 08 Mar 2016 08:54:17 +0700
+
+lava-server (2016.3-1) unstable; urgency=medium
+
+  [ Senthil Kumaran S (stylesen) ]
+  * Building lava-tool depends on python-mock (lava-dev)
+
+  [ Neil Williams ]
+  * New production release.
+  * Add support for pipeline healthchecks.
+  * Fix management commands to work with django >= 1.7.x
+  * Add support for Debian SSO client certs.
+  * Split documentation for LAVA V1 and LAVA pipeline V2
+
+ -- Neil Williams <codehelp@debian.org>  Fri, 04 Mar 2016 15:01:28 +0000
+
+lava-server (2016.2-3) unstable; urgency=medium
+
+  * Add back uwsgi conffiles and setting.conf.
+
+ -- Neil Williams <codehelp@debian.org>  Sat, 13 Feb 2016 13:42:12 +0000
+
+lava-server (2016.2-2) unstable; urgency=medium
+
+  * Fix testsuite parameters for autopkgtest
+  * Fix missing apache2 config in sites-available
+
+ -- Neil Williams <codehelp@debian.org>  Sat, 13 Feb 2016 12:35:41 +0000
+
+lava-server (2016.2-1) unstable; urgency=medium
+
+  * New production release (Closes: #807999)
+
+ -- Neil Williams <codehelp@debian.org>  Tue, 02 Feb 2016 08:33:52 +0000
+
+lava-server (2015.12-4) unstable; urgency=medium
+
+  * Use --fake-initial option on migrations, when django1.8
+    is available but not on Jessie. (Closes: #810355)
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 13 Jan 2016 19:33:16 +0000
+
+lava-server (2015.12-3) unstable; urgency=medium
+
+  * Conflict with python-django-auth-openid as
+    python-django-auth-openid cannot support django1.9 which
+    is now in unstable and testing. (Closes: #808313)
+
+ -- Neil Williams <codehelp@debian.org>  Fri, 18 Dec 2015 20:09:33 +0000
+
+lava-server (2015.12-2) unstable; urgency=medium
+
+  * Add extra autopkgtest dependency: python-tz
+    Also add to main Depends to avoid issues if python-django
+    is installed without Recommends.
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 14 Dec 2015 21:24:35 +0000
+
+lava-server (2015.12-1) unstable; urgency=medium
+
+  * New production release
+  * Migrates to django1.9 support (Closes: #804111)
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 14 Dec 2015 09:40:37 +0000
+
+lava-server (2015.11-1) unstable; urgency=medium
+
+  * New production release
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 02 Nov 2015 13:36:09 +0000
+
+lava-server (2015.9-1) unstable; urgency=medium
 
   * New production release
   * Add Senthil Kumaran S (stylesen) as an uploader.
@@ -1371,3 +3084,414 @@ lava-dispatcher (0.32.2-1) unstable; urgency=low
   * Initial release
 
  -- Neil Williams <codehelp@debian.org>  Fri, 24 May 2013 13:11:45 +0100
+
+lava-server (2015.8.1-1) unstable; urgency=medium
+
+  * Hot fix production release
+
+ -- Neil Williams <codehelp@debian.org>  Fri, 07 Aug 2015 10:29:08 +0100
+
+lava-server (2015.8-1) unstable; urgency=medium
+
+  * New production release
+  * Change from using return to exit in config script.
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 03 Aug 2015 08:32:45 +0100
+
+lava-server (2015.07-1) unstable; urgency=medium
+
+  * New upstream production release.
+  * Support old and new python-lockfile API for
+    trusty and jessie-backports support (Closes: #789907)
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 01 Jul 2015 17:11:18 +0100
+
+lava-server (2015.06-1) unstable; urgency=medium
+
+  *  Add lxc and bridge-utils as dependency to lava package.
+
+ -- Senthil Kumaran S (stylesen) <stylesen@gmail.com>  Thu, 30 Jul 2015 18:46:33 +0530
+
+lava-server (2015.06-1) unstable; urgency=medium
+
+  *  New upstream production release
+  *  Add unit test support files. (Closes: #785607)
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 18 May 2015 12:57:56 +0100
+
+lava-server (2015.05-1~bpo8+1) jessie-backports; urgency=medium
+
+  * Rebuild for jessie-backports.
+
+ -- Neil Williams <codehelp@debian.org>  Fri, 15 May 2015 12:01:12 +0100
+
+lava-server (2015.05-1) unstable; urgency=medium
+
+  * New production release for unstable.
+  * Use Debian changelog date for sphinx timestamps. Patch from
+    Reiner Herrmann <reiner@reiner-h.de> (Closes: #782386)
+  * Symlink the source files as well as minified js files
+  * Tidy up lintian copyright Files matches.
+
+ -- Neil Williams <codehelp@debian.org>  Fri, 08 May 2015 10:57:24 +0100
+
+lava-server (2015.04-1) experimental; urgency=medium
+
+  * New production release
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 08 Apr 2015 10:34:05 +0100
+
+lava-server (2015.03-1) experimental; urgency=medium
+
+  * New production release
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 09 Mar 2015 19:33:42 +0000
+
+lava-server (2015.01-1) experimental; urgency=medium
+
+  * New production release.
+  * [INTL:nl] Dutch translation of debconf messages
+    (Closes: #766547)
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 11 Feb 2015 13:39:42 +0800
+
+lava-server (2014.12-1) experimental; urgency=medium
+
+  * New production release
+  * Add dh-python to Build-Depends
+
+ -- Neil Williams <codehelp@debian.org>  Thu, 04 Dec 2014 08:59:39 +0000
+
+lava-server (2014.09.1-1) unstable; urgency=medium
+
+  * New hotfix release cherry-picking upstream fixes,
+    reviews 3346, 3345, 3347, 3348 and 3331.
+    Includes fixes for django-tables2 update on filter
+    tables, multinode scheduling and a regression in
+    filter charts.
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 20 Oct 2014 18:00:39 +0100
+
+lava-server (2014.09-1) unstable; urgency=medium
+
+  * New upstream production release
+  * Fix upgrade issue with parallel migrations. (Closes: #763310)
+  * Use libjs-excanvas package as a dependency.
+  * Includes fix to trailing calls to python-django-longerusername.
+    (Closes: #763319)
+  * Add option to use LDAP authentication
+  * Update standards version, no changes
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 01 Oct 2014 14:13:30 +0100
+
+lava-server (2014.08.2-1) unstable; urgency=medium
+
+  * New production release includes fixes for multinode tagging,
+    multinode slave capability and documentation, fixup time
+    display in various places to be more human readable,
+    make test selection on image reports persistent and add
+    skipped and unknown test count to totals in image reports.
+  * Migrate to Django 1.7 support (Closes: #755610)
+  * Fix machine-readable sections of copyright lines
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 17 Sep 2014 10:24:09 -0700
+
+lava-server (2014.07.1-1) unstable; urgency=medium
+
+  * New upstream bug fix release, including fixes for
+    multinode device tags support and fixes for attaching
+    bug numbers to image reports.
+  * [INTL:pt] Portuguese translation for debconf messages
+    (Closes: #753907)
+  * [INTL:ru] Russian debconf templates translation
+    (Closes: #756644)
+  * [INTL:de] Initial German debconf translation
+    (Closes: #757519)
+  * [INTL:da] Danish translation of the debconf templates lava-
+    server (Closes: #757651)
+  * [INTL:fr] French debconf templates translation
+    (Closes: #757709)
+  * [INTL:es] Spanish translation of debconf messages
+    (Closes: #757894)
+  * [l10n:cs] Initial Czech translation of PO debconf template for
+    lava-server (Closes: #758018)
+  * [INTL:it] Italian translation of debconf messages
+    (Closes: #758028)
+  * [INTL:pt_BR] Brazilian Portuguese debconf templates
+    translation (Closes: #757728)
+  * [debconf_rewrite] Debconf templates and debian/control review
+    completed. (Closes: #754149)
+
+ -- Neil Williams <codehelp@debian.org>  Sat, 09 Aug 2014 12:15:28 +0100
+
+lava-server (2014.07-1) unstable; urgency=medium
+
+  * New production release
+  * Includes optimised Image Reports 2.0 and bug fixes
+
+ -- Neil Williams <codehelp@debian.org>  Thu, 07 Aug 2014 11:32:36 +0100
+
+lava-server (2014.06.24-1) unstable; urgency=medium
+
+  * New upstream bug fix release.
+  * Documentation update and unit test fixes.
+
+ -- Neil Williams <codehelp@debian.org>  Thu, 24 Jul 2014 21:07:50 +0100
+
+lava-server (2014.06.22-1) unstable; urgency=medium
+
+  * New upstream release
+
+ -- Neil Williams <codehelp@debian.org>  Tue, 22 Jul 2014 16:43:51 +0100
+
+lava-server (2014.06.14.17-1) unstable; urgency=medium
+
+  * New upstream release
+  * Includes fix for dashboard unit tests and error on
+    submitting result data for the first time.
+  * Recommend Android support tools to communicate with devices using
+    adb
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 14 Jul 2014 19:01:00 +0100
+
+lava-server (2014.06.02.17-2) unstable; urgency=medium
+
+  * Drop README.Debian as this information is now in the
+    upstream documentation and has also been updated.
+  * Specify django-testscenarios to fix autopkgtest
+  * Add build-essential to the dependencies of lava-dev
+    to ensure the build scripts can operate.
+  * add directory to support archival of job output files
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 07 Jul 2014 15:35:50 +0100
+
+lava-server (2014.06.02.17-1) unstable; urgency=medium
+
+  * New upstream production release
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 02 Jul 2014 18:49:10 +0100
+
+lava-server (2014.05.30.09-1) unstable; urgency=medium
+
+  * New upstream release
+  * Update debian/copyright for upstream changes.
+
+ -- Neil Williams <codehelp@debian.org>  Sun, 29 Jun 2014 19:29:34 +0100
+
+lava-server (2014.05.11.14-1) unstable; urgency=medium
+
+  * New upstream release
+  * Update for merge into upstream master branch.
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 11 Jun 2014 18:47:23 +0100
+
+lava-server (2014.04.16-1) experimental; urgency=medium
+
+  * Initial release. (Closes: #747356: ITP: lava-server -- Linaro
+    Automated Validation Architecture server)
+  * Target experimental during final changes.
+
+ -- Neil Williams <codehelp@debian.org>  Fri, 16 May 2014 21:11:32 +0100
+
+lava-server (0.22.1-8) unstable; urgency=medium
+
+  * Add python-setuptools to ensure lava-server manage operates
+    properly.
+  * Use common static file locations in Debian and Ubuntu
+  * Create all the SSHFS directories and generate the SSH key for the
+    worker.
+  * Improve the remote worker setup support.
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 07 May 2014 20:05:26 +0100
+
+lava-server (0.22.1-7) unstable; urgency=medium
+
+  * Add sbuild sample script to lava-dev
+  * Move creation of superuser into install_database function and check
+    if the superuser needs to be created.
+  * Update vcs location
+  * Drop linaro-django-pagination from lava-server
+  * Add lava-dev to the metapackage
+  * Add vmdebootstrap to lava metapackage and a README to lava-dev.
+  * Add libjs-jquery-flot and symlink relevant copies.
+  * Add the sshfs mount script for remote workers.
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 14 Apr 2014 10:37:27 +0100
+
+lava-server (0.22.1-6) unstable; urgency=medium
+
+  * Drop libguestfs-tools as it has moved to lava-dispatcher to be
+    architecture-dependent.
+
+ -- Neil Williams <codehelp@debian.org>  Sat, 29 Mar 2014 22:21:41 +0000
+
+lava-server (0.22.1-5) unstable; urgency=medium
+
+  * Add support for lava-dev - future versions will use git tag version
+    strings.
+  * Add support for reconfiguring lava-server as a remote worker - ssh
+    and xmlrpc support needs to be done manually.
+  * Create the superuser after completing migrations
+
+ -- Neil Williams <codehelp@debian.org>  Fri, 28 Mar 2014 10:58:41 +0000
+
+lava-server (0.22.1-4) unstable; urgency=medium
+
+  * Add debconf support for migrating existing LAVA instances.
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 17 Mar 2014 15:26:39 +0000
+
+lava-server (0.22.1-3) unstable; urgency=medium
+
+  * Add libguestfs-tools for improved qemu support
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 10 Mar 2014 10:16:07 +0000
+
+lava-server (0.22.1-2) unstable; urgency=medium
+
+  * Add support for creating the devel database for unit tests
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 26 Feb 2014 11:04:55 +0000
+
+lava-server (0.22.1-1) unstable; urgency=medium
+
+  * Port to django1.6
+
+ -- Neil Williams <codehelp@debian.org>  Thu, 20 Feb 2014 10:45:58 +0000
+
+lava-server (0.22-1) unstable; urgency=medium
+
+  * Multicolumn search support
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 10 Feb 2014 10:41:46 +0000
+
+lava-server (0.21.2-2) unstable; urgency=medium
+
+  * Package instructions for using the initial data and sample
+    configuration files
+  * kvm.conf is packaged upstream in lava-dispatcher, removed.
+  * Package an example health check for kvm devices
+
+ -- Neil Williams <codehelp@debian.org>  Tue, 10 Dec 2013 11:41:15 +0000
+
+lava-server (0.21.2-1) unstable; urgency=medium
+
+  * New upstream version
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 09 Dec 2013 08:29:10 +0000
+
+lava-server (0.21.1-6) unstable; urgency=medium
+
+  * Remove dbconfig-common and configure localhost postgres manually
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 02 Dec 2013 13:34:50 +0000
+
+lava-server (0.21.1-5) unstable; urgency=medium
+
+  * Updated for dashboard format 1.7
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 27 Nov 2013 15:43:03 +0000
+
+lava-server (0.21.1-4) unstable; urgency=low
+
+  * Add upstream manpages
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 06 Nov 2013 16:48:41 +0000
+
+lava-server (0.21.1-3) unstable; urgency=low
+
+  * Package the etc files provided by upstream after merging from the
+    packaging branch.
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 06 Nov 2013 10:36:34 +0000
+
+lava-server (0.21.1-2) unstable; urgency=low
+
+  * Add PEP386 support for versioned dependencies based on requires.txt
+
+ -- Neil Williams <codehelp@debian.org>  Tue, 22 Oct 2013 15:29:06 +0100
+
+lava-server (0.21.1-1) unstable; urgency=low
+
+  * Update for working support of a native Debian LAVA install.
+
+ -- Neil Williams <codehelp@debian.org>  Tue, 08 Oct 2013 16:00:48 +0100
+
+lava-server (0.21.0-1) unstable; urgency=low
+
+  * Incorporate changes from upstream server consolidation
+
+ -- Neil Williams <codehelp@debian.org>  Thu, 03 Oct 2013 15:58:49 +0100
+
+lava-server (0.20.1-1) unstable; urgency=low
+
+  * Update from tip
+
+ -- Neil Williams <codehelp@debian.org>  Fri, 13 Sep 2013 17:02:57 +0100
+
+lava-server (0.20-5) UNRELEASED; urgency=low
+
+  * Add config changes for apache2.4 support.
+  * Package the scheduler init file
+  * Add hints about symlinks needed later.
+  * Specify pyscopg2 dependency provision.
+
+ -- Neil Williams <codehelp@debian.org>  Tue, 25 Jun 2013 20:38:02 +0100
+
+lava-server (0.20-4) unstable; urgency=low
+
+  * Fix missing dependency on python-psycopg2
+
+ -- Neil Williams <codehelp@debian.org>  Fri, 07 Jun 2013 15:16:58 +0100
+
+lava-server (0.20-3) unstable; urgency=low
+
+  * Add helpers for correct dependency calculations.
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 05 Jun 2013 21:05:18 +0100
+
+lava-server (0.20-2) unstable; urgency=low
+
+  * Package the fixed upstream which serves /static/ files correctly.
+
+ -- Neil Williams <codehelp@debian.org>  Tue, 04 Jun 2013 21:24:50 +0100
+
+lava-server (0.20-1a4) unstable; urgency=low
+
+  * added db setup support
+
+ -- Neil Williams <codehelp@debian.org>  Tue, 04 Jun 2013 17:59:03 +0100
+
+lava-server (0.20-1a3) unstable; urgency=low
+
+  * test views.py for url django issue
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 03 Jun 2013 15:05:49 +0100
+
+lava-server (0.20-1a2) UNRELEASED; urgency=low
+
+  * handle migration of python-django-debian into lava-server
+  * fix package symlinks
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 03 Jun 2013 14:31:50 +0100
+
+lava-server (0.20-1) unstable; urgency=low
+
+  * Move to the combined lava-server upstream package to which the etc/
+    files have been migrated.
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 29 May 2013 16:14:30 +0100
+
+lava-server (0.0.1-1) unstable; urgency=low
+
+  * Migrate LAVA recipes from lava-manifest to provide a baseline for
+    what the build out would do in the manifest.
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 29 May 2013 12:06:46 +0100
+
+lava-server (0.0.0-1) unstable; urgency=low
+
+  * Initial packaging, generated from the lava-deployment-tool
+    installation.
+
+ -- Neil Williams <codehelp@debian.org>  Thu, 23 May 2013 08:52:04 +0100

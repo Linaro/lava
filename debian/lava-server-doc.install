@@ -1,0 +1,2 @@
+doc/v2/_build/html/* ./usr/share/doc/lava-server-doc/html/v2/
+doc/v2/examples/* ./usr/share/doc/lava-server-doc/html/v2/examples/

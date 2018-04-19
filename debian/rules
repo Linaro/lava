@@ -27,17 +27,26 @@ export PYBUILD_DISABLE_python3.3=test
 export PYBUILD_DISABLE_python3.5=test
 export PYBUILD_DISABLE_python3.6=test
 
+PYTHONDIR=/usr/lib/python3/dist-packages/
+
+PYTHON:=$(shell py3versions -r)
+install_dir=$(call py_libdir, $(PYTHON))
+
 %:
-	dh $@ --with systemd,python3
+	dh $@ --with sphinxdoc,systemd,python3
 
 override_dh_python3:
 	dh_python3 --shebang=/usr/bin/python3
 
 override_dh_auto_build:
 	python3 setup.py build
-	make -C man/ man SPHINXOPTS="-D today=\"$(BUILD_DATE)\""
+	make -C man/ man SPHINXBUILD="/usr/share/sphinx/scripts/python3/sphinx-build" SPHINXOPTS="-D today=\"$(BUILD_DATE)\""
+	make -C doc/v2/ html SPHINXBUILD="/usr/share/sphinx/scripts/python3/sphinx-build" SPHINXOPTS="-j 4 -D today=\"$(BUILD_DATE)\""
+	make -C man/ man SPHINXBUILD="/usr/share/sphinx/scripts/python3/sphinx-build" SPHINXOPTS="-j 4 -D today=\"$(BUILD_DATE)\""
 
 override_dh_auto_install:
+	find . -path '*/__pycache__/*' -delete
+	find . -type d -name '__pycache__' -empty -delete
 	dh_installman -plava-dispatcher man/_build/man/lava-run.1
 	dh_installman -plava-dispatcher man/_build/man/lava-slave.8
 	dh_installman -plava-lxc-mocker man/_build/man/lava-lxc-mocker.7
@@ -48,10 +57,28 @@ override_dh_auto_install:
 	dh_installman -plava-lxc-mocker man/_build/man/lxc-info.1
 	dh_installman -plava-lxc-mocker man/_build/man/lxc-start.1
 	dh_installman -plava-lxc-mocker man/_build/man/lxc-stop.1
-	python3 setup.py install --root=$(CURDIR)/debian/lava-dispatcher/ --install-layout=deb
+	python3 setup.py install --root=$(CURDIR)/debian/lava/ --install-layout=deb
 	cp ./etc/lava-slave.service debian/
 	dh_systemd_enable --name lava-slave
 	dh_systemd_start --name lava-slave
+	[ -f debian/lava-server/usr/bin/lava-server ] || cp ./debian/lava/$(PYTHONDIR)/lava_server/manage.py debian/lava-server/usr/bin/lava-server; chmod a+x debian/lava-server/usr/bin/lava-server
+	dh_installman -plava-server man/_build/man/lava-server.1
+	# skip unwanted licence file specified in copyright
+	$(RM) debian/lava-server/$(PYTHONDIR)/google_analytics/LICENSE
+	# handle embedded JS
+	python3 ./share/javascript.py -f ./share/javascript.yaml --remove
+	# handle systemd services
+	cp ./etc/*.service debian/
+	dh_systemd_enable --name lava-server-gunicorn
+	dh_systemd_enable --name lava-logs
+	dh_systemd_enable --name lava-server
+	dh_systemd_enable --name lava-publisher
+	dh_systemd_enable --name lava-master
+	dh_systemd_start --name lava-server-gunicorn
+	dh_systemd_start --name lava-logs
+	dh_systemd_start --name lava-server
+	dh_systemd_start --name lava-publisher
+	dh_systemd_start --name lava-master
 
 override_dh_fixperms:
 	dh_fixperms -X debian/lava-dispatcher/usr/lib/python3/dist-packages/lava_dispatcher/dynamic_vm_keys/lava
@@ -59,11 +86,25 @@ override_dh_fixperms:
 	chmod 0600 debian/lava-dispatcher/usr/lib/python3/dist-packages/lava_dispatcher/dynamic_vm_keys/lava
 	chmod 0644 debian/lava-dispatcher/usr/lib/python3/dist-packages/lava_dispatcher/dynamic_vm_keys/lava.pub
 
+override_dh_installinit:
+	dh_installinit -Nlava-server
+
+override_dh_compress:
+	dh_compress -X.yaml
+	$(RM) -r debian/lava/usr/lib/python3
+	$(RM) -r debian/lava/usr/bin
+
 override_dh_auto_clean:
 	python3 setup.py clean -a
 	find . -path '*/__pycache__/*' -delete
-	$(RM) -r lava_dispatcher.egg-info setup.cfg .idea/ build/
+	$(RM) -r lava.egg-info setup.cfg .idea/ build/
 	$(RM) -r .eggs/ versiontools-*.egg/ doc/build/ doc/html/
 	$(RM) debian/lava-slave.service
+	find . -type d -name '__pycache__' -empty -delete
+	$(RM) -r dist/ jquery.cookie.js
+	$(RM) debian/*.service
+	[ ! -f doc/Makefile ] || make -C doc/ clean
+	[ ! -f doc/v1/Makefile ] || make -C doc/v1/ clean
+	[ ! -f doc/v2/Makefile ] || make -C doc/v2/ clean
 	[ ! -f man/Makefile ] || make -C man/ clean
 
