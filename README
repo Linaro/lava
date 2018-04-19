@@ -8,10 +8,24 @@ Documentation
 
 lava-dispatcher documentation is installed as part of the lava-server-doc
 package and is available on each LAVA instance,
-e.g. http://localhost/static/docs/ or http://validation.linaro.org/static/docs/
+e.g. http://localhost/static/docs/v2/ or https://validation.linaro.org/static/docs/v2/
 
 Reporting Bugs
 ==============
 
-All bugs should be reported to Linaro at - 
-https://bugs.linaro.org/enter_bug.cgi?product=LAVA%20Framework
+The LAVA software team use Jira [1] to track bugs. Bugs / issues, feature
+requests, enhancements and problems can be either reported directly into JIRA
+using a CTT [2] ticket or via the lava-users [3] mailing list. Updates to each
+JIRA ticket will be sent to the lava-users [3] mailing list.
+
+If you do not already have a Linaro account, you can choose to Register with
+Linaro as a Community contributor [4] in order to file a new CTT ticket. It is
+often useful to discuss the full details of the problem on the lava-users
+mailing list before creating a ticket. One of the LAVA software team member
+can then create a ticket on your behalf and keep the list updated as the work
+progresses.
+
+[1] http://www.atlassian.com/jira-software
+[2] https://projects.linaro.org/servicedesk/customer/portal/1/create/34
+[3] https://lists.linaro.org/mailman/listinfo/lava-users
+[4] http://localhost/static/docs/v2/development-intro.html#register
