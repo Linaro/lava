@@ -34,6 +34,7 @@ from lava_dispatcher.action import (
     Timeout,
 )
 from lava_dispatcher.utils.constants import (
+    LXC_PROTOCOL,
     LAVA_LXC_TIMEOUT,
     LXC_PATH,
     UDEV_RULES_DIR,
@@ -45,7 +46,7 @@ class LxcProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
     """
     Lxc API protocol.
     """
-    name = "lava-lxc"
+    name = LXC_PROTOCOL
 
     def __init__(self, parameters, job_id):
         super().__init__(parameters, job_id)

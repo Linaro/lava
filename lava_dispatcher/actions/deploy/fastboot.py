@@ -39,6 +39,7 @@ from lava_dispatcher.actions.deploy.apply_overlay import (
 )
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.utils.filesystem import copy_to_lxc
+from lava_dispatcher.utils.lxc import is_lxc_requested
 from lava_dispatcher.protocols.lxc import LxcProtocol
 from lava_dispatcher.actions.boot.fastboot import EnterFastbootAction
 from lava_dispatcher.actions.boot.u_boot import UBootEnterFastbootAction
@@ -96,9 +97,6 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
         super().validate()
         if not self.test_needs_deployment(self.parameters):
             return
-        protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name]
-        if not protocol:
-            self.errors = "No LXC device requested"
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -222,19 +220,14 @@ class FastbootFlashAction(Action):
 
     def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-locals
         connection = super().run(connection, max_end_time, args)
-        # this is the device namespace - the lxc namespace is not accessible
-        lxc_name = None
-        protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
-        if protocol:
-            lxc_name = protocol.lxc_name
-        if not lxc_name:
-            raise JobError("Unable to use fastboot")
 
         src = self.get_namespace_data(action='download-action', label=self.command, key='file')
         if not src:
             return connection
-        dst = copy_to_lxc(lxc_name, src, self.job.parameters['dispatcher'])
         self.logger.debug("%s bytes", os.stat(src)[6])
+        lxc_name = is_lxc_requested(self.job)
+        if lxc_name:
+            src = copy_to_lxc(lxc_name, src, self.job.parameters['dispatcher'])
         sequence = self.job.device['actions']['boot']['methods'].get(
             'fastboot', [])
         if 'no-flash-boot' in sequence and self.command in ['boot']:
@@ -251,9 +244,9 @@ class FastbootFlashAction(Action):
 
         serial_number = self.job.device['fastboot_serial_number']
         fastboot_opts = self.job.device['fastboot_options']
-        fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
-                        '-s', serial_number, 'flash', self.command,
-                        dst] + fastboot_opts
+        fastboot_cmd = self.lxc_cmd_prefix + [
+            'fastboot', '-s', serial_number, 'flash', self.command, src
+        ] + fastboot_opts
         self.logger.info("Handling %s", self.command)
         command_output = self.run_command(fastboot_cmd)
         if not command_output:
@@ -270,23 +263,14 @@ class FastbootReboot(Action):
     summary = 'execute a reboot using fastboot'
 
     def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-locals
-
         connection = super().run(connection, max_end_time, args)
-        # this is the device namespace - the lxc namespace is not accessible
-        lxc_name = None
-        protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
-        if protocol:
-            lxc_name = protocol.lxc_name
-        if not lxc_name:
-            raise JobError("Unable to use fastboot")
 
         serial_number = self.job.device['fastboot_serial_number']
         fastboot_opts = self.job.device['fastboot_options']
 
         self.logger.info("fastboot rebooting device.")
-        fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--',
-                        'fastboot', '-s', serial_number,
-                        'reboot'] + fastboot_opts
+        fastboot_cmd = self.lxc_cmd_prefix + ['fastboot', '-s', serial_number,
+                                              'reboot'] + fastboot_opts
         command_output = self.run_command(fastboot_cmd)
         if not command_output:
             raise InfrastructureError("Unable to reboot")
@@ -300,23 +284,15 @@ class FastbootRebootBootloader(Action):
     summary = 'execute a reboot to bootloader using fastboot'
 
     def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-locals
-
         connection = super().run(connection, max_end_time, args)
-        # this is the device namespace - the lxc namespace is not accessible
-        lxc_name = None
-        protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
-        if protocol:
-            lxc_name = protocol.lxc_name
-        if not lxc_name:
-            raise JobError("Unable to use fastboot")
 
         serial_number = self.job.device['fastboot_serial_number']
         fastboot_opts = self.job.device['fastboot_options']
 
         self.logger.info("fastboot reboot device to bootloader.")
-        fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--',
-                        'fastboot', '-s', serial_number,
-                        'reboot-bootloader'] + fastboot_opts
+        fastboot_cmd = self.lxc_cmd_prefix + [
+            'fastboot', '-s', serial_number, 'reboot-bootloader'
+        ] + fastboot_opts
         command_output = self.run_command(fastboot_cmd)
         if not command_output:
             raise InfrastructureError("Unable to reboot to bootloader")

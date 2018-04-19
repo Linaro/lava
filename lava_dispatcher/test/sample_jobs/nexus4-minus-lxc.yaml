@@ -1,0 +1,53 @@
+device_type: nexus4
+job_name: Nexus4 health check - minus LXC
+timeouts:
+  job:
+    minutes: 60
+  action:
+    minutes: 5
+  connection:
+    minutes: 2
+priority: medium
+visibility: public
+reboot_to_fastboot: false
+
+metadata:
+  source: https://git.linaro.org/lava-team/refactoring.git
+  path: health-checks/nexus4.yaml
+
+actions:
+- deploy:
+    timeout:
+      minutes: 5
+    to: fastboot
+    images:
+      boot:
+        url: http://images.validation.linaro.org/people.linaro.org/~senthil.kumaran/nexus4-userdebug/boot.img
+      userdata:
+        url: http://images.validation.linaro.org/people.linaro.org/~senthil.kumaran/nexus4-userdebug/userdata.img
+      system:
+        url: http://images.validation.linaro.org/people.linaro.org/~senthil.kumaran/nexus4-userdebug/system.img
+    os: android
+
+- boot:
+    timeout:
+      minutes: 15
+    method: fastboot
+    prompts:
+    - 'shell@mako'
+
+- test:
+    timeout:
+      minutes: 5
+    definitions:
+    - from: inline
+      name: get-adb-serial
+      path: inline/adb-serial.yaml
+      repository:
+        metadata:
+          description: adb serial tests
+          format: Lava-Test Test Definition 1.0
+          name: get-adb-serial
+        run:
+          steps:
+          - cat /sys/class/android_usb/f_accessory/device/iSerial

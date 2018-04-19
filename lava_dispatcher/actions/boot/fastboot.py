@@ -32,10 +32,13 @@ from lava_dispatcher.actions.boot import (
     BootAction,
     AutoLoginAction,
     OverlayUnpack,
+    AdbOverlayUnpack,
 )
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.utils.constants import LAVA_LXC_HOME
+from lava_dispatcher.utils.lxc import is_lxc_requested
 from lava_dispatcher.connections.serial import ConnectDevice
+from lava_dispatcher.connections.adb import ConnectAdb
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.protocols.lxc import LxcProtocol
 from lava_dispatcher.shell import ExpectShellSession
@@ -122,13 +125,12 @@ class BootFastbootAction(BootAction):
                     mapped[0](device_actions=mapped[1]))
             elif mapped[0]:
                 self.internal_pipeline.add_action(mapped[0]())
-        if self.has_prompts(parameters):
-            self.internal_pipeline.add_action(AutoLoginAction())
-            if self.test_has_shell(parameters):
-                self.internal_pipeline.add_action(ExpectShellSession())
-                if 'transfer_overlay' in parameters:
-                    self.internal_pipeline.add_action(OverlayUnpack())
-                self.internal_pipeline.add_action(ExportDeviceEnvironment())
+
+        # Direct connection to device without LXC.
+        if not self.job.device.hard_reset_command:
+            if not is_lxc_requested(self.job):
+                self.internal_pipeline.add_action(ConnectAdb())
+                self.internal_pipeline.add_action(AdbOverlayUnpack())
 
 
 class WaitFastBootInterrupt(Action):
@@ -200,25 +202,19 @@ class FastbootBootAction(Action):
 
     def run(self, connection, max_end_time, args=None):
         connection = super().run(connection, max_end_time, args)
-        # this is the device namespace - the lxc namespace is not accessible
-        lxc_name = None
-        protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
-        if protocol:
-            lxc_name = protocol.lxc_name
-        if not lxc_name:
-            raise JobError("Unable to use fastboot")
-        self.logger.debug("[%s] lxc name: %s", self.parameters['namespace'],
-                          lxc_name)
+        lxc_name = is_lxc_requested(self.job)
         serial_number = self.job.device['fastboot_serial_number']
         boot_img = self.get_namespace_data(action='download-action',
                                            label='boot', key='file')
         if not boot_img:
             raise JobError("Boot image not found, unable to boot")
         else:
-            boot_img = os.path.join(LAVA_LXC_HOME, os.path.basename(boot_img))
-        fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
-                        '-s', serial_number, 'boot',
-                        boot_img] + self.job.device['fastboot_options']
+            if lxc_name:
+                boot_img = os.path.join(LAVA_LXC_HOME,
+                                        os.path.basename(boot_img))
+        fastboot_cmd = self.lxc_cmd_prefix + [
+            'fastboot', '-s', serial_number, 'boot', boot_img
+        ] + self.job.device['fastboot_options']
         command_output = self.run_command(fastboot_cmd, allow_fail=True)
         if command_output and 'booting' not in command_output:
             raise JobError("Unable to boot with fastboot: %s" % command_output)
@@ -258,19 +254,10 @@ class FastbootRebootAction(Action):
 
     def run(self, connection, max_end_time, args=None):
         connection = super().run(connection, max_end_time, args)
-        # this is the device namespace - the lxc namespace is not accessible
-        lxc_name = None
-        protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
-        if protocol:
-            lxc_name = protocol.lxc_name
-        if not lxc_name:
-            raise JobError("Unable to use fastboot")
-        self.logger.debug("[%s] lxc name: %s", self.parameters['namespace'],
-                          lxc_name)
         serial_number = self.job.device['fastboot_serial_number']
         fastboot_opts = self.job.device['fastboot_options']
-        fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot', '-s',
-                        serial_number, 'reboot'] + fastboot_opts
+        fastboot_cmd = self.lxc_cmd_prefix + ['fastboot', '-s', serial_number,
+                                              'reboot'] + fastboot_opts
         command_output = self.run_command(fastboot_cmd, allow_fail=True)
         if command_output and 'rebooting' not in command_output:
             raise JobError("Unable to fastboot reboot: %s" % command_output)
@@ -308,44 +295,36 @@ class EnterFastbootAction(Action):
 
     def run(self, connection, max_end_time, args=None):
         connection = super().run(connection, max_end_time, args)
-        # this is the device namespace - the lxc namespace is not accessible
-        lxc_name = None
-        protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
-        if protocol:
-            lxc_name = protocol.lxc_name
-        if not lxc_name:
-            raise JobError("Unable to use fastboot")
-
-        self.logger.debug("[%s] lxc name: %s", self.parameters['namespace'], lxc_name)
-        fastboot_serial_number = self.job.device['fastboot_serial_number']
 
         # Try to enter fastboot mode with adb.
         adb_serial_number = self.job.device['adb_serial_number']
         # start the adb daemon
-        adb_cmd = ['lxc-attach', '-n', lxc_name, '--', 'adb', 'start-server']
+        adb_cmd = self.lxc_cmd_prefix + ['adb', 'start-server']
         command_output = self.run_command(adb_cmd, allow_fail=True)
         if command_output and 'successfully' in command_output:
             self.logger.debug("adb daemon started: %s", command_output)
-        adb_cmd = ['lxc-attach', '-n', lxc_name, '--', 'adb', '-s',
-                   adb_serial_number, 'devices']
+        adb_cmd = self.lxc_cmd_prefix + ['adb', '-s', adb_serial_number,
+                                         'devices']
         command_output = self.run_command(adb_cmd, allow_fail=True)
         if command_output and adb_serial_number in command_output:
             self.logger.debug("Device is in adb: %s", command_output)
-            adb_cmd = ['lxc-attach', '-n', lxc_name, '--', 'adb',
-                       '-s', adb_serial_number, 'reboot-bootloader']
+            adb_cmd = self.lxc_cmd_prefix + ['adb', '-s', adb_serial_number,
+                                             'reboot-bootloader']
             self.run_command(adb_cmd)
             return connection
 
         # Enter fastboot mode with fastboot.
+        fastboot_serial_number = self.job.device['fastboot_serial_number']
         fastboot_opts = self.job.device['fastboot_options']
-        fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot', '-s',
-                        fastboot_serial_number, 'devices'] + fastboot_opts
+        fastboot_cmd = self.lxc_cmd_prefix + ['fastboot', '-s',
+                                              fastboot_serial_number,
+                                              'devices'] + fastboot_opts
         command_output = self.run_command(fastboot_cmd)
         if command_output and fastboot_serial_number in command_output:
             self.logger.debug("Device is in fastboot: %s", command_output)
-            fastboot_cmd = ['lxc-attach', '-n', lxc_name, '--', 'fastboot',
-                            '-s', fastboot_serial_number,
-                            'reboot-bootloader'] + fastboot_opts
+            fastboot_cmd = self.lxc_cmd_prefix + [
+                'fastboot', '-s', fastboot_serial_number, 'reboot-bootloader'
+            ] + fastboot_opts
             command_output = self.run_command(fastboot_cmd)
             if command_output and 'OKAY' not in command_output:
                 raise InfrastructureError("Unable to enter fastboot: %s" %

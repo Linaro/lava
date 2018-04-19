@@ -59,6 +59,9 @@ ACTION_TIMEOUT = 30
 # Android tmp directory
 ANDROID_TMP_DIR = '/data/local/tmp'
 
+# LXC protocol name
+LXC_PROTOCOL = "lava-lxc"
+
 # LXC container path
 LXC_PATH = "/var/lib/lxc"
 

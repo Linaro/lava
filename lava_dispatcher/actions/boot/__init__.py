@@ -42,6 +42,7 @@ from lava_dispatcher.utils.messages import LinuxKernelMessages
 from lava_dispatcher.utils.strings import substitute
 from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.filesystem import write_bootscript
+from lava_dispatcher.utils.compression import untar_file
 from lava_dispatcher.connections.ssh import SShSession
 from lava_dispatcher.connections.serial import ConnectShell
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
@@ -705,4 +706,49 @@ class BootloaderCommandsAction(Action):
             self.wait(connection, max_end_time)
 
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
+        return connection
+
+
+class AdbOverlayUnpack(Action):
+
+    name = "adb-overlay-unpack"
+    summary = "unpack the overlay on the remote device"
+    description = "unpack the overlay over adb"
+
+    def __init__(self):
+        super(AdbOverlayUnpack, self).__init__()
+
+    def validate(self):
+        super(AdbOverlayUnpack, self).validate()
+        if 'adb_serial_number' not in self.job.device:
+            self.errors = "device adb serial number missing"
+            if self.job.device['adb_serial_number'] == '0000000000':
+                self.errors = "device adb serial number unset"
+
+    def run(self, connection, max_end_time, args=None):
+        connection = super(AdbOverlayUnpack, self).run(connection,
+                                                       max_end_time, args)
+        if not connection:
+            raise LAVABug("Cannot transfer overlay, no connection available.")
+        overlay_file = self.get_namespace_data(action='compress-overlay',
+                                               label='output', key='file')
+        if not overlay_file:
+            raise JobError("No overlay file identified for the transfer.")
+        serial_number = self.job.device['adb_serial_number']
+        host_dir = self.mkdtemp()
+        target_dir = '/data/local'
+        untar_file(overlay_file, host_dir)
+        host_dir = os.path.join(host_dir, 'data/local/tmp')
+        adb_cmd = ['adb', '-s', serial_number, 'push', host_dir,
+                   target_dir]
+        command_output = self.run_command(adb_cmd)
+        if command_output and 'pushed' not in command_output:
+            raise JobError("Unable to push overlay files with adb: %s" %
+                           command_output)
+        adb_cmd = ['adb', '-s', serial_number, 'shell', '/system/bin/chmod',
+                   '-R', '0777', os.path.join(target_dir, 'tmp')]
+        command_output = self.run_command(adb_cmd)
+        if command_output and 'pushed' not in command_output:
+            raise JobError("Unable to chmod overlay files with adb: %s" %
+                           command_output)
         return connection

@@ -15,7 +15,7 @@
 {% set baud_rate = baud_rate|default(115200) %}
 {% set uboot_extra_error_message = 'Invalid partition' %}
 {% set fastboot_sequence = [
-    'reboot'] %}
+    'reboot', 'auto-login'] %}
 {% set fastboot_deploy_uboot = "
       u-boot:
         parameters:

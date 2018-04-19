@@ -128,7 +128,7 @@ actions:
     methods:
       minimal:
       ssh:
-      fastboot: ['reboot']
+      fastboot: ['reboot', 'auto-login']
       u-boot:
         parameters:
           mkimage_arch: arm

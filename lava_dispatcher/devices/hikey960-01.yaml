@@ -61,7 +61,7 @@ actions:
       lxc:
     methods:
       lxc:
-      fastboot: ['boot']
+      fastboot: ['boot', 'auto-login']
       grub:
         sequence:
         - wait-fastboot-interrupt

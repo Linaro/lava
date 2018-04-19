@@ -41,6 +41,9 @@ actions:
       lxc:
       fastboot:
         - no-flash-boot
+        - auto-login
+        - shell-session
+        - export-env
 
 timeouts:
   actions:

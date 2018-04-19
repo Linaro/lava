@@ -30,6 +30,7 @@ from lava_dispatcher.test.utils import DummyLogger, infrastructure_error, infras
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.fastboot import FastbootFlashOrderAction
 from lava_dispatcher.actions.boot.fastboot import BootAction
+from lava_dispatcher.utils.lxc import is_lxc_requested
 
 
 class FastBootFactory(Factory):  # pylint: disable=too-few-public-methods
@@ -328,3 +329,17 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
         self.assertIsNotNone(flash_order)
         self.assertIsInstance(flash_order, FastbootFlashOrderAction)
         self.assertEqual(expected_flash_cmds, flash_cmds)
+
+    def test_fastboot_minus_lxc(self):
+        job = self.factory.create_fastboot_job(
+            'sample_jobs/nexus4-minus-lxc.yaml')
+        description_ref = self.pipeline_reference('nexus4-minus-lxc.yaml',
+                                                  job=job)
+        self.assertEqual(description_ref, job.pipeline.describe(False))
+        # There shouldn't be any lxc defined
+        lxc_name = is_lxc_requested(job)
+        self.assertEqual(lxc_name, False)
+        deploy = [action for action in job.pipeline.actions
+                  if action.name == 'fastboot-deploy'][0]
+        # No lxc requested, hence lxc_cmd_prefix is an empty list
+        self.assertEqual([], deploy.lxc_cmd_prefix)
