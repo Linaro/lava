@@ -1,6 +1,6 @@
 # Compulsory line, this is a version 3 file
 version=3
 
-# https://git.linaro.org/lava/lava-dispatcher.git/snapshot/lava-2016.11.tar.gz
+# https://git.linaro.org/lava/lava.git/snapshot/lava-2016.11.tar.gz
 
-https://git.linaro.org/lava/lava-dispatcher.git/refs /lava/lava-dispatcher.git/snapshot/lava-(\d+.\d+.\d?)\d*.*.tar.gz
+https://git.linaro.org/lava/lava.git/refs /lava/lava.git/snapshot/lava-(\d+.\d+.\d?)\d*.*.tar.gz
