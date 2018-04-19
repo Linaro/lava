@@ -1,0 +1,26 @@
+lava-server 2015.12
+===================
+
+Ubuntu Trusty 14.04LTS
+----------------------
+
+Support for Ubuntu Trusty 14.04LTS has been frozen upstream.
+The master branch and uploads to Debian are no longer
+supportable with django1.6 or older.
+
+For Trusty support, see the frozen release at
+http://images.validation.linaro.org/trusty-repo/
+
+Debian Jessie
+-------------
+
+setuptools behaviour has changed in Debian Stretch. The 'requires.txt' file
+is not being created - this does not affect installs on Debian Stretch -
+however, setuptools in Jessie uses this file and if lava-server is built
+in Stretch, it will fail to install on Jessie.
+
+Ensure that all builds for Jessie are built using Jessie (chroot or VM) in
+the same way that packages are built for jessie-backports. Builds available
+from http://images.validation.linaro.org/staging-repo/ and
+http://images.validation.linaro.org/production-repo/ are built in a Jessie
+environment, so are suitable for Jessie.
