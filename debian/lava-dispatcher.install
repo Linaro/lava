@@ -6,3 +6,9 @@ share/create_certificate.py ./usr/share/lava-dispatcher/
 share/apache2/lava-dispatcher.conf ./usr/share/lava-dispatcher/apache2/
 share/lava_lxc_device_add.py ./usr/share/lava-dispatcher/
 etc/lava-slave ./usr/share/lava-dispatcher/
+etc/dispatcher.yaml ./usr/share/lava-dispatcher/
+etc/lava-modules.conf ./etc/modules-load.d/
+etc/lava-dispatcher-nfs.exports ./etc/exports.d/
+etc/logrotate.d/lava-slave-log ./etc/logrotate.d/
+etc/tftpd-hpa ./usr/share/lava-dispatcher/
+etc/lava-slave.service ./usr/share/lava-dispatcher/
