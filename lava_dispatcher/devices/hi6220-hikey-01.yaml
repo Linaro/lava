@@ -1,0 +1,90 @@
+commands:
+    # deprecated
+    # connect: telnet localhost 7019
+    connections:
+      uart1:
+        connect: telnet localhost 7019
+        tags:
+        - primary
+      uart0:
+        connect: telnet localhost 7020
+    hard_reset: /usr/bin/pduclient --daemon services --hostname pdu09 --command reboot --port 08
+    power_off: /usr/bin/pduclient --daemon services --hostname pdu09 --command off --port 08
+    pre_power_command: /usr/local/lab-scripts/usb_hub_control -p 8000 -m sync -u 06
+device_type: hi6220-hikey
+adb_serial_number: 0123456789
+fastboot_serial_number: 96B0201601000691
+fastboot_options: ['-S', '256M']
+device_info: [{'board_id': '96B0201601000691'}]
+static_info: [{'board_id': 'S/NO62200001'}]
+flash_cmds_order: ['update', 'ptable', 'partition', 'hyp', 'modem', 'rpm',
+                  'sbl1', 'sbl2', 'sec', 'tz', 'aboot', 'boot', 'rootfs',
+                  'vendor', 'system', 'cache', 'userdata', ]
+
+constants:
+  shutdown-message: "The system is going down for reboot NOW"
+  kernel-start-message: "Linux version [0-9]"
+  default-shell-prompt: "lava-test: # "
+  grub-efi:
+    interrupt-prompt: "Press enter to boot the selected OS"
+    interrupt-character: "c"
+
+actions:
+  deploy:
+    methods:
+      lxc:
+      fastboot:
+    connections:
+      lxc:
+      serial:
+      console:
+  boot:
+    connections:
+      lxc:
+      serial:
+      console:
+    methods:
+      grub-efi:
+        installed:
+          parameters:
+            interrupt_prompt: "Android Fastboot mode"
+            interrupt_string: ' '
+          commands:
+          - search.fs_label rootfs root
+          - 'linux ($root)/boot/Image console=tty0 console=ttyAMA3,115200 root=/dev/mmcblk0p9 rootwait rw'
+          - devicetree ($root)/boot/hi6220-hikey.dtb
+          - boot
+        menu_options: fastboot
+        reset_device: False  # default is True
+        parameters:
+          bootloader_prompt: 'grub>'
+      uefi-menu:
+        menu_options: fastboot
+        parameters:
+          interrupt_prompt: "Android Fastboot mode"
+          interrupt_string: ' '
+          item_markup:
+            - "["
+            - "]"
+          item_class: '0-9'
+          separator: ' '
+          label_class: 'a-zA-Z0-9\s\:'
+          bootloader_prompt: 'Start:'
+          boot_message: "Booting Linux Kernel..."
+          send_char: True
+          character_delay: 10
+        fastboot:
+        - select:
+            items:
+             - 'boot from eMMC'
+
+timeouts:
+  actions:
+    apply-overlay-image:
+      seconds: 120
+    umount-retry:
+      seconds: 45
+    lava-test-shell:
+      seconds: 600
+    power_off:
+      seconds: 10

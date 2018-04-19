@@ -1,0 +1,9 @@
+#!/bin/sh
+#
+# This file is for Vland test
+#
+# Prints the interface details for this device
+#
+# Usage: ``lava-vland-self``
+
+echo -e ${LAVA_VLAND_SELF}

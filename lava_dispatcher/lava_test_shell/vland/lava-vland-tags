@@ -1,0 +1,9 @@
+#!/bin/sh
+#
+# This file is for Vland test
+#
+# Prints the tag details for this device
+#
+# Usage: ``lava-vland-tags``
+
+echo -e ${LAVA_VLAND_TAGS}

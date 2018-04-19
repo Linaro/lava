@@ -1,0 +1,156 @@
+character_delays:
+      boot: 10
+constants:
+  shutdown-message: "The system is going down for reboot NOW"
+  kernel-start-message: "Linux version [0-9]"
+  default-shell-prompt: "lava-test: # "
+  grub-efi:
+    interrupt-prompt: "Press enter to boot the selected OS"
+    interrupt-character: "c"
+
+commands:
+    connections:
+      uart0:
+        connect: telnet localhost 7012
+        tags:
+        - primary
+    hard_reset: /usr/bin/pduclient --daemon services --hostname pdu09 --command reboot --port 05
+    power_off: /usr/bin/pduclient --daemon services --hostname pdu09 --command off --port 05
+parameters:
+  media:
+    sata:
+      UUID-required: True
+      ST500DM002:
+        uuid: ata-ST500DM002-1BD142_S2AKYFSN
+        device_id: 0
+        uboot_interface: scsi
+        grub_interface: hd0
+        boot_part: 1
+
+device_type: mustang
+
+actions:
+  deploy:
+    methods:
+      sata:
+      tftp:
+      ssh:
+        options:
+          - '-o'
+          - 'Compression=yes'
+          - '-o'
+          - 'PasswordAuthentication=no'
+          - '-o'
+          - 'LogLevel=FATAL'
+
+        host: ''
+        user: root
+        port: 22
+        identity_file: dynamic_vm_keys/lava
+  boot:
+     connections:
+       serial:
+       ssh:
+     methods:
+      ssh:
+      grub-efi:
+        menu_options: pxe-grub
+        parameters:
+          bootloader_prompt: grub>
+        ramdisk:
+          commands:
+          - insmod gzio
+          - linux (tftp,{SERVER_IP})/{KERNEL} console=ttyS0,115200n8 debug
+            root=/dev/ram0 rw ip=:::::eth0:dhcp
+          - initrd (tftp,{SERVER_IP})/{RAMDISK}
+          - boot
+        installed:
+          commands:
+          - insmod gzio
+          - linux (tftp,{SERVER_IP})/{KERNEL} console=ttyS0,115200n8 debug
+            root=/dev/sda2 rw ip=:::::eth0:dhcp
+          - initrd (tftp,{SERVER_IP})/{RAMDISK}
+          - boot
+        nfs:
+          commands:
+          - insmod gzio
+          - 'linux (tftp,{SERVER_IP})/{KERNEL} console=ttyS0,115200n8 debug
+            root=/dev/nfs rw nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr ip=:::::eth0:dhcp '
+          - initrd (tftp,{SERVER_IP})/{RAMDISK}
+          - boot
+        sata:
+          commands:
+          - insmod gzio
+          - linux (hd0,gpt1)/{KERNEL}
+            console=ttyS0,115200n8 debug
+            root=/dev/sda2 rw ip=:::::eth0:dhcp
+          - initrd (hd0,gpt1/{RAMDISK}
+          - boot
+      uefi-menu:
+        menu_options: pxe-grub
+        parameters:
+          interrupt_prompt: The default boot selection will start in
+          interrupt_string: ' '
+          item_markup:
+            - "["
+            - "]"
+          item_class: '0-9'
+          separator: ' '
+          bootloader_prompt: 'Start:'
+        pxe-grub:
+        - select:
+            items:
+            - 'LAVA PXE Grub'
+timeouts:
+  actions:
+    apply-overlay-image:
+      minutes: 2
+    dd-image:
+      minutes: 10
+    download-retry:
+      minutes: 5
+    http-download:
+      minutes: 5
+    lava-test-shell:
+      minutes: 3
+    nfs-deploy:
+      minutes: 10
+    power-off:
+      seconds: 5
+    bootloader-commands:
+      minutes: 3
+    bootloader-interrupt:
+      seconds: 30
+    u-boot-interrupt:
+      seconds: 30
+    umount-retry:
+      seconds: 45
+    auto-login-action:
+      minutes: 2
+    bootloader-action:
+      minutes: 3
+    uboot-action:
+      minutes: 3
+    uboot-retry:
+      minutes: 3
+    bootloader-retry:
+      minutes: 3
+    boot-qemu-image:
+      minutes: 2
+    boot-image-retry:
+      minutes: 2
+  connections:
+    dd-image:
+      minutes: 10
+    uboot-retry:
+      seconds: 30
+    bootloader-commands:
+      seconds: 30
+    auto-login-action:
+      minutes: 2
+    bootloader-interrupt:
+      seconds: 30
+    u-boot-interrupt:
+      seconds: 30
+
+

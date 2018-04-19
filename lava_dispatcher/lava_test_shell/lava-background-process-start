@@ -1,0 +1,45 @@
+usage () {
+    echo "Usage: lava-background-process-start NAME --cmd PROCESS"
+    echo ""
+    echo "Start PROCESS in background."
+    echo "NAME is used to identify the process in the lava-background-process-stop"
+}
+
+NAME="$1"
+shift
+if [ -z "$NAME" ]; then
+    usage
+    exit 1
+fi
+
+while [ $# -gt 0 ]; do
+    case $1 in
+        --cmd)
+            shift
+            PROCESS="$*"
+            shift
+            ;;
+        *)
+            usage
+            exit 1
+            ;;
+    esac
+done
+
+# $LAVA_RESULT_DIR is set by lava-test-shell
+result_dir="$LAVA_RESULT_DIR/results/$NAME"
+mkdir -p "$result_dir"
+
+cat <<EOF > $result_dir/bg_run.sh
+set -e
+trap "exit" SIGHUP SIGINT SIGTERM
+while true; do
+    $PROCESS &
+    sleep 1
+done
+EOF
+
+/bin/bash $result_dir/bg_run.sh &
+echo $! > $result_dir/pid
+
+exit 0

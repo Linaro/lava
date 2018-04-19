@@ -1,0 +1,364 @@
+did_firmware=edid-1920x1080.fw root=/dev/nfs rw nfsroot=10.3.2.1:/var/lib/lava/dispatcher/tmp/tmpSSmVt8,tcp,hard,intr earlyprintk ip=:::::eth0:dhcp
+[    0.000000] PID hash table entries: 4096 (order: 2, 16384 bytes)
+[    0.000000] Dentry cache hash table entries: 131072 (order: 7, 524288 bytes)
+[    0.000000] Inode-cache hash table entries: 65536 (order: 6, 262144 bytes)
+[    0.000000] Memory: 2018768K/2080768K available (6413K kernel code, 829K rwdata, 2204K rodata, 688K init, 393K bss, 62000K reserved, 1318912K highmem)
+[    0.000000] Virtual kernel memory layout:
+[    0.000000]     vector  : 0xffff0000 - 0xffff1000   (   4 kB)
+[    0.000000]     fixmap  : 0xffc00000 - 0xffe00000   (2048 kB)
+[    0.000000]     vmalloc : 0xf0000000 - 0xff000000   ( 240 MB)
+[    0.000000]     lowmem  : 0xc0000000 - 0xef800000   ( 760 MB)
+[    0.000000]     pkmap   : 0xbfe00000 - 0xc0000000   (   2 MB)
+[    0.000000]     modules : 0xbf000000 - 0xbfe00000   (  14 MB)
+[    0.000000]       .text : 0xc0008000 - 0xc0872938   (8619 kB)
+[    0.000000]       .init : 0xc0873000 - 0xc091f140   ( 689 kB)
+[    0.000000]       .data : 0xc09
+20000 - 0xc09ef610   ( 830 kB)
+[    0.000000]        .bss : 0xc09ef610 - 0xc0a51b34   ( 394 kB)
+[    0.000000] Hierarchical RCU implementation.
+[    0.000000] 	RCU dyntick-idle grace-period acceleration is enabled.
+[    0.000000] 	RCU restricting CPUs from NR_CPUS=4 to nr_cpu_ids=2.
+[    0.000000] RCU: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=2
+[    0.000000] NR_IRQS:16 nr_irqs:16 16
+[    0.000000] L2C: failed to init: -19
+[    0.000000] Exynos5250: clock setup completed, armclk=1000000000
+[    0.000000] Architected cp15 timer(s) running at 24.00MHz (phys).
+[    0.000000] sched_clock: 56 bits at 24MHz, resolution 41ns, wraps every 2863311519744ns
+[    0.000000] Switching to timer-based delay loop
+[    0.000002] Ignoring duplicate/late registration of read_current_timer delay
+[    0.000024] sched_clock: 64 bits at 24MHz, resolution 41ns, wraps every 2863311519744ns
+[    0.000970] Console: colour dummy device 80x30
+[    0.000994] Calibrating delay loop (skipped), value calculated using timer frequency.. 48.00 BogoMIPS (lpj=96000)
+[    0.001012] pid_max: default: 32768 minimum: 301
+[    0.001129] Security Framework initialized
+[    0.001156] AppArmor: 
+AppArmor disabled by boot time parameter
+[    0.001166] Yama: disabled by default; enable with sysctl kernel.yama.*
+[    0.001235] Mount-cache hash table entries: 2048 (order: 1, 8192 bytes)
+[    0.001249] Mountpoint-cache hash table entries: 2048 (order: 1, 8192 bytes)
+[    0.002076] Initializing cgroup subsys memory
+[    0.002102] Initializing cgroup subsys devices
+[    0.002144] Initializing cgroup subsys freezer
+[    0.002162] Initializing cgroup subsys net_cls
+[    0.002192] Initializing cgroup subsys blkio
+[    0.002216] Initializing cgroup subsys perf_event
+[    0.002232] Initializing cgroup subsys net_prio
+[    0.002295] CPU: Testing write buffer coherency: ok
+[    0.002329] ftrace: allocating 23120 entries in 68 pages
+[    0.034201] CPU0: update cpu_capacity 1024
+[    0.034216] CPU0: thread -1, cpu 0, socket 0, mpidr 80000000
+[    0.034530] Setting up static identity map for 0x405c2358 - 0x405c23b0
+[    0.044001] CPU1: Booted secondary processor
+[    0.044041] CPU1: update cpu_capacity 1024
+[    0.044047] CPU1: thread -1, cpu 1, socket 0, mpidr 80000001
+[    0.044141] Brought up 2 CPUs
+[    0.04
+4159] SMP: Total of 2 processors activated (96.00 BogoMIPS).
+[    0.044166] CPU: All CPU(s) started in HYP mode.
+[    0.044172] CPU: Virtualization extensions available.
+[    0.044671] devtmpfs: initialized
+[    0.048463] VFP support v0.3: implementor 41 architecture 4 part 30 variant f rev 0
+[    0.052181] pinctrl core: initialized pinctrl subsystem
+[    0.052520] regulator-dummy: no parameters
+[    0.061905] NET: Registered protocol family 16
+[    0.062140] DMA: preallocated 256 KiB pool for atomic coherent allocations
+[    0.073834] exynos-audss-clk 3810000.audss-clock-controller: setup completed
+[    0.081519] No ATAGs?
+[    0.081550] hw-breakpoint: found 5 (+1 reserved) breakpoint and 4 watchpoint registers.
+[    0.081560] hw-breakpoint: maximum watchpoint size is 8 bytes.
+[    0.081724] EXYNOS5250 PMU Initialize
+[    0.082641] Serial: AMBA PL011 UART driver
+[    0.100748] edma-dma-engine edma-dma-engine.0: Can't allocate PaRAM dummy slot
+[    0.100769] edma-dma-engine: probe of edma-dma-engine.0 failed with error -5
+[    0.101388] MAIN_DC: no parameters
+[    0.101632] VDD_33ON_2.8V: 2800 mV 
+[    0.
+101846] hdmi-en: no parameters
+[    0.103268] vgaarb: loaded
+[    0.103714] usbcore: registered new interface driver usbfs
+[    0.103776] usbcore: registered new interface driver hub
+[    0.103882] usbcore: registered new device driver usb
+[    0.104650] s3c-i2c 12c60000.i2c: slave address 0x66
+[    0.104664] s3c-i2c 12c60000.i2c: bus frequency set to 18 KHz
+[    0.118818] s3c-i2c 12c60000.i2c: i2c-0: S3C I2C adapter
+[    0.118938] s3c-i2c 12c80000.i2c: slave address 0x50
+[    0.118959] s3c-i2c 12c80000.i2c: bus frequency set to 65 KHz
+[    0.119459] s3c-i2c 12c80000.i2c: i2c-2: S3C I2C adapter
+[    0.119570] s3c-i2c 12c90000.i2c: slave address 0x00
+[    0.119583] s3c-i2c 12c90000.i2c: bus frequency set to 65 KHz
+[    0.120041] s3c-i2c 12c90000.i2c: i2c-3: S3C I2C adapter
+[    0.120131] s3c-i2c 12ce0000.i2c: slave address 0x38
+[    0.120144] s3c-i2c 12ce0000.i2c: bus frequency set to 65 KHz
+[    0.120589] s3c-i2c 12ce0000.i2c: i2c-8: S3C I2C adapter
+[    0.120676] s3c-i2c 121d0000.i2c: slave address 0x38
+[    0.120689] s3c-i2c 121d0000.i2c: bus frequency set to 39 KHz
+[    0.121112] s3c-i2c 121d0000.i2c: 
+i2c-9: S3C I2C adapter
+[    0.121245] media: Linux media interface: v0.10
+[    0.121310] Linux video capture interface: v2.00
+[    0.121397] pps_core: LinuxPPS API ver. 1 registered
+[    0.121405] pps_core: Software ver. 5.3.6 - Copyright 2005-2007 Rodolfo Giometti <giometti@linux.it>
+[    0.121432] PTP clock support registered
+[    0.122711] Switched to clocksource arch_sys_counter
+[    0.169623] NET: Registered protocol family 2
+[    0.170383] TCP established hash table entries: 8192 (order: 3, 32768 bytes)
+[    0.170448] TCP bind hash table entries: 8192 (order: 4, 65536 bytes)
+[    0.170573] TCP: Hash tables configured (established 8192 bind 8192)
+[    0.170616] TCP: reno registered
+[    0.170628] UDP hash table entries: 512 (order: 2, 16384 bytes)
+[    0.170659] UDP-Lite hash table entries: 512 (order: 2, 16384 bytes)
+[    0.170891] NET: Registered protocol family 1
+[    0.171284] Unpacking initramfs...
+[    2.219124] Freeing initrd memory: 34080K (c5001000 - c7149000)
+[    2.219509] hw perfevents: enabled with ARMv7 Cortex-A15 PMU driver, 7 counters available
+[    2.221067] futex hash table entries:
+ 512 (order: 3, 32768 bytes)
+[    2.221151] audit: initializing netlink subsys (disabled)
+[    2.221212] audit: type=2000 audit(2.208:1): initialized
+[    2.222187] zbud: loaded
+[    2.222483] VFS: Disk quotas dquot_6.5.2
+[    2.222533] Dquot-cache hash table entries: 1024 (order 0, 4096 bytes)
+[    2.222636] msgmni has been set to 1433
+[    2.223802] alg: No test for stdrng (krng)
+[    2.223898] bounce: pool size: 64 pages
+[    2.223954] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 249)
+[    2.224120] io scheduler noop registered
+[    2.224133] io scheduler deadline registered
+[    2.224267] io scheduler cfq registered (default)
+[    2.230499] dma-pl330 121a0000.pdma: Loaded driver for PL330 DMAC-2364208
+[    2.230514] dma-pl330 121a0000.pdma: 	DBUFF-32x4bytes Num_Chans-8 Num_Peri-32 Num_Events-32
+[    2.233612] dma-pl330 121b0000.pdma: Loaded driver for PL330 DMAC-2364208
+[    2.233626] dma-pl330 121b0000.pdma: 	DBUFF-32x4bytes Num_Chans-8 Num_Peri-32 Num_Events-32
+[    2.234499] dma-pl330 10800000.mdma: Loaded driver for PL330 DMAC-2364208
+[    2.234512] dma-pl330 10800000.mdma: 	DBUFF-64x8bytes Num_Chans-8 Num_Peri-1 Num_Events-32
+[    2.235413] dma-pl330 11c10000.mdma: Loaded driver for PL330 DMAC-2364208
+[    2.235426] dma-pl330 11c10000.mdma: 	DB
+UFF-64x8bytes Num_Chans-8 Num_Peri-1 Num_Events-32
+[    2.235957] Serial: 8250/16550 driver, 4 ports, IRQ sharing disabled
+[    2.237284] Serial: AMBA driver
+[    2.237484] 12c00000.serial: ttySAC0 at MMIO 0x12c00000 (irq = 83, base_baud = 0) is a S3C6400/10
+[    2.237822] 12c10000.serial: ttySAC1 at MMIO 0x12c10000 (irq = 84, base_baud = 0) is a S3C6400/10
+[    2.238150] 12c20000.serial: ttySAC2 at MMIO 0x12c20000 (irq = 85, base_baud = 0) is a S3C6400/10
+[    3.069435] console [ttySAC2] enabled
+[    3.073441] 12c30000.serial: ttySAC3 at MMIO 0x12c30000 (irq = 86, base_baud = 0) is a S3C6400/10
+[    3.082376] Serial: IMX driver
+[    3.088488] mousedev: PS/2 mouse device common for all mice
+[    3.124080] s5m-rtc s5m-rtc: rtc core: registered s5m-rtc as rtc0
+
+[    3.131777] deviceless supply vdd_arm not found, using dummy regulator
+[    3.136982] exynos-cpufreq exynos-cpufreq: failed to set cpu voltage to 1300000
+[    3.144134] cpufreq: __target_index: Failed to change cpu frequency: -22
+[    3.150828] exynos-cpufreq exynos-cpufreq: failed to set cpu voltage to 1300000
+[    3.158104] cpufreq: __target_index: Failed to change cpu frequency: -22
+[    3.165120] ledtrig-cpu: registered to indicate activity on CPUs
+[    3.170851] hidraw: raw HID events driver (C) Jiri Kosina
+[    3.176701] usbcore: registered new interface driver usbhid
+[    3.181714] usbhid: USB HID core driver
+[    3.186320] TCP: cubic registered
+[    3.188927] NET: Registered protocol family 10
+[    3.193965] mip6: Mobile IPv6
+[    3.196230] NET: Registered protocol family 17
+[    3.200657] mpls_gso: MPLS GSO support
+[    3.204578] ThumbEE CPU extension supported.
+[    3.208658] mfc-power-domain: Power-off latency exceeded, new value 4163500 ns
+[    3.215846] Registering SWP/SWPB emulation handler
+[    3.220867] gsc-power-domain: Power-off latency exceeded, new value 247500 ns
+[    3.221482] regi
+stered taskstats version 1
+[    3.232685] input: gpio_keys as /devices/gpio_keys/input/input0
+[    3.243429] s5m-rtc s5m-rtc: setting system clock to 2000-01-02 00:02:00 UTC (946771320)
+[    3.260820] hdmi-en: disabling
+[    3.262391] VDD_33ON_2.8V: disabling
+[    3.265969] MAIN_DC: disabling
+[    3.270213] Freeing unused kernel memory: 688K (c0873000 - c091f000)
+Loading, please wait...
+[    3.314646] systemd-udevd[72]: starting version 215
+[    3.319453] random: systemd-udevd urandom read with 1 bits of entropy available
+
+[    3.388869] ehci_hcd: USB 2.0 'Enhanced' Host Controller (EHCI) Driver
+[    3.397044] Synopsys Designware Multimedia Card Interface Driver
+[    3.402058] ehci-exynos: EHCI EXYNOS driver
+[    3.403034] ohci_hcd: USB 1.1 'Open' Host Controller (OHCI) Driver
+[    3.403911] ohci-exynos: OHCI EXYNOS driver
+[    3.404466] exynos-ohci 12120000.usb: USB Host Controller
+[    3.404870] exynos-ohci 12120000.usb: new USB bus registered, assigned bus number 1
+[    3.404993] exynos-ohci 12120000.usb: irq 103, io mem 0x12120000
+[    3.412894] dwmmc_exynos 12200000.mmc: Using PIO mode.
+[    3.412904] dwmmc_exynos 12200000.mmc: Version ID is 241a
+[    3.441403] s2mps11-clk s5m8767-clk: could not find clock sub-node
+[    3.441429] s2mps11-clk: probe of s5m8767-clk failed with error -22
+[    3.462992] usb usb1: New USB device found, idVendor=1d6b, idProduct=0001
+[    3.468340] usb usb1: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+[    3.475
+524] usb usb1: Product: USB Host Controller
+[    3.475927] exynos-ehci 12110000.usb: EHCI Host Controller
+[    3.485770] usb usb1: Manufacturer: Linux 3.16.0-4-armmp ohci_hcd
+[    3.491839] usb usb1: SerialNumber: 12120000.usb
+[    3.496524] dwmmc_exynos 12200000.mmc: DW MMC controller at irq 107, 32 bit host data width, 128 deep fifo
+[    3.496795] SCSI subsystem initialized
+[    3.513442] hub 1-0:1.0: USB hub found
+[    3.515881] ahci 122f0000.sata: forcing PORTS_IMPL to 0x1
+[    3.527119] hub 1-0:1.0: 3 ports detected
+[    3.531035] ahci 122f0000.sata: AHCI 0001.0300 32 slots 1 ports 6 Gbps 0x1 impl platform mode
+[    3.538202] ahci 122f0000.sata: flags: ncq sntf pm led clo only pmp pio slum part ccc apst 
+[    3.551851] exynos-ehci 12110000.usb: new USB bus registered, assigned bus number 2
+[    3.555431] scsi0 : ahci_platform
+[    3.562066] ata1: SATA max UDMA/133 mmio [mem 0x122f0000-0x122f01fe] port 0x100 irq 147
+[    3.570601] exynos-ehci 12110000.usb: irq 103, io mem 0x12110000
+
+[    3.575434] dwmmc_exynos 12200000.mmc: 1 slots initialized
+[    3.576521] VDD_ALIVE_1.0V: 1100 mV 
+[    3.585625] VDD_28IO_DP_1.35V: 1200 mV 
+[    3.596400] exynos-ehci 12110000.usb: USB 2.0 started, EHCI 1.00
+[    3.608123] VDD_COMMON1_1.8V: 1800 mV 
+[    3.611276] usb usb2: New USB device found, idVendor=1d6b, idProduct=0002
+[    3.617217] usb usb2: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+[    3.624406] usb usb2: Product: EHCI Host Controller
+[    3.629266] usb usb2: Manufacturer: Linux 3.16.0-4-armmp ehci_hcd
+[    3.635325] usb usb2: SerialNumber: 12110000.usb
+[    3.640502] usb3503 usb_hub_bus:usb_hub: switched to HUB mode
+[    3.645679] usb3503 usb_hub_bus:usb_hub: usb3503_probe: probed in hub mode
+[    3.657078] VDD_IOPERI_1.8V: 1800 mV 
+[    3.660649] hub 2-0:1.0: USB hub found
+[    3.664913] hub 2-0:1.0: 3 ports detected
+[    3.667546] mmc0: BKOPS_EN bit is not set
+[    3.670586] VDD_EXT_1.8V: 1800 mV 
+
+[    3.677531] VDD_MPLL_1.1V: 1100 mV 
+[    3.681522] mmc_host mmc0: Bus speed (slot 0) = 50000000Hz (slot req 52000000Hz, actual 50000000HZ div = 0)
+[    3.690125] mmc_host mmc0: Bus speed (slot 0) = 100000000Hz (slot req 52000000Hz, actual 50000000HZ div = 1)
+[    3.690318] VDD_XPLL_1.1V: 1100 mV 
+[    3.697495] VDD_COMMON2_1.0V: 1000 mV 
+[    3.702173] VDD_33ON_3.0V: 3000 mV 
+[    3.709584] VDD_COMMON3_1.8V: 1800 mV 
+[    3.714126] mmc0: new DDR MMC card at address 0001
+[    3.716747] VDD_ABB2_1.8V: 1800 mV 
+[    3.722798] mmcblk0: mmc0:0001 M4G1FB 3.64 GiB 
+[    3.723959] VDD_USB_3.0V: 3000 mV 
+[    3.730344] mmcblk0boot0: mmc0:0001 M4G1FB partition 1 1.00 MiB
+[    3.730959] VDDQ_C2C_W_1.8V: 1800 mV 
+[    3.737839] VDD18_ABB0_3_1.8V: 1800 mV 
+[    3.743708] mmcblk0boot1: mmc0:0001 M4G1FB partition 2 1.00 MiB
+[    3.744684] VDD10_COMMON4_1.0V: 1000 mV 
+[    3.751550] VDD18_HSIC_1.8V: 1800 mV 
+[    3.758390] VDDQ_MMC2_3_2.8V: 2800 mV 
+[    3.761128]  mmcblk0: p1 p2 p3 p4
+[    3.765947] VDD_33ON_2.8V: 2800 mV 
+[    3.768643]  mmcblk0boot1: unknown partition table
+[    3.770242] VDD_
+33ON_2.8V: Failed to create debugfs directory
+[    3.772797] EXT_33_OFF: 3300 mV 
+[    3.777615] EXT_28_OFF: 2800 mV 
+[    3.782435] PVDD_LDO25: 1200 mV 
+[    3.787263] EXT_18_OFF: 1800 mV 
+[    3.792616]  mmcblk0boot0: unknown partition table
+[    3.794274] vdd_mif: 950 <--> 1200 mV at 1000 mV 
+[    3.801270] vdd_arm: 912 <--> 1300 mV at 1100 mV 
+[    3.812217] vdd_int: 900 <--> 1200 mV at 1000 mV 
+[    3.822193] vdd_g3d: 1000 mV 
+[    3.830513] VDD_MEM_1.35V: 750 <--> 1350 mV at 1200 mV 
+[    3.840976] PVDD_BUCK7: at 2050 mV 
+[    3.849721] PVDD_BUCK8: at 1350 mV 
+[    3.856342] VDD_33_OFF_EXT1: 750 <--> 3000 mV at 2850 mV 
+[    3.862626] dwmmc_exynos 12220000.mmc: Using PIO mode.
+[    3.862895] usb_phy_generic.0.auto supply vcc not found, using dummy regulator
+[    3.863357] usb_phy_generic
+.1.auto supply vcc not found, using dummy regulator
+[    3.863500] usb@12000000 supply vdd33 not found, using dummy regulator
+[    3.863604] usb@12000000 supply vdd10 not found, using dummy regulator
+[    3.869727] platform 12000000.dwc3: Driver dwc3 requests probe deferral
+[    3.886753] ata1: SATA link down (SStatus 0 SControl 300)
+[    3.905741] dwmmc_exynos 12220000.mmc: Version ID is 241a
+[    3.911267] dwmmc_exynos 12220000.mmc: DW MMC controller at irq 109, 32 bit host data width, 128 deep fifo
+[    3.950774] dwmmc_exynos 12220000.mmc: 1 slots initialized
+[    3.956491] platform 12000000.dwc3: Driver dwc3 requests probe deferral
+
+[    4.018732] usb 2-3: new high-speed USB device number 2 using exynos-ehci
+[    4.028018] mmc_host mmc1: Bus speed (slot 0) = 50000000Hz (slot req 50000000Hz, actual 50000000HZ div = 0)
+[    4.036411] mmc1: new high speed SDHC card at address aaaa
+[    4.042906] mmcblk1: mmc1:aaaa SL16G 14.8 GiB 
+[    4.056455]  mmcblk1: p1 p2 p3 p4 < p5 p6 p7 >
+[    4.062214] platform 12000000.dwc3: Driver dwc3 requests probe deferral
+
+[    4.163442] usb 2-3: New USB device found, idVendor=0424, idProduct=3503
+[    4.168698] usb 2-3: New USB device strings: Mfr=0, Product=0, SerialNumber=0
+[    4.181599] hub 2-3:1.0: USB hub found
+[    4.184230] hub 2-3:1.0: 3 ports detected
+[    4.189888] platform 12000000.dwc3: Driver dwc3 requests probe deferral
+[    4.197296] platform 12000000.dwc3: Driver dwc3 requests probe deferral
+
+[    4.269379] random: nonblocking pool is initialized
+
+[    4.458738] usb 2-3.2: new high-speed USB device number 3 using exynos-ehci
+
+[    4.572638] usb 2-3.2: New USB device found, idVendor=05e3, idProduct=0610
+[    4.578078] usb 2-3.2: New USB device strings: Mfr=0, Product=1, SerialNumber=0
+[    4.585346] usb 2-3.2: Product: USB2.0 Hub
+[    4.590477] hub 2-3.2:1.0: USB hub found
+[    4.593644] hub 2-3.2:1.0: 4 ports detected
+[    4.600908] platform 12000000.dwc3: Driver dwc3 requests probe deferral
+[    4.606631] platform 12000000.dwc3: Driver dwc3 requests probe deferral
+
+Begin: Loading essential drivers ... done.
+Begin: Running /scripts/init-premount ... done.
+Begin: Mounting root f[    4.789352] FS-Cache: Loaded
+ile system ... Begin: Running /scripts/nfs-top ... done.
+Begin: Running /scripts/nfs-premount ...[    4.800444] RPC: Registered named UNIX socket transport module.
+[    4.805635] RPC: Registered udp transport module.
+[    4.810298] RPC: Registered tcp transport module.
+[    4.814984] RPC: Registered tcp NFSv4.1 backchannel transport module.
+ done.
+[    4.833644] FS-Cache: Netfs 'nfs' registered for caching
+ipconfig: eth0: SIOCGIFINDEX: No such device
+ipconfig: no devices to configure
+ipconfig: eth0: SIOCGIFINDEX: No 
+such device
+ipconfig: no devices to configure
+ipconfig: eth0: SIOCGIFINDEX: No such devi[    4.874740] usb 2-3.2.4: new high-speed USB device number 4 using exynos-ehci
+ce
+ipconfig: no devices to configure
+ipconfig: eth0: SIOCGIFINDEX: No such device
+ipconfig: no devices to configure
+ipconfig: eth0: SIOCGIFINDEX: No such device
+ipconfig: no devices to configure
+ipconfig: eth0: SIOCGIFINDEX: No such device
+ipconfig: no devices to configure
+ipconfig: eth0: SIOCGIFINDEX: No such device
+ipconfig: no devices to configure
+ipconfig: eth0: SIOCGIFINDEX: No such device
+ipconfig: no devices to configure
+ipconfig: eth0: SIOCGIFINDEX: No such device
+ipconfig: no devices to configure
+ipconfig: eth0: SIOCGIFINDEX: No such device
+ipconfig: no devices to configure
+/init: .: line 224: can't open '/run/net-eth0.conf'
+[    4.946791] Kernel panic - not syncing: Attempted to kill init! exitcode=0x00000200
+[    4.946791] 
+[    4.954448] CPU: 0 PID: 1 Comm: init Not tainted 3.16.0-4-armmp #1 Debian 3.16.7-ckt20-1+deb8u2
+[    4.963141] [<c001a250>] (unwind_backtrace) from [<c00149a0>] (show_stack+0x2
+0/0x24)
+[    4.970856] [<c00149a0>] (show_stack) from [<c05b9b40>] (dump_stack+0x8c/0x9c)
+[    4.978059] [<c05b9b40>] (dump_stack) from [<c05b6ec0>] (panic+0xb0/0x230)
+[    4.984916] [<c05b6ec0>] (panic) from [<c005602c>] (complete_and_exit+0x0/0x2c)
+[    4.992206] [<c005602c>] (complete_and_exit) from [<c00560c4>] (do_group_exit+0x4c/0xd4)
+[    5.000278] [<c00560c4>] (do_group_exit) from [<c005616c>] (__wake_up_parent+0x0/0x30)
+[    5.008179] [<c005616c>] (__wake_up_parent) from [<c00105c0>] (ret_fast_syscall+0x0/0x38)
+[    5.016337] CPU1: stopping
+[    5.019026] CPU: 1 PID: 0 Comm: swapper/1 Not tainted 3.16.0-4-armmp #1 Debian 3.16.7-ckt20-1+deb8u2
+[    5.028148] [<c001a250>] (unwind_backtrace) from [<c00149a0>] (show_stack+0x20/0x24)
+[    5.035869] [<c00149a0>] (show_stack) from [<c05b9b40>] (dump_stack+0x8c/0x9c)
+[    5.043073] [<c05b9b40>] (dump_stack) from [<c001795c>] (handle_IPI+0x15c/0x17c)
+[    5.050450] [<c001795c>] (handle_IPI) from [<c0008944>] (gic_handle_irq+0x68/0x6c)
+[    5.058003] [<c0008944>] (gic_handle_irq) from [<c05c0440>] (__irq_svc+0x40/0x54)
+[    5.065461] Exception stack(0xed8fff68 
+to 0xed8fffb0)
+[    5.070498] ff60:                   fffedfec 00000000 00001418 c0024220 ed8fe000 00000001
+[    5.078657] ff80: c0929614 c09f0220 c09e17c8 c09295a8 c05ca140 ed8fffbc ed8fffc0 ed8fffb0
+[    5.086814] ffa0: c0011380 c0011384 60070013 ffffffff
+[    5.091857] [<c05c0440>] (__irq_svc) from [<c0011384>] (arch_cpu_idle+0x48/0x4c)
+[    5.099235] [<c0011384>] (arch_cpu_idle) from [<c0094040>] (cpu_startup_entry+0x194/0x1f0)
+[    5.107479] [<c0094040>] (cpu_startup_entry) from [<c0017568>] (secondary_start_kernel+0x140/0x14c)
+[    5.116509] [<c0017568>] (secondary_start_kernel) from [<40008a64>] (0x40008a64)
+[    5.123884] ---[ end Kernel panic - not syncing: Attempted to kill init! exitcode=0x00000200
+[    5.123884] 
+

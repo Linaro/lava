@@ -1,0 +1,35 @@
+
+constants:
+     shutdown-message: 'The system is going down for reboot NOW'
+     boot-message: 'Booting Linux'
+     cpu-reset-messages:
+       - 'Resetting CPU'
+       - 'Must RESET board to recover'
+     default-shell-prompt: 'lava-test: # '
+     uboot-autoboot-prompt: 'Hit any key to stop autoboot'
+     uboot-interrupt-character: ' '
+     grub-autoboot-prompt: 'Press enter to boot the selected OS'
+     grub-interrupt-character: 'c'
+
+commands:
+    connect: telnet 192.168.0.43 10031
+    hard_reset: /opt/lava-lab/shared/lab-scripts/snmp_pdu_control --hostname 192.168.0.53 --port 14 --delay 20 --command reboot
+    power_off: /opt/lava-lab/shared/lab-scripts/snmp_pdu_control --hostname 192.168.0.53 --port 14 --delay 20 --command off
+    power_on: /opt/lava-lab/shared/lab-scripts/snmp_pdu_control --hostname 192.168.0.53 --port 14 --delay 20 --command on
+device_info: [{'fs_label': 'V2M_MPS2'}]
+
+device_type: mps2plus
+usb_filesystem_label: 'V2M_MPS2'
+
+actions:
+  deploy:
+    methods:
+      lxc:
+      mps:
+  boot:
+    connections:
+      lxc:
+      serial:
+    methods:
+      lxc:
+      minimal:

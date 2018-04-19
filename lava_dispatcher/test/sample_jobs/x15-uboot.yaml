@@ -1,0 +1,91 @@
+device_type: x15
+
+job_name: x15-oe
+timeouts:
+  job:
+    minutes: 60
+  action:
+    minutes: 15
+  connection:
+    minutes: 2
+priority: medium
+visibility: public
+
+protocols:
+  lava-lxc:
+    name: lxc-x15-test
+    template: debian
+    distribution: debian
+    release: jessie
+    mirror: http://mirror.bytemark.co.uk/debian
+
+actions:
+- deploy:
+    namespace: tlxc
+    timeout:
+      minutes: 5
+    to: lxc
+    packages:
+    - android-tools-adb
+    - android-tools-fastboot
+    - systemd
+    - systemd-sysv
+    os: debian
+
+- boot:
+    namespace: tlxc
+    prompts:
+    - 'root@(.*):/#'
+    - 'shell@am57xevm:/'
+    timeout:
+      minutes: 5
+    method: lxc
+
+- deploy:
+    timeout:
+      minutes: 15
+    to: fastboot
+    namespace: droid
+    images:
+      userdata:
+        url: http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lkft/morty/am57xx-evm/rpb/linux-mainline/279/rpb-console-image-am57xx-evm-20170918074710-279.rootfs.img.gz
+        compression: gz
+    os: debian
+
+- boot:
+    namespace: droid
+    prompts:
+    - 'root@(.*):/#'
+    - 'shell@am57xevm:/'
+    commands: mmc
+    timeout:
+      minutes: 15
+    method: u-boot
+
+- test:
+    namespace: tlxc
+    timeout:
+      minutes: 10
+    definitions:
+    - from: inline
+      repository:
+        metadata:
+          format: Lava-Test Test Definition 1.0
+          name: prep-tests
+          description: "Device preparation"
+        run:
+          steps:
+          # the image does not raise the interface itself
+          # force a DHCP request to avoid avahi using a zero conf address.
+          - set -x
+          - uname -a
+          - cat /etc/os-release
+          - netstat
+          - ip a
+          - df
+      name: prep-inline
+      path: inline/prep.yaml
+    - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+      from: git
+      path: lava-test-shell/smoke-tests-basic.yaml
+      name: smoke-tests-lxc

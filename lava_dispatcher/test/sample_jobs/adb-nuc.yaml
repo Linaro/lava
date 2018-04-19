@@ -1,0 +1,44 @@
+device_type: adb-nuc
+job_name: nuc adb test
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 5
+priority: medium
+visibility: public
+
+protocols:
+  lava-lxc:
+    name: adb-nuc-test
+    template: debian
+    distribution: debian
+    release: jessie
+    mirror: http://ftp.us.debian.org/debian/
+    security_mirror: http://mirror.csclub.uwaterloo.ca/debian-security/
+
+actions:
+- deploy:
+    timeout:
+      minutes: 5
+    to: lxc
+    packages:
+    - android-tools-adb
+    - iputils-ping
+    os: debian
+
+- boot:
+    prompts:
+    - 'root@(.*):/#'
+    timeout:
+      minutes: 5
+    method: lxc
+
+- test:
+    timeout:
+      minutes: 5
+    definitions:
+    - repository: https://git.linaro.org/lava-team/refactoring.git
+      from: git
+      path: debian/nuc-adb.yaml
+      name: nuc-adb

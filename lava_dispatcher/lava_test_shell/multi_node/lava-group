@@ -1,0 +1,40 @@
+#!/bin/sh
+#
+#This file is for Multi-Node test
+#
+#This command will produce in its standard output a representation of the
+#device group that is participating in the multi-node test job.
+#
+#Usage: ``lava-group``
+#
+#The output format contains one line per device, and each line contains
+#the hostname and the role that device is playing in the test, separated
+#by a TAB character::
+#
+#	panda01	client
+#	highbank01	loadbalancer
+#	highbank02	backend
+#	highbank03	backend
+#
+#Usage: ``lava-group role``
+#
+#The output format contains one line per device assigned to the specified
+#role, with no whitespace. The matched role is not output.::
+#
+#   panda01
+#
+#If there is no matching role, exit non-zero and output nothing.
+#
+
+FILTER=$1
+if [ -z "$FILTER" ]; then
+  printf ${LAVA_GROUP}
+  exit 0
+fi
+MATCH=$(printf ${LAVA_GROUP} | awk "/\t$FILTER$/" | sed -e "s/\t$FILTER$//")
+if [ "$MATCH" = "${LAVA_GROUP}" ] || [ -z "$MATCH" ]; then
+  # failed to find the filter in the group
+  exit 1
+fi
+printf "${MATCH}"
+exit 0

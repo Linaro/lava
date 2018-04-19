@@ -1,0 +1,48 @@
+# Sample job to show juno uefi-menu functionality
+
+device_type: juno
+job_name: juno-uefi-menu-tftp
+timeouts:
+  job:
+    minutes: 20
+  action:
+    minutes: 6
+  connection:
+    minutes: 5
+priority: medium
+visibility: public
+
+actions:
+
+- deploy:
+    namespace: recovery
+    timeout:
+      minutes: 10
+    to: vemsd
+    recovery_image:
+      url: http://images.validation.linaro.org/releases.linaro.org/members/arm/platforms/15.12/juno-latest-oe-uefi.zip
+      compression: zip
+
+- deploy:
+     namespace: target
+     timeout:
+       minutes: 2
+     to: tftp
+     kernel:
+         url: http://images.validation.linaro.org/juno/kernel/Image
+     dtb:
+         url: http://images.validation.linaro.org/juno/kernel/juno.dtb
+     nfsrootfs:
+         url: http://images.validation.linaro.org/releases.linaro.org/openembedded/juno-lsk/15.09/linaro-image-minimal-genericarmv8-20150921-770.rootfs.tar.gz
+         compression: gz
+     os: oe
+
+- boot:
+    namespace: target
+    connection-namespace: recovery
+    method: uefi-menu
+    commands: tftp
+    parameters:
+      shutdown-message: 'reboot: Restarting system'
+    prompts:
+    - root@genericarmv8:~#

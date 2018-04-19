@@ -1,0 +1,125 @@
+
+character_delays:
+      boot: 10
+constants:
+  # OS shutdown message
+  # Override: set as the shutdown-message parameter of an Action.
+  # SHUTDOWN_MESSAGE
+  shutdown-message: 'The system is going down for reboot NOW'
+
+  # Kernel starting message
+  # BOOT_MESSAGE
+  boot-message: 'Booting Linux'
+
+  # CPU reset message
+  # CPU_RESET_MESSAGE
+  cpu-reset-messages:
+   - 'Resetting CPU'
+   - 'Must RESET board to recover'
+
+  # Default shell prompt for AutoLogin
+  # DEFAULT_SHELL_PROMPT
+  default-shell-prompt: 'lava-test: # '
+
+  # GRUB_BOOT_PROMPT
+  grub:
+    interrupt-prompt: "Press enter to boot the selected OS"
+    interrupt-character: "c"
+
+commands:
+    connections:
+      uart0:
+        connect: telnet tweetypie 4050
+        tags:
+        - primary
+    hard_reset: ['/usr/bin/pduclient --daemon tweetypie --hostname pdu --command off --port 02', 'sleep 10', '/usr/bin/pduclient --daemon tweetypie --hostname pdu --command on --port 02']
+    soft_reset: fastboot -u -s 4932A6C603284698 reboot
+    soft_reboot: adb -s 4932A6C603284698 reboot bootloader
+    power_off: /usr/bin/pduclient --daemon tweetypie --hostname pdu --command off --port 02
+    pre_power_command: /home/neil/lava-lab/shared/lab-scripts/usb_hub_control -u 5 -p 4000 -m sync
+    pre_os_command: /home/neil/lava-lab/shared/lab-scripts/usb_hub_control -u 5 -p 4000 -m off
+device_info: [{'board_id': '4932A6C603284698'}]
+flash_cmds_order: ['ptable', 'xloader', 'fastboot', 'nvme', 'fw_lpm3', 'trustfirmware', 'boot', 'dts', 'system', 'userdata', 'cache']
+device_type: hi960-hikey
+adb_serial_number: 4932A6C603284698
+fastboot_serial_number: 4932A6C603284698
+fastboot_options: ['-S', '256M', '-u']
+
+
+actions:
+  deploy:
+    methods:
+      lxc:
+      fastboot:
+        interrupt_prompt: 'Android Fastboot mode'
+        interrupt_string: ' '
+    connections:
+      lxc:
+      serial:
+  boot:
+    connections:
+      lxc:
+    methods:
+      lxc:
+      fastboot: ['boot']
+      grub:
+        sequence:
+        - wait-fastboot-interrupt
+        reset_device: False
+        installed:
+          commands:
+            - boot
+
+timeouts:
+  actions:
+    apply-overlay-image:
+      minutes: 2
+    dd-image:
+      minutes: 10
+    download-retry:
+      minutes: 5
+    http-download:
+      minutes: 5
+    lava-test-shell:
+      minutes: 3
+    nfs-deploy:
+      minutes: 10
+    power-off:
+      seconds: 5
+    bootloader-commands:
+      minutes: 3
+    bootloader-interrupt:
+      seconds: 30
+    u-boot-interrupt:
+      seconds: 30
+    umount-retry:
+      seconds: 45
+    auto-login-action:
+      minutes: 2
+    bootloader-action:
+      minutes: 3
+    uboot-action:
+      minutes: 3
+    uboot-retry:
+      minutes: 3
+    bootloader-retry:
+      minutes: 3
+    boot-qemu-image:
+      minutes: 2
+    boot-image-retry:
+      minutes: 2
+  connections:
+    dd-image:
+      minutes: 10
+    uboot-retry:
+      seconds: 30
+    bootloader-commands:
+      seconds: 30
+    auto-login-action:
+      minutes: 2
+    bootloader-interrupt:
+      seconds: 30
+    u-boot-interrupt:
+      seconds: 30
+    lava-test-shell:
+      seconds: 10

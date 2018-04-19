@@ -19,7 +19,6 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-
 import subprocess
 import os
 
@@ -77,13 +76,6 @@ def version_tag():
                                                    'utf-8')
         # example version returned would be '2016.11'
         return deb_version.split('-')[0]
-    if not os.path.exists("./.git/"):
-        base = os.path.basename(os.getcwd())
-        name_list = ['grep', 'name=', 'setup.py']
-        name_data = subprocess.check_output(name_list).strip().decode('utf-8')
-        name_data = name_data.replace("name=\'", '')
-        name_data = name_data.replace("\',", '')
-        return base.replace("%s-" % name_data, '')
 
 
 def main():

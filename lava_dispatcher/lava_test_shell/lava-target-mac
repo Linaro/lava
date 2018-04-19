@@ -1,0 +1,7 @@
+#!/bin/sh
+#
+#Prints the mac address of the current device.
+#
+#Usage: ``lava-target-mac``
+
+echo ${TARGET_DEVICE_MAC}

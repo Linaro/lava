@@ -1,0 +1,33 @@
+device_type: intel1521
+job_name: intel1521-test
+visibility: public
+priority: medium
+
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 15
+  connection:
+    minutes: 10
+
+
+actions:
+- deploy:
+    to: ssh
+    os: oe
+- boot:
+    method: ssh
+    connection: ssh
+    failure_retry: 2
+    prompts:
+      - 'root@inteld1521:~#'
+- test:
+    timeout:
+      minutes: 5
+    name: tests
+    definitions:
+      - repository: http://git.enea.se/cgit/eltf/lava.git
+        from: git
+        path: healthcheck-runner.yaml
+        name: healthcheck-run

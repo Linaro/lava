@@ -1,0 +1,294 @@
+[    0.000000] Booting Linux on physical CPU 0x0
+[    0.000000] Linux version 4.7.0-1-armmp (debian-kernel@lists.debian.org) (gcc version 5.4.1 20160904 (Debian 5.4.1-2) ) #1 SMP Debian 4.7.8-1 (2016-10-19)
+[    0.000000] CPU: ARMv7 Processor [413fc082] revision 2 (ARMv7), cr=10c5387d
+[    0.000000] CPU: PIPT / VIPT nonaliasing data cache, VIPT aliasing instruction cache
+[    0.000000] Machine model: TI AM335x BeagleBone Black
+[    0.000000] efi: Getting EFI parameters from FDT:
+[    0.000000] efi: UEFI not found.
+[    0.000000] cma: Reserved 16 MiB at 0x9e800000
+[    0.000000] Memory policy: Data cache writeback
+[    0.000000] CPU: All CPU(s) started in SVC mode.
+[    0.000000] AM335X ES2.0 (sgx neon )
+[    0.000000] percpu: Embedded 14 pages/cpu @df939000 s24972 r8192 d24180 u57344
+[    0.000000] Built 1 zonelists in Zone order, mobility grouping on.  Total pages: 129408
+[    0.000000] Kernel command line: console=ttyO0,115200n8 root=/dev/nfs rw nfsroot=10.14.255.253:/var/lib/lava/dispatcher/tmp/10397/extract-nfsrootfs-uKU5Wa,tcp,hard,intr ip=dhcp
+[    0.000000] PID hash table entries: 2048 (order: 1, 8192 bytes)
+[    0.000000] Dentry cache hash table entries: 65536 (order: 6, 262144 bytes)
+[    0.000000] Inode-cache hash table entries: 32768 (order: 5, 131072 bytes)
+[    0.000000] Memory: 446424K/522240K available (7785K kernel code, 926K rwdata, 2628K rodata, 1024K init, 394K bss, 59432K reserved, 16384K cma-reserved, 0K highmem)
+[    0.000000] Virtual kernel memory layout:
+[    0.000000]     vector  : 0xffff0000 - 0xffff1000   (   4 kB)
+[    0.000000]     fixmap  : 0xffc00000 - 0xfff00000   (3072 kB)
+[    0.000000]     vmalloc : 0xe0800000 - 0xff800000   ( 496 MB)
+[    0.000000]     lowmem  : 0xc0000000 - 0xe0000000   ( 512 MB)
+[    0.000000]     pkmap   : 0xbfe00000 - 0xc0000000   (   2 MB)
+[    0.000000]     modules : 0xbf000000 - 0xbfe00000   (  14 MB)
+[    0.000000]       .text : 0xc0008000 - 0xc0b2b4d0   (11406 kB)
+[    0.000000]       .init : 0xc0c00000 - 0xc0d00000   (1024 kB)
+[    0.000000]       .data : 0xc0d00000 - 0xc0de7b94   ( 927 kB)
+[    0.000000]        .bss : 0xc0de9000 - 0xc0e4bb8c   ( 395 kB)
+[    0.000000] Hierarchical RCU implementation.
+[    0.000000] 	Build-time adjustment of leaf fanout to 32.
+[    0.000000] 	RCU restricting CPUs from NR_CPUS=8 to nr_cpu_ids=1.
+[    0.000000] RCU: Adjusting geometry for rcu_fanout_leaf=32, nr_cpu_ids=1
+[    0.000000] NR_IRQS:16 nr_irqs:16 16
+[    0.000000] IRQ: Found an INTC at 0xfa200000 (revision 5.0) with 128 interrupts
+[    0.000000] OMAP clockevent source: timer2 at 24000000 Hz
+[    0.000014] sched_clock: 32 bits at 24MHz, resolution 41ns, wraps every 89478484971ns
+[    0.000037] clocksource: timer1: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 79635851949 ns
+[    0.000049] OMAP clocksource: timer1 at 24000000 Hz
+[    0.003607] clocksource_probe: no matching clocksources found
+[    0.004050] Console: colour dummy device 80x30
+[    0.004087] Calibrating delay loop... 997.78 BogoMIPS (lpj=2494464)
+[    0.033896] pid_max: default: 32768 minimum: 301
+[    0.034093] Security Framework initialized
+[    0.034109] Yama: disabled by default; enable with sysctl kernel.yama.*
+[    0.034148] AppArmor: AppArmor disabled by boot time parameter
+[    0.034212] Mount-cache hash table entries: 1024 (order: 0, 4096 bytes)
+[    0.034223] Mountpoint-cache hash table entries: 1024 (order: 0, 4096 bytes)
+[    0.035248] CPU: Testing write buffer coherency: ok
+[    0.035319] ftrace: allocating 26069 entries in 77 pages
+[    0.108404] CPU0: thread -1, cpu 0, socket -1, mpidr 0
+[    0.108484] Setting up static identity map for 0x80100000 - 0x80100098
+[    0.113705] EFI services will not be available.
+[    0.114305] Brought up 1 CPUs
+[    0.114322] SMP: Total of 1 processors activated (997.78 BogoMIPS).
+[    0.114330] CPU: All CPU(s) started in SVC mode.
+[    0.115845] devtmpfs: initialized
+[    0.127176] VFP support v0.3: implementor 41 architecture 3 part 30 variant c rev 3
+[    0.127972] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 9556302231375000 ns
+[    0.129412] pinctrl core: initialized pinctrl subsystem
+[    0.131221] NET: Registered protocol family 16
+[    0.133474] DMA: preallocated 256 KiB pool for atomic coherent allocations
+[    0.155177] omap_hwmod: debugss: _wait_target_disable failed
+[    0.216966] OMAP GPIO hardware version 0.1
+[    0.229186] No ATAGs?
+[    0.229214] hw-breakpoint: debug architecture 0x4 unsupported.
+[    0.229646] omap4_sram_init:Unable to allocate sram needed to handle errata I688
+[    0.229660] omap4_sram_init:Unable to get sram pool needed to handle errata I688
+[    0.230788] Serial: AMBA PL011 UART driver
+[    0.247477] edma 49000000.edma: TI EDMA DMA engine driver
+[    0.250901] vgaarb: loaded
+[    0.251686] omap_i2c 44e0b000.i2c: could not find pctldev for node /ocp/l4_wkup@44c00000/scm@210000/pinmux@800/pinmux_i2c0_pins, deferring probe
+[    0.251745] omap_i2c 4819c000.i2c: could not find pctldev for node /ocp/l4_wkup@44c00000/scm@210000/pinmux@800/pinmux_i2c2_pins, deferring probe
+[    0.252140] media: Linux media interface: v0.10
+[    0.252197] Linux video capture interface: v2.00
+[    0.252279] pps_core: LinuxPPS API ver. 1 registered
+[    0.252287] pps_core: Software ver. 5.3.6 - Copyright 2005-2007 Rodolfo Giometti <giometti@linux.it>
+[    0.252321] PTP clock support registered
+[    0.252929] omap-mailbox 480c8000.mailbox: omap mailbox rev 0x400
+[    0.254892] clocksource: Switched to clocksource timer1
+[    0.303963] VFS: Disk quotas dquot_6.6.0
+[    0.304078] VFS: Dquot-cache hash table entries: 1024 (order 0, 4096 bytes)
+[    0.317276] NET: Registered protocol family 2
+[    0.318214] TCP established hash table entries: 4096 (order: 2, 16384 bytes)
+[    0.318263] TCP bind hash table entries: 4096 (order: 3, 32768 bytes)
+[    0.318323] TCP: Hash tables configured (established 4096 bind 4096)
+[    0.318400] UDP hash table entries: 256 (order: 1, 8192 bytes)
+[    0.318421] UDP-Lite hash table entries: 256 (order: 1, 8192 bytes)
+[    0.318622] NET: Registered protocol family 1
+[    0.319239] Unpacking initramfs...
+[    3.381561] Freeing initrd memory: 40484K (c3000000 - c5789000)
+[    3.382111] hw perfevents: enabled with armv7_cortex_a8 PMU driver, 5 counters available
+[    3.384652] futex hash table entries: 256 (order: 2, 16384 bytes)
+[    3.384736] audit: initializing netlink subsys (disabled)
+[    3.384837] audit: type=2000 audit(3.335:1): initialized
+[    3.385795] Initialise system trusted keyrings
+[    3.386400] workingset: timestamp_bits=12 max_order=17 bucket_order=5
+[    3.386526] zbud: loaded
+[    3.795659] Key type asymmetric registered
+[    3.795682] Asymmetric key parser 'x509' registered
+[    3.795840] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 248)
+[    3.796091] io scheduler noop registered
+[    3.796105] io scheduler deadline registered
+[    3.796146] io scheduler cfq registered (default)
+[    3.797366] pinctrl-single 44e10800.pinmux: 142 pins at pa f9e10800 size 568
+[    3.802728] Serial: 8250/16550 driver, 4 ports, IRQ sharing disabled
+[    3.804809] Serial: AMBA driver
+[    3.805921] omap_uart 44e09000.serial: no wakeirq for uart0
+[    3.806162] 44e09000.serial: ttyO0 at MMIO 0x44e09000 (irq = 158, base_baud = 3000000) is a OMAP UART0
+[    4.487148] console [ttyO0] enabled
+[    4.493932] libphy: Fixed MDIO Bus: probed
+[    4.499385] mousedev: PS/2 mouse device common for all mice
+[    4.506856] omap_rtc 44e3e000.rtc: already running
+[    4.512460] omap_rtc 44e3e000.rtc: rtc core: registered 44e3e000.rtc as rtc0
+[    4.522561] ledtrig-cpu: registered to indicate activity on CPUs
+[    4.530856] NET: Registered protocol family 10
+[    4.536751] mip6: Mobile IPv6
+[    4.539993] NET: Registered protocol family 17
+[    4.544669] mpls_gso: MPLS GSO support
+[    4.548775] omap_voltage_late_init: Voltage driver support not added
+[    4.555494] sr_dev_init: No voltage domain specified for smartreflex0. Cannot initialize
+[    4.564003] sr_dev_init: No voltage domain specified for smartreflex1. Cannot initialize
+[    4.572883] ThumbEE CPU extension supported.
+[    4.577426] Registering SWP/SWPB emulation handler
+[    4.582481] SmartReflex Class3 initialized
+[    4.587699] registered taskstats version 1
+[    4.592054] Loading compiled-in X.509 certificates
+[    4.609420] alg: No test for pkcs1pad(rsa,sha256) (pkcs1pad(rsa-generic,sha256))
+[    4.619932] Loaded X.509 cert 'Debian Project: Ben Hutchings: 008a018dca80932630'
+[    4.628109] zswap: loaded using pool lzo/zbud
+[    4.635035] omap_i2c 44e0b000.i2c: bus 0 rev0.11 at 400 kHz
+[    4.642589] omap_i2c 4819c000.i2c: bus 2 rev0.11 at 100 kHz
+[    4.649083] omap_rtc 44e3e000.rtc: setting system clock to 2000-01-01 00:08:25 UTC (946685305)
+[    4.658217] sr_init: No PMIC hook to init smartreflex
+[    4.663735] sr_init: platform driver register failed for SR
+[    4.674357] vmmcsd_fixed: disabling
+[    4.680472] Freeing unused kernel memory: 1024K (c0c00000 - c0d00000)
+Loading, please wait...
+starting version 231
+[    4.818745] random: systemd-udevd: uninitialized urandom read (16 bytes read, 14 bits of entropy available)
+[    4.839559] random: udevadm: uninitialized urandom read (16 bytes read, 14 bits of entropy available)
+[    4.850464] random: systemd-udevd: uninitialized urandom read (16 bytes read, 14 bits of entropy available)
+[    4.861259] random: udevadm: uninitialized urandom read (16 bytes read, 14 bits of entropy available)
+[    4.874155] random: udevadm: uninitialized urandom read (16 bytes read, 14 bits of entropy available)
+[    4.885004] random: udevadm: uninitialized urandom read (16 bytes read, 14 bits of entropy available)
+[    4.895513] random: udevadm: uninitialized urandom read (16 bytes read, 14 bits of entropy available)
+[    4.905911] random: udevadm: uninitialized urandom read (16 bytes read, 14 bits of entropy available)
+[    4.916323] random: udevadm: uninitialized urandom read (16 bytes read, 14 bits of entropy available)
+[    4.926694] random: udevadm: uninitialized urandom read (16 bytes read, 14 bits of entropy available)
+[    5.211673] omap_wdt: OMAP Watchdog Timer Rev 0x01: initial timeout 60 sec
+[    5.329489] omap_hsmmc 48060000.mmc: Got CD GPIO
+[    5.356096] at24 0-0050: 32768 byte 24c256 EEPROM, writable, 1 bytes/write
+[    5.425680] at24 2-0054: 32768 byte 24c256 EEPROM, writable, 1 bytes/write
+[    5.447457] [drm] Initialized drm 1.1.0 20060810
+[    5.487599] at24 2-0055: 32768 byte 24c256 EEPROM, writable, 1 bytes/write
+[    5.543586] at24 2-0056: 32768 byte 24c256 EEPROM, writable, 1 bytes/write
+[    5.560805] mmc0: host does not support reading read-only switch, assuming write-enable
+[    5.572465] mmc1: new high speed MMC card at address 0001
+[    5.604534] at24 2-0057: 32768 byte 24c256 EEPROM, writable, 1 bytes/write
+[    5.616808] omap_rng 48310000.rng: OMAP Random Number Generator ver. 20
+[    5.626587] mmcblk1: mmc1:0001 MMC02G 1.79 GiB
+[    5.631639] mmc0: new high speed SDHC card at address aaaa
+[    5.655732] mmcblk1boot0: mmc1:0001 MMC02G partition 1 1.00 MiB
+[    5.669114] mmcblk0: mmc0:aaaa SU16G 14.8 GiB
+[    5.692693]  mmcblk0: p1 p2
+[    5.705680] mmcblk1boot1: mmc1:0001 MMC02G partition 2 1.00 MiB
+[    5.813549] tda998x 0-0070: found TDA19988
+[    5.842859] tilcdc 4830e000.lcdc: bound 0-0070 (ops tda998x_driver_exit [tda998x])
+[    5.907706] [drm] Supports vblank timestamp caching Rev 2 (21.10.2013).
+[    5.914814] [drm] No driver support for vblank timestamp query.
+[    5.964336] tilcdc 4830e000.lcdc: No connectors reported connected with modes
+[    5.995135] [drm] Cannot find any crtc or sizes - going 1024x768
+[    6.032400] Console: switching to colour frame buffer device 128x48
+[    6.078499] tilcdc 4830e000.lcdc: fb0:  frame buffer device
+[    6.100167] [drm] Initialized tilcdc 1.0.0 20121205 on minor 0
+[    6.125215] omap-sham 53100000.sham: hw accel on OMAP rev 4.3
+[    6.144245] omap-sham 53100000.sham: initialization failed.
+[    6.165201] omap-sham: probe of 53100000.sham failed with error -22
+[    6.172241] omap-aes 53500000.aes: OMAP AES hw accel rev: 3.2
+[    6.193291] Unable to handle kernel NULL pointer dereference at virtual address 0000002c
+[    6.201803] pgd = c0004000
+[    6.204640] [0000002c] *pgd=00000000
+[    6.208401] Internal error: Oops: 5 [#1] SMP ARM
+[    6.213243] Modules linked in: ti_cpsw(+) cpsw_ale omap_sham(+) cpsw_common davinci_cpdma omap_aes(+) crypto_engine tilcdc tda998x omap_rng rng_core drm_kms_helper drm omap_hwspinlock hwspinlock_core omap_hsmmc at24 nvmem_core musb_am335x omap_wdt leds_gpio
+[    6.237249] CPU: 0 PID: 95 Comm: cryptomgr_test Not tainted 4.7.0-1-armmp #1 Debian 4.7.8-1
+[    6.246009] Hardware name: Generic AM33XX (Flattened Device Tree)
+[    6.252399] task: c5175180 ti: c5084000 task.ti: c5084000
+[    6.258076] PC is at _raw_spin_lock_irqsave+0x24/0x60
+[    6.263380] LR is at crypto_transfer_request+0x2c/0x90 [crypto_engine]
+[    6.270226] pc : [<c07c5668>]    lr : [<bf13209c>]    psr: a0070093
+[    6.270226] sp : c5085ac0  ip : c5085ad0  fp : c5085acc
+[    6.282266] r10: c50030c0  r9 : c5006300  r8 : 00000001
+[    6.287744] r7 : c511d200  r6 : c5006340  r5 : 0000002c  r4 : 00000000
+[    6.294588] r3 : c5084000  r2 : 0000002c  r1 : c5006340  r0 : a0070013
+[    6.301434] Flags: NzCv  IRQs off  FIQs on  Mode SVC_32  ISA ARM  Segment none
+[    6.309008] Control: 10c5387d  Table: 85134019  DAC: 00000051
+[    6.315032] Process cryptomgr_test (pid: 95, stack limit = 0xc5084220)
+[    6.321877] Stack: (0xc5085ac0 to 0xc5086000)
+[    6.326449] 5ac0: c5085af4 c5085ad0 bf13209c c07c5650 c5006340 c511d240 00000001 c511d200
+[    6.335029] 5ae0: 00000001 c5006300 c5085b04 c5085af8 bf13211c bf13207c c5085b2c c5085b08
+[    6.343610] 5b00: bf136270 bf13210c c5085b3c c5085b18 c03ad060 c5085c18 00000400 c5085bc4
+[    6.352190] 5b20: c5085b3c c5085b30 bf13636c bf136214 c5085b5c c5085b40 c03ae7f8 bf13635c
+[    6.360770] 5b40: c0d69b48 c5085e1c c519b000 00000000 c5085e6c c5085b60 c03b368c c03ae794
+[    6.369350] 5b60: 6d72645f 5f62665f 706c6568 695f7265 0074696e 736b5f5f 61746d79 72645f62
+[    6.377930] 5b80: 70645f6d 5f77625f 65646f63 5f6f745f 6b6e696c 7461725f 5f5f0065 bf138c68
+[    6.386509] 5ba0: c09c99ac c09ce6a4 c0d69b48 c0d03550 00000001 00000000 00000000 00000004
+[    6.395089] 5bc0: 6761746c 00000000 00000000 c5085bcc c5085bcc c013025c c519b000 c5187000
+[    6.403670] 5be0: c51c0000 c51c1000 c51b0000 c51b1000 c51aa000 c51ab000 c0194698 00000000
+[    6.412250] 5c00: c5085c2c c5085c10 c0137fa8 c01d8694 c0d10570 00000003 dfa289ce 00000000
+[    6.420829] 5c20: 00000010 00000000 00000000 00000000 00000000 00000000 00657461 c0d10570
+[    6.429410] 5c40: c0deb4d4 c0661d74 c5085c74 c5085c58 c0661d74 c0132454 c0d1d47c c0d03550
+[    6.437990] 5c60: 00000000 c0132560 c0d1d47c c0d03550 c5085cac c5085c80 c0132560 c0132360
+[    6.446571] 5c80: c0138e4c c013c560 00000000 dc8ba508 c0d1d47c 00000000 00000000 c0deae9c
+[    6.455150] 5ca0: c5085cd4 c5085cb0 c0132828 c0132410 c5175200 df93e700 c0d1d47c c0d1d4dc
+[    6.463731] 5cc0: a0070013 c013310c c5085cf4 c5085cd8 c013310c c07c5700 00000001 00000000
+[    6.472310] 5ce0: de1c61c0 c0d03100 c5085d14 c5085cf8 c0134524 c0193dac de1cae10 00000000
+[    6.480889] 5d00: c0134574 de1caee0 60070093 00000000 00000003 00000000 c0194698 c054f8f8
+[    6.489470] 5d20: de1cae10 de190210 c5085d5c c5085d38 c054f8f8 c054ee0c de1cae10 c055021c
+[    6.498050] 5d40: de1cae10 de190210 00000000 c0550224 c5085db4 c5085d60 c0550224 c07c55f8
+[    6.506629] 5d60: 00000000 c0d03550 de1cae98 c5084020 df93e6c0 712326c8 00000001 00000000
+[    6.515209] 5d80: c0cf56c0 dc8ba508 bf138c00 de1cae10 00000004 de1cae74 60070013 00003085
+[    6.523789] 5da0: d6ff8480 c05503d8 c5085dd4 c5085db8 c05503d8 c07c5700 c511d200 d6f2b310
+[    6.532370] 5dc0: c511d200 00000000 c5085df4 c5085dd8 bf1361cc c0550364 c511d200 bf138c00
+[    6.540950] 5de0: 00000000 00000000 c5085e14 c5085df8 c03a94c4 bf136190 c5003100 00000000
+[    6.549531] 5e00: bf138c00 bf138c00 c5085e34 c5085e18 c03ae9b8 c03a93d0 c5003100 00000000
+[    6.558110] 5e20: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 dc8ba508
+[    6.566691] 5e40: c5084000 c50030c0 00000001 c0d69b48 00000004 c0d03550 00001085 00000000
+[    6.575270] 5e60: c5085e9c c5085e70 c03b5870 c03b3474 00000000 00000000 00001085 d6ff8480
+[    6.583851] 5e80: c50030c0 c081a144 c0e392b4 c0d03550 c5085ebc c5085ea0 c03b5954 c03b5844
+[    6.592431] 5ea0: c03b5900 00000076 ffffffff c0e392b4 c5085f44 c5085ec0 c03b5d18 c03b590c
+[    6.601010] 5ec0: c500de00 00000400 d6ff84c0 d6ff8480 c5085f44 c5085ee0 c07c0fa4 c0176678
+[    6.609590] 5ee0: c5085f24 c5085ef0 c0193d24 c017a7f4 5f746573 00000000 7122bf6e 00000001
+[    6.618169] 5f00: c5131ae4 c07c14d8 df93e6c0 00000001 00000000 dc8ba508 c5085f3c d6ff8480
+[    6.626749] 5f20: c51a93c0 d6ff8480 c03b2d00 00000000 00000000 00000000 c5085f5c c5085f48
+[    6.635329] 5f40: c03b2d50 c03b5b3c 00000000 c51a93c0 c5085fac c5085f60 c016e814 c03b2d0c
+[    6.643909] 5f60: 00000000 c5175180 d6ff8480 00000000 00000000 c5085f74 c5085f74 00000000
+[    6.652489] 5f80: 00000000 c5085f84 c5085f84 dc8ba508 c51a93c0 c016e718 00000000 00000000
+[    6.661069] 5fa0: 00000000 c5085fb0 c010a3d8 c016e724 00000000 00000000 00000000 00000000
+[    6.669647] 5fc0: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[    6.678226] 5fe0: 00000000 00000000 00000000 00000000 00000013 00000000 5f5f0074 5f637263
+[    6.686828] [<c07c5668>] (_raw_spin_lock_irqsave) from [<bf13209c>] (crypto_transfer_request+0x2c/0x90 [crypto_engine])
+[    6.698159] [<bf13209c>] (crypto_transfer_request [crypto_engine]) from [<bf13211c>] (crypto_transfer_request_to_engine+0x1c/0x20 [crypto_engine])
+[    6.711961] [<bf13211c>] (crypto_transfer_request_to_engine [crypto_engine]) from [<bf136270>] (omap_aes_crypt+0x68/0xa8 [omap_aes])
+[    6.724479] [<bf136270>] (omap_aes_crypt [omap_aes]) from [<bf13636c>] (omap_aes_ecb_encrypt+0x1c/0x20 [omap_aes])
+[    6.735354] [<bf13636c>] (omap_aes_ecb_encrypt [omap_aes]) from [<c03ae7f8>] (skcipher_encrypt_ablkcipher+0x70/0x74)
+[    6.746404] [<c03ae7f8>] (skcipher_encrypt_ablkcipher) from [<c03b368c>] (__test_skcipher+0x224/0xb1c)
+[    6.756173] [<c03b368c>] (__test_skcipher) from [<c03b5870>] (test_skcipher+0x38/0xc8)
+[    6.764482] [<c03b5870>] (test_skcipher) from [<c03b5954>] (alg_test_skcipher+0x54/0xb4)
+[    6.772972] [<c03b5954>] (alg_test_skcipher) from [<c03b5d18>] (alg_test+0x1e8/0x408)
+[    6.781189] [<c03b5d18>] (alg_test) from [<c03b2d50>] (cryptomgr_test+0x50/0x58)
+[    6.788958] [<c03b2d50>] (cryptomgr_test) from [<c016e814>] (kthread+0xfc/0x114)
+[    6.796732] [<c016e814>] (kthread) from [<c010a3d8>] (ret_from_fork+0x14/0x3c)
+[    6.804313] Code: e1a02000 e10f0000 f10c0080 f5d2f000 (e1923f9f)
+[    6.810708] ---[ end trace f15bd9e3adacbf54 ]---
+[    6.980918] 47401300.usb-phy supply vcc not found, using dummy regulator
+[    7.001618] usbcore: registered new interface driver usbfs
+[    7.017522] 47401b00.usb-phy supply vcc not found, using dummy regulator
+[    7.035432] usbcore: registered new interface driver hub
+[    7.069272] usbcore: registered new device driver usb
+[    7.333167] musb-hdrc musb-hdrc.1.auto: MUSB HDRC host driver
+[    7.357297] musb-hdrc musb-hdrc.1.auto: new USB bus registered, assigned bus number 1
+[    7.374842] usb usb1: New USB device found, idVendor=1d6b, idProduct=0002
+[    7.382106] usb usb1: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+[    7.389710] usb usb1: Product: MUSB HDRC host driver
+[    7.394936] usb usb1: Manufacturer: Linux 4.7.0-1-armmp musb-hcd
+[    7.401278] usb usb1: SerialNumber: musb-hdrc.1.auto
+[    7.410424] hub 1-0:1.0: USB hub found
+[    7.414453] hub 1-0:1.0: 1 port detected
+[  113.494906] random: nonblocking pool is initialized
+Begin: Loading essential drivers ... done.
+Begin: Running /scripts/init-premount ... done.
+Begin: Mounting root file system ... Begin: Running /scripts/nfs-top ... done.
+Begin: Running /scripts/nfs-premount ... done.
+[  125.523842] FS-Cache: Loaded
+[  125.564409] RPC: Registered named UNIX socket transport module.
+[  125.570794] RPC: Registered udp transport module.
+[  125.575757] RPC: Registered tcp transport module.
+[  125.580709] RPC: Registered tcp NFSv4.1 backchannel transport module.
+[  125.635817] FS-Cache: Netfs 'nfs' registered for caching
+ipconfig: no devices to configure
+ipconfig: no devices to configure
+ipconfig: no devices to configure
+ipconfig: no devices to configure
+ipconfig: no devices to configure
+ipconfig: no devices to configure
+ipconfig: no devices to configure
+ipconfig: no devices to configure
+ipconfig: no devices to configure
+ipconfig: no devices to configure
+/init: .: line 230: can't open '/run/net-*.conf'
+[  145.750074] Kernel panic - not syncing: Attempted to kill init! exitcode=0x00000200
+[  145.750074]
+[  145.759694] ---[ end Kernel panic - not syncing: Attempted to kill init! exitcode=0x00000200
+[  145.759694]

@@ -1,0 +1,7 @@
+#!/bin/sh
+#
+#Prints the ip address of the attached energy probe device.
+#
+#Usage: ``lava-probe-ip``
+
+echo ${PROBE_DEVICE_IP}

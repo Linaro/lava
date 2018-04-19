@@ -1,0 +1,6 @@
+#!/bin/sh -ex
+
+# Signals that the vms can be started. Must be called from the host node when
+# it's ready to start the VM's
+
+lava-send lava_vm_start host_ip=$_LAVA_VM_GROUP_HOST_IP

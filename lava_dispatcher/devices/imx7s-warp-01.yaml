@@ -1,0 +1,107 @@
+actions:
+  boot:
+    connections: {lxc: null, serial: null}
+    methods:
+      minimal: null
+      ssh: null
+      u-boot:
+        nbd:
+          commands: [setenv autoload no, setenv initrd_high 0xffffffff, setenv fdt_high
+              0xffffffff, dhcp, 'setenv serverip {SERVER_IP}', 'tftp {KERNEL_ADDR}
+              {KERNEL}', 'tftp {RAMDISK_ADDR} {RAMDISK}', 'setenv initrd_size ${filesize}',
+            'tftp {DTB_ADDR} {DTB}', 'setenv bootargs '' rw nbd.server={NBDSERVERIP}
+              nbd.port={NBDSERVERPORT} root=/dev/ram0 ramdisk_size=16384 rootdelay=7   ip=dhcp
+              verbose earlyprintk systemd.log_color=false ${extraargs} rw''', '{BOOTX}']
+        nfs:
+          commands: [setenv autoload no, setenv initrd_high 0xffffffff, setenv fdt_high
+              0xffffffff, dhcp, 'setenv serverip {SERVER_IP}', 'tftp {KERNEL_ADDR}
+              {KERNEL}', 'tftp {RAMDISK_ADDR} {RAMDISK}', 'setenv initrd_size ${filesize}',
+            'tftp {DTB_ADDR} {DTB}', 'setenv bootargs '' root=/dev/nfs rw nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr  ip=dhcp''',
+            '{BOOTX}']
+        parameters: {bootloader_prompt: =>, interrupt_char: '', interrupt_prompt: Hit
+            any key to stop autoboot, mkimage_arch: arm, needs_interrupt: true, uboot_mass_storage_device: /dev/vde,
+          uboot_ums_flash: true}
+        ramdisk:
+          commands: [setenv autoload no, setenv initrd_high 0xffffffff, setenv fdt_high
+              0xffffffff, dhcp, 'setenv serverip {SERVER_IP}', 'tftp {KERNEL_ADDR}
+              {KERNEL}', 'tftp {RAMDISK_ADDR} {RAMDISK}', 'setenv initrd_size ${filesize}',
+            'tftp {DTB_ADDR} {DTB}', setenv bootargs ' root=/dev/ram0  ip=dhcp', '{BOOTX}']
+        sata:
+          commands: [scsi scan, setenv autoload no, 'load scsi {ROOT_PART} {KERNEL_ADDR}
+              {KERNEL}', 'load scsi {ROOT_PART} {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size
+              ${filesize}', 'load scsi {ROOT_PART} {DTB_ADDR} {DTB}', 'setenv bootargs
+              '' root={ROOT}  ip=dhcp''', '{BOOTX}']
+        ums:
+          commands: [ums 0 mmc 0]
+        usb:
+          commands: [usb start, setenv autoload no, 'load usb 0:{ROOT_PART} {KERNEL_ADDR}
+              {KERNEL}', 'load usb 0:{ROOT_PART} {RAMDISK_ADDR} {RAMDISK}', 'setenv
+              initrd_size ${filesize}', 'load usb 0:{ROOT_PART} {DTB_ADDR} {DTB}',
+            ' root={ROOT}  ip=dhcp', '{BOOTX}']
+  deploy:
+    connections: {lxc: null, serial: null}
+    methods:
+      lxc: null
+      nbd: null
+      ssh:
+        host: ''
+        identity_file: dynamic_vm_keys/lava
+        options: [-o, Compression=yes, -o, PasswordAuthentication=no, -o, LogLevel=FATAL]
+        port: 22
+        user: root
+      tftp: null
+      u-boot-ums: null
+    parameters: {add_header: u-boot, append_dtb: false, mkimage_arch: arm64, use_xip: false}
+commands: {connect: telnet lava-dev 7008, hard_reset: /root/reboot_port.sh 1, power_off: 'curl
+    -s -o /dev/null http://192.168.25.38/30000/00'}
+constants:
+  default-shell-prompt: 'lava-test: # '
+  grub: {interrupt-character: c, interrupt-prompt: Press enter to boot the selected
+      OS}
+  grub-efi:
+    error-messages: [Undefined OpCode Exception PC at, Synchronous Exception at]
+    interrupt-character: c
+    interrupt-prompt: Press enter to boot the selected OS
+  ipxe:
+    error-messages: [No configuration methods succeeded, Connection timed out]
+    interrupt-prompt: Press Ctrl-B for the iPXE command line
+    interrupt_ctrl_list: [b]
+  kernel-start-message: Linux version [0-9]
+  shutdown-message: The system is going down for reboot NOW
+  u-boot:
+    error-messages: [Resetting CPU, Must RESET board to recover, TIMEOUT, Retry count
+        exceeded, 'ERROR: The remote end did not respond in time.']
+    final-message: Starting kernel
+    interrupt-character: ' '
+    interrupt-prompt: Hit any key to stop autoboot
+device_type: imx7s-warp
+parameters: {pass: null}
+timeouts:
+  actions:
+    apply-overlay-image: {minutes: 2}
+    auto-login-action: {minutes: 2}
+    boot-image-retry: {minutes: 2}
+    boot-qemu-image: {minutes: 2}
+    bootloader-action: {minutes: 3}
+    bootloader-commands: {minutes: 3}
+    bootloader-interrupt: {seconds: 30}
+    bootloader-retry: {minutes: 3}
+    dd-image: {minutes: 10}
+    download-retry: {minutes: 5}
+    flash-uboot-ums: {minutes: 20}
+    http-download: {minutes: 5}
+    lava-test-shell: {minutes: 3}
+    nfs-deploy: {minutes: 10}
+    power-off: {seconds: 5}
+    u-boot-interrupt: {seconds: 30}
+    uboot-action: {minutes: 3}
+    uboot-retry: {minutes: 3}
+    umount-retry: {seconds: 45}
+  connections:
+    auto-login-action: {minutes: 2}
+    bootloader-commands: {seconds: 30}
+    bootloader-interrupt: {seconds: 30}
+    dd-image: {minutes: 10}
+    lava-test-shell: {seconds: 10}
+    u-boot-interrupt: {seconds: 30}
+    uboot-retry: {seconds: 30}

@@ -1,0 +1,32 @@
+#!/bin/sh
+
+if [ -x /usr/bin/lsb_release ]
+then
+    /usr/bin/lsb_release -d | sed -e 's/^Description:\s*//'
+    exit 0
+fi
+
+if [ -f /etc/redhat-release ]
+then
+    head -n 1 /etc/redhat-release
+    exit 0
+fi
+
+if [ -f /etc/fedora-release ]
+then
+    head -n 1 /etc/fedora-release
+    exit 0
+fi
+
+if [ -f /etc/system-release ]
+then
+    head -n 1 /etc/system-release
+    exit 0
+fi
+
+if [ -f /etc/os-release ]
+then
+    . /etc/os-release
+    echo ${PRETTY_NAME}
+    exit 0
+fi

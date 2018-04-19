@@ -1,0 +1,102 @@
+device_type: dragonboard410c
+job_name: lxc-dragonboard-410c
+timeouts:
+  job:
+    minutes: 90
+  action:
+    minutes: 15
+  connection:
+    minutes: 2
+priority: medium
+visibility: public
+
+metadata:
+  source: https://git.linaro.org/lava-team/refactoring.git
+  path: dragonboard-410c.yaml
+
+protocols:
+  lava-lxc:
+    name: lxc-db410c-test
+    template: debian
+    distribution: debian
+    release: jessie
+
+actions:
+- deploy:
+    namespace: tlxc
+    timeout:
+      minutes: 5
+    to: lxc
+    packages:
+    - android-tools-adb
+    - android-tools-fastboot
+    - systemd
+    - systemd-sysv
+    os: debian
+
+- boot:
+    namespace: tlxc
+    prompts:
+    - 'root@(.*):/#'
+    - 'root@linaro-developer:~#'
+    timeout:
+      minutes: 5
+    method: lxc
+
+- deploy:
+    timeout:
+      minutes: 35
+    to: fastboot
+    namespace: droid
+    images:
+      partition:
+        url: http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/gpt_both0.bin
+      hyp:
+        url: http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/hyp.mbn
+      cdt:
+        url: http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/sbc_1.0_8016.bin
+      rpm:
+        url: http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/rpm.mbn
+      sbl1:
+        url: http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/sbl1.mbn
+      tz:
+        url: http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/tz.mbn
+      aboot:
+        url: http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/emmc_appsboot.mbn
+      boot:
+        url: https://builds.96boards.org/snapshots/dragonboard410c/linaro/debian/305/boot-linaro-buster-dragonboard-410c-305.img.gz
+        compression: gz
+      rootfs:
+        url: https://builds.96boards.org/snapshots/dragonboard410c/linaro/debian/305/linaro-buster-alip-dragonboard-410c-305.img.gz
+        compression: gz
+    os: debian
+
+- boot:
+    namespace: droid
+    prompts:
+    - 'root@(.*):/#'
+    - 'root@linaro-developer:~#'
+    timeout:
+      minutes: 15
+    method: fastboot
+
+- test:
+    namespace: droid
+    timeout:
+      minutes: 5
+    definitions:
+    - repository: git://git.linaro.org/lava-team/lava-functional-tests.git
+      from: git
+      path: lava-test-shell/smoke-tests-basic.yaml
+      name: smoke-tests-db-410c
+
+- test:
+    namespace: tlxc
+    timeout:
+      minutes: 5
+    definitions:
+    - repository: git://git.linaro.org/lava-team/lava-functional-tests.git
+      from: git
+      path: lava-test-shell/smoke-tests-basic.yaml
+      name: smoke-tests-lxc
+

@@ -1,0 +1,11 @@
+#!/bin/sh
+
+which opkg
+rc=$?
+
+if [ "$rc" != 0 ]; then
+  echo "Error: OPKG package manager not found, cannot obtain list of installed packages."
+  exit $rc
+fi
+
+opkg list-installed | sed -n 's/^/package: /p' | sed -n 's/ - / : /p'

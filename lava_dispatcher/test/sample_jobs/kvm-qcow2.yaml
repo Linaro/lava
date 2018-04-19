@@ -1,0 +1,56 @@
+# Sample JOB definition for a KVM
+
+device_type: qemu
+
+job_name: kvm-pipeline
+timeouts:
+  job:
+    minutes: 15            # timeout for the whole job (default: ??h)
+  action:
+    minutes: 5         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
+priority: medium
+visibility: public
+
+actions:
+
+    - deploy:
+        timeout:
+          minutes: 20
+        to: tmpfs
+        images:
+          rootfs:
+            url: http://images.validation.linaro.org/kvm/debian-sid-2014_08_21-amd64.qcow2.xz
+            image_arg: -drive format=raw,file={rootfs}
+            format: qcow2
+            compression: xz
+        os: debian
+
+    - boot:
+        method: qemu
+        # FIXME: this is not working for the moment
+        timeout:
+          minutes: 5
+        media: tmpfs
+        failure_retry: 2
+        prompts:
+          - 'linaro-test'
+          - 'root@debian:~#'
+
+    - test:
+        failure_retry: 3
+        name: kvm-basic-singlenode  # is not present, use "test $N"
+        # only s, m & h are supported.
+        timeout:
+          minutes: 5 # uses install:deps, so takes longer than singlenode01
+        definitions:
+            - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+              from: git
+              path: lava-test-shell/smoke-tests-basic.yaml
+              name: smoke-tests
+            - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+              from: git
+              path: lava-test-shell/single-node/singlenode03.yaml
+              name: singlenode-advanced
+
+context:
+  arch: amd64

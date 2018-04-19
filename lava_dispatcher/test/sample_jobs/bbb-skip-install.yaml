@@ -1,0 +1,66 @@
+device_type: beaglebone-black
+
+job_name: bbb-armmp-standard-nfs
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 5
+  connection:
+    minutes: 2
+priority: medium
+visibility: public
+
+actions:
+- deploy:
+    parameters:
+      mkimage_arch: arm
+    timeout:
+      minutes: 4
+    to: tftp
+    kernel:
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/vmlinuz
+    ramdisk:
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/initramfs.cpio.gz
+      compression: gz
+      add-header: u-boot
+    modules:
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/modules.tar.gz
+      compression: gz
+    nfsrootfs:
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/jessie-armhf-nfs.tar.gz
+      compression: gz
+      prefix: jessie/
+    os: oe
+    dtb:
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/dtbs/am335x-boneblack.dtb
+
+- boot:
+    method: u-boot
+    commands: nfs
+    auto_login:
+      login_prompt: 'login:'
+      username: root
+    parameters:
+      shutdown-message: "reboot: Restarting system"
+    prompts:
+    - 'root@jessie:'
+    timeout:
+      minutes: 2
+
+- test:
+     failure_retry: 3
+     name: kvm-basic-singlenode
+     timeout:
+       minutes: 5 # uses install:deps, so takes longer than singlenode01
+     definitions:
+       - repository: git://git.linaro.org/lava-team/lava-functional-tests.git
+         from: git
+         path: lava-test-shell/smoke-tests-basic.yaml
+         name: smoke-tests
+       - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+         skip_install:
+         - deps
+         from: git
+         path: lava-test-shell/single-node/singlenode03.yaml
+         name: singlenode-advanced

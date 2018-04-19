@@ -1,0 +1,23 @@
+#!/bin/sh
+#
+#This file is for Multi-Node test
+#
+#Prints the role the current device is playing in a multi-node job.
+#
+#Usage: ``lava-role``
+#
+#*Example.* In a directory with several scripts, one for each role
+#involved in the test::
+#
+#    $ ./run-`lava-role`.sh
+#
+#Usage: ``lava-role list``
+#
+#Lists all the available roles for the current group, separated by whitespace.
+
+LIST=$1
+if [ "$LIST" != "list" ]; then
+  printf "%s" ${TARGET_ROLE}
+  exit 0
+fi
+lava-group | cut -f2

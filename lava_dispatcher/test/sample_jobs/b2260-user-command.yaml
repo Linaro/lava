@@ -1,0 +1,44 @@
+device_type: b2260
+job_name: dummy test for user commands
+timeouts:
+  job:
+    minutes: 10
+  action:
+    minutes: 5
+  connection:
+    minutes: 2
+priority: medium
+visibility: public
+actions:
+- command:
+    name: set_boot_to_usb
+    timeout:
+      minutes: 1
+- deploy:
+    timeout:
+      minutes: 4
+    to: tftp
+    kernel:
+      url: https://images.validation.linaro.org/builds.96boards.org/snapshots/b2260/linaro/debian/21/uImage
+      type: uimage
+    ramdisk:
+      url: http://images.validation.linaro.org/storage.kernelci.org/images/rootfs/buildroot/armel/rootfs.cpio.gz
+      compression: gz
+    os: debian
+    dtb:
+      url: https://images.validation.linaro.org/builds.96boards.org/snapshots/b2260/linaro/debian/21/stih410-b2260.dtb
+- boot:
+    method: u-boot
+    commands: ramdisk
+    prompts:
+    - 'linaro-test'
+    - 'root@debian:~#'
+    - '/ #'
+- test:
+    timeout:
+      minutes: 5
+    definitions:
+    - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+      from: git
+      path: lava-test-shell/smoke-tests-basic.yaml
+      name: smoke-tests

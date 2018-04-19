@@ -1,0 +1,30 @@
+#!/bin/sh
+#
+#This file is for Multi-Node test
+#
+#This command will print to stdout any extra device information contained in
+# /etc/lava-server/shared-device-config.yaml
+#
+#Usage: ``lava-echo-config``
+#
+
+if [ -z "${LAVA_SHARED_CONFIG}" ]
+then
+    printf "no shared config\n"
+    exit 1
+fi
+
+FILTER=$1
+if [ -z "$FILTER" ]; then
+    printf "${LAVA_SHARED_CONFIG}\n"
+    exit 0
+fi
+
+MATCH=$(printf "${LAVA_SHARED_CONFIG}" | sed "/^${FILTER} /!D" | sed "s/^${FILTER} //")
+if [ "$MATCH" = "" ] || [ -z "$MATCH" ]; then
+  # failed to find the filter in the group
+  printf "no matching devices\n"
+  exit 1
+fi
+printf "${MATCH}"
+exit 0

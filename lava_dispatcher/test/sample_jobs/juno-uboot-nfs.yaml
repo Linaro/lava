@@ -1,0 +1,58 @@
+# Sample JOB definition for a juno u-boot NFS job
+
+device_type: juno
+job_name: Juno UBoot Debian NFS
+
+timeouts:
+  job:
+    minutes: 30
+  action:
+    minutes: 5
+priority: medium
+visibility: public
+
+context:
+   bootloader_prompt: juno#
+
+actions:
+
+- deploy:
+    namespace: recovery
+    timeout:
+      minutes: 10
+    to: vemsd
+    recovery_image:
+      url:  http://releases.linaro.org/members/arm/platforms/17.04/juno-latest-oe-uboot.zip
+      compression: zip
+
+- deploy:
+    namespace: debian
+    timeout:
+      minutes: 2
+    to: nfs
+    os: debian
+    nfsrootfs:
+      url: http://people.linaro.org/~neil.williams/arm64/debian-jessie-arm64-rootfs.tar.gz
+      compression: gz
+
+- boot:
+    namespace: debian
+    connection-namespace: recovery
+    method: u-boot
+    commands: norflash
+    auto_login:
+      login_prompt: 'login:'
+      username: root
+    prompts:
+    - root@(.*):~#
+
+- test:
+    namespace: debian
+    connection-namespace: recovery
+    timeout:
+      minutes: 5
+    definitions:
+    - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+      from: git
+      path: lava-test-shell/smoke-tests-basic.yaml
+      name: smoke-tests

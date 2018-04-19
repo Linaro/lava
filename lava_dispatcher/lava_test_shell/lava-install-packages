@@ -1,0 +1,13 @@
+#!/bin/sh
+
+echo "######################################################"
+echo
+echo "I: unsupported distro, cannot install packages:"
+for pkg in $@; do
+    echo "- $pkg"
+done
+echo ''
+echo 'I: for the upcoming tests to work, the image will need'
+echo '   to have those packages pre-installed'
+echo
+echo "######################################################"

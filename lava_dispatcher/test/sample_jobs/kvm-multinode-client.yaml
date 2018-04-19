@@ -1,0 +1,81 @@
+target: kvm01
+
+job_name: kvm-client
+
+timeouts:
+  job:
+    minutes: 5
+  action:
+    minutes: 1
+
+protocols:
+  lava-multinode:
+    # real multinode jobs will be parsed by the scheduler into separate YAML fies
+    # so there are two files for the unittests which use a false target_group
+    # these jobs are not expected to run, only support the unit tests
+    target_group: arbitrary-group-id  # only for unittest support
+    role: client
+    roles:
+      kvm01: client
+      kvm02: server
+    group_size: 2
+    sub_id: 1
+    request: lava-start
+    expect_role: server
+    timeout:
+      minutes: 10
+
+priority: medium
+visibility: public
+
+actions:
+
+    - deploy:
+        timeout:
+          minutes: 2
+        to: tmpfs
+        images:
+          rootfs:
+            url: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
+            image_arg: -drive format=raw,file={rootfs}
+            compression: gz
+        os: debian
+        role: client
+        protocols:
+          lava-multinode:
+            - action: customise
+              request: lava-send
+              message:
+                key: value
+              messageID: test
+
+    - boot:
+        method: qemu
+        media: tmpfs
+        failure_retry: 2
+        role: client
+        prompts:
+          - 'linaro-test'
+          - 'root@debian:~#'
+        protocols:
+          lava-multinode:
+            - action: execute-qemu
+              request: lava-wait
+              messageID: test
+              message:
+                ipv4: $IPV4  # any value here will be replaced by the reply to the lava-send
+
+    - test:
+        role: client
+        timeout:
+          minutes: 3
+        failure_retry: 3
+        name: kvm-basic-multinode
+        definitions:
+            - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+              from: git
+              path: lava-test-shell/multi-node/multinode01.yaml
+              name: multinode-basic
+
+context:
+  arch: amd64

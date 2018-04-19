@@ -1,0 +1,45 @@
+- class: actions.deploy.tftp.TftpAction
+  name: tftp-deploy
+  pipeline:
+  - class: actions.deploy.download.DownloaderAction
+    name: download-retry
+    pipeline:
+    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
+  - class: actions.deploy.download.DownloaderAction
+    name: download-retry
+    pipeline:
+    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
+  - class: actions.deploy.apply_overlay.PrepareOverlayTftp
+    name: prepare-tftp-overlay
+    pipeline:
+    - {class: actions.deploy.apply_overlay.ExtractNfsRootfs, name: extract-nfsrootfs}
+    - {class: actions.deploy.overlay.OverlayAction, name: lava-overlay}
+    - {class: actions.deploy.apply_overlay.ExtractRamdisk, name: extract-overlay-ramdisk}
+    - {class: actions.deploy.apply_overlay.ExtractModules, name: extract-modules}
+    - {class: actions.deploy.apply_overlay.ApplyOverlayTftp, name: apply-overlay-tftp}
+    - {class: actions.deploy.apply_overlay.ConfigurePreseedFile, name: configure-preseed-file}
+    - {class: actions.deploy.apply_overlay.CompressRamdisk, name: compress-ramdisk}
+    - class: actions.deploy.prepare.PrepareKernelAction
+      name: prepare-kernel
+      pipeline:
+      - {class: actions.deploy.prepare.PrepareFITAction, name: prepare-fit}
+  - {class: actions.deploy.lxc.LxcCreateUdevRuleAction, name: lxc-create-udev-rule-action}
+- class: actions.boot.depthcharge.DepthchargeAction
+  name: depthcharge-action
+  pipeline:
+  - {class: actions.boot.depthcharge.DepthchargeCommandOverlay, name: depthcharge-overlay}
+  - {class: connections.serial.ConnectDevice, name: connect-device}
+  - class: actions.boot.depthcharge.DepthchargeRetry
+    name: depthcharge-retry
+    pipeline:
+    - class: power.ResetDevice
+      name: reset-device
+      pipeline:
+      - {class: power.SendRebootCommands, name: send-reboot-commands}
+    - {class: actions.boot.depthcharge.DepthchargeStart, name: depthcharge-start}
+    - {class: actions.boot.BootloaderCommandsAction, name: bootloader-commands}
+- class: power.FinalizeAction
+  name: finalize
+  pipeline:
+  - {class: power.PowerOff, name: power-off}
+  - {class: power.ReadFeedback, name: read-feedback}

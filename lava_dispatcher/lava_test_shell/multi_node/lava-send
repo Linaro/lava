@@ -1,0 +1,17 @@
+#!/bin/sh
+#
+#This file is for Multi-Node test
+#
+#Sends a message to the group, optionally passing associated key-value
+#data pairs. Sending a message is a non-blocking operation. The message
+#is guaranteed to be available to all members of the group, but some of
+#them might never retrieve it.
+#
+#Usage: ``lava-send <message-id> [key1=val1 [key2=val2] ...]``
+LAVA_MULTI_NODE_API="LAVA_SEND"
+#MESSAGE_TIMEOUT=5
+MESSAGE_NEED_ACK=
+
+. $LAVA_TEST_BIN/lava-multi-node.lib
+
+lava_multi_node_send $1 "$(_get_key_value_pattern $@)"

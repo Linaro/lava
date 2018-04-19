@@ -1,0 +1,40 @@
+# Zephyr JOB definition for QEMU
+device_type: arduino101
+job_name: zephyr-test-kernel-common
+
+timeouts:
+  job:
+    minutes: 6
+  action:
+    minutes: 3
+  actions:
+    wait-dfu-device:
+      seconds: 20
+
+priority: medium
+visibility: public
+
+actions:
+- deploy:
+    timeout:
+      minutes: 3
+    to: tmpfs
+    images:
+        app:
+          image_arg: --alt x86_app --download {app}
+          url: http://images.validation.linaro.org/functional-test-images/zephyr/arduino_101/test_common-zephyr.bin
+
+- boot:
+    method: dfu
+    timeout:
+      minutes: 10
+
+- test:
+    monitors:
+    - name: tests
+      start: Running test suite common_test
+      end: PROJECT EXECUTION SUCCESSFUL
+      pattern: '(?P<result>(PASS|FAIL)) - (?P<test_case_id>.*)\.'
+      fixupdict:
+        PASS: pass
+        FAIL: fail

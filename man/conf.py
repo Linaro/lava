@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# LAVA Server documentation build configuration file, created by
-# sphinx-quickstart on Mon Dec 27 16:39:47 2010.
+# LAVA documentation build configuration file, created by
+# sphinx-quickstart on Sat Sep 24 18:20:56 2011.
 #
 # This file is execfile()d with the current directory set to its containing dir.
 #
@@ -18,15 +18,26 @@ import subprocess
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
+# sys.path.insert(0, os.path.abspath('.'))
 sys.path.append(os.path.abspath('..'))
 
 # -- General configuration -----------------------------------------------------
 
+# If your documentation needs a minimal Sphinx version, state it here.
+# needs_sphinx = '1.0'
+
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.intersphinx', 'sphinx.ext.todo', 'sphinx.ext.coverage']
+extensions = [
+    'sphinx.ext.autodoc',
+    'sphinx.ext.doctest',
+    'sphinx.ext.intersphinx',
+    'sphinx.ext.todo',
+    'sphinx.ext.coverage',
+    'sphinx.ext.viewcode']
 
 # Configuration for sphinx.ext.todo
+
 todo_include_todos = True
 
 # Add any paths that contain templates here, relative to this directory.
@@ -42,8 +53,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'LAVA Server'
-copyright = u'2010-2014, Linaro Limited'
+project = u'LAVA'
+copyright = u'2010-2018, Linaro Limited'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -64,12 +75,9 @@ release = version
 # Else, today_fmt is used as the format for a strftime call.
 # today_fmt = '%B %d, %Y'
 
-# List of documents that shouldn't be included in the build.
-# unused_docs = []
-
-# List of directories, relative to source directory, that shouldn't be searched
-# for source files.
-exclude_trees = []
+# List of patterns, relative to source directory, that match files and
+# directories to ignore when looking for source files.
+exclude_patterns = ['_build']
 
 # The reST default role (used for this markup: `text`) to use for all documents.
 # default_role = None
@@ -94,8 +102,8 @@ pygments_style = 'sphinx'
 
 # -- Options for HTML output ---------------------------------------------------
 
-# The theme to use for HTML and HTML Help pages.  Major themes that come with
-# Sphinx are currently 'default' and 'sphinxdoc'.
+# The theme to use for HTML and HTML Help pages.  See the documentation for
+# a list of builtin themes.
 html_theme = 'default'
 
 # Theme options are theme-specific and customize the look and feel of a theme
@@ -143,7 +151,7 @@ html_static_path = []
 # html_additional_pages = {}
 
 # If false, no module index is generated.
-# html_use_modindex = True
+# html_domain_indices = True
 
 # If false, no index is generated.
 # html_use_index = True
@@ -154,13 +162,19 @@ html_static_path = []
 # If true, links to the reST sources are added to the pages.
 # html_show_sourcelink = True
 
+# If true, "Created using Sphinx" is shown in the HTML footer. Default is True.
+# html_show_sphinx = True
+
+# If true, "(C) Copyright ..." is shown in the HTML footer. Default is True.
+# html_show_copyright = True
+
 # If true, an OpenSearch description file will be output, and all pages will
 # contain a <link> tag referring to it.  The value of this option must be the
 # base URL from which the finished HTML is served.
 # html_use_opensearch = ''
 
-# If nonempty, this is the file name suffix for HTML files (e.g. ".xhtml").
-# html_file_suffix = ''
+# This is the file name suffix for HTML files (e.g. ".xhtml").
+# html_file_suffix = None
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'LAVADocumentation'
@@ -177,8 +191,8 @@ htmlhelp_basename = 'LAVADocumentation'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-    ('index', 'LAVAServer.tex', u'LAVA Server Documentation',
-     u'Linaro Validation Team', 'manual'),
+    ('index', 'LAVA.tex', 'LAVA Documentation',
+     'Linaro Validation Team', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -189,6 +203,12 @@ latex_documents = [
 # not chapters.
 # latex_use_parts = False
 
+# If true, show page references after internal links.
+# latex_show_pagerefs = False
+
+# If true, show URL addresses after external links.
+# latex_show_urls = False
+
 # Additional stuff for the LaTeX preamble.
 # latex_preamble = ''
 
@@ -196,11 +216,8 @@ latex_documents = [
 # latex_appendices = []
 
 # If false, no module index is generated.
-# latex_use_modindex = True
+# latex_domain_indices = True
 
-
-# Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'http://docs.python.org/': None}
 
 # -- Options for manual page output --------------------------------------------
 
@@ -209,4 +226,24 @@ intersphinx_mapping = {'http://docs.python.org/': None}
 man_pages = [
     ('lava-server', 'lava-server', u'lava-server command line support',
      [u'Linaro Validation Team'], 1),
+    ('lava-run', 'lava-run', u'run jobs on LAVA devices',
+     [u'Linaro Validation Team'], 1),
+    ('lava-slave', 'lava-slave', u'manage connections to lava master',
+     [u'Linaro Validation Team'], 8),
+    ('lava-lxc-mocker', 'lava-lxc-mocker', u'mock LXC commands used by LAVA',
+     [u'Senthil Kumaran S <senthil.kumaran@linaro.org>'], 7),
+    ('lxc-attach', 'lxc-attach', u'mock lxc-attach command used by LAVA',
+     [u'Senthil Kumaran S <senthil.kumaran@linaro.org>'], 1),
+    ('lxc-create', 'lxc-create', u'mock lxc-create command used by LAVA',
+     [u'Senthil Kumaran S <senthil.kumaran@linaro.org>'], 1),
+    ('lxc-destroy', 'lxc-destroy', u'mock lxc-destroy command used by LAVA',
+     [u'Senthil Kumaran S <senthil.kumaran@linaro.org>'], 1),
+    ('lxc-device', 'lxc-device', u'mock lxc-device command used by LAVA',
+     [u'Senthil Kumaran S <senthil.kumaran@linaro.org>'], 1),
+    ('lxc-info', 'lxc-info', u'mock lxc-info command used by LAVA',
+     [u'Senthil Kumaran S <senthil.kumaran@linaro.org>'], 1),
+    ('lxc-start', 'lxc-start', u'mock lxc-start command used by LAVA',
+     [u'Senthil Kumaran S <senthil.kumaran@linaro.org>'], 1),
+    ('lxc-stop', 'lxc-stop', u'mock lxc-stop command used by LAVA',
+     [u'Senthil Kumaran S <senthil.kumaran@linaro.org>'], 1)
 ]

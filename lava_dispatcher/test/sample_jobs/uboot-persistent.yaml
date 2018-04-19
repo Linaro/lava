@@ -1,0 +1,48 @@
+# Sample JOB definition for a u-boot job
+
+device_type: beaglebone-black
+
+job_name: uboot-persistent-nfs
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 5
+priority: medium
+visibility: public
+
+actions:
+  - deploy:
+     timeout:
+       minutes: 2
+     to: tftp
+     kernel:
+         url: http://images.validation.linaro.org/functional-test-images/bbb/zImage
+         type: zimage
+     persistent_nfs:
+       address: "127.0.0.1:/nfs/debian-jessie.armhf"
+     os: debian
+     dtb:
+         url: http://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
+
+  - boot:
+     method: u-boot
+     commands: nfs
+     prompts:
+     - 'linaro-test'
+     - 'root@debian:~#'
+
+  - test:
+     failure_retry: 3
+     name: kvm-basic-singlenode
+     timeout:
+       minutes: 5
+     definitions:
+         - repository: git://git.linaro.org/lava-team/lava-functional-tests.git
+           from: git
+           path: lava-test-shell/smoke-tests-basic.yaml
+           name: smoke-tests
+         - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+           from: git
+           path: lava-test-shell/single-node/singlenode03.yaml
+           name: singlenode-advanced

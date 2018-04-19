@@ -1,0 +1,24 @@
+usage () {
+    echo "Usage: lava-background-process-stop NAME"
+    echo ""
+    echo "Stop background process NAME."
+}
+
+NAME="$1"
+shift
+if [ -z "$NAME" ]; then
+    usage
+    exit 1
+fi
+
+# $LAVA_RESULT_DIR is set by lava-test-shell
+result_dir="$LAVA_RESULT_DIR/results/$NAME"
+
+PID=`cat $result_dir/pid`
+
+if ps -p $PID > /dev/null;
+then
+    kill $PID 2>&1 > /dev/null
+fi
+
+exit 0

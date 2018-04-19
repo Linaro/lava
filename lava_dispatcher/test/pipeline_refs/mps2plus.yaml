@@ -1,0 +1,31 @@
+- class: actions.deploy.mps.MpsAction
+  name: mps-deploy
+  pipeline:
+  - {class: connections.serial.ConnectDevice, name: connect-device}
+  - class: power.ResetDevice
+    name: reset-device
+    pipeline:
+    - {class: power.PDUReboot, name: pdu-reboot}
+  - {class: utils.udev.WaitUSBMassStorageDeviceAction, name: wait-usb-mass-storage-device}
+  - {class: utils.udev.WaitUSBMassStorageDeviceAction, name: wait-usb-mass-storage-device}
+  - class: actions.deploy.download.DownloaderAction
+    name: download-retry
+    pipeline:
+    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
+  - {class: actions.deploy.vemsd.MountVExpressMassStorageDevice, name: mount-vexpress-usbmsd}
+  - {class: actions.deploy.vemsd.ExtractVExpressRecoveryImage, name: extract-vexpress-recovery-image}
+  - {class: actions.deploy.vemsd.DeployVExpressRecoveryImage, name: deploy-vexpress-recovery-image}
+  - {class: actions.deploy.vemsd.UnmountVExpressMassStorageDevice, name: unmount-vexpress-usbmsd}
+- class: actions.boot.minimal.MinimalBoot
+  name: minimal-boot
+  pipeline:
+  - {class: connections.serial.ConnectDevice, name: connect-device}
+  - class: power.ResetDevice
+    name: reset-device
+    pipeline:
+    - {class: power.PDUReboot, name: pdu-reboot}
+- class: power.FinalizeAction
+  name: finalize
+  pipeline:
+  - {class: power.PowerOff, name: power-off}
+  - {class: power.ReadFeedback, name: read-feedback}

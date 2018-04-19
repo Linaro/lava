@@ -1,0 +1,33 @@
+set_usage () {
+    echo "Usage:"
+    echo "       lava-test-set start NAME"
+    echo "       lava-test-set stop"
+    echo ""
+    echo "Start a test set with the given NAME, or stop the test set section."
+}
+
+set_start () {
+    echo "<LAVA_SIGNAL_TESTSET START $1>"
+    exit 0
+}
+
+set_stop () {
+    echo "<LAVA_SIGNAL_TESTSET STOP>"
+    exit 0
+}
+
+COMMAND="$1"
+shift
+if [ "$COMMAND" = "start" ]; then
+    SETNAME="$1"
+    if [ -z "$SETNAME" ]; then
+        set_usage
+        exit 1
+    fi
+    set_start "$SETNAME"
+elif [ "$COMMAND" = "stop" ]; then
+    set_stop
+else
+    set_usage
+    exit 1
+fi

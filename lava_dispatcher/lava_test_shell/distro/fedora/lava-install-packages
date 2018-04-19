@@ -1,0 +1,24 @@
+#!/bin/sh
+retry=0
+max_retry=4
+
+source /etc/os-release
+if [ "$VERSION_ID" -ge "22" ]; then
+    PKG_MANAGER="dnf"
+else
+    PKG_MANAGER="yum"
+fi
+
+while [ 1 ]
+do
+  $PKG_MANAGER -e 0 -y -q install "$@"
+  return_value=$?
+  [ "$return_value" = 0 ] && break
+  [ "$retry" = "$max_retry" ] && exit $return_value
+
+  echo "================================================="
+  echo "($retry) Install failed... Retrying after some seconds"
+  echo "================================================="
+  sleep 60
+  retry=$((retry+1))
+done

@@ -1,0 +1,68 @@
+device_type: d02
+
+job_name: d02-debian-preseed
+timeouts:
+  job:
+    minutes: 300
+  action:
+    minutes: 300
+priority: medium
+visibility: public
+
+actions:
+  - deploy:
+     namespace: installer
+     timeout:
+       minutes: 10
+     to: tftp
+     kernel:
+        url: https://builds.96boards.org/releases/reference-platform/components/debian-installer/16.03/debian-installer/arm64/linux
+     ramdisk:
+         url: https://builds.96boards.org/releases/reference-platform/components/debian-installer/16.03/debian-installer/arm64/initrd.gz
+         compression: gz
+     preseed:
+         url: http://images.validation.linaro.org/functional-test-images/d02/preseed-lava.cfg
+     os: debian_installer
+
+  - boot:
+     namespace: installer
+     method: grub
+     expect_shell: False
+     commands: debian-installer
+     timeout:
+       minutes: 50
+     boot_finished:
+     - 'reboot: Restarting system'
+     - 'reboot: System halted'
+     - 'Requesting system halt'
+
+  - boot:
+      namespace: installed
+      method: grub
+      commands: debian-installed
+      auto_login:
+        login_prompt: 'login:'
+        username: root
+        password_prompt: 'Password:'
+        password: linaro123
+      timeout:
+          minutes: 5
+      prompts:
+       - 'root@debian:~#'
+       - 'root@d02:~#'
+
+  - test:
+     namespace: installed
+     failure_retry: 3
+     name: kvm-basic-singlenode
+     timeout:
+       minutes: 5
+     definitions:
+         - repository: git://git.linaro.org/lava-team/lava-functional-tests.git
+           from: git
+           path: lava-test-shell/smoke-tests-basic.yaml
+           name: smoke-tests
+         - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+           from: git
+           path: lava-test-shell/single-node/singlenode03.yaml
+           name: singlenode-advanced

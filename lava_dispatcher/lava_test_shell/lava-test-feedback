@@ -1,0 +1,32 @@
+#NOTE the lava_test_shell_action fills in the proper interpreter path
+# above during target deployment
+
+feedback_usage () {
+    echo "Usage:"
+    echo "       lava-test-feedback --namespace STRING"
+    echo ""
+    echo "Listen to feedback from the specified namespace."
+}
+
+while [ $# -gt 0 ]; do
+    case $1 in
+        --namespace)
+            shift
+            NAMESPACE=$1
+            shift
+            ;;
+        *)
+            feedback_usage
+            exit 1
+            ;;
+    esac
+done
+
+if [ -z "${NAMESPACE+x}" ]; then
+    echo "--namespace must be specified"
+    exit 1
+fi
+
+echo "<LAVA_SIGNAL_TESTFEEDBACK $NAMESPACE>"
+
+exit 0

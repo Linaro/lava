@@ -1,0 +1,3 @@
+#!/bin/sh
+
+echo 'Unsupported distro: cannot obtain list of installed packages'

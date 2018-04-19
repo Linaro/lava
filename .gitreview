@@ -1,4 +1,4 @@
 [gerrit]
 host=review.linaro.org
 port=29418
-project=lava/lava-server
+project=lava/lava

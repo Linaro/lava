@@ -1,0 +1,24 @@
+# Configuration for lava-slave daemon
+
+# URL to the master and the logger
+# MASTER_URL="tcp://<lava-master-dns>:5556"
+# LOGGER_URL="tcp://<lava-master-dns>:5555"
+
+# Enable IPv6 to connect to the master and logger
+# IPV6="--ipv6"
+
+# Slave hostname
+# Should be set for host that have random hostname (containers, ...)
+# The hostname can be any unique string, except "lava-logs" which is reserved
+# for the lava-logs daemon.
+# HOSTNAME="--hostname <hostname.fqdn>"
+
+# Logging level should be uppercase (DEBUG, INFO, WARN, ERROR)
+# LOGLEVEL="DEBUG"
+
+# Encryption
+# If set, will activate encryption using the master public and the slave
+# private keys
+# ENCRYPT="--encrypt"
+# MASTER_CERT="--master-cert /etc/lava-dispatcher/certificates.d/<master.key>"
+# SLAVE_CERT="--slave-cert /etc/lava-dispatcher/certificates.d/<slave.key_secret>"

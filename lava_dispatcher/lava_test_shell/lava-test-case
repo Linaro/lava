@@ -1,0 +1,88 @@
+#NOTE the lava_test_shell_action fills in the proper interpreter path
+# above during target deployment
+
+usage () {
+    echo "Usage: lava-test-case TEST_CASE_ID --shell cmds ..."
+    echo "   or: lava-test-case TEST_CASE_ID --result RESULT [--units UNITS] "
+    echo "                                   [--measurement MEASUREMENT]"
+    echo ""
+    echo "Either run or record the results of a particular test case"
+}
+
+rc=0
+
+TEST_CASE_ID="$1"
+shift
+if [ -z "$TEST_CASE_ID" ]; then
+    usage
+    exit 1
+fi
+if [ "$1" = "--shell" ]; then
+    shift
+    echo "<LAVA_SIGNAL_STARTTC $TEST_CASE_ID>"
+    eval "$*"
+    rc=$?
+    echo "<LAVA_SIGNAL_ENDTC $TEST_CASE_ID>"
+    if [ $rc -eq 0 ]; then
+        RESULT=pass
+    else
+        RESULT=fail
+    fi
+else
+    while [ $# -gt 0 ]; do
+        case $1 in
+            --result)
+                shift
+                RESULT=$1
+                shift
+                ;;
+            --units)
+                shift
+                UNITS=$1
+                shift
+                ;;
+            --measurement)
+                shift
+                MEASUREMENT=$1
+                shift
+                ;;
+            *)
+                usage
+                exit 1
+                ;;
+        esac
+    done
+fi
+
+# $LAVA_RESULT_DIR is set by lava-test-shell
+result_dir="$LAVA_RESULT_DIR/results/$TEST_CASE_ID"
+mkdir -p "$result_dir"
+
+# signal the test case results
+TCDATA=""
+
+if [ -z "${RESULT+x}" ]; then
+    echo "--result must be specified"
+    exit 1
+else
+    echo $RESULT > "$result_dir/result"
+    TCDATA="$TCDATA RESULT=$RESULT"
+fi
+
+if [ -n "${UNITS+x}" ]; then
+    echo $UNITS > "$result_dir/units"
+    TCDATA="$TCDATA UNITS=$UNITS"
+fi
+
+if [ -n "${MEASUREMENT+x}" ]; then
+    echo $MEASUREMENT > "$result_dir/measurement"
+    TCDATA="$TCDATA MEASUREMENT=$MEASUREMENT"
+fi
+
+# signal the test case results
+echo "<LAVA_SIGNAL_TESTCASE TEST_CASE_ID=$TEST_CASE_ID$TCDATA>"
+
+# lava-test-case testname --shell false should report a fail as test result
+# but not fail itself; hence don't honor 'rc' if we reach this, but exit 0
+exit 0
+

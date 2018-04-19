@@ -1,0 +1,62 @@
+#!/bin/sh
+
+if [ "$1" = "" ]
+then
+    LAVA_PATH="/lava"
+else
+	LAVA_PATH=$1
+fi
+
+echo $LAVA_PATH
+PREFIX="<LAVA_TEST_RUNNER>:"
+WORKFILE="$LAVA_PATH/lava-test-runner.conf"
+RESULTSDIR="$LAVA_PATH/results"
+BINDIR="$LAVA_PATH/../bin"
+
+cleanup()
+{
+	# just adds a little handy debugging
+	ls ${RESULTSDIR}
+	echo "${PREFIX} exiting lava-test-runner"
+}
+trap cleanup INT TERM EXIT
+
+export PATH=${BINDIR}:${PATH}
+echo "${PREFIX} started"
+mkdir -p ${RESULTSDIR}
+
+# move the workfile to something timestamped and run that. This
+# prevents us from running the same thing again after a reboot
+TS=`date +%s`
+mv ${WORKFILE} ${WORKFILE}-${TS}
+WORKFILE=${WORKFILE}-${TS}
+
+echo "${PREFIX} looking for work in ${WORKFILE}"
+
+if [ -z "${SHELL}" ]; then
+    SHELL=/bin/sh
+fi
+echo "${PREFIX} Using ${SHELL}"
+
+for line in $(cat ${WORKFILE}); do
+	test=`basename $line`
+	echo "${PREFIX} running ${test} under lava-test-shell..."
+	odir=${RESULTSDIR}/${test}-`date +%s`
+	mkdir ${odir}
+	cp ${line}/testdef.yaml ${odir}/
+	cp ${line}/testdef_metadata ${odir}/
+
+	if [ -f ${line}/install.sh ]; then
+		echo "${PREFIX} running ${test} installer ..."
+		/bin/sh ${line}/install.sh
+		R=$?
+		echo ${R} > ${odir}/install_return_code
+		if [ ${R} -ne 0 ] ; then
+			echo "${PREFIX} ${test} installer failed, skipping"
+			continue
+		fi
+	fi
+
+	lava-test-shell --output_dir ${odir} ${SHELL} -e "${line}/run.sh"
+	echo "${PREFIX} ${test} exited with: `cat ${odir}/return_code`"
+done
