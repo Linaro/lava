@@ -272,10 +272,8 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
                 decompress_command = 'gunzip'
             elif compression == 'bz2':
                 decompress_command = 'bunzip2'
-            elif compression == 'zip':
-                decompress_command = 'unzip'
-            else:
-                decompress_command = 'unxz'
+            elif compression == 'unxz':
+                decompress_command = 'unzx'
             self.logger.debug("Using %s decompression" % compression)
         else:
             self.logger.debug("No compression specified.")
@@ -291,7 +289,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
             md5.update(buff)
             sha256.update(buff)
 
-        if compression:
+        if compression and decompress_command:
             try:
                 with open(fname, 'wb') as dwnld_file:
                     proc = subprocess.Popen([decompress_command],
