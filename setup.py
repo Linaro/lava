@@ -3,7 +3,7 @@
 #
 # Copyright (C) 2010 Linaro Limited
 #
-# Author: Zygmunt Krynicki <zygmunt.krynicki@linaro.org>
+# Author: Neil Williams <neil.williams@linaro.org>
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -52,7 +52,7 @@ SRCDIR = os.path.join('.', 'lava_scheduler_app', 'tests', 'device-types')
 DEVICE_TYPE_TEMPLATES = find_data_files(SRCDIR, '*.jinja2')
 
 setup(
-    name='lava-server',
+    name='lava',
     version=version_tag(),
     author="Neil Williams",
     author_email="lava-team@linaro.org",
@@ -60,7 +60,7 @@ setup(
     packages=find_packages(),
     test_suite="lava_server.tests.run_tests",
     license="AGPL",
-    description="LAVA Server",
+    description="LAVA",
     long_description="""
      LAVA is a continuous integration system for deploying operating
      systems onto physical and virtual hardware for running tests.
@@ -81,11 +81,71 @@ setup(
         'jinja2',
         'django-auth-ldap >= 1.2.12',
         'voluptuous >= 0.8.8',
-        # scheduler
-        "lava-dispatcher",
         "simplejson",
+        'pexpect >= 4.2',
+        'PyYAML',
+        'pyserial >= 2.6',
+        'requests',
+        'netifaces >= 0.10.0',
+        'nose',
+        'pyudev >= 0.21',
+        'pytz',
+        'file-magic',
+        'configobj',
+        'setproctitle >= 1.1.8'
+    ],
+    package_data={
+        'lava_dispatcher': [
+            'dynamic_vm_keys/lava*',
+            'devices/*.yaml',
+            'lava_test_shell/lava-add-keys',
+            'lava_test_shell/lava-add-sources',
+            'lava_test_shell/lava-background-process-start',
+            'lava_test_shell/lava-background-process-stop',
+            'lava_test_shell/lava-echo-ipv4',
+            'lava_test_shell/lava-installed-packages',
+            'lava_test_shell/lava-install-packages',
+            'lava_test_shell/lava-lxc-device-add',
+            'lava_test_shell/lava-lxc-device-wait-add',
+            'lava_test_shell/lava-os-build',
+            'lava_test_shell/lava-probe-channel',
+            'lava_test_shell/lava-probe-ip',
+            'lava_test_shell/lava-target-ip',
+            'lava_test_shell/lava-target-mac',
+            'lava_test_shell/lava-target-storage',
+            'lava_test_shell/lava-test-case',
+            'lava_test_shell/lava-test-feedback',
+            'lava_test_shell/lava-test-raise',
+            'lava_test_shell/lava-test-reference',
+            'lava_test_shell/lava-test-runner',
+            'lava_test_shell/lava-test-set',
+            'lava_test_shell/lava-test-shell',
+            'lava_test_shell/multi_node/*',
+            'lava_test_shell/vland/*',
+            'lava_test_shell/lmp/*',
+            'lava_test_shell/distro/fedora/*',
+            'lava_test_shell/distro/android/*',
+            'lava_test_shell/distro/ubuntu/*',
+            'lava_test_shell/distro/debian/*',
+            'lava_test_shell/distro/oe/*',
+        ],
+    },
+    scripts=[
+        'lava/dispatcher/lava-run',
+        'lava/dispatcher/lava-slave'
     ],
     data_files=[
+        ('/usr/share/lava-dispatcher/',
+            ['etc/tftpd-hpa',
+             'etc/dispatcher.yaml']),
+        ('/etc/exports.d',
+            ['etc/lava-dispatcher-nfs.exports']),
+        ('/etc/modules-load.d/',
+            ['etc/lava-modules.conf']),
+        ('/etc/logrotate.d/',
+            ['etc/logrotate.d/lava-slave-log']),
+        ('/usr/share/lava-dispatcher/',
+            ['etc/lava-slave.service']),
         ('/etc/lava-server',
          ['etc/settings.conf',
           'etc/env.yaml']),

@@ -25,7 +25,10 @@ include google_analytics/USAGE
 include lava/dispatcher/lava-run
 include lava/dispatcher/lava-slave
 include lava/lxc-mocker/*
+include lava_dispatcher/dynamic_vm_keys/*
 include lava_dispatcher/lava_test_shell/*
+include lava_dispatcher/lava_test_shell/multi_node/*
+include lava_dispatcher/lava_test_shell/vland/*
 include lava_dispatcher/lava_test_shell/distro/android/*
 include lava_dispatcher/lava_test_shell/distro/archlinux/*
 include lava_dispatcher/lava_test_shell/distro/centos/*

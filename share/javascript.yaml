@@ -1,5 +1,5 @@
 debian:
-  - python_dir: debian/lava-server/usr/lib/python3/dist-packages/
+  - python_dir: debian/lava/usr/lib/python3/dist-packages/
   - package: libjs-jquery
     directory: /usr/share/javascript/jquery/
     lava_directory: lava_server/static/lava_server/js/
