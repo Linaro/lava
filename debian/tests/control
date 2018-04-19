@@ -2,5 +2,6 @@ Tests: testsuite
 Depends: @, @builddeps@,
  python3-testscenarios, pep8, git, telnet, qemu-system-x86,
  nfs-kernel-server, u-boot-tools, iproute2, tftpd-hpa,
- schroot, lxc
-Restrictions: allow-stderr
+ schroot, lxc, lava-server, python3-django-testscenarios, python3-tz,
+ tftpd-hpa, git, qemu-system-x86, nfs-kernel-server, u-boot-tools
+Restrictions: allow-stderr, needs-root

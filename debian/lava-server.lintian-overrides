@@ -1,0 +1,9 @@
+# these are symlinks created by dh_python.
+lava-server: image-file-in-usr-lib *
+# 895597
+lava-server: maintainer-script-should-not-use-recursive-chown-or-chmod postinst:154
+lava-server: maintainer-script-should-not-use-recursive-chown-or-chmod postinst:156
+lava-server: maintainer-script-should-not-use-recursive-chown-or-chmod postinst:158
+lava-server: maintainer-script-should-not-use-recursive-chown-or-chmod postinst:159
+lava-server: maintainer-script-should-not-use-recursive-chown-or-chmod postinst:160
+lava-server: maintainer-script-should-not-use-recursive-chown-or-chmod postinst:161

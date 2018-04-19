@@ -32,6 +32,15 @@ lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispat
 lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-add-keys
 lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-add-sources
 lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-install-packages
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/archlinux/lava-install-packages
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/archlinux/lava-installed-packages
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/archlinux/lava-os-build
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/centos/lava-install-packages
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/centos/lava-installed-packages
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/centos/lava-os-build
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/slackware/lava-install-packages
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/slackware/lava-installed-packages
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/slackware/lava-os-build
 
 lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-target-ip
 lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-target-mac

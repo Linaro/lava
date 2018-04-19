@@ -1,0 +1,7 @@
+/etc/lava-server/dispatcher-config/devices/
+/etc/lava-server/dispatcher-config/health-checks/
+/etc/lava-server/dispatcher.d
+/var/log/lava-server/
+/var/lib/lava-server/default/media/
+/var/lib/lava-server/default/archive/job-output/
+/usr/bin/
