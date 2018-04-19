@@ -1,4 +1,0 @@
-pexpect
-lockfile
-python-daemon
-setproctitle
