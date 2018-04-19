@@ -148,7 +148,7 @@ The latest git hash is a reference to the latest commit. If you have not
 committed local changes (e.g. you are on a local branch based on a tag) then
 the short hash can be used to lookup the commit in the master branch, e.g.::
 
-  https://git.linaro.org/lava/lava-server.git/f9304da
+  https://git.linaro.org/lava/lava.git/commit?id=f9304da
 
 .. _distribution_differences:
 
@@ -170,19 +170,15 @@ Example
 The helper supports ``lava-server`` and ``lava-dispatcher``::
 
  $ sudo apt install lava-dev
- $ git clone https://git.linaro.org/git/lava/lava-server.git
- $ cd lava-server
- $ /usr/share/lava-server/debian-dev-build.sh -p lava-server
-
- $ git clone https://git.linaro.org/git/lava/lava-dispatcher.git
- $ cd lava-dispatcher
- $ /usr/share/lava-server/debian-dev-build.sh -p lava-dispatcher
+ $ git clone https://git.linaro.org/git/lava/lava.git
+ $ cd lava
+ $ /usr/share/lava-server/debian-dev-build.sh -p lava
 
 ``lava-dispatcher`` has architecture-dependent dependencies. By default, the
 package is built for the native architecture and can only be installed on that
 architecture. To build for a different architecture, e.g. armhf, use::
 
- $ /usr/share/lava-server/debian-dev-build.sh -p lava-dispatcher -a armhf
+ $ /usr/share/lava-server/debian-dev-build.sh -p lava -a armhf
 
 This does a *binary build*, so the source is not included, which allows these
 builds to be included in a local repository, e.g. using ``reprepro``.
@@ -201,7 +197,7 @@ identify the latest git commit in the branch upon which this build is based.
 The git short hash can be looked up on the ``git.linaro.org`` site,
 irrespective of which release tag is the current. For example, build version
 ``2015.07.5333.1521ddb-1`` relates directly to
-``https://git.linaro.org/lava/lava-server.git/1521ddb``
+``https://git.linaro.org/lava/lava.git/commit?id=1521ddb``
 
 From August 2015, LAVA uses git tags without a leading zero on the month
 number, in accordance with PEP440, so the git tag will be ``2015.8`` instead of

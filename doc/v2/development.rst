@@ -34,17 +34,14 @@ There are two main components to LAVA, ``lava-server`` and
 
 ::
 
-    git clone https://git.linaro.org/git/lava/lava-server.git
-    cd lava-server
+    git clone https://git.linaro.org/git/lava/lava.git
+    cd lava
 
-    git clone https://git.linaro.org/git/lava/lava-dispatcher.git
-    cd lava-dispatcher
-
-There is also ``lava-tool`` which is gaining more support for operations
+There is also ``lavacli`` which is gaining more support for operations
 involving the :ref:`dispatcher_design`::
 
-    git clone https://git.linaro.org/git/lava/lava-tool.git
-    cd lava-tool
+    git clone https://git.linaro.org/git/lava/lavacli.git
+    cd lavacli
 
 Setting up git-review
 =====================
