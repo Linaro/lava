@@ -92,7 +92,7 @@ override_dh_installinit:
 
 override_dh_compress:
 	dh_compress -X.yaml
-	$(RM) -r debian/lava/usr/lib/python3
+	$(RM) -r debian/lava/usr/lib
 	$(RM) -r debian/lava/usr/bin
 
 override_dh_auto_clean:
