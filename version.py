@@ -49,7 +49,7 @@ def version_tag():
         clone_hash = commits[0].replace('commit ', '')[:8]
         tag_data = subprocess.check_output(tag_list).strip().decode('utf-8')
         tags = tag_data.split('\n')
-        if len(tags) < 2:
+        if not set([tag for tag in tags if 'refs/tags/' in tag]):
             return clone_hash
         tag_line = str(tags[len(tags) - 1]).replace('\'', '').strip()
         tag_name = tag_line.split("/")[2]
