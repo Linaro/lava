@@ -59,8 +59,8 @@ override_dh_auto_install:
 	dh_installman -plava-lxc-mocker man/_build/man/lxc-stop.1
 	python3 setup.py install --root=$(CURDIR)/debian/lava/ --install-layout=deb
 	cp ./etc/lava-slave.service debian/
-	dh_systemd_enable --name lava-slave
-	dh_systemd_start --name lava-slave
+	dh_systemd_enable -p lava-dispatcher --name lava-slave
+	dh_systemd_start -p lava-dispatcher --name lava-slave
 	[ -f debian/lava-server/usr/bin/lava-server ] || cp ./debian/lava/$(PYTHONDIR)/lava_server/manage.py debian/lava-server/usr/bin/lava-server; chmod a+x debian/lava-server/usr/bin/lava-server
 	dh_installman -plava-server man/_build/man/lava-server.1
 	# skip unwanted licence file specified in copyright
@@ -68,17 +68,18 @@ override_dh_auto_install:
 	# handle embedded JS
 	python3 ./share/javascript.py -f ./share/javascript.yaml --remove
 	# handle systemd services
-	cp ./etc/*.service debian/
-	dh_systemd_enable --name lava-server-gunicorn
-	dh_systemd_enable --name lava-logs
-	dh_systemd_enable --name lava-server
-	dh_systemd_enable --name lava-publisher
-	dh_systemd_enable --name lava-master
-	dh_systemd_start --name lava-server-gunicorn
-	dh_systemd_start --name lava-logs
-	dh_systemd_start --name lava-server
-	dh_systemd_start --name lava-publisher
-	dh_systemd_start --name lava-master
+	cp ./etc/lava-server-gunicorn.service debian/lava-server.lava-server-gunicorn.service
+	cp ./etc/lava-logs.service debian/lava-server.lava-logs.service
+	cp ./etc/lava-master.service debian/lava-server.lava-master.service
+	cp ./etc/lava-publisher.service debian/lava-server.lava-publisher.service
+	dh_systemd_enable -p lava-server --name lava-server-gunicorn
+	dh_systemd_enable -p lava-server --name lava-logs
+	dh_systemd_enable -p lava-server --name lava-publisher
+	dh_systemd_enable -p lava-server --name lava-master
+	dh_systemd_start -p lava-server --name lava-server-gunicorn
+	dh_systemd_start -p lava-server --name lava-logs
+	dh_systemd_start -p lava-server --name lava-publisher
+	dh_systemd_start -p lava-server --name lava-master
 
 override_dh_fixperms:
 	dh_fixperms -X debian/lava-dispatcher/usr/lib/python3/dist-packages/lava_dispatcher/dynamic_vm_keys/lava
