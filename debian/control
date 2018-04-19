@@ -24,7 +24,7 @@ Depends: file, systemd-sysv, python3-serial (>= 2.6), python3-setuptools,
  python3-configobj, python3-magic, python3-netifaces (>= 0.10.0),
  python3-nose, python3-pexpect (>= 4.2), python3-pyudev (>= 0.21),
  python3-requests, python3-setproctitle (>= 1.1.8), python3-tz,
- python3-yaml, python3-zmq
+ python3-yaml, python3-zmq,
  sudo, telnet, ${python3:Depends}, ${misc:Depends}
 Multi-Arch: foreign
 Recommends: ntp, git, tftpd-hpa, openbsd-inetd, ser2net,
@@ -59,7 +59,7 @@ Depends: apache2, adduser, gunicorn3, iproute2, python3-tz, python3-dateutil,
  lava-dispatcher (>= 2018.4), python3-django-restricted-resource (>= 2016.8),
  python3-django-tables2 (>= 1.2), python3-docutils, python3-jinja2,
  python3-markdown, python3-psycopg2, python3-simplejson,
- python3-voluptuous (>= 0.8.8), python3-zmq
+ python3-voluptuous (>= 0.8.8), python3-zmq,
  ${python3:Depends}, ${misc:Depends}
 Recommends: fuse, ntp, lava-coordinator, lava-server-doc,
 Suggests: python3-django-hijack, python3-django-debug-toolbar
