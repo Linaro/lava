@@ -44,6 +44,7 @@ echo "Removing old .pyc files"
 echo
 find . -name '*.pyc' -delete
 rm -rf ./.cache/
+rm -rf ./__init__.py
 
 echo "Starting unit tests"
 echo
