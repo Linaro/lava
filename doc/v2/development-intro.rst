@@ -643,9 +643,7 @@ that someone can migrate the pull request to a review.
    ``master`` can also be significantly behind current ``master`` from
    ``git.linaro.org``. Reviews use ``git.linaro.org``.)
 
-* https://git.linaro.org/lava/lava-server.git/
-* https://git.linaro.org/lava/lava-dispatcher.git/
-* https://git.linaro.org/lava/lava-tool.git/
-* https://git.linaro.org/lava/lava-coordinator.git/
+* https://git.linaro.org/lava/lava.git/
+* https://git.linaro.org/lava/lavacli.git/
 
 .. seealso:: :ref:`lava_development`.

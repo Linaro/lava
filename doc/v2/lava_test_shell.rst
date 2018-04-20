@@ -336,12 +336,12 @@ the git-repos action, for example:
 
   install:
       git-repos:
-          - url: https://git.linaro.org/lava/lava-dispatcher.git
+          - url: https://git.linaro.org/lava/lava.git
             skip_by_default: False
-          - url: https://git.linaro.org/lava/lava-dispatcher.git
+          - url: https://git.linaro.org/lava/lava.git
             destination:  lava-d-r
             branch:       release
-          - url: https://git.linaro.org/lava/lava-dispatcher.git
+          - url: https://git.linaro.org/lava/lava.git
             destination:  lava-d-s
             branch:       staging
 
