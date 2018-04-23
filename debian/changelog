@@ -1,3 +1,12 @@
+lava (2018.4.post2-1) unstable; urgency=medium
+
+  * New hot fix release.
+    fe70ac6ca Update version.py for repos with no tags
+    1f7c5b5f1 Fix typo in 86362f and add debug
+    11c5ab57e Do not attempt to unzip on the fly
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 23 Apr 2018 16:07:19 +0100
+
 lava (2018.4.post1-1) unstable; urgency=medium
 
   * New production release
