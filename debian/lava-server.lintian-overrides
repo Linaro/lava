@@ -7,3 +7,5 @@ lava-server: maintainer-script-should-not-use-recursive-chown-or-chmod postinst:
 lava-server: maintainer-script-should-not-use-recursive-chown-or-chmod postinst:159
 lava-server: maintainer-script-should-not-use-recursive-chown-or-chmod postinst:160
 lava-server: maintainer-script-should-not-use-recursive-chown-or-chmod postinst:161
+# lintian error
+lava-server: spelling-error-in-description some system some systems
