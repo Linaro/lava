@@ -14,7 +14,7 @@ metadata:
   # please change these fields when modifying this job for your own tests.
   docs-source: connections
   docs-filename: examples/test-jobs/multiple-serial-ports-lxc.yaml
-  build: morty-mainline-337
+  build: morty-mainline-588
   original.build: http://snapshots.linaro.org/openembedded/lkft/morty/hikey/rpb/linux-mainline/337/
   reference.job: https://staging.validation.linaro.org/scheduler/job/192744/definition
 
@@ -23,7 +23,7 @@ protocols:
     name: lxc-hikey-oe
     template: debian
     distribution: debian
-    release: jessie
+    release: stretch
 
 actions:
 - deploy:
@@ -32,7 +32,7 @@ actions:
       minutes: 15
     to: lxc
     packages:
-    - android-tools-fastboot
+    - fastboot
     os: debian
 
 - boot:
@@ -55,10 +55,10 @@ actions:
         url: http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lkft/morty/hikey/rpb/4.9/83/bootloader/ptable-linux-8g.img
         reboot: hard-reset
       boot:
-        url: http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lkft/morty/hikey/rpb/4.9/83/boot-0.0+AUTOINC+06e4def583-fb1158a365-r0-hikey-20170713193031-83.uefi.img
+        url: http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lkft/morty/hikey/rpb/linux-mainline/588/boot-0.0+AUTOINC+06e4def583-fb1158a365-r0-hikey-20180128213254-588.uefi.img
         reboot: hard-reset
       system:
-        url: http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lkft/morty/hikey/rpb/4.9/83/rpb-console-image-hikey-20170808001820-83.rootfs.img.gz
+        url: http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lkft/morty/hikey/rpb/linux-mainline/588/rpb-console-image-hikey-20180128213254-588.rootfs.img.gz
         compression: gz
         apply-overlay: true
         # ensure that this job raises a network interface with DHCP before relying on internet access
@@ -77,12 +77,11 @@ actions:
     - 'login:'
     timeout:
       minutes: 5
-    method: uefi-menu
-    commands: fastboot
+    method: grub
+    commands: installed
     protocols:
       lava-lxc:
-      # other action could be boot-fastboot
-      - action: uefi-commands
+      - action: grub-sequence-action
         request: pre-os-command
         timeout:
           minutes: 2

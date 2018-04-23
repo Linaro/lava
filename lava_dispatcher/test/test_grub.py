@@ -294,7 +294,7 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertIn('connections', job.device['commands'])
         uart = job.device['commands']['connections'][command.hardware]['connect']
         self.assertIn(command.command, uart)
-        self.assertEqual('telnet localhost 7020', uart)
+        self.assertEqual('telnet azrael 6070', uart)
         tshells = [action for action in job.pipeline.actions if action.name == 'lava-test-retry']
         for shell in tshells:
             cn = shell.parameters.get('connection-namespace', None)
@@ -304,20 +304,23 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
                 self.assertNotEqual(shell.parameters['namespace'], 'tlxc')
                 self.assertEqual(shell.parameters['connection-namespace'], 'isolation')
                 retry = [action for action in shell.internal_pipeline.actions][0]
-                print(retry.parameters.get('connection-namespace', None))
+                self.assertEqual(retry.parameters['connection-namespace'], 'isolation')
             else:
                 self.assertNotEqual(shell.parameters['namespace'], 'hikey-oe')
                 self.assertNotEqual(shell.parameters['namespace'], 'isolation')
                 self.assertEqual(shell.parameters['namespace'], 'tlxc')
                 self.assertNotIn('connection-namespace', shell.parameters.keys())
-        menu = [action for action in job.pipeline.actions if action.name == 'uefi-menu-action'][0]
+        menu = [action for action in job.pipeline.actions if action.name == 'grub-sequence-action'][0]
         autologin = [action for action in menu.internal_pipeline.actions if action.name == 'auto-login-action'][0]
-        self.assertIsNotNone(autologin.params)
+        self.assertIsNone(autologin.params)
+        self.assertEqual(['login:'], autologin.parameters.get('prompts', None))
+        menu = [action for action in job.pipeline.actions if action.name == 'secondary-shell-action'][0]
+        autologin = [action for action in menu.internal_pipeline.actions if action.name == 'auto-login-action'][0]
+        self.assertIsNotNone(autologin.parameters)
         self.assertIn('test_info', autologin.parameters)
         self.assertIn('isolation', autologin.parameters['test_info'])
         self.assertIn('hikey-oe', autologin.parameters['test_info'])
         self.assertIn('tlxc', autologin.parameters['test_info'])
-        self.assertEqual(['login:'], autologin.parameters.get('prompts', None))
 
     def test_hikey960_grub(self):
         job = self.factory.create_hikey960_job('sample_jobs/hikey960-oe.yaml')
