@@ -18,6 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import os
 from lava_dispatcher.logical import Deployment
 from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.power import (
@@ -233,6 +234,7 @@ class FastbootFlashAction(Action):
         if not src:
             return connection
         dst = copy_to_lxc(lxc_name, src, self.job.parameters['dispatcher'])
+        self.logger.debug("%s bytes", os.stat(src)[6])
         sequence = self.job.device['actions']['boot']['methods'].get(
             'fastboot', [])
         if 'no-flash-boot' in sequence and self.command in ['boot']:

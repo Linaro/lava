@@ -272,8 +272,8 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
                 decompress_command = 'gunzip'
             elif compression == 'bz2':
                 decompress_command = 'bunzip2'
-            elif compression == 'unxz':
-                decompress_command = 'unzx'
+            elif compression == 'xz':
+                decompress_command = 'unxz'
             self.logger.debug("Using %s decompression" % compression)
         else:
             self.logger.debug("No compression specified.")
@@ -393,6 +393,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
 
         self.results = {
             'label': self.key,
+            'size': downloaded_size,
             'md5sum': str(self.get_namespace_data(
                 action='download-action', label=self.key, key='md5')),
             'sha256sum': str(self.get_namespace_data(
