@@ -1,5 +1,5 @@
 {% extends 'base.jinja2' %}
-{% set boot_character_delay = 150 %}
+{% set boot_character_delay = boot_character_delay | default(150) %}
 
 
 device_type: thunderx
