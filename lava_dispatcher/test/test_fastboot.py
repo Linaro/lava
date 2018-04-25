@@ -131,9 +131,8 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
         self.assertEqual(description_ref, job.pipeline.describe(False))
         self.assertIn(LxcProtocol.name, [protocol.name for protocol in job.protocols])
         self.assertEqual(len(job.protocols), 1)
-        self.assertIsNone(job.device.pre_os_command)  # FIXME: a real device config would typically need this.
-        uefi_menu = [action for action in job.pipeline.actions if action.name == 'uefi-menu-action'][0]
-        select = [action for action in uefi_menu.internal_pipeline.actions if action.name == 'uefi-menu-selector'][0]
+        self.assertIsNotNone(job.device.pre_os_command)
+        select = [action for action in job.pipeline.actions if action.name == 'grub-sequence-action'][0]
         self.assertIn(LxcProtocol.name, select.parameters.keys())
         self.assertIn('protocols', select.parameters.keys())
         self.assertIn(LxcProtocol.name, select.parameters['protocols'].keys())
@@ -165,25 +164,23 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
     @unittest.skipIf(infrastructure_error('lxc-info'), "lxc-info not installed")
     def test_fastboot_lxc(self):
         job = self.factory.create_hikey_job('sample_jobs/hi6220-hikey.yaml')
+        self.update_ref = True
         description_ref = self.pipeline_reference('hi6220-hikey.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
-        uefi_menu = [action for action in job.pipeline.actions if action.name == 'uefi-menu-action'][0]
-        self.assertIn('commands', uefi_menu.parameters)
-        self.assertIn('fastboot', uefi_menu.parameters['commands'])
         self.assertEqual(
             job.device.pre_power_command,
-            '/usr/local/lab-scripts/usb_hub_control -p 8000 -m sync -u 06')
+            '/home/neil/lava-lab/shared/lab-scripts/usb_hub_control -u 12 -p 4000 -m sync')
         lxc_deploy = [action for action in job.pipeline.actions if action.name == 'lxc-deploy'][0]
         overlay = [action for action in lxc_deploy.internal_pipeline.actions if action.name == 'lava-overlay'][0]
         testdef = [action for action in overlay.internal_pipeline.actions if action.name == 'test-definition'][0]
         job.validate()
         self.assertEqual(
             {
-                '1.8.3.20': '4_android-optee',
-                '1.8.3.4': '0_get-adb-serial',
-                '1.8.3.12': '2_android-busybox',
-                '1.8.3.8': '1_android-meminfo',
-                '1.8.3.16': '3_android-ping-dns'},
+                '1.8.4.20': '4_android-optee',
+                '1.8.4.4': '0_get-adb-serial',
+                '1.8.4.12': '2_android-busybox',
+                '1.8.4.8': '1_android-meminfo',
+                '1.8.4.16': '3_android-ping-dns'},
             testdef.get_namespace_data(action='test-runscript-overlay', label='test-runscript-overlay', key='testdef_levels'))
         for testdef in testdef.test_list[0]:
             self.assertEqual('git', testdef['from'])
@@ -266,8 +263,8 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
         self.assertIn('interrupt_prompt', interrupt.params)
         self.assertTrue(interrupt.needs_interrupt)
         autologin = [action for action in boot.internal_pipeline.actions if action.name == 'auto-login-action'][0]
-        print(autologin.booting)
-        print(autologin.parameters.get('prompts', None))
+        self.assertTrue(autologin.booting)
+        self.assertEqual(set(autologin.parameters.get('prompts')), set(['root@(.*):/#', 'shell@am57xevm:/']))
         self.assertIsNone(autologin.parameters.get('boot_message', None))
 
     def test_nexus5x_job(self):

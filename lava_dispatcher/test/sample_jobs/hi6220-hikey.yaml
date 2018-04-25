@@ -19,7 +19,7 @@ protocols:
     name: lxc-hikey-test
     template: debian
     distribution: debian
-    release: jessie
+    release: stretch
 
 actions:
 - deploy:
@@ -28,15 +28,13 @@ actions:
       minutes: 5
     to: lxc
     packages:
-    - android-tools-adb
-    - android-tools-fastboot
+    - fastboot
     os: debian
 
 - boot:
     namespace: tlxc
     prompts:
     - 'root@(.*):/#'
-    - 'shell@hikey'
     timeout:
       minutes: 5
     method: lxc
@@ -68,6 +66,12 @@ actions:
         compression: xz
         archive: tar
     os: debian
+    protocols:
+      lava-lxc:
+      - action: fastboot-deploy
+        request: pre-power-command
+        timeout:
+          minutes: 2
 
 - boot:
     namespace: droid
@@ -77,8 +81,14 @@ actions:
     - 'shell@hikey'
     timeout:
       minutes: 15
-    method: uefi-menu
-    commands: fastboot
+    method: grub
+    commands: installed
+    protocols:
+      lava-lxc:
+      - action: grub-sequence-action
+        request: pre-os-command
+        timeout:
+          minutes: 2
 
 - test:
     namespace: tlxc

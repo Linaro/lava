@@ -27,7 +27,7 @@ protocols:
     name: lxc-hikey-oe
     template: debian
     distribution: debian
-    release: jessie
+    release: stretch
 
 actions:
 - deploy:
@@ -36,7 +36,7 @@ actions:
       minutes: 15
     to: lxc
     packages:
-    - android-tools-fastboot
+    - fastboot
     os: debian
 
 - boot:
@@ -80,14 +80,11 @@ actions:
     - 'root@hikey:~#'
     timeout:
       minutes: 5
-    method: uefi-menu
-    commands: fastboot
+    method: grub
+    commands: installed
     protocols:
       lava-lxc:
-      # other action could be boot-fastboot
-      # actual test jobs would be better doing this in uefi-commands
-      # to make the process clearer in the log files.
-      - action: uefi-menu-selector
+      - action: grub-sequence-action
         request: pre-os-command
         timeout:
           minutes: 2

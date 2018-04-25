@@ -63,6 +63,7 @@ commands:
     pre_power_command: /home/neil/lava-lab/shared/lab-scripts/usb_hub_control -u 12 -p 4000 -m sync
     pre_os_command: /home/neil/lava-lab/shared/lab-scripts/usb_hub_control -u 12 -p 4000 -m off
 device_info: [{'board_id': '5A0EE5D0003FC2D0'}]
+static_info: [{'board_id': 'S/NO62200001'}]
 flash_cmds_order: ['ptable', 'xloader', 'fastboot', 'nvme', 'fw_lpm3', 'trustfirmware', 'boot', 'dts', 'system', 'userdata', 'cache']
 parameters:
   interfaces:

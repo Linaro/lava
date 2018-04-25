@@ -451,7 +451,6 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
             self.fakejob.run()
 
     def test_action_timout_custom_exception(self):
-        """ Test custom timeout exception """
         seconds = 2
         pipeline = TestTimeout.FakePipeline(job=self.fakejob)
         action = TestTimeout.FakeAction()

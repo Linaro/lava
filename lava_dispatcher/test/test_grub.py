@@ -272,11 +272,6 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         job.validate()
         description_ref = self.pipeline_reference('hikey-grub-efi.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
-        grub = [action for action in job.pipeline.actions if action.name == 'grub-main-action'][0]
-        menu = [action for action in grub.internal_pipeline.actions if action.name == 'uefi-menu-interrupt'][0]
-        self.assertIn('item_class', menu.params)
-        grub_efi = [action for action in grub.internal_pipeline.actions if action.name == 'grub-efi-menu-selector'][0]
-        self.assertEqual('fastboot', grub_efi.commands)
 
     @unittest.skipIf(infrastructure_error_multi_paths(
         ['lxc-info', 'img2simg', 'simg2img']),
