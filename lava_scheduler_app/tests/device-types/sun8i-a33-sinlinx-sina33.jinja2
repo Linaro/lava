@@ -1,15 +1,9 @@
-{% extends 'base-uboot.jinja2' %}
-{% set console_device = console_device|default('ttyS0') %}
-{% set baud_rate = baud_rate|default(115200) %}
+{% extends 'sunxi-common.jinja2' %}
+
 {% set device_type = "sun8i-a33-sinlinx-sina33" %}
-{% set bootloader_prompt = bootloader_prompt|default('=>') %}
 {% set bootm_kernel_addr = '0x42000000' %}
 {% set bootm_ramdisk_addr = '0x43300000' %}
 {% set bootm_dtb_addr = '0x43000000' %}
-{% set bootz_kernel_addr = bootm_kernel_addr %}
-{% set bootz_ramdisk_addr = bootm_ramdisk_addr %}
-{% set bootz_dtb_addr = bootm_dtb_addr %}
-{% set base_ip_args = 'ip=dhcp' %}
 {% set uboot_mkimage_arch = 'arm' %}
 {% set uboot_tftp_commands = ("          - setenv loadkernel 'tftp {KERNEL_ADDR} {KERNEL}'
           - setenv loadinitrd 'tftp {RAMDISK_ADDR} {RAMDISK}'
