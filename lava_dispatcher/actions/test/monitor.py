@@ -121,6 +121,7 @@ class TestMonitorAction(TestAction):  # pylint: disable=too-many-instance-attrib
             self.patterns["test_result"] = monitor['pattern']
 
             # Find the start string before parsing any output.
+            self.logger.info("Waiting for start message: %s", monitor['start'])
             connection.prompt_str = monitor['start']
             connection.wait()
             self.logger.info("ok: start string found, lava test monitoring started")
