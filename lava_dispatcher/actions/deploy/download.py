@@ -414,6 +414,7 @@ class FileDownloadAction(DownloadHandler):
     def validate(self):
         super().validate()
         try:
+            self.logger.debug("Validating that %s exists", self.url.geturl())
             self.size = os.stat(self.url.path).st_size
         except OSError:
             self.errors = "Image file '%s' does not exist or is not readable" % (self.url.path)
