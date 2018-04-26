@@ -21,6 +21,7 @@
 import contextlib
 import logging
 import pexpect
+import sre_constants
 import sys
 import time
 from lava_dispatcher.action import (
@@ -149,6 +150,9 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
         """
         try:
             proc = super().expect(*args, **kw)
+        except sre_constants.error as exc:
+            msg = "Invalid regular expression '%s': %s" % (exc.pattern, exc.msg)
+            raise TestError(msg)
         except pexpect.TIMEOUT:
             raise TestError("ShellCommand command timed out.")
         except ValueError as exc:
