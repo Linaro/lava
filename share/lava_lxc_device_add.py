@@ -110,6 +110,11 @@ def main():
     except subprocess.CalledProcessError as exc:
         logger.error("[%s] failed to add device %s: '%s'",
                      uniq_str, device, exc)
+        logger.close(linger=LINGER)  # pylint: disable=no-member
+        return 2
+    except:  # pylint: disable=bare-except
+        logger.close(linger=LINGER)  # pylint: disable=no-member
+        return 3
 
     logger.close(linger=LINGER)  # pylint: disable=no-member
     return 0

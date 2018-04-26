@@ -341,7 +341,7 @@ def allow_fs_label(device):
     # will require a filesystem label to identify a device.
     # So far, mps devices are supported, but these don't provide a
     # unique serial, so fs label must be used.
-    fs_label_methods = ['mps']
+    fs_label_methods = ['mps', 'recovery']
 
     # Don't allow using filesystem labels by default as they are
     # unreliable, and can be changed via a malicious job.

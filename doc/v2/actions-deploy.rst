@@ -64,6 +64,7 @@ Parameter List
 .. include:: actions-deploy-to-nbd.rsti
 .. include:: actions-deploy-to-usb.rsti
 .. include:: actions-deploy-to-download.rsti
+.. include:: actions-deploy-to-recovery.rsti
 
 .. index:: deploy os
 

@@ -1434,6 +1434,29 @@ class TestTemplates(unittest.TestCase):
             self.assertNotIn('115200n8', command)
             self.assertNotIn('n8', command)
 
+    def test_recovery_mode(self):
+        with open(os.path.join(os.path.dirname(__file__), 'devices', 'hi6220-hikey-bl-01.jinja2')) as hikey:
+            data = hikey.read()
+        self.assertTrue(self.validate_data('hi620-bl-01', data))
+        test_template = prepare_jinja_template('hi620-bl-01', data)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        recovery = template_dict['actions']['deploy']['methods']
+        self.assertIsNotNone('recovery', recovery)
+        self.assertIn('recovery', recovery)
+        self.assertIn('commands', recovery['recovery'])
+        self.assertIsNotNone('recovery', recovery['recovery']['commands'])
+        self.assertIn('recovery_mode', recovery['recovery']['commands'])
+        self.assertEqual(
+            ['/home/neil/lava-lab/shared/lab-scripts/eth008_control -a 10.15.0.171 -r 1 -s off',
+                '/home/neil/lava-lab/shared/lab-scripts/eth008_control -a 10.15.0.171 -r 2 -s on'],
+            recovery['recovery']['commands']['recovery_mode'])
+        self.assertIn('recovery_exit', recovery['recovery']['commands'])
+        self.assertEqual(
+            ['/home/neil/lava-lab/shared/lab-scripts/eth008_control -a 10.15.0.171 -r 1 -s on',
+                '/home/neil/lava-lab/shared/lab-scripts/eth008_control -a 10.15.0.171 -r 2 -s off'],
+            recovery['recovery']['commands']['recovery_exit'])
+
     def test_flasher(self):
         data = """{% extends 'b2260.jinja2' %}
 {% set flasher_deploy_commands = ['flashing', 'something --else'] %}

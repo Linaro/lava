@@ -38,3 +38,4 @@ from lava_dispatcher.actions.deploy.ssh import Ssh
 from lava_dispatcher.actions.deploy.tftp import Tftp
 from lava_dispatcher.actions.deploy.uboot_ums import UBootUMS
 from lava_dispatcher.actions.deploy.vemsd import VExpressMsd
+from lava_dispatcher.actions.deploy.recovery import RecoveryMode

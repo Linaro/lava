@@ -1,0 +1,31 @@
+{% extends 'hi6220-hikey-bl.jinja2' %}
+{% set fastboot_options = ['-S', '256M', '-u'] %}
+{% set hard_reset_command = ['/usr/bin/pduclient --daemon calvin --hostname pdu --command off --port 04',
+'sleep 30',
+'/usr/bin/pduclient --daemon calvin --hostname pdu --command on --port 04'] %}
+{% set pre_os_command = '/home/neil/lava-lab/shared/lab-scripts/usb_hub_control -u 9 -p 4000 -m off' %}
+{% set pre_power_command = '/home/neil/lava-lab/shared/lab-scripts/usb_hub_control -u 9 -p 4000 -m sync' %}
+{% set interrupt_prompt = 'Android Fastboot mode' %}
+{% set interrupt_string = "' '" %}
+{% set soft_reset_command = 'fastboot -u -s 4F7EC2290037CD2B reboot' %}
+{% set power_off_command = ['/usr/bin/pduclient --daemon calvin --hostname pdu --command off --port 04',
+'sleep 30',
+'/home/neil/lava-lab/shared/lab-scripts/eth008_control -a 10.15.0.171 -r 1 -s on',
+'/home/neil/lava-lab/shared/lab-scripts/eth008_control -a 10.15.0.171 -r 2 -s off'] %}
+{% set fastboot_serial_number = '4F7EC2290037CD2B' %}
+{% set device_info = [{'board_id': '4F7EC2290037CD2B'}, {'parent': True, 'usb_vendor_id': '12d1', 'usb_product_id': '3609'}] %}
+{# set device_info = [{'board_id': '4F7EC2290037CD2B'}] #}
+{% set adb_serial_number = '4F7EC2290037CD2B' %}
+{% set power_on_command = '/usr/bin/pduclient --daemon calvin --hostname pdu --command on --port 04' %}
+{% set connection_commands = {'uart1': 'telnet azrael 4100'} %}
+{% set connection_list = ['uart1'] %}
+{% set connection_tags = {'uart1': ['primary', 'telnet']} %}
+{% set flash_cmds_order = ['ptable', 'fastboot', 'nvme', 'boot', 'cache', 'system', 'userdata'] %}
+{% set device_mac = '8a:ce:4c:ff:aa:bb' %}
+{% set recovery_mode_command = [
+'/home/neil/lava-lab/shared/lab-scripts/eth008_control -a 10.15.0.171 -r 1 -s off',
+'/home/neil/lava-lab/shared/lab-scripts/eth008_control -a 10.15.0.171 -r 2 -s on'] %}
+{% set recovery_exit_command = [
+'/home/neil/lava-lab/shared/lab-scripts/eth008_control -a 10.15.0.171 -r 1 -s on',
+'/home/neil/lava-lab/shared/lab-scripts/eth008_control -a 10.15.0.171 -r 2 -s off'] %}
+{% set action_timeout_power_off = 60 %}
