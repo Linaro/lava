@@ -9,12 +9,11 @@ import tempfile
 # pylint: disable=superfluous-parens,ungrouped-imports
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.device import NewDevice
-from lava_scheduler_app.schema import validate_device, SubmissionException
 from lava_dispatcher.action import Timeout
 from lava_dispatcher.test.utils import DummyLogger, infrastructure_error
 from lava_scheduler_app.schema import (
-    validate_submission,
     validate_device,
+    SubmissionException,
 )
 
 # pylint: disable=too-many-branches,too-many-public-methods
@@ -186,7 +185,7 @@ class TestTemplates(unittest.TestCase):
             self.assertNotIn('115200n8', command)
             self.assertNotIn('n8', command)
 
-    def test_primary_connection_power_commands_fail(self):
+    def test_primary_connection_power_commands_fail(self):  # pylint: disable=invalid-name
         data = """{% extends 'x86.jinja2' %}
 {% set power_off_command = '/usr/bin/pduclient --command off' %}
 {% set power_on_command = '/usr/bin/pduclient --command on' %}
@@ -200,7 +199,7 @@ class TestTemplates(unittest.TestCase):
             yaml.load(device_dict)
         )
 
-    def test_primary_connection_power_commands_empty_ssh_host(self):
+    def test_primary_connection_power_commands_empty_ssh_host(self):  # pylint: disable=invalid-name
         data = """{% extends 'x86.jinja2' %}
 {% set power_off_command = '/usr/bin/pduclient --command off' %}
 {% set power_on_command = '/usr/bin/pduclient --command on' %}
@@ -210,7 +209,7 @@ class TestTemplates(unittest.TestCase):
         device_dict = self.render_device_dictionary('staging-x86-01', data)
         self.assertTrue(validate_device(yaml.load(device_dict)))
 
-    def test_primary_connection_power_commands(self):
+    def test_primary_connection_power_commands(self):  # pylint: disable=invalid-name
         data = """{% extends 'x86.jinja2' %}
 {% set power_off_command = '/usr/bin/pduclient --command off' %}
 {% set hard_reset_command = '/usr/bin/pduclient --command reset' %}
@@ -550,7 +549,7 @@ class TestTemplates(unittest.TestCase):
             if 'setenv fdt_high' in line:
                 self.fail('Mustang should not have fdt_high set')
 
-    def test_mustang_pxe_grub_efi_template(self):
+    def test_mustang_pxe_grub_efi_template(self):  # pylint: disable=invalid-name
         data = """{% extends 'mustang-grub-efi.jinja2' %}
 {% set hard_reset_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command reboot --port 05' %}
 {% set power_off_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command off --port 05' %}

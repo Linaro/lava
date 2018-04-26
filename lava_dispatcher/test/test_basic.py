@@ -21,6 +21,7 @@
 import os
 import sys
 import time
+import jinja2
 import unittest
 import logging
 import yaml
@@ -29,6 +30,7 @@ from lava_dispatcher.action import Pipeline, Action, JobError, LAVABug, LAVAErro
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.job import Job
 from lava_dispatcher.device import NewDevice
+from lava_scheduler_app.schema import validate_device, SubmissionException
 from lava_dispatcher.actions.deploy.image import DeployImages
 from lava_dispatcher.test.utils import DummyLogger
 
@@ -151,6 +153,41 @@ class Factory(object):
         logger = logging.getLogger('dispatcher')
         logger.disabled = True
         logger.propagate = False
+
+    CONFIG_PATH = os.path.abspath(
+        os.path.join(
+            os.path.dirname(__file__), "..", "..",
+            "lava_scheduler_app", "tests", "devices"))
+
+    def prepare_jinja_template(self, hostname, jinja_data):
+        string_loader = jinja2.DictLoader({'%s.jinja2' % hostname: jinja_data})
+        path = os.path.dirname(self.CONFIG_PATH)
+        type_loader = jinja2.FileSystemLoader([os.path.join(path, 'device-types')])
+        env = jinja2.Environment(
+            loader=jinja2.ChoiceLoader([string_loader, type_loader]),
+            trim_blocks=True)
+        return env.get_template("%s.jinja2" % hostname)
+
+    def render_device_dictionary(self, hostname, data, job_ctx=None):
+        if not job_ctx:
+            job_ctx = {}
+        test_template = self.prepare_jinja_template(hostname, data)
+        rendered = test_template.render(**job_ctx)
+        return rendered
+
+    def validate_data(self, hostname, data, job_ctx=None):
+        """
+        Needs to be passed a device dictionary (jinja2 format)
+        """
+        rendered = self.render_device_dictionary(hostname, data, job_ctx)
+        try:
+            ret = validate_device(yaml.load(rendered))
+        except SubmissionException as exc:
+            print('#######')
+            print(rendered)
+            print('#######')
+            self.fail(exc)
+        return ret
 
     def create_fake_qemu_job(self):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/kvm01.yaml'))

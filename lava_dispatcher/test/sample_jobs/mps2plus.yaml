@@ -28,7 +28,7 @@ actions:
     to: mps
     images:
       recovery_image:
-        url: https://example.com  # Replace this url!
+        url: http://images.validation.linaro.org/debian-jessie-rootfs.tar.gz  # Replace this url!
         compression: gz
     namespace: target
 # Single test
