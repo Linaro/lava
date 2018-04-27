@@ -113,7 +113,7 @@ class FlashCMSISAction(Action):
     def validate(self):
         super().validate()
         if self.job.device['board_id'] == '0000000000':
-            self.errors = "board_id unset"
+            self.errors = "[FLASH_CMSIS] board_id unset"
         method_parameters = self.job.device['actions']['boot']['methods']['cmsis-dap']['parameters']
         self.usb_mass_device = method_parameters.get('usb_mass_device', None)
         if not self.usb_mass_device:

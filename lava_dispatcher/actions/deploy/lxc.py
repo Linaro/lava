@@ -233,11 +233,11 @@ class LxcCreateUdevRuleAction(DeployAction):
                 for usb_device in self.job.device['device_info']:
                     if usb_device.get('board_id', '') in ['', '0000000000'] \
                             and requires_board_id:
-                        self.errors = "board_id unset"
+                        self.errors = "[LXC_CREATE] board_id unset"
                     if usb_device.get('usb_vendor_id', '') == '0000':
-                        self.errors = 'usb_vendor_id unset'
+                        self.errors = '[LXC_CREATE] usb_vendor_id unset'
                     if usb_device.get('usb_product_id', '') == '0000':
-                        self.errors = 'usb_product_id unset'
+                        self.errors = '[LXC_CREATE] usb_product_id unset'
         except TypeError:
             self.errors = "Invalid parameters for %s" % self.name
 

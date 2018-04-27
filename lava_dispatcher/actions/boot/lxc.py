@@ -115,11 +115,11 @@ class LxcAddStaticDevices(Action):
             for usb_device in self.get_usb_devices():
                 if usb_device.get('board_id', '') in ['', '0000000000'] and \
                         requires_board_id:
-                    self.errors = "board_id unset"
+                    self.errors = "[LXC_STATIC] board_id unset"
                 if usb_device.get('usb_vendor_id', '') == '0000':
-                    self.errors = 'usb_vendor_id unset'
+                    self.errors = '[LXC_STATIC] usb_vendor_id unset'
                 if usb_device.get('usb_product_id', '') == '0000':
-                    self.errors = 'usb_product_id unset'
+                    self.errors = '[LXC_STATIC] usb_product_id unset'
         except TypeError:
             self.errors = "Invalid parameters for %s" % self.name
 

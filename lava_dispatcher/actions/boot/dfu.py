@@ -104,11 +104,11 @@ class FlashDFUAction(Action):
             self.base_command = [dfu_binary]
             self.base_command.extend(boot['parameters'].get('options', []))
             if self.job.device['board_id'] == '0000000000':
-                self.errors = "board_id unset"
+                self.errors = "[FLASH_DFU] board_id unset"
             if self.job.device['usb_vendor_id'] == '0000':
-                self.errors = 'usb_vendor_id unset'
+                self.errors = '[FLASH_DFU] usb_vendor_id unset'
             if self.job.device['usb_product_id'] == '0000':
-                self.errors = 'usb_product_id unset'
+                self.errors = '[FLASH_DFU] usb_product_id unset'
             self.usb_vendor_id = self.job.device['usb_vendor_id']
             self.usb_product_id = self.job.device['usb_product_id']
             self.board_id = self.job.device['board_id']

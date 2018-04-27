@@ -40,7 +40,7 @@ class WaitUSBSerialDeviceAction(Action):
         usb_product_id = self.job.device.get('usb_product_id', '')
         usb_serial_driver = self.job.device.get('usb_serial_driver', 'cdc_acm')
         if board_id == '0000000000':
-            self.errors = "board_id unset"
+            self.errors = "[USBSERIAL] board_id unset"
         if usb_vendor_id == '0000':
             self.errors = 'usb_vendor_id unset'
         if usb_product_id == '0000':
@@ -73,7 +73,7 @@ class WaitDFUDeviceAction(Action):
         usb_vendor_id = self.job.device.get('usb_vendor_id', '')
         usb_product_id = self.job.device.get('usb_product_id', '')
         if board_id == '0000000000':
-            self.errors = "board_id unset"
+            self.errors = "[DFU] board_id unset"
         if usb_vendor_id == '0000':
             self.errors = 'usb_vendor_id unset'
         if usb_product_id == '0000':

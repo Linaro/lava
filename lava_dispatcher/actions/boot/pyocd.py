@@ -101,7 +101,7 @@ class FlashPyOCDAction(Action):
         self.base_command = [pyocd_binary]
         self.base_command.extend(boot['parameters'].get('options', []))
         if self.job.device['board_id'] == '0000000000':
-            self.errors = "board_id unset"
+            self.errors = "[PYOCD] board_id unset"
         substitutions = {}
         self.base_command.extend(['--board', self.job.device['board_id']])
         namespace = self.parameters['namespace']
