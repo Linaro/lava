@@ -272,6 +272,12 @@ class LxcCreateUdevRuleAction(DeployAction):
             slave_cert = self.logger.handler.slave_cert
             ipv6 = self.logger.handler.ipv6
             job_id = self.logger.handler.job_id
+        # The rules file will be created in job's temporary directory with
+        # the name something like '100-lava-lxc-hikey-2808.rules'
+        # where, 100 is just an arbitrary number which specifies loading
+        # priority for udevd
+        rules_file_name = '100-lava-' + lxc_name + '.rules'
+        rules_file = os.path.join(self.mkdtemp(), rules_file_name)
         for device in device_info:
             data = {'serial_number': str(device.get('board_id', '')),
                     'vendor_id': device.get('usb_vendor_id', None),
@@ -284,24 +290,18 @@ class LxcCreateUdevRuleAction(DeployAction):
                     'slave_cert': slave_cert,
                     'ipv6': ipv6,
                     'job_id': job_id}
-            # The rules file will be created in job's temporary directory with
-            # the name something like '100-lava-lxc-hikey-2808.rules'
-            # where, 100 is just an arbitrary number which specifies loading
-            # priority for udevd
-            rules_file_name = '100-lava-' + lxc_name + '.rules'
-            rules_file = os.path.join(self.mkdtemp(), rules_file_name)
             str_lxc_udev_rule = lxc_udev_rule(data)
             with open(rules_file, 'a') as f_obj:
                 f_obj.write(str_lxc_udev_rule)
             self.logger.debug("udev rules file '%s' created with:\n %s",
                               rules_file, str_lxc_udev_rule)
-            # Create symlink to rules file inside UDEV_RULES_DIR
-            # See https://projects.linaro.org/browse/LAVA-1227
-            os.symlink(rules_file, os.path.join(UDEV_RULES_DIR,
-                                                rules_file_name))
-            self.logger.debug("'%s' symlinked to '%s'",
-                              os.path.join(UDEV_RULES_DIR, rules_file_name),
-                              rules_file)
+        # Create symlink to rules file inside UDEV_RULES_DIR
+        # See https://projects.linaro.org/browse/LAVA-1227
+        os.symlink(rules_file, os.path.join(UDEV_RULES_DIR,
+                                            rules_file_name))
+        self.logger.debug("'%s' symlinked to '%s'",
+                          os.path.join(UDEV_RULES_DIR, rules_file_name),
+                          rules_file)
 
         # Reload udev rules.
         reload_cmd = ['udevadm', 'control', '--reload-rules']
