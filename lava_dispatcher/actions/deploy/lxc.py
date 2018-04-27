@@ -42,7 +42,7 @@ from lava_dispatcher.utils.constants import (
     LXC_DEFAULT_PACKAGES,
     UDEV_RULES_DIR,
 )
-from lava_dispatcher.utils.udev import lxc_udev_rule
+from lava_dispatcher.utils.udev import lxc_udev_rule, lxc_udev_rule_parent
 from lava_dispatcher.utils.udev import allow_fs_label
 from lava_dispatcher.utils.filesystem import (
     debian_package_version,
@@ -278,6 +278,7 @@ class LxcCreateUdevRuleAction(DeployAction):
         # priority for udevd
         rules_file_name = '100-lava-' + lxc_name + '.rules'
         rules_file = os.path.join(self.mkdtemp(), rules_file_name)
+        lines = []
         for device in device_info:
             data = {'serial_number': str(device.get('board_id', '')),
                     'vendor_id': device.get('usb_vendor_id', None),
@@ -291,17 +292,22 @@ class LxcCreateUdevRuleAction(DeployAction):
                     'ipv6': ipv6,
                     'job_id': job_id}
             str_lxc_udev_rule = lxc_udev_rule(data)
-            with open(rules_file, 'a') as f_obj:
-                f_obj.write(str_lxc_udev_rule)
-            self.logger.debug("udev rules file '%s' created with:\n %s",
-                              rules_file, str_lxc_udev_rule)
+            if device.get('parent', False):
+                str_lxc_udev_rule += lxc_udev_rule_parent(data)
+            lines.append(str_lxc_udev_rule)
+        if lines:
+            self.logger.info("udev rules file '%s' created", rules_file)
+        with open(rules_file, "w") as f_obj:
+            f_obj.write("\n".join(lines))
+        for line in lines:
+            self.logger.debug(line)
         # Create symlink to rules file inside UDEV_RULES_DIR
         # See https://projects.linaro.org/browse/LAVA-1227
         os.symlink(rules_file, os.path.join(UDEV_RULES_DIR,
                                             rules_file_name))
-        self.logger.debug("'%s' symlinked to '%s'",
-                          os.path.join(UDEV_RULES_DIR, rules_file_name),
-                          rules_file)
+        self.logger.info("'%s' symlinked to '%s'",
+                         os.path.join(UDEV_RULES_DIR, rules_file_name),
+                         rules_file)
 
         # Reload udev rules.
         reload_cmd = ['udevadm', 'control', '--reload-rules']

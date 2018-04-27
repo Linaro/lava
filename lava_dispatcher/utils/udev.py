@@ -356,3 +356,31 @@ def lxc_udev_rule(data):
         rule = 'IMPORT{builtin}="blkid"\n' + rule
     rule += '"\n'
     return rule
+
+
+def lxc_udev_rule_parent(data):
+    """Construct the udev rule string."""
+    rule = 'ACTION=="add", '
+    if data["vendor_id"] is not None:
+        rule += 'ATTRS{{idVendor}}=="{vendor_id}", '
+    if data["product_id"] is not None:
+        rule += 'ATTRS{{idProduct}}=="{product_id}", '
+    if data["fs_label"] is not None:
+        rule += 'ENV{{ID_FS_LABEL}}=="{fs_label}", '
+    rule += 'RUN+="/usr/share/lava-dispatcher/lava_lxc_device_add.py ' \
+            '--lxc-name {lxc_name} --device-node $name ' \
+            '--job-id {job_id}'
+    if data['logging_url']:
+        rule += ' --logging-url {logging_url}'
+    rule = rule.format(**data)
+
+    if data["master_cert"] is not None:
+        rule += " --master-cert %s" % data["master_cert"]
+    if data["slave_cert"] is not None:
+        rule += " --slave-cert %s" % data["slave_cert"]
+    if data["ipv6"]:
+        rule += " --ipv6"
+    if data["fs_label"] is not None:
+        rule = 'IMPORT{builtin}="blkid"\n' + rule
+    rule += '"\n'
+    return rule
