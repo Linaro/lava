@@ -253,3 +253,8 @@ def sort_items(items):
 @register.filter()
 def replace_python_unicode(data):
     return data.replace('!!python/unicode ', '')
+
+
+@register.filter()
+def is_list_type(data):
+    return isinstance(data, list)

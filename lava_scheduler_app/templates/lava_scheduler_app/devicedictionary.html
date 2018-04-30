@@ -1,5 +1,5 @@
 {% extends "layouts/content.html" %}
-
+{% load utils %}
 {% block content %}
 
 {% if device.device_type.owners_only %}
@@ -47,7 +47,15 @@ i.e., its equivalent to get-pipeline-device-config in lava-tool.">
     <dl class="dl-horizontal">
     {% for key, value in dictionary.items %}
         <dt>{{ key }}</dt>
+{% if value|is_list_type %}
+        <dd>
+{% for line in value %}
+        <pre>{{ line }}</pre>
+{% endfor %}
+        </dd>
+{% else %}
         <dd><pre>{{ value }}</pre></dd>
+{% endif %}
     {% endfor %}
     </dl>
 </div>
