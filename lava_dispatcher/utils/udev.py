@@ -18,8 +18,9 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-
 import pyudev
+import time
+
 from lava_dispatcher.action import Action, LAVABug
 
 
@@ -32,6 +33,7 @@ class WaitUSBSerialDeviceAction(Action):
     def __init__(self):
         super().__init__()
         self.serial_device = {}
+        self.usb_sleep = 0
 
     def validate(self):
         super().validate()
@@ -49,11 +51,17 @@ class WaitUSBSerialDeviceAction(Action):
                               'ID_VENDOR_ID': str(usb_vendor_id),
                               'ID_MODEL_ID': str(usb_product_id),
                               'ID_USB_DRIVER': str(usb_serial_driver)}
+        self.usb_sleep = self.job.device.get('usb_sleep', 0)
+        if not isinstance(self.usb_sleep, int):
+            self.errors = 'usb_sleep should be an integer'
 
     def run(self, connection, max_end_time, args=None):
         connection = super().run(connection, max_end_time, args)
         self.logger.debug("Waiting for usb serial device: %s", self.serial_device)
         wait_udev_event(action='add', match_dict=self.serial_device, subsystem='tty')
+        if self.usb_sleep:
+            self.logger.debug("Waiting for the board to setup, sleeping %ds", self.usb_sleep)
+            time.sleep(self.usb_sleep)
         return connection
 
 
