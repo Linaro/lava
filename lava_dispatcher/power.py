@@ -113,6 +113,68 @@ class PDUReboot(Action):
         return connection
 
 
+class PrePower(Action):
+    """
+    Issue the configured pre-power command.
+
+    Can be used to activate relays or other external hardware to change DUT
+    operation before applying power. e.g. to set the OTG port to 'sync' so
+    that the DUT is visible to fastboot.
+    """
+
+    name = "pre-power-command"
+    description = "issue pre power command"
+    summary = "send pre-power-command"
+    timeout_exception = InfrastructureError
+
+    def run(self, connection, max_end_time, args=None):
+        if self.job.device.pre_power_command == '':
+            self.logger.warning("Pre power command does not exist")
+            return connection
+        connection = super().run(connection, max_end_time, args)
+        if self.job.device.pre_power_command:
+            command = self.job.device.pre_power_command
+            self.logger.info("Running pre power command")
+            if not isinstance(command, list):
+                command = [command]
+            for cmd in command:
+                if not self.run_command(cmd.split(' '), allow_silent=True):
+                    raise InfrastructureError("%s failed" % cmd)
+        self.results = {'success': self.name}
+        return connection
+
+
+class PreOs(Action):
+    """
+    Issue the configured pre-os command.
+
+    Can be used to activate relays or other external hardware to change DUT
+    operation before applying power. e.g. to set the OTG port to 'off' so that
+    the DUT can use USB host.
+    """
+
+    name = "pre-os-command"
+    description = "issue pre os command"
+    summary = "send pre-os-command"
+    timeout_exception = InfrastructureError
+
+    def run(self, connection, max_end_time, args=None):
+        if self.job.device.pre_os_command == '':
+            self.logger.warning("Pre OS command does not exist")
+            return connection
+        connection = super().run(connection, max_end_time, args)
+        if self.job.device.pre_os_command:
+            command = self.job.device.pre_os_command
+            self.logger.info("Running pre OS command")
+            if not isinstance(command, list):
+                command = [command]
+            for cmd in command:
+                if not self.run_command(cmd.split(' '), allow_silent=True):
+                    raise InfrastructureError("%s failed" % cmd)
+        self.results = {'success': self.name}
+        return connection
+
+
 class PowerOn(Action):
     """
     Issues the power on command via the PDU
