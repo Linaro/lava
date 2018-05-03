@@ -36,8 +36,9 @@ from lava_dispatcher.utils.constants import REBOOT_COMMAND_LIST
 
 class ResetDevice(Action):
     """
-    Used within a RetryAction - first tries 'reboot' then
-    tries PDU.
+    Used within a RetryAction - If there is a hard reset, then tries that via
+    PDUReboot, else tries issuing 'reboot' command either from device
+    configuration (if configured) or from a constant list.
     """
 
     name = "reset-device"
