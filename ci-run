@@ -17,6 +17,10 @@ while getopts ":pdty" opt; do
       # template tests only
       TEMPLATE=true
       ;;
+    y)
+      # pytest-3 only
+      PYTEST=true
+      ;;
     ?)
       echo "Usage:"
       echo "-p - pep8 only"
@@ -45,7 +49,7 @@ rm -rf ./__init__.py
 
 echo "Starting unit tests"
 echo
-if [ -z "${DISPATCH}"  -a  -z "${TEMPLATE}" ]
+if [ -z "${DISPATCH}"  -a -z "${TEMPLATE}" -a -z "${PYTEST}" ]
 then
     echo "If it exists, a broken test database will be deleted without prompting."
     python3 ./lava_server/manage.py test --noinput -v 2 lava_scheduler_app linaro_django_xmlrpc.tests lava_results_app
@@ -53,12 +57,21 @@ then
     exit
 fi
 
-if [ -n "${DISPATCH}"  -a  -z "${TEMPLATE}" ]
+if [ -n "${DISPATCH}" -a  -z "${TEMPLATE}" -a -z "${PYTEST}" ]
 then
     python3 -m unittest discover -v lava_dispatcher/test
 fi
 
-if [ -z "${DISPATCH}"  -a  -n "${TEMPLATE}" ]
+if [ -z "${DISPATCH}" -a  -n "${TEMPLATE}" -a -z "${PYTEST}" ]
 then
     python3 -m unittest -vcf lava_scheduler_app.tests.test_templates
+fi
+
+
+if [ -z "${DISPATCH}" -a -z "${TEMPLATE}" -a -n "${PYTEST}" ]
+then
+    PYTHONPATH=. pytest-3 --cache-clear --disable-pytest-warnings --ds lava_server.settings.development -v lava_scheduler_app
+    PYTHONPATH=. pytest-3 --cache-clear --disable-pytest-warnings --ds lava_server.settings.development -v lava_results_app
+    PYTHONPATH=. pytest-3 --cache-clear --disable-pytest-warnings --ds lava_server.settings.development -v linaro_django_xmlrpc/tests.py
+    PYTHONPATH=. pytest-3 --cache-clear --disable-pytest-warnings -v lava_dispatcher
 fi
