@@ -110,7 +110,7 @@ class CallDockerAction(Action):
 
         # Build the command line
         # The docker image is safe to be included in the command line
-        cmd = "docker run --interactive --tty --hostname lava"
+        cmd = "docker run --rm --interactive --tty --hostname lava"
         cmd += " --name %s" % self.container
         if self.test_needs_overlay(self.parameters):
             overlay = self.get_namespace_data(action='test', label='results', key='lava_test_results_dir')
@@ -133,6 +133,4 @@ class CallDockerAction(Action):
         if self.cleanup_required:
             self.logger.debug("Stopping container %s", self.container)
             self.run_command(["docker", "stop", self.container], allow_fail=True)
-            self.logger.debug("Removing container %s", self.container)
-            self.run_command(["docker", "rm", self.container], allow_fail=True)
             self.cleanup_required = False
