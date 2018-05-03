@@ -138,7 +138,7 @@ Depends: build-essential, ca-certificates, devscripts, dpkg-dev,
  python3-zmq, python3-yaml, python3-voluptuous (>= 0.8.8),
  docbook-xsl, xsltproc, ${python3:Depends}, ${misc:Depends}
 Recommends: sbuild, python3-django-extensions, python3-pydot,
- python3-django-testscenarios
+ python3-django-testscenarios, python3-pytest-django
 Description: Linaro Automated Validation Architecture developer support
  LAVA is a continuous integration system for deploying operating
  systems onto physical and virtual hardware for running tests.
