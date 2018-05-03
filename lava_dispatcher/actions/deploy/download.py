@@ -138,6 +138,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         # path unique.
         self.path = os.path.join(path, key) if uniquify else path
         self.size = -1
+        self.decompress_command_map = {'xz': 'unxz', 'gz': 'gunzip', 'bz2': 'bunzip2'}
 
     def reader(self):
         raise LAVABug("'reader' function unimplemented")
@@ -154,7 +155,8 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         parts = filename.split('.')
         # Handle unmodified filename
         # Also files without suffixes, e.g. kernel images
-        if not modify or len(parts) == 1:
+        # Don't rename files we don't support decompressing during download
+        if not modify or len(parts) == 1 or (modify not in self.decompress_command_map):
             return (os.path.join(path, filename),
                     None)
         else:
@@ -268,15 +270,13 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
 
         decompress_command = None
         if compression:
-            if compression == 'gz':
-                decompress_command = 'gunzip'
-            elif compression == 'bz2':
-                decompress_command = 'bunzip2'
-            elif compression == 'xz':
-                decompress_command = 'unxz'
-            self.logger.debug("Using %s decompression" % compression)
+            if compression in self.decompress_command_map:
+                decompress_command = self.decompress_command_map[compression]
+                self.logger.info("Using %s to decompress %s", decompress_command, compression)
+            else:
+                self.logger.info("Compression %s specified but not decompressing during download", compression)
         else:
-            self.logger.debug("No compression specified.")
+            self.logger.debug("No compression specified")
 
         def update_progress():
             nonlocal downloaded_size, last_value, md5, sha256
