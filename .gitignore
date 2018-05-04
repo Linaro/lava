@@ -2,6 +2,7 @@
 *.db
 *.e4p
 *.egg-info
+*.egg
 *.log
 *.min.js
 *.pyc
