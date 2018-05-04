@@ -109,11 +109,10 @@ def testjob_post_handler(sender, **kwargs):
             "submit_time": instance.submit_time.isoformat(),
             "submitter": str(instance.submitter),
             "visibility": instance.get_visibility_display(),
+            "health_check": instance.health_check,
         }
         if instance.is_multinode:
             data['sub_id'] = instance.sub_id
-        if instance.health_check:
-            data['health_check'] = True
         if instance.actual_device:
             data["device"] = instance.actual_device.hostname
         if instance.requested_device_type:
