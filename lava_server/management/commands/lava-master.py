@@ -157,7 +157,7 @@ class Command(LAVADaemonCommand):
         # List of known dispatchers. At startup do not load this from the
         # database. This will help to know if the slave as restarted or not.
         self.dispatchers = {"lava-logs": SlaveDispatcher("lava-logs", online=False)}
-        self.events = {"canceling": set()}
+        self.events = {"canceling": set(), "available_dt": set()}
 
     def add_arguments(self, parser):
         super(Command, self).add_arguments(parser)
@@ -258,17 +258,21 @@ class Command(LAVADaemonCommand):
 
         try:
             (topic, _, dt, username, data) = (u(m) for m in msg)
+            data = simplejson.loads(data)
         except ValueError:
             self.logger.error("Invalid event: %s", msg)
             return True
 
         if topic.endswith(".testjob"):
-            try:
-                data = simplejson.loads(data)
-                if data["state"] == "Canceling":
-                    self.events["canceling"].add(int(data["job"]))
-            except ValueError:
-                self.logger.error("Invalid event data: %s", msg)
+            if data["state"] == "Canceling":
+                self.events["canceling"].add(int(data["job"]))
+            elif data["state"] == "Submitted":
+                if "device_type" in data:
+                    self.events["available_dt"].add(data["device_type"])
+        elif topic.endswith(".device"):
+            if data["state"] == "Idle" and data["health"] in ["Good", "Unknown", "Looping"]:
+                self.events["available_dt"].add(data["device_type"])
+
         return True
 
     def _handle_end(self, hostname, action, msg):  # pylint: disable=unused-argument
@@ -458,7 +462,7 @@ class Command(LAVADaemonCommand):
                               yaml.dump(min_device_cfg), dispatcher_cfg,
                               env_str, env_dut_str])
 
-    def start_jobs(self, options):
+    def start_jobs(self, options, jobs=None):
         """
         Loop on all scheduled jobs and send the START message to the slave.
         """
@@ -471,7 +475,9 @@ class Command(LAVADaemonCommand):
         # exclude test job without a device: they are special test jobs like
         # dynamic connection.
         query = query.exclude(actual_device=None)
-        # TODO: find a way to lock actual_device
+        # Allow for partial scheduling
+        if jobs is not None:
+            query = query.filter(id__in=jobs)
 
         # Loop on all jobs
         for job in query:
@@ -619,8 +625,8 @@ class Command(LAVADaemonCommand):
                     timeout = min(SCHEDULE_INTERVAL - (now - last_schedule),
                                   PING_INTERVAL - (now - last_dispatcher_check))
                     # If some actions are remaining, decrease the timeout
-                    if self.events["canceling"]:
-                        timeout = min(timeout, 1)
+                    if any([self.events[k] for k in self.events.keys()]):
+                        timeout = min(timeout, 2)
                     # Wait at least for 1ms
                     timeout = max(timeout * 1000, 1)
 
@@ -691,6 +697,13 @@ class Command(LAVADaemonCommand):
                     if self.events["canceling"]:
                         self.cancel_jobs(partial=True)
                         self.events["canceling"] = set()
+                    # Schedule for available device-types
+                    if self.events["available_dt"]:
+                        jobs = schedule(self.logger, self.events["available_dt"])
+                        self.events["available_dt"] = set()
+                        # Dispatch scheduled jobs
+                        with transaction.atomic():
+                            self.start_jobs(options, jobs)
 
             except (OperationalError, InterfaceError):
                 self.logger.info("[RESET] database connection reset.")

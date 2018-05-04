@@ -38,16 +38,22 @@ from lava_scheduler_app.models import (
 )
 
 
-def schedule(logger):
-    available_devices = schedule_health_checks(logger)
-    schedule_jobs(logger, available_devices)
+def schedule(logger, available_dt=None):
+    (available_devices, jobs) = schedule_health_checks(logger, available_dt)
+    jobs.extend(schedule_jobs(logger, available_devices))
+    return jobs
 
 
-def schedule_health_checks(logger):
+def schedule_health_checks(logger, available_dt=None):
     logger.info("scheduling health checks:")
     available_devices = {}
+    jobs = []
     hc_disabled = []
-    for dt in DeviceType.objects.all().order_by("name"):
+    if available_dt:
+        query = DeviceType.objects.filter(name__in=available_dt)
+    else:
+        query = DeviceType.objects.all()
+    for dt in query.order_by("name"):
         if dt.disable_health_check:
             hc_disabled.append(dt.name)
             # Add all devices o that type to the list of available devices
@@ -60,13 +66,14 @@ def schedule_health_checks(logger):
 
         else:
             with transaction.atomic():
-                available_devices[dt.name] = schedule_health_checks_for_device_type(logger, dt)
+                (available_devices[dt.name], new_jobs) = schedule_health_checks_for_device_type(logger, dt)
+                jobs.extend(new_jobs)
 
     # Print disabled device types
     if hc_disabled:
         logger.debug("-> disabled on: %s", ", ".join(hc_disabled))
 
-    return available_devices
+    return (available_devices, jobs)
 
 
 def schedule_health_checks_for_device_type(logger, dt):
@@ -80,6 +87,7 @@ def schedule_health_checks_for_device_type(logger, dt):
 
     print_header = True
     available_devices = []
+    jobs = []
     for device in devices:
         # Do we have an health check
         health_check = device.get_health_check()
@@ -120,7 +128,7 @@ def schedule_health_checks_for_device_type(logger, dt):
                      device.get_health_display())
         logger.debug("  |--> scheduling health check")
         try:
-            schedule_health_check(device, health_check)
+            jobs.append(schedule_health_check(device, health_check))
         except Exception as exc:
             # If the health check cannot be schedule, set health to BAD to exclude the device
             logger.error("  |--> Unable to schedule health check")
@@ -130,7 +138,7 @@ def schedule_health_checks_for_device_type(logger, dt):
             device.log_admin_entry(None, "%s → %s (Invalid health check)" % (prev_health_display, device.get_health_display()))
             device.save()
 
-    return available_devices
+    return (available_devices, jobs)
 
 
 def schedule_health_check(device, definition):
@@ -139,20 +147,23 @@ def schedule_health_check(device, definition):
     job.health_check = True
     job.go_state_scheduled(device)
     job.save()
+    return job.id
 
 
 def schedule_jobs(logger, available_devices):
     logger.info("scheduling jobs:")
+    jobs = []
     for dt in DeviceType.objects.all().order_by("name"):
         # Check that some devices are available for this device-type
         if not available_devices.get(dt.name):
             continue
         with transaction.atomic():
-            schedule_jobs_for_device_type(logger, dt, available_devices[dt.name])
+            jobs.extend(schedule_jobs_for_device_type(logger, dt, available_devices[dt.name]))
 
     with transaction.atomic():
         # Transition multinode if needed
-        transition_multinode_jobs(logger)
+        jobs.extend(transition_multinode_jobs(logger))
+    return jobs
 
 
 def schedule_jobs_for_device_type(logger, dt, available_devices):
@@ -165,13 +176,17 @@ def schedule_jobs_for_device_type(logger, dt, available_devices):
                                          Device.HEALTH_UNKNOWN])
     devices = devices.order_by("is_public", "hostname")
 
+    jobs = []
     for device in devices:
         # Check that the device had been marked available by
         # schedule_health_checks. In fact, it's possible that a device is made
         # IDLE between the two functions.
         if device.hostname not in available_devices:
             continue
-        schedule_jobs_for_device(logger, device)
+        new_job = schedule_jobs_for_device(logger, device)
+        if new_job is not None:
+            jobs.append(new_job)
+    return jobs
 
 
 def schedule_jobs_for_device(logger, device):
@@ -205,7 +220,8 @@ def schedule_jobs_for_device(logger, device):
         else:
             job.go_state_scheduled(device)
         job.save()
-        break
+        return job.id
+    return None
 
 
 def transition_multinode_jobs(logger):
@@ -217,6 +233,8 @@ def transition_multinode_jobs(logger):
     # Ordering by target_group is mandatory for distinct to work
     jobs = jobs.order_by("target_group", "id")
     jobs = jobs.distinct("target_group")
+
+    new_jobs = []
     for job in jobs:
         sub_jobs = job.sub_jobs_list
         if not all([j.state == TestJob.STATE_SCHEDULING or j.dynamic_connection for j in sub_jobs]):
@@ -241,3 +259,5 @@ def transition_multinode_jobs(logger):
             # transition the job and device
             sub_job.go_state_scheduled()
             sub_job.save()
+            new_jobs.append(sub_job.id)
+    return new_jobs
