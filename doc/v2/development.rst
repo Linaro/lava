@@ -283,11 +283,11 @@ lava-dispatcher
 Changes to most files in ``lava-dispatcher`` can be symlinked or copied into
 the packaged locations. e.g.::
 
- PYTHONDIR=/usr/lib/python2.7/dist-packages/
+ PYTHONDIR=/usr/lib/python3/dist-packages/
  sudo cp <path_to_file> $PYTHONDIR/<path_to_file>
 
-.. note:: The path used for ``PYTHONDIR`` will change when the LAVA runtime
-   support moves to Python3: PYTHONDIR=/usr/lib/python3/dist-packages/
+.. note:: The path used for ``PYTHONDIR`` has changed with the LAVA runtime
+   support moving to Python3 in 2018.4.
 
 There is no need to copy files used solely by the unit tests.
 
@@ -356,10 +356,10 @@ Changes to django templates can be applied immediately by copying the template
 into the packaged path, e.g. html files in
 ``lava_scheduler_app/templates/lava_scheduler_app/`` can be copied or symlinked
 to
-``/usr/lib/python2.7/dist-packages/lava_scheduler_app/templates/lava_scheduler_app/``
+``/usr/lib/python3/dist-packages/lava_scheduler_app/templates/lava_scheduler_app/``
 
-.. note:: The path will change when the LAVA runtime support moves to Python3:
-   /usr/lib/python3/dist-packages/
+.. note:: The path changed when the LAVA runtime support moved to Python3
+   with the 2018.4 release.
 
 Changes to python code generally require copying the files and restarting the
 ``lava-server-gunicorn`` service before the changes will be applied::
@@ -651,6 +651,79 @@ for different versions and separate with:
  else:
      pass  # older compatibility code
 
+.. _use_templates_in_dispatcher:
+
+Use templates to generate device configuration
+**********************************************
+
+One of the technical reasons to merge the lava-dispatcher and lava-server 
+source trees into a single source is to allow lava-dispatcher to use the output 
+of the lava-server templates in development. Further changes are being made in 
+this area to provide a common module but it is already possible to build a 
+lava_dispatcher unit test which pulls device configuration directly from the
+templates in lava_scheduler_app. This removes the problem of static YAML files
+in ``lava_dispatcher/devices`` getting out of date compared to the actual YAML
+created by changes in the templates.
+
+A simple change in the ``Factory`` class function to create the test job is
+sufficient:
+
+Old code
+========
+
+The file ``'../devices/hi6220-hikey-01.yaml'`` is created once in the original
+review and is rarely updated:
+
+.. code-block:: python
+
+    def create_hikey_job(self, filename):  # pylint: disable=no-self-use
+        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/hi6220-hikey-01.yaml'))
+        fastboot_yaml = os.path.join(os.path.dirname(__file__), filename)
+        with open(fastboot_yaml) as sample_job_data:
+            parser = JobParser()
+            job = parser.parse(sample_job_data, device, 4212, None, "")
+            job.logger = DummyLogger()
+        return job
+
+New code
+========
+
+The YAML device configuration is generated from a device dictionary in 
+``lava_scheduler_app`` which extends a template in ``lava_scheduler_app`` - the
+same template which is used at runtime on LAVA instances. Any change to the
+template or device dictionary is immediately reflected in the YAML sent to the
+``lava_dispatcher`` unit test.
+
+.. code-block:: python
+
+    def create_hikey_bl_device(self, hostname):
+        """
+        Create a device configuration on-the-fly from in-tree
+        device-type Jinja2 template.
+        """
+        with open(
+            os.path.join(
+                os.path.dirname(__file__),
+                '..', '..', 'lava_scheduler_app', 'tests',
+                'devices', 'hi6220-hikey-bl-01.jinja2')) as hikey:
+            data = hikey.read()
+        test_template = self.prepare_jinja_template(hostname, data)
+        rendered = test_template.render()
+        return (rendered, data)
+
+    def create_hikey_bl_job(self, filename):
+        (data, device_dict) = self.create_hikey_bl_device('hi6220-hikey-01')
+        device = NewDevice(yaml.load(data))
+        self.validate_data('hi6220-hikey-01', device_dict)
+        fastboot_yaml = os.path.join(os.path.dirname(__file__), filename)
+        with open(fastboot_yaml) as sample_job_data:
+            parser = JobParser()
+            job = parser.parse(sample_job_data, device, 4212, None, "")
+            job.logger = DummyLogger()
+        return job
+
+
+
 .. _database_migrations:
 
 Database migrations
@@ -677,7 +750,7 @@ On Debian Jessie and later::
  $ sudo lava-server manage makemigrations lava_scheduler_app
 
 The migration file will be created in
-``/usr/lib/python2.7/dist-packages/lava_scheduler_app/migrations/`` (which is
+``/usr/lib/python3/dist-packages/lava_scheduler_app/migrations/`` (which is
 why ``sudo`` is required) and will need to be copied into your git working copy
 and added to the review.
 
@@ -703,9 +776,8 @@ https://lists.linaro.org/pipermail/lava-announce/2017-June/000032.html
 
 https://lists.linaro.org/pipermail/lava-announce/2018-January/000046.html
 
-lava-dispatcher and lava-server now support python3 testing. Code changes to
-either codebase **must** be Python3 compatible to not break the unit tests when
-run using python3.
+lava-dispatcher and lava-server now fully support python3, runtime and testing. 
+Code changes to either codebase **must** be Python3 compatible.
 
 All reviews run the ``lava-dispatcher`` and ``lava-server`` unit tests against
 python 3.x and changes must pass all unit tests.

@@ -82,7 +82,7 @@ packages need to be installed.
 The helper needs to know the name of the package to build and to be started
 from the directory containing the code for that package::
 
- $ /usr/share/lava-server/debian-dev-build.sh -p lava-server
+ $ /usr/share/lava-server/debian-dev-build.sh -p lava
 
 The packages will be built in a temporary directory using a version string
 based on the current git tag and the time of the build. The helper outputs the
@@ -167,7 +167,7 @@ the correct suite (using sbuild) using the `lava-buildd scripts
 Example
 =======
 
-The helper supports ``lava-server`` and ``lava-dispatcher``::
+The helper supports ``lava``::
 
  $ sudo apt install lava-dev
  $ git clone https://git.linaro.org/git/lava/lava.git
@@ -241,10 +241,10 @@ The paths to execute LAVA python scripts have changed and developing LAVA based
 on packages has a different workflow.
 
 Modified files can be copied to the equivalent python path. The current LAVA
-packages use python2.7, so the path is beneath
-``/usr/lib/python2.7/dist-packages/`` with sudo::
+packages use python3, so the path is beneath
+``/usr/lib/python3/dist-packages/`` with sudo::
 
- $ sudo cp <git-path> /usr/lib/python2.7/dist-packages/<git-path>
+ $ sudo cp <git-path> /usr/lib/python3/dist-packages/<git-path>
 
 .. warning:: To fix failures in the Python3 unit tests, the **same** change
    will also need to be copied to ``/usr/lib/python3/dist-packages/``.
@@ -570,7 +570,7 @@ Apache then needs access to django-debug-toolbar CSS and JS files::
 
   sudo su -
   cd /usr/share/lava-server/static/
-  ln -s /usr/lib/python2.7/dist-packages/debug_toolbar/static/debug_toolbar .
+  ln -s /usr/lib/python3/dist-packages/debug_toolbar/static/debug_toolbar .
 
 In ``/etc/lava-server/settings.conf`` remove the reference to htdocs in
 ``STATICFILES_DIRS``. Django-debug-toolbar does check that all directories
