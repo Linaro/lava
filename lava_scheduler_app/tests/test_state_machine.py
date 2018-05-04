@@ -459,6 +459,36 @@ class TestTestJobStateMachine(TestCase):
         self.check_device(Device.STATE_IDLE, Device.HEALTH_BAD)
         self.check_job(TestJob.STATE_FINISHED, TestJob.HEALTH_INCOMPLETE)
 
+    def test_job_go_state_finished_health_check_looping(self):
+        # Normal case
+        # 1/ STATE_RUNNING => STATE_FINISHED
+        # 1.1/ Success
+        self.device.state = Device.STATE_RUNNING
+        self.device.health = Device.HEALTH_LOOPING
+        self.device.save()
+        self.job.state = TestJob.STATE_RUNNING
+        self.job.actual_device = self.device
+        self.job.health_check = True
+        self.job.save()
+        self.job.go_state_finished(TestJob.HEALTH_COMPLETE)
+        self.job.save()
+        self.check_device(Device.STATE_IDLE, Device.HEALTH_LOOPING)
+        self.check_job(TestJob.STATE_FINISHED, TestJob.HEALTH_COMPLETE)
+
+        # 1.2/ Failure
+        self.device.state = Device.STATE_RUNNING
+        self.device.health = Device.HEALTH_LOOPING
+        self.device.save()
+        self.job.state = TestJob.STATE_RUNNING
+        self.job.actual_device = self.device
+        self.job.health_check = True
+        self.job.save()
+        self.job.go_state_finished(TestJob.HEALTH_INCOMPLETE)
+        self.job.save()
+        # looping is persistent
+        self.check_device(Device.STATE_IDLE, Device.HEALTH_LOOPING)
+        self.check_job(TestJob.STATE_FINISHED, TestJob.HEALTH_INCOMPLETE)
+
     def test_job_go_state_finished_multinode(self):
         # 1/ Essential role
         self.device2 = Device.objects.create(hostname="device-02", device_type=self.device_type)

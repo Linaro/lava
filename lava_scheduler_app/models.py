@@ -783,7 +783,14 @@ class Device(RestrictedResource):
             prev_health_display = self.get_health_display()
             if job.health_check:
                 self.last_health_report_job = job
-                if self.health in [Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN, Device.HEALTH_BAD]:
+                if self.health == Device.HEALTH_LOOPING:
+                    if job.health == TestJob.HEALTH_INCOMPLETE:
+                        # Looping is persistent until cancelled by the admin.
+                        self.log_admin_entry(
+                            None,
+                            "%s → %s (Looping health-check [%s] failed)" % (
+                                prev_health_display, self.get_health_display(), job.id))
+                elif self.health in [Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN, Device.HEALTH_BAD]:
                     if job.health == TestJob.HEALTH_COMPLETE:
                         self.health = Device.HEALTH_GOOD
                     elif job.health == TestJob.HEALTH_INCOMPLETE:
@@ -792,10 +799,14 @@ class Device(RestrictedResource):
                         self.health = Device.HEALTH_UNKNOWN
                     else:
                         raise NotImplementedError("Unexpected TestJob health")
-                    self.log_admin_entry(None, "%s → %s" % (prev_health_display, self.get_health_display()))
+                    self.log_admin_entry(
+                        None, "%s → %s (health-check [%s] failed)" % (
+                            prev_health_display, self.get_health_display(), job.id))
             elif infrastructure_error:
                 self.health = Device.HEALTH_UNKNOWN
-                self.log_admin_entry(None, "%s → %s (Infrastructure error after %s)" % (prev_health_display, self.get_health_display(), job.display_id))
+                self.log_admin_entry(
+                    None, "%s → %s (Infrastructure error after %s)" % (
+                        prev_health_display, self.get_health_display(), job.display_id))
 
         else:
             raise NotImplementedError("Unknown signal %s" % signal)
@@ -2089,7 +2100,6 @@ class TestJob(RestrictedResource):
         return retval
 
     def get_token_from_description(self, description):
-        from linaro_django_xmlrpc.models import AuthToken
         tokens = AuthToken.objects.filter(user=self.submitter, description=description)
         if tokens:
             return tokens.first().secret
