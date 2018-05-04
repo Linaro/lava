@@ -1086,7 +1086,7 @@ def _get_device_type(user, name):
 # pylint: disable=too-many-arguments,too-many-locals
 def _create_pipeline_job(job_data, user, taglist, device=None,
                          device_type=None, target_group=None,
-                         orig=None):
+                         orig=None, health_check=False):
 
     if not isinstance(job_data, dict):
         # programming error
@@ -1141,7 +1141,7 @@ def _create_pipeline_job(job_data, user, taglist, device=None,
                   requested_device_type=device_type,
                   target_group=target_group,
                   description=job_data['job_name'],
-                  health_check=False,
+                  health_check=health_check,
                   user=user, is_public=public_state,
                   visibility=visibility,
                   priority=priority)
