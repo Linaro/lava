@@ -1,0 +1,76 @@
+# Your first LAVA JOB definition for an x86_64 QEMU
+device_type: qemu
+job_name: QEMU pipeline, first job
+
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 5
+  connection:
+    minutes: 2
+priority: medium
+visibility: public
+
+# context allows specific values to be overridden or included
+context:
+  # tell the qemu template which architecture is being tested
+  # the template uses that to ensure that qemu-system-x86_64 is executed.
+  arch: amd64
+
+metadata:
+  # please change these fields when modifying this job for your own tests.
+  docs-source: first-job
+  docs-filename: qemu-pipeline-first-job.yaml
+
+# ACTION_BLOCK
+actions:
+- deploy:
+    timeout:
+      minutes: 5
+    to: tmpfs
+    images:
+      rootfs:
+        image_arg: -drive format=raw,file={rootfs}
+        url: https://images.validation.linaro.org/kvm/standard/stretch-2.img.gz
+        compression: gz
+    os: debian
+
+# BOOT_BLOCK
+- boot:
+    timeout:
+      minutes: 2
+    method: qemu
+    media: tmpfs
+    prompts: ["root@debian:"]
+    auto_login:
+      login_prompt: "login:"
+      username: root
+
+- test:
+    timeout:
+      minutes: 5
+    definitions:
+    - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+      from: git
+      path: lava-test-shell/smoke-tests-basic.yaml
+      name: smoke-tests
+    - repository:
+        metadata:
+          format: Lava-Test Test Definition 1.0
+          name: apache-server
+          description: "test events"
+          os:
+          - debian
+          scope:
+          - functional
+        run:
+          steps:
+          - lava-test-event demonstration
+      from: inline
+      name: test-event
+      path: inline/test-event.yaml
+    - repository: https://git.linaro.org/lava-team/lava-functional-tests.git
+      from: git
+      path: lava-test-shell/single-node/singlenode03.yaml
+      name: singlenode-advanced

@@ -35,6 +35,7 @@ from django.db.utils import OperationalError, InterfaceError
 from lava_results_app.models import TestCase
 from lava_server.cmdutils import LAVADaemonCommand, watch_directory
 from lava_scheduler_app.models import TestJob
+from lava_scheduler_app.signals import send_event
 from lava_scheduler_app.utils import mkdir
 from lava_results_app.dbutils import map_scanned_results, create_metadata_store
 
@@ -326,6 +327,12 @@ class Command(LAVADaemonCommand):
                 "[%s] invalid log line, missing \"lvl\" or \"msg\" keys: %s",
                 job_id, message)
             return
+
+        # For 'event', send an event and log as 'debug'
+        if message_lvl == 'event':
+            self.logger.debug("[%s] event: %s", job_id, message_msg)
+            send_event(".event", "lavaserver", {"message": message_msg, "job": job_id})
+            message_lvl = "debug"
 
         # Find the handler (if available)
         if job_id not in self.jobs:

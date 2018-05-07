@@ -566,6 +566,8 @@ class TestShellAction(TestAction):
                     name = ret
             elif name == "TESTRAISE":
                 raise TestError(' '.join(params))
+            elif name == "TESTEVENT":
+                self.logger.event(' '.join(params))
 
             self.signal_director.signal(name, params)
             ret_val = True

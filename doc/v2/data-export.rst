@@ -6,13 +6,14 @@ Exporting data out of LAVA
 ##########################
 
 LAVA supports two methods of extracting data: the :ref:`rest_api` and
-:ref:`xml_rpc`. Results are made available while the job is running;
-this is a new feature compared to LAVA V1 where results were only
-published at the end of a job.
+:ref:`xml_rpc`. Results are made available while the job is running via
+the results API. Direct links from the test log UI are not populated
+until after the job completes, due to performance issues.
 
 In addition to these methods of pulling data out of LAVA, there are
 also two methods for pushing information about its activity:
-notifications and :ref:`publishing events <publishing_events>`.
+:ref:`notifications <notification_summary>` and :ref:`publishing events
+<publishing_events>`.
 
 .. index:: rest api
 
@@ -125,6 +126,14 @@ available using ``lava-publisher``. Events include:
 * metadata on the instance which was the source of the event; and
 * description of a status change on that instance.
 
+Event notifications are disabled by default and **must** be configured
+before being enabled.
+
+.. seealso:: :ref:`configuring_event_notifications`
+
+
+.. _example_event_metadata:
+
 Example metadata
 ================
 
@@ -136,6 +145,30 @@ Example metadata
 The ``topic`` field is configurable by lab administrators. Its
 intended use is to allow receivers of events to filter incoming
 events.
+
+.. _event_types:
+
+Event notification types
+========================
+
+* :ref:`Device event <example_device_event>` notifications are emitted
+  automatically when a device changes state (e.g. Idle to Running) or
+  health (e.g. Bad to Unknown). Some events are related to testjobs,
+  some are due to admin action.
+
+* :ref:`Testjob event <example_testjob_event>` notifications are
+  emitted automatically when a testjob changes state (e.g. Submitted to
+  Running).
+
+* :ref:`System event <example_log_event>` notifications are emitted
+  automatically when ``lava-logs`` is restarted or when workers change
+  state.
+
+* :ref:`Test Shell event <example_testshell_event>` notifications are
+  emitted only when requested within a Lava Test Shell by a test writer
+  and contain a customised message.
+
+.. _example_device_event:
 
 Example device notification
 ===========================
@@ -151,10 +184,57 @@ Example device notification
     "status": "Idle"
  }
 
-Event notifications are disabled by default and **must** be configured
-before being enabled.
+.. _example_testjob_event:
 
-.. seealso:: :ref:`configuring_event_notifications`
+Example testjob notification
+============================
+
+.. code-block:: python
+
+    {
+        'health_check': False,
+        'description': 'QEMU pipeline, first job',
+        'state': 'Scheduled',
+        'visibility': 'Publicly visible',
+        'priority': 50,
+        'submitter': 'default',
+        'job': 'http://calvin.codehelp/scheduler/1995',
+        'health': 'Unknown',
+        'device_type': 'qemu',
+        'submit_time': '2018-05-17T11:49:56.336847+00:00',
+        'device': 'qemu01'
+    }
+
+.. _example_log_event:
+
+Example log event notification
+==============================
+
+::
+
+ 2018-05-17T12:12:15.238331 .codehelp.calvin.worker lavaserver - [lava-logs] state=Online health=Active
+
+.. _example_testshell_event:
+
+Example test event notification
+===============================
+
+.. FIXME: this needs to be much more like the test job event.
+
+Test writers can cause event notifications to be emitted under the
+control of a Lava Test Shell. This example uses an inline test
+definition.
+
+.. include:: examples/test-jobs/qemu-test-events.yaml
+     :code: yaml
+     :start-after:       name: smoke-tests
+     :end-before:    - repository: https://git.linaro.org/lava-team/lava-functional-tests.git
+
+.. FIXME: change the output to what would be shown by lava-tool wait-job-events or lavacli wait
+
+::
+
+ 2018-05-17T11:51:22.542416 org.linaro.validation.event lavaserver - {"message": "demonstration", "job": "1995"}
 
 .. _example_event_notification_client:
 
@@ -193,3 +273,5 @@ wait for the job to start and then monitor it directly as it
 runs. Recent versions of :ref:`lava_tool` support this directly - look
 at its `source code <https://git.linaro.org/lava/lava-tool.git/>`_ if
 you want to do something similar in your own code.
+
+.. FIXME: add example here for lavacli and deprecate the lava-tool example.
