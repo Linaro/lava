@@ -714,9 +714,7 @@ class CopyToLxcAction(DeployAction):
             return connection
 
         # Copy each file to LXC.
-        namespace = self.parameters['namespace']
-        images = self.data[namespace]['download-action'].keys()
-        for image in images:
+        for image in self.get_namespace_keys('download-action'):
             src = self.get_namespace_data(action='download-action',
                                           label=image, key='file')
             # The archive extraction logic and some deploy logic in
@@ -733,5 +731,6 @@ class CopyToLxcAction(DeployAction):
             self.logger.debug("skipped %s", self.name)
         else:
             copy_overlay_to_lxc(lxc_name, overlay_file,
-                                self.job.parameters['dispatcher'], namespace)
+                                self.job.parameters['dispatcher'],
+                                self.parameters['namespace'])
         return connection

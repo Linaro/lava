@@ -118,8 +118,7 @@ class FlashCMSISAction(Action):
         self.usb_mass_device = method_parameters.get('usb_mass_device', None)
         if not self.usb_mass_device:
             self.errors = "usb_mass_device unset"
-        namespace = self.parameters['namespace']
-        for action in self.data[namespace]['download-action'].keys():
+        for action in self.get_namespace_keys('download-action'):
             action_arg = self.get_namespace_data(action='download-action', label=action, key='file')
             self.filelist.extend([action_arg])
 

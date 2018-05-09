@@ -696,6 +696,12 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
             data['parameters']['deployment_data'] = self.parameters['deployment_data'].__data__
         return data
 
+    def get_namespace_keys(self, action, parameters=None):
+        """ Return the keys for the given action """
+        params = parameters if parameters else self.parameters
+        namespace = params['namespace']
+        return self.data.get(namespace, {}).get(action, {}).keys()
+
     def get_namespace_data(self, action, label, key, deepcopy=True, parameters=None):  # pylint: disable=too-many-arguments
         """
         Get a namespaced data value from dynamic job data using the specified key.

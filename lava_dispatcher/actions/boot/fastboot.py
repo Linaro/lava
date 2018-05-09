@@ -34,7 +34,7 @@ from lava_dispatcher.actions.boot import (
     OverlayUnpack,
     AdbOverlayUnpack,
 )
-from lava_dispatcher.power import ResetDevice
+from lava_dispatcher.power import ResetDevice, PreOs
 from lava_dispatcher.utils.constants import LAVA_LXC_HOME
 from lava_dispatcher.utils.lxc import is_lxc_requested
 from lava_dispatcher.connections.serial import ConnectDevice
@@ -127,8 +127,10 @@ class BootFastbootAction(BootAction):
                 self.internal_pipeline.add_action(mapped[0]())
 
         # Direct connection to device without LXC.
-        if not self.job.device.hard_reset_command:
-            if not is_lxc_requested(self.job):
+        if not is_lxc_requested(self.job):
+            if self.job.device.hard_reset_command:
+                self.internal_pipeline.add_action(PreOs())
+            else:
                 self.internal_pipeline.add_action(ConnectAdb())
                 self.internal_pipeline.add_action(AdbOverlayUnpack())
 
@@ -223,12 +225,6 @@ class FastbootBootAction(Action):
                 '\n') if 'finished' in status][0]
             self.results = {'status': status}
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
-        lxc_active = any([pc for pc in self.job.protocols if pc.name == LxcProtocol.name])
-        if self.job.device.pre_os_command and not lxc_active:
-            self.logger.info("Running pre OS command.")
-            command = self.job.device.pre_os_command
-            if not self.run_command(command.split(' '), allow_silent=True):
-                raise InfrastructureError("%s failed" % command)
         return connection
 
 

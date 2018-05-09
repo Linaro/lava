@@ -21,9 +21,7 @@
 import os
 from lava_dispatcher.logical import Deployment
 from lava_dispatcher.connections.serial import ConnectDevice
-from lava_dispatcher.power import (
-    ResetDevice,
-)
+from lava_dispatcher.power import ResetDevice, PrePower
 from lava_dispatcher.action import (
     InfrastructureError,
     JobError,
@@ -110,6 +108,8 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
         elif self.job.device.hard_reset_command:
             self.force_prompt = True
             self.internal_pipeline.add_action(ConnectDevice())
+            if not is_lxc_requested(self.job):
+                self.internal_pipeline.add_action(PrePower())
             self.internal_pipeline.add_action(ResetDevice())
         else:
             self.internal_pipeline.add_action(EnterFastbootAction())

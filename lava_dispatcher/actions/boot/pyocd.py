@@ -104,8 +104,7 @@ class FlashPyOCDAction(Action):
             self.errors = "[PYOCD] board_id unset"
         substitutions = {}
         self.base_command.extend(['--board', self.job.device['board_id']])
-        namespace = self.parameters['namespace']
-        for action in self.data[namespace]['download-action'].keys():
+        for action in self.get_namespace_keys('download-action'):
             pyocd_full_command = []
             image_arg = self.get_namespace_data(action='download-action', label=action, key='image_arg')
             action_arg = self.get_namespace_data(action='download-action', label=action, key='file')

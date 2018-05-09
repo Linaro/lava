@@ -30,6 +30,15 @@ INVALID_CHARACTER_ERROR_MSG = "Invalid character"
 INCLUDE_URL_TIMEOUT = 10
 
 
+CALLBACK_SCHEMA = {
+    Required('url'): str,
+    Optional('method'): Any('GET', 'POST'),
+    Optional('token'): str,
+    Optional('dataset'): Any('minimal', 'logs', 'results', 'all'),
+    Optional('content-type'): Any('json', 'urlencoded')
+}
+
+
 class SubmissionException(UserWarning):
     """ Error raised if the submission is itself invalid. """
 
@@ -171,7 +180,8 @@ def _job_notify_schema():
     return Schema({
         Required('criteria'): _notify_criteria_schema(),
         'recipients': _recipient_schema(),
-        'callback': _callback_schema(),
+        Exclusive('callback', 'legacy_callback'): _legacy_callback_schema(),
+        Exclusive('callbacks', 'legacy_callback'): _callback_schema(),
         'verbosity': Any('verbose', 'quiet', 'status-only'),
         'compare': _notify_compare_schema()
     }, extra=True)
@@ -223,13 +233,11 @@ def _query_conditions_schema():
 
 
 def _callback_schema():
-    return Schema({
-        'method': Any('GET', 'POST'),
-        Required('url'): str,
-        'token': str,
-        'dataset': Any('minimal', 'logs', 'results', 'all'),
-        'content-type': Any('json', 'urlencoded')
-    }, extra=True)
+    return Schema([CALLBACK_SCHEMA], extra=True)
+
+
+def _legacy_callback_schema():
+    return Schema(CALLBACK_SCHEMA, extra=True)
 
 
 def vlan_name(value):
@@ -412,6 +420,7 @@ def _device_schema():
         'board_id': str,
         'usb_vendor_id': All(str, Length(min=4, max=4)),  # monitor type like arduino
         'usb_product_id': All(str, Length(min=4, max=4)),  # monitor type like arduino
+        'usb_sleep': int,
         'usb_filesystem_label': str,
         'usb_serial_driver': str,
         'actions': _device_actions_schema(),
