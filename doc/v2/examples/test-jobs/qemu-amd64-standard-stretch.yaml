@@ -4,7 +4,7 @@ job_name: qemu amd64 standard build, Debian Stretch
 
 timeouts:
   job:
-    minutes: 5
+    minutes: 10
   action:
     minutes: 2
   connection:
