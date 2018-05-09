@@ -125,12 +125,18 @@ class BootFastbootAction(BootAction):
                     mapped[0](device_actions=mapped[1]))
             elif mapped[0]:
                 self.internal_pipeline.add_action(mapped[0]())
-
-        # Direct connection to device without LXC.
-        if not is_lxc_requested(self.job):
-            if self.job.device.hard_reset_command:
+        if self.job.device.hard_reset_command:
+            if not is_lxc_requested(self.job):
                 self.internal_pipeline.add_action(PreOs())
-            else:
+            if self.has_prompts(parameters):
+                self.internal_pipeline.add_action(AutoLoginAction())
+                if self.test_has_shell(parameters):
+                    self.internal_pipeline.add_action(ExpectShellSession())
+                    if 'transfer_overlay' in parameters:
+                        self.internal_pipeline.add_action(OverlayUnpack())
+                    self.internal_pipeline.add_action(ExportDeviceEnvironment())
+        else:
+            if not is_lxc_requested(self.job):
                 self.internal_pipeline.add_action(ConnectAdb())
                 self.internal_pipeline.add_action(AdbOverlayUnpack())
 

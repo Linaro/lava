@@ -77,7 +77,6 @@ actions:
     namespace: droid
     connection: serial
     prompts:
-    - 'root@(.*):/#'
     - 'shell@hikey'
     timeout:
       minutes: 15

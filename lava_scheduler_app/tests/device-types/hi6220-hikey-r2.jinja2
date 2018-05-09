@@ -4,7 +4,7 @@
 {% set base_kernel_args = base_kernel_args|default('') %}
 {% set console_device = console_device|default('ttyAMA3') %}
 {% set baud_rate = baud_rate|default('115200') %}
-{% set fastboot_sequence = ['boot', 'auto-login'] %}
+{% set fastboot_sequence = ['boot'] %}
 {% set device_type = "hi6220-hikey-r2" %}
 {% set fastboot_interrupt_params = "
         interrupt_prompt: 'Android Fastboot mode'

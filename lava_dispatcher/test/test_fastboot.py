@@ -182,8 +182,15 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
         for action in self.job.pipeline.actions:
             if isinstance(action, BootAction):
                 # get the action & populate it
-                self.assertIn(action.parameters['method'], ['lxc', 'fastboot'])
-                self.assertEqual(action.parameters['prompts'], ['root@(.*):/#'])
+                if action.parameters.get('namespace') == 'tlxc':
+                    self.assertIn(action.parameters['method'],
+                                  ['lxc', 'fastboot'])
+                    self.assertEqual(action.parameters['prompts'],
+                                     ['root@(.*):/#'])
+                if action.parameters.get('namespace') == 'droid':
+                    self.assertIn(action.parameters['method'],
+                                  ['lxc', 'fastboot'])
+                    self.assertEqual(action.parameters.get('prompts'), None)
 
     def test_testdefinitions(self):
         for action in self.job.pipeline.actions:

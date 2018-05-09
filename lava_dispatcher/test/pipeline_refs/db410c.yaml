@@ -123,6 +123,8 @@
     - {class: power.PDUReboot, name: pdu-reboot}
   - {class: actions.boot.fastboot.FastbootBootAction, name: boot-fastboot}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
+  - {class: shell.ExpectShellSession, name: expect-shell-connection}
+  - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
   pipeline:

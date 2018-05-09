@@ -51,8 +51,6 @@ actions:
 
   - boot:
       namespace: droid
-      prompts:
-      - 'root@(.*):/#'
       timeout:
         minutes: 15
       method: fastboot
