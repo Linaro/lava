@@ -36,7 +36,7 @@ from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.strings import substitute
 from lava_dispatcher.utils.constants import SYS_CLASS_KVM
 from lava_dispatcher.utils.network import dispatcher_ip
-from lava_dispatcher.utils.filesystem import debian_package_version
+from lava_dispatcher.utils.filesystem import debian_package_version, debian_package_arch
 from lava_dispatcher.actions.boot import AutoLoginAction, OverlayUnpack
 
 # pylint: disable=too-many-instance-attributes,too-many-branches
@@ -116,25 +116,31 @@ class CallQemuAction(Action):
         self.commands = []
         self.methods = None
         self.nfsrootfs = None
+        self.qemu_data = {}
 
     def validate(self):
         super().validate()
 
         # 'arch' must be defined in job definition context.
+        architecture = self.job.parameters['context']['arch']
         try:
-            if self.job.parameters['context']['arch'] not in \
+            if architecture not in \
                self.job.device['available_architectures']:
                 self.errors = "Non existing architecture specified in context arch parameter. Please check the device configuration for available options."
                 return
         except KeyError:
             self.errors = "Arch parameter must be set in the context section. Please check the device configuration for available architectures."
             return
-        if self.job.parameters['context']['arch'] in ['amd64', 'x86_64']:
-            self.logger.info("qemu-system-x86, installed at version: %s",
-                             debian_package_version(pkg='qemu-system-x86', split=False))
-        if self.job.parameters['context']['arch'] in ['arm64', 'arm', 'armhf', 'aarch64']:
-            self.logger.info("qemu-system-arm, installed at version: %s",
-                             debian_package_version(pkg='qemu-system-arm', split=False))
+        if architecture in ['amd64', 'x86_64']:
+            ver_str = debian_package_version(pkg='qemu-system-x86', split=False)
+            arch_str = debian_package_arch(pkg='qemu-system-x86')
+            self.qemu_data = {'qemu_version': ver_str, 'host_arch': arch_str, 'job_arch': architecture}
+            self.logger.info("qemu-system-x86, installed at version: %s, host architecture: %s", ver_str, arch_str)
+        if architecture in ['arm64', 'arm', 'armhf', 'aarch64']:
+            ver_str = debian_package_version(pkg='qemu-system-arm', split=False)
+            arch_str = debian_package_arch(pkg='qemu-system-arm')
+            self.qemu_data = {'qemu_version': ver_str, 'host_arch': arch_str, 'job_arch': architecture}
+            self.logger.info("qemu-system-arm, installed at version: %s, host architecture: %s", ver_str, arch_str)
 
         if self.parameters['method'] in ['qemu', 'qemu-nfs']:
             if 'prompts' not in self.parameters:
@@ -200,6 +206,7 @@ class CallQemuAction(Action):
         pexpect.spawn is one of the raw_connection objects for a Connection class.
         """
         # initialise the first Connection object, a command line shell into the running QEMU.
+        self.results = self.qemu_data
         guest = self.get_namespace_data(action='apply-overlay-guest', label='guest', key='filename')
         # check for NFS
         if 'qemu-nfs' in self.methods and self.parameters.get('media', None) == 'nfs':

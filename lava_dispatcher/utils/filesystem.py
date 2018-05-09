@@ -394,6 +394,21 @@ def debian_package_version(pkg='lava-dispatcher', split=True):
     return ''
 
 
+def debian_package_arch(pkg='lava-dispatcher'):
+    """
+    Relies on Debian Policy rules for the existence of the
+    changelog. Distributions not derived from Debian will
+    return an empty string.
+    """
+    changelog = '/usr/share/doc/%s/changelog.Debian.gz' % pkg
+    if os.path.exists(changelog):
+        deb_arch = subprocess.check_output((
+            'dpkg-query', '-W', "-f=${Architecture}\n",
+            "%s" % pkg)).strip().decode('utf-8', errors="replace")
+        return deb_arch
+    return ''
+
+
 def copy_directory_contents(root_dir, dst_dir):
     """
     Copies the contents of the root directory to the destination directory
