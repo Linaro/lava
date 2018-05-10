@@ -20,7 +20,6 @@
 
 
 import os
-import sys
 import yaml
 import logging
 import unittest
@@ -48,41 +47,17 @@ class UBootFactory(Factory):  # pylint: disable=too-few-public-methods
     Factory objects are dispatcher based classes, independent
     of any database objects.
     """
-    def create_bbb_job(self, filename):  # pylint: disable=no-self-use
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
-        bbb_yaml = os.path.join(os.path.dirname(__file__), filename)
-        with open(bbb_yaml) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "")
-            job.logger = DummyLogger()
-        return job
+    def create_bbb_job(self, filename):
+        return self.create_job('bbb-03.jinja2', filename)
 
-    def create_x15_job(self, filename):  # pylint: disable=no-self-use
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/x15-01.yaml'))
-        bbb_yaml = os.path.join(os.path.dirname(__file__), filename)
-        with open(bbb_yaml) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "")
-            job.logger = DummyLogger()
-        return job
+    def create_x15_job(self, filename):
+        return self.create_job('x15-01.jinja2', filename)
 
-    def create_juno_job(self, filename):  # pylint: disable=no-self-use
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/juno-01.yaml'))
-        juno_yaml = os.path.join(os.path.dirname(__file__), filename)
-        with open(juno_yaml) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "")
-            job.logger = DummyLogger()
-        return job
+    def create_juno_job(self, filename):
+        return self.create_job('juno-r2-01.jinja2', filename)
 
-    def create_zcu102_job(self, filename):  # pylint: disable=no-self-use
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/xilinx-zcu102.yaml'))
-        zcu_yaml = os.path.join(os.path.dirname(__file__), filename)
-        with open(zcu_yaml) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "")
-            job.logger = DummyLogger()
-        return job
+    def create_zcu102_job(self, filename):
+        return self.create_job('zcu102.jinja2', filename)
 
 
 class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
@@ -290,6 +265,7 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         # Fixme: more asserts
         self.assertIn('u-boot', job.device['actions']['boot']['methods'])
         params = job.device['actions']['deploy']['parameters']
+        self.assertIsNotNone(params)
         for action in job.pipeline.actions:
             action.validate()
             if isinstance(action, UBootAction):
@@ -384,7 +360,8 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         Test UBootSecondaryMedia validation
         """
         job_parser = JobParser()
-        cubie = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/cubie1.yaml'))
+        (rendered, _) = self.factory.create_device('cubie1.jinja2')
+        cubie = NewDevice(yaml.load(rendered))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/cubietruck-removable.yaml')
         sample_job_data = open(sample_job_file)
         job = job_parser.parse(sample_job_data, cubie, 4212, None, "")

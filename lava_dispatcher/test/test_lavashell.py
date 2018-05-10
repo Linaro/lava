@@ -26,7 +26,6 @@ from lava_dispatcher.action import (
     InfrastructureError,
     Pipeline,
     JobError,
-    LAVAError,
     Timeout
 )
 from lava_dispatcher.parser import JobParser
@@ -47,8 +46,8 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
 
     def setUp(self):
         super().setUp()
-        factory = Factory()
-        self.job = factory.create_kvm_job('sample_jobs/kvm.yaml')
+        self.factory = Factory()
+        self.job = self.factory.create_kvm_job('sample_jobs/kvm.yaml')
 
     def test_testshell(self):
         testshell = None
@@ -70,7 +69,8 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
         )
 
     def test_missing_handler(self):
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/kvm01.yaml'))
+        (rendered, _) = self.factory.create_device('kvm01.jinja2')
+        device = NewDevice(yaml.load(rendered))
         kvm_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/kvm.yaml')
         parser = JobParser()
         with open(kvm_yaml) as sample_job_data:
@@ -101,18 +101,8 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
 
 class X86Factory(Factory):
 
-    def create_x86_job(self, filename, device):  # pylint: disable=no-self-use
-        kvm_yaml = os.path.join(os.path.dirname(__file__), filename)
-        parser = JobParser()
-        try:
-            with open(kvm_yaml) as sample_job_data:
-                job = parser.parse(sample_job_data, device, 4212, None, "")
-            job.logger = DummyLogger()
-        except LAVAError as exc:
-            print(exc)
-            # some deployments listed in basics.yaml are not implemented yet
-            return None
-        return job
+    def create_x86_job(self, filename, device):
+        return self.create_job(device, filename)
 
 
 class TestMultiNodeOverlay(StdoutTestCase):  # pylint: disable=too-many-public-methods
@@ -120,10 +110,8 @@ class TestMultiNodeOverlay(StdoutTestCase):  # pylint: disable=too-many-public-m
     def setUp(self):
         super().setUp()
         factory = X86Factory()
-        lng1 = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/lng-generator-01.yaml'))
-        lng2 = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/lng-generator-02.yaml'))
-        self.server_job = factory.create_x86_job('sample_jobs/test_action-1.yaml', lng1)
-        self.client_job = factory.create_x86_job('sample_jobs/test_action-2.yaml', lng2)
+        self.server_job = factory.create_x86_job('sample_jobs/test_action-1.yaml', 'lng-generator-01.jinja2')
+        self.client_job = factory.create_x86_job('sample_jobs/test_action-2.yaml', 'lng-generator-02.jinja2')
 
     def test_action_namespaces(self):
         self.assertIsNotNone(self.server_job)
@@ -153,9 +141,7 @@ class TestMultiNodeOverlay(StdoutTestCase):  # pylint: disable=too-many-public-m
 class TestShellResults(StdoutTestCase):   # pylint: disable=too-many-public-methods
 
     class FakeJob(Job):
-
-        def __init__(self, parameters):
-            super().__init__(parameters)
+        pass
 
     class FakeDeploy(object):
         """

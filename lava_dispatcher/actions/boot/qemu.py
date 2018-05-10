@@ -123,6 +123,8 @@ class CallQemuAction(Action):
 
         # 'arch' must be defined in job definition context.
         architecture = self.job.parameters['context']['arch']
+        if 'available_architectures' not in self.job.device:
+            self.errors = "Device lacks list of available architectures."
         try:
             if architecture not in \
                self.job.device['available_architectures']:

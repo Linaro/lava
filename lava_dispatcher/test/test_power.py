@@ -19,46 +19,17 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 
-import os
-from lava_dispatcher.device import NewDevice
-from lava_dispatcher.parser import JobParser
 from lava_dispatcher.test.test_basic import Factory, StdoutTestCase
-from lava_dispatcher.test.utils import DummyLogger
-
-
-class PowerFactory(Factory):  # pylint: disable=too-few-public-methods
-    """
-    Not Model based, this is not a Django factory.
-    Factory objects are dispatcher based classes, independent
-    of any database objects.
-    """
-    def create_job(self, filename):  # pylint: disable=no-self-use
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
-        bbb_yaml = os.path.join(os.path.dirname(__file__), filename)
-        with open(bbb_yaml) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "")
-            job.logger = DummyLogger()
-        return job
-
-    def create_nopower_job(self, filename):  # pylint: disable=no-self-use
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/cubie1.yaml'))
-        bbb_yaml = os.path.join(os.path.dirname(__file__), filename)
-        with open(bbb_yaml) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "")
-            job.logger = DummyLogger()
-        return job
 
 
 class TestPowerAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
         super().setUp()
-        self.factory = PowerFactory()
+        self.factory = Factory()
 
     def test_reset_nopower(self):
-        job = self.factory.create_nopower_job('sample_jobs/uboot-ramdisk.yaml')
+        job = self.factory.create_job('cubie1.jinja2', 'sample_jobs/uboot-ramdisk.yaml')
         uboot_action = None
         names = [r_action.name for r_action in job.pipeline.actions]
         self.assertIn('uboot-action', names)
@@ -73,7 +44,7 @@ class TestPowerAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         self.assertEqual(['send-reboot-commands'], names)
 
     def test_reset_power(self):
-        job = self.factory.create_job('sample_jobs/uboot-ramdisk.yaml')
+        job = self.factory.create_job('bbb-01.jinja2', 'sample_jobs/uboot-ramdisk.yaml')
         uboot_action = None
         names = [r_action.name for r_action in job.pipeline.actions]
         self.assertIn('uboot-action', names)

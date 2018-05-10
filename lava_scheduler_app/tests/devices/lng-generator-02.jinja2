@@ -1,0 +1,11 @@
+{% extends 'x86.jinja2' %}
+{% set map = {'MAC a0 (SFP+)': {'lngswitch02': 1}, 'MAC d9': {'lngswitch01': 3}, 'MAC d8': {'lngswitch01': 4}, 'MAC da': {'lngswitch01': 2}, 'MAC db': {'lngswitch01': 1}, 'MAC 90': {'lngswitch01': 6}, 'MAC 91': {'lngswitch01': 5}, 'MAC a1 (SFP+)': {'lngswitch02': 2}} %}
+{% set hard_reset_command = '/usr/local/lab-scripts/snmp_pdu_control --port 2 --hostname lngpdu01 --command reboot' %}
+{% set tags = {'MAC a0 (SFP+)': ['SFP+', '1G', '10G'], 'MAC d9': ['RJ45', '10M', '100M', '1G'], 'MAC d8': [], 'MAC da': ['RJ45', '10M', '100M', '1G'], 'MAC db': ['RJ45', '10M', '100M', '1G'], 'MAC 90': ['RJ45', '10M', '100M', '1G'], 'MAC 91': ['RJ45', '10M', '100M', '1G'], 'MAC a1 (SFP+)': ['SFP+', '1G', '10G']} %}
+{% set interfaces = ['MAC db', 'MAC da', 'MAC d9', 'MAC d8', 'MAC 91', 'MAC 90', 'MAC a0 (SFP+)', 'MAC a1 (SFP+)'] %}
+{% set sysfs = {'MAC a0 (SFP+)': '/sys/devices/pci0000:00/0000:00:03.0/0000:07:00.1/net/', 'MAC d9': '/sys/devices/pci0000:00/0000:00:02.0/0000:03:00.1/net/', 'MAC d8': '/sys/devices/pci0000:00/0000:00:02.0/0000:03:00.0/net/', 'MAC da': '/sys/devices/pci0000:00/0000:00:02.0/0000:03:00.2/net/', 'MAC db': '/sys/devices/pci0000:00/0000:00:02.0/0000:03:00.3/net/', 'MAC 90': '/sys/devices/pci0000:00/0000:00:01.0/0000:04:00.0/net/', 'MAC 91': '/sys/devices/pci0000:00/0000:00:01.0/0000:04:00.1/net/', 'MAC a1 (SFP+)': '/sys/devices/pci0000:00/0000:00:03.0/0000:07:00.0/net/'} %}
+{% set power_off_command = '/usr/local/lab-scripts/snmp_pdu_control --port 2 --hostname lngpdu01 --command off' %}
+{% set connection_command = 'telnet localhost 7302' %}
+{% set mac_addr = {'MAC a0 (SFP+)': '38:ea:a7:93:83:a0', 'MAC d9': 'd8:9d:67:26:cd:d9', 'MAC d8': 'd8:9d:67:26:cd:d8', 'MAC da': 'd8:9d:67:26:cd:da', 'MAC db': 'd8:9d:67:26:cd:db', 'MAC 90': 'a0:36:9f:3e:2d:90', 'MAC 91': 'a0:36:9f:3e:2d:91', 'MAC a1 (SFP+)': '38:ea:a7:93:83:a1'} %}
+{% set power_on_command = '/usr/local/lab-scripts/snmp_pdu_control --port 2 --hostname lngpdu01 --command on' %}
+{% set lava_mac = 'd8:9d:67:26:cd:d8' %}

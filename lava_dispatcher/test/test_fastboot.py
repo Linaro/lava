@@ -40,68 +40,26 @@ class FastBootFactory(Factory):  # pylint: disable=too-few-public-methods
     of any database objects.
     """
 
-    def create_fastboot_job(self, filename):  # pylint: disable=no-self-use
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/nexus4-01.yaml'))
-        fastboot_yaml = os.path.join(os.path.dirname(__file__), filename)
-        with open(fastboot_yaml) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "")
-            job.logger = DummyLogger()
-        return job
+    def create_fastboot_job(self, filename):
+        return self.create_job('nexus4-01.jinja2', filename)
 
-    def create_db410c_job(self, filename):  # pylint: disable=no-self-use
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/db410c-01.yaml'))
-        fastboot_yaml = os.path.join(os.path.dirname(__file__), filename)
-        with open(fastboot_yaml) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "")
-            job.logger = DummyLogger()
-        return job
+    def create_db410c_job(self, filename):
+        return self.create_job('db410c-01.jinja2', filename)
 
-    def create_x15_job(self, filename):  # pylint: disable=no-self-use
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/x15-01.yaml'))
-        fastboot_yaml = os.path.join(os.path.dirname(__file__), filename)
-        with open(fastboot_yaml) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "")
-            job.logger = DummyLogger()
-        return job
+    def create_x15_job(self, filename):
+        return self.create_job('x15-01.jinja2', filename)
 
-    def create_hikey_job(self, filename):  # pylint: disable=no-self-use
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/hi6220-hikey-01.yaml'))
-        fastboot_yaml = os.path.join(os.path.dirname(__file__), filename)
-        with open(fastboot_yaml) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "")
-            job.logger = DummyLogger()
-        return job
+    def create_hikey_job(self, filename):
+        return self.create_job('hi6220-hikey-r2-01.jinja2', filename)
 
-    def create_hikey960_job(self, filename):  # pylint: disable=no-self-use
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/hikey960-01.yaml'))
-        y_file = os.path.join(os.path.dirname(__file__), filename)
-        with open(y_file) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "")
-        job.logger = DummyLogger()
-        return job
+    def create_hikey960_job(self, filename):
+        return self.create_job('hi960-hikey-01.jinja2', filename)
 
-    def create_nexus5x_job(self, filename):  # pylint: disable=no-self-use
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/nexus5x-01.yaml'))
-        fastboot_yaml = os.path.join(os.path.dirname(__file__), filename)
-        with open(fastboot_yaml) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "")
-            job.logger = DummyLogger()
-        return job
+    def create_nexus5x_job(self, filename):
+        return self.create_job('nexus5x-01.jinja2', filename)
 
-    def create_pixel_job(self, filename):  # pylint: disable=no-self-use
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/pixel-01.yaml'))
-        fastboot_yaml = os.path.join(os.path.dirname(__file__), filename)
-        with open(fastboot_yaml) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "")
-            job.logger = DummyLogger()
-        return job
+    def create_pixel_job(self, filename):
+        return self.create_job('pixel-01.jinja2', filename)
 
 
 class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-methods

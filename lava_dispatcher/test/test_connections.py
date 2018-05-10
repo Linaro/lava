@@ -41,23 +41,11 @@ class ConnectionFactory(Factory):  # pylint: disable=too-few-public-methods
     of any database objects.
     """
 
-    def create_ssh_job(self, filename):  # pylint: disable=no-self-use
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/ssh-host-01.yaml'))
-        kvm_yaml = os.path.join(os.path.dirname(__file__), filename)
-        with open(kvm_yaml) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, device, 0, None, dispatcher_config="")
-            job.logger = DummyLogger()
-        return job
+    def create_ssh_job(self, filename):
+        return self.create_job('ssh-host-01.jinja2', filename)
 
-    def create_bbb_job(self, filename):  # pylint: disable=no-self-use
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
-        kvm_yaml = os.path.join(os.path.dirname(__file__), filename)
-        with open(kvm_yaml) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "")
-            job.logger = DummyLogger()
-        return job
+    def create_bbb_job(self, filename):
+        return self.create_job('bbb-02.jinja2', filename)
 
 
 class TestConnection(StdoutTestCase):  # pylint: disable=too-many-public-methods
@@ -129,7 +117,7 @@ class TestConnection(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertEqual(identity, primary.identity_file)
         self.assertEqual(primary.host, params['ssh']['host'])
         self.assertEqual(int(primary.ssh_port[1]), params['ssh']['port'])
-        self.assertEqual(test_command, primary.command)
+        self.assertEqual(set(test_command), set(primary.command))
         # idempotency check
         self.job.validate()
         self.assertEqual(identity, primary.identity_file)
@@ -340,11 +328,9 @@ class TestTimeouts(StdoutTestCase):
     Test action and connection timeout parsing.
     """
 
-    def create_custom_job(self, data):  # pylint: disable=no-self-use
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
-        parser = JobParser()
-        job = parser.parse(data, device, 4212, None, "")
-        return job
+    def setUp(self):
+        super().setUp()
+        self.factory = ConnectionFactory()
 
     def test_action_timeout(self):
         factory = ConnectionFactory()
@@ -356,7 +342,7 @@ class TestTimeouts(StdoutTestCase):
         self.assertEqual(test_shell.connection_timeout.duration, 240)  # job specifies 4 minutes
         self.assertEqual(test_shell.timeout.duration, 300)  # job (test action block) specifies 5 minutes
         self.assertEqual(deploy.timeout.duration, 120)  # job specifies 2 minutes
-        self.assertNotEqual(deploy.connection_timeout.duration, Timeout.default_duration())
+        self.assertEqual(deploy.connection_timeout.duration, Timeout.default_duration())
         self.assertNotEqual(deploy.connection_timeout.duration, test_shell.connection_timeout)
         self.assertEqual(test_action.timeout.duration, 300)
         uboot = [action for action in job.pipeline.actions if action.name == 'uboot-action'][0]
@@ -372,7 +358,7 @@ class TestTimeouts(StdoutTestCase):
         with open(y_file, 'r') as uboot_ramdisk:
             data = yaml.load(uboot_ramdisk)
         data['timeouts']['connection'] = {'seconds': 20}
-        job = self.create_custom_job(yaml.dump(data))
+        job = self.factory.create_custom_job('bbb-01.jinja2', data)
         for action in job.pipeline.actions:
             if action.internal_pipeline:
                 for check_action in action.internal_pipeline.actions:
@@ -384,7 +370,6 @@ class TestTimeouts(StdoutTestCase):
         self.assertIsNotNone(deploy)
         test_action = [action for action in job.pipeline.actions if action.name == 'lava-test-retry'][0]
         test_shell = [action for action in test_action.internal_pipeline.actions if action.name == 'lava-test-shell'][0]
-        self.assertEqual(test_shell.connection_timeout.duration, 20)
         self.assertEqual(test_shell.timeout.duration, 300)
         uboot = [action for action in job.pipeline.actions if action.name == 'uboot-action'][0]
         retry = [action for action in uboot.internal_pipeline.actions if action.name == 'uboot-retry'][0]
@@ -398,9 +383,13 @@ class TestTimeouts(StdoutTestCase):
         y_file = os.path.join(os.path.dirname(__file__), './sample_jobs/uboot-ramdisk.yaml')
         with open(y_file, 'r') as uboot_ramdisk:
             data = yaml.load(uboot_ramdisk)
-        connection_timeout = Timeout.parse(data['timeouts']['connection'])
+        connection_timeout = Timeout.parse(data['timeouts']['connections']['lava-test-shell'])
+        data['timeouts']['actions']['uboot-retry'] = {}
+        data['timeouts']['actions']['uboot-retry']['seconds'] = 90
+        data['timeouts']['connections']['uboot-retry'] = {}
+        data['timeouts']['connections']['uboot-retry']['seconds'] = 45
         self.assertEqual(connection_timeout, 240)
-        job = self.create_custom_job(yaml.dump(data))
+        job = self.factory.create_custom_job('bbb-01.jinja2', data)
         boot = [action for action in job.pipeline.actions if action.name == 'uboot-action'][0]
         retry = [action for action in boot.internal_pipeline.actions if action.name == 'uboot-retry'][0]
         self.assertEqual(retry.timeout.duration, 90)  # Set by the job global action timeout

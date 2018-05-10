@@ -1,0 +1,11 @@
+{% extends 'x86.jinja2' %}
+{% set map = {'MAC 57 (SFP+)': {'lngswitch04': 3}, 'MAC 56 (SFP+)': {'lngswitch04': 4}, 'MAC e8': {'lngswitch01': 11}, 'MAC e9': {'lngswitch01': 10}, 'MAC eb': {'lngswitch01': 8}, 'MAC ea': {'lngswitch01': 9}, 'MAC 94 (SFP+)': {'lngswitch02': 3}, 'MAC 95 (SFP+)': {'lngswitch02': 4}} %}
+{% set hard_reset_command = '/usr/local/lab-scripts/snmp_pdu_control --port 1 --hostname lngpdu01 --command reboot' %}
+{% set tags = {'MAC 57 (SFP+)': ['SFP+', '25G'], 'MAC 56 (SFP+)': ['SFP+', '25G'], 'MAC e8': [], 'MAC e9': ['RJ45', '10M', '100M', '1G'], 'MAC eb': ['RJ45', '10M', '100M', '1G'], 'MAC ea': ['RJ45', '10M', '100M', '1G'], 'MAC 94 (SFP+)': ['SFP+', '1G', '10G'], 'MAC 95 (SFP+)': ['SFP+', '1G', '10G']} %}
+{% set interfaces = ['MAC eb', 'MAC ea', 'MAC e9', 'MAC e8', 'MAC 56 (SFP+)', 'MAC 57 (SFP+)', 'MAC 94 (SFP+)', 'MAC 95 (SFP+)'] %}
+{% set sysfs = {'MAC 57 (SFP+)': '/sys/devices/pci0000:00/0000:00:03.0/0000:07:00.1/net/', 'MAC 56 (SFP+)': '/sys/devices/pci0000:00/0000:00:03.0/0000:07:00.0/net/', 'MAC e8': '/sys/devices/pci0000:00/0000:00:02.0/0000:03:00.0/net/', 'MAC e9': '/sys/devices/pci0000:00/0000:00:02.0/0000:03:00.1/net/', 'MAC eb': '/sys/devices/pci0000:00/0000:00:02.0/0000:03:00.3/net/', 'MAC ea': '/sys/devices/pci0000:00/0000:00:02.0/0000:03:00.2/net/', 'MAC 94 (SFP+)': '/sys/devices/pci0000:00/0000:00:01.0/0000:04:00.1/net/', 'MAC 95 (SFP+)': '/sys/devices/pci0000:00/0000:00:01.0/0000:04:00.0/net/'} %}
+{% set power_off_command = '/usr/local/lab-scripts/snmp_pdu_control --port 1 --hostname lngpdu01 --command off' %}
+{% set connection_command = 'telnet localhost 7301' %}
+{% set mac_addr = {'MAC 57 (SFP+)': '24:8a:07:1e:2e:57', 'MAC 56 (SFP+)': '24:8a:07:1e:2e:56', 'MAC e8': 'd8:9d:67:26:ae:e8', 'MAC e9': 'd8:9d:67:26:ae:e9', 'MAC eb': 'd8:9d:67:26:ae:eb', 'MAC ea': 'd8:9d:67:26:ae:ea', 'MAC 94 (SFP+)': '38:ea:a7:93:98:94', 'MAC 95 (SFP+)': '38:ea:a7:93:98:95'} %}
+{% set power_on_command = '/usr/local/lab-scripts/snmp_pdu_control --port 1 --hostname lngpdu01 --command on' %}
+{% set lava_mac = 'd8:9d:67:26:ae:e8' %}

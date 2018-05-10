@@ -13,11 +13,11 @@ timeouts:
       minutes: 7
     auto-login-action:
       minutes: 9
-  connection:
-    minutes: 4
   connections:
     auto-login-action:
       minutes: 12
+    lava-test-shell:
+      minutes: 4
 
 
 priority: medium

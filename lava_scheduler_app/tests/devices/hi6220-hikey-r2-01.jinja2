@@ -9,5 +9,7 @@
 {% set power_on_command = '/home/stylesen/work/pdu/pdu-control-on.sh 5' %}
 {% set power_off_command = '/home/stylesen/work/pdu/pdu-control-off.sh 5' %}
 {% set fastboot_options = ['-S', '256M'] %}
+{% set pre_power_command = '/home/neil/lava-lab/shared/lab-scripts/usb_hub_control -u 12 -p 4000 -m sync' %}
+{% set pre_os_command = '/home/neil/lava-lab/shared/lab-scripts/usb_hub_control -u 12 -p 4000 -m off' %}
 {% set device_info = [{'board_id': '0123456789'}] %}
 {% set static_info = [{'board_id': 'S_N0123456'}] %}

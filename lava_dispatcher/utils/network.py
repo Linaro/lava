@@ -62,7 +62,7 @@ def dispatcher_ip(dispatcher_config):
     return addr[netifaces.AF_INET][0]['addr']
 
 
-def rpcinfo_nfs(server):
+def rpcinfo_nfs(server, version=3):
     """
     Calls rpcinfo nfs on the specified server.
     Only stderr matters
@@ -70,7 +70,7 @@ def rpcinfo_nfs(server):
     :return: None if success, message if fail
     """
     with open(os.devnull, 'w') as devnull:
-        proc = subprocess.Popen(['/usr/sbin/rpcinfo', '-u', server, 'nfs'], stdout=devnull, stderr=subprocess.PIPE)
+        proc = subprocess.Popen(['/usr/sbin/rpcinfo', '-u', server, 'nfs', "%s" % version], stdout=devnull, stderr=subprocess.PIPE)
         msg = proc.communicate()
         if msg[1]:
             return "%s %s" % (server, msg[1])

@@ -44,6 +44,7 @@ from lava_dispatcher.utils.messages import LinuxKernelMessages
 from lava_dispatcher.test.test_defs import allow_missing_path, check_missing_path
 from lava_dispatcher.test.utils import DummyLogger, infrastructure_error
 from lava_dispatcher.utils.strings import substitute
+from lava_dispatcher.utils.constants import SYS_CLASS_KVM
 
 # pylint: disable=invalid-name
 
@@ -52,11 +53,12 @@ class TestBasicJob(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def test_basic_actions(self):
         factory = Factory()
-        job = factory.create_fake_qemu_job()
+        job = factory.create_kvm_job('sample_jobs/basics.yaml')
         if not job:
             return unittest.skip("not all deployments have been implemented")
         self.assertIsInstance(job, Job)
         self.assertIsInstance(job.pipeline, Pipeline)
+        return None
 
 
 class TestKVMSimulation(StdoutTestCase):  # pylint: disable=too-many-public-methods
@@ -278,8 +280,8 @@ class TestKVMInlineTestDeploy(StdoutTestCase):  # pylint: disable=too-many-publi
 
     def setUp(self):
         super().setUp()
-        factory = Factory()
-        self.job = factory.create_kvm_job('sample_jobs/kvm-inline.yaml')
+        self.factory = Factory()
+        self.job = self.factory.create_kvm_job('sample_jobs/kvm-inline.yaml')
 
     def test_deploy_job(self):
         self.assertEqual(self.job.pipeline.job, self.job)
@@ -298,7 +300,8 @@ class TestKVMInlineTestDeploy(StdoutTestCase):  # pylint: disable=too-many-publi
             self.assertEqual([], action.errors)
 
     def test_extra_options(self):
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/kvm01.yaml'))
+        (rendered, _) = self.factory.create_device('kvm01.jinja2')
+        device = NewDevice(yaml.load(rendered))
         kvm_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/kvm-inline.yaml')
         with open(kvm_yaml) as sample_job_data:
             job_data = yaml.load(sample_job_data)
@@ -541,8 +544,8 @@ class TestChecksum(StdoutTestCase):
 
     def setUp(self):
         super().setUp()
-        factory = Factory()
-        self.job = factory.create_kvm_job('sample_jobs/kvm-inline.yaml')
+        self.factory = Factory()
+        self.job = self.factory.create_kvm_job('sample_jobs/kvm-inline.yaml')
 
     def test_download_checksum_match_success(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
@@ -640,7 +643,8 @@ class TestChecksum(StdoutTestCase):
             self.assertEqual([], action.errors)
 
     def test_uboot_checksum(self):
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
+        (rendered, _) = self.factory.create_device('bbb-01.jinja2')
+        device = NewDevice(yaml.load(rendered))
         bbb_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/bbb-ramdisk-nfs.yaml')
         with open(bbb_yaml) as sample_job_data:
             parser = JobParser()
@@ -699,21 +703,13 @@ class TestQemuNFS(StdoutTestCase):
 
     def setUp(self):
         super().setUp()
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/kvm03.yaml'))
-        kvm_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/qemu-nfs.yaml')
-        parser = JobParser()
-        try:
-            with open(kvm_yaml) as sample_job_data:
-                job = parser.parse(sample_job_data, device, 4212, None, "")
-        except NotImplementedError as exc:
-            print(exc)
-            # some deployments listed in basics.yaml are not implemented yet
-            return None
-        self.job = job
+        factory = Factory()
+        self.job = factory.create_job('kvm02.jinja2', 'sample_jobs/qemu-nfs.yaml')
         self.job.logger = DummyLogger()
 
     @unittest.skipIf(infrastructure_error('qemu-system-aarch64'),
                      'qemu-system-arm not installed')
+    @unittest.skipIf(not os.path.exists(SYS_CLASS_KVM), "Cannot use --enable-kvm")
     def test_qemu_nfs(self):
         self.assertIsNotNone(self.job)
         description_ref = self.pipeline_reference('qemu-nfs.yaml')
@@ -755,7 +751,7 @@ class TestQemuNFS(StdoutTestCase):
         self.assertIn('/dev/nfs', kernel_cmdline)
         self.assertIn('root_dir,tcp,hard,intr', kernel_cmdline)
         self.assertIn('smp', kernel_cmdline)
-        self.assertIn('cortex-a57', kernel_cmdline)
+        self.assertIn('cpu host', kernel_cmdline)
 
 
 class TestMonitor(StdoutTestCase):  # pylint: disable=too-many-public-methods

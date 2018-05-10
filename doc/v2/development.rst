@@ -656,39 +656,16 @@ for different versions and separate with:
 Use templates to generate device configuration
 **********************************************
 
-One of the technical reasons to merge the lava-dispatcher and lava-server 
-source trees into a single source is to allow lava-dispatcher to use the output 
-of the lava-server templates in development. Further changes are being made in 
-this area to provide a common module but it is already possible to build a 
+One of the technical reasons to merge the lava-dispatcher and lava-server
+source trees into a single source is to allow lava-dispatcher to use the output
+of the lava-server templates in development. Further changes are being made in
+this area to provide a common module but it is already possible to build a
 lava_dispatcher unit test which pulls device configuration directly from the
 templates in lava_scheduler_app. This removes the problem of static YAML files
 in ``lava_dispatcher/devices`` getting out of date compared to the actual YAML
 created by changes in the templates.
 
-A simple change in the ``Factory`` class function to create the test job is
-sufficient:
-
-Old code
-========
-
-The file ``'../devices/hi6220-hikey-01.yaml'`` is created once in the original
-review and is rarely updated:
-
-.. code-block:: python
-
-    def create_hikey_job(self, filename):  # pylint: disable=no-self-use
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/hi6220-hikey-01.yaml'))
-        fastboot_yaml = os.path.join(os.path.dirname(__file__), filename)
-        with open(fastboot_yaml) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "")
-            job.logger = DummyLogger()
-        return job
-
-New code
-========
-
-The YAML device configuration is generated from a device dictionary in 
+The YAML device configuration is generated from a device dictionary in
 ``lava_scheduler_app`` which extends a template in ``lava_scheduler_app`` - the
 same template which is used at runtime on LAVA instances. Any change to the
 template or device dictionary is immediately reflected in the YAML sent to the
@@ -696,32 +673,21 @@ template or device dictionary is immediately reflected in the YAML sent to the
 
 .. code-block:: python
 
-    def create_hikey_bl_device(self, hostname):
-        """
-        Create a device configuration on-the-fly from in-tree
-        device-type Jinja2 template.
-        """
-        with open(
-            os.path.join(
-                os.path.dirname(__file__),
-                '..', '..', 'lava_scheduler_app', 'tests',
-                'devices', 'hi6220-hikey-bl-01.jinja2')) as hikey:
-            data = hikey.read()
-        test_template = self.prepare_jinja_template(hostname, data)
-        rendered = test_template.render()
-        return (rendered, data)
+    import unittest
+    from lava_dispatcher.test.test_basic import Factory, StdoutTestCase
+    from lava_dispatcher.test.utils import infrastructure_error_multi_paths
 
-    def create_hikey_bl_job(self, filename):
-        (data, device_dict) = self.create_hikey_bl_device('hi6220-hikey-01')
-        device = NewDevice(yaml.load(data))
-        self.validate_data('hi6220-hikey-01', device_dict)
-        fastboot_yaml = os.path.join(os.path.dirname(__file__), filename)
-        with open(fastboot_yaml) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "")
-            job.logger = DummyLogger()
-        return job
+    class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
+        def setUp(self):
+            super().setUp()
+            self.factory = Factory()
+
+        @unittest.skipIf(infrastructure_error_multi_paths(
+            ['lxc-info', 'img2simg', 'simg2img']),
+            "lxc or img2simg or simg2img not installed")
+        def test_lxc_api(self):
+            job = self.factory.create_job('d02-01.jinja2', 'sample_jobs/grub-ramdisk.yaml')
 
 
 .. _database_migrations:
@@ -776,7 +742,7 @@ https://lists.linaro.org/pipermail/lava-announce/2017-June/000032.html
 
 https://lists.linaro.org/pipermail/lava-announce/2018-January/000046.html
 
-lava-dispatcher and lava-server now fully support python3, runtime and testing. 
+lava-dispatcher and lava-server now fully support python3, runtime and testing.
 Code changes to either codebase **must** be Python3 compatible.
 
 All reviews run the ``lava-dispatcher`` and ``lava-server`` unit tests against

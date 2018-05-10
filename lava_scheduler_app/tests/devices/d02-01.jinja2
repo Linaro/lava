@@ -1,0 +1,12 @@
+{% extends 'd02.jinja2' %}
+{% set interfaces = ['eth3', 'eth2', 'eth0', 'eth1'] %}
+{% set sysfs = {'eth3': '/sys/devices/platform/soc@000000000/soc@000000000\\:ethernet@5/net/eth3', 'eth2': '/sys/devices/platform/soc@000000000/soc@000000000\\:ethernet@4/net/eth2', 'eth1': '/sys/devices/platform/soc@000000000/soc@000000000\\:ethernet@1/net/eth1', 'eth0': '/sys/devices/platform/soc@000000000/soc@000000000\\:ethernet@0/net/eth0'} %}
+{% set mac_addr = {'eth3': '00:18:82:04:00:15 ', 'eth2': '00:18:82:05:00:15', 'eth1': '', 'eth0': ''} %}
+{% set tags = {'eth3': ['RJ45 10M 100M 1G'], 'eth2': ['RJ45 10M 100M 1G'], 'eth1': ['SFP+ 1G 10G'], 'eth0': ['SFP+ 1G 10G']} %}
+{% set map = {'eth3': {'1': 16}, 'eth2': {'1': 15}, 'eth1': {'2': 6}, 'eth0': {'2': 5}} %}
+{% set hard_reset_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname lngpdu01 --command reboot --port 3' %}
+{% set power_off_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname lngpdu01 --command off --port 3' %}
+{% set power_on_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname lngpdu01 --command on --port 3' %}
+{% set connection_commands = {'uart0': 'telnet ratchet 7003'} %}
+{% set connection_tags = {'uart0': ['primary', 'telnet']} %}
+{% set connection_list = ['uart0'] %}

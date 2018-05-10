@@ -19,6 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
+import yaml
 import unittest
 from lava_dispatcher.test.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.action import JobError
@@ -50,11 +51,16 @@ class RemovableFactory(Factory):  # pylint: disable=too-few-public-methods
 
 class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
+    def setUp(self):
+        super().setUp()
+        self.factory = Factory()
+
     def test_device_parameters(self):
         """
         Test that the correct parameters have been set for the device
         """
-        cubie = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/cubie1.yaml'))
+        (rendered, _) = self.factory.create_device('cubie2.jinja2')
+        cubie = NewDevice(yaml.load(rendered))
         self.assertIsNotNone(cubie['parameters']['media'].get('usb', None))
         self.assertIsNotNone(cubie.get('commands', None))
         self.assertIsNotNone(cubie.get('actions', None))
@@ -68,7 +74,6 @@ class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertIn('usb', u_boot_params)
         self.assertIn('commands', u_boot_params['usb'])
         self.assertIn('parameters', u_boot_params)
-        self.assertIn('boot_message', u_boot_params['parameters'])
         self.assertIn('bootloader_prompt', u_boot_params['parameters'])
 
     def _check_valid_job(self, device, test_file):
@@ -107,7 +112,8 @@ class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
         """
         Test that the job parameters match expected structure
         """
-        cubie = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/cubie1.yaml'))
+        (rendered, _) = self.factory.create_device('cubie1.jinja2')
+        cubie = NewDevice(yaml.load(rendered))
         job = self._check_valid_job(cubie, 'cubietruck-removable.yaml')
         self._check_job_parameters(cubie, job, 'download')
 
@@ -115,7 +121,8 @@ class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
         """
         Test that the job parameters with a writer tool match expected structure
         """
-        cubie = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/cubie1.yaml'))
+        (rendered, _) = self.factory.create_device('cubie1.jinja2')
+        cubie = NewDevice(yaml.load(rendered))
         job = self._check_valid_job(cubie, 'cubietruck-removable-with-writer.yaml')
         self._check_job_parameters(cubie, job, 'writer')
 
@@ -151,11 +158,13 @@ class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
             action='uboot-prepare-kernel', label='bootcommand', key='bootcommand'))
 
     def test_deployment(self):
-        cubie = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/cubie1.yaml'))
+        (rendered, _) = self.factory.create_device('cubie1.jinja2')
+        cubie = NewDevice(yaml.load(rendered))
         self._check_deployment(cubie, 'cubietruck-removable.yaml')
 
     def test_writer_deployment(self):
-        cubie = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/cubie1.yaml'))
+        (rendered, _) = self.factory.create_device('cubie1.jinja2')
+        cubie = NewDevice(yaml.load(rendered))
         self._check_deployment(cubie, 'cubietruck-removable-with-writer.yaml')
 
     def test_juno_deployment(self):
@@ -233,7 +242,8 @@ class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
         Test that definitions of secondary media do not block submissions using primary media
         """
         job_parser = JobParser()
-        bbb = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
+        (rendered, _) = self.factory.create_device('bbb-01.jinja2')
+        bbb = NewDevice(yaml.load(rendered))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/uboot-ramdisk.yaml')
         with open(sample_job_file) as sample_job_data:
             job = job_parser.parse(sample_job_data, bbb, 4212, None, "")
@@ -251,7 +261,8 @@ class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
         and the image details from the job submission.
         """
         job_parser = JobParser()
-        cubie = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/cubie1.yaml'))
+        (rendered, _) = self.factory.create_device('cubie1.jinja2')
+        cubie = NewDevice(yaml.load(rendered))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/cubietruck-removable.yaml')
         with open(sample_job_file) as sample_job_data:
             job = job_parser.parse(sample_job_data, cubie, 4212, None, "")
@@ -298,24 +309,17 @@ class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertEqual('bootz 0x42000000 0x43300000 0x43000000', substitutions['{BOOTX}'])
         self.assertEqual('/boot/initrd.img-3.16.0-4-armmp-lpae.u-boot', substitutions['{RAMDISK}'])
         commands = substitute(commands_list, substitutions)
+        print(commands)
         self.assertEqual(
             commands,
             [
                 'usb start',
-                'usb info',
                 'setenv autoload no',
-                "setenv initrd_high '0xffffffff'",
-                "setenv fdt_high '0xffffffff'",
-                'setenv initrd_addr_r ${ramdisk_addr_r}',
-                "setenv loadkernel 'load usb 0:1 ${kernel_addr_r} /boot/vmlinuz-3.16.0-4-armmp-lpae'",
-                "setenv loadinitrd 'load usb 0:1 ${initrd_addr_r} /boot/initrd.img-3.16.0-4-armmp-lpae.u-boot; setenv initrd_size ${filesize}'",
-                "setenv loadfdt 'load usb 0:1 ${fdt_addr_r} /boot/dtb-3.16.0-4-armmp-lpae'",
-                "setenv bootargs 'console=ttyS0,115200n8 root=UUID=159d17cc-697c-4125-95a0-a3775e1deabe ip=dhcp'",
-                "setenv bootcmd 'run loadkernel; run loadinitrd; run loadfdt; bootz 0x42000000 0x43300000 0x43000000'", 'boot'
+                'load usb 0:0:1 {KERNEL_ADDR} /boot/vmlinuz-3.16.0-4-armmp-lpae',
+                'load usb 0:0:1 {RAMDISK_ADDR} /boot/initrd.img-3.16.0-4-armmp-lpae.u-boot',
+                'setenv initrd_size ${filesize}',
+                'load usb 0:0:1 {DTB_ADDR} /boot/dtb-3.16.0-4-armmp-lpae',
+                'console=ttyS0,115200n8 root=UUID=159d17cc-697c-4125-95a0-a3775e1deabe  ip=dhcp',
+                'bootz 0x42000000 0x43300000 0x43000000'
             ]
         )
-        # reference commands:
-        #        setenv loadkernel 'load usb 0:1 ${kernel_addr_r} /boot/vmlinuz-3.16.0-4-armmp-lpae'
-        #        setenv loadinitrd 'load usb 0:1 ${initrd_addr_r} /boot/initrd.img-3.16.0-4-armmp-lpae.u-boot; setenv initrd_size ${filesize}'
-        #        setenv loadfdt 'load usb 0:1 ${fdt_addr_r} /boot/dtb-3.16.0-4-armmp-lpae'
-        #        setenv bootargs 'console=ttyS0,115200 rw root=UUID=159d17cc-697c-4125-95a0-a3775e1deabe ip=dhcp'

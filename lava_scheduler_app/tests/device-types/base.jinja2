@@ -21,10 +21,10 @@
 {% set ssh_user = 'root' -%}
 
 {# The code will create the correct port arguments for SCP and SSH, as they are different #}
-{% set ssh_port = '22' -%}
+{% set ssh_port = ssh_port|default('22') -%}
 
 {# This is no longer a requirement, to support devices that allow login without authentication #}
-{% set ssh_identity_file = 'dynamic_vm_keys/lava' -%}
+{% set ssh_identity_file = ssh_identity_file|default('dynamic_vm_keys/lava') -%}
 
 {% set schroot_options = (
 "          - 'schroot'

@@ -26,7 +26,14 @@ import unittest
 import logging
 import yaml
 
-from lava_dispatcher.action import Pipeline, Action, JobError, LAVABug, LAVAError
+from lava_dispatcher.action import (
+    Pipeline,
+    Action,
+    JobError,
+    LAVABug,
+    LAVAError,
+    ConfigurationError,
+)
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.job import Job
 from lava_dispatcher.device import NewDevice
@@ -153,6 +160,7 @@ class Factory(object):
         logger = logging.getLogger('dispatcher')
         logger.disabled = True
         logger.propagate = False
+        self.debug = False
 
     CONFIG_PATH = os.path.abspath(
         os.path.join(
@@ -182,27 +190,67 @@ class Factory(object):
         rendered = self.render_device_dictionary(hostname, data, job_ctx)
         try:
             ret = validate_device(yaml.load(rendered))
-        except SubmissionException as exc:
+        except (SubmissionException, ConfigurationError) as exc:
             print('#######')
             print(rendered)
             print('#######')
             self.fail(exc)
         return ret
 
-    def create_fake_qemu_job(self):  # pylint: disable=no-self-use
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/kvm01.yaml'))
-        sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/basics.yaml')
-        parser = JobParser()
+    def create_device(self, template, job_ctx=None):
+        """
+        Create a device configuration on-the-fly from in-tree
+        device-type Jinja2 template.
+        """
+        with open(
+            os.path.join(
+                os.path.dirname(__file__),
+                '..', '..', 'lava_scheduler_app', 'tests',
+                'devices', template)) as hikey:
+            data = hikey.read()
+        hostname = template.replace('.jinja2', '')
+        rendered = self.render_device_dictionary(hostname, data, job_ctx)
+        return (rendered, data)
+
+    def create_custom_job(self, template, job_data):
+        job_ctx = job_data.get('context', None)
+        (data, device_dict) = self.create_device(template, job_ctx)
+        device = NewDevice(yaml.load(data))
+        if self.debug:
+            print('####### Device configuration #######')
+            print(data)
+            print('#######')
         try:
-            with open(sample_job_file) as sample_job_data:
-                job = parser.parse(sample_job_data, device, 4212, None, "")
-        except LAVAError:
-            # some deployments listed in basics.yaml are not implemented yet
-            return None
+            parser = JobParser()
+            job = parser.parse(yaml.dump(job_data), device, 4999, None, "")
+        except (ConfigurationError, TypeError) as exc:
+            print('####### Parser exception ########')
+            print(device)
+            print('#######')
+            raise ConfigurationError("Invalid device: %s" % exc)
+        job.logger = DummyLogger()
         return job
 
+    def create_job(self, template, filename):
+        y_file = os.path.join(os.path.dirname(__file__), filename)
+        with open(y_file) as sample_job_data:
+            job_data = yaml.load(sample_job_data.read())
+        return self.create_custom_job(template, job_data)
+
+    def create_fake_qemu_job(self):
+        return self.create_job('qemu01.jinja2', 'sample_jobs/basics.yaml')
+
     def create_kvm_job(self, filename):  # pylint: disable=no-self-use
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/kvm01.yaml'))
+        """
+        Custom function to allow for extra exception handling.
+        """
+        (data, device_dict) = self.create_device('kvm01.jinja2')
+        device = NewDevice(yaml.load(data))
+        if self.debug:
+            print('####### Device configuration #######')
+            print(data)
+            print('#######')
+        self.validate_data('hi6220-hikey-01', device_dict)
         kvm_yaml = os.path.join(os.path.dirname(__file__), filename)
         parser = JobParser()
         try:
@@ -383,7 +431,8 @@ class TestPipeline(StdoutTestCase):  # pylint: disable=too-many-public-methods
             job_def = yaml.load(kvm_yaml)
         job_def['compatibility'] = job.compatibility
         parser = JobParser()
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/kvm01.yaml'))
+        (rendered, data) = factory.create_device('kvm01.jinja2')
+        device = yaml.load(rendered)
         try:
             job = parser.parse(yaml.dump(job_def), device, 4212, None, "")
         except NotImplementedError:
