@@ -13,7 +13,7 @@ Build-Depends:
  libjs-jquery-ui, po-debconf,
  python3-sphinx-bootstrap-theme,
 X-Python3-Version: >=3.5
-Standards-Version: 4.1.3
+Standards-Version: 4.1.4
 Homepage: https://www.linaro.org/initiatives/lava/
 Vcs-Git: https://github.com/Linaro/pkg-lava.git
 Vcs-Browser: https://github.com/Linaro/pkg-lava
