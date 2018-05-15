@@ -27,25 +27,24 @@ import logging
 import pexpect
 from nose.tools import nottest
 from collections import OrderedDict
-
-from lava_dispatcher.actions.test import (
-    TestAction,
-    handle_testcase
-)
-from lava_dispatcher.action import (
-    Pipeline,
+from lava_common.exceptions import (
     JobError,
     InfrastructureError,
     TestError,
     LAVABug,
 )
+from lava_dispatcher.actions.test import (
+    TestAction,
+    handle_testcase
+)
+from lava_dispatcher.action import Pipeline
 from lava_dispatcher.logical import (
     LavaTest,
     RetryAction
 )
 from lava_dispatcher.connection import SignalMatch
 from lava_dispatcher.protocols.lxc import LxcProtocol
-from lava_dispatcher.utils.constants import (
+from lava_common.constants import (
     DEFAULT_V1_PATTERN,
     DEFAULT_V1_FIXUP,
 )

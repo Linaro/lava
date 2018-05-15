@@ -20,17 +20,16 @@
 
 import os
 import re
-from lava_dispatcher.action import (
-    Action,
-    Pipeline,
+from lava_dispatcher.action import Action, Pipeline
+from lava_common.timeout import Timeout
+from lava_common.exceptions import (
     InfrastructureError,
     JobError,
     ConfigurationError,
-    Timeout,
     LAVABug)
 from lava_dispatcher.logical import Boot
 from lava_dispatcher.logical import RetryAction
-from lava_dispatcher.utils.constants import (
+from lava_common.constants import (
     DISPATCHER_DOWNLOAD_DIR,
     DISTINCTIVE_PROMPT_CHARACTERS,
     LINE_SEPARATOR,

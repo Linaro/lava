@@ -18,7 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from lava_dispatcher.utils.constants import LXC_PROTOCOL
+from lava_common.constants import LXC_PROTOCOL
 
 
 def is_lxc_requested(job):

@@ -28,9 +28,11 @@ import netifaces
 import random
 import socket
 import subprocess
-from lava_dispatcher.action import InfrastructureError
-from lava_dispatcher.utils.constants import XNBD_PORT_RANGE_MIN
-from lava_dispatcher.utils.constants import XNBD_PORT_RANGE_MAX
+from lava_common.exceptions import InfrastructureError
+from lava_common.constants import (
+    XNBD_PORT_RANGE_MIN,
+    XNBD_PORT_RANGE_MAX,
+)
 
 # pylint: disable=no-member
 

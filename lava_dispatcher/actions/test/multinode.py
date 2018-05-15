@@ -20,9 +20,9 @@
 
 import json
 from lava_dispatcher.actions.test.shell import TestShellAction
-from lava_dispatcher.action import (
+from lava_common.timeout import Timeout
+from lava_common.exceptions import (
     TestError,
-    Timeout,
     MultinodeProtocolTimeoutError
 )
 from lava_dispatcher.actions.test import LavaTest

@@ -23,16 +23,18 @@ import shutil
 import subprocess
 from lava_dispatcher.action import (
     Action,
+    Pipeline,
+)
+from lava_common.exceptions import (
     InfrastructureError,
     JobError,
     LAVABug,
-    Pipeline,
 )
-from lava_dispatcher.actions.deploy.overlay import OverlayAction
-from lava_dispatcher.utils.constants import (
+from lava_common.constants import (
     RAMDISK_FNAME,
     UBOOT_DEFAULT_HEADER_LENGTH,
 )
+from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.utils.contextmanager import chdir
 from lava_dispatcher.utils.installers import (
     add_late_command,

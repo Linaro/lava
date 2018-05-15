@@ -21,7 +21,8 @@
 import re
 import subprocess
 
-from lava_dispatcher.action import InfrastructureError, JobError, Pipeline
+from lava_common.exceptions import InfrastructureError, JobError
+from lava_dispatcher.action import Pipeline
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.actions.deploy.overlay import OverlayAction

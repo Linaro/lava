@@ -22,10 +22,10 @@ import re
 import pexpect
 
 from collections import OrderedDict
-from lava_dispatcher.action import (
+from lava_dispatcher.action import Pipeline
+from lava_common.exceptions import (
     InfrastructureError,
     LAVABug,
-    Pipeline,
 )
 from lava_dispatcher.actions.test import (
     TestAction,

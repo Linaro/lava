@@ -22,7 +22,7 @@
 import os
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
-from lava_dispatcher.action import JobError, ConfigurationError
+from lava_common.exceptions import JobError, ConfigurationError
 from lava_dispatcher.test.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.test.utils import DummyLogger
 

@@ -20,10 +20,10 @@
 
 import shutil
 
+from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.action import (
     Pipeline,
     Action,
-    InfrastructureError
 )
 from lava_dispatcher.actions.boot import BootAction
 from lava_dispatcher.connections.serial import ConnectDevice

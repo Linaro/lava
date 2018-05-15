@@ -18,10 +18,12 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from lava_dispatcher.action import (
-    Action,
+from lava_common.exceptions import (
     ConfigurationError,
     InfrastructureError,
+)
+from lava_dispatcher.action import (
+    Action,
     Pipeline,
 )
 from lava_dispatcher.logical import Boot, RetryAction

@@ -19,10 +19,11 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
+from lava_common.constants import SYS_CLASS_KVM
+from lava_common.exceptions import JobError
 from lava_dispatcher.action import (
     Pipeline,
     Action,
-    JobError,
 )
 from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.actions.boot import BootAction
@@ -34,12 +35,11 @@ from lava_dispatcher.shell import (
 )
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.strings import substitute
-from lava_dispatcher.utils.constants import SYS_CLASS_KVM
 from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.filesystem import debian_package_version, debian_package_arch
 from lava_dispatcher.actions.boot import AutoLoginAction, OverlayUnpack
 
-# pylint: disable=too-many-instance-attributes,too-many-branches
+# pylint: disable=too-many-instance-attributes,too-many-branches,too-many-statements
 
 
 # FIXME: decide if 'media: tmpfs' is necessary or remove from YAML. Only removable needs 'media'

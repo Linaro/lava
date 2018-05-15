@@ -24,7 +24,8 @@
 import os
 import tempfile
 
-from lava_dispatcher.action import Pipeline, JobError
+from lava_dispatcher.action import Pipeline
+from lava_common.exceptions import JobError
 from lava_dispatcher.logical import Deployment
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.download import DownloaderAction

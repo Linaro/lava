@@ -20,12 +20,11 @@
 
 
 import os
-from lava_dispatcher.action import (
-    Action,
+from lava_dispatcher.action import Action, Pipeline
+from lava_common.exceptions import (
     InfrastructureError,
     JobError,
     LAVABug,
-    Pipeline,
 )
 from lava_dispatcher.logical import Boot
 from lava_dispatcher.actions.boot import (
@@ -35,12 +34,11 @@ from lava_dispatcher.actions.boot import (
     AdbOverlayUnpack,
 )
 from lava_dispatcher.power import ResetDevice, PreOs
-from lava_dispatcher.utils.constants import LAVA_LXC_HOME
+from lava_common.constants import LAVA_LXC_HOME
 from lava_dispatcher.utils.lxc import is_lxc_requested
 from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.connections.adb import ConnectAdb
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
-from lava_dispatcher.protocols.lxc import LxcProtocol
 from lava_dispatcher.shell import ExpectShellSession
 from lava_dispatcher.actions.boot.u_boot import UBootEnterFastbootAction
 
@@ -152,9 +150,9 @@ class WaitFastBootInterrupt(Action):
     description = "Check for prompt and pass the interrupt string to exit fastboot."
     summary = "watch output and try to interrupt fastboot"
 
-    def __init__(self, type):
+    def __init__(self, itype):
         super().__init__()
-        self.type = type
+        self.type = itype
         self.prompt = None
         self.string = None
 

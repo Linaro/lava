@@ -20,8 +20,8 @@
 
 import pyudev
 import time
-from lava_dispatcher.action import (
-    Action,
+from lava_dispatcher.action import Action
+from lava_common.exceptions import (
     LAVABug,
     InfrastructureError,
 )

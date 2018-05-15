@@ -21,9 +21,9 @@
 import os
 import yaml
 from lava_dispatcher.logical import Deployment
+from lava_common.exceptions import LAVABug
 from lava_dispatcher.action import (
     JobError,
-    LAVABug,
     Pipeline,
 )
 from lava_dispatcher.actions.deploy import DeployAction
@@ -36,7 +36,7 @@ from lava_dispatcher.actions.boot.lxc import (
 )
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.protocols.lxc import LxcProtocol
-from lava_dispatcher.utils.constants import (
+from lava_common.constants import (
     LXC_PATH,
     LXC_TEMPLATE_WITH_MIRROR,
     LXC_DEFAULT_PACKAGES,

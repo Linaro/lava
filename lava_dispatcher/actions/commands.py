@@ -18,10 +18,8 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from lava_dispatcher.action import (
-    Action,
-    ConfigurationError,
-)
+from lava_dispatcher.action import Action
+from lava_common.exceptions import ConfigurationError
 
 
 class CommandAction(Action):

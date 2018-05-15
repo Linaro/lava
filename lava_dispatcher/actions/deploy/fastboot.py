@@ -22,8 +22,11 @@ import os
 from lava_dispatcher.logical import Deployment
 from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.power import ResetDevice, PrePower
-from lava_dispatcher.action import (
+from lava_common.exceptions import (
     InfrastructureError,
+    JobError,
+)
+from lava_dispatcher.action import (
     JobError,
     Pipeline,
     Action,

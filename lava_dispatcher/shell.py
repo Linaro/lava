@@ -24,16 +24,16 @@ import pexpect
 import sre_constants
 import sys
 import time
-from lava_dispatcher.action import (
-    Action,
+from lava_dispatcher.action import Action
+from lava_common.exceptions import (
     InfrastructureError,
     JobError,
     LAVABug,
     TestError,
-    Timeout,
 )
+from lava_common.timeout import Timeout
 from lava_dispatcher.connection import Connection
-from lava_dispatcher.utils.constants import LINE_SEPARATOR
+from lava_common.constants import LINE_SEPARATOR
 from lava_dispatcher.utils.strings import seconds_to_str
 
 

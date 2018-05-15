@@ -19,10 +19,10 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import time
+from lava_common.exceptions import JobError
 from lava_dispatcher.action import (
     Pipeline,
     Action,
-    JobError,
 )
 from lava_dispatcher.logical import Boot
 from lava_dispatcher.actions.boot import BootAction

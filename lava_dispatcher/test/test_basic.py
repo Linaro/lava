@@ -29,6 +29,8 @@ import yaml
 from lava_dispatcher.action import (
     Pipeline,
     Action,
+)
+from lava_common.exceptions import (
     JobError,
     LAVABug,
     LAVAError,

@@ -31,8 +31,8 @@ import magic
 import errno
 from configobj import ConfigObj
 
-from lava_dispatcher.action import InfrastructureError, JobError, LAVABug
-from lava_dispatcher.utils.constants import (
+from lava_common.exceptions import InfrastructureError, JobError, LAVABug
+from lava_common.constants import (
     LXC_PATH,
     LAVA_LXC_HOME,
 )

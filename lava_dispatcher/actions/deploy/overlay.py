@@ -24,12 +24,8 @@ import glob
 import shutil
 import tarfile
 from lava_dispatcher.actions.deploy import DeployAction
-from lava_dispatcher.action import (
-    Action,
-    InfrastructureError,
-    LAVABug,
-    Pipeline
-)
+from lava_dispatcher.action import Action, Pipeline
+from lava_common.exceptions import InfrastructureError, LAVABug
 from lava_dispatcher.actions.deploy.testdef import (
     TestDefinitionAction,
     get_test_action_namespaces,

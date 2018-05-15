@@ -19,11 +19,8 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 from lava_dispatcher.utils.shell import which
-from lava_dispatcher.action import (
-    Action,
-    JobError,
-    InfrastructureError
-)
+from lava_dispatcher.action import Action
+from lava_common.exceptions import JobError, InfrastructureError
 from lava_dispatcher.shell import (
     ShellCommand,
     ShellSession,

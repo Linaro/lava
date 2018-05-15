@@ -19,7 +19,8 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
-from lava_dispatcher.action import Pipeline, InfrastructureError, Action
+from lava_common.exceptions import InfrastructureError
+from lava_dispatcher.action import Pipeline, Action
 from lava_dispatcher.logical import Deployment
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.download import (

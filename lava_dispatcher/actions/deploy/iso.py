@@ -19,8 +19,8 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
-
-from lava_dispatcher.action import Action, JobError, Pipeline
+from lava_common.exceptions import JobError
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.logical import Deployment
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.download import DownloaderAction
@@ -34,7 +34,7 @@ from lava_dispatcher.utils.filesystem import (
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.filesystem import tftpd_dir
 from lava_dispatcher.utils.network import dispatcher_ip
-from lava_dispatcher.utils.constants import INSTALLER_IMAGE_MAX_SIZE
+from lava_common.constants import INSTALLER_IMAGE_MAX_SIZE
 
 
 class DeployIsoAction(DeployAction):  # pylint: disable=too-many-instance-attributes

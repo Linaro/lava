@@ -21,7 +21,7 @@
 
 import yaml
 
-from lava_dispatcher.action import ConfigurationError
+from lava_common.exceptions import ConfigurationError
 
 
 class PipelineDevice(dict):

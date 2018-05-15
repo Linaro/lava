@@ -21,7 +21,8 @@
 import os
 import yaml
 import unittest
-from lava_dispatcher.action import Action, ConfigurationError, JobError
+from lava_dispatcher.action import Action
+from lava_common.exceptions import ConfigurationError, JobError
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.actions.deploy import DeployAction

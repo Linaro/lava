@@ -22,7 +22,7 @@ import re
 import os
 import yaml
 import decimal
-from lava_dispatcher.action import TestError, JobError
+from lava_common.exceptions import TestError, JobError
 from lava_dispatcher.test.test_basic import StdoutTestCase, Factory
 from lava_dispatcher.test.test_multi import DummyLogger
 

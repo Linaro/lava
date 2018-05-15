@@ -21,9 +21,9 @@
 # List just the subclasses supported for this base strategy
 # imported by the parser to populate the list of subclasses.
 
+from lava_common.exceptions import ConfigurationError
 from lava_dispatcher.action import (
     Action,
-    ConfigurationError,
     Pipeline
 )
 from lava_dispatcher.logical import Boot
@@ -154,7 +154,7 @@ class GrubSequenceAction(BootAction):
             mapped = _grub_sequence_map(sequence)
             if mapped[1]:
                 self.internal_pipeline.add_action(
-                    mapped[0](type=mapped[1]))
+                    mapped[0](itype=mapped[1]))
             elif mapped[0]:
                 self.internal_pipeline.add_action(mapped[0]())
         if self.has_prompts(parameters):

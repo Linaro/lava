@@ -22,7 +22,7 @@ import os
 import yaml
 
 from lava_dispatcher.action import Action
-from lava_dispatcher.utils.constants import LINE_SEPARATOR
+from lava_common.constants import LINE_SEPARATOR
 
 
 class DeployDeviceEnvironment(Action):

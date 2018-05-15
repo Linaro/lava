@@ -21,11 +21,13 @@
 import os
 import re
 import glob
-from lava_dispatcher.action import (
-    Action,
+from lava_common.exceptions import (
     JobError,
     InfrastructureError,
     LAVABug,
+)
+from lava_dispatcher.action import (
+    Action,
     Pipeline
 )
 from lava_dispatcher.logical import RetryAction

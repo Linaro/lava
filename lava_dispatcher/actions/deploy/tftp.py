@@ -23,18 +23,15 @@
 
 import os
 import tempfile
-
-from lava_dispatcher.action import (
-    JobError,
-    Pipeline
-)
+from lava_common.exceptions import JobError
+from lava_dispatcher.action import Pipeline
 from lava_dispatcher.logical import Deployment
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.lxc import LxcCreateUdevRuleAction
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.apply_overlay import PrepareOverlayTftp
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
-from lava_dispatcher.utils.constants import TFTP_SIZE_LIMIT
+from lava_common.constants import TFTP_SIZE_LIMIT
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.filesystem import tftpd_dir
 

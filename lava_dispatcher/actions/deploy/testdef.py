@@ -28,18 +28,20 @@ import tarfile
 import shutil
 from collections import OrderedDict
 from nose.tools import nottest
-from lava_dispatcher.action import (
-    Action,
+from lava_common.exceptions import (
     InfrastructureError,
     JobError,
     LAVABug,
-    Pipeline,
     TestError,
+)
+from lava_dispatcher.action import (
+    Action,
+    Pipeline,
 )
 from lava_dispatcher.actions.test import TestAction
 from lava_dispatcher.utils.strings import indices
 from lava_dispatcher.utils.vcs import BzrHelper, GitHelper
-from lava_dispatcher.utils.constants import (
+from lava_common.constants import (
     DEFAULT_V1_FIXUP,
     DEFAULT_V1_PATTERN,
     DEFAULT_TESTDEF_NAME_CLASS,

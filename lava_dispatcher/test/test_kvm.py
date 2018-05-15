@@ -26,12 +26,15 @@ import unittest
 import yaml
 import pexpect
 
+from lava_common.constants import SYS_CLASS_KVM
+from lava_common.exceptions import (
+    JobError,
+    InfrastructureError,
+)
 from lava_dispatcher.utils.filesystem import mkdtemp
 from lava_dispatcher.action import (
     Pipeline,
     Action,
-    JobError,
-    InfrastructureError,
 )
 from lava_dispatcher.test.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.job import Job
@@ -44,7 +47,6 @@ from lava_dispatcher.utils.messages import LinuxKernelMessages
 from lava_dispatcher.test.test_defs import allow_missing_path, check_missing_path
 from lava_dispatcher.test.utils import DummyLogger, infrastructure_error
 from lava_dispatcher.utils.strings import substitute
-from lava_dispatcher.utils.constants import SYS_CLASS_KVM
 
 # pylint: disable=invalid-name
 

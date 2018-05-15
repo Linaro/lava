@@ -24,6 +24,13 @@ import yaml
 import uuid
 import json
 import logging
+from lava_common.constants import LAVA_MULTINODE_SYSTEM_TIMEOUT
+from lava_common.timeout import Timeout
+from lava_common.exceptions import (
+    TestError,
+    JobError,
+    InfrastructureError,
+)
 from lava_dispatcher.test.fake_coordinator import TestCoordinator
 from lava_dispatcher.test.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.actions.deploy.image import DeployImagesAction
@@ -35,13 +42,6 @@ from lava_dispatcher.actions.boot.qemu import BootQemuRetry, CallQemuAction
 from lava_dispatcher.actions.boot import BootAction
 from lava_dispatcher.actions.test.multinode import MultinodeTestAction
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
-from lava_dispatcher.action import (
-    TestError,
-    JobError,
-    Timeout,
-    InfrastructureError,
-)
-from lava_dispatcher.utils.constants import LAVA_MULTINODE_SYSTEM_TIMEOUT
 from lava_dispatcher.test.test_defs import allow_missing_path
 from lava_dispatcher.test.utils import DummyLogger
 

@@ -38,7 +38,7 @@ from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.strings import substitute
-from lava_dispatcher.utils.constants import (
+from lava_common.constants import (
     DD_PROMPTS,
 )
 

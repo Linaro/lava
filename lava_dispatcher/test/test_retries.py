@@ -22,7 +22,9 @@ import time
 from lava_dispatcher.action import (
     Action,
     Pipeline,
-    Timeout,
+)
+from lava_common.timeout import Timeout
+from lava_common.exceptions import (
     JobError,
     LAVABug,
     InfrastructureError,

@@ -20,9 +20,9 @@
 
 
 from lava_dispatcher.logical import Boot
+from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.action import (
     Action,
-    InfrastructureError,
     Pipeline,
 )
 from lava_dispatcher.power import PowerOn, PowerOff

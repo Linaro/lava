@@ -21,9 +21,9 @@
 
 
 import os.path
+from lava_common.exceptions import ConfigurationError
 from lava_dispatcher.action import (
     Action,
-    ConfigurationError,
     Pipeline,
 )
 from lava_dispatcher.actions.boot import (

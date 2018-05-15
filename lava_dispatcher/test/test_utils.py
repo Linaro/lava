@@ -29,7 +29,8 @@ from lava_dispatcher.test.test_uboot import UBootFactory, StdoutTestCase
 from lava_dispatcher.actions.boot.u_boot import UBootAction, UBootRetry
 from lava_dispatcher.power import ResetDevice, PDUReboot
 from lava_dispatcher.test.utils import infrastructure_error
-from lava_dispatcher.action import InfrastructureError, Action
+from lava_common.exceptions import InfrastructureError
+from lava_dispatcher.action import Action
 from lava_dispatcher.utils import vcs, installers
 
 

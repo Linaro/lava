@@ -24,7 +24,8 @@ import re
 import logging
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
-from lava_dispatcher.action import Timeout, JobError
+from lava_common.timeout import Timeout
+from lava_common.exceptions import JobError
 from lava_dispatcher.shell import ShellSession, ShellCommand
 from lava_dispatcher.test.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.test.utils import DummyLogger

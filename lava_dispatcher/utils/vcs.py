@@ -23,7 +23,7 @@ import os
 import shutil
 import subprocess
 import yaml
-from lava_dispatcher.action import InfrastructureError
+from lava_common.exceptions import InfrastructureError
 
 
 # pylint: disable=too-few-public-methods

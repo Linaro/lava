@@ -20,11 +20,8 @@
 
 import os
 
-from lava_dispatcher.action import (
-    Action,
-    Pipeline,
-    InfrastructureError,
-)
+from lava_dispatcher.action import Action, Pipeline
+from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.strings import map_kernel_uboot
 

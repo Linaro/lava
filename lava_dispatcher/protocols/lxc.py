@@ -26,14 +26,14 @@ import logging
 import traceback
 import subprocess
 from lava_dispatcher.connection import Protocol
-from lava_dispatcher.action import (
+from lava_common.exceptions import (
     InfrastructureError,
     LAVABug,
     TestError,
     JobError,
-    Timeout,
 )
-from lava_dispatcher.utils.constants import (
+from lava_common.timeout import Timeout
+from lava_common.constants import (
     LXC_PROTOCOL,
     LAVA_LXC_TIMEOUT,
     LXC_PATH,

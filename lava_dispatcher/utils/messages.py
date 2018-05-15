@@ -20,8 +20,9 @@
 
 import time
 import pexpect
-from lava_dispatcher.action import Action, TestError, JobError
-from lava_dispatcher.utils.constants import (
+from lava_dispatcher.action import Action
+from lava_common.exceptions import TestError, JobError
+from lava_common.constants import (
     KERNEL_FREE_UNUSED_MSG,
     KERNEL_FREE_INIT_MSG,
     KERNEL_EXCEPTION_MSG,

@@ -19,9 +19,14 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 
+from lava_common.exceptions import InfrastructureError
+from lava_common.constants import (
+    DEFAULT_UEFI_LABEL_CLASS,
+    LINE_SEPARATOR,
+    UEFI_LINE_SEPARATOR,
+)
 from lava_dispatcher.action import (
     Action,
-    InfrastructureError,
     Pipeline,
 )
 from lava_dispatcher.menus.menus import (
@@ -37,11 +42,6 @@ from lava_dispatcher.utils.strings import substitute
 from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.actions.boot import BootAction, AutoLoginAction
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
-from lava_dispatcher.utils.constants import (
-    DEFAULT_UEFI_LABEL_CLASS,
-    LINE_SEPARATOR,
-    UEFI_LINE_SEPARATOR,
-)
 
 
 class UefiMenu(Boot):

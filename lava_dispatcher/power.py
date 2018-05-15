@@ -22,14 +22,13 @@
 # imported by the parser to populate the list of subclasses.
 
 
-from lava_dispatcher.action import (
-    Action,
+from lava_common.exceptions import (
     InfrastructureError,
-    Pipeline,
     JobError,
     TestError,
 )
-from lava_dispatcher.utils.constants import REBOOT_COMMAND_LIST
+from lava_common.constants import REBOOT_COMMAND_LIST
+from lava_dispatcher.action import Action, Pipeline
 
 # pylint: disable=missing-docstring
 

@@ -28,7 +28,7 @@ import os
 import subprocess
 import tarfile
 
-from lava_dispatcher.action import (
+from lava_common.exceptions import (
     InfrastructureError,
     JobError
 )

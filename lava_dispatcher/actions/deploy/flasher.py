@@ -20,7 +20,8 @@
 
 import yaml
 
-from lava_dispatcher.action import Pipeline, JobError
+from lava_common.exceptions import JobError
+from lava_dispatcher.action import Pipeline
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment

@@ -36,7 +36,7 @@ from lava_dispatcher.power import (
     ResetDevice
 )
 from lava_dispatcher.shell import ExpectShellSession
-from lava_dispatcher.utils.constants import UEFI_LINE_SEPARATOR
+from lava_common.constants import UEFI_LINE_SEPARATOR
 
 
 class UefiShell(Boot):

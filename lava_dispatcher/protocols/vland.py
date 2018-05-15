@@ -25,9 +25,9 @@ import json
 import socket
 import logging
 from lava_dispatcher.connection import Protocol
-from lava_dispatcher.action import JobError, TestError
+from lava_common.exceptions import JobError, TestError
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
-from lava_dispatcher.utils.constants import VLAND_DEPLOY_TIMEOUT
+from lava_common.constants import VLAND_DEPLOY_TIMEOUT
 
 
 # pylint: disable=too-many-instance-attributes
