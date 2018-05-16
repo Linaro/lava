@@ -504,7 +504,11 @@ class TestKernelConversion(StdoutTestCase):
         self.assertNotIn('uboot-prepare-kernel', [action.name for action in overlay.internal_pipeline.actions])
 
 
-class TestOverlayCommands(TestUbootAction):  # pylint: disable=too-many-public-methods
+class TestOverlayCommands(StdoutTestCase):  # pylint: disable=too-many-public-methods
+
+    def setUp(self):
+        super().setUp()
+        self.factory = UBootFactory()
 
     def test_combined_ramdisk_nfs(self):
         job = self.factory.create_bbb_job('sample_jobs/bbb-ramdisk-nfs.yaml')
