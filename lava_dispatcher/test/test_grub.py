@@ -312,3 +312,10 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertIsNotNone(wait)
         login = [action for action in grub_seq.internal_pipeline.actions if action.name == 'auto-login-action'][0]
         self.assertIsNotNone(login)
+
+    def test_synquacer_grub(self):
+        job = self.factory.create_job('synquacer-dtb-01.jinja2', 'sample_jobs/synquacer-dtb.yaml')
+        self.assertIsNotNone(job)
+        job.validate()
+        description_ref = self.pipeline_reference('synquacer_dtb.yaml', job=job)
+        self.assertEqual(description_ref, job.pipeline.describe(False))

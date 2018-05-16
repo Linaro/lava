@@ -1,0 +1,4 @@
+{% extends 'moonshot-m400.jinja2' %}
+{% set hard_reset_command = '/root/ilo-power-reboot c17n1' %}
+{% set power_off_command = '/root/ilo-power-off c17n1' %}
+{% set connection_command = '/root/ilo-console c17n1' %}

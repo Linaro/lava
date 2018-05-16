@@ -1,0 +1,4 @@
+{% extends 'x86-celeron.jinja2' %}
+{% set hard_reset_command = '/usr/bin/pduclient --daemon lava-master --hostname pdu01 --command reboot --port 06' %}
+{% set power_off_command = '/usr/bin/pduclient --daemon lava-master --hostname pdu01 --command off --port 06' %}
+{% set connection_command = 'telnet starscream 8003' %}
