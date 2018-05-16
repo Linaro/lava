@@ -601,7 +601,9 @@ class BootloaderInterruptAction(Action):
     def validate(self):
         super().validate()
         # 'to' only exists in deploy, this action can be used in boot too.
-        if self.parameters.get('to', "") == 'fastboot' or self.parameters.get('method', "") == 'fastboot':
+        deployment = self.parameters.get('to', "")
+        boot_method = self.parameters.get('method', "")
+        if deployment in ['fastboot', 'download'] or boot_method in ['fastboot', 'download']:
             if self.job.device.get('fastboot_via_uboot', False):
                 self.method = 'u-boot'
         else:

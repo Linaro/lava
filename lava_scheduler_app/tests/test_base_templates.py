@@ -44,6 +44,8 @@ class BaseTemplate(object):
                 job_ctx = {}
             self.assertTrue(self.validate_data(device, data))
             test_template = prepare_jinja_template(device, data)
+            if not job_ctx:
+                job_ctx = {}
             return test_template.render(**job_ctx)
 
         def render_device_dictionary(self, hostname, data, job_ctx=None):

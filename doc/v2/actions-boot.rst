@@ -405,6 +405,30 @@ The ``fastboot`` boot method takes no arguments or parameters.
 .. note:: Since all fastboot :term:`DUT` depend on LXC to run jobs, it is
           mandatory to have the namespace specified.
 
+.. index:: boot method fastboot commands
+
+.. _boot_method_fastboot_commands:
+
+fastboot boot commands
+----------------------
+
+Some test jobs may need to add a ``fastboot`` command prior to boot, for
+example to specify whether the ``_a`` or ``_b`` partitions are to be
+active.
+
+If the test job specifies the ``images`` labels as ``boot_a`` instead
+of ``boot``, then a fastboot boot command will be required to make sure
+that the device boots from ``boot_a`` instead of ``boot_b`` (which may
+contain an old deployment from a previous test job or may contain nothing
+at all).
+
+.. code-block:: yaml
+
+  - boot:
+      method: fastboot
+      commands:
+      - --set-active=_a
+
 .. index:: boot method grub
 
 .. _boot_method_grub:

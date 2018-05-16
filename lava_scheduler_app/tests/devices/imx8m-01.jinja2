@@ -1,0 +1,20 @@
+{% extends 'imx8m.jinja2' %}
+{# USB C cable in Cambrionix port 7 #}
+{% set fastboot_serial_number = '130651d6f060954b' %}
+{% set adb_serial_number = fastboot_serial_number %}
+{% set connection_list = ['uart0'] %}
+{% set connection_tags = {'uart0': ['primary', 'telnet']} %}
+{% set connection_commands = {'uart0': 'telnet azrael 2030'} %}
+{% set soft_reset_command = 'fastboot -u -s ' + fastboot_serial_number + ' reboot' %}
+{% set hard_reset_command = [
+'/usr/bin/pduclient --daemon calvin --hostname pdu2 --command off --port 01',
+'/home/neil/code/lava-lab/shared/lab-scripts/usb_hub_control -u 7 -p 4000 -m off',
+'sleep 20',
+'/home/neil/code/lava-lab/shared/lab-scripts/usb_hub_control -u 7 -p 4000 -m sync',
+'/usr/bin/pduclient --daemon calvin --hostname pdu2 --command on --port 01'] %}
+{% set power_off_command = '/usr/bin/pduclient --daemon calvin --hostname pdu2 --command off --port 01' %}
+{% set power_on_command = '/usr/bin/pduclient --daemon calvin --hostname pdu2 --command on --port 01' %}
+{% set adb_command = 'adb -s ' + fastboot_serial_number %}
+{% set fastboot_command = 'fastboot -u -s ' + fastboot_serial_number %}
+{% set device_info = [{'board_id': fastboot_serial_number}] %}
+{% set fastboot_options = ['-i', '0x0525'] %}

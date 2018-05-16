@@ -21,11 +21,7 @@
 
 import os
 from lava_dispatcher.action import Action, Pipeline
-from lava_common.exceptions import (
-    InfrastructureError,
-    JobError,
-    LAVABug,
-)
+from lava_common.exceptions import InfrastructureError, JobError, LAVABug
 from lava_dispatcher.logical import Boot
 from lava_dispatcher.actions.boot import (
     BootAction,
@@ -59,6 +55,7 @@ class BootFastboot(Boot):
     """
     Expects fastboot bootloader, and boots.
     """
+
     compatibility = 1
 
     def __init__(self, parent, parameters):
@@ -76,11 +73,30 @@ class BootFastboot(Boot):
         return False, 'boot "method" was not "fastboot"'
 
 
+class BootFastbootCommands(Action):
+
+    name = "fastboot-boot-commands"
+    description = "Run custom fastboot commands before boot"
+    summary = "Run fastboot boot commands"
+
+    def run(self, connection, max_end_time):
+        serial_number = self.job.device['fastboot_serial_number']
+        self.logger.info("Running custom fastboot boot commands....")
+        for command in self.parameters.get("commands"):
+            pre_cmd = (
+                lxc_cmd_prefix(self.job)
+                + ["fastboot", "-s", serial_number, command]
+                + self.job.device["fastboot_options"]
+            )
+            self.run_command(pre_cmd)
+
+
 class BootFastbootAction(BootAction):
     """
     Provide for auto_login parameters in this boot stanza and re-establish the
     connection after boot.
     """
+
     name = "fastboot-boot"
     description = "fastboot boot into the system"
     summary = "fastboot boot"
@@ -99,6 +115,10 @@ class BootFastbootAction(BootAction):
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job,
                                           parameters=parameters)
+
+        if parameters.get("commands"):
+            self.internal_pipeline.add_action(BootFastbootCommands())
+
         # Always ensure the device is in fastboot mode before trying to boot.
         # Check if the device has a power command such as HiKey, Dragonboard,
         # etc. against device that doesn't like Nexus, etc.

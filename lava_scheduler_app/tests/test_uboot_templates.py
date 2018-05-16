@@ -411,6 +411,55 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
         self.assertEqual('Shell>', template_dict['actions']['boot']['methods']['uefi']['parameters']['bootloader_prompt'])
         self.assertEqual('Start:', template_dict['actions']['boot']['methods']['uefi-menu']['parameters']['bootloader_prompt'])
 
+    def test_imx8m_template(self):
+        fastboot_cmd_order = ['update',
+                              'ptable',
+                              'partition',
+                              'hyp',
+                              'modem',
+                              'rpm',
+                              'sbl1',
+                              'sbl2',
+                              'sec',
+                              'tz',
+                              'aboot',
+                              'boot',
+                              'rootfs',
+                              'vendor',
+                              'system',
+                              'cache',
+                              'userdata']
+
+        rendered = self.render_device_dictionary_file('imx8m-01.jinja2')
+        template_dict = yaml.load(rendered)
+        self.assertIsNotNone(template_dict)
+        self.assertIn('error-messages', template_dict['constants']['u-boot'])
+        self.assertEqual('u-boot=>', template_dict['actions']['boot']['methods']['u-boot']['parameters']['bootloader_prompt'])
+
+        context = {'bootloader_prompt': 'imx8m=>'}
+        rendered = self.render_device_dictionary_file('imx8m-01.jinja2', context)
+        template_dict = yaml.load(rendered)
+        self.assertIsNotNone(template_dict)
+        self.assertIn('error-messages', template_dict['constants']['u-boot'])
+        self.assertEqual('imx8m=>', template_dict['actions']['boot']['methods']['u-boot']['parameters']['bootloader_prompt'])
+
+        for cmd in template_dict['flash_cmds_order']:
+            idx = template_dict['flash_cmds_order'].index(cmd)
+            self.assertEqual(cmd, fastboot_cmd_order[idx])
+        # test overwriting kernel args
+        checked = False
+        context = {'console_device': 'ttyUSB1'}
+        rendered = self.render_device_dictionary_file('imx8m-01.jinja2', context)
+        template_dict = yaml.load(rendered)
+        commands = template_dict['actions']['boot']['methods']['u-boot']['ramdisk']['commands']
+        self.assertIsNotNone(commands)
+        self.assertIsInstance(commands, list)
+        for line in commands:
+            if 'setenv bootargs' in line:
+                self.assertIn("console=ttyUSB1", line)
+                checked = True
+        self.assertTrue(checked)
+
     def test_xilinx_zcu102(self):
         with open(os.path.join(os.path.dirname(__file__), 'devices', 'zcu102.jinja2')) as zcu:
             data = zcu.read()

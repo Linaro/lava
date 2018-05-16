@@ -418,6 +418,18 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         description_ref = self.pipeline_reference('zcu102-ramdisk.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
 
+    def test_imx8m(self):
+        job = self.factory.create_job('imx8m-01.jinja2', 'sample_jobs/imx8m.yaml')
+        self.assertIsNotNone(job)
+        job.validate()
+        self.assertEqual(job.pipeline.errors, [])
+        description_ref = self.pipeline_reference('imx8m.yaml', job=job)
+        self.assertEqual(description_ref, job.pipeline.describe(False))
+        deploy = [action for action in job.pipeline.actions if action.name == 'fastboot-deploy'][0]
+        fastboot = [action for action in deploy.internal_pipeline.actions if action.name == 'uboot-enter-fastboot'][0]
+        bootloader = [action for action in fastboot.internal_pipeline.actions if action.name == 'bootloader-interrupt'][0]
+        self.assertEqual('u-boot', bootloader.method)
+
 
 class TestKernelConversion(StdoutTestCase):
 
