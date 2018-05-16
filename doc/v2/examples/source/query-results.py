@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 #  incomplete-results.py
@@ -27,10 +27,7 @@
 
 import sys
 import yaml
-if sys.version_info < (3, 0):
-    import xmlrpclib
-else:
-    import xmlrpc.client as xmlrpclib
+import xmlrpc.client
 
 # configuration
 USER = 'neil.williams'
@@ -60,7 +57,7 @@ STATUS_CHOICES = (
 # main_function
 def main(args):
     # change https to http when testing with localhost
-    connection = xmlrpclib.ServerProxy("https://%s:%s@%s/RPC2" % (USER, TOKEN, HOSTNAME))
+    connection = xmlrpc.client.ServerProxy("https://%s:%s@%s/RPC2" % (USER, TOKEN, HOSTNAME))
     data = connection.results.run_query(QUERY, 20, QUERY_USER)
     if not data:
         return 0
@@ -82,5 +79,4 @@ def main(args):
 
 
 if __name__ == '__main__':
-    import sys
     sys.exit(main(sys.argv))

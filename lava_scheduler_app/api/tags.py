@@ -16,20 +16,12 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Lava Server.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-
+import xmlrpc.client
 from django.db import IntegrityError
 
 from linaro_django_xmlrpc.models import ExposedV2API
 from lava_scheduler_app.api import check_superuser
 from lava_scheduler_app.models import Tag
-
-if sys.version_info[0] == 2:
-    # Python 2.x
-    import xmlrpclib
-elif sys.version_info[0] == 3:
-    # For Python 3.0 and later
-    import xmlrpc.client as xmlrpclib
 
 
 class SchedulerTagsAPI(ExposedV2API):
@@ -60,7 +52,7 @@ class SchedulerTagsAPI(ExposedV2API):
         try:
             Tag.objects.create(name=name, description=description)
         except IntegrityError as exc:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 400, "Bad request: %s" % exc.message)
 
     @check_superuser
@@ -87,7 +79,7 @@ class SchedulerTagsAPI(ExposedV2API):
         try:
             Tag.objects.get(name=name).delete()
         except Tag.DoesNotExist:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 404, "Tag '%s' was not found." % name)
 
     def list(self):
@@ -136,7 +128,7 @@ class SchedulerTagsAPI(ExposedV2API):
         try:
             tag = Tag.objects.get(name=name)
         except Tag.DoesNotExist:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 404, "Tag '%s' was not found." % name)
 
         devices = [d.hostname for d in tag.device_set.all() if d.is_visible_to(self.user)]

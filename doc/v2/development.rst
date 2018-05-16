@@ -783,7 +783,7 @@ functionality using :ref:`XML-RPC <xml_rpc>`.
     self._authenticate()
 
 #. Catch exceptions for all errors, ``SubmissionException``, ``DoesNotExist``
-   and others, then re-raise as ``xmlrpclib.Fault``.
+   and others, then re-raise as ``xmlrpc.client.Fault``.
 
 #. Move as much of the work into the relevant app as possible, either in
    ``models.py`` or in ``dbutils.py``. Wherever possible, re-use existing

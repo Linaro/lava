@@ -19,7 +19,7 @@
 
 import os
 import subprocess
-import sys
+import xmlrpc.client
 import yaml
 
 from django.http import Http404
@@ -28,13 +28,6 @@ from django.core.exceptions import PermissionDenied
 from lava_scheduler_app.views import get_restricted_job
 from lava_scheduler_app.models import Device, DeviceType
 from linaro_django_xmlrpc.models import errors, Mapper, SystemAPI
-
-if sys.version_info[0] == 2:
-    # Python 2.x
-    import xmlrpclib
-elif sys.version_info[0] == 3:
-    # For Python 3.0 and later
-    import xmlrpc.client as xmlrpclib
 
 
 class LavaSystemAPI(SystemAPI):
@@ -175,7 +168,7 @@ class LavaSystemAPI(SystemAPI):
         """
         self._authenticate()
         if not isinstance(job_list, list):
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 errors.BAD_REQUEST,
                 "job list argument must be a list")
         username = self._switch_user(username)
@@ -291,7 +284,7 @@ class LavaSystemAPI(SystemAPI):
         """
         self._authenticate()
         if not isinstance(device_list, list):
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 errors.BAD_REQUEST,
                 "device list argument must be a list")
         username = self._switch_user(username)
@@ -371,12 +364,12 @@ class LavaSystemAPI(SystemAPI):
         """
         self._authenticate()
         if not isinstance(type_list, list):
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 errors.BAD_REQUEST,
                 "type list argument must be a list")
         username = self._switch_user(username)
         if not username.has_perm('lava_scheduler_app.add_testjob'):
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 errors.FORBIDDEN,
                 "User '%s' does not have permissiont to submit jobs." % username
             )
@@ -454,7 +447,7 @@ class LavaSystemAPI(SystemAPI):
             if switch in network_map['switches']:
                 return yaml.dump(network_map['switches'][switch])
             else:
-                return xmlrpclib.Fault(
+                return xmlrpc.client.Fault(
                     404, "No switch '%s' was found in the network map of supported devices." % switch)
         return yaml.dump(network_map)
 

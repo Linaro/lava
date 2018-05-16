@@ -584,12 +584,13 @@ specified Device hostname:
 
 .. code-block:: python
 
-  import xmlrpclib
+  # Python3
+  import xmlrpc.client
   username = "USERNAME"
   token = "TOKEN_STRING"
   hostname = "HOSTNAME"
   protocol = "PROTOCOL"  # http or preferably https
-  server = xmlrpclib.ServerProxy("%s://%s:%s@%s/RPC2" % (protocol, username, token, hostname))
+  server = xmlrpc.client.ServerProxy("%s://%s:%s@%s/RPC2" % (protocol, username, token, hostname))
   server.scheduler.import_device_dictionary(device_hostname, jinja_string)
 
 If the dictionary did not exist for this hostname, it will be created. The

@@ -2,7 +2,7 @@ from functools import wraps
 from simplejson import JSONDecodeError
 import yaml
 import sys
-
+import xmlrpc.client
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Q
@@ -28,13 +28,6 @@ from lava_scheduler_app.schema import (
     SubmissionException,
 )
 
-if sys.version_info[0] == 2:
-    # Python 2.x
-    import xmlrpclib
-elif sys.version_info[0] == 3:
-    # For Python 3.0 and later
-    import xmlrpc.client as xmlrpclib
-
 # functions need to be members to be exposed in the API
 # pylint: disable=no-self-use
 
@@ -48,7 +41,7 @@ def check_superuser(f):
     def wrapper(self, *args, **kwargs):
         self._authenticate()
         if not self.user.is_superuser:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 403,
                 "User '%s' is not superuser." % self.user.username
             )
@@ -97,21 +90,21 @@ class SchedulerAPI(ExposedAPI):
         """
         self._authenticate()
         if not self.user.has_perm('lava_scheduler_app.add_testjob'):
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 403, "Permission denied.  User %r does not have the "
                 "'lava_scheduler_app.add_testjob' permission.  Contact "
                 "the administrators." % self.user.username)
         try:
             job = testjob_submission(job_data, self.user)
         except SubmissionException as exc:
-            raise xmlrpclib.Fault(400, "Problem with submitted job data: %s" % exc)
+            raise xmlrpc.client.Fault(400, "Problem with submitted job data: %s" % exc)
         # FIXME: json error is not needed anymore
         except (JSONDataError, JSONDecodeError, ValueError) as exc:
-            raise xmlrpclib.Fault(400, "Decoding job submission failed: %s." % exc)
+            raise xmlrpc.client.Fault(400, "Decoding job submission failed: %s." % exc)
         except (Device.DoesNotExist, DeviceType.DoesNotExist):
-            raise xmlrpclib.Fault(404, "Specified device or device type not found.")
+            raise xmlrpc.client.Fault(404, "Specified device or device type not found.")
         except DevicesUnavailableException as exc:
-            raise xmlrpclib.Fault(400, "Device unavailable: %s" % str(exc))
+            raise xmlrpc.client.Fault(400, "Device unavailable: %s" % str(exc))
         if isinstance(job, type(list())):
             return [j.sub_id for j in job]
         else:
@@ -140,14 +133,14 @@ class SchedulerAPI(ExposedAPI):
         """
         self._authenticate()
         if not self.user.has_perm('lava_scheduler_app.add_testjob'):
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 403, "Permission denied.  User %r does not have the "
                 "'lava_scheduler_app.add_testjob' permission.  Contact "
                 "the administrators." % self.user.username)
         try:
             job = get_restricted_job(self.user, job_id)
         except TestJob.DoesNotExist:
-            raise xmlrpclib.Fault(404, "Specified job not found.")
+            raise xmlrpc.client.Fault(404, "Specified job not found.")
 
         if job.is_multinode:
             return self.submit_job(job.multinode_definition)
@@ -175,23 +168,23 @@ class SchedulerAPI(ExposedAPI):
         """
         self._authenticate()
         if not job_id:
-            raise xmlrpclib.Fault(400, "Bad request: TestJob id was not "
-                                  "specified.")
+            raise xmlrpc.client.Fault(
+                400, "Bad request: TestJob id was not specified.")
 
         with transaction.atomic():
             try:
                 job = get_restricted_job(self.user, job_id, for_update=True)
             except PermissionDenied:
-                raise xmlrpclib.Fault(
+                raise xmlrpc.client.Fault(
                     401, "Permission denied for user to job %s" % job_id)
             except TestJob.DoesNotExist:
-                raise xmlrpclib.Fault(404, "Specified job not found.")
+                raise xmlrpc.client.Fault(404, "Specified job not found.")
 
             if job.state in [TestJob.STATE_CANCELING, TestJob.STATE_FINISHED]:
                 # Don't do anything for jobs that ended already
                 return True
             if not job.can_cancel(self.user):
-                raise xmlrpclib.Fault(403, "Permission denied.")
+                raise xmlrpc.client.Fault(403, "Permission denied.")
 
             if job.is_multinode:
                 multinode_jobs = TestJob.objects.select_for_update().filter(
@@ -232,12 +225,12 @@ class SchedulerAPI(ExposedAPI):
             # YAML can parse JSON as YAML, JSON cannot parse YAML at all
             yaml_data = yaml.load(yaml_string)
         except yaml.YAMLError as exc:
-            raise xmlrpclib.Fault(400, "Decoding job submission failed: %s." % exc)
+            raise xmlrpc.client.Fault(400, "Decoding job submission failed: %s." % exc)
         try:
             # validate against the submission schema.
             validate_submission(yaml_data)  # raises SubmissionException if invalid.
         except SubmissionException as exc:
-            raise xmlrpclib.Fault(400, "Invalid YAML submission: %s" % exc)
+            raise xmlrpc.client.Fault(400, "Invalid YAML submission: %s" % exc)
 
     def job_output(self, job_id, offset=0):
         """
@@ -264,22 +257,22 @@ class SchedulerAPI(ExposedAPI):
         """
         self._authenticate()
         if not job_id:
-            raise xmlrpclib.Fault(400, "Bad request: TestJob id was not "
-                                  "specified.")
+            raise xmlrpc.client.Fault(
+                400, "Bad request: TestJob id was not specified.")
         try:
             job = get_restricted_job(self.user, job_id)
         except PermissionDenied:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 401, "Permission denied for user to job %s" % job_id)
         except TestJob.DoesNotExist:
-            raise xmlrpclib.Fault(404, "Specified job not found.")
+            raise xmlrpc.client.Fault(404, "Specified job not found.")
 
         output_file = job.output_file()
         if output_file:
             output_file.seek(offset)
-            return xmlrpclib.Binary(output_file.read().encode('UTF-8'))
+            return xmlrpc.client.Binary(output_file.read().encode('UTF-8'))
         else:
-            raise xmlrpclib.Fault(404, "Job output not found.")
+            raise xmlrpc.client.Fault(404, "Job output not found.")
 
     def all_devices(self):
         """
@@ -402,22 +395,22 @@ class SchedulerAPI(ExposedAPI):
         ]
         """
         if not device_type:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 400, "Bad request: device_type was not specified."
             )
         if count < 0:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 400, "Bad request: count must not be negative."
             )
         try:
             dt = DeviceType.objects.get(name=device_type, display=True)
         except Device.DoesNotExist:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 404, "DeviceType '%s' was not found." % device_type
             )
 
         if not dt.some_devices_visible_to(self.user):
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 403, "DeviceType '%s' not available to user '%s'." %
                 (device_type, self.user)
             )
@@ -482,22 +475,22 @@ class SchedulerAPI(ExposedAPI):
         ]
         """
         if not device:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 400, "Bad request: device was not specified."
             )
         if count < 0:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 400, "Bad request: count must not be negative."
             )
         try:
             device_obj = Device.objects.get(hostname=device)
         except Device.DoesNotExist:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 404, "Device '%s' was not found." % device
             )
 
         if not device_obj.is_visible_to(self.user):
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 403, "Device '%s' not available to user '%s'." %
                 (device, self.user)
             )
@@ -588,13 +581,13 @@ class SchedulerAPI(ExposedAPI):
         """
 
         if not hostname:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 400, "Bad request: Hostname was not specified."
             )
         try:
             device = Device.objects.get(hostname=hostname)
         except Device.DoesNotExist:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 404, "Device '%s' was not found." % hostname
             )
 
@@ -611,7 +604,7 @@ class SchedulerAPI(ExposedAPI):
             if current_job is not None:
                 device_dict["job"] = current_job.pk
         else:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 403, "Permission denied for user to access %s information." % hostname
             )
         return device_dict
@@ -645,25 +638,25 @@ class SchedulerAPI(ExposedAPI):
 
         self._authenticate()
         if not hostname:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 400, "Bad request: Hostname was not specified."
             )
         if not reason:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 400, "Bad request: Reason was not specified."
             )
         with transaction.atomic():
             try:
                 device = Device.objects.select_for_update().get(hostname=hostname)
             except Device.DoesNotExist:
-                raise xmlrpclib.Fault(
+                raise xmlrpc.client.Fault(
                     404, "Device '%s' was not found." % hostname
                 )
             if device.can_admin(self.user):
                 device.health = Device.HEALTH_MAINTENANCE
                 device.save()
             else:
-                raise xmlrpclib.Fault(
+                raise xmlrpc.client.Fault(
                     403, "Permission denied for user to put %s into maintenance mode." % hostname
                 )
 
@@ -696,25 +689,25 @@ class SchedulerAPI(ExposedAPI):
 
         self._authenticate()
         if not hostname:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 400, "Bad request: Hostname was not specified."
             )
         if not reason:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 400, "Bad request: Reason was not specified."
             )
         with transaction.atomic():
             try:
                 device = Device.objects.select_for_update().get(hostname=hostname)
             except Device.DoesNotExist:
-                raise xmlrpclib.Fault(
+                raise xmlrpc.client.Fault(
                     404, "Device '%s' was not found." % hostname
                 )
             if device.can_admin(self.user):
                 device.health = Device.HEALTH_UNKNOWN
                 device.save()
             else:
-                raise xmlrpclib.Fault(
+                raise xmlrpc.client.Fault(
                     403, "Permission denied for user to put %s into online mode." % hostname
                 )
 
@@ -792,8 +785,8 @@ class SchedulerAPI(ExposedAPI):
         """
         self._authenticate()
         if not job_id:
-            raise xmlrpclib.Fault(400, "Bad request: TestJob id was not "
-                                  "specified.")
+            raise xmlrpc.client.Fault(
+                400, "Bad request: TestJob id was not specified.")
         try:
             job = get_restricted_job(self.user, job_id)
             job.status = job.get_legacy_status_display()
@@ -803,10 +796,10 @@ class SchedulerAPI(ExposedAPI):
             job.absolute_url = job.get_absolute_url()
             job.is_pipeline = True
         except PermissionDenied:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 401, "Permission denied for user to job %s" % job_id)
         except TestJob.DoesNotExist:
-            raise xmlrpclib.Fault(404, "Specified job not found.")
+            raise xmlrpc.client.Fault(404, "Specified job not found.")
 
         return job
 
@@ -842,15 +835,15 @@ class SchedulerAPI(ExposedAPI):
         """
         self._authenticate()
         if not job_id:
-            raise xmlrpclib.Fault(400, "Bad request: TestJob id was not "
-                                  "specified.")
+            raise xmlrpc.client.Fault(
+                400, "Bad request: TestJob id was not specified.")
         try:
             job = get_restricted_job(self.user, job_id)
         except PermissionDenied:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 401, "Permission denied for user to job %s" % job_id)
         except TestJob.DoesNotExist:
-            raise xmlrpclib.Fault(404, "Specified job not found.")
+            raise xmlrpc.client.Fault(404, "Specified job not found.")
 
         job_status = {'job_id': job.id}
 
@@ -904,9 +897,9 @@ class SchedulerAPI(ExposedAPI):
         # optimise the query for a long list instead of using the
         # convenience handlers
         if not isinstance(job_id_list, list):
-            raise xmlrpclib.Fault(400, "Bad request: needs to be a list")
+            raise xmlrpc.client.Fault(400, "Bad request: needs to be a list")
         if not all(isinstance(chk, (float, int)) for chk in job_id_list):
-            raise xmlrpclib.Fault(400, "Bad request: needs to be a list of integers or floats")
+            raise xmlrpc.client.Fault(400, "Bad request: needs to be a list of integers or floats")
         jobs = TestJob.objects.filter(
             Q(id__in=job_id_list) | Q(sub_id__in=job_id_list)).select_related(
                 'actual_device', 'requested_device_type')
@@ -947,15 +940,15 @@ class SchedulerAPI(ExposedAPI):
         """
         self._authenticate()
         if not job_id:
-            raise xmlrpclib.Fault(400, "Bad request: TestJob id was not "
-                                  "specified.")
+            raise xmlrpc.client.Fault(
+                400, "Bad request: TestJob id was not specified.")
         try:
             job = get_restricted_job(self.user, job_id)
         except PermissionDenied:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 401, "Permission denied for user to job %s" % job_id)
         except TestJob.DoesNotExist:
-            raise xmlrpclib.Fault(404, "Specified job not found.")
+            raise xmlrpc.client.Fault(404, "Specified job not found.")
 
         job_health = {
             'job_id': job.id,
@@ -995,15 +988,15 @@ class SchedulerAPI(ExposedAPI):
         """
         self._authenticate()
         if not job_id:
-            raise xmlrpclib.Fault(400, "Bad request: TestJob id was not "
-                                  "specified.")
+            raise xmlrpc.client.Fault(
+                400, "Bad request: TestJob id was not specified.")
         try:
             job = get_restricted_job(self.user, job_id)
         except PermissionDenied:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 401, "Permission denied for user to job %s" % job_id)
         except TestJob.DoesNotExist:
-            raise xmlrpclib.Fault(404, "Specified job not found.")
+            raise xmlrpc.client.Fault(404, "Specified job not found.")
 
         job_state = {
             'job_id': job.id,
@@ -1099,28 +1092,28 @@ class SchedulerAPI(ExposedAPI):
         This function returns an XML-RPC binary data of output file.
         """
         if not device_hostname:
-            raise xmlrpclib.Fault(400, "Bad request: Device hostname was not "
-                                  "specified.")
+            raise xmlrpc.client.Fault(
+                400, "Bad request: Device hostname was not specified.")
 
         job_ctx = None
         if context is not None:
             try:
                 job_ctx = yaml.load(context)
             except yaml.YAMLError as exc:
-                raise xmlrpclib.Fault(
+                raise xmlrpc.client.Fault(
                     400,
                     "Job context '%s' is not valid. %s" % (context, exc))
         try:
             device = Device.objects.get(hostname=device_hostname)
         except Device.DoesNotExist:
-            raise xmlrpclib.Fault(404, "Specified device was not found.")
+            raise xmlrpc.client.Fault(404, "Specified device was not found.")
 
         config = device.load_configuration(job_ctx=job_ctx, output_format="yaml")
 
         # validate against the device schema
         validate_device(yaml.load(config))
 
-        return xmlrpclib.Binary(config.encode('UTF-8'))
+        return xmlrpc.client.Binary(config.encode('UTF-8'))
 
     def import_device_dictionary(self, hostname, jinja_str):
         """
@@ -1147,18 +1140,18 @@ class SchedulerAPI(ExposedAPI):
         """
         self._authenticate()
         if not self.user.is_superuser:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 403,
                 "User '%s' is not superuser." % self.user.username
             )
         try:
             device = Device.objects.get(hostname=hostname)
         except DeviceType.DoesNotExist:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 404, "Device '%s' was not found." % hostname
             )
         if not device.save_configuration(jinja_str):
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 400, "Unable to store the configuration for %s on disk" % hostname
             )
 
@@ -1189,22 +1182,22 @@ class SchedulerAPI(ExposedAPI):
         """
         self._authenticate()
         if not self.user.is_superuser:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 403, "User '%s' is not superuser." % self.user.username
             )
         try:
             device = Device.objects.get(hostname=hostname)
         except DeviceType.DoesNotExist:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 404, "Device '%s' was not found." % hostname
             )
         device_dict = device.load_configuration(output_format="raw")
         if not device_dict:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 404, "Device '%s' does not have a device dictionary" % hostname
             )
 
-        return xmlrpclib.Binary(device_dict.encode('UTF-8'))
+        return xmlrpc.client.Binary(device_dict.encode('UTF-8'))
 
     def validate_pipeline_devices(self, name=None):
         """
@@ -1249,12 +1242,12 @@ class SchedulerAPI(ExposedAPI):
             if not devices:
                 devices = Device.objects.exclude(health=Device.HEALTH_RETIRED).filter(hostname=name)
         if not devices and name:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 404,
                 "No devices found with hostname or device type name %s" % name
             )
         if not devices and not name:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 404, "No pipeline device found on this instance."
             )
         results = {}
@@ -1271,7 +1264,7 @@ class SchedulerAPI(ExposedAPI):
                 results[key] = {'Invalid': exc}
                 continue
             results[key] = {'Valid': None}
-        return xmlrpclib.Binary(yaml.dump(results).encode('UTF-8'))
+        return xmlrpc.client.Binary(yaml.dump(results).encode('UTF-8'))
 
     def get_publisher_event_socket(self):
         """

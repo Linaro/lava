@@ -1,8 +1,9 @@
 import os
-import sys
 import yaml
 import logging
 import unittest
+from io import BytesIO as StringIO
+import xmlrpc.client
 from django.test.client import Client
 from django.contrib.auth.models import Permission, User
 from django.utils import timezone
@@ -18,18 +19,9 @@ from lava_scheduler_app.schema import validate_submission, validate_device, Subm
 from lava_scheduler_app.tests.test_submission import ModelFactory, TestCaseWithFactory
 # pylint: disable=invalid-name
 
-if sys.version_info[0] == 2:
-    # Python 2.x
-    from cStringIO import StringIO
-    import xmlrpclib
-elif sys.version_info[0] == 3:
-    # For Python 3.0 and later
-    from io import BytesIO as StringIO
-    import xmlrpc.client as xmlrpclib
-
 
 # Based on http://www.technobabble.dk/2008/apr/02/xml-rpc-dispatching-through-django-test-client/
-class TestTransport(xmlrpclib.Transport, object):
+class TestTransport(xmlrpc.client.Transport, object):
     """Handles connections to XML-RPC server through Django test client."""
 
     def __init__(self, user=None, password=None):
@@ -61,7 +53,7 @@ class TestSchedulerAPI(TestCaseWithFactory):  # pylint: disable=too-many-ancesto
         logger.disabled = True
 
     def server_proxy(self, user=None, password=None):  # pylint: disable=no-self-use
-        return xmlrpclib.ServerProxy(
+        return xmlrpc.client.ServerProxy(
             'http://localhost/RPC2/',
             transport=TestTransport(user=user, password=password))
 
@@ -69,7 +61,7 @@ class TestSchedulerAPI(TestCaseWithFactory):  # pylint: disable=too-many-ancesto
         server = self.server_proxy()
         try:
             server.scheduler.submit_job("{}")
-        except xmlrpclib.Fault as f:
+        except xmlrpc.client.Fault as f:
             self.assertEqual(401, f.faultCode)
         else:
             self.fail("fault not raised")
@@ -79,7 +71,7 @@ class TestSchedulerAPI(TestCaseWithFactory):  # pylint: disable=too-many-ancesto
         server = self.server_proxy('unpriv-test', 'test')
         try:
             server.scheduler.submit_job("{}")
-        except xmlrpclib.Fault as f:
+        except xmlrpc.client.Fault as f:
             self.assertEqual(403, f.faultCode)
         else:
             self.fail("fault not raised")

@@ -16,20 +16,12 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Lava Server.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-
+import xmlrpc.client
 from django.db import IntegrityError
 
 from linaro_django_xmlrpc.models import ExposedV2API
 from lava_scheduler_app.api import check_superuser
 from lava_scheduler_app.models import Alias
-
-if sys.version_info[0] == 2:
-    # Python 2.x
-    import xmlrpclib
-elif sys.version_info[0] == 3:
-    # For Python 3.0 and later
-    import xmlrpc.client as xmlrpclib
 
 
 class SchedulerAliasesAPI(ExposedV2API):
@@ -58,7 +50,7 @@ class SchedulerAliasesAPI(ExposedV2API):
         try:
             Alias.objects.create(name=name)
         except IntegrityError as exc:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 400, "Bad request: %s" % exc.message)
 
     @check_superuser
@@ -85,7 +77,7 @@ class SchedulerAliasesAPI(ExposedV2API):
         try:
             Alias.objects.get(name=name).delete()
         except Alias.DoesNotExist:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 404, "Alias '%s' was not found." % name)
 
     def list(self):
@@ -133,7 +125,7 @@ class SchedulerAliasesAPI(ExposedV2API):
         try:
             alias = Alias.objects.get(name=name)
         except Alias.DoesNotExist:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 404, "Alias '%s' was not found." % name)
 
         device_types = []
