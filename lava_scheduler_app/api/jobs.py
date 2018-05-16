@@ -18,17 +18,10 @@
 
 import os
 import sys
-
+import xmlrpc.client as xmlrpclib
 from linaro_django_xmlrpc.models import ExposedV2API
 from lava_scheduler_app.api import SchedulerAPI
 from lava_scheduler_app.models import TestJob
-
-if sys.version_info[0] == 2:
-    # Python 2.x
-    import xmlrpclib
-elif sys.version_info[0] == 3:
-    # For Python 3.0 and later
-    import xmlrpc.client as xmlrpclib
 
 
 def load_optional_file(filename):
@@ -127,6 +120,9 @@ class SchedulerJobsAPI(ExposedV2API):
         Return value
         ------------
         The job definition or and error.
+
+        Note: for MultiNode jobs, the original MultiNode definition
+        is returned.
         """
         try:
             job = TestJob.get_by_job_number(job_id)
@@ -140,9 +136,9 @@ class SchedulerJobsAPI(ExposedV2API):
                 (job_id, self.user))
 
         if job.is_multinode:
-            return xmlrpclib.Binary(job.multinode_definition)
+            return job.multinode_definition
         else:
-            return xmlrpclib.Binary(job.original_definition)
+            return job.original_definition
 
     def list(self, state=None, health=None, start=0, limit=25):
         """
