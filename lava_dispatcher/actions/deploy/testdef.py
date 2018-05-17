@@ -1068,6 +1068,8 @@ class TestRunnerAction(TestOverlayAction):
         if self.parameters['name'] == 'lava':
             raise TestError('The "lava" test definition name is reserved.')
 
+        lava_signal = self.parameters.get('lava-signal', 'stdout')
+
         testdef_levels = self.get_namespace_data(action=self.name, label=self.name, key='testdef_levels')
         with open(filename, 'a') as runsh:
             for line in content:
@@ -1080,7 +1082,11 @@ class TestRunnerAction(TestOverlayAction):
                 action='uuid', label='runner_path', key=self.parameters['test_name']))
             runsh.write('UUID=`cat uuid`\n')
             runsh.write('set +x\n')
-            runsh.write('echo "<LAVA_SIGNAL_STARTRUN $TESTRUN_ID $UUID>"\n')
+            if lava_signal == 'kmsg':
+                runsh.write('export KMSG=true\n')
+                runsh.write('echo "<0><LAVA_SIGNAL_STARTRUN $TESTRUN_ID $UUID>" > /dev/kmsg\n')
+            else:
+                runsh.write('echo "<LAVA_SIGNAL_STARTRUN $TESTRUN_ID $UUID>"\n')
             runsh.write('set -x\n')
             steps = testdef.get('run', {}).get('steps', [])
             for cmd in steps:
@@ -1088,7 +1094,11 @@ class TestRunnerAction(TestOverlayAction):
                     cmd = re.sub(r'\$(\d+)\b', r'\\$\1', cmd)
                 runsh.write('%s\n' % cmd)
             runsh.write('set +x\n')
-            runsh.write('echo "<LAVA_SIGNAL_ENDRUN $TESTRUN_ID $UUID>"\n')
+            if lava_signal == 'kmsg':
+                runsh.write('unset KMSG\n')
+                runsh.write('echo "<0><LAVA_SIGNAL_ENDRUN $TESTRUN_ID $UUID>" > /dev/kmsg\n')
+            else:
+                runsh.write('echo "<LAVA_SIGNAL_ENDRUN $TESTRUN_ID $UUID>"\n')
 
         self.results = {
             'uuid': self.test_uuid,

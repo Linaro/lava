@@ -1,3 +1,5 @@
+. lava-common-functions
+
 set_usage () {
     echo "Usage:"
     echo "       lava-test-set start NAME"
@@ -7,12 +9,12 @@ set_usage () {
 }
 
 set_start () {
-    echo "<LAVA_SIGNAL_TESTSET START $1>"
+    signal "<LAVA_SIGNAL_TESTSET START $1>"
     exit 0
 }
 
 set_stop () {
-    echo "<LAVA_SIGNAL_TESTSET STOP>"
+    signal "<LAVA_SIGNAL_TESTSET STOP>"
     exit 0
 }
 

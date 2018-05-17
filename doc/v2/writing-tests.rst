@@ -23,6 +23,8 @@ For certain tests, the instructions can be included inline with the actions.
 For more complex tests or to share test definitions across multiple devices,
 environments and purposes, the test can use a repository of YAML files.
 
+.. seealso:: :ref:`test_repos` and :ref:`test_definition_kmsg`.
+
 .. _test_definition_yaml:
 
 Writing a test definition YAML file

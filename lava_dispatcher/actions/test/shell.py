@@ -170,8 +170,8 @@ class TestShellAction(TestAction):
     def _reset_patterns(self):
         # Extend the list of patterns when creating subclasses.
         self.patterns = {
-            "exit": "<LAVA_TEST_RUNNER>: exiting",
-            "error": "<LAVA_TEST_RUNNER>: ([^ ]+) installer failed, skipping",
+            "exit": "<LAVA_TEST_RUNNER EXIT>",
+            "error": "<LAVA_TEST_RUNNER INSTALL_FAIL>",
             "eof": pexpect.EOF,
             "timeout": pexpect.TIMEOUT,
             "signal": r"<LAVA_SIGNAL_(\S+) ([^>]+)>",
@@ -243,7 +243,6 @@ class TestShellAction(TestAction):
                            "otherwise this is a bug which should be reported.")
 
         self.logger.debug("Using %s" % lava_test_results_dir)
-        connection.sendline('ls -l %s/' % lava_test_results_dir, delay=self.character_delay)
         if lava_test_sh_cmd:
             connection.sendline('export SHELL=%s' % lava_test_sh_cmd, delay=self.character_delay)
 

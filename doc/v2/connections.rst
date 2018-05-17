@@ -208,6 +208,10 @@ kernel to reduce the number or frequency of its messages, but often
 those messages are critical information when debugging a fault so this
 is not a good solution for everybody.
 
+.. index:: kernel messages - interleaving, serial corruption
+
+.. _isolating_kernel_messages:
+
 Isolating kernel messages from test output
 ==========================================
 
@@ -238,6 +242,9 @@ with kernel message output.
 
 LAVA supports using these multiple serial connections in a simple way,
 avoiding the need for MultiNode complexity.
+
+.. seealso:: :ref:`test_definition_kmsg` for a mitigation of the
+   interleaving problem if multiple UART support is not available.
 
 .. _extra_serial_ports_modify_test_image:
 

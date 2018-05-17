@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set +x
+
 if [ "$1" = "" ]
 then
     LAVA_PATH="/lava"
@@ -7,22 +9,19 @@ else
 	LAVA_PATH=$1
 fi
 
-echo $LAVA_PATH
-PREFIX="<LAVA_TEST_RUNNER>:"
 WORKFILE="$LAVA_PATH/lava-test-runner.conf"
 RESULTSDIR="$LAVA_PATH/results"
 BINDIR="$LAVA_PATH/../bin"
 
+. $BINDIR/lava-common-functions
+
 cleanup()
 {
-	# just adds a little handy debugging
-	ls ${RESULTSDIR}
-	echo "${PREFIX} exiting lava-test-runner"
+  signal "<LAVA_TEST_RUNNER EXIT>"
 }
 trap cleanup INT TERM EXIT
 
 export PATH=${BINDIR}:${PATH}
-echo "${PREFIX} started"
 mkdir -p ${RESULTSDIR}
 
 # move the workfile to something timestamped and run that. This
@@ -31,32 +30,24 @@ TS=`date +%s`
 mv ${WORKFILE} ${WORKFILE}-${TS}
 WORKFILE=${WORKFILE}-${TS}
 
-echo "${PREFIX} looking for work in ${WORKFILE}"
-
 if [ -z "${SHELL}" ]; then
     SHELL=/bin/sh
 fi
-echo "${PREFIX} Using ${SHELL}"
 
-for line in $(cat ${WORKFILE}); do
+for line in $(cat ${WORKFILE} | grep -v LAVA_SIGNAL); do
 	test=`basename $line`
-	echo "${PREFIX} running ${test} under lava-test-shell..."
 	odir=${RESULTSDIR}/${test}-`date +%s`
 	mkdir ${odir}
-	cp ${line}/testdef.yaml ${odir}/
-	cp ${line}/testdef_metadata ${odir}/
 
 	if [ -f ${line}/install.sh ]; then
-		echo "${PREFIX} running ${test} installer ..."
 		/bin/sh ${line}/install.sh
 		R=$?
 		echo ${R} > ${odir}/install_return_code
 		if [ ${R} -ne 0 ] ; then
-			echo "${PREFIX} ${test} installer failed, skipping"
+            signal "<LAVA_TEST_RUNNER INSTALL_FAIL>"
 			continue
 		fi
 	fi
 
 	lava-test-shell --output_dir ${odir} ${SHELL} -e "${line}/run.sh"
-	echo "${PREFIX} ${test} exited with: `cat ${odir}/return_code`"
 done

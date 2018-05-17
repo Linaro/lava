@@ -180,6 +180,7 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
             'lava-test-set',
             'lava-test-shell',
             'lava-test-raise',
+            'lava-common-functions'
         ]
 
         overlay = None

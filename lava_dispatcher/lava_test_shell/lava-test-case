@@ -1,5 +1,6 @@
 #NOTE the lava_test_shell_action fills in the proper interpreter path
 # above during target deployment
+. lava-common-functions
 
 usage () {
     echo "Usage: lava-test-case TEST_CASE_ID --shell cmds ..."
@@ -17,12 +18,13 @@ if [ -z "$TEST_CASE_ID" ]; then
     usage
     exit 1
 fi
+
 if [ "$1" = "--shell" ]; then
     shift
-    echo "<LAVA_SIGNAL_STARTTC $TEST_CASE_ID>"
+    signal "<LAVA_SIGNAL_STARTTC $TEST_CASE_ID>"
     eval "$*"
     rc=$?
-    echo "<LAVA_SIGNAL_ENDTC $TEST_CASE_ID>"
+    signal "<LAVA_SIGNAL_ENDTC $TEST_CASE_ID>"
     if [ $rc -eq 0 ]; then
         RESULT=pass
     else
@@ -80,9 +82,8 @@ if [ -n "${MEASUREMENT+x}" ]; then
 fi
 
 # signal the test case results
-echo "<LAVA_SIGNAL_TESTCASE TEST_CASE_ID=$TEST_CASE_ID$TCDATA>"
+signal "<LAVA_SIGNAL_TESTCASE TEST_CASE_ID=$TEST_CASE_ID$TCDATA>"
 
 # lava-test-case testname --shell false should report a fail as test result
 # but not fail itself; hence don't honor 'rc' if we reach this, but exit 0
 exit 0
-
