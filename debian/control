@@ -34,7 +34,7 @@ Recommends: ntp, git, tftpd-hpa, openbsd-inetd, ser2net,
  libguestfs-tools (>= 1.32.7) [amd64 i386], nfs-kernel-server, rpcbind,
  u-boot-tools, unzip, xz-utils, lxc (>= 1:2.0.7),
  debootstrap (>= 1.0.86), bridge-utils, rsync, sshfs, dfu-util
-Suggests: apache2, bzr, android-tools-fsutils | img2simg
+Suggests: apache2, bzr, img2simg, simg2img
 Description: Linaro Automated Validation Architecture dispatcher
  LAVA is a continuous integration system for deploying operating
  systems onto physical and virtual hardware for running tests.
@@ -62,7 +62,7 @@ Depends: apache2, adduser, gunicorn3, iproute2, python3-tz, python3-dateutil,
  python3-markdown, python3-psycopg2, python3-simplejson,
  python3-voluptuous (>= 0.8.8), python3-zmq,
  ${python3:Depends}, ${misc:Depends}
-Recommends: fuse, ntp, lava-coordinator, lava-server-doc, lava-dispatcher,
+Recommends: ntp, lava-coordinator, lava-server-doc, lava-dispatcher,
 Suggests: python3-django-hijack, python3-django-debug-toolbar
 Description: Linaro Automated Validation Architecture server
  LAVA is a continuous integration system for deploying operating
@@ -101,11 +101,11 @@ Package: lava
 Architecture: all
 Section: metapackages
 Depends: lava-server (= ${binary:Version}), lava-server-doc,
- lava-dispatcher, lava-coordinator, lava-dev, lava-tool,
+ lava-dispatcher, lava-coordinator, lava-dev, lavacli,
  lavapdu-client, ntp | ntpdate, tftpd-hpa, debootstrap (>= 1.0.86~),
  openssh-client, lxc (>= 1:2.0.6), rsync, bridge-utils, ${misc:Depends}
-Recommends: lavapdu-daemon, schroot, android-tools-fsutils | img2simg
-Suggests: vmdebootstrap
+Recommends: lavapdu-daemon, schroot, img2simg, simg2img
+Suggests: vmdebootstrap, lava-tool
 Description: Linaro Automated Validation Architecture metapackage
  LAVA is a continuous integration system for deploying operating
  systems onto physical and virtual hardware for running tests.
