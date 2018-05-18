@@ -76,6 +76,7 @@ class UEFIMenuInterrupt(MenuInterrupt):
     name = 'uefi-menu-interrupt'
     description = 'interrupt for uefi menu'
     summary = 'interrupt for uefi menu'
+    timeout_exception = InfrastructureError
 
     def __init__(self):
         super().__init__()
