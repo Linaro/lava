@@ -48,18 +48,54 @@ class Command(BaseCommand):
 
         # "add" sub-command
         add_parser = sub.add_parser("add", help="Add a user")
-        add_parser.add_argument("username",
-                                help="Username of the user")
-        add_parser.add_argument("--email", type=str, default=None,
-                                help="email of the user")
-        add_parser.add_argument("--passwd", type=str, default=None,
-                                help="Password for this user. If empty, a random password is generated.")
-        add_parser.add_argument("--staff", default=False,
-                                action="store_true",
-                                help="Make this user a staff member")
-        add_parser.add_argument("--superuser", default=False,
-                                action="store_true",
-                                help="Make this user a super user")
+        add_parser.add_argument(
+            "username", help="Username of the user")
+        add_parser.add_argument(
+            "--email", type=str, default=None, help="email of the user")
+        add_parser.add_argument(
+            "--passwd", type=str, default=None,
+            help="Password for this user. If empty, a random password is generated.")
+        add_parser.add_argument(
+            "--staff", default=False, action="store_true",
+            help="Make this user a staff member")
+        add_parser.add_argument(
+            "--superuser", default=False, action="store_true",
+            help="Make this user a super user")
+
+        # "update" sub-command
+        update_parser = sub.add_parser("update", help="Update an existing user")
+        update_parser.add_argument(
+            "username", help="Username of the user")
+        update_parser.add_argument(
+            "--email", type=str, default=None,
+            help="Change email of the user")
+
+        active_parser = update_parser.add_mutually_exclusive_group(required=False)
+        active_parser.add_argument(
+            "--active", dest='active', action="store_const", const=True,  # not a boolean
+            help="Make this user active")
+        active_parser.add_argument(
+            "--not-active", dest='active', action="store_const", const=False,
+            help="Make this user inactive")
+        active_parser.set_defaults(active=None)  # tri-state - None, True, False
+
+        staff_parser = update_parser.add_mutually_exclusive_group(required=False)
+        staff_parser.add_argument(
+            "--staff", dest='staff', action="store_const", const=True,
+            help="Make this user a staff member")
+        staff_parser.add_argument(
+            "--not-staff", dest='staff', action="store_const", const=False,
+            help="Make this user no longer a staff member")
+        staff_parser.set_defaults(staff=None)
+
+        superuser_parser = update_parser.add_mutually_exclusive_group(required=False)
+        superuser_parser.add_argument(
+            "--superuser", dest='superuser', action="store_const", const=True,
+            help="Make this user a superuser")
+        superuser_parser.add_argument(
+            "--not-superuser", dest='superuser', action="store_const", const=False,
+            help="Make this user no longer a superuser")
+        superuser_parser.set_defaults(superuser=None)
 
         # "details" sub-command
         details_parser = sub.add_parser("details", help="User details")
@@ -78,6 +114,8 @@ class Command(BaseCommand):
         """ Forward to the right sub-handler """
         if options["sub_command"] == "add":
             self.handle_add(options)
+        elif options["sub_command"] == "update":
+            self.handle_update(options)
         elif options["sub_command"] == "details":
             self.handle_details(options['username'])
         elif options["sub_command"] == "list":
@@ -100,6 +138,24 @@ class Command(BaseCommand):
 
         if options['passwd'] is None:
             self.stdout.write(passwd)
+
+    def handle_update(self, options):  # pylint: disable=no-self-use
+        """ Update existing user"""
+        username = options['username']
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            raise CommandError("User %s does not exist" % username)
+        if options['email']:
+            user.email = options['email']
+        # False is an allowed value, but not None.
+        if options['active'] in [True, False]:
+            user.is_active = options['active']
+        if options['staff'] in [True, False]:
+            user.is_staff = options['staff']
+        if options['superuser'] in [True, False]:
+            user.is_superuser = options['superuser']
+        user.save()
 
     def handle_details(self, username):
         """ Print user details """
