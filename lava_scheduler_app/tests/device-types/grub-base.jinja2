@@ -1,0 +1,112 @@
+{% extends 'base.jinja2' %}
+
+{% set console_device = console_device | default('ttyS0') %}
+{% set baud_rate = baud_rate | default(115200) %}
+{% set grub_installed_device = grub_installed_device | default('(hd1,gpt1)') %}
+{% set efi_grub = efi_grub | default(False) %}
+
+{# allow job context override - use a different variable name, undefined if not in job context #}
+{% set base_kernel_args = extra_kernel_args | default(base_kernel_args) %}
+
+{% if efi_grub %}
+
+{% if static_ip %}
+{% set net_commands = "          - net_add_addr lava efinet0 " + static_ip + "
+          - net_add_route lava 0.0.0.0 gw " + static_gateway + "
+          - net_add_dns " + static_dns %}
+{% else %}
+
+{% set net_commands = "          - net_ls_addr" %}
+
+{# end static_ip #}
+{% endif %}
+
+{% if efinet %}
+
+{% set net_commands = "          - insmod efinet
+" + net_commands %}
+
+{% endif %}
+
+{% else %}
+{# not efi_grub #}
+
+{% set net_commands = "          - net_bootp" %}
+
+{% endif %}
+
+{% if console_device %}
+{% set console_args = "console=" ~ console_device ~ "," ~ baud_rate %}
+{% else %}
+{% set console_args = "" %}
+{% endif %}
+{% if has_dtb %}
+{% set dtb_commands = "          - clear
+          - devicetree (tftp,{SERVER_IP})/{DTB}" %}
+{% else %}
+{% set dtb_commands = "" %}
+{% endif %}
+
+
+{% block body %}
+
+actions:
+  deploy:
+    connections:
+      serial:
+    methods:
+      tftp:
+  boot:
+    connections:
+      serial:
+    methods:
+      grub:
+        parameters:
+          bootloader_prompt: {{ bootloader_prompt|default('grub>') }}
+        ramdisk:
+          commands:
+{{ net_commands }}
+          - clear
+          - insmod linux
+          - clear
+          - insmod tftp
+          - clear
+          - 'linux (tftp,{SERVER_IP})/{KERNEL} {{ console_args }} {{ base_ip_args }} {{ base_kernel_args }}' 
+          - clear
+          - initrd (tftp,{SERVER_IP})/{RAMDISK}
+{{ dtb_commands }}
+          - clear
+          - boot
+        nfs:
+          commands:
+{{ net_commands }}
+          - 'linux (tftp,{SERVER_IP})/{KERNEL} {{ console_args }} root=/dev/nfs rw {{ base_nfsroot_args }} {{ base_ip_args }} {{ base_kernel_args }}'
+          - initrd (tftp,{SERVER_IP})/{RAMDISK}
+{{ dtb_commands }}
+          - boot
+        debian-installer:
+          expect_shell: False
+          commands:
+{{ net_commands }}
+          - 'linux (tftp,{SERVER_IP})/{KERNEL} auto=true interface=eth0 priority=critical noshell BOOT_DEBUG=1 DEBIAN_FRONTEND=text url=tftp://{SERVER_IP}/{PRESEED_CONFIG} --- {{ console_args }} {{ base_kernel_args }} debug verbose'
+          - initrd (tftp,{SERVER_IP})/{RAMDISK}
+{{ dtb_commands }}
+          - boot
+        debian-installed:
+          commands:
+          - insmod part_gpt
+          - insmod ext2
+          - insmod part_msdos
+          - insmod chain
+          - ls
+          - ls {{ grub_installed_device }}
+          - sleep 10
+          - set
+          - set root={{ grub_installed_device }}
+          - sleep 10
+          - ls {{ grub_installed_device }}
+          - sleep 10
+          - chainloader {{ grub_installed_device }}/efi/debian/grubaa64.efi
+          - sleep 10
+          - boot
+{% endblock %}
