@@ -84,7 +84,7 @@ First steps using LAVA
    first_steps
    first-job
    explain_first_job
-   lava-tool
+   lavacli
    standard-test-jobs
    standard-qemu-stretch
    standard-qemu-kernel
@@ -155,6 +155,7 @@ Results in LAVA
    user-notifications
    custom-result-handling
    tables
+   lava-tool
 
 .. _contents_admin_guide:
 
