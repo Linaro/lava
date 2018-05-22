@@ -57,7 +57,7 @@ def schedule_health_checks(logger, available_dt=None):
     for dt in query.order_by("name"):
         if dt.disable_health_check:
             hc_disabled.append(dt.name)
-            # Add all devices o that type to the list of available devices
+            # Add all devices of that type to the list of available devices
             devices = dt.device_set.filter(state=Device.STATE_IDLE)
             devices = devices.filter(worker_host__state=Worker.STATE_ONLINE)
             devices = devices.filter(health__in=[Device.HEALTH_GOOD,

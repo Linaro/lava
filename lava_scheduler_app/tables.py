@@ -115,8 +115,12 @@ class RestrictedDeviceColumn(tables.Column):
         :return: a text string describing the restrictions on this device.
         """
         label = None
-        if record.health in [Device.HEALTH_BAD, Device.HEALTH_MAINTENANCE, Device.HEALTH_RETIRED]:
-            return "no submissions possible."
+        if record.health == Device.HEALTH_BAD:
+            return "Health check failed: no test jobs will be scheduled."
+        if record.health == Device.HEALTH_MAINTENANCE:
+            return "No test jobs will be scheduled."
+        if record.health == Device.HEALTH_RETIRED:
+            return "Retired: no submissions possible."
         if record.is_public:
             return ""
         if record.user:
