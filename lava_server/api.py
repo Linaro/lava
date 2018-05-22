@@ -23,7 +23,7 @@ import xmlrpc.client
 import yaml
 
 from django.http import Http404
-
+from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from lava_scheduler_app.views import get_restricted_job
 from lava_scheduler_app.models import Device, DeviceType
@@ -120,6 +120,79 @@ class LavaSystemAPI(SystemAPI):
         lava-server XML-RPC API version integer
         """
         return 2
+
+    def master_config(self):
+        """
+        Name
+        ----
+        `master_config` ()
+
+        Description
+        -----------
+        Return a dictionary containing the master and logger ZMQ
+        socket addresses for this instance.
+
+        Arguments
+        ---------
+        None
+
+        Return value
+        ------------
+        Returns a dictionary containing the following keys:
+        {
+          "MASTER_URL": "tcp://<lava-master-dns>:5556",
+          "LOGGING_URL": "tcp://<lava-master-dns>:5555",
+          "ENCRYPT": False,
+          "IPv6": False,
+          "EVENT_SOCKET": "tcp://*:5500",
+          "EVENT_TOPIC": "org.linaro.validation",
+          "EVENT_NOTIFICATION": True,
+          "LOG_SIZE_LIMIT": 10,
+        }
+
+        If ENCRYPT is True, clients MUST already have a usable
+        client certificate installed on the master AND the current
+        master certificate installed on the client, before a
+        connection can be made.
+        """
+        data = {
+            "master_socket": "tcp://<lava-master-dns>:5556",
+            "socket": "tcp://<lava-master-dns>:5555",
+            "encrypt": False,
+            "ipv6": False,
+        }
+
+        master = {"ERROR": "invalid master config"}
+        filename = os.path.join(settings.MEDIA_ROOT, 'lava-master-config.yaml')
+        if os.path.exists(filename):
+            try:
+                with open(filename, 'r') as output:
+                    master = yaml.load(output)
+            except yaml.YAMLError as exc:
+                return master
+        if master:
+            data.update(master)
+
+        log_config = {"ERROR": "invalid logging config"}
+        filename = os.path.join(settings.MEDIA_ROOT, 'lava-logs-config.yaml')
+        if os.path.exists(filename):
+            try:
+                with open(filename, 'r') as output:
+                    log_config = yaml.load(output)
+            except yaml.YAMLError as exc:
+                return log_config
+        if log_config:
+            data.update(log_config)
+        return {
+            "MASTER_URL": data['master_socket'],
+            "LOGGING_URL": data['socket'],
+            "IPv6": data['ipv6'],
+            "ENCRYPT": data.get('encrypt', False),
+            "EVENT_TOPIC": settings.EVENT_TOPIC,
+            "EVENT_SOCKET": settings.EVENT_SOCKET,
+            "EVENT_NOTIFICATION": settings.EVENT_NOTIFICATION,
+            "LOG_SIZE_LIMIT": settings.LOG_SIZE_LIMIT,
+        }
 
     def user_can_view_jobs(self, job_list, username=None):
         """

@@ -28,7 +28,7 @@ import zmq
 import zmq.auth
 from zmq.utils.strtypes import u
 from zmq.auth.thread import ThreadAuthenticator
-
+from django.conf import settings
 from django.db import connection, transaction
 from django.db.utils import OperationalError, InterfaceError
 
@@ -114,6 +114,11 @@ class Command(LAVADaemonCommand):
         if not self.drop_privileges(options['user'], options['group']):
             self.logger.error("[INIT] Unable to drop privileges")
             return
+
+        filename = os.path.join(settings.MEDIA_ROOT, 'lava-logs-config.yaml')
+        self.logger.debug("[INIT] Dumping config to %s", filename)
+        with open(filename, 'w') as output:
+            yaml.dump(options, output)
 
         # Create the sockets
         context = zmq.Context()

@@ -536,6 +536,11 @@ class Command(LAVADaemonCommand):
             self.logger.error("[INIT] Unable to drop privileges")
             return
 
+        filename = os.path.join(settings.MEDIA_ROOT, 'lava-master-config.yaml')
+        self.logger.debug("[INIT] Dumping config to %s", filename)
+        with open(filename, 'w') as output:
+            yaml.dump(options, output)
+
         self.logger.info("[INIT] Marking all workers as offline")
         with transaction.atomic():
             for worker in Worker.objects.select_for_update().all():
