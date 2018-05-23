@@ -124,7 +124,9 @@ class ConnectDevice(Action):
         self.logger.info(
             "[%s] %s %s '%s'", parameters['namespace'], self.name, self.message, self.command)
         # ShellCommand executes the connection command
-        shell = self.shell_class("%s\n" % self.command, self.timeout, logger=self.logger)
+        shell = self.shell_class(
+            "%s\n" % self.command, self.timeout, logger=self.logger,
+            window=self.job.device.get_constant('spawn_window_size'))
         if shell.exitstatus:
             raise JobError("%s command exited %d: %s" % (self.command, shell.exitstatus, shell.readlines()))
         # ShellSession monitors the pexpect

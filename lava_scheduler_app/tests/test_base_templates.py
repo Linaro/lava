@@ -208,3 +208,11 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
 {% set connection_command = 'telnet localhost 7302' %}"""
         device_dict = self.render_device_dictionary('staging-x86-01', data)
         self.assertTrue(validate_device(yaml.load(device_dict)))
+
+    def test_pexpect_spawn_window(self):
+        rendered = self.render_device_dictionary_file('hi6220-hikey-01.jinja2')
+        template_dict = yaml.load(rendered)
+        self.assertIsNotNone(template_dict['constants'])
+        self.assertIn('spawn_window_size', template_dict['constants'])
+        self.assertIsInstance(template_dict['constants']['spawn_window_size'], str)
+        self.assertEqual(int(template_dict['constants']['spawn_window_size']), 2048)

@@ -69,12 +69,13 @@ class ConnectAdb(Action):
         cmd = "adb -s {0} shell".format(adb_serial_number)
         self.logger.info("%s Connecting to device using '%s'", self.name, cmd)
         # ShellCommand executes the connection command
-        shell = self.shell_class("%s\n" % cmd, self.timeout,
-                                 logger=self.logger)
+        shell = self.shell_class(
+            "%s\n" % cmd, self.timeout, logger=self.logger,
+            window=self.job.device.get_constant('spawn_window_size'))
         if shell.exitstatus:
-            raise JobError("%s command exited %d: %s" % (cmd,
-                                                         shell.exitstatus,
-                                                         shell.readlines()))
+            raise JobError(
+                "%s command exited %d: %s" % (
+                    cmd, shell.exitstatus, shell.readlines()))
         # ShellSession monitors the pexpect
         connection = self.session_class(self.job, shell)
         connection.connected = True

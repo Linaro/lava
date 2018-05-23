@@ -84,10 +84,21 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
     subprocess, i.e. not on the dispatcher itself.
     Takes a Timeout object (to support overrides and logging)
 
+    https://pexpect.readthedocs.io/en/stable/api/pexpect.html#spawn-class
+
+    Window size is managed to limit impact on performance.
+    maxread is left at default to ensure the entire log is captured.
+
     A ShellCommand is a raw_connection for a ShellConnection instance.
     """
 
-    def __init__(self, command, lava_timeout, logger=None, cwd=None):
+    def __init__(self, command, lava_timeout, logger=None, cwd=None, window=-1):
+        if isinstance(window, str):
+            # constants need to be stored as strings.
+            try:
+                window = int(window)
+            except ValueError:
+                raise LAVABug("ShellCommand was passed an invalid window size of %s bytes." % window)
         if not lava_timeout or not isinstance(lava_timeout, Timeout):
             raise LAVABug("ShellCommand needs a timeout set by the calling Action")
         if not logger:
@@ -98,6 +109,7 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
             cwd=cwd,
             logfile=ShellLogger(logger),
             encoding='utf-8',
+            searchwindowsize=window,
             codec_errors='replace'
         )
         self.name = "ShellCommand"

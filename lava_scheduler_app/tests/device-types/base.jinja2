@@ -115,6 +115,10 @@ constants:
   # DEFAULT_SHELL_PROMPT
   default-shell-prompt: '{{ default_shell_prompt | default("lava-test: # ") }}'
 
+  # pexpect.spawn searchwindowsize
+  # SPAWN_WINDOW_SIZE - in bytes, quoted as a string.
+  spawn_window_size: '{{ spawn_window_size | default(2048) }}'
+
 {% endblock constants -%}
 
 {% block commands %}

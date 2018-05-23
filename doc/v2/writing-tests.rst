@@ -402,7 +402,8 @@ Script interpreters
    you use ``#!/bin/sh``.
 
 #. **python** - ensure that python is installed in the test image. Add all the
-   python dependencies necessary for your script.
+   python dependencies necessary for your script. Remember that Python2 is
+   end-of-life and ``python3-`` alternative dependencies may be required.
 
 #. **perl** - ensure that any modules required by your script are  available,
    bearing in mind that some images may only have a basic perl installation
@@ -1254,10 +1255,15 @@ progress bar behaviour of all operations.
 Problems with output
 ====================
 
-LAVA uses `pexpect` to monitor the output over the serial connection for
+LAVA uses ``pexpect`` to monitor the output over the serial connection for
 patterns which are used to pick up test cases and other test shell support.
 Each time a match is found, the buffer is cleared. If there is a lot of output
 with no pattern matches, the processing can slow down.
+
+It is possible to limit the window which ``pexpect`` uses to scan for pattern
+matches and LAVA uses a limit of 2048 bytes. This is intended to limit problems
+with processing slowing down but best practice remains to manage the test job
+output to make the logs more useful during later triage.
 
 Large log files also have a few implications for the user interface and triage.
 More content makes loading links to a test job take longer and finding the
