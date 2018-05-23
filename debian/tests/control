@@ -1,5 +1,5 @@
 Tests: testsuite
-Depends: @, @builddeps@,
+Depends: lava-server, lava-common, lava-dispatcher, @builddeps@,
  python3-testscenarios, pep8, git, telnet, qemu-system-x86,
  nfs-kernel-server, u-boot-tools, iproute2, tftpd-hpa,
  schroot, lxc, lava-server, python3-django-testscenarios, python3-tz,
