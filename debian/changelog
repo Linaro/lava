@@ -25,7 +25,7 @@ lava (2018.5-1) unstable; urgency=medium
     50d69d971 Update instructions for merged codebase
     e2de099f4 LAVA-1316 Instant scheduling
     edd48e0b1 signals: always add health_check field
-    1bbaec1e2 Allow to create health-check directly
+    1bbaec1e2 Allow creating health-check directly
     e0cddeb5e Create admin log entries when looping
     2489bcbc8 Add auto-login to fastboot sequence of hi6220
         device types.
@@ -34,7 +34,7 @@ lava (2018.5-1) unstable; urgency=medium
     51c81f659 Test decompression during download streams
     3d2541d00 docker: always run with --rm
     1cdd275aa Fix ResetDevice comment to match what it actually does.
-    db2775001 Allow to sleep after the usb serial appeared
+    db2775001 Allow sleep after the usb serial appeared
     391595bcc LAVA-1309 - pre-* commands should be called
         with minus-lxc
     d524354f7 Add an helper to list all keys of an action namespace
@@ -48,7 +48,7 @@ lava (2018.5-1) unstable; urgency=medium
     a3cc054f3 Implementation of recovery mode deploy and boot
     47b184796 Print the url when validating file:// download
     8d1ffad00 dispatcher: raise a TestError for invalid regexp
-    fb39a9da8 Factorize compatiblity code
+    fb39a9da8 Factorize compatibility code
     4511d4de6 monitor: log the start message
     c18752652 Fix broken unit test
     84769209a Exclude Retired devices from invalid_template check
