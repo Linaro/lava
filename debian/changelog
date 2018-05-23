@@ -1,3 +1,88 @@
+lava (2018.5-1) unstable; urgency=medium
+
+  * New upstream release combining upstream code for lava-server
+        and lava-dispatcher.
+  * Replaces source packages for lava-server and lava-dispatcher
+  * Provides lava, lava-dev, lava-server, lava-server-doc and
+        lava-dispatcher binaries.
+  * Add new binary package lava-common for common code.
+    4a4bde2a1 LAVA-999 Export master and logger config
+    6f50e1145 LAVA-1315 add option to update existing users
+    ff8d9f882 Update device-types to match my lab config
+    809ae34ea Use InfrastructureError for uefi menu timeout
+    e52d83dc6 Stop the Overlay tests duplicating the base class
+    099f19599 LAVA-1310 separate the template unit tests
+    198283abb Drop Python2 xmlrpc support
+    13fa6bdef Fix support for scheduler.jobs.definition
+    a40fe8664 Fix query results export to CSV.
+    b18e74ca9 Create lava_common for Timeout and Exceptions
+    ece1a46d4 Generate device configuration from templates
+    e2d0f4b36 LAVA-1324 QEMU usage of KVM accelerator
+    59e0ab091 Extend timeouts in example test jobs
+    4269cc55a Merge branch 'master' into coordinator
+    7f49853f0 Complete fastboot sequence cannot be governed in
+        device dictionary.
+    50d69d971 Update instructions for merged codebase
+    e2de099f4 LAVA-1316 Instant scheduling
+    edd48e0b1 signals: always add health_check field
+    1bbaec1e2 Allow to create health-check directly
+    e0cddeb5e Create admin log entries when looping
+    2489bcbc8 Add auto-login to fastboot sequence of hi6220
+        device types.
+    13a4b5923 Drop debug line to update pipeline_reference
+    da933a151 Add support for optionally running using pytest-3
+    51c81f659 Test decompression during download streams
+    3d2541d00 docker: always run with --rm
+    1cdd275aa Fix ResetDevice comment to match what it actually does.
+    db2775001 Allow to sleep after the usb serial appeared
+    391595bcc LAVA-1309 - pre-* commands should be called
+        with minus-lxc
+    d524354f7 Add an helper to list all keys of an action namespace
+    9bfe50d84 Expand command lists in device dictionaries
+    0ff09a569 LAVA-1173 - allow for matching parents of nodes
+    3b5f47bf7 Make device_info validate errors unique
+    dad039adb Allow for multiple udev rules in a single file
+    80ca5346a LAVA-1203 - Allow multiple callback URLs in notify action
+    120181cb6 ci-run should stop on first error
+    bed5fcb20 Allow dispatcher unit tests to generate device config
+    a3cc054f3 Implementation of recovery mode deploy and boot
+    47b184796 Print the url when validating file:// download
+    8d1ffad00 dispatcher: raise a TestError for invalid regexp
+    fb39a9da8 Factorize compatiblity code
+    4511d4de6 monitor: log the start message
+    c18752652 Fix broken unit test
+    84769209a Exclude Retired devices from invalid_template check
+    534f1a9b8 LAVA-1300 - fail if static devices cannot be found
+    235f17d35 Add the end time to the Recent job errors table
+    e18d27c5a Update templates for changes from Harston lab
+    fa0d9125f Update second UART example jobs
+    600fc7b4e ci-run: Remove some of the unused args and clean it
+        up for jenkins
+    36fee805b Revert "Remove unused and obsolete requirements.txt"
+    2e051cb6d Remove any generated top level init.py
+    2060d7851 LAVA-1298 fix references to old repositories
+    1978274d1 Treat kernel panics as a job failure
+    d920b7825 Remove unused and obsolete requirements.txt
+    ed9039e87 LAVA-1297 - Incorporate changes to run jobs without LXC
+    fabd4a44f Port to python3 and fix prospector warning
+    e98737c55 LAVA-1286 Raise JobError if 'params' is not a dict
+    5af7a7f74 compression: do not use shell=True
+    a4e1ac09b device-types: add meson-gxbb-nanopi-k2
+    2e84699d8 Port classes to python3 only
+    6a02322a1 device-types: add meson-gxl-s905x-libretech-cc
+    968873081 publisher: do not duplicate logs
+    05d119426 Send the wait-all role reply
+    80a912d7e Add a ./ci-run script
+    02a83fed4 Fix waitall with a role support
+    33644d89e Port to new daemon support with systemd service
+    a1d9f99e3 Explicitly allow wait-all to occur before send
+    8b2e3feb0 Add a status check script
+    a4cfb1b90 LAVA-489 Python3 support
+    1c570a0f8 add the gitreview file for lava-coordinator
+    210e4b7cf bump version
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 23 May 2018 15:33:49 +0100
+
 lava (2018.4.post2-1) unstable; urgency=medium
 
   * New hot fix release.
@@ -2246,7 +2331,7 @@ lava-dispatcher (2016.3-1) unstable; urgency=medium
 
 lava-dispatcher (2016.2-1) unstable; urgency=medium
 
-  * New production release 
+  * New production release
 
  -- Neil Williams <codehelp@debian.org>  Tue, 02 Feb 2016 08:34:13 +0000
 
@@ -2831,7 +2916,7 @@ lava-dispatcher (2015.04-1) experimental; urgency=medium
 lava-dispatcher (2015.03-1) experimental; urgency=medium
 
   * New production release.
-  * Update adt test run dependencies 
+  * Update adt test run dependencies
   * Add nose to pydist-overrides
 
  -- Neil Williams <codehelp@debian.org>  Wed, 11 Feb 2015 16:40:38 +0800
@@ -2922,14 +3007,14 @@ lava-dispatcher (2014.06.1-1) unstable; urgency=medium
 
 lava-dispatcher (2014.06-1) unstable; urgency=medium
 
-  * New upstream production release. 
+  * New upstream production release.
 
  -- Neil Williams <codehelp@debian.org>  Wed, 02 Jul 2014 18:48:20 +0100
 
 lava-dispatcher (2014.05.32.13-1) unstable; urgency=medium
 
   * Use the device and device-types defaults from /usr/lib
-    and leave /etc/ for admin overrides only. 
+    and leave /etc/ for admin overrides only.
 
  -- Neil Williams <codehelp@debian.org>  Tue, 01 Jul 2014 16:51:49 +0100
 
@@ -3035,7 +3120,7 @@ lava-dispatcher (0.33.3-1) unstable; urgency=medium
 lava-dispatcher (0.33.2-5) unstable; urgency=medium
 
   * Update python overrides to pick up versioned
-    dependency information from upstream setup.py. 
+    dependency information from upstream setup.py.
 
  -- Neil Williams <codehelp@debian.org>  Wed, 27 Nov 2013 15:52:18 +0000
 
@@ -3073,7 +3158,7 @@ lava-dispatcher (0.32.3-1) unstable; urgency=low
 
   * Testing MultiNode
 
- -- Neil Williams <codehelp@debian.org>  Tue, 02 Jul 2013 22:38:39 +0100 
+ -- Neil Williams <codehelp@debian.org>  Tue, 02 Jul 2013 22:38:39 +0100
 
 lava-dispatcher (0.32.2-3) unstable; urgency=low
 
