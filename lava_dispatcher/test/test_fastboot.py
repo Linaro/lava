@@ -296,9 +296,27 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
         self.assertEqual(expected_flash_cmds, flash_cmds)
 
     def test_fastboot_minus_lxc(self):
+        # Do not run job.validate() since it will require some android tools
+        # such as fastboot, adb, etc. to be installed.
         job = self.factory.create_fastboot_job(
             'sample_jobs/nexus4-minus-lxc.yaml')
         description_ref = self.pipeline_reference('nexus4-minus-lxc.yaml',
+                                                  job=job)
+        self.assertEqual(description_ref, job.pipeline.describe(False))
+        # There shouldn't be any lxc defined
+        lxc_name = is_lxc_requested(job)
+        self.assertEqual(lxc_name, False)
+        deploy = [action for action in job.pipeline.actions
+                  if action.name == 'fastboot-deploy'][0]
+        # No lxc requested, hence lxc_cmd_prefix is an empty list
+        self.assertEqual([], deploy.lxc_cmd_prefix)
+
+    def test_db410c_minus_lxc(self):
+        # Do not run job.validate() since it will require some android tools
+        # such as fastboot, adb, etc. to be installed.
+        job = self.factory.create_db410c_job(
+            'sample_jobs/db410c-minus-lxc.yaml')
+        description_ref = self.pipeline_reference('db410c-minus-lxc.yaml',
                                                   job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
         # There shouldn't be any lxc defined
