@@ -22,13 +22,13 @@
 import pexpect
 import logging
 from lava_dispatcher.connection import Protocol
-from lava_dispatcher.action import (
+from lava_common.timeout import Timeout
+from lava_common.exceptions import (
     JobError,
     TestError,
-    Timeout,
 )
 from lava_dispatcher.shell import ShellCommand
-from lava_dispatcher.utils.constants import XNBD_SYSTEM_TIMEOUT
+from lava_common.constants import XNBD_SYSTEM_TIMEOUT
 from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.network import get_free_port
 
@@ -40,7 +40,7 @@ class XnbdProtocol(Protocol):
     name = "lava-xnbd"
 
     def __init__(self, parameters, job_id):
-        super(XnbdProtocol, self).__init__(parameters, job_id)
+        super().__init__(parameters, job_id)
         # timeout in utils.constants, default 10000
         self.system_timeout = Timeout('system', XNBD_SYSTEM_TIMEOUT)
         self.logger = logging.getLogger('dispatcher')

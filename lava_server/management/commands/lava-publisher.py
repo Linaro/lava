@@ -33,7 +33,7 @@ class Command(LAVADaemonCommand):
     default_logfile = "/var/log/lava-server/lava-publisher.log"
 
     def handle(self, *args, **options):
-        self.setup_logging("publisher", options["level"],
+        self.setup_logging("lava-publisher", options["level"],
                            options["log_file"], FORMAT)
 
         self.logger.info("Dropping privileges")

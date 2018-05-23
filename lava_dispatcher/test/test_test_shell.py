@@ -22,7 +22,7 @@ import re
 import os
 import yaml
 import decimal
-from lava_dispatcher.action import TestError, JobError
+from lava_common.exceptions import TestError, JobError
 from lava_dispatcher.test.test_basic import StdoutTestCase, Factory
 from lava_dispatcher.test.test_multi import DummyLogger
 
@@ -36,7 +36,7 @@ class FakeConnection(object):  # pylint: disable=too-few-public-methods
 class TestPatterns(StdoutTestCase):
 
     def setUp(self):
-        super(TestPatterns, self).setUp()
+        super().setUp()
         self.testdef = os.path.join(os.path.dirname(__file__), 'testdefs', 'params.yaml')
         self.res_data = os.path.join(os.path.dirname(__file__), 'testdefs', 'result-data.txt')
         factory = Factory()

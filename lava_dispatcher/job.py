@@ -27,8 +27,7 @@ import time
 import pytz
 import traceback
 import os
-
-from lava_dispatcher.action import (
+from lava_common.exceptions import (
     LAVABug,
     LAVAError,
     JobError,
@@ -36,7 +35,7 @@ from lava_dispatcher.action import (
 from lava_dispatcher.logical import PipelineContext
 from lava_dispatcher.diagnostics import DiagnoseNetwork
 from lava_dispatcher.protocols.multinode import MultinodeProtocol  # pylint: disable=unused-import
-from lava_dispatcher.utils.constants import DISPATCHER_DOWNLOAD_DIR
+from lava_common.constants import DISPATCHER_DOWNLOAD_DIR
 from lava_dispatcher.utils.filesystem import debian_package_version
 
 

@@ -1,0 +1,154 @@
+.. index:: deploy to recovery
+
+.. _deploy_to_recovery:
+
+to: recovery
+************
+
+Deployment to ``recovery`` allows the use of device dictionary commands
+and an LXC test shell to automate recovery mode operations on some
+DUTs.
+
+Successful use of recovery deployments require support by the admins
+and by the test writers.
+
+.. note:: In recovery mode, the device may have different identifiers
+   and might no longer be unique. This can result in requiring a new
+   device-type template and only creating one device of this type on
+   any one worker. Not all devices can support automated recovery
+   mode.
+
+   Additionally, recovery deployments are **blind** - there is ``udev``
+   support to add the device to the LXC but no serial connection, so no
+   output will be read from the DUT. All tools and libraries required
+   to execute the recovery test shell need to be added to the LXC. For
+   example, using an earlier test shell inside the LXC.
+
+#. Download scripts and binaries to transfer to the device
+#. Copy the downloaded artifacts into the LXC.
+#. Ensure that power to the device is OFF
+#. Execute the ``recovery_mode_command`` to use relays or similar to
+   put the device into recovery mode, in a dedicated :term:`namespace`.
+
+   .. code-block:: jinja
+
+    {% set recovery_mode_command = [
+    '/home/neil/lava-lab/shared/lab-scripts/eth008_control -a 10.15.0.171 -r 1 -s off',
+    '/home/neil/lava-lab/shared/lab-scripts/eth008_control -a 10.15.0.171 -r 2 -s on'] %}
+
+#. Apply power.
+
+   .. code-block:: jinja
+
+    - boot:
+      namespace: recovery
+      timeout:
+        minutes: 5
+      method: recovery
+      commands: recovery
+
+The test job would then define a test action which executes the scripts
+using the downloaded files and completes recovery. This script may have
+to wait for the device to appear and as the device may then have an
+unpredictable device node name, an action to create a symlink with a
+known name is likely to be required. The use of LXC ensures that only
+one suitable device exists, as long as the device configuration and
+recovery mode operations only require a single device matching the
+check in the recovery script.
+
+Example: for the HiKey 6220, the `recovery mode operations
+<https://github.com/96boards/documentation/wiki/HiKeyUEFI#flash-binaries-to-emmc->`_
+could be executed as steps in the test shell as follows:
+
+.. code-block:: yaml
+
+    run:
+      steps:
+      - find /dev/ -name 'ttyUSB*' -xdev -type c -quit -exec ln -s {} /dev/recovery ';'
+      - python /lava-lxc/hisi-idt.py --img1=/lava-lxc/l-loader.bin -d /dev/recovery
+      # fastboot should wait for the device to reset here
+      # udev rule copes with adding it to the LXC once it appears
+      - fastboot flash ptable /lava-lxc/ptable-linux.img
+      - fastboot flash ptable /lava-lxc/fip.bin
+      - fastboot flash ptable /lava-lxc/nvme.img
+      # next boot action takes care of exiting from recovery mode
+
+.. important:: Make these commands **portable** so that the same script
+   can be used to deploy new firmware to the device outside of LAVA.
+   When using a test shell to handle firmware deployments, make sure
+   that a failure of any test shell command fails the job by using
+   ``lava-test-raise``.
+
+   .. code-block:: shell
+
+        command(){
+            if [ -n "$(which lava-test-case || true)" ]; then
+                echo $2
+                $2 && lava-test-case "$1" --result pass || lava-test-raise "$1"
+            else
+                echo $2
+                $2
+            fi
+        }
+
+   Then call the function with two arguments, the test case name (with
+   no spaces) and the command to execute (with substitutions for the
+   parameterized variables for the files which were downloaded by the
+   test job):
+
+   .. code-block:: shell
+
+    command 'hisi-idt-l-loader' "python ${SCRIPT} --img1=${LOADER} -d /dev/recovery"
+
+   Take note of the quoting in this shell example. The first parameter
+   can use single quotes but the second parameter **must** use double
+   quotes ``"`` so that the values of ``$SCRIPT`` and ``$LOADER`` are
+   substituted. Portable scripts are free to use whatever language you
+   prefer.
+
+.. seealso:: :ref:`test_definition_portability`
+
+Examples for hikey 6220:
+
+* https://git.linaro.org/lava-team/refactoring.git/plain/testdefs/hikey-6220-recovery.yaml
+* https://git.linaro.org/lava-team/refactoring.git/tree/scripts/hikey-6220-recovery.sh
+
+When the test shell exits, the device is reset using a second boot ``recovery``
+operation.
+
+.. code-block:: yaml
+
+ - boot:
+    namespace: recovery
+    timeout:
+      minutes: 5
+    method: recovery
+    commands: exit
+
+A ``recovery_exit_command`` must be specified in the device dictionary.
+
+.. code-block:: jinja
+
+ {% set recovery_exit_command = [
+ '/home/neil/lava-lab/shared/lab-scripts/eth008_control -a 10.15.0.171 -r 1 -s on',
+ '/home/neil/lava-lab/shared/lab-scripts/eth008_control -a 10.15.0.171 -r 2 -s off'] %}
+
+Test jobs can terminate early (either through bugs or cancellation), so
+it is important to include the ``recovery_exit`` support in the
+``power_off_command`` so that the device is left in a suitable state
+for the next test job in the queue.
+
+.. code-block:: jinja
+
+ {% set power_off_command = ['/usr/bin/pduclient --daemon calvin --hostname pdu --command off --port 04',
+ 'sleep 30',
+ '/home/neil/lava-lab/shared/lab-scripts/eth008_control -a 10.15.0.171 -r 1 -s on',
+ '/home/neil/lava-lab/shared/lab-scripts/eth008_control -a 10.15.0.171 -r 2 -s off'] %}
+
+The additional command may take some time to complete, so the timeout
+of the power_off action may also need extending in the device-type
+template.
+
+.. code-block:: jinja
+
+ {% set action_timeout_power_off = 60 %}

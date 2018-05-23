@@ -1,0 +1,20 @@
+{% extends 'dragonboard-410c.jinja2' %}
+{% set connection_list = ['uart0'] %}
+{% set connection_tags = {'uart0': ['primary', 'telnet']} %}
+{% set connection_commands = {'uart0': 'telnet localhost 7103'} %}
+{% set adb_serial_number = 'c2e02318' %}
+{% set fastboot_serial_number = 'c2e02318' %}
+{% set pre_power_command = '/usr/local/lab-scripts/ethersync_control --hub 10.3.1.10 --usb_port 1 --mode sync --pass Hah0wae9' %}
+{% set pre_os_command = '/usr/local/lab-scripts/ethersync_control --hub 10.3.1.10 --usb_port 1 --mode off --pass Hah0wae9' %}
+{% set hard_reset_command = ['/usr/local/lab-scripts/ethersync_control --hub 10.3.1.10 --usb_port 1 --mode off --pass Hah0wae9',
+'/usr/local/lab-scripts/snmp_pdu_control --hostname pdu15 --command reboot --port 1 --delay 50',
+'/usr/local/lab-scripts/ethersync_control --hub 10.3.1.10 --usb_port 1 --mode sync --pass Hah0wae9'] %}
+{% set power_on_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu15 --command on --port 1' %}
+{% set power_off_command = ['/usr/local/lab-scripts/snmp_pdu_control --hostname pdu15 --command off --port 1',
+'/usr/local/lab-scripts/ethersync_control --hub 10.3.1.10 --usb_port 1 --mode off --pass Hah0wae9'] %}
+{% set device_info = [{'board_id': 'c2e02318'}] %}
+{% set flash_cmds_order = ['update', 'ptable', 'partition', 'hyp', 'modem',
+                           'rpm', 'sbl1', 'sbl2', 'sec', 'tz', 'aboot',
+                           'boot', 'rootfs', 'vendor', 'system', 'cache',
+                           'userdata', ] %}
+{% set device_ip = "10.7.0.78" %}

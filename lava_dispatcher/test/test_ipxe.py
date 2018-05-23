@@ -38,31 +38,14 @@ from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.strings import substitute
 
 
-class X86Factory(Factory):  # pylint: disable=too-few-public-methods
-    """
-    Not Model based, this is not a Django factory.
-    Factory objects are dispatcher based classes, independent
-    of any database objects.
-    """
-
-    def create_job(self, filename):  # pylint: disable=no-self-use
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/x86-01.yaml'))
-        y_file = os.path.join(os.path.dirname(__file__), filename)
-        with open(y_file) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "")
-        job.logger = DummyLogger()
-        return job
-
-
 class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestBootloaderAction, self).setUp()
-        self.factory = X86Factory()
+        super().setUp()
+        self.factory = Factory()
 
     def test_simulated_action(self):
-        job = self.factory.create_job('sample_jobs/ipxe-ramdisk.yaml')
+        job = self.factory.create_job('x86-01.jinja2', 'sample_jobs/ipxe-ramdisk.yaml')
         self.assertIsNotNone(job)
 
         description_ref = self.pipeline_reference('ipxe.yaml', job=job)
@@ -72,7 +55,7 @@ class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-m
         self.assertEqual(job.device['device_type'], 'x86')
 
     def test_tftp_pipeline(self):
-        job = self.factory.create_job('sample_jobs/ipxe-ramdisk.yaml')
+        job = self.factory.create_job('x86-01.jinja2', 'sample_jobs/ipxe-ramdisk.yaml')
         self.assertEqual(
             [action.name for action in job.pipeline.actions],
             ['tftp-deploy', 'bootloader-action', 'lava-test-retry', 'finalize']
@@ -88,7 +71,7 @@ class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-m
         self.assertIn('kernel', [action.key for action in tftp.internal_pipeline.actions if hasattr(action, 'key')])
 
     def test_device_x86(self):
-        job = self.factory.create_job('sample_jobs/ipxe-ramdisk.yaml')
+        job = self.factory.create_job('x86-02.jinja2', 'sample_jobs/ipxe-ramdisk.yaml')
         self.assertEqual(
             job.device['commands']['connections']['uart0']['connect'],
             'telnet bumblebee 8003'
@@ -99,7 +82,7 @@ class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-m
         self.assertEqual(methods['ipxe']['parameters'].get('bootloader_prompt', None), 'iPXE>')
 
     def test_bootloader_action(self):
-        job = self.factory.create_job('sample_jobs/ipxe-ramdisk.yaml')
+        job = self.factory.create_job('x86-01.jinja2', 'sample_jobs/ipxe-ramdisk.yaml')
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
         self.assertIn('ipxe', job.device['actions']['boot']['methods'])
@@ -110,7 +93,7 @@ class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-m
         bootloader_action = [action for action in job.pipeline.actions if action.name == 'bootloader-action'][0]
         bootloader_retry = [action for action in bootloader_action.internal_pipeline.actions if action.name == 'bootloader-retry'][0]
         commands = [action for action in bootloader_retry.internal_pipeline.actions if action.name == 'bootloader-commands'][0]
-        self.assertEqual(commands.character_delay, 250)
+        self.assertEqual(commands.character_delay, 500)
         for action in job.pipeline.actions:
             action.validate()
             if isinstance(action, BootloaderAction):
@@ -146,7 +129,8 @@ class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-m
                 }
             }
         }
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/x86-01.yaml'))
+        (rendered, _) = self.factory.create_device('x86-01.jinja2')
+        device = NewDevice(yaml.load(rendered))
         job = Job(4212, parameters, None)
         job.device = device
         pipeline = Pipeline(job=job, parameters=parameters['actions']['boot'])
@@ -170,13 +154,13 @@ class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-m
         self.assertIs(type(commands), list)
         self.assertIn("dhcp net0", commands)
         self.assertIn("set console console=ttyS0,115200n8 lava_mac=00:00:00:00:00:00", commands)
-        self.assertIn("set extraargs init=/sbin/init ip=dhcp", commands)
+        self.assertIn("set extraargs  ip=dhcp", commands)
         self.assertNotIn("kernel tftp://{SERVER_IP}/{KERNEL} ${extraargs} ${console}", commands)
         self.assertNotIn("initrd tftp://{SERVER_IP}/{RAMDISK}", commands)
         self.assertIn("boot", commands)
 
     def test_download_action(self):
-        job = self.factory.create_job('sample_jobs/ipxe.yaml')
+        job = self.factory.create_job('x86-01.jinja2', 'sample_jobs/ipxe.yaml')
         for action in job.pipeline.actions:
             action.validate()
             self.assertTrue(action.valid)
@@ -203,7 +187,7 @@ class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-m
         self.assertEqual(extract.timeout.duration, 120)
 
     def test_reset_actions(self):
-        job = self.factory.create_job('sample_jobs/ipxe.yaml')
+        job = self.factory.create_job('x86-01.jinja2', 'sample_jobs/ipxe.yaml')
         bootloader_action = None
         bootloader_retry = None
         reset_action = None
@@ -237,7 +221,7 @@ class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-m
         Loads a known YAML, adds a prompt to the dict and re-parses the job.
         Checks that the prompt is available in the expect_shell_connection action.
         """
-        job = self.factory.create_job('sample_jobs/ipxe-ramdisk.yaml')
+        job = self.factory.create_job('x86-01.jinja2', 'sample_jobs/ipxe-ramdisk.yaml')
         job.validate()
         bootloader = [action for action in job.pipeline.actions if action.name == 'bootloader-action'][0]
         retry = [action for action in bootloader.internal_pipeline.actions
@@ -245,7 +229,8 @@ class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-m
         expect = [action for action in retry.internal_pipeline.actions
                   if action.name == 'expect-shell-connection'][0]
         check = expect.parameters
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/x86-01.yaml'))
+        (rendered, _) = self.factory.create_device('x86-01.jinja2')
+        device = NewDevice(yaml.load(rendered))
         extra_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/ipxe.yaml')
         with open(extra_yaml) as data:
             sample_job_string = data.read()
@@ -264,7 +249,7 @@ class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-m
                   if action.name == 'expect-shell-connection'][0]
 
     def test_xz_nfs(self):
-        job = self.factory.create_job('sample_jobs/ipxe-nfs.yaml')
+        job = self.factory.create_job('x86-01.jinja2', 'sample_jobs/ipxe-nfs.yaml')
         # this job won't validate as the .xz nfsrootfs URL is a fiction
         self.assertRaises(JobError, job.validate)
         tftp_deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
@@ -274,7 +259,7 @@ class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-m
         self.assertEqual(nfs.parameters['nfsrootfs']['compression'], 'xz')
 
     def test_ipxe_with_monitor(self):
-        job = self.factory.create_job('sample_jobs/ipxe-monitor.yaml')
+        job = self.factory.create_job('x86-01.jinja2', 'sample_jobs/ipxe-monitor.yaml')
         job.validate()
         description_ref = self.pipeline_reference('ipxe-monitor.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))

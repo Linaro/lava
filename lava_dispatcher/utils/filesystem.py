@@ -31,8 +31,8 @@ import magic
 import errno
 from configobj import ConfigObj
 
-from lava_dispatcher.action import InfrastructureError, JobError, LAVABug
-from lava_dispatcher.utils.constants import (
+from lava_common.exceptions import InfrastructureError, JobError, LAVABug
+from lava_common.constants import (
     LXC_PATH,
     LAVA_LXC_HOME,
 )
@@ -391,6 +391,21 @@ def debian_package_version(pkg='lava-dispatcher', split=True):
         if split:
             return deb_version.split('-')[0]
         return deb_version
+    return ''
+
+
+def debian_package_arch(pkg='lava-dispatcher'):
+    """
+    Relies on Debian Policy rules for the existence of the
+    changelog. Distributions not derived from Debian will
+    return an empty string.
+    """
+    changelog = '/usr/share/doc/%s/changelog.Debian.gz' % pkg
+    if os.path.exists(changelog):
+        deb_arch = subprocess.check_output((
+            'dpkg-query', '-W', "-f=${Architecture}\n",
+            "%s" % pkg)).strip().decode('utf-8', errors="replace")
+        return deb_arch
     return ''
 
 

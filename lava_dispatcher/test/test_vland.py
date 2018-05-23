@@ -28,7 +28,7 @@ from lava_dispatcher.action import JobError
 from lava_dispatcher.connection import Protocol
 from lava_dispatcher.protocols.vland import VlandProtocol
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
-from lava_dispatcher.test.test_basic import StdoutTestCase
+from lava_dispatcher.test.test_basic import StdoutTestCase, Factory
 from lava_dispatcher.test.utils import DummyLogger
 
 # pylint: disable=superfluous-parens
@@ -37,10 +37,12 @@ from lava_dispatcher.test.utils import DummyLogger
 class TestVland(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestVland, self).setUp()
+        super().setUp()
         self.filename = os.path.join(os.path.dirname(__file__), 'sample_jobs/bbb-group-vland-alpha.yaml')
         self.beta_filename = os.path.join(os.path.dirname(__file__), 'sample_jobs/bbb-group-vland-beta.yaml')
-        self.device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
+        self.factory = Factory()
+        (rendered, _) = self.factory.create_device('bbb-01.jinja2')
+        self.device = NewDevice(yaml.load(rendered))
         self.job_id = "100"
 
     def test_file_structure(self):
@@ -97,7 +99,7 @@ class TestVland(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertIn('port', self.device['parameters']['interfaces']['eth1'])
         self.assertIn('tags', self.device['parameters']['interfaces']['eth1'])
         self.assertIsInstance(self.device['parameters']['interfaces']['eth1']['tags'], list)
-        self.assertIsInstance(self.device['parameters']['interfaces']['eth0']['tags'], list)
+        self.assertIsNone(self.device['parameters']['interfaces']['eth0']['tags'])
         csv_list = []
         for interface in self.device['parameters']['interfaces']:
             csv_list.extend(
@@ -116,6 +118,8 @@ class TestVland(StdoutTestCase):  # pylint: disable=too-many-public-methods
         )
         tag_list = []
         for interface in self.device['parameters']['interfaces']:
+            if interface == 'eth0':
+                continue
             for tag in self.device['parameters']['interfaces'][interface]['tags']:
                 tag_list.extend([interface, tag])
         self.assertEqual(set(tag_list), {'RJ45', '100M', 'eth1', '10M'})
@@ -147,14 +151,15 @@ class TestVland(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertIn('port', vprotocol.params['vlan_one'])
         self.assertIsNotNone(vprotocol.multinode_protocol)
 
-        bbb2 = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
+        (rendered, _) = self.factory.create_device('bbb-01.jinja2')
+        bbb2 = NewDevice(yaml.load(rendered))
         bbb2['parameters']['interfaces']['eth0']['switch'] = '192.168.0.2'
         bbb2['parameters']['interfaces']['eth0']['port'] = '6'
         bbb2['parameters']['interfaces']['eth1']['switch'] = '192.168.0.2'
         bbb2['parameters']['interfaces']['eth1']['port'] = '4'
         self.assertEqual(
             vprotocol.params, {
-                'vlan_one': {'switch': '192.168.0.1', 'iface': 'eth1', 'port': 7, 'tags': ['100M', 'RJ45', '10M']}
+                'vlan_one': {'switch': '192.168.0.2', 'iface': 'eth1', 'port': 7, 'tags': ['100M', 'RJ45', '10M']}
             }
         )
         # already configured the vland protocol in the same job
@@ -162,7 +167,7 @@ class TestVland(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertEqual(
             vprotocol.params, {
                 'vlan_one': {
-                    'switch': '192.168.0.1', 'iface': 'eth1', 'port': 7, 'tags': ['100M', 'RJ45', '10M']}
+                    'switch': '192.168.0.2', 'iface': 'eth1', 'port': 7, 'tags': ['100M', 'RJ45', '10M']}
             }
         )
         self.assertTrue(vprotocol.valid)

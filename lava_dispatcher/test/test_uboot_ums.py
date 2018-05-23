@@ -18,12 +18,9 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import os
 import unittest
-from lava_dispatcher.device import NewDevice
-from lava_dispatcher.parser import JobParser
 from lava_dispatcher.test.test_basic import Factory, StdoutTestCase
-from lava_dispatcher.test.utils import DummyLogger, infrastructure_error
+from lava_dispatcher.test.utils import infrastructure_error
 
 
 class UBootUMSFactory(Factory):  # pylint: disable=too-few-public-methods
@@ -32,20 +29,14 @@ class UBootUMSFactory(Factory):  # pylint: disable=too-few-public-methods
     Factory objects are dispatcher based classes, independent
     of any database objects.
     """
-    def create_warp7_job(self, filename):  # pylint: disable=no-self-use
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/imx7s-warp-01.yaml'))
-        bbb_yaml = os.path.join(os.path.dirname(__file__), filename)
-        with open(bbb_yaml) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "")
-            job.logger = DummyLogger()
-        return job
+    def create_warp7_job(self, filename):
+        return self.create_job('imx7s-warp-01.jinja2', filename)
 
 
 class TestUbootUMSAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestUbootUMSAction, self).setUp()
+        super().setUp()
         self.factory = UBootUMSFactory()
 
     @unittest.skipIf(infrastructure_error('dd'), "dd not installed")
@@ -62,4 +53,4 @@ class TestUbootUMSAction(StdoutTestCase):  # pylint: disable=too-many-public-met
         retry = [action for action in uboot.internal_pipeline.actions if action.name == 'uboot-retry'][0]
         flash = [action for action in retry.internal_pipeline.actions if action.name == 'flash-uboot-ums'][0]
         self.assertEqual("ums", flash.parameters['commands'])
-        self.assertEqual("/dev/vde", flash.usb_mass_device)
+        self.assertEqual("/dev/disk/by-id/usb-Linux_UMS_disk_0_WaRP7-0x742400d3000000e6-0:0", flash.usb_mass_device)

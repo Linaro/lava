@@ -24,12 +24,8 @@ import glob
 import shutil
 import tarfile
 from lava_dispatcher.actions.deploy import DeployAction
-from lava_dispatcher.action import (
-    Action,
-    InfrastructureError,
-    LAVABug,
-    Pipeline
-)
+from lava_dispatcher.action import Action, Pipeline
+from lava_common.exceptions import InfrastructureError, LAVABug
 from lava_dispatcher.actions.deploy.testdef import (
     TestDefinitionAction,
     get_test_action_namespaces,
@@ -48,7 +44,7 @@ class Overlay(Deployment):
     name = "overlay"
 
     def __init__(self, parent, parameters):
-        super(Overlay, self).__init__(parent)
+        super().__init__(parent)
         self.action = OverlayAction()
         self.action.section = self.action_type
         self.action.job = self.job
@@ -90,7 +86,7 @@ class OverlayAction(DeployAction):
     summary = "overlay the lava support scripts"
 
     def __init__(self):
-        super(OverlayAction, self).__init__()
+        super().__init__()
         self.lava_test_dir = os.path.realpath(
             '%s/../../lava_test_shell' % os.path.dirname(__file__))
         self.scripts_to_copy = []
@@ -102,7 +98,7 @@ class OverlayAction(DeployAction):
         self.probe_channel = ''
 
     def validate(self):
-        super(OverlayAction, self).validate()
+        super().validate()
         self.scripts_to_copy = sorted(glob.glob(os.path.join(self.lava_test_dir, 'lava-*')))
         # Distro-specific scripts override the generic ones
         if not self.test_needs_overlay(self.parameters):
@@ -211,7 +207,7 @@ class OverlayAction(DeployAction):
                         continue
                     fout.write("%s=%s\n" % (key, value))
 
-        connection = super(OverlayAction, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         return connection
 
 
@@ -222,7 +218,7 @@ class MultinodeOverlayAction(OverlayAction):
     summary = "overlay the lava multinode scripts"
 
     def __init__(self):
-        super(MultinodeOverlayAction, self).__init__()
+        super().__init__()
         # Multinode-only
         self.lava_multi_node_test_dir = os.path.realpath(
             '%s/../../lava_test_shell/multi_node' % os.path.dirname(__file__))
@@ -236,7 +232,7 @@ class MultinodeOverlayAction(OverlayAction):
         pass
 
     def validate(self):
-        super(MultinodeOverlayAction, self).validate()
+        super().validate()
         # idempotency
         if 'actions' not in self.job.parameters:
             return
@@ -315,7 +311,7 @@ class VlandOverlayAction(OverlayAction):
     summary = "Add files detailing vlan configuration."
 
     def __init__(self):
-        super(VlandOverlayAction, self).__init__()
+        super().__init__()
         # vland-only
         self.lava_vland_test_dir = os.path.realpath(
             '%s/../../lava_test_shell/vland' % os.path.dirname(__file__))
@@ -332,7 +328,7 @@ class VlandOverlayAction(OverlayAction):
         pass
 
     def validate(self):
-        super(VlandOverlayAction, self).validate()
+        super().validate()
         # idempotency
         if 'actions' not in self.job.parameters:
             return
@@ -447,7 +443,7 @@ class CompressOverlay(Action):
         if not self.valid:
             self.logger.error(self.errors)
             return connection
-        connection = super(CompressOverlay, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         with chdir(location):
             try:
                 with tarfile.open(output, "w:gz") as tar:
@@ -481,12 +477,12 @@ class SshAuthorize(Action):
     summary = 'add public key to authorized_keys'
 
     def __init__(self):
-        super(SshAuthorize, self).__init__()
+        super().__init__()
         self.active = False
         self.identity_file = None
 
     def validate(self):
-        super(SshAuthorize, self).validate()
+        super().validate()
         if 'to' in self.parameters:
             if self.parameters['to'] == 'ssh':
                 return
@@ -509,7 +505,7 @@ class SshAuthorize(Action):
                 self.active = True
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(SshAuthorize, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         if not self.identity_file:
             self.logger.debug("No authorisation required.")  # idempotency
             return connection
@@ -553,7 +549,7 @@ class PersistentNFSOverlay(Action):
     summary = "add test overlay to NFS"
 
     def validate(self):
-        super(PersistentNFSOverlay, self).validate()
+        super().validate()
         persist = self.parameters.get('persistent_nfs', None)
         if not persist:
             return

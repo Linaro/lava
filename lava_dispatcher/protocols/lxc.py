@@ -26,14 +26,15 @@ import logging
 import traceback
 import subprocess
 from lava_dispatcher.connection import Protocol
-from lava_dispatcher.action import (
+from lava_common.exceptions import (
     InfrastructureError,
     LAVABug,
     TestError,
     JobError,
-    Timeout,
 )
-from lava_dispatcher.utils.constants import (
+from lava_common.timeout import Timeout
+from lava_common.constants import (
+    LXC_PROTOCOL,
     LAVA_LXC_TIMEOUT,
     LXC_PATH,
     UDEV_RULES_DIR,
@@ -45,10 +46,10 @@ class LxcProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
     """
     Lxc API protocol.
     """
-    name = "lava-lxc"
+    name = LXC_PROTOCOL
 
     def __init__(self, parameters, job_id):
-        super(LxcProtocol, self).__init__(parameters, job_id)
+        super().__init__(parameters, job_id)
         self.system_timeout = Timeout('system', LAVA_LXC_TIMEOUT)
         self.persistence = parameters['protocols'][self.name].get('persist',
                                                                   False)

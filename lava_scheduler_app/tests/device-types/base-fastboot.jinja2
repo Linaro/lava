@@ -28,6 +28,17 @@ actions:
         port: {{ ssh_port|default(22) }}
         user: {{ ssh_user|default('root') }}
         identity_file: {{ ssh_identity_file }}
+{% if recovery_mode %}
+{{ recovery_mode }}
+          recovery_mode:
+{% for url in recovery_mode_command %}
+          - {{ url }}
+{% endfor %}
+          recovery_exit:
+{% for url in recovery_exit_command %}
+          - {{ url }}
+{% endfor %}
+{% endif %}
       fastboot:
 {{- fastboot_deploy_uboot }}
 {{- fastboot_interrupt_params }}
@@ -38,6 +49,7 @@ actions:
     connections:
       lxc:
       serial:
+      adb:
     methods:
       lxc:
       ssh:

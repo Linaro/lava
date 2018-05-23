@@ -37,17 +37,16 @@ Recipients can be specified using the LAVA username or in full.
 
 If the **recipients** section is omitted in the notify block, the system will
 send an email to the job submitter only, provided the **criteria** is satisfied,
-and there is no **callback** section.
+and there is no **callbacks** section.
 
-Notification callback
-=====================
+Notification callbacks
+======================
 
 In addition to sending email and IRC messages to **recipients**, the system can
-send a URL callback action. This will do a GET or POST request to the specified
-URL in the **callback** subsection. This can be used to trigger some action
-remotely. If a callback uses the POST request, the system will attach job data
-as described below.
-The **callback** section supports following options:
+send multiple URL callback actions. This will do a GET or POST request to the
+specified URL in the **callbacks** subsection. This can be used to trigger some
+action remotely. If a callback uses the POST request, the system will attach job data as described below.
+The **callbacks** section supports list of the following options:
 
 * **url** The URL for the request. This also supports field value
   substitution, i.e. in http://my.remote.site/{ID}/{STATUS} **id** and
@@ -82,6 +81,13 @@ The **callback** section supports following options:
   urlencoded query string.
   * **json** The data is dumped into JSON and returned with an application/json 
   Content-Type header.
+
+Example callback usage:
+
+.. include:: examples/source/notifications.yaml
+   :code: yaml
+   :start-after: # notify callbacks block
+
 
 Using profile settings
 ----------------------
@@ -138,4 +144,4 @@ Here are some comparing setup examples from test definition excerpts:
 .. include:: examples/source/notifications.yaml
    :code: yaml
    :start-after: # notify compare custom block
-
+   :end-before: # notify callbacks block

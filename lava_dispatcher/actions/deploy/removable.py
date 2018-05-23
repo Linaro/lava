@@ -38,7 +38,7 @@ from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.strings import substitute
-from lava_dispatcher.utils.constants import (
+from lava_common.constants import (
     DD_PROMPTS,
 )
 
@@ -60,7 +60,7 @@ class Removable(Deployment):
     name = 'removeable'
 
     def __init__(self, parent, parameters):
-        super(Removable, self).__init__(parent)
+        super().__init__(parent)
         self.action = MassStorage()
         self.action.job = self.job
         self.action.section = self.action_type
@@ -99,14 +99,14 @@ class DDAction(Action):
     summary = "write image to drive"
 
     def __init__(self):
-        super(DDAction, self).__init__()
+        super().__init__()
         self.timeout = Timeout(self.name, 600)
         self.boot_params = None
         self.tool_prompts = None
         self.tool_flags = None
 
     def validate(self):
-        super(DDAction, self).validate()
+        super().validate()
         if 'device' not in self.parameters:
             self.errors = "missing device for deployment"
 
@@ -189,7 +189,7 @@ class DDAction(Action):
         by the test writer, from within the test image of the first deployment, using the
         device to write directly to the secondary media, without needing to cache on the device.
         """
-        connection = super(DDAction, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         d_file = self.get_namespace_data(action='download-action', label='image', key='file')
         if not d_file:
             self.logger.debug("Skipping %s - nothing downloaded")
@@ -268,12 +268,12 @@ class MassStorage(DeployAction):  # pylint: disable=too-many-instance-attributes
     summary = "write image to storage"
 
     def __init__(self):
-        super(MassStorage, self).__init__()
+        super().__init__()
         self.suffix = None
         self.image_path = None
 
     def validate(self):
-        super(MassStorage, self).validate()
+        super().validate()
         # if 'image' not in self.parameters.keys():
         #     self.errors = "%s needs an image to deploy" % self.name
         if 'device' not in self.parameters:

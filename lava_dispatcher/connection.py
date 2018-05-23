@@ -22,12 +22,9 @@ import os
 import signal
 import decimal
 import logging
-from lava_dispatcher.action import (
-    InternalObject,
-    LAVABug,
-    TestError,
-    Timeout,
-)
+from lava_dispatcher.action import InternalObject
+from lava_common.exceptions import LAVABug, TestError
+from lava_common.timeout import Timeout
 
 # pylint: disable=too-many-public-methods,too-many-instance-attributes
 # pylint: disable=unused-argument,no-self-use

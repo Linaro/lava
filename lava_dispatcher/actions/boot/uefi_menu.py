@@ -19,9 +19,14 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 
+from lava_common.exceptions import InfrastructureError
+from lava_common.constants import (
+    DEFAULT_UEFI_LABEL_CLASS,
+    LINE_SEPARATOR,
+    UEFI_LINE_SEPARATOR,
+)
 from lava_dispatcher.action import (
     Action,
-    InfrastructureError,
     Pipeline,
 )
 from lava_dispatcher.menus.menus import (
@@ -37,11 +42,6 @@ from lava_dispatcher.utils.strings import substitute
 from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.actions.boot import BootAction, AutoLoginAction
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
-from lava_dispatcher.utils.constants import (
-    DEFAULT_UEFI_LABEL_CLASS,
-    LINE_SEPARATOR,
-    UEFI_LINE_SEPARATOR,
-)
 
 
 class UefiMenu(Boot):
@@ -52,7 +52,7 @@ class UefiMenu(Boot):
     """
 
     def __init__(self, parent, parameters):
-        super(UefiMenu, self).__init__(parent)
+        super().__init__(parent)
         self.action = UefiMenuAction()
         self.action.section = self.action_type
         self.action.job = self.job
@@ -76,14 +76,15 @@ class UEFIMenuInterrupt(MenuInterrupt):
     name = 'uefi-menu-interrupt'
     description = 'interrupt for uefi menu'
     summary = 'interrupt for uefi menu'
+    timeout_exception = InfrastructureError
 
     def __init__(self):
-        super(UEFIMenuInterrupt, self).__init__()
+        super().__init__()
         self.params = None
         self.method = 'uefi-menu'
 
     def validate(self):
-        super(UEFIMenuInterrupt, self).validate()
+        super().validate()
         self.params = self.job.device['actions']['boot']['methods'][self.method]['parameters']
         if 'interrupt_prompt' not in self.params:
             self.errors = "Missing interrupt prompt"
@@ -94,7 +95,7 @@ class UEFIMenuInterrupt(MenuInterrupt):
         if not connection:
             self.logger.debug("%s called without active connection", self.name)
             return
-        connection = super(UEFIMenuInterrupt, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         connection.prompt_str = self.params['interrupt_prompt']
         self.wait(connection)
         connection.raw_connection.send(self.params['interrupt_string'])
@@ -108,7 +109,7 @@ class UefiMenuSelector(SelectorMenuAction):  # pylint: disable=too-many-instance
     summary = 'select options in the uefi menu'
 
     def __init__(self):
-        super(UefiMenuSelector, self).__init__()
+        super().__init__()
         self.selector.prompt = "Start:"
         self.method_name = 'uefi-menu'
         self.commands = []
@@ -170,7 +171,7 @@ class UefiMenuSelector(SelectorMenuAction):  # pylint: disable=too-many-instance
             self.line_sep = LINE_SEPARATOR
         else:
             self.errors = "Unrecognised line separator configuration."
-        super(UefiMenuSelector, self).validate()
+        super().validate()
 
     def run(self, connection, max_end_time, args=None):
         lxc_active = any([protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name])
@@ -186,7 +187,7 @@ class UefiMenuSelector(SelectorMenuAction):  # pylint: disable=too-many-instance
         connection.raw_connection.linesep = self.line_sep
         self.logger.debug("Looking for %s", self.selector.prompt)
         self.wait(connection)
-        connection = super(UefiMenuSelector, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         if self.boot_message:
             self.logger.debug("Looking for %s", self.boot_message)
             connection.prompt_str = self.boot_message
@@ -202,11 +203,11 @@ class UefiSubstituteCommands(Action):
     summary = 'substitute job values into uefi commands'
 
     def __init__(self):
-        super(UefiSubstituteCommands, self).__init__()
+        super().__init__()
         self.items = None
 
     def validate(self):
-        super(UefiSubstituteCommands, self).validate()
+        super().validate()
         if self.parameters['commands'] not in self.job.device['actions']['boot']['methods']['uefi-menu']:
             self.errors = "Missing commands for %s" % self.parameters['commands']
         self.items = self.job.device['actions']['boot']['methods']['uefi-menu'][self.parameters['commands']]
@@ -215,7 +216,7 @@ class UefiSubstituteCommands(Action):
                 self.errors = "Invalid device configuration for %s: %s" % (self.name, item)
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(UefiSubstituteCommands, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         ip_addr = dispatcher_ip(self.job.parameters['dispatcher'])
         substitution_dictionary = {
             '{SERVER_IP}': ip_addr,
@@ -249,11 +250,11 @@ class UefiMenuAction(BootAction):
     summary = 'interact with uefi menu'
 
     def __init__(self):
-        super(UefiMenuAction, self).__init__()
+        super().__init__()
         self.method = 'uefi-menu'
 
     def validate(self):
-        super(UefiMenuAction, self).validate()
+        super().validate()
         self.set_namespace_data(
             action=self.name,
             label='bootloader_prompt',

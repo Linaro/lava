@@ -21,7 +21,7 @@
 
 import yaml
 
-from lava_dispatcher.action import ConfigurationError
+from lava_common.exceptions import ConfigurationError
 
 
 class PipelineDevice(dict):
@@ -32,7 +32,7 @@ class PipelineDevice(dict):
     """
 
     def __init__(self, config):
-        super(PipelineDevice, self).__init__()
+        super().__init__()
         self.update(config)
 
     def check_config(self, job):
@@ -99,15 +99,18 @@ class NewDevice(PipelineDevice):
     """
 
     def __init__(self, target):
-        super(NewDevice, self).__init__({})
+        super().__init__({})
         # Parse the yaml configuration
         try:
             if isinstance(target, str):
                 with open(target) as f_in:
                     data = f_in.read()
+                data = yaml.load(data)
+            elif isinstance(target, dict):
+                data = target
             else:
                 data = target.read()
-            data = yaml.load(data)
+                data = yaml.load(data)
             if data is None:
                 raise ConfigurationError("Missing device configuration")
             self.update(data)

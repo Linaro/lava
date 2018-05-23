@@ -39,7 +39,7 @@ class BootKExec(Boot):
     compatibility = 1
 
     def __init__(self, parent, parameters):
-        super(BootKExec, self).__init__(parent)
+        super().__init__(parent)
         self.action = BootKexecAction()
         self.action.section = self.action_type
         self.action.job = self.job
@@ -84,12 +84,12 @@ class KexecAction(Action):
     description = "call kexec with specified arguments"
 
     def __init__(self):
-        super(KexecAction, self).__init__()
+        super().__init__()
         self.command = ''
         self.load_command = ''
 
     def validate(self):
-        super(KexecAction, self).validate()
+        super().validate()
         self.command = self.parameters.get('command', '/sbin/kexec')
         self.load_command = self.command[:]  # local copy for idempotency
         self.command += ' -e'
@@ -110,7 +110,7 @@ class KexecAction(Action):
         If kexec fails, there is no real chance at diagnostics because the device will be hung.
         Get the output prior to the call, in case this helps after the job fails.
         """
-        connection = super(KexecAction, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         if 'kernel-config' in self.parameters:
             cmd = "zgrep -i kexec %s |grep -v '^#'" % self.parameters['kernel-config']
             self.logger.debug("Checking for kexec: %s", cmd)

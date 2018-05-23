@@ -732,9 +732,11 @@ def _export_query(query_results, content_type, filename):
     # Remove non-relevant columns for CSV file.
     removed_fields = [
         # TestJob fields:
-        "user_id", "actual_device_id", "definition",
-        "group_id", "id", "original_definition",
+        "user_id", "actual_device_id", "definition", "admin_notifications",
+        "group_id", "id", "original_definition", "health_check",
         "sub_id", "submitter_id", "testdata", "testsuite",
+        "notification", "testjobmaterializedview", "testjobuser",
+        "pipeline_compatibility",
         # TestSuite fields:
         "job_id",
         # TestCase fields:
@@ -744,7 +746,7 @@ def _export_query(query_results, content_type, filename):
         if field in query_keys:
             query_keys.remove(field)
 
-    with open(file_path, 'wb+') as csv_file:
+    with open(file_path, 'w+') as csv_file:
         out = csv.DictWriter(csv_file, quoting=csv.QUOTE_ALL,
                              extrasaction='ignore',
                              fieldnames=query_keys)

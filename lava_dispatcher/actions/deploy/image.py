@@ -19,7 +19,8 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
-from lava_dispatcher.action import Pipeline, InfrastructureError, Action
+from lava_common.exceptions import InfrastructureError
+from lava_dispatcher.action import Pipeline, Action
 from lava_dispatcher.logical import Deployment
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.download import (
@@ -71,7 +72,7 @@ class DeployQemuNfs(Deployment):
     name = 'qemu-nfs'
 
     def __init__(self, parent, parameters):
-        super(DeployQemuNfs, self).__init__(parent)
+        super().__init__(parent)
         self.action = DeployQemuNfsAction()
         self.action.section = self.action_type
         self.action.job = self.job
@@ -130,7 +131,7 @@ class ExtractNfsAction(Action):
     summary = "NFS deployment for QEMU"
 
     def __init__(self):
-        super(ExtractNfsAction, self).__init__()
+        super().__init__()
         self.param_key = 'nfsrootfs'
         self.file_key = "nfsroot"
         self.extra_compression = ['xz']
@@ -138,7 +139,7 @@ class ExtractNfsAction(Action):
         self.use_lzma = False
 
     def validate(self):
-        super(ExtractNfsAction, self).validate()
+        super().validate()
         if not self.valid:
             return
         if not self.parameters['images'].get(self.param_key, None):  # idempotency
@@ -158,7 +159,7 @@ class ExtractNfsAction(Action):
     def run(self, connection, max_end_time, args=None):
         if not self.parameters['images'].get(self.param_key, None):  # idempotency
             return connection
-        connection = super(ExtractNfsAction, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         root = self.get_namespace_data(action='download-action', label=self.param_key, key='file')
         root_dir = self.mkdtemp()
         untar_file(root, root_dir)
@@ -203,7 +204,7 @@ class DeployImages(Deployment):
     name = 'images'
 
     def __init__(self, parent, parameters):
-        super(DeployImages, self).__init__(parent)
+        super().__init__(parent)
         self.action = DeployImagesAction()
         self.action.section = self.action_type
         self.action.job = self.job

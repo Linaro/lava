@@ -1,0 +1,11 @@
+{% extends 'b2260.jinja2' %}
+{% set hard_reset_command = '/usr/local/lab-scripts/snmp_pdu_control --port 13 --hostname pdu15 --command reboot' %}
+{% set power_off_command = ['/usr/local/lab-scripts/snmp_pdu_control --port 13 --hostname pdu15 --command off',
+'sleep 10'] %}
+{% set connection_list = ['uart0'] %}
+{% set connection_tags = {'uart0': ['primary', 'telnet']} %}
+{% set connection_commands = {'uart0': 'telnet localhost 7107'} %}
+{% set power_on_command = '/usr/local/lab-scripts/snmp_pdu_control --port 13 --hostname pdu15 --command on' %}
+{% set uboot_mac_addr = '00:80:e1:12:81:30' %}
+{% set user_commands = {'set_boot_to_usb': {'do': '/bin/true', 'undo': '/bin/true'},
+'set_boot_to_sd': {'do': '/bin/true', 'undo': '/bin/true'}} %}

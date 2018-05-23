@@ -21,18 +21,19 @@
 import contextlib
 import logging
 import pexpect
+import sre_constants
 import sys
 import time
-from lava_dispatcher.action import (
-    Action,
+from lava_dispatcher.action import Action
+from lava_common.exceptions import (
     InfrastructureError,
     JobError,
     LAVABug,
     TestError,
-    Timeout,
 )
+from lava_common.timeout import Timeout
 from lava_dispatcher.connection import Connection
-from lava_dispatcher.utils.constants import LINE_SEPARATOR
+from lava_common.constants import LINE_SEPARATOR
 from lava_dispatcher.utils.strings import seconds_to_str
 
 
@@ -124,7 +125,7 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
 
     def sendcontrol(self, char):
         self.logger.input(char)
-        return super(ShellCommand, self).sendcontrol(char)
+        return super().sendcontrol(char)
 
     def send(self, string, delay=0, send_char=True):  # pylint: disable=arguments-differ
         """
@@ -136,10 +137,10 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
         delay = float(delay) / 1000
         if send_char:
             for char in string:
-                sent += super(ShellCommand, self).send(char)
+                sent += super().send(char)
                 time.sleep(delay)
         else:
-            sent = super(ShellCommand, self).send(string)
+            sent = super().send(string)
         return sent
 
     def expect(self, *args, **kw):
@@ -148,7 +149,10 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
         the TestShellAction make much more useful reports of what was matched
         """
         try:
-            proc = super(ShellCommand, self).expect(*args, **kw)
+            proc = super().expect(*args, **kw)
+        except sre_constants.error as exc:
+            msg = "Invalid regular expression '%s': %s" % (exc.pattern, exc.msg)
+            raise TestError(msg)
         except pexpect.TIMEOUT:
             raise TestError("ShellCommand command timed out.")
         except ValueError as exc:
@@ -173,7 +177,7 @@ class ShellSession(Connection):
         Optionally, a prompt can be forced after
         a percentage of the timeout.
         """
-        super(ShellSession, self).__init__(job, shell_command)
+        super().__init__(job, shell_command)
         self.name = "ShellSession"
         # FIXME: rename __prompt_str__ to indicate it can be a list or str
         self.__prompt_str__ = None
@@ -184,7 +188,7 @@ class ShellSession(Connection):
     def disconnect(self, reason=''):
         logger = logging.getLogger('dispatcher')
         logger.debug("Disconnecting %s", self.name)
-        super(ShellSession, self).disconnect(reason)
+        super().disconnect(reason)
 
     # FIXME: rename prompt_str to indicate it can be a list or str
     @property
@@ -294,16 +298,16 @@ class ExpectShellSession(Action):
     summary = "Expect a shell prompt"
 
     def __init__(self):
-        super(ExpectShellSession, self).__init__()
+        super().__init__()
         self.force_prompt = True
 
     def validate(self):
-        super(ExpectShellSession, self).validate()
+        super().validate()
         if 'prompts' not in self.parameters:
             self.errors = "Unable to identify test image prompts from parameters."
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(ExpectShellSession, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         if not connection:
             raise JobError("No connection available.")
         if not connection.prompt_str:

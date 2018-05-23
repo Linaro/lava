@@ -22,7 +22,9 @@ import time
 from lava_dispatcher.action import (
     Action,
     Pipeline,
-    Timeout,
+)
+from lava_common.timeout import Timeout
+from lava_common.exceptions import (
     JobError,
     LAVABug,
     InfrastructureError,
@@ -44,7 +46,7 @@ class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
     class FakeJob(Job):
 
         def __init__(self, parameters):
-            super(TestAction.FakeJob, self).__init__(4212, parameters, None)
+            super().__init__(4212, parameters, None)
 
     class FakeDeploy(object):
         """
@@ -70,7 +72,7 @@ class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
     class FakePipeline(Pipeline):
 
         def __init__(self, parent=None, job=None):
-            super(TestAction.FakePipeline, self).__init__(parent, job)
+            super().__init__(parent, job)
             job.pipeline = self
 
     class FakeAction(Action):
@@ -83,7 +85,7 @@ class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         summary = "fake action for unit tests"
 
         def __init__(self):
-            super(TestAction.FakeAction, self).__init__()
+            super().__init__()
             self.count = 1
 
         def run(self, connection, max_end_time, args=None):
@@ -101,7 +103,7 @@ class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         summary = "fake trigger action for unit tests"
 
         def __init__(self):
-            super(TestAction.FakeTriggerAction, self).__init__()
+            super().__init__()
             self.count = 1
             self.parameters['namespace'] = 'common'
 
@@ -144,14 +146,14 @@ class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
     class DiagnoseCheck(DiagnosticAction):
 
         def __init__(self):
-            super(TestAction.DiagnoseCheck, self).__init__()
+            super().__init__()
 
         @classmethod
         def trigger(cls):
             return 'fake-check'
 
     def setUp(self):
-        super(TestAction, self).setUp()
+        super().setUp()
         self.parameters = {
             "job_name": "fakejob",
             "actions": [
@@ -288,7 +290,7 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
     class FakeJob(Job):
 
         def __init__(self, parameters):
-            super(TestTimeout.FakeJob, self).__init__(4212, parameters, None)
+            super().__init__(4212, parameters, None)
             self.logger = DummyLogger()
 
         def validate(self, simulate=False):
@@ -304,7 +306,7 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
     class FakePipeline(Pipeline):
 
         def __init__(self, parent=None, job=None):
-            super(TestTimeout.FakePipeline, self).__init__(parent, job)
+            super().__init__(parent, job)
 
     class FakeAction(Action):
         """
@@ -336,7 +338,7 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
         summary = "fake action without adjuvant"
 
         def __init__(self):
-            super(TestTimeout.SafeAction, self).__init__()
+            super().__init__()
             self.parameters['namespace'] = 'common'
 
         def run(self, connection, max_end_time, args=None):
@@ -355,7 +357,7 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
         summary = "fake action with overly long sleep"
 
         def __init__(self):
-            super(TestTimeout.LongAction, self).__init__()
+            super().__init__()
             self.parameters['namespace'] = 'common'
 
         def run(self, connection, max_end_time, args=None):
@@ -387,7 +389,7 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
         summary = "fake action for unit tests"
 
         def __init__(self):
-            super(TestTimeout.FakeSafeAction, self).__init__()
+            super().__init__()
             self.timeout.duration = 4
 
         def populate(self, parameters):
@@ -402,7 +404,7 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
             return connection
 
     def setUp(self):
-        super(TestTimeout, self).setUp()
+        super().setUp()
         self.parameters = {
             "job_name": "fakejob",
             'timeouts': {
@@ -451,7 +453,6 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
             self.fakejob.run()
 
     def test_action_timout_custom_exception(self):
-        """ Test custom timeout exception """
         seconds = 2
         pipeline = TestTimeout.FakePipeline(job=self.fakejob)
         action = TestTimeout.FakeAction()

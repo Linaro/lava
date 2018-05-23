@@ -21,10 +21,8 @@
 # List just the subclasses supported for this base strategy
 # imported by the parser to populate the list of subclasses.
 
-from lava_dispatcher.action import (
-    ConfigurationError,
-    Pipeline,
-)
+from lava_dispatcher.action import Pipeline
+from lava_common.exceptions import ConfigurationError
 from lava_dispatcher.logical import Boot
 from lava_dispatcher.actions.boot import (
     BootAction,
@@ -58,7 +56,7 @@ class UBoot(Boot):
     compatibility = 1
 
     def __init__(self, parent, parameters):
-        super(UBoot, self).__init__(parent)
+        super().__init__(parent)
         self.action = UBootAction()
         self.action.section = self.action_type
         self.action.job = self.job
@@ -87,7 +85,7 @@ class UBootAction(BootAction):
     summary = "pass uboot commands"
 
     def validate(self):
-        super(UBootAction, self).validate()
+        super().validate()
         if 'type' in self.parameters:
             self.logger.warning("Specifying a type in the boot action is deprecated. "
                                 "Please specify the kernel type in the deploy parameters.")
@@ -130,7 +128,7 @@ class UBootRetry(BootAction):
                 self.internal_pipeline.add_action(ExportDeviceEnvironment())
 
     def validate(self):
-        super(UBootRetry, self).validate()
+        super().validate()
         self.set_namespace_data(
             action=self.name,
             label='bootloader_prompt',
@@ -139,7 +137,7 @@ class UBootRetry(BootAction):
         )
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(UBootRetry, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection
 
@@ -160,7 +158,7 @@ class UBootSecondaryMedia(BootloaderSecondaryMedia):
         media_keys = self.job.device['parameters']['media'].keys()
         if self.parameters['commands'] not in list(media_keys):
             return
-        super(UBootSecondaryMedia, self).validate()
+        super().validate()
         if 'kernel_type' not in self.parameters:
             self.errors = "Missing kernel_type for secondary media boot"
         self.logger.debug("Mapping kernel_type: %s", self.parameters['kernel_type'])
@@ -198,7 +196,7 @@ class UBootEnterFastbootAction(BootAction):
     summary = "uboot commands to enter fastboot mode"
 
     def __init__(self):
-        super(UBootEnterFastbootAction, self).__init__()
+        super().__init__()
         self.params = {}
 
     def populate(self, parameters):
@@ -211,7 +209,7 @@ class UBootEnterFastbootAction(BootAction):
         self.internal_pipeline.add_action(ConnectLxc())
 
     def validate(self):
-        super(UBootEnterFastbootAction, self).validate()
+        super().validate()
         if 'u-boot' not in self.job.device['actions']['deploy']['methods']:
             self.errors = "uboot method missing"
 
@@ -220,9 +218,7 @@ class UBootEnterFastbootAction(BootAction):
             self.errors = "uboot command missing"
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(UBootEnterFastbootAction, self).run(connection,
-                                                               max_end_time,
-                                                               args)
+        connection = super().run(connection, max_end_time, args)
         connection.prompt_str = self.params['bootloader_prompt']
         self.logger.debug("Changing prompt to %s", connection.prompt_str)
         self.wait(connection)

@@ -21,13 +21,11 @@
 import os
 import yaml
 import datetime
-from lava_dispatcher.action import (
-    Action,
+from lava_dispatcher.action import Action, Pipeline
+from lava_common.timeout import Timeout
+from lava_common.exceptions import (
     InfrastructureError,
-    Pipeline,
     JobError,
-    LAVAError,
-    Timeout
 )
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.device import NewDevice
@@ -46,9 +44,9 @@ from lava_dispatcher.actions.test.shell import TestShellRetry, TestShellAction
 class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestDefinitionHandlers, self).setUp()
-        factory = Factory()
-        self.job = factory.create_kvm_job('sample_jobs/kvm.yaml')
+        super().setUp()
+        self.factory = Factory()
+        self.job = self.factory.create_kvm_job('sample_jobs/kvm.yaml')
 
     def test_testshell(self):
         testshell = None
@@ -70,7 +68,8 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
         )
 
     def test_missing_handler(self):
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/kvm01.yaml'))
+        (rendered, _) = self.factory.create_device('kvm01.jinja2')
+        device = NewDevice(yaml.load(rendered))
         kvm_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/kvm.yaml')
         parser = JobParser()
         with open(kvm_yaml) as sample_job_data:
@@ -101,29 +100,17 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
 
 class X86Factory(Factory):
 
-    def create_x86_job(self, filename, device):  # pylint: disable=no-self-use
-        kvm_yaml = os.path.join(os.path.dirname(__file__), filename)
-        parser = JobParser()
-        try:
-            with open(kvm_yaml) as sample_job_data:
-                job = parser.parse(sample_job_data, device, 4212, None, "")
-            job.logger = DummyLogger()
-        except LAVAError as exc:
-            print(exc)
-            # some deployments listed in basics.yaml are not implemented yet
-            return None
-        return job
+    def create_x86_job(self, filename, device):
+        return self.create_job(device, filename)
 
 
 class TestMultiNodeOverlay(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestMultiNodeOverlay, self).setUp()
+        super().setUp()
         factory = X86Factory()
-        lng1 = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/lng-generator-01.yaml'))
-        lng2 = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/lng-generator-02.yaml'))
-        self.server_job = factory.create_x86_job('sample_jobs/test_action-1.yaml', lng1)
-        self.client_job = factory.create_x86_job('sample_jobs/test_action-2.yaml', lng2)
+        self.server_job = factory.create_x86_job('sample_jobs/test_action-1.yaml', 'lng-generator-01.jinja2')
+        self.client_job = factory.create_x86_job('sample_jobs/test_action-2.yaml', 'lng-generator-02.jinja2')
 
     def test_action_namespaces(self):
         self.assertIsNotNone(self.server_job)
@@ -153,9 +140,7 @@ class TestMultiNodeOverlay(StdoutTestCase):  # pylint: disable=too-many-public-m
 class TestShellResults(StdoutTestCase):   # pylint: disable=too-many-public-methods
 
     class FakeJob(Job):
-
-        def __init__(self, parameters):
-            super(TestShellResults.FakeJob, self).__init__(parameters)
+        pass
 
     class FakeDeploy(object):
         """
@@ -171,7 +156,7 @@ class TestShellResults(StdoutTestCase):   # pylint: disable=too-many-public-meth
     class FakePipeline(Pipeline):
 
         def __init__(self, parent=None, job=None):
-            super(TestShellResults.FakePipeline, self).__init__(parent, job)
+            super().__init__(parent, job)
 
     class FakeAction(Action):
         """
@@ -183,7 +168,7 @@ class TestShellResults(StdoutTestCase):   # pylint: disable=too-many-public-meth
         summary = "fake action for unit tests"
 
         def __init__(self):
-            super(TestShellResults.FakeAction, self).__init__()
+            super().__init__()
             self.count = 1
 
         def run(self, connection, max_end_time, args=None):

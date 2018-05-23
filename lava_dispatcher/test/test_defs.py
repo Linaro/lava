@@ -33,7 +33,7 @@ from nose.tools import nottest
 from lava_dispatcher.power import FinalizeAction
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
-from lava_dispatcher.action import InfrastructureError
+from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.actions.test.shell import TestShellRetry, PatternFixup
 from lava_dispatcher.test.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.test.test_uboot import UBootFactory
@@ -72,9 +72,9 @@ def check_missing_path(testcase, exception, path):
 class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestDefinitionHandlers, self).setUp()
-        factory = Factory()
-        self.job = factory.create_kvm_job('sample_jobs/kvm.yaml')
+        super().setUp()
+        self.factory = Factory()
+        self.job = self.factory.create_job('qemu01.jinja2', 'sample_jobs/kvm.yaml')
         with open(os.path.join(os.path.dirname(__file__), 'testdefs', 'params.yaml'), 'r') as params:
             self.testdef = yaml.safe_load(params)
 
@@ -127,7 +127,8 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
         testdef = [action for action in overlay.internal_pipeline.actions if action.name == 'test-definition'][0]
         testdef.validate()
         self.assertEqual([], testdef.errors)
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/kvm01.yaml'))
+        (rendered, _) = self.factory.create_device('kvm01.jinja2')
+        device = yaml.load(rendered)
         kvm_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/kvm.yaml')
         parser = JobParser()
         with open(kvm_yaml, 'r') as sample_job_data:
@@ -203,7 +204,7 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
 class TestDefinitionSimple(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestDefinitionSimple, self).setUp()
+        super().setUp()
         factory = Factory()
         self.job = factory.create_kvm_job('sample_jobs/kvm-notest.yaml')
 
@@ -227,7 +228,7 @@ class TestDefinitionSimple(StdoutTestCase):  # pylint: disable=too-many-public-m
 class TestDefinitionParams(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestDefinitionParams, self).setUp()
+        super().setUp()
         self.factory = Factory()
         self.job = self.factory.create_kvm_job('sample_jobs/kvm-params.yaml')
 
@@ -310,7 +311,7 @@ class TestDefinitionParams(StdoutTestCase):  # pylint: disable=too-many-public-m
 class TestDefinitionRepeat(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestDefinitionRepeat, self).setUp()
+        super().setUp()
         factory = Factory()
         self.job = factory.create_kvm_job("sample_jobs/kvm-multi.yaml")
 
@@ -339,7 +340,7 @@ class TestDefinitionRepeat(StdoutTestCase):  # pylint: disable=too-many-public-m
 class TestSkipInstall(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestSkipInstall, self).setUp()
+        super().setUp()
         factory = UBootFactory()
         self.job = factory.create_bbb_job("sample_jobs/bbb-skip-install.yaml")
 
@@ -377,7 +378,7 @@ def check_rpcinfo(server='127.0.0.1'):
     returns True on failure.
     """
     try:
-        subprocess.check_output(['/usr/sbin/rpcinfo', '-u', server, 'nfs'])
+        subprocess.check_output(['/usr/sbin/rpcinfo', '-u', server, 'nfs', 3])
     except (OSError, subprocess.CalledProcessError):
         return True
     return False
@@ -393,7 +394,7 @@ class TestDefinitions(StdoutTestCase):
     """
 
     def setUp(self):
-        super(TestDefinitions, self).setUp()
+        super().setUp()
         self.testdef = os.path.join(os.path.dirname(__file__), 'testdefs', 'params.yaml')
         self.res_data = os.path.join(os.path.dirname(__file__), 'testdefs', 'result-data.txt')
         factory = UBootFactory()
@@ -423,7 +424,7 @@ class TestDefinitions(StdoutTestCase):
         pattern = PatternFixup(testdef=params, count=0)
         self.assertTrue(pattern.valid())
 
-    @unittest.skipIf(check_rpcinfo(), "rpcinfo returns non-zero for nfs")
+    # @unittest.skipIf(check_rpcinfo(), "rpcinfo returns non-zero for nfs")
     def test_definition_lists(self):  # pylint: disable=too-many-locals
         self.job.validate()
         tftp_deploy = [action for action in self.job.pipeline.actions if action.name == 'tftp-deploy'][0]
@@ -451,7 +452,7 @@ class TestDefinitions(StdoutTestCase):
         )
         self.assertEqual(
             {repo.uuid for repo in git_repos},
-            {'4212_1.3.2.4.1', '4212_1.3.2.4.5'}
+            {'4999_1.3.2.4.1', '4999_1.3.2.4.5'}
         )
         self.assertEqual(
             set(git_repos[0].get_namespace_data(action='test-runscript-overlay', label='test-runscript-overlay', key='testdef_levels').values()),
@@ -470,8 +471,8 @@ class TestDefinitions(StdoutTestCase):
         self.assertEqual(
             self.job.context['test'],
             {
-                '4212_1.3.2.4.5': {'testdef_pattern': {'pattern': '(?P<test_case_id>.*-*):\\s+(?P<result>(pass|fail))'}},
-                '4212_1.3.2.4.1': {'testdef_pattern': {'pattern': '(?P<test_case_id>.*-*):\\s+(?P<result>(pass|fail))'}}}
+                '4999_1.3.2.4.5': {'testdef_pattern': {'pattern': '(?P<test_case_id>.*-*):\\s+(?P<result>(pass|fail))'}},
+                '4999_1.3.2.4.1': {'testdef_pattern': {'pattern': '(?P<test_case_id>.*-*):\\s+(?P<result>(pass|fail))'}}}
         )
         testdef_index = self.job.context['common']['test-definition']['test-definition']['testdef_index']
         start_run = '0_smoke-tests'
@@ -479,7 +480,7 @@ class TestDefinitions(StdoutTestCase):
         self.assertIsNotNone(uuid_list)
         for key, value in enumerate(testdef_index):
             if start_run == "%s_%s" % (key, value):
-                self.assertEqual('4212_1.3.2.4.1', uuid_list[key])
+                self.assertEqual('4999_1.3.2.4.1', uuid_list[key])
                 self.assertEqual(
                     self.job.context['test'][uuid_list[key]]['testdef_pattern']['pattern'],
                     '(?P<test_case_id>.*-*):\\s+(?P<result>(pass|fail))'

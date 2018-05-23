@@ -28,15 +28,15 @@ import os
 import socket
 import time
 from lava_dispatcher.connection import Protocol
-from lava_dispatcher.action import (
+from lava_common.timeout import Timeout
+from lava_common.exceptions import (
     ConfigurationError,
     InfrastructureError,
     JobError,
     TestError,
     MultinodeProtocolTimeoutError,
-    Timeout,
 )
-from lava_dispatcher.utils.constants import LAVA_MULTINODE_SYSTEM_TIMEOUT
+from lava_common.constants import LAVA_MULTINODE_SYSTEM_TIMEOUT
 
 # pylint: disable=misplaced-comparison-constant,too-many-branches
 
@@ -50,7 +50,7 @@ class MultinodeProtocol(Protocol):  # pylint: disable=too-many-instance-attribut
     # FIXME: use errors and valid where old code just logged complaints
 
     def __init__(self, parameters, job_id):
-        super(MultinodeProtocol, self).__init__(parameters, job_id)
+        super().__init__(parameters, job_id)
         self.blocks = 4 * 1024
         # how long between polls (in seconds)
         self.system_timeout = Timeout('system', LAVA_MULTINODE_SYSTEM_TIMEOUT)

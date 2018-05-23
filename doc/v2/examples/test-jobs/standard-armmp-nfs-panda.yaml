@@ -3,7 +3,7 @@ device_type: panda
 job_name: standard Debian ARMMP nfs test on panda
 timeouts:
   job:
-    minutes: 15
+    minutes: 30
   action:
     minutes: 5
   connection:
@@ -21,7 +21,7 @@ metadata:
 actions:
 - deploy:
     timeout:
-      minutes: 5
+      minutes: 10
     to: tftp
     kernel:
       url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/armhf/3/vmlinuz-4.9.0-4-armmp
@@ -54,7 +54,7 @@ actions:
 
 - test:
     timeout:
-      minutes: 10
+      minutes: 20
     definitions:
     - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
       from: git

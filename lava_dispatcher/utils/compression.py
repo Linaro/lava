@@ -28,7 +28,7 @@ import os
 import subprocess
 import tarfile
 
-from lava_dispatcher.action import (
+from lava_common.exceptions import (
     InfrastructureError,
     JobError
 )
@@ -38,8 +38,13 @@ from lava_dispatcher.utils.shell import which
 
 
 # https://www.kernel.org/doc/Documentation/xz.txt
-compress_command_map = {'xz': 'xz --check=crc32', 'gz': 'gzip', 'bz2': 'bzip2'}
-decompress_command_map = {'xz': 'unxz', 'gz': 'gunzip', 'bz2': 'bunzip2', 'zip': 'unzip'}
+compress_command_map = {'xz': ['xz', '--check=crc32'],
+                        'gz': ['gzip'],
+                        'bz2': ['bzip2']}
+decompress_command_map = {'xz': ['unxz'],
+                          'gz': ['gunzip'],
+                          'bz2': ['bunzip2'],
+                          'zip': ['unzip']}
 
 
 def compress_file(infile, compression):
@@ -49,13 +54,13 @@ def compress_file(infile, compression):
         raise JobError("Cannot find shell command to compress: %s" % compression)
 
     # Check that the command does exists
-    which(compress_command_map[compression].split(" ")[0])
+    which(compress_command_map[compression][0])
 
     with chdir(os.path.dirname(infile)):
-        cmd = "%s %s" % (compress_command_map[compression], infile)
+        cmd = compress_command_map[compression]
+        cmd.append(infile)
         try:
-            # safe to use shell=True here, no external arguments
-            subprocess.check_output(cmd, shell=True)
+            subprocess.check_output(cmd)
             return "%s.%s" % (infile, compression)
         except (OSError, subprocess.CalledProcessError) as exc:
             raise InfrastructureError('unable to compress file %s: %s' % (infile, exc))
@@ -68,16 +73,16 @@ def decompress_file(infile, compression):
         raise JobError("Cannot find shell command to decompress: %s" % compression)
 
     # Check that the command does exists
-    which(decompress_command_map[compression])
+    which(decompress_command_map[compression][0])
 
     with chdir(os.path.dirname(infile)):
-        cmd = "%s %s" % (decompress_command_map[compression], infile)
+        cmd = decompress_command_map[compression]
+        cmd.append(infile)
         outfile = infile
         if infile.endswith(compression):
             outfile = infile[:-(len(compression) + 1)]
         try:
-            # safe to use shell=True here, no external arguments
-            subprocess.check_output(cmd, shell=True)
+            subprocess.check_output(cmd)
             return outfile
         except (OSError, subprocess.CalledProcessError) as exc:
             raise InfrastructureError('unable to decompress file %s: %s' % (infile, exc))

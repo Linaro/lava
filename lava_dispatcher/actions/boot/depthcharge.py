@@ -21,9 +21,9 @@
 
 
 import os.path
+from lava_common.exceptions import ConfigurationError
 from lava_dispatcher.action import (
     Action,
-    ConfigurationError,
     Pipeline,
 )
 from lava_dispatcher.actions.boot import (
@@ -52,7 +52,7 @@ class Depthcharge(Boot):
     device tree blob, and the other contains the kernel arguments.
     """
     def __init__(self, parent, parameters):
-        super(Depthcharge, self).__init__(parent)
+        super().__init__(parent)
         self.action = DepthchargeAction()
         self.action.section = self.action_type
         self.action.job = self.job
@@ -81,11 +81,11 @@ class DepthchargeCommandOverlay(BootloaderCommandOverlay):
     name = "depthcharge-overlay"
 
     def __init__(self):
-        super(DepthchargeCommandOverlay, self).__init__()
+        super().__init__()
         self.cmdline = None
 
     def validate(self):
-        super(DepthchargeCommandOverlay, self).validate()
+        super().validate()
         method = self.job.device['actions']['boot']['methods'][self.method]
         commands_name = self.parameters['commands']
         method_params = method[commands_name]
@@ -94,8 +94,7 @@ class DepthchargeCommandOverlay(BootloaderCommandOverlay):
             self.errors = "No cmdline found in {}".format(commands_name)
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(DepthchargeCommandOverlay, self).run(
-            connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
 
         # Create the cmdline file, this is not set by any bootloader command
         ip_addr = dispatcher_ip(self.job.parameters['dispatcher'])
@@ -187,8 +186,7 @@ class DepthchargeRetry(BootAction):
                 self.internal_pipeline.add_action(ExportDeviceEnvironment())
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(DepthchargeRetry, self).run(
-            connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         self.set_namespace_data(
             action='shared', label='shared', key='connection', value=connection)
         return connection
@@ -204,11 +202,11 @@ class DepthchargeStart(Action):
     summary = "Depthcharge start"
 
     def __init__(self):
-        super(DepthchargeStart, self).__init__()
+        super().__init__()
         self.start_message = None
 
     def validate(self):
-        super(DepthchargeStart, self).validate()
+        super().validate()
         if self.job.device.connect_command == '':
             self.errors = "Unable to connect to device"
         method = self.job.device['actions']['boot']['methods']['depthcharge']
@@ -217,8 +215,7 @@ class DepthchargeStart(Action):
             self.errors = "Missing Depthcharge start message for device"
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(DepthchargeStart, self).run(
-            connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         connection.prompt_str = self.start_message
         self.logger.debug("Changing prompt to '%s'", connection.prompt_str)
         self.wait(connection)

@@ -21,14 +21,25 @@
 import os
 import sys
 import time
+import jinja2
 import unittest
 import logging
 import yaml
 
-from lava_dispatcher.action import Pipeline, Action, JobError, LAVABug, LAVAError
+from lava_dispatcher.action import (
+    Pipeline,
+    Action,
+)
+from lava_common.exceptions import (
+    JobError,
+    LAVABug,
+    LAVAError,
+    ConfigurationError,
+)
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.job import Job
 from lava_dispatcher.device import NewDevice
+from lava_scheduler_app.schema import validate_device, SubmissionException
 from lava_dispatcher.actions.deploy.image import DeployImages
 from lava_dispatcher.test.utils import DummyLogger
 
@@ -38,7 +49,7 @@ from lava_dispatcher.test.utils import DummyLogger
 class StdoutTestCase(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(StdoutTestCase, self).setUp()
+        super().setUp()
         logger = logging.getLogger('dispatcher')
         logger.disabled = True
         logger.propagate = False
@@ -73,7 +84,7 @@ class TestPipelineInit(StdoutTestCase):  # pylint: disable=too-many-public-metho
 
         def __init__(self):
             self.ran = False
-            super(TestPipelineInit.FakeAction, self).__init__()
+            super().__init__()
 
         def run(self, connection, max_end_time, args=None):
             self.ran = True
@@ -82,7 +93,7 @@ class TestPipelineInit(StdoutTestCase):  # pylint: disable=too-many-public-metho
             raise NotImplementedError("invalid")
 
     def setUp(self):
-        super(TestPipelineInit, self).setUp()
+        super().setUp()
         self.sub0 = TestPipelineInit.FakeAction()
         self.sub1 = TestPipelineInit.FakeAction()
 
@@ -96,7 +107,7 @@ class TestPipelineInit(StdoutTestCase):  # pylint: disable=too-many-public-metho
 class TestJobParser(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestJobParser, self).setUp()
+        super().setUp()
         factory = Factory()
         self.job = factory.create_kvm_job('sample_jobs/basics.yaml')
 
@@ -151,21 +162,97 @@ class Factory(object):
         logger = logging.getLogger('dispatcher')
         logger.disabled = True
         logger.propagate = False
+        self.debug = False
 
-    def create_fake_qemu_job(self):  # pylint: disable=no-self-use
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/kvm01.yaml'))
-        sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/basics.yaml')
-        parser = JobParser()
+    CONFIG_PATH = os.path.abspath(
+        os.path.join(
+            os.path.dirname(__file__), "..", "..",
+            "lava_scheduler_app", "tests", "devices"))
+
+    def prepare_jinja_template(self, hostname, jinja_data):
+        string_loader = jinja2.DictLoader({'%s.jinja2' % hostname: jinja_data})
+        path = os.path.dirname(self.CONFIG_PATH)
+        type_loader = jinja2.FileSystemLoader([os.path.join(path, 'device-types')])
+        env = jinja2.Environment(
+            loader=jinja2.ChoiceLoader([string_loader, type_loader]),
+            trim_blocks=True)
+        return env.get_template("%s.jinja2" % hostname)
+
+    def render_device_dictionary(self, hostname, data, job_ctx=None):
+        if not job_ctx:
+            job_ctx = {}
+        test_template = self.prepare_jinja_template(hostname, data)
+        rendered = test_template.render(**job_ctx)
+        return rendered
+
+    def validate_data(self, hostname, data, job_ctx=None):
+        """
+        Needs to be passed a device dictionary (jinja2 format)
+        """
+        rendered = self.render_device_dictionary(hostname, data, job_ctx)
         try:
-            with open(sample_job_file) as sample_job_data:
-                job = parser.parse(sample_job_data, device, 4212, None, "")
-        except LAVAError:
-            # some deployments listed in basics.yaml are not implemented yet
-            return None
+            ret = validate_device(yaml.load(rendered))
+        except (SubmissionException, ConfigurationError) as exc:
+            print('#######')
+            print(rendered)
+            print('#######')
+            self.fail(exc)
+        return ret
+
+    def create_device(self, template, job_ctx=None):
+        """
+        Create a device configuration on-the-fly from in-tree
+        device-type Jinja2 template.
+        """
+        with open(
+            os.path.join(
+                os.path.dirname(__file__),
+                '..', '..', 'lava_scheduler_app', 'tests',
+                'devices', template)) as hikey:
+            data = hikey.read()
+        hostname = template.replace('.jinja2', '')
+        rendered = self.render_device_dictionary(hostname, data, job_ctx)
+        return (rendered, data)
+
+    def create_custom_job(self, template, job_data):
+        job_ctx = job_data.get('context', None)
+        (data, device_dict) = self.create_device(template, job_ctx)
+        device = NewDevice(yaml.load(data))
+        if self.debug:
+            print('####### Device configuration #######')
+            print(data)
+            print('#######')
+        try:
+            parser = JobParser()
+            job = parser.parse(yaml.dump(job_data), device, 4999, None, "")
+        except (ConfigurationError, TypeError) as exc:
+            print('####### Parser exception ########')
+            print(device)
+            print('#######')
+            raise ConfigurationError("Invalid device: %s" % exc)
+        job.logger = DummyLogger()
         return job
 
+    def create_job(self, template, filename):
+        y_file = os.path.join(os.path.dirname(__file__), filename)
+        with open(y_file) as sample_job_data:
+            job_data = yaml.load(sample_job_data.read())
+        return self.create_custom_job(template, job_data)
+
+    def create_fake_qemu_job(self):
+        return self.create_job('qemu01.jinja2', 'sample_jobs/basics.yaml')
+
     def create_kvm_job(self, filename):  # pylint: disable=no-self-use
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/kvm01.yaml'))
+        """
+        Custom function to allow for extra exception handling.
+        """
+        (data, device_dict) = self.create_device('kvm01.jinja2')
+        device = NewDevice(yaml.load(data))
+        if self.debug:
+            print('####### Device configuration #######')
+            print(data)
+            print('#######')
+        self.validate_data('hi6220-hikey-01', device_dict)
         kvm_yaml = os.path.join(os.path.dirname(__file__), filename)
         parser = JobParser()
         try:
@@ -187,7 +274,7 @@ class TestPipeline(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
         def __init__(self):
             self.ran = False
-            super(TestPipeline.FakeAction, self).__init__()
+            super().__init__()
 
         def run(self, connection, max_end_time, args=None):
             time.sleep(1)
@@ -346,7 +433,8 @@ class TestPipeline(StdoutTestCase):  # pylint: disable=too-many-public-methods
             job_def = yaml.load(kvm_yaml)
         job_def['compatibility'] = job.compatibility
         parser = JobParser()
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/kvm01.yaml'))
+        (rendered, data) = factory.create_device('kvm01.jinja2')
+        device = yaml.load(rendered)
         try:
             job = parser.parse(yaml.dump(job_def), device, 4212, None, "")
         except NotImplementedError:
@@ -409,7 +497,7 @@ class TestFakeActions(StdoutTestCase):  # pylint: disable=too-many-public-method
             return new_connection
 
     def setUp(self):
-        super(TestFakeActions, self).setUp()
+        super().setUp()
         self.sub0 = TestPipeline.FakeAction()
         self.sub1 = TestPipeline.FakeAction()
 

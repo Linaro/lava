@@ -23,88 +23,19 @@ import copy
 from functools import reduce  # pylint: disable=redefined-builtin
 import time
 import types
-import signal
-import datetime
 import traceback
 import subprocess
 from collections import OrderedDict
-from contextlib import contextmanager
 from nose.tools import nottest
-
+from lava_common.timeout import Timeout
+from lava_common.exceptions import (
+    LAVABug,
+    LAVAError,
+    JobError,
+)
 from lava_dispatcher.log import YAMLLogger
-from lava_dispatcher.utils.constants import ACTION_TIMEOUT
+from lava_dispatcher.utils.lxc import is_lxc_requested
 from lava_dispatcher.utils.strings import seconds_to_str
-
-
-class LAVAError(Exception):
-    """ Base class for all exceptions in LAVA """
-    error_help = ""
-    error_type = ""
-
-
-class InfrastructureError(LAVAError):
-    """
-    Exceptions based on an error raised by a component of the
-    test which is neither the LAVA dispatcher code nor the
-    code being executed on the device under test. This includes
-    errors arising from the device (like the arndale SD controller
-    issue) and errors arising from the hardware to which the device
-    is connected (serial console connection, ethernet switches or
-    internet connection beyond the control of the device under test).
-
-    Use LAVABug for errors arising from bugs in LAVA code.
-    """
-    error_help = "InfrastructureError: The Infrastructure is not working " \
-                 "correctly. Please report this error to LAVA admins."
-    error_type = "Infrastructure"
-
-
-class JobCanceled(LAVAError):
-    """ The job was canceled """
-    error_help = "JobCanceled: The job was canceled"
-    error_type = "Canceled"
-
-
-class JobError(LAVAError):
-    """
-    An Error arising from the information supplied as part of the TestJob
-    e.g. HTTP404 on a file to be downloaded as part of the preparation of
-    the TestJob or a download which results in a file which tar or gzip
-    does not recognise.
-    """
-    error_help = "JobError: Your job cannot terminate cleanly."
-    error_type = "Job"
-
-
-class LAVABug(LAVAError):
-    """
-    An error that is raised when an un-expected error is catched. Only happen
-    when a bug is encountered.
-    """
-    error_help = "LAVABug: This is probably a bug in LAVA, please report it."
-    error_type = "Bug"
-
-
-class TestError(LAVAError):
-    """
-    An error in the operation of the test definition, e.g.
-    in parsing measurements or commands which fail.
-    Always ensure TestError is caught, logged and cleared. It is not fatal.
-    """
-    error_help = "TestError: A test failed to run, look at the error message."
-    error_type = "Test"
-
-
-class ConfigurationError(LAVAError):
-    error_help = "ConfigurationError: The LAVA instance is not configured " \
-                 "correctly. Please report this error to LAVA admins."
-    error_type = "Configuration"
-
-
-class MultinodeProtocolTimeoutError(LAVAError):
-    error_help = "MultinodeProtocolTimeoutError: Multinode wait/sync call " \
-                 "has timed out."
-    error_type = "MultinodeTimeout"
 
 
 class InternalObject(object):  # pylint: disable=too-few-public-methods
@@ -352,6 +283,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         self.max_retries = 1  # unless the strategy or the job parameters change this, do not retry
         self.diagnostics = []
         self.protocols = []  # list of protocol objects supported by this action, full list in job.protocols
+        self.lxc_cmd_prefix = []
         self.connection_timeout = Timeout(self.name, exception=self.timeout_exception)
         self.character_delay = 0
         self.force_prompt = False
@@ -498,6 +430,11 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
 
         if not self.section:
             self.errors = "action %s (%s) has no section set" % (self.name, self)
+
+        # Decide whether we need lxc_cmd_prefix or not
+        lxc_name = is_lxc_requested(self.job)
+        if lxc_name:
+            self.lxc_cmd_prefix = ['lxc-attach', '-n', lxc_name, '--']
 
         # Collect errors from internal pipeline actions
         if self.internal_pipeline:
@@ -689,6 +626,12 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
             data['parameters']['deployment_data'] = self.parameters['deployment_data'].__data__
         return data
 
+    def get_namespace_keys(self, action, parameters=None):
+        """ Return the keys for the given action """
+        params = parameters if parameters else self.parameters
+        namespace = params['namespace']
+        return self.data.get(namespace, {}).get(action, {}).keys()
+
     def get_namespace_data(self, action, label, key, deepcopy=True, parameters=None):  # pylint: disable=too-many-arguments
         """
         Get a namespaced data value from dynamic job data using the specified key.
@@ -828,78 +771,3 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
                 if testclass['class'].needs_overlay():
                     return True
         return False
-
-
-class Timeout(object):
-    """
-    The Timeout class is a declarative base which any actions can use. If an Action has
-    a timeout, that timeout name and the duration will be output as part of the action
-    description and the timeout is then exposed as a modifiable value via the device_type,
-    device or even job inputs. (Some timeouts may be deemed "protected" which may not be
-    altered by the job. All timeouts are subject to a hardcoded maximum duration which
-    cannot be exceeded by device_type, device or job input, only by the Action initialising
-    the timeout.
-    If a connection is set, this timeout is used per pexpect operation on that connection.
-    If a connection is not set, this timeout applies for the entire run function of the action.
-    """
-    def __init__(self, name, duration=ACTION_TIMEOUT, exception=JobError):
-        self.name = name
-        self.start = 0
-        self.elapsed_time = -1
-        self.duration = duration  # Actions can set timeouts higher than the clamp.
-        self.exception = exception
-
-    @classmethod
-    def default_duration(cls):
-        return ACTION_TIMEOUT
-
-    @classmethod
-    def parse(cls, data):
-        """
-        Parsed timeouts can be set in device configuration or device_type configuration
-        and can therefore exceed the clamp.
-        """
-        if not isinstance(data, dict):
-            raise ConfigurationError("Invalid timeout data")
-        duration = datetime.timedelta(days=data.get('days', 0),
-                                      hours=data.get('hours', 0),
-                                      minutes=data.get('minutes', 0),
-                                      seconds=data.get('seconds', 0))
-        if not duration:
-            return Timeout.default_duration()
-        return int(duration.total_seconds())
-
-    def _timed_out(self, signum, frame):  # pylint: disable=unused-argument
-        duration = int(time.time() - self.start)
-        raise self.exception("%s timed out after %s seconds" % (self.name, duration))
-
-    @contextmanager
-    def __call__(self, action_max_end_time=None):
-        self.start = time.time()
-        if action_max_end_time is None:
-            # action_max_end_time is None when cleaning the pipeline after a
-            # timeout.
-            # In this case, the job timeout is not taken into account.
-            max_end_time = self.start + self.duration
-        else:
-            max_end_time = min(action_max_end_time, self.start + self.duration)
-
-        duration = int(max_end_time - self.start)
-        if duration <= 0:
-            # If duration is lower than 0, then the timeout should be raised now.
-            # Calling signal.alarm in this case will only deactivate the alarm
-            # (by passing 0 or the unsigned value).
-            # Deactivate any previous alarm and set elapse_time prior to raise
-            signal.alarm(0)
-            self.elapsed_time = 0
-            self._timed_out(None, None)
-
-        signal.signal(signal.SIGALRM, self._timed_out)
-        signal.alarm(duration)
-
-        try:
-            yield max_end_time
-        finally:
-            # clear the timeout alarm, the action has returned
-            signal.alarm(0)
-            self.elapsed_time = time.time() - self.start

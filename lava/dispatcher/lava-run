@@ -33,7 +33,7 @@ import sys
 import traceback
 import yaml
 
-from lava_dispatcher.action import (
+from lava_common.exceptions import (
     InfrastructureError,
     JobCanceled,
     LAVABug,

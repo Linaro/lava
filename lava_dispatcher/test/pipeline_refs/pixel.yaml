@@ -11,6 +11,7 @@
   - class: actions.deploy.overlay.OverlayAction
     name: lava-overlay
     pipeline:
+    - {class: actions.deploy.overlay.SshAuthorize, name: ssh-authorize}
     - {class: actions.deploy.overlay.VlandOverlayAction, name: lava-vland-overlay}
     - {class: actions.deploy.overlay.MultinodeOverlayAction, name: lava-multinode-overlay}
     - class: actions.deploy.testdef.TestDefinitionAction
@@ -69,7 +70,6 @@
   pipeline:
   - {class: actions.boot.fastboot.EnterFastbootAction, name: enter-fastboot-action}
   - {class: actions.boot.fastboot.FastbootRebootAction, name: fastboot-reboot}
-  - {class: actions.boot.AutoLoginAction, name: auto-login-action}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
   pipeline:

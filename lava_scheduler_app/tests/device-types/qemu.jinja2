@@ -36,6 +36,7 @@ actions:
 {% block qemu_method %}
         parameters:
           command:
+{# start arch command #}
 {% if arch == 'arm64' or arch == 'aarch64' %}
             qemu-system-aarch64
 {% elif arch == 'arm' %}
@@ -45,8 +46,10 @@ actions:
 {% elif arch == 'i386' %}
             qemu-system-i386
 {% endif %}
+{# end arch command #}
           # used by installers to relate to the empty target device
           boot_options:
+{# start arch root #}
 {% if arch == 'arm64' or arch == 'aarch64' %}
             {root: '{{ boot_root|default("/dev/vda2") }} rw rootwait', console: {{ boot_console|default('ttyAMA0 115200') }}, ip: dhcp, mem: 1024M}
 {% elif arch == 'arm' %}
@@ -57,23 +60,32 @@ actions:
 {% else %}
             {root: {{ boot_root|default('/dev/sda1') }}, console: {{ boot_console|default('ttyS0,115200') }}}
 {% endif %}
+{# end arch root #}
           options:
 {% block qemu_options %}
+{# arch cpu #}
 {% if arch == 'arm64' or arch == 'aarch64' or arch == 'arm' %}
           - -cpu {{ cpu|default('cortex-a57') }}
           - -machine {{ machine|default('virt') }}
+{# arch cpu + vga #}
 {% if vga %}
           - {{ vga }}
 {% endif %}
+{# arch cpu #}
+{# arch cpu + serial #}
 {% if serial %}
           - {{ serial }}
 {% endif %}
+{# arch cpu #}
 {% else %}
+{# not arch cpu #}
 {% if not no_kvm %}
           - -cpu host
           - -enable-kvm
 {% endif %}
+{# end no_kvm #}
 {% endif %}
+{# end arch cpu #}
           - -nographic
           - -net nic,{{ model|default('model=virtio') }},macaddr={{ mac_addr|default('52:54:00:12:34:58') }} -net {{ netdevice|default('user') }}
           - -m {{ memory|default(512) }}

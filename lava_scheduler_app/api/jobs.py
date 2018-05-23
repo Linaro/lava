@@ -17,18 +17,10 @@
 # along with Lava Server.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import sys
-
+import xmlrpc.client
 from linaro_django_xmlrpc.models import ExposedV2API
 from lava_scheduler_app.api import SchedulerAPI
 from lava_scheduler_app.models import TestJob
-
-if sys.version_info[0] == 2:
-    # Python 2.x
-    import xmlrpclib
-elif sys.version_info[0] == 3:
-    # For Python 3.0 and later
-    import xmlrpc.client as xmlrpclib
 
 
 def load_optional_file(filename):
@@ -88,16 +80,16 @@ class SchedulerJobsAPI(ExposedV2API):
         try:
             job = TestJob.get_by_job_number(job_id)
         except TestJob.DoesNotExist:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 404, "Job '%s' was not found." % job_id)
 
         if not job.can_view(self.user):
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 403, "Job '%s' not available to user '%s'." %
                 (job_id, self.user))
 
         if job.state not in [TestJob.STATE_RUNNING, TestJob.STATE_CANCELING, TestJob.STATE_FINISHED]:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 404, "Job '%s' has not started yet" % job_id)
 
         output_dir = job.output_dir
@@ -127,22 +119,25 @@ class SchedulerJobsAPI(ExposedV2API):
         Return value
         ------------
         The job definition or and error.
+
+        Note: for MultiNode jobs, the original MultiNode definition
+        is returned.
         """
         try:
             job = TestJob.get_by_job_number(job_id)
         except TestJob.DoesNotExist:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 404, "Job '%s' was not found." % job_id)
 
         if not job.can_view(self.user):
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 403, "Job '%s' not available to user '%s'." %
                 (job_id, self.user))
 
         if job.is_multinode:
-            return xmlrpclib.Binary(job.multinode_definition)
+            return job.multinode_definition
         else:
-            return xmlrpclib.Binary(job.original_definition)
+            return job.original_definition
 
     def list(self, state=None, health=None, start=0, limit=25):
         """
@@ -181,12 +176,12 @@ class SchedulerJobsAPI(ExposedV2API):
             try:
                 jobs = jobs.filter(state=TestJob.STATE_REVERSE[state.capitalize()])
             except KeyError:
-                raise xmlrpclib.Fault(400, "Invalid state '%s'" % state)
+                raise xmlrpc.client.Fault(400, "Invalid state '%s'" % state)
         if health is not None:
             try:
                 jobs = jobs.filter(health=TestJob.HEALTH_REVERSE[health.capitalize()])
             except KeyError:
-                raise xmlrpclib.Fault(400, "Invalid health '%s'" % health)
+                raise xmlrpc.client.Fault(400, "Invalid health '%s'" % health)
 
         for job in jobs.order_by('-id')[start:start + limit]:
             device_type = None
@@ -226,11 +221,11 @@ class SchedulerJobsAPI(ExposedV2API):
         try:
             job = TestJob.get_by_job_number(job_id)
         except TestJob.DoesNotExist:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 404, "Job '%s' was not found." % job_id)
 
         if not job.can_view(self.user):
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 403, "Job '%s' not available to user '%s'." %
                 (job_id, self.user))
 
@@ -242,9 +237,9 @@ class SchedulerJobsAPI(ExposedV2API):
                 for _ in range(line):
                     count += len(next(f_in))
                 f_in.seek(count)
-                return (job_finished, xmlrpclib.Binary(f_in.read().encode("utf-8")))
+                return (job_finished, xmlrpc.client.Binary(f_in.read().encode("utf-8")))
         except (IOError, StopIteration):
-            return (job_finished, xmlrpclib.Binary("[]".encode("utf-8")))
+            return (job_finished, xmlrpc.client.Binary("[]".encode("utf-8")))
 
     def show(self, job_id):
         """
@@ -268,11 +263,11 @@ class SchedulerJobsAPI(ExposedV2API):
         try:
             job = TestJob.get_by_job_number(job_id)
         except TestJob.DoesNotExist:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 404, "Job '%s' was not found." % job_id)
 
         if not job.can_view(self.user):
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 403, "Job '%s' not available to user '%s'." %
                 (job_id, self.user))
 

@@ -19,14 +19,16 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
+import yaml
 import unittest
-from lava_dispatcher.action import Action, ConfigurationError, JobError
+from lava_dispatcher.action import Action
+from lava_common.exceptions import ConfigurationError, JobError
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.boot import BootAction
 from lava_dispatcher.actions.boot.u_boot import BootloaderInterruptAction, UBootAction
-from lava_dispatcher.test.test_basic import StdoutTestCase
+from lava_dispatcher.test.test_basic import StdoutTestCase, Factory
 from lava_dispatcher.test.utils import DummyLogger, infrastructure_error
 
 # Test the loading of test definitions within the deploy stage
@@ -35,7 +37,9 @@ from lava_dispatcher.test.utils import DummyLogger, infrastructure_error
 class TestDeviceParser(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def test_new_device(self):
-        kvm01 = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/kvm01.yaml'))
+        factory = Factory()
+        (rendered, _) = factory.create_device('kvm01.jinja2')
+        kvm01 = yaml.load(rendered)
         try:
             self.assertIsNotNone(kvm01['actions'])
         except:  # pylint: disable=bare-except
@@ -66,13 +70,10 @@ class TestJobDeviceParameters(StdoutTestCase):  # pylint: disable=too-many-publi
 
     def test_device_parser(self):
         job_parser = JobParser()
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
-        self.assertIn('power_state', device)
-        self.assertFalse(hasattr(device, 'power_state'))
-        sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/uboot-ramdisk.yaml')
-        with open(sample_job_file) as sample_job_data:
-            job = job_parser.parse(sample_job_data, device, 4212, None, "")
+        factory = Factory()
+        job = factory.create_job('bbb-01.jinja2', 'sample_jobs/uboot-ramdisk.yaml')
         uboot_action = None
+        device = job.device
         for action in job.pipeline.actions:
             if isinstance(action, DeployAction):
                 self.assertIn('ramdisk', action.parameters)
@@ -109,13 +110,18 @@ class TestJobDeviceParameters(StdoutTestCase):  # pylint: disable=too-many-publi
                 self.assertTrue(len(action.parameters['u-boot']['ramdisk']['commands']) > 2)
 
     def test_device_power(self):
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
-        self.assertNotEqual(device.hard_reset_command, '')
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/kvm01.yaml'))
-        self.assertEqual(device.hard_reset_command, '')
+        factory = Factory()
+        (rendered, _) = factory.create_device('bbb-01.jinja2')
+        device = yaml.load(rendered)
+        self.assertNotEqual(device['commands'].get('hard_reset', ''), '')
+        (rendered, _) = factory.create_device('kvm01.jinja2')
+        device = yaml.load(rendered)
+        self.assertNotIn('commands', device)
 
     def test_device_constants(self):
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
+        factory = Factory()
+        (rendered, _) = factory.create_device('bbb-01.jinja2')
+        device = NewDevice(yaml.load(rendered))
         self.assertIn('constants', device)
         self.assertEqual(device.get_constant('kernel-start-message'), "Linux version [0-9]")
         self.assertRaises(ConfigurationError,
@@ -128,9 +134,11 @@ class TestDeviceEnvironment(StdoutTestCase):  # pylint: disable=too-many-public-
     """
 
     def test_empty_device_environment(self):
+        factory = Factory()
         data = None
         job_parser = JobParser()
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
+        (rendered, _) = factory.create_device('bbb-01.jinja2')
+        device = NewDevice(yaml.load(rendered))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/uboot-ramdisk.yaml')
         with open(sample_job_file) as sample_job_data:
             job = job_parser.parse(
@@ -153,8 +161,10 @@ overrides:
  DEBEMAIL = "codehelp@debian.org"
  DEBFULLNAME: "Neil Williams"
         """
+        factory = Factory()
         job_parser = JobParser()
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
+        (rendered, _) = factory.create_device('bbb-01.jinja2')
+        device = NewDevice(yaml.load(rendered))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/uboot-ramdisk.yaml')
         with open(sample_job_file) as sample_job_data:
             job = job_parser.parse(
@@ -176,8 +186,10 @@ overrides:
  DEBEMAIL: "codehelp@debian.org"
  DEBFULLNAME: "Neil Williams"
         """
+        factory = Factory()
         job_parser = JobParser()
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
+        (rendered, _) = factory.create_device('bbb-01.jinja2')
+        device = NewDevice(yaml.load(rendered))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/uboot-ramdisk.yaml')
         with open(sample_job_file) as sample_job_data:
             job = job_parser.parse(

@@ -19,22 +19,15 @@
 
 import os
 import subprocess
-import sys
+import xmlrpc.client
 import yaml
 
 from django.http import Http404
-
+from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from lava_scheduler_app.views import get_restricted_job
 from lava_scheduler_app.models import Device, DeviceType
 from linaro_django_xmlrpc.models import errors, Mapper, SystemAPI
-
-if sys.version_info[0] == 2:
-    # Python 2.x
-    import xmlrpclib
-elif sys.version_info[0] == 3:
-    # For Python 3.0 and later
-    import xmlrpc.client as xmlrpclib
 
 
 class LavaSystemAPI(SystemAPI):
@@ -128,6 +121,79 @@ class LavaSystemAPI(SystemAPI):
         """
         return 2
 
+    def master_config(self):
+        """
+        Name
+        ----
+        `master_config` ()
+
+        Description
+        -----------
+        Return a dictionary containing the master and logger ZMQ
+        socket addresses for this instance.
+
+        Arguments
+        ---------
+        None
+
+        Return value
+        ------------
+        Returns a dictionary containing the following keys:
+        {
+          "MASTER_URL": "tcp://<lava-master-dns>:5556",
+          "LOGGING_URL": "tcp://<lava-master-dns>:5555",
+          "ENCRYPT": False,
+          "IPv6": False,
+          "EVENT_SOCKET": "tcp://*:5500",
+          "EVENT_TOPIC": "org.linaro.validation",
+          "EVENT_NOTIFICATION": True,
+          "LOG_SIZE_LIMIT": 10,
+        }
+
+        If ENCRYPT is True, clients MUST already have a usable
+        client certificate installed on the master AND the current
+        master certificate installed on the client, before a
+        connection can be made.
+        """
+        data = {
+            "master_socket": "tcp://<lava-master-dns>:5556",
+            "socket": "tcp://<lava-master-dns>:5555",
+            "encrypt": False,
+            "ipv6": False,
+        }
+
+        master = {"ERROR": "invalid master config"}
+        filename = os.path.join(settings.MEDIA_ROOT, 'lava-master-config.yaml')
+        if os.path.exists(filename):
+            try:
+                with open(filename, 'r') as output:
+                    master = yaml.load(output)
+            except yaml.YAMLError as exc:
+                return master
+        if master:
+            data.update(master)
+
+        log_config = {"ERROR": "invalid logging config"}
+        filename = os.path.join(settings.MEDIA_ROOT, 'lava-logs-config.yaml')
+        if os.path.exists(filename):
+            try:
+                with open(filename, 'r') as output:
+                    log_config = yaml.load(output)
+            except yaml.YAMLError as exc:
+                return log_config
+        if log_config:
+            data.update(log_config)
+        return {
+            "MASTER_URL": data['master_socket'],
+            "LOGGING_URL": data['socket'],
+            "IPv6": data['ipv6'],
+            "ENCRYPT": data.get('encrypt', False),
+            "EVENT_TOPIC": settings.EVENT_TOPIC,
+            "EVENT_SOCKET": settings.EVENT_SOCKET,
+            "EVENT_NOTIFICATION": settings.EVENT_NOTIFICATION,
+            "LOG_SIZE_LIMIT": settings.LOG_SIZE_LIMIT,
+        }
+
     def user_can_view_jobs(self, job_list, username=None):
         """
         Name
@@ -175,7 +241,7 @@ class LavaSystemAPI(SystemAPI):
         """
         self._authenticate()
         if not isinstance(job_list, list):
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 errors.BAD_REQUEST,
                 "job list argument must be a list")
         username = self._switch_user(username)
@@ -291,7 +357,7 @@ class LavaSystemAPI(SystemAPI):
         """
         self._authenticate()
         if not isinstance(device_list, list):
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 errors.BAD_REQUEST,
                 "device list argument must be a list")
         username = self._switch_user(username)
@@ -371,12 +437,12 @@ class LavaSystemAPI(SystemAPI):
         """
         self._authenticate()
         if not isinstance(type_list, list):
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 errors.BAD_REQUEST,
                 "type list argument must be a list")
         username = self._switch_user(username)
         if not username.has_perm('lava_scheduler_app.add_testjob'):
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 errors.FORBIDDEN,
                 "User '%s' does not have permissiont to submit jobs." % username
             )
@@ -454,7 +520,7 @@ class LavaSystemAPI(SystemAPI):
             if switch in network_map['switches']:
                 return yaml.dump(network_map['switches'][switch])
             else:
-                return xmlrpclib.Fault(
+                return xmlrpc.client.Fault(
                     404, "No switch '%s' was found in the network map of supported devices." % switch)
         return yaml.dump(network_map)
 

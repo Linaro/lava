@@ -31,7 +31,7 @@ class TestRepeatBootTest(StdoutTestCase):  # pylint: disable=too-many-public-met
     Test repeat counts with nested test stanzas
     """
     def setUp(self):
-        super(TestRepeatBootTest, self).setUp()
+        super().setUp()
         factory = Factory()
         self.job = factory.create_kvm_job('sample_jobs/kvm-repeat.yaml')
 

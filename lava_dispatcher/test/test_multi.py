@@ -36,7 +36,7 @@ from lava_dispatcher.test.utils import DummyLogger
 class TestMultiDeploy(StdoutTestCase):
 
     def setUp(self):
-        super(TestMultiDeploy, self).setUp()
+        super().setUp()
         self.parameters = {}
         self.parsed_data = {  # fake parsed YAML
             'device_type': 'fake',
@@ -79,11 +79,11 @@ class TestMultiDeploy(StdoutTestCase):
 
         def __init__(self):
             filename = os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml')
-            super(TestMultiDeploy.FakeDevice, self).__init__(filename)
+            super().__init__(filename)
 
     class TestDeploy(object):  # cannot be a subclass of Deployment without a full select function.
         def __init__(self, parent, parameters, job):
-            super(TestMultiDeploy.TestDeploy, self).__init__()
+            super().__init__()
             self.action = TestMultiDeploy.TestDeployAction()
             self.action.job = job
             self.action.section = 'internal'
@@ -96,7 +96,7 @@ class TestMultiDeploy(StdoutTestCase):
         summary = "fake deployment"
 
         def validate(self):
-            super(TestMultiDeploy.TestDeployAction, self).validate()
+            super().validate()
 
         def run(self, connection, max_end_time, args=None):
             self.data[self.name] = self.parameters
@@ -104,7 +104,7 @@ class TestMultiDeploy(StdoutTestCase):
 
     class TestJob(Job):
         def __init__(self):
-            super(TestMultiDeploy.TestJob, self).__init__(4122, 0, self.parameters)
+            super().__init__(4122, 0, self.parameters)
 
     def test_multi_deploy(self):
         self.assertIsNotNone(self.parsed_data)
@@ -151,7 +151,7 @@ class TestMultiDeploy(StdoutTestCase):
 class TestMultiDefinition(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestMultiDefinition, self).setUp()
+        super().setUp()
         self.device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
         bbb_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/uboot-nfs.yaml')
         with open(bbb_yaml) as sample_job_data:
@@ -181,7 +181,7 @@ class TestMultiDefinition(StdoutTestCase):  # pylint: disable=too-many-public-me
 class TestMultiUBoot(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestMultiUBoot, self).setUp()
+        super().setUp()
         factory = UBootFactory()
         self.job = factory.create_bbb_job('sample_jobs/uboot-multiple.yaml')
         self.assertIsNotNone(self.job)

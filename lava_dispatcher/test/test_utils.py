@@ -29,14 +29,15 @@ from lava_dispatcher.test.test_uboot import UBootFactory, StdoutTestCase
 from lava_dispatcher.actions.boot.u_boot import UBootAction, UBootRetry
 from lava_dispatcher.power import ResetDevice, PDUReboot
 from lava_dispatcher.test.utils import infrastructure_error
-from lava_dispatcher.action import InfrastructureError, Action
+from lava_common.exceptions import InfrastructureError
+from lava_dispatcher.action import Action
 from lava_dispatcher.utils import vcs, installers
 
 
 class TestGit(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestGit, self).setUp()
+        super().setUp()
         self.cwd = os.getcwd()
 
         # Go into a temp dirctory
@@ -134,7 +135,7 @@ class TestGit(StdoutTestCase):  # pylint: disable=too-many-public-methods
 class TestBzr(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestBzr, self).setUp()
+        super().setUp()
         self.cwd = os.getcwd()
 
         # Go into a temp dirctory
@@ -202,7 +203,7 @@ class TestConstants(StdoutTestCase):  # pylint: disable=too-many-public-methods
     in that stanza.
     """
     def setUp(self):
-        super(TestConstants, self).setUp()
+        super().setUp()
         factory = UBootFactory()
         self.job = factory.create_bbb_job('sample_jobs/uboot-ramdisk.yaml')
         self.assertIsNotNone(self.job)
@@ -245,7 +246,7 @@ class TestConstants(StdoutTestCase):  # pylint: disable=too-many-public-methods
 class TestClasses(StdoutTestCase):
 
     def setUp(self):
-        super(TestClasses, self).setUp()
+        super().setUp()
         from lava_dispatcher.actions.deploy import strategies  # pylint: disable=unused-variable
         from lava_dispatcher.actions.boot import strategies  # pylint: disable=reimported
         from lava_dispatcher.actions.test import strategies  # pylint: disable=reimported
@@ -273,7 +274,7 @@ class TestClasses(StdoutTestCase):
 class TestInstallers(StdoutTestCase):
 
     def setUp(self):
-        super(TestInstallers, self).setUp()
+        super().setUp()
         self.cwd = os.getcwd()
         self.tmpdir = tempfile.mkdtemp()
         os.chdir(self.tmpdir)

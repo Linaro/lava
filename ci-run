@@ -3,29 +3,29 @@
 set -x
 set -e
 
-PEP8=1
-PYTEST=0
-ALL=1
-
-while getopts ":pya" opt; do
+while getopts ":pdty" opt; do
   case $opt in
     p)
       # pep8 only
-      PEP8=2
+      PEP8=true
+      ;;
+    d)
+      # lava_dispatcher only
+      DISPATCH=true
+      ;;
+    t)
+      # template tests only
+      TEMPLATE=true
       ;;
     y)
-      # use py.test
-      PYTEST=1
+      # pytest-3 only
+      PYTEST=true
       ;;
-    a)
-      # python3 - python2 support dropped
-      ALL=1
-      ;;
-    \?)
+    ?)
       echo "Usage:"
       echo "-p - pep8 only"
-      echo "-y - use py.test"
-      echo "-a - run all tests: pep8 and python3"
+      echo "-d - pep8 and dispatcher only"
+      echo "-t - pep8 and templates only"
       echo "Invalid option: -$OPTARG" >&2
       exit 1
       ;;
@@ -36,40 +36,42 @@ shift $((OPTIND -1))
 
 pep8 --ignore E501,E722 .
 
-if [ ${PEP8} = 2 ]; then
+if [ -n "${PEP8}" ]
+then
     exit 0
 fi
 
-echo "Removing old .pyc files"
+echo "Removing old .pyc files and cache"
 echo
 find . -name '*.pyc' -delete
 rm -rf ./.cache/
+rm -rf ./__init__.py
 
 echo "Starting unit tests"
 echo
-
-if [ -z "$1" ] || [ "$1" == "--noinput" ]; then
-  echo "If it exists, a broken test database will be deleted without prompting."
-  NOINPUT='--noinput -v2'
-fi
-
-if [[ (-z "$1") || (("$1" == -v*) && ($# -eq 1)) ]]; then
-  VERBOSE=$1
-fi
-
-if [ ${ALL} = 1 ]; then
-  if [ -n "$NOINPUT" ] || [ -n "$VERBOSE" ]; then
-    python3 ./lava_server/manage.py test $NOINPUT $VERBOSE \
-    lava_scheduler_app \
-    linaro_django_xmlrpc.tests \
-    lava_results_app
-  else
-    python3 ./lava_server/manage.py test "$@"
-  fi
-
-  if [ ${PYTEST} = 1 ]; then
-    py.test-3 -v lava_dispatcher/test
-  else
+if [ -z "${DISPATCH}"  -a -z "${TEMPLATE}" -a -z "${PYTEST}" ]
+then
+    echo "If it exists, a broken test database will be deleted without prompting."
+    python3 ./lava_server/manage.py test --noinput -v 2 lava_scheduler_app linaro_django_xmlrpc.tests lava_results_app
     python3 -m unittest discover -v lava_dispatcher/test
-  fi
+    exit
+fi
+
+if [ -n "${DISPATCH}" -a  -z "${TEMPLATE}" -a -z "${PYTEST}" ]
+then
+    python3 -m unittest discover -v lava_dispatcher/test
+fi
+
+if [ -z "${DISPATCH}" -a  -n "${TEMPLATE}" -a -z "${PYTEST}" ]
+then
+    python3 -m unittest -vcf lava_scheduler_app.tests.test_templates
+fi
+
+
+if [ -z "${DISPATCH}" -a -z "${TEMPLATE}" -a -n "${PYTEST}" ]
+then
+    PYTHONPATH=. pytest-3 --cache-clear --disable-pytest-warnings --ds lava_server.settings.development -v lava_scheduler_app
+    PYTHONPATH=. pytest-3 --cache-clear --disable-pytest-warnings --ds lava_server.settings.development -v lava_results_app
+    PYTHONPATH=. pytest-3 --cache-clear --disable-pytest-warnings --ds lava_server.settings.development -v linaro_django_xmlrpc/tests.py
+    PYTHONPATH=. pytest-3 --cache-clear --disable-pytest-warnings -v lava_dispatcher
 fi

@@ -24,7 +24,8 @@ import re
 import logging
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
-from lava_dispatcher.action import Timeout, JobError
+from lava_common.timeout import Timeout
+from lava_common.exceptions import JobError
 from lava_dispatcher.shell import ShellSession, ShellCommand
 from lava_dispatcher.test.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.test.utils import DummyLogger
@@ -37,7 +38,7 @@ from lava_dispatcher.menus.menus import SelectorMenu
 class TestSelectorMenu(StdoutTestCase):
 
     def setUp(self):
-        super(TestSelectorMenu, self).setUp()
+        super().setUp()
         self.menu = SelectorMenu()
         self.menu.item_markup = (r'\[', r'\]')
         self.menu.item_class = '0-9'
@@ -93,7 +94,7 @@ class MenuFactory(Factory):  # pylint: disable=too-few-public-methods
 class TestUefi(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestUefi, self).setUp()
+        super().setUp()
         factory = MenuFactory()
         self.job = factory.create_uefi_job('sample_jobs/mustang-menu-ramdisk.yaml')
 

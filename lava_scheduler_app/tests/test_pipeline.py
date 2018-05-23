@@ -29,10 +29,10 @@ from lava_scheduler_app.schema import (
 from lava_dispatcher.device import PipelineDevice
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.test.test_defs import check_missing_path
-from lava_dispatcher.action import JobError, InfrastructureError
+from lava_common.exceptions import JobError, InfrastructureError
 from lava_dispatcher.actions.boot.qemu import BootQEMU
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
-from lava_dispatcher.utils.constants import SYS_CLASS_KVM
+from lava_common.constants import SYS_CLASS_KVM
 from lava_dispatcher.test.utils import DummyLogger
 from django_restricted_resource.managers import RestrictedResourceQuerySet
 from unittest import TestCase

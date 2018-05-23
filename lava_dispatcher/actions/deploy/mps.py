@@ -25,9 +25,9 @@ import os
 import shutil
 from lava_dispatcher.action import (
     Action,
-    InfrastructureError,
     Pipeline,
 )
+from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.logical import Deployment
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.download import DownloaderAction

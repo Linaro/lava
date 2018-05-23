@@ -21,7 +21,7 @@ Unit tests for Linaro Django XML-RPC Application
 """
 import re
 import logging
-import sys
+import xmlrpc.client
 
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
@@ -37,13 +37,6 @@ from linaro_django_xmlrpc.models import (
     SystemAPI,
     xml_rpc_signature,
 )
-
-if sys.version_info[0] == 2:
-    # Python 2.x
-    import xmlrpclib
-elif sys.version_info[0] == 3:
-    # For Python 3.0 and later
-    import xmlrpc.client as xmlrpclib
 
 
 class MockUser(object):
@@ -252,7 +245,7 @@ class TestAPI(ExposedAPI):
         """
         Raise a Fault exception with the specified code and string
         """
-        raise xmlrpclib.Fault(code, string)
+        raise xmlrpc.client.Fault(code, string)
 
     def internal_boom(self):
         """
@@ -276,18 +269,18 @@ class DispatcherTests(TestCase):
 
         This calls the method just like we would have normally from our view.
         All arguments are marshaled and un-marshaled. XML-RPC fault exceptions
-        are raised like normal python exceptions (by xmlrpclib.loads)
+        are raised like normal python exceptions (by xmlrpc.client.loads)
         """
-        request = xmlrpclib.dumps(tuple(args), methodname=method)
+        request = xmlrpc.client.dumps(tuple(args), methodname=method)
         response = self.dispatcher.marshalled_dispatch(request)
         # This returns return value wrapped in a tuple and method name
         # (which we don't have here as this is a response message).
-        return xmlrpclib.loads(response)[0][0]
+        return xmlrpc.client.loads(response)[0][0]
 
     def test_standard_fault_code_for_method_not_found(self):
         try:
             self.xml_rpc_call("method_that_does_not_exist")
-        except xmlrpclib.Fault as ex:
+        except xmlrpc.client.Fault as ex:
             self.assertEqual(
                 ex.faultCode,
                 FaultCodes.ServerError.REQUESTED_METHOD_NOT_FOUND)
@@ -304,7 +297,7 @@ class DispatcherTests(TestCase):
         self.dispatcher.handle_internal_error = handler
         try:
             self.xml_rpc_call("internal_boom")
-        except xmlrpclib.Fault:
+        except xmlrpc.client.Fault:
             pass
         else:
             self.fail("Exception not raised")
@@ -317,7 +310,7 @@ class DispatcherTests(TestCase):
         self.dispatcher.handle_internal_error = lambda method, args: None
         try:
             self.xml_rpc_call("internal_boom")
-        except xmlrpclib.Fault as ex:
+        except xmlrpc.client.Fault as ex:
             self.assertEqual(
                 ex.faultCode,
                 FaultCodes.ServerError.INTERNAL_XML_RPC_ERROR)
@@ -334,7 +327,7 @@ class DispatcherTests(TestCase):
         self.assertEqual(self.xml_rpc_call("echo", 1.5), 1.5)
 
     def test_boom(self):
-        self.assertRaises(xmlrpclib.Fault,
+        self.assertRaises(xmlrpc.client.Fault,
                           self.xml_rpc_call, "boom", 1, "str")
 
 
@@ -444,13 +437,13 @@ class SystemAPITest(TestCase):
         class TestAPI(ExposedAPI):
 
             def boom(self):
-                raise xmlrpclib.Fault(1, "boom")
+                raise xmlrpc.client.Fault(1, "boom")
         self.mapper.register(TestAPI, "TestAPI")
         calls = [
             {"methodName": "TestAPI.boom", "params": []},
         ]
         observed = self.system_api.multicall(calls)
-        self.assertIsInstance(observed[0], xmlrpclib.Fault)
+        self.assertIsInstance(observed[0], xmlrpc.client.Fault)
 
     def test_multicall_just_returns_faults(self):
         # If one method being called returns a fault, any subsequent method
@@ -458,7 +451,7 @@ class SystemAPITest(TestCase):
         class TestAPI(ExposedAPI):
 
             def boom(self):
-                raise xmlrpclib.Fault(1, "boom")
+                raise xmlrpc.client.Fault(1, "boom")
 
             def echo(self, arg):
                 return arg
@@ -473,7 +466,7 @@ class SystemAPITest(TestCase):
         self.assertEqual(observed[0], ["before"])
         # Note that at this point the exception is returned as-is. It will be
         # converted to proper xml-rpc encoding by the dispatcher. Here we do
-        # manual comparison as xmlrpclib.Fault does not implement __eq__
+        # manual comparison as xmlrpc.client.Fault does not implement __eq__
         # properly.
         self.assertEqual(observed[1].faultCode, 1)
         self.assertEqual(observed[1].faultString, "boom")
@@ -485,7 +478,7 @@ class SystemAPITest(TestCase):
         for bad_stuff in [None, {}, True, False, -1, 10000, "foobar"]:
             try:
                 self.system_api.multicall(bad_stuff)
-            except xmlrpclib.Fault as ex:
+            except xmlrpc.client.Fault as ex:
                 self.assertEqual(ex.faultCode, FaultCodes.ServerError.INVALID_METHOD_PARAMETERS)
                 self.assertEqual(ex.faultString, "system.multicall expected a list of methods to call")
             else:
@@ -495,14 +488,14 @@ class SystemAPITest(TestCase):
         # XXX: Use TestCaseWithInvariants in the future
         for bad_stuff in [None, [], True, False, -1, 10000, "foobar"]:
             [result] = self.system_api.multicall([bad_stuff])
-            self.assertIsInstance(result, xmlrpclib.Fault)
+            self.assertIsInstance(result, xmlrpc.client.Fault)
             self.assertEqual(
                 result.faultCode,
                 FaultCodes.ServerError.INVALID_METHOD_PARAMETERS)
 
     def test_multicall_subcall_wants_methodName(self):
         [result] = self.system_api.multicall([{}])
-        self.assertIsInstance(result, xmlrpclib.Fault)
+        self.assertIsInstance(result, xmlrpc.client.Fault)
         self.assertEqual(
             result.faultCode,
             FaultCodes.ServerError.INVALID_METHOD_PARAMETERS)
@@ -510,7 +503,7 @@ class SystemAPITest(TestCase):
     def test_multicall_subcall_wants_methodName_to_be_a_string(self):
         [result] = self.system_api.multicall(
             [{"methodName": False}])
-        self.assertIsInstance(result, xmlrpclib.Fault)
+        self.assertIsInstance(result, xmlrpc.client.Fault)
         self.assertEqual(
             result.faultCode,
             FaultCodes.ServerError.INVALID_METHOD_PARAMETERS)
@@ -518,7 +511,7 @@ class SystemAPITest(TestCase):
     def test_multicall_subcall_wants_params(self):
         [result] = self.system_api.multicall(
             [{"methodName": "system.listMethods"}])
-        self.assertIsInstance(result, xmlrpclib.Fault)
+        self.assertIsInstance(result, xmlrpc.client.Fault)
         self.assertEqual(
             result.faultCode,
             FaultCodes.ServerError.INVALID_METHOD_PARAMETERS)
@@ -526,7 +519,7 @@ class SystemAPITest(TestCase):
     def test_multicall_subcall_wants_params_to_be_a_list(self):
         [result] = self.system_api.multicall(
             [{"methodName": "system.listMethods", "params": False}])
-        self.assertIsInstance(result, xmlrpclib.Fault)
+        self.assertIsInstance(result, xmlrpc.client.Fault)
         self.assertEqual(
             result.faultCode,
             FaultCodes.ServerError.INVALID_METHOD_PARAMETERS)
@@ -534,7 +527,7 @@ class SystemAPITest(TestCase):
     def test_multicall_subcall_rejects_other_arguments(self):
         [result] = self.system_api.multicall(
             [{"methodName": "system.listMethods", "params": [], "other": 1}])
-        self.assertIsInstance(result, xmlrpclib.Fault)
+        self.assertIsInstance(result, xmlrpc.client.Fault)
         print(result.faultString)
         self.assertEqual(
             result.faultCode,

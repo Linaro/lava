@@ -35,19 +35,14 @@ class DownloadFactory(Factory):  # pylint: disable=too-few-public-methods
     of any database objects.
     """
 
-    def create_download_job(self, filename):  # pylint: disable=no-self-use
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/db410c-01.yaml'))
-        download_yaml = os.path.join(os.path.dirname(__file__), filename)
-        with open(download_yaml) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "")
-        return job
+    def create_download_job(self, filename):
+        return self.create_job('db410c-01.jinja2', filename)
 
 
 class TestDownloadDeploy(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestDownloadDeploy, self).setUp()
+        super().setUp()
         self.factory = DownloadFactory()
         self.job = self.factory.create_download_job('sample_jobs/download.yaml')
 

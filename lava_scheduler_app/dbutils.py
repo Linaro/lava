@@ -164,7 +164,8 @@ def invalid_template(dt):
     """
     d_template = bool(load_devicetype_template(dt.name))  # returns None on error ( == False)
     if not d_template:
-        extends = set([device.get_extends() for device in Device.objects.filter(device_type=dt)])
+        queryset = Device.objects.filter(Q(device_type=dt), ~Q(health=Device.HEALTH_RETIRED))
+        extends = set([device.get_extends() for device in queryset])
         if not extends:
             return True
         for extend in extends:

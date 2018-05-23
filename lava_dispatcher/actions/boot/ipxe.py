@@ -21,10 +21,8 @@
 # List just the subclasses supported for this base strategy
 # imported by the parser to populate the list of subclasses.
 
-from lava_dispatcher.action import (
-    LAVABug,
-    Pipeline,
-)
+from lava_common.exceptions import LAVABug
+from lava_dispatcher.action import Pipeline
 from lava_dispatcher.logical import Boot
 from lava_dispatcher.actions.boot import (
     BootAction,
@@ -53,7 +51,7 @@ class IPXE(Boot):
     compatibility = 1
 
     def __init__(self, parent, parameters):
-        super(IPXE, self).__init__(parent)
+        super().__init__(parent)
         self.action = BootloaderAction()
         self.action.section = self.action_type
         self.action.job = self.job
@@ -94,7 +92,7 @@ class BootloaderRetry(BootAction):
     summary = "uboot commands with retry"
 
     def __init__(self):
-        super(BootloaderRetry, self).__init__()
+        super().__init__()
         self.type = "ipxe"
         self.force_prompt = False
 
@@ -114,7 +112,7 @@ class BootloaderRetry(BootAction):
                 self.internal_pipeline.add_action(ExportDeviceEnvironment())
 
     def validate(self):
-        super(BootloaderRetry, self).validate()
+        super().validate()
         if 'bootloader_prompt' not in self.job.device['actions']['boot']['methods'][self.type]['parameters']:
             self.errors = "Missing bootloader prompt for device"
         self.set_namespace_data(
@@ -125,6 +123,6 @@ class BootloaderRetry(BootAction):
         )
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(BootloaderRetry, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection

@@ -23,18 +23,15 @@
 
 import os
 import tempfile
-
-from lava_dispatcher.action import (
-    JobError,
-    Pipeline
-)
+from lava_common.exceptions import JobError
+from lava_dispatcher.action import Pipeline
 from lava_dispatcher.logical import Deployment
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.lxc import LxcCreateUdevRuleAction
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.apply_overlay import PrepareOverlayTftp
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
-from lava_dispatcher.utils.constants import TFTP_SIZE_LIMIT
+from lava_common.constants import TFTP_SIZE_LIMIT
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.filesystem import tftpd_dir
 
@@ -51,7 +48,7 @@ class Tftp(Deployment):
     name = 'tftp'
 
     def __init__(self, parent, parameters):
-        super(Tftp, self).__init__(parent)
+        super().__init__(parent)
         self.action = TftpAction()
         self.action.section = self.action_type
         self.action.job = self.job
@@ -75,11 +72,11 @@ class TftpAction(DeployAction):  # pylint:disable=too-many-instance-attributes
     summary = "tftp deployment"
 
     def __init__(self):
-        super(TftpAction, self).__init__()
+        super().__init__()
         self.tftp_dir = None
 
     def validate(self):
-        super(TftpAction, self).validate()
+        super().validate()
         if 'kernel' not in self.parameters:
             self.errors = "%s needs a kernel to deploy" % self.name
         if not self.valid:
@@ -120,7 +117,7 @@ class TftpAction(DeployAction):  # pylint:disable=too-many-instance-attributes
             self.internal_pipeline.add_action(DeployDeviceEnvironment())
 
     def run(self, connection, max_end_time, args=None):
-        super(TftpAction, self).run(connection, max_end_time, args)
+        super().run(connection, max_end_time, args)
         tftp_size_limit = self.job.parameters['dispatcher'].get('tftp_size_limit',
                                                                 TFTP_SIZE_LIMIT)
         self.logger.debug("Checking files for TFTP limit of %s bytes.", tftp_size_limit)

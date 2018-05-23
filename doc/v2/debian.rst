@@ -82,7 +82,7 @@ packages need to be installed.
 The helper needs to know the name of the package to build and to be started
 from the directory containing the code for that package::
 
- $ /usr/share/lava-server/debian-dev-build.sh -p lava-server
+ $ /usr/share/lava-server/debian-dev-build.sh -p lava
 
 The packages will be built in a temporary directory using a version string
 based on the current git tag and the time of the build. The helper outputs the
@@ -148,7 +148,7 @@ The latest git hash is a reference to the latest commit. If you have not
 committed local changes (e.g. you are on a local branch based on a tag) then
 the short hash can be used to lookup the commit in the master branch, e.g.::
 
-  https://git.linaro.org/lava/lava-server.git/f9304da
+  https://git.linaro.org/lava/lava.git/commit?id=f9304da
 
 .. _distribution_differences:
 
@@ -167,22 +167,18 @@ the correct suite (using sbuild) using the `lava-buildd scripts
 Example
 =======
 
-The helper supports ``lava-server`` and ``lava-dispatcher``::
+The helper supports ``lava``::
 
  $ sudo apt install lava-dev
- $ git clone https://git.linaro.org/git/lava/lava-server.git
- $ cd lava-server
- $ /usr/share/lava-server/debian-dev-build.sh -p lava-server
-
- $ git clone https://git.linaro.org/git/lava/lava-dispatcher.git
- $ cd lava-dispatcher
- $ /usr/share/lava-server/debian-dev-build.sh -p lava-dispatcher
+ $ git clone https://git.linaro.org/git/lava/lava.git
+ $ cd lava
+ $ /usr/share/lava-server/debian-dev-build.sh -p lava
 
 ``lava-dispatcher`` has architecture-dependent dependencies. By default, the
 package is built for the native architecture and can only be installed on that
 architecture. To build for a different architecture, e.g. armhf, use::
 
- $ /usr/share/lava-server/debian-dev-build.sh -p lava-dispatcher -a armhf
+ $ /usr/share/lava-server/debian-dev-build.sh -p lava -a armhf
 
 This does a *binary build*, so the source is not included, which allows these
 builds to be included in a local repository, e.g. using ``reprepro``.
@@ -201,7 +197,7 @@ identify the latest git commit in the branch upon which this build is based.
 The git short hash can be looked up on the ``git.linaro.org`` site,
 irrespective of which release tag is the current. For example, build version
 ``2015.07.5333.1521ddb-1`` relates directly to
-``https://git.linaro.org/lava/lava-server.git/1521ddb``
+``https://git.linaro.org/lava/lava.git/commit?id=1521ddb``
 
 From August 2015, LAVA uses git tags without a leading zero on the month
 number, in accordance with PEP440, so the git tag will be ``2015.8`` instead of
@@ -245,10 +241,10 @@ The paths to execute LAVA python scripts have changed and developing LAVA based
 on packages has a different workflow.
 
 Modified files can be copied to the equivalent python path. The current LAVA
-packages use python2.7, so the path is beneath
-``/usr/lib/python2.7/dist-packages/`` with sudo::
+packages use python3, so the path is beneath
+``/usr/lib/python3/dist-packages/`` with sudo::
 
- $ sudo cp <git-path> /usr/lib/python2.7/dist-packages/<git-path>
+ $ sudo cp <git-path> /usr/lib/python3/dist-packages/<git-path>
 
 .. warning:: To fix failures in the Python3 unit tests, the **same** change
    will also need to be copied to ``/usr/lib/python3/dist-packages/``.
@@ -574,7 +570,7 @@ Apache then needs access to django-debug-toolbar CSS and JS files::
 
   sudo su -
   cd /usr/share/lava-server/static/
-  ln -s /usr/lib/python2.7/dist-packages/debug_toolbar/static/debug_toolbar .
+  ln -s /usr/lib/python3/dist-packages/debug_toolbar/static/debug_toolbar .
 
 In ``/etc/lava-server/settings.conf`` remove the reference to htdocs in
 ``STATICFILES_DIRS``. Django-debug-toolbar does check that all directories

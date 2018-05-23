@@ -4,7 +4,13 @@
 
 {% set base_nfsroot_args = ("nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr" + base_extra_nfsroot_args) -%}
 {% set base_nbdroot_args = ("nbd.server={NBDSERVERIP} nbd.port={NBDSERVERPORT} root=/dev/ram0 ramdisk_size=16384 rootdelay=7 ") -%}
+
+{% if static_ip and static_gateway and static_netmask and static_dns %}
+{% set base_ip_args = base_ip_args|default("ip=" + static_ip + "::" + static_gateway + ":" + static_netmask + ":::off:" + static_dns + ":") %}
+{% else %}
 {% set base_ip_args = base_ip_args|default("ip=dhcp") %}
+{% endif %}
+
 {# these options are used by both ssh and scp! #}
 {# check the manpages *carefully* & ensure compatibility! #}
 {# Do not specify port or login (-p/-P or -l) here as this is now handled in the codebase. #}
@@ -21,10 +27,10 @@
 {% set ssh_user = 'root' -%}
 
 {# The code will create the correct port arguments for SCP and SSH, as they are different #}
-{% set ssh_port = '22' -%}
+{% set ssh_port = ssh_port|default('22') -%}
 
 {# This is no longer a requirement, to support devices that allow login without authentication #}
-{% set ssh_identity_file = 'dynamic_vm_keys/lava' -%}
+{% set ssh_identity_file = ssh_identity_file|default('dynamic_vm_keys/lava') -%}
 
 {% set schroot_options = (
 "          - 'schroot'
@@ -50,6 +56,7 @@
 
 {% block character_delays %}
 {% if boot_character_delay or test_character_delay %}
+# in milliseconds
 character_delays:
 {% if boot_character_delay %}
       boot: {{ boot_character_delay }}
@@ -77,12 +84,12 @@ constants:
       - '{{ uboot_extra_error_message }}'
 {% endif %}
   grub:
-    interrupt-prompt: '{{ grub_autoboot_prompt | default("Press enter to boot the selected OS") }}'
+    interrupt-prompt: '{{ grub_autoboot_prompt | default("for a command-line") }}'
     interrupt-character: '{{ grub_interrupt_character | default ("c") }}'
     error-messages:
       - "error: missing (.*) symbol."
   grub-efi:
-    interrupt-prompt: '{{ grub_autoboot_prompt | default("Press enter to boot the selected OS") }}'
+    interrupt-prompt: '{{ grub_autoboot_prompt | default("for a command-line") }}'
     interrupt-character: '{{ grub_interrupt_character | default ("c") }}'
     error-messages:
       - 'Undefined OpCode Exception PC at'

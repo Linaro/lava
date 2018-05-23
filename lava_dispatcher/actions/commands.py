@@ -18,10 +18,8 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from lava_dispatcher.action import (
-    Action,
-    ConfigurationError,
-)
+from lava_dispatcher.action import Action
+from lava_common.exceptions import ConfigurationError
 
 
 class CommandAction(Action):
@@ -32,13 +30,13 @@ class CommandAction(Action):
     summary = "execute commands"
 
     def __init__(self):
-        super(CommandAction, self).__init__()
+        super().__init__()
         self.section = "command"
         self.cmd = None
         self.ran = False
 
     def validate(self):
-        super(CommandAction, self).validate()
+        super().validate()
         cmd_name = self.parameters['name']
         try:
             user_commands = self.job.device['commands']['users']
@@ -57,7 +55,7 @@ class CommandAction(Action):
             return False
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(CommandAction, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
 
         self.logger.debug("Running user command '%s'", self.parameters['name'])
         self.ran = True

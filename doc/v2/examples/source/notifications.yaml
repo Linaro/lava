@@ -22,7 +22,7 @@ notify:
      method: email
      user: neil.williams
   criteria:
-    status: complete
+    status: finished
   verbosity: verbose
   compare:
     query:
@@ -37,7 +37,7 @@ notify:
      method: email
      user: neil.williams
   criteria:
-    status: complete
+    status: finished
   verbosity: verbose
   compare:
     query:
@@ -46,3 +46,16 @@ notify:
         submitter: stevan.radakovic
         requested_device_type: qemu
     blacklist: [singlenode-advanced]
+
+# notify callbacks block
+notify:
+  criteria:
+    status: finished
+  callbacks:
+    - url: https://my-url/callback
+      method: GET
+    - url: https://remote-site/callback/lava?status={STATUS}&status_string={STATUS_STRING}
+      method: POST
+      dataset: all
+      token: ci-callback
+      content-type: json

@@ -21,7 +21,7 @@
 import os
 from stat import S_IXUSR
 
-from lava_dispatcher.action import InfrastructureError
+from lava_common.exceptions import InfrastructureError
 
 
 def _which_check(path, match):

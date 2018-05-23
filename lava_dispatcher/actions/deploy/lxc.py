@@ -21,9 +21,9 @@
 import os
 import yaml
 from lava_dispatcher.logical import Deployment
+from lava_common.exceptions import LAVABug
 from lava_dispatcher.action import (
     JobError,
-    LAVABug,
     Pipeline,
 )
 from lava_dispatcher.actions.deploy import DeployAction
@@ -36,13 +36,13 @@ from lava_dispatcher.actions.boot.lxc import (
 )
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.protocols.lxc import LxcProtocol
-from lava_dispatcher.utils.constants import (
+from lava_common.constants import (
     LXC_PATH,
     LXC_TEMPLATE_WITH_MIRROR,
     LXC_DEFAULT_PACKAGES,
     UDEV_RULES_DIR,
 )
-from lava_dispatcher.utils.udev import lxc_udev_rule
+from lava_dispatcher.utils.udev import lxc_udev_rule, lxc_udev_rule_parent
 from lava_dispatcher.utils.udev import allow_fs_label
 from lava_dispatcher.utils.filesystem import (
     debian_package_version,
@@ -61,7 +61,7 @@ class Lxc(Deployment):
     name = 'lxc'
 
     def __init__(self, parent, parameters):
-        super(Lxc, self).__init__(parent)
+        super().__init__(parent)
         self.action = LxcAction()
         self.action.section = self.action_type
         self.action.job = self.job
@@ -87,11 +87,11 @@ class LxcAction(DeployAction):  # pylint:disable=too-many-instance-attributes
     summary = "lxc deployment"
 
     def __init__(self):
-        super(LxcAction, self).__init__()
+        super().__init__()
         self.lxc_data = {}
 
     def validate(self):
-        super(LxcAction, self).validate()
+        super().validate()
         self.logger.info("lxc, installed at version: %s",
                          debian_package_version(pkg='lxc', split=False))
         protocols = [protocol.name for protocol in self.job.protocols]
@@ -128,7 +128,7 @@ class LxcCreateAction(DeployAction):
     summary = "create lxc"
 
     def __init__(self):
-        super(LxcCreateAction, self).__init__()
+        super().__init__()
         self.retries = 10
         self.sleep = 10
         self.lxc_data = {}
@@ -151,12 +151,12 @@ class LxcCreateAction(DeployAction):
             self.lxc_data['custom_lxc_path'] = protocol.custom_lxc_path
 
     def validate(self):
-        super(LxcCreateAction, self).validate()
+        super().validate()
         # set lxc_data
         self._set_lxc_data()
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(LxcCreateAction, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         verbose = '' if self.lxc_data['verbose'] else '-q'
         lxc_default_path = lxc_path(self.job.parameters['dispatcher'])
         if self.lxc_data['custom_lxc_path']:
@@ -215,12 +215,12 @@ class LxcCreateUdevRuleAction(DeployAction):
     summary = "create lxc udev rule"
 
     def __init__(self):
-        super(LxcCreateUdevRuleAction, self).__init__()
+        super().__init__()
         self.retries = 10
         self.sleep = 10
 
     def validate(self):
-        super(LxcCreateUdevRuleAction, self).validate()
+        super().validate()
         which('udevadm')
         if 'device_info' in self.job.device \
            and not isinstance(self.job.device.get('device_info'), list):
@@ -233,18 +233,16 @@ class LxcCreateUdevRuleAction(DeployAction):
                 for usb_device in self.job.device['device_info']:
                     if usb_device.get('board_id', '') in ['', '0000000000'] \
                             and requires_board_id:
-                        self.errors = "board_id unset"
+                        self.errors = "[LXC_CREATE] board_id unset"
                     if usb_device.get('usb_vendor_id', '') == '0000':
-                        self.errors = 'usb_vendor_id unset'
+                        self.errors = '[LXC_CREATE] usb_vendor_id unset'
                     if usb_device.get('usb_product_id', '') == '0000':
-                        self.errors = 'usb_product_id unset'
+                        self.errors = '[LXC_CREATE] usb_product_id unset'
         except TypeError:
             self.errors = "Invalid parameters for %s" % self.name
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(LxcCreateUdevRuleAction, self).run(connection,
-                                                              max_end_time,
-                                                              args)
+        connection = super().run(connection, max_end_time, args)
         # this may be the device namespace - the lxc namespace may not be
         # accessible
         lxc_name = None
@@ -274,6 +272,13 @@ class LxcCreateUdevRuleAction(DeployAction):
             slave_cert = self.logger.handler.slave_cert
             ipv6 = self.logger.handler.ipv6
             job_id = self.logger.handler.job_id
+        # The rules file will be created in job's temporary directory with
+        # the name something like '100-lava-lxc-hikey-2808.rules'
+        # where, 100 is just an arbitrary number which specifies loading
+        # priority for udevd
+        rules_file_name = '100-lava-' + lxc_name + '.rules'
+        rules_file = os.path.join(self.mkdtemp(), rules_file_name)
+        lines = []
         for device in device_info:
             data = {'serial_number': str(device.get('board_id', '')),
                     'vendor_id': device.get('usb_vendor_id', None),
@@ -286,24 +291,23 @@ class LxcCreateUdevRuleAction(DeployAction):
                     'slave_cert': slave_cert,
                     'ipv6': ipv6,
                     'job_id': job_id}
-            # The rules file will be created in job's temporary directory with
-            # the name something like '100-lava-lxc-hikey-2808.rules'
-            # where, 100 is just an arbitrary number which specifies loading
-            # priority for udevd
-            rules_file_name = '100-lava-' + lxc_name + '.rules'
-            rules_file = os.path.join(self.mkdtemp(), rules_file_name)
             str_lxc_udev_rule = lxc_udev_rule(data)
-            with open(rules_file, 'a') as f_obj:
-                f_obj.write(str_lxc_udev_rule)
-            self.logger.debug("udev rules file '%s' created with:\n %s",
-                              rules_file, str_lxc_udev_rule)
-            # Create symlink to rules file inside UDEV_RULES_DIR
-            # See https://projects.linaro.org/browse/LAVA-1227
-            os.symlink(rules_file, os.path.join(UDEV_RULES_DIR,
-                                                rules_file_name))
-            self.logger.debug("'%s' symlinked to '%s'",
-                              os.path.join(UDEV_RULES_DIR, rules_file_name),
-                              rules_file)
+            if device.get('parent', False):
+                str_lxc_udev_rule += lxc_udev_rule_parent(data)
+            lines.append(str_lxc_udev_rule)
+        if lines:
+            self.logger.info("udev rules file '%s' created", rules_file)
+        with open(rules_file, "w") as f_obj:
+            f_obj.write("\n".join(lines))
+        for line in lines:
+            self.logger.debug(line)
+        # Create symlink to rules file inside UDEV_RULES_DIR
+        # See https://projects.linaro.org/browse/LAVA-1227
+        os.symlink(rules_file, os.path.join(UDEV_RULES_DIR,
+                                            rules_file_name))
+        self.logger.info("'%s' symlinked to '%s'",
+                         os.path.join(UDEV_RULES_DIR, rules_file_name),
+                         rules_file)
 
         # Reload udev rules.
         reload_cmd = ['udevadm', 'control', '--reload-rules']
@@ -326,13 +330,12 @@ class LxcAptUpdateAction(DeployAction):
     summary = "lxc apt update"
 
     def __init__(self):
-        super(LxcAptUpdateAction, self).__init__()
+        super().__init__()
         self.retries = 10
         self.sleep = 10
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(LxcAptUpdateAction, self).run(connection,
-                                                         max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         lxc_name = self.get_namespace_data(action='lxc-create-action',
                                            label='lxc', key='name')
         cmd = ['lxc-attach', '-n', lxc_name, '--', 'apt-get', '-y', 'update']
@@ -351,18 +354,17 @@ class LxcAptInstallAction(DeployAction):
     summary = "lxc apt install"
 
     def __init__(self):
-        super(LxcAptInstallAction, self).__init__()
+        super().__init__()
         self.retries = 10
         self.sleep = 10
 
     def validate(self):
-        super(LxcAptInstallAction, self).validate()
+        super().validate()
         if 'packages' not in self.parameters:
             raise LAVABug("%s package list unavailable" % self.name)
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(LxcAptInstallAction, self).run(connection,
-                                                          max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         lxc_name = self.get_namespace_data(action='lxc-create-action',
                                            label='lxc', key='name')
         packages = self.parameters['packages']

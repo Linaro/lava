@@ -27,22 +27,22 @@
 
 <h2>About XML-RPC API</h2>
 <p>LAVA Server offers API services as an XML-RPC server. You can interact with it using any XML-RPC
-client. For example, in python you can do this:</p>
+client. For example, in python3 you can do this:</p>
 <pre>
-import xmlrpclib
-server = xmlrpclib.ServerProxy("{{ site_url }}{% url 'lava.api_handler' %}")
+import xmlrpc.client
+server = xmlrpc.client.ServerProxy("{{ site_url }}{% url 'lava.api_handler' %}")
 print(server.system.listMethods())
 </pre>
-<p>The following python code shows how to authenticate using an
+<p>The following python3 code shows how to authenticate using an
   XML-RPC client, when a method requires authentication.</p>
 <p class="text-warning"><strong>WARNING: <code>https://</code> scheme
     is recommended when using authentication.</strong></p>
 <pre>
-  import xmlrpclib
+  import xmlrpc.client
   username = "USERNAME"
   token = "TOKEN_STRING"
   hostname = "HOSTNAME"  # {{ site_domain }}
-  server = xmlrpclib.ServerProxy("{{ site_scheme }}://%s:%s@%s{% url 'lava.api_handler' %}" % (username, token, hostname))
+  server = xmlrpc.client.ServerProxy("{{ site_scheme }}://%s:%s@%s{% url 'lava.api_handler' %}" % (username, token, hostname))
   print(server.system.listMethods())
 </pre>
 <p class="text-info">NOTE: <code>USERNAME</code> is a valid username

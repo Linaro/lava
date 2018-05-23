@@ -20,6 +20,7 @@
 
 
 import os
+import yaml
 import unittest
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
@@ -41,52 +42,26 @@ class GrubFactory(Factory):  # pylint: disable=too-few-public-methods
     Factory objects are dispatcher based classes, independent
     of any database objects.
     """
-    def create_job(self, filename):  # pylint: disable=no-self-use
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/d02-01.yaml'))
-        y_file = os.path.join(os.path.dirname(__file__), filename)
-        with open(y_file) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "")
-        job.logger = DummyLogger()
-        return job
 
-    def create_mustang_job(self, filename):  # pylint: disable=no-self-use
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/mustang-grub-efi.yaml'))
-        y_file = os.path.join(os.path.dirname(__file__), filename)
-        with open(y_file) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "")
-        job.logger = DummyLogger()
-        return job
+    def create_mustang_job(self, filename):
+        return self.create_job('mustang1.jinja2', filename)
 
-    def create_hikey_job(self, filename):  # pylint: disable=no-self-use
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/hi6220-hikey-01.yaml'))
-        y_file = os.path.join(os.path.dirname(__file__), filename)
-        with open(y_file) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "")
-        job.logger = DummyLogger()
-        return job
+    def create_hikey_job(self, filename):
+        return self.create_job('hi6220-hikey-r2-01.jinja2', filename)
 
-    def create_hikey960_job(self, filename):  # pylint: disable=no-self-use
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/hikey960-01.yaml'))
-        y_file = os.path.join(os.path.dirname(__file__), filename)
-        with open(y_file) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "")
-        job.logger = DummyLogger()
-        return job
+    def create_hikey960_job(self, filename):
+        return self.create_job('hi960-hikey-01.jinja2', filename)
 
 
 class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestGrubAction, self).setUp()
+        super().setUp()
         self.factory = GrubFactory()
 
     @unittest.skipIf(infrastructure_error('mkimage'), "u-boot-tools not installed")
     def test_simulated_action(self):
-        job = self.factory.create_job('sample_jobs/grub-ramdisk.yaml')
+        job = self.factory.create_job('d02-01.jinja2', 'sample_jobs/grub-ramdisk.yaml')
         self.assertIsNotNone(job)
 
         # uboot and uboot-ramdisk have the same pipeline structure
@@ -97,7 +72,7 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertEqual(job.device['device_type'], 'd02')
 
     def test_tftp_pipeline(self):
-        job = self.factory.create_job('sample_jobs/grub-ramdisk.yaml')
+        job = self.factory.create_job('d02-01.jinja2', 'sample_jobs/grub-ramdisk.yaml')
         self.assertEqual(
             [action.name for action in job.pipeline.actions],
             ['tftp-deploy', 'grub-main-action', 'lava-test-retry', 'finalize']
@@ -115,7 +90,7 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertNotIn('=', tftpd_dir())
 
     def test_device_d02(self):
-        job = self.factory.create_job('sample_jobs/grub-ramdisk.yaml')
+        job = self.factory.create_job('d02-01.jinja2', 'sample_jobs/grub-ramdisk.yaml')
         self.assertNotIn('connect', job.device['commands'])
         self.assertEqual(
             job.device['commands']['connections']['uart0']['connect'],
@@ -128,7 +103,7 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     @unittest.skipIf(infrastructure_error('mkimage'), "u-boot-tools not installed")
     def test_grub_action(self):
-        job = self.factory.create_job('sample_jobs/grub-ramdisk.yaml')
+        job = self.factory.create_job('d02-01.jinja2', 'sample_jobs/grub-ramdisk.yaml')
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
         self.assertIn('grub', job.device['actions']['boot']['methods'])
@@ -168,7 +143,8 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
                 }
             }
         }
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/d02-01.yaml'))
+        (rendered, _) = self.factory.create_device('d02-01.jinja2')
+        device = NewDevice(yaml.load(rendered))
         job = Job(4212, parameters, None)
         job.device = device
         pipeline = Pipeline(job=job, parameters=parameters['actions']['boot'])
@@ -205,7 +181,7 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertNotIn('devicetree (tftp,{SERVER_IP})/{DTB}', parsed)
 
     def test_download_action(self):
-        job = self.factory.create_job('sample_jobs/grub-nfs.yaml')
+        job = self.factory.create_job('d02-01.jinja2', 'sample_jobs/grub-nfs.yaml')
         for action in job.pipeline.actions:
             action.validate()
             if not action.valid:
@@ -234,7 +210,7 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertEqual(extract.timeout.duration, 600)
 
     def test_reset_actions(self):
-        job = self.factory.create_job('sample_jobs/grub-ramdisk.yaml')
+        job = self.factory.create_job('d02-01.jinja2', 'sample_jobs/grub-ramdisk.yaml')
         grub_action = None
         for action in job.pipeline.actions:
             action.validate()
@@ -249,7 +225,7 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertIn('bootloader-commands', names)
 
     def test_grub_with_monitor(self):
-        job = self.factory.create_job('sample_jobs/grub-ramdisk-monitor.yaml')
+        job = self.factory.create_job('d02-01.jinja2', 'sample_jobs/grub-ramdisk-monitor.yaml')
         job.validate()
         description_ref = self.pipeline_reference('grub-ramdisk-monitor.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
@@ -272,11 +248,6 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         job.validate()
         description_ref = self.pipeline_reference('hikey-grub-efi.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
-        grub = [action for action in job.pipeline.actions if action.name == 'grub-main-action'][0]
-        menu = [action for action in grub.internal_pipeline.actions if action.name == 'uefi-menu-interrupt'][0]
-        self.assertIn('item_class', menu.params)
-        grub_efi = [action for action in grub.internal_pipeline.actions if action.name == 'grub-efi-menu-selector'][0]
-        self.assertEqual('fastboot', grub_efi.commands)
 
     @unittest.skipIf(infrastructure_error_multi_paths(
         ['lxc-info', 'img2simg', 'simg2img']),
@@ -294,7 +265,7 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertIn('connections', job.device['commands'])
         uart = job.device['commands']['connections'][command.hardware]['connect']
         self.assertIn(command.command, uart)
-        self.assertEqual('telnet localhost 7020', uart)
+        self.assertEqual('telnet localhost 4002', uart)
         tshells = [action for action in job.pipeline.actions if action.name == 'lava-test-retry']
         for shell in tshells:
             cn = shell.parameters.get('connection-namespace', None)
@@ -304,20 +275,23 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
                 self.assertNotEqual(shell.parameters['namespace'], 'tlxc')
                 self.assertEqual(shell.parameters['connection-namespace'], 'isolation')
                 retry = [action for action in shell.internal_pipeline.actions][0]
-                print(retry.parameters.get('connection-namespace', None))
+                self.assertEqual(retry.parameters['connection-namespace'], 'isolation')
             else:
                 self.assertNotEqual(shell.parameters['namespace'], 'hikey-oe')
                 self.assertNotEqual(shell.parameters['namespace'], 'isolation')
                 self.assertEqual(shell.parameters['namespace'], 'tlxc')
                 self.assertNotIn('connection-namespace', shell.parameters.keys())
-        menu = [action for action in job.pipeline.actions if action.name == 'uefi-menu-action'][0]
+        menu = [action for action in job.pipeline.actions if action.name == 'grub-sequence-action'][0]
         autologin = [action for action in menu.internal_pipeline.actions if action.name == 'auto-login-action'][0]
-        self.assertIsNotNone(autologin.params)
+        self.assertIsNone(autologin.params)
+        self.assertEqual(['login:'], autologin.parameters.get('prompts', None))
+        menu = [action for action in job.pipeline.actions if action.name == 'secondary-shell-action'][0]
+        autologin = [action for action in menu.internal_pipeline.actions if action.name == 'auto-login-action'][0]
+        self.assertIsNotNone(autologin.parameters)
         self.assertIn('test_info', autologin.parameters)
         self.assertIn('isolation', autologin.parameters['test_info'])
         self.assertIn('hikey-oe', autologin.parameters['test_info'])
         self.assertIn('tlxc', autologin.parameters['test_info'])
-        self.assertEqual(['login:'], autologin.parameters.get('prompts', None))
 
     def test_hikey960_grub(self):
         job = self.factory.create_hikey960_job('sample_jobs/hikey960-oe.yaml')
@@ -338,3 +312,10 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertIsNotNone(wait)
         login = [action for action in grub_seq.internal_pipeline.actions if action.name == 'auto-login-action'][0]
         self.assertIsNotNone(login)
+
+    def test_synquacer_grub(self):
+        job = self.factory.create_job('synquacer-dtb-01.jinja2', 'sample_jobs/synquacer-dtb.yaml')
+        self.assertIsNotNone(job)
+        job.validate()
+        description_ref = self.pipeline_reference('synquacer_dtb.yaml', job=job)
+        self.assertEqual(description_ref, job.pipeline.describe(False))

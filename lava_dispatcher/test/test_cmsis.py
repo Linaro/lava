@@ -22,7 +22,7 @@
 import os
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
-from lava_dispatcher.action import JobError
+from lava_common.exceptions import JobError, ConfigurationError
 from lava_dispatcher.test.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.test.utils import DummyLogger
 
@@ -33,23 +33,11 @@ class Cmsis_Factory(Factory):  # pylint: disable=too-few-public-methods
     Factory objects are dispatcher based classes, independent
     of any database objects.
     """
-    def create_k64f_job(self, filename):  # pylint: disable=no-self-use
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/frdm-k64f-01.yaml'))
-        y_file = os.path.join(os.path.dirname(__file__), filename)
-        with open(y_file) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4999, None, "")
-        job.logger = DummyLogger()
-        return job
+    def create_k64f_job(self, filename):
+        return self.create_job('frdm-k64f-01.jinja2', filename)
 
-    def create_k64f_job_with_power(self, filename):  # pylint: disable=no-self-use
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/frdm-k64f-01-with-power.yaml'))
-        y_file = os.path.join(os.path.dirname(__file__), filename)
-        with open(y_file) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, device, 5999, None, "")
-        job.logger = DummyLogger()
-        return job
+    def create_k64f_job_with_power(self, filename):
+        return self.create_job('frdm-k64f-power-01.jinja2', filename)
 
 
 class TestCMSISAction(StdoutTestCase):  # pylint: disable=too-many-public-methods

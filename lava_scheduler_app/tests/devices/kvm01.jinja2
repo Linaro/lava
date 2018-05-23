@@ -1,4 +1,6 @@
-{% extends 'kvm.jinja2' %}
+{% extends 'qemu.jinja2' %}
 {% set arch = 'amd64' %}
 {% set memory = 256 %}
 {% set mac_addr = '52:54:00:12:34:59' %}
+{# unit test support does not care about SYS_CLASS_KVM #}
+{% set no_kvm = True %}

@@ -41,7 +41,7 @@ class SshLogin(Boot):
     compatibility = 1
 
     def __init__(self, parent, parameters):
-        super(SshLogin, self).__init__(parent)
+        super().__init__(parent)
         self.action = SshAction()
         self.action.job = self.job
         parent.add_action(self.action, parameters)
@@ -91,12 +91,12 @@ class Scp(ConnectSsh):
     summary = "scp over the ssh connection"
 
     def __init__(self, key):
-        super(Scp, self).__init__()
+        super().__init__()
         self.key = key
         self.scp = []
 
     def validate(self):
-        super(Scp, self).validate()
+        super().validate()
         params = self._check_params()
         which('scp')
         if 'ssh' not in self.job.device['actions']['deploy']['methods']:
@@ -146,7 +146,7 @@ class Scp(ConnectSsh):
         command = self.scp[:]  # local copy
         # add the argument for setting the port (-P port)
         command.extend(self.scp_port)
-        connection = super(Scp, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         if self.identity_file:
             command.extend(['-i', self.identity_file])
         # add arguments to ignore host key checking of the host device
@@ -159,7 +159,7 @@ class Scp(ConnectSsh):
         command.extend(["%s@%s:/%s" % (self.ssh_user, host_address, destination)])
         self.logger.info(yaml.dump(command))
         self.run_command(command)
-        connection = super(Scp, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         self.results = {'success': 'ssh deployment'}
         self.set_namespace_data(action=self.name, label='scp-overlay-unpack', key='overlay', value=destination)
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
@@ -176,7 +176,7 @@ class PrepareSsh(Action):
     summary = "set the host address of the ssh connection"
 
     def __init__(self):
-        super(PrepareSsh, self).__init__()
+        super().__init__()
         self.primary = False
 
     def validate(self):
@@ -187,7 +187,7 @@ class PrepareSsh(Action):
             self.primary = True
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(PrepareSsh, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         if not self.primary:
             host_data = self.get_namespace_data(
                 action=MultinodeProtocol.name,
@@ -211,7 +211,7 @@ class ScpOverlayUnpack(Action):
     summary = "unpack the overlay on the remote device"
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(ScpOverlayUnpack, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         if not connection:
             raise LAVABug("Cannot unpack, no connection available.")
         filename = self.get_namespace_data(action='scp-deploy', label='scp-overlay-unpack', key='overlay')
@@ -226,7 +226,7 @@ class ScpOverlayUnpack(Action):
 class Schroot(Boot):
 
     def __init__(self, parent, parameters):
-        super(Schroot, self).__init__(parent)
+        super().__init__(parent)
         self.action = SchrootAction()
         self.action.job = self.job
         parent.add_action(self.action, parameters)
@@ -258,7 +258,7 @@ class SchrootAction(Action):
     summary = "enter specified schroot"
 
     def __init__(self):
-        super(SchrootAction, self).__init__()
+        super().__init__()
         self.section = 'boot'
         self.schroot = None
         self.command = None

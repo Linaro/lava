@@ -29,7 +29,7 @@ from zmq.utils.strtypes import b
 
 class ZMQPushHandler(logging.Handler):
     def __init__(self, logging_url, master_cert, slave_cert, job_id, ipv6):
-        super(ZMQPushHandler, self).__init__()
+        super().__init__()
 
         # Keep track of the parameters
         self.logging_url = logging_url
@@ -67,13 +67,13 @@ class ZMQPushHandler(logging.Handler):
         # If the process crashes really early, the handler will be closed
         # directly by the logging module. In this case, close is called without
         # any arguments.
-        super(ZMQPushHandler, self).close()
+        super().close()
         self.context.destroy(linger=linger)
 
 
 class YAMLLogger(logging.Logger):
     def __init__(self, name):
-        super(YAMLLogger, self).__init__(name)
+        super().__init__(name)
         self.handler = None
 
     def addZMQHandler(self, logging_url, master_cert, slave_cert, job_id, ipv6):

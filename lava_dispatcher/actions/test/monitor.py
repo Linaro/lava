@@ -22,10 +22,10 @@ import re
 import pexpect
 
 from collections import OrderedDict
-from lava_dispatcher.action import (
+from lava_dispatcher.action import Pipeline
+from lava_common.exceptions import (
     InfrastructureError,
     LAVABug,
-    Pipeline,
 )
 from lava_dispatcher.actions.test import (
     TestAction,
@@ -41,7 +41,7 @@ class TestMonitor(LavaTest):
     LavaTestMonitor Strategy object
     """
     def __init__(self, parent, parameters):
-        super(TestMonitor, self).__init__(parent)
+        super().__init__(parent)
         self.action = TestMonitorRetry()
         self.action.job = self.job
         self.action.section = self.action_type
@@ -96,14 +96,14 @@ class TestMonitorAction(TestAction):  # pylint: disable=too-many-instance-attrib
     summary = "Lava Test Monitor"
 
     def __init__(self):
-        super(TestMonitorAction, self).__init__()
+        super().__init__()
         self.test_suite_name = None
         self.report = {}
         self.fixupdict = {}
         self.patterns = {}
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(TestMonitorAction, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
 
         if not connection:
             raise InfrastructureError("Connection closed")
@@ -121,6 +121,7 @@ class TestMonitorAction(TestAction):  # pylint: disable=too-many-instance-attrib
             self.patterns["test_result"] = monitor['pattern']
 
             # Find the start string before parsing any output.
+            self.logger.info("Waiting for start message: %s", monitor['start'])
             connection.prompt_str = monitor['start']
             connection.wait()
             self.logger.info("ok: start string found, lava test monitoring started")

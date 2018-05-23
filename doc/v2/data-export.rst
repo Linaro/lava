@@ -45,20 +45,22 @@ snippet:
 
 .. code-block:: python
 
-  import xmlrpclib
+  # Python3
+  import xmlrpc.client
   import simplejson
 
   config = simplejson.dumps({ ... })
-  server=xmlrpclib.ServerProxy("http://username:API-Key@localhost:8001/RPC2/")
+  server=xmlrpc.client.ServerProxy("http://username:API-Key@localhost:8001/RPC2/")
   jobid=server.scheduler.submit_job(config)
 
 XML-RPC can also be used to query data anonymously:
 
 .. code-block:: python
 
-  import xmlrpclib
+  # Python3
+  import xmlrpc.client
 
-  server = xmlrpclib.ServerProxy("http://sylvester.codehelp/RPC2")
+  server = xmlrpc.client.ServerProxy("http://sylvester.codehelp/RPC2")
   print server.system.listMethods()
 
 Individual XML-RPC commands are documented on the `API Help

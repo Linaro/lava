@@ -38,7 +38,7 @@ class Minimal(Boot):
     compatibility = 1
 
     def __init__(self, parent, parameters):
-        super(Minimal, self).__init__(parent)
+        super().__init__(parent)
         self.action = MinimalBoot()
         self.action.section = self.action_type
         self.action.job = self.job
@@ -74,6 +74,6 @@ class MinimalBoot(BootAction):
                 self.internal_pipeline.add_action(ExportDeviceEnvironment())
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(MinimalBoot, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection

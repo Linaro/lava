@@ -19,7 +19,6 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
-
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.test.test_basic import Factory, StdoutTestCase
@@ -27,7 +26,9 @@ from lava_dispatcher.test.utils import DummyLogger
 
 
 class MpsFactory(Factory):
-    def create_job(self, filename, output_dir='/tmp'):  # pylint: disable=no-self-use
+
+    def create_mps_job(self, filename):  # pylint: disable=no-self-use
+        # FIXME - create a device dictionary for mps2plus
         device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/mps2plus_01.yaml'))
         y_file = os.path.join(os.path.dirname(__file__), filename)
         with open(y_file) as sample_job_data:
@@ -38,10 +39,11 @@ class MpsFactory(Factory):
 
 
 class TestMps(StdoutTestCase):
+
     def setUp(self):
         super(TestMps, self).setUp()
         self.factory = MpsFactory()
-        self.job = self.factory.create_job("sample_jobs/mps2plus.yaml")
+        self.job = self.factory.create_mps_job("sample_jobs/mps2plus.yaml")
 
     def test_mps_reference(self):
         self.job.validate()

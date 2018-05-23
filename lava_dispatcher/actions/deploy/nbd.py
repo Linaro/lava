@@ -24,7 +24,8 @@
 import os
 import tempfile
 
-from lava_dispatcher.action import Pipeline, JobError
+from lava_dispatcher.action import Pipeline
+from lava_common.exceptions import JobError
 from lava_dispatcher.logical import Deployment
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.download import DownloaderAction
@@ -47,7 +48,7 @@ class Nbd(Deployment):
     name = 'nbd'
 
     def __init__(self, parent, parameters):
-        super(Nbd, self).__init__(parent)
+        super().__init__(parent)
         self.action = NbdAction()
         self.action.section = self.action_type
         self.action.job = self.job
@@ -71,13 +72,13 @@ class NbdAction(DeployAction):  # pylint:disable=too-many-instance-attributes
     summary = "nbd deployment"
 
     def __init__(self):
-        super(NbdAction, self).__init__()
+        super().__init__()
         self.tftp_dir = None
         self.nbd_ip = None
         self.nbd_port = None
 
     def validate(self):
-        super(NbdAction, self).validate()
+        super().validate()
         if 'kernel' not in self.parameters:
             self.errors = "%s needs a kernel to deploy" % self.name
         if not self.valid:
@@ -141,13 +142,13 @@ class XnbdAction(DeployAction):
     summary = "xnbd daemon"
 
     def __init__(self):
-        super(XnbdAction, self).__init__()
+        super().__init__()
         self.protocol = XnbdProtocol.name
         self.nbd_server_port = None
         self.nbd_server_ip = None
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(XnbdAction, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         self.logger.debug("%s: starting xnbd-server", self.name)
         # pull from parameters - as previously set
         self.nbd_root = self.parameters['lava-xnbd']['nbdroot']

@@ -1,0 +1,8 @@
+{% extends 'synquacer-acpi.jinja2' %}
+{% set hard_reset_command = '/usr/bin/pduclient --hostname pdu01 --daemon lava-master --port 08 --command reboot' %}
+{% set power_off_command = '/usr/bin/pduclient --hostname pdu01 --daemon lava-master --port 08 --command off' %}
+{% set connection_command = 'telnet jazz 7002' %}
+{% set static_ip = '192.168.25.43' %}
+{% set static_gateway = '192.168.25.1' %}
+{% set static_dns = '192.168.25.1' %}
+{% set static_netmask = '255.255.255.0' %}

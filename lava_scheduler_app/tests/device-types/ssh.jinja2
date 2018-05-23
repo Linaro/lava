@@ -11,7 +11,7 @@ actions:
         # secondary connections get this from the lava-multinode protocol support.
         host: '{{ ssh_host|default('') }}'
         port: {{ ssh_port|default(22) }}
-{{ ssh_identity}}
+        identity_file: {{ ssh_identity_file }}
 
   boot:
     connections:

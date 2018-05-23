@@ -36,7 +36,7 @@ class DiagnoseNetwork(DiagnosticAction):
         return "network"
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(DiagnoseNetwork, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         return connection
 
 
@@ -54,7 +54,7 @@ class DiagnoseTargetNetwork(DiagnosticAction):
         return "target-network"
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(DiagnoseTargetNetwork, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         return connection
 
 
@@ -71,6 +71,6 @@ class DiagnoseUBoot(DiagnosticAction):
         return "uboot-printenv"
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(DiagnoseUBoot, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         # FIXME: write the support for reset, including running PDU command
         return connection

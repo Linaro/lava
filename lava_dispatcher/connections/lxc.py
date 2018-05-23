@@ -37,7 +37,7 @@ class LxcSession(ShellSession):
 
     def finalise(self):
         self.disconnect("closing")
-        super(LxcSession, self).finalise()
+        super().finalise()
 
     def disconnect(self, reason=''):
         self.sendline('exit', disconnecting=True)
@@ -54,14 +54,14 @@ class ConnectLxc(Action):
     summary = "run connection command"
 
     def __init__(self):
-        super(ConnectLxc, self).__init__()
+        super().__init__()
         self.session_class = LxcSession
         self.shell_class = ShellCommand
 
     def validate(self):
         if 'lxc' not in self.job.device['actions']['boot']['methods']:
             return
-        super(ConnectLxc, self).validate()
+        super().validate()
         which('lxc-attach')
 
     def run(self, connection, max_end_time, args=None):
@@ -90,7 +90,7 @@ class ConnectLxc(Action):
         # LxcSession monitors the pexpect
         connection = self.session_class(self.job, shell)
         connection.connected = True
-        connection = super(ConnectLxc, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         connection.prompt_str = self.parameters['prompts']
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection

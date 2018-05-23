@@ -36,7 +36,7 @@ from lava_dispatcher.power import (
     ResetDevice
 )
 from lava_dispatcher.shell import ExpectShellSession
-from lava_dispatcher.utils.constants import UEFI_LINE_SEPARATOR
+from lava_common.constants import UEFI_LINE_SEPARATOR
 
 
 class UefiShell(Boot):
@@ -44,7 +44,7 @@ class UefiShell(Boot):
     compatibility = 3
 
     def __init__(self, parent, parameters):
-        super(UefiShell, self).__init__(parent)
+        super().__init__(parent)
         self.action = UefiShellAction()
         self.action.section = self.action_type
         self.action.job = self.job
@@ -72,7 +72,7 @@ class UefiShellAction(BootAction):
     summary = "run UEFI shell to system"
 
     def __init__(self):
-        super(UefiShellAction, self).__init__()
+        super().__init__()
         self.shell_menu = []
 
     def _skip_menu(self, parameters):
@@ -107,13 +107,13 @@ class UefiShellAction(BootAction):
                 self.internal_pipeline.add_action(ExportDeviceEnvironment())
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(UefiShellAction, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         connection.raw_connection.linesep = UEFI_LINE_SEPARATOR
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection
 
     def validate(self):
-        super(UefiShellAction, self).validate()
+        super().validate()
         params = self.job.device['actions']['boot']['methods']['uefi']['parameters']
         self.set_namespace_data(
             action=self.name,
@@ -130,7 +130,7 @@ class UefiShellMenuInterrupt(UEFIMenuInterrupt):
     summary = 'interrupt default boot and to menu'
 
     def __init__(self):
-        super(UefiShellMenuInterrupt, self).__init__()
+        super().__init__()
         # Take parameters from the uefi method, not uefi menu.
         self.method = 'uefi'
 
@@ -156,7 +156,7 @@ class UefiShellInterrupt(MenuInterrupt):
         if not connection:
             self.logger.debug("%s called without active connection", self.name)
             return
-        connection = super(UefiShellInterrupt, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         # param keys already checked in accepts() classmethod
         params = self.job.device['actions']['boot']['methods']['uefi']['parameters']
         connection.prompt_str = params['shell_interrupt_prompt']
@@ -176,7 +176,7 @@ class UefiShellMenuSelector(UefiMenuSelector):
     summary = 'use uefi menu to drop to shell'
 
     def __init__(self):
-        super(UefiShellMenuSelector, self).__init__()
+        super().__init__()
         # Take parameters from the uefi method, not uefi menu.
         self.method_name = 'uefi'
         # Default menu command name: drop to shell
@@ -195,6 +195,6 @@ class UefiShellMenuSelector(UefiMenuSelector):
             self.errors = "Missing menu commands for %s" % self.commands
         if 'menu_boot_message' in params:
             self.boot_message = params['menu_boot_message']
-        super(UefiShellMenuSelector, self).validate()
+        super().validate()
         if 'menu_prompt' in params:
             self.selector.prompt = params['menu_prompt']

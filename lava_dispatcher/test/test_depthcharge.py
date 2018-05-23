@@ -55,7 +55,7 @@ class DepthchargeFactory(object):
 class TestDepthchargeAction(StdoutTestCase):
 
     def setUp(self):
-        super(TestDepthchargeAction, self).setUp()
+        super().setUp()
         self.factory = DepthchargeFactory()
 
     @unittest.skipIf(infrastructure_error('mkimage'), "mkimage not installed")

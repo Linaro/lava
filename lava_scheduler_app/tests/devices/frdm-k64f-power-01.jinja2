@@ -1,0 +1,7 @@
+{% extends 'frdm-k64f.jinja2' %}
+{% set board_id = '02400201E8B77E4E154983F6' %}
+{% set usb_mass_device = '/dev/disk/by-id/usb-MBED_microcontroller_02400201E8B77E4E154983F6-0:0' %}
+{% set connection_command = 'telnet localhost 7010' %}
+{% set power_off_command = '/usr/local/lab-scripts/usb_hub_control -p 7008 -m off -u 06' %}
+{% set power_on_command = '/usr/local/lab-scripts/usb_hub_control -p 7008 --mode1 off --mode2 sync -d 15 -u 06' %}
+{% set hard_reset_command = '/usr/local/lab-scripts/usb_hub_control -p 7008 --mode1 off --mode2 sync -d 15 -u 06' %}

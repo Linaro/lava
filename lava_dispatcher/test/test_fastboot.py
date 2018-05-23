@@ -30,6 +30,7 @@ from lava_dispatcher.test.utils import DummyLogger, infrastructure_error, infras
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.fastboot import FastbootFlashOrderAction
 from lava_dispatcher.actions.boot.fastboot import BootAction
+from lava_dispatcher.utils.lxc import is_lxc_requested
 
 
 class FastBootFactory(Factory):  # pylint: disable=too-few-public-methods
@@ -39,74 +40,32 @@ class FastBootFactory(Factory):  # pylint: disable=too-few-public-methods
     of any database objects.
     """
 
-    def create_fastboot_job(self, filename):  # pylint: disable=no-self-use
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/nexus4-01.yaml'))
-        fastboot_yaml = os.path.join(os.path.dirname(__file__), filename)
-        with open(fastboot_yaml) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "")
-            job.logger = DummyLogger()
-        return job
+    def create_fastboot_job(self, filename):
+        return self.create_job('nexus4-01.jinja2', filename)
 
-    def create_db410c_job(self, filename):  # pylint: disable=no-self-use
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/db410c-01.yaml'))
-        fastboot_yaml = os.path.join(os.path.dirname(__file__), filename)
-        with open(fastboot_yaml) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "")
-            job.logger = DummyLogger()
-        return job
+    def create_db410c_job(self, filename):
+        return self.create_job('db410c-01.jinja2', filename)
 
-    def create_x15_job(self, filename):  # pylint: disable=no-self-use
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/x15-01.yaml'))
-        fastboot_yaml = os.path.join(os.path.dirname(__file__), filename)
-        with open(fastboot_yaml) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "")
-            job.logger = DummyLogger()
-        return job
+    def create_x15_job(self, filename):
+        return self.create_job('x15-01.jinja2', filename)
 
-    def create_hikey_job(self, filename):  # pylint: disable=no-self-use
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/hi6220-hikey-01.yaml'))
-        fastboot_yaml = os.path.join(os.path.dirname(__file__), filename)
-        with open(fastboot_yaml) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "")
-            job.logger = DummyLogger()
-        return job
+    def create_hikey_job(self, filename):
+        return self.create_job('hi6220-hikey-r2-01.jinja2', filename)
 
-    def create_hikey960_job(self, filename):  # pylint: disable=no-self-use
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/hikey960-01.yaml'))
-        y_file = os.path.join(os.path.dirname(__file__), filename)
-        with open(y_file) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "")
-        job.logger = DummyLogger()
-        return job
+    def create_hikey960_job(self, filename):
+        return self.create_job('hi960-hikey-01.jinja2', filename)
 
-    def create_nexus5x_job(self, filename):  # pylint: disable=no-self-use
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/nexus5x-01.yaml'))
-        fastboot_yaml = os.path.join(os.path.dirname(__file__), filename)
-        with open(fastboot_yaml) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "")
-            job.logger = DummyLogger()
-        return job
+    def create_nexus5x_job(self, filename):
+        return self.create_job('nexus5x-01.jinja2', filename)
 
-    def create_pixel_job(self, filename):  # pylint: disable=no-self-use
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/pixel-01.yaml'))
-        fastboot_yaml = os.path.join(os.path.dirname(__file__), filename)
-        with open(fastboot_yaml) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "")
-            job.logger = DummyLogger()
-        return job
+    def create_pixel_job(self, filename):
+        return self.create_job('pixel-01.jinja2', filename)
 
 
 class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestFastbootDeploy, self).setUp()
+        super().setUp()
         self.factory = FastBootFactory()
         self.job = self.factory.create_fastboot_job('sample_jobs/fastboot.yaml')
 
@@ -131,9 +90,8 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
         self.assertEqual(description_ref, job.pipeline.describe(False))
         self.assertIn(LxcProtocol.name, [protocol.name for protocol in job.protocols])
         self.assertEqual(len(job.protocols), 1)
-        self.assertIsNone(job.device.pre_os_command)  # FIXME: a real device config would typically need this.
-        uefi_menu = [action for action in job.pipeline.actions if action.name == 'uefi-menu-action'][0]
-        select = [action for action in uefi_menu.internal_pipeline.actions if action.name == 'uefi-menu-selector'][0]
+        self.assertIsNotNone(job.device.pre_os_command)
+        select = [action for action in job.pipeline.actions if action.name == 'grub-sequence-action'][0]
         self.assertIn(LxcProtocol.name, select.parameters.keys())
         self.assertIn('protocols', select.parameters.keys())
         self.assertIn(LxcProtocol.name, select.parameters['protocols'].keys())
@@ -165,25 +123,23 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
     @unittest.skipIf(infrastructure_error('lxc-info'), "lxc-info not installed")
     def test_fastboot_lxc(self):
         job = self.factory.create_hikey_job('sample_jobs/hi6220-hikey.yaml')
+
         description_ref = self.pipeline_reference('hi6220-hikey.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
-        uefi_menu = [action for action in job.pipeline.actions if action.name == 'uefi-menu-action'][0]
-        self.assertIn('commands', uefi_menu.parameters)
-        self.assertIn('fastboot', uefi_menu.parameters['commands'])
         self.assertEqual(
             job.device.pre_power_command,
-            '/usr/local/lab-scripts/usb_hub_control -p 8000 -m sync -u 06')
+            '/home/neil/lava-lab/shared/lab-scripts/usb_hub_control -u 12 -p 4000 -m sync')
         lxc_deploy = [action for action in job.pipeline.actions if action.name == 'lxc-deploy'][0]
         overlay = [action for action in lxc_deploy.internal_pipeline.actions if action.name == 'lava-overlay'][0]
         testdef = [action for action in overlay.internal_pipeline.actions if action.name == 'test-definition'][0]
         job.validate()
         self.assertEqual(
             {
-                '1.8.3.20': '4_android-optee',
-                '1.8.3.4': '0_get-adb-serial',
-                '1.8.3.12': '2_android-busybox',
-                '1.8.3.8': '1_android-meminfo',
-                '1.8.3.16': '3_android-ping-dns'},
+                '1.8.4.20': '4_android-optee',
+                '1.8.4.4': '0_get-adb-serial',
+                '1.8.4.12': '2_android-busybox',
+                '1.8.4.8': '1_android-meminfo',
+                '1.8.4.16': '3_android-ping-dns'},
             testdef.get_namespace_data(action='test-runscript-overlay', label='test-runscript-overlay', key='testdef_levels'))
         for testdef in testdef.test_list[0]:
             self.assertEqual('git', testdef['from'])
@@ -226,8 +182,15 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
         for action in self.job.pipeline.actions:
             if isinstance(action, BootAction):
                 # get the action & populate it
-                self.assertIn(action.parameters['method'], ['lxc', 'fastboot'])
-                self.assertEqual(action.parameters['prompts'], ['root@(.*):/#'])
+                if action.parameters.get('namespace') == 'tlxc':
+                    self.assertIn(action.parameters['method'],
+                                  ['lxc', 'fastboot'])
+                    self.assertEqual(action.parameters['prompts'],
+                                     ['root@(.*):/#'])
+                if action.parameters.get('namespace') == 'droid':
+                    self.assertIn(action.parameters['method'],
+                                  ['lxc', 'fastboot'])
+                    self.assertEqual(action.parameters.get('prompts'), None)
 
     def test_testdefinitions(self):
         for action in self.job.pipeline.actions:
@@ -266,8 +229,8 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
         self.assertIn('interrupt_prompt', interrupt.params)
         self.assertTrue(interrupt.needs_interrupt)
         autologin = [action for action in boot.internal_pipeline.actions if action.name == 'auto-login-action'][0]
-        print(autologin.booting)
-        print(autologin.parameters.get('prompts', None))
+        self.assertTrue(autologin.booting)
+        self.assertEqual(set(autologin.parameters.get('prompts')), set(['root@(.*):/#', 'shell@am57xevm:/']))
         self.assertIsNone(autologin.parameters.get('boot_message', None))
 
     def test_nexus5x_job(self):
@@ -331,3 +294,17 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
         self.assertIsNotNone(flash_order)
         self.assertIsInstance(flash_order, FastbootFlashOrderAction)
         self.assertEqual(expected_flash_cmds, flash_cmds)
+
+    def test_fastboot_minus_lxc(self):
+        job = self.factory.create_fastboot_job(
+            'sample_jobs/nexus4-minus-lxc.yaml')
+        description_ref = self.pipeline_reference('nexus4-minus-lxc.yaml',
+                                                  job=job)
+        self.assertEqual(description_ref, job.pipeline.describe(False))
+        # There shouldn't be any lxc defined
+        lxc_name = is_lxc_requested(job)
+        self.assertEqual(lxc_name, False)
+        deploy = [action for action in job.pipeline.actions
+                  if action.name == 'fastboot-deploy'][0]
+        # No lxc requested, hence lxc_cmd_prefix is an empty list
+        self.assertEqual([], deploy.lxc_cmd_prefix)

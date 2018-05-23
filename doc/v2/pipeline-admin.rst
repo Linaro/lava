@@ -165,7 +165,7 @@ configuration. These are the raw forms which are used on the ``lava-dispatch``
 command line and are useful for debugging and starting to create support for
 your own devices.
 
-https://git.linaro.org/lava/lava-dispatcher.git/tree/HEAD:/lava_dispatcher
+https://git.linaro.org/lava/lava.git/tree/HEAD:/lava_dispatcher
 
 The lava-server unit test support
 =================================
@@ -175,7 +175,7 @@ become the default :term:`device type` templates when the packages are built.
 The ``devices`` directory contains working device dictionary examples for these
 device types.
 
-https://git.linaro.org/lava/lava-server.git/tree/HEAD:/lava_scheduler_app/tests
+https://git.linaro.org/lava/lava.git/tree/HEAD:/lava_scheduler_app/tests
 
 .. _extra_device_configuration:
 
@@ -584,12 +584,13 @@ specified Device hostname:
 
 .. code-block:: python
 
-  import xmlrpclib
+  # Python3
+  import xmlrpc.client
   username = "USERNAME"
   token = "TOKEN_STRING"
   hostname = "HOSTNAME"
   protocol = "PROTOCOL"  # http or preferably https
-  server = xmlrpclib.ServerProxy("%s://%s:%s@%s/RPC2" % (protocol, username, token, hostname))
+  server = xmlrpc.client.ServerProxy("%s://%s:%s@%s/RPC2" % (protocol, username, token, hostname))
   server.scheduler.import_device_dictionary(device_hostname, jinja_string)
 
 If the dictionary did not exist for this hostname, it will be created. The

@@ -19,10 +19,11 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
+from lava_common.constants import SYS_CLASS_KVM
+from lava_common.exceptions import JobError
 from lava_dispatcher.action import (
     Pipeline,
     Action,
-    JobError,
 )
 from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.actions.boot import BootAction
@@ -34,12 +35,11 @@ from lava_dispatcher.shell import (
 )
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.strings import substitute
-from lava_dispatcher.utils.constants import SYS_CLASS_KVM
 from lava_dispatcher.utils.network import dispatcher_ip
-from lava_dispatcher.utils.filesystem import debian_package_version
+from lava_dispatcher.utils.filesystem import debian_package_version, debian_package_arch
 from lava_dispatcher.actions.boot import AutoLoginAction, OverlayUnpack
 
-# pylint: disable=too-many-instance-attributes,too-many-branches
+# pylint: disable=too-many-instance-attributes,too-many-branches,too-many-statements
 
 
 # FIXME: decide if 'media: tmpfs' is necessary or remove from YAML. Only removable needs 'media'
@@ -56,7 +56,7 @@ class BootQEMU(Boot):
     compatibility = 4
 
     def __init__(self, parent, parameters):
-        super(BootQEMU, self).__init__(parent)
+        super().__init__(parent)
         self.action = BootQEMUImageAction()
         self.action.section = self.action_type
         self.action.job = self.job
@@ -110,31 +110,39 @@ class CallQemuAction(Action):
     summary = "execute qemu to boot the image"
 
     def __init__(self):
-        super(CallQemuAction, self).__init__()
+        super().__init__()
         self.sub_command = []
         self.substitutions = {}
         self.commands = []
         self.methods = None
         self.nfsrootfs = None
+        self.qemu_data = {}
 
     def validate(self):
-        super(CallQemuAction, self).validate()
+        super().validate()
 
         # 'arch' must be defined in job definition context.
+        architecture = self.job.parameters['context']['arch']
+        if 'available_architectures' not in self.job.device:
+            self.errors = "Device lacks list of available architectures."
         try:
-            if self.job.parameters['context']['arch'] not in \
+            if architecture not in \
                self.job.device['available_architectures']:
                 self.errors = "Non existing architecture specified in context arch parameter. Please check the device configuration for available options."
                 return
         except KeyError:
             self.errors = "Arch parameter must be set in the context section. Please check the device configuration for available architectures."
             return
-        if self.job.parameters['context']['arch'] in ['amd64', 'x86_64']:
-            self.logger.info("qemu-system-x86, installed at version: %s",
-                             debian_package_version(pkg='qemu-system-x86', split=False))
-        if self.job.parameters['context']['arch'] in ['arm64', 'arm', 'armhf', 'aarch64']:
-            self.logger.info("qemu-system-arm, installed at version: %s",
-                             debian_package_version(pkg='qemu-system-arm', split=False))
+        if architecture in ['amd64', 'x86_64']:
+            ver_str = debian_package_version(pkg='qemu-system-x86', split=False)
+            arch_str = debian_package_arch(pkg='qemu-system-x86')
+            self.qemu_data = {'qemu_version': ver_str, 'host_arch': arch_str, 'job_arch': architecture}
+            self.logger.info("qemu-system-x86, installed at version: %s, host architecture: %s", ver_str, arch_str)
+        if architecture in ['arm64', 'arm', 'armhf', 'aarch64']:
+            ver_str = debian_package_version(pkg='qemu-system-arm', split=False)
+            arch_str = debian_package_arch(pkg='qemu-system-arm')
+            self.qemu_data = {'qemu_version': ver_str, 'host_arch': arch_str, 'job_arch': architecture}
+            self.logger.info("qemu-system-arm, installed at version: %s, host architecture: %s", ver_str, arch_str)
 
         if self.parameters['method'] in ['qemu', 'qemu-nfs']:
             if 'prompts' not in self.parameters:
@@ -158,8 +166,8 @@ class CallQemuAction(Action):
                 exc, self.job.device['actions']['boot']['methods'][method])
         except (KeyError, TypeError):
             self.errors = "Invalid parameters for %s" % self.name
-        namespace = self.parameters['namespace']
-        for label in self.data[namespace]['download-action'].keys():
+
+        for label in self.get_namespace_keys('download-action'):
             if label in ['offset', 'available_loops', 'uefi', 'nfsrootfs']:
                 continue
             image_arg = self.get_namespace_data(action='download-action', label=label, key='image_arg')
@@ -200,6 +208,7 @@ class CallQemuAction(Action):
         pexpect.spawn is one of the raw_connection objects for a Connection class.
         """
         # initialise the first Connection object, a command line shell into the running QEMU.
+        self.results = self.qemu_data
         guest = self.get_namespace_data(action='apply-overlay-guest', label='guest', key='filename')
         # check for NFS
         if 'qemu-nfs' in self.methods and self.parameters.get('media', None) == 'nfs':
@@ -242,7 +251,7 @@ class CallQemuAction(Action):
         self.logger.debug("started a shell command")
 
         shell_connection = ShellSession(self.job, shell)
-        shell_connection = super(CallQemuAction, self).run(shell_connection, max_end_time, args)
+        shell_connection = super().run(shell_connection, max_end_time, args)
 
         self.set_namespace_data(action='shared', label='shared', key='connection', value=shell_connection)
         return shell_connection

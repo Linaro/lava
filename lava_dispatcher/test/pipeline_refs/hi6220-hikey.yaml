@@ -11,6 +11,7 @@
   - class: actions.deploy.overlay.OverlayAction
     name: lava-overlay
     pipeline:
+    - {class: actions.deploy.overlay.SshAuthorize, name: ssh-authorize}
     - {class: actions.deploy.overlay.VlandOverlayAction, name: lava-vland-overlay}
     - {class: actions.deploy.overlay.MultinodeOverlayAction, name: lava-multinode-overlay}
     - class: actions.deploy.testdef.TestDefinitionAction
@@ -84,15 +85,11 @@
     - {class: actions.deploy.fastboot.FastbootFlashAction, name: fastboot-flash-action}
     - {class: actions.deploy.fastboot.FastbootFlashAction, name: fastboot-flash-action}
     - {class: actions.deploy.fastboot.FastbootFlashAction, name: fastboot-flash-action}
-- class: actions.boot.uefi_menu.UefiMenuAction
-  name: uefi-menu-action
+- class: actions.boot.grub.GrubSequenceAction
+  name: grub-sequence-action
   pipeline:
-  - {class: actions.boot.uefi_menu.UefiSubstituteCommands, name: uefi-commands}
-  - {class: actions.boot.uefi_menu.UEFIMenuInterrupt, name: uefi-menu-interrupt}
-  - {class: actions.boot.uefi_menu.UefiMenuSelector, name: uefi-menu-selector}
-  - {class: menus.menus.MenuReset, name: menu-reset}
+  - {class: actions.boot.fastboot.WaitFastBootInterrupt, name: wait-fastboot-interrupt}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
-  - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
   pipeline:

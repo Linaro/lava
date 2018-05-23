@@ -11,6 +11,7 @@
   - class: actions.deploy.overlay.OverlayAction
     name: lava-overlay
     pipeline:
+    - {class: actions.deploy.overlay.SshAuthorize, name: ssh-authorize}
     - {class: actions.deploy.overlay.VlandOverlayAction, name: lava-vland-overlay}
     - {class: actions.deploy.overlay.MultinodeOverlayAction, name: lava-multinode-overlay}
     - class: actions.deploy.testdef.TestDefinitionAction
@@ -58,16 +59,10 @@
     - {class: actions.deploy.fastboot.FastbootFlashAction, name: fastboot-flash-action}
     - {class: actions.deploy.fastboot.FastbootFlashAction, name: fastboot-flash-action}
     - {class: actions.deploy.fastboot.FastbootFlashAction, name: fastboot-flash-action}
-- class: actions.boot.grub.GrubMainAction
-  name: grub-main-action
+- class: actions.boot.grub.GrubSequenceAction
+  name: grub-sequence-action
   pipeline:
-  - {class: actions.boot.BootloaderSecondaryMedia, name: bootloader-from-media}
-  - {class: actions.boot.BootloaderCommandOverlay, name: bootloader-overlay}
-  - {class: connections.serial.ConnectDevice, name: connect-device}
-  - {class: actions.boot.uefi_menu.UEFIMenuInterrupt, name: uefi-menu-interrupt}
-  - {class: actions.boot.grub.GrubMenuSelector, name: grub-efi-menu-selector}
-  - {class: actions.boot.BootloaderInterruptAction, name: bootloader-interrupt}
-  - {class: actions.boot.BootloaderCommandsAction, name: bootloader-commands}
+  - {class: actions.boot.fastboot.WaitFastBootInterrupt, name: wait-fastboot-interrupt}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry

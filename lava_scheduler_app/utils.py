@@ -354,6 +354,8 @@ def device_dictionary_sequence():
         'fastboot_serial_number',
         'device_info',
         'static_info',
+        'recovery_mode_command',
+        'recovery_exit_command',
     ]
 
 

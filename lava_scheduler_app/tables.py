@@ -150,12 +150,19 @@ class JobErrorsTable(LavaTable):
 
     job = tables.Column(verbose_name="Job", empty_values=[""])
     job.orderable = False
+    end_time = tables.DateColumn(format="Nd, g:ia")
+    end_time.orderable = False
     device = tables.Column(empty_values=[""])
     device.orderable = False
     error_type = tables.Column(empty_values=[""])
     error_type.orderable = False
     error_msg = tables.Column(empty_values=[""])
     error_msg.orderable = False
+
+    def render_end_time(self, record):
+        if record.suite.job is None:
+            return ""
+        return record.suite.job.end_time
 
     def render_device(self, record):
         if record.suite.job.actual_device is None:
@@ -178,10 +185,10 @@ class JobErrorsTable(LavaTable):
     class Meta(LavaTable.Meta):
         model = TestCase
         fields = (
-            'job', 'device', 'error_type', 'error_msg',
+            'job', 'end_time', 'device', 'error_type', 'error_msg',
         )
         sequence = (
-            'job', 'device', 'error_type', 'error_msg',
+            'job', 'end_time', 'device', 'error_type', 'error_msg',
         )
 
 

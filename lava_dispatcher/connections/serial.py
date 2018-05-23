@@ -19,11 +19,8 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 from lava_dispatcher.utils.shell import which
-from lava_dispatcher.action import (
-    Action,
-    JobError,
-    InfrastructureError
-)
+from lava_dispatcher.action import Action
+from lava_common.exceptions import JobError, InfrastructureError
 from lava_dispatcher.shell import (
     ShellCommand,
     ShellSession,
@@ -46,7 +43,7 @@ class ConnectDevice(Action):
     timeout_exception = InfrastructureError
 
     def __init__(self):
-        super(ConnectDevice, self).__init__()
+        super().__init__()
         self.session_class = ShellSession  # wraps the pexpect and provides prompt_str access
         self.shell_class = ShellCommand  # runs the command to initiate the connection
         self.command = ''
@@ -64,7 +61,7 @@ class ConnectDevice(Action):
         which(exe)
 
     def validate(self):
-        super(ConnectDevice, self).validate()
+        super().validate()
         matched = False
         if 'connect' in self.job.device['commands']:
             # deprecated but allowed for primary
@@ -135,7 +132,7 @@ class ConnectDevice(Action):
         connection.connected = True
         if self.hardware:
             connection.tags = self.tag_dict[self.hardware]
-        connection = super(ConnectDevice, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         if not connection.prompt_str:
             connection.prompt_str = [self.job.device.get_constant(
                 'default-shell-prompt')]
@@ -150,7 +147,7 @@ class ConnectShell(ConnectDevice):
     """
 
     def __init__(self, name=None):
-        super(ConnectShell, self).__init__()
+        super().__init__()
         self.name = "connect-shell"
         self.primary = False
         self.hardware = name
@@ -161,7 +158,7 @@ class ConnectShell(ConnectDevice):
         self.shell_class = ShellCommand  # runs the command to initiate the connection
 
     def validate(self):
-        super(ConnectShell, self).validate()
+        super().validate()
         if 'connections' not in self.job.device['commands']:
             self.errors = "Unable to connect to shell - missing connections block."
             return
@@ -169,7 +166,7 @@ class ConnectShell(ConnectDevice):
 
     def run(self, connection, max_end_time, args=None):
         # explicitly call the base class run()
-        connection = super(ConnectShell, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         self.logger.debug("Forcing a prompt")
         # force a prompt to appear without using a character that could be interpreted as a username
         connection.sendline('')

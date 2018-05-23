@@ -1,0 +1,41 @@
+device_type: synquacer-dtb
+
+job_name: synquacer-dtb-health-ironhide
+timeouts:
+  job:
+    minutes: 10
+  action:
+   minutes: 10
+  actions:
+    power-off:
+      seconds: 30
+priority: medium
+visibility: public
+
+metadata:
+  original: http://lava.streamtester.net/scheduler/job/114010/definition
+
+actions:
+- deploy:
+    timeout:
+      minutes: 2
+    to: tftp
+    kernel:
+      url: http://images.validation.linaro.org/ironhide.bounceme.net/health-checks/synquacer/Image
+      type: image
+    ramdisk:
+      url: http://images.validation.linaro.org/ironhide.bounceme.net/health-checks/synquacer/rootfs.cpio.gz
+      compression: gz
+    modules:
+      url: http://images.validation.linaro.org/ironhide.bounceme.net/health-checks/synquacer/modules.tar.xz
+      compression: xz
+    os: oe
+
+
+- boot:
+    timeout:
+      minutes: 5
+    method: grub
+    commands: ramdisk
+    prompts:
+      - '/ #'

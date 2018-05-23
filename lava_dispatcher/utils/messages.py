@@ -20,18 +20,19 @@
 
 import time
 import pexpect
-from lava_dispatcher.action import Action, TestError
-from lava_dispatcher.utils.constants import (
+from lava_dispatcher.action import Action
+from lava_common.exceptions import TestError, JobError
+from lava_common.constants import (
     KERNEL_FREE_UNUSED_MSG,
     KERNEL_FREE_INIT_MSG,
     KERNEL_EXCEPTION_MSG,
     KERNEL_FAULT_MSG,
     KERNEL_PANIC_MSG,
     KERNEL_TRACE_MSG,
-    KERNEL_INIT_ALERT,
     METADATA_MESSAGE_LIMIT,
 )
 from lava_dispatcher.utils.strings import seconds_to_str
+from lava_dispatcher.log import YAMLLogger
 
 
 class LinuxKernelMessages(Action):
@@ -54,26 +55,22 @@ class LinuxKernelMessages(Action):
     EXCEPTION = 0
     FAULT = 1
     PANIC = 2
-    ALERT = 3
-    TRACE = 4
+    TRACE = 3
     # these can be omitted by InitMessages
-    FREE_UNUSED = 5
-    FREE_INIT = 6
+    FREE_UNUSED = 4
+    FREE_INIT = 5
 
     MESSAGE_CHOICES = (
         (EXCEPTION, KERNEL_EXCEPTION_MSG, 'exception'),
         (FAULT, KERNEL_FAULT_MSG, 'fault'),
         (PANIC, KERNEL_PANIC_MSG, 'panic'),
         (TRACE, KERNEL_TRACE_MSG, 'trace'),
-        # ALERT is allowable behaviour for some deployments
-        # ramdisk just needs a sendline to get to the prompt
-        (ALERT, KERNEL_INIT_ALERT, 'alert'),
         (FREE_UNUSED, KERNEL_FREE_UNUSED_MSG, 'success'),
         (FREE_INIT, KERNEL_FREE_INIT_MSG, 'success'),
     )
 
     def __init__(self):
-        super(LinuxKernelMessages, self).__init__()
+        super().__init__()
         self.messages = self.get_kernel_prompts()
         self.existing_prompt = None
         for choice in self.MESSAGE_CHOICES:
@@ -108,8 +105,11 @@ class LinuxKernelMessages(Action):
 
         Always returns a list, the list may be empty.
         """
-        results = []
+        results = []  # wrap inside a dict to use in results
+        res = "pass"
+        halt = None
         init = False
+        start = time.time()
         if not connection:
             return results
         if cls.MESSAGE_CHOICES[cls.FREE_UNUSED][1] in connection.prompt_str:
@@ -134,10 +134,11 @@ class LinuxKernelMessages(Action):
             if action and index:
                 action.logger.debug("Matched prompt #%s: %s", index, connection.prompt_str[index])
             message = connection.raw_connection.after
-            if index == cls.ALERT or index == cls.TRACE:
+            if index == cls.TRACE or index == cls.EXCEPTION:
+                res = "fail"
                 if action:
                     action.logger.warning("%s: %s" % (action.name, cls.MESSAGE_CHOICES[index][2]))
-                # ALERT or TRACE may need a newline to force a prompt
+                # TRACE may need a newline to force a prompt
                 connection.sendline(connection.check_char)
                 # this is allowable behaviour, not a failure.
                 results.append({
@@ -145,14 +146,16 @@ class LinuxKernelMessages(Action):
                     'message': message[:METADATA_MESSAGE_LIMIT]
                 })
                 continue
-            elif index == cls.PANIC or index == cls.EXCEPTION:
+            elif index == cls.PANIC:
+                res = "fail"
                 if action:
                     action.logger.error("%s %s" % (action.name, cls.MESSAGE_CHOICES[index][2]))
                 results.append({
                     cls.MESSAGE_CHOICES[index][2]: cls.MESSAGE_CHOICES[index][1],
                     'message': message[:METADATA_MESSAGE_LIMIT]
                 })
-                continue
+                halt = message[:METADATA_MESSAGE_LIMIT]
+                break
             elif index and index >= cls.FREE_UNUSED:
                 if init and index <= cls.FREE_INIT:
                     results.append({
@@ -167,12 +170,27 @@ class LinuxKernelMessages(Action):
                     break
             else:
                 break
-        # allow calling actions to pick up failures
+        # record a specific result for the kernel messages for later debugging.
+        if action and isinstance(action.logger, YAMLLogger):
+            action.logger.results({  # pylint: disable=no-member
+                "definition": "lava",
+                "namespace": action.parameters.get('namespace', 'common'),
+                "case": cls.name,
+                "level": action.level,
+                "duration": "%.02f" % (time.time() - start),
+                "result": res,
+                "extra": {'extra': results}
+            })
+        if halt:
+            # end this job early, kernel is unable to continue
+            raise JobError(halt)
+
+        # allow calling actions to also pick up failures
         # without overriding their own success result, if any.
         return results
 
     def validate(self):
-        super(LinuxKernelMessages, self).validate()
+        super().validate()
         if not self.messages:
             self.errors = "Unable to build a list of kernel messages to monitor."
 

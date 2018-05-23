@@ -20,7 +20,8 @@
 
 import yaml
 
-from lava_dispatcher.action import Pipeline, JobError
+from lava_common.exceptions import JobError
+from lava_dispatcher.action import Pipeline
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
@@ -32,7 +33,7 @@ from lava_dispatcher.utils.strings import substitute
 class FlasherAction(DeployAction):
 
     def __init__(self):
-        super(FlasherAction, self).__init__()
+        super().__init__()
         self.name = "deploy-flasher"
         self.description = "deploy flasher"
         self.summary = "deploy custom flasher"
@@ -40,7 +41,7 @@ class FlasherAction(DeployAction):
         self.path = None
 
     def validate(self):
-        super(FlasherAction, self).validate()
+        super().validate()
         method = self.job.device['actions']['deploy']['methods']['flasher']
         self.commands = method.get("commands")
         if not isinstance(self.commands, list):
@@ -60,7 +61,7 @@ class FlasherAction(DeployAction):
             self.internal_pipeline.add_action(OverlayAction())
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(FlasherAction, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         # Substitute in the device commands
         substitutions = {}
         for key in [key for key in self.parameters['images'].keys() if key != "yaml_line"]:
@@ -98,7 +99,7 @@ class Flasher(Deployment):
     name = 'flasher'
 
     def __init__(self, parent, parameters):
-        super(Flasher, self).__init__(parent)
+        super().__init__(parent)
         self.action = FlasherAction()
         self.action.section = self.action_type
         self.action.job = self.job

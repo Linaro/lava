@@ -1,0 +1,6 @@
+{% extends 'frdm-k64f.jinja2' %}
+{% set board_id = '024002019EBF4E5B6341B3E3' %}
+{% set usb_mass_device = '/dev/disk/by-id/usb-MBED_microcontroller_024002019EBF4E5B6341B3E3-0:0' %}
+{% set connection_list = ['usb0'] %}
+{% set connection_tags = {'usb0': ['primary', 'telnet']} %}
+{% set connection_commands = {'usb0': 'telnet localhost 7115'} %}

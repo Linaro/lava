@@ -31,8 +31,9 @@ from lava_dispatcher.utils.strings import substitute
 
 class InstallerFactory(Factory):  # pylint: disable=too-few-public-methods
 
-    def create_qemu_installer_job(self):  # pylint: disable=no-self-use
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/kvm01.yaml'))
+    def create_qemu_installer_job(self):
+        (rendered, _) = self.create_device('kvm01.jinja2')
+        device = NewDevice(yaml.load(rendered))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/qemu-debian-installer.yaml')
         parser = JobParser()
         try:
@@ -48,7 +49,7 @@ class InstallerFactory(Factory):  # pylint: disable=too-few-public-methods
 class TestIsoJob(StdoutTestCase):
 
     def setUp(self):
-        super(TestIsoJob, self).setUp()
+        super().setUp()
         factory = InstallerFactory()
         self.job = factory.create_qemu_installer_job()
         self.assertIsNotNone(self.job)
@@ -75,7 +76,7 @@ class TestIsoJob(StdoutTestCase):
         deploy_iso = [action for action in self.job.pipeline.actions if action.name == 'deploy-iso-installer'][0]
         prepare = [action for action in deploy_iso.internal_pipeline.actions if action.name == 'prepare-qemu-commands'][0]
         self.assertEqual(prepare.boot_order, '-boot c')
-        self.assertEqual(prepare.console, 'console=ttyS0,38400n8')
+        self.assertEqual(prepare.console, 'console=ttyS0,115200')
         self.assertIsNotNone(prepare.preseed_url)
         self.assertIn('-nographic', prepare.sub_command)
         self.assertIn(prepare.boot_order, prepare.sub_command)

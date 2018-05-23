@@ -20,17 +20,16 @@
 
 import os
 import re
-from lava_dispatcher.action import (
-    Action,
-    Pipeline,
+from lava_dispatcher.action import Action, Pipeline
+from lava_common.timeout import Timeout
+from lava_common.exceptions import (
     InfrastructureError,
     JobError,
     ConfigurationError,
-    Timeout,
     LAVABug)
 from lava_dispatcher.logical import Boot
 from lava_dispatcher.logical import RetryAction
-from lava_dispatcher.utils.constants import (
+from lava_common.constants import (
     DISPATCHER_DOWNLOAD_DIR,
     DISTINCTIVE_PROMPT_CHARACTERS,
     LINE_SEPARATOR,
@@ -42,6 +41,7 @@ from lava_dispatcher.utils.messages import LinuxKernelMessages
 from lava_dispatcher.utils.strings import substitute
 from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.filesystem import write_bootscript
+from lava_dispatcher.utils.compression import untar_file
 from lava_dispatcher.connections.ssh import SShSession
 from lava_dispatcher.connections.serial import ConnectShell
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
@@ -87,7 +87,7 @@ class SecondaryShell(Boot):
     compatibility = 6
 
     def __init__(self, parent, parameters):
-        super(SecondaryShell, self).__init__(parent)
+        super().__init__(parent)
         self.action = SecondaryShellAction()
         self.action.section = self.action_type
         self.action.job = self.job
@@ -143,7 +143,7 @@ class AutoLoginAction(Action):
     summary = "Auto-login after boot with support for kernel messages."
 
     def __init__(self):
-        super(AutoLoginAction, self).__init__()
+        super().__init__()
         self.check_prompt_characters_warning = (
             "The string '%s' does not look like a typical prompt and"
             " could match status messages instead. Please check the"
@@ -155,7 +155,7 @@ class AutoLoginAction(Action):
         self.booting = True  # if a boot is expected, False for second UART or ssh.
 
     def validate(self):  # pylint: disable=too-many-branches
-        super(AutoLoginAction, self).validate()
+        super().validate()
         # Skip auto login if the configuration is not found
         self.method = self.parameters['method']
         params = self.parameters.get('auto_login', None)
@@ -260,7 +260,7 @@ class AutoLoginAction(Action):
             if not any([True for c in DISTINCTIVE_PROMPT_CHARACTERS if c in chk_prompt]):
                 self.logger.warning(self.check_prompt_characters_warning, chk_prompt)
 
-        connection = super(AutoLoginAction, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         if not connection:
             return connection
         prompts = self.parameters.get('prompts', None)
@@ -374,7 +374,7 @@ class BootloaderCommandOverlay(Action):
     summary = "replace placeholders with job data"
 
     def __init__(self):
-        super(BootloaderCommandOverlay, self).__init__()
+        super().__init__()
         self.commands = None
         self.method = ""
         self.use_bootscript = False
@@ -383,7 +383,7 @@ class BootloaderCommandOverlay(Action):
         self.ram_disk = None
 
     def validate(self):
-        super(BootloaderCommandOverlay, self).validate()
+        super().validate()
         self.method = self.parameters['method']
         device_methods = self.job.device['actions']['boot']['methods']
         if isinstance(self.parameters['commands'], list):
@@ -417,7 +417,7 @@ class BootloaderCommandOverlay(Action):
         """
         # Multiple deployments would overwrite the value if parsed in the validate step.
         # FIXME: implement isolation for repeated steps.
-        connection = super(BootloaderCommandOverlay, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         ip_addr = dispatcher_ip(self.job.parameters['dispatcher'])
 
         self.ram_disk = self.get_namespace_data(action='compress-ramdisk', label='file', key='ramdisk')
@@ -520,7 +520,7 @@ class BootloaderSecondaryMedia(Action):
     summary = "set bootloader strings for deployed media"
 
     def validate(self):
-        super(BootloaderSecondaryMedia, self).validate()
+        super().validate()
         if 'media' not in self.job.device.get('parameters', []):
             return
         media_keys = self.job.device['parameters']['media'].keys()
@@ -557,7 +557,7 @@ class OverlayUnpack(Action):
     summary = 'transfer and unpack overlay'
 
     def validate(self):
-        super(OverlayUnpack, self).validate()
+        super().validate()
         if 'transfer_overlay' not in self.parameters:
             self.errors = "Unable to identify transfer commands for overlay."
             return
@@ -567,7 +567,7 @@ class OverlayUnpack(Action):
             self.errors = "Unable to identify unpack command for overlay."
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(OverlayUnpack, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         if not connection:
             raise LAVABug("Cannot transfer overlay, no connection available.")
         ip_addr = dispatcher_ip(self.job.parameters['dispatcher'])
@@ -597,13 +597,13 @@ class BootloaderInterruptAction(Action):
     timeout_exception = InfrastructureError
 
     def __init__(self):
-        super(BootloaderInterruptAction, self).__init__()
+        super().__init__()
         self.params = {}
         self.method = None
         self.needs_interrupt = False
 
     def validate(self):
-        super(BootloaderInterruptAction, self).validate()
+        super().validate()
         # 'to' only exists in deploy, this action can be used in boot too.
         if self.parameters.get('to', "") == 'fastboot' or self.parameters.get('method', "") == 'fastboot':
             if self.job.device.get('fastboot_via_uboot', False):
@@ -632,7 +632,7 @@ class BootloaderInterruptAction(Action):
     def run(self, connection, max_end_time, args=None):
         if not connection:
             raise LAVABug("%s started without a connection already in use" % self.name)
-        connection = super(BootloaderInterruptAction, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         if self.needs_interrupt:
             connection.prompt_str = self.interrupt_prompt
             self.wait(connection)
@@ -660,14 +660,14 @@ class BootloaderCommandsAction(Action):
     timeout_exception = InfrastructureError
 
     def __init__(self, expect_final=True):
-        super(BootloaderCommandsAction, self).__init__()
+        super().__init__()
         self.params = None
         self.timeout = Timeout(self.name, BOOTLOADER_DEFAULT_CMD_TIMEOUT)
         self.method = ""
         self.expect_final = expect_final
 
     def validate(self):
-        super(BootloaderCommandsAction, self).validate()
+        super().validate()
         self.method = self.parameters['method']
         self.params = self.job.device['actions']['boot']['methods'][self.method]['parameters']
 
@@ -677,7 +677,7 @@ class BootloaderCommandsAction(Action):
     def run(self, connection, max_end_time, args=None):
         if not connection:
             self.errors = "%s started without a connection already in use" % self.name
-        connection = super(BootloaderCommandsAction, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         connection.raw_connection.linesep = self.line_separator()
         connection.prompt_str = [self.params['bootloader_prompt']]
         at_bootloader_prompt = self.get_namespace_data(action='interrupt', label='interrupt', key='at_bootloader_prompt')
@@ -705,4 +705,49 @@ class BootloaderCommandsAction(Action):
             self.wait(connection, max_end_time)
 
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
+        return connection
+
+
+class AdbOverlayUnpack(Action):
+
+    name = "adb-overlay-unpack"
+    summary = "unpack the overlay on the remote device"
+    description = "unpack the overlay over adb"
+
+    def __init__(self):
+        super(AdbOverlayUnpack, self).__init__()
+
+    def validate(self):
+        super(AdbOverlayUnpack, self).validate()
+        if 'adb_serial_number' not in self.job.device:
+            self.errors = "device adb serial number missing"
+            if self.job.device['adb_serial_number'] == '0000000000':
+                self.errors = "device adb serial number unset"
+
+    def run(self, connection, max_end_time, args=None):
+        connection = super(AdbOverlayUnpack, self).run(connection,
+                                                       max_end_time, args)
+        if not connection:
+            raise LAVABug("Cannot transfer overlay, no connection available.")
+        overlay_file = self.get_namespace_data(action='compress-overlay',
+                                               label='output', key='file')
+        if not overlay_file:
+            raise JobError("No overlay file identified for the transfer.")
+        serial_number = self.job.device['adb_serial_number']
+        host_dir = self.mkdtemp()
+        target_dir = '/data/local'
+        untar_file(overlay_file, host_dir)
+        host_dir = os.path.join(host_dir, 'data/local/tmp')
+        adb_cmd = ['adb', '-s', serial_number, 'push', host_dir,
+                   target_dir]
+        command_output = self.run_command(adb_cmd)
+        if command_output and 'pushed' not in command_output:
+            raise JobError("Unable to push overlay files with adb: %s" %
+                           command_output)
+        adb_cmd = ['adb', '-s', serial_number, 'shell', '/system/bin/chmod',
+                   '-R', '0777', os.path.join(target_dir, 'tmp')]
+        command_output = self.run_command(adb_cmd)
+        if command_output and 'pushed' not in command_output:
+            raise JobError("Unable to chmod overlay files with adb: %s" %
+                           command_output)
         return connection

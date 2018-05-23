@@ -19,20 +19,13 @@
 import errno
 import glob
 import os
-import sys
+import xmlrpc.client
 
 from django.db import IntegrityError
 
 from linaro_django_xmlrpc.models import ExposedV2API
 from lava_scheduler_app.api import check_superuser
 from lava_scheduler_app.models import Alias, DeviceType
-
-if sys.version_info[0] == 2:
-    # Python 2.x
-    import xmlrpclib
-elif sys.version_info[0] == 3:
-    # For Python 3.0 and later
-    import xmlrpc.client as xmlrpclib
 
 
 class SchedulerDeviceTypesAPI(ExposedV2API):
@@ -86,7 +79,7 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
         elif health_denominator == "jobs":
             health_denominator = DeviceType.HEALTH_PER_JOB
         else:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 400, "Bad request: invalid health_denominator.")
 
         try:
@@ -95,7 +88,7 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
                                       health_frequency=health_frequency,
                                       health_denominator=health_denominator)
         except IntegrityError:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 400, "Bad request: device-type name is already used.")
 
     def get_health_check(self, name):
@@ -126,24 +119,24 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
         try:
             dt = DeviceType.objects.get(name=name)
             if dt.owners_only and not dt.some_devices_visible_to(self.user):
-                raise xmlrpclib.Fault(404, "Device-type '%s' was not found." % name)
+                raise xmlrpc.client.Fault(404, "Device-type '%s' was not found." % name)
         except DeviceType.DoesNotExist:
             pass
 
         # Filename should not be a path or starting with a dot
         if os.path.basename(name) != name or name[0] == ".":
-            raise xmlrpclib.Fault(400, "Invalid device-type '%s'" % name)
+            raise xmlrpc.client.Fault(400, "Invalid device-type '%s'" % name)
 
         try:
             filename = os.path.join("/etc/lava-server/dispatcher-config/health-checks", name)
             filename += ".yaml" if not filename.endswith('.yaml') else ''
             with open(filename, "r") as f_in:
-                return xmlrpclib.Binary(f_in.read().encode("utf-8"))
+                return xmlrpc.client.Binary(f_in.read().encode("utf-8"))
         except IOError as exc:
             if exc.errno == errno.ENOENT:
-                raise xmlrpclib.Fault(404, "Device-type '%s' was not found." % name)
+                raise xmlrpc.client.Fault(404, "Device-type '%s' was not found." % name)
             else:
-                raise xmlrpclib.Fault(400, "Unable to read health-check: %s" % exc.strerror)
+                raise xmlrpc.client.Fault(400, "Unable to read health-check: %s" % exc.strerror)
 
     def get_template(self, name):
         """
@@ -173,24 +166,24 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
         try:
             dt = DeviceType.objects.get(name=name)
             if dt.owners_only and not dt.some_devices_visible_to(self.user):
-                raise xmlrpclib.Fault(404, "Device-type '%s' was not found." % name)
+                raise xmlrpc.client.Fault(404, "Device-type '%s' was not found." % name)
         except DeviceType.DoesNotExist:
             pass
 
         # Filename should not be a path or starting with a dot
         if os.path.basename(name) != name or name[0] == ".":
-            raise xmlrpclib.Fault(400, "Invalid device-type '%s'" % name)
+            raise xmlrpc.client.Fault(400, "Invalid device-type '%s'" % name)
 
         try:
             filename = os.path.join("/etc/lava-server/dispatcher-config/device-types", name)
             filename += ".jinja2" if not filename.endswith('.jinja2') else ''
             with open(filename, "r") as f_in:
-                return xmlrpclib.Binary(f_in.read().encode("utf-8"))
+                return xmlrpc.client.Binary(f_in.read().encode("utf-8"))
         except IOError as exc:
             if exc.errno == errno.ENOENT:
-                raise xmlrpclib.Fault(404, "Device-type '%s' was not found." % name)
+                raise xmlrpc.client.Fault(404, "Device-type '%s' was not found." % name)
             else:
-                raise xmlrpclib.Fault(400, "Unable to read device-type configuration: %s" % exc.strerror)
+                raise xmlrpc.client.Fault(400, "Unable to read device-type configuration: %s" % exc.strerror)
 
     @check_superuser
     def set_health_check(self, name, config):
@@ -223,7 +216,7 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
         """
         # Filename should not be a path or starting with a dot
         if os.path.basename(name) != name or name[0] == ".":
-            raise xmlrpclib.Fault(400, "Invalid device-type '%s'" % name)
+            raise xmlrpc.client.Fault(400, "Invalid device-type '%s'" % name)
 
         try:
             filename = os.path.join("/etc/lava-server/dispatcher-config/health-checks", name)
@@ -231,7 +224,7 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
             with open(filename, "w") as f_out:
                 f_out.write(config)
         except IOError as exc:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 400, "Unable to write health-check: %s" % exc.strerror)
 
     @check_superuser
@@ -265,7 +258,7 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
         """
         # Filename should not be a path or starting with a dot
         if os.path.basename(name) != name or name[0] == ".":
-            raise xmlrpclib.Fault(400, "Invalid device-type '%s'" % name)
+            raise xmlrpc.client.Fault(400, "Invalid device-type '%s'" % name)
 
         try:
             filename = os.path.join("/etc/lava-server/dispatcher-config/device-types", name)
@@ -273,7 +266,7 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
             with open(filename, "w") as f_out:
                 f_out.write(config)
         except IOError as exc:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 400, "Unable to write device-type configuration: %s" % exc.strerror)
 
     def list(self, show_all=False):
@@ -338,11 +331,11 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
         try:
             dt = DeviceType.objects.get(name=name)
         except DeviceType.DoesNotExist:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 404, "Device-type '%s' was not found." % name)
 
         if dt.owners_only and not dt.some_devices_visible_to(self.user):
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 404, "Device-type '%s' was not found." % name)
 
         aliases = [str(alias.name) for alias in dt.aliases.all()]
@@ -398,7 +391,7 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
         try:
             dt = DeviceType.objects.get(name=name)
         except DeviceType.DoesNotExist:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 404, "Device-type '%s' was not found." % name)
 
         if description is not None:
@@ -419,7 +412,7 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
             elif health_denominator == "jobs":
                 health_denominator = DeviceType.HEALTH_PER_JOB
             else:
-                raise xmlrpclib.Fault(
+                raise xmlrpc.client.Fault(
                     400, "Bad request: invalid health_denominator.")
 
             dt.health_denominator = health_denominator
@@ -458,7 +451,7 @@ class SchedulerDeviceTypesAliasesAPI(ExposedV2API):
         try:
             dt = DeviceType.objects.get(name=name)
         except DeviceType.DoesNotExist:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 404, "DeviceType '%s' was not found." % name)
 
         alias_obj, _ = Alias.objects.get_or_create(name=alias)
@@ -487,11 +480,11 @@ class SchedulerDeviceTypesAliasesAPI(ExposedV2API):
         try:
             dt = DeviceType.objects.get(name=name)
         except DeviceType.DoesNotExist:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 404, "DeviceType '%s' was not found." % name)
 
         if dt.owners_only and not dt.some_devices_visible_to(self.user):
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 404, "Device-type '%s' was not found." % name)
 
         return [a.name for a in dt.aliases.all().order_by("name")]
@@ -521,13 +514,13 @@ class SchedulerDeviceTypesAliasesAPI(ExposedV2API):
         try:
             dt = DeviceType.objects.get(name=name)
         except DeviceType.DoesNotExist:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 404, "DeviceType '%s' was not found." % name)
 
         try:
             alias_obj = Alias.objects.get(name=alias)
         except Alias.DoesNotExist:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 404, "Alias '%s' was not found." % name)
 
         dt.aliases.remove(alias_obj)

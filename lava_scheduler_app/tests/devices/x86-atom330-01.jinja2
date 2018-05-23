@@ -1,0 +1,4 @@
+{% extends 'x86-atom330.jinja2' %}
+{% set hard_reset_command = '/usr/bin/pduclient --hostname pdu01 --daemon lava-master --port 01 --command reboot' %}
+{% set power_off_command = '/usr/bin/pduclient --hostname pdu01 --daemon lava-master --port 01 --command off' %}
+{% set connection_command = 'telnet bumblebee 8001' %}

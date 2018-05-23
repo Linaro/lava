@@ -18,23 +18,12 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import unittest
-import os
-
-from lava_dispatcher.device import NewDevice
-from lava_dispatcher.parser import JobParser
 from lava_dispatcher.test.test_basic import Factory, StdoutTestCase
-from lava_dispatcher.test.utils import DummyLogger
 
 
 class UserCommandFactory(Factory):
     def create_b2260_job(self, filename):
-        device = NewDevice(os.path.join(os.path.dirname(__file__), "../devices/b2260-01.yaml"))
-        with open(os.path.join(os.path.dirname(__file__), filename)) as f_in:
-            parser = JobParser()
-            job = parser.parse(f_in, device, 456, None, "")
-        job.logger = DummyLogger()
-        return job
+        return self.create_job('b2260-01.jinja2', filename)
 
 
 class TestUserCommand(StdoutTestCase):

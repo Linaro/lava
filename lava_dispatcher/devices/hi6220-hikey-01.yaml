@@ -1,90 +1,177 @@
-commands:
-    # deprecated
-    # connect: telnet localhost 7019
-    connections:
-      uart1:
-        connect: telnet localhost 7019
-        tags:
-        - primary
-      uart0:
-        connect: telnet localhost 7020
-    hard_reset: /usr/bin/pduclient --daemon services --hostname pdu09 --command reboot --port 08
-    power_off: /usr/bin/pduclient --daemon services --hostname pdu09 --command off --port 08
-    pre_power_command: /usr/local/lab-scripts/usb_hub_control -p 8000 -m sync -u 06
-device_type: hi6220-hikey
-adb_serial_number: 0123456789
-fastboot_serial_number: 96B0201601000691
-fastboot_options: ['-S', '256M']
-device_info: [{'board_id': '96B0201601000691'}]
-static_info: [{'board_id': 'S/NO62200001'}]
-flash_cmds_order: ['update', 'ptable', 'partition', 'hyp', 'modem', 'rpm',
-                  'sbl1', 'sbl2', 'sec', 'tz', 'aboot', 'boot', 'rootfs',
-                  'vendor', 'system', 'cache', 'userdata', ]
 
+character_delays:
+      boot: 10
 constants:
-  shutdown-message: "The system is going down for reboot NOW"
-  kernel-start-message: "Linux version [0-9]"
-  default-shell-prompt: "lava-test: # "
+  # bootloader specific
+  u-boot:
+    interrupt-prompt: 'Hit any key to stop autoboot'
+    interrupt-character: ' '
+    final-message: 'Starting kernel'
+    error-messages:
+      - 'Resetting CPU'
+      - 'Must RESET board to recover'
+      - 'TIMEOUT'
+      - 'Retry count exceeded'
+      - 'ERROR: The remote end did not respond in time.'
+  grub:
+    interrupt-prompt: 'Press enter to boot the selected OS'
+    interrupt-character: 'c'
+    error-messages:
+      - "error: missing (.*) symbol."
   grub-efi:
-    interrupt-prompt: "Press enter to boot the selected OS"
-    interrupt-character: "c"
+    interrupt-prompt: 'Press enter to boot the selected OS'
+    interrupt-character: 'c'
+    error-messages:
+      - 'Undefined OpCode Exception PC at'
+      - 'Synchronous Exception at'
+      - "error: missing (.*) symbol."
+  ipxe:
+    interrupt-prompt: 'Press Ctrl-B for the iPXE command line'
+    interrupt_ctrl_list: ['b']
+    error-messages:
+      - 'No configuration methods succeeded'
+      - 'Connection timed out'
+
+  # OS shutdown message
+  # Override: set as the shutdown-message parameter of an Action.
+  # SHUTDOWN_MESSAGE
+  shutdown-message: 'The system is going down for reboot NOW'
+
+  # Kernel starting message
+  kernel-start-message: 'Linux version [0-9]'
+
+  # Default shell prompt for AutoLogin
+  # DEFAULT_SHELL_PROMPT
+  default-shell-prompt: 'lava-test: # '
+
+commands:
+    connections:
+        uart0:
+            connect: telnet azrael 6070
+            tags:
+            - telnet
+        uart1:
+            connect: telnet azrael 6080
+            tags:
+            - primary
+            - telnet
+    hard_reset: ['/usr/bin/pduclient --daemon calvin --hostname pdu --command off --port 02', 'sleep 30', '/usr/bin/pduclient --daemon calvin --hostname pdu --command on --port 02']
+    soft_reset: fastboot -u -s 5A0EE5D0003FC2D0 reboot
+    soft_reboot: adb -s 5A0EE5D0003FC2D0 reboot bootloader
+    power_off: /usr/bin/pduclient --daemon calvin --hostname pdu --command off --port 02
+    power_on: /usr/bin/pduclient --daemon calvin --hostname pdu --command on --port 02
+    pre_power_command: /home/neil/lava-lab/shared/lab-scripts/usb_hub_control -u 12 -p 4000 -m sync
+    pre_os_command: /home/neil/lava-lab/shared/lab-scripts/usb_hub_control -u 12 -p 4000 -m off
+device_info: [{'board_id': '5A0EE5D0003FC2D0'}]
+static_info: [{'board_id': 'S/NO62200001'}]
+flash_cmds_order: ['ptable', 'xloader', 'fastboot', 'nvme', 'fw_lpm3', 'trustfirmware', 'boot', 'dts', 'system', 'userdata', 'cache']
+parameters:
+  interfaces:
+    target:
+      ip:
+      mac: '8a:ce:4c:ff:aa:bb'
+  # device_ip or device_mac
+  # interfaces
+  # interfaces or device_ip or device_mac
+
+  pass: # sata_uuid_sd_uuid_usb_uuid
+device_type: hi960-hikey
+adb_serial_number: "5A0EE5D0003FC2D0"
+fastboot_serial_number: "5A0EE5D0003FC2D0"
+fastboot_options: ['-S', '256M', '-u']
+
 
 actions:
   deploy:
     methods:
       lxc:
+      ssh:
+        options:
+          - '-o'
+          - 'Compression=yes'
+          - '-o'
+          - 'PasswordAuthentication=no'
+          - '-o'
+          - 'LogLevel=FATAL'
+
+        host: ''
+        port: 22
+        user: root
+        identity_file: dynamic_vm_keys/lava
       fastboot:
+        interrupt_prompt: 'Android Fastboot mode'
+        interrupt_string: ' '
     connections:
       lxc:
       serial:
-      console:
   boot:
     connections:
       lxc:
       serial:
-      console:
     methods:
-      grub-efi:
+      lxc:
+      ssh:
+      fastboot: ['boot']
+      grub:
+        reset_device: False
+        sequence:
+        - wait-fastboot-interrupt
         installed:
-          parameters:
-            interrupt_prompt: "Android Fastboot mode"
-            interrupt_string: ' '
           commands:
-          - search.fs_label rootfs root
-          - 'linux ($root)/boot/Image console=tty0 console=ttyAMA3,115200 root=/dev/mmcblk0p9 rootwait rw'
-          - devicetree ($root)/boot/hi6220-hikey.dtb
-          - boot
-        menu_options: fastboot
-        reset_device: False  # default is True
-        parameters:
-          bootloader_prompt: 'grub>'
-      uefi-menu:
-        menu_options: fastboot
-        parameters:
-          interrupt_prompt: "Android Fastboot mode"
-          interrupt_string: ' '
-          item_markup:
-            - "["
-            - "]"
-          item_class: '0-9'
-          separator: ' '
-          label_class: 'a-zA-Z0-9\s\:'
-          bootloader_prompt: 'Start:'
-          boot_message: "Booting Linux Kernel..."
-          send_char: True
-          character_delay: 10
-        fastboot:
-        - select:
-            items:
-             - 'boot from eMMC'
+            - boot
 
 timeouts:
   actions:
     apply-overlay-image:
-      seconds: 120
+      minutes: 2
+    dd-image:
+      minutes: 10
+    download-retry:
+      minutes: 5
+    http-download:
+      minutes: 5
+    lava-test-shell:
+      minutes: 3
+    nfs-deploy:
+      minutes: 10
+    power-off:
+      seconds: 5
+    bootloader-commands:
+      minutes: 3
+    bootloader-interrupt:
+      seconds: 30
+    u-boot-interrupt:
+      seconds: 30
     umount-retry:
       seconds: 45
+    auto-login-action:
+      minutes: 2
+    bootloader-action:
+      minutes: 3
+    uboot-action:
+      minutes: 3
+    uboot-retry:
+      minutes: 3
+    bootloader-retry:
+      minutes: 3
+    boot-qemu-image:
+      minutes: 2
+    boot-image-retry:
+      minutes: 2
+    flash-uboot-ums:
+      minutes: 20
+  connections:
+    dd-image:
+      minutes: 10
+    uboot-retry:
+      seconds: 30
+    bootloader-commands:
+      seconds: 30
+    auto-login-action:
+      minutes: 2
+    bootloader-interrupt:
+      seconds: 30
+    u-boot-interrupt:
+      seconds: 30
     lava-test-shell:
-      seconds: 600
-    power_off:
       seconds: 10

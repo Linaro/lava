@@ -26,20 +26,11 @@ import inspect
 import logging
 import pydoc
 import random
-import sys
-
+import xmlrpc.client
 from django.contrib.auth.models import AnonymousUser, User
 from django.db import models
 from django.utils import timezone
-
 from six import string_types
-
-if sys.version_info[0] == 2:
-    # Python 2.x
-    import xmlrpclib
-elif sys.version_info[0] == 3:
-    # For Python 3.0 and later
-    import xmlrpc.client as xmlrpclib
 
 
 class errors:
@@ -217,7 +208,7 @@ class ExposedAPI(object):
 
     def _authenticate(self):
         if self.user is None:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 401, "Authentication with user and token required for this "
                 "API.")
 
@@ -231,10 +222,10 @@ class ExposedAPI(object):
             try:
                 username = User.objects.get(username=username)
             except User.DoesNotExist:
-                raise xmlrpclib.Fault(
+                raise xmlrpc.client.Fault(
                     404, "Username %s not found" % username)
         else:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 401,
                 "Permission denied for user '%s' to query other users" % self.user)
         return username
@@ -248,7 +239,7 @@ class ExposedV2API(ExposedAPI):
 
     def _authenticate(self):
         if not self.user.is_active:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 401, "Authentication with user and token required for this "
                 "API.")
 
@@ -369,7 +360,7 @@ class Dispatcher(object):
 
     Unlike the original server this server does not expose errors in the
     internal method implementation unless those errors are raised as
-    xmlrpclib.Fault instances.
+    xmlrpc.client.Fault instances.
 
     Subclasses may want to override handle_internal_error() that currently
     uses logging.exception to print as short message.
@@ -388,19 +379,19 @@ class Dispatcher(object):
 
         @return A tuple with (method_name, params)
         """
-        # TODO: Check that xmlrpclib.loads can only raise this exception (it
+        # TODO: Check that xmlrpc.client.loads can only raise this exception (it
         # probably can raise some others as well but this is not documented)
         # and handle each by wrapping it into an appropriate Fault with correct
         # code/message.
         try:
-            params, method_name = xmlrpclib.loads(data)
+            params, method_name = xmlrpc.client.loads(data)
             return method_name, params
-        except xmlrpclib.ResponseError:
-            raise xmlrpclib.Fault(
+        except xmlrpc.client.ResponseError:
+            raise xmlrpc.client.Fault(
                 FaultCodes.ServerError.INVALID_XML_RPC,
                 "Unable to decode request")
         except:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 FaultCodes.ServerError.INTERNAL_XML_RPC_ERROR,
                 "Unable to decode request")
 
@@ -417,13 +408,13 @@ class Dispatcher(object):
         try:
             method_name, params = self.decode_request(data)
             response = self.dispatch(method_name, params, context)
-        except xmlrpclib.Fault as fault:
+        except xmlrpc.client.Fault as fault:
             # Push XML-RPC faults to the client
-            response = xmlrpclib.dumps(fault, allow_none=self.allow_none)
+            response = xmlrpc.client.dumps(fault, allow_none=self.allow_none)
         else:
             # Package responses and send them to the client
             response = (response,)
-            response = xmlrpclib.dumps(
+            response = xmlrpc.client.dumps(
                 response, methodresponse=1, allow_none=self.allow_none)
         return response
 
@@ -437,11 +428,12 @@ class Dispatcher(object):
                 self.logger.error(
                     'Unable to dispatch unknown method %r', method_name,
                     extra={'request': context.request})
-                raise xmlrpclib.Fault(FaultCodes.ServerError.REQUESTED_METHOD_NOT_FOUND,
-                                      "No such method: %r" % method_name)
+                raise xmlrpc.client.Fault(
+                    FaultCodes.ServerError.REQUESTED_METHOD_NOT_FOUND,
+                    "No such method: %r" % method_name)
             # TODO: check parameter types before calling
             return impl(*params)
-        except xmlrpclib.Fault:
+        except xmlrpc.client.Fault:
             # Forward XML-RPC Faults to the client
             raise
         except Exception as exc:
@@ -453,7 +445,7 @@ class Dispatcher(object):
                     method_name, params, exc_info=True,
                     extra={'request': context.request})
             # TODO: figure out a way to get the error id from Raven if that is around
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 FaultCodes.ServerError.INTERNAL_XML_RPC_ERROR,
                 "Internal Server Error (contact server administrator for details): %s" % exc)
 
@@ -461,7 +453,7 @@ class Dispatcher(object):
         """
         Handle exceptions raised while dispatching registered methods.
 
-        Subclasses may implement this but cannot prevent the xmlrpclib.Fault
+        Subclasses may implement this but cannot prevent the xmlrpc.client.Fault
         from being raised. If something other than None is returned then a
         logging message will be supressed.
         """
@@ -560,36 +552,36 @@ class SystemAPI(ExposedAPI):
         Dispatch one multicall request
         """
         if not isinstance(subcall, dict):
-            return xmlrpclib.Fault(
+            return xmlrpc.client.Fault(
                 FaultCodes.ServerError.INVALID_METHOD_PARAMETERS,
                 "system.multicall expected struct")
         if 'methodName' not in subcall:
-            return xmlrpclib.Fault(
+            return xmlrpc.client.Fault(
                 FaultCodes.ServerError.INVALID_METHOD_PARAMETERS,
                 "system.multicall methodName not specified")
         methodName = subcall.pop('methodName')
         if not isinstance(methodName, string_types):
-            return xmlrpclib.Fault(
+            return xmlrpc.client.Fault(
                 FaultCodes.ServerError.INVALID_METHOD_PARAMETERS,
                 "system.multicall methodName must be a string")
         if 'params' not in subcall:
-            return xmlrpclib.Fault(
+            return xmlrpc.client.Fault(
                 FaultCodes.ServerError.INVALID_METHOD_PARAMETERS,
                 "system.multicall params not specified")
         params = subcall.pop('params')
         if not isinstance(params, list):
-            return xmlrpclib.Fault(
+            return xmlrpc.client.Fault(
                 FaultCodes.ServerError.INVALID_METHOD_PARAMETERS,
                 "system.multicall params must be an array")
         if len(subcall) > 0:
-            return xmlrpclib.Fault(
+            return xmlrpc.client.Fault(
                 FaultCodes.ServerError.INVALID_METHOD_PARAMETERS,
                 "system.multicall specified additional arguments %s" %
                 sorted(subcall.keys()))
         try:
             return self._context.dispatcher.dispatch(
                 methodName, params, self._context)
-        except xmlrpclib.Fault as fault:
+        except xmlrpc.client.Fault as fault:
             return fault
 
     @xml_rpc_signature('array', 'array')
@@ -613,13 +605,13 @@ class SystemAPI(ExposedAPI):
         that is the return value of the subcall.
         """
         if not isinstance(subcalls, list):
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 FaultCodes.ServerError.INVALID_METHOD_PARAMETERS,
                 "system.multicall expected a list of methods to call")
         results = []
         for subcall in subcalls:
             result = self._multicall_dispatch_one(subcall)
-            if isinstance(result, xmlrpclib.Fault):
+            if isinstance(result, xmlrpc.client.Fault):
                 # Faults are returned directly
                 results.append(result)
             else:

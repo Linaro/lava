@@ -17,7 +17,7 @@
 # along with Lava Server.  If not, see <http://www.gnu.org/licenses/>.
 
 import yaml
-import sys
+import xmlrpc.client
 
 from django.contrib.auth.models import User, Group
 from django.core.exceptions import ValidationError
@@ -31,13 +31,6 @@ from lava_scheduler_app.models import (
     Tag,
     Worker
 )
-
-if sys.version_info[0] == 2:
-    # Python 2.x
-    import xmlrpclib
-elif sys.version_info[0] == 3:
-    # For Python 3.0 and later
-    import xmlrpc.client as xmlrpclib
 
 
 class SchedulerDevicesAPI(ExposedV2API):
@@ -93,16 +86,16 @@ class SchedulerDevicesAPI(ExposedV2API):
             if group_name is not None:
                 group = Group.objects.get(name=group_name)
         except DeviceType.DoesNotExist:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 404, "DeviceType '%s' was not found." % type_name)
         except Worker.DoesNotExist:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 404, "Worker '%s' was not found." % worker_hostname)
         except User.DoesNotExist:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 404, "User '%s' was not found." % user_name)
         except Group.DoesNotExist:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 404, "Group '%s' was not found." % group_name)
 
         health_val = Device.HEALTH_UNKNOWN
@@ -110,7 +103,7 @@ class SchedulerDevicesAPI(ExposedV2API):
             if health is not None:
                 health_val = Device.HEALTH_REVERSE[health]
         except KeyError:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 400, "Invalid health")
 
         try:
@@ -120,7 +113,7 @@ class SchedulerDevicesAPI(ExposedV2API):
                                   worker_host=worker, description=description)
 
         except (IntegrityError, ValidationError) as exc:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 400, "Bad request: %s" % exc.message)
 
     def get_dictionary(self, hostname, render=False, context=None):
@@ -154,11 +147,11 @@ class SchedulerDevicesAPI(ExposedV2API):
         try:
             device = Device.objects.get(hostname=hostname)
         except Device.DoesNotExist:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 404, "Device '%s' was not found." % hostname)
 
         if not device.is_visible_to(self.user):
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 403, "Device '%s' not available to user '%s'." %
                 (hostname, self.user))
 
@@ -167,15 +160,15 @@ class SchedulerDevicesAPI(ExposedV2API):
             try:
                 job_ctx = yaml.load(context)
             except yaml.YAMLError as exc:
-                raise xmlrpclib.Fault(
+                raise xmlrpc.client.Fault(
                     400, "Job Context '%s' is not valid: %s" % (context, str(exc)))
 
         config = device.load_configuration(job_ctx=job_ctx,
                                            output_format="raw" if not render else "yaml")
         if config is None:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 404, "Device '%s' does not have a configuration" % hostname)
-        return xmlrpclib.Binary(config.encode('utf-8'))
+        return xmlrpc.client.Binary(config.encode('utf-8'))
 
     @check_superuser
     def set_dictionary(self, hostname, dictionary):
@@ -203,7 +196,7 @@ class SchedulerDevicesAPI(ExposedV2API):
         try:
             device = Device.objects.get(hostname=hostname)
         except Device.DoesNotExist:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 404, "Device '%s' was not found." % hostname)
 
         return device.save_configuration(dictionary)
@@ -273,12 +266,12 @@ class SchedulerDevicesAPI(ExposedV2API):
         try:
             device = Device.objects.get(hostname=hostname)
         except Device.DoesNotExist:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 404, "Device '%s' was not found." % hostname
             )
 
         if not device.is_visible_to(self.user):
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 403, "Device '%s' not available to user '%s'." %
                 (hostname, self.user)
             )
@@ -349,7 +342,7 @@ class SchedulerDevicesAPI(ExposedV2API):
                     try:
                         device.worker_host = Worker.objects.get(hostname=worker_hostname)
                     except Worker.DoesNotExist:
-                        raise xmlrpclib.Fault(
+                        raise xmlrpc.client.Fault(
                             404, "Unable to find worker '%s'" % worker_hostname)
 
                 user = group = None
@@ -359,10 +352,10 @@ class SchedulerDevicesAPI(ExposedV2API):
                     if group_name is not None:
                         group = Group.objects.get(name=group_name)
                 except User.DoesNotExist:
-                    raise xmlrpclib.Fault(
+                    raise xmlrpc.client.Fault(
                         404, "User '%s' was not found." % user_name)
                 except Group.DoesNotExist:
-                    raise xmlrpclib.Fault(
+                    raise xmlrpc.client.Fault(
                         404, "Group '%s' was not found." % group_name)
 
                 if user is not None or group is not None:
@@ -376,7 +369,7 @@ class SchedulerDevicesAPI(ExposedV2API):
                     if health is not None:
                         device.health = Device.HEALTH_REVERSE[health]
                 except KeyError:
-                    raise xmlrpclib.Fault(
+                    raise xmlrpc.client.Fault(
                         400, "Health '%s' is invalid" % health)
 
                 if description is not None:
@@ -384,11 +377,11 @@ class SchedulerDevicesAPI(ExposedV2API):
 
                 device.save()
         except Device.DoesNotExist:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 404, "Device '%s' was not found." % hostname
             )
         except (IntegrityError, ValidationError) as exc:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 400, "Bad request: %s" % exc.message)
 
 
@@ -420,7 +413,7 @@ class SchedulerDevicesTagsAPI(ExposedV2API):
         try:
             device = Device.objects.get(hostname=hostname)
         except Device.DoesNotExist:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 404, "Device '%s' was not found." % hostname)
 
         tag, _ = Tag.objects.get_or_create(name=name)
@@ -449,7 +442,7 @@ class SchedulerDevicesTagsAPI(ExposedV2API):
         try:
             device = Device.objects.get(hostname=hostname)
         except Device.DoesNotExist:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 404, "Device '%s' was not found." % hostname)
 
         return [t.name for t in device.tags.all()]
@@ -479,13 +472,13 @@ class SchedulerDevicesTagsAPI(ExposedV2API):
         try:
             device = Device.objects.get(hostname=hostname)
         except Device.DoesNotExist:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 404, "Device '%s' was not found." % hostname)
 
         try:
             tag = Tag.objects.get(name=name)
         except Tag.DoesNotExist:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 404, "Tag '%s' was not found." % name)
 
         device.tags.remove(tag)

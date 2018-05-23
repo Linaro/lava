@@ -104,7 +104,7 @@ class TestHealthCheckScheduling(TestCase):
         self.assertEqual(self.device02.get_health_check(), None)
         self.assertEqual(self.device03.get_health_check(), None)
         # Schedule without health check
-        available_devices = schedule_health_checks(DummyLogger())
+        available_devices = schedule_health_checks(DummyLogger())[0]
         self.assertEquals(available_devices,
                           {"dt-01": ["device-01", "device-03"]})
 
@@ -117,7 +117,7 @@ class TestHealthCheckScheduling(TestCase):
 
         self.device_type01.disable_health_check = True
         self.device_type01.save()
-        available_devices = schedule_health_checks(DummyLogger())
+        available_devices = schedule_health_checks(DummyLogger())[0]
         self.assertEquals(available_devices,
                           {"dt-01": ["device-01", "device-03"]})
 
@@ -128,7 +128,7 @@ class TestHealthCheckScheduling(TestCase):
         self.assertNotEqual(self.device02.get_health_check(), None)
         self.assertNotEqual(self.device03.get_health_check(), None)
 
-        available_devices = schedule_health_checks(DummyLogger())
+        available_devices = schedule_health_checks(DummyLogger())[0]
         self.assertEquals(available_devices, {"dt-01": []})
         self._check_hc_scheduled(self.device01)
         self._check_hc_not_scheduled(self.device02)
@@ -147,7 +147,7 @@ class TestHealthCheckScheduling(TestCase):
         self.device02.save()
         self.device03.health = Device.HEALTH_GOOD
         self.device03.save()
-        available_devices = schedule_health_checks(DummyLogger())
+        available_devices = schedule_health_checks(DummyLogger())[0]
         self.assertEquals(available_devices, {"dt-01": ["device-03"]})
         self._check_hc_scheduled(self.device01)
         self._check_hc_not_scheduled(self.device02)
@@ -166,7 +166,7 @@ class TestHealthCheckScheduling(TestCase):
         self.device02.save()
         self.device03.health = Device.HEALTH_LOOPING
         self.device03.save()
-        available_devices = schedule_health_checks(DummyLogger())
+        available_devices = schedule_health_checks(DummyLogger())[0]
         self.assertEquals(available_devices, {"dt-01": []})
         self._check_hc_scheduled(self.device01)
         self._check_hc_not_scheduled(self.device02)
@@ -187,7 +187,7 @@ class TestHealthCheckScheduling(TestCase):
             self.device02.save()
             self.device03.health = health
             self.device03.save()
-            available_devices = schedule_health_checks(DummyLogger())
+            available_devices = schedule_health_checks(DummyLogger())[0]
             self.assertEquals(available_devices, {"dt-01": []})
             self._check_hc_not_scheduled(self.device01)
             self._check_hc_not_scheduled(self.device02)

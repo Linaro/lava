@@ -37,7 +37,7 @@ class PyOCD(Boot):
     compatibility = 4  # FIXME: change this to 5 and update test cases
 
     def __init__(self, parent, parameters):
-        super(PyOCD, self).__init__(parent)
+        super().__init__(parent)
         self.action = BootPyOCD()
         self.action.section = self.action_type
         self.action.job = self.job
@@ -89,23 +89,22 @@ class FlashPyOCDAction(Action):
     summary = "flash pyocd to boot the image"
 
     def __init__(self):
-        super(FlashPyOCDAction, self).__init__()
+        super().__init__()
         self.base_command = []
         self.exec_list = []
 
     def validate(self):
-        super(FlashPyOCDAction, self).validate()
+        super().validate()
         boot = self.job.device['actions']['boot']['methods']['pyocd']
         pyocd_binary = boot['parameters']['command']
         which(pyocd_binary)
         self.base_command = [pyocd_binary]
         self.base_command.extend(boot['parameters'].get('options', []))
         if self.job.device['board_id'] == '0000000000':
-            self.errors = "board_id unset"
+            self.errors = "[PYOCD] board_id unset"
         substitutions = {}
         self.base_command.extend(['--board', self.job.device['board_id']])
-        namespace = self.parameters['namespace']
-        for action in self.data[namespace]['download-action'].keys():
+        for action in self.get_namespace_keys('download-action'):
             pyocd_full_command = []
             image_arg = self.get_namespace_data(action='download-action', label=action, key='image_arg')
             action_arg = self.get_namespace_data(action='download-action', label=action, key='file')
@@ -125,7 +124,7 @@ class FlashPyOCDAction(Action):
             self.errors = "No PyOCD command to execute"
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(FlashPyOCDAction, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         for pyocd_command in self.exec_list:
             pyocd = ' '.join(pyocd_command)
             self.logger.info("PyOCD command: %s", pyocd)

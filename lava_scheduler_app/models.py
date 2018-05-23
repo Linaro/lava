@@ -783,7 +783,14 @@ class Device(RestrictedResource):
             prev_health_display = self.get_health_display()
             if job.health_check:
                 self.last_health_report_job = job
-                if self.health in [Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN, Device.HEALTH_BAD]:
+                if self.health == Device.HEALTH_LOOPING:
+                    if job.health == TestJob.HEALTH_INCOMPLETE:
+                        # Looping is persistent until cancelled by the admin.
+                        self.log_admin_entry(
+                            None,
+                            "%s → %s (Looping health-check [%s] failed)" % (
+                                prev_health_display, self.get_health_display(), job.id))
+                elif self.health in [Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN, Device.HEALTH_BAD]:
                     if job.health == TestJob.HEALTH_COMPLETE:
                         self.health = Device.HEALTH_GOOD
                     elif job.health == TestJob.HEALTH_INCOMPLETE:
@@ -792,10 +799,14 @@ class Device(RestrictedResource):
                         self.health = Device.HEALTH_UNKNOWN
                     else:
                         raise NotImplementedError("Unexpected TestJob health")
-                    self.log_admin_entry(None, "%s → %s" % (prev_health_display, self.get_health_display()))
+                    self.log_admin_entry(
+                        None, "%s → %s (health-check [%s] failed)" % (
+                            prev_health_display, self.get_health_display(), job.id))
             elif infrastructure_error:
                 self.health = Device.HEALTH_UNKNOWN
-                self.log_admin_entry(None, "%s → %s (Infrastructure error after %s)" % (prev_health_display, self.get_health_display(), job.display_id))
+                self.log_admin_entry(
+                    None, "%s → %s (Infrastructure error after %s)" % (
+                        prev_health_display, self.get_health_display(), job.display_id))
 
         else:
             raise NotImplementedError("Unknown signal %s" % signal)
@@ -1086,7 +1097,7 @@ def _get_device_type(user, name):
 # pylint: disable=too-many-arguments,too-many-locals
 def _create_pipeline_job(job_data, user, taglist, device=None,
                          device_type=None, target_group=None,
-                         orig=None):
+                         orig=None, health_check=False):
 
     if not isinstance(job_data, dict):
         # programming error
@@ -1141,7 +1152,7 @@ def _create_pipeline_job(job_data, user, taglist, device=None,
                   requested_device_type=device_type,
                   target_group=target_group,
                   description=job_data['job_name'],
-                  health_check=False,
+                  health_check=health_check,
                   user=user, is_public=public_state,
                   visibility=visibility,
                   priority=priority)
@@ -2089,31 +2100,19 @@ class TestJob(RestrictedResource):
         return retval
 
     def get_token_from_description(self, description):
-        from linaro_django_xmlrpc.models import AuthToken
         tokens = AuthToken.objects.filter(user=self.submitter, description=description)
         if tokens:
             return tokens.first().secret
         return description
 
     def create_notification(self, notify_data):
+        logger = logging.getLogger('lava_scheduler_app')
         # Create notification object.
         notification = Notification()
 
         if "verbosity" in notify_data:
             notification.verbosity = Notification.VERBOSITY_MAP[
                 notify_data["verbosity"]]
-
-        if "callback" in notify_data:
-            notification.callback_url = self.substitute_callback_url_variables(
-                notify_data["callback"]["url"])
-            if notify_data["callback"].get("token", None):
-                notification.callback_token = self.get_token_from_description(notify_data["callback"]['token'])
-            notification.callback_method = Notification.METHOD_MAP[
-                notify_data["callback"].get("method", "GET")]
-            notification.callback_dataset = Notification.DATASET_MAP[
-                notify_data["callback"].get("dataset", "minimal")]
-            notification.callback_content_type = Notification.CONTENT_TYPE_MAP[
-                notify_data['callback'].get('content-type', 'urlencoded')]
 
         if "type" in notify_data["criteria"]:
             notification.type = Notification.TYPE_MAP[
@@ -2165,7 +2164,12 @@ class TestJob(RestrictedResource):
                     pass
 
         else:
-            if "callback" not in notify_data:
+            # You can do "callbacks only" without having recipients, in that
+            # case, no notification will be sent.
+            if "callbacks" not in notify_data and \
+               "callback" not in notify_data:
+                # But if there's no callback and no recipients then we add a
+                # submitter as a default recipient.
                 try:
                     notification_recipient = NotificationRecipient.objects.create(
                         user=self.submitter,
@@ -2174,13 +2178,35 @@ class TestJob(RestrictedResource):
                     # Ignore unique constraint violation.
                     pass
 
+        # Add callbacks.
+        if "callbacks" in notify_data:
+            for callback in notify_data["callbacks"]:
+                self.create_callback(callback, notification)
+        if "callback" in notify_data:
+            self.create_callback(notify_data["callback"], notification)
+
+    def create_callback(self, callback_data, notification):
+        notification_callback = NotificationCallback(
+            notification=notification)
+
+        notification_callback.url = self.substitute_callback_url_variables(callback_data["url"])
+        if callback_data.get("token", None):
+            notification_callback.token = self.get_token_from_description(callback_data['token'])
+        notification_callback.method = NotificationCallback.METHOD_MAP[
+            callback_data.get("method", "GET")]
+        notification_callback.dataset = NotificationCallback.DATASET_MAP[callback_data.get("dataset", "minimal")]
+        notification_callback.content_type = NotificationCallback.CONTENT_TYPE_MAP[callback_data.get('content-type', 'urlencoded')]
+
+        notification_callback.save()
+
     def send_notifications(self):
         logger = logging.getLogger('lava_scheduler_app')
         notification = self.notification
         # Prep template args.
         kwargs = self.get_notification_args()
         # Process notification callback.
-        notification.invoke_callback()
+        for callback in notification.notificationcallback_set.all():
+            callback.invoke_callback()
 
         for recipient in notification.notificationrecipient_set.all():
             if recipient.method == NotificationRecipient.EMAIL:
@@ -2500,85 +2526,6 @@ class Notification(models.Model):
         verbose_name='Template name'
     )
 
-    callback_url = models.CharField(
-        max_length=200,
-        default=None,
-        null=True,
-        blank=True,
-        verbose_name='Callback URL'
-    )
-
-    GET = 0
-    POST = 1
-    METHOD_CHOICES = (
-        (GET, 'GET'),
-        (POST, 'POST'),
-    )
-    METHOD_MAP = {
-        'GET': GET,
-        'POST': POST,
-    }
-
-    callback_method = models.IntegerField(
-        choices=METHOD_CHOICES,
-        default=None,
-        null=True,
-        blank=True,
-        verbose_name=_("Callback method"),
-    )
-
-    callback_token = models.CharField(
-        max_length=200,
-        default=None,
-        null=True,
-        blank=True,
-        verbose_name='Callback token'
-    )
-
-    MINIMAL = 0
-    LOGS = 1
-    RESULTS = 2
-    ALL = 3
-    DATASET_CHOICES = (
-        (MINIMAL, 'minimal'),
-        (LOGS, 'logs'),
-        (RESULTS, 'results'),
-        (ALL, 'all')
-    )
-    DATASET_MAP = {
-        'minimal': MINIMAL,
-        'logs': LOGS,
-        'results': RESULTS,
-        'all': ALL,
-    }
-
-    callback_dataset = models.IntegerField(
-        choices=DATASET_CHOICES,
-        default=None,
-        null=True,
-        blank=True,
-        verbose_name=_("Callback dataset"),
-    )
-
-    URLENCODED = 0
-    JSON = 1
-    CONTENT_TYPE_CHOICES = (
-        (URLENCODED, 'urlencoded'),
-        (JSON, 'json')
-    )
-    CONTENT_TYPE_MAP = {
-        'urlencoded': URLENCODED,
-        'json': JSON
-    }
-
-    callback_content_type = models.IntegerField(
-        choices=CONTENT_TYPE_CHOICES,
-        default=None,
-        null=True,
-        blank=True,
-        verbose_name=_("Callback content-type"),
-    )
-
     blacklist = ArrayField(
         models.CharField(max_length=100, blank=True),
         null=True,
@@ -2650,81 +2597,6 @@ class Notification(models.Model):
                 reverse("lava.results.query_custom"),
                 self.entity.model,
                 self.conditions)
-
-    def invoke_callback(self):
-        logger = logging.getLogger('lava_scheduler_app')
-        callback_data = self.get_callback_data()
-        headers = {}
-
-        if callback_data:
-            if callback_data.get('token') is not None:
-                headers['Authorization'] = callback_data['token']
-            if self.callback_content_type == Notification.JSON:
-                callback_data = simplejson.dumps(callback_data).encode("utf-8")
-                headers['Content-Type'] = 'application/json'
-            else:
-                callback_data = urlencode(callback_data).encode("utf-8")
-                headers['Content-Type'] = 'application/x-www-form-urlencoded'
-
-        if self.callback_url:
-            try:
-                logger.info("Sending request to callback_url %s" % self.callback_url)
-                request = Request(self.callback_url, callback_data, headers)
-                urlopen(request)
-
-            except Exception as ex:
-                logger.warning("Problem sending request to %s: %s" % (
-                    self.callback_url, ex))
-
-    def get_callback_data(self):
-
-        from lava_results_app.dbutils import export_testcase
-
-        if self.callback_method == Notification.GET:
-            return None
-        else:
-
-            data = {
-                "id": self.test_job.pk,
-                "status": self.test_job.get_legacy_status(),
-                "status_string": self.test_job.get_legacy_status_display().lower(),
-                "state": self.test_job.state,
-                "state_string": self.test_job.get_state_display(),
-                "health": self.test_job.health,
-                "health_string": self.test_job.get_health_display(),
-                "submit_time": str(self.test_job.submit_time),
-                "start_time": str(self.test_job.start_time),
-                "end_time": str(self.test_job.end_time),
-                "submitter_username": self.test_job.submitter.username,
-                "failure_comment": self.test_job.failure_comment,
-                "priority": self.test_job.priority,
-                "description": self.test_job.description,
-                "actual_device_id": self.test_job.actual_device_id,
-                "definition": self.test_job.definition,
-                "metadata": self.test_job.get_metadata_dict(),
-            }
-            # Only add the token if it's not empty
-            if self.callback_token is not None:
-                data["token"] = self.callback_token
-
-            # Logs.
-            output_file = self.test_job.output_file()
-            if output_file and self.callback_dataset in [Notification.LOGS,
-                                                         Notification.ALL]:
-                data["log"] = self.test_job.output_file().read().encode(
-                    'UTF-8')
-
-            # Results.
-            if self.callback_dataset in [Notification.RESULTS,
-                                         Notification.ALL]:
-                data["results"] = {}
-                for test_suite in self.test_job.testsuite_set.all():
-                    yaml_list = []
-                    for test_case in test_suite.testcase_set.all():
-                        yaml_list.append(export_testcase(test_case))
-                    data["results"][test_suite.name] = yaml.dump(yaml_list)
-
-            return data
 
 
 @python_2_unicode_compatible
@@ -2845,11 +2717,175 @@ class NotificationRecipient(models.Model):
                 return None
 
 
+@python_2_unicode_compatible
+class NotificationCallback(models.Model):
+
+    notification = models.ForeignKey(
+        Notification,
+        null=False,
+        on_delete=models.CASCADE,
+        verbose_name='Notification'
+    )
+
+    url = models.CharField(
+        max_length=200,
+        default=None,
+        null=True,
+        blank=True,
+        verbose_name='Callback URL'
+    )
+
+    GET = 0
+    POST = 1
+    METHOD_CHOICES = (
+        (GET, 'GET'),
+        (POST, 'POST'),
+    )
+    METHOD_MAP = {
+        'GET': GET,
+        'POST': POST,
+    }
+
+    method = models.IntegerField(
+        choices=METHOD_CHOICES,
+        default=None,
+        null=True,
+        blank=True,
+        verbose_name=_("Callback method"),
+    )
+
+    token = models.CharField(
+        max_length=200,
+        default=None,
+        null=True,
+        blank=True,
+        verbose_name='Callback token'
+    )
+
+    MINIMAL = 0
+    LOGS = 1
+    RESULTS = 2
+    ALL = 3
+    DATASET_CHOICES = (
+        (MINIMAL, 'minimal'),
+        (LOGS, 'logs'),
+        (RESULTS, 'results'),
+        (ALL, 'all')
+    )
+    DATASET_MAP = {
+        'minimal': MINIMAL,
+        'logs': LOGS,
+        'results': RESULTS,
+        'all': ALL,
+    }
+
+    dataset = models.IntegerField(
+        choices=DATASET_CHOICES,
+        default=None,
+        null=True,
+        blank=True,
+        verbose_name=_("Callback dataset"),
+    )
+
+    URLENCODED = 0
+    JSON = 1
+    CONTENT_TYPE_CHOICES = (
+        (URLENCODED, 'urlencoded'),
+        (JSON, 'json')
+    )
+    CONTENT_TYPE_MAP = {
+        'urlencoded': URLENCODED,
+        'json': JSON
+    }
+
+    content_type = models.IntegerField(
+        choices=CONTENT_TYPE_CHOICES,
+        default=None,
+        null=True,
+        blank=True,
+        verbose_name=_("Callback content-type"),
+    )
+
+    def invoke_callback(self):
+        logger = logging.getLogger('lava_scheduler_app')
+        callback_data = self.get_callback_data()
+        headers = {}
+
+        if callback_data:
+            if callback_data.get('token') is not None:
+                headers['Authorization'] = callback_data['token']
+            if self.content_type == NotificationCallback.JSON:
+                callback_data = simplejson.dumps(callback_data).encode("utf-8")
+                headers['Content-Type'] = 'application/json'
+            else:
+                callback_data = urlencode(callback_data).encode("utf-8")
+                headers['Content-Type'] = 'application/x-www-form-urlencoded'
+
+        if self.url:
+            try:
+                logger.info("Sending request to callback url %s" % self.url)
+                request = Request(self.url, callback_data, headers)
+                urlopen(request)
+
+            except Exception as ex:
+                logger.warning("Problem sending request to %s: %s" % (
+                    self.url, ex))
+
+    def get_callback_data(self):
+
+        from lava_results_app.dbutils import export_testcase
+
+        if self.method == NotificationCallback.GET:
+            return None
+        else:
+
+            data = {
+                "id": self.notification.test_job.pk,
+                "status": self.notification.test_job.get_legacy_status(),
+                "status_string": self.notification.test_job.get_legacy_status_display().lower(),
+                "state": self.notification.test_job.state,
+                "state_string": self.notification.test_job.get_state_display(),
+                "health": self.notification.test_job.health,
+                "health_string": self.notification.test_job.get_health_display(),
+                "submit_time": str(self.notification.test_job.submit_time),
+                "start_time": str(self.notification.test_job.start_time),
+                "end_time": str(self.notification.test_job.end_time),
+                "submitter_username": self.notification.test_job.submitter.username,
+                "failure_comment": self.notification.test_job.failure_comment,
+                "priority": self.notification.test_job.priority,
+                "description": self.notification.test_job.description,
+                "actual_device_id": self.notification.test_job.actual_device_id,
+                "definition": self.notification.test_job.definition,
+                "metadata": self.notification.test_job.get_metadata_dict(),
+            }
+            # Only add the token if it's not empty
+            if self.token is not None:
+                data["token"] = self.token
+
+            # Logs.
+            output_file = self.notification.test_job.output_file()
+            if output_file and self.dataset in [
+                    NotificationCallback.LOGS,
+                    NotificationCallback.ALL]:
+                data["log"] = self.notification.test_job.output_file().read().encode('UTF-8')
+
+            # Results.
+            if self.dataset in [NotificationCallback.RESULTS,
+                                NotificationCallback.ALL]:
+                data["results"] = {}
+                for test_suite in self.notification.test_job.testsuite_set.all():
+                    yaml_list = []
+                    for test_case in test_suite.testcase_set.all():
+                        yaml_list.append(export_testcase(test_case))
+                    data["results"][test_suite.name] = yaml.dump(yaml_list)
+
+            return data
+
+
 @receiver(pre_save, sender=TestJob, dispatch_uid="process_notifications")
 def process_notifications(sender, **kwargs):
     new_job = kwargs["instance"]
     notification_state = [TestJob.STATE_RUNNING, TestJob.STATE_FINISHED]
-    # Send only for pipeline jobs.
     # If it's a new TestJob, no need to send notifications.
     if new_job.id:
         old_job = TestJob.objects.get(pk=new_job.id)

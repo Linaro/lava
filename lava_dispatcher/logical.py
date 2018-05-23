@@ -19,8 +19,8 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import time
-from lava_dispatcher.action import (
-    Action,
+from lava_dispatcher.action import Action
+from lava_common.exceptions import (
     InfrastructureError,
     ConfigurationError,
     JobError,
@@ -38,7 +38,7 @@ class RetryAction(Action):
     """
 
     def __init__(self):
-        super(RetryAction, self).__init__()
+        super().__init__()
         self.sleep = 1
 
     def validate(self):
@@ -47,7 +47,7 @@ class RetryAction(Action):
         so that the retry logic only occurs once and applies equally to the entire pipeline
         of the retry.
         """
-        super(RetryAction, self).validate()
+        super().validate()
         if not self.internal_pipeline:
             raise LAVABug("Retry action %s needs to implement an internal pipeline" % self.name)
 
@@ -137,8 +137,7 @@ class Deployment(object):
         self.__parameters__ = {}
         self.pipeline = parent
         self.job = parent.job
-        if self.compatibility > self.job.compatibility:
-            self.job.compatibility = self.compatibility
+        self.job.compatibility = max(self.compatibility, self.job.compatibility)
 
     @property
     def parameters(self):
@@ -227,8 +226,7 @@ class Boot(object):
         self.__parameters__ = {}
         self.pipeline = parent
         self.job = parent.job
-        if self.compatibility > self.job.compatibility:
-            self.job.compatibility = self.compatibility
+        self.job.compatibility = max(self.compatibility, self.job.compatibility)
 
     @classmethod
     def boot_check(cls, device, parameters):
@@ -293,8 +291,7 @@ class LavaTest(object):
         self.__parameters__ = {}
         self.pipeline = parent
         self.job = parent.job
-        if self.compatibility > self.job.compatibility:
-            self.job.compatibility = self.compatibility
+        self.job.compatibility = max(self.compatibility, self.job.compatibility)
 
     @classmethod
     def accepts(cls, device, parameters):  # pylint: disable=unused-argument

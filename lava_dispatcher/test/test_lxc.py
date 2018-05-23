@@ -38,25 +38,11 @@ class LxcFactory(Factory):  # pylint: disable=too-few-public-methods
     of any database objects.
     """
 
-    def create_lxc_job(self, filename):  # pylint: disable=no-self-use
-        device = NewDevice(os.path.join(os.path.dirname(__file__),
-                                        '../devices/lxc-01.yaml'))
-        lxc_yaml = os.path.join(os.path.dirname(__file__), filename)
-        with open(lxc_yaml) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4577, None, "")
-        job.logger = DummyLogger()
-        return job
+    def create_lxc_job(self, filename):
+        return self.create_job('lxc-01.jinja2', filename)
 
     def create_bbb_lxc_job(self, filename):  # pylint: disable=no-self-use
-        device = NewDevice(os.path.join(os.path.dirname(__file__),
-                                        '../devices/bbb-01.yaml'))
-        lxc_yaml = os.path.join(os.path.dirname(__file__), filename)
-        with open(lxc_yaml) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4577, None, "")
-        job.logger = DummyLogger()
-        return job
+        return self.create_job('bbb-01.jinja2', filename)
 
     def create_adb_nuc_job(self, filename):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(os.path.dirname(__file__),
@@ -82,7 +68,7 @@ class LxcFactory(Factory):  # pylint: disable=too-few-public-methods
 class TestLxcDeploy(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
-        super(TestLxcDeploy, self).setUp()
+        super().setUp()
         factory = LxcFactory()
         self.job = factory.create_lxc_job('sample_jobs/lxc.yaml')
 
@@ -141,7 +127,7 @@ class TestLxcDeploy(StdoutTestCase):  # pylint: disable=too-many-public-methods
 class TestLxcWithDevices(StdoutTestCase):
 
     def setUp(self):
-        super(TestLxcWithDevices, self).setUp()
+        super().setUp()
         self.factory = LxcFactory()
         self.job = self.factory.create_bbb_lxc_job('sample_jobs/bbb-lxc.yaml')
 
@@ -195,8 +181,8 @@ class TestLxcWithDevices(StdoutTestCase):
         self.assertEqual(len(test_actions), 1)
         self.assertEqual(test_actions[0]['test']['namespace'], 'probe')
         parser = JobParser()
-        device = NewDevice(os.path.join(os.path.dirname(__file__),
-                                        '../devices/bbb-01.yaml'))
+        (rendered, _) = self.factory.create_device('bbb-01.jinja2')
+        device = NewDevice(yaml.load(rendered))
         job = parser.parse(yaml.dump(data), device, 4577, None, "")
         job.logger = DummyLogger()
         job.validate()
@@ -212,6 +198,7 @@ class TestLxcWithDevices(StdoutTestCase):
         self.job.validate()
         lxc_boot = [action for action in self.job.pipeline.actions if action.name == 'lxc-boot'][0]
         lxc_static = [action for action in lxc_boot.internal_pipeline.actions if action.name == 'lxc-add-static'][0]
+        self.assertIsNotNone(lxc_static)
         self.assertIsInstance(self.job.device.get('static_info'), list)
         self.assertEqual(len(self.job.device.get('static_info')), 1)
         for board in self.job.device.get('static_info'):
@@ -219,14 +206,15 @@ class TestLxcWithDevices(StdoutTestCase):
             self.assertIn('board_id', board)
             self.assertEqual(board['board_id'], 'S/NO62200001')
         description_ref = self.pipeline_reference('hi6220-hikey.yaml', job=self.job)
+        self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
     def test_lxc_without_lxctest(self):  # pylint: disable=too-many-locals
         lxc_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/bbb-lxc-notest.yaml')
         with open(lxc_yaml) as sample_job_data:
             data = yaml.load(sample_job_data)
         parser = JobParser()
-        device = NewDevice(os.path.join(os.path.dirname(__file__),
-                                        '../devices/bbb-01.yaml'))
+        (rendered, _) = self.factory.create_device('bbb-01.jinja2')
+        device = NewDevice(yaml.load(rendered))
         job = parser.parse(yaml.dump(data), device, 4577, None, "")
         job.logger = DummyLogger()
         job.validate()

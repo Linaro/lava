@@ -27,25 +27,24 @@ import logging
 import pexpect
 from nose.tools import nottest
 from collections import OrderedDict
-
-from lava_dispatcher.actions.test import (
-    TestAction,
-    handle_testcase
-)
-from lava_dispatcher.action import (
-    Pipeline,
+from lava_common.exceptions import (
     JobError,
     InfrastructureError,
     TestError,
     LAVABug,
 )
+from lava_dispatcher.actions.test import (
+    TestAction,
+    handle_testcase
+)
+from lava_dispatcher.action import Pipeline
 from lava_dispatcher.logical import (
     LavaTest,
     RetryAction
 )
 from lava_dispatcher.connection import SignalMatch
 from lava_dispatcher.protocols.lxc import LxcProtocol
-from lava_dispatcher.utils.constants import (
+from lava_common.constants import (
     DEFAULT_V1_PATTERN,
     DEFAULT_V1_FIXUP,
 )
@@ -59,7 +58,7 @@ class TestShell(LavaTest):
     LavaTestShell Strategy object
     """
     def __init__(self, parent, parameters):
-        super(TestShell, self).__init__(parent)
+        super().__init__(parent)
         self.action = TestShellRetry()
         self.action.job = self.job
         self.action.section = self.action_type
@@ -104,7 +103,7 @@ class PatternFixup(object):
         Avoid calling from validate() or populate() - this needs the
         RepoAction to be running.
         """
-        super(PatternFixup, self).__init__()
+        super().__init__()
         self.pat = DEFAULT_V1_PATTERN
         self.fixup = DEFAULT_V1_FIXUP
         if isinstance(testdef, dict) and 'metadata' in testdef:
@@ -155,7 +154,7 @@ class TestShellAction(TestAction):
     summary = "Lava Test Shell"
 
     def __init__(self):
-        super(TestShellAction, self).__init__()
+        super().__init__()
         self.signal_director = self.SignalDirector(None)  # no default protocol
         self.patterns = {}
         self.signal_match = SignalMatch()
@@ -186,13 +185,13 @@ class TestShellAction(TestAction):
                 if "repository" not in testdef:
                     self.errors = "Repository missing from test definition"
         self._reset_patterns()
-        super(TestShellAction, self).validate()
+        super().validate()
 
     def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-locals
         """
         Common run function for subclasses which define custom patterns
         """
-        super(TestShellAction, self).run(connection, max_end_time, args)
+        super().run(connection, max_end_time, args)
 
         # Get the connection, specific to this namespace
         connection_namespace = self.parameters.get('connection-namespace', None)

@@ -1,5 +1,7 @@
 {% extends 'x86.jinja2' %}
-{% set connection_command = "telnet bumblebee 8003" %}
+{% set connection_commands = {'uart0': "telnet bumblebee 8003"} %}
+{% set connection_list = ['uart0'] %}
+{% set connection_tags = {'uart0': ['primary', 'telnet']} %}
 {% set hard_reset_command = (
 "/usr/bin/pduclient --hostname pdu02 --daemon ironhide --port 08 --command reboot --delay 5") %}
 {% set power_off_command = (

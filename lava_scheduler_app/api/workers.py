@@ -17,20 +17,13 @@
 # along with Lava Server.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import sys
+import xmlrpc.client
 
 from django.db import IntegrityError, transaction
 
 from linaro_django_xmlrpc.models import ExposedV2API
 from lava_scheduler_app.api import check_superuser
 from lava_scheduler_app.models import Worker
-
-if sys.version_info[0] == 2:
-    # Python 2.x
-    import xmlrpclib
-elif sys.version_info[0] == 3:
-    # For Python 3.0 and later
-    import xmlrpc.client as xmlrpclib
 
 
 class SchedulerWorkersAPI(ExposedV2API):
@@ -66,7 +59,7 @@ class SchedulerWorkersAPI(ExposedV2API):
                                   description=description,
                                   health=health)
         except IntegrityError as exc:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 400, "Bad request: %s" % exc.message)
 
     def get_config(self, hostname):
@@ -91,16 +84,16 @@ class SchedulerWorkersAPI(ExposedV2API):
         try:
             Worker.objects.get(hostname=hostname)
         except Worker.DoesNotExist:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 404, "Worker '%s' was not found." % hostname)
 
         filename = os.path.join("/etc/lava-server/dispatcher.d",
                                 "%s.yaml" % hostname)
         try:
             with open(filename, "r") as f_in:
-                return xmlrpclib.Binary(f_in.read().encode('utf-8'))
+                return xmlrpc.client.Binary(f_in.read().encode('utf-8'))
         except IOError:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 404, "Worker '%s' does not have a configuration" % hostname)
 
     @check_superuser
@@ -129,7 +122,7 @@ class SchedulerWorkersAPI(ExposedV2API):
         try:
             Worker.objects.get(hostname=hostname)
         except Worker.DoesNotExist:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 404, "Worker '%s' was not found." % hostname)
 
         filename = os.path.join("/etc/lava-server/dispatcher.d",
@@ -185,7 +178,7 @@ class SchedulerWorkersAPI(ExposedV2API):
         try:
             worker = Worker.objects.get(hostname=hostname)
         except Worker.DoesNotExist:
-            raise xmlrpclib.Fault(
+            raise xmlrpc.client.Fault(
                 404, "Worker '%s' was not found." % hostname)
 
         return {"hostname": worker.hostname,
@@ -224,7 +217,7 @@ class SchedulerWorkersAPI(ExposedV2API):
             try:
                 worker = Worker.objects.select_for_update().get(hostname=hostname)
             except Worker.DoesNotExist:
-                raise xmlrpclib.Fault(
+                raise xmlrpc.client.Fault(
                     404, "Worker '%s' was not found." % hostname)
 
             if description is not None:
@@ -238,7 +231,7 @@ class SchedulerWorkersAPI(ExposedV2API):
                 elif health == "RETIRED":
                     worker.go_health_retired(self.user)
                 else:
-                    raise xmlrpclib.Fault(
+                    raise xmlrpc.client.Fault(
                         400, "Invalid health: %s" % health)
 
             worker.save()

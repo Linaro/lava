@@ -39,7 +39,7 @@ from lava_results_app.models import (
 )
 from lava_results_app.utils import debian_package_version
 from django.core.exceptions import MultipleObjectsReturned
-from lava_dispatcher.action import Timeout
+from lava_common.timeout import Timeout
 
 if sys.version_info[0] == 2:
     # Python 2.x
