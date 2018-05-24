@@ -185,6 +185,7 @@ class EnterVExpressMCC(Action):
         self.interrupt_char = None
         self.mcc_prompt = None
         self.autorun_prompt = None
+        self.mcc_reset_msg = None
 
     def validate(self):
         super().validate()
@@ -194,10 +195,13 @@ class EnterVExpressMCC(Action):
         self.interrupt_char = self.device_params.get('interrupt_char', VEXPRESS_AUTORUN_INTERRUPT_CHARACTER)
         self.mcc_prompt = self.device_params.get('mcc_prompt', None)
         self.autorun_prompt = self.device_params.get('autorun_prompt', None)
+        self.mcc_reset_msg = self.device_params.get('mcc_reset_msg', None)
         if not isinstance(self.mcc_prompt, str):
             self.errors = 'Versatile Express MCC prompt unset'
         if not isinstance(self.autorun_prompt, str):
             self.errors = 'Versatile Express autorun prompt unset'
+        if not isinstance(self.mcc_reset_msg, str):
+            self.errors = 'Versatile Express MCC reset message unset'
 
     def run(self, connection, max_end_time, args=None):
         if not connection:
@@ -205,7 +209,8 @@ class EnterVExpressMCC(Action):
         connection = super().run(connection, max_end_time, args)
 
         # Get possible prompts from device config
-        connection.prompt_str = [self.autorun_prompt, self.mcc_prompt]
+        prompt_list = [self.autorun_prompt, self.mcc_prompt, self.mcc_reset_msg]
+        connection.prompt_str = prompt_list
 
         self.logger.debug("Changing prompt to '%s'", connection.prompt_str)
         index = self.wait(connection)
@@ -213,7 +218,9 @@ class EnterVExpressMCC(Action):
             self.logger.debug('Autorun enabled: interrupting..')
             connection.sendline('%s\n' % self.interrupt_char)
             connection.prompt_str = self.mcc_prompt
-            self.wait(connection)
+            index = self.wait(connection)
+            if prompt_list[index] == self.mcc_reset_msg:
+                raise InfrastructureError("MCC: Unable to interrupt auto-run")
         else:
             self.logger.debug('Already at MCC prompt: autorun looks to be disabled')
         return connection

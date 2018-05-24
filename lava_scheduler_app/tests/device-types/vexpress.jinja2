@@ -172,6 +172,7 @@ actions:
           flash_erase_msg: '{{ flash_erase_msg|default('Erasing Flash') }}'
           flash_exit_cmd: '{{ flash_exit_cmd|default('exit') }}'
           autorun_prompt: '{{ autorun_prompt|default('Press Enter to stop auto boot...') }}'
+          mcc_reset_msg: '{{ mcc_reset_msg|default('Programming NOR Flash')}}'
 {% endif %}
   boot:
     connections:
