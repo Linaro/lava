@@ -22,6 +22,8 @@ case "$1" in
     purge)
       rm -f /etc/lava-dispatcher/lava-dispatcher.conf
       rm -f /etc/lava-dispatcher/lava-slave
+      rm -f /var/lib/lava/dispatcher/slave/db.sqlite3
+      rm -f /var/log/lava-dispatcher/
     ;;
     remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
     ;;
