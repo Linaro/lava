@@ -2867,7 +2867,7 @@ class NotificationCallback(models.Model):
             if output_file and self.dataset in [
                     NotificationCallback.LOGS,
                     NotificationCallback.ALL]:
-                data["log"] = self.notification.test_job.output_file().read().encode('UTF-8')
+                data["log"] = self.notification.test_job.output_file().read()
 
             # Results.
             if self.dataset in [NotificationCallback.RESULTS,
