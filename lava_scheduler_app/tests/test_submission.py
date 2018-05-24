@@ -11,11 +11,14 @@ from django_testscenarios.ubertest import TestCase
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
+    DevicesUnavailableException,
     Notification,
     Tag,
     TestJob,
 )
 from lava_scheduler_app.schema import SubmissionException
+from lava_scheduler_app.scheduler import schedule_health_check
+from lava_common.exceptions import ConfigurationError
 
 LOGGER = logging.getLogger()
 LOGGER.level = logging.INFO  # change to DEBUG to see *all* output
@@ -105,7 +108,9 @@ class ModelFactory(object):
         if not isinstance(tags, list):
             tags = []
         # a hidden device type will override is_public
-        device = Device(device_type=device_type, is_public=is_public, hostname=hostname, **kw)
+        device = Device(
+            device_type=device_type, is_public=is_public, state=Device.STATE_IDLE,
+            hostname=hostname, **kw)
         device.tags = tags
         logging.debug("making a device of type %s %s %s with tags '%s'",
                       device_type, device.is_public, device.hostname, ", ".join([x.name for x in device.tags.all()]))
@@ -244,3 +249,59 @@ class TestHiddenTestJob(TestCaseWithFactory):  # pylint: disable=too-many-ancest
         device = self.factory.make_device(device_type=device_type, hostname="hidden1")
         device.save()
         self.assertEqual(device.is_public, False)
+
+    def test_visibility_and_hidden(self):
+        self.factory.cleanup()
+        device_type = self.factory.make_hidden_device_type('hidden')
+        device = self.factory.make_device(device_type=device_type, hostname="hidden1")
+        device.save()
+        self.assertEqual(device.is_public, False)
+        definition = self.factory.make_job_data()
+        definition['visibility'] = 'public'
+        user = self.factory.make_user()
+        user.user_permissions.add(
+            Permission.objects.get(codename='add_testjob'))
+        user.save()
+        self.assertRaises(
+            DevicesUnavailableException,
+            TestJob.from_yaml_and_user,
+            yaml.dump(definition),
+            user)
+
+    def test_hidden_healthcheck(self):
+        self.factory.cleanup()
+        device_type = self.factory.make_hidden_device_type('hidden')
+        device = self.factory.make_device(device_type=device_type, hostname="hidden1")
+        device.save()
+        device.refresh_from_db()
+        self.assertEqual(Device.STATE_IDLE, device.state)
+        self.assertEqual(device.is_public, False)
+        definition = self.factory.make_job_data()
+        definition['job_name'] = 'job_should_fail'
+        definition['visibility'] = 'public'
+        self.assertIsNotNone(device)
+        self.factory.ensure_user('lava-health', 'test@l.org', 'pass')
+        self.assertRaises(
+            ConfigurationError,
+            schedule_health_check,
+            device,
+            yaml.dump(definition))
+
+        # reset device state.
+        definition['job_name'] = 'job_should_schedule'
+        self.factory.make_group('hide')
+        device.state = Device.STATE_IDLE
+        device.save(update_fields=['state'])
+        definition['visibility'] = {'group': ['hide']}
+        job_id = schedule_health_check(device, yaml.dump(definition))
+        job = TestJob.objects.get(id=job_id)
+        self.assertEqual(job.is_public, False)
+        self.assertEqual(job.visibility, TestJob.VISIBLE_GROUP)
+
+        device.state = Device.STATE_IDLE
+        device.save(update_fields=['state'])
+        definition['visibility'] = 'personal'
+        job_id = schedule_health_check(device, yaml.dump(definition))
+        job = TestJob.objects.get(id=job_id)
+        self.assertEqual(job.is_public, False)
+        self.assertEqual(job.visibility, TestJob.VISIBLE_PERSONAL)

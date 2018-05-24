@@ -11,7 +11,6 @@ import uuid
 import simplejson
 import smtplib
 import socket
-import sys
 import yaml
 
 from django.db.models import Q
@@ -41,7 +40,6 @@ from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
 
-
 from django_restricted_resource.models import (
     RestrictedResource,
     RestrictedResourceManager
@@ -52,27 +50,16 @@ from lava_scheduler_app.schema import (
     handle_include_option,
     SubmissionException
 )
-
+from lava_common.exceptions import ConfigurationError
 from lava_scheduler_app import utils
 from linaro_django_xmlrpc.models import AuthToken
 from lava_scheduler_app.schema import validate_device
 
-if sys.version_info[0] == 2:
-    # Python 2.x
-    from urllib2 import urlopen, Request
-    from urllib import urlencode
-elif sys.version_info[0] == 3:
-    # For Python 3.0 and later
-    from urllib.request import urlopen, Request
-    from urllib.parse import urlencode
+from urllib.request import urlopen, Request
+from urllib.parse import urlencode
 
 # pylint: disable=invalid-name,no-self-use,too-many-public-methods,too-few-public-methods
 # pylint: disable=too-many-branches,too-many-return-statements,too-many-instance-attributes
-
-# Make the open function accept encodings in python < 3.x
-if sys.version_info[0] < 3:
-    import codecs
-    open = codecs.open  # pylint: disable=redefined-builtin
 
 
 class JSONDataError(ValueError):
@@ -1130,6 +1117,13 @@ def _create_pipeline_job(job_data, user, taglist, device=None,
     visibility = TestJob.VISIBLE_PUBLIC
     viewing_groups = []
     param = job_data['visibility']
+
+    if health_check and not device.is_public:
+        # 'lava-health' user is normally allowed to "ignore" visibility
+        if isinstance(param, str):
+            if param == 'public':
+                raise ConfigurationError("Publicly visible health check for restricted device")
+
     if isinstance(param, str):
         if param == 'personal':
             public_state = False
@@ -1462,7 +1456,7 @@ class TestJob(RestrictedResource):
         Jobs that are not multinode will directly use STATE_SCHEDULED
         """
         if device.state != Device.STATE_IDLE:
-            raise Exception("device is not IDLE")
+            raise Exception("device is not IDLE: %s", Device.STATE_CHOICES[device.state])
         if self.state >= TestJob.STATE_SCHEDULING:
             return
         self.state = TestJob.STATE_SCHEDULING
@@ -1485,7 +1479,7 @@ class TestJob(RestrictedResource):
                 device = self.actual_device
         else:
             if device.state != Device.STATE_IDLE:
-                raise Exception("device is not IDLE")
+                raise Exception("device is not IDLE: %s", Device.STATE_CHOICES[device.state])
         if self.state >= TestJob.STATE_SCHEDULED:
             return
         self.state = TestJob.STATE_SCHEDULED

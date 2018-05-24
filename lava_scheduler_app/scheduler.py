@@ -33,6 +33,7 @@ from lava_scheduler_app.models import (
     DeviceType,
     Device,
     _create_pipeline_job,
+    _check_submit_to_device,
     TestJob,
     Worker
 )
@@ -143,9 +144,9 @@ def schedule_health_checks_for_device_type(logger, dt):
 
 def schedule_health_check(device, definition):
     user = User.objects.get(username="lava-health")
-    job = _create_pipeline_job(yaml.load(definition), user, [],
-                               device_type=device.device_type,
-                               orig=definition, health_check=True)
+    job = _create_pipeline_job(
+        yaml.load(definition), user, [], device=device, device_type=device.device_type,
+        orig=definition, health_check=True)
     job.go_state_scheduled(device)
     job.save()
     return job.id
