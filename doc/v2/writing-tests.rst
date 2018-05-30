@@ -946,6 +946,149 @@ simple script which returns the exit code of the command.
    non-zero exit code from your scripts and call the script directly instead of
    as a test case.
 
+.. _custom_script_side_effects:
+
+Check custom scripts for side-effects
+*************************************
+
+Subtle bugs can be introduced in custom scripts, so it is important to
+make the scripts :ref:`portable <test_definition_portability>` so that
+bugs can be reproduced outside LAVA.
+
+When interacting directly with LAVA, for example calling
+``lava-test-case``, it is possible to introduce control flow bugs.
+These can cause the output of ``lava-test-case`` to be received
+**after** the end of a test run and this can generate TestError
+exceptions. This section covers one example when using Python, there
+may be others.
+
+This example checks for ``lava-test-case`` in ``$PATH`` to determine
+whether to use the LAVA helpers.
+
+.. code-block:: python
+
+    import os
+    import subprocess
+
+
+    def _which_check(path, match):
+        """
+        Simple replacement for the `which` command found on
+        Debian based systems. Allows ordinary users to query
+        the PATH used at runtime.
+        """
+        paths = os.environ['PATH'].split(':')
+        if os.getuid() != 0:
+            # avoid sudo - it may ask for a password on developer systems.
+            paths.extend(['/usr/local/sbin', '/usr/sbin', '/sbin'])
+        for dirname in paths:
+            candidate = os.path.join(dirname, path)
+            if match(candidate):
+                return candidate
+        return None
+
+
+    if _which_check(path='lava-test-case', match=os.path.isfile):
+        subprocess.Popen([
+             'lava-test-case', 'probe-results', '--result', 'pass',
+             '--measurement', str(average), '--units', 'volts'])
+
+The error is in this line:
+
+.. code-block:: python
+
+        subprocess.Popen([
+
+``Popen`` calls ``fork`` but returns immediately. Unless the script
+also calls ``wait``, then the output of the subprocess can occur after
+the above function has returned. It is easy for this to happen at the
+end of a test definition, leading to intermittent bugs where some tests
+fail.
+
+The solution is to use the existing ``subprocess`` functions which
+already use ``wait`` internally. For ``lava-test-case``, this would be
+``check_call`` which waits for the process to execute and checks the
+return value.
+
+The fixed example looks like:
+
+.. code-block:: python
+
+    import os
+    import subprocess
+
+
+    def _which_check(path, match):
+        """
+        Simple replacement for the `which` command found on
+        Debian based systems. Allows ordinary users to query
+        the PATH used at runtime.
+        """
+        paths = os.environ['PATH'].split(':')
+        if os.getuid() != 0:
+            # avoid sudo - it may ask for a password on developer systems.
+            paths.extend(['/usr/local/sbin', '/usr/sbin', '/sbin'])
+        for dirname in paths:
+            candidate = os.path.join(dirname, path)
+            if match(candidate):
+                return candidate
+        return None
+
+
+    if _which_check(path='lava-test-case', match=os.path.isfile):
+        subprocess.check_call([
+             'lava-test-case', 'probe-results', '--result', 'pass',
+             '--measurement', str(average), '--units', 'volts'])
+
+.. _call_test_raise:
+
+Call lava-test-raise if setup fails
+***********************************
+
+Many custom scripts have setup routines which ensure that dependencies
+are available or that the directory layout is correct etc. In most
+cases, these routines are called early and a failure in the setup
+function would undermine all subsequent test operations.
+
+Custom scripts should check the return code of such setup operations
+and use ``lava-test-raise`` to halt the test job immediately if a setup
+error occurs. This makes triage much easier as it puts the failure
+much closer to the actual cause within the log file.
+
+
+
+.. code-block:: python
+
+    import os
+    import subprocess
+
+
+    def _which_check(path, match):
+        """
+        Simple replacement for the `which` command found on
+        Debian based systems. Allows ordinary users to query
+        the PATH used at runtime.
+        """
+        paths = os.environ['PATH'].split(':')
+        if os.getuid() != 0:
+            # avoid sudo - it may ask for a password on developer systems.
+            paths.extend(['/usr/local/sbin', '/usr/sbin', '/sbin'])
+        for dirname in paths:
+            candidate = os.path.join(dirname, path)
+            if match(candidate):
+                return candidate
+        return None
+
+
+    values = []
+    # other processing populates the values list
+    if len(values) == 0:
+        if _which_check(path='lava-test-raise', match=os.path.isfile):
+            subprocess.check_call(['lava-test-raise', 'setup failed'])
+        else:
+            print("setup failed")
+        return 1
+
 .. _controlling_tool_output:
 
 Control the amount of output from scripts and tools

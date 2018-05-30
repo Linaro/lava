@@ -462,7 +462,7 @@ configuration of ``staging`` as a reference:
 https://git.linaro.org/lava/lava-lab.git/tree/HEAD:/staging.validation.linaro.org/lava/pipeline/devices
 
 Device dictionaries can also be downloaded from any LAVA instance
-using the :ref:`_xml_rpc` call, without needing authentication:
+using the :ref:`xml_rpc` call, without needing authentication:
 
 .. code-block:: python
 
