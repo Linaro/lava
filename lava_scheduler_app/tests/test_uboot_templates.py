@@ -463,3 +463,10 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
         self.assertEqual({'set_boot_to_usb': {'do': '/bin/true', 'undo': '/bin/true'},
                           'set_boot_to_sd': {'do': '/bin/true', 'undo': '/bin/true'}},
                          template_dict['commands']['users'])
+
+    def test_meson8b_template(self):
+        rendered = self.render_device_dictionary_file('meson8b-odroidc1-1.jinja2')
+        template_dict = yaml.load(rendered)
+        self.assertIsNotNone(template_dict)
+        template_dict['constants']['u-boot'].get('interrupt_ctrl_list', self.fail)
+        self.assertEqual(template_dict['constants']['u-boot']['interrupt_ctrl_list'], ['c'])
