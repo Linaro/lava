@@ -258,3 +258,16 @@ def replace_python_unicode(data):
 @register.filter()
 def is_list_type(data):
     return isinstance(data, list)
+
+
+@register.filter
+def get_api_by_section(methods, api):
+    ret = ''
+    sections = sorted(set([block['section'] for block in methods[api]]))
+    for section in sections:
+        if section:
+            ret += mark_safe("<h3>%s</h3>" % section)
+        for method in methods[api]:
+            if method['section'] == section:
+                ret += mark_safe('[&nbsp;<a href="#%s">%s</a>&nbsp;]' % (method['name'], method['name']))
+    return mark_safe(ret)

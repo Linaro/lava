@@ -129,6 +129,7 @@ def help(request, mapper, template_name="linaro_django_xmlrpc/api.html"):  # pyl
         'scheduler': [
             {
                 'name': method,
+                'section': method.rsplit('.', 1)[0] if '.' in method else '',
                 'signature': system.methodSignature(method),
                 'help': system.methodHelp(method)
             }
