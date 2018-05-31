@@ -2,12 +2,13 @@
 import logging
 import sys
 import os
+import json
 import warnings
 import yaml
 
 from django.contrib.auth.models import Group, Permission, User
 from django_testscenarios.ubertest import TestCase
-
+from lava_scheduler_app.dbutils import testjob_submission
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
@@ -120,7 +121,7 @@ class ModelFactory(object):
     def make_job_data(self, actions=None, **kw):
         if not actions:
             actions = []
-        data = {'actions': actions, 'timeout': 1, 'health_check': False}
+        data = {'actions': actions}
         data.update(kw)
         if 'target' not in data and 'device_type' not in data:
             if DeviceType.objects.all():
@@ -240,6 +241,24 @@ class TestTestJob(TestCaseWithFactory):  # pylint: disable=too-many-ancestors,to
         self.assertEqual(job.visibility, TestJob.VISIBLE_GROUP)
         self.assertEqual(known_groups, list(job.viewing_groups.all()))
         self.factory.cleanup()
+
+    def test_json_yaml(self):
+        self.factory.cleanup()
+        user = self.factory.make_user()
+        user.user_permissions.add(
+            Permission.objects.get(codename='add_testjob'))
+        user.save()
+        dt = self.factory.make_device_type(name='qemu')
+        device = self.factory.make_device(device_type=dt, hostname='qemu-1')
+        device.save()
+        definition = self.factory.make_job_data_from_file('qemu-pipeline-first-job.yaml')
+        # convert content of file to JSON string
+        json_def = json.dumps(yaml.load(definition))
+        job = testjob_submission(json_def, user, None)
+        # check that submitted JSON is now YAML
+        self.assertRaises(json.decoder.JSONDecodeError, json.loads, job.definition)
+        yaml.load(job.definition)
+        self.assertIsInstance(job.definition, str)
 
 
 class TestHiddenTestJob(TestCaseWithFactory):  # pylint: disable=too-many-ancestors

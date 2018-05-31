@@ -10,6 +10,7 @@ from __future__ import unicode_literals
 import os
 import yaml
 import jinja2
+import json
 import logging
 from django.db.models import Q, Case, When, IntegerField, Sum
 from lava_scheduler_app.models import (
@@ -65,6 +66,16 @@ def testjob_submission(job_definition, user, original_job=None):
         DeviceType.DoesNotExist, DevicesUnavailableException,
         ValueError
     """
+    json_data = True
+    try:
+        # accept JSON but store as YAML
+        json.loads(job_definition)
+    except json.decoder.JSONDecodeError:
+        json_data = False
+    if json_data:
+        # explicitly convert to YAML.
+        # JSON cannot have comments anyway.
+        job_definition = yaml.dump(yaml.load(job_definition))
 
     validate_job(job_definition)
     # returns a single job or a list (not a QuerySet) of job objects.
