@@ -182,7 +182,7 @@ def map_scanned_results(results, job, meta_filename):  # pylint: disable=too-man
             logger.debug("%s/%s %s%s", suite, name, measurement, units)
         if result not in TestCase.RESULT_MAP:
             logger.warning("[%d] Unrecognised result: '%s' for test case '%s'", job.id, result, name)
-            return False
+            return None
         try:
             test_case = TestCase(name=name,
                                  suite=suite,
