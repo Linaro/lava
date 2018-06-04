@@ -1,6 +1,6 @@
 {# Base Kernel options #}
 {% set base_kernel_args = '' %}
-{% set base_extra_nfsroot_args = extra_nfsroot_args | default('') %}
+{% set base_extra_nfsroot_args = extra_nfsroot_args | default(',vers=3') %}
 
 {% set base_nfsroot_args = ("nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr" + base_extra_nfsroot_args) -%}
 {% set base_nbdroot_args = ("nbd.server={NBDSERVERIP} nbd.port={NBDSERVERPORT} root=/dev/ram0 ramdisk_size=16384 rootdelay=7 ") -%}

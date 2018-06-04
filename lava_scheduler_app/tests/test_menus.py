@@ -59,7 +59,7 @@ class TestPipelineMenu(TestCaseWithFactory):  # pylint: disable=too-many-ancesto
         }
         hostname = 'fakemustang2'
         device = self.factory.make_device(self.device_type, hostname)
-        config = device.load_configuration()
+        config = device.load_configuration(job_ctx)
         self.assertIsNotNone(config)
         self.assertIsNotNone(config['actions']['boot']['methods']['uefi-menu']['nfs'])
         menu_data = config['actions']['boot']['methods']['uefi-menu']
@@ -71,5 +71,5 @@ class TestPipelineMenu(TestCaseWithFactory):  # pylint: disable=too-many-ancesto
         # assert that menu_early_printk replaces the default earlyprintk default
         self.assertEqual(
             [e for e in menu_data['nfs'] if 'enter' in e['select'] and 'new Entry' in e['select']['wait']][0]['select']['enter'],
-            'console=ttyS0,115200 earlyprintk=uart8250-32bit,0x1c020000 debug root=/dev/nfs rw nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr ip=dhcp'
+            'console=ttyS0,115200  debug root=/dev/nfs rw nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr,vers=3 ip=dhcp'
         )
