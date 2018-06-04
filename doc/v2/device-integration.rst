@@ -412,6 +412,8 @@ familiar with:
 
 * :ref:`unit_tests`
 
+* :ref:`hidden_assumptions`
+
 In addition, some device types will require the developer to also be
 familiar with:
 
@@ -496,8 +498,9 @@ template is :ref:`contributed upstream <contribute_upstream>`, a new
 Extend the template unit tests
 ******************************
 
-.. seealso:: :ref:`testing_new_devicetype_templates` and
+.. seealso:: :ref:`testing_new_devicetype_templates`,
    :ref:`debugging configuration files <debugging_configuration>`
+   and setting character delays due to :ref:`input_speeds`.
 
 All device type template files in
 ``lava_scheduler_app/tests/device-types`` will be checked for simple

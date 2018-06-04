@@ -174,6 +174,9 @@ serial line during the operation of the test shell::
 
   test_shell_serial_delay_ms = 100
 
+.. seealso:: :ref:`input_speeds` for the updated syntax on setting
+   character delays in the device configuration.
+
 busybox httpd + wget
 ....................
 

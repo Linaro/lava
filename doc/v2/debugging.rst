@@ -328,6 +328,149 @@ Be obsessive about paths and scripts
 * Avoid the temptation of using absolute paths - LAVA may need to change the
   absolute locations.
 
+.. index:: debugging automation failures
+
+.. _debugging_automation:
+
+Debugging automation failures
+*****************************
+
+A first step in triage of a test job failure can be to replicate the
+steps manually. If this works, then consider the differences between
+running a test manually and through automation:
+
+.. _infrastructure_changes:
+
+Infrastructure effects
+======================
+
+Some devices have substantial requirements for infrastructure to
+support the automation: switchable USB hubs, relays, remote power
+control, multiple serial connections, :term:`VLANd` support, etc.
+
+Triaging of test job failures in one automated system typically needs
+to be done on the same instance or, if using another instance, using
+infrastructure which is as close as possible to the original instance.
+It will still be difficult to identify the problem, especially with
+intermittent failures, unless key elements of the test instance can be
+disabled, replaced or otherwise eliminated from the test process
+without generating new failures.
+
+LAVA tries to identify the likely cause of the error and raise the
+correct exception. (This can be tracked in the ``job`` test case
+created by every test job in the ``lava`` test suite of the results.)
+
+It can be particularly hard to identify the cause of timeouts. Pay
+close attention to all devices across the instance to see if a third
+party element (like a distribution mirror) is the cause. Look for
+common factors - both those which trigger a failure and those which do
+not.
+
+When investigating intermittent errors, see if the error can be
+provoked in a health check and then use :ref:`looping mode
+<looping_mode>` to generate data on how often the error occurs whilst
+keeping the test job identical.
+
+.. seealso:: :ref:`change_one_thing`
+
+.. _hidden_assumptions:
+
+Hidden assumptions in the manual operations
+===========================================
+
+It is common to find that a manual user will **know** that something is
+meant to happen or that an error can simply be ignored and re-tried or
+simply add an extra command "just in case". Automation will **not** do
+those steps and if the underlying problem is intermittent, a lot of
+engineering time will be wasted trying to work out **why**. Be
+meticulous in logging **every** operation done on the device to run a
+test job manually. Pay particular attention to:
+
+* **Changes in prompts** - exactly **when** and under what
+  circumstances?
+
+* **Hidden time limits** - interrupting a process or waiting for an
+  operation to take place. These will need to be carefully written into
+  the device integration.
+
+* **Extra commands** - often not needed every single time but just
+  *sometimes*. Define exactly when and prove whether the commands can
+  be safely issued anyway or whether there are specific circumstances.
+
+.. index:: character delays, serial corruption, boot character delay, test character delay
+
+.. _input_speeds:
+
+Differences in input speeds
+===========================
+
+Manual keyboard entry has noticeable gaps between every key press. Even
+the fastest typist will not approach the speed at which a computer can
+transmit the same string over a serial connection.
+
+In automation, strings will be sent as quickly as the connection
+allows. Some devices may then fail to process the characters correctly.
+This might manifest in several ways, including:
+
+* **Missing characters** - ``rot`` instead of ``root`` or ``erverip``
+  instead of ``set serverip``.  Often at the start of a line, although
+  also includes loss of the newline itself, causing lines to join
+  together. ``set foo ; set bar`` can be changed to ``set foo set
+  bar``, causing a failure to process ``bar``.
+
+* **Reordered characters** - ``orot`` instead of ``root``. This is less
+  common than missing characters and can sometimes indicate a hardware
+  problem on the device. However, replicating an input speed which is
+  closer to human typing can still alleviate the problem.
+
+.. note:: This is **not** the same as the replacement of characters
+   by invalid characters which is a different type of serial
+   corruption. If you see ASCII strings being output to the device but
+   unprintable or otherwise incorrect characters being received, then
+   this could be a hardware problem with the DUT or the connections to
+   it. Intermittent single bit flips in the serial data stream are all
+   too common.
+
+LAVA supports specifying **character delays** in the boot and test
+actions to help alleviate these problems. These are device-specific
+features, so best controlled in the device configuration.
+
+The ``boot`` action suffers from this problem more frequently than the
+``test`` action, typically because ``boot`` has to interact with
+processes executed by firmware or a bootloader where processing can be
+more limited than in a POSIX-type test environment.
+
+Setting boot_character_delay
+----------------------------
+
+In the device-type template, set the number of milliseconds to add
+between each character of every string sent to the DUT during the
+``boot`` action:
+
+.. code-block:: jinja
+
+ {% set boot_character_delay = 10 %}
+
+``base.jinja2`` will then handle this variable to set the boot
+character delay to 10 milliseconds. Some devices may need more, up to
+100 or 500 milliseconds. In the case of such long delays, it is also
+necessary to consider the overall boot timeout and specify a minimum
+for the relevant boot action in the device-type template.
+
+Setting test_character_delay
+----------------------------
+
+In the device-type template, set the number of milliseconds to add
+between each character of every string sent to the DUT during the
+``test`` action:
+
+.. code-block:: jinja
+
+ {% set test_character_delay = 10 %}
+
+``base.jinja2`` will then handle this variable to set the test
+character delay to 10 milliseconds.
+
 .. index:: MultiNode - debugging
 
 .. _debugging_multinode:
