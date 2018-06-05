@@ -1,3 +1,13 @@
+lava (2018.5-2) unstable; urgency=medium
+
+  * Add missing python3-yaml dependency to lava-server binary
+  * [INTL:ru] Russian debconf translation (Closes: #898179)
+  * [INTL:pt] Portuguese debconf translation (Closes: #898485)
+  * [INTL:nl] Dutch debconf translation (Closes: #898870)
+  * [INTL:fr] French debconf translation (Closes: #899229)
+
+ -- Neil Williams <codehelp@debian.org>  Tue, 05 Jun 2018 21:57:06 +0100
+
 lava (2018.5-1) unstable; urgency=medium
 
   * New upstream release combining upstream code for lava-server

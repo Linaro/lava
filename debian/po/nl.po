@@ -1,0 +1,45 @@
+# Dutch translation of lava-server debconf templates.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the lava-server package.
+# Frans Spiesschaert <Frans.Spiesschaert@yucom.be>, 2014, 2018.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: lava-server 2018.4-1\n"
+"Report-Msgid-Bugs-To: lava-server@packages.debian.org\n"
+"POT-Creation-Date: 2017-11-16 15:40+0000\n"
+"PO-Revision-Date: 2018-05-04 23:42+0200\n"
+"Last-Translator: Frans Spiesschaert <Frans.Spiesschaert@yucom.be>\n"
+"Language-Team: Debian Dutch l10n Team <debian-l10n-dutch@lists.debian.org>\n"
+"Language: nl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Gtranslator 2.91.7\n"
+
+#. Type: boolean
+#. Description
+#: ../lava-server.templates:1001
+msgid "Remove V1 data from database?"
+msgstr "De V1-gegevens uit de databank verwijderen?"
+
+#. Type: boolean
+#. Description
+#: ../lava-server.templates:1001
+msgid ""
+"If you continue this upgrade, all V1 test data will be permanently DELETED."
+msgstr ""
+"Indien u voortgaat met deze opwaardering zullen alle testgegevens van V1 "
+"permanent VERWIJDERD worden."
+
+#. Type: boolean
+#. Description
+#: ../lava-server.templates:1001
+msgid ""
+"V2 test data will not be affected. If you have remaining V1 test data that "
+"you care about, make sure it is backed up before you continue here."
+msgstr ""
+"Dit heeft geen impact op de testgegevens van V2. Indien er nog testgegevens "
+"van V1 resten waarom u geeft, zorg er dan voor dat u er een back-up van "
+"maakt voor u hier verdergaat."
