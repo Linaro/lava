@@ -15,9 +15,6 @@
 Introduction to LAVA
 ####################
 
-Navigation
-**********
-
 [ `Home <../../../>`_ ]
 [ `Results <../../../../results/>`_ ]
 [ `Scheduler <../../../scheduler/>`_ ]
@@ -25,8 +22,30 @@ Navigation
 [ `Help Index <genindex.html>`_ ]
 [ `Help Contents <contents.html>`_ ]
 
-Use the navigation bar at the top of the page to quickly navigate between
-sections of the documentation.
+Navigation
+**********
+
+Use the navigation bar at the top of each page to quickly navigate
+between sections of the documentation; `Index <genindex.html>`_,
+`Contents <contents.html>`_, :ref:`Page <page_indices>` and `Next
+<contents.html>`_.
+
+Index
+=====
+
+The `Help Index <genindex.html>`_ is often the quickest way to find
+specific sections of the documentation.
+
+Contents
+========
+
+If you are new to LAVA, the `Help Contents <contents.html>`_ describes
+several useful starting points, depending on how you expect to use LAVA.
+
+.. _page_indices:
+
+Page indices
+============
 
 Each page also has a **Page** menu for topics within the page as well as
 forward and back navigation to lead readers through in a logical manner.

@@ -813,6 +813,8 @@ Results from any test suite can be tracked using :term:`queries <query>`,
 .. seealso:: :ref:`best_practices`, :ref:`custom_scripts` and
    :ref:`test_writer_scripts` for recommended ways to use this in practice.
 
+.. index:: test shell - best practices, best practice
+
 .. _best_practices:
 
 Best practices for writing a LAVA test job
@@ -821,6 +823,8 @@ Best practices for writing a LAVA test job
 A test job may consist of several LAVA test definitions and multiple
 deployments, but this flexibility needs to be balanced against the complexity
 of the job and the ways to analyse the results.
+
+.. index:: test shell - portability
 
 .. _test_definition_portability:
 
@@ -888,6 +892,8 @@ switching branches or compiling the source tree). Then, when debugging the test
 job, a test writer can setup a similar environment and simply call exactly the
 same script.
 
+.. _best_practice_one_thing:
+
 Use different test definitions for different test areas
 *******************************************************
 
@@ -929,6 +935,10 @@ case or a custom script which reports this information. Even if this only
 exists in the test job log output, it will still be useful when comparing the
 log files of other similar jobs.
 
+.. index:: test shell - check for support
+
+.. _best_practice_check_support:
+
 Check for specific support as a test case
 *****************************************
 
@@ -945,6 +955,8 @@ simple script which returns the exit code of the command.
    prevent the rest of a test definition from exiting, you can report a
    non-zero exit code from your scripts and call the script directly instead of
    as a test case.
+
+.. index:: test shell - side effects
 
 .. _custom_script_side_effects:
 
@@ -1040,22 +1052,131 @@ The fixed example looks like:
              'lava-test-case', 'probe-results', '--result', 'pass',
              '--measurement', str(average), '--units', 'volts'])
 
+.. index:: lava-test-raise, setup commands, test shell - setup
+
 .. _call_test_raise:
 
 Call lava-test-raise if setup fails
 ***********************************
 
-Many custom scripts have setup routines which ensure that dependencies
+Most test jobs have setup routines which ensure that dependencies
 are available or that the directory layout is correct etc. In most
 cases, these routines are called early and a failure in the setup
 function would undermine all subsequent test operations.
 
-Custom scripts should check the return code of such setup operations
-and use ``lava-test-raise`` to halt the test job immediately if a setup
-error occurs. This makes triage much easier as it puts the failure
-much closer to the actual cause within the log file.
+The return code of some operations can be used to trigger an early
+failure.
+
+.. _setup_inline:
+
+Inline
+======
+
+If you are using an inline definition, the syntax can be a bit awkward:
+
+.. code-block:: yaml
+
+  run:
+     steps:
+         - apt-get update -q && lava-test-case "apt-update" --result pass || lava-test-raise "apt-update"
+
+An alternative is to put the definition into a file on a remote
+fileserver, use ``wget`` to download it and then execute it:
+
+.. code-block:: yaml
+
+        run:
+          steps:
+            - apt -y install wget
+            - wget http://people.linaro.org/~neil.williams/setup-test.sh
+            - sh -x setup-test.sh
+
+.. caution:: The download step is itself a setup command and could
+  fail, so whilst this is useful in development, using scripts from a
+  git repository is preferable.
+
+.. _setup_repository:
+
+Using a repository
+==================
+
+Shell library
+-------------
+
+A local shell library and a shell script can be easily used from a test
+shell repository:
+
+.. code-block:: shell
+
+    # saved, committed and pushed as ./testdefs/lava-common
+
+    command(){
+        if [ -n "$(which lava-test-case || true)" ]; then
+            echo $2
+            $2 && lava-test-case "$1" --result pass || lava-test-raise "$1"
+        else
+            echo $2
+            $2
+        fi
+    }
+
+This snippet is also :ref:`portable <test_definition_portability>`
+because if ``lava-test-case`` is not in the ``$PATH``, the setup
+command is executed without needing ``lava-test-case`` or
+``lava-test-raise``. The calling script is responsible for handling the
+return code, typically by using ``set -e``.
+
+.. seealso:: https://git.linaro.org/lava-team/refactoring.git/tree/testdefs
+
+Calling shell script
+--------------------
+
+.. code-block:: shell
+
+ #!/bin/sh
+
+ # saved, committed and pushed as ./testdefs/local-run.sh
+
+ . ./lava-common
+
+ command 'setup-apt' "apt-get update -q"
+
+If the shell script is saved to a different directory, the path to
+the shell library will have to be updated.
+
+.. seealso:: :ref:`setup_custom_scripts` - the language used for these
+   scripts is entirely up to the test writer to choose. Remember that
+   some language interpreters will themselves need to be installed
+   before scripts can be executed, requiring an initial setup shell script.
+   That does not mean that all setup needs to be done in shell; there
+   are key advantages to using other languages, including test writer
+   familiarity and ease of triage.
+
+Test shell definition
+---------------------
+
+Execute using a Lava Test Shell Definition:
+
+.. code-block:: yaml
+
+  run:
+      steps:
+        ./testdefs/local-run.sh
 
 
+.. seealso:: :ref:`Deploying to recovery <deploy_to_recovery>`
+
+.. index:: test shell - custom scripts
+
+.. _setup_custom_scripts:
+
+Custom scripts
+==============
+
+Custom scripts should check the return code of setup operations and use
+``lava-test-raise`` to halt the test job immediately if a setup error
+occurs. This makes triage much easier as it puts the failure much
+closer to the actual cause within the log file.
 
 .. code-block:: python
 
@@ -1088,6 +1209,8 @@ much closer to the actual cause within the log file.
         else:
             print("setup failed")
         return 1
+
+.. index:: test shell - control output
 
 .. _controlling_tool_output:
 
@@ -1217,7 +1340,7 @@ to optimise your test shell output.
   Example: If the test operation involves iterations over a test condition,
   report a lava test case every few iterations.
 
-_too_many_test_cases:
+.. _too_many_test_cases:
 
 Control the number of test cases reported
 *****************************************
