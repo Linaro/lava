@@ -245,47 +245,43 @@ def get_udev_devices(job=None, logger=None, device_info=None):
                    and (device.get('ID_VENDOR_ID') == usb_vendor_id) \
                    and (device.get('ID_MODEL_ID') == usb_product_id):
                     device_paths.add(device.device_node)
+                    added.add(board_id)
                     for child in device.children:
                         if child.device_node:
                             device_paths.add(child.device_node)
-                            added.add(board_id)
                     for link in device.device_links:
                         device_paths.add(link)
-                        added.add(board_id)
             elif board_id and usb_vendor_id and not usb_product_id:
                 # try with parameters such as board id, usb_vendor_id
                 if (device.get('ID_SERIAL_SHORT') == board_id) \
                    and (device.get('ID_VENDOR_ID') == usb_vendor_id):
                     device_paths.add(device.device_node)
+                    added.add(board_id)
                     for child in device.children:
                         if child.device_node:
                             device_paths.add(child.device_node)
-                            added.add(board_id)
                     for link in device.device_links:
                         device_paths.add(link)
-                        added.add(board_id)
             elif board_id and not usb_vendor_id and not usb_product_id:
                 # try with board id alone
                 if device.get('ID_SERIAL_SHORT') == board_id:
                     device_paths.add(device.device_node)
+                    added.add(board_id)
                     for child in device.children:
                         if child.device_node:
                             device_paths.add(child.device_node)
-                            added.add(board_id)
                     for link in device.device_links:
                         device_paths.add(link)
-                        added.add(board_id)
             elif usb_fs_label:
                 # Just restrict by filesystem label.
                 if device.get('ID_FS_LABEL') == usb_fs_label:
                     device_paths.add(device.device_node)
+                    added.add(usb_fs_label)
                     for child in device.children:
                         if child.device_node:
                             device_paths.add(child.device_node)
-                            added.add(usb_fs_label)
                     for link in device.device_links:
                         device_paths.add(link)
-                        added.add(usb_fs_label)
     if device_info:
         for static_device in device_info:
             for _, value in static_device.items():
