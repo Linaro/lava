@@ -3,7 +3,7 @@
 set -x
 set -e
 
-while getopts ":pdty" opt; do
+while getopts ":pdtyc" opt; do
   case $opt in
     p)
       # pep8 only
@@ -21,11 +21,16 @@ while getopts ":pdty" opt; do
       # pytest-3 only
       PYTEST=true
       ;;
+    c)
+      # clean only
+      CLEAN=true
+      ;;
     ?)
       echo "Usage:"
-      echo "-p - pep8 only"
-      echo "-d - pep8 and dispatcher only"
-      echo "-t - pep8 and templates only"
+      echo "-c - clean targets only"
+      echo "-p - clean and pep8 only"
+      echo "-d - clean, pep8 and dispatcher only"
+      echo "-t - clean, pep8 and templates only"
       echo "Invalid option: -$OPTARG" >&2
       exit 1
       ;;
@@ -34,18 +39,25 @@ done
 
 shift $((OPTIND -1))
 
+echo "Removing old .pyc files and cache"
+echo
+find . -name '*.pyc' -delete
+rm -rf ./.cache/
+rm -rf ./__init__.py
+rm -rf lava.egg-info/
+find . -name __pycache__ -exec rmdir "{}" \; || true
+
+if [ -n "${CLEAN}" ]
+then
+    exit 0
+fi
+
 pep8 --ignore E501,E722 .
 
 if [ -n "${PEP8}" ]
 then
     exit 0
 fi
-
-echo "Removing old .pyc files and cache"
-echo
-find . -name '*.pyc' -delete
-rm -rf ./.cache/
-rm -rf ./__init__.py
 
 echo "Starting unit tests"
 echo
