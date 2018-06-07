@@ -7,7 +7,7 @@ from django.core.exceptions import ValidationError
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.db import transaction
-
+from django.conf import settings
 from lava_scheduler_app.models import (
     Device, DeviceType, TestJob, Tag, JobFailureTag,
     User, Worker, DefaultDeviceOwner,
@@ -51,6 +51,9 @@ class UserAdmin(UserAdmin):
     """
     inlines = (DefaultOwnerInline, )
     actions = [expire_user_action]
+
+    def has_delete_permission(self, request, obj=None):
+        return settings.ALLOW_ADMIN_DELETE
 
 
 #  Setup the override in the django admin interface at startup.
@@ -213,6 +216,9 @@ class DeviceAdmin(admin.ModelAdmin):
     def device_dictionary_jinja(self, obj):
         return obj.load_configuration(output_format="raw")
 
+    def has_delete_permission(self, request, obj=None):
+        return settings.ALLOW_ADMIN_DELETE
+
     fieldsets = (
         ('Properties', {
             'fields': (('device_type', 'hostname'), 'worker_host', 'device_version')}),
@@ -251,8 +257,13 @@ class VisibilityForm(forms.ModelForm):
 
 
 class TestJobAdmin(admin.ModelAdmin):
+
     def requested_device_type_name(self, obj):
         return '' if obj.requested_device_type is None else obj.requested_device_type
+
+    def has_delete_permission(self, request, obj=None):
+        return settings.ALLOW_ADMIN_DELETE
+
     requested_device_type_name.short_description = 'Request device type'
     form = VisibilityForm
     actions = [cancel_action, fail_action]
@@ -366,6 +377,9 @@ class WorkerAdmin(admin.ModelAdmin):
     ordering = ['hostname']
     actions = [worker_health_active, worker_health_maintenance,
                worker_health_retired]
+
+    def has_delete_permission(self, request, obj=None):
+        return settings.ALLOW_ADMIN_DELETE
 
 
 class TagLowerForm(forms.ModelForm):

@@ -19,7 +19,7 @@
 """
 Administration interface of the LAVA Results application.
 """
-
+from django.conf import settings
 from django.contrib import admin
 from django.contrib.contenttypes.models import ContentType
 
@@ -40,6 +40,9 @@ class ActionDataAdmin(admin.ModelAdmin):
     def job_pk(self, action):
         return action.testdata.testjob.pk
 
+    def has_delete_permission(self, request, obj=None):
+        return settings.ALLOW_ADMIN_DELETE
+
 
 class QueryAdmin(admin.ModelAdmin):
     list_display = ('name', 'owner', 'query_group', 'is_published', 'is_archived')
@@ -57,9 +60,15 @@ class TestCaseAdmin(admin.ModelAdmin):
     def suite_name(self, testcase):
         return testcase.suite.name
 
+    def has_delete_permission(self, request, obj=None):
+        return settings.ALLOW_ADMIN_DELETE
+
 
 class TestSetAdmin(admin.ModelAdmin):
     list_display = ('suite', 'name')
+
+    def has_delete_permission(self, request, obj=None):
+        return settings.ALLOW_ADMIN_DELETE
 
 
 class TestSuiteAdmin(admin.ModelAdmin):
@@ -68,6 +77,9 @@ class TestSuiteAdmin(admin.ModelAdmin):
 
     def job_pk(self, testsuite):
         return testsuite.job.pk
+
+    def has_delete_permission(self, request, obj=None):
+        return settings.ALLOW_ADMIN_DELETE
 
 
 class BugLinkAdmin(admin.ModelAdmin):

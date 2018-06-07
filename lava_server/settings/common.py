@@ -199,3 +199,6 @@ AUTH_LDAP_GROUP_TYPE = None
 
 # Debian SSO is of be default
 AUTH_DEBIAN_SSO = None
+
+# Remove Delete buttons in django admin interface
+ALLOW_ADMIN_DELETE = True
