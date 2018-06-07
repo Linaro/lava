@@ -81,7 +81,7 @@ override_dh_auto_install:
 	dh_systemd_start -p lava-server --name lava-publisher
 	dh_systemd_start -p lava-server --name lava-master
 
-override_dh_fixperms:
+override_dh_fixperms_arch:
 	dh_fixperms -X debian/lava-dispatcher/usr/lib/python3/dist-packages/lava_dispatcher/dynamic_vm_keys/lava
 	# ssh connections use a shared private key - use the same location for debian & ubuntu
 	chmod 0600 debian/lava-dispatcher/usr/lib/python3/dist-packages/lava_dispatcher/dynamic_vm_keys/lava
