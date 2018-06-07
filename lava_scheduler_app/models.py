@@ -752,6 +752,7 @@ class Device(RestrictedResource):
         )
 
     def testjob_signal(self, signal, job, infrastructure_error=False):
+
         if signal == "go_state_scheduling":
             self.state = Device.STATE_RESERVED
 
@@ -762,7 +763,9 @@ class Device(RestrictedResource):
             self.state = Device.STATE_RUNNING
 
         elif signal == "go_state_canceling":
-            pass
+            if job.health_check and self.health != Device.HEALTH_LOOPING:
+                self.log_admin_entry(None, "Health check cancelled.")
+                self.health = Device.HEALTH_BAD
 
         elif signal == "go_state_finished":
             self.state = Device.STATE_IDLE
@@ -783,7 +786,7 @@ class Device(RestrictedResource):
                     elif job.health == TestJob.HEALTH_INCOMPLETE:
                         self.health = Device.HEALTH_BAD
                     elif job.health == TestJob.HEALTH_CANCELED:
-                        self.health = Device.HEALTH_UNKNOWN
+                        self.health = Device.HEALTH_BAD
                     else:
                         raise NotImplementedError("Unexpected TestJob health")
                     self.log_admin_entry(
@@ -1510,6 +1513,7 @@ class TestJob(RestrictedResource):
         """
         if self.state >= TestJob.STATE_CANCELING:
             return
+
         # If the job was not scheduled, go directly to STATE_FINISHED
         if self.state == TestJob.STATE_SUBMITTED:
             self.go_state_finished(TestJob.HEALTH_CANCELED)
