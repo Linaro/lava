@@ -1,7 +1,7 @@
 lava (2018.5-3) unstable; urgency=medium
 
   * Drop Build-Depends-Arch and add
-    override_dh_fixperms_arch (Closes: #900971)
+    override_dh_fixperms-arch (Closes: #900971)
 
  -- Neil Williams <codehelp@debian.org>  Thu, 07 Jun 2018 15:22:15 +0100
 
