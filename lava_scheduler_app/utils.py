@@ -396,18 +396,15 @@ def get_ldap_user_properties(ldap_user):
     user_search = settings.AUTH_LDAP_USER_SEARCH
 
     search_scope = ldap.SCOPE_SUBTREE
-    # Attributes should be byte strings
-    # (see https://github.com/pyldap/pyldap/issues/68)
-    attributes = [b'uid', b'givenName', b'sn', b'mail']
+    attributes = ['uid', 'givenName', 'sn', 'mail']
     search_filter = "cn=*"
 
     if user_dn_template:
         user_dn = user_dn_template % {'user': ldap_user}
-    if user_search:
+    if user_search is not None:
         from django_auth_ldap.config import LDAPSearch
-        search = eval(user_search)
-        user_dn = search.base_dn
-        search_filter = search.filterstr % {'user': ldap_user}
+        user_dn = user_search.base_dn
+        search_filter = user_search.filterstr % {'user': ldap_user}
 
     user_properties = {}
     if server_uri is not None:
