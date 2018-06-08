@@ -115,10 +115,13 @@ constants:
   # DEFAULT_SHELL_PROMPT
   default-shell-prompt: '{{ default_shell_prompt | default("lava-test: # ") }}'
 
-  # pexpect.spawn searchwindowsize
-  # SPAWN_WINDOW_SIZE - in bytes, quoted as a string.
-  spawn_window_size: '{{ spawn_window_size | default(2048) }}'
-
+  # pexpect.spawn maxread
+  # SPAWN_MAXREAD - in bytes, quoted as a string
+  # 1 to turn off buffering, pexpect default is 2000
+  # maximum may be limited by platform issues to 4092
+  # avoid setting searchwindowsize:
+  # Data before searchwindowsize point is preserved, but not searched.
+  spawn_maxread: '{{ spawn_maxread | default(4092) }}'
 {% endblock constants -%}
 
 {% block commands %}

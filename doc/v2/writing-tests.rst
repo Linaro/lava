@@ -1260,10 +1260,11 @@ patterns which are used to pick up test cases and other test shell support.
 Each time a match is found, the buffer is cleared. If there is a lot of output
 with no pattern matches, the processing can slow down.
 
-It is possible to limit the window which ``pexpect`` uses to scan for pattern
-matches and LAVA uses a limit of 2048 bytes. This is intended to limit problems
-with processing slowing down but best practice remains to manage the test job
-output to make the logs more useful during later triage.
+By default ``pexpect`` uses a buffer of 2000 bytes for the input used
+for pattern matches. In order to improve performance, LAVA uses a limit
+of 4092 bytes. This is intended to limit problems with processing
+slowing down but best practice remains to manage the test job output to
+make the logs more useful during later triage.
 
 Large log files also have a few implications for the user interface and triage.
 More content makes loading links to a test job take longer and finding the

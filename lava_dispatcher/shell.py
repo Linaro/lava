@@ -92,7 +92,7 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
     A ShellCommand is a raw_connection for a ShellConnection instance.
     """
 
-    def __init__(self, command, lava_timeout, logger=None, cwd=None, window=-1):
+    def __init__(self, command, lava_timeout, logger=None, cwd=None, window=2000):
         if isinstance(window, str):
             # constants need to be stored as strings.
             try:
@@ -109,7 +109,9 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
             cwd=cwd,
             logfile=ShellLogger(logger),
             encoding='utf-8',
-            searchwindowsize=window,
+            # Data before searchwindowsize point is preserved, but not searched.
+            searchwindowsize=None,  # pattern match the entire buffer
+            maxread=window,  # limit the size of the buffer. 1 to turn off buffering
             codec_errors='replace'
         )
         self.name = "ShellCommand"

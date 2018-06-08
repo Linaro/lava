@@ -126,7 +126,7 @@ class ConnectDevice(Action):
         # ShellCommand executes the connection command
         shell = self.shell_class(
             "%s\n" % self.command, self.timeout, logger=self.logger,
-            window=self.job.device.get_constant('spawn_window_size'))
+            window=self.job.device.get_constant('spawn_maxread'))
         if shell.exitstatus:
             raise JobError("%s command exited %d: %s" % (self.command, shell.exitstatus, shell.readlines()))
         # ShellSession monitors the pexpect
