@@ -763,9 +763,7 @@ class Device(RestrictedResource):
             self.state = Device.STATE_RUNNING
 
         elif signal == "go_state_canceling":
-            if job.health_check and self.health != Device.HEALTH_LOOPING:
-                self.log_admin_entry(None, "Health check cancelled.")
-                self.health = Device.HEALTH_BAD
+            pass
 
         elif signal == "go_state_finished":
             self.state = Device.STATE_IDLE
@@ -783,15 +781,18 @@ class Device(RestrictedResource):
                 elif self.health in [Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN, Device.HEALTH_BAD]:
                     if job.health == TestJob.HEALTH_COMPLETE:
                         self.health = Device.HEALTH_GOOD
+                        msg = "completed"
                     elif job.health == TestJob.HEALTH_INCOMPLETE:
                         self.health = Device.HEALTH_BAD
+                        msg = "failed"
                     elif job.health == TestJob.HEALTH_CANCELED:
                         self.health = Device.HEALTH_BAD
+                        msg = "canceled"
                     else:
                         raise NotImplementedError("Unexpected TestJob health")
                     self.log_admin_entry(
-                        None, "%s → %s (health-check [%s] failed)" % (
-                            prev_health_display, self.get_health_display(), job.id))
+                        None, "%s → %s (health-check [%s] %s)" % (
+                            prev_health_display, self.get_health_display(), job.id, msg))
             elif infrastructure_error:
                 self.health = Device.HEALTH_UNKNOWN
                 self.log_admin_entry(

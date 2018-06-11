@@ -224,6 +224,35 @@ class TestTestJobStateMachine(TestCase):
             self.check_job(state, TestJob.HEALTH_UNKNOWN)
             self.assertEqual(self.job.actual_device, self.device)
 
+    def test_job_go_state_canceling_health_check(self):
+        # Normal case
+        self.device.state = Device.STATE_RUNNING
+        self.device.save()
+        self.job.health_check = True
+        self.job.state = TestJob.STATE_RUNNING
+        self.job.actual_device = self.device
+        self.job.save()
+        self.job.go_state_canceling()
+        self.job.save()
+        self.check_device(Device.STATE_RUNNING, Device.HEALTH_UNKNOWN)
+        self.check_job(TestJob.STATE_CANCELING, TestJob.HEALTH_UNKNOWN)
+
+        # Test errors
+        # job state >= TestJob.STATE_CANCELING
+        self.device.state = Device.STATE_RUNNING
+        self.device.save()
+        self.job.state = TestJob.STATE_RUNNING
+        self.job.actual_device = self.device
+        self.job.save()
+        for state in [TestJob.STATE_CANCELING, TestJob.STATE_FINISHED]:
+            self.job.state = state
+            self.job.save()
+            self.job.go_state_canceling()
+            self.job.save()
+            self.check_device(Device.STATE_RUNNING, Device.HEALTH_UNKNOWN)
+            self.check_job(state, TestJob.HEALTH_UNKNOWN)
+            self.assertEqual(self.job.actual_device, self.device)
+
     def test_job_state_canceling_multinode(self):
         self.device2 = Device.objects.create(hostname="device-02",
                                              device_type=self.device_type,
@@ -382,7 +411,7 @@ class TestTestJobStateMachine(TestCase):
         self.job.save()
 
         # 2/ STATE_CANCELING => STATE_FINISHED
-        # 1.1/ Success
+        # 2.1/ Success
         self.device.state = Device.STATE_RUNNING
         self.device.health = Device.HEALTH_UNKNOWN
         self.device.save()
@@ -394,7 +423,7 @@ class TestTestJobStateMachine(TestCase):
         self.check_device(Device.STATE_IDLE, Device.HEALTH_UNKNOWN)
         self.check_job(TestJob.STATE_FINISHED, TestJob.HEALTH_CANCELED)
 
-        # 1.2/ Failure
+        # 2.2/ Failure
         self.device.state = Device.STATE_RUNNING
         self.device.save()
         self.job.state = TestJob.STATE_CANCELING
@@ -405,10 +434,38 @@ class TestTestJobStateMachine(TestCase):
         self.check_device(Device.STATE_IDLE, Device.HEALTH_UNKNOWN)
         self.check_job(TestJob.STATE_FINISHED, TestJob.HEALTH_CANCELED)
 
+        # 2.3/ Success of an health-check
+        self.device.state = Device.STATE_RUNNING
+        self.device.health = Device.HEALTH_UNKNOWN
+        self.device.save()
+        self.job.health_check = True
+        self.job.state = TestJob.STATE_CANCELING
+        self.job.actual_device = self.device
+        self.job.save()
+        self.job.go_state_finished(TestJob.HEALTH_COMPLETE)
+        self.job.save()
+        self.check_device(Device.STATE_IDLE, Device.HEALTH_BAD)
+        self.check_job(TestJob.STATE_FINISHED, TestJob.HEALTH_CANCELED)
+
+        # 2.2/ Failure
+        self.device.state = Device.STATE_RUNNING
+        self.device.health = Device.HEALTH_UNKNOWN
+        self.device.save()
+        self.job.health_check = True
+        self.job.state = TestJob.STATE_CANCELING
+        self.job.actual_device = self.device
+        self.job.save()
+        self.job.go_state_finished(TestJob.HEALTH_INCOMPLETE)
+        self.job.save()
+        self.check_device(Device.STATE_IDLE, Device.HEALTH_BAD)
+        self.check_job(TestJob.STATE_FINISHED, TestJob.HEALTH_CANCELED)
+
         # Test errors
         # 1/ already finished
         self.device.state = Device.STATE_IDLE
+        self.device.health = Device.HEALTH_UNKNOWN
         self.device.save()
+        self.job.health_check = False
         self.job.state = TestJob.STATE_FINISHED
         self.job.health = TestJob.HEALTH_UNKNOWN
         self.job.actual_device = self.device

@@ -289,69 +289,6 @@ class TestHealthCheckScheduling(TestCase):
         self.assertEqual(current_hc.state, TestJob.STATE_SCHEDULED)
 
 
-class TestHealthCheckCanceling(TestCase):
-
-    def setUp(self):
-        self.worker01 = Worker.objects.create(hostname="worker-01", state=Worker.STATE_ONLINE)
-        self.device_type01 = DeviceType.objects.create(name="dt-01")
-
-        self.device01 = Device.objects.create(hostname="device-01", device_type=self.device_type01,
-                                              worker_host=self.worker01, is_public=True)
-        self.user = User.objects.create(username="user-01")
-
-        self.original_health_check = Device.get_health_check
-
-    def tearDown(self):
-        Device.get_health_check = self.original_health_check
-
-    def test_hc_cancel(self):
-        # LAVA-1349 - cancel health check -> BAD
-        Device.get_health_check = _minimal_valid_job
-        self.assertNotEqual(self.device01.get_health_check(), None)
-        self.assertEqual(self.device01.state, Device.STATE_IDLE)
-        self.assertEqual(list(TestJob.objects.all()), [])
-
-        schedule(DummyLogger())
-
-        self.device01.refresh_from_db()
-        j01 = TestJob.objects.all()[0]
-        self.assertEqual(TestJob.objects.all().count(), 1)
-        self.assertEqual(j01.state, TestJob.STATE_SCHEDULED)
-        self.assertEqual(j01.actual_device, self.device01)
-        j01.start_time = timezone.now() - timedelta(hours=1)
-        j01.save()
-
-        schedule(DummyLogger())
-
-        self.device01.refresh_from_db()
-        self.assertEqual(self.device01.state, Device.STATE_RESERVED)
-        self.assertEqual(j01.state, TestJob.STATE_SCHEDULED)
-        self.assertEqual(self.device01.health, Device.HEALTH_UNKNOWN)
-        self.assertEqual(j01.health, TestJob.HEALTH_UNKNOWN)
-
-        schedule(DummyLogger())
-
-        j01.go_state_canceling()
-        # go_state_canceling isn't atomic, so ensure there is a save.
-        j01.save()
-        # device state *has* been saved.
-        self.device01.refresh_from_db()
-        j01.refresh_from_db()
-        self.assertEqual(self.device01.health, Device.HEALTH_BAD)
-        self.assertEqual(self.device01.state, Device.STATE_RESERVED)
-        self.assertEqual(j01.state, TestJob.STATE_CANCELING)
-        self.assertEqual(j01.health, TestJob.HEALTH_UNKNOWN)
-
-        j01.go_state_finished(TestJob.HEALTH_CANCELED)
-        j01.save()
-        self.device01.refresh_from_db()
-        j01.refresh_from_db()
-        self.assertEqual(self.device01.health, Device.HEALTH_BAD)
-        self.assertEqual(j01.health, TestJob.HEALTH_CANCELED)
-        self.assertEqual(self.device01.state, Device.STATE_IDLE)
-        self.assertEqual(j01.state, TestJob.STATE_FINISHED)
-
-
 class TestPriorities(TestCase):
 
     def setUp(self):
