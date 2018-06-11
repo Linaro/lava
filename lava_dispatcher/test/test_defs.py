@@ -378,7 +378,7 @@ def check_rpcinfo(server='127.0.0.1'):
     returns True on failure.
     """
     try:
-        subprocess.check_output(['/usr/sbin/rpcinfo', '-u', server, 'nfs', 3])
+        subprocess.check_output(['/usr/sbin/rpcinfo', '-u', server, 'nfs', '3'])
     except (OSError, subprocess.CalledProcessError):
         return True
     return False
@@ -424,7 +424,7 @@ class TestDefinitions(StdoutTestCase):
         pattern = PatternFixup(testdef=params, count=0)
         self.assertTrue(pattern.valid())
 
-    # @unittest.skipIf(check_rpcinfo(), "rpcinfo returns non-zero for nfs")
+    @unittest.skipIf(check_rpcinfo(), "rpcinfo returns non-zero for nfs")
     def test_definition_lists(self):  # pylint: disable=too-many-locals
         self.job.validate()
         tftp_deploy = [action for action in self.job.pipeline.actions if action.name == 'tftp-deploy'][0]
