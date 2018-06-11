@@ -228,7 +228,7 @@ class TestTemplates(BaseTemplate.BaseTemplateCases):
         rendered = test_template.render(**context)
         template_dict = yaml.load(rendered)
         self.assertIn(
-            'set extraargs root=/dev/nfs rw nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr,vers=3 intel_mmio=on mmio=on ip=dhcp',
+            'set extraargs root=/dev/nfs rw nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr intel_mmio=on mmio=on ip=dhcp',
             template_dict['actions']['boot']['methods']['ipxe']['nfs']['commands'])
 
     def test_arduino(self):
@@ -275,18 +275,3 @@ class TestTemplates(BaseTemplate.BaseTemplateCases):
         self.assertIsNotNone(template_dict['actions']['boot']['methods']['ipxe'])
         self.assertIn('ramdisk', template_dict['actions']['boot']['methods']['ipxe'])
         self.assertIn('commands', template_dict['actions']['boot']['methods']['ipxe']['nfs'])
-
-    def test_nfsvers_is_present_by_default(self):
-        rendered = self.render_device_dictionary_file('juno-r2-01.jinja2')
-        template_dict = yaml.load(rendered)
-        self.assertIsNotNone(template_dict['actions']['boot']['methods']['uefi']['nfs']['commands'])
-        command = template_dict['actions']['boot']['methods']['uefi']['nfs']['commands'][0]
-        self.assertIn(',vers=3', command)
-
-    def test_nfsvers_can_be_removed(self):
-        job_ctx = {'extra_nfsroot_args': ''}
-        rendered = self.render_device_dictionary_file('juno-r2-01.jinja2', job_ctx=job_ctx)
-        template_dict = yaml.load(rendered)
-        self.assertIsNotNone(template_dict['actions']['boot']['methods']['uefi']['nfs']['commands'])
-        command = template_dict['actions']['boot']['methods']['uefi']['nfs']['commands'][0]
-        self.assertNotIn(',vers=3', command)
