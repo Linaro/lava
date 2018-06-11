@@ -152,7 +152,7 @@ def start_job(job_id, definition, device_definition, zmq_config,
 
     # Dump the environment variables in the tmp file.
     if env_dut_str:
-        with open(os.path.join(base_dir, "env.dut.yaml", 'w')) as f_env:
+        with open(os.path.join(base_dir, "env.dut.yaml"), 'w') as f_env:
             f_env.write(env_dut_str)
 
     try:
