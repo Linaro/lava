@@ -1,3 +1,9 @@
+lava (2018.5-3~bpo9+1) stretch-backports; urgency=medium
+
+  * Rebuild for stretch-backports.
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 11 Jun 2018 13:41:43 +0100
+
 lava (2018.5-3) unstable; urgency=medium
 
   * Drop Build-Depends-Arch and add
