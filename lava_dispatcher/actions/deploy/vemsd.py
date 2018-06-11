@@ -214,15 +214,19 @@ class EnterVExpressMCC(Action):
 
         self.logger.debug("Changing prompt to '%s'", connection.prompt_str)
         index = self.wait(connection)
-        if connection.prompt_str[index] != self.mcc_prompt:
+
+        # Interrupt autorun if enabled
+        if connection.prompt_str[index] == self.autorun_prompt:
             self.logger.debug('Autorun enabled: interrupting..')
             connection.sendline('%s\n' % self.interrupt_char)
-            connection.prompt_str = self.mcc_prompt
+            connection.prompt_str = [self.mcc_prompt, self.mcc_reset_msg]
             index = self.wait(connection)
-            if prompt_list[index] == self.mcc_reset_msg:
-                raise InfrastructureError("MCC: Unable to interrupt auto-run")
-        else:
+        elif connection.prompt_str[index] == self.mcc_prompt:
             self.logger.debug('Already at MCC prompt: autorun looks to be disabled')
+
+        # Check that mcc_reset_msg hasn't been received
+        if connection.prompt_str[index] == self.mcc_reset_msg:
+            raise InfrastructureError("MCC: Unable to interrupt auto-run")
         return connection
 
 
