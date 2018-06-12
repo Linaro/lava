@@ -48,11 +48,9 @@ constructible). To fix that simply add the missing keyword argument and reload.
 """
 
 from django.core.urlresolvers import reverse
-from django.utils.encoding import python_2_unicode_compatible
 import logging
 
 
-@python_2_unicode_compatible
 class BreadCrumb(object):
     """
     A crumb of bread left in the forest of pages to let you go back to (no, not
@@ -124,7 +122,6 @@ class BreadCrumb(object):
             raise
 
 
-@python_2_unicode_compatible
 class LiveBreadCrumb(object):
     """
     Bread crumb instance as observed by a particular request.

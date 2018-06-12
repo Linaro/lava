@@ -93,7 +93,7 @@ class AuthToken(models.Model):
 
     user = models.ForeignKey(User, related_name="auth_tokens")
 
-    def __unicode__(self):
+    def __str__(self):
         return u"security token {pk}".format(pk=self.pk)
 
     @classmethod

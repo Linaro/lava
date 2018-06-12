@@ -34,7 +34,6 @@ from django.dispatch import receiver
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
 from django.utils import timezone
-from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
 
@@ -68,7 +67,6 @@ class DevicesUnavailableException(UserWarning):
     """Error raised when required number of devices are unavailable."""
 
 
-@python_2_unicode_compatible
 class ExtendedUser(models.Model):
 
     user = models.OneToOneField(User)
@@ -93,7 +91,6 @@ class ExtendedUser(models.Model):
         return "%s: %s@%s" % (self.user, self.irc_handle, self.irc_server)
 
 
-@python_2_unicode_compatible
 class Tag(models.Model):
 
     name = models.SlugField(unique=True)
@@ -172,7 +169,6 @@ def validate_yaml(yaml_data):
                     raise SubmissionException(e)
 
 
-@python_2_unicode_compatible
 class Architecture(models.Model):
     name = models.CharField(
         primary_key=True,
@@ -186,7 +182,6 @@ class Architecture(models.Model):
         return self.pk
 
 
-@python_2_unicode_compatible
 class ProcessorFamily(models.Model):
     name = models.CharField(
         primary_key=True,
@@ -200,7 +195,6 @@ class ProcessorFamily(models.Model):
         return self.pk
 
 
-@python_2_unicode_compatible
 class Alias(models.Model):
     name = models.CharField(
         primary_key=True,
@@ -214,7 +208,6 @@ class Alias(models.Model):
         return self.pk
 
 
-@python_2_unicode_compatible
 class BitWidth(models.Model):
     width = models.PositiveSmallIntegerField(
         primary_key=True,
@@ -227,7 +220,6 @@ class BitWidth(models.Model):
         return "%d" % self.pk
 
 
-@python_2_unicode_compatible
 class Core(models.Model):
     name = models.CharField(
         primary_key=True,
@@ -241,7 +233,6 @@ class Core(models.Model):
         return self.pk
 
 
-@python_2_unicode_compatible
 class DeviceType(models.Model):
     """
     A class of device, for example a pandaboard or a snowball.
@@ -395,7 +386,6 @@ class DeviceType(models.Model):
         return result
 
 
-@python_2_unicode_compatible
 class DefaultDeviceOwner(models.Model):
     """
     Used to override the django User model to allow one individual
@@ -414,7 +404,6 @@ class DefaultDeviceOwner(models.Model):
         return ''
 
 
-@python_2_unicode_compatible
 class Worker(models.Model):
     """
     A worker node to which devices are attached.
@@ -536,7 +525,6 @@ class Worker(models.Model):
         )
 
 
-@python_2_unicode_compatible
 class Device(RestrictedResource):
     """
     A device that we can run tests on.
@@ -938,7 +926,6 @@ class Device(RestrictedResource):
             return None
 
 
-@python_2_unicode_compatible
 class JobFailureTag(models.Model):
     """
     Allows us to maintain a set of common ways jobs fail. These can then be
@@ -1282,7 +1269,6 @@ def _pipeline_protocols(job_data, user, yaml_data=None):  # pylint: disable=too-
         return job_object_list
 
 
-@python_2_unicode_compatible
 class TestJob(RestrictedResource):
     """
     A test job is a test process that will be run on a Device.
@@ -2455,7 +2441,6 @@ class TestJob(RestrictedResource):
         return callback_url
 
 
-@python_2_unicode_compatible
 class Notification(models.Model):
 
     TEMPLATES_DIR = os.path.join(
@@ -2596,7 +2581,6 @@ class Notification(models.Model):
                 self.conditions)
 
 
-@python_2_unicode_compatible
 class NotificationRecipient(models.Model):
 
     class Meta:
@@ -2714,7 +2698,6 @@ class NotificationRecipient(models.Model):
                 return None
 
 
-@python_2_unicode_compatible
 class NotificationCallback(models.Model):
 
     notification = models.ForeignKey(
@@ -2900,7 +2883,6 @@ def process_notifications(sender, **kwargs):
                     new_job.send_notifications()
 
 
-@python_2_unicode_compatible
 class TestJobUser(models.Model):
 
     class Meta:
