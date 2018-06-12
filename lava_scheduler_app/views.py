@@ -1103,7 +1103,7 @@ def job_submit(request):
 
             except Exception as e:
                 response_data["error"] = str(e)
-                response_data["context_help"] = "lava scheduler submit job",
+                response_data["context_help"] = "lava scheduler submit job"
                 response_data["definition_input"] = request.POST.get(
                     "definition-input")
                 response_data["is_favorite"] = request.POST.get("is_favorite")
