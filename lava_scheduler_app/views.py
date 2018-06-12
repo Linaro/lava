@@ -130,9 +130,6 @@ def _str_to_bool(string):
 
 class JobTableView(LavaView):
 
-    def __init__(self, request, **kwargs):
-        super(JobTableView, self).__init__(request, **kwargs)
-
     def device_query(self, term):  # pylint: disable=no-self-use
         visible = filter_device_types(self.request.user)
         device = list(Device.objects.filter(hostname__contains=term, device_type__in=visible))

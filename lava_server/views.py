@@ -46,9 +46,6 @@ class ExtendedUserIRCForm(forms.ModelForm):
         fields = ('irc_server', 'irc_handle', 'user')
         widgets = {'user': forms.HiddenInput}
 
-    def __init__(self, *args, **kwargs):
-        super(ExtendedUserIRCForm, self).__init__(*args, **kwargs)
-
     def save(self, commit=True, **kwargs):
         return super(ExtendedUserIRCForm, self).save(commit=commit, **kwargs)
 
