@@ -765,7 +765,7 @@ class TestOverlayAction(TestAction):  # pylint: disable=too-many-instance-attrib
         if 'params' in testdef:
             raise_if_not_dict(testdef, 'params')
             for def_param_name, def_param_value in list(testdef['params'].items()):
-                if def_param_name is 'yaml_line':
+                if def_param_name == 'yaml_line':
                     continue
                 if not def_param_value:
                     def_param_value = ''
@@ -773,7 +773,7 @@ class TestOverlayAction(TestAction):  # pylint: disable=too-many-instance-attrib
         if 'parameters' in testdef:
             raise_if_not_dict(testdef, 'parameters')
             for def_param_name, def_param_value in list(testdef['parameters'].items()):
-                if def_param_name is 'yaml_line':
+                if def_param_name == 'yaml_line':
                     continue
                 if not def_param_value:
                     def_param_value = ''
@@ -785,7 +785,7 @@ class TestOverlayAction(TestAction):  # pylint: disable=too-many-instance-attrib
             raise_if_not_dict(self.parameters, 'parameters')
             # turn a string into a local variable.
             for param_name, param_value in list(self.parameters['parameters'].items()):
-                if param_name is 'yaml_line':
+                if param_name == 'yaml_line':
                     continue
                 if not param_value:
                     param_value = ''
@@ -795,7 +795,7 @@ class TestOverlayAction(TestAction):  # pylint: disable=too-many-instance-attrib
             raise_if_not_dict(self.parameters, 'params')
             # turn a string into a local variable.
             for param_name, param_value in list(self.parameters['params'].items()):
-                if param_name is 'yaml_line':
+                if param_name == 'yaml_line':
                     continue
                 if not param_value:
                     param_value = ''

@@ -169,7 +169,7 @@ class LoopMountAction(RetryAction):
             self.mntdir
         ]
         command_output = self.run_command(mount_cmd)
-        if command_output and command_output is not '':
+        if command_output and command_output != '':
             raise JobError("Unable to mount: %s" % command_output)  # FIXME: JobError needs a unit test
         return connection
 

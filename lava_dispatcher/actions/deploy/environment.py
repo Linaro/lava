@@ -78,7 +78,7 @@ class DeployDeviceEnvironment(Action):
 
     def _create_environment(self):
         """Generate the env variables for the device."""
-        conf = yaml.load(self.env) if self.env is not '' else {}
+        conf = yaml.load(self.env) if self.env != '' else {}
         if conf.get("purge", False):
             environ = {}
         else:

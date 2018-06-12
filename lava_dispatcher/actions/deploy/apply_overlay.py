@@ -626,7 +626,7 @@ class ApplyLxcOverlay(Action):
         tar_cmd = ['tar', '--warning', 'no-timestamp', '-C', lxc_rootfs_path,
                    '-xaf', overlay_file]
         command_output = self.run_command(tar_cmd)
-        if command_output and command_output is not '':
+        if command_output and command_output != '':
             raise JobError("Unable to untar overlay: %s" %
                            command_output)
 

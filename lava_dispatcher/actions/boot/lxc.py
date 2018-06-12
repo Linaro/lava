@@ -162,7 +162,7 @@ class LxcStartAction(Action):
         lxc_name = self.get_namespace_data(action='lxc-create-action', label='lxc', key='name')
         lxc_cmd = ['lxc-start', '-n', lxc_name, '-d']
         command_output = self.run_command(lxc_cmd)
-        if command_output and command_output is not '':
+        if command_output and command_output != '':
             raise JobError("Unable to start lxc container: %s" %
                            command_output)  # FIXME: JobError needs a unit test
         lxc_cmd = ['lxc-info', '-sH', '-n', lxc_name]
@@ -206,7 +206,7 @@ class LxcStopAction(Action):
                                            label='lxc', key='name')
         lxc_cmd = ['lxc-stop', '-k', '-n', lxc_name]
         command_output = self.run_command(lxc_cmd)
-        if command_output and command_output is not '':
+        if command_output and command_output != '':
             raise JobError("Unable to stop lxc container: %s" %
                            command_output)  # FIXME: JobError needs a unit test
         return connection
