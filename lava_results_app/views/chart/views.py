@@ -101,7 +101,7 @@ class OtherChartView(LavaView):
 class GroupChartView(LavaView):
 
     def __init__(self, request, group, **kwargs):
-        super(GroupChartView, self).__init__(request, **kwargs)
+        super().__init__(request, **kwargs)
         self.chart_group = group
 
     def get_queryset(self):

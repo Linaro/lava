@@ -51,7 +51,7 @@ class Mps(Deployment):
     name = 'mps'
 
     def __init__(self, parent, parameters):
-        super(Mps, self).__init__(parent)
+        super().__init__(parent)
         self.action = MpsAction()
         self.action.section = self.action_type
         self.action.job = self.job
@@ -78,13 +78,13 @@ class MpsAction(DeployAction):
     a prompt after reboot.
     """
     def __init__(self):
-        super(MpsAction, self).__init__()
+        super().__init__()
         self.name = "mps-deploy"
         self.description = "deploy image to MPS device"
         self.summary = "MPS device image deployment"
 
     def validate(self):
-        super(MpsAction, self).validate()
+        super().validate()
         if not self.valid:
             return
         if not self.parameters.get('recovery_image', None):
@@ -113,21 +113,21 @@ class DeployMPSTestBinary(Action):
     Copies test binary to MPS device and renames if required
     """
     def __init__(self):
-        super(DeployMPSTestBinary, self).__init__()
+        super().__init__()
         self.name = "deploy-mps-test-binary"
         self.description = "deploy test binary to usb msd"
         self.summary = "copy test binary to MPS device and rename if required"
         self.param_key = "test_binary"
 
     def validate(self):
-        super(DeployMPSTestBinary, self).validate()
+        super().validate()
         if not self.valid:
             return
         if not self.parameters['images'].get(self.param_key, None):
             return
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(DeployMPSTestBinary, self).run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         mount_point = self.get_namespace_data(action='mount-vexpress-usbmsd', label='vexpress-fw', key='mount-point')
         try:
             os.path.realpath(mount_point)

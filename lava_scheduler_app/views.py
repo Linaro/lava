@@ -257,7 +257,7 @@ class WorkersLogView(LavaView):
 class WorkerLogView(LavaView):
 
     def __init__(self, worker, *args, **kwargs):
-        super(WorkerLogView, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.worker = worker
 
     def get_queryset(self):
@@ -270,7 +270,7 @@ class WorkerLogView(LavaView):
 
 class DevicesLogView(LavaView):
     def __init__(self, devices, *args, **kwargs):
-        super(DevicesLogView, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.devices = devices
 
     def get_queryset(self):
@@ -279,7 +279,7 @@ class DevicesLogView(LavaView):
 
 class DeviceLogView(LavaView):
     def __init__(self, device, *args, **kwargs):
-        super(DeviceLogView, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.device = device
 
     def get_queryset(self):
@@ -523,7 +523,7 @@ def active_device_list(request):
 class OnlineDeviceView(DeviceTableView):
 
     def get_queryset(self):
-        q = super(OnlineDeviceView, self).get_queryset()
+        q = super().get_queryset()
         return q.filter(health__in=[Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN],
                         worker_host__state=Worker.STATE_ONLINE)
 
@@ -549,7 +549,7 @@ def online_device_list(request):
 class PassingHealthTableView(DeviceTableView):
 
     def get_queryset(self):
-        q = super(PassingHealthTableView, self).get_queryset()
+        q = super().get_queryset()
         q = q.exclude(health=Device.HEALTH_RETIRED)
         q = q.select_related("last_health_report_job", "last_health_report_job__actual_device")
         return q.order_by("-health", "device_type", "hostname")
@@ -645,20 +645,20 @@ def filter_device_types(user):
 class ActiveDeviceView(DeviceTableView):
 
     def get_queryset(self):
-        q = super(ActiveDeviceView, self).get_queryset()
+        q = super().get_queryset()
         return q.exclude(health=Device.HEALTH_RETIRED)
 
 
 class MaintenanceDeviceView(DeviceTableView):
 
     def get_queryset(self):
-        return super(MaintenanceDeviceView, self).get_queryset().filter(health=Device.HEALTH_MAINTENANCE)
+        return super().get_queryset().filter(health=Device.HEALTH_MAINTENANCE)
 
 
 class DeviceHealthView(DeviceTableView):
 
     def get_queryset(self):
-        q = super(DeviceHealthView, self).get_queryset()
+        q = super().get_queryset()
         q = q.exclude(health=Device.HEALTH_RETIRED)
         return q.select_related("last_health_report_job")
 
@@ -1825,7 +1825,7 @@ def get_remote_definition(request):
 class RecentJobsView(JobTableView):
 
     def __init__(self, request, device, **kwargs):
-        super(RecentJobsView, self).__init__(request, **kwargs)
+        super().__init__(request, **kwargs)
         self.device = device
 
     def get_queryset(self):

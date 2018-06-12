@@ -58,7 +58,7 @@ class TestCaseWithFactory(TestCase):
 class DeviceTest(TestCaseWithFactory):
 
     def setUp(self):
-        super(DeviceTest, self).setUp()
+        super().setUp()
         logger = logging.getLogger('lava-master')
         logger.disabled = True
 
@@ -91,7 +91,7 @@ class DeviceTest(TestCaseWithFactory):
 class DeviceTypeTest(TestCaseWithFactory):
 
     def setUp(self):
-        super(DeviceTypeTest, self).setUp()
+        super().setUp()
         self.types_dir = os.path.join(Device.CONFIG_PATH, '..', 'device-types')
         self.basedir = (os.path.abspath(os.path.join(
             os.path.dirname(__file__))))

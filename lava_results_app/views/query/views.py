@@ -119,7 +119,7 @@ class OtherQueryView(LavaView):
 class GroupQueryView(LavaView):
 
     def __init__(self, request, group, **kwargs):
-        super(GroupQueryView, self).__init__(request, **kwargs)
+        super().__init__(request, **kwargs)
         self.query_group = group
 
     def get_queryset(self):
@@ -147,7 +147,7 @@ class QueryCustomResultView(LavaView):
         self.content_type = content_type
         self.conditions = conditions
         self.request = request
-        super(QueryCustomResultView, self).__init__(request, **kwargs)
+        super().__init__(request, **kwargs)
 
     def get_queryset(self):
         return Query.get_queryset(
@@ -161,7 +161,7 @@ class QueryResultView(LavaView):
     def __init__(self, query, request, **kwargs):
         self.query = query
         self.request = request
-        super(QueryResultView, self).__init__(request, **kwargs)
+        super().__init__(request, **kwargs)
 
     def get_queryset(self):
         return self.query.get_results(self.request.user)

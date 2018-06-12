@@ -52,7 +52,7 @@ class YamlFactory(ModelFactory):
     """
 
     def __init__(self):
-        super(YamlFactory, self).__init__()
+        super().__init__()
         Device.CONFIG_PATH = os.path.join(os.getcwd(), 'lava_scheduler_app', 'tests', 'devices')
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
         logger = logging.getLogger('unittests')
@@ -103,7 +103,7 @@ class PipelineDeviceTags(TestCaseWithFactory):
     Same tests as test_submission but converted to use and look for YAML.
     """
     def setUp(self):
-        super(PipelineDeviceTags, self).setUp()
+        super().setUp()
         self.factory = YamlFactory()
         self.device_type = self.factory.make_device_type()
         self.conf = {
@@ -235,7 +235,7 @@ class PipelineDeviceTags(TestCaseWithFactory):
 class TestPipelineSubmit(TestCaseWithFactory):
 
     def setUp(self):
-        super(TestPipelineSubmit, self).setUp()
+        super().setUp()
         self.factory = YamlFactory()
         self.device_type = self.factory.make_device_type()
         self.factory.make_device(device_type=self.device_type, hostname="fakeqemu1")
@@ -548,7 +548,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
 class TestExtendsSubmit(TestCaseWithFactory):
 
     def setUp(self):
-        super(TestExtendsSubmit, self).setUp()
+        super().setUp()
         Device.HEALTH_CHECK_PATH = os.path.join(os.getcwd(), 'lava_scheduler_app', 'tests', 'health-checks')
         self.factory = YamlFactory()
         self.device_type = self.factory.make_device_type(name='juno-r2')
@@ -579,7 +579,7 @@ class TestExtendsSubmit(TestCaseWithFactory):
 class TestYamlMultinode(TestCaseWithFactory):
 
     def setUp(self):
-        super(TestYamlMultinode, self).setUp()
+        super().setUp()
         self.factory = YamlFactory()
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
         logger = logging.getLogger('unittests')
@@ -591,7 +591,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         logger.propagate = False
 
     def tearDown(self):
-        super(TestYamlMultinode, self).tearDown()
+        super().tearDown()
         Device.objects.all().delete()
 
     def test_multinode_split(self):
@@ -1110,7 +1110,7 @@ class TestYamlMultinode(TestCaseWithFactory):
 class VlanInterfaces(TestCaseWithFactory):
 
     def setUp(self):
-        super(VlanInterfaces, self).setUp()
+        super().setUp()
         # YAML, pipeline only
         user = User.objects.create_user('test', 'e@mail.invalid', 'test')
         user.user_permissions.add(

@@ -25,7 +25,7 @@ class TestTransport(xmlrpc.client.Transport, object):
     """Handles connections to XML-RPC server through Django test client."""
 
     def __init__(self, user=None, password=None):
-        super(TestTransport, self).__init__()
+        super().__init__()
         self.client = Client()
         if user:
             success = self.client.login(username=user, password=password)
@@ -46,7 +46,7 @@ class TestTransport(xmlrpc.client.Transport, object):
 class TestSchedulerAPI(TestCaseWithFactory):  # pylint: disable=too-many-ancestors
 
     def setUp(self):
-        super(TestSchedulerAPI, self).setUp()
+        super().setUp()
         logger = logging.getLogger('lava-master')
         logger.disabled = True
         logger = logging.getLogger('lava_scheduler_app')

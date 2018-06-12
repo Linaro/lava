@@ -42,7 +42,7 @@ class TestMetaTypes(TestCaseWithFactory):
     """
 
     def setUp(self):
-        super(TestMetaTypes, self).setUp()
+        super().setUp()
         logger = logging.getLogger('lava-master')
         logger.disabled = True
 

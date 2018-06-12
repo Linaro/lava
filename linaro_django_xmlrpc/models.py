@@ -234,7 +234,7 @@ class ExposedAPI(object):
 class ExposedV2API(ExposedAPI):
     @property
     def user(self):
-        user = super(ExposedV2API, self).user
+        user = super().user
         return AnonymousUser() if user is None else user
 
     def _authenticate(self):
@@ -472,7 +472,7 @@ class SystemAPI(ExposedAPI):
         if context is None:
             raise ValueError(
                 "SystemAPI needs to be constructed with a real CallContext")
-        super(SystemAPI, self).__init__(context)
+        super().__init__(context)
 
     def listMethods(self):
         """

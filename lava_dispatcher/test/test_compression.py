@@ -30,7 +30,7 @@ from lava_dispatcher.utils.compression import decompress_command_map
 class TestDecompression(StdoutTestCase):
 
     def setUp(self):
-        super(TestDecompression, self).setUp()
+        super().setUp()
         factory = Factory()
         self.job = factory.create_kvm_job('sample_jobs/compression.yaml')
         self.job.validate()

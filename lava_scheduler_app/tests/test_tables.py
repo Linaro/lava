@@ -24,13 +24,12 @@ LOGGER.addHandler(logging.StreamHandler(sys.stdout))
 
 
 class TestTable(LavaTable):
-    def __init__(self, *args, **kwargs):
-        super(TestTable, self).__init__(*args, **kwargs)
+    pass
 
 
 class TestLengthTable(LavaTable):
     def __init__(self, *args, **kwargs):
-        super(TestLengthTable, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.length = 25
 
 
@@ -57,13 +56,13 @@ class TestTestTable(TestCase):
 
 class TestJobTable(JobTable):
     def __init__(self, *args, **kwargs):
-        super(TestJobTable, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.length = 18
 
 
 class TestDeviceTable(DeviceTable):
     def __init__(self, *args, **kwargs):
-        super(TestDeviceTable, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.length = 8
 
 

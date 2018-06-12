@@ -35,7 +35,7 @@ from lava_results_app.tables import (
 class UserQueryTable(LavaTable):
 
     def __init__(self, *args, **kwargs):
-        super(UserQueryTable, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.length = 10
 
     name = tables.Column()
@@ -78,7 +78,7 @@ class UserQueryTable(LavaTable):
 class OtherQueryTable(UserQueryTable):
 
     def __init__(self, *args, **kwargs):
-        super(OtherQueryTable, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.length = 10
 
     name = tables.Column()
@@ -106,7 +106,7 @@ class OtherQueryTable(UserQueryTable):
 class GroupQueryTable(UserQueryTable):
 
     def __init__(self, *args, **kwargs):
-        super(GroupQueryTable, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.length = 10
         self.base_columns['query_group'].visible = False
 
@@ -150,7 +150,7 @@ class QueryTestJobTable(JobTable):
     omit.orderable = False
 
     def __init__(self, query, user, *args, **kwargs):
-        super(QueryTestJobTable, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.length = 25
         if query and query.is_accessible_by(user):
             self.base_columns['omit'].visible = True
@@ -176,7 +176,7 @@ class QueryTestCaseTable(SuiteTable):
     omit.orderable = False
 
     def __init__(self, query, user, *args, **kwargs):
-        super(QueryTestCaseTable, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.length = 25
         if query and query.is_accessible_by(user):
             self.base_columns['omit'].visible = True
@@ -204,7 +204,7 @@ class QueryTestSuiteTable(ResultsTable):
     omit.orderable = False
 
     def __init__(self, query, user, *args, **kwargs):
-        super(QueryTestSuiteTable, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.length = 25
         if query and query.is_accessible_by(user):
             self.base_columns['omit'].visible = True

@@ -39,7 +39,7 @@ class QueryForm(forms.ModelForm):
 
     def __init__(self, owner, *args, **kwargs):
         is_copy = kwargs.pop('is_copy', None)
-        super(QueryForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if is_copy:
             from copy import deepcopy
             self.instance = deepcopy(self.instance)
@@ -47,7 +47,7 @@ class QueryForm(forms.ModelForm):
             self.instance.pk = None
 
     def save(self, commit=True, **kwargs):
-        instance = super(QueryForm, self).save(commit=commit, **kwargs)
+        instance = super().save(commit=commit, **kwargs)
         return instance
 
     def clean(self):
@@ -90,7 +90,7 @@ class QueryConditionForm(forms.ModelForm):
     )
 
     def __init__(self, *args, **kwargs):
-        super(QueryConditionForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         if "query" in self.initial and \
            self.initial['query'].__class__ == Query:
@@ -100,7 +100,7 @@ class QueryConditionForm(forms.ModelForm):
                 condition_choices)
 
     def save(self, commit=True, **kwargs):
-        return super(QueryConditionForm, self).save(commit=commit, **kwargs)
+        return super().save(commit=commit, **kwargs)
 
     def clean(self):
         form_data = self.cleaned_data

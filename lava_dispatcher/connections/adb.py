@@ -38,7 +38,7 @@ class ConnectAdb(Action):
     description = "connect via adb shell to the device"
 
     def __init__(self):
-        super(ConnectAdb, self).__init__()
+        super().__init__()
         self.session_class = ShellSession
         self.shell_class = ShellCommand
 
@@ -47,7 +47,7 @@ class ConnectAdb(Action):
             return
         if 'adb_serial_number' not in self.job.device:
             self.errors = "device adb serial number missing"
-        super(ConnectAdb, self).validate()
+        super().validate()
         which('adb')
 
     def run(self, connection, max_end_time, args=None):
@@ -79,7 +79,7 @@ class ConnectAdb(Action):
         # ShellSession monitors the pexpect
         connection = self.session_class(self.job, shell)
         connection.connected = True
-        connection = super(ConnectAdb, self).run(connection, args)
+        connection = super().run(connection, args)
         connection.prompt_str = self.parameters['prompts']
         self.set_namespace_data(action='shared', label='shared',
                                 key='connection', value=connection)

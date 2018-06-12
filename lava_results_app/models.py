@@ -1108,7 +1108,7 @@ class Query(models.Model):
         cls.parse_conditions(content_type, conditions)
 
     def save(self, *args, **kwargs):
-        super(Query, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
         if self.is_live:
             # Drop the view.
             QueryMaterializedView.drop(self.id)
@@ -1117,7 +1117,7 @@ class Query(models.Model):
         if not self.is_live:
             # Drop the view.
             QueryMaterializedView.drop(self.id)
-        super(Query, self).delete(*args, **kwargs)
+        super().delete(*args, **kwargs)
 
     def is_accessible_by(self, user):
         if user.is_superuser or self.owner == user or \
@@ -1227,13 +1227,13 @@ class QueryCondition(models.Model):
     )
 
     def save(self, *args, **kwargs):
-        super(QueryCondition, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
         if not self.query.is_live:
             self.query.is_changed = True
             self.query.save()
 
     def delete(self, *args, **kwargs):
-        super(QueryCondition, self).delete(*args, **kwargs)
+        super().delete(*args, **kwargs)
         if not self.query.is_live:
             self.query.is_changed = True
             self.query.save()

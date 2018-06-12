@@ -46,9 +46,6 @@ class ExtendedUserIRCForm(forms.ModelForm):
         fields = ('irc_server', 'irc_handle', 'user')
         widgets = {'user': forms.HiddenInput}
 
-    def save(self, commit=True, **kwargs):
-        return super(ExtendedUserIRCForm, self).save(commit=commit, **kwargs)
-
 
 @BreadCrumb(_("LAVA"))
 def index(request):

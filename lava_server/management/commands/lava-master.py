@@ -146,7 +146,7 @@ class Command(LAVADaemonCommand):
     default_logfile = "/var/log/lava-server/lava-master.log"
 
     def __init__(self, *args, **options):
-        super(Command, self).__init__(*args, **options)
+        super().__init__(*args, **options)
         self.auth = None
         self.controler = None
         self.event_socket = None
@@ -160,7 +160,7 @@ class Command(LAVADaemonCommand):
         self.events = {"canceling": set(), "available_dt": set()}
 
     def add_arguments(self, parser):
-        super(Command, self).add_arguments(parser)
+        super().add_arguments(parser)
         # Important: ensure share/env.yaml is put into /etc/ by setup.py in packaging.
         config = parser.add_argument_group("dispatcher config")
 

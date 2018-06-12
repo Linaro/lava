@@ -1786,7 +1786,7 @@ class TestJob(RestrictedResource):
             raise ValidationError("is_public is set but visibility is not public.")
         elif not self.is_public and self.visibility == TestJob.VISIBLE_PUBLIC:
             raise ValidationError("is_public is not set but visibility is public.")
-        return super(TestJob, self).clean()
+        return super().clean()
 
     def can_view(self, user):
         """

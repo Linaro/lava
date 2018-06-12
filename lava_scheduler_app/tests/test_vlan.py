@@ -25,7 +25,7 @@ from lava_dispatcher.protocols.multinode import MultinodeProtocol
 class VlandFactory(YamlFactory):
 
     def __init__(self):
-        super(VlandFactory, self).__init__()
+        super().__init__()
         self.bbb1 = None
         self.cubie1 = None
         self.bbb_type = None
@@ -50,7 +50,7 @@ class TestVlandSplit(TestCaseWithFactory):
     Same tests as test_submission but converted to use and look for YAML.
     """
     def setUp(self):
-        super(TestVlandSplit, self).setUp()
+        super().setUp()
         self.factory = VlandFactory()
 
     def test_split_vland(self):
@@ -81,7 +81,7 @@ class TestVlandDevices(TestCaseWithFactory):
     Test the matching of vland device requirements with submission YAML
     """
     def setUp(self):
-        super(TestVlandDevices, self).setUp()
+        super().setUp()
         self.factory = VlandFactory()
         self.factory.setUp()
         logger = logging.getLogger('lava-master')
@@ -133,7 +133,7 @@ class TestVlandProtocolSplit(TestCaseWithFactory):
     Test the handling of protocols in dispatcher after splitting the YAML
     """
     def setUp(self):
-        super(TestVlandProtocolSplit, self).setUp()
+        super().setUp()
         self.factory = VlandFactory()
         self.factory.setUp()
 

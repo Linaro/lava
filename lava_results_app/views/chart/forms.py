@@ -32,10 +32,10 @@ class ChartForm(forms.ModelForm):
         widgets = {'owner': forms.HiddenInput}
 
     def __init__(self, owner, *args, **kwargs):
-        super(ChartForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def save(self, commit=True, **kwargs):
-        instance = super(ChartForm, self).save(commit=commit, **kwargs)
+        instance = super().save(commit=commit, **kwargs)
         return instance
 
 
@@ -48,10 +48,10 @@ class ChartQueryForm(forms.ModelForm):
                    'relative_index': forms.HiddenInput}
 
     def __init__(self, user, *args, **kwargs):
-        super(ChartQueryForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def save(self, commit=True, **kwargs):
-        instance = super(ChartQueryForm, self).save(commit=commit, **kwargs)
+        instance = super().save(commit=commit, **kwargs)
         return instance
 
     def clean(self):
@@ -78,4 +78,4 @@ class ChartQueryUserForm(forms.ModelForm):
         exclude = ['user', 'chart_query']
 
     def __init__(self, user, *args, **kwargs):
-        super(ChartQueryUserForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)

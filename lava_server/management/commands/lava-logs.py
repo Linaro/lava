@@ -67,7 +67,7 @@ class Command(LAVADaemonCommand):
     default_logfile = "/var/log/lava-server/lava-logs.log"
 
     def __init__(self, *args, **options):
-        super(Command, self).__init__(*args, **options)
+        super().__init__(*args, **options)
         self.logger = logging.getLogger("lava-logs")
         self.log_socket = None
         self.auth = None
@@ -85,7 +85,7 @@ class Command(LAVADaemonCommand):
         self.ping_interval = TIMEOUT
 
     def add_arguments(self, parser):
-        super(Command, self).add_arguments(parser)
+        super().add_arguments(parser)
 
         net = parser.add_argument_group("network")
         net.add_argument('--socket',

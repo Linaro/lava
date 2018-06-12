@@ -73,7 +73,7 @@ class ExampleAPI(ExposedAPI):
 class CallContextTests(TestCase):
 
     def setUp(self):
-        super(CallContextTests, self).setUp()
+        super().setUp()
         logger = logging.getLogger('linaro-django-xmlrpc-mapper')
         logger.disabled = True
         logger = logging.getLogger('linaro-django-xmlrpc-dispatcher')
@@ -118,7 +118,7 @@ class ExposedAPITests(TestCase):
 class MapperTests(TestCase):
 
     def setUp(self):
-        super(MapperTests, self).setUp()
+        super().setUp()
         self.mapper = Mapper()
 
     def test_register_checks_type(self):
@@ -258,7 +258,7 @@ class TestAPI(ExposedAPI):
 class DispatcherTests(TestCase):
 
     def setUp(self):
-        super(DispatcherTests, self).setUp()
+        super().setUp()
         self.mapper = Mapper()
         self.mapper.register(TestAPI, '')
         self.dispatcher = Dispatcher(self.mapper)
@@ -334,7 +334,7 @@ class DispatcherTests(TestCase):
 class SystemAPITest(TestCase):
 
     def setUp(self):
-        super(SystemAPITest, self).setUp()
+        super().setUp()
         self.mapper = Mapper()
         self.dispatcher = Dispatcher(self.mapper)
         self.context = CallContext(
@@ -570,7 +570,7 @@ class AuthTokenTests(TestCase):
     _INEXISTING_SECRET = "inexisting-secret"
 
     def setUp(self):
-        super(AuthTokenTests, self).setUp()
+        super().setUp()
         self.user = User.objects.get_or_create(username=self._USER)[0]
 
     def test_secret_is_generated(self):

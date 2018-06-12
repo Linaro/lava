@@ -714,19 +714,15 @@ class AdbOverlayUnpack(Action):
     summary = "unpack the overlay on the remote device"
     description = "unpack the overlay over adb"
 
-    def __init__(self):
-        super(AdbOverlayUnpack, self).__init__()
-
     def validate(self):
-        super(AdbOverlayUnpack, self).validate()
+        super().validate()
         if 'adb_serial_number' not in self.job.device:
             self.errors = "device adb serial number missing"
             if self.job.device['adb_serial_number'] == '0000000000':
                 self.errors = "device adb serial number unset"
 
     def run(self, connection, max_end_time, args=None):
-        connection = super(AdbOverlayUnpack, self).run(connection,
-                                                       max_end_time, args)
+        connection = super().run(connection, max_end_time, args)
         if not connection:
             raise LAVABug("Cannot transfer overlay, no connection available.")
         overlay_file = self.get_namespace_data(action='compress-overlay',

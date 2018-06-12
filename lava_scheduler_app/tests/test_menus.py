@@ -22,7 +22,7 @@ class TestPipelineMenu(TestCaseWithFactory):  # pylint: disable=too-many-ancesto
     Test the building and override support of pipeline menus from submission YAML
     """
     def setUp(self):
-        super(TestPipelineMenu, self).setUp()
+        super().setUp()
         self.factory = YamlMenuFactory()
         self.device_type = self.factory.make_device_type(name='mustang-uefi')
 
