@@ -29,15 +29,15 @@ while getopts "qt:n:" opt; do
 done
 
 if [ "$PACKAGES" ] && [ "$QUIET" ]; then
-    DEBIAN_FRONTEND=noninteractive apt update > /dev/null 2>&1
-    DEBIAN_FRONTEND=noninteractive apt upgrade -y > /dev/null 2>&1
+    DEBIAN_FRONTEND=noninteractive apt-get -q update > /dev/null 2>&1
+    DEBIAN_FRONTEND=noninteractive apt-get -q upgrade -y > /dev/null 2>&1
     # install the requested packages.
-    DEBIAN_FRONTEND=noninteractive apt install -y $PACKAGES > /dev/null 2>&1
+    DEBIAN_FRONTEND=noninteractive apt-get -q install -y $PACKAGES > /dev/null 2>&1
 elif [ "$PACKAGES" ]; then
-    DEBIAN_FRONTEND=noninteractive apt update
-    DEBIAN_FRONTEND=noninteractive apt upgrade -y
+    DEBIAN_FRONTEND=noninteractive apt-get -q update
+    DEBIAN_FRONTEND=noninteractive apt-get -q upgrade -y
     # install the requested packages.
-    DEBIAN_FRONTEND=noninteractive apt install -y $PACKAGES
+    DEBIAN_FRONTEND=noninteractive apt-get -q install -y $PACKAGES
 fi
 
 if [ "$LXC_NAME" ]; then
