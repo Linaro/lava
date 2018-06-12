@@ -3,8 +3,6 @@ Database utility functions which use but are not actually models themselves
 Used to allow models.py to be shortened and easier to follow.
 """
 
-from __future__ import unicode_literals
-
 # pylint: disable=wrong-import-order
 
 import os

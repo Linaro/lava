@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 import datetime
 from django.conf import settings
 from django.db.models.signals import post_init, post_save

@@ -21,8 +21,6 @@ Views for the Results application
 Keep to just the response rendering functions
 """
 
-from __future__ import unicode_literals
-
 import os
 import csv
 import logging

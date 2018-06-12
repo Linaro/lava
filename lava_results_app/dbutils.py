@@ -19,8 +19,6 @@
 # pylint: disable=no-member,too-many-locals,too-many-nested-blocks,
 # pylint: disable=too-many-return-statements,ungrouped-imports
 
-from __future__ import unicode_literals
-
 import hashlib
 import os
 import yaml

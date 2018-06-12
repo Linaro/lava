@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 from django.conf.urls import url
 from lava_scheduler_app.views import (
     active_device_list, active_jobs, device_derestrict_device, device_detail,

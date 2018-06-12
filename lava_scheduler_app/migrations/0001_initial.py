@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
 from django.db import models, migrations, DEFAULT_DB_ALIAS, connections
 from django.db.migrations.recorder import MigrationRecorder
 import django.db.models.deletion

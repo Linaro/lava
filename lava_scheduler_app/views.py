@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=too-many-lines,invalid-namlog_e
 
-from __future__ import unicode_literals
-
 from collections import OrderedDict
 import contextlib
 import datetime

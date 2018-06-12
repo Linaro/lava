@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=too-many-lines
 
-from __future__ import unicode_literals
-
 import jinja2
 import logging
 import os

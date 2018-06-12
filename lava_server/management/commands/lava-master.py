@@ -20,8 +20,6 @@
 
 # pylint: disable=wrong-import-order
 
-from __future__ import unicode_literals
-
 import contextlib
 import errno
 import jinja2

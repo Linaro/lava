@@ -28,8 +28,6 @@ TestSet can be enabled within a test definition run step
 TestCase is a single lava-test-case record or Action result.
 """
 
-from __future__ import unicode_literals
-
 import logging
 import sys
 import yaml
