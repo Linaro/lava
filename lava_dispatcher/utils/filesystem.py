@@ -115,6 +115,16 @@ def write_bootscript(commands, filename):
         bootscript.close()
 
 
+def _launch_guestfs(guest):
+    # Launch guestfs and raise an InfrastructureError if needed
+    try:
+        guest.launch()
+    except RuntimeError as exc:
+        logger = logging.getLogger('dispatcher')
+        logger.exception(str(exc))
+        raise InfrastructureError("Unable to start libguestfs")
+
+
 @replace_exception(RuntimeError, JobError)
 def prepare_guestfs(output, overlay, size):
     """
@@ -131,7 +141,7 @@ def prepare_guestfs(output, overlay, size):
     guest = guestfs.GuestFS(python_return_dict=True)
     guest.disk_create(output, "qcow2", size * 1024 * 1024)
     guest.add_drive_opts(output, format="qcow2", readonly=False)
-    guest.launch()
+    _launch_guestfs(guest)
     devices = guest.list_devices()
     if len(devices) != 1:
         raise InfrastructureError("Unable to prepare guestfs")
@@ -166,7 +176,7 @@ def prepare_install_base(output, size):
     guest = guestfs.GuestFS(python_return_dict=True)
     guest.disk_create(output, "raw", size)
     guest.add_drive_opts(output, format="raw", readonly=False)
-    guest.launch()
+    _launch_guestfs(guest)
     devices = guest.list_devices()
     if len(devices) != 1:
         raise InfrastructureError("Unable to prepare guestfs")
@@ -186,7 +196,7 @@ def copy_out_files(image, filenames, destination):
         raise LAVABug('filenames must be a list')
     guest = guestfs.GuestFS(python_return_dict=True)
     guest.add_drive_ro(image)
-    guest.launch()
+    _launch_guestfs(guest)
     devices = guest.list_devices()
     if len(devices) != 1:
         raise InfrastructureError("Unable to prepare guestfs")
@@ -208,7 +218,7 @@ def copy_in_overlay(image, root_partition, overlay):
     """
     guest = guestfs.GuestFS(python_return_dict=True)
     guest.add_drive(image)
-    guest.launch()
+    _launch_guestfs(guest)
 
     if root_partition:
         partitions = guest.list_partitions()
@@ -351,7 +361,7 @@ def copy_overlay_to_sparse_fs(image, overlay):
     subprocess.check_output(['/usr/bin/simg2img', image, ext4_img],
                             stderr=subprocess.STDOUT)
     guest.add_drive(ext4_img)
-    guest.launch()
+    _launch_guestfs(guest)
     devices = guest.list_devices()
     if not devices:
         raise InfrastructureError("Unable to prepare guestfs")
