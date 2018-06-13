@@ -20,6 +20,9 @@ while getopts "qt:n:" opt; do
         q)
             QUIET=1
             ;;
+        t)
+            TEMPLATE="$OPTARG"
+            ;;
         n)
             LXC_NAME="$OPTARG"
             ;;
