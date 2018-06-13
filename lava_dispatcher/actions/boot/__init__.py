@@ -243,6 +243,7 @@ class AutoLoginAction(Action):
                     'kernel-start-message', self.job.device.get_constant('kernel-start-message'))
             if kernel_start_message:
                 connection.prompt_str = [kernel_start_message]
+
             if self.params and self.params.get('boot_message', None):
                 self.logger.warning("boot_message is being deprecated in favour of kernel-start-message in constants")
                 connection.prompt_str = [self.params.get('boot_message')]
@@ -252,9 +253,10 @@ class AutoLoginAction(Action):
                 if isinstance(connection.prompt_str, str):
                     connection.prompt_str = [connection.prompt_str]
                 connection.prompt_str = connection.prompt_str + error_messages
-            res = self.wait(connection)
-            if res != 0:
-                raise InfrastructureError('matched a bootloader error message: %s' % connection.prompt_str[res])
+            if kernel_start_message:
+                res = self.wait(connection)
+                if res != 0:
+                    raise InfrastructureError('matched a bootloader error message: %s' % connection.prompt_str[res])
 
         def check_prompt_characters(chk_prompt):
             if not any([True for c in DISTINCTIVE_PROMPT_CHARACTERS if c in chk_prompt]):
