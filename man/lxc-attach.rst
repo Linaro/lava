@@ -33,9 +33,9 @@ Examples
 ********
 
 To update the package repository, use
-  lxc-attach -n container -- apt-get -y update
+  lxc-attach -n container -- apt-get -y -q update
 
-The above will run "apt-get -y update" directly on the host.
+The above will run "apt-get -y -q update" directly on the host.
 
 To open up a shell, use
   lxc-attach -n container

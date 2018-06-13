@@ -338,7 +338,8 @@ class LxcAptUpdateAction(DeployAction):
         connection = super().run(connection, max_end_time, args)
         lxc_name = self.get_namespace_data(action='lxc-create-action',
                                            label='lxc', key='name')
-        cmd = ['lxc-attach', '-n', lxc_name, '--', 'apt-get', '-y', 'update']
+        cmd = ['lxc-attach', '-n', lxc_name, '--', 'apt-get', '-y', '-q',
+               'update']
         if not self.run_command(cmd, allow_silent=True):
             raise JobError("Unable to apt-get update in lxc container")
         return connection
@@ -368,8 +369,8 @@ class LxcAptInstallAction(DeployAction):
         lxc_name = self.get_namespace_data(action='lxc-create-action',
                                            label='lxc', key='name')
         packages = self.parameters['packages']
-        cmd = ['lxc-attach', '-v', 'DEBIAN_FRONTEND=noninteractive', '-n', lxc_name,
-               '--', 'apt-get', '-y', 'install'] + packages
+        cmd = ['lxc-attach', '-v', 'DEBIAN_FRONTEND=noninteractive', '-n',
+               lxc_name, '--', 'apt-get', '-y', '-q', 'install'] + packages
         if not self.run_command(cmd):
             raise JobError("Unable to install using apt-get in lxc container")
         return connection
