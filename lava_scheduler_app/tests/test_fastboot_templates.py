@@ -51,6 +51,7 @@ class TestFastbootTemplates(BaseTemplate.BaseTemplateCases):
         data = """{% extends 'x15.jinja2' %}
 {% set adb_serial_number = 'R32D300FRYP' %}
 {% set fastboot_serial_number = 'R32D300FRYP' %}
+{% set interrupt_prompt = "interrupt bootloader" %}
 """
         self.assertTrue(self.validate_data('x15-01', data))
         test_template = prepare_jinja_template('x15-01', data)
@@ -63,6 +64,9 @@ class TestFastbootTemplates(BaseTemplate.BaseTemplateCases):
         self.assertIn('u-boot', template_dict['actions']['boot']['methods'])
         self.assertIn('parameters', template_dict['actions']['boot']['methods']['u-boot'])
         self.assertIn('interrupt_prompt', template_dict['actions']['boot']['methods']['u-boot']['parameters'])
+        self.assertEqual(
+            'interrupt bootloader',
+            template_dict['actions']['boot']['methods']['u-boot']['parameters']['interrupt_prompt'])
         # fastboot deploy to eMMC
         self.assertIn('mmc', template_dict['actions']['boot']['methods']['u-boot'])
         self.assertIn('commands', template_dict['actions']['boot']['methods']['u-boot']['mmc'])
@@ -74,6 +78,8 @@ class TestFastbootTemplates(BaseTemplate.BaseTemplateCases):
                 # x15 needs both consoles enabled.
                 self.assertIn('ttyS2', command)
                 self.assertNotIn('console=ttyO2', command)
+        for board in template_dict['device_info']:
+            self.assertEqual(template_dict['fastboot_serial_number'], board['board_id'])
 
     def test_sharkl2_template(self):
         data = """{% extends 'sharkl2.jinja2' %}
