@@ -4,6 +4,8 @@ import yaml
 import jinja2
 import unittest
 import logging
+import subprocess
+from nose.tools import nottest
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
@@ -576,6 +578,20 @@ class TestExtendsSubmit(TestCaseWithFactory):
         self.assertIsNotNone(device1.get_health_check())
 
 
+@nottest
+def check_rpcinfo(server='127.0.0.1'):
+    """
+    Supports the unittest.SkipIf
+    needs to return True if skip, so
+    returns True on failure.
+    """
+    try:
+        subprocess.check_output(['/usr/sbin/rpcinfo', '-u', server, 'nfs', '3'])
+    except (OSError, subprocess.CalledProcessError):
+        return True
+    return False
+
+
 class TestYamlMultinode(TestCaseWithFactory):
 
     def setUp(self):
@@ -618,6 +634,7 @@ class TestYamlMultinode(TestCaseWithFactory):
                 if role == 'server':
                     self.assertEqual(job, yaml.load(open(server_check, 'r')))
 
+    @unittest.skipIf(check_rpcinfo(), "rpcinfo returns non-zero for nfs")
     def test_secondary_connection(self):
         user = self.factory.make_user()
         device_type = self.factory.make_device_type(name='mustang')
@@ -1020,6 +1037,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         )
 
     @unittest.skipIf(not os.path.exists(SYS_CLASS_KVM), "Cannot use --enable-kvm")
+    @unittest.skipIf(check_rpcinfo(), "rpcinfo returns non-zero for nfs")
     def test_multinode_mixed_deploy(self):
         user = self.factory.make_user()
         device_type = self.factory.make_device_type()
