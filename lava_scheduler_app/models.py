@@ -1025,23 +1025,27 @@ def _check_submit_to_device(device_list, user):
     return allow
 
 
-def _check_tags_support(tag_devices, device_list):
+def _check_tags_support(tag_devices, device_list, count=1):
     """
     Combines the Device Ownership list with the requested tag list and
     returns any devices which meet both criteria.
     If neither the job nor the device have any tags, tag_devices will
     be empty, so the check will pass.
+    This function is called to check availability when a test job is submitted;
+    it is called for both single node and multinode jobs.
     :param tag_devices: A list of devices which meet the tag
     requirements
     :param device_list: A list of devices to which the user is able
     to submit a TestJob
+    :param count: Count of devices in the role to check for tag support, prior
+    to scheduling.
     :raise: DevicesUnavailableException if there is no overlap between
     the two sets.
     """
     if len(tag_devices) == 0:
         # no tags requested in the job: proceed.
         return
-    if len(set(tag_devices) & set(device_list)) == 0:
+    if len(set(tag_devices) & set(device_list)) < count:
         raise DevicesUnavailableException(
             "Not enough devices available matching the requested tags.")
 
@@ -1222,7 +1226,7 @@ def _pipeline_protocols(job_data, user, yaml_data=None):  # pylint: disable=too-
                 role_dictionary[role]['tags'] = _get_tag_list(params.get('tags', []))
                 if role_dictionary[role]['tags']:
                     supported = _check_tags(role_dictionary[role]['tags'], device_type=device_type)
-                    _check_tags_support(supported, allowed_devices)
+                    _check_tags_support(supported, allowed_devices, params['count'])
 
                 # FIXME: other protocols could need to remove devices from 'supported' here
 

@@ -682,6 +682,33 @@ class TestYamlMultinode(TestCaseWithFactory):
                 else:
                     self.fail('unexpected role')
 
+        # all devices available
+        user = self.factory.make_user()
+        device_type = self.factory.make_device_type()
+
+        self.factory.make_device(device_type, 'fakeqemu1',
+                                 tags=[self.factory.ensure_tag('tap')])
+        self.factory.make_device(device_type, 'fakeqemu2',
+                                 tags=[self.factory.ensure_tag('virtio')])
+        job_list = TestJob.from_yaml_and_user(yaml.dump(submission), user)
+        self.assertEqual(len(job_list), 2)
+        # not enough devices with correct tags
+        roles_dict['client']['count'] = 2
+        submission['protocols'][MultinodeProtocol.name]['roles'] = roles_dict
+        self.factory.make_device(device_type, 'fakeqemu3',
+                                 tags=[self.factory.ensure_tag('wrong-tag')])
+        self.assertRaises(
+            DevicesUnavailableException,
+            TestJob.from_yaml_and_user,
+            yaml.dump(submission),
+            user
+        )
+        # enough devices with correct tags
+        self.factory.make_device(device_type, 'fakeqemu4',
+                                 tags=[self.factory.ensure_tag('tap')])
+        job_list = TestJob.from_yaml_and_user(yaml.dump(submission), user)
+        self.assertEqual(len(job_list), 3)
+
     def test_multinode_lxc(self):
         submission = yaml.load(open(
             os.path.join(os.path.dirname(__file__), 'sample_jobs', 'lxc-multinode.yaml'), 'r'))
