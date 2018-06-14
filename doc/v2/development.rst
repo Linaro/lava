@@ -6,75 +6,10 @@ LAVA development
 ################
 
 Before you start, ensure you've read the
-:ref:`development_pre_requisites` and :ref:`criteria`.
+:ref:`development_pre_requisites`, :ref:`contribution_guide` and
+:ref:`criteria`.
 
 .. seealso:: :ref:`contribute_upstream`
-
-.. _development_workflow:
-
-Patch Submissions and workflow
-******************************
-
-This is a short guide on how to send your patches to LAVA. The LAVA
-team uses the gerrit_ code review system to review changes.
-
-.. _gerrit: https://review.linaro.org/
-
-If you do not already have a Linaro account, you will first need to
-:ref:`register`.
-
-So the first step will be logging in to gerrit_ and uploading you SSH
-public key there.
-
-Obtaining the repository
-========================
-
-There is a single LAVA codebase, including the code available as
-``lava-server`` and ``lava-dispatcher`` binary packages.
-
-::
-
-    git clone https://git.linaro.org/git/lava/lava.git
-    cd lava
-
-There is also ``lavacli`` which is gaining more support for operations
-involving the :ref:`dispatcher_design`::
-
-    git clone https://git.linaro.org/git/lava/lavacli.git
-    cd lavacli
-
-Setting up git-review
-=====================
-
-If you have not done so already, ``git review`` needs to be setup for
-each clone of each source::
-
-    git review -s
-
-.. _developer_topic_branches:
-
-Create a topic branch
-=====================
-
-We recommend **never** working off the master branch (unless you are a
-git expert and really know what you are doing). You should create a
-topic branch for each logically distinct change you work on.
-
-.. note:: Unless your change **directly** depends on changes made in an
-   earlier commit on a branch, this means making a fresh branch for
-   each change with **one commit** per branch.
-
-.. seealso:: :ref:`developer_submitting_new_version` and
-   :ref:`developer_submitting_new_version`
-
-Before you start, make sure your master branch is up to date::
-
-    git checkout master
-    git pull
-
-Now create your topic branch off master::
-
-    git checkout -b my-change master
 
 .. _running_all_unit_tests:
 
@@ -112,21 +47,26 @@ distributions, see :ref:`dev_builds`. See :ref:`writing_tests` for
 information on writing LAVA test jobs to test particular device
 functionality.
 
+.. index:: git commit messages
+
+.. _making_git_changes:
+
 Make your changes
 =================
 
 * Follow PEP8 style for Python code.
-* Make one commit (and hence one review) per logical change.
 * Use one topic branch for each logical change.
-* Include unit tests in the commit of the change being tested.
-* Write good commit messages. There are a number of useful guides:
+* Include new unit tests in the proposed merge request.
+* Write good commit messages.
 
-  * `A note about git commit messages`_
-  * `5 useful tips for a better commit message`_
+  * Describe why the change was made, not what files were changed.
+    The commit message should reflect your intention, not the contents
+    of the commit.
 
   * Avoid putting documentation into the commit message. Keep the
     commit message to a reasonable length (about 10 to 12 lines at
-    most).
+    most). Include changes to the existing documentation in your
+    commit.
 
   * Usage examples need to go into the documentation, not the commit
     message. Everything which is intended to help users to add this
@@ -136,16 +76,6 @@ Make your changes
     message, reviewers will be reading the documentation as well.
 
   * Use comments in the code in preference to detailed commit messages.
-
-  * Avoid putting updates into the commit message for each patch set.
-    The review comments are the correct place for details of what
-    changed at which patch set.
-
-.. _`A note about git commit messages`:
-   https://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html
-
-.. _`5 useful tips for a better commit message`:
-   https://robots.thoughtbot.com/5-useful-tips-for-a-better-commit-message
 
 .. index:: developer: adding unit tests
 
@@ -305,7 +235,8 @@ Once your change is working successfully:
    added any new files in your local change, make sure these have been
    removed. Reproduce the original bug or problem.
 
-#. Build and install a package from your local branch and repeat the tests.
+#. Build and install a package from your local branch and repeat the
+   tests.
 
 lava_dispatcher
 ---------------
@@ -457,53 +388,43 @@ Send your commits for review
 
 From each topic branch, just run::
 
-    git review
+    git push
 
-If you have multiple commits in that topic branch, git review will warn
-you. It's OK to send multiple commits from the same branch, but note
-that:
+#. each merge request is reviewed and approved individually and
 
-#. commits are review and approved individually and
-
-#. later commits  will depend on earlier commits, so if a later commit
+#. later commits will depend on earlier commits, so if a later commit
    is approved and the one before it is not, the later commit will not
    be merged until the earlier one is approved.
 
 #. you are responsible for **rebasing** your branch(es) against updates
-   on master and this can become **much** more difficult when there are
-   multiple commits on one local branch. It can become a **lot** of
-   work to make the correct changes in the correct commit on a single
-   branch.
+   on master and this can become more difficult when there are multiple
+   commits on one local branch.
 
 #. Fixes from comments or unit test failures in one review are **not**
-   acceptable as separate reviews, so don't be tempted to make another
-   commit at the top of the branch.
+   acceptable as separate merge requests.
 
-#. It is common for reviews to go through repeated cycles of comments
-   and updates. This is not a reflection on the usefulness of the
-   change or on any particular contributors, it is a natural evolution
-   of the code. Comments may reflect changes being made in other
-   parallel reviews or reviews merged whilst this change was being
-   reviewed. Contributors may be added to other reviews where the team
-   consider this to be useful for feedback or where the documentation
-   is being updated in areas which relate to your change. The number of
-   comments per review is no indication of the quality of that review
-   and does not affect when the review would be merged.
+#. It is common for merge requests to go through repeated cycles of
+   comments and updates. This is not a reflection on the usefulness of
+   the change or on any particular contributors, it is a natural
+   evolution of the code. Comments may reflect changes being made in
+   other parallel reviews or reviews merged whilst this change was
+   being reviewed. Contributors may be added to other reviews where the
+   team consider this to be useful for feedback or where the
+   documentation is being updated in areas which relate to your change.
+   The number of comments per review is no indication of the quality of
+   that review and does not affect when the review would be merged.
 
 #. It is common for changes to develop merge conflicts during the
-   review process as other reviews are merged. Unfortunately, gerrit
-   does **not** email reviewers when a review gains a merge conflict.
-   The team will usually *ping* the review if it looks like the
-   reviewer has not noticed a merge conflict when the review is
-   considered ready to be merged.
+   review process as other reviews are merged. You are responsible for
+   fixing all merge conflicts in your merge requests.
 
-#. If a review has been given ``-1`` by ``lava-bot``, a reviewer or the
-   author, the team will generally ignore that review unless it relates
-   to parallel work on a bug fix or other feature.
+#. All merge requests must pass all CI tests.
 
 Therefore the recommendations are:
 
-#. **Always** use a separate local branch per commit
+#. **Always** use a separate local branch per change and a new commit
+   for changes on that branch each time branch gets pushed until it
+   is merged.
 
 #. Think carefully about whether to base one local branch on another
    local branch. This is recommended when one change logically extends
@@ -512,109 +433,24 @@ Therefore the recommendations are:
 
 #. Keep all your branches up to date with master **regularly**. It is
    much better to resolve merge conflicts one change at a time instead
-   of having multiple merge commits all in the one rebase operation.
+   of having multiple merge commits all in the one rebase operation
+   when the merge request is finally ready to be merged. GitLab will
+   show a message if a rebase is required but you can also simply
+   rebase your local branch before pushing any new changes.
 
-#. Check gerrit intermittently and ensure that you address **all**
-   comments on the review. LAVA software releases tend to be within the
-   first week of the month. Towards the end of each month, pay
-   particular attention to comments made in gerrit and check if your
-   review has gained a merge conflict. Resolving these problems will
-   make it easier to get your change into the next LAVA release.
+#. Check gitlab periodically and ensure that you address **all**
+   comments on the review.
 
 .. _developer_adding_reviewers:
 
 Adding reviewers
 ================
 
-Reviews submitted for ``lava`` and ``lavacli`` will **automatically**
-have the LAVA software team added as reviewers when the review is first
-submitted.
+The lava group is automatically added as approver for every merge
+request.
 
-Other reviewers can also be added to individual reviews. The Owner of
-the review is always added. Reviewers will get email for all changes
-relating to that review. All reviewers need to :ref:`register`, email
-will go to the ``@linaro.org`` account of that reviewer.
-
-If you know that there are still problems to fix in the review, please
-use the Gerrit interface to reply to the review and give the review a
-score of ``-1`` and summarize your concerns in the comment. This
-indicates to the software team that this review should not be
-considered for merging into master at this time. You may still get
-comments.
-
-Optionally, you can put ``[RFC]`` or similar at the start of your git
-commit message and then amend the message when the review is ready to
-merge.
-
-.. _developer_submitting_new_version:
-
-Submitting a new version of a change
-====================================
-
-When reviewers make comments on your change, you should amend the
-original commit to address the comments, and **not** submit a new
-change addressing the comments while leaving the original one
-untouched.
-
-Gerrit handles this by adding a ChangeId to your commit message. Keep
-this Id unchanged when amending commit messages.
-
-Locally, you can make a separate commit addressing the reviewer
-comments, it's not a problem. But before you resubmit your branch for
-review, you have to rebase your changes against master to end up with a
-single, enhanced commit. For example::
-
-    $ git branch
-      master
-    * my-feature
-    $ git show-branch master my-feature
-    ! [master] Last commit on master
-     ! [my-feature] address reviewer comments
-    --
-     + [my-feature] address reviewer comments
-     + [my-feature^] New feature or bug fix
-    -- [master] Last commit on master
-    $ git rebase -i master
-
-
-``git rebase -i`` will open your ``$EDITOR`` and present you with
-something like this::
-
-    pick xxxxxxx New feature or bug fix
-    pick yyyyyyy address reviewer comments
-
-You want the last commit to be combined with the first and keep the
-first commit message, so you change ``pick`` to ``fixup`` ending up
-with something like this::
-
-    pick xxxxxxx New feature or bug fix
-    fixup yyyyyyy address reviewer comments
-
-If you also want to edit the commit message of the first commit to
-mention something else, change ``pick`` to ``reword`` and you will have
-the chance to do that. Just remember to keep the ``Change-Id``
-unchanged.
-
-**NOTE**: if you want to abort the rebase, just delete everything, save
-the file as empty and exit the ``$EDITOR``.
-
-Now save the file and exit your ``$EDITOR``.
-
-In the end, your original commit will be updated with the changes::
-
-    $ git show-branch master my-feature
-    ! [master] Last commit on master
-     ! [my-feature] New feature or bug fix
-    --
-     + [my-feature] New feature or bug fix
-    -- [master] Last commit on master
-
-
-Note that the "New feature or bug fix" commit is now not the same as
-before since it was modified, so it will have a new hash (``zzzzzzz``
-instead of the original ``xxxxxxx``). But as long as the commit message
-still contains the same ``Change-Id``, gerrit will know it is a new
-version of a previously submitted change.
+Optionally, you can put ``WIP:`` at the start of your git commit
+message and then amend the message when the request is ready to merge.
 
 Handling your local branches
 ============================
@@ -639,49 +475,12 @@ branch. If you are completely sure the branch should still be deleted
 or if the review of this branch was abandoned, use the `-D` option
 instead of `-d` and repeat the command.
 
-Reviewing changes in clean branches
-===================================
-
-If you haven't got a clone handy on the instance to be used for the
-review, prepare a clone as usual.
-
-Gerrit provides a number of ways to apply the changes to be reviewed,
-so set up a test branch as usual - always ensuring that the master
-branch of the clone is up to date before creating the review branch.
-
-::
-
-    $ git checkout master
-    $ git pull
-    $ git checkout -b review-111
-
-To pull in the changes in the review already marked for commit in your
-local branch, use the ``pull`` link in the patch set of the review you
-want to run.
-
-Alternatively, to pull in the changes as plain patches, use the
-``patch``` link and pipe that to ``patch -p1``. In this full example,
-the second patch set of review 159 is applied to the ``review-159``
-branch as a patch set.
-
-::
-
-    $ git checkout master
-    $ git pull
-    $ git checkout -b review-159
-    $ git fetch https://review.linaro.org/lava/lava-server refs/changes/59/159/2 && git format-patch -1 --stdout FETCH_HEAD | patch -p1
-    $ git status
-
-Handle the local branch as normal. If the reviewed change needs
-modification and a new patch set is added, revert the local change and
-apply the new patch set.
-
 Future proofing
-***************
+===============
 
-All developers are encouraged to write code with futuristic changes in
-mind, so that it is easy to do a technology upgrade, which includes
-watching for errors and warnings generated by dependency packages as
+All developers are encouraged to write code with future changes in
+mind, so that it is easy to do a technology upgrade. This includes
+watching for errors and warnings generated by dependency packages, as
 well as upgrading and migrating to newer APIs as a normal part of
 development.
 
@@ -701,7 +500,7 @@ necessary, write code for different versions and separate with:
 .. _use_templates_in_dispatcher:
 
 Use templates to generate device configuration
-**********************************************
+==============================================
 
 One of the technical reasons to merge the lava-dispatcher and
 lava-server source trees into a single source is to allow
@@ -742,7 +541,7 @@ test.
 .. _database_migrations:
 
 Database migrations
-*******************
+===================
 
 The LAVA team recommend using Debian stable but also support testing
 and unstable which have a newer version of `python-django
@@ -778,8 +577,12 @@ See `django docs
 <https://docs.djangoproject.com/en/1.8/topics/migrations/>`_ for more
 information.
 
+.. index:: developer: use python3
+
+.. _use_python3:
+
 Python 3.x
-**********
+==========
 
 Python3 support in LAVA is related to a number of factors:
 
@@ -816,7 +619,7 @@ need to be installed from ``stretch-backports``.
    updates after that point.
 
 XML-RPC changes
-***************
+===============
 
 Each of the installed django apps in ``lava-server`` are able to expose
 functionality using :ref:`XML-RPC <xml_rpc>`.
@@ -847,7 +650,7 @@ functionality using :ref:`XML-RPC <xml_rpc>`.
 .. _lava_instance_settings:
 
 Instance settings
-*****************
+=================
 
 ``/etc/lava-server/instance.conf`` is principally for V1 configuration.
 V2 uses this file only for the database connection settings on the
@@ -863,7 +666,7 @@ uses **JSON** syntax.)
 .. _pylint_tool:
 
 Pylint3
-*******
+=======
 
 `Pylint`_ is a tool that checks for errors in Python code, tries to
 enforce a coding standard and looks for bad code smells. We encourage
@@ -914,7 +717,7 @@ codebase, it still has a high level of false indications, particularly
 when extending an existing model.
 
 pep8
-****
+====
 
 In order to check for `PEP 008`_ compliance the following command is
 recommended::
@@ -930,7 +733,7 @@ recommended::
 .. _unit_tests:
 
 Unit-tests
-**********
+==========
 
 LAVA has set of unit tests which the developers can run on a regular
 basis for each change they make in order to check for regressions if
@@ -958,7 +761,7 @@ To run the tests, use the ci-run / ci-build scripts::
    within a class or module.
 
 LAVA database model visualization
-*********************************
+=================================
 
 LAVA database models can be visualized with the help of
 `django_extensions`_ along with tools such as `pydot`_. In Debian based
@@ -1005,7 +808,7 @@ Other useful features from `django_extensions`_ are as follows:
 .. _developer_access_to_django_shell:
 
 Developer access to django shell
-********************************
+================================
 
 Default configurations use a side-effect of the logging behaviour to
 restrict access to the ``lava-server manage`` operations which typical

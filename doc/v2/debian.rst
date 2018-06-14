@@ -149,14 +149,14 @@ The local version is built (using ``./version.py``) from these components:
 * ``git describe``::
 
    $ git describe
-   2018.7+15.g64824c402
+   2018.7-35-gb022cde9
 
 The latest git hash is a reference to the latest commit. If you have
 not committed local changes (e.g. you are on a local branch based on a
 tag) then the short hash can be used to lookup the commit in the master
 branch, omitting the ``g`` prefix, e.g.::
 
-  https://git.linaro.org/lava/lava.git/commit?id=64824c402
+  https://git.lavasoftware.org/lava/lava/commit/b022cde9
 
 .. _distribution_differences:
 
@@ -212,7 +212,7 @@ From August 2015, LAVA uses git tags without a leading zero on the
 month number, in accordance with PEP440, so the git tag will be
 ``2015.8`` instead of ``2015.07`` used for the previous release tag.
 
-.. index:: developer: python3
+.. index:: developer: python3 dependencies
 
 .. _developer_python3:
 

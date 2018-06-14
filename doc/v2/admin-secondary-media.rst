@@ -262,7 +262,7 @@ A more complete device dictionary would look like:
 Device template example
 =======================
 
-https://git.linaro.org/lava/lava.git/tree/lava_scheduler_app/tests/device-types/base.jinja2
+https://git.lavasoftware.org/lava/lava/blob/master/lava_scheduler_app/tests/device-types/base.jinja2
 
 .. note:: The duplication of ``uboot_interface`` and ``grub_interface`` is yet
    to be fixed in the dispatcher code. Currently, the same interface gets set
@@ -356,7 +356,7 @@ Device dictionary
 Device template example
 =======================
 
-https://git.linaro.org/lava/lava.git/tree/lava_scheduler_app/tests/device-types/base.jinja2
+https://git.lavasoftware.org/lava/lava/blob/master/lava_scheduler_app/tests/device-types/base.jinja2
 
 The template is the same as with :ref:`secondary_media_grub_sata` above.
 

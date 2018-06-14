@@ -448,13 +448,15 @@ Find a similar existing device type
 There are a number of places to check for similar types of device which
 are already supported in LAVA V2.
 
+#. https://master.lavasoftware.org/scheduler/
+
 #. https://staging.validation.linaro.org/scheduler/
 
 #. https://validation.linaro.org/scheduler/
 
 #. https://lng.validation.linaro.org/scheduler/
 
-#. https://git.linaro.org/lava/lava.git/tree/lava_scheduler_app/tests/device-types
+#. https://git.lavasoftware.org/lava/lava/tree/master/lava_scheduler_app/tests/device-types
 
 Check for:
 

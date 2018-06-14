@@ -365,9 +365,9 @@ backports. Subscribe to the :ref:`lava_announce` mailing list for
 details of when new releases are made. Backports will be available
 about a week after the initial release.
 
-Updates for LAVA on Debian Stretch will be uploaded to
-`stretch-backports <http://backports.debian.org/>`_ once this becomes
-available.
+Updates for LAVA on Debian Stretch will be uploaded to `the
+stretch-backports suite <http://backports.debian.org/>`_ once this
+becomes available.
 
 Create an apt source for backports, either by editing ``/etc/apt/sources.list``
 or adding a file with a ``.list`` suffix into ``/etc/apt/sources.list.d/``.

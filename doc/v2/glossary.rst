@@ -5,6 +5,8 @@
 Glossary of terms
 =================
 
+.. seealso:: :ref:`naming_conventions`
+
 ..
    Please add new terms in alphabetical order and feel free to relocate
    existing terms to match. All terms are automatically added to the Sphinx

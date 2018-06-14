@@ -40,7 +40,7 @@ overview to help you know where to look for particular help.
 
 ========================================================================
 
-* :ref:`contents_developer_guide` - LAVA is developed in the open, and
+* :ref:`contents_contribution_guide` - LAVA is developed in the open, and
   contributions are welcome from the community. This guide introduces
   the code structure and design requirements as well as how to
   contribute patches for review.
@@ -85,6 +85,7 @@ First steps using LAVA
    first-job
    explain_first_job
    lavacli
+   gold-standards
    standard-test-jobs
    standard-qemu-stretch
    standard-qemu-kernel
@@ -190,6 +191,33 @@ LAVA administration guide
    lava-tool-issues
    v1removal
 
+.. _contents_contribution_guide:
+
+LAVA Software Community Project Contribution Guide
+==================================================
+
+.. toctree::
+   :maxdepth: 1
+
+   code-of-conduct
+   contribution-intro
+   contribution
+   naming-conventions
+   review-criteria
+   development-intro
+   process
+   development
+   pipeline-design
+   dispatcher-design
+   dispatcher-format
+   pipeline-schema
+   dispatcher-testing
+   debian
+   packaging
+   developer-example
+   scheduler
+   functional_tests
+
 .. _contents_integration_guide:
 
 LAVA device integration guide
@@ -204,28 +232,6 @@ LAVA device integration guide
    integrate-iot
    integrate-uefi
    integration-stories
-
-.. _contents_developer_guide:
-
-LAVA developer guide
-====================
-
-.. toctree::
-   :maxdepth: 1
-
-   development-intro
-   process
-   development
-   pipeline-design
-   dispatcher-design
-   dispatcher-format
-   pipeline-schema
-   dispatcher-testing
-   debian
-   packaging
-   developer-example
-   scheduler
-   functional_tests
 
 .. _contents_migration:
 

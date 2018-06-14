@@ -99,7 +99,7 @@ Download or view the complete example:
 The python script to process the template is based on the LAVA source
 code and only requires Jinja2:
 
-https://git.linaro.org/lava/lava.git/tree/lava_scheduler_app/tests/test_base_templates.py#n22
+https://git.lavasoftware.org/lava/lava/blob/master/lava_scheduler_app/tests/test_base_templates.py#L22
 
 .. literalinclude:: examples/templates/templating.py
      :language: python

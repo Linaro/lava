@@ -102,6 +102,8 @@ retired, in the following steps:
 
 .. _`announced`: https://lists.linaro.org/pipermail/lava-announce/2017-September/000037.html
 
+.. _lava_overview:
+
 LAVA Overview
 #############
 
@@ -111,6 +113,8 @@ Architecture
 ************
 
 .. include:: architecture-v2.rsti
+
+.. _overview_preparation:
 
 Preparation
 ***********
