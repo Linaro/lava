@@ -32,7 +32,7 @@ Recommends: ntp, git, tftpd-hpa, openbsd-inetd, ser2net,
  qemu-system-arm (>= 2.8.0) [amd64 armhf arm64],
  libguestfs-tools (>= 1.32.7) [amd64 i386], nfs-kernel-server, rpcbind,
  u-boot-tools, unzip, xz-utils, lxc (>= 1:2.0.7),
- debootstrap (>= 1.0.86), bridge-utils, rsync, sshfs, dfu-util
+ debootstrap (>= 1.0.86), bridge-utils, rsync, dfu-util
 Suggests: apache2, bzr, img2simg, simg2img
 Description: Linaro Automated Validation Architecture dispatcher
  LAVA is a continuous integration system for deploying operating
@@ -147,12 +147,14 @@ Depends: build-essential, ca-certificates, devscripts, dpkg-dev,
  libjs-jquery-flot (>= 0.8.2), libjs-jquery-ui, python3:any,
  python3-setuptools, python3-dateutil, python3-guestfs, python3-nose,
  python3-netifaces, python3-pexpect (>= 4.2), pep8 | python3-pep8,
- python3-guestfs,  python3-nose, python3-netifaces,
+ python3-guestfs,  python3-nose, python3-netifaces, python3-magic,
  python3-sphinx (>= 1.4), python3-sphinx-bootstrap-theme, python3-requests,
- python3-zmq, python3-yaml, python3-voluptuous (>= 0.8.8),
- docbook-xsl, xsltproc, ${python3:Depends}, ${misc:Depends}
+ python3-zmq, python3-yaml, python3-voluptuous (>= 0.8.8), python3-tz,
+ python3-configobj, python3-pyudev, docbook-xsl, xsltproc,
+ ${python3:Depends}, ${misc:Depends}
 Recommends: sbuild, python3-django-extensions, python3-pydot,
- python3-django-testscenarios, python3-pytest-django
+ python3-django-testscenarios, python3-pytest-django, nfs-kernel-server,
+ lxc, tftpd-hpa, rpcbind, p-boot-tools, telnet, img2simg, simg2img
 Description: Linaro Automated Validation Architecture developer support
  LAVA is a continuous integration system for deploying operating
  systems onto physical and virtual hardware for running tests.
