@@ -21,7 +21,12 @@ from pwd import getpwuid
 import stat
 import subprocess
 
-from django.core.checks import Error, register, Warning
+from django.core.checks import (
+    Error,
+    register,
+    Info,
+    Warning,
+)
 
 from lava_scheduler_app.dbutils import invalid_template
 from lava_scheduler_app.models import Device, DeviceType, validate_job
@@ -103,14 +108,17 @@ def check_permissions(app_configs, **kwargs):
     return errors
 
 
-def _package_status(name, errors):
+def _package_status(name, errors, info=False):
     try:
         out = subprocess.check_output(["dpkg-query", "--status", name],
                                       stderr=subprocess.STDOUT).decode("utf-8").split("\n")
         if out[1] != "Status: install ok installed":
             errors.append(Error('not installed correctly', obj=name))
     except subprocess.CalledProcessError:
-        errors.append(Error('not installed from a Debian package', obj=name))
+        if info:
+            errors.append(Info('not installed from a Debian package', obj=name))
+        else:
+            errors.append(Error('not installed from a Debian package', obj=name))
 
 
 def _package_symlinks(name, errors):
@@ -123,7 +131,7 @@ def _package_symlinks(name, errors):
 def check_packaging(app_configs, **kwargs):
     errors = []
 
-    _package_status("lava-dispatcher", errors)
+    _package_status("lava-dispatcher", errors, info=True)
     _package_status("lava-server", errors)
 
     _package_symlinks("lava_dispatcher", errors)
@@ -143,10 +151,12 @@ def check_services(app_configs, **kwargs):
         'apache2',
         'lava-server-gunicorn',
         'lava-master',
-        'lava-slave',
         'lava-publisher',
         'lava-logs',
         'postgresql',
+    ]
+    optional = [
+        'lava-slave',
     ]
 
     for service in services:
@@ -154,4 +164,10 @@ def check_services(app_configs, **kwargs):
             subprocess.check_call(['systemctl', '-q', 'is-active', service])
         except subprocess.CalledProcessError:
             errors.append(Error("%s service is not active." % service, obj="lava service"))
+
+    for service in optional:
+        try:
+            subprocess.check_call(['systemctl', '-q', 'is-active', service])
+        except subprocess.CalledProcessError:
+            errors.append(Info("%s service is not active." % service, obj="lava service"))
     return errors
