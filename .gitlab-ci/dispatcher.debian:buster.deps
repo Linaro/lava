@@ -1,0 +1,27 @@
+bzr
+git
+# currently missing in debian buster
+#img2simg
+lxc
+nfs-kernel-server
+python3-configobj
+python3-guestfs
+python3-jinja2
+python3-magic
+python3-netifaces
+python3-nose
+python3-pexpect
+python3-pytest
+python3-pyudev
+python3-requests
+python3-tz
+python3-voluptuous
+python3-yaml
+python3-zmq
+schroot
+# currently missing in debian buster
+#simg2img
+telnet
+tftpd-hpa
+u-boot-tools
+xnbd-server

@@ -1,0 +1,149 @@
+stages:
+- short
+- full
+- analysis
+- packaging
+
+# quicktest
+codestyle:
+  stage: short
+  image: debian:9
+  before_script:
+  - apt-get update -qq
+  - apt-get install --no-install-recommends -y pycodestyle
+  script:
+  - pycodestyle --ignore E501,E203,W503 .
+
+test-dispatcher-debian-9:
+  stage: short
+  image: debian:9
+  before_script: &before_script_dispatcher
+  - apt-get update -qq
+  - DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y $(grep -v '^#' .gitlab-ci/dispatcher.debian:9.deps)
+  script: &script_dispatcher
+  - PYTHONPATH=. py.test-3 --cache-clear -v lava_dispatcher/test
+
+test-server-debian-9:
+  stage: short
+  image: debian:9
+  before_script: &before_script_server
+  - apt-get update -qq
+  - DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y $(grep -v '^#' .gitlab-ci/server.debian:9.deps)
+  - DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y $(grep -v '^#' .gitlab-ci/dispatcher.debian:9.deps)
+  script: &script_server
+  - service postgresql start
+  - sudo -u postgres psql -c "CREATE ROLE devel NOSUPERUSER CREATEDB NOCREATEROLE INHERIT LOGIN ENCRYPTED PASSWORD 'devel'"
+  - PYTHONPATH=. py.test-3 --cache-clear --ds lava_server.settings.development -v lava_scheduler_app/tests lava_results_app/tests linaro_django_xmlrpc/tests.py
+  - PYTHONPATH=. py.test-3 --cache-clear -v lava_common/test
+
+# Full test suite
+test-dispatcher-debian-10:
+  stage: full
+  image: debian:buster
+  before_script:
+  - apt-get update -qq
+  - DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y $(grep -v '^#' .gitlab-ci/dispatcher.debian:buster.deps)
+  script: *script_dispatcher
+
+test-server-debian-10:
+  stage: full
+  image: debian:buster
+  before_script:
+  - apt-get update -qq
+  - DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y $(grep -v '^#' .gitlab-ci/server.debian:buster.deps)
+  - DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y $(grep -v '^#' .gitlab-ci/dispatcher.debian:buster.deps)
+  script: *script_server
+
+test-dispatcher-ubuntu-18.04:
+  stage: full
+  image: ubuntu:18.04
+  before_script: *before_script_dispatcher
+  script: *script_dispatcher
+
+test-server-ubuntu-18.04:
+  stage: full
+  image: ubuntu:18.04
+  before_script: *before_script_server
+  script: *script_server
+
+test-dispatcher-ubuntu-18.10:
+  stage: full
+  image: ubuntu:18.10
+  before_script: *before_script_dispatcher
+  script: *script_dispatcher
+
+test-server-ubuntu-18.10:
+  stage: full
+  image: ubuntu:18.10
+  before_script: *before_script_server
+  script: *script_server
+
+# coverage
+coverage:
+  stage: analysis
+  image: debian:buster
+  before_script:
+  - apt-get update -qq
+  - DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y $(grep -v '^#' .gitlab-ci/server.debian:buster.deps)
+  - DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y $(grep -v '^#' .gitlab-ci/dispatcher.debian:buster.deps)
+  - apt-get install --no-install-recommends -y python3-pytest python3-pytest-cov
+  coverage: '/^TOTAL.+ (\d+\.\d+)%$/'
+  script:
+  - service postgresql start
+  - sudo -u postgres psql -c "CREATE ROLE devel NOSUPERUSER CREATEDB NOCREATEROLE INHERIT LOGIN ENCRYPTED PASSWORD 'devel'"
+  - PYTHONPATH=. py.test-3 --cache-clear -v --cov --cov-report= lava_dispatcher/test
+  - PYTHONPATH=. py.test-3 --cache-clear -v --ds lava_server.settings.development --cov --cov-append --cov-report= lava_scheduler_app/tests lava_results_app/tests linaro_django_xmlrpc/tests.py
+  - PYTHONPATH=. py.test-3 --cache-clear -v --cov --cov-append --cov-report=term --cov-report=html lava_common/test
+  artifacts:
+    paths:
+    - htmlcov
+
+# static analysis with bandit
+# Integrated only in GitLab EE (with some format changes)
+sast:
+  stage: analysis
+  image: debian:buster
+  before_script:
+  - apt-get update -qq
+  - apt-get install --no-install-recommends -y python3-bandit
+  script:
+  - bandit -a vuln -f json -x lava_common/test,lava_dispatcher/test,lava_results_app/tests,lava_scheduler_app/tests -r . -o gl-sast-report.json || true
+  artifacts:
+    paths: [gl-sast-report.json]
+
+# prospector check
+prospector:
+  stage: analysis
+  image: debian:buster
+  before_script:
+  - apt-get update -qq
+  - apt-get install --no-install-recommends -y python3-pip python3-setuptools
+  - pip3 install prospector
+  script:
+  - prospector -o json . > gl-prospector.json || true
+  artifacts:
+    paths: [gl-prospector.json]
+
+# Build the doc
+doc:
+  stage: packaging
+  image: debian:9
+  before_script:
+  - apt-get update -qq
+  - apt-get install --no-install-recommends -y git make python3 python3-sphinx python3-sphinx-bootstrap-theme
+  script:
+  - make -C doc/v2 html
+  artifacts:
+    paths:
+    - doc/v2/_build/html
+
+debian-pkg:
+  stage: packaging
+  image: debian:9
+  before_script:
+  - apt-get update -qq
+  - DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y $(grep -v '^#' .gitlab-ci/server.debian:9.deps)
+  - DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y $(grep -v '^#' .gitlab-ci/dispatcher.debian:9.deps)
+  - DEBIAN_FRONTEND=noninteractive apt-get install -y devscripts debhelper node-uglify python3-sphinx python3-sphinx-bootstrap-theme
+  script:
+  - ./share/debian-dev-build.sh -p lava -a amd64 -b master -o build
