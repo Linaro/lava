@@ -45,7 +45,7 @@ find . -name '*.pyc' -delete
 rm -rf ./.cache/
 rm -rf ./__init__.py
 rm -rf lava.egg-info/
-find . -name __pycache__ -exec rmdir "{}" \; || true
+find . -name __pycache__ -exec rmdir "{}" \; 2>/dev/null || true
 
 if [ -n "${CLEAN}" ]
 then
@@ -82,6 +82,6 @@ fi
 
 if [ -z "${DISPATCH}" -a -z "${TEMPLATE}" -a -n "${PYTEST}" ]
 then
-    PYTHONPATH=. pytest-3 --cache-clear --disable-pytest-warnings --ds lava_server.settings.development -v lava_scheduler_app lava_results_app linaro_django_xmlrpc/tests.py
-    PYTHONPATH=. pytest-3 --cache-clear --disable-pytest-warnings -v lava_dispatcher
+    PYTHONPATH=. pytest-3 --cache-clear --disable-pytest-warnings --ds lava_server.settings.development -v lava_scheduler_app/tests lava_results_app/tests linaro_django_xmlrpc/tests.py
+    PYTHONPATH=. pytest-3 --cache-clear --disable-pytest-warnings -v lava_dispatcher/test
 fi
