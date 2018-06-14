@@ -19,7 +19,7 @@ set -e
 
 case "$1" in
     configure)
-        python3 ./share/postinst.py
+        python3 /usr/share/lava-server/postinst.py
         if [ -f /etc/apache2/sites-enabled/lava-server.conf ]; then
             apache2ctl restart
         fi
