@@ -92,8 +92,13 @@ class LxcAction(DeployAction):  # pylint:disable=too-many-instance-attributes
 
     def validate(self):
         super().validate()
-        self.logger.info("lxc, installed at version: %s",
-                         debian_package_version(pkg='lxc', split=False))
+        lxc_version = debian_package_version(pkg='lxc', split=False)
+        if lxc_version is not '':
+            self.logger.info("lxc, installed at version: %s", lxc_version)
+        else:
+            self.logger.info("lava-lxc-mocker, installed at version: %s",
+                             debian_package_version(pkg='lava-lxc-mocker',
+                                                    split=False))
         protocols = [protocol.name for protocol in self.job.protocols]
         if LxcProtocol.name not in protocols:
             self.logger.debug("Missing protocol '%s' in %s",
