@@ -3,7 +3,7 @@
 set -x
 set -e
 
-while getopts ":pdtyc" opt; do
+while getopts ":pdstyc" opt; do
   case $opt in
     p)
       # pep8 only
@@ -12,6 +12,10 @@ while getopts ":pdtyc" opt; do
     d)
       # lava_dispatcher only
       DISPATCH=true
+      ;;
+    s)
+      # lava_server only
+      SERVER=true
       ;;
     t)
       # template tests only
@@ -30,6 +34,7 @@ while getopts ":pdtyc" opt; do
       echo "-c - clean targets only"
       echo "-p - clean and pep8 only"
       echo "-d - clean, pep8 and dispatcher only"
+      echo "-s - clean, pep8 and server only"
       echo "-t - clean, pep8 and templates only"
       echo "Invalid option: -$OPTARG" >&2
       exit 1
@@ -65,9 +70,14 @@ if [ -z "${DISPATCH}"  -a -z "${TEMPLATE}" -a -z "${PYTEST}" ]
 then
     echo "If it exists, a broken test database will be deleted without prompting."
     python3 ./lava_server/manage.py test --noinput -v 2 lava_scheduler_app linaro_django_xmlrpc.tests lava_results_app
+    if [ -n "${SERVER}" ]
+    then
+        exit
+    fi
     python3 -m unittest discover -v lava_dispatcher/test
     exit
 fi
+
 
 if [ -n "${DISPATCH}" -a  -z "${TEMPLATE}" -a -z "${PYTEST}" ]
 then
