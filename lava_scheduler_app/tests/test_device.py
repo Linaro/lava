@@ -6,6 +6,7 @@ import jinja2
 import logging
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.admin.models import LogEntry
+from django.db.models import Q
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
@@ -130,6 +131,19 @@ class DeviceTypeTest(TestCaseWithFactory):
                 print(data)  # for easier debugging - use the online yaml parser
                 self.fail("%s: %s" % (template_name, exc))
             self.assertIsInstance(yaml_data, dict)
+
+    def test_retired_invalid_template(self):
+        name = "beaglebone-black"
+        dt = DeviceType(name=name)
+        dt.save()
+        dt.refresh_from_db()
+        device = Device(device_type=dt, hostname='bbb-01', health=Device.HEALTH_RETIRED)
+        device.save()
+        device.refresh_from_db()
+        self.assertEqual([], list(Device.objects.filter(Q(device_type=dt), ~Q(health=Device.HEALTH_RETIRED))))
+        self.assertIsNotNone([d for d in Device.objects.filter(device_type=dt)])
+        self.assertTrue(Device.CONFIG_PATH.startswith(self.basedir))
+        self.assertFalse(invalid_template(device.device_type))
 
     def test_bbb_valid_template(self):
         name = "beaglebone-black"
