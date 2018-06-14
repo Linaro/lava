@@ -42,15 +42,15 @@ class TestDeviceParser(StdoutTestCase):  # pylint: disable=too-many-public-metho
         kvm01 = yaml.load(rendered)
         try:
             self.assertIsNotNone(kvm01['actions'])
-        except:  # pylint: disable=bare-except
+        except Exception:
             self.fail("missing actions block for device")
         try:
             self.assertIsNotNone(kvm01['actions']['boot'])
-        except:  # pylint: disable=bare-except
+        except Exception:
             self.fail("missing boot block for device")
         try:
             self.assertIsNotNone(kvm01['actions']['deploy'])
-        except:  # pylint: disable=bare-except
+        except Exception:
             self.fail("missing boot block for device")
         self.assertTrue('qemu' in kvm01['actions']['boot']['methods'])
         self.assertTrue('image' in kvm01['actions']['deploy']['methods'])

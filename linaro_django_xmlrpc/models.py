@@ -302,7 +302,7 @@ class Mapper(object):
             return
         try:
             obj = cls(context)
-        except:
+        except Exception:
             # TODO: Perhaps this should be an APPLICATION_ERROR?
             self.logger.exception("unable to instantiate API class %r", cls)
             return
@@ -388,7 +388,7 @@ class Dispatcher(object):
             raise xmlrpc.client.Fault(
                 FaultCodes.ServerError.INVALID_XML_RPC,
                 "Unable to decode request")
-        except:
+        except Exception:
             raise xmlrpc.client.Fault(
                 FaultCodes.ServerError.INTERNAL_XML_RPC_ERROR,
                 "Unable to decode request")

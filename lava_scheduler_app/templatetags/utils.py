@@ -229,7 +229,7 @@ def markup_metadata(key, value):
 def can_view(record, user):
     try:
         return record.can_view(user)
-    except:
+    except Exception:
         return False
 
 

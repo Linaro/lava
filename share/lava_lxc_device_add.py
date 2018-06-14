@@ -112,7 +112,7 @@ def main():
                      uniq_str, device, exc)
         logger.close(linger=LINGER)  # pylint: disable=no-member
         return 2
-    except:  # pylint: disable=bare-except
+    except Exception:
         logger.close(linger=LINGER)  # pylint: disable=no-member
         return 3
 

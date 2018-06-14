@@ -98,7 +98,7 @@ class BreadCrumb(object):
         """
         try:
             return self.name.format(**kwargs)
-        except:
+        except Exception:
             logging.exception(
                 "Unable to construct breadcrumb name for view %r", self.view)
             raise
@@ -116,7 +116,7 @@ class BreadCrumb(object):
             return reverse(
                 self.view,
                 args=[kwargs[name] for name in self.needs])
-        except:
+        except Exception:
             logging.exception(
                 "Unable to construct breadcrumb URL for view %r", self.view)
             raise

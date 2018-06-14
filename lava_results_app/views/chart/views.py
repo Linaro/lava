@@ -463,7 +463,7 @@ def chart_query_order_update(request, name):
             chart_query = ChartQuery.objects.get(pk=chart_query_id)
             chart_query.relative_index = index
             chart_query.save()
-    except:
+    except Exception:
         return HttpResponse("fail", content_type='application/json')
 
     return HttpResponse("success", content_type='application/json')

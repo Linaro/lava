@@ -2066,8 +2066,7 @@ class TestJob(RestrictedResource):
                         object_id=testdata.id,
                         name=xaxis_attribute).values_list('value', flat=True)[0]
 
-            # FIXME: bare except
-            except:  # There's no attribute, skip this result.
+            except Exception:  # There's no attribute, skip this result.
                 pass
 
         return attribute
@@ -2684,7 +2683,7 @@ class NotificationRecipient(models.Model):
         else:
             try:
                 return self.user.extendeduser.irc_handle
-            except:
+            except Exception:
                 return None
 
     @property
@@ -2694,7 +2693,7 @@ class NotificationRecipient(models.Model):
         else:
             try:
                 return self.user.extendeduser.irc_server
-            except:
+            except Exception:
                 return None
 
 

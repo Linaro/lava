@@ -52,7 +52,7 @@ then
     exit 0
 fi
 
-pep8 --ignore E501,E722 .
+pep8 --ignore E501 .
 
 if [ -n "${PEP8}" ]
 then
