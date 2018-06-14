@@ -367,9 +367,8 @@ common factors - both those which trigger a failure and those which do
 not.
 
 When investigating intermittent errors, see if the error can be
-provoked in a health check and then use :ref:`looping mode
-<looping_mode>` to generate data on how often the error occurs whilst
-keeping the test job identical.
+provoked in a health check and then use looping mode to generate data
+on how often the error occurs whilst keeping the test job identical.
 
 .. seealso:: :ref:`change_one_thing`
 

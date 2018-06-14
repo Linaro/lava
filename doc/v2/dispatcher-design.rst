@@ -28,9 +28,6 @@ prior to merging into master. There is also a `staging instance
 <http://staging.validation.linaro.org>`_ for testing of the current master
 branch and release candidates for the next production release.
 
-Devices indicate their support for pipeline jobs in the :ref:`detailed device
-information <device_owner_help>` for each device and device type.
-
 Pipeline Architecture
 *********************
 

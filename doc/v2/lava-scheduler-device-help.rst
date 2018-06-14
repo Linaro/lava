@@ -47,9 +47,8 @@ Static device information
   device.
 
 * **Description** - Free text description of this individual device.
-  This field can be used by the :term:`device owner` to give more
-  information about the device. This field can be edited by the lab
-  administrators.
+  This field can be used to give more information about the device.
+  This field can be edited by the lab administrators.
 
 * **Device version** - Optional field which can be edited by the lab
   administrators.

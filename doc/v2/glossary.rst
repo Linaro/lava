@@ -18,7 +18,7 @@ Glossary of terms
 **C** [ :term:`chart` ] [ :term:`ci loop` ]
 
 **D** [ :term:`device` ] [ :term:`device dictionary` ]
-[ :term:`device owner` ] [:term:`device status transition` ]
+[:term:`device status transition` ]
 [ :term:`device tag` ] [ :term:`device type` ] [ :term:`developer image` ]
 [ :term:`dispatcher` ] [ :term:`distributed deployment` ] [ :term:`DTB` ]
 [ :term:`DUT` ]
@@ -119,14 +119,6 @@ Glossary of terms
 
     .. seealso:: :ref:`create_device_dictionary` and
       :ref:`viewing_device_dictionary_content`.
-
-  device owner
-    A device owner has permission to change the status of a particular device
-    and update the free text description of a device. Note that superusers of
-    the LAVA instance are always able to submit jobs to and administer any
-    devices on that instance.
-
-    .. seealso:: :ref:`device_owner_help` and :ref:`owner_actions`.
 
   device status transition
     A record of when a device changed :ref:`device_status`, who caused the
