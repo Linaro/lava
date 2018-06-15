@@ -45,12 +45,12 @@
 <p>To view the full job list click <a href="{{ list_url }}">here</a>.</p>
 
 {% else %}
-<p>Paste your job definition here. Alternatively, you can paste a URL to your job definition file.</p>
+<p>Paste your job definition here.</p>
 
 <form action="" method="post">
   {% csrf_token %}
   <div>
-    <textarea id="definition-input" name="definition-input" placeholder="Enter your job definition or link to a job definition here.">{{ definition_input }}</textarea>
+    <textarea id="definition-input" name="definition-input" placeholder="Enter your job definition here.">{{ definition_input }}</textarea>
     <div id="busyIndicator"></div>
     <div>
       <div id="valid_container">
@@ -80,9 +80,6 @@
 
 {% block scripts %}
 <script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery-linedtextarea.min.js"></script>
-<script type="text/javascript">
-  var remote_definition_url = '{% url 'lava.scheduler.get_remote_definition' %}';
-</script>
 {% if not job_id %}
 <script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/job-submit.min.js"></script>
 {% endif %}

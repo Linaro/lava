@@ -107,13 +107,6 @@ from lava_scheduler_app.tables import (
     RunningTable,
 )
 
-if sys.version_info[0] == 2:
-    # Python 2.x
-    from urllib2 import urlopen
-elif sys.version_info[0] == 3:
-    # For Python 3.0 and later
-    from urllib.request import urlopen
-
 # pylint: disable=too-many-attributes,too-many-ancestors,too-many-arguments,too-many-locals
 # pylint: disable=too-many-statements,too-many-branches,too-many-return-statements
 # pylint: disable=no-self-use,too-many-nested-blocks,too-few-public-methods
@@ -1801,23 +1794,6 @@ def job_annotate_failure(request, pk):
             'job': job,
         },
         request=request))
-
-
-@post_only
-def get_remote_definition(request):
-    """Fetches remote job definition file."""
-    url = request.POST.get("url")
-
-    try:
-        data = urlopen(url).read()
-        # Validate that the data at the location is really JSON or YAML.
-        # This is security based check so noone can misuse this url.
-        yaml.load(data)
-    except Exception as e:
-        return HttpResponse(simplejson.dumps(str(e)),
-                            content_type="application/json")
-
-    return HttpResponse(data)
 
 
 class RecentJobsView(JobTableView):
