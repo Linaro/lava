@@ -21,6 +21,7 @@
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
 import argparse
+import contextlib
 import errno
 import fcntl
 import glob
@@ -92,10 +93,8 @@ def create_environ(env):
             environ = {}
         # Remove some variables (that might not exist)
         for var in conf.get("removes", {}):
-            try:
+            with contextlib.suppress(KeyError):
                 del environ[var]
-            except KeyError:
-                pass
         # Override
         environ.update(conf.get("overrides", {}))
     return environ
@@ -306,11 +305,9 @@ class JobsDB(object):
             return None
 
     def delete(self, job_id):
-        try:
+        with contextlib.suppress(sqlite3.Error):
             self.conn.execute("DELETE FROM jobs WHERE id=?", (str(job_id), ))
             self.conn.commit()
-        except sqlite3.Error:
-            pass
 
     def all_ids(self):
         jobs = self.conn.execute("SELECT * FROM jobs")
@@ -636,12 +633,9 @@ def destroy_context(context, sock, read_pipe, write_pipe):
     :param write_pipe: The write pipe to close.
     """
     LOG.info("[EXIT] Closing sock and pipes, dropping messages")
-    try:
+    with contextlib.suppress(OSError):
         os.close(read_pipe)
         os.close(write_pipe)
-    except OSError:
-        # Silently ignore possible errors.
-        pass
     sock.close(linger=0)
     context.term()
 

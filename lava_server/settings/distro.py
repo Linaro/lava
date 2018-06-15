@@ -1,5 +1,6 @@
 # Django settings for django_hello project used on Debian systems.
 
+import contextlib
 import django
 import os
 import re
@@ -12,12 +13,10 @@ from lava_server.settings.secret_key import get_secret_key
 
 
 # Load the setting file and add the variables to the current context
-try:
+with contextlib.suppress(AttributeError, ValueError):
     with open("/etc/lava-server/settings.conf", "r") as f_conf:
         for (k, v) in simplejson.load(f_conf).items():
             globals()[k] = v
-except (AttributeError, ValueError):
-    pass
 
 # Fix mount point
 # Remove the leading slash and keep only one trailing slash

@@ -1,3 +1,4 @@
+import contextlib
 import re
 import requests
 import sys
@@ -497,7 +498,7 @@ def _validate_primary_connection_power_commands(data_object):
     ]
 
     # debug, tests don't pass. write docs.
-    try:
+    with contextlib.suppress(KeyError):
         ssh_host = data_object['actions']['deploy']['methods']['ssh']['host']
         if ssh_host:
             if 'commands' in data_object:
@@ -505,8 +506,6 @@ def _validate_primary_connection_power_commands(data_object):
                     if command in data_object['commands']:
                         raise SubmissionException(
                             "When primary connection is used, power control commands (%s) should not be specified." % ", ".join(power_control_commands))
-    except KeyError:
-        pass  # no primary connection setup, skip
 
 
 def validate_device(data_object):

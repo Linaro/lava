@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=too-many-lines
 
+import contextlib
 import jinja2
 import logging
 import os
@@ -1747,11 +1748,8 @@ class TestJob(RestrictedResource):
         if original_job:
             # Add old job absolute url to metadata
             job_url = str(original_job.get_absolute_url())
-            try:
+            with contextlib.suppress(Site.DoesNotExist, ImproperlyConfigured):
                 site = Site.objects.get_current()
-            except (Site.DoesNotExist, ImproperlyConfigured):
-                pass
-            else:
                 job_url = "http://%s%s" % (site.domain, job_url)
 
             job_data.setdefault("metadata", {}).setdefault("job.original", job_url)
@@ -1847,11 +1845,8 @@ class TestJob(RestrictedResource):
 
     def _generate_summary_mail(self):
         domain = '???'
-        try:
+        with contextlib.suppress(Site.DoesNotExist, ImproperlyConfigured):
             site = Site.objects.get_current()
-        except (Site.DoesNotExist, ImproperlyConfigured):
-            pass
-        else:
             domain = site.domain
         url_prefix = 'http://%s' % domain
         return render_to_string(
@@ -1860,11 +1855,8 @@ class TestJob(RestrictedResource):
 
     def _generate_cancellation_mail(self, user):
         domain = '???'
-        try:
+        with contextlib.suppress(Site.DoesNotExist, ImproperlyConfigured):
             site = Site.objects.get_current()
-        except (Site.DoesNotExist, ImproperlyConfigured):
-            pass
-        else:
             domain = site.domain
         url_prefix = 'http://%s' % domain
         return render_to_string(
@@ -2055,7 +2047,7 @@ class TestJob(RestrictedResource):
         from lava_results_app.models import NamedTestAttribute, TestData
         attribute = None
         if xaxis_attribute:
-            try:
+            with contextlib.suppress(Exception):
                 testdata = TestData.objects.filter(testjob=self).first()
                 if testdata:
                     attribute = NamedTestAttribute.objects.filter(
@@ -2063,9 +2055,6 @@ class TestJob(RestrictedResource):
                             TestData),
                         object_id=testdata.id,
                         name=xaxis_attribute).values_list('value', flat=True)[0]
-
-            except Exception:  # There's no attribute, skip this result.
-                pass
 
         return attribute
 
@@ -2137,11 +2126,9 @@ class TestJob(RestrictedResource):
                     notification_recipient.irc_server = recipient["to"][
                         "server"]
 
-                try:
+                # Ignore unique constraint violation.
+                with contextlib.suppress(IntegrityError):
                     notification_recipient.save()
-                except IntegrityError:
-                    # Ignore unique constraint violation.
-                    pass
 
         else:
             # You can do "callbacks only" without having recipients, in that
@@ -2150,13 +2137,11 @@ class TestJob(RestrictedResource):
                "callback" not in notify_data:
                 # But if there's no callback and no recipients then we add a
                 # submitter as a default recipient.
-                try:
+                # Ignore unique constraint violation.
+                with contextlib.suppress(IntegrityError):
                     notification_recipient = NotificationRecipient.objects.create(
                         user=self.submitter,
                         notification=notification)
-                except IntegrityError:
-                    # Ignore unique constraint violation.
-                    pass
 
         # Add callbacks.
         if "callbacks" in notify_data:
@@ -2248,13 +2233,11 @@ class TestJob(RestrictedResource):
         kwargs["job"] = self
         kwargs["url_prefix"] = "http://%s" % utils.get_domain()
         # Get lava.job result if available
-        try:
+        with contextlib.suppress(TestCase.DoesNotExist):
             lava_job_obj = TestCase.objects.get(suite__job=self,
                                                 suite__name="lava",
                                                 name="job")
             kwargs["lava_job_result"] = lava_job_obj.action_metadata
-        except TestCase.DoesNotExist:
-            pass
 
         kwargs["query"] = {}
         if self.notification.query_name or self.notification.entity:

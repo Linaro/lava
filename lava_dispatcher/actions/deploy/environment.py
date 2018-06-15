@@ -18,6 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import contextlib
 import os
 import yaml
 
@@ -86,10 +87,8 @@ class DeployDeviceEnvironment(Action):
 
         # Remove some variables (that might not exist)
         for var in conf.get("removes", {}):
-            try:
+            with contextlib.suppress(KeyError):
                 del environ[var]
-            except KeyError:
-                pass
 
         # Override
         environ.update(conf.get("overrides", {}))

@@ -18,6 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import contextlib
 import csv
 
 from django.core.management.base import (
@@ -197,11 +198,9 @@ class Command(BaseCommand):
         online = options['online']
         tags = options['tags']
 
-        try:
+        with contextlib.suppress(Device.DoesNotExist):
             Device.objects.get(hostname=hostname)
             raise CommandError("Device '%s' already exists" % hostname)
-        except Device.DoesNotExist:
-            pass
 
         try:
             dt = DeviceType.objects.get(name=device_type)

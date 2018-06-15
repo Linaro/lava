@@ -1212,15 +1212,13 @@ def job_detail(request, pk):
 
         # Get lava.job result if available
         lava_job_result = None
-        try:
+        with contextlib.suppress(TestCase.DoesNotExist):
             lava_job_obj = TestCase.objects.get(suite__job=job,
                                                 suite__name="lava",
                                                 name="job")
             # Only print it if it's a failure
             if lava_job_obj.result == TestCase.RESULT_FAIL:
                 lava_job_result = lava_job_obj.action_metadata
-        except TestCase.DoesNotExist:
-            pass
 
         data.update({
             'log_data': log_data if log_data else [],
@@ -2253,11 +2251,9 @@ def similar_jobs(request, pk):
                 job_field_value = job_field_value.hostname
 
             # For dates, use date of the job, not the exact moment in time.
-            try:
+            with contextlib.suppress(AttributeError):
                 job_field_value = job_field_value.date()
                 operator = QueryCondition.ICONTAINS
-            except AttributeError:  # it's not a date.
-                pass
 
         else:  # NamedTestAttribute
             try:

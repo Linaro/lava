@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Lava Server.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 import errno
 import glob
 import os
@@ -116,12 +117,10 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
         ------------
         The health-check
         """
-        try:
+        with contextlib.suppress(DeviceType.DoesNotExist):
             dt = DeviceType.objects.get(name=name)
             if dt.owners_only and not dt.some_devices_visible_to(self.user):
                 raise xmlrpc.client.Fault(404, "Device-type '%s' was not found." % name)
-        except DeviceType.DoesNotExist:
-            pass
 
         # Filename should not be a path or starting with a dot
         if os.path.basename(name) != name or name[0] == ".":
@@ -163,12 +162,10 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
         ------------
         The device-type configuration
         """
-        try:
+        with contextlib.suppress(DeviceType.DoesNotExist):
             dt = DeviceType.objects.get(name=name)
             if dt.owners_only and not dt.some_devices_visible_to(self.user):
                 raise xmlrpc.client.Fault(404, "Device-type '%s' was not found." % name)
-        except DeviceType.DoesNotExist:
-            pass
 
         # Filename should not be a path or starting with a dot
         if os.path.basename(name) != name or name[0] == ".":

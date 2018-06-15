@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Lava Server.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 import datetime
 import simplejson
 
@@ -53,7 +54,7 @@ class QueryForm(forms.ModelForm):
     def clean(self):
         form_data = self.cleaned_data
 
-        try:
+        with contextlib.suppress(KeyError, Query.DoesNotExist):
             # Existing (or archived) Query validataion.
             existing_query = Query.objects.get(name=form_data["name"],
                                                owner=form_data["owner"])
@@ -67,11 +68,6 @@ class QueryForm(forms.ModelForm):
                     self.add_error(
                         "name",
                         "Query with this owner and name already exists.")
-        except KeyError:
-            # form_data will pick up the rest of validation errors.
-            pass
-        except Query.DoesNotExist:
-            pass
 
         return form_data
 

@@ -18,6 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import contextlib
 import csv
 
 from django.core.management.base import BaseCommand, CommandError, CommandParser
@@ -90,11 +91,9 @@ class Command(BaseCommand):
 
     def handle_add(self, hostname, description, health_str):
         """ Create a worker """
-        try:
+        with contextlib.suppress(Worker.DoesNotExist):
             Worker.objects.get(hostname=hostname)
             raise CommandError("Worker already exists with hostname %s" % hostname)
-        except Worker.DoesNotExist:
-            pass
 
         if health_str == "ACTIVE":
             health = Worker.HEALTH_ACTIVE

@@ -16,9 +16,12 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 import os
+
 from lava_server.settings.config_file import ConfigFile
 from lava_server.settings.common import *
+
 
 # Activate debugging
 DEBUG = True
@@ -78,11 +81,9 @@ SECRET_KEY = '00000000000000000000000000000000000000000000000000'
 # like SQL queries and timings for each request. It also supports
 # multi-threaded or multi-process server so some degree of parallelism can be
 # achieved.
-try:
+with contextlib.suppress(ImportError):
     import devserver
     INSTALLED_APPS += ['devserver']
-except ImportError:
-    pass
 
 USE_DEBUG_TOOLBAR = False
 

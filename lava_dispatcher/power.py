@@ -21,6 +21,7 @@
 # List just the subclasses supported for this base strategy
 # imported by the parser to populate the list of subclasses.
 
+import contextlib
 
 from lava_common.exceptions import (
     InfrastructureError,
@@ -307,16 +308,13 @@ class FinalizeAction(Action):
         The internal_pipeline of FinalizeAction is special - it needs to run even in the case of error / cancel.
         """
         self.ran = True
-        try:
+        with contextlib.suppress(Exception):
             connection = super().run(connection, max_end_time, args)
             if connection:
                 connection.finalise()
 
-        except Exception as exc:  # pylint: disable=unused-variable,broad-except
-            pass
-        finally:
-            for protocol in self.job.protocols:
-                protocol.finalise_protocol(self.job.device)
+        for protocol in self.job.protocols:
+            protocol.finalise_protocol(self.job.device)
         return connection
 
     def cleanup(self, connection):

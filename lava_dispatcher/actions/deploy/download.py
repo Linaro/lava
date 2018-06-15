@@ -22,6 +22,7 @@
 # This class is used for all downloads, including images and individual files for tftp.
 # python2 only
 
+import contextlib
 import errno
 import math
 import os
@@ -526,10 +527,8 @@ class ScpDownloadAction(DownloadHandler):
                                % (self.url.geturl(), process.stderr.read()))
         finally:
             if process is not None:
-                try:
+                with contextlib.suppress(OSError):
                     process.kill()
-                except OSError:
-                    pass
 
 
 class LxcDownloadAction(Action):

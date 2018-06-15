@@ -1132,11 +1132,9 @@ class Query(models.Model):
 
 @receiver(pre_save, sender=Query)
 def limit_update_signal(sender, instance, **kwargs):
-    try:
+    # If the object does not exists, this is a new query: ignore
+    with contextlib.suppress(sender.DoesNotExist):
         query = sender.objects.get(pk=instance.pk)
-    except sender.DoesNotExist:
-        pass  # New query, ignore.
-    else:
         if not query.limit == instance.limit:  # Field has changed
             instance.is_changed = True
 

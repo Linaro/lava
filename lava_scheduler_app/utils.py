@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA Scheduler.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 import copy
 import errno
 import jinja2
@@ -55,11 +56,8 @@ class IRCHandleNotFoundError(IRCSendError):
 
 def get_domain():
     domain = '???'
-    try:
+    with contextlib.suppress(Site.DoesNotExist, ImproperlyConfigured):
         site = Site.objects.get_current()
-    except (Site.DoesNotExist, ImproperlyConfigured):
-        pass
-    else:
         domain = site.domain
 
     return domain

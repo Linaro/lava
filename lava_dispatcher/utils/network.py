@@ -23,6 +23,7 @@
 # List just the subclasses supported for this base strategy
 # imported by the parser to populate the list of subclasses.
 
+import contextlib
 import os
 import netifaces
 import random
@@ -52,10 +53,8 @@ def dispatcher_ip(dispatcher_config):
     Retrieves the IP address of the interface associated
     with the current default gateway.
     """
-    try:
+    with contextlib.suppress(KeyError, TypeError):
         return dispatcher_config["dispatcher_ip"]
-    except (KeyError, TypeError):
-        pass
     gateways = netifaces.gateways()
     if 'default' not in gateways:
         raise InfrastructureError("Unable to find dispatcher 'default' gateway")
@@ -86,14 +85,12 @@ def get_free_port(dispatcher_config):
     :return: port number
     """
     port = None
-    try:
+    with contextlib.suppress(KeyError, TypeError):
         dcport = dispatcher_config["nbd_server_port"]
         if 'auto' in dcport:
             pass
         elif dcport.isdigit():
             return dcport
-    except (KeyError, TypeError):
-        pass
     # use random
     rng = random.Random()
     for _ in range(10):

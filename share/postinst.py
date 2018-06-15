@@ -18,7 +18,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
+import contextlib
 import django
 import os
 import psycopg2
@@ -103,15 +103,11 @@ def db_setup(config, pg_admin_username, pg_admin_password):
     # reuse the connection to manipulate DB.
     cursor = conn.cursor()
 
-    try:
+    with contextlib.suppress(psycopg2.ProgrammingError):
         cursor.execute("CREATE ROLE devel NOSUPERUSER CREATEDB NOCREATEROLE INHERIT LOGIN ENCRYPTED PASSWORD 'devel'")
-    except psycopg2.ProgrammingError:
-        pass
 
-    try:
+    with contextlib.suppress(psycopg2.ProgrammingError):
         cursor.execute("""CREATE DATABASE OWNER devel devel""")
-    except psycopg2.ProgrammingError:
-        pass
 
     if db_existed_before:
         run(['lava-server', 'manage', 'drop_materialized_views'],

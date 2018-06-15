@@ -18,6 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import contextlib
 import csv
 import glob
 import os
@@ -126,11 +127,9 @@ class Command(BaseCommand):
     def handle_add(self, device_type, alias, health_denominator,
                    health_frequency):
         """ Add a device type """
-        try:
+        with contextlib.suppress(DeviceType.DoesNotExist):
             DeviceType.objects.get(name=device_type)
             raise CommandError("Device-type '%s' already exists" % device_type)
-        except DeviceType.DoesNotExist:
-            pass
 
         aliases = []
         alias_item = None
