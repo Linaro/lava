@@ -225,6 +225,7 @@ LAVA developer guide
    packaging
    developer-example
    scheduler
+   functional_tests
 
 .. _contents_migration:
 
