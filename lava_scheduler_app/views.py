@@ -1460,7 +1460,7 @@ def job_status(request, pk):
 def job_pipeline_timing(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
     try:
-        logs = yaml.load(open(os.path.join(job.output_dir, "output.yaml")))
+        logs = yaml.load(open(os.path.join(job.output_dir, "output.yaml")), Loader=yaml.CLoader)
     except IOError:
         raise Http404
 
