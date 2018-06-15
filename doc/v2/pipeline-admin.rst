@@ -195,6 +195,10 @@ Not all devices of one device-type will necessarily need fixed IPv4 addresses
 to be configured in the device dictionary. Admins should consider the use of
 :term`device tags`.
 
+.. index:: storage, filesystem storage
+
+.. _temporary_filesystem_storage:
+
 Providing temporary filesystem storage
 ======================================
 
@@ -220,6 +224,8 @@ abbreviation for USB Mass Storage).
    exported block device which are necessary for the device to reboot and
    execute another test job successfully. Not all devices can support such
    temporary storage.
+
+.. seealso:: :ref:`device_dictionary_exported_parameters`
 
 .. _dispatcher_configuration:
 

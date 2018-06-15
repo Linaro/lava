@@ -115,6 +115,8 @@ of contents returned by `get-pipeline-device-config` in `lava-tool`. This file
 is not intended for admin support and cannot be used to modify the
 :term:`device dictionary` itself.
 
+.. index:: storage_info, device_ip, device_mac
+
 .. _device_dictionary_exported_parameters:
 
 Exported parameters
