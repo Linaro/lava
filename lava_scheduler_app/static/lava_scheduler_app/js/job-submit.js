@@ -18,11 +18,7 @@ $(window).ready(
             // Need a timeout since paste event does not give the content
             // of the clipboard.
             setTimeout(function(){
-                if (is_url($("#definition-input").val()) && $("#definition-input").val().split("\n").length == 1) {
-                    load_url($("#definition-input").val());
-                } else {
-                    validate_input();
-                }
+              validate_input();
             },100);
         });
 
@@ -43,27 +39,6 @@ validate_input = function() {
     if ($("#definition-input").val() != "") {
         validate_job_definition($("#definition-input").val());
     }
-}
-
-load_url = function(url) {
-    // Loads definition content if URL is provided in the text area.
-    $.ajax({
-        type: "POST",
-        url: remote_definition_url,
-        data: {
-            "url": url.trim(),
-            "csrfmiddlewaretoken": $("[name='csrfmiddlewaretoken']").val()
-        },
-        success: function(data) {
-            try {
-                $("#definition-input").val(data);
-                validate_input();
-            } catch (e) {
-                validate_definition_callback(e);
-                return;
-            }
-        }
-    });
 }
 
 validate_job_definition = function(data) {
@@ -119,9 +94,4 @@ select_error_line = function(error) {
             line_number * (parseInt($("#lineno1").css(
                 "height")) - 1) - ($("#definition-input").height() / 2));
     }
-}
-
-is_url = function (str) {
-    var regexp = /^(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/
-    return regexp.test(str);
 }
