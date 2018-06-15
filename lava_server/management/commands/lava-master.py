@@ -393,7 +393,7 @@ class Command(LAVADaemonCommand):
             self.dispatcher_alive(hostname)
 
     def export_definition(self, job):  # pylint: disable=no-self-use
-        job_def = yaml.load(job.definition)
+        job_def = yaml.safe_load(job.definition)
         job_def['compatibility'] = job.pipeline_compatibility
 
         # no need for the dispatcher to retain comments
@@ -417,7 +417,7 @@ class Command(LAVADaemonCommand):
     def start_job(self, job, options):
         # Load job definition to get the variables for template
         # rendering
-        job_def = yaml.load(job.definition)
+        job_def = yaml.safe_load(job.definition)
         job_ctx = job_def.get('context', {})
 
         device = job.actual_device

@@ -435,7 +435,7 @@ def _validate_vcs_parameters(data_objects):
 
 def _download_raw_yaml(url):
     try:
-        return yaml.load(requests.get(url, timeout=INCLUDE_URL_TIMEOUT).content)
+        return yaml.safe_load(requests.get(url, timeout=INCLUDE_URL_TIMEOUT).content)
     except requests.RequestException as exc:
         raise SubmissionException(
             "Section 'include' must contain valid URL: %s" % exc)
@@ -473,7 +473,7 @@ def handle_include_option(data_object):
 def validate_submission(data_object):
     """
     Validates a python object as a TestJob submission
-    :param data: Python object, e.g. from yaml.load()
+    :param data: Python object, e.g. from yaml.safe_load()
     :return: True if valid, else raises SubmissionException
     """
     try:
@@ -512,7 +512,7 @@ def _validate_primary_connection_power_commands(data_object):
 def validate_device(data_object):
     """
     Validates a python object as a pipeline device configuration
-    e.g. yaml.load(`lava-server manage device-dictionary --hostname host1 --export`)
+    e.g. yaml.safe_load(`lava-server manage device-dictionary --hostname host1 --export`)
     To validate a device_type template, a device dictionary needs to be created.
     :param data: Python object representing a pipeline Device.
     :return: True if valid, else raises SubmissionException

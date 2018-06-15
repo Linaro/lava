@@ -118,7 +118,7 @@ class JobParser(object):
     # pylint: disable=too-many-locals,too-many-statements
     def parse(self, content, device, job_id, logger, dispatcher_config,
               env_dut=None):
-        self.loader = yaml.Loader(content)
+        self.loader = yaml.SafeLoader(content)
         self.loader.compose_node = self.compose_node
         self.loader.construct_mapping = self.construct_mapping
         data = self.loader.get_single_data()
@@ -129,7 +129,7 @@ class JobParser(object):
         # Load the dispatcher config
         job.parameters['dispatcher'] = {}
         if dispatcher_config is not None:
-            config = yaml.load(dispatcher_config)
+            config = yaml.safe_load(dispatcher_config)
             if isinstance(config, dict):
                 job.parameters['dispatcher'] = config
 

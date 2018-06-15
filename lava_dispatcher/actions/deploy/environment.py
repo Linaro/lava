@@ -47,7 +47,7 @@ class DeployDeviceEnvironment(Action):
         if 'env_dut' in self.job.parameters and self.job.parameters['env_dut']:
             # Check that the file is valid yaml
             try:
-                yaml.load(self.job.parameters['env_dut'])
+                yaml.safe_load(self.job.parameters['env_dut'])
             except (TypeError, yaml.scanner.ScannerError) as exc:
                 self.errors = exc
                 return
@@ -78,7 +78,7 @@ class DeployDeviceEnvironment(Action):
 
     def _create_environment(self):
         """Generate the env variables for the device."""
-        conf = yaml.load(self.env) if self.env != '' else {}
+        conf = yaml.safe_load(self.env) if self.env != '' else {}
         if conf.get("purge", False):
             environ = {}
         else:

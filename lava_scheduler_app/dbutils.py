@@ -73,7 +73,7 @@ def testjob_submission(job_definition, user, original_job=None):
     if json_data:
         # explicitly convert to YAML.
         # JSON cannot have comments anyway.
-        job_definition = yaml.dump(yaml.load(job_definition))
+        job_definition = yaml.dump(yaml.safe_load(job_definition))
 
     validate_job(job_definition)
     # returns a single job or a list (not a QuerySet) of job objects.
@@ -160,7 +160,7 @@ def load_devicetype_template(device_type_name, raw=False):
         data = template.render()
         if not data:
             return None
-        return data if raw else yaml.load(data)
+        return data if raw else yaml.safe_load(data)
     except (jinja2.TemplateError, yaml.error.YAMLError):
         return None
 

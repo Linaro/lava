@@ -51,7 +51,7 @@ class TestMetaTypes(TestCaseWithFactory):
         TestJob.objects.all().delete()
         job = TestJob.from_yaml_and_user(
             self.factory.make_job_yaml(), self.user)
-        job_def = yaml.load(job.definition)
+        job_def = yaml.safe_load(job.definition)
         job_ctx = job_def.get('context', {})
         job_ctx.update({'no_kvm': True})  # override to allow unit tests on all types of systems
         device = Device.objects.get(hostname='fakeqemu1')
@@ -187,7 +187,7 @@ class TestMetaTypes(TestCaseWithFactory):
     def test_repositories(self):  # pylint: disable=too-many-locals
         job = TestJob.from_yaml_and_user(
             self.factory.make_job_yaml(), self.user)
-        job_def = yaml.load(job.definition)
+        job_def = yaml.safe_load(job.definition)
         job_ctx = job_def.get('context', {})
         job_ctx.update({'no_kvm': True})  # override to allow unit tests on all types of systems
         device = Device.objects.get(hostname='fakeqemu1')
@@ -238,7 +238,7 @@ class TestMetaTypes(TestCaseWithFactory):
             'VARIABLE_NAME_2': "second value"
         }
         job = TestJob.from_yaml_and_user(yaml.dump(data), self.user)
-        job_def = yaml.load(job.definition)
+        job_def = yaml.safe_load(job.definition)
         job_ctx = job_def.get('context', {})
         job_ctx.update({'no_kvm': True})  # override to allow unit tests on all types of systems
         device = Device.objects.get(hostname='fakeqemu1')
@@ -271,7 +271,7 @@ class TestMetaTypes(TestCaseWithFactory):
         with open(multi_test_file, 'r') as test_support:
             data = test_support.read()
         job = TestJob.from_yaml_and_user(data, self.user)
-        job_def = yaml.load(job.definition)
+        job_def = yaml.safe_load(job.definition)
         job_ctx = job_def.get('context', {})
         job_ctx.update({'no_kvm': True})  # override to allow unit tests on all types of systems
         device = Device.objects.get(hostname='fakeqemu1')
@@ -311,7 +311,7 @@ class TestMetaTypes(TestCaseWithFactory):
         ]
         test_block['test']['definitions'] = smoke
         job = TestJob.from_yaml_and_user(yaml.dump(data), self.user)
-        job_def = yaml.load(job.definition)
+        job_def = yaml.safe_load(job.definition)
         job_ctx = job_def.get('context', {})
         job_ctx.update({'no_kvm': True})  # override to allow unit tests on all types of systems
         device = Device.objects.get(hostname='fakeqemu1')

@@ -85,7 +85,7 @@ def create_environ(env):
     """
     Generate the env variables for the job.
     """
-    conf = yaml.load(env) if env else None
+    conf = yaml.safe_load(env) if env else None
     environ = dict(os.environ)
     if conf:
         if conf.get("purge", False):
@@ -791,12 +791,12 @@ def handle_start(msg, jobs, sock, master, zmq_config):
             job.send_start_ok(sock)
     else:
         # Pretty print configuration
-        dispatcher_str = str(yaml.load(dispatcher_config)) if dispatcher_config else ""
-        env_str = str(yaml.load(env)) if env else ""
-        env_dut_str = str(yaml.load(env_dut)) if env_dut else ""
+        dispatcher_str = str(yaml.safe_load(dispatcher_config)) if dispatcher_config else ""
+        env_str = str(yaml.safe_load(env)) if env else ""
+        env_dut_str = str(yaml.safe_load(env_dut)) if env_dut else ""
 
         LOG.info("[%d] Starting job", job_id)
-        LOG.debug("[%d]         : %s", job_id, yaml.load(job_definition))
+        LOG.debug("[%d]         : %s", job_id, yaml.safe_load(job_definition))
         LOG.debug("[%d] device  : %s", job_id, device_definition)
         LOG.debug("[%d] dispatch: %s", job_id, dispatcher_str)
         LOG.debug("[%d] env     : %s", job_id, env_str)

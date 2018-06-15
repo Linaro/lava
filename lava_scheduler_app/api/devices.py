@@ -158,7 +158,7 @@ class SchedulerDevicesAPI(ExposedV2API):
         job_ctx = None
         if context is not None:
             try:
-                job_ctx = yaml.load(context)
+                job_ctx = yaml.safe_load(context)
             except yaml.YAMLError as exc:
                 raise xmlrpc.client.Fault(
                     400, "Job Context '%s' is not valid: %s" % (context, str(exc)))

@@ -167,7 +167,7 @@ class LavaSystemAPI(SystemAPI):
         if os.path.exists(filename):
             try:
                 with open(filename, 'r') as output:
-                    master = yaml.load(output)
+                    master = yaml.safe_load(output)
             except yaml.YAMLError as exc:
                 return master
         if master:
@@ -178,7 +178,7 @@ class LavaSystemAPI(SystemAPI):
         if os.path.exists(filename):
             try:
                 with open(filename, 'r') as output:
-                    log_config = yaml.load(output)
+                    log_config = yaml.safe_load(output)
             except yaml.YAMLError as exc:
                 return log_config
         if log_config:
