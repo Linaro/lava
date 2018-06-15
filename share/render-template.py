@@ -82,7 +82,7 @@ def main():
     print(config)
     print("Parsed config")
     print("=============")
-    print(yaml.load(config))
+    print(yaml.safe_load(config))
 
 
 if __name__ == '__main__':

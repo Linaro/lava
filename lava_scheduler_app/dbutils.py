@@ -151,7 +151,7 @@ def load_devicetype_template(device_type_name, raw=False):
         data = template.render()
         if not data:
             return None
-        return data if raw else yaml.load(data)
+        return data if raw else yaml.safe_load(data)
     except (jinja2.TemplateError, yaml.error.YAMLError):
         return None
 

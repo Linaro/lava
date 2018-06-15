@@ -367,7 +367,7 @@ def map_metadata(description, job):
     """
     logger = logging.getLogger('lava-master')
     try:
-        submission_data = yaml.load(job.definition)
+        submission_data = yaml.safe_load(job.definition)
         description_data = yaml.load(description)
     except yaml.YAMLError as exc:
         logger.exception("[%s] %s", job.id, exc)

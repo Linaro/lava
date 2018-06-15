@@ -612,7 +612,7 @@ files to see how this is done. e.g. for QEMU from
         job_ctx = {'arch': 'amd64'}
         test_template = prepare_jinja_template('staging-qemu-01', data)
         rendered = test_template.render(**job_ctx)
-        template_dict = yaml.load(rendered)
+        template_dict = yaml.safe_load(rendered)
         self.assertEqual(
             'c',
             template_dict['actions']['boot']['methods']['qemu']['parameters']['boot_options']['boot_order']

@@ -121,7 +121,7 @@ class Tag(models.Model):
 
 def validate_job(data):
     try:
-        yaml_data = yaml.load(data)
+        yaml_data = yaml.safe_load(data)
     except yaml.YAMLError as exc:
         raise SubmissionException("Loading job submission failed: %s." % exc)
 
@@ -874,7 +874,7 @@ class Device(RestrictedResource):
         if output_format == "yaml":
             return device_template
         else:
-            return yaml.load(device_template)
+            return yaml.safe_load(device_template)
 
     def minimise_configuration(self, data):
         """
@@ -1379,7 +1379,7 @@ class TestJob(RestrictedResource):
         """
         if not self.is_multinode or not self.definition:
             return False
-        job_data = yaml.load(self.definition)
+        job_data = yaml.safe_load(self.definition)
         return 'connection' in job_data
 
     tags = models.ManyToManyField(Tag, blank=True)
@@ -1685,7 +1685,7 @@ class TestJob(RestrictedResource):
     def essential_role(self):  # pylint: disable=too-many-return-statements
         if not self.is_multinode:
             return False
-        data = yaml.load(self.definition)
+        data = yaml.safe_load(self.definition)
         # would be nice to use reduce here but raising and catching TypeError is slower
         # than checking 'if .. in ' - most jobs will return False.
         if 'protocols' not in data:
@@ -1702,7 +1702,7 @@ class TestJob(RestrictedResource):
     def device_role(self):  # pylint: disable=too-many-return-statements
         if not self.is_multinode:
             return "Error"
-        data = yaml.load(self.definition)
+        data = yaml.safe_load(self.definition)
         if 'protocols' not in data:
             return 'Error'
         if 'lava-multinode' not in data['protocols']:
@@ -1738,7 +1738,7 @@ class TestJob(RestrictedResource):
         :return: a single TestJob object or a list
         (explicitly, a list, not a QuerySet) of evaluated TestJob objects
         """
-        job_data = yaml.load(yaml_data)
+        job_data = yaml.safe_load(yaml_data)
 
         # Unpack include value if present.
         job_data = handle_include_option(job_data)
@@ -1962,7 +1962,7 @@ class TestJob(RestrictedResource):
         if not self.is_multinode:
             return None
         try:
-            data = yaml.load(self.definition)
+            data = yaml.safe_load(self.definition)
         except yaml.YAMLError:
             return None
         if 'host_role' not in data:
@@ -2891,7 +2891,7 @@ def process_notifications(sender, **kwargs):
         old_job = TestJob.objects.get(pk=new_job.id)
         if new_job.state in notification_state and \
            old_job.state != new_job.state:
-            job_def = yaml.load(new_job.definition)
+            job_def = yaml.safe_load(new_job.definition)
             if "notify" in job_def:
                 if new_job.notification_criteria(job_def["notify"]["criteria"],
                                                  old_job):
