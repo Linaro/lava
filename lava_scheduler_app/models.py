@@ -939,24 +939,24 @@ class JobFailureTag(models.Model):
         return self.name
 
 
-def _get_tag_list(tags, pipeline=False):
+def _get_tag_list(tags):
     """
     Creates a list of Tag objects for the specified device tags
     for singlenode and multinode jobs.
     :param tags: a list of strings from the JSON
     :return: a list of tags which match the strings
-    :raise: JSONDataError if a tag cannot be found in the database.
+    :raise: yaml.YAMLError if a tag cannot be found in the database.
     """
     taglist = []
     if not isinstance(tags, list):
         msg = "'device_tags' needs to be a list - received %s" % type(tags)
-        raise yaml.YAMLError(msg) if pipeline else JSONDataError(msg)
+        raise yaml.YAMLError(msg)
     for tag_name in tags:
         try:
             taglist.append(Tag.objects.get(name=tag_name))
         except Tag.DoesNotExist:
             msg = "Device tag '%s' does not exist in the database." % tag_name
-            raise yaml.YAMLError(msg) if pipeline else JSONDataError(msg)
+            raise yaml.YAMLError(msg)
 
     return taglist
 
@@ -1170,8 +1170,7 @@ def _pipeline_protocols(job_data, user, yaml_data=None):  # pylint: disable=too-
     So despite doing the tag checks here, the job is created with just the device_type
     and the checks are done again before the job starts.
 
-    Actual device assignment happens in lava_scheduler_daemon:dbjobsource.py until
-    this migrates into lava-master.
+    Actual device assignment happens in lava-master.
 
     params:
       job_data - dictionary of the submission YAML
@@ -1224,7 +1223,7 @@ def _pipeline_protocols(job_data, user, yaml_data=None):  # pylint: disable=too-
                     raise DevicesUnavailableException("Not enough devices of type %s are currently "
                                                       "available to user %s"
                                                       % (device_type, user))
-                role_dictionary[role]['tags'] = _get_tag_list(params.get('tags', []), True)
+                role_dictionary[role]['tags'] = _get_tag_list(params.get('tags', []))
                 if role_dictionary[role]['tags']:
                     supported = _check_tags(role_dictionary[role]['tags'], device_type=device_type)
                     _check_tags_support(supported, allowed_devices)
@@ -1355,8 +1354,7 @@ class TestJob(RestrictedResource):
     @property
     def dynamic_connection(self):
         """
-        Secondary connection detection - pipeline & multinode only.
-        (Enhanced version of vmgroups.)
+        Secondary connection detection - multinode only.
         A Primary connection needs a real device (persistence).
         """
         if not self.is_multinode or not self.definition:
@@ -1712,7 +1710,7 @@ class TestJob(RestrictedResource):
     @classmethod
     def from_yaml_and_user(cls, yaml_data, user, original_job=None):
         """
-        Runs the submission checks on incoming pipeline jobs.
+        Runs the submission checks on incoming jobs.
         Either rejects the job with a DevicesUnavailableException (which the caller is expected to handle), or
         creates a TestJob object for the submission and saves that testjob into the database.
         This function must *never* be involved in setting the state of this job or the state of any associated device.
@@ -1741,13 +1739,13 @@ class TestJob(RestrictedResource):
         allow = _check_submit_to_device(list(Device.objects.filter(
             device_type=device_type)), user)
         if not allow:
-            raise DevicesUnavailableException("No devices of type %s have pipeline support." % device_type)
-        taglist = _get_tag_list(job_data.get('tags', []), True)
+            raise DevicesUnavailableException("No devices of type %s are available." % device_type)
+        taglist = _get_tag_list(job_data.get('tags', []))
         if taglist:
             supported = _check_tags(taglist, device_type=device_type)
             _check_tags_support(supported, allow)
         if original_job:
-            # Add old job absolute url to metadata for pipeline jobs.
+            # Add old job absolute url to metadata
             job_url = str(original_job.get_absolute_url())
             try:
                 site = Site.objects.get_current()
@@ -1762,7 +1760,7 @@ class TestJob(RestrictedResource):
 
     def clean(self):
         """
-        Implement the schema constraints for visibility for pipeline jobs so that
+        Implement the schema constraints for visibility for jobs so that
         admins cannot set a job into a logically inconsistent state.
         """
         # public settings must match
@@ -1775,7 +1773,7 @@ class TestJob(RestrictedResource):
     def can_view(self, user):
         """
         Take over the checks behind RestrictedIDLinkColumn, for
-        pipeline jobs which support a view user list or view group.
+        jobs which support a view user list or view group.
         For speed, the lookups on the user/group tables are only by id
         Any elements which would need admin access must be checked
         separately using can_admin instead.
