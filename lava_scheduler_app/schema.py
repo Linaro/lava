@@ -1,4 +1,5 @@
 import re
+import requests
 import sys
 import yaml
 from voluptuous import (
@@ -13,16 +14,6 @@ from voluptuous import (
     Required,
     Schema
 )
-
-if sys.version_info[0] == 2:
-    # Python 2.x
-    from urllib2 import urlopen
-    from urllib2 import URLError
-elif sys.version_info[0] == 3:
-    # For Python 3.0 and later
-    from urllib.request import urlopen
-    from urllib.error import URLError
-
 
 INVALID_CHARACTER_ERROR_MSG = "Invalid character"
 INCLUDE_URL_TIMEOUT = 10
@@ -444,12 +435,10 @@ def _validate_vcs_parameters(data_objects):
 
 def _download_raw_yaml(url):
     try:
-        data = yaml.load(
-            urlopen(url, timeout=INCLUDE_URL_TIMEOUT).read())
-        return data
-    except URLError as e:
+        return yaml.load(requests.get(url, timeout=INCLUDE_URL_TIMEOUT).content)
+    except requests.RequestException as exc:
         raise SubmissionException(
-            "Section 'include' must contain valid URL: %s" % e)
+            "Section 'include' must contain valid URL: %s" % exc)
     except yaml.YAMLError as e:
         raise SubmissionException("Section 'include' must contain URL to a raw file in valid YAML format: %s" % e)
 
