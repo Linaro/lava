@@ -140,6 +140,7 @@ Writing tests for LAVA
    vland
    debugging
    pipeline-usecases
+   templating
 
 .. _contents_results:
 
