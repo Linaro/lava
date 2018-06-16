@@ -1,3 +1,13 @@
+lava (2018.5.post1-1) unstable; urgency=medium
+
+  * Security hotfix
+    0a8db2d0e Use requests instead of urlopen
+    95f28429c Use yaml.safe_load when parsing user data
+    6f4000445 Remove the ability to past URLs in the submit page
+  * Update dependencies for lava-dev
+
+ -- Neil Williams <codehelp@debian.org>  Sat, 16 Jun 2018 10:51:32 +0100
+
 lava (2018.5-3~bpo9+1) stretch-backports; urgency=medium
 
   * Rebuild for stretch-backports.
