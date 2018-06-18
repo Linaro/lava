@@ -525,8 +525,7 @@ class SshAuthorize(Action):
             return connection
         self.logger.info("Adding SSH authorisation for %s.pub", os.path.basename(output_file))
         user_sshdir = os.path.join(location, 'root', '.ssh')
-        if not os.path.exists(user_sshdir):
-            os.makedirs(user_sshdir, 0o755)
+        os.makedirs(user_sshdir, 0o755, exist_ok=True)
         # if /root/.ssh/authorized_keys exists in the test image it will be overwritten
         # the key exists in the lava_test_results_dir to allow test writers to work around this
         # after logging in via the identity_file set here

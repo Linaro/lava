@@ -268,8 +268,7 @@ def lava_lxc_home(lxc_name, dispatcher_config):
     path = os.path.join(lxc_path(dispatcher_config), lxc_name, 'rootfs',
                         LAVA_LXC_HOME.lstrip('/'))
     # Create lava_lxc_home if it is unavailable
-    if not os.path.exists(path):
-        os.makedirs(path, 0o755)
+    os.makedirs(path, 0o755, exist_ok=True)
     return path
 
 

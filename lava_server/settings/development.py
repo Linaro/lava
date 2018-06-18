@@ -46,8 +46,7 @@ PRECIOUS_DIR = os.path.join(PROJECT_SRC_DIR, "precious")
 PROJECT_STATE_DIR = os.path.join(PRECIOUS_DIR, "var/lib/lava-server/")
 
 # Create state directory if needed
-if not os.path.exists(PROJECT_STATE_DIR):
-    os.makedirs(PROJECT_STATE_DIR)
+os.makedirs(PROJECT_STATE_DIR, exist_ok=True)
 
 DATABASES = {
     'default': {
