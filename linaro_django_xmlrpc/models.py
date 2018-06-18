@@ -57,7 +57,7 @@ def _make_secret():
 
     # Set of valid characters for secret
     _SECRET_CHARS = "01234567890abcdefghijklmnopqrtsuwxyz"
-    return ''.join((random.choice(_SECRET_CHARS)
+    return ''.join((random.SystemRandom().choice(_SECRET_CHARS)
                     for i in range(128)))
 
 
