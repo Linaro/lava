@@ -513,10 +513,18 @@ class Command(LAVADaemonCommand):
                 job.save()
 
     def cancel_jobs(self, partial=False):
-        query = TestJob.objects.filter(state=TestJob.STATE_CANCELING)
+        # make the request atomic
+        query = TestJob.objects.select_for_update()
+        # Only select the test job that are canceling
+        query = query.filter(state=TestJob.STATE_CANCELING)
+        # Only cancel jobs on online workers
+        query = query.filter(actual_device__worker_host__state=Worker.STATE_ONLINE)
+
+        # Allow for partial canceling
         if partial:
             query = query.filter(id__in=list(self.events["canceling"]))
 
+        # Loop on all jobs
         for job in query:
             worker = job.lookup_worker if job.dynamic_connection else job.actual_device.worker_host
             self.logger.info("[%d] CANCEL => %s", job.id,
@@ -691,14 +699,16 @@ class Command(LAVADaemonCommand):
                         self.logger.warning("lava-logs is offline: can't schedule jobs")
 
                     # Handle canceling jobs
-                    self.cancel_jobs()
+                    with transaction.atomic():
+                        self.cancel_jobs()
 
                     # Do not count the time taken to schedule jobs
                     last_schedule = time.time()
                 else:
                     # Cancel the jobs and remove the jobs from the set
                     if self.events["canceling"]:
-                        self.cancel_jobs(partial=True)
+                        with transaction.atomic():
+                            self.cancel_jobs(partial=True)
                         self.events["canceling"] = set()
                     # Schedule for available device-types
                     if self.events["available_dt"]:
