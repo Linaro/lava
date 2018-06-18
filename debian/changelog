@@ -1,3 +1,9 @@
+lava (2018.5.post1-2) unstable; urgency=medium
+
+  * Fix missing dependency on python3-requests, found by piuparts
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 18 Jun 2018 10:40:54 +0100
+
 lava (2018.5.post1-1) unstable; urgency=medium
 
   * Security hotfix

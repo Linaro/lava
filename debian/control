@@ -53,7 +53,7 @@ Architecture: all
 Pre-Depends: debconf | debconf-2.0
 Depends: apache2, adduser, gunicorn3, iproute2, python3-tz, python3-dateutil,
  python3-django (>= 1.10), python3-django-auth-ldap (>= 1.2.12),
- python3-setuptools, python3-yaml,
+ python3-setuptools, python3-yaml, python3-requests,
  libjs-excanvas, libjs-jquery-cookie, libjs-jquery, libjs-jquery-ui,
  libjs-jquery-watermark, libjs-jquery-flot (>= 0.8.2), openssh-client,
  postgresql, postgresql-client, postgresql-common, systemd-sysv,
