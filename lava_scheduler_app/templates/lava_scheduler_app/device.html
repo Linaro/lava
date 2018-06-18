@@ -13,15 +13,6 @@
     <a href="{% if next_device %}{% url 'lava.scheduler.device.detail' next_device %}{% else %}#{% endif %}">{% trans "Next Device" %} <span class="glyphicon glyphicon-forward"></span></a>
   </li>
 </ul>
-
-{% if user.is_staff and not device.get_health_check and not device.device_type.disable_health_check %}
-  <div class="alert alert-warning">
-    <button type="button" class="close" data-dismiss="alert">&times;</button>
-    <strong>The device has no
-      <a href="{{ STATIC_URL }}docs/v2/glossary.html#term-health-check">health check job</a></strong>
-    Consider adding a <a href="{{ STATIC_URL }}docs/v2/healthchecks.html#health-checks">health check definition</a>.
-  </div>
-{% endif %}
 {% endblock %}
 
 {% block content_columns %}

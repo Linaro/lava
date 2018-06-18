@@ -3,6 +3,22 @@
 
 {% block content %}
 
+{% if template_mismatch %}
+<div class="alert alert-danger alert-dismissible">
+  <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+  <strong>Configuration Error: missing or invalid template.</strong>
+  <p>Jobs requesting this device type ({{ device.device_type }}) will not be able to start until
+     a template is available on the master.</p>
+</div>
+{% endif %}
+
+{% if not device.worker_host %}
+<div class="alert alert-danger alert-dismissible">
+  <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+  <strong>No worker is associated with this device</strong>: no jobs can be scheduled, started or canceled.
+</div>
+{% endif %}
+
 {% if device.device_type.owners_only %}
 <div class="alert alert-warning alert-dismissable">
   <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
@@ -10,11 +26,12 @@
 </div>
 {% endif %}
 
-{% if template_mismatch %}
-  <div class="alert alert-danger">
-    <strong>Configuration Error: missing or invalid template.</strong>
-    <p>Jobs requesting this device type ({{ device.device_type }}) will not be able to start until
-       a template is available on the master.</p>
+{% if user.is_staff and not device.get_health_check and not device.device_type.disable_health_check %}
+  <div class="alert alert-warning alert-dismissable">
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+    <strong>The device has no
+      <a href="{{ STATIC_URL }}docs/v2/glossary.html#term-health-check">health check job</a></strong>
+    Consider adding a <a href="{{ STATIC_URL }}docs/v2/healthchecks.html#health-checks">health check definition</a>.
   </div>
 {% endif %}
 
@@ -114,7 +131,11 @@
         {% endif %}
       </dd>
       <dt>Worker</dt>
+      {% if device.worker_host %}
       <dd><a href="{{ device.worker_host.get_absolute_url }}">{{ device.worker_host.hostname }}</a></dd>
+      {% else %}
+      <dd><i>...</i></dd>
+      {% endif %}
       <dt>Device dictionary</dt>
       <dd><a href="{% url 'lava.scheduler.device.dictionary' device.pk %}"><span class="glyphicon glyphicon-eye-open"></span></a></dd>
     </dl>
