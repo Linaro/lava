@@ -15,6 +15,8 @@ Glossary of terms
 
 **A** [ :term:`action level` ] [ :term:`alias` ]
 
+**B** [ :term:`BMC` ]
+
 **C** [ :term:`chart` ] [ :term:`ci loop` ]
 
 **D** [ :term:`device` ] [ :term:`device dictionary` ]
@@ -86,6 +88,11 @@ Glossary of terms
     which can be used with this device-type. (Aliases cannot be used in job
     submissions directly.) Multiple device-types are allowed to share the one
     or more aliases.
+
+  BMC
+    A Baseboard Management Controller (BMC) is an embedded controller
+    on a computer mainboard which allows external monitoring and
+    management of the computer system.
 
   chart
     A chart allows users to track :term:`results` over time using

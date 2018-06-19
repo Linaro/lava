@@ -343,7 +343,7 @@ should remain usable for the duration of all test jobs on the device.
 
 .. OS what OSes are you expecting to run as test jobs? How will that
    change your integration requirements? testing of firmware - what
-   software is to be tested? BMC?
+   software is to be tested? Does it have a :term:`BMC`?
 
 .. index:: device integration - integration process
 

@@ -110,7 +110,7 @@ D02/D03
 =======
 
 Serial and power control were available over the network due to the onboard
-BMC. This made integration much simpler, in theory.
+:term:`BMC`. This made integration much simpler, in theory.
 
 Cons
 ----

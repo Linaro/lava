@@ -14,16 +14,17 @@ the files provided by the test writer. Many test devices require this
 bootloader to be installed onto re-writeable media which can be modified from
 the running system, for example an SD card.
 
-The critical element for LAVA is the **first point where the boot can be
-interrupted or modified**. Devices which lack some kind of :abbr:`BMC
-(baseboard management controller)` rely on this bootloader to be able to
-automatically recover from a broken deployment. This bootloader can be
-considered as the **primary bootloader** and the medium where this is installed
-can be considered as the **primary medium** which **must** be protected from
-deployments which would replace its entire contents. For example, a panda board
-has an SD card and USB host support, the primary bootloader (U-Boot) **must**
-be on the SD card, so V2 uses the SD card as primary media. It is therefore not
-supportable for a panda board to deploy to the SD card in LAVA.
+The critical element for LAVA is the **first point where the boot can
+be interrupted or modified**. Devices which lack some kind of
+:term:`BMC` rely on this bootloader to be able to automatically
+recover from a broken deployment. This bootloader can be considered as
+the **primary bootloader** and the medium where this is installed can
+be considered as the **primary medium** which **must** be protected
+from deployments which would replace its entire contents. For example,
+a panda board has an SD card and USB host support, the primary
+bootloader (U-Boot) **must** be on the SD card, so V2 uses the SD card
+as primary media. It is therefore not supportable for a panda board to
+deploy to the SD card in LAVA.
 
 .. note:: Primary and secondary media relate to devices where the primary
    bootloader is installed on writeable media and where that bootloader needs

@@ -164,7 +164,7 @@ option in the device-type configuration. Values are specified in milliseconds::
   bootloader_serial_delay_ms = 300
 
 Some Serial over LAN (SOL) controllers are similarly unable to process bursts
-of input over the serial connection. The controller drops the serial connection
+of input over the serial connection. The :term:`BMC` drops the serial connection
 and outputs the error::
 
   SOL session closed by BMC
