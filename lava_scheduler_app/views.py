@@ -2203,16 +2203,17 @@ def running(request):
 
 
 def download_device_type_template(request, pk):
-    device_type = DeviceType.objects.filter(name=pk)
-    if not device_type:
-        raise Http404
-    device_type = device_type[0]
-    data = load_devicetype_template(device_type.name, raw=True)
+    dt = get_object_or_404(DeviceType, name=pk)
+    if dt.owners_only:
+        if not dt.some_devices_visible_to(request.user):
+            raise Http404('No device type matches the given query.')
+
+    data = load_devicetype_template(dt.name, raw=True)
     if not data:
         raise Http404
     response = HttpResponse(data, content_type='text/plain; charset=utf-8')
     response['Content-Transfer-Encoding'] = 'quoted-printable'
-    response['Content-Disposition'] = "attachment; filename=%s_template.yaml" % device_type.name
+    response['Content-Disposition'] = "attachment; filename=%s_template.yaml" % dt.name
     return response
 
 
