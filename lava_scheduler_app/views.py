@@ -82,6 +82,7 @@ from lava_results_app.models import (
     Query,
     QueryCondition,
     TestCase,
+    TestData
 )
 
 from django.contrib.auth.models import User, Group
@@ -2217,8 +2218,6 @@ def download_device_type_template(request, pk):
 
 @post_only
 def similar_jobs(request, pk):
-    from lava_results_app.models import TestData
-
     logger = logging.getLogger('lava_scheduler_app')
     job = get_restricted_job(request.user, pk, request=request)
     if not job.can_change_priority(request.user):
