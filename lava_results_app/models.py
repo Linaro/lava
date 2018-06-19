@@ -31,7 +31,7 @@ TestCase is a single lava-test-case record or Action result.
 import logging
 import sys
 import yaml
-
+import contextlib
 from datetime import timedelta
 from django.conf import settings
 from django.contrib.admin.models import LogEntry, ADDITION
