@@ -156,10 +156,10 @@ class ExtractNfsAction(Action):
             if not prefix.endswith('/'):
                 self.errors = 'prefix must be a directory and end with /'
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         if not self.parameters['images'].get(self.param_key, None):  # idempotency
             return connection
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
         root = self.get_namespace_data(action='download-action', label=self.param_key, key='file')
         root_dir = self.mkdtemp()
         untar_file(root, root_dir)

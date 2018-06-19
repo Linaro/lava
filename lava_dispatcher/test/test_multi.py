@@ -98,7 +98,7 @@ class TestMultiDeploy(StdoutTestCase):
         def validate(self):
             super().validate()
 
-        def run(self, connection, max_end_time, args=None):
+        def run(self, connection, max_end_time):
             self.data[self.name] = self.parameters
             return connection  # no actual connection during this fake job
 

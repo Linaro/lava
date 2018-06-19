@@ -189,17 +189,15 @@ class RepoAction(Action):
             uuid_list = [self.uuid]
         self.set_namespace_data(action='repo-action', label='repo-action', key='uuid-list', value=uuid_list)
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         """
         The base class run() currently needs to run after the mount operation, i.e. as part of run() so that
         the path can be correctly set when writing the overlay.
         Better approach will be to create the entire overlay without mounting and then
         unpack an overlay.tgz after mounting.
         """
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
 
-        if args is None or 'test_name' not in args:
-            raise LAVABug("RepoAction run called via super without parameters as arguments")
         location = self.get_namespace_data(action='test', label='shared', key='location')
         lava_test_results_dir = self.get_namespace_data(action='test', label='results', key='lava_test_results_dir')
         if not lava_test_results_dir:
@@ -211,6 +209,7 @@ class RepoAction(Action):
             raise LAVABug("Overlay location does not exist")
 
         # runner_path is the path to read and execute from to run the tests after boot
+        args = self.parameters
         runner_path = os.path.join(
             args['deployment_data']['lava_test_results_dir'] % self.job.job_id,
             str(self.stage),
@@ -294,7 +293,7 @@ class GitRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
     def accepts(cls, repo_type):
         return repo_type == 'git'
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         """
         Clones the git repo into a directory name constructed from the mount_path,
         lava-$hostname prefix, tests, $index_$test_name elements. e.g.
@@ -302,7 +301,7 @@ class GitRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
         Also updates some basic metadata about the test definition.
         """
         # use the base class to populate the runner_path and overlay_path data into the context
-        connection = super().run(connection, max_end_time, self.parameters)
+        connection = super().run(connection, max_end_time)
 
         # NOTE: the runner_path dir must remain empty until after the VCS clone, so let the VCS clone create the final dir
         runner_path = self.get_namespace_data(action='uuid', label='overlay_path', key=self.parameters['test_name'])
@@ -386,11 +385,11 @@ class BzrRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
     def accepts(cls, repo_type):
         return repo_type == 'bzr'
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         """
         Clone the bazar repository into a directory
         """
-        connection = super().run(connection, max_end_time, self.parameters)
+        connection = super().run(connection, max_end_time)
 
         # NOTE: the runner_path dir must remain empty until after the VCS clone, so let the VCS clone create the final dir
         runner_path = self.get_namespace_data(action='uuid', label='overlay_path', key=args['test_name'])
@@ -441,12 +440,12 @@ class InlineRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
     def accepts(cls, repo_type):
         return repo_type == 'inline'
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         """
         Extract the inlined test definition and dump it onto the target image
         """
         # use the base class to populate the runner_path and overlay_path data into the context
-        connection = super().run(connection, max_end_time, self.parameters)
+        connection = super().run(connection, max_end_time)
 
         # NOTE: the runner_path dir must remain empty until after the VCS clone, so let the VCS clone create the final dir
         runner_path = self.get_namespace_data(action='uuid', label='overlay_path', key=self.parameters['test_name'])
@@ -485,11 +484,11 @@ class TarRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
     def accepts(cls, repo_type):
         return repo_type == 'tar'
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         """
         Extracts the provided encoded tar archive into tmpdir.
         """
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
         runner_path = self.get_namespace_data(action='uuid', label='overlay_dir', key=self.parameters['test_name'])
         temp_tar = os.path.join(runner_path, '..', '..', "tar-repo.tar")
 
@@ -537,9 +536,9 @@ class UrlRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
     def accepts(cls, repo_type):
         return repo_type == 'url'
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         """Download the provided test definition file into tmpdir."""
-        super().run(connection, max_end_time, args)
+        super().run(connection, max_end_time)
         runner_path = self.get_namespace_data(action='uuid', label='overlay_dir', key=self.parameters['test_name'])
 
         try:
@@ -691,13 +690,12 @@ class TestDefinitionAction(TestAction):
                 except JobError as exc:
                     self.errors = str(exc)
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         """
         Creates the list of test definitions for this Test
 
         :param connection: Connection object, if any.
         :param max_end_time: remaining time before block timeout.
-        :param args: Not used.
         :return: the received Connection.
         """
         location = self.get_namespace_data(action='test', label='shared', key='location')
@@ -716,7 +714,7 @@ class TestDefinitionAction(TestAction):
             value=overlay_base
         )
 
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
 
         self.logger.info("Creating lava-test-runner.conf files")
         for stage in range(self.stages):
@@ -804,8 +802,8 @@ class TestOverlayAction(TestAction):  # pylint: disable=too-many-instance-attrib
         ret_val.append('######\n')
         return ret_val
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         runner_path = self.get_namespace_data(action='uuid', label='overlay_path', key=self.parameters['test_name'])
 
         # now read the YAML to create a testdef dict to retrieve metadata
@@ -939,8 +937,8 @@ class TestInstallAction(TestOverlayAction):
             if commit_id is None:
                 raise JobError("Unable to clone %s" % str((repo)))
 
-    def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-statements
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):  # pylint: disable=too-many-statements
+        connection = super().run(connection, max_end_time)
         runner_path = self.get_namespace_data(action='uuid', label='overlay_path', key=self.parameters['test_name'])
 
         # now read the YAML to create a testdef dict to retrieve metadata
@@ -1049,8 +1047,8 @@ class TestRunnerAction(TestOverlayAction):
             current = self.testdef_levels
         self.set_namespace_data(action=self.name, label=self.name, key='testdef_levels', value=current)
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         runner_path = self.get_namespace_data(action='uuid', label='overlay_path', key=self.parameters['test_name'])
 
         # now read the YAML to create a testdef dict to retrieve metadata

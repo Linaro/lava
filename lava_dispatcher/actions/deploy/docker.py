@@ -68,7 +68,7 @@ class DockerAction(DeployAction):
         if self.test_needs_overlay(parameters):
             self.internal_pipeline.add_action(OverlayAction())
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         # Pull the image
         cmd = ["docker", "pull", self.parameters["image"]]
         out = self.run_command(cmd, allow_fail=False, allow_silent=False)
@@ -76,7 +76,7 @@ class DockerAction(DeployAction):
             msg = "Unable to pull docker image '%s'" % self.parameters["image"]
             raise JobError(msg)
 
-        return super().run(connection, max_end_time, args)
+        return super().run(connection, max_end_time)
 
 
 class Docker(Deployment):

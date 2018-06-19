@@ -196,7 +196,7 @@ class CallQemuAction(Action):
             if not os.path.exists(SYS_CLASS_KVM):
                 self.errors = "Device configuration contains -enable-kvm option but kvm module is not enabled."
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         """
         CommandRunner expects a pexpect.spawn connection which is the return value
         of target.device.power_on executed by boot in the old dispatcher.
@@ -251,7 +251,7 @@ class CallQemuAction(Action):
         self.logger.debug("started a shell command")
 
         shell_connection = ShellSession(self.job, shell)
-        shell_connection = super().run(shell_connection, max_end_time, args)
+        shell_connection = super().run(shell_connection, max_end_time)
 
         self.set_namespace_data(action='shared', label='shared', key='connection', value=shell_connection)
         return shell_connection

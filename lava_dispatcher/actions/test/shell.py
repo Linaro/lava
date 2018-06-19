@@ -187,11 +187,11 @@ class TestShellAction(TestAction):
         self._reset_patterns()
         super().validate()
 
-    def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-locals
+    def run(self, connection, max_end_time):  # pylint: disable=too-many-locals
         """
         Common run function for subclasses which define custom patterns
         """
-        super().run(connection, max_end_time, args)
+        super().run(connection, max_end_time)
 
         # Get the connection, specific to this namespace
         connection_namespace = self.parameters.get('connection-namespace', None)

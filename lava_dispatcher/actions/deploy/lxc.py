@@ -160,8 +160,8 @@ class LxcCreateAction(DeployAction):
         # set lxc_data
         self._set_lxc_data()
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         verbose = '' if self.lxc_data['verbose'] else '-q'
         lxc_default_path = lxc_path(self.job.parameters['dispatcher'])
         if self.lxc_data['custom_lxc_path']:
@@ -246,8 +246,8 @@ class LxcCreateUdevRuleAction(DeployAction):
         except TypeError:
             self.errors = "Invalid parameters for %s" % self.name
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         # this may be the device namespace - the lxc namespace may not be
         # accessible
         lxc_name = None
@@ -339,8 +339,8 @@ class LxcAptUpdateAction(DeployAction):
         self.retries = 10
         self.sleep = 10
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         lxc_name = self.get_namespace_data(action='lxc-create-action',
                                            label='lxc', key='name')
         cmd = ['lxc-attach', '-n', lxc_name, '--', 'apt-get', '-y', '-q',
@@ -369,8 +369,8 @@ class LxcAptInstallAction(DeployAction):
         if 'packages' not in self.parameters:
             raise LAVABug("%s package list unavailable" % self.name)
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         lxc_name = self.get_namespace_data(action='lxc-create-action',
                                            label='lxc', key='name')
         packages = self.parameters['packages']

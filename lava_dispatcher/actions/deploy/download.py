@@ -205,7 +205,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
                 action='download-action', label='type', key=self.key,
                 value=self.parameters[self.key].get('type', None))
 
-    def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
+    def run(self, connection, max_end_time):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
         def progress_unknown_total(downloaded_sz, last_val):
             """ Compute progress when the size is unknown """
             condition = downloaded_sz >= last_val + 25 * 1024 * 1024
@@ -219,7 +219,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
             return (condition, percent,
                     "progress %3d%% (%dMB)" % (percent, int(downloaded_sz / (1024 * 1024))) if condition else "")
 
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
         # self.cookies = self.job.context.config.lava_cookies  # FIXME: work out how to restore
         md5 = hashlib.md5()
         sha256 = hashlib.sha256()
@@ -553,8 +553,8 @@ class LxcDownloadAction(Action):
         if not self.url.path:
             self.errors = "Invalid path in lxc:/// url"
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         # this is the device namespace - the lxc namespace is not accessible
         lxc_name = None
         protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
@@ -590,8 +590,8 @@ class QCowConversionAction(Action):
         super().__init__()
         self.key = key
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         fname = self.get_namespace_data(
             action='download-action',
             label=self.key,
@@ -704,8 +704,8 @@ class CopyToLxcAction(DeployAction):
         self.retries = 3
         self.sleep = 10
 
-    def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-locals
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):  # pylint: disable=too-many-locals
+        connection = super().run(connection, max_end_time)
         # this is the device namespace - the lxc namespace is not accessible
         lxc_name = None
         protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]

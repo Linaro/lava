@@ -62,8 +62,8 @@ class SendRebootCommands(Action):
     description = 'Issue a reboot command on the device'
     summary = 'Issue a reboot command on the device'
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         reboot_commands = self.parameters.get('soft_reboot', [])  # list
         if not self.parameters.get('soft_reboot', None):  # unit test
             self.logger.warning('No soft reboot command defined in the test job. Using defaults.')
@@ -100,8 +100,8 @@ class PDUReboot(Action):
         super().__init__()
         self.command = None
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         if not self.job.device.hard_reset_command:
             raise InfrastructureError("Hard reset required but not defined.")
         command = self.job.device.hard_reset_command
@@ -128,11 +128,11 @@ class PrePower(Action):
     summary = "send pre-power-command"
     timeout_exception = InfrastructureError
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         if self.job.device.pre_power_command == '':
             self.logger.warning("Pre power command does not exist")
             return connection
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
         if self.job.device.pre_power_command:
             command = self.job.device.pre_power_command
             self.logger.info("Running pre power command")
@@ -159,11 +159,11 @@ class PreOs(Action):
     summary = "send pre-os-command"
     timeout_exception = InfrastructureError
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         if self.job.device.pre_os_command == '':
             self.logger.warning("Pre OS command does not exist")
             return connection
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
         if self.job.device.pre_os_command:
             command = self.job.device.pre_os_command
             self.logger.info("Running pre OS command")
@@ -186,12 +186,12 @@ class PowerOn(Action):
     summary = "send power_on command"
     timeout_exception = InfrastructureError
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         # to enable power to a device, either power_on or hard_reset are needed.
         if self.job.device.power_command == '':
             self.logger.warning("Unable to power on the device")
             return connection
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
         if self.job.device.pre_power_command:
             command = self.job.device.pre_power_command
             self.logger.info("Running pre power command")
@@ -222,8 +222,8 @@ class PowerOff(Action):
     summary = "send power_off command"
     timeout_exception = InfrastructureError
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         if not self.job.device.get('commands', None):
             return connection
         command = self.job.device['commands'].get('power_off', [])
@@ -253,7 +253,7 @@ class ReadFeedback(Action):
         self.duration = 1  # FIXME: needs to be a constant set in the base template.
         self.repeat = repeat
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         feedbacks = []
         for feedback_ns in self.data.keys():  # pylint: disable=no-member
             if feedback_ns == self.parameters.get('namespace'):
@@ -276,7 +276,7 @@ class ReadFeedback(Action):
                 self.logger.info("Finalising connection for namespace '%s'", feedback[0])
                 # Finalize all connections associated with each namespace.
                 feedback[1].finalise()
-        super().run(connection, max_end_time, args)
+        super().run(connection, max_end_time)
         return connection
 
 
@@ -301,7 +301,7 @@ class FinalizeAction(Action):
         self.internal_pipeline.add_action(PowerOff())
         self.internal_pipeline.add_action(ReadFeedback(finalize=True, repeat=True))
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         """
         The pexpect.spawn here is the ShellCommand not the ShellSession connection object.
         So call the finalise() function of the connection which knows about the raw_connection inside.
@@ -309,7 +309,7 @@ class FinalizeAction(Action):
         """
         self.ran = True
         with contextlib.suppress(Exception):
-            connection = super().run(connection, max_end_time, args)
+            connection = super().run(connection, max_end_time)
             if connection:
                 connection.finalise()
 
@@ -320,4 +320,4 @@ class FinalizeAction(Action):
     def cleanup(self, connection):
         # avoid running Finalize in validate or unit tests
         if not self.ran and self.job.started:
-            self.run(connection, None, None)
+            self.run(connection, None)

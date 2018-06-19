@@ -119,8 +119,8 @@ class MenuConnect(ConnectDevice):
         if self.job.device.connect_command == '':
             self.errors = "Unable to connect to device"
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         if not connection:
             raise LAVABug("%s needs a Connection")
         connection.check_char = '\n'
@@ -141,8 +141,8 @@ class MenuReset(ConnectDevice):
         super().__init__()
         self.session_class = ShellSession
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         if not connection:
             raise LAVABug("%s needs a Connection")
 
@@ -182,7 +182,7 @@ class SelectorMenuAction(Action):
             self.logger.debug("Changing menu prompt to '%s'", connection.prompt_str)
             connection.wait()  # call MenuSession::wait directly for a tighter loop
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         """
         iterate through the menu sequence:
         items: select
@@ -195,7 +195,7 @@ class SelectorMenuAction(Action):
         :param logger: Action logger
         :return: connection
         """
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
         if not connection:
             self.logger.error("%s called without a Connection", self.name)
             return connection

@@ -51,13 +51,13 @@ class RetryAction(Action):
         if not self.internal_pipeline:
             raise LAVABug("Retry action %s needs to implement an internal pipeline" % self.name)
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         retries = 0
         has_failed = False
         self.call_protocols()
         while retries < self.max_retries:
             try:
-                connection = self.internal_pipeline.run_actions(connection, max_end_time, args)
+                connection = self.internal_pipeline.run_actions(connection, max_end_time)
                 if 'repeat' not in self.parameters:
                     # failure_retry returns on first success. repeat returns only at max_retries.
                     return connection
@@ -108,7 +108,7 @@ class DiagnosticAction(Action):
     def trigger(cls):
         raise NotImplementedError("Define in the subclass: %s" % cls)
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         """
         Log the requested diagnostic.
         Raises NotImplementedError if subclass has omitted a trigger classmethod.

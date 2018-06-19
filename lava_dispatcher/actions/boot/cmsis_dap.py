@@ -122,8 +122,8 @@ class FlashCMSISAction(Action):
             action_arg = self.get_namespace_data(action='download-action', label=action, key='file')
             self.filelist.extend([action_arg])
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         dstdir = mkdtemp()
         mount_command = "mount -t vfat %s %s" % (self.usb_mass_device, dstdir)
         self.run_command(mount_command.split(' '), allow_silent=True)

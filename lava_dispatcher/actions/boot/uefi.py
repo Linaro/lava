@@ -106,8 +106,8 @@ class UefiShellAction(BootAction):
                     self.internal_pipeline.add_action(OverlayUnpack())
                 self.internal_pipeline.add_action(ExportDeviceEnvironment())
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         connection.raw_connection.linesep = UEFI_LINE_SEPARATOR
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection
@@ -152,11 +152,11 @@ class UefiShellInterrupt(MenuInterrupt):
     description = 'interrupt uefi menu to get to a shell'
     summary = 'first uefi interrupt'
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         if not connection:
             self.logger.debug("%s called without active connection", self.name)
             return
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
         # param keys already checked in accepts() classmethod
         params = self.job.device['actions']['boot']['methods']['uefi']['parameters']
         connection.prompt_str = params['shell_interrupt_prompt']

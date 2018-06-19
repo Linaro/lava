@@ -173,10 +173,10 @@ class WaitFastBootInterrupt(Action):
         if not self.prompt or not self.string:
             self.errors = "Missing interrupt configuration for device."
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         if not connection:
             raise LAVABug("%s started without a connection already in use" % self.name)
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
         # device is to be put into a reset state, either by issuing 'reboot' or power-cycle
         connection.prompt_str = self.prompt
         self.logger.debug("Changing prompt to '%s'", connection.prompt_str)
@@ -206,8 +206,8 @@ class FastbootBootAction(Action):
         elif not isinstance(self.job.device['fastboot_options'], list):
             self.errors = "device fastboot options is not a list"
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         lxc_name = is_lxc_requested(self.job)
         serial_number = self.job.device['fastboot_serial_number']
         boot_img = self.get_namespace_data(action='download-action',
@@ -252,8 +252,8 @@ class FastbootRebootAction(Action):
         elif not isinstance(self.job.device['fastboot_options'], list):
             self.errors = "device fastboot options is not a list"
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         serial_number = self.job.device['fastboot_serial_number']
         fastboot_opts = self.job.device['fastboot_options']
         fastboot_cmd = self.lxc_cmd_prefix + ['fastboot', '-s', serial_number,
@@ -293,8 +293,8 @@ class EnterFastbootAction(Action):
         elif not isinstance(self.job.device['fastboot_options'], list):
             self.errors = "device fastboot options is not a list"
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
 
         # Try to enter fastboot mode with adb.
         adb_serial_number = self.job.device['adb_serial_number']

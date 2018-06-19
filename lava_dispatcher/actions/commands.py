@@ -54,8 +54,8 @@ class CommandAction(Action):
             self.errors = "Unknown user command '%s'" % cmd_name
             return False
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
 
         self.logger.debug("Running user command '%s'", self.parameters['name'])
         self.ran = True

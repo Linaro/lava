@@ -320,8 +320,8 @@ class ExpectShellSession(Action):
         if 'prompts' not in self.parameters:
             self.errors = "Unable to identify test image prompts from parameters."
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         if not connection:
             raise JobError("No connection available.")
         if not connection.prompt_str:

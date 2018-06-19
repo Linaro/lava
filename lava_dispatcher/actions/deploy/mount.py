@@ -57,11 +57,11 @@ class OffsetAction(DeployAction):
         if not self.get_namespace_data(action='download-action', label=self.key, key='file'):
             self.errors = "no file specified to calculate offset"
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         if self.get_namespace_data(action='download-action', label=self.key, key='offset'):
             # idempotency
             return connection
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
         image = self.get_namespace_data(action='download-action', label=self.key, key='file')
         if not os.path.exists(image):
             raise JobError("Not able to mount %s: file does not exist" % image)
@@ -109,8 +109,8 @@ class LoopCheckAction(DeployAction):
         available_loops = len(glob.glob('/sys/block/loop*'))
         self.set_namespace_data(action=self.name, label=self.key, key='available_loops', value=available_loops)
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         if not self.get_namespace_data(action=self.name, label=self.key, key='available_loops'):
             raise LAVABug("Unable to check available loop devices")
         args = ['/sbin/losetup', '-a']
@@ -153,8 +153,8 @@ class LoopMountAction(RetryAction):
         if not self.get_namespace_data(action='download-action', label=self.key, key='file'):
             self.errors = "no file specified to mount"
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         self.mntdir = mkdtemp(autoremove=False)
         lava_test_results_dir = self.get_namespace_data(action='test', label='results', key='lava_test_results_dir')
         test_mntdir = os.path.abspath("%s/%s" % (self.mntdir, lava_test_results_dir))
@@ -231,10 +231,10 @@ class Unmount(Action):
     description = "unmount the test image at end of deployment"
     summary = "unmount image"
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         """
         rmtree is not a cleanup action - it needs to be umounted first.
         """
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
         # mntdir was never being set correctly
         return connection

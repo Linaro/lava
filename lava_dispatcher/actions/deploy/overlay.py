@@ -142,7 +142,7 @@ class OverlayAction(DeployAction):
             self.internal_pipeline.add_action(CompressOverlay())
             self.internal_pipeline.add_action(PersistentNFSOverlay())  # idempotent
 
-    def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-locals
+    def run(self, connection, max_end_time):  # pylint: disable=too-many-locals
         """
         Check if a lava-test-shell has been requested, implement the overlay
         * create test runner directories beneath the temporary location
@@ -207,7 +207,7 @@ class OverlayAction(DeployAction):
                         continue
                     fout.write("%s=%s\n" % (key, value))
 
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
         return connection
 
 
@@ -245,7 +245,7 @@ class MultinodeOverlayAction(OverlayAction):
             else:
                 self.role = self.job.parameters['protocols'][self.protocol]['role']
 
-    def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
+    def run(self, connection, max_end_time):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
         if self.role is None:
             self.logger.debug("skipped %s", self.name)
             return connection
@@ -366,7 +366,7 @@ class VlandOverlayAction(OverlayAction):
                 self.tags.append(",".join([interface, tag]))
 
     # pylint: disable=anomalous-backslash-in-string
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         """
         Writes out file contents from lists, across multiple lines
         VAR="VAL1\n\
@@ -431,7 +431,7 @@ class CompressOverlay(Action):
     description = "Create a lava overlay tarball and store alongside the job"
     summary = "Compress the lava overlay files"
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         output = os.path.join(self.mkdtemp(), "overlay-%s.tar.gz" % self.level)
         location = self.get_namespace_data(action='test', label='shared', key='location')
         lava_test_results_dir = self.get_namespace_data(action='test', label='results', key='lava_test_results_dir')
@@ -443,7 +443,7 @@ class CompressOverlay(Action):
         if not self.valid:
             self.logger.error(self.errors)
             return connection
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
         with chdir(location):
             try:
                 with tarfile.open(output, "w:gz") as tar:
@@ -504,8 +504,8 @@ class SshAuthorize(Action):
                 # only secondary connections set active.
                 self.active = True
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         if not self.identity_file:
             self.logger.debug("No authorisation required.")  # idempotency
             return connection

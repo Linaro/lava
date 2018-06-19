@@ -88,7 +88,7 @@ class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
             super().__init__()
             self.count = 1
 
-        def run(self, connection, max_end_time, args=None):
+        def run(self, connection, max_end_time):
             self.count += 1
             raise JobError("fake error")
 
@@ -107,7 +107,7 @@ class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
             self.count = 1
             self.parameters['namespace'] = 'common'
 
-        def run(self, connection, max_end_time, args=None):
+        def run(self, connection, max_end_time):
             self.count += 1
             self.job.triggers.append(TestAction.DiagnoseCheck.trigger())
             raise JobError("fake error")
@@ -321,7 +321,7 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
             self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
             self.internal_pipeline.add_action(TestAction.FakeAction())
 
-        def run(self, connection, max_end_time, args=None):
+        def run(self, connection, max_end_time):
             if connection:
                 raise LAVABug("Fake action not meant to have a real connection")
             time.sleep(3)
@@ -341,7 +341,7 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
             super().__init__()
             self.parameters['namespace'] = 'common'
 
-        def run(self, connection, max_end_time, args=None):
+        def run(self, connection, max_end_time):
             if connection:
                 raise LAVABug("Fake action not meant to have a real connection")
             self.results = {'status': "passed"}
@@ -360,7 +360,7 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
             super().__init__()
             self.parameters['namespace'] = 'common'
 
-        def run(self, connection, max_end_time, args=None):
+        def run(self, connection, max_end_time):
             if connection:
                 raise LAVABug("Fake action not meant to have a real connection")
             time.sleep(5)
@@ -376,7 +376,7 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
         description = "fake action runs without calling adjuvant"
         summary = "fake action without adjuvant"
 
-        def run(self, connection, max_end_time, args=None):
+        def run(self, connection, max_end_time):
             raise LAVABug("Fake action not meant to actually run - should have timed out")
 
     class FakeSafeAction(Action):
@@ -396,7 +396,7 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
             self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
             self.internal_pipeline.add_action(TestAction.FakeAction())
 
-        def run(self, connection, max_end_time, args=None):
+        def run(self, connection, max_end_time):
             if connection:
                 raise LAVABug("Fake action not meant to have a real connection")
             time.sleep(3)

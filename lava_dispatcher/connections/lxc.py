@@ -64,7 +64,7 @@ class ConnectLxc(Action):
         super().validate()
         which('lxc-attach')
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         lxc_name = self.get_namespace_data(
             action='lxc-create-action',
             label='lxc',
@@ -91,7 +91,7 @@ class ConnectLxc(Action):
         # LxcSession monitors the pexpect
         connection = self.session_class(self.job, shell)
         connection.connected = True
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
         connection.prompt_str = self.parameters['prompts']
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection

@@ -126,8 +126,8 @@ class DeployMPSTestBinary(Action):
         if not self.parameters['images'].get(self.param_key, None):
             return
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         mount_point = self.get_namespace_data(action='mount-vexpress-usbmsd', label='vexpress-fw', key='mount-point')
         try:
             os.path.realpath(mount_point)

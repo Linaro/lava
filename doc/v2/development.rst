@@ -332,7 +332,7 @@ service to be restarted.
 
     super().validate()
 
-    connection = super().run(connection, max_end_time, args)
+    connection = super().run(connection, max_end_time)
 
 * When adding or modifying ``run`` functions in subclasses of
   ``Action``, **always** ensure that each return point out of the

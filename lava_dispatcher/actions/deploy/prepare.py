@@ -119,8 +119,8 @@ class UBootPrepareKernelAction(Action):
             action='uboot-prepare-kernel', label='bootcommand',
             key='bootcommand', value=self.bootcommand)
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         if not self.kernel_type:
             return connection  # idempotency
         old_kernel = self.get_namespace_data(
@@ -214,8 +214,8 @@ class PrepareFITAction(Action):
         cmd.append(params['fit_path'])
         return cmd
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         params = {
             label: self.get_namespace_data(
                 action='download-action', label=label, key='file')

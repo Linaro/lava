@@ -102,8 +102,8 @@ class TestMonitorAction(TestAction):  # pylint: disable=too-many-instance-attrib
         self.fixupdict = {}
         self.patterns = {}
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
 
         if not connection:
             raise InfrastructureError("Connection closed")

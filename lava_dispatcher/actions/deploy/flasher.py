@@ -60,8 +60,8 @@ class FlasherAction(DeployAction):
         if self.test_needs_overlay(parameters):
             self.internal_pipeline.add_action(OverlayAction())
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         # Substitute in the device commands
         substitutions = {}
         for key in [key for key in self.parameters['images'].keys() if key != "yaml_line"]:

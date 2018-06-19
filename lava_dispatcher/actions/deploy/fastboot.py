@@ -221,8 +221,8 @@ class FastbootFlashAction(Action):
             self.interrupt_prompt = device_methods['fastboot'].get('interrupt_prompt')
             self.interrupt_string = device_methods['fastboot'].get('interrupt_string')
 
-    def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-locals
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):  # pylint: disable=too-many-locals
+        connection = super().run(connection, max_end_time)
 
         src = self.get_namespace_data(action='download-action', label=self.command, key='file')
         if not src:
@@ -265,8 +265,8 @@ class FastbootReboot(Action):
     description = 'Reset a device between flash operations using fastboot reboot.'
     summary = 'execute a reboot using fastboot'
 
-    def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-locals
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):  # pylint: disable=too-many-locals
+        connection = super().run(connection, max_end_time)
 
         serial_number = self.job.device['fastboot_serial_number']
         fastboot_opts = self.job.device['fastboot_options']
@@ -286,8 +286,8 @@ class FastbootRebootBootloader(Action):
     description = 'Reset a device between flash operations using fastboot reboot-bootloader.'
     summary = 'execute a reboot to bootloader using fastboot'
 
-    def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-locals
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):  # pylint: disable=too-many-locals
+        connection = super().run(connection, max_end_time)
 
         serial_number = self.job.device['fastboot_serial_number']
         fastboot_opts = self.job.device['fastboot_options']

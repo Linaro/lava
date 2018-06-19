@@ -234,7 +234,7 @@ class AutoLoginAction(Action):
             self.results = {'fail': parsed}
             self.logger.warning("Kernel warnings or errors detected.")
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         # Prompts commonly include # - when logging such strings,
         # use lazy logging or the string will not be quoted correctly.
         if self.booting:
@@ -260,7 +260,7 @@ class AutoLoginAction(Action):
             if not any([True for c in DISTINCTIVE_PROMPT_CHARACTERS if c in chk_prompt]):
                 self.logger.warning(self.check_prompt_characters_warning, chk_prompt)
 
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
         if not connection:
             return connection
         prompts = self.parameters.get('prompts', None)
@@ -409,7 +409,7 @@ class BootloaderCommandOverlay(Action):
             else:
                 self.errors = "lava_mac is not a valid mac address"
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         """
         Read data from the download action and replace in context
         Use common data for all values passed into the substitutions so that
@@ -417,7 +417,7 @@ class BootloaderCommandOverlay(Action):
         """
         # Multiple deployments would overwrite the value if parsed in the validate step.
         # FIXME: implement isolation for repeated steps.
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
         ip_addr = dispatcher_ip(self.job.parameters['dispatcher'])
 
         self.ram_disk = self.get_namespace_data(action='compress-ramdisk', label='file', key='ramdisk')
@@ -566,8 +566,8 @@ class OverlayUnpack(Action):
         if 'unpack_command' not in self.parameters['transfer_overlay']:
             self.errors = "Unable to identify unpack command for overlay."
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         if not connection:
             raise LAVABug("Cannot transfer overlay, no connection available.")
         ip_addr = dispatcher_ip(self.job.parameters['dispatcher'])
@@ -629,10 +629,10 @@ class BootloaderInterruptAction(Action):
         # vendor u-boot builds may require one or more control characters
         self.interrupt_control_chars = self.params.get('interrupt_ctrl_list', self.job.device.get_constant('interrupt_ctrl_list', prefix=self.method, missing_ok=True))
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         if not connection:
             raise LAVABug("%s started without a connection already in use" % self.name)
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
         if self.needs_interrupt:
             connection.prompt_str = self.interrupt_prompt
             self.wait(connection)
@@ -674,10 +674,10 @@ class BootloaderCommandsAction(Action):
     def line_separator(self):
         return LINE_SEPARATOR
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         if not connection:
             self.errors = "%s started without a connection already in use" % self.name
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
         connection.raw_connection.linesep = self.line_separator()
         connection.prompt_str = [self.params['bootloader_prompt']]
         at_bootloader_prompt = self.get_namespace_data(action='interrupt', label='interrupt', key='at_bootloader_prompt')
@@ -721,8 +721,8 @@ class AdbOverlayUnpack(Action):
             if self.job.device['adb_serial_number'] == '0000000000':
                 self.errors = "device adb serial number unset"
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         if not connection:
             raise LAVABug("Cannot transfer overlay, no connection available.")
         overlay_file = self.get_namespace_data(action='compress-overlay',

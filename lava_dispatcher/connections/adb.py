@@ -50,7 +50,7 @@ class ConnectAdb(Action):
         super().validate()
         which('adb')
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         connection = self.get_namespace_data(action='shared', label='shared',
                                              key='connection', deepcopy=False)
         if connection:
@@ -79,7 +79,7 @@ class ConnectAdb(Action):
         # ShellSession monitors the pexpect
         connection = self.session_class(self.job, shell)
         connection.connected = True
-        connection = super().run(connection, args)
+        connection = super().run(connection)
         connection.prompt_str = self.parameters['prompts']
         self.set_namespace_data(action='shared', label='shared',
                                 key='connection', value=connection)

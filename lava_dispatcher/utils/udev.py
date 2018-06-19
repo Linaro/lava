@@ -58,8 +58,8 @@ class WaitUSBSerialDeviceAction(Action):
         if not isinstance(self.usb_sleep, int):
             self.errors = 'usb_sleep should be an integer'
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         self.logger.debug("Waiting for usb serial device: %s", self.serial_device)
         wait_udev_event(action='add', match_dict=self.serial_device, subsystem='tty')
         if self.usb_sleep:
@@ -93,8 +93,8 @@ class WaitDFUDeviceAction(Action):
                            'ID_VENDOR_ID': str(usb_vendor_id),
                            'ID_MODEL_ID': str(usb_product_id)}
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         self.logger.debug("Waiting for DFU device: %s", self.dfu_device)
         wait_udev_event(action='add', match_dict=self.dfu_device, subsystem='usb', devtype='usb_device')
         return connection
@@ -117,8 +117,8 @@ class WaitUSBMassStorageDeviceAction(Action):
             self.errors = 'usb_fs_label unset'
         self.ms_device = {'ID_FS_LABEL': str(usb_fs_label)}
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         self.logger.debug("Waiting for USB mass storage device: %s", self.ms_device)
         wait_udev_event(action='add', match_dict=self.ms_device, subsystem='block', devtype='partition')
         return connection
@@ -139,8 +139,8 @@ class WaitDevicePathAction(Action):
         if not isinstance(self.devicepath, str):
             self.errors = "invalid device path"
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         self.logger.debug("Waiting for udev device path: %s", self.devicepath)
         wait_udev_event(action='add', devicepath=self.devicepath)
         return connection
@@ -165,8 +165,8 @@ class WaitDeviceBoardID(Action):
             self.errors = "invalid board_id"
         self.udev_device = {'ID_SERIAL_SHORT': str(self.board_id)}
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         self.logger.debug("Waiting for udev device with ID: %s", self.board_id)
         wait_udev_event(action='add', match_dict=self.udev_device)
         return connection

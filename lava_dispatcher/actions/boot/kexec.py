@@ -105,12 +105,12 @@ class KexecAction(Action):
         if self.load_command == '/sbin/kexec':
             self.errors = "Default kexec handler needs at least a kernel to pass to the --load command"
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         """
         If kexec fails, there is no real chance at diagnostics because the device will be hung.
         Get the output prior to the call, in case this helps after the job fails.
         """
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
         if 'kernel-config' in self.parameters:
             cmd = "zgrep -i kexec %s |grep -v '^#'" % self.parameters['kernel-config']
             self.logger.debug("Checking for kexec: %s", cmd)

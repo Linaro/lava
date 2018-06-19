@@ -93,8 +93,8 @@ class DepthchargeCommandOverlay(BootloaderCommandOverlay):
         if self.cmdline is None:
             self.errors = "No cmdline found in {}".format(commands_name)
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
 
         # Create the cmdline file, this is not set by any bootloader command
         ip_addr = dispatcher_ip(self.job.parameters['dispatcher'])
@@ -185,8 +185,8 @@ class DepthchargeRetry(BootAction):
                     self.internal_pipeline.add_action(OverlayUnpack())
                 self.internal_pipeline.add_action(ExportDeviceEnvironment())
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         self.set_namespace_data(
             action='shared', label='shared', key='connection', value=connection)
         return connection
@@ -214,8 +214,8 @@ class DepthchargeStart(Action):
         if self.start_message is None:
             self.errors = "Missing Depthcharge start message for device"
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         connection.prompt_str = self.start_message
         self.logger.debug("Changing prompt to '%s'", connection.prompt_str)
         self.wait(connection)

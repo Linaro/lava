@@ -202,7 +202,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
         # Diagnosis is not allowed to alter the connection, do not use the return value.
         return None
 
-    def run_actions(self, connection, max_end_time, args=None):  # pylint: disable=too-many-branches,too-many-statements,too-many-locals
+    def run_actions(self, connection, max_end_time):  # pylint: disable=too-many-branches,too-many-statements,too-many-locals
         for action in self.actions:
             failed = False
             namespace = action.parameters.get('namespace', 'common')
@@ -219,8 +219,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                     else:
                         action.logger.debug(msg)
 
-                    new_connection = action.run(connection,
-                                                action_max_end_time, args)
+                    new_connection = action.run(connection, action_max_end_time)
             except LAVAError as exc:
                 action.logger.exception(str(exc))
                 # allows retries without setting errors, which make the job incomplete.
@@ -540,7 +539,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
                     self.set_namespace_data(
                         action=protocol.name, label=protocol.name, key=message[0], value=message[1])
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         """
         This method is responsible for performing the operations that an action
         is supposed to do.
@@ -554,13 +553,12 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
 
         :param connection: The Connection object to use to run the steps
         :param max_end_time: The maximum time before this action will timeout.
-        :param args: Command and arguments to run
         :raise: Classes inheriting from BaseAction must handle
         all exceptions possible from the command and re-raise
         """
         self.call_protocols()
         if self.internal_pipeline:
-            return self.internal_pipeline.run_actions(connection, max_end_time, args)
+            return self.internal_pipeline.run_actions(connection, max_end_time)
         if connection:
             connection.timeout = self.connection_timeout
         return connection

@@ -171,6 +171,6 @@ class TestShellResults(StdoutTestCase):   # pylint: disable=too-many-public-meth
             super().__init__()
             self.count = 1
 
-        def run(self, connection, max_end_time, args=None):
+        def run(self, connection, max_end_time):
             self.count += 1
             raise JobError("fake error")

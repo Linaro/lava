@@ -96,8 +96,8 @@ class SwitchRecoveryCommand(Action):
         if not command:
             self.errors = "Unable to find %s recovery command" % self.mode
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         command = self.recovery['commands'][self.mode]
         self.logger.info("Switching using '%s' recovery command", self.mode)
         if not isinstance(command, list):

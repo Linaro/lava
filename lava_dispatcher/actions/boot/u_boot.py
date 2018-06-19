@@ -136,8 +136,8 @@ class UBootRetry(BootAction):
             value=self.job.device['actions']['boot']['methods']['u-boot']['parameters']['bootloader_prompt']
         )
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection
 
@@ -217,8 +217,8 @@ class UBootEnterFastbootAction(BootAction):
         if 'commands' not in self.job.device['actions']['deploy']['methods']['u-boot']['parameters']['fastboot']:
             self.errors = "uboot command missing"
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         connection.prompt_str = self.params['bootloader_prompt']
         self.logger.debug("Changing prompt to %s", connection.prompt_str)
         self.wait(connection)
