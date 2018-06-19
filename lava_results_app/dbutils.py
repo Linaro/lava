@@ -25,6 +25,7 @@ import yaml
 import sys
 import logging
 import decimal
+from urllib.parse import quote
 
 from collections import OrderedDict  # pylint: disable=unused-import
 from lava_results_app.models import (
@@ -38,14 +39,6 @@ from lava_results_app.models import (
 from lava_results_app.utils import debian_package_version
 from django.core.exceptions import MultipleObjectsReturned
 from lava_common.timeout import Timeout
-
-if sys.version_info[0] == 2:
-    # Python 2.x
-    from urllib import quote
-elif sys.version_info[0] == 3:
-    # For Python 3.0 and later
-    from urllib.parse import quote
-    basestring = str
 
 
 def _check_for_testset(result_dict, suite):
@@ -446,7 +439,7 @@ def export_testcase(testcase, with_buglinks=False):
     metadata = dict(testcase.action_metadata) if testcase.action_metadata else {}
     extra_source = []
     extra_data = metadata.get('extra', None)
-    if isinstance(extra_data, basestring) and os.path.exists(extra_data):
+    if isinstance(extra_data, str) and os.path.exists(extra_data):
         with open(metadata['extra'], 'r') as extra_file:
             items = yaml.load(extra_file, Loader=yaml.CLoader)
         # hide the !!python OrderedDict prefix from the output.
