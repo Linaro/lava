@@ -1,6 +1,6 @@
 include .testr.conf
 include .gitreview
-include COPYING.AGPL-3 
+include COPYING.AGPL-3
 include doc/*
 include doc/deprecated/*
 include doc/v2/*
@@ -46,6 +46,8 @@ include share/*
 include share/apache2/*
 include share/zmq/*
 include version.py
+include requirements.txt
+include dispatcher-requirements.txt
 recursive-include doc/images *.gif *.png *.jpg *.jpeg *.bmp *.svg *.odg
 recursive-include doc/v2/images *.gif *.png *.jpg *.jpeg *.bmp *.svg *.odg
 recursive-include doc/v2/examples *.yaml *.txt *.py
