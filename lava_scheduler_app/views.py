@@ -1501,7 +1501,9 @@ def job_pipeline_timing(request, pk):
             level = d["level"]
             parts = d["duration"].split(":")
             duration = float(parts[0]) * 3600 + float(parts[1]) * 60 + float(parts[2])
-            timings[level]["duration"] = duration
+            # We create the entry because with some timeout, the start line
+            # might be missing.
+            timings.setdefault(level, {})["duration"] = duration
 
             max_duration = max(max_duration, duration)
             if '.' not in level:
@@ -1514,8 +1516,9 @@ def job_pipeline_timing(request, pk):
     pipeline = []
     for lvl in levels:
         duration = timings[lvl].get("duration", 0.0)
-        timeout = timings[lvl]["timeout"]
-        pipeline.append((lvl, timings[lvl]["name"], duration, timeout,
+        timeout = timings[lvl].get("timeout", 0.0)
+        name = timings[lvl].get("name", "???")
+        pipeline.append((lvl, name, duration, timeout,
                          bool(duration >= (timeout * 0.85))))
 
     # Compute the percentage
