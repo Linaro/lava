@@ -19,12 +19,8 @@ Vcs-Browser: https://github.com/Linaro/pkg-lava
 
 Package: lava-dispatcher
 Architecture: amd64 arm64 armhf i386 ppc64el s390x ppc64
-Depends: file, systemd-sysv, python3-serial (>= 2.6), python3-setuptools,
- lava-common (>= ${source:Version}), python3-guestfs (>= 1.32.7), tar (>= 1.27),
- python3-configobj, python3-magic, python3-netifaces (>= 0.10.0),
- python3-nose, python3-pexpect (>= 4.2), python3-pyudev (>= 0.21),
- python3-requests, python3-setproctitle (>= 1.1.8), python3-tz,
- python3-yaml, python3-zmq,
+Depends: file, systemd-sysv, python3-setuptools,
+ lava-common (>= ${source:Version}), tar (>= 1.27),
  sudo, telnet, ${python3:Depends}, ${misc:Depends}
 Multi-Arch: foreign
 Recommends: ntp, git, tftpd-hpa, openbsd-inetd, ser2net,
@@ -51,17 +47,11 @@ Description: Linaro Automated Validation Architecture dispatcher
 Package: lava-server
 Architecture: all
 Pre-Depends: debconf | debconf-2.0
-Depends: apache2, adduser, gunicorn3, iproute2, python3-tz, python3-dateutil,
- python3-django (>= 1.10), python3-django-auth-ldap (>= 1.2.12),
- python3-setuptools, python3-yaml, python3-requests,
+Depends: apache2, adduser, gunicorn3, iproute2, python3-setuptools,
  libjs-excanvas, libjs-jquery-cookie, libjs-jquery, libjs-jquery-ui,
  libjs-jquery-watermark, libjs-jquery-flot (>= 0.8.2), openssh-client,
  postgresql, postgresql-client, postgresql-common, systemd-sysv,
- lava-common (>= ${source:Version}), python3-django-restricted-resource (>= 2016.8),
- python3-django-tables2 (>= 1.2), python3-docutils, python3-jinja2,
- python3-markdown, python3-psycopg2, python3-simplejson,
- python3-voluptuous (>= 0.8.8), python3-zmq,
- ${python3:Depends}, ${misc:Depends}
+ lava-common (>= ${source:Version}),${python3:Depends}, ${misc:Depends}
 Recommends: ntp, lava-coordinator, lava-server-doc, lava-dispatcher,
 Suggests: python3-django-hijack, python3-django-debug-toolbar
 Description: Linaro Automated Validation Architecture server
