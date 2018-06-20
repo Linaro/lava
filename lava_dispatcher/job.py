@@ -209,21 +209,20 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         success = False
         try:
             self._validate()
-        except LAVAError as exc:
+            success = True
+        except LAVAError:
             raise
         except Exception as exc:
             # provide useful info on command line, e.g. failed unit tests.
             self.logger.exception(traceback.format_exc())
             raise LAVABug(exc)
-        else:
-            success = True
         finally:
-            if not success:
-                self.cleanup(connection=None)
             self.logger.info("validate duration: %.02f", time.time() - start)
             self.logger.results({"definition": "lava",
                                  "case": "validate",
                                  "result": "pass" if success else "fail"})
+            if not success:
+                self.cleanup(connection=None)
 
     def _run(self):
         """
