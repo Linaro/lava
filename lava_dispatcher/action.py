@@ -208,7 +208,8 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
             namespace = action.parameters.get('namespace', 'common')
             # Begin the action
             try:
-                with action.timeout(max_end_time) as action_max_end_time:
+                parent = self.parent if self.parent else self.job
+                with action.timeout(parent, max_end_time) as action_max_end_time:
                     # Add action start timestamp to the log message
                     # Log in INFO for root actions and in DEBUG for the other actions
                     timeout = seconds_to_str(action_max_end_time - action.timeout.start)

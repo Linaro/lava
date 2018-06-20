@@ -21,6 +21,7 @@
 # List just the subclasses supported for this base strategy
 # imported by the parser to populate the list of subclasses.
 
+import time
 import traceback
 
 from lava_common.exceptions import (
@@ -323,4 +324,4 @@ class FinalizeAction(Action):
     def cleanup(self, connection):
         # avoid running Finalize in validate or unit tests
         if not self.ran and self.job.started:
-            self.run(connection, None)
+            self.run(connection, time.time() + self.timeout.duration)

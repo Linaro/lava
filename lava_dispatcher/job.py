@@ -247,7 +247,7 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
                 raise JobError(msg)
 
         # Run the pipeline and wait for exceptions
-        with self.timeout() as max_end_time:
+        with self.timeout(None, None) as max_end_time:
             self.pipeline.run_actions(self.connection, max_end_time)
 
     def run(self):
