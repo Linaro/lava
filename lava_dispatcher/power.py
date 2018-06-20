@@ -21,7 +21,7 @@
 # List just the subclasses supported for this base strategy
 # imported by the parser to populate the list of subclasses.
 
-import contextlib
+import traceback
 
 from lava_common.exceptions import (
     InfrastructureError,
@@ -308,10 +308,13 @@ class FinalizeAction(Action):
         The internal_pipeline of FinalizeAction is special - it needs to run even in the case of error / cancel.
         """
         self.ran = True
-        with contextlib.suppress(Exception):
+        try:
             connection = super().run(connection, max_end_time)
             if connection:
                 connection.finalise()
+        except Exception as exc:
+            self.logger.error("Failed to run '%s': %s", self.name, str(exc))
+            self.logger.exception(traceback.format_exc())
 
         for protocol in self.job.protocols:
             protocol.finalise_protocol(self.job.device)
