@@ -275,7 +275,7 @@ class JobsDB(object):
     def __init__(self, dbname):
         self.conn = sqlite3.connect(dbname)
         self.conn.row_factory = sqlite3.Row
-        self.conn.execute("CREATE TABLE IF NOT EXISTS jobs(id INTERGER PRIMARY KEY, pid INTEGER, status INTEGER, last_update INTEGER)")
+        self.conn.execute("CREATE TABLE IF NOT EXISTS jobs(id INTEGER PRIMARY KEY, pid INTEGER, status INTEGER, last_update INTEGER)")
         self.conn.commit()
 
     def create(self, job_id, pid, status):
