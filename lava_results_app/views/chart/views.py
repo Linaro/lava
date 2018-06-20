@@ -351,7 +351,7 @@ def chart_add_group(request, name):
         if not old_group.chart_set.count():
             old_group.delete()
 
-    return HttpResponse(group_name, content_type='application/json')
+    return HttpResponseRedirect(chart.get_absolute_url() + "/+detail")
 
 
 @login_required
@@ -367,12 +367,15 @@ def chart_select_group(request, name):
     if not group_name:
         chart.group = None
     else:
-        group = Group.objects.get(name=group_name)
+        try:
+            group = Group.objects.get(name=group_name)
+        except Group.DoesNotExist:
+            group = None
         chart.group = group
 
     chart.save()
 
-    return HttpResponse(group_name, content_type='application/json')
+    return HttpResponseRedirect(chart.get_absolute_url() + "/+detail")
 
 
 @login_required

@@ -528,7 +528,7 @@ def query_add_group(request, username, name):
         if not old_group.query_set.count():
             old_group.delete()
 
-    return HttpResponse(group_name, content_type='application/json')
+    return HttpResponseRedirect(query.get_absolute_url() + "/+detail")
 
 
 @login_required
@@ -544,12 +544,15 @@ def query_select_group(request, username, name):
     if not group_name:
         query.group = None
     else:
-        group = Group.objects.get(name=group_name)
+        try:
+            group = Group.objects.get(name=group_name)
+        except Group.DoesNotExist:
+            group = None
         query.group = group
 
     query.save()
 
-    return HttpResponse(group_name, content_type='application/json')
+    return HttpResponseRedirect(query.get_absolute_url() + "/+detail")
 
 
 @login_required

@@ -98,8 +98,6 @@ urlpatterns = [
         name='lava.scheduler.job.log_pipeline_incremental'),
     url(r'^myjobs$', myjobs, name='lava.scheduler.myjobs'),
     url(r'^favorite-jobs$', favorite_jobs, name='lava.scheduler.favorite_jobs'),
-    url(r'^favorite-jobs/~(?P<username>[^/]+)$', favorite_jobs,
-        name='lava.scheduler.favorite_jobs'),
     url(r'^job/(?P<pk>[0-9]+|[0-9]+\.[0-9]+)/priority$', job_change_priority,
         name='lava.scheduler.job.priority'),
     url(r'^device/(?P<pk>[-_a-zA-Z0-9.]+)/restrict$', device_restrict_device,

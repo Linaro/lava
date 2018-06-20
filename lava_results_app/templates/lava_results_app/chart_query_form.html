@@ -25,13 +25,22 @@
   </div>
   {% endif %}
 
+<div class="help-text" style="margin-left: 10px;">Type to search for the query using the query name.<br>Available queries will appear in a list below.<br>A query name is required to save the changes to the Chart.
+</div>
 <div id="add_filter_link" class="form-field">
-
-  {{ form.query.label_tag }}
-  <input id="query" value="{{ instance.query.owner_name }}" />
-  {{ form.query }}
-  {{ form.chart }}
-  {{ form.relative_index }}
+  <div style="display: inline;">
+    <label for="id_query">Query:</label>
+  </div>
+  <div class="typeahead__container">
+    <div class="typeahead__field">
+      <div class="typeahead__query">
+        <input id="query" type="search" placeholder="Search" autocomplete="off" value="{{ instance.query.owner_name }}" />
+        {{ form.query }}
+        {{ form.chart }}
+        {{ form.relative_index }}
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="form-field">
@@ -73,15 +82,19 @@
 {% endblock %}
 
 {% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}lava_server/js/jquery.typeahead.min.js"></script>
 <script>
 
 $(document).ready(function () {
 
-  $("#query").autocomplete({
-    source: '{% url 'lava.results.get_query_names' %}',
+  $("#query").typeahead({
+    source: {queries: {ajax: {type:"GET", url: '{% url 'lava.results.get_query_names' %}', data: {term: "{{query}}"}}}},
+    display: ["value"],
     minLength: 1,
-    select: function(event, ui) {
-      $("#id_query").val(ui.item.id);
+    callback: {
+      onClickAfter: function(node, a, item, event) {
+        $("#id_query").val(item.id);
+      },
     }
   });
 

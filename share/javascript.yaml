@@ -26,13 +26,20 @@ debian:
       jquery.flot.min.js: jquery.flot.min.js
       jquery.flot.js: jquery.flot.js
       jquery.flot.stack.js: jquery.flot.stack.js
-  - package: libjs-jquery-ui
-    directory: /usr/share/javascript/jquery-ui/ui/
+  - package: libjs-jquery-typeahead
+    directory: /usr/share/javascript/jquery-typeahead/
     lava_directory: lava_server/static/lava_server/js/
     replacements:
-      jquery-ui-1.10.4.custom.js: jquery-ui.custom.js
-      jquery-ui-1.10.4.custom.min.js: jquery-ui.custom.min.js
-    version: '1.10.4'
+      jquery.typeahead.js: jquery.typeahead.js
+      jquery.typeahead.min.js: jquery.typeahead.min.js
+    version: '2.10.4'
+  - package: libjs-jquery-typeahead
+    directory: /usr/share/javascript/jquery-typeahead/
+    lava_directory: lava_server/static/lava_server/css/
+    replacements:
+      jquery.typeahead.css: jquery.typeahead.css
+      jquery.typeahead.min.css: jquery.typeahead.min.css
+    version: '2.10.4'
   - uglify:
     lava_directory: lava_scheduler_app/static/lava_scheduler_app/js/
     destination: lava_scheduler_app/static/lava_scheduler_app/js/
@@ -44,7 +51,6 @@ debian:
       favorite-jobs.js: favorite-jobs.min.js
       jquery.details.js: jquery.details.min.js
       similar-jobs.js: similar-jobs.min.js
-      jquery.jeditable.js: jquery.jeditable.min.js
       anchor-v3.2.0.js: anchor-v3.2.0.min.js
   - uglify:
     lava_directory: lava_results_app/static/lava_results_app/js/
@@ -57,6 +63,7 @@ debian:
       query.js: query.min.js
       chart.js: chart.min.js
       bootbox.data.toggle.js: bootbox.data.toggle.min.js
+      sortable.js: sortable.min.js
   - uglify:
     lava_directory: lava_server/static/lava_server/js/
     destination: lava_server/static/lava_server/js/

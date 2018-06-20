@@ -1334,8 +1334,9 @@ def longest_jobs(request, username=None):
 
 
 @BreadCrumb("Favorite Jobs", parent=index)
-def favorite_jobs(request, username=None):
+def favorite_jobs(request):
 
+    username = request.POST.get("username")
     if not username:
         username = request.user.username
     user = get_object_or_404(User, username=username)

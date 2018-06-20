@@ -171,7 +171,7 @@ div.selector .selector-chosen select {
     margin-right: 10px;
 }
 
-.sortable-placeholder {
+.sort {
     border: 1px solid #000000;
     width: 100%;
     margin: 10px 0 10px 0;
@@ -179,7 +179,7 @@ div.selector .selector-chosen select {
     height: 180px;
 }
 
-.sortable-placeholder:hover {
+.sort:hover {
     cursor: row-resize;
 }
 
@@ -379,4 +379,14 @@ div.selector .selector-chosen select {
 .group-link {
     margin: 0 0 0 10px;
     float: left;
+}
+
+
+.loading_dialog {
+    height: 45px;
+    width: 250px;
+}
+
+.help-text {
+    font-size: 11px;
 }
