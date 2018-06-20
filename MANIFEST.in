@@ -50,7 +50,7 @@ include requirements.txt
 include dispatcher-requirements.txt
 recursive-include doc/images *.gif *.png *.jpg *.jpeg *.bmp *.svg *.odg
 recursive-include doc/v2/images *.gif *.png *.jpg *.jpeg *.bmp *.svg *.odg
-recursive-include doc/v2/examples *.yaml *.txt *.py
+recursive-include doc/v2/examples *.yaml *.txt *.py *.jinja2
 recursive-include doc/v2/_templates *.html
 recursive-include etc/dispatcher-config README
 recursive-include google_analytics/templates *.html
