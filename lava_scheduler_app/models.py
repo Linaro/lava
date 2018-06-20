@@ -45,7 +45,6 @@ from django_restricted_resource.models import (
 from lava_scheduler_app.managers import RestrictedTestJobQuerySet
 from lava_scheduler_app.schema import (
     validate_submission,
-    handle_include_option,
     SubmissionException
 )
 from lava_common.exceptions import ConfigurationError
@@ -1721,9 +1720,6 @@ class TestJob(RestrictedResource):
         (explicitly, a list, not a QuerySet) of evaluated TestJob objects
         """
         job_data = yaml.safe_load(yaml_data)
-
-        # Unpack include value if present.
-        job_data = handle_include_option(job_data)
 
         # visibility checks
         if 'visibility' not in job_data:
