@@ -8,4 +8,6 @@ lava-server: maintainer-script-should-not-use-recursive-chown-or-chmod postinst:
 lava-server: maintainer-script-should-not-use-recursive-chown-or-chmod postinst:160
 lava-server: maintainer-script-should-not-use-recursive-chown-or-chmod postinst:161
 # lintian error
-lava-server: spelling-error-in-description some system some systems
+lava-server: privacy-breach-generic usr/lib/python3/dist-packages/lava_server/templates/layouts/base.html [<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js">] (https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js)
+lava-server: privacy-breach-generic usr/lib/python3/dist-packages/lava_server/templates/layouts/base.html [<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js">] (https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js)
+

@@ -1,2 +1,1 @@
 lava-dev: binary-package-depends-on-toolchain-package depends: debhelper (>= 9.20160709)
-lava-dev: spelling-error-in-description some system some systems

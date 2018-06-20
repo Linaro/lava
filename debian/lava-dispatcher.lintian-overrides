@@ -1,5 +1,4 @@
 # lintian error
-lava-dispatcher: spelling-error-in-description some system some systems
 
 lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/fedora/lava-install-packages
 lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/fedora/lava-installed-packages
