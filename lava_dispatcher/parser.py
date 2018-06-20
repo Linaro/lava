@@ -110,10 +110,9 @@ class JobParser(object):
         return mapping
 
     def _timeouts(self, data, job):
-        if data.get('timeouts', None) is not None:
-            if 'job' in data['timeouts']:
-                duration = Timeout.parse(data['timeouts']['job'])
-                job.timeout = Timeout(data['job_name'], duration)
+        if 'job' in data.get('timeouts', {}):
+            duration = Timeout.parse(data['timeouts']['job'])
+            job.timeout = Timeout('job', duration)
 
     # pylint: disable=too-many-locals,too-many-statements
     def parse(self, content, device, job_id, logger, dispatcher_config,
