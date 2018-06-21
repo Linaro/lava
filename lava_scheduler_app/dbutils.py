@@ -73,7 +73,7 @@ def testjob_submission(job_definition, user, original_job=None):
     if json_data:
         # explicitly convert to YAML.
         # JSON cannot have comments anyway.
-        job_definition = yaml.dump(yaml.safe_load(job_definition))
+        job_definition = yaml.safe_dump(yaml.safe_load(job_definition))
 
     validate_job(job_definition)
     # returns a single job or a list (not a QuerySet) of job objects.

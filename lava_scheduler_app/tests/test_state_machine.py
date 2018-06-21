@@ -32,7 +32,7 @@ from lava_scheduler_app.models import (
 )
 
 
-minimal_valid_job = yaml.dump("""
+minimal_valid_job = yaml.safe_dump("""
 job_name: minimal valid job
 visibility: public
 timeouts:
@@ -261,19 +261,19 @@ class TestTestJobStateMachine(TestCase):
                                              device_type=self.device_type,
                                              worker_host=self.worker)
 
-        self.job.definition = yaml.dump({"protocols": {"lava-multinode": {"role": "master", "essential": True}}})
+        self.job.definition = yaml.safe_dump({"protocols": {"lava-multinode": {"role": "master", "essential": True}}})
         self.job.target_group = "target_group"
         self.job.save()
         self.sub_job1 = TestJob.objects.create(requested_device_type=self.device_type,
                                                submitter=self.user, user=self.user,
                                                target_group="target_group", is_public=True)
-        self.sub_job1.definition = yaml.dump({"protocols": {"lava-multinode": {"role": "worker", "essential": False}}})
+        self.sub_job1.definition = yaml.safe_dump({"protocols": {"lava-multinode": {"role": "worker", "essential": False}}})
         self.sub_job1.actual_device = self.device2
         self.sub_job1.save()
         self.sub_job2 = TestJob.objects.create(requested_device_type=self.device_type,
                                                submitter=self.user, user=self.user,
                                                target_group="target_group", is_public=True)
-        self.sub_job2.definition = yaml.dump({"protocols": {"lava-multinode": {"role": "worker", "essential": False}}})
+        self.sub_job2.definition = yaml.safe_dump({"protocols": {"lava-multinode": {"role": "worker", "essential": False}}})
         self.sub_job2.actual_device = self.device3
         self.sub_job2.save()
 
@@ -312,7 +312,7 @@ class TestTestJobStateMachine(TestCase):
         self.assertEqual(self.sub_job2.state, TestJob.STATE_CANCELING)
 
         # 2/ Non-essential role
-        self.job.definition = yaml.dump({"protocols": {"lava-multinode": {"role": "master", "essential": False}}})
+        self.job.definition = yaml.safe_dump({"protocols": {"lava-multinode": {"role": "master", "essential": False}}})
         self.job.state = TestJob.STATE_RUNNING
         self.job.actual_device = self.device
         self.job.actual_device.state = Device.STATE_RUNNING
@@ -551,19 +551,19 @@ class TestTestJobStateMachine(TestCase):
         self.device2 = Device.objects.create(hostname="device-02", device_type=self.device_type)
         self.device3 = Device.objects.create(hostname="device-03", device_type=self.device_type)
 
-        self.job.definition = yaml.dump({"protocols": {"lava-multinode": {"role": "master", "essential": True}}})
+        self.job.definition = yaml.safe_dump({"protocols": {"lava-multinode": {"role": "master", "essential": True}}})
         self.job.target_group = "target_group"
         self.job.save()
         self.sub_job1 = TestJob.objects.create(requested_device_type=self.device_type,
                                                submitter=self.user, user=self.user,
                                                target_group="target_group", is_public=True)
-        self.sub_job1.definition = yaml.dump({"protocols": {"lava-multinode": {"role": "worker", "essential": False}}})
+        self.sub_job1.definition = yaml.safe_dump({"protocols": {"lava-multinode": {"role": "worker", "essential": False}}})
         self.sub_job1.actual_device = self.device2
         self.sub_job1.save()
         self.sub_job2 = TestJob.objects.create(requested_device_type=self.device_type,
                                                submitter=self.user, user=self.user,
                                                target_group="target_group", is_public=True)
-        self.sub_job2.definition = yaml.dump({"protocols": {"lava-multinode": {"role": "worker", "essential": False}}})
+        self.sub_job2.definition = yaml.safe_dump({"protocols": {"lava-multinode": {"role": "worker", "essential": False}}})
         self.sub_job2.actual_device = self.device3
         self.sub_job2.save()
 
@@ -638,7 +638,7 @@ class TestTestJobStateMachine(TestCase):
 
         # 2/ Non-essential role
         # 1.1/ Success
-        self.job.definition = yaml.dump({"protocols": {"lava-multinode": {"role": "master", "essential": False}}})
+        self.job.definition = yaml.safe_dump({"protocols": {"lava-multinode": {"role": "master", "essential": False}}})
         self.job.state = TestJob.STATE_RUNNING
         self.job.actual_device = self.device
         self.job.actual_device.state = Device.STATE_RUNNING

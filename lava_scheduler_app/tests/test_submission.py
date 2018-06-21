@@ -133,7 +133,7 @@ class ModelFactory(object):
         return data
 
     def make_job_yaml(self, **kw):
-        return yaml.dump(self.make_job_data(**kw))
+        return yaml.safe_dump(self.make_job_data(**kw))
 
     def make_job_data_from_file(self, sample_job_file):
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs', sample_job_file)
@@ -221,7 +221,7 @@ class TestTestJob(TestCaseWithFactory):  # pylint: disable=too-many-ancestors,to
         definition = self.factory.make_job_data()
         definition['visibility'] = {'group': ['newgroup']}
         definition['job_name'] = 'unittest_visibility'
-        self.assertIsNotNone(yaml.dump(definition))
+        self.assertIsNotNone(yaml.safe_dump(definition))
         self.assertIsNotNone(list(Device.objects.filter(device_type=dt)))
         user = self.factory.make_user()
         user.user_permissions.add(
@@ -230,12 +230,12 @@ class TestTestJob(TestCaseWithFactory):  # pylint: disable=too-many-ancestors,to
         self.assertRaises(
             SubmissionException,
             TestJob.from_yaml_and_user,
-            yaml.dump(definition),
+            yaml.safe_dump(definition),
             user)
         self.factory.make_group('newgroup')
         known_groups = list(Group.objects.filter(name__in=['newgroup']))
         job = TestJob.from_yaml_and_user(
-            yaml.dump(definition), user)
+            yaml.safe_dump(definition), user)
         job.refresh_from_db()
         self.assertEqual(user, job.submitter)
         self.assertEqual(job.visibility, TestJob.VISIBLE_GROUP)
@@ -253,11 +253,11 @@ class TestTestJob(TestCaseWithFactory):  # pylint: disable=too-many-ancestors,to
         device.save()
         definition = self.factory.make_job_data_from_file('qemu-pipeline-first-job.yaml')
         # convert content of file to JSON string
-        json_def = json.dumps(yaml.load(definition))
+        json_def = json.dumps(yaml.safe_load(definition))
         job = testjob_submission(json_def, user, None)
         # check that submitted JSON is now YAML
         self.assertRaises(json.decoder.JSONDecodeError, json.loads, job.definition)
-        yaml.load(job.definition)
+        yaml.safe_load(job.definition)
         self.assertIsInstance(job.definition, str)
 
 
@@ -284,7 +284,7 @@ class TestHiddenTestJob(TestCaseWithFactory):  # pylint: disable=too-many-ancest
         self.assertRaises(
             DevicesUnavailableException,
             TestJob.from_yaml_and_user,
-            yaml.dump(definition),
+            yaml.safe_dump(definition),
             user)
 
     def test_hidden_healthcheck(self):
@@ -304,7 +304,7 @@ class TestHiddenTestJob(TestCaseWithFactory):  # pylint: disable=too-many-ancest
             ConfigurationError,
             schedule_health_check,
             device,
-            yaml.dump(definition))
+            yaml.safe_dump(definition))
 
         # reset device state.
         definition['job_name'] = 'job_should_schedule'
@@ -312,7 +312,7 @@ class TestHiddenTestJob(TestCaseWithFactory):  # pylint: disable=too-many-ancest
         device.state = Device.STATE_IDLE
         device.save(update_fields=['state'])
         definition['visibility'] = {'group': ['hide']}
-        job_id = schedule_health_check(device, yaml.dump(definition))
+        job_id = schedule_health_check(device, yaml.safe_dump(definition))
         job = TestJob.objects.get(id=job_id)
         self.assertEqual(job.is_public, False)
         self.assertEqual(job.visibility, TestJob.VISIBLE_GROUP)
@@ -320,7 +320,7 @@ class TestHiddenTestJob(TestCaseWithFactory):  # pylint: disable=too-many-ancest
         device.state = Device.STATE_IDLE
         device.save(update_fields=['state'])
         definition['visibility'] = 'personal'
-        job_id = schedule_health_check(device, yaml.dump(definition))
+        job_id = schedule_health_check(device, yaml.safe_dump(definition))
         job = TestJob.objects.get(id=job_id)
         self.assertEqual(job.is_public, False)
         self.assertEqual(job.visibility, TestJob.VISIBLE_PERSONAL)
