@@ -144,6 +144,9 @@ class YAMLLogger(logging.Logger):
     def event(self, message, *args, **kwargs):
         self.log_message(logging.INFO, 'event', message, *args, **kwargs)
 
+    def marker(self, message, *args, **kwargs):
+        self.log_message(logging.INFO, 'marker', message, *args, **kwargs)
+
     def results(self, results, *args, **kwargs):
         if 'extra' in results and 'level' not in results:
             raise Exception("'level' is mandatory when 'extra' is used")

@@ -103,7 +103,7 @@ def create_metadata_store(results, job):
     return meta_filename
 
 
-def map_scanned_results(results, job, meta_filename):  # pylint: disable=too-many-branches,too-many-statements,too-many-return-statements
+def map_scanned_results(results, job, markers, meta_filename):  # pylint: disable=too-many-branches,too-many-statements,too-many-return-statements
     """
     Sanity checker on the logged results dictionary
     :param results: results logged via the slave
@@ -174,6 +174,13 @@ def map_scanned_results(results, job, meta_filename):  # pylint: disable=too-man
         if result not in TestCase.RESULT_MAP:
             logger.warning("[%d] Unrecognised result: '%s' for test case '%s'", job.id, result, name)
             return None
+        # Add the marker if available
+        starttc = endtc = None
+        if name in markers:
+            test_case = markers[name].get('test_case')
+            starttc = markers[name].get("start_test_case", test_case)
+            endtc = markers[name].get("end_test_case", test_case)
+            del markers[name]
         try:
             test_case = TestCase(name=name,
                                  suite=suite,
@@ -181,7 +188,9 @@ def map_scanned_results(results, job, meta_filename):  # pylint: disable=too-man
                                  result=TestCase.RESULT_MAP[result],
                                  metadata=metadata,
                                  measurement=measurement,
-                                 units=units)
+                                 units=units,
+                                 start_log_line=starttc,
+                                 end_log_line=endtc)
         except decimal.InvalidOperation:
             logger.exception("[%d] Unable to create test case %s", job.id, name)
     return test_case
@@ -419,7 +428,8 @@ def testcase_export_fields():
     return [
         'job', 'suite', 'result', 'measurement', 'unit',
         'duration', 'timeout',
-        'logged', 'level', 'metadata', 'url', 'name', 'id'
+        'logged', 'level', 'metadata', 'url', 'name', 'id',
+        'log_start_line', 'log_end_line'
     ]
 
 
@@ -452,6 +462,8 @@ def export_testcase(testcase, with_buglinks=False):
         'url': str(testcase.get_absolute_url()),
         'id': str(testcase.id),
         'logged': str(testcase.logged),
+        'log_start_line': str(testcase.start_log_line) if testcase.start_log_line else '',
+        'log_end_line': str(testcase.end_log_line) if testcase.end_log_line else '',
         'metadata': metadata,
     }
     if with_buglinks:

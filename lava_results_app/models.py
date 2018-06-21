@@ -391,6 +391,20 @@ class TestCase(models.Model, Queryable):
         TestSuite,
     )
 
+    # Store start and end of the TestCase in the log file
+    # We are countaing the lines
+    start_log_line = models.PositiveIntegerField(
+        blank=True,
+        null=True,
+        editable=False
+    )
+
+    end_log_line = models.PositiveIntegerField(
+        blank=True,
+        null=True,
+        editable=False
+    )
+
     test_set = models.ForeignKey(
         TestSet,
         related_name='test_cases',

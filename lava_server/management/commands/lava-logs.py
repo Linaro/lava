@@ -55,6 +55,7 @@ class JobHandler(object):  # pylint: disable=too-few-public-methods
         self.output = open(os.path.join(self.output_dir, 'output.yaml'), 'ab')
         self.index = open(os.path.join(self.output_dir, 'output.idx'), 'ab')
         self.last_usage = time.time()
+        self.markers = {}
 
     def write(self, message):
         write_logs(self.output, self.index,
@@ -349,12 +350,6 @@ class Command(LAVADaemonCommand):
                 job_id, message)
             return
 
-        # For 'event', send an event and log as 'debug'
-        if message_lvl == 'event':
-            self.logger.debug("[%s] event: %s", job_id, message_msg)
-            send_event(".event", "lavaserver", {"message": message_msg, "job": job_id})
-            message_lvl = "debug"
-
         # Find the handler (if available)
         if job_id not in self.jobs:
             # Query the database for the job
@@ -369,6 +364,25 @@ class Command(LAVADaemonCommand):
             mkdir(job.output_dir)
             self.jobs[job_id] = JobHandler(job)
 
+        # For 'event', send an event and log as 'debug'
+        if message_lvl == 'event':
+            self.logger.debug("[%s] event: %s", job_id, message_msg)
+            send_event(".event", "lavaserver", {"message": message_msg, "job": job_id})
+            message_lvl = "debug"
+        # For 'marker', save in the database and log as 'debug'
+        elif message_lvl == 'marker':
+            # TODO: save on the file system in case of lava-logs restart
+            m_type = message_msg.get("type")
+            case = message_msg.get("case")
+            if m_type is None or case is None:
+                self.logger.error("[%s] invalid marker: %s", job_id, message_msg)
+                return
+            self.jobs[job_id].markers.setdefault(case, {})[m_type] = self.jobs[job_id].line_count()
+            # This is in fact the previous line
+            self.jobs[job_id].markers[case][m_type] -= 1
+            self.logger.debug("[%s] marker: %s line: %s", job_id, message_msg, self.jobs[job_id].markers[case][m_type])
+            return
+
         # Mark the file handler as used
         self.jobs[job_id].last_usage = time.time()
         # The format is a list of dictionaries
@@ -382,7 +396,9 @@ class Command(LAVADaemonCommand):
                 return
             meta_filename = create_metadata_store(message_msg, job)
             new_test_case = map_scanned_results(results=message_msg, job=job,
+                                                markers=self.jobs[job_id].markers,
                                                 meta_filename=meta_filename)
+
             if new_test_case is None:
                 self.logger.warning(
                     "[%s] unable to map scanned results: %s",

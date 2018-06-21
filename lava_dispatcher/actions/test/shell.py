@@ -502,6 +502,9 @@ class TestShellAction(TestAction):
         if res:
             # disallow whitespace in test_case_id
             test_case_id = "%s" % res['test_case_id'].replace('/', '_')
+            self.logger.marker(
+                {"case": res["test_case_id"],
+                    "type": "test_case"})
             if ' ' in test_case_id.strip():
                 self.logger.debug("Skipping invalid test_case_id '%s'", test_case_id.strip())
                 return True
@@ -555,7 +558,16 @@ class TestShellAction(TestAction):
                 self.signal_start_run(params)
             elif name == "ENDRUN":
                 self.signal_end_run(params)
+            elif name == "STARTTC":
+                self.logger.marker({"case": params[0],
+                                    "type": "start_test_case"})
+            elif name == "ENDTC":
+                self.logger.marker({"case": params[0],
+                                    "type": "end_test_case"})
             elif name == "TESTCASE":
+                self.logger.marker(
+                    {"case": params[0].replace('TEST_CASE_ID=', ''),
+                        "type": "test_case"})
                 self.signal_test_case(params)
             elif name == "TESTFEEDBACK":
                 self.signal_test_feedback(params)
