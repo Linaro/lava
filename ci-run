@@ -44,6 +44,12 @@ done
 
 shift $((OPTIND -1))
 
+if [ -n "${SUDO_USER}" ]; then
+    echo "./ci-run should NOT be run using ``sudo``"
+    # root is ok but only if root did the git clone
+    exit 3
+fi
+
 echo "Removing old .pyc files and cache"
 echo
 find . -name '*.pyc' -delete
@@ -86,7 +92,12 @@ fi
 
 if [ -z "${DISPATCH}" -a  -n "${TEMPLATE}" -a -z "${PYTEST}" ]
 then
+    python3 -m unittest -vcf lava_scheduler_app.tests.test_base_templates
     python3 -m unittest -vcf lava_scheduler_app.tests.test_templates
+    python3 -m unittest -vcf lava_scheduler_app.tests.test_uboot_templates
+    python3 -m unittest -vcf lava_scheduler_app.tests.test_fastboot_templates
+    python3 -m unittest -vcf lava_scheduler_app.tests.test_grub_templates
+    python3 -m unittest -vcf lava_scheduler_app.tests.test_qemu_templates
 fi
 
 

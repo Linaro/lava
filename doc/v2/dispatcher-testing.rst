@@ -20,45 +20,50 @@ lava-server
 
 ::
 
- $ ./lava_server/manage test
+ $ ./lava_server/manage.py test
 
 ``lava-server`` has several components, see the contents of ``ci-run`` for the
 full list. Each component can be tested separately::
 
- $ ./lava_server/manage test lava_scheduler_app
+ $ ./lava_server/manage.py test lava_scheduler_app
 
 To run particular tests in a specific file, add e.g. ``test_device.py`` to the
 command::
 
- $ ./lava_server/manage test lava_scheduler_app.tests.test_device
+ $ ./lava_server/manage.py test lava_scheduler_app.tests.test_device
 
 .. note:: the ``tests`` directory needs to be specified (instead of the test
-   process discovering all tests) and the filename lacks the ``.py`` suffix.
+   process discovering all tests) but the filename in the ``tests`` directory
+   **lacks** the ``.py`` suffix.
 
 Add the class name to run all tests within that class within the specified
 file.::
 
- $ ./lava_server/manage test lava_scheduler_app.tests.test_device.TestTemplates
+ $ ./lava_server/manage.py test lava_scheduler_app.tests.test_device.DeviceTypeTest
 
 Add a specific test function to run only that one unit test::
 
- $ ./lava_server/manage test lava_scheduler_app.tests.test_device.TestTemplates.test_x86_template
+ $ ./lava_server/manage.py test lava_scheduler_app.tests.test_device.DeviceTypeTest.test_device_type_templates
 
-The same path can also be passed to ``./ci-run``::
-
- $ ./ci-run lava_scheduler_app.tests.test_device.TestTemplates.test_x86_template
-
-This adds the ``pep8`` check before running the test(s).
+Useful options to ``./lava_server/manage.py test`` include ``-v2`` to follow what is
+being done and ``--noinput`` to automatically remove a database created by a previous
+run of the unit tests which did not complete properly.
 
 Jinja2 templates
 ================
 
+Tests on the Jinja2 templates can be run using ``./ci-run -t``.
+
 #. All jinja2 templates in ``lava_scheduler_app/tests/device-types/`` will be
    tested using a basic check in
-   ``lava_scheduler_app.tests.test_device.DeviceTypeTest.test_device_type_templates``
+   ``lava_scheduler_app.tests.test_base_templates.TestBaseTemplates.test_all_templates``
    for YAML syntax. This renders the template without a device dictionary and
    checks that the output is valid YAML. This test will fail with syntax errors
    in variables, jinja2 blocks, inheritance and whitespace indent errors.
+
+   ::
+
+   $ python3 -m unittest -vcf lava_scheduler_app.tests.test_base_templates.TestBaseTemplates.test_all_templates
 
 #. Add a new unit test to the ``TestTemplates`` class in the same unit test
    file when any jinja2 template fails to parse. Change the ``DEBUG`` setting
@@ -100,22 +105,6 @@ without the call to ``discover``::
 The call references the path to the python module, the class and then the test
 function within that class. To run all tests in a class, omit the function. To
 run all tests in a file, omit the class and the function.
-
-Sets of tests can also be executed from the :file:`./ci-run` script
-of ``lava-dispatcher`` as well::
-
- $ ./ci-run --test-suite lava_dispatcher.test.test_basic.TestPipelineInit.test_pipeline_init
-
-Also, install the updated ``lava-dispatcher`` package and use it to write out
-the pipeline to a ``description.yaml`` file in the specified output directory
-using the ``--validate`` switch to ``lava-run``::
-
- $ sudo lava-run --validate --target ./devices/kvm01.yaml ./sample_jobs/kvm.yaml --output-dir=/tmp/test --job-id=6
-
-.. note:: The refactoring has changed the behaviour of ``target`` - the value
-   **must** be a path to a YAML file, not a hostname. This is because the
-   refactored dispatcher has no local configuration, so the master sends the
-   entire device configuration to the dispatcher as a single YAML file.
 
 .. seealso:: :ref:`unit_tests` for information on running the full set of
    unit tests on ``lava-server`` and ``lava-dispatcher``.
@@ -393,21 +382,6 @@ Sample pipeline description output
         valid: true
       description: finish the process and cleanup
       summary: finalize the job
-
-Provisos with the current codebase
-----------------------------------
-
-The code can be executed::
-
- $ sudo lava-dispatch --target kvm01 lava_dispatcher/test/sample_jobs/kvm.yaml --output-dir=/tmp/test
-
-* During development, there may be images left mounted at the end of the run.
-  Always check the output of ``mount``.
-
-* Files in ``/tmp/test`` are not removed at the start or end of a job as these
-  would eventually form part of the result bundle and would also be in a
-  per-job temporary directory (created by the scheduler). To be certain of what
-  logs were created by each run, clear the directory each time.
 
 Compatibility with the old dispatcher LavaTestShell
 ***************************************************
