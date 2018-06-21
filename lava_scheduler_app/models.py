@@ -1683,7 +1683,13 @@ class TestJob(RestrictedResource):
     def device_role(self):  # pylint: disable=too-many-return-statements
         if not self.is_multinode:
             return "Error"
-        data = yaml.safe_load(self.definition)
+        try:
+            # For some old definition (when migrating from python2 to python3)
+            # includes "!!python/unicode" statements that are not accepted by
+            # yaml.safe_load().
+            data = yaml.safe_load(self.definition)
+        except yaml.YAMLError:
+            return "Error"
         if 'protocols' not in data:
             return 'Error'
         if 'lava-multinode' not in data['protocols']:
