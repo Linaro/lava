@@ -351,12 +351,6 @@ class AutoLoginAction(Action):
                 for command in login_commands:
                     connection.sendline(command)
 
-        connection.prompt_str.extend([self.job.device.get_constant(
-            'default-shell-prompt')])
-        self.logger.debug("Setting shell prompt(s) to %s" % connection.prompt_str)  # pylint: disable=logging-not-lazy
-        connection.sendline('export PS1="%s"' % self.job.device.get_constant(
-            'default-shell-prompt'), delay=self.character_delay)
-
         return connection
 
 

@@ -408,10 +408,8 @@ class TestAutoLogin(StdoutTestCase):
         conn = autologinaction.run(shell_connection, max_end_time=self.max_end_time)
         self.assertEqual(shell_connection.raw_connection.linesep, 'testsep')
 
-        self.assertIn('lava-test: # ', conn.prompt_str)
         self.assertIn('root@debian:~#', conn.prompt_str)
         conn.prompt_str = 'root@stretch:'
-        self.assertNotIn('lava-test: # ', conn.prompt_str)
         self.assertNotIn('root@debian:~#', conn.prompt_str)
         self.assertIn('root@stretch:', conn.prompt_str)
 
@@ -482,7 +480,6 @@ class TestAutoLogin(StdoutTestCase):
         # Test the AutoLoginAction directly
         conn = autologinaction.run(shell_connection, max_end_time=self.max_end_time)
 
-        self.assertIn('lava-test: # ', conn.prompt_str)
         self.assertIn('root@debian:~#', conn.prompt_str)
 
     def test_missing_autologin_void_prompts_str(self):
@@ -513,7 +510,6 @@ class TestAutoLogin(StdoutTestCase):
         # Test the AutoLoginAction directly
         conn = autologinaction.run(shell_connection, max_end_time=self.max_end_time)
 
-        self.assertIn('lava-test: # ', conn.prompt_str)
         self.assertIn('root@debian:~#', conn.prompt_str)
 
     def test_autologin_login_incorrect(self):
@@ -536,7 +532,6 @@ class TestAutoLogin(StdoutTestCase):
         # Test the AutoLoginAction directly
         conn = autologinaction.run(shell_connection, max_end_time=self.max_end_time)
 
-        self.assertIn('lava-test: # ', conn.prompt_str)
         self.assertIn('root@debian:~#', conn.prompt_str)
         self.assertIn('Login incorrect', conn.prompt_str)
         self.assertIn('Login timed out', conn.prompt_str)
