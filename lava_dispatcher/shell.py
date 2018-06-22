@@ -324,6 +324,7 @@ class ExpectShellSession(Action):
         connection = super().run(connection, max_end_time)
         if not connection:
             raise JobError("No connection available.")
+        connection.prompt_str = self.parameters['prompts']
         connection.timeout = self.connection_timeout
         self.logger.debug("Forcing a shell prompt, looking for %s" % connection.prompt_str)  # pylint: disable=logging-not-lazy
         connection.sendline('')
