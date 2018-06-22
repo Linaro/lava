@@ -7,6 +7,7 @@ pyudev python3-pyudev; PEP386
 setproctitle python3-setproctitle; PEP386
 pytz python3-tz; PEP386
 file-magic python3-magic; PEP386
+dateutil python3-dateutil; PEP386
 django python3-django; PEP386
 django_restricted_resource python3-django-restricted-resource; PEP386
 django_tables2 python3-django-tables2; PEP386
