@@ -21,3 +21,4 @@ ldap python3-pyldap; PEP386
 voluptuous python3-voluptuous; PEP386
 django_auth_ldap python3-django-auth-ldap; PEP386
 guestfs python3-guestfs; PEP386
+dateutil python3-dateutil; PEP386
