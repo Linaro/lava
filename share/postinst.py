@@ -88,7 +88,7 @@ def db_setup(config, pg_admin_username, pg_admin_password):
 
     if not db_existed_before:
         try:
-            cursor.execute("CREATE DATABASE %s LC_CTYPE 'C.UTF-8' ENCODING 'UTF-8' OWNER %s TEMPLATE template0" % (config.LAVA_DB_NAME, config.LAVA_DB_USER))
+            cursor.execute("CREATE DATABASE \"%s\" LC_CTYPE 'C.UTF-8' ENCODING 'UTF-8' OWNER \"%s\" TEMPLATE template0" % (config.LAVA_DB_NAME, config.LAVA_DB_USER))
         except psycopg2.ProgrammingError as e:
             print(e)
             pass
