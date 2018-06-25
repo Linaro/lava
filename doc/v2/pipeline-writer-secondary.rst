@@ -14,6 +14,8 @@ Even if the test definitions will eventually reside in external repositories,
 it is helpful to do the planning stage using inline definitions. See
 :ref:`inline_test_definition_example`.
 
+.. index:: ssh for secondary connections, secondary connections - ssh
+
 .. _secure_secondary_shells:
 
 Secure Shell connections (ssh)
@@ -270,10 +272,19 @@ final operation.
      role:
      - guest
 
+.. index:: secondary connections - example test job
+
+.. _complete_secondary_connection:
+
 Complete Multinode test definition
 ==================================
 
-https://git.linaro.org/lava-team/refactoring.git/plain/bbb-ssh-guest.yaml
+.. note:: The ``prompts`` list and ``auto-login`` details for the SSH
+   deployment **must** be identical to the ``prompts`` list and
+   ``auto-login`` details for the host device - it is the same system
+   in each case.
+
+https://git.linaro.org/lava-team/refactoring.git/plain/release/bbb-ssh-guest.yaml
 
 .. code-block:: yaml
 
@@ -292,12 +303,20 @@ https://git.linaro.org/lava-team/refactoring.git/plain/bbb-ssh-guest.yaml
         minutes: 3
       connection:
         minutes: 5
+    priority: medium
     visibility: public
+
+    metadata:
+      source: https://git.linaro.org/lava-team/refactoring.git
+      path: release/bbb-ssh-guest.yaml
+      lava.series: release-testing
+      build-readme: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/debian-armmp-armhf-readme.html
+      build-script: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/armmp-nfs.sh
 
     protocols:
       lava-multinode:
-      # expect_role is used by the dispatcher and is part of delay_start
-      # host_role is used by the scheduler, unrelated to delay_start.
+        # expect_role is used by the dispatcher and is part of delay_start
+        # host_role is used by the scheduler, unrelated to delay_start.
         roles:
           host:
             device_type: beaglebone-black
@@ -317,30 +336,38 @@ https://git.linaro.org/lava-team/refactoring.git/plain/bbb-ssh-guest.yaml
             # each ssh connection will attempt to connect to the device of role 'host'
             host_role: host
 
-    priority: medium
-
     actions:
-      - deploy:
+    - deploy:
+          role:
+          - host
           timeout:
-            minutes: 4
+            minutes: 10
           to: tftp
           # authorize for ssh adds the ssh public key to authorized_keys
           authorize: ssh
           kernel:
-            url: https://images.validation.linaro.org/functional-test-images/bbb/zImage
-          # nfsrootfs: file:///home/linaro/lava/nfsrootfs/jessie-rootfs2.tar.gz
+            url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/vmlinuz
+            type: zimage
+          ramdisk:
+            url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/initramfs.cpio.gz
+            compression: gz
+            # the bootloader needs a u-boot header on the modified ramdisk
+            add-header: u-boot
+          modules:
+            url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/modules.tar.gz
+            compression: gz
           nfsrootfs:
-            url: https://images.validation.linaro.org/debian-jessie-rootfs.tar.gz
+            url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/jessie-armhf-nfs.tar.gz
             compression: gz
           os: debian
           dtb:
-            url: https://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
-          role:
-          - host
+            url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/dtbs/am335x-boneblack.dtb
 
-      - deploy:
-          timeout:  # timeout for the connection attempt
-            seconds: 30
+    - deploy:
+          role:
+          - guest
+        timeout:  # timeout for the ssh connection attempt
+          minutes: 2
           to: ssh
           connection: ssh
           os: debian
@@ -354,99 +381,108 @@ https://git.linaro.org/lava-team/refactoring.git/plain/bbb-ssh-guest.yaml
                 # the key of the message matches value of the host_key
                 # the value of the message gets substituted
                 ipaddr: $ipaddr
-              timeout:  # delay_start timeout
-                minutes: 5
-          role:
-          - guest
+            timeout:  # delay_start timeout
+              minutes: 5
 
       - boot:
+          role:
+          - host
           timeout:
             minutes: 15
           method: u-boot
           commands: nfs
-          type: bootz
-          prompts: ['root@linaro:', 'root@debian:']
-          # auto_login:
-          # login_prompt: "login:"
-          # username: root
+          auto_login:
+            login_prompt: 'login:'
+            username: root
+          prompts:
+          - 'root@jessie:'
           parameters:
             shutdown-message: "reboot: Restarting system"
-          role:
-          - host
 
-      - boot:
-          timeout:
-            minutes: 3
-          prompts: ['root@linaro:', 'root@debian:']
-          parameters:
-            hostID: ipv4  # messageID
-            host_key: ipaddr  # message key
-          method: ssh
-          role:
-          - guest
+    - boot:
+        role:
+        - guest
+        timeout:
+          minutes: 3
+        prompts:
+        - 'root@jessie:'
+        parameters:
+          hostID: ipv4  # messageID
+          host_key: ipaddr  # message key
+        method: ssh
 
-      - test:
-         name: install-ssh-server
-         timeout:
-           minutes: 30
-         definitions:
-             - repository:
-                    metadata:
-                        format: Lava-Test Test Definition 1.0
-                        name: install-ssh
-                        description: "install step"
-                        os:
-                            - debian
-                        scope:
-                            - functional
-                    install:
-                        deps:
-                            - openssh-server
-                            - ntpdate
-                    run:
-                        steps:
-                            - ntpdate-debian
-                            - lava-network broadcast eth0
-                            # messageID matches, message_key as the key.
-                            - lava-send ipv4 ipaddr=$(lava-echo-ipv4 eth0)
-                            - lava-send lava_start
-                            - lava-sync clients
-               from: inline
-               name: ssh-inline
-               path: inline/ssh-install.yaml
-             - repository: git://git.linaro.org/lava-team/lava-functional-tests.git
-               from: git
-               path: lava-test-shell/smoke-tests-basic.yaml
-               name: smoke-tests
-         role:
-         - host
+    - test:
+        role:
+        - host
+        timeout:
+          minutes: 30
+        definitions:
+        - repository:
+            metadata:
+              format: Lava-Test Test Definition 1.0
+              name: install-ssh
+              description: "install step"
+              os:
+              - debian
+              scope:
+              - functional
+            run:
+              steps:
+              - apt-get update -q
+              - DEBIAN_FRONTEND=noninteractive lava-test-case install-base --shell apt-get -q -y install -o Dpkg::Options::="--force-confold" openssh-server ntpdate net-tools
+              - ntpdate-debian
+              # messageID matches, message_key as the key.
+              - lava-send ipv4 ipaddr=$(lava-echo-ipv4 eth0)
+              - lava-send lava_start
+              - lava-sync clients
+          from: inline
+          name: ssh-inline
+          path: inline/ssh-install.yaml
+        - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+          from: git
+          path: lava-test-shell/smoke-tests-basic.yaml
+          name: smoke-tests
+        - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+          from: git
+          path: lava-test-shell/single-node/singlenode02.yaml
+          name: singlenode-intermediate
 
-      - test:
-         name: kvm-basic-singlenode
-         timeout:
-           minutes: 5
-         definitions:
-             - repository: git://git.linaro.org/lava-team/lava-functional-tests.git
-               from: git
-               path: lava-test-shell/smoke-tests-basic.yaml
-               name: smoke-tests
-               # run the inline last as the host is waiting for this final sync.
-             - repository:
-                    metadata:
-                        format: Lava-Test Test Definition 1.0
-                        name: client-ssh
-                        description: "client complete"
-                        os:
-                            - debian
-                        scope:
-                            - functional
-                    run:
-                        steps:
-                            - df -h
-                            - free
-                            - lava-sync clients
-               from: inline
-               name: ssh-client
-               path: inline/ssh-client.yaml
-         role:
-         - guest
+    - test:
+        role:
+        - guest
+        timeout:
+          minutes: 5
+        definitions:
+        - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+          from: git
+          path: lava-test-shell/smoke-tests-basic.yaml
+          name: smoke-tests
+          # run the inline last as the host is waiting for this final sync.
+        - repository:
+            metadata:
+              format: Lava-Test Test Definition 1.0
+              name: client-ssh
+              description: "client complete"
+              os:
+              - debian
+              scope:
+              - functional
+            run:
+              steps:
+              - df -h
+              - free
+              - lava-sync clients
+          from: inline
+          name: ssh-client
+          path: inline/ssh-client.yaml
+
+    - test:
+        role:
+        - host
+        timeout:
+          minutes: 10
+        definitions:
+        - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+          from: git
+          path: lava-test-shell/single-node/singlenode03.yaml
+          name: singlenode-advanced

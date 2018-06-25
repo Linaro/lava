@@ -162,10 +162,7 @@ class ConnectSsh(Action):
         # SshSession monitors the pexpect
         connection = SShSession(self.job, shell)
         connection = super().run(connection, max_end_time)
-        connection.sendline('export PS1="%s"' % self.job.device.get_constant(
-            'default-shell-prompt'))
-        connection.prompt_str = [self.job.device.get_constant(
-            'default-shell-prompt')]
+        connection.prompt_str = list(self.parameters.get('prompts', []))
         connection.connected = True
         self.wait(connection)
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
