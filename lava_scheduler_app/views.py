@@ -2100,7 +2100,8 @@ def edit_worker_desc(request):
     worker_obj = get_object_or_404(Worker, pk=pk)
 
     if worker_obj.can_admin(request.user):
-        worker_obj.update_description(value)
+        worker_obj.description = value
+        worker.save()
         return HttpResponse(worker_obj.get_description())
     else:
         return HttpResponseForbidden("Permission denied.",

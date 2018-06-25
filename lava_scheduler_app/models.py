@@ -468,10 +468,6 @@ class Worker(models.Model):
     def get_description(self):
         return mark_safe(self.description) if self.description else None
 
-    def update_description(self, description):
-        self.description = description
-        self.save()
-
     def retired_devices_count(self):
         return self.device_set.filter(health=Device.HEALTH_RETIRED).count()
 
