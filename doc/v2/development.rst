@@ -903,6 +903,8 @@ recommended::
 
   $ apt install pep8
 
+.. index:: unit tests
+
 .. _unit_tests:
 
 Unit-tests
@@ -914,7 +916,10 @@ any. Most of the LAVA components such as ``lava-server``,
 ``lava-dispatcher``, :ref:`lava-tool <lava_tool>` have unit tests.
 
 Extra dependencies are required to run the tests. On Debian based
-distributions, you can install lava-dev.
+distributions, you need to install ``lava-dev`` and
+``python3-django-testscenarios``.
+
+.. seealso:: :ref:`unit_test_dependencies`
 
 To run the tests, use the ci-run / ci-build scripts::
 
@@ -925,9 +930,10 @@ To run the tests, use the ci-run / ci-build scripts::
 .. _`PEP 008`: https://www.python.org/dev/peps/pep-0008/
 .. _`Guido's style guide`: https://www.python.org/doc/essays/styleguide.html
 
-.. seealso:: :ref:`developer_preparations` and
-   :ref:`testing_pipeline_code` for examples of how to run individual
-   unit tests or all unit tests within a class or module.
+.. seealso:: :ref:`developer_preparations`,
+   :ref:`unit_test_dependencies` and :ref:`testing_pipeline_code` for
+   examples of how to run individual unit tests or all unit tests
+   within a class or module.
 
 LAVA database model visualization
 *********************************
