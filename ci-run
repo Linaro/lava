@@ -105,4 +105,5 @@ if [ -z "${DISPATCH}" -a -z "${TEMPLATE}" -a -n "${PYTEST}" ]
 then
     PYTHONPATH=. pytest-3 --cache-clear --disable-pytest-warnings --ds lava_server.settings.development -v lava_scheduler_app/tests lava_results_app/tests linaro_django_xmlrpc/tests.py
     PYTHONPATH=. pytest-3 --cache-clear --disable-pytest-warnings -v lava_dispatcher/test
+    PYTHONPATH=. pytest-3 --cache-clear --disable-pytest-warnings -v lava_common/test
 fi
