@@ -26,6 +26,7 @@ from lava_dispatcher.test.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.test.utils import DummyLogger, infrastructure_error_multi_paths
+from lava_dispatcher.utils.udev import allow_fs_label
 
 
 class FastBootFactory(Factory):  # pylint: disable=too-few-public-methods
@@ -78,6 +79,14 @@ class TestRecoveryMode(StdoutTestCase):  # pylint: disable=too-many-public-metho
 
         description_ref = self.pipeline_reference('hi6220-recovery.yaml', job=self.job)
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
+
+        requires_board_id = not allow_fs_label(self.job.device)
+        self.assertFalse(requires_board_id)
+        if 'device_info' in self.job.device:
+            for usb_device in self.job.device['device_info']:
+                if usb_device.get('board_id', '') in ['', '0000000000'] \
+                        and requires_board_id:
+                    self.fail("[LXC_CREATE] board_id unset")
 
     def test_commands(self):
         enter = [action for action in self.job.pipeline.actions if action.name == 'recovery-boot'][0]
