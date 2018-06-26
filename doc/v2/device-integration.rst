@@ -478,15 +478,20 @@ currently boots and exactly how new files are deployed to the device.
 Do not resort to :ref:`simplistic testing
 <simplistic_testing_problems>`.
 
-..caution:: Do not be tempted to re-use the existing support for
+.. caution:: Do not be tempted to re-use the existing support for
   something which is not actually using that support. Just because
   your custom system looks like U-Boot or fastboot does **not**
-  mean you can mangle the existing support to fit. If you need
+  mean you should mangle the existing support to fit. If you need
   something which is similar but not the same, write a new set of
-  classes and templates. **Never** share method-specific syntax
-  with a similar but different method. U-Boot or fastboot
-  parameters and options remain specific to U-Boot or fastboot
-  respectively.
+  classes and templates. By all means, use that existing code as a
+  starting point.
+
+  Avoid sharing method-specific syntax with a similar but different
+  method. U-Boot or fastboot parameters and options remain specific to
+  U-Boot or fastboot respectively. While this might look like a quick
+  and easy way to add support, it is very likely that future changes
+  to the support you're abusing might break your tests without
+  warning.
 
 .. _integration_extend_template:
 
