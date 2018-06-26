@@ -18,11 +18,9 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from lava_dispatcher.action import Action
-from lava_common.exceptions import (
-    InfrastructureError,
+from lava_dispatcher.action import (
+    Action,
     JobError,
-    ConfigurationError
 )
 
 

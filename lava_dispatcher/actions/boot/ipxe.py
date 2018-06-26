@@ -21,7 +21,6 @@
 # List just the subclasses supported for this base strategy
 # imported by the parser to populate the list of subclasses.
 
-from lava_common.exceptions import LAVABug
 from lava_dispatcher.action import Pipeline
 from lava_dispatcher.logical import Boot
 from lava_dispatcher.actions.boot import (

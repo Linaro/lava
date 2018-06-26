@@ -31,10 +31,6 @@ import time
 import hashlib
 import requests
 import subprocess
-import bz2
-import contextlib
-import lzma
-import zlib
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.protocols.lxc import LxcProtocol
 from lava_dispatcher.actions.deploy import DeployAction

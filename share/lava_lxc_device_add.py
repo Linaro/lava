@@ -32,7 +32,6 @@ import logging
 import subprocess
 import sys
 import time
-import yaml
 
 from lava_dispatcher.log import YAMLLogger
 

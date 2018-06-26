@@ -22,12 +22,8 @@ import os
 from lava_dispatcher.logical import Deployment
 from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.power import ResetDevice, PrePower
-from lava_common.exceptions import (
-    InfrastructureError,
-    JobError,
-)
+from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.action import (
-    JobError,
     Pipeline,
     Action,
 )
@@ -41,7 +37,6 @@ from lava_dispatcher.actions.deploy.apply_overlay import (
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.utils.filesystem import copy_to_lxc
 from lava_dispatcher.utils.lxc import is_lxc_requested
-from lava_dispatcher.protocols.lxc import LxcProtocol
 from lava_dispatcher.actions.boot.fastboot import EnterFastbootAction
 from lava_dispatcher.actions.boot.u_boot import UBootEnterFastbootAction
 from lava_dispatcher.power import PDUReboot, ReadFeedback
