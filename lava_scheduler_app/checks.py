@@ -122,7 +122,7 @@ def _package_status(name, errors, info=False):
 
 
 def _package_symlinks(name, errors):
-    dirname = os.path.join("/usr/lib/python2.7/dist-packages/", name)
+    dirname = os.path.join("/usr/lib/python3/dist-packages/", name)
     if os.path.islink(dirname):
         errors.append(Error('symlink to %s' % os.path.realpath(dirname), obj=name))
 
@@ -131,9 +131,11 @@ def _package_symlinks(name, errors):
 def check_packaging(app_configs, **kwargs):
     errors = []
 
+    _package_status("lava-common", errors)
     _package_status("lava-dispatcher", errors, info=True)
     _package_status("lava-server", errors)
 
+    _package_symlinks("lava_common", errors)
     _package_symlinks("lava_dispatcher", errors)
     _package_symlinks("lava_results_app", errors)
     _package_symlinks("lava_scheduler_app", errors)

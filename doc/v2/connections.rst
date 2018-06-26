@@ -854,7 +854,7 @@ Sequence
    test image or manual setup. The server **must** be configured to allow the
    (insecure) LAVA automation SSH private key to log in as authorized - this
    key is available in the
-   ``/usr/lib/python2.7/dist-packages/lava_dispatcher/device/dynamic_vm_keys``
+   ``/usr/lib/python3/dist-packages/lava_dispatcher/device/dynamic_vm_keys``
    directory when lava-dispatcher is installed or in the lava-dispatcher `git
    tree
    <https://git.linaro.org/lava/lava.git/tree/HEAD:/lava_dispatcher/device/dynamic_vm_keys>`_.

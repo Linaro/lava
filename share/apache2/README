@@ -17,6 +17,6 @@ it can be useful for persistent NFS.
 
 If the DocumentRoot and Alias need to be changed in the localhost
 configuration, the value in DISPATCHER_DOWNLOAD_DIR also needs to be changed in
-/usr/lib/python2.7/dist-packages/lava_dispatcher/utils/constants.py
+/usr/lib/python3/dist-packages/lava_common/constants.py
 
 (Support for reading constants independently of the packaged code is pending.)

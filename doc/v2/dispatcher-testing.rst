@@ -305,7 +305,7 @@ Sample pipeline description output
         default_fixupdict: {FAIL: fail, PASS: pass, SKIP: skip, UNKNOWN: unknown}
         default_pattern: (?P<test_case_id>.*-*)\s+:\s+(?P<result>(PASS|pass|FAIL|fail|SKIP|skip|UNKNOWN|unknown))
         description: add lava scripts during deployment for test shell use
-        lava_test_dir: /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell
+        lava_test_dir: /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell
         level: '1.6'
         name: lava-overlay
         parameters:
