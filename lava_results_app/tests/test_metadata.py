@@ -5,8 +5,12 @@ import yaml
 import shutil
 import logging
 import decimal
+
 import django
 from django.core.exceptions import MultipleObjectsReturned
+from django.urls.exceptions import NoReverseMatch
+from django.urls import reverse
+
 from lava_results_app.tests.test_names import TestCaseWithFactory
 from lava_scheduler_app.models import (
     TestJob,
@@ -25,13 +29,6 @@ from lava_results_app.models import ActionData, MetaType, TestData, TestCase, Te
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.device import PipelineDevice
 from lava_dispatcher.test.test_defs import allow_missing_path
-
-if django.VERSION > (1, 10):
-    from django.urls.exceptions import NoReverseMatch
-    from django.urls import reverse
-else:
-    from django.core.urlresolvers import reverse
-    from django.core.urlresolvers import NoReverseMatch
 
 # pylint: disable=invalid-name,too-few-public-methods,too-many-public-methods,no-member,too-many-ancestors
 

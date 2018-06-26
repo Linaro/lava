@@ -23,16 +23,10 @@ with contextlib.suppress(AttributeError, ValueError):
 MOUNT_POINT = (MOUNT_POINT.rstrip("/") + "/").lstrip("/")
 
 # Fix ADMINS and MANAGERS variables
-# In Django < 1.9, this is a tuple of tuples
 # In Django >= 1.9 this is a list of tuples
-# See https://docs.djangoproject.com/en/1.8/ref/settings/#admins
 # and https://docs.djangoproject.com/en/1.9/ref/settings/#admins
-if django.VERSION < (1, 9):
-    ADMINS = tuple(tuple(v) for v in ADMINS)
-    MANAGERS = tuple(tuple(v) for v in MANAGERS)
-else:
-    ADMINS = [tuple(v) for v in ADMINS]
-    MANAGERS = [tuple(v) for v in MANAGERS]
+ADMINS = [tuple(v) for v in ADMINS]
+MANAGERS = [tuple(v) for v in MANAGERS]
 
 # Load default database from distro integration
 config = ConfigFile.load("/etc/lava-server/instance.conf")

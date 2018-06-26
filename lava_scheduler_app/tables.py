@@ -688,10 +688,7 @@ class LogEntryTable(tables.Table):
     change_message.orderable = False
 
     def render_change_message(self, record):
-        if django.VERSION > (1, 10):
-            message = record.get_change_message()
-        else:
-            message = record.change_message
+        message = record.get_change_message()
         if record.is_change():
             return message
         elif record.is_addition():
