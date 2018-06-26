@@ -20,7 +20,7 @@
 
 import logging
 import copy
-from functools import reduce  # pylint: disable=redefined-builtin
+from functools import reduce
 import time
 import types
 import traceback

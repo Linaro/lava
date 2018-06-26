@@ -48,7 +48,6 @@ from lava_common.constants import (
     DEFAULT_V1_PATTERN,
     DEFAULT_V1_FIXUP,
 )
-from functools import reduce
 
 # pylint: disable=too-many-branches,too-many-statements,too-many-instance-attributes,logging-not-lazy
 
@@ -109,7 +108,7 @@ class PatternFixup(object):
         self.fixup = DEFAULT_V1_FIXUP
         if isinstance(testdef, dict) and 'metadata' in testdef:
             self.testdef = testdef
-            self.name = "%d_%s" % (count, reduce(dict.get, ['metadata', 'name'], testdef))
+            self.name = "%d_%s" % (count, testdef["metadata"].get("name"))
         else:
             self.testdef = {}
             self.name = None
