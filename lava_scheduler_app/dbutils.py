@@ -10,6 +10,7 @@ import yaml
 import jinja2
 import json
 import logging
+from nose.tools import nottest
 from django.db.models import Q, Case, When, IntegerField, Sum
 from lava_scheduler_app.models import (
     Device,
@@ -54,6 +55,7 @@ def match_vlan_interface(device, job_def):
 
 
 # TODO: check the list of exception that can be raised
+@nottest
 def testjob_submission(job_definition, user, original_job=None):
     """
     Single submission frontend for YAML
