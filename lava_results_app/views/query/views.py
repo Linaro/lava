@@ -20,7 +20,6 @@ import csv
 import os
 import shutil
 import simplejson
-import sys
 import tempfile
 
 from django.db import IntegrityError
@@ -85,9 +84,6 @@ from django_tables2 import (
 )
 
 from lava.utils.lavatable import LavaView
-
-if sys.version_info[0] == 3:
-    basestring = str
 
 
 class QueryViewDoesNotExistError(Exception):
@@ -758,7 +754,7 @@ def _export_query(query_results, content_type, filename):
         for result in query_results:
             result_dict = result.__dict__.copy()
             # Encode the strings if necessary.
-            out.writerow({k: (v.encode('utf8') if isinstance(v, basestring) else v) for k, v in result_dict.items()})
+            out.writerow({k: (v.encode('utf8') if isinstance(v, str) else v) for k, v in result_dict.items()})
 
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = "attachment; filename=%s.csv" % filename

@@ -28,12 +28,13 @@ TestSet can be enabled within a test definition run step
 TestCase is a single lava-test-case record or Action result.
 """
 
+from datetime import timedelta
 import logging
-import sys
+from nose.tools import nottest
+from urllib.parse import quote
 import yaml
 import contextlib
-from nose.tools import nottest
-from datetime import timedelta
+
 from django.conf import settings
 from django.contrib.admin.models import LogEntry, ADDITION
 from django.contrib.auth.models import User, Group
@@ -63,13 +64,6 @@ from lava_scheduler_app.managers import (
 )
 
 from lava_results_app.utils import help_max_length
-
-if sys.version_info[0] == 2:
-    # Python 2.x
-    from urllib import quote
-elif sys.version_info[0] == 3:
-    # For Python 3.0 and later
-    from urllib.parse import quote
 
 
 class InvalidConditionsError(Exception):
