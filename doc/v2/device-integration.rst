@@ -478,6 +478,16 @@ currently boots and exactly how new files are deployed to the device.
 Do not resort to :ref:`simplistic testing
 <simplistic_testing_problems>`.
 
+..caution:: Do not be tempted to re-use the existing support for
+  something which is not actually using that support. Just because
+  your custom system looks like U-Boot or fastboot does **not**
+  mean you can mangle the existing support to fit. If you need
+  something which is similar but not the same, write a new set of
+  classes and templates. **Never** share method-specific syntax
+  with a similar but different method. U-Boot or fastboot
+  parameters and options remain specific to U-Boot or fastboot
+  respectively.
+
 .. _integration_extend_template:
 
 Extend from an existing device type template
