@@ -47,6 +47,7 @@ include share/apache2/*
 include share/zmq/*
 include version.py
 include requirements.txt
+include common-requirements.txt
 include dispatcher-requirements.txt
 recursive-include doc/images *.gif *.png *.jpg *.jpeg *.bmp *.svg *.odg
 recursive-include doc/v2/images *.gif *.png *.jpg *.jpeg *.bmp *.svg *.odg

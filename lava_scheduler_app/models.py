@@ -11,7 +11,7 @@ import simplejson
 import smtplib
 import socket
 import yaml
-
+from nose.tools import nottest
 from django.db.models import Q
 from django.conf import settings
 from django.contrib.auth.models import User, Group
@@ -1264,6 +1264,7 @@ def _pipeline_protocols(job_data, user, yaml_data=None):  # pylint: disable=too-
         return job_object_list
 
 
+@nottest
 class TestJob(RestrictedResource):
     """
     A test job is a test process that will be run on a Device.

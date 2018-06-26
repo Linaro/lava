@@ -2,6 +2,7 @@ import os
 import yaml
 import logging
 import unittest
+from nose.tools import nottest
 from io import BytesIO as StringIO
 import xmlrpc.client
 from django.test.client import Client
@@ -21,6 +22,7 @@ from lava_scheduler_app.tests.test_submission import ModelFactory, TestCaseWithF
 
 
 # Based on http://www.technobabble.dk/2008/apr/02/xml-rpc-dispatching-through-django-test-client/
+@nottest
 class TestTransport(xmlrpc.client.Transport, object):
     """Handles connections to XML-RPC server through Django test client."""
 

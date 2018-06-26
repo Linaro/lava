@@ -32,6 +32,7 @@ import logging
 import sys
 import yaml
 import contextlib
+from nose.tools import nottest
 from datetime import timedelta
 from django.conf import settings
 from django.contrib.admin.models import LogEntry, ADDITION
@@ -197,6 +198,7 @@ class BugLink(models.Model):
         )
 
 
+@nottest
 class TestSuite(models.Model, Queryable):
     """
     Result suite of a pipeline job.
@@ -283,6 +285,7 @@ class TestSuite(models.Model, Queryable):
         return _(u"Test Suite {0}/{1}").format(self.job.id, self.name)
 
 
+@nottest
 class TestSet(models.Model):
     """
     Sets collate result cases under an arbitrary text label.
@@ -317,6 +320,7 @@ class TestSet(models.Model):
             self.name)
 
 
+@nottest
 class TestCase(models.Model, Queryable):
     """
     Result of an individual test case.
@@ -635,6 +639,7 @@ class NamedTestAttribute(models.Model):
         verbose_name = "metadata"
 
 
+@nottest
 class TestData(models.Model):
     """
     Static metadata gathered from the test definition and device dictionary

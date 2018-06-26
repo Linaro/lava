@@ -570,6 +570,7 @@ class UrlRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
         return connection
 
 
+@nottest
 class TestDefinitionAction(TestAction):
 
     name = "test-definition"
@@ -729,6 +730,7 @@ class TestDefinitionAction(TestAction):
         return connection
 
 
+@nottest
 class TestOverlayAction(TestAction):  # pylint: disable=too-many-instance-attributes
 
     name = "test-overlay"
@@ -844,6 +846,7 @@ class TestOverlayAction(TestAction):  # pylint: disable=too-many-instance-attrib
         return connection
 
 
+@nottest
 class TestInstallAction(TestOverlayAction):
 
     name = "test-install-overlay"

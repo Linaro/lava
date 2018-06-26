@@ -18,6 +18,8 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+from nose.tools import nottest
+
 
 class LAVAError(Exception):
     """ Base class for all exceptions in LAVA """
@@ -68,6 +70,7 @@ class LAVABug(LAVAError):
     error_type = "Bug"
 
 
+@nottest
 class TestError(LAVAError):
     """
     An error in the operation of the test definition, e.g.

@@ -21,6 +21,7 @@
 
 import os
 import yaml
+from nose.tools import nottest
 from lava_dispatcher.test.test_basic import StdoutTestCase
 from lava_dispatcher.job import Job
 from lava_dispatcher.action import Pipeline, Timeout
@@ -81,6 +82,7 @@ class TestMultiDeploy(StdoutTestCase):
             filename = os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml')
             super().__init__(filename)
 
+    @nottest
     class TestDeploy(object):  # cannot be a subclass of Deployment without a full select function.
         def __init__(self, parent, parameters, job):
             super().__init__()
@@ -102,6 +104,7 @@ class TestMultiDeploy(StdoutTestCase):
             self.data[self.name] = self.parameters
             return connection  # no actual connection during this fake job
 
+    @nottest
     class TestJob(Job):
         def __init__(self):
             super().__init__(4122, 0, self.parameters)

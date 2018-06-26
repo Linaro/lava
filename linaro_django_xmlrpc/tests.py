@@ -22,7 +22,7 @@ Unit tests for Linaro Django XML-RPC Application
 import re
 import logging
 import xmlrpc.client
-
+from nose.tools import nottest
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django_testscenarios.ubertest import TestCase, TestCaseWithScenarios
@@ -224,6 +224,7 @@ class MapperTests(TestCase):
         self.assertEqual(retval, ['SourceA.a', 'SourceB.a'])
 
 
+@nottest
 class TestAPI(ExposedAPI):
     """
     Test API that gets exposed by the dispatcher for test runs.

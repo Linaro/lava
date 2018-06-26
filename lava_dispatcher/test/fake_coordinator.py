@@ -20,6 +20,7 @@
 import logging
 import json
 import uuid
+from nose.tools import nottest
 
 
 # disable pylint warnings until lava-coordinator is updated to make it easier to port other changes.
@@ -128,6 +129,7 @@ class TestSocket(object):
         self.signalHandler.checkMessage(self.message)
 
 
+@nottest
 class TestCoordinator(object):
     """
     Contains direct copies of critical functions from lava.coordinator module in a wrapper

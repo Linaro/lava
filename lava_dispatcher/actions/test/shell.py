@@ -83,6 +83,7 @@ class TestShell(LavaTest):
         return True
 
 
+@nottest
 class TestShellRetry(RetryAction):
 
     name = "lava-test-retry"
@@ -142,6 +143,7 @@ class PatternFixup(object):
         return self.pat
 
 
+@nottest
 class TestShellAction(TestAction):
     """
     Sets up and runs the LAVA Test Shell Definition scripts.
