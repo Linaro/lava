@@ -112,7 +112,7 @@ class UBootRetry(BootAction):
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.method_params = self.job.device['actions']['boot']['methods']['u-boot']['parameters']
-        self.usb_mass_device = self.method_params.get('uboot_mass_storage_device', None)
+        self.usb_mass_device = self.method_params.get('uboot_mass_storage_device')
         # establish a new connection before trying the reset
         self.internal_pipeline.add_action(ResetDevice())
         self.internal_pipeline.add_action(BootloaderInterruptAction())
@@ -166,7 +166,7 @@ class UBootSecondaryMedia(BootloaderSecondaryMedia):
         if 'kernel_type' not in self.parameters:
             self.errors = "Missing kernel_type for secondary media boot"
         self.logger.debug("Mapping kernel_type: %s", self.parameters['kernel_type'])
-        bootcommand = map_kernel_uboot(self.parameters['kernel_type'], self.job.device.get('parameters', None))
+        bootcommand = map_kernel_uboot(self.parameters['kernel_type'], self.job.device.get('parameters'))
         self.logger.debug("Using bootcommand: %s", bootcommand)
         self.set_namespace_data(
             action='uboot-prepare-kernel', label='kernel-type',

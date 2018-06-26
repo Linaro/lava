@@ -28,7 +28,7 @@ from lava_results_app.models import Chart
 def ownership_required(view_func):
     @wraps(view_func, assigned=available_attrs(view_func))
     def wrapper(request, *args, **kwargs):
-        report_name = kwargs.get('name', None)
+        report_name = kwargs.get('name')
         chart = get_object_or_404(Chart, name=report_name)
         if chart.can_admin(request.user):
             return view_func(request, *args, **kwargs)

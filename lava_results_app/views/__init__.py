@@ -483,8 +483,8 @@ def get_bug_links_json(request):
     """
 
     data = None
-    if not request.POST.get('content_type_id', None) or \
-       not request.POST.get('object_id', None):
+    if not request.POST.get('content_type_id') or \
+       not request.POST.get('object_id'):
         data = False
 
     else:
@@ -504,8 +504,8 @@ def add_bug_link(request):
     success = True
     error_msg = None
 
-    if not request.POST.get('content_type_id', None) or \
-       not request.POST.get('object_id', None):
+    if not request.POST.get('content_type_id') or \
+       not request.POST.get('object_id'):
         success = False
 
     else:

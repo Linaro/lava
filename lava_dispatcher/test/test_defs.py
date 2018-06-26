@@ -431,9 +431,9 @@ class TestDefinitions(StdoutTestCase):
         prepare = [action for action in tftp_deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
         overlay = [action for action in prepare.internal_pipeline.actions if action.name == 'lava-overlay'][0]
         apply_o = [action for action in prepare.internal_pipeline.actions if action.name == 'apply-overlay-tftp'][0]
-        self.assertIsNone(apply_o.parameters.get('nfs_url', None))
-        self.assertIsInstance(apply_o.parameters.get('persistent_nfs', None), dict)
-        self.assertIsInstance(apply_o.parameters['persistent_nfs'].get('address', None), str)
+        self.assertIsNone(apply_o.parameters.get('nfs_url'))
+        self.assertIsInstance(apply_o.parameters.get('persistent_nfs'), dict)
+        self.assertIsInstance(apply_o.parameters['persistent_nfs'].get('address'), str)
         definition = [action for action in overlay.internal_pipeline.actions if action.name == 'test-definition'][0]
         git_repos = [action for action in definition.internal_pipeline.actions if action.name == 'git-repo-action']
         self.assertIn('common', self.job.context)

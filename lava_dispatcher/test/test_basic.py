@@ -215,7 +215,7 @@ class Factory(object):
         return (rendered, data)
 
     def create_custom_job(self, template, job_data):
-        job_ctx = job_data.get('context', None)
+        job_ctx = job_data.get('context')
         (data, device_dict) = self.create_device(template, job_ctx)
         device = NewDevice(yaml.load(data))
         if self.debug:

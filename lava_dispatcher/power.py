@@ -66,7 +66,7 @@ class SendRebootCommands(Action):
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
         reboot_commands = self.parameters.get('soft_reboot', [])  # list
-        if not self.parameters.get('soft_reboot', None):  # unit test
+        if not self.parameters.get('soft_reboot'):  # unit test
             self.logger.warning('No soft reboot command defined in the test job. Using defaults.')
             reboot_commands = REBOOT_COMMAND_LIST
         connection.prompt_str = self.parameters.get(
@@ -225,7 +225,7 @@ class PowerOff(Action):
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
-        if not self.job.device.get('commands', None):
+        if not self.job.device.get('commands'):
             return connection
         command = self.job.device['commands'].get('power_off', [])
         if not isinstance(command, list):

@@ -1251,7 +1251,7 @@ def _pipeline_protocols(job_data, user, yaml_data=None):  # pylint: disable=too-
                 job = _create_pipeline_job(
                     node_data, user, target_group=target_group,
                     taglist=role_dict['tags'],
-                    device_type=role_dict.get('device_type', None),
+                    device_type=role_dict.get('device_type'),
                     orig=None  # store the dump of the split yaml as the job definition
                 )
                 if not job:
@@ -2091,7 +2091,7 @@ class TestJob(RestrictedResource):
             notification=notification)
 
         notification_callback.url = self.substitute_callback_url_variables(callback_data["url"])
-        if callback_data.get("token", None):
+        if callback_data.get("token"):
             notification_callback.token = self.get_token_from_description(callback_data['token'])
         notification_callback.method = NotificationCallback.METHOD_MAP[
             callback_data.get("method", "GET")]

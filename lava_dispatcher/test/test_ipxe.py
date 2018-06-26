@@ -78,7 +78,7 @@ class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-m
         self.assertEqual(job.device['commands'].get('interrupt', ' '), ' ')
         methods = job.device['actions']['boot']['methods']
         self.assertIn('ipxe', methods)
-        self.assertEqual(methods['ipxe']['parameters'].get('bootloader_prompt', None), 'iPXE>')
+        self.assertEqual(methods['ipxe']['parameters'].get('bootloader_prompt'), 'iPXE>')
 
     def test_bootloader_action(self):
         job = self.factory.create_job('x86-01.jinja2', 'sample_jobs/ipxe-ramdisk.yaml')

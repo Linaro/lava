@@ -98,7 +98,7 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertEqual(job.device['commands'].get('interrupt', ' '), ' ')
         methods = job.device['actions']['boot']['methods']
         self.assertIn('grub', methods)
-        self.assertEqual(methods['grub']['parameters'].get('bootloader_prompt', None), 'grub>')
+        self.assertEqual(methods['grub']['parameters'].get('bootloader_prompt'), 'grub>')
 
     @unittest.skipIf(infrastructure_error('mkimage'), "u-boot-tools not installed")
     def test_grub_action(self):
@@ -269,7 +269,7 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertEqual('telnet localhost 4002', uart)
         tshells = [action for action in job.pipeline.actions if action.name == 'lava-test-retry']
         for shell in tshells:
-            cn = shell.parameters.get('connection-namespace', None)
+            cn = shell.parameters.get('connection-namespace')
             if cn:
                 self.assertEqual(shell.parameters['namespace'], 'hikey-oe')
                 self.assertNotEqual(shell.parameters['namespace'], 'isolation')
@@ -285,7 +285,7 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         menu = [action for action in job.pipeline.actions if action.name == 'grub-sequence-action'][0]
         autologin = [action for action in menu.internal_pipeline.actions if action.name == 'auto-login-action'][0]
         self.assertIsNone(autologin.params)
-        self.assertEqual(['login:'], autologin.parameters.get('prompts', None))
+        self.assertEqual(['login:'], autologin.parameters.get('prompts'))
         menu = [action for action in job.pipeline.actions if action.name == 'secondary-shell-action'][0]
         autologin = [action for action in menu.internal_pipeline.actions if action.name == 'auto-login-action'][0]
         self.assertIsNotNone(autologin.parameters)

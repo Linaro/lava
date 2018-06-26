@@ -231,7 +231,7 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
         autologin = [action for action in boot.internal_pipeline.actions if action.name == 'auto-login-action'][0]
         self.assertTrue(autologin.booting)
         self.assertEqual(set(autologin.parameters.get('prompts')), set(['root@(.*):/#', 'shell@am57xevm:/']))
-        self.assertIsNone(autologin.parameters.get('boot_message', None))
+        self.assertIsNone(autologin.parameters.get('boot_message'))
 
     def test_nexus5x_job(self):
         self.factory = FastBootFactory()

@@ -210,24 +210,24 @@ class FailureTableView(JobTableView):
         failures = [TestJob.HEALTH_INCOMPLETE, TestJob.HEALTH_CANCELED]
         jobs = all_jobs_with_custom_sort().filter(health__in=failures)
 
-        health = self.request.GET.get('health_check', None)
+        health = self.request.GET.get('health_check')
         if health:
             jobs = jobs.filter(health_check=_str_to_bool(health))
 
-        dt = self.request.GET.get('device_type', None)
+        dt = self.request.GET.get('device_type')
         if dt:
             jobs = jobs.filter(actual_device__device_type__name=dt)
 
-        device = self.request.GET.get('device', None)
+        device = self.request.GET.get('device')
         if device:
             jobs = jobs.filter(actual_device__hostname=device)
 
-        start = self.request.GET.get('start', None)
+        start = self.request.GET.get('start')
         if start:
             now = timezone.now()
             start = now + datetime.timedelta(int(start))
 
-            end = self.request.GET.get('end', None)
+            end = self.request.GET.get('end')
             if end:
                 end = now + datetime.timedelta(int(end))
                 jobs = jobs.filter(start_time__range=(start, end))
@@ -464,8 +464,8 @@ def failure_report(request):
         request,
         "lava_scheduler_app/failure_report.html",
         {
-            'device_type': request.GET.get('device_type', None),
-            'device': request.GET.get('device', None),
+            'device_type': request.GET.get('device_type'),
+            'device': request.GET.get('device'),
             'failed_job_table': ptable,
             "sort": '-submit_time',
             "terms_data": ptable.prepare_terms_data(data),

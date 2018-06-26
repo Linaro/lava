@@ -33,7 +33,7 @@ def match_vlan_interface(device, job_def):
     interfaces = []
     logger = logging.getLogger('lava-master')
     device_dict = device.load_configuration()
-    if not device_dict or device_dict.get('parameters', {}).get('interfaces', None) is None:
+    if not device_dict or device_dict.get('parameters', {}).get('interfaces') is None:
         return False
 
     for vlan_name in job_def['protocols']['lava-vland']:

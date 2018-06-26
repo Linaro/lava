@@ -92,7 +92,7 @@ class SwitchRecoveryCommand(Action):
         self.recovery = self.job.device['actions']['deploy']['methods']['recovery']
         if 'commands' not in self.recovery:
             self.errors = "Missing commands to enter recovery mode"
-        command = self.recovery['commands'].get(self.mode, None)
+        command = self.recovery['commands'].get(self.mode)
         if not command:
             self.errors = "Unable to find %s recovery command" % self.mode
 

@@ -61,14 +61,14 @@ class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
         """
         (rendered, _) = self.factory.create_device('cubie2.jinja2')
         cubie = NewDevice(yaml.load(rendered))
-        self.assertIsNotNone(cubie['parameters']['media'].get('usb', None))
-        self.assertIsNotNone(cubie.get('commands', None))
-        self.assertIsNotNone(cubie.get('actions', None))
-        self.assertIsNotNone(cubie['actions'].get('deploy', None))
-        self.assertIsNotNone(cubie['actions']['deploy'].get('methods', None))
+        self.assertIsNotNone(cubie['parameters']['media'].get('usb'))
+        self.assertIsNotNone(cubie.get('commands'))
+        self.assertIsNotNone(cubie.get('actions'))
+        self.assertIsNotNone(cubie['actions'].get('deploy'))
+        self.assertIsNotNone(cubie['actions']['deploy'].get('methods'))
         self.assertIn('usb', cubie['actions']['deploy']['methods'])
-        self.assertIsNotNone(cubie['actions'].get('boot', None))
-        self.assertIsNotNone(cubie['actions']['boot'].get('methods', None))
+        self.assertIsNotNone(cubie['actions'].get('boot'))
+        self.assertIsNotNone(cubie['actions']['boot'].get('methods'))
         self.assertIn('u-boot', cubie['actions']['boot']['methods'])
         u_boot_params = cubie['actions']['boot']['methods']['u-boot']
         self.assertIn('usb', u_boot_params)
@@ -290,7 +290,7 @@ class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
         device_id = u_boot_action.get_namespace_data(action='storage-deploy', label='u-boot', key='device')
         self.assertIsNotNone(device_id)
         kernel_type = u_boot_action.parameters['kernel_type']
-        bootcommand = map_kernel_uboot(kernel_type, device_params=cubie.get('parameters', None))
+        bootcommand = map_kernel_uboot(kernel_type, device_params=cubie.get('parameters'))
         substitutions = {
             '{BOOTX}': "%s %s %s %s" % (
                 bootcommand,

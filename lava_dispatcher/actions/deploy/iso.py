@@ -222,7 +222,7 @@ class QemuCommandLine(Action):  # pylint: disable=too-many-instance-attributes
         qemu_binary = which(boot['parameters']['command'])
         self.sub_command = [qemu_binary]
         self.sub_command.extend(boot['parameters'].get('options', []))
-        boot_opts = boot['parameters'].get('boot_options', None)
+        boot_opts = boot['parameters'].get('boot_options')
         if boot_opts:
             self.console = "console=%s" % boot_opts['console']
             self.boot_order = "-boot %s" % boot_opts['boot_order']

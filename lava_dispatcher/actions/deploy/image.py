@@ -142,7 +142,7 @@ class ExtractNfsAction(Action):
         super().validate()
         if not self.valid:
             return
-        if not self.parameters['images'].get(self.param_key, None):  # idempotency
+        if not self.parameters['images'].get(self.param_key):  # idempotency
             return
         if not self.get_namespace_data(
                 action='download-action', label=self.param_key, key='file'):
@@ -157,7 +157,7 @@ class ExtractNfsAction(Action):
                 self.errors = 'prefix must be a directory and end with /'
 
     def run(self, connection, max_end_time):
-        if not self.parameters['images'].get(self.param_key, None):  # idempotency
+        if not self.parameters['images'].get(self.param_key):  # idempotency
             return connection
         connection = super().run(connection, max_end_time)
         root = self.get_namespace_data(action='download-action', label=self.param_key, key='file')

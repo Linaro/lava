@@ -112,7 +112,7 @@ class WaitUSBMassStorageDeviceAction(Action):
 
     def validate(self):
         super().validate()
-        usb_fs_label = self.job.device.get('usb_filesystem_label', None)
+        usb_fs_label = self.job.device.get('usb_filesystem_label')
         if not isinstance(usb_fs_label, str):
             self.errors = 'usb_fs_label unset'
         self.ms_device = {'ID_FS_LABEL': str(usb_fs_label)}
@@ -156,7 +156,7 @@ class WaitDeviceBoardID(Action):
         super().__init__()
         self.udev_device = None
         if not board_id:
-            self.board_id = self.job.device.get('board_id', None)
+            self.board_id = self.job.device.get('board_id')
         else:
             self.board_id = board_id
 

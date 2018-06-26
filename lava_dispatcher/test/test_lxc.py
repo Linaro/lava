@@ -157,7 +157,7 @@ class TestLxcWithDevices(StdoutTestCase):
         prepare = [action for action in tftp_deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
         overlay = [action for action in prepare.internal_pipeline.actions if action.name == 'lava-overlay'][0]
         test_def = [action for action in overlay.internal_pipeline.actions if action.name == 'test-definition'][0]
-        namespace = test_def.parameters.get('namespace', None)
+        namespace = test_def.parameters.get('namespace')
         self.assertIsNotNone(namespace)
         test_actions = [action for action in self.job.parameters['actions'] if 'test' in action]
         for action in test_actions:
@@ -221,12 +221,12 @@ class TestLxcWithDevices(StdoutTestCase):
         lxc_deploy = [action for action in job.pipeline.actions if action.name == 'lxc-deploy'][0]
         names = [action.name for action in lxc_deploy.internal_pipeline.actions]
         self.assertNotIn('prepare-tftp-overlay', names)
-        namespace1 = lxc_deploy.parameters.get('namespace', None)
+        namespace1 = lxc_deploy.parameters.get('namespace')
         tftp_deploy = [action for action in job.pipeline.actions if action.name == 'tftp-deploy'][0]
         prepare = [action for action in tftp_deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
         overlay = [action for action in prepare.internal_pipeline.actions if action.name == 'lava-overlay'][0]
         test_def = [action for action in overlay.internal_pipeline.actions if action.name == 'test-definition'][0]
-        namespace = test_def.parameters.get('namespace', None)
+        namespace = test_def.parameters.get('namespace')
         self.assertIsNotNone(namespace)
         self.assertIsNotNone(namespace1)
         self.assertNotEqual(namespace, namespace1)

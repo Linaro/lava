@@ -87,7 +87,7 @@ class MpsAction(DeployAction):
         super().validate()
         if not self.valid:
             return
-        if not self.parameters.get('recovery_image', None):
+        if not self.parameters.get('recovery_image'):
             return
 
     def populate(self, parameters):
@@ -123,7 +123,7 @@ class DeployMPSTestBinary(Action):
         super().validate()
         if not self.valid:
             return
-        if not self.parameters['images'].get(self.param_key, None):
+        if not self.parameters['images'].get(self.param_key):
             return
 
     def run(self, connection, max_end_time):

@@ -284,9 +284,9 @@ class LxcCreateUdevRuleAction(DeployAction):
         lines = []
         for device in device_info:
             data = {'serial_number': str(device.get('board_id', '')),
-                    'vendor_id': device.get('usb_vendor_id', None),
-                    'product_id': device.get('usb_product_id', None),
-                    'fs_label': device.get('fs_label', None),
+                    'vendor_id': device.get('usb_vendor_id'),
+                    'product_id': device.get('usb_product_id'),
+                    'fs_label': device.get('fs_label'),
                     'lxc_name': lxc_name,
                     'device_info_file': device_info_file,
                     'logging_url': logging_url,

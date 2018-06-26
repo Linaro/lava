@@ -106,7 +106,7 @@ class ConnectDevice(Action):
         self._check_command()
 
     def run(self, connection, max_end_time):
-        connection_namespace = self.parameters.get('connection-namespace', None)
+        connection_namespace = self.parameters.get('connection-namespace')
         parameters = None
         if connection_namespace:
             parameters = {"namespace": connection_namespace}

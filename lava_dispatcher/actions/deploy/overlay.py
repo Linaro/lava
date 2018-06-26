@@ -149,7 +149,7 @@ class OverlayAction(DeployAction):
         * copy runners into test runner directories
         """
         tmp_dir = self.mkdtemp()
-        namespace = self.parameters.get('namespace', None)
+        namespace = self.parameters.get('namespace')
         if namespace:
             if namespace not in get_test_action_namespaces(self.job.parameters):
                 self.logger.info("[%s] skipped %s - no test action.", namespace, self.name)
@@ -549,7 +549,7 @@ class PersistentNFSOverlay(Action):
 
     def validate(self):
         super().validate()
-        persist = self.parameters.get('persistent_nfs', None)
+        persist = self.parameters.get('persistent_nfs')
         if not persist:
             return
         if 'address' not in persist:

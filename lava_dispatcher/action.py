@@ -126,7 +126,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
         # pylint: disable=protected-access
         action._override_action_timeout(dict_merge_get(timeouts, 'action'))
         action._override_action_timeout(subdict_merge_get(timeouts, 'actions', action.name))
-        action._override_action_timeout(parameters.get('timeout', None))
+        action._override_action_timeout(parameters.get('timeout'))
 
         action._override_connection_timeout(dict_merge_get(timeouts, 'connection'))
         action._override_connection_timeout(subdict_merge_get(timeouts, 'connections', action.name))
@@ -650,7 +650,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         """
         params = parameters if parameters else self.parameters
         namespace = params['namespace']
-        value = self.data.get(namespace, {}).get(action, {}).get(label, {}).get(key, None)  # pylint: disable=no-member
+        value = self.data.get(namespace, {}).get(action, {}).get(label, {}).get(key)  # pylint: disable=no-member
         if value is None:
             return None
         return copy.deepcopy(value) if deepcopy else value

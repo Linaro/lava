@@ -160,10 +160,10 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         if 'images' in self.parameters and self.key in self.parameters['images']:
             image = self.parameters['images'][self.key]
             self.url = lavaurl.urlparse(image['url'])
-            compression = image.get('compression', None)
-            archive = image.get('archive', None)
+            compression = image.get('compression')
+            archive = image.get('archive')
             image_name, _ = self._url_to_fname_suffix(self.path, compression)
-            image_arg = image.get('image_arg', None)
+            image_arg = image.get('image_arg')
             overlay = image.get('overlay', False)
             self.set_namespace_data(action='download-action', label=self.key,
                                     key='file', value=image_name)
@@ -173,8 +173,8 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
                                     key='compression', value=compression)
         else:
             self.url = lavaurl.urlparse(self.parameters[self.key]['url'])
-            compression = self.parameters[self.key].get('compression', None)
-            archive = self.parameters[self.key].get('archive', None)
+            compression = self.parameters[self.key].get('compression')
+            archive = self.parameters[self.key].get('archive')
             overlay = self.parameters.get('overlay', False)
             fname, _ = self._url_to_fname_suffix(self.path, compression)
             self.set_namespace_data(action='download-action', label=self.key, key='file', value=fname)
@@ -192,7 +192,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         if self.key == 'kernel' and ('kernel' in self.parameters):
             self.set_namespace_data(
                 action='download-action', label='type', key=self.key,
-                value=self.parameters[self.key].get('type', None))
+                value=self.parameters[self.key].get('type'))
 
     def run(self, connection, max_end_time):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
         def progress_unknown_total(downloaded_sz, last_val):
@@ -236,8 +236,8 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
                 compression = self.parameters[self.key].get('compression',
                                                             False)
 
-        md5sum = remote.get('md5sum', None)
-        sha256sum = remote.get('sha256sum', None)
+        md5sum = remote.get('md5sum')
+        sha256sum = remote.get('sha256sum')
 
         fname, _ = self._url_to_fname_suffix(self.path, compression)
         if os.path.isdir(fname):
@@ -326,7 +326,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         if 'images' in self.parameters and self.key in self.parameters['images']:
             archive = self.parameters['images'][self.key].get('archive', False)
         else:
-            archive = self.parameters[self.key].get('archive', None)
+            archive = self.parameters[self.key].get('archive')
         if archive:
             origin = fname
             target_fname = os.path.basename(origin).rstrip('.' + archive)

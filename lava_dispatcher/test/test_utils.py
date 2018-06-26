@@ -211,7 +211,7 @@ class TestConstants(StdoutTestCase):  # pylint: disable=too-many-public-methods
     def test_action_parameters(self):
         self.assertIsNotNone(self.job.parameters)
         deploy = self.job.pipeline.actions[0]
-        self.assertIsNone(deploy.parameters.get('parameters', None))
+        self.assertIsNone(deploy.parameters.get('parameters'))
         uboot = self.job.pipeline.actions[1]
         self.assertEqual(
             "reboot: Restarting system",  # modified in the job yaml

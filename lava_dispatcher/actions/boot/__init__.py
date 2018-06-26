@@ -158,7 +158,7 @@ class AutoLoginAction(Action):
         super().validate()
         # Skip auto login if the configuration is not found
         self.method = self.parameters['method']
-        params = self.parameters.get('auto_login', None)
+        params = self.parameters.get('auto_login')
         if params:
             if not isinstance(params, dict):
                 self.errors = "'auto_login' should be a dictionary"
@@ -183,7 +183,7 @@ class AutoLoginAction(Action):
                 if not login_commands:
                     self.errors = "'login_commands' must not be empty"
 
-        prompts = self.parameters.get('prompts', None)
+        prompts = self.parameters.get('prompts')
         if prompts is None:
             self.errors = "'prompts' is mandatory for AutoLoginAction"
 
@@ -244,7 +244,7 @@ class AutoLoginAction(Action):
             if kernel_start_message:
                 connection.prompt_str = [kernel_start_message]
 
-            if self.params and self.params.get('boot_message', None):
+            if self.params and self.params.get('boot_message'):
                 self.logger.warning("boot_message is being deprecated in favour of kernel-start-message in constants")
                 connection.prompt_str = [self.params.get('boot_message')]
 
@@ -265,7 +265,7 @@ class AutoLoginAction(Action):
         connection = super().run(connection, max_end_time)
         if not connection:
             return connection
-        prompts = self.parameters.get('prompts', None)
+        prompts = self.parameters.get('prompts')
         for prompt in prompts:
             check_prompt_characters(prompt)
 
@@ -282,7 +282,7 @@ class AutoLoginAction(Action):
         self.logger.debug("Using line separator: #%r#", connection.raw_connection.linesep)
 
         # Skip auto login if the configuration is not found
-        params = self.parameters.get('auto_login', None)
+        params = self.parameters.get('auto_login')
         if not params:
             self.logger.debug("No login prompt set.")
             self.force_prompt = True
@@ -345,7 +345,7 @@ class AutoLoginAction(Action):
                     self.errors = LOGIN_TIMED_OUT_MSG
                     raise JobError(LOGIN_TIMED_OUT_MSG)
 
-            login_commands = params.get('login_commands', None)
+            login_commands = params.get('login_commands')
             if login_commands is not None:
                 self.logger.debug("Running login commands")
                 for command in login_commands:
@@ -451,7 +451,7 @@ class BootloaderCommandOverlay(Action):
                     and not self.get_namespace_data(action='download-action', label='file', key='ramdisk') \
                     and not self.get_namespace_data(action='download-action', label='file', key='initrd'):
                 ramdisk_addr = '-'
-            add_header = self.job.device['actions']['deploy']['parameters'].get('add_header', None)
+            add_header = self.job.device['actions']['deploy']['parameters'].get('add_header')
             if self.method == 'u-boot' and not add_header == "u-boot":
                 self.logger.debug("No u-boot header, not passing ramdisk to bootX cmd")
                 ramdisk_addr = '-'

@@ -92,7 +92,7 @@ class TestRecoveryMode(StdoutTestCase):  # pylint: disable=too-many-public-metho
         enter = [action for action in self.job.pipeline.actions if action.name == 'recovery-boot'][0]
         mode = [action for action in enter.internal_pipeline.actions if action.name == 'switch-recovery'][0]
         recovery = self.job.device['actions']['deploy']['methods']['recovery']
-        self.assertIsNotNone(recovery['commands'].get(mode.mode, None))
+        self.assertIsNotNone(recovery['commands'].get(mode.mode))
         self.assertEqual(
             [
                 '/home/neil/lava-lab/shared/lab-scripts/eth008_control -a 10.15.0.171 -r 1 -s off',
@@ -101,7 +101,7 @@ class TestRecoveryMode(StdoutTestCase):  # pylint: disable=too-many-public-metho
         self.assertEqual('recovery_mode', mode.mode)
         exit_mode = [action for action in self.job.pipeline.actions if action.name == 'recovery-boot'][1]
         mode = [action for action in exit_mode.internal_pipeline.actions if action.name == 'switch-recovery'][0]
-        self.assertIsNotNone(recovery['commands'].get(mode.mode, None))
+        self.assertIsNotNone(recovery['commands'].get(mode.mode))
         self.assertEqual(
             [
                 '/home/neil/lava-lab/shared/lab-scripts/eth008_control -a 10.15.0.171 -r 1 -s on',

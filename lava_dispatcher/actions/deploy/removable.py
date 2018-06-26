@@ -68,8 +68,8 @@ class Removable(Deployment):
 
     @classmethod
     def accepts(cls, device, parameters):
-        media = parameters.get('to', None)
-        job_device = parameters.get('device', None)
+        media = parameters.get('to')
+        job_device = parameters.get('device')
 
         # Is the media supported?
         if media not in ['sata', 'sd', 'usb']:

@@ -211,7 +211,7 @@ class TestKVMBasicDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
                 # get the action & populate it
                 self.assertEqual(action.parameters['method'], 'qemu')
                 self.assertEqual(action.parameters['prompts'], ['linaro-test', 'root@debian:~#'])
-                params = action.parameters.get('auto_login', None)
+                params = action.parameters.get('auto_login')
 
                 if 'login_prompt' in params:
                     self.assertEqual(params['login_prompt'], 'login:')
@@ -650,9 +650,9 @@ class TestChecksum(StdoutTestCase):
         download = [action for action in deploy.internal_pipeline.actions if action.name == 'download-retry'][0]
         helper = [action for action in download.internal_pipeline.actions if action.name == 'file-download'][0]
         remote = helper.parameters[helper.key]
-        md5sum = remote.get('md5sum', None)
+        md5sum = remote.get('md5sum')
         self.assertIsNone(md5sum)
-        sha256sum = remote.get('sha256sum', None)
+        sha256sum = remote.get('sha256sum')
         self.assertIsNotNone(sha256sum)
 
 

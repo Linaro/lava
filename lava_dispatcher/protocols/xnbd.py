@@ -68,7 +68,7 @@ class XnbdProtocol(Protocol):
             self.errors = ('No port set in parameters for lava-xnbd protocol!\nE.g.:\n protocols:\n  lava-xnbd:\n    port: auto \n')
 
     def __call__(self, *args, **kwargs):
-        action = kwargs.get('action', None)
+        action = kwargs.get('action')
         self.logger.debug("[%s] Checking protocol data for %s", action.name, self.name)
         try:
             return self._api_select(args, action=action)

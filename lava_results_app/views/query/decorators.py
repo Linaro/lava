@@ -28,8 +28,8 @@ from lava_results_app.models import Query
 def ownership_required(view_func):
     @wraps(view_func, assigned=available_attrs(view_func))
     def wrapper(request, *args, **kwargs):
-        report_name = kwargs.get('name', None)
-        username = kwargs.get('username', None)
+        report_name = kwargs.get('name')
+        username = kwargs.get('username')
         query = get_object_or_404(Query, name=report_name,
                                   owner__username=username)
         if query.is_accessible_by(request.user):

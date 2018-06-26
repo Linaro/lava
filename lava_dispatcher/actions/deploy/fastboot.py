@@ -161,7 +161,7 @@ class FastbootFlashOrderAction(DeployAction):
             if flash_cmd not in parameters['images']:
                 continue
             self.internal_pipeline.add_action(FastbootFlashAction(cmd=flash_cmd))
-            self.reboot = parameters['images'][flash_cmd].get('reboot', None)
+            self.reboot = parameters['images'][flash_cmd].get('reboot')
             if self.reboot == 'fastboot-reboot':
                 self.internal_pipeline.add_action(FastbootReboot())
                 self.internal_pipeline.add_action(ReadFeedback(repeat=True))

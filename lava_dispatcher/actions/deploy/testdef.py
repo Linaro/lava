@@ -78,13 +78,12 @@ def get_deployment_testdefs(parameters=None):
         namespace = None
         if 'deploy' in action:
             yaml_line = action['deploy']['yaml_line']
-            namespace = action['deploy'].get('namespace', None)
+            namespace = action['deploy'].get('namespace')
             test_dict[yaml_line] = []
             deploy_list = get_deployment_tests(parameters, yaml_line)
         for deploy_action in deploy_list:
             if 'test' in deploy_action:
-                if namespace and namespace == deploy_action['test'].get(
-                        'namespace', None):
+                if namespace and namespace == deploy_action['test'].get('namespace'):
                     test_dict[yaml_line].append(deploy_action['test']['definitions'])
         deploy_list = []
     return test_dict
@@ -120,7 +119,7 @@ def get_test_action_namespaces(parameters=None):
     test_namespaces = []
     for action in parameters['actions']:
         if 'test' in action:
-            if action['test'].get('namespace', None):
+            if action['test'].get('namespace'):
                 test_namespaces.append(action['test']['namespace'])
     repeat_list = [action['repeat']
                    for action in parameters['actions']
@@ -129,7 +128,7 @@ def get_test_action_namespaces(parameters=None):
         test_namespaces.extend(
             [action['test']['namespace']
              for action in repeat_list[0]['actions']
-             if 'test' in action and action['test'].get('namespace', None)])
+             if 'test' in action and action['test'].get('namespace')])
     return test_namespaces
 
 
@@ -227,7 +226,7 @@ class RepoAction(Action):
             action='test', label=self.uuid, key='repository', value=self.parameters['repository'])
         self.set_namespace_data(
             action='test', label=self.uuid, key='path', value=self.parameters['path'])
-        revision = self.parameters.get('revision', None)
+        revision = self.parameters.get('revision')
         if revision:
             self.set_namespace_data(
                 action='test', label=self.uuid, key='revision', value=revision)
@@ -316,11 +315,11 @@ class GitRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
         self.logger.info("Fetching tests from %s", self.parameters['repository'])
 
         # Get the branch if specified.
-        branch = self.parameters.get('branch', None)
+        branch = self.parameters.get('branch')
 
         # Set shallow to False if revision is specified.
         # Otherwise default to True if not specified as a parameter.
-        revision = self.parameters.get('revision', None)
+        revision = self.parameters.get('revision')
         shallow = False
         if not revision:
             shallow = self.parameters.get('shallow', True)
@@ -396,7 +395,7 @@ class BzrRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
 
         commit_id = self.vcs.clone(
             runner_path,
-            revision=self.parameters.get('revision', None))
+            revision=self.parameters.get('revision'))
         if commit_id is None:
             raise InfrastructureError("Unable to get test definition from %s (%s)" % (self.vcs.binary, self.parameters))
         self.results = {
@@ -920,7 +919,7 @@ class TestInstallAction(TestOverlayAction):
                 # for 'skip_by_default' comes from job parameters.
                 url = repo.get('url', '')
                 url = self._lookup_params('url', url, testdef)
-                branch = repo.get('branch', None)
+                branch = repo.get('branch')
                 branch = self._lookup_params('branch', branch, testdef)
                 if not url:
                     raise TestError('Invalid git-repos dictionary in install definition.')

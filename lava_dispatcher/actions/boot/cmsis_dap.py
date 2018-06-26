@@ -81,14 +81,14 @@ class BootCMSISRetry(RetryAction):
     def validate(self):
         super().validate()
         method_params = self.job.device['actions']['boot']['methods']['cmsis-dap']['parameters']
-        usb_mass_device = method_params.get('usb_mass_device', None)
+        usb_mass_device = method_params.get('usb_mass_device')
         if not usb_mass_device:
             self.errors = "usb_mass_device unset"
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         method_params = self.job.device['actions']['boot']['methods']['cmsis-dap']['parameters']
-        usb_mass_device = method_params.get('usb_mass_device', None)
+        usb_mass_device = method_params.get('usb_mass_device')
         resets_after_flash = method_params.get('resets_after_flash', True)
         if self.job.device.hard_reset_command:
             self.internal_pipeline.add_action(ResetDevice())
@@ -115,7 +115,7 @@ class FlashCMSISAction(Action):
         if self.job.device['board_id'] == '0000000000':
             self.errors = "[FLASH_CMSIS] board_id unset"
         method_parameters = self.job.device['actions']['boot']['methods']['cmsis-dap']['parameters']
-        self.usb_mass_device = method_parameters.get('usb_mass_device', None)
+        self.usb_mass_device = method_parameters.get('usb_mass_device')
         if not self.usb_mass_device:
             self.errors = "usb_mass_device unset"
         for action in self.get_namespace_keys('download-action'):

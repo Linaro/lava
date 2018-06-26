@@ -98,7 +98,7 @@ class VExpressMsdAction(DeployAction):
         super().validate()
         if not self.valid:
             return
-        if not self.parameters.get('recovery_image', None):  # idempotency
+        if not self.parameters.get('recovery_image'):  # idempotency
             return
 
     def populate(self, parameters):
@@ -193,9 +193,9 @@ class EnterVExpressMCC(Action):
             return
         self.device_params = self.job.device['actions']['deploy']['methods']['vemsd']['parameters']
         self.interrupt_char = self.device_params.get('interrupt_char', VEXPRESS_AUTORUN_INTERRUPT_CHARACTER)
-        self.mcc_prompt = self.device_params.get('mcc_prompt', None)
-        self.autorun_prompt = self.device_params.get('autorun_prompt', None)
-        self.mcc_reset_msg = self.device_params.get('mcc_reset_msg', None)
+        self.mcc_prompt = self.device_params.get('mcc_prompt')
+        self.autorun_prompt = self.device_params.get('autorun_prompt')
+        self.mcc_reset_msg = self.device_params.get('mcc_reset_msg')
         if not isinstance(self.mcc_prompt, str):
             self.errors = 'Versatile Express MCC prompt unset'
         if not isinstance(self.autorun_prompt, str):

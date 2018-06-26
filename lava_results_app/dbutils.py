@@ -221,9 +221,9 @@ def _get_action_metadata(data):  # pylint: disable=too-many-branches,too-many-ne
         for block in deploy:
             if not block:
                 continue
-            namespace = block.get('namespace', None)
+            namespace = block.get('namespace')
             prefix = "deploy.%d.%s" % (count, namespace) if namespace else 'deploy.%d' % count
-            value = block.get('method', None)
+            value = block.get('method')
             if value:
                 retval['%s.method' % prefix] = value
                 count += 1
@@ -232,15 +232,15 @@ def _get_action_metadata(data):  # pylint: disable=too-many-branches,too-many-ne
         for block in boot:
             if not block:
                 continue
-            namespace = block.get('namespace', None)
+            namespace = block.get('namespace')
             prefix = "boot.%d.%s" % (count, namespace) if namespace else 'boot.%d' % count
-            value = block.get('commands', None)
+            value = block.get('commands')
             if value:
                 retval['%s.commands' % prefix] = value
-            value = block.get('method', None)
+            value = block.get('method')
             if value:
                 retval['%s.method' % prefix] = value
-            value = block.get('type', None)
+            value = block.get('type')
             if value:
                 retval['%s.type' % prefix] = value
             count += 1
@@ -249,7 +249,7 @@ def _get_action_metadata(data):  # pylint: disable=too-many-branches,too-many-ne
         for block in test:
             if not block:
                 continue
-            namespace = block.get('namespace', None)
+            namespace = block.get('namespace')
             definitions = [dict.get(block, 'definitions')][0]
             if not definitions:
                 monitors = [dict.get(block, 'monitors')][0]
@@ -262,7 +262,7 @@ def _get_action_metadata(data):  # pylint: disable=too-many-branches,too-many-ne
             else:
                 for definition in definitions:
                     if definition['from'] == 'inline':
-                        run = definition['repository'].get('run', None)
+                        run = definition['repository'].get('run')
                         # an inline repo without test cases will not get reported.
                         steps = [dict.get(run, 'steps')][0] if run else None
                         if steps is not None and 'lava-test-case' in steps:
@@ -433,7 +433,7 @@ def export_testcase(testcase, with_buglinks=False):
     """
     metadata = dict(testcase.action_metadata) if testcase.action_metadata else {}
     extra_source = []
-    extra_data = metadata.get('extra', None)
+    extra_data = metadata.get('extra')
     if isinstance(extra_data, str) and os.path.exists(extra_data):
         with open(metadata['extra'], 'r') as extra_file:
             items = yaml.load(extra_file, Loader=yaml.CLoader)
