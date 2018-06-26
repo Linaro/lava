@@ -99,6 +99,7 @@ class TestJobDeviceParameters(StdoutTestCase):  # pylint: disable=too-many-publi
                 self.assertIn('hard_reset', action.job.device['commands'])
                 self.assertIn('connect', action.job.device['commands'])
                 self.assertEqual(action.job.device['commands']['connect'].split(' ')[0], 'telnet')
+                self.assertTrue(action.interrupt_newline)
             if isinstance(action, UBootAction):
                 self.assertIn('method', action.parameters)
                 self.assertIn('commands', action.parameters)

@@ -87,6 +87,7 @@ constants:
   grub:
     interrupt-prompt: '{{ grub_autoboot_prompt | default("for a command-line") }}'
     interrupt-character: '{{ grub_interrupt_character | default ("c") }}'
+    interrupt-newline: {{ grub_interrupt_newline | default(False) }}
     error-messages:
       - "error: missing (.*) symbol."
   grub-efi:

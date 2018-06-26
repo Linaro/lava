@@ -617,6 +617,7 @@ class BootloaderInterruptAction(Action):
         self.bootloader_prompt = self.params['bootloader_prompt']
         self.interrupt_prompt = self.params.get('interrupt_prompt', self.job.device.get_constant('interrupt-prompt', prefix=self.method))
         self.needs_interrupt = self.params.get('needs_interrupt', True)
+        self.interrupt_newline = self.job.device.get_constant('interrupt-newline', prefix=self.method, missing_ok=True, missing_default=True)
         # interrupt_char can actually be a sequence of ASCII characters - sendline does not care.
         self.interrupt_char = None
         if self.method != 'ipxe':
@@ -636,7 +637,10 @@ class BootloaderInterruptAction(Action):
                 for char in self.interrupt_control_chars:
                     connection.sendcontrol(char)
             else:
-                connection.sendline(self.interrupt_char)
+                if self.interrupt_newline:
+                    connection.sendline(self.interrupt_char)
+                else:
+                    connection.send(self.interrupt_char)
         else:
             self.logger.info("Not interrupting bootloader, waiting for bootloader prompt")
             connection.prompt_str = self.bootloader_prompt

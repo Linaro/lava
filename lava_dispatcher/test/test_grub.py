@@ -26,7 +26,7 @@ from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.test.utils import DummyLogger, infrastructure_error, infrastructure_error_multi_paths
 from lava_dispatcher.actions.boot.grub import GrubMainAction
-from lava_dispatcher.actions.boot import BootloaderCommandOverlay
+from lava_dispatcher.actions.boot import BootloaderCommandOverlay, BootloaderInterruptAction
 from lava_dispatcher.actions.deploy.tftp import TftpAction
 from lava_dispatcher.job import Job
 from lava_dispatcher.action import JobError, Pipeline
@@ -121,6 +121,8 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
                 self.assertIn('kernel', action.parameters)
                 self.assertIn('to', action.parameters)
                 self.assertEqual('tftp', action.parameters['to'])
+            if isinstance(action, BootloaderInterruptAction):
+                self.assertFalse(action.interrupt_newline)
             self.assertTrue(action.valid)
 
     def test_overlay_action(self):  # pylint: disable=too-many-locals

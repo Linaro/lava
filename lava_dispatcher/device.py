@@ -74,21 +74,22 @@ class PipelineDevice(dict):
                     return value['connect']
         return ''
 
-    def get_constant(self, const, prefix=None, missing_ok=False):
+    def get_constant(self, const, prefix=None, missing_ok=False, missing_default=None):
         if 'constants' not in self:
             raise ConfigurationError("constants section not present in the device config.")
+        constants = self['constants']
         if prefix:
-            if not self['constants'].get(prefix, {}).get(const, {}):
-                if missing_ok:
-                    return None
-                raise ConfigurationError("Constant %s,%s does not exist in the device config 'constants' section." % (prefix, const))
-            else:
-                return self['constants'][prefix][const]
-        if const not in self['constants']:
+            if prefix in constants:
+                if const in constants[prefix]:
+                    return constants[prefix][const]
             if missing_ok:
-                return None
-            raise ConfigurationError("Constant %s does not exist in the device config 'constants' section." % const)
-        return self['constants'][const]
+                return missing_default
+            raise ConfigurationError("Constant %s,%s does not exist in the device config 'constants' section." % (prefix, const))
+        if const in constants:
+            return constants[const]
+        if missing_ok:
+            return missing_default
+        raise ConfigurationError("Constant %s does not exist in the device config 'constants' section." % const)
 
 
 class NewDevice(PipelineDevice):
