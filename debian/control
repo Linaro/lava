@@ -49,7 +49,8 @@ Architecture: all
 Pre-Depends: debconf | debconf-2.0
 Depends: apache2, adduser, gunicorn3, iproute2, python3-setuptools,
  libjs-excanvas, libjs-jquery-cookie, libjs-jquery, libjs-jquery-ui,
- libjs-jquery-watermark, libjs-jquery-flot (>= 0.8.2), openssh-client,
+ libjs-jquery-watermark, libjs-jquery-flot (>= 0.8.2),
+ libjs-jquery-typeahead, openssh-client,
  postgresql, postgresql-client, postgresql-common, systemd-sysv,
  lava-common (>= ${source:Version}),${python3:Depends}, ${misc:Depends}
 Recommends: ntp, lava-coordinator, lava-server-doc, lava-dispatcher,
