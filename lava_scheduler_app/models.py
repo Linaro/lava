@@ -1439,7 +1439,7 @@ class TestJob(RestrictedResource):
         Jobs that are not multinode will directly use STATE_SCHEDULED
         """
         if device.state != Device.STATE_IDLE:
-            raise Exception("device is not IDLE: %s", Device.STATE_CHOICES[device.state])
+            raise Exception("device is not IDLE: %s" % Device.STATE_CHOICES[device.state])
         if self.state >= TestJob.STATE_SCHEDULING:
             return
         self.state = TestJob.STATE_SCHEDULING
@@ -1462,7 +1462,7 @@ class TestJob(RestrictedResource):
                 device = self.actual_device
         else:
             if device.state != Device.STATE_IDLE:
-                raise Exception("device is not IDLE: %s", Device.STATE_CHOICES[device.state])
+                raise Exception("device is not IDLE: %s" % Device.STATE_CHOICES[device.state])
         if self.state >= TestJob.STATE_SCHEDULED:
             return
         self.state = TestJob.STATE_SCHEDULED
