@@ -296,16 +296,16 @@ class Mapper(object):
             meth_name = name
             api_name = ''
         if meth_name.startswith("_"):
-            return
+            return None
         cls = self.registered.get(api_name)
         if cls is None:
-            return
+            return None
         try:
             obj = cls(context)
         except Exception:
             # TODO: Perhaps this should be an APPLICATION_ERROR?
             self.logger.exception("unable to instantiate API class %r", cls)
-            return
+            return None
         meth = getattr(obj, meth_name, None)
         if not inspect.ismethod(meth):
             return
