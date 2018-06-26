@@ -21,6 +21,7 @@
 import os
 from lava_common.constants import SYS_CLASS_KVM
 from lava_common.exceptions import JobError
+from lava_common.utils import debian_package_arch, debian_package_version
 from lava_dispatcher.action import (
     Pipeline,
     Action,
@@ -36,7 +37,6 @@ from lava_dispatcher.shell import (
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.strings import substitute
 from lava_dispatcher.utils.network import dispatcher_ip
-from lava_dispatcher.utils.filesystem import debian_package_version, debian_package_arch
 from lava_dispatcher.actions.boot import AutoLoginAction, OverlayUnpack
 
 # pylint: disable=too-many-instance-attributes,too-many-branches,too-many-statements

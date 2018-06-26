@@ -32,11 +32,11 @@ from lava_common.exceptions import (
     LAVAError,
     JobError,
 )
+from lava_common.utils import debian_package_version
 from lava_dispatcher.logical import PipelineContext
 from lava_dispatcher.diagnostics import DiagnoseNetwork
 from lava_dispatcher.protocols.multinode import MultinodeProtocol  # pylint: disable=unused-import
 from lava_common.constants import DISPATCHER_DOWNLOAD_DIR
-from lava_dispatcher.utils.filesystem import debian_package_version
 
 
 class ZMQConfig(object):
@@ -201,7 +201,7 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         Public wrapper for the pipeline validation.
         Send a "fail" results if needed.
         """
-        label = "lava-dispatcher, installed at version: %s" % debian_package_version(split=False)
+        label = "lava-dispatcher, installed at version: %s" % debian_package_version(pkg='lava-dispatcher', split=False)
         self.logger.info(label)
         self.logger.info("start: 0 validate")
         start = time.time()

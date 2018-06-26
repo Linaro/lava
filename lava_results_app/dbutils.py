@@ -28,6 +28,8 @@ import decimal
 from urllib.parse import quote
 
 from collections import OrderedDict  # pylint: disable=unused-import
+
+from lava_common.utils import debian_package_version
 from lava_results_app.models import (
     TestSuite,
     TestSet,
@@ -36,7 +38,6 @@ from lava_results_app.models import (
     ActionData,
     MetaType,
 )
-from lava_results_app.utils import debian_package_version
 from django.core.exceptions import MultipleObjectsReturned
 from lava_common.timeout import Timeout
 
@@ -202,7 +203,7 @@ def _get_job_metadata(job):
             job.original_definition.encode('utf-8')).hexdigest()
     })
     # Add lava-server-version to metadata
-    packaged = debian_package_version()
+    packaged = debian_package_version(pkg="lava-server", split=False)
     if packaged:
         retval.update({
             'lava-server-version': packaged

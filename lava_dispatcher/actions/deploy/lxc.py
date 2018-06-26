@@ -22,6 +22,7 @@ import os
 import yaml
 from lava_dispatcher.logical import Deployment
 from lava_common.exceptions import LAVABug
+from lava_common.utils import debian_package_version
 from lava_dispatcher.action import (
     JobError,
     Pipeline,
@@ -44,10 +45,7 @@ from lava_common.constants import (
 )
 from lava_dispatcher.utils.udev import lxc_udev_rule, lxc_udev_rule_parent
 from lava_dispatcher.utils.udev import allow_fs_label
-from lava_dispatcher.utils.filesystem import (
-    debian_package_version,
-    lxc_path,
-)
+from lava_dispatcher.utils.filesystem import lxc_path
 
 # pylint: disable=superfluous-parens,too-many-locals
 

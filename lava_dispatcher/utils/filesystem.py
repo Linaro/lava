@@ -385,39 +385,6 @@ def copy_overlay_to_sparse_fs(image, overlay):
     os.remove(ext4_img)
 
 
-def debian_package_version(pkg='lava-dispatcher', split=True):
-    """
-    Relies on Debian Policy rules for the existence of the
-    changelog. Distributions not derived from Debian will
-    return an empty string.
-    """
-    changelog = '/usr/share/doc/%s/changelog.Debian.gz' % pkg
-    if os.path.exists(changelog):
-        deb_version = subprocess.check_output((
-            'dpkg-query', '-W', "-f=${Version}\n",
-            "%s" % pkg)).strip().decode('utf-8', errors="replace")
-        # example version returned would be '2016.11'
-        if split:
-            return deb_version.split('-')[0]
-        return deb_version
-    return ''
-
-
-def debian_package_arch(pkg='lava-dispatcher'):
-    """
-    Relies on Debian Policy rules for the existence of the
-    changelog. Distributions not derived from Debian will
-    return an empty string.
-    """
-    changelog = '/usr/share/doc/%s/changelog.Debian.gz' % pkg
-    if os.path.exists(changelog):
-        deb_arch = subprocess.check_output((
-            'dpkg-query', '-W', "-f=${Architecture}\n",
-            "%s" % pkg)).strip().decode('utf-8', errors="replace")
-        return deb_arch
-    return ''
-
-
 def copy_directory_contents(root_dir, dst_dir):
     """
     Copies the contents of the root directory to the destination directory
