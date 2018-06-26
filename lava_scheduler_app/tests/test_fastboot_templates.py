@@ -380,3 +380,34 @@ class TestFastbootTemplates(BaseTemplate.BaseTemplateCases):
             ['/home/neil/lava-lab/shared/lab-scripts/eth008_control -a 10.15.0.171 -r 1 -s on',
              '/home/neil/lava-lab/shared/lab-scripts/eth008_control -a 10.15.0.171 -r 2 -s off'],
             recovery['recovery']['commands']['recovery_exit'])
+
+    def test_sdm845_mtp_template(self):
+        fastboot_cmd_order = ['update',
+                              'ptable',
+                              'partition',
+                              'hyp',
+                              'modem',
+                              'rpm',
+                              'sbl1',
+                              'sbl2',
+                              'sec',
+                              'tz',
+                              'aboot',
+                              'cdt',
+                              'boot',
+                              'rootfs',
+                              'vendor',
+                              'system',
+                              'cache',
+                              'userdata']
+
+        rendered = self.render_device_dictionary_file('sdm845-mtp-05.jinja2')
+        template_dict = yaml.safe_load(rendered)
+        self.assertEqual('sdm845-mtp', template_dict['device_type'])
+        self.assertEqual('5c302cef', template_dict['adb_serial_number'])
+        self.assertEqual('5c302cef', template_dict['fastboot_serial_number'])
+        self.assertEqual([], template_dict['fastboot_options'])
+
+        for cmd in template_dict['flash_cmds_order']:
+            idx = template_dict['flash_cmds_order'].index(cmd)
+            self.assertEqual(cmd, fastboot_cmd_order[idx])
