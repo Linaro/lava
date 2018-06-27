@@ -102,7 +102,7 @@ class Command(BaseCommand):
             raise CommandError("TestJob '%d' does not exists" % job_id)
 
     def handle_rm(self, older_than, submitter, state, simulate, slow):
-        if not older_than and not submitter and not state and not v1_only:
+        if not older_than and not submitter and not state:
             raise CommandError("You should specify at least one filtering option")
 
         if simulate:

@@ -392,7 +392,7 @@ class BzrRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
         connection = super().run(connection, max_end_time)
 
         # NOTE: the runner_path dir must remain empty until after the VCS clone, so let the VCS clone create the final dir
-        runner_path = self.get_namespace_data(action='uuid', label='overlay_path', key=args['test_name'])
+        runner_path = self.get_namespace_data(action='uuid', label='overlay_path', key=self.parameters['test_name'])
 
         commit_id = self.vcs.clone(
             runner_path,

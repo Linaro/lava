@@ -250,7 +250,7 @@ class ResultsAPI(ExposedAPI):
                 query.refresh_view()
             except QueryUpdatedError as e:
                 raise xmlrpc.client.Fault(
-                    400, "Query with name %s owned by user %s was recently refreshed." % (query_name, username))
+                    400, "Query with name %s owned by user %s was recently refreshed." % (query.name, username))
             except Exception as e:
                 raise xmlrpc.client.Fault(
                     401, "Refresh operation for query with name %s owned by user %s failed. Please contact system administrator. Error: %s" % (query.name, query.owner.username, str(e)))

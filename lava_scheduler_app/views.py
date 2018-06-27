@@ -2102,7 +2102,7 @@ def edit_worker_desc(request):
 
     if worker_obj.can_admin(request.user):
         worker_obj.description = value
-        worker.save()
+        worker_obj.save()
         return HttpResponse(worker_obj.get_description())
     else:
         return HttpResponseForbidden("Permission denied.",

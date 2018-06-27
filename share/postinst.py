@@ -22,6 +22,7 @@ import contextlib
 import django
 import os
 import psycopg2
+import pwd
 import random
 import shutil
 import stat
@@ -81,7 +82,6 @@ def db_setup(config, pg_admin_username, pg_admin_password):
         cursor.execute("CREATE ROLE %s NOSUPERUSER NOCREATEDB NOCREATEROLE INHERIT LOGIN ENCRYPTED PASSWORD '%s'" % (config.LAVA_DB_USER, config.LAVA_DB_PASSWORD))
     except psycopg2.ProgrammingError:
         print("LAVA db user password not set in db")
-        pass
 
     cursor.execute("SELECT EXISTS(SELECT * FROM information_schema.tables WHERE table_name='%s')" % config.LAVA_DB_NAME)
     db_existed_before = cursor.fetchone()[0]
@@ -91,7 +91,6 @@ def db_setup(config, pg_admin_username, pg_admin_password):
             cursor.execute("CREATE DATABASE \"%s\" LC_CTYPE 'C.UTF-8' ENCODING 'UTF-8' OWNER \"%s\" TEMPLATE template0" % (config.LAVA_DB_NAME, config.LAVA_DB_USER))
         except psycopg2.ProgrammingError as e:
             print(e)
-            pass
 
     conn = psycopg2.connect("dbname='%s' user='%s' host='%s' password='%s' connect_timeout=5" % (
         config.LAVA_DB_NAME,
@@ -189,7 +188,6 @@ def configure():
                      config.LAVA_SYS_USER)
     except FileNotFoundError:
         print("legacy directory is missing, skip..")
-        pass
 
     # support changes in xml-rpc API for 2017.6
     shutil.chown("/etc/lava-server/dispatcher.d/",
