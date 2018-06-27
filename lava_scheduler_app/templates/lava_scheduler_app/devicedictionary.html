@@ -26,9 +26,15 @@ i.e., its equivalent to get-pipeline-device-config in lava-tool.">
   <div class="col-md-6">
     <dl class="dl-horizontal">
       <dt>Hostname</dt>
-      <dd>{{ device.hostname }}</dd>
+      <dd><a href="{{ device.get_absolute_url }}">{{ device.hostname }}</a>
+          {% if user.is_superuser %}<a
+          href="{% url 'admin:lava_scheduler_app_device_change' device.hostname %}" title="admin this device"><span
+          class="glyphicon glyphicon-wrench"></span></a>
+          {% endif %}
+          <a href="{% url 'lava.scheduler.device_report' device.pk %}"><span class="glyphicon glyphicon-stats"></span></a>
+      </dd>
       <dt>Device type</dt>
-      <dd>{{ device.device_type }}</dd>
+      <dd><a href="{{ device.device_type.get_absolute_url }}">{{ device.device_type.name }}</a> <a href="{% url 'lava.scheduler.device_type_report' device.device_type.pk %}"><span class="glyphicon glyphicon-stats"></span></a></dd>
     </dl>
   </div>
   <div class="col-md-6">
