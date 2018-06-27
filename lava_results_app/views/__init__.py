@@ -32,6 +32,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core import serializers
 from django.http import Http404
 from django.http.response import HttpResponse, StreamingHttpResponse
+from django.views.decorators.http import require_POST
 from django.shortcuts import render, loader
 from lava_server.views import index as lava_index
 from lava_server.bread_crumbs import (
@@ -51,7 +52,6 @@ from lava_results_app.dbutils import (
     testcase_export_fields,
     export_testsuite
 )
-from lava_scheduler_app.decorators import post_only
 from lava_scheduler_app.models import TestJob
 from lava_scheduler_app.tables import pklink
 from lava_scheduler_app.views import get_restricted_job
@@ -475,7 +475,7 @@ def testcase_yaml(request, pk):
 
 
 @login_required
-@post_only
+@require_POST
 def get_bug_links_json(request):
     """Return all bug links related to content type.
 
@@ -498,7 +498,7 @@ def get_bug_links_json(request):
 
 
 @login_required
-@post_only
+@require_POST
 def add_bug_link(request):
 
     success = True
@@ -530,7 +530,7 @@ def add_bug_link(request):
 
 
 @login_required
-@post_only
+@require_POST
 def delete_bug_link(request):
 
     bug_link = get_object_or_404(BugLink, pk=request.POST.get("bug_link_id"))

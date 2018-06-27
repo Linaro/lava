@@ -30,6 +30,7 @@ from django.shortcuts import render
 from django.template import loader
 from django.utils.translation import ugettext_lazy as _
 from django.views.decorators.csrf import requires_csrf_token
+from django.views.decorators.http import require_POST
 
 from lava_server.bread_crumbs import (
     BreadCrumb,
@@ -68,14 +69,13 @@ def me(request):  # pylint: disable=invalid-name
 
 
 @login_required
+@require_POST
 def update_irc_settings(request):
-
     extended_user = request.user.extendeduser
-    if request.method == 'POST':
-        form = ExtendedUserIRCForm(request.POST, instance=extended_user)
-        if form.is_valid():
-            extended_user = form.save()
-            return HttpResponseRedirect(reverse('lava.me'))
+    form = ExtendedUserIRCForm(request.POST, instance=extended_user)
+    if form.is_valid():
+        extended_user = form.save()
+    return HttpResponseRedirect(reverse('lava.me'))
 
 
 @requires_csrf_token

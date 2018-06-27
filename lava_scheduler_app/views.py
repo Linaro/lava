@@ -40,6 +40,7 @@ from django.template import loader
 from django.db.models import Q
 from django.utils import timezone
 from django.utils.timesince import timeuntil
+from django.views.decorators.http import require_POST
 from django_tables2 import (
     RequestConfig,
 )
@@ -50,7 +51,6 @@ from lava_server.bread_crumbs import (
     BreadCrumbTrail,
 )
 
-from lava_scheduler_app.decorators import post_only
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
@@ -1752,7 +1752,7 @@ class FailureForm(forms.ModelForm):
         fields = ('failure_tags', 'failure_comment')
 
 
-@post_only
+@require_POST
 def job_change_priority(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
     if not job.can_change_priority(request.user):
@@ -1985,7 +1985,7 @@ def device_edit_description(request, pk):
             "you cannot edit the description of this device", content_type="text/plain")
 
 
-@post_only
+@require_POST
 def device_restrict_device(request, pk):
     device = Device.objects.get(pk=pk)
     if device.can_admin(request.user):
@@ -1999,7 +1999,7 @@ def device_restrict_device(request, pk):
             "you cannot restrict submissions to this device", content_type="text/plain")
 
 
-@post_only
+@require_POST
 def device_derestrict_device(request, pk):
     device = Device.objects.get(pk=pk)
     if device.can_admin(request.user):
@@ -2013,7 +2013,7 @@ def device_derestrict_device(request, pk):
             "you cannot derestrict submissions to this device", content_type="text/plain")
 
 
-@post_only
+@require_POST
 def device_health(request, pk):
     try:
         with transaction.atomic():
@@ -2067,7 +2067,7 @@ def worker_detail(request, pk):
         request=request))
 
 
-@post_only
+@require_POST
 def worker_health(request, pk):
     try:
         with transaction.atomic():
@@ -2092,7 +2092,7 @@ def worker_health(request, pk):
         raise Http404("Worker %s not found" % pk)
 
 
-@post_only
+@require_POST
 def edit_worker_desc(request):
     """Edit worker description, based on user permission."""
 
@@ -2219,7 +2219,7 @@ def download_device_type_template(request, pk):
     return response
 
 
-@post_only
+@require_POST
 def similar_jobs(request, pk):
     logger = logging.getLogger('lava_scheduler_app')
     job = get_restricted_job(request.user, pk, request=request)
