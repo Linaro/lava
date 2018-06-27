@@ -38,7 +38,7 @@ install_dir=$(call py_libdir, $(PYTHON))
 override_dh_python3:
 	dh_python3 -p lava-dispatcher --shebang=/usr/bin/python3 --requires=dispatcher-requirements.txt
 	dh_python3 -p lava-server --shebang=/usr/bin/python3 --requires=requirements.txt
-	dh_python3 -p lava-common --shebang=/usr/bin/python3
+	dh_python3 -p lava-common --shebang=/usr/bin/python3 --requires=common-requirements.txt
 
 override_dh_auto_build:
 	python3 setup.py build
