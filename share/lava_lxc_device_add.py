@@ -102,7 +102,7 @@ def main():
     device = "/dev/%s" % options.device_node
     if not os.path.exists(device):
         logger.debug("Skipping node not in /dev/ : %s" % options.device_node)
-        continue
+        return 0
 
     lxc_cmd = ['lxc-device', '-n', lxc_name, 'add', device]
     try:
