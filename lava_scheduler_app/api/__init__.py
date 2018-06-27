@@ -1063,7 +1063,7 @@ class SchedulerAPI(ExposedAPI):
         ------------
         This function returns an XML-RPC binary data of output file.
         """
-        return get_device_config(device_hostname, context)
+        return self.get_device_config(device_hostname)
 
     def get_device_config(self, device_hostname, context=None):
         """
