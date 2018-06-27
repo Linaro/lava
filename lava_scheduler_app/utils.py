@@ -20,7 +20,6 @@
 import contextlib
 import copy
 import errno
-import jinja2
 import ldap
 import logging
 import os
@@ -309,68 +308,6 @@ def send_irc_notification(nick, recipient, message,
             if NO_SUCH_NICK_ERROR in line:
                 raise IRCHandleNotFoundError(line)
     proc.wait()
-
-
-def _dump_value(node):
-    if isinstance(node, jinja2.nodes.Const):
-        return node.as_const()
-
-    elif isinstance(node, jinja2.nodes.Dict):
-        ret = {}
-        for n in node.iter_child_nodes():
-            ret[n.key.as_const()] = _dump_value(n.value)
-        return ret
-
-    elif isinstance(node, (jinja2.nodes.List, jinja2.nodes.Tuple)):
-        ret = []
-        for n in node.iter_child_nodes():
-            ret.append(_dump_value(n))
-        return ret if isinstance(node, jinja2.nodes.List) else tuple(ret)
-
-
-def device_dictionary_to_dict(ast):
-    ret = {}
-
-    for node in ast.find_all(jinja2.nodes.Assign):
-        ret[node.target.name] = _dump_value(node.node)
-
-    return ret
-
-
-def device_dictionary_sequence():
-    return [
-        'power_on_command',
-        'power_off_command',
-        'soft_reset_command',
-        'hard_reset_command',
-        'pre_power_command',
-        'pre_os_command',
-        'adb_serial_number',
-        'fastboot_options',
-        'fastboot_serial_number',
-        'device_info',
-        'static_info',
-        'recovery_mode_command',
-        'recovery_exit_command',
-    ]
-
-
-def device_dictionary_connections():
-    return [
-        'connection_list',
-        'connection_commands',
-        'connection_tags'
-    ]
-
-
-def device_dictionary_vlan():
-    return [
-        'interfaces',
-        'tags',
-        'map',
-        'mac_addr',
-        'sysfs',
-    ]
 
 
 def get_ldap_user_properties(ldap_user):

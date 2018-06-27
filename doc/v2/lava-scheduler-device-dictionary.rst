@@ -16,9 +16,6 @@ Other fields can also be used in the templates. The only field which is
 compulsory is **extends** which links this device dictionary to a specific
 device type template.
 
-Dictionary elements are shown in four blocks: commands, connections, vland and
-others.
-
 .. _device_dictionary_commands:
 
 Commands
