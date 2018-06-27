@@ -348,6 +348,11 @@ class Command(LAVADaemonCommand):
             mkdir(job.output_dir)
             self.jobs[job_id] = JobHandler(job)
 
+        # Mark the file handler as used
+        self.jobs[job_id].last_usage = time.time()
+        # The format is a list of dictionaries
+        self.jobs[job_id].write("- %s" % message)
+
         if message_lvl == "results":
             try:
                 job = TestJob.objects.get(pk=job_id)
@@ -391,15 +396,7 @@ class Command(LAVADaemonCommand):
                     job.go_state_finished(health, infrastructure_error)
                     job.save()
 
-        # Mark the file handler as used
-        self.jobs[job_id].last_usage = time.time()
-
         # n.b. logging here would produce a log entry for every message in every job.
-        # The format is a list of dictionaries
-        message = "- %s" % message
-
-        # Write data
-        self.jobs[job_id].write(message)
 
     def controler_socket(self):
         msg = self.controler.recv_multipart()
