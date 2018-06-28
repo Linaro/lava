@@ -370,6 +370,10 @@ When investigating intermittent errors, see if the error can be
 provoked in a health check and then use looping mode to generate data
 on how often the error occurs whilst keeping the test job identical.
 
+If the health check does generate the error, the device will go
+offline. Infrastructure problems can be debugged whilst keeping the
+device(s) offline by :ref:`running_lava_run`.
+
 .. seealso:: :ref:`change_one_thing`
 
 .. _hidden_assumptions:
