@@ -260,6 +260,24 @@ class TestTestJob(TestCaseWithFactory):  # pylint: disable=too-many-ancestors,to
         yaml.safe_load(job.definition)
         self.assertIsInstance(job.definition, str)
 
+    def test_job_data(self):
+        self.factory.cleanup()
+        user = self.factory.make_user()
+        user.user_permissions.add(
+            Permission.objects.get(codename='add_testjob'))
+        user.save()
+        dt = self.factory.make_device_type(name='qemu')
+        device = self.factory.make_device(device_type=dt, hostname='qemu-1')
+        device.save()
+        definition = self.factory.make_job_data_from_file('qemu-pipeline-first-job.yaml')
+        job = testjob_submission(definition, user, None)
+        data = job.create_job_data()
+        self.assertIsNotNone(data)
+        self.assertIn('start_time', data)
+        # job has not started but job_data explicitly turns start_time into str()
+        self.assertEqual(data['start_time'], "None")
+        self.assertEqual(data['state_string'], TestJob.STATE_CHOICES[TestJob.STATE_SUBMITTED][1])
+
 
 class TestHiddenTestJob(TestCaseWithFactory):  # pylint: disable=too-many-ancestors
 

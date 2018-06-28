@@ -7,7 +7,7 @@ from lava_scheduler_app.views import (
     device_restrict_device, all_device_types, device_type_detail, device_dictionary,
     device_dictionary_plain, maintenance_devices,
     device_type_reports, edit_worker_desc,
-    failure_report, favorite_jobs,
+    failure_report, favorite_jobs, job_fetch_data,
     health_job_list, healthcheck, index,
     job_annotate_failure, job_cancel, job_fail, job_change_priority,
     job_definition, job_definition_plain, job_description_yaml, job_detail,
@@ -23,7 +23,7 @@ from lava_scheduler_app.views import (
     download_device_type_template, similar_jobs,)
 
 
-urlpatterns = [
+urlpatterns = [  # pylint: disable=invalid-name
     url(r'^$', index, name='lava.scheduler'),
     url(r'^reports$', reports, name='lava.scheduler.reports'),
     url(r'^reports/failures$', failure_report, name='lava.scheduler.failure_report'),
@@ -91,6 +91,9 @@ urlpatterns = [
     url(r'^job/(?P<pk>[0-9]+|[0-9]+\.[0-9]+)/log_pipeline_incremental$',
         job_log_incremental,
         name='lava.scheduler.job.log_incremental'),
+    url(r'^job/(?P<pk>[0-9]+|[0-9]+\.[0-9]+)/job_data$',
+        job_fetch_data,
+        name='lava.scheduler.job.fetch_data'),
     url(r'^myjobs$', myjobs, name='lava.scheduler.myjobs'),
     url(r'^favorite-jobs$', favorite_jobs, name='lava.scheduler.favorite_jobs'),
     url(r'^job/(?P<pk>[0-9]+|[0-9]+\.[0-9]+)/priority$', job_change_priority,

@@ -79,7 +79,7 @@ The **callbacks** section supports list of the following options:
   * **urlencoded** (Default) Will return a standard HTTP POST request, with an
   application/x-www-form-urlencoded Content-Type header and data sent as an
   urlencoded query string.
-  * **json** The data is dumped into JSON and returned with an application/json 
+  * **json** The data is dumped into JSON and returned with an application/json
   Content-Type header.
 
 Example callback usage:
@@ -88,6 +88,23 @@ Example callback usage:
    :code: yaml
    :start-after: # notify callbacks block
 
+.. _debugging_callback:
+
+Debugging notification callbacks
+--------------------------------
+
+The job data can also be retrieved using the :ref:`REST API <rest_api>` (which
+supports authentication. For example::
+
+ $ wget -O job_data.gz http://localhost/scheduler/job/2126/job_data
+
+ $ wget -O job_data.gz "http://localhost/scheduler/job/2127/job_data?user=neil&token=22yj3ls...."
+
+Returns a gzip file containing the job data as JSON.
+
+.. note:: Only test jobs which are configured to use the notification callback
+   will create notification callback data for later retrieval. Other jobs will
+   generate a 404 error.
 
 Using profile settings
 ----------------------

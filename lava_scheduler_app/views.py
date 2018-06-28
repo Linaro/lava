@@ -1,15 +1,12 @@
 # -*- coding: utf-8 -*-
-# pylint: disable=too-many-lines,invalid-namlog_e
+# pylint: disable=too-many-lines,invalid-name
 
-from collections import OrderedDict
 import contextlib
 import datetime
 import io
-import jinja2
 import logging
 import os
 import simplejson
-import sys
 import tarfile
 import re
 import yaml
@@ -109,7 +106,7 @@ from lava_scheduler_app.tables import (
     RunningTable,
 )
 
-# pylint: disable=too-many-attributes,too-many-ancestors,too-many-arguments,too-many-locals
+# pylint: disable=too-many-ancestors,too-many-arguments,too-many-locals
 # pylint: disable=too-many-statements,too-many-branches,too-many-return-statements
 # pylint: disable=no-self-use,too-many-nested-blocks,too-few-public-methods
 
@@ -1272,6 +1269,22 @@ def multinode_job_definition_plain(request, pk):
     filename = "job_%d.yaml" % job.id
     response['Content-Disposition'] = \
         "attachment; filename=multinode_%s" % filename
+    return response
+
+
+def job_fetch_data(request, pk):
+    job = get_restricted_job(request.user, pk, request=request)
+    if job.state != TestJob.STATE_FINISHED:
+        raise Http404()
+    path = os.path.join(job.output_dir, 'job_data.gz')
+    if not os.path.exists(path):
+        raise Http404()
+    # FileResponse could be used here with Django2.0 but
+    # currently it doesn't set a useful extension.
+    with open(path, 'rb') as data:
+        response = HttpResponse(data, content_type='application/gzip')
+    response['Content-Disposition'] = 'attachment; filename="%s"' % os.path.basename(path)
+    # response['Content-Encoding'] = 'gzip'
     return response
 
 

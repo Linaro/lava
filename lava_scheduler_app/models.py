@@ -7,6 +7,7 @@ import logging
 import os
 import re
 import uuid
+import gzip
 import simplejson
 import smtplib
 import socket
@@ -45,6 +46,7 @@ from lava_scheduler_app.schema import (
     validate_submission,
     SubmissionException
 )
+
 from lava_common.exceptions import ConfigurationError
 from lava_scheduler_app import utils
 from linaro_django_xmlrpc.models import AuthToken
@@ -1844,6 +1846,56 @@ class TestJob(RestrictedResource):
         return (user.is_superuser or
                 user.has_perm('lava_scheduler_app.cancel_resubmit_testjob'))
 
+    def create_job_data(self, token=None, output=False, results=False):
+        """
+        Populates a dictionary used by the NotificationCallback
+        and by the REST API, containing data about the test job.
+        If output is True, the entire test job log file is included.
+        If results is True, an export of all test cases is included.
+        """
+        # Python3 circular dependency issues need this here.
+        from lava_results_app.dbutils import export_testcase
+
+        data = {
+            "id": self.pk,
+            "status": self.get_legacy_status(),
+            "status_string": self.get_legacy_status_display().lower(),
+            "state": self.state,
+            "state_string": self.get_state_display(),
+            "health": self.health,
+            "health_string": self.get_health_display(),
+            "submit_time": str(self.submit_time),
+            "start_time": str(self.start_time),
+            "end_time": str(self.end_time),
+            "submitter_username": self.submitter.username,
+            "failure_comment": self.failure_comment,
+            "priority": self.priority,
+            "description": self.description,
+            "actual_device_id": self.actual_device_id,
+            "definition": self.definition,
+            "metadata": self.get_metadata_dict(),
+        }
+
+        # Only add the token if it's not empty
+        if token is not None:
+            data["token"] = token
+
+        # Logs.
+        output_file = self.output_file()
+        if output_file and output:
+            data["log"] = self.output_file().read()
+
+        # Results.
+        if results:
+            data["results"] = {}
+            for test_suite in self.testsuite_set.all():
+                yaml_list = []
+                for test_case in test_suite.testcase_set.all():
+                    yaml_list.append(export_testcase(test_case))
+                data["results"][test_suite.name] = yaml.dump(yaml_list)
+
+        return data
+
     def set_failure_comment(self, message):
         if not self.failure_comment:
             self.failure_comment = message
@@ -2704,7 +2756,22 @@ class NotificationCallback(models.Model):
 
     def invoke_callback(self):
         logger = logging.getLogger('lava_scheduler_app')
-        callback_data = self.get_callback_data()
+        callback_data = None
+
+        if self.method != NotificationCallback.GET:
+            output = self.dataset in [
+                NotificationCallback.LOGS,
+                NotificationCallback.ALL]
+            results = self.dataset in [
+                NotificationCallback.RESULTS,
+                NotificationCallback.ALL]
+            callback_data = self.notification.test_job.create_job_data(
+                token=self.token, output=output, results=results)
+            # store callback_data for later retrieval & triage
+            job_data_file = os.path.join(job.output_dir, 'job_data.gz')
+            if callback_data and not os.path.exists(job_data_file):
+                with gzip.open(job_data_file, 'wb') as output:
+                    output.write(simplejson.dumps(callback_data).encode('utf-8'))
         headers = {}
 
         if callback_data:
@@ -2726,56 +2793,6 @@ class NotificationCallback(models.Model):
             except Exception as ex:
                 logger.warning("Problem sending request to %s: %s" % (
                     self.url, ex))
-
-    def get_callback_data(self):
-
-        from lava_results_app.dbutils import export_testcase
-
-        if self.method == NotificationCallback.GET:
-            return None
-        else:
-
-            data = {
-                "id": self.notification.test_job.pk,
-                "status": self.notification.test_job.get_legacy_status(),
-                "status_string": self.notification.test_job.get_legacy_status_display().lower(),
-                "state": self.notification.test_job.state,
-                "state_string": self.notification.test_job.get_state_display(),
-                "health": self.notification.test_job.health,
-                "health_string": self.notification.test_job.get_health_display(),
-                "submit_time": str(self.notification.test_job.submit_time),
-                "start_time": str(self.notification.test_job.start_time),
-                "end_time": str(self.notification.test_job.end_time),
-                "submitter_username": self.notification.test_job.submitter.username,
-                "failure_comment": self.notification.test_job.failure_comment,
-                "priority": self.notification.test_job.priority,
-                "description": self.notification.test_job.description,
-                "actual_device_id": self.notification.test_job.actual_device_id,
-                "definition": self.notification.test_job.definition,
-                "metadata": self.notification.test_job.get_metadata_dict(),
-            }
-            # Only add the token if it's not empty
-            if self.token is not None:
-                data["token"] = self.token
-
-            # Logs.
-            output_file = self.notification.test_job.output_file()
-            if output_file and self.dataset in [
-                    NotificationCallback.LOGS,
-                    NotificationCallback.ALL]:
-                data["log"] = self.notification.test_job.output_file().read()
-
-            # Results.
-            if self.dataset in [NotificationCallback.RESULTS,
-                                NotificationCallback.ALL]:
-                data["results"] = {}
-                for test_suite in self.notification.test_job.testsuite_set.all():
-                    yaml_list = []
-                    for test_case in test_suite.testcase_set.all():
-                        yaml_list.append(export_testcase(test_case))
-                    data["results"][test_suite.name] = yaml.dump(yaml_list)
-
-            return data
 
 
 @receiver(pre_save, sender=TestJob, dispatch_uid="process_notifications")
