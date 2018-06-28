@@ -20,6 +20,7 @@
 
 # pylint: disable=wrong-import-order
 
+import contextlib
 import logging
 import os
 import time
@@ -30,7 +31,7 @@ from zmq.utils.strtypes import u
 from zmq.auth.thread import ThreadAuthenticator
 from django.conf import settings
 from django.db import connection, transaction
-from django.db.utils import OperationalError, InterfaceError
+from django.db.utils import DatabaseError, InterfaceError, OperationalError
 
 from lava_results_app.models import TestCase
 from lava_server.cmdutils import LAVADaemonCommand, watch_directory
@@ -223,9 +224,24 @@ class Command(LAVADaemonCommand):
             context.term()
 
     def flush_test_cases(self):
-        if self.test_cases:
-            self.logger.info("Saving %d test cases", len(self.test_cases))
+        if not self.test_cases:
+            return
+
+        # Try to save into the database
+        try:
             TestCase.objects.bulk_create(self.test_cases)
+            self.logger.info("Saving %d test cases", len(self.test_cases))
+            self.test_cases = []
+        except DatabaseError as exc:
+            self.logger.error("Unable to flush the test cases")
+            self.logger.exception(exc)
+            self.logger.warning("Saving test cases one by one and dropping the faulty ones")
+            saved = 0
+            for tc in self.test_cases:
+                with contextlib.suppress(DatabaseError):
+                    tc.save()
+                    saved += 1
+            self.logger.info("%d test cases saved, %d dropped", saved, len(self.test_cases) - saved)
             self.test_cases = []
 
     def main_loop(self):
