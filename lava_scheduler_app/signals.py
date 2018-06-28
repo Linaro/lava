@@ -1,6 +1,7 @@
 import datetime
 from django.conf import settings
-from django.db.models.signals import post_init, post_save
+from django.db import transaction
+from django.db.models.signals import post_init, post_save, pre_delete
 import simplejson
 import threading
 import uuid
@@ -124,6 +125,12 @@ def testjob_post_handler(sender, **kwargs):
         send_event(".testjob", str(instance.submitter), data)
 
 
+def testjob_pre_delete_handler(sender, **kwargs):
+    instance = kwargs["instance"]
+    with transaction.atomic():
+        instance.go_state_finished(TestJob.HEALTH_CANCELED, True)
+
+
 def worker_init_handler(sender, **kwargs):
     # This function is called for every testJob object created
     # Save the old states
@@ -154,9 +161,13 @@ def worker_post_handler(sender, **kwargs):
         send_event(".worker", "lavaserver", data)
 
 
-post_init.connect(device_init_handler, sender=Device, weak=False, dispatch_uid="device_init_handler")
-post_save.connect(device_post_handler, sender=Device, weak=False, dispatch_uid="device_post_handler")
-post_init.connect(testjob_init_handler, sender=TestJob, weak=False, dispatch_uid="testjob_init_handler")
-post_save.connect(testjob_post_handler, sender=TestJob, weak=False, dispatch_uid="testjob_post_handler")
-post_init.connect(worker_init_handler, sender=Worker, weak=False, dispatch_uid="worker_init_handler")
-post_save.connect(worker_post_handler, sender=Worker, weak=False, dispatch_uid="worker_post_handler")
+pre_delete.connect(testjob_pre_delete_handler, sender=TestJob, weak=False, dispatch_uid="testjob_pre_delete_handler")
+
+# Only activate theses signals when EVENT_NOTIFICATION is in use
+if settings.EVENT_NOTIFICATION:
+    post_init.connect(device_init_handler, sender=Device, weak=False, dispatch_uid="device_init_handler")
+    post_save.connect(device_post_handler, sender=Device, weak=False, dispatch_uid="device_post_handler")
+    post_init.connect(testjob_init_handler, sender=TestJob, weak=False, dispatch_uid="testjob_init_handler")
+    post_save.connect(testjob_post_handler, sender=TestJob, weak=False, dispatch_uid="testjob_post_handler")
+    post_init.connect(worker_init_handler, sender=Worker, weak=False, dispatch_uid="worker_init_handler")
+    post_save.connect(worker_post_handler, sender=Worker, weak=False, dispatch_uid="worker_post_handler")
