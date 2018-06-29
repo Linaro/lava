@@ -69,6 +69,7 @@ from lava_scheduler_app.dbutils import (
     load_devicetype_template,
     testjob_submission,
 )
+from lava_scheduler_app.logutils import read_logs
 from lava_scheduler_app.templatetags.utils import udecode
 
 from lava.utils.lavatable import LavaView
@@ -1604,34 +1605,24 @@ def job_log_pipeline_incremental(request, pk):
         first_line = 0
 
     try:
-        with open(os.path.join(job.output_dir, "output.yaml"), "r") as f_in:
-            # Manually skip the first lines
-            # This is working because:
-            # 1/ output.yaml is a list of dictionnaries
-            # 2/ each item in this list is represented as one line in output.yaml
-            count = 0
-            for _ in range(first_line):
-                count += len(next(f_in))
-            # Seeking is needed to switch from reading lines to reading bytes.
-            f_in.seek(count)
-            # Load the remaining as yaml
-            data = yaml.load(f_in, Loader=yaml.CLoader)
-            # When reaching EOF, yaml.load does return None instead of []
-            if not data:
-                data = []
-            else:
-                for line in data:
-                    line["msg"] = udecode(line["msg"])
-                    if line["lvl"] == "results":
-                        case_id = TestCase.objects.filter(
-                            suite__job=job,
-                            suite__name=line["msg"]["definition"],
-                            name=line["msg"]["case"]).values_list(
-                                "id", flat=True)
-                        if case_id:
-                            line["msg"]["case_id"] = case_id[0]
+        data = read_logs(job.output_dir, first_line)
+        data = yaml.load(data, Loader=yaml.CLoader)
+        # When reaching EOF, yaml.load does return None instead of []
+        if not data:
+            data = []
+        else:
+            for line in data:
+                line["msg"] = udecode(line["msg"])
+                if line["lvl"] == "results":
+                    case_id = TestCase.objects.filter(
+                        suite__job=job,
+                        suite__name=line["msg"]["definition"],
+                        name=line["msg"]["case"]).values_list(
+                            "id", flat=True)
+                    if case_id:
+                        line["msg"]["case_id"] = case_id[0]
 
-    except (IOError, StopIteration, yaml.YAMLError):
+    except (OSError, StopIteration, yaml.YAMLError):
         data = []
 
     response = HttpResponse(

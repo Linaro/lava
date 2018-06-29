@@ -37,6 +37,7 @@ from lava_server.cmdutils import LAVADaemonCommand, watch_directory
 from lava_scheduler_app.models import TestJob
 from lava_scheduler_app.signals import send_event
 from lava_scheduler_app.utils import mkdir
+from lava_scheduler_app.logutils import line_count, read_logs, write_logs
 from lava_results_app.dbutils import map_scanned_results, create_metadata_store
 
 
@@ -50,15 +51,19 @@ FD_TIMEOUT = 60
 class JobHandler(object):  # pylint: disable=too-few-public-methods
     def __init__(self, job):
         self.output_dir = job.output_dir
-        self.output = open(os.path.join(self.output_dir, 'output.yaml'), 'a+')
+        self.output = open(os.path.join(self.output_dir, 'output.yaml'), 'ab')
+        self.index = open(os.path.join(self.output_dir, 'output.idx'), 'ab')
         self.last_usage = time.time()
 
     def write(self, message):
-        self.output.write(message)
-        self.output.write('\n')
-        self.output.flush()
+        write_logs(self.output, self.index,
+                   (message + '\n').encode("utf-8"))
+
+    def line_count(self):
+        return line_count(self.index)
 
     def close(self):
+        self.index.close()
         self.output.close()
 
 
