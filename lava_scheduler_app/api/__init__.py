@@ -20,7 +20,8 @@ from lava_scheduler_app.views import (
 )
 from lava_scheduler_app.dbutils import (
     device_type_summary,
-    testjob_submission
+    testjob_submission,
+    active_device_types,
 )
 from lava_scheduler_app.schema import (
     validate_submission,
@@ -711,7 +712,7 @@ class SchedulerAPI(ExposedAPI):
                     403, "Permission denied for user to put %s into online mode." % hostname
                 )
 
-    def pending_jobs_by_device_type(self):
+    def pending_jobs_by_device_type(self, all=False):
         """
         Name
         ----
@@ -720,10 +721,12 @@ class SchedulerAPI(ExposedAPI):
         Description
         -----------
         Get number of pending jobs in each device type.
+        Private test jobs and hidden device types are
+        excluded, except for authenticated superusers.
 
         Arguments
         ---------
-        None
+        `all`: boolean - include retired devices and undisplayed device-types in the listing.
 
         Return value
         ------------
@@ -736,18 +739,30 @@ class SchedulerAPI(ExposedAPI):
 
         pending_jobs_by_device = {}
 
-        jobs_res = TestJob.objects.filter(state=TestJob.STATE_SUBMITTED) \
-                                  .values_list('requested_device_type_id')\
-                                  .annotate(pending_jobs=(Count('id')))
+        jobs_res = TestJob.objects.filter(state=TestJob.STATE_SUBMITTED)
+        jobs_res = jobs_res.exclude(requested_device_type_id__isnull=True)
+
+        if not self.user or not self.user.is_superuser:
+            jobs_res = jobs_res.filter(is_public=True)
+
+        jobs_res = jobs_res.values_list('requested_device_type_id')
+        jobs_res = jobs_res.annotate(pending_jobs=(Count('id')))
+
         jobs = {}
         jobs_hash = dict(jobs_res)
         for job in jobs_hash:
-            if job:
-                jobs[job] = jobs_hash[job]
+            jobs[job] = jobs_hash[job]
         pending_jobs_by_device.update(jobs)
 
         # Get rest of the devices and put number of pending jobs as 0.
-        device_types = DeviceType.objects.values_list('name', flat=True)
+        if all:
+            device_types = DeviceType.objects.values_list('name', flat=True)
+        else:
+            device_types = active_device_types().values_list('name', flat=True)
+
+        if not self.user or not self.user.is_superuser:
+            device_types.filter(owners_only=False)
+
         for device_type in device_types:
             if device_type not in pending_jobs_by_device:
                 pending_jobs_by_device[device_type] = 0

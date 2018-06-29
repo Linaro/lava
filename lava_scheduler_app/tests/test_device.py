@@ -14,6 +14,7 @@ from lava_scheduler_app.models import (
 from lava_scheduler_app.dbutils import (
     load_devicetype_template,
     invalid_template,
+    active_device_types,
 )
 from django_testscenarios.ubertest import TestCase
 from django.contrib.auth.models import User
@@ -96,6 +97,11 @@ class DeviceTypeTest(TestCaseWithFactory):
         self.types_dir = os.path.join(Device.CONFIG_PATH, '..', 'device-types')
         self.basedir = (os.path.abspath(os.path.join(
             os.path.dirname(__file__))))
+
+    def tearDown(self):
+        super().tearDown()
+        Device.objects.all().delete()
+        DeviceType.objects.all().delete()
 
     """
     Test loading of device-type information
@@ -205,3 +211,55 @@ class DeviceTypeTest(TestCaseWithFactory):
         self.assertEqual('juno', device.get_extends())
         self.assertFalse(bool(load_devicetype_template(device.device_type.name)))
         self.assertFalse(invalid_template(device.device_type))
+
+    def test_active_device_types(self):
+        name = "beaglebone-black"
+        dt = DeviceType(name=name)
+        dt.save()
+        dt.refresh_from_db()
+        device = Device(device_type=dt, hostname='bbb-01', health=Device.HEALTH_GOOD)
+        device.save()
+        device = Device(device_type=dt, hostname='bbb-02', health=Device.HEALTH_RETIRED)
+        device.save()
+
+        name = "juno-r2"
+        dt = DeviceType(name=name)
+        dt.save()
+        dt.refresh_from_db()
+        device = Device(device_type=dt, hostname='juno-r2-01', health=Device.HEALTH_RETIRED)
+        device.save()
+
+        name = "juno"
+        dt = DeviceType(name=name)
+        dt.display = False
+        dt.save()
+        dt.refresh_from_db()
+        dt.refresh_from_db()
+        device = Device(device_type=dt, hostname='juno-01', health=Device.HEALTH_UNKNOWN)
+        device.save()
+
+        name = "qemu"
+        dt = DeviceType(name=name)
+        dt.save()
+        dt.refresh_from_db()
+        device = Device(device_type=dt, hostname='qemu-01', health=Device.HEALTH_GOOD)
+        device.save()
+
+        self.assertEqual(
+            {'bbb-01', 'bbb-02', 'juno-r2-01', 'qemu-01', 'juno-01'},
+            set(Device.objects.all().values_list('hostname', flat=True))
+        )
+
+        self.assertEqual(
+            {'beaglebone-black', 'juno', 'juno-r2', 'qemu'},
+            set(DeviceType.objects.values_list('name', flat=True))
+        )
+
+        # exclude juno-r2 because all devices of that device-type are retired.
+        # exclude juno because the device_type is set to not be displayed.
+        # include beaglebone-black because not all devices of that type are retired.
+        # include qemu because none of the devices of that type are retired.
+        self.assertEqual(
+            {'beaglebone-black', 'qemu'},
+            set(active_device_types().values_list('name', flat=True))
+        )

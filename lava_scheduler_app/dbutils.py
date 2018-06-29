@@ -14,6 +14,7 @@ from nose.tools import nottest
 from django.db.models import Q, Case, When, IntegerField, Sum
 from lava_scheduler_app.models import (
     Device,
+    DeviceType,
     TestJob,
     validate_job,
     validate_device,
@@ -139,6 +140,34 @@ def device_type_summary(visible=None):
                     )
                 ),).order_by('device_type')
     return devices
+
+
+def active_device_types():
+    """
+    Filter the available device types to exclude
+    all device-types where ALL devices are in health RETIRED
+    without excluding device-types where only SOME devices are retired.
+
+    oneliner:
+{device.device_type for device in Device.objects.filter(~Q(health=Device.HEALTH_RETIRED))}.union( \
+{dt for dt in {device.device_type for device in Device.objects.filter(health=Device.HEALTH_RETIRED)} \
+if list(Device.objects.filter(Q(device_type=dt), ~Q(health=Device.HEALTH_RETIRED)))})
+
+    Returns a RestrictedQuerySet of DeviceType objects.
+    """
+    not_retired_devices = Device.objects.filter(
+        Q(device_type__display=True), ~Q(health=Device.HEALTH_RETIRED)).select_related('device_type')
+    retired_devices = Device.objects.filter(
+        Q(device_type__display=True), health=Device.HEALTH_RETIRED).select_related('device_type')
+    not_all_retired = set()  # set of device_type.names where some devices of that device_type are retired but *not* all.
+    for device in retired_devices:
+        # identify device_types which can be added back because not all devices of that type are retired.
+        if list(Device.objects.filter(Q(device_type=device.device_type), ~Q(health=Device.HEALTH_RETIRED))):
+            not_all_retired.add(device.device_type.name)
+    # join the two sets as a union.
+    candidates = {device.device_type.name for device in not_retired_devices}.union(not_all_retired)
+    device_types = DeviceType.objects.filter(name__in=candidates)
+    return device_types
 
 
 def load_devicetype_template(device_type_name, raw=False):
