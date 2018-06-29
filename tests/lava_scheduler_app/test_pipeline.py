@@ -1151,7 +1151,7 @@ class TestYamlMultinode(TestCaseWithFactory):
             },
         )
 
-    @unittest.skipIf(not os.path.exists(SYS_CLASS_KVM), "Cannot use --enable-kvm")
+    @unittest.skipIf(not SYS_CLASS_KVM.exists(), "Cannot use --enable-kvm")
     def test_multinode_mixed_deploy(self):
         user = self.factory.make_user()
         device_type = self.factory.make_device_type()

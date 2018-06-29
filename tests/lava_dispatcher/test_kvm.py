@@ -848,7 +848,7 @@ class TestQemuNFS(StdoutTestCase):
     @unittest.skipIf(
         infrastructure_error("qemu-system-aarch64"), "qemu-system-arm not installed"
     )
-    @unittest.skipIf(not os.path.exists(SYS_CLASS_KVM), "Cannot use --enable-kvm")
+    @unittest.skipIf(not SYS_CLASS_KVM.exists(), "Cannot use --enable-kvm")
     def test_qemu_nfs(self):
         self.assertIsNotNone(self.job)
         description_ref = self.pipeline_reference("qemu-nfs.yaml", job=self.job)

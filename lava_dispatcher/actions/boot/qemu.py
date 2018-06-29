@@ -249,7 +249,7 @@ class CallQemuAction(Action):
         ]
         if "-enable-kvm" in options:
             # Check if the worker has kvm enabled.
-            if not os.path.exists(SYS_CLASS_KVM):
+            if not SYS_CLASS_KVM.exists():
                 self.errors = "Device configuration contains -enable-kvm option but kvm module is not enabled."
 
     def run(self, connection, max_end_time):

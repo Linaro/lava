@@ -21,6 +21,9 @@
 # Overrides are only supported when and as declared in the comments for
 # each constant.
 
+from pathlib import Path
+
+
 # Retry at most 5 times
 MAX_RETRY = 5
 
@@ -142,7 +145,7 @@ METADATA_MESSAGE_LIMIT = 8192
 VEXPRESS_AUTORUN_INTERRUPT_CHARACTER = " "
 
 # sys class kvm path
-SYS_CLASS_KVM = "/sys/class/misc/kvm"
+SYS_CLASS_KVM = Path("/sys/class/misc/kvm")
 
 # default reboot commands
 REBOOT_COMMAND_LIST = ["reboot", "reboot -n", "reboot -nf"]
