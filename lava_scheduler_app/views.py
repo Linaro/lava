@@ -1163,72 +1163,53 @@ def job_detail(request, pk):
         'job_tags': job.tags.all(),
     }
 
-    # Is the old or new v2 format?
-    if os.path.exists(os.path.join(job.output_dir, 'output.txt')):
-        if 'section' in request.GET:
-            log_data = utils.folded_logs(job, request.GET['section'], sections, summary=True)
-        else:
-            log_data = utils.folded_logs(job, default_section, sections, summary=True)
-            if not log_data:
-                default_section = 'deploy'
-                log_data = utils.folded_logs(job, default_section, sections, summary=True)
+    try:
+        with open(os.path.join(job.output_dir, "output.yaml"), "r") as f_in:
+            # Compute the size of the file
+            f_in.seek(0, 2)
+            job_file_size = f_in.tell()
 
-        data.update({
-            'log_data': log_data if log_data else [],
-            'invalid_log_data': log_data is None,
-            'default_section': default_section,
-        })
+            if job_file_size >= job.size_limit:
+                log_data = []
+                data["size_warning"] = job.size_limit
+            else:
+                # Go back to the start and load the file
+                f_in.seek(0, 0)
+                log_data = yaml.load(f_in, Loader=yaml.CLoader)
 
-        return render(request, "lava_scheduler_app/job.html", data)
+        # list all related results
+        for line in log_data:
+            if line["lvl"] == "results":
+                case_id = TestCase.objects.filter(
+                    suite__job=job,
+                    suite__name=line["msg"].get("definition"),
+                    name=line["msg"].get("case")).values_list(
+                        "id", flat=True)
+                if case_id:
+                    line["msg"]["case_id"] = case_id[0]
 
-    else:
-        try:
-            with open(os.path.join(job.output_dir, "output.yaml"), "r") as f_in:
-                # Compute the size of the file
-                f_in.seek(0, 2)
-                job_file_size = f_in.tell()
+    except IOError:
+        log_data = []
+    except yaml.YAMLError:
+        log_data = None
 
-                if job_file_size >= job.size_limit:
-                    log_data = []
-                    data["size_warning"] = job.size_limit
-                else:
-                    # Go back to the start and load the file
-                    f_in.seek(0, 0)
-                    log_data = yaml.load(f_in, Loader=yaml.CLoader)
+    # Get lava.job result if available
+    lava_job_result = None
+    with contextlib.suppress(TestCase.DoesNotExist):
+        lava_job_obj = TestCase.objects.get(suite__job=job,
+                                            suite__name="lava",
+                                            name="job")
+        # Only print it if it's a failure
+        if lava_job_obj.result == TestCase.RESULT_FAIL:
+            lava_job_result = lava_job_obj.action_metadata
 
-            # list all related results
-            for line in log_data:
-                if line["lvl"] == "results":
-                    case_id = TestCase.objects.filter(
-                        suite__job=job,
-                        suite__name=line["msg"].get("definition"),
-                        name=line["msg"].get("case")).values_list(
-                            "id", flat=True)
-                    if case_id:
-                        line["msg"]["case_id"] = case_id[0]
+    data.update({
+        'log_data': log_data if log_data else [],
+        'invalid_log_data': log_data is None,
+        'lava_job_result': lava_job_result
+    })
 
-        except IOError:
-            log_data = []
-        except yaml.YAMLError:
-            log_data = None
-
-        # Get lava.job result if available
-        lava_job_result = None
-        with contextlib.suppress(TestCase.DoesNotExist):
-            lava_job_obj = TestCase.objects.get(suite__job=job,
-                                                suite__name="lava",
-                                                name="job")
-            # Only print it if it's a failure
-            if lava_job_obj.result == TestCase.RESULT_FAIL:
-                lava_job_result = lava_job_obj.action_metadata
-
-        data.update({
-            'log_data': log_data if log_data else [],
-            'invalid_log_data': log_data is None,
-            'lava_job_result': lava_job_result
-        })
-
-        return render(request, "lava_scheduler_app/job_pipeline.html", data)
+    return render(request, "lava_scheduler_app/job.html", data)
 
 
 @BreadCrumb("Definition", parent=job_detail, needs=['pk'])
@@ -1359,66 +1340,6 @@ def favorite_jobs(request):
         request=request))
 
 
-@BreadCrumb("Complete log", parent=job_detail, needs=['pk'])
-def job_complete_log(request, pk):
-    job = get_restricted_job(request.user, pk, request=request)
-    # If this is a new log format, redirect to the job page
-    if os.path.exists(os.path.join(job.output_dir, "output.yaml")):
-        return HttpResponseRedirect(reverse('lava.scheduler.job.detail', args=[pk]))
-
-    description = description_data(job)
-    pipeline = description.get('pipeline', {})
-    sections = []
-    for action in pipeline:
-        sections.append({action['section']: action['level']})
-    default_section = 'boot'  # to come from user profile later.
-    if 'section' in request.GET:
-        log_data = utils.folded_logs(job, request.GET['section'], sections, summary=False)
-    else:
-        log_data = utils.folded_logs(job, default_section, sections, summary=False)
-        if not log_data:
-            default_section = 'deploy'
-            log_data = utils.folded_logs(job, default_section, sections, summary=False)
-    template = loader.get_template("lava_scheduler_app/pipeline_complete.html")
-    return HttpResponse(template.render(
-        {
-            'show_cancel': job.can_cancel(request.user),
-            'show_resubmit': job.can_resubmit(request.user),
-            'show_failure': job.can_annotate(request.user),
-            'job': job,
-            'sections': sections,
-            'default_section': default_section,
-            'log_data': log_data,
-            'pipeline_data': pipeline,
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(job_complete_log, pk=pk),
-        },
-        request=request))
-
-
-def job_section_log(request, pk, log_name):
-    job = get_restricted_job(request.user, pk, request=request)
-    path = os.path.join(job.output_dir, 'pipeline', log_name[0], log_name)
-    if not os.path.exists(path):
-        raise Http404
-    with open(path, 'r') as data:
-        log_content = yaml.load(data)
-    log_target = []
-    for logitem in log_content:
-        for key, value in logitem.items():
-            if key == 'target':
-                log_target.append(value)
-    # FIXME: decide if this should be a separate URL
-    if not log_target:
-        for logitem in log_content:
-            for key, value in logitem.items():
-                log_target.append(yaml.dump(value))
-
-    response = HttpResponse('\n'.join(log_target), content_type='text/plain; charset=utf-8')
-    response['Content-Transfer-Encoding'] = 'quoted-printable'
-    response['Content-Disposition'] = "attachment; filename=job-%s_%s" % (job.id, log_name)
-    return response
-
-
 def job_status(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
     response_dict = {'actual_device': "<i>...</i>",
@@ -1460,7 +1381,7 @@ def job_status(request, pk):
     return response
 
 
-def job_pipeline_timing(request, pk):
+def job_timing(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
     try:
         logs = yaml.load(open(os.path.join(job.output_dir, "output.yaml")), Loader=yaml.CLoader)
@@ -1532,7 +1453,7 @@ def job_pipeline_timing(request, pk):
         response_dict = {'timing': '',
                          'graph': []}
     else:
-        timing = render_to_string('lava_scheduler_app/job_pipeline_timing.html',
+        timing = render_to_string('lava_scheduler_app/job_timing.html',
                                   {'job': job, 'pipeline': pipeline, 'summary': summary,
                                    'total_duration': total_duration,
                                    'mean_duration': total_duration / len(pipeline),
@@ -1596,7 +1517,7 @@ def job_log_file_plain(request, pk):
         raise Http404
 
 
-def job_log_pipeline_incremental(request, pk):
+def job_log_incremental(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
     # Start from this line
     try:

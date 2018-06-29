@@ -66,54 +66,6 @@ def is_member(user, group):
     return user.groups.filter(name='%s' % group).exists()
 
 
-def _read_log(log_path):
-    logger = logging.getLogger('lava_scheduler_app')
-    if not os.path.exists(log_path):
-        return {}
-    logs = {}
-    for logfile in os.listdir(log_path):
-        filepath = os.path.join(log_path, logfile)
-        with open(filepath, 'r') as log_files:
-            try:
-                logs.update({logfile: yaml.load(log_files)})
-            except yaml.YAMLError as exc:
-                logger.warning(exc)
-                logs.update({logfile: [{'warning': "YAML error in %s" % os.path.basename(logfile)}]})
-    return logs
-
-
-def folded_logs(job, section_name, sections, summary=False, increment=False):
-    log_data = None
-    if increment:
-        latest = 0
-        section_name = ''
-        for item in sections:
-            current = int(item.values()[0])
-            log_path = os.path.join(job.output_dir, 'pipeline', item.values()[0])
-            if os.path.isdir(log_path):
-                latest = current if current > latest else latest
-                section_name = item.keys()[0] if latest == current else section_name
-        if not section_name:
-            return log_data
-    logs = {}
-    initialise_log = os.path.join(job.output_dir, 'pipeline', '0')
-    if os.path.exists(initialise_log) and section_name == 'deploy':
-        logs.update(_read_log(initialise_log))
-    for item in sections:
-        if section_name in item:
-            log_path = os.path.join(job.output_dir, 'pipeline', item[section_name])
-            logs.update(_read_log(log_path))
-            log_keys = sorted(logs)
-            log_data = OrderedDict()
-            for key in log_keys:
-                summary_items = [item for item in logs[key] if 'ts' in item or 'warning' in item or 'exception' in item]
-                if summary_items and summary:
-                    log_data[key] = summary_items
-                else:
-                    log_data[key] = logs[key]
-    return log_data
-
-
 def _split_multinode_vland(submission, jobs):
 
     for role, _ in jobs.items():
