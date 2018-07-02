@@ -32,8 +32,6 @@ from django.core.validators import validate_email
 from django.db import models, IntegrityError
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
-from django.shortcuts import get_object_or_404
-from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
@@ -1845,71 +1843,6 @@ class TestJob(RestrictedResource):
     def can_resubmit(self, user):
         return (user.is_superuser or
                 user.has_perm('lava_scheduler_app.cancel_resubmit_testjob'))
-
-    def _generate_summary_mail(self):
-        domain = '???'
-        with contextlib.suppress(Site.DoesNotExist, ImproperlyConfigured):
-            site = Site.objects.get_current()
-            domain = site.domain
-        url_prefix = 'http://%s' % domain
-        return render_to_string(
-            'lava_scheduler_app/job_summary_mail.txt',
-            {'job': self, 'url_prefix': url_prefix})
-
-    def _generate_cancellation_mail(self, user):
-        domain = '???'
-        with contextlib.suppress(Site.DoesNotExist, ImproperlyConfigured):
-            site = Site.objects.get_current()
-            domain = site.domain
-        url_prefix = 'http://%s' % domain
-        return render_to_string(
-            'lava_scheduler_app/job_cancelled_mail.txt',
-            {'job': self, 'url_prefix': url_prefix, 'user': user})
-
-    def _send_cancellation_mail(self, user):
-        if user == self.submitter:
-            return
-        recipient = get_object_or_404(User.objects.select_related(), id=self.submitter.id)
-        if not recipient.email:
-            return
-        mail = self._generate_cancellation_mail(user)
-        description = self.description.splitlines()[0]
-        if len(description) > 200:
-            description = description[197:] + '...'
-        logger = logging.getLogger('lava_scheduler_app')
-        logger.info("sending mail to %s", recipient.email)
-        try:
-            send_mail(
-                "LAVA job notification: " + description, mail,
-                settings.SERVER_EMAIL, [recipient.email])
-        except (smtplib.SMTPRecipientsRefused, smtplib.SMTPSenderRefused, socket.error):
-            logger.info("unable to send email to recipient")
-
-    def _get_notification_recipients(self):
-        job_data = simplejson.loads(self.definition)
-        recipients = job_data.get('notify', [])
-        recipients.extend([self.admin_notifications])  # Bug 170
-        recipients = filter(None, recipients)
-        if self.health != self.HEALTH_COMPLETE:
-            recipients.extend(job_data.get('notify_on_incomplete', []))
-        return recipients
-
-    def send_summary_mails(self):
-        recipients = self._get_notification_recipients()
-        if not recipients:
-            return
-        mail = self._generate_summary_mail()
-        description = self.description.splitlines()[0]
-        if len(description) > 200:
-            description = description[197:] + '...'
-        logger = logging.getLogger('lava_scheduler_app')
-        logger.info("sending mail to %s", recipients)
-        try:
-            send_mail(
-                "LAVA job notification: " + description, mail,
-                settings.SERVER_EMAIL, recipients)
-        except (smtplib.SMTPRecipientsRefused, smtplib.SMTPSenderRefused, socket.error):
-            logger.info("unable to send email - recipient refused")
 
     def set_failure_comment(self, message):
         if not self.failure_comment:
