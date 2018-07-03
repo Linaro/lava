@@ -198,9 +198,12 @@ to develop. There are a lot of examples in the current unit tests.
    :ref:`we can help with that <getting_support>` by putting files onto
    images.validation.linaro.org.
 
-#. Create a device configuration using the download link of a real
-   device dictionary which can run the testjob and save this file to
-   ``lava_dispatcher/devices``.
+#. Use the updated ``Factory`` support to generate the device
+   configuration directly from the ``lava_scheduler_app`` templates.
+
+   If a suitable device dictionary does not already exist in
+   ``lava_scheduler_app/tests/devices``, a new one can be added to
+   support the unit tests.
 
 #. Add a function to a suitable Factory class to use the device config
    file to create a device and use the parser to create a Job instance
