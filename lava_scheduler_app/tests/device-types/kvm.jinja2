@@ -1,6 +1,6 @@
+{# device_type: kvm #}
 {% extends 'base.jinja2' %}
 {% block body %}
-device_type: kvm
 
 # allow job context override - use a different variable name, undefined if not in job context
 {% set base_guest_fs_size = guestfs_size | default(512) %}

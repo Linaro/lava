@@ -27,7 +27,6 @@ parameters:
         grub_interface: hd0
         boot_part: 1
 
-device_type: mustang
 
 actions:
   deploy:

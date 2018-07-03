@@ -1,8 +1,8 @@
+{# device_type = "imx6q-nitrogen6x" #}
 {% extends 'base-uboot.jinja2' %}
 
 {% set console_device = console_device|default('ttymxc1') %}
 {% set baud_rate = baud_rate|default(115200) %}
-{% set device_type = "imx6q-nitrogen6x" %}
 {% set bootloader_prompt = bootloader_prompt|default('U-Boot >') %}
 {% set bootm_kernel_addr = '0x11000000' %}
 {% set bootm_ramdisk_addr = '0x13000000' %}

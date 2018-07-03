@@ -1,8 +1,7 @@
 # Peach pi AKA Samsung Chromebook 2 running u-boot (chainloaded by vendor
 # u-boot)
+{# device_type = "peach-pi" #}
 {% extends 'exynos5420-common.jinja2' %}
-
-{% set device_type = "peach-pi" %}
 
 {% set bootloader_prompt = bootloader_prompt|default('Peach') %}
 {% set console_device = console_device|default('ttySAC3') %}

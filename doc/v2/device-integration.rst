@@ -569,7 +569,6 @@ template so that a device dictionary can set an override:
 
     {% extends 'base.jinja2' %}
     {% set boot_character_delay = 150 %}
-    device_type: thunderx
     {% set console_device = console_device | default('ttyAMA0') %}
     {% set baud_rate = baud_rate | default(115200) %}
 

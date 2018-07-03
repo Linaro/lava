@@ -1,4 +1,3 @@
-device_type: x86
 parameters:
   stuff:
     - junk

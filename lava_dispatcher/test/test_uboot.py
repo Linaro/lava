@@ -76,7 +76,6 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         self.assertEqual(description_ref, job.pipeline.describe(False))
 
         self.assertIsNone(job.validate())
-        self.assertEqual(job.device['device_type'], 'beaglebone-black')
 
     def test_tftp_pipeline(self):
         job = self.factory.create_bbb_job('sample_jobs/uboot-ramdisk.yaml')

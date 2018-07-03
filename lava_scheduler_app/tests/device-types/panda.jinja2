@@ -1,8 +1,8 @@
+{# device_type = "panda" #}
 {% extends 'base-uboot.jinja2' %}
 
 {% set console_device = console_device|default('ttyO2') %}
 {% set baud_rate = baud_rate|default(115200) %}
-{% set device_type = "panda" %}
 {% if extra_kernel_args %}
 {% set extra_kernel_args = "fixrtc nocompcache vram=48M omapfb.vram=0:24M mem=456M@0x80000000 mem=512M@0xA0000000 rootdelay=5 "  + extra_kernel_args %}
 {% else %}

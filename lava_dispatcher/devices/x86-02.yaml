@@ -1,5 +1,3 @@
-device_type: x86
-
 commands:
   connections:
     uart0:

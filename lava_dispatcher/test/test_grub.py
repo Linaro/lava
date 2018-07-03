@@ -69,7 +69,6 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertEqual(description_ref, job.pipeline.describe(False))
 
         self.assertIsNone(job.validate())
-        self.assertEqual(job.device['device_type'], 'd02')
 
     def test_tftp_pipeline(self):
         job = self.factory.create_job('d02-01.jinja2', 'sample_jobs/grub-ramdisk.yaml')

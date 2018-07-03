@@ -1,3 +1,4 @@
+{# device_type = "hi6220-hikey-r2" #}
 {% extends 'base-fastboot.jinja2' %}
 {% set boot_character_delay = 10 %}
 {% set root_device = root_device | default('/dev/mmcblk0p9') %}
@@ -5,7 +6,6 @@
 {% set console_device = console_device|default('ttyAMA3') %}
 {% set baud_rate = baud_rate|default('115200') %}
 {% set fastboot_sequence = ['boot'] %}
-{% set device_type = "hi6220-hikey-r2" %}
 {% set fastboot_interrupt_params = "
         interrupt_prompt: 'Android Fastboot mode'
         interrupt_string: ' '"%}

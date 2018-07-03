@@ -397,7 +397,6 @@ def _device_schema():
         'static_info': [dict],
         'storage_info': [dict],
         'flash_cmds_order': list,
-        'device_type': All(str, Length(min=1)),
         'parameters': dict,
         'board_id': str,
         'usb_vendor_id': All(str, Length(min=4, max=4)),  # monitor type like arduino

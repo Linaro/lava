@@ -1,3 +1,4 @@
+{# set device_type = "hi6220-hikey-bl - based on r2 based on 960" #}
 {% extends 'base-fastboot.jinja2' %}
 {% set boot_character_delay = 10 %}
 {% set root_device = root_device | default('/dev/mmcblk0p9') %}
@@ -7,7 +8,6 @@
 {% set fastboot_sequence = ['boot'] %}
 {% set recovery_mode_command = recovery_mode_command|default('') %}
 {% set fastboot_only_command = fastboot_only_command|default('') %}
-{# set device_type = "hi6220-hikey-bl - based on r2 based on 960" #}
 {% set fastboot_interrupt_params = "
         interrupt_prompt: 'Android Fastboot mode'
         interrupt_string: ' '"%}

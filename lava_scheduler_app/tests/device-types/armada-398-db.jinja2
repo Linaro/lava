@@ -1,7 +1,7 @@
+{# device_type = "armada-398-db" #}
 {% extends 'base-uboot.jinja2' %}
 {% set console_device = console_device|default('ttyS0') %}
 {% set baud_rate = baud_rate|default(115200) %}
-{% set device_type = "armada-398-db" %}
 {% set bootloader_prompt = bootloader_prompt|default('Marvell>>') %}
 {% set bootm_kernel_addr = '0x02000000' %}
 {% set bootm_ramdisk_addr = '0x02880000' %}

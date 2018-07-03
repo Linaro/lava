@@ -287,13 +287,6 @@ def _get_action_metadata(data):  # pylint: disable=too-many-branches,too-many-ne
     return retval
 
 
-def _get_device_metadata(data):
-    devicetype = data.get('device_type', None)
-    return {
-        'target.device_type': devicetype
-    }
-
-
 def build_action(action_data, testdata, submission):
     # test for a known section
     logger = logging.getLogger('lava-master')
@@ -397,7 +390,8 @@ def map_metadata(description, job):
         testdata.attributes.create(name=key, value=value)
 
     # get metadata from device
-    device_values = _get_device_metadata(description_data['device'])
+    device_values = {}
+    device_values['target.device_type'] = job.requested_device_type
     for key, value in device_values.items():
         if not key or not value:
             logger.warning('[%s] Missing element in device. %s: %s', job.id, key, value)

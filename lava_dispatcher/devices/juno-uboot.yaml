@@ -1,4 +1,3 @@
-device_type: juno
 
 board_id: 'V2M-JUNO'
 usb_vendor_id: 'c251'

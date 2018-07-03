@@ -1,7 +1,7 @@
+{# device_type = "at91-sama5d4_xplained" #}
 {% extends 'base-uboot.jinja2' %}
 {% set console_device = console_device|default('ttyAT0') %}
 {% set baud_rate = baud_rate|default(115200) %}
-{% set device_type = "at91-sama5d4_xplained" %}
 {% set bootloader_prompt = bootloader_prompt|default('=>') %}
 {% set bootm_kernel_addr = '0x22100000' %}
 {% set bootm_ramdisk_addr = '0x23000000' %}

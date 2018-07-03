@@ -1,3 +1,4 @@
+{# device_type: 'vexpress' #}
 {% extends 'base.jinja2' %}
 
 {% set vexpress_supports_vemsd = vexpress_supports_vemsd|default(true) %}
@@ -123,7 +124,6 @@
 
 
 {% block body %}
-device_type: {{ device_type|default('vexpress') }}
 
 usb_filesystem_label: '{{ usb_filesystem_label|default('VEMSD') }}'
 

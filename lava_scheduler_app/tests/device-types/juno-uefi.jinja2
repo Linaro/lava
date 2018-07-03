@@ -1,3 +1,4 @@
+{# device_type: juno #}
 {% extends 'base.jinja2' %}
 
 {% set console_device = console_device | default('ttyS0') %}
@@ -14,8 +15,6 @@
 {% endif %}
 
 {% block body %}
-
-device_type: juno
 
 character_delays:
   boot: 50

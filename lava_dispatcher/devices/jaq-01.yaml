@@ -1,7 +1,5 @@
 # Veyron jaq AKA Haier Chromebook 11, running depthcharge firmware in netboot mode
 
-device_type: rk3288-veyron-jaq
-
 commands:
   connect: telnet localhost 6002
 

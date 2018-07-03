@@ -1,6 +1,5 @@
+{# device_type = "hip07-d05" #}
 {% extends 'd03.jinja2' %}
-
-{% set device_type = "hip07-d05" %}
 
 {% block grub_ramdisk %}
           - 'linux (tftp,{SERVER_IP})/{KERNEL} pcie_aspm=off pci=pcie_bus_perf root=/dev/ram0 {{ base_ip_args }}'

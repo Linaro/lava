@@ -1,3 +1,4 @@
+{# device_type: hi6220-hikey #}
 {% extends 'base.jinja2' %}
 {% set root_device = root_device | default('/dev/mmcblk0p9') %}
 {% set base_kernel_args = base_kernel_args|default('efi=noruntime backend=ramoops ramoops.mem_address=0x30000000 ramoops.mem_size=0x10000') %}
@@ -5,7 +6,7 @@
 {% set baud_rate = baud_rate|default('115200') %}
 {% set boot_character_delay = boot_character_delay|default(300) %}
 {% block body %}
-device_type: hi6220-hikey
+
 adb_serial_number: '{{ adb_serial_number|default('0000000000') }}'
 fastboot_serial_number: '{{ fastboot_serial_number|default('0000000000') }}'
 fastboot_options: {{ fastboot_options|default([]) }}

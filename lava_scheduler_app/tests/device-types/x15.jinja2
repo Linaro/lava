@@ -1,5 +1,5 @@
+{# device_type = "x15" #}
 {% extends 'base-uboot.jinja2' %}
-{% set device_type = "x15" %}
 {% set bootloader_prompt = bootloader_prompt|default('=>') %}
 {% set interrupt_prompt = interrupt_prompt|default('Hit any key to stop autoboot') %}
 {% set interrupt_char = interrupt_char|default('') %}

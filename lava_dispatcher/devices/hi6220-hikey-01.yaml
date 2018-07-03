@@ -75,7 +75,6 @@ parameters:
   # interfaces or device_ip or device_mac
 
   pass: # sata_uuid_sd_uuid_usb_uuid
-device_type: hi960-hikey
 adb_serial_number: "5A0EE5D0003FC2D0"
 fastboot_serial_number: "5A0EE5D0003FC2D0"
 fastboot_options: ['-S', '256M', '-u']

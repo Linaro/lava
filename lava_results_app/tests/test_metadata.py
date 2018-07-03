@@ -21,7 +21,7 @@ from lava_results_app.dbutils import (
     map_metadata,
     map_scanned_results,
     create_metadata_store,
-    _get_action_metadata, _get_device_metadata,  # pylint: disable=protected-access
+    _get_action_metadata,  # pylint: disable=protected-access
     testcase_export_fields,
     export_testcase,
 )
@@ -195,21 +195,10 @@ class TestMetaTypes(TestCaseWithFactory):
         allow_missing_path(pipeline_job.pipeline.validate_actions, self,
                            'qemu-system-x86_64')
         pipeline = pipeline_job.describe()
-        device_values = _get_device_metadata(pipeline['device'])
-        self.assertEqual(
-            device_values,
-            {'target.device_type': 'qemu'}
-        )
-        del pipeline['device']['device_type']
-        self.assertNotIn('device_type', pipeline['device'])
-        device_values = _get_device_metadata(pipeline['device'])
         try:
             testdata, _ = TestData.objects.get_or_create(testjob=job)
         except (MultipleObjectsReturned):
             self.fail('multiple objects')
-        for key, value in device_values.items():
-            if not key or not value:
-                continue
             testdata.attributes.create(name=key, value=value)
         retval = _get_action_metadata(pipeline['job']['actions'])
         self.assertEqual(
@@ -246,14 +235,10 @@ class TestMetaTypes(TestCaseWithFactory):
         allow_missing_path(pipeline_job.pipeline.validate_actions, self,
                            'qemu-system-x86_64')
         pipeline = pipeline_job.describe()
-        device_values = _get_device_metadata(pipeline['device'])
         try:
             testdata, _ = TestData.objects.get_or_create(testjob=job)
         except (MultipleObjectsReturned):
             self.fail('multiple objects')
-        for key, value in device_values.items():
-            if not key or not value:
-                continue
             testdata.attributes.create(name=key, value=value)
         retval = _get_action_metadata(pipeline['job']['actions'])
         self.assertIn('test.0.common.definition.parameters.VARIABLE_NAME_2', retval)

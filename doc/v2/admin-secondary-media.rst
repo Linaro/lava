@@ -213,7 +213,6 @@ is the bootloader view of the same device on this interface.
 
 .. code-block:: yaml
 
- device_type: cubietruck
  commands:
   connect: telnet localhost 6000
  media:

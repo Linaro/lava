@@ -189,7 +189,6 @@ class TestMultiUBoot(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.job = factory.create_bbb_job('sample_jobs/uboot-multiple.yaml')
         self.assertIsNotNone(self.job)
         self.assertIsNone(self.job.validate())
-        self.assertEqual(self.job.device['device_type'], 'beaglebone-black')
 
     def test_multi_uboot(self):
         self.assertIsNotNone(self.job)

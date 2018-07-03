@@ -1,8 +1,8 @@
+{# device_type: thunderx #}
 {% extends 'base.jinja2' %}
 {% set boot_character_delay = boot_character_delay | default(150) %}
 
 
-device_type: thunderx
 {% set console_device = console_device | default('ttyAMA0') %}
 {% set baud_rate = baud_rate | default(115200) %}
 

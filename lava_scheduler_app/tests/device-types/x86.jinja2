@@ -1,10 +1,10 @@
+{# device_type: x86 #}
 {% extends 'base.jinja2' %}
 
 # in milliseconds
 {% set boot_character_delay = boot_character_delay | default(500) %}
 {% set boot_interface = boot_interface | default('net0') %}
 {% block body %}
-device_type: x86
 
 {% set console_device = console_device | default('ttyS0') %}
 {% set baud_rate = baud_rate | default(115200) %}

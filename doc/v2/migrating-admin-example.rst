@@ -98,7 +98,6 @@ https://git.linaro.org/lava-team/refactoring.git/tree/bbb-uboot-ramdisk.yaml
           tftp: null
           usb: null
     commands: {connect: telnet localhost 6000}
-    device_type: beaglebone-black
     hostname: bbb-01
     parameters:
       bootm: {dtb: '0x815f0000', kernel: '0x80200000', ramdisk: '0x81600000'}
@@ -138,7 +137,6 @@ Start with a new file:
 
 .. code-block:: yaml
 
- device_type: mustang
  # hostname is irrelevant in the refactoring, the dispatcher uses what it is given.
  commands:
    connect: telnet serial4 7012
@@ -355,7 +353,6 @@ Untested at this point, but this is the start of the integration.
 
 .. code-block:: yaml
 
- device_type: mustang
  # hostname is irrelevant in the refactoring, the dispatcher uses what it is given.
  commands:
    connect: telnet serial4 7012
@@ -546,8 +543,6 @@ For example, a new mustang template starts as::
 
  {% extends 'base.jinja2' %}
  {% block body %}
-
- device_type: mustang
 
  {% endblock %}
 

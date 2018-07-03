@@ -1,8 +1,8 @@
+{# device_type = "meson8b-odroidc1" #}
 {% extends 'base-uboot.jinja2' %}
 
 {% set console_device = console_device|default('ttyAML0') %}
 {% set baud_rate = baud_rate|default(115200) %}
-{% set device_type = "meson8b-odroidc1" %}
 {% set bootloader_prompt = bootloader_prompt|default('odroidc#') %}
 {% set interrupt_prompt = interrupt_prompt|default('stop autoboot') %}
 {% set interrupt_char = interrupt_char|default(' ') %}

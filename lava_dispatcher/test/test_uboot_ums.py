@@ -48,7 +48,6 @@ class TestUbootUMSAction(StdoutTestCase):  # pylint: disable=too-many-public-met
         self.assertEqual(description_ref, job.pipeline.describe(False))
 
         self.assertIsNone(job.validate())
-        self.assertEqual(job.device['device_type'], 'imx7s-warp')
         uboot = [action for action in job.pipeline.actions if action.name == 'uboot-action'][0]
         retry = [action for action in uboot.internal_pipeline.actions if action.name == 'uboot-retry'][0]
         flash = [action for action in retry.internal_pipeline.actions if action.name == 'flash-uboot-ums'][0]

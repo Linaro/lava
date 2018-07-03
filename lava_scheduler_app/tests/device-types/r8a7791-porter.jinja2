@@ -1,7 +1,7 @@
+{# device_type = "r8a7791-porter" #}
 {% extends 'base-uboot.jinja2' %}
 {% set console_device = console_device|default('ttySC6') %}
 {% set baud_rate = baud_rate|default(38400) %}
-{% set device_type = "r8a7791-porter" %}
 {% if extra_kernel_args %}
 {% set extra_kernel_args = "vmalloc=384M video=HDMI-A-1:1024x768-32@60 " + extra_kernel_args %}
 {% else %}

@@ -42,7 +42,6 @@ class TestPipelineMenu(TestCaseWithFactory):  # pylint: disable=too-many-ancesto
 
         config = device.load_configuration()
         self.assertIsNotNone(config)
-        self.assertEqual(config['device_type'], self.device_type.name)
         self.assertNotIn('parameters', config)
         self.assertIsNotNone(config['actions']['boot']['methods']['uefi-menu']['nfs'])
         menu_data = config['actions']['boot']['methods']['uefi-menu']['nfs']

@@ -60,7 +60,6 @@ class TestDepthchargeAction(StdoutTestCase):
         self.assertEqual(description_ref, job.pipeline.describe(False))
 
         self.assertIsNone(job.validate())
-        self.assertEqual(job.device['device_type'], 'rk3288-veyron-jaq')
 
         self.assertEqual(
             [action.name for action in job.pipeline.actions],

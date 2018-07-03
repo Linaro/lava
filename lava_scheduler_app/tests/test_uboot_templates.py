@@ -43,7 +43,6 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
 {% extends 'base-uboot.jinja2' %}
 {% set console_device = console_device|default('ttyS0') %}
 {% set baud_rate = baud_rate|default(115200) %}
-{% set device_type = "armada-375-db" %}
 {% set bootloader_prompt = bootloader_prompt|default('Marvell>>') %}
 {% set bootm_kernel_addr = '0x02080000' %}
 {% set bootm_ramdisk_addr = '0x02880000' %}
@@ -131,7 +130,6 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
         test_template = prepare_jinja_template('staging-rpi3-01', data)
         rendered = test_template.render(**context)
         template_dict = yaml.load(rendered)
-        self.assertEqual('bcm2837-rpi-3-b-32', (template_dict['device_type']))
         commands = template_dict['actions']['boot']['methods']['u-boot']['ramdisk']['commands']
         self.assertIsNotNone(commands)
         self.assertIsInstance(commands, list)
@@ -148,7 +146,6 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
         test_template = prepare_jinja_template('staging-rpi3-01', data)
         rendered = test_template.render(**context)
         template_dict = yaml.load(rendered)
-        self.assertEqual('bcm2837-rpi-3-b-32', (template_dict['device_type']))
         commands = template_dict['actions']['boot']['methods']['u-boot']['ramdisk']['commands']
         self.assertIsNotNone(commands)
         self.assertIsInstance(commands, list)
@@ -174,7 +171,6 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
         test_template = prepare_jinja_template('staging-panda-01', data)
         rendered = test_template.render(**context)
         template_dict = yaml.load(rendered)
-        self.assertEqual('panda', (template_dict['device_type']))
         self.assertIn('bootloader-commands', template_dict['timeouts']['actions'])
         self.assertEqual(180.0, Timeout.parse(template_dict['timeouts']['actions']['bootloader-commands']))
         commands = template_dict['actions']['boot']['methods']['u-boot']['ramdisk']['commands']

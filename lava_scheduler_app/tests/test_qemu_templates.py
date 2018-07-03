@@ -120,7 +120,6 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
         test_template = prepare_jinja_template('docker-01', data)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
-        self.assertEqual('docker', template_dict['device_type'])
         self.assertEqual({'docker': None}, template_dict['actions']['deploy']['methods'])
         self.assertEqual({'docker': {'options': {'cpus': 0.0, 'memory': 0, 'volumes': []}}},
                          template_dict['actions']['boot']['methods'])
@@ -133,7 +132,6 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
         test_template = prepare_jinja_template('docker-01', data)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
-        self.assertEqual('docker', template_dict['device_type'])
         self.assertEqual({'docker': None}, template_dict['actions']['deploy']['methods'])
         self.assertEqual({'docker': {'options': {'cpus': 2.1, 'memory': "120M",
                                                  'volumes': ["/home", "/tmp"]}}},

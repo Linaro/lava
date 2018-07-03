@@ -88,7 +88,7 @@
 {% endblock vland %}
 
 {% block body %}
-device_type: {{ device_type|default('uboot') }}
+
 {% if console_device %}
 {% set console_device = "console=" + console_device + "," %}
 {% set parity = console_parity|default('n') %}

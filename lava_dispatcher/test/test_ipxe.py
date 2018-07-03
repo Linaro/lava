@@ -52,7 +52,6 @@ class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-m
         self.assertEqual(description_ref, job.pipeline.describe(False))
 
         self.assertIsNone(job.validate())
-        self.assertEqual(job.device['device_type'], 'x86')
 
     def test_tftp_pipeline(self):
         job = self.factory.create_job('x86-01.jinja2', 'sample_jobs/ipxe-ramdisk.yaml')

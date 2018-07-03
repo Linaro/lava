@@ -1,6 +1,6 @@
 # Nyan big AKA Acer Chromebook 13 CB5-311, running u-boot
+{# device_type = "tegra124-nyan-big" #}
 {% extends 'tegra124-common.jinja2' %}
-{% set device_type = "tegra124-nyan-big" %}
 
 {% set bootloader_prompt = bootloader_prompt|default('Nyan-big') %}
 {% set uboot_needs_usb = true %}
