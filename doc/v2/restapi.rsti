@@ -40,7 +40,7 @@ differ from the username you use if logging in via LDAP.
    public git repositories. Wherever supported, use ``https://`` when
    using a token to avoid it being sent in plain-text.
 
-.. index:: results pagination
+.. index:: results - pagination
 
 .. _test_suite_result_pagination:
 

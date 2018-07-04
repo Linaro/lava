@@ -1,4 +1,4 @@
-.. index:: results introduction
+.. index:: results - introduction
 
 .. _results_intro:
 

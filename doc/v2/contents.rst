@@ -155,6 +155,7 @@ Results in LAVA
    data-export
    user-notifications
    custom-result-handling
+   relating
    tables
    lava-tool
 
