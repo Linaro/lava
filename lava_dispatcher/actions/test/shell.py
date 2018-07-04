@@ -247,7 +247,10 @@ class TestShellAction(TestAction):
             action='test', label='results', key='lava_test_results_dir')
         lava_test_sh_cmd = self.get_namespace_data(action='test', label='shared', key='lava_test_sh_cmd')
 
-        if pre_command_list and running == 0:
+        # Any errors arising from this command are not checked.
+        # If the result of the command means that lava-test-runner cannot be found,
+        # this will cause the job to time out as Incomplete.
+        if pre_command_list:
             for command in pre_command_list:
                 connection.sendline(command, delay=self.character_delay)
 

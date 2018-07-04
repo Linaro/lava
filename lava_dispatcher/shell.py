@@ -185,6 +185,8 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
 
 class ShellSession(Connection):
 
+    name = "ShellSession"
+
     def __init__(self, job, shell_command):
         """
         A ShellSession monitors a pexpect connection.
@@ -192,7 +194,6 @@ class ShellSession(Connection):
         a percentage of the timeout.
         """
         super().__init__(job, shell_command)
-        self.name = "ShellSession"
         # FIXME: rename __prompt_str__ to indicate it can be a list or str
         self.__prompt_str__ = None
         self.spawn = shell_command

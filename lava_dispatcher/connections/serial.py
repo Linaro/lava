@@ -18,6 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import time
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.action import Action
 from lava_common.exceptions import JobError, InfrastructureError
@@ -176,3 +177,25 @@ class ConnectShell(ConnectDevice):
         # force a prompt to appear without using a character that could be interpreted as a username
         connection.sendline('')
         return connection
+
+
+class QemuSession(ShellSession):
+    """Extends a ShellSession to include the ability to disconnect and finalise
+    cleanly.
+    """
+
+    name = "QemuSession"
+
+    def __init__(self, job, raw_connection):
+        super().__init__(job, raw_connection)
+        self.tags = ['qemu']
+
+    def finalise(self):
+        self.disconnect("closing")
+        super().finalise()
+
+    def disconnect(self, reason=''):
+        self.sendline('poweroff', disconnecting=True)
+        self.listen_feedback(5)
+        self.connected = False
+        super().disconnect()

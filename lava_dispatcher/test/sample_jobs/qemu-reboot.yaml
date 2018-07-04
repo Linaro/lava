@@ -1,0 +1,78 @@
+device_type: qemu
+
+job_name: qemu jessie reboot
+
+timeouts:
+  job:
+    minutes: 6
+  action:
+    minutes: 2
+priority: medium
+visibility: public
+
+context:
+  arch: amd64
+
+actions:
+- deploy:
+    timeout:
+      minutes: 3
+    to: tmpfs
+    images:
+        rootfs:
+          image_arg: -drive format=raw,file={rootfs}
+          url: http://images.validation.linaro.org/kvm/standard/large-stable-6.img.gz
+          compression: gz
+    os: debian
+    root_partition: 1
+
+- boot:
+    method: qemu
+    timeout:
+      minutes: 2
+    media: tmpfs
+    prompts:
+    - "root@debian:"
+    auto_login:
+      login_prompt: "login:"
+      username: root
+
+- test:
+    timeout:
+      minutes: 5
+    definitions:
+    - repository:
+        metadata:
+          format: Lava-Test Test Definition 1.0
+          name: smoke-tests-basic
+          description: "Basic system test command for Linaro Ubuntu images"
+        run:
+          steps:
+          - lava-test-case logline --result pass
+      from: inline
+      name: env-dut-inline
+      path: inline/env-dut.yaml
+    - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+      from: git
+      path: lava-test-shell/smoke-tests-basic.yaml
+      name: smoke-tests
+
+- boot:
+    method: qemu
+    timeout:
+      minutes: 2
+    media: tmpfs
+    prompts:
+    - "root@debian:"
+    auto_login:
+      login_prompt: "login:"
+      username: root
+
+- test:
+    timeout:
+      minutes: 5
+    definitions:
+    - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+      from: git
+      path: lava-test-shell/smoke-tests-basic.yaml
+      name: smoke-tests-reboot

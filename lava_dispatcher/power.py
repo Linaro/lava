@@ -228,6 +228,8 @@ class PowerOff(Action):
         if not self.job.device.get('commands'):
             return connection
         command = self.job.device['commands'].get('power_off', [])
+        # QEMU cannot use a power_off_command because that would be run
+        # on the worker, not the VM.
         if not isinstance(command, list):
             command = [command]
         for cmd in command:

@@ -32,8 +32,8 @@ from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.shell import (
     ExpectShellSession,
     ShellCommand,
-    ShellSession
 )
+from lava_dispatcher.connections.serial import QemuSession
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.strings import substitute
 from lava_dispatcher.utils.network import dispatcher_ip
@@ -117,6 +117,8 @@ class CallQemuAction(Action):
         self.methods = None
         self.nfsrootfs = None
         self.qemu_data = {}
+        self.session_class = QemuSession
+        self.shell_class = ShellCommand
 
     def validate(self):
         super().validate()
@@ -207,6 +209,8 @@ class CallQemuAction(Action):
         to run commands issued *after* the device has booted.
         pexpect.spawn is one of the raw_connection objects for a Connection class.
         """
+        if connection:
+            connection.finalise()
         # initialise the first Connection object, a command line shell into the running QEMU.
         self.results = self.qemu_data
         guest = self.get_namespace_data(action='apply-overlay-guest', label='guest', key='filename')
@@ -245,12 +249,12 @@ class CallQemuAction(Action):
             self.set_namespace_data(action='test', label='lava-test-shell', key='pre-command-list', value=shell_precommand_list)
 
         self.logger.info("Boot command: %s", ' '.join(self.sub_command))
-        shell = ShellCommand(' '.join(self.sub_command), self.timeout, logger=self.logger)
+        shell = self.shell_class(' '.join(self.sub_command), self.timeout, logger=self.logger)
         if shell.exitstatus:
             raise JobError("%s command exited %d: %s" % (self.sub_command, shell.exitstatus, shell.readlines()))
         self.logger.debug("started a shell command")
 
-        shell_connection = ShellSession(self.job, shell)
+        shell_connection = self.session_class(self.job, shell)
         shell_connection = super().run(shell_connection, max_end_time)
 
         self.set_namespace_data(action='shared', label='shared', key='connection', value=shell_connection)

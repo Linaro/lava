@@ -147,12 +147,15 @@ class Connection:
                 logger.info("Disconnecting from lxc: %s", reason)
                 self.sendline('', disconnecting=True)
                 self.sendline('exit', disconnecting=True)
+            elif self.name == 'QemuSession':
+                logger.info("Disconnecting from qemu: %s", reason)
             else:
                 raise LAVABug("'disconnect' not supported for %s" % self.tags)
         except ValueError:  # protection against file descriptor == -1
             logger.debug("Already disconnected")
         self.connected = False
-        self.raw_connection.close(force=True)
+        if self.raw_connection:
+            self.raw_connection.close(force=True)
         self.raw_connection = None
 
     def finalise(self):

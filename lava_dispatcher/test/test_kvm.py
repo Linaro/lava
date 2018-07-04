@@ -47,6 +47,7 @@ from lava_dispatcher.utils.messages import LinuxKernelMessages
 from lava_dispatcher.test.test_defs import allow_missing_path, check_missing_path
 from lava_dispatcher.test.utils import DummyLogger, infrastructure_error
 from lava_dispatcher.utils.strings import substitute
+from lava_dispatcher.connections.serial import QemuSession
 
 # pylint: disable=invalid-name
 
@@ -409,6 +410,29 @@ class TestKVMInlineTestDeploy(StdoutTestCase):  # pylint: disable=too-many-publi
                                     'yaml_line': 53},
                             'yaml_line': 38}
         self.assertEqual(set(testdef), set(expected_testdef))
+
+
+class TestKvmConnection(StdoutTestCase):
+
+    def setUp(self):
+        super().setUp()
+        factory = Factory()
+        self.job = factory.create_kvm_job('sample_jobs/qemu-reboot.yaml')
+        self.job.logger = DummyLogger()
+        self.max_end_time = time.time() + 30
+
+    def test_kvm_connection(self):
+        self.job.validate()
+        description_ref = self.pipeline_reference('qemu-reboot.yaml')
+        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+        bootaction = [action for action in self.job.pipeline.actions if action.name == 'boot-image-retry'][0]
+        bootqemu = [action for action in bootaction.internal_pipeline.actions if action.name == 'boot-qemu-image'][0]
+        call_qemu = [action for action in bootqemu.internal_pipeline.actions if action.name == 'execute-qemu'][0]
+        self.assertEqual(call_qemu.session_class, QemuSession)
+        bootaction = [action for action in self.job.pipeline.actions if action.name == 'boot-image-retry'][1]
+        bootqemu = [action for action in bootaction.internal_pipeline.actions if action.name == 'boot-qemu-image'][0]
+        call_qemu = [action for action in bootqemu.internal_pipeline.actions if action.name == 'execute-qemu'][0]
+        self.assertEqual(call_qemu.session_class, QemuSession)
 
 
 class TestAutoLogin(StdoutTestCase):
