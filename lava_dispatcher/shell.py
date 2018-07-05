@@ -157,7 +157,7 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
             sent = super().send(string)
         return sent
 
-    def expect(self, *args, **kw):
+    def expect(self, *args, **kw):  # pylint: disable=arguments-differ
         """
         No point doing explicit logging here, the SignalDirector can help
         the TestShellAction make much more useful reports of what was matched

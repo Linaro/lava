@@ -23,10 +23,7 @@ import pexpect
 
 from collections import OrderedDict
 from lava_dispatcher.action import Pipeline
-from lava_common.exceptions import (
-    InfrastructureError,
-    LAVABug,
-)
+from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.actions.test import (
     TestAction,
 )
@@ -57,8 +54,7 @@ class TestMonitor(LavaTest):
                 if all([x for x in required_parms if x in monitor]):
                     return True, 'accepted'
             return False, 'missing a required parameter from %s' % required_parms
-        else:
-            return False, '"monitors" not in parameters'
+        return False, '"monitors" not in parameters'
 
     @classmethod
     def needs_deployment_data(cls):

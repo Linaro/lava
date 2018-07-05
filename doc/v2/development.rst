@@ -883,6 +883,24 @@ the pylint output, some warnings are recommended to be disabled::
 .. note:: Docstrings should still be added wherever a docstring would
    be useful.
 
+Many developers use a ``~/.pylintrc`` file which already includes a
+sample list of warnings to disable. Other warnings frequently disabled
+in ``~/.pylintrc`` include:
+
+.. code-block:: none
+
+        too-many-locals,
+        too-many-ancestors,
+        too-many-arguments,
+        too-many-instance-attributes,
+        too-many-nested-blocks,
+        too-many-return-statements,
+        too-many-branches,
+        too-many-statements,
+        too-few-public-methods,
+        wrong-import-order,
+        ungrouped-imports,
+
 ``pylint`` also supports local disabling of warnings and there are many
 examples of:
 
@@ -892,7 +910,8 @@ examples of:
 
 There is a ``pylint-django`` plugin available in unstable and testing
 and whilst it improves the pylint output for the ``lava-server``
-codebase, it still has a high level of false indications.
+codebase, it still has a high level of false indications, particularly
+when extending an existing model.
 
 pep8
 ****

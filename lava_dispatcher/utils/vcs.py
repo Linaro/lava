@@ -34,7 +34,7 @@ class VCSHelper(object):
     def __init__(self, url):
         self.url = url
 
-    def clone(self, dest_path, revision=None, branch=None):
+    def clone(self, dest_path, shallow=None, revision=None, branch=None, history=None):
         raise NotImplementedError
 
 
@@ -44,7 +44,7 @@ class BzrHelper(VCSHelper):
         super().__init__(url)
         self.binary = '/usr/bin/bzr'
 
-    def clone(self, dest_path, revision=None, branch=None):
+    def clone(self, dest_path, shallow=None, revision=None, branch=None, history=None):
         cwd = os.getcwd()
         logger = logging.getLogger('dispatcher')
         env = dict(os.environ)
@@ -69,7 +69,7 @@ class BzrHelper(VCSHelper):
 
         except subprocess.CalledProcessError as exc:
             exc_command = [i.strip() for i in exc.cmd]
-            exc_message = str(exc)  # pylint: disable=redefined-variable-type
+            exc_message = str(exc)
             exc_output = str(exc).split('\n')
             logger.exception(yaml.dump({
                 'command': exc_command,
@@ -151,3 +151,6 @@ class URLHelper(VCSHelper):
     def __init__(self, url):
         super().__init__(url)
         self.binary = None
+
+    def clone(self, dest_path, shallow=None, revision=None, branch=None, history=None):
+        raise NotImplementedError

@@ -375,8 +375,7 @@ def copy_overlay_to_sparse_fs(image, overlay):
     # Check if we have space left on the mounted image.
     output = guest.df()
     logger.debug(output)
-    device, size, used, available, percent, mountpoint = output.split(
-        "\n")[1].split()
+    _, _, _, available, percent, _ = output.split("\n")[1].split()
     guest.umount(devices[0])
     if int(available) is 0 or percent == '100%':
         raise JobError("No space in image after applying overlay: %s" % image)
@@ -418,9 +417,6 @@ def is_sparse_image(image):
     """
     Returns True if the image is an 'Android sparse image' else False.
     """
-    image_magic = magic.open(magic.MAGIC_NONE)
+    image_magic = magic.open(magic.MAGIC_NONE)  # pylint: disable=no-member
     image_magic.load()
-    if image_magic.file(image).split(',')[0] == 'Android sparse image':
-        return True
-    else:
-        return False
+    return bool(image_magic.file(image).split(',')[0] == 'Android sparse image')

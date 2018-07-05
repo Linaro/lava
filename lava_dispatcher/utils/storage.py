@@ -37,6 +37,7 @@ class FlashUBootUMSAction(Action):
         super().__init__()
         self.params = None
         self.usb_mass_device = usb_mass_device
+        self.ums_device = None
 
     def validate(self):
         super().validate()

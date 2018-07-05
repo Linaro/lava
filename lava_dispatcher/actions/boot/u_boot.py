@@ -70,8 +70,7 @@ class UBoot(Boot):
             raise ConfigurationError("commands not specified in boot parameters")
         if 'u-boot' in device['actions']['boot']['methods']:
             return True, 'accepted'
-        else:
-            return False, '"u-boot" was not in the device configuration boot methods'
+        return False, '"u-boot" was not in the device configuration boot methods'
 
 
 class UBootAction(BootAction):
@@ -104,6 +103,11 @@ class UBootRetry(BootAction):
     name = "uboot-retry"
     description = "interactive uboot retry action"
     summary = "uboot commands with retry"
+
+    def __init__(self):
+        super().__init__()
+        self.method_params = None
+        self.usb_mass_device = None
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)

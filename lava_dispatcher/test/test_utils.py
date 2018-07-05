@@ -173,12 +173,12 @@ class TestBzr(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def test_clone_at_2(self):
         bzr = vcs.BzrHelper('repo')
-        self.assertEqual(bzr.clone('bzr.clone1', '2'), '2')
+        self.assertEqual(bzr.clone('bzr.clone1', revision='2'), '2')
 
     def test_clone_at_1(self):
         bzr = vcs.BzrHelper('repo')
-        self.assertEqual(bzr.clone('bzr.clone1', '1'), '1')
-        self.assertEqual(bzr.clone('bzr.clone2', '1'), '1')
+        self.assertEqual(bzr.clone('bzr.clone1', revision='1'), '1')
+        self.assertEqual(bzr.clone('bzr.clone2', revision='1'), '1')
 
     def test_non_existing_bzr(self):
         bzr = vcs.BzrHelper('does_not_exists')
@@ -192,8 +192,8 @@ class TestBzr(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def test_invalid_commit(self):
         bzr = vcs.BzrHelper('repo')
-        self.assertRaises(InfrastructureError, bzr.clone, 'foo.bar', '3')
-        self.assertRaises(InfrastructureError, bzr.clone, 'foo.bar', 'badrev')
+        self.assertRaises(InfrastructureError, bzr.clone, 'foo.bar', revision='3')
+        self.assertRaises(InfrastructureError, bzr.clone, 'foo.bar', revision='badrev')
 
 
 class TestConstants(StdoutTestCase):  # pylint: disable=too-many-public-methods

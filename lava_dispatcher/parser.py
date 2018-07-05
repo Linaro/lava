@@ -109,7 +109,7 @@ class JobParser(object):
         mapping['yaml_line'] = node.__line__
         return mapping
 
-    def _timeouts(self, data, job):
+    def _timeouts(self, data, job):  # pylint: disable=no-self-use
         if 'job' in data.get('timeouts', {}):
             duration = Timeout.parse(data['timeouts']['job'])
             job.timeout = Timeout('job', duration)

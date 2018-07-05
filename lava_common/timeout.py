@@ -99,11 +99,11 @@ class Timeout(object):
             if parent is None:
                 signal.alarm(0)
             else:
-                signal.signal(signal.SIGALRM, parent.timeout._timed_out)
+                signal.signal(signal.SIGALRM, parent.timeout._timed_out)  # pylint: disable=protected-access
                 duration = round(action_max_end_time - time.time())
                 if duration <= 0:
                     signal.alarm(0)
-                    parent.timeout._timed_out(None, None)
+                    parent.timeout._timed_out(None, None)  # pylint: disable=protected-access
                 signal.alarm(duration)
         except Exception:
             # clear the timeout alarm, the action has returned an error

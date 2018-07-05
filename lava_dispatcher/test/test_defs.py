@@ -20,7 +20,6 @@
 
 import re
 import os
-import sys
 import glob
 import stat
 import yaml
@@ -31,7 +30,6 @@ import unittest
 import subprocess
 from nose.tools import nottest
 from lava_dispatcher.power import FinalizeAction
-from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
 from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.actions.test.shell import TestShellRetry, PatternFixup

@@ -55,11 +55,9 @@ class deployment_data_dict(object):  # pylint: disable=invalid-name, too-few-pub
     def get(self, *args):
         if len(args) == 1:
             return self.__data__.get(args[0])
-        else:
-            if args[0] in self.__data__.keys():
-                return self.__data__.get(args[0])
-            else:
-                return args[1]
+        if args[0] in self.__data__.keys():
+            return self.__data__.get(args[0])
+        return args[1]
 
     def keys(self):
         """

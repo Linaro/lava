@@ -88,6 +88,9 @@ class Connection(object):
     Connecting between devices is handled inside the YAML test definition, whether by
     multinode or by configured services inside the test image.
     """
+
+    name = "Connection"
+
     def __init__(self, job, raw_connection):
         self.device = job.device
         self.job = job

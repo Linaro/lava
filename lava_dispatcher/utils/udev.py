@@ -154,6 +154,7 @@ class WaitDeviceBoardID(Action):
 
     def __init__(self, board_id=None):
         super().__init__()
+        self.udev_device = None
         if not board_id:
             self.board_id = self.job.device.get('board_id', None)
         else:

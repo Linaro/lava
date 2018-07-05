@@ -193,7 +193,7 @@ class PrepareFITAction(Action):
         else:
             self.device_params = device_params
 
-    def _make_mkimage_command(self, params):
+    def _make_mkimage_command(self, params):  # pylint: disable=no-self-use
         cmd = [
             'mkimage',
             '-D', '"-I dts -O dtb -p 2048"',

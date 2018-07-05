@@ -89,6 +89,7 @@ class CallDockerAction(Action):
         super().__init__()
         self.cleanup_required = False
         self.extra_options = ''
+        self.container = ''
 
     def validate(self):
         super().validate()

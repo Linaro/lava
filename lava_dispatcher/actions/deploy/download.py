@@ -67,10 +67,6 @@ import urllib.parse as lavaurl
 
 # pylint: disable=logging-not-lazy
 
-# FIXME: separate download actions for decompressed and uncompressed downloads
-# so that the logic can be held in the Strategy class, not the Action.
-# FIXME: create a download3.py which uses urllib.urlparse
-
 
 class DownloaderAction(RetryAction):
     """
@@ -104,11 +100,11 @@ class DownloaderAction(RetryAction):
         if url.scheme == 'scp':
             action = ScpDownloadAction(self.key, self.path, url, self.uniquify)
         elif url.scheme == 'http' or url.scheme == 'https':
-            action = HttpDownloadAction(self.key, self.path, url, self.uniquify)  # pylint: disable=redefined-variable-type
+            action = HttpDownloadAction(self.key, self.path, url, self.uniquify)
         elif url.scheme == 'file':
-            action = FileDownloadAction(self.key, self.path, url, self.uniquify)  # pylint: disable=redefined-variable-type
+            action = FileDownloadAction(self.key, self.path, url, self.uniquify)
         elif url.scheme == 'lxc':
-            action = LxcDownloadAction(self.key, self.path, url)  # pylint: disable=redefined-variable-type
+            action = LxcDownloadAction(self.key, self.path, url)
         else:
             raise JobError("Unsupported url protocol scheme: %s" % url.scheme)
         self.internal_pipeline.add_action(action)
@@ -139,7 +135,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         self.size = -1
         self.decompress_command_map = {'xz': 'unxz', 'gz': 'gunzip', 'bz2': 'bunzip2'}
 
-    def reader(self):
+    def reader(self):  # pylint: disable=no-self-use
         raise LAVABug("'reader' function unimplemented")
 
     def cleanup(self, connection):
@@ -156,11 +152,8 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         # Also files without suffixes, e.g. kernel images
         # Don't rename files we don't support decompressing during download
         if not modify or len(parts) == 1 or (modify not in self.decompress_command_map):
-            return (os.path.join(path, filename),
-                    None)
-        else:
-            return (os.path.join(path, '.'.join(parts[:-1])),
-                    parts[-1])
+            return (os.path.join(path, filename), None)
+        return (os.path.join(path, '.'.join(parts[:-1])), parts[-1])
 
     def validate(self):
         super().validate()
