@@ -1,0 +1,4 @@
+{% extends 'base-barebox.jinja2' %}
+
+{% set bootloader_prompt = 'i.MX53 Quick Start-R Board:/' %}
+{% set console_device = console_device | default('ttymxc0') %}
