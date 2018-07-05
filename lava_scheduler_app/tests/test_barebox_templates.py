@@ -47,3 +47,6 @@ class TestBareboxTemplates(BaseTemplate.BaseTemplateCases):
 
     def test_imx28_duckbill_template(self):
         barebox_helper(self, "imx28-duckbill")
+
+    def test_imx27_phytec_phycard_s_rdk_template(self):
+        barebox_helper(self, "imx27-phytec-phycard-s-rdk")
