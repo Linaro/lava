@@ -62,3 +62,6 @@ class TestBareboxTemplates(BaseTemplate.BaseTemplateCases):
 
     def test_ar9331_dpt_module_template(self):
         barebox_helper(self, "ar9331-dpt-module")
+
+    def test_socfpga_cyclone5_socrates_template(self):
+        barebox_helper(self, "socfpga-cyclone5-socrates")
