@@ -53,3 +53,6 @@ class TestBareboxTemplates(BaseTemplate.BaseTemplateCases):
 
     def test_imx53_qsbr_template(self):
         barebox_helper(self, "imx53-qsbr")
+
+    def test_imx6l_riotboard_template(self):
+        barebox_helper(self, "imx6dl-riotboard")
