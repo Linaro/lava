@@ -1,0 +1,4 @@
+{% extends 'base-barebox.jinja2' %}
+
+{% set bootloader_prompt = 'Olimex.ltd imx233-olinuxino:/' %}
+{% set console_device = console_device | default('ttymxc0') %}

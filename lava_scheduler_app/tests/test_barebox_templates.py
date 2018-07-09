@@ -41,3 +41,6 @@ class TestBareboxTemplates(BaseTemplate.BaseTemplateCases):
 
     def test_imx6ul_pico_hobbit_template(self):
         barebox_helper(self, "imx6ul-pico-hobbit")
+
+    def test_imx23_olinuxino_template(self):
+        barebox_helper(self, "imx23-olinuxino")
