@@ -184,6 +184,7 @@ LAVA administration guide
    migrate-lava
    vland-admin
    pipeline-debug
+   docker-admin
    lava-tool-issues
 
 .. _contents_contribution_guide:
