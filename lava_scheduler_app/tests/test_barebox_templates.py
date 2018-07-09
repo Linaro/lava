@@ -59,3 +59,6 @@ class TestBareboxTemplates(BaseTemplate.BaseTemplateCases):
 
     def test_dove_cubox_template(self):
         barebox_helper(self, "dove-cubox")
+
+    def test_ar9331_dpt_module_template(self):
+        barebox_helper(self, "ar9331-dpt-module")
