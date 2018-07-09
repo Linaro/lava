@@ -1,0 +1,4 @@
+{% extends 'base-barebox.jinja2' %}
+
+{% set bootloader_prompt = 'I2SE Duckbill:/' %}
+{% set console_device = console_device | default('ttymxc0') %}

@@ -44,3 +44,6 @@ class TestBareboxTemplates(BaseTemplate.BaseTemplateCases):
 
     def test_imx23_olinuxino_template(self):
         barebox_helper(self, "imx23-olinuxino")
+
+    def test_imx28_duckbill_template(self):
+        barebox_helper(self, "imx28-duckbill")
