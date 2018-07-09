@@ -104,12 +104,13 @@ or via XML-RPC.
 Authorization and admin
 ***********************
 
-Queries which are not published are visible exclusively to the query owner.
-When query is published, it's results are generally visible to all users,
-providing that the user has access to the jobs which provide the results. All
-the authorization is managed through test jobs visibility rules, meaning that
-individual results will be omitted in the query display list depending on user
-authorization to see the specific jobs.
+Queries which are not published are visible exclusively to the query
+owner. When query is published, it's results are generally visible to
+all users, providing that the user has access to the jobs which provide
+the results. All the authorization is managed through test jobs
+:term:`visibility` rules, meaning that individual results will be
+omitted in the query display list depending on user authorization to
+see the specific jobs.
 
 Besides owner of the specific query, administration of the query can be allowed
 to a group in the system as well, through the 'Group edit permission' option.

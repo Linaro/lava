@@ -1105,11 +1105,11 @@ def _create_pipeline_job(job_data, user, taglist, device=None,
     viewing_groups = []
     param = job_data['visibility']
 
-    if health_check and not device.is_public:
+    if health_check and device.device_type.owners_only:
         # 'lava-health' user is normally allowed to "ignore" visibility
         if isinstance(param, str):
             if param == 'public':
-                raise ConfigurationError("Publicly visible health check for restricted device")
+                raise ConfigurationError("Publicly visible health check requested for a hidden device-type.")
 
     if isinstance(param, str):
         if param == 'personal':
