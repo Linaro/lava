@@ -30,7 +30,7 @@ Recommends: ntp, git, tftpd-hpa, openbsd-inetd, ser2net,
  libguestfs-tools (>= 1.32.7) [amd64 i386], nfs-kernel-server, rpcbind,
  u-boot-tools, unzip, xz-utils, lxc (>= 1:2.0.7),
  debootstrap (>= 1.0.86), bridge-utils, rsync, dfu-util
-Suggests: apache2, bzr, img2simg, simg2img
+Suggests: apache2, bzr, img2simg, simg2img, docker.io
 Description: Linaro Automated Validation Architecture dispatcher
  LAVA is a continuous integration system for deploying operating
  systems onto physical and virtual hardware for running tests.
@@ -96,7 +96,7 @@ Depends: lava-server (= ${binary:Version}), lava-server-doc,
  lava-dispatcher, lava-coordinator, lava-dev, lavacli,
  lavapdu-client, ntp | ntpdate, tftpd-hpa, debootstrap (>= 1.0.86~),
  openssh-client, lxc (>= 1:2.0.6), rsync, bridge-utils, ${misc:Depends}
-Recommends: lavapdu-daemon, schroot, img2simg, simg2img
+Recommends: lavapdu-daemon, schroot, img2simg, simg2img, docker.io
 Suggests: vmdebootstrap, lava-tool
 Description: Linaro Automated Validation Architecture metapackage
  LAVA is a continuous integration system for deploying operating
