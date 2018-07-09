@@ -8,6 +8,20 @@ from lava_scheduler_app.tests.test_base_templates import (
 # pylint: disable=too-many-nested-blocks
 
 
+def barebox_helper(self, board):
+    data = """{% extends '""" + board + """.jinja2' %}"""
+    self.assertTrue(self.validate_data(board + "-0", data))
+    template_dict = prepare_jinja_template(board + "-0", data, raw=False)
+    self.assertIn("barebox", template_dict["actions"]["boot"]["methods"])
+    self.assertIn("ramdisk", template_dict["actions"]["boot"]["methods"]["barebox"])
+    commands = template_dict["actions"]["boot"]["methods"]["barebox"]["ramdisk"][
+        "commands"
+    ]
+    for command in commands:
+        self.assertNotIn("boot ", command)
+        self.assertIn("bootm", command)
+
+
 class TestBareboxTemplates(BaseTemplate.BaseTemplateCases):
     """
     Test rendering of jinja2 templates
@@ -26,14 +40,4 @@ class TestBareboxTemplates(BaseTemplate.BaseTemplateCases):
     """
 
     def test_imx6ul_pico_hobbit_template(self):
-        data = """{% extends 'imx6ul-pico-hobbit.jinja2' %}"""
-        self.assertTrue(self.validate_data("imx6ul-pico-hobbit-0", data))
-        template_dict = prepare_jinja_template("imx6ul-pico-hobbit-0", data, raw=False)
-        self.assertIn("barebox", template_dict["actions"]["boot"]["methods"])
-        self.assertIn("ramdisk", template_dict["actions"]["boot"]["methods"]["barebox"])
-        commands = template_dict["actions"]["boot"]["methods"]["barebox"]["ramdisk"][
-            "commands"
-        ]
-        for command in commands:
-            self.assertNotIn("boot ", command)
-            self.assertIn("bootm", command)
+        barebox_helper(self, "imx6ul-pico-hobbit")
