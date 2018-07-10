@@ -63,12 +63,12 @@ def read_logs(dir_name, start=0, end=None):
             f_log.seek(start_offset)
             if end is None:
                 return f_log.read().decode("utf-8")
-            else:
-                end_offset = _get_line_offset(f_idx, end)
-                if end_offset is None:
-                    return f_log.read().decode("utf-8")
-                else:
-                    return f_log.read(end_offset - start_offset).decode("utf-8")
+            end_offset = _get_line_offset(f_idx, end)
+            if end_offset is None:
+                return f_log.read().decode("utf-8")
+            if end_offset <= start_offset:
+                return ""
+            return f_log.read(end_offset - start_offset).decode("utf-8")
 
 
 def write_logs(f_log, f_idx, line):
