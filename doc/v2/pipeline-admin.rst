@@ -260,6 +260,35 @@ Current support includes:
 
 .. seealso:: :ref:`keep_dispatcher_dumb`
 
+.. _dispatcher_environment:
+
+Per dispatcher environment settings
+===================================
+
+Sometimes individual dispatchers can need different environment
+settings, for example when a remote dispatcher is added then any
+settings for ``HTTP_PROXY`` for other internal dispatchers cannot
+apply to the remote dispatcher.
+
+To support this, LAVA will check for dispatcher-specific environment
+files. If the files exist, the content will be used instead of applying
+any environment files for the entire instance.
+
+In a similar manner to :ref:`dispatcher_configuration` above, the
+configuration files are:
+
+* ``/etc/lava-server/dispatcher.d/<hostname>/env.yaml``
+
+* ``/etc/lava-server/dispatcher.d/<hostname>/env.dut.yaml``
+
+If the dispatcher specific configuration files are not present,
+lava-master will fallback to the environment files for the entire
+instance:
+
+* ``/etc/lava-server/env.yaml``
+
+* ``/etc/lava-server/env.dut.yaml``
+
 .. index:: pipeline device requirements
 
 .. _pipeline_device_requirements:
