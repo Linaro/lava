@@ -213,20 +213,15 @@ class TestSuite(models.Model, Queryable):
         max_length=200
     )
 
+    def testcase_count(self, value):
+        return self.testcase_set.filter(result=TestCase.RESULT_MAP[value]).count()
+
     def get_passfail_results(self):
         # Get pass fail results per lava_results_app.testsuite.
-        results = {}
-        results[self.name] = {
-            'pass': self.testcase_set.filter(
-                result=TestCase.RESULT_MAP['pass']).count(),
-            'fail': self.testcase_set.filter(
-                result=TestCase.RESULT_MAP['fail']).count(),
-            'skip': self.testcase_set.filter(
-                result=TestCase.RESULT_MAP['skip']).count(),
-            'unknown': self.testcase_set.filter(
-                result=TestCase.RESULT_MAP['unknown']).count()
-        }
-        return results
+        return {self.name: {'pass': self.testcase_count('pass'),
+                            'fail': self.testcase_count('fail'),
+                            'skip': self.testcase_count('skip'),
+                            'unknown': self.testcase_count('unknown')}}
 
     def get_measurement_results(self):
         # Get measurement values per lava_results_app.testcase.

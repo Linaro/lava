@@ -11,16 +11,25 @@ import jinja2
 import json
 import logging
 from nose.tools import nottest
+
 from django.db.models import Q, Case, When, IntegerField, Sum
+from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
+
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
+    NotificationRecipient,
     TestJob,
-    validate_job,
-    validate_device,
     Worker
 )
+from lava_scheduler_app.schema import (
+    validate_submission,
+    SubmissionException,
+)
 from lava_results_app.dbutils import map_metadata
+from lava_results_app.models import Query
 
 # pylint: disable=too-many-branches,too-many-statements,too-many-locals
 
@@ -220,3 +229,70 @@ def invalid_template(dt):
     else:
         d_template = False  # template exists, invalid check is False
     return d_template
+
+
+def validate_job(data):
+    try:
+        yaml_data = yaml.safe_load(data)
+    except yaml.YAMLError as exc:
+        raise SubmissionException("Loading job submission failed: %s." % exc)
+
+    # validate against the submission schema.
+    validate_submission(yaml_data)  # raises SubmissionException if invalid.
+    validate_yaml(yaml_data)  # raises SubmissionException if invalid.
+
+
+def validate_yaml(yaml_data):
+    if "notify" in yaml_data:
+        if "recipients" in yaml_data["notify"]:
+            for recipient in yaml_data["notify"]["recipients"]:
+                if recipient["to"]["method"] == \
+                   NotificationRecipient.EMAIL_STR:
+                    if "email" not in recipient["to"] and \
+                       "user" not in recipient["to"]:
+                        raise SubmissionException("No valid user or email address specified.")
+                else:
+                    if "handle" not in recipient["to"] and \
+                       "user" not in recipient["to"]:
+                        raise SubmissionException("No valid user or IRC handle specified.")
+                if "user" in recipient["to"]:
+                    try:
+                        User.objects.get(username=recipient["to"]["user"])
+                    except User.DoesNotExist:
+                        raise SubmissionException("%r is not an existing user in LAVA." % recipient["to"]["user"])
+                elif "email" in recipient["to"]:
+                    try:
+                        validate_email(recipient["to"]["email"])
+                    except ValidationError:
+                        raise SubmissionException("%r is not a valid email address." % recipient["to"]["email"])
+
+        if "compare" in yaml_data["notify"] and \
+           "query" in yaml_data["notify"]["compare"]:
+            query_yaml_data = yaml_data["notify"]["compare"]["query"]
+            if "username" in query_yaml_data:
+                try:
+                    query = Query.objects.get(
+                        owner__username=query_yaml_data["username"],
+                        name=query_yaml_data["name"])
+                    if query.content_type.model_class() != TestJob:
+                        raise SubmissionException(
+                            "Only TestJob queries allowed.")
+                except Query.DoesNotExist:
+                    raise SubmissionException(
+                        "Query ~%s/%s does not exist" % (
+                            query_yaml_data["username"],
+                            query_yaml_data["name"]))
+            else:  # Custom query.
+                if query_yaml_data["entity"] != "testjob":
+                    raise SubmissionException(
+                        "Only TestJob queries allowed.")
+                try:
+                    conditions = None
+                    if "conditions" in query_yaml_data:
+                        conditions = query_yaml_data["conditions"]
+                    Query.validate_custom_query(
+                        query_yaml_data["entity"],
+                        conditions
+                    )
+                except Exception as e:
+                    raise SubmissionException(e)

@@ -22,10 +22,9 @@ from lava_results_app.dbutils import (
     map_scanned_results,
     create_metadata_store,
     _get_action_metadata,  # pylint: disable=protected-access
-    testcase_export_fields,
-    export_testcase,
 )
 from lava_results_app.models import ActionData, MetaType, TestData, TestCase, TestSuite
+from lava_results_app.utils import export_testcase, testcase_export_fields
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.device import PipelineDevice
 from lava_dispatcher.test.test_defs import allow_missing_path

@@ -19,7 +19,6 @@ from lava_scheduler_app.models import (
     DeviceType,
     Worker,
 )
-from lava_results_app.models import TestCase
 from lava.utils.lavatable import LavaTable
 from django.db.models import Q
 from django.utils import timezone

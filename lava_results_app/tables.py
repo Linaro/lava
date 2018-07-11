@@ -79,20 +79,12 @@ class ResultsTable(LavaTable):
     def render_passes(self, record, table=None):
         if not self._check_job(record, table):
             return ''
-        return TestCase.objects.filter(
-            suite__job=record.job,
-            suite=record,
-            result=TestCase.RESULT_MAP['pass']
-        ).count()
+        return record.testcase_count('pass')
 
     def render_fails(self, record, table=None):
         if not self._check_job(record, table):
             return ''
-        return TestCase.objects.filter(
-            suite__job=record.job,
-            suite=record,
-            result=TestCase.RESULT_MAP['fail']
-        ).count()
+        return record.testcase_count('fail')
 
     def render_total(self, record, table=None):
         if not self._check_job(record, table):

@@ -8,12 +8,12 @@ import xmlrpc.client
 from django.test.client import Client
 from django.contrib.auth.models import Permission, User
 from django.utils import timezone
+from lava_scheduler_app.dbutils import validate_yaml
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
     Tag,
     TestJob,
-    validate_yaml,
     Alias,
 )
 from lava_scheduler_app.schema import validate_submission, validate_device, SubmissionException

@@ -1,10 +1,8 @@
 import os
 import yaml
 import logging
-import subprocess
 from django.db import DataError
 from django.utils.translation import ungettext_lazy
-from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from linaro_django_xmlrpc.models import AuthToken
 
@@ -118,3 +116,56 @@ def get_testcases_with_limit(testsuite, limit=None, offset=None):
         testcases = list(testsuite.testcase_set.all().order_by('id'))
 
     return testcases
+
+
+def testcase_export_fields():
+    """
+    Keep this list in sync with the keys in export_testcase
+    :return: list of fields used in export_testcase
+    """
+    return [
+        'job', 'suite', 'result', 'measurement', 'unit',
+        'duration', 'timeout',
+        'logged', 'level', 'metadata', 'url', 'name', 'id',
+        'log_start_line', 'log_end_line'
+    ]
+
+
+def export_testcase(testcase, with_buglinks=False):
+    """
+    Returns string versions of selected elements of a TestCase
+    Unicode causes issues with CSV and can complicate YAML parsing
+    with non-python parsers.
+    :param testcase: list of TestCase objects
+    :return: Dictionary containing relevant information formatted for export
+    """
+    metadata = dict(testcase.action_metadata) if testcase.action_metadata else {}
+    extra_source = []
+    extra_data = metadata.get('extra')
+    if isinstance(extra_data, str) and os.path.exists(extra_data):
+        with open(metadata['extra'], 'r') as extra_file:
+            # TODO: this can fail!
+            items = yaml.load(extra_file, Loader=yaml.CLoader)
+        # hide the !!python OrderedDict prefix from the output.
+        for key, value in items.items():
+            extra_source.append({key: value})
+        metadata['extra'] = extra_source
+    casedict = {
+        'name': str(testcase.name),
+        'job': str(testcase.suite.job_id),
+        'suite': str(testcase.suite.name),
+        'result': str(testcase.result_code),
+        'measurement': str(testcase.measurement),
+        'unit': str(testcase.units),
+        'level': metadata.get('level', ''),
+        'url': str(testcase.get_absolute_url()),
+        'id': str(testcase.id),
+        'logged': str(testcase.logged),
+        'log_start_line': str(testcase.start_log_line) if testcase.start_log_line else '',
+        'log_end_line': str(testcase.end_log_line) if testcase.end_log_line else '',
+        'metadata': metadata,
+    }
+    if with_buglinks:
+        casedict['buglinks'] = [str(url) for url in testcase.buglinks.values_list('url', flat=True)]
+
+    return casedict

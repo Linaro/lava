@@ -25,7 +25,6 @@ from django.core.exceptions import (
     MultipleObjectsReturned,
 )
 from django.core.urlresolvers import reverse
-from django.core.validators import validate_email
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
@@ -35,15 +34,15 @@ from django_restricted_resource.models import (
     RestrictedResource,
     RestrictedResourceManager
 )
-from lava_scheduler_app.managers import RestrictedTestJobQuerySet
-from lava_scheduler_app.schema import (
-    validate_submission,
-    SubmissionException
-)
 
 from lava_common.exceptions import ConfigurationError
+from lava_results_app.utils import export_testcase
 from lava_scheduler_app import utils
-from lava_scheduler_app.schema import validate_device
+from lava_scheduler_app.managers import RestrictedTestJobQuerySet
+from lava_scheduler_app.schema import (
+    SubmissionException,
+    validate_device
+)
 
 from urllib.request import urlopen, Request
 from urllib.parse import urlencode
@@ -92,74 +91,6 @@ class Tag(models.Model):
 
     def __str__(self):
         return self.name.lower()
-
-
-def validate_job(data):
-    try:
-        yaml_data = yaml.safe_load(data)
-    except yaml.YAMLError as exc:
-        raise SubmissionException("Loading job submission failed: %s." % exc)
-
-    # validate against the submission schema.
-    validate_submission(yaml_data)  # raises SubmissionException if invalid.
-    validate_yaml(yaml_data)  # raises SubmissionException if invalid.
-
-
-def validate_yaml(yaml_data):
-    if "notify" in yaml_data:
-        if "recipients" in yaml_data["notify"]:
-            for recipient in yaml_data["notify"]["recipients"]:
-                if recipient["to"]["method"] == \
-                   NotificationRecipient.EMAIL_STR:
-                    if "email" not in recipient["to"] and \
-                       "user" not in recipient["to"]:
-                        raise SubmissionException("No valid user or email address specified.")
-                else:
-                    if "handle" not in recipient["to"] and \
-                       "user" not in recipient["to"]:
-                        raise SubmissionException("No valid user or IRC handle specified.")
-                if "user" in recipient["to"]:
-                    try:
-                        User.objects.get(username=recipient["to"]["user"])
-                    except User.DoesNotExist:
-                        raise SubmissionException("%r is not an existing user in LAVA." % recipient["to"]["user"])
-                elif "email" in recipient["to"]:
-                    try:
-                        validate_email(recipient["to"]["email"])
-                    except ValidationError:
-                        raise SubmissionException("%r is not a valid email address." % recipient["to"]["email"])
-
-        if "compare" in yaml_data["notify"] and \
-           "query" in yaml_data["notify"]["compare"]:
-            from lava_results_app.models import Query
-            query_yaml_data = yaml_data["notify"]["compare"]["query"]
-            if "username" in query_yaml_data:
-                try:
-                    query = Query.objects.get(
-                        owner__username=query_yaml_data["username"],
-                        name=query_yaml_data["name"])
-                    if query.content_type.model_class() != TestJob:
-                        raise SubmissionException(
-                            "Only TestJob queries allowed.")
-                except Query.DoesNotExist:
-                    raise SubmissionException(
-                        "Query ~%s/%s does not exist" % (
-                            query_yaml_data["username"],
-                            query_yaml_data["name"]))
-            else:  # Custom query.
-                if query_yaml_data["entity"] != "testjob":
-                    raise SubmissionException(
-                        "Only TestJob queries allowed.")
-                try:
-                    conditions = None
-                    if "conditions" in query_yaml_data:
-                        conditions = query_yaml_data["conditions"]
-                    Query.validate_custom_query(
-                        query_yaml_data["entity"],
-                        conditions
-                    )
-                except Exception as e:
-                    raise SubmissionException(e)
 
 
 class Architecture(models.Model):
@@ -1846,9 +1777,6 @@ class TestJob(RestrictedResource):
         If output is True, the entire test job log file is included.
         If results is True, an export of all test cases is included.
         """
-        # Python3 circular dependency issues need this here.
-        from lava_results_app.dbutils import export_testcase
-
         data = {
             "id": self.pk,
             "status": self.get_legacy_status(),
@@ -1967,36 +1895,22 @@ class TestJob(RestrictedResource):
             return self.definition
 
     def get_passfail_results(self):
-        # Get pass fail results per lava_results_app.testsuite.
+        # Get pass fail results per lava_scheduler_app.testjob.
         results = {}
-        from lava_results_app.models import TestCase
         for suite in self.testsuite_set.all():
-            results[suite.name] = {
-                'pass': suite.testcase_set.filter(
-                    result=TestCase.RESULT_MAP['pass']).count(),
-                'fail': suite.testcase_set.filter(
-                    result=TestCase.RESULT_MAP['fail']).count(),
-                'skip': suite.testcase_set.filter(
-                    result=TestCase.RESULT_MAP['skip']).count(),
-                'unknown': suite.testcase_set.filter(
-                    result=TestCase.RESULT_MAP['unknown']).count()
-            }
+            results.update(suite.get_passfail_results())
         return results
 
     def get_measurement_results(self):
-        # Get measurement values per lava_results_app.testcase.
+        # Get measurement values per lava_scheduler_app.testjob.
         # TODO: add min, max
-        from lava_results_app.models import TestSuite, TestCase
-
         results = {}
-        for suite in TestSuite.objects.filter(job=self).prefetch_related(
+        for suite in self.testsuite_set.all().prefetch_related(
                 'testcase_set').annotate(
                     test_case_avg=models.Avg('testcase__measurement')):
-            if suite.name not in results:
-                results[suite.name] = {}
+            results.setdefault(suite.name, {})
             results[suite.name]['measurement'] = suite.test_case_avg
-            results[suite.name]['fail'] = suite.testcase_set.filter(
-                result=TestCase.RESULT_MAP['fail']).count()
+            results[suite.name]['fail'] = suite.testcase_count('fail')
 
         return results
 
@@ -2005,8 +1919,7 @@ class TestJob(RestrictedResource):
         results = {}
         attributes = [x.strip() for x in attributes.split(',')]
 
-        from lava_results_app.models import TestData
-        testdata = TestData.objects.filter(testjob=self).first()
+        testdata = self.testdata_set.first()
         if testdata:
             for attr in testdata.attributes.all():
                 if attr.name in attributes:
@@ -2024,27 +1937,18 @@ class TestJob(RestrictedResource):
         return self.end_time
 
     def get_xaxis_attribute(self, xaxis_attribute=None):
-
-        from lava_results_app.models import NamedTestAttribute, TestData
-        attribute = None
-        if xaxis_attribute:
-            with contextlib.suppress(Exception):
-                testdata = TestData.objects.filter(testjob=self).first()
-                if testdata:
-                    attribute = NamedTestAttribute.objects.filter(
-                        content_type=ContentType.objects.get_for_model(
-                            TestData),
-                        object_id=testdata.id,
-                        name=xaxis_attribute).values_list('value', flat=True)[0]
-
-        return attribute
+        if not xaxis_attribute:
+            return None
+        with contextlib.suppress(Exception):
+            testdata = self.testdata_set.first()
+            if not testdata:
+                return None
+            data = testdata.attributes.filter(name=xaxis_attribute)
+            return data.values_list('value', flat=True)[0]
 
     def get_metadata_dict(self):
-
-        from lava_results_app.models import TestData
         retval = []
-        data = TestData.objects.filter(testjob=self)
-        for datum in data:
+        for datum in self.testdata_set.all():
             for attribute in datum.attributes.all():
                 retval.append({attribute.name: attribute.value})
         return retval
@@ -2162,32 +2066,6 @@ class Notification(models.Model):
 
     def __str__(self):
         return str(self.test_job)
-
-    def get_query_results(self):
-        from lava_results_app.models import Query
-        if self.query_name:
-            query = Query.objects.get(name=self.query_name,
-                                      owner=self.query_owner)
-            # We use query_owner as user here since we show only status.
-            return query.get_results(self.query_owner)[:self.QUERY_LIMIT]
-        else:
-            return Query.get_queryset(
-                self.entity,
-                Query.parse_conditions(self.entity, self.conditions),
-                self.QUERY_LIMIT)
-
-    def get_query_link(self):
-        from lava_results_app.models import Query
-        if self.query_name:
-            query = Query.objects.get(name=self.query_name,
-                                      owner=self.query_owner)
-            return query.get_absolute_url()
-        else:
-            # Make absolute URL manually.
-            return "%s?entity=%s&conditions=%s" % (
-                reverse("lava.results.query_custom"),
-                self.entity.model,
-                self.conditions)
 
 
 class NotificationRecipient(models.Model):

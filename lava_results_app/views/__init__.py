@@ -27,6 +27,8 @@ import logging
 import simplejson
 import yaml
 from collections import OrderedDict
+
+from django_tables2 import RequestConfig
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from django.core import serializers
@@ -47,16 +49,7 @@ from lava_results_app.tables import (
     TestJobResultsTable
 )
 from lava_results_app.utils import StreamEcho
-from lava_results_app.dbutils import (
-    export_testcase,
-    testcase_export_fields,
-    export_testsuite
-)
-from lava_scheduler_app.models import TestJob
-from lava_scheduler_app.tables import pklink
-from lava_scheduler_app.views import get_restricted_job
-from django_tables2 import RequestConfig
-from lava_results_app.utils import check_request_auth, get_testcases_with_limit
+from lava_results_app.dbutils import export_testsuite
 from lava_results_app.models import (
     BugLink,
     QueryCondition,
@@ -65,6 +58,16 @@ from lava_results_app.models import (
     TestSet,
     TestData
 )
+from lava_results_app.utils import (
+    check_request_auth,
+    export_testcase,
+    get_testcases_with_limit,
+    testcase_export_fields,
+)
+from lava_scheduler_app.models import TestJob
+from lava_scheduler_app.tables import pklink
+from lava_scheduler_app.views import get_restricted_job
+
 from lava.utils.lavatable import LavaView
 
 # pylint: disable=too-many-ancestors,invalid-name

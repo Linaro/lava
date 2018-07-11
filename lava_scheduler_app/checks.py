@@ -28,8 +28,8 @@ from django.core.checks import (
     Warning,
 )
 
-from lava_scheduler_app.dbutils import invalid_template
-from lava_scheduler_app.models import Device, DeviceType, validate_job
+from lava_scheduler_app.dbutils import invalid_template, validate_job
+from lava_scheduler_app.models import Device, DeviceType
 from lava_scheduler_app.schema import SubmissionException
 # pylint: disable=unused-argument,missing-docstring,invalid-name
 

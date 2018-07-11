@@ -55,7 +55,6 @@ from lava_scheduler_app.models import (
     TestJob,
     TestJobUser,
     JSONDataError,
-    validate_job,
     DevicesUnavailableException,
     Worker,
 )
@@ -65,6 +64,7 @@ from lava_scheduler_app.dbutils import (
     invalid_template,
     load_devicetype_template,
     testjob_submission,
+    validate_job,
 )
 from lava_scheduler_app.logutils import read_logs
 from lava_scheduler_app.templatetags.utils import udecode

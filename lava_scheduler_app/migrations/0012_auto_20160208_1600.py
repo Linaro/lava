@@ -24,6 +24,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='devicetype',
             name='health_check_job',
-            field=models.TextField(blank=True, default=None, null=True, validators=[lava_scheduler_app.models.validate_job]),
+            field=models.TextField(blank=True, default=None, null=True, validators=[lava_scheduler_app.dbutils.validate_job]),
         ),
     ]

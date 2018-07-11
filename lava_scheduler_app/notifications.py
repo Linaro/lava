@@ -26,6 +26,7 @@ import socket
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
+from django.core.urlresolvers import reverse
 from django.db import IntegrityError
 
 from lava_scheduler_app import utils
@@ -48,6 +49,32 @@ def get_token_from_description(user, description):
         return AuthToken.objects.filter(user=user, description=description).first()
     except AuthToken.DoesNotExist:
         return description
+
+
+def get_query_results(notification):
+    if notification.query_name:
+        query = Query.objects.get(name=notification.query_name,
+                                  owner=notification.query_owner)
+        # We use query_owner as user here since we show only status.
+        return query.get_results(notification.query_owner)[:notification.QUERY_LIMIT]
+    else:
+        return Query.get_queryset(
+            notification.entity,
+            Query.parse_conditions(notification.entity, notification.conditions),
+            notification.QUERY_LIMIT)
+
+
+def get_query_link(notification):
+    if notification.query_name:
+        query = Query.objects.get(name=notification.query_name,
+                                  owner=notification.query_owner)
+        return query.get_absolute_url()
+    else:
+        # Make absolute URL manually.
+        return "%s?entity=%s&conditions=%s" % (
+            reverse("lava.results.query_custom"),
+            notification.entity.model,
+            notification.conditions)
 
 
 def substitute_callback_url_variables(job, callback_url):
@@ -100,8 +127,8 @@ def get_notification_args(job):
 
     args["query"] = {}
     if job.notification.query_name or job.notification.entity:
-        args["query"]["results"] = job.notification.get_query_results()
-        args["query"]["link"] = job.notification.get_query_link()
+        args["query"]["results"] = get_query_results(job.notification)
+        args["query"]["link"] = get_query_link(job.notification)
         # Find the first job which has health HEALTH_COMPLETE and is not the
         # current job (this can happen with custom queries) for comparison.
         compare_index = None

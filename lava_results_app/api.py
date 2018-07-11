@@ -26,8 +26,6 @@ from linaro_django_xmlrpc.models import ExposedAPI
 from django.db.models.fields import FieldDoesNotExist
 
 from lava_results_app.dbutils import (
-    export_testcase,
-    testcase_export_fields,
     export_testsuite,
     testsuite_export_fields
 )
@@ -40,7 +38,11 @@ from lava_results_app.models import (
     TestSuite,
     InvalidContentTypeError,
 )
-from lava_results_app.utils import get_testcases_with_limit
+from lava_results_app.utils import (
+    export_testcase,
+    get_testcases_with_limit,
+    testcase_export_fields,
+)
 from lava_scheduler_app.models import TestJob
 
 
