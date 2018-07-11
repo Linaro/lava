@@ -2,7 +2,6 @@ debian/lava/usr/lib/python3/dist-packages/lava_server ./usr/lib/python3/dist-pac
 debian/lava/usr/lib/python3/dist-packages/dashboard_app ./usr/lib/python3/dist-packages/
 debian/lava/usr/lib/python3/dist-packages/lava_scheduler_app ./usr/lib/python3/dist-packages/
 debian/lava/usr/lib/python3/dist-packages/lava_results_app ./usr/lib/python3/dist-packages/
-debian/lava/usr/lib/python3/dist-packages/google_analytics ./usr/lib/python3/dist-packages/
 debian/lava/usr/lib/python3/dist-packages/lava/utils ./usr/lib/python3/dist-packages/lava/
 debian/lava/usr/lib/python3/dist-packages/linaro_django_xmlrpc/ ./usr/lib/python3/dist-packages/
 etc/instance.conf.template ./usr/share/lava-server/
