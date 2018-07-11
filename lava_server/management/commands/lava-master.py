@@ -64,6 +64,11 @@ SCHEDULE_INTERVAL = 20
 # Log format
 FORMAT = '%(asctime)-15s %(levelname)7s %(message)s'
 
+# Configuration files
+ENV_PATH = "/etc/lava-server/env.yaml"
+ENV_DUT_PATH = "/etc/lava-server/env.dut.yaml"
+DISPATCHERS_PATH = "/etc/lava-server/dispatcher.d"
+
 
 def send_multipart_u(sock, data):
     """ Wrapper around send_multipart that encode data as bytes.
@@ -159,21 +164,6 @@ class Command(LAVADaemonCommand):
 
     def add_arguments(self, parser):
         super().add_arguments(parser)
-        # Important: ensure share/env.yaml is put into /etc/ by setup.py in packaging.
-        config = parser.add_argument_group("dispatcher config")
-
-        config.add_argument('--env',
-                            default="/etc/lava-server/env.yaml",
-                            help="Environment variables for the dispatcher processes. "
-                                 "Default: /etc/lava-server/env.yaml")
-        config.add_argument('--env-dut',
-                            default="/etc/lava-server/env.dut.yaml",
-                            help="Environment variables for device under test. "
-                                 "Default: /etc/lava-server/env.dut.yaml")
-        config.add_argument('--dispatchers-config',
-                            default="/etc/lava-server/dispatcher.d",
-                            help="Directory that might contain dispatcher specific configuration")
-
         net = parser.add_argument_group("network")
         net.add_argument('--master-socket',
                          default='tcp://*:5556',
@@ -405,11 +395,11 @@ class Command(LAVADaemonCommand):
         with open(os.path.join(output_dir, "job.yaml"), "w") as f_out:
             f_out.write(self.export_definition(job))
         with contextlib.suppress(IOError):
-            shutil.copy(options["env"], os.path.join(output_dir, "env.yaml"))
+            shutil.copy(ENV_PATH, os.path.join(output_dir, "env.yaml"))
         with contextlib.suppress(IOError):
-            shutil.copy(options["env_dut"], os.path.join(output_dir, "env.dut.yaml"))
+            shutil.copy(ENV_DUT_PATH, os.path.join(output_dir, "env.dut.yaml"))
         with contextlib.suppress(IOError):
-            shutil.copy(os.path.join(options["dispatchers_config"], "%s.yaml" % worker.hostname),
+            shutil.copy(os.path.join(DISPATCHERS_PATH, "%s.yaml" % worker.hostname),
                         os.path.join(output_dir, "dispatcher.yaml"))
         with open(os.path.join(output_dir, "device.yaml"), "w") as f_out:
             yaml.dump(device_cfg, f_out)
@@ -424,10 +414,11 @@ class Command(LAVADaemonCommand):
         worker = device.worker_host
 
         # Load configurations
-        env_str = load_optional_yaml_file(options['env'])
-        env_dut_str = load_optional_yaml_file(options['env_dut'])
+        env_str = load_optional_yaml_file(ENV_PATH)
+        env_dut_str = load_optional_yaml_file(ENV_DUT_PATH)
+        # TODO: check that device_cfg is not None!
         device_cfg = device.load_configuration(job_ctx)
-        dispatcher_cfg_file = os.path.join(options['dispatchers_config'],
+        dispatcher_cfg_file = os.path.join(DISPATCHERS_PATH,
                                            "%s.yaml" % worker.hostname)
         dispatcher_cfg = load_optional_yaml_file(dispatcher_cfg_file)
 
