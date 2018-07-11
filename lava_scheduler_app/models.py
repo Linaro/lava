@@ -31,8 +31,6 @@ from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
 from django.core.validators import validate_email
 from django.db import models, IntegrityError
-from django.db.models.signals import pre_save
-from django.dispatch import receiver
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
@@ -2793,27 +2791,6 @@ class NotificationCallback(models.Model):
             except Exception as ex:
                 logger.warning("Problem sending request to %s: %s" % (
                     self.url, ex))
-
-
-@receiver(pre_save, sender=TestJob, dispatch_uid="process_notifications")
-def process_notifications(sender, **kwargs):
-    new_job = kwargs["instance"]
-    notification_state = [TestJob.STATE_RUNNING, TestJob.STATE_FINISHED]
-    # If it's a new TestJob, no need to send notifications.
-    if new_job.id:
-        old_job = TestJob.objects.get(pk=new_job.id)
-        if new_job.state in notification_state and \
-           old_job.state != new_job.state:
-            job_def = yaml.safe_load(new_job.definition)
-            if "notify" in job_def:
-                if new_job.notification_criteria(job_def["notify"]["criteria"],
-                                                 old_job):
-                    try:
-                        old_job.notification
-                    except ObjectDoesNotExist:
-                        new_job.create_notification(job_def["notify"])
-
-                    new_job.send_notifications()
 
 
 class TestJobUser(models.Model):
