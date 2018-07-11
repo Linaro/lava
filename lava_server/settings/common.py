@@ -46,7 +46,6 @@ INSTALLED_APPS = [
     # Add LAVA dependencies
     'django_tables2',
     'linaro_django_xmlrpc',
-    'google_analytics',
     # Add contrib
     'django.contrib.admin',
     'django.contrib.auth',
@@ -136,9 +135,6 @@ for module_name in ["devserver", "django_extensions", "django_openid_auth", "hij
     with contextlib.suppress(ImportError):
         imp.find_module(module_name)
         INSTALLED_APPS.append(module_name)
-
-# Add google analytics model.
-GOOGLE_ANALYTICS_MODEL = True
 
 # General URL prefix
 MOUNT_POINT = ""

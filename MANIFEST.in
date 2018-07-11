@@ -20,8 +20,6 @@ include etc/lava-server-gunicorn.service
 include etc/logrotate.d/*
 include etc/settings.conf
 include fake-dispatcher
-include google_analytics/LICENSE
-include google_analytics/USAGE
 include lava/dispatcher/lava-run
 include lava/dispatcher/lava-slave
 include lava/lxc-mocker/*
@@ -54,7 +52,6 @@ recursive-include doc/v2/images *.gif *.png *.jpg *.jpeg *.bmp *.svg *.odg
 recursive-include doc/v2/examples *.yaml *.txt *.py *.jinja2
 recursive-include doc/v2/_templates *.html
 recursive-include etc/dispatcher-config README
-recursive-include google_analytics/templates *.html
 recursive-include lava_dispatcher/devices *.yaml
 recursive-include lava_dispatcher/test *.yaml *.txt
 recursive-include lava_results_app/templates *.html

@@ -1,4 +1,4 @@
-{% load analytics %}<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE }}">
 <head>
   <meta charset="utf-8">
@@ -68,7 +68,6 @@
 </head>
 
 <body onload="fix_anchor_offset()">
-{% analytics %}
 {% block body %}{% endblock %}
 
 <script type="text/javascript" src="{{ STATIC_URL }}lava_server/js/jquery-1.11.0.min.js"></script>
