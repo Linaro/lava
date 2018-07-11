@@ -42,6 +42,13 @@ from django.core.exceptions import MultipleObjectsReturned
 from lava_common.timeout import Timeout
 
 
+def yaml_decimal_str(dumper, value):
+    return yaml.ScalarNode(tag=u'tag:yaml.org,2002:str', value=str(value))
+
+
+yaml.add_representer(decimal.Decimal, yaml_decimal_str)
+
+
 def _check_for_testset(result_dict, suite):
     """
     The presence of the test_set key indicates the start and usage of a TestSet.
