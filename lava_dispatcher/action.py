@@ -36,6 +36,7 @@ from lava_common.exceptions import (
 from lava_dispatcher.log import YAMLLogger
 from lava_dispatcher.utils.lxc import is_lxc_requested
 from lava_dispatcher.utils.strings import seconds_to_str
+from lava_dispatcher.deployment_data import deployment_data_dict
 
 
 class InternalObject(object):  # pylint: disable=too-few-public-methods
@@ -405,6 +406,13 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         except ValueError:
             raise LAVABug("Action results need to be a dictionary")
 
+    def get_constant(self, key, prefix):
+        # whilst deployment data is still supported, check if the key exists there.
+        # once deployment_data is removed, merge with device.get_constant
+        if self.parameters.get('deployment_data'):
+            return self.parameters['deployment_data'][key]
+        return self.job.device.get_constant(key, prefix=prefix)
+
     def validate(self):
         """
         This method needs to validate the parameters to the action. For each
@@ -622,7 +630,8 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
                 data[attr] = getattr(self, attr)
         if 'deployment_data' in self.parameters:
             data['parameters'] = dict()
-            data['parameters']['deployment_data'] = self.parameters['deployment_data'].__data__
+            if isinstance(self.parameters['deployment_data'], deployment_data_dict):
+                data['parameters']['deployment_data'] = self.parameters['deployment_data'].__data__
         return data
 
     def get_namespace_keys(self, action, parameters=None):

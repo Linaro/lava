@@ -225,6 +225,32 @@ class TestKVMBasicDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
                 self.assertEqual(len(action.parameters['definitions']), 2)
 
 
+class TestKVMPortable(StdoutTestCase):  # pylint: disable=too-many-public-methods
+
+    def setUp(self):
+        super().setUp()
+        factory = Factory()
+        self.job = factory.create_kvm_job('sample_jobs/kvm-noos.yaml')
+
+    def test_deploy_job(self):
+        self.assertEqual(self.job.pipeline.job, self.job)
+        for action in self.job.pipeline.actions:
+            if isinstance(action, DeployAction):
+                self.assertEqual(action.job, self.job)
+
+    def test_pipeline(self):
+        description_ref = self.pipeline_reference('kvm-noos.yaml')
+        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+
+    def test_validate(self):
+        try:
+            allow_missing_path(self.job.pipeline.validate_actions, self, 'qemu-system-x86_64')
+        except JobError as exc:
+            self.fail(exc)
+        for action in self.job.pipeline.actions:
+            self.assertEqual([], action.errors)
+
+
 class TestKVMQcow2Deploy(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):

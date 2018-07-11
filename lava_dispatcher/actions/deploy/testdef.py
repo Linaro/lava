@@ -208,9 +208,10 @@ class RepoAction(Action):
             raise LAVABug("Overlay location does not exist")
 
         # runner_path is the path to read and execute from to run the tests after boot
+        lava_test_results_dir = self.get_constant('lava_test_results_dir', 'posix')
         args = self.parameters
         runner_path = os.path.join(
-            args['deployment_data']['lava_test_results_dir'] % self.job.job_id,
+            lava_test_results_dir % self.job.job_id,
             str(self.stage),
             'tests',
             args['test_name']
@@ -981,7 +982,8 @@ class TestInstallAction(TestOverlayAction):
                 deps = testdef['install'].get('deps', [])
 
                 # distro-specific dependencies
-                deps = deps + testdef['install'].get('deps-' + self.parameters['deployment_data']['distro'], [])
+                if 'distro' in self.parameters['deployment_data']:
+                    deps = deps + testdef['install'].get('deps-' + self.parameters['deployment_data']['distro'])
 
                 if deps:
                     install_file.write('lava-install-packages ')

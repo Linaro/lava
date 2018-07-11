@@ -103,22 +103,23 @@ class OverlayAction(DeployAction):
         # Distro-specific scripts override the generic ones
         if not self.test_needs_overlay(self.parameters):
             return
-        lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
+        lava_test_results_dir = self.get_constant('lava_test_results_dir', 'posix')
         lava_test_results_dir = lava_test_results_dir % self.job.job_id
         self.set_namespace_data(action='test', label='results', key='lava_test_results_dir',
                                 value=lava_test_results_dir)
-        lava_test_sh_cmd = self.parameters['deployment_data']['lava_test_sh_cmd']
+        lava_test_sh_cmd = self.get_constant('lava_test_sh_cmd', 'posix')
         self.set_namespace_data(action='test', label='shared', key='lava_test_sh_cmd',
                                 value=lava_test_sh_cmd)
 
-        # Add distro support scripts
-        distro = self.parameters['deployment_data']['distro']
-        distro_support_dir = '%s/distro/%s' % (self.lava_test_dir, distro)
-        self.scripts_to_copy += sorted(glob.glob(os.path.join(distro_support_dir,
-                                                              'lava-*')))
+        # Add distro support scripts - only if deployment_data is set
+        distro = self.parameters['deployment_data'].get('distro')
+        if distro:
+            distro_support_dir = '%s/distro/%s' % (self.lava_test_dir, distro)
+            self.scripts_to_copy += sorted(glob.glob(os.path.join(distro_support_dir,
+                                                                  'lava-*')))
 
         if not self.scripts_to_copy:
-            self.errors = "Unable to locate lava_test_shell support scripts."
+            self.logger.debug("Skipping lava_test_shell support scripts.")
         if 'parameters' in self.job.device:
             if 'interfaces' in self.job.device['parameters']:
                 if 'target' in self.job.device['parameters']['interfaces']:

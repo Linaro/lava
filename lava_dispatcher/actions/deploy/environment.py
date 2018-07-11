@@ -41,8 +41,8 @@ class DeployDeviceEnvironment(Action):
 
     def validate(self):
         super().validate()
-        if 'lava_test_shell_file' not in \
-           self.parameters['deployment_data'].keys():
+        shell_file = self.get_constant('lava_test_shell_file', 'posix')
+        if not shell_file:
             self.errors = "Invalid deployment data - missing lava_test_shell_file"
 
         if 'env_dut' in self.job.parameters and self.job.parameters['env_dut']:

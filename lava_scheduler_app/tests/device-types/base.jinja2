@@ -69,6 +69,13 @@ character_delays:
 
 {% block constants %}
 constants:
+
+  # POSIX os (not AOSP)
+  posix:
+    lava_test_sh_cmd: '/bin/sh'
+    lava_test_results_dir: '/lava-%s'
+    lava_test_shell_file: '~/.bashrc'
+
   # bootloader specific
   u-boot:
     interrupt-prompt: '{{ uboot_autoboot_prompt | default("Hit any key to stop autoboot") }}'
