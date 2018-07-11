@@ -207,7 +207,10 @@ def schedule_jobs_for_device_type(logger, dt, available_devices):
     devices = devices.filter(state=Device.STATE_IDLE)
     devices = devices.filter(worker_host__state=Worker.STATE_ONLINE)
     devices = devices.filter(health__in=[Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN])
-    devices = devices.order_by("is_public", "hostname")
+    # Add a random sort: with N devices and num(jobs) < N, if we don't sort
+    # randomly, the same devices will always be used while the others will
+    # never be used.
+    devices = devices.order_by("is_public", "?")
 
     jobs = []
     for device in devices:
