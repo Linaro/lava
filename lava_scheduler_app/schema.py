@@ -110,6 +110,7 @@ def _test_definition_schema():
             Required('name'): str,
             Required('path'): str,
             Optional('parameters'): dict,
+            Optional('timeout'): _timeout_schema(),
         }
     ], extra=True)
 
