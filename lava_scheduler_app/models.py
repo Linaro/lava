@@ -2768,7 +2768,7 @@ class NotificationCallback(models.Model):
             callback_data = self.notification.test_job.create_job_data(
                 token=self.token, output=output, results=results)
             # store callback_data for later retrieval & triage
-            job_data_file = os.path.join(job.output_dir, 'job_data.gz')
+            job_data_file = os.path.join(self.notification.test_job.output_dir, 'job_data.gz')
             if callback_data and not os.path.exists(job_data_file):
                 with gzip.open(job_data_file, 'wb') as output:
                     output.write(simplejson.dumps(callback_data).encode('utf-8'))
