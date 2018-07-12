@@ -827,6 +827,17 @@ A test job may consist of several LAVA test definitions and multiple
 deployments, but this flexibility needs to be balanced against the complexity
 of the job and the ways to analyse the results.
 
+As with all things in automation, the core principles of best practice
+can be summarised as:
+
+#. Start small
+
+#. Build slowly
+
+#. Change only one thing at a time
+
+#. Test every change
+
 .. index:: test shell - portability
 
 .. _test_definition_portability:
@@ -927,16 +938,37 @@ other jobs for other users in between the smaller jobs.
 Retain at least some debug output in the final test definitions
 ***************************************************************
 
-Information about which commit or version of any third-party code is and will
-remain useful when debugging failures. When cloning such code, call a script in
-the code or use the version control tools to output information about the
-cloned copy. You may want to include the most recent commit message or the
-current commit hash or version control tag or branch name.
+Information about which commit or version of any third-party code is
+and will remain useful when debugging failures. When cloning such code,
+call a script in the code or use the version control tools to output
+information about the cloned copy. You may want to include the most
+recent commit message or the current commit hash or version control tag
+or branch name.
 
-If an item of configuration is important to how the test operates, write a test
-case or a custom script which reports this information. Even if this only
-exists in the test job log output, it will still be useful when comparing the
-log files of other similar jobs.
+If an item of configuration is important to how the test operates,
+write a test case or a custom script which reports this information.
+Even if this only exists in the test job log output, it will still be
+useful when comparing the log files of other similar jobs.
+
+Mock up the device output to test the scripts
+*********************************************
+
+Avoid waiting for a device to deploy and boot for each iteration in the
+development of test support scripts. Copy the output of a working
+device and use that as the input to the scripts which process the logs
+to identify results and cut out the noise.
+
+Where possible, include such mock ups as tests which can be run in
+another CI process, triggered each time the scripts are modified.
+
+Use functional tests to validate common functionality
+*****************************************************
+
+Use the principles of :ref:`functional_testing` to test common code
+used by the test jobs. For example, if a shell library is used, ensure
+that your smoke tests definitions are changed to use the shell library
+so that all health checks and functional tests provide test coverage
+for the shell library.
 
 .. index:: test shell - check for support
 
