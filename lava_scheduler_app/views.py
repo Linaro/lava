@@ -827,7 +827,7 @@ def device_type_detail(request, pk):
             available_devices_label = "danger"
 
     if dt.disable_health_check:
-        health_freq_str = "Disabled"
+        health_freq_str = "disabled"
     elif dt.health_denominator == DeviceType.HEALTH_PER_JOB:
         health_freq_str = "one every %d jobs" % dt.health_frequency
     else:
