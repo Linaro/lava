@@ -59,14 +59,18 @@ def description_data(job):
     filename = description_filename(job)
     if not filename:
         return {}
+
+    data = None
     try:
         data = yaml.load(open(filename, 'r'), Loader=V2Loader)
-    except yaml.YAMLError:
-        logger.error("Unable to parse description for %s" % job.id)
-        return {}
-    if not data:
-        return {}
-    return data
+    except yaml.YAMLError as exc:
+        logger.error("Unable to parse description for %s", job.id)
+        logger.exception(exc)
+    except OSError as exc:
+        logger.error("Unable to open description for %s", job.id)
+        logger.exception(exc)
+    # This should be a dictionary, None is not acceptable
+    return data if data else {}
 
 
 # FIXME: relocate these two functions into dbutils to avoid needing django settings here.
