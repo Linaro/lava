@@ -14,26 +14,88 @@ However, unit tests cannot properly test the ``run()`` functions or
 performance of the code with real hardware. Two extra levels of testing
 are available:
 
-* **meta-lava** - tests the ``run()`` functions against static log
+* :ref:`metalava` - tests the ``run()`` functions against static log
   files. This is useful for devices which are not available to a
   particular instance but will need updating if changes in the code
   cause differences in the messages sent to the device.
 
-* **functional testing** - running test jobs on real hardware. The
-  extra cost of infrastructure, administration and maintenance is
-  worthwhile to ensure that changes actually perform the required work.
-  Also provides opportunities to test the scheduling of the queue and
-  can highlight resource limitations.
+* :ref:`Functional testing <purpose_functional_tests>` - running test
+  jobs on real hardware. The extra cost of infrastructure,
+  administration and maintenance is worthwhile to ensure that changes
+  actually perform the required work. Also provides opportunities to
+  test the scheduling of the queue and can highlight resource
+  limitations.
 
 The LAVA UI is **not** part of functional testing. Wherever possible,
 unit tests are used for the UI. Functional testing relates to the code
 paths required to schedule, run and cleanup test jobs.
 
+.. index:: meta-lava
+
+.. _meta_lava:
+
+meta-lava
+*********
+
+``meta-lava`` is a way of running idealised test jobs to test changes
+in the LAVA codebase. It was developed to provide limited test coverage
+when suitable hardware was not available. It can be used to provide
+test coverage for code which detects unusual or intermittent behaviour
+by replaying a static log against changes in the codebase.
+``meta-lava`` creates a DummySys device based on real log files and
+then checks that the inputs from LAVA are correct for that specific use
+case.
+
+https://framagit.org/ivoire/meta-lava/
+
+``meta-lava`` is a python script that will:
+
+* build lava-server and lava-dispatcher docker image
+
+  * installs lava-server or lava-dispatcher using debian packaging
+
+  * fetches the source from git.linaro.org and adds the right symlinks
+
+* start the containers and link them in the same network (lava-slave,
+  lava-master)
+
+* during the startup, fetch the last git commits (in case the docker
+  image were build with an old version)
+
+* wait for the xmlrpc api to show up
+
+* wait for the worker to be up and running (polling the xmlrpc api)
+
+* run a bunch of lava jobs and compare the results with the expected
+  ones.
+
+Currently we test:
+
+* ``tests/health-checks``: Check that lava is sending exactly the same
+  set of commands and providing the right binaries (ramdisk, kernel,
+  dtb over tftp)
+
+* ``tests/bootloader``: Check that lava is detecting and classifying
+  common bootloader errors
+
+* ``tests/notitications``: Check that lava is sending the notifications
+  as expected (no irc or emails yet)
+
+Future plans
+============
+
+* Add more use cases and job output (logs).
+
+* Make test runs public
+
+.. _purpose_functional_tests:
+
 Purpose of functional tests
 ***************************
 
 Functional tests serve to check the changes in the codebase against
-unchanging test job images, resources, metadata, submitter and results.
+unchanging test job images, resources, metadata, submitter and results
+running on real hardware.
 
 Functional tests are similar to health checks and both differ from test
 jobs used elsewhere in your CI due to fundamentally different
