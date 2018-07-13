@@ -1,0 +1,6 @@
+{% extends 'meson-gx-common.jinja2' %}
+
+{% set device_type = "meson-gxm-khadas-vim2" %}
+{% set bootloader_prompt = bootloader_prompt|default('kvim2#') %}
+{% set interrupt_char = interrupt_char|default('\n') %}
+{% set interrupt_ctrl_list = ['c'] %}
