@@ -3,13 +3,6 @@
 {% block content %}
 
 {% load i18n %}
-{% comment %}
-Despite being introduced for django1.8 warnings, loading cycle from future
-is already deprecated in 1.9 and to be removed in 1.10. Once 1.10 is available,
-remove the loading from future and live with the warning from 1.8
-https://git.linaro.org/lava/lava-server.git/b727660635e57d5ccdb08272f0a379207a333d8b
-{% load cycle from future %}
-{% endcomment %}
 {% block table %}
 <div class="row">
   <div class="col-md-6">
@@ -28,7 +21,7 @@ https://git.linaro.org/lava/lava-server.git/b727660635e57d5ccdb08272f0a379207a33
     </div>
     </form>
   </div>
-{%  if search_data|get_search_data:table.prefix %}
+{%  if table.Meta.searches|get_search_data:table.prefix %}
   <div class="col-md-5">
     <form class="form-inline pull-right" action="{% querystring "search"="" %}#{{ table.prefix|default:"table" }}" method="GET">
       {% for key,value in request.GET.iteritems %}
@@ -53,21 +46,21 @@ https://git.linaro.org/lava/lava-server.git/b727660635e57d5ccdb08272f0a379207a33
           <div class="modal-body">
             <p>Availble methods and fields</p>
             <dl class="dl-horizontal">
-              {% if search_data|get_search_data:table.prefix %}
+              {% if table.Meta.searches|get_search_data:table.prefix %}
                 <dt>Simple text</dt>
-                <dd>{{ search_data|get_search_data:table.prefix|join:", " }} <abbr title="text entered in the search box will be used in case sensitive matches - any field can match.">(?)</abbr></dd>
+                <dd>{{ table.Meta.searches|get_search_data:table.prefix|join:", " }} <abbr title="text entered in the search box will be used in case sensitive matches - any field can match.">(?)</abbr></dd>
               {% endif %}
-              {% if times_data|get_search_data:table.prefix %}
+              {% if table.Meta.times|get_search_data:table.prefix %}
                 <dt>Time based</dt>
-                <dd>{{ times_data|get_search_data:table.prefix|join:", " }} <abbr title="add the filter and a number in the query string, e.g. end_time=48 - all rows must match.">(?)</abbr></dd>
+                <dd>{{ table.Meta.times|get_search_data:table.prefix|join:", " }} <abbr title="add the filter and a number in the query string, e.g. end_time=48 - all rows must match.">(?)</abbr></dd>
               {% endif %}
-              {% if discrete_data|get_discrete_data:table.prefix %}
+              {% if table.Meta.discrete|get_discrete_data:table.prefix %}
                 <dt>Exclusive text</dt>
-                <dd>{{ discrete_data|get_discrete_data:table.prefix|join:", " }} <abbr title="add field=text in the querystring to make case sensitive matches - all fields must match.">(?)</abbr></dd>
+                <dd>{{ table.Meta.discrete|get_discrete_data:table.prefix|join:", " }} <abbr title="add field=text in the querystring to make case sensitive matches - all fields must match.">(?)</abbr></dd>
               {% endif %}
-              {% if terms_data|get_terms_data:table.prefix %}
+              {% if table.Meta.terms|get_terms_data:table.prefix %}
                 <dt>Case-sensitive text</dt>
-                <dd>{{ terms_data|get_terms_data:table.prefix|join:", " }}</dd>
+                <dd>{{ table.Meta.terms|get_terms_data:table.prefix|join:", " }}</dd>
               {% endif %}
             </dl>
           </div>

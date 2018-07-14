@@ -576,9 +576,6 @@ class DeviceTypeTable(LavaTable):
             'architecture', 'health_denominator', 'health_frequency',
             'processor', 'cpu_model', 'bits', 'cores', 'core_count', 'description'
         ]
-        searches = {
-            'name': 'contains',
-        }
 
 
 class DeviceTable(LavaTable):

@@ -687,7 +687,7 @@ def maintenance_devices(request):
 @BreadCrumb("Device Types", parent=index)
 def all_device_types(request):
     data = DeviceTypeOverView(request, model=DeviceType, table_class=DeviceTypeTable)
-    ptable = DeviceTypeTable(data.get_table_data(), prefix="device_type_")
+    ptable = DeviceTypeTable(data.get_table_data())
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
 
     return render(request,
