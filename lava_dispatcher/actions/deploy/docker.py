@@ -62,8 +62,6 @@ class DockerAction(Action):
             self.logger.debug("docker client, installed at version: %s", out)
         except subprocess.CalledProcessError as exc:
             raise InfrastructureError("Unable to call '%s': %s" % (exc.cmd, exc.output))
-        except OSError:
-            raise InfrastructureError("Command 'docker' does not exist")
 
         # "image" can be a dict or a string
         image = self.parameters["image"]
