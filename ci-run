@@ -56,6 +56,7 @@ find . -name '*.pyc' -delete
 rm -rf ./.cache/
 rm -rf ./__init__.py
 rm -rf lava.egg-info/
+rm -rf .pytest_cache/
 find . -name __pycache__ -exec rmdir "{}" \; 2>/dev/null || true
 
 if [ -n "${CLEAN}" ]
