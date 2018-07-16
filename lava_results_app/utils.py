@@ -33,8 +33,16 @@ class V2Loader(yaml.Loader):
         return self.construct_python_object(suffix, node)
 
     def remove_pipeline_module_name(self, suffix, node):
+        # Fix old dumps when "pipeline" was a module
         if 'lava_dispatcher.pipeline' in suffix:
             suffix = suffix.replace('lava_dispatcher.pipeline', 'lava_dispatcher')
+        # Fix dumps when dispatcher exceptions where not in lava_common.
+        exceptions = ["ConfigurationError", "InfrastructureError",
+                      "JobCanceled", "JobError", "LAVABug",
+                      "MultinodeProtocolTimeoutError", "TestError"]
+        for exc in exceptions:
+            if 'lava_dispatcher.action.%s' % exc in suffix:
+                suffix = suffix.replace('lava_dispatcher.action.%s' % exc, 'lava_common.exceptions.%s' % exc)
         return self.construct_python_name(suffix, node)
 
     def remove_pipeline_module_new(self, suffix, node):
