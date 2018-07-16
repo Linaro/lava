@@ -464,11 +464,11 @@ class TestMultinode(StdoutTestCase):  # pylint: disable=too-many-public-methods
                 'action': 'execute-qemu',
                 'message': {
                     'ipv4': '$IPV4',
-                    'yaml_line': 65
+                    'yaml_line': 23
                 },
                 'messageID': 'test',
                 'request': 'lava-wait',
-                'yaml_line': 62
+                'yaml_line': 22
             }])
         client_calls = {}
         for action in retry.internal_pipeline.actions:
@@ -514,9 +514,9 @@ class TestMultinode(StdoutTestCase):  # pylint: disable=too-many-public-methods
                 'action': 'execute-qemu',
                 'message': {
                     'ipv4': reply['message'][mn_protocol.job_id]['ipv4'],
-                    'yaml_line': 65
+                    'yaml_line': 23
                 },
-                'yaml_line': 62,
+                'yaml_line': 22,
                 'request': 'lava-wait',
                 'messageID': 'test'
             }

@@ -39,7 +39,8 @@ actions:
 
 - test:
     timeout:
-      minutes: 5
+      seconds: 20
+      skip: true
     definitions:
     - repository:
         metadata:
@@ -56,6 +57,10 @@ actions:
       from: git
       path: lava-test-shell/smoke-tests-basic.yaml
       name: smoke-tests
+    - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+      from: git
+      path: lava-test-shell/single-node/singlenode03.yaml
+      name: singlenode-advanced
 
 - boot:
     method: qemu

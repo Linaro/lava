@@ -54,7 +54,8 @@ def _timeout_schema():
         Exclusive('days', 'timeout_unit'): int,
         Exclusive('hours', 'timeout_unit'): int,
         Exclusive('minutes', 'timeout_unit'): int,
-        Exclusive('seconds', 'timeout_unit'): int
+        Exclusive('seconds', 'timeout_unit'): int,
+        Optional('skip'): bool,
     })
 
 
@@ -196,12 +197,12 @@ def _job_notify_schema():
 
 
 def _recipient_schema():
-    from lava_scheduler_app.models import NotificationRecipient
+    EMAIL_STR = 'email'
+    IRC_STR = 'irc'
     return Schema([
         {
             Required('to'): {
-                Required('method'): Any(NotificationRecipient.EMAIL_STR,
-                                        NotificationRecipient.IRC_STR),
+                Required('method'): Any(EMAIL_STR, IRC_STR),
                 'user': str,
                 'email': str,
                 'server': str,

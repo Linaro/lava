@@ -74,6 +74,7 @@ class MultinodeTestAction(TestShellAction):
     name = "multinode-test"
     description = "Executing lava-test-runner"
     summary = "Multinode Lava Test Shell"
+    timeout_exception = TestError
 
     def __init__(self):
         super().__init__()

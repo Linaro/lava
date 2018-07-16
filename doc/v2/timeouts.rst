@@ -89,11 +89,9 @@ the admins.
 Test shell timeouts
 ===================
 
-Whilst V1 is still supported, the timeout used by the test action is a single
-value covering all test operations. This behaviour is expected to change once
-V1 submissions are rejected to allow each test definition to specify a timeout.
-Actual durations are still tracked and recorded, so excessive timeouts still
-need to be addressed.
+The timeout used by the test action is a single value covering all test
+operations. Actual durations are still tracked and recorded, so
+excessive timeouts still need to be addressed.
 
 .. index:: defining timeouts
 
@@ -298,3 +296,113 @@ actions within that block. Action blocks are identified by the start of the
 Unless individual actions within this block have overrides, the
 default action timeout for each will be set to the specified
 timeout.
+
+.. index:: timeouts - skipping
+
+Skipping a test shell timeout
+*****************************
+
+In some cases, a test shell action is known to hang or otherwise cause
+a timeout.
+
+If the device is capable of booting twice in a single test job
+(*deploy*, *boot*, *test*, *boot*, *test*) then the first test action
+timeout can set ``skip: true`` which stops the job finishing as
+Incomplete if the timeout occurs. The job will then continue to the
+second boot action, allowing the device to reset to a known state and
+start the second test action.
+
+If the first test action does not timeout, the job completes that
+test action and executes the second boot action as normal.
+
+Test writers should consider using utilities like the ``timeout``
+command inside their own test shell scripts to retain control within
+the currently executing test shell scripts. Skipping a test shell
+timeout is intended for tests which may cause a kernel panic or other
+deadlock of the currently executing test shell.
+
+.. important:: There are limitations to what can be achieved here:
+
+   * Lava Test Shell is **not re-entrant** - it is not
+     possible to restart or return to the previously executing test
+     shell. The second test action is a separate test shell and the
+     boot action **must** be defined by the test writer at submission.
+
+   * Timeouts in :term:`MultiNode` test jobs **cannot be skipped**.
+
+   * The timeout itself must still occur - the test job must wait,
+     after the error has occurred, until the timeout. Ensure that the
+     timeout value is still long enough to cover the actual execution
+     time if the test shell action did not hang or fail.
+
+   * This support will **not** protect the DUT in the case of a
+     destructive test shell failure. If the test shell action simply
+     takes too long because, for example, a parameter has been missed
+     and the script is deleting all of ``/usr/lib/`` instead of
+     ``/home/test/usr/lib/``, the DUT will likely fail to reboot
+     without a new deployment regardless of the skip support.
+
+   * This support is intended for predictable test shell errors.
+     Support must be planned into the test job before submission.
+     Design your test shell definition and test result handling
+     carefully. Any expected test case results from the test shell
+     definition which might have occurred after the timeout will be
+     completely missing. It is recommended to put the operation which
+     is expected to fail as the last command in the test shell
+     definition before the test action would normally end.
+
+   * Timeouts are immediate, aggressive and external to the test shell.
+     There is no opportunity for the active test shell to respond or
+     handle the timeout. The currently executing process will disappear
+     and filesystems will **not** be unmounted - power is simply
+     removed from the :term:`DUT`. This could affect the ability of the
+     DUT to execute the next test shell after a reboot, for example if
+     the filesystem cannot be mounted or the previous test action
+     failed in the middle of an operation which relies on filesystem
+     locks.
+
+   Test writers are wholly responsible for cleaning up any artefacts of
+   the failed test shell at the start of the second test shell. For
+   example:
+
+   * if the first test shell fails when making persistent changes to
+     the filesystem(s) on the DUT, filesystem corruption is possible
+     which could cause the second boot action to fail.
+
+   * Test actions which install packages are likely to leave stale lock
+     files in place, incompletely installed packages and other breakage.
+
+     Use :ref:`portable test shell definitions
+     <test_definition_portability>` and ensure the integrity of the
+     packages on the DUT before trying to make more persistent changes
+     in the second test action block. Assume that the second test
+     action will start in a broken system if no deploy action is
+     specified before the second boot action.
+
+For some devices a *deploy* action is also needed to get to a point
+where the device will boot successfully. (This is also a way of
+ensuring that filesystem corruption issues are avoided - by
+re-deploying the filesystem itself in a known clean state.)
+
+.. code-block:: yaml
+
+ - test:
+    timeout:
+      minutes: 5
+      skip: true
+    definitions:
+
+ # ... rest of the first test action block
+
+ - boot:
+    timeout:
+      minutes: 2
+
+ # ... rest of the second boot action block
+
+ - test:
+    timeout:
+      minutes: 5
+    definitions:
+
+ # ... rest of the second test action block

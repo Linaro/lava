@@ -19,7 +19,6 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import re
-import sys
 import time
 import yaml
 import decimal
@@ -40,7 +39,6 @@ from lava_dispatcher.logical import (
     RetryAction
 )
 from lava_dispatcher.connection import SignalMatch
-from lava_dispatcher.protocols.lxc import LxcProtocol
 from lava_common.constants import (
     DEFAULT_V1_PATTERN,
     DEFAULT_V1_FIXUP,
@@ -209,6 +207,11 @@ class TestShellAction(TestAction):
         # Get the connection, specific to this namespace
         connection_namespace = self.parameters.get('connection-namespace')
         parameters = None
+        if self.timeout.can_skip(self.parameters):
+            self.logger.info(
+                "The timeout has 'skip' enabled. "
+                "If this test action block times out, the job will continue at the next action block.")
+
         if connection_namespace:
             self.logger.debug("Using connection namespace: %s", connection_namespace)
             parameters = {"namespace": connection_namespace}
@@ -519,7 +522,7 @@ class TestShellAction(TestAction):
             test_case_id = "%s" % res['test_case_id'].replace('/', '_')
             self.logger.marker(
                 {"case": res["test_case_id"],
-                    "type": "test_case"})
+                 "type": "test_case"})
             if ' ' in test_case_id.strip():
                 self.logger.debug("Skipping invalid test_case_id '%s'", test_case_id.strip())
                 return True
@@ -582,7 +585,7 @@ class TestShellAction(TestAction):
             elif name == "TESTCASE":
                 self.logger.marker(
                     {"case": params[0].replace('TEST_CASE_ID=', ''),
-                        "type": "test_case"})
+                     "type": "test_case"})
                 self.signal_test_case(params)
             elif name == "TESTFEEDBACK":
                 self.signal_test_feedback(params)

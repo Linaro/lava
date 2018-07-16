@@ -19,6 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 from lava_dispatcher.action import Action
+from lava_common.exceptions import LAVATimeoutError
 from lava_dispatcher.logical import (
     LavaTest,
     RetryAction,
@@ -39,3 +40,4 @@ class TestAction(Action):
     """
 
     name = 'test'
+    timeout_exception = LAVATimeoutError

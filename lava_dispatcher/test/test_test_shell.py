@@ -22,7 +22,10 @@ import re
 import os
 import yaml
 import decimal
-from lava_common.exceptions import TestError, JobError
+from lava_common.exceptions import (
+    TestError, JobError,
+    LAVATimeoutError,
+)
 from lava_dispatcher.test.test_basic import StdoutTestCase, Factory
 from lava_dispatcher.test.test_multi import DummyLogger
 
@@ -31,6 +34,35 @@ class FakeConnection:  # pylint: disable=too-few-public-methods
 
     def __init__(self, match):
         self.match = match
+
+
+class TestSkipTimeouts(StdoutTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.testdef = os.path.join(os.path.dirname(__file__), 'testdefs', 'params.yaml')
+        self.res_data = os.path.join(os.path.dirname(__file__), 'testdefs', 'result-data.txt')
+        factory = Factory()
+        self.job = factory.create_kvm_job("sample_jobs/qemu-reboot.yaml", check_job=True)
+        self.job.logger = DummyLogger()
+        self.job.validate()
+        self.ret = False
+        test_retry = [action for action in self.job.pipeline.actions if action.name == 'lava-test-retry'][0]
+        self.skipped_shell = [action for action in test_retry.internal_pipeline.actions if action.name == 'lava-test-shell'][0]
+        print(self.skipped_shell.parameters['timeout'])
+        self.skipped_shell.logger = DummyLogger()
+        test_retry = [action for action in self.job.pipeline.actions if action.name == 'lava-test-retry'][1]
+        self.fatal_shell = [action for action in test_retry.internal_pipeline.actions if action.name == 'lava-test-shell'][0]
+
+    def test_timeouterror(self):
+        self.assertEqual(self.skipped_shell.timeout_exception, LAVATimeoutError)
+        self.assertIn('timeout', self.skipped_shell.parameters)
+        self.assertIn('skip', self.skipped_shell.parameters['timeout'])
+        self.assertTrue(self.skipped_shell.timeout.can_skip(self.skipped_shell.parameters))
+        self.assertEqual(self.fatal_shell.timeout_exception, LAVATimeoutError)
+        self.assertIn('timeout', self.fatal_shell.parameters)
+        self.assertNotIn('skip', self.fatal_shell.parameters['timeout'])
+        self.assertFalse(self.fatal_shell.timeout.can_skip(self.fatal_shell.parameters))
 
 
 class TestPatterns(StdoutTestCase):

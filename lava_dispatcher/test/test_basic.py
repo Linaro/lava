@@ -39,7 +39,11 @@ from lava_common.exceptions import (
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.job import Job
 from lava_dispatcher.device import NewDevice
-from lava_scheduler_app.schema import validate_device, SubmissionException
+from lava_scheduler_app.schema import (
+    validate_device,
+    validate_submission,
+    SubmissionException
+)
 from lava_dispatcher.actions.deploy.image import DeployImages
 from lava_dispatcher.test.utils import DummyLogger
 
@@ -245,7 +249,7 @@ class Factory:
     def create_fake_qemu_job(self):
         return self.create_job('qemu01.jinja2', 'sample_jobs/basics.yaml')
 
-    def create_kvm_job(self, filename):  # pylint: disable=no-self-use
+    def create_kvm_job(self, filename, check_job=False):  # pylint: disable=no-self-use
         """
         Custom function to allow for extra exception handling.
         """
@@ -258,9 +262,15 @@ class Factory:
         self.validate_data('hi6220-hikey-01', device_dict)
         kvm_yaml = os.path.join(os.path.dirname(__file__), filename)
         parser = JobParser()
+        job_data = ''
+        with open(kvm_yaml) as sample_job_data:
+            job_data = yaml.safe_load(sample_job_data.read())
+        if self.debug:
+            print('########## Test Job Submission validation #######')
+        if check_job:  # FIXME: all submissions should validate.
+            validate_submission(job_data)
         try:
-            with open(kvm_yaml) as sample_job_data:
-                job = parser.parse(sample_job_data, device, 4212, None, "")
+            job = parser.parse(yaml.dump(job_data), device, 4212, None, "")
             job.logger = DummyLogger()
         except LAVAError as exc:
             print(exc)

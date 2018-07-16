@@ -32,9 +32,10 @@ from lava_common.exceptions import (
     LAVABug,
     LAVAError,
     JobError,
+    TestError,
+    LAVATimeoutError,
 )
 from lava_dispatcher.log import YAMLLogger
-from lava_dispatcher.utils.lxc import is_lxc_requested
 from lava_dispatcher.utils.strings import seconds_to_str
 
 
@@ -221,6 +222,20 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
                         action.logger.debug(msg)
 
                     new_connection = action.run(connection, action_max_end_time)
+            except LAVATimeoutError as exc:
+                action.logger.exception(str(exc))
+                # allows retries without setting errors, which make the job incomplete.
+                failed = True
+                action.results = {'fail': str(exc)}
+                if action.timeout.can_skip(action.parameters):
+                    if self.parent is None:
+                        action.logger.warning(
+                            "skip_timeout is set for %s - continuing to next action block." % (action.name))
+                    else:
+                        raise
+                    new_connection = None
+                else:
+                    raise TestError(str(exc))
             except LAVAError as exc:
                 action.logger.exception(str(exc))
                 # allows retries without setting errors, which make the job incomplete.
@@ -480,7 +495,7 @@ class Action:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         try:
             log = subprocess.check_output(command_list, stderr=subprocess.STDOUT,  # nosec - internal
                                           cwd=cwd)
-            log = log.decode('utf-8', errors="replace")  # pylint: disable=redefined-variable-type
+            log = log.decode('utf-8', errors="replace")
         except subprocess.CalledProcessError as exc:
             # the errors property doesn't support removing errors
             errors = []

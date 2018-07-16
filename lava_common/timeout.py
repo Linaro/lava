@@ -31,8 +31,7 @@ class Timeout:
     The Timeout class is a declarative base which any actions can use. If an Action has
     a timeout, that timeout name and the duration will be output as part of the action
     description and the timeout is then exposed as a modifiable value via the device_type,
-    device or even job inputs. (Some timeouts may be deemed "protected" which may not be
-    altered by the job. All timeouts are subject to a hardcoded maximum duration which
+    device or even job inputs. All timeouts are subject to a hardcoded maximum duration which
     cannot be exceeded by device_type, device or job input, only by the Action initialising
     the timeout.
     If a connection is set, this timeout is used per pexpect operation on that connection.
@@ -64,6 +63,9 @@ class Timeout:
         if not duration:
             return Timeout.default_duration()
         return int(duration.total_seconds())
+
+    def can_skip(self, parameters):  # pylint: disable=no-self-use
+        return parameters.get('timeout', {}).get('skip', False)
 
     def _timed_out(self, signum, frame):  # pylint: disable=unused-argument
         duration = int(time.time() - self.start)

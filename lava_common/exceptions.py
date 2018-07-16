@@ -87,6 +87,11 @@ class ConfigurationError(LAVAError):
     error_type = "Configuration"
 
 
+class LAVATimeoutError(LAVAError):
+    error_help = "LAVATimeoutError: test shell has timed out."
+    error_type = "LAVATimeout"
+
+
 class MultinodeProtocolTimeoutError(LAVAError):
     error_help = "MultinodeProtocolTimeoutError: Multinode wait/sync call " \
                  "has timed out."
