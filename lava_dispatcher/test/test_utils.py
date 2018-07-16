@@ -141,19 +141,25 @@ class TestBzr(StdoutTestCase):  # pylint: disable=too-many-public-methods
         # Go into a temp dirctory
         self.tmpdir = tempfile.mkdtemp()
         os.chdir(self.tmpdir)
-        self.env = {'BZR_HOME': self.tmpdir, 'BZR_LOG': self.tmpdir}
+        self.env = {'BZR_HOME': self.tmpdir,
+                    'BZR_LOG': os.path.join(self.tmpdir, "bzr.log")}
 
         # Create a Git repository with two commits
-        subprocess.check_output(['bzr', 'init', 'repo'], env=self.env, stderr=subprocess.STDOUT)
+        subprocess.check_output(['bzr', 'init', 'repo'],
+                                env=self.env, stderr=subprocess.STDOUT)
         os.chdir('repo')
+        subprocess.check_output(['bzr', 'whoami', 'lava-ci@example.com'],
+                                env=self.env, stderr=subprocess.STDOUT)
         with open('test.txt', 'w') as datafile:
             datafile.write("Some data")
-        subprocess.check_output(['bzr', 'add', 'test.txt'], env=self.env, stderr=subprocess.STDOUT)
+        subprocess.check_output(['bzr', 'add', 'test.txt'],
+                                env=self.env, stderr=subprocess.STDOUT)
         subprocess.check_output(['bzr', 'commit', 'test.txt', '-m', 'First commit'],
                                 env=self.env, stderr=subprocess.STDOUT)
         with open('second.txt', 'w') as datafile:
             datafile.write("Some more data")
-        subprocess.check_output(['bzr', 'add', 'second.txt'], stderr=subprocess.STDOUT)
+        subprocess.check_output(['bzr', 'add', 'second.txt'],
+                                env=self.env, stderr=subprocess.STDOUT)
         subprocess.check_output(['bzr', 'commit', 'second.txt', '-m', 'Second commit'],
                                 env=self.env, stderr=subprocess.STDOUT)
 
