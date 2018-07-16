@@ -33,10 +33,7 @@ from lava_common.exceptions import (
     TestError,
     LAVABug,
 )
-from lava_dispatcher.actions.test import (
-    TestAction,
-    handle_testcase
-)
+from lava_dispatcher.actions.test import TestAction
 from lava_dispatcher.action import Pipeline
 from lava_dispatcher.logical import (
     LavaTest,
@@ -50,6 +47,20 @@ from lava_common.constants import (
 )
 
 # pylint: disable=too-many-branches,too-many-statements,too-many-instance-attributes,logging-not-lazy
+
+
+def handle_testcase(params):
+    data = {}
+    for param in params:
+        parts = param.split('=')
+        if len(parts) == 2:
+            key, value = parts
+            key = key.lower()
+            data[key] = value
+        else:
+            raise JobError(
+                "Ignoring malformed parameter for signal: \"%s\". " % param)
+    return data
 
 
 class TestShell(LavaTest):
