@@ -317,6 +317,13 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
                          (downloaded_size / (1024 * 1024), round(ending - beginning, 2),
                           round(downloaded_size / (1024 * 1024 * (ending - beginning)), 2)))
 
+        # If the remote server uses "Content-Encoding: gzip", this calculation will be wrong
+        # because requests will decompress the file on the fly, creating a larger file than
+        # LAVA expects.
+        if self.size:
+            if self.size != downloaded_size:
+                raise InfrastructureError("Download finished (%i bytes) but was not expected size (%i bytes), check your networking." % (downloaded_size, self.size))
+
         # set the dynamic data into the context
         self.set_namespace_data(action='download-action', label=self.key, key='file', value=fname)
         self.set_namespace_data(action='download-action', label=self.key, key='md5', value=md5.hexdigest())
@@ -464,6 +471,8 @@ class HttpDownloadAction(DownloadHandler):
     def reader(self):
         res = None
         try:
+            # FIXME: When requests 3.0 is released, use the enforce_content_length
+            # parameter to raise an exception the file is not fully downloaded
             res = requests.get(self.url.geturl(), allow_redirects=True,
                                stream=True)
             if res.status_code != requests.codes.OK:  # pylint: disable=no-member

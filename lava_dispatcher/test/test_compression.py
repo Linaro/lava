@@ -65,6 +65,8 @@ class TestDecompression(StdoutTestCase):
             outputmd5 = md5sumhash.hexdigest()
             outputsha = sha256hash.hexdigest()
             outputsize = os.path.getsize(os.path.join(httpaction.path, output))
+            self.assertIsInstance(httpaction.size, int)
+            self.assertIsNot(httpaction.size, -1)
             if httpaction.key == 'testzip':
                 # zipfiles are NOT decompressed on the fly
                 self.assertEqual(outputmd5, md5zipsum)
@@ -72,6 +74,8 @@ class TestDecompression(StdoutTestCase):
                 self.assertEqual(outputsize, zipsize)
                 # zipfiles aren't decompressed, so shouldn't change name
                 self.assertEqual(outputfile, '10MB.zip')
+                # we know it's 10MB.zip for download size test
+                self.assertEqual(httpaction.size, 10109)
             else:
                 self.assertEqual(outputmd5, md5sum)
                 self.assertEqual(outputsha, sha256sum)
