@@ -259,6 +259,9 @@ class TestJobAdmin(admin.ModelAdmin):
     def requested_device_type_name(self, obj):
         return '' if obj.requested_device_type is None else obj.requested_device_type
 
+    def has_add_permission(self, request):
+        return False
+
     def has_delete_permission(self, request, obj=None):
         return settings.ALLOW_ADMIN_DELETE
 
@@ -403,6 +406,12 @@ class NotificationRecipientAdmin(admin.ModelAdmin):
             return "%s@%s" % (obj.irc_handle, obj.irc_server_name)
     list_display = ('method', 'handle', 'status')
     list_filter = ('method', 'status')
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return settings.ALLOW_ADMIN_DELETE
 
 
 admin.site.register(Device, DeviceAdmin)

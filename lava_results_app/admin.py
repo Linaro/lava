@@ -40,6 +40,9 @@ class ActionDataAdmin(admin.ModelAdmin):
     def job_pk(self, action):
         return action.testdata.testjob.pk
 
+    def has_add_permission(self, request):
+        return False
+
     def has_delete_permission(self, request, obj=None):
         return settings.ALLOW_ADMIN_DELETE
 
@@ -48,6 +51,12 @@ class QueryAdmin(admin.ModelAdmin):
     list_display = ('name', 'owner', 'query_group', 'is_published', 'is_archived')
     ordering = ('name', 'owner', 'query_group', 'is_published', 'is_archived')
     save_as = True
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return settings.ALLOW_ADMIN_DELETE
 
 
 class TestCaseAdmin(admin.ModelAdmin):
@@ -60,12 +69,18 @@ class TestCaseAdmin(admin.ModelAdmin):
     def suite_name(self, testcase):
         return testcase.suite.name
 
+    def has_add_permission(self, request):
+        return False
+
     def has_delete_permission(self, request, obj=None):
         return settings.ALLOW_ADMIN_DELETE
 
 
 class TestSetAdmin(admin.ModelAdmin):
     list_display = ('suite', 'name')
+
+    def has_add_permission(self, request):
+        return False
 
     def has_delete_permission(self, request, obj=None):
         return settings.ALLOW_ADMIN_DELETE
@@ -77,6 +92,9 @@ class TestSuiteAdmin(admin.ModelAdmin):
 
     def job_pk(self, testsuite):
         return testsuite.job.pk
+
+    def has_add_permission(self, request):
+        return False
 
     def has_delete_permission(self, request, obj=None):
         return settings.ALLOW_ADMIN_DELETE
