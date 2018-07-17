@@ -45,10 +45,10 @@ from linaro_django_xmlrpc.models import AuthToken
 
 
 def get_token_from_description(user, description):
-    try:
-        return AuthToken.objects.filter(user=user, description=description).first()
-    except AuthToken.DoesNotExist:
-        return description
+    tokens = AuthToken.objects.filter(user=user, description=description)
+    if tokens:
+        return tokens.first().secret
+    return description
 
 
 def get_query_results(notification):
