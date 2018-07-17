@@ -219,7 +219,7 @@ class DeviceAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('Properties', {
-            'fields': (('device_type', 'hostname'), 'worker_host', 'device_version')}),
+            'fields': ('device_type', 'worker_host', 'device_version')}),
         ('Device owner', {
             'fields': (('user', 'group'), ('physical_owner', 'physical_group'), 'is_public')}),
         ('Status', {

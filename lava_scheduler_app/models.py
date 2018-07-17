@@ -99,7 +99,7 @@ class Architecture(models.Model):
         verbose_name='Architecture version',
         help_text='e.g. ARMv7',
         max_length=100,
-        editable=True,
+        editable=False,
     )
 
     def __str__(self):
@@ -112,7 +112,7 @@ class ProcessorFamily(models.Model):
         verbose_name='Processor Family',
         help_text='e.g. OMAP4, Exynos',
         max_length=100,
-        editable=True,
+        editable=False,
     )
 
     def __str__(self):
@@ -125,7 +125,7 @@ class Alias(models.Model):
         verbose_name='Alias for this device-type',
         help_text='e.g. the device tree name(s)',
         max_length=200,
-        editable=True,
+        editable=False,
     )
 
     def __str__(self):
@@ -137,7 +137,7 @@ class BitWidth(models.Model):
         primary_key=True,
         verbose_name='Processor bit width',
         help_text='integer: e.g. 32 or 64',
-        editable=True,
+        editable=False,
     )
 
     def __str__(self):
@@ -149,7 +149,7 @@ class Core(models.Model):
         primary_key=True,
         verbose_name='CPU core',
         help_text='Name of a specific CPU core, e.g. Cortex-A9',
-        editable=True,
+        editable=False,
         max_length=100,
     )
 
@@ -162,7 +162,8 @@ class DeviceType(models.Model):
     A class of device, for example a pandaboard or a snowball.
     """
 
-    name = models.SlugField(primary_key=True)
+    name = models.SlugField(primary_key=True,
+                            editable=False)
 
     architecture = models.ForeignKey(
         Architecture,
@@ -338,7 +339,7 @@ class Worker(models.Model):
         max_length=200,
         primary_key=True,
         default=None,
-        editable=True
+        editable=False
     )
 
     STATE_ONLINE, STATE_OFFLINE = range(2)
@@ -457,6 +458,7 @@ class Device(RestrictedResource):
         verbose_name=_("Hostname"),
         max_length=200,
         primary_key=True,
+        editable=False,
     )
 
     device_type = models.ForeignKey(
