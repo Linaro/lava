@@ -594,7 +594,6 @@ def verify_socket(sock, master_url, ipv6=False):
 
 def connect_to_master(poller, pipe_r, sock, master, ipv6):
     LOG.info("[BTSP] Greeting the master [%s] => 'HELLO'", master)
-    verify_socket(sock, master, ipv6)
     send_multipart_u(sock, ["HELLO", str(PROTOCOL_VERSION)])
     (leaving, msg) = recv_from_master("[BTSP]", poller, pipe_r, sock)
 
@@ -607,18 +606,13 @@ def connect_to_master(poller, pipe_r, sock, master, ipv6):
                 return True
             else:
                 LOG.info("[BTSP] Unexpected message from master: %s", message)
-        except socket.gaierror as exc:
-            LOG.exception("[BTSP] Socket error: %s", message)
-            verify_socket(sock, master, ipv6)
         except (IndexError, TypeError):
             if msg is not None:
                 LOG.error("[BTSP] Invalid message from master: %s", msg)
         if verify_socket(sock, master, ipv6):
             LOG.info("[BTSP] Greeting master => 'HELLO_RETRY' (using the same version?)")
             send_multipart_u(sock, ["HELLO_RETRY", str(PROTOCOL_VERSION)])
-            (leaving, msg) = recv_from_master("[BTSP]", poller, pipe_r, sock)
-        else:
-            time.sleep(TIMEOUT)
+        (leaving, msg) = recv_from_master("[BTSP]", poller, pipe_r, sock)
 
     return False
 
