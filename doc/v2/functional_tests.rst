@@ -14,7 +14,7 @@ However, unit tests cannot properly test the ``run()`` functions or
 performance of the code with real hardware. Two extra levels of testing
 are available:
 
-* :ref:`metalava` - tests the ``run()`` functions against static log
+* :ref:`meta_lava` - tests the ``run()`` functions against static log
   files. This is useful for devices which are not available to a
   particular instance but will need updating if changes in the code
   cause differences in the messages sent to the device.
