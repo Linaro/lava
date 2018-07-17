@@ -36,7 +36,7 @@ from lava_dispatcher.actions.deploy.apply_overlay import (
 )
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.utils.filesystem import copy_to_lxc
-from lava_dispatcher.utils.lxc import is_lxc_requested
+from lava_dispatcher.utils.lxc import is_lxc_requested, lxc_cmd_prefix
 from lava_dispatcher.actions.boot.fastboot import EnterFastbootAction
 from lava_dispatcher.actions.boot.u_boot import UBootEnterFastbootAction
 from lava_dispatcher.power import PDUReboot, ReadFeedback
@@ -242,7 +242,7 @@ class FastbootFlashAction(Action):
 
         serial_number = self.job.device['fastboot_serial_number']
         fastboot_opts = self.job.device['fastboot_options']
-        fastboot_cmd = self.lxc_cmd_prefix + [
+        fastboot_cmd = lxc_cmd_prefix(self.job) + [
             'fastboot', '-s', serial_number, 'flash', self.command, src
         ] + fastboot_opts
         self.logger.info("Handling %s", self.command)
@@ -267,8 +267,8 @@ class FastbootReboot(Action):
         fastboot_opts = self.job.device['fastboot_options']
 
         self.logger.info("fastboot rebooting device.")
-        fastboot_cmd = self.lxc_cmd_prefix + ['fastboot', '-s', serial_number,
-                                              'reboot'] + fastboot_opts
+        fastboot_cmd = lxc_cmd_prefix(self.job) + ['fastboot', '-s', serial_number,
+                                                   'reboot'] + fastboot_opts
         command_output = self.run_command(fastboot_cmd)
         if not command_output:
             raise InfrastructureError("Unable to reboot")
@@ -288,7 +288,7 @@ class FastbootRebootBootloader(Action):
         fastboot_opts = self.job.device['fastboot_options']
 
         self.logger.info("fastboot reboot device to bootloader.")
-        fastboot_cmd = self.lxc_cmd_prefix + [
+        fastboot_cmd = lxc_cmd_prefix(self.job) + [
             'fastboot', '-s', serial_number, 'reboot-bootloader'
         ] + fastboot_opts
         command_output = self.run_command(fastboot_cmd)

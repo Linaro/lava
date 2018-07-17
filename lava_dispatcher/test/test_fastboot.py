@@ -30,7 +30,7 @@ from lava_dispatcher.test.utils import DummyLogger, infrastructure_error, infras
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.fastboot import FastbootFlashOrderAction
 from lava_dispatcher.actions.boot.fastboot import BootAction
-from lava_dispatcher.utils.lxc import is_lxc_requested
+from lava_dispatcher.utils.lxc import is_lxc_requested, lxc_cmd_prefix
 
 
 class FastBootFactory(Factory):  # pylint: disable=too-few-public-methods
@@ -309,7 +309,7 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
         deploy = [action for action in job.pipeline.actions
                   if action.name == 'fastboot-deploy'][0]
         # No lxc requested, hence lxc_cmd_prefix is an empty list
-        self.assertEqual([], deploy.lxc_cmd_prefix)
+        self.assertEqual([], lxc_cmd_prefix(job))
 
     def test_db410c_minus_lxc(self):
         # Do not run job.validate() since it will require some android tools
@@ -325,4 +325,4 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
         deploy = [action for action in job.pipeline.actions
                   if action.name == 'fastboot-deploy'][0]
         # No lxc requested, hence lxc_cmd_prefix is an empty list
-        self.assertEqual([], deploy.lxc_cmd_prefix)
+        self.assertEqual([], lxc_cmd_prefix(job))

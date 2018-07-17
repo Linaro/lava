@@ -284,7 +284,6 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         self.max_retries = 1  # unless the strategy or the job parameters change this, do not retry
         self.diagnostics = []
         self.protocols = []  # list of protocol objects supported by this action, full list in job.protocols
-        self.lxc_cmd_prefix = []
         self.connection_timeout = Timeout(self.name, exception=self.timeout_exception)
         self.character_delay = 0
         self.force_prompt = False
@@ -438,11 +437,6 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
 
         if not self.section:
             self.errors = "action %s (%s) has no section set" % (self.name, self)
-
-        # Decide whether we need lxc_cmd_prefix or not
-        lxc_name = is_lxc_requested(self.job)
-        if lxc_name:
-            self.lxc_cmd_prefix = ['lxc-attach', '-n', lxc_name, '--']
 
         # Collect errors from internal pipeline actions
         if self.internal_pipeline:
