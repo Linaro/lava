@@ -50,7 +50,7 @@ class TestTestJobStateMachine(TestCase):
         self.worker = Worker.objects.create(hostname="worker-01", state=Worker.STATE_ONLINE)
         self.device_type = DeviceType.objects.create(name="dt-01")
         self.device = Device.objects.create(hostname="device-01", device_type=self.device_type,
-                                            worker_host=self.worker)
+                                            worker_host=self.worker, health=Device.HEALTH_UNKNOWN)
         self.user = User.objects.create(username="user-01")
         self.job = TestJob.objects.create(requested_device_type=self.device_type,
                                           submitter=self.user, user=self.user, is_public=True,
@@ -727,7 +727,7 @@ class TestWorkerStateMachine(TestCase):
         self.worker = Worker.objects.create(hostname="worker-01")
         self.device_type = DeviceType.objects.create(name="dt-01")
         self.device = Device.objects.create(hostname="device-01", device_type=self.device_type,
-                                            worker_host=self.worker)
+                                            worker_host=self.worker, health=Device.HEALTH_UNKNOWN)
         self.user = User.objects.create(username="user-01")
         self.job = TestJob.objects.create(requested_device_type=self.device_type,
                                           submitter=self.user, user=self.user, is_public=True)

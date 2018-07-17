@@ -62,12 +62,12 @@ class TestHealthCheckScheduling(TestCase):
         self.device_type01 = DeviceType.objects.create(name="dt-01")
 
         self.device01 = Device.objects.create(hostname="device-01", device_type=self.device_type01,
-                                              worker_host=self.worker01, is_public=True)
+                                              worker_host=self.worker01, is_public=True, health=Device.HEALTH_UNKNOWN)
         # This device should never be considered (his worker is OFFLINE)
         self.device02 = Device.objects.create(hostname="device-02", device_type=self.device_type01,
-                                              worker_host=self.worker02, is_public=True)
+                                              worker_host=self.worker02, is_public=True, health=Device.HEALTH_UNKNOWN)
         self.device03 = Device.objects.create(hostname="device-03", device_type=self.device_type01,
-                                              worker_host=self.worker03, is_public=True)
+                                              worker_host=self.worker03, is_public=True, health=Device.HEALTH_UNKNOWN)
         self.user = User.objects.create(username="user-01")
         self.last_hc03 = TestJob.objects.create(health_check=True, actual_device=self.device03,
                                                 user=self.user, submitter=self.user,
@@ -298,14 +298,14 @@ class TestVisibility(TestCase):
 
         self.device01 = Device.objects.create(
             hostname="device-01", device_type=self.device_type01,
-            worker_host=self.worker01, is_public=True)
+            worker_host=self.worker01, is_public=True, health=Device.HEALTH_UNKNOWN)
         # This device should never be considered (his worker is OFFLINE)
         self.device02 = Device.objects.create(
             hostname="device-02", device_type=self.device_type01,
-            worker_host=self.worker02, is_public=True)
+            worker_host=self.worker02, is_public=True, health=Device.HEALTH_UNKNOWN)
         self.device03 = Device.objects.create(
             hostname="device-03", device_type=self.device_type01,
-            worker_host=self.worker03, is_public=False)
+            worker_host=self.worker03, is_public=False, health=Device.HEALTH_UNKNOWN)
         self.user = User.objects.create(username="user-01")
         self.device03.save()
 
