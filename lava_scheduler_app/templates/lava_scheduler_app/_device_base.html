@@ -3,7 +3,7 @@
 
 {% block content %}
 
-{% if template_mismatch %}
+{% if template_mismatch and device.health != device.HEALTH_RETIRED %}
 <div class="alert alert-danger alert-dismissible">
   <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
   <strong>Configuration Error: missing or invalid template.</strong>
@@ -12,7 +12,7 @@
 </div>
 {% endif %}
 
-{% if not device.worker_host %}
+{% if not device.worker_host and device.health != device.HEALTH_RETIRED %}
 <div class="alert alert-danger alert-dismissible">
   <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
   <strong>No worker is associated with this device</strong>: no jobs can be scheduled, started or canceled.
@@ -26,7 +26,7 @@
 </div>
 {% endif %}
 
-{% if user.is_staff and not device.get_health_check and not device.device_type.disable_health_check %}
+{% if user.is_staff and not device.get_health_check and not device.device_type.disable_health_check and device.health != device.HEALTH_RETIRED %}
   <div class="alert alert-warning alert-dismissable">
     <button type="button" class="close" data-dismiss="alert">&times;</button>
     <strong>The device has no
