@@ -212,6 +212,13 @@ running a health check immediately. Alternatively, specify the
 
   lava-server manage devices add --offline --device-type qemu --worker <worker> qemu01
 
+It is also possible to copy an existing device as a new device with a new hostname.
+
+.. code-block:: none
+
+  # copy existing qemu01 to a new qem02
+  lava-server manage devices copy qemu01 qemu02 --worker <worker> --offline
+
 See ``lava-server manage help devices`` for more options.
 
 Adding a dictionary to the first QEMU device
