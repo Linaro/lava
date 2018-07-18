@@ -20,7 +20,7 @@ def get_search_data(data, prefix):
         return data[prefix]
     if 'search' in data:
         return data['search']
-    return []
+    return data
 
 
 @register.filter
@@ -31,7 +31,7 @@ def get_terms_data(data, prefix):
         return data[prefix].values()
     if 'terms' in data:
         return data['terms'].values()
-    return []
+    return data
 
 
 @register.filter
@@ -42,7 +42,7 @@ def get_discrete_data(data, prefix):
         return data[prefix]
     if 'discrete' in data:
         return data['discrete']
-    return []
+    return data
 
 
 @register.filter
