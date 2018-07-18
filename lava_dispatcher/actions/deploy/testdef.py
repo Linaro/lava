@@ -983,7 +983,7 @@ class TestInstallAction(TestOverlayAction):
 
                 # distro-specific dependencies
                 if 'distro' in self.parameters['deployment_data']:
-                    deps = deps + testdef['install'].get('deps-' + self.parameters['deployment_data']['distro'])
+                    deps = deps + testdef['install'].get('deps-' + self.parameters['deployment_data']['distro'], [])
 
                 if deps:
                     install_file.write('lava-install-packages ')

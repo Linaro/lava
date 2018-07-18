@@ -1,0 +1,111 @@
+device_type: hi960-hikey
+job_name: HiKey 960 OE AEP
+timeouts:
+  job:
+    minutes: 60
+  action:
+    minutes: 10
+  connection:
+    minutes: 2
+priority: medium
+visibility: public
+
+context:
+  kernel_start_message: ''
+
+metadata:
+  build: uefi morty 140
+  original.build: http://snapshots.linaro.org/openembedded/lkft/morty/hikey/rpb/4.9/83/
+
+protocols:
+  lava-lxc:
+    name: lxc-hikey-oe
+    template: debian
+    distribution: debian
+    release: stretch
+
+actions:
+- deploy:
+    namespace: tlxc
+    timeout:
+      minutes: 15
+    to: lxc
+    packages:
+    - fastboot
+    os: debian
+
+- boot:
+    namespace: tlxc
+    prompts:
+    - 'root@(.*):/#'
+    timeout:
+      minutes: 10
+    method: lxc
+
+- deploy:
+    timeout:
+      minutes: 30
+    to: fastboot
+    namespace: hikey-oe
+    connection: lxc
+    images:
+      ptable:
+        url: http://images.validation.linaro.org/builds.96boards.org/snapshots/reference-platform/components/uefi-staging/50/hikey960/release/prm_ptable.img
+        reboot: hard-reset
+      boot:
+        url: http://images.validation.linaro.org/snapshots.linaro.org/reference-platform/embedded/morty/hikey960/140/rpb/boot-0.0+AUTOINC+ba45819943-ea12986b87-r0-hikey960-20180420075721-140.uefi.img
+        reboot: hard-reset
+      system:
+        url: http://images.validation.linaro.org/snapshots.linaro.org/reference-platform/embedded/morty/hikey960/140/rpb/rpb-console-image-hikey960-20180420075721-140.rootfs.img.gz
+        compression: gz
+        apply-overlay: true
+        # ensure that this job raises a network interface with DHCP before relying on internet access
+    os: oe
+    protocols:
+      lava-lxc:
+      - action: fastboot-deploy
+        request: pre-power-command
+        timeout:
+          minutes: 2
+- boot:
+    namespace: hikey-oe
+    auto_login:
+      login_prompt: 'login:'
+      username: root
+    prompts:
+    - 'root@hikey960:'
+    timeout:
+      minutes: 10
+    method: grub
+    commands: installed
+    protocols:
+      lava-lxc:
+      - action: grub-sequence-action
+        request: pre-os-command
+        timeout:
+          minutes: 2
+
+- test:
+    namespace: hikey-oe
+    timeout:
+      minutes: 5
+    definitions:
+    - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+      from: git
+      path: lava-test-shell/smoke-tests-basic.yaml
+      name: smoke-tests-basic-oe
+
+- test:
+    namespace: tlxc
+    timeout:
+      minutes: 15
+    definitions:
+    - repository: https://git.linaro.org/lava-team/refactoring.git
+      from: git
+      path: testdefs/arm-probe.yaml
+      name: arm-probe
+    - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+      from: git
+      path: lava-test-shell/smoke-tests-basic.yaml
+      name: smoke-tests-basic-lxc
+

@@ -397,8 +397,8 @@ class TestDefinitions(StdoutTestCase):
         super().setUp()
         self.testdef = os.path.join(os.path.dirname(__file__), 'testdefs', 'params.yaml')
         self.res_data = os.path.join(os.path.dirname(__file__), 'testdefs', 'result-data.txt')
-        factory = UBootFactory()
-        self.job = factory.create_bbb_job("sample_jobs/bbb-nfs-url.yaml")
+        self.factory = UBootFactory()
+        self.job = self.factory.create_bbb_job("sample_jobs/bbb-nfs-url.yaml")
 
     def test_pattern(self):
         self.assertTrue(os.path.exists(self.testdef))
@@ -513,3 +513,30 @@ test3a: skip
         self.assertEqual(child.after.encode('utf-8'), b'test2a: fail')
         child.expect([re_pat, pexpect.EOF])
         self.assertEqual(child.after, pexpect.EOF)
+
+    def test_deployment_data(self):
+        job = self.factory.create_job('hi960-hikey-01.jinja2', 'sample_jobs/hikey960-oe-aep.yaml')
+        job.validate()
+        description_ref = self.pipeline_reference('hikey960-oe-aep.yaml', job=job)
+        self.assertEqual(description_ref, job.pipeline.describe(False))
+
+        lxc_deploy = [action for action in job.pipeline.actions if action.name == 'lxc-deploy'][0]
+        lxc_overlay = [action for action in lxc_deploy.internal_pipeline.actions if action.name == 'lava-overlay'][0]
+        lxc_defs = [action for action in lxc_overlay.internal_pipeline.actions if action.name == 'test-definition'][0]
+        lxc_installscript = [action for action in lxc_defs.internal_pipeline.actions if action.name == 'test-install-overlay'][0]
+        fastboot_deploy = [action for action in job.pipeline.actions if action.name == 'fastboot-deploy'][0]
+        fastboot_overlay = [action for action in fastboot_deploy.internal_pipeline.actions if action.name == 'lava-overlay'][0]
+        fastboot_defs = [action for action in fastboot_overlay.internal_pipeline.actions if action.name == 'test-definition'][0]
+        fastboot_installscript = [action for action in fastboot_defs.internal_pipeline.actions if action.name == 'test-install-overlay'][0]
+
+        self.assertIn('distro', lxc_installscript.parameters['deployment_data'].keys())
+        self.assertIn('distro', list(lxc_installscript.parameters['deployment_data'].keys()))
+        self.assertIn('distro', list(lxc_installscript.parameters['deployment_data']))
+        self.assertIn('distro', dict(lxc_installscript.parameters['deployment_data']))
+        self.assertEqual('debian', lxc_installscript.parameters['deployment_data']['distro'])
+
+        self.assertIn('distro', fastboot_installscript.parameters['deployment_data'].keys())
+        self.assertIn('distro', list(fastboot_installscript.parameters['deployment_data'].keys()))
+        self.assertIn('distro', fastboot_installscript.parameters['deployment_data'])
+        self.assertIn('distro', dict(fastboot_installscript.parameters['deployment_data']))
+        self.assertEqual('oe', fastboot_installscript.parameters['deployment_data']['distro'])

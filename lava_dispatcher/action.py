@@ -36,7 +36,6 @@ from lava_common.exceptions import (
 from lava_dispatcher.log import YAMLLogger
 from lava_dispatcher.utils.lxc import is_lxc_requested
 from lava_dispatcher.utils.strings import seconds_to_str
-from lava_dispatcher.deployment_data import deployment_data_dict
 
 
 class InternalObject(object):  # pylint: disable=too-few-public-methods
@@ -622,10 +621,6 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
                 data[attr] = dict(getattr(self, attr))
             else:
                 data[attr] = getattr(self, attr)
-        if 'deployment_data' in self.parameters:
-            data['parameters'] = dict()
-            if isinstance(self.parameters['deployment_data'], deployment_data_dict):
-                data['parameters']['deployment_data'] = self.parameters['deployment_data'].__data__
         return data
 
     def get_namespace_keys(self, action, parameters=None):
