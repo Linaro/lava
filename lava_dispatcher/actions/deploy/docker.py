@@ -53,13 +53,22 @@ class DockerAction(DeployAction):
         except OSError:
             raise InfrastructureError("Command 'docker' does not exist")
 
+        # "image" can be a dict or a string
+        image = self.parameters["image"]
+        if isinstance(image, str):
+            self.image_name = image
+            self.local = False
+        else:
+            self.image_name = image["name"]
+            self.local = image.get("local", False)
+
         # check docker image name
         # The string should be safe for command line inclusion
         image_name = self.parameters["image"]
         if re.compile("^[a-z0-9._:/-]+$").match(image_name) is None:
             self.errors = "image_name '%s' is invalid" % image_name
         self.set_namespace_data(action=self.name, label='image',
-                                key='name', value=image_name)
+                                key='name', value=self.image_name)
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -70,11 +79,19 @@ class DockerAction(DeployAction):
 
     def run(self, connection, max_end_time):
         # Pull the image
-        cmd = ["docker", "pull", self.parameters["image"]]
-        out = self.run_command(cmd, allow_fail=False, allow_silent=False)
-        if not out:
-            msg = "Unable to pull docker image '%s'" % self.parameters["image"]
-            raise JobError(msg)
+        if self.local:
+            cmd = ["docker", "image", "inspect", "--format", "image exists",
+                   self.image_name]
+            out = self.run_command(cmd, allow_fail=False, allow_silent=False)
+            if not out:
+                msg = "Unable to inspect docker image '%s'" % self.image_name
+                raise JobError(msg)
+        else:
+            cmd = ["docker", "pull", self.image_name]
+            out = self.run_command(cmd, allow_fail=False, allow_silent=False)
+            if not out:
+                msg = "Unable to pull docker image '%s'" % self.image_name
+                raise JobError(msg)
 
         return super().run(connection, max_end_time)
 
