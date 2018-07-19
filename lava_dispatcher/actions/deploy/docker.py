@@ -64,9 +64,8 @@ class DockerAction(DeployAction):
 
         # check docker image name
         # The string should be safe for command line inclusion
-        image_name = self.parameters["image"]
-        if re.compile("^[a-z0-9._:/-]+$").match(image_name) is None:
-            self.errors = "image_name '%s' is invalid" % image_name
+        if re.compile("^[a-z0-9._:/-]+$").match(self.image_name) is None:
+            self.errors = "image name '%s' is invalid" % self.image_name
         self.set_namespace_data(action=self.name, label='image',
                                 key='name', value=self.image_name)
 
