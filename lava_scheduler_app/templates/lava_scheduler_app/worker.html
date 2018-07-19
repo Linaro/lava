@@ -19,7 +19,9 @@
   <div class="col-md-4">
     <dl class="dl-horizontal">
       <dt>Hostname</dt>
-      <dd>{{ worker.hostname }}</dd>
+      <dd>{{ worker.hostname }}
+        {% if user.is_superuser %}<a href="{% url 'admin:lava_scheduler_app_worker_change' worker %}" title="admin this worker"><span class="glyphicon glyphicon-wrench"></span></a>{% endif %}
+      </dd>
       <dt>Description</dt>
       {% if can_admin %}
       <form method="POST" action="{% url 'lava.scheduler.edit_worker_desc' %}">
