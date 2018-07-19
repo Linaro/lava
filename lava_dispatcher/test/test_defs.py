@@ -47,7 +47,10 @@ from lava_dispatcher.actions.deploy.testdef import (
 from lava_dispatcher.actions.boot import BootAction
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.actions.deploy.download import DownloaderAction
-from lava_dispatcher.test.utils import infrastructure_error
+from lava_dispatcher.test.utils import (
+    infrastructure_error,
+    infrastructure_error_multi_paths,
+)
 
 
 # pylint: disable=duplicate-code
@@ -514,6 +517,9 @@ test3a: skip
         child.expect([re_pat, pexpect.EOF])
         self.assertEqual(child.after, pexpect.EOF)
 
+    @unittest.skipIf(infrastructure_error_multi_paths(
+        ['lxc-info', 'img2simg', 'simg2img']),
+        "lxc or img2simg or simg2img not installed")
     def test_deployment_data(self):
         job = self.factory.create_job('hi960-hikey-01.jinja2', 'sample_jobs/hikey960-oe-aep.yaml')
         job.validate()
