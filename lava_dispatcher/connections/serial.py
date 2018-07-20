@@ -63,6 +63,9 @@ class ConnectDevice(Action):
     def validate(self):
         super().validate()
         matched = False
+        if 'commands' not in self.job.device:
+            self.errors = "Invalid device configuration - missing 'commands'"
+            return
         if 'connect' in self.job.device['commands']:
             # deprecated but allowed for primary
             if self.primary:
