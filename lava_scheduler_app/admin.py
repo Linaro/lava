@@ -6,16 +6,44 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.db import transaction
 from django.conf import settings
+
 from lava_scheduler_app.models import (
-    Device, DeviceType, TestJob, Tag, JobFailureTag,
-    User, Worker, DefaultDeviceOwner,
-    Architecture, ProcessorFamily, Alias, BitWidth, Core,
-    NotificationRecipient
+    Architecture, Alias, BitWidth, Core, DefaultDeviceOwner, Device,
+    DeviceType, JobFailureTag, NotificationRecipient, ProcessorFamily, Tag,
+    TestJob, User, Worker
 )
 from linaro_django_xmlrpc.models import AuthToken
 
 # django admin API itself isn't pylint clean, so some settings must be suppressed.
 # pylint: disable=no-self-use,function-redefined
+
+
+class AliasAdmin(admin.ModelAdmin):
+    def get_readonly_fields(self, _, obj=None):
+        if obj:  # editing an existing object
+            return self.readonly_fields + ('name',)
+        return self.readonly_fields
+
+
+class ArchitectureAdmin(admin.ModelAdmin):
+    def get_readonly_fields(self, _, obj=None):
+        if obj:  # editing an existing object
+            return self.readonly_fields + ('name',)
+        return self.readonly_fields
+
+
+class BitWidthAdmin(admin.ModelAdmin):
+    def get_readonly_fields(self, _, obj=None):
+        if obj:  # editing an existing object
+            return self.readonly_fields + ('width',)
+        return self.readonly_fields
+
+
+class CoreAdmin(admin.ModelAdmin):
+    def get_readonly_fields(self, _, obj=None):
+        if obj:  # editing an existing object
+            return self.readonly_fields + ('name',)
+        return self.readonly_fields
 
 
 class DefaultOwnerInline(admin.StackedInline):
@@ -206,6 +234,11 @@ class DeviceAdmin(admin.ModelAdmin):
     health_check_enabled.boolean = True
     health_check_enabled.short_description = "Health check enabled"
 
+    def get_readonly_fields(self, _, obj=None):
+        if obj:  # editing an existing object
+            return self.readonly_fields + ('hostname',)
+        return self.readonly_fields
+
     def valid_device(self, obj):
         return bool(obj.is_valid())
     valid_device.boolean = True
@@ -219,7 +252,7 @@ class DeviceAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('Properties', {
-            'fields': (('device_type', 'hostname'), 'worker_host', 'device_version')}),
+            'fields': ('hostname', 'device_type', 'worker_host', 'device_version')}),
         ('Device owner', {
             'fields': (('user', 'group'), ('physical_owner', 'physical_group'), 'is_public')}),
         ('Status', {
@@ -327,6 +360,11 @@ class DeviceTypeAdmin(admin.ModelAdmin):
                 ','.join([core.name for core in obj.cores.all().order_by('name')]))
         return ''
 
+    def get_readonly_fields(self, _, obj=None):
+        if obj:  # editing an existing object
+            return self.readonly_fields + ('name',)
+        return self.readonly_fields
+
     def health_check_enabled(self, obj):
         return not obj.disable_health_check
     health_check_enabled.boolean = True
@@ -338,6 +376,11 @@ class DeviceTypeAdmin(admin.ModelAdmin):
         return "every %d hours" % device_type.health_frequency
 
     actions = [disable_health_check_action]
+    fields = (
+        'name', 'architecture', 'processor', 'cpu_model', 'aliases',
+        'bits', 'cores', 'core_count', 'description', 'health_frequency',
+        'health_denominator', 'disable_health_check', 'display', 'owners_only',
+    )
     list_filter = ('name', 'display', 'cores',
                    'architecture', 'processor')
     list_display = ('name', 'display', 'owners_only', 'health_check_enabled', 'health_check_frequency',
@@ -379,6 +422,11 @@ class WorkerAdmin(admin.ModelAdmin):
     actions = [worker_health_active, worker_health_maintenance,
                worker_health_retired]
 
+    def get_readonly_fields(self, _, obj=None):
+        if obj:  # editing an existing object
+            return self.readonly_fields + ('hostname',)
+        return self.readonly_fields
+
     def has_delete_permission(self, request, obj=None):
         return settings.ALLOW_ADMIN_DELETE
 
@@ -397,6 +445,11 @@ class TagAdmin(admin.ModelAdmin):
     list_display = ('name', 'description')
     ordering = ['name']
 
+    def get_readonly_fields(self, _, obj=None):
+        if obj:  # editing an existing object
+            return self.readonly_fields + ('name',)
+        return self.readonly_fields
+
 
 class NotificationRecipientAdmin(admin.ModelAdmin):
     def handle(self, obj):
@@ -414,15 +467,15 @@ class NotificationRecipientAdmin(admin.ModelAdmin):
         return settings.ALLOW_ADMIN_DELETE
 
 
+admin.site.register(Alias, AliasAdmin)
+admin.site.register(Architecture, ArchitectureAdmin)
+admin.site.register(BitWidth, BitWidthAdmin)
+admin.site.register(Core, CoreAdmin)
 admin.site.register(Device, DeviceAdmin)
 admin.site.register(DeviceType, DeviceTypeAdmin)
+admin.site.register(JobFailureTag)
+admin.site.register(NotificationRecipient, NotificationRecipientAdmin)
+admin.site.register(ProcessorFamily)
 admin.site.register(TestJob, TestJobAdmin)
 admin.site.register(Tag, TagAdmin)
-admin.site.register(Architecture)
-admin.site.register(ProcessorFamily)
-admin.site.register(Alias)
-admin.site.register(BitWidth)
-admin.site.register(Core)
-admin.site.register(JobFailureTag)
 admin.site.register(Worker, WorkerAdmin)
-admin.site.register(NotificationRecipient, NotificationRecipientAdmin)

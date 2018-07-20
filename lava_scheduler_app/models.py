@@ -162,7 +162,9 @@ class DeviceType(models.Model):
     A class of device, for example a pandaboard or a snowball.
     """
 
-    name = models.SlugField(primary_key=True)
+    name = models.SlugField(
+        primary_key=True,
+        editable=True)  # read-only after create via admin.py
 
     architecture = models.ForeignKey(
         Architecture,
@@ -457,6 +459,7 @@ class Device(RestrictedResource):
         verbose_name=_("Hostname"),
         max_length=200,
         primary_key=True,
+        editable=True,  # read-only after create via admin.py
     )
 
     device_type = models.ForeignKey(
