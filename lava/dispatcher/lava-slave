@@ -220,10 +220,9 @@ class Job(object):
         mkdir(self.base_dir)
 
     def errors(self):
-        try:
+        with contextlib.suppress(IOError):
             return open(os.path.join(self.base_dir, "stderr"), 'r').read()
-        except IOError:
-            return ''
+        return ''
 
     def description(self):
         try:
@@ -248,11 +247,10 @@ class Job(object):
         os.kill(self.pid, signal.SIGTERM)
 
     def is_running(self):
-        try:
+        with contextlib.suppress(IOError):
             with open("/proc/%d/cmdline" % self.pid, "r") as fd:
                 return "lava-run" in fd.read()
-        except IOError:
-            return False
+        return False
 
     def send_end(self, sock):
         errors = self.errors()
@@ -282,13 +280,12 @@ class JobsDB(object):
         """
         When pid is 0, the pid is unknown
         """
-        try:
+        with contextlib.suppress(sqlite3.Error):
             self.conn.execute("INSERT INTO jobs VALUES(?, ?, ?, ?)",
                               (str(job_id), str(pid), str(status), str(int(time.time()))))
             self.conn.commit()
             return self.get(job_id)
-        except sqlite3.Error:
-            return None
+        return None
 
     def get(self, job_id):
         row = self.conn.execute("SELECT * FROM jobs WHERE id=?", (str(job_id), )).fetchone()
@@ -296,13 +293,12 @@ class JobsDB(object):
 
 
     def update(self, job_id, status):
-        try:
+        with contextlib.suppress(sqlite3.Error):
             self.conn.execute("UPDATE jobs SET status=?, last_update=? WHERE id=?",
                               (str(status), str(int(time.time())), str(job_id)))
             self.conn.commit()
             return self.get(job_id)
-        except sqlite3.Error:
-            return None
+        return None
 
     def delete(self, job_id):
         with contextlib.suppress(sqlite3.Error):
