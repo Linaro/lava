@@ -1,0 +1,19 @@
+[run]
+source =
+    lava
+    lava_common
+    lava_dispatcher
+    lava_results_app
+    lava_scheduler_app
+    lava_server
+    linaro_django_xmlrpc
+
+omit =
+    */test/*
+    */tests/*
+
+[report]
+precision = 2
+
+[html]
+title = LAVA coverage report

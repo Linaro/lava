@@ -2,17 +2,18 @@ import os
 import yaml
 import logging
 import unittest
+from nose.tools import nottest
 from io import BytesIO as StringIO
 import xmlrpc.client
 from django.test.client import Client
 from django.contrib.auth.models import Permission, User
 from django.utils import timezone
+from lava_scheduler_app.dbutils import validate_yaml
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
     Tag,
     TestJob,
-    validate_yaml,
     Alias,
 )
 from lava_scheduler_app.schema import validate_submission, validate_device, SubmissionException
@@ -21,11 +22,12 @@ from lava_scheduler_app.tests.test_submission import ModelFactory, TestCaseWithF
 
 
 # Based on http://www.technobabble.dk/2008/apr/02/xml-rpc-dispatching-through-django-test-client/
+@nottest
 class TestTransport(xmlrpc.client.Transport, object):
     """Handles connections to XML-RPC server through Django test client."""
 
     def __init__(self, user=None, password=None):
-        super(TestTransport, self).__init__()
+        super().__init__()
         self.client = Client()
         if user:
             success = self.client.login(username=user, password=password)
@@ -46,7 +48,7 @@ class TestTransport(xmlrpc.client.Transport, object):
 class TestSchedulerAPI(TestCaseWithFactory):  # pylint: disable=too-many-ancestors
 
     def setUp(self):
-        super(TestSchedulerAPI, self).setUp()
+        super().setUp()
         logger = logging.getLogger('lava-master')
         logger.disabled = True
         logger = logging.getLogger('lava_scheduler_app')
@@ -86,7 +88,7 @@ class TestSchedulerAPI(TestCaseWithFactory):  # pylint: disable=too-many-ancesto
         device.save()
         server = self.server_proxy('test', 'test')
         self.assertEqual(
-            {'status': 'idle', 'job': None, 'offline_since': None, 'hostname': 'black01',
+            {'status': 'offline', 'job': None, 'offline_since': None, 'hostname': 'black01',
                 'offline_by': None, 'is_pipeline': True},
             server.scheduler.get_device_status('black01'))
 

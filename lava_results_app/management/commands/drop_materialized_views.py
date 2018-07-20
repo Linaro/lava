@@ -33,10 +33,7 @@ class Command(BaseCommand):
     """
 
     logger = None
-
-    def __init__(self, *args, **options):
-        super(Command, self).__init__(*args, **options)
-        self.help = "Drop materialized views from database"
+    help = "Drop materialized views from database"
 
     def handle(self, *args, **options):
         for query in Query.objects.all().filter(is_live=False):

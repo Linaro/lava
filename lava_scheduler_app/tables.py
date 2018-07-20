@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 import yaml
 import django
 import logging
@@ -21,7 +19,6 @@ from lava_scheduler_app.models import (
     DeviceType,
     Worker,
 )
-from lava_results_app.models import TestCase
 from lava.utils.lavatable import LavaTable
 from django.db.models import Q
 from django.utils import timezone
@@ -42,7 +39,7 @@ class IDLinkColumn(tables.Column):
 
     def __init__(self, verbose_name="ID", **kw):
         kw['verbose_name'] = verbose_name
-        super(IDLinkColumn, self).__init__(**kw)
+        super().__init__(**kw)
 
     def render(self, record, table=None):  # pylint: disable=arguments-differ,unused-argument
         return pklink(record)
@@ -73,7 +70,7 @@ class ExpandedStatusColumn(tables.Column):
 
     def __init__(self, verbose_name="Expanded Status", **kw):
         kw['verbose_name'] = verbose_name
-        super(ExpandedStatusColumn, self).__init__(**kw)
+        super().__init__(**kw)
 
     def render(self, record):
         """
@@ -105,7 +102,7 @@ class RestrictedDeviceColumn(tables.Column):
 
     def __init__(self, verbose_name="Submissions restricted to", **kw):
         kw['verbose_name'] = verbose_name
-        super(RestrictedDeviceColumn, self).__init__(**kw)
+        super().__init__(**kw)
 
     def render(self, record):
         """
@@ -115,8 +112,12 @@ class RestrictedDeviceColumn(tables.Column):
         :return: a text string describing the restrictions on this device.
         """
         label = None
-        if record.health in [Device.HEALTH_BAD, Device.HEALTH_MAINTENANCE, Device.HEALTH_RETIRED]:
-            return "no submissions possible."
+        if record.health == Device.HEALTH_BAD:
+            return "Health check failed: no test jobs will be scheduled."
+        if record.health == Device.HEALTH_MAINTENANCE:
+            return "No test jobs will be scheduled."
+        if record.health == Device.HEALTH_RETIRED:
+            return "Retired: no submissions possible."
         if record.is_public:
             return ""
         if record.user:
@@ -145,7 +146,7 @@ def all_jobs_with_custom_sort():
 class JobErrorsTable(LavaTable):
 
     def __init__(self, *args, **kwargs):
-        super(LavaTable, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.length = 10
 
     job = tables.Column(verbose_name="Job", empty_values=[""])
@@ -204,7 +205,7 @@ class JobTable(LavaTable):
     ensure those are copied into the new class.
     """
     def __init__(self, *args, **kwargs):
-        super(JobTable, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.length = 25
 
     id = tables.Column(verbose_name="ID")
@@ -318,7 +319,7 @@ class IndexJobTable(JobTable):
     end_time = tables.DateColumn("Nd, g:ia")
 
     def __init__(self, *args, **kwargs):
-        super(IndexJobTable, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.length = 25
 
     class Meta(JobTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
@@ -361,7 +362,7 @@ class FailedJobTable(JobTable):
     end_time = tables.DateColumn("Nd, g:ia")
 
     def __init__(self, *args, **kwargs):
-        super(FailedJobTable, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.length = 10
 
     def render_failure_comment(self, record):
@@ -411,7 +412,7 @@ class LongestJobTable(JobTable):
     running.orderable = False
 
     def __init__(self, *args, **kwargs):
-        super(LongestJobTable, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.length = 10
 
     def render_running(self, record):  # pylint: disable=no-self-use
@@ -448,7 +449,7 @@ class OverviewJobsTable(JobTable):
     end_time = tables.DateColumn("Nd, g:ia")
 
     def __init__(self, *args, **kwargs):
-        super(OverviewJobsTable, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.length = 10
 
     class Meta(JobTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
@@ -476,7 +477,7 @@ class RecentJobsTable(JobTable):
     end_time = tables.DateColumn("Nd, g:ia")
 
     def __init__(self, *args, **kwargs):
-        super(RecentJobsTable, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.length = 10
 
     class Meta(JobTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
@@ -496,7 +497,7 @@ class RecentJobsTable(JobTable):
 class DeviceHealthTable(LavaTable):
 
     def __init__(self, *args, **kwargs):
-        super(DeviceHealthTable, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.length = 25
 
     def render_last_health_report_job(self, record):  # pylint: disable=no-self-use
@@ -534,7 +535,7 @@ class DeviceHealthTable(LavaTable):
 class DeviceTypeTable(LavaTable):
 
     def __init__(self, *args, **kwargs):
-        super(DeviceTypeTable, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.length = 50
 
     def render_idle(self, record):  # pylint: disable=no-self-use
@@ -575,15 +576,12 @@ class DeviceTypeTable(LavaTable):
             'architecture', 'health_denominator', 'health_frequency',
             'processor', 'cpu_model', 'bits', 'cores', 'core_count', 'description'
         ]
-        searches = {
-            'name': 'contains',
-        }
 
 
 class DeviceTable(LavaTable):
 
     def __init__(self, *args, **kwargs):
-        super(DeviceTable, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.length = 50
 
     def render_device_type(self, record):  # pylint: disable=no-self-use
@@ -640,7 +638,7 @@ class DeviceTable(LavaTable):
 class WorkerTable(tables.Table):  # pylint: disable=too-few-public-methods,no-init
 
     def __init__(self, *args, **kwargs):
-        super(WorkerTable, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.length = 10
         self.show_help = True
 
@@ -677,7 +675,7 @@ class WorkerTable(tables.Table):  # pylint: disable=too-few-public-methods,no-in
 class LogEntryTable(tables.Table):
 
     def __init__(self, *args, **kwargs):
-        super(LogEntryTable, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.length = 10
 
     action_time = tables.DateColumn(format="Nd, g:ia")
@@ -686,10 +684,7 @@ class LogEntryTable(tables.Table):
     change_message.orderable = False
 
     def render_change_message(self, record):
-        if django.VERSION > (1, 10):
-            message = record.get_change_message()
-        else:
-            message = record.change_message
+        message = record.get_change_message()
         if record.is_change():
             return message
         elif record.is_addition():
@@ -763,7 +758,7 @@ class QueueJobsTable(JobTable):
     end_time = tables.DateColumn("Nd, g:ia")
 
     def __init__(self, *args, **kwargs):
-        super(QueueJobsTable, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.length = 50
 
     class Meta(JobTable.Meta):  # pylint: disable=too-few-public-methods,no-init,no-self-use
@@ -781,7 +776,7 @@ class QueueJobsTable(JobTable):
 class PassingHealthTable(DeviceHealthTable):
 
     def __init__(self, *args, **kwargs):
-        super(PassingHealthTable, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.length = 25
 
     def render_device_type(self, record):  # pylint: disable=no-self-use
@@ -818,7 +813,7 @@ class RunningTable(LavaTable):
     """
 
     def __init__(self, *args, **kwargs):
-        super(RunningTable, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.length = 50
 
     # deprecated: dynamic connections are TestJob without a device

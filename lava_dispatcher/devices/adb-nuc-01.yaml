@@ -32,7 +32,6 @@ parameters:
     target:
       ip: 192.168.1.11
       mac: ''
-device_type: adb-nuc
 
 actions:
   deploy:

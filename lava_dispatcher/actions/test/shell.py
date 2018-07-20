@@ -33,10 +33,7 @@ from lava_common.exceptions import (
     TestError,
     LAVABug,
 )
-from lava_dispatcher.actions.test import (
-    TestAction,
-    handle_testcase
-)
+from lava_dispatcher.actions.test import TestAction
 from lava_dispatcher.action import Pipeline
 from lava_dispatcher.logical import (
     LavaTest,
@@ -48,9 +45,22 @@ from lava_common.constants import (
     DEFAULT_V1_PATTERN,
     DEFAULT_V1_FIXUP,
 )
-from functools import reduce
 
 # pylint: disable=too-many-branches,too-many-statements,too-many-instance-attributes,logging-not-lazy
+
+
+def handle_testcase(params):
+    data = {}
+    for param in params:
+        parts = param.split('=')
+        if len(parts) == 2:
+            key, value = parts
+            key = key.lower()
+            data[key] = value
+        else:
+            raise JobError(
+                "Ignoring malformed parameter for signal: \"%s\". " % param)
+    return data
 
 
 class TestShell(LavaTest):
@@ -72,6 +82,7 @@ class TestShell(LavaTest):
 
     @classmethod
     def needs_deployment_data(cls):
+        """ Some, not all, deployments will want deployment_data """
         return True
 
     @classmethod
@@ -83,6 +94,7 @@ class TestShell(LavaTest):
         return True
 
 
+@nottest
 class TestShellRetry(RetryAction):
 
     name = "lava-test-retry"
@@ -108,7 +120,7 @@ class PatternFixup(object):
         self.fixup = DEFAULT_V1_FIXUP
         if isinstance(testdef, dict) and 'metadata' in testdef:
             self.testdef = testdef
-            self.name = "%d_%s" % (count, reduce(dict.get, ['metadata', 'name'], testdef))
+            self.name = "%d_%s" % (count, testdef["metadata"].get("name"))
         else:
             self.testdef = {}
             self.name = None
@@ -142,6 +154,7 @@ class PatternFixup(object):
         return self.pat
 
 
+@nottest
 class TestShellAction(TestAction):
     """
     Sets up and runs the LAVA Test Shell Definition scripts.
@@ -170,8 +183,8 @@ class TestShellAction(TestAction):
     def _reset_patterns(self):
         # Extend the list of patterns when creating subclasses.
         self.patterns = {
-            "exit": "<LAVA_TEST_RUNNER>: exiting",
-            "error": "<LAVA_TEST_RUNNER>: ([^ ]+) installer failed, skipping",
+            "exit": "<LAVA_TEST_RUNNER EXIT>",
+            "error": "<LAVA_TEST_RUNNER INSTALL_FAIL>",
             "eof": pexpect.EOF,
             "timeout": pexpect.TIMEOUT,
             "signal": r"<LAVA_SIGNAL_(\S+) ([^>]+)>",
@@ -187,14 +200,14 @@ class TestShellAction(TestAction):
         self._reset_patterns()
         super().validate()
 
-    def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-locals
+    def run(self, connection, max_end_time):  # pylint: disable=too-many-locals
         """
         Common run function for subclasses which define custom patterns
         """
-        super().run(connection, max_end_time, args)
+        super().run(connection, max_end_time)
 
         # Get the connection, specific to this namespace
-        connection_namespace = self.parameters.get('connection-namespace', None)
+        connection_namespace = self.parameters.get('connection-namespace')
         parameters = None
         if connection_namespace:
             self.logger.debug("Using connection namespace: %s", connection_namespace)
@@ -243,7 +256,6 @@ class TestShellAction(TestAction):
                            "otherwise this is a bug which should be reported.")
 
         self.logger.debug("Using %s" % lava_test_results_dir)
-        connection.sendline('ls -l %s/' % lava_test_results_dir, delay=self.character_delay)
         if lava_test_sh_cmd:
             connection.sendline('export SHELL=%s' % lava_test_sh_cmd, delay=self.character_delay)
 
@@ -376,7 +388,7 @@ class TestShellAction(TestAction):
         revision = self.get_namespace_data(action='test', label=uuid, key='revision')
         res['revision'] = revision if revision else 'unspecified'
         res['namespace'] = self.parameters['namespace']
-        connection_namespace = self.parameters.get('connection_namespace', None)
+        connection_namespace = self.parameters.get('connection_namespace')
         if connection_namespace:
             res['connection-namespace'] = connection_namespace
         commit_id = self.get_namespace_data(action='test', label=uuid, key='commit-id')
@@ -502,6 +514,9 @@ class TestShellAction(TestAction):
         if res:
             # disallow whitespace in test_case_id
             test_case_id = "%s" % res['test_case_id'].replace('/', '_')
+            self.logger.marker(
+                {"case": res["test_case_id"],
+                    "type": "test_case"})
             if ' ' in test_case_id.strip():
                 self.logger.debug("Skipping invalid test_case_id '%s'", test_case_id.strip())
                 return True
@@ -555,7 +570,16 @@ class TestShellAction(TestAction):
                 self.signal_start_run(params)
             elif name == "ENDRUN":
                 self.signal_end_run(params)
+            elif name == "STARTTC":
+                self.logger.marker({"case": params[0],
+                                    "type": "start_test_case"})
+            elif name == "ENDTC":
+                self.logger.marker({"case": params[0],
+                                    "type": "end_test_case"})
             elif name == "TESTCASE":
+                self.logger.marker(
+                    {"case": params[0].replace('TEST_CASE_ID=', ''),
+                        "type": "test_case"})
                 self.signal_test_case(params)
             elif name == "TESTFEEDBACK":
                 self.signal_test_feedback(params)
@@ -567,6 +591,8 @@ class TestShellAction(TestAction):
                     name = ret
             elif name == "TESTRAISE":
                 raise TestError(' '.join(params))
+            elif name == "TESTEVENT":
+                self.logger.event(' '.join(params))
 
             self.signal_director.signal(name, params)
             ret_val = True

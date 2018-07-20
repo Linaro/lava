@@ -20,8 +20,6 @@
 Empty module for Django to pick up this package as Django application
 """
 
-from __future__ import unicode_literals
-
 import inspect
 import logging
 import pydoc
@@ -59,7 +57,7 @@ def _make_secret():
 
     # Set of valid characters for secret
     _SECRET_CHARS = "01234567890abcdefghijklmnopqrtsuwxyz"
-    return ''.join((random.choice(_SECRET_CHARS)
+    return ''.join((random.SystemRandom().choice(_SECRET_CHARS)
                     for i in range(128)))
 
 
@@ -95,7 +93,7 @@ class AuthToken(models.Model):
 
     user = models.ForeignKey(User, related_name="auth_tokens")
 
-    def __unicode__(self):
+    def __str__(self):
         return u"security token {pk}".format(pk=self.pk)
 
     @classmethod
@@ -234,7 +232,7 @@ class ExposedAPI(object):
 class ExposedV2API(ExposedAPI):
     @property
     def user(self):
-        user = super(ExposedV2API, self).user
+        user = super().user
         return AnonymousUser() if user is None else user
 
     def _authenticate(self):
@@ -298,16 +296,16 @@ class Mapper(object):
             meth_name = name
             api_name = ''
         if meth_name.startswith("_"):
-            return
+            return None
         cls = self.registered.get(api_name)
         if cls is None:
-            return
+            return None
         try:
             obj = cls(context)
-        except:
+        except Exception:
             # TODO: Perhaps this should be an APPLICATION_ERROR?
             self.logger.exception("unable to instantiate API class %r", cls)
-            return
+            return None
         meth = getattr(obj, meth_name, None)
         if not inspect.ismethod(meth):
             return
@@ -390,7 +388,7 @@ class Dispatcher(object):
             raise xmlrpc.client.Fault(
                 FaultCodes.ServerError.INVALID_XML_RPC,
                 "Unable to decode request")
-        except:
+        except Exception:
             raise xmlrpc.client.Fault(
                 FaultCodes.ServerError.INTERNAL_XML_RPC_ERROR,
                 "Unable to decode request")
@@ -472,7 +470,7 @@ class SystemAPI(ExposedAPI):
         if context is None:
             raise ValueError(
                 "SystemAPI needs to be constructed with a real CallContext")
-        super(SystemAPI, self).__init__(context)
+        super().__init__(context)
 
     def listMethods(self):
         """

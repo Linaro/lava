@@ -1,6 +1,7 @@
 
 # Sends a message which raises a TestError
 # using the specified message (which must exist)
+. lava-common-functions
 
 raise_usage () {
     echo "Usage:"
@@ -13,6 +14,6 @@ if [ -z "${1}" ]; then
     exit 1
 fi
 
-echo "<LAVA_SIGNAL_TESTRAISE $@>"
+signal "<LAVA_SIGNAL_TESTRAISE $@>"
 # always fail
 exit 1

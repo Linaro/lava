@@ -60,13 +60,13 @@ class LxcProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
                 [parameters['protocols'][self.name]['name'], str(job_id)])
         self.lxc_dist = parameters['protocols'][self.name]['distribution']
         self.lxc_release = parameters['protocols'][self.name]['release']
-        self.lxc_arch = parameters['protocols'][self.name].get('arch', None)
+        self.lxc_arch = parameters['protocols'][self.name].get('arch')
         self.lxc_template = parameters['protocols'][self.name].get(
             'template', 'download')
         self.lxc_mirror = parameters['protocols'][self.name].get('mirror',
                                                                  None)
         self.lxc_security_mirror = parameters['protocols'][self.name].get(
-            'security_mirror', None)
+            'security_mirror')
         self.verbose = parameters['protocols'][self.name].get('verbose', False)
         self.fastboot_reboot = parameters.get('reboot_to_fastboot', True)
         self.custom_lxc_path = False
@@ -105,12 +105,16 @@ class LxcProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
             if 'pre-os-command' in item['request']:
                 action.logger.info("[%s] Running pre OS command via protocol.", self.name)
                 command = action.job.device.pre_os_command
+                if not command:
+                    raise JobError("No pre OS command is defined for this device.")
                 if not action.run_command(command.split(' '), allow_silent=True):
                     raise InfrastructureError("%s failed" % command)
                 continue
             elif 'pre-power-command' in item['request']:
                 action.logger.info("[%s] Running pre-power-command via protocol.", self.name)
                 command = action.job.device.pre_power_command
+                if not command:
+                    raise JobError("No pre power command is defined for this device.")
                 if not action.run_command(command.split(' '), allow_silent=True):
                     raise InfrastructureError("%s failed" % command)
                 continue
@@ -118,7 +122,7 @@ class LxcProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
                 raise JobError("[%s] Unrecognised protocol request: %s" % (self.name, item))
 
     def __call__(self, *args, **kwargs):
-        action = kwargs.get('action', None)
+        action = kwargs.get('action')
         logger = action.logger if action else logging.getLogger("dispatcher")
         self.logger.debug("[%s] Checking protocol data for %s", action.name, self.name)
         try:

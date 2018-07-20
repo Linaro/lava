@@ -30,8 +30,8 @@
     {% if chart.is_published %}
     <dt>Chart Group label</dt>
     <dd>
-      <a href="#">
-	<div id="chart_group" style="float: left;">{{ chart.chart_group|default:"Click here to select"}}</div>
+      <a href="#" data-toggle="modal" data-target="#chart_group_modal">
+	<div style="float: left;">{{ chart.chart_group|default:"Click here to select"}}</div>
       </a>
 
       {% if chart.chart_group %}
@@ -55,8 +55,8 @@
 
     <dt>Group edit permission</dt>
     <dd>
-      <a href="#">
-	<div id="group" style="float: left;">{{ chart.group|default:"Click here to select"}}</div>
+      <a href="#" data-toggle="modal" data-target="#chart_permission_modal">
+	<div style="float: left;">{{ chart.group|default:"Click here to select"}}</div>
       </a>
       &nbsp;&nbsp;
       <button class="btn btn-info btn-xs" data-toggle="tooltip" data-placement="right" title="A group of users already listed on the Profile page.">?</button>
@@ -104,7 +104,7 @@
 
 <div class="list-container" id="queries">
   {% for chart_query in chart.chartquery_set.all %}
-  <div id="{{ chart_query.id }}" class="sortable-placeholder">
+  <div id="{{ chart_query.id }}" class="sort">
     <div class="chart-title">
       <a href="{{ chart_query.query.get_absolute_url }}">{{ chart_query.query.owner_name }}</a>
       <a class="chart-title-link" href="{% url 'lava.results.chart_query_remove' chart.name chart_query.id %}" data-toggle="confirm" data-title="Are you sure you want to remove query from this chart?">
@@ -141,28 +141,92 @@
   {% endfor %}
 </div>
 
+<div id="chart_group_modal" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">Chart group update</h4>
+      </div>
+      <form class="well" id="chart_group_form" method="post" action="{% url 'chart_add_group' name=chart.name %}">
+        <div class="modal-body">
+	  {% csrf_token %}
+          <div class="help-text">Type to search for the group label.<br>Available group labels will appear in a list below.<br>Alternatively you can type in a new one.
+          </div>
+          <div style="display: inline;">
+            <label for="chart_group">Chart Group label:</label>
+          </div>
+          <div class="typeahead__container">
+            <div class="typeahead__field">
+              <div class="typeahead__query">
+                <input id="chart_group" name="value" type="search" placeholder="Search" autocomplete="off" value="{{ chart.chart_group|default:'' }}" />
+              </div>
+            </div>
+          </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal HTML -->
+<div id="chart_permission_modal" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">Group permission update</h4>
+      </div>
+      <form class="well" id="group_permission_form" method="post" action="{% url 'chart_select_group' name=chart.name %}">
+        <div class="modal-body">
+	  {% csrf_token %}
+          <div class="help-text">Type to search for the system group.<br>Available groups will appear in a list below.
+          </div>
+          <div style="display: inline;">
+            <label for="group_permission">Group edit permission:</label>
+          </div>
+          <div class="typeahead__container">
+            <div class="typeahead__field">
+              <div class="typeahead__query">
+                <input id="group_permission" name="value" type="search" placeholder="Search" autocomplete="off" value="{{ chart.group|default:'' }}" />
+              </div>
+            </div>
+          </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.jeditable.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_server/js/jquery.typeahead.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_results_app/js/sortable.min.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}lava_server/js/bootbox.min.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}lava_results_app/js/bootbox.data.toggle.min.js"></script>
 <script>
-  $("#queries").sortable({
-    cursor: "move",
-    placeholder: "sortable-placeholder",
-    forcePlaceholderSize: true
-  });
-  $("#queries").disableSelection();
 
-  $("#queries").on("sortstop", function(event, ui) {
-    var chart_query_order = $("#queries").sortable("toArray").join();
+  $("#queries").on("mouseup", function(event, ui) {
+    var chart_query_order = [];
+    $("#queries").children().each(function () {
+      chart_query_order.push($(this).attr("id"));
+    });
+
     $.ajax({
       url: "{% url 'chart_query_order_update' name=chart.name %}",
       type: "POST",
       data: {
         csrfmiddlewaretoken: '{{csrf_token}}',
-        chart_query_order: chart_query_order,
+        chart_query_order: chart_query_order.join(),
       },
     });
   });
@@ -173,54 +237,21 @@
 </script>
 {% if chart.is_published %}
 <script>
-  $("#chart_group").editable(
-  "{% url 'chart_add_group' name=chart.name %}",
-  {
-    onblur: "submit",
-    width: 200,
-    submitdata : {"csrfmiddlewaretoken": '{{csrf_token}}'},
-    callback: function(data) {
-      if(data != "") {
-        $("#group_link").show();
-        href = $("#group_link a:first-child").attr("href").split("#")[0] + "#";
-        $("#group_link a:first-child").attr("href", href + data);
-      } else {
-        $("#group_link").hide();
-      }
-    }
-  });
-
-  $("#chart_group").on("click", function(event) {
-      var field = $(this).find("input");
-      {% if chart.chart_group == None %}
-        field.val("");
-      {% endif %}
-      field.select();
-      field.autocomplete({
-        source: '{% url 'chart_group_list' %}',
-        minLength: 2,
-      });
-  });
-
-
-  $("#group").editable(
-  "{% url 'chart_select_group' name=chart.name %}",
-  {
-    onblur: "submit",
-    width: 200,
-    submitdata : {"csrfmiddlewaretoken": '{{csrf_token}}'},
-  });
-
-  $("#group").on("click", function(event) {
-      var field = $(this).find("input");
-      {% if chart.group == None %}
-        field.val("");
-      {% endif %}
-      field.select();
-      field.autocomplete({
-        source: '{% url 'lava.results.get_chart_group_names' %}',
+  $("#chart_group_modal").on('show.bs.modal', function (e) {
+    $("#chart_group").val("{{ chart.chart_group|default:'' }}");
+    $("#chart_group").typeahead({
+        source: {chartgroups: {ajax: {type:"GET", url: '{% url 'chart_group_list' %}', data: {term: $(this).val()}}}},
         minLength: 1,
-      });
+    });
+  });
+
+  $("#chart_permission_modal").on('show.bs.modal', function (e) {
+    $("#group_permission").val("{{ chart.group|default:'' }}");
+    $("#group_permission").typeahead({
+        source: {groups: {ajax: {type:"GET", url: '{% url 'get_chart_group_names' %}', data: {term: $(this).val()}}}},
+        display: ["name"],
+        minLength: 1,
+    });
   });
 
 </script>

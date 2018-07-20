@@ -207,12 +207,10 @@ appear as a list.
 Basic structure for device configuration
 ========================================
 
-Individual devices then populate parameters for a specified device_type. A
-device can only have one device_type.
+Individual devices then populate parameters for a specified device_type.
 
 .. code-block:: yaml
 
- device_type: kvm
  root_part: 1
  architecture: amd64
  memory: 512
@@ -337,7 +335,6 @@ The corresponding :term:`device type` template for nexus 10 is as follows::
 
  {% extends 'base.jinja2' %}
  {% block body %}
- device_type: nexus10
  adb_serial_number: {{ adb_serial_number|default('0000000000') }}
  fastboot_serial_number: {{ fastboot_serial_number|default('0000000000') }}
  fastboot_options: {{ fastboot_options|default([]) }}
@@ -384,7 +381,6 @@ like the following for a nexus 10 device:
  commands:
      connect: adb -s R32D300FRYP shell
      soft_reboot: adb -s R32D300FRYP reboot bootloader
- device_type: nexus10
  adb_serial_number: R32D300FRYP
  fastboot_serial_number: R32D300FRYP
  fastboot_options: ['-u']

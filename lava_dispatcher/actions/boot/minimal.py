@@ -73,7 +73,7 @@ class MinimalBoot(BootAction):
                     self.internal_pipeline.add_action(OverlayUnpack())
                 self.internal_pipeline.add_action(ExportDeviceEnvironment())
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection

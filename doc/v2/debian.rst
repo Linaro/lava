@@ -56,6 +56,8 @@ to the full dependencies of ``pinentry-gtk2`` which is brought in via
   $ sudo apt-get --purge autoremove
   $ sudo apt install lava-dev
 
+.. seealso:: :ref:`unit_test_dependencies`
+
 .. index:: developer-builds
 
 .. _dev_builds:

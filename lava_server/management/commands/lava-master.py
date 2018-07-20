@@ -20,16 +20,12 @@
 
 # pylint: disable=wrong-import-order
 
-from __future__ import unicode_literals
-
 import contextlib
 import errno
 import jinja2
 import simplejson
 import lzma
 import os
-import shutil
-import sys
 import time
 import yaml
 import zmq
@@ -65,6 +61,11 @@ SCHEDULE_INTERVAL = 20
 
 # Log format
 FORMAT = '%(asctime)-15s %(levelname)7s %(message)s'
+
+# Configuration files
+ENV_PATH = "/etc/lava-server/env.yaml"
+ENV_DUT_PATH = "/etc/lava-server/env.dut.yaml"
+DISPATCHERS_PATH = "/etc/lava-server/dispatcher.d"
 
 
 def send_multipart_u(sock, data):
@@ -115,7 +116,7 @@ class SlaveDispatcher(object):  # pylint: disable=too-few-public-methods
                 worker.save()
 
 
-def load_optional_yaml_file(filename):
+def load_optional_yaml_file(filename, fallback=None):
     """
     Returns the string after checking for YAML errors which would cause issues later.
     Only raise an error if the file exists but is not readable or parsable
@@ -126,9 +127,12 @@ def load_optional_yaml_file(filename):
         yaml.safe_load(data_str)
         return data_str
     except IOError as exc:
-        # This is ok if the file does not exist
         if exc.errno == errno.ENOENT:
-            return ''
+            # This is ok if the file does not exist
+            if fallback is None:
+                return ""
+            # Use the fallback filename
+            return load_optional_yaml_file(fallback)
         raise
     except yaml.YAMLError:
         # Raise an IOError because the caller uses yaml.YAMLError for a
@@ -146,7 +150,7 @@ class Command(LAVADaemonCommand):
     default_logfile = "/var/log/lava-server/lava-master.log"
 
     def __init__(self, *args, **options):
-        super(Command, self).__init__(*args, **options)
+        super().__init__(*args, **options)
         self.auth = None
         self.controler = None
         self.event_socket = None
@@ -160,22 +164,7 @@ class Command(LAVADaemonCommand):
         self.events = {"canceling": set(), "available_dt": set()}
 
     def add_arguments(self, parser):
-        super(Command, self).add_arguments(parser)
-        # Important: ensure share/env.yaml is put into /etc/ by setup.py in packaging.
-        config = parser.add_argument_group("dispatcher config")
-
-        config.add_argument('--env',
-                            default="/etc/lava-server/env.yaml",
-                            help="Environment variables for the dispatcher processes. "
-                                 "Default: /etc/lava-server/env.yaml")
-        config.add_argument('--env-dut',
-                            default="/etc/lava-server/env.dut.yaml",
-                            help="Environment variables for device under test. "
-                                 "Default: /etc/lava-server/env.dut.yaml")
-        config.add_argument('--dispatchers-config',
-                            default="/etc/lava-server/dispatcher.d",
-                            help="Directory that might contain dispatcher specific configuration")
-
+        super().add_arguments(parser)
         net = parser.add_argument_group("network")
         net.add_argument('--master-socket',
                          default='tcp://*:5556',
@@ -401,22 +390,25 @@ class Command(LAVADaemonCommand):
         # no need for the dispatcher to retain comments
         return yaml.dump(job_def)
 
-    def save_job_config(self, job, worker, device_cfg, options):
+    def save_job_config(self, job, device_cfg, env_str, env_dut_str,
+                        dispatcher_cfg):
         output_dir = job.output_dir
         mkdir(output_dir)
         with open(os.path.join(output_dir, "job.yaml"), "w") as f_out:
             f_out.write(self.export_definition(job))
-        with contextlib.suppress(IOError):
-            shutil.copy(options["env"], os.path.join(output_dir, "env.yaml"))
-        with contextlib.suppress(IOError):
-            shutil.copy(options["env_dut"], os.path.join(output_dir, "env.dut.yaml"))
-        with contextlib.suppress(IOError):
-            shutil.copy(os.path.join(options["dispatchers_config"], "%s.yaml" % worker.hostname),
-                        os.path.join(output_dir, "dispatcher.yaml"))
         with open(os.path.join(output_dir, "device.yaml"), "w") as f_out:
             yaml.dump(device_cfg, f_out)
+        if env_str:
+            with open(os.path.join(output_dir, "env.yaml"), "w") as f_out:
+                f_out.write(env_str)
+        if env_dut_str:
+            with open(os.path.join(output_dir, "env.dut.yaml"), "w") as f_out:
+                f_out.write(env_dut_str)
+        if dispatcher_cfg:
+            with open(os.path.join(output_dir, "dispatcher.yaml"), "w") as f_out:
+                f_out.write(dispatcher_cfg)
 
-    def start_job(self, job, options):
+    def start_job(self, job):
         # Load job definition to get the variables for template
         # rendering
         job_def = yaml.safe_load(job.definition)
@@ -425,15 +417,22 @@ class Command(LAVADaemonCommand):
         device = job.actual_device
         worker = device.worker_host
 
-        # Load configurations
-        env_str = load_optional_yaml_file(options['env'])
-        env_dut_str = load_optional_yaml_file(options['env_dut'])
+        # TODO: check that device_cfg is not None!
         device_cfg = device.load_configuration(job_ctx)
-        dispatcher_cfg_file = os.path.join(options['dispatchers_config'],
-                                           "%s.yaml" % worker.hostname)
-        dispatcher_cfg = load_optional_yaml_file(dispatcher_cfg_file)
 
-        self.save_job_config(job, worker, device_cfg, options)
+        # Try to load the dispatcher specific files and then fallback to the
+        # default configuration files.
+        env_str = load_optional_yaml_file(
+            os.path.join(DISPATCHERS_PATH, worker.hostname, "env.yaml"),
+            ENV_PATH)
+        env_dut_str = load_optional_yaml_file(
+            os.path.join(DISPATCHERS_PATH, worker.hostname, "env.dut.yaml"),
+            ENV_DUT_PATH)
+        dispatcher_cfg = load_optional_yaml_file(
+            os.path.join(DISPATCHERS_PATH, worker.hostname, "dispatcher.yaml"),
+            os.path.join(DISPATCHERS_PATH, "%s.yaml" % worker.hostname))
+
+        self.save_job_config(job, device_cfg, env_str, env_dut_str, dispatcher_cfg)
         self.logger.info("[%d] START => %s (%s)", job.id,
                          worker.hostname, device.hostname)
         send_multipart_u(self.controler,
@@ -452,7 +451,8 @@ class Command(LAVADaemonCommand):
             self.logger.info("[%d] Trimming dynamic connection device configuration.", sub_job.id)
             min_device_cfg = parent.actual_device.minimise_configuration(device_cfg)
 
-            self.save_job_config(sub_job, worker, min_device_cfg, options)
+            self.save_job_config(sub_job, min_device_cfg, env_str, env_dut_str,
+                                 dispatcher_cfg)
             self.logger.info("[%d] START => %s (connection)",
                              sub_job.id, worker.hostname)
             send_multipart_u(self.controler,
@@ -462,7 +462,7 @@ class Command(LAVADaemonCommand):
                               yaml.dump(min_device_cfg), dispatcher_cfg,
                               env_str, env_dut_str])
 
-    def start_jobs(self, options, jobs=None):
+    def start_jobs(self, jobs=None):
         """
         Loop on all scheduled jobs and send the START message to the slave.
         """
@@ -483,7 +483,7 @@ class Command(LAVADaemonCommand):
         for job in query:
             msg = None
             try:
-                self.start_job(job, options)
+                self.start_job(job)
             except jinja2.TemplateNotFound as exc:
                 self.logger.error("[%d] Template not found: '%s'",
                                   job.id, exc.message)
@@ -515,10 +515,18 @@ class Command(LAVADaemonCommand):
                 job.save()
 
     def cancel_jobs(self, partial=False):
-        query = TestJob.objects.filter(state=TestJob.STATE_CANCELING)
+        # make the request atomic
+        query = TestJob.objects.select_for_update()
+        # Only select the test job that are canceling
+        query = query.filter(state=TestJob.STATE_CANCELING)
+        # Only cancel jobs on online workers
+        query = query.filter(actual_device__worker_host__state=Worker.STATE_ONLINE)
+
+        # Allow for partial canceling
         if partial:
             query = query.filter(id__in=list(self.events["canceling"]))
 
+        # Loop on all jobs
         for job in query:
             worker = job.lookup_worker if job.dynamic_connection else job.actual_device.worker_host
             self.logger.info("[%d] CANCEL => %s", job.id,
@@ -688,19 +696,21 @@ class Command(LAVADaemonCommand):
 
                         # Dispatch scheduled jobs
                         with transaction.atomic():
-                            self.start_jobs(options)
+                            self.start_jobs()
                     else:
                         self.logger.warning("lava-logs is offline: can't schedule jobs")
 
                     # Handle canceling jobs
-                    self.cancel_jobs()
+                    with transaction.atomic():
+                        self.cancel_jobs()
 
                     # Do not count the time taken to schedule jobs
                     last_schedule = time.time()
                 else:
                     # Cancel the jobs and remove the jobs from the set
                     if self.events["canceling"]:
-                        self.cancel_jobs(partial=True)
+                        with transaction.atomic():
+                            self.cancel_jobs(partial=True)
                         self.events["canceling"] = set()
                     # Schedule for available device-types
                     if self.events["available_dt"]:
@@ -708,7 +718,7 @@ class Command(LAVADaemonCommand):
                         self.events["available_dt"] = set()
                         # Dispatch scheduled jobs
                         with transaction.atomic():
-                            self.start_jobs(options, jobs)
+                            self.start_jobs(jobs)
 
             except (OperationalError, InterfaceError):
                 self.logger.info("[RESET] database connection reset.")

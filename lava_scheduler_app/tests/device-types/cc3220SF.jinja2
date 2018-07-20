@@ -1,0 +1,35 @@
+{# device_type: ccr3220SF #}
+{% extends 'base.jinja2' %}
+{% block body %}
+board_id: '{{ board_id|default('00000000') }}'
+usb_vendor_id: '0451'
+usb_product_id: 'bef3'
+usb_sleep: {{ usb_sleep|default(10) }}
+
+actions:
+  deploy:
+    methods:
+      image:
+        parameters:
+
+  boot:
+    connections:
+      serial:
+    methods:
+      gdb:
+        parameters:
+          command: gdb-multiarch
+          wait_before_continue: {{ wait_before_continue|default(5) }}
+        openocd:
+          arguments:
+          - "{ZEPHYR}"
+          commands:
+          - target remote | openocd -c "gdb_port pipe" -f {OPENOCD_SCRIPT}
+          - monitor reset halt
+          - load
+          - set remotetimeout 10000
+          docker:
+            use: {{ docker_use|default(False) }}
+            container: '{{ docker_container|default('ti-openocd') }}'
+            devices: {{ docker_devices|default([]) }}
+{% endblock body %}

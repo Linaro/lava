@@ -20,6 +20,7 @@
 
 # pylint: disable=wrong-import-order
 
+import contextlib
 import logging
 import os
 import time
@@ -30,12 +31,14 @@ from zmq.utils.strtypes import u
 from zmq.auth.thread import ThreadAuthenticator
 from django.conf import settings
 from django.db import connection, transaction
-from django.db.utils import OperationalError, InterfaceError
+from django.db.utils import DatabaseError, InterfaceError, OperationalError
 
 from lava_results_app.models import TestCase
 from lava_server.cmdutils import LAVADaemonCommand, watch_directory
 from lava_scheduler_app.models import TestJob
+from lava_scheduler_app.signals import send_event
 from lava_scheduler_app.utils import mkdir
+from lava_scheduler_app.logutils import line_count, read_logs, write_logs
 from lava_results_app.dbutils import map_scanned_results, create_metadata_store
 
 
@@ -49,15 +52,20 @@ FD_TIMEOUT = 60
 class JobHandler(object):  # pylint: disable=too-few-public-methods
     def __init__(self, job):
         self.output_dir = job.output_dir
-        self.output = open(os.path.join(self.output_dir, 'output.yaml'), 'a+')
+        self.output = open(os.path.join(self.output_dir, 'output.yaml'), 'ab')
+        self.index = open(os.path.join(self.output_dir, 'output.idx'), 'ab')
         self.last_usage = time.time()
+        self.markers = {}
 
     def write(self, message):
-        self.output.write(message)
-        self.output.write('\n')
-        self.output.flush()
+        write_logs(self.output, self.index,
+                   (message + '\n').encode("utf-8"))
+
+    def line_count(self):
+        return line_count(self.index)
 
     def close(self):
+        self.index.close()
         self.output.close()
 
 
@@ -67,7 +75,7 @@ class Command(LAVADaemonCommand):
     default_logfile = "/var/log/lava-server/lava-logs.log"
 
     def __init__(self, *args, **options):
-        super(Command, self).__init__(*args, **options)
+        super().__init__(*args, **options)
         self.logger = logging.getLogger("lava-logs")
         self.log_socket = None
         self.auth = None
@@ -85,7 +93,7 @@ class Command(LAVADaemonCommand):
         self.ping_interval = TIMEOUT
 
     def add_arguments(self, parser):
-        super(Command, self).add_arguments(parser)
+        super().add_arguments(parser)
 
         net = parser.add_argument_group("network")
         net.add_argument('--socket',
@@ -217,9 +225,24 @@ class Command(LAVADaemonCommand):
             context.term()
 
     def flush_test_cases(self):
-        if self.test_cases:
-            self.logger.info("Saving %d test cases", len(self.test_cases))
+        if not self.test_cases:
+            return
+
+        # Try to save into the database
+        try:
             TestCase.objects.bulk_create(self.test_cases)
+            self.logger.info("Saving %d test cases", len(self.test_cases))
+            self.test_cases = []
+        except DatabaseError as exc:
+            self.logger.error("Unable to flush the test cases")
+            self.logger.exception(exc)
+            self.logger.warning("Saving test cases one by one and dropping the faulty ones")
+            saved = 0
+            for tc in self.test_cases:
+                with contextlib.suppress(DatabaseError):
+                    tc.save()
+                    saved += 1
+            self.logger.info("%d test cases saved, %d dropped", saved, len(self.test_cases) - saved)
             self.test_cases = []
 
     def main_loop(self):
@@ -341,6 +364,30 @@ class Command(LAVADaemonCommand):
             mkdir(job.output_dir)
             self.jobs[job_id] = JobHandler(job)
 
+        # For 'event', send an event and log as 'debug'
+        if message_lvl == 'event':
+            self.logger.debug("[%s] event: %s", job_id, message_msg)
+            send_event(".event", "lavaserver", {"message": message_msg, "job": job_id})
+            message_lvl = "debug"
+        # For 'marker', save in the database and log as 'debug'
+        elif message_lvl == 'marker':
+            # TODO: save on the file system in case of lava-logs restart
+            m_type = message_msg.get("type")
+            case = message_msg.get("case")
+            if m_type is None or case is None:
+                self.logger.error("[%s] invalid marker: %s", job_id, message_msg)
+                return
+            self.jobs[job_id].markers.setdefault(case, {})[m_type] = self.jobs[job_id].line_count()
+            # This is in fact the previous line
+            self.jobs[job_id].markers[case][m_type] -= 1
+            self.logger.debug("[%s] marker: %s line: %s", job_id, message_msg, self.jobs[job_id].markers[case][m_type])
+            return
+
+        # Mark the file handler as used
+        self.jobs[job_id].last_usage = time.time()
+        # The format is a list of dictionaries
+        self.jobs[job_id].write("- %s" % message)
+
         if message_lvl == "results":
             try:
                 job = TestJob.objects.get(pk=job_id)
@@ -349,7 +396,9 @@ class Command(LAVADaemonCommand):
                 return
             meta_filename = create_metadata_store(message_msg, job)
             new_test_case = map_scanned_results(results=message_msg, job=job,
+                                                markers=self.jobs[job_id].markers,
                                                 meta_filename=meta_filename)
+
             if new_test_case is None:
                 self.logger.warning(
                     "[%s] unable to map scanned results: %s",
@@ -384,15 +433,7 @@ class Command(LAVADaemonCommand):
                     job.go_state_finished(health, infrastructure_error)
                     job.save()
 
-        # Mark the file handler as used
-        self.jobs[job_id].last_usage = time.time()
-
         # n.b. logging here would produce a log entry for every message in every job.
-        # The format is a list of dictionaries
-        message = "- %s" % message
-
-        # Write data
-        self.jobs[job_id].write(message)
 
     def controler_socket(self):
         msg = self.controler.recv_multipart()

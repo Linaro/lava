@@ -70,30 +70,6 @@ setup(
     exported for further analysis.
     """,
     url='https://www.linaro.org/initiatives/lava/',
-    install_requires=[
-        'django >= 1.10',
-        'django-restricted-resource >= 2016.8',
-        'django-tables2 >= 1.2',
-        'docutils >= 0.6',
-        'markdown >= 2.0.3',
-        'psycopg2',
-        'pyzmq',
-        'jinja2',
-        'django-auth-ldap >= 1.2.12',
-        'voluptuous >= 0.8.8',
-        "simplejson",
-        'pexpect >= 4.2',
-        'PyYAML',
-        'pyserial >= 2.6',
-        'requests',
-        'netifaces >= 0.10.0',
-        'nose',
-        'pyudev >= 0.21',
-        'pytz',
-        'file-magic',
-        'configobj',
-        'setproctitle >= 1.1.8'
-    ],
     package_data={
         'lava_dispatcher': [
             'dynamic_vm_keys/lava*',

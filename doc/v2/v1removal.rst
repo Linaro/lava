@@ -244,11 +244,10 @@ support V2, the admin can disable V1 test jobs on that worker.
 #. ``umount`` the V1 SSHFS which provices read-write access to the test 
    job log files **on the master**.
 
-   * Check the output of ``mount`` and 
-   ``/etc/lava-server/instance.conf`` for
-     the value of LAVA_PREFIX. The SSHFS mount is
-     ``${LAVA_PREFIX}/default/media``. The directory should be empty once the
-     SSHFS mount is removed:
+   * Check the output of ``mount`` and
+     ``/etc/lava-server/instance.conf`` for the value of LAVA_PREFIX.
+     The SSHFS mount is ``${LAVA_PREFIX}/default/media``. The directory
+     should be empty once the SSHFS mount is removed:
 
      .. code-block:: shell
 

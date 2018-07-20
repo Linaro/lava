@@ -70,8 +70,7 @@ class UBoot(Boot):
             raise ConfigurationError("commands not specified in boot parameters")
         if 'u-boot' in device['actions']['boot']['methods']:
             return True, 'accepted'
-        else:
-            return False, '"u-boot" was not in the device configuration boot methods'
+        return False, '"u-boot" was not in the device configuration boot methods'
 
 
 class UBootAction(BootAction):
@@ -105,10 +104,15 @@ class UBootRetry(BootAction):
     description = "interactive uboot retry action"
     summary = "uboot commands with retry"
 
+    def __init__(self):
+        super().__init__()
+        self.method_params = None
+        self.usb_mass_device = None
+
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.method_params = self.job.device['actions']['boot']['methods']['u-boot']['parameters']
-        self.usb_mass_device = self.method_params.get('uboot_mass_storage_device', None)
+        self.usb_mass_device = self.method_params.get('uboot_mass_storage_device')
         # establish a new connection before trying the reset
         self.internal_pipeline.add_action(ResetDevice())
         self.internal_pipeline.add_action(BootloaderInterruptAction())
@@ -136,8 +140,8 @@ class UBootRetry(BootAction):
             value=self.job.device['actions']['boot']['methods']['u-boot']['parameters']['bootloader_prompt']
         )
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection
 
@@ -162,7 +166,7 @@ class UBootSecondaryMedia(BootloaderSecondaryMedia):
         if 'kernel_type' not in self.parameters:
             self.errors = "Missing kernel_type for secondary media boot"
         self.logger.debug("Mapping kernel_type: %s", self.parameters['kernel_type'])
-        bootcommand = map_kernel_uboot(self.parameters['kernel_type'], self.job.device.get('parameters', None))
+        bootcommand = map_kernel_uboot(self.parameters['kernel_type'], self.job.device.get('parameters'))
         self.logger.debug("Using bootcommand: %s", bootcommand)
         self.set_namespace_data(
             action='uboot-prepare-kernel', label='kernel-type',
@@ -217,8 +221,8 @@ class UBootEnterFastbootAction(BootAction):
         if 'commands' not in self.job.device['actions']['deploy']['methods']['u-boot']['parameters']['fastboot']:
             self.errors = "uboot command missing"
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         connection.prompt_str = self.params['bootloader_prompt']
         self.logger.debug("Changing prompt to %s", connection.prompt_str)
         self.wait(connection)

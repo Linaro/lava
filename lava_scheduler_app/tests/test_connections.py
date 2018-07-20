@@ -26,7 +26,7 @@ class YamlSshFactory(YamlFactory):
 class SecondaryConnections(TestCaseWithFactory):
 
     def setUp(self):
-        super(SecondaryConnections, self).setUp()
+        super().setUp()
         self.factory = YamlSshFactory()
         self.device_type = self.factory.make_device_type()
 

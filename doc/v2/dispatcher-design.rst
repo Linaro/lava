@@ -28,9 +28,6 @@ prior to merging into master. There is also a `staging instance
 <http://staging.validation.linaro.org>`_ for testing of the current master
 branch and release candidates for the next production release.
 
-Devices indicate their support for pipeline jobs in the :ref:`detailed device
-information <device_owner_help>` for each device and device type.
-
 Pipeline Architecture
 *********************
 
@@ -895,12 +892,25 @@ produce the same output.
 
 .. note:: A helper is being planned for this step.
 
-Running lava-dispatch directly
-==============================
+.. index:: lava-run
 
-``lava-dispatch`` only accepts a YAML file for pipeline jobs - the old
-behaviour of looking up the file based on the device hostname has been dropped.
+.. _running_lava_run:
+
+Running lava-run directly
+=========================
+
+``lava-run`` can be used to execute test jobs locally on the worker without
+submitting the job or waiting for the scheduler. This is used during device
+integration and triage of infrastructure problems.
+
+.. caution:: Ensure that the device is offline (health state Bad from a
+   failed health check or manually set to health Maintenance) so that the
+   scheduler does not try to start another test job whilst you are running
+   a test job locally.
+
+``lava-run`` accepts a YAML file containing the device configuration which
+can be accessed from the download link on the device dictionary page.
 The absolute or relative path to the YAML file must be specified to the
-``--target`` option. ``--output-dir`` must also be specified::
+``--device`` option. ``--output-dir`` must also be specified::
 
- sudo lava-dispatch --target devices/fred.conf panda-ramdisk.yaml --output-dir=/tmp/test
+ $ sudo lava-run --device devices/fred.yaml panda-ramdisk.yaml --output-dir=/tmp/test

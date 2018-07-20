@@ -72,6 +72,40 @@ tools to access devices and debug test jobs.
 .. _SSH: http://www.openssh.com/
 .. _POSIX: http://www.opengroup.org/austin/papers/posix_faq.html
 
+.. index:: unit tests - dependencies
+
+.. _unit_test_dependencies:
+
+Dependencies required to run unit tests
+=======================================
+
+.. seealso:: :ref:`developer_preparations` and :ref:`building LAVA
+   packages <testing_packaging>`.
+
+To run the unit tests, a range of dependencies need to be installed::
+
+ $ sudo apt -y install lava-dev python3-django-testscenarios
+
+To reduce the number of unit tests which are skipped, a number of other
+packages are listed as recommended by ``lava-dev`` and these should be
+installed as well::
+
+ $ sudo apt -y install lxc u-boot-tools tftpd-hpa telnet nfs-kernel-server img2simg simg2img
+
+.. important:: For security reasons, each installation of
+   ``lava-server`` sets the permissions of
+   ``/etc/lava-server/instance.conf`` to only be readable by the
+   ``lavaserver`` user and users in the ``lavaserver`` group.
+
+   (Some older instances may have a different username for this user
+   and group - check the value of ``LAVA_DB_USER`` in
+   ``/etc/lava-server/instance.conf`` using sudo.)
+
+   To run the unit tests, the user running the unit tests needs to be
+   in the ``lavaserver`` group. For example::
+
+    $ sudo adduser <username> lavaserver
+
 .. index:: templates as code, device-type template files
 
 .. _developing_device_type_templates:
@@ -462,7 +496,7 @@ configuration of ``staging`` as a reference:
 https://git.linaro.org/lava/lava-lab.git/tree/HEAD:/staging.validation.linaro.org/lava/pipeline/devices
 
 Device dictionaries can also be downloaded from any LAVA instance
-using the :ref:`_xml_rpc` call, without needing authentication:
+using the :ref:`xml_rpc` call, without needing authentication:
 
 .. code-block:: python
 

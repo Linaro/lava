@@ -195,6 +195,10 @@ Not all devices of one device-type will necessarily need fixed IPv4 addresses
 to be configured in the device dictionary. Admins should consider the use of
 :term`device tags`.
 
+.. index:: storage, filesystem storage
+
+.. _temporary_filesystem_storage:
+
 Providing temporary filesystem storage
 ======================================
 
@@ -220,6 +224,8 @@ abbreviation for USB Mass Storage).
    exported block device which are necessary for the device to reboot and
    execute another test job successfully. Not all devices can support such
    temporary storage.
+
+.. seealso:: :ref:`device_dictionary_exported_parameters`
 
 .. _dispatcher_configuration:
 
@@ -253,6 +259,35 @@ Current support includes:
  #lxc_path: <custom-path>
 
 .. seealso:: :ref:`keep_dispatcher_dumb`
+
+.. _dispatcher_environment:
+
+Per dispatcher environment settings
+===================================
+
+Sometimes individual dispatchers can need different environment
+settings, for example when a remote dispatcher is added then any
+settings for ``HTTP_PROXY`` for other internal dispatchers cannot
+apply to the remote dispatcher.
+
+To support this, LAVA will check for dispatcher-specific environment
+files. If the files exist, the content will be used instead of applying
+any environment files for the entire instance.
+
+In a similar manner to :ref:`dispatcher_configuration` above, the
+configuration files are:
+
+* ``/etc/lava-server/dispatcher.d/<hostname>/env.yaml``
+
+* ``/etc/lava-server/dispatcher.d/<hostname>/env.dut.yaml``
+
+If the dispatcher specific configuration files are not present,
+lava-master will fallback to the environment files for the entire
+instance:
+
+* ``/etc/lava-server/env.yaml``
+
+* ``/etc/lava-server/env.dut.yaml``
 
 .. index:: pipeline device requirements
 

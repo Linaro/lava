@@ -43,7 +43,6 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
 {% extends 'base-uboot.jinja2' %}
 {% set console_device = console_device|default('ttyS0') %}
 {% set baud_rate = baud_rate|default(115200) %}
-{% set device_type = "armada-375-db" %}
 {% set bootloader_prompt = bootloader_prompt|default('Marvell>>') %}
 {% set bootm_kernel_addr = '0x02080000' %}
 {% set bootm_ramdisk_addr = '0x02880000' %}
@@ -131,7 +130,6 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
         test_template = prepare_jinja_template('staging-rpi3-01', data)
         rendered = test_template.render(**context)
         template_dict = yaml.load(rendered)
-        self.assertEqual('bcm2837-rpi-3-b-32', (template_dict['device_type']))
         commands = template_dict['actions']['boot']['methods']['u-boot']['ramdisk']['commands']
         self.assertIsNotNone(commands)
         self.assertIsInstance(commands, list)
@@ -148,7 +146,6 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
         test_template = prepare_jinja_template('staging-rpi3-01', data)
         rendered = test_template.render(**context)
         template_dict = yaml.load(rendered)
-        self.assertEqual('bcm2837-rpi-3-b-32', (template_dict['device_type']))
         commands = template_dict['actions']['boot']['methods']['u-boot']['ramdisk']['commands']
         self.assertIsNotNone(commands)
         self.assertIsInstance(commands, list)
@@ -174,7 +171,6 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
         test_template = prepare_jinja_template('staging-panda-01', data)
         rendered = test_template.render(**context)
         template_dict = yaml.load(rendered)
-        self.assertEqual('panda', (template_dict['device_type']))
         self.assertIn('bootloader-commands', template_dict['timeouts']['actions'])
         self.assertEqual(180.0, Timeout.parse(template_dict['timeouts']['actions']['bootloader-commands']))
         commands = template_dict['actions']['boot']['methods']['u-boot']['ramdisk']['commands']
@@ -463,3 +459,10 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
         self.assertEqual({'set_boot_to_usb': {'do': '/bin/true', 'undo': '/bin/true'},
                           'set_boot_to_sd': {'do': '/bin/true', 'undo': '/bin/true'}},
                          template_dict['commands']['users'])
+
+    def test_meson8b_template(self):
+        rendered = self.render_device_dictionary_file('meson8b-odroidc1-1.jinja2')
+        template_dict = yaml.load(rendered)
+        self.assertIsNotNone(template_dict)
+        template_dict['constants']['u-boot'].get('interrupt_ctrl_list', self.fail)
+        self.assertEqual(template_dict['constants']['u-boot']['interrupt_ctrl_list'], ['c'])

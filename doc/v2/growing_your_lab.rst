@@ -320,6 +320,7 @@ Before considering installing LAVA workers in remote locations, it is
   :ref:`infrastructure_requirements` and :ref:`more_installation_types`
 * :ref:`growing_your_lab`
 * :ref:`lab_scaling`
+* :ref:`debugging infrastructure effects <infrastructure_changes>`
 
 .. _remote_lab_infrastructure:
 

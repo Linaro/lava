@@ -98,7 +98,7 @@ class VExpressMsdAction(DeployAction):
         super().validate()
         if not self.valid:
             return
-        if not self.parameters.get('recovery_image', None):  # idempotency
+        if not self.parameters.get('recovery_image'):  # idempotency
             return
 
     def populate(self, parameters):
@@ -145,8 +145,8 @@ class ExtractVExpressRecoveryImage(Action):
         if not self.compression:
             self.errors = "no compression set for recovery image"
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
 
         # copy recovery image to a temporary directory and unpack
         recovery_image = self.get_namespace_data(action='download-action', label=self.param_key, key='file')
@@ -185,6 +185,7 @@ class EnterVExpressMCC(Action):
         self.interrupt_char = None
         self.mcc_prompt = None
         self.autorun_prompt = None
+        self.mcc_reset_msg = None
 
     def validate(self):
         super().validate()
@@ -192,30 +193,40 @@ class EnterVExpressMCC(Action):
             return
         self.device_params = self.job.device['actions']['deploy']['methods']['vemsd']['parameters']
         self.interrupt_char = self.device_params.get('interrupt_char', VEXPRESS_AUTORUN_INTERRUPT_CHARACTER)
-        self.mcc_prompt = self.device_params.get('mcc_prompt', None)
-        self.autorun_prompt = self.device_params.get('autorun_prompt', None)
+        self.mcc_prompt = self.device_params.get('mcc_prompt')
+        self.autorun_prompt = self.device_params.get('autorun_prompt')
+        self.mcc_reset_msg = self.device_params.get('mcc_reset_msg')
         if not isinstance(self.mcc_prompt, str):
             self.errors = 'Versatile Express MCC prompt unset'
         if not isinstance(self.autorun_prompt, str):
             self.errors = 'Versatile Express autorun prompt unset'
+        if not isinstance(self.mcc_reset_msg, str):
+            self.errors = 'Versatile Express MCC reset message unset'
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         if not connection:
             raise LAVABug("%s started without a connection already in use" % self.name)
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
 
         # Get possible prompts from device config
-        connection.prompt_str = [self.autorun_prompt, self.mcc_prompt]
+        prompt_list = [self.autorun_prompt, self.mcc_prompt, self.mcc_reset_msg]
+        connection.prompt_str = prompt_list
 
         self.logger.debug("Changing prompt to '%s'", connection.prompt_str)
         index = self.wait(connection)
-        if connection.prompt_str[index] != self.mcc_prompt:
+
+        # Interrupt autorun if enabled
+        if connection.prompt_str[index] == self.autorun_prompt:
             self.logger.debug('Autorun enabled: interrupting..')
             connection.sendline('%s\n' % self.interrupt_char)
-            connection.prompt_str = self.mcc_prompt
-            self.wait(connection)
-        else:
+            connection.prompt_str = [self.mcc_prompt, self.mcc_reset_msg]
+            index = self.wait(connection)
+        elif connection.prompt_str[index] == self.mcc_prompt:
             self.logger.debug('Already at MCC prompt: autorun looks to be disabled')
+
+        # Check that mcc_reset_msg hasn't been received
+        if connection.prompt_str[index] == self.mcc_reset_msg:
+            raise InfrastructureError("MCC: Unable to interrupt auto-run")
         return connection
 
 
@@ -243,10 +254,10 @@ class EnableVExpressMassStorage(Action):
         if not isinstance(self.mcc_cmd, str):
             self.errors = 'Versatile Express USB Mass Storage mount command unset'
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         if not connection:
             raise LAVABug("%s started without a connection already in use" % self.name)
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
 
         # Issue command and check that you are returned to the prompt again
         connection.sendline('%s\n' % self.mcc_cmd)
@@ -277,8 +288,8 @@ class MountVExpressMassStorageDevice(Action):
         if not isinstance(self.microsd_fs_label, str):
             self.errors = 'Filesystem label unset for Versatile Express'
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
 
         device_path = "/dev/disk/by-label/%s" % self.microsd_fs_label
         try:
@@ -316,8 +327,8 @@ class DeployVExpressRecoveryImage(Action):
         if not self.valid:
             return
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         mount_point = self.get_namespace_data(action='mount-vexpress-usbmsd', label='vexpress-fw', key='mount-point')
         try:
             os.path.realpath(mount_point)
@@ -353,8 +364,8 @@ class UnmountVExpressMassStorageDevice(Action):
     description = "unmount vexpress usb msd"
     summary = "unmount vexpress usb mass storage device"
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
 
         mount_point = self.get_namespace_data(action='mount-vexpress-usbmsd', label='vexpress-fw', key='mount-point')
         if not self.run_command(["umount", mount_point], allow_silent=True):
@@ -403,10 +414,10 @@ class VExpressFlashErase(Action):  # pylint: disable=too-many-instance-attribute
         if not isinstance(self.flash_exit_cmd, str):
             self.errors = 'Versatile Express flash exit command unset'
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         if not connection:
             raise RuntimeError("%s started without a connection already in use" % self.name)
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
 
         # From Versatile Express MCC, enter flash menu
         connection.sendline('%s\n' % self.flash_enter_cmd)

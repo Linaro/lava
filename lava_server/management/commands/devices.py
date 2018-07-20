@@ -18,6 +18,8 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import os
+import contextlib
 import csv
 
 from django.core.management.base import (
@@ -61,7 +63,7 @@ class Command(BaseCommand):
             See http://stackoverflow.com/a/37414551
             """
             def __init__(self, **kwargs):
-                super(SubParser, self).__init__(cmd, **kwargs)
+                super().__init__(cmd, **kwargs)
 
         sub = parser.add_subparsers(dest="sub_command", help="Sub commands", parser_class=SubParser)
         sub.required = True
@@ -94,6 +96,24 @@ class Command(BaseCommand):
                            help="Username of the user with ownership of the device")
         owner.add_argument("--group",
                            help="Name of the group with ownership of the device")
+
+        # "copy" sub-command
+        add_parser = sub.add_parser("copy", help="Copy an existing device as a new hostname")
+        add_parser.add_argument(
+            "original", help="Hostname of the existing device")
+        add_parser.add_argument(
+            "target", help="Hostname of the device to create")
+        add_parser.add_argument(
+            "--offline", action="store_false", dest="online", default=True,
+            help="Create the device offline (online by default)")
+        add_parser.add_argument(
+            "--private", action="store_false", dest="public", default=True,
+            help="Make the device private (public by default)")
+        add_parser.add_argument(
+            "--worker", required=True, help="The name of the worker (required)")
+        add_parser.add_argument(
+            "--copy-with-tags", action="store_true", dest='copytags', default=False,
+            help="Set all the tags of the original device on the target device")
 
         # "details" sub-command
         details_parser = sub.add_parser("details", help="Details about a device")
@@ -146,6 +166,8 @@ class Command(BaseCommand):
         """ Forward to the right sub-handler """
         if options["sub_command"] == "add":
             self.handle_add(options)
+        elif options["sub_command"] == "copy":
+            self.handle_copy(options)
         elif options["sub_command"] == "details":
             self.handle_details(options["hostname"])
         elif options["sub_command"] == "list":
@@ -197,11 +219,9 @@ class Command(BaseCommand):
         online = options['online']
         tags = options['tags']
 
-        try:
+        with contextlib.suppress(Device.DoesNotExist):
             Device.objects.get(hostname=hostname)
             raise CommandError("Device '%s' already exists" % hostname)
-        except Device.DoesNotExist:
-            pass
 
         try:
             dt = DeviceType.objects.get(name=device_type)
@@ -233,6 +253,88 @@ class Command(BaseCommand):
         elif options['group']:
             self._assign(options['group'], device, group=True, owner=True)
         device.save()
+
+    def handle_copy(self, options):
+        original = options['original']
+        target = options['target']
+        worker_name = options['worker']
+        public = options['public']
+        online = options['online']
+        tags = options['copytags']
+
+        try:
+            from_device = Device.objects.get(hostname=original)
+        except Device.DoesNotExist:
+            raise CommandError("Original device '%s' does NOT exist!" % original)
+
+        with contextlib.suppress(Device.DoesNotExist):
+            Device.objects.get(hostname=target)
+            raise CommandError("Target device '%s' already exists" % target)
+
+        origin = from_device.load_configuration()
+        if not origin:
+            raise CommandError("Device dictionary does not exist for %s" % original)
+
+        if online:
+            target_dict = os.path.join(Device.CONFIG_PATH, "%s.jinja2" % target)
+            if not os.path.exists(target_dict):
+                raise CommandError(
+                    "Refusing to copy %s to new device %s with health 'Good' -"
+                    " no device dictionary exists for target device, yet. "
+                    "Use --offline or copy %s.jinja2 to "
+                    "/etc/lava-server/dispatcher-config/devices/ and try again." % (original, target, target))
+
+        try:
+            worker = Worker.objects.get(hostname=worker_name)
+        except Worker.DoesNotExist:
+            raise CommandError("Unable to find worker '%s'" % worker_name)
+
+        health = Device.HEALTH_GOOD if online else Device.HEALTH_MAINTENANCE
+        description = from_device.description
+        device_type = from_device.device_type
+        from_tags = None
+        if tags:
+            from_tags = from_device.tags.all()
+
+        physical_owner = None
+        physical_group = None
+        owner = None
+        group = None
+
+        if from_device.physical_owner:
+            physical_owner = from_device.physical_owner
+        elif from_device.physical_group:
+            physical_group = from_device.physical_group
+
+        if from_device.owner:
+            owner = from_device.owner
+        elif from_device.group:
+            group = from_device.group
+
+        with transaction.atomic():
+            device = Device.objects.create(
+                hostname=target, device_type=device_type, description=description,
+                state=Device.STATE_IDLE, health=health, worker_host=worker, is_public=public)
+
+            if from_tags is not None:
+                for tag in from_tags:
+                    device.tags.add(tag)
+
+            if physical_owner:
+                self._assign(physical_owner, device, user=True, physical=True)
+            elif physical_group:
+                self._assign(physical_group, device, group=True, physical=True)
+
+            if owner:
+                self._assign(owner, device, user=True, owner=True)
+            elif group:
+                self._assign(group, device, group=True, owner=True)
+
+            device.save()
+
+        destiny = device.load_configuration()
+        if not destiny:
+            print("Reminder: device dictionary does not yet exist for %s" % target)
 
     def handle_details(self, hostname):
         """ Print device details """

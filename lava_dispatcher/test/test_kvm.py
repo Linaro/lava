@@ -211,7 +211,7 @@ class TestKVMBasicDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
                 # get the action & populate it
                 self.assertEqual(action.parameters['method'], 'qemu')
                 self.assertEqual(action.parameters['prompts'], ['linaro-test', 'root@debian:~#'])
-                params = action.parameters.get('auto_login', None)
+                params = action.parameters.get('auto_login')
 
                 if 'login_prompt' in params:
                     self.assertEqual(params['login_prompt'], 'login:')
@@ -223,6 +223,32 @@ class TestKVMBasicDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
             if action.name == 'test':
                 # get the action & populate it
                 self.assertEqual(len(action.parameters['definitions']), 2)
+
+
+class TestKVMPortable(StdoutTestCase):  # pylint: disable=too-many-public-methods
+
+    def setUp(self):
+        super().setUp()
+        factory = Factory()
+        self.job = factory.create_kvm_job('sample_jobs/kvm-noos.yaml')
+
+    def test_deploy_job(self):
+        self.assertEqual(self.job.pipeline.job, self.job)
+        for action in self.job.pipeline.actions:
+            if isinstance(action, DeployAction):
+                self.assertEqual(action.job, self.job)
+
+    def test_pipeline(self):
+        description_ref = self.pipeline_reference('kvm-noos.yaml')
+        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+
+    def test_validate(self):
+        try:
+            allow_missing_path(self.job.pipeline.validate_actions, self, 'qemu-system-x86_64')
+        except JobError as exc:
+            self.fail(exc)
+        for action in self.job.pipeline.actions:
+            self.assertEqual([], action.errors)
 
 
 class TestKVMQcow2Deploy(StdoutTestCase):  # pylint: disable=too-many-public-methods
@@ -408,10 +434,8 @@ class TestAutoLogin(StdoutTestCase):
         conn = autologinaction.run(shell_connection, max_end_time=self.max_end_time)
         self.assertEqual(shell_connection.raw_connection.linesep, 'testsep')
 
-        self.assertIn('lava-test: # ', conn.prompt_str)
         self.assertIn('root@debian:~#', conn.prompt_str)
         conn.prompt_str = 'root@stretch:'
-        self.assertNotIn('lava-test: # ', conn.prompt_str)
         self.assertNotIn('root@debian:~#', conn.prompt_str)
         self.assertIn('root@stretch:', conn.prompt_str)
 
@@ -482,7 +506,6 @@ class TestAutoLogin(StdoutTestCase):
         # Test the AutoLoginAction directly
         conn = autologinaction.run(shell_connection, max_end_time=self.max_end_time)
 
-        self.assertIn('lava-test: # ', conn.prompt_str)
         self.assertIn('root@debian:~#', conn.prompt_str)
 
     def test_missing_autologin_void_prompts_str(self):
@@ -513,7 +536,6 @@ class TestAutoLogin(StdoutTestCase):
         # Test the AutoLoginAction directly
         conn = autologinaction.run(shell_connection, max_end_time=self.max_end_time)
 
-        self.assertIn('lava-test: # ', conn.prompt_str)
         self.assertIn('root@debian:~#', conn.prompt_str)
 
     def test_autologin_login_incorrect(self):
@@ -536,7 +558,6 @@ class TestAutoLogin(StdoutTestCase):
         # Test the AutoLoginAction directly
         conn = autologinaction.run(shell_connection, max_end_time=self.max_end_time)
 
-        self.assertIn('lava-test: # ', conn.prompt_str)
         self.assertIn('root@debian:~#', conn.prompt_str)
         self.assertIn('Login incorrect', conn.prompt_str)
         self.assertIn('Login timed out', conn.prompt_str)
@@ -655,9 +676,9 @@ class TestChecksum(StdoutTestCase):
         download = [action for action in deploy.internal_pipeline.actions if action.name == 'download-retry'][0]
         helper = [action for action in download.internal_pipeline.actions if action.name == 'file-download'][0]
         remote = helper.parameters[helper.key]
-        md5sum = remote.get('md5sum', None)
+        md5sum = remote.get('md5sum')
         self.assertIsNone(md5sum)
-        sha256sum = remote.get('sha256sum', None)
+        sha256sum = remote.get('sha256sum')
         self.assertIsNotNone(sha256sum)
 
 

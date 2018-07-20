@@ -1,4 +1,3 @@
-device_type: beaglebone-black
 
 parameters:
   bootm:

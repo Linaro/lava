@@ -1,6 +1,6 @@
+{# device_type = 'dragonboard-410c' #}
 {% extends 'base-fastboot.jinja2' %}
 
-{% set device_type = 'dragonboard-410c' %}
 {% set fastboot_sequence = ['no-flash-boot'] %}
 {% set flash_cmds_order = ['update', 'ptable', 'partition', 'hyp', 'modem',
 'rpm', 'sbl1', 'sbl2', 'sec', 'tz', 'aboot', 'cdt', 'boot', 'rootfs', 'vendor',

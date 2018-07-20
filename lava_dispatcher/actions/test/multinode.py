@@ -57,6 +57,7 @@ class MultinodeTestShell(LavaTest):
 
     @classmethod
     def needs_deployment_data(cls):
+        """ Some, not all, deployments will want deployment_data """
         return True
 
     @classmethod

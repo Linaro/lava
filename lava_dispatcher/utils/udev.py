@@ -58,8 +58,8 @@ class WaitUSBSerialDeviceAction(Action):
         if not isinstance(self.usb_sleep, int):
             self.errors = 'usb_sleep should be an integer'
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         self.logger.debug("Waiting for usb serial device: %s", self.serial_device)
         wait_udev_event(action='add', match_dict=self.serial_device, subsystem='tty')
         if self.usb_sleep:
@@ -93,8 +93,8 @@ class WaitDFUDeviceAction(Action):
                            'ID_VENDOR_ID': str(usb_vendor_id),
                            'ID_MODEL_ID': str(usb_product_id)}
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         self.logger.debug("Waiting for DFU device: %s", self.dfu_device)
         wait_udev_event(action='add', match_dict=self.dfu_device, subsystem='usb', devtype='usb_device')
         return connection
@@ -112,13 +112,13 @@ class WaitUSBMassStorageDeviceAction(Action):
 
     def validate(self):
         super().validate()
-        usb_fs_label = self.job.device.get('usb_filesystem_label', None)
+        usb_fs_label = self.job.device.get('usb_filesystem_label')
         if not isinstance(usb_fs_label, str):
             self.errors = 'usb_fs_label unset'
         self.ms_device = {'ID_FS_LABEL': str(usb_fs_label)}
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         self.logger.debug("Waiting for USB mass storage device: %s", self.ms_device)
         wait_udev_event(action='add', match_dict=self.ms_device, subsystem='block', devtype='partition')
         return connection
@@ -139,8 +139,8 @@ class WaitDevicePathAction(Action):
         if not isinstance(self.devicepath, str):
             self.errors = "invalid device path"
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         self.logger.debug("Waiting for udev device path: %s", self.devicepath)
         wait_udev_event(action='add', devicepath=self.devicepath)
         return connection
@@ -154,8 +154,9 @@ class WaitDeviceBoardID(Action):
 
     def __init__(self, board_id=None):
         super().__init__()
+        self.udev_device = None
         if not board_id:
-            self.board_id = self.job.device.get('board_id', None)
+            self.board_id = self.job.device.get('board_id')
         else:
             self.board_id = board_id
 
@@ -165,8 +166,8 @@ class WaitDeviceBoardID(Action):
             self.errors = "invalid board_id"
         self.udev_device = {'ID_SERIAL_SHORT': str(self.board_id)}
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         self.logger.debug("Waiting for udev device with ID: %s", self.board_id)
         wait_udev_event(action='add', match_dict=self.udev_device)
         return connection
@@ -245,47 +246,43 @@ def get_udev_devices(job=None, logger=None, device_info=None):
                    and (device.get('ID_VENDOR_ID') == usb_vendor_id) \
                    and (device.get('ID_MODEL_ID') == usb_product_id):
                     device_paths.add(device.device_node)
+                    added.add(board_id)
                     for child in device.children:
                         if child.device_node:
                             device_paths.add(child.device_node)
-                            added.add(board_id)
                     for link in device.device_links:
                         device_paths.add(link)
-                        added.add(board_id)
             elif board_id and usb_vendor_id and not usb_product_id:
                 # try with parameters such as board id, usb_vendor_id
                 if (device.get('ID_SERIAL_SHORT') == board_id) \
                    and (device.get('ID_VENDOR_ID') == usb_vendor_id):
                     device_paths.add(device.device_node)
+                    added.add(board_id)
                     for child in device.children:
                         if child.device_node:
                             device_paths.add(child.device_node)
-                            added.add(board_id)
                     for link in device.device_links:
                         device_paths.add(link)
-                        added.add(board_id)
             elif board_id and not usb_vendor_id and not usb_product_id:
                 # try with board id alone
                 if device.get('ID_SERIAL_SHORT') == board_id:
                     device_paths.add(device.device_node)
+                    added.add(board_id)
                     for child in device.children:
                         if child.device_node:
                             device_paths.add(child.device_node)
-                            added.add(board_id)
                     for link in device.device_links:
                         device_paths.add(link)
-                        added.add(board_id)
             elif usb_fs_label:
                 # Just restrict by filesystem label.
                 if device.get('ID_FS_LABEL') == usb_fs_label:
                     device_paths.add(device.device_node)
+                    added.add(usb_fs_label)
                     for child in device.children:
                         if child.device_node:
                             device_paths.add(child.device_node)
-                            added.add(usb_fs_label)
                     for link in device.device_links:
                         device_paths.add(link)
-                        added.add(usb_fs_label)
     if device_info:
         for static_device in device_info:
             for _, value in static_device.items():

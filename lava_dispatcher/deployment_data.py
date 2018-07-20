@@ -1,6 +1,7 @@
-# Copyright (C) 2013 Linaro Limited
+# Copyright (C) 2013, 2018 Linaro Limited
 #
 # Author: Antonio Terceiro <antonio.terceiro@linaro.org>
+# Author: Neil Williams <neil.williams@linaro.org>
 #
 # This file is part of LAVA Dispatcher.
 #
@@ -21,59 +22,7 @@ import sys
 from lava_dispatcher.action import JobError
 
 
-def get_deployment_data(distro):
-    """
-    Returns the deployment data by name, for the cases where we actually need that.
-    """
-    if distro is '':
-        raise JobError("Missing 'os' value for deployment - unable to identify operating system for deployment data.")
-    this_module = sys.modules[__name__]
-    try:
-        return getattr(this_module, distro)
-    except AttributeError:
-        raise JobError("%s is not a supported distribution" % distro)
-
-
-class deployment_data_dict(object):  # pylint: disable=invalid-name, too-few-public-methods
-
-    """
-    A read-only dictionary.
-    """
-
-    def __init__(self, data):
-        self.__data__ = data
-
-    def __getitem__(self, key):
-        return self.__data__[key]
-
-    def __str__(self):
-        return str(self.__data__)
-
-    def __repr__(self):
-        return repr(self.__data__)
-
-    def get(self, *args):
-        if len(args) == 1:
-            return self.__data__.get(args[0])
-        else:
-            if args[0] in self.__data__.keys():
-                return self.__data__.get(args[0])
-            else:
-                return args[1]
-
-    def keys(self):
-        """
-        Exists principally so that the return looks like a list
-        of keys of a normal dict object. The most common thing
-        to do with the return value of dict.keys() is to iterate
-        or just with if _ in dict.keys():, so take the line of
-        least surprise, despite what 2to3 thinks.
-        https://docs.python.org/3/library/stdtypes.html#dict-views
-        """
-        return self.__data__.keys()
-
-
-android = deployment_data_dict({  # pylint: disable=invalid-name
+android = {  # pylint: disable=invalid-name
     'TESTER_PS1': "root@linaro# ",
     'TESTER_PS1_PATTERN': "root@linaro# ",
     'TESTER_PS1_INCLUDES_RC': False,
@@ -87,9 +36,9 @@ android = deployment_data_dict({  # pylint: disable=invalid-name
     'lava_test_results_part_attr': 'data_part_android_org',
     'lava_test_results_dir': '/data/local/tmp/lava-%s',
     'lava_test_shell_file': None,
-})
+}
 
-archlinux = deployment_data_dict({  # pylint: disable=invalid-name
+archlinux = {  # pylint: disable=invalid-name
     'TESTER_PS1': r"linaro-test [rc=$(echo \$?)]# ",
     'TESTER_PS1_PATTERN': r"linaro-test \[rc=(\d+)\]# ",
     'TESTER_PS1_INCLUDES_RC': True,
@@ -104,9 +53,9 @@ archlinux = deployment_data_dict({  # pylint: disable=invalid-name
     'lava_test_results_part_attr': 'root_part',
     'lava_test_results_dir': '/lava-%s',
     'lava_test_shell_file': '~/.bashrc',
-})
+}
 
-centos = deployment_data_dict({  # pylint: disable=invalid-name
+centos = {  # pylint: disable=invalid-name
     'TESTER_PS1': r"linaro-test [rc=$(echo \$?)]# ",
     'TESTER_PS1_PATTERN': r"linaro-test \[rc=(\d+)\]# ",
     'TESTER_PS1_INCLUDES_RC': True,
@@ -121,9 +70,9 @@ centos = deployment_data_dict({  # pylint: disable=invalid-name
     'lava_test_results_part_attr': 'root_part',
     'lava_test_results_dir': '/lava-%s',
     'lava_test_shell_file': '~/.bashrc',
-})
+}
 
-centos_installer = deployment_data_dict({  # pylint: disable=invalid-name
+centos_installer = {  # pylint: disable=invalid-name
     'TESTER_PS1': r"linaro-test [rc=$(echo \$?)]# ",
     'TESTER_PS1_PATTERN': r"linaro-test \[rc=(\d+)\]# ",
     'TESTER_PS1_INCLUDES_RC': True,
@@ -139,9 +88,9 @@ centos_installer = deployment_data_dict({  # pylint: disable=invalid-name
     'lava_test_results_part_attr': 'root_part',
     'lava_test_results_dir': '/lava-%s',
     'lava_test_shell_file': '~/.bashrc',
-})
+}
 
-debian = deployment_data_dict({  # pylint: disable=invalid-name
+debian = {  # pylint: disable=invalid-name
     'TESTER_PS1': r"linaro-test [rc=$(echo \$?)]# ",
     'TESTER_PS1_PATTERN': r"linaro-test \[rc=(\d+)\]# ",
     'TESTER_PS1_INCLUDES_RC': True,
@@ -156,9 +105,9 @@ debian = deployment_data_dict({  # pylint: disable=invalid-name
     'lava_test_results_part_attr': 'root_part',
     'lava_test_results_dir': '/lava-%s',
     'lava_test_shell_file': '~/.bashrc',
-})
+}
 
-debian_installer = deployment_data_dict({  # pylint: disable=invalid-name
+debian_installer = {  # pylint: disable=invalid-name
     'TESTER_PS1': r"linaro-test [rc=$(echo \$?)]# ",
     'TESTER_PS1_PATTERN': r"linaro-test \[rc=(\d+)\]# ",
     'TESTER_PS1_INCLUDES_RC': True,
@@ -186,9 +135,9 @@ debian_installer = deployment_data_dict({  # pylint: disable=invalid-name
     'lava_test_results_part_attr': 'root_part',
     'lava_test_results_dir': '/lava-%s',
     'lava_test_shell_file': '~/.bashrc',
-})
+}
 
-fedora = deployment_data_dict({  # pylint: disable=invalid-name
+fedora = {  # pylint: disable=invalid-name
     'TESTER_PS1': r"linaro-test [rc=$(echo \$?)]# ",
     'TESTER_PS1_PATTERN': r"linaro-test \[rc=(\d+)\]# ",
     'TESTER_PS1_INCLUDES_RC': True,
@@ -203,9 +152,9 @@ fedora = deployment_data_dict({  # pylint: disable=invalid-name
     'lava_test_results_part_attr': 'root_part',
     'lava_test_results_dir': '/lava-%s',
     'lava_test_shell_file': '~/.bashrc',
-})
+}
 
-lede = deployment_data_dict({  # pylint: disable=invalid-name
+lede = {  # pylint: disable=invalid-name
     'TESTER_PS1': r"linaro-test [rc=$(echo \$?)]# ",
     'TESTER_PS1_PATTERN': r"linaro-test \[rc=(\d+)\]# ",
     'TESTER_PS1_INCLUDES_RC': True,
@@ -219,9 +168,9 @@ lede = deployment_data_dict({  # pylint: disable=invalid-name
     'lava_test_results_part_attr': 'root_part',
     'lava_test_results_dir': '/tmp/lava-results-%s',
     'lava_test_shell_file': None,
-})
+}
 
-oe = deployment_data_dict({  # pylint: disable=invalid-name
+oe = {  # pylint: disable=invalid-name
     'TESTER_PS1': r"linaro-test [rc=$(echo \$?)]# ",
     'TESTER_PS1_PATTERN': r"linaro-test \[rc=(\d+)\]# ",
     'TESTER_PS1_INCLUDES_RC': True,
@@ -235,9 +184,9 @@ oe = deployment_data_dict({  # pylint: disable=invalid-name
     'lava_test_results_part_attr': 'root_part',
     'lava_test_results_dir': '/lava-%s',
     'lava_test_shell_file': '~/.bashrc',
-})
+}
 
-slackware = deployment_data_dict({  # pylint: disable=invalid-name
+slackware = {  # pylint: disable=invalid-name
     'TESTER_PS1': r"linaro-test [rc=$(echo \$?)]# ",
     'TESTER_PS1_PATTERN': r"linaro-test \[rc=(\d+)\]# ",
     'TESTER_PS1_INCLUDES_RC': True,
@@ -252,8 +201,9 @@ slackware = deployment_data_dict({  # pylint: disable=invalid-name
     'lava_test_results_part_attr': 'root_part',
     'lava_test_results_dir': '/lava-%s',
     'lava_test_shell_file': '~/.bashrc',
-})
-ubuntu = deployment_data_dict({  # pylint: disable=invalid-name
+}
+
+ubuntu = {  # pylint: disable=invalid-name
     'TESTER_PS1': r"linaro-test [rc=$(echo \$?)]# ",
     'TESTER_PS1_PATTERN': r"linaro-test \[rc=(\d+)\]# ",
     'TESTER_PS1_INCLUDES_RC': True,
@@ -268,4 +218,25 @@ ubuntu = deployment_data_dict({  # pylint: disable=invalid-name
     'lava_test_results_part_attr': 'root_part',
     'lava_test_results_dir': '/lava-%s',
     'lava_test_shell_file': '~/.bashrc',
-})
+}
+
+deployments = {
+    'android': android,
+    'archlinux': archlinux,
+    'centos': centos,
+    'centos_installer': centos_installer,
+    'debian': debian,
+    'debian_installer': debian_installer,
+    'fedora': fedora,
+    'lede': lede,
+    'oe': oe,
+    'slackware': slackware,
+    'ubuntu': ubuntu,
+}
+
+
+def get_deployment_data(distro):
+    """
+    Returns the deployment data by name
+    """
+    return deployments.get(distro, {})

@@ -69,10 +69,18 @@ character_delays:
 
 {% block constants %}
 constants:
+
+  # POSIX os (not AOSP)
+  posix:
+    lava_test_sh_cmd: '/bin/sh'
+    lava_test_results_dir: '/lava-%s'
+    lava_test_shell_file: '~/.bashrc'
+
   # bootloader specific
   u-boot:
     interrupt-prompt: '{{ uboot_autoboot_prompt | default("Hit any key to stop autoboot") }}'
     interrupt-character: '{{ uboot_interrupt_character | default(" ") }}'
+    interrupt_ctrl_list: {{ interrupt_ctrl_list  | default([]) }}
     final-message: '{{ uboot_final_message | default("Starting kernel") }}'
     error-messages:
       - 'Resetting CPU'
@@ -86,6 +94,7 @@ constants:
   grub:
     interrupt-prompt: '{{ grub_autoboot_prompt | default("for a command-line") }}'
     interrupt-character: '{{ grub_interrupt_character | default ("c") }}'
+    interrupt-newline: {{ grub_interrupt_newline | default(False) }}
     error-messages:
       - "error: missing (.*) symbol."
   grub-efi:
@@ -114,6 +123,13 @@ constants:
   # DEFAULT_SHELL_PROMPT
   default-shell-prompt: '{{ default_shell_prompt | default("lava-test: # ") }}'
 
+  # pexpect.spawn maxread
+  # SPAWN_MAXREAD - in bytes, quoted as a string
+  # 1 to turn off buffering, pexpect default is 2000
+  # maximum may be limited by platform issues to 4092
+  # avoid setting searchwindowsize:
+  # Data before searchwindowsize point is preserved, but not searched.
+  spawn_maxread: '{{ spawn_maxread | default(4092) }}'
 {% endblock constants -%}
 
 {% block commands %}

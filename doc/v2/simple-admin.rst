@@ -144,7 +144,7 @@ all of these rules.
    to the serial console server and/or remote power control services.
    Typically, this will be controlled using SSH keys.
 
-   .. seealso:: :ref:`power_commands`
+   .. seealso:: :ref:`power_commands` and :ref:`running_lava_run`
 
 #. **Subscribe** to the :ref:`mailing_lists` where you will find others who
    have setup their own LAVA instances. IRC is fine for quick queries but it is

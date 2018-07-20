@@ -1,8 +1,8 @@
+{# device_type = "highbank" #}
 {% extends 'base-uboot.jinja2' %}
 
 {% set console_device = console_device|default('ttyAMA0') %}
 {% set baud_rate = baud_rate|default(115200) %}
-{% set device_type = "highbank" %}
 {% if extra_kernel_args %}
 {% set extra_kernel_args = "nosplash break " + extra_kernel_args %}
 {% else %}

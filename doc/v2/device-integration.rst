@@ -343,7 +343,7 @@ should remain usable for the duration of all test jobs on the device.
 
 .. OS what OSes are you expecting to run as test jobs? How will that
    change your integration requirements? testing of firmware - what
-   software is to be tested? BMC?
+   software is to be tested? Does it have a :term:`BMC`?
 
 .. index:: device integration - integration process
 
@@ -412,6 +412,8 @@ familiar with:
 
 * :ref:`unit_tests`
 
+* :ref:`hidden_assumptions`
+
 In addition, some device types will require the developer to also be
 familiar with:
 
@@ -476,6 +478,21 @@ currently boots and exactly how new files are deployed to the device.
 Do not resort to :ref:`simplistic testing
 <simplistic_testing_problems>`.
 
+.. caution:: Do not be tempted to re-use the existing support for
+  something which is not actually using that support. Just because
+  your custom system looks like U-Boot or fastboot does **not**
+  mean you should mangle the existing support to fit. If you need
+  something which is similar but not the same, write a new set of
+  classes and templates. By all means, use that existing code as a
+  starting point.
+
+  Avoid sharing method-specific syntax with a similar but different
+  method. U-Boot or fastboot parameters and options remain specific to
+  U-Boot or fastboot respectively. While this might look like a quick
+  and easy way to add support, it is very likely that future changes
+  to the support you're abusing might break your tests without
+  warning.
+
 .. _integration_extend_template:
 
 Extend from an existing device type template
@@ -496,8 +513,9 @@ template is :ref:`contributed upstream <contribute_upstream>`, a new
 Extend the template unit tests
 ******************************
 
-.. seealso:: :ref:`testing_new_devicetype_templates` and
+.. seealso:: :ref:`testing_new_devicetype_templates`,
    :ref:`debugging configuration files <debugging_configuration>`
+   and setting character delays due to :ref:`input_speeds`.
 
 All device type template files in
 ``lava_scheduler_app/tests/device-types`` will be checked for simple
@@ -551,7 +569,6 @@ template so that a device dictionary can set an override:
 
     {% extends 'base.jinja2' %}
     {% set boot_character_delay = 150 %}
-    device_type: thunderx
     {% set console_device = console_device | default('ttyAMA0') %}
     {% set baud_rate = baud_rate | default(115200) %}
 

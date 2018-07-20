@@ -1,0 +1,38 @@
+# Use a specific docker container for openocd because upstream openocd does not
+# support cc3220SF boards
+device_type: cc3220SF
+job_name: cc3220SF health check with docker
+timeouts:
+  job:
+    minutes: 10
+  connection:
+    minutes: 2
+priority: medium
+visibility: public
+actions:
+- deploy:
+    timeout:
+      minutes: 3
+    to: tmpfs
+    images:
+      zephyr:
+        url: http://ivoire.dinauz.org/linaro/lava/cc3220SF/kernel_zephyr.elf
+      openocd_script:
+        url: http://ivoire.dinauz.org/linaro/lava/cc3220SF/cc3220_xds110.cfg
+- boot:
+    method: gdb
+    commands: openocd
+    container: ti-openocd-small
+    timeout:
+      minutes: 2
+- test:
+    timeout:
+      minutes: 8
+    monitors:
+    - name: tests
+      start: Running test suite common
+      end: PROJECT EXECUTION SUCCESSFUL
+      pattern: '(?P<result>(PASS|FAIL)) - (?P<test_case_id>[\w_]+)\.'
+      fixupdict:
+        PASS: pass
+        FAIL: fail

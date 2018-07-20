@@ -18,6 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import contextlib
 import os
 import yaml
 
@@ -40,8 +41,8 @@ class DeployDeviceEnvironment(Action):
 
     def validate(self):
         super().validate()
-        if 'lava_test_shell_file' not in \
-           self.parameters['deployment_data'].keys():
+        shell_file = self.get_constant('lava_test_shell_file', 'posix')
+        if not shell_file:
             self.errors = "Invalid deployment data - missing lava_test_shell_file"
 
         if 'env_dut' in self.job.parameters and self.job.parameters['env_dut']:
@@ -86,10 +87,8 @@ class DeployDeviceEnvironment(Action):
 
         # Remove some variables (that might not exist)
         for var in conf.get("removes", {}):
-            try:
+            with contextlib.suppress(KeyError):
                 del environ[var]
-            except KeyError:
-                pass
 
         # Override
         environ.update(conf.get("overrides", {}))

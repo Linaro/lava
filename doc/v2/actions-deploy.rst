@@ -73,21 +73,62 @@ Parameter List
 os *
 ****
 
-The operating system of the image **must** be specified so that the LAVA
-scripts can install packages and identify other defaults in the deployment
-data.
+The operating system of the image may be specified if the LAVA scripts
+need to use the LAVA install helpers to install packages or identify
+other defaults in the deployment data. However, this support is
+**deprecated** for most use cases.
+
+If ``os`` is used, the value does not have to be exact. A similar
+operating system can be specified, based on how the test job operates.
+If the test shell definition uses the deprecated LAVA install helpers
+(by defining ``install:`` steps), then any ``os`` value which provides
+the same installation tools will work. For example, operating systems
+which are derivatives of Debian can use ``os: debian`` without needing
+explicit support for each derivative because both will use ``apt`` and
+``dpkg``.
+
+.. seealso:: :ref:`less_reliance_on_install`
+
+Test jobs which execute operating system installers **will** require
+the deployment data for that installer, so ``os`` will need to be
+specified in those test jobs. When the Lava install helpers are
+removed, the elements of deployment data which are required for
+installers will be retained.
+
+Portable test definitions do not need to specify ``os`` at all, as long
+as the test definition is not expected to run on a DUT running Android.
+
+.. important:: Please read the notes on
+   :ref:`test_definition_portability` - all test writers are strongly
+   encouraged to drop all use of the LAVA install helpers as this
+   support is **deprecated** and is expected to be removed by moving to
+   support for an updated Lava-Test Test Definition.
 
 * **Not all deployment methods support all types of operating system.**
 * **Not all devices can support all operating systems.**
 
 .. topic:: Allowed values
 
- * ``android``
- * ``ubuntu``
+ * ``android`` : If your android test job executes a Lava Test Shell
+   **on the DUT** then ``os: android`` will be needed so that the
+   Android shell is used instead of ``/bin/sh``. Many AOSP images do
+   not include ``busybox`` or other support for a shell on the DUT, so
+   test jobs using those images drive the test from the LXC by using
+   ``adb``. The deployment to the LXC does not need to specify ``os``
+   as long as the test shell is **portable**.
+
+ * ``ubuntu`` : **deprecated** - compatible with ``debian``.
+
  * ``debian``
+
  * ``lede``
+
  * ``fedora``
- * ``centos``
+
+ * ``centos`` : **deprecated** - compatible with ``fedora``.
+
  * ``debian_installer``
+
  * ``centos_installer``
+
  * ``oe``

@@ -67,7 +67,7 @@ Similarly::
 .. note:: If you need to make deeper changes that don't fit into the
           exposed configuration, it is quite simple to tweak things in
           the code here. Edit
-          ``/usr/lib/python2.7/dist-packages/lava_server/settings/common.py``
+          ``/usr/lib/python3/dist-packages/lava_server/settings/common.py``
 
 Restart the ``lava-server`` and ``apache2`` services after any
 changes.

@@ -1,8 +1,8 @@
+{# device_type = "apq8016-sbc" #}
 {% extends 'base-uboot.jinja2' %}
 
 {% set console_device = console_device|default('ttyMSM0') %}
 {% set baud_rate = baud_rate|default(115200) %}
-{% set device_type = "apq8016-sbc" %}
 {% if extra_kernel_args %}
 {% set extra_kernel_args = "debug loglevel=7 " + extra_kernel_args %}
 {% else %}

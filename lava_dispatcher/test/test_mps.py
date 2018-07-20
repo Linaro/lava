@@ -41,7 +41,7 @@ class MpsFactory(Factory):
 class TestMps(StdoutTestCase):
 
     def setUp(self):
-        super(TestMps, self).setUp()
+        super().setUp()
         self.factory = MpsFactory()
         self.job = self.factory.create_mps_job("sample_jobs/mps2plus.yaml")
 

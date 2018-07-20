@@ -135,13 +135,14 @@ Using ``lava_test_shell`` in all health checks has several benefits:
 
 See also :ref:`writing_tests`.
 
-Skipping health checks
-======================
+Infrastructure issues
+=====================
 
-When a device is taken online in the web UI, there is an option to skip the
-manual health check. Health checks will still run in the following
-circumstances when "Skip Health check" has been selected:
+If a health check fails, the device will be taken offline. If the
+failure was due to an infrastructure issue, then the device will
+continue to go offline.
 
-* When the health status of the device is in Unknown, Fail or Looping
-* When the device has been offline for long enough that a health
-   check is already overdue.
+If the investigation involves changing the health check test job,
+use :ref:`lava-run directly <running_lava_run>` on the worker to
+make local changes to the health check test job until you have a
+working test job whilst keeping the device offline.

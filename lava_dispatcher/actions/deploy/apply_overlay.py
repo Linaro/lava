@@ -76,7 +76,7 @@ class ApplyOverlayGuest(Action):
         if 'guest' not in self.job.device['actions']['deploy']['methods']['image']['parameters']:
             self.errors = "Device configuration does not specify size of guest filesystem."
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         overlay_file = self.get_namespace_data(action='compress-overlay', label='output', key='file')
         if not overlay_file:
             raise LAVABug("Unable to find the overlay")
@@ -103,7 +103,7 @@ class ApplyOverlayImage(Action):
         self.image_key = image_key
         self.use_root_partition = use_root_partition
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         overlay_file = self.get_namespace_data(action='compress-overlay', label='output', key='file')
         if overlay_file:
             self.logger.debug("Overlay: %s", overlay_file)
@@ -141,7 +141,7 @@ class ApplyOverlaySparseImage(Action):
         which('umount')
         which('img2simg')
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         overlay_file = self.get_namespace_data(action='compress-overlay',
                                                label='output', key='file')
         if overlay_file:
@@ -178,8 +178,8 @@ class PrepareOverlayTftp(Action):
         if 'depthcharge' in self.job.device['actions']['boot']['methods']:
             self.internal_pipeline.add_action(PrepareKernelAction())
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         ramdisk = self.get_namespace_data(
             action='download-action',
             label='file',
@@ -205,20 +205,20 @@ class ApplyOverlayTftp(Action):
 
     def validate(self):
         super().validate()
-        persist = self.parameters.get('persistent_nfs', None)
+        persist = self.parameters.get('persistent_nfs')
         if persist:
             if not isinstance(persist, dict):
                 self.errors = "Invalid persistent_nfs parameter."
             if 'address' not in persist:
                 self.errors = "Missing address for persistent NFS"
 
-    def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-branches
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):  # pylint: disable=too-many-branches
+        connection = super().run(connection, max_end_time)
         directory = None
         nfs_address = None
         overlay_file = None
-        namespace = self.parameters.get('namespace', None)
-        if self.parameters.get('nfsrootfs', None) is not None:
+        namespace = self.parameters.get('namespace')
+        if self.parameters.get('nfsrootfs') is not None:
             if not self.parameters['nfsrootfs'].get('install_overlay', True):
                 self.logger.info("[%s] Skipping applying overlay to NFS", namespace)
                 return connection
@@ -226,7 +226,7 @@ class ApplyOverlayTftp(Action):
             directory = self.get_namespace_data(action='extract-rootfs', label='file', key='nfsroot')
             if overlay_file:
                 self.logger.info("[%s] Applying overlay to NFS", namespace)
-        elif self.parameters.get('images', {}).get('nfsrootfs', None) is not None:
+        elif self.parameters.get('images', {}).get('nfsrootfs') is not None:
             if not self.parameters['images']['nfsrootfs'].get('install_overlay', True):
                 self.logger.info("[%s] Skipping applying overlay to NFS", namespace)
                 return connection
@@ -234,7 +234,7 @@ class ApplyOverlayTftp(Action):
             directory = self.get_namespace_data(action='extract-rootfs', label='file', key='nfsroot')
             if overlay_file:
                 self.logger.info("[%s] Applying overlay to NFS", namespace)
-        elif self.parameters.get('persistent_nfs', None) is not None:
+        elif self.parameters.get('persistent_nfs') is not None:
             if not self.parameters['persistent_nfs'].get('install_overlay', True):
                 self.logger.info("[%s] Skipping applying overlay to persistent NFS", namespace)
                 return connection
@@ -250,7 +250,7 @@ class ApplyOverlayTftp(Action):
                 subprocess.check_output(['mount', '-t', 'nfs', nfs_address, directory])
             except subprocess.CalledProcessError as exc:
                 raise JobError(exc)
-        elif self.parameters.get('ramdisk', None) is not None:
+        elif self.parameters.get('ramdisk') is not None:
             if not self.parameters['ramdisk'].get('install_overlay', True):
                 self.logger.info("[%s] Skipping applying overlay to ramdisk", namespace)
                 return connection
@@ -258,13 +258,13 @@ class ApplyOverlayTftp(Action):
             directory = self.get_namespace_data(action='extract-overlay-ramdisk', label='extracted_ramdisk', key='directory')
             if overlay_file:
                 self.logger.info("[%s] Applying overlay %s to ramdisk", namespace, overlay_file)
-        elif self.parameters.get('rootfs', None) is not None:
+        elif self.parameters.get('rootfs') is not None:
             overlay_file = self.get_namespace_data(action='compress-overlay', label='output', key='file')
             directory = self.get_namespace_data(action='apply-overlay', label='file', key='root')
         else:
             self.logger.debug("[%s] No overlay directory", namespace)
             self.logger.debug(self.parameters)
-        if self.parameters.get('os', None) == "centos_installer":
+        if self.parameters.get('os') == "centos_installer":
             # centos installer ramdisk doesnt like having anything other
             # than the kickstart config being inserted. Instead, make the
             # overlay accessible through tftp. Yuck.
@@ -301,10 +301,10 @@ class ExtractRootfs(Action):  # pylint: disable=too-many-instance-attributes
         self.use_tarfile = True
         self.use_lzma = False
 
-    def run(self, connection, max_end_time, args=None):
-        if not self.parameters.get(self.param_key, None):  # idempotency
+    def run(self, connection, max_end_time):
+        if not self.parameters.get(self.param_key):  # idempotency
             return connection
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
         root = self.get_namespace_data(action='download-action', label=self.param_key, key='file')
         root_dir = self.mkdtemp()
         untar_file(root, root_dir)
@@ -329,7 +329,7 @@ class ExtractNfsRootfs(ExtractRootfs):
 
     def validate(self):
         super().validate()
-        if not self.parameters.get(self.param_key, None):  # idempotency
+        if not self.parameters.get(self.param_key):  # idempotency
             return
         if not self.get_namespace_data(
                 action='download-action', label=self.param_key, key='file'):
@@ -343,10 +343,10 @@ class ExtractNfsRootfs(ExtractRootfs):
             if not prefix.endswith('/'):
                 self.errors = 'prefix must be a directory and end with /'
 
-    def run(self, connection, max_end_time, args=None):
-        if not self.parameters.get(self.param_key, None):  # idempotency
+    def run(self, connection, max_end_time):
+        if not self.parameters.get(self.param_key):  # idempotency
             return connection
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
 
         if 'prefix' in self.parameters[self.param_key]:
             prefix = self.parameters[self.param_key]['prefix']
@@ -376,18 +376,18 @@ class ExtractModules(Action):
     description = "extract supplied kernel modules"
     summary = "extract kernel modules"
 
-    def run(self, connection, max_end_time, args=None):
-        if not self.parameters.get('modules', None):  # idempotency
+    def run(self, connection, max_end_time):
+        if not self.parameters.get('modules'):  # idempotency
             return connection
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
         modules = self.get_namespace_data(action='download-action', label='modules', key='file')
-        if not self.parameters.get('ramdisk', None):
-            if not self.parameters.get('nfsrootfs', None):
+        if not self.parameters.get('ramdisk'):
+            if not self.parameters.get('nfsrootfs'):
                 raise JobError("Unable to identify a location for the unpacked modules")
         # if both NFS and ramdisk are specified, apply modules to both
         # as the kernel may need some modules to raise the network and
         # will need other modules to support operations within the NFS
-        if self.parameters.get('nfsrootfs', None):
+        if self.parameters.get('nfsrootfs'):
             if not self.parameters['nfsrootfs'].get('install_modules', True):
                 self.logger.info("Skipping applying overlay to NFS")
                 return connection
@@ -398,7 +398,7 @@ class ExtractModules(Action):
             )
             self.logger.info("extracting modules file %s to %s", modules, root)
             untar_file(modules, root)
-        if self.parameters.get('ramdisk', None):
+        if self.parameters.get('ramdisk'):
             if not self.parameters['ramdisk'].get('install_modules', True):
                 self.logger.info("Not adding modules to the ramdisk.")
                 return
@@ -432,15 +432,15 @@ class ExtractRamdisk(Action):
 
     def validate(self):
         super().validate()
-        if not self.parameters.get('ramdisk', None):  # idempotency
+        if not self.parameters.get('ramdisk'):  # idempotency
             return
         if not self.parameters['ramdisk'].get('install_modules', True) and \
                 not self.parameters['ramdisk'].get('install_overlay', True):
             self.skip = True
             return
 
-    def run(self, connection, max_end_time, args=None):
-        if not self.parameters.get('ramdisk', None):  # idempotency
+    def run(self, connection, max_end_time):
+        if not self.parameters.get('ramdisk'):  # idempotency
             return connection
         ramdisk = self.get_namespace_data(action='download-action', label='ramdisk', key='file')
         if self.skip:
@@ -450,16 +450,16 @@ class ExtractRamdisk(Action):
             # declare the original ramdisk as the name to be used later.
             self.set_namespace_data(action='compress-ramdisk', label='file', key='ramdisk', value=filename)
             return
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
         ramdisk_dir = self.mkdtemp()
         extracted_ramdisk = os.path.join(ramdisk_dir, 'ramdisk')
         os.mkdir(extracted_ramdisk, 0o755)
-        compression = self.parameters['ramdisk'].get('compression', None)
+        compression = self.parameters['ramdisk'].get('compression')
         suffix = ""
         if compression:
             suffix = ".%s" % compression
         ramdisk_compressed_data = os.path.join(ramdisk_dir, RAMDISK_FNAME + suffix)
-        if self.parameters['ramdisk'].get('header', None) == 'u-boot':
+        if self.parameters['ramdisk'].get('header') == 'u-boot':
             cmd = ('dd if=%s of=%s ibs=%s skip=1' % (
                 ramdisk, ramdisk_compressed_data, UBOOT_DEFAULT_HEADER_LENGTH)).split(' ')
             try:
@@ -499,14 +499,14 @@ class CompressRamdisk(Action):
 
     def validate(self):
         super().validate()
-        if not self.parameters.get('ramdisk', None):  # idempotency
+        if not self.parameters.get('ramdisk'):  # idempotency
             return
         if not self.parameters['ramdisk'].get('install_modules', True) and \
                 not self.parameters['ramdisk'].get('install_overlay', True):
             self.skip = True
             return
         if 'parameters' in self.job.device['actions']['deploy']:
-            self.add_header = self.job.device['actions']['deploy']['parameters'].get('add_header', None)
+            self.add_header = self.job.device['actions']['deploy']['parameters'].get('add_header')
             if self.add_header is not None:
                 if self.add_header == 'u-boot':
                     which('mkimage')
@@ -517,12 +517,12 @@ class CompressRamdisk(Action):
                 else:
                     self.errors = "ramdisk: add_header: unknown header type"
 
-    def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-locals
-        if not self.parameters.get('ramdisk', None):  # idempotency
+    def run(self, connection, max_end_time):  # pylint: disable=too-many-locals
+        if not self.parameters.get('ramdisk'):  # idempotency
             return connection
         if self.skip:
             return connection
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
         ramdisk_dir = self.get_namespace_data(
             action='extract-overlay-ramdisk', label='extracted_ramdisk', key='directory')
         ramdisk_data = self.get_namespace_data(
@@ -531,8 +531,8 @@ class CompressRamdisk(Action):
             raise LAVABug("Unable to find unpacked ramdisk")
         if not ramdisk_data:
             raise LAVABug("Unable to find ramdisk directory")
-        if self.parameters.get('preseed', None):
-            if self.parameters["deployment_data"].get("preseed_to_ramdisk", None):
+        if self.parameters.get('preseed'):
+            if self.parameters["deployment_data"].get("preseed_to_ramdisk"):
                 # download action must have completed to get this far
                 # some installers (centos) cannot fetch the preseed file via tftp.
                 # Instead, put the preseed file into the ramdisk using a given name
@@ -558,7 +558,7 @@ class CompressRamdisk(Action):
             self.logger.debug("%s\n%s" % (cmd, log))  # pylint: disable=logging-not-lazy
 
             # we need to compress the ramdisk with the same method is was submitted with
-            compression = self.parameters['ramdisk'].get('compression', None)
+            compression = self.parameters['ramdisk'].get('compression')
             final_file = compress_file(ramdisk_data, compression)
 
         tftp_dir = os.path.dirname(self.get_namespace_data(
@@ -610,8 +610,8 @@ class ApplyLxcOverlay(Action):
         if not os.path.exists(self.lava_test_dir):
             self.errors = "Missing lava-test-runner: %s" % self.lava_test_dir
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         overlay_file = self.get_namespace_data(action='compress-overlay', label='output', key='file')
         if overlay_file is None:
             self.logger.debug("skipped %s", self.name)
@@ -626,7 +626,7 @@ class ApplyLxcOverlay(Action):
         tar_cmd = ['tar', '--warning', 'no-timestamp', '-C', lxc_rootfs_path,
                    '-xaf', overlay_file]
         command_output = self.run_command(tar_cmd)
-        if command_output and command_output is not '':
+        if command_output and command_output != '':
             raise JobError("Unable to untar overlay: %s" %
                            command_output)
 
@@ -651,14 +651,14 @@ class ConfigurePreseedFile(Action):
     description = "add commands to automated installers, to copy the lava test overlay to the installed system"
     summary = "add commands to installer config"
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         if 'deployment_data' not in self.parameters:
             return connection
-        if self.parameters["deployment_data"].get('installer_extra_cmd', None):
-            if self.parameters.get('os', None) == "debian_installer":
+        if self.parameters["deployment_data"].get('installer_extra_cmd'):
+            if self.parameters.get('os') == "debian_installer":
                 add_late_command(self.get_namespace_data(action='download-action', label='preseed', key='file'),
                                  self.parameters["deployment_data"]["installer_extra_cmd"])
-            if self.parameters.get('os', None) == "centos_installer":
+            if self.parameters.get('os') == "centos_installer":
                 ip_addr = dispatcher_ip(self.job.parameters['dispatcher'])
                 overlay = self.get_namespace_data(
                     action='download-action', label='file', key='overlay')

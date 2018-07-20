@@ -97,7 +97,7 @@ actions:
         method: tftp
         media: usb
         kernel: http://myimage.com/zImage
-        boot_cmds: “blah blah blah”
+        boot_cmds: "blah blah blah"
         prompts:
           - 'linaro-test'
           - 'root@debian:~#'
@@ -144,7 +144,7 @@ actions:
     #      path: testdef.yaml
 
     #- if:
-    #    condition: ... # ← DEFINING THIS IS THE REAL PROBLEM
+    #    condition: ... # DEFINING THIS IS THE REAL PROBLEM
     #    true:
     #        # just a list of commands
     #        - boot:

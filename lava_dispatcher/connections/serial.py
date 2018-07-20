@@ -63,6 +63,9 @@ class ConnectDevice(Action):
     def validate(self):
         super().validate()
         matched = False
+        if 'commands' not in self.job.device:
+            self.errors = "Invalid device configuration - missing 'commands'"
+            return
         if 'connect' in self.job.device['commands']:
             # deprecated but allowed for primary
             if self.primary:
@@ -105,8 +108,8 @@ class ConnectDevice(Action):
             self.command = self.job.device['commands']['connections'][self.hardware]['connect'][:]  # local copy to retain idempotency.
         self._check_command()
 
-    def run(self, connection, max_end_time, args=None):
-        connection_namespace = self.parameters.get('connection-namespace', None)
+    def run(self, connection, max_end_time):
+        connection_namespace = self.parameters.get('connection-namespace')
         parameters = None
         if connection_namespace:
             parameters = {"namespace": connection_namespace}
@@ -124,7 +127,9 @@ class ConnectDevice(Action):
         self.logger.info(
             "[%s] %s %s '%s'", parameters['namespace'], self.name, self.message, self.command)
         # ShellCommand executes the connection command
-        shell = self.shell_class("%s\n" % self.command, self.timeout, logger=self.logger)
+        shell = self.shell_class(
+            "%s\n" % self.command, self.timeout, logger=self.logger,
+            window=self.job.device.get_constant('spawn_maxread'))
         if shell.exitstatus:
             raise JobError("%s command exited %d: %s" % (self.command, shell.exitstatus, shell.readlines()))
         # ShellSession monitors the pexpect
@@ -132,7 +137,7 @@ class ConnectDevice(Action):
         connection.connected = True
         if self.hardware:
             connection.tags = self.tag_dict[self.hardware]
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
         if not connection.prompt_str:
             connection.prompt_str = [self.job.device.get_constant(
                 'default-shell-prompt')]
@@ -164,9 +169,9 @@ class ConnectShell(ConnectDevice):
             return
         self._check_command()
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         # explicitly call the base class run()
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
         self.logger.debug("Forcing a prompt")
         # force a prompt to appear without using a character that could be interpreted as a username
         connection.sendline('')

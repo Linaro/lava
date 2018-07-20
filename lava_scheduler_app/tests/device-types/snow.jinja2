@@ -1,8 +1,7 @@
 # snow AKA Samsung arm Chromebook running u-boot (chainloaded by vendor
 # u-boot)
+{# device_type = "snow" #}
 {% extends 'exynos4-5-common.jinja2' %}
-
-{% set device_type = "snow" %}
 
 {% set boot_character_delay = 1 %}
 {% set bootloader_prompt = bootloader_prompt|default('snow \#') %}

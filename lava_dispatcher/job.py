@@ -32,11 +32,11 @@ from lava_common.exceptions import (
     LAVAError,
     JobError,
 )
+from lava_common.utils import debian_package_version
 from lava_dispatcher.logical import PipelineContext
 from lava_dispatcher.diagnostics import DiagnoseNetwork
 from lava_dispatcher.protocols.multinode import MultinodeProtocol  # pylint: disable=unused-import
 from lava_common.constants import DISPATCHER_DOWNLOAD_DIR
-from lava_dispatcher.utils.filesystem import debian_package_version
 
 
 class ZMQConfig(object):
@@ -201,7 +201,7 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         Public wrapper for the pipeline validation.
         Send a "fail" results if needed.
         """
-        label = "lava-dispatcher, installed at version: %s" % debian_package_version(split=False)
+        label = "lava-dispatcher, installed at version: %s" % debian_package_version(pkg='lava-dispatcher', split=False)
         self.logger.info(label)
         self.logger.info("start: 0 validate")
         start = time.time()
@@ -209,21 +209,20 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
         success = False
         try:
             self._validate()
-        except LAVAError as exc:
+            success = True
+        except LAVAError:
             raise
         except Exception as exc:
             # provide useful info on command line, e.g. failed unit tests.
             self.logger.exception(traceback.format_exc())
             raise LAVABug(exc)
-        else:
-            success = True
         finally:
-            if not success:
-                self.cleanup(connection=None)
             self.logger.info("validate duration: %.02f", time.time() - start)
             self.logger.results({"definition": "lava",
                                  "case": "validate",
                                  "result": "pass" if success else "fail"})
+            if not success:
+                self.cleanup(connection=None)
 
     def _run(self):
         """
@@ -248,7 +247,7 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
                 raise JobError(msg)
 
         # Run the pipeline and wait for exceptions
-        with self.timeout() as max_end_time:
+        with self.timeout(None, None) as max_end_time:
             self.pipeline.run_actions(self.connection, max_end_time)
 
     def run(self):

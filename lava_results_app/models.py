@@ -28,13 +28,13 @@ TestSet can be enabled within a test definition run step
 TestCase is a single lava-test-case record or Action result.
 """
 
-from __future__ import unicode_literals
-
-import logging
-import sys
-import yaml
-
 from datetime import timedelta
+import logging
+from nose.tools import nottest
+from urllib.parse import quote
+import yaml
+import contextlib
+
 from django.conf import settings
 from django.contrib.admin.models import LogEntry, ADDITION
 from django.contrib.auth.models import User, Group
@@ -64,13 +64,6 @@ from lava_scheduler_app.managers import (
 )
 
 from lava_results_app.utils import help_max_length
-
-if sys.version_info[0] == 2:
-    # Python 2.x
-    from urllib import quote
-elif sys.version_info[0] == 3:
-    # For Python 3.0 and later
-    from urllib.parse import quote
 
 
 class InvalidConditionsError(Exception):
@@ -199,6 +192,7 @@ class BugLink(models.Model):
         )
 
 
+@nottest
 class TestSuite(models.Model, Queryable):
     """
     Result suite of a pipeline job.
@@ -219,20 +213,15 @@ class TestSuite(models.Model, Queryable):
         max_length=200
     )
 
+    def testcase_count(self, value):
+        return self.testcase_set.filter(result=TestCase.RESULT_MAP[value]).count()
+
     def get_passfail_results(self):
         # Get pass fail results per lava_results_app.testsuite.
-        results = {}
-        results[self.name] = {
-            'pass': self.testcase_set.filter(
-                result=TestCase.RESULT_MAP['pass']).count(),
-            'fail': self.testcase_set.filter(
-                result=TestCase.RESULT_MAP['fail']).count(),
-            'skip': self.testcase_set.filter(
-                result=TestCase.RESULT_MAP['skip']).count(),
-            'unknown': self.testcase_set.filter(
-                result=TestCase.RESULT_MAP['unknown']).count()
-        }
-        return results
+        return {self.name: {'pass': self.testcase_count('pass'),
+                            'fail': self.testcase_count('fail'),
+                            'skip': self.testcase_count('skip'),
+                            'unknown': self.testcase_count('unknown')}}
 
     def get_measurement_results(self):
         # Get measurement values per lava_results_app.testcase.
@@ -285,6 +274,7 @@ class TestSuite(models.Model, Queryable):
         return _(u"Test Suite {0}/{1}").format(self.job.id, self.name)
 
 
+@nottest
 class TestSet(models.Model):
     """
     Sets collate result cases under an arbitrary text label.
@@ -319,6 +309,7 @@ class TestSet(models.Model):
             self.name)
 
 
+@nottest
 class TestCase(models.Model, Queryable):
     """
     Result of an individual test case.
@@ -393,6 +384,20 @@ class TestCase(models.Model, Queryable):
 
     suite = models.ForeignKey(
         TestSuite,
+    )
+
+    # Store start and end of the TestCase in the log file
+    # We are countaing the lines
+    start_log_line = models.PositiveIntegerField(
+        blank=True,
+        null=True,
+        editable=False
+    )
+
+    end_log_line = models.PositiveIntegerField(
+        blank=True,
+        null=True,
+        editable=False
     )
 
     test_set = models.ForeignKey(
@@ -637,6 +642,7 @@ class NamedTestAttribute(models.Model):
         verbose_name = "metadata"
 
 
+@nottest
 class TestData(models.Model):
     """
     Static metadata gathered from the test definition and device dictionary
@@ -1108,7 +1114,7 @@ class Query(models.Model):
         cls.parse_conditions(content_type, conditions)
 
     def save(self, *args, **kwargs):
-        super(Query, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
         if self.is_live:
             # Drop the view.
             QueryMaterializedView.drop(self.id)
@@ -1117,7 +1123,7 @@ class Query(models.Model):
         if not self.is_live:
             # Drop the view.
             QueryMaterializedView.drop(self.id)
-        super(Query, self).delete(*args, **kwargs)
+        super().delete(*args, **kwargs)
 
     def is_accessible_by(self, user):
         if user.is_superuser or self.owner == user or \
@@ -1134,11 +1140,9 @@ class Query(models.Model):
 
 @receiver(pre_save, sender=Query)
 def limit_update_signal(sender, instance, **kwargs):
-    try:
+    # If the object does not exists, this is a new query: ignore
+    with contextlib.suppress(sender.DoesNotExist):
         query = sender.objects.get(pk=instance.pk)
-    except sender.DoesNotExist:
-        pass  # New query, ignore.
-    else:
         if not query.limit == instance.limit:  # Field has changed
             instance.is_changed = True
 
@@ -1227,13 +1231,13 @@ class QueryCondition(models.Model):
     )
 
     def save(self, *args, **kwargs):
-        super(QueryCondition, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
         if not self.query.is_live:
             self.query.is_changed = True
             self.query.save()
 
     def delete(self, *args, **kwargs):
-        super(QueryCondition, self).delete(*args, **kwargs)
+        super().delete(*args, **kwargs)
         if not self.query.is_live:
             self.query.is_changed = True
             self.query.save()

@@ -1,8 +1,8 @@
+{# device_type = "arndale" #}
 {% extends 'base-uboot.jinja2' %}
 
 {% set console_device = console_device|default('ttySAC2') %}
 {% set baud_rate = baud_rate|default(115200) %}
-{% set device_type = "arndale" %}
 {% if extra_kernel_args %}
 {% set extra_kernel_args = "drm_kms_helper.edid_firmware=edid-1920x1080.fw " + extra_kernel_args %}
 {% else %}

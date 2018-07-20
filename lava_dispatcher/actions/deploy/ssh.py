@@ -149,8 +149,8 @@ class PrepareOverlayScp(Action):
         self.internal_pipeline.add_action(ExtractRootfs())  # idempotent, checks for nfsrootfs parameter
         self.internal_pipeline.add_action(ExtractModules())  # idempotent, checks for a modules parameter
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         overlay_file = self.get_namespace_data(action='compress-overlay', label='output', key='file')
         self.logger.info("Preparing to copy: %s", os.path.basename(overlay_file))
         self.set_namespace_data(action=self.name, label='scp-deploy', key='overlay', value=overlay_file)

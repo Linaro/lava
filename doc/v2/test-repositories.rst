@@ -178,3 +178,159 @@ LAVA regularly runs a set of test definitions to check for regressions and the
 set is available for others to use as a template for their own tests::
 
 * https://git.linaro.org/lava-team/lava-functional-tests.git
+
+.. _test_definition_kmsg:
+
+Using kernel messages in a test shell
+*************************************
+
+.. seealso:: :ref:`Simple test job flow <simple_job_flow>` for
+   background on serial corruption and interleaving of kernel
+   messages with test output. Also :ref:`isolating_kernel_messages`
+   for information on using multiple serial connections to prevent
+   such issues.
+
+In situations where multiple serial ports are not available, there is
+a possible mitigation to the problem of serial corruption of test shell
+messages by kernel messages.
+
+This is an example of the interleaving of kernel messages and test
+shell messages:
+
+.. code-block:: none
+
+    <LAVA_SIGNAL_ENDRUN 0_network[   31.811978] ------------[ cut here ]------------
+    -inline 14658_3.[   31.818261] WARNING: CPU: 4 PID: 2576 at /srv/oe/build/tmp-rpb-glibc/work-shared/hikey/kernel-source/include/net/sock.h:1703 af_alg_accept+0x1d8/0x208 [af_alg]
+    2.3.1>
+    <LAVA_TE[   31.834094] Modules linked in: algif_hash af_alg smsc75xx usbnet adv7511 kirin_drm drm_kms_helper dw_drm_dsi drm fuse
+    Received signal: <ENDRUN> 0_network[   31.811978] ------------[ cut here ]------------
+    -inline 14658_3.[   31.818261] WARNING: CPU: 4 PID: 2576 at /srv/oe/build/tmp-rpb-glibc/work-shared/hikey/kernel-source/include/net/sock.h:1703 af_alg_accept+0x1d8/0x208 [af_alg]
+    2.3.1
+    Ending use of test pattern.
+    Ending test lava.0_network[ (31.811978]), duration 1.92
+    case: 0_network[
+    case_id: 875068
+    definition: lava
+    duration: 1.92
+    namespace: hikey-oe
+    path: None
+    repository: None
+    result: pass
+    revision: unspecified
+    uuid: 31.811978]
+    _on_endrun() takes exactly 3 arguments (20 given)
+
+The expected signal would have been more like the another message
+of this type in the same test job:
+
+.. code-block:: none
+
+    <LAVA_SIGNAL_ENDRUN 1_kselftest 14658_3.2.3.5>
+    Received signal: <ENDRUN> 1_kselftest 14658_3.2.3.5
+    Ending use of test pattern.
+    Ending test lava.1_kselftest (14658_3.2.3.5), duration 0.00
+    case: 1_kselftest
+    case_id: 876176
+    commit_id: fd1f392f983803e7189e264dda22790c54950c8f
+    definition: lava
+    duration: 0.0057
+    namespace: hikey-oe
+    path: automated/linux/kselftest/kselftest.yaml
+    repository: git://git.linaro.org/qa/test-definitions.git
+    result: pass
+    revision: unspecified
+    uuid: 14658_3.2.3.5
+    <LAVA_TEST_RUNNER>: 1_kselftest exited with: 0
+
+As described in :ref:`isolating kernel messages <simple_job_flow>` in
+the section on Multiple serial port support, this happens because the
+test shell message ``<LAVA_SIGNAL_ENDRUN 1_kselftest 14658_3.2.3.5>``
+is sent to ``stdout``. If the message was sent to ``/dev/kmsg`` then
+the kernel would take care of emitting the entire line **before** (or
+just **after**) emitting the warning. The test shell message would
+remain intact and processing could continue normally.
+
+Syntax
+======
+
+Test writers can decide which test shell definitions need to use this
+support and which continue to use ``stdout``.
+
+.. literalinclude:: examples/test-jobs/qemu-kmsg-events.yaml
+     :language: yaml
+     :linenos:
+     :lines: 47-57
+     :emphasize-lines: 4
+
+By specifying ``lava-signal: kmsg`` for the first test shell definition
+in the test job submission example above, LAVA can output the test
+shell messages to ``/dev/kmsg``, resulting in output like:
+
+.. code-block:: none
+
+    [    8.862986] <LAVA_SIGNAL_ENDRUN 0_smoke-tests 1998_1.2.3.1>
+    + export TESTRUN_ID=1_singlenode-advanced
+    + TESTRUN_ID=1_singlenode-advanced
+    + cd /lava-1998/0/tests/1_singlenode-advanced
+    ++ cat uuid
+    + UUID=1998_1.2.3.5
+    + set +x
+    <LAVA_SIGNAL_STARTRUN 1_singlenode-advanced 1998_1.2.3.5>
+    + apt-get update -q
+    Received signal: <TESTCASE> TEST_CASE_ID=linux-linaro-ubuntu-lsb_release RESULT=fail
+    case: linux-linaro-ubuntu-lsb_release
+    case_id: 49920
+    definition: 0_smoke-tests
+    result: fail
+    Received signal: <ENDRUN> 0_smoke-tests 1998_1.2.3.1
+
+.. note::
+   * The LAVA test shell messages are now prefixed with the kernel
+     message time stamp - this does not affect processing which is
+     restricted to the content betweent the ``<`` and ``>`` markers.
+
+   * The ``STARTRUN`` message is not sent to ``/dev/kmsg`` (see
+     :ref:`kmsg_signal_limitations`) and is still vulnerable to kernel
+     messages being interleaved.
+
+   * When describing ``stdout``, ``stderr`` is implicitly included.
+
+   * The ordering of messages in the output shows the inherent
+     latency in the message processing.
+
+.. _kmsg_signal_limitations:
+
+Limitations
+===========
+
+.. seealso:: If the limitations with this approach make it unsuitable,
+    :ref:`multiple_serial_support` is preferred, where available.
+
+Login
+-----
+
+The login shell is not part of the LAVA test shell, it is the final
+part of the boot sequence and the input/output of the login shell is
+not under the control of LAVA. If kernel messages appear when the
+device is attempting to read in the username or password or if a
+message appears when the login shell is attempting to output the
+prompt, then the parsing will still fail.
+
+stdout
+------
+
+The problem of interleaving messages from multiple inputs onto a single
+output has not gone away by sending the LAVA test shell messages to
+``/dev/kmsg``. There is still only a single serial connection which
+**must** be shared between all ``stdout`` output and all ``console``
+output. Test shell operations which produce a lot of ``stdout`` and/or
+``stderr`` output can still flood the serial connection and interrupt
+kernel message lines.
+
+Definitions
+-----------
+
+Not all LAVA test shell operations can be sent to ``/dev/kmsg`` - some
+will go to ``stdout`` even if all test definitions are marked to use
+``/dev/kmsg`` because the test shell runner script needs to be the same
+for all definitions.

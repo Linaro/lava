@@ -19,8 +19,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
-from __future__ import unicode_literals
-
 from datetime import timedelta
 import yaml
 
@@ -64,12 +62,12 @@ class TestHealthCheckScheduling(TestCase):
         self.device_type01 = DeviceType.objects.create(name="dt-01")
 
         self.device01 = Device.objects.create(hostname="device-01", device_type=self.device_type01,
-                                              worker_host=self.worker01, is_public=True)
+                                              worker_host=self.worker01, is_public=True, health=Device.HEALTH_UNKNOWN)
         # This device should never be considered (his worker is OFFLINE)
         self.device02 = Device.objects.create(hostname="device-02", device_type=self.device_type01,
-                                              worker_host=self.worker02, is_public=True)
+                                              worker_host=self.worker02, is_public=True, health=Device.HEALTH_UNKNOWN)
         self.device03 = Device.objects.create(hostname="device-03", device_type=self.device_type01,
-                                              worker_host=self.worker03, is_public=True)
+                                              worker_host=self.worker03, is_public=True, health=Device.HEALTH_UNKNOWN)
         self.user = User.objects.create(username="user-01")
         self.last_hc03 = TestJob.objects.create(health_check=True, actual_device=self.device03,
                                                 user=self.user, submitter=self.user,
@@ -287,6 +285,144 @@ class TestHealthCheckScheduling(TestCase):
         current_hc = self.device03.current_job()
         self.assertTrue(current_hc.health_check)
         self.assertEqual(current_hc.state, TestJob.STATE_SCHEDULED)
+
+
+class TestVisibility(TestCase):
+
+    def setUp(self):
+        self.worker01 = Worker.objects.create(hostname="worker-01", state=Worker.STATE_ONLINE)
+        self.worker02 = Worker.objects.create(hostname="worker-02", state=Worker.STATE_OFFLINE)
+        self.worker03 = Worker.objects.create(hostname="worker-03", state=Worker.STATE_ONLINE)
+
+        self.device_type01 = DeviceType.objects.create(name="dt-01")
+
+        self.device01 = Device.objects.create(
+            hostname="device-01", device_type=self.device_type01,
+            worker_host=self.worker01, is_public=True, health=Device.HEALTH_UNKNOWN)
+        # This device should never be considered (his worker is OFFLINE)
+        self.device02 = Device.objects.create(
+            hostname="device-02", device_type=self.device_type01,
+            worker_host=self.worker02, is_public=True, health=Device.HEALTH_UNKNOWN)
+        self.device03 = Device.objects.create(
+            hostname="device-03", device_type=self.device_type01,
+            worker_host=self.worker03, is_public=False, health=Device.HEALTH_UNKNOWN)
+        self.user = User.objects.create(username="user-01")
+        self.device03.save()
+
+        self.original_health_check = Device.get_health_check
+        # Make sure that get_health_check does return something
+        Device.get_health_check = _minimal_valid_job
+
+    def tearDown(self):
+        Device.get_health_check = self.original_health_check
+        for job in TestJob.objects.filter(state__in=[TestJob.STATE_SUBMITTED, TestJob.STATE_SCHEDULING]):
+            job.go_state_finished(TestJob.HEALTH_GOOD)
+
+    def _minimal_personal_job(self):
+        return """
+job_name: minimal valid job
+visibility: personal
+timeouts:
+  job:
+    minutes: 10
+  action:
+    minutes: 5
+actions: []
+"""
+
+    def _check_hc_scheduled(self, device):
+        device.refresh_from_db()
+        self.assertEqual(device.state, Device.STATE_RESERVED)
+        job = device.current_job()
+        self.assertNotEqual(job, None)
+        self.assertEqual(job.state, TestJob.STATE_SCHEDULED)
+        self.assertEqual(job.health, TestJob.HEALTH_UNKNOWN)
+        self.assertEqual(job.actual_device, device)
+
+    def _check_hc_not_scheduled(self, device):
+        device.refresh_from_db()
+        self.assertEqual(device.state, Device.STATE_IDLE)
+        self.assertEqual(device.current_job(), None)
+
+    def _check_initial_state(self):
+        self.assertNotEqual(self.device01.get_health_check(), None)
+        self.assertNotEqual(self.device02.get_health_check(), None)
+        self.assertNotEqual(self.device03.get_health_check(), None)
+        self.assertEqual(self.device01.health, Device.HEALTH_UNKNOWN)
+        self.assertEqual(self.device02.health, Device.HEALTH_UNKNOWN)
+        self.assertEqual(self.device03.health, Device.HEALTH_UNKNOWN)
+
+    def test_health_visibility(self):
+        self._check_initial_state()
+
+        self.device_type01.disable_health_check = False
+        self.device_type01.owners_only = False
+        self.device_type01.save()
+
+        schedule_health_checks(DummyLogger())[0]
+
+        self._check_hc_scheduled(self.device01)
+        self._check_hc_not_scheduled(self.device02)
+        self._check_hc_scheduled(self.device03)
+
+    def test_health_visibility_owners(self):
+        self._check_initial_state()
+
+        self.device_type01.disable_health_check = False
+        self.device_type01.owners_only = True
+        self.device_type01.save()
+
+        schedule_health_checks(DummyLogger())[0]
+
+        # no health checks can be scheduled for _minimal_valid_job
+        self._check_hc_not_scheduled(self.device01)
+        self._check_hc_not_scheduled(self.device02)
+        self._check_hc_not_scheduled(self.device03)
+
+    def test_health_visibility_owners_personal(self):
+        self._check_initial_state()
+
+        # repeat test_health_visibility_owners with suitable test job
+        Device.get_health_check = self._minimal_personal_job
+
+        self.device_type01.disable_health_check = False
+        self.device_type01.owners_only = True
+        self.device_type01.save()
+
+        schedule_health_checks(DummyLogger())[0]
+
+        # health checks can be scheduled for _minimal_personal_job
+        self._check_hc_scheduled(self.device01)
+        self._check_hc_not_scheduled(self.device02)
+        self._check_hc_scheduled(self.device03)
+
+    def test_health_visibility_some_restricted(self):
+        self._check_initial_state()
+
+        self.device_type01.disable_health_check = False
+        self.device_type01.owners_only = False
+        self.device_type01.save()
+
+        schedule_health_checks(DummyLogger())[0]
+
+        self._check_hc_scheduled(self.device01)
+        self._check_hc_not_scheduled(self.device02)
+        # device03 is restricted in setUp
+        self._check_hc_scheduled(self.device03)
+
+    def test_health_visibility_all_restricted(self):
+        self._check_initial_state()
+
+        self.device_type01.disable_health_check = False
+        self.device_type01.owners_only = False
+        self.device_type01.save()
+        self.device01.is_public = False
+
+        schedule_health_checks(DummyLogger())[0]
+
+        self._check_hc_scheduled(self.device01)
+        self._check_hc_not_scheduled(self.device02)
+        self._check_hc_scheduled(self.device03)
 
 
 class TestPriorities(TestCase):

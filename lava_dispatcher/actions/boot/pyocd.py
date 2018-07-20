@@ -77,7 +77,7 @@ class BootPyOCDRetry(RetryAction):
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         if self.job.device.hard_reset_command:
             self.internal_pipeline.add_action(ResetDevice())
-            self.internal_pipeline.add_action(WaitDeviceBoardID(self.job.device.get('board_id', None)))
+            self.internal_pipeline.add_action(WaitDeviceBoardID(self.job.device.get('board_id')))
         self.internal_pipeline.add_action(FlashPyOCDAction())
         self.internal_pipeline.add_action(ConnectDevice())
 
@@ -123,8 +123,8 @@ class FlashPyOCDAction(Action):
         if len(self.exec_list) < 1:
             self.errors = "No PyOCD command to execute"
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         for pyocd_command in self.exec_list:
             pyocd = ' '.join(pyocd_command)
             self.logger.info("PyOCD command: %s", pyocd)

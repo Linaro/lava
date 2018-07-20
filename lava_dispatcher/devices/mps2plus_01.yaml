@@ -18,7 +18,6 @@ commands:
     power_on: /opt/lava-lab/shared/lab-scripts/snmp_pdu_control --hostname 192.168.0.53 --port 14 --delay 20 --command on
 device_info: [{'fs_label': 'V2M_MPS2'}]
 
-device_type: mps2plus
 usb_filesystem_label: 'V2M_MPS2'
 
 actions:

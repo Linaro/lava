@@ -5,7 +5,7 @@
 {% set console_device = console_device|default('ttyAML0') %}
 {% set baud_rate = baud_rate|default(115200) %}
 {% set interrupt_prompt = interrupt_prompt|default('stop autoboot') %}
-{% set interrupt_char = interrupt_char|default('\n') %}
+{% set interrupt_ctrl_list = ['c'] %}
 
 {% set bootm_kernel_addr = '0x1080000' %}
 {% set bootm_dtb_addr = '0x1000000' %}

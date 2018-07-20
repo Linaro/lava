@@ -17,11 +17,9 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA Scheduler.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import unicode_literals
-
+import contextlib
 import copy
 import errno
-import jinja2
 import ldap
 import logging
 import os
@@ -57,11 +55,8 @@ class IRCHandleNotFoundError(IRCSendError):
 
 def get_domain():
     domain = '???'
-    try:
+    with contextlib.suppress(Site.DoesNotExist, ImproperlyConfigured):
         site = Site.objects.get_current()
-    except (Site.DoesNotExist, ImproperlyConfigured):
-        pass
-    else:
         domain = site.domain
 
     return domain
@@ -69,54 +64,6 @@ def get_domain():
 
 def is_member(user, group):
     return user.groups.filter(name='%s' % group).exists()
-
-
-def _read_log(log_path):
-    logger = logging.getLogger('lava_scheduler_app')
-    if not os.path.exists(log_path):
-        return {}
-    logs = {}
-    for logfile in os.listdir(log_path):
-        filepath = os.path.join(log_path, logfile)
-        with open(filepath, 'r') as log_files:
-            try:
-                logs.update({logfile: yaml.load(log_files)})
-            except yaml.YAMLError as exc:
-                logger.warning(exc)
-                logs.update({logfile: [{'warning': "YAML error in %s" % os.path.basename(logfile)}]})
-    return logs
-
-
-def folded_logs(job, section_name, sections, summary=False, increment=False):
-    log_data = None
-    if increment:
-        latest = 0
-        section_name = ''
-        for item in sections:
-            current = int(item.values()[0])
-            log_path = os.path.join(job.output_dir, 'pipeline', item.values()[0])
-            if os.path.isdir(log_path):
-                latest = current if current > latest else latest
-                section_name = item.keys()[0] if latest == current else section_name
-        if not section_name:
-            return log_data
-    logs = {}
-    initialise_log = os.path.join(job.output_dir, 'pipeline', '0')
-    if os.path.exists(initialise_log) and section_name == 'deploy':
-        logs.update(_read_log(initialise_log))
-    for item in sections:
-        if section_name in item:
-            log_path = os.path.join(job.output_dir, 'pipeline', item[section_name])
-            logs.update(_read_log(log_path))
-            log_keys = sorted(logs)
-            log_data = OrderedDict()
-            for key in log_keys:
-                summary_items = [item for item in logs[key] if 'ts' in item or 'warning' in item or 'exception' in item]
-                if summary_items and summary:
-                    log_data[key] = summary_items
-                else:
-                    log_data[key] = logs[key]
-    return log_data
 
 
 def _split_multinode_vland(submission, jobs):
@@ -315,68 +262,6 @@ def send_irc_notification(nick, recipient, message,
     proc.wait()
 
 
-def _dump_value(node):
-    if isinstance(node, jinja2.nodes.Const):
-        return node.as_const()
-
-    elif isinstance(node, jinja2.nodes.Dict):
-        ret = {}
-        for n in node.iter_child_nodes():
-            ret[n.key.as_const()] = _dump_value(n.value)
-        return ret
-
-    elif isinstance(node, (jinja2.nodes.List, jinja2.nodes.Tuple)):
-        ret = []
-        for n in node.iter_child_nodes():
-            ret.append(_dump_value(n))
-        return ret if isinstance(node, jinja2.nodes.List) else tuple(ret)
-
-
-def device_dictionary_to_dict(ast):
-    ret = {}
-
-    for node in ast.find_all(jinja2.nodes.Assign):
-        ret[node.target.name] = _dump_value(node.node)
-
-    return ret
-
-
-def device_dictionary_sequence():
-    return [
-        'power_on_command',
-        'power_off_command',
-        'soft_reset_command',
-        'hard_reset_command',
-        'pre_power_command',
-        'pre_os_command',
-        'adb_serial_number',
-        'fastboot_options',
-        'fastboot_serial_number',
-        'device_info',
-        'static_info',
-        'recovery_mode_command',
-        'recovery_exit_command',
-    ]
-
-
-def device_dictionary_connections():
-    return [
-        'connection_list',
-        'connection_commands',
-        'connection_tags'
-    ]
-
-
-def device_dictionary_vlan():
-    return [
-        'interfaces',
-        'tags',
-        'map',
-        'mac_addr',
-        'sysfs',
-    ]
-
-
 def get_ldap_user_properties(ldap_user):
     """Searches LDAP based on the parameters in settings.conf and returns LDAP
     user properties as a dictionary, eg:
@@ -396,18 +281,15 @@ def get_ldap_user_properties(ldap_user):
     user_search = settings.AUTH_LDAP_USER_SEARCH
 
     search_scope = ldap.SCOPE_SUBTREE
-    # Attributes should be byte strings
-    # (see https://github.com/pyldap/pyldap/issues/68)
-    attributes = [b'uid', b'givenName', b'sn', b'mail']
+    attributes = ['uid', 'givenName', 'sn', 'mail']
     search_filter = "cn=*"
 
     if user_dn_template:
         user_dn = user_dn_template % {'user': ldap_user}
-    if user_search:
+    if user_search is not None:
         from django_auth_ldap.config import LDAPSearch
-        search = eval(user_search)
-        user_dn = search.base_dn
-        search_filter = search.filterstr % {'user': ldap_user}
+        user_dn = user_search.base_dn
+        search_filter = user_search.filterstr % {'user': ldap_user}
 
     user_properties = {}
     if server_uri is not None:

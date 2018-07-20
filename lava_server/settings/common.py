@@ -18,6 +18,7 @@
 
 # Created with Django 1.8.18
 
+import contextlib
 import imp
 
 # Import application settings
@@ -45,7 +46,6 @@ INSTALLED_APPS = [
     # Add LAVA dependencies
     'django_tables2',
     'linaro_django_xmlrpc',
-    'google_analytics',
     # Add contrib
     'django.contrib.admin',
     'django.contrib.auth',
@@ -132,14 +132,9 @@ LOGIN_REDIRECT_URL = "/"
 # Automatically install some applications
 available_modules = list()
 for module_name in ["devserver", "django_extensions", "django_openid_auth", "hijack"]:
-    try:
+    with contextlib.suppress(ImportError):
         imp.find_module(module_name)
         INSTALLED_APPS.append(module_name)
-    except ImportError:
-        pass
-
-# Add google analytics model.
-GOOGLE_ANALYTICS_MODEL = True
 
 # General URL prefix
 MOUNT_POINT = ""
@@ -199,3 +194,6 @@ AUTH_LDAP_GROUP_TYPE = None
 
 # Debian SSO is of be default
 AUTH_DEBIAN_SSO = None
+
+# Remove Delete buttons in django admin interface
+ALLOW_ADMIN_DELETE = True

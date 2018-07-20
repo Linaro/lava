@@ -5,9 +5,12 @@
 lava-tool
 =========
 
-``lava-tool`` is the command-line tool for interacting with the various
-services offered by LAVA via XML-RPC APIs. The full list of API calls is
-visible on the **Available methods** link from the API menu::
+`lava-tool`` is a **deprecated** command-line tool for interacting with
+the various services offered by LAVA via XML-RPC APIs. See
+:ref:`lavacli` for the new tool that is replacing it.
+
+The full list of API calls is visible on the **Available methods** link
+from the API menu::
 
  http://localhost/api/help
 

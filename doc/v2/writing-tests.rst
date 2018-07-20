@@ -23,6 +23,8 @@ For certain tests, the instructions can be included inline with the actions.
 For more complex tests or to share test definitions across multiple devices,
 environments and purposes, the test can use a repository of YAML files.
 
+.. seealso:: :ref:`test_repos` and :ref:`test_definition_kmsg`.
+
 .. _test_definition_yaml:
 
 Writing a test definition YAML file
@@ -402,7 +404,8 @@ Script interpreters
    you use ``#!/bin/sh``.
 
 #. **python** - ensure that python is installed in the test image. Add all the
-   python dependencies necessary for your script.
+   python dependencies necessary for your script. Remember that Python2 is
+   end-of-life and ``python3-`` alternative dependencies may be required.
 
 #. **perl** - ensure that any modules required by your script are  available,
    bearing in mind that some images may only have a basic perl installation
@@ -813,6 +816,8 @@ Results from any test suite can be tracked using :term:`queries <query>`,
 .. seealso:: :ref:`best_practices`, :ref:`custom_scripts` and
    :ref:`test_writer_scripts` for recommended ways to use this in practice.
 
+.. index:: test shell - best practices, best practice
+
 .. _best_practices:
 
 Best practices for writing a LAVA test job
@@ -821,6 +826,19 @@ Best practices for writing a LAVA test job
 A test job may consist of several LAVA test definitions and multiple
 deployments, but this flexibility needs to be balanced against the complexity
 of the job and the ways to analyse the results.
+
+As with all things in automation, the core principles of best practice
+can be summarised as:
+
+#. Start small
+
+#. Build slowly
+
+#. Change only one thing at a time
+
+#. Test every change
+
+.. index:: test shell - portability
 
 .. _test_definition_portability:
 
@@ -888,6 +906,8 @@ switching branches or compiling the source tree). Then, when debugging the test
 job, a test writer can setup a similar environment and simply call exactly the
 same script.
 
+.. _best_practice_one_thing:
+
 Use different test definitions for different test areas
 *******************************************************
 
@@ -918,16 +938,41 @@ other jobs for other users in between the smaller jobs.
 Retain at least some debug output in the final test definitions
 ***************************************************************
 
-Information about which commit or version of any third-party code is and will
-remain useful when debugging failures. When cloning such code, call a script in
-the code or use the version control tools to output information about the
-cloned copy. You may want to include the most recent commit message or the
-current commit hash or version control tag or branch name.
+Information about which commit or version of any third-party code is
+and will remain useful when debugging failures. When cloning such code,
+call a script in the code or use the version control tools to output
+information about the cloned copy. You may want to include the most
+recent commit message or the current commit hash or version control tag
+or branch name.
 
-If an item of configuration is important to how the test operates, write a test
-case or a custom script which reports this information. Even if this only
-exists in the test job log output, it will still be useful when comparing the
-log files of other similar jobs.
+If an item of configuration is important to how the test operates,
+write a test case or a custom script which reports this information.
+Even if this only exists in the test job log output, it will still be
+useful when comparing the log files of other similar jobs.
+
+Mock up the device output to test the scripts
+*********************************************
+
+Avoid waiting for a device to deploy and boot for each iteration in the
+development of test support scripts. Copy the output of a working
+device and use that as the input to the scripts which process the logs
+to identify results and cut out the noise.
+
+Where possible, include such mock ups as tests which can be run in
+another CI process, triggered each time the scripts are modified.
+
+Use functional tests to validate common functionality
+*****************************************************
+
+Use the principles of :ref:`functional_testing` to test common code
+used by the test jobs. For example, if a shell library is used, ensure
+that your smoke tests definitions are changed to use the shell library
+so that all health checks and functional tests provide test coverage
+for the shell library.
+
+.. index:: test shell - check for support
+
+.. _best_practice_check_support:
 
 Check for specific support as a test case
 *****************************************
@@ -945,6 +990,262 @@ simple script which returns the exit code of the command.
    prevent the rest of a test definition from exiting, you can report a
    non-zero exit code from your scripts and call the script directly instead of
    as a test case.
+
+.. index:: test shell - side effects
+
+.. _custom_script_side_effects:
+
+Check custom scripts for side-effects
+*************************************
+
+Subtle bugs can be introduced in custom scripts, so it is important to
+make the scripts :ref:`portable <test_definition_portability>` so that
+bugs can be reproduced outside LAVA.
+
+When interacting directly with LAVA, for example calling
+``lava-test-case``, it is possible to introduce control flow bugs.
+These can cause the output of ``lava-test-case`` to be received
+**after** the end of a test run and this can generate TestError
+exceptions. This section covers one example when using Python, there
+may be others.
+
+This example checks for ``lava-test-case`` in ``$PATH`` to determine
+whether to use the LAVA helpers.
+
+.. code-block:: python
+
+    import os
+    import subprocess
+
+
+    def _which_check(path, match):
+        """
+        Simple replacement for the `which` command found on
+        Debian based systems. Allows ordinary users to query
+        the PATH used at runtime.
+        """
+        paths = os.environ['PATH'].split(':')
+        if os.getuid() != 0:
+            # avoid sudo - it may ask for a password on developer systems.
+            paths.extend(['/usr/local/sbin', '/usr/sbin', '/sbin'])
+        for dirname in paths:
+            candidate = os.path.join(dirname, path)
+            if match(candidate):
+                return candidate
+        return None
+
+
+    if _which_check(path='lava-test-case', match=os.path.isfile):
+        subprocess.Popen([
+             'lava-test-case', 'probe-results', '--result', 'pass',
+             '--measurement', str(average), '--units', 'volts'])
+
+The error is in this line:
+
+.. code-block:: python
+
+        subprocess.Popen([
+
+``Popen`` calls ``fork`` but returns immediately. Unless the script
+also calls ``wait``, then the output of the subprocess can occur after
+the above function has returned. It is easy for this to happen at the
+end of a test definition, leading to intermittent bugs where some tests
+fail.
+
+The solution is to use the existing ``subprocess`` functions which
+already use ``wait`` internally. For ``lava-test-case``, this would be
+``check_call`` which waits for the process to execute and checks the
+return value.
+
+The fixed example looks like:
+
+.. code-block:: python
+
+    import os
+    import subprocess
+
+
+    def _which_check(path, match):
+        """
+        Simple replacement for the `which` command found on
+        Debian based systems. Allows ordinary users to query
+        the PATH used at runtime.
+        """
+        paths = os.environ['PATH'].split(':')
+        if os.getuid() != 0:
+            # avoid sudo - it may ask for a password on developer systems.
+            paths.extend(['/usr/local/sbin', '/usr/sbin', '/sbin'])
+        for dirname in paths:
+            candidate = os.path.join(dirname, path)
+            if match(candidate):
+                return candidate
+        return None
+
+
+    if _which_check(path='lava-test-case', match=os.path.isfile):
+        subprocess.check_call([
+             'lava-test-case', 'probe-results', '--result', 'pass',
+             '--measurement', str(average), '--units', 'volts'])
+
+.. index:: lava-test-raise, setup commands, test shell - setup
+
+.. _call_test_raise:
+
+Call lava-test-raise if setup fails
+***********************************
+
+Most test jobs have setup routines which ensure that dependencies
+are available or that the directory layout is correct etc. In most
+cases, these routines are called early and a failure in the setup
+function would undermine all subsequent test operations.
+
+The return code of some operations can be used to trigger an early
+failure.
+
+.. _setup_inline:
+
+Inline
+======
+
+If you are using an inline definition, the syntax can be a bit awkward:
+
+.. code-block:: yaml
+
+  run:
+     steps:
+         - apt-get update -q && lava-test-case "apt-update" --result pass || lava-test-raise "apt-update"
+
+An alternative is to put the definition into a file on a remote
+fileserver, use ``wget`` to download it and then execute it:
+
+.. code-block:: yaml
+
+        run:
+          steps:
+            - apt -y install wget
+            - wget http://people.linaro.org/~neil.williams/setup-test.sh
+            - sh -x setup-test.sh
+
+.. caution:: The download step is itself a setup command and could
+  fail, so whilst this is useful in development, using scripts from a
+  git repository is preferable.
+
+.. _setup_repository:
+
+Using a repository
+==================
+
+Shell library
+-------------
+
+A local shell library and a shell script can be easily used from a test
+shell repository:
+
+.. code-block:: shell
+
+    # saved, committed and pushed as ./testdefs/lava-common
+
+    command(){
+        if [ -n "$(which lava-test-case || true)" ]; then
+            echo $2
+            $2 && lava-test-case "$1" --result pass || lava-test-raise "$1"
+        else
+            echo $2
+            $2
+        fi
+    }
+
+This snippet is also :ref:`portable <test_definition_portability>`
+because if ``lava-test-case`` is not in the ``$PATH``, the setup
+command is executed without needing ``lava-test-case`` or
+``lava-test-raise``. The calling script is responsible for handling the
+return code, typically by using ``set -e``.
+
+.. seealso:: https://git.linaro.org/lava-team/refactoring.git/tree/testdefs
+
+Calling shell script
+--------------------
+
+.. code-block:: shell
+
+ #!/bin/sh
+
+ # saved, committed and pushed as ./testdefs/local-run.sh
+
+ . ./lava-common
+
+ command 'setup-apt' "apt-get update -q"
+
+If the shell script is saved to a different directory, the path to
+the shell library will have to be updated.
+
+.. seealso:: :ref:`setup_custom_scripts` - the language used for these
+   scripts is entirely up to the test writer to choose. Remember that
+   some language interpreters will themselves need to be installed
+   before scripts can be executed, requiring an initial setup shell script.
+   That does not mean that all setup needs to be done in shell; there
+   are key advantages to using other languages, including test writer
+   familiarity and ease of triage.
+
+Test shell definition
+---------------------
+
+Execute using a Lava Test Shell Definition:
+
+.. code-block:: yaml
+
+  run:
+      steps:
+        ./testdefs/local-run.sh
+
+
+.. seealso:: :ref:`Deploying to recovery <deploy_to_recovery>`
+
+.. index:: test shell - custom scripts
+
+.. _setup_custom_scripts:
+
+Custom scripts
+==============
+
+Custom scripts should check the return code of setup operations and use
+``lava-test-raise`` to halt the test job immediately if a setup error
+occurs. This makes triage much easier as it puts the failure much
+closer to the actual cause within the log file.
+
+.. code-block:: python
+
+    import os
+    import subprocess
+
+
+    def _which_check(path, match):
+        """
+        Simple replacement for the `which` command found on
+        Debian based systems. Allows ordinary users to query
+        the PATH used at runtime.
+        """
+        paths = os.environ['PATH'].split(':')
+        if os.getuid() != 0:
+            # avoid sudo - it may ask for a password on developer systems.
+            paths.extend(['/usr/local/sbin', '/usr/sbin', '/sbin'])
+        for dirname in paths:
+            candidate = os.path.join(dirname, path)
+            if match(candidate):
+                return candidate
+        return None
+
+
+    values = []
+    # other processing populates the values list
+    if len(values) == 0:
+        if _which_check(path='lava-test-raise', match=os.path.isfile):
+            subprocess.check_call(['lava-test-raise', 'setup failed'])
+        else:
+            print("setup failed")
+        return 1
+
+.. index:: test shell - control output
 
 .. _controlling_tool_output:
 
@@ -988,10 +1289,16 @@ progress bar behaviour of all operations.
 Problems with output
 ====================
 
-LAVA uses `pexpect` to monitor the output over the serial connection for
+LAVA uses ``pexpect`` to monitor the output over the serial connection for
 patterns which are used to pick up test cases and other test shell support.
 Each time a match is found, the buffer is cleared. If there is a lot of output
 with no pattern matches, the processing can slow down.
+
+By default ``pexpect`` uses a buffer of 2000 bytes for the input used
+for pattern matches. In order to improve performance, LAVA uses a limit
+of 4092 bytes. This is intended to limit problems with processing
+slowing down but best practice remains to manage the test job output to
+make the logs more useful during later triage.
 
 Large log files also have a few implications for the user interface and triage.
 More content makes loading links to a test job take longer and finding the
@@ -1074,7 +1381,7 @@ to optimise your test shell output.
   Example: If the test operation involves iterations over a test condition,
   report a lava test case every few iterations.
 
-_too_many_test_cases:
+.. _too_many_test_cases:
 
 Control the number of test cases reported
 *****************************************

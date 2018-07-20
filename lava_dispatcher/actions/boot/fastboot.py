@@ -35,7 +35,7 @@ from lava_dispatcher.actions.boot import (
 )
 from lava_dispatcher.power import ResetDevice, PreOs
 from lava_common.constants import LAVA_LXC_HOME
-from lava_dispatcher.utils.lxc import is_lxc_requested
+from lava_dispatcher.utils.lxc import is_lxc_requested, lxc_cmd_prefix
 from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.connections.adb import ConnectAdb
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
@@ -173,10 +173,10 @@ class WaitFastBootInterrupt(Action):
         if not self.prompt or not self.string:
             self.errors = "Missing interrupt configuration for device."
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         if not connection:
             raise LAVABug("%s started without a connection already in use" % self.name)
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
         # device is to be put into a reset state, either by issuing 'reboot' or power-cycle
         connection.prompt_str = self.prompt
         self.logger.debug("Changing prompt to '%s'", connection.prompt_str)
@@ -206,8 +206,8 @@ class FastbootBootAction(Action):
         elif not isinstance(self.job.device['fastboot_options'], list):
             self.errors = "device fastboot options is not a list"
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         lxc_name = is_lxc_requested(self.job)
         serial_number = self.job.device['fastboot_serial_number']
         boot_img = self.get_namespace_data(action='download-action',
@@ -218,7 +218,7 @@ class FastbootBootAction(Action):
             if lxc_name:
                 boot_img = os.path.join(LAVA_LXC_HOME,
                                         os.path.basename(boot_img))
-        fastboot_cmd = self.lxc_cmd_prefix + [
+        fastboot_cmd = lxc_cmd_prefix(self.job) + [
             'fastboot', '-s', serial_number, 'boot', boot_img
         ] + self.job.device['fastboot_options']
         command_output = self.run_command(fastboot_cmd, allow_fail=True)
@@ -252,12 +252,12 @@ class FastbootRebootAction(Action):
         elif not isinstance(self.job.device['fastboot_options'], list):
             self.errors = "device fastboot options is not a list"
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         serial_number = self.job.device['fastboot_serial_number']
         fastboot_opts = self.job.device['fastboot_options']
-        fastboot_cmd = self.lxc_cmd_prefix + ['fastboot', '-s', serial_number,
-                                              'reboot'] + fastboot_opts
+        fastboot_cmd = lxc_cmd_prefix(self.job) + ['fastboot', '-s', serial_number,
+                                                   'reboot'] + fastboot_opts
         command_output = self.run_command(fastboot_cmd, allow_fail=True)
         if command_output and 'rebooting' not in command_output:
             raise JobError("Unable to fastboot reboot: %s" % command_output)
@@ -293,36 +293,35 @@ class EnterFastbootAction(Action):
         elif not isinstance(self.job.device['fastboot_options'], list):
             self.errors = "device fastboot options is not a list"
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
 
+        cmd_prefix = lxc_cmd_prefix(self.job)
         # Try to enter fastboot mode with adb.
         adb_serial_number = self.job.device['adb_serial_number']
         # start the adb daemon
-        adb_cmd = self.lxc_cmd_prefix + ['adb', 'start-server']
+        adb_cmd = cmd_prefix + ['adb', 'start-server']
         command_output = self.run_command(adb_cmd, allow_fail=True)
         if command_output and 'successfully' in command_output:
             self.logger.debug("adb daemon started: %s", command_output)
-        adb_cmd = self.lxc_cmd_prefix + ['adb', '-s', adb_serial_number,
-                                         'devices']
+        adb_cmd = cmd_prefix + ['adb', '-s', adb_serial_number, 'devices']
         command_output = self.run_command(adb_cmd, allow_fail=True)
         if command_output and adb_serial_number in command_output:
             self.logger.debug("Device is in adb: %s", command_output)
-            adb_cmd = self.lxc_cmd_prefix + ['adb', '-s', adb_serial_number,
-                                             'reboot-bootloader']
+            adb_cmd = cmd_prefix + ['adb', '-s', adb_serial_number,
+                                    'reboot-bootloader']
             self.run_command(adb_cmd)
             return connection
 
         # Enter fastboot mode with fastboot.
         fastboot_serial_number = self.job.device['fastboot_serial_number']
         fastboot_opts = self.job.device['fastboot_options']
-        fastboot_cmd = self.lxc_cmd_prefix + ['fastboot', '-s',
-                                              fastboot_serial_number,
-                                              'devices'] + fastboot_opts
+        fastboot_cmd = cmd_prefix + ['fastboot', '-s', fastboot_serial_number,
+                                     'devices'] + fastboot_opts
         command_output = self.run_command(fastboot_cmd)
         if command_output and fastboot_serial_number in command_output:
             self.logger.debug("Device is in fastboot: %s", command_output)
-            fastboot_cmd = self.lxc_cmd_prefix + [
+            fastboot_cmd = cmd_prefix + [
                 'fastboot', '-s', fastboot_serial_number, 'reboot-bootloader'
             ] + fastboot_opts
             command_output = self.run_command(fastboot_cmd)

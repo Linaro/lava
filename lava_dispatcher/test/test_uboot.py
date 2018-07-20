@@ -76,7 +76,6 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         self.assertEqual(description_ref, job.pipeline.describe(False))
 
         self.assertIsNone(job.validate())
-        self.assertEqual(job.device['device_type'], 'beaglebone-black')
 
     def test_tftp_pipeline(self):
         job = self.factory.create_bbb_job('sample_jobs/uboot-ramdisk.yaml')
@@ -108,7 +107,7 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         self.assertEqual(job.device['commands'].get('interrupt', ' '), ' ')
         methods = job.device['actions']['boot']['methods']
         self.assertIn('u-boot', methods)
-        self.assertEqual(methods['u-boot']['parameters'].get('bootloader_prompt', None), 'U-Boot')
+        self.assertEqual(methods['u-boot']['parameters'].get('bootloader_prompt'), 'U-Boot')
 
     @unittest.skipIf(infrastructure_error('mkimage'), "u-boot-tools not installed")
     def test_uboot_action(self):
@@ -518,16 +517,16 @@ class TestOverlayCommands(StdoutTestCase):  # pylint: disable=too-many-public-me
         ramdisk = [action for action in prepare.internal_pipeline.actions if action.name == 'extract-overlay-ramdisk'][0]
         modules = [action for action in prepare.internal_pipeline.actions if action.name == 'extract-modules'][0]
         overlay = [action for action in prepare.internal_pipeline.actions if action.name == 'apply-overlay-tftp'][0]
-        self.assertIsNotNone(ramdisk.parameters.get('ramdisk'), None)
-        self.assertIsNotNone(ramdisk.parameters['ramdisk'].get('url'), None)
-        self.assertIsNotNone(ramdisk.parameters['ramdisk'].get('compression'), None)
+        self.assertIsNotNone(ramdisk.parameters.get('ramdisk'))
+        self.assertIsNotNone(ramdisk.parameters['ramdisk'].get('url'))
+        self.assertIsNotNone(ramdisk.parameters['ramdisk'].get('compression'))
         self.assertTrue(ramdisk.parameters['ramdisk'].get('install_modules', True))
         self.assertTrue(ramdisk.parameters['ramdisk'].get('install_overlay', True))
-        self.assertIsNotNone(modules.parameters.get('ramdisk', None))
-        self.assertIsNotNone(modules.parameters.get('nfsrootfs', None))
-        self.assertIsNotNone(nfs.parameters.get('nfsrootfs', None))
-        self.assertIsNotNone(overlay.parameters.get('nfsrootfs', None))
-        self.assertIsNotNone(overlay.parameters.get('ramdisk', None))
+        self.assertIsNotNone(modules.parameters.get('ramdisk'))
+        self.assertIsNotNone(modules.parameters.get('nfsrootfs'))
+        self.assertIsNotNone(nfs.parameters.get('nfsrootfs'))
+        self.assertIsNotNone(overlay.parameters.get('nfsrootfs'))
+        self.assertIsNotNone(overlay.parameters.get('ramdisk'))
 
     def test_ramdisk_nfs_nomodules(self):
         job = self.factory.create_bbb_job('sample_jobs/bbb-uinitrd-nfs.yaml')
@@ -537,12 +536,12 @@ class TestOverlayCommands(StdoutTestCase):  # pylint: disable=too-many-public-me
         ramdisk = [action for action in prepare.internal_pipeline.actions if action.name == 'extract-overlay-ramdisk'][0]
         modules = [action for action in prepare.internal_pipeline.actions if action.name == 'extract-modules'][0]
         overlay = [action for action in prepare.internal_pipeline.actions if action.name == 'apply-overlay-tftp'][0]
-        self.assertIsNotNone(ramdisk.parameters.get('ramdisk'), None)
-        self.assertIsNotNone(ramdisk.parameters['ramdisk'].get('url'), None)
-        self.assertIsNone(ramdisk.parameters['ramdisk'].get('compression'), None)
+        self.assertIsNotNone(ramdisk.parameters.get('ramdisk'))
+        self.assertIsNotNone(ramdisk.parameters['ramdisk'].get('url'))
+        self.assertIsNone(ramdisk.parameters['ramdisk'].get('compression'))
         self.assertFalse(ramdisk.parameters['ramdisk'].get('install_overlay', True))
-        self.assertIsNotNone(modules.parameters.get('ramdisk', None))
-        self.assertIsNotNone(modules.parameters.get('nfsrootfs', None))
-        self.assertIsNotNone(nfs.parameters.get('nfsrootfs', None))
-        self.assertIsNotNone(overlay.parameters.get('nfsrootfs', None))
-        self.assertIsNotNone(overlay.parameters.get('ramdisk', None))
+        self.assertIsNotNone(modules.parameters.get('ramdisk'))
+        self.assertIsNotNone(modules.parameters.get('nfsrootfs'))
+        self.assertIsNotNone(nfs.parameters.get('nfsrootfs'))
+        self.assertIsNotNone(overlay.parameters.get('nfsrootfs'))
+        self.assertIsNotNone(overlay.parameters.get('ramdisk'))

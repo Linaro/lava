@@ -3,23 +3,33 @@ Database utility functions which use but are not actually models themselves
 Used to allow models.py to be shortened and easier to follow.
 """
 
-from __future__ import unicode_literals
-
 # pylint: disable=wrong-import-order
 
 import os
 import yaml
 import jinja2
+import json
 import logging
+from nose.tools import nottest
+
 from django.db.models import Q, Case, When, IntegerField, Sum
+from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
+
 from lava_scheduler_app.models import (
     Device,
+    DeviceType,
+    NotificationRecipient,
     TestJob,
-    validate_job,
-    validate_device,
     Worker
 )
+from lava_scheduler_app.schema import (
+    validate_submission,
+    SubmissionException,
+)
 from lava_results_app.dbutils import map_metadata
+from lava_results_app.models import Query
 
 # pylint: disable=too-many-branches,too-many-statements,too-many-locals
 
@@ -32,7 +42,7 @@ def match_vlan_interface(device, job_def):
     interfaces = []
     logger = logging.getLogger('lava-master')
     device_dict = device.load_configuration()
-    if not device_dict or device_dict.get('parameters', {}).get('interfaces', None) is None:
+    if not device_dict or device_dict.get('parameters', {}).get('interfaces') is None:
         return False
 
     for vlan_name in job_def['protocols']['lava-vland']:
@@ -55,6 +65,7 @@ def match_vlan_interface(device, job_def):
 
 
 # TODO: check the list of exception that can be raised
+@nottest
 def testjob_submission(job_definition, user, original_job=None):
     """
     Single submission frontend for YAML
@@ -65,6 +76,16 @@ def testjob_submission(job_definition, user, original_job=None):
         DeviceType.DoesNotExist, DevicesUnavailableException,
         ValueError
     """
+    json_data = True
+    try:
+        # accept JSON but store as YAML
+        json.loads(job_definition)
+    except json.decoder.JSONDecodeError:
+        json_data = False
+    if json_data:
+        # explicitly convert to YAML.
+        # JSON cannot have comments anyway.
+        job_definition = yaml.safe_dump(yaml.safe_load(job_definition))
 
     validate_job(job_definition)
     # returns a single job or a list (not a QuerySet) of job objects.
@@ -130,6 +151,34 @@ def device_type_summary(visible=None):
     return devices
 
 
+def active_device_types():
+    """
+    Filter the available device types to exclude
+    all device-types where ALL devices are in health RETIRED
+    without excluding device-types where only SOME devices are retired.
+
+    oneliner:
+{device.device_type for device in Device.objects.filter(~Q(health=Device.HEALTH_RETIRED))}.union( \
+{dt for dt in {device.device_type for device in Device.objects.filter(health=Device.HEALTH_RETIRED)} \
+if list(Device.objects.filter(Q(device_type=dt), ~Q(health=Device.HEALTH_RETIRED)))})
+
+    Returns a RestrictedQuerySet of DeviceType objects.
+    """
+    not_retired_devices = Device.objects.filter(
+        Q(device_type__display=True), ~Q(health=Device.HEALTH_RETIRED)).select_related('device_type')
+    retired_devices = Device.objects.filter(
+        Q(device_type__display=True), health=Device.HEALTH_RETIRED).select_related('device_type')
+    not_all_retired = set()  # set of device_type.names where some devices of that device_type are retired but *not* all.
+    for device in retired_devices:
+        # identify device_types which can be added back because not all devices of that type are retired.
+        if list(Device.objects.filter(Q(device_type=device.device_type), ~Q(health=Device.HEALTH_RETIRED))):
+            not_all_retired.add(device.device_type.name)
+    # join the two sets as a union.
+    candidates = {device.device_type.name for device in not_retired_devices}.union(not_all_retired)
+    device_types = DeviceType.objects.filter(name__in=candidates)
+    return device_types
+
+
 def load_devicetype_template(device_type_name, raw=False):
     """
     Loads the bare device-type template as a python dictionary object for
@@ -164,7 +213,9 @@ def invalid_template(dt):
     """
     d_template = bool(load_devicetype_template(dt.name))  # returns None on error ( == False)
     if not d_template:
-        queryset = Device.objects.filter(Q(device_type=dt), ~Q(health=Device.HEALTH_RETIRED))
+        queryset = list(Device.objects.filter(Q(device_type=dt), ~Q(health=Device.HEALTH_RETIRED)))
+        if not queryset:
+            return False
         extends = set([device.get_extends() for device in queryset])
         if not extends:
             return True
@@ -178,3 +229,70 @@ def invalid_template(dt):
     else:
         d_template = False  # template exists, invalid check is False
     return d_template
+
+
+def validate_job(data):
+    try:
+        yaml_data = yaml.safe_load(data)
+    except yaml.YAMLError as exc:
+        raise SubmissionException("Loading job submission failed: %s." % exc)
+
+    # validate against the submission schema.
+    validate_submission(yaml_data)  # raises SubmissionException if invalid.
+    validate_yaml(yaml_data)  # raises SubmissionException if invalid.
+
+
+def validate_yaml(yaml_data):
+    if "notify" in yaml_data:
+        if "recipients" in yaml_data["notify"]:
+            for recipient in yaml_data["notify"]["recipients"]:
+                if recipient["to"]["method"] == \
+                   NotificationRecipient.EMAIL_STR:
+                    if "email" not in recipient["to"] and \
+                       "user" not in recipient["to"]:
+                        raise SubmissionException("No valid user or email address specified.")
+                else:
+                    if "handle" not in recipient["to"] and \
+                       "user" not in recipient["to"]:
+                        raise SubmissionException("No valid user or IRC handle specified.")
+                if "user" in recipient["to"]:
+                    try:
+                        User.objects.get(username=recipient["to"]["user"])
+                    except User.DoesNotExist:
+                        raise SubmissionException("%r is not an existing user in LAVA." % recipient["to"]["user"])
+                elif "email" in recipient["to"]:
+                    try:
+                        validate_email(recipient["to"]["email"])
+                    except ValidationError:
+                        raise SubmissionException("%r is not a valid email address." % recipient["to"]["email"])
+
+        if "compare" in yaml_data["notify"] and \
+           "query" in yaml_data["notify"]["compare"]:
+            query_yaml_data = yaml_data["notify"]["compare"]["query"]
+            if "username" in query_yaml_data:
+                try:
+                    query = Query.objects.get(
+                        owner__username=query_yaml_data["username"],
+                        name=query_yaml_data["name"])
+                    if query.content_type.model_class() != TestJob:
+                        raise SubmissionException(
+                            "Only TestJob queries allowed.")
+                except Query.DoesNotExist:
+                    raise SubmissionException(
+                        "Query ~%s/%s does not exist" % (
+                            query_yaml_data["username"],
+                            query_yaml_data["name"]))
+            else:  # Custom query.
+                if query_yaml_data["entity"] != "testjob":
+                    raise SubmissionException(
+                        "Only TestJob queries allowed.")
+                try:
+                    conditions = None
+                    if "conditions" in query_yaml_data:
+                        conditions = query_yaml_data["conditions"]
+                    Query.validate_custom_query(
+                        query_yaml_data["entity"],
+                        conditions
+                    )
+                except Exception as e:
+                    raise SubmissionException(e)

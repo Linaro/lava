@@ -38,7 +38,7 @@ class ConnectAdb(Action):
     description = "connect via adb shell to the device"
 
     def __init__(self):
-        super(ConnectAdb, self).__init__()
+        super().__init__()
         self.session_class = ShellSession
         self.shell_class = ShellCommand
 
@@ -47,10 +47,10 @@ class ConnectAdb(Action):
             return
         if 'adb_serial_number' not in self.job.device:
             self.errors = "device adb serial number missing"
-        super(ConnectAdb, self).validate()
+        super().validate()
         which('adb')
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         connection = self.get_namespace_data(action='shared', label='shared',
                                              key='connection', deepcopy=False)
         if connection:
@@ -69,16 +69,17 @@ class ConnectAdb(Action):
         cmd = "adb -s {0} shell".format(adb_serial_number)
         self.logger.info("%s Connecting to device using '%s'", self.name, cmd)
         # ShellCommand executes the connection command
-        shell = self.shell_class("%s\n" % cmd, self.timeout,
-                                 logger=self.logger)
+        shell = self.shell_class(
+            "%s\n" % cmd, self.timeout, logger=self.logger,
+            window=self.job.device.get_constant('spawn_maxread'))
         if shell.exitstatus:
-            raise JobError("%s command exited %d: %s" % (cmd,
-                                                         shell.exitstatus,
-                                                         shell.readlines()))
+            raise JobError(
+                "%s command exited %d: %s" % (
+                    cmd, shell.exitstatus, shell.readlines()))
         # ShellSession monitors the pexpect
         connection = self.session_class(self.job, shell)
         connection.connected = True
-        connection = super(ConnectAdb, self).run(connection, args)
+        connection = super().run(connection, max_end_time)
         connection.prompt_str = self.parameters['prompts']
         self.set_namespace_data(action='shared', label='shared',
                                 key='connection', value=connection)

@@ -1,0 +1,9 @@
+{% extends 'base-uboot.jinja2' %}
+
+{% set console_device = console_device|default('ttyS2') %}
+{% set baud_rate = baud_rate|default(115200) %}
+{% set booti_kernel_addr = booti_kernel_addr|default('0x02000000') %}
+{% set booti_ramdisk_addr = booti_ramdisk_addr|default('0x04000000') %}
+{% set booti_dtb_addr = booti_dtb_addr|default('0x01f00000') %}
+{% set uboot_mkimage_arch = 'arm64' %}
+{% set base_high_limits = False %}

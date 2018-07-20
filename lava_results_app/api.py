@@ -26,8 +26,6 @@ from linaro_django_xmlrpc.models import ExposedAPI
 from django.db.models.fields import FieldDoesNotExist
 
 from lava_results_app.dbutils import (
-    export_testcase,
-    testcase_export_fields,
     export_testsuite,
     testsuite_export_fields
 )
@@ -38,10 +36,13 @@ from lava_results_app.models import (
     QueryUpdatedError,
     TestCase,
     TestSuite,
-    TestData,
     InvalidContentTypeError,
 )
-from lava_results_app.utils import get_testcases_with_limit
+from lava_results_app.utils import (
+    export_testcase,
+    get_testcases_with_limit,
+    testcase_export_fields,
+)
 from lava_scheduler_app.models import TestJob
 
 
@@ -210,15 +211,15 @@ class ResultsAPI(ExposedAPI):
 
         try:
             query.refresh_view()
-        except QueryUpdatedError as e:
+        except QueryUpdatedError:
             raise xmlrpc.client.Fault(
                 400, "Query with name %s owned by user %s was recently refreshed." % (query_name, username))
-        except RefreshLiveQueryError as e:
+        except RefreshLiveQueryError:
             raise xmlrpc.client.Fault(
                 400, "Query with name %s owned by user %s cannot be refreshed since it's a live query." % (query_name, username))
-        except Exception as e:
+        except Exception as exc:
             raise xmlrpc.client.Fault(
-                401, "Query refresh failed. Please contact system administrator: %s" % str(e))
+                401, "Query refresh failed. Please contact system administrator: %s" % str(exc))
 
     def refresh_all_queries(self):
         """
@@ -248,12 +249,12 @@ class ResultsAPI(ExposedAPI):
         for query in Query.objects.all().filter(is_live=False):
             try:
                 query.refresh_view()
-            except QueryUpdatedError as e:
+            except QueryUpdatedError:
                 raise xmlrpc.client.Fault(
-                    400, "Query with name %s owned by user %s was recently refreshed." % (query_name, username))
-            except Exception as e:
+                    400, "Query with name %s owned by user %s was recently refreshed." % (query.name, self.user.username))
+            except Exception as exc:
                 raise xmlrpc.client.Fault(
-                    401, "Refresh operation for query with name %s owned by user %s failed. Please contact system administrator. Error: %s" % (query.name, query.owner.username, str(e)))
+                    401, "Refresh operation for query with name %s owned by user %s failed. Please contact system administrator. Error: %s" % (query.name, query.owner.username, str(exc)))
 
     def get_testjob_results_yaml(self, job_id):
         """
@@ -373,7 +374,7 @@ class ResultsAPI(ExposedAPI):
             if not job.can_view(self.user):
                 raise xmlrpc.client.Fault(
                     401, "Permission denied for user to job %s" % job_id)
-            output = io.BytesIO()
+            output = io.StringIO()
             writer = csv.DictWriter(
                 output,
                 quoting=csv.QUOTE_ALL,
@@ -420,7 +421,7 @@ class ResultsAPI(ExposedAPI):
             if not job.can_view(self.user):
                 raise xmlrpc.client.Fault(
                     401, "Permission denied for user to job %s" % job_id)
-            output = io.BytesIO()
+            output = io.StringIO()
             writer = csv.DictWriter(
                 output,
                 quoting=csv.QUOTE_ALL,
@@ -562,7 +563,7 @@ class ResultsAPI(ExposedAPI):
             if not job.can_view(self.user):
                 raise xmlrpc.client.Fault(
                     401, "Permission denied for user to job %s" % job_id)
-            output = io.BytesIO()
+            output = io.StringIO()
             writer = csv.DictWriter(
                 output,
                 quoting=csv.QUOTE_ALL,
@@ -709,7 +710,7 @@ class ResultsAPI(ExposedAPI):
                 raise xmlrpc.client.Fault(
                     401, "Permission denied for user to job %s" % job_id)
 
-            output = io.BytesIO()
+            output = io.StringIO()
             writer = csv.DictWriter(
                 output,
                 quoting=csv.QUOTE_ALL,

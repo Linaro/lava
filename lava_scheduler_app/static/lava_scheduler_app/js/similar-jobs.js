@@ -9,9 +9,12 @@ $(document).ready(function () {
                 "' name='table' >" +
                 "</select></div>" +
                 "<div class='col-xs-4'>" +
-                "<input type='text' id='field_" +
+                "<div class='typeahead__container'>" +
+                "<div class='typeahead__field'>" +
+                "<div class='typeahead__query'><input type='search'" +
+                " placeholder='Search' autocomplete='off' id='field_" +
                 options_count + "' name='field' />" +
-                "</div>" +
+                "</div></div></div></div>" +
                 "<div class='col-xs-4'>" +
                 "<a class='glyphicon glyphicon-remove' href='#' id='remove_" +
                 options_count + "' class='btn btn-danger'>" +
@@ -41,15 +44,18 @@ $(document).ready(function () {
     table_changed = function(event) {
         // Table field change callback.
         table_obj = event.data.table_obj;
-        field_obj = table_obj.parent().next().children().last();
+        var elem_id = table_obj.attr("id").split("_")[1];
+        field_obj = $("#field_" + elem_id);
         field_obj.val("");
-        field_obj.autocomplete({
-            source: Object.keys(condition_choices[
-                table_obj.val()]["fields"]),
-            minLength: 0,
-	    autoFocus: true,
-	    appendTo: table_obj.parent()
-        });
+        if (($("#similar_jobs_modal").data('bs.modal') || {}).isShown) {
+            field_obj.typeahead({
+                source: {
+                    data: Object.keys(condition_choices[table_obj.val()]["fields"])
+                },
+                order: "asc",
+                minLength: 1,
+            });
+        }
     }
 
     add_option_row();

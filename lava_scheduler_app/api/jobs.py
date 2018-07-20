@@ -20,6 +20,7 @@ import os
 import xmlrpc.client
 from linaro_django_xmlrpc.models import ExposedV2API
 from lava_scheduler_app.api import SchedulerAPI
+from lava_scheduler_app.logutils import read_logs
 from lava_scheduler_app.models import TestJob
 
 
@@ -196,11 +197,11 @@ class SchedulerJobsAPI(ExposedV2API):
 
         return ret
 
-    def logs(self, job_id, line=0):
+    def logs(self, job_id, start=0, end=None):
         """
         Name
         ----
-        `scheduler.jobs.logs` (`job_id`, `line=0`)
+        `scheduler.jobs.logs` (`job_id`, `start=0`, `end=None`)
 
         Description
         -----------
@@ -210,8 +211,10 @@ class SchedulerJobsAPI(ExposedV2API):
         ---------
         `job_id`: str
           Job id
-        `line`: int
+        `start`: int
           Show only after the given line
+        `end`: int
+          Do not return after the fiven line
 
         Return value
         ------------
@@ -232,12 +235,8 @@ class SchedulerJobsAPI(ExposedV2API):
         job_finished = (job.state == TestJob.STATE_FINISHED)
 
         try:
-            with open(os.path.join(job.output_dir, "output.yaml"), "r") as f_in:
-                count = 0
-                for _ in range(line):
-                    count += len(next(f_in))
-                f_in.seek(count)
-                return (job_finished, xmlrpc.client.Binary(f_in.read().encode("utf-8")))
+            data = read_logs(job.output_dir, start, end)
+            return (job_finished, xmlrpc.client.Binary(data.encode("utf-8")))
         except (IOError, StopIteration):
             return (job_finished, xmlrpc.client.Binary("[]".encode("utf-8")))
 

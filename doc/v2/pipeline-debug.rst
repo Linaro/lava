@@ -65,14 +65,10 @@ All log files use ``logrotate``, so the information you need may be in a
 * **slave** - ``/var/log/lava-dispatcher/lava-slave.log``.
 
 * **test jobs** - ``/var/lib/lava-server/default/media/job-output/``
-  individual files are in a directory named ``job-$ID``, e.g. ``job-1234``.
-  Individual log files from each action in the pipeline are kept in the
-  ``pipeline`` directory with directories for each top level of the pipeline.
-  Other files include the validation output ``description.yaml`` and the full
-  log file ``output.txt``. Unlike other logs, ``output.txt`` can include escape
-  characters and other elements which can confuse some text editors which try
-  to identify the encoding of the file when no encoding was used when the file
-  was written.
+  individual files are in a directory named after the start time of the
+  corresponding job ``<year>/<month>/<day/$ID``, e.g. ``2018/08/10/1234``.
+  The directory includes the validation output ``description.yaml`` and the
+  full log file ``output.yaml``.
 
 .. _debugging_cli:
 

@@ -158,7 +158,7 @@ class AutoLoginAction(Action):
         super().validate()
         # Skip auto login if the configuration is not found
         self.method = self.parameters['method']
-        params = self.parameters.get('auto_login', None)
+        params = self.parameters.get('auto_login')
         if params:
             if not isinstance(params, dict):
                 self.errors = "'auto_login' should be a dictionary"
@@ -183,7 +183,7 @@ class AutoLoginAction(Action):
                 if not login_commands:
                     self.errors = "'login_commands' must not be empty"
 
-        prompts = self.parameters.get('prompts', None)
+        prompts = self.parameters.get('prompts')
         if prompts is None:
             self.errors = "'prompts' is mandatory for AutoLoginAction"
 
@@ -234,7 +234,7 @@ class AutoLoginAction(Action):
             self.results = {'fail': parsed}
             self.logger.warning("Kernel warnings or errors detected.")
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         # Prompts commonly include # - when logging such strings,
         # use lazy logging or the string will not be quoted correctly.
         if self.booting:
@@ -243,7 +243,8 @@ class AutoLoginAction(Action):
                     'kernel-start-message', self.job.device.get_constant('kernel-start-message'))
             if kernel_start_message:
                 connection.prompt_str = [kernel_start_message]
-            if self.params and self.params.get('boot_message', None):
+
+            if self.params and self.params.get('boot_message'):
                 self.logger.warning("boot_message is being deprecated in favour of kernel-start-message in constants")
                 connection.prompt_str = [self.params.get('boot_message')]
 
@@ -252,18 +253,19 @@ class AutoLoginAction(Action):
                 if isinstance(connection.prompt_str, str):
                     connection.prompt_str = [connection.prompt_str]
                 connection.prompt_str = connection.prompt_str + error_messages
-            res = self.wait(connection)
-            if res != 0:
-                raise InfrastructureError('matched a bootloader error message: %s' % connection.prompt_str[res])
+            if kernel_start_message:
+                res = self.wait(connection)
+                if res != 0:
+                    raise InfrastructureError('matched a bootloader error message: %s' % connection.prompt_str[res])
 
         def check_prompt_characters(chk_prompt):
             if not any([True for c in DISTINCTIVE_PROMPT_CHARACTERS if c in chk_prompt]):
                 self.logger.warning(self.check_prompt_characters_warning, chk_prompt)
 
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
         if not connection:
             return connection
-        prompts = self.parameters.get('prompts', None)
+        prompts = self.parameters.get('prompts')
         for prompt in prompts:
             check_prompt_characters(prompt)
 
@@ -280,7 +282,7 @@ class AutoLoginAction(Action):
         self.logger.debug("Using line separator: #%r#", connection.raw_connection.linesep)
 
         # Skip auto login if the configuration is not found
-        params = self.parameters.get('auto_login', None)
+        params = self.parameters.get('auto_login')
         if not params:
             self.logger.debug("No login prompt set.")
             self.force_prompt = True
@@ -343,17 +345,11 @@ class AutoLoginAction(Action):
                     self.errors = LOGIN_TIMED_OUT_MSG
                     raise JobError(LOGIN_TIMED_OUT_MSG)
 
-            login_commands = params.get('login_commands', None)
+            login_commands = params.get('login_commands')
             if login_commands is not None:
                 self.logger.debug("Running login commands")
                 for command in login_commands:
                     connection.sendline(command)
-
-        connection.prompt_str.extend([self.job.device.get_constant(
-            'default-shell-prompt')])
-        self.logger.debug("Setting shell prompt(s) to %s" % connection.prompt_str)  # pylint: disable=logging-not-lazy
-        connection.sendline('export PS1="%s"' % self.job.device.get_constant(
-            'default-shell-prompt'), delay=self.character_delay)
 
         return connection
 
@@ -409,7 +405,7 @@ class BootloaderCommandOverlay(Action):
             else:
                 self.errors = "lava_mac is not a valid mac address"
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         """
         Read data from the download action and replace in context
         Use common data for all values passed into the substitutions so that
@@ -417,7 +413,7 @@ class BootloaderCommandOverlay(Action):
         """
         # Multiple deployments would overwrite the value if parsed in the validate step.
         # FIXME: implement isolation for repeated steps.
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
         ip_addr = dispatcher_ip(self.job.parameters['dispatcher'])
 
         self.ram_disk = self.get_namespace_data(action='compress-ramdisk', label='file', key='ramdisk')
@@ -455,7 +451,7 @@ class BootloaderCommandOverlay(Action):
                     and not self.get_namespace_data(action='download-action', label='file', key='ramdisk') \
                     and not self.get_namespace_data(action='download-action', label='file', key='initrd'):
                 ramdisk_addr = '-'
-            add_header = self.job.device['actions']['deploy']['parameters'].get('add_header', None)
+            add_header = self.job.device['actions']['deploy']['parameters'].get('add_header')
             if self.method == 'u-boot' and not add_header == "u-boot":
                 self.logger.debug("No u-boot header, not passing ramdisk to bootX cmd")
                 ramdisk_addr = '-'
@@ -566,8 +562,8 @@ class OverlayUnpack(Action):
         if 'unpack_command' not in self.parameters['transfer_overlay']:
             self.errors = "Unable to identify unpack command for overlay."
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         if not connection:
             raise LAVABug("Cannot transfer overlay, no connection available.")
         ip_addr = dispatcher_ip(self.job.parameters['dispatcher'])
@@ -621,6 +617,7 @@ class BootloaderInterruptAction(Action):
         self.bootloader_prompt = self.params['bootloader_prompt']
         self.interrupt_prompt = self.params.get('interrupt_prompt', self.job.device.get_constant('interrupt-prompt', prefix=self.method))
         self.needs_interrupt = self.params.get('needs_interrupt', True)
+        self.interrupt_newline = self.job.device.get_constant('interrupt-newline', prefix=self.method, missing_ok=True, missing_default=True)
         # interrupt_char can actually be a sequence of ASCII characters - sendline does not care.
         self.interrupt_char = None
         if self.method != 'ipxe':
@@ -629,10 +626,10 @@ class BootloaderInterruptAction(Action):
         # vendor u-boot builds may require one or more control characters
         self.interrupt_control_chars = self.params.get('interrupt_ctrl_list', self.job.device.get_constant('interrupt_ctrl_list', prefix=self.method, missing_ok=True))
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         if not connection:
             raise LAVABug("%s started without a connection already in use" % self.name)
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
         if self.needs_interrupt:
             connection.prompt_str = self.interrupt_prompt
             self.wait(connection)
@@ -640,7 +637,10 @@ class BootloaderInterruptAction(Action):
                 for char in self.interrupt_control_chars:
                     connection.sendcontrol(char)
             else:
-                connection.sendline(self.interrupt_char)
+                if self.interrupt_newline:
+                    connection.sendline(self.interrupt_char)
+                else:
+                    connection.send(self.interrupt_char)
         else:
             self.logger.info("Not interrupting bootloader, waiting for bootloader prompt")
             connection.prompt_str = self.bootloader_prompt
@@ -674,10 +674,10 @@ class BootloaderCommandsAction(Action):
     def line_separator(self):
         return LINE_SEPARATOR
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         if not connection:
             self.errors = "%s started without a connection already in use" % self.name
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
         connection.raw_connection.linesep = self.line_separator()
         connection.prompt_str = [self.params['bootloader_prompt']]
         at_bootloader_prompt = self.get_namespace_data(action='interrupt', label='interrupt', key='at_bootloader_prompt')
@@ -714,19 +714,15 @@ class AdbOverlayUnpack(Action):
     summary = "unpack the overlay on the remote device"
     description = "unpack the overlay over adb"
 
-    def __init__(self):
-        super(AdbOverlayUnpack, self).__init__()
-
     def validate(self):
-        super(AdbOverlayUnpack, self).validate()
+        super().validate()
         if 'adb_serial_number' not in self.job.device:
             self.errors = "device adb serial number missing"
             if self.job.device['adb_serial_number'] == '0000000000':
                 self.errors = "device adb serial number unset"
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super(AdbOverlayUnpack, self).run(connection,
-                                                       max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         if not connection:
             raise LAVABug("Cannot transfer overlay, no connection available.")
         overlay_file = self.get_namespace_data(action='compress-overlay',

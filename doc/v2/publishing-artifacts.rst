@@ -31,8 +31,8 @@ from a shell script:
 
 
 .. note:: In order to include a **secrets** dictionary, a job definition
-          shouldn't be public. Hence a **visibility** set to *personal* or
-          *group* (see :ref:`explain_first_job`).
+          shouldn't be public. Hence a :term:`visibility` set to
+          *personal* or *group* (see :ref:`explain_first_job`).
 
 Thanks to these secrets, the test writer can push files to an external server
 that he does control.

@@ -1,0 +1,8 @@
+{% extends 'cc3220SF.jinja2' %}
+
+{% set board_id = '01234567' %}
+{% set connection_command = 'telnet localhost 2004' %}
+
+{% set hard_reset_command = 'webrelay --host 192.168.0.10 --port 1234 --relay 7 reset' %}
+{% set power_off_command = 'webrelay --host 192.168.0.10 --port 1234 --relay 7 off' %}
+{% set power_on_command = 'webrelay --host 192.168.0.10 --port 1234 --relay 7 on' %}

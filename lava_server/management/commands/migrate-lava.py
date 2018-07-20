@@ -23,9 +23,6 @@
 #
 # https://github.com/django/django/blob/1.8.6/django/core/management/commands/migrate.py
 
-
-from __future__ import unicode_literals
-
 import itertools
 import time
 import traceback

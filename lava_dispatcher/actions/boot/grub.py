@@ -213,8 +213,8 @@ class GrubMainAction(BootAction):
                 self.internal_pipeline.add_action(InstallerWait())
                 self.internal_pipeline.add_action(PowerOff())
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection
 
@@ -243,7 +243,7 @@ class GrubMenuSelector(UefiMenuSelector):  # pylint: disable=too-many-instance-a
         self.commands = self.params['menu_options']
         super().validate()
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         # Needs to get the interrupt_prompt from the bootloader device config
         interrupt_prompt = self.params['parameters'].get(
             'interrupt_prompt', self.job.device.get_constant('interrupt-prompt', prefix='grub'))
@@ -251,7 +251,7 @@ class GrubMenuSelector(UefiMenuSelector):  # pylint: disable=too-many-instance-a
         connection.prompt_str = interrupt_prompt
         # override base class behaviour to interact with grub.
         self.boot_message = None
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
         return connection
 
 
@@ -273,8 +273,8 @@ class InstallerWait(Action):
         if "boot_finished" not in self.parameters:
             self.errors = "Missing boot_finished string"
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         wait_string = self.parameters['boot_finished']
         msg = wait_string if isinstance(wait_string, str) else ', '.join(wait_string)
         self.logger.debug("Not expecting a shell, so waiting for boot_finished: %s", msg)

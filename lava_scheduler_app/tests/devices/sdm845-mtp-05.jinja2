@@ -1,0 +1,8 @@
+{% extends 'sdm845-mtp.jinja2' %}
+{% set power_on_command = 'dut-ssh-ctrl.py sdm845-mtp-5 power_on' %}
+{% set power_off_command = 'dut-ssh-ctrl.py sdm845-mtp-5 power_off' %}
+{% set hard_reset_command = 'dut-ssh-ctrl.py sdm845-mtp-5 hard_reset' %}
+{% set connection_command = 'dut-ssh-ctrl.py sdm845-mtp-5 console' %}
+{% set fastboot_serial_number = '5c302cef' %}
+{% set device_info = [{'board_id': '5c302cef'}] %}
+{% set adb_serial_number = '5c302cef' %}

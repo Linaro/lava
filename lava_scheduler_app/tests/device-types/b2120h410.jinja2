@@ -1,8 +1,8 @@
+{# set device_type = "b2120h410" #}
 {% extends 'base-uboot.jinja2' %}
 
 {% set console_device = console_device|default('ttyUSB0') %}
 {% set baud_rate = baud_rate|default(115200) %}
-{% set device_type = "b2120h410" %}
 {% if extra_kernel_args %}
 {% set extra_kernel_args = "consoleblank=0 mem=1071644672@0x40000000 vmalloc=256m video=HDMI-A-1:1920x1080 snd-usb-audio.index=-2 earlyprintk consoleblank=0 " + extra_kernel_args %}
 {% else %}

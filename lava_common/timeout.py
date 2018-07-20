@@ -18,7 +18,6 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-
 import datetime
 import time
 import signal
@@ -71,17 +70,15 @@ class Timeout(object):
         raise self.exception("%s timed out after %s seconds" % (self.name, duration))
 
     @contextmanager
-    def __call__(self, action_max_end_time=None):
+    def __call__(self, parent, action_max_end_time):
         self.start = time.time()
-        if action_max_end_time is None:
-            # action_max_end_time is None when cleaning the pipeline after a
-            # timeout.
-            # In this case, the job timeout is not taken into account.
-            max_end_time = self.start + self.duration
-        else:
-            max_end_time = min(action_max_end_time, self.start + self.duration)
 
-        duration = int(max_end_time - self.start)
+        max_end_time = self.start + self.duration
+        if action_max_end_time is not None:
+            # action_max_end_time is None when called by the job class directly
+            max_end_time = min(action_max_end_time, max_end_time)
+
+        duration = round(max_end_time - self.start)
         if duration <= 0:
             # If duration is lower than 0, then the timeout should be raised now.
             # Calling signal.alarm in this case will only deactivate the alarm
@@ -96,7 +93,21 @@ class Timeout(object):
 
         try:
             yield max_end_time
-        finally:
-            # clear the timeout alarm, the action has returned
+
+            # Restore the parent handler and timeout
+            # This will be None when called by Job class
+            if parent is None:
+                signal.alarm(0)
+            else:
+                signal.signal(signal.SIGALRM, parent.timeout._timed_out)  # pylint: disable=protected-access
+                duration = round(action_max_end_time - time.time())
+                if duration <= 0:
+                    signal.alarm(0)
+                    parent.timeout._timed_out(None, None)  # pylint: disable=protected-access
+                signal.alarm(duration)
+        except Exception:
+            # clear the timeout alarm, the action has returned an error
             signal.alarm(0)
+            raise
+        finally:
             self.elapsed_time = time.time() - self.start

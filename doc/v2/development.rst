@@ -198,9 +198,12 @@ to develop. There are a lot of examples in the current unit tests.
    :ref:`we can help with that <getting_support>` by putting files onto
    images.validation.linaro.org.
 
-#. Create a device configuration using the download link of a real
-   device dictionary which can run the testjob and save this file to
-   ``lava_dispatcher/devices``.
+#. Use the updated ``Factory`` support to generate the device
+   configuration directly from the ``lava_scheduler_app`` templates.
+
+   If a suitable device dictionary does not already exist in
+   ``lava_scheduler_app/tests/devices``, a new one can be added to
+   support the unit tests.
 
 #. Add a function to a suitable Factory class to use the device config
    file to create a device and use the parser to create a Job instance
@@ -332,7 +335,7 @@ service to be restarted.
 
     super().validate()
 
-    connection = super().run(connection, max_end_time, args)
+    connection = super().run(connection, max_end_time)
 
 * When adding or modifying ``run`` functions in subclasses of
   ``Action``, **always** ensure that each return point out of the
@@ -880,6 +883,24 @@ the pylint output, some warnings are recommended to be disabled::
 .. note:: Docstrings should still be added wherever a docstring would
    be useful.
 
+Many developers use a ``~/.pylintrc`` file which already includes a
+sample list of warnings to disable. Other warnings frequently disabled
+in ``~/.pylintrc`` include:
+
+.. code-block:: none
+
+        too-many-locals,
+        too-many-ancestors,
+        too-many-arguments,
+        too-many-instance-attributes,
+        too-many-nested-blocks,
+        too-many-return-statements,
+        too-many-branches,
+        too-many-statements,
+        too-few-public-methods,
+        wrong-import-order,
+        ungrouped-imports,
+
 ``pylint`` also supports local disabling of warnings and there are many
 examples of:
 
@@ -889,7 +910,8 @@ examples of:
 
 There is a ``pylint-django`` plugin available in unstable and testing
 and whilst it improves the pylint output for the ``lava-server``
-codebase, it still has a high level of false indications.
+codebase, it still has a high level of false indications, particularly
+when extending an existing model.
 
 pep8
 ****
@@ -903,6 +925,8 @@ recommended::
 
   $ apt install pep8
 
+.. index:: unit tests
+
 .. _unit_tests:
 
 Unit-tests
@@ -914,7 +938,10 @@ any. Most of the LAVA components such as ``lava-server``,
 ``lava-dispatcher``, :ref:`lava-tool <lava_tool>` have unit tests.
 
 Extra dependencies are required to run the tests. On Debian based
-distributions, you can install lava-dev.
+distributions, you need to install ``lava-dev`` and
+``python3-django-testscenarios``.
+
+.. seealso:: :ref:`unit_test_dependencies`
 
 To run the tests, use the ci-run / ci-build scripts::
 
@@ -925,9 +952,10 @@ To run the tests, use the ci-run / ci-build scripts::
 .. _`PEP 008`: https://www.python.org/dev/peps/pep-0008/
 .. _`Guido's style guide`: https://www.python.org/doc/essays/styleguide.html
 
-.. seealso:: :ref:`developer_preparations` and
-   :ref:`testing_pipeline_code` for examples of how to run individual
-   unit tests or all unit tests within a class or module.
+.. seealso:: :ref:`developer_preparations`,
+   :ref:`unit_test_dependencies` and :ref:`testing_pipeline_code` for
+   examples of how to run individual unit tests or all unit tests
+   within a class or module.
 
 LAVA database model visualization
 *********************************

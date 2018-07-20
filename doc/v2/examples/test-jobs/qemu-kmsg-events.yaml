@@ -1,0 +1,57 @@
+device_type: qemu
+job_name: QEMU using kernel messages
+
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 5
+  connection:
+    minutes: 2
+priority: medium
+visibility: public
+
+context:
+  arch: amd64
+
+metadata:
+  docs-source: kmsg-events
+  docs-filename: qemu-kmsg-events.yaml
+
+actions:
+- deploy:
+    timeout:
+      minutes: 5
+    to: tmpfs
+    images:
+      rootfs:
+        image_arg: -drive format=raw,file={rootfs}
+        url: https://images.validation.linaro.org/kvm/standard/stretch-2.img.gz
+        compression: gz
+    os: debian
+
+- boot:
+    timeout:
+      minutes: 2
+    method: qemu
+    media: tmpfs
+    prompts: ["root@debian:"]
+    auto_login:
+      login_prompt: "login:"
+      username: root
+
+- test:
+    timeout:
+      minutes: 5
+    definitions:
+    # this test definition will use /dev/kmsg
+    - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+      from: git
+      lava-signal: kmsg
+      path: lava-test-shell/smoke-tests-basic.yaml
+      name: smoke-tests
+    # this test definition will use stdout
+    - repository: https://git.linaro.org/lava-team/lava-functional-tests.git
+      from: git
+      path: lava-test-shell/single-node/singlenode03.yaml
+      name: singlenode-advanced

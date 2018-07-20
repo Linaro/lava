@@ -21,6 +21,7 @@
 import os
 from lava_common.constants import SYS_CLASS_KVM
 from lava_common.exceptions import JobError
+from lava_common.utils import debian_package_arch, debian_package_version
 from lava_dispatcher.action import (
     Pipeline,
     Action,
@@ -36,7 +37,6 @@ from lava_dispatcher.shell import (
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.strings import substitute
 from lava_dispatcher.utils.network import dispatcher_ip
-from lava_dispatcher.utils.filesystem import debian_package_version, debian_package_arch
 from lava_dispatcher.actions.boot import AutoLoginAction, OverlayUnpack
 
 # pylint: disable=too-many-instance-attributes,too-many-branches,too-many-statements
@@ -196,7 +196,7 @@ class CallQemuAction(Action):
             if not os.path.exists(SYS_CLASS_KVM):
                 self.errors = "Device configuration contains -enable-kvm option but kvm module is not enabled."
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         """
         CommandRunner expects a pexpect.spawn connection which is the return value
         of target.device.power_on executed by boot in the old dispatcher.
@@ -211,7 +211,7 @@ class CallQemuAction(Action):
         self.results = self.qemu_data
         guest = self.get_namespace_data(action='apply-overlay-guest', label='guest', key='filename')
         # check for NFS
-        if 'qemu-nfs' in self.methods and self.parameters.get('media', None) == 'nfs':
+        if 'qemu-nfs' in self.methods and self.parameters.get('media') == 'nfs':
             self.logger.debug("Adding NFS arguments to kernel command line.")
             root_dir = self.get_namespace_data(action='extract-rootfs', label='file', key='nfsroot')
             self.substitutions["{NFSROOTFS}"] = root_dir
@@ -251,7 +251,7 @@ class CallQemuAction(Action):
         self.logger.debug("started a shell command")
 
         shell_connection = ShellSession(self.job, shell)
-        shell_connection = super().run(shell_connection, max_end_time, args)
+        shell_connection = super().run(shell_connection, max_end_time)
 
         self.set_namespace_data(action='shared', label='shared', key='connection', value=shell_connection)
         return shell_connection

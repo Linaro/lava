@@ -1,0 +1,63 @@
+- class: actions.deploy.fastboot.FastbootAction
+  name: fastboot-deploy
+  pipeline:
+  - class: actions.deploy.overlay.OverlayAction
+    name: lava-overlay
+    pipeline:
+    - {class: actions.deploy.overlay.SshAuthorize, name: ssh-authorize}
+    - {class: actions.deploy.overlay.VlandOverlayAction, name: lava-vland-overlay}
+    - {class: actions.deploy.overlay.MultinodeOverlayAction, name: lava-multinode-overlay}
+    - class: actions.deploy.testdef.TestDefinitionAction
+      name: test-definition
+      pipeline:
+      - {class: actions.deploy.testdef.GitRepoAction, name: git-repo-action}
+      - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
+      - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
+      - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
+    - {class: actions.deploy.overlay.CompressOverlay, name: compress-overlay}
+    - {class: actions.deploy.overlay.PersistentNFSOverlay, name: persistent-nfs-overlay}
+  - {class: connections.serial.ConnectDevice, name: connect-device}
+  - {class: power.PrePower, name: pre-power-command}
+  - class: power.ResetDevice
+    name: reset-device
+    pipeline:
+    - {class: power.PDUReboot, name: pdu-reboot}
+  - class: actions.deploy.download.DownloaderAction
+    name: download-retry
+    pipeline:
+    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
+  - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
+  - class: actions.deploy.download.DownloaderAction
+    name: download-retry
+    pipeline:
+    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
+  - {class: actions.deploy.apply_overlay.ApplyOverlaySparseImage, name: apply-overlay-sparse-image}
+  - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
+  - class: actions.deploy.fastboot.FastbootFlashOrderAction
+    name: fastboot-flash-order-action
+    pipeline:
+    - {class: power.ReadFeedback, name: read-feedback}
+    - {class: actions.deploy.fastboot.FastbootFlashAction, name: fastboot-flash-action}
+    - {class: actions.deploy.fastboot.FastbootFlashAction, name: fastboot-flash-action}
+- class: actions.boot.fastboot.BootFastbootAction
+  name: fastboot-boot
+  pipeline:
+  - {class: connections.serial.ConnectDevice, name: connect-device}
+  - class: power.ResetDevice
+    name: reset-device
+    pipeline:
+    - {class: power.PDUReboot, name: pdu-reboot}
+  - {class: actions.boot.fastboot.FastbootBootAction, name: boot-fastboot}
+  - {class: power.PreOs, name: pre-os-command}
+  - {class: actions.boot.AutoLoginAction, name: auto-login-action}
+  - {class: shell.ExpectShellSession, name: expect-shell-connection}
+  - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
+- class: actions.test.shell.TestShellRetry
+  name: lava-test-retry
+  pipeline:
+  - {class: actions.test.shell.TestShellAction, name: lava-test-shell}
+- class: power.FinalizeAction
+  name: finalize
+  pipeline:
+  - {class: power.PowerOff, name: power-off}
+  - {class: power.ReadFeedback, name: read-feedback}

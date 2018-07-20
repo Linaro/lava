@@ -119,9 +119,9 @@ class TestMultiNodeOverlay(StdoutTestCase):  # pylint: disable=too-many-public-m
         self.assertIn(MultinodeProtocol.name, deploy_server.parameters.keys())
         self.assertIn(VlandProtocol.name, deploy_server.parameters.keys())
         self.assertEqual(['common'], get_test_action_namespaces(self.server_job.parameters))
-        namespace = self.server_job.parameters.get('namespace', None)
+        namespace = self.server_job.parameters.get('namespace')
         self.assertIsNone(namespace)
-        namespace = self.client_job.parameters.get('namespace', None)
+        namespace = self.client_job.parameters.get('namespace')
         self.assertIsNone(namespace)
         deploy_client = [action for action in self.client_job.pipeline.actions if action.name == 'tftp-deploy'][0]
         self.assertIn(MultinodeProtocol.name, deploy_client.parameters.keys())
@@ -171,6 +171,6 @@ class TestShellResults(StdoutTestCase):   # pylint: disable=too-many-public-meth
             super().__init__()
             self.count = 1
 
-        def run(self, connection, max_end_time, args=None):
+        def run(self, connection, max_end_time):
             self.count += 1
             raise JobError("fake error")

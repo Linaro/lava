@@ -25,6 +25,7 @@
 Simple shell-sourcable configuration file class
 """
 
+import os
 import re
 
 
@@ -57,3 +58,13 @@ class ConfigFile(object):
                 match = cls._pattern.match(line)
                 if match:
                     yield match.group("key"), match.group("value")
+
+    @classmethod
+    def serialize(cls, pathname, config):
+        """
+        Store all the values from config in the file from pathname
+        """
+        os.makedirs(os.path.dirname(pathname), exist_ok=True)
+        with open(pathname, "w+") as handle:
+            for key in config:
+                handle.write('%s="%s"\n' % (key, config[key]))

@@ -25,7 +25,7 @@
 Obtain or generate secret key on first use.
 """
 
-from random import choice
+import random
 
 from lava_server.settings.config_file import ConfigFile
 
@@ -35,7 +35,7 @@ def _make_secret_key():
     Generate a value that can be used as SECRET_KEY in Django settings
     """
     return ''.join([
-        choice('abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)')
+        random.SystemRandom().choice('abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)')
         for i in range(50)])
 
 

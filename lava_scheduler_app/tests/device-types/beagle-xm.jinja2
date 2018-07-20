@@ -1,8 +1,8 @@
+{# device_type = "beagle-xm" #}
 {% extends 'base-uboot.jinja2' %}
 
 {% set console_device = console_device|default('ttyO2') %}
 {% set baud_rate = baud_rate|default(115200) %}
-{% set device_type = "beagle-xm" %}
 {% set bootloader_prompt = bootloader_prompt|default('=>') %}
 {% set bootm_kernel_addr = '0x80000000' %}
 {% set bootm_ramdisk_addr = '0x81600000' %}
@@ -13,4 +13,3 @@
 {% set uboot_mkimage_arch = 'arm' %}
 {% set uboot_needs_usb = true %}
 {% set uboot_usb_commands = '          - "setenv usbethaddr 00:40:5c:26:0a:6c; usb start"' %}
-

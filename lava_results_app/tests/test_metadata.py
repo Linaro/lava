@@ -5,8 +5,12 @@ import yaml
 import shutil
 import logging
 import decimal
+
 import django
 from django.core.exceptions import MultipleObjectsReturned
+from django.urls.exceptions import NoReverseMatch
+from django.urls import reverse
+
 from lava_results_app.tests.test_names import TestCaseWithFactory
 from lava_scheduler_app.models import (
     TestJob,
@@ -17,21 +21,13 @@ from lava_results_app.dbutils import (
     map_metadata,
     map_scanned_results,
     create_metadata_store,
-    _get_action_metadata, _get_device_metadata,  # pylint: disable=protected-access
-    testcase_export_fields,
-    export_testcase,
+    _get_action_metadata,  # pylint: disable=protected-access
 )
 from lava_results_app.models import ActionData, MetaType, TestData, TestCase, TestSuite
+from lava_results_app.utils import export_testcase, testcase_export_fields
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.device import PipelineDevice
 from lava_dispatcher.test.test_defs import allow_missing_path
-
-if django.VERSION > (1, 10):
-    from django.urls.exceptions import NoReverseMatch
-    from django.urls import reverse
-else:
-    from django.core.urlresolvers import reverse
-    from django.core.urlresolvers import NoReverseMatch
 
 # pylint: disable=invalid-name,too-few-public-methods,too-many-public-methods,no-member,too-many-ancestors
 
@@ -42,7 +38,7 @@ class TestMetaTypes(TestCaseWithFactory):
     """
 
     def setUp(self):
-        super(TestMetaTypes, self).setUp()
+        super().setUp()
         logger = logging.getLogger('lava-master')
         logger.disabled = True
 
@@ -139,7 +135,7 @@ class TestMetaTypes(TestCaseWithFactory):
         self.assertIsNotNone(reverse('lava.results.testcase', args=[case.id]))
         self.assertIsNotNone(reverse('lava.results.testcase',
                                      args=[job.id, suite.name, case.id]))
-        self.assertIsNotNone(map_scanned_results(test_dict, job, None))
+        self.assertIsNotNone(map_scanned_results(test_dict, job, {}, None))
         # now break the reverse pattern
         test_dict['case'] = 'unit test'  # whitespace in the case name
         matches = re.search(pattern, test_dict['case'])
@@ -171,7 +167,7 @@ class TestMetaTypes(TestCaseWithFactory):
             # isolate from other unit tests
             os.unlink(meta_filename)
         self.assertEqual(meta_filename, create_metadata_store(results, job))
-        ret = map_scanned_results(results, job, meta_filename)
+        ret = map_scanned_results(results, job, {}, meta_filename)
         self.assertIsNotNone(ret)
         ret.save()
         self.assertEqual(TestCase.objects.filter(name='unit-test').count(), 1)
@@ -198,21 +194,10 @@ class TestMetaTypes(TestCaseWithFactory):
         allow_missing_path(pipeline_job.pipeline.validate_actions, self,
                            'qemu-system-x86_64')
         pipeline = pipeline_job.describe()
-        device_values = _get_device_metadata(pipeline['device'])
-        self.assertEqual(
-            device_values,
-            {'target.device_type': 'qemu'}
-        )
-        del pipeline['device']['device_type']
-        self.assertNotIn('device_type', pipeline['device'])
-        device_values = _get_device_metadata(pipeline['device'])
         try:
             testdata, _ = TestData.objects.get_or_create(testjob=job)
         except (MultipleObjectsReturned):
             self.fail('multiple objects')
-        for key, value in device_values.items():
-            if not key or not value:
-                continue
             testdata.attributes.create(name=key, value=value)
         retval = _get_action_metadata(pipeline['job']['actions'])
         self.assertEqual(
@@ -249,14 +234,10 @@ class TestMetaTypes(TestCaseWithFactory):
         allow_missing_path(pipeline_job.pipeline.validate_actions, self,
                            'qemu-system-x86_64')
         pipeline = pipeline_job.describe()
-        device_values = _get_device_metadata(pipeline['device'])
         try:
             testdata, _ = TestData.objects.get_or_create(testjob=job)
         except (MultipleObjectsReturned):
             self.fail('multiple objects')
-        for key, value in device_values.items():
-            if not key or not value:
-                continue
             testdata.attributes.create(name=key, value=value)
         retval = _get_action_metadata(pipeline['job']['actions'])
         self.assertIn('test.0.common.definition.parameters.VARIABLE_NAME_2', retval)

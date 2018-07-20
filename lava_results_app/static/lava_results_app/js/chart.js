@@ -130,20 +130,17 @@ $(document).ready(function () {
     }
 
     ChartQuery.prototype.setup_print_menu = function() {
-        chart_id = this.chart_id;
-        $("#print_menu_" + chart_id).menu();
-        $("#print_menu_" + chart_id).hide();
-        $("#print_menu_" + chart_id).mouseleave(function() {
-            $("#print_menu_" + chart_id).hide();
+        $("#print_menu_" + this.chart_id).hide();
+        $("#print_menu_" + this.chart_id).mouseleave(function() {
+            $(this).hide();
         });
     }
 
     ChartQuery.prototype.setup_item_menu = function() {
-        $("#item_menu_" + this.chart_id).menu();
         $("#item_menu_" + this.chart_id).hide();
         $("#item_menu_" + this.chart_id).attr("chart_id", this.chart_id);
         $("#item_menu_" + this.chart_id).mouseleave(function() {
-            $("#item_menu_" + $(this).attr("chart_id")).hide();
+            $(this).hide();
         });
     }
 
@@ -151,7 +148,8 @@ $(document).ready(function () {
 
 	// Add item menu.
 	$("#chart_container_" + this.chart_id).append(
-            '<ul class="print-menu" id="item_menu_' + this.chart_id + '">' +
+            '<ul class="print-menu dropdown-menu" id="item_menu_' +
+                this.chart_id + '">' +
 		'<li class="print-menu-item"><a target="_blank" href="#"' +
 		' id="view_item_' + this.chart_id + '">View result</a></li>' +
 		'<li class="print-menu-item"><a href="#"' + ' id="omit_item_' +
@@ -280,8 +278,8 @@ $(document).ready(function () {
         }
 
         $("#toggle_options_container_" + this.chart_id).append(
-            '<ul class="print-menu" id="print_menu_' + this.chart_id + '">' +
-                print_menu_html +
+            '<ul class="print-menu dropdown-menu" id="print_menu_' +
+                this.chart_id + '">' + print_menu_html +
             '</ul>');
 
 
@@ -1290,9 +1288,14 @@ $(document).ready(function () {
     }
 
     format_date = function(date_string) {
-        time = date_string.split(' ')[1];
-        date = $.datepicker.parseDate("yy-mm-dd", date_string);
-        date_string = $.datepicker.formatDate("M d, yy", date);
+        date_time = date_string.split(' ');
+        date = date_time[0];
+        time = date_time[1];
+
+        date = new Date(date);
+        var options = {year: '2-digit', month: 'long', day: 'numeric'};
+
+        date_string = date.toLocaleDateString('en-US', options);
         return date_string + "<br/>" + time;
     }
 
@@ -1329,27 +1332,19 @@ $(document).ready(function () {
     }
 
     init_loading_dialog = function() {
-    // Setup the loading image dialog.
-        $("#main_container").append('<div id="loading_dialog"></div>');
+        // Setup the loading image dialog.
+        $("#main_container").append('<div id="loading_dialog" class="loading-dialog"></div>');
         $("#loading_dialog").append('<img src="/static/lava_results_app/images/ajax-progress.gif" alt="Loading..." />');
 
-        $('#loading_dialog').dialog({
-            autoOpen: false,
-            title: '',
-            draggable: false,
-            height: 45,
-            width: 250,
-            modal: true,
-            resizable: false,
-            dialogClass: 'loading-dialog'
-        });
-
-        $('.loading-dialog div.ui-dialog-titlebar').hide();
+        $('#loading_dialog').hide();
     }
     init_loading_dialog();
 
     chart = new Chart(chart_data);
+
+    $('#loading_dialog').show();
     chart.start();
+    $('#loading_dialog').hide();
 
     //add_bug_link();
 

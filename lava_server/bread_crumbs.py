@@ -47,14 +47,10 @@ will result in logged warnings (either a name of the URL being not
 constructible). To fix that simply add the missing keyword argument and reload.
 """
 
-from __future__ import unicode_literals
-
 from django.core.urlresolvers import reverse
-from django.utils.encoding import python_2_unicode_compatible
 import logging
 
 
-@python_2_unicode_compatible
 class BreadCrumb(object):
     """
     A crumb of bread left in the forest of pages to let you go back to (no, not
@@ -102,7 +98,7 @@ class BreadCrumb(object):
         """
         try:
             return self.name.format(**kwargs)
-        except:
+        except Exception:
             logging.exception(
                 "Unable to construct breadcrumb name for view %r", self.view)
             raise
@@ -120,13 +116,12 @@ class BreadCrumb(object):
             return reverse(
                 self.view,
                 args=[kwargs[name] for name in self.needs])
-        except:
+        except Exception:
             logging.exception(
                 "Unable to construct breadcrumb URL for view %r", self.view)
             raise
 
 
-@python_2_unicode_compatible
 class LiveBreadCrumb(object):
     """
     Bread crumb instance as observed by a particular request.

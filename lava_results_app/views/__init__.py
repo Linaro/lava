@@ -21,19 +21,20 @@ Views for the Results application
 Keep to just the response rendering functions
 """
 
-from __future__ import unicode_literals
-
 import os
 import csv
 import logging
 import simplejson
 import yaml
 from collections import OrderedDict
+
+from django_tables2 import RequestConfig
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from django.core import serializers
 from django.http import Http404
 from django.http.response import HttpResponse, StreamingHttpResponse
+from django.views.decorators.http import require_POST
 from django.shortcuts import render, loader
 from lava_server.views import index as lava_index
 from lava_server.bread_crumbs import (
@@ -48,17 +49,7 @@ from lava_results_app.tables import (
     TestJobResultsTable
 )
 from lava_results_app.utils import StreamEcho
-from lava_results_app.dbutils import (
-    export_testcase,
-    testcase_export_fields,
-    export_testsuite
-)
-from lava_scheduler_app.decorators import post_only
-from lava_scheduler_app.models import TestJob
-from lava_scheduler_app.tables import pklink
-from lava_scheduler_app.views import get_restricted_job
-from django_tables2 import RequestConfig
-from lava_results_app.utils import check_request_auth, get_testcases_with_limit
+from lava_results_app.dbutils import export_testsuite
 from lava_results_app.models import (
     BugLink,
     QueryCondition,
@@ -67,6 +58,16 @@ from lava_results_app.models import (
     TestSet,
     TestData
 )
+from lava_results_app.utils import (
+    check_request_auth,
+    export_testcase,
+    get_testcases_with_limit,
+    testcase_export_fields,
+)
+from lava_scheduler_app.models import TestJob
+from lava_scheduler_app.tables import pklink
+from lava_scheduler_app.views import get_restricted_job
+
 from lava.utils.lavatable import LavaView
 
 # pylint: disable=too-many-ancestors,invalid-name
@@ -477,7 +478,7 @@ def testcase_yaml(request, pk):
 
 
 @login_required
-@post_only
+@require_POST
 def get_bug_links_json(request):
     """Return all bug links related to content type.
 
@@ -485,8 +486,8 @@ def get_bug_links_json(request):
     """
 
     data = None
-    if not request.POST.get('content_type_id', None) or \
-       not request.POST.get('object_id', None):
+    if not request.POST.get('content_type_id') or \
+       not request.POST.get('object_id'):
         data = False
 
     else:
@@ -500,14 +501,14 @@ def get_bug_links_json(request):
 
 
 @login_required
-@post_only
+@require_POST
 def add_bug_link(request):
 
     success = True
     error_msg = None
 
-    if not request.POST.get('content_type_id', None) or \
-       not request.POST.get('object_id', None):
+    if not request.POST.get('content_type_id') or \
+       not request.POST.get('object_id'):
         success = False
 
     else:
@@ -532,7 +533,7 @@ def add_bug_link(request):
 
 
 @login_required
-@post_only
+@require_POST
 def delete_bug_link(request):
 
     bug_link = get_object_or_404(BugLink, pk=request.POST.get("bug_link_id"))

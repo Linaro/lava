@@ -250,7 +250,6 @@ class TestTemplates(BaseTemplate.BaseTemplateCases):
     def test_depthcharge_template(self):
         data = """\
 {% extends 'base-depthcharge.jinja2' %}
-{% set device_type = 'rk3288-veyron-jaq' %}
 {% set mkimage_fit_arch = 'arm' %}
 {% set fit_kernel_load_address = '0x5678' %}
 {% set start_message = 'Starting netboot on veyron_jaq...' %}
@@ -260,7 +259,6 @@ class TestTemplates(BaseTemplate.BaseTemplateCases):
         test_template = prepare_jinja_template('jaq-01', data)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
-        self.assertEqual('rk3288-veyron-jaq', template_dict['device_type'])
         load_addr = template_dict['parameters']['load_address']
         self.assertEqual(load_addr, '0x5678')
         depthcharge = template_dict['actions']['boot']['methods']['depthcharge']

@@ -1,5 +1,6 @@
 {% extends "layouts/content.html" %}
 {% load i18n %}
+{% load utils %}
 
 {% block navigation %}
 <div id="lava-extension-navigation">
@@ -59,9 +60,7 @@ print(server.system.listMethods())
 <h2 id="top">Available functions</h2>
 <div>
       <h2>Scheduler</h2>
-      {% for method in methods.scheduler %}
-        [&nbsp;<a href="#{{method.name}}">{{ method.name }}</a>&nbsp;]
-      {% endfor %}
+      {{ methods|get_api_by_section:'scheduler' }}
       <h2>Results</h2>
       {% for method in methods.results %}
         [&nbsp;<a href="#{{method.name}}">{{ method.name }}</a>&nbsp;]

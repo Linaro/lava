@@ -1,5 +1,5 @@
+{# device_type = "sharkl2" #}
 {% extends 'base-uboot.jinja2' %}
-{% set device_type = "sharkl2" %}
 {% set bootloader_prompt = bootloader_prompt|default('=>') %}
 {% set uboot_mkimage_arch = 'arm' %}
 {% set adb_serial_number = adb_serial_number|default("'0000000000'") %}

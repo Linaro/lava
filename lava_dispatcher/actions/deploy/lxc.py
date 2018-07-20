@@ -22,6 +22,7 @@ import os
 import yaml
 from lava_dispatcher.logical import Deployment
 from lava_common.exceptions import LAVABug
+from lava_common.utils import debian_package_version
 from lava_dispatcher.action import (
     JobError,
     Pipeline,
@@ -44,10 +45,7 @@ from lava_common.constants import (
 )
 from lava_dispatcher.utils.udev import lxc_udev_rule, lxc_udev_rule_parent
 from lava_dispatcher.utils.udev import allow_fs_label
-from lava_dispatcher.utils.filesystem import (
-    debian_package_version,
-    lxc_path,
-)
+from lava_dispatcher.utils.filesystem import lxc_path
 
 # pylint: disable=superfluous-parens,too-many-locals
 
@@ -92,8 +90,13 @@ class LxcAction(DeployAction):  # pylint:disable=too-many-instance-attributes
 
     def validate(self):
         super().validate()
-        self.logger.info("lxc, installed at version: %s",
-                         debian_package_version(pkg='lxc', split=False))
+        lxc_version = debian_package_version(pkg='lxc', split=False)
+        if lxc_version is not '':
+            self.logger.info("lxc, installed at version: %s", lxc_version)
+        else:
+            self.logger.info("lava-lxc-mocker, installed at version: %s",
+                             debian_package_version(pkg='lava-lxc-mocker',
+                                                    split=False))
         protocols = [protocol.name for protocol in self.job.protocols]
         if LxcProtocol.name not in protocols:
             self.logger.debug("Missing protocol '%s' in %s",
@@ -155,8 +158,8 @@ class LxcCreateAction(DeployAction):
         # set lxc_data
         self._set_lxc_data()
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         verbose = '' if self.lxc_data['verbose'] else '-q'
         lxc_default_path = lxc_path(self.job.parameters['dispatcher'])
         if self.lxc_data['custom_lxc_path']:
@@ -241,8 +244,8 @@ class LxcCreateUdevRuleAction(DeployAction):
         except TypeError:
             self.errors = "Invalid parameters for %s" % self.name
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         # this may be the device namespace - the lxc namespace may not be
         # accessible
         lxc_name = None
@@ -281,9 +284,9 @@ class LxcCreateUdevRuleAction(DeployAction):
         lines = []
         for device in device_info:
             data = {'serial_number': str(device.get('board_id', '')),
-                    'vendor_id': device.get('usb_vendor_id', None),
-                    'product_id': device.get('usb_product_id', None),
-                    'fs_label': device.get('fs_label', None),
+                    'vendor_id': device.get('usb_vendor_id'),
+                    'product_id': device.get('usb_product_id'),
+                    'fs_label': device.get('fs_label'),
                     'lxc_name': lxc_name,
                     'device_info_file': device_info_file,
                     'logging_url': logging_url,
@@ -334,11 +337,12 @@ class LxcAptUpdateAction(DeployAction):
         self.retries = 10
         self.sleep = 10
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         lxc_name = self.get_namespace_data(action='lxc-create-action',
                                            label='lxc', key='name')
-        cmd = ['lxc-attach', '-n', lxc_name, '--', 'apt-get', '-y', 'update']
+        cmd = ['lxc-attach', '-n', lxc_name, '--', 'apt-get', '-y', '-q',
+               'update']
         if not self.run_command(cmd, allow_silent=True):
             raise JobError("Unable to apt-get update in lxc container")
         return connection
@@ -363,13 +367,13 @@ class LxcAptInstallAction(DeployAction):
         if 'packages' not in self.parameters:
             raise LAVABug("%s package list unavailable" % self.name)
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         lxc_name = self.get_namespace_data(action='lxc-create-action',
                                            label='lxc', key='name')
         packages = self.parameters['packages']
-        cmd = ['lxc-attach', '-v', 'DEBIAN_FRONTEND=noninteractive', '-n', lxc_name,
-               '--', 'apt-get', '-y', 'install'] + packages
+        cmd = ['lxc-attach', '-v', 'DEBIAN_FRONTEND=noninteractive', '-n',
+               lxc_name, '--', 'apt-get', '-y', '-q', 'install'] + packages
         if not self.run_command(cmd):
             raise JobError("Unable to install using apt-get in lxc container")
         return connection

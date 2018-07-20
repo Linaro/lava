@@ -68,8 +68,8 @@ class Removable(Deployment):
 
     @classmethod
     def accepts(cls, device, parameters):
-        media = parameters.get('to', None)
-        job_device = parameters.get('device', None)
+        media = parameters.get('to')
+        job_device = parameters.get('device')
 
         # Is the media supported?
         if media not in ['sata', 'sd', 'usb']:
@@ -183,13 +183,13 @@ class DDAction(Action):
                 value=self.boot_params[self.parameters['device']]['device_id']
             )
 
-    def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-locals
+    def run(self, connection, max_end_time):  # pylint: disable=too-many-locals
         """
         Retrieve the decompressed image from the dispatcher by calling the tool specified
         by the test writer, from within the test image of the first deployment, using the
         device to write directly to the secondary media, without needing to cache on the device.
         """
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
         d_file = self.get_namespace_data(action='download-action', label='image', key='file')
         if not d_file:
             self.logger.debug("Skipping %s - nothing downloaded")

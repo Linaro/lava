@@ -104,7 +104,7 @@ class UBootPrepareKernelAction(Action):
                 self.errors = "Kernel boot type is not supported by this device."
         if self.kernel_type:
             self.set_namespace_data(action=self.name, label='prepared-kernel', key='exists', value=True)
-            self.bootcommand = map_kernel_uboot(self.kernel_type, self.job.device.get('parameters', None))
+            self.bootcommand = map_kernel_uboot(self.kernel_type, self.job.device.get('parameters'))
             self.kernel_type = str(self.kernel_type).lower()
             if self.bootcommand not in self.job.device['parameters']:
                 self.errors = "Requested kernel boot type '%s' is not supported by this device." % self.bootcommand
@@ -119,8 +119,8 @@ class UBootPrepareKernelAction(Action):
             action='uboot-prepare-kernel', label='bootcommand',
             key='bootcommand', value=self.bootcommand)
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         if not self.kernel_type:
             return connection  # idempotency
         old_kernel = self.get_namespace_data(
@@ -193,7 +193,7 @@ class PrepareFITAction(Action):
         else:
             self.device_params = device_params
 
-    def _make_mkimage_command(self, params):
+    def _make_mkimage_command(self, params):  # pylint: disable=no-self-use
         cmd = [
             'mkimage',
             '-D', '"-I dts -O dtb -p 2048"',
@@ -214,8 +214,8 @@ class PrepareFITAction(Action):
         cmd.append(params['fit_path'])
         return cmd
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         params = {
             label: self.get_namespace_data(
                 action='download-action', label=label, key='file')

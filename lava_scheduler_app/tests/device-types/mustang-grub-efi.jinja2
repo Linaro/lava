@@ -1,3 +1,4 @@
+{# device_type: mustang #}
 {% extends 'base.jinja2' %}
 {% set boot_character_delay = 10 %}
 {% set base_ip_args = 'ip=:::::eth0:dhcp' %}
@@ -26,8 +27,6 @@
 {% set base_early_printk = menu_early_printk | default('earlyprintk=uart8250-32bit,0x1c020000') -%}
 
 {% block body %}
-
-device_type: mustang
 
 actions:
   deploy:

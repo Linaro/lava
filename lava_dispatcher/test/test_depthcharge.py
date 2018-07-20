@@ -22,16 +22,9 @@
 
 import os
 import unittest
-from lava_dispatcher.actions.deploy.tftp import TftpAction
-from lava_dispatcher.actions.boot.depthcharge import (
-    DepthchargeAction,
-    DepthchargeStart,
-    DepthchargeCommandOverlay,
-    DepthchargeRetry,
-)
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
-from lava_dispatcher.test.test_basic import Factory, StdoutTestCase
+from lava_dispatcher.test.test_basic import StdoutTestCase
 from lava_dispatcher.test.utils import DummyLogger, infrastructure_error
 
 
@@ -41,7 +34,7 @@ class DepthchargeFactory(object):
     Factory objects are dispatcher based classes, independent
     of any database objects.
     """
-    def create_jaq_job(self, filename):
+    def create_jaq_job(self, filename):  # pylint: disable=no-self-use
         device = NewDevice(os.path.join(
             os.path.dirname(__file__), '../devices/jaq-01.yaml'))
         yaml = os.path.join(os.path.dirname(__file__), filename)
@@ -67,7 +60,6 @@ class TestDepthchargeAction(StdoutTestCase):
         self.assertEqual(description_ref, job.pipeline.describe(False))
 
         self.assertIsNone(job.validate())
-        self.assertEqual(job.device['device_type'], 'rk3288-veyron-jaq')
 
         self.assertEqual(
             [action.name for action in job.pipeline.actions],
@@ -107,7 +99,7 @@ class TestDepthchargeAction(StdoutTestCase):
 -b {dtb} \
 -i {ramdisk} \
 {fit_path}'.format(**params)
-        cmd = prep_fit._make_mkimage_command(params)
+        cmd = prep_fit._make_mkimage_command(params)  # pylint: disable=protected-access
         self.assertEqual(cmd_ref, ' '.join(cmd))
 
         depthcharge = [action for action in job.pipeline.actions

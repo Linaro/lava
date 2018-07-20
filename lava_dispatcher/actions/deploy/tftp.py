@@ -116,8 +116,8 @@ class TftpAction(DeployAction):  # pylint:disable=too-many-instance-attributes
         if self.test_needs_deployment(parameters):
             self.internal_pipeline.add_action(DeployDeviceEnvironment())
 
-    def run(self, connection, max_end_time, args=None):
-        super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        super().run(connection, max_end_time)
         tftp_size_limit = self.job.parameters['dispatcher'].get('tftp_size_limit',
                                                                 TFTP_SIZE_LIMIT)
         self.logger.debug("Checking files for TFTP limit of %s bytes.", tftp_size_limit)

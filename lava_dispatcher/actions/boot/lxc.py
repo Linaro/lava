@@ -123,8 +123,8 @@ class LxcAddStaticDevices(Action):
         except TypeError:
             self.errors = "Invalid parameters for %s" % self.name
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         lxc_name = self.get_namespace_data(action='lxc-create-action', label='lxc', key='name')
         # If there are no USB devices under static_info then this action should be idempotent.
         if not self.get_usb_devices():
@@ -157,12 +157,12 @@ class LxcStartAction(Action):
         super().validate()
         which('lxc-start')
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         lxc_name = self.get_namespace_data(action='lxc-create-action', label='lxc', key='name')
         lxc_cmd = ['lxc-start', '-n', lxc_name, '-d']
         command_output = self.run_command(lxc_cmd)
-        if command_output and command_output is not '':
+        if command_output and command_output != '':
             raise JobError("Unable to start lxc container: %s" %
                            command_output)  # FIXME: JobError needs a unit test
         lxc_cmd = ['lxc-info', '-sH', '-n', lxc_name]
@@ -200,13 +200,13 @@ class LxcStopAction(Action):
         super().validate()
         which('lxc-stop')
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         lxc_name = self.get_namespace_data(action='lxc-create-action',
                                            label='lxc', key='name')
         lxc_cmd = ['lxc-stop', '-k', '-n', lxc_name]
         command_output = self.run_command(lxc_cmd)
-        if command_output and command_output is not '':
+        if command_output and command_output != '':
             raise JobError("Unable to stop lxc container: %s" %
                            command_output)  # FIXME: JobError needs a unit test
         return connection

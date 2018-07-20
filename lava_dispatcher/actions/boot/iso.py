@@ -92,7 +92,7 @@ class IsoCommandLine(Action):  # pylint: disable=too-many-instance-attributes
     description = 'add dynamic data values to command line and execute'
     summary = 'include downloaded locations and call qemu'
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         # substitutions
         substitutions = {'{emptyimage}': self.get_namespace_data(action='prepare-empty-image', label='prepare-empty-image', key='output')}
         sub_command = self.get_namespace_data(action='prepare-qemu-commands', label='prepare-qemu-commands', key='sub_command')
@@ -124,7 +124,7 @@ class IsoCommandLine(Action):  # pylint: disable=too-many-instance-attributes
         shell_connection = ShellSession(self.job, shell)
         shell_connection.prompt_str = self.get_namespace_data(
             action='prepare-qemu-commands', label='prepare-qemu-commands', key='prompts')
-        shell_connection = super().run(shell_connection, max_end_time, args)
+        shell_connection = super().run(shell_connection, max_end_time)
         return shell_connection
 
 
@@ -149,7 +149,7 @@ class MonitorInstallerSession(Action):
         if 'prompts' not in self.parameters:
             self.errors = "Unable to identify test image prompts from parameters."
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         self.logger.debug("%s: Waiting for prompt %s", self.name, ' '.join(connection.prompt_str))
         self.wait(connection, max_end_time)
         return connection
@@ -179,7 +179,7 @@ class IsoRebootAction(Action):
         except (KeyError, TypeError):
             self.errors = "Invalid parameters for %s" % self.name
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         """
         qemu needs help to reboot after running the debian installer
         and typically the boot is quiet, so there is almost nothing to log.
@@ -205,7 +205,7 @@ class IsoRebootAction(Action):
         self.logger.debug("started a shell command")
 
         shell_connection = ShellSession(self.job, shell)
-        shell_connection = super().run(shell_connection, max_end_time, args)
+        shell_connection = super().run(shell_connection, max_end_time)
         shell_connection.prompt_str = [INSTALLER_QUIET_MSG]
         self.wait(shell_connection)
         self.set_namespace_data(action='shared', label='shared', key='connection', value=shell_connection)

@@ -103,22 +103,23 @@ class OverlayAction(DeployAction):
         # Distro-specific scripts override the generic ones
         if not self.test_needs_overlay(self.parameters):
             return
-        lava_test_results_dir = self.parameters['deployment_data']['lava_test_results_dir']
+        lava_test_results_dir = self.get_constant('lava_test_results_dir', 'posix')
         lava_test_results_dir = lava_test_results_dir % self.job.job_id
         self.set_namespace_data(action='test', label='results', key='lava_test_results_dir',
                                 value=lava_test_results_dir)
-        lava_test_sh_cmd = self.parameters['deployment_data']['lava_test_sh_cmd']
+        lava_test_sh_cmd = self.get_constant('lava_test_sh_cmd', 'posix')
         self.set_namespace_data(action='test', label='shared', key='lava_test_sh_cmd',
                                 value=lava_test_sh_cmd)
 
-        # Add distro support scripts
-        distro = self.parameters['deployment_data']['distro']
-        distro_support_dir = '%s/distro/%s' % (self.lava_test_dir, distro)
-        self.scripts_to_copy += sorted(glob.glob(os.path.join(distro_support_dir,
-                                                              'lava-*')))
+        # Add distro support scripts - only if deployment_data is set
+        distro = self.parameters['deployment_data'].get('distro')
+        if distro:
+            distro_support_dir = '%s/distro/%s' % (self.lava_test_dir, distro)
+            self.scripts_to_copy += sorted(glob.glob(os.path.join(distro_support_dir,
+                                                                  'lava-*')))
 
         if not self.scripts_to_copy:
-            self.errors = "Unable to locate lava_test_shell support scripts."
+            self.logger.debug("Skipping lava_test_shell support scripts.")
         if 'parameters' in self.job.device:
             if 'interfaces' in self.job.device['parameters']:
                 if 'target' in self.job.device['parameters']['interfaces']:
@@ -142,14 +143,14 @@ class OverlayAction(DeployAction):
             self.internal_pipeline.add_action(CompressOverlay())
             self.internal_pipeline.add_action(PersistentNFSOverlay())  # idempotent
 
-    def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-locals
+    def run(self, connection, max_end_time):  # pylint: disable=too-many-locals
         """
         Check if a lava-test-shell has been requested, implement the overlay
         * create test runner directories beneath the temporary location
         * copy runners into test runner directories
         """
         tmp_dir = self.mkdtemp()
-        namespace = self.parameters.get('namespace', None)
+        namespace = self.parameters.get('namespace')
         if namespace:
             if namespace not in get_test_action_namespaces(self.job.parameters):
                 self.logger.info("[%s] skipped %s - no test action.", namespace, self.name)
@@ -207,7 +208,7 @@ class OverlayAction(DeployAction):
                         continue
                     fout.write("%s=%s\n" % (key, value))
 
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
         return connection
 
 
@@ -245,7 +246,7 @@ class MultinodeOverlayAction(OverlayAction):
             else:
                 self.role = self.job.parameters['protocols'][self.protocol]['role']
 
-    def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
+    def run(self, connection, max_end_time):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
         if self.role is None:
             self.logger.debug("skipped %s", self.name)
             return connection
@@ -366,7 +367,7 @@ class VlandOverlayAction(OverlayAction):
                 self.tags.append(",".join([interface, tag]))
 
     # pylint: disable=anomalous-backslash-in-string
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         """
         Writes out file contents from lists, across multiple lines
         VAR="VAL1\n\
@@ -431,7 +432,7 @@ class CompressOverlay(Action):
     description = "Create a lava overlay tarball and store alongside the job"
     summary = "Compress the lava overlay files"
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         output = os.path.join(self.mkdtemp(), "overlay-%s.tar.gz" % self.level)
         location = self.get_namespace_data(action='test', label='shared', key='location')
         lava_test_results_dir = self.get_namespace_data(action='test', label='results', key='lava_test_results_dir')
@@ -443,7 +444,7 @@ class CompressOverlay(Action):
         if not self.valid:
             self.logger.error(self.errors)
             return connection
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
         with chdir(location):
             try:
                 with tarfile.open(output, "w:gz") as tar:
@@ -504,8 +505,8 @@ class SshAuthorize(Action):
                 # only secondary connections set active.
                 self.active = True
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         if not self.identity_file:
             self.logger.debug("No authorisation required.")  # idempotency
             return connection
@@ -525,8 +526,7 @@ class SshAuthorize(Action):
             return connection
         self.logger.info("Adding SSH authorisation for %s.pub", os.path.basename(output_file))
         user_sshdir = os.path.join(location, 'root', '.ssh')
-        if not os.path.exists(user_sshdir):
-            os.makedirs(user_sshdir, 0o755)
+        os.makedirs(user_sshdir, 0o755, exist_ok=True)
         # if /root/.ssh/authorized_keys exists in the test image it will be overwritten
         # the key exists in the lava_test_results_dir to allow test writers to work around this
         # after logging in via the identity_file set here
@@ -550,7 +550,7 @@ class PersistentNFSOverlay(Action):
 
     def validate(self):
         super().validate()
-        persist = self.parameters.get('persistent_nfs', None)
+        persist = self.parameters.get('persistent_nfs')
         if not persist:
             return
         if 'address' not in persist:

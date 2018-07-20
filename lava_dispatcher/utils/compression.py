@@ -38,10 +38,10 @@ from lava_dispatcher.utils.shell import which
 
 
 # https://www.kernel.org/doc/Documentation/xz.txt
-compress_command_map = {'xz': ['xz', '--check=crc32'],
+compress_command_map = {'xz': ['xz', '--check=crc32'],  # pylint: disable=invalid-name
                         'gz': ['gzip'],
                         'bz2': ['bzip2']}
-decompress_command_map = {'xz': ['unxz'],
+decompress_command_map = {'xz': ['unxz'],  # pylint: disable=invalid-name
                           'gz': ['gunzip'],
                           'bz2': ['bunzip2'],
                           'zip': ['unzip']}
@@ -57,7 +57,8 @@ def compress_file(infile, compression):
     which(compress_command_map[compression][0])
 
     with chdir(os.path.dirname(infile)):
-        cmd = compress_command_map[compression]
+        # local copy for idempotency
+        cmd = compress_command_map[compression][:]
         cmd.append(infile)
         try:
             subprocess.check_output(cmd)
@@ -76,7 +77,8 @@ def decompress_file(infile, compression):
     which(decompress_command_map[compression][0])
 
     with chdir(os.path.dirname(infile)):
-        cmd = decompress_command_map[compression]
+        # local copy for idempotency
+        cmd = decompress_command_map[compression][:]
         cmd.append(infile)
         outfile = infile
         if infile.endswith(compression):

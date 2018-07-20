@@ -31,3 +31,10 @@ def is_lxc_requested(job):
         if protocol:
             return protocol[0].lxc_name
     return False
+
+
+def lxc_cmd_prefix(job):
+    name = is_lxc_requested(job)
+    if not name:
+        return []
+    return ['lxc-attach', '-n', name, '--']

@@ -89,6 +89,7 @@ class CallDockerAction(Action):
         super().__init__()
         self.cleanup_required = False
         self.extra_options = ''
+        self.container = ''
 
     def validate(self):
         super().validate()
@@ -104,7 +105,7 @@ class CallDockerAction(Action):
             for volume in options['volumes']:
                 self.extra_options += ' --volume %s' % volume
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         location = self.get_namespace_data(action='test', label='shared', key='location')
         docker_image = self.get_namespace_data(action='deploy-docker', label='image', key='name')
 
@@ -123,7 +124,7 @@ class CallDockerAction(Action):
         self.cleanup_required = True
 
         shell_connection = ShellSession(self.job, shell)
-        shell_connection = super().run(shell_connection, max_end_time, args)
+        shell_connection = super().run(shell_connection, max_end_time)
 
         self.set_namespace_data(action='shared', label='shared', key='connection', value=shell_connection)
         return shell_connection

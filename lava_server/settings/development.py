@@ -16,9 +16,11 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 import os
-from lava_server.settings.config_file import ConfigFile
+
 from lava_server.settings.common import *
+
 
 # Activate debugging
 DEBUG = True
@@ -46,8 +48,7 @@ PRECIOUS_DIR = os.path.join(PROJECT_SRC_DIR, "precious")
 PROJECT_STATE_DIR = os.path.join(PRECIOUS_DIR, "var/lib/lava-server/")
 
 # Create state directory if needed
-if not os.path.exists(PROJECT_STATE_DIR):
-    os.makedirs(PROJECT_STATE_DIR)
+os.makedirs(PROJECT_STATE_DIR, exist_ok=True)
 
 DATABASES = {
     'default': {
@@ -79,11 +80,9 @@ SECRET_KEY = '00000000000000000000000000000000000000000000000000'
 # like SQL queries and timings for each request. It also supports
 # multi-threaded or multi-process server so some degree of parallelism can be
 # achieved.
-try:
+with contextlib.suppress(ImportError):
     import devserver
     INSTALLED_APPS += ['devserver']
-except ImportError:
-    pass
 
 USE_DEBUG_TOOLBAR = False
 
@@ -101,13 +100,8 @@ BRANDING_BUG_URL = "https://lists.linaro.org/mailman/listinfo/lava-users"
 BRANDING_SOURCE_URL = "https://git.linaro.org/lava"
 BRANDING_MESSAGE = ''
 
-instance_name = 'default'
-instance_path = "/etc/lava-server/instance.conf"
-if os.path.exists(instance_path):
-    instance_config = ConfigFile.load(instance_path)
-    instance_name = instance_config.LAVA_INSTANCE
-
-INSTANCE_NAME = instance_name
+# Use default instance name
+INSTANCE_NAME = "default"
 
 # Logging
 

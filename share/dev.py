@@ -25,7 +25,7 @@ import subprocess
 import sys
 
 
-modules = ["lava_results_app", "lava_scheduler_app",
+modules = ["lava_common", "lava_results_app", "lava_scheduler_app",
            "lava_server", "linaro_django_xmlrpc"]
 services = ["lava-coordinator", "lava-logs", "lava-master", "lava-publisher",
             "lava-server-gunicorn", "lava-slave"]
@@ -40,7 +40,7 @@ def handle_on(options):
         print("Downloading the sources")
         subprocess.check_call(["git", "clone", options.url])
 
-    os.chdir("/usr/lib/python2.7/dist-packages")
+    os.chdir("/usr/lib/python3/dist-packages")
     # Making backups
     print("Making backups for:")
     for module in modules:
@@ -66,7 +66,7 @@ def handle_on(options):
 def handle_off(_):
     print("Deactivate the developer mode")
 
-    os.chdir("/usr/lib/python2.7/dist-packages")
+    os.chdir("/usr/lib/python3/dist-packages")
 
     # Removing the symlinks
     print("Removing symlinks for:")

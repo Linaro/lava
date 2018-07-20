@@ -57,8 +57,8 @@
     {% if query.is_published and is_accessible %}
     <dt>Query Group label</dt>
     <dd>
-      <a href="#">
-	<div id="query_group" style="float: left;">{{ query.query_group|default:"Click here to select"}}</div>
+      <a href="#" data-toggle="modal" data-target="#query_group_modal">
+	<div style="float: left;">{{ query.query_group|default:"Click here to select"}}</div>
       </a>
 
       {% if query.query_group %}
@@ -76,8 +76,8 @@
     </dd>
     <dt>Group edit permission</dt>
     <dd>
-      <a href="#">
-	<div id="group" style="float: left;">{{ query.group|default:"Click here to select"}}</div>
+      <a href="#" data-toggle="modal" data-target="#group_permission_modal">
+	<div style="float: left;">{{ query.group|default:"Click here to select"}}</div>
       </a>
       &nbsp;&nbsp;
       <button class="btn btn-info btn-xs" data-toggle="tooltip" data-placement="right" title="A group of users already listed on the Profile page.">?</button>
@@ -205,6 +205,72 @@
 </div>
 
 <!-- Modal HTML -->
+<div id="query_group_modal" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">Query group update</h4>
+      </div>
+      <form class="well" id="query_group_form" method="post" action="{% url 'query_add_group' username=query.owner.username name=query.name %}">
+        <div class="modal-body">
+	  {% csrf_token %}
+          <div class="help-text">Type to search for the group label.<br>Available group labels will appear in a list below.<br>Alternatively you can type in a new one.
+          </div>
+          <div style="display: inline;">
+            <label for="query_group">Query Group label:</label>
+          </div>
+          <div class="typeahead__container">
+            <div class="typeahead__field">
+              <div class="typeahead__query">
+                <input id="query_group" name="value" type="search" placeholder="Search" autocomplete="off" value="{{ query.query_group|default:'' }}" />
+              </div>
+            </div>
+          </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal HTML -->
+<div id="group_permission_modal" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">Group permission update</h4>
+      </div>
+      <form class="well" id="group_permission_form" method="post" action="{% url 'query_select_group' username=query.owner.username name=query.name %}">
+        <div class="modal-body">
+	  {% csrf_token %}
+          <div class="help-text">Type to search for the system group.<br>Available groups will appear in a list below.
+          </div>
+          <div style="display: inline;">
+            <label for="group_permission">Group edit permission:</label>
+          </div>
+          <div class="typeahead__container">
+            <div class="typeahead__field">
+              <div class="typeahead__query">
+                <input id="group_permission" name="value" type="search" placeholder="Search" autocomplete="off" value="{{ query.group|default:'' }}" />
+              </div>
+            </div>
+          </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal HTML -->
 <div id="condition_modal" class="modal fade">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -216,6 +282,8 @@
 	<div id="condition_errors" class="errorlist" style="color: red;"></div>
 	<form class="well" id="condition_form" method="post" action="/+add-condition">
 	  {% csrf_token %}
+          <div class="help-text" style="margin-left: 10px;">Type to search for the available fields depending on the condition model.<br>Available fields will appear in a list below.
+          </div>
 	  <input type="hidden" id="condition_id" name="id" />
 	  {{ condition_form.as_p }}
 	</form>
@@ -232,9 +300,8 @@
 {% block scripts %}
 
 {% is_accessible_by query request.user as is_accessible %}
-
+<script type="text/javascript" src="{{ STATIC_URL }}lava_server/js/jquery.typeahead.min.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}lava_results_app/js/query.min.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.jeditable.min.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}lava_server/js/bootbox.min.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}lava_results_app/js/bootbox.data.toggle.min.js"></script>
 <script type="text/javascript">
@@ -258,55 +325,23 @@
 
 {% if query.is_published and is_accessible %}
 <script>
-  $("#query_group").editable(
-  "{% url 'query_add_group' username=query.owner.username name=query.name %}",
-  {
-    onblur: "submit",
-    width: 200,
-    submitdata : {"csrfmiddlewaretoken": '{{csrf_token}}'},
-    callback: function(data) {
-      if(data != "") {
-        $("#group_link").show();
-        href = $("#group_link a:first-child").attr("href").split("#")[0] + "#";
-        $("#group_link a:first-child").attr("href", href + data);
-      } else {
-        $("#group_link").hide();
-      }
-    }
-  });
-
-  $("#query_group").on("click", function(event) {
-      var field = $(this).find("input");
-      {% if query.query_group == None %}
-        field.val("");
-      {% endif %}
-      field.select();
-      field.autocomplete({
-        source: '{% url 'query_group_list' %}',
-        minLength: 2,
-      });
-  });
-
-
-  $("#group").editable(
-  "{% url 'query_select_group' username=query.owner.username name=query.name %}",
-  {
-    onblur: "submit",
-    width: 200,
-    submitdata : {"csrfmiddlewaretoken": '{{csrf_token}}'},
-  });
-
-  $("#group").on("click", function(event) {
-      var field = $(this).find("input");
-      {% if query.group == None %}
-        field.val("");
-      {% endif %}
-      field.select();
-      field.autocomplete({
-        source: '{% url 'get_query_group_names' %}',
+  $("#query_group_modal").on('show.bs.modal', function (e) {
+    $("#query_group").val("{{ query.query_group|default:'' }}");
+    $("#query_group").typeahead({
+        source: {querygroups: {ajax: {type:"GET", url: '{% url 'query_group_list' %}', data: {term: "{{query_group}}"}}}},
         minLength: 1,
-      });
+    });
   });
+
+  $("#group_permission_modal").on('show.bs.modal', function (e) {
+    $("#group_permission").val("{{ query.group|default:'' }}");
+    $("#group_permission").typeahead({
+        source: {groups: {ajax: {type:"GET", url: '{% url 'get_query_group_names' %}', data: {term: $(this).val()}}}},
+        display: ["name"],
+        minLength: 1,
+    });
+  });
+
 </script>
 {% endif %}
 

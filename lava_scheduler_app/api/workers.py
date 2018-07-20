@@ -225,11 +225,11 @@ class SchedulerWorkersAPI(ExposedV2API):
 
             if health is not None:
                 if health == "ACTIVE":
-                    worker.go_health_active(self.user)
+                    worker.go_health_active(self.user, "xmlrpc api")
                 elif health == "MAINTENANCE":
-                    worker.go_health_maintenance(self.user)
+                    worker.go_health_maintenance(self.user, "xmlrpc api")
                 elif health == "RETIRED":
-                    worker.go_health_retired(self.user)
+                    worker.go_health_retired(self.user, "xmlrpc api")
                 else:
                     raise xmlrpc.client.Fault(
                         400, "Invalid health: %s" % health)

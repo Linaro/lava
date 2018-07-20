@@ -1,3 +1,4 @@
+{# device_type: juno #}
 {% extends 'base-uboot.jinja2' %}
 
 {% set console_device = console_device | default('ttyAMA0') %}
@@ -17,7 +18,6 @@
           - setenv loadinitrd 'afs load ${initrd_name} {RAMDISK_ADDR}; setenv initrd_param {RAMDISK_ADDR}'") -%}
 
 {% block body %}
-device_type: juno
 
 board_id: '{{ board_id|default('0000000000') }}'
 usb_vendor_id: '{{ usb_vendor_id|default('0000') }}'

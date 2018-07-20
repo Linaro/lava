@@ -19,8 +19,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
-from __future__ import unicode_literals
-
 import datetime
 import yaml
 
@@ -33,6 +31,7 @@ from lava_scheduler_app.models import (
     DeviceType,
     Device,
     _create_pipeline_job,
+    _check_submit_to_device,
     TestJob,
     Worker
 )
@@ -56,7 +55,7 @@ def schedule_health_checks(logger, available_dt=None):
     for dt in query.order_by("name"):
         if dt.disable_health_check:
             hc_disabled.append(dt.name)
-            # Add all devices o that type to the list of available devices
+            # Add all devices of that type to the list of available devices
             devices = dt.device_set.filter(state=Device.STATE_IDLE)
             devices = devices.filter(worker_host__state=Worker.STATE_ONLINE)
             devices = devices.filter(health__in=[Device.HEALTH_GOOD,
@@ -143,9 +142,9 @@ def schedule_health_checks_for_device_type(logger, dt):
 
 def schedule_health_check(device, definition):
     user = User.objects.get(username="lava-health")
-    job = _create_pipeline_job(yaml.safe_load(definition), user, [],
-                               device_type=device.device_type,
-                               orig=definition, health_check=True)
+    job = _create_pipeline_job(
+        yaml.safe_load(definition), user, [], device=device, device_type=device.device_type,
+        orig=definition, health_check=True)
     job.go_state_scheduled(device)
     job.save()
     return job.id
@@ -256,7 +255,7 @@ def transition_multinode_jobs(logger):
             # apply the complete list to all jobs in this group
             definition = yaml.safe_load(sub_job.definition)
             definition['protocols']['lava-multinode']['roles'] = devices
-            sub_job.definition = yaml.dump(definition)
+            sub_job.definition = yaml.safe_dump(definition)
             # transition the job and device
             sub_job.go_state_scheduled()
             sub_job.save()

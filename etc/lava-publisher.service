@@ -8,6 +8,7 @@ Environment=LOGLEVEL=DEBUG
 EnvironmentFile=-/etc/default/lava-publisher
 EnvironmentFile=-/etc/lava-server/lava-publisher
 ExecStart=/usr/bin/lava-server manage lava-publisher --level $LOGLEVEL
+TimeoutStopSec=10
 Restart=always
 
 [Install]

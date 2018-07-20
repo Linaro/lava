@@ -141,19 +141,25 @@ class TestBzr(StdoutTestCase):  # pylint: disable=too-many-public-methods
         # Go into a temp dirctory
         self.tmpdir = tempfile.mkdtemp()
         os.chdir(self.tmpdir)
-        self.env = {'BZR_HOME': self.tmpdir, 'BZR_LOG': self.tmpdir}
+        self.env = {'BZR_HOME': self.tmpdir,
+                    'BZR_LOG': os.path.join(self.tmpdir, "bzr.log")}
 
         # Create a Git repository with two commits
-        subprocess.check_output(['bzr', 'init', 'repo'], env=self.env, stderr=subprocess.STDOUT)
+        subprocess.check_output(['bzr', 'init', 'repo'],
+                                env=self.env, stderr=subprocess.STDOUT)
         os.chdir('repo')
+        subprocess.check_output(['bzr', 'whoami', 'lava-ci@example.com'],
+                                env=self.env, stderr=subprocess.STDOUT)
         with open('test.txt', 'w') as datafile:
             datafile.write("Some data")
-        subprocess.check_output(['bzr', 'add', 'test.txt'], env=self.env, stderr=subprocess.STDOUT)
+        subprocess.check_output(['bzr', 'add', 'test.txt'],
+                                env=self.env, stderr=subprocess.STDOUT)
         subprocess.check_output(['bzr', 'commit', 'test.txt', '-m', 'First commit'],
                                 env=self.env, stderr=subprocess.STDOUT)
         with open('second.txt', 'w') as datafile:
             datafile.write("Some more data")
-        subprocess.check_output(['bzr', 'add', 'second.txt'], stderr=subprocess.STDOUT)
+        subprocess.check_output(['bzr', 'add', 'second.txt'],
+                                env=self.env, stderr=subprocess.STDOUT)
         subprocess.check_output(['bzr', 'commit', 'second.txt', '-m', 'Second commit'],
                                 env=self.env, stderr=subprocess.STDOUT)
 
@@ -173,12 +179,12 @@ class TestBzr(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def test_clone_at_2(self):
         bzr = vcs.BzrHelper('repo')
-        self.assertEqual(bzr.clone('bzr.clone1', '2'), '2')
+        self.assertEqual(bzr.clone('bzr.clone1', revision='2'), '2')
 
     def test_clone_at_1(self):
         bzr = vcs.BzrHelper('repo')
-        self.assertEqual(bzr.clone('bzr.clone1', '1'), '1')
-        self.assertEqual(bzr.clone('bzr.clone2', '1'), '1')
+        self.assertEqual(bzr.clone('bzr.clone1', revision='1'), '1')
+        self.assertEqual(bzr.clone('bzr.clone2', revision='1'), '1')
 
     def test_non_existing_bzr(self):
         bzr = vcs.BzrHelper('does_not_exists')
@@ -192,8 +198,8 @@ class TestBzr(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def test_invalid_commit(self):
         bzr = vcs.BzrHelper('repo')
-        self.assertRaises(InfrastructureError, bzr.clone, 'foo.bar', '3')
-        self.assertRaises(InfrastructureError, bzr.clone, 'foo.bar', 'badrev')
+        self.assertRaises(InfrastructureError, bzr.clone, 'foo.bar', revision='3')
+        self.assertRaises(InfrastructureError, bzr.clone, 'foo.bar', revision='badrev')
 
 
 class TestConstants(StdoutTestCase):  # pylint: disable=too-many-public-methods
@@ -211,7 +217,7 @@ class TestConstants(StdoutTestCase):  # pylint: disable=too-many-public-methods
     def test_action_parameters(self):
         self.assertIsNotNone(self.job.parameters)
         deploy = self.job.pipeline.actions[0]
-        self.assertIsNone(deploy.parameters.get('parameters', None))
+        self.assertIsNone(deploy.parameters.get('parameters'))
         uboot = self.job.pipeline.actions[1]
         self.assertEqual(
             "reboot: Restarting system",  # modified in the job yaml

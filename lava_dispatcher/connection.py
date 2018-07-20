@@ -88,6 +88,9 @@ class Connection(object):
     Connecting between devices is handled inside the YAML test definition, whether by
     multinode or by configured services inside the test image.
     """
+
+    name = "Connection"
+
     def __init__(self, job, raw_connection):
         self.device = job.device
         self.job = job
@@ -102,6 +105,12 @@ class Connection(object):
 
     def corruption_check(self):
         self.sendline(self.check_char)
+
+    def send(self, character, disconnecting=False):
+        if self.connected:
+            self.raw_connection.send(character)
+        elif not disconnecting:
+            raise LAVABug("send")
 
     def sendline(self, line, delay=0, disconnecting=False):
         if self.connected:

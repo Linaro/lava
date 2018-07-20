@@ -4,6 +4,8 @@ import yaml
 import jinja2
 import unittest
 import logging
+import subprocess
+from nose.tools import nottest
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
@@ -23,7 +25,6 @@ from lava_scheduler_app.tests.test_submission import ModelFactory, TestCaseWithF
 from lava_scheduler_app.schema import (
     validate_submission,
     validate_device,
-    include_yaml,
     SubmissionException
 )
 from lava_dispatcher.device import PipelineDevice
@@ -52,7 +53,7 @@ class YamlFactory(ModelFactory):
     """
 
     def __init__(self):
-        super(YamlFactory, self).__init__()
+        super().__init__()
         Device.CONFIG_PATH = os.path.join(os.getcwd(), 'lava_scheduler_app', 'tests', 'devices')
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
         logger = logging.getLogger('unittests')
@@ -103,7 +104,7 @@ class PipelineDeviceTags(TestCaseWithFactory):
     Same tests as test_submission but converted to use and look for YAML.
     """
     def setUp(self):
-        super(PipelineDeviceTags, self).setUp()
+        super().setUp()
         self.factory = YamlFactory()
         self.device_type = self.factory.make_device_type()
         self.conf = {
@@ -235,7 +236,7 @@ class PipelineDeviceTags(TestCaseWithFactory):
 class TestPipelineSubmit(TestCaseWithFactory):
 
     def setUp(self):
-        super(TestPipelineSubmit, self).setUp()
+        super().setUp()
         self.factory = YamlFactory()
         self.device_type = self.factory.make_device_type()
         self.factory.make_device(device_type=self.device_type, hostname="fakeqemu1")
@@ -509,46 +510,11 @@ class TestPipelineSubmit(TestCaseWithFactory):
         job.save()
         device.save()
 
-    def test_include_yaml_non_dict(self):
-        include_data = ['value1', 'value2']
-        self.assertRaises(
-            SubmissionException,
-            include_yaml,
-            self.factory.make_job_data(),
-            include_data)
-
-    def test_include_yaml_overwrite(self):
-        # Test overwrite of values.
-        job_data = self.factory.make_job_data()
-        include_data = {'priority': 'high'}
-        job_data = include_yaml(job_data, include_data)
-        self.assertEqual(job_data['priority'], 'high')
-
-        # Test in-depth overwrite.
-        include_data = {'timeouts': {'action': {'minutes': 10}}}
-        job_data = include_yaml(job_data, include_data)
-        self.assertEqual(job_data['timeouts']['action']['minutes'], 10)
-        self.assertEqual(job_data['timeouts']['job']['minutes'], 15)
-
-    def test_include_yaml_list_append(self):
-        job_data = self.factory.make_job_data()
-        include_data = {'actions': [
-            {'deploy': {'to': 'tmpfs', 'compression': 'gz', 'images': {}}}]}
-        job_data = include_yaml(job_data, include_data)
-        self.assertEqual(len(job_data['actions']), 4)
-        self.assertEqual(job_data['actions'][3], include_data['actions'][0])
-
-    def test_include_yaml(self):
-        job_data = self.factory.make_job_data()
-        include_data = {'key': 'value'}
-        job_data = include_yaml(job_data, include_data)
-        self.assertEqual(job_data['key'], 'value')
-
 
 class TestExtendsSubmit(TestCaseWithFactory):
 
     def setUp(self):
-        super(TestExtendsSubmit, self).setUp()
+        super().setUp()
         Device.HEALTH_CHECK_PATH = os.path.join(os.getcwd(), 'lava_scheduler_app', 'tests', 'health-checks')
         self.factory = YamlFactory()
         self.device_type = self.factory.make_device_type(name='juno-r2')
@@ -576,10 +542,24 @@ class TestExtendsSubmit(TestCaseWithFactory):
         self.assertIsNotNone(device1.get_health_check())
 
 
+@nottest
+def check_rpcinfo(server='127.0.0.1'):
+    """
+    Supports the unittest.SkipIf
+    needs to return True if skip, so
+    returns True on failure.
+    """
+    try:
+        subprocess.check_output(['/usr/sbin/rpcinfo', '-u', server, 'nfs', '3'])
+    except (OSError, subprocess.CalledProcessError):
+        return True
+    return False
+
+
 class TestYamlMultinode(TestCaseWithFactory):
 
     def setUp(self):
-        super(TestYamlMultinode, self).setUp()
+        super().setUp()
         self.factory = YamlFactory()
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
         logger = logging.getLogger('unittests')
@@ -591,7 +571,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         logger.propagate = False
 
     def tearDown(self):
-        super(TestYamlMultinode, self).tearDown()
+        super().tearDown()
         Device.objects.all().delete()
 
     def test_multinode_split(self):
@@ -618,6 +598,7 @@ class TestYamlMultinode(TestCaseWithFactory):
                 if role == 'server':
                     self.assertEqual(job, yaml.load(open(server_check, 'r')))
 
+    @unittest.skipIf(check_rpcinfo(), "rpcinfo returns non-zero for nfs")
     def test_secondary_connection(self):
         user = self.factory.make_user()
         device_type = self.factory.make_device_type(name='mustang')
@@ -700,6 +681,33 @@ class TestYamlMultinode(TestCaseWithFactory):
                     self.assertEqual(job['protocols']['lava-multinode']['tags'], ['tap'])
                 else:
                     self.fail('unexpected role')
+
+        # all devices available
+        user = self.factory.make_user()
+        device_type = self.factory.make_device_type()
+
+        self.factory.make_device(device_type, 'fakeqemu1',
+                                 tags=[self.factory.ensure_tag('tap')])
+        self.factory.make_device(device_type, 'fakeqemu2',
+                                 tags=[self.factory.ensure_tag('virtio')])
+        job_list = TestJob.from_yaml_and_user(yaml.dump(submission), user)
+        self.assertEqual(len(job_list), 2)
+        # not enough devices with correct tags
+        roles_dict['client']['count'] = 2
+        submission['protocols'][MultinodeProtocol.name]['roles'] = roles_dict
+        self.factory.make_device(device_type, 'fakeqemu3',
+                                 tags=[self.factory.ensure_tag('wrong-tag')])
+        self.assertRaises(
+            DevicesUnavailableException,
+            TestJob.from_yaml_and_user,
+            yaml.dump(submission),
+            user
+        )
+        # enough devices with correct tags
+        self.factory.make_device(device_type, 'fakeqemu4',
+                                 tags=[self.factory.ensure_tag('tap')])
+        job_list = TestJob.from_yaml_and_user(yaml.dump(submission), user)
+        self.assertEqual(len(job_list), 3)
 
     def test_multinode_lxc(self):
         submission = yaml.load(open(
@@ -1020,6 +1028,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         )
 
     @unittest.skipIf(not os.path.exists(SYS_CLASS_KVM), "Cannot use --enable-kvm")
+    @unittest.skipIf(check_rpcinfo(), "rpcinfo returns non-zero for nfs")
     def test_multinode_mixed_deploy(self):
         user = self.factory.make_user()
         device_type = self.factory.make_device_type()
@@ -1110,7 +1119,7 @@ class TestYamlMultinode(TestCaseWithFactory):
 class VlanInterfaces(TestCaseWithFactory):
 
     def setUp(self):
-        super(VlanInterfaces, self).setUp()
+        super().setUp()
         # YAML, pipeline only
         user = User.objects.create_user('test', 'e@mail.invalid', 'test')
         user.user_permissions.add(

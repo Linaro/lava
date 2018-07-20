@@ -1,5 +1,3 @@
-device_type: mustang-uefi
-
 commands:
   connections:
     uart0:

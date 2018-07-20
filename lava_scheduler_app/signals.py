@@ -1,15 +1,27 @@
-from __future__ import unicode_literals
-
 import datetime
-from django.conf import settings
-from django.db.models.signals import post_init, post_save
 import simplejson
 import threading
 import uuid
+import yaml
 import zmq
 from zmq.utils.strtypes import b
 
+from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
+from django.db.models.signals import (
+    post_init,
+    post_save,
+    pre_delete,
+    pre_save
+)
+
 from lava_scheduler_app.models import Device, TestJob, Worker
+from lava_scheduler_app.notifications import (
+    create_notification,
+    notification_criteria,
+    send_notifications
+)
 
 
 # Thread local storage for zmq socket and context
@@ -87,6 +99,28 @@ def testjob_init_handler(sender, **kwargs):
     instance._old_state = instance.state
 
 
+def testjob_notifications(sender, **kwargs):
+    job = kwargs["instance"]
+    # If it's a new TestJob, no need to send notifications.
+    if not job.id:
+        return
+
+    # Only notify when the state changed
+    if job._old_state == job.state:
+        return
+    if job.state not in [TestJob.STATE_RUNNING, TestJob.STATE_FINISHED]:
+        return
+
+    job_def = yaml.safe_load(job.definition)
+    if "notify" in job_def:
+        if notification_criteria(job_def["notify"]["criteria"], job.state, job.health, job._old_health):
+            try:
+                job.notification
+            except ObjectDoesNotExist:
+                create_notification(job, job_def["notify"])
+            send_notifications(job)
+
+
 def testjob_post_handler(sender, **kwargs):
     # Called only when a Device is saved into the database
     instance = kwargs["instance"]
@@ -126,6 +160,12 @@ def testjob_post_handler(sender, **kwargs):
         send_event(".testjob", str(instance.submitter), data)
 
 
+def testjob_pre_delete_handler(sender, **kwargs):
+    instance = kwargs["instance"]
+    with transaction.atomic():
+        instance.go_state_finished(TestJob.HEALTH_CANCELED, True)
+
+
 def worker_init_handler(sender, **kwargs):
     # This function is called for every testJob object created
     # Save the old states
@@ -156,9 +196,15 @@ def worker_post_handler(sender, **kwargs):
         send_event(".worker", "lavaserver", data)
 
 
-post_init.connect(device_init_handler, sender=Device, weak=False, dispatch_uid="device_init_handler")
-post_save.connect(device_post_handler, sender=Device, weak=False, dispatch_uid="device_post_handler")
+pre_delete.connect(testjob_pre_delete_handler, sender=TestJob, weak=False, dispatch_uid="testjob_pre_delete_handler")
+# This handler is used for the notification and the events
 post_init.connect(testjob_init_handler, sender=TestJob, weak=False, dispatch_uid="testjob_init_handler")
-post_save.connect(testjob_post_handler, sender=TestJob, weak=False, dispatch_uid="testjob_post_handler")
-post_init.connect(worker_init_handler, sender=Worker, weak=False, dispatch_uid="worker_init_handler")
-post_save.connect(worker_post_handler, sender=Worker, weak=False, dispatch_uid="worker_post_handler")
+pre_save.connect(testjob_notifications, sender=TestJob, weak=False, dispatch_uid="testjob_notifications")
+
+# Only activate theses signals when EVENT_NOTIFICATION is in use
+if settings.EVENT_NOTIFICATION:
+    post_init.connect(device_init_handler, sender=Device, weak=False, dispatch_uid="device_init_handler")
+    post_save.connect(device_post_handler, sender=Device, weak=False, dispatch_uid="device_post_handler")
+    post_save.connect(testjob_post_handler, sender=TestJob, weak=False, dispatch_uid="testjob_post_handler")
+    post_init.connect(worker_init_handler, sender=Worker, weak=False, dispatch_uid="worker_init_handler")
+    post_save.connect(worker_post_handler, sender=Worker, weak=False, dispatch_uid="worker_post_handler")

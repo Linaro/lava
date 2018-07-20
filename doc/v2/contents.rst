@@ -84,7 +84,7 @@ First steps using LAVA
    first_steps
    first-job
    explain_first_job
-   lava-tool
+   lavacli
    standard-test-jobs
    standard-qemu-stretch
    standard-qemu-kernel
@@ -140,6 +140,7 @@ Writing tests for LAVA
    vland
    debugging
    pipeline-usecases
+   templating
 
 .. _contents_results:
 
@@ -154,7 +155,9 @@ Results in LAVA
    data-export
    user-notifications
    custom-result-handling
+   relating
    tables
+   lava-tool
 
 .. _contents_admin_guide:
 
@@ -222,6 +225,7 @@ LAVA developer guide
    packaging
    developer-example
    scheduler
+   functional_tests
 
 .. _contents_migration:
 

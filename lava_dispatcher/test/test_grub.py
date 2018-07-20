@@ -26,7 +26,7 @@ from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.test.utils import DummyLogger, infrastructure_error, infrastructure_error_multi_paths
 from lava_dispatcher.actions.boot.grub import GrubMainAction
-from lava_dispatcher.actions.boot import BootloaderCommandOverlay
+from lava_dispatcher.actions.boot import BootloaderCommandOverlay, BootloaderInterruptAction
 from lava_dispatcher.actions.deploy.tftp import TftpAction
 from lava_dispatcher.job import Job
 from lava_dispatcher.action import JobError, Pipeline
@@ -69,7 +69,6 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertEqual(description_ref, job.pipeline.describe(False))
 
         self.assertIsNone(job.validate())
-        self.assertEqual(job.device['device_type'], 'd02')
 
     def test_tftp_pipeline(self):
         job = self.factory.create_job('d02-01.jinja2', 'sample_jobs/grub-ramdisk.yaml')
@@ -99,7 +98,7 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertEqual(job.device['commands'].get('interrupt', ' '), ' ')
         methods = job.device['actions']['boot']['methods']
         self.assertIn('grub', methods)
-        self.assertEqual(methods['grub']['parameters'].get('bootloader_prompt', None), 'grub>')
+        self.assertEqual(methods['grub']['parameters'].get('bootloader_prompt'), 'grub>')
 
     @unittest.skipIf(infrastructure_error('mkimage'), "u-boot-tools not installed")
     def test_grub_action(self):
@@ -121,6 +120,8 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
                 self.assertIn('kernel', action.parameters)
                 self.assertIn('to', action.parameters)
                 self.assertEqual('tftp', action.parameters['to'])
+            if isinstance(action, BootloaderInterruptAction):
+                self.assertFalse(action.interrupt_newline)
             self.assertTrue(action.valid)
 
     def test_overlay_action(self):  # pylint: disable=too-many-locals
@@ -268,7 +269,7 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertEqual('telnet localhost 4002', uart)
         tshells = [action for action in job.pipeline.actions if action.name == 'lava-test-retry']
         for shell in tshells:
-            cn = shell.parameters.get('connection-namespace', None)
+            cn = shell.parameters.get('connection-namespace')
             if cn:
                 self.assertEqual(shell.parameters['namespace'], 'hikey-oe')
                 self.assertNotEqual(shell.parameters['namespace'], 'isolation')
@@ -284,7 +285,7 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         menu = [action for action in job.pipeline.actions if action.name == 'grub-sequence-action'][0]
         autologin = [action for action in menu.internal_pipeline.actions if action.name == 'auto-login-action'][0]
         self.assertIsNone(autologin.params)
-        self.assertEqual(['login:'], autologin.parameters.get('prompts', None))
+        self.assertEqual(['login:'], autologin.parameters.get('prompts'))
         menu = [action for action in job.pipeline.actions if action.name == 'secondary-shell-action'][0]
         autologin = [action for action in menu.internal_pipeline.actions if action.name == 'auto-login-action'][0]
         self.assertIsNotNone(autologin.parameters)

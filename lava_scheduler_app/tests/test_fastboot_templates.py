@@ -39,7 +39,6 @@ class TestFastbootTemplates(BaseTemplate.BaseTemplateCases):
         test_template = prepare_jinja_template('nexus4-01', data)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
-        self.assertEqual('nexus4', template_dict['device_type'])
         self.assertEqual('R32D300FRYP', template_dict['adb_serial_number'])
         self.assertEqual('R32D300FRYP', template_dict['fastboot_serial_number'])
         self.assertEqual([], template_dict['fastboot_options'])
@@ -51,18 +50,21 @@ class TestFastbootTemplates(BaseTemplate.BaseTemplateCases):
         data = """{% extends 'x15.jinja2' %}
 {% set adb_serial_number = 'R32D300FRYP' %}
 {% set fastboot_serial_number = 'R32D300FRYP' %}
+{% set interrupt_prompt = "interrupt bootloader" %}
 """
         self.assertTrue(self.validate_data('x15-01', data))
         test_template = prepare_jinja_template('x15-01', data)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
-        self.assertEqual('x15', template_dict['device_type'])
         self.assertEqual('R32D300FRYP', template_dict['adb_serial_number'])
         self.assertEqual('R32D300FRYP', template_dict['fastboot_serial_number'])
         self.assertEqual([], template_dict['fastboot_options'])
         self.assertIn('u-boot', template_dict['actions']['boot']['methods'])
         self.assertIn('parameters', template_dict['actions']['boot']['methods']['u-boot'])
         self.assertIn('interrupt_prompt', template_dict['actions']['boot']['methods']['u-boot']['parameters'])
+        self.assertEqual(
+            'interrupt bootloader',
+            template_dict['actions']['boot']['methods']['u-boot']['parameters']['interrupt_prompt'])
         # fastboot deploy to eMMC
         self.assertIn('mmc', template_dict['actions']['boot']['methods']['u-boot'])
         self.assertIn('commands', template_dict['actions']['boot']['methods']['u-boot']['mmc'])
@@ -74,6 +76,8 @@ class TestFastbootTemplates(BaseTemplate.BaseTemplateCases):
                 # x15 needs both consoles enabled.
                 self.assertIn('ttyS2', command)
                 self.assertNotIn('console=ttyO2', command)
+        for board in template_dict['device_info']:
+            self.assertEqual(template_dict['fastboot_serial_number'], board['board_id'])
 
     def test_sharkl2_template(self):
         data = """{% extends 'sharkl2.jinja2' %}
@@ -84,7 +88,6 @@ class TestFastbootTemplates(BaseTemplate.BaseTemplateCases):
         test_template = prepare_jinja_template('sharkl2-01', data)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
-        self.assertEqual('sharkl2', template_dict['device_type'])
         self.assertEqual('R32D300FRYP', template_dict['adb_serial_number'])
         self.assertEqual('R32D300FRYP', template_dict['fastboot_serial_number'])
         self.assertEqual([], template_dict['fastboot_options'])
@@ -328,7 +331,6 @@ class TestFastbootTemplates(BaseTemplate.BaseTemplateCases):
                                                data)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
-        self.assertEqual('ifc6410', template_dict['device_type'])
         self.assertEqual('e080c212', template_dict['adb_serial_number'])
         self.assertEqual('e080c212', template_dict['fastboot_serial_number'])
         self.assertEqual([], template_dict['fastboot_options'])
@@ -347,7 +349,6 @@ class TestFastbootTemplates(BaseTemplate.BaseTemplateCases):
         test_template = prepare_jinja_template('db820c-01', data)
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
-        self.assertEqual('dragonboard-820c', template_dict['device_type'])
         self.assertEqual('3083f595', template_dict['adb_serial_number'])
         self.assertEqual('3083f595', template_dict['fastboot_serial_number'])
         self.assertEqual([], template_dict['fastboot_options'])
@@ -374,3 +375,33 @@ class TestFastbootTemplates(BaseTemplate.BaseTemplateCases):
             ['/home/neil/lava-lab/shared/lab-scripts/eth008_control -a 10.15.0.171 -r 1 -s on',
              '/home/neil/lava-lab/shared/lab-scripts/eth008_control -a 10.15.0.171 -r 2 -s off'],
             recovery['recovery']['commands']['recovery_exit'])
+
+    def test_sdm845_mtp_template(self):
+        fastboot_cmd_order = ['update',
+                              'ptable',
+                              'partition',
+                              'hyp',
+                              'modem',
+                              'rpm',
+                              'sbl1',
+                              'sbl2',
+                              'sec',
+                              'tz',
+                              'aboot',
+                              'cdt',
+                              'boot',
+                              'rootfs',
+                              'vendor',
+                              'system',
+                              'cache',
+                              'userdata']
+
+        rendered = self.render_device_dictionary_file('sdm845-mtp-05.jinja2')
+        template_dict = yaml.safe_load(rendered)
+        self.assertEqual('5c302cef', template_dict['adb_serial_number'])
+        self.assertEqual('5c302cef', template_dict['fastboot_serial_number'])
+        self.assertEqual([], template_dict['fastboot_options'])
+
+        for cmd in template_dict['flash_cmds_order']:
+            idx = template_dict['flash_cmds_order'].index(cmd)
+            self.assertEqual(cmd, fastboot_cmd_order[idx])

@@ -18,15 +18,19 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import copy
 import os
 import hashlib
+from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.test.test_basic import Factory, StdoutTestCase
+from lava_dispatcher.utils.compression import decompress_file
+from lava_dispatcher.utils.compression import decompress_command_map
 
 
 class TestDecompression(StdoutTestCase):
 
     def setUp(self):
-        super(TestDecompression, self).setUp()
+        super().setUp()
         factory = Factory()
         self.job = factory.create_kvm_job('sample_jobs/compression.yaml')
         self.job.validate()
@@ -73,3 +77,18 @@ class TestDecompression(StdoutTestCase):
                 self.assertEqual(outputsha, sha256sum)
                 self.assertEqual(outputsize, filesize)
                 self.assertEqual(outputfile, '10MB')
+
+    def test_multiple_decompressions(self):
+        """
+        Previously had an issue with decompress_command_map being modified.
+        This should be a constant. If this is modified during calling decompress_file
+        then a regression has occurred.
+        :return:
+        """
+        # Take a complete copy of decompress_command_map before it has been modified
+        copy_of_command_map = copy.deepcopy(decompress_command_map)
+        # Call decompress_file, we only need it to create the command required,
+        # it doesn't need to complete successfully.
+        with self.assertRaises(InfrastructureError):
+            decompress_file("/tmp/test.xz", "zip")
+        self.assertEqual(copy_of_command_map, decompress_command_map)

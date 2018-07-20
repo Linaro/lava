@@ -1,5 +1,18 @@
 {% extends "layouts/content.html" %}
 {% load utils %}
+{% block styles %}
+<style>
+.noselect {
+  -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Chrome/Safari/Opera */
+     -khtml-user-select: none; /* Konqueror */
+       -moz-user-select: none; /* Firefox */
+        -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently
+                                  not supported by any browser */
+}
+</style>
+{% endblock %}
 {% block content %}
 
 {% if device.device_type.owners_only %}
@@ -10,8 +23,7 @@
 </div>
 {% endif %}
 
-<h2>Device Dictionary for {{ device.hostname }}
-
+<h2>Device dictionary
   <a class="btn btn-xs btn-info"
      href="{% url 'lava.scheduler.device.dictionary.plain' device.hostname %}"
      title="Download full device configuration (YAML).
@@ -26,9 +38,15 @@ i.e., its equivalent to get-pipeline-device-config in lava-tool.">
   <div class="col-md-6">
     <dl class="dl-horizontal">
       <dt>Hostname</dt>
-      <dd>{{ device.hostname }}</dd>
+      <dd><a href="{{ device.get_absolute_url }}">{{ device.hostname }}</a>
+          {% if user.is_superuser %}<a
+          href="{% url 'admin:lava_scheduler_app_device_change' device.hostname %}" title="admin this device"><span
+          class="glyphicon glyphicon-wrench"></span></a>
+          {% endif %}
+          <a href="{% url 'lava.scheduler.device_report' device.pk %}"><span class="glyphicon glyphicon-stats"></span></a>
+      </dd>
       <dt>Device type</dt>
-      <dd>{{ device.device_type }}</dd>
+      <dd><a href="{{ device.device_type.get_absolute_url }}">{{ device.device_type.name }}</a> <a href="{% url 'lava.scheduler.device_type_report' device.device_type.pk %}"><span class="glyphicon glyphicon-stats"></span></a></dd>
     </dl>
   </div>
   <div class="col-md-6">
@@ -39,62 +57,46 @@ i.e., its equivalent to get-pipeline-device-config in lava-tool.">
   </div>
 </div>
 
+<ul class="nav nav-tabs">
+  <li class="active"><a href="#jinja" data-toggle="tab">Raw Jinja</a></li>
+  <li><a href="#yaml" data-toggle="tab">Rendered YAML</a></li>
+</ul>
+<div class="tab-content">
+  <div class="tab-pane active" id="jinja">
+<h4 class="modal-header">Jinja2</h4>
 
-<div class="container-fluid">
-{% if dictionary %}
-<div class="row">
-    <h4 class="modal-header">Commands</h4>
-    <dl class="dl-horizontal">
-    {% for key, value in dictionary.items %}
-        <dt>{{ key }}</dt>
-{% if value|is_list_type %}
-        <dd>
-{% for line in value %}
-        <pre>{{ line }}</pre>
+{% with dictionary|split_definition as definition_data %}
+{% for line in definition_data %}
+    <div class="row">
+  <div class="col-md-1 noselect" id="defline{{ forloop.counter }}">
+    <a href="#defline{{ forloop.counter }}">{{ forloop.counter }}</a>
+   </div>
+   <div class="col-md-8">
+    <span style="font-family: monospace; white-space: pre;">{{ line.rstrip|replace_python_unicode }}</span>
+   </div>
+    </div>
 {% endfor %}
-        </dd>
-{% else %}
-        <dd><pre>{{ value }}</pre></dd>
-{% endif %}
-    {% endfor %}
-    </dl>
-</div>
-{% endif %}
+{% endwith %}
 
-{% if connections %}
-<div class="row">
-    <h4 class="modal-header">Connections</h4>
-    <dl class="dl-horizontal">
-    {% for key, value in connections.items %}
-        <dt>{{ key }}</dt>
-        <dd><pre>{{ value }}</pre></dd>
-    {% endfor %}
-    </dl>
-</div>
-{% endif %}
+ </div>
+  <div class="tab-pane" id="yaml">
+<h4 class="modal-header">YAML</h4>
 
-{% if extra %}
-<div class="row">
-    <h4 class="modal-header">Other parameters</h4>
-    <dl class="dl-horizontal">
-    {% for key, value in extra.items %}
-        <dt>{{ key }}</dt>
-        <dd><pre>{{ value }}</pre></dd>
-    {% endfor %}
-    </dl>
-</div>
-{% endif %}
+{% with device_yaml|split_definition as definition_data %}
+{% for line in definition_data %}
+    <div class="row">
+  <div class="col-md-1 noselect" id="defline{{ forloop.counter }}">
+    <a href="#defline{{ forloop.counter }}">{{ forloop.counter }}</a>
+   </div>
+   <div class="col-md-8">
+    <span style="font-family: monospace; white-space: pre;">{{ line.rstrip|replace_python_unicode }}</span>
+   </div>
+    </div>
+{% endfor %}
+{% endwith %}
 
-{% if vland %}
-<div class="row">
-    <h4 class="modal-header">Networking parameters</h4>
-    <dl class="dl-horizontal">
-    {% for key, value in vland.items %}
-        <dt>{{ key }}</dt>
-        <dd><pre>{{ value }}</pre></dd>
-    {% endfor %}
-    </dl>
+  </div>
 </div>
-{% endif %}
-</div>
+
+
 {% endblock %}

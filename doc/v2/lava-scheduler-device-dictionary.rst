@@ -16,9 +16,6 @@ Other fields can also be used in the templates. The only field which is
 compulsory is **extends** which links this device dictionary to a specific
 device type template.
 
-Dictionary elements are shown in four blocks: commands, connections, vland and
-others.
-
 .. _device_dictionary_commands:
 
 Commands
@@ -114,6 +111,8 @@ download a YAML file of the :term:`device dictionary`, which is the equivalent
 of contents returned by `get-pipeline-device-config` in `lava-tool`. This file
 is not intended for admin support and cannot be used to modify the
 :term:`device dictionary` itself.
+
+.. index:: storage_info, device_ip, device_mac
 
 .. _device_dictionary_exported_parameters:
 

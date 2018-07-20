@@ -115,6 +115,16 @@ def write_bootscript(commands, filename):
         bootscript.close()
 
 
+def _launch_guestfs(guest):
+    # Launch guestfs and raise an InfrastructureError if needed
+    try:
+        guest.launch()
+    except RuntimeError as exc:
+        logger = logging.getLogger('dispatcher')
+        logger.exception(str(exc))
+        raise InfrastructureError("Unable to start libguestfs")
+
+
 @replace_exception(RuntimeError, JobError)
 def prepare_guestfs(output, overlay, size):
     """
@@ -131,7 +141,7 @@ def prepare_guestfs(output, overlay, size):
     guest = guestfs.GuestFS(python_return_dict=True)
     guest.disk_create(output, "qcow2", size * 1024 * 1024)
     guest.add_drive_opts(output, format="qcow2", readonly=False)
-    guest.launch()
+    _launch_guestfs(guest)
     devices = guest.list_devices()
     if len(devices) != 1:
         raise InfrastructureError("Unable to prepare guestfs")
@@ -166,7 +176,7 @@ def prepare_install_base(output, size):
     guest = guestfs.GuestFS(python_return_dict=True)
     guest.disk_create(output, "raw", size)
     guest.add_drive_opts(output, format="raw", readonly=False)
-    guest.launch()
+    _launch_guestfs(guest)
     devices = guest.list_devices()
     if len(devices) != 1:
         raise InfrastructureError("Unable to prepare guestfs")
@@ -186,7 +196,7 @@ def copy_out_files(image, filenames, destination):
         raise LAVABug('filenames must be a list')
     guest = guestfs.GuestFS(python_return_dict=True)
     guest.add_drive_ro(image)
-    guest.launch()
+    _launch_guestfs(guest)
     devices = guest.list_devices()
     if len(devices) != 1:
         raise InfrastructureError("Unable to prepare guestfs")
@@ -208,7 +218,7 @@ def copy_in_overlay(image, root_partition, overlay):
     """
     guest = guestfs.GuestFS(python_return_dict=True)
     guest.add_drive(image)
-    guest.launch()
+    _launch_guestfs(guest)
 
     if root_partition:
         partitions = guest.list_partitions()
@@ -258,8 +268,7 @@ def lava_lxc_home(lxc_name, dispatcher_config):
     path = os.path.join(lxc_path(dispatcher_config), lxc_name, 'rootfs',
                         LAVA_LXC_HOME.lstrip('/'))
     # Create lava_lxc_home if it is unavailable
-    if not os.path.exists(path):
-        os.makedirs(path, 0o755)
+    os.makedirs(path, 0o755, exist_ok=True)
     return path
 
 
@@ -351,7 +360,7 @@ def copy_overlay_to_sparse_fs(image, overlay):
     subprocess.check_output(['/usr/bin/simg2img', image, ext4_img],
                             stderr=subprocess.STDOUT)
     guest.add_drive(ext4_img)
-    guest.launch()
+    _launch_guestfs(guest)
     devices = guest.list_devices()
     if not devices:
         raise InfrastructureError("Unable to prepare guestfs")
@@ -366,47 +375,13 @@ def copy_overlay_to_sparse_fs(image, overlay):
     # Check if we have space left on the mounted image.
     output = guest.df()
     logger.debug(output)
-    device, size, used, available, percent, mountpoint = output.split(
-        "\n")[1].split()
+    _, _, _, available, percent, _ = output.split("\n")[1].split()
     guest.umount(devices[0])
     if int(available) is 0 or percent == '100%':
         raise JobError("No space in image after applying overlay: %s" % image)
     subprocess.check_output(['/usr/bin/img2simg', ext4_img, image],
                             stderr=subprocess.STDOUT)
     os.remove(ext4_img)
-
-
-def debian_package_version(pkg='lava-dispatcher', split=True):
-    """
-    Relies on Debian Policy rules for the existence of the
-    changelog. Distributions not derived from Debian will
-    return an empty string.
-    """
-    changelog = '/usr/share/doc/%s/changelog.Debian.gz' % pkg
-    if os.path.exists(changelog):
-        deb_version = subprocess.check_output((
-            'dpkg-query', '-W', "-f=${Version}\n",
-            "%s" % pkg)).strip().decode('utf-8', errors="replace")
-        # example version returned would be '2016.11'
-        if split:
-            return deb_version.split('-')[0]
-        return deb_version
-    return ''
-
-
-def debian_package_arch(pkg='lava-dispatcher'):
-    """
-    Relies on Debian Policy rules for the existence of the
-    changelog. Distributions not derived from Debian will
-    return an empty string.
-    """
-    changelog = '/usr/share/doc/%s/changelog.Debian.gz' % pkg
-    if os.path.exists(changelog):
-        deb_arch = subprocess.check_output((
-            'dpkg-query', '-W', "-f=${Architecture}\n",
-            "%s" % pkg)).strip().decode('utf-8', errors="replace")
-        return deb_arch
-    return ''
 
 
 def copy_directory_contents(root_dir, dst_dir):
@@ -442,9 +417,6 @@ def is_sparse_image(image):
     """
     Returns True if the image is an 'Android sparse image' else False.
     """
-    image_magic = magic.open(magic.MAGIC_NONE)
+    image_magic = magic.open(magic.MAGIC_NONE)  # pylint: disable=no-member
     image_magic.load()
-    if image_magic.file(image).split(',')[0] == 'Android sparse image':
-        return True
-    else:
-        return False
+    return bool(image_magic.file(image).split(',')[0] == 'Android sparse image')

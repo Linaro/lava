@@ -20,7 +20,6 @@
 
 import re
 import os
-import sys
 import glob
 import stat
 import yaml
@@ -31,7 +30,6 @@ import unittest
 import subprocess
 from nose.tools import nottest
 from lava_dispatcher.power import FinalizeAction
-from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
 from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.actions.test.shell import TestShellRetry, PatternFixup
@@ -49,7 +47,10 @@ from lava_dispatcher.actions.deploy.testdef import (
 from lava_dispatcher.actions.boot import BootAction
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.actions.deploy.download import DownloaderAction
-from lava_dispatcher.test.utils import infrastructure_error
+from lava_dispatcher.test.utils import (
+    infrastructure_error,
+    infrastructure_error_multi_paths,
+)
 
 
 # pylint: disable=duplicate-code
@@ -174,12 +175,14 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
             'lava-target-mac',
             'lava-target-storage',
             'lava-test-case',
+            'lava-test-event',
             'lava-test-feedback',
             'lava-test-reference',
             'lava-test-runner',
             'lava-test-set',
             'lava-test-shell',
             'lava-test-raise',
+            'lava-common-functions'
         ]
 
         overlay = None
@@ -378,7 +381,7 @@ def check_rpcinfo(server='127.0.0.1'):
     returns True on failure.
     """
     try:
-        subprocess.check_output(['/usr/sbin/rpcinfo', '-u', server, 'nfs', 3])
+        subprocess.check_output(['/usr/sbin/rpcinfo', '-u', server, 'nfs', '3'])
     except (OSError, subprocess.CalledProcessError):
         return True
     return False
@@ -397,8 +400,8 @@ class TestDefinitions(StdoutTestCase):
         super().setUp()
         self.testdef = os.path.join(os.path.dirname(__file__), 'testdefs', 'params.yaml')
         self.res_data = os.path.join(os.path.dirname(__file__), 'testdefs', 'result-data.txt')
-        factory = UBootFactory()
-        self.job = factory.create_bbb_job("sample_jobs/bbb-nfs-url.yaml")
+        self.factory = UBootFactory()
+        self.job = self.factory.create_bbb_job("sample_jobs/bbb-nfs-url.yaml")
 
     def test_pattern(self):
         self.assertTrue(os.path.exists(self.testdef))
@@ -424,16 +427,16 @@ class TestDefinitions(StdoutTestCase):
         pattern = PatternFixup(testdef=params, count=0)
         self.assertTrue(pattern.valid())
 
-    # @unittest.skipIf(check_rpcinfo(), "rpcinfo returns non-zero for nfs")
+    @unittest.skipIf(check_rpcinfo(), "rpcinfo returns non-zero for nfs")
     def test_definition_lists(self):  # pylint: disable=too-many-locals
         self.job.validate()
         tftp_deploy = [action for action in self.job.pipeline.actions if action.name == 'tftp-deploy'][0]
         prepare = [action for action in tftp_deploy.internal_pipeline.actions if action.name == 'prepare-tftp-overlay'][0]
         overlay = [action for action in prepare.internal_pipeline.actions if action.name == 'lava-overlay'][0]
         apply_o = [action for action in prepare.internal_pipeline.actions if action.name == 'apply-overlay-tftp'][0]
-        self.assertIsNone(apply_o.parameters.get('nfs_url', None))
-        self.assertIsInstance(apply_o.parameters.get('persistent_nfs', None), dict)
-        self.assertIsInstance(apply_o.parameters['persistent_nfs'].get('address', None), str)
+        self.assertIsNone(apply_o.parameters.get('nfs_url'))
+        self.assertIsInstance(apply_o.parameters.get('persistent_nfs'), dict)
+        self.assertIsInstance(apply_o.parameters['persistent_nfs'].get('address'), str)
         definition = [action for action in overlay.internal_pipeline.actions if action.name == 'test-definition'][0]
         git_repos = [action for action in definition.internal_pipeline.actions if action.name == 'git-repo-action']
         self.assertIn('common', self.job.context)
@@ -513,3 +516,33 @@ test3a: skip
         self.assertEqual(child.after.encode('utf-8'), b'test2a: fail')
         child.expect([re_pat, pexpect.EOF])
         self.assertEqual(child.after, pexpect.EOF)
+
+    @unittest.skipIf(infrastructure_error_multi_paths(
+        ['lxc-info', 'img2simg', 'simg2img']),
+        "lxc or img2simg or simg2img not installed")
+    def test_deployment_data(self):
+        job = self.factory.create_job('hi960-hikey-01.jinja2', 'sample_jobs/hikey960-oe-aep.yaml')
+        job.validate()
+        description_ref = self.pipeline_reference('hikey960-oe-aep.yaml', job=job)
+        self.assertEqual(description_ref, job.pipeline.describe(False))
+
+        lxc_deploy = [action for action in job.pipeline.actions if action.name == 'lxc-deploy'][0]
+        lxc_overlay = [action for action in lxc_deploy.internal_pipeline.actions if action.name == 'lava-overlay'][0]
+        lxc_defs = [action for action in lxc_overlay.internal_pipeline.actions if action.name == 'test-definition'][0]
+        lxc_installscript = [action for action in lxc_defs.internal_pipeline.actions if action.name == 'test-install-overlay'][0]
+        fastboot_deploy = [action for action in job.pipeline.actions if action.name == 'fastboot-deploy'][0]
+        fastboot_overlay = [action for action in fastboot_deploy.internal_pipeline.actions if action.name == 'lava-overlay'][0]
+        fastboot_defs = [action for action in fastboot_overlay.internal_pipeline.actions if action.name == 'test-definition'][0]
+        fastboot_installscript = [action for action in fastboot_defs.internal_pipeline.actions if action.name == 'test-install-overlay'][0]
+
+        self.assertIn('distro', lxc_installscript.parameters['deployment_data'].keys())
+        self.assertIn('distro', list(lxc_installscript.parameters['deployment_data'].keys()))
+        self.assertIn('distro', list(lxc_installscript.parameters['deployment_data']))
+        self.assertIn('distro', dict(lxc_installscript.parameters['deployment_data']))
+        self.assertEqual('debian', lxc_installscript.parameters['deployment_data']['distro'])
+
+        self.assertIn('distro', fastboot_installscript.parameters['deployment_data'].keys())
+        self.assertIn('distro', list(fastboot_installscript.parameters['deployment_data'].keys()))
+        self.assertIn('distro', fastboot_installscript.parameters['deployment_data'])
+        self.assertIn('distro', dict(fastboot_installscript.parameters['deployment_data']))
+        self.assertEqual('oe', fastboot_installscript.parameters['deployment_data']['distro'])

@@ -3,7 +3,7 @@
 set -x
 set -e
 
-while getopts ":pdty" opt; do
+while getopts ":pdstyc" opt; do
   case $opt in
     p)
       # pep8 only
@@ -13,6 +13,10 @@ while getopts ":pdty" opt; do
       # lava_dispatcher only
       DISPATCH=true
       ;;
+    s)
+      # lava_server only
+      SERVER=true
+      ;;
     t)
       # template tests only
       TEMPLATE=true
@@ -21,11 +25,17 @@ while getopts ":pdty" opt; do
       # pytest-3 only
       PYTEST=true
       ;;
+    c)
+      # clean only
+      CLEAN=true
+      ;;
     ?)
       echo "Usage:"
-      echo "-p - pep8 only"
-      echo "-d - pep8 and dispatcher only"
-      echo "-t - pep8 and templates only"
+      echo "-c - clean targets only"
+      echo "-p - clean and pep8 only"
+      echo "-d - clean, pep8 and dispatcher only"
+      echo "-s - clean, pep8 and server only"
+      echo "-t - clean, pep8 and templates only"
       echo "Invalid option: -$OPTARG" >&2
       exit 1
       ;;
@@ -34,11 +44,10 @@ done
 
 shift $((OPTIND -1))
 
-pep8 --ignore E501,E722 .
-
-if [ -n "${PEP8}" ]
-then
-    exit 0
+if [ -n "${SUDO_USER}" ]; then
+    echo "./ci-run should NOT be run using ``sudo``"
+    # root is ok but only if root did the git clone
+    exit 3
 fi
 
 echo "Removing old .pyc files and cache"
@@ -46,6 +55,21 @@ echo
 find . -name '*.pyc' -delete
 rm -rf ./.cache/
 rm -rf ./__init__.py
+rm -rf lava.egg-info/
+rm -rf .pytest_cache/
+find . -name __pycache__ -exec rmdir "{}" \; 2>/dev/null || true
+
+if [ -n "${CLEAN}" ]
+then
+    exit 0
+fi
+
+pep8 --ignore E501 .
+
+if [ -n "${PEP8}" ]
+then
+    exit 0
+fi
 
 echo "Starting unit tests"
 echo
@@ -53,9 +77,14 @@ if [ -z "${DISPATCH}"  -a -z "${TEMPLATE}" -a -z "${PYTEST}" ]
 then
     echo "If it exists, a broken test database will be deleted without prompting."
     python3 ./lava_server/manage.py test --noinput -v 2 lava_scheduler_app linaro_django_xmlrpc.tests lava_results_app
+    if [ -n "${SERVER}" ]
+    then
+        exit
+    fi
     python3 -m unittest discover -v lava_dispatcher/test
     exit
 fi
+
 
 if [ -n "${DISPATCH}" -a  -z "${TEMPLATE}" -a -z "${PYTEST}" ]
 then
@@ -64,14 +93,18 @@ fi
 
 if [ -z "${DISPATCH}" -a  -n "${TEMPLATE}" -a -z "${PYTEST}" ]
 then
+    python3 -m unittest -vcf lava_scheduler_app.tests.test_base_templates
     python3 -m unittest -vcf lava_scheduler_app.tests.test_templates
+    python3 -m unittest -vcf lava_scheduler_app.tests.test_uboot_templates
+    python3 -m unittest -vcf lava_scheduler_app.tests.test_fastboot_templates
+    python3 -m unittest -vcf lava_scheduler_app.tests.test_grub_templates
+    python3 -m unittest -vcf lava_scheduler_app.tests.test_qemu_templates
 fi
 
 
 if [ -z "${DISPATCH}" -a -z "${TEMPLATE}" -a -n "${PYTEST}" ]
 then
-    PYTHONPATH=. pytest-3 --cache-clear --disable-pytest-warnings --ds lava_server.settings.development -v lava_scheduler_app
-    PYTHONPATH=. pytest-3 --cache-clear --disable-pytest-warnings --ds lava_server.settings.development -v lava_results_app
-    PYTHONPATH=. pytest-3 --cache-clear --disable-pytest-warnings --ds lava_server.settings.development -v linaro_django_xmlrpc/tests.py
-    PYTHONPATH=. pytest-3 --cache-clear --disable-pytest-warnings -v lava_dispatcher
+    PYTHONPATH=. pytest-3 --cache-clear --ds lava_server.settings.development -v lava_scheduler_app/tests lava_results_app/tests linaro_django_xmlrpc/tests.py
+    PYTHONPATH=. pytest-3 --cache-clear -v lava_dispatcher/test
+    PYTHONPATH=. pytest-3 --cache-clear -v lava_common/test
 fi

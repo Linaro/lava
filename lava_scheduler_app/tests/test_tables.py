@@ -1,5 +1,6 @@
 import logging
 import sys
+from nose.tools import nottest
 from django.contrib.auth.models import User, AnonymousUser
 from django_testscenarios.ubertest import TestCase
 from lava_scheduler_app.models import (
@@ -23,14 +24,15 @@ LOGGER.addHandler(logging.StreamHandler(sys.stdout))
 # pylint: disable=too-many-ancestors
 
 
+@nottest
 class TestTable(LavaTable):
-    def __init__(self, *args, **kwargs):
-        super(TestTable, self).__init__(*args, **kwargs)
+    pass
 
 
+@nottest
 class TestLengthTable(LavaTable):
     def __init__(self, *args, **kwargs):
-        super(TestLengthTable, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.length = 25
 
 
@@ -55,18 +57,21 @@ class TestTestTable(TestCase):
         self.assertEqual(table.prepare_times_data(self.data), {})
 
 
+@nottest
 class TestJobTable(JobTable):
     def __init__(self, *args, **kwargs):
-        super(TestJobTable, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.length = 18
 
 
+@nottest
 class TestDeviceTable(DeviceTable):
     def __init__(self, *args, **kwargs):
-        super(TestDeviceTable, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.length = 8
 
 
+@nottest
 class TestDeviceView(LavaView):
 
     def get_queryset(self):
@@ -75,6 +80,7 @@ class TestDeviceView(LavaView):
             .order_by("hostname").filter(device_type__in=visible)
 
 
+@nottest
 class TestJobView(LavaView):
 
     def get_queryset(self):

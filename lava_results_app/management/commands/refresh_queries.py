@@ -35,10 +35,7 @@ class Command(BaseCommand):
     """
 
     logger = None
-
-    def __init__(self, *args, **options):
-        super(Command, self).__init__(*args, **options)
-        self.help = "LAVA V2 query helper"
+    help = "LAVA V2 query helper"
 
     def add_arguments(self, parser):
         parser.add_argument('--name', help="Name of the query")

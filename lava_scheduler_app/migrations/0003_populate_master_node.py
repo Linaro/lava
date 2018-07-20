@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
 from django.db import models, migrations, transaction
 
 
@@ -30,7 +28,7 @@ def forwards_func(apps, schema_editor):
             worker.ip_address = ipaddr
             worker.rpc2_url = rpc2_url
             worker.save()
-    except:
+    except Exception:
         print("Identifying master node failed ...")
 
 

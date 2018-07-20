@@ -86,7 +86,7 @@ class TestPipelineInit(StdoutTestCase):  # pylint: disable=too-many-public-metho
             self.ran = False
             super().__init__()
 
-        def run(self, connection, max_end_time, args=None):
+        def run(self, connection, max_end_time):
             self.ran = True
 
         def post_process(self):
@@ -215,7 +215,7 @@ class Factory(object):
         return (rendered, data)
 
     def create_custom_job(self, template, job_data):
-        job_ctx = job_data.get('context', None)
+        job_ctx = job_data.get('context')
         (data, device_dict) = self.create_device(template, job_ctx)
         device = NewDevice(yaml.load(data))
         if self.debug:
@@ -276,7 +276,7 @@ class TestPipeline(StdoutTestCase):  # pylint: disable=too-many-public-methods
             self.ran = False
             super().__init__()
 
-        def run(self, connection, max_end_time, args=None):
+        def run(self, connection, max_end_time):
             time.sleep(1)
             self.ran = True
 
@@ -483,7 +483,7 @@ class TestFakeActions(StdoutTestCase):  # pylint: disable=too-many-public-method
     class KeepConnection(Action):
         name = "keep-connection"
 
-        def run(self, connection, max_end_time, args=None):
+        def run(self, connection, max_end_time):
             pass
 
         def post_process(self):
@@ -492,7 +492,7 @@ class TestFakeActions(StdoutTestCase):  # pylint: disable=too-many-public-method
     class MakeNewConnection(Action):
         name = "make-new-connection"
 
-        def run(self, connection, max_end_time, args=None):
+        def run(self, connection, max_end_time):
             new_connection = object()
             return new_connection
 

@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 from django.conf.urls import url
 from lava_scheduler_app.views import (
     active_device_list, active_jobs, device_derestrict_device, device_detail,
@@ -9,13 +7,13 @@ from lava_scheduler_app.views import (
     device_restrict_device, all_device_types, device_type_detail, device_dictionary,
     device_dictionary_plain, maintenance_devices,
     device_type_reports, edit_worker_desc,
-    failure_report, favorite_jobs,
+    failure_report, favorite_jobs, job_fetch_data,
     health_job_list, healthcheck, index,
-    job_annotate_failure, job_cancel, job_fail, job_change_priority, job_complete_log,
+    job_annotate_failure, job_cancel, job_fail, job_change_priority,
     job_definition, job_definition_plain, job_description_yaml, job_detail,
     job_list, job_configuration, job_errors,
-    job_log_file_plain, job_log_pipeline_incremental,
-    job_pipeline_timing, job_resubmit, job_section_log, job_status,
+    job_log_file_plain, job_log_incremental,
+    job_timing, job_resubmit, job_status,
     job_submit, job_toggle_favorite, lab_health,
     longest_jobs, multinode_job_definition, multinode_job_definition_plain,
     mydevice_list, myjobs, online_device_list,
@@ -25,7 +23,7 @@ from lava_scheduler_app.views import (
     download_device_type_template, similar_jobs,)
 
 
-urlpatterns = [
+urlpatterns = [  # pylint: disable=invalid-name
     url(r'^$', index, name='lava.scheduler'),
     url(r'^reports$', reports, name='lava.scheduler.reports'),
     url(r'^reports/failures$', failure_report, name='lava.scheduler.failure_report'),
@@ -74,15 +72,10 @@ urlpatterns = [
     url(r'^job/(?P<pk>[0-9]+|[0-9]+\.[0-9]+)/log_file/plain$', job_log_file_plain,
         name='lava.scheduler.job.log_file.plain'),
     url(r'^job/(?P<pk>[0-9]+|[0-9]+\.[0-9]+)/timing$',
-        job_pipeline_timing,
-        name='lava.scheduler.job_pipeline_timing'),
+        job_timing,
+        name='lava.scheduler.job.timing'),
     url(r'^job/(?P<pk>[0-9]+|[0-9]+\.[0-9]+)/job_status$', job_status,
         name='lava.scheduler.job_status'),
-    url(r'^job/(?P<pk>[0-9]+|[0-9]+\.[0-9]+)/complete_log$', job_complete_log,
-        name='lava.scheduler.job.complete_log'),
-    url(r'^job/(?P<pk>[0-9]+|[0-9]+\.[0-9]+)(/download/)(?P<log_name>[-_a-zA-Z0-9.]+)$',
-        job_section_log,
-        name='lava.scheduler.job.section_log'),
     url(r'^job/(?P<pk>[0-9]+|[0-9]+\.[0-9]+)/cancel$', job_cancel,
         name='lava.scheduler.job.cancel'),
     url(r'^job/(?P<pk>[0-9]+|[0-9]+\.[0-9]+)/fail$', job_fail,
@@ -96,12 +89,13 @@ urlpatterns = [
         job_toggle_favorite,
         name='lava.scheduler.job.toggle_favorite'),
     url(r'^job/(?P<pk>[0-9]+|[0-9]+\.[0-9]+)/log_pipeline_incremental$',
-        job_log_pipeline_incremental,
-        name='lava.scheduler.job.log_pipeline_incremental'),
+        job_log_incremental,
+        name='lava.scheduler.job.log_incremental'),
+    url(r'^job/(?P<pk>[0-9]+|[0-9]+\.[0-9]+)/job_data$',
+        job_fetch_data,
+        name='lava.scheduler.job.fetch_data'),
     url(r'^myjobs$', myjobs, name='lava.scheduler.myjobs'),
     url(r'^favorite-jobs$', favorite_jobs, name='lava.scheduler.favorite_jobs'),
-    url(r'^favorite-jobs/~(?P<username>[^/]+)$', favorite_jobs,
-        name='lava.scheduler.favorite_jobs'),
     url(r'^job/(?P<pk>[0-9]+|[0-9]+\.[0-9]+)/priority$', job_change_priority,
         name='lava.scheduler.job.priority'),
     url(r'^device/(?P<pk>[-_a-zA-Z0-9.]+)/restrict$', device_restrict_device,

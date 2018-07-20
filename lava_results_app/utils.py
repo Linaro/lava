@@ -1,10 +1,8 @@
 import os
 import yaml
 import logging
-import subprocess
 from django.db import DataError
 from django.utils.translation import ungettext_lazy
-from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from linaro_django_xmlrpc.models import AuthToken
 
@@ -35,8 +33,16 @@ class V2Loader(yaml.Loader):
         return self.construct_python_object(suffix, node)
 
     def remove_pipeline_module_name(self, suffix, node):
+        # Fix old dumps when "pipeline" was a module
         if 'lava_dispatcher.pipeline' in suffix:
             suffix = suffix.replace('lava_dispatcher.pipeline', 'lava_dispatcher')
+        # Fix dumps when dispatcher exceptions where not in lava_common.
+        exceptions = ["ConfigurationError", "InfrastructureError",
+                      "JobCanceled", "JobError", "LAVABug",
+                      "MultinodeProtocolTimeoutError", "TestError"]
+        for exc in exceptions:
+            if 'lava_dispatcher.action.%s' % exc in suffix:
+                suffix = suffix.replace('lava_dispatcher.action.%s' % exc, 'lava_common.exceptions.%s' % exc)
         return self.construct_python_name(suffix, node)
 
     def remove_pipeline_module_new(self, suffix, node):
@@ -61,14 +67,18 @@ def description_data(job):
     filename = description_filename(job)
     if not filename:
         return {}
+
+    data = None
     try:
         data = yaml.load(open(filename, 'r'), Loader=V2Loader)
-    except yaml.YAMLError:
-        logger.error("Unable to parse description for %s" % job.id)
-        return {}
-    if not data:
-        return {}
-    return data
+    except yaml.YAMLError as exc:
+        logger.error("Unable to parse description for %s", job.id)
+        logger.exception(exc)
+    except OSError as exc:
+        logger.error("Unable to open description for %s", job.id)
+        logger.exception(exc)
+    # This should be a dictionary, None is not acceptable
+    return data if data else {}
 
 
 # FIXME: relocate these two functions into dbutils to avoid needing django settings here.
@@ -98,20 +108,6 @@ def check_request_auth(request, job):
         raise PermissionDenied()
 
 
-def debian_package_version():
-    """
-    Relies on Debian Policy rules for the existence of the
-    changelog. Distributions not derived from Debian will
-    return an empty string.
-    """
-    changelog = '/usr/share/doc/lava-server/changelog.Debian.gz'
-    if os.path.exists(changelog):
-        deb_version = subprocess.check_output((
-            'dpkg-query', '-W', "-f=${Version}\n", 'lava-server')).strip().decode('utf-8')
-        # example version returned would be '2016.11-1'
-        return deb_version
-
-
 def get_testcases_with_limit(testsuite, limit=None, offset=None):
     logger = logging.getLogger('lava_results_app')
     if limit:
@@ -132,3 +128,56 @@ def get_testcases_with_limit(testsuite, limit=None, offset=None):
         testcases = list(testsuite.testcase_set.all().order_by('id'))
 
     return testcases
+
+
+def testcase_export_fields():
+    """
+    Keep this list in sync with the keys in export_testcase
+    :return: list of fields used in export_testcase
+    """
+    return [
+        'job', 'suite', 'result', 'measurement', 'unit',
+        'duration', 'timeout',
+        'logged', 'level', 'metadata', 'url', 'name', 'id',
+        'log_start_line', 'log_end_line'
+    ]
+
+
+def export_testcase(testcase, with_buglinks=False):
+    """
+    Returns string versions of selected elements of a TestCase
+    Unicode causes issues with CSV and can complicate YAML parsing
+    with non-python parsers.
+    :param testcase: list of TestCase objects
+    :return: Dictionary containing relevant information formatted for export
+    """
+    metadata = dict(testcase.action_metadata) if testcase.action_metadata else {}
+    extra_source = []
+    extra_data = metadata.get('extra')
+    if isinstance(extra_data, str) and os.path.exists(extra_data):
+        with open(metadata['extra'], 'r') as extra_file:
+            # TODO: this can fail!
+            items = yaml.load(extra_file, Loader=yaml.CLoader)
+        # hide the !!python OrderedDict prefix from the output.
+        for key, value in items.items():
+            extra_source.append({key: value})
+        metadata['extra'] = extra_source
+    casedict = {
+        'name': str(testcase.name),
+        'job': str(testcase.suite.job_id),
+        'suite': str(testcase.suite.name),
+        'result': str(testcase.result_code),
+        'measurement': str(testcase.measurement),
+        'unit': str(testcase.units),
+        'level': metadata.get('level', ''),
+        'url': str(testcase.get_absolute_url()),
+        'id': str(testcase.id),
+        'logged': str(testcase.logged),
+        'log_start_line': str(testcase.start_log_line) if testcase.start_log_line else '',
+        'log_end_line': str(testcase.end_log_line) if testcase.end_log_line else '',
+        'metadata': metadata,
+    }
+    if with_buglinks:
+        casedict['buglinks'] = [str(url) for url in testcase.buglinks.values_list('url', flat=True)]
+
+    return casedict

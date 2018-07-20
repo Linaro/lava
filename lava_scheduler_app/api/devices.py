@@ -367,7 +367,10 @@ class SchedulerDevicesAPI(ExposedV2API):
 
                 try:
                     if health is not None:
+                        prev_health = device.get_health_display()
                         device.health = Device.HEALTH_REVERSE[health]
+                        device.log_admin_entry(self.user, "%s → %s (xmlrpc api)" % (
+                            prev_health, device.get_health_display()))
                 except KeyError:
                     raise xmlrpc.client.Fault(
                         400, "Health '%s' is invalid" % health)

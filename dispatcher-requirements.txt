@@ -1,0 +1,15 @@
+PyYAML
+configobj
+file-magic
+jinja2
+markdown>=2.0.3
+netifaces>=0.10.0
+nose
+pexpect>=4.2
+pyserial>=2.6
+pytz
+pyudev>=0.21
+pyzmq
+requests
+setproctitle>=1.1.8
+guestfs

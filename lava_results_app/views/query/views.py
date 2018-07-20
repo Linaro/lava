@@ -20,7 +20,6 @@ import csv
 import os
 import shutil
 import simplejson
-import sys
 import tempfile
 
 from django.db import IntegrityError
@@ -86,9 +85,6 @@ from django_tables2 import (
 
 from lava.utils.lavatable import LavaView
 
-if sys.version_info[0] == 3:
-    basestring = str
-
 
 class QueryViewDoesNotExistError(Exception):
     """ Raise when corresponding query materialized view does not exist. """
@@ -119,7 +115,7 @@ class OtherQueryView(LavaView):
 class GroupQueryView(LavaView):
 
     def __init__(self, request, group, **kwargs):
-        super(GroupQueryView, self).__init__(request, **kwargs)
+        super().__init__(request, **kwargs)
         self.query_group = group
 
     def get_queryset(self):
@@ -147,7 +143,7 @@ class QueryCustomResultView(LavaView):
         self.content_type = content_type
         self.conditions = conditions
         self.request = request
-        super(QueryCustomResultView, self).__init__(request, **kwargs)
+        super().__init__(request, **kwargs)
 
     def get_queryset(self):
         return Query.get_queryset(
@@ -161,7 +157,7 @@ class QueryResultView(LavaView):
     def __init__(self, query, request, **kwargs):
         self.query = query
         self.request = request
-        super(QueryResultView, self).__init__(request, **kwargs)
+        super().__init__(request, **kwargs)
 
     def get_queryset(self):
         return self.query.get_results(self.request.user)
@@ -528,7 +524,7 @@ def query_add_group(request, username, name):
         if not old_group.query_set.count():
             old_group.delete()
 
-    return HttpResponse(group_name, content_type='application/json')
+    return HttpResponseRedirect(query.get_absolute_url() + "/+detail")
 
 
 @login_required
@@ -544,12 +540,15 @@ def query_select_group(request, username, name):
     if not group_name:
         query.group = None
     else:
-        group = Group.objects.get(name=group_name)
+        try:
+            group = Group.objects.get(name=group_name)
+        except Group.DoesNotExist:
+            group = None
         query.group = group
 
     query.save()
 
-    return HttpResponse(group_name, content_type='application/json')
+    return HttpResponseRedirect(query.get_absolute_url() + "/+detail")
 
 
 @login_required
@@ -755,7 +754,7 @@ def _export_query(query_results, content_type, filename):
         for result in query_results:
             result_dict = result.__dict__.copy()
             # Encode the strings if necessary.
-            out.writerow({k: (v.encode('utf8') if isinstance(v, basestring) else v) for k, v in result_dict.items()})
+            out.writerow({k: (v.encode('utf8') if isinstance(v, str) else v) for k, v in result_dict.items()})
 
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = "attachment; filename=%s.csv" % filename

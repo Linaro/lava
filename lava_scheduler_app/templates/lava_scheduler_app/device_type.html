@@ -30,7 +30,7 @@
       <dt>Description</dt>
       <dd>{{ dt.description|default:"<i>...</i>" }}</dd>
       <dt>Health Checks</dt>
-     <dd>{{ health_freq }} <a href="{% url 'lava.scheduler.device_type_report' dt %}" title="device-type health report"><span class="glyphicon glyphicon-stats"></span></a></dd>
+      <dd>{% if dt.disable_health_check %}<span class="text-danger">{{ health_freq }}</span>{% else %}{{ health_freq }}{% endif %} <a href="{% url 'lava.scheduler.device_type_report' dt %}" title="device-type health report"><span class="glyphicon glyphicon-stats"></span></a></dd>
       <dt>Aliases</dt>
       <dd>{{ aliases|default:"<i>...</i>" }}</dd>
     </div>

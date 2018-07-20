@@ -399,6 +399,45 @@ daemons:
  $ sudo service lava-server-gunicorn restart
  $ sudo service lava-master restart
 
+.. _admin_control:
+
+Controlling the Django Admin Interface
+**************************************
+
+Some instances may need to allow selected users to be Django superusers
+to provide access to the `Django Admin Interface
+<https://docs.djangoproject.com/en/2.0/ref/contrib/admin/>`_. Some of
+the features of the interface need **very** careful handling,
+especially the **deletion** of database objects.
+
+Deleting database objects is **always** a problem and needs careful
+consideration after looking at all the relevant logs. There are complex
+inter-relationships not just in the UI but also in the scheduler,
+logging support and publishing support. UI errors and scheduling errors
+can be caused by inappropriate deletion of database objects and
+recovery from these situations can be complex and may involve a
+complete restoration of the instance from :ref:`backups
+<admin_backups>`.
+
+Admins can choose to disable access to the ``Delete`` button in
+critical areas of the admin interface by adding a setting to
+``/etc/lava-server/settings.conf``:
+
+.. code-block:: json
+
+ {
+  "ALLOW_ADMIN_DELETE": false,
+ }
+
+This disables the ``Delete`` button and the ``delete`` action for
+selected database objects, particularly Device, TestJob, TestCase,
+TestSuite and TestSet. None of these objects should be deleted in
+the admin interface (helpers exist to delete using the command line
+interface, with suitable safeguards).
+
+Restart the ``lava-server-gunicorn`` service each time
+``/etc/lava-server/settings.conf`` is modified.
+
 LAVA server performance
 ***********************
 

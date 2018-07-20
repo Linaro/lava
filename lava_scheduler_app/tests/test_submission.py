@@ -2,20 +2,24 @@
 import logging
 import sys
 import os
+import json
 import warnings
 import yaml
 
 from django.contrib.auth.models import Group, Permission, User
 from django_testscenarios.ubertest import TestCase
-
+from lava_scheduler_app.dbutils import testjob_submission
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
+    DevicesUnavailableException,
     Notification,
     Tag,
     TestJob,
 )
 from lava_scheduler_app.schema import SubmissionException
+from lava_scheduler_app.scheduler import schedule_health_check
+from lava_common.exceptions import ConfigurationError
 
 LOGGER = logging.getLogger()
 LOGGER.level = logging.INFO  # change to DEBUG to see *all* output
@@ -105,7 +109,9 @@ class ModelFactory(object):
         if not isinstance(tags, list):
             tags = []
         # a hidden device type will override is_public
-        device = Device(device_type=device_type, is_public=is_public, hostname=hostname, **kw)
+        device = Device(
+            device_type=device_type, is_public=is_public, state=Device.STATE_IDLE,
+            hostname=hostname, **kw)
         device.tags = tags
         logging.debug("making a device of type %s %s %s with tags '%s'",
                       device_type, device.is_public, device.hostname, ", ".join([x.name for x in device.tags.all()]))
@@ -115,7 +121,7 @@ class ModelFactory(object):
     def make_job_data(self, actions=None, **kw):
         if not actions:
             actions = []
-        data = {'actions': actions, 'timeout': 1, 'health_check': False}
+        data = {'actions': actions}
         data.update(kw)
         if 'target' not in data and 'device_type' not in data:
             if DeviceType.objects.all():
@@ -127,7 +133,7 @@ class ModelFactory(object):
         return data
 
     def make_job_yaml(self, **kw):
-        return yaml.dump(self.make_job_data(**kw))
+        return yaml.safe_dump(self.make_job_data(**kw))
 
     def make_job_data_from_file(self, sample_job_file):
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs', sample_job_file)
@@ -215,7 +221,7 @@ class TestTestJob(TestCaseWithFactory):  # pylint: disable=too-many-ancestors,to
         definition = self.factory.make_job_data()
         definition['visibility'] = {'group': ['newgroup']}
         definition['job_name'] = 'unittest_visibility'
-        self.assertIsNotNone(yaml.dump(definition))
+        self.assertIsNotNone(yaml.safe_dump(definition))
         self.assertIsNotNone(list(Device.objects.filter(device_type=dt)))
         user = self.factory.make_user()
         user.user_permissions.add(
@@ -224,17 +230,53 @@ class TestTestJob(TestCaseWithFactory):  # pylint: disable=too-many-ancestors,to
         self.assertRaises(
             SubmissionException,
             TestJob.from_yaml_and_user,
-            yaml.dump(definition),
+            yaml.safe_dump(definition),
             user)
         self.factory.make_group('newgroup')
         known_groups = list(Group.objects.filter(name__in=['newgroup']))
         job = TestJob.from_yaml_and_user(
-            yaml.dump(definition), user)
+            yaml.safe_dump(definition), user)
         job.refresh_from_db()
         self.assertEqual(user, job.submitter)
         self.assertEqual(job.visibility, TestJob.VISIBLE_GROUP)
         self.assertEqual(known_groups, list(job.viewing_groups.all()))
         self.factory.cleanup()
+
+    def test_json_yaml(self):
+        self.factory.cleanup()
+        user = self.factory.make_user()
+        user.user_permissions.add(
+            Permission.objects.get(codename='add_testjob'))
+        user.save()
+        dt = self.factory.make_device_type(name='qemu')
+        device = self.factory.make_device(device_type=dt, hostname='qemu-1')
+        device.save()
+        definition = self.factory.make_job_data_from_file('qemu-pipeline-first-job.yaml')
+        # convert content of file to JSON string
+        json_def = json.dumps(yaml.safe_load(definition))
+        job = testjob_submission(json_def, user, None)
+        # check that submitted JSON is now YAML
+        self.assertRaises(json.decoder.JSONDecodeError, json.loads, job.definition)
+        yaml.safe_load(job.definition)
+        self.assertIsInstance(job.definition, str)
+
+    def test_job_data(self):
+        self.factory.cleanup()
+        user = self.factory.make_user()
+        user.user_permissions.add(
+            Permission.objects.get(codename='add_testjob'))
+        user.save()
+        dt = self.factory.make_device_type(name='qemu')
+        device = self.factory.make_device(device_type=dt, hostname='qemu-1')
+        device.save()
+        definition = self.factory.make_job_data_from_file('qemu-pipeline-first-job.yaml')
+        job = testjob_submission(definition, user, None)
+        data = job.create_job_data()
+        self.assertIsNotNone(data)
+        self.assertIn('start_time', data)
+        # job has not started but job_data explicitly turns start_time into str()
+        self.assertEqual(data['start_time'], "None")
+        self.assertEqual(data['state_string'], TestJob.STATE_CHOICES[TestJob.STATE_SUBMITTED][1])
 
 
 class TestHiddenTestJob(TestCaseWithFactory):  # pylint: disable=too-many-ancestors
@@ -244,3 +286,59 @@ class TestHiddenTestJob(TestCaseWithFactory):  # pylint: disable=too-many-ancest
         device = self.factory.make_device(device_type=device_type, hostname="hidden1")
         device.save()
         self.assertEqual(device.is_public, False)
+
+    def test_visibility_and_hidden(self):
+        self.factory.cleanup()
+        device_type = self.factory.make_hidden_device_type('hidden')
+        device = self.factory.make_device(device_type=device_type, hostname="hidden1")
+        device.save()
+        self.assertEqual(device.is_public, False)
+        definition = self.factory.make_job_data()
+        definition['visibility'] = 'public'
+        user = self.factory.make_user()
+        user.user_permissions.add(
+            Permission.objects.get(codename='add_testjob'))
+        user.save()
+        self.assertRaises(
+            DevicesUnavailableException,
+            TestJob.from_yaml_and_user,
+            yaml.safe_dump(definition),
+            user)
+
+    def test_hidden_healthcheck(self):
+        self.factory.cleanup()
+        device_type = self.factory.make_hidden_device_type('hidden')
+        device = self.factory.make_device(device_type=device_type, hostname="hidden1")
+        device.save()
+        device.refresh_from_db()
+        self.assertEqual(Device.STATE_IDLE, device.state)
+        self.assertEqual(device.is_public, False)
+        definition = self.factory.make_job_data()
+        definition['job_name'] = 'job_should_fail'
+        definition['visibility'] = 'public'
+        self.assertIsNotNone(device)
+        self.factory.ensure_user('lava-health', 'test@l.org', 'pass')
+        self.assertRaises(
+            ConfigurationError,
+            schedule_health_check,
+            device,
+            yaml.safe_dump(definition))
+
+        # reset device state.
+        definition['job_name'] = 'job_should_schedule'
+        self.factory.make_group('hide')
+        device.state = Device.STATE_IDLE
+        device.save(update_fields=['state'])
+        definition['visibility'] = {'group': ['hide']}
+        job_id = schedule_health_check(device, yaml.safe_dump(definition))
+        job = TestJob.objects.get(id=job_id)
+        self.assertEqual(job.is_public, False)
+        self.assertEqual(job.visibility, TestJob.VISIBLE_GROUP)
+
+        device.state = Device.STATE_IDLE
+        device.save(update_fields=['state'])
+        definition['visibility'] = 'personal'
+        job_id = schedule_health_check(device, yaml.safe_dump(definition))
+        job = TestJob.objects.get(id=job_id)
+        self.assertEqual(job.is_public, False)
+        self.assertEqual(job.visibility, TestJob.VISIBLE_PERSONAL)

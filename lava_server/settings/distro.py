@@ -1,5 +1,6 @@
 # Django settings for django_hello project used on Debian systems.
 
+import contextlib
 import django
 import os
 import re
@@ -12,28 +13,20 @@ from lava_server.settings.secret_key import get_secret_key
 
 
 # Load the setting file and add the variables to the current context
-try:
+with contextlib.suppress(AttributeError, ValueError):
     with open("/etc/lava-server/settings.conf", "r") as f_conf:
         for (k, v) in simplejson.load(f_conf).items():
             globals()[k] = v
-except (AttributeError, ValueError):
-    pass
 
 # Fix mount point
 # Remove the leading slash and keep only one trailing slash
 MOUNT_POINT = (MOUNT_POINT.rstrip("/") + "/").lstrip("/")
 
 # Fix ADMINS and MANAGERS variables
-# In Django < 1.9, this is a tuple of tuples
 # In Django >= 1.9 this is a list of tuples
-# See https://docs.djangoproject.com/en/1.8/ref/settings/#admins
 # and https://docs.djangoproject.com/en/1.9/ref/settings/#admins
-if django.VERSION < (1, 9):
-    ADMINS = tuple(tuple(v) for v in ADMINS)
-    MANAGERS = tuple(tuple(v) for v in MANAGERS)
-else:
-    ADMINS = [tuple(v) for v in ADMINS]
-    MANAGERS = [tuple(v) for v in MANAGERS]
+ADMINS = [tuple(v) for v in ADMINS]
+MANAGERS = [tuple(v) for v in MANAGERS]
 
 # Load default database from distro integration
 config = ConfigFile.load("/etc/lava-server/instance.conf")
@@ -72,13 +65,13 @@ if AUTH_LDAP_SERVER_URI:
     # AUTH_LDAP_USER_DN_TEMPLATE AUTH_LDAP_USER_ATTR_MAP
 
     if AUTH_LDAP_USER_SEARCH:
-        AUTH_LDAP_USER_SEARCH = eval(AUTH_LDAP_USER_SEARCH)
+        AUTH_LDAP_USER_SEARCH = eval(AUTH_LDAP_USER_SEARCH.encode('utf-8'))
         # AUTH_LDAP_USER_SEARCH and AUTH_LDAP_USER_DN_TEMPLATE are mutually
         # exclusive, hence,
         AUTH_LDAP_USER_DN_TEMPLATE = None
 
     if AUTH_LDAP_GROUP_SEARCH:
-        AUTH_LDAP_GROUP_SEARCH = eval(AUTH_LDAP_GROUP_SEARCH)
+        AUTH_LDAP_GROUP_SEARCH = eval(AUTH_LDAP_GROUP_SEARCH.encode('utf-8'))
 
     if AUTH_LDAP_GROUP_TYPE:
         group_type = AUTH_LDAP_GROUP_TYPE

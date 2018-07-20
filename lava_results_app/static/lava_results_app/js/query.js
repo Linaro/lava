@@ -2,6 +2,23 @@ open_condition_modal = function(query_name, condition_id, table_id,
                                 field, operator, value) {
 
     $("#condition_errors").html("");
+
+    // Initiate typeahead for "field" and "value"
+    $("#id_field").attr("type", "search");
+    $("#id_field").attr("placeholder", "Search");
+    $("#id_field").attr("autocomplete", "off");
+    $("#id_value").attr("type", "search");
+    $("#id_value").attr("placeholder", "Search");
+    $("#id_value").attr("autocomplete", "off");
+
+    if (!$("#id_field").parent().attr("class")) {
+        $("#id_field").wrap("<div class='typeahead__container'></div>").wrap("<div class='typeahead__field'></div>").wrap("<div class='typeahead__query'></div>");
+    }
+    if (!$("#id_value").parent().attr("class")) {
+        $("#id_value").wrap("<div class='typeahead__container'></div>").wrap("<div class='typeahead__field'></div>").wrap("<div class='typeahead__query'></div>");
+    }
+    // End typeahead init.
+
     if (typeof(condition_id) === 'undefined') { // Add condition.
         $("#id_table").val("");
         $("#id_field").val("");
@@ -28,12 +45,15 @@ open_condition_modal = function(query_name, condition_id, table_id,
 
 table_changed = function() {
     // Table field change callback.
-
-    $("#id_field").autocomplete({
-        source: Object.keys(condition_choices[$("#id_table").val()]["fields"]),
-        minLength: 0,
-	autoFocus: true,
-	appendTo: $("#id_table").parent()
+    $("#id_field").typeahead({
+        source: {
+            data: Object.keys(condition_choices[$("#id_table").val()]["fields"])
+        },
+        order: "asc",
+        minLength: 1,
+        callback: {
+            onResult: "field_changed",
+        }
     });
 }
 
@@ -65,13 +85,16 @@ field_changed = function() {
 	    }
 
 	    if (condition_field["choices"]) {
-		$("#id_value").autocomplete({
-		    source: condition_field["choices"],
-		    minLength: 0,
-		    autoFocus: true,
-		    appendTo: $("#id_table").parent()
+		$("#id_value").typeahead({
+		    source: {
+                        data: condition_field["choices"],
+                    },
+                    minLength: 1,
+                    order: "asc",
 		});
-	    }
+	    } else {
+                $("#id_value").typeahead({source: {data: []}});
+            }
 
 	} else {
 	    // Do nothing, validation will pick this up.
@@ -194,6 +217,4 @@ $(document).ready(function () {
 	$("#id_field").val("");
 	table_changed();
     });
-    $("#id_field").on("autocompletechange", field_changed);
-
 });

@@ -1,3 +1,4 @@
+{# device_type: mustang-uefi #}
 {% extends 'base.jinja2' %}
 {% set boot_character_delay = 10 %}
 
@@ -6,7 +7,6 @@
 
 {% block body %}
 
-device_type: mustang-uefi
 {% set console_device = console_device | default('ttyS0') -%}
 {% set baud_rate = baud_rate | default(115200) -%}
 {% set tftp_mac = tftp_mac | default('00:01:73:69:5A:EF') -%}

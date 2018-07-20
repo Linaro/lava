@@ -22,6 +22,7 @@
 # This class is used for all downloads, including images and individual files for tftp.
 # python2 only
 
+import contextlib
 import errno
 import math
 import os
@@ -30,10 +31,6 @@ import time
 import hashlib
 import requests
 import subprocess
-import bz2
-import contextlib
-import lzma
-import zlib
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.protocols.lxc import LxcProtocol
 from lava_dispatcher.actions.deploy import DeployAction
@@ -70,10 +67,6 @@ import urllib.parse as lavaurl
 
 # pylint: disable=logging-not-lazy
 
-# FIXME: separate download actions for decompressed and uncompressed downloads
-# so that the logic can be held in the Strategy class, not the Action.
-# FIXME: create a download3.py which uses urllib.urlparse
-
 
 class DownloaderAction(RetryAction):
     """
@@ -107,11 +100,11 @@ class DownloaderAction(RetryAction):
         if url.scheme == 'scp':
             action = ScpDownloadAction(self.key, self.path, url, self.uniquify)
         elif url.scheme == 'http' or url.scheme == 'https':
-            action = HttpDownloadAction(self.key, self.path, url, self.uniquify)  # pylint: disable=redefined-variable-type
+            action = HttpDownloadAction(self.key, self.path, url, self.uniquify)
         elif url.scheme == 'file':
-            action = FileDownloadAction(self.key, self.path, url, self.uniquify)  # pylint: disable=redefined-variable-type
+            action = FileDownloadAction(self.key, self.path, url, self.uniquify)
         elif url.scheme == 'lxc':
-            action = LxcDownloadAction(self.key, self.path, url)  # pylint: disable=redefined-variable-type
+            action = LxcDownloadAction(self.key, self.path, url)
         else:
             raise JobError("Unsupported url protocol scheme: %s" % url.scheme)
         self.internal_pipeline.add_action(action)
@@ -142,7 +135,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         self.size = -1
         self.decompress_command_map = {'xz': 'unxz', 'gz': 'gunzip', 'bz2': 'bunzip2'}
 
-    def reader(self):
+    def reader(self):  # pylint: disable=no-self-use
         raise LAVABug("'reader' function unimplemented")
 
     def cleanup(self, connection):
@@ -159,21 +152,18 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         # Also files without suffixes, e.g. kernel images
         # Don't rename files we don't support decompressing during download
         if not modify or len(parts) == 1 or (modify not in self.decompress_command_map):
-            return (os.path.join(path, filename),
-                    None)
-        else:
-            return (os.path.join(path, '.'.join(parts[:-1])),
-                    parts[-1])
+            return (os.path.join(path, filename), None)
+        return (os.path.join(path, '.'.join(parts[:-1])), parts[-1])
 
     def validate(self):
         super().validate()
         if 'images' in self.parameters and self.key in self.parameters['images']:
             image = self.parameters['images'][self.key]
             self.url = lavaurl.urlparse(image['url'])
-            compression = image.get('compression', None)
-            archive = image.get('archive', None)
+            compression = image.get('compression')
+            archive = image.get('archive')
             image_name, _ = self._url_to_fname_suffix(self.path, compression)
-            image_arg = image.get('image_arg', None)
+            image_arg = image.get('image_arg')
             overlay = image.get('overlay', False)
             self.set_namespace_data(action='download-action', label=self.key,
                                     key='file', value=image_name)
@@ -183,8 +173,8 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
                                     key='compression', value=compression)
         else:
             self.url = lavaurl.urlparse(self.parameters[self.key]['url'])
-            compression = self.parameters[self.key].get('compression', None)
-            archive = self.parameters[self.key].get('archive', None)
+            compression = self.parameters[self.key].get('compression')
+            archive = self.parameters[self.key].get('archive')
             overlay = self.parameters.get('overlay', False)
             fname, _ = self._url_to_fname_suffix(self.path, compression)
             self.set_namespace_data(action='download-action', label=self.key, key='file', value=fname)
@@ -202,9 +192,9 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         if self.key == 'kernel' and ('kernel' in self.parameters):
             self.set_namespace_data(
                 action='download-action', label='type', key=self.key,
-                value=self.parameters[self.key].get('type', None))
+                value=self.parameters[self.key].get('type'))
 
-    def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
+    def run(self, connection, max_end_time):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
         def progress_unknown_total(downloaded_sz, last_val):
             """ Compute progress when the size is unknown """
             condition = downloaded_sz >= last_val + 25 * 1024 * 1024
@@ -218,7 +208,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
             return (condition, percent,
                     "progress %3d%% (%dMB)" % (percent, int(downloaded_sz / (1024 * 1024))) if condition else "")
 
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
         # self.cookies = self.job.context.config.lava_cookies  # FIXME: work out how to restore
         md5 = hashlib.md5()
         sha256 = hashlib.sha256()
@@ -246,8 +236,8 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
                 compression = self.parameters[self.key].get('compression',
                                                             False)
 
-        md5sum = remote.get('md5sum', None)
-        sha256sum = remote.get('sha256sum', None)
+        md5sum = remote.get('md5sum')
+        sha256sum = remote.get('sha256sum')
 
         fname, _ = self._url_to_fname_suffix(self.path, compression)
         if os.path.isdir(fname):
@@ -336,7 +326,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         if 'images' in self.parameters and self.key in self.parameters['images']:
             archive = self.parameters['images'][self.key].get('archive', False)
         else:
-            archive = self.parameters[self.key].get('archive', None)
+            archive = self.parameters[self.key].get('archive')
         if archive:
             origin = fname
             target_fname = os.path.basename(origin).rstrip('.' + archive)
@@ -526,10 +516,8 @@ class ScpDownloadAction(DownloadHandler):
                                % (self.url.geturl(), process.stderr.read()))
         finally:
             if process is not None:
-                try:
+                with contextlib.suppress(OSError):
                     process.kill()
-                except OSError:
-                    pass
 
 
 class LxcDownloadAction(Action):
@@ -554,8 +542,8 @@ class LxcDownloadAction(Action):
         if not self.url.path:
             self.errors = "Invalid path in lxc:/// url"
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         # this is the device namespace - the lxc namespace is not accessible
         lxc_name = None
         protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
@@ -591,8 +579,8 @@ class QCowConversionAction(Action):
         super().__init__()
         self.key = key
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         fname = self.get_namespace_data(
             action='download-action',
             label=self.key,
@@ -705,8 +693,8 @@ class CopyToLxcAction(DeployAction):
         self.retries = 3
         self.sleep = 10
 
-    def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-locals
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):  # pylint: disable=too-many-locals
+        connection = super().run(connection, max_end_time)
         # this is the device namespace - the lxc namespace is not accessible
         lxc_name = None
         protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]

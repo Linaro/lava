@@ -106,6 +106,8 @@ could be executed as steps in the test shell as follows:
    substituted. Portable scripts are free to use whatever language you
    prefer.
 
+   .. seealso:: :ref:`setup_custom_scripts` and :ref:`call_test_raise`
+
 .. seealso:: :ref:`test_definition_portability`
 
 Examples for hikey 6220:

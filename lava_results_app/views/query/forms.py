@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Lava Server.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 import datetime
 import simplejson
 
@@ -39,7 +40,7 @@ class QueryForm(forms.ModelForm):
 
     def __init__(self, owner, *args, **kwargs):
         is_copy = kwargs.pop('is_copy', None)
-        super(QueryForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if is_copy:
             from copy import deepcopy
             self.instance = deepcopy(self.instance)
@@ -47,13 +48,13 @@ class QueryForm(forms.ModelForm):
             self.instance.pk = None
 
     def save(self, commit=True, **kwargs):
-        instance = super(QueryForm, self).save(commit=commit, **kwargs)
+        instance = super().save(commit=commit, **kwargs)
         return instance
 
     def clean(self):
         form_data = self.cleaned_data
 
-        try:
+        with contextlib.suppress(KeyError, Query.DoesNotExist):
             # Existing (or archived) Query validataion.
             existing_query = Query.objects.get(name=form_data["name"],
                                                owner=form_data["owner"])
@@ -67,11 +68,6 @@ class QueryForm(forms.ModelForm):
                     self.add_error(
                         "name",
                         "Query with this owner and name already exists.")
-        except KeyError:
-            # form_data will pick up the rest of validation errors.
-            pass
-        except Query.DoesNotExist:
-            pass
 
         return form_data
 
@@ -90,7 +86,7 @@ class QueryConditionForm(forms.ModelForm):
     )
 
     def __init__(self, *args, **kwargs):
-        super(QueryConditionForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         if "query" in self.initial and \
            self.initial['query'].__class__ == Query:
@@ -100,7 +96,7 @@ class QueryConditionForm(forms.ModelForm):
                 condition_choices)
 
     def save(self, commit=True, **kwargs):
-        return super(QueryConditionForm, self).save(commit=commit, **kwargs)
+        return super().save(commit=commit, **kwargs)
 
     def clean(self):
         form_data = self.cleaned_data

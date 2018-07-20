@@ -147,8 +147,8 @@ class XnbdAction(DeployAction):
         self.nbd_server_port = None
         self.nbd_server_ip = None
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         self.logger.debug("%s: starting xnbd-server", self.name)
         # pull from parameters - as previously set
         self.nbd_root = self.parameters['lava-xnbd']['nbdroot']

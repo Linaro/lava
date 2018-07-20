@@ -91,11 +91,11 @@ class UEFIMenuInterrupt(MenuInterrupt):
         if 'interrupt_string' not in self.params:
             self.errors = "Missing interrupt string"
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         if not connection:
             self.logger.debug("%s called without active connection", self.name)
             return
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
         connection.prompt_str = self.params['interrupt_prompt']
         self.wait(connection)
         connection.raw_connection.send(self.params['interrupt_string'])
@@ -173,7 +173,7 @@ class UefiMenuSelector(SelectorMenuAction):  # pylint: disable=too-many-instance
             self.errors = "Unrecognised line separator configuration."
         super().validate()
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         lxc_active = any([protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name])
         if self.job.device.pre_os_command and not lxc_active:
             self.logger.info("Running pre OS command.")
@@ -187,7 +187,7 @@ class UefiMenuSelector(SelectorMenuAction):  # pylint: disable=too-many-instance
         connection.raw_connection.linesep = self.line_sep
         self.logger.debug("Looking for %s", self.selector.prompt)
         self.wait(connection)
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
         if self.boot_message:
             self.logger.debug("Looking for %s", self.boot_message)
             connection.prompt_str = self.boot_message
@@ -215,8 +215,8 @@ class UefiSubstituteCommands(Action):
             if 'select' not in item:
                 self.errors = "Invalid device configuration for %s: %s" % (self.name, item)
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         ip_addr = dispatcher_ip(self.job.parameters['dispatcher'])
         substitution_dictionary = {
             '{SERVER_IP}': ip_addr,

@@ -18,11 +18,9 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from lava_dispatcher.action import Action
-from lava_common.exceptions import (
-    InfrastructureError,
+from lava_dispatcher.action import (
+    Action,
     JobError,
-    ConfigurationError
 )
 
 
@@ -39,6 +37,7 @@ class FlashUBootUMSAction(Action):
         super().__init__()
         self.params = None
         self.usb_mass_device = usb_mass_device
+        self.ums_device = None
 
     def validate(self):
         super().validate()
@@ -48,7 +47,8 @@ class FlashUBootUMSAction(Action):
         else:
             raise JobError("uboot_mass_storage_device is not set")
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         image_file = self.get_namespace_data(action='download-action', label='image', key='file')
         cmd = 'dd if={} of={} bs=1M oflag=sync conv=fsync'.format(image_file, self.usb_mass_device)
         if not self.run_command(cmd.split(' '), allow_silent=True):

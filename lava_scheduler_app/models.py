@@ -1,19 +1,15 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=too-many-lines
 
-from __future__ import unicode_literals
-
+import contextlib
 import jinja2
 import logging
 import os
-import re
 import uuid
+import gzip
 import simplejson
-import smtplib
-import socket
-import sys
 import yaml
-
+from nose.tools import nottest
 from django.db.models import Q
 from django.conf import settings
 from django.contrib.auth.models import User, Group
@@ -28,51 +24,31 @@ from django.core.exceptions import (
     ObjectDoesNotExist,
     MultipleObjectsReturned,
 )
-from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
-from django.core.validators import validate_email
-from django.db import models, IntegrityError
-from django.db.models.signals import pre_save
-from django.dispatch import receiver
-from django.shortcuts import get_object_or_404
-from django.template.loader import render_to_string
+from django.db import models
 from django.utils import timezone
-from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
-
 
 from django_restricted_resource.models import (
     RestrictedResource,
     RestrictedResourceManager
 )
+
+from lava_common.exceptions import ConfigurationError
+from lava_results_app.utils import export_testcase
+from lava_scheduler_app import utils
 from lava_scheduler_app.managers import RestrictedTestJobQuerySet
 from lava_scheduler_app.schema import (
-    validate_submission,
-    handle_include_option,
-    SubmissionException
+    SubmissionException,
+    validate_device
 )
 
-from lava_scheduler_app import utils
-from linaro_django_xmlrpc.models import AuthToken
-from lava_scheduler_app.schema import validate_device
-
-if sys.version_info[0] == 2:
-    # Python 2.x
-    from urllib2 import urlopen, Request
-    from urllib import urlencode
-elif sys.version_info[0] == 3:
-    # For Python 3.0 and later
-    from urllib.request import urlopen, Request
-    from urllib.parse import urlencode
+from urllib.request import urlopen, Request
+from urllib.parse import urlencode
 
 # pylint: disable=invalid-name,no-self-use,too-many-public-methods,too-few-public-methods
 # pylint: disable=too-many-branches,too-many-return-statements,too-many-instance-attributes
-
-# Make the open function accept encodings in python < 3.x
-if sys.version_info[0] < 3:
-    import codecs
-    open = codecs.open  # pylint: disable=redefined-builtin
 
 
 class JSONDataError(ValueError):
@@ -83,7 +59,6 @@ class DevicesUnavailableException(UserWarning):
     """Error raised when required number of devices are unavailable."""
 
 
-@python_2_unicode_compatible
 class ExtendedUser(models.Model):
 
     user = models.OneToOneField(User)
@@ -108,7 +83,6 @@ class ExtendedUser(models.Model):
         return "%s: %s@%s" % (self.user, self.irc_handle, self.irc_server)
 
 
-@python_2_unicode_compatible
 class Tag(models.Model):
 
     name = models.SlugField(unique=True)
@@ -119,75 +93,6 @@ class Tag(models.Model):
         return self.name.lower()
 
 
-def validate_job(data):
-    try:
-        yaml_data = yaml.safe_load(data)
-    except yaml.YAMLError as exc:
-        raise SubmissionException("Loading job submission failed: %s." % exc)
-
-    # validate against the submission schema.
-    validate_submission(yaml_data)  # raises SubmissionException if invalid.
-    validate_yaml(yaml_data)  # raises SubmissionException if invalid.
-
-
-def validate_yaml(yaml_data):
-    if "notify" in yaml_data:
-        if "recipients" in yaml_data["notify"]:
-            for recipient in yaml_data["notify"]["recipients"]:
-                if recipient["to"]["method"] == \
-                   NotificationRecipient.EMAIL_STR:
-                    if "email" not in recipient["to"] and \
-                       "user" not in recipient["to"]:
-                        raise SubmissionException("No valid user or email address specified.")
-                else:
-                    if "handle" not in recipient["to"] and \
-                       "user" not in recipient["to"]:
-                        raise SubmissionException("No valid user or IRC handle specified.")
-                if "user" in recipient["to"]:
-                    try:
-                        User.objects.get(username=recipient["to"]["user"])
-                    except User.DoesNotExist:
-                        raise SubmissionException("%r is not an existing user in LAVA." % recipient["to"]["user"])
-                elif "email" in recipient["to"]:
-                    try:
-                        validate_email(recipient["to"]["email"])
-                    except ValidationError:
-                        raise SubmissionException("%r is not a valid email address." % recipient["to"]["email"])
-
-        if "compare" in yaml_data["notify"] and \
-           "query" in yaml_data["notify"]["compare"]:
-            from lava_results_app.models import Query
-            query_yaml_data = yaml_data["notify"]["compare"]["query"]
-            if "username" in query_yaml_data:
-                try:
-                    query = Query.objects.get(
-                        owner__username=query_yaml_data["username"],
-                        name=query_yaml_data["name"])
-                    if query.content_type.model_class() != TestJob:
-                        raise SubmissionException(
-                            "Only TestJob queries allowed.")
-                except Query.DoesNotExist:
-                    raise SubmissionException(
-                        "Query ~%s/%s does not exist" % (
-                            query_yaml_data["username"],
-                            query_yaml_data["name"]))
-            else:  # Custom query.
-                if query_yaml_data["entity"] != "testjob":
-                    raise SubmissionException(
-                        "Only TestJob queries allowed.")
-                try:
-                    conditions = None
-                    if "conditions" in query_yaml_data:
-                        conditions = query_yaml_data["conditions"]
-                    Query.validate_custom_query(
-                        query_yaml_data["entity"],
-                        conditions
-                    )
-                except Exception as e:
-                    raise SubmissionException(e)
-
-
-@python_2_unicode_compatible
 class Architecture(models.Model):
     name = models.CharField(
         primary_key=True,
@@ -201,7 +106,6 @@ class Architecture(models.Model):
         return self.pk
 
 
-@python_2_unicode_compatible
 class ProcessorFamily(models.Model):
     name = models.CharField(
         primary_key=True,
@@ -215,7 +119,6 @@ class ProcessorFamily(models.Model):
         return self.pk
 
 
-@python_2_unicode_compatible
 class Alias(models.Model):
     name = models.CharField(
         primary_key=True,
@@ -229,7 +132,6 @@ class Alias(models.Model):
         return self.pk
 
 
-@python_2_unicode_compatible
 class BitWidth(models.Model):
     width = models.PositiveSmallIntegerField(
         primary_key=True,
@@ -242,7 +144,6 @@ class BitWidth(models.Model):
         return "%d" % self.pk
 
 
-@python_2_unicode_compatible
 class Core(models.Model):
     name = models.CharField(
         primary_key=True,
@@ -256,13 +157,14 @@ class Core(models.Model):
         return self.pk
 
 
-@python_2_unicode_compatible
 class DeviceType(models.Model):
     """
     A class of device, for example a pandaboard or a snowball.
     """
 
-    name = models.SlugField(primary_key=True)
+    name = models.SlugField(
+        primary_key=True,
+        editable=True)  # read-only after create via admin.py
 
     architecture = models.ForeignKey(
         Architecture,
@@ -410,7 +312,6 @@ class DeviceType(models.Model):
         return result
 
 
-@python_2_unicode_compatible
 class DefaultDeviceOwner(models.Model):
     """
     Used to override the django User model to allow one individual
@@ -429,7 +330,6 @@ class DefaultDeviceOwner(models.Model):
         return ''
 
 
-@python_2_unicode_compatible
 class Worker(models.Model):
     """
     A worker node to which devices are attached.
@@ -494,10 +394,6 @@ class Worker(models.Model):
     def get_description(self):
         return mark_safe(self.description) if self.description else None
 
-    def update_description(self, description):
-        self.description = description
-        self.save()
-
     def retired_devices_count(self):
         return self.device_set.filter(health=Device.HEALTH_RETIRED).count()
 
@@ -551,7 +447,6 @@ class Worker(models.Model):
         )
 
 
-@python_2_unicode_compatible
 class Device(RestrictedResource):
     """
     A device that we can run tests on.
@@ -564,6 +459,7 @@ class Device(RestrictedResource):
         verbose_name=_("Hostname"),
         max_length=200,
         primary_key=True,
+        editable=True,  # read-only after create via admin.py
     )
 
     device_type = models.ForeignKey(
@@ -633,7 +529,7 @@ class Device(RestrictedResource):
         "MAINTENANCE": HEALTH_MAINTENANCE,
         "RETIRED": HEALTH_RETIRED,
     }
-    health = models.IntegerField(choices=HEALTH_CHOICES, default=HEALTH_UNKNOWN)
+    health = models.IntegerField(choices=HEALTH_CHOICES, default=HEALTH_MAINTENANCE)
 
     last_health_report_job = models.OneToOneField(
         "TestJob", blank=True, unique=True, null=True, related_name='+',
@@ -765,6 +661,7 @@ class Device(RestrictedResource):
         )
 
     def testjob_signal(self, signal, job, infrastructure_error=False):
+
         if signal == "go_state_scheduling":
             self.state = Device.STATE_RESERVED
 
@@ -793,15 +690,18 @@ class Device(RestrictedResource):
                 elif self.health in [Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN, Device.HEALTH_BAD]:
                     if job.health == TestJob.HEALTH_COMPLETE:
                         self.health = Device.HEALTH_GOOD
+                        msg = "completed"
                     elif job.health == TestJob.HEALTH_INCOMPLETE:
                         self.health = Device.HEALTH_BAD
+                        msg = "failed"
                     elif job.health == TestJob.HEALTH_CANCELED:
-                        self.health = Device.HEALTH_UNKNOWN
+                        self.health = Device.HEALTH_BAD
+                        msg = "canceled"
                     else:
                         raise NotImplementedError("Unexpected TestJob health")
                     self.log_admin_entry(
-                        None, "%s → %s (health-check [%s] failed)" % (
-                            prev_health_display, self.get_health_display(), job.id))
+                        None, "%s → %s (health-check [%s] %s)" % (
+                            prev_health_display, self.get_health_display(), job.id, msg))
             elif infrastructure_error:
                 self.health = Device.HEALTH_UNKNOWN
                 self.log_admin_entry(
@@ -949,7 +849,6 @@ class Device(RestrictedResource):
             return None
 
 
-@python_2_unicode_compatible
 class JobFailureTag(models.Model):
     """
     Allows us to maintain a set of common ways jobs fail. These can then be
@@ -963,24 +862,24 @@ class JobFailureTag(models.Model):
         return self.name
 
 
-def _get_tag_list(tags, pipeline=False):
+def _get_tag_list(tags):
     """
     Creates a list of Tag objects for the specified device tags
     for singlenode and multinode jobs.
     :param tags: a list of strings from the JSON
     :return: a list of tags which match the strings
-    :raise: JSONDataError if a tag cannot be found in the database.
+    :raise: yaml.YAMLError if a tag cannot be found in the database.
     """
     taglist = []
     if not isinstance(tags, list):
         msg = "'device_tags' needs to be a list - received %s" % type(tags)
-        raise yaml.YAMLError(msg) if pipeline else JSONDataError(msg)
+        raise yaml.YAMLError(msg)
     for tag_name in tags:
         try:
             taglist.append(Tag.objects.get(name=tag_name))
         except Tag.DoesNotExist:
             msg = "Device tag '%s' does not exist in the database." % tag_name
-            raise yaml.YAMLError(msg) if pipeline else JSONDataError(msg)
+            raise yaml.YAMLError(msg)
 
     return taglist
 
@@ -1053,23 +952,27 @@ def _check_submit_to_device(device_list, user):
     return allow
 
 
-def _check_tags_support(tag_devices, device_list):
+def _check_tags_support(tag_devices, device_list, count=1):
     """
     Combines the Device Ownership list with the requested tag list and
     returns any devices which meet both criteria.
     If neither the job nor the device have any tags, tag_devices will
     be empty, so the check will pass.
+    This function is called to check availability when a test job is submitted;
+    it is called for both single node and multinode jobs.
     :param tag_devices: A list of devices which meet the tag
     requirements
     :param device_list: A list of devices to which the user is able
     to submit a TestJob
+    :param count: Count of devices in the role to check for tag support, prior
+    to scheduling.
     :raise: DevicesUnavailableException if there is no overlap between
     the two sets.
     """
     if len(tag_devices) == 0:
         # no tags requested in the job: proceed.
         return
-    if len(set(tag_devices) & set(device_list)) == 0:
+    if len(set(tag_devices) & set(device_list)) < count:
         raise DevicesUnavailableException(
             "Not enough devices available matching the requested tags.")
 
@@ -1130,6 +1033,13 @@ def _create_pipeline_job(job_data, user, taglist, device=None,
     visibility = TestJob.VISIBLE_PUBLIC
     viewing_groups = []
     param = job_data['visibility']
+
+    if health_check and device.device_type.owners_only:
+        # 'lava-health' user is normally allowed to "ignore" visibility
+        if isinstance(param, str):
+            if param == 'public':
+                raise ConfigurationError("Publicly visible health check requested for a hidden device-type.")
+
     if isinstance(param, str):
         if param == 'personal':
             public_state = False
@@ -1187,8 +1097,7 @@ def _pipeline_protocols(job_data, user, yaml_data=None):  # pylint: disable=too-
     So despite doing the tag checks here, the job is created with just the device_type
     and the checks are done again before the job starts.
 
-    Actual device assignment happens in lava_scheduler_daemon:dbjobsource.py until
-    this migrates into lava-master.
+    Actual device assignment happens in lava-master.
 
     params:
       job_data - dictionary of the submission YAML
@@ -1241,10 +1150,10 @@ def _pipeline_protocols(job_data, user, yaml_data=None):  # pylint: disable=too-
                     raise DevicesUnavailableException("Not enough devices of type %s are currently "
                                                       "available to user %s"
                                                       % (device_type, user))
-                role_dictionary[role]['tags'] = _get_tag_list(params.get('tags', []), True)
+                role_dictionary[role]['tags'] = _get_tag_list(params.get('tags', []))
                 if role_dictionary[role]['tags']:
                     supported = _check_tags(role_dictionary[role]['tags'], device_type=device_type)
-                    _check_tags_support(supported, allowed_devices)
+                    _check_tags_support(supported, allowed_devices, params['count'])
 
                 # FIXME: other protocols could need to remove devices from 'supported' here
 
@@ -1271,7 +1180,7 @@ def _pipeline_protocols(job_data, user, yaml_data=None):  # pylint: disable=too-
                 job = _create_pipeline_job(
                     node_data, user, target_group=target_group,
                     taglist=role_dict['tags'],
-                    device_type=role_dict.get('device_type', None),
+                    device_type=role_dict.get('device_type'),
                     orig=None  # store the dump of the split yaml as the job definition
                 )
                 if not job:
@@ -1286,7 +1195,7 @@ def _pipeline_protocols(job_data, user, yaml_data=None):  # pylint: disable=too-
         return job_object_list
 
 
-@python_2_unicode_compatible
+@nottest
 class TestJob(RestrictedResource):
     """
     A test job is a test process that will be run on a Device.
@@ -1373,8 +1282,7 @@ class TestJob(RestrictedResource):
     @property
     def dynamic_connection(self):
         """
-        Secondary connection detection - pipeline & multinode only.
-        (Enhanced version of vmgroups.)
+        Secondary connection detection - multinode only.
         A Primary connection needs a real device (persistence).
         """
         if not self.is_multinode or not self.definition:
@@ -1462,7 +1370,7 @@ class TestJob(RestrictedResource):
         Jobs that are not multinode will directly use STATE_SCHEDULED
         """
         if device.state != Device.STATE_IDLE:
-            raise Exception("device is not IDLE")
+            raise Exception("device is not IDLE: %s" % Device.STATE_CHOICES[device.state])
         if self.state >= TestJob.STATE_SCHEDULING:
             return
         self.state = TestJob.STATE_SCHEDULING
@@ -1485,7 +1393,7 @@ class TestJob(RestrictedResource):
                 device = self.actual_device
         else:
             if device.state != Device.STATE_IDLE:
-                raise Exception("device is not IDLE")
+                raise Exception("device is not IDLE: %s" % Device.STATE_CHOICES[device.state])
         if self.state >= TestJob.STATE_SCHEDULED:
             return
         self.state = TestJob.STATE_SCHEDULED
@@ -1516,6 +1424,7 @@ class TestJob(RestrictedResource):
         """
         if self.state >= TestJob.STATE_CANCELING:
             return
+
         # If the job was not scheduled, go directly to STATE_FINISHED
         if self.state == TestJob.STATE_SUBMITTED:
             self.go_state_finished(TestJob.HEALTH_CANCELED)
@@ -1702,7 +1611,13 @@ class TestJob(RestrictedResource):
     def device_role(self):  # pylint: disable=too-many-return-statements
         if not self.is_multinode:
             return "Error"
-        data = yaml.safe_load(self.definition)
+        try:
+            # For some old definition (when migrating from python2 to python3)
+            # includes "!!python/unicode" statements that are not accepted by
+            # yaml.safe_load().
+            data = yaml.safe_load(self.definition)
+        except yaml.YAMLError:
+            return "Error"
         if 'protocols' not in data:
             return 'Error'
         if 'lava-multinode' not in data['protocols']:
@@ -1729,7 +1644,7 @@ class TestJob(RestrictedResource):
     @classmethod
     def from_yaml_and_user(cls, yaml_data, user, original_job=None):
         """
-        Runs the submission checks on incoming pipeline jobs.
+        Runs the submission checks on incoming jobs.
         Either rejects the job with a DevicesUnavailableException (which the caller is expected to handle), or
         creates a TestJob object for the submission and saves that testjob into the database.
         This function must *never* be involved in setting the state of this job or the state of any associated device.
@@ -1739,9 +1654,6 @@ class TestJob(RestrictedResource):
         (explicitly, a list, not a QuerySet) of evaluated TestJob objects
         """
         job_data = yaml.safe_load(yaml_data)
-
-        # Unpack include value if present.
-        job_data = handle_include_option(job_data)
 
         # visibility checks
         if 'visibility' not in job_data:
@@ -1758,19 +1670,16 @@ class TestJob(RestrictedResource):
         allow = _check_submit_to_device(list(Device.objects.filter(
             device_type=device_type)), user)
         if not allow:
-            raise DevicesUnavailableException("No devices of type %s have pipeline support." % device_type)
-        taglist = _get_tag_list(job_data.get('tags', []), True)
+            raise DevicesUnavailableException("No devices of type %s are available." % device_type)
+        taglist = _get_tag_list(job_data.get('tags', []))
         if taglist:
             supported = _check_tags(taglist, device_type=device_type)
             _check_tags_support(supported, allow)
         if original_job:
-            # Add old job absolute url to metadata for pipeline jobs.
+            # Add old job absolute url to metadata
             job_url = str(original_job.get_absolute_url())
-            try:
+            with contextlib.suppress(Site.DoesNotExist, ImproperlyConfigured):
                 site = Site.objects.get_current()
-            except (Site.DoesNotExist, ImproperlyConfigured):
-                pass
-            else:
                 job_url = "http://%s%s" % (site.domain, job_url)
 
             job_data.setdefault("metadata", {}).setdefault("job.original", job_url)
@@ -1779,7 +1688,7 @@ class TestJob(RestrictedResource):
 
     def clean(self):
         """
-        Implement the schema constraints for visibility for pipeline jobs so that
+        Implement the schema constraints for visibility for jobs so that
         admins cannot set a job into a logically inconsistent state.
         """
         # public settings must match
@@ -1787,12 +1696,12 @@ class TestJob(RestrictedResource):
             raise ValidationError("is_public is set but visibility is not public.")
         elif not self.is_public and self.visibility == TestJob.VISIBLE_PUBLIC:
             raise ValidationError("is_public is not set but visibility is public.")
-        return super(TestJob, self).clean()
+        return super().clean()
 
     def can_view(self, user):
         """
         Take over the checks behind RestrictedIDLinkColumn, for
-        pipeline jobs which support a view user list or view group.
+        jobs which support a view user list or view group.
         For speed, the lookups on the user/group tables are only by id
         Any elements which would need admin access must be checked
         separately using can_admin instead.
@@ -1864,76 +1773,52 @@ class TestJob(RestrictedResource):
         return (user.is_superuser or
                 user.has_perm('lava_scheduler_app.cancel_resubmit_testjob'))
 
-    def _generate_summary_mail(self):
-        domain = '???'
-        try:
-            site = Site.objects.get_current()
-        except (Site.DoesNotExist, ImproperlyConfigured):
-            pass
-        else:
-            domain = site.domain
-        url_prefix = 'http://%s' % domain
-        return render_to_string(
-            'lava_scheduler_app/job_summary_mail.txt',
-            {'job': self, 'url_prefix': url_prefix})
+    def create_job_data(self, token=None, output=False, results=False):
+        """
+        Populates a dictionary used by the NotificationCallback
+        and by the REST API, containing data about the test job.
+        If output is True, the entire test job log file is included.
+        If results is True, an export of all test cases is included.
+        """
+        data = {
+            "id": self.pk,
+            "status": self.get_legacy_status(),
+            "status_string": self.get_legacy_status_display().lower(),
+            "state": self.state,
+            "state_string": self.get_state_display(),
+            "health": self.health,
+            "health_string": self.get_health_display(),
+            "submit_time": str(self.submit_time),
+            "start_time": str(self.start_time),
+            "end_time": str(self.end_time),
+            "submitter_username": self.submitter.username,
+            "failure_comment": self.failure_comment,
+            "priority": self.priority,
+            "description": self.description,
+            "actual_device_id": self.actual_device_id,
+            "definition": self.definition,
+            "metadata": self.get_metadata_dict(),
+        }
 
-    def _generate_cancellation_mail(self, user):
-        domain = '???'
-        try:
-            site = Site.objects.get_current()
-        except (Site.DoesNotExist, ImproperlyConfigured):
-            pass
-        else:
-            domain = site.domain
-        url_prefix = 'http://%s' % domain
-        return render_to_string(
-            'lava_scheduler_app/job_cancelled_mail.txt',
-            {'job': self, 'url_prefix': url_prefix, 'user': user})
+        # Only add the token if it's not empty
+        if token is not None:
+            data["token"] = token
 
-    def _send_cancellation_mail(self, user):
-        if user == self.submitter:
-            return
-        recipient = get_object_or_404(User.objects.select_related(), id=self.submitter.id)
-        if not recipient.email:
-            return
-        mail = self._generate_cancellation_mail(user)
-        description = self.description.splitlines()[0]
-        if len(description) > 200:
-            description = description[197:] + '...'
-        logger = logging.getLogger('lava_scheduler_app')
-        logger.info("sending mail to %s", recipient.email)
-        try:
-            send_mail(
-                "LAVA job notification: " + description, mail,
-                settings.SERVER_EMAIL, [recipient.email])
-        except (smtplib.SMTPRecipientsRefused, smtplib.SMTPSenderRefused, socket.error):
-            logger.info("unable to send email to recipient")
+        # Logs.
+        output_file = self.output_file()
+        if output_file and output:
+            data["log"] = self.output_file().read()
 
-    def _get_notification_recipients(self):
-        job_data = simplejson.loads(self.definition)
-        recipients = job_data.get('notify', [])
-        recipients.extend([self.admin_notifications])  # Bug 170
-        recipients = filter(None, recipients)
-        if self.health != self.HEALTH_COMPLETE:
-            recipients.extend(job_data.get('notify_on_incomplete', []))
-        return recipients
+        # Results.
+        if results:
+            data["results"] = {}
+            for test_suite in self.testsuite_set.all():
+                yaml_list = []
+                for test_case in test_suite.testcase_set.all():
+                    yaml_list.append(export_testcase(test_case))
+                data["results"][test_suite.name] = yaml.dump(yaml_list)
 
-    def send_summary_mails(self):
-        recipients = self._get_notification_recipients()
-        if not recipients:
-            return
-        mail = self._generate_summary_mail()
-        description = self.description.splitlines()[0]
-        if len(description) > 200:
-            description = description[197:] + '...'
-        logger = logging.getLogger('lava_scheduler_app')
-        logger.info("sending mail to %s", recipients)
-        try:
-            send_mail(
-                "LAVA job notification: " + description, mail,
-                settings.SERVER_EMAIL, recipients)
-        except (smtplib.SMTPRecipientsRefused, smtplib.SMTPSenderRefused, socket.error):
-            logger.info("unable to send email - recipient refused")
+        return data
 
     def set_failure_comment(self, message):
         if not self.failure_comment:
@@ -2013,36 +1898,22 @@ class TestJob(RestrictedResource):
             return self.definition
 
     def get_passfail_results(self):
-        # Get pass fail results per lava_results_app.testsuite.
+        # Get pass fail results per lava_scheduler_app.testjob.
         results = {}
-        from lava_results_app.models import TestCase
         for suite in self.testsuite_set.all():
-            results[suite.name] = {
-                'pass': suite.testcase_set.filter(
-                    result=TestCase.RESULT_MAP['pass']).count(),
-                'fail': suite.testcase_set.filter(
-                    result=TestCase.RESULT_MAP['fail']).count(),
-                'skip': suite.testcase_set.filter(
-                    result=TestCase.RESULT_MAP['skip']).count(),
-                'unknown': suite.testcase_set.filter(
-                    result=TestCase.RESULT_MAP['unknown']).count()
-            }
+            results.update(suite.get_passfail_results())
         return results
 
     def get_measurement_results(self):
-        # Get measurement values per lava_results_app.testcase.
+        # Get measurement values per lava_scheduler_app.testjob.
         # TODO: add min, max
-        from lava_results_app.models import TestSuite, TestCase
-
         results = {}
-        for suite in TestSuite.objects.filter(job=self).prefetch_related(
+        for suite in self.testsuite_set.all().prefetch_related(
                 'testcase_set').annotate(
                     test_case_avg=models.Avg('testcase__measurement')):
-            if suite.name not in results:
-                results[suite.name] = {}
+            results.setdefault(suite.name, {})
             results[suite.name]['measurement'] = suite.test_case_avg
-            results[suite.name]['fail'] = suite.testcase_set.filter(
-                result=TestCase.RESULT_MAP['fail']).count()
+            results[suite.name]['fail'] = suite.testcase_count('fail')
 
         return results
 
@@ -2051,8 +1922,7 @@ class TestJob(RestrictedResource):
         results = {}
         attributes = [x.strip() for x in attributes.split(',')]
 
-        from lava_results_app.models import TestData
-        testdata = TestData.objects.filter(testjob=self).first()
+        testdata = self.testdata_set.first()
         if testdata:
             for attr in testdata.attributes.all():
                 if attr.name in attributes:
@@ -2070,395 +1940,23 @@ class TestJob(RestrictedResource):
         return self.end_time
 
     def get_xaxis_attribute(self, xaxis_attribute=None):
-
-        from lava_results_app.models import NamedTestAttribute, TestData
-        attribute = None
-        if xaxis_attribute:
-            try:
-                testdata = TestData.objects.filter(testjob=self).first()
-                if testdata:
-                    attribute = NamedTestAttribute.objects.filter(
-                        content_type=ContentType.objects.get_for_model(
-                            TestData),
-                        object_id=testdata.id,
-                        name=xaxis_attribute).values_list('value', flat=True)[0]
-
-            # FIXME: bare except
-            except:  # There's no attribute, skip this result.
-                pass
-
-        return attribute
+        if not xaxis_attribute:
+            return None
+        with contextlib.suppress(Exception):
+            testdata = self.testdata_set.first()
+            if not testdata:
+                return None
+            data = testdata.attributes.filter(name=xaxis_attribute)
+            return data.values_list('value', flat=True)[0]
 
     def get_metadata_dict(self):
-
-        from lava_results_app.models import TestData
         retval = []
-        data = TestData.objects.filter(testjob=self)
-        for datum in data:
+        for datum in self.testdata_set.all():
             for attribute in datum.attributes.all():
                 retval.append({attribute.name: attribute.value})
         return retval
 
-    def get_token_from_description(self, description):
-        tokens = AuthToken.objects.filter(user=self.submitter, description=description)
-        if tokens:
-            return tokens.first().secret
-        return description
 
-    def create_notification(self, notify_data):
-        logger = logging.getLogger('lava_scheduler_app')
-        # Create notification object.
-        notification = Notification()
-
-        if "verbosity" in notify_data:
-            notification.verbosity = Notification.VERBOSITY_MAP[
-                notify_data["verbosity"]]
-
-        if "type" in notify_data["criteria"]:
-            notification.type = Notification.TYPE_MAP[
-                notify_data["criteria"]["type"]]
-        if "compare" in notify_data:
-            if "blacklist" in notify_data["compare"]:
-                notification.blacklist = notify_data["compare"]["blacklist"]
-            if "query" in notify_data["compare"]:
-                from lava_results_app.models import Query
-                query_data = notify_data["compare"]["query"]
-                if "username" in query_data:
-                    # DoesNotExist scenario already verified in validate
-                    notification.query_owner = User.objects.get(
-                        username=query_data["username"])
-                    notification.query_name = query_data["name"]
-                else:  # Custom query.
-                    notification.entity = Query.get_content_type(
-                        query_data["entity"])
-                    if "conditions" in query_data:
-                        # Save conditions as a string.
-                        notification.conditions = Query.CONDITIONS_SEPARATOR.join(['%s%s%s' % (key, Query.CONDITION_DIVIDER, value) for (key, value) in query_data["conditions"].items()])
-
-        notification.test_job = self
-        notification.template = Notification.DEFAULT_TEMPLATE
-        notification.save()
-
-        if "recipients" in notify_data:
-            for recipient in notify_data["recipients"]:
-                notification_recipient = NotificationRecipient(
-                    notification=notification)
-                notification_recipient.method = NotificationRecipient.METHOD_MAP[recipient["to"]["method"]]
-                if "user" in recipient["to"]:
-                    user = User.objects.get(
-                        username=recipient["to"]["user"])
-                    notification_recipient.user = user
-                if "email" in recipient["to"]:
-                    notification_recipient.email = recipient["to"]["email"]
-                if "handle" in recipient["to"]:
-                    notification_recipient.irc_handle = recipient["to"][
-                        "handle"]
-                if "server" in recipient["to"]:
-                    notification_recipient.irc_server = recipient["to"][
-                        "server"]
-
-                try:
-                    notification_recipient.save()
-                except IntegrityError:
-                    # Ignore unique constraint violation.
-                    pass
-
-        else:
-            # You can do "callbacks only" without having recipients, in that
-            # case, no notification will be sent.
-            if "callbacks" not in notify_data and \
-               "callback" not in notify_data:
-                # But if there's no callback and no recipients then we add a
-                # submitter as a default recipient.
-                try:
-                    notification_recipient = NotificationRecipient.objects.create(
-                        user=self.submitter,
-                        notification=notification)
-                except IntegrityError:
-                    # Ignore unique constraint violation.
-                    pass
-
-        # Add callbacks.
-        if "callbacks" in notify_data:
-            for callback in notify_data["callbacks"]:
-                self.create_callback(callback, notification)
-        if "callback" in notify_data:
-            self.create_callback(notify_data["callback"], notification)
-
-    def create_callback(self, callback_data, notification):
-        notification_callback = NotificationCallback(
-            notification=notification)
-
-        notification_callback.url = self.substitute_callback_url_variables(callback_data["url"])
-        if callback_data.get("token", None):
-            notification_callback.token = self.get_token_from_description(callback_data['token'])
-        notification_callback.method = NotificationCallback.METHOD_MAP[
-            callback_data.get("method", "GET")]
-        notification_callback.dataset = NotificationCallback.DATASET_MAP[callback_data.get("dataset", "minimal")]
-        notification_callback.content_type = NotificationCallback.CONTENT_TYPE_MAP[callback_data.get('content-type', 'urlencoded')]
-
-        notification_callback.save()
-
-    def send_notifications(self):
-        logger = logging.getLogger('lava_scheduler_app')
-        notification = self.notification
-        # Prep template args.
-        kwargs = self.get_notification_args()
-        # Process notification callback.
-        for callback in notification.notificationcallback_set.all():
-            callback.invoke_callback()
-
-        for recipient in notification.notificationrecipient_set.all():
-            if recipient.method == NotificationRecipient.EMAIL:
-                if recipient.status == NotificationRecipient.NOT_SENT:
-                    try:
-                        logger.info("[%d] sending email notification to %s",
-                                    self.id, recipient.email_address)
-                        title = "LAVA notification for Test Job %s %s" % (
-                            self.id, self.description[:200])
-                        kwargs["user"] = self.get_recipient_args(recipient)
-                        body = self.create_notification_body(
-                            notification.template, **kwargs)
-                        result = send_mail(
-                            title, body, settings.SERVER_EMAIL,
-                            [recipient.email_address])
-                        if result:
-                            recipient.status = NotificationRecipient.SENT
-                            recipient.save()
-                    except (smtplib.SMTPRecipientsRefused, jinja2.exceptions.TemplateError,
-                            smtplib.SMTPSenderRefused, socket.error) as exc:
-                        logger.exception(exc)
-                        logger.warning("[%d] failed to send email notification to %s",
-                                       self.id, recipient.email_address)
-            else:  # IRC method
-                if recipient.status == NotificationRecipient.NOT_SENT:
-                    if recipient.irc_server_name:
-
-                        logger.info("[%d] sending IRC notification to %s on %s",
-                                    self.id, recipient.irc_handle_name,
-                                    recipient.irc_server_name)
-                        try:
-                            irc_message = self.create_irc_notification()
-                            utils.send_irc_notification(
-                                Notification.DEFAULT_IRC_HANDLE,
-                                recipient=recipient.irc_handle_name,
-                                message=irc_message,
-                                server=recipient.irc_server_name)
-                            recipient.status = NotificationRecipient.SENT
-                            recipient.save()
-                            logger.info("[%d] IRC notification sent to %s",
-                                        self.id, recipient.irc_handle_name)
-                        # FIXME: this bare except should be constrained
-                        except Exception as e:
-                            logger.warning(
-                                "[%d] IRC notification not sent. Reason: %s - %s",
-                                self.id, e.__class__.__name__, str(e))
-
-    def create_irc_notification(self):
-        kwargs = {}
-        kwargs["job"] = self
-        kwargs["url_prefix"] = "http://%s" % utils.get_domain()
-        return self.create_notification_body(
-            Notification.DEFAULT_IRC_TEMPLATE, **kwargs)
-
-    def get_notification_args(self):
-        from lava_results_app.models import TestCase
-
-        kwargs = {}
-        kwargs["job"] = self
-        kwargs["url_prefix"] = "http://%s" % utils.get_domain()
-        # Get lava.job result if available
-        try:
-            lava_job_obj = TestCase.objects.get(suite__job=self,
-                                                suite__name="lava",
-                                                name="job")
-            kwargs["lava_job_result"] = lava_job_obj.action_metadata
-        except TestCase.DoesNotExist:
-            pass
-
-        kwargs["query"] = {}
-        if self.notification.query_name or self.notification.entity:
-            kwargs["query"]["results"] = self.notification.get_query_results()
-            kwargs["query"]["link"] = self.notification.get_query_link()
-            # Find the first job which has health HEALTH_COMPLETE and is not the
-            # current job (this can happen with custom queries) for comparison.
-            compare_index = None
-            for index, result in enumerate(kwargs["query"]["results"]):
-                if result.health == TestJob.HEALTH_COMPLETE and \
-                   self != result:
-                    compare_index = index
-                    break
-
-            kwargs["query"]["compare_index"] = compare_index
-            if compare_index is not None and self.notification.blacklist:
-                # Get testsuites diffs between current job and latest complete
-                # job from query.
-                new_suites = self.testsuite_set.all().exclude(
-                    name__in=self.notification.blacklist)
-                old_suites = kwargs["query"]["results"][
-                    compare_index].testsuite_set.all().exclude(
-                        name__in=self.notification.blacklist)
-                left_suites_diff = new_suites.exclude(
-                    name__in=old_suites.values_list(
-                        'name', flat=True))
-                right_suites_diff = old_suites.exclude(
-                    name__in=new_suites.values_list('name', flat=True))
-
-                kwargs["query"]["left_suites_diff"] = left_suites_diff
-                kwargs["query"]["right_suites_diff"] = right_suites_diff
-
-                # Get testcases diffs between current job and latest complete
-                # job from query.
-                from lava_results_app.models import TestCase, TestSuite
-                new_cases = TestCase.objects.filter(suite__job=self).exclude(
-                    name__in=self.notification.blacklist).exclude(
-                        suite__name__in=self.notification.blacklist)
-                old_cases = TestCase.objects.filter(suite__job=kwargs["query"]["results"][compare_index]).exclude(
-                    name__in=self.notification.blacklist).exclude(
-                        suite__name__in=self.notification.blacklist)
-
-                left_cases_diff = new_cases.exclude(
-                    name__in=old_cases.values_list(
-                        'name', flat=True))
-                right_cases_diff = old_cases.exclude(
-                    name__in=new_cases.values_list('name', flat=True))
-
-                kwargs["query"]["left_cases_diff"] = left_cases_diff
-                kwargs["query"]["right_cases_diff"] = right_cases_diff
-
-                left_suites_intersection = new_suites.filter(
-                    name__in=old_suites.values_list(
-                        'name', flat=True))
-
-                # Format results.
-                left_suites_count = {}
-                for suite in left_suites_intersection:
-                    left_suites_count[suite.name] = (
-                        suite.testcase_set.filter(
-                            result=TestCase.RESULT_PASS).count(),
-                        suite.testcase_set.filter(
-                            result=TestCase.RESULT_FAIL).count(),
-                        suite.testcase_set.filter(
-                            result=TestCase.RESULT_SKIP).count()
-                    )
-
-                right_suites_intersection = old_suites.filter(
-                    name__in=new_suites.values_list(
-                        'name', flat=True))
-
-                # Format results.
-                right_suites_count = {}
-                for suite in right_suites_intersection:
-                    right_suites_count[suite.name] = (
-                        suite.testcase_set.filter(
-                            result=TestCase.RESULT_PASS).count(),
-                        suite.testcase_set.filter(
-                            result=TestCase.RESULT_FAIL).count(),
-                        suite.testcase_set.filter(
-                            result=TestCase.RESULT_SKIP).count()
-                    )
-
-                kwargs["query"]["left_suites_count"] = left_suites_count
-                kwargs["query"]["right_suites_count"] = right_suites_count
-
-                # Format {<Testcase>: old_result, ...}
-                testcases_changed = {}
-                for suite in left_suites_intersection:
-                    try:
-                        old_suite = TestSuite.objects.get(
-                            name=suite.name,
-                            job=kwargs["query"]["results"][compare_index])
-                    except TestSuite.DoesNotExist:
-                        continue  # No matching suite, move on.
-                    for testcase in suite.testcase_set.all():
-                        try:
-                            old_testcase = TestCase.objects.get(
-                                suite=old_suite, name=testcase.name)
-                            if old_testcase and \
-                               testcase.result != old_testcase.result:
-                                testcases_changed[testcase] = old_testcase.get_result_display()
-                        except TestCase.DoesNotExist:
-                            continue  # No matching TestCase, move on.
-                        except TestCase.MultipleObjectsReturned:
-                            logging.info("Multiple Test Cases with the equal name in TestSuite %s, could not compare",
-                                         old_suite)
-
-                kwargs["query"]["testcases_changed"] = testcases_changed
-
-        return kwargs
-
-    def get_recipient_args(self, recipient):
-        user_data = {}
-        if recipient.user:
-            user_data["username"] = recipient.user.username
-            user_data["first_name"] = recipient.user.first_name
-            user_data["last_name"] = recipient.user.last_name
-        return user_data
-
-    def create_notification_body(self, template_name, **kwargs):
-        txt_body = Notification.TEMPLATES_ENV.get_template(
-            template_name).render(**kwargs)
-        return txt_body
-
-    def notification_criteria(self, criteria, old_job):
-        # support special status of finished, otherwise skip to normal
-        if criteria["status"] == "finished":
-            return self.state == TestJob.STATE_FINISHED
-
-        if criteria["status"] == "running":
-            return self.state == TestJob.STATE_RUNNING
-
-        if criteria["status"] == "complete":
-            const = TestJob.HEALTH_COMPLETE
-        elif criteria["status"] == "incomplete":
-            const = TestJob.HEALTH_INCOMPLETE
-        else:
-            const = TestJob.HEALTH_CANCELED
-
-        # use normal notification support
-        if self.health == const:
-            if "type" in criteria:
-                if criteria["type"] == "regression":
-                    if old_job.health == TestJob.HEALTH_COMPLETE and \
-                       self.health == TestJob.HEALTH_INCOMPLETE:
-                        return True
-                if criteria["type"] == "progression":
-                    if old_job.health == TestJob.HEALTH_INCOMPLETE and \
-                       self.health == TestJob.HEALTH_COMPLETE:
-                        return True
-            else:
-                return True
-
-        return False
-
-    def substitute_callback_url_variables(self, callback_url):
-        # Substitute variables in callback_url with field values from self.
-        # Format: { FIELD_NAME }
-        # If field name is non-existing, return None.
-        logger = logging.getLogger('lava_scheduler_app')
-
-        substitutes = re.findall(r'{\s*[A-Z_-]*\s*}', callback_url)
-        for sub in substitutes:
-
-            attribute_name = sub.replace('{', '').replace('}', '').strip().lower()
-            # FIXME: Keep legacy behavior. Should be removed.
-            if attribute_name == "status":
-                attr = self.get_legacy_status()
-            elif attribute_name == "status_string":
-                attr = self.get_legacy_status_display().lower()
-            else:
-                try:
-                    attr = getattr(self, attribute_name)
-                except AttributeError:
-                    logger.error("Attribute '%s' does not exist in TestJob." % attribute_name)
-                    continue
-
-            callback_url = callback_url.replace(str(sub), str(attr))
-
-        return callback_url
-
-
-@python_2_unicode_compatible
 class Notification(models.Model):
 
     TEMPLATES_DIR = os.path.join(
@@ -2572,34 +2070,7 @@ class Notification(models.Model):
     def __str__(self):
         return str(self.test_job)
 
-    def get_query_results(self):
-        from lava_results_app.models import Query
-        if self.query_name:
-            query = Query.objects.get(name=self.query_name,
-                                      owner=self.query_owner)
-            # We use query_owner as user here since we show only status.
-            return query.get_results(self.query_owner)[:self.QUERY_LIMIT]
-        else:
-            return Query.get_queryset(
-                self.entity,
-                Query.parse_conditions(self.entity, self.conditions),
-                self.QUERY_LIMIT)
 
-    def get_query_link(self):
-        from lava_results_app.models import Query
-        if self.query_name:
-            query = Query.objects.get(name=self.query_name,
-                                      owner=self.query_owner)
-            return query.get_absolute_url()
-        else:
-            # Make absolute URL manually.
-            return "%s?entity=%s&conditions=%s" % (
-                reverse("lava.results.query_custom"),
-                self.entity.model,
-                self.conditions)
-
-
-@python_2_unicode_compatible
 class NotificationRecipient(models.Model):
 
     class Meta:
@@ -2703,7 +2174,7 @@ class NotificationRecipient(models.Model):
         else:
             try:
                 return self.user.extendeduser.irc_handle
-            except:
+            except Exception:
                 return None
 
     @property
@@ -2713,11 +2184,10 @@ class NotificationRecipient(models.Model):
         else:
             try:
                 return self.user.extendeduser.irc_server
-            except:
+            except Exception:
                 return None
 
 
-@python_2_unicode_compatible
 class NotificationCallback(models.Model):
 
     notification = models.ForeignKey(
@@ -2808,7 +2278,22 @@ class NotificationCallback(models.Model):
 
     def invoke_callback(self):
         logger = logging.getLogger('lava_scheduler_app')
-        callback_data = self.get_callback_data()
+        callback_data = None
+
+        if self.method != NotificationCallback.GET:
+            output = self.dataset in [
+                NotificationCallback.LOGS,
+                NotificationCallback.ALL]
+            results = self.dataset in [
+                NotificationCallback.RESULTS,
+                NotificationCallback.ALL]
+            callback_data = self.notification.test_job.create_job_data(
+                token=self.token, output=output, results=results)
+            # store callback_data for later retrieval & triage
+            job_data_file = os.path.join(self.notification.test_job.output_dir, 'job_data.gz')
+            if callback_data and not os.path.exists(job_data_file):
+                with gzip.open(job_data_file, 'wb') as output:
+                    output.write(simplejson.dumps(callback_data).encode('utf-8'))
         headers = {}
 
         if callback_data:
@@ -2831,79 +2316,7 @@ class NotificationCallback(models.Model):
                 logger.warning("Problem sending request to %s: %s" % (
                     self.url, ex))
 
-    def get_callback_data(self):
 
-        from lava_results_app.dbutils import export_testcase
-
-        if self.method == NotificationCallback.GET:
-            return None
-        else:
-
-            data = {
-                "id": self.notification.test_job.pk,
-                "status": self.notification.test_job.get_legacy_status(),
-                "status_string": self.notification.test_job.get_legacy_status_display().lower(),
-                "state": self.notification.test_job.state,
-                "state_string": self.notification.test_job.get_state_display(),
-                "health": self.notification.test_job.health,
-                "health_string": self.notification.test_job.get_health_display(),
-                "submit_time": str(self.notification.test_job.submit_time),
-                "start_time": str(self.notification.test_job.start_time),
-                "end_time": str(self.notification.test_job.end_time),
-                "submitter_username": self.notification.test_job.submitter.username,
-                "failure_comment": self.notification.test_job.failure_comment,
-                "priority": self.notification.test_job.priority,
-                "description": self.notification.test_job.description,
-                "actual_device_id": self.notification.test_job.actual_device_id,
-                "definition": self.notification.test_job.definition,
-                "metadata": self.notification.test_job.get_metadata_dict(),
-            }
-            # Only add the token if it's not empty
-            if self.token is not None:
-                data["token"] = self.token
-
-            # Logs.
-            output_file = self.notification.test_job.output_file()
-            if output_file and self.dataset in [
-                    NotificationCallback.LOGS,
-                    NotificationCallback.ALL]:
-                data["log"] = self.notification.test_job.output_file().read().encode('UTF-8')
-
-            # Results.
-            if self.dataset in [NotificationCallback.RESULTS,
-                                NotificationCallback.ALL]:
-                data["results"] = {}
-                for test_suite in self.notification.test_job.testsuite_set.all():
-                    yaml_list = []
-                    for test_case in test_suite.testcase_set.all():
-                        yaml_list.append(export_testcase(test_case))
-                    data["results"][test_suite.name] = yaml.dump(yaml_list)
-
-            return data
-
-
-@receiver(pre_save, sender=TestJob, dispatch_uid="process_notifications")
-def process_notifications(sender, **kwargs):
-    new_job = kwargs["instance"]
-    notification_state = [TestJob.STATE_RUNNING, TestJob.STATE_FINISHED]
-    # If it's a new TestJob, no need to send notifications.
-    if new_job.id:
-        old_job = TestJob.objects.get(pk=new_job.id)
-        if new_job.state in notification_state and \
-           old_job.state != new_job.state:
-            job_def = yaml.safe_load(new_job.definition)
-            if "notify" in job_def:
-                if new_job.notification_criteria(job_def["notify"]["criteria"],
-                                                 old_job):
-                    try:
-                        old_job.notification
-                    except ObjectDoesNotExist:
-                        new_job.create_notification(job_def["notify"])
-
-                    new_job.send_notifications()
-
-
-@python_2_unicode_compatible
 class TestJobUser(models.Model):
 
     class Meta:

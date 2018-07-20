@@ -45,12 +45,6 @@ def results_pklink(record):
             escape(job_id), complete, button))
 
 
-class JobRestrictionColumn(RestrictedIDLinkColumn):
-
-    def render(self, record, table=None):
-        return super(JobRestrictionColumn, self).render(record.job, table)
-
-
 class IndexResultsColumn(RestrictedIDLinkColumn):
 
     def render(self, record, table=None):
@@ -67,7 +61,7 @@ class ResultsTable(LavaTable):
     """
 
     def __init__(self, *args, **kwargs):
-        super(ResultsTable, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.length = 25
 
     def _check_job(self, record, table=None):  # pylint: disable=no-self-use
@@ -85,20 +79,12 @@ class ResultsTable(LavaTable):
     def render_passes(self, record, table=None):
         if not self._check_job(record, table):
             return ''
-        return TestCase.objects.filter(
-            suite__job=record.job,
-            suite=record,
-            result=TestCase.RESULT_MAP['pass']
-        ).count()
+        return record.testcase_count('pass')
 
     def render_fails(self, record, table=None):
         if not self._check_job(record, table):
             return ''
-        return TestCase.objects.filter(
-            suite__job=record.job,
-            suite=record,
-            result=TestCase.RESULT_MAP['fail']
-        ).count()
+        return record.testcase_count('fail')
 
     def render_total(self, record, table=None):
         if not self._check_job(record, table):
@@ -210,7 +196,7 @@ class SuiteTable(LavaTable):
     Details of the test sets or test cases in a test suite
     """
     def __init__(self, *args, **kwargs):
-        super(SuiteTable, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.length = 25
 
     name = tables.Column()

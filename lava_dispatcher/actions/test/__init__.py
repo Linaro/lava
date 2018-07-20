@@ -18,30 +18,11 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from lava_dispatcher.action import (
-    Action,
-    JobError,
-)
+from lava_dispatcher.action import Action
 from lava_dispatcher.logical import (
     LavaTest,
     RetryAction,
 )
-
-
-def handle_testcase(params):
-
-    # FIXME: move to utils
-    data = {}
-    for param in params:
-        parts = param.split('=')
-        if len(parts) == 2:
-            key, value = parts
-            key = key.lower()
-            data[key] = value
-        else:
-            raise JobError(
-                "Ignoring malformed parameter for signal: \"%s\". " % param)
-    return data
 
 
 class TestAction(Action):

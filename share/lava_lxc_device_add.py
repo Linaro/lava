@@ -32,7 +32,6 @@ import logging
 import subprocess
 import sys
 import time
-import yaml
 
 from lava_dispatcher.log import YAMLLogger
 
@@ -100,6 +99,9 @@ def main():
     uniq_str = "udev_trigger-%s-%02d:%02d:%02d" % (lxc_name, start.tm_hour, start.tm_min, start.tm_sec)
 
     device = "/dev/%s" % options.device_node
+    if not os.path.exists(device):
+        logger.debug("Skipping node not in /dev/ : %s" % options.device_node)
+        return 0
 
     lxc_cmd = ['lxc-device', '-n', lxc_name, 'add', device]
     try:
@@ -112,7 +114,7 @@ def main():
                      uniq_str, device, exc)
         logger.close(linger=LINGER)  # pylint: disable=no-member
         return 2
-    except:  # pylint: disable=bare-except
+    except Exception:
         logger.close(linger=LINGER)  # pylint: disable=no-member
         return 3
 

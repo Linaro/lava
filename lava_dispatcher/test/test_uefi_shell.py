@@ -19,32 +19,15 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 
-import os
-
-from lava_dispatcher.device import NewDevice
-from lava_dispatcher.parser import JobParser
 from lava_dispatcher.test.test_basic import Factory, StdoutTestCase
-from lava_dispatcher.test.utils import DummyLogger
-
-
-class UefiFactory(Factory):  # pylint: disable=too-few-public-methods
-
-    def create_job(self, filename):  # pylint: disable=no-self-use
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/juno-uefi.yaml'))
-        y_file = os.path.join(os.path.dirname(__file__), filename)
-        with open(y_file) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "")
-        job.logger = DummyLogger()
-        return job
 
 
 class TestUefiShell(StdoutTestCase):
 
     def setUp(self):
         super().setUp()
-        self.factory = UefiFactory()
-        self.job = self.factory.create_job("sample_jobs/juno-uefi-nfs.yaml")
+        self.factory = Factory()
+        self.job = self.factory.create_job("juno-r2-01.jinja2", "sample_jobs/juno-uefi-nfs.yaml")
 
     def test_shell_reference(self):
         self.job.validate()
@@ -55,9 +38,7 @@ class TestUefiShell(StdoutTestCase):
     def test_device_juno_uefi(self):
         job = self.job
         self.assertIsNotNone(job)
-
         self.assertIsNone(job.validate())
-        self.assertEqual(job.device['device_type'], 'juno')
 
     def test_shell_prompts(self):
         self.job.validate()
@@ -92,7 +73,7 @@ class TestUefiShell(StdoutTestCase):
         self.assertIsNotNone(shell_interrupt)
 
     def test_no_menu_reference(self):
-        job = self.factory.create_job("sample_jobs/juno-uefi-nfs-no-menu.yaml")
+        job = self.factory.create_job("juno-r2-01.jinja2", "sample_jobs/juno-uefi-nfs-no-menu.yaml")
         self.assertEqual([], job.pipeline.errors)
         description_ref = self.pipeline_reference('juno-uefi-nfs-no-menu.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
@@ -101,7 +82,7 @@ class TestUefiShell(StdoutTestCase):
         """
         Tests that if shell_menu=='' that the menu is skipped
         """
-        job = self.factory.create_job("sample_jobs/juno-uefi-nfs-no-menu.yaml")
+        job = self.factory.create_job("juno-r2-01.jinja2", "sample_jobs/juno-uefi-nfs-no-menu.yaml")
         job.validate()
         params = job.device['actions']['boot']['methods']['uefi']['parameters']
         self.assertIn('shell_interrupt_prompt', params)

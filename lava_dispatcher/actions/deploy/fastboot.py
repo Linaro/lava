@@ -22,12 +22,8 @@ import os
 from lava_dispatcher.logical import Deployment
 from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.power import ResetDevice, PrePower
-from lava_common.exceptions import (
-    InfrastructureError,
-    JobError,
-)
+from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.action import (
-    JobError,
     Pipeline,
     Action,
 )
@@ -40,8 +36,7 @@ from lava_dispatcher.actions.deploy.apply_overlay import (
 )
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.utils.filesystem import copy_to_lxc
-from lava_dispatcher.utils.lxc import is_lxc_requested
-from lava_dispatcher.protocols.lxc import LxcProtocol
+from lava_dispatcher.utils.lxc import is_lxc_requested, lxc_cmd_prefix
 from lava_dispatcher.actions.boot.fastboot import EnterFastbootAction
 from lava_dispatcher.actions.boot.u_boot import UBootEnterFastbootAction
 from lava_dispatcher.power import PDUReboot, ReadFeedback
@@ -166,7 +161,7 @@ class FastbootFlashOrderAction(DeployAction):
             if flash_cmd not in parameters['images']:
                 continue
             self.internal_pipeline.add_action(FastbootFlashAction(cmd=flash_cmd))
-            self.reboot = parameters['images'][flash_cmd].get('reboot', None)
+            self.reboot = parameters['images'][flash_cmd].get('reboot')
             if self.reboot == 'fastboot-reboot':
                 self.internal_pipeline.add_action(FastbootReboot())
                 self.internal_pipeline.add_action(ReadFeedback(repeat=True))
@@ -221,8 +216,8 @@ class FastbootFlashAction(Action):
             self.interrupt_prompt = device_methods['fastboot'].get('interrupt_prompt')
             self.interrupt_string = device_methods['fastboot'].get('interrupt_string')
 
-    def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-locals
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):  # pylint: disable=too-many-locals
+        connection = super().run(connection, max_end_time)
 
         src = self.get_namespace_data(action='download-action', label=self.command, key='file')
         if not src:
@@ -247,7 +242,7 @@ class FastbootFlashAction(Action):
 
         serial_number = self.job.device['fastboot_serial_number']
         fastboot_opts = self.job.device['fastboot_options']
-        fastboot_cmd = self.lxc_cmd_prefix + [
+        fastboot_cmd = lxc_cmd_prefix(self.job) + [
             'fastboot', '-s', serial_number, 'flash', self.command, src
         ] + fastboot_opts
         self.logger.info("Handling %s", self.command)
@@ -265,15 +260,15 @@ class FastbootReboot(Action):
     description = 'Reset a device between flash operations using fastboot reboot.'
     summary = 'execute a reboot using fastboot'
 
-    def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-locals
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):  # pylint: disable=too-many-locals
+        connection = super().run(connection, max_end_time)
 
         serial_number = self.job.device['fastboot_serial_number']
         fastboot_opts = self.job.device['fastboot_options']
 
         self.logger.info("fastboot rebooting device.")
-        fastboot_cmd = self.lxc_cmd_prefix + ['fastboot', '-s', serial_number,
-                                              'reboot'] + fastboot_opts
+        fastboot_cmd = lxc_cmd_prefix(self.job) + ['fastboot', '-s', serial_number,
+                                                   'reboot'] + fastboot_opts
         command_output = self.run_command(fastboot_cmd)
         if not command_output:
             raise InfrastructureError("Unable to reboot")
@@ -286,14 +281,14 @@ class FastbootRebootBootloader(Action):
     description = 'Reset a device between flash operations using fastboot reboot-bootloader.'
     summary = 'execute a reboot to bootloader using fastboot'
 
-    def run(self, connection, max_end_time, args=None):  # pylint: disable=too-many-locals
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):  # pylint: disable=too-many-locals
+        connection = super().run(connection, max_end_time)
 
         serial_number = self.job.device['fastboot_serial_number']
         fastboot_opts = self.job.device['fastboot_options']
 
         self.logger.info("fastboot reboot device to bootloader.")
-        fastboot_cmd = self.lxc_cmd_prefix + [
+        fastboot_cmd = lxc_cmd_prefix(self.job) + [
             'fastboot', '-s', serial_number, 'reboot-bootloader'
         ] + fastboot_opts
         command_output = self.run_command(fastboot_cmd)

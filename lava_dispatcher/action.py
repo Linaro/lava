@@ -20,7 +20,7 @@
 
 import logging
 import copy
-from functools import reduce  # pylint: disable=redefined-builtin
+from functools import reduce
 import time
 import types
 import traceback
@@ -126,7 +126,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
         # pylint: disable=protected-access
         action._override_action_timeout(dict_merge_get(timeouts, 'action'))
         action._override_action_timeout(subdict_merge_get(timeouts, 'actions', action.name))
-        action._override_action_timeout(parameters.get('timeout', None))
+        action._override_action_timeout(parameters.get('timeout'))
 
         action._override_connection_timeout(dict_merge_get(timeouts, 'connection'))
         action._override_connection_timeout(subdict_merge_get(timeouts, 'connections', action.name))
@@ -202,13 +202,14 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
         # Diagnosis is not allowed to alter the connection, do not use the return value.
         return None
 
-    def run_actions(self, connection, max_end_time, args=None):  # pylint: disable=too-many-branches,too-many-statements,too-many-locals
+    def run_actions(self, connection, max_end_time):  # pylint: disable=too-many-branches,too-many-statements,too-many-locals
         for action in self.actions:
             failed = False
             namespace = action.parameters.get('namespace', 'common')
             # Begin the action
             try:
-                with action.timeout(max_end_time) as action_max_end_time:
+                parent = self.parent if self.parent else self.job
+                with action.timeout(parent, max_end_time) as action_max_end_time:
                     # Add action start timestamp to the log message
                     # Log in INFO for root actions and in DEBUG for the other actions
                     timeout = seconds_to_str(action_max_end_time - action.timeout.start)
@@ -219,8 +220,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
                     else:
                         action.logger.debug(msg)
 
-                    new_connection = action.run(connection,
-                                                action_max_end_time, args)
+                    new_connection = action.run(connection, action_max_end_time)
             except LAVAError as exc:
                 action.logger.exception(str(exc))
                 # allows retries without setting errors, which make the job incomplete.
@@ -283,7 +283,6 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         self.max_retries = 1  # unless the strategy or the job parameters change this, do not retry
         self.diagnostics = []
         self.protocols = []  # list of protocol objects supported by this action, full list in job.protocols
-        self.lxc_cmd_prefix = []
         self.connection_timeout = Timeout(self.name, exception=self.timeout_exception)
         self.character_delay = 0
         self.force_prompt = False
@@ -405,6 +404,13 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         except ValueError:
             raise LAVABug("Action results need to be a dictionary")
 
+    def get_constant(self, key, prefix):
+        # whilst deployment data is still supported, check if the key exists there.
+        # once deployment_data is removed, merge with device.get_constant
+        if self.parameters.get('deployment_data'):
+            return self.parameters['deployment_data'][key]
+        return self.job.device.get_constant(key, prefix=prefix)
+
     def validate(self):
         """
         This method needs to validate the parameters to the action. For each
@@ -430,11 +436,6 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
 
         if not self.section:
             self.errors = "action %s (%s) has no section set" % (self.name, self)
-
-        # Decide whether we need lxc_cmd_prefix or not
-        lxc_name = is_lxc_requested(self.job)
-        if lxc_name:
-            self.lxc_cmd_prefix = ['lxc-attach', '-n', lxc_name, '--']
 
         # Collect errors from internal pipeline actions
         if self.internal_pipeline:
@@ -540,7 +541,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
                     self.set_namespace_data(
                         action=protocol.name, label=protocol.name, key=message[0], value=message[1])
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         """
         This method is responsible for performing the operations that an action
         is supposed to do.
@@ -554,13 +555,12 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
 
         :param connection: The Connection object to use to run the steps
         :param max_end_time: The maximum time before this action will timeout.
-        :param args: Command and arguments to run
         :raise: Classes inheriting from BaseAction must handle
         all exceptions possible from the command and re-raise
         """
         self.call_protocols()
         if self.internal_pipeline:
-            return self.internal_pipeline.run_actions(connection, max_end_time, args)
+            return self.internal_pipeline.run_actions(connection, max_end_time)
         if connection:
             connection.timeout = self.connection_timeout
         return connection
@@ -621,9 +621,6 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
                 data[attr] = dict(getattr(self, attr))
             else:
                 data[attr] = getattr(self, attr)
-        if 'deployment_data' in self.parameters:
-            data['parameters'] = dict()
-            data['parameters']['deployment_data'] = self.parameters['deployment_data'].__data__
         return data
 
     def get_namespace_keys(self, action, parameters=None):
@@ -651,7 +648,7 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
         """
         params = parameters if parameters else self.parameters
         namespace = params['namespace']
-        value = self.data.get(namespace, {}).get(action, {}).get(label, {}).get(key, None)  # pylint: disable=no-member
+        value = self.data.get(namespace, {}).get(action, {}).get(label, {}).get(key)  # pylint: disable=no-member
         if value is None:
             return None
         return copy.deepcopy(value) if deepcopy else value

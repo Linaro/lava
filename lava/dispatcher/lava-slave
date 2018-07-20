@@ -21,6 +21,7 @@
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
 import argparse
+import contextlib
 import errno
 import fcntl
 import glob
@@ -92,10 +93,8 @@ def create_environ(env):
             environ = {}
         # Remove some variables (that might not exist)
         for var in conf.get("removes", {}):
-            try:
+            with contextlib.suppress(KeyError):
                 del environ[var]
-            except KeyError:
-                pass
         # Override
         environ.update(conf.get("overrides", {}))
     return environ
@@ -152,7 +151,7 @@ def start_job(job_id, definition, device_definition, zmq_config,
 
     # Dump the environment variables in the tmp file.
     if env_dut_str:
-        with open(os.path.join(base_dir, "env.dut.yaml", 'w')) as f_env:
+        with open(os.path.join(base_dir, "env.dut.yaml"), 'w') as f_env:
             f_env.write(env_dut_str)
 
     try:
@@ -276,7 +275,7 @@ class JobsDB(object):
     def __init__(self, dbname):
         self.conn = sqlite3.connect(dbname)
         self.conn.row_factory = sqlite3.Row
-        self.conn.execute("CREATE TABLE IF NOT EXISTS jobs(id INTERGER PRIMARY KEY, pid INTEGER, status INTEGER, last_update INTEGER)")
+        self.conn.execute("CREATE TABLE IF NOT EXISTS jobs(id INTEGER PRIMARY KEY, pid INTEGER, status INTEGER, last_update INTEGER)")
         self.conn.commit()
 
     def create(self, job_id, pid, status):
@@ -306,11 +305,9 @@ class JobsDB(object):
             return None
 
     def delete(self, job_id):
-        try:
+        with contextlib.suppress(sqlite3.Error):
             self.conn.execute("DELETE FROM jobs WHERE id=?", (str(job_id), ))
             self.conn.commit()
-        except sqlite3.Error:
-            pass
 
     def all_ids(self):
         jobs = self.conn.execute("SELECT * FROM jobs")
@@ -597,9 +594,8 @@ def verify_socket(sock, master_url, ipv6=False):
 
 def connect_to_master(poller, pipe_r, sock, master, ipv6):
     LOG.info("[BTSP] Greeting the master [%s] => 'HELLO'", master)
-    verify_socket(sock, master, ipv6)
     send_multipart_u(sock, ["HELLO", str(PROTOCOL_VERSION)])
-    (leaving, msg) = recv_from_master("[BTSP]", poller, pipe_r, sock)
+    (leaving, msg) = recv_from_master("[BTSP] ", poller, pipe_r, sock)
 
     while not leaving:
         # Parse the message
@@ -610,18 +606,13 @@ def connect_to_master(poller, pipe_r, sock, master, ipv6):
                 return True
             else:
                 LOG.info("[BTSP] Unexpected message from master: %s", message)
-        except socket.gaierror as exc:
-            LOG.exception("[BTSP] Socket error: %s", message)
-            verify_socket(sock, master, ipv6)
         except (IndexError, TypeError):
             if msg is not None:
                 LOG.error("[BTSP] Invalid message from master: %s", msg)
         if verify_socket(sock, master, ipv6):
             LOG.info("[BTSP] Greeting master => 'HELLO_RETRY' (using the same version?)")
             send_multipart_u(sock, ["HELLO_RETRY", str(PROTOCOL_VERSION)])
-            (leaving, msg) = recv_from_master("[BTSP]", poller, pipe_r, sock)
-        else:
-            time.sleep(TIMEOUT)
+        (leaving, msg) = recv_from_master("[BTSP] ", poller, pipe_r, sock)
 
     return False
 
@@ -636,12 +627,9 @@ def destroy_context(context, sock, read_pipe, write_pipe):
     :param write_pipe: The write pipe to close.
     """
     LOG.info("[EXIT] Closing sock and pipes, dropping messages")
-    try:
+    with contextlib.suppress(OSError):
         os.close(read_pipe)
         os.close(write_pipe)
-    except OSError:
-        # Silently ignore possible errors.
-        pass
     sock.close(linger=0)
     context.term()
 

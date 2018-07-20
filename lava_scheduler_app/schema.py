@@ -1,9 +1,5 @@
-from __future__ import unicode_literals
-
+import contextlib
 import re
-import requests
-import sys
-import yaml
 from voluptuous import (
     All,
     Any,
@@ -18,7 +14,6 @@ from voluptuous import (
 )
 
 INVALID_CHARACTER_ERROR_MSG = "Invalid character"
-INCLUDE_URL_TIMEOUT = 10
 
 
 CALLBACK_SCHEMA = {
@@ -115,6 +110,7 @@ def _test_definition_schema():
             Required('name'): str,
             Required('path'): str,
             Optional('parameters'): dict,
+            Optional('timeout'): _timeout_schema(),
         }
     ], extra=True)
 
@@ -307,15 +303,11 @@ def visibility_schema():
 
 
 def _job_schema():
-    if sys.version_info[0] == 2:
-        metadata_types = Any(str, int, unicode)
-    else:
-        metadata_types = Any(str, int)
+    metadata_types = Any(str, int)
     return Schema(
         {
             'device_type': All(str, Length(min=1)),  # not Required as some protocols encode it elsewhere
             Required('job_name'): All(str, Length(min=1, max=200)),
-            Optional('include'): str,
             Optional('priority'): Any('high', 'medium', 'low', int),
             Optional('protocols'): _job_protocols_schema(),
             Optional('context'): _context_schema(),
@@ -406,7 +398,6 @@ def _device_schema():
         'static_info': [dict],
         'storage_info': [dict],
         'flash_cmds_order': list,
-        'device_type': All(str, Length(min=1)),
         'parameters': dict,
         'board_id': str,
         'usb_vendor_id': All(str, Length(min=4, max=4)),  # monitor type like arduino
@@ -435,43 +426,6 @@ def _validate_vcs_parameters(data_objects):
                     raise SubmissionException("When 'revision' is used, 'shallow' shouldn't be 'True'")
 
 
-def _download_raw_yaml(url):
-    try:
-        return yaml.safe_load(requests.get(url, timeout=INCLUDE_URL_TIMEOUT).content)
-    except requests.RequestException as exc:
-        raise SubmissionException(
-            "Section 'include' must contain valid URL: %s" % exc)
-    except yaml.YAMLError as e:
-        raise SubmissionException("Section 'include' must contain URL to a raw file in valid YAML format: %s" % e)
-
-
-def include_yaml(data_object, include_data):
-
-    if not isinstance(include_data, dict):
-        raise SubmissionException("Include section must be a dictionary.")
-
-    for key in include_data:
-        if key not in data_object:
-            data_object[key] = include_data[key]
-        else:
-            if isinstance(data_object[key], dict):
-                data_object[key].update(include_data[key])
-            elif isinstance(data_object[key], list):
-                data_object[key] += include_data[key]
-            elif isinstance(data_object[key], str):
-                data_object[key] = include_data[key]
-
-    return data_object
-
-
-def handle_include_option(data_object):
-    if 'include' in data_object:
-        include_data = _download_raw_yaml(data_object['include'])
-        include_yaml(data_object, include_data)
-
-    return data_object
-
-
 def validate_submission(data_object):
     """
     Validates a python object as a TestJob submission
@@ -479,7 +433,6 @@ def validate_submission(data_object):
     :return: True if valid, else raises SubmissionException
     """
     try:
-        data_object = handle_include_option(data_object)
         schema = _job_schema()
         schema(data_object)
     except MultipleInvalid as exc:
@@ -499,7 +452,7 @@ def _validate_primary_connection_power_commands(data_object):
     ]
 
     # debug, tests don't pass. write docs.
-    try:
+    with contextlib.suppress(KeyError):
         ssh_host = data_object['actions']['deploy']['methods']['ssh']['host']
         if ssh_host:
             if 'commands' in data_object:
@@ -507,8 +460,6 @@ def _validate_primary_connection_power_commands(data_object):
                     if command in data_object['commands']:
                         raise SubmissionException(
                             "When primary connection is used, power control commands (%s) should not be specified." % ", ".join(power_control_commands))
-    except KeyError:
-        pass  # no primary connection setup, skip
 
 
 def validate_device(data_object):

@@ -1,0 +1,32 @@
+- class: actions.deploy.image.DeployImagesAction
+  name: deployimages
+  pipeline:
+  - class: actions.deploy.download.DownloaderAction
+    name: download-retry
+    pipeline:
+    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
+  - class: actions.deploy.download.DownloaderAction
+    name: download-retry
+    pipeline:
+    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
+- class: actions.boot.gdb.BootGDB
+  name: boot-gdb
+  pipeline:
+  - class: actions.boot.gdb.BootGDBRetry
+    name: boot-gdb-retry
+    pipeline:
+    - class: power.ResetDevice
+      name: reset-device
+      pipeline:
+      - {class: power.PDUReboot, name: pdu-reboot}
+    - {class: utils.udev.WaitUSBSerialDeviceAction, name: wait-usb-serial}
+    - {class: connections.serial.ConnectDevice, name: connect-device}
+- class: actions.test.monitor.TestMonitorRetry
+  name: lava-test-monitor-retry
+  pipeline:
+  - {class: actions.test.monitor.TestMonitorAction, name: lava-test-monitor}
+- class: power.FinalizeAction
+  name: finalize
+  pipeline:
+  - {class: power.PowerOff, name: power-off}
+  - {class: power.ReadFeedback, name: read-feedback}

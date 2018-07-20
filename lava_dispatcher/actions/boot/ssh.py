@@ -123,7 +123,7 @@ class Scp(ConnectSsh):
             if 'options' in params:
                 self.scp.extend(params['options'])
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         path = self.get_namespace_data(action='prepare-scp-overlay', label='scp-deploy', key=self.key)
         if not path:
             error_msg = "%s: could not find details of '%s'" % (self.name, self.key)
@@ -146,7 +146,7 @@ class Scp(ConnectSsh):
         command = self.scp[:]  # local copy
         # add the argument for setting the port (-P port)
         command.extend(self.scp_port)
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
         if self.identity_file:
             command.extend(['-i', self.identity_file])
         # add arguments to ignore host key checking of the host device
@@ -159,7 +159,7 @@ class Scp(ConnectSsh):
         command.extend(["%s@%s:/%s" % (self.ssh_user, host_address, destination)])
         self.logger.info(yaml.dump(command))
         self.run_command(command)
-        connection = super().run(connection, max_end_time, args)
+        connection = super().run(connection, max_end_time)
         self.results = {'success': 'ssh deployment'}
         self.set_namespace_data(action=self.name, label='scp-overlay-unpack', key='overlay', value=destination)
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
@@ -186,8 +186,8 @@ class PrepareSsh(Action):
             self.set_namespace_data(action=self.name, label='ssh-connection', key='host', value=False)
             self.primary = True
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         if not self.primary:
             host_data = self.get_namespace_data(
                 action=MultinodeProtocol.name,
@@ -210,8 +210,8 @@ class ScpOverlayUnpack(Action):
     description = "unpack the overlay over an existing ssh connection"
     summary = "unpack the overlay on the remote device"
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         if not connection:
             raise LAVABug("Cannot unpack, no connection available.")
         filename = self.get_namespace_data(action='scp-deploy', label='scp-overlay-unpack', key='overlay')
@@ -285,11 +285,12 @@ class SchrootAction(Action):
         self.schroot = params['schroot']['name']
         self.command = params['schroot']['command']
 
-    def run(self, connection, max_end_time, args=None):
+    def run(self, connection, max_end_time):
         if not connection:
             return connection
         self.logger.info("Entering %s schroot", self.schroot)
         connection.prompt_str = "(%s)" % self.schroot
         connection.sendline(self.command)
         self.wait(connection)
+        # TODO: not calling super?
         return connection

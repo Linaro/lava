@@ -1,5 +1,4 @@
-from __future__ import unicode_literals
-
+from datetime import datetime, timedelta  # pylint: disable=unused-import
 import django_tables2 as tables
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
@@ -9,7 +8,7 @@ from django.db.models import Q
 class LavaView(tables.SingleTableView):
 
     def __init__(self, request, **kwargs):
-        super(LavaView, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.request = request
         self.terms = {}  # complete search term list, passed back to the template.
         self.search = []
@@ -163,7 +162,7 @@ class LavaTable(tables.Table):
     and tables using prefixes, as well as a default page length.
     """
     def __init__(self, *args, **kwargs):
-        super(LavaTable, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.length = 10
         self._empty_text = mark_safe('<div style="text-align: center">No data available in table</div>')
 

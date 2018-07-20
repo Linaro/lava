@@ -102,6 +102,19 @@ lava_scheduler_app
               --worker WORKER       The name of the worker
               --tags TAG1 TAG2      List of tags for the device
 
+          copy                Copy an existing device as a new device
+
+            optional arguments:
+              -h, --help           show this help message and exit
+              --original ORIGINAL  Hostname of the existing device
+              --target TARGET      Hostname of the device to create
+              --offline            Create the device offline (online by default)
+              --private            Make the device private (public by default)
+              --worker WORKER      The name of the worker
+              --copy-with-tags     Set all the tags of the original device on the target
+                                   device
+
+
           details             Details about a device
 
             positional arguments:

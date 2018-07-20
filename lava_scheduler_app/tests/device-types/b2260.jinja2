@@ -1,8 +1,8 @@
+{# set device_type = "b2260" #}
 {% extends 'base-uboot.jinja2' %}
 
 {% set console_device = console_device|default('ttyAS1') %}
 {% set baud_rate = baud_rate|default(115200) %}
-{% set device_type = "b2260" %}
 {% if extra_kernel_args %}
 {% set extra_kernel_args = "consoleblank=0 mem=992M@0x40000000 vmalloc=256m clk_ignore_unused earlyprintk " + extra_kernel_args %}
 {% else %}

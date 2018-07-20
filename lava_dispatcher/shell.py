@@ -84,10 +84,21 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
     subprocess, i.e. not on the dispatcher itself.
     Takes a Timeout object (to support overrides and logging)
 
+    https://pexpect.readthedocs.io/en/stable/api/pexpect.html#spawn-class
+
+    Window size is managed to limit impact on performance.
+    maxread is left at default to ensure the entire log is captured.
+
     A ShellCommand is a raw_connection for a ShellConnection instance.
     """
 
-    def __init__(self, command, lava_timeout, logger=None, cwd=None):
+    def __init__(self, command, lava_timeout, logger=None, cwd=None, window=2000):
+        if isinstance(window, str):
+            # constants need to be stored as strings.
+            try:
+                window = int(window)
+            except ValueError:
+                raise LAVABug("ShellCommand was passed an invalid window size of %s bytes." % window)
         if not lava_timeout or not isinstance(lava_timeout, Timeout):
             raise LAVABug("ShellCommand needs a timeout set by the calling Action")
         if not logger:
@@ -98,6 +109,9 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
             cwd=cwd,
             logfile=ShellLogger(logger),
             encoding='utf-8',
+            # Data before searchwindowsize point is preserved, but not searched.
+            searchwindowsize=None,  # pattern match the entire buffer
+            maxread=window,  # limit the size of the buffer. 1 to turn off buffering
             codec_errors='replace'
         )
         self.name = "ShellCommand"
@@ -143,7 +157,7 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
             sent = super().send(string)
         return sent
 
-    def expect(self, *args, **kw):
+    def expect(self, *args, **kw):  # pylint: disable=arguments-differ
         """
         No point doing explicit logging here, the SignalDirector can help
         the TestShellAction make much more useful reports of what was matched
@@ -306,13 +320,13 @@ class ExpectShellSession(Action):
         if 'prompts' not in self.parameters:
             self.errors = "Unable to identify test image prompts from parameters."
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         if not connection:
             raise JobError("No connection available.")
-        if not connection.prompt_str:
-            self.logger.debug("Setting default test shell prompt")
-            connection.prompt_str = self.parameters['prompts']
+        connection.prompt_str = self.parameters['prompts']
         connection.timeout = self.connection_timeout
+        self.logger.debug("Forcing a shell prompt, looking for %s" % connection.prompt_str)  # pylint: disable=logging-not-lazy
+        connection.sendline('')
         self.wait(connection)
         return connection

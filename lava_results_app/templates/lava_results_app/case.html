@@ -36,6 +36,12 @@
         <dt>Measurement:</dt>
         <dd>{{ testcase.measurement|floatformat:2 }} {{ testcase.units }}</dd>
         {% endif %}
+        {% if testcase.start_log_line %}
+        <dt>Start line:</dt>
+        <dd>{{ testcase.start_log_line }}</dd>
+        <dt>Last line:</dt>
+        <dd>{{ testcase.end_log_line }}</dd>
+  {% endif %}
         </dl>
     {% endfor %}
 {% endfor %}
@@ -44,7 +50,7 @@
   {% if testcase.test_set %}
      <h2>Test Set: <a href="{{ testcase.test_set.get_absolute_url }}">{{ testcase.test_set.name }}</a></h2>
   {% endif %}
-  {% if testcase.result == 1%}
+  {% if testcase.result == 1 %}
     <h3>{{ testcase.name }} <span class="glyphicon glyphicon-remove"></span>&nbsp;fail</h3>
       <h4><a
       title="view test job output for this failed test"
@@ -68,6 +74,15 @@
       title="view test job output for this passed test"
       href="{{ job.get_absolute_url }}#results_{{ testcase.id }}">
       Log entry in job {{ job.id }} for test case {{ testcase.id }}</a></h4>
+  {% endif %}
+  {% if testcase.start_log_line %}
+    {% if testcase.start_log_line == testcase.end_log_line %}
+    <h3>Associated log line: {{ testcase.start_log_line }}</h3>
+    {% else %}
+    <h3>Associated log lines</h3>
+    <h4>Start line: {{ testcase.start_log_line }}</h4>
+    <h4>Last line: {{ testcase.end_log_line }}</h4>
+    {% endif %}
   {% endif %}
   {% if testcase.test_set %}
       {% if test_cases|length > 1 %}

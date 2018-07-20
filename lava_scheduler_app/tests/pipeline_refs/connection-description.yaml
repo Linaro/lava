@@ -78,12 +78,6 @@ job: &id006
       default_action_timeout: 180.0
       default_connection_timeout: 300.0
       default_test_timeout: 30
-      deployment_data: !!python/object:lava_dispatcher.deployment_data.deployment_data_dict
-        __data__: &id002 {TESTER_PS1: 'linaro-test [rc=$(echo \$?)]# ', TESTER_PS1_INCLUDES_RC: true,
-          TESTER_PS1_PATTERN: 'linaro-test \[rc=(\d+)\]# ', boot_cmds: boot_cmds,
-          distro: debian, lava_test_dir: /lava-%s, lava_test_results_dir: /lava-%s,
-          lava_test_results_part_attr: root_part, lava_test_sh_cmd: /bin/bash, lava_test_shell_file: ~/.bashrc,
-          tar_flags: --warning no-timestamp}
       lava-multinode: &id001
         expect_role: host
         group_size: 4
@@ -205,21 +199,17 @@ pipeline:
   log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1-scp-overlay.log'
   max_retries: 1
   name: scp-overlay
-  parameters:
-    deployment_data: *id002
   pipeline:
   - connection_timeout: !!python/object:lava_dispatcher.action.Timeout {
       duration: 300.0, name: deploy, protected: false}
     data: *id003
     description: add lava scripts during deployment for test shell use
-    lava_test_dir: /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell
-    lava_v2_test_dir: /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell
+    lava_test_dir: /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell
+    lava_v2_test_dir: /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell
     level: '1.1'
     log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1-lava-overlay.log'
     max_retries: 1
     name: lava-overlay
-    parameters:
-      deployment_data: *id002
     pipeline:
     - connection_timeout: !!python/object:lava_dispatcher.action.Timeout {
         duration: 300.0, name: null, protected: false}
@@ -229,8 +219,6 @@ pipeline:
       log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.1-ssh-authorize.log'
       max_retries: 1
       name: ssh-authorize
-      parameters:
-        deployment_data: *id002
       section: deploy
       summary: add public key to authorized_keys
       timeout: {duration: 30.0, name: ssh-authorize}
@@ -239,40 +227,38 @@ pipeline:
         duration: 300.0, name: deploy, protected: false}
       data: *id003
       description: Populate specific vland scripts for tests to lookup vlan data.
-      lava_test_dir: /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell
-      lava_v2_test_dir: /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell
+      lava_test_dir: /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell
+      lava_v2_test_dir: /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell
       lava_vland_cache_file: /tmp/lava_vland_cache.txt
-      lava_vland_test_dir: /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/vland
+      lava_vland_test_dir: /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/vland
       level: 1.1.2
       log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.2-lava-vland-overlay.log'
       max_retries: 1
       name: lava-vland-overlay
-      parameters:
-        deployment_data: *id002
       protocol: lava-vland
-      scripts_to_copy: [/usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-case,
-        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-case-attach,
-        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-set,
-        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-background-process-start,
-        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-os-build,
-        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-echo-ipv4,
-        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-shell,
-        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-background-process-stop,
-        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-run-attach,
-        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-case-metadata,
-        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-installed-packages,
-        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-runner,
-        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-vm-groups-setup-host,
-        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-add-keys,
-        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-install-packages,
-        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-os-build,
-        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-installed-packages,
-        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-add-sources]
+      scripts_to_copy: [/usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-test-case,
+        /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-test-case-attach,
+        /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-test-set,
+        /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-background-process-start,
+        /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-os-build,
+        /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-echo-ipv4,
+        /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-test-shell,
+        /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-background-process-stop,
+        /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-test-run-attach,
+        /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-test-case-metadata,
+        /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-installed-packages,
+        /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-test-runner,
+        /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-vm-groups-setup-host,
+        /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-add-keys,
+        /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-install-packages,
+        /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-os-build,
+        /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-installed-packages,
+        /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-add-sources]
       section: deploy
       summary: Add files detailing vlan configuration.
       timeout: {duration: 30.0, name: lava-vland-overlay}
-      v2_scripts_to_copy: [/usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-case,
-        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-runner]
+      v2_scripts_to_copy: [/usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-test-case,
+        /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-test-runner]
       valid: true
       xmod: 493
     - connection_timeout: !!python/object:lava_dispatcher.action.Timeout {
@@ -280,40 +266,38 @@ pipeline:
       data: *id003
       description: add lava scripts during deployment for multinode test shell use
       lava_multi_node_cache_file: /tmp/lava_multi_node_cache.txt
-      lava_multi_node_test_dir: /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/multi_node
-      lava_test_dir: /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell
-      lava_v2_test_dir: /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell
+      lava_multi_node_test_dir: /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/multi_node
+      lava_test_dir: /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell
+      lava_v2_test_dir: /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell
       level: 1.1.3
       log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.3-lava-multinode-overlay.log'
       max_retries: 1
       name: lava-multinode-overlay
-      parameters:
-        deployment_data: *id002
       protocol: lava-multinode
       role: guest
-      scripts_to_copy: [/usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-case,
-        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-case-attach,
-        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-set,
-        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-background-process-start,
-        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-os-build,
-        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-echo-ipv4,
-        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-shell,
-        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-background-process-stop,
-        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-run-attach,
-        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-case-metadata,
-        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-installed-packages,
-        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-runner,
-        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-vm-groups-setup-host,
-        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-add-keys,
-        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-install-packages,
-        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-os-build,
-        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-installed-packages,
-        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-add-sources]
+      scripts_to_copy: [/usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-test-case,
+        /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-test-case-attach,
+        /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-test-set,
+        /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-background-process-start,
+        /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-os-build,
+        /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-echo-ipv4,
+        /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-test-shell,
+        /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-background-process-stop,
+        /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-test-run-attach,
+        /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-test-case-metadata,
+        /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-installed-packages,
+        /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-test-runner,
+        /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-vm-groups-setup-host,
+        /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-add-keys,
+        /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-install-packages,
+        /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-os-build,
+        /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-installed-packages,
+        /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-add-sources]
       section: deploy
       summary: overlay the lava multinode scripts
       timeout: {duration: 30.0, name: lava-multinode-overlay}
-      v2_scripts_to_copy: [/usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-case,
-        /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-runner]
+      v2_scripts_to_copy: [/usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-test-case,
+        /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-test-runner]
       valid: true
       xmod: 493
     - connection_timeout: !!python/object:lava_dispatcher.action.Timeout {
@@ -324,8 +308,6 @@ pipeline:
       log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.4-test-definition.log'
       max_retries: 1
       name: test-definition
-      parameters:
-        deployment_data: *id002
       pipeline:
       - connection_timeout: !!python/object:lava_dispatcher.action.Timeout {
           duration: 300.0, name: null, protected: false}
@@ -337,8 +319,6 @@ pipeline:
         log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.4.1-git-repo-action.log'
         max_retries: 1
         name: git-repo-action
-        parameters:
-          deployment_data: *id002
         priority: 1
         section: deploy
         summary: clone git test repo
@@ -354,8 +334,6 @@ pipeline:
         log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.4.2-test-overlay.log'
         max_retries: 1
         name: test-overlay
-        parameters:
-          deployment_data: *id002
         section: deploy
         summary: applying LAVA test overlay
         test_uuid: a042a252-e4a7-4553-adc9-846869de9f2e
@@ -369,8 +347,6 @@ pipeline:
         log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.4.3-test-install-overlay.log'
         max_retries: 1
         name: test-install-overlay
-        parameters:
-          deployment_data: *id002
         section: deploy
         skip_list: [keys, sources, deps, steps, all]
         summary: applying LAVA test install scripts
@@ -385,8 +361,6 @@ pipeline:
         log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.4.4-test-runscript-overlay.log'
         max_retries: 1
         name: test-runscript-overlay
-        parameters:
-          deployment_data: *id002
         section: deploy
         summary: applying LAVA test run script
         test_uuid: a042a252-e4a7-4553-adc9-846869de9f2e
@@ -402,8 +376,6 @@ pipeline:
         log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.4.5-inline-repo-action.log'
         max_retries: 1
         name: inline-repo-action
-        parameters:
-          deployment_data: *id002
         priority: 1
         section: deploy
         summary: exctract inline test definition
@@ -418,8 +390,6 @@ pipeline:
         log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.4.6-test-overlay.log'
         max_retries: 1
         name: test-overlay
-        parameters:
-          deployment_data: *id002
         section: deploy
         summary: applying LAVA test overlay
         test_uuid: 14e5cacf-7167-4f54-af2d-173e0bdf83af
@@ -433,8 +403,6 @@ pipeline:
         log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.4.7-test-install-overlay.log'
         max_retries: 1
         name: test-install-overlay
-        parameters:
-          deployment_data: *id002
         section: deploy
         skip_list: [keys, sources, deps, steps, all]
         summary: applying LAVA test install scripts
@@ -449,8 +417,6 @@ pipeline:
         log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.4.8-test-runscript-overlay.log'
         max_retries: 1
         name: test-runscript-overlay
-        parameters:
-          deployment_data: *id002
         section: deploy
         summary: applying LAVA test run script
         test_uuid: 14e5cacf-7167-4f54-af2d-173e0bdf83af
@@ -470,8 +436,6 @@ pipeline:
       log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.5-compress-overlay.log'
       max_retries: 1
       name: compress-overlay
-      parameters:
-        deployment_data: *id002
       section: deploy
       summary: Compress the lava overlay files
       timeout: {duration: 30.0, name: compress-overlay}
@@ -484,35 +448,33 @@ pipeline:
       log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.6-persistent-nfs-overlay.log'
       max_retries: 1
       name: persistent-nfs-overlay
-      parameters:
-        deployment_data: *id002
       section: deploy
       summary: add test overlay to NFS
       timeout: {duration: 30.0, name: persistent-nfs-overlay}
       valid: true
-    scripts_to_copy: [/usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-case,
-      /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-case-attach,
-      /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-set,
-      /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-background-process-start,
-      /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-os-build,
-      /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-echo-ipv4,
-      /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-shell,
-      /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-background-process-stop,
-      /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-run-attach,
-      /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-case-metadata,
-      /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-installed-packages,
-      /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-runner,
-      /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-vm-groups-setup-host,
-      /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-add-keys,
-      /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-install-packages,
-      /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-os-build,
-      /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-installed-packages,
-      /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-add-sources]
+    scripts_to_copy: [/usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-test-case,
+      /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-test-case-attach,
+      /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-test-set,
+      /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-background-process-start,
+      /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-os-build,
+      /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-echo-ipv4,
+      /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-test-shell,
+      /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-background-process-stop,
+      /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-test-run-attach,
+      /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-test-case-metadata,
+      /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-installed-packages,
+      /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-test-runner,
+      /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-vm-groups-setup-host,
+      /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-add-keys,
+      /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-install-packages,
+      /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-os-build,
+      /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-installed-packages,
+      /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-add-sources]
     section: deploy
     summary: overlay the lava support scripts
     timeout: {duration: 30.0, name: lava-overlay}
-    v2_scripts_to_copy: [/usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-case,
-      /usr/lib/python2.7/dist-packages/lava_dispatcher/lava_test_shell/lava-test-runner]
+    v2_scripts_to_copy: [/usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-test-case,
+      /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-test-runner]
     valid: true
     xmod: 493
   - connection_timeout: !!python/object:lava_dispatcher.action.Timeout {
@@ -524,8 +486,6 @@ pipeline:
     log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.2-prepare-scp-overlay.log'
     max_retries: 1
     name: prepare-scp-overlay
-    parameters:
-      deployment_data: *id002
     pipeline:
     - connection_timeout: !!python/object:lava_dispatcher.action.Timeout {
         duration: 300.0, name: null, protected: false}
@@ -538,8 +498,6 @@ pipeline:
       max_retries: 1
       name: extract-rootfs
       param_key: rootfs
-      parameters:
-        deployment_data: *id002
       section: deploy
       summary: unpack rootfs, ready to apply lava overlay
       timeout: {duration: 30.0, name: extract-rootfs}
@@ -553,8 +511,6 @@ pipeline:
       log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.2.2-extract-modules.log'
       max_retries: 1
       name: extract-modules
-      parameters:
-        deployment_data: *id002
       section: deploy
       summary: extract kernel modules
       timeout: {duration: 30.0, name: extract-modules}
@@ -571,8 +527,6 @@ pipeline:
     log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.3-deploy-device-env.log'
     max_retries: 1
     name: deploy-device-env
-    parameters:
-      deployment_data: *id002
     section: deploy
     summary: deploy device environment
     timeout: {duration: 30.0, name: deploy-device-env}
@@ -592,14 +546,14 @@ pipeline:
   name: login-ssh
   pipeline:
   - command: [ssh, -o, Compression=yes, -o, PasswordAuthentication=no, -o, LogLevel=FATAL,
-      -o, UserKnownHostsFile=/dev/null, -o, StrictHostKeyChecking=no, -i, /usr/lib/python2.7/dist-packages/lava_dispatcher/dynamic_vm_keys/lava,
+      -o, UserKnownHostsFile=/dev/null, -o, StrictHostKeyChecking=no, -i, /usr/lib/python3/dist-packages/lava_dispatcher/dynamic_vm_keys/lava,
       -p, '22']
     connection_timeout: !!python/object:lava_dispatcher.action.Timeout {
       duration: 300.0, name: null, protected: false}
     data: *id003
     description: copy a file to a known device using scp
     host: 10.15.0.151
-    identity_file: /usr/lib/python2.7/dist-packages/lava_dispatcher/dynamic_vm_keys/lava
+    identity_file: /usr/lib/python3/dist-packages/lava_dispatcher/dynamic_vm_keys/lava
     key: overlay
     level: '2.1'
     log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/2/2.1-scp-deploy.log'
@@ -626,14 +580,14 @@ pipeline:
     timeout: {duration: 180.0, name: prepare-ssh}
     valid: true
   - command: [ssh, -o, Compression=yes, -o, PasswordAuthentication=no, -o, LogLevel=FATAL,
-      -o, UserKnownHostsFile=/dev/null, -o, StrictHostKeyChecking=no, -i, /usr/lib/python2.7/dist-packages/lava_dispatcher/dynamic_vm_keys/lava,
+      -o, UserKnownHostsFile=/dev/null, -o, StrictHostKeyChecking=no, -i, /usr/lib/python3/dist-packages/lava_dispatcher/dynamic_vm_keys/lava,
       -p, '22']
     connection_timeout: !!python/object:lava_dispatcher.action.Timeout {
       duration: 300.0, name: null, protected: false}
     data: *id003
     description: login to a known device using ssh
     host: 10.15.0.151
-    identity_file: /usr/lib/python2.7/dist-packages/lava_dispatcher/dynamic_vm_keys/lava
+    identity_file: /usr/lib/python3/dist-packages/lava_dispatcher/dynamic_vm_keys/lava
     level: '2.3'
     log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/2/2.3-ssh-connection.log'
     max_retries: 1

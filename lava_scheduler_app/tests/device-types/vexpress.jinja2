@@ -1,3 +1,4 @@
+{# device_type: 'vexpress' #}
 {% extends 'base.jinja2' %}
 
 {% set vexpress_supports_vemsd = vexpress_supports_vemsd|default(true) %}
@@ -111,18 +112,18 @@
 
 {% set action_timeout_auto_login = action_timeout_auto_login | default(5) %}
 {% set action_timeout_bootloader_commands = action_timeout_bootloader_commands | default(3) %}
+{% set action_timeout_bootloader_interrupt = action_timeout_bootloader_interrupt | default(180) %}
 {% set action_timeout_u_boot_interrupt = action_timeout_u_boot_interrupt | default(120) %}
 {% set action_timeout_uboot_retry = action_timeout_uboot_retry | default(4) %}
 {% set action_timeout_uboot_action = action_timeout_uboot_action | default(4) %}
 
 {% set connection_timeout_auto_login = connection_timeout_auto_login | default(5) %}
-{% set connection_timeout_bootloader_commands = connection_timeout_bootloader_commands | default(30) %}
+{% set connection_timeout_bootloader_commands = connection_timeout_bootloader_commands | default(180) %}
 {% set connection_timeout_u_boot_interrupt = connection_timeout_u_boot_interrupt | default(120) %}
 {% set connection_timeout_uboot_retry = connection_timeout_uboot_retry | default(4) %}
 
 
 {% block body %}
-device_type: {{ device_type|default('vexpress') }}
 
 usb_filesystem_label: '{{ usb_filesystem_label|default('VEMSD') }}'
 
@@ -171,6 +172,7 @@ actions:
           flash_erase_msg: '{{ flash_erase_msg|default('Erasing Flash') }}'
           flash_exit_cmd: '{{ flash_exit_cmd|default('exit') }}'
           autorun_prompt: '{{ autorun_prompt|default('Press Enter to stop auto boot...') }}'
+          mcc_reset_msg: '{{ mcc_reset_msg|default('Programming NOR Flash')}}'
 {% endif %}
   boot:
     connections:

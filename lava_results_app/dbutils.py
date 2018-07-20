@@ -19,16 +19,16 @@
 # pylint: disable=no-member,too-many-locals,too-many-nested-blocks,
 # pylint: disable=too-many-return-statements,ungrouped-imports
 
-from __future__ import unicode_literals
-
 import hashlib
 import os
 import yaml
-import sys
 import logging
 import decimal
+from urllib.parse import quote
 
 from collections import OrderedDict  # pylint: disable=unused-import
+
+from lava_common.utils import debian_package_version
 from lava_results_app.models import (
     TestSuite,
     TestSet,
@@ -37,17 +37,8 @@ from lava_results_app.models import (
     ActionData,
     MetaType,
 )
-from lava_results_app.utils import debian_package_version
 from django.core.exceptions import MultipleObjectsReturned
 from lava_common.timeout import Timeout
-
-if sys.version_info[0] == 2:
-    # Python 2.x
-    from urllib import quote
-elif sys.version_info[0] == 3:
-    # For Python 3.0 and later
-    from urllib.parse import quote
-    basestring = str
 
 
 def _check_for_testset(result_dict, suite):
@@ -93,8 +84,7 @@ def create_metadata_store(results, job):
     logger = logging.getLogger('lava-master')
     stub = "%s-%s-%s.yaml" % (results['definition'], results['case'], level)
     meta_filename = os.path.join(job.output_dir, 'metadata', stub)
-    if not os.path.exists(os.path.dirname(meta_filename)):
-        os.makedirs(os.path.dirname(meta_filename), mode=0o755)
+    os.makedirs(os.path.dirname(meta_filename), mode=0o755, exist_ok=True)
     if os.path.exists(meta_filename):
         with open(meta_filename, 'r') as existing_store:
             data = yaml.load(existing_store)
@@ -112,7 +102,7 @@ def create_metadata_store(results, job):
     return meta_filename
 
 
-def map_scanned_results(results, job, meta_filename):  # pylint: disable=too-many-branches,too-many-statements,too-many-return-statements
+def map_scanned_results(results, job, markers, meta_filename):  # pylint: disable=too-many-branches,too-many-statements,too-many-return-statements
     """
     Sanity checker on the logged results dictionary
     :param results: results logged via the slave
@@ -182,7 +172,14 @@ def map_scanned_results(results, job, meta_filename):  # pylint: disable=too-man
             logger.debug("%s/%s %s%s", suite, name, measurement, units)
         if result not in TestCase.RESULT_MAP:
             logger.warning("[%d] Unrecognised result: '%s' for test case '%s'", job.id, result, name)
-            return False
+            return None
+        # Add the marker if available
+        starttc = endtc = None
+        if name in markers:
+            test_case = markers[name].get('test_case')
+            starttc = markers[name].get("start_test_case", test_case)
+            endtc = markers[name].get("end_test_case", test_case)
+            del markers[name]
         try:
             test_case = TestCase(name=name,
                                  suite=suite,
@@ -190,7 +187,9 @@ def map_scanned_results(results, job, meta_filename):  # pylint: disable=too-man
                                  result=TestCase.RESULT_MAP[result],
                                  metadata=metadata,
                                  measurement=measurement,
-                                 units=units)
+                                 units=units,
+                                 start_log_line=starttc,
+                                 end_log_line=endtc)
         except decimal.InvalidOperation:
             logger.exception("[%d] Unable to create test case %s", job.id, name)
     return test_case
@@ -212,7 +211,7 @@ def _get_job_metadata(job):
             job.original_definition.encode('utf-8')).hexdigest()
     })
     # Add lava-server-version to metadata
-    packaged = debian_package_version()
+    packaged = debian_package_version(pkg="lava-server", split=False)
     if packaged:
         retval.update({
             'lava-server-version': packaged
@@ -230,9 +229,9 @@ def _get_action_metadata(data):  # pylint: disable=too-many-branches,too-many-ne
         for block in deploy:
             if not block:
                 continue
-            namespace = block.get('namespace', None)
+            namespace = block.get('namespace')
             prefix = "deploy.%d.%s" % (count, namespace) if namespace else 'deploy.%d' % count
-            value = block.get('method', None)
+            value = block.get('method')
             if value:
                 retval['%s.method' % prefix] = value
                 count += 1
@@ -241,15 +240,15 @@ def _get_action_metadata(data):  # pylint: disable=too-many-branches,too-many-ne
         for block in boot:
             if not block:
                 continue
-            namespace = block.get('namespace', None)
+            namespace = block.get('namespace')
             prefix = "boot.%d.%s" % (count, namespace) if namespace else 'boot.%d' % count
-            value = block.get('commands', None)
+            value = block.get('commands')
             if value:
                 retval['%s.commands' % prefix] = value
-            value = block.get('method', None)
+            value = block.get('method')
             if value:
                 retval['%s.method' % prefix] = value
-            value = block.get('type', None)
+            value = block.get('type')
             if value:
                 retval['%s.type' % prefix] = value
             count += 1
@@ -258,7 +257,7 @@ def _get_action_metadata(data):  # pylint: disable=too-many-branches,too-many-ne
         for block in test:
             if not block:
                 continue
-            namespace = block.get('namespace', None)
+            namespace = block.get('namespace')
             definitions = [dict.get(block, 'definitions')][0]
             if not definitions:
                 monitors = [dict.get(block, 'monitors')][0]
@@ -271,7 +270,7 @@ def _get_action_metadata(data):  # pylint: disable=too-many-branches,too-many-ne
             else:
                 for definition in definitions:
                     if definition['from'] == 'inline':
-                        run = definition['repository'].get('run', None)
+                        run = definition['repository'].get('run')
                         # an inline repo without test cases will not get reported.
                         steps = [dict.get(run, 'steps')][0] if run else None
                         if steps is not None and 'lava-test-case' in steps:
@@ -294,13 +293,6 @@ def _get_action_metadata(data):  # pylint: disable=too-many-branches,too-many-ne
                                                 dictionary=retval, label='definition')
                     count += 1
     return retval
-
-
-def _get_device_metadata(data):
-    devicetype = data.get('device_type', None)
-    return {
-        'target.device_type': devicetype
-    }
 
 
 def build_action(action_data, testdata, submission):
@@ -386,13 +378,13 @@ def map_metadata(description, job):
     # get job-action metadata
     if description is None:
         logger.warning("[%s] skipping empty description", job.id)
-        return
+        return False
     if not description_data:
         logger.warning("[%s] skipping invalid description data", job.id)
-        return
+        return False
     if 'job' not in description_data:
         logger.warning("[%s] skipping description without a job.", job.id)
-        return
+        return False
     action_values = _get_action_metadata(description_data['job']['actions'])
     for key, value in action_values.items():
         if not key or not value:
@@ -406,7 +398,8 @@ def map_metadata(description, job):
         testdata.attributes.create(name=key, value=value)
 
     # get metadata from device
-    device_values = _get_device_metadata(description_data['device'])
+    device_values = {}
+    device_values['target.device_type'] = job.requested_device_type
     for key, value in device_values.items():
         if not key or not value:
             logger.warning('[%s] Missing element in device. %s: %s', job.id, key, value)
@@ -424,55 +417,6 @@ def map_metadata(description, job):
 
     walk_actions(description_data['pipeline'], testdata, submission_data)
     return True
-
-
-def testcase_export_fields():
-    """
-    Keep this list in sync with the keys in export_testcase
-    :return: list of fields used in export_testcase
-    """
-    return [
-        'job', 'suite', 'result', 'measurement', 'unit',
-        'duration', 'timeout',
-        'logged', 'level', 'metadata', 'url', 'name', 'id'
-    ]
-
-
-def export_testcase(testcase, with_buglinks=False):
-    """
-    Returns string versions of selected elements of a TestCase
-    Unicode causes issues with CSV and can complicate YAML parsing
-    with non-python parsers.
-    :param testcase: list of TestCase objects
-    :return: Dictionary containing relevant information formatted for export
-    """
-    metadata = dict(testcase.action_metadata) if testcase.action_metadata else {}
-    extra_source = []
-    extra_data = metadata.get('extra', None)
-    if isinstance(extra_data, basestring) and os.path.exists(extra_data):
-        with open(metadata['extra'], 'r') as extra_file:
-            items = yaml.load(extra_file, Loader=yaml.CLoader)
-        # hide the !!python OrderedDict prefix from the output.
-        for key, value in items.items():
-            extra_source.append({key: value})
-        metadata['extra'] = extra_source
-    casedict = {
-        'name': str(testcase.name),
-        'job': str(testcase.suite.job_id),
-        'suite': str(testcase.suite.name),
-        'result': str(testcase.result_code),
-        'measurement': str(testcase.measurement),
-        'unit': str(testcase.units),
-        'level': metadata.get('level', ''),
-        'url': str(testcase.get_absolute_url()),
-        'id': str(testcase.id),
-        'logged': str(testcase.logged),
-        'metadata': metadata,
-    }
-    if with_buglinks:
-        casedict['buglinks'] = [str(url) for url in testcase.buglinks.values_list('url', flat=True)]
-
-    return casedict
 
 
 def testsuite_export_fields():

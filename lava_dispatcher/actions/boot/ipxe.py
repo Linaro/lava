@@ -21,7 +21,6 @@
 # List just the subclasses supported for this base strategy
 # imported by the parser to populate the list of subclasses.
 
-from lava_common.exceptions import LAVABug
 from lava_dispatcher.action import Pipeline
 from lava_dispatcher.logical import Boot
 from lava_dispatcher.actions.boot import (
@@ -122,7 +121,7 @@ class BootloaderRetry(BootAction):
             value=self.job.device['actions']['boot']['methods'][self.type]['parameters']['bootloader_prompt']
         )
 
-    def run(self, connection, max_end_time, args=None):
-        connection = super().run(connection, max_end_time, args)
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection

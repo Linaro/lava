@@ -1,17 +1,12 @@
 # -*- coding: utf-8 -*-
-# pylint: disable=too-many-lines,invalid-namlog_e
+# pylint: disable=too-many-lines,invalid-name
 
-from __future__ import unicode_literals
-
-from collections import OrderedDict
 import contextlib
 import datetime
 import io
-import jinja2
 import logging
 import os
 import simplejson
-import sys
 import tarfile
 import re
 import yaml
@@ -42,6 +37,7 @@ from django.template import loader
 from django.db.models import Q
 from django.utils import timezone
 from django.utils.timesince import timeuntil
+from django.views.decorators.http import require_POST
 from django_tables2 import (
     RequestConfig,
 )
@@ -52,7 +48,6 @@ from lava_server.bread_crumbs import (
     BreadCrumbTrail,
 )
 
-from lava_scheduler_app.decorators import post_only
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
@@ -60,7 +55,6 @@ from lava_scheduler_app.models import (
     TestJob,
     TestJobUser,
     JSONDataError,
-    validate_job,
     DevicesUnavailableException,
     Worker,
 )
@@ -70,7 +64,9 @@ from lava_scheduler_app.dbutils import (
     invalid_template,
     load_devicetype_template,
     testjob_submission,
+    validate_job,
 )
+from lava_scheduler_app.logutils import read_logs
 from lava_scheduler_app.templatetags.utils import udecode
 
 from lava.utils.lavatable import LavaView
@@ -84,6 +80,7 @@ from lava_results_app.models import (
     Query,
     QueryCondition,
     TestCase,
+    TestData
 )
 
 from django.contrib.auth.models import User, Group
@@ -109,7 +106,7 @@ from lava_scheduler_app.tables import (
     RunningTable,
 )
 
-# pylint: disable=too-many-attributes,too-many-ancestors,too-many-arguments,too-many-locals
+# pylint: disable=too-many-ancestors,too-many-arguments,too-many-locals
 # pylint: disable=too-many-statements,too-many-branches,too-many-return-statements
 # pylint: disable=no-self-use,too-many-nested-blocks,too-few-public-methods
 
@@ -122,9 +119,6 @@ def _str_to_bool(string):
 
 
 class JobTableView(LavaView):
-
-    def __init__(self, request, **kwargs):
-        super(JobTableView, self).__init__(request, **kwargs)
 
     def device_query(self, term):  # pylint: disable=no-self-use
         visible = filter_device_types(self.request.user)
@@ -213,24 +207,24 @@ class FailureTableView(JobTableView):
         failures = [TestJob.HEALTH_INCOMPLETE, TestJob.HEALTH_CANCELED]
         jobs = all_jobs_with_custom_sort().filter(health__in=failures)
 
-        health = self.request.GET.get('health_check', None)
+        health = self.request.GET.get('health_check')
         if health:
             jobs = jobs.filter(health_check=_str_to_bool(health))
 
-        dt = self.request.GET.get('device_type', None)
+        dt = self.request.GET.get('device_type')
         if dt:
             jobs = jobs.filter(actual_device__device_type__name=dt)
 
-        device = self.request.GET.get('device', None)
+        device = self.request.GET.get('device')
         if device:
             jobs = jobs.filter(actual_device__hostname=device)
 
-        start = self.request.GET.get('start', None)
+        start = self.request.GET.get('start')
         if start:
             now = timezone.now()
             start = now + datetime.timedelta(int(start))
 
-            end = self.request.GET.get('end', None)
+            end = self.request.GET.get('end')
             if end:
                 end = now + datetime.timedelta(int(end))
                 jobs = jobs.filter(start_time__range=(start, end))
@@ -253,7 +247,7 @@ class WorkersLogView(LavaView):
 class WorkerLogView(LavaView):
 
     def __init__(self, worker, *args, **kwargs):
-        super(WorkerLogView, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.worker = worker
 
     def get_queryset(self):
@@ -266,7 +260,7 @@ class WorkerLogView(LavaView):
 
 class DevicesLogView(LavaView):
     def __init__(self, devices, *args, **kwargs):
-        super(DevicesLogView, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.devices = devices
 
     def get_queryset(self):
@@ -275,7 +269,7 @@ class DevicesLogView(LavaView):
 
 class DeviceLogView(LavaView):
     def __init__(self, device, *args, **kwargs):
-        super(DeviceLogView, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.device = device
 
     def get_queryset(self):
@@ -467,8 +461,8 @@ def failure_report(request):
         request,
         "lava_scheduler_app/failure_report.html",
         {
-            'device_type': request.GET.get('device_type', None),
-            'device': request.GET.get('device', None),
+            'device_type': request.GET.get('device_type'),
+            'device': request.GET.get('device'),
             'failed_job_table': ptable,
             "sort": '-submit_time',
             "terms_data": ptable.prepare_terms_data(data),
@@ -519,7 +513,7 @@ def active_device_list(request):
 class OnlineDeviceView(DeviceTableView):
 
     def get_queryset(self):
-        q = super(OnlineDeviceView, self).get_queryset()
+        q = super().get_queryset()
         return q.filter(health__in=[Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN],
                         worker_host__state=Worker.STATE_ONLINE)
 
@@ -545,7 +539,7 @@ def online_device_list(request):
 class PassingHealthTableView(DeviceTableView):
 
     def get_queryset(self):
-        q = super(PassingHealthTableView, self).get_queryset()
+        q = super().get_queryset()
         q = q.exclude(health=Device.HEALTH_RETIRED)
         q = q.select_related("last_health_report_job", "last_health_report_job__actual_device")
         return q.order_by("-health", "device_type", "hostname")
@@ -641,20 +635,20 @@ def filter_device_types(user):
 class ActiveDeviceView(DeviceTableView):
 
     def get_queryset(self):
-        q = super(ActiveDeviceView, self).get_queryset()
+        q = super().get_queryset()
         return q.exclude(health=Device.HEALTH_RETIRED)
 
 
 class MaintenanceDeviceView(DeviceTableView):
 
     def get_queryset(self):
-        return super(MaintenanceDeviceView, self).get_queryset().filter(health=Device.HEALTH_MAINTENANCE)
+        return super().get_queryset().filter(health=Device.HEALTH_MAINTENANCE)
 
 
 class DeviceHealthView(DeviceTableView):
 
     def get_queryset(self):
-        q = super(DeviceHealthView, self).get_queryset()
+        q = super().get_queryset()
         q = q.exclude(health=Device.HEALTH_RETIRED)
         return q.select_related("last_health_report_job")
 
@@ -693,7 +687,7 @@ def maintenance_devices(request):
 @BreadCrumb("Device Types", parent=index)
 def all_device_types(request):
     data = DeviceTypeOverView(request, model=DeviceType, table_class=DeviceTypeTable)
-    ptable = DeviceTypeTable(data.get_table_data(), prefix="device_type_")
+    ptable = DeviceTypeTable(data.get_table_data())
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
 
     return render(request,
@@ -833,7 +827,7 @@ def device_type_detail(request, pk):
             available_devices_label = "danger"
 
     if dt.disable_health_check:
-        health_freq_str = "Disabled"
+        health_freq_str = "disabled"
     elif dt.health_denominator == DeviceType.HEALTH_PER_JOB:
         health_freq_str = "one every %d jobs" % dt.health_frequency
     else:
@@ -1099,7 +1093,7 @@ def job_submit(request):
 
             except Exception as e:
                 response_data["error"] = str(e)
-                response_data["context_help"] = "lava scheduler submit job",
+                response_data["context_help"] = "lava scheduler submit job"
                 response_data["definition_input"] = request.POST.get(
                     "definition-input")
                 response_data["is_favorite"] = request.POST.get("is_favorite")
@@ -1166,74 +1160,53 @@ def job_detail(request, pk):
         'job_tags': job.tags.all(),
     }
 
-    # Is the old or new v2 format?
-    if os.path.exists(os.path.join(job.output_dir, 'output.txt')):
-        if 'section' in request.GET:
-            log_data = utils.folded_logs(job, request.GET['section'], sections, summary=True)
-        else:
-            log_data = utils.folded_logs(job, default_section, sections, summary=True)
-            if not log_data:
-                default_section = 'deploy'
-                log_data = utils.folded_logs(job, default_section, sections, summary=True)
+    try:
+        with open(os.path.join(job.output_dir, "output.yaml"), "r") as f_in:
+            # Compute the size of the file
+            f_in.seek(0, 2)
+            job_file_size = f_in.tell()
 
-        data.update({
-            'log_data': log_data if log_data else [],
-            'invalid_log_data': log_data is None,
-            'default_section': default_section,
-        })
+            if job_file_size >= job.size_limit:
+                log_data = []
+                data["size_warning"] = job.size_limit
+            else:
+                # Go back to the start and load the file
+                f_in.seek(0, 0)
+                log_data = yaml.load(f_in, Loader=yaml.CLoader)
 
-        return render(request, "lava_scheduler_app/job.html", data)
+        # list all related results
+        for line in log_data:
+            if line["lvl"] == "results":
+                case_id = TestCase.objects.filter(
+                    suite__job=job,
+                    suite__name=line["msg"].get("definition"),
+                    name=line["msg"].get("case")).values_list(
+                        "id", flat=True)
+                if case_id:
+                    line["msg"]["case_id"] = case_id[0]
 
-    else:
-        try:
-            with open(os.path.join(job.output_dir, "output.yaml"), "r") as f_in:
-                # Compute the size of the file
-                f_in.seek(0, 2)
-                job_file_size = f_in.tell()
+    except IOError:
+        log_data = []
+    except yaml.YAMLError:
+        log_data = None
 
-                if job_file_size >= job.size_limit:
-                    log_data = []
-                    data["size_warning"] = job.size_limit
-                else:
-                    # Go back to the start and load the file
-                    f_in.seek(0, 0)
-                    log_data = yaml.load(f_in, Loader=yaml.CLoader)
+    # Get lava.job result if available
+    lava_job_result = None
+    with contextlib.suppress(TestCase.DoesNotExist):
+        lava_job_obj = TestCase.objects.get(suite__job=job,
+                                            suite__name="lava",
+                                            name="job")
+        # Only print it if it's a failure
+        if lava_job_obj.result == TestCase.RESULT_FAIL:
+            lava_job_result = lava_job_obj.action_metadata
 
-            # list all related results
-            for line in log_data:
-                if line["lvl"] == "results":
-                    case_id = TestCase.objects.filter(
-                        suite__job=job,
-                        suite__name=line["msg"].get("definition"),
-                        name=line["msg"].get("case")).values_list(
-                            "id", flat=True)
-                    if case_id:
-                        line["msg"]["case_id"] = case_id[0]
+    data.update({
+        'log_data': log_data if log_data else [],
+        'invalid_log_data': log_data is None,
+        'lava_job_result': lava_job_result
+    })
 
-        except IOError:
-            log_data = []
-        except yaml.YAMLError:
-            log_data = None
-
-        # Get lava.job result if available
-        lava_job_result = None
-        try:
-            lava_job_obj = TestCase.objects.get(suite__job=job,
-                                                suite__name="lava",
-                                                name="job")
-            # Only print it if it's a failure
-            if lava_job_obj.result == TestCase.RESULT_FAIL:
-                lava_job_result = lava_job_obj.action_metadata
-        except TestCase.DoesNotExist:
-            pass
-
-        data.update({
-            'log_data': log_data if log_data else [],
-            'invalid_log_data': log_data is None,
-            'lava_job_result': lava_job_result
-        })
-
-        return render(request, "lava_scheduler_app/job_pipeline.html", data)
+    return render(request, "lava_scheduler_app/job.html", data)
 
 
 @BreadCrumb("Definition", parent=job_detail, needs=['pk'])
@@ -1299,6 +1272,22 @@ def multinode_job_definition_plain(request, pk):
     return response
 
 
+def job_fetch_data(request, pk):
+    job = get_restricted_job(request.user, pk, request=request)
+    if job.state != TestJob.STATE_FINISHED:
+        raise Http404()
+    path = os.path.join(job.output_dir, 'job_data.gz')
+    if not os.path.exists(path):
+        raise Http404()
+    # FileResponse could be used here with Django2.0 but
+    # currently it doesn't set a useful extension.
+    with open(path, 'rb') as data:
+        response = HttpResponse(data, content_type='application/gzip')
+    response['Content-Disposition'] = 'attachment; filename="%s"' % os.path.basename(path)
+    # response['Content-Encoding'] = 'gzip'
+    return response
+
+
 @BreadCrumb("My Jobs", parent=index)
 def myjobs(request):
     get_object_or_404(User, pk=request.user.id)
@@ -1340,8 +1329,9 @@ def longest_jobs(request, username=None):
 
 
 @BreadCrumb("Favorite Jobs", parent=index)
-def favorite_jobs(request, username=None):
+def favorite_jobs(request):
 
+    username = request.POST.get("username")
     if not username:
         username = request.user.username
     user = get_object_or_404(User, username=username)
@@ -1361,66 +1351,6 @@ def favorite_jobs(request, username=None):
             "times_data": ptable.prepare_times_data(data),
         },
         request=request))
-
-
-@BreadCrumb("Complete log", parent=job_detail, needs=['pk'])
-def job_complete_log(request, pk):
-    job = get_restricted_job(request.user, pk, request=request)
-    # If this is a new log format, redirect to the job page
-    if os.path.exists(os.path.join(job.output_dir, "output.yaml")):
-        return HttpResponseRedirect(reverse('lava.scheduler.job.detail', args=[pk]))
-
-    description = description_data(job)
-    pipeline = description.get('pipeline', {})
-    sections = []
-    for action in pipeline:
-        sections.append({action['section']: action['level']})
-    default_section = 'boot'  # to come from user profile later.
-    if 'section' in request.GET:
-        log_data = utils.folded_logs(job, request.GET['section'], sections, summary=False)
-    else:
-        log_data = utils.folded_logs(job, default_section, sections, summary=False)
-        if not log_data:
-            default_section = 'deploy'
-            log_data = utils.folded_logs(job, default_section, sections, summary=False)
-    template = loader.get_template("lava_scheduler_app/pipeline_complete.html")
-    return HttpResponse(template.render(
-        {
-            'show_cancel': job.can_cancel(request.user),
-            'show_resubmit': job.can_resubmit(request.user),
-            'show_failure': job.can_annotate(request.user),
-            'job': job,
-            'sections': sections,
-            'default_section': default_section,
-            'log_data': log_data,
-            'pipeline_data': pipeline,
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(job_complete_log, pk=pk),
-        },
-        request=request))
-
-
-def job_section_log(request, pk, log_name):
-    job = get_restricted_job(request.user, pk, request=request)
-    path = os.path.join(job.output_dir, 'pipeline', log_name[0], log_name)
-    if not os.path.exists(path):
-        raise Http404
-    with open(path, 'r') as data:
-        log_content = yaml.load(data)
-    log_target = []
-    for logitem in log_content:
-        for key, value in logitem.items():
-            if key == 'target':
-                log_target.append(value)
-    # FIXME: decide if this should be a separate URL
-    if not log_target:
-        for logitem in log_content:
-            for key, value in logitem.items():
-                log_target.append(yaml.dump(value))
-
-    response = HttpResponse('\n'.join(log_target), content_type='text/plain; charset=utf-8')
-    response['Content-Transfer-Encoding'] = 'quoted-printable'
-    response['Content-Disposition'] = "attachment; filename=job-%s_%s" % (job.id, log_name)
-    return response
 
 
 def job_status(request, pk):
@@ -1464,10 +1394,10 @@ def job_status(request, pk):
     return response
 
 
-def job_pipeline_timing(request, pk):
+def job_timing(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
     try:
-        logs = yaml.load(open(os.path.join(job.output_dir, "output.yaml")))
+        logs = yaml.load(open(os.path.join(job.output_dir, "output.yaml")), Loader=yaml.CLoader)
     except IOError:
         raise Http404
 
@@ -1508,7 +1438,9 @@ def job_pipeline_timing(request, pk):
             level = d["level"]
             parts = d["duration"].split(":")
             duration = float(parts[0]) * 3600 + float(parts[1]) * 60 + float(parts[2])
-            timings[level]["duration"] = duration
+            # We create the entry because with some timeout, the start line
+            # might be missing.
+            timings.setdefault(level, {})["duration"] = duration
 
             max_duration = max(max_duration, duration)
             if '.' not in level:
@@ -1521,8 +1453,9 @@ def job_pipeline_timing(request, pk):
     pipeline = []
     for lvl in levels:
         duration = timings[lvl].get("duration", 0.0)
-        timeout = timings[lvl]["timeout"]
-        pipeline.append((lvl, timings[lvl]["name"], duration, timeout,
+        timeout = timings[lvl].get("timeout", 0.0)
+        name = timings[lvl].get("name", "???")
+        pipeline.append((lvl, name, duration, timeout,
                          bool(duration >= (timeout * 0.85))))
 
     # Compute the percentage
@@ -1533,7 +1466,7 @@ def job_pipeline_timing(request, pk):
         response_dict = {'timing': '',
                          'graph': []}
     else:
-        timing = render_to_string('lava_scheduler_app/job_pipeline_timing.html',
+        timing = render_to_string('lava_scheduler_app/job_timing.html',
                                   {'job': job, 'pipeline': pipeline, 'summary': summary,
                                    'total_duration': total_duration,
                                    'mean_duration': total_duration / len(pipeline),
@@ -1597,7 +1530,7 @@ def job_log_file_plain(request, pk):
         raise Http404
 
 
-def job_log_pipeline_incremental(request, pk):
+def job_log_incremental(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
     # Start from this line
     try:
@@ -1606,34 +1539,24 @@ def job_log_pipeline_incremental(request, pk):
         first_line = 0
 
     try:
-        with open(os.path.join(job.output_dir, "output.yaml"), "r") as f_in:
-            # Manually skip the first lines
-            # This is working because:
-            # 1/ output.yaml is a list of dictionnaries
-            # 2/ each item in this list is represented as one line in output.yaml
-            count = 0
-            for _ in range(first_line):
-                count += len(next(f_in))
-            # Seeking is needed to switch from reading lines to reading bytes.
-            f_in.seek(count)
-            # Load the remaining as yaml
-            data = yaml.load(f_in, Loader=yaml.CLoader)
-            # When reaching EOF, yaml.load does return None instead of []
-            if not data:
-                data = []
-            else:
-                for line in data:
-                    line["msg"] = udecode(line["msg"])
-                    if line["lvl"] == "results":
-                        case_id = TestCase.objects.filter(
-                            suite__job=job,
-                            suite__name=line["msg"]["definition"],
-                            name=line["msg"]["case"]).values_list(
-                                "id", flat=True)
-                        if case_id:
-                            line["msg"]["case_id"] = case_id[0]
+        data = read_logs(job.output_dir, first_line)
+        data = yaml.load(data, Loader=yaml.CLoader)
+        # When reaching EOF, yaml.load does return None instead of []
+        if not data:
+            data = []
+        else:
+            for line in data:
+                line["msg"] = udecode(line["msg"])
+                if line["lvl"] == "results":
+                    case_id = TestCase.objects.filter(
+                        suite__job=job,
+                        suite__name=line["msg"]["definition"],
+                        name=line["msg"]["case"]).values_list(
+                            "id", flat=True)
+                    if case_id:
+                        line["msg"]["case_id"] = case_id[0]
 
-    except (IOError, StopIteration, yaml.YAMLError):
+    except (OSError, StopIteration, yaml.YAMLError):
         data = []
 
     response = HttpResponse(
@@ -1754,7 +1677,7 @@ class FailureForm(forms.ModelForm):
         fields = ('failure_tags', 'failure_comment')
 
 
-@post_only
+@require_POST
 def job_change_priority(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
     if not job.can_change_priority(request.user):
@@ -1804,7 +1727,7 @@ def job_annotate_failure(request, pk):
 class RecentJobsView(JobTableView):
 
     def __init__(self, request, device, **kwargs):
-        super(RecentJobsView, self).__init__(request, **kwargs)
+        super().__init__(request, **kwargs)
         self.device = device
 
     def get_queryset(self):
@@ -1907,36 +1830,14 @@ def device_dictionary(request, pk):
         raise Http404
 
     # Parse the template
-    env = jinja2.Environment()
-    ast = env.parse(raw_device_dict)
-    device_dict = utils.device_dictionary_to_dict(ast)
+    device_yaml = device.load_configuration(output_format="yaml")
 
-    dictionary = OrderedDict()
-    vland = OrderedDict()
-    connections = OrderedDict()
-    extra = {}
-    sequence = utils.device_dictionary_sequence()
-    for item in sequence:
-        if item in device_dict.keys():
-            dictionary[item] = device_dict[item]
-    connect_sequence = utils.device_dictionary_connections()
-    for item in connect_sequence:
-        if item in device_dict.keys():
-            connections[item] = yaml.dump(device_dict[item], default_flow_style=False)
-    vlan_sequence = utils.device_dictionary_vlan()
-    for item in vlan_sequence:
-        if item in device_dict.keys():
-            vland[item] = yaml.dump(device_dict[item], default_flow_style=False)
-    for item in set(device_dict.keys()) - set(sequence) - set(connect_sequence) - set(vlan_sequence):
-        extra[item] = device_dict[item]
     template = loader.get_template("lava_scheduler_app/devicedictionary.html")
     return HttpResponse(template.render(
         {
             'device': device,
-            'dictionary': dictionary,
-            'connections': connections,
-            'vland': vland,
-            'extra': extra,
+            'dictionary': raw_device_dict,
+            'device_yaml': device_yaml,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(device_dictionary, pk=pk),
             'context_help': ['lava-scheduler-device-dictionary'],
         },
@@ -1987,7 +1888,7 @@ def device_edit_description(request, pk):
             "you cannot edit the description of this device", content_type="text/plain")
 
 
-@post_only
+@require_POST
 def device_restrict_device(request, pk):
     device = Device.objects.get(pk=pk)
     if device.can_admin(request.user):
@@ -2001,7 +1902,7 @@ def device_restrict_device(request, pk):
             "you cannot restrict submissions to this device", content_type="text/plain")
 
 
-@post_only
+@require_POST
 def device_derestrict_device(request, pk):
     device = Device.objects.get(pk=pk)
     if device.can_admin(request.user):
@@ -2015,7 +1916,7 @@ def device_derestrict_device(request, pk):
             "you cannot derestrict submissions to this device", content_type="text/plain")
 
 
-@post_only
+@require_POST
 def device_health(request, pk):
     try:
         with transaction.atomic():
@@ -2069,7 +1970,7 @@ def worker_detail(request, pk):
         request=request))
 
 
-@post_only
+@require_POST
 def worker_health(request, pk):
     try:
         with transaction.atomic():
@@ -2094,7 +1995,7 @@ def worker_health(request, pk):
         raise Http404("Worker %s not found" % pk)
 
 
-@post_only
+@require_POST
 def edit_worker_desc(request):
     """Edit worker description, based on user permission."""
 
@@ -2103,7 +2004,8 @@ def edit_worker_desc(request):
     worker_obj = get_object_or_404(Worker, pk=pk)
 
     if worker_obj.can_admin(request.user):
-        worker_obj.update_description(value)
+        worker_obj.description = value
+        worker_obj.save()
         return HttpResponse(worker_obj.get_description())
     else:
         return HttpResponseForbidden("Permission denied.",
@@ -2206,23 +2108,22 @@ def running(request):
 
 
 def download_device_type_template(request, pk):
-    device_type = DeviceType.objects.filter(name=pk)
-    if not device_type:
-        raise Http404
-    device_type = device_type[0]
-    data = load_devicetype_template(device_type.name, raw=True)
+    dt = get_object_or_404(DeviceType, name=pk)
+    if dt.owners_only:
+        if not dt.some_devices_visible_to(request.user):
+            raise Http404('No device type matches the given query.')
+
+    data = load_devicetype_template(dt.name, raw=True)
     if not data:
         raise Http404
     response = HttpResponse(data, content_type='text/plain; charset=utf-8')
     response['Content-Transfer-Encoding'] = 'quoted-printable'
-    response['Content-Disposition'] = "attachment; filename=%s_template.yaml" % device_type.name
+    response['Content-Disposition'] = "attachment; filename=%s_template.yaml" % dt.name
     return response
 
 
-@post_only
+@require_POST
 def similar_jobs(request, pk):
-    from lava_results_app.models import TestData
-
     logger = logging.getLogger('lava_scheduler_app')
     job = get_restricted_job(request.user, pk, request=request)
     if not job.can_change_priority(request.user):
@@ -2258,11 +2159,9 @@ def similar_jobs(request, pk):
                 job_field_value = job_field_value.hostname
 
             # For dates, use date of the job, not the exact moment in time.
-            try:
+            with contextlib.suppress(AttributeError):
                 job_field_value = job_field_value.date()
                 operator = QueryCondition.ICONTAINS
-            except AttributeError:  # it's not a date.
-                pass
 
         else:  # NamedTestAttribute
             try:

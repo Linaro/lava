@@ -15,15 +15,19 @@ Glossary of terms
 
 **A** [ :term:`action level` ] [ :term:`alias` ]
 
+**B** [ :term:`BMC` ]
+
 **C** [ :term:`chart` ] [ :term:`ci loop` ]
 
 **D** [ :term:`device` ] [ :term:`device dictionary` ]
-[ :term:`device owner` ] [:term:`device status transition` ]
+[:term:`device status transition` ]
 [ :term:`device tag` ] [ :term:`device type` ] [ :term:`developer image` ]
 [ :term:`dispatcher` ] [ :term:`distributed deployment` ] [ :term:`DTB` ]
 [ :term:`DUT` ]
 
 **F** [ :term:`frontend` ]
+
+**G** [ :term:`group` ]
 
 **H** [ :term:`hacking session` ] [ :term:`health check` ]
 [:term:`hidden device type` ] [ :term:`hostname` ]
@@ -61,7 +65,7 @@ Glossary of terms
 
 **U** [ :term:`UART` ]
 
-**V** [ :term:`VLANd` ]
+**V** [ :term:`visibility`] [ :term:`VLANd` ]
 
 **W** [ :term:`worker` ]
 
@@ -86,6 +90,11 @@ Glossary of terms
     which can be used with this device-type. (Aliases cannot be used in job
     submissions directly.) Multiple device-types are allowed to share the one
     or more aliases.
+
+  BMC
+    A Baseboard Management Controller (BMC) is an embedded controller
+    on a computer mainboard which allows external monitoring and
+    management of the computer system.
 
   chart
     A chart allows users to track :term:`results` over time using
@@ -119,14 +128,6 @@ Glossary of terms
 
     .. seealso:: :ref:`create_device_dictionary` and
       :ref:`viewing_device_dictionary_content`.
-
-  device owner
-    A device owner has permission to change the status of a particular device
-    and update the free text description of a device. Note that superusers of
-    the LAVA instance are always able to submit jobs to and administer any
-    devices on that instance.
-
-    .. seealso:: :ref:`device_owner_help` and :ref:`owner_actions`.
 
   device status transition
     A record of when a device changed :ref:`device_status`, who caused the
@@ -192,6 +193,14 @@ Glossary of terms
     supported using the :ref:`xml_rpc` and REST API support.
 
     .. seealso:: :ref:`what_is_lava_not` and :ref:`custom_result_handling`.
+
+  group
+    LAVA uses the Django local group configuration (synchronising
+    Django groups with external groups like LDAP is **not** supported).
+    Users can be added to groups after the specified group has been
+    created by admins using the :ref:`django_admin_interface` or the
+    ``lava-server manage groups`` and ``lava-server manage users``
+    command line support.
 
   hacking session
     A test job which uses a particular type of test definition to allow users
@@ -524,6 +533,32 @@ Glossary of terms
     .. seealso:: `UART article on Wikipedia
        <https://en.wikipedia.org/wiki/Universal_asynchronous_receiver-transmitter>`_
        and :ref:`multiple_serial_support`.
+
+  visibility
+    Supports values of ``public``, ``personal`` and ``group`` and
+    controls who is allowed to view the job and the results generated
+    by the job. This includes whether the results are available to
+    queries and to charts::
+
+     visibility: personal
+
+    or::
+
+     visibility: public
+
+    ``group`` visibility setting should list the groups users must be
+    in to be allowed to see the job. If more than one :term:`group` is
+    listed, users must be in all the listed groups to be able to view
+    the job or the results::
+
+     visibility:
+       group:
+         - developers
+         - project
+
+    In this example, users must be members of both ``developers`` group
+    and ``project`` group. Groups must already exist in the Django
+    configuration for the instance.
 
   VLANd
     VLANd is a daemon to support virtual local area networks in LAVA. This

@@ -30,7 +30,7 @@ from lava_dispatcher.test.utils import DummyLogger, infrastructure_error, infras
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.fastboot import FastbootFlashOrderAction
 from lava_dispatcher.actions.boot.fastboot import BootAction
-from lava_dispatcher.utils.lxc import is_lxc_requested
+from lava_dispatcher.utils.lxc import is_lxc_requested, lxc_cmd_prefix
 
 
 class FastBootFactory(Factory):  # pylint: disable=too-few-public-methods
@@ -231,7 +231,7 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
         autologin = [action for action in boot.internal_pipeline.actions if action.name == 'auto-login-action'][0]
         self.assertTrue(autologin.booting)
         self.assertEqual(set(autologin.parameters.get('prompts')), set(['root@(.*):/#', 'shell@am57xevm:/']))
-        self.assertIsNone(autologin.parameters.get('boot_message', None))
+        self.assertIsNone(autologin.parameters.get('boot_message'))
 
     def test_nexus5x_job(self):
         self.factory = FastBootFactory()
@@ -296,6 +296,8 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
         self.assertEqual(expected_flash_cmds, flash_cmds)
 
     def test_fastboot_minus_lxc(self):
+        # Do not run job.validate() since it will require some android tools
+        # such as fastboot, adb, etc. to be installed.
         job = self.factory.create_fastboot_job(
             'sample_jobs/nexus4-minus-lxc.yaml')
         description_ref = self.pipeline_reference('nexus4-minus-lxc.yaml',
@@ -307,4 +309,20 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
         deploy = [action for action in job.pipeline.actions
                   if action.name == 'fastboot-deploy'][0]
         # No lxc requested, hence lxc_cmd_prefix is an empty list
-        self.assertEqual([], deploy.lxc_cmd_prefix)
+        self.assertEqual([], lxc_cmd_prefix(job))
+
+    def test_db410c_minus_lxc(self):
+        # Do not run job.validate() since it will require some android tools
+        # such as fastboot, adb, etc. to be installed.
+        job = self.factory.create_db410c_job(
+            'sample_jobs/db410c-minus-lxc.yaml')
+        description_ref = self.pipeline_reference('db410c-minus-lxc.yaml',
+                                                  job=job)
+        self.assertEqual(description_ref, job.pipeline.describe(False))
+        # There shouldn't be any lxc defined
+        lxc_name = is_lxc_requested(job)
+        self.assertEqual(lxc_name, False)
+        deploy = [action for action in job.pipeline.actions
+                  if action.name == 'fastboot-deploy'][0]
+        # No lxc requested, hence lxc_cmd_prefix is an empty list
+        self.assertEqual([], lxc_cmd_prefix(job))

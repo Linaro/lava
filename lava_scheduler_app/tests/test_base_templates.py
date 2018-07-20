@@ -36,13 +36,15 @@ class BaseTemplate(object):
         debug = False  # set to True to see the YAML device config output
         system = False  # set to True to debug the system templates
 
-        def render_device_dictionary_file(self, filename):
+        def render_device_dictionary_file(self, filename, job_ctx=None):
             device = filename.replace('.jinja2', '')
             with open(os.path.join(os.path.dirname(__file__), 'devices', filename)) as input:
                 data = input.read()
+            if not job_ctx:
+                job_ctx = {}
             self.assertTrue(self.validate_data(device, data))
             test_template = prepare_jinja_template(device, data)
-            return test_template.render()
+            return test_template.render(**job_ctx)
 
         def render_device_dictionary(self, hostname, data, job_ctx=None):
             if not job_ctx:
@@ -208,3 +210,11 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
 {% set connection_command = 'telnet localhost 7302' %}"""
         device_dict = self.render_device_dictionary('staging-x86-01', data)
         self.assertTrue(validate_device(yaml.load(device_dict)))
+
+    def test_pexpect_spawn_window(self):
+        rendered = self.render_device_dictionary_file('hi6220-hikey-01.jinja2')
+        template_dict = yaml.load(rendered)
+        self.assertIsNotNone(template_dict['constants'])
+        self.assertIn('spawn_maxread', template_dict['constants'])
+        self.assertIsInstance(template_dict['constants']['spawn_maxread'], str)
+        self.assertEqual(int(template_dict['constants']['spawn_maxread']), 4092)
