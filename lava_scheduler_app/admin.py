@@ -245,12 +245,12 @@ class DeviceAdmin(admin.ModelAdmin):
     def has_health_check(self, obj):
         return bool(obj.get_health_check())
     has_health_check.boolean = True
-    has_health_check.short_description = "Health check"
+    has_health_check.short_description = "HC"
 
     def health_check_enabled(self, obj):
         return not obj.device_type.disable_health_check
     health_check_enabled.boolean = True
-    health_check_enabled.short_description = "Health check enabled"
+    health_check_enabled.short_description = "HC enabled"
 
     def get_readonly_fields(self, _, obj=None):
         if obj:  # editing an existing object
@@ -260,7 +260,7 @@ class DeviceAdmin(admin.ModelAdmin):
     def valid_device(self, obj):
         return bool(obj.is_valid())
     valid_device.boolean = True
-    valid_device.short_description = "V2 configuration"
+    valid_device.short_description = "Config"
 
     def device_dictionary_jinja(self, obj):
         return obj.load_configuration(output_format="raw")
@@ -351,25 +351,25 @@ class DeviceTypeAdmin(admin.ModelAdmin):
         if obj.architecture:
             return obj.architecture
         return ''
+    architecture_name.short_description = "arch"
 
     def processor_name(self, obj):
         if obj.processor:
             return obj.processor
         return ''
+    processor_name.short_description = "proc"
 
     def cpu_model_name(self, obj):
         if obj.cpu_model:
             return obj.cpu_model
         return ''
-
-    def list_of_aliases(self, obj):
-        if obj.aliases:
-            return ', '.join([alias.name for alias in obj.aliases])
+    cpu_model_name.short_description = "cpu"
 
     def bit_count(self, obj):
         if obj.bits:
             return obj.bits
         return ''
+    bit_count.short_description = "bits"
 
     def list_of_cores(self, obj):
         if obj.core_count:
@@ -377,6 +377,7 @@ class DeviceTypeAdmin(admin.ModelAdmin):
                 obj.core_count,
                 ','.join([core.name for core in obj.cores.all().order_by('name')]))
         return ''
+    list_of_cores.short_description = "cores"
 
     def get_readonly_fields(self, _, obj=None):
         if obj:  # editing an existing object
@@ -386,24 +387,28 @@ class DeviceTypeAdmin(admin.ModelAdmin):
     def health_check_enabled(self, obj):
         return not obj.disable_health_check
     health_check_enabled.boolean = True
-    health_check_enabled.short_description = "Health check enabled"
+    health_check_enabled.short_description = "HC enabled"
 
     def health_check_frequency(self, device_type):
         if device_type.health_denominator == DeviceType.HEALTH_PER_JOB:
             return "every %d jobs" % device_type.health_frequency
         return "every %d hours" % device_type.health_frequency
+    health_check_frequency.short_description = "HC frequency"
 
     actions = [disable_health_check_action]
-    fields = (
-        'name', 'architecture', 'processor', 'cpu_model', 'aliases',
-        'bits', 'cores', 'core_count', 'description', 'health_frequency',
-        'health_denominator', 'disable_health_check', 'display', 'owners_only',
-    )
     list_filter = ('name', 'display', 'cores',
                    'architecture', 'processor')
     list_display = ('name', 'display', 'owners_only', 'health_check_enabled', 'health_check_frequency',
                     'architecture_name', 'processor_name', 'cpu_model_name',
                     'list_of_cores', 'bit_count')
+    fieldsets = (
+        ('Properties', {
+            'fields': ('name', 'description', 'display', 'owners_only', 'aliases')}),
+        ('Health checks', {
+            'fields': (('health_frequency', 'health_denominator'), 'disable_health_check')}),
+        ('Meta data', {
+            'fields': ('architecture', 'processor', ('cores', 'core_count'), 'bits', 'cpu_model')})
+    )
     ordering = ['name']
 
 
