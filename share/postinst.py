@@ -80,7 +80,7 @@ def db_setup(config, pg_admin_username, pg_admin_password):
     cursor = conn.cursor()
 
     try:
-        cursor.execute("CREATE ROLE %s NOSUPERUSER NOCREATEDB NOCREATEROLE INHERIT LOGIN ENCRYPTED PASSWORD '%s'" % (config.LAVA_DB_USER, config.LAVA_DB_PASSWORD))
+        cursor.execute("CREATE ROLE \"%s\" NOSUPERUSER NOCREATEDB NOCREATEROLE INHERIT LOGIN ENCRYPTED PASSWORD '%s'" % (config.LAVA_DB_USER, config.LAVA_DB_PASSWORD))
     except psycopg2.ProgrammingError as exc:
         print(exc)
 
