@@ -94,7 +94,7 @@ class VlandProtocol(Protocol):
         try:
             self.sock.connect((self.settings['vland_hostname'], self.settings['port']))
             return True
-        except socket.error as exc:
+        except OSError as exc:
             self.logger.exception(
                 "socket error on connect: %d %s %s",
                 exc.errno, self.settings['vland_hostname'], self.settings['port'])
@@ -114,7 +114,7 @@ class VlandProtocol(Protocol):
             if ret_bytes == 0:
                 self.logger.debug("zero bytes sent for message - connection closed?")
                 return False
-        except socket.error as exc:
+        except OSError as exc:
             self.logger.exception("socket error '%d' on send", exc.message)
             self.sock.close()
             return False
@@ -132,7 +132,7 @@ class VlandProtocol(Protocol):
             while recv_count < msg_count:
                 response += self.sock.recv(self.blocks)
                 recv_count += self.blocks
-        except socket.error as exc:
+        except OSError as exc:
             self.logger.exception("socket error '%d' on response", exc.errno)
             self.sock.close()
             return json.dumps({"response": "wait"})

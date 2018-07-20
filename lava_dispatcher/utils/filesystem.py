@@ -301,7 +301,7 @@ def copy_to_lxc(lxc_name, src, dispatcher_config):
         logger.debug("Copying %s to %s", filename, lxc_name)
         try:
             shutil.copyfile(src, dst)
-        except IOError:
+        except OSError:
             raise JobError("Unable to copy image: %s" % src)
 
     return os.path.join(LAVA_LXC_HOME, filename)
@@ -335,7 +335,7 @@ def copy_overlay_to_lxc(lxc_name, src, dispatcher_config, namespace):
     logger.debug("Copying %s to %s", os.path.basename(src), dst)
     try:
         shutil.copy(src, dst)
-    except IOError as exc:
+    except OSError as exc:
         # ENOENT(2): No such file or directory
         if exc.errno != errno.ENOENT:
             raise JobError("Unable to copy image: %s" % src)

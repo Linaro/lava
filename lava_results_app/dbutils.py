@@ -95,7 +95,7 @@ def create_metadata_store(results, job):
     try:
         with open(meta_filename, 'w') as extra_store:
             yaml.dump(data, extra_store)
-    except (OSError, IOError) as exc:  # LAVA-847
+    except OSError as exc:  # LAVA-847
         msg = "[%d] Unable to create metadata store: %s" % (job.id, exc)
         logger.error(msg)
         append_failure_comment(job, msg)

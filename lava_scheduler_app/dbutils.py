@@ -120,7 +120,7 @@ def parse_job_description(job):
         with open(filename, 'r') as f_describe:
             description = f_describe.read()
         pipeline = yaml.load(description)
-    except (IOError, yaml.YAMLError):
+    except (OSError, yaml.YAMLError):
         logger.error("'Unable to open and parse '%s'", filename)
         return
 

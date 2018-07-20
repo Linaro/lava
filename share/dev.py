@@ -128,7 +128,7 @@ def main():
             if not conf.get("DEBUG"):
                 print("lava-server should be running in 'DEBUG' mode")
                 sys.exit(1)
-    except IOError as exc:
+    except OSError as exc:
         print("Unable to open lava-server configuration: %s" % str(exc))
         sys.exit(1)
     except ValueError as exc:

@@ -220,7 +220,7 @@ class Job(object):
         mkdir(self.base_dir)
 
     def errors(self):
-        with contextlib.suppress(IOError):
+        with contextlib.suppress(OSError):
             return open(os.path.join(self.base_dir, "stderr"), 'r').read()
         return ''
 
@@ -229,7 +229,7 @@ class Job(object):
             filename = os.path.join(self.base_dir, "description.yaml")
             data = open(filename, 'r').read()
             return lzma.compress(b(data))
-        except (IOError, lzma.LZMAError) as exc:
+        except (OSError, lzma.LZMAError) as exc:
             LOG.error("[%d] Unable to read 'description.yaml'", self.job_id)
             LOG.exception(exc)
             return None
@@ -247,7 +247,7 @@ class Job(object):
         os.kill(self.pid, signal.SIGTERM)
 
     def is_running(self):
-        with contextlib.suppress(IOError):
+        with contextlib.suppress(OSError):
             with open("/proc/%d/cmdline" % self.pid, "r") as fd:
                 return "lava-run" in fd.read()
         return False

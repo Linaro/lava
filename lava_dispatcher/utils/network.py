@@ -100,7 +100,7 @@ def get_free_port(dispatcher_config):
             s.bind(("", randport))
             s.listen(1)
             port = s.getsockname()[1]
-        except socket.error:
+        except OSError:
             s.close()
             continue
         s.close()

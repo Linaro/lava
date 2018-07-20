@@ -63,6 +63,6 @@ def get_secret_key(pathname):
     """
     try:
         return ConfigFile.load(pathname).SECRET_KEY
-    except (AttributeError, IOError, ValueError) as ex:
+    except (AttributeError, OSError, ValueError) as ex:
         _write_secret_key(pathname, _make_secret_key())
     return ConfigFile.load(pathname).SECRET_KEY

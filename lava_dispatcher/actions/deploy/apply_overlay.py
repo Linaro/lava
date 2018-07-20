@@ -639,7 +639,7 @@ class ApplyLxcOverlay(Action):
         self.logger.debug("Copying %s", output_file)
         try:
             shutil.copy(fname, output_file)
-        except IOError:
+        except OSError:
             raise InfrastructureError("Unable to copy: %s" % output_file)
 
         return connection

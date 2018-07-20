@@ -93,7 +93,7 @@ class SchedulerWorkersAPI(ExposedV2API):
         try:
             with open(filename, "r") as f_in:
                 return xmlrpc.client.Binary(f_in.read().encode('utf-8'))
-        except IOError:
+        except OSError:
             raise xmlrpc.client.Fault(
                 404, "Worker '%s' does not have a configuration" % hostname)
 
@@ -132,7 +132,7 @@ class SchedulerWorkersAPI(ExposedV2API):
             with open(filename, "w") as f_out:
                 f_out.write(config)
                 return True
-        except IOError:
+        except OSError:
             return False
 
     def list(self):

@@ -132,7 +132,7 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
             filename += ".yaml" if not filename.endswith('.yaml') else ''
             with open(filename, "r") as f_in:
                 return xmlrpc.client.Binary(f_in.read().encode("utf-8"))
-        except IOError as exc:
+        except OSError as exc:
             if exc.errno == errno.ENOENT:
                 raise xmlrpc.client.Fault(404, "Device-type '%s' was not found." % name)
             else:
@@ -177,7 +177,7 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
             filename += ".jinja2" if not filename.endswith('.jinja2') else ''
             with open(filename, "r") as f_in:
                 return xmlrpc.client.Binary(f_in.read().encode("utf-8"))
-        except IOError as exc:
+        except OSError as exc:
             if exc.errno == errno.ENOENT:
                 raise xmlrpc.client.Fault(404, "Device-type '%s' was not found." % name)
             else:
@@ -221,7 +221,7 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
             filename += ".yaml" if not filename.endswith('.yaml') else ''
             with open(filename, "w") as f_out:
                 f_out.write(config)
-        except IOError as exc:
+        except OSError as exc:
             raise xmlrpc.client.Fault(
                 400, "Unable to write health-check: %s" % exc.strerror)
 
@@ -263,7 +263,7 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
             filename += ".jinja2" if not filename.endswith('.jinja2') else ''
             with open(filename, "w") as f_out:
                 f_out.write(config)
-        except IOError as exc:
+        except OSError as exc:
             raise xmlrpc.client.Fault(
                 400, "Unable to write device-type configuration: %s" % exc.strerror)
 

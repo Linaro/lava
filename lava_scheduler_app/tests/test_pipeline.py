@@ -477,7 +477,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
 
         try:
             device_config = device.load_configuration(job_ctx)  # raw dict
-        except (jinja2.TemplateError, yaml.YAMLError, IOError) as exc:
+        except (jinja2.TemplateError, yaml.YAMLError, OSError) as exc:
             # FIXME: report the exceptions as useful user messages
             self.fail("[%d] jinja2 error: %s" % (job.id, exc))
         if not device_config or not isinstance(device_config, dict):
@@ -626,7 +626,7 @@ class TestYamlMultinode(TestCaseWithFactory):
 
         try:
             device_config = device.load_configuration(job_ctx)  # raw dict
-        except (jinja2.TemplateError, yaml.YAMLError, IOError) as exc:
+        except (jinja2.TemplateError, yaml.YAMLError, OSError) as exc:
             # FIXME: report the exceptions as useful user messages
             self.fail("[%d] jinja2 error: %s" % (host_job.id, exc))
         if not device_config or not isinstance(device_config, dict):
@@ -933,7 +933,7 @@ class TestYamlMultinode(TestCaseWithFactory):
 
                 try:
                     device_config = device.load_configuration(job_ctx)  # raw dict
-                except (jinja2.TemplateError, yaml.YAMLError, IOError) as exc:
+                except (jinja2.TemplateError, yaml.YAMLError, OSError) as exc:
                     # FIXME: report the exceptions as useful user messages
                     self.fail("[%d] jinja2 error: %s" % (job.id, exc))
                 if not device_config or not isinstance(device_config, dict):
@@ -1061,7 +1061,7 @@ class TestYamlMultinode(TestCaseWithFactory):
 
                 try:
                     device_config = device.load_configuration(job_ctx)  # raw dict
-                except (jinja2.TemplateError, yaml.YAMLError, IOError) as exc:
+                except (jinja2.TemplateError, yaml.YAMLError, OSError) as exc:
                     # FIXME: report the exceptions as useful user messages
                     self.fail("[%d] jinja2 error: %s" % (job.id, exc))
                 if not device_config or not isinstance(device_config, dict):

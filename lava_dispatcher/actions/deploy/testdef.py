@@ -344,7 +344,7 @@ class GitRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
         try:
             with open(yaml_file, 'r') as test_file:
                 testdef = yaml.safe_load(test_file)
-        except IOError as exc:
+        except OSError as exc:
             raise JobError("Unable to open test definition '%s': %s" % (self.parameters['path'],
                                                                         str(exc)))
 
@@ -410,7 +410,7 @@ class BzrRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
         try:
             with open(yaml_file, 'r') as test_file:
                 self.testdef = yaml.safe_load(test_file)
-        except IOError as exc:
+        except OSError as exc:
             raise JobError("Unable to open test definition '%s': %s" % (self.parameters['path'],
                                                                         str(exc)))
 
@@ -813,7 +813,7 @@ class TestOverlayAction(TestAction):  # pylint: disable=too-many-instance-attrib
         try:
             with open(yaml_file, 'r') as test_file:
                 testdef = yaml.safe_load(test_file)
-        except IOError as exc:
+        except OSError as exc:
             raise JobError("Unable to open test definition '%s': %s" % (self.parameters['path'],
                                                                         str(exc)))
 
@@ -949,7 +949,7 @@ class TestInstallAction(TestOverlayAction):
         try:
             with open(yaml_file, 'r') as test_file:
                 testdef = yaml.safe_load(test_file)
-        except IOError as exc:
+        except OSError as exc:
             raise JobError("Unable to open test definition '%s': %s" % (self.parameters['path'],
                                                                         str(exc)))
 
@@ -1060,7 +1060,7 @@ class TestRunnerAction(TestOverlayAction):
         try:
             with open(yaml_file, 'r') as test_file:
                 testdef = yaml.safe_load(test_file)
-        except IOError as exc:
+        except OSError as exc:
             raise JobError("Unable to open test definition '%s': %s" % (self.parameters['path'],
                                                                         str(exc)))
 

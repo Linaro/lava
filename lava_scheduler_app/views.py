@@ -1204,7 +1204,7 @@ def job_detail(request, pk):
                 if case_id:
                     line["msg"]["case_id"] = case_id[0]
 
-    except IOError:
+    except OSError:
         log_data = []
     except yaml.YAMLError:
         log_data = None
@@ -1417,7 +1417,7 @@ def job_timing(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
     try:
         logs = yaml.load(open(os.path.join(job.output_dir, "output.yaml")), Loader=yaml.CLoader)
-    except IOError:
+    except OSError:
         raise Http404
 
     # start and end patterns
@@ -1545,7 +1545,7 @@ def job_log_file_plain(request, pk):
                                              content_type="application/yaml")
             response['Content-Disposition'] = "attachment; filename=job_%d.log" % job.id
             return response
-    except IOError:
+    except OSError:
         raise Http404
 
 

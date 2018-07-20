@@ -29,7 +29,7 @@ def load_optional_file(filename):
     try:
         with open(filename, "r") as f_in:
             return f_in.read().encode("utf-8")
-    except IOError:
+    except OSError:
         return None
 
 
@@ -238,7 +238,7 @@ class SchedulerJobsAPI(ExposedV2API):
         try:
             data = read_logs(job.output_dir, start, end)
             return (job_finished, xmlrpc.client.Binary(data.encode("utf-8")))
-        except (IOError, StopIteration):
+        except OSError:
             return (job_finished, xmlrpc.client.Binary("[]".encode("utf-8")))
 
     def show(self, job_id):

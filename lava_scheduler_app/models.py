@@ -761,7 +761,7 @@ class Device(RestrictedResource):
     def load_configuration(self, job_ctx=None, output_format="dict"):
         """
         Maps the device dictionary to the static templates in /etc/.
-        raise: this function can raise IOError, jinja2.TemplateError or yaml.YAMLError -
+        raise: this function can raise OSError, jinja2.TemplateError or yaml.YAMLError -
             handling these exceptions may be context-dependent, users will need
             useful messages based on these exceptions.
         """
@@ -774,7 +774,7 @@ class Device(RestrictedResource):
                 with open(os.path.join(Device.CONFIG_PATH,
                                        "%s.jinja2" % self.hostname), "r") as f_in:
                     return f_in.read()
-            except IOError:
+            except OSError:
                 return None
 
         # Create the environment
@@ -824,7 +824,7 @@ class Device(RestrictedResource):
                                    "%s.jinja2" % self.hostname), "w") as f_out:
                 f_out.write(data)
             return True
-        except IOError as exc:
+        except OSError as exc:
             logger = logging.getLogger("lava_scheduler_app")
             logger.error("Error saving device configuration for %s: %s",
                          self.hostname, str(exc))
@@ -864,7 +864,7 @@ class Device(RestrictedResource):
         try:
             with open(filename, "r") as f_in:
                 return f_in.read()
-        except IOError:
+        except OSError:
             return None
 
 

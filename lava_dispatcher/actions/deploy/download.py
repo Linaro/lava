@@ -287,7 +287,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
                     proc = subprocess.Popen([decompress_command],
                                             stdin=subprocess.PIPE,
                                             stdout=dwnld_file)
-            except (IOError, OSError) as exc:
+            except OSError as exc:
                 msg = "Unable to open %s: %s" % (fname, exc.strerror)
                 self.logger.error(msg)
                 raise InfrastructureError(msg)
@@ -419,7 +419,7 @@ class FileDownloadAction(DownloadHandler):
             while buff:
                 yield buff
                 buff = reader.read(FILE_DOWNLOAD_CHUNK_SIZE)
-        except IOError as exc:
+        except OSError as exc:
             raise InfrastructureError("Unable to write to %s: %s" % (self.url.path, str(exc)))
         finally:
             if reader is not None:

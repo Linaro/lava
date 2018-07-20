@@ -152,7 +152,7 @@ class Command(LAVADaemonCommand):
                 master_public, master_secret = zmq.auth.load_certificate(options['master_cert'])
                 self.logger.debug("[INIT] Using slaves certificates from: %s", options['slaves_certs'])
                 self.auth.configure_curve(domain='*', location=options['slaves_certs'])
-            except IOError as err:
+            except OSError as err:
                 self.logger.error("[INIT] %s", err)
                 self.auth.stop()
                 return

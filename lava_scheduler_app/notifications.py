@@ -279,7 +279,7 @@ def send_notifications(job):
                         recipient.status = NotificationRecipient.SENT
                         recipient.save()
                 except (smtplib.SMTPRecipientsRefused, jinja2.exceptions.TemplateError,
-                        smtplib.SMTPSenderRefused, socket.error) as exc:
+                        smtplib.SMTPSenderRefused, OSError) as exc:
                     logger.exception(exc)
                     logger.warning("[%d] failed to send email notification to %s",
                                    job.id, recipient.email_address)

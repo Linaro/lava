@@ -125,7 +125,7 @@ def load_optional_yaml_file(filename, fallback=None):
             data_str = f_in.read()
         yaml.safe_load(data_str)
         return data_str
-    except IOError as exc:
+    except OSError as exc:
         if exc.errno == errno.ENOENT:
             # This is ok if the file does not exist
             if fallback is None:
@@ -134,9 +134,9 @@ def load_optional_yaml_file(filename, fallback=None):
             return load_optional_yaml_file(fallback)
         raise
     except yaml.YAMLError:
-        # Raise an IOError because the caller uses yaml.YAMLError for a
+        # Raise an OSError because the caller uses yaml.YAMLError for a
         # specific usage. Allows here to specify the faulty filename.
-        raise IOError("", "Not a valid YAML file", filename)
+        raise OSError("", "Not a valid YAML file", filename)
 
 
 class Command(LAVADaemonCommand):
@@ -313,7 +313,7 @@ class Command(LAVADaemonCommand):
                     f_description.write(description.decode("utf-8"))
                 if description:
                     parse_job_description(job)
-            except (IOError, lzma.LZMAError) as exc:
+            except (OSError, lzma.LZMAError) as exc:
                 self.logger.error("[%d] Unable to dump 'description.yaml'",
                                   job_id)
                 self.logger.exception("[%d] %s", job_id, exc)
@@ -491,7 +491,7 @@ class Command(LAVADaemonCommand):
                 self.logger.error("[%d] Template syntax error in '%s', line %d: %s",
                                   job.id, exc.name, exc.lineno, exc.message)
                 msg = "Template syntax error in '%s', line %d: %s" % (exc.name, exc.lineno, exc.message)
-            except IOError as exc:
+            except OSError as exc:
                 self.logger.error("[%d] Unable to read '%s': %s",
                                   job.id, exc.filename, exc.strerror)
                 msg = "Cannot open '%s': %s" % (exc.filename, exc.strerror)
@@ -573,7 +573,7 @@ class Command(LAVADaemonCommand):
                 master_public, master_secret = zmq.auth.load_certificate(options['master_cert'])
                 self.logger.debug("[INIT] Using slaves certificates from: %s", options['slaves_certs'])
                 self.auth.configure_curve(domain='*', location=options['slaves_certs'])
-            except IOError as err:
+            except OSError as err:
                 self.logger.error(err)
                 self.auth.stop()
                 return
