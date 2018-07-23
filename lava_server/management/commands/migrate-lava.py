@@ -1,26 +1,23 @@
+# -*- coding: utf-8 -*-
 # Copyright (c) Django Software Foundation and individual contributors.
-#
-# Copyright (C) 2015 Linaro Limited
+# Copyright (C) 2018 Linaro Limited
 #
 # Author: Senthil Kumaran S <senthil.kumaran@linaro.org>
 #
-# This file is part of LAVA Server
+# This file is part of LAVA.
 #
-# Lava Dashboard is free software: you can redistribute it and/or modify
+# LAVA is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License version 3
 # as published by the Free Software Foundation
 #
-# Lava Dashboard is distributed in the hope that it will be useful,
+# LAVA is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU Affero General Public License
-# along with Lava Dashboard. If not, see <http://www.gnu.org/licenses/>.
+# along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-# This is a modified work of django 1.8 migrate command as seen in the
-# following link, in order to include --db-dry-run option:
-#
 # https://github.com/django/django/blob/1.8.6/django/core/management/commands/migrate.py
 
 import itertools

@@ -1,21 +1,21 @@
-# Copyright (C) 2015 Linaro Limited
+# -*- coding: utf-8 -*-
+# Copyright (C) 2015-2018 Linaro Limited
 #
 # Author: Senthil Kumaran S <senthil.kumaran@linaro.org>
 #
-# This file is part of LAVA Dashboard
+# This file is part of LAVA.
 #
-# Lava Dashboard is free software: you can redistribute it and/or modify
+# LAVA is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License version 3
 # as published by the Free Software Foundation
 #
-# Lava Dashboard is distributed in the hope that it will be useful,
+# LAVA is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU Affero General Public License
-# along with Lava Dashboard. If not, see <http://www.gnu.org/licenses/>.
-
+# along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import csv

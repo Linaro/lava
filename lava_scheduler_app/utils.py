@@ -1,21 +1,22 @@
-# Copyright (C) 2013 Linaro Limited
+# -*- coding: utf-8 -*-
+# Copyright (C) 2013-2018 Linaro Limited
 #
 # Author: Neil Williams <neil.williams@linaro.org>
 #         Senthil Kumaran <senthil.kumaran@linaro.org>
 #
-# This file is part of LAVA Scheduler.
+# This file is part of LAVA.
 #
-# LAVA Scheduler is free software: you can redistribute it and/or modify it
-# under the terms of the GNU Affero General Public License version 3 as
-# published by the Free Software Foundation
+# LAVA is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License version 3
+# as published by the Free Software Foundation
 #
-# LAVA Scheduler is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
-# more details.
+# LAVA is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
 # You should have received a copy of the GNU Affero General Public License
-# along with LAVA Scheduler.  If not, see <http://www.gnu.org/licenses/>.
+# along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
 import copy
