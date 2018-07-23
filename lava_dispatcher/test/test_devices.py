@@ -220,8 +220,7 @@ class TestCommand(StdoutTestCase):
     def test_silent(self):
         fake = FakeAction()
         command = 'true'
-        log = fake.run_command(command.split(' '))
-        self.assertEqual(log, '')
+        self.assertRaises(JobError, fake.run_command, command.split(' '))
         self.assertEqual([], fake.errors)
 
     def test_allow_silent(self):

@@ -503,8 +503,12 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
                 return False
 
         # allow for commands which return no output
-        if not log and allow_silent:
-            return self.errors == []
+        if not log:
+            if allow_silent:
+                return self.errors == []
+            else:
+                self.logger.error("The command hasn't output anything")
+                raise JobError("Unable to call %s" % command_list)
         else:
             for line in log.split("\n"):
                 self.logger.debug('output: %s', line)
