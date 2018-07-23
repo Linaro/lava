@@ -44,6 +44,7 @@ override_dh_auto_build:
 	python3 setup.py build
 	make -C man/ man SPHINXBUILD="/usr/share/sphinx/scripts/python3/sphinx-build" SPHINXOPTS="-D today=\"$(BUILD_DATE)\""
 	make -C doc/v2/ html SPHINXBUILD="/usr/share/sphinx/scripts/python3/sphinx-build" SPHINXOPTS="-j 4 -D today=\"$(BUILD_DATE)\""
+	$(RM) doc/v2/_build/html/objects.inv
 	make -C man/ man SPHINXBUILD="/usr/share/sphinx/scripts/python3/sphinx-build" SPHINXOPTS="-j 4 -D today=\"$(BUILD_DATE)\""
 
 override_dh_auto_install:
