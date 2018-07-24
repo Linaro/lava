@@ -3,53 +3,33 @@ Upstream-Name: lava
 Source: https://git.linaro.org/lava/lava.git
 
 Files: *
-Copyright: 2010-2016, Linaro Limited
+Copyright: 2010-2018, Linaro Limited
 License: GPL-3.0+
 
 Files: lava/lxc-mocker/*
 Copyright: 2018 Linaro Limited
 License: MIT
 
-Files: lava_dispatcher/*
-Copyright: 2010-2016, Linaro Limited
+Files: lava_dispatcher/*  lava/coordinator/*
+ lava_common/*
+ lava_scheduler_app/tests/test_scheduler.py
+ lava_scheduler_app/tests/test_state_machine.py
+ share/create_certificate.py
+ share/render-template.py
+ share/check-devices.py
+ share/lava_lxc_device_add.py
+ share/dev.py
+Copyright: 2010-2018, Linaro Limited
 License: GPL-2.0+
 
 Files: debian/*
-Copyright: 2013 Neil Williams <codehelp@debian.org>
+Copyright: 2013-2018 Neil Williams <codehelp@debian.org>
 License: GPL-2.0+
 
 Files: lava_server/* lava_scheduler_app/* lava_results_app/*
-Copyright: 2010-2016, Linaro Limited
+ dashboard_app/*
+Copyright: 2010-2018, Linaro Limited
 License: AGPL-3.0
-
-Files: lava_scheduler_app/logutils.py lava_scheduler_app/scheduler.py
- lava_scheduler_app/tests/test_scheduler.py
- lava_scheduler_app/tests/test_state_machine.py
- lava_results_app/management/commands/drop_materialized_views.py
- lava_results_app/management/commands/refresh_queries.py
- lava_server/cmdutils.py
- lava_server/management/commands/device-types.py
- lava_server/management/commands/devices.py
- lava_server/management/commands/jobs.py
- lava_server/management/commands/lava-logs.py
- lava_server/management/commands/lava-master.py
- lava_server/management/commands/lava-publisher.py
- lava_server/management/commands/maintenance.py
- lava_server/management/commands/migrate-job-output.py
- lava_server/management/commands/tokens.py
- lava_server/management/commands/users.py
- lava_server/management/commands/workers.py
- lava/coordinator/__init__.py
- lava/coordinator/lava-coordinator.py
- lava/coordinator/status.py
- lava/dispatcher/lava-run
- lava/dispatcher/lava-slave
- lava_common/constants.py
- lava_common/exceptions.py
- lava_common/timeout.py
- lava_common/utils.py
-Copyright: 2010-2016, Linaro Limited
-License: GPL-2.0+
 
 Files: lava_scheduler_app/static/lava_scheduler_app/js/*
  lava_scheduler_app/static/lava_scheduler_app/css/jquery-linedtextarea.css
@@ -72,25 +52,6 @@ Copyright: 2014 Jörn Zaefferer
            2010 Xuan Luo.
            2012 by Matt Burland
 License: MIT
-
-Files:
- share/render-template.py
- share/check-devices.py
- share/dev.py
-Copyright: 2013, 2016 Linaro Limited
-           2015 Neil Williams <codehelp@debian.org>
-License: GPL-2.0+
-
-Files: share/release-queue.py
- share/javascript.py
- share/validate_devices.py
- share/check-devices.py
- share/startup.py
- share/download-test-suites-api.py
- setup.py
- version.py
-Copyright: 2016 Linaro Limited
-License: GPL-3.0+
 
 Files: doc/v2/_static/default.css
 Copyright: 2009, Stanislaus Madueke
