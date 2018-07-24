@@ -218,3 +218,25 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
         self.assertIn('spawn_maxread', template_dict['constants'])
         self.assertIsInstance(template_dict['constants']['spawn_maxread'], str)
         self.assertEqual(int(template_dict['constants']['spawn_maxread']), 4092)
+
+    def test_test_shell_constants(self):
+        job_ctx = {}
+        rendered = self.render_device_dictionary_file('hi6220-hikey-01.jinja2', job_ctx=job_ctx)
+        template_dict = yaml.load(rendered)
+        self.assertIsNotNone(template_dict['constants'])
+        self.assertIn('posix', template_dict['constants'])
+        self.assertEqual(
+            '/lava-%s',
+            template_dict['constants']['posix']['lava_test_results_dir']
+        )
+        job_ctx = {
+            'lava_test_results_dir': '/sysroot/lava-%s',
+        }
+        rendered = self.render_device_dictionary_file('hi6220-hikey-01.jinja2', job_ctx=job_ctx)
+        template_dict = yaml.load(rendered)
+        self.assertIsNotNone(template_dict['constants'])
+        self.assertIn('posix', template_dict['constants'])
+        self.assertEqual(
+            '/sysroot/lava-%s',
+            template_dict['constants']['posix']['lava_test_results_dir']
+        )

@@ -72,9 +72,9 @@ constants:
 
   # POSIX os (not AOSP)
   posix:
-    lava_test_sh_cmd: '/bin/sh'
-    lava_test_results_dir: '/lava-%s'
-    lava_test_shell_file: '~/.bashrc'
+    lava_test_sh_cmd: {{ lava_test_sh_cmd | default('/bin/sh') }}
+    lava_test_results_dir: {{ lava_test_results_dir | default('/lava-%s') }}
+    lava_test_shell_file: {{ lava_test_shell_file | default('~/.bashrc') }}
 
   # bootloader specific
   u-boot:

@@ -312,9 +312,35 @@ The helpers have two main uses:
 
 * to support communication with LAVA during test jobs.
 
+Some helpers will always be required, for example to locate and start the test
+shell scripts.
+
 Helpers which are too closely tied to any one operating system are likely to
 be deprecated and removed after LAVA V1 is dropped, along with helpers which
 duplicate standard operating system support.
+
+For example, helpers which use distribution-specific utilities to install
+packages or add repositories.
+
+Supporting OS variants
+----------------------
+
+Most test shells can support portable test scripts without changes to the
+defaults.
+
+* ``lava_test_sh_cmd`` specifies the location of the shell interpreter.
+  Default: ``/bin/sh``
+
+* ``lava_test_results_dir`` specifies the location of the LAVA test directory
+  which includes ``lava-test-runner``. If this directory does not exist,
+  the test shell will not start. Default: ``'/lava-%s'``
+
+* ``lava_test_shell_file`` specifies the file to append with any
+  :ref:`dispatcher_environment`. Note: this is not the same as the :ref:`LAVA
+  params support <yaml_parameters>`. Default: ``'~/.bashrc'``
+
+These values can be overridden in the :term:`job context` if the test job
+deploys a non-standard system.
 
 .. _test_writer_scripts:
 
