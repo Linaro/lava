@@ -157,4 +157,4 @@ file, irrespective of whether that file is decompressed later.:
 .. include:: examples/test-jobs/hi6220-hikey.yaml
      :code: yaml
      :start-after: system:
-     :end-before: os: debian
+     :end-before: - boot

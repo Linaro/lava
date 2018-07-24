@@ -34,7 +34,6 @@ actions:
       url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/arm64/3/stretch-arm64-nfs.tar.gz
       sha256sum: be163cf08119f8f1b8cb44fa4bf1b4a6e10873ac92df6872645535751ad92154
       compression: gz
-    os: debian
     timeout:
       minutes: 5
     to: tftp

@@ -24,7 +24,6 @@ actions:
     timeout:
       minutes: 30
     to: lxc
-    os: fedora
 
 - boot:
     prompts:

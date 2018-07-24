@@ -45,7 +45,6 @@ actions:
         image_arg: -initrd {initrd}
         url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/sid/arm64/8/initrd.img-4.9.0-2-arm64
         sha256sum: 4dfdcf9053bea72d7bc1c37f77f43c4447422c68f4ea8b99c6690de2e7f6e3e4
-    os: oe
 
 # BOOT_BLOCK
 - boot:

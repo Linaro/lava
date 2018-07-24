@@ -37,7 +37,6 @@ actions:
     nfsrootfs:
       url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/armhf/3/stretch-armhf-nfs.tar.gz
       compression: gz
-    os: debian
     dtb:
       url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/armhf/3/dtbs/omap4-panda.dtb
 

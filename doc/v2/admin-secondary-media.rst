@@ -338,7 +338,6 @@ method (``to: sata``).
     timeout:
       minutes: 30
     to: sata
-    os: debian
     device: ST500DM002 # needs to be exposed in the device-specific UI
 
 

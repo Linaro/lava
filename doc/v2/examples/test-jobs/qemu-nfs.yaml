@@ -27,7 +27,6 @@ actions:
     timeout:
       minutes: 5
     to: nfs
-    os: debian
     images:
       nfsrootfs:
         image_arg: 'nfsroot={NFS_SERVER_IP}:{nfsrootfs},tcp,hard,intr rw'

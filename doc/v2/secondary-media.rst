@@ -306,7 +306,6 @@ rootfs which provides enough support to complete this second deployment.
         timeout:
           minutes: 10
         to: usb
-        os: debian
         # not a real job, just used for unit tests
         compression: gz
         image:
@@ -360,7 +359,6 @@ below illustrates how to do this:
         timeout:
           minutes: 10
         to: usb
-        os: debian
         # not a real job, just used for illustrative purposes
         compression: gz
         images:

@@ -39,7 +39,6 @@ actions:
     - procps
     - lsb-release
     - util-linux
-    os: debian
 
 - deploy:
     namespace: testdevice
@@ -57,8 +56,6 @@ actions:
     modules:
       url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/modules.tar.gz
       compression: gz
-    # despite this being a Debian initramfs, it is not a complete Debian rootfs, so use oe compatibility
-    os: oe
     dtb:
       url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/dtbs/am335x-bone.dtb
 

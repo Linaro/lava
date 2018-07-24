@@ -56,7 +56,6 @@ actions:
     packages:
     - android-tools-adb
     - android-tools-fastboot
-    os: debian
 
 - boot:
     namespace: tlxc
@@ -94,7 +93,6 @@ actions:
       boot:
         url: http://images.validation.linaro.org/builds.96boards.org/releases/dragonboard410c/linaro/debian/16.06/boot-linaro-jessie-qcom-snapdragon-arm64-20160630-110.img.gz
         compression: gz
-    os: debian
 
 - test:
     namespace: tlxc
@@ -140,7 +138,6 @@ actions:
       rootfs:
         url: lxc:///linaro-jessie-developer-qcom-snapdragon-arm64-20160630-110.img
         apply-overlay: true
-    os: debian
     protocols:
       lava-lxc:
       - action: fastboot-deploy

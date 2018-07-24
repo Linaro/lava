@@ -157,7 +157,6 @@ pipeline for the job.
         seconds: 30
       to: ssh
       connection: ssh
-      os: debian
       protocols:
         lava-multinode:
           - action: prepare-scp-overlay
@@ -359,7 +358,6 @@ https://git.linaro.org/lava-team/refactoring.git/plain/release/bbb-ssh-guest.yam
           nfsrootfs:
             url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/jessie-armhf-nfs.tar.gz
             compression: gz
-          os: debian
           dtb:
             url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/dtbs/am335x-boneblack.dtb
 
@@ -370,7 +368,6 @@ https://git.linaro.org/lava-team/refactoring.git/plain/release/bbb-ssh-guest.yam
           minutes: 2
           to: ssh
           connection: ssh
-          os: debian
           protocols:
             lava-multinode:
             - action: prepare-scp-overlay

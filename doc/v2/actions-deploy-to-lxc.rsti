@@ -25,4 +25,4 @@ packages that should be installed as part of LXC creation.
 .. include:: examples/test-jobs/hi6220-hikey.yaml
      :code: yaml
      :start-after: to: lxc
-     :end-before: os:
+     :end-before: - boot

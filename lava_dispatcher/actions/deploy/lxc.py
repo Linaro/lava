@@ -69,8 +69,6 @@ class Lxc(Deployment):
     def accepts(cls, device, parameters):
         if 'to' not in parameters:
             return False, '"to" is not in deploy parameters'
-        if 'os' not in parameters:
-            return False, '"os" is not in deploy parameters'
         if parameters['to'] != 'lxc':
             return False, '"to" parameter is not "lxc"'
         if 'lxc' in device['actions']['deploy']['methods']:

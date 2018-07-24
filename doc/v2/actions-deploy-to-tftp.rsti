@@ -92,7 +92,7 @@ URLs **must** use one of the supported schemes, the first element of the URL.
 
 .. include:: examples/test-jobs/standard-armmp-ramdisk-bbb.yaml
      :code: yaml
-     :start-after: os: oe
+     :start-after:  so use oe compatibility
      :end-before: # BOOT_BLOCK
 
 .. topic:: Supported schema
@@ -258,7 +258,7 @@ nfsrootfs
 .. include:: examples/test-jobs/standard-armmp-nfs-bbb.yaml
      :code: yaml
      :start-after: to: tftp
-     :end-before: os: debian
+     :end-before: - boot:
 
 .. _deploy_to_tftp_nfsrootfs_url:
 
@@ -478,5 +478,5 @@ file, irrespective of whether that file is decompressed later.:
 .. include:: examples/test-jobs/qemu-amd64-standard-stretch.yaml
      :code: yaml
      :start-after: rootfs:
-     :end-before: os: debian
+     :end-before: - boot
 

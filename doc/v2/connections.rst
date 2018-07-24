@@ -132,8 +132,8 @@ blocks:
 .. literalinclude:: examples/test-jobs/namespace-connections-example1.yaml
      :language: yaml
      :linenos:
-     :lines: 31-95
-     :emphasize-lines: 3, 15, 36, 45, 57
+     :lines: 31-92
+     :emphasize-lines: 3, 15, 36, 42, 54
 
 
 Download or view the complete example:
@@ -506,7 +506,7 @@ Finally, we start our tests.
 .. literalinclude:: examples/test-jobs/bbb-2serial.yaml
      :language: yaml
      :linenos:
-     :lines: 71-82
+     :lines: 71-81
      :emphasize-lines: 3,5
 
 Download or view the complete example:
@@ -645,7 +645,7 @@ This is where it all comes together.
 .. literalinclude:: examples/test-jobs/multiple-serial-ports-lxc.yaml
      :language: yaml
      :linenos:
-     :lines: 105-115
+     :lines: 105-113
      :emphasize-lines: 3-4
 
 Download or view the complete example:

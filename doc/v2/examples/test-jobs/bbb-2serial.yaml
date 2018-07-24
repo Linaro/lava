@@ -38,7 +38,6 @@ actions:
     nfsrootfs:
       url: http://people.linaro.org/~steve.mcintyre/lava/images/stretch-armhf-multi-serial/stretch-armhf-nfs-extra-getty.tar.gz
       compression: gz
-    os: debian
     dtb:
       url: http://people.linaro.org/~steve.mcintyre/lava/images/stretch-armhf-multi-serial/dtbs/am335x-boneblack.dtb
 

@@ -103,8 +103,8 @@ about the environment in each namespace.
 .. literalinclude:: examples/test-jobs/hikey-oe.yaml
      :language: yaml
      :linenos:
-     :lines: 26-108
-     :emphasize-lines: 3, 12, 24, 47, 66, 76
+     :lines: 26-106
+     :emphasize-lines: 3, 12, 24, 46, 64, 74
 
 .. note:: The two test shells are *almost* identical but remember that all the
    results of this one test job will be reported together. The name of each

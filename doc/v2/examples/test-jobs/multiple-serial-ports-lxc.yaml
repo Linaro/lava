@@ -33,7 +33,6 @@ actions:
     to: lxc
     packages:
     - fastboot
-    os: debian
 
 - boot:
     namespace: tlxc
@@ -62,7 +61,6 @@ actions:
         compression: gz
         apply-overlay: true
         # ensure that this job raises a network interface with DHCP before relying on internet access
-    os: oe
     protocols:
       lava-lxc:
       - action: fastboot-deploy

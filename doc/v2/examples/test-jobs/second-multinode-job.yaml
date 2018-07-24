@@ -54,7 +54,6 @@ actions:
     nfsrootfs:
       url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/jessie-armhf-nfs.tar.gz
       compression: gz
-    os: debian
     dtb:
       url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/dtbs/sun7i-a20-cubietruck.dtb
 
@@ -78,7 +77,6 @@ actions:
     nfsrootfs:
       url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/jessie-armhf-nfs.tar.gz
       compression: gz
-    os: debian
     dtb:
       url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/dtbs/am335x-boneblack.dtb
 # END-DEPLOY-BLOCK

@@ -498,7 +498,7 @@ of the boot action.
 
 .. include:: examples/test-jobs/mustang-admin-example-job.yaml
    :code: yaml
-   :start-after: os: debian
+   :start-after:         url: http://images-internal/mustang/mustang.dtb_1.11
    :end-before: - test
 
 Test

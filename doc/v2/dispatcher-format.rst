@@ -73,7 +73,6 @@ as an indented block of lines **without** a preceding hyphen.
           minutes: 20
         to: tmpfs
         image: https://images.validation.linaro.org/kvm/standard/stretch-2.img.gz
-        os: debian
 
 This stanza describes a deployment strategy where the timeout for the entire
 deployment action is 20 minutes, the deployment happens to ``tmpfs`` (it is up
@@ -115,7 +114,6 @@ Sample JOB definition for a KVM
           minutes: 20
         to: tmpfs
         image: https://images.validation.linaro.org/kvm/standard/stretch-2.img.gz
-        os: debian
         # if root_partition partition is not present:
         # - look for a partitions labelled "root" or "ROOT" or "Root" (i.e. case insensitive)
         # - look into device configuration
@@ -520,7 +518,6 @@ Supported methods
           minutes: 20
         to: tmpfs
         image: https://images.validation.linaro.org/kvm/standard/stretch-2.img.gz
-        os: debian
         # if root_partition partition is not present:
         # - look for a partitions labelled "root" or "ROOT" or "Root" (i.e. case insensitive)
         # - look into device configuration

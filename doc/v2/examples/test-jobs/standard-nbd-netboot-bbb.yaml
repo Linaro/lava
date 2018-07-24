@@ -33,7 +33,6 @@ actions:
     nbdroot:
       url: http://fix.me/rootfs.ext4.xz
       compression: xz
-    os: debian
     dtb:
       url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/dtbs/am335x-boneblack.dtb
 

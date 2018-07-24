@@ -54,7 +54,6 @@ actions:
     ramdisk:
       url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/arm64/3/initrd.img-4.9.0-2-arm64
       compression: gz
-    os: debian
     timeout:
       minutes: 12
     to: tftp
@@ -64,7 +63,6 @@ actions:
     role:
     - guest
     connection: ssh
-    os: debian
     protocols:
       lava-multinode:
       - action: prepare-scp-overlay

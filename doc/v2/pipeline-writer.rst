@@ -236,7 +236,6 @@ that device can use NFS - in this case, using tftp.
       nfsrootfs:
         url: https://images.validation.linaro.org/pipeline/debian-jessie-rootfs.tar.gz
         compression: gz
-      os: debian
       dtb:
         url: https://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
 
@@ -262,7 +261,6 @@ provide a ramdisk instead of an nfsrootfs:
        url: https://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot
        compression: gz
        add-header: u-boot
-     os: oe
      dtb:
        url: https://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
 

@@ -71,7 +71,7 @@ URLs **must** use one of the supported schemes, the first element of the URL.
 
 .. include:: examples/test-jobs/standard-nbd-netboot-bbb.yaml
      :code: yaml
-     :start-after: os: debian
+     :start-after:       compression: xz
      :end-before: - boot
 
 .. topic:: Supported schema
@@ -119,7 +119,7 @@ nbdroot
 .. include:: examples/test-jobs/standard-nbd-netboot-bbb.yaml
      :code: yaml
      :start-after: allow_modify: false
-     :end-before: os: debian
+     :end-before:       compression: xz
 
 .. _deploy_to_nbd_nbdroot_url:
 

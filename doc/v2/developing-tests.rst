@@ -137,7 +137,6 @@ Deploying a pre-built QEMU image
               image_arg: -drive format=raw,file={rootfs}
               url: https://images.validation.linaro.org/kvm/standard/stretch-2.img.gz
               compression: gz
-        os: debian
 
 .. index:: device tag example
 

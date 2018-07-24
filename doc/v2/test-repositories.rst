@@ -259,7 +259,7 @@ support and which continue to use ``stdout``.
 .. literalinclude:: examples/test-jobs/qemu-kmsg-events.yaml
      :language: yaml
      :linenos:
-     :lines: 47-57
+     :lines: 47-56
      :emphasize-lines: 4
 
 By specifying ``lava-signal: kmsg`` for the first test shell definition

@@ -61,7 +61,6 @@ actions:
     - procps
     - lsb-release
     - util-linux
-    os: debian
 
 - boot:
     role:
@@ -98,7 +97,6 @@ actions:
     nfsrootfs:
       url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/jessie-armhf-nfs.tar.gz
       compression: gz
-    os: debian
     dtb:
       url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/dtbs/am335x-boneblack.dtb
 
@@ -110,7 +108,6 @@ actions:
       seconds: 30
     to: ssh
     connection: ssh
-    os: debian
     protocols:
       lava-multinode:
       - action: prepare-scp-overlay

@@ -28,7 +28,6 @@ actions:
         compression: gz
       dtb:
         url: http://images-internal/mustang/mustang.dtb_1.11
-      os: debian
 - boot:
     prompts:
       - 'root@linaro-nano:'
