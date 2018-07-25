@@ -2,7 +2,7 @@ PyYAML
 dateutil
 django-auth-ldap>=1.2.12
 django-restricted-resource>=2016.8
-django-tables2>=1.2
+django-tables2>=1.14.2
 django>=1.10
 docutils>=0.6
 jinja2
