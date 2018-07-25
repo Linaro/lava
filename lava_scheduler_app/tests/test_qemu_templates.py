@@ -121,7 +121,7 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
         rendered = test_template.render()
         template_dict = yaml.load(rendered)
         self.assertEqual({'docker': None}, template_dict['actions']['deploy']['methods'])
-        self.assertEqual({'docker': {'options': {'cpus': 0.0, 'memory': 0, 'volumes': []}}},
+        self.assertEqual({'docker': {'options': {'cpus': 0.0, 'memory': 0, 'devices': [], 'volumes': []}}},
                          template_dict['actions']['boot']['methods'])
 
         data = """{% extends 'docker.jinja2' %}
@@ -134,5 +134,20 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
         template_dict = yaml.load(rendered)
         self.assertEqual({'docker': None}, template_dict['actions']['deploy']['methods'])
         self.assertEqual({'docker': {'options': {'cpus': 2.1, 'memory': "120M",
+                                                 'devices': [],
                                                  'volumes': ["/home", "/tmp"]}}},
+                         template_dict['actions']['boot']['methods'])
+
+        data = """{% extends 'docker.jinja2' %}
+{% set docker_cpus=2.1 %}
+{% set docker_memory="120M" %}
+{% set docker_devices=["/dev/kvm"] %}"""
+        self.assertTrue(self.validate_data('docker-01', data))
+        test_template = prepare_jinja_template('docker-01', data)
+        rendered = test_template.render()
+        template_dict = yaml.load(rendered)
+        self.assertEqual({'docker': None}, template_dict['actions']['deploy']['methods'])
+        self.assertEqual({'docker': {'options': {'cpus': 2.1, 'memory': "120M",
+                                                 'devices': ["/dev/kvm"],
+                                                 'volumes': []}}},
                          template_dict['actions']['boot']['methods'])
