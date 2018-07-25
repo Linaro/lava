@@ -8,6 +8,7 @@ usb_product_id: '0204'
 actions:
   deploy:
     methods:
+      lxc:
       image:
         parameters:
 
@@ -16,6 +17,7 @@ actions:
       serial:
       ssh:
     methods:
+      lxc:
       pyocd:
         parameters:
           command:

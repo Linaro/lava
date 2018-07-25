@@ -250,3 +250,12 @@ class TestLxcWithDevices(StdoutTestCase):
         job = self.factory.create_adb_nuc_job('sample_jobs/adb-nuc.yaml')
         description_ref = self.pipeline_reference('adb-nuc.yaml', job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
+
+    def test_iot_lxc(self):
+        self.factory = Factory()
+        job = self.factory.create_job('frdm-k64f-01.jinja2', 'sample_jobs/frdm-k64f-lxc.yaml')
+        job.validate()
+        self.assertIsNotNone([action for action in job.pipeline.actions if action.name == 'lxc-deploy'])
+        self.assertIsNotNone([action for action in job.pipeline.actions if action.name == 'lxc-boot'])
+        description_ref = self.pipeline_reference('frdm-k64f-lxc.yaml', job=job)
+        self.assertEqual(description_ref, job.pipeline.describe(False))
