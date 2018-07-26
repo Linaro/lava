@@ -123,6 +123,8 @@ class FlashCMSISAction(Action):
             self.filelist.extend([action_arg])
 
     def run(self, connection, max_end_time):
+        connection = self.get_namespace_data(
+            action='shared', label='shared', key='connection', deepcopy=False)
         connection = super().run(connection, max_end_time)
         dstdir = mkdtemp()
         mount_command = "mount -t vfat %s %s" % (self.usb_mass_device, dstdir)

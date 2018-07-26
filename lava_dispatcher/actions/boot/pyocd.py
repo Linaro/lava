@@ -124,6 +124,8 @@ class FlashPyOCDAction(Action):
             self.errors = "No PyOCD command to execute"
 
     def run(self, connection, max_end_time):
+        connection = self.get_namespace_data(
+            action='shared', label='shared', key='connection', deepcopy=False)
         connection = super().run(connection, max_end_time)
         for pyocd_command in self.exec_list:
             pyocd = ' '.join(pyocd_command)

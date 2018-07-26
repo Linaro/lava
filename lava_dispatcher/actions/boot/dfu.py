@@ -139,6 +139,8 @@ class FlashDFUAction(Action):
             self.errors = "No DFU command to execute"
 
     def run(self, connection, max_end_time):
+        connection = self.get_namespace_data(
+            action='shared', label='shared', key='connection', deepcopy=False)
         connection = super().run(connection, max_end_time)
         count = 1
         for dfu_command in self.exec_list:
