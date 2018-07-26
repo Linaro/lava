@@ -69,36 +69,51 @@ Developer package build
    :ref:`development_pre_requisites`
 
 .. note:: The supported suite for LAVA development is now Stretch. The
-   developer package build now defaults to expecting Stretch and therefore uses
-   Python3 exclusively. Support for building Python2 has been removed, the
-   ``master`` branch only builds Python3. See
+   developer package build now defaults to expecting Stretch and
+   therefore uses Python3 exclusively. Support for building Python2 has
+   been removed, the ``master`` branch only builds Python3. See
    https://lists.linaro.org/pipermail/lava-announce/2018-January/000046.html
 
-The ``lava-dev`` package includes a helper script which is also present in the
-source code in ``lava-server/share/``. The script requires a normal Debian
-package build environment (i.e. ``dpkg-dev``) as well as the build-dependencies
-of the package itself. The helper checks for package dependencies using
-``dpkg-checkbuilddeps`` which halts upon failure with a message showing which
-packages need to be installed.
+The ``lava-dev`` package includes a helper script which is also present
+in the source code in ``lava-server/share/``. The script requires a
+normal Debian package build environment (i.e. ``dpkg-dev``) as well as
+the build-dependencies of the package itself. The helper checks for
+package dependencies using ``dpkg-checkbuilddeps`` which halts upon
+failure with a message showing which packages need to be installed.
 
-The helper needs to know the name of the package to build and to be started
-from the directory containing the code for that package::
+The helper needs to know the name of the package to build and to be
+started from the directory containing the code for that package::
 
  $ /usr/share/lava-server/debian-dev-build.sh -p lava
 
-The packages will be built in a temporary directory using a version string
-based on the current git tag and the time of the build. The helper outputs the
-location of all the built packages at the end of a successful build, ready for
-use with ``$ sudo dpkg -i``.
+The packages will be built in a temporary directory using a version
+string based on the current git tag and the time of the build. The
+helper outputs the location of all the built packages at the end of a
+successful build, ready for use with ``$ sudo dpkg -i
+<path_to_dot_deb_file>``, repeated for every file or ``$ sudo debi -u
+<path_to_lava_dot_changes_file>`` which will upgrade matching packages
+which are already installed but skip ones which are not installed.
+e.g.:
 
-.. note:: the helper does **not** install the packages for you, neither do the
-   packages restart apache, although the ``lava-server`` service will be
-   restarted each time ``lava-server`` is installed or updated.
+.. code-block:: none
+
+ $ sudo dpkg -i /tmp/tmp.DCraOEYiPJ/lava-common_2018.7-15-g64824c402-1_all.deb
+ $ sudo dpkg -i /tmp/tmp.DCraOEYiPJ/lava-dispatcher_2018.7-15-g64824c402-1_amd64.deb
+ ...
+
+or all in one command:
+
+.. code-block:: none
+
+ $ sudo debi -u /tmp/tmp.DCraOEYiPJ/lava_2018.7-15-g64824c402-1_amd64.changes
 
 To install any package, including the developer build packages, the
 corresponding package **must** already be installed at the current production
 release version (or better), on the same machine. This ensures that all of the
 runtime dependencies already exist on the system.
+
+Use the ``-o`` option to set a build directory instead of the temporary
+directory default.
 
 .. _devel_branches:
 
@@ -131,26 +146,17 @@ Local version strings
 The local version is built (using ``./version.py``) from these components:
 
 * package name
-* latest git tag name::
+* ``git describe``
 
-   $ git tag --sort -v:refname|head -n1
-   2015.12
+   $ git describe
+   2018.7+15.g64824c402
 
-* incremental revision list count::
+The latest git hash is a reference to the latest commit. If you have
+not committed local changes (e.g. you are on a local branch based on a
+tag) then the short hash can be used to lookup the commit in the master
+branch, omitting the ``g`` prefix, e.g.::
 
-   $ git rev-list --count HEAD
-   5451
-
-* latest git hash::
-
-   $ git rev-parse --short HEAD
-   f9304da
-
-The latest git hash is a reference to the latest commit. If you have not
-committed local changes (e.g. you are on a local branch based on a tag) then
-the short hash can be used to lookup the commit in the master branch, e.g.::
-
-  https://git.linaro.org/lava/lava.git/commit?id=f9304da
+  https://git.linaro.org/lava/lava.git/commit?id=64824c402
 
 .. _distribution_differences:
 
@@ -176,34 +182,35 @@ The helper supports ``lava``::
  $ cd lava
  $ /usr/share/lava-server/debian-dev-build.sh -p lava
 
-``lava-dispatcher`` has architecture-dependent dependencies. By default, the
-package is built for the native architecture and can only be installed on that
-architecture. To build for a different architecture, e.g. armhf, use::
+``lava-dispatcher`` has architecture-dependent dependencies. By
+default, the package is built for the native architecture and can only
+be installed on that architecture. To build for a different
+architecture, e.g. armhf, use::
 
  $ /usr/share/lava-server/debian-dev-build.sh -p lava -a armhf
 
-This does a *binary build*, so the source is not included, which allows these
-builds to be included in a local repository, e.g. using ``reprepro``.
+This does a *binary build*, so the source is not included, which allows
+these builds to be included in a local repository, e.g. using
+``reprepro``.
 
-Helpers for other distributions may be added in due course. Patches welcome.
+Helpers for other distributions may be added in due course. Patches
+welcome.
 
 .. _developer_build_version:
 
 Developer build versions
 ========================
 
-LAVA uses git tags and the developer build adds a suffix to the tag for each
-local build - the suffix is formed from the ``git rev-list --count`` (to get a
-sequential, unique, identifier) and the ``git rev-parse --short`` hash to
-identify the latest git commit in the branch upon which this build is based.
-The git short hash can be looked up on the ``git.linaro.org`` site,
-irrespective of which release tag is the current. For example, build version
-``2015.07.5333.1521ddb-1`` relates directly to
-``https://git.linaro.org/lava/lava.git/commit?id=1521ddb``
+LAVA uses git tags and the developer build adds a suffix to the tag for
+each local build - the suffix is formed from the output of ``git
+describe``
 
-From August 2015, LAVA uses git tags without a leading zero on the month
-number, in accordance with PEP440, so the git tag will be ``2015.8`` instead of
-``2015.07`` used for the previous release tag.
+.. seealso:: :ref:`local_version_strings` for information on how to
+   look up the commit information from the version string.
+
+From August 2015, LAVA uses git tags without a leading zero on the
+month number, in accordance with PEP440, so the git tag will be
+``2015.8`` instead of ``2015.07`` used for the previous release tag.
 
 .. index:: developer: python3
 

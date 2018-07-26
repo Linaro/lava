@@ -29,6 +29,14 @@ while getopts ":p:a:b:o:" opt; do
       ;;
     \?)
       echo "Invalid option: -$OPTARG" >&2
+      echo
+      echo "Usage: -p <package> [-a <architecture> -b <branch> -o <directory>]"
+      echo
+      echo "Builds a sourceful package locally, using debuild."
+      echo "If architecture is a known Debian architecture, build"
+      echo "a binary-only package for this architecture. e.g. armhf or arm64"
+      echo "Branch specifies the packaging branch to use from github."
+      echo "Specify the build directory using -o (a temporary directory"
       exit 1
       ;;
   esac
@@ -36,19 +44,13 @@ done
 
 if [ -z "$NAME" ]; then
 
-    echo "Usage: -p <package> [-a <architecture> -b <branch>]"
-    echo "Builds a sourceful package locally, using debuild."
-    echo "If architecture is a known Debian architecture, build"
-    echo "a binary-only package for this architecture. e.g. armhf or arm64"
-    echo "Branch specifies the packaging branch to use from github."
-    echo "By default, the packaging branch supports Python2 and Python3."
-    echo "If building on Jessie, use the backports branch."
+    echo "Please specify the package name to build."
     exit 1
 fi
 if [ -x ./version.py ]; then
   VERSION=`python3 ./version.py`
 else
-  VERSION=`python3 setup.py --version`
+  exit 1
 fi
 if [ -d './dist/' ]; then
     rm -f ./dist/*
@@ -56,11 +58,6 @@ fi
 python3 setup.py sdist
 if [ -d .git ]; then
   LOG=`git log -n1 --pretty=format:"Last change %h by %an, %ar. %s%n" --no-merges`
-fi
-if [ ! -e ./dist/${NAME}-${VERSION}.tar.gz ]; then
-	# setuptools/pkg-resources in jessie silently converts + to -
-	# setuptools/pkg-resource in unstable requires + and disallows -
-	VERSION=`echo ${VERSION}| sed -e 's/\([0-9]\)+/\1-/'`
 fi
 
 if [ -z "$DIR" ]; then
@@ -70,9 +67,6 @@ else
 fi
 if [ -f "./dist/${NAME}-${VERSION}.tar.gz" ]; then
   mv -v ./dist/${NAME}-${VERSION}.tar.gz ${DIR}/${NAME}_${VERSION}.orig.tar.gz
-else
-  echo "WARNING: broken setuptools tarball - Debian bug #786977"
-  mv -v ./dist/${NAME}*.tar.gz ${DIR}/${NAME}_${VERSION}.orig.tar.gz
 fi
 cd ${DIR}
 git clone https://github.com/Linaro/pkg-${NAME}.git
