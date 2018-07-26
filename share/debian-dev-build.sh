@@ -5,7 +5,7 @@ set -e
 BRANCH=master
 ARCH=''
 
-while getopts ":p:a:b:" opt; do
+while getopts ":p:a:b:o:" opt; do
   case $opt in
     p)
       NAME=$OPTARG
@@ -23,6 +23,9 @@ while getopts ":p:a:b:" opt; do
       ;;
     b)
       BRANCH=$OPTARG
+      ;;
+    o)
+      DIR=`readlink -f $OPTARG`
       ;;
     \?)
       echo "Invalid option: -$OPTARG" >&2
@@ -59,7 +62,12 @@ if [ ! -e ./dist/${NAME}-${VERSION}.tar.gz ]; then
 	# setuptools/pkg-resource in unstable requires + and disallows -
 	VERSION=`echo ${VERSION}| sed -e 's/\([0-9]\)+/\1-/'`
 fi
-DIR=`mktemp -d`
+
+if [ -z "$DIR" ]; then
+  DIR=`mktemp -d`
+else
+  mkdir -p $DIR
+fi
 if [ -f "./dist/${NAME}-${VERSION}.tar.gz" ]; then
   mv -v ./dist/${NAME}-${VERSION}.tar.gz ${DIR}/${NAME}_${VERSION}.orig.tar.gz
 else
