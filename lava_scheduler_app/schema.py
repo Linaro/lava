@@ -110,7 +110,7 @@ def _job_boot_schema():
         Optional('timeout'): _timeout_schema(),
         Optional('auto_login'): _auto_login_schema(),
         Optional('parameters'): _simple_params(),
-        Optional('commands'): list,
+        Optional('commands'): Any(str, list),
     }, extra=True)
 
 
