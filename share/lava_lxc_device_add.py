@@ -32,6 +32,7 @@ import logging
 import subprocess
 import sys
 import time
+import syslog
 
 from lava_dispatcher.log import YAMLLogger
 
@@ -51,14 +52,17 @@ def setup_logger(options):
     if options.logging_url is not None:
         if options.master_cert and options.slave_cert:
             if not os.path.exists(options.master_cert) or not os.path.exists(options.slave_cert):
+                syslog.syslog("[%s] Unable to find certificates for %s" % (options.job_id, options.logging_url))
                 return None
         # pylint: disable=no-member
-        logger.addZMQHandler(options.logging_url,
-                             options.master_cert,
-                             options.slave_cert,
-                             options.job_id,
-                             options.ipv6)
+        handler = logger.addZMQHandler(
+            options.logging_url,
+            options.master_cert,
+            options.slave_cert,
+            options.job_id,
+            options.ipv6)
     else:
+        syslog.syslog("[%s] Logging to streamhandler" % options.job_id)
         logger.addHandler(logging.StreamHandler())
 
     return logger
@@ -92,15 +96,17 @@ def main():
     # Setup the logger
     logger = setup_logger(options)
     if not logger:
-        print("Unable to setup the logger")
+        syslog.syslog("[%s] Unable to setup the logger, exiting." % (options.job_id))
         return 1
 
     start = time.gmtime()
     uniq_str = "udev_trigger-%s-%02d:%02d:%02d" % (lxc_name, start.tm_hour, start.tm_min, start.tm_sec)
 
     device = "/dev/%s" % options.device_node
+
     if not os.path.exists(device):
         logger.debug("Skipping node not in /dev/ : %s" % options.device_node)
+        syslog.syslog("[%s] Skipping node not in /dev/ : %s" % (options.job_id, options.device_node))
         return 0
 
     lxc_cmd = ['lxc-device', '-n', lxc_name, 'add', device]
@@ -109,12 +115,16 @@ def main():
         output = output.decode("utf-8", errors="replace")
         logger.debug(output)
         logger.info("[%s] device %s added", uniq_str, device)
+        syslog.syslog("[%s] device %s added" % (uniq_str, device))
     except subprocess.CalledProcessError as exc:
-        logger.error("[%s] failed to add device %s: '%s'",
-                     uniq_str, device, exc)
+        msg = "[%s] failed to add device %s: '%s'" % (uniq_str, device, exc)
+        logger.error(msg)
+        syslog.syslog(msg)
+        syslog.syslog("[%s] Tried: %s" % (options.job_id, " ".join(lxc_cmd)))
         logger.close(linger=LINGER)  # pylint: disable=no-member
         return 2
     except Exception:
+        syslog.syslog("[%s] uncaught exception: %s" % (options.job_id, exc))
         logger.close(linger=LINGER)  # pylint: disable=no-member
         return 3
 
