@@ -107,16 +107,23 @@ class LxcProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
                 command = action.job.device.pre_os_command
                 if not command:
                     raise JobError("No pre OS command is defined for this device.")
-                if not action.run_command(command.split(' '), allow_silent=True):
-                    raise InfrastructureError("%s failed" % command)
+                if not isinstance(command, list):
+                    command = [command]
+                for cmd in command:
+                    if not self.run_command(cmd.split(' '), allow_silent=True):
+                        raise InfrastructureError("%s failed" % cmd)
                 continue
             elif 'pre-power-command' in item['request']:
                 action.logger.info("[%s] Running pre-power-command via protocol.", self.name)
                 command = action.job.device.pre_power_command
                 if not command:
                     raise JobError("No pre power command is defined for this device.")
-                if not action.run_command(command.split(' '), allow_silent=True):
-                    raise InfrastructureError("%s failed" % command)
+
+                if not isinstance(command, list):
+                    command = [command]
+                for cmd in command:
+                    if not self.run_command(cmd.split(' '), allow_silent=True):
+                        raise InfrastructureError("%s failed" % cmd)
                 continue
             else:
                 raise JobError("[%s] Unrecognised protocol request: %s" % (self.name, item))
