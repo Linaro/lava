@@ -146,7 +146,7 @@ Local version strings
 The local version is built (using ``./version.py``) from these components:
 
 * package name
-* ``git describe``
+* ``git describe``::
 
    $ git describe
    2018.7+15.g64824c402
