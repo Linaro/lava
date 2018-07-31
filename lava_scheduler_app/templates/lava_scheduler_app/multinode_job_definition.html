@@ -55,6 +55,11 @@
         {% if show_resubmit %}
           <li><a href="{% url 'lava.scheduler.job.resubmit' job.pk %}" class="btn btn-default">Resubmit</a></li>
         {% endif %}
+      {% if show_cancel %}
+      <li><a class="btn btn-warning" id="cancel" href="{% url 'lava.scheduler.job.cancel' job.sub_id %}">Cancel</a></li>
+      {% elif show_fail %}
+      <li><a class="btn btn-danger" id="fail" title="This should not be used if lava-run is still running" href="{% url 'lava.scheduler.job.fail' job.sub_id %}">Fail</a></li>
+      {% endif %}
         </ul>
       </div>
       <div class="col-md-6">

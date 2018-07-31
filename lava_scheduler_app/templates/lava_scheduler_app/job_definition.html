@@ -57,6 +57,15 @@
         {% if show_resubmit and not job.is_multinode %}
           <li><a href="{% url 'lava.scheduler.job.resubmit' job.pk %}" class="btn btn-default">Resubmit</a></li>
         {% endif %}
+      {% if show_cancel %}
+      <li><a class="btn btn-warning" id="cancel" href="{% url 'lava.scheduler.job.cancel' job.pk %}">Cancel</a></li>
+      {% elif show_fail %}
+      <li><a class="btn btn-danger" id="fail" title="This should not be used if lava-run is still running" href="{% url 'lava.scheduler.job.fail' job.pk %}">Fail</a></li>
+      {% endif %}
+        </ul>
+      </div>
+      <div class="col-md-6">
+        <ul class="nav nav-pills nav-stacked">
         {% if user.is_authenticated %}
         <li><a href="{% url 'lava.scheduler.job.toggle_favorite' job.pk %}"  class="btn btn-info">
             {% if is_favorite %}

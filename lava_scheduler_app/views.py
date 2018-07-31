@@ -1240,6 +1240,7 @@ def job_definition(request, pk):
             'pipeline': description.get('pipeline', []),
             'job_file_present': bool(log_file),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(job_definition, pk=pk),
+            'show_cancel': job.can_cancel(request.user),
             'show_resubmit': job.can_resubmit(request.user),
         },
         request=request))
