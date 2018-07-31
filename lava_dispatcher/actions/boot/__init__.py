@@ -520,7 +520,8 @@ class BootloaderSecondaryMedia(Action):
         if 'media' not in self.job.device.get('parameters', []):
             return
         media_keys = self.job.device['parameters']['media'].keys()
-        if self.parameters['commands'] not in media_keys:
+        commands = self.parameters['commands']
+        if isinstance(commands, list) or commands not in media_keys:
             return
         if 'kernel' not in self.parameters:
             self.errors = "Missing kernel location"
