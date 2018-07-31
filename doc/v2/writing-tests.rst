@@ -340,7 +340,8 @@ defaults.
   params support <yaml_parameters>`. Default: ``'~/.bashrc'``
 
 These values can be overridden in the :term:`job context` if the test job
-deploys a non-standard system.
+deploys a non-standard system as long as none of the deployments specify the
+``os``.
 
 .. _test_writer_scripts:
 

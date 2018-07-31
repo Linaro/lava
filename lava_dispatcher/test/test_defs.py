@@ -203,6 +203,12 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
         self.assertCountEqual(check_list, script_list)
         self.assertEqual(overlay.xmod, stat.S_IRWXU | stat.S_IXGRP | stat.S_IRGRP | stat.S_IXOTH | stat.S_IROTH)
 
+    def test_overlay_override(self):
+        job = self.factory.create_job('qemu01.jinja2', 'sample_jobs/kvm-context.yaml')
+        deploy = [action for action in job.pipeline.actions if action.name == 'deployimages'][0]
+        overlay = [action for action in deploy.internal_pipeline.actions if action.name == 'lava-overlay'][0]
+        self.assertEqual('/sysroot/lava-%s', overlay.get_constant('lava_test_results_dir', 'posix'))
+
 
 class TestDefinitionSimple(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
