@@ -2310,9 +2310,13 @@ class NotificationCallback(models.Model):
                 token=self.token, output=output, results=results)
             # store callback_data for later retrieval & triage
             job_data_file = os.path.join(self.notification.test_job.output_dir, 'job_data.gz')
-            if callback_data and not os.path.exists(job_data_file):
-                with gzip.open(job_data_file, 'wb') as output:
-                    output.write(simplejson.dumps(callback_data).encode('utf-8'))
+            if callback_data:
+                # allow for jobs cancelled in submitted state
+                utils.mkdir(self.notification.test_job.output_dir)
+                # only write the file once
+                if not os.path.exists(job_data_file):
+                    with gzip.open(job_data_file, 'wb') as output:
+                        output.write(simplejson.dumps(callback_data).encode('utf-8'))
         headers = {}
 
         if callback_data:
