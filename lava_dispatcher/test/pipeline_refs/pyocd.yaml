@@ -11,8 +11,8 @@
   - class: actions.boot.pyocd.BootPyOCDRetry
     name: boot-pyocd-image
     pipeline:
-    - {class: connections.serial.ConnectDevice, name: connect-device}
     - {class: actions.boot.pyocd.FlashPyOCDAction, name: flash-pyocd}
+    - {class: connections.serial.ConnectDevice, name: connect-device}
 - class: actions.test.monitor.TestMonitorRetry
   name: lava-test-monitor-retry
   pipeline:

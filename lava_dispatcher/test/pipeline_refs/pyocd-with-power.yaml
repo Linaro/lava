@@ -16,8 +16,8 @@
       pipeline:
       - {class: power.PDUReboot, name: pdu-reboot}
     - {class: utils.udev.WaitDeviceBoardID, name: wait-device-boardid}
-    - {class: connections.serial.ConnectDevice, name: connect-device}
     - {class: actions.boot.pyocd.FlashPyOCDAction, name: flash-pyocd}
+    - {class: connections.serial.ConnectDevice, name: connect-device}
 - class: actions.test.monitor.TestMonitorRetry
   name: lava-test-monitor-retry
   pipeline:
