@@ -78,8 +78,8 @@ class BootPyOCDRetry(RetryAction):
         if self.job.device.hard_reset_command:
             self.internal_pipeline.add_action(ResetDevice())
             self.internal_pipeline.add_action(WaitDeviceBoardID(self.job.device.get('board_id')))
-        self.internal_pipeline.add_action(FlashPyOCDAction())
         self.internal_pipeline.add_action(ConnectDevice())
+        self.internal_pipeline.add_action(FlashPyOCDAction())
 
 
 class FlashPyOCDAction(Action):
