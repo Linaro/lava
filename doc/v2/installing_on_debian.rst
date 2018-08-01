@@ -18,7 +18,7 @@ These instructions cover installation on Debian. The supported versions are:
 +---------------+------------------------+--------+----------------------+
 | Debian        | Buster (testing)       | n/a    | Yes [#f4]_           |
 +---------------+------------------------+--------+----------------------+
-| Debian        | Stretch (stable)       | 9.0    | Yes [#f2]_           |
+| Debian        | Stretch (stable)       | 9.*    | Yes [#f2]_           |
 +---------------+------------------------+--------+----------------------+
 | Debian        | Jessie (oldstable)     | 8.0    | **No** [#f3]_        |
 +---------------+------------------------+--------+----------------------+
@@ -55,7 +55,9 @@ that point will include that codename in the table.
          stretch-backports. LAVA packages and dependencies which are
          installed using stretch-backports are **fully supported** by
          upstream and are the same codebase as the relevant production
-         release available from the :ref:`lava_repositories`.
+         release available from the :ref:`lava_repositories`. Stretch
+         continues to receive point releases and LAVA remains supported
+         for each point release of Debian.
 
 .. [#f3] Jessie was released on April 25th, 2015 and security support
          for Jessie is expected to terminate in June 2018. LAVA
