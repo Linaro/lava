@@ -4,6 +4,7 @@
 	compress
 	delaycompress
 	missingok
+	su lavaserver lavaserver
 	notifempty
-	create 644 lavaserver lavaserver
+	create 644 lavaserver adm
 }

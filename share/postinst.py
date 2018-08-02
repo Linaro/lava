@@ -223,9 +223,16 @@ def configure():
         logfile.write('')
     shutil.chown(LAVA_LOGS, user=config.LAVA_SYS_USER, group='adm')
     for file in glob.glob("%s/*" % LAVA_LOGS):
+        if 'lava-scheduler.log' in file:
+            # skip changes to old logs.
+            continue
         shutil.chown(file, user=config.LAVA_SYS_USER, group='adm')
         # allow users in the adm group to run lava-server commands
         os.chmod(file, 0o0664)
+
+    # tidy up old logrotate config to allow logrotate cron to complete.
+    if os.path.exists('/etc/logrotate.d/lava-scheduler-log'):
+        os.unlink('/etc/logrotate.d/lava-scheduler-log')
 
     # Allow lava user to write the secret key
     with open(SECRET_KEY, 'w+') as key:
