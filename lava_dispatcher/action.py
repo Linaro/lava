@@ -488,8 +488,8 @@ class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-p
                 errors.append(exc.output.strip().decode('utf-8', errors="replace"))
             else:
                 errors.append(str(exc))
-            msg = '[%s] command %s\nmessage %s\noutput %s\n' % (
-                self.name, [i.strip() for i in exc.cmd], str(exc), str(exc).split('\n'))
+            msg = 'action: %s\ncommand: %s\nmessage: %s\noutput: %s\n' % (
+                self.name, [i.strip() for i in exc.cmd], str(exc), "\n".join(errors))
 
             # the exception is raised due to a non-zero exc.returncode
             if allow_fail:
