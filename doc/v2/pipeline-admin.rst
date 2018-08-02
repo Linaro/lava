@@ -259,6 +259,17 @@ Current support includes:
 
 .. seealso:: :ref:`keep_dispatcher_dumb`
 
+* Add a prefix to tmp directories on a worker. This can be useful if
+  a worker runs more than one ``lava-slave``, e.g. using docker.
+
+.. code-block:: yaml
+
+ # Prefix for all temporary directories
+ # If this variable is set, the temporary files will be created in
+ # /var/lib/lava/dispatcher/tmp/<prefix><job_id> instead of
+ # /var/lib/lava/dispatcher/tmp/<job_id>
+ #prefix: <prefix>
+
 .. _dispatcher_environment:
 
 Per dispatcher environment settings

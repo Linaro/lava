@@ -138,7 +138,8 @@ class Job(object):  # pylint: disable=too-many-instance-attributes
 
         if create_base_dir:
             # Try to create the directory.
-            base_dir = os.path.join(base_dir, str(self.job_id))
+            prefix = self.parameters["dispatcher"].get("prefix", "")
+            base_dir = os.path.join(base_dir, "%s%s" % (prefix, self.job_id))
             try:
                 os.makedirs(base_dir, mode=0o755)
             except OSError as exc:
