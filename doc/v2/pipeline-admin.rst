@@ -233,9 +233,8 @@ Extra dispatcher configuration
 ******************************
 
 It is possible to supply dispatcher-specific configuration along with each test
-job, using the support in ``/etc/lava-server/dispatcher.d/``. The master will
-read files in this directory which match the ``hostname`` of a known worker and
-send the configuration to that worker.
+job, by adding a configuration file on the master at
+``/etc/lava-server/dispatcher.d/<hostname>.yaml``.
 
 An example file exists in ``/usr/share/lava-dispatcher/dispatcher.yaml`` on
 each worker.
@@ -288,6 +287,11 @@ instance:
 * ``/etc/lava-server/env.yaml``
 
 * ``/etc/lava-server/env.dut.yaml``
+
+.. note:: when using dispatcher specific environment, it can be useful
+  (but not mandatory) to move the dispatcher configuration from
+    ``/etc/lava-server/dispatcher.d/<hostname>.yaml`` to
+    ``/etc/lava-server/dispatcher.d/<hostname>/dispatcher.yaml``.
 
 .. index:: pipeline device requirements
 
