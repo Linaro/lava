@@ -382,6 +382,21 @@ alongside the FIT image.
       method: depthcharge
       commands: nfs
 
+.. note:: Unlike some other boot methods such as ``u-boot``, the
+          ``depthcharge`` boot method always expects the kernel image to be in
+          the same standard format (zImage for arm, Image for arm64...).  So
+          there should not be any ``type`` attribute for the kernel image in
+          the ``deploy`` section as shown in the example below:
+
+.. code-block:: yaml
+
+  - deploy:
+      kernel:
+        url: http://storage.kernelci.org/mainline/master/v4.18-1283-g10f3e23f07cb/arm/multi_v7_defconfig/zImage
+      ramdisk:
+        url: http://storage.kernelci.org/images/rootfs/debian/stretchtests/20180627.0/armhf/rootfs.cpio.gz
+        compression: gz
+
 .. index:: boot method fastboot
 
 .. _boot_method_fastboot:
