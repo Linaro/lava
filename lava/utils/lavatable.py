@@ -68,8 +68,7 @@ class LavaView(tables.SingleTableView):
             self.search.sort()
         if hasattr(self.table_class.Meta, 'times'):
             for key, value in self.table_class.Meta.times.items():
-                field = [f for f in self.model._meta.get_fields()
-                         if f.name == key][0]
+                field = next((f for f in self.model._meta.get_fields() if f.name == key))
                 column = self.table_class.base_columns.get(key)
                 if column and hasattr(column, 'verbose_name') and column.verbose_name is not None:
                     self.times.append("%s (%s)" % (str(column.verbose_name), value))
@@ -80,8 +79,7 @@ class LavaView(tables.SingleTableView):
             self.times.sort()
         if hasattr(self.table_class.Meta, 'searches'):
             for key in self.table_class.Meta.searches.keys():
-                field = [f for f in self.model._meta.get_fields()
-                         if f.name == key][0]
+                field = next((f for f in self.model._meta.get_fields() if f.name == key))
                 column = self.table_class.base_columns.get(key)
                 if column and hasattr(column, 'verbose_name') and column.verbose_name is not None:
                     self.search.append(column.verbose_name)

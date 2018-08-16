@@ -588,10 +588,10 @@ class Action:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         e.g. SignalMatch
         """
         data = {}
-        attrs = set([attr for attr in dir(self)
+        attrs = set((attr for attr in dir(self)
                      if not attr.startswith('_') and getattr(self, attr) and not
                      isinstance(getattr(self, attr), types.MethodType) and not
-                     isinstance(getattr(self, attr), InternalObject)])
+                     isinstance(getattr(self, attr), InternalObject)))
 
         # noinspection PySetFunctionToLiteral
         for attr in attrs - set([
@@ -610,10 +610,10 @@ class Action:  # pylint: disable=too-many-instance-attributes,too-many-public-me
                 data['protocols'] = {}
                 for protocol in getattr(self, attr):
                     data['protocols'][protocol.name] = {}
-                    protocol_attrs = set([attr for attr in dir(protocol)
+                    protocol_attrs = set((attr for attr in dir(protocol)
                                           if not attr.startswith('_') and getattr(protocol, attr) and not
                                           isinstance(getattr(protocol, attr), types.MethodType) and not
-                                          isinstance(getattr(protocol, attr), InternalObject)])
+                                          isinstance(getattr(protocol, attr), InternalObject)))
                     for protocol_attr in protocol_attrs:
                         if protocol_attr not in ['logger']:
                             data['protocols'][protocol.name][protocol_attr] = getattr(protocol, protocol_attr)
