@@ -33,7 +33,7 @@ warnings.filterwarnings('ignore', r"StrAndUnicode is deprecated")
 # pylint: disable=no-self-use,invalid-name,too-many-ancestors,too-many-public-methods
 
 
-class ModelFactory(object):
+class ModelFactory:
 
     def __init__(self):
         self._int = 0

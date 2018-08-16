@@ -574,7 +574,7 @@ class TestProtocol(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertTrue(self.coord.group['group'] == '')
         self.coord.conn.clearPasses()
 
-    class FakeClient(object):
+    class FakeClient:
         """
         acts as the client socket, passing data to the fake coordinator dataReceived() call
         """

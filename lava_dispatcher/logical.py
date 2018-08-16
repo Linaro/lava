@@ -117,7 +117,7 @@ class DiagnosticAction(Action):
         return connection
 
 
-class Deployment(object):
+class Deployment:
     """
     Deployment is a strategy class which aggregates Actions
     until the request from the YAML can be validated or rejected.
@@ -213,7 +213,7 @@ class Deployment(object):
         return willing[0]
 
 
-class Boot(object):
+class Boot:
     """
     Allows selection of the boot method for this job within the parser.
     """
@@ -278,7 +278,7 @@ class Boot(object):
         return willing[0]
 
 
-class LavaTest(object):
+class LavaTest:
     """
     Allows selection of the LAVA test method for this job within the parser.
     """
@@ -341,7 +341,7 @@ class LavaTest(object):
         return NotImplementedError("has_shell %s" % cls)
 
 
-class PipelineContext(object):  # pylint: disable=too-few-public-methods
+class PipelineContext:  # pylint: disable=too-few-public-methods
     """
     Replacement for the LavaContext which only holds data for the device for the
     current pipeline.

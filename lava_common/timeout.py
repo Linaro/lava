@@ -26,7 +26,7 @@ from lava_common.constants import ACTION_TIMEOUT
 from lava_common.exceptions import JobError, ConfigurationError
 
 
-class Timeout(object):
+class Timeout:
     """
     The Timeout class is a declarative base which any actions can use. If an Action has
     a timeout, that timeout name and the duration will be output as part of the action

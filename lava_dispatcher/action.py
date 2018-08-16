@@ -38,7 +38,7 @@ from lava_dispatcher.utils.lxc import is_lxc_requested
 from lava_dispatcher.utils.strings import seconds_to_str
 
 
-class InternalObject(object):  # pylint: disable=too-few-public-methods
+class InternalObject:  # pylint: disable=too-few-public-methods
     """
     An object within the dispatcher pipeline which should not be included in
     the description of the pipeline.
@@ -46,7 +46,7 @@ class InternalObject(object):  # pylint: disable=too-few-public-methods
     pass
 
 
-class Pipeline(object):  # pylint: disable=too-many-instance-attributes
+class Pipeline:  # pylint: disable=too-many-instance-attributes
     """
     Pipelines ensure that actions are run in the correct sequence whilst
     allowing for retries and other requirements.
@@ -253,7 +253,7 @@ class Pipeline(object):  # pylint: disable=too-many-instance-attributes
         return connection
 
 
-class Action(object):  # pylint: disable=too-many-instance-attributes,too-many-public-methods
+class Action:  # pylint: disable=too-many-instance-attributes,too-many-public-methods
 
     def __init__(self):
         """

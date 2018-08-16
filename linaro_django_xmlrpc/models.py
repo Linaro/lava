@@ -136,7 +136,7 @@ def xml_rpc_signature(*sig):
     return decorator
 
 
-class FaultCodes(object):
+class FaultCodes:
     """
     Common fault codes.
 
@@ -158,7 +158,7 @@ class FaultCodes(object):
     TRANSPORT_ERROR = -32300
 
 
-class CallContext(object):
+class CallContext:
     """
     Call context encapsulates all runtime information about a particular call
     to ExposedAPI subclasses. In practice it binds the user, mapper and
@@ -175,7 +175,7 @@ class CallContext(object):
         self.request = request
 
 
-class ExposedAPI(object):
+class ExposedAPI:
     """
     Base class for exposing code via XML-RPC.
 
@@ -242,7 +242,7 @@ class ExposedV2API(ExposedAPI):
                 "API.")
 
 
-class Mapper(object):
+class Mapper:
     """
     Simple namespace for mapping multiple subclasses of ExposedAPI using one
     dispatcher.
@@ -349,7 +349,7 @@ class Mapper(object):
         self.register(SystemAPI, 'system')
 
 
-class Dispatcher(object):
+class Dispatcher:
     """
     XML-RPC dispatcher based on Mapper (for name lookup) and libxmlrpc (for
     marshalling). The API is loosely modeled after SimpleXMLRPCDispatcher from

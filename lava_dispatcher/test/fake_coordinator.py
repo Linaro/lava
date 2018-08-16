@@ -28,7 +28,7 @@ from nose.tools import nottest
 # pylint: disable=superfluous-parens,invalid-name,logging-not-lazy,attribute-defined-outside-init,no-self-use
 
 
-class TestSignals(object):
+class TestSignals:
 
     message_str = ''
 
@@ -45,7 +45,7 @@ class TestSignals(object):
             self.log.info("\t<LAVA_TEST_COMPLETE%s>" % self.formatString(reply))
 
 
-class TestSocket(object):
+class TestSocket:
     """
     Mock up a LavaCoordinator socket without needing a server
     """
@@ -130,7 +130,7 @@ class TestSocket(object):
 
 
 @nottest
-class TestCoordinator(object):
+class TestCoordinator:
     """
     Contains direct copies of critical functions from lava.coordinator module in a wrapper
     which prevents the need for socket communication. Module imported from lava-coordinator 0.1.5

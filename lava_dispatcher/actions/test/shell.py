@@ -107,7 +107,7 @@ class TestShellRetry(RetryAction):
 
 
 # FIXME: move to utils and call inside the overlay
-class PatternFixup(object):
+class PatternFixup:
 
     def __init__(self, testdef, count):
         """
@@ -609,7 +609,7 @@ class TestShellAction(TestAction):
         retval = test_connection.expect(list(self.patterns.values()), timeout=timeout)
         return self.check_patterns(list(self.patterns.keys())[retval], test_connection, check_char)
 
-    class SignalDirector(object):
+    class SignalDirector:
 
         # FIXME: create proxy handlers
         def __init__(self, protocol=None):

@@ -20,7 +20,7 @@ from six import string_types
 # pylint: disable=invalid-name,too-few-public-methods
 
 
-class ModelFactory(object):
+class ModelFactory:
 
     def __init__(self):
         self._int = 0

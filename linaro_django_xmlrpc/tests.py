@@ -39,7 +39,7 @@ from linaro_django_xmlrpc.models import (
 )
 
 
-class MockUser(object):
+class MockUser:
     """
     Mock django.contrib.auth.models.User class for our test cases
     """

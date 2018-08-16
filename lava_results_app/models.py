@@ -82,7 +82,7 @@ class RefreshLiveQueryError(Exception):
     """ Error raised if refreshing the live query is attempted. """
 
 
-class Queryable(object):
+class Queryable:
     """All Queryable objects should inherit this."""
     def get_passfail_results(self):
         raise NotImplementedError("Should have implemented this")

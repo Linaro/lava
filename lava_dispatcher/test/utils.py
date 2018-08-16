@@ -24,7 +24,7 @@ from stat import S_IXUSR
 from lava_dispatcher.utils.shell import _which_check
 
 
-class DummyLogger(object):
+class DummyLogger:
     def info(self, *args, **kwargs):
         pass
 

@@ -69,7 +69,7 @@ def parse_action(job_data, name, device, pipeline, test_info, test_count):
         Deployment.select(device, parameters)(pipeline, parameters)
 
 
-class JobParser(object):
+class JobParser:
     """
     Creates a Job object from the Device and the job YAML by selecting the
     Strategy class with the highest priority for the parameters of the job.

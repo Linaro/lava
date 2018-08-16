@@ -48,7 +48,7 @@ BULK_CREATE_TIMEOUT = 10
 FD_TIMEOUT = 60
 
 
-class JobHandler(object):  # pylint: disable=too-few-public-methods
+class JobHandler:  # pylint: disable=too-few-public-methods
     def __init__(self, job):
         self.output_dir = job.output_dir
         self.output = open(os.path.join(self.output_dir, 'output.yaml'), 'ab')

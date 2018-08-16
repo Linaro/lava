@@ -20,7 +20,7 @@ class JobEndTimeoutError(Exception):
     """ Raise when the specified job does not finish in certain timeframe. """
 
 
-class Timeout(object):
+class Timeout:
     """ Timeout error class with ALARM signal. Accepts time in seconds. """
     class TimeoutError(Exception):
         pass
@@ -39,7 +39,7 @@ class Timeout(object):
         raise Timeout.TimeoutError()
 
 
-class JobListener(object):
+class JobListener:
 
     def __init__(self, url):
         self.context = zmq.Context.instance()

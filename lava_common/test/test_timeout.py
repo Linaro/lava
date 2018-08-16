@@ -6,7 +6,7 @@ from lava_common.exceptions import ConfigurationError, InfrastructureError, JobE
 from lava_common.timeout import Timeout
 
 
-class DummyAlarm(object):
+class DummyAlarm:
     def __init__(self, data):
         self.data = data
         self.previous = 0
@@ -18,7 +18,7 @@ class DummyAlarm(object):
         return previous
 
 
-class DummySignal(object):
+class DummySignal:
     def __init__(self, data):
         self.data = data
         self.previous = 0
@@ -31,7 +31,7 @@ class DummySignal(object):
         return previous
 
 
-class ParentAction(object):
+class ParentAction:
     def __init__(self, timeout):
         self.timeout = timeout
 

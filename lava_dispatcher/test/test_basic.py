@@ -147,7 +147,7 @@ class TestValidation(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertEqual([1, 2], pipe.errors)
 
 
-class Factory(object):
+class Factory:
     """
     Not Model based, this is not a Django factory.
     Factory objects are dispatcher based classes, independent
@@ -537,7 +537,7 @@ class TestStrategySelector(StdoutTestCase):
     """
     Check the lambda operation
     """
-    class Base(object):
+    class Base:
         priority = 0
 
     class First(Base):

@@ -83,7 +83,7 @@ class TestMultiDeploy(StdoutTestCase):
             super().__init__(filename)
 
     @nottest
-    class TestDeploy(object):  # cannot be a subclass of Deployment without a full select function.
+    class TestDeploy:  # cannot be a subclass of Deployment without a full select function.
         def __init__(self, parent, parameters, job):
             super().__init__()
             self.action = TestMultiDeploy.TestDeployAction()

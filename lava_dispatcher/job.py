@@ -39,7 +39,7 @@ from lava_dispatcher.protocols.multinode import MultinodeProtocol  # pylint: dis
 from lava_common.constants import DISPATCHER_DOWNLOAD_DIR
 
 
-class ZMQConfig(object):
+class ZMQConfig:
     """
     Namespace for the ZMQ logging configuration
     """
@@ -50,7 +50,7 @@ class ZMQConfig(object):
         self.ipv6 = ipv6
 
 
-class Job(object):  # pylint: disable=too-many-instance-attributes
+class Job:  # pylint: disable=too-many-instance-attributes
     """
     Populated by the parser, the Job contains all of the
     Actions and their pipelines.

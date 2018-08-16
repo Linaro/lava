@@ -76,7 +76,7 @@ def send_multipart_u(sock, data):
     return sock.send_multipart([b(d) for d in data])
 
 
-class SlaveDispatcher(object):  # pylint: disable=too-few-public-methods
+class SlaveDispatcher:  # pylint: disable=too-few-public-methods
 
     def __init__(self, hostname, online=True):
         self.hostname = hostname

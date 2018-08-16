@@ -30,7 +30,7 @@ commit_pattern = re.compile("commit (.+)")
 author_pattern = re.compile("author ([^>]+>) (\w+) ((\+|-)\w\w\w\w)")
 
 
-class Commit(object):
+class Commit:
     def __init__(self, commit_id, change_id):
         self.commit_id = commit_id
         self.change_id = change_id

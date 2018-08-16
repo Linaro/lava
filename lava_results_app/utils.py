@@ -34,7 +34,7 @@ def help_max_length(max_length):
         max_length).format(max_length)
 
 
-class StreamEcho(object):  # pylint: disable=too-few-public-methods
+class StreamEcho:  # pylint: disable=too-few-public-methods
     def write(self, value):  # pylint: disable=no-self-use,
         return value
 

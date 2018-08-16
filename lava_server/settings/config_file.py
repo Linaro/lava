@@ -26,7 +26,7 @@ import os
 import re
 
 
-class ConfigFile(object):
+class ConfigFile:
     """
     Configuration file parser compatible with files generated
     dbconfig-generate-include using sh format.

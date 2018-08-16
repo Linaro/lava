@@ -70,7 +70,7 @@ class SignalMatch(InternalObject):  # pylint: disable=too-few-public-methods
         return res
 
 
-class Connection(object):
+class Connection:
     """
     A raw_connection is an arbitrary instance of a standard Python (or added LAVA) class
     designed to implement an interactive connection onto the device. The raw_connection
@@ -173,7 +173,7 @@ class Connection(object):
                 self.raw_connection = None
 
 
-class Protocol(object):
+class Protocol:
     """
     Similar to a Connection object, provides a transport layer for the dispatcher.
     Uses a pre-defined API instead of pexpect using Shell.

@@ -27,7 +27,7 @@ from lava_dispatcher.connections.serial import ConnectDevice
 # pylint: disable=too-few-public-methods,too-many-branches
 
 
-class MovementMenu(object):
+class MovementMenu:
 
     def __init__(self):
         self.start_pos = 0
@@ -47,7 +47,7 @@ class MenuInterrupt(Action):
         self.interrupt_string = None
 
 
-class SelectorMenu(object):
+class SelectorMenu:
 
     def __init__(self):
         self.item_markup = None

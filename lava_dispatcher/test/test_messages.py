@@ -30,7 +30,7 @@ from lava_dispatcher.utils.messages import LinuxKernelMessages
 from lava_dispatcher.test.test_basic import StdoutTestCase
 
 
-class Kernel(object):  # pylint: disable=too-few-public-methods
+class Kernel:  # pylint: disable=too-few-public-methods
 
     def __init__(self):
         super().__init__()
@@ -62,7 +62,7 @@ class Child(Kernel):  # pylint: disable=too-few-public-methods
         return prompt_list
 
 
-class FakeConnection(object):  # pylint: disable=too-few-public-methods
+class FakeConnection:  # pylint: disable=too-few-public-methods
 
     def __init__(self, child, prompt_str):
         super().__init__()

@@ -25,7 +25,7 @@ from django.contrib.auth.models import User
 # pylint: disable=too-many-branches,too-many-locals,too-many-nested-blocks
 
 
-class ModelFactory(object):
+class ModelFactory:
 
     def __init__(self):
         self._int = 0

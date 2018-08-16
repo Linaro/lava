@@ -29,7 +29,7 @@ def prepare_jinja_template(hostname, jinja_data):
     return env.get_template("%s.jinja2" % hostname)
 
 
-class BaseTemplate(object):
+class BaseTemplate:
 
     class BaseTemplateCases(unittest.TestCase):
 

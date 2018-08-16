@@ -205,7 +205,7 @@ def start_job(job_id, definition, device_definition, zmq_config,
 # Classes
 #########
 
-class Job(object):
+class Job:
     """Wrapper around a job process."""
 
     RUNNING, CANCELING, FINISHED = range(3)
@@ -268,7 +268,7 @@ class Job(object):
         send_multipart_u(sock, ["START_OK", str(self.job_id)])
 
 
-class JobsDB(object):
+class JobsDB:
 
     def __init__(self, dbname):
         self.conn = sqlite3.connect(dbname)
@@ -325,7 +325,7 @@ class JobsDB(object):
             yield Job(job)
 
 
-class Master(object):
+class Master:
     """
     Keep track of the master state
     """

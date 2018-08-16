@@ -52,7 +52,7 @@ from django.core.urlresolvers import reverse
 import logging
 
 
-class BreadCrumb(object):
+class BreadCrumb:
     """
     A crumb of bread left in the forest of pages to let you go back to (no, not
     to where you came from) where the developer desired you to go.
@@ -123,7 +123,7 @@ class BreadCrumb(object):
             raise
 
 
-class LiveBreadCrumb(object):
+class LiveBreadCrumb:
     """
     Bread crumb instance as observed by a particular request.
 
@@ -149,7 +149,7 @@ class LiveBreadCrumb(object):
         return self.bread_crumb.get_absolute_url(self.kwargs)
 
 
-class BreadCrumbTrail(object):
+class BreadCrumbTrail:
     """
     A list of live bread crumbs that lead from a particular view, along the
     parent chain, all the way to the root view (that is without any parent

@@ -37,7 +37,7 @@ from lava_common.constants import LINE_SEPARATOR
 from lava_dispatcher.utils.strings import seconds_to_str
 
 
-class ShellLogger(object):
+class ShellLogger:
     """
     Builds a YAML log message out of the incremental output of the pexpect.spawn
     using the logfile support built into pexpect.

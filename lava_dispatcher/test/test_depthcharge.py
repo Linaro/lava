@@ -28,7 +28,7 @@ from lava_dispatcher.test.test_basic import StdoutTestCase
 from lava_dispatcher.test.utils import DummyLogger, infrastructure_error
 
 
-class DepthchargeFactory(object):
+class DepthchargeFactory:
     """
     Not Model based, this is not a Django factory.
     Factory objects are dispatcher based classes, independent

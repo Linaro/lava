@@ -48,7 +48,7 @@ class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         def __init__(self, parameters):
             super().__init__(4212, parameters, None)
 
-    class FakeDeploy(object):
+    class FakeDeploy:
         """
         Derived from object, *not* Deployment as this confuses python -m unittest discover
         - leads to the FakeDeploy being called instead.
@@ -60,7 +60,7 @@ class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
             self.action = TestAction.CleanupRetryAction()
             self.action.job = self.job
 
-    class MissingCleanupDeploy(object):
+    class MissingCleanupDeploy:
 
         def __init__(self, parent):
             self.__parameters__ = {}

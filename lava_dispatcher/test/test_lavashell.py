@@ -142,7 +142,7 @@ class TestShellResults(StdoutTestCase):   # pylint: disable=too-many-public-meth
     class FakeJob(Job):
         pass
 
-    class FakeDeploy(object):
+    class FakeDeploy:
         """
         Derived from object, *not* Deployment as this confuses python -m unittest discover
         - leads to the FakeDeploy being called instead.
