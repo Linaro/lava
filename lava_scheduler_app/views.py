@@ -1093,7 +1093,7 @@ def job_submit(request):
                 definition_data = request.POST.get("definition-input")
                 job = testjob_submission(definition_data, request.user)
 
-                if isinstance(job, type(list())):
+                if isinstance(job, list):
                     response_data["job_list"] = [j.sub_id for j in job]
                     # Refer to first job in list for job info.
                     job = job[0]
@@ -1643,7 +1643,7 @@ def job_resubmit(request, pk):
                 original = job
                 job = testjob_submission(request.POST.get("definition-input"),
                                          request.user, original_job=original)
-                if isinstance(job, type(list())):
+                if isinstance(job, list):
                     response_data["job_list"] = [j.sub_id for j in job]
                     # Refer to first job in list for job info.
                     job = job[0]

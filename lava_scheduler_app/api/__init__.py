@@ -126,7 +126,7 @@ class SchedulerAPI(ExposedAPI):
             raise xmlrpc.client.Fault(404, "Specified device or device type not found.")
         except DevicesUnavailableException as exc:
             raise xmlrpc.client.Fault(400, "Device unavailable: %s" % str(exc))
-        if isinstance(job, type(list())):
+        if isinstance(job, list):
             return [j.sub_id for j in job]
         else:
             return job.id

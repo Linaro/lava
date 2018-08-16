@@ -198,7 +198,7 @@ class LavaTable(tables.Table):
         :param data: the view data
         :return: a list of exclusive terms
         """
-        if not hasattr(data, "discrete") or type(data.discrete) != list:
+        if not hasattr(data, "discrete") or not isinstance(data.discrete, list):
             return {}
         if self.prefix:
             return {self.prefix: data.discrete} if len(data.discrete) > 1 else {}
