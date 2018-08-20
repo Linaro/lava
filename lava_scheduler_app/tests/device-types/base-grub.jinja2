@@ -4,6 +4,7 @@
 {% set baud_rate = baud_rate | default(115200) %}
 {% set grub_installed_device = grub_installed_device | default('(hd1,gpt1)') %}
 {% set efi_grub = efi_grub | default(False) %}
+{% set pxe_net_configured = pxe_net_configured | default(True) %}
 
 {# allow job context override - use a different variable name, undefined if not in job context #}
 {% set base_kernel_args = extra_kernel_args | default(base_kernel_args) %}
@@ -15,8 +16,15 @@
           - net_add_route lava 0.0.0.0 gw " + static_gateway + "
           - net_add_dns " + static_dns %}
 {% else %}
+{% if pxe_net_configured %}
 
 {% set net_commands = "          - net_ls_addr" %}
+
+{% else %}
+
+{% set net_commands = "          - net_bootp" %}
+
+{% endif %}
 
 {# end static_ip #}
 {% endif %}

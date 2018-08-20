@@ -1,0 +1,8 @@
+{% extends 'base-grub.jinja2' %}
+{% set boot_character_delay = 200 %}
+{% set efi_grub = True %}
+{% set action_timeout_bootloader_interrupt = 300 %}
+{% set efinet = True %}
+{% set extra_nfsroot_args = ",vers=3" %}
+{% set console_device = False %}
+{% set pxe_net_configured = False %}
