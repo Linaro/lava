@@ -1,0 +1,54 @@
+{% extends 'base-grub.jinja2' %}
+
+{% set grub_autoboot_prompt = 'SecStartup' %}
+{% set boot_character_delay = 1 %}
+{% set boot_message = 'Booting in blind mode' %}
+
+{% block ramdisk_commands %}
+          - set net_default_server={SERVER_IP}
+          - 'linux (tftp)/{KERNEL} console=tty0 console={{ console_device }},{{ baud_rate }} root=/dev/ram0 ip=:::::eth0:dhcp'
+          - initrd (tftp)/{RAMDISK}
+          - boot
+{% endblock ramdisk_commands %}
+
+{% block nfs_commands %}
+          - set net_default_server={SERVER_IP}
+          - 'linux (tftp)/{KERNEL} console=tty0 console={{ console_device }},{{ baud_rate }} root=/dev/nfs rw {{ base_nfsroot_args }} {{ base_ip_args }}'
+          - boot
+{% endblock nfs_commands %}
+
+{% block timeouts %}
+timeouts:
+  actions:
+    grub-main:
+      seconds: 5400
+    bootloader-action:
+      seconds: 5400
+    bootloader-interrupt:
+      seconds: 300
+    bootloader-commands:
+      seconds: 600
+    auto-login:
+      seconds: 600
+    auto-login-action:
+      seconds: 600
+    installer-wait:
+      seconds: 5400
+    pdu-reboot:
+      seconds: 3000
+  connections:
+    pdu-reboot:
+      seconds: 3000
+    grub-main:
+       seconds: 5400
+    bootloader-action:
+       seconds: 5400
+    installer-wait:
+      seconds: 5400
+    bootloader-retry:
+      seconds: 3000
+    bootloader-interrupt:
+      seconds: 300
+    bootloader-commands:
+      seconds: 600
+{% endblock timeouts %}
