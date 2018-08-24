@@ -65,25 +65,29 @@ actions:
           bootloader_prompt: {{ bootloader_prompt|default('grub>') }}
         ramdisk:
           commands:
+{% block ramdisk_commands %}
 {{ net_commands }}
           - clear
           - insmod linux
           - clear
           - insmod tftp
           - clear
-          - 'linux (tftp,{SERVER_IP})/{KERNEL} {{ console_args }} {{ base_ip_args }} {{ base_kernel_args }}' 
+          - 'linux (tftp,{SERVER_IP})/{KERNEL} {{ console_args }} {{ base_ip_args }} {{ base_kernel_args }}'
           - clear
           - initrd (tftp,{SERVER_IP})/{RAMDISK}
 {{ dtb_commands }}
           - clear
           - boot
+{% endblock ramdisk_commands %}
         nfs:
           commands:
+{% block nfs_commands %}
 {{ net_commands }}
           - 'linux (tftp,{SERVER_IP})/{KERNEL} {{ console_args }} root=/dev/nfs rw {{ base_nfsroot_args }} {{ base_ip_args }} {{ base_kernel_args }}'
           - initrd (tftp,{SERVER_IP})/{RAMDISK}
 {{ dtb_commands }}
           - boot
+{% endblock nfs_commands %}
         debian-installer:
           expect_shell: False
           commands:
@@ -109,4 +113,4 @@ actions:
           - chainloader {{ grub_installed_device }}/efi/debian/grubaa64.efi
           - sleep 10
           - boot
-{% endblock %}
+{% endblock body %}
