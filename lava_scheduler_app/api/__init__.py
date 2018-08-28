@@ -776,14 +776,14 @@ class SchedulerAPI(ExposedAPI):
 
         # Get rest of the devices and put number of pending jobs as 0.
         if all:
-            device_types = DeviceType.objects.values_list('name', flat=True)
+            device_types = DeviceType.objects.all()
         else:
-            device_types = active_device_types().values_list('name', flat=True)
+            device_types = active_device_types()
 
         if not self.user or not self.user.is_superuser:
-            device_types.filter(owners_only=False)
+            device_types = device_types.filter(owners_only=False)
 
-        for device_type in device_types:
+        for device_type in device_types.values_list('name', flat=True):
             if device_type not in pending_jobs_by_device:
                 pending_jobs_by_device[device_type] = 0
 
