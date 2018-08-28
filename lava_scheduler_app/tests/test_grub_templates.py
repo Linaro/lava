@@ -197,3 +197,30 @@ class TestGrubTemplates(BaseTemplate.BaseTemplateCases):
             'linux (tftp,{SERVER_IP})/{KERNEL} console=ttyS0,9600 ip=dhcp ',
             template_dict['actions']['boot']['methods']['grub']['ramdisk']['commands']
         )
+
+    def test_minnowboard_turbot_template(self):
+        rendered = self.render_device_dictionary_file('minnowboard-turbot-E3826-01.jinja2')
+        template_dict = yaml.load(rendered)
+        grub = template_dict['actions']['boot']['methods']['grub']
+        self.assertIsNotNone(grub)
+
+        self.assertIn('ramdisk', grub)
+        self.assertIn('commands', grub['ramdisk'])
+        ramdisk_commands = grub['ramdisk']['commands']
+        ramdisk_ref_commands = [
+            'set net_default_server={SERVER_IP}',
+            'linux (tftp)/{KERNEL} console=tty0 console=ttyS0,115200 root=/dev/ram0 ip=:::::eth0:dhcp',
+            'initrd (tftp)/{RAMDISK}',
+            'boot',
+        ]
+        self.assertEqual(ramdisk_commands, ramdisk_ref_commands)
+
+        self.assertIn('nfs', grub)
+        self.assertIn('commands', grub['nfs'])
+        nfs_commands = grub['nfs']['commands']
+        nfs_ref_commands = [
+            'set net_default_server={SERVER_IP}',
+            'linux (tftp)/{KERNEL} console=tty0 console=ttyS0,115200 root=/dev/nfs rw nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr ip=dhcp',
+            'boot',
+        ]
+        self.assertEqual(nfs_commands, nfs_ref_commands)
