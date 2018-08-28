@@ -29,9 +29,10 @@ from lava_dispatcher.test.test_uboot import UBootFactory, StdoutTestCase
 from lava_dispatcher.actions.boot.u_boot import UBootAction, UBootRetry
 from lava_dispatcher.power import ResetDevice, PDUReboot
 from lava_dispatcher.test.utils import infrastructure_error
-from lava_common.exceptions import InfrastructureError
+from lava_common.exceptions import InfrastructureError, JobError
 from lava_dispatcher.action import Action
 from lava_dispatcher.utils import vcs, installers
+from lava_dispatcher.utils.decorator import replace_exception
 
 
 class TestGit(StdoutTestCase):  # pylint: disable=too-many-public-methods
@@ -275,6 +276,44 @@ class TestClasses(StdoutTestCase):
                 continue
             if not hasattr(subclass, 'description') and subclass.name not in self.allowed:
                 self.fail(subclass)
+
+    @replace_exception(RuntimeError, JobError)
+    def replacement(self, msg):
+        raise RuntimeError(msg)
+
+    @replace_exception(RuntimeError, JobError, limit=1024)
+    def short_replacement(self, msg):
+        raise RuntimeError(msg)
+
+    def test_replacement(self):
+        try:
+            self.replacement("test")
+        except JobError:
+            pass
+        except RuntimeError:
+            self.fail("decorator failed")
+        except:  # noqa
+            self.fail("Unexpected exception")
+
+    def test_long_replacement(self):
+        try:
+            self.replacement("t" * 4056)
+        except JobError as exc:
+            self.assertEqual(len(str(exc)), 2048)
+        except RuntimeError:
+            self.fail("decorator failed")
+        except:  # noqa
+            self.fail("Unexpected exception")
+
+    def test_short_replacement(self):
+        try:
+            self.short_replacement("t" * 4096)
+        except JobError as exc:
+            self.assertEqual(len(str(exc)), 1024)
+        except RuntimeError:
+            self.fail("decorator failed")
+        except:  # noqa
+            self.fail("Unexpected exception")
 
 
 class TestInstallers(StdoutTestCase):
