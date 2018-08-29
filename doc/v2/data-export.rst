@@ -65,7 +65,7 @@ XML-RPC can also be used to query data anonymously:
   print server.system.listMethods()
 
 Individual XML-RPC commands are documented on the `API Help
-<../../api/help>`_ page.
+<../../../api/help>`_ page.
 
 .. index:: notifications - summary
 
