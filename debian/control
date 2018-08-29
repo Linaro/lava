@@ -21,7 +21,7 @@ Vcs-Browser: https://github.com/Linaro/pkg-lava
 Package: lava-dispatcher
 Architecture: amd64 arm64 armhf i386 ppc64el s390x ppc64
 Depends: file, systemd-sysv, python3-setuptools,
- lava-common (>= ${sourceVersion}), tar (>= 1.27),
+ lava-common (>= ${source:Version}), tar (>= 1.27),
  ${python3:Depends}, ${misc:Depends}
 Multi-Arch: foreign
 Recommends: ntp, git, tftpd-hpa, openbsd-inetd, ser2net,
