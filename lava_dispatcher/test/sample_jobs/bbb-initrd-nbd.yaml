@@ -11,6 +11,10 @@ timeouts:
 priority: medium
 visibility: public
 
+protocols:
+  lava-xnbd:
+    port: auto
+
 actions:
 - deploy:
     timeout:
