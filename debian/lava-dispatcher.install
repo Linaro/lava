@@ -2,7 +2,6 @@ debian/lava/usr/lib/python3/dist-packages/lava_dispatcher ./usr/lib/python3/dist
 debian/lava/usr/bin/lava-slave ./usr/bin
 debian/lava/usr/bin/lava-run ./usr/bin
 debian/lava-dispatcher.conf ./usr/share/lava-dispatcher/
-share/create_certificate.py ./usr/share/lava-dispatcher/
 share/apache2/lava-dispatcher.conf ./usr/share/lava-dispatcher/apache2/
 share/lava_lxc_device_add.py ./usr/share/lava-dispatcher/
 etc/lava-slave ./usr/share/lava-dispatcher/
