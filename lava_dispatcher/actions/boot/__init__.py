@@ -209,7 +209,7 @@ class AutoLoginAction(Action):
                 # fastboot devices usually lack method parameters
                 self.params = methods[self.method]['parameters']
 
-    def check_kernel_messages(self, connection, max_end_time):
+    def check_kernel_messages(self, connection, max_end_time, fail_msg):
         """
         Use the additional pexpect expressions to detect warnings
         and errors during the kernel boot. Ensure all test jobs using
@@ -221,7 +221,7 @@ class AutoLoginAction(Action):
             return
         self.logger.info("Parsing kernel messages")
         self.logger.debug(connection.prompt_str)
-        parsed = LinuxKernelMessages.parse_failures(connection, self, max_end_time=max_end_time)
+        parsed = LinuxKernelMessages.parse_failures(connection, self, max_end_time=max_end_time, fail_msg=fail_msg)
         if len(parsed) and 'success' in parsed[0]:
             self.results = {'success': parsed[0]['success']}
             if len(parsed) > 1:
@@ -272,6 +272,15 @@ class AutoLoginAction(Action):
         connection.prompt_str = LinuxKernelMessages.get_init_prompts()
         connection.prompt_str.extend(prompts)
 
+        # Needs to be added after the standard kernel message matches
+        # FIXME: check behaviour if boot_message is defined too.
+        failure = self.parameters.get('failure_message')
+        if failure:
+            self.logger.info("Checking for user specified failure message: %s", failure)
+            if isinstance(connection.prompt_str, str):
+                connection.prompt_str = [connection.prompt_str]
+            connection.prompt_str.append(failure)
+
         # linesep should come from deployment_data as from now on it is OS dependent
         linesep = self.get_namespace_data(
             action='deploy-device-env',
@@ -291,7 +300,7 @@ class AutoLoginAction(Action):
             connection.prompt_str.append(LOGIN_TIMED_OUT_MSG)
             connection.prompt_str.append(LOGIN_INCORRECT_MSG)
             # wait for a prompt or kernel messages
-            self.check_kernel_messages(connection, max_end_time)
+            self.check_kernel_messages(connection, max_end_time, failure)
             if 'success' in self.results:
                 check = self.results['success']
                 if LOGIN_TIMED_OUT_MSG in check or LOGIN_INCORRECT_MSG in check:
@@ -305,7 +314,7 @@ class AutoLoginAction(Action):
             connection.prompt_str.append(LOGIN_INCORRECT_MSG)
 
             # wait for a prompt or kernel messages
-            self.check_kernel_messages(connection, max_end_time)
+            self.check_kernel_messages(connection, max_end_time, failure)
             if 'success' in self.results:
                 if LOGIN_INCORRECT_MSG in self.results['success']:
                     self.logger.warning("Login incorrect message matched before the login prompt. "

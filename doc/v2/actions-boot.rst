@@ -351,6 +351,29 @@ for example to append values to the NFS options using ``extra_nfsroot_args``:
    <https://www.kernel.org/doc/Documentation/filesystems/nfs/nfsroot.txt>`_ ,
    :ref:`override_variables_context` and :ref:`override_support`
 
+.. index:: boot failure_message
+
+.. _boot_failure_message:
+
+failure_message
+***************
+
+Some devices deploy the boot commands inside the boot image which is
+then deployed using ``fastboot``. To boot the device after deployment,
+LAVA does not interrupt the bootloader (e.g. U-Boot or Grub) and lets
+the configured boot arguments control the boot.
+
+In some situations, a test kernel can fail and cause the device to
+reset to the bootloader. The presence of configured boot commands leads
+to the device booting into an environment which is not necessarily the
+one required by the test writer and the failure of the test kernel can
+then be hidden. To handle this issue, a ``failure_message`` can be
+specified to match a string output by the bootloader after the device
+has reset. The test job will then fail after the reset and tracking the
+kernel errors.
+
+.. seealso:: :ref:`boot_method_fastboot`
+
 .. index:: boot method
 
 .. _boot_method:

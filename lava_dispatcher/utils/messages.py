@@ -85,7 +85,7 @@ class LinuxKernelMessages(Action):
         return [prompt[1] for prompt in cls.MESSAGE_CHOICES[:cls.FREE_UNUSED]]
 
     @classmethod
-    def parse_failures(cls, connection, action=None, max_end_time=None):  # pylint: disable=too-many-branches
+    def parse_failures(cls, connection, action=None, max_end_time=None, fail_msg=None):  # pylint: disable=too-many-branches
         """
         Returns a list of dictionaries of matches for failure strings and
         other kernel messages.
@@ -156,7 +156,15 @@ class LinuxKernelMessages(Action):
                 })
                 halt = message[:METADATA_MESSAGE_LIMIT]
                 break
-            elif index and index >= cls.FREE_UNUSED:
+            elif action and fail_msg and index and fail_msg == connection.prompt_str[index]:
+                res = "fail"
+                # user has declared this message to be terminal for this test job.
+                halt = "Matched job-specific failure message: '%s'" % fail_msg
+                action.logger.error("%s %s" % (action.name, halt))
+                results.append({
+                    'message': 'kernel-messages'
+                })
+            elif index and index == cls.FREE_UNUSED or index == cls.FREE_INIT:
                 if init and index <= cls.FREE_INIT:
                     results.append({
                         cls.MESSAGE_CHOICES[index][2]: cls.MESSAGE_CHOICES[index][1],
