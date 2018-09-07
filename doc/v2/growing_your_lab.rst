@@ -43,6 +43,8 @@ LAVA:
 .. contents::
    :backlinks: top
 
+.. _logical_layouts:
+
 Logical layouts
 ***************
 
@@ -152,8 +154,10 @@ As an example, the Linaro LAVA lab in Cambridge is a hybrid setup. It operates
 using a set of micro-instances, some of which provide results to frontends like
 :ref:`kernelci_org`.
 
-Recommendations
-***************
+.. _layout_recommendations:
+
+Layout Recommendations
+**********************
 
 * Some labs have found it beneficial to have identical machines serving as the
   workers, in identical racks. This makes administration of a large lab much
@@ -201,6 +205,8 @@ Recommendations
   support devices not commonly found in general hosting locations. This also
   means that LAVA is **not** suitable for customer-facing testing, debugging or
   triage.
+
+.. _physical_layouts:
 
 Physical layouts
 ****************

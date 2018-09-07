@@ -86,6 +86,40 @@ suites by following links from the Debian package trackers for
 `lava-dispatcher <https://tracker.debian.org/pkg/lava-dispatcher>`_ and
 `lava-server <https://tracker.debian.org/pkg/lava-server>`_.
 
+.. index:: debian - architectures
+
+.. _recommended_debian_architectures:
+
+Recommended Debian architectures
+================================
+
+LAVA is intended to provide a CI system which is capable of handling
+dozens or hundreds of simultaneous test jobs across dozens of devices.
+Whilst it is possible to install and operate LAVA on 32 bit
+architectures like ``i386`` and ``armhf``, this is not recommended for
+any production instance. The memory requirements for the master will
+increase with the number of users and if your instance is publicly
+visible on the internet, limited access to RAM is known to cause
+problems. The memory, CPU and I/O requirements of lava-dispatcher
+depend on the number and type of devices as well as the number of test
+jobs which can run simultaneously. For example, experience has shown
+that any test job using ``fastboot`` requires a single CPU core (not
+hyperthread) per attached device, as well as at least one core for the
+base OS. ``armhf`` in particular can struggle to provide enough
+processing power (CPU or I/O or RAM) for such devices. EAch QEMU device
+can require more RAM than would be available on most 32bit systems.
+
+LAVA is routinely used on ``amd64`` and ``arm64`` architectures.
+Packages for other 64bit architectures like ppc64, ppc64el and s390x are
+available from Debian.
+
+Each lab will be different and there are no definitive guidelines on
+what hardware specifications to choose. Start slowly and :ref:`grow
+your lab one step at a time <growing_your_lab>`. If in doubt,
+:ref:`talk to us <getting_support>`.
+
+.. seealso:: :ref:`lab_scaling`
+
 .. index:: lava repository, staging-repo, production-repo
 
 .. _lava_repositories:
@@ -99,6 +133,9 @@ are uploaded to a Linaro `production-repo`_ repository which uses the
 repository.
 
 .. _production-repo: https://images.validation.linaro.org/production-repo/
+
+.. note:: The LAVA repositories only provide packages for ``amd64`` and
+   ``arm64``. See :ref:`recommended_debian_architectures`.
 
 In times when the current production release has not made it into
 either ``stretch-backports`` (e.g. due to a migration issue or a
