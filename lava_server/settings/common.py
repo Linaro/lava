@@ -164,13 +164,13 @@ X_FRAME_OPTIONS = 'DENY'
 HTTPS_XML_RPC = True
 
 # Branding support
-BRANDING_ALT = "Linaro logo"
+BRANDING_ALT = "LAVA Software logo"
 BRANDING_ICON = "lava_server/images/logo.png"
-BRANDING_URL = "http://www.linaro.org"
+BRANDING_URL = "https://lavasoftware.org"
 BRANDING_HEIGHT = 22
 BRANDING_WIDTH = 22
-BRANDING_BUG_URL = "/static/docs/v2/development-intro.html#report-a-bug"
-BRANDING_SOURCE_URL = "https://git.linaro.org/lava"
+BRANDING_BUG_URL = "https://git.lavasoftware.org/lava/lava/issues"
+BRANDING_SOURCE_URL = "https://git.lavasoftware.org/lava/lava"
 BRANDING_MESSAGE = ""
 
 # Custom documentation

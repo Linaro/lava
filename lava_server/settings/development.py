@@ -92,13 +92,13 @@ USE_DEBUG_TOOLBAR = False
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # default branding details
-BRANDING_ALT = "Linaro logo"
+BRANDING_ALT = "LAVA Software logo"
 BRANDING_ICON = 'lava_server/images/logo.png'
-BRANDING_URL = 'http://www.linaro.org'
+BRANDING_URL = 'http://www.lavasoftware.org'
 BRANDING_HEIGHT = "BRANDING_HEIGHT", 22
 BRANDING_WIDTH = "BRANDING_WIDTH", 22
-BRANDING_BUG_URL = "https://lists.linaro.org/mailman/listinfo/lava-users"
-BRANDING_SOURCE_URL = "https://git.linaro.org/lava"
+BRANDING_BUG_URL = "https://git.lavasoftware.org/lava/lava/issues"
+BRANDING_SOURCE_URL = "https://git.lavasoftware.org/lava/lava"
 BRANDING_MESSAGE = ''
 
 # Use default instance name

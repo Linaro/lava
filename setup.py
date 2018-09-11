@@ -69,7 +69,7 @@ setup(
      system tests. Results are tracked over time and data can be
     exported for further analysis.
     """,
-    url='https://www.linaro.org/initiatives/lava/',
+    url='https://www.lavasoftware.org/',
     package_data={
         'lava_dispatcher': [
             'dynamic_vm_keys/lava*',
