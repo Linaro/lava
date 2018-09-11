@@ -177,6 +177,8 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
             archive = self.parameters[self.key].get('archive')
             overlay = self.parameters.get('overlay', False)
             fname, _ = self._url_to_fname_suffix(self.path, compression)
+            if fname.endswith('/'):
+                self.errors = "Cannot download a directory for %s" % self.key
             self.set_namespace_data(action='download-action', label=self.key, key='file', value=fname)
             self.set_namespace_data(action='download-action', label=self.key, key='compression', value=compression)
 

@@ -28,23 +28,12 @@ from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.test.utils import infrastructure_error_multi_paths
 
 
-class DownloadFactory(Factory):  # pylint: disable=too-few-public-methods
-    """
-    Not Model based, this is not a Django factory.
-    Factory objects are dispatcher based classes, independent
-    of any database objects.
-    """
-
-    def create_download_job(self, filename):
-        return self.create_job('db410c-01.jinja2', filename)
-
-
 class TestDownloadDeploy(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def setUp(self):
         super().setUp()
-        self.factory = DownloadFactory()
-        self.job = self.factory.create_download_job('sample_jobs/download.yaml')
+        self.factory = Factory()
+        self.job = self.factory.create_job('db410c-01.jinja2', 'sample_jobs/download.yaml')
 
     def test_deploy_job(self):
         self.assertEqual(self.job.pipeline.job, self.job)
@@ -67,3 +56,9 @@ class TestDownloadDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
             self.fail(exc)
         for action in self.job.pipeline.actions:
             self.assertEqual([], action.errors)
+
+    def test_directories(self):
+        job = self.factory.create_job('bbb-01.jinja2', 'sample_jobs/download_dir.yaml')
+        with self.assertRaises(JobError):
+            job.validate()
+
