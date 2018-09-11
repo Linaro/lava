@@ -442,11 +442,14 @@ class SchedulerAPI(ExposedAPI):
             job_qs = job_qs.filter(submitter=self.user)
         job_list = []
         for job in job_qs.all()[:count]:
+            hostname = ''
+            if job.actual_device:
+                hostname = job.actual_device.hostname
             job_dict = {
                 "id": job.id,
                 "description": job.description,
                 "status": job.get_legacy_status_display(),
-                "device": job.actual_device.hostname,
+                "device": hostname,
             }
             if not job.can_view(self.user):
                 job_dict["id"] = None
