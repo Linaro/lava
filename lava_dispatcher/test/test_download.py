@@ -61,4 +61,3 @@ class TestDownloadDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
         job = self.factory.create_job('bbb-01.jinja2', 'sample_jobs/download_dir.yaml')
         with self.assertRaises(JobError):
             job.validate()
-
