@@ -64,12 +64,17 @@ on which the user has an account.::
   $ sudo apt install lavacli
 
 (If you are installing on Debian Stretch, you will need to first enable
-``backports`` to install ``lavacli``).
+``backports`` to install ``lavacli``) and tell ``apt`` to use
+``stretch-backports``::
+
+ $ sudo apt -t stretch-backports install lavacli
 
 .. _using_lavacli:
 
 Using lavacli
 *************
+
+.. seealso:: :ref:`Creating & displaying a token <authentication_tokens>`
 
 Once the token is created, add it to the configuration of lavacli.
 Click on the "Display the token" link on the "Authentication Tokens"
@@ -78,9 +83,17 @@ validation.linaro.org then you may want to use the identity
 ``production``. The ``uri`` is typically provided on the *Available
 methods* page, e.g. ``http://localhost/api/help``.
 
+Run ``lavacli`` as your normal username. Avoid using ``sudo``.
+
 The syntax is::
 
  --token <TOKEN> --uri <URI> --username <USERNAME> <IDENTITY>
+
+(``<TOKEN>`` is the displayed Authentication Token string)
+
+  .. note:: You should configure and use ``https://`` for all
+     **public** instances. Only use ``http://`` for localhost or
+     developer instances.
 
 .. code-block:: none
 
