@@ -4,6 +4,20 @@ stages:
 - analysis
 - packaging
 
+# template jobs
+.dispatcher: &dispatcher
+  stage: full
+  image: hub.lavasoftware.org/lava/ci-images/$CI_JOB_NAME
+  script:
+  - PYTHONPATH=. py.test-3 --cache-clear -v lava_dispatcher/test
+
+.server: &server
+  stage: full
+  image: hub.lavasoftware.org/lava/ci-images/$CI_JOB_NAME
+  script:
+  - PYTHONPATH=. py.test-3 --cache-clear --ds lava_server.settings.development -v lava_scheduler_app/tests lava_results_app/tests linaro_django_xmlrpc/tests.py
+  - PYTHONPATH=. py.test-3 --cache-clear -v lava_common/test
+
 # quicktest
 codestyle:
   stage: short
@@ -14,83 +28,30 @@ codestyle:
   script:
   - pycodestyle --ignore E501,E203,W503 .
 
-test-dispatcher-debian-9:
+dispatcher-debian-9:
+  <<: *dispatcher
   stage: short
-  image: debian:9
-  before_script: &before_script_dispatcher
-  - apt-get update -qq
-  - DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y $(grep -v '^#' .gitlab-ci/dispatcher.debian:9.deps)
-  script: &script_dispatcher
-  - PYTHONPATH=. py.test-3 --cache-clear -v lava_dispatcher/test
 
-test-server-debian-9:
+server-debian-9:
+  <<: *server
   stage: short
-  image: debian:9
-  before_script: &before_script_server
-  - apt-get update -qq
-  - DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y $(grep -v '^#' .gitlab-ci/server.debian:9.deps)
-  - DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y $(grep -v '^#' .gitlab-ci/dispatcher.debian:9.deps)
-  script: &script_server
-  - service postgresql start
-  - sudo -u postgres psql -c "CREATE ROLE devel NOSUPERUSER CREATEDB NOCREATEROLE INHERIT LOGIN ENCRYPTED PASSWORD 'devel'"
-  - PYTHONPATH=. py.test-3 --cache-clear --ds lava_server.settings.development -v lava_scheduler_app/tests lava_results_app/tests linaro_django_xmlrpc/tests.py
-  - PYTHONPATH=. py.test-3 --cache-clear -v lava_common/test
 
 # Full test suite
-test-dispatcher-debian-10:
-  stage: full
-  image: debian:buster
-  before_script:
-  - apt-get update -qq
-  - DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y $(grep -v '^#' .gitlab-ci/dispatcher.debian:buster.deps)
-  script: *script_dispatcher
-
-test-server-debian-10:
-  stage: full
-  image: debian:buster
-  before_script:
-  - apt-get update -qq
-  - DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y $(grep -v '^#' .gitlab-ci/server.debian:buster.deps)
-  - DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y $(grep -v '^#' .gitlab-ci/dispatcher.debian:buster.deps)
-  script: *script_server
-
-test-dispatcher-ubuntu-18.04:
-  stage: full
-  image: ubuntu:18.04
-  before_script: *before_script_dispatcher
-  script: *script_dispatcher
-
-test-server-ubuntu-18.04:
-  stage: full
-  image: ubuntu:18.04
-  before_script: *before_script_server
-  script: *script_server
-
-test-dispatcher-ubuntu-18.10:
-  stage: full
-  image: ubuntu:18.10
-  before_script: *before_script_dispatcher
-  script: *script_dispatcher
-
-test-server-ubuntu-18.10:
-  stage: full
-  image: ubuntu:18.10
-  before_script: *before_script_server
-  script: *script_server
+dispatcher-debian-10: *dispatcher
+dispatcher-ubuntu-18.04: *dispatcher
+dispatcher-ubuntu-18.10: *dispatcher
+server-debian-10: *server
+server-ubuntu-18.04: *server
+server-ubuntu-18.10: *server
 
 # coverage
 coverage:
   stage: analysis
-  image: debian:buster
+  image: hub.lavasoftware.org/lava/ci-images/server-debian-10
   before_script:
-  - apt-get update -qq
-  - DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y $(grep -v '^#' .gitlab-ci/server.debian:buster.deps)
-  - DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y $(grep -v '^#' .gitlab-ci/dispatcher.debian:buster.deps)
   - apt-get install --no-install-recommends -y python3-pytest python3-pytest-cov
   coverage: '/^TOTAL.+ (\d+\.\d+)%$/'
   script:
-  - service postgresql start
-  - sudo -u postgres psql -c "CREATE ROLE devel NOSUPERUSER CREATEDB NOCREATEROLE INHERIT LOGIN ENCRYPTED PASSWORD 'devel'"
   - PYTHONPATH=. py.test-3 --cache-clear -v --cov --cov-report= lava_dispatcher/test
   - PYTHONPATH=. py.test-3 --cache-clear -v --ds lava_server.settings.development --cov --cov-append --cov-report= lava_scheduler_app/tests lava_results_app/tests linaro_django_xmlrpc/tests.py
   - PYTHONPATH=. py.test-3 --cache-clear -v --cov --cov-append --cov-report=term --cov-report=html lava_common/test
@@ -139,11 +100,8 @@ doc:
 
 debian-pkg:
   stage: packaging
-  image: debian:9
+  image: hub.lavasoftware.org/lava/ci-images/server-debian-9
   before_script:
-  - apt-get update -qq
-  - DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y $(grep -v '^#' .gitlab-ci/server.debian:9.deps)
-  - DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y $(grep -v '^#' .gitlab-ci/dispatcher.debian:9.deps)
   - DEBIAN_FRONTEND=noninteractive apt-get install -y devscripts debhelper node-uglify python3-sphinx python3-sphinx-bootstrap-theme
   script:
   - ./share/debian-dev-build.sh -p lava -a amd64 -b master -o build
