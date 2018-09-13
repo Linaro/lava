@@ -4,20 +4,6 @@ stages:
 - analysis
 - packaging
 
-# template jobs
-.dispatcher: &dispatcher
-  stage: full
-  image: hub.lavasoftware.org/lava/ci-images/$CI_JOB_NAME
-  script:
-  - PYTHONPATH=. py.test-3 --cache-clear -v lava_dispatcher/test
-
-.server: &server
-  stage: full
-  image: hub.lavasoftware.org/lava/ci-images/$CI_JOB_NAME
-  script:
-  - PYTHONPATH=. py.test-3 --cache-clear --ds lava_server.settings.development -v lava_scheduler_app/tests lava_results_app/tests linaro_django_xmlrpc/tests.py
-  - PYTHONPATH=. py.test-3 --cache-clear -v lava_common/test
-
 # quicktest
 codestyle:
   stage: short
@@ -29,14 +15,40 @@ codestyle:
   - pycodestyle --ignore E501,E203,W503 .
 
 dispatcher-debian-9:
-  <<: *dispatcher
   stage: short
+  image: hub.lavasoftware.org/lava/ci-images/$CI_JOB_NAME
+  script:
+  - PYTHONPATH=. py.test-3 --cache-clear -v --junitxml=dispatcher.xml lava_dispatcher/test
+  artifacts:
+    reports:
+      junit: dispatcher.xml
 
 server-debian-9:
-  <<: *server
   stage: short
+  image: hub.lavasoftware.org/lava/ci-images/$CI_JOB_NAME
+  script:
+  - PYTHONPATH=. py.test-3 --cache-clear -v --junitxml=common.xml lava_common/test
+  - PYTHONPATH=. py.test-3 --cache-clear --ds lava_server.settings.development -v --junitxml=server.xml lava_scheduler_app/tests lava_results_app/tests linaro_django_xmlrpc/tests.py
+  artifacts:
+    reports:
+      junit:
+      - common.xml
+      - server.xml
 
 # Full test suite
+.dispatcher: &dispatcher
+  stage: full
+  image: hub.lavasoftware.org/lava/ci-images/$CI_JOB_NAME
+  script:
+  - PYTHONPATH=. py.test-3 --cache-clear -v lava_dispatcher/test
+
+.server: &server
+  stage: full
+  image: hub.lavasoftware.org/lava/ci-images/$CI_JOB_NAME
+  script:
+  - PYTHONPATH=. py.test-3 --cache-clear -v lava_common/test
+  - PYTHONPATH=. py.test-3 --cache-clear --ds lava_server.settings.development -v lava_scheduler_app/tests lava_results_app/tests linaro_django_xmlrpc/tests.py
+
 dispatcher-debian-10: *dispatcher
 server-debian-10: *server
 
