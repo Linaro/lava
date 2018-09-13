@@ -36,8 +36,11 @@ install_dir=$(call py_libdir, $(PYTHON))
 	dh $@ --with sphinxdoc,systemd,python3
 
 override_dh_python3:
+	$(PYTHON) ./share/requires.py --distribution debian --suite sid --package lava-dispatcher > dispatcher-requirements.txt
+	$(PYTHON) ./share/requires.py --distribution debian --suite sid --package lava-server > server-requirements.txt
+	$(PYTHON) ./share/requires.py --distribution debian --suite sid --package lava-common > common-requirements.txt
 	dh_python3 -p lava-dispatcher --shebang=/usr/bin/python3 --requires=dispatcher-requirements.txt
-	dh_python3 -p lava-server --shebang=/usr/bin/python3 --requires=requirements.txt
+	dh_python3 -p lava-server --shebang=/usr/bin/python3 --requires=server-requirements.txt
 	dh_python3 -p lava-common --shebang=/usr/bin/python3 --requires=common-requirements.txt
 
 override_dh_auto_build:
