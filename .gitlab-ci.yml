@@ -38,11 +38,7 @@ server-debian-9:
 
 # Full test suite
 dispatcher-debian-10: *dispatcher
-dispatcher-ubuntu-18.04: *dispatcher
-dispatcher-ubuntu-18.10: *dispatcher
 server-debian-10: *server
-server-ubuntu-18.04: *server
-server-ubuntu-18.10: *server
 
 # coverage
 coverage:
