@@ -1,0 +1,16 @@
+# names must exist as binary packages in the suite
+# for this distribution at a version which matches the constraint.
+# else move the dependency to a new file for a suite which
+# contains the dependency, e.g. backports.
+
+lava-server:
+#  django:
+#      version: ">=1.11"
+#      name: python3-django
+#  django-allauth:
+#      version:
+#      name: python3-django-allauth
+
+lava-dispatcher:
+
+lava-common:

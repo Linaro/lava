@@ -408,7 +408,140 @@ Now the old database package can be removed::
 
  $ sudo apt remove postgresql-9.3
 
+.. index:: dependency requirements
+
+.. _dependency_requirements:
+
+Dependency Requirements
+***********************
+
+LAVA needs to control and output the list of dependencies in a variety
+of formats. Building Docker images and running unit tests in an LXC
+need an updated list of binary package names suitable for the
+distribution and suite of the LXC. Each needs to cope with dependencies
+outside the specified suite, e.g. stable releases which need backports.
+Building the LAVA Debian packages themselves also requires a properly
+up to date list of dependencies - including minimum versions. Each set
+of dependencies needs to be specific to each LAVA binary package -
+``lava-server`` has different dependencies to ``lava-dispatcher`` and
+``lava-common``.
+
+LAVA has several dependencies which are not available via PyPi or pip
+and the ``requirements.txt`` file is therefore misleading. However, the
+format of this file is still useful in building the LAVA packages.
+
+Therefore, LAVA has the ``./share/requires.py`` script which can be
+used to output the preferred format, depending on the arguments.
+
+The dependencies **MUST** be installed in the specified suite of the
+specified distribution for LAVA to work, so take care before pushing a
+merge request to add package names to the support. Make sure your merge
+request includes a change to the relevant requirement YAML files for
+**all** supported distributions or the CI will fail.
+
+Some distributions support ``Recommends`` level dependencies. These are
+typically intended to be installed by ~90% of installations but give
+flexibility for other use cases. ``Recommends`` are **not** handled by
+``requires.py`` at all. The packages must be listed explicitly by the
+maintainer of the packaging for the distribution. ``requires.py``
+exists so that automated processes, like CI, can have a reliable but
+minimal set of packages which must be installed for the specified
+package to be installable.
+
+.. note:: extra dependencies to enable unit tests and other CI actions
+   are not covered by this support. However, these tend to change less
+   often than the dependencies of the main source code.
+
+``requires.py`` does not currently support dependencies based on the
+architecture of the installation. (Currently, only ``Recommends``
+includes architecture-sensitive packages.)
+
+Outputting the requirements.txt format
+======================================
+
+Processes which need the version string can use the original output
+format which mimics ``requirements.txt``::
+
+    $ ./share/requires.py --package lava-server --distribution debian --suite stretch
+    django-auth-ldap>=1.2.12
+    PyYAML
+    dateutil
+    django-restricted-resource>=2016.8
+    django-tables2>=1.14.2
+    django>=1.10
+    docutils>=0.6
+    jinja2
+    markdown>=2.0.3
+    nose
+    psycopg2
+    pytz
+    pyzmq
+    requests
+    simplejson
+    voluptuous>=0.8.8
+
+Outputting a list of binary package names
+=========================================
+
+::
+
+    $ ./share/requires.py --package lava-server --distribution debian --suite stretch --names
+    python3-django-auth-ldap
+    python3-yaml
+    python3-dateutil
+    python3-django-restricted-resource
+    python3-django-tables2
+    python3-django
+    python3-docutils
+    python3-jinja2
+    python3-markdown
+    python3-nose
+    python3-psycopg2
+    python3-tz
+    python3-zmq
+    python3-requests
+    python3-simplejson
+    python3-voluptuous
+    apache2
+    adduser
+    gunicorn3
+    iproute2
+    python3-setuptools
+    libjs-excanvas
+    libjs-jquery-cookie
+    libjs-jquery
+    libjs-jquery-ui
+    libjs-jquery-watermark
+    libjs-jquery-flot
+    libjs-jquery-typeahead
+    systemd-sysv
+    postgresql
+    postgresql-client
+    postgresql-common
+    lava-common
+
+Outputting a single line of binary package names
+================================================
+
+This is intended to be passed directly to a package installer like
+``apt-get`` together with the other required commands and options.
+
+The caller determines the ``suite``, so to use with stretch-backports,
+the ``-t stretch-backports`` option would also be added to the
+other ``apt-get`` commands before appending the list of packages.
+
+(Line breaks are added for readability only)::
+
+    $ ./share/requires.py --package lava-server --distribution debian --suite stretch --names --inline
+    lava-common postgresql-common postgresql-client postgresql systemd-sysv libjs-jquery-typeahead libjs-jquery-flot \
+    libjs-jquery-watermark libjs-jquery-ui libjs-jquery libjs-jquery-cookie libjs-excanvas python3-setuptools iproute2 \
+    gunicorn3 adduser apache2 python3-django-auth-ldap python3-yaml python3-dateutil python3-django-restricted-resource \
+    python3-django-tables2 python3-django python3-docutils python3-jinja2 python3-markdown python3-nose python3-psycopg2 \
+    python3-tz python3-zmq python3-requests python3-simplejson python3-voluptuous
+
 .. index:: javascript
+
+.. _javascript_handling:
 
 Javascript handling
 *******************
