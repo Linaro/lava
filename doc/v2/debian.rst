@@ -677,7 +677,7 @@ needs to be enabled in the instance. Two settings are required in
 
 .. note:: ``settings.conf`` is JSON syntax, so ensure that the previous
    line ends with a comma and that the resulting file validates as JSON.
-   Use `JSONLINT <http://www.jsonlint.com>`_
+   Use `JSONLINT <https://jsonlint.com>`_
 
 The toolbar can be disabled without disabling django debug but django must be
 in debug mode for the toolbar to be loaded at all.

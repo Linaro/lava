@@ -578,7 +578,7 @@ Glossary of terms
     on the master.
 
   ZMQ
-    Zero MQ (or `0MQ <http://en.wikipedia.org/wiki/%C3%98MQ>`_) is the basis of
+    Zero MQ (or `0MQ <https://en.wikipedia.org/wiki/%C3%98MQ>`_) is the basis of
     the :term:`refactoring` to solve a lot of the problems inherent in the
     `distributed_instance`. The detail of this change is only relevant to
     developers but it allows LAVA to remove the need for ``postgresql`` and

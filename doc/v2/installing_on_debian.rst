@@ -41,7 +41,7 @@ that point will include that codename in the table.
    future. The last version of LAVA supported in Ubuntu was
    **2015.9.post1**.
 
-.. _suites: http://en.wikipedia.org/wiki/Debian#Branches
+.. _suites: https://en.wikipedia.org/wiki/Debian#Branches
 
 .. [#f1] `experimental`_ allows updates to be selected on top of
          unstable (or the current testing) during times when testing is
@@ -79,7 +79,7 @@ that point will include that codename in the table.
 
 .. _experimental: https://wiki.debian.org/DebianExperimental
 
-.. _stretch-backports: http://backports.debian.org/
+.. _stretch-backports: https://backports.debian.org/
 
 You can track the versions of LAVA packages in the various Debian
 suites by following links from the Debian package trackers for
@@ -456,7 +456,7 @@ LAVA and Python3
 ================
 
 Python2 has been `marked as end of life
-<http://legacy.python.org/dev/peps/pep-0373/>`_ and distributions are
+<https://legacy.python.org/dev/peps/pep-0373/>`_ and distributions are
 in the process of removing packages which depend on Python2. Django has
 had Python3 support for some time and will be dropping Python2 support
 in the next LTS. (The current non-LTS release of django, version 2.0,

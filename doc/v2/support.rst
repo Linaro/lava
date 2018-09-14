@@ -173,7 +173,7 @@ Pastebins
 *********
 
 Pastebin services are provided online by multiple people. Some are open to
-anyone, such as `pastebin.com <http://pastebin.com/>`_ and `paste.debian.net
+anyone, such as `pastebin.com <https://pastebin.com/>`_ and `paste.debian.net
 <https://paste.debian.net/>`_. Others (like the internal Linaro pastebin) are
 restricted and will require users to `register`_. Pastes will typically expire
 automatically, depending on the options selected by the user creating the

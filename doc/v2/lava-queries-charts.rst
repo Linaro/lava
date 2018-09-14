@@ -135,7 +135,7 @@ The query string format looks like this::
 .. note:: object_name can be omitted if it's the same as the query object set.
    Operator is one of the following - exact, iexact, contains, gt, lt.
 
-`Example Query by URL <https://playground.validation.linaro.org/results/query/+custom?entity=testjob&conditions=testjob__priority__exact__Medium,testjob__submitter__contains__code>`_
+`Example Query by URL <https://staging.validation.linaro.org/results/query/+custom?entity=testjob&conditions=testjob__priority__exact__Medium,testjob__submitter__contains__code>`_
 
 Once the query by URL results are displayed, user can create new query from
 these conditions, which will be automatically added to the query.
@@ -510,4 +510,4 @@ typing in the entity and conditions in URL. There is one aditional option
 compared to queries, the chart type. New URL paramater is named "type" and can
 take values of pass/fail, measurement and attributes.
 
-`Example Chart by URL <https://playground.validation.linaro.org/results/chart/+custom?type=pass/fail&entity=testjob&conditions=testjob__priority__exact__Medium,testjob__submitter__contains__code>`_
+`Example Chart by URL <https://staging.validation.linaro.org/results/chart/+custom?type=pass/fail&entity=testjob&conditions=testjob__priority__exact__Medium,testjob__submitter__contains__code>`_

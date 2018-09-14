@@ -22,10 +22,8 @@ current dispatcher will be removed.
 ``2016.2`` release and the V2 support will continue to expand in subsequent
 releases.
 
-The LAVA developers use a `playground instance
-<http://playground.validation.linaro.org>`_ for testing of selected changes
-prior to merging into master. There is also a `staging instance
-<http://staging.validation.linaro.org>`_ for testing of the current master
+The LAVA developers use a `staging instance
+<https://staging.validation.linaro.org>`_ for testing of the current master
 branch and release candidates for the next production release.
 
 Pipeline Architecture

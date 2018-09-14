@@ -13,11 +13,11 @@ Multinode jobs are more likely to trigger this issue as they cause many jobs to
 be started at the same time.
 
 To solve this problem we use a project called `pdudaemon
-<https://github.com/Linaro/pdudaemon>`_. Instead of each dispatcher accessing
+<https://github.com/pdudaemon/pdudaemon>`_. Instead of each dispatcher accessing
 the PDUs directly, dispatchers make requests to a queueing daemon which
 executes them sequentially.
 
-The project source is available here: https://github.com/Linaro/pdudaemon
+The project source is available here: https://github.com/pdudaemon/pdudaemon
 Packages for Debian and Ubuntu will be available shortly.
 
 A Postgres server is required with a database created, and postgres credentials

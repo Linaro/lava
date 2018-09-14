@@ -57,7 +57,7 @@ recovery mode operations only require a single device matching the
 check in the recovery script.
 
 Example: for the HiKey 6220, the `recovery mode operations
-<https://github.com/96boards/documentation/wiki/HiKeyUEFI#flash-binaries-to-emmc->`_
+<https://github.com/96boards/documentation/wiki/HiKeyUEFI#user-content-flash-binaries-to-emmc->`_
 could be executed as steps in the test shell as follows:
 
 .. code-block:: yaml

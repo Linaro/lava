@@ -19,9 +19,6 @@ You need to be familiar with these sections:
 #. :ref:`first_devices`
 #. :ref:`admin_backups`
 
-.. seealso:: `Django documentation on the Django Admin
-   Interface <http://www.djangobook.com/en/2.0/chapter06.html>`_
-
 .. _simple_admin_outline:
 
 Outline
@@ -407,7 +404,7 @@ Best practice
 
 .. _`nagios`: https://www.nagios.org/about/
 .. _`munin`: http://munin-monitoring.org/
-.. _`salt`: https://saltstack.com/community/
+.. _`salt`: https://s.saltstack.com/community/
 .. _`puppet`: https://github.com/puppetlabs/puppet
 .. _`ansible`: https://www.ansible.com/
 
@@ -710,7 +707,7 @@ Files and directories in ``/etc/lava-server/``:
 
 * **secret_key.conf** - This key is used by Django to ensure the security of
   various cookies and # one-time values. To learn more please visit:
-  http://docs.djangoproject.com/en/1.8/ref/settings/#secret-key.
+  https://docs.djangoproject.com/en/1.8/ref/settings/#secret-key.
 
 * **settings.conf** - Instance-specific settings used by Django and lava-server
   including authentication backends, branding support and event notifications.

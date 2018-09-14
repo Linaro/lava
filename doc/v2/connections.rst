@@ -857,7 +857,7 @@ Sequence
    ``/usr/lib/python3/dist-packages/lava_dispatcher/device/dynamic_vm_keys``
    directory when lava-dispatcher is installed or in the lava-dispatcher `git
    tree
-   <https://git.linaro.org/lava/lava.git/tree/HEAD:/lava_dispatcher/device/dynamic_vm_keys>`_.
+   <https://git.linaro.org/lava/lava.git/tree/lava_dispatcher/dynamic_vm_keys>`_.
 
 #. The test image on the host device starts a test definition over the existing
    (typically serial) connection. At this point, the image file and overlay for
@@ -1297,7 +1297,7 @@ for more information on ``schroot``. A common way to create an ``schroot`` is
 to use tools packaged with `sbuild`_ or you can `use debootstrap
 <https://wiki.debian.org/Schroot>`_.
 
-.. _LVM Snapshots: https://www.debian-administration.org/article/410/A_simple_introduction_to_working_with_LVM
+.. _LVM Snapshots: https://debian-administration.org/article/410/A_simple_introduction_to_working_with_LVM
 .. _schroot: https://tracker.debian.org/pkg/schroot
 .. _sbuild: https://tracker.debian.org/pkg/sbuild
 

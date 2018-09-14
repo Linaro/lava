@@ -45,7 +45,7 @@ Other elements involved in LAVA development
 
 The Django backend used with LAVA is PostgreSQL_ and some
 `postgres-specific support
-<http://www.postgresql.org/docs/9.5/static/rules-materializedviews.html>`_
+<https://www.postgresql.org/docs/9.5/static/rules-materializedviews.html>`_
 is used. The LAVA UI has some use of Javascript_ and CSS_. LAVA also
 uses ZMQ_ and XML-RPC_ and the LAVA documentation is written with RST_.
 
@@ -53,19 +53,19 @@ In addition, test jobs and device support can involve use of U-Boot_,
 GuestFS_, ADB_, QEMU_, Grub_, SSH_ and a variety of other systems and
 tools to access devices and debug test jobs.
 
-.. _Python: http://www.python.org/
+.. _Python: https://www.python.org/
 .. _Django: https://www.djangoproject.com/
 .. _YAML: http://yaml.org/
 .. _Jinja2: http://jinja.pocoo.org/docs/dev/
-.. _git: http://www.git-scm.org/
-.. _PostgreSQL: http://www.postgresql.org/
+.. _git: https://www.git-scm.com/
+.. _PostgreSQL: https://www.postgresql.org/
 .. _Debian: https://www.debian.org/
 .. _Javascript: https://www.javascript.com/
 .. _CSS: https://www.w3.org/Style/CSS/Overview.en.html
 .. _GuestFS: http://libguestfs.org/
 .. _ZMQ: http://zeromq.org/
 .. _XML-RPC: http://xmlrpc.scripting.com/
-.. _ADB: http://developer.android.com/tools/help/adb.html
+.. _ADB: https://developer.android.com/studio/command-line/adb
 .. _QEMU: http://wiki.qemu.org/Main_Page
 .. _Grub: https://www.gnu.org/software/grub/
 .. _U-Boot: http://www.denx.de/wiki/U-Boot
@@ -493,7 +493,7 @@ any of these would work with any real devices, even of the declared
 For example, the Cambridge lab stores each :term:`device dictionary` in
 git at https://git.linaro.org/lava/lava-lab.git and you can look at the
 configuration of ``staging`` as a reference:
-https://git.linaro.org/lava/lava-lab.git/tree/HEAD:/staging.validation.linaro.org/lava/pipeline/devices
+https://git.linaro.org/lava/lava-lab.git/tree/staging.validation.linaro.org/master-configs/staging-master.lavalab/lava-server/dispatcher-config/devices
 
 Device dictionaries can also be downloaded from any LAVA instance
 using the :ref:`xml_rpc` call, without needing authentication:
@@ -566,7 +566,7 @@ reviews related to that story. When the review is merged, the story
 will be marked as resolved with a *Fix Version* matching the git tag of
 the release containing the fix from the review.
 
-.. _Jira: http://www.atlassian.com/jira-software
+.. _Jira: https://www.atlassian.com/software/jira
 
 .. index:: bug reporting
 

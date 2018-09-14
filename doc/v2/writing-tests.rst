@@ -408,11 +408,11 @@ https://git.linaro.org/lava-team/refactoring.git/tree/functional/unittests.sh
 
 The script is simply called directly from the test shell definition:
 
-https://git.linaro.org/lava-team/refactoring.git/tree/functional/server-pipeline-unit-tests.yaml
+https://git.linaro.org/lava-team/refactoring.git/tree/functional/server-unit-tests-stretch.yaml
 
 Example V2 job using this support:
 
-https://git.linaro.org/lava-team/refactoring.git/tree/functional/qemu-server-pipeline.yaml
+https://git.linaro.org/lava-team/refactoring.git/tree/functional/server-jessie-stretch-debian.yaml
 
 .. note:: Make sure that your custom scripts output some useful information,
    including some indication of progress, in all test jobs but control the

@@ -1,6 +1,6 @@
 # If you modify this file, change the docs which reference lines within
 # this file. Sphinx starts line numbers at zero.
-# https://git.linaro.org/lava-team/lava-functional-tests.git/blob/HEAD:/lava-test-shell/single-node/singlenode01.yaml
+# https://git.linaro.org/lava-team/lava-functional-tests.git/blob/lava-test-shell/single-node/singlenode01.yaml
 
 metadata:
     format: Lava-Test Test Definition 1.0

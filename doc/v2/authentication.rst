@@ -32,7 +32,7 @@ LAVA server may be configured to authenticate via Lightweight
 Directory Access Protocol (LDAP). LAVA uses the `django_auth_ldap`_
 backend for LDAP authentication.
 
-.. _`django_auth_ldap`: http://www.pythonhosted.org/django-auth-ldap/
+.. _`django_auth_ldap`: https://django-auth-ldap.readthedocs.io/en/latest/
 
 LDAP server support is configured using the following parameters in
 ``/etc/lava-server/settings.conf`` (JSON syntax)::

@@ -454,11 +454,7 @@ are already supported in LAVA V2.
 
 #. https://lng.validation.linaro.org/scheduler/
 
-#. https://playground.validation.linaro.org/scheduler/
-
 #. https://git.linaro.org/lava/lava.git/tree/lava_scheduler_app/tests/device-types
-
-#. https://review.linaro.org/#/dashboard/self
 
 Check for:
 

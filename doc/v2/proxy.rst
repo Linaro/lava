@@ -17,7 +17,7 @@ Squid is easy to install via apt::
     sudo apt install squid
 
 Or if you want a configurable squid, refer to the following link to compile and
-install manually: http://wiki.squid-cache.org/SquidFaq/CompilingSquid
+install manually: https://wiki.squid-cache.org/SquidFaq/CompilingSquid
 
 Configure Squid
 ^^^^^^^^^^^^^^^

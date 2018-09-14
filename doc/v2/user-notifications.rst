@@ -49,7 +49,7 @@ action remotely. If a callback uses the POST request, the system will attach job
 The **callbacks** section supports list of the following options:
 
 * **url** The URL for the request. This also supports field value
-  substitution, i.e. in http://my.remote.site/{ID}/{STATUS} **id** and
+  substitution, i.e. in http://example.com/{ID}/{STATUS} **id** and
   **status** will be replaced with corresponding values from the job.
 
 * **method** GET or POST

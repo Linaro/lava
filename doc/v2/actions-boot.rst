@@ -581,7 +581,7 @@ The version of ``qemu`` installed on the dispatcher is a choice made by the
 admin. Generally, this will be the same as the version of ``qemu`` available
 from Debian in the same suite as the rest of the packages installed on the
 dispatcher, e.g. ``stretch``. Information on the available versions of ``qemu``
-in Debian is available at http://tracker.debian.org/qemu
+in Debian is available at https://tracker.debian.org/pkg/qemu
 
 .. seealso:: :ref:`essential_components` and :ref:`qemu-iso boot method
    <boot_method_qemu_iso>`
@@ -620,7 +620,7 @@ The version of ``qemu`` installed on the dispatcher is a choice made by the
 admin. Generally, this will be the same as the version of ``qemu`` available
 from Debian in the same suite as the rest of the packages installed on the
 dispatcher, e.g. ``stretch``. Information on the available versions of ``qemu``
-in Debian is available at http://tracker.debian.org/qemu
+in Debian is available at https://tracker.debian.org/pkg/qemu
 
 QEMU can be used with an NFS using the ``qemu-nfs`` method and the ``nfs``
 media:
@@ -668,7 +668,7 @@ The version of ``qemu`` installed on the dispatcher is a choice made by the
 admin. Generally, this will be the same as the version of ``qemu`` available
 from Debian in the same suite as the rest of the packages installed on the
 dispatcher, e.g. ``stretch``. Information on the available versions of ``qemu``
-in Debian is available at http://tracker.debian.org/qemu
+in Debian is available at https://tracker.debian.org/pkg/qemu
 
 .. seealso:: :ref:`essential_components` and :ref:`boot method qemu
    <boot_method_qemu>`

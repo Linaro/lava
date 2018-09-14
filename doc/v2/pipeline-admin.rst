@@ -165,7 +165,7 @@ configuration. These are the raw forms which are used on the ``lava-dispatch``
 command line and are useful for debugging and starting to create support for
 your own devices.
 
-https://git.linaro.org/lava/lava.git/tree/HEAD:/lava_dispatcher
+https://git.linaro.org/lava/lava.git/tree/lava_dispatcher
 
 The lava-server unit test support
 =================================
@@ -175,7 +175,7 @@ become the default :term:`device type` templates when the packages are built.
 The ``devices`` directory contains working device dictionary examples for these
 device types.
 
-https://git.linaro.org/lava/lava.git/tree/HEAD:/lava_scheduler_app/tests
+https://git.linaro.org/lava/lava.git/tree/lava_scheduler_app/tests
 
 .. _extra_device_configuration:
 

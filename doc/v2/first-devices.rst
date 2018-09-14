@@ -26,9 +26,6 @@ You need to be familiar with these sections:
 #. :ref:`logging_in` (as superuser)
 #. :ref:`device_types` and :ref:`device_type_elements`
 
-.. seealso:: `Django documentation on the Django Admin
-   Interface <http://www.djangobook.com/en/2.0/chapter06.html>`_
-
 .. _django_admin_interface:
 
 Django administration interface
@@ -314,7 +311,7 @@ device looks like:
  {% set power_off_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu15 --command off --port 11' %}
  {% set power_on_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu15 --command on --port 11' %}
 
-https://git.linaro.org/lava/lava-lab.git/tree/staging.validation.linaro.org/lava/pipeline/devices/staging-black01.jinja2
+https://git.linaro.org/lava/lava-lab.git/tree/staging.validation.linaro.org/master-configs/staging-master.lavalab/lava-server/dispatcher-config/devices/staging-black01.jinja2
 
 .. note:: It is recommended to keep the device dictionary jinja files under
    version control. The templates are configuration files, so if you modify the

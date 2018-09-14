@@ -167,7 +167,7 @@ LXC by using the associated test shell helpers.
 * **lava-probe-channel** - echoes the ``probe_channel`` specified in the device
   dictionary.
 
-  .. seealso:: https://github.com/ARM-software/lisa/wiki/Energy-Meters-Requirements#iiocapture---baylibre-acme-cape
+  .. seealso:: https://github.com/ARM-software/lisa/wiki/Energy-Meters-Requirements#user-content-iiocapture---baylibre-acme-cape
 
 Configuration
 *************
@@ -268,6 +268,6 @@ For advanced LXC configurations and usage refer the following links:
 * https://wiki.debian.org/LXC
 * https://linuxcontainers.org/lxc/getting-started/
 * https://help.ubuntu.com/lts/serverguide/lxc.html
-* https://www.stgraber.org/2013/12/20/lxc-1-0-blog-post-series/
+* https://stgraber.org/2013/12/20/lxc-1-0-blog-post-series/
 * https://www.stylesen.org/access_android_devices_lxc
 * https://www.stylesen.org/run_android_cts_within_lxc

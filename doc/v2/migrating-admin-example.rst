@@ -63,7 +63,7 @@ Don't worry about running this example yourself at this stage. The files
 themselves may be useful for reference. The device YAML file comes from the
 lava-dispatcher unit tests:
 
-https://git.linaro.org/lava/lava.git/tree/lava_dispatcher/devices/bbb-01.yaml
+https://git.linaro.org/lava/lava.git/tree/lava_scheduler_app/tests/devices/bbb-01.yaml
 
 The job submission YAML used in the example comes from the lava-team
 refactoring repository of functional tests:
@@ -646,7 +646,7 @@ Creating a device dictionary for the device
 ===========================================
 
 Examples of exported device dictionaries exist in the ``lava-server`` `codebase
-<https://git.linaro.org/lava/lava.git/tree/lava_scheduler_app/tests/bbb-01.yaml>`_
+<https://git.linaro.org/lava/lava.git/tree/lava_scheduler_app/tests/devices/bbb-01.yaml>`_
 for unit test support. The dictionary extends the new template and provides the
 device-specific values.
 

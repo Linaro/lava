@@ -310,7 +310,7 @@ Email notifications also need to be configured.
 With these changes to ``/etc/apt/apt.conf.d/50unattended-upgrades``, the rest
 of the setup is as described on the Debian wiki.
 
-https://wiki.debian.org/UnattendedUpgrades#automatic_call_via_.2Fetc.2Fapt.2Fapt.conf.d.2F20auto-upgrades
+https://wiki.debian.org/UnattendedUpgrades#Automatic_call_via_.2Fetc.2Fapt.2Fapt.conf.d.2F20auto-upgrades
 
 .. index:: event notifications - configuration
 

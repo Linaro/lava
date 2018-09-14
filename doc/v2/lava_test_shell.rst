@@ -367,7 +367,7 @@ file. See the following YAML test definition to get an understanding of how it
 works.
 
 * YAML test definition - https://git.linaro.org/lava-team/lava-functional-tests.git/tree/lava-test-shell/params/params.yaml
-* YAML job submission - https://git.linaro.org/lava-team/refactoring.git/tree/kvm-params.yaml
+* YAML job submission - https://git.linaro.org/lava-team/refactoring.git/tree/qemu-stretch-params.yaml
 
 Install Steps
 =============

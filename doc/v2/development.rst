@@ -142,10 +142,10 @@ Make your changes
     changed at which patch set.
 
 .. _`A note about git commit messages`:
-   http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html
+   https://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html
 
 .. _`5 useful tips for a better commit message`:
-   https://robots.thoughtbot.com/post/48933156625/5-useful-tips-for-a-better-commit-message
+   https://robots.thoughtbot.com/5-useful-tips-for-a-better-commit-message
 
 .. index:: developer: adding unit tests
 
@@ -948,7 +948,7 @@ To run the tests, use the ci-run / ci-build scripts::
   $ ./ci-run
 
 .. _`Pylint`: https://www.pylint.org/
-.. _`refactoring book`: http://www.refactoring.com/
+.. _`refactoring book`: https://www.refactoring.com/
 .. _`PEP 008`: https://www.python.org/dev/peps/pep-0008/
 .. _`Guido's style guide`: https://www.python.org/doc/essays/styleguide.html
 
@@ -977,7 +977,7 @@ to get the visualization of ``lava-server`` models in PNG format:
  $ sudo lava-server manage graph_models --pydot -a -g -o lava-server-model.png
 
 More documentation about graph models is available in
-https://django-extensions.readthedocs.org/en/latest/graph_models.html
+https://django-extensions.readthedocs.io/en/latest/graph_models.html
 
 Other useful features from `django_extensions`_ are as follows:
 
@@ -996,11 +996,11 @@ Other useful features from `django_extensions`_ are as follows:
 
    $ sudo lava-server manage runscript fix_user_names --script-args=all
 
-.. _`django_extensions`: https://django-extensions.readthedocs.org/en/latest/
-.. _`pydot`: https://pypi.python.org/pypi/pydot
-.. _`shell_plus`: https://django-extensions.readthedocs.org/en/latest/shell_plus.html
-.. _`validate_templates`: https://django-extensions.readthedocs.org/en/latest/validate_templates.html
-.. _`runscript`: https://django-extensions.readthedocs.org/en/latest/runscript.html
+.. _`django_extensions`: https://django-extensions.readthedocs.io/en/latest/
+.. _`pydot`: https://pypi.org/project/pydot/
+.. _`shell_plus`: https://django-extensions.readthedocs.io/en/latest/shell_plus.html
+.. _`validate_templates`: https://django-extensions.readthedocs.io/en/latest/validate_templates.html
+.. _`runscript`: https://django-extensions.readthedocs.io/en/latest/runscript.html
 
 .. _developer_access_to_django_shell:
 
@@ -1023,7 +1023,7 @@ Console inside a development environment. In
 
 .. note:: ``settings.conf`` is JSON syntax, so ensure that the previous
    line ends with a comma and that the resulting file validates as
-   JSON. Use `JSONLINT <http://www.jsonlint.com>`_
+   JSON. Use `JSONLINT <https://jsonlint.com>`_
 
 The new location needs to be writable by the ``lavaserver`` user (for
 use by localhost) and by the developer user (but would typically be
