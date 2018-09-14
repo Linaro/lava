@@ -88,8 +88,6 @@ doc:
 
 debian-pkg:
   stage: packaging
-  image: hub.lavasoftware.org/lava/ci-images/server-debian-9
-  before_script:
-  - DEBIAN_FRONTEND=noninteractive apt-get install -y devscripts debhelper node-uglify python3-sphinx python3-sphinx-bootstrap-theme
+  image: hub.lavasoftware.org/lava/ci-images/debian-9-packaging
   script:
   - ./share/debian-dev-build.sh -p lava -a amd64 -b master -o build
