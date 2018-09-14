@@ -17,6 +17,8 @@ metadata:
   # please change these fields when modifying this job for your own tests.
   docs-source: writing-multinode
   docs-filename: second-multinode-job.yaml
+  build-readme: https://files.lavasoftware.org/components/lava/standard/debian/stretch/armhf/3/debian-stretch-armmp-armhf-readme.html
+  build-script: https://files.lavasoftware.org/components/lava/standard/debian/stretch/armhf/3/armmp-nfs.sh
 
 # Very simple multinode definition for our example
 # START-PROTOCOLS-BLOCK
@@ -42,20 +44,25 @@ actions:
       minutes: 2
     to: tftp
     kernel:
-      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/vmlinuz
+      url: https://files.lavasoftware.org/components/lava/standard/debian/stretch/armhf/3/vmlinuz-4.9.0-4-armmp
+      sha256sum: b6043cc5a07e2cead3f7f098018e7706ea7840eece2a456ba5fcfaddaf98a21e
       type: zimage
     ramdisk:
-      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/initramfs.cpio.gz
+      url: https://files.lavasoftware.org/components/lava/standard/debian/stretch/armhf/3/initrd.img-4.9.0-4-armmp
+      sha256sum: 4cc25f499ae74e72b5d74c9c5e65e143de8c2e3b019f5d1781abbf519479b843
       compression: gz
       add-header: u-boot
     modules:
-      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/modules.tar.gz
+      url: https://files.lavasoftware.org/components/lava/standard/debian/stretch/armhf/3/modules.tar.gz
+      sha256sum: 10e6930e9282dd44905cfd3f3a2d5a5058a1d400374afb2619412554e1067d58
       compression: gz
     nfsrootfs:
-      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/jessie-armhf-nfs.tar.gz
+      url: https://files.lavasoftware.org/components/lava/standard/debian/stretch/armhf/3/stretch-armhf-nfs.tar.gz
+      sha256sum: 46d18f339ac973359e8ac507e5258b620709add94cf5e09a858d936ace38f698
       compression: gz
     dtb:
-      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/dtbs/sun7i-a20-cubietruck.dtb
+      url: https://files.lavasoftware.org/components/lava/standard/debian/stretch/armhf/3/dtbs/sun7i-a20-cubietruck.dtb
+      sha256sum: b727c17dce4a67a865cbcd53447f7297e35ffbd18f0a99c7e9f8a10026237cea
 
 - deploy:
     role:
@@ -64,21 +71,26 @@ actions:
       minutes: 2
     to: tftp
     kernel:
-      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/vmlinuz
+      url: https://files.lavasoftware.org/components/lava/standard/debian/stretch/armhf/3/vmlinuz-4.9.0-4-armmp
+      sha256sum: b6043cc5a07e2cead3f7f098018e7706ea7840eece2a456ba5fcfaddaf98a21e
       type: zimage
     ramdisk:
-      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/initramfs.cpio.gz
+      url: https://files.lavasoftware.org/components/lava/standard/debian/stretch/armhf/3/initrd.img-4.9.0-4-armmp
+      sha256sum: 4cc25f499ae74e72b5d74c9c5e65e143de8c2e3b019f5d1781abbf519479b843
       compression: gz
       # the bootloader needs a u-boot header on the modified ramdisk
       add-header: u-boot
     modules:
-      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/modules.tar.gz
+      url: https://files.lavasoftware.org/components/lava/standard/debian/stretch/armhf/3/modules.tar.gz
+      sha256sum: 10e6930e9282dd44905cfd3f3a2d5a5058a1d400374afb2619412554e1067d58
       compression: gz
     nfsrootfs:
-      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/jessie-armhf-nfs.tar.gz
+      url: https://files.lavasoftware.org/components/lava/standard/debian/stretch/armhf/3/stretch-armhf-nfs.tar.gz
+      sha256sum: 46d18f339ac973359e8ac507e5258b620709add94cf5e09a858d936ace38f698
       compression: gz
     dtb:
-      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/dtbs/am335x-boneblack.dtb
+      url: https://files.lavasoftware.org/components/lava/standard/debian/stretch/armhf/3/dtbs/am335x-boneblack.dtb
+      sha256sum: c4c461712bf52af7d020e78678e20fc946f1d9b9552ef26fd07ae85c5373ece9
 # END-DEPLOY-BLOCK
 
 # START-BOOT-BLOCK
@@ -92,7 +104,7 @@ actions:
       login_prompt: 'login:'
       username: root
     prompts:
-    - 'root@jessie:'
+    - 'root@stretch:'
     timeout:
       minutes: 5
 # END-BOOT-BLOCK

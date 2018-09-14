@@ -14,8 +14,8 @@ metadata:
   # please change these fields when modifying this job for your own tests.
   docs-source: writing-multinode
   docs-filename: examples/test-jobs/bbb-lxc-ssh-guest.yaml
-  build-readme: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/debian-armmp-armhf-readme.html
-  build-script: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/armmp-nfs.sh
+  build-readme: https://files.lavasoftware.org/components/lava/standard/debian/stretch/armhf/3/debian-stretch-armmp-armhf-readme.html
+  build-script: https://files.lavasoftware.org/components/lava/standard/debian/stretch/armhf/3/armmp-nfs.sh
 
 # PROTOCOL_BLOCK
 protocols:
@@ -24,7 +24,7 @@ protocols:
       name: lxc-ssh-test
       template: debian
       distribution: debian
-      release: jessie
+      release: stretch
   lava-multinode:
     # expect_role is used by the dispatcher and is part of delay_start
     # host_role is used by the scheduler, unrelated to delay_start.
@@ -84,21 +84,26 @@ actions:
     authorize: ssh
 
     kernel:
-      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/vmlinuz
+      url: https://files.lavasoftware.org/components/lava/standard/debian/stretch/armhf/3/vmlinuz-4.9.0-4-armmp
+      sha256sum: b6043cc5a07e2cead3f7f098018e7706ea7840eece2a456ba5fcfaddaf98a21e
       type: zimage
     ramdisk:
-      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/initramfs.cpio.gz
+      url: https://files.lavasoftware.org/components/lava/standard/debian/stretch/armhf/3/initrd.img-4.9.0-4-armmp
+      sha256sum: 4cc25f499ae74e72b5d74c9c5e65e143de8c2e3b019f5d1781abbf519479b843
       compression: gz
       # the bootloader needs a u-boot header on the modified ramdisk
       add-header: u-boot
     modules:
-      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/modules.tar.gz
+      url: https://files.lavasoftware.org/components/lava/standard/debian/stretch/armhf/3/modules.tar.gz
+      sha256sum: 10e6930e9282dd44905cfd3f3a2d5a5058a1d400374afb2619412554e1067d58
       compression: gz
     nfsrootfs:
-      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/jessie-armhf-nfs.tar.gz
+      url: https://files.lavasoftware.org/components/lava/standard/debian/stretch/armhf/3/stretch-armhf-nfs.tar.gz
+      sha256sum: 46d18f339ac973359e8ac507e5258b620709add94cf5e09a858d936ace38f698
       compression: gz
     dtb:
-      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/dtbs/am335x-boneblack.dtb
+      url: https://files.lavasoftware.org/components/lava/standard/debian/stretch/armhf/3/dtbs/am335x-boneblack.dtb
+      sha256sum: c4c461712bf52af7d020e78678e20fc946f1d9b9552ef26fd07ae85c5373ece9
 
 - deploy:
     role:
@@ -133,7 +138,7 @@ actions:
       login_prompt: 'login:'
       username: root
     prompts:
-    - 'root@jessie:'
+    - 'root@stretch:'
     parameters:
       shutdown-message: "reboot: Restarting system"
 
@@ -144,7 +149,7 @@ actions:
     timeout:
       minutes: 3
     prompts:
-    - 'root@jessie:'
+    - 'root@stretch:'
     parameters:
       hostID: ipv4  # messageID
       host_key: ipaddr  # message key
@@ -162,18 +167,11 @@ actions:
           format: Lava-Test Test Definition 1.0
           name: install-ssh
           description: "install step"
-          os:
-          - debian
-          scope:
-          - functional
-        install:
-          deps:
-          - openssh-server
-          - ntpdate
-          - net-tools
         run:
           steps:
-          - ntpdate-debian
+          - apt-get -q update
+          - lava-test-case apt --shell apt-get -q -y install ntpdate openssh-server net-tools
+          - lava-test-case ntpdate --shell ntpdate-debian
           # messageID matches, message_key as the key.
           - lava-send ipv4 ipaddr=$(lava-echo-ipv4 eth0)
           - lava-send lava_start
@@ -207,10 +205,6 @@ actions:
           format: Lava-Test Test Definition 1.0
           name: client-ssh
           description: "client complete"
-          os:
-          - debian
-          scope:
-          - functional
         run:
           steps:
           - df -h
@@ -232,15 +226,9 @@ actions:
           format: Lava-Test Test Definition 1.0
           name: network
           description: "installation"
-          os:
-          - debian
-          scope:
-          - functional
-        install:
-          deps:
-          - net-tools
         run:
           steps:
+          - lava-test-case apt --shell apt-get -q -y install net-tools
           - lava-test-case inline --shell ls /dev/serial/by-id
       from: inline
       name: lxc-test

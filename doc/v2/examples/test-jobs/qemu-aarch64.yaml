@@ -25,7 +25,6 @@ metadata:
   source: https://git.linaro.org/lava-team/refactoring.git
   path: qemu-aarch64.yaml
   build-readme: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/sid/arm64/8/debian-arm64-readme.html
-  build-console: https://ci.linaro.org/view/lava-ci/job/lava-debian-sid-arm64/8/console
 
 actions:
 - deploy:
