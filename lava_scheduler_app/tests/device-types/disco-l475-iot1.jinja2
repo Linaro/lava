@@ -4,6 +4,7 @@
 board_id: '{{ board_id|default('0000000000') }}'
 usb_vendor_id: '0483'
 usb_product_id: '374b'
+usb_sleep: {{ usb_sleep|default(10) }}
 
 actions:
   deploy:
@@ -20,4 +21,18 @@ actions:
         parameters:
           usb_mass_device: '{{ usb_mass_device|default('/notset') }}'
           resets_after_flash: false
+      gdb:
+        parameters:
+          command: gdb-multiarch
+          wait_before_continue: {{ wait_before_continue|default(10) }}
+        openocd:
+          arguments:
+          - "{ZEPHYR}"
+          commands:
+          - target remote | openocd -c "gdb_port pipe" -f {OPENOCD_SCRIPT}
+          - monitor reset halt
+          - load
+          - set remotetimeout 10000
+          docker:
+            use: False
 {% endblock body -%}
