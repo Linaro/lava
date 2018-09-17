@@ -62,7 +62,7 @@ class BaseTemplate(object):
         def validate_data(self, hostname, data, job_ctx=None):
             rendered = self.render_device_dictionary(hostname, data, job_ctx)
             try:
-                ret = validate_device(yaml.load(rendered))
+                ret = validate_device(yaml.load(rendered, Loader=yaml.CLoader))
             except SubmissionException as exc:
                 print('#######')
                 print(rendered)
@@ -77,10 +77,19 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
         path = os.path.dirname(CONFIG_PATH)
         templates = glob.glob(os.path.join(path, 'device-types', '*.jinja2'))
         self.assertNotEqual([], templates)
+
+        # keep this out of the loop, as creating the environment is slow.
+        path = os.path.dirname(CONFIG_PATH)
+        fs_loader = jinja2.FileSystemLoader([os.path.join(path, 'device-types')])
+        env = jinja2.Environment(loader=fs_loader, trim_blocks=True)
+
         for template in templates:
             data = "{%% extends '%s' %%}" % os.path.basename(template)
             try:
-                self.validate_data('device', data)
+                test_template = env.from_string(data)
+                rendered = test_template.render()
+                template_dict = yaml.load(rendered, Loader=yaml.CLoader)
+                validate_device(template_dict)
             except AssertionError as exc:
                 self.fail("Template %s failed: %s" % (os.path.basename(template), exc))
 
@@ -88,14 +97,20 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
         path = os.path.dirname(CONFIG_PATH)
         templates = glob.glob(os.path.join(path, 'device-types', '*.jinja2'))
         self.assertNotEqual([], templates)
+
+        # keep this out of the loop, as creating the environment is slow.
+        path = os.path.dirname(CONFIG_PATH)
+        fs_loader = jinja2.FileSystemLoader([os.path.join(path, 'device-types')])
+        env = jinja2.Environment(loader=fs_loader, trim_blocks=True)
+
         for template in templates:
             name = os.path.basename(template)
             data = "{%% extends '%s' %%}" % os.path.basename(template)
             data += "{% set connection_command = 'telnet calvin 6080' %}"
-            self.validate_data('device', data)
-            test_template = prepare_jinja_template('testing-01', data)
+            test_template = env.from_string(data)
             rendered = test_template.render()
-            template_dict = yaml.load(rendered)
+            template_dict = yaml.load(rendered, Loader=yaml.CLoader)
+            validate_device(template_dict)
             self.assertIn('connect', template_dict['commands'])
             self.assertNotIn(
                 'connections',
@@ -104,10 +119,10 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
             data += "{% set connection_list = ['uart0'] %}"
             data += "{% set connection_commands = {'uart1': 'telnet calvin 6080'} %}"
             data += "{% set connection_tags = {'uart1': ['primary']} %}"
-            self.validate_data('device', data)
-            test_template = prepare_jinja_template('testing-01', data)
+            test_template = env.from_string(data)
             rendered = test_template.render()
-            template_dict = yaml.load(rendered)
+            template_dict = yaml.load(rendered, Loader=yaml.CLoader)
+            validate_device(template_dict)
             self.assertNotIn('connect', template_dict['commands'])
             self.assertIn(
                 'connections',

@@ -118,13 +118,14 @@ class DeviceTypeTest(TestCaseWithFactory):
         Ensure each template renders valid YAML
         """
         jinja2_path = os.path.dirname(Device.CONFIG_PATH)
+        type_loader = jinja2.FileSystemLoader([os.path.join(jinja2_path, 'device-types')])
+        env = jinja2.Environment(
+            loader=jinja2.ChoiceLoader([type_loader]),
+            trim_blocks=True)
+
         for template_name in os.listdir(os.path.join(jinja2_path, 'device-types')):
             if not template_name.endswith('jinja2'):
                 continue
-            type_loader = jinja2.FileSystemLoader([os.path.join(jinja2_path, 'device-types')])
-            env = jinja2.Environment(
-                loader=jinja2.ChoiceLoader([type_loader]),
-                trim_blocks=True)
             try:
                 template = env.get_template(template_name)
             except jinja2.TemplateNotFound as exc:
@@ -132,7 +133,7 @@ class DeviceTypeTest(TestCaseWithFactory):
             data = None
             try:
                 data = template.render()
-                yaml_data = yaml.load(data)
+                yaml_data = yaml.load(data, Loader=yaml.CLoader)
             except yaml.YAMLError as exc:
                 print(data)  # for easier debugging - use the online yaml parser
                 self.fail("%s: %s" % (template_name, exc))
