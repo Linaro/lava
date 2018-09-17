@@ -41,9 +41,7 @@ codestyle:
 
 coverage:
   stage: analysis
-  image: hub.lavasoftware.org/lava/ci-images/server-debian-10
-  before_script:
-  - apt-get install --no-install-recommends -y python3-pytest python3-pytest-cov
+  image: hub.lavasoftware.org/lava/ci-images/server-debian-9
   coverage: '/^TOTAL.+ (\d+\.\d+)%$/'
   script:
   - PYTHONPATH=. py.test-3 --cache-clear -v --cov --cov-report= lava_dispatcher/test
