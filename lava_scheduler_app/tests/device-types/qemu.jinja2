@@ -45,6 +45,8 @@ actions:
             qemu-system-x86_64
 {% elif arch == 'i386' %}
             qemu-system-i386
+{% elif arch == 'misc' %}
+            qemu-system-misc
 {% endif %}
 {# end arch command #}
           # used by installers to relate to the empty target device
