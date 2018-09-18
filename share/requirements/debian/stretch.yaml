@@ -17,10 +17,6 @@ lava-server:
   django-tables2:
       version: ">=1.14.2"
       name: python3-django-tables2
-  # Remove if 1.11 is listed in stretch-backports
-  django:
-      version: ">=1.10"
-      name: python3-django
   docutils:
       version: ">=0.6"
       name: python3-docutils

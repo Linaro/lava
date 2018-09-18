@@ -3,7 +3,8 @@
 #
 #  requires.py
 #
-#  Copyright 2018 Neil Williams <neil.williams@linaro.org>
+#  Copyright 2018 Linaro
+#  Author: Neil Williams <neil.williams@linaro.org>
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -36,6 +37,59 @@ Goals:
 """
 
 
+def debian(args, depends):
+    """
+    Special knowledge about how the dependencies work
+    for this specific distribution.
+
+    For package building, recurse from backports into
+    the parent suite.
+    For package names (e.g. docker), require TWO separate
+    calls, 1 for backports and one for the parent.
+    """
+    if args.names:
+        msg = []
+        backports = []
+        if not depends.get(args.package):
+            return 0
+        for key, item in depends[args.package].items():
+            if args.suite.endswith("-backports"):
+                backports.append(item["name"])
+                continue
+            if depends[args.package][key].get("system"):
+                msg.insert(0, key)
+                continue
+            msg.append(item["name"])
+        if backports:
+            print(" ".join(backports))
+        else:
+            print(" ".join(msg))
+        return 0
+    if not depends[args.package]:
+        return 0
+    for item in depends[args.package].keys():
+        if depends[args.package][item].get("system"):
+            continue
+        print("%s%s" % (item, depends[args.package][item].get("version", "")))
+
+
+def load_depends(args, parent):
+    req = os.path.join(
+        os.path.dirname(__file__), "requirements", args.distribution, "%s.yaml" % parent
+    )
+    if not os.path.exists(req):
+        msg = "Unsupported suite|distribution: %s %s\n\n" % (args.distribution, parent)
+        sys.stderr.write(msg)
+        raise RuntimeError(msg)
+    with open(req, "r") as data:
+        depends = yaml.safe_load(data)
+    if args.package not in depends:
+        msg = "Unknown package: %s\n\n" % args.package
+        sys.stderr.write(msg)
+        raise RuntimeError(msg)
+    return depends
+
+
 def main():
     """
     Parse options and load requirements files.
@@ -54,57 +108,25 @@ def main():
         "-s", "--suite", required=True, help="The distribution suite / release"
     )
     parser.add_argument(
-        "-i",
-        "--inline",
-        action="store_true",
-        help="Print in a single line separated by whitespace. Requires --names",
-    )
-    parser.add_argument(
         "-n",
         "--names",
         action="store_true",
         help="Only output distribution package names, not versions",
     )
     args = parser.parse_args()
-    req = os.path.join(
-        os.path.dirname(__file__),
-        "requirements",
-        args.distribution,
-        "%s.yaml" % args.suite,
-    )
-    if not os.path.exists(req):
-        sys.stderr.write(
-            "Unsupported suite|distribution: %s %s\n\n"
-            % (args.distribution, args.suite)
-        )
+    try:
+        depends = load_depends(args, args.suite)
+    except RuntimeError:
         return 1
-    with open(req, "r") as data:
-        depends = yaml.safe_load(data)
-    if args.package not in depends:
-        sys.stderr.write("Unknown package: %s\n\n" % args.package)
-        return 2
-    if args.names:
-        msg = []
-        for key, item in depends[args.package].items():
-            if depends[args.package][key].get("system"):
-                if args.inline:
-                    msg.insert(0, key)
-                else:
-                    print(key)
-                continue
-            if args.inline:
-                msg.append(item["name"])
-            else:
-                print(item["name"])
-        if args.inline:
-            print(" ".join(msg))
-        return 0
-    if not depends[args.package]:
-        return 0
-    for item in depends[args.package].keys():
-        if depends[args.package][item].get("system"):
-            continue
-        print("%s%s" % (item, depends[args.package][item].get("version", "")))
+    if args.distribution == "debian":
+        debian(args, depends)
+        if args.suite.endswith("-backports") and not args.names:
+            parent = args.suite.replace("-backports", "")
+            try:
+                ret = load_depends(args, parent)
+            except RuntimeError:
+                return 2
+            debian(args, ret)
     return 0
 
 

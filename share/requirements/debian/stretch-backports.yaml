@@ -1,15 +1,15 @@
 # names must exist as binary packages in the suite
 # for this distribution at a version which matches the constraint.
-# else move the dependency to a new file for a suite which
-# contains the dependency, e.g. backports.
+# set backports: True if the -t option is required.
+
+# note: this will produce TWO lines of output in 'names' mode
 
 lava-server:
-#  django:
-#      version: ">=1.11"
-#      name: python3-django
-#  django-allauth:
-#      version:
-#      name: python3-django-allauth
+  django:
+     version: ">=1.11"
+     name: python3-django
+  django-allauth:
+     name: python3-django-allauth
 
 lava-dispatcher:
 
