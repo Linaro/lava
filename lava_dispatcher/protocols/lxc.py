@@ -110,7 +110,7 @@ class LxcProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
                 if not isinstance(command, list):
                     command = [command]
                 for cmd in command:
-                    if not self.run_command(cmd.split(' '), allow_silent=True):
+                    if not action.run_command(cmd.split(' '), allow_silent=True):
                         raise InfrastructureError("%s failed" % cmd)
                 continue
             elif 'pre-power-command' in item['request']:
@@ -122,7 +122,7 @@ class LxcProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
                 if not isinstance(command, list):
                     command = [command]
                 for cmd in command:
-                    if not self.run_command(cmd.split(' '), allow_silent=True):
+                    if not action.run_command(cmd.split(' '), allow_silent=True):
                         raise InfrastructureError("%s failed" % cmd)
                 continue
             else:
