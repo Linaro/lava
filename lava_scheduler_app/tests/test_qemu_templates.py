@@ -137,3 +137,24 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
                                                  'devices': ["/dev/kvm"],
                                                  'volumes': []}}},
                          template_dict['actions']['boot']['methods'])
+
+    def test_qemu_misc(self):
+        job_ctx = {
+            'arch': 'microblaze'
+        }
+        template_dict = self.render_device_dictionary_file('qemu01.jinja2', job_ctx, raw=False)
+        self.assertIsNotNone(template_dict)
+        self.assertEqual(
+            set([
+                'arm64', 'arm', 'aarch64', 'amd64', 'x86_64', 'i386',
+                'alpha', 'cris', 'lm32', 'm68k', 'microblaze', 'microblazeel',
+                'moxie', 'or32', 's390x', 'sh4', 'sh4eb', 'tricore', 'unicore32',
+                'xtensa', 'xtensaeb']),
+            set(template_dict['available_architectures'])
+        )
+        params = template_dict['actions']['boot']['methods']['qemu']['parameters']
+        self.assertIsNotNone(params['command'])
+        self.assertEqual(
+            params['command'],
+            "qemu-system-" + job_ctx['arch']
+        )

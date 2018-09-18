@@ -2,13 +2,20 @@
 {% extends 'base.jinja2' %}
 
 {% block vland %}
+{# disabled #}
 {% endblock vland %}
 
 {% block body %}
 
-# allow job context override - use a different variable name, undefined if not in job context
+{# allow job context override - use a different variable name, undefined if not in job context #}
 {% set base_guest_fs_size = guestfs_size | default(512) %}
 {% set qemu_guest_fs_interface = guestfs_interface | default('ide') %}
+
+{# see https://packages.debian.org/stretch/amd64/qemu-system-misc/filelist #}
+{% set qemu_misc_architectures = [
+'alpha', 'cris', 'lm32', 'm68k', 'microblaze', 'microblazeel',
+'moxie', 'or32', 's390x', 'sh4', 'sh4eb', 'tricore', 'unicore32',
+'xtensa', 'xtensaeb'] %}
 
 available_architectures:
 - arm64
@@ -17,6 +24,9 @@ available_architectures:
 - amd64
 - x86_64
 - i386
+{% for arch in qemu_misc_architectures %}
+- {{ arch }}
+{% endfor %}
 
 actions:
   deploy:
@@ -45,8 +55,9 @@ actions:
             qemu-system-x86_64
 {% elif arch == 'i386' %}
             qemu-system-i386
-{% elif arch == 'misc' %}
-            qemu-system-misc
+{% else %}
+{# binary comes from the qemu-system-misc package #}
+            qemu-system-{{ arch }}
 {% endif %}
 {# end arch command #}
           # used by installers to relate to the empty target device

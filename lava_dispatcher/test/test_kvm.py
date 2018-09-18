@@ -161,8 +161,8 @@ class TestKVMBasicDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
 
     def setUp(self):
         super().setUp()
-        factory = Factory()
-        self.job = factory.create_kvm_job('sample_jobs/kvm.yaml')
+        self.factory = Factory()
+        self.job = self.factory.create_job('qemu01.jinja2', 'sample_jobs/kvm.yaml')
 
     def test_deploy_job(self):
         self.assertEqual(self.job.pipeline.job, self.job)
@@ -184,6 +184,13 @@ class TestKVMBasicDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
             self.fail(exc)
         for action in self.job.pipeline.actions:
             self.assertEqual([], action.errors)
+
+    def test_available_architectures(self):
+        job_ctx = {'arch': 'unknown'}
+        job = self.factory.create_job('qemu01.jinja2', 'sample_jobs/kvm.yaml', job_ctx)
+        self.assertIsNotNone(job.device['available_architectures'])
+        self.assertEqual(job.parameters['context']['arch'], 'unknown')
+        self.assertRaises(JobError, job.pipeline.validate_actions)
 
     def test_overlay(self):
         overlay = None

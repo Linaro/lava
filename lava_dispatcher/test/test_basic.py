@@ -214,8 +214,11 @@ class Factory:
         rendered = self.render_device_dictionary(hostname, data, job_ctx)
         return (rendered, data)
 
-    def create_custom_job(self, template, job_data):
-        job_ctx = job_data.get('context')
+    def create_custom_job(self, template, job_data, job_ctx=None):
+        if job_ctx:
+            job_data['context'] = job_ctx
+        else:
+            job_ctx = job_data.get('context')
         (data, device_dict) = self.create_device(template, job_ctx)
         device = NewDevice(yaml.safe_load(data))
         if self.debug:
@@ -233,11 +236,11 @@ class Factory:
         job.logger = DummyLogger()
         return job
 
-    def create_job(self, template, filename):
+    def create_job(self, template, filename, job_ctx=None):
         y_file = os.path.join(os.path.dirname(__file__), filename)
         with open(y_file) as sample_job_data:
             job_data = yaml.safe_load(sample_job_data.read())
-        return self.create_custom_job(template, job_data)
+        return self.create_custom_job(template, job_data, job_ctx)
 
     def create_fake_qemu_job(self):
         return self.create_job('qemu01.jinja2', 'sample_jobs/basics.yaml')
