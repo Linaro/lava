@@ -22,9 +22,6 @@ lava-server:
       name: python3-docutils
   jinja2:
       name: python3-jinja2
-  markdown:
-      version: ">=2.0.3"
-      name: python3-markdown
   nose:
       name: python3-nose
   psycopg2:
@@ -40,41 +37,6 @@ lava-server:
   voluptuous:
       version: ">=0.8.8"
       name: python3-voluptuous
-  apache2:
-      system: True
-  adduser:
-      system: True
-  gunicorn3:
-      system: True
-  iproute2:
-      system: True
-  python3-setuptools:
-      system: True
-  libjs-excanvas:
-      system: True
-  libjs-jquery-cookie:
-      system: True
-  libjs-jquery:
-      system: True
-  libjs-jquery-ui:
-      system: True
-  libjs-jquery-watermark:
-      system: True
-  libjs-jquery-flot:
-      system: True
-  libjs-jquery-typeahead:
-      system: True
-  systemd-sysv:
-      system: True
-  # may be removed when separate postgresql docker support is tested.
-  postgresql:
-      system: True
-  postgresql-client:
-      system: True
-  postgresql-common:
-      system: True
-  lava-common:
-      system: True
 
 lava-dispatcher:
     PyYAML:
@@ -85,9 +47,6 @@ lava-dispatcher:
         name: python3-magic
     jinja2:
         name: python3-jinja2
-    markdown:
-        version: ">=2.0.3"
-        name: python3-markdown
     netifaces:
         version: ">=0.10.0"
         name: python3-netifaces
@@ -96,9 +55,6 @@ lava-dispatcher:
     pexpect:
         version: ">=4.2"
         name: python3-pexpect
-    pyserial:
-        version: ">=2.6"
-        name: python3-serial
     pytz:
         name: python3-tz
     pyudev:
@@ -113,14 +69,6 @@ lava-dispatcher:
         name: python3-setproctitle
     guestfs:
         name: python3-guestfs
-    python3-setuptools:
-        system: True
-    systemd-sysv:
-        system: True
-    file:
-        system: True
-    lava-common:
-        system: True
 
 lava-common:
     nose:

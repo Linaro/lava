@@ -234,7 +234,7 @@ Python3 dependencies include:
  python3-django (>= 1.8), python3-django-auth-ldap (>= 1.1.8),
  python3-django-restricted-resource (>= 2015.09),
  python3-django-tables2 (>=1.2), python3-docutils, python3-jinja2,
- python3-markdown, python3-psycopg2, python3-simplejson,
+ python3-psycopg2, python3-simplejson,
  python3-voluptuous (>= 0.8.8), python3:any (>= 3.3.2-2~),
  python3-configobj, python3-magic, python3-netifaces (>=0.10.0),
  python3-nose, python3-pexpect (>= 4.2), python3-pyudev (>= 0.21),
@@ -471,7 +471,6 @@ format which mimics ``requirements.txt``::
     django>=1.10
     docutils>=0.6
     jinja2
-    markdown>=2.0.3
     nose
     psycopg2
     pytz
@@ -494,7 +493,6 @@ Outputting a list of binary package names
     python3-django
     python3-docutils
     python3-jinja2
-    python3-markdown
     python3-nose
     python3-psycopg2
     python3-tz
@@ -536,7 +534,7 @@ other ``apt-get`` commands before appending the list of packages.
     lava-common postgresql-common postgresql-client postgresql systemd-sysv libjs-jquery-typeahead libjs-jquery-flot \
     libjs-jquery-watermark libjs-jquery-ui libjs-jquery libjs-jquery-cookie libjs-excanvas python3-setuptools iproute2 \
     gunicorn3 adduser apache2 python3-django-auth-ldap python3-yaml python3-dateutil python3-django-restricted-resource \
-    python3-django-tables2 python3-django python3-docutils python3-jinja2 python3-markdown python3-nose python3-psycopg2 \
+    python3-django-tables2 python3-django python3-docutils python3-jinja2 python3-nose python3-psycopg2 \
     python3-tz python3-zmq python3-requests python3-simplejson python3-voluptuous
 
 .. index:: javascript

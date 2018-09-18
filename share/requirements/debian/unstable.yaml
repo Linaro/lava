@@ -25,9 +25,6 @@ lava-server:
       name: python3-docutils
   jinja2:
       name: python3-jinja2
-  markdown:
-      version: ">=2.0.3"
-      name: python3-markdown
   nose:
       name: python3-nose
   psycopg2:
@@ -53,9 +50,6 @@ lava-dispatcher:
         name: python3-magic
     jinja2:
         name: python3-jinja2
-    markdown:
-        version: ">=2.0.3"
-        name: python3-markdown
     netifaces:
         version: ">=0.10.0"
         name: python3-netifaces
@@ -64,9 +58,6 @@ lava-dispatcher:
     pexpect:
         version: ">=4.2"
         name: python3-pexpect
-    pyserial:
-        version: ">=2.6"
-        name: python3-serial
     pytz:
         name: python3-tz
     pyudev:
