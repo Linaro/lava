@@ -86,6 +86,13 @@ started from the directory containing the code for that package::
 
  $ /usr/share/lava-server/debian-dev-build.sh -p lava
 
+From time to time, dependencies may need to vary between the current Debian
+stable release and the unstable suite and the package building tools expect
+to build for unstable. If you are building a package to update an instance
+running a different suite, pass that suite using the ``-s`` option::
+
+ $ ./share/debian-dev-build.sh -p lava -s stretch-backports
+
 The packages will be built in a temporary directory using a version
 string based on the current git tag and the time of the build. The
 helper outputs the location of all the built packages at the end of a

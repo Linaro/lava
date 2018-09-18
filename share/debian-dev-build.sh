@@ -2,10 +2,11 @@
 
 set -e
 
+SUITE=unstable
 BRANCH=master
 ARCH=''
 
-while getopts ":p:a:b:o:" opt; do
+while getopts ":p:a:b:o:s:" opt; do
   case $opt in
     p)
       NAME=$OPTARG
@@ -24,13 +25,16 @@ while getopts ":p:a:b:o:" opt; do
     b)
       BRANCH=$OPTARG
       ;;
+    s)
+      SUITE=$OPTARG
+      ;;
     o)
       DIR=`readlink -f $OPTARG`
       ;;
     \?)
       echo "Invalid option: -$OPTARG" >&2
       echo
-      echo "Usage: -p <package> [-a <architecture> -b <branch> -o <directory>]"
+      echo "Usage: -p <package> [-a <architecture> -b <branch> -o <directory> -s <suite>]"
       echo
       echo "Builds a sourceful package locally, using debuild."
       echo "If architecture is a known Debian architecture, build"
@@ -79,7 +83,7 @@ git checkout ${BRANCH}
 dpkg-checkbuilddeps
 git archive ${BRANCH} debian | tar -x -C ../${NAME}-${VERSION}
 cd ${DIR}/${NAME}-${VERSION}
-dch -v ${VERSION}-1 -D unstable "Local developer build"
+dch -v ${VERSION}-1 -D ${SUITE} "Local developer build"
 if [ -n "${LOG}" ]; then
   dch -a "${LOG}"
 fi
