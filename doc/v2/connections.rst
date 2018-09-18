@@ -285,7 +285,7 @@ dispatcher-side connections) when adding more serial connections. You
 may benefit from daughter cards or mezzanine boards to expose multiple
 serial connections over one cable.
 
-.. index:: connections - configuring serial ports
+.. index:: connections - configuring serial ports, device dictionary - connections
 
 .. _configuring_serial_ports:
 

@@ -49,6 +49,8 @@ the jinja markup. Jinja is used to:
   template and that variable is not set in the device dictionary, it becomes
   available for the job submission to set that variable.
 
+.. index:: device dictionary - admin
+
 .. _admin_device_dictionary:
 
 Device dictionary
@@ -74,10 +76,15 @@ kind to make it easier to track changes. The :ref:`administrative interface
 <django_admin_interface>` tracks when and who changed the device dictionary but
 not the detail of what was changed within it.
 
-.. seealso:: :ref:`updating_device_dictionary_using_xmlrpc` and
-   :ref:`updating_device_dictionary_on_command_line` for information on how to
-   use the new file to update the device dictionary. (Needs superuser
-   permissions on that instance.)
+.. seealso::
+   * :ref:`updating_device_dictionary_using_xmlrpc` and
+     :ref:`updating_device_dictionary_on_command_line` for information on how to
+     use the new file to update the device dictionary. (Needs superuser
+     permissions on that instance.)
+   * :ref:`device_dictionary_help`
+   * :ref:`create_device_dictionary`
+   * :ref:`configuring_serial_ports` and
+   * :ref:`viewing_device_dictionary_content`.
 
 The `Jinja template documentation
 <http://jinja.pocoo.org/docs/dev/templates/>`_ gives more information on jinja
@@ -554,22 +561,20 @@ Now modify the dictionary (`Jinja2 child template`_ format) to set the values re
 Viewing current device dictionary content
 =========================================
 
-The admin interface displays the current device dictionary contents in the
+View the device in the UI and click the link to the device dictionary.
+The dictionary is displayed as Jinja2 by default. Click on "Rendered YAML" to
+see the full device configuration as it would be sent to the worker.
+
+The admin interface also displays the current device dictionary contents in the
 Advanced Properties drop-down section of the Device detail view. e.g. for a
 device called ``kvm01``, the URL in the admin interface would be
 ``/admin/lava_scheduler_app/device/kvm01/``, click Show on the Advanced
 Properties section.
 
 The Advanced Properties includes the device description and the device tags as
-well as showing both the YAML formatting as it will be sent to the dispatcher
-and the Jinja2 formatting used to update the device dictionary.
+well as showing both the YAML formatting and the Jinja2 formatting.
 
-.. note:: The device dictionary is **not** editable in the Django admin
-   interface due to constraints of the key value store and the django admin
-   forms. The device configuration for pipeline devices is managed using
-   external files, allowing version control of the device configuration.
-
-.. index:: device dictionary update
+.. index:: device dictionary - update
 
 .. _updating_device_dictionary:
 
@@ -589,15 +594,43 @@ pipeline device for the dictionary to be active -
 * :ref:`updating_device_dictionary_using_xmlrpc`
 * :ref:`updating_device_dictionary_on_command_line`
 
+.. _updating_device_dict_with_lavacli:
+
+Using lavacli
+=============
+
+::
+
+ $ lavacli -i <identity> devices dict get <hostname>
+
+Other options when using ``get`` include:
+
+*  ``field`` to only show the given sub-fields
+
+* ``--context CONTEXT`` to pass a job context for template rendering
+
+* ``--render`` to render the dictionary into a configuration (YAML).
+
+::
+
+ $ lavacli -i <identity> devices dict set <hostname> <device_dict_file>
+
+.. seealso::
+  * :ref:`device_dictionary_help`,
+  * :ref:`create_device_dictionary`,
+  * :ref:`configuring_serial_ports`,
+  * :ref:`viewing_device_dictionary_content`
+
 .. _updating_device_dictionary_with_lava_tool:
 
 Using lava-tool
 ===============
 
-.. note:: Ensure you update to the latest version of
-   :ref:`lava_tool <lava_tool>` (>= 0.23) to use
-   the ``device-dictionary`` ``--update`` and ``--export``
-   functions as superuser.
+.. caution:: lava-tool is **deprecated**, use lavacli.
+
+   If you do use lava-tool, ensure you update to the latest version of
+   :ref:`lava_tool <lava_tool>` (>= 0.23) to use the ``device-dictionary``
+   ``--update`` and ``--export`` functions as superuser.
 
 ::
 

@@ -128,8 +128,9 @@ Glossary of terms
     key:value store within the LAVA server database which admins can modify to
     set configuration values according to the :term:`pipeline` design.
 
-    .. seealso:: :ref:`create_device_dictionary` and
-      :ref:`viewing_device_dictionary_content`.
+    .. seealso:: :ref:`device_dictionary_help`,
+      :ref:`create_device_dictionary`, :ref:`configuring_serial_ports`
+      and :ref:`viewing_device_dictionary_content`.
 
   device status transition
     A record of when a device changed :ref:`device_status`, who caused the

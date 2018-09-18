@@ -1,4 +1,4 @@
-.. index:: device dictionary help
+.. index:: device dictionary - help
 
 .. _device_dictionary_help:
 
@@ -24,7 +24,8 @@ Commands
 * **connection_command** - **deprecated** command to access the serial port of
   the device.
 
-  .. seealso: :ref:`device_dictionary_connections`
+  .. seealso: :ref:`device_dictionary_connections` and
+    :ref:`configuring_serial_ports`
 
 * **power_on_command** - command to supply power to the device remotely. (The
   device **must** start the boot sequence on application of power.)
@@ -84,6 +85,9 @@ Connections
   Other tags may describe the *type* of connection, as extra information that
   LAVA can use to determine how to close the connection cleanly when a job
   finishes (e.g ``telnet`` and ``ssh``).
+
+.. seealso:: :ref:`create_device_dictionary`, :ref:`configuring_serial_ports`
+   and :ref:`viewing_device_dictionary_content`.
 
 VLANd support
 *************
