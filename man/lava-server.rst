@@ -100,11 +100,13 @@ lava_scheduler_app
               --offline             Create the device offline (online by default)
               --private             Make the device private (public by default)
               --worker WORKER       The name of the worker
+
               --tags TAG1 TAG2      List of tags for the device
 
           copy                Copy an existing device as a new device
 
             optional arguments:
+
               -h, --help           show this help message and exit
               --original ORIGINAL  Hostname of the existing device
               --target TARGET      Hostname of the device to create
@@ -114,10 +116,10 @@ lava_scheduler_app
               --copy-with-tags     Set all the tags of the original device on the target
                                    device
 
-
           details             Details about a device
 
             positional arguments:
+
               hostname    Hostname of the device
 
           list                List the installed devices
@@ -189,7 +191,9 @@ lava_scheduler_app
       Output can be filtered by old_state and new_state field values.
 
         positional arguments:
+
           {export}            Sub commands
+
             export            Export existing device state transitions
                               Fields exported: created_on, created_by, device,
                               job, old_state, new_state, message
@@ -204,8 +208,11 @@ lava_scheduler_app
                               Note: exporting all transitions will produce a
                               lot of output, it is recommended to always
                               specify --old-state and --new-state.
+
                 optional arguments:
+
                   -h, --help  show this help message and exit
+
                   --csv       Print as csv
                   --old-state Filter output by old device status
                   --new-state Filter output by new device status
