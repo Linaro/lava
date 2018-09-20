@@ -5,76 +5,76 @@
 
 lava-server:
   django-auth-ldap:
-      version: ">=1.2.12"
-      name: python3-django-auth-ldap
+    version: ">=1.2.12"
+    name: python3-django-auth-ldap
   PyYAML:
-      name: python3-yaml
+    name: python3-yaml
   dateutil:
-      name: python3-dateutil
+    name: python3-dateutil
   django-restricted-resource:
-      version: ">=2016.8"
-      name: python3-django-restricted-resource
+    version: ">=2016.8"
+    name: python3-django-restricted-resource
   django-tables2:
-      version: ">=1.14.2"
-      name: python3-django-tables2
+    version: ">=1.14.2"
+    name: python3-django-tables2
   django:
-      version: ">=1.10"
-      name: python3-django
+    version: ">=1.10"
+    name: python3-django
   docutils:
-      version: ">=0.6"
-      name: python3-docutils
+    version: ">=0.6"
+    name: python3-docutils
   jinja2:
-      name: python3-jinja2
+    name: python3-jinja2
   nose:
-      name: python3-nose
+    name: python3-nose
   psycopg2:
-      name: python3-psycopg2
+    name: python3-psycopg2
   pytz:
-      name: python3-tz
+    name: python3-tz
   pyzmq:
-      name: python3-zmq
+    name: python3-zmq
   requests:
-      name: python3-requests
+    name: python3-requests
   simplejson:
-      name: python3-simplejson
+    name: python3-simplejson
   voluptuous:
-      version: ">=0.8.8"
-      name: python3-voluptuous
+    version: ">=0.8.8"
+    name: python3-voluptuous
 
 lava-dispatcher:
-    PyYAML:
-        name: python3-yaml
-    configobj:
-        name: python3-configobj
-    file-magic:
-        name: python3-magic
-    jinja2:
-        name: python3-jinja2
-    netifaces:
-        version: ">=0.10.0"
-        name: python3-netifaces
-    nose:
-        name: python3-nose
-    pexpect:
-        version: ">=4.2"
-        name: python3-pexpect
-    pytz:
-        name: python3-tz
-    pyudev:
-        version: ">=0.21"
-        name: python3-pyudev
-    pyzmq:
-        name: python3-zmq
-    requests:
-        name: python3-requests
-    setproctitle:
-        version: ">=1.1.8"
-        name: python3-setproctitle
-    guestfs:
-        name: python3-guestfs
+  PyYAML:
+    name: python3-yaml
+  configobj:
+    name: python3-configobj
+  file-magic:
+    name: python3-magic
+  jinja2:
+    name: python3-jinja2
+  netifaces:
+    version: ">=0.10.0"
+    name: python3-netifaces
+  nose:
+    name: python3-nose
+  pexpect:
+    version: ">=4.2"
+    name: python3-pexpect
+  pytz:
+    name: python3-tz
+  pyudev:
+    version: ">=0.21"
+    name: python3-pyudev
+  pyzmq:
+    name: python3-zmq
+  requests:
+    name: python3-requests
+  setproctitle:
+    version: ">=1.1.8"
+    name: python3-setproctitle
+  guestfs:
+    name: python3-guestfs
 
 lava-common:
-    nose:
-        name: python3-nose
-    pyzmq:
-        name: python3-zmq
+  nose:
+    name: python3-nose
+  pyzmq:
+    name: python3-zmq
