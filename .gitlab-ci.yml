@@ -1,19 +1,19 @@
-lava-base:
+.job: &job
   before_script:
   - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
   image: docker:stable
   tags:
   - dind
   script:
-  - docker build -t $DISPATCHER_TAG --target lava-dispatcher-base lava-base
-  - docker build -t $SERVER_TAG --target lava-server-base lava-base
-  - '[ "$CI_COMMIT_REF_NAME" = "master" ] && docker push $DISPATCHER_TAG || :'
-  - '[ "$CI_COMMIT_REF_NAME" = "master" ] && docker push $SERVER_TAG || :'
+  - docker build -t $IMAGE_TAG $CI_JOB_NAME
+  - '[ "$CI_COMMIT_REF_NAME" = "master" ] && docker push $IMAGE_TAG || :'
   services:
     - docker:dind
   stage: build
   variables:
     DOCKER_HOST: tcp://docker:2375/
     DOCKER_DRIVER: overlay2
-    DISPATCHER_TAG: $CI_REGISTRY_IMAGE/lava-dispatcher-base
-    SERVER_TAG: $CI_REGISTRY_IMAGE/lava-server-base
+    IMAGE_TAG: $CI_REGISTRY_IMAGE/$CI_JOB_NAME
+
+lava-dispatcher-base: *job
+lava-server-base: *job
