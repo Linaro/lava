@@ -2,7 +2,7 @@
 
 set -e
 
-[ -n "$@" ] && exec $@ || :
+[ -n "$1" ] && exec $@
 
 echo "Starting postgresql"
 service postgresql start
@@ -26,16 +26,15 @@ echo
 
 echo "Starting lava-publisher"
 lava-server manage lava-publisher&
-LAVA_PUBLISHER_PID=$!
 echo "done"
 echo
 
 echo "Starting lava-master"
 lava-server manage lava-master&
-LAVA_MASTER_PID=$!
 echo "done"
 echo
 
 echo "Wait for a signal"
-/bin/sleep infinity
+cd /var/log/lava-server
+tail -f --retry django.log gunicorn.log lava-logs.log lava-master.log lava-publisher.log
 echo "leaving"

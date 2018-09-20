@@ -7,5 +7,9 @@ RUN dpkg -i /tmp/common.deb && \
 
 ARG pkg_dispatcher=lava-dispatcher.deb
 COPY $pkg_dispatcher /tmp/dispatcher.deb
-RUN dpkg -i /tmp/dispatcher.deb 7& \
+RUN dpkg -i /tmp/dispatcher.deb && \
     rm -f /tmp/dispatcher.deb
+
+# Install the entry point
+COPY entrypoint.sh /root/
+ENTRYPOINT ["/root/entrypoint.sh"]
