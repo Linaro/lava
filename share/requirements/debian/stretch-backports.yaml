@@ -10,6 +10,9 @@ lava-server:
      name: python3-django
   django-allauth:
      name: python3-django-allauth
+  django-tables2:
+      version: ">=1.14.2"
+      name: python3-django-tables2
 
 lava-dispatcher:
 
