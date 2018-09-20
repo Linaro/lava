@@ -2,6 +2,11 @@
 
 set -e
 
+echo "Install git"
+apt-get install --no-install-recommends --yes git
+echo "done"
+echo
+
 echo "Clone lava.git"
 cd /root/
 git clone https://git.lavasoftware.org/lava/lava.git
