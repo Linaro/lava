@@ -14,9 +14,9 @@ Build-Depends:
  libjs-jquery-typeahead, libjs-jquery-ui
 X-Python3-Version: >=3.5
 Standards-Version: 4.1.4
-Homepage: https://www.linaro.org/initiatives/lava/
-Vcs-Git: https://github.com/Linaro/pkg-lava.git
-Vcs-Browser: https://github.com/Linaro/pkg-lava
+Homepage: https://www.lavasoftware.org/
+Vcs-Git: https://git.lavasoftware.org/lava/pkg-lava-debian.git
+Vcs-Browser: https://git.lavasoftware.org/lava/pkg-lava-debian
 
 Package: lava-dispatcher
 Architecture: amd64 arm64 armhf i386 ppc64el s390x ppc64
