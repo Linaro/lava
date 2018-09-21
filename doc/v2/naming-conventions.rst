@@ -5,8 +5,8 @@
 Naming conventions and LAVA architecture
 ****************************************
 
-Certain terms used in LAVA have specific meanings, please be
-consistent, across all media, in the use of the following terms:
+Certain terms used in LAVA have specific meanings. Please be
+consistent in the use of the following terms:
 
 .. seealso:: :ref:`glossary`
 
@@ -28,9 +28,10 @@ consistent, across all media, in the use of the following terms:
   .. seealso:: :ref:`adding_new_device_types` and :term:`health check`.
 
 **connection**
-  A means of communicating with a device, often using a serial port but
-  can also be SSH_ or another way of obtaining a shell-type interactive
-  interface. Connections will typically require a POSIX_ type shell.
+  A means of communicating with a device. This will often involve
+  using a serial port, but can also be SSH_ or another way of obtaining
+  a shell-type interactive interface. Connections will typically
+  require a POSIX_ type shell.
 
   .. _SSH: http://www.openssh.com/
   .. _POSIX: http://www.opengroup.org/austin/papers/posix_faq.html
@@ -62,11 +63,11 @@ consistent, across all media, in the use of the following terms:
   the scheduler will assign the device according to the required device
   tags.
 
-  A device tag is not a method of running specific test jobs on
-  specific boards. LAVA is not a board farm and a board can be replaced
-  at any time without affecting ongoing CI. There is no support in LAVA
-  for allocating specific boards to specific test jobs, the two models
-  are incompatible.
+  A device tag is not meant to be a method of running specific test
+  jobs on specific boards. LAVA is not a board farm and a board can be
+  replaced at any time without affecting ongoing CI. There is no
+  support in LAVA for allocating specific boards to specific test
+  jobs, the two models are incompatible.
 
   Device tags frequently apply to multiple devices. This allows the
   queue of test jobs to be optimised and get results back to the
@@ -83,9 +84,9 @@ consistent, across all media, in the use of the following terms:
   .. seealso:: :ref:`device_types`
 
 **dispatcher**
-  The dispatcher software relates to the ``lava-dispatcher`` source
-  package in git and in Debian. The dispatcher software for LAVA can be
-  installed without the server or the scheduler and a machine
+  The dispatcher software relates to the ``lava-dispatcher`` source in
+  git and the Debian binary package. The dispatcher software for LAVA
+  can be installed without the server or the scheduler and a machine
   configured in this way is also called a :term:`dispatcher`. Such
   machines are typically expensive, especially in a busy instance,
   which can have a big impact on how a LAVA lab is built.
