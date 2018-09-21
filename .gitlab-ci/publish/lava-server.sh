@@ -9,7 +9,15 @@ then
   apk add git
 else
   set -x
-  VERSION=$(git describe)
+
+  # Build the image tag
+  if [ "$CI_COMMIT_TAG" ]
+  then
+    IMAGE_TAG="$IMAGE_TAG:$CI_COMMIT_TAG"
+  else
+    IMAGE_TAG="$IMAGE_TAG/$CI_COMMIT_REF_NAME:$(git describe)"
+  fi
+
   git clone https://git.lavasoftware.org/lava/pkg/docker.git
   pkg_common=$(find build -name "lava-common_*.deb")
   pkg_server=$(find build -name "lava-server_*.deb")
@@ -17,9 +25,11 @@ else
   cp $pkg_common docker/lava-server/lava-common.deb
   cp $pkg_server docker/lava-server/lava-server.deb
   cp $pkg_server_doc docker/lava-server/lava-server-doc.deb
-  docker build -t $IMAGE_TAG:$VERSION docker/lava-server
-  if [ "$CI_COMMIT_REF_NAME" = "master" ]
+  docker build -t $IMAGE_TAG docker/lava-server
+
+  # Push only for tags or master
+  if [ "$CI_COMMIT_REF_NAME" = "master" -o -n "$CI_COMMIT_TAG" ]
   then
-    docker push $IMAGE_TAG:$VERSION
+    docker push $IMAGE_TAG
   fi
 fi

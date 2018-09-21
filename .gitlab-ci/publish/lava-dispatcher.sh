@@ -9,15 +9,25 @@ then
   apk add git
 else
   set -x
-  VERSION=$(git describe)
+
+  # Build the image tag
+  if [ "$CI_COMMIT_TAG" ]
+  then
+    IMAGE_TAG="$IMAGE_TAG:$CI_COMMIT_TAG"
+  else
+    IMAGE_TAG="$IMAGE_TAG/$CI_COMMIT_REF_NAME:$(git describe)"
+  fi
+
   git clone https://git.lavasoftware.org/lava/pkg/docker.git
   pkg_common=$(find build -name "lava-common_*.deb")
   pkg_dispatcher=$(find build -name "lava-dispatcher_*.deb")
   cp $pkg_common docker/lava-dispatcher/lava-common.deb
   cp $pkg_dispatcher docker/lava-dispatcher/lava-dispatcher.deb
-  docker build -t $IMAGE_TAG:$VERSION docker/lava-dispatcher
+  docker build -t $IMAGE_TAG docker/lava-dispatcher
+
+  # Push only for tags or master
   if [ "$CI_COMMIT_REF_NAME" = "master" -o -n "$CI_COMMIT_TAG" ]
   then
-    docker push $IMAGE_TAG:$VERSION
+    docker push $IMAGE_TAG
   fi
 fi
