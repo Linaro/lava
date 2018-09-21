@@ -281,9 +281,11 @@ Push your changes to your development branch
 ============================================
 
 Use ``git push`` to publish the changes on your branch back to your own
-fork. This will share the code with other developers. For example::
+fork. This will share the code with other developers. In this example,
+replace ``my_username`` with the username of the fork and ``my_branch``
+with the name of the local branch which will be pushed to that fork::
 
- $ git push --set-upstream origin my_branch
+ $ git push --set-upstream my_username my_branch
  Enumerating objects: 9, done.
  Counting objects: 100% (9/9), done.
  Delta compression using up to 4 threads
@@ -292,13 +294,17 @@ fork. This will share the code with other developers. For example::
  Total 5 (delta 3), reused 0 (delta 0)
  remote:
  remote: To create a merge request for my_branch, visit:
- remote:   https://git.lavasoftware.org/lava/lava/merge_requests/new?merge_request%5Bsource_branch%5D=my_branch
+ remote:   https://git.lavasoftware.org/my_username/lava/merge_requests/new?merge_request%5Bsource_branch%5D=my_branch
  remote:
- To git.lavasoftware.org:lava/lava.git
+ To git.lavasoftware.org:my_username/lava.git
  * [new branch]          my_branch -> my_branch
- Branch 'my_branch' set up to track remote branch 'my_branch' from 'origin'.
+ Branch 'my_branch' set up to track remote branch 'my_branch' from 'my_username'.
 
 You can push here as many times as you like, as you make more changes.
+
+Pushing to your fork will trigger the CI process - your changes will
+now be automatically tested and the results will be displayed for the
+MR. You will also receive email to tell you how things went.
 
 .. index:: submit merge request
 
@@ -314,9 +320,15 @@ develpment branch, and present them together for review in one
 patchset. To create the MR, use the link that gitlab gave you when you
 pushed your branch or visit the "Merge Requests" area in the web UI.
 
-Submitting your MR will trigger the CI process - your changes will now
-be automatically tested and the results will be displayed for the MR.
-You will also receive email to tell you how things went.
+It is useful to select both these options in GitLab when creating or
+editing a merge request:
+
+* Remove source branch when merge request is accepted.
+
+* Allow commits from members who can merge to the target branch.
+
+By allowing commits, reviewers can make small changes themselves, to
+correct typos etc., without needing to start a new discussion.
 
 Changes will only be merged after a merge request is created and
 the CI process for that MR has passed.
@@ -348,6 +360,9 @@ In the merge request, as comments:
 
 #. If helpful, links to external resources like gold standard images to
    demonstrate how to use and/or test a new feature.
+
+Once you are familiar with creating merge requests, you can also set
+labels to help reviewers identify the type of change to be reviewed.
 
 .. index:: developer: reviewing merge requests
 

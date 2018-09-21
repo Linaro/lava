@@ -5,9 +5,12 @@
 LAVA development
 ################
 
-Before you start, ensure you've read the
-:ref:`development_pre_requisites`, :ref:`contribution_guide` and
-:ref:`criteria`.
+Before you start, ensure you've read:
+
+* :ref:`development_pre_requisites`
+* :ref:`contribution_guide`
+* :ref:`code_of_conduct`
+* :ref:`criteria`.
 
 .. seealso:: :ref:`contribute_upstream`
 
@@ -23,8 +26,11 @@ To run the tests, use the ``ci-run`` script::
 
  $ ./ci-run
 
-..seealso:: :ref:`testing_pipeline_code` and
-  :ref:`developer_preparations`
+There is never any need to use ``sudo`` for unit tests, it causes lots
+of complications by changing file permissions in your local git clone.
+
+.. seealso:: :ref:`testing_pipeline_code` and
+   :ref:`developer_preparations`
 
 Static code analysis
 ====================
@@ -91,23 +97,23 @@ support has not been affected. The intent is that as much as possible
 of the test job and device configuration is covered by at least one
 unit test. Some examples include:
 
-# Changes to an existing jinja2 device-type template which change the
-  output YAML of the device configuration need a unit test to show that
-  the change is being included.
+#. Changes to an existing jinja2 device-type template which change the
+   output YAML of the device configuration need a unit test to show that
+   the change is being included.
 
-# Adding a new deployment or boot method needs unit tests (including
-  sample test jobs) which check that all ``validate()`` functions work
-  correctly and particular tests checking for the specific details of
-  the new method.
+#. Adding a new deployment or boot method needs unit tests (including
+   sample test jobs) which check that all ``validate()`` functions work
+   correctly and particular tests checking for the specific details of
+   the new method.
 
-# Adding a change to an existing deployment or boot method which
-  changes the construction of the pipeline based on test job or device
-  configuration. Unit tests will be required to show that the change is
-  being made.
+#. Adding a change to an existing deployment or boot method which
+   changes the construction of the pipeline based on test job or device
+   configuration. Unit tests will be required to show that the change is
+   being made.
 
 Reviewers may ask for unit test support for any change, so :ref:`talk
 to us <getting_support>` during development. You can also use an
-``RFC`` prefix in your git commit to indicate that the change is not
+``WIP:`` prefix in your git commit to indicate that the change is not
 ready for merging but is ready for comments.
 
 lava_dispatcher
@@ -244,8 +250,8 @@ lava_dispatcher
 Changes to most files in ``lava_dispatcher`` can be symlinked or copied
 into the packaged locations. e.g.::
 
- PYTHONDIR=/usr/lib/python3/dist-packages/
- sudo cp <path_to_file> $PYTHONDIR/<path_to_file>
+ $ PYTHONDIR=/usr/lib/python3/dist-packages/
+ $ sudo cp <path_to_file> $PYTHONDIR/<path_to_file>
 
 .. note:: The path used for ``PYTHONDIR`` has changed with the LAVA
    runtime support moving to Python3 in 2018.4.
@@ -256,7 +262,7 @@ Changes to files in ``./etc/`` will require restarting the relevant
 service.
 
 Changes to files in ``./lava/dispatcher/`` will need the ``lava-slave``
-service to be restarted.
+service to be restarted but changes to ``./lava_dispatcher/`` will not.
 
 * When adding or modifying ``run``, ``validate``, ``populate`` or
   ``cleanup`` functions, **always** ensure that ``super`` is called
@@ -368,6 +374,11 @@ Documentation is written in RST, so the `RST Primer
 when modifying the documentation.
 
 #. Keep all documentation paragraphs wrapped to 80 columns.
+
+#. Strip trailing whitespace from all modified files.
+
+#. When you build your changes from clean, make sure there are no
+   warning or error messages from the build.
 
 #. Use ``en_GB`` unless referring to elements of code which use
    ``en_US``.

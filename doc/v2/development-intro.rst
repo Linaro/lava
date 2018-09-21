@@ -92,7 +92,7 @@ All templates are checked for basic syntax and output using:
 
 .. code-block:: shell
 
- $ python3 -m unittest -vcf lava_scheduler_app.tests.test_templates.TestTemplates.test_all_templates
+ $ python3 -m unittest -vcf lava_scheduler_app.tests.test_base_templates.TestBaseTemplates.test_all_templates
 
 A more rigorous test is to use the dedicated unit test which does
 **not** require ``lava-server`` to be installed, i.e. it does not
@@ -337,16 +337,13 @@ and planning for new features and concepts. Discussion happens on the
 
 .. _GitLab: https://git.lavasoftware.org/
 
-Many git commit messages within the LAVA codebase contain references to
-JIRA issues as ``LAVA-123`` etc. All references like this can be
-appended to a basic URL to find the details of that issue:
-``https://projects.linaro.org/browse/``. e.g. the addition of this
-section on JIRA relates to ``LAVA-735`` which can be viewed as
+Many older git commit messages within the LAVA codebase contain
+references to JIRA issues as ``LAVA-123`` etc., as the LAVA project
+used to use Linaro's JIRA instance to track issues. All references
+like this can be appended to a basic URL to find the details of that
+issue: ``https://projects.linaro.org/browse/``. e.g. the addition of
+this section on JIRA relates to ``LAVA-735`` which can be viewed as
 https://projects.linaro.org/browse/LAVA-735
-
-Within JIRA, there is a hierarchy of issues. *EPIC* is the highest
-level to group similar issues. *Stories* are each within a single EPIC
-and *sub-tasks* can exist within a single Story.
 
 If you have comments or questions about anything visible within the
 LAVA project, please subscribe to one of the :ref:`mailing lists
@@ -364,7 +361,6 @@ feature requests, enhancements and problem reports. For more general
 questions and discussion, use the :ref:`mailing_lists`. It is often
 useful to discuss the full details of the problem on the lava-users_
 mailing list before creating an issue in GitLab.
-
 
 .. note:: The old Bugzilla and JIRA systems are both deprecated and
           reporting bugs in the old Bugzilla system will not be tracked

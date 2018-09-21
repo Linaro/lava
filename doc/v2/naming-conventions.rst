@@ -38,10 +38,6 @@ consistent in the use of the following terms:
 
   .. seealso:: :ref:`connections`
 
-**compatibility**
-  An integer calculated by the master and separately by the worker to
-  determine whether the worker is running older code than the master.
-
 **device**
   In ``lava-server``, a :term:`device` is a database object in LAVA
   which stores configuration, information and status relating to a
@@ -84,12 +80,13 @@ consistent in the use of the following terms:
   .. seealso:: :ref:`device_types`
 
 **dispatcher**
-  The dispatcher software relates to the ``lava-dispatcher`` source in
-  git and the Debian binary package. The dispatcher software for LAVA
-  can be installed without the server or the scheduler and a machine
-  configured in this way is also called a :term:`dispatcher`. Such
-  machines are typically expensive, especially in a busy instance,
-  which can have a big impact on how a LAVA lab is built.
+  The dispatcher software relates to the ``lava_dispatcher`` module in
+  git and the ``lava-dispatcher`` binary package in Debian. The
+  dispatcher software for LAVA can be installed without the server or
+  the scheduler and a machine configured in this way is also called a
+  :term:`dispatcher`. Such machines are typically expensive, especially
+  in a busy instance, which can have a big impact on how a LAVA lab is
+  built.
 
 **dynamic data**
   The Action base class provides access to dynamic data stores which
@@ -121,17 +118,17 @@ consistent in the use of the following terms:
   dynamic data.
 
 **pipeline**
-  The name for the design of LAVA V2, based on how the actions to be
-  executed by the dispatcher are arranged in a unidirectional pipe. The
-  contents of the pipe are validated before the job starts and the
-  description of all elements in the pipe is retained for later
-  reference.
+  The internal name for the design of LAVA V2, based on how the actions
+  to be executed by the dispatcher are arranged in a unidirectional
+  pipeline object. The contents of the pipe are validated before the
+  job starts and the description of all elements in the pipe is
+  retained for later reference.
 
   .. seealso:: :ref:`pipeline_construction` and :term:`pipeline` in the
      Glossary.
 
 **protocol**
-  An API used by the python code inside ``lava-dispatcher`` to interact
+  An API used by the python code inside ``lava_dispatcher`` to interact
   with external systems and daemons when a shell like environment is
   not supported. :term:`Protocols <protocol>` need to be supported
   within the python codebase and currently include multinode, LXC and

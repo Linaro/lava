@@ -64,10 +64,10 @@ LAVA documentation lives in the same repository as the code, in the
 Issue Tracker
 =============
 
-Get involved in the LAVA Software Community Project issue tracker at
-https://git.lavasoftware.org/lava/lava/issues. To begin with, you might
-only create bug reports for issues you encounter. As you become more
-comfortable, consider triaging other bug reports.
+Get involved by using the LAVA Software Community Project issue
+tracker at https://git.lavasoftware.org/lava/lava/issues. To begin
+with, you might only create bug reports for issues you encounter. As
+you become more comfortable, consider triaging other bug reports.
 
 Start by picking an existing issue and try to reproduce the problem in
 another system to which you have access. If you can reproduce it,
@@ -101,18 +101,18 @@ Contributing to the functional testing
 
 The LAVA Software Community Project uses LAVA to test changes to the
 LAVA codebase as part of our internal :ref:`continuous_integration` by
-running unchanging LAVA test jobs against updates to the LAVA codebase
-using as many different :term:`device types <device type>` as possible.
-As a long term project, it is important to get wide coverage of devices
-yet also to minimise changes outside the LAVA codebase.
+running unchanging reference LAVA test jobs against the evolving LAVA
+codebase, using as many different :term:`device types <device type>`
+as possible. As a long term project, it is important to get wide
+coverage of devices yet also to minimise changes outside the LAVA
+codebase.
 
-Historically, this has been done using
-https://staging.validation.linaro.org/scheduler/ as this provided
-isolation from the other CI on other instances at
-https://validation.linaro.org etc. In order to broaden the range of
-devices which are available for functional testing, labs with
-device-types not currently available on
-https://staging.validation.linaro.org would be particularly beneficial.
+Historically, this testing was done using Linaro's staging test lab
+(https://staging.validation.linaro.org/scheduler/), a small lab
+isolated from the other Linaro LAVA instances. In order to broaden the
+range of devices which are available for functional testing, labs with
+device-types not currently available on staging.validation.linaro.org
+would be particularly beneficial.
 
 To contribute, you need to already have a local LAVA lab with suitably
 configured, stable, devices and enough capacity to run extra LAVA test
