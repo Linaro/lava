@@ -4,33 +4,41 @@ stages:
 - build
 - publish
 
+#############
+# Templates #
+#############
+.job: &job
+  before_script:
+  - ./.gitlab-ci/$CI_JOB_STAGE/$CI_JOB_NAME.sh setup
+  dependencies: []
+  script:
+  - ./.gitlab-ci/$CI_JOB_STAGE/$CI_JOB_NAME.sh
+
+.dind: &dind
+  <<: *job
+  tags:
+  - dind
+  image: docker:stable
+  variables:
+    DOCKER_DRIVER: overlay2
+  services:
+  - docker:stable-dind
+
 #######
 # Tests
 #######
-.job: &job
-  stage: test
-  image: hub.lavasoftware.org/lava/ci-images/$CI_JOB_NAME
-  before_script:
-  - PKG="lava-$(echo $CI_JOB_NAME | cut -d - -f 1)"
-  - DISTRO=$(echo $CI_JOB_NAME | cut -d - -f 2)
-  - SUITE=$(echo $CI_JOB_NAME | cut -d - -f 3)
-  - '[ "$SUITE" = "9" ] && SUITE="stretch" || SUITE="buster"'
-  - apt-get install --no-install-recommends --yes $(./share/requires.py -p $PKG -d $DISTRO -s $SUITE -n)
-  - '[ "$SUITE" = "stretch" ] && apt-get install --no-install-recommends --yes -t stretch-backports $(./share/requires.py -p $PKG -d $DISTRO -s stretch-backports -n) || :'
-
 .dispatcher: &dispatcher
   <<: *job
-  script:
-  - PYTHONPATH=. py.test-3 --cache-clear -v --junitxml=dispatcher.xml lava_dispatcher/test
+  stage: test
+  image: hub.lavasoftware.org/lava/ci-images/$CI_JOB_NAME
   artifacts:
     reports:
       junit: dispatcher.xml
 
 .server: &server
   <<: *job
-  script:
-  - PYTHONPATH=. py.test-3 --cache-clear -v --junitxml=common.xml lava_common/test
-  - PYTHONPATH=. py.test-3 --cache-clear --ds lava_server.settings.development -v --junitxml=server.xml lava_scheduler_app/tests lava_results_app/tests linaro_django_xmlrpc/tests.py
+  stage: test
+  image: hub.lavasoftware.org/lava/ci-images/$CI_JOB_NAME
   artifacts:
     reports:
       junit:
@@ -46,50 +54,23 @@ server-debian-10: *server
 # Analyze #
 ###########
 codestyle:
+  <<: *job
   stage: analyze
   image: debian:9
-  before_script:
-  - apt-get update -qq
-  - apt-get install --no-install-recommends -y pycodestyle
-  script:
-  - pycodestyle --ignore E501,E203,W503 .
 
 coverage:
+  <<: *job
   stage: analyze
   image: hub.lavasoftware.org/lava/ci-images/server-debian-9
   coverage: '/^TOTAL.+ (\d+\.\d+)%$/'
-  dependencies: []
-  before_script:
-  - apt-get install --no-install-recommends --yes $(./share/requires.py -p lava-dispatcher -d debian -s stretch -n)
-  - apt-get install --no-install-recommends --yes $(./share/requires.py -p lava-dispatcher -d debian -s stretch-backports -n)
-  - apt-get install --no-install-recommends --yes $(./share/requires.py -p lava-server -d debian -s stretch -n)
-  - apt-get install --no-install-recommends --yes $(./share/requires.py -p lava-server -d debian -s stretch-backports -n)
-  script:
-  - PYTHONPATH=. py.test-3 --cache-clear -v --cov --cov-report= lava_dispatcher/test
-  - PYTHONPATH=. py.test-3 --cache-clear -v --ds lava_server.settings.development --cov --cov-append --cov-report= lava_scheduler_app/tests lava_results_app/tests linaro_django_xmlrpc/tests.py
-  - PYTHONPATH=. py.test-3 --cache-clear -v --cov --cov-append --cov-report=term --cov-report=html lava_common/test
   artifacts:
     paths:
     - htmlcov
 
 sast:
-  tags:
-  - dind
+  <<: *dind
   stage: analyze
-  image: docker:stable
-  dependencies: []
-  variables:
-    DOCKER_DRIVER: overlay2
   allow_failure: true
-  services:
-  - docker:stable-dind
-  script:
-  - export SP_VERSION=$(echo "$CI_SERVER_VERSION" | sed 's/^\([0-9]*\)\.\([0-9]*\).*/\1-\2-stable/')
-  - docker run
-      --env SAST_CONFIDENCE_LEVEL="${SAST_CONFIDENCE_LEVEL:-3}"
-      --volume "$PWD:/code"
-      --volume /var/run/docker.sock:/var/run/docker.sock
-      "registry.gitlab.com/gitlab-org/security-products/sast:$SP_VERSION" /app/bin/run /code
   artifacts:
     paths: [gl-sast-report.json]
 
@@ -97,24 +78,17 @@ sast:
 # Build #
 #########
 doc:
+  <<: *job
   stage: build
   image: debian:9
-  dependencies: []
-  before_script:
-  - apt-get update -qq
-  - apt-get install --no-install-recommends -y git make python3 python3-sphinx python3-sphinx-bootstrap-theme
-  script:
-  - make -C doc/v2 html
   artifacts:
     paths:
     - doc/v2/_build/html
 
 debian-pkg:
+  <<: *job
   stage: build
   image: hub.lavasoftware.org/lava/ci-images/debian-9-packaging
-  dependencies: []
-  script:
-  - ./share/debian-dev-build.sh -p lava -a amd64 -b master -o build
   artifacts:
     paths:
     - build/*.deb
@@ -123,51 +97,15 @@ debian-pkg:
 # Publish #
 ###########
 lava-dispatcher:
-  tags:
-  - dind
+  <<: *dind
   stage: publish
-  image: docker:stable
   dependencies: [debian-pkg]
-  variables:
-    DOCKER_DRIVER: overlay2
-  services:
-  - docker:stable-dind
-  before_script:
-  - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
-  - apk add git
-  script:
-  - git clone https://git.lavasoftware.org/lava/pkg/docker.git
-  - pkg_common=$(find build -name "lava-common_*.deb")
-  - pkg_dispatcher=$(find build -name "lava-dispatcher_*.deb")
-  - cp $pkg_common docker/lava-dispatcher/lava-common.deb
-  - cp $pkg_dispatcher docker/lava-dispatcher/lava-dispatcher.deb
-  - docker build -t $IMAGE_TAG docker/lava-dispatcher
-  - '[ "$CI_COMMIT_REF_NAME" = "master" ] && docker push $IMAGE_TAG || :'
   variables:
     IMAGE_TAG: $CI_REGISTRY_IMAGE/$CI_JOB_NAME
 
 lava-server:
-  tags:
-  - dind
+  <<: *dind
   stage: publish
-  image: docker:stable
   dependencies: [debian-pkg]
-  variables:
-    DOCKER_DRIVER: overlay2
-  services:
-  - docker:stable-dind
-  before_script:
-  - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
-  - apk add git
-  script:
-  - git clone https://git.lavasoftware.org/lava/pkg/docker.git
-  - pkg_common=$(find build -name "lava-common_*.deb")
-  - pkg_server=$(find build -name "lava-server_*.deb")
-  - pkg_server_doc=$(find build -name "lava-server-doc_*.deb")
-  - cp $pkg_common docker/lava-server/lava-common.deb
-  - cp $pkg_server docker/lava-server/lava-server.deb
-  - cp $pkg_server_doc docker/lava-server/lava-server-doc.deb
-  - docker build -t $IMAGE_TAG docker/lava-server
-  - '[ "$CI_COMMIT_REF_NAME" = "master" ] && docker push $IMAGE_TAG || :'
   variables:
     IMAGE_TAG: $CI_REGISTRY_IMAGE/$CI_JOB_NAME
