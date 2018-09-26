@@ -145,9 +145,7 @@ class SchedulerJobsAPI(ExposedV2API):
         else:
             return job.original_definition
 
-    def list(
-        self, state=None, health=None, start=0, limit=25,
-        since=0, verbose=False):
+    def list(self, state=None, health=None, start=0, limit=25, since=0, verbose=False):
         """
         Name
         ----
@@ -170,11 +168,11 @@ class SchedulerJobsAPI(ExposedV2API):
           Filter by health, None by default (no filtering).
           Values: [UNKNOWN, COMPLETE, INCOMPLETE, CANCELED]
         `start`: int
-          Skip the first job(s) in the list
+          Skip the first N job(s) in the list
         `limit`: int
           Max number of jobs to return.
           This value will be clamped to 100
-        `since`: timedelta
+        `since`: int (minutes)
           Filter by jobs which completed in the last N minutes.
         `verbose`: bool
           Add extra data including actual_device, start_time, end_time,
@@ -208,11 +206,11 @@ class SchedulerJobsAPI(ExposedV2API):
 
         # since
         if since:
-            start_time = datetime.now()
-            # search back in time, so range is [end_time, start_time]
-            end_time = start_time - timedelta(minutes=since)
+            end = datetime.now()
+            # search back in time
+            start = end - timedelta(minutes=since)
             try:
-                jobs = jobs.filter(end_time__range=[end_time, start_time])
+                jobs = jobs.filter(end_time__range=[start, end])
             except TestJob.DoesNotExist:
                 raise xmlrpc.client.Fault(404, "No jobs exist since %s minutes ago" % since)
 
