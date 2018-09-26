@@ -18,11 +18,15 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+from datetime import datetime, timedelta
+import pytz
 import xmlrpc.client
+from django.utils import timezone
 from linaro_django_xmlrpc.models import ExposedV2API
 from lava_scheduler_app.api import SchedulerAPI
 from lava_scheduler_app.logutils import read_logs
 from lava_scheduler_app.models import TestJob
+from lava_results_app.models import TestCase
 
 
 def load_optional_file(filename):
@@ -141,11 +145,16 @@ class SchedulerJobsAPI(ExposedV2API):
         else:
             return job.original_definition
 
-    def list(self, state=None, health=None, start=0, limit=25):
+    def list(
+        self, state=None, health=None, start=0, limit=25,
+        since=0, verbose=False):
         """
         Name
         ----
-        `scheduler.jobs.list` (`state=None`, `health=None`, `start=0`, `limit=25`)
+        `scheduler.jobs.list` (
+            `state=None`, `health=None`, `start=0`, `limit=25`,
+            `since=None`, `verbose=False`
+        )
 
         Description
         -----------
@@ -161,40 +170,86 @@ class SchedulerJobsAPI(ExposedV2API):
           Filter by health, None by default (no filtering).
           Values: [UNKNOWN, COMPLETE, INCOMPLETE, CANCELED]
         `start`: int
-          Skip the first job in the list
+          Skip the first job(s) in the list
         `limit`: int
           Max number of jobs to return.
           This value will be clamped to 100
+        `since`: timedelta
+          Filter by jobs which completed in the last N minutes.
+        `verbose`: bool
+          Add extra data including actual_device, start_time, end_time,
+          error_msg and error_type.
+          Note: error_msg can contain nested quotes and other escape
+          characters, parse with care.
 
         Return value
         ------------
-        This function returns an array of jobs
+        This function returns an array of jobs with keys:
+            "id", "description", "device_type", "health",
+            "state", "submitter"
+        If verbose is True, these keys are added:
+            "actual_device", "start_time", "end_time",
+            "error_msg", "error_type"
         """
         ret = []
         start = max(0, start)
         limit = min(limit, 100)
         jobs = TestJob.objects.all()
-        if state is not None:
+        if state:
             try:
                 jobs = jobs.filter(state=TestJob.STATE_REVERSE[state.capitalize()])
             except KeyError:
                 raise xmlrpc.client.Fault(400, "Invalid state '%s'" % state)
-        if health is not None:
+        if health:
             try:
                 jobs = jobs.filter(health=TestJob.HEALTH_REVERSE[health.capitalize()])
             except KeyError:
                 raise xmlrpc.client.Fault(400, "Invalid health '%s'" % health)
 
-        for job in jobs.order_by('-id')[start:start + limit]:
+        # since
+        if since:
+            start_time = datetime.now()
+            # search back in time, so range is [end_time, start_time]
+            end_time = start_time - timedelta(minutes=since)
+            try:
+                jobs = jobs.filter(end_time__range=[end_time, start_time])
+            except TestJob.DoesNotExist:
+                raise xmlrpc.client.Fault(404, "No jobs exist since %s minutes ago" % since)
+
+        if not jobs:
+                raise xmlrpc.client.Fault(404, "No jobs match the specified criteria.")
+
+        for job in jobs.order_by("-id")[start : start + limit]:
             device_type = None
             if job.requested_device_type is not None:
                 device_type = job.requested_device_type.name
-            ret.append({"id": job.display_id,
-                        "description": job.description,
-                        "device_type": device_type,
-                        "health": job.get_health_display(),
-                        "state": job.get_state_display(),
-                        "submitter": job.submitter.username})
+            data = {
+                "id": job.display_id,
+                "description": job.description,
+                "device_type": device_type,
+                "health": job.get_health_display(),
+                "state": job.get_state_display(),
+                "submitter": job.submitter.username,
+            }
+            if verbose:
+                try:
+                    job_case = TestCase.objects.get(
+                        suite__job=job,
+                        suite__name="lava",
+                        name="job")
+                except TestCase.DoesNotExist:
+                    job_case = None
+                base = {"error_msg": "", "error_type": ""}
+                metadata = job_case.action_metadata if job_case else base
+                data.update({
+                    "actual_device": job.actual_device.hostname,
+                    "start_time": str(job.start_time),
+                    "end_time": str(job.end_time),
+                    "error_msg": metadata.get("error_msg", ""),
+                    "error_type": metadata.get("error_type", "")
+                })
+
+            ret.append(data)
 
         return ret
 
