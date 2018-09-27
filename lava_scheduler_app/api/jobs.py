@@ -206,11 +206,11 @@ class SchedulerJobsAPI(ExposedV2API):
 
         # since
         if since:
-            end = datetime.now()
+            end_time = datetime.now()
             # search back in time
-            start = end - timedelta(minutes=since)
+            start_time = end_time - timedelta(minutes=since)
             try:
-                jobs = jobs.filter(end_time__range=[start, end])
+                jobs = jobs.filter(end_time__range=[start_time, end_time])
             except TestJob.DoesNotExist:
                 raise xmlrpc.client.Fault(404, "No jobs exist since %s minutes ago" % since)
 
