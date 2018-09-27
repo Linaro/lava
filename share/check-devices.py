@@ -37,11 +37,19 @@ import yaml
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Check device templates')
-    parser.add_argument("--device-types", required=True, type=str,
-                        help="Path to the directory containing the device-type jinja2 templates.")
-    parser.add_argument("--devices", required=True, type=str,
-                        help="Path to directory containing the device dictionary files.")
+    parser = argparse.ArgumentParser(description="Check device templates")
+    parser.add_argument(
+        "--device-types",
+        required=True,
+        type=str,
+        help="Path to the directory containing the device-type jinja2 templates.",
+    )
+    parser.add_argument(
+        "--devices",
+        required=True,
+        type=str,
+        help="Path to directory containing the device dictionary files.",
+    )
     args = parser.parse_args()
 
     if not os.path.isdir(args.devices):
@@ -57,7 +65,8 @@ def main():
     print("Devices:")
     env = jinja2.Environment(  # nosec - YAML, not HTML, no XSS scope.
         loader=jinja2.FileSystemLoader([args.devices, args.device_types]),
-        autoescape=False)
+        autoescape=False,
+    )
 
     for device in devices:
         device_name = os.path.splitext(os.path.basename(device))[0]
@@ -72,7 +81,10 @@ def main():
             print('* %s (ERROR): redering error "%s"' % (device_name, exc))
             errors = True
         except jinja2.exceptions.TemplateSyntaxError as exc:
-            print('* %s (ERROR): invalid syntax "%s" in "%s"' % (device_name, exc, exc.filename))
+            print(
+                '* %s (ERROR): invalid syntax "%s" in "%s"'
+                % (device_name, exc, exc.filename)
+            )
             errors = True
         else:
             print("* %s" % device_name)
@@ -80,5 +92,5 @@ def main():
     return errors
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

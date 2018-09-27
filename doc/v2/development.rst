@@ -83,6 +83,49 @@ Make your changes
 
   * Use comments in the code in preference to detailed commit messages.
 
+.. index:: codestyle, black
+
+.. _running_black:
+
+Blackening the source code
+--------------------------
+
+LAVA is adopting ``black`` as the formatter for LAVA source code, in a
+gradual manner. ``black`` is only available for Debian Buster and later
+- it is not suitable for backporting to Stretch. However, Buster is
+starting the release freeze process ready for a release in Q2 2019. If
+you are running Buster on your development machine already, or have
+Buster packages available to you, you can install ``black`` using
+``apt`` as usual. You can also choose to install ``black`` from
+https://github.com/ambv/black if it is not available for your OS.
+
+Initially, black is to only be applied to:
+
+* New files added via merge requests on
+  https://git.lavasoftware.org/lava/lava/
+
+* Existing files which are substantially refactored in a merge request
+  on https://git.lavasoftware.org/lava/lava/
+
+* Unit test files and files in ``./share/``
+
+When changing files with black:
+
+#. Avoid changing a file with ``black`` if the file is already part of
+   an existing merge request. Formatting changes must be secondary to
+   functional changes.
+#. The objective is not to run ``black`` on lots of files at once, that
+   just leads to large and noisy merge requests and churn. Change at
+   most two or three files at a time. (This advice can be relaxed for
+   unit test files as simply running the unit tests in the CI is
+   sufficient to show that the formatting change has not affected
+   functionality. Even then, avoid changing more than a few hundred
+   lines per merge request.)
+#. When changing files with ``black``, add the filename to the tracking
+   file in ``share/black.yaml``. In time, this will be used to keep
+   those formatting changes when the file is touched again with a merge
+   request.
+
 .. index:: developer: adding unit tests
 
 .. _developer_adding_unit_tests:
