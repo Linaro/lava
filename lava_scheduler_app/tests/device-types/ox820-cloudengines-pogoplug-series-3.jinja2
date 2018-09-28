@@ -1,0 +1,14 @@
+{% extends 'base-uboot.jinja2' %}
+
+{% set console_device = console_device|default('ttyS0') %}
+{% set baud_rate = baud_rate|default(115200) %}
+{% set bootloader_prompt = bootloader_prompt|default('OX820>') %}
+{% set bootz_kernel_addr = '0x60500000' %}
+{% set bootz_ramdisk_addr = '0x60e00000' %}
+{% set bootz_dtb_addr = '0x62c00000' %}
+{% set booti_kernel_addr = '0x60500000' %}
+{% set booti_ramdisk_addr = '0x60e00000' %}
+{% set booti_dtb_addr = '0x62c00000' %}
+{% set base_ip_args = 'ip=dhcp' %}
+{% set interrupt_ctrl_list = ['c'] %}
+{% set uboot_mkimage_arch = 'arm' %}
