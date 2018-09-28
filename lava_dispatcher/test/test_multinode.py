@@ -211,7 +211,7 @@ class TestMultinode(StdoutTestCase):  # pylint: disable=too-many-public-methods
         for action in self.client_job.pipeline.actions:
             data = action.explode()
             data_str = yaml.dump(data)
-            yaml.load(data_str)
+            yaml.load(data_str)  # nosec not suitable for safe_load
 
     def test_multinode_timeout(self):
         """

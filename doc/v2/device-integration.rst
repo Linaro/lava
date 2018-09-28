@@ -625,9 +625,7 @@ files to see how this is done. e.g. for QEMU from
  {% set mac_addr = 'DE:AD:BE:EF:28:01' %}
  {% set memory = 512 %}"""
         job_ctx = {'arch': 'amd64'}
-        test_template = prepare_jinja_template('staging-qemu-01', data)
-        rendered = test_template.render(**job_ctx)
-        template_dict = yaml.safe_load(rendered)
+        template_dict = prepare_jinja_template('staging-qemu-01', data, job_ctx=job_ctx, raw=False)
         self.assertEqual(
             'c',
             template_dict['actions']['boot']['methods']['qemu']['parameters']['boot_options']['boot_order']

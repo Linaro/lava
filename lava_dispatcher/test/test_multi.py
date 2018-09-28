@@ -158,7 +158,7 @@ class TestMultiDefinition(StdoutTestCase):  # pylint: disable=too-many-public-me
         self.device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
         bbb_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/uboot-nfs.yaml')
         with open(bbb_yaml) as sample_job_data:
-            self.job_data = yaml.load(sample_job_data)
+            self.job_data = yaml.safe_load(sample_job_data)
 
     def test_multidefinition(self):
         block = [testblock['test'] for testblock in self.job_data['actions'] if 'test' in testblock][0]

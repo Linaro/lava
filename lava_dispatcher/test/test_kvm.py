@@ -329,11 +329,11 @@ class TestKVMInlineTestDeploy(StdoutTestCase):  # pylint: disable=too-many-publi
 
     def test_extra_options(self):
         (rendered, _) = self.factory.create_device('kvm01.jinja2')
-        device = NewDevice(yaml.load(rendered))
+        device = NewDevice(yaml.safe_load(rendered))
         kvm_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/kvm-inline.yaml')
         with open(kvm_yaml) as sample_job_data:
-            job_data = yaml.load(sample_job_data)
-        device['actions']['boot']['methods']['qemu']['parameters']['extra'] = yaml.load("""
+            job_data = yaml.safe_load(sample_job_data)
+        device['actions']['boot']['methods']['qemu']['parameters']['extra'] = yaml.safe_load("""
                   - -smp
                   - 1
                   - -global
@@ -383,7 +383,7 @@ class TestKVMInlineTestDeploy(StdoutTestCase):  # pylint: disable=too-many-publi
         yaml_file = os.path.join(location, '0/tests/0_smoke-tests-inline/inline/smoke-tests-basic.yaml')
         self.assertTrue(os.path.exists(yaml_file))
         with open(yaml_file, 'r') as f_in:
-            testdef = yaml.load(f_in)
+            testdef = yaml.safe_load(f_in)
         expected_testdef = {'metadata':
                             {'description': 'Basic system test command for Linaro Ubuntu images',
                              'devices': ['panda', 'panda-es', 'arndale', 'vexpress-a9', 'vexpress-tc2'],
@@ -667,7 +667,7 @@ class TestChecksum(StdoutTestCase):
 
     def test_uboot_checksum(self):
         (rendered, _) = self.factory.create_device('bbb-01.jinja2')
-        device = NewDevice(yaml.load(rendered))
+        device = NewDevice(yaml.safe_load(rendered))
         bbb_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/bbb-ramdisk-nfs.yaml')
         with open(bbb_yaml) as sample_job_data:
             parser = JobParser()

@@ -13,10 +13,8 @@ from lava_scheduler_app.models import (
     Tag,
     DevicesUnavailableException,
     _pipeline_protocols,
-    _check_submit_to_device,
 )
 from lava_scheduler_app.dbutils import match_vlan_interface
-from django.db.models import Q
 from django.contrib.auth.models import Group, Permission, User
 from lava_scheduler_app.utils import (
     split_multinode_yaml,
@@ -35,7 +33,6 @@ from lava_dispatcher.actions.boot.qemu import BootQEMU
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
 from lava_common.constants import SYS_CLASS_KVM
 from lava_dispatcher.test.utils import DummyLogger
-from django_restricted_resource.managers import RestrictedResourceQuerySet
 from unittest import TestCase
 
 
@@ -90,7 +87,7 @@ class YamlFactory(ModelFactory):
     def make_job_data(self, actions=None, **kw):
         sample_job_file = os.path.join(os.path.dirname(__file__), 'devices', 'qemu.yaml')
         with open(sample_job_file, 'r') as test_support:
-            data = yaml.load(test_support)
+            data = yaml.safe_load(test_support)
         data.update(kw)
         return data
 
@@ -115,7 +112,7 @@ class PipelineDeviceTags(TestCaseWithFactory):
         }
 
     def test_make_job_yaml(self):
-        data = yaml.load(self.factory.make_job_yaml())
+        data = yaml.safe_load(self.factory.make_job_yaml())
         self.assertIn('device_type', data)
         self.assertNotIn('timeout', data)
         self.assertIn('timeouts', data)
@@ -150,7 +147,7 @@ class PipelineDeviceTags(TestCaseWithFactory):
             self.factory.ensure_tag('usb'),
             self.factory.ensure_tag('sata')
         ]
-        data = yaml.load(self.factory.make_job_yaml(tags=['usb', 'sata']))
+        data = yaml.safe_load(self.factory.make_job_yaml(tags=['usb', 'sata']))
         validate_submission(data)
         device = self.factory.make_device(self.device_type, 'fakeqemu4', tags=tag_list)
         job_ctx = data.get('context', {})
@@ -266,7 +263,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
         user = self.factory.make_user()
         job = TestJob.from_yaml_and_user(
             self.factory.make_job_yaml(), user)
-        job_def = yaml.load(job.definition)
+        job_def = yaml.safe_load(job.definition)
         job_ctx = job_def.get('context', {})
         device_config = device.load_configuration(job_ctx)  # raw dict
         self.assertTrue(device.is_valid(system=False))
@@ -275,7 +272,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
             'qemu-system-x86_64'
         )
 
-        job_data = yaml.load(self.factory.make_job_yaml())
+        job_data = yaml.safe_load(self.factory.make_job_yaml())
         job_data['context'].update({'netdevice': 'tap'})
         job_ctx = job_data.get('context', {})
         device_config = device.load_configuration(job_ctx)  # raw dict
@@ -325,7 +322,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
         )
 
     def test_metadata(self):
-        data = yaml.load(self.factory.make_job_yaml(metadata={15: 'test'}))
+        data = yaml.safe_load(self.factory.make_job_yaml(metadata={15: 'test'}))
         validate_submission(data)
         metadata = {
             'build-url': None,
@@ -335,13 +332,13 @@ class TestPipelineSubmit(TestCaseWithFactory):
             'git-url': 'https://git.linaro.org/zephyrproject-org/zephyr.git',
             'git-commit': 1234
         }
-        data = yaml.load(self.factory.make_job_yaml(metadata=metadata))
+        data = yaml.safe_load(self.factory.make_job_yaml(metadata=metadata))
         self.assertRaises(SubmissionException, validate_submission, data)
         metadata['build-url'] = 'http://nowhere.com'
-        data = yaml.load(self.factory.make_job_yaml(metadata=metadata))
+        data = yaml.safe_load(self.factory.make_job_yaml(metadata=metadata))
         self.assertRaises(SubmissionException, validate_submission, data)
         metadata['zephyr-gcc-variant'] = '4.9'
-        data = yaml.load(self.factory.make_job_yaml(metadata=metadata))
+        data = yaml.safe_load(self.factory.make_job_yaml(metadata=metadata))
         validate_submission(data)
 
     def test_command_list(self):
@@ -371,7 +368,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
         self.assertIn('timeouts', device_dict)
 
     def test_auto_login(self):
-        data = yaml.load(self.factory.make_job_yaml())
+        data = yaml.safe_load(self.factory.make_job_yaml())
         validate_submission(data)
 
         boot_params = None
@@ -406,7 +403,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
 
         # public set in the YAML
         yaml_str = self.factory.make_job_yaml()
-        yaml_data = yaml.load(yaml_str)
+        yaml_data = yaml.safe_load(yaml_str)
         job = TestJob.from_yaml_and_user(
             yaml_str, user)
         self.assertTrue(job.is_public)
@@ -436,7 +433,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
         self.assertFalse(job2.can_view(user))
         self.assertTrue(job2.can_view(user3))
 
-        job_data = yaml.load(self.factory.make_job_yaml())
+        job_data = yaml.safe_load(self.factory.make_job_yaml())
         job_data['visibility'] = {'group': [group1.name]}
         param = job_data['visibility']
         if isinstance(param, dict):
@@ -458,7 +455,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
         user = self.factory.make_user()
         # public set in the YAML
         yaml_str = self.factory.make_job_yaml()
-        yaml_data = yaml.load(yaml_str)
+        yaml_data = yaml.safe_load(yaml_str)
         job = TestJob.from_yaml_and_user(
             yaml_str, user)
         self.assertTrue(job.is_public)
@@ -467,10 +464,10 @@ class TestPipelineSubmit(TestCaseWithFactory):
         self.assertEqual(job.pipeline_compatibility, 0)
         self.assertNotIn('compatibility', yaml_data)
         # FIXME: dispatcher master needs to make this kind of test more accessible.
-        definition = yaml.load(job.definition)
+        definition = yaml.safe_load(job.definition)
         self.assertNotIn('protocols', definition)
         job.actual_device = Device.objects.get(hostname='fakeqemu1')
-        job_def = yaml.load(job.definition)
+        job_def = yaml.safe_load(job.definition)
         job_ctx = job_def.get('context', {})
         parser = JobParser()
         device = job.actual_device
@@ -583,7 +580,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         """
         server_check = os.path.join(os.path.dirname(__file__), 'sample_jobs', 'kvm-multinode-server.yaml')
         client_check = os.path.join(os.path.dirname(__file__), 'sample_jobs', 'kvm-multinode-client.yaml')
-        submission = yaml.load(open(
+        submission = yaml.safe_load(open(
             os.path.join(os.path.dirname(__file__), 'sample_jobs', 'kvm-multinode.yaml'), 'r'))
         target_group = 'arbitrary-group-id'  # for unit tests only
 
@@ -594,16 +591,16 @@ class TestYamlMultinode(TestCaseWithFactory):
                 del(job['protocols']['lava-multinode']['sub_id'])
                 yaml.dump(job)  # ensure the jobs can be serialised as YAML
                 if role == 'client':
-                    self.assertEqual(job, yaml.load(open(client_check, 'r')))
+                    self.assertEqual(job, yaml.safe_load(open(client_check, 'r')))
                 if role == 'server':
-                    self.assertEqual(job, yaml.load(open(server_check, 'r')))
+                    self.assertEqual(job, yaml.safe_load(open(server_check, 'r')))
 
     @unittest.skipIf(check_rpcinfo(), "rpcinfo returns non-zero for nfs")
     def test_secondary_connection(self):
         user = self.factory.make_user()
         device_type = self.factory.make_device_type(name='mustang')
         device = self.factory.make_device(device_type, 'mustang1')
-        submission = yaml.load(open(
+        submission = yaml.safe_load(open(
             os.path.join(os.path.dirname(__file__), 'sample_jobs', 'mustang-ssh-multinode.yaml'), 'r'))
         target_group = 'arbitrary-group-id'  # for unit tests only
         jobs_dict = split_multinode_yaml(submission, target_group)
@@ -664,7 +661,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         Tag.objects.all().delete()
         self.factory.ensure_tag('tap'),
         self.factory.ensure_tag('virtio')
-        submission = yaml.load(open(
+        submission = yaml.safe_load(open(
             os.path.join(os.path.dirname(__file__), 'sample_jobs', 'kvm-multinode.yaml'), 'r'))
         roles_dict = submission['protocols'][MultinodeProtocol.name]['roles']
         roles_dict['client']['tags'] = ['tap']
@@ -710,7 +707,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         self.assertEqual(len(job_list), 3)
 
     def test_multinode_lxc(self):
-        submission = yaml.load(open(
+        submission = yaml.safe_load(open(
             os.path.join(os.path.dirname(__file__), 'sample_jobs', 'lxc-multinode.yaml'), 'r'))
         target_group = 'arbitrary-group-id'  # for unit tests only
 
@@ -731,7 +728,7 @@ class TestYamlMultinode(TestCaseWithFactory):
                 self.fail('Unrecognised role: %s' % role)
 
     def test_multinode_hikey(self):
-        submission = yaml.load(open(
+        submission = yaml.safe_load(open(
             os.path.join(os.path.dirname(__file__), 'sample_jobs', 'hikey_multinode.yaml'), 'r'))
         target_group = 'arbitrary-group-id'  # for unit tests only
 
@@ -758,7 +755,7 @@ class TestYamlMultinode(TestCaseWithFactory):
                 self.fail('Unrecognised role: %s' % role)
 
     def test_multinode_nexus4(self):
-        submission = yaml.load(open(
+        submission = yaml.safe_load(open(
             os.path.join(os.path.dirname(__file__), 'sample_jobs', 'nexus4_multinode.yaml'), 'r'))
         target_group = 'arbitrary-group-id'  # for unit tests only
 
@@ -783,7 +780,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         device_type = self.factory.make_device_type()
         Device.objects.filter(device_type=device_type).delete()
         Tag.objects.all().delete()
-        submission = yaml.load(open(
+        submission = yaml.safe_load(open(
             os.path.join(os.path.dirname(__file__), 'sample_jobs', 'kvm-multinode.yaml'), 'r'))
         # no devices defined for the specified type
         self.assertRaises(DevicesUnavailableException, _pipeline_protocols, submission, user, yaml_data=None)
@@ -810,7 +807,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         self.assertEqual(len(job_object_list), 2)
         for job in job_object_list:
             self.assertEqual(list(job.sub_jobs_list), job_object_list)
-            check = yaml.load(job.definition)
+            check = yaml.safe_load(job.definition)
             if check['protocols']['lava-multinode']['role'] == 'client':
                 self.assertEqual(
                     check['protocols']['lava-multinode']['tags'],
@@ -826,7 +823,7 @@ class TestYamlMultinode(TestCaseWithFactory):
     def test_multinode_group(self):
         user = self.factory.make_user()
         device_type = self.factory.make_device_type()
-        submission = yaml.load(open(
+        submission = yaml.safe_load(open(
             os.path.join(os.path.dirname(__file__), 'sample_jobs', 'kvm-multinode.yaml'), 'r'))
         self.factory.make_device(device_type, 'fakeqemu1')
         tag_list = [
@@ -838,8 +835,8 @@ class TestYamlMultinode(TestCaseWithFactory):
         job_object_list = _pipeline_protocols(submission, user, yaml.dump(submission))
         for job in job_object_list:
             self.assertEqual(list(job.sub_jobs_list), job_object_list)
-        check_one = yaml.load(job_object_list[0].definition)
-        check_two = yaml.load(job_object_list[1].definition)
+        check_one = yaml.safe_load(job_object_list[0].definition)
+        check_two = yaml.safe_load(job_object_list[1].definition)
         self.assertEqual(
             job_object_list[0].target_group,
             job_object_list[1].target_group
@@ -868,7 +865,7 @@ class TestYamlMultinode(TestCaseWithFactory):
     def test_multinode_definition(self):
         user = self.factory.make_user()
         device_type = self.factory.make_device_type()
-        submission = yaml.load(open(
+        submission = yaml.safe_load(open(
             os.path.join(os.path.dirname(__file__), 'sample_jobs', 'kvm-multinode.yaml'), 'r'))
         self.factory.make_device(device_type, 'fakeqemu1')
         self.factory.make_device(device_type, 'fakeqemu2')
@@ -893,7 +890,7 @@ class TestYamlMultinode(TestCaseWithFactory):
     def test_invalid_multinode(self):  # pylint: disable=too-many-locals
         user = self.factory.make_user()
         device_type = self.factory.make_device_type()
-        submission = yaml.load(open(
+        submission = yaml.safe_load(open(
             os.path.join(os.path.dirname(__file__), 'sample_jobs', 'kvm-multinode.yaml'), 'r'))
 
         tag_list = [
@@ -920,10 +917,10 @@ class TestYamlMultinode(TestCaseWithFactory):
             "%d.%d" % (int(job_object_list[0].id), 0))
         # FIXME: dispatcher master needs to make this kind of test more accessible.
         for job in job_object_list:
-            definition = yaml.load(job.definition)
+            definition = yaml.safe_load(job.definition)
             self.assertNotEqual(definition['protocols']['lava-multinode']['sub_id'], '')
             job.actual_device = Device.objects.get(hostname='fakeqemu1')
-            job_def = yaml.load(job.definition)
+            job_def = yaml.safe_load(job.definition)
             job_ctx = job_def.get('context', {})
             parser = JobParser()
             device = None
@@ -974,7 +971,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         self.factory.make_device(device_type, 'fakeqemu2')
         self.factory.make_device(device_type, 'fakeqemu3')
         self.factory.make_device(device_type, 'fakeqemu4')
-        submission = yaml.load(open(
+        submission = yaml.safe_load(open(
             os.path.join(os.path.dirname(__file__), 'sample_jobs', 'kvm-multinode.yaml'), 'r'))
         role_list = submission['protocols'][MultinodeProtocol.name]['roles']
         for role in role_list:
@@ -987,7 +984,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         device_type = self.factory.make_device_type()
         self.factory.make_device(device_type, 'fakeqemu1')
         self.factory.make_device(device_type, 'fakeqemu2')
-        client_submission = yaml.load(open(
+        client_submission = yaml.safe_load(open(
             os.path.join(os.path.dirname(__file__), 'sample_jobs', 'kvm-multinode-client.yaml'), 'r'))
         job_ctx = client_submission.get('context', {})
         device = Device.objects.get(hostname='fakeqemu1')
@@ -1011,7 +1008,7 @@ class TestYamlMultinode(TestCaseWithFactory):
             },
             meta_dict)
         # simulate dynamic connection
-        dynamic = yaml.load(open(
+        dynamic = yaml.load(open(  # nosec - not suitable for safe_load
             os.path.join(os.path.dirname(__file__), 'pipeline_refs', 'connection-description.yaml'), 'r'))
         meta_dict = _get_action_metadata(dynamic['job']['actions'])
         self.assertEqual(
@@ -1037,12 +1034,12 @@ class TestYamlMultinode(TestCaseWithFactory):
         bbb_type = self.factory.make_device_type('beaglebone-black')
         self.factory.make_device(hostname='bbb-01', device_type=bbb_type)
         self.factory.make_device(hostname='bbb-02', device_type=bbb_type)
-        submission = yaml.load(open(
+        submission = yaml.safe_load(open(
             os.path.join(os.path.dirname(__file__), 'sample_jobs', 'bbb-qemu-multinode.yaml'), 'r'))
         job_object_list = _pipeline_protocols(submission, user, yaml.dump(submission))
 
         for job in job_object_list:
-            definition = yaml.load(job.definition)
+            definition = yaml.safe_load(job.definition)
             self.assertNotEqual(definition['protocols']['lava-multinode']['sub_id'], '')
             sub_ids = [job.sub_id for job in job_object_list]
             self.assertEqual(len(set(sub_ids)), len(sub_ids))
@@ -1052,7 +1049,7 @@ class TestYamlMultinode(TestCaseWithFactory):
                 job.actual_device = Device.objects.get(hostname='bbb-01')
             else:
                 self.fail('Unrecognised device type: %s' % job.requested_device_type)
-            job_def = yaml.load(job.definition)
+            job_def = yaml.safe_load(job.definition)
             job_ctx = job_def.get('context', {})
             parser = JobParser()
             device_object = None
@@ -1098,14 +1095,14 @@ class TestYamlMultinode(TestCaseWithFactory):
         bbb_type = self.factory.make_device_type('beaglebone-black')
         self.factory.make_device(hostname='bbb-01', device_type=bbb_type)
         self.factory.make_device(hostname='bbb-02', device_type=bbb_type)
-        submission = yaml.load(open(
+        submission = yaml.safe_load(open(
             os.path.join(os.path.dirname(__file__), 'sample_jobs', 'bbb-qemu-multinode.yaml'), 'r'))
         self.assertIn('protocols', submission)
         self.assertIn(MultinodeProtocol.name, submission['protocols'])
         submission['protocols'][MultinodeProtocol.name]['roles']['server']['essential'] = True
         job_object_list = _pipeline_protocols(submission, user, yaml.dump(submission))
         for job in job_object_list:
-            definition = yaml.load(job.definition)
+            definition = yaml.safe_load(job.definition)
             role = definition['protocols'][MultinodeProtocol.name]['role']
             self.assertNotEqual(definition['protocols']['lava-multinode']['sub_id'], '')
             if role == 'client':
@@ -1132,7 +1129,7 @@ class VlanInterfaces(TestCaseWithFactory):
         self.filename = os.path.join(os.path.dirname(__file__), 'sample_jobs', 'bbb-cubie-vlan-group.yaml')
 
     def test_vlan_interface(self):  # pylint: disable=too-many-locals
-        submission = yaml.load(open(self.filename, 'r'))
+        submission = yaml.safe_load(open(self.filename, 'r'))
         self.assertIn('protocols', submission)
         self.assertIn('lava-vland', submission['protocols'])
         roles = [role for role, _ in submission['protocols']['lava-vland'].items()]

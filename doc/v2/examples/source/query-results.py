@@ -63,7 +63,7 @@ def main(args):
         return 0
     print("Job, Type, Message, Time")
     for result in data:
-        job_lava = yaml.load(connection.results.get_testcase_results_yaml(result['id'], 'lava', 'job'))[0]
+        job_lava = yaml.safe_load(connection.results.get_testcase_results_yaml(result['id'], 'lava', 'job'))[0]
         job_id = job_lava['job']
         logged = job_lava['logged']
         if result['status'] == INCOMPLETE:

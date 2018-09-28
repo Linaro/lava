@@ -39,7 +39,7 @@ class TestDeviceParser(StdoutTestCase):  # pylint: disable=too-many-public-metho
     def test_new_device(self):
         factory = Factory()
         (rendered, _) = factory.create_device('kvm01.jinja2')
-        kvm01 = yaml.load(rendered)
+        kvm01 = yaml.safe_load(rendered)
         try:
             self.assertIsNotNone(kvm01['actions'])
         except Exception:
@@ -113,16 +113,16 @@ class TestJobDeviceParameters(StdoutTestCase):  # pylint: disable=too-many-publi
     def test_device_power(self):
         factory = Factory()
         (rendered, _) = factory.create_device('bbb-01.jinja2')
-        device = yaml.load(rendered)
+        device = yaml.safe_load(rendered)
         self.assertNotEqual(device['commands'].get('hard_reset', ''), '')
         (rendered, _) = factory.create_device('kvm01.jinja2')
-        device = yaml.load(rendered)
+        device = yaml.safe_load(rendered)
         self.assertNotIn('commands', device)
 
     def test_device_constants(self):
         factory = Factory()
         (rendered, _) = factory.create_device('bbb-01.jinja2')
-        device = NewDevice(yaml.load(rendered))
+        device = NewDevice(yaml.safe_load(rendered))
         self.assertIn('constants', device)
         self.assertEqual(device.get_constant('kernel-start-message'), "Linux version [0-9]")
         self.assertRaises(ConfigurationError,
@@ -139,7 +139,7 @@ class TestDeviceEnvironment(StdoutTestCase):  # pylint: disable=too-many-public-
         data = None
         job_parser = JobParser()
         (rendered, _) = factory.create_device('bbb-01.jinja2')
-        device = NewDevice(yaml.load(rendered))
+        device = NewDevice(yaml.safe_load(rendered))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/uboot-ramdisk.yaml')
         with open(sample_job_file) as sample_job_data:
             job = job_parser.parse(
@@ -165,7 +165,7 @@ overrides:
         factory = Factory()
         job_parser = JobParser()
         (rendered, _) = factory.create_device('bbb-01.jinja2')
-        device = NewDevice(yaml.load(rendered))
+        device = NewDevice(yaml.safe_load(rendered))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/uboot-ramdisk.yaml')
         with open(sample_job_file) as sample_job_data:
             job = job_parser.parse(
@@ -190,7 +190,7 @@ overrides:
         factory = Factory()
         job_parser = JobParser()
         (rendered, _) = factory.create_device('bbb-01.jinja2')
-        device = NewDevice(yaml.load(rendered))
+        device = NewDevice(yaml.safe_load(rendered))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/uboot-ramdisk.yaml')
         with open(sample_job_file) as sample_job_data:
             job = job_parser.parse(

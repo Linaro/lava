@@ -19,14 +19,22 @@ CONFIG_PATH = os.path.abspath(
         "lava_scheduler_app", "tests", "devices"))
 
 
-def prepare_jinja_template(hostname, jinja_data):
+def prepare_jinja_template(hostname, jinja_data, job_ctx=None, raw=True):
+    if not job_ctx:
+        job_ctx = {}
     string_loader = jinja2.DictLoader({'%s.jinja2' % hostname: jinja_data})
     path = os.path.dirname(CONFIG_PATH)
     type_loader = jinja2.FileSystemLoader([os.path.join(path, 'device-types')])
     env = jinja2.Environment(  # nosec - YAML, not HTML, no XSS scope.
         loader=jinja2.ChoiceLoader([string_loader, type_loader]),
         trim_blocks=True, autoescape=False)
-    return env.get_template("%s.jinja2" % hostname)
+    test_template = env.get_template("%s.jinja2" % hostname)
+    if raw:
+        return test_template
+    rendered = test_template.render(**job_ctx)
+    if not rendered:
+        return None
+    return yaml.safe_load(rendered)
 
 
 class BaseTemplate:
@@ -36,7 +44,7 @@ class BaseTemplate:
         debug = False  # set to True to see the YAML device config output
         system = False  # set to True to debug the system templates
 
-        def render_device_dictionary_file(self, filename, job_ctx=None):
+        def render_device_dictionary_file(self, filename, job_ctx=None, raw=True):
             device = filename.replace('.jinja2', '')
             with open(os.path.join(os.path.dirname(__file__), 'devices', filename)) as input:
                 data = input.read()
@@ -46,9 +54,12 @@ class BaseTemplate:
             test_template = prepare_jinja_template(device, data)
             if not job_ctx:
                 job_ctx = {}
-            return test_template.render(**job_ctx)
+            rendered = test_template.render(**job_ctx)
+            if raw:
+                return rendered
+            return yaml.safe_load(rendered)
 
-        def render_device_dictionary(self, hostname, data, job_ctx=None):
+        def render_device_dictionary(self, hostname, data, job_ctx=None, raw=True):
             if not job_ctx:
                 job_ctx = {}
             test_template = prepare_jinja_template(hostname, data)
@@ -57,12 +68,14 @@ class BaseTemplate:
                 print('#######')
                 print(rendered)
                 print('#######')
-            return rendered
+            if raw:
+                return rendered
+            return yaml.safe_load(rendered)
 
         def validate_data(self, hostname, data, job_ctx=None):
-            rendered = self.render_device_dictionary(hostname, data, job_ctx)
+            rendered = self.render_device_dictionary(hostname, data, job_ctx, raw=True)
             try:
-                ret = validate_device(yaml.load(rendered, Loader=yaml.CLoader))
+                ret = validate_device(yaml.load(rendered, Loader=yaml.CSafeLoader))  # nosec - safe_load implemented directly
             except SubmissionException as exc:
                 print('#######')
                 print(rendered)
@@ -88,7 +101,7 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
             try:
                 test_template = env.from_string(data)
                 rendered = test_template.render()
-                template_dict = yaml.load(rendered, Loader=yaml.CLoader)
+                template_dict = yaml.load(rendered, Loader=yaml.CLoader)  # nosec - safe_load implemented directly
                 validate_device(template_dict)
             except AssertionError as exc:
                 self.fail("Template %s failed: %s" % (os.path.basename(template), exc))
@@ -109,7 +122,7 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
             data += "{% set connection_command = 'telnet calvin 6080' %}"
             test_template = env.from_string(data)
             rendered = test_template.render()
-            template_dict = yaml.load(rendered, Loader=yaml.CLoader)
+            template_dict = yaml.load(rendered, Loader=yaml.CSafeLoader)  # nosec - safe_load implemented directly
             validate_device(template_dict)
             self.assertIn('connect', template_dict['commands'])
             self.assertNotIn(
@@ -121,7 +134,7 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
             data += "{% set connection_tags = {'uart1': ['primary']} %}"
             test_template = env.from_string(data)
             rendered = test_template.render()
-            template_dict = yaml.load(rendered, Loader=yaml.CLoader)
+            template_dict = yaml.load(rendered, Loader=yaml.CSafeLoader)  # nosec - safe_load implemented directly
             validate_device(template_dict)
             self.assertNotIn('connect', template_dict['commands'])
             self.assertIn(
@@ -151,9 +164,7 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
 {% set fastboot_serial_number = 'R42D300FRYP' %}
 {% set connection_command = 'adb -s ' + adb_serial_number +' shell' %}
 """
-        test_template = prepare_jinja_template('nexus4-01', data)
-        rendered = test_template.render()
-        template_dict = yaml.load(rendered)
+        template_dict = prepare_jinja_template('nexus4-01', data, raw=False)
         self.assertEqual(
             'adb -s R42D300FRYP shell',
             template_dict['commands']['connect']
@@ -169,9 +180,7 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
 
     def test_console_baud(self):
         data = """{% extends 'beaglebone-black.jinja2' %}"""
-        test_template = prepare_jinja_template('bbb-01', data)
-        rendered = test_template.render()
-        template_dict = yaml.load(rendered)
+        template_dict = prepare_jinja_template('bbb-01', data, raw=False)
         self.assertIn('u-boot', template_dict['actions']['boot']['methods'])
         self.assertIn('nfs', template_dict['actions']['boot']['methods']['u-boot'])
         commands = template_dict['actions']['boot']['methods']['u-boot']['nfs']['commands']
@@ -180,9 +189,7 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
                 continue
             self.assertIn('console=ttyO0,115200n8', command)
         data = """{% extends 'base-uboot.jinja2' %}"""
-        test_template = prepare_jinja_template('base-01', data)
-        rendered = test_template.render()
-        template_dict = yaml.load(rendered)
+        template_dict = prepare_jinja_template('base-01', data, raw=False)
         self.assertIn('u-boot', template_dict['actions']['boot']['methods'])
         self.assertIn('nfs', template_dict['actions']['boot']['methods']['u-boot'])
         commands = template_dict['actions']['boot']['methods']['u-boot']['nfs']['commands']
@@ -206,7 +213,7 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
         self.assertRaises(
             SubmissionException,
             validate_device,
-            yaml.load(device_dict)
+            yaml.safe_load(device_dict)
         )
 
     def test_primary_connection_power_commands_empty_ssh_host(self):  # pylint: disable=invalid-name
@@ -217,7 +224,7 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
 {% set connection_command = 'telnet localhost 7302' %}
 {% set ssh_host = '' %}"""
         device_dict = self.render_device_dictionary('staging-x86-01', data)
-        self.assertTrue(validate_device(yaml.load(device_dict)))
+        self.assertTrue(validate_device(yaml.safe_load(device_dict)))
 
     def test_primary_connection_power_commands(self):  # pylint: disable=invalid-name
         data = """{% extends 'x86.jinja2' %}
@@ -226,11 +233,10 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
 {% set power_on_command = '/usr/bin/pduclient --command on' %}
 {% set connection_command = 'telnet localhost 7302' %}"""
         device_dict = self.render_device_dictionary('staging-x86-01', data)
-        self.assertTrue(validate_device(yaml.load(device_dict)))
+        self.assertTrue(validate_device(yaml.safe_load(device_dict)))
 
     def test_pexpect_spawn_window(self):
-        rendered = self.render_device_dictionary_file('hi6220-hikey-01.jinja2')
-        template_dict = yaml.load(rendered)
+        template_dict = self.render_device_dictionary_file('hi6220-hikey-01.jinja2', raw=False)
         self.assertIsNotNone(template_dict['constants'])
         self.assertIn('spawn_maxread', template_dict['constants'])
         self.assertIsInstance(template_dict['constants']['spawn_maxread'], str)
@@ -238,8 +244,7 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
 
     def test_test_shell_constants(self):
         job_ctx = {}
-        rendered = self.render_device_dictionary_file('hi6220-hikey-01.jinja2', job_ctx=job_ctx)
-        template_dict = yaml.load(rendered)
+        template_dict = self.render_device_dictionary_file('hi6220-hikey-01.jinja2', job_ctx=job_ctx, raw=False)
         self.assertIsNotNone(template_dict['constants'])
         self.assertIn('posix', template_dict['constants'])
         self.assertEqual(
@@ -249,8 +254,7 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
         job_ctx = {
             'lava_test_results_dir': '/sysroot/lava-%s',
         }
-        rendered = self.render_device_dictionary_file('hi6220-hikey-01.jinja2', job_ctx=job_ctx)
-        template_dict = yaml.load(rendered)
+        template_dict = self.render_device_dictionary_file('hi6220-hikey-01.jinja2', job_ctx=job_ctx, raw=False)
         self.assertIsNotNone(template_dict['constants'])
         self.assertIn('posix', template_dict['constants'])
         self.assertEqual(

@@ -360,7 +360,7 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         """
         job_parser = JobParser()
         (rendered, _) = self.factory.create_device('cubie1.jinja2')
-        cubie = NewDevice(yaml.load(rendered))
+        cubie = NewDevice(yaml.safe_load(rendered))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/cubietruck-removable.yaml')
         sample_job_data = open(sample_job_file)
         job = job_parser.parse(sample_job_data, cubie, 4212, None, "")
@@ -443,7 +443,7 @@ class TestKernelConversion(StdoutTestCase):
         self.device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/bbb-01.yaml'))
         bbb_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/uboot-ramdisk.yaml')
         with open(bbb_yaml) as sample_job_data:
-            self.base_data = yaml.load(sample_job_data)
+            self.base_data = yaml.safe_load(sample_job_data)
         self.deploy_block = [block for block in self.base_data['actions'] if 'deploy' in block][0]['deploy']
         self.boot_block = [block for block in self.base_data['actions'] if 'boot' in block][0]['boot']
         self.parser = JobParser()

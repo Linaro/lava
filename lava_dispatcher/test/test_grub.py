@@ -19,12 +19,10 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 
-import os
 import yaml
 import unittest
 from lava_dispatcher.device import NewDevice
-from lava_dispatcher.parser import JobParser
-from lava_dispatcher.test.utils import DummyLogger, infrastructure_error, infrastructure_error_multi_paths
+from lava_dispatcher.test.utils import infrastructure_error, infrastructure_error_multi_paths
 from lava_dispatcher.actions.boot.grub import GrubMainAction
 from lava_dispatcher.actions.boot import BootloaderCommandOverlay, BootloaderInterruptAction
 from lava_dispatcher.actions.deploy.tftp import TftpAction
@@ -32,7 +30,7 @@ from lava_dispatcher.job import Job
 from lava_dispatcher.action import JobError, Pipeline
 from lava_dispatcher.test.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.utils.network import dispatcher_ip
-from lava_dispatcher.utils.filesystem import mkdtemp, tftpd_dir
+from lava_dispatcher.utils.filesystem import tftpd_dir
 from lava_dispatcher.utils.strings import substitute
 
 
@@ -145,7 +143,7 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
             }
         }
         (rendered, _) = self.factory.create_device('d02-01.jinja2')
-        device = NewDevice(yaml.load(rendered))
+        device = NewDevice(yaml.safe_load(rendered))
         job = Job(4212, parameters, None)
         job.device = device
         pipeline = Pipeline(job=job, parameters=parameters['actions']['boot'])

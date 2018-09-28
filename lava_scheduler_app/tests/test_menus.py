@@ -12,7 +12,7 @@ class YamlMenuFactory(YamlFactory):
     def make_job_data(self, actions=None, **kw):
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs', 'mustang-menu-ramdisk.yaml')
         with open(sample_job_file, 'r') as test_support:
-            data = yaml.load(test_support)
+            data = yaml.safe_load(test_support)
         data.update(kw)
         return data
 
@@ -27,7 +27,7 @@ class TestPipelineMenu(TestCaseWithFactory):  # pylint: disable=too-many-ancesto
         self.device_type = self.factory.make_device_type(name='mustang-uefi')
 
     def test_make_job_yaml(self):
-        data = yaml.load(self.factory.make_job_yaml())
+        data = yaml.safe_load(self.factory.make_job_yaml())
         self.assertIn('device_type', data)
         self.assertNotIn('timeout', data)
         self.assertIn('timeouts', data)

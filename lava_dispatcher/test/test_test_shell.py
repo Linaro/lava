@@ -52,7 +52,7 @@ class TestPatterns(StdoutTestCase):
         self.assertEqual([], self.job.pipeline.errors)
         self.assertTrue(os.path.exists(self.testdef))
         with open(self.testdef, 'r') as par:
-            params = yaml.load(par)
+            params = yaml.safe_load(par)
         self.assertIn('parse', params.keys())
 
         line = 'test1a: pass'

@@ -20,7 +20,6 @@
 
 
 import os
-import sys
 import yaml
 import unittest
 from lava_dispatcher.device import NewDevice
@@ -129,7 +128,7 @@ class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-m
             }
         }
         (rendered, _) = self.factory.create_device('x86-01.jinja2')
-        device = NewDevice(yaml.load(rendered))
+        device = NewDevice(yaml.safe_load(rendered))
         job = Job(4212, parameters, None)
         job.device = device
         pipeline = Pipeline(job=job, parameters=parameters['actions']['boot'])
@@ -229,12 +228,12 @@ class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-m
                   if action.name == 'expect-shell-connection'][0]
         check = expect.parameters
         (rendered, _) = self.factory.create_device('x86-01.jinja2')
-        device = NewDevice(yaml.load(rendered))
+        device = NewDevice(yaml.safe_load(rendered))
         extra_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/ipxe.yaml')
         with open(extra_yaml) as data:
             sample_job_string = data.read()
         parser = JobParser()
-        sample_job_data = yaml.load(sample_job_string)
+        sample_job_data = yaml.safe_load(sample_job_string)
         boot = [item['boot'] for item in sample_job_data['actions'] if 'boot' in item][0]
         self.assertIsNotNone(boot)
         sample_job_string = yaml.dump(sample_job_data)

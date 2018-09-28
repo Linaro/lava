@@ -288,7 +288,7 @@ commands:
       uart0:
         connect: telnet localhost 7020
         """
-        data = yaml.load(device_data)
+        data = yaml.safe_load(device_data)
         self.assertIn('commands', data)
         self.assertIn('connections', data['commands'])
         self.assertNotIn('connect', data['commands'])
@@ -354,7 +354,7 @@ class TestTimeouts(StdoutTestCase):
         """
         y_file = os.path.join(os.path.dirname(__file__), './sample_jobs/uboot-ramdisk.yaml')
         with open(y_file, 'r') as uboot_ramdisk:
-            data = yaml.load(uboot_ramdisk)
+            data = yaml.safe_load(uboot_ramdisk)
         data['timeouts']['connection'] = {'seconds': 20}
         job = self.factory.create_custom_job('bbb-01.jinja2', data)
         for action in job.pipeline.actions:
@@ -380,7 +380,7 @@ class TestTimeouts(StdoutTestCase):
         """
         y_file = os.path.join(os.path.dirname(__file__), './sample_jobs/uboot-ramdisk.yaml')
         with open(y_file, 'r') as uboot_ramdisk:
-            data = yaml.load(uboot_ramdisk)
+            data = yaml.safe_load(uboot_ramdisk)
         connection_timeout = Timeout.parse(data['timeouts']['connections']['lava-test-shell'])
         data['timeouts']['actions']['uboot-retry'] = {}
         data['timeouts']['actions']['uboot-retry']['seconds'] = 90

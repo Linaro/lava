@@ -53,7 +53,7 @@ class FastBootFactory(Factory):  # pylint: disable=too-few-public-methods
 
     def create_hikey_bl_job(self, filename):
         (data, device_dict) = self.create_hikey_bl_device('hi6220-hikey-01')
-        device = NewDevice(yaml.load(data))
+        device = NewDevice(yaml.safe_load(data))
         self.validate_data('hi6220-hikey-01', device_dict)
         fastboot_yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(fastboot_yaml) as sample_job_data:

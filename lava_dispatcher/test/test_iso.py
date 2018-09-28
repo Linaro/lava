@@ -33,7 +33,7 @@ class InstallerFactory(Factory):  # pylint: disable=too-few-public-methods
 
     def create_qemu_installer_job(self):
         (rendered, _) = self.create_device('kvm01.jinja2')
-        device = NewDevice(yaml.load(rendered))
+        device = NewDevice(yaml.safe_load(rendered))
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/qemu-debian-installer.yaml')
         parser = JobParser()
         try:
@@ -109,7 +109,7 @@ class TestIsoJob(StdoutTestCase):
         test_retry = [action for action in self.job.pipeline.actions if action.name == 'lava-test-retry'][0]
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/qemu-debian-installer.yaml')
         with open(sample_job_file, 'r') as jobdef:
-            data = yaml.load(jobdef)
+            data = yaml.safe_load(jobdef)
         testdata = [block['test'] for block in data['actions'] if 'test' in block][0]
         duration = (Timeout.parse(testdata['timeout']))
         self.assertEqual(

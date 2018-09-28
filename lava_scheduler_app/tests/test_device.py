@@ -4,8 +4,6 @@ import os
 import yaml
 import jinja2
 import logging
-from django.contrib.contenttypes.models import ContentType
-from django.contrib.admin.models import LogEntry
 from django.db.models import Q
 from lava_scheduler_app.models import (
     Device,
@@ -133,7 +131,7 @@ class DeviceTypeTest(TestCaseWithFactory):
             data = None
             try:
                 data = template.render()
-                yaml_data = yaml.load(data, Loader=yaml.CLoader)
+                yaml_data = yaml.load(data, Loader=yaml.CSafeLoader)  # nosec - safe_load implemented directly
             except yaml.YAMLError as exc:
                 print(data)  # for easier debugging - use the online yaml parser
                 self.fail("%s: %s" % (template_name, exc))

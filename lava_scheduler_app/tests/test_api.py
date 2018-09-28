@@ -6,18 +6,14 @@ from nose.tools import nottest
 from io import BytesIO as StringIO
 import xmlrpc.client
 from django.test.client import Client
-from django.contrib.auth.models import Permission, User
-from django.utils import timezone
+from django.contrib.auth.models import Permission
 from lava_scheduler_app.dbutils import validate_yaml
 from lava_scheduler_app.models import (
-    Device,
     DeviceType,
-    Tag,
-    TestJob,
     Alias,
 )
 from lava_scheduler_app.schema import validate_submission, validate_device, SubmissionException
-from lava_scheduler_app.tests.test_submission import ModelFactory, TestCaseWithFactory
+from lava_scheduler_app.tests.test_submission import TestCaseWithFactory
 # pylint: disable=invalid-name
 
 
@@ -139,7 +135,7 @@ class TestVoluptuous(unittest.TestCase):
         for filename in files:
             # some files are dispatcher-level test files, e.g. after the multinode split
             try:
-                yaml_data = yaml.load(open(os.path.join(path, filename), 'r'))
+                yaml_data = yaml.safe_load(open(os.path.join(path, filename), 'r'))
             except yaml.YAMLError as exc:
                 raise RuntimeError("Decoding YAML job submission failed: %s." % exc)
             if filename in device_files:
@@ -163,9 +159,9 @@ timeouts:
   action:
     minutes: 5
                 """
-        self.assertRaises(SubmissionException, validate_submission, yaml.load(bad_submission))
+        self.assertRaises(SubmissionException, validate_submission, yaml.safe_load(bad_submission))
         try:
-            validate_submission(yaml.load(bad_submission))
+            validate_submission(yaml.safe_load(bad_submission))
         except SubmissionException as exc:
             # with more than one omission, which one gets mentioned is undefined
             self.assertIn('required key not provided', str(exc))
@@ -174,9 +170,9 @@ actions:
   - deploy:
       to: tmpfs
                 """
-        self.assertRaises(SubmissionException, validate_submission, yaml.load(bad_submission))
+        self.assertRaises(SubmissionException, validate_submission, yaml.safe_load(bad_submission))
         try:
-            validate_submission(yaml.load(bad_submission))
+            validate_submission(yaml.safe_load(bad_submission))
         except SubmissionException as exc:
             self.assertIn('required key not provided', str(exc))
             # with more than one omission, which one gets mentioned is undefined
@@ -184,20 +180,20 @@ actions:
         bad_submission += """
 visibility: public
                 """
-        self.assertRaises(SubmissionException, validate_submission, yaml.load(bad_submission))
+        self.assertRaises(SubmissionException, validate_submission, yaml.safe_load(bad_submission))
         try:
-            validate_submission(yaml.load(bad_submission))
+            validate_submission(yaml.safe_load(bad_submission))
         except SubmissionException as exc:
             self.assertIn('required key not provided', str(exc))
             self.assertIn('job_name', str(exc))
         bad_submission += """
 job_name: qemu-pipeline
                 """
-        self.assertTrue(validate_submission(yaml.load(bad_submission)))
-        bad_yaml = yaml.load(bad_submission)
+        self.assertTrue(validate_submission(yaml.safe_load(bad_submission)))
+        bad_yaml = yaml.safe_load(bad_submission)
         del bad_yaml['timeouts']['job']
         try:
-            validate_submission(yaml.load(bad_submission))
+            validate_submission(yaml.safe_load(bad_submission))
         except SubmissionException as exc:
             self.assertIn('required key not provided', str(exc))
             self.assertIn('job', str(exc))
@@ -207,14 +203,14 @@ notify:
   criteria:
     status: complete
         """
-        self.assertTrue(validate_submission(yaml.load(bad_submission)))
+        self.assertTrue(validate_submission(yaml.safe_load(bad_submission)))
         bad_submission += """
   compare:
     query:
       entity: testrunfilter
         """
         self.assertRaises(SubmissionException, validate_yaml,
-                          yaml.load(bad_submission))
+                          yaml.safe_load(bad_submission))
 
         invalid_monitors_name_char_yaml_def = """
 # Zephyr JOB definition
@@ -256,7 +252,7 @@ actions:
 """
 
         self.assertRaises(SubmissionException, validate_submission,
-                          yaml.load(invalid_monitors_name_char_yaml_def))
+                          yaml.safe_load(invalid_monitors_name_char_yaml_def))
 
     def test_compression_change(self):
 
@@ -284,7 +280,7 @@ actions:
           location: http://test.com/baz
                 """
         try:
-            validate_submission(yaml.load(bad_submission))
+            validate_submission(yaml.safe_load(bad_submission))
         except SubmissionException as exc:
             self.assertIn('required key not provided', str(exc))
             self.assertIn('dtb', str(exc))
@@ -313,7 +309,7 @@ actions:
         dtb: http://test.com/baz
                 """
         try:
-            validate_submission(yaml.load(bad_submission))
+            validate_submission(yaml.safe_load(bad_submission))
         except SubmissionException as exc:
             self.assertIn('expected a dictionary for dictionary value', str(exc))
             self.assertIn('dtb', str(exc))
@@ -340,7 +336,7 @@ secrets:
   foo: bar
   username: secret
 """
-        self.assertTrue(validate_submission(yaml.load(secrets)))
+        self.assertTrue(validate_submission(yaml.safe_load(secrets)))
         secrets = """
 job_name: kvm-test
 visibility: public
@@ -361,7 +357,7 @@ secrets:
   foo: bar
   username: secret
 """
-        self.assertRaises(SubmissionException, validate_submission, yaml.load(secrets))
+        self.assertRaises(SubmissionException, validate_submission, yaml.safe_load(secrets))
 
     def test_multinode(self):
         # Without protocols
@@ -375,7 +371,7 @@ timeouts:
     minutes: 5
 actions: []
 """
-        self.assertTrue(validate_submission(yaml.load(data)))
+        self.assertTrue(validate_submission(yaml.safe_load(data)))
 
         data = """
 job_name: test
@@ -388,7 +384,7 @@ timeouts:
 actions: []
 protocols: {}
 """
-        self.assertTrue(validate_submission(yaml.load(data)))
+        self.assertTrue(validate_submission(yaml.safe_load(data)))
 
         # With a valid multinode protocol
         data = """
@@ -406,7 +402,7 @@ protocols:
       guest: {}
       host: {}
 """
-        self.assertTrue(validate_submission(yaml.load(data)))
+        self.assertTrue(validate_submission(yaml.safe_load(data)))
 
         data = """
 job_name: test
@@ -425,7 +421,7 @@ protocols:
         expect_role: host
       host: {}
 """
-        self.assertTrue(validate_submission(yaml.load(data)))
+        self.assertTrue(validate_submission(yaml.safe_load(data)))
 
         # invalid host_role or expect_role
         data = """
@@ -444,7 +440,7 @@ protocols:
         host_role: server
       host: {}
 """
-        self.assertRaises(SubmissionException, validate_submission, yaml.load(data))
+        self.assertRaises(SubmissionException, validate_submission, yaml.safe_load(data))
 
         data = """
 job_name: test
@@ -463,7 +459,7 @@ protocols:
         expect_role: server
       host: {}
 """
-        self.assertRaises(SubmissionException, validate_submission, yaml.load(data))
+        self.assertRaises(SubmissionException, validate_submission, yaml.safe_load(data))
 
         # host_role without expect_role
         data = """
@@ -482,7 +478,7 @@ protocols:
         host_role: host
       host: {}
 """
-        self.assertRaises(SubmissionException, validate_submission, yaml.load(data))
+        self.assertRaises(SubmissionException, validate_submission, yaml.safe_load(data))
 
         # expect_role without host_role
         data = """
@@ -501,4 +497,4 @@ protocols:
         expect_role: host
       host: {}
 """
-        self.assertRaises(SubmissionException, validate_submission, yaml.load(data))
+        self.assertRaises(SubmissionException, validate_submission, yaml.safe_load(data))

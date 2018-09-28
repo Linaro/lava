@@ -66,7 +66,7 @@ class StdoutTestCase(unittest.TestCase):  # pylint: disable=too-many-public-meth
             with open(y_file, 'w') as describe:
                 yaml.dump(job.pipeline.describe(False), describe)
         with open(y_file, 'r') as f_ref:
-            return yaml.load(f_ref)
+            return yaml.safe_load(f_ref)
 
 
 class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
@@ -191,7 +191,7 @@ class Factory:
         """
         rendered = self.render_device_dictionary(hostname, data, job_ctx)
         try:
-            ret = validate_device(yaml.load(rendered))
+            ret = validate_device(yaml.safe_load(rendered))
         except (SubmissionException, ConfigurationError) as exc:
             print('#######')
             print(rendered)
@@ -217,7 +217,7 @@ class Factory:
     def create_custom_job(self, template, job_data):
         job_ctx = job_data.get('context')
         (data, device_dict) = self.create_device(template, job_ctx)
-        device = NewDevice(yaml.load(data))
+        device = NewDevice(yaml.safe_load(data))
         if self.debug:
             print('####### Device configuration #######')
             print(data)
@@ -236,7 +236,7 @@ class Factory:
     def create_job(self, template, filename):
         y_file = os.path.join(os.path.dirname(__file__), filename)
         with open(y_file) as sample_job_data:
-            job_data = yaml.load(sample_job_data.read())
+            job_data = yaml.safe_load(sample_job_data.read())
         return self.create_custom_job(template, job_data)
 
     def create_fake_qemu_job(self):
@@ -247,7 +247,7 @@ class Factory:
         Custom function to allow for extra exception handling.
         """
         (data, device_dict) = self.create_device('kvm01.jinja2')
-        device = NewDevice(yaml.load(data))
+        device = NewDevice(yaml.safe_load(data))
         if self.debug:
             print('####### Device configuration #######')
             print(data)
@@ -430,11 +430,11 @@ class TestPipeline(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertEqual(job.compatibility, DeployImages.compatibility)
         kvm_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/kvm.yaml')
         with open(kvm_yaml, 'r') as kvm_yaml:
-            job_def = yaml.load(kvm_yaml)
+            job_def = yaml.safe_load(kvm_yaml)
         job_def['compatibility'] = job.compatibility
         parser = JobParser()
         (rendered, data) = factory.create_device('kvm01.jinja2')
-        device = yaml.load(rendered)
+        device = yaml.safe_load(rendered)
         try:
             job = parser.parse(yaml.dump(job_def), device, 4212, None, "")
         except NotImplementedError:

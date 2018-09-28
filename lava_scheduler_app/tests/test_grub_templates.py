@@ -1,4 +1,3 @@
-import yaml
 # pylint: disable=superfluous-parens,ungrouped-imports
 from lava_scheduler_app.tests.test_base_templates import (
     BaseTemplate,
@@ -33,9 +32,7 @@ class TestGrubTemplates(BaseTemplate.BaseTemplateCases):
 {% set power_on_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command on --port 05' %}
 {% set connection_command = 'telnet localhost 7012' %}"""
         self.assertTrue(self.validate_data('staging-mustang-01', data))
-        test_template = prepare_jinja_template('staging-mustang-01', data)
-        rendered = test_template.render()
-        template_dict = yaml.load(rendered)
+        template_dict = prepare_jinja_template('staging-mustang-01', data, raw=False)
         self.assertIn('uefi-menu', template_dict['actions']['boot']['methods'])
         self.assertIn('pxe-grub', template_dict['actions']['boot']['methods']['uefi-menu'])
         self.assertNotIn('grub', template_dict['actions']['boot']['methods']['uefi-menu'])
@@ -60,9 +57,7 @@ class TestGrubTemplates(BaseTemplate.BaseTemplateCases):
 {% set power_on_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command on --port 05' %}
 {% set connection_command = 'telnet localhost 7012' %}"""
         self.assertTrue(self.validate_data('staging-mustang-01', data))
-        test_template = prepare_jinja_template('staging-mustang-01', data)
-        rendered = test_template.render()
-        template_dict = yaml.load(rendered)
+        template_dict = prepare_jinja_template('staging-mustang-01', data, raw=False)
         self.assertIn('uefi-menu', template_dict['actions']['boot']['methods'])
         self.assertNotIn('pxe-grub', template_dict['actions']['boot']['methods']['uefi-menu'])
         self.assertIn('grub', template_dict['actions']['boot']['methods']['uefi-menu'])
@@ -85,9 +80,7 @@ class TestGrubTemplates(BaseTemplate.BaseTemplateCases):
 {% set power_on_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command on --port 05' %}
 {% set connection_command = 'telnet localhost 7012' %}"""
         self.assertTrue(self.validate_data('staging-mustang-01', data))
-        test_template = prepare_jinja_template('staging-mustang-01', data)
-        rendered = test_template.render()
-        template_dict = yaml.load(rendered)
+        template_dict = prepare_jinja_template('staging-mustang-01', data, raw=False)
         parameters = {
             'parameters': {
                 'media': {
@@ -133,9 +126,7 @@ class TestGrubTemplates(BaseTemplate.BaseTemplateCases):
 'iface3': '/sys/devices/pci0000:00/0000:00:02.1/0000:01:00.1/net/'} %}
 {% set boot_character_delay = 100 %}"""
         self.assertTrue(self.validate_data('staging-overdrive-01', data))
-        test_template = prepare_jinja_template('staging-overdrive-01', data)
-        rendered = test_template.render()
-        template_dict = yaml.load(rendered)
+        template_dict = prepare_jinja_template('staging-overdrive-01', data, raw=False)
         self.assertIsNotNone(template_dict)
         self.assertIn('parameters', template_dict)
         self.assertIn('interfaces', template_dict['parameters'])
@@ -157,9 +148,7 @@ class TestGrubTemplates(BaseTemplate.BaseTemplateCases):
         )
 
     def test_synquacer_acpi_template(self):
-        rendered = self.render_device_dictionary_file('synquacer-acpi-01.jinja2')
-        template_dict = yaml.load(rendered)
-        template_dict = yaml.load(rendered)
+        template_dict = self.render_device_dictionary_file('synquacer-acpi-01.jinja2', raw=False)
         self.assertIsNotNone(template_dict['actions']['boot']['methods']['grub'])
         self.assertIn('ramdisk', template_dict['actions']['boot']['methods']['grub'])
         self.assertIn('commands', template_dict['actions']['boot']['methods']['grub']['ramdisk'])
@@ -173,8 +162,7 @@ class TestGrubTemplates(BaseTemplate.BaseTemplateCases):
         )
 
     def test_synquacer_dtb_template(self):
-        rendered = self.render_device_dictionary_file('synquacer-dtb-01.jinja2')
-        template_dict = yaml.load(rendered)
+        template_dict = self.render_device_dictionary_file('synquacer-dtb-01.jinja2', raw=False)
         self.assertIsNotNone(template_dict['actions']['boot']['methods']['grub'])
         self.assertIn('ramdisk', template_dict['actions']['boot']['methods']['grub'])
         self.assertIn('commands', template_dict['actions']['boot']['methods']['grub']['ramdisk'])
@@ -188,8 +176,7 @@ class TestGrubTemplates(BaseTemplate.BaseTemplateCases):
         )
 
     def test_moonshot_m400_template(self):
-        rendered = self.render_device_dictionary_file('moonshot-m400-17.jinja2')
-        template_dict = yaml.load(rendered)
+        template_dict = self.render_device_dictionary_file('moonshot-m400-17.jinja2', raw=False)
         self.assertIsNotNone(template_dict['actions']['boot']['methods']['grub'])
         self.assertIn('ramdisk', template_dict['actions']['boot']['methods']['grub'])
         self.assertIn('commands', template_dict['actions']['boot']['methods']['grub']['ramdisk'])
@@ -199,8 +186,7 @@ class TestGrubTemplates(BaseTemplate.BaseTemplateCases):
         )
 
     def test_minnowboard_turbot_template(self):
-        rendered = self.render_device_dictionary_file('minnowboard-turbot-E3826-01.jinja2')
-        template_dict = yaml.load(rendered)
+        template_dict = self.render_device_dictionary_file('minnowboard-turbot-E3826-01.jinja2', raw=False)
         grub = template_dict['actions']['boot']['methods']['grub']
         self.assertIsNotNone(grub)
 

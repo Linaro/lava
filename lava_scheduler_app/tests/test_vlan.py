@@ -5,13 +5,11 @@ import tempfile
 from lava_scheduler_app.utils import split_multinode_yaml
 from lava_scheduler_app.dbutils import match_vlan_interface
 from lava_scheduler_app.models import (
-    Device,
     TestJob,
     Tag,
 )
 from lava_scheduler_app.tests.test_submission import TestCaseWithFactory
 from lava_scheduler_app.tests.test_pipeline import YamlFactory
-from lava_scheduler_app.dbutils import match_vlan_interface
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.protocols.vland import VlandProtocol
@@ -39,7 +37,7 @@ class VlandFactory(YamlFactory):
     def make_vland_job(self, **kw):
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs', 'bbb-cubie-vlan-group.yaml')
         with open(sample_job_file, 'r') as test_support:
-            data = yaml.load(test_support)
+            data = yaml.safe_load(test_support)
         data.update(kw)
         return data
 
@@ -105,12 +103,12 @@ class TestVlandDevices(TestCaseWithFactory):
         user = self.factory.make_user()
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs', 'bbb-cubie-vlan-group.yaml')
         with open(sample_job_file, 'r') as test_support:
-            data = yaml.load(test_support)
+            data = yaml.safe_load(test_support)
         vlan_job = TestJob.from_yaml_and_user(yaml.dump(data), user)
         assignments = {}
         for job in vlan_job:
-            self.assertFalse(match_vlan_interface(self.bbb3, yaml.load(job.definition)))
-            self.assertFalse(match_vlan_interface(self.cubie2, yaml.load(job.definition)))
+            self.assertFalse(match_vlan_interface(self.bbb3, yaml.safe_load(job.definition)))
+            self.assertFalse(match_vlan_interface(self.cubie2, yaml.safe_load(job.definition)))
 
     def test_jinja_template(self):
         yaml_data = self.factory.bbb1.load_configuration()

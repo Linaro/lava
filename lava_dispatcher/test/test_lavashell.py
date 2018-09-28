@@ -69,11 +69,11 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
 
     def test_missing_handler(self):
         (rendered, _) = self.factory.create_device('kvm01.jinja2')
-        device = NewDevice(yaml.load(rendered))
+        device = NewDevice(yaml.safe_load(rendered))
         kvm_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/kvm.yaml')
         parser = JobParser()
         with open(kvm_yaml) as sample_job_data:
-            data = yaml.load(sample_job_data)
+            data = yaml.safe_load(sample_job_data)
         data['actions'][2]['test']['definitions'][0]['from'] = 'unusable-handler'
         try:
             job = parser.parse(yaml.dump(data), device, 4212, None, "")

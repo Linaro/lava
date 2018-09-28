@@ -129,11 +129,11 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
         testdef.validate()
         self.assertEqual([], testdef.errors)
         (rendered, _) = self.factory.create_device('kvm01.jinja2')
-        device = yaml.load(rendered)
+        device = yaml.safe_load(rendered)
         kvm_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/kvm.yaml')
         parser = JobParser()
         with open(kvm_yaml, 'r') as sample_job_data:
-            content = yaml.load(sample_job_data)
+            content = yaml.safe_load(sample_job_data)
         data = [block['test'] for block in content['actions'] if 'test' in block][0]
         definitions = [block for block in data['definitions'] if 'path' in block][0]
         definitions['name'] = 'smoke tests'
@@ -412,7 +412,7 @@ class TestDefinitions(StdoutTestCase):
     def test_pattern(self):
         self.assertTrue(os.path.exists(self.testdef))
         with open(self.testdef, 'r') as par:
-            params = yaml.load(par)
+            params = yaml.safe_load(par)
         self.assertIn('parse', params.keys())
         line = 'test1a: pass'
         self.assertEqual(
@@ -429,7 +429,7 @@ class TestDefinitions(StdoutTestCase):
         # without a name from a testdef, the pattern is not valid.
         self.assertFalse(pattern.valid())
         with open(self.testdef, 'r') as par:
-            params = yaml.load(par)
+            params = yaml.safe_load(par)
         pattern = PatternFixup(testdef=params, count=0)
         self.assertTrue(pattern.valid())
 
@@ -469,7 +469,7 @@ class TestDefinitions(StdoutTestCase):
         )
         # fake up a run step
         with open(self.testdef, 'r') as par:
-            params = yaml.load(par)
+            params = yaml.safe_load(par)
         self.assertEqual(
             r'(?P<test_case_id>.*-*):\s+(?P<result>(pass|fail))',
             params['parse']['pattern'])
@@ -509,7 +509,7 @@ test3a: skip
 \"test4a:\" \"unknown\"
         """
         with open(self.testdef, 'r') as par:
-            params = yaml.load(par)
+            params = yaml.safe_load(par)
         pattern = params['parse']['pattern']
         re_pat = re.compile(pattern, re.M)
         match = re.search(re_pat, data)

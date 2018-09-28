@@ -146,7 +146,7 @@ class TestLxcWithDevices(StdoutTestCase):
         self.job.validate()
         lxc_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/bbb-lxc.yaml')
         with open(lxc_yaml) as sample_job_data:
-            data = yaml.load(sample_job_data)
+            data = yaml.safe_load(sample_job_data)
         lxc_deploy = [action for action in self.job.pipeline.actions if action.name == 'lxc-deploy'][0]
         overlay = [action for action in lxc_deploy.internal_pipeline.actions if action.name == 'lava-overlay'][0]
         test_def = [action for action in overlay.internal_pipeline.actions if action.name == 'test-definition'][0]
@@ -182,7 +182,7 @@ class TestLxcWithDevices(StdoutTestCase):
         self.assertEqual(test_actions[0]['test']['namespace'], 'probe')
         parser = JobParser()
         (rendered, _) = self.factory.create_device('bbb-01.jinja2')
-        device = NewDevice(yaml.load(rendered))
+        device = NewDevice(yaml.safe_load(rendered))
         job = parser.parse(yaml.dump(data), device, 4577, None, "")
         job.logger = DummyLogger()
         job.validate()
@@ -211,10 +211,10 @@ class TestLxcWithDevices(StdoutTestCase):
     def test_lxc_without_lxctest(self):  # pylint: disable=too-many-locals
         lxc_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/bbb-lxc-notest.yaml')
         with open(lxc_yaml) as sample_job_data:
-            data = yaml.load(sample_job_data)
+            data = yaml.safe_load(sample_job_data)
         parser = JobParser()
         (rendered, _) = self.factory.create_device('bbb-01.jinja2')
-        device = NewDevice(yaml.load(rendered))
+        device = NewDevice(yaml.safe_load(rendered))
         job = parser.parse(yaml.dump(data), device, 4577, None, "")
         job.logger = DummyLogger()
         job.validate()

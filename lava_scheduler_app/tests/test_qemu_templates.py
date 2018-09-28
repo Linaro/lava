@@ -32,14 +32,14 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
 {% set memory = 512 %}"""
         job_ctx = {'arch': 'amd64', 'no_kvm': True}
         self.assertTrue(self.validate_data('staging-qemu-01', data, job_ctx))
-        test_template = prepare_jinja_template('staging-qemu-01', data)
+        test_template = prepare_jinja_template('staging-qemu-01', data, job_ctx=None, raw=True)
         rendered = test_template.render(**job_ctx)
-        template_dict = yaml.load(rendered)
+        template_dict = yaml.safe_load(rendered)
         options = template_dict['actions']['boot']['methods']['qemu']['parameters']['options']
         self.assertNotIn('-enable-kvm', options)
         job_ctx = {'arch': 'amd64', 'no_kvm': False}
         rendered = test_template.render(**job_ctx)
-        template_dict = yaml.load(rendered)
+        template_dict = yaml.safe_load(rendered)
         options = template_dict['actions']['boot']['methods']['qemu']['parameters']['options']
         self.assertIn('-enable-kvm', options)
 
@@ -48,9 +48,7 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
 {% set mac_addr = 'DE:AD:BE:EF:28:01' %}
 {% set memory = 512 %}"""
         job_ctx = {'arch': 'amd64'}
-        test_template = prepare_jinja_template('staging-qemu-01', data)
-        rendered = test_template.render(**job_ctx)
-        template_dict = yaml.load(rendered)
+        template_dict = prepare_jinja_template('staging-qemu-01', data, job_ctx=job_ctx, raw=False)
         self.assertEqual(
             'c',
             template_dict['actions']['boot']['methods']['qemu']['parameters']['boot_options']['boot_order']
@@ -69,10 +67,7 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
             'extra_options': ['-global', 'virtio-blk-device.scsi=off', '-smp', 1, '-device', 'virtio-scsi-device,id=scsi']
         }
         self.assertTrue(self.validate_data('staging-qemu-01', data))
-        test_template = prepare_jinja_template('staging-juno-01', data)
-        rendered = test_template.render(**job_ctx)
-        self.assertIsNotNone(rendered)
-        template_dict = yaml.load(rendered)
+        template_dict = prepare_jinja_template('staging-juno-01', data, job_ctx=job_ctx, raw=False)
         options = template_dict['actions']['boot']['methods']['qemu']['parameters']['options']
         self.assertIn('-cpu cortex-a57', options)
         self.assertNotIn('-global', options)
@@ -97,10 +92,7 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
             'extra_options': ['-smp', 1]
         }
         self.assertTrue(self.validate_data('staging-qemu-01', data))
-        test_template = prepare_jinja_template('staging-juno-01', data)
-        rendered = test_template.render(**job_ctx)
-        self.assertIsNotNone(rendered)
-        template_dict = yaml.load(rendered)
+        template_dict = prepare_jinja_template('staging-juno-01', data, job_ctx=job_ctx, raw=False)
         self.assertIn('qemu-nfs', template_dict['actions']['boot']['methods'])
         params = template_dict['actions']['boot']['methods']['qemu-nfs']['parameters']
         self.assertIn('command', params)
@@ -117,9 +109,7 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
     def test_docker_template(self):
         data = "{% extends 'docker.jinja2' %}"
         self.assertTrue(self.validate_data('docker-01', data))
-        test_template = prepare_jinja_template('docker-01', data)
-        rendered = test_template.render()
-        template_dict = yaml.load(rendered)
+        template_dict = prepare_jinja_template('docker-01', data, raw=False)
         self.assertEqual({'docker': None}, template_dict['actions']['deploy']['methods'])
         self.assertEqual({'docker': {'options': {'cpus': 0.0, 'memory': 0, 'devices': [], 'volumes': []}}},
                          template_dict['actions']['boot']['methods'])
@@ -129,9 +119,7 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
 {% set docker_memory="120M" %}
 {% set docker_volumes=["/home", "/tmp"] %}"""
         self.assertTrue(self.validate_data('docker-01', data))
-        test_template = prepare_jinja_template('docker-01', data)
-        rendered = test_template.render()
-        template_dict = yaml.load(rendered)
+        template_dict = prepare_jinja_template('docker-01', data, raw=False)
         self.assertEqual({'docker': None}, template_dict['actions']['deploy']['methods'])
         self.assertEqual({'docker': {'options': {'cpus': 2.1, 'memory': "120M",
                                                  'devices': [],
@@ -143,9 +131,7 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
 {% set docker_memory="120M" %}
 {% set docker_devices=["/dev/kvm"] %}"""
         self.assertTrue(self.validate_data('docker-01', data))
-        test_template = prepare_jinja_template('docker-01', data)
-        rendered = test_template.render()
-        template_dict = yaml.load(rendered)
+        template_dict = prepare_jinja_template('docker-01', data, raw=False)
         self.assertEqual({'docker': None}, template_dict['actions']['deploy']['methods'])
         self.assertEqual({'docker': {'options': {'cpus': 2.1, 'memory': "120M",
                                                  'devices': ["/dev/kvm"],
