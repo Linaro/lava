@@ -212,9 +212,9 @@ def load_devicetype_template(device_type_name, raw=False):
     """
     path = os.path.dirname(Device.CONFIG_PATH)
     type_loader = jinja2.FileSystemLoader([os.path.join(path, 'device-types')])
-    env = jinja2.Environment(
+    env = jinja2.Environment(  # nosec - YAML, not HTML, no XSS scope.
         loader=jinja2.ChoiceLoader([type_loader]),
-        trim_blocks=True)
+        trim_blocks=True, autoescape=False)
     try:
         template = env.get_template("%s.jinja2" % device_type_name)
         data = template.render()

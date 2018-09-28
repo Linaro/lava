@@ -55,7 +55,9 @@ def main():
     devices = sorted(glob.glob("%s/*.jinja2" % args.devices))
 
     print("Devices:")
-    env = jinja2.Environment(loader=jinja2.FileSystemLoader([args.devices, args.device_types]))
+    env = jinja2.Environment(  # nosec - YAML, not HTML, no XSS scope.
+        loader=jinja2.FileSystemLoader([args.devices, args.device_types]),
+        autoescape=False)
 
     for device in devices:
         device_name = os.path.splitext(os.path.basename(device))[0]

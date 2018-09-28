@@ -119,9 +119,9 @@ class DeviceTypeTest(TestCaseWithFactory):
         """
         jinja2_path = os.path.dirname(Device.CONFIG_PATH)
         type_loader = jinja2.FileSystemLoader([os.path.join(jinja2_path, 'device-types')])
-        env = jinja2.Environment(
+        env = jinja2.Environment(  # nosec - YAML, not HTML, no XSS scope.
             loader=jinja2.ChoiceLoader([type_loader]),
-            trim_blocks=True)
+            trim_blocks=True, autoescape=False)
 
         for template_name in os.listdir(os.path.join(jinja2_path, 'device-types')):
             if not template_name.endswith('jinja2'):

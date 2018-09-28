@@ -173,9 +173,9 @@ class Factory:
         string_loader = jinja2.DictLoader({'%s.jinja2' % hostname: jinja_data})
         path = os.path.dirname(self.CONFIG_PATH)
         type_loader = jinja2.FileSystemLoader([os.path.join(path, 'device-types')])
-        env = jinja2.Environment(
+        env = jinja2.Environment(  # nosec - YAML, not HTML, no XSS scope.
             loader=jinja2.ChoiceLoader([string_loader, type_loader]),
-            trim_blocks=True)
+            trim_blocks=True, autoescape=False)
         return env.get_template("%s.jinja2" % hostname)
 
     def render_device_dictionary(self, hostname, data, job_ctx=None):

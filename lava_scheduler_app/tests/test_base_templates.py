@@ -23,9 +23,9 @@ def prepare_jinja_template(hostname, jinja_data):
     string_loader = jinja2.DictLoader({'%s.jinja2' % hostname: jinja_data})
     path = os.path.dirname(CONFIG_PATH)
     type_loader = jinja2.FileSystemLoader([os.path.join(path, 'device-types')])
-    env = jinja2.Environment(
+    env = jinja2.Environment(  # nosec - YAML, not HTML, no XSS scope.
         loader=jinja2.ChoiceLoader([string_loader, type_loader]),
-        trim_blocks=True)
+        trim_blocks=True, autoescape=False)
     return env.get_template("%s.jinja2" % hostname)
 
 
@@ -81,7 +81,7 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
         # keep this out of the loop, as creating the environment is slow.
         path = os.path.dirname(CONFIG_PATH)
         fs_loader = jinja2.FileSystemLoader([os.path.join(path, 'device-types')])
-        env = jinja2.Environment(loader=fs_loader, trim_blocks=True)
+        env = jinja2.Environment(loader=fs_loader, trim_blocks=True, autoescape=False)  # nosec - YAML, not HTML, no XSS scope.
 
         for template in templates:
             data = "{%% extends '%s' %%}" % os.path.basename(template)
@@ -101,7 +101,7 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
         # keep this out of the loop, as creating the environment is slow.
         path = os.path.dirname(CONFIG_PATH)
         fs_loader = jinja2.FileSystemLoader([os.path.join(path, 'device-types')])
-        env = jinja2.Environment(loader=fs_loader, trim_blocks=True)
+        env = jinja2.Environment(loader=fs_loader, trim_blocks=True, autoescape=False)  # nosec - YAML, not HTML, no XSS scope.
 
         for template in templates:
             name = os.path.basename(template)
@@ -132,7 +132,7 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
         self.assertFalse(CONFIG_PATH.startswith('/etc/'))
         with open(os.path.join(os.path.dirname(__file__), 'devices', 'db410c.jinja2')) as hikey:
             data = hikey.read()
-        env = jinja2.Environment()
+        env = jinja2.Environment(autoescape=False)  # nosec - YAML, not HTML, no XSS scope.
         ast = env.parse(data)
         device_dict = {}
         count = 0

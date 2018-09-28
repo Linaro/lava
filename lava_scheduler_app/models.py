@@ -778,7 +778,8 @@ class Device(RestrictedResource):
                 return None
 
         # Create the environment
-        env = jinja2.Environment(
+        env = jinja2.Environment(  # nosec - YAML, not HTML, no XSS scope.
+            autoescape=False,
             loader=jinja2.FileSystemLoader(
                 [Device.CONFIG_PATH,
                  os.path.join(os.path.dirname(Device.CONFIG_PATH), "device-types")]),
@@ -835,7 +836,7 @@ class Device(RestrictedResource):
         if not jinja_config:
             return None
 
-        env = jinja2.Environment()
+        env = jinja2.Environment(autoescape=False)  # nosec - YAML, not HTML, no XSS scope.
         try:
             ast = env.parse(jinja_config)
             extends = list(ast.find_all(jinja2.nodes.Extends))
@@ -1982,9 +1983,9 @@ class Notification(models.Model):
         os.path.dirname(os.path.abspath(__file__)), "templates/",
         TestJob._meta.app_label)
 
-    TEMPLATES_ENV = jinja2.Environment(
+    TEMPLATES_ENV = jinja2.Environment(  # nosec - YAML, not HTML, no XSS scope.
         loader=jinja2.FileSystemLoader(TEMPLATES_DIR),
-        extensions=["jinja2.ext.i18n"])
+        extensions=["jinja2.ext.i18n"], autoescape=True)
 
     DEFAULT_TEMPLATE = "testjob_notification.txt"
     DEFAULT_IRC_TEMPLATE = "testjob_irc_notification.txt"
