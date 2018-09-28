@@ -19,15 +19,9 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 import yaml
-import django
 import logging
 import random
-from django.contrib.admin.models import (
-    ADDITION,
-    CHANGE,
-    LogEntry,
-)
-from django.template import defaultfilters as filters
+from django.contrib.admin.models import LogEntry
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from django.utils.timesince import timesince
@@ -80,7 +74,7 @@ def pklink(record):
     if isinstance(record, TestJob):
         if record.sub_jobs_list:
             job_id = record.sub_id
-    return mark_safe(
+    return mark_safe(  # nosec - internal data
         '<a href="%s" title="job summary">%s</a>' % (
             record.get_absolute_url(),
             escape(job_id)))
@@ -101,13 +95,13 @@ class ExpandedStatusColumn(tables.Column):
         logger = logging.getLogger('lava_scheduler_app')
         if record.state == Device.STATE_RUNNING:
             current_job = record.current_job()
-            return mark_safe("Running job #%s - %s submitted by %s" % (
+            return mark_safe("Running job #%s - %s submitted by %s" % (  # nosec - internal data
                 pklink(current_job),
                 current_job.description,
                 current_job.submitter))
         elif record.state == Device.STATE_RESERVED:
             current_job = record.current_job()
-            return mark_safe("Reserved for job #%s (%s) \"%s\" submitted by %s" % (
+            return mark_safe("Reserved for job #%s (%s) \"%s\" submitted by %s" % (  # nosec - internal data
                 pklink(current_job),
                 current_job.get_state_display(),
                 current_job.description,
@@ -189,7 +183,7 @@ class JobErrorsTable(LavaTable):
         if record.suite.job.actual_device is None:
             return ""
         else:
-            return mark_safe(
+            return mark_safe(  # nosec - internal data
                 '<a href="%s" title="device details">%s</a>' % (
                     record.suite.job.actual_device.get_absolute_url(),
                     escape(record.suite.job.actual_device.hostname)))
@@ -201,7 +195,7 @@ class JobErrorsTable(LavaTable):
         return record.action_metadata["error_msg"]
 
     def render_job(self, record):
-        return mark_safe('<a href="%s">%s</a>' % (record.suite.job.get_absolute_url(), record.suite.job.pk))
+        return mark_safe('<a href="%s">%s</a>' % (record.suite.job.get_absolute_url(), record.suite.job.pk))  # nosec - internal data
 
     class Meta(LavaTable.Meta):
         model = TestCase
@@ -240,8 +234,9 @@ class JobTable(LavaTable):
 
     def render_state(self, record):
         if record.state == TestJob.STATE_RUNNING:
-            return mark_safe('<span class="text-info"><strong>%s</strong></span>' %
-                             record.get_state_display())
+            return mark_safe(  # nosec - internal data
+                '<span class="text-info"><strong>%s</strong></span>' %
+                record.get_state_display())
         elif record.state == TestJob.STATE_FINISHED:
             if record.health == TestJob.HEALTH_UNKNOWN:
                 text = 'text-default'
@@ -251,11 +246,13 @@ class JobTable(LavaTable):
                 text = 'text-danger'
             elif record.health == TestJob.HEALTH_CANCELED:
                 text = 'text-warning'
-            return mark_safe('<span class="%s"><strong>%s</strong></span>' %
-                             (text, record.get_health_display()))
+            return mark_safe(  # nosec - internal data
+                '<span class="%s"><strong>%s</strong></span>' %
+                (text, record.get_health_display()))
         else:
-            return mark_safe('<span class="text-muted"><strong>%s</strong></span>' %
-                             record.get_state_display())
+            return mark_safe(  # nosec - internal data
+                '<span class="text-muted"><strong>%s</strong></span>' %
+                record.get_state_display())
 
     def render_device(self, record):
         if record.actual_device:
@@ -263,7 +260,7 @@ class JobTable(LavaTable):
             retval = pklink(record.actual_device)
         elif record.requested_device_type:
             device_type = record.requested_device_type
-            retval = mark_safe('<i>%s</i>' % escape(record.requested_device_type.pk))
+            retval = mark_safe('<i>%s</i>' % escape(record.requested_device_type.pk))  # nosec - internal data
         elif record.dynamic_connection:
             return 'connection'
         else:
@@ -357,14 +354,14 @@ class IndexJobTable(JobTable):
 class TagsColumn(tables.Column):
 
     def render(self, value):
-        tag_id = 'tag-%s' % "".join(random.choice("abcdefghijklmnopqrstuvwxyz") for _ in range(8))
+        tag_id = 'tag-%s' % "".join(random.choice("abcdefghijklmnopqrstuvwxyz") for _ in range(8))  # nosec - not crypto
         tags = ''
         values = list(value.all())
         if len(values) > 0:
             tags = '<p class="collapse" id="%s">' % tag_id
             tags += ',<br>'.join('<abbr data-toggle="tooltip" title="%s">%s</abbr>' % (tag.description, tag.name) for tag in values)
             tags += '</p><a class="btn btn-xs btn-success" data-toggle="collapse" data-target="#%s"><span class="glyphicon glyphicon-eye-open"></span></a>' % tag_id
-        return mark_safe(tags)
+        return mark_safe(tags)  # nosec - internal data
 
 
 class FailedJobTable(JobTable):
@@ -609,15 +606,15 @@ class DeviceTable(LavaTable):
 
     def render_health(self, record):
         if record.health == Device.HEALTH_GOOD:
-            return mark_safe('<strong class="text-success">Good</strong>')
+            return mark_safe('<strong class="text-success">Good</strong>')  # nosec - internal data
         elif record.health in [Device.HEALTH_UNKNOWN, Device.HEALTH_LOOPING]:
-            return mark_safe('<span class="text-info">%s</span>' % record.get_health_display())
+            return mark_safe('<span class="text-info">%s</span>' % record.get_health_display())  # nosec - internal data
         elif record.health == Device.HEALTH_BAD:
-            return mark_safe('<span class="text-danger">Bad</span>')
+            return mark_safe('<span class="text-danger">Bad</span>')  # nosec - internal data
         elif record.health == Device.HEALTH_MAINTENANCE:
-            return mark_safe('<span class="text-warning">Maintenance</span>')
+            return mark_safe('<span class="text-warning">Maintenance</span>')  # nosec - internal data
         else:
-            return mark_safe('<span class="text-muted">Retired</span>')
+            return mark_safe('<span class="text-muted">Retired</span>')  # nosec - internal data
 
     hostname = tables.TemplateColumn('''
     <a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a>
@@ -668,19 +665,19 @@ class WorkerTable(tables.Table):  # pylint: disable=too-few-public-methods,no-in
 
     def render_state(self, record):
         if record.state == Worker.STATE_ONLINE:
-            return mark_safe('<span class="glyphicon glyphicon-ok text-success"></span> %s' % record.get_state_display())
+            return mark_safe('<span class="glyphicon glyphicon-ok text-success"></span> %s' % record.get_state_display())  # nosec - internal data
         elif record.health == Worker.HEALTH_ACTIVE:
-            return mark_safe('<span class="glyphicon glyphicon-fire text-danger"></span> %s' % record.get_state_display())
+            return mark_safe('<span class="glyphicon glyphicon-fire text-danger"></span> %s' % record.get_state_display())  # nosec - internal data
         else:
-            return mark_safe('<span class="glyphicon glyphicon-remove text-danger"></span> %s' % record.get_state_display())
+            return mark_safe('<span class="glyphicon glyphicon-remove text-danger"></span> %s' % record.get_state_display())  # nosec - internal data
 
     def render_health(self, record):
         if record.health == Worker.HEALTH_ACTIVE:
-            return mark_safe('<span class="glyphicon glyphicon-ok text-success"></span> %s' % record.get_health_display())
+            return mark_safe('<span class="glyphicon glyphicon-ok text-success"></span> %s' % record.get_health_display())  # nosec - internal data
         elif record.health == Worker.HEALTH_MAINTENANCE:
-            return mark_safe('<span class="glyphicon glyphicon-wrench text-warning"></span> %s' % record.get_health_display())
+            return mark_safe('<span class="glyphicon glyphicon-wrench text-warning"></span> %s' % record.get_health_display())  # nosec - internal data
         else:
-            return mark_safe('<span class="glyphicon glyphicon-remove text-danger"></span> %s' % record.get_health_display())
+            return mark_safe('<span class="glyphicon glyphicon-remove text-danger"></span> %s' % record.get_health_display())  # nosec - internal data
 
     def render_last_ping(self, record):
         return timesince(record.last_ping)
@@ -708,9 +705,9 @@ class LogEntryTable(tables.Table):
         if record.is_change():
             return message
         elif record.is_addition():
-            return mark_safe('<span class="glyphicon glyphicon-plus text-success"></span> %s' % message)
+            return mark_safe('<span class="glyphicon glyphicon-plus text-success"></span> %s' % message)  # nosec - internal data
         else:
-            return mark_safe('<span class="glyphicon glyphicon-remove text-danger"></span> %s' % message)
+            return mark_safe('<span class="glyphicon glyphicon-remove text-danger"></span> %s' % message)  # nosec - internal data
 
     class Meta(LavaTable.Meta):
         model = LogEntry
@@ -804,7 +801,7 @@ class PassingHealthTable(DeviceHealthTable):
 
     def render_last_health_report_job(self, record):  # pylint: disable=no-self-use
         report = record.last_health_report_job
-        return mark_safe('<a href="%s">%s</a>' % (report.get_absolute_url(), report))
+        return mark_safe('<a href="%s">%s</a>' % (report.get_absolute_url(), report))  # nosec - internal data
 
     device_type = tables.Column()
 
