@@ -5,6 +5,8 @@ import time
 from lava_common.exceptions import ConfigurationError, InfrastructureError, JobError
 from lava_common.timeout import Timeout
 
+# nosec - assert is part of the test process.
+
 
 class DummyAlarm:
     def __init__(self, data):
