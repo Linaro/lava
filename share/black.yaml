@@ -1,3 +1,7 @@
+lava_server:
+    management:
+        commands:
+            device-tags.py
 share:
     check-devices.py
     validate_devices.py
