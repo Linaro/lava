@@ -13,7 +13,7 @@ Build-Depends:
  libjs-jquery-watermark, libjs-jquery-flot (>= 0.8.2),
  libjs-jquery-typeahead, libjs-jquery-ui
 X-Python3-Version: >=3.5
-Standards-Version: 4.1.4
+Standards-Version: 4.2.1
 Homepage: https://www.lavasoftware.org/
 Vcs-Git: https://git.lavasoftware.org/lava/pkg-lava-debian.git
 Vcs-Browser: https://git.lavasoftware.org/lava/pkg-lava-debian
