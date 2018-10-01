@@ -39,11 +39,11 @@ def main():
 
     # Create the command line parser
     parser = argparse.ArgumentParser()
+    manage = parser
     if installed:
-        subparser = parser.add_subparsers(title='subcommand', help='Manage LAVA')
+        subparser = parser.add_subparsers(dest='subcommand', help='Manage LAVA')
+        subparser.required = True
         manage = subparser.add_parser("manage")
-    else:
-        manage = parser
 
     group = manage.add_argument_group("Server configuration")
 
