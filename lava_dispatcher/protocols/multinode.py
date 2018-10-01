@@ -403,7 +403,7 @@ class MultinodeProtocol(Protocol):  # pylint: disable=too-many-instance-attribut
         try:
             return self._api_select(json.dumps(args[0]))
         except (ValueError, TypeError) as exc:
-            msg = re.sub('\s+', ' ', ''.join(traceback.format_exc().split('\n')))
+            msg = re.sub(r'\s+', ' ', ''.join(traceback.format_exc().split('\n')))
             logger = logging.getLogger("dispatcher")
             logger.exception(msg)
             raise JobError("Invalid call to %s %s" % (self.name, exc))

@@ -370,11 +370,11 @@ class VlandOverlayAction(OverlayAction):
     def run(self, connection, max_end_time):
         """
         Writes out file contents from lists, across multiple lines
-        VAR="VAL1\n\
-        VAL2\n\
+        VAR="VAL1\n
+        VAL2\n
         "
-        The \n and \ are used to avoid unwanted whitespace, so are escaped.
-        \n becomes \\n, \ becomes \\, which itself then needs \n to output:
+        The newline and escape characters are used to avoid unwanted whitespace.
+        \n becomes \\n, a single escape gets expanded and itself then needs \n to output:
         VAL1
         VAL2
         """

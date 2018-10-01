@@ -25,9 +25,9 @@ import subprocess
 import time
 
 
-change_id_pattern = re.compile("\s+Change-Id: (\w+)")
-commit_pattern = re.compile("commit (.+)")
-author_pattern = re.compile("author ([^>]+>) (\w+) ((\+|-)\w\w\w\w)")
+change_id_pattern = re.compile(r"\s+Change-Id: (\w+)")
+commit_pattern = re.compile(r"commit (.+)")
+author_pattern = re.compile(r"author ([^>]+>) (\w+) ((\+|-)\w\w\w\w)")
 
 
 class Commit:

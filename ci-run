@@ -64,7 +64,7 @@ then
     exit 0
 fi
 
-pep8 --ignore E501,E203,W503 .
+pep8 --ignore E501,E203,W503,W504 --exclude migrations,lava_scheduler_app/tests/test_api.py .
 
 if [ -n "${PEP8}" ]
 then

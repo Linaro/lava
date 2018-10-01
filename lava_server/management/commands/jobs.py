@@ -109,7 +109,7 @@ class Command(BaseCommand):
 
         jobs = TestJob.objects.all().order_by('id')
         if older_than is not None:
-            pattern = re.compile("^(?P<time>\d+)(?P<unit>(h|d))$")
+            pattern = re.compile(r"^(?P<time>\d+)(?P<unit>(h|d))$")
             match = pattern.match(older_than)
             if match is None:
                 raise CommandError("Invalid older-than format")

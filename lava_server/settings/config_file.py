@@ -33,7 +33,7 @@ class ConfigFile:
     """
 
     _pattern = re.compile(
-        "^(?P<key>[_a-zA-Z][_a-zA-Z0-9]*)=['\"](?P<value>[^']*)['\"]\s*(?:#.*)?$")
+        r"^(?P<key>[_a-zA-Z][_a-zA-Z0-9]*)=['\"](?P<value>[^']*)['\"]\s*(?:#.*)?$")
 
     @classmethod
     def load(cls, pathname):

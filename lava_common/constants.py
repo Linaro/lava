@@ -86,17 +86,17 @@ BOOTLOADER_DEFAULT_CMD_TIMEOUT = 90
 
 # kernel boot monitoring
 # Some successful kernel builds end the boot with this string
-KERNEL_FREE_UNUSED_MSG = 'Freeing unused kernel memory'
+KERNEL_FREE_UNUSED_MSG = r'Freeing unused kernel memory'
 # Some successful kernel builds end the boot with this string
-KERNEL_FREE_INIT_MSG = 'Freeing init memory'
+KERNEL_FREE_INIT_MSG = r'Freeing init memory'
 # exception
-KERNEL_EXCEPTION_MSG = '-+\[ cut here \]-+\s+(.*\s+-+\[ end trace (\w*) \]-+)'
+KERNEL_EXCEPTION_MSG = r'-+\[ cut here \]-+\s+(.*\s+-+\[ end trace (\w*) \]-+)'
 # stack trace
-KERNEL_TRACE_MSG = 'Stack:\s+(.*\s+-+\[ end trace (\w*) \]-+)'
+KERNEL_TRACE_MSG = r'Stack:\s+(.*\s+-+\[ end trace (\w*) \]-+)'
 # unhandled fault
-KERNEL_FAULT_MSG = '(Unhandled fault.*)\r\n'
+KERNEL_FAULT_MSG = r'(Unhandled fault.*)\r\n'
 # panic
-KERNEL_PANIC_MSG = "Kernel panic - (.*) end Kernel panic"
+KERNEL_PANIC_MSG = r"Kernel panic - (.*) end Kernel panic"
 
 # Login incorrect message
 LOGIN_INCORRECT_MSG = 'Login incorrect'
@@ -113,10 +113,10 @@ DEFAULT_V1_PATTERN = "(?P<test_case_id>.*-*)\\s+:\\s+(?P<result>(PASS|pass|FAIL|
 DEFAULT_V1_FIXUP = {'PASS': 'pass', 'FAIL': 'fail', 'SKIP': 'skip', 'UNKNOWN': 'unknown'}
 
 # List of DD output prompts for notifying completion of secondary deployment
-DD_PROMPTS = ['[0-9]+\+[0-9]+ records out', '[0-9]+ bytes \(.*\) copied']
+DD_PROMPTS = [r'[0-9]+\+[0-9]+ records out', r'[0-9]+ bytes \(.*\) copied']
 
 # fallback UEFI menu label class
-DEFAULT_UEFI_LABEL_CLASS = 'a-zA-Z0-9\s\:'
+DEFAULT_UEFI_LABEL_CLASS = r'a-zA-Z0-9\s\:'
 
 # Set a default newline seperator for pexpect, override as necessary
 LINE_SEPARATOR = '\n'
