@@ -25,7 +25,7 @@ import pwd
 import random
 import shutil
 import glob
-import subprocess
+import subprocess  # nosec - controlled inputs.
 import sys
 
 from lava_server.settings.config_file import ConfigFile
@@ -54,7 +54,7 @@ def psql_run(cmd_list, failure_msg):
 def run(cmd_list, failure_msg):
     print(" ".join(cmd_list))
     try:
-        ret = subprocess.check_call(cmd_list)
+        ret = subprocess.check_call(cmd_list)  # nosec - internal.
     except subprocess.CalledProcessError:
         print(failure_msg)
         # all failures are fatal during setup
@@ -84,7 +84,7 @@ def db_setup(config, pg_admin_username, pg_admin_password):
     except psycopg2.ProgrammingError as exc:
         print(exc)
 
-    cursor.execute("SELECT EXISTS(SELECT * FROM information_schema.tables WHERE table_name='%s')" % config.LAVA_DB_NAME)
+    cursor.execute("SELECT EXISTS(SELECT * FROM information_schema.tables WHERE table_name='%s')" % config.LAVA_DB_NAME)  # nosec - not accessible.
     db_existed_before = cursor.fetchone()[0]
 
     if not db_existed_before:
@@ -216,7 +216,7 @@ def configure():
 
     # Allow lavaserver to write to all the log files
     # setgid on LAVA_LOGS directory
-    os.chmod(LAVA_LOGS, 0o2775)
+    os.chmod(LAVA_LOGS, 0o2775)  # nosec - group permissive.
 
     # Allow users in the adm group to read all logs
     with open("%s/django.log" % LAVA_LOGS, 'w+') as logfile:

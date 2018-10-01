@@ -24,7 +24,7 @@ import errno
 import ldap
 import logging
 import os
-import subprocess
+import subprocess  # nosec verified
 import yaml
 
 from collections import OrderedDict
@@ -244,7 +244,7 @@ def send_irc_notification(nick, recipient, message,
         nick, nick, nick, recipient, message,
         server, port)
 
-    proc = subprocess.Popen(['/bin/bash', '-c', netcat_cmd],
+    proc = subprocess.Popen(['/bin/bash', '-c', netcat_cmd],  # nosec managed.
                             stdin=subprocess.PIPE,
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 

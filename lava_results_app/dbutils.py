@@ -208,7 +208,7 @@ def _get_job_metadata(job):
     retval = {}
     # Add original_definition checksum to metadata
     retval.update({
-        'definition-checksum': hashlib.md5(
+        'definition-checksum': hashlib.md5(  # nosec - not used for crypto
             job.original_definition.encode('utf-8')).hexdigest()
     })
     # Add lava-server-version to metadata

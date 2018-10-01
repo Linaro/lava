@@ -170,7 +170,7 @@ class TestMultinode(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertEqual(client_protocol.parameters['protocols'][client_protocol.name]['roles']['kvm02'], 'server')
         self.assertEqual(server_protocol.parameters['protocols'][client_protocol.name]['roles']['kvm01'], 'client')
         self.assertEqual(server_protocol.parameters['protocols'][client_protocol.name]['roles']['kvm02'], 'server')
-        self.assertEqual(client_multinode.lava_multi_node_cache_file, '/tmp/lava_multi_node_cache.txt')
+        self.assertEqual(client_multinode.lava_multi_node_cache_file, '/tmp/lava_multi_node_cache.txt')  # nosec - replicating DUT behaviour.
         self.assertIsNotNone(client_multinode.lava_multi_node_test_dir)
         self.assertTrue(os.path.exists(client_multinode.lava_multi_node_test_dir))
 
@@ -589,7 +589,7 @@ class TestProtocol(StdoutTestCase):  # pylint: disable=too-many-public-methods
         def send(self, msg):
             if self.header:
                 self.header = False
-                assert(int(msg, 16) < 0xFFFE)
+                assert(int(msg, 16) < 0xFFFE)  # nosec - unit test support
             else:
                 message = json.loads(msg)
                 self.coord.dataReceived(message)

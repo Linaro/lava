@@ -21,7 +21,7 @@
 import argparse
 import simplejson
 import os
-import subprocess
+import subprocess  # nosec - internal
 import sys
 
 
@@ -38,7 +38,7 @@ def handle_on(options):
     # Check that the sources are already present
     if not os.path.exists("lava-server/.git"):
         print("Downloading the sources")
-        subprocess.check_call(["git", "clone", options.url])
+        subprocess.check_call(["git", "clone", options.url])  # nosec - internal
 
     os.chdir("/usr/lib/python3/dist-packages")
     # Making backups
@@ -95,7 +95,7 @@ def _restart():
     print("Restarting the services:")
     for service in services:
         print("* %s" % service)
-        subprocess.check_call(["service", service, "restart"])
+        subprocess.check_call(["service", service, "restart"])  # nosec - internal
 
 
 def main():
@@ -116,7 +116,7 @@ def main():
     options = parser.parse_args()
 
     # Check that we are running this script on a debian machine
-    out = subprocess.check_output(["lsb_release", "--id"],
+    out = subprocess.check_output(["lsb_release", "--id"],  # nosec - internal
                                   stderr=subprocess.STDOUT).decode("utf-8")
     if out != "Distributor ID:\tDebian\n":
         print("Not running on a Debian system")

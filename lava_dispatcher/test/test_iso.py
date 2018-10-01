@@ -93,11 +93,11 @@ class TestIsoJob(StdoutTestCase):
             '/usr/bin/qemu-system-x86_64', '-nographic', '-enable-kvm',
             '-cpu host', '-net nic,model=virtio,macaddr=52:54:00:12:34:58 -net user',
             '-m 2048', ' -drive format=raw,file={emptyimage} ', '-boot c']
-        substitutions = {'{emptyimage}': '/tmp/tmp.00000/hd.img'}
+        substitutions = {'{emptyimage}': '/tmp/tmp.00000/hd.img'}  # nosec unit test support.
         sub_command = substitute(sub_command, substitutions)
         self.assertNotIn('{emptyimage}', sub_command)
-        self.assertNotIn('/tmp/tmp.00000/hd.img', sub_command)
-        self.assertIn('/tmp/tmp.00000/hd.img', ' '.join(sub_command))
+        self.assertNotIn('/tmp/tmp.00000/hd.img', sub_command)  # nosec unit test support.
+        self.assertIn('/tmp/tmp.00000/hd.img', ' '.join(sub_command))  # nosec unit test support.
 
     def test_timeout_inheritance(self):
         """

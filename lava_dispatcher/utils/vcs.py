@@ -21,7 +21,7 @@
 import logging
 import os
 import shutil
-import subprocess
+import subprocess  # nosec - internal use.
 import yaml
 from lava_common.exceptions import InfrastructureError
 
@@ -53,18 +53,18 @@ class BzrHelper(VCSHelper):
         try:
             if revision is not None:
                 logger.debug("Running '%s branch -r %s %s'", self.binary, str(revision), self.url)
-                subprocess.check_output([self.binary, 'branch', '-r',
+                subprocess.check_output([self.binary, 'branch', '-r',  # nosec - internal use.
                                          str(revision), self.url,
                                          dest_path],
                                         stderr=subprocess.STDOUT, env=env)
                 commit_id = revision
             else:
                 logger.debug("Running '%s branch %s'", self.binary, self.url)
-                subprocess.check_output([self.binary, 'branch', self.url,
+                subprocess.check_output([self.binary, 'branch', self.url,  # nosec - internal use.
                                          dest_path],
                                         stderr=subprocess.STDOUT, env=env)
                 os.chdir(dest_path)
-                commit_id = subprocess.check_output(['bzr', 'revno'],
+                commit_id = subprocess.check_output(['bzr', 'revno'],  # nosec - internal use.
                                                     env=env).strip().decode('utf-8', errors="replace")
 
         except subprocess.CalledProcessError as exc:
@@ -112,16 +112,16 @@ class GitHelper(VCSHelper):
                 cmd_args.append("--depth=1")
 
             logger.debug("Running '%s'", " ".join(cmd_args))
-            subprocess.check_output(cmd_args, stderr=subprocess.STDOUT)
+            subprocess.check_output(cmd_args, stderr=subprocess.STDOUT)  # nosec - internal use.
 
             if revision is not None:
                 logger.debug("Running '%s checkout %s", self.binary,
                              str(revision))
-                subprocess.check_output([self.binary, '-C', dest_path,
+                subprocess.check_output([self.binary, '-C', dest_path,  # nosec - internal use.
                                          'checkout', str(revision)],
                                         stderr=subprocess.STDOUT)
 
-            commit_id = subprocess.check_output([self.binary, '-C', dest_path,
+            commit_id = subprocess.check_output([self.binary, '-C', dest_path,  # nosec - internal use.
                                                  'log', '-1', '--pretty=%H'],
                                                 stderr=subprocess.STDOUT).strip()
 

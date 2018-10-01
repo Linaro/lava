@@ -24,7 +24,7 @@ from functools import reduce
 import time
 import types
 import traceback
-import subprocess
+import subprocess  # nosec - internal
 from collections import OrderedDict
 from nose.tools import nottest
 from lava_common.timeout import Timeout
@@ -478,7 +478,7 @@ class Action:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         command_list = ['nice'] + [str(s) for s in command_list]
         self.logger.debug("%s", ' '.join(command_list))
         try:
-            log = subprocess.check_output(command_list, stderr=subprocess.STDOUT,
+            log = subprocess.check_output(command_list, stderr=subprocess.STDOUT,  # nosec - internal
                                           cwd=cwd)
             log = log.decode('utf-8', errors="replace")  # pylint: disable=redefined-variable-type
         except subprocess.CalledProcessError as exc:

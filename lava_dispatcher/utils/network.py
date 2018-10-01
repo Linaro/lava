@@ -28,7 +28,7 @@ import os
 import netifaces
 import random
 import socket
-import subprocess
+import subprocess  # nosec - internal use.
 from lava_common.exceptions import InfrastructureError
 from lava_common.constants import (
     XNBD_PORT_RANGE_MIN,
@@ -71,7 +71,7 @@ def rpcinfo_nfs(server, version=3):
     :return: None if success, message if fail
     """
     with open(os.devnull, 'w') as devnull:
-        proc = subprocess.Popen(['/usr/sbin/rpcinfo', '-u', server, 'nfs', "%s" % version], stdout=devnull, stderr=subprocess.PIPE)
+        proc = subprocess.Popen(['/usr/sbin/rpcinfo', '-u', server, 'nfs', "%s" % version], stdout=devnull, stderr=subprocess.PIPE)  # nosec - internal use.
         msg = proc.communicate()
         if msg[1]:
             return "%s %s" % (server, msg[1])

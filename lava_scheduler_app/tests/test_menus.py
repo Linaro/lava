@@ -7,7 +7,7 @@ from lava_scheduler_app.tests.test_submission import TestCaseWithFactory
 class YamlMenuFactory(YamlFactory):
 
     def make_fake_mustang_device(self, hostname='fakemustang1'):  # pylint: disable=no-self-use
-        assert hostname == 'fakemustang1'
+        assert hostname == 'fakemustang1'  # nosec - unit test support
 
     def make_job_data(self, actions=None, **kw):
         sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs', 'mustang-menu-ramdisk.yaml')

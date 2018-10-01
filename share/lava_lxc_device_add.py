@@ -29,7 +29,7 @@
 import os
 import argparse
 import logging
-import subprocess
+import subprocess  # nosec - internal
 import sys
 import time
 import syslog
@@ -111,7 +111,7 @@ def main():
 
     lxc_cmd = ['lxc-device', '-n', lxc_name, 'add', device]
     try:
-        output = subprocess.check_output(lxc_cmd, stderr=subprocess.STDOUT)
+        output = subprocess.check_output(lxc_cmd, stderr=subprocess.STDOUT)  # nosec - internal
         output = output.decode("utf-8", errors="replace")
         logger.debug(output)
         logger.info("[%s] device %s added", uniq_str, device)

@@ -452,7 +452,7 @@ class InlineRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
 
         # Grab the inline test definition
         testdef = self.parameters['repository']
-        sha1 = hashlib.sha1()
+        sha1 = hashlib.sha1()  # nosec - not used for cryptography
 
         # Dump the test definition and compute the sha1
         yaml_file = os.path.join(runner_path, self.parameters['path'])

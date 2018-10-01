@@ -66,14 +66,14 @@ def main():
         '%s/yaml_summary' % (job_results_url),
         params={'user': args.username, 'token': args.token})
 
-    for test_suite in yaml.load(summary_response.content):
+    for test_suite in yaml.safe_load(summary_response.content):
         if test_suite['name'] in args.testsuites:
             print("Test case list for suite '%s':" % test_suite["name"])
             suite_response = requests.get(
                 '%s/%s/yaml' % (job_results_url, test_suite['name']),
                 params={'user': args.username, 'token': args.token})
 
-            for test_case in yaml.load(suite_response.content):
+            for test_case in yaml.safe_load(suite_response.content):
                 print("- %s" % test_case["name"])
 
 

@@ -24,7 +24,7 @@ import os
 import yaml
 import logging
 import traceback
-import subprocess
+import subprocess  # nosec - internal
 from lava_dispatcher.connection import Protocol
 from lava_common.exceptions import (
     InfrastructureError,
@@ -142,7 +142,7 @@ class LxcProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
     def _call_handler(self, command):
         try:
             self.logger.debug("%s protocol: executing '%s'", self.name, command)
-            output = subprocess.check_output(command.split(' '),
+            output = subprocess.check_output(command.split(' '),  # nosec - internal
                                              stderr=subprocess.STDOUT)
             if output:
                 self.logger.debug(output)

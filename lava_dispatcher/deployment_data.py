@@ -164,9 +164,9 @@ lede = {  # pylint: disable=invalid-name
     # for lava-test-shell
     'distro': 'lede',
     'lava_test_sh_cmd': '/bin/sh',
-    'lava_test_dir': '/tmp/lava-%s',
+    'lava_test_dir': '/tmp/lava-%s',  # nosec - on the DUT
     'lava_test_results_part_attr': 'root_part',
-    'lava_test_results_dir': '/tmp/lava-results-%s',
+    'lava_test_results_dir': '/tmp/lava-results-%s',  # nosec - on the DUT
     'lava_test_shell_file': None,
 }
 

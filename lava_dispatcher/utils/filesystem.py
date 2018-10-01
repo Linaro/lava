@@ -24,7 +24,7 @@ import shutil
 import tarfile
 import tempfile
 import guestfs
-import subprocess
+import subprocess  # nosec - internal use.
 import glob
 import logging
 import magic
@@ -55,13 +55,13 @@ def rmtree(directory):
                       % (directory, exc))
 
 
-def mkdtemp(autoremove=True, basedir='/tmp'):
+def mkdtemp(autoremove=True, basedir='/tmp'):  # nosec - internal use.
     """
     returns a temporary directory that's deleted when the process exits
 
     """
     tmpdir = tempfile.mkdtemp(dir=basedir)
-    os.chmod(tmpdir, 0o755)
+    os.chmod(tmpdir, 0o755)  # nosec - internal use.
     if autoremove:
         atexit.register(rmtree, tmpdir)
     return tmpdir
@@ -357,7 +357,7 @@ def copy_overlay_to_sparse_fs(image, overlay):
     if not is_sparse_image(image):
         raise JobError("Image is not an Android sparse image: %s" % image)
 
-    subprocess.check_output(['/usr/bin/simg2img', image, ext4_img],
+    subprocess.check_output(['/usr/bin/simg2img', image, ext4_img],  # nosec - internal use.
                             stderr=subprocess.STDOUT)
     guest.add_drive(ext4_img)
     _launch_guestfs(guest)
@@ -379,7 +379,7 @@ def copy_overlay_to_sparse_fs(image, overlay):
     guest.umount(devices[0])
     if int(available) is 0 or percent == '100%':
         raise JobError("No space in image after applying overlay: %s" % image)
-    subprocess.check_output(['/usr/bin/img2simg', ext4_img, image],
+    subprocess.check_output(['/usr/bin/img2simg', ext4_img, image],  # nosec - internal use.
                             stderr=subprocess.STDOUT)
     os.remove(ext4_img)
 

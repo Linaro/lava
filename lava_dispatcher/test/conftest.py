@@ -26,8 +26,8 @@ import requests
 @pytest.fixture(autouse=True)
 def no_requests(monkeypatch, request):
     def get(url, allow_redirects, stream):
-        assert allow_redirects is True
-        assert stream is True
+        assert allow_redirects is True  # nosec - unit test support
+        assert stream is True  # nosec - unit test support
         res = requests.Response()
         res.status_code = requests.codes.OK
         res.close = lambda: None

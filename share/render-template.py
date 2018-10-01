@@ -65,11 +65,11 @@ def main():
         help='Path to the device-types template folder')
     args = parser.parse_args()
 
-    env = Environment(
+    env = Environment(  # nosec rendering to YAML
         loader=FileSystemLoader(
             [os.path.join(args.path, 'devices'),
              os.path.join(args.path, 'device-types')]),
-        trim_blocks=True)
+        trim_blocks=True, autoescape=False)
     if not os.path.exists(os.path.join(args.path, 'devices', "%s.jinja2" % args.device)):
         print("Cannot find %s device configuration file" % args.device)
         return

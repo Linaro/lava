@@ -21,7 +21,7 @@
 
 import argparse
 import re
-import subprocess
+import subprocess  # nosec - local
 import time
 
 
@@ -35,8 +35,8 @@ class Commit:
         self.commit_id = commit_id
         self.change_id = change_id
 
-        self.obj = subprocess.check_output(['git', 'cat-file', '-p', self.commit_id]).decode('utf-8')
-        self.hash = subprocess.check_output(['git', 'rev-parse', '--short', self.commit_id]).decode('utf-8').strip()
+        self.obj = subprocess.check_output(['git', 'cat-file', '-p', self.commit_id]).decode('utf-8')  # nosec - internal
+        self.hash = subprocess.check_output(['git', 'rev-parse', '--short', self.commit_id]).decode('utf-8').strip()  # nosec - internal
         break_next_time = False
 
         for line in self.obj.split('\n'):
@@ -63,8 +63,8 @@ class Commit:
 def get_change_ids(branch):
     results = []
 
-    subprocess.check_output(["git", "checkout", branch], stderr=subprocess.STDOUT)
-    lines = subprocess.check_output(["git", "log"]).decode('utf-8')
+    subprocess.check_output(["git", "checkout", branch], stderr=subprocess.STDOUT)  # nosec - internal
+    lines = subprocess.check_output(["git", "log"]).decode('utf-8')  # nosec - internal
     for line in lines.split('\n'):
         if "Change-Id" in line:
             m = change_id_pattern.match(line)
@@ -85,7 +85,7 @@ def main():
 
     # Check the current working directory
     try:
-        subprocess.check_call(["git", "rev-parse"])
+        subprocess.check_call(["git", "rev-parse"])  # nosec - internal
     except subprocess.CalledProcessError:
         print("Ensure this script is run from the git working copy.")
         return 1
@@ -99,8 +99,8 @@ def main():
     diff.sort()
 
     # Go back to master
-    subprocess.check_output(["git", "checkout", master_branch], stderr=subprocess.STDOUT)
-    lines = subprocess.check_output(["git", "log"]).decode('utf-8')
+    subprocess.check_output(["git", "checkout", master_branch], stderr=subprocess.STDOUT)  # nosec - internal
+    lines = subprocess.check_output(["git", "log"]).decode('utf-8')  # nosec - internal
 
     # List the missing commits
     current_hash = ''

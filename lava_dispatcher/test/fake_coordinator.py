@@ -65,27 +65,27 @@ class TestSocket:
     def send(self, data):
         if self.header:
             self.header = False
-            assert(int(data, 16) < 0xFFFE)
+            assert(int(data, 16) < 0xFFFE)  # nosec - unit test support
             self.log.info("\tCoordinator header: %d bytes" % int(data, 16))
         else:
             try:
                 json_data = json.loads(data)
             except ValueError:
-                assert False
+                assert False  # nosec - unit test support
             if not self.response:
-                assert(json_data['response'] == "nack")
+                assert(json_data['response'] == "nack")  # nosec - unit test support
                 self.header = True
                 return
-            assert 'response' in json_data
+            assert 'response' in json_data  # nosec - unit test support
             self.log.info("\tCoordinator response: '%s'" % json_data['response'])
             self.log.info("\tdebug: %s" % self.response['response'])
-            assert(json_data['response'] == self.response['response'])
+            assert(json_data['response'] == self.response['response'])  # nosec - unit test support
             self.passes += 1
             if self.message:
                 # we are expecting a message back.
-                assert 'message' in json_data
+                assert 'message' in json_data  # nosec - unit test support
                 self.log.info("\tCoordinator received a message: '%s'" % (json.dumps(json_data['message'])))
-                assert(json_data['message'] == self.message)
+                assert(json_data['message'] == self.message)  # nosec - unit test support
                 self.passes += 1
             else:
                 # actual calls will discriminate between dict and string replies

@@ -30,7 +30,7 @@ import shutil
 import time
 import hashlib
 import requests
-import subprocess
+import subprocess  # nosec - verified.
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.protocols.lxc import LxcProtocol
 from lava_dispatcher.actions.deploy import DeployAction
@@ -212,7 +212,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
 
         connection = super().run(connection, max_end_time)
         # self.cookies = self.job.context.config.lava_cookies  # FIXME: work out how to restore
-        md5 = hashlib.md5()
+        md5 = hashlib.md5()  # nosec - not being used for cryptography.
         sha256 = hashlib.sha256()
 
         # Create a fresh directory if the old one has been removed by a previous cleanup
@@ -286,7 +286,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         if compression and decompress_command:
             try:
                 with open(fname, 'wb') as dwnld_file:
-                    proc = subprocess.Popen([decompress_command],
+                    proc = subprocess.Popen([decompress_command],  # nosec - internal.
                                             stdin=subprocess.PIPE,
                                             stdout=dwnld_file)
             except OSError as exc:
@@ -502,7 +502,7 @@ class ScpDownloadAction(DownloadHandler):
     def validate(self):
         super().validate()
         try:
-            size = subprocess.check_output(['nice', 'ssh',
+            size = subprocess.check_output(['nice', 'ssh',  # nosec - internal.
                                             self.url.netloc,
                                             'stat', '-c', '%s',
                                             self.url.path],
@@ -514,7 +514,7 @@ class ScpDownloadAction(DownloadHandler):
     def reader(self):
         process = None
         try:
-            process = subprocess.Popen(
+            process = subprocess.Popen(  # nosec - internal.
                 ['nice', 'ssh', self.url.netloc, 'cat', self.url.path],
                 stdout=subprocess.PIPE
             )
@@ -605,7 +605,7 @@ class QCowConversionAction(Action):
 
         self.logger.debug("Converting downloaded image from qcow2 to raw")
         try:
-            subprocess.check_output(['qemu-img', 'convert',
+            subprocess.check_output(['qemu-img', 'convert',  # nosec - checked.
                                      '-f', 'qcow2',
                                      '-O', 'raw', origin, fname],
                                     stderr=subprocess.STDOUT)

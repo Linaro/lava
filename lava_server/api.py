@@ -19,7 +19,7 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import subprocess
+import subprocess  # nosec internal
 import xmlrpc.client
 import yaml
 
@@ -80,7 +80,7 @@ class LavaSystemAPI(SystemAPI):
 
         changelog = '/usr/share/doc/lava-server/changelog.Debian.gz'
         if os.path.exists(changelog):
-            deb_version = subprocess.check_output((
+            deb_version = subprocess.check_output((  # nosec internal
                 'dpkg-query', '-W', "-f=${Version}\n",
                 "lava-server")).strip().decode('utf-8')
             return deb_version

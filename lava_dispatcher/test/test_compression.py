@@ -57,7 +57,7 @@ class TestDecompression(StdoutTestCase):
             output = httpaction.get_namespace_data(action='download-action', label=httpaction.key, key='file')
             outputfile = output.split('/')[-1]
             sha256hash = hashlib.sha256()
-            md5sumhash = hashlib.md5()
+            md5sumhash = hashlib.md5()  # nosec - not used for cryptography
             with open(output, 'rb', buffering=0) as f:
                 for b in iter(lambda: f.read(128 * 1024), b''):
                     sha256hash.update(b)
@@ -94,5 +94,5 @@ class TestDecompression(StdoutTestCase):
         # Call decompress_file, we only need it to create the command required,
         # it doesn't need to complete successfully.
         with self.assertRaises(InfrastructureError):
-            decompress_file("/tmp/test.xz", "zip")
+            decompress_file("/tmp/test.xz", "zip")  # nosec - unit test only.
         self.assertEqual(copy_of_command_map, decompress_command_map)

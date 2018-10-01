@@ -19,7 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
-import subprocess
+import subprocess  # nosec dpkg
 
 
 def debian_package_arch(pkg):
@@ -30,7 +30,7 @@ def debian_package_arch(pkg):
     """
     changelog = '/usr/share/doc/%s/changelog.Debian.gz' % pkg
     if os.path.exists(changelog):
-        deb_arch = subprocess.check_output((
+        deb_arch = subprocess.check_output((  # nosec dpkg-query
             'dpkg-query', '-W', "-f=${Architecture}\n",
             "%s" % pkg)).strip().decode('utf-8', errors="replace")
         return deb_arch
@@ -45,7 +45,7 @@ def debian_package_version(pkg, split):
     """
     changelog = '/usr/share/doc/%s/changelog.Debian.gz' % pkg
     if os.path.exists(changelog):
-        deb_version = subprocess.check_output((
+        deb_version = subprocess.check_output((  # nosec dpkg-query
             'dpkg-query', '-W', "-f=${Version}\n",
             "%s" % pkg)).strip().decode('utf-8', errors="replace")
         # example version returned would be '2016.11'

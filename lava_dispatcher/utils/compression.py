@@ -25,7 +25,7 @@
 # vexpress recovery images: any compression though usually zip
 
 import os
-import subprocess
+import subprocess  # nosec - internal use.
 import tarfile
 
 from lava_common.exceptions import (
@@ -61,7 +61,7 @@ def compress_file(infile, compression):
         cmd = compress_command_map[compression][:]
         cmd.append(infile)
         try:
-            subprocess.check_output(cmd)
+            subprocess.check_output(cmd)  # nosec - internal use.
             return "%s.%s" % (infile, compression)
         except (OSError, subprocess.CalledProcessError) as exc:
             raise InfrastructureError('unable to compress file %s: %s' % (infile, exc))
@@ -84,7 +84,7 @@ def decompress_file(infile, compression):
         if infile.endswith(compression):
             outfile = infile[:-(len(compression) + 1)]
         try:
-            subprocess.check_output(cmd)
+            subprocess.check_output(cmd)  # nosec - internal use.
             return outfile
         except (OSError, subprocess.CalledProcessError) as exc:
             raise InfrastructureError('unable to decompress file %s: %s' % (infile, exc))

@@ -22,7 +22,7 @@ import os
 import sys
 import yaml
 import argparse
-import subprocess
+import subprocess  # nosec - internal
 
 # pylint: disable=too-many-branches
 
@@ -110,8 +110,8 @@ def uglify(os_name, data, dirname, remove=False, simulate=False):
 
                     if not simulate:
                         try:
-                            subprocess.check_call(
-                                ['uglifyjs', orig_path, '-o',
+                            subprocess.check_call(  # nosec - internal
+                                ['/usr/bin/uglifyjs', orig_path, '-o',
                                  dest_path, '-c', '-m'],
                                 stderr=open(os.devnull, 'wb'))
                         except Exception as e:
@@ -148,7 +148,7 @@ def main():
         action='store_true', help='Only echo the commands')
 
     args = parser.parse_args()
-    data = yaml.load(open(args.filename, 'r'))
+    data = yaml.safe_load(open(args.filename, 'r'))
     # only have data for debian-based packages so far.
     dependencies = handle_embedded('debian', data, os.getcwd(), args.simulate)
     dep_list = []

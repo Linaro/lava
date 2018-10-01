@@ -20,7 +20,7 @@
 
 import os
 import shutil
-import subprocess
+import subprocess  # nosec - unit test support.
 import tempfile
 import unittest
 
@@ -45,12 +45,12 @@ class TestGit(StdoutTestCase):  # pylint: disable=too-many-public-methods
         os.chdir(self.tmpdir)
 
         # Create a Git repository with two commits
-        subprocess.check_output(['git', 'init', 'git'])
+        subprocess.check_output(['git', 'init', 'git'])  # nosec - unit test support.
         os.chdir('git')
         with open('test.txt', 'w') as testfile:
             testfile.write("Some data")
-        subprocess.check_output(['git', 'add', 'test.txt'])
-        subprocess.check_output(['git', 'commit', 'test.txt', '-m', 'First commit'],
+        subprocess.check_output(['git', 'add', 'test.txt'])  # nosec - unit test support.
+        subprocess.check_output(['git', 'commit', 'test.txt', '-m', 'First commit'],  # nosec - unit test support.
                                 env={'GIT_COMMITTER_DATE': 'Fri Oct 24 14:40:36 CEST 2014',
                                      'GIT_AUTHOR_DATE': 'Fri Oct 24 14:40:36 CEST 2014',
                                      'GIT_AUTHOR_NAME': 'Foo Bar',
@@ -59,8 +59,8 @@ class TestGit(StdoutTestCase):  # pylint: disable=too-many-public-methods
                                      'GIT_COMMITTER_EMAIL': 'foo@example.com'})
         with open('second.txt', 'w') as datafile:
             datafile.write("Some more data")
-        subprocess.check_output(['git', 'add', 'second.txt'])
-        subprocess.check_output(['git', 'commit', 'second.txt', '-m', 'Second commit'],
+        subprocess.check_output(['git', 'add', 'second.txt'])  # nosec - unit test support.
+        subprocess.check_output(['git', 'commit', 'second.txt', '-m', 'Second commit'],  # nosec - unit test support.
                                 env={'GIT_COMMITTER_DATE': 'Fri Oct 24 14:40:38 CEST 2014',
                                      'GIT_AUTHOR_DATE': 'Fri Oct 24 14:40:38 CEST 2014',
                                      'GIT_AUTHOR_NAME': 'Foo Bar',
@@ -68,11 +68,11 @@ class TestGit(StdoutTestCase):  # pylint: disable=too-many-public-methods
                                      'GIT_COMMITTER_NAME': 'Foo Bar',
                                      'GIT_COMMITTER_EMAIL': 'foo@example.com'})
 
-        subprocess.check_output(['git', 'checkout', '-q', '-b', 'testing'])
+        subprocess.check_output(['git', 'checkout', '-q', '-b', 'testing'])  # nosec - unit test support.
         with open('third.txt', 'w') as datafile:
             datafile.write("333")
-        subprocess.check_output(['git', 'add', 'third.txt'])
-        subprocess.check_output(['git', 'commit', 'third.txt', '-m', 'Third commit'],
+        subprocess.check_output(['git', 'add', 'third.txt'])  # nosec - unit test support.
+        subprocess.check_output(['git', 'commit', 'third.txt', '-m', 'Third commit'],  # nosec - unit test support.
                                 env={'GIT_COMMITTER_DATE': 'Thu Sep  1 10:14:29 CEST 2016',
                                      'GIT_AUTHOR_DATE': 'Thu Sep  1 10:14:29 CEST 2016',
                                      'GIT_AUTHOR_NAME': 'Foo Bar',
@@ -80,7 +80,7 @@ class TestGit(StdoutTestCase):  # pylint: disable=too-many-public-methods
                                      'GIT_COMMITTER_NAME': 'Foo Bar',
                                      'GIT_COMMITTER_EMAIL': 'foo@example.com'})
 
-        subprocess.check_output(['git', 'checkout', '-q', 'master'])
+        subprocess.check_output(['git', 'checkout', '-q', 'master'])  # nosec - unit test support.
 
         # Go into the tempdir
         os.chdir('..')
@@ -145,22 +145,22 @@ class TestBzr(StdoutTestCase):  # pylint: disable=too-many-public-methods
                     'BZR_LOG': os.path.join(self.tmpdir, "bzr.log")}
 
         # Create a Git repository with two commits
-        subprocess.check_output(['bzr', 'init', 'repo'],
+        subprocess.check_output(['bzr', 'init', 'repo'],  # nosec - unit test support.
                                 env=self.env, stderr=subprocess.STDOUT)
         os.chdir('repo')
-        subprocess.check_output(['bzr', 'whoami', 'lava-ci@example.com'],
+        subprocess.check_output(['bzr', 'whoami', 'lava-ci@example.com'],  # nosec - unit test support.
                                 env=self.env, stderr=subprocess.STDOUT)
         with open('test.txt', 'w') as datafile:
             datafile.write("Some data")
-        subprocess.check_output(['bzr', 'add', 'test.txt'],
+        subprocess.check_output(['bzr', 'add', 'test.txt'],  # nosec - unit test support.
                                 env=self.env, stderr=subprocess.STDOUT)
-        subprocess.check_output(['bzr', 'commit', 'test.txt', '-m', 'First commit'],
+        subprocess.check_output(['bzr', 'commit', 'test.txt', '-m', 'First commit'],  # nosec - unit test support.
                                 env=self.env, stderr=subprocess.STDOUT)
         with open('second.txt', 'w') as datafile:
             datafile.write("Some more data")
-        subprocess.check_output(['bzr', 'add', 'second.txt'],
+        subprocess.check_output(['bzr', 'add', 'second.txt'],  # nosec - unit test support.
                                 env=self.env, stderr=subprocess.STDOUT)
-        subprocess.check_output(['bzr', 'commit', 'second.txt', '-m', 'Second commit'],
+        subprocess.check_output(['bzr', 'commit', 'second.txt', '-m', 'Second commit'],  # nosec - unit test support.
                                 env=self.env, stderr=subprocess.STDOUT)
 
         # Go back into the tempdir

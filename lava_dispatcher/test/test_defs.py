@@ -27,7 +27,7 @@ import shutil
 import pexpect
 import tempfile
 import unittest
-import subprocess
+import subprocess  # nosec - unit test support.
 from nose.tools import nottest
 from lava_dispatcher.power import FinalizeAction
 from lava_dispatcher.parser import JobParser
@@ -387,7 +387,7 @@ def check_rpcinfo(server='127.0.0.1'):
     returns True on failure.
     """
     try:
-        subprocess.check_output(['/usr/sbin/rpcinfo', '-u', server, 'nfs', '3'])
+        subprocess.check_output(['/usr/sbin/rpcinfo', '-u', server, 'nfs', '3'])  # nosec - unit test support.
     except (OSError, subprocess.CalledProcessError):
         return True
     return False

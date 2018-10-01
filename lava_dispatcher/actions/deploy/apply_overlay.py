@@ -20,7 +20,7 @@
 
 import os
 import shutil
-import subprocess
+import subprocess  # nosec - internal use.
 from lava_dispatcher.action import (
     Action,
     Pipeline,
@@ -247,7 +247,7 @@ class ApplyOverlayTftp(Action):
             # not be removed if umount fails.
             directory = mkdtemp(autoremove=False)
             try:
-                subprocess.check_output(['mount', '-t', 'nfs', nfs_address, directory])
+                subprocess.check_output(['mount', '-t', 'nfs', nfs_address, directory])  # nosec - internal.
             except subprocess.CalledProcessError as exc:
                 raise JobError(exc)
         elif self.parameters.get('ramdisk') is not None:
@@ -279,7 +279,7 @@ class ApplyOverlayTftp(Action):
             self.logger.debug("[%s] Applying overlay %s to directory %s", namespace, overlay_file, directory)
             untar_file(overlay_file, directory)
             if nfs_address:
-                subprocess.check_output(['umount', directory])
+                subprocess.check_output(['umount', directory])  # nosec - internal.
                 os.rmdir(directory)  # fails if the umount fails
         return connection
 
@@ -549,8 +549,7 @@ class CompressRamdisk(Action):
                              ramdisk_data, ramdisk_dir)
             cmd = "find . | cpio --create --format='newc' > %s" % ramdisk_data
             try:
-                # safe to use shell=True here, no external arguments
-                log = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT)
+                log = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT)  # nosec - safe to use shell=True here, no external arguments
                 log = log.decode("utf-8", errors="replace")
             except OSError as exc:
                 raise InfrastructureError('Unable to create cpio filesystem: %s' % exc)

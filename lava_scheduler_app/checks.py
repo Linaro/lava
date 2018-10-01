@@ -19,7 +19,7 @@
 import os
 from pwd import getpwuid
 import stat
-import subprocess
+import subprocess  # nosec system
 
 from django.core.checks import (
     Error,
@@ -110,7 +110,7 @@ def check_permissions(app_configs, **kwargs):
 
 def _package_status(name, errors, info=False):
     try:
-        out = subprocess.check_output(["dpkg-query", "--status", name],
+        out = subprocess.check_output(["dpkg-query", "--status", name],  # nosec system
                                       stderr=subprocess.STDOUT).decode("utf-8").split("\n")
         if out[1] != "Status: install ok installed":
             errors.append(Error('not installed correctly', obj=name))
@@ -163,13 +163,13 @@ def check_services(app_configs, **kwargs):
 
     for service in services:
         try:
-            subprocess.check_call(['systemctl', '-q', 'is-active', service])
+            subprocess.check_call(['systemctl', '-q', 'is-active', service])  # nosec system
         except subprocess.CalledProcessError:
             errors.append(Error("%s service is not active." % service, obj="lava service"))
 
     for service in optional:
         try:
-            subprocess.check_call(['systemctl', '-q', 'is-active', service])
+            subprocess.check_call(['systemctl', '-q', 'is-active', service])  # nosec system
         except subprocess.CalledProcessError:
             errors.append(Info("%s service is not active." % service, obj="lava service"))
     return errors

@@ -20,24 +20,11 @@
 XMP-RPC API
 """
 
-import datetime
 import logging
-import re
-import hashlib
-import os
-import subprocess
-import xmlrpc.client
-from django.contrib.auth.models import User, Group
-from django.core.urlresolvers import reverse
-from django.db import IntegrityError
 from linaro_django_xmlrpc.models import (
     ExposedAPI,
     Mapper,
     xml_rpc_signature,
-)
-
-from lava_scheduler_app.models import (
-    TestJob,
 )
 
 

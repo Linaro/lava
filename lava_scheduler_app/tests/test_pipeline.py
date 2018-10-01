@@ -4,7 +4,7 @@ import yaml
 import jinja2
 import unittest
 import logging
-import subprocess
+import subprocess  # nosec unit test support
 from nose.tools import nottest
 from lava_scheduler_app.models import (
     Device,
@@ -547,7 +547,7 @@ def check_rpcinfo(server='127.0.0.1'):
     returns True on failure.
     """
     try:
-        subprocess.check_output(['/usr/sbin/rpcinfo', '-u', server, 'nfs', '3'])
+        subprocess.check_output(['/usr/sbin/rpcinfo', '-u', server, 'nfs', '3'])  # nosec unit test
     except (OSError, subprocess.CalledProcessError):
         return True
     return False

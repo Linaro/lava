@@ -13,7 +13,7 @@
 
 import sys
 import os
-import subprocess
+import subprocess  # nosec - internal
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -61,7 +61,7 @@ copyright = u'2010-2018, Linaro Limited'
 # built documents.
 #
 # The short X.Y version.
-version = subprocess.Popen(r'./version.py', cwd=r'..', stdout=subprocess.PIPE).stdout.read().decode('utf-8')
+version = subprocess.Popen(r'./version.py', cwd=r'..', stdout=subprocess.PIPE).stdout.read().decode('utf-8')  # nosec - internal
 # The full version, including alpha/beta/rc tags.
 release = version
 

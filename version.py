@@ -19,7 +19,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import subprocess
+import subprocess  # nosec - internal
 import os
 
 
@@ -38,9 +38,9 @@ def version_tag():
     """
     describe = None
     if os.path.exists("./.git/"):
-        return subprocess.check_output(['git', 'describe']).strip().decode('utf-8')
+        return subprocess.check_output(['git', 'describe']).strip().decode('utf-8')  # nosec - internal
     if os.path.exists('debian/changelog'):
-        return subprocess.check_output(('dpkg-parsechangelog', '--show-field',
+        return subprocess.check_output(('dpkg-parsechangelog', '--show-field',  # nosec - internal
                                         'Version')).strip().decode('utf-8').split('-')[0]
 
 

@@ -155,7 +155,7 @@ class Job:  # pylint: disable=too-many-instance-attributes
 
         # Create the sub-directory
         tmp_dir = tempfile.mkdtemp(prefix=action_name + '-', dir=base_dir)
-        os.chmod(tmp_dir, 0o755)
+        os.chmod(tmp_dir, 0o755)  # nosec - automatic cleanup.
         return tmp_dir
 
     def _validate(self):

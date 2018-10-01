@@ -3,7 +3,7 @@ from django.db import migrations
 import base64
 import errno
 import os
-import pickle
+import pickle  # nosec - migration no longer in active use
 import pprint
 
 
@@ -50,7 +50,7 @@ def migrate_device_dict_to_filesystem(apps, schema_editor):
         hostname = device_dict.kee.replace('__KV_STORE_::lava_scheduler_app.models.DeviceDictionary:', '')
         value64 = device_dict.value
         valuepickled = base64.b64decode(value64)
-        value = pickle.loads(valuepickled)
+        value = pickle.loads(valuepickled)  # nosec - no longer in active use
         DDT[hostname] = devicedictionary_to_jinja2(value['parameters'], value['parameters']['extends'])
 
     # Dump the device dictionaries to file system

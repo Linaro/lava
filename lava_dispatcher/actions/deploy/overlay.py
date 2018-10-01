@@ -223,7 +223,7 @@ class MultinodeOverlayAction(OverlayAction):
         # Multinode-only
         self.lava_multi_node_test_dir = os.path.realpath(
             '%s/../../lava_test_shell/multi_node' % os.path.dirname(__file__))
-        self.lava_multi_node_cache_file = '/tmp/lava_multi_node_cache.txt'
+        self.lava_multi_node_cache_file = '/tmp/lava_multi_node_cache.txt'  # nosec - on the DUT
         self.role = None
         self.protocol = MultinodeProtocol.name
 
@@ -316,7 +316,7 @@ class VlandOverlayAction(OverlayAction):
         # vland-only
         self.lava_vland_test_dir = os.path.realpath(
             '%s/../../lava_test_shell/vland' % os.path.dirname(__file__))
-        self.lava_vland_cache_file = '/tmp/lava_vland_cache.txt'
+        self.lava_vland_cache_file = '/tmp/lava_vland_cache.txt'  # nosec - on the DUT
         self.params = {}
         self.sysfs = []
         self.tags = []
