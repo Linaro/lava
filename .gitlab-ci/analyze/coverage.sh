@@ -5,10 +5,14 @@ set -e
 if [ "$1" = "setup" ]
 then
   set -x
-  apt-get install --no-install-recommends --yes $(./share/requires.py -p lava-dispatcher -d debian -s stretch -n)
-  apt-get install --no-install-recommends --yes $(./share/requires.py -p lava-dispatcher -d debian -s stretch-backports -n)
-  apt-get install --no-install-recommends --yes $(./share/requires.py -p lava-server -d debian -s stretch -n)
-  apt-get install --no-install-recommends --yes $(./share/requires.py -p lava-server -d debian -s stretch-backports -n)
+  DEPS=$(./share/requires.py -p lava-dispatcher -d debian -s stretch -n)
+  apt-get install --no-install-recommends --yes $DEPS
+  DEPS=$(./share/requires.py -p lava-dispatcher -d debian -s stretch-backports -n)
+  apt-get install --no-install-recommends --yes $DEPS
+  DEPS=$(./share/requires.py -p lava-server -d debian -s stretch -n)
+  apt-get install --no-install-recommends --yes $DEPS
+  DEPS=$(./share/requires.py -p lava-server -d debian -s stretch-backports -n)
+  apt-get install --no-install-recommends --yes $DEPS
 else
   set -x
   PYTHONPATH=. py.test-3 --cache-clear -v --cov --cov-report= lava_dispatcher/test
