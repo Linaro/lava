@@ -157,6 +157,29 @@ class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-m
         self.assertNotIn("initrd tftp://{SERVER_IP}/{RAMDISK}", commands)
         self.assertIn("boot", commands)
 
+    @unittest.skipIf(infrastructure_error('xnbd-server'), "xnbd-server not installed")
+    def test_nbd_boot(self):
+        job = self.factory.create_job('x86-01.jinja2', 'sample_jobs/up2-initrd-nbd.yaml')
+        job.validate()
+        self.assertEqual(job.pipeline.errors, [])
+        description_ref = self.pipeline_reference('up2-initrd-nbd.yaml', job=job)
+        self.assertEqual(description_ref, job.pipeline.describe(False))
+        # Fixme: more asserts
+        self.assertIn('ipxe', job.device['actions']['boot']['methods'])
+        params = job.device['actions']['boot']['methods']['ipxe']['parameters']
+        for action in job.pipeline.actions:
+            action.validate()
+            if isinstance(action, BootloaderAction):
+                self.assertIn('method', action.parameters)
+                self.assertEqual('ipxe', action.parameters['method'])
+            if isinstance(action, TftpAction):
+                self.assertIn('initrd', action.parameters)
+                self.assertIn('kernel', action.parameters)
+                self.assertIn('nbdroot', action.parameters)
+                self.assertIn('to', action.parameters)
+                self.assertEqual('nbd', action.parameters['to'])
+            self.assertTrue(action.valid)
+
     def test_download_action(self):
         job = self.factory.create_job('x86-01.jinja2', 'sample_jobs/ipxe.yaml')
         for action in job.pipeline.actions:

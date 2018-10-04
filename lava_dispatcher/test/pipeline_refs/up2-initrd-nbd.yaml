@@ -1,0 +1,37 @@
+- class: actions.deploy.nbd.NbdAction
+  name: nbd-deploy
+  pipeline:
+  - class: actions.deploy.download.DownloaderAction
+    name: download-retry
+    pipeline:
+    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
+  - class: actions.deploy.download.DownloaderAction
+    name: download-retry
+    pipeline:
+    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
+  - class: actions.deploy.download.DownloaderAction
+    name: download-retry
+    pipeline:
+    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
+  - {class: actions.deploy.overlay.OverlayAction, name: lava-overlay}
+  - {class: actions.deploy.nbd.XnbdAction, name: xnbd-server-deploy}
+- class: actions.boot.ipxe.BootloaderAction
+  name: bootloader-action
+  pipeline:
+  - {class: actions.boot.BootloaderCommandOverlay, name: bootloader-overlay}
+  - {class: connections.serial.ConnectDevice, name: connect-device}
+  - class: actions.boot.ipxe.BootloaderRetry
+    name: bootloader-retry
+    pipeline:
+    - class: power.ResetDevice
+      name: reset-device
+      pipeline:
+      - {class: power.PDUReboot, name: pdu-reboot}
+    - {class: actions.boot.BootloaderInterruptAction, name: bootloader-interrupt}
+    - {class: actions.boot.BootloaderCommandsAction, name: bootloader-commands}
+    - {class: actions.boot.AutoLoginAction, name: auto-login-action}
+- class: power.FinalizeAction
+  name: finalize
+  pipeline:
+  - {class: power.PowerOff, name: power-off}
+  - {class: power.ReadFeedback, name: read-feedback}

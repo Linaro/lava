@@ -16,6 +16,7 @@ actions:
   deploy:
     methods:
       tftp:
+      nbd:
       ssh:
         options:
 {{ ssh_options }}
@@ -38,6 +39,14 @@ actions:
           - dhcp {{ boot_interface }}
           - set console console={{ console_device }},{{ baud_rate }}n8 lava_mac={LAVA_MAC}
           - "set extraargs root=/dev/nfs rw {{ base_nfsroot_args }} {{ base_kernel_args }} {{ base_ip_args }}"
+          - kernel tftp://{SERVER_IP}/{KERNEL} ${extraargs} ${console}
+          - initrd tftp://{SERVER_IP}/{RAMDISK}
+          - boot
+        nbd:
+          commands:
+          - dhcp {{ boot_interface }}
+          - set console console={{ console_device }},{{ baud_rate }}n8 lava_mac={LAVA_MAC}
+          - set extraargs {{ base_nbdroot_args }} rw {{ base_kernel_args }} {{ base_ip_args }}
           - kernel tftp://{SERVER_IP}/{KERNEL} ${extraargs} ${console}
           - initrd tftp://{SERVER_IP}/{RAMDISK}
           - boot
