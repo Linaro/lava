@@ -361,6 +361,21 @@ method
 The boot ``method`` determines how the device is booted and which commands and
 prompts are used to determine a successful boot.
 
+.. index:: boot method cmsis-dap
+
+.. _boot_method_cmsis_dap:
+
+cmsis-dap
+=========
+
+The ``cmsis-dap`` boot method takes no arguments or parameters.
+
+.. code-block:: yaml
+
+    method: cmsis-dap
+    timeout:
+      minutes: 10
+
 .. index:: boot method depthcharge
 
 .. _boot_method_depthcharge:
@@ -517,6 +532,22 @@ lxc
     - 'root@(.*):/#'
     timeout:
       minutes: 5
+
+.. index:: boot method pyocd
+
+.. _boot_method_pyocd:
+
+pyocd
+=====
+
+The ``pyocd`` boot method takes no arguments or parameters.
+
+.. code-block:: yaml
+
+ - boot:
+    method: pyocd
+    timeout:
+      minutes: 10
 
 .. index:: boot method console
 

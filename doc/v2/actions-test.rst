@@ -14,18 +14,30 @@ Lava-Test-Shell Test Definitions although the submission format has changed:
    and the same scripts will be used for all test definitions until another
    ``deploy`` block is encountered.
 
-.. note:: There is a FIXME outstanding to ensure that only the test definitions
-   listed in this block are executed for that test action - this allows
-   different tests to be run after different boot actions, within the one
-   deployment.
-
 ::
 
   - test:
      failure_retry: 3
 
+:ref:`test_action_definitions` are used for POSIX compliant operating
+systems on the DUT. The deployed system is expected to support a POSIX
+shell environment (``/bin/ash``, ``/bin/dash`` or ``/bin/bash`` are the
+most common) so that LAVA can execute the LAVA Test Shell Helper
+scripts.
+
+:ref:`monitor_test_action` are used for devices which have no POSIX
+shell and start the test immediately, for example IoT boards.
+
+Currently, there is no support for executing arbitrary commands on DUTs
+which cannot offer a full POSIX environment. This is being investigated
+for a future release.
+
+.. seealso:: :ref:`lava_test_helpers`
+
 .. contents::
    :backlinks: top
+
+.. index:: test action definitions (POSIX)
 
 .. _test_action_definitions:
 
@@ -236,7 +248,9 @@ Result checks
 
 LAVA collects results from internal operations as well as from the submitted
 test definitions, these form the ``lava`` test suite results. The full set of
-results for a job are available at::
+results for a job are available at:
+
+.. code-block:: none
 
  results/1234
 
@@ -285,14 +299,118 @@ Each TestSet name must be valid as a URL, which is consistent with the
 requirements for test definition names and test case names in the V1
 dispatcher.
 
-For TestJob ``1234``, the ``uname`` test case would appear as::
+For TestJob ``1234``, the ``uname`` test case would appear as:
+
+.. code-block:: none
 
  results/1234/testset-def/uname
 
-The ``date`` and ``mount`` test cases are referenced via the TestSet::
+The ``date`` and ``mount`` test cases are referenced via the TestSet:
+
+.. code-block:: none
 
  results/1234/testset-def/first_set/date
  results/1234/testset-def/first_set/mount
 
 A single test definition can start and stop different TestSets in sequence, as
 long as the name of each TestSet is unique for that test definition.
+
+.. index:: test action monitors
+
+.. _monitor_test_action:
+
+Monitors
+********
+
+Test jobs using Monitors **must**:
+
+#. Be carefully designed to automatically execute after boot.
+
+#. Emit a unique ``start`` string:
+
+   #. Only once per boot operation.
+   #. Before any test operation starts.
+
+#. Emit a unique ``end`` string:
+
+   #. Only once per boot operation.
+   #. After all test operations have completed.
+
+#. Provide a regular expression which matches all expected test output
+   and maps the output to results **without** leading to excessively
+   long test case names.
+
+``start`` and ``end`` strings will match part of a line but make sure
+that each string is long enough that it can only match once per boot.
+
+If ``start`` does not match, the job will timeout with no results.
+
+If ``end`` does not match, the job will timeout but the results (of
+the current boot) will already have been reported.
+
+name
+====
+
+The name of the :ref:`test suite <results_test_suite>`.
+
+.. code-block:: yaml
+
+ - name: tests
+      start: BOOTING ZEPHYR
+      end: PROJECT EXECUTION SUCCESSFUL
+      pattern: '(?P<test_case_id>\d+ *- [^-]+) (?P<measurement>\d+) tcs = [0-9]+ nsec'
+      fixupdict:
+        PASS: pass
+        FAIL: fail
+
+If the device output is of the form:
+
+.. code-block:: none
+
+ ***** BOOTING ZEPHYR OS v1.7.99 - BUILD: Apr 18 2018 10:00:55 *****
+ |-----------------------------------------------------------------------------|
+ |                            Latency Benchmark                                |
+ |-----------------------------------------------------------------------------|
+ |  tcs = timer clock cycles: 1 tcs is 12 nsec                                 |
+ |-----------------------------------------------------------------------------|
+ | 1 - Measure time to switch from ISR back to interrupted thread              |
+ | switching time is 107 tcs = 1337 nsec                                       |
+ |-----------------------------------------------------------------------------|
+
+ ...
+
+ PROJECT EXECUTION SUCCESSFUL
+
+The above regular expression can result in test case names like:
+
+.. code-block:: none
+
+ 1_measure_time_to_switch_from_isr_back_to_interrupted_thread_switching_time_is
+
+The raw data will be logged as:
+
+.. code-block:: none
+
+ test_case_id: 1 - Measure time to switch from ISR back to interrupted thread              |
+ | switching time is
+
+.. caution:: Notice how the regular expression has not closed the match
+   at the end of the "line" but has continued on to the first
+   non-matching character. The test case name then concatenates all
+   whitespace and invalid characters to a single underscore.
+
+.. code-block:: python
+
+ r'(?P<test_case_id>\d+ *- [^-]+) (?P<measurement>\d+) tcs = [0-9]+ nsec'
+
+The test_case_id will be formed from the match of the expression ``\d+
+*- [^-]+`` followed by a single space - but **only** if the rest of the
+expression matches as well.
+
+The measurement will be taken from the match of the expression ``\d+``
+preceded by a single space and followed by the **exact** string ``tcs =
+`` which itself must be followed by a number of digits, then a single
+space and finally the **exact** string ``nsec`` - but only if the rest
+of the expression also matches.
+
+.. seealso:: `Regular Expression HOWTO for Python3 <https://docs.python.org/3/howto/regex.html>`_
