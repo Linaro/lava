@@ -21,5 +21,5 @@ PACKAGES=$(./share/requires.py -p lava-dispatcher -d debian -s stretch-backports
 for pkg in $PACKAGES
 do
   echo "* $pkg"
-  [ -n $(dpkg-query --show --showformat '${Version}\n' "$pkg" | grep bpo) ]
+  dpkg-query --show --showformat '${Version}\n' "$pkg" | grep -q bpo
 done
