@@ -15,7 +15,7 @@ else
   then
     IMAGE_TAG="$IMAGE_TAG:$CI_COMMIT_TAG"
   else
-    IMAGE_TAG="$IMAGE_TAG/$CI_COMMIT_REF_NAME:$(git describe)"
+    IMAGE_TAG="$IMAGE_TAG/$CI_COMMIT_REF_SLUG:$(git describe)"
   fi
 
   git clone https://git.lavasoftware.org/lava/pkg/docker.git
@@ -26,7 +26,7 @@ else
   docker build -t $IMAGE_TAG docker/lava-dispatcher
 
   # Push only for tags or master
-  if [ "$CI_COMMIT_REF_NAME" = "master" -o -n "$CI_COMMIT_TAG" ]
+  if [ "$CI_COMMIT_REF_SLUG" = "master" -o -n "$CI_COMMIT_TAG" ]
   then
     docker push $IMAGE_TAG
   fi
