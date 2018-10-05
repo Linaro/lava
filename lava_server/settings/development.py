@@ -29,9 +29,7 @@ from lava_server.settings.common import *
 DEBUG = True
 TEMPLATES[0]["OPTIONS"]["debug"] = True
 
-# Disable TZ for the test as dashboard_app does not pass the tests.
-# FIXME: should be removed when v1 is removed
-USE_TZ = False
+USE_TZ = True
 
 # Top-level directory of the project.
 PROJECT_SRC_DIR = os.path.normpath(
