@@ -16,7 +16,6 @@ COPY $pkg_server /tmp/server.deb
 RUN service postgresql start && \
     dpkg -i /tmp/server.deb && \
     rm -f /tmp/server.deb && \
-    lava-server manage shell -c "from django.contrib.auth.models import User; User.objects.create_superuser('admin', 'admin@example.com', 'admin')" && \
     service postgresql stop
 
 ARG pkg_server_doc=lava-server-doc.deb
@@ -25,8 +24,9 @@ RUN dpkg -i /tmp/server-doc.deb && \
     rm -f /tmp/server-doc.deb
 
 # Activate the apache2 configuration and module
-run a2dissite 000-default
-run a2ensite lava-server && a2enmod proxy_http
+RUN a2dissite 000-default && \
+    a2ensite lava-server &&
+    a2enmod proxy_http
 
 # Copy lava settings
 COPY settings.conf /etc/lava-server/settings.conf
