@@ -63,8 +63,7 @@ from lava_scheduler_app.schema import (
     validate_device
 )
 
-from urllib.request import urlopen, Request
-from urllib.parse import urlencode
+import requests
 
 # pylint: disable=invalid-name,no-self-use,too-many-public-methods,too-few-public-methods
 # pylint: disable=too-many-branches,too-many-return-statements,too-many-instance-attributes
@@ -2297,7 +2296,7 @@ class NotificationCallback(models.Model):
 
     def invoke_callback(self):
         logger = logging.getLogger('lava_scheduler_app')
-        callback_data = None
+        data = None
 
         if self.method != NotificationCallback.GET:
             output = self.dataset in [
@@ -2306,38 +2305,34 @@ class NotificationCallback(models.Model):
             results = self.dataset in [
                 NotificationCallback.RESULTS,
                 NotificationCallback.ALL]
-            callback_data = self.notification.test_job.create_job_data(
+            data = self.notification.test_job.create_job_data(
                 token=self.token, output=output, results=results)
             # store callback_data for later retrieval & triage
             job_data_file = os.path.join(self.notification.test_job.output_dir, 'job_data.gz')
-            if callback_data:
+            if data:
                 # allow for jobs cancelled in submitted state
                 utils.mkdir(self.notification.test_job.output_dir)
                 # only write the file once
                 if not os.path.exists(job_data_file):
                     with gzip.open(job_data_file, 'wb') as output:
-                        output.write(simplejson.dumps(callback_data).encode('utf-8'))
-        headers = {}
+                        output.write(simplejson.dumps(data).encode('utf-8'))
+        try:
+            logger.info("Sending request to callback url %s" % self.url)
+            headers = {}
+            if self.token is not None:
+                headers['Authorization'] = self.token
 
-        if callback_data:
-            if callback_data.get('token') is not None:
-                headers['Authorization'] = callback_data['token']
-            if self.content_type == NotificationCallback.JSON:
-                callback_data = simplejson.dumps(callback_data).encode("utf-8")
-                headers['Content-Type'] = 'application/json'
+            if self.method == NotificationCallback.GET:
+                ret = requests.get(self.url, headers=headers)
+            elif self.content_type == NotificationCallback.JSON:
+                ret = requests.post(self.url, json=data, headers=headers)
             else:
-                callback_data = urlencode(callback_data).encode("utf-8")
-                headers['Content-Type'] = 'application/x-www-form-urlencoded'
+                ret = requests.post(self.url, data=data, headers=headers)
+            ret.raise_for_status()
 
-        if self.url:
-            try:
-                logger.info("Sending request to callback url %s" % self.url)
-                request = Request(self.url, callback_data, headers)
-                urlopen(request)
-
-            except Exception as ex:
-                logger.warning("Problem sending request to %s: %s" % (
-                    self.url, ex))
+        except Exception as ex:
+            logger.warning("Problem sending request to %s: %s" % (
+                self.url, ex))
 
 
 class TestJobUser(models.Model):
