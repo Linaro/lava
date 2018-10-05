@@ -13,10 +13,10 @@
 
 {% block content %}
 <h2>Authentication Tokens</h2>
-<p>Authentication tokens allow scripts using <a href="{{ STATIC_URL }}docs/v2/lava-tool.html">lava-tool</a> to
-securely access LAVA resources. You can create and use any number of tokens simultaneously. If you believe a token
-is compromised you can quickly remove it. Anyone using that token will no longer be able to authenticate as You
-in the system.</p>
+<p>Authentication tokens allow scripts using <a href="{{ STATIC_URL }}docs/v2/lavacli.html">lavacli</a> and other
+scripts based on XML-RPC to securely access LAVA resources. You can create and use any number of tokens
+simultaneously. If you believe a token is compromised you can quickly remove it. Anyone using that token
+will no longer be able to authenticate as You in the system.</p>
 
           <button class="btn btn-xs btn-primary" data-toggle="modal" data-target="#newTokenModal" title="Create new token">new&nbsp;<span
                   class="glyphicon glyphicon-plus-sign"></span></button>
