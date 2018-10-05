@@ -1,0 +1,3 @@
+lava_server/management/commands/device-tags.py
+share/check-devices.py
+share/validate_devices.py

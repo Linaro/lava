@@ -53,6 +53,11 @@ server-debian-10: *server
 ###########
 # Analyze #
 ###########
+black:
+  <<: *job
+  stage: analyze
+  image: debian:buster
+
 codestyle:
   <<: *job
   stage: analyze
@@ -96,16 +101,12 @@ debian-pkg:
 ###########
 # Publish #
 ###########
-lava-dispatcher:
+.publish: &publish
   <<: *dind
   stage: publish
   dependencies: [debian-pkg]
   variables:
     IMAGE_TAG: $CI_REGISTRY_IMAGE/$CI_JOB_NAME
 
-lava-server:
-  <<: *dind
-  stage: publish
-  dependencies: [debian-pkg]
-  variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE/$CI_JOB_NAME
+lava-dispatcher: *publish
+lava-server: *publish
