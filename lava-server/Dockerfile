@@ -25,7 +25,7 @@ RUN dpkg -i /tmp/server-doc.deb && \
 
 # Activate the apache2 configuration and module
 RUN a2dissite 000-default && \
-    a2ensite lava-server &&
+    a2ensite lava-server && \
     a2enmod proxy_http
 
 # Copy lava settings
