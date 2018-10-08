@@ -142,9 +142,10 @@ Depends: build-essential, ca-certificates, devscripts, dpkg-dev,
  python3-guestfs, python3-netifaces, python3-magic,
  python3-sphinx (>= 1.4), python3-sphinx-bootstrap-theme, python3-requests,
  python3-zmq, python3-yaml, python3-voluptuous (>= 0.8.8), python3-tz,
+ python3-pytest, python3-pytest-django,
  python3-configobj, python3-pyudev, docbook-xsl, xsltproc,
  ${python3:Depends}, ${misc:Depends}
-Recommends: sbuild, python3-django-extensions, python3-pydot,
+Recommends: sbuild, python3-django-extensions, python3-pydot, python3-pytest-cov,
  python3-django-testscenarios, python3-pytest-django, nfs-kernel-server,
  lxc, tftpd-hpa, rpcbind, u-boot-tools, telnet, img2simg, simg2img
 Suggests: python3-bandit, black
