@@ -122,7 +122,7 @@ When changing files with black:
    functionality. Even then, avoid changing more than a few hundred
    lines per merge request.)
 #. When changing files with ``black``, add the filename to the tracking
-   file in ``share/black.yaml``. In time, this will be used to keep
+   file in ``share/black.list``. In time, this will be used to keep
    those formatting changes when the file is touched again with a merge
    request.
 
