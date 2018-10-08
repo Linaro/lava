@@ -1,10 +1,7 @@
 include .testr.conf
 include .gitreview
 include COPYING.AGPL-3
-include doc/*
-include doc/deprecated/*
 include doc/v2/*
-include doc/_static/*
 include doc/v2/_static/*
 include etc/*
 include etc/env.yaml
@@ -19,7 +16,6 @@ include etc/lava-server-gunicorn
 include etc/lava-server-gunicorn.service
 include etc/logrotate.d/*
 include etc/settings.conf
-include fake-dispatcher
 include lava/dispatcher/lava-run
 include lava/dispatcher/lava-slave
 include lava/lxc-mocker/*
@@ -39,14 +35,10 @@ include lava_server/templates/robots.txt
 include man/*
 include requirements.txt
 include README
-include setup-dev-env.sh
 include share/*
 include share/apache2/*
 include share/zmq/*
 include version.py
-include requirements.txt
-include common-requirements.txt
-include dispatcher-requirements.txt
 recursive-include doc/images *.gif *.png *.jpg *.jpeg *.bmp *.svg *.odg
 recursive-include doc/v2/images *.gif *.png *.jpg *.jpeg *.bmp *.svg *.odg
 recursive-include doc/v2/examples *.yaml *.txt *.py *.jinja2
@@ -59,7 +51,7 @@ recursive-include lava_results_app/templates *.html
 recursive-include lava_results_app/tests *.yaml
 recursive-include lava_results_app/static *.png *.js *.css *.gif
 recursive-include lava_scheduler_app/templates *.html *.txt
-recursive-include lava_scheduler_app/tests *.yaml *.json
+recursive-include lava_scheduler_app/tests *.yaml
 recursive-include lava_scheduler_app/tests/device-types *.jinja2
 recursive-include lava_scheduler_app/tests/devices *.jinja2
 recursive-include lava_scheduler_app/static *.js *.css *.gif *.png

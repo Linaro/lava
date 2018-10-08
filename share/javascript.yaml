@@ -48,7 +48,6 @@ debian:
       jquery-linedtextarea.js: jquery-linedtextarea.min.js
       job-submit.js: job-submit.min.js
       job-definition.js: job-definition.min.js
-      favorite-jobs.js: favorite-jobs.min.js
       jquery.details.js: jquery.details.min.js
       similar-jobs.js: similar-jobs.min.js
       anchor-v3.2.0.js: anchor-v3.2.0.min.js
