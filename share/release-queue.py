@@ -35,18 +35,26 @@ class Commit:
         self.commit_id = commit_id
         self.change_id = change_id
 
-        self.obj = subprocess.check_output(['git', 'cat-file', '-p', self.commit_id]).decode('utf-8')  # nosec - internal
-        self.hash = subprocess.check_output(['git', 'rev-parse', '--short', self.commit_id]).decode('utf-8').strip()  # nosec - internal
+        self.obj = subprocess.check_output(
+            ["git", "cat-file", "-p", self.commit_id]
+        ).decode(
+            "utf-8"
+        )  # nosec - internal
+        self.hash = (
+            subprocess.check_output(["git", "rev-parse", "--short", self.commit_id])
+            .decode("utf-8")
+            .strip()
+        )  # nosec - internal
         break_next_time = False
 
-        for line in self.obj.split('\n'):
+        for line in self.obj.split("\n"):
             if break_next_time:
                 self.message = line
                 break
 
-            if line == '':
+            if line == "":
                 break_next_time = True
-            elif line[0:6] == 'author':
+            elif line[0:6] == "author":
                 m = author_pattern.match(line)
                 if m:
                     self.author = m.group(1)
@@ -54,18 +62,32 @@ class Commit:
 
     def get_time(self):
         t = time.gmtime(float(self.time))
-        return "%02d/%02d/%d %02d:%02d" % (t.tm_mon, t.tm_mday, t.tm_year, t.tm_hour, t.tm_min)
+        return "%02d/%02d/%d %02d:%02d" % (
+            t.tm_mon,
+            t.tm_mday,
+            t.tm_year,
+            t.tm_hour,
+            t.tm_min,
+        )
 
     def render(self):
-        return "%s %s (%s %s): %s" % (self.get_time(), self.hash, self.commit_id, self.change_id, self.message)
+        return "%s %s (%s %s): %s" % (
+            self.get_time(),
+            self.hash,
+            self.commit_id,
+            self.change_id,
+            self.message,
+        )
 
 
 def get_change_ids(branch):
     results = []
 
-    subprocess.check_output(["git", "checkout", branch], stderr=subprocess.STDOUT)  # nosec - internal
-    lines = subprocess.check_output(["git", "log"]).decode('utf-8')  # nosec - internal
-    for line in lines.split('\n'):
+    subprocess.check_output(
+        ["git", "checkout", branch], stderr=subprocess.STDOUT
+    )  # nosec - internal
+    lines = subprocess.check_output(["git", "log"]).decode("utf-8")  # nosec - internal
+    for line in lines.split("\n"):
         if "Change-Id" in line:
             m = change_id_pattern.match(line)
             results.append(m.group(1))
@@ -74,13 +96,32 @@ def get_change_ids(branch):
 
 def main():
     # Add the argument parse
-    parser = argparse.ArgumentParser(description='Show the missing commits in release branch')
-    parser.add_argument('-c', '--changelog', dest='changelog', action='store_true',
-                        default=False, help='Print the changelog')
-    parser.add_argument('-b', '--branch', dest='branch',
-                        default='release', help='branch to compare with base branch')
-    parser.add_argument('-s', '--staging', dest='staging', action='store_true',
-                        default=False, help='compare branch against staging')
+    parser = argparse.ArgumentParser(
+        description="Show the missing commits in release branch"
+    )
+    parser.add_argument(
+        "-c",
+        "--changelog",
+        dest="changelog",
+        action="store_true",
+        default=False,
+        help="Print the changelog",
+    )
+    parser.add_argument(
+        "-b",
+        "--branch",
+        dest="branch",
+        default="release",
+        help="branch to compare with base branch",
+    )
+    parser.add_argument(
+        "-s",
+        "--staging",
+        dest="staging",
+        action="store_true",
+        default=False,
+        help="compare branch against staging",
+    )
     args = parser.parse_args()
 
     # Check the current working directory
@@ -90,7 +131,7 @@ def main():
         print("Ensure this script is run from the git working copy.")
         return 1
 
-    master_branch = 'staging' if args.staging else 'master'
+    master_branch = "staging" if args.staging else "master"
     # Get all change ids between master_branch and release
     master = get_change_ids(master_branch)
     release = get_change_ids(args.branch)
@@ -99,14 +140,16 @@ def main():
     diff.sort()
 
     # Go back to master
-    subprocess.check_output(["git", "checkout", master_branch], stderr=subprocess.STDOUT)  # nosec - internal
-    lines = subprocess.check_output(["git", "log"]).decode('utf-8')  # nosec - internal
+    subprocess.check_output(
+        ["git", "checkout", master_branch], stderr=subprocess.STDOUT
+    )  # nosec - internal
+    lines = subprocess.check_output(["git", "log"]).decode("utf-8")  # nosec - internal
 
     # List the missing commits
-    current_hash = ''
+    current_hash = ""
     commits = []
     for change in diff:
-        for line in lines.split('\n'):
+        for line in lines.split("\n"):
             # Get the commit hash
             if "commit " in line:
                 m = commit_pattern.match(line)
@@ -130,5 +173,5 @@ def main():
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

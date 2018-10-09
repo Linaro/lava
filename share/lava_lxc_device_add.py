@@ -48,11 +48,16 @@ def setup_logger(options):
     logging.setLoggerClass(YAMLLogger)
 
     # The logger can be used by the parser and the Job object in all phases.
-    logger = logging.getLogger('dispatcher')
+    logger = logging.getLogger("dispatcher")
     if options.logging_url is not None:
         if options.master_cert and options.slave_cert:
-            if not os.path.exists(options.master_cert) or not os.path.exists(options.slave_cert):
-                syslog.syslog("[%s] Unable to find certificates for %s" % (options.job_id, options.logging_url))
+            if not os.path.exists(options.master_cert) or not os.path.exists(
+                options.slave_cert
+            ):
+                syslog.syslog(
+                    "[%s] Unable to find certificates for %s"
+                    % (options.job_id, options.logging_url)
+                )
                 return None
         # pylint: disable=no-member
         handler = logger.addZMQHandler(
@@ -60,7 +65,8 @@ def setup_logger(options):
             options.master_cert,
             options.slave_cert,
             options.job_id,
-            options.ipv6)
+            options.ipv6,
+        )
     else:
         syslog.syslog("[%s] Logging to streamhandler" % options.job_id)
         logger.addHandler(logging.StreamHandler())
@@ -72,22 +78,24 @@ def main():
     # Configure the parser
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--lxc-name", required=True,
-                        help="Name of the lxc container")
-    parser.add_argument("--device-node", required=True,
-                        help="Path to the device node")
+    parser.add_argument("--lxc-name", required=True, help="Name of the lxc container")
+    parser.add_argument("--device-node", required=True, help="Path to the device node")
 
     group = parser.add_argument_group("logging")
-    group.add_argument("--job-id", required=True, metavar="ID",
-                       help="Job identifier.")
-    group.add_argument("--logging-url", metavar="URL", default=None,
-                       help="URL of the ZMQ socket to send the logs to the master")
-    group.add_argument("--master-cert", default=None, metavar="PATH",
-                       help="Master certificate file")
-    group.add_argument("--slave-cert", default=None, metavar="PATH",
-                       help="Slave certificate file")
-    group.add_argument("--ipv6", action="store_true", default=False,
-                       help="Enable IPv6")
+    group.add_argument("--job-id", required=True, metavar="ID", help="Job identifier.")
+    group.add_argument(
+        "--logging-url",
+        metavar="URL",
+        default=None,
+        help="URL of the ZMQ socket to send the logs to the master",
+    )
+    group.add_argument(
+        "--master-cert", default=None, metavar="PATH", help="Master certificate file"
+    )
+    group.add_argument(
+        "--slave-cert", default=None, metavar="PATH", help="Slave certificate file"
+    )
+    group.add_argument("--ipv6", action="store_true", default=False, help="Enable IPv6")
 
     # Parse the command line
     options = parser.parse_args()
@@ -100,18 +108,28 @@ def main():
         return 1
 
     start = time.gmtime()
-    uniq_str = "udev_trigger-%s-%02d:%02d:%02d" % (lxc_name, start.tm_hour, start.tm_min, start.tm_sec)
+    uniq_str = "udev_trigger-%s-%02d:%02d:%02d" % (
+        lxc_name,
+        start.tm_hour,
+        start.tm_min,
+        start.tm_sec,
+    )
 
     device = "/dev/%s" % options.device_node
 
     if not os.path.exists(device):
         logger.debug("Skipping node not in /dev/ : %s" % options.device_node)
-        syslog.syslog("[%s] Skipping node not in /dev/ : %s" % (options.job_id, options.device_node))
+        syslog.syslog(
+            "[%s] Skipping node not in /dev/ : %s"
+            % (options.job_id, options.device_node)
+        )
         return 0
 
-    lxc_cmd = ['lxc-device', '-n', lxc_name, 'add', device]
+    lxc_cmd = ["lxc-device", "-n", lxc_name, "add", device]
     try:
-        output = subprocess.check_output(lxc_cmd, stderr=subprocess.STDOUT)  # nosec - internal
+        output = subprocess.check_output(
+            lxc_cmd, stderr=subprocess.STDOUT
+        )  # nosec - internal
         output = output.decode("utf-8", errors="replace")
         logger.debug(output)
         logger.info("[%s] device %s added", uniq_str, device)
@@ -132,5 +150,5 @@ def main():
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

@@ -28,10 +28,12 @@ import optparse
 import yaml
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     usage = "Usage: %prog device_name job.yaml"
-    description = "LAVA dispatcher pipeline helper. Dump the pipeline that " \
-                  "was built for the given job on the given device"
+    description = (
+        "LAVA dispatcher pipeline helper. Dump the pipeline that "
+        "was built for the given job on the given device"
+    )
 
     parser = optparse.OptionParser(usage=usage, description=description)
     (options, args) = parser.parse_args()
@@ -48,7 +50,7 @@ if __name__ == '__main__':
         exit(1)
 
     # Load the job definition
-    with open(args[1], 'r') as job_data:
+    with open(args[1], "r") as job_data:
         parser = JobParser()
         job = parser.parse(job_data, device, 0, None, None, None)
 

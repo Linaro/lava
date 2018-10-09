@@ -28,11 +28,13 @@ def main():
     Parse options and create the certificate
     """
     parser = argparse.ArgumentParser(description="")
-    parser.add_argument("--directory", type=str,
-                        default="/etc/lava-dispatcher/certificates.d",
-                        help="Directory where to store the certificates")
-    parser.add_argument(type=str, dest="name",
-                        help="Name of the certificate")
+    parser.add_argument(
+        "--directory",
+        type=str,
+        default="/etc/lava-dispatcher/certificates.d",
+        help="Directory where to store the certificates",
+    )
+    parser.add_argument(type=str, dest="name", help="Name of the certificate")
     args = parser.parse_args()
 
     # Create the certificate
@@ -42,5 +44,5 @@ def main():
     print(" - %s.key_secret" % args.name)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

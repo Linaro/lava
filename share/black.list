@@ -1,3 +1,8 @@
 lava_server/management/commands/device-tags.py
 share/check-devices.py
 share/validate_devices.py
+share/create_certificate.py
+share/download-test-suites-api.py
+share/dump_pipeline.py
+share/lava_lxc_device_add.py
+share/release-queue.py
