@@ -27,4 +27,4 @@ from linaro_django_xmlrpc.models import AuthToken
 class AuthTokenForm(forms.ModelForm):
     class Meta:
         model = AuthToken
-        fields = ('description',)
+        fields = ("description",)

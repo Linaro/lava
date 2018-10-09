@@ -71,12 +71,11 @@ class ExampleAPI(ExposedAPI):
 
 
 class CallContextTests(TestCase):
-
     def setUp(self):
         super().setUp()
-        logger = logging.getLogger('linaro-django-xmlrpc-mapper')
+        logger = logging.getLogger("linaro-django-xmlrpc-mapper")
         logger.disabled = True
-        logger = logging.getLogger('linaro-django-xmlrpc-dispatcher')
+        logger = logging.getLogger("linaro-django-xmlrpc-dispatcher")
         logger.disabled = True
 
     def test_unauthenticated_users_are_ignored(self):
@@ -96,7 +95,6 @@ class CallContextTests(TestCase):
 
 
 class ExposedAPITests(TestCase):
-
     def test_context_must_be_of_proper_clasS(self):
         self.assertRaises(TypeError, ExposedAPI, object())
 
@@ -116,7 +114,6 @@ class ExposedAPITests(TestCase):
 
 
 class MapperTests(TestCase):
-
     def setUp(self):
         super().setUp()
         self.mapper = Mapper()
@@ -138,10 +135,11 @@ class MapperTests(TestCase):
 
         class TestAPI2(ExposedAPI):
             pass
-        self.mapper.register(TestAPI1, 'API')
-        self.assertRaises(ValueError, self.mapper.register, TestAPI2, 'API')
-        self.assertTrue('API' in self.mapper.registered)
-        self.assertTrue(self.mapper.registered['API'] is TestAPI1)
+
+        self.mapper.register(TestAPI1, "API")
+        self.assertRaises(ValueError, self.mapper.register, TestAPI2, "API")
+        self.assertTrue("API" in self.mapper.registered)
+        self.assertTrue(self.mapper.registered["API"] is TestAPI1)
 
     def test_lookup_finds_method(self):
         self.mapper.register(ExampleAPI, "ExampleAPI")
@@ -150,7 +148,7 @@ class MapperTests(TestCase):
         self.assertEqual(foo(), "bar")
 
     def test_lookup_finds_method_in_root_scope(self):
-        self.mapper.register(ExampleAPI, '')
+        self.mapper.register(ExampleAPI, "")
         foo = self.mapper.lookup("foo")
         # Calling the method is easier than doing some other magic here
         self.assertEqual(foo(), "bar")
@@ -166,18 +164,19 @@ class MapperTests(TestCase):
 
     def test_lookup_passes_context_to_exposed_api(self):
         class TestAPI(ExposedAPI):
-
             def foo(self):
                 pass
-        self.mapper.register(TestAPI, 'API')
+
+        self.mapper.register(TestAPI, "API")
         context = CallContext(None, self.mapper, None)
-        retval = self.mapper.lookup('API.foo', context)
+        retval = self.mapper.lookup("API.foo", context)
         # bound method seems to have im_self attribute pointing back to self
         self.assertIs(retval.__self__._context, context)
 
     def test_list_methods_without_methods(self):
         class TestAPI(ExposedAPI):
             pass
+
         self.mapper.register(TestAPI, "TestAPI")
         retval = self.mapper.list_methods()
         self.assertEqual(retval, [])
@@ -192,9 +191,10 @@ class MapperTests(TestCase):
 
             def c(self):
                 pass
-        self.mapper.register(TestAPI, '')
+
+        self.mapper.register(TestAPI, "")
         retval = self.mapper.list_methods()
-        self.assertEqual(retval, ['a', 'b', 'c'])
+        self.assertEqual(retval, ["a", "b", "c"])
 
     def test_list_methods_from_class_scope(self):
         class TestAPI(ExposedAPI):
@@ -206,9 +206,10 @@ class MapperTests(TestCase):
 
             def c(self):
                 pass
+
         self.mapper.register(TestAPI, "TestAPI")
         retval = self.mapper.list_methods()
-        self.assertEqual(retval, ['TestAPI.a', 'TestAPI.b', 'TestAPI.c'])
+        self.assertEqual(retval, ["TestAPI.a", "TestAPI.b", "TestAPI.c"])
 
     def test_list_methods_with_two_sources(self):
         class SourceA(ExposedAPI):
@@ -218,10 +219,11 @@ class MapperTests(TestCase):
         class SourceB(ExposedAPI):
             def a(self):
                 pass
+
         self.mapper.register(SourceA, "SourceA")
         self.mapper.register(SourceB, "SourceB")
         retval = self.mapper.list_methods()
-        self.assertEqual(retval, ['SourceA.a', 'SourceB.a'])
+        self.assertEqual(retval, ["SourceA.a", "SourceB.a"])
 
 
 @nottest
@@ -257,11 +259,10 @@ class TestAPI(ExposedAPI):
 
 
 class DispatcherTests(TestCase):
-
     def setUp(self):
         super().setUp()
         self.mapper = Mapper()
-        self.mapper.register(TestAPI, '')
+        self.mapper.register(TestAPI, "")
         self.dispatcher = Dispatcher(self.mapper)
 
     def xml_rpc_call(self, method, *args):
@@ -283,8 +284,8 @@ class DispatcherTests(TestCase):
             self.xml_rpc_call("method_that_does_not_exist")
         except xmlrpc.client.Fault as ex:
             self.assertEqual(
-                ex.faultCode,
-                FaultCodes.ServerError.REQUESTED_METHOD_NOT_FOUND)
+                ex.faultCode, FaultCodes.ServerError.REQUESTED_METHOD_NOT_FOUND
+            )
         else:
             self.fail("Calling missing method did not raise an exception")
 
@@ -292,9 +293,10 @@ class DispatcherTests(TestCase):
         self.was_called = False
 
         def handler(method, params):
-            self.assertEqual(method, 'internal_boom')
+            self.assertEqual(method, "internal_boom")
             self.assertEqual(params, ())
             self.was_called = True
+
         self.dispatcher.handle_internal_error = handler
         try:
             self.xml_rpc_call("internal_boom")
@@ -313,8 +315,8 @@ class DispatcherTests(TestCase):
             self.xml_rpc_call("internal_boom")
         except xmlrpc.client.Fault as ex:
             self.assertEqual(
-                ex.faultCode,
-                FaultCodes.ServerError.INTERNAL_XML_RPC_ERROR)
+                ex.faultCode, FaultCodes.ServerError.INTERNAL_XML_RPC_ERROR
+            )
         else:
             self.fail("Exception not raised")
 
@@ -328,18 +330,17 @@ class DispatcherTests(TestCase):
         self.assertEqual(self.xml_rpc_call("echo", 1.5), 1.5)
 
     def test_boom(self):
-        self.assertRaises(xmlrpc.client.Fault,
-                          self.xml_rpc_call, "boom", 1, "str")
+        self.assertRaises(xmlrpc.client.Fault, self.xml_rpc_call, "boom", 1, "str")
 
 
 class SystemAPITest(TestCase):
-
     def setUp(self):
         super().setUp()
         self.mapper = Mapper()
         self.dispatcher = Dispatcher(self.mapper)
         self.context = CallContext(
-            user=None, mapper=self.mapper, dispatcher=self.dispatcher)
+            user=None, mapper=self.mapper, dispatcher=self.dispatcher
+        )
         self.system_api = SystemAPI(self.context)
 
     def test_listMethods_just_calls_mapper_list_methods(self):
@@ -352,6 +353,7 @@ class SystemAPITest(TestCase):
         class TestAPI(ExposedAPI):
             def method(self):
                 pass
+
         self.mapper.register(TestAPI, "TestAPI")
         retval = self.system_api.methodHelp("TestAPI.method")
         self.assertEqual(retval, "")
@@ -360,6 +362,7 @@ class SystemAPITest(TestCase):
         class TestAPI(ExposedAPI):
             def method(self):
                 """docstring"""
+
         self.mapper.register(TestAPI, "TestAPI")
         retval = self.system_api.methodHelp("TestAPI.method")
         self.assertEqual(retval, "docstring")
@@ -371,6 +374,7 @@ class SystemAPITest(TestCase):
                 line 1
                 line 2
                 """
+
         self.mapper.register(TestAPI, "TestAPI")
         retval = self.system_api.methodHelp("TestAPI.method")
         self.assertEqual(retval, "line 1\nline 2")
@@ -379,18 +383,20 @@ class SystemAPITest(TestCase):
         class TestAPI(ExposedAPI):
             def method(self):
                 pass
+
         self.mapper.register(TestAPI, "TestAPI")
         retval = self.system_api.methodSignature("TestAPI.method")
-        self.assertEqual(retval, 'undef')
+        self.assertEqual(retval, "undef")
 
     def test_methodSignature_returns_signature_when_defined(self):
         class TestAPI(ExposedAPI):
-            @xml_rpc_signature('str', 'int')
+            @xml_rpc_signature("str", "int")
             def int_to_str(value):
                 return "%s" % value
+
         self.mapper.register(TestAPI, "TestAPI")
         retval = self.system_api.methodSignature("TestAPI.int_to_str")
-        self.assertEqual(retval, ['str', 'int'])
+        self.assertEqual(retval, ["str", "int"])
 
     def test_multicall_with_empty_list(self):
         retval = self.system_api.multicall([])
@@ -401,34 +407,29 @@ class SystemAPITest(TestCase):
         # originally think: each return value is boxed in a one-element list
         # to be different from unboxed faults.
         class TestAPI(ExposedAPI):
-
             def foo(self):
                 return 1
+
         self.mapper.register(TestAPI, "TestAPI")
-        calls = [
-            {"methodName": "TestAPI.foo", "params": []},
-        ]
+        calls = [{"methodName": "TestAPI.foo", "params": []}]
         observed = self.system_api.multicall(calls)
         self.assertIsInstance(observed[0], list)
         self.assertEqual(observed, [[1]])
 
     def test_multicall_calls_methods(self):
         class TestAPI(ExposedAPI):
-
             def foo(self):
                 return "foo-result"
 
             def bar(self, arg):
                 return arg
+
         self.mapper.register(TestAPI, "TestAPI")
         calls = [
             {"methodName": "TestAPI.foo", "params": []},
             {"methodName": "TestAPI.bar", "params": ["bar-result"]},
         ]
-        expected = [
-            ["foo-result"],
-            ["bar-result"]
-        ]
+        expected = [["foo-result"], ["bar-result"]]
         observerd = self.system_api.multicall(calls)
         self.assertEqual(observerd, expected)
 
@@ -436,13 +437,11 @@ class SystemAPITest(TestCase):
         # See comment in test_multicall_boxes_normal_return_values_in_lists
         # above. Each fault is returned directly and is not boxed in a list.
         class TestAPI(ExposedAPI):
-
             def boom(self):
                 raise xmlrpc.client.Fault(1, "boom")
+
         self.mapper.register(TestAPI, "TestAPI")
-        calls = [
-            {"methodName": "TestAPI.boom", "params": []},
-        ]
+        calls = [{"methodName": "TestAPI.boom", "params": []}]
         observed = self.system_api.multicall(calls)
         self.assertIsInstance(observed[0], xmlrpc.client.Fault)
 
@@ -450,12 +449,12 @@ class SystemAPITest(TestCase):
         # If one method being called returns a fault, any subsequent method
         # calls are still performed.
         class TestAPI(ExposedAPI):
-
             def boom(self):
                 raise xmlrpc.client.Fault(1, "boom")
 
             def echo(self, arg):
                 return arg
+
         self.mapper.register(TestAPI, "TestAPI")
         calls = [
             {"methodName": "TestAPI.echo", "params": ["before"]},
@@ -480,8 +479,13 @@ class SystemAPITest(TestCase):
             try:
                 self.system_api.multicall(bad_stuff)
             except xmlrpc.client.Fault as ex:
-                self.assertEqual(ex.faultCode, FaultCodes.ServerError.INVALID_METHOD_PARAMETERS)
-                self.assertEqual(ex.faultString, "system.multicall expected a list of methods to call")
+                self.assertEqual(
+                    ex.faultCode, FaultCodes.ServerError.INVALID_METHOD_PARAMETERS
+                )
+                self.assertEqual(
+                    ex.faultString,
+                    "system.multicall expected a list of methods to call",
+                )
             else:
                 self.fail("Should have raised an exception")
 
@@ -491,67 +495,67 @@ class SystemAPITest(TestCase):
             [result] = self.system_api.multicall([bad_stuff])
             self.assertIsInstance(result, xmlrpc.client.Fault)
             self.assertEqual(
-                result.faultCode,
-                FaultCodes.ServerError.INVALID_METHOD_PARAMETERS)
+                result.faultCode, FaultCodes.ServerError.INVALID_METHOD_PARAMETERS
+            )
 
     def test_multicall_subcall_wants_methodName(self):
         [result] = self.system_api.multicall([{}])
         self.assertIsInstance(result, xmlrpc.client.Fault)
         self.assertEqual(
-            result.faultCode,
-            FaultCodes.ServerError.INVALID_METHOD_PARAMETERS)
+            result.faultCode, FaultCodes.ServerError.INVALID_METHOD_PARAMETERS
+        )
 
     def test_multicall_subcall_wants_methodName_to_be_a_string(self):
-        [result] = self.system_api.multicall(
-            [{"methodName": False}])
+        [result] = self.system_api.multicall([{"methodName": False}])
         self.assertIsInstance(result, xmlrpc.client.Fault)
         self.assertEqual(
-            result.faultCode,
-            FaultCodes.ServerError.INVALID_METHOD_PARAMETERS)
+            result.faultCode, FaultCodes.ServerError.INVALID_METHOD_PARAMETERS
+        )
 
     def test_multicall_subcall_wants_params(self):
-        [result] = self.system_api.multicall(
-            [{"methodName": "system.listMethods"}])
+        [result] = self.system_api.multicall([{"methodName": "system.listMethods"}])
         self.assertIsInstance(result, xmlrpc.client.Fault)
         self.assertEqual(
-            result.faultCode,
-            FaultCodes.ServerError.INVALID_METHOD_PARAMETERS)
+            result.faultCode, FaultCodes.ServerError.INVALID_METHOD_PARAMETERS
+        )
 
     def test_multicall_subcall_wants_params_to_be_a_list(self):
         [result] = self.system_api.multicall(
-            [{"methodName": "system.listMethods", "params": False}])
+            [{"methodName": "system.listMethods", "params": False}]
+        )
         self.assertIsInstance(result, xmlrpc.client.Fault)
         self.assertEqual(
-            result.faultCode,
-            FaultCodes.ServerError.INVALID_METHOD_PARAMETERS)
+            result.faultCode, FaultCodes.ServerError.INVALID_METHOD_PARAMETERS
+        )
 
     def test_multicall_subcall_rejects_other_arguments(self):
         [result] = self.system_api.multicall(
-            [{"methodName": "system.listMethods", "params": [], "other": 1}])
+            [{"methodName": "system.listMethods", "params": [], "other": 1}]
+        )
         self.assertIsInstance(result, xmlrpc.client.Fault)
         print(result.faultString)
         self.assertEqual(
-            result.faultCode,
-            FaultCodes.ServerError.INVALID_METHOD_PARAMETERS)
+            result.faultCode, FaultCodes.ServerError.INVALID_METHOD_PARAMETERS
+        )
 
     def test_listMethods_exists(self):
-        self.mapper.register(SystemAPI, 'system')
+        self.mapper.register(SystemAPI, "system")
         self.assertIn("system.listMethods", self.system_api.listMethods())
 
     def test_methodHelp_exists(self):
-        self.mapper.register(SystemAPI, 'system')
+        self.mapper.register(SystemAPI, "system")
         self.assertIn("system.methodHelp", self.system_api.listMethods())
 
     def test_methodSignature_exists(self):
-        self.mapper.register(SystemAPI, 'system')
+        self.mapper.register(SystemAPI, "system")
         self.assertIn("system.methodSignature", self.system_api.listMethods())
 
     def test_getCapabilities_exists(self):
-        self.mapper.register(SystemAPI, 'system')
+        self.mapper.register(SystemAPI, "system")
         self.assertIn("system.getCapabilities", self.system_api.listMethods())
 
     def test_multicall_exists(self):
-        self.mapper.register(SystemAPI, 'system')
+        self.mapper.register(SystemAPI, "system")
         self.assertIn("system.multicall", self.system_api.listMethods())
 
     def test_fault_interop_capabilitiy_supported(self):
@@ -594,7 +598,8 @@ class AuthTokenTests(TestCase):
 
     def test_lookup_user_for_secret_returns_none_on_failure(self):
         user = AuthToken.get_user_for_secret(
-            self.user.username, self._INEXISTING_SECRET)
+            self.user.username, self._INEXISTING_SECRET
+        )
         self.assertTrue(user is None)
 
     def test_get_user_for_secret_finds_valid_user(self):
@@ -604,8 +609,7 @@ class AuthTokenTests(TestCase):
 
     def test_get_user_for_secret_checks_if_the_user_matches(self):
         token = AuthToken.objects.create(user=self.user)
-        user = AuthToken.get_user_for_secret(
-            self._INEXISTING_USER, token.secret)
+        user = AuthToken.get_user_for_secret(self._INEXISTING_USER, token.secret)
         self.assertEqual(user, None)
 
     def test_get_user_for_secret_sets_last_used_on(self):

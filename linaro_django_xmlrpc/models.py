@@ -37,6 +37,7 @@ class errors:
     methods. Where applicable existing status codes from HTTP protocol
     are reused
     """
+
     AUTH_FAILED = 100
     AUTH_BLOCKED = 101
     BAD_REQUEST = 400
@@ -57,8 +58,7 @@ def _make_secret():
 
     # Set of valid characters for secret
     _SECRET_CHARS = "01234567890abcdefghijklmnopqrtsuwxyz"
-    return ''.join((random.SystemRandom().choice(_SECRET_CHARS)
-                    for i in range(128)))
+    return "".join((random.SystemRandom().choice(_SECRET_CHARS) for i in range(128)))
 
 
 class AuthToken(models.Model):
@@ -71,25 +71,31 @@ class AuthToken(models.Model):
 
     secret = models.CharField(
         max_length=128,
-        help_text=("Secret randomly generated text that grants user access "
-                   "instead of their regular password"),
+        help_text=(
+            "Secret randomly generated text that grants user access "
+            "instead of their regular password"
+        ),
         unique=True,
-        default=_make_secret)
+        default=_make_secret,
+    )
 
     description = models.TextField(
         default="",
         null=False,
         blank=True,
-        help_text=("Arbitrary text that helps the user to associate tokens "
-                   "with their intended purpose"))
+        help_text=(
+            "Arbitrary text that helps the user to associate tokens "
+            "with their intended purpose"
+        ),
+    )
 
     created_on = models.DateTimeField(
-        auto_now=True,
-        help_text="Time and date when the token was created")
+        auto_now=True, help_text="Time and date when the token was created"
+    )
 
     last_used_on = models.DateTimeField(
-        null=True,
-        help_text="Time and date when the token was last used")
+        null=True, help_text="Time and date when the token was last used"
+    )
 
     user = models.ForeignKey(User, related_name="auth_tokens")
 
@@ -130,9 +136,11 @@ def xml_rpc_signature(*sig):
 
     The first element is the signature of the return type.
     """
+
     def decorator(func):
         func.xml_rpc_signature = list(sig)
         return func
+
     return decorator
 
 
@@ -142,6 +150,7 @@ class FaultCodes:
 
     See: http://xmlrpc-epi.sourceforge.net/specs/rfc.fault_codes.php
     """
+
     class ParseError:
         NOT_WELL_FORMED = -32700
         UNSUPPORTED_ENCODING = -32701
@@ -194,7 +203,8 @@ class ExposedAPI:
     def __init__(self, context=None):
         if context is not None and not isinstance(context, CallContext):
             raise TypeError(
-                "context must be a subclass of CallContext (got %r)" % context)
+                "context must be a subclass of CallContext (got %r)" % context
+            )
         self._context = context
 
     @property
@@ -207,8 +217,8 @@ class ExposedAPI:
     def _authenticate(self):
         if self.user is None:
             raise xmlrpc.client.Fault(
-                401, "Authentication with user and token required for this "
-                "API.")
+                401, "Authentication with user and token required for this " "API."
+            )
 
     def _switch_user(self, username):
         """
@@ -220,12 +230,11 @@ class ExposedAPI:
             try:
                 username = User.objects.get(username=username)
             except User.DoesNotExist:
-                raise xmlrpc.client.Fault(
-                    404, "Username %s not found" % username)
+                raise xmlrpc.client.Fault(404, "Username %s not found" % username)
         else:
             raise xmlrpc.client.Fault(
-                401,
-                "Permission denied for user '%s' to query other users" % self.user)
+                401, "Permission denied for user '%s' to query other users" % self.user
+            )
         return username
 
 
@@ -238,8 +247,8 @@ class ExposedV2API(ExposedAPI):
     def _authenticate(self):
         if not self.user.is_active:
             raise xmlrpc.client.Fault(
-                401, "Authentication with user and token required for this "
-                "API.")
+                401, "Authentication with user and token required for this " "API."
+            )
 
 
 class Mapper:
@@ -274,10 +283,10 @@ class Mapper:
         """
         if not isinstance(cls, type) or not issubclass(cls, ExposedAPI):
             raise TypeError(
-                "Only ExposedAPI subclasses can be registered with the mapper")
+                "Only ExposedAPI subclasses can be registered with the mapper"
+            )
         if name in self.registered:
-            raise ValueError(
-                "Name %r is already registered with this mapper" % name)
+            raise ValueError("Name %r is already registered with this mapper" % name)
         self.registered[name] = cls
 
     def lookup(self, name, context=None):
@@ -291,10 +300,10 @@ class Mapper:
         registered entity.
         """
         if "." in name:
-            api_name, meth_name = name.rsplit('.', 1)
+            api_name, meth_name = name.rsplit(".", 1)
         else:
             meth_name = name
-            api_name = ''
+            api_name = ""
         if meth_name.startswith("_"):
             return None
         cls = self.registered.get(api_name)
@@ -346,7 +355,7 @@ class Mapper:
 
         For reference see the SystemAPI class.
         """
-        self.register(SystemAPI, 'system')
+        self.register(SystemAPI, "system")
 
 
 class Dispatcher:
@@ -386,12 +395,13 @@ class Dispatcher:
             return method_name, params
         except xmlrpc.client.ResponseError:
             raise xmlrpc.client.Fault(
-                FaultCodes.ServerError.INVALID_XML_RPC,
-                "Unable to decode request")
+                FaultCodes.ServerError.INVALID_XML_RPC, "Unable to decode request"
+            )
         except Exception:
             raise xmlrpc.client.Fault(
                 FaultCodes.ServerError.INTERNAL_XML_RPC_ERROR,
-                "Unable to decode request")
+                "Unable to decode request",
+            )
 
     def marshalled_dispatch(self, data, user=None, request=None):
         """
@@ -402,7 +412,8 @@ class Dispatcher:
         Returns the text of the response
         """
         context = CallContext(
-            user, mapper=self.mapper, dispatcher=self, request=request)
+            user, mapper=self.mapper, dispatcher=self, request=request
+        )
         try:
             method_name, params = self.decode_request(data)
             response = self.dispatch(method_name, params, context)
@@ -413,7 +424,8 @@ class Dispatcher:
             # Package responses and send them to the client
             response = (response,)
             response = xmlrpc.client.dumps(
-                response, methodresponse=1, allow_none=self.allow_none)
+                response, methodresponse=1, allow_none=self.allow_none
+            )
         return response
 
     def dispatch(self, method_name, params, context):
@@ -424,11 +436,14 @@ class Dispatcher:
             impl = self.mapper.lookup(method_name, context)
             if impl is None:
                 self.logger.error(
-                    'Unable to dispatch unknown method %r', method_name,
-                    extra={'request': context.request})
+                    "Unable to dispatch unknown method %r",
+                    method_name,
+                    extra={"request": context.request},
+                )
                 raise xmlrpc.client.Fault(
                     FaultCodes.ServerError.REQUESTED_METHOD_NOT_FOUND,
-                    "No such method: %r" % method_name)
+                    "No such method: %r" % method_name,
+                )
             # TODO: check parameter types before calling
             return impl(*params)
         except xmlrpc.client.Fault:
@@ -440,12 +455,17 @@ class Dispatcher:
                 # If there is no better handler we should log the problem
                 self.logger.error(
                     "Internal error in the XML-RPC dispatcher while calling method %r with %r",
-                    method_name, params, exc_info=True,
-                    extra={'request': context.request})
+                    method_name,
+                    params,
+                    exc_info=True,
+                    extra={"request": context.request},
+                )
             # TODO: figure out a way to get the error id from Raven if that is around
             raise xmlrpc.client.Fault(
                 FaultCodes.ServerError.INTERNAL_XML_RPC_ERROR,
-                "Internal Server Error (contact server administrator for details): %s" % exc)
+                "Internal Server Error (contact server administrator for details): %s"
+                % exc,
+            )
 
     def handle_internal_error(self, method_name, params):
         """
@@ -469,7 +489,8 @@ class SystemAPI(ExposedAPI):
     def __init__(self, context):
         if context is None:
             raise ValueError(
-                "SystemAPI needs to be constructed with a real CallContext")
+                "SystemAPI needs to be constructed with a real CallContext"
+            )
         super().__init__(context)
 
     def listMethods(self):
@@ -517,9 +538,9 @@ class SystemAPI(ExposedAPI):
             return ""
         # When signature is not known return "undef"
         # See: http://xmlrpc-c.sourceforge.net/introspection.html
-        return getattr(impl, 'xml_rpc_signature', "undef")
+        return getattr(impl, "xml_rpc_signature", "undef")
 
-    @xml_rpc_signature('str', 'str')
+    @xml_rpc_signature("str", "str")
     def methodHelp(self, method_name):
         """
         Name
@@ -552,37 +573,42 @@ class SystemAPI(ExposedAPI):
         if not isinstance(subcall, dict):
             return xmlrpc.client.Fault(
                 FaultCodes.ServerError.INVALID_METHOD_PARAMETERS,
-                "system.multicall expected struct")
-        if 'methodName' not in subcall:
+                "system.multicall expected struct",
+            )
+        if "methodName" not in subcall:
             return xmlrpc.client.Fault(
                 FaultCodes.ServerError.INVALID_METHOD_PARAMETERS,
-                "system.multicall methodName not specified")
-        methodName = subcall.pop('methodName')
+                "system.multicall methodName not specified",
+            )
+        methodName = subcall.pop("methodName")
         if not isinstance(methodName, string_types):
             return xmlrpc.client.Fault(
                 FaultCodes.ServerError.INVALID_METHOD_PARAMETERS,
-                "system.multicall methodName must be a string")
-        if 'params' not in subcall:
+                "system.multicall methodName must be a string",
+            )
+        if "params" not in subcall:
             return xmlrpc.client.Fault(
                 FaultCodes.ServerError.INVALID_METHOD_PARAMETERS,
-                "system.multicall params not specified")
-        params = subcall.pop('params')
+                "system.multicall params not specified",
+            )
+        params = subcall.pop("params")
         if not isinstance(params, list):
             return xmlrpc.client.Fault(
                 FaultCodes.ServerError.INVALID_METHOD_PARAMETERS,
-                "system.multicall params must be an array")
+                "system.multicall params must be an array",
+            )
         if len(subcall) > 0:
             return xmlrpc.client.Fault(
                 FaultCodes.ServerError.INVALID_METHOD_PARAMETERS,
-                "system.multicall specified additional arguments %s" %
-                sorted(subcall.keys()))
+                "system.multicall specified additional arguments %s"
+                % sorted(subcall.keys()),
+            )
         try:
-            return self._context.dispatcher.dispatch(
-                methodName, params, self._context)
+            return self._context.dispatcher.dispatch(methodName, params, self._context)
         except xmlrpc.client.Fault as fault:
             return fault
 
-    @xml_rpc_signature('array', 'array')
+    @xml_rpc_signature("array", "array")
     def multicall(self, subcalls):
         """
         Call multiple methods with one request.
@@ -605,7 +631,8 @@ class SystemAPI(ExposedAPI):
         if not isinstance(subcalls, list):
             raise xmlrpc.client.Fault(
                 FaultCodes.ServerError.INVALID_METHOD_PARAMETERS,
-                "system.multicall expected a list of methods to call")
+                "system.multicall expected a list of methods to call",
+            )
         results = []
         for subcall in subcalls:
             result = self._multicall_dispatch_one(subcall)
@@ -666,11 +693,11 @@ class SystemAPI(ExposedAPI):
         return {
             "introspect": {
                 "specUrl": "http://xmlrpc-c.sourceforge.net/xmlrpc-c/introspection.html",
-                "specVersion": 1
+                "specVersion": 1,
             },
             "faults_interop": {
                 "specUrl": "http://xmlrpc-epi.sourceforge.net/specs/rfc.fault_codes.php",
-                "specVersion": 20010516
+                "specVersion": 20010516,
             },
             "auth_token": {
                 # XXX: We need some good way to indicate we support token
@@ -678,6 +705,6 @@ class SystemAPI(ExposedAPI):
                 # this spec was registered in lanuchpad. It was was *not*
                 # copy-pasted from fault codes spec :-)
                 "specUrl": "https://blueprints.launchpad.net/linaro-django-xmlrpc/+spec/other-o-linaro-xml-rpc-auth-tokens",
-                "specVersion": 20110516
-            }
+                "specVersion": 20110516,
+            },
         }

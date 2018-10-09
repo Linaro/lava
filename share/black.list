@@ -1,4 +1,13 @@
 lava_server/management/commands/device-tags.py
+linaro_django_xmlrpc/admin.py
+linaro_django_xmlrpc/urls.py
+linaro_django_xmlrpc/tests.py
+linaro_django_xmlrpc/models.py
+linaro_django_xmlrpc/__init__.py
+linaro_django_xmlrpc/forms.py
+linaro_django_xmlrpc/views.py
+linaro_django_xmlrpc/migrations/0001_initial.py
+linaro_django_xmlrpc/migrations/__init__.py
 share/check-devices.py
 share/validate_devices.py
 share/create_certificate.py
