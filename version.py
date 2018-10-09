@@ -19,6 +19,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import re
 import subprocess  # nosec - internal
 import os
 
@@ -36,9 +37,17 @@ def version_tag():
     from that.
     :return: a version string based on the tag and short hash
     """
-    describe = None
     if os.path.exists("./.git/"):
-        return subprocess.check_output(['git', 'describe']).strip().decode('utf-8')  # nosec - internal
+        pattern = re.compile(r"(?P<tag>.+)-(?P<commits>\d+)-g(?P<hash>[abcdef\d]+)")
+        describe = (
+            subprocess.check_output(["git", "describe"]).strip().decode("utf-8")
+        )  # nosec - internal
+        m = pattern.match(describe)
+        if m is None:
+            return describe
+        else:
+            d = m.groupdict()
+            return "%s-%04d-g%s" % (d["tag"], int(d["commits"]), d["hash"])
     if os.path.exists('debian/changelog'):
         return subprocess.check_output(('dpkg-parsechangelog', '--show-field',  # nosec - internal
                                         'Version')).strip().decode('utf-8').split('-')[0]
