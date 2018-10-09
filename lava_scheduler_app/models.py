@@ -1087,12 +1087,11 @@ def _create_pipeline_job(job_data, user, taglist, device=None,
                   visibility=visibility,
                   priority=priority)
     job.save()
-    # need a valid job before the tags can be assigned, then it needs to be saved again.
-    for tag in Tag.objects.filter(name__in=taglist):
-        job.tags.add(tag)
 
-    for grp in viewing_groups:
-        job.viewing_groups.add(grp)
+    # need a valid job (witha  primary_key )before tags and groups can be
+    # assigned
+    job.tags.add(*taglist)
+    job.viewing_groups.add(*viewing_groups)
 
     return job
 
