@@ -14,6 +14,7 @@
 {% block nfs_commands %}
           - set net_default_server={SERVER_IP}
           - 'linux (tftp)/{KERNEL} console=tty0 console={{ console_device }},{{ baud_rate }} root=/dev/nfs rw {{ base_nfsroot_args }} {{ base_ip_args }}'
+          - initrd (tftp)/{RAMDISK}
           - boot
 {% endblock nfs_commands %}
 

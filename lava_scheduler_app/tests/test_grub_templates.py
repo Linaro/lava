@@ -207,6 +207,7 @@ class TestGrubTemplates(BaseTemplate.BaseTemplateCases):
         nfs_ref_commands = [
             'set net_default_server={SERVER_IP}',
             'linux (tftp)/{KERNEL} console=tty0 console=ttyS0,115200 root=/dev/nfs rw nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr ip=dhcp',
+            'initrd (tftp)/{RAMDISK}',
             'boot',
         ]
         self.assertEqual(nfs_commands, nfs_ref_commands)
