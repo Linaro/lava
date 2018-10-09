@@ -6,7 +6,7 @@ if [ "$1" = "setup" ]
 then
   set -x
   docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
-  apk add git
+  apk add git python3
 else
   set -x
 
@@ -15,7 +15,7 @@ else
   then
     IMAGE_TAG="$IMAGE_TAG:$CI_COMMIT_TAG"
   else
-    IMAGE_TAG="$IMAGE_TAG/$CI_COMMIT_REF_SLUG:$(git describe)"
+    IMAGE_TAG="$IMAGE_TAG/$CI_COMMIT_REF_SLUG:$(./version.py)"
   fi
 
   git clone https://git.lavasoftware.org/lava/pkg/docker.git
