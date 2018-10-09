@@ -47,11 +47,6 @@ LAVA_PUBLISHER_PID=$!
 echo "done"
 echo
 
-echo "Starting lava-coordinator"
-/etc/init.d/lava-coordinator start
-echo "done"
-echo
-
 echo "Starting lava-master"
 lava-server manage lava-master&
 LAVA_MASTER_PID=$!
@@ -74,8 +69,6 @@ echo "* gunicorn \$$GUNICORN_PID"
 kill $GUNICORN_PID
 echo "* apache2"
 /etc/init.d/apache2 stop
-echo "* lava-coordinator"
-/etc/init.d/lava-coordinator stop
 
 echo "Waiting for:"
 echo "* lava-logs"
