@@ -56,12 +56,12 @@ server-debian-10: *server
 black:
   <<: *job
   stage: analyze
-  image: debian:buster
+  image: hub.lavasoftware.org/lava/ci-images/codestyle
 
 codestyle:
   <<: *job
   stage: analyze
-  image: debian:9
+  image: hub.lavasoftware.org/lava/ci-images/codestyle
 
 coverage:
   <<: *job

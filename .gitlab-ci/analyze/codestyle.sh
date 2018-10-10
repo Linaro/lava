@@ -4,10 +4,8 @@ set -e
 
 if [ "$1" = "setup" ]
 then
-  set -x
-  apt-get update -qq
-  apt-get install --no-install-recommends -y pycodestyle
+  echo "nothing to do"
 else
   set -x
-  pycodestyle --ignore E501,E203,W503 .
+  pycodestyle --ignore E501,E203,W503,W504 .
 fi
