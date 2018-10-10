@@ -46,14 +46,15 @@ class TestFastbootTemplates(BaseTemplate.BaseTemplateCases):
 
     def test_x15_template(self):
         data = """{% extends 'x15.jinja2' %}
-{% set adb_serial_number = 'R32D300FRYP' %}
-{% set fastboot_serial_number = 'R32D300FRYP' %}
+{% set adb_serial_number = '1234567890' %}
+{% set fastboot_serial_number = '1234567890' %}
 {% set interrupt_prompt = "interrupt bootloader" %}
 """
         self.assertTrue(self.validate_data('x15-01', data))
         template_dict = prepare_jinja_template('x15-01', data, raw=False)
-        self.assertEqual('R32D300FRYP', template_dict['adb_serial_number'])
-        self.assertEqual('R32D300FRYP', template_dict['fastboot_serial_number'])
+        self.assertIsInstance(template_dict['adb_serial_number'], str)
+        self.assertEqual('1234567890', template_dict['adb_serial_number'])
+        self.assertEqual('1234567890', template_dict['fastboot_serial_number'])
         self.assertEqual([], template_dict['fastboot_options'])
         self.assertIn('u-boot', template_dict['actions']['boot']['methods'])
         self.assertIn('parameters', template_dict['actions']['boot']['methods']['u-boot'])
