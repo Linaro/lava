@@ -24,7 +24,7 @@ import yaml
 import socket
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
-from lava_dispatcher.action import JobError
+from lava_common.exceptions import JobError
 from lava_dispatcher.connection import Protocol
 from lava_dispatcher.protocols.vland import VlandProtocol
 from lava_dispatcher.protocols.multinode import MultinodeProtocol

@@ -25,7 +25,7 @@ from lava_common.constants import (
     KERNEL_FREE_UNUSED_MSG, KERNEL_PANIC_MSG,
     KERNEL_FREE_INIT_MSG
 )
-from lava_dispatcher.action import JobError
+from lava_common.exceptions import JobError
 from lava_dispatcher.utils.messages import LinuxKernelMessages
 from lava_dispatcher.test.test_basic import StdoutTestCase
 

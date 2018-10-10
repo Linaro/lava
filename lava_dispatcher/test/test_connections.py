@@ -23,7 +23,7 @@ import os
 import yaml
 import logging
 import unittest
-from lava_dispatcher.action import JobError
+from lava_common.exceptions import JobError
 from lava_common.timeout import Timeout
 from lava_dispatcher.actions.boot.ssh import SchrootAction
 from lava_dispatcher.test.test_basic import Factory, StdoutTestCase

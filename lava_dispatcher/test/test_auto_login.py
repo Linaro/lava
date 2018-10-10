@@ -1,4 +1,5 @@
-from lava_dispatcher.action import JobError, Pipeline
+from lava_common.exceptions import JobError
+from lava_dispatcher.action import Pipeline
 from lava_dispatcher.actions.boot import AutoLoginAction
 from lava_dispatcher.test.test_basic import StdoutTestCase
 

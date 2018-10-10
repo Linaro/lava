@@ -19,7 +19,7 @@
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
 import sys
-from lava_dispatcher.action import JobError
+from lava_common.exceptions import JobError
 
 
 android = {  # pylint: disable=invalid-name

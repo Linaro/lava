@@ -22,7 +22,8 @@
 
 import os
 import yaml
-from lava_dispatcher.action import Action, LAVABug, Pipeline, JobError
+from lava_common.exceptions import LAVABug, JobError
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.actions.boot import AutoLoginAction
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
