@@ -27,7 +27,7 @@ class Migration(migrations.Migration):
         migrations.RunPython(remove_views, noop),
 
         migrations.RunSQL(
-            sql="""CREATE OR REPLACE FUNCTION chartonumeric(convertvalue character varying)
+            sql=r"""CREATE OR REPLACE FUNCTION chartonumeric(convertvalue character varying)
   RETURNS numeric AS
     $BODY$
         SELECT CASE WHEN trim($1) SIMILAR TO '[0-9]+\.[0-9]+'

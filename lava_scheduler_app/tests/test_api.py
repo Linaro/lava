@@ -212,7 +212,7 @@ notify:
         self.assertRaises(SubmissionException, validate_yaml,
                           yaml.safe_load(bad_submission))
 
-        invalid_monitors_name_char_yaml_def = """
+        invalid_monitors_name_char_yaml_def = r"""
 # Zephyr JOB definition
 device_type: 'arduino101'
 job_name: 'zephyr-upstream master drivers/spi/spi_basic_api/test_spi'
