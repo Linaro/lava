@@ -198,6 +198,7 @@ class FastbootFlashAction(Action):
     name = "fastboot-flash-action"
     description = "Run a specified flash command"
     summary = "Execute fastboot flash command"
+    timeout_exception = InfrastructureError
 
     def __init__(self, cmd=None):
         super().__init__()

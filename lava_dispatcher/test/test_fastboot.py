@@ -23,7 +23,7 @@ import glob
 import unittest
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
-from lava_common.exceptions import JobError
+from lava_common.exceptions import JobError, InfrastructureError
 from lava_dispatcher.protocols.lxc import LxcProtocol
 from lava_dispatcher.test.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.test.utils import DummyLogger, infrastructure_error, infrastructure_error_multi_paths
@@ -266,10 +266,14 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
                     flash_order = [action for action in
                                    action.pipeline.actions if action.name ==
                                    'fastboot-flash-order-action'][0]
+                    flash_action = [
+                        action for action in flash_order.pipeline.actions if action.name == 'fastboot-flash-action'][0]
                     flash_cmds = [action.command for action in
                                   flash_order.pipeline.actions if
                                   action.name == 'fastboot-flash-action']
         self.assertIsNotNone(flash_order)
+        self.assertIsNotNone(flash_action)
+        self.assertEqual(flash_action.timeout_exception, InfrastructureError)
         self.assertIsInstance(flash_order, FastbootFlashOrderAction)
         self.assertEqual(expected_flash_cmds, flash_cmds)
 
