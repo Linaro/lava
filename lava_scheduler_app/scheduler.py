@@ -47,9 +47,9 @@ def schedule_health_checks(logger, available_dt=None):
     jobs = []
     hc_disabled = []
     if available_dt:
-        query = DeviceType.objects.filter(name__in=available_dt)
+        query = DeviceType.objects.filter(name__in=available_dt, display=True)
     else:
-        query = DeviceType.objects.all()
+        query = DeviceType.objects.filter(display=True)
     for dt in query.order_by("name"):
         if dt.disable_health_check:
             hc_disabled.append(dt.name)
@@ -123,6 +123,17 @@ def schedule_health_checks_for_device_type(logger, dt):
         logger.debug(" -> %s (%s, %s)", device.hostname,
                      device.get_state_display(),
                      device.get_health_display())
+        if not device.is_valid():
+            prev_health_display = device.get_health_display()
+            device.health = Device.HEALTH_BAD
+            device.log_admin_entry(
+                None, "%s → %s (Invalid device configuration)" % (
+                    prev_health_display, device.get_health_display()))
+            device.save()
+            logger.debug(
+                "%s → %s (Invalid device configuration for %s)" % (
+                    prev_health_display, device.get_health_display(), device.hostname))
+            continue
         logger.debug("  |--> scheduling health check")
         try:
             jobs.append(schedule_health_check(device, health_check))
@@ -201,6 +212,18 @@ def schedule_jobs_for_device(logger, device):
         device_tags = set(device.tags.all())
         job_tags = set(job.tags.all())
         if not job_tags.issubset(device_tags):
+            continue
+
+        if not device.is_valid():
+            prev_health_display = device.get_health_display()
+            device.health = Device.HEALTH_BAD
+            device.log_admin_entry(
+                None, "%s → %s (Invalid device configuration)" % (
+                    prev_health_display, device.get_health_display()))
+            device.save()
+            logger.debug(
+                "%s → %s (Invalid device configuration for %s)" % (
+                    prev_health_display, device.get_health_display(), device.hostname))
             continue
 
         job_dict = yaml.safe_load(job.definition)
