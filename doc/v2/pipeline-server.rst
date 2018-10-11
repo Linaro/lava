@@ -3,36 +3,10 @@
 Setting up a LAVA instance
 ##########################
 
-The LAVA design designates the machine running Django and PostgreSQL as 
-the ``lava-master`` and all other machines connected to that master 
-which will actually be running the jobs are termed ``lava-slave`` 
+The LAVA design designates the machine running Django and PostgreSQL as
+the ``lava-master`` and all other machines connected to that master
+which will actually be running the jobs are termed ``lava-slave``
 machines.
-
-.. _dependencies_recommends:
-
-Dependencies and recommends
-***************************
-
-Debian has the concept of Dependencies which must be installed and 
-Recommends which are optional but expected to be useful by most users 
-of the package in question.  Opting out of installing Recommends is 
-supported when installing packages, so if admins have concerns about 
-extra packages being installed on the slaves (e.g. if using ARMv7 
-slaves or simply to reduce the complexity of the install) then 
-Recommends can be omitted for the installation of these dependencies,
-
-The 2016.6 release added a dependency on ``python-guestfs``. The 
-Recommends for GuestFS can be omitted from the installation, if admins 
-desire, but this needs to be done ahead of the upgrade to 2016.6::
-
- $ sudo apt --no-install-recommends install python-guestfs
-
-.. seealso:: `Debian Policy: What is meant by saying that a package 
-   Depends, Recommends, Suggests, Conflicts, Replaces, Breaks or 
-   Provides another package? 
-   <https://www.debian.org/doc/manuals/debian-faq/ch-pkg_basics.en.html#s-depends>`_ 
-   and `details of the lava package in Debian
-   <https://packages.debian.org/sid/lava>`_
 
 Installing just lava-server
 ***************************
@@ -52,54 +26,68 @@ This will install lava-dispatcher and lava-server.
 
 Other packages to consider:
 
-* ``lavapdu-client`` to control a :term:`PDU` to allow LAVA to 
+* ``lavapdu-client`` to control a :term:`PDU` to allow LAVA to
   automatically power cycle a device.
 
 * ``lavapdu-daemon`` - only one daemon is required to run multiple PDUs.
 
-* ``ntp`` - some actions within LAVA can be time-sensitive, so ensuring 
+* ``ntp`` - some actions within LAVA can be time-sensitive, so ensuring
   that devices within your lab keep time correctly can be important.
 
-.. note:: There is no support in V2 for ``linaro-media-create`` to 
-   manipulate hardware packs from Linaro, so this package can be 
+.. note:: There is no support in V2 for ``linaro-media-create`` to
+   manipulate hardware packs from Linaro, so this package can be
    removed once there are no V1 devices on the worker.
 
 Installing the full lava set
 ****************************
 
-Production installs of LAVA will rarely use the full ``lava`` set as it 
-includes tools more commonly used by developers and test labs. These 
-tools mean that the ``lava`` package brings more dependencies than when 
+Production installs of LAVA will rarely use the full ``lava`` set as it
+includes tools more commonly used by developers and test labs. These
+tools mean that the ``lava`` package brings more dependencies than when
 installing ``lava-server`` to run a production LAVA instance.
 
-.. seealso:: :ref:`dependencies_recommends`
+.. note:: Debian has the concept of Dependencies which must be
+   installed and Recommends which are optional but expected to be
+   useful by most users of the package in question.  Opting out of
+   installing Recommends is supported when installing packages, so if
+   admins have concerns about extra packages being installed on the
+   slaves (e.g. if using ARMv7 slaves or simply to reduce the
+   complexity of the install) then Recommends can be omitted for the
+   installation of these dependencies.
 
-The ``lava`` package installs support for:
+   .. seealso:: `Debian Policy: What is meant by saying that a package
+      Depends, Recommends, Suggests, Conflicts, Replaces, Breaks or
+      Provides another package?
+      <https://www.debian.org/doc/manuals/debian-faq/ch-pkg_basics.en.html#s-depends>`_
+      and `details of the lava package in Debian
+      <https://packages.debian.org/sid/lava>`_
 
-* ``lava-dev`` - scripts to build developer packages based on your 
-  current git tree of ``lava-server`` or ``lava-dispatcher``, including 
+sThe ``lava`` package installs support for:
+
+* ``lava-dev`` - scripts to build developer packages based on your
+  current git tree of ``lava-server`` or ``lava-dispatcher``, including
   any local changes.
-  
+
   .. note:: ``lava-dev`` includes **a lot** of packages which are not
      typically used on a production master or worker.
 
 * ``vmdebootstrap`` for building your own Debian based KVM images.
 
-* ``lavapdu-client`` to control a :term:`PDU` to allow LAVA to 
+* ``lavapdu-client`` to control a :term:`PDU` to allow LAVA to
   automatically power cycle a device.
 
-* ``lavapdu-daemon`` is recommended or you can use a single daemon for 
+* ``lavapdu-daemon`` is recommended or you can use a single daemon for
   multiple PDUs.
 
-* ``ntp`` - some actions within LAVA can be time-sensitive, so ensuring 
+* ``ntp`` - some actions within LAVA can be time-sensitive, so ensuring
   that devices within your lab keep time correctly can be important.
 
-.. note:: There is no support in V2 for ``linaro-media-create`` to 
-   manipulate hardware packs from Linaro, so this package can be 
+.. note:: There is no support in V2 for ``linaro-media-create`` to
+   manipulate hardware packs from Linaro, so this package can be
    removed once there are no V1 devices on the worker.
 
-All of these packages can be installed separately alongside the main 
-``lava-server`` package, the ``lava`` package merely collects them into 
+All of these packages can be installed separately alongside the main
+``lava-server`` package, the ``lava`` package merely collects them into
 one set.
 
 ::
@@ -121,12 +109,12 @@ one set.
 Installing master without Recommends
 ************************************
 
-The ``lava-common`` binary package is new in 2018.5 and allows admins 
-to choose not to install ``lava-dispatcher`` on the master if there are 
-to be no devices assigned to the machine running ``lava-master``. This 
-is common for installations where there are multiple workers and the 
-master is regularly busy. ``lava-server`` now _Recommends_ 
-``lava-dispatcher`` which means that admins can choose not to install 
+The ``lava-common`` binary package is new in 2018.5 and allows admins
+to choose not to install ``lava-dispatcher`` on the master if there are
+to be no devices assigned to the machine running ``lava-master``. This
+is common for installations where there are multiple workers and the
+master is regularly busy. ``lava-server`` now _Recommends_
+``lava-dispatcher`` which means that admins can choose not to install
 it alongside ``lava-server``::
 
  $ sudo apt --no-install-recommends install lava-server lava-server-doc
@@ -137,16 +125,16 @@ packages may also be desirable:
 * **lava-coordinator**
 * **ntp**
 
-``lava-server-doc`` can be omitted but this would be unusual - 
-instances would need to be configured to have some other Help option in 
-the menu using the ``CUSTOM_DOCS`` dictionary setting in 
+``lava-server-doc`` can be omitted but this would be unusual -
+instances would need to be configured to have some other Help option in
+the menu using the ``CUSTOM_DOCS`` dictionary setting in
 ``/etc/lava-server/settings.conf`` and the ``Help`` links from pages
 within the LAVA UI would cause a 404 error for users, unless the
 Apache configuration was adjusted.
 
-.. seealso:: `Debian Policy: What is meant by saying that a package 
-   Depends, Recommends, Suggests, Conflicts, Replaces, Breaks or 
-   Provides another package? 
+.. seealso:: `Debian Policy: What is meant by saying that a package
+   Depends, Recommends, Suggests, Conflicts, Replaces, Breaks or
+   Provides another package?
    <https://www.debian.org/doc/manuals/debian-faq/ch-pkg_basics.en.html#s-depends>`_
 
 .. _configuring_lava_slave:
@@ -154,18 +142,18 @@ Apache configuration was adjusted.
 Installing lava-dispatcher
 **************************
 
-If this machine is only meant to be a dispatcher for connected devices, 
-then just install ``lava-dispatcher``. The ``lava-server`` package is 
+If this machine is only meant to be a dispatcher for connected devices,
+then just install ``lava-dispatcher``. The ``lava-server`` package is
 only needed on the master in each LAVA instance.
 
 ::
 
  $ sudo apt install lava-dispatcher
 
-#. Change the dispatcher configuration in 
-   ``/etc/lava-dispatcher/lava-slave`` to allow the init script for 
-   ``lava-slave`` (``/etc/init.d/lava-slave``) to connect to the 
-   relevant ``lava-master`` instead of ``localhost``. Change the port 
+#. Change the dispatcher configuration in
+   ``/etc/lava-dispatcher/lava-slave`` to allow the init script for
+   ``lava-slave`` (``/etc/init.d/lava-slave``) to connect to the
+   relevant ``lava-master`` instead of ``localhost``. Change the port
    numbers, if required, to match those in use on the ``lava-master``::
 
      /etc/lava-dispatcher/lava-slave
@@ -204,32 +192,32 @@ only needed on the master in each LAVA instance.
 #. The administrator of the master will then be able to allocate
    pipeline devices to this slave.
 
-.. note:: For security reasons, the slave does not declare the devices 
-   connected to it to the master. The LAVA configuration on the slave 
-   actually needs no knowledge of what is connected or where as long as 
-   services like ``ser2net`` are configured. All the LAVA configuration 
-   data is stored solely in the database of the master. Once this data 
-   is entered by the admin of the master, the slave then needs to 
-   connect and the admin can then select that slave for the relevant 
-   devices. Once selected, the slave can immediately start running 
+.. note:: For security reasons, the slave does not declare the devices
+   connected to it to the master. The LAVA configuration on the slave
+   actually needs no knowledge of what is connected or where as long as
+   services like ``ser2net`` are configured. All the LAVA configuration
+   data is stored solely in the database of the master. Once this data
+   is entered by the admin of the master, the slave then needs to
+   connect and the admin can then select that slave for the relevant
+   devices. Once selected, the slave can immediately start running
    pipeline jobs on those devices.
 
-The administrator of the master will require the following information 
+The administrator of the master will require the following information
 about the devices attached to each slave:
 
-#. Confirmation that a suitable template already exists, for each 
+#. Confirmation that a suitable template already exists, for each
    device i.e. :ref:`adding_known_device`
 
 #. A completed and tested :term:`device dictionary` for each device.
 
-This information contains specific information about the local network 
-setup of the slave and will be transmitted between the master and the 
-slave in **clear text** over :term:`ZMQ`. Any encryption would need to 
-be arranged separately between the slave and the master. Information 
-typically involves the hostname of the PDU, the port number of the 
-device on that PDU and the port number of the serial connection for 
-that device. The slave is responsible for ensuring that these ports are 
-only visible to that slave. There is no need for any connections to be 
+This information contains specific information about the local network
+setup of the slave and will be transmitted between the master and the
+slave in **clear text** over :term:`ZMQ`. Any encryption would need to
+be arranged separately between the slave and the master. Information
+typically involves the hostname of the PDU, the port number of the
+device on that PDU and the port number of the serial connection for
+that device. The slave is responsible for ensuring that these ports are
+only visible to that slave. There is no need for any connections to be
 visible to the master.
 
 .. index:: worker - apache config
@@ -239,7 +227,7 @@ visible to the master.
 Configuring apache2 on a worker
 *******************************
 
-Some test job deployments will require a working Apache2 server to 
+Some test job deployments will require a working Apache2 server to
 offer deployment files over the network to the device::
 
     $ sudo cp /usr/share/lava-dispatcher/apache2/lava-dispatcher.conf /etc/apache2/sites-available/
@@ -248,7 +236,7 @@ offer deployment files over the network to the device::
     $ wget http://localhost/tmp/
     $ rm index.html
 
-You may also need to disable any existing apache2 configuration if this 
+You may also need to disable any existing apache2 configuration if this
 is a default apache2 installation::
 
     $ sudo a2dissite 000-default
@@ -261,8 +249,8 @@ is a default apache2 installation::
 Adding workers to the master
 ****************************
 
-A new worker needs to be manually added to the master so that the 
-admins of the master have the ability to assign devices in the database 
+A new worker needs to be manually added to the master so that the
+admins of the master have the ability to assign devices in the database
 and enable or disable the worker.
 
 To add a new worker::
@@ -277,11 +265,11 @@ To add a worker in a disabled state::
 
  $ sudo lava-server manage workers add --description <DESC> --disabled <HOSTNAME>
 
-Workers are enabled or disabled in the Django admin interface by 
-changing the ``display`` field of the worker. Jobs submitted to devices 
-on that worker will fail, so it is also recommended that the devices 
-would be made offline at the same time. (The django admin interface has 
-support for selecting devices by worker and taking all selected devices 
+Workers are enabled or disabled in the Django admin interface by
+changing the ``display`` field of the worker. Jobs submitted to devices
+on that worker will fail, so it is also recommended that the devices
+would be made offline at the same time. (The django admin interface has
+support for selecting devices by worker and taking all selected devices
 offline in a single action.)
 
 .. note:: *lava-logs* is a reserved hostname. Any worker connecting with that
@@ -296,39 +284,39 @@ offline in a single action.)
 Using ZMQ authentication and encryption
 ***************************************
 
-``lava-master`` and ``lava-slave`` use ZMQ to pass control messages and 
-log messages. When using a slave on the same machine as the master, 
-this traffic does not need to be authenticated or encrypted. When the 
-slave is remote to the master, it is **strongly** recommended that the 
-slave authenticates with the master using ZMQ curve so that all traffic 
-can then be encrypted and the master can refuse connections which 
-cannot be authenticated against the credentials configured by the 
+``lava-master`` and ``lava-slave`` use ZMQ to pass control messages and
+log messages. When using a slave on the same machine as the master,
+this traffic does not need to be authenticated or encrypted. When the
+slave is remote to the master, it is **strongly** recommended that the
+slave authenticates with the master using ZMQ curve so that all traffic
+can then be encrypted and the master can refuse connections which
+cannot be authenticated against the credentials configured by the
 admin.
 
-To enable authentication and encryption, you will need to restart the 
-master and each of the slaves. Once the master is reconfigured, it will 
-not be possible for the slaves to communicate with the master until 
-each is configured correctly. It is recommended that this is done when 
-there are no test jobs running on any of the slaves, so a maintenance 
-window may be needed before the work can start. ZMQ is able to cope 
-with short interruptions to the connection between master and slave, so 
-depending on the particular layout of your instance, the changes can be 
-made on each machine before the master is restarted, then the slaves 
-can be restarted. Make sure you test this process on a temporary or 
-testing instance if you are planning on doing this for a live instance 
+To enable authentication and encryption, you will need to restart the
+master and each of the slaves. Once the master is reconfigured, it will
+not be possible for the slaves to communicate with the master until
+each is configured correctly. It is recommended that this is done when
+there are no test jobs running on any of the slaves, so a maintenance
+window may be needed before the work can start. ZMQ is able to cope
+with short interruptions to the connection between master and slave, so
+depending on the particular layout of your instance, the changes can be
+made on each machine before the master is restarted, then the slaves
+can be restarted. Make sure you test this process on a temporary or
+testing instance if you are planning on doing this for a live instance
 without using a maintenance window.
 
-Encryption is particularly important when using remote slaves as the 
-control socket (which manages starting and ending testjobs) needs to be 
-protected when it is visible across open networks. Authentication 
-ensures that only known slaves are able to connect to the master. Once 
-authenticated, all communication will be encrypted using the 
+Encryption is particularly important when using remote slaves as the
+control socket (which manages starting and ending testjobs) needs to be
+protected when it is visible across open networks. Authentication
+ensures that only known slaves are able to connect to the master. Once
+authenticated, all communication will be encrypted using the
 certificates.
 
-Protection of the secret keys for the master and each of the slaves is 
-the responsibility of the admin. If a slave is compromised, the admin 
-can delete the certificate from 
-``/etc/lava-dispatcher/certificates.d/`` and restart the master daemon 
+Protection of the secret keys for the master and each of the slaves is
+the responsibility of the admin. If a slave is compromised, the admin
+can delete the certificate from
+``/etc/lava-dispatcher/certificates.d/`` and restart the master daemon
 to immediately block that slave.
 
 .. index:: encrypt, ZMQ certificates
@@ -336,16 +324,16 @@ to immediately block that slave.
 Create certificates
 ===================
 
-Encryption is supported by default in ``lava-master`` and 
-``lava-slave`` but needs to be enabled in the init scripts for each 
+Encryption is supported by default in ``lava-master`` and
+``lava-slave`` but needs to be enabled in the init scripts for each
 daemon. Start by generating a master certificate on the master::
 
  $ sudo /usr/share/lava-dispatcher/create_certificate.py master
 
-Now generate a unique slave certificate on each slave. The default name 
-for any slave certificate is just ``slave`` but this is only relevant 
-for testing. Use a name which relates to the hostname or location or 
-other unique aspect of each slave. The admin will need to be able to 
+Now generate a unique slave certificate on each slave. The default name
+for any slave certificate is just ``slave`` but this is only relevant
+for testing. Use a name which relates to the hostname or location or
+other unique aspect of each slave. The admin will need to be able to
 relate each certificate to a specific slave machine::
 
  $ sudo /usr/share/lava-dispatcher/create_certificate.py foo_slave_1
@@ -353,18 +341,18 @@ relate each certificate to a specific slave machine::
 Distribute public certificates
 ==============================
 
-Copy the public component of the master certificate to each slave. By 
-default, the master public key will be 
-``/etc/lava-dispatcher/certificates.d/master.key`` and needs to be 
+Copy the public component of the master certificate to each slave. By
+default, the master public key will be
+``/etc/lava-dispatcher/certificates.d/master.key`` and needs to be
 copied to the same directory on each slave.
 
-Copy the public component of each slave certificate to the master. By 
-default, the slave public key will be 
+Copy the public component of each slave certificate to the master. By
+default, the slave public key will be
 ``/etc/lava-dispatcher/certificates.d/slave.key``.
 
-Admins need to maintain the set of slave certificates in 
-``/etc/lava-dispatcher/certificates.d`` - only certificates declared by 
-active slaves will be used but having obsolete or possibly compromised 
+Admins need to maintain the set of slave certificates in
+``/etc/lava-dispatcher/certificates.d`` - only certificates declared by
+active slaves will be used but having obsolete or possibly compromised
 certificates available to the master is a security risk.
 
 .. _preparing_for_zmq_auth:
@@ -372,9 +360,9 @@ certificates available to the master is a security risk.
 Preparation
 ===========
 
-Once enabled, the master will refuse connections from any slave which 
-are either not encrypted or lack a certificate in 
-``/etc/lava-dispatcher/certificates.d/``. So before restarting the 
+Once enabled, the master will refuse connections from any slave which
+are either not encrypted or lack a certificate in
+``/etc/lava-dispatcher/certificates.d/``. So before restarting the
 master, stop each of the slaves::
 
  $ sudo service lava-slave stop
@@ -384,8 +372,8 @@ master, stop each of the slaves::
 Enable master encryption
 ========================
 
-The master will only authenticate the slave certificates if the master 
-is configured with the ``--encrypt`` option. Edit 
+The master will only authenticate the slave certificates if the master
+is configured with the ``--encrypt`` option. Edit
 ``/etc/lava-server/lava-master`` to enable encryption::
 
  # Encryption
@@ -400,15 +388,15 @@ Also edit ``/etc/lava-server/lava-logs`` to enable encryption::
  # private keys
  ENCRYPT="--encrypt"
 
-If you have changed the name or location of the master certificate or 
-the location of the slave certificates, specify those locations and 
+If you have changed the name or location of the master certificate or
+the location of the slave certificates, specify those locations and
 names explicitly, in each file::
 
  # MASTER_CERT="--master-cert /etc/lava-dispatcher/certificates.d/<master.key_secret>"
  # SLAVES_CERTS="--slaves-certs /etc/lava-dispatcher/certificates.d"
 
-.. note:: Each master needs to find the **secret** key for that master 
-   and the **directory** containing all of the  **public** slave keys 
+.. note:: Each master needs to find the **secret** key for that master
+   and the **directory** containing all of the  **public** slave keys
    copied onto that master by the admin.
 
 .. seealso:: :ref:`preparing_for_zmq_auth`
@@ -420,7 +408,7 @@ Enable slave encryption
 
 .. seealso:: :ref:`preparing_for_zmq_auth`
 
-Edit ``/etc/lava-dispatcher/lava-slave`` to enable encryption by adding 
+Edit ``/etc/lava-dispatcher/lava-slave`` to enable encryption by adding
 the enabling the ``--encrypt`` argument::
 
  # Encryption
@@ -428,25 +416,25 @@ the enabling the ``--encrypt`` argument::
  # private keys
  ENCRYPT="--encrypt"
 
-If you have changed the name or location of the master certificate or 
-the location of the slave certificates, specify those locations and 
+If you have changed the name or location of the master certificate or
+the location of the slave certificates, specify those locations and
 names in ``/etc/lava-dispatcher/lava-slave`` explicitly::
 
  # MASTER_CERT="--master-cert /etc/lava-dispatcher/certificates.d/<master.key>"
  # SLAVE_CERT="--slave-cert /etc/lava-dispatcher/certificates.d/<slave.key_secret>"
 
-.. note:: Each slave refers to the **secret** key for that slave and 
+.. note:: Each slave refers to the **secret** key for that slave and
    the **public** master key copied onto that slave by the admin.
 
 Restarting master and slaves
 ============================
 
-For minimal disruption, the master and each slave can be prepared for 
-encryption and authentication without restarting any of the daemons. 
+For minimal disruption, the master and each slave can be prepared for
+encryption and authentication without restarting any of the daemons.
 Only upon restarting the master will the slaves need to authenticate.
 
-Once all the slaves are configured restart the master and check the 
-logs for a message showing that encryption has been enabled on the 
+Once all the slaves are configured restart the master and check the
+logs for a message showing that encryption has been enabled on the
 master. e.g.
 
 .. code-block:: none
@@ -458,7 +446,7 @@ master. e.g.
  2018-02-05 11:33:55,986    INFO [INIT] LAVA master has started.
  2018-02-05 11:33:55,986    INFO [INIT] Using protocol version 2
 
-Now restart each slave in turn and watch for equivalent messages in the 
+Now restart each slave in turn and watch for equivalent messages in the
 logs:
 
 .. code-block:: none
@@ -479,8 +467,8 @@ logs:
 Adding devices to a worker
 **************************
 
-Admins use the Django admin interface to add devices to workers using 
+Admins use the Django admin interface to add devices to workers using
 the worker drop-down in the device detail page.
 
-.. note:: A worker may have a description but does not have a record of 
+.. note:: A worker may have a description but does not have a record of
    the IP address, uptime or architecture in the Worker object.

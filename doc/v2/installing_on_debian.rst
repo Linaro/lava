@@ -5,9 +5,8 @@
 Installing on a Debian system
 *****************************
 
-.. seealso:: :ref:`archiving_v1`
-
-These instructions cover installation on Debian. The supported versions are:
+These instructions cover installation on Debian. The supported versions
+are:
 
 +---------------+------------------------+--------+----------------------+
 | Distribution  | Codename               | Number | Support              |
@@ -67,8 +66,13 @@ that point will include that codename in the table.
 .. [#f4] `buster` is the name of the next Debian release after Stretch,
          which is supported automatically via uploads to Sid
          (unstable). Buster is **not** recommended for production
-         instances of LAVA at this time. The release process for
-         buster is scheduled to start in Jan 2019.
+         instances of LAVA at this time. The release process for buster
+         is scheduled to start in Jan 2019.
+
+         When buster is released as Debian 10, it will use the suite
+         name ``stable``, testing will get the codename of the next
+         Debian stable release, **bullseye**, and Stretch will become
+         ``oldstable``.
 
 .. [#f5] `sid` is the name of the unstable suite which never gets
          released but acts as a feed for ``testing``. As the name
@@ -82,9 +86,8 @@ that point will include that codename in the table.
 .. _stretch-backports: https://backports.debian.org/
 
 You can track the versions of LAVA packages in the various Debian
-suites by following links from the Debian package trackers for
-`lava-dispatcher <https://tracker.debian.org/pkg/lava-dispatcher>`_ and
-`lava-server <https://tracker.debian.org/pkg/lava-server>`_.
+suites by following links from the Debian package tracker for
+`lava <https://tracker.debian.org/pkg/lava>`_.
 
 .. index:: debian - architectures
 
@@ -110,8 +113,8 @@ processing power (CPU or I/O or RAM) for such devices. EAch QEMU device
 can require more RAM than would be available on most 32bit systems.
 
 LAVA is routinely used on ``amd64`` and ``arm64`` architectures.
-Packages for other 64bit architectures like ppc64, ppc64el and s390x are
-available from Debian.
+Packages for other 64bit architectures like ppc64, ppc64el and s390x
+are available from Debian.
 
 Each lab will be different and there are no definitive guidelines on
 what hardware specifications to choose. Start slowly and :ref:`grow
@@ -128,85 +131,75 @@ LAVA repositories
 =================
 
 As well as being uploaded to Debian, :ref:`production_releases` of LAVA
-are uploaded to a Linaro `production-repo`_ repository which uses the
-:ref:`lava_archive_signing_key` - a copy of the key is available in the
-repository.
+are uploaded to the LAVA Software Community Project repository which
+uses the :ref:`lava_archive_signing_key` - a copy of the key is
+available in the repository and on keyservers.
 
-.. _production-repo: https://images.validation.linaro.org/production-repo/
+Releases
+--------
+
+.. code-block:: none
+
+ deb https://apt.lavasoftware.org/release stretch-backports main
+ deb https://apt.lavasoftware.org/release buster main
 
 .. note:: The LAVA repositories only provide packages for ``amd64`` and
    ``arm64``. See :ref:`recommended_debian_architectures`.
 
 In times when the current production release has not made it into
-either ``stretch-backports`` (e.g. due to a migration issue or a
-pre-release package freeze in Debian), this repository can be used
-instead.
+either ``stretch-backports`` or ``testing`` (e.g. due to a migration
+issue or a pre-release package freeze in Debian), this repository can
+be used instead.
 
-The :file:`services-trace.txt` file in the repository shows the latest
-update timestamp and is accompanied by a GnuPG signature of the trace
-file, signed using the :ref:`lava_archive_signing_key`.
+Daily builds
+------------
 
-Interim builds (including release candidates) are available in the
-staging repository, using the same suites::
+Interim builds (including release candidates) are available from the
+daily builds repository, using the same suites:
 
- deb https://images.validation.linaro.org/staging-repo stretch-backports main
+.. code-block:: none
 
-This repository uses the same key as the production repository.
+ deb https://apt.lavasoftware.org/daily stretch-backports main
+ deb https://apt.lavasoftware.org/daily buster main
+
+Snapshots 
+---------
+
+When a build is updated in the repositories, a copy of the same build
+is created in the snapshot folder.
+https://apt.lavasoftware.org/snapshot/
+
+Entries are created according to the suite for which it was built and
+the year, month and day of the build.
 
 Stretch users
 -------------
 
 .. note:: The recommended base for LAVA is Debian Stretch, as of 2018.1.
 
-::
+.. code-block:: none
 
- deb https://images.validation.linaro.org/production-repo stretch-backports main
+ deb https://apt.lavasoftware.org/release stretch-backports main
 
-Jessie users
+Buster users
 -------------
 
-.. caution:: Unsupported - please upgrade Jessie systems to Stretch. No
-   new releases or developer builds are available for Jessie.
+.. note:: The recommended base for LAVA is Debian Stretch, as of 2018.1.
 
-.. _archive_repository:
+.. code-block:: none
 
-Archive repository
-------------------
-
-The recommended time to create an :ref:`archive <archiving_v1>` for V1
-test data is after the upgrade to 2017.10 but before the upgrade to
-2017.11.
-
-It is possible to create an archive retrospectively, but **only** if a
-usable backup of the postgresql database exists from the period
-**between** the upgrade to 2017.10 and the upgrade to 2017.11.
-
-.. important:: Once an instance has been upgraded to 2017.11, some of
-   the internal data links in the V1 test data **will have been
-   deleted** and the database will not be able to function correctly
-   as an archive of V1 test data. Once an instance has been upgraded
-   to 2017.12 or beyond, **all** V1 test data will have been
-   permanently and deliberately deleted from the database.
-
-For the sake of users needing this archive functionality, packages of
-the 2017.10 LAVA release will also remain available in a dedicated LAVA
-repository. The archive machine will need to be configured **not** to
-use the default apt sources for stretch or jessie above. The archive
-**must instead use** the archive repository, for stretch or jessie
-respectively::
-
- deb https://images.validation.linaro.org/v1-archive-repo stretch-backports main
-
-or::
-
- deb https://images.validation.linaro.org/v1-archive-repo jessie-backports main
+ deb https://apt.lavasoftware.org/release buster main
 
 .. index:: lava archive signing key
 
 .. _lava_archive_signing_key:
 
-LAVA Archive signing key
-------------------------
+LAVA Archive signing keys
+-------------------------
+
+The LAVA Software Community Project uses two keys for the repositories.
+
+The daily builds are signed using:
 
 .. code-block:: none
 
@@ -214,12 +207,19 @@ LAVA Archive signing key
       Key fingerprint = 45AD 50DC 41AE D421 FF5B  33D4 ECF3 C05C C771 02A9
  uid                  LAVA build daemon (Staging) <lava-lab@linaro.org>
 
-Each of the support archives on ``images.validation.linaro.org`` is
-signed using the same key, 0x33D4ECF3C05CC77102A9, which can be
-downloaded_ and added to apt::
+Production releases are signed using:
 
- $ wget https://images.validation.linaro.org/staging-repo/staging-repo.key.asc
- $ sudo apt-key add staging-repo.key.asc
+.. code-block:: none
+
+ pub   rsa4096/A791358F2E49B100 2018-10-02 [SC]
+      Key fingerprint = C87D 63FD 9355 35CF B0CA  F5C2 A791 358F 2E49 B100
+ uid                 [ultimate] LAVA Software release key <release@lavasoftware.org>
+ sub   rsa4096/42124FB9C30943EC 2018-10-02 [E]
+
+Both keys can be downloaded and added to apt::
+
+ $ wget https://apt.lavasoftware.org/lavasoftware.key.asc
+ $ sudo apt-key add lavasoftware.key.asc
  OK
 
 Then update to locate the required dependencies::
@@ -227,9 +227,8 @@ Then update to locate the required dependencies::
  $ sudo apt update
 
 .. note:: The above repositories use `https` hence install the package
-          `apt-transport-https` if it is not already installed.
-
-.. _downloaded: https://images.validation.linaro.org/staging-repo/staging-repo.key.asc
+          `apt-transport-https` if it is not already installed or
+          change the apt source URL to `http://`
 
 .. index:: production release
 
@@ -238,7 +237,7 @@ Then update to locate the required dependencies::
 Production releases
 ===================
 
-.. seealso:: :ref:`setting_up_pipeline_instance` and :ref:`archiving_v1`.
+.. seealso:: :ref:`setting_up_pipeline_instance`.
 
 LAVA is currently packaged for Debian unstable using Django1.10 and
 Postgresql. LAVA packages are now available from official Debian
@@ -247,8 +246,8 @@ mirrors for Debian unstable. e.g. to install the master, use::
  $ sudo apt install postgresql
  $ sudo apt install lava-server
 
-If the default Apache configuration from LAVA is suitable, you can enable it
-immediately::
+If the default Apache configuration from LAVA is suitable, you can
+enable it immediately::
 
  $ sudo a2dissite 000-default
  $ sudo a2enmod proxy
@@ -275,7 +274,7 @@ If the installation uses ``http://localhost``, the remaining
 configuration is to disable some of the Django security checks which
 expect ``https``.
 
-.. seealso:: :ref:`check_instance`
+.. seealso:: :ref:`check_instance` and :ref:`django_localhost`
 
 If the installation uses a remote slave, then :ref:`zmq_curve` should
 be enabled.
@@ -291,49 +290,6 @@ Each master has a local ``lava-slave`` even if that slave has no
 devices configured.
 
 * ``/etc/default/lava-slave`` or ``/etc/lava-server/lava-slave``.
-
-.. index:: tftpd-hpa
-
-.. _tftp_support:
-
-TFTP support requirement
-========================
-
-LAVA uses :term:`tftp` to serve files to a variety of device types.
-
-The LAVA V1 dispatcher **relies** on TFTP downloads, NFS share
-directories and master image downloads to **all** be made from a single
-directory: :file:`/var/lib/lava/dispatcher/tmp`. To do this, the
-configuration file for :command:`tftpd-hpa` needs to be modified to use
-the LAVA directory instead of the default, ``/srv/tftp``.
-
-.. note:: The TFTP support in LAVA has had to be changed from the
-   **2015.8 release** onwards to stop LAVA enforcing a configuration
-   change on the ``tftpd-hpa`` package without explicit configuration
-   by the admin. Previously, installation may have prompted about
-   changes in :file:`/etc/default/tftpd-hpa`; now this change needs to
-   be made manually as the configuration of the ``tftpd-hpa`` package
-   should not have been up to LAVA to impose. If you are already
-   running a version of LAVA installed prior to the **2015.8 release**
-   (and have working TFTP support), then the configuration change will
-   have been imposed by LAVA and then maintained by ``dpkg`` and
-   ``tftpd-hpa``. Check that your ``/etc/default/tftpd-hpa`` file
-   references :file:`/var/lib/lava/dispatcher/tmp` and continue as
-   before.
-
-Admins can either manually change the :file:`/etc/default/tftpd-hpa` to
-set the ``TFTP_DIRECTORY`` to :file:`/var/lib/lava/dispatcher/tmp` or
-copy the file packaged by ``lava-dispatcher``::
-
- $ sudo cp /usr/share/lava-dispatcher/tftpd-hpa /etc/default/tftpd-hpa
-
-Whatever base directory is configured for ``tftpd-hpa``, LAVA will use
-temporary subdirectories for all TFTP operations; other LAVA operations
-will use the :file:`/var/lib/lava/dispatcher/tmp` directory. The
-``tftpd-hpa`` configuration can be set to the tftpd original value
-(``/srv/tftp``), the LAVA historical value
-(``/var/lib/lava/dispatcher/tmp``) or any other directory specified by
-the admin.
 
 .. index:: stretch, install on stretch
 
@@ -369,9 +325,10 @@ Updates for LAVA on Debian Stretch will be uploaded to `the
 stretch-backports suite <http://backports.debian.org/>`_ once this
 becomes available.
 
-Create an apt source for backports, either by editing ``/etc/apt/sources.list``
-or adding a file with a ``.list`` suffix into ``/etc/apt/sources.list.d/``.
-Create a line like the one below (using your preferred Debian mirror)::
+Create an apt source for backports, either by editing
+``/etc/apt/sources.list`` or adding a file with a ``.list`` suffix into
+``/etc/apt/sources.list.d/``. Create a line like the one below (using
+your preferred Debian mirror)::
 
  deb http://deb.debian.org/debian stretch-backports main
 
@@ -379,7 +336,8 @@ Remember to update your apt cache whenever add a new apt source::
 
  $ sudo apt update
 
-Then install ``lava-server`` from ``stretch-backports`` using the ``-t`` option::
+Then install ``lava-server`` from ``stretch-backports`` using the
+``-t`` option::
 
  $ sudo apt -t stretch-backports install lava-server
  $ sudo a2dissite 000-default
@@ -404,21 +362,21 @@ existing backports require updates from backports.
 Installing on Debian Buster
 ---------------------------
 
-.. warning:: Buster is currently Debian testing, not yet released as
-   stable and frequent updates will be required. Some breakages are
-   possible and packages are routinely removed from buster, so
-   installation will not always be possible. For example, if a
-   dependency of a LAVA package has been removed due to a
-   release-critical bug in buster then all LAVA packages would also be
-   removed from Buster. This would also affect the ability to install
-   developer builds unless all the relevant dependencies are either
-   already installed or still present in Buster. Buster is **not**
-   recommended for production instances of LAVA at this time.
+.. note:: Buster is currently Debian testing, not yet released as
+   stable and frequent updates may be required. Buster will soon be
+   entering the release freeze, but some breakage is still possible as
+   packages may be removed from buster. For example, if a dependency of
+   a LAVA package has been removed due to a release-critical bug in
+   buster then all LAVA packages would also be removed from Buster.
+   This would also affect the ability to install developer builds
+   unless all the relevant dependencies are either already installed or
+   still present in Buster. Admins can choose to use buster for
+   production instances, with these constraints in mind.
 
-Buster brings in a number of updated dependencies, e.g. postgresql-10
-and QEMU 2.12 as well as a more recent kernel. The installation process
-is similar to :ref:`installing on Stretch <install_debian_stretch>`
-with two differences:
+Buster brings in a number of updated dependencies, e.g. postgresql-10,
+docker.io and QEMU 2.12 as well as a more recent kernel. The
+installation process is similar to :ref:`installing on Stretch
+<install_debian_stretch>` with two differences:
 
 * There is no need for backports as buster has no backports until after
   release.
@@ -430,23 +388,9 @@ If you want a smaller installation, particularly for a worker, you can
 choose to install ``qemu-system-x86`` (or ``qemu-system-arm`` if
 running on ``armhf`` or ``arm64``) without the recommended packages::
 
- $ sudo apt --no-install-recommends qemu-system-x86
+ $ sudo apt --no-install-recommends install qemu-system-x86
 
 .. index:: backports, jessie-backports, install using backports
-
-.. _install_debian_jessie:
-
-Installing on Debian Jessie
----------------------------
-
-.. caution:: Unsupported - Instances using Jessie must upgrade to Stretch
-
-Debian Jessie was released on April 25th, 2015, containing a full set
-of packages to install LAVA at version 2014.9. Debian stable releases
-of LAVA do not receive updates to LAVA directly, so a simple install on
-Jessie will only get you ``2014.9``. All admins of LAVA instances are
-**strongly** advised to upgrade the instance to Stretch to receive
-security updates to the base system and to be able to install LAVA.
 
 .. index:: python3
 
@@ -462,8 +406,7 @@ had Python3 support for some time and will be dropping Python2 support
 in the next LTS. (The current non-LTS release of django, version 2.0,
 has already dropped support for Python2.)
 
-LAVA has moved to exclusive Python3 support as the completion of the
-migration to V2.
+LAVA has moved to exclusive Python3 support.
 
 Setting up a reverse proxy
 ==========================

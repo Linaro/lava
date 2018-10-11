@@ -39,6 +39,8 @@ is no longer supported.
 Contributions to support other distributions are welcome as long as there is a
 commitment to maintain LAVA on those distributions.
 
+.. mention docker support here once that is merged.
+
 .. _Debian: https://www.debian.org/
 
 If you'd like to help us provide support for other distributions, feel free to
@@ -106,9 +108,9 @@ The LAVA team makes regular releases (called ``production releases``),
 typically monthly. These are installed onto Linaro's central instance
 https://validation.linaro.org/ and they are also uploaded to Debian unstable
 and backports (see :ref:`debian_installation`). These ``production releases``
-are tracked in the ``release`` branch of the upstream git repositories.
+using tags on the ``master`` branch.
 
-Interim releases are made available from the the :ref:`staging-repo
+Interim releases are made available from the :ref:`daily builds
 <lava_repositories>`.
 
 If in doubt, install the ``production`` release of ``lava-server`` from
@@ -173,8 +175,9 @@ expand beyond that, start adding workers one at a time. For this configuration:
 * The master needs the ``lava-server`` package installed, just as on a
   :ref:`single_instance`.
 
-* A worker only needs the ``lava-dispatcher`` package installed. When prompted
-  during package installation, configure it for a :ref:`pipeline installation
+* A worker only needs the ``lava-dispatcher`` package installed.
+
+  .. seealso:: :ref:`pipeline installation
   <setting_up_pipeline_instance>`.
 
 As you expand your setup, you will also need to do some configuration of
