@@ -5,6 +5,9 @@
 # note: this will produce TWO lines of output in 'names' mode
 
 lava-server:
+  django-auth-ldap:
+    version: ">=1.2.12"
+    name: python3-django-auth-ldap
   django-tables2:
     version: ">=1.14.2"
     name: python3-django-tables2
