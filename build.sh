@@ -11,8 +11,7 @@ do
   hash=$(docker build --force-rm -q "$image")
   echo "=> $hash"
   echo "* testing"
-  rm -f "$image.log"
-  docker run --rm --volume "$PWD/$image/test.sh:/root/test.sh" "$hash" /root/test.sh > "$image.log" 2>&1
+  docker run --rm --volume "$PWD/$image/test.sh:/root/test.sh" --volume "$PWD/$image/:/root/image" "$hash" /root/test.sh > "$image.log" 2>&1
   echo "=> done"
   echo
 done
