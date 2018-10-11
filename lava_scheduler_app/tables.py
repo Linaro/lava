@@ -231,6 +231,8 @@ class JobTable(LavaTable):
     duration.orderable = False
     submit_time = tables.DateColumn(format="Nd, g:ia")
     end_time = tables.DateColumn(format="Nd, g:ia")
+    state = tables.Column()
+    state.orderable = False
 
     def render_state(self, record):
         if record.state == TestJob.STATE_RUNNING:
