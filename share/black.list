@@ -14,4 +14,3 @@ share/create_certificate.py
 share/download-test-suites-api.py
 share/dump_pipeline.py
 share/lava_lxc_device_add.py
-share/release-queue.py
