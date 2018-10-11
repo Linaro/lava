@@ -103,15 +103,9 @@ indentation within the file. You can (temporarily) copy your template into
 ``lava_scheduler_app/tests/device-types`` and run the unit tests to verify that
 the template can be parsed and rendered as valid YAML::
 
- $ ./lava_server/manage.py test lava_scheduler_app.tests.test_device.DeviceTypeTest
+ $ python3 -m unittest -vcf lava_scheduler_app.tests.test_base_templates.TestBaseTemplates.test_all_templates
 
-(As with all unit tests in ``lava-server``, this requires that ``lava-server``
-is installed and configured on the machine running the test **and** that the
-version of ``lava-server`` is recent enough such that its database schema is
-compatible with the source code in the git checkout you are using. It does not
-need to be `latest`, as long as it is `consistent` with the version installed.
-If you are using production releases or jessie-backports, this is likely to
-mean using ``git pull; git checkout release``.)
+.. seealso:: :ref:`integration_unit_test`
 
 All contributions are **required** to pass this test (amongst others) and you
 will not be able to successfully run jobs through your instance if it fails.
@@ -147,14 +141,14 @@ Finding your way around the files
 Information sources
 *******************
 
-The pipeline tests repository
-=============================
+The functional tests repository
+===============================
 
 This git repository holds working examples of a range of different jobs for a
 range of different devices. These jobs are routinely submitted as functional
 tests of upcoming releases of the LAVA software.
 
-https://git.linaro.org/lava-team/refactoring.git
+https://git.lavasoftware.org/lava/functional-tests
 
 Not every combination of deployment method or boot method can be expressed for
 all supported devices but we aim to have at least one example of each
@@ -162,17 +156,6 @@ deployment method and each boot method on at least one supported device.
 
 Check the ``standard`` directory for tests which use
 :ref:`gold standard images <providing_gold_standard_files>`.
-
-The lava-dispatcher pipeline source code
-========================================
-
-As well as the source code, the ``devices`` and ``device_types`` directories in
-this git repository contain YAML examples of device and device type
-configuration. These are the raw forms which are used on the ``lava-dispatch``
-command line and are useful for debugging and starting to create support for
-your own devices.
-
-https://git.lavasoftware.org/lava/lava/tree/master/lava_dispatcher
 
 The lava-server unit test support
 =================================
@@ -404,6 +387,8 @@ in the database. Once the device dictionary is working, the device can be
 marked as a pipeline device in the admin interface. See
 :ref:`create_entry_known_type`.
 
+.. seealso:: :ref:`naming_conventions`
+
 .. _Jinja2: http://jinja.pocoo.org/docs/dev/
 
 .. _obtain_known_device_config:
@@ -412,14 +397,12 @@ Obtaining configuration of a known device
 *****************************************
 
 The simplest way to start is to download the working configuration of a device
-of the same known device type using `XML-RPC
-<https://staging.validation.linaro.org/api/help/#scheduler.get_pipeline_device_config>`_
-or the :command:`lava-tool device-dictionary` command, see
-:manpage:`lava-tool (1)`. This will (by default) write a new file in the
-current working directory containing the configuration.
+of the same known device type from a configured LAVA instance. Browse to the
+device and select "Device Dictionary". There is a download link for the
+full rendered YAML or the original Jinja can be copied.
 
-This YAML file will then need some tweaks for your local setup. e.g. these
-values will differ for every local LAVA instance.
+The original Jinja2 file will then need some tweaks for your local setup.
+e.g. values like these will differ for every local LAVA instance.
 
 .. code-block:: yaml
 
@@ -431,61 +414,13 @@ values will differ for every local LAVA instance.
 
 .. seealso:: :ref:`power_commands`
 
-These values are similar to the existing dispatcher configuration and those
-values can be transferred directly into the new structure.
+Alternatively, the fully rendered YAML file, can be used to test jobs
+on that device **but only from the command line on the worker**::
 
-With this local YAML file, you can now run pipeline jobs on that device **but
-only from the lava-dispatch command line**::
+ $ sudo lava-run --device ./bbb01.yaml bbb-ramdisk.yaml --output-dir=/tmp/test/
 
- $ sudo lava-dispatch --target ./bbb01.yaml bbb-ramdisk.yaml --output-dir=/tmp/test/
-
-.. note:: unlike the current dispatcher, the pipeline dispatcher takes a
-   complete YAML file, with path, as the target. There is no default location
-   for this file - in routine usage, the dispatcher has no permanent
-   configuration for any pipeline device - the YAML is delivered to the
-   dispatcher at the start of each job, generated from the :term:`device
-   dictionary` and the template.
-
-A sample pipeline testjob definition can be downloaded from the same instance
+A sample testjob definition can be downloaded from the same instance
 as you obtained the device configuration.
-
-:command:`lava-tool` can also compare the device configuration YAML files using
-the ``compare_device_conf`` option (see also :ref:`create_device_dictionary`.)
-The output is a unified diff of the two YAML files::
-
- $ lava-tool compare-device-conf ./black02.yaml ./pipeline/devices/black01.yaml
- --- /home/neil/black02.yaml
- +++ /home/neil/pipeline/devices/black01.yaml
-
- @@ -1,5 +1,5 @@
-
-  commands:
- -    connect: telnet localhost 6001
- +    connect: telnet localhost 6000
-
-  device_type: beaglebone-black
-
-
-The unified diff can also be piped to :command:`wdiff -d` to show as a word
-diff::
-
- lava-tool compare-device-conf ./black02.yaml ./pipeline/devices/black01.yaml|wdiff -d
-
- [--- /home/neil/black02.yaml-]
- {+++ /home/neil/pipeline/devices/black01.yaml+}
-
- @@ -1,5 +1,5 @@
-
- commands:
-     connect: telnet localhost [-6001-] {+6000+}
-
- device_type: beaglebone-black
-
-.. note:: Unlike the current dispatcher, the pipeline does **not** care about
-   the ``hostname`` of the device, the name of the file is unrelated and
-   nothing about the job needs to know anything about the hostname (the
-   :ref:`multinode_api` has support for making this information available to
-   the test cases via the scheduler).
 
 .. _create_entry_known_type:
 
@@ -493,20 +428,14 @@ Creating a new device entry for a known device type
 ***************************************************
 
 If this device does not already exist in the database of the instance, it will
-need to be created by the admins. This step is similar to how devices were
-added to the database with the current dispatcher:
-
-* Login to the Adminstration interface for the instance
-* Click on Lava_Scheduler_App
+need to be created by the admins using the :ref:`django_admin_interface`
 
 If there are no devices of this device type in the instance, check that the
 device type exists and create it if not. Don't worry about a health check at
-this stage. (pipeline device health checks will follow in time.)
+this stage.
 
-Create the device using the device type and ensure that the device has the
-:command:`Pipeline device?` field checked. Pipeline devices need the worker
-hostname to be set manually in the database, ensure this is correct, then save
-the changes.
+Create the device using the device type then set the worker hostname
+for this device and save the changes.
 
 .. _create_device_dictionary:
 
@@ -514,31 +443,15 @@ Creating a device dictionary for the device
 *******************************************
 
 .. seealso:: :ref:`updating_device_dictionary` to add a device dictionary to
-   a new pipeline device.
+   a new device.
 
-Existing devices
-================
+Based upon an existing device
+=============================
 
-Export the device dictionary of existing devices in the original ``jinja2``
-syntax, ready for modification.
-
-The local YAML file downloaded using :command:`get-pipeline-device-config`,
-whether XML-RPC or :file:`lava-tool` is the result of combining a device
-dictionary and the Jinja2 template. To be able to submit and schedule jobs on
-the device, the values from your modified file need to be entered into the
-database of the instance you want to use to schedule the jobs. These values are
-stored as a :term:`device dictionary`.
-
-Compare with the existing device dictionary for the device. (If you do not have
-access, ask the admins for an export of the dictionary)::
-
- $ lava-tool device-dictionary SERVER HOSTNAME --export > file.jinja2
-
-.. note:: the device dictionary can have a variety of values, according to the
-   support available in the template specified in the **extends** setting.
-   There is no mention of the hostname within the exported dictionary.
-
-Now modify the dictionary (`Jinja2 child template`_ format) to set the values required::
+Download the device dictionary of an existing device in the original
+``jinja2`` syntax, ready for modification. Compare with the existing
+device dictionary for the device and modify the dictionary (`Jinja2
+child template`_ format) to set the values required::
 
  {% extends 'beaglebone-black.jinja2' %}
  {% set power_off_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command off --port 04' %}
@@ -565,15 +478,6 @@ View the device in the UI and click the link to the device dictionary.
 The dictionary is displayed as Jinja2 by default. Click on "Rendered YAML" to
 see the full device configuration as it would be sent to the worker.
 
-The admin interface also displays the current device dictionary contents in the
-Advanced Properties drop-down section of the Device detail view. e.g. for a
-device called ``kvm01``, the URL in the admin interface would be
-``/admin/lava_scheduler_app/device/kvm01/``, click Show on the Advanced
-Properties section.
-
-The Advanced Properties includes the device description and the device tags as
-well as showing both the YAML formatting and the Jinja2 formatting.
-
 .. index:: device dictionary - update
 
 .. _updating_device_dictionary:
@@ -584,15 +488,31 @@ Updating a device dictionary
 The populated dictionary now needs to be updated on the filesystem of the
 instance.
 
-All operations to update a device dictionary need to be done by a superuser.
-The specified device must already exist in the database **and** be marked as a
-pipeline device for the dictionary to be active -
+All operations to update a device dictionary need to be done by a
+superuser. The specified device must already exist in the database
+**and** be assigned to an active worker to run test jobs -
 
 .. seealso:: :ref:`create_entry_known_type`
 
-* :ref:`updating_device_dictionary_with_lava_tool`
 * :ref:`updating_device_dictionary_using_xmlrpc`
 * :ref:`updating_device_dictionary_on_command_line`
+
+.. _updating_device_dictionary_on_command_line:
+
+Using the command line
+======================
+
+Most commonly, a device dictionary is updated by placing a new file
+onto the master, typically using configuration management tools like
+salt_, puppet_ or ansible_.
+
+.. _salt: https://www.saltstack.com/
+.. _puppet: https://puppet.com/
+.. _ansible: https://www.ansible.com/
+
+The device dictionary exists as a ``jinja2`` file in
+``/etc/lava-server/dispatcher-config/devices`` and can be updated by admins
+with the necessary access.
 
 .. _updating_device_dict_with_lavacli:
 
@@ -611,7 +531,13 @@ Other options when using ``get`` include:
 
 * ``--render`` to render the dictionary into a configuration (YAML).
 
-::
+Make changes within the `Jinja2 child template`_ syntax and then ``lavacli``
+can be used to update a new device dictionary (replacing the previous device
+dictionary).
+
+The filename and extension of the ``<device_dict_file>`` are completely
+arbitrary but you may find that your preferred editor has highlighting
+support for jinja2::
 
  $ lavacli -i <identity> devices dict set <hostname> <device_dict_file>
 
@@ -620,42 +546,6 @@ Other options when using ``get`` include:
   * :ref:`create_device_dictionary`,
   * :ref:`configuring_serial_ports`,
   * :ref:`viewing_device_dictionary_content`
-
-.. _updating_device_dictionary_with_lava_tool:
-
-Using lava-tool
-===============
-
-.. caution:: lava-tool is **deprecated**, use lavacli.
-
-   If you do use lava-tool, ensure you update to the latest version of
-   :ref:`lava_tool <lava_tool>` (>= 0.23) to use the ``device-dictionary``
-   ``--update`` and ``--export`` functions as superuser.
-
-::
-
- $ lava-tool device-dictionary SERVER HOSTNAME --export > file.jinja2
- Please enter password for encrypted keyring:
-
-The filename and extension are completely arbitrary but you may find that your
-preferred editor has highlighting support for jinja2. The contents of the file
-can be something like:
-
-.. code-block:: jinja
-
- {% extends 'beaglebone-black.jinja2' %}
- {% set power_off_command = '/usr/bin/pduclient --daemon localhost --hostname pdu01 --command off --port 12' %}
- {% set hard_reset_command = '/usr/bin/pduclient --daemon localhost --hostname pdu01 --command reboot --port 12' %}
- {% set connection_command = 'telnet dispatcher01 7001' %}
- {% set power_on_command = '/usr/bin/pduclient --daemon localhost --hostname pdu01 --command on --port 12' %}
-
-Make changes within the `Jinja2 child template`_ syntax and then ``lava-tool``
-can be used to update a new device dictionary (replacing the previous device
-dictionary)::
-
- $ lava-tool device-dictionary SERVER HOSTNAME --update file.jinja2
- Please enter password for encrypted keyring:
- Device dictionary updated for black01
 
 .. _updating_device_dictionary_using_xmlrpc:
 
@@ -689,12 +579,3 @@ return::
 Superusers can also export the existing jinja2 device information using
 ``export_device_dictionary`` for a known device hostname. This output can then
 be edited and used to update the device dictionary information.
-
-.. _updating_device_dictionary_on_command_line:
-
-Using the command line
-======================
-
-The device dictionary exists as a ``jinja2`` file in
-``/etc/lava-server/dispatcher-config/devices`` and can be updated by admins
-with the necessary access.
