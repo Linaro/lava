@@ -40,6 +40,18 @@ lava-server:
   voluptuous:
     version: ">=0.8.8"
     name: python3-voluptuous
+  django-test-scenarios:
+    name: python3-django-testscenarios
+    unittests: true
+  pytest-django:
+    name: python3-pytest-django
+    unittests: true
+  pytest:
+    name: python3-pytest
+    unittests: true
+  pytest-cov:
+    name: python3-pytest-cov
+    unittests: true
 
 lava-dispatcher:
   PyYAML:
@@ -72,6 +84,42 @@ lava-dispatcher:
     name: python3-setproctitle
   guestfs:
     name: python3-guestfs
+  pyocd:
+    name: pyocd-flashtool
+    unittests: true
+  gdb-multiarch:
+    name: gdb-multiarch
+    unittests: true
+  git:
+    name: git
+    unittests: true
+  bzr:
+    name: bzr
+    unittests: true
+  schroot:
+    name: schroot
+    unittests: true
+  lxc-info:
+    name: lxc
+    unittests: true
+  mkimage:
+    name: u-boot-tools
+    unittests: true
+  docker:
+    name: docker.io
+    unittests: true
+  xnbd-server:
+    name: xnbd-server
+    unittests: true
+  telnet:
+    name: telnet
+    unittests: true
+  qemu-system-x86_64:
+    name: qemu-system-x86
+    unittests: true
+  qemu-system-aarch64:
+    name: qemu-system-arm
+    unittests: true
 
 lava-common:
   nose:

@@ -47,28 +47,36 @@ def debian(args, depends):
     For package names (e.g. docker), require TWO separate
     calls, 1 for backports and one for the parent.
     """
+    if args.unittests:
+        unittests = []
+        if args.names and depends[args.package]:
+            for key, item in depends[args.package].items():
+                if depends[args.package][key].get("unittests"):
+                    unittests.append(item["name"])
+            if unittests:
+                print(" ".join(unittests))
+        return 0
     if args.names:
         msg = []
         backports = []
         if not depends.get(args.package):
             return 0
         for key, item in depends[args.package].items():
+            if depends[args.package][key].get("unittests"):
+                continue
             if args.suite.endswith("-backports"):
                 backports.append(item["name"])
-                continue
-            if depends[args.package][key].get("system"):
-                msg.insert(0, key)
                 continue
             msg.append(item["name"])
         if backports:
             print(" ".join(backports))
-        else:
+        elif msg:
             print(" ".join(msg))
         return 0
     if not depends[args.package]:
         return 0
     for item in depends[args.package].keys():
-        if depends[args.package][item].get("system"):
+        if depends[args.package][item].get("unittests"):
             continue
         print("%s%s" % (item, depends[args.package][item].get("version", "")))
 
@@ -93,9 +101,10 @@ def load_depends(args, parent):
 def main():
     """
     Parse options and load requirements files.
-    By default, outputs the same list as requirements.txt but
-    with the Pip name replaced by the distro|suite package name.
+    By default, outputs the same list as requirements.txt without
+    packages needed for unit tests.
     Use the -n option to only get the distro|suite package names.
+    Use the -u option to get the extra packages neeed for unit tests.
     """
     parser = argparse.ArgumentParser(description="Handle dependency lists")
     parser.add_argument(
@@ -108,12 +117,17 @@ def main():
         "-s", "--suite", required=True, help="The distribution suite / release"
     )
     parser.add_argument(
-        "-n",
-        "--names",
+        "-n", "--names", action="store_true", help="List the distribution package names"
+    )
+    parser.add_argument(
+        "-u",
+        "--unittests",
         action="store_true",
-        help="Only output distribution package names, not versions",
+        help="Distribution package names for unittest support - requires --names",
     )
     args = parser.parse_args()
+    if args.unittests and not args.names:
+        raise RuntimeError("--unittests option requires --names")
     try:
         depends = load_depends(args, args.suite)
     except RuntimeError:

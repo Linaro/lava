@@ -66,6 +66,36 @@ lava-dispatcher:
     name: python3-setproctitle
   guestfs:
     name: python3-guestfs
+  gdb-multiarch:
+    name: gdb-multiarch
+    unittests: true
+  git:
+    name: git
+    unittests: true
+  bzr:
+    name: bzr
+    unittests: true
+  schroot:
+    name: schroot
+    unittests: true
+  lxc-info:
+    name: lxc
+    unittests: true
+  mkimage:
+    name: u-boot-tools
+    unittests: true
+  xnbd-server:
+    name: xnbd-server
+    unittests: true
+  telnet:
+    name: telnet
+    unittests: true
+  qemu-system-x86_64:
+    name: qemu-system-x86
+    unittests: true
+  qemu-system-aarch64:
+    name: qemu-system-arm
+    unittests: true
 
 lava-common:
   nose:
