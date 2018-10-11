@@ -1,6 +1,8 @@
-# Compulsory line, this is a version 3 file
-version=3
+# Compulsory line, this is a version 4 file
+version=4
 
-# https://git.linaro.org/lava/lava.git/snapshot/lava-2016.11.tar.gz
+# https://git.lavasoftware.org/codehelp/lava-test/-/archive/2018.10/lava-test-2018.10.tar.gz
 
-https://git.linaro.org/lava/lava.git/refs /lava/lava.git/snapshot/lava-(\d+.\d+.\d?)\d*.*.tar.gz
+opts=filenamemangle=s/.*\/archive\/(\d\S+)\/lava.*\.tar\.gz/lava-$1\.tar\.gz/g \
+  https://git.lavasoftware.org/lava/lava/tags?sort=updated_desc .*/archive/(\d\S+)/.*\.tar\.gz.*
+
