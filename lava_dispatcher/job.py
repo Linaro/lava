@@ -110,7 +110,7 @@ class Job:  # pylint: disable=too-many-instance-attributes
         return None
 
     def describe(self):
-        return {'device': self.device,
+        return {'device': dict(self.device),
                 'job': self.parameters,
                 'compatibility': self.compatibility,
                 'pipeline': self.pipeline.describe()}
