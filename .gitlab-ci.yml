@@ -97,6 +97,9 @@ debian-pkg:
   artifacts:
     paths:
     - build/*.deb
+    - build/*.dsc
+    - build/*.changes
+    - build/*.buildinfo
 
 ###########
 # Publish #
