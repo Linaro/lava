@@ -5,8 +5,9 @@ set -e
 SUITE=unstable
 BRANCH=master
 ARCH=''
+BUILD='-sa'
 
-while getopts ":p:a:b:o:s:" opt; do
+while getopts ":p:a:b:o:s:B" opt; do
   case $opt in
     p)
       NAME=$OPTARG
@@ -25,6 +26,9 @@ while getopts ":p:a:b:o:s:" opt; do
     b)
       BRANCH=$OPTARG
       ;;
+    B)
+      BUILD="-B"
+      ;;
     s)
       SUITE=$OPTARG
       ;;
@@ -34,13 +38,16 @@ while getopts ":p:a:b:o:s:" opt; do
     \?)
       echo "Invalid option: -$OPTARG" >&2
       echo
-      echo "Usage: -p <package> [-a <architecture> -b <branch> -o <directory> -s <suite>]"
+      echo "Usage: -p <package> [-a <architecture> -b <branch> -o <directory> -s <suite> -B]"
       echo
       echo "Builds a sourceful package locally, using debuild."
       echo "If architecture is a known Debian architecture, build"
       echo "a binary-only package for this architecture. e.g. armhf or arm64"
       echo "Branch specifies the packaging branch to use from github."
       echo "Specify the build directory using -o (a temporary directory"
+      echo
+      echo "Use -B to only build the architecture specific binary package"
+      echo "e.g. when building lava-dispatcher on arm64."
       exit 1
       ;;
   esac
@@ -87,7 +94,7 @@ dch -v ${VERSION}-1 -D ${SUITE} "Local developer build"
 if [ -n "${LOG}" ]; then
   dch -a "${LOG}"
 fi
-debuild -sa -uc -us $ARCH
+debuild ${BUILD} -uc -us $ARCH
 cd ${DIR}
 rm -rf ${DIR}/pkg-${NAME}
 rm -rf ${DIR}/${NAME}-${VERSION}
