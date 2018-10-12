@@ -1157,6 +1157,8 @@ and support for this has not been implemented, yet.
 See also the :ref:`host_role` for information on how access to devices is
 managed.
 
+.. index:: persistence
+
 .. _persistence:
 
 Persistence
