@@ -1,17 +1,48 @@
-#!/bin/sh
-
+#!/usr/bin/env bash
 set -e
-
-[ -n "$1" ] && exec "$@"
-
-# Install signal handler
-trap "echo '\\nSignal received...'" HUP INT QUIT TERM
 
 # Keep track of the PIDs
 GUNICORN_PID=0
 LAVA_LOGS_PID=0
 LAVA_MASTER_PID=0
 LAVA_PUBLISHER_PID=0
+
+# Signal handler
+handler() {
+    tail_pid="${!}"
+    echo "Killing:"
+    echo "* lava-logs \$$LAVA_LOGS_PID"
+    kill $LAVA_LOGS_PID
+    echo "* lava-master \$$LAVA_MASTER_PID"
+    kill $LAVA_MASTER_PID
+    echo "* lava-publisher \$$LAVA_PUBLISHER_PID"
+    kill $LAVA_PUBLISHER_PID
+    echo "* gunicorn \$$GUNICORN_PID"
+    kill $GUNICORN_PID
+    echo "* apache2"
+    /etc/init.d/apache2 stop
+
+    echo "Waiting for:"
+    echo "* lava-logs"
+    wait $LAVA_LOGS_PID || true
+    echo "* lava-master"
+    wait $LAVA_MASTER_PID || true
+    echo "* lava-publisher"
+    wait $LAVA_PUBLISHER_PID || true
+    echo "* gunicorn"
+    wait $GUNICORN_PID || true
+
+    echo "Killing postgresql"
+    /etc/init.d/postgresql stop
+
+    echo "Killing log reader"
+    kill "$tail_pid"
+    wait "$tail_pid"
+    exit 0
+}
+
+# setup handlers
+trap 'handler' SIGTERM
 
 # Start all services
 echo "Starting postgresql"
@@ -53,33 +84,9 @@ LAVA_MASTER_PID=$!
 echo "done"
 echo
 
-echo "Wait for a signal"
+# Wait for signals
 cd /var/log/lava-server
-tail -f --retry django.log gunicorn.log lava-logs.log lava-master.log lava-publisher.log
-
-# Stopping services
-echo "killing:"
-echo "* lava-logs \$$LAVA_LOGS_PID"
-kill $LAVA_LOGS_PID
-echo "* lava-master \$$LAVA_MASTER_PID"
-kill $LAVA_MASTER_PID
-echo "* lava-publisher \$$LAVA_PUBLISHER_PID"
-kill $LAVA_PUBLISHER_PID
-echo "* gunicorn \$$GUNICORN_PID"
-kill $GUNICORN_PID
-echo "* apache2"
-/etc/init.d/apache2 stop
-
-echo "Waiting for:"
-echo "* lava-logs"
-wait $LAVA_LOGS_PID || true
-echo "* lava-master"
-wait $LAVA_MASTER_PID || true
-echo "* lava-publisher"
-wait $LAVA_PUBLISHER_PID || true
-echo "* gunicorn"
-wait $GUNICORN_PID || true
-
-echo "killing postgresql"
-/etc/init.d/postgresql stop
-echo "done"
+while true
+do
+  tail -f --retry django.log gunicorn.log lava-logs.log lava-master.log lava-publisher.log & wait ${!}
+done
