@@ -16,5 +16,3 @@ RUN apt-get install --no-install-recommends --yes bridge-utils debootstrap dfu-u
 # Suggests
 # Excluding: docker.io
 RUN apt-get install --no-install-recommends --yes apache2 bzr img2simg simg2img
-
-
