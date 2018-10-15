@@ -887,6 +887,35 @@ scripts, some basic information about the job and a way of reporting test case
 results - that's about all it should be doing outside of the
 :ref:`multinode_api`.
 
+**Avoid using test definitions patterns**
+
+Test definitions which can use ``lava-test-case`` should not also use
+test definition patterns like:
+
+.. code-block:: python
+
+ "(?P<test_case_id>.*-*):\\s+(?P<result>(pass|fail))"
+
+Test shell definition patterns are difficult to debug and almost
+impossible to make portable. If you have access to ``lava-test-case``,
+there is no need to also use a pattern because you already have a shell
+on the DUT which is capable of much better pattern matching and
+parsing. Start by copying the relevant part of the test output and see
+how parsing can be improved:
+
+* Is any kind of pattern needed at all? Can the process generating the
+  output be called by a script which already understands the output?
+
+* If you do need a pattern, put the pattern handling inside the test
+  shell definition scripts and use copies of different sections of
+  output to debug the pattern matching before submitting anything to
+  LAVA.
+
+.. note:: If the DUT does not support a POSIX shell then
+   ``lava-test-case`` will not be available either. In some cases, the
+   test operation is executed from an LXC and this will provide the
+   necessary shell support.
+
 **Do not lock yourself out of your tests**
 
 #. Do not make your test code depend on the LAVA infrastructure any more than
