@@ -13,4 +13,4 @@ MASTER_URL=${MASTER_URL:-tcp://localhost:5556}
 # Import variables
 [ -e /etc/lava-dispatcher/lava-slave ] && . /etc/lava-dispatcher/lava-slave
 
-/usr/bin/lava-slave --level "$LOGLEVEL" --log-file "$LOGFILE" --master "$MASTER_URL" --socket-addr $LOGGER_URL $IPV6 $ENCRYPT $MASTER_CERT $SLAVE_CERT $DISPATCHER_HOSTNAME
+exec /usr/bin/lava-slave --level "$LOGLEVEL" --log-file "$LOGFILE" --master "$MASTER_URL" --socket-addr $LOGGER_URL $IPV6 $ENCRYPT $MASTER_CERT $SLAVE_CERT $DISPATCHER_HOSTNAME
