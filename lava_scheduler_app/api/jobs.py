@@ -230,6 +230,16 @@ class SchedulerJobsAPI(ExposedV2API):
                 "submitter": job.submitter.username,
             }
             if verbose:
+                actual_device = None
+                # Neither dynamic connections
+                # nor jobs cancelled in submitted state
+                # will have an actual_device
+                if job.actual_device:
+                    actual_device = job.actual_device.hostname
+                # cancelled jobs might not have start or end time
+                end_time = str(job.end_time) if job.end_time else None
+                start_time = str(job.start_time) if job.start_time else None
+                metadata = None
                 try:
                     job_case = TestCase.objects.get(
                         suite__job=job,
@@ -237,14 +247,17 @@ class SchedulerJobsAPI(ExposedV2API):
                         name="job")
                 except TestCase.DoesNotExist:
                     job_case = None
-                base = {"error_msg": "", "error_type": ""}
-                metadata = job_case.action_metadata if job_case else base
+                if job_case:
+                    metadata = job_case.action_metadata
+                if not metadata:
+                    # if job_case exists but metadata is still None due to job error
+                    metadata = {}
                 data.update({
-                    "actual_device": job.actual_device.hostname,
-                    "start_time": str(job.start_time),
-                    "end_time": str(job.end_time),
-                    "error_msg": metadata.get("error_msg", ""),
-                    "error_type": metadata.get("error_type", "")
+                    "actual_device": actual_device,
+                    "start_time": start_time,
+                    "end_time": end_time,
+                    "error_msg": metadata.get("error_msg"),
+                    "error_type": metadata.get("error_type")
                 })
 
             ret.append(data)
