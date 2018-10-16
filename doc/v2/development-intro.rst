@@ -366,7 +366,7 @@ mailing list before creating an issue in GitLab.
           reporting bugs in the old Bugzilla system will not be tracked
           by the LAVA team.
 
-.. _lava-users: https://lists.linaro.org/mailman/listinfo/lava-users
+.. _lava-users: https://lists.lavasoftware.org/mailman/listinfo/lava-users
 
 .. index:: community contributions
 

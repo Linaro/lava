@@ -102,7 +102,7 @@ Aborting the upgrade
 ********************
 
 If you have read `the roadmap to removal of V1
-<https://lists.linaro.org/pipermail/lava-announce/2017-September/000037.html>`_
+<https://lists.lavasoftware.org/pipermail/lava-announce/2017-September/000037.html>`_
 and still proceeded with the upgrade to ``2017.12`` but then decide to abort,
 there is **one** safe chance to do so, when prompted at the very start of the
 install process with the following prompt::

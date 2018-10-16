@@ -124,7 +124,7 @@ Some of the critical packages to monitor include:
 * ``python-django-tables2``
 
 Check the `LAVA Announce mailing list archives
-<https://lists.linaro.org/pipermail/lava-announce/>`_ for additional notices
+<https://lists.lavasoftware.org/pipermail/lava-announce/>`_ for additional notices
 about new packages to install alongside particular versions of ``lava-server``
 and ``lava-dispatcher``. (Admins might choose to download the compressed
 archive for the month in which the backup is made and add that to the backup.)

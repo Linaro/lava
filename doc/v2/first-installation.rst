@@ -307,7 +307,7 @@ Contact and bug reports
 ***********************
 
 Please report bugs using the LAVA Users mailing list:
-https://lists.linaro.org/mailman/listinfo/lava-users
+https://lists.lavasoftware.org/mailman/listinfo/lava-users
 
 You can also report bugs using ``reportbug`` and the Debian Bug Tracking
 System: https://bugs.debian.org/cgi-bin/pkgreport.cgi?pkg=lava-server

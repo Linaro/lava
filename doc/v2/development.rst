@@ -648,9 +648,9 @@ Python3 support in LAVA is related to a number of factors:
 
 * Transition within Debian to full python3 support.
 
-https://lists.linaro.org/pipermail/lava-announce/2017-June/000032.html
+https://lists.lavasoftware.org/pipermail/lava-announce/2017-June/000032.html
 
-https://lists.linaro.org/pipermail/lava-announce/2018-January/000046.html
+https://lists.lavasoftware.org/pipermail/lava-announce/2018-January/000046.html
 
 lava-dispatcher and lava-server now fully support python3, runtime and
 testing. Code changes to either codebase **must** be Python3

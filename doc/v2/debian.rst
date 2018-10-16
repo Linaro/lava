@@ -72,7 +72,7 @@ Developer package build
    developer package build now defaults to expecting Stretch and
    therefore uses Python3 exclusively. Support for building Python2 has
    been removed, the ``master`` branch only builds Python3. See
-   https://lists.linaro.org/pipermail/lava-announce/2018-January/000046.html
+   https://lists.lavasoftware.org/pipermail/lava-announce/2018-January/000046.html
 
 The ``lava-dev`` package includes a helper script which is also present
 in the source code in ``lava-server/share/``. The script requires a
@@ -228,7 +228,7 @@ Development using Python3
 
 LAVA has moved to exclusive Python3 support as the final stage of the
 migration to V2. See
-<https://lists.linaro.org/pipermail/lava-announce/2017-June/000032.html>`_
+<https://lists.lavasoftware.org/pipermail/lava-announce/2017-June/000032.html>`_
 
 Both lava-server and lava-dispatcher only support running the unit tests with
 Python3. **All** reviews **must** pass the unit tests when run with Python3.

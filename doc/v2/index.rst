@@ -100,7 +100,7 @@ retired, in the following steps:
 
   .. seealso:: :ref:`v1_removal`
 
-.. _`announced`: https://lists.linaro.org/pipermail/lava-announce/2017-September/000037.html
+.. _`announced`: https://lists.lavasoftware.org/pipermail/lava-announce/2017-September/000037.html
 
 .. _lava_overview:
 

@@ -303,7 +303,7 @@ by test writers from a hacking session.)
    tests, or maybe even damage them permanently - be careful!
 
    If the commands are to be used regularly, `ask on the lava-users mailing
-   list <https://lists.linaro.org/mailman/listinfo/lava-users>`_ requesting
+   list <https://lists.lavasoftware.org/mailman/listinfo/lava-users>`_ requesting
    that a label is created in the templates for this set of commands.
    Alternatively, you can request a new override to make the existing labels
    more flexible.
