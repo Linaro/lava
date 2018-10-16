@@ -43,7 +43,6 @@ handler() {
 
     echo "Killing log reader"
     kill "$tail_pid"
-    wait "$tail_pid"
     exit 0
 }
 
@@ -85,7 +84,7 @@ start_lava_server_gunicorn() {
 ########
 
 # setup handlers
-trap 'handler' SIGTERM
+trap 'handler' INT QUIT TERM
 
 # Start all services
 echo "Starting postgresql"
