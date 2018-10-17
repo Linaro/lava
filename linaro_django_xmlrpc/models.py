@@ -373,9 +373,8 @@ class Dispatcher:
     uses logging.exception to print as short message.
     """
 
-    def __init__(self, mapper, allow_none=True):
+    def __init__(self, mapper):
         self.mapper = mapper
-        self.allow_none = allow_none
         # logging output goes to lava-server.log
         logging.basicConfig()
         self.logger = logging.getLogger("linaro-django-xmlrpc-dispatcher")
@@ -419,13 +418,11 @@ class Dispatcher:
             response = self.dispatch(method_name, params, context)
         except xmlrpc.client.Fault as fault:
             # Push XML-RPC faults to the client
-            response = xmlrpc.client.dumps(fault, allow_none=self.allow_none)
+            response = xmlrpc.client.dumps(fault, allow_none=True)
         else:
             # Package responses and send them to the client
             response = (response,)
-            response = xmlrpc.client.dumps(
-                response, methodresponse=1, allow_none=self.allow_none
-            )
+            response = xmlrpc.client.dumps(response, methodresponse=1, allow_none=True)
         return response
 
     def dispatch(self, method_name, params, context):
