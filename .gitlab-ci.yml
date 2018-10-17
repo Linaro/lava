@@ -4,15 +4,25 @@ stages:
 - build
 - publish
 
-#############
-# Templates #
-#############
+###########################
+# Templates               #
+#                         #
+# make sure all jobs use  #
+# architecture tags.      #
+###########################
 .job: &job
   before_script:
   - ./.gitlab-ci/$CI_JOB_STAGE/$CI_JOB_NAME.sh setup
   dependencies: []
+  tags:
+  - amd64
   script:
   - ./.gitlab-ci/$CI_JOB_STAGE/$CI_JOB_NAME.sh
+
+.job_aarch64: &job_aarch64
+  <<: *job
+  tags:
+  - aarch64
 
 .dind: &dind
   <<: *job
@@ -102,7 +112,37 @@ debian-pkg:
   artifacts:
     paths:
     - build/*.deb
+    # handle native package - need to publish the source
+    - build/*.tar.xz
     - build/*.dsc
+    - build/*.changes
+    - build/*.buildinfo
+
+debian-10-pkg-amd64:
+  <<: *job
+  stage: build
+  image: hub.lavasoftware.org/lava/ci-images/debian-10-amd64-packaging
+  artifacts:
+    paths:
+    - build/*.deb
+    # handle native package - need to publish the source
+    - build/*.tar.xz
+    - build/*.dsc
+    - build/*.changes
+    - build/*.buildinfo
+
+debian-pkg-aarch64:
+  <<: *job_aarch64
+  stage: build
+  image: hub.lavasoftware.org/lava/ci-images/debian-10-arm64-packaging
+  only:
+    refs:
+    - master
+    - tags
+  artifacts:
+    # binary only build, no .dsc or .tar.xz
+    paths:
+    - build/*.deb
     - build/*.changes
     - build/*.buildinfo
 

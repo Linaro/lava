@@ -19,8 +19,8 @@ else
   export GIT_COMMITTER_EMAIL="lava-dev@lavasoftware.org"
   export GIT_AUTHOR_NAME="lava-dev debian build script"
   export GIT_AUTHOR_EMAIL="lava-dev@lavasoftware.org"
-  # build the full package, including original source, for stretch.
-  ./share/debian-dev-build.sh -o build -s stretch
+  # build only the arm64 binary package, no source, for buster only.
+  ./share/debian-dev-build.sh -aarm64 -B -o build -s buster
   debc $(find build -name 'lava_*_amd64.changes' 2>/dev/null|head -n1)
   git branch -D cibase || true
 fi
