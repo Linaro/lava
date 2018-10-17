@@ -17,6 +17,7 @@ stages:
 .dind: &dind
   <<: *job
   tags:
+  - amd64
   - dind
   image: docker:stable
   variables:
