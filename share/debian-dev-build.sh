@@ -20,7 +20,7 @@ while getopts ":p:a:b:o:s:" opt; do
           echo "Did not recognise ${ARCH} as a Debian architecture name. Exit."
           exit 1
       fi
-      ARCH="-a${ARCH} -b"
+      ARCH="-a${ARCH}"
       ;;
     b)
       BRANCH=$OPTARG
