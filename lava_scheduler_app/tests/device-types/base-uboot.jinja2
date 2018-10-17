@@ -200,6 +200,9 @@ actions:
 {% if base_high_limits %}
 {{ base_uboot_high_limits }}
 {% endif %}
+{% if uboot_set_mac %}
+{{ base_uboot_set_mac }}
+{% endif -%}
 {{ base_uboot_dhcp_command }}
 {{ base_uboot_tftp_commands }}
           # Always quote the entire string if the command includes a colon to support correct YAML.
