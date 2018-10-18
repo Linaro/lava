@@ -31,7 +31,7 @@
 client. For example, in python3 you can do this:</p>
 <pre>
 import xmlrpc.client
-server = xmlrpc.client.ServerProxy("{{ site_url }}{% url 'lava.api_handler' %}")
+server = xmlrpc.client.ServerProxy("{{ site_url }}{% url 'lava.api_handler' %}", allow_none=True)
 print(server.system.listMethods())
 </pre>
 <p>The following python3 code shows how to authenticate using an
@@ -43,7 +43,7 @@ print(server.system.listMethods())
   username = "USERNAME"
   token = "TOKEN_STRING"
   hostname = "HOSTNAME"  # {{ site_domain }}
-  server = xmlrpc.client.ServerProxy("{{ site_scheme }}://%s:%s@%s{% url 'lava.api_handler' %}" % (username, token, hostname))
+  server = xmlrpc.client.ServerProxy("{{ site_scheme }}://%s:%s@%s{% url 'lava.api_handler' %}" % (username, token, hostname), allow_none=True)
   print(server.system.listMethods())
 </pre>
 <p class="text-info">NOTE: <code>USERNAME</code> is a valid username
@@ -56,6 +56,10 @@ print(server.system.listMethods())
   is constructed from different components, with separators, which are
   clearly illustrated as follows:<br>
   <code>USERNAME:TOKEN_STRING@HOSTNAME/HANDLER</code>
+</p>
+<p><code>allow_none=True</code> allows your client to match the server behaviour
+of handling an empty value as a null (<code>None</code> in Python, <code>undef</code> in Perl etc.)
+instead of as string like <code>'None'</code>.
 </p>
 <h2 id="top">Available functions</h2>
 <div>
