@@ -260,6 +260,19 @@ Setting Up Serial Connections to LAVA Devices
 LAVA controls the DUT using a serial connection, except for emulated devices
 like QEMU.
 
+LAVA can support :ref:multiple serial connections <connections> per
+DUT. The recommended method for creating a serial connection is to use
+:ref:ser2net to provide a connection using the telnet client. This
+allows simple and clean disconnection and allows LAVA to use the
+connection over the network. Other tools (conmux, minicom) have been
+tried but showed reliability problems when used at scale. LAVA is not
+able to directly access a device node.
+
+.. seealso:: :ref:growing_your_lab` and :ref:`serial_console_support`
+   for information about hardware.
+
+`ser2net` is the recommendation based on several million test jobs.
+
 .. seealso:: :ref:`serial_console_support` for information about hardware.
 
 .. caution:: Make sure your serial connection configuration is :ref:`backed up
@@ -283,13 +296,19 @@ installed automatically.
 Example config (in /etc/ser2net.conf)::
 
  #port:connectiontype:idle_timeout:serial_device:baudrate databit parity stopbit
- 7001:telnet:0:/dev/serial_port1:115200 8DATABITS NONE 1STOPBIT
+ 7001:telnet:0:/dev/serial/by-id/serial_path:115200 8DATABITS NONE 1STOPBIT LOCAL
 
 .. note:: In the above example we have the idle_timeout as 0 which specifies a
    infinite idle_timeout value. 0 is the recommended value. If the user prefers
    to give a positive finite idle_timeout value, then there is a possibility
    that long running jobs may terminate due to inactivity on the serial
    connection.
+
+   Always use paths in ``/dev/serial/by-id/`` in the configuration to prevent
+   connections being lost when devices reenumerate.
+
+   The LOCAL flag is necessary if you connect modem control lines (for example a
+   full RS232 cable) to prevent connection aborts on DUT power cycling.
 
 StarTech rackmount usb
 ----------------------

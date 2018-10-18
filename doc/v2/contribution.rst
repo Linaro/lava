@@ -131,7 +131,6 @@ LAVA documentation is written in reStructuredText, and then converted
 into other formats using Sphinx. You can use the command below to
 generate html format files for LAVA V2::
 
- $ cd lava-server/
  $ make -C doc/v2 clean
  $ make -C doc/v2 html
  $ firefox doc/v2/_build/html/index.html
