@@ -10,6 +10,9 @@ RUN apt-get update -q && \
     apt-get install --no-install-recommends --yes {STRETCH_DEPS} && \
     apt-get install --no-install-recommends --yes -t stretch-backports {STRETCH_BPO_DEPS}
 
+# rest_api
+RUN apt-get install --no-install-recommends --yes python3-djangorestframework
+
 # Recommends
 RUN apt-get install --no-install-recommends --yes ntp openssh-client
 

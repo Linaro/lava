@@ -10,6 +10,9 @@ RUN apt-get update -q && \
     apt-get install --no-install-recommends --yes python3-dateutil python3-django python3-django-restricted-resource python3-docutils python3-jinja2 python3-nose python3-psycopg2 python3-requests python3-simplejson python3-tz python3-voluptuous python3-yaml python3-zmq && \
     apt-get install --no-install-recommends --yes -t stretch-backports python3-django-auth-ldap python3-django-tables2
 
+# rest_api
+RUN apt-get install --no-install-recommends --yes python3-djangorestframework
+
 # Recommends
 RUN apt-get install --no-install-recommends --yes ntp openssh-client
 
