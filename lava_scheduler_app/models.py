@@ -2323,11 +2323,23 @@ class NotificationCallback(models.Model):
                 headers['Authorization'] = self.token
 
             if self.method == NotificationCallback.GET:
-                ret = requests.get(self.url, headers=headers)
+                ret = requests.get(
+                    self.url, headers=headers, timeout=settings.CALLBACK_TIMEOUT
+                )
             elif self.content_type == NotificationCallback.JSON:
-                ret = requests.post(self.url, json=data, headers=headers)
+                ret = requests.post(
+                    self.url,
+                    json=data,
+                    headers=headers,
+                    timeout=settings.CALLBACK_TIMEOUT,
+                )
             else:
-                ret = requests.post(self.url, data=data, headers=headers)
+                ret = requests.post(
+                    self.url,
+                    data=data,
+                    headers=headers,
+                    timeout=settings.CALLBACK_TIMEOUT,
+                )
             ret.raise_for_status()
 
         except Exception as ex:

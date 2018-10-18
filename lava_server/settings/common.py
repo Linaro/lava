@@ -199,3 +199,6 @@ AUTH_DEBIAN_SSO = None
 
 # Remove Delete buttons in django admin interface
 ALLOW_ADMIN_DELETE = True
+
+# Default callback http timeout in seconds
+CALLBACK_TIMEOUT = 5
