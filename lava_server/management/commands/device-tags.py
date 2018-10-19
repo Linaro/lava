@@ -137,7 +137,7 @@ class Command(BaseCommand):
                 try:
                     tag = Tag.objects.get(name=tag)
                 except Device.DoesNotExist:
-                    raise CommandError("Tag '%s' does NOT exist!" % name)
+                    raise CommandError("Tag '%s' does NOT exist!" % tag)
                 if tag not in device.tags.all():
                     raise CommandError(
                         "Device %s does not have tag %s" % (hostname, tag.name)

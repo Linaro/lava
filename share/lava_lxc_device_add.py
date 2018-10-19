@@ -141,7 +141,7 @@ def main():
         syslog.syslog("[%s] Tried: %s" % (options.job_id, " ".join(lxc_cmd)))
         logger.close(linger=LINGER)  # pylint: disable=no-member
         return 2
-    except Exception:
+    except Exception as exc:
         syslog.syslog("[%s] uncaught exception: %s" % (options.job_id, exc))
         logger.close(linger=LINGER)  # pylint: disable=no-member
         return 3
