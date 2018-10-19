@@ -60,7 +60,7 @@ def replace_dots(string):
     return string.replace(".", "-")
 
 
-@register.simple_tag()
+@register.simple_tag
 def assign_setting(value):
     """Returns the value of the setting"""
     if hasattr(settings, value):
@@ -84,7 +84,7 @@ def _get_pipeline_data(pipeline, levels):
             _get_pipeline_data(action["pipeline"], levels)
 
 
-@register.simple_tag()
+@register.simple_tag
 def get_pipeline_sections(pipeline):
     """
     Just a top level view of the pipeline sections
@@ -96,7 +96,7 @@ def get_pipeline_sections(pipeline):
     return sections
 
 
-@register.simple_tag()
+@register.simple_tag
 def get_pipeline_levels(pipeline):
     """
     Retrieve the full set of action levels in this pipeline.
@@ -117,7 +117,7 @@ def deploy_methods(device_type, methods):
     return [methods]
 
 
-@register.simple_tag()
+@register.simple_tag
 def device_type_timeouts(device_type):
     data = load_devicetype_template(device_type)
     if not data or "timeouts" not in data:

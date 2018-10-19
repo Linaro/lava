@@ -141,8 +141,7 @@ class SchedulerJobsAPI(ExposedV2API):
 
         if job.is_multinode:
             return job.multinode_definition
-        else:
-            return job.original_definition
+        return job.original_definition
 
     def list(self, state=None, health=None, start=0, limit=25, since=0, verbose=False):
         """

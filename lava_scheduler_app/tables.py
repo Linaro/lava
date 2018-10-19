@@ -86,7 +86,6 @@ class ExpandedStatusColumn(tables.Column):
         device is Reserved or Running. Logs error if reserved or running
         with no current job.
         """
-        logger = logging.getLogger("lava_scheduler_app")
         if record.state == Device.STATE_RUNNING:
             current_job = record.current_job()
             return mark_safe(  # nosec - internal data

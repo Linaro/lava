@@ -25,16 +25,13 @@ import sys
 import yaml
 import argparse
 
-
-"""
-Goals:
-0: Convert a packaged list of dependencies and versions
-   to a distro-specific list of dependencies.
-1: Remove need for requirements.txt using Pip syntax as this is
-   misleading.
-2: output a list of binary package names for the requested distribution
-   and suite to pass to docker scripts and LXC unit test jobs.
-"""
+#  Goals:
+#  0: Convert a packaged list of dependencies and versions
+#     to a distro-specific list of dependencies.
+#  1: Remove need for requirements.txt using Pip syntax as this is
+#     misleading.
+#  2: output a list of binary package names for the requested distribution
+#     and suite to pass to docker scripts and LXC unit test jobs.
 
 
 def debian(args, depends):

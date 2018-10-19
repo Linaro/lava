@@ -61,7 +61,7 @@ class Command(BaseCommand):
         show_parser.add_argument("hostname", help="Hostname of the device")
 
         # "list" sub-command
-        list_parser = sub.add_parser("list", help="List all device tag(s)")
+        sub.add_parser("list", help="List all device tag(s)")
 
         # "remove" sub-command
         remove_parser = sub.add_parser(

@@ -22,12 +22,8 @@ import contextlib
 import copy
 import errno
 import ldap
-import logging
 import os
 import subprocess  # nosec verified
-import yaml
-
-from collections import OrderedDict
 
 from django.contrib.sites.models import Site
 from django.conf import settings

@@ -118,7 +118,7 @@ def main():
     device = "/dev/%s" % options.device_node
 
     if not os.path.exists(device):
-        logger.debug("Skipping node not in /dev/ : %s" % options.device_node)
+        logger.debug("Skipping node not in /dev/ : %s", options.device_node)
         syslog.syslog(
             "[%s] Skipping node not in /dev/ : %s"
             % (options.job_id, options.device_node)

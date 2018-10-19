@@ -37,7 +37,7 @@ from lava_server.cmdutils import LAVADaemonCommand, watch_directory
 from lava_scheduler_app.models import TestJob
 from lava_scheduler_app.signals import send_event
 from lava_scheduler_app.utils import mkdir
-from lava_scheduler_app.logutils import line_count, read_logs, write_logs
+from lava_scheduler_app.logutils import line_count, write_logs
 from lava_results_app.dbutils import map_scanned_results, create_metadata_store
 
 

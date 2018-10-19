@@ -2391,7 +2391,7 @@ def similar_jobs(request, pk):
                     job_field_value = dict(field_obj.choices)[job_field_value]
 
             except FieldDoesNotExist:
-                logger.info("Test job does not contain field '%s'." % fields[key])
+                logger.info("Test job does not contain field '%s'.", fields[key])
                 continue
 
             # Handle Foreign key values and dates
@@ -2417,8 +2417,8 @@ def similar_jobs(request, pk):
             except NamedTestAttribute.DoesNotExist:
                 # Ignore this condition.
                 logger.info(
-                    "Named attribute %s does not exist for similar jobs search."
-                    % fields[key]
+                    "Named attribute %s does not exist for similar jobs search.",
+                    fields[key],
                 )
                 continue
 
