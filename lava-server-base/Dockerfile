@@ -11,7 +11,7 @@ RUN apt-get update -q && \
     apt-get install --no-install-recommends --yes -t stretch-backports python3-django-auth-ldap python3-django-tables2
 
 # rest_api
-RUN apt-get install --no-install-recommends --yes python3-djangorestframework
+RUN apt-get install --no-install-recommends --yes python3-djangorestframework python3-mock
 
 # Recommends
 RUN apt-get install --no-install-recommends --yes ntp openssh-client
