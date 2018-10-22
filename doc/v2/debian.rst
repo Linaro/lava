@@ -453,11 +453,10 @@ flexibility for other use cases. ``Recommends`` are **not** handled by
 maintainer of the packaging for the distribution. ``requires.py``
 exists so that automated processes, like CI, can have a reliable but
 minimal set of packages which must be installed for the specified
-package to be installable.
-
-.. note:: extra dependencies to enable unit tests and other CI actions
-   are not covered by this support. However, these tend to change less
-   often than the dependencies of the main source code.
+package to be installable. To use a minimal installation, each package
+listed by `./share/requires.py`` can be installed without its
+recommended packages using the ``apt install --no-install-recommends
+<packages>`` syntax.
 
 ``requires.py`` does not currently support dependencies based on the
 architecture of the installation. (Currently, only ``Recommends``
@@ -470,12 +469,10 @@ Processes which need the version string can use the original output
 format which mimics ``requirements.txt``::
 
     $ ./share/requires.py --package lava-server --distribution debian --suite stretch
-    django-auth-ldap>=1.2.12
+    django>=1.10
     PyYAML
     dateutil
     django-restricted-resource>=2016.8
-    django-tables2>=1.14.2
-    django>=1.10
     docutils>=0.6
     jinja2
     nose
@@ -489,45 +486,6 @@ format which mimics ``requirements.txt``::
 Outputting a list of binary package names
 =========================================
 
-::
-
-    $ ./share/requires.py --package lava-server --distribution debian --suite stretch --names
-    python3-django-auth-ldap
-    python3-yaml
-    python3-dateutil
-    python3-django-restricted-resource
-    python3-django-tables2
-    python3-django
-    python3-docutils
-    python3-jinja2
-    python3-nose
-    python3-psycopg2
-    python3-tz
-    python3-zmq
-    python3-requests
-    python3-simplejson
-    python3-voluptuous
-    apache2
-    adduser
-    gunicorn3
-    iproute2
-    python3-setuptools
-    libjs-excanvas
-    libjs-jquery-cookie
-    libjs-jquery
-    libjs-jquery-ui
-    libjs-jquery-watermark
-    libjs-jquery-flot
-    libjs-jquery-typeahead
-    systemd-sysv
-    postgresql
-    postgresql-client
-    postgresql-common
-    lava-common
-
-Outputting a single line of binary package names
-================================================
-
 This is intended to be passed directly to a package installer like
 ``apt-get`` together with the other required commands and options.
 
@@ -535,14 +493,32 @@ The caller determines the ``suite``, so to use with stretch-backports,
 the ``-t stretch-backports`` option would also be added to the
 other ``apt-get`` commands before appending the list of packages.
 
-(Line breaks are added for readability only)::
+(Line breaks are added for readability only):
 
-    $ ./share/requires.py --package lava-server --distribution debian --suite stretch --names --inline
-    lava-common postgresql-common postgresql-client postgresql systemd-sysv libjs-jquery-typeahead libjs-jquery-flot \
-    libjs-jquery-watermark libjs-jquery-ui libjs-jquery libjs-jquery-cookie libjs-excanvas python3-setuptools iproute2 \
-    gunicorn3 adduser apache2 python3-django-auth-ldap python3-yaml python3-dateutil python3-django-restricted-resource \
-    python3-django-tables2 python3-django python3-docutils python3-jinja2 python3-nose python3-psycopg2 \
-    python3-tz python3-zmq python3-requests python3-simplejson python3-voluptuous
+.. code-block:: none
+
+    $ ./share/requires.py --package lava-server --distribution debian --suite stretch --names
+    python3-django python3-yaml python3-dateutil python3-django-restricted-resource python3-docutils \
+    python3-jinja2 python3-nose python3-psycopg2 python3-tz python3-zmq python3-requests \
+    python3-simplejson python3-voluptuous
+
+Adding packages needed for the unittests
+========================================
+
+Some packages are only required to allow the unittests to pass. To add
+these packages, use the ``--unittest`` option, in combination with
+``--names``. These packages need to be added to the installation as
+well as the base list of packages using ``--names``.
+
+::
+
+ $ ./share/requires.py --package lava-server --distribution debian --suite unstable --names --unittest
+ python3-django-testscenarios python3-pytest-django python3-pytest python3-pytest-cov
+
+::
+
+ $ ./share/requires.py --package lava-dispatcher --distribution debian --suite unstable --names --unittest
+ pyocd-flashtool gdb-multiarch git bzr schroot lxc img2simg simg2img u-boot-tools docker.io xnbd-server telnet qemu-system-x86 qemu-system-arm
 
 .. index:: javascript
 
