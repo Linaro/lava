@@ -1,0 +1,47 @@
+#!/bin/sh
+# postinst script for lava-dispatcher
+#
+# see: dh_installdeb(1)
+
+set -e
+
+# summary of how this script can be called:
+#        * <postinst> `configure' <most-recently-configured-version>
+#        * <old-postinst> `abort-upgrade' <new version>
+#        * <conflictor's-postinst> `abort-remove' `in-favour' <package>
+#          <new-version>
+#        * <postinst> `abort-remove'
+#        * <deconfigured's-postinst> `abort-deconfigure' `in-favour'
+#          <failed-install-package> <version> `removing'
+#          <conflicting-package> <version>
+# for details, see http://www.debian.org/doc/debian-policy/ or
+# the debian-policy package
+
+# Irrelevant with the dumb dispatcher model of V2
+LAVA_SERVER_IP=`ip addr | awk '{ if ($1 == "inet" && $4 != "host") { gsub("/.*", "", $2); print($2) } }'`
+
+case "$1" in
+    configure)
+        # protect local changes to /etc/lava-dispatcher/lava-slave for V2 support
+        if [ ! -f /etc/lava-dispatcher/lava-slave ]; then
+            cp /usr/share/lava-dispatcher/lava-slave /etc/lava-dispatcher/lava-slave
+        fi
+        # only used by V1 and can be overriden using LAVA_NETWORK_INTERFACE
+        if [ ! -f /etc/lava-dispatcher/lava-dispatcher.conf ]; then
+            sed -e "s/#LAVANETWORKIFACE#//" /usr/share/lava-dispatcher/lava-dispatcher.conf > /etc/lava-dispatcher/lava-dispatcher.conf
+            perl -pi -e "s/#LAVASERVERIP#/${LAVA_SERVER_IP}/g" /etc/lava-dispatcher/lava-dispatcher.conf
+        fi
+    ;;
+
+    abort-upgrade|abort-remove|abort-deconfigure)
+    ;;
+
+    *)
+        echo "postinst called with unknown argument \`$1'" >&2
+        exit 1
+    ;;
+esac
+
+#DEBHELPER#
+
+exit 0

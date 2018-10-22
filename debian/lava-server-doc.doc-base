@@ -1,0 +1,11 @@
+Document: lava-server-doc
+Title: Debian lava-server Manual
+Author: Linaro Developers <linaro-dev@lists.linaro.org>
+Abstract: This manual describes what lava-server is
+ and how it can be used to validate kernel images and
+ root filesystems on configured devices.
+Section: Network/Monitoring
+
+Format: HTML
+Index: /usr/share/doc/lava-server-doc/html/v2/index.html
+Files: /usr/share/doc/lava-server-doc/html/v2/*.html

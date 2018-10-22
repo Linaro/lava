@@ -1,0 +1,3 @@
+lava-server-doc: embedded-javascript-library usr/share/doc/lava-server-doc/html/v2/_static/bootstrap-2.3.2/js/bootstrap.js please use libjs-twitter-bootstrap
+lava-server-doc: embedded-javascript-library usr/share/doc/lava-server-doc/html/v2/_static/bootstrap-3.3.7/js/bootstrap.js please use libjs-twitter-bootstrap
+lava-server-doc: embedded-javascript-library usr/share/doc/lava-server-doc/html/v2/_static/js/jquery-1.11.0.min.js please use libjs-jquery

@@ -1,0 +1,43 @@
+# German translation of the debconf dialogue for lava
+# Copyright (C) 2010-2016, Linaro Limited
+# This file is distributed under the same license as the lava-server package.
+# Markus Hiereth <translation@hiereth.de>, 2018.
+msgid ""
+msgstr ""
+"Project-Id-Version: lava-server\n"
+"Report-Msgid-Bugs-To: lava-server@packages.debian.org\n"
+"POT-Creation-Date: 2017-11-16 15:40+0000\n"
+"PO-Revision-Date: 2018-08-09 12:33+0200\n"
+"Last-Translator: Markus Hiereth <translation@hiereth.de>\n"
+"Language-Team: debian-l10n-german <debian-l10n-german@lists.debian.org>\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Virtaal 0.7.1\n"
+
+#. Type: boolean
+#. Description
+#: ../lava-server.templates:1001
+msgid "Remove V1 data from database?"
+msgstr "V1-Daten aus der Datenbank entfernen?"
+
+#. Type: boolean
+#. Description
+#: ../lava-server.templates:1001
+msgid ""
+"If you continue this upgrade, all V1 test data will be permanently DELETED."
+msgstr ""
+"Wenn Sie dieses Upgrade fortsetzen, werden alle V1-Testdaten dauerhaft "
+"gelöscht."
+
+#. Type: boolean
+#. Description
+#: ../lava-server.templates:1001
+msgid ""
+"V2 test data will not be affected. If you have remaining V1 test data that "
+"you care about, make sure it is backed up before you continue here."
+msgstr ""
+"V2-Testdaten sind nicht betroffen. Sollte es noch Ihnen wichtige V1-"
+"Testdaten geben, erstellen Sie eine Sicherungskopie, ehe Sie fortfahren."
