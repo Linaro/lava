@@ -65,7 +65,7 @@ class RetryAction(Action):
             except (InfrastructureError, JobError, TestError) as exc:
                 has_failed = True
                 # Restart max_end_time or the retry on a timeout fails with duration < 0
-                max_end_time = self.timeout.duration + time.time()
+                max_end_time += time.time() - self.timeout.start
                 self.timeout.start = time.time()
                 # Print the error message
                 retries += 1
@@ -84,7 +84,8 @@ class RetryAction(Action):
 
                 # Wait some time before retrying
                 time.sleep(self.sleep)
-                self.logger.warning("Retrying: %s %s (%s sec)", self.level, self.name, max_end_time)
+                self.logger.warning("Retrying: %s %s (%s sec)", self.level,
+                                    self.name, int(max_end_time - self.timeout.start))
 
         # If we are repeating, check that all repeat were a success.
         if has_failed:

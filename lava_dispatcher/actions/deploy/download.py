@@ -124,6 +124,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
     name = "download-action"
     description = "download action"
     summary = "download-action"
+    timeout_exception = InfrastructureError
 
     def __init__(self, key, path, url, uniquify=True):
         super().__init__()
