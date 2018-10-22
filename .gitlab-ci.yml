@@ -72,6 +72,10 @@ coverage:
   artifacts:
     paths:
     - htmlcov
+  only:
+    refs:
+    - master
+    - tags
 
 sast:
   <<: *dind
