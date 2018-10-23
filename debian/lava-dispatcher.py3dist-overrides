@@ -1,0 +1,14 @@
+pexpect python3-pexpect; PEP386
+requests python3-requests; PEP386
+netifaces python3-netifaces; PEP386
+nose python3-nose; PEP386
+pyzmq python3-zmq; PEP386
+pyudev python3-pyudev; PEP386
+setproctitle python3-setproctitle; PEP386
+pytz python3-tz; PEP386
+file-magic python3-magic; PEP386
+lava_common lava-common; PEP386
+netifaces python3-netifaces; PEP386
+pyzmq python3-zmq; PEP386
+jinja2 python3-jinja2; PEP386
+guestfs python3-guestfs; PEP386

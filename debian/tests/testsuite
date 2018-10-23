@@ -1,0 +1,35 @@
+#!/bin/sh
+
+set -e
+
+TESTDIR=`pwd`/debian/testhome
+mkdir -p ${TESTDIR}
+
+# test the installed package database
+lava-server manage check
+lava-server manage check --deploy
+lava-server manage createsuperuser --username autopkgtest --noinput --email a@test.com
+lava-server manage users add nobody --email b@test.com
+lava-server manage users add staffer --email c@test.com --staff
+lava-server manage workers add autopkgtest
+lava-server manage workers add disabled --health MAINTENANCE
+lava-server manage device-types add qemu
+lava-server manage device-types list --all
+lava-server manage devices add --device-type qemu --worker autopkgtest qemu01
+lava-server manage devices list --all
+lava-server manage devices update --private --health RETIRED qemu01
+lava-server manage devices list --all
+
+# test daemon handling
+service lava-server-gunicorn restart
+service lava-master restart
+service lava-slave restart
+service lava-logs restart
+
+# scenario files are not packaged & need django support, test the local tree only.
+python3 ./lava_server/manage.py test --noinput -v2 \
+	lava_scheduler_app \
+	linaro_django_xmlrpc.tests \
+	lava_results_app
+
+python3 -m unittest discover -v lava_dispatcher/test

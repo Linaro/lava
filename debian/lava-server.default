@@ -1,0 +1,10 @@
+# Defaults for lava-server initscript
+# sourced by /etc/init.d/lava-server
+# installed at /etc/default/lava-server by the maintainer scripts
+
+#
+# This is a POSIX shell fragment
+#
+
+# Additional options that are passed to the Daemon.
+DAEMON_OPTS=""

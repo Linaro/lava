@@ -1,0 +1,39 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the lava-server package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: lava-server\n"
+"Report-Msgid-Bugs-To: lava-server@packages.debian.org\n"
+"POT-Creation-Date: 2017-11-16 15:40+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. Type: boolean
+#. Description
+#: ../lava-server.templates:1001
+msgid "Remove V1 data from database?"
+msgstr ""
+
+#. Type: boolean
+#. Description
+#: ../lava-server.templates:1001
+msgid ""
+"If you continue this upgrade, all V1 test data will be permanently DELETED."
+msgstr ""
+
+#. Type: boolean
+#. Description
+#: ../lava-server.templates:1001
+msgid ""
+"V2 test data will not be affected. If you have remaining V1 test data that "
+"you care about, make sure it is backed up before you continue here."
+msgstr ""

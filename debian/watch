@@ -1,0 +1,8 @@
+# Compulsory line, this is a version 4 file
+version=4
+
+# https://git.lavasoftware.org/codehelp/lava-test/-/archive/2018.10/lava-test-2018.10.tar.gz
+
+opts=filenamemangle=s/.*\/archive\/(\d\S+)\/lava.*\.tar\.gz/lava-$1\.tar\.gz/g \
+  https://git.lavasoftware.org/lava/lava/tags?sort=updated_desc .*/archive/(\d\S+)/.*\.tar\.gz.*
+

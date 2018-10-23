@@ -1,0 +1,181 @@
+Source: lava
+Section: net
+Priority: optional
+Maintainer: Debian LAVA team <pkg-linaro-lava-devel@lists.alioth.debian.org>
+Uploaders: Neil Williams <codehelp@debian.org>,
+ Senthil Kumaran S (stylesen) <stylesen@gmail.com>
+Build-Depends:
+ debhelper (>= 9.20160709), dh-python, po-debconf,
+ python3, python3-sphinx (>= 1.4), python3-setuptools (>= 3),
+ python3-yaml, python3-sphinx-bootstrap-theme,
+ node-uglify, libjs-excanvas, libjs-jquery-cookie, libjs-jquery,
+ libjs-jquery-watermark, libjs-jquery-flot (>= 0.8.2),
+ libjs-jquery-typeahead, libjs-jquery-ui
+X-Python3-Version: >=3.5
+Standards-Version: 4.2.1
+Homepage: https://www.lavasoftware.org/
+Vcs-Git: https://git.lavasoftware.org/lava/pkg-lava-debian.git
+Vcs-Browser: https://git.lavasoftware.org/lava/pkg-lava-debian
+
+Package: lava-dispatcher
+Architecture: amd64 arm64 armhf i386 ppc64el s390x ppc64
+Depends: file, systemd-sysv, python3-setuptools,
+ lava-common (>= ${source:Version}), tar (>= 1.27),
+ ${python3:Depends}, ${misc:Depends}
+Multi-Arch: foreign
+Recommends: ntp, git, tftpd-hpa, openbsd-inetd, ser2net,
+ telnet, qemu-system-x86 (>= 2.8.0) [amd64 i386],
+ qemu-system-arm (>= 2.8.0) [amd64 armhf arm64],
+ libguestfs-tools (>= 1.32.7) [amd64 i386], nfs-kernel-server, rpcbind,
+ u-boot-tools, unzip, xz-utils, lxc (>= 1:2.0.7), sudo,
+ debootstrap (>= 1.0.86), bridge-utils, rsync, dfu-util
+Suggests: apache2, bzr, img2simg, simg2img, docker.io
+Description: Linaro Automated Validation Architecture dispatcher
+ LAVA is a continuous integration system for deploying operating
+ systems onto physical and virtual hardware for running tests.
+ Tests can be simple boot testing, bootloader testing and system
+ level testing, although extra hardware may be required for some
+ system tests. Results are tracked over time and data can be
+ exported for further analysis.
+ .
+ This package provides lava-dispatcher to dispatch
+ LAVA jobs to configured devices, for Python3 only.
+ .
+ A range of devices are supported for ARM and
+ x86 architectures.
+
+Package: lava-server
+Architecture: all
+Pre-Depends: debconf | debconf-2.0
+Depends: apache2, adduser, gunicorn3, iproute2, python3-setuptools,
+ libjs-excanvas, libjs-jquery-cookie, libjs-jquery, libjs-jquery-ui,
+ libjs-jquery-watermark, libjs-jquery-flot (>= 0.8.2),
+ libjs-jquery-typeahead, systemd-sysv,
+ postgresql, postgresql-client, postgresql-common,
+ lava-common (>= ${source:Version}), ${python3:Depends}, ${misc:Depends}
+Recommends: ntp, openssh-client,
+ lava-coordinator, lava-server-doc, lava-dispatcher,
+Suggests: lavacli, python3-django-hijack, python3-django-debug-toolbar
+Description: Linaro Automated Validation Architecture server
+ LAVA is a continuous integration system for deploying operating
+ systems onto physical and virtual hardware for running tests.
+ Tests can be simple boot testing, bootloader testing and system
+ level testing. Extra hardware may be required for some
+ system tests. Results are tracked over time and data can be
+ exported for further analysis.
+ .
+ This package provides the Apache and WSGI configuration and LAVA
+ support files to run the validation server on the local Apache
+ instance as a lava-server virtual host as well as the scheduler
+ and dispatcher.
+ .
+ This package no longer supports configuration as a
+ remote worker and needs to be removed from existing workers.
+ Workers must only install lava-dispatcher.
+ .
+ This package no longer supports Python2.
+
+Package: lava-common
+Architecture: all
+Depends: ${python3:Depends}, ${misc:Depends}
+Description: Linaro Automated Validation Architecture common
+ LAVA is a continuous integration system for deploying operating
+ systems onto physical and virtual hardware for running tests.
+ Tests can be simple boot testing, bootloader testing and system
+ level testing, although extra hardware may be required for some
+ system tests. Results are tracked over time and data can be
+ exported for further analysis.
+ .
+ This package contains common Python code to support lava-server
+ and lava-dispatcher.
+
+Package: lava
+Architecture: all
+Section: metapackages
+Depends: lava-server (>= ${source:Version}), lava-server-doc,
+ lava-dispatcher (>= ${source:Version}), lava-coordinator, lava-dev,
+ lavacli, lavapdu-client, ntp | ntpdate, tftpd-hpa, sudo,
+ telnet, debootstrap (>= 1.0.86~),
+ openssh-client, lxc (>= 1:2.0.6), rsync, bridge-utils, ${misc:Depends}
+Recommends: lavapdu-daemon, schroot, img2simg, simg2img, docker.io
+Description: Linaro Automated Validation Architecture metapackage
+ LAVA is a continuous integration system for deploying operating
+ systems onto physical and virtual hardware for running tests.
+ Tests can be simple boot testing, bootloader testing and system
+ level testing, although extra hardware may be required for some
+ system tests. Results are tracked over time and data can be
+ exported for further analysis.
+ .
+ This metapackage brings in all LAVA components on a single
+ machine. Some suggested packages may not be available for all
+ architectures.
+
+Package: lava-lxc-mocker
+Architecture: all
+Depends: ${misc:Depends}
+Conflicts: lxc
+Provides: lxc
+Replaces: lxc
+Description: Linaro Automated Validation Architecture LXC Mocker
+ LAVA is a continuous integration system for deploying operating
+ systems onto physical and virtual hardware for running tests.
+ Tests can be simple boot testing, bootloader testing and system
+ level testing, although extra hardware may be required for some
+ system tests. Results are tracked over time and data can be
+ exported for further analysis.
+ .
+ This package contains set of mocker scripts that mocks each of
+ the lxc commands that LAVA uses. It does not support all commands
+ and options that lxc provides, but just the ones that LAVA uses.
+ Test jobs using LXC can then be replicated in Docker.
+
+Package: lava-dev
+Architecture: all
+Section: devel
+Depends: build-essential, ca-certificates, devscripts, dpkg-dev,
+ debootstrap (>= 1.0.86), debhelper (>= 9.20160709), dh-python,
+ fakeroot, git, libdistro-info-perl, node-uglify, libjs-excanvas,
+ libjs-jquery-cookie, libjs-jquery, libjs-jquery-watermark,
+ libjs-jquery-flot (>= 0.8.2), libjs-jquery-ui, python3:any,
+ python3-setuptools, python3-dateutil, python3-guestfs, python3-nose,
+ python3-netifaces, python3-pexpect (>= 4.2), pep8 | python3-pep8,
+ python3-guestfs, python3-netifaces, python3-magic,
+ python3-sphinx (>= 1.4), python3-sphinx-bootstrap-theme, python3-requests,
+ python3-zmq, python3-yaml, python3-voluptuous (>= 0.8.8), python3-tz,
+ python3-pytest, python3-pytest-django,
+ python3-configobj, python3-pyudev, docbook-xsl, xsltproc,
+ ${python3:Depends}, ${misc:Depends}
+Recommends: sbuild, python3-django-extensions, python3-pydot,
+ python3-pytest-cov, python3-django-testscenarios, nfs-kernel-server,
+ lxc, tftpd-hpa, rpcbind, u-boot-tools, telnet, img2simg, simg2img
+Suggests: python3-bandit, black, radon
+Description: Linaro Automated Validation Architecture developer support
+ LAVA is a continuous integration system for deploying operating
+ systems onto physical and virtual hardware for running tests.
+ .
+ This package provides a helper script to build LAVA packages
+ from local git working copies and support for running the
+ LAVA unit tests locally, using Python3.
+
+Package: lava-server-doc
+Architecture: all
+Section: doc
+Depends: ${sphinxdoc:Depends}, ${misc:Depends}
+Description: Linaro Automated Validation Architecture documentation
+ LAVA is a continuous integration system for deploying operating
+ systems onto physical and virtual hardware for running tests.
+ Tests can be simple boot testing, bootloader testing and system
+ level testing, although extra hardware may be required for some
+ system tests. Results are tracked over time and data can be
+ exported for further analysis.
+ .
+ This package contains an offline copy of the LAVA
+ Manual which is also available on each instance running LAVA
+ server.
+ .
+  - an overview of LAVA
+  - help on installing and configuring LAVA
+  - test developer guide to writing LAVA tests
+  - use cases and examples
+  - administrator guide for managing a LAVA lab
+  - developer guide

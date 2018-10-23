@@ -1,0 +1,55 @@
+# lintian error
+
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/fedora/lava-install-packages
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/fedora/lava-installed-packages
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/fedora/lava-os-build
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/ubuntu/lava-install-packages
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/ubuntu/lava-installed-packages
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/ubuntu/lava-os-build
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-install-packages
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-installed-packages
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-os-build
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/oe/lava-install-packages
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/oe/lava-installed-packages
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-installed-packages
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-os-build
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/multi_node/lava-group
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/multi_node/lava-multi-node.lib
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/multi_node/lava-role
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/multi_node/lava-self
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/multi_node/lava-send
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/multi_node/lava-sync
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/multi_node/lava-wait
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/multi_node/lava-wait-all
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/multi_node/lava-start-vms
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/multi_node/lava-wait-for-vms
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-add-keys
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/debian/lava-add-sources
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/ubuntu/lava-add-keys
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/ubuntu/lava-add-sources
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/vland/lava-vland-self
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/vland/lava-vland-tags
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/vland/lava-vland-names
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/multi_node/lava-echo-config
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-add-keys
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-add-sources
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-install-packages
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/archlinux/lava-install-packages
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/archlinux/lava-installed-packages
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/archlinux/lava-os-build
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/centos/lava-install-packages
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/centos/lava-installed-packages
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/centos/lava-os-build
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/slackware/lava-install-packages
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/slackware/lava-installed-packages
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/slackware/lava-os-build
+
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-target-ip
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-target-mac
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-target-storage
+lava-dispatcher: executable-not-elf-or-script usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/android/lava-test-runner
+lava-dispatcher: non-standard-file-perm usr/lib/python3/dist-packages/lava_dispatcher/dynamic_vm_keys/lava 0600 != 0644
+
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-probe-channel
+lava-dispatcher: script-not-executable usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/lava-probe-ip
+

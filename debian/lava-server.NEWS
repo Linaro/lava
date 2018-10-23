@@ -1,0 +1,12 @@
+lava-server (2017.10-1) unstable; urgency=medium
+
+  The 2017.10 release **disables ALL V1 test job submissions**. Queued
+  test jobs will continue to run but if you proceed, only V2 submissions
+  will be accepted by this instance.
+  .
+  If you want to create an archive of the existing V1 test data, install
+  this version but do not allow further upgrades of LAVA packages.
+  .
+  See https://lists.linaro.org/pipermail/lava-announce/2017-September/000037.html  
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 04 Oct 2017 08:59:03 +0100

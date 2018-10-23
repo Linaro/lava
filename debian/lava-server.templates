@@ -1,0 +1,10 @@
+Template: lava-server/removev1
+Type: boolean
+Default: true
+_Description: Remove V1 data from database?
+ If you continue this upgrade, all V1 test data will be
+ permanently DELETED.
+ .
+ V2 test data will not be affected. If you have remaining
+ V1 test data that you care about, make sure it is backed
+ up before you continue here.

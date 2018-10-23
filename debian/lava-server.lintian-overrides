@@ -1,0 +1,2 @@
+# these are symlinks created by dh_python.
+lava-server: image-file-in-usr-lib *
