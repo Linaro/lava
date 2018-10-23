@@ -85,7 +85,7 @@ lava-dispatcher:
   guestfs:
     name: python3-guestfs
   pyocd:
-    name: pyocd-flashtool
+    name: python3-pyocd
     unittests: true
   gdb-multiarch:
     name: gdb-multiarch
