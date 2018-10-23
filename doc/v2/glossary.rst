@@ -520,8 +520,6 @@ Glossary of terms
     booting). The protocol is managed by the `tftpd-hpa package
     <https://tracker.debian.org/pkg/tftp-hpa>`_ and **not** by LAVA directly.
 
-    .. seealso:: :ref:`tftp_support`.
-
   token
     LAVA uses tokens to authenticate users via the :ref:`xml_rpc` and REST APIs.
 

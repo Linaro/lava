@@ -178,7 +178,7 @@ expand beyond that, start adding workers one at a time. For this configuration:
 * A worker only needs the ``lava-dispatcher`` package installed.
 
   .. seealso:: :ref:`pipeline installation
-  <setting_up_pipeline_instance>`.
+     <setting_up_pipeline_instance>`.
 
 As you expand your setup, you will also need to do some configuration of
 communications between the master and the worker(s), which reliy on :term:`ZMQ`

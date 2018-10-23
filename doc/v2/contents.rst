@@ -189,7 +189,6 @@ LAVA administration guide
    vland-admin
    pipeline-debug
    lava-tool-issues
-   v1removal
 
 .. _contents_contribution_guide:
 
