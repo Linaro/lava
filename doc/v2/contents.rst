@@ -61,10 +61,6 @@ overview to help you know where to look for particular help.
 
 ========================================================================
 
-.. # FIXME: remove link in 2018.1
-
-.. seealso:: :ref:`v1_removal`
-
 .. toctree::
    :maxdepth: 1
    :hidden:

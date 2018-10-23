@@ -242,8 +242,6 @@ is a default apache2 installation::
     $ sudo a2dissite 000-default
     $ sudo service apache2 restart
 
-.. seealso:: :ref:`disable_v1_worker`
-
 .. _adding_pipeline_workers:
 
 Adding workers to the master
