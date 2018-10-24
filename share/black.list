@@ -1,3 +1,4 @@
+lava_dispatcher/test/conftest.py
 lava_server/management/commands/device-tags.py
 linaro_django_xmlrpc/admin.py
 linaro_django_xmlrpc/urls.py

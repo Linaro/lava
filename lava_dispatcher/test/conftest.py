@@ -19,12 +19,13 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import netifaces
 import pytest
 import requests
 
 
 @pytest.fixture(autouse=True)
-def no_requests(monkeypatch, request):
+def no_network(monkeypatch, request):
     def get(url, allow_redirects, stream):
         assert allow_redirects is True  # nosec - unit test support
         assert stream is True  # nosec - unit test support
@@ -33,10 +34,37 @@ def no_requests(monkeypatch, request):
         res.close = lambda: None
         return res
 
+    def head(url, allow_redirects):
+        assert allow_redirects is True  # nosec - unit test support
+        print(url)
+        res = requests.Response()
+        res.status_code = requests.codes.OK
+        res.close = lambda: None
+        return res
+
     # List of tests that should have access to the network
     # When pytest is mandatory, we can use pytest marks
     # See https://stackoverflow.com/a/38763328
-    skip_tests = ["test_download_decompression", "TestChecksum", "test_xz_nfs"]
-    if set(skip_tests) & set(request.keywords.keys()):
-        return
-    monkeypatch.setattr(requests, "get", get)
+    skip_tests = set(["test_download_decompression", "TestChecksum", "test_xz_nfs"])
+    if not skip_tests & set(request.keywords.keys()):
+        monkeypatch.setattr(requests, "head", head)
+        monkeypatch.setattr(requests, "get", get)
+
+    # Fake netifaces to always return the same results
+    def gateways():
+        return {"default": {2: ("192.168.0.2", "eth0")}}
+
+    def ifaddresses(iface):
+        assert iface == "eth0"  # nosec - unit test support
+        return {
+            2: [
+                {
+                    "addr": "192.168.0.2",
+                    "netmask": "255.255.255.0",
+                    "broadcast": "192.168.0.255",
+                }
+            ]
+        }
+
+    monkeypatch.setattr(netifaces, "gateways", gateways)
+    monkeypatch.setattr(netifaces, "ifaddresses", ifaddresses)
