@@ -105,7 +105,7 @@ https://hub.docker.com/r/lavasoftware/lava-server-arm64-master/tags/
 https://hub.docker.com/r/lavasoftware/lava-dispatcher-arm64-master/tags/
 
 Command lines
-=============
+*************
 
 Command lines get long, so use wrapper scripts, e.g.:
 
@@ -123,7 +123,7 @@ Command lines get long, so use wrapper scripts, e.g.:
     hub.lavasoftware.org/lava/lava/lava-dispatcher/master:2018.7-88-ga7b7939dd
 
 Supporting encryption
-=====================
+*********************
 
 Always use encryption to any master outside your local network. Create
 a docker volume to act as a fileshare, mounting the specified directory
