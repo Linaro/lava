@@ -115,7 +115,7 @@ pristine-tar = False
 cleaner = true
 EOF
 git add debian/gbp.conf
-dch -b -v ${VERSION} -D ${SUITE} "Local developer native build for ${SUITE}"
+dch -b -v "${VERSION}+${SUITE}" -D ${SUITE} "Local developer native build for ${SUITE}"
 if [ -n "${LOG}" ]; then
   dch -a "${LOG}"
 fi
