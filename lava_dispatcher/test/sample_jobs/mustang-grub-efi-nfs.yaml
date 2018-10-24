@@ -13,17 +13,24 @@ visibility: public
 
 actions:
 - deploy:
+    # URLs changed to permanent locations for unit tests
+    # This test job is not expected to be executed
+    # use commented URLs, (if still available).
     kernel:
-      url: http://people.linaro.org/~neil.williams/stretch-files/vmlinuz-4.9.0-1-arm64
+      url: https://files.lavasoftware.org/components/lava/standard/debian/sid/arm64/2/vmlinuz-4.6.0-1-arm64
+      # url: http://people.linaro.org/~neil.williams/stretch-files/vmlinuz-4.9.0-1-arm64
       type: zimage
     ramdisk:
-      url: http://people.linaro.org/~neil.williams/stretch-files/initrd.img-4.9.0-1-arm64
+      url: https://files.lavasoftware.org/components/lava/standard/debian/sid/arm64/2/initrd.img-4.6.0-1-arm64
+      # url: http://people.linaro.org/~neil.williams/stretch-files/initrd.img-4.9.0-1-arm64
       compression: gz
     modules:
-      url: http://people.linaro.org/~neil.williams/stretch-files/modules2.tar.gz
+      url: https://files.lavasoftware.org/components/lava/standard/debian/sid/arm64/2/modules.tar.gz
+      # url: http://people.linaro.org/~neil.williams/stretch-files/modules2.tar.gz
       compression: gz
     nfsrootfs:
-      url: http://images.validation.linaro.org/functional-test-images/debian-jessie-arm64-rootfs.tar.gz
+      url: https://files.lavasoftware.org/components/lava/standard/debian/sid/arm64/2/sid-arm64-nfs.tar.gz
+      # url: http://images.validation.linaro.org/functional-test-images/debian-jessie-arm64-rootfs.tar.gz
       compression: gz
     os: debian
     timeout:

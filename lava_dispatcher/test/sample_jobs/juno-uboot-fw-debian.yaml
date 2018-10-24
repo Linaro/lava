@@ -37,7 +37,11 @@ actions:
       install_overlay: false
       install_modules: false
     nfsrootfs:
-      url: http://people.linaro.org/~neil.williams/arm64/debian-jessie-arm64-rootfs.tar.gz
+      url: https://files.lavasoftware.org/components/lava/standard/debian/sid/arm64/2/sid-arm64-nfs.tar.gz
+      # URL changed to permanent locations for unit tests
+      # This test job is not expected to be executed
+      # use commented URL, (if still available).
+      # url: http://people.linaro.org/~neil.williams/arm64/debian-jessie-arm64-rootfs.tar.gz
       compression: gz
 
 - boot:

@@ -1,13 +1,13 @@
 actions:
 - deploy:
-    kernel: {url: 'http://people.linaro.org/~anders.roxell/ubuntu-v4.4/vmlinuz-4.4.0-31-generic'}
-    modules: {compression: gz, url: 'http://people.linaro.org/~anders.roxell/ubuntu-v4.4/overlay.tar.gz'}
+    kernel: {url: 'http://images.validation.linaro.org/x86/ubuntu/vmlinuz-3.10-rc7-amd64'}
+    modules: {compression: gz, url: 'http://images.validation.linaro.org/x86/ubuntu/ubuntu-precise-3.10.gz'}
     nfsrootfs: {compression: gz, prefix: binary/, url: 'http://images.validation.linaro.org/x86/debian/linaro-jessie-nano-20150123-1.tar.gz'}
     os: debian
     protocols:
       lava-vland:
       - {action: lava-vland-overlay, request: deploy_vlans}
-    ramdisk: {compression: gz, url: 'http://people.linaro.org/~anders.roxell/bridge-initramfs/initramfs.amd64-new18.cpio.gz'}
+    ramdisk: {compression: gz, url: 'http://images.validation.linaro.org/x86/ubuntu/ubuntu-precise-initram.gz'}
     role: client
     timeout: {minutes: 30}
     to: tftp

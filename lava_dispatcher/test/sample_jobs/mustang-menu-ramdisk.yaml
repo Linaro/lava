@@ -25,7 +25,11 @@ actions:
          url: http://images.validation.linaro.org/mustang/uImage_1.11
          # uefi-menu does not support UBoot load addresses, so no type: here.
      nfsrootfs:
-         url: http://people.linaro.org/~neil.williams/arm64/debian-jessie-arm64-rootfs.tar.gz
+         # URLs changed to permanent locations for unit tests
+         # This test job is not expected to be executed
+         # use commented URLs, (if still available).
+         url: https://files.lavasoftware.org/components/lava/standard/debian/sid/arm64/2/sid-arm64-nfs.tar.gz
+         # url: http://people.linaro.org/~neil.williams/arm64/debian-jessie-arm64-rootfs.tar.gz
          compression: gz
      os: debian
      timeout: {minutes: 5}

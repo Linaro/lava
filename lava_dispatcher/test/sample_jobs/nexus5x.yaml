@@ -10,10 +10,6 @@ timeouts:
 priority: medium
 visibility: public
 
-metadata:
-  source: https://git.linaro.org/lava-team/refactoring.git
-  path: nexus5x-simple.yaml
-
 protocols:
   lava-lxc:
     name: lxc-nexus5x-test
@@ -48,16 +44,24 @@ actions:
     to: fastboot
     namespace: droid
     images:
+      # URLs changed to permanent locations for unit tests
+      # This test job is not expected to be executed
+      # use commented URLs, (if still available).
       boot:
-        url: http://snapshots.linaro.org/android/android-generic-build/4/aosp_bullhead-userdebug/boot.img
+        url: http://images.validation.linaro.org/nexus5x/2016-04-19-307/boot.img
+        # url: http://snapshots.linaro.org/android/android-generic-build/4/aosp_bullhead-userdebug/boot.img
       cache:
-        url: http://snapshots.linaro.org/android/android-generic-build/4/aosp_bullhead-userdebug/cache.img
+        url: http://images.validation.linaro.org/nexus5x/2016-04-19-307/cache.img
+        # url: http://snapshots.linaro.org/android/android-generic-build/4/aosp_bullhead-userdebug/cache.img
       userdata:
-        url: http://snapshots.linaro.org/android/android-generic-build/4/aosp_bullhead-userdebug/userdata.img
+        url: http://images.validation.linaro.org/nexus5x/2016-04-19-307/userdata.img
+        # url: http://snapshots.linaro.org/android/android-generic-build/4/aosp_bullhead-userdebug/userdata.img
       system:
-        url: http://snapshots.linaro.org/android/android-generic-build/4/aosp_bullhead-userdebug/system.img
+        url: http://images.validation.linaro.org/nexus5x/2016-04-19-307/system.img
+        # url: http://snapshots.linaro.org/android/android-generic-build/4/aosp_bullhead-userdebug/system.img
       vendor:
-        url: http://snapshots.linaro.org/android/android-generic-build/4/aosp_bullhead-userdebug/vendor.img
+        url: http://images.validation.linaro.org/nexus5x/2016-04-19-307/cache.img
+        # url: http://snapshots.linaro.org/android/android-generic-build/4/aosp_bullhead-userdebug/vendor.img
     os: debian
 
 - boot:

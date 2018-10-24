@@ -11,22 +11,24 @@ priority: medium
 visibility: public
 reboot_to_fastboot: false
 
-metadata:
-  source: https://git.linaro.org/lava-team/refactoring.git
-  path: health-checks/nexus4.yaml
-
 actions:
 - deploy:
     timeout:
       minutes: 5
     to: fastboot
     images:
+      # URLs changed to permanent locations for unit tests
+      # This test job is not expected to be executed
+      # use commented URLs, (if still available).
       boot:
-        url: http://images.validation.linaro.org/people.linaro.org/~senthil.kumaran/nexus4-userdebug/boot.img
+        url: http://images.validation.linaro.org/nexus5x/2016-04-19-307/boot.img
+        # url: http://images.validation.linaro.org/people.linaro.org/~senthil.kumaran/nexus4-userdebug/boot.img
       userdata:
-        url: http://images.validation.linaro.org/people.linaro.org/~senthil.kumaran/nexus4-userdebug/userdata.img
+        url: http://images.validation.linaro.org/nexus5x/2016-04-19-307/userdata.img
+        # url: http://images.validation.linaro.org/people.linaro.org/~senthil.kumaran/nexus4-userdebug/userdata.img
       system:
-        url: http://images.validation.linaro.org/people.linaro.org/~senthil.kumaran/nexus4-userdebug/system.img
+        url: http://images.validation.linaro.org/nexus5x/2016-04-19-307/system.img
+        # url: http://images.validation.linaro.org/people.linaro.org/~senthil.kumaran/nexus4-userdebug/system.img
     os: android
 
 - boot:

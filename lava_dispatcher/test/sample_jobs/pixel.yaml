@@ -48,16 +48,24 @@ actions:
     to: fastboot
     namespace: droid
     images:
+      # URLs changed to permanent locations for unit tests
+      # This test job is not expected to be executed
+      # use commented URLs, (if still available).
       boot:
-        url: http://snapshots.linaro.org/android/android-generic-build/10/aosp_sailfish-userdebug/boot.img
+        url: http://images.validation.linaro.org/nexus5x/2016-04-19-307/boot.img
+        # url: http://snapshots.linaro.org/android/android-generic-build/10/aosp_sailfish-userdebug/boot.img
       userdata:
-        url: http://snapshots.linaro.org/android/android-generic-build/10/aosp_sailfish-userdebug/userdata.img
+        url: http://images.validation.linaro.org/nexus5x/2016-04-19-307/userdata.img
+        # url: http://snapshots.linaro.org/android/android-generic-build/10/aosp_sailfish-userdebug/userdata.img
       system_a:
-        url: http://snapshots.linaro.org/android/android-generic-build/10/aosp_sailfish-userdebug/system.img
+        url: http://images.validation.linaro.org/nexus5x/2016-04-19-307/system.img
+        # url: http://snapshots.linaro.org/android/android-generic-build/10/aosp_sailfish-userdebug/system.img
       system_b:
-        url: http://snapshots.linaro.org/android/android-generic-build/10/aosp_sailfish-userdebug/system_other.img
+        url: http://images.validation.linaro.org/nexus5x/2016-04-19-307/system.img
+        # url: http://snapshots.linaro.org/android/android-generic-build/10/aosp_sailfish-userdebug/system_other.img
       vendor:
-        url: http://snapshots.linaro.org/android/android-generic-build/10/aosp_sailfish-userdebug/vendor.img
+        url: http://images.validation.linaro.org/nexus5x/2016-04-19-307/cache.img
+        # url: http://snapshots.linaro.org/android/android-generic-build/10/aosp_sailfish-userdebug/vendor.img
     os: debian
 
 - boot:
