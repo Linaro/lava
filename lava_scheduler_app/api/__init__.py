@@ -56,18 +56,20 @@ from lava_scheduler_app.schema import (
 # pylint: disable=no-self-use
 
 
-def check_superuser(f):
-    """ decorator to check that the caller is a super-user """
-    @wraps(f)
-    def wrapper(self, *args, **kwargs):
-        self._authenticate()
-        if not self.user.is_superuser:
-            raise xmlrpc.client.Fault(
-                403,
-                "User '%s' is not superuser." % self.user.username
-            )
-        return f(self, *args, **kwargs)
-    return wrapper
+def check_perm(perm):
+    """ decorator to check that the caller has the given permission """
+    def decorator(f):
+        @wraps(f)
+        def wrapper(self, *args, **kwargs):
+            self._authenticate()
+            if not self.user.has_perm(perm):
+                raise xmlrpc.client.Fault(
+                    403,
+                    "User '%s' is missing permission %s ." % (self.user.username, perm)
+                )
+            return f(self, *args, **kwargs)
+        return wrapper
+    return decorator
 
 
 def build_device_status_display(state, health):

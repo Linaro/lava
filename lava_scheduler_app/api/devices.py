@@ -25,7 +25,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 
 from linaro_django_xmlrpc.models import ExposedV2API
-from lava_scheduler_app.api import check_superuser
+from lava_scheduler_app.api import check_perm
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
@@ -36,7 +36,7 @@ from lava_scheduler_app.models import (
 
 class SchedulerDevicesAPI(ExposedV2API):
 
-    @check_superuser
+    @check_perm("lava_scheduler_app.add_device")
     def add(self, hostname, type_name, worker_hostname,
             user_name=None, group_name=None, public=True,
             health=None, description=None):
@@ -171,7 +171,7 @@ class SchedulerDevicesAPI(ExposedV2API):
                 404, "Device '%s' does not have a configuration" % hostname)
         return xmlrpc.client.Binary(config.encode('utf-8'))
 
-    @check_superuser
+    @check_perm("lava_scheduler_app.change_device")
     def set_dictionary(self, hostname, dictionary):
         """
         Name
@@ -297,7 +297,7 @@ class SchedulerDevicesAPI(ExposedV2API):
 
         return device_dict
 
-    @check_superuser
+    @check_perm("lava_scheduler_app.change_device")
     def update(self, hostname, worker_hostname=None, user_name=None,
                group_name=None, public=True, health=None, description=None):
         """
@@ -391,7 +391,8 @@ class SchedulerDevicesAPI(ExposedV2API):
 
 class SchedulerDevicesTagsAPI(ExposedV2API):
 
-    @check_superuser
+    @check_perm("lava_scheduler_app.add_tag")
+    @check_perm("lava_scheduler_app.change_device")
     def add(self, hostname, name):
         """
         Name
@@ -451,7 +452,7 @@ class SchedulerDevicesTagsAPI(ExposedV2API):
 
         return [t.name for t in device.tags.all()]
 
-    @check_superuser
+    @check_perm("lava_scheduler_app.change_device")
     def delete(self, hostname, name):
         """
         Name

@@ -21,13 +21,13 @@ import xmlrpc.client
 from django.db import IntegrityError
 
 from linaro_django_xmlrpc.models import ExposedV2API
-from lava_scheduler_app.api import check_superuser
+from lava_scheduler_app.api import check_perm
 from lava_scheduler_app.models import Tag
 
 
 class SchedulerTagsAPI(ExposedV2API):
 
-    @check_superuser
+    @check_perm("lava_scheduler_app.add_tag")
     def add(self, name, description=None):
         """
         Name
@@ -56,7 +56,7 @@ class SchedulerTagsAPI(ExposedV2API):
             raise xmlrpc.client.Fault(
                 400, "Bad request: %s" % exc.message)
 
-    @check_superuser
+    @check_perm("lava_scheduler_app.delete_tag")
     def delete(self, name):
         """
         Name

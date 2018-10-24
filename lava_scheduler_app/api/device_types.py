@@ -26,7 +26,7 @@ import xmlrpc.client
 from django.db import IntegrityError
 
 from linaro_django_xmlrpc.models import ExposedV2API
-from lava_scheduler_app.api import check_superuser
+from lava_scheduler_app.api import check_perm
 from lava_scheduler_app.models import Alias, DeviceType
 
 
@@ -42,7 +42,7 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
         available_types.sort()
         return available_types
 
-    @check_superuser
+    @check_perm("lava_scheduler_app.add_devicetype")
     def add(self, name, description, display, owners_only,
             health_frequency, health_denominator):
         """
@@ -183,7 +183,7 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
             else:
                 raise xmlrpc.client.Fault(400, "Unable to read device-type configuration: %s" % exc.strerror)
 
-    @check_superuser
+    @check_perm("lava_scheduler_app.change_devicetype")
     def set_health_check(self, name, config):
         """
         Name
@@ -225,7 +225,7 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
             raise xmlrpc.client.Fault(
                 400, "Unable to write health-check: %s" % exc.strerror)
 
-    @check_superuser
+    @check_perm("lava_scheduler_app.change_devicetype")
     def set_template(self, name, config):
         """
         Name
@@ -348,7 +348,7 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
 
         return dt_dict
 
-    @check_superuser
+    @check_perm("lava_scheduler_app.change_devicetype")
     def update(self, name, description, display, owners_only, health_frequency,
                health_denominator, health_disabled):
         """
@@ -423,7 +423,8 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
 
 class SchedulerDeviceTypesAliasesAPI(ExposedV2API):
 
-    @check_superuser
+    @check_perm("lava_scheduler_app.add_alias")
+    @check_perm("lava_scheduler_app.change_devicetype")
     def add(self, name, alias):
         """
         Name
@@ -487,7 +488,7 @@ class SchedulerDeviceTypesAliasesAPI(ExposedV2API):
 
         return [a.name for a in dt.aliases.all().order_by("name")]
 
-    @check_superuser
+    @check_perm("lava_scheduler_app.change_devicetype")
     def delete(self, name, alias):
         """
         Name

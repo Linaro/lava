@@ -23,13 +23,13 @@ import xmlrpc.client
 from django.db import IntegrityError, transaction
 
 from linaro_django_xmlrpc.models import ExposedV2API
-from lava_scheduler_app.api import check_superuser
+from lava_scheduler_app.api import check_perm
 from lava_scheduler_app.models import Worker
 
 
 class SchedulerWorkersAPI(ExposedV2API):
 
-    @check_superuser
+    @check_perm("lava_scheduler_app.add_worker")
     def add(self, hostname, description=None, disabled=False):
         """
         Name
@@ -97,7 +97,7 @@ class SchedulerWorkersAPI(ExposedV2API):
             raise xmlrpc.client.Fault(
                 404, "Worker '%s' does not have a configuration" % hostname)
 
-    @check_superuser
+    @check_perm("lava_scheduler_app.change_worker")
     def set_config(self, hostname, config):
         """
         Name
@@ -189,7 +189,7 @@ class SchedulerWorkersAPI(ExposedV2API):
                 "devices": [d.hostname for d in worker.device_set.all().order_by("hostname")],
                 "last_ping": worker.last_ping}
 
-    @check_superuser
+    @check_perm("lava_scheduler_app.change_worker")
     def update(self, hostname, description=None, health=None):
         """
         Name
