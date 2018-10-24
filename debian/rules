@@ -108,6 +108,7 @@ override_dh_auto_clean:
 	find . -type d -name '__pycache__' -empty -delete
 	$(RM) -r dist/ jquery.cookie.js
 	$(RM) debian/*.service
+	$(RM) common-requirements.txt dispatcher-requirements.txt server-requirements.txt
 	[ ! -f doc/Makefile ] || make -C doc/ clean
 	[ ! -f doc/v1/Makefile ] || make -C doc/v1/ clean
 	[ ! -f doc/v2/Makefile ] || make -C doc/v2/ clean

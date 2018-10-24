@@ -32,7 +32,6 @@ while getopts ":a:o:s:B" opt; do
       ;;
     o)
       DIR=`readlink -f $OPTARG`
-      GBP_OPTS+=" --git-export-dir=${DIR}"
       ;;
     \?)
       echo "[LAVA-DEV] Invalid option: -$OPTARG" >&2
@@ -53,6 +52,11 @@ done
 # lintian is disabled because it will complain about the
 # change to a native build.
 DEBUILD_OPTS=" --no-lintian -uc -us ${DEBUILD_OPTS}"
+
+if [ ! -d ${DIR} ]; then
+  mkdir ${DIR}
+fi
+GBP_OPTS+=" --git-export-dir=${DIR}"
 
 # store the current branch name
 BRANCH=`git branch | grep \* | cut -d ' ' -f2`
@@ -75,14 +79,14 @@ if [ ! -x /usr/bin/gbp ]; then
     exit 2
 fi
 
+dpkg-checkbuilddeps
+fakeroot debian/rules clean
 LOCAL=`git ls-files -m -o --exclude-standard|wc -l`
 if [ ${LOCAL} != 0 ]; then
     echo "[LAVA-DEV] You have uncommitted changes in your source tree:"
     git status
     exit 3
 fi
-
-dpkg-checkbuilddeps
 
 # only trap here to avoid branch changes without a branch
 trap finish EXIT
