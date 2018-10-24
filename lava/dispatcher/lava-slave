@@ -71,9 +71,9 @@ FORMAT = "%(asctime)-15s %(levelname)7s %(message)s"
 # Check for stale resources every STALE_CHECK_INTERVAL seconds (default to 1 hour)
 STALE_CHECK_INTERVAL = 3600
 STALE_CONFIG = {
-    "/var/lib/lava/dispatcher/tmp": {"pattern": r"^(?P<job_id>[0-9]+)$"},
-    "/var/lib/lava/dispatcher/slave/tmp": {"pattern": r"^(?P<job_id>[0-9]+)$"},
-    "/etc/udev/rules.d/": {"pattern": r"^100-lava-lxc-[\w-]+-(?P<job_id>[0-9]+)\.rules$",
+    "/var/lib/lava/dispatcher/tmp": {"pattern": "{prefix}{job_id}"},
+    "/var/lib/lava/dispatcher/slave/tmp": {"pattern": "{prefix}{job_id}"},
+    "/etc/udev/rules.d/": {"glob": "100-lava-{prefix}lxc-*-{job_id}.rules",
                            "post-action": ["udevadm", "control", "--reload-rules"]},
 }
 
@@ -120,6 +120,10 @@ def mkdir(path):
             pass
         else:
             raise
+def get_prefix(cfg):
+    if isinstance(cfg, dict):
+        return cfg.get("prefix", "")
+    return ""
 
 
 def send_multipart_u(sock, data):
@@ -138,7 +142,8 @@ def start_job(job_id, definition, device_definition, zmq_config,
     Start the lava-run process and return the pid
     """
     # Create the base directory
-    base_dir = os.path.join(TMP_DIR, "%s/" % job_id)
+    dispatcher_cfg = yaml.safe_load(dispatcher_config)
+    base_dir = os.path.join(TMP_DIR, "{prefix}{job_id}".format(prefix=get_prefix(dispatcher_cfg), job_id=str(job_id)))
     mkdir(base_dir)
 
     # Write back the job, device and dispatcher configuration
@@ -214,9 +219,10 @@ class Job:
         self.job_id = row["id"]
         self.pid = row["pid"]
         self.status = row["status"]
+        self.prefix = row["prefix"]
         self.last_update = row["last_update"]
         # Create the base directory
-        self.base_dir = os.path.join(TMP_DIR, "%s/" % self.job_id)
+        self.base_dir = os.path.join(TMP_DIR, "{prefix}{job_id}".format(prefix=self.prefix, job_id=str(self.job_id)))
         mkdir(self.base_dir)
 
     def errors(self):
@@ -273,16 +279,25 @@ class JobsDB:
     def __init__(self, dbname):
         self.conn = sqlite3.connect(dbname)
         self.conn.row_factory = sqlite3.Row
-        self.conn.execute("CREATE TABLE IF NOT EXISTS jobs(id INTEGER PRIMARY KEY, pid INTEGER, status INTEGER, last_update INTEGER)")
+        self.conn.execute("CREATE TABLE IF NOT EXISTS jobs(id INTEGER PRIMARY KEY, pid INTEGER, status INTEGER, last_update INTEGER, prefix VARCHAR(100) DEFAULT '')")
         self.conn.commit()
+        # Migrate the schema only if needed
+        sql = self.conn.execute("SELECT sql FROM sqlite_master").fetchone()["sql"]
+        if "prefix" not in sql:
+            self.conn.execute("ALTER TABLE jobs ADD COLUMN prefix VARCHAR(100) DEFAULT ''")
+            self.conn.commit()
 
-    def create(self, job_id, pid, status):
+    def create(self, job_id, pid, status, dispatcher_cfg):
         """
         When pid is 0, the pid is unknown
         """
+        # Keep the prefix (if present) in the database to later delete
+        # resources
+        prefix = get_prefix(dispatcher_cfg)
+
         with contextlib.suppress(sqlite3.Error):
-            self.conn.execute("INSERT INTO jobs VALUES(?, ?, ?, ?)",
-                              (str(job_id), str(pid), str(status), str(int(time.time()))))
+            self.conn.execute("INSERT INTO jobs VALUES(?, ?, ?, ?, ?)",
+                              (str(job_id), str(pid), str(status), str(int(time.time())), prefix))
             self.conn.commit()
             return self.get(job_id)
         return None
@@ -518,50 +533,6 @@ def check_job_status(jobs, sock, last_jobs_check):
     return time.time()
 
 
-def remove_stale_resources(jobs, last_stale_check):
-    now = time.time()
-    if now - last_stale_check < STALE_CHECK_INTERVAL:
-        return last_stale_check
-
-    # Grab the known jobs
-    job_ids = jobs.all_ids()
-
-    LOG.info("Removing stale resources:")
-    for directory in STALE_CONFIG:
-        LOG.debug("-> %s", directory)
-        pattern = re.compile(STALE_CONFIG[directory]["pattern"])
-
-        removed = 0
-        for path in glob.iglob("%s/*" % directory):
-            match = pattern.match(os.path.basename(path))
-            if match is None:
-                continue
-            try:
-                job_id = int(match.groupdict()["job_id"])
-            except ValueError:
-                LOG.error("Invalid job_id: %s", job_id)
-                continue
-            if job_id not in job_ids:
-                LOG.debug("--> removing %s", path)
-                try:
-                    # Try to remove a file
-                    os.remove(path)
-                except OSError:
-                    # If it fails, that because it's a directory
-                    shutil.rmtree(path, ignore_errors=True)
-                removed += 1
-        if removed:
-            action = STALE_CONFIG[directory].get("post-action")
-            if action is not None:
-                try:
-                    LOG.debug("---> calling '%s'", " ".join(action))
-                    subprocess.check_call(action)
-                except (OSError, subprocess.CalledProcessError) as exc:
-                    LOG.error("----> unable to run action: %s", str(exc))
-
-    return time.time()
-
-
 def verify_socket(sock, master_url, ipv6=False):
     identity = sock.getsockopt(zmq.IDENTITY).decode('utf-8')
     master = urlparse(master_url)
@@ -691,7 +662,7 @@ def handle_cancel(msg, jobs, sock, master):
                 job.send_end(sock)
     else:
         LOG.debug("[%d] Unknown job", job_id)
-        job = jobs.create(job_id, 0, Job.FINISHED)
+        job = jobs.create(job_id, 0, Job.FINISHED, "")
         job.send_end(sock)
 
     # Mark the master as alive
@@ -711,10 +682,38 @@ def handle_end_ok(msg, jobs):
     if job is None:
         LOG.debug("[%d] Unknown job", job_id)
 
-    # Remove the tmp directory without checking for errors
-    job_dir = os.path.join(TMP_DIR, str(job_id))
-    LOG.debug("[%d] Removing %s", job_id, job_dir)
-    shutil.rmtree(job_dir, ignore_errors=True)
+    # Remove stale resources
+    prefix = "" if job is None else job.prefix
+    for directory in STALE_CONFIG:
+        if "pattern" in STALE_CONFIG[directory]:
+            dir_name = STALE_CONFIG[directory]["pattern"].format(prefix=prefix, job_id=job_id)
+            dir_path = os.path.join(directory, dir_name)
+            if not os.path.exists(dir_path):
+                continue
+            LOG.debug("[%d] Removing %s", job_id, dir_path)
+            with contextlib.suppress(OSError):
+                os.remove(dir_path)
+            shutil.rmtree(dir_path, ignore_errors=True)
+        elif "glob" in STALE_CONFIG[directory]:
+            pattern_str = STALE_CONFIG[directory]["glob"].format(prefix=prefix, job_id=job_id)
+            pattern = os.path.join(directory, pattern_str)
+            removed = False
+            for path in glob.iglob(pattern):
+                LOG.debug("[%d] Removing %s", job_id, path)
+                with contextlib.suppress(OSError):
+                    os.remove(path)
+                shutil.rmtree(path, ignore_errors=True)
+            if not removed:
+                continue
+        else:
+            continue
+        action = STALE_CONFIG[directory].get("post-action")
+        if action is not None:
+            try:
+                LOG.debug("---> calling '%s'", " ".join(action))
+                subprocess.check_call(action)
+            except (OSError, subprocess.CalledProcessError) as exc:
+                LOG.error("----> unable to run action: %s", str(exc))
 
     # Remove from the jobs
     jobs.delete(job_id)
@@ -775,7 +774,8 @@ def handle_start(msg, jobs, sock, master, zmq_config):
             job.send_start_ok(sock)
     else:
         # Pretty print configuration
-        dispatcher_str = str(yaml.safe_load(dispatcher_config)) if dispatcher_config else ""
+        dispatcher_cfg = yaml.safe_load(dispatcher_config)
+        dispatcher_str = str(dispatcher_cfg) if dispatcher_config else ""
         env_str = str(yaml.safe_load(env)) if env else ""
         env_dut_str = str(yaml.safe_load(env_dut)) if env_dut else ""
 
@@ -790,7 +790,8 @@ def handle_start(msg, jobs, sock, master, zmq_config):
         pid = start_job(job_id, job_definition, device_definition, zmq_config,
                         dispatcher_config, env, env_dut)
         job = jobs.create(job_id, 0 if pid is None else pid,
-                          Job.FINISHED if pid is None else Job.RUNNING)
+                          Job.FINISHED if pid is None else Job.RUNNING,
+                          dispatcher_cfg)
         job.send_start_ok(sock)
 
     # Mark the master as alive
@@ -823,7 +824,7 @@ def handle_status(msg, jobs, sock, master):
     else:
         # Unknown job: return END anyway
         LOG.debug("[%d] Unknown job, sending END after STATUS", job_id)
-        job = jobs.create(job_id, 0, Job.FINISHED)
+        job = jobs.create(job_id, 0, Job.FINISHED, "")
         job.send_end(sock)
 
     # Mark the master as alive
@@ -916,8 +917,9 @@ def main():
     # slave states
     master = Master()
     mkdir(SLAVE_DIR)
+    # TODO: make this configurable
     jobs = JobsDB(os.path.join(SLAVE_DIR, "db.sqlite3"))
-    last_jobs_check = last_stale_check = time.time()
+    last_jobs_check = time.time()
     if options.encrypt:
         zmq_config = ZMQConfig(options.socket_addr, options.master_cert,
                                options.slave_cert, options.ipv6)
@@ -940,7 +942,6 @@ def main():
             master.ping(sock)
             # Regular checks
             last_jobs_check = check_job_status(jobs, sock, last_jobs_check)
-            last_stale_check = remove_stale_resources(jobs, last_stale_check)
             # Listen to the master
             (leaving, msg) = recv_from_master("", poller, pipe_r, sock)
 
