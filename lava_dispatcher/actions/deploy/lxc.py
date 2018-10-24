@@ -277,7 +277,8 @@ class LxcCreateUdevRuleAction(DeployAction):
         # the name something like '100-lava-lxc-hikey-2808.rules'
         # where, 100 is just an arbitrary number which specifies loading
         # priority for udevd
-        rules_file_name = '100-lava-' + lxc_name + '.rules'
+        job_prefix = self.job.parameters["dispatcher"].get("prefix", "")
+        rules_file_name = '100-lava-' + job_prefix + lxc_name + '.rules'
         rules_file = os.path.join(self.mkdtemp(), rules_file_name)
         lines = []
         for device in device_info:

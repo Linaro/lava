@@ -73,6 +73,7 @@ class LxcProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
         if LXC_PATH != lxc_path(parameters['dispatcher']):
             self.custom_lxc_path = True
         self.logger = logging.getLogger('dispatcher')
+        self.job_prefix = parameters["dispatcher"].get("prefix", "")
 
     @classmethod
     def accepts(cls, parameters):  # pylint: disable=too-many-return-statements
@@ -188,8 +189,8 @@ class LxcProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
                 os.remove(os.path.join(LXC_PATH, self.lxc_name))
         # Remove udev rule which added device to the container and then reload
         # udev rules.
-        rules_file = os.path.join(UDEV_RULES_DIR,
-                                  '100-lava-' + self.lxc_name + '.rules')
+        rules_file_name = '100-lava-' + self.job_prefix + self.lxc_name + '.rules'
+        rules_file = os.path.join(UDEV_RULES_DIR, rules_file_name)
         if os.path.exists(rules_file):
             os.remove(rules_file)
             self.logger.debug("%s protocol: removed udev rules '%s'",
