@@ -131,10 +131,10 @@ debian-10-pkg-amd64:
     - build/*.changes
     - build/*.buildinfo
 
-debian-pkg-aarch64:
+debian-10-pkg-aarch64:
   <<: *job_aarch64
   stage: build
-  image: hub.lavasoftware.org/lava/ci-images/debian-10-arm64-packaging
+  image: hub.lavasoftware.org/lava/ci-images/debian-10-aarch64-packaging
   only:
     refs:
     - master
