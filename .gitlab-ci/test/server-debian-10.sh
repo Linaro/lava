@@ -7,6 +7,8 @@ then
   set -x
   DEPS=$(./share/requires.py -p lava-server -d debian -s buster -n)
   apt-get install --no-install-recommends --yes $DEPS
+  DEPS=$(./share/requires.py -p lava-server -d debian -s buster -n -u)
+  apt-get install --no-install-recommends --yes $DEPS
 else
   set -x
   PYTHONPATH=. py.test-3 --cache-clear -v --junitxml=common.xml lava_common/test
