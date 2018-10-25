@@ -28,7 +28,10 @@ def debian_package_arch(pkg):
     changelog. Distributions not derived from Debian will
     return an empty string.
     """
+    # release path
     changelog = '/usr/share/doc/%s/changelog.Debian.gz' % pkg
+    if not os.path.exists(changelog):
+        changelog = '/usr/share/doc/%s/changelog.gz' % pkg
     if os.path.exists(changelog):
         deb_arch = subprocess.check_output((  # nosec dpkg-query
             'dpkg-query', '-W', "-f=${Architecture}\n",
@@ -43,7 +46,10 @@ def debian_package_version(pkg, split):
     changelog. Distributions not derived from Debian will
     return an empty string.
     """
+    # release path
     changelog = '/usr/share/doc/%s/changelog.Debian.gz' % pkg
+    if not os.path.exists(changelog):
+        changelog = '/usr/share/doc/%s/changelog.gz' % pkg
     if os.path.exists(changelog):
         deb_version = subprocess.check_output((  # nosec dpkg-query
             'dpkg-query', '-W', "-f=${Version}\n",
