@@ -1,3 +1,151 @@
+lava (2018.10-1) unstable; urgency=medium
+
+  * New production release
+    24f6bc296 Support gdb/openocd for disco_l475_iot1
+    1d1cf4380 Fix resource cleanup when using prefix
+    7f9796ee1 Append the defined prefix to the udev rule files
+    1e60552f1 Allow a user-specified kernel failure message
+    8445444bb device-types: minnowboard: add initrd command to nfs_commands
+    7c006f458 Ensure build dir exists
+    0e598e63f Update package version support
+    0c75c37b9 Distinguish between builds on different suites
+    135269b50 XMLRPC: use django permissions to manage accesses
+    dcf5e1358 Fix inconsistent header in docker admin
+    21f2ddf12 Do not depend on network access for test suites
+    e74e35b93 docs: Improve wording in various places for new users
+    579b86bb3 Add docs for IoT boot methods and monitor test action
+    fab08cc2e docker: allow to use local images
+    0e0f4d352 Comment out people.l.o and snapshots.l.o urls
+    f429369bd Support for skipping test shell timeout
+    32e02b925 Add device-type for qcom QDF2400
+    368f13217 Help for admins using docker.
+    829658237 Drop sections on V1 removal
+    05fcc7f9a docker: allow to use local images
+    d24c2e756 Fix build errors in docs
+    d4cfad706 Import the packaging support into upstream
+    caf3df11e Fix pyocd requirement listing
+    ae66959a1 Callback add a default timeout to 5 seconds
+    8e556cbab Compute coverage only on master or for tags
+    8d928d483 Update documentation for changes in share/requires.py
+    536b3bab9 Advise use of allow_none in XMLRPC clients
+    2dc976d28 Update Debian installation instructions for new repo
+    ddc980704 Allow switching to a binary=any build
+    59ba58b9c download: Raise an Infrastructure Error on timeout
+    2e3338ebc Limit excessive exception messages
+    1f10f2996 Fix undefined variables found by prospector
+    93529bc64 LAVA-1231 Support multiple boots in QEMU
+    23f25ee7a Ensure Device.is_valid is checked in submissions
+    6ca13ea7a Update jobs.list for two bugs found in Linaro
+    5f36ec668 XMLRPC: allow_none should always be True
+    f077b620d base-uboot: nbd: handle uboot_set_mac
+    1d2f38615 Fix arch build instructions in build script.
+    a6e61d0f9 Update pipeline-admin section on device dicts
+    5d045edec Isolate dependencies for unit tests
+    97e55bcf4 Advise against using patterns if POSIX is available
+    cbdc3ca47 Migrate support links to lists.lavasoftware.org
+    b34022569 Do not dump python object in description.yaml
+    42bfd72d3 Update the shebang to python3
+    ede13f753 Add index entry for persistence
+    b037a8660 Callbacks replace urllib.request with requests
+    a5bfdd71e Disable sorting Jobs tables by state
+    59add5e70 Drop release-queue.py
+    ecfc5c405 Set InfrastructureError for fastboot-flash-action
+    8d5679606 Fix imports of JobError from the wrong file
+    38dc6cace Ensure base-uboot quotes fastboot and adb serial
+    22f64cb62 Use raw string for regexp
+    dd5532ee3 Apply black formatting to linaro_django_xmlrpc
+    819986bd9 Apply black to remaining files in share
+    9556abc5c Add NBD support for iPXE based DUTs
+    563b88a00 Keep tags with uppercase letters
+    74b1d8ca2 Make version string lexicographically sortable
+    485bca7a6 Improve 359f8278 to support all -misc variants
+    13fe9a5ec Fix crash when calling lava-server without args
+    c96946ee9 Fix BootloaderSecondaryMedia.validate() with arbitrary boot commands
+    9debcf425 Fix warnings during package build
+    6a9ad82b8 add pytest support to lava-dev
+    1e0de18dc Fix missing change in the doc after 9595d66e
+    ee97069da Update Authentication Token page to use lavacli
+    b52d52b5e Add lava-server manage device-tags
+    9ae06152c Initial blackening support.
+    8051f1ddf Silence SAST warnings about mark_safe for internal data.
+    146e143d4 Apply yaml.safe_load to unit tests
+    01a3b0c0b Silence SAST noise from unit test
+    9ac2edac8 Silence security noise from unit test use of assert
+    c4ad0130a Explicitly set autoescape to False for YAML.
+    3c359acf3 Point README at new site
+    b9169d75e Fix typo in the variable names for since
+    53e21ef20 Update jobs.py
+    386b9efb7 Add more output to scheduler.jobs.list
+    a7b7939dd Updates for the contribution guide
+    fdd55ba63 Improve indexing and linking for device dicts
+    a956159da Support building for specific suites
+    9a5aa7e9b Minor doc updates
+    33f3abf62 Update copyright of docs.
+    8c6761baa Add gitlab ci configuration
+    eefc21edc Fix build errors in manpages
+    5b9ef16d7 Port zmq-client example script to Python3
+    8cd8cee2a Fix copy/paste error in 65ba876cb5
+    ce3f6120d Use generator expressions when available
+    e6f4ef1de Use isinstance() instead of type()
+    4440cd746 doc: fix most broken links
+    60928847d Support LXC with IoT
+    0cc3653f9 Allow LXC for FRDM-K64F IoT device
+    3bb0819fb Allow the suite to be specified for requirements
+    dff387150 Fix call to requires.py
+    7ad9790a8 Move requirements away from pypi tooling
+    75c928fe1 Remove python2 leftover
+    359f82786 Add support for qemu-system-misc
+    65ba876cb Let LXC protocol calls use lists as in base
+    79312ea8a Upgrade doc examples to Stretch
+    6a2638fb6 Handle cancelled test jobs in get_recent_jobs
+    c56ab4c66 Fix logic in pending_jobs_by_device_type
+    af211db77 LAVA-1398 fix group handling for logrotate support.
+    cdf4aaec3 Support branch for requires.py
+    6ff5b43b4 Clarify some of the lavacli doc items
+    f4948855e Check for download files ending with /
+    0b25c71bc Port URLs to lavasoftware.org
+    9871e777c Fix link to api/help location.
+    571ff39e9 Support ZMQ dependency on lava-common
+    a7acfc0ae Document architecture restrictions.
+    393e52fda Fix vland interface code so it works with python3 too
+    6fc476481 Certificate directory needs to be available in common
+    e159a369b sample_jobs: fix bbb-initrd-nbd NBD usage
+    98dfbb377 Add unit test for minnowboard-turbot-E3826 GRUB template
+    7c01f67a7 device-types: add x86 Minnowboard Max and Turbot using GRUB
+    2d373d36a documentation: add note about no kernel type attribute for Depthcharge
+    cc432d33b device-types: define block commands in base-grub.jinja2
+    5e101d817 run_command: print the output when failing
+    f019af70d device-types: sunxi-common: support booti
+    8961645f0 LAVA-1014 add a prefix to tmp directories
+    b022cde9d Fix indent error
+    b885dd112 Improve documentation about dispatcher configuration
+    d9196acd2 LAVA-1397 - fix crash in callback data
+    55c52bb6d LAVA-1156 When running under pytest, fake requests
+    c6d61c0e4 Clarify about Debian point releases of Stretch
+    b051ff1b5 Add missing show_fail after e3cdf814
+    c4f578e46 Use syslog for lava_lxc_device_add
+    5f7a22074 Portablility support without using 'os'
+    e3cdf8140 LAVA-1384 - Add cancel button to definition pages
+    5693b68b1 Fix sphinx syntax in git describe example
+    f2f1af5d8 Update filtering of TestJob fields in export
+    927a28820 Fix error in imx8m change
+    d484031f7 Use git describe to get the version
+    b76fe5a1d LAVA-1295 iMX8M evk device integration.
+    5f3d1769e Allow user to specify the build directory
+    09d6a90dd LAVA-1380 Drop 'os' from functional test jobs
+    3af493d42 Update requirement for django-tables
+    8df4482f0 LAVA-1383 - allow overrides of posix constants
+    ba035ca72 docker: allow to bind devices
+    2c507744f Allow for '@' in device name
+    407db2b45 Revert "Raise a JobError when a cmd output is empty"
+    f2d4490fd admin: improve listing and update/add page
+    953df9325 Raise a JobError when a cmd output is empty
+    baf61b465 Check downloaded file size against expected
+    ca74a1939 Use OSError when applicable
+    fc083df5c Use contextlib.suppress when applicable
+
+ -- Neil Williams <codehelp@debian.org>  Fri, 26 Oct 2018 11:02:39 +0100
+
 lava (2018.5.post1-2) unstable; urgency=medium
 
   * Fix missing dependency on python3-requests, found by piuparts
