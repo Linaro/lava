@@ -264,7 +264,6 @@ class VlandProtocol(Protocol):
         self.logger.debug({"delete_vlan": msg})
         self._call_vland(msg)
         # FIXME detect a failure
-        del self.vlans[friendly_name]
 
     def _lookup_switch_id(self, switch_name):
         msg = {
