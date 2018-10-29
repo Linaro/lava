@@ -1,4 +1,4 @@
-FROM hub.lavasoftware.org/lava/pkg/docker/lava-server-base
+FROM hub.lavasoftware.org/lava/pkg/docker/aarch64/lava-server-base
 
 EXPOSE 80
 EXPOSE 5500

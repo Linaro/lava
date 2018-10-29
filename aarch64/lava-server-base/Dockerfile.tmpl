@@ -1,0 +1,20 @@
+FROM arm64v8/debian:stretch-backports
+
+LABEL maintainer="Rémi Duraffort <remi.duraffort@linaro.org>"
+
+ENV DEBIAN_FRONTEND noninteractive
+
+# Depends (system, python then python from backports)
+RUN apt-get update -q && \
+    apt-get install --no-install-recommends --yes adduser apache2 gunicorn3 iproute2 libjs-excanvas libjs-jquery libjs-jquery-cookie libjs-jquery-flot libjs-jquery-typeahead libjs-jquery-ui libjs-jquery-watermark postgresql postgresql-client postgresql-common python3-setuptools systemd-sysv && \
+    apt-get install --no-install-recommends --yes {STRETCH_DEPS} && \
+    apt-get install --no-install-recommends --yes -t stretch-backports {STRETCH_BPO_DEPS}
+
+# rest_api
+RUN apt-get install --no-install-recommends --yes python3-djangorestframework python3-mock
+
+# Recommends
+RUN apt-get install --no-install-recommends --yes ntp openssh-client
+
+# lava-server-doc
+RUN apt-get install --no-install-recommends --yes libjs-sphinxdoc

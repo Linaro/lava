@@ -1,7 +1,5 @@
 .job: &job
   image: docker:stable
-  tags:
-  - dind
   before_script:
   - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
   script:
@@ -10,11 +8,20 @@
   - '[ "$CI_COMMIT_REF_NAME" = "master" ] && docker push $IMAGE_TAG || :'
   services:
     - docker:dind
-  stage: build
   variables:
     DOCKER_HOST: tcp://docker:2375/
     DOCKER_DRIVER: overlay2
     IMAGE_TAG: $CI_REGISTRY_IMAGE/$CI_JOB_NAME
 
-lava-dispatcher-base: *job
-lava-server-base: *job
+.aarch64: &aarch64
+  <<: *job
+  tags: [dind, aarch64]
+
+.amd64: &amd64
+  <<: *job
+  tags: [dind, amd64]
+
+aarch64/lava-dispatcher-base: *aarch64
+aarch64/lava-server-base: *aarch64
+amd64/lava-dispatcher-base: *amd64
+amd64/lava-server-base: *amd64

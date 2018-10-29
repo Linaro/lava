@@ -1,4 +1,4 @@
-FROM hub.lavasoftware.org/lava/pkg/docker/lava-dispatcher-base
+FROM hub.lavasoftware.org/lava/pkg/docker/aarch64/lava-dispatcher-base
 
 ARG pkg_common=lava-common.deb
 COPY $pkg_common /tmp/common.deb

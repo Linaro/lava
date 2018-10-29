@@ -1,7 +1,15 @@
 #!/bin/sh
 set -e
 
-IMAGES=$(find . -maxdepth 1 -name "*base" -type d \( ! -path './.*' \) \( ! -path . \) | sort | sed "s#^./##")
+ARCH=$(uname -m)
+if [ "$ARCH" = "x86_64" ]
+then
+  dir="amd64"
+else
+  dir="aarch64"
+fi
+
+IMAGES=$(find $dir -maxdepth 1 -name "*base" -type d \( ! -path './.*' \) \( ! -path . \) | sort | sed "s#^./##")
 IMAGES=${1:-$IMAGES}
 
 for image in $IMAGES
