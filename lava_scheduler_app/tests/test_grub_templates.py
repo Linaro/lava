@@ -213,9 +213,9 @@ class TestGrubTemplates(BaseTemplate.BaseTemplateCases):
         self.assertEqual(nfs_commands, nfs_ref_commands)
 
     def test_qdf2400_template(self):
-        template_dict = self.render_device_dictionary_file('qdf2400-01.jinja2', raw=False)
+        template_dict = self.render_device_dictionary_file('qcom-qdf2400-01.jinja2', raw=False)
         grub = template_dict['actions']['boot']['methods']['grub']
         self.assertIsNotNone(grub)
         nfs_commands = template_dict['actions']['boot']['methods']['grub']['nfs']['commands']
         self.assertIn('insmod efinet', nfs_commands)
-        self.assertIn('net_bootp', nfs_commands)
+        self.assertNotIn('net_bootp', nfs_commands)

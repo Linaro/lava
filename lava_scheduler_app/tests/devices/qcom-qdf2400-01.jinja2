@@ -1,0 +1,8 @@
+{% extends 'qcom-qdf2400.jinja2' %}
+{% set hard_reset_command = 'ipmitool -I lanplus -H 10.66.16.249 -U admin -P admin chassis power reset' %}
+{% set power_off_command = 'ipmitool -I lanplus -H 10.66.16.249 -U admin -P admin chassis power off' %}
+{% set connection_command = 'telnet lkft-slave03 7004' %}
+
+{% set static_ip = '10.66.16.90' %}
+{% set static_dns = '10.66.16.10' %}
+{% set static_gateway = '10.66.16.1' %}
