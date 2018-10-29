@@ -22,10 +22,10 @@ else
   pkg_common=$(find build -name "lava-common_*.deb")
   pkg_server=$(find build -name "lava-server_*.deb")
   pkg_server_doc=$(find build -name "lava-server-doc_*.deb")
-  cp $pkg_common docker/lava-server/lava-common.deb
-  cp $pkg_server docker/lava-server/lava-server.deb
-  cp $pkg_server_doc docker/lava-server/lava-server-doc.deb
-  docker build -t $IMAGE_TAG docker/lava-server
+  cp $pkg_common docker/amd64/lava-server/lava-common.deb
+  cp $pkg_server docker/amd64/lava-server/lava-server.deb
+  cp $pkg_server_doc docker/amd64/lava-server/lava-server-doc.deb
+  docker build -t $IMAGE_TAG docker/amd64/lava-server
 
   # Push only for tags or master
   if [ "$CI_COMMIT_REF_SLUG" = "master" -o -n "$CI_COMMIT_TAG" ]

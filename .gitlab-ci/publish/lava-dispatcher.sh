@@ -21,9 +21,9 @@ else
   git clone https://git.lavasoftware.org/lava/pkg/docker.git
   pkg_common=$(find build -name "lava-common_*.deb")
   pkg_dispatcher=$(find build -name "lava-dispatcher_*.deb")
-  cp $pkg_common docker/lava-dispatcher/lava-common.deb
-  cp $pkg_dispatcher docker/lava-dispatcher/lava-dispatcher.deb
-  docker build -t $IMAGE_TAG docker/lava-dispatcher
+  cp $pkg_common docker/amd64/lava-dispatcher/lava-common.deb
+  cp $pkg_dispatcher docker/amd64/lava-dispatcher/lava-dispatcher.deb
+  docker build -t $IMAGE_TAG docker/amd64/lava-dispatcher
 
   # Push only for tags or master
   if [ "$CI_COMMIT_REF_SLUG" = "master" -o -n "$CI_COMMIT_TAG" ]
