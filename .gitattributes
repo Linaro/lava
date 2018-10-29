@@ -1,0 +1,4 @@
+.gitlab-ci* export-ignore
+.coverage.rc export-ignore
+.gitignore export-ignore
+.gitattributes export-ignore
