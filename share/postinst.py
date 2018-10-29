@@ -240,10 +240,20 @@ def configure():
     shutil.chown(SECRET_KEY, config.LAVA_SYS_USER, config.LAVA_SYS_USER)
     os.chmod(SECRET_KEY, 0o640)
 
-    # Allow lavaserver to write device dictionary files
+    # Allow lavaserver to write dispatcher-config files for XMLRPC API
     os.makedirs("%s/devices/" % DISPATCHER_CONFIG, exist_ok=True)
     shutil.chown(
         "%s/devices/" % DISPATCHER_CONFIG, config.LAVA_SYS_USER, config.LAVA_SYS_USER)
+    for filename in glob.glob("%s/devices/*" % DISPATCHER_CONFIG):
+        shutil.chown(filename, config.LAVA_SYS_USER, config.LAVA_SYS_USER)
+    shutil.chown(
+        "%s/health-checks/" % DISPATCHER_CONFIG, config.LAVA_SYS_USER, config.LAVA_SYS_USER)
+    for filename in glob.glob("%s/health-checks/*" % DISPATCHER_CONFIG):
+        shutil.chown(filename, config.LAVA_SYS_USER, config.LAVA_SYS_USER)
+    shutil.chown(
+        "%s/device-types/" % DISPATCHER_CONFIG, config.LAVA_SYS_USER, config.LAVA_SYS_USER)
+    for filename in glob.glob("%s/device-types/*" % DISPATCHER_CONFIG):
+        shutil.chown(filename, config.LAVA_SYS_USER, config.LAVA_SYS_USER)
 
     # Create temporary database role for db operations.
     pg_admin_username = "user_%012x" % random.getrandbits(48)
