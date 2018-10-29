@@ -114,6 +114,19 @@ class TestMetaTypes(TestCaseWithFactory):
         action_data.save(update_fields=['timeout'])
         self.assertEqual(action_data.timeout, 300)
 
+    def test_decimal_yaml_dump(self):
+        job = TestJob.from_yaml_and_user(
+            self.factory.make_job_yaml(), self.user)
+        test_dict = {
+            'definition': 'unit-test',
+            'case': 'unit-test',
+            'measurement': decimal.Decimal(1234.5),
+            'result': 'pass',
+        }
+        test_case = map_scanned_results(test_dict, job, {}, None)
+        metadata_yaml_ref = "{case: unit-test, definition: unit-test, measurement: '1234.5', result: pass}"
+        self.assertEqual(metadata_yaml_ref, test_case.metadata.strip())
+
     def test_case_as_url(self):
         job = TestJob.from_yaml_and_user(
             self.factory.make_job_yaml(), self.user)
