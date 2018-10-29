@@ -105,10 +105,10 @@ doc:
     paths:
     - doc/v2/_build/html
 
-debian-pkg:
+amd64/pkg-debian-9:
   <<: *job
   stage: build
-  image: hub.lavasoftware.org/lava/ci-images/debian-9-packaging
+  image: hub.lavasoftware.org/lava/ci-images/amd64/pkg-debian-9
   artifacts:
     paths:
     - build/*.deb
@@ -118,10 +118,10 @@ debian-pkg:
     - build/*.changes
     - build/*.buildinfo
 
-debian-10-pkg-amd64:
+amd64/pkg-debian-10:
   <<: *job
   stage: build
-  image: hub.lavasoftware.org/lava/ci-images/debian-10-amd64-packaging
+  image: hub.lavasoftware.org/lava/ci-images/amd64/pkg-debian-10
   artifacts:
     paths:
     - build/*.deb
@@ -131,10 +131,10 @@ debian-10-pkg-amd64:
     - build/*.changes
     - build/*.buildinfo
 
-debian-10-pkg-aarch64:
+aarch64/pkg-debian-10:
   <<: *job_aarch64
   stage: build
-  image: hub.lavasoftware.org/lava/ci-images/debian-10-aarch64-packaging
+  image: hub.lavasoftware.org/lava/ci-images/aarch64/pkg-debian-10
   only:
     refs:
     - master
@@ -152,9 +152,20 @@ debian-10-pkg-aarch64:
 .publish: &publish
   <<: *dind
   stage: publish
-  dependencies: [debian-pkg]
+  dependencies: [amd64/pkg-debian-9]
   variables:
     IMAGE_TAG: $CI_REGISTRY_IMAGE/$CI_JOB_NAME
 
-lava-dispatcher: *publish
-lava-server: *publish
+.publish_aarch64: &publish_aarch64
+  <<: *publish
+  only:
+    refs:
+    - master
+    - tag
+  tags: [dind, aarch64]
+  dependencies: [aarch64/pkg-debian-10, amd64/pkg-debian-9]
+
+amd64/lava-dispatcher: *publish
+amd64/lava-server: *publish
+aarch64/lava-dispatcher: *publish_aarch64
+aarch64/lava-server: *publish_aarch64

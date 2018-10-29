@@ -11,11 +11,11 @@ else
   set -x
 
   # Build the image tag
-  if [ "$CI_COMMIT_TAG" ]
+  if [ -n "$CI_COMMIT_TAG" ]
   then
     IMAGE_TAG="$IMAGE_TAG:$CI_COMMIT_TAG"
   else
-    IMAGE_TAG="$IMAGE_TAG/$CI_COMMIT_REF_SLUG:$(./version.py)"
+    IMAGE_TAG="$IMAGE_TAG:$CI_COMMIT_REF_SLUG-$(./version.py)"
   fi
 
   git clone https://git.lavasoftware.org/lava/pkg/docker.git
