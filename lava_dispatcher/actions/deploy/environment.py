@@ -60,7 +60,7 @@ class DeployDeviceEnvironment(Action):
                 action=self.name,
                 label='environment',
                 key='shell_file',
-                value=self.parameters['deployment_data']['lava_test_shell_file']
+                value=shell_file
             )
 
             self.set_namespace_data(
