@@ -64,7 +64,7 @@ forward ports to different numbers outside the container.
 
 .. code-block:: none
 
- $ docker run --net dockernet --ip 172.18.0.5 -it hub.lavasoftware.org/lava/lava/lava-server/master:2018.7-88-ga7b7939dd
+ $ docker run --net dockernet --ip 172.18.0.5 -it hub.lavasoftware.org/lava/lava/lava-dispatcher:2018.10
 
 This IP address (or a hostname if you configure local DNS
 appropriately) can then be used in commands to docker run to start a
@@ -86,41 +86,69 @@ Official LAVA Software Docker images are available via
 images are built at the same version: ``lava-dispatcher`` and
 ``lava-server``.
 
+Daily builds
+*************
+
 ``hub.lavasoftware.org`` hosts CI images regularly built from the
 ``master`` branch of ``lava``. Images are listed in GitLab:
 
 https://git.lavasoftware.org/lava/lava/container_registry
 
+.. _official_docker_releases:
+
+Official LAVA Releases using Docker
+***********************************
+
 The ``lavasoftware`` organisation on ``hub.docker.com`` hosts releases
 of LAVA. https://hub.docker.com/u/lavasoftware/
 
-For amd64:
+lava-dispatcher
+===============
 
-https://hub.docker.com/r/lavasoftware/lava-server-master/tags/
-https://hub.docker.com/r/lavasoftware/lava-dispatcher-master/tags/
+https://hub.docker.com/r/lavasoftware/lava-dispatcher/
 
-For arm64:
+.. code-block:: none
 
-https://hub.docker.com/r/lavasoftware/lava-server-arm64-master/tags/
-https://hub.docker.com/r/lavasoftware/lava-dispatcher-arm64-master/tags/
+ docker pull lavasoftware/lava-dispatcher:2018.10
+
+or
+
+.. code-block:: none
+
+ docker pull hub.lavasoftware.org/lava/lava/lava-dispatcher:2018.10
+
+lava-server
+===========
+
+https://hub.docker.com/r/lavasoftware/lava-server/
+
+.. code-block:: none
+
+ docker pull lavasoftware/lava-server:2018.10
+
+or
+
+.. code-block:: none
+
+ docker pull hub.lavasoftware.org/lava/lava/lava-server:2018.10
 
 Command lines
 *************
 
 Command lines get long, so use wrapper scripts, e.g.:
 
-   .. code-block:: none
+.. code-block:: none
 
-    #!/bin/sh
-    set -e
-    set -x
+ #!/bin/sh
+ set -e
+ set -x
 
-    docker run \
-    -e "DISPATCHER_HOSTNAME=--hostname=calvin-2018.7-88" \
-    -e "LOGGER_URL=tcp://calvin:5555" \
-    -e "MASTER_URL=tcp://calvin:5556" \
-    --name calvin-docker-88-3 \
-    hub.lavasoftware.org/lava/lava/lava-dispatcher/master:2018.7-88-ga7b7939dd
+ docker run \
+ -e "DISPATCHER_HOSTNAME=--hostname=calvin-2018.7-88" \
+ -e "LOGGER_URL=tcp://calvin:5555" \
+ -e "MASTER_URL=tcp://calvin:5556" \
+ --name calvin-docker-88-3 \
+ hub.lavasoftware.org/lava/lava/lava-dispatcher/master:2018.7-88-ga7b7939dd
 
 Supporting encryption
 *********************
@@ -131,20 +159,21 @@ from the host machine inside the docker container at the specified
 location to exchange files from the host to the container and vice
 versa:
 
-   .. code-block:: none
+.. code-block:: none
 
-    -v $PWD/my-certificates.d:/etc/lava-dispatcher/certificates.d/
+ -v $PWD/my-certificates.d:/etc/lava-dispatcher/certificates.d/
 
 Then use these certificates in the commands:
 
-   .. code-block:: none
+.. code-block:: none
 
-    -e ENCRYPT="--encrypt" \
-    -e MASTER_CERT='/etc/lava-dispatcher/certificates.d/master.key' \
-    -e SLAVE_CERT='/etc/lava-dispatcher/certificates.d/docker-slave-1.key_secret'
+ -e ENCRYPT="--encrypt" \
+ -e MASTER_CERT='/etc/lava-dispatcher/certificates.d/master.key' \
+ -e SLAVE_CERT='/etc/lava-dispatcher/certificates.d/docker-slave-1.key_secret'
 
-   .. seealso:: `lava-dispatcher docker images - part 2 <https://www.stylesen.org/lavadispatcher_docker_images_part_2>`_
-    - note that the options changed since this content was written.
+.. seealso:: `lava-dispatcher docker images - part 2
+   <https://www.stylesen.org/lavadispatcher_docker_images_part_2>`_
+   - note that the options changed since this content was written.
 
 .. _modifying_docker_dispatcher:
 
@@ -197,19 +226,7 @@ CI images
 ``lava/lava/lava-dispatcher/master`` on ``hub.lavasoftware.org``
 contains images like 2018.7-101-g5987db8b5
 
-Release images
-**************
-
-When a release is made, ``lava/lava/lava-dispatcher`` will contain
-images like ``2018.10`` which can be accessed as::
-
- hub.lavasoftware.org/lava/lava/lava-dispatcher:2018.10
- hub.lavasoftware.org/lava/lava/lava-server:2018.10
-
-Also from hub.docker.com::
-
- lavasoftware/lava-server-master:2018.10
- lavasoftware/lava-dispatcher-master:2018.10
+.. seealso:: :ref:`official_docker_releases`
 
 lava-dispatcher
 ***************
