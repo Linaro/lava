@@ -136,6 +136,12 @@ lava-dispatcher:
   schroot:
     name: schroot
     unittests: true
+  img2simg:
+    name: android-sdk-libsparse-utils
+    unittests: true
+  simg2img:
+    name: android-sdk-libsparse-utils
+    unittests: true
   lxc-info:
     name: lxc
     unittests: true

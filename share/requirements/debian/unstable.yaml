@@ -143,10 +143,10 @@ lava-dispatcher:
     name: lxc-templates
     unittests: true
   img2simg:
-    name: img2simg
+    name: android-sdk-libsparse-utils
     unittests: true
   simg2img:
-    name: simg2img
+    name: android-sdk-libsparse-utils
     unittests: true
   minicom:
     name: minicom
