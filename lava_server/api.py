@@ -26,6 +26,8 @@ import yaml
 from django.http import Http404
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
+
+from lava_common.utils import debian_package_version
 from lava_scheduler_app.views import get_restricted_job
 from lava_scheduler_app.models import Device, DeviceType
 from linaro_django_xmlrpc.models import errors, Mapper, SystemAPI
@@ -77,14 +79,7 @@ class LavaSystemAPI(SystemAPI):
         ------------
         lava-server version string
         """
-
-        changelog = '/usr/share/doc/lava-server/changelog.Debian.gz'
-        if os.path.exists(changelog):
-            deb_version = subprocess.check_output((  # nosec internal
-                'dpkg-query', '-W', "-f=${Version}\n",
-                "lava-server")).strip().decode('utf-8')
-            return deb_version
-        return ''
+        return debian_package_version(pkg="lava-server", split=False)
 
     # Update the integer return value when adding arguments to
     # existing functions anywhere in the XML-RPC API or
