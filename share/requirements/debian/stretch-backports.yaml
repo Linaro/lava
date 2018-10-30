@@ -5,6 +5,9 @@
 # note: this will produce TWO lines of output in 'names' mode
 
 lava-server:
+  requests:
+   version: ">=2.20.0"
+   name: python3-requests
   django-auth-ldap:
     version: ">=1.2.12"
     name: python3-django-auth-ldap
@@ -13,5 +16,8 @@ lava-server:
     name: python3-django-tables2
 
 lava-dispatcher:
+  requests:
+   version: ">=2.20.0"
+   name: python3-requests
 
 lava-common:

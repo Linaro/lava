@@ -27,8 +27,6 @@ lava-server:
     name: python3-tz
   pyzmq:
     name: python3-zmq
-  requests:
-    name: python3-requests
   simplejson:
     name: python3-simplejson
   voluptuous:
@@ -59,8 +57,6 @@ lava-dispatcher:
     name: python3-pyudev
   pyzmq:
     name: python3-zmq
-  requests:
-    name: python3-requests
   setproctitle:
     version: ">=1.1.8"
     name: python3-setproctitle
