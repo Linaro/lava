@@ -163,7 +163,8 @@ class TestKVMBasicDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
     def setUp(self):
         super().setUp()
         self.factory = Factory()
-        self.job = self.factory.create_job('qemu01.jinja2', 'sample_jobs/kvm.yaml')
+        job_ctx = {'arch': 'amd64', 'no_kvm': True}  # override to allow unit tests on all types of systems
+        self.job = self.factory.create_job('qemu01.jinja2', 'sample_jobs/kvm.yaml', job_ctx)
 
     def test_deploy_job(self):
         self.assertEqual(self.job.pipeline.job, self.job)
@@ -187,7 +188,7 @@ class TestKVMBasicDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
             self.assertEqual([], action.errors)
 
     def test_available_architectures(self):
-        job_ctx = {'arch': 'unknown'}
+        job_ctx = {'arch': 'unknown', 'no_kvm': True}
         job = self.factory.create_job('qemu01.jinja2', 'sample_jobs/kvm.yaml', job_ctx)
         self.assertIsNotNone(job.device['available_architectures'])
         self.assertEqual(job.parameters['context']['arch'], 'unknown')

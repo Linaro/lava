@@ -253,7 +253,8 @@ class Factory:
         """
         Custom function to allow for extra exception handling.
         """
-        (data, device_dict) = self.create_device('kvm01.jinja2')
+        job_ctx = {'arch': 'amd64', 'no_kvm': True}  # override to allow unit tests on all types of systems
+        (data, device_dict) = self.create_device('kvm01.jinja2', job_ctx)
         device = NewDevice(yaml.safe_load(data))
         if self.debug:
             print('####### Device configuration #######')
