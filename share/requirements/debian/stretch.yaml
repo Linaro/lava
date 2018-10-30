@@ -32,6 +32,39 @@ lava-server:
   voluptuous:
     version: ">=0.8.8"
     name: python3-voluptuous
+  guestfs:
+    name: python3-guestfs
+    unittests: true
+  magic:
+    name: python3-magic
+    unittests: true
+  configobj:
+    name: python3-configobj
+    unittests: true
+  netifaces:
+    version: ">=0.10.0"
+    name: python3-netifaces
+    unittests: true
+  pexpect:
+    version: ">=4.2"
+    name: python3-pexpect
+    unittests: true
+  pyudev:
+    version: ">=0.21"
+    name: python3-pyudev
+    unittests: true
+  pytest-django:
+    name: python3-pytest-django
+    unittests: true
+  pytest:
+    name: python3-pytest
+    unittests: true
+  pytest-cov:
+    name: python3-pytest-cov
+    unittests: true
+  tftpd-hpa:
+    name: tftpd-hpa
+    unittests: true
 
 lava-dispatcher:
   PyYAML:
@@ -62,6 +95,10 @@ lava-dispatcher:
     name: python3-setproctitle
   guestfs:
     name: python3-guestfs
+  voluptuous:
+    version: ">=0.8.8"
+    name: python3-voluptuous
+    unittests: true
   gdb-multiarch:
     name: gdb-multiarch
     unittests: true
@@ -85,6 +122,9 @@ lava-dispatcher:
     unittests: true
   telnet:
     name: telnet
+    unittests: true
+  tftpd-hpa:
+    name: tftpd-hpa
     unittests: true
   qemu-system-x86_64:
     name: qemu-system-x86
