@@ -3,6 +3,7 @@ stages:
 - analyze
 - build
 - publish
+- deploy
 
 ###########################
 # Templates               #
@@ -169,3 +170,15 @@ amd64/lava-dispatcher: *publish
 amd64/lava-server: *publish
 aarch64/lava-dispatcher: *publish_aarch64
 aarch64/lava-server: *publish_aarch64
+
+##########
+# Deploy #
+##########
+lavafed-master:
+  <<: *job
+  stage: deploy
+  tags: [deploy]
+  only: [schedules]
+  environment:
+    name: lavafed-master
+    url: https://federation.lavasoftware.org/lava/
