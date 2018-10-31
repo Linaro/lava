@@ -14,6 +14,7 @@ else
     echo "LAVAFED_PATH is empty"
     exit 1
   elif [ -z "$LAVAFED_CONTAINER_NAME" ]
+  then
     echo "LAVAFED_CONTAINER_NAME is empty"
     exit 1
   fi
@@ -28,8 +29,8 @@ else
   fi
 
   # Check if the container is running
-  hash=$(docker container ls --filter name="$LAVAFED_CONTAINER_NAME" --quiet)
-  if [ -n "$hash" ]
+  version=$(docker container ls --filter name="$LAVAFED_CONTAINER_NAME" --format "{{.Image}}")
+  if [ -n "$version" ] && [ "$version" != "$IMAGE_TAG" ]
   then
     echo "Stopping the container"
     docker container stop --time 20 "$LAVAFED_CONTAINER_NAME"
