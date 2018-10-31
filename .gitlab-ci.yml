@@ -162,7 +162,7 @@ aarch64/pkg-debian-10:
   only:
     refs:
     - master
-    - tag
+    - tags
   tags: [dind, aarch64]
   dependencies: [aarch64/pkg-debian-10, amd64/pkg-debian-9]
 
