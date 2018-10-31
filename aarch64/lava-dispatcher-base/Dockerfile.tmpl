@@ -7,7 +7,8 @@ ENV DEBIAN_FRONTEND noninteractive
 # Depends (system then python)
 RUN apt-get update -q && \
     apt-get install --no-install-recommends --yes file python3-setuptools systemd-sysv tar && \
-    apt-get install --no-install-recommends --yes {STRETCH_DEPS}
+    apt-get install --no-install-recommends --yes {STRETCH_DEPS} && \
+    apt-get install --no-install-recommends --yes -t stretch-backports {STRETCH_BPO_DEPS}
 
 # Recommends
 # Excluding: lxc, sudo
