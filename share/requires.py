@@ -54,7 +54,7 @@ def debian(args, depends):
                 if depends[args.package][key].get("unittests"):
                     unittests.append(item["name"])
             if unittests:
-                print(" ".join(unittests))
+                print(" ".join(sorted(unittests)))
         return 0
     if args.names:
         msg = []
@@ -69,9 +69,9 @@ def debian(args, depends):
                 continue
             msg.append(item["name"])
         if backports:
-            print(" ".join(backports))
+            print(" ".join(sorted(backports)))
         elif msg:
-            print(" ".join(msg))
+            print(" ".join(sorted(msg)))
         return 0
     if not depends[args.package]:
         return 0
