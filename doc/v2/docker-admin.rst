@@ -78,6 +78,8 @@ variables.
     -e "MASTER_URL=tcp://172.18.0.5:5556" \
     ...
 
+.. _lava_docker_images:
+
 Official LAVA Software Docker images
 ####################################
 

@@ -228,6 +228,7 @@ LAVA device integration guide
    integrate-iot
    integrate-uefi
    integration-stories
+   bootloaders
 
 .. _contents_migration:
 

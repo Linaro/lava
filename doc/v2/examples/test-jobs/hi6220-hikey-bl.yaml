@@ -1,0 +1,238 @@
+device_type: hi6220-hikey-bl
+job_name: HiKey 6220-bl health check - build 70
+timeouts:
+  job:
+    minutes: 60
+  action:
+    minutes: 15
+  connection:
+    minutes: 2
+priority: medium
+visibility: public
+
+metadata:
+  source: https://git.linaro.org/lava-team/refactoring.git
+  path: hi6220-recovery.yaml
+  recovery-build: '70'
+
+protocols:
+  lava-lxc:
+    name: lxc-hikey-test
+    template: debian
+    distribution: debian
+    release: stretch
+
+actions:
+- deploy:
+    namespace: tlxc
+    timeout:
+      minutes: 5
+    to: lxc
+    packages:
+    - adb
+    - fastboot
+    - python
+    - python-serial
+    os: debian
+
+- boot:
+    namespace: tlxc
+    prompts:
+    - 'root@(.*):/#'
+    timeout:
+      minutes: 5
+    method: lxc
+
+- deploy:
+    timeout:
+      minutes: 10
+    to: recovery
+    namespace: recovery
+    connection: lxc
+    images:
+      script:
+        url: http://images.validation.linaro.org/snapshots.linaro.org/96boards/reference-platform/components/uefi-staging/70/hikey/release/hisi-idt.py
+      recovery:
+        url: http://images.validation.linaro.org/snapshots.linaro.org/96boards/reference-platform/components/uefi-staging/70/hikey/release/recovery.bin
+      loader:
+        url: http://images.validation.linaro.org/snapshots.linaro.org/96boards/reference-platform/components/uefi-staging/70/hikey/release/l-loader.bin
+      ptable:
+        url: http://images.validation.linaro.org/snapshots.linaro.org/96boards/reference-platform/components/uefi-staging/70/hikey/release/ptable-linux-8g.img
+      fastboot:
+        url: http://images.validation.linaro.org/snapshots.linaro.org/96boards/reference-platform/components/uefi-staging/70/hikey/release/fip.bin
+      nvme:
+        url: http://images.validation.linaro.org/snapshots.linaro.org/96boards/reference-platform/components/uefi-staging/70/hikey/release/nvme.img
+    os: debian
+
+- boot:
+    namespace: recovery
+    timeout:
+      minutes: 5
+    method: recovery
+    commands: recovery
+
+- test:
+    namespace: tlxc
+    connection: lxc
+    timeout:
+      minutes: 10
+    definitions:
+    - repository: https://git.linaro.org/lava-team/refactoring.git/
+      from: git
+      path: testdefs/hikey-6220-recovery-59.yaml
+      name: execute-recovery
+
+- boot:
+    namespace: recovery
+    timeout:
+      minutes: 5
+    method: recovery
+    commands: exit
+
+- deploy:
+    timeout:
+      minutes: 15
+    to: fastboot
+    namespace: hikey
+    images:
+      ptable:
+        url: http://images.validation.linaro.org/snapshots.linaro.org/96boards/reference-platform/components/uefi-staging/70/hikey/release/ptable-aosp-8g.img
+        reboot: hard-reset
+      boot:
+        url: http://images.validation.linaro.org/snapshots.linaro.org/96boards/hikey/linaro/aosp-master/868/boot.img.xz
+        compression: xz
+        reboot: hard-reset
+      vendor:
+        url: http://images.validation.linaro.org/snapshots.linaro.org/96boards/hikey/linaro/aosp-master/868/vendor.img.xz
+        compression: xz
+      cache:
+        url: http://images.validation.linaro.org/snapshots.linaro.org/96boards/hikey/linaro/aosp-master/868/cache.img.xz
+        compression: xz
+      userdata:
+        url: http://images.validation.linaro.org/snapshots.linaro.org/96boards/hikey/linaro/aosp-master/868/userdata.img.xz
+        compression: xz
+      system:
+        url: http://images.validation.linaro.org/snapshots.linaro.org/96boards/hikey/linaro/aosp-master/868/system.img.xz
+        compression: xz
+    os: debian
+    protocols:
+      lava-lxc:
+      - action: fastboot-deploy
+        request: pre-power-command
+        timeout:
+          minutes: 2
+
+- boot:
+    namespace: hikey
+    prompts:
+    - 'healthd: No battery devices found'
+    - 'console\:\/ \$'
+    timeout:
+      minutes: 15
+    method: grub
+    commands: installed
+
+- test:
+    namespace: tlxc
+    timeout:
+      minutes: 10
+    definitions:
+    - repository: https://git.linaro.org/lava-team/refactoring.git/
+      from: git
+      path: android/lava-android-basic-lxc.yaml
+      name: v2-make-adb-connection
+
+- deploy:
+    timeout:
+      minutes: 45
+    to: fastboot
+    # OE deployment
+    namespace: hikey
+    connection: lxc
+    images:
+      ptable:
+        url: http://images.validation.linaro.org/snapshots.linaro.org/96boards/reference-platform/components/uefi-staging/70/hikey/release/ptable-linux-8g.img
+        reboot: hard-reset
+      boot:
+        url: http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lkft/morty/hikey/rpb/linux-mainline/985/boot-0.0+AUTOINC+06e4def583-fb1158a365-r0-hikey-20180626160020-985.uefi.img
+        reboot: hard-reset
+      system:
+        url: http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lkft/morty/hikey/rpb/linux-mainline/985/rpb-console-image-hikey-20180626160020-985.rootfs.img.gz
+        compression: gz
+        apply-overlay: true
+    os: oe
+    protocols:
+      lava-lxc:
+      - action: fastboot-deploy
+        request: pre-power-command
+        timeout:
+          minutes: 2
+- boot:
+    namespace: hikey
+    prompts:
+    - 'root@hikey:~#'
+    auto_login:
+      login_prompt: 'login:'
+      username: root
+    timeout:
+      minutes: 5
+    method: grub
+    commands: installed
+    protocols:
+      lava-lxc:
+      - action: grub-sequence-action
+        request: pre-os-command
+        timeout:
+          minutes: 2
+
+- test:
+    namespace: hikey
+    timeout:
+      minutes: 5
+    definitions:
+    - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+      from: git
+      path: lava-test-shell/smoke-tests-basic.yaml
+      name: smoke-tests-basic-oe
+    - repository:
+        metadata:
+          format: Lava-Test Test Definition 1.0
+          name: device-helper
+          description: "check helpers"
+          os:
+          - debian
+          scope:
+          - functional
+        run:
+          steps:
+          - lava-target-mac
+          - lava-target-ip
+      from: inline
+      name: device-helpers
+      path: inline/device-helpers.yaml
+
+- test:
+   namespace: tlxc
+   timeout:
+     minutes: 5
+   definitions:
+    - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+      from: git
+      path: lava-test-shell/smoke-tests-basic.yaml
+      name: smoke-tests-basic-lxc
+    - repository:
+        metadata:
+          format: Lava-Test Test Definition 1.0
+          name: device-helper
+          description: "check helpers"
+          os:
+          - debian
+          scope:
+          - functional
+        run:
+          steps:
+          - lava-target-mac
+          - lava-target-ip
+      from: inline
+      name: lxc-helpers
+      path: inline/lxc-helpers.yaml
