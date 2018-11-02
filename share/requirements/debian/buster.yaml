@@ -94,6 +94,9 @@ lava-dispatcher:
   pexpect:
     version: ">=4.2"
     name: python3-pexpect
+  pytest:
+    name: python3-pytest
+    unittests: true
   pytz:
     name: python3-tz
   pyudev:
