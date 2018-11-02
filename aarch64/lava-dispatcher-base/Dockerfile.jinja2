@@ -1,0 +1,12 @@
+{% extends "base.jinja2" %}
+
+{% set base_image = "arm64v8/debian:stretch-backports" %}
+
+{% set dependencies = [
+    {"pkgs": "file python3-setuptools systemd-sysv tar"},
+    {"pkgs": requires("debian", "stretch", "lava-dispatcher") },
+    {"pkgs": requires("debian", "stretch-backports", "lava-dispatcher"),
+     "from": "stretch-backports" },
+    {"pkgs": "bridge-utils debootstrap dfu-util git libguestfs-tools nfs-kernel-server ntp openbsd-inetd qemu-system-arm qemu-system-x86 rpcbind rsync ser2net telnet tftpd-hpa u-boot-tools unzip xz-utils" },
+    {"pkgs": "apache2 bzr" }
+] %}

@@ -17,8 +17,6 @@ do
   # Test that the package exist and it's not from stretch-backports
   dpkg-query --show --showformat '${Version}\n' "$pkg" | grep -qv bpo
 done
-cp /root/image/Dockerfile.tmpl /tmp/Dockerfile
-sed -i "s#{STRETCH_DEPS}#$PACKAGES#" /tmp/Dockerfile
 
 echo "Check stretch-backports dependencies"
 PACKAGES=$(/root/lava/share/requires.py -p lava-dispatcher -d debian -s stretch-backports -n| sed "s# #\n#g" | sort -u | xargs echo)
@@ -29,7 +27,3 @@ do
   echo "  => $VERSION"
   dpkg-query --show --showformat '${Version}\n' "$pkg" | grep -q bpo
 done
-sed -i "s#{STRETCH_BPO_DEPS}#$PACKAGES#" /tmp/Dockerfile
-
-echo "Check Dockerfile"
-diff -u /root/image/Dockerfile /tmp/Dockerfile

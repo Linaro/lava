@@ -1,0 +1,11 @@
+FROM {{ base_image }}
+
+LABEL maintainer="Rémi Duraffort <remi.duraffort@linaro.org>"
+
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN apt-get update -q
+
+{% for dep in dependencies %}
+{%- if dep["pkgs"] %}RUN apt-get install {% if not dep["recommends"] %}--no-install-recommends {% endif %}--yes {% if dep["from"] %}-t {{ dep["from"] }} {% endif %}{{ dep["pkgs"] }}{% endif %}
+{% endfor %}
