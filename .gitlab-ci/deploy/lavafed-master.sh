@@ -30,7 +30,17 @@ else
 
   # Check if the container is running
   version=$(docker container ls --filter name="$LAVAFED_CONTAINER_NAME" --format "{{.Image}}")
-  if [ -n "$version" ] && [ "$version" != "$IMAGE_TAG" ]
+  if [ "$version" = "$IMAGE_TAG" ]
+  then
+    echo "Already running latest version"
+    exit 0
+  fi
+
+  # Pull the image before stopping the container to reduce downtime
+  echo "Pulling new image"
+  docker pull "$IMAGE_TAG"
+
+  if [ -n "$version" ]
   then
     echo "Stopping the container"
     docker container stop --time 20 "$LAVAFED_CONTAINER_NAME"
