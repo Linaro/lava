@@ -242,6 +242,9 @@ class ShellSession(Connection):
             return self.wait()
         # connection_prompt_limit
         partial_timeout = remaining / 2.0
+        logger.debug(
+            "Waiting using forced prompt support. %ss timeout" % partial_timeout
+        )
         while True:
             try:
                 return self.raw_connection.expect(

@@ -21,7 +21,7 @@
 import time
 import pexpect
 from lava_dispatcher.action import Action
-from lava_common.exceptions import TestError, JobError
+from lava_common.exceptions import TestError, JobError, LAVABug
 from lava_common.constants import (
     KERNEL_FREE_UNUSED_MSG,
     KERNEL_FREE_INIT_MSG,
@@ -117,7 +117,11 @@ class LinuxKernelMessages(Action):
         if cls.MESSAGE_CHOICES[cls.FREE_UNUSED][1] in connection.prompt_str:
             if cls.MESSAGE_CHOICES[cls.FREE_INIT][1] in connection.prompt_str:
                 init = True
-        remaining = max_end_time - time.time()
+        remaining = max_end_time - start
+        if remaining < 0:
+            raise LAVABug(
+                "Invalid time remaining: max: %s start: %s" % (max_end_time, start)
+            )
 
         while True:
             if action:
@@ -127,7 +131,10 @@ class LinuxKernelMessages(Action):
                     seconds_to_str(remaining),
                 )
             try:
-                index = connection.force_prompt_wait(remaining)
+                if action and action.force_prompt:
+                    index = connection.force_prompt_wait(remaining)
+                else:
+                    index = connection.wait(max_end_time)
             except (pexpect.EOF, pexpect.TIMEOUT, TestError):
                 if action:
                     msg = "Failed to match - connection timed out handling messages."
