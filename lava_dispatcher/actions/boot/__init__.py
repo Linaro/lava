@@ -256,7 +256,8 @@ class AutoLoginAction(Action):
             if kernel_start_message:
                 res = self.wait(connection)
                 if res != 0:
-                    raise InfrastructureError('matched a bootloader error message: %s' % connection.prompt_str[res])
+                    msg = 'matched a bootloader error message: %s %d' % (connection.prompt_str[res], res)
+                    raise InfrastructureError(msg)
 
         def check_prompt_characters(chk_prompt):
             if not any([True for c in DISTINCTIVE_PROMPT_CHARACTERS if c in chk_prompt]):
@@ -709,7 +710,8 @@ class BootloaderCommandsAction(Action):
             if i != (len(commands)):
                 res = self.wait(connection, max_end_time)
                 if res != 0:
-                    raise InfrastructureError('matched a bootloader error message')
+                    msg = "matched a bootloader error message: %s %d" % (connection.prompt_str[res], res)
+                    raise InfrastructureError(msg)
                 i += 1
 
         if final_message and self.expect_final:
