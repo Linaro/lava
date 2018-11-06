@@ -15,5 +15,5 @@ then
   apt-get install --no-install-recommends --yes -t stretch-backports $DEPS
 else
   set -x
-  PYTHONPATH=. py.test-3 --cache-clear -v --junitxml=dispatcher.xml lava_dispatcher/test
+  PYTHONPATH=. pytest-3 --cache-clear -v --junitxml=dispatcher.xml lava_dispatcher/test
 fi
