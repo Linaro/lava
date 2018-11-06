@@ -177,10 +177,10 @@ Local version strings
 The local version is built (using ``./version.py``) from these components:
 
 * package name
-* ``git describe``::
+* ``git describe`` - (dashes replaced by dots)::
 
-   $ git describe
-   2018.7-35-gb022cde9
+   $ ./version.py
+   2018.7.35.gb022cde9
 
 The latest git hash is a reference to the latest commit. If you have
 not committed local changes (e.g. you are on a local branch based on a

@@ -40,7 +40,10 @@ def version_tag():
     if os.path.exists("./.git/"):
         pattern = re.compile(r"(?P<tag>.+)-(?P<commits>\d+)-g(?P<hash>[abcdef\d]+)")
         describe = (
-            subprocess.check_output(["git", "describe"]).strip().decode("utf-8")
+            subprocess.check_output(["git", "describe"])
+            .strip()
+            .decode("utf-8")
+            .replace("-", ".")
         )  # nosec - internal
         m = pattern.match(describe)
         if m is None:
