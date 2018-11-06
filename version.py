@@ -38,7 +38,7 @@ def version_tag():
     :return: a version string based on the tag and short hash
     """
     if os.path.exists("./.git/"):
-        pattern = re.compile(r"(?P<tag>.+)-(?P<commits>\d+)-g(?P<hash>[abcdef\d]+)")
+        pattern = re.compile(r"(?P<tag>.+)\.(?P<commits>\d+)\.g(?P<hash>[abcdef\d]+)")
         describe = (
             subprocess.check_output(["git", "describe"])
             .strip()
@@ -50,7 +50,7 @@ def version_tag():
             return describe
         else:
             d = m.groupdict()
-            return "%s-%04d-g%s" % (d["tag"], int(d["commits"]), d["hash"])
+            return "%s.%04d.g%s" % (d["tag"], int(d["commits"]), d["hash"])
     if os.path.exists('debian/changelog'):
         return subprocess.check_output(('dpkg-parsechangelog', '--show-field',  # nosec - internal
                                         'Version')).strip().decode('utf-8').split('-')[0]
