@@ -132,7 +132,15 @@
       </dd>
       <dt>Worker</dt>
       {% if device.worker_host %}
-      <dd><a href="{{ device.worker_host.get_absolute_url }}">{{ device.worker_host.hostname }}</a></dd>
+      <dd><a href="{{ device.worker_host.get_absolute_url }}">{{ device.worker_host.hostname }}</a>
+      {% if device.worker_host.state == device.worker_host.STATE_ONLINE and device.worker_host.health == device.worker_host.HEALTH_ACTIVE %}
+      {% elif device.worker_host.health == device.worker_host.HEALTH_ACTIVE %}
+      <span class="glyphicon glyphicon-fire text-danger"></span>
+      {% else %}
+      <span class="glyphicon glyphicon-minus-sign text-warning"></span>
+      {% endif %}
+      {{ worker.get_state_display }}
+      </dd>
       {% else %}
       <dd><i>...</i></dd>
       {% endif %}

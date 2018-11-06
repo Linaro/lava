@@ -606,6 +606,32 @@ class DeviceTable(LavaTable):
     def render_device_type(self, record):  # pylint: disable=no-self-use
         return pklink(record.device_type)
 
+    def render_worker_host(self, record):
+        if record.worker_host.state == Worker.STATE_ONLINE and record.worker_host.health == Worker.HEALTH_ACTIVE:
+            return mark_safe(  # nosec - internal data
+                '<a href="%s">%s</span></a>'
+                % (
+                    record.worker_host.get_absolute_url(),
+                    record.worker_host,
+                )
+            )
+        elif record.worker_host.health == Worker.HEALTH_ACTIVE:
+            return mark_safe(  # nosec - internal data
+                '<a href="%s" class="text-danger">%s <span class="glyphicon glyphicon-fire"></span></a>'
+                % (
+                    record.worker_host.get_absolute_url(),
+                    record.worker_host,
+                )
+            )
+        else:
+            return mark_safe(  # nosec - internal data
+                '<a href="%s" class="text-warning">%s <span class="glyphicon glyphicon-minus-sign"></span></a>'
+                % (
+                    record.worker_host.get_absolute_url(),
+                    record.worker_host,
+                )
+            )
+
     def render_health(self, record):
         if record.health == Device.HEALTH_GOOD:
             return mark_safe('<strong class="text-success">Good</strong>')  # nosec - internal data
