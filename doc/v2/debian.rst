@@ -216,9 +216,9 @@ The helper supports ``lava``::
 ``lava-dispatcher`` has architecture-dependent dependencies. By
 default, the package is built for the native architecture and can only
 be installed on that architecture. To build for a different
-architecture, e.g. armhf, use::
+architecture, e.g. arm64, use::
 
- $ /usr/share/lava-server/debian-dev-build.sh -p lava -a armhf
+ $ /usr/share/lava-server/debian-dev-build.sh -a arm64 -B
 
 This does a *binary build*, so the source is not included, which allows
 these builds to be included in a local repository, e.g. using
@@ -630,10 +630,10 @@ Packaging changes
 
 From time to time, there can be packaging changes required to handle changes in
 the LAVA upstream codebase. If you have write access to the packaging
-repository, changes to the packaging can be tested by pushing to a public
-branch and passing the ``-b`` option to :file:`debian-dev-build-sh`::
+repository, changes to the packaging can be tested by pushing to your
+fork of lava.git and making a local commit. Then build as normal::
 
- $ /usr/share/lava-server/debian-dev-build.sh -p lava-server -b docs
+ $ /usr/share/lava-server/debian-dev-build.sh
 
 .. _architecture_builds:
 
@@ -642,9 +642,9 @@ Building for other architectures
 
 ``lava-server`` is the same for all architectures but ``lava-dispatcher`` has a
 different set of dependencies depending on the build architecture. To build an
-``armhf`` package of lava-dispatcher using the developer scripts, use::
+``arm64`` package of lava-dispatcher using the developer scripts, use::
 
- $ /usr/share/lava-server/debian-dev-build.sh -p lava-dispatcher -a armhf
+ $ /usr/share/lava-server/debian-dev-build.sh -a arm64 -B
 
 .. _django_debug_toolbar:
 
