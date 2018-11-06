@@ -119,12 +119,17 @@ pristine-tar = False
 cleaner = true
 EOF
 git add debian/gbp.conf
-dch -b -v "${VERSION}+${SUITE}" -D ${SUITE} "Local developer native build for ${SUITE}"
+# if building for stretch, need the backports dependencies too.
+BUILD_SUITE="${SUITE}"
+if [ "${SUITE}" = 'stretch' ]; then
+    BUILD_SUITE='stretch-backports'
+fi
+dch -b -v "${VERSION}+${SUITE}" -D ${BUILD_SUITE} "Local developer native build for ${BUILD_SUITE}"
 if [ -n "${LOG}" ]; then
   dch -a "${LOG}"
 fi
 git add debian
-git commit -m "Local developer native build for ${SUITE}"
+git commit -m "Local developer native build for ${BUILD_SUITE}"
 
 CHANGES="${DIR}/${NAME}_${VERSION}*.changes"
 gbp buildpackage ${GBP_OPTS} --git-debian-branch=${SCRATCH} --git-builder="debuild ${DEBUILD_OPTS}"
