@@ -349,7 +349,10 @@ class EnterFastbootAction(Action):
                 raise InfrastructureError("Unable to enter fastboot: %s" %
                                           command_output)
             else:
-                status = [status.strip() for status in command_output.split(
-                    '\n') if 'finished' in status][0]
-                self.results = {'status': status}
+                lines = [status for status in command_output.split(
+                    '\n') if 'finished' in status.lower()]
+                if lines:
+                    self.results = {'status': lines[0].strip()}
+                else:
+                    self.results = {'fail': 'fastboot'}
         return connection
