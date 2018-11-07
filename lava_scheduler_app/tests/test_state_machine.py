@@ -24,15 +24,11 @@ import yaml
 from django.contrib.auth.models import User
 from django.test import TestCase
 
-from lava_scheduler_app.models import (
-    Device,
-    DeviceType,
-    TestJob,
-    Worker,
-)
+from lava_scheduler_app.models import Device, DeviceType, TestJob, Worker
 
 
-minimal_valid_job = yaml.safe_dump("""
+minimal_valid_job = yaml.safe_dump(
+    """
 job_name: minimal valid job
 visibility: public
 timeouts:
@@ -41,20 +37,30 @@ timeouts:
   action:
     minutes: 5
 actions: []
-""")
+"""
+)
 
 
 class TestTestJobStateMachine(TestCase):
-
     def setUp(self):
-        self.worker = Worker.objects.create(hostname="worker-01", state=Worker.STATE_ONLINE)
+        self.worker = Worker.objects.create(
+            hostname="worker-01", state=Worker.STATE_ONLINE
+        )
         self.device_type = DeviceType.objects.create(name="dt-01")
-        self.device = Device.objects.create(hostname="device-01", device_type=self.device_type,
-                                            worker_host=self.worker, health=Device.HEALTH_UNKNOWN)
+        self.device = Device.objects.create(
+            hostname="device-01",
+            device_type=self.device_type,
+            worker_host=self.worker,
+            health=Device.HEALTH_UNKNOWN,
+        )
         self.user = User.objects.create(username="user-01")
-        self.job = TestJob.objects.create(requested_device_type=self.device_type,
-                                          submitter=self.user, user=self.user, is_public=True,
-                                          definition=minimal_valid_job)
+        self.job = TestJob.objects.create(
+            requested_device_type=self.device_type,
+            submitter=self.user,
+            user=self.user,
+            is_public=True,
+            definition=minimal_valid_job,
+        )
 
     def check_device(self, state, health):
         self.device.refresh_from_db()
@@ -186,7 +192,11 @@ class TestTestJobStateMachine(TestCase):
         self.job.actual_device = self.device
         self.job.save()
         for (state, _) in TestJob.STATE_CHOICES:
-            if state in [TestJob.STATE_SUBMITTED, TestJob.STATE_SCHEDULING, TestJob.STATE_SCHEDULED]:
+            if state in [
+                TestJob.STATE_SUBMITTED,
+                TestJob.STATE_SCHEDULING,
+                TestJob.STATE_SCHEDULED,
+            ]:
                 continue
             self.job.state = state
             self.job.save()
@@ -254,26 +264,40 @@ class TestTestJobStateMachine(TestCase):
             self.assertEqual(self.job.actual_device, self.device)
 
     def test_job_state_canceling_multinode(self):
-        self.device2 = Device.objects.create(hostname="device-02",
-                                             device_type=self.device_type,
-                                             worker_host=self.worker)
-        self.device3 = Device.objects.create(hostname="device-03",
-                                             device_type=self.device_type,
-                                             worker_host=self.worker)
+        self.device2 = Device.objects.create(
+            hostname="device-02", device_type=self.device_type, worker_host=self.worker
+        )
+        self.device3 = Device.objects.create(
+            hostname="device-03", device_type=self.device_type, worker_host=self.worker
+        )
 
-        self.job.definition = yaml.safe_dump({"protocols": {"lava-multinode": {"role": "master", "essential": True}}})
+        self.job.definition = yaml.safe_dump(
+            {"protocols": {"lava-multinode": {"role": "master", "essential": True}}}
+        )
         self.job.target_group = "target_group"
         self.job.save()
-        self.sub_job1 = TestJob.objects.create(requested_device_type=self.device_type,
-                                               submitter=self.user, user=self.user,
-                                               target_group="target_group", is_public=True)
-        self.sub_job1.definition = yaml.safe_dump({"protocols": {"lava-multinode": {"role": "worker", "essential": False}}})
+        self.sub_job1 = TestJob.objects.create(
+            requested_device_type=self.device_type,
+            submitter=self.user,
+            user=self.user,
+            target_group="target_group",
+            is_public=True,
+        )
+        self.sub_job1.definition = yaml.safe_dump(
+            {"protocols": {"lava-multinode": {"role": "worker", "essential": False}}}
+        )
         self.sub_job1.actual_device = self.device2
         self.sub_job1.save()
-        self.sub_job2 = TestJob.objects.create(requested_device_type=self.device_type,
-                                               submitter=self.user, user=self.user,
-                                               target_group="target_group", is_public=True)
-        self.sub_job2.definition = yaml.safe_dump({"protocols": {"lava-multinode": {"role": "worker", "essential": False}}})
+        self.sub_job2 = TestJob.objects.create(
+            requested_device_type=self.device_type,
+            submitter=self.user,
+            user=self.user,
+            target_group="target_group",
+            is_public=True,
+        )
+        self.sub_job2.definition = yaml.safe_dump(
+            {"protocols": {"lava-multinode": {"role": "worker", "essential": False}}}
+        )
         self.sub_job2.actual_device = self.device3
         self.sub_job2.save()
 
@@ -312,7 +336,9 @@ class TestTestJobStateMachine(TestCase):
         self.assertEqual(self.sub_job2.state, TestJob.STATE_CANCELING)
 
         # 2/ Non-essential role
-        self.job.definition = yaml.safe_dump({"protocols": {"lava-multinode": {"role": "master", "essential": False}}})
+        self.job.definition = yaml.safe_dump(
+            {"protocols": {"lava-multinode": {"role": "master", "essential": False}}}
+        )
         self.job.state = TestJob.STATE_RUNNING
         self.job.actual_device = self.device
         self.job.actual_device.state = Device.STATE_RUNNING
@@ -548,22 +574,40 @@ class TestTestJobStateMachine(TestCase):
 
     def test_job_go_state_finished_multinode(self):
         # 1/ Essential role
-        self.device2 = Device.objects.create(hostname="device-02", device_type=self.device_type)
-        self.device3 = Device.objects.create(hostname="device-03", device_type=self.device_type)
+        self.device2 = Device.objects.create(
+            hostname="device-02", device_type=self.device_type
+        )
+        self.device3 = Device.objects.create(
+            hostname="device-03", device_type=self.device_type
+        )
 
-        self.job.definition = yaml.safe_dump({"protocols": {"lava-multinode": {"role": "master", "essential": True}}})
+        self.job.definition = yaml.safe_dump(
+            {"protocols": {"lava-multinode": {"role": "master", "essential": True}}}
+        )
         self.job.target_group = "target_group"
         self.job.save()
-        self.sub_job1 = TestJob.objects.create(requested_device_type=self.device_type,
-                                               submitter=self.user, user=self.user,
-                                               target_group="target_group", is_public=True)
-        self.sub_job1.definition = yaml.safe_dump({"protocols": {"lava-multinode": {"role": "worker", "essential": False}}})
+        self.sub_job1 = TestJob.objects.create(
+            requested_device_type=self.device_type,
+            submitter=self.user,
+            user=self.user,
+            target_group="target_group",
+            is_public=True,
+        )
+        self.sub_job1.definition = yaml.safe_dump(
+            {"protocols": {"lava-multinode": {"role": "worker", "essential": False}}}
+        )
         self.sub_job1.actual_device = self.device2
         self.sub_job1.save()
-        self.sub_job2 = TestJob.objects.create(requested_device_type=self.device_type,
-                                               submitter=self.user, user=self.user,
-                                               target_group="target_group", is_public=True)
-        self.sub_job2.definition = yaml.safe_dump({"protocols": {"lava-multinode": {"role": "worker", "essential": False}}})
+        self.sub_job2 = TestJob.objects.create(
+            requested_device_type=self.device_type,
+            submitter=self.user,
+            user=self.user,
+            target_group="target_group",
+            is_public=True,
+        )
+        self.sub_job2.definition = yaml.safe_dump(
+            {"protocols": {"lava-multinode": {"role": "worker", "essential": False}}}
+        )
         self.sub_job2.actual_device = self.device3
         self.sub_job2.save()
 
@@ -638,7 +682,9 @@ class TestTestJobStateMachine(TestCase):
 
         # 2/ Non-essential role
         # 1.1/ Success
-        self.job.definition = yaml.safe_dump({"protocols": {"lava-multinode": {"role": "master", "essential": False}}})
+        self.job.definition = yaml.safe_dump(
+            {"protocols": {"lava-multinode": {"role": "master", "essential": False}}}
+        )
         self.job.state = TestJob.STATE_RUNNING
         self.job.actual_device = self.device
         self.job.actual_device.state = Device.STATE_RUNNING
@@ -722,15 +768,22 @@ class TestTestJobStateMachine(TestCase):
 
 
 class TestWorkerStateMachine(TestCase):
-
     def setUp(self):
         self.worker = Worker.objects.create(hostname="worker-01")
         self.device_type = DeviceType.objects.create(name="dt-01")
-        self.device = Device.objects.create(hostname="device-01", device_type=self.device_type,
-                                            worker_host=self.worker, health=Device.HEALTH_UNKNOWN)
+        self.device = Device.objects.create(
+            hostname="device-01",
+            device_type=self.device_type,
+            worker_host=self.worker,
+            health=Device.HEALTH_UNKNOWN,
+        )
         self.user = User.objects.create(username="user-01")
-        self.job = TestJob.objects.create(requested_device_type=self.device_type,
-                                          submitter=self.user, user=self.user, is_public=True)
+        self.job = TestJob.objects.create(
+            requested_device_type=self.device_type,
+            submitter=self.user,
+            user=self.user,
+            is_public=True,
+        )
 
     def check_device(self, state, health):
         self.device.refresh_from_db()

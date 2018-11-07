@@ -26,7 +26,6 @@ from lava_scheduler_app.models import Alias
 
 
 class SchedulerAliasesAPI(ExposedV2API):
-
     @check_perm("lava_scheduler_app.add_alias")
     def add(self, name):
         """
@@ -51,8 +50,7 @@ class SchedulerAliasesAPI(ExposedV2API):
         try:
             Alias.objects.create(name=name)
         except IntegrityError as exc:
-            raise xmlrpc.client.Fault(
-                400, "Bad request: %s" % exc.message)
+            raise xmlrpc.client.Fault(400, "Bad request: %s" % exc.message)
 
     @check_perm("lava_scheduler_app.delete_alias")
     def delete(self, name):
@@ -78,8 +76,7 @@ class SchedulerAliasesAPI(ExposedV2API):
         try:
             Alias.objects.get(name=name).delete()
         except Alias.DoesNotExist:
-            raise xmlrpc.client.Fault(
-                404, "Alias '%s' was not found." % name)
+            raise xmlrpc.client.Fault(404, "Alias '%s' was not found." % name)
 
     def list(self):
         """
@@ -126,8 +123,7 @@ class SchedulerAliasesAPI(ExposedV2API):
         try:
             alias = Alias.objects.get(name=name)
         except Alias.DoesNotExist:
-            raise xmlrpc.client.Fault(
-                404, "Alias '%s' was not found." % name)
+            raise xmlrpc.client.Fault(404, "Alias '%s' was not found." % name)
 
         device_types = []
         for dt in alias.device_types.all():
@@ -135,5 +131,4 @@ class SchedulerAliasesAPI(ExposedV2API):
                 continue
             device_types.append(dt.name)
 
-        return {"name": alias.name,
-                "device_types": device_types}
+        return {"name": alias.name, "device_types": device_types}

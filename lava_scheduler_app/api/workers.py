@@ -28,7 +28,6 @@ from lava_scheduler_app.models import Worker
 
 
 class SchedulerWorkersAPI(ExposedV2API):
-
     @check_perm("lava_scheduler_app.add_worker")
     def add(self, hostname, description=None, disabled=False):
         """
@@ -56,12 +55,11 @@ class SchedulerWorkersAPI(ExposedV2API):
         """
         try:
             health = Worker.HEALTH_RETIRED if disabled else Worker.HEALTH_ACTIVE
-            Worker.objects.create(hostname=hostname,
-                                  description=description,
-                                  health=health)
+            Worker.objects.create(
+                hostname=hostname, description=description, health=health
+            )
         except IntegrityError as exc:
-            raise xmlrpc.client.Fault(
-                400, "Bad request: %s" % exc.message)
+            raise xmlrpc.client.Fault(400, "Bad request: %s" % exc.message)
 
     def get_config(self, hostname):
         """
@@ -85,17 +83,16 @@ class SchedulerWorkersAPI(ExposedV2API):
         try:
             Worker.objects.get(hostname=hostname)
         except Worker.DoesNotExist:
-            raise xmlrpc.client.Fault(
-                404, "Worker '%s' was not found." % hostname)
+            raise xmlrpc.client.Fault(404, "Worker '%s' was not found." % hostname)
 
-        filename = os.path.join("/etc/lava-server/dispatcher.d",
-                                "%s.yaml" % hostname)
+        filename = os.path.join("/etc/lava-server/dispatcher.d", "%s.yaml" % hostname)
         try:
             with open(filename, "r") as f_in:
-                return xmlrpc.client.Binary(f_in.read().encode('utf-8'))
+                return xmlrpc.client.Binary(f_in.read().encode("utf-8"))
         except OSError:
             raise xmlrpc.client.Fault(
-                404, "Worker '%s' does not have a configuration" % hostname)
+                404, "Worker '%s' does not have a configuration" % hostname
+            )
 
     @check_perm("lava_scheduler_app.change_worker")
     def set_config(self, hostname, config):
@@ -123,11 +120,9 @@ class SchedulerWorkersAPI(ExposedV2API):
         try:
             Worker.objects.get(hostname=hostname)
         except Worker.DoesNotExist:
-            raise xmlrpc.client.Fault(
-                404, "Worker '%s' was not found." % hostname)
+            raise xmlrpc.client.Fault(404, "Worker '%s' was not found." % hostname)
 
-        filename = os.path.join("/etc/lava-server/dispatcher.d",
-                                "%s.yaml" % hostname)
+        filename = os.path.join("/etc/lava-server/dispatcher.d", "%s.yaml" % hostname)
         try:
             with open(filename, "w") as f_out:
                 f_out.write(config)
@@ -153,7 +148,7 @@ class SchedulerWorkersAPI(ExposedV2API):
         ------------
         This function returns an XML-RPC array of workers
         """
-        workers = Worker.objects.all().order_by('hostname')
+        workers = Worker.objects.all().order_by("hostname")
         return [w.hostname for w in workers]
 
     def show(self, hostname):
@@ -179,15 +174,18 @@ class SchedulerWorkersAPI(ExposedV2API):
         try:
             worker = Worker.objects.get(hostname=hostname)
         except Worker.DoesNotExist:
-            raise xmlrpc.client.Fault(
-                404, "Worker '%s' was not found." % hostname)
+            raise xmlrpc.client.Fault(404, "Worker '%s' was not found." % hostname)
 
-        return {"hostname": worker.hostname,
-                "description": worker.description,
-                "state": worker.get_state_display(),
-                "health": worker.get_health_display(),
-                "devices": [d.hostname for d in worker.device_set.all().order_by("hostname")],
-                "last_ping": worker.last_ping}
+        return {
+            "hostname": worker.hostname,
+            "description": worker.description,
+            "state": worker.get_state_display(),
+            "health": worker.get_health_display(),
+            "devices": [
+                d.hostname for d in worker.device_set.all().order_by("hostname")
+            ],
+            "last_ping": worker.last_ping,
+        }
 
     @check_perm("lava_scheduler_app.change_worker")
     def update(self, hostname, description=None, health=None):
@@ -218,8 +216,7 @@ class SchedulerWorkersAPI(ExposedV2API):
             try:
                 worker = Worker.objects.select_for_update().get(hostname=hostname)
             except Worker.DoesNotExist:
-                raise xmlrpc.client.Fault(
-                    404, "Worker '%s' was not found." % hostname)
+                raise xmlrpc.client.Fault(404, "Worker '%s' was not found." % hostname)
 
             if description is not None:
                 worker.description = description
@@ -232,7 +229,6 @@ class SchedulerWorkersAPI(ExposedV2API):
                 elif health == "RETIRED":
                     worker.go_health_retired(self.user, "xmlrpc api")
                 else:
-                    raise xmlrpc.client.Fault(
-                        400, "Invalid health: %s" % health)
+                    raise xmlrpc.client.Fault(400, "Invalid health: %s" % health)
 
             worker.save()

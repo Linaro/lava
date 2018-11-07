@@ -28,20 +28,12 @@ from django.test import TestCase
 from django.utils import timezone
 
 from lava_dispatcher.test.utils import DummyLogger
-from lava_scheduler_app.models import (
-    Device,
-    DeviceType,
-    TestJob,
-    Worker,
-)
-from lava_scheduler_app.scheduler import (
-    schedule,
-    schedule_health_checks
-)
+from lava_scheduler_app.models import Device, DeviceType, TestJob, Worker
+from lava_scheduler_app.scheduler import schedule, schedule_health_checks
 
 
 def _minimal_valid_job(self):
-            return """
+    return """
 job_name: minimal valid job
 visibility: public
 timeouts:
@@ -54,14 +46,27 @@ actions: []
 
 
 class TestHealthCheckScheduling(TestCase):
-
     def setUp(self):
-        Device.CONFIG_PATH = os.path.abspath(os.path.join(
-            os.path.dirname(__file__), "..", "..", "lava_scheduler_app", "tests", "devices"))
+        Device.CONFIG_PATH = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "..",
+                "..",
+                "lava_scheduler_app",
+                "tests",
+                "devices",
+            )
+        )
 
-        self.worker01 = Worker.objects.create(hostname="worker-01", state=Worker.STATE_ONLINE)
-        self.worker02 = Worker.objects.create(hostname="worker-02", state=Worker.STATE_OFFLINE)
-        self.worker03 = Worker.objects.create(hostname="worker-03", state=Worker.STATE_ONLINE)
+        self.worker01 = Worker.objects.create(
+            hostname="worker-01", state=Worker.STATE_ONLINE
+        )
+        self.worker02 = Worker.objects.create(
+            hostname="worker-02", state=Worker.STATE_OFFLINE
+        )
+        self.worker03 = Worker.objects.create(
+            hostname="worker-03", state=Worker.STATE_ONLINE
+        )
 
         self.device_type01 = DeviceType.objects.create(name="panda")
 
@@ -70,23 +75,48 @@ class TestHealthCheckScheduling(TestCase):
         self.device_type02.display = False
         self.device_type02.save()
 
-        self.device01 = Device.objects.create(hostname="panda01", device_type=self.device_type01,
-                                              worker_host=self.worker01, is_public=True, health=Device.HEALTH_UNKNOWN)
+        self.device01 = Device.objects.create(
+            hostname="panda01",
+            device_type=self.device_type01,
+            worker_host=self.worker01,
+            is_public=True,
+            health=Device.HEALTH_UNKNOWN,
+        )
         # This device should never be considered (his worker is OFFLINE)
-        self.device02 = Device.objects.create(hostname="panda02", device_type=self.device_type01,
-                                              worker_host=self.worker02, is_public=True, health=Device.HEALTH_UNKNOWN)
-        self.device03 = Device.objects.create(hostname="panda03", device_type=self.device_type01,
-                                              worker_host=self.worker03, is_public=True, health=Device.HEALTH_UNKNOWN)
+        self.device02 = Device.objects.create(
+            hostname="panda02",
+            device_type=self.device_type01,
+            worker_host=self.worker02,
+            is_public=True,
+            health=Device.HEALTH_UNKNOWN,
+        )
+        self.device03 = Device.objects.create(
+            hostname="panda03",
+            device_type=self.device_type01,
+            worker_host=self.worker03,
+            is_public=True,
+            health=Device.HEALTH_UNKNOWN,
+        )
         # ignored by other tests, used to check device.is_valid handling
         self.device04 = Device.objects.create(
-            hostname="unknown-01", device_type=self.device_type02,
-            worker_host=self.worker01, is_public=True, health=Device.HEALTH_RETIRED)
+            hostname="unknown-01",
+            device_type=self.device_type02,
+            worker_host=self.worker01,
+            is_public=True,
+            health=Device.HEALTH_RETIRED,
+        )
 
         self.user = User.objects.create(username="user-01")
-        self.last_hc03 = TestJob.objects.create(health_check=True, actual_device=self.device03,
-                                                user=self.user, submitter=self.user,
-                                                start_time=timezone.now(), is_public=True,
-                                                state=TestJob.STATE_FINISHED, health=TestJob.HEALTH_COMPLETE)
+        self.last_hc03 = TestJob.objects.create(
+            health_check=True,
+            actual_device=self.device03,
+            user=self.user,
+            submitter=self.user,
+            start_time=timezone.now(),
+            is_public=True,
+            state=TestJob.STATE_FINISHED,
+            health=TestJob.HEALTH_COMPLETE,
+        )
         self.device03.last_health_report_job = self.last_hc03
         self.device03.save()
 
@@ -117,8 +147,7 @@ class TestHealthCheckScheduling(TestCase):
         self.assertEqual(self.device03.get_health_check(), None)
         # Schedule without health check
         available_devices = schedule_health_checks(DummyLogger())[0]
-        self.assertEquals(available_devices,
-                          {"panda": ["panda01", "panda03"]})
+        self.assertEquals(available_devices, {"panda": ["panda01", "panda03"]})
 
     def test_disabled_hc(self):
         # Make sure that get_health_check does return something
@@ -130,8 +159,7 @@ class TestHealthCheckScheduling(TestCase):
         self.device_type01.disable_health_check = True
         self.device_type01.save()
         available_devices = schedule_health_checks(DummyLogger())[0]
-        self.assertEquals(available_devices,
-                          {"panda": ["panda01", "panda03"]})
+        self.assertEquals(available_devices, {"panda": ["panda01", "panda03"]})
 
     def test_no_devicedict(self):
         Device.get_health_check = _minimal_valid_job
@@ -210,7 +238,11 @@ class TestHealthCheckScheduling(TestCase):
         self.assertNotEqual(self.device03.get_health_check(), None)
 
         # HEALTH_(BAD|MAINTENANCE|RETIRED)
-        for health in [Device.HEALTH_BAD, Device.HEALTH_MAINTENANCE, Device.HEALTH_RETIRED]:
+        for health in [
+            Device.HEALTH_BAD,
+            Device.HEALTH_MAINTENANCE,
+            Device.HEALTH_RETIRED,
+        ]:
             self.device01.health = health
             self.device01.save()
             self.device02.health = health
@@ -240,9 +272,13 @@ class TestHealthCheckScheduling(TestCase):
         self.assertTrue(self.device03.is_valid())
 
         # Create a job that should be scheduled now
-        j = TestJob.objects.create(requested_device_type=self.device_type01,
-                                   user=self.user, submitter=self.user, is_public=True,
-                                   definition=_minimal_valid_job(None))
+        j = TestJob.objects.create(
+            requested_device_type=self.device_type01,
+            user=self.user,
+            submitter=self.user,
+            is_public=True,
+            definition=_minimal_valid_job(None),
+        )
         schedule(DummyLogger())
         self.device01.refresh_from_db()
         j.refresh_from_db()
@@ -252,9 +288,13 @@ class TestHealthCheckScheduling(TestCase):
         j.save()
 
         # Create a job that should be scheduled after the health check
-        j = TestJob.objects.create(requested_device_type=self.device_type01,
-                                   user=self.user, submitter=self.user, is_public=True,
-                                   definition=_minimal_valid_job(None))
+        j = TestJob.objects.create(
+            requested_device_type=self.device_type01,
+            user=self.user,
+            submitter=self.user,
+            is_public=True,
+            definition=_minimal_valid_job(None),
+        )
         self.device03.refresh_from_db()
         self.last_hc03.submit_time = timezone.now() - timedelta(hours=25)
         self.last_hc03.save()
@@ -284,15 +324,27 @@ class TestHealthCheckScheduling(TestCase):
         self.device03.save()
 
         # Create a job that should be scheduled now
-        j01 = TestJob.objects.create(requested_device_type=self.device_type01,
-                                     user=self.user, submitter=self.user, is_public=True,
-                                     definition=_minimal_valid_job(None))
-        j02 = TestJob.objects.create(requested_device_type=self.device_type01,
-                                     user=self.user, submitter=self.user, is_public=True,
-                                     definition=_minimal_valid_job(None))
-        j03 = TestJob.objects.create(requested_device_type=self.device_type01,
-                                     user=self.user, submitter=self.user, is_public=True,
-                                     definition=_minimal_valid_job(None))
+        j01 = TestJob.objects.create(
+            requested_device_type=self.device_type01,
+            user=self.user,
+            submitter=self.user,
+            is_public=True,
+            definition=_minimal_valid_job(None),
+        )
+        j02 = TestJob.objects.create(
+            requested_device_type=self.device_type01,
+            user=self.user,
+            submitter=self.user,
+            is_public=True,
+            definition=_minimal_valid_job(None),
+        )
+        j03 = TestJob.objects.create(
+            requested_device_type=self.device_type01,
+            user=self.user,
+            submitter=self.user,
+            is_public=True,
+            definition=_minimal_valid_job(None),
+        )
 
         schedule(DummyLogger())
         self.device03.refresh_from_db()
@@ -322,26 +374,51 @@ class TestHealthCheckScheduling(TestCase):
 
 
 class TestVisibility(TestCase):
-
     def setUp(self):
-        Device.CONFIG_PATH = os.path.abspath(os.path.join(
-            os.path.dirname(__file__), "..", "..", "lava_scheduler_app", "tests", "devices"))
-        self.worker01 = Worker.objects.create(hostname="worker-01", state=Worker.STATE_ONLINE)
-        self.worker02 = Worker.objects.create(hostname="worker-02", state=Worker.STATE_OFFLINE)
-        self.worker03 = Worker.objects.create(hostname="worker-03", state=Worker.STATE_ONLINE)
+        Device.CONFIG_PATH = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "..",
+                "..",
+                "lava_scheduler_app",
+                "tests",
+                "devices",
+            )
+        )
+        self.worker01 = Worker.objects.create(
+            hostname="worker-01", state=Worker.STATE_ONLINE
+        )
+        self.worker02 = Worker.objects.create(
+            hostname="worker-02", state=Worker.STATE_OFFLINE
+        )
+        self.worker03 = Worker.objects.create(
+            hostname="worker-03", state=Worker.STATE_ONLINE
+        )
 
         self.device_type01 = DeviceType.objects.create(name="panda")
 
         self.device01 = Device.objects.create(
-            hostname="panda01", device_type=self.device_type01,
-            worker_host=self.worker01, is_public=True, health=Device.HEALTH_UNKNOWN)
+            hostname="panda01",
+            device_type=self.device_type01,
+            worker_host=self.worker01,
+            is_public=True,
+            health=Device.HEALTH_UNKNOWN,
+        )
         # This device should never be considered (his worker is OFFLINE)
         self.device02 = Device.objects.create(
-            hostname="panda02", device_type=self.device_type01,
-            worker_host=self.worker02, is_public=True, health=Device.HEALTH_UNKNOWN)
+            hostname="panda02",
+            device_type=self.device_type01,
+            worker_host=self.worker02,
+            is_public=True,
+            health=Device.HEALTH_UNKNOWN,
+        )
         self.device03 = Device.objects.create(
-            hostname="panda03", device_type=self.device_type01,
-            worker_host=self.worker03, is_public=False, health=Device.HEALTH_UNKNOWN)
+            hostname="panda03",
+            device_type=self.device_type01,
+            worker_host=self.worker03,
+            is_public=False,
+            health=Device.HEALTH_UNKNOWN,
+        )
         self.user = User.objects.create(username="user-01")
         self.device03.save()
 
@@ -351,7 +428,9 @@ class TestVisibility(TestCase):
 
     def tearDown(self):
         Device.get_health_check = self.original_health_check
-        for job in TestJob.objects.filter(state__in=[TestJob.STATE_SUBMITTED, TestJob.STATE_SCHEDULING]):
+        for job in TestJob.objects.filter(
+            state__in=[TestJob.STATE_SUBMITTED, TestJob.STATE_SCHEDULING]
+        ):
             job.go_state_finished(TestJob.HEALTH_GOOD)
 
     def _minimal_personal_job(self):
@@ -462,15 +541,28 @@ actions: []
 
 
 class TestPriorities(TestCase):
-
     def setUp(self):
-        Device.CONFIG_PATH = os.path.abspath(os.path.join(
-            os.path.dirname(__file__), "..", "..", "lava_scheduler_app", "tests", "devices"))
-        self.worker01 = Worker.objects.create(hostname="worker-01", state=Worker.STATE_ONLINE)
+        Device.CONFIG_PATH = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "..",
+                "..",
+                "lava_scheduler_app",
+                "tests",
+                "devices",
+            )
+        )
+        self.worker01 = Worker.objects.create(
+            hostname="worker-01", state=Worker.STATE_ONLINE
+        )
         self.device_type01 = DeviceType.objects.create(name="panda")
-        self.device01 = Device.objects.create(hostname="panda01", device_type=self.device_type01,
-                                              worker_host=self.worker01, health=Device.HEALTH_GOOD,
-                                              is_public=True)
+        self.device01 = Device.objects.create(
+            hostname="panda01",
+            device_type=self.device_type01,
+            worker_host=self.worker01,
+            health=Device.HEALTH_GOOD,
+            is_public=True,
+        )
         self.user = User.objects.create(username="user-01")
         self.original_health_check = Device.get_health_check
 
@@ -486,10 +578,22 @@ class TestPriorities(TestCase):
         # Disable health checks
         Device.get_health_check = lambda cls: None
         jobs = []
-        for p in [TestJob.LOW, TestJob.MEDIUM, TestJob.HIGH, TestJob.MEDIUM, TestJob.LOW, 40]:
-            j = TestJob.objects.create(requested_device_type=self.device_type01,
-                                       user=self.user, submitter=self.user, is_public=True,
-                                       definition=_minimal_valid_job(None), priority=p)
+        for p in [
+            TestJob.LOW,
+            TestJob.MEDIUM,
+            TestJob.HIGH,
+            TestJob.MEDIUM,
+            TestJob.LOW,
+            40,
+        ]:
+            j = TestJob.objects.create(
+                requested_device_type=self.device_type01,
+                user=self.user,
+                submitter=self.user,
+                is_public=True,
+                definition=_minimal_valid_job(None),
+                priority=p,
+            )
             jobs.append(j)
 
         log = DummyLogger()
@@ -582,10 +686,21 @@ class TestPriorities(TestCase):
         self.assertNotEqual(self.device01.get_health_check(), None)
 
         jobs = []
-        for p in [TestJob.LOW, TestJob.MEDIUM, TestJob.HIGH, TestJob.MEDIUM, TestJob.LOW]:
-            j = TestJob.objects.create(requested_device_type=self.device_type01,
-                                       user=self.user, submitter=self.user, is_public=True,
-                                       definition=_minimal_valid_job(None), priority=p)
+        for p in [
+            TestJob.LOW,
+            TestJob.MEDIUM,
+            TestJob.HIGH,
+            TestJob.MEDIUM,
+            TestJob.LOW,
+        ]:
+            j = TestJob.objects.create(
+                requested_device_type=self.device_type01,
+                user=self.user,
+                submitter=self.user,
+                is_public=True,
+                definition=_minimal_valid_job(None),
+                priority=p,
+            )
             jobs.append(j)
 
         # Check that an health check will be scheduled before any jobs

@@ -26,7 +26,6 @@ from lava_scheduler_app.models import Tag
 
 
 class SchedulerTagsAPI(ExposedV2API):
-
     @check_perm("lava_scheduler_app.add_tag")
     def add(self, name, description=None):
         """
@@ -53,8 +52,7 @@ class SchedulerTagsAPI(ExposedV2API):
         try:
             Tag.objects.create(name=name, description=description)
         except IntegrityError as exc:
-            raise xmlrpc.client.Fault(
-                400, "Bad request: %s" % exc.message)
+            raise xmlrpc.client.Fault(400, "Bad request: %s" % exc.message)
 
     @check_perm("lava_scheduler_app.delete_tag")
     def delete(self, name):
@@ -80,8 +78,7 @@ class SchedulerTagsAPI(ExposedV2API):
         try:
             Tag.objects.get(name=name).delete()
         except Tag.DoesNotExist:
-            raise xmlrpc.client.Fault(
-                404, "Tag '%s' was not found." % name)
+            raise xmlrpc.client.Fault(404, "Tag '%s' was not found." % name)
 
     def list(self):
         """
@@ -103,8 +100,7 @@ class SchedulerTagsAPI(ExposedV2API):
         """
         ret = []
         for tag in Tag.objects.all().order_by("name"):
-            ret.append({"name": tag.name,
-                        "description": tag.description})
+            ret.append({"name": tag.name, "description": tag.description})
         return ret
 
     def show(self, name):
@@ -129,10 +125,9 @@ class SchedulerTagsAPI(ExposedV2API):
         try:
             tag = Tag.objects.get(name=name)
         except Tag.DoesNotExist:
-            raise xmlrpc.client.Fault(
-                404, "Tag '%s' was not found." % name)
+            raise xmlrpc.client.Fault(404, "Tag '%s' was not found." % name)
 
-        devices = [d.hostname for d in tag.device_set.all() if d.is_visible_to(self.user)]
-        return {"name": name,
-                "description": tag.description,
-                "devices": devices}
+        devices = [
+            d.hostname for d in tag.device_set.all() if d.is_visible_to(self.user)
+        ]
+        return {"name": name, "description": tag.description, "devices": devices}

@@ -38,7 +38,6 @@ def load_optional_file(filename):
 
 
 class SchedulerJobsAPI(ExposedV2API):
-
     def cancel(self, job_id):
         """
         Name
@@ -86,23 +85,24 @@ class SchedulerJobsAPI(ExposedV2API):
         try:
             job = TestJob.get_by_job_number(job_id)
         except TestJob.DoesNotExist:
-            raise xmlrpc.client.Fault(
-                404, "Job '%s' was not found." % job_id)
+            raise xmlrpc.client.Fault(404, "Job '%s' was not found." % job_id)
 
         if not job.can_view(self.user):
             raise xmlrpc.client.Fault(
-                403, "Job '%s' not available to user '%s'." %
-                (job_id, self.user))
+                403, "Job '%s' not available to user '%s'." % (job_id, self.user)
+            )
 
-        if job.state not in [TestJob.STATE_RUNNING, TestJob.STATE_CANCELING, TestJob.STATE_FINISHED]:
-            raise xmlrpc.client.Fault(
-                404, "Job '%s' has not started yet" % job_id)
+        if job.state not in [
+            TestJob.STATE_RUNNING,
+            TestJob.STATE_CANCELING,
+            TestJob.STATE_FINISHED,
+        ]:
+            raise xmlrpc.client.Fault(404, "Job '%s' has not started yet" % job_id)
 
         output_dir = job.output_dir
         definition = load_optional_file(os.path.join(output_dir, "job.yaml"))
         device = load_optional_file(os.path.join(output_dir, "device.yaml"))
-        dispatcher = load_optional_file(os.path.join(output_dir,
-                                                     "dispatcher.yaml"))
+        dispatcher = load_optional_file(os.path.join(output_dir, "dispatcher.yaml"))
         env = load_optional_file(os.path.join(output_dir, "env.yaml"))
         env_dut = load_optional_file(os.path.join(output_dir, "env.dut.yaml"))
         return [definition, device, dispatcher, env, env_dut]
@@ -132,13 +132,12 @@ class SchedulerJobsAPI(ExposedV2API):
         try:
             job = TestJob.get_by_job_number(job_id)
         except TestJob.DoesNotExist:
-            raise xmlrpc.client.Fault(
-                404, "Job '%s' was not found." % job_id)
+            raise xmlrpc.client.Fault(404, "Job '%s' was not found." % job_id)
 
         if not job.can_view(self.user):
             raise xmlrpc.client.Fault(
-                403, "Job '%s' not available to user '%s'." %
-                (job_id, self.user))
+                403, "Job '%s' not available to user '%s'." % (job_id, self.user)
+            )
 
         if job.is_multinode:
             return job.multinode_definition
@@ -212,10 +211,12 @@ class SchedulerJobsAPI(ExposedV2API):
             try:
                 jobs = jobs.filter(end_time__range=[start_time, end_time])
             except TestJob.DoesNotExist:
-                raise xmlrpc.client.Fault(404, "No jobs exist since %s minutes ago" % since)
+                raise xmlrpc.client.Fault(
+                    404, "No jobs exist since %s minutes ago" % since
+                )
 
         if not jobs:
-                raise xmlrpc.client.Fault(404, "No jobs match the specified criteria.")
+            raise xmlrpc.client.Fault(404, "No jobs match the specified criteria.")
 
         for job in jobs.order_by("-id")[start : start + limit]:
             device_type = None
@@ -242,9 +243,8 @@ class SchedulerJobsAPI(ExposedV2API):
                 metadata = None
                 try:
                     job_case = TestCase.objects.get(
-                        suite__job=job,
-                        suite__name="lava",
-                        name="job")
+                        suite__job=job, suite__name="lava", name="job"
+                    )
                 except TestCase.DoesNotExist:
                     job_case = None
                 if job_case:
@@ -252,13 +252,15 @@ class SchedulerJobsAPI(ExposedV2API):
                 if not metadata:
                     # if job_case exists but metadata is still None due to job error
                     metadata = {}
-                data.update({
-                    "actual_device": actual_device,
-                    "start_time": start_time,
-                    "end_time": end_time,
-                    "error_msg": metadata.get("error_msg"),
-                    "error_type": metadata.get("error_type")
-                })
+                data.update(
+                    {
+                        "actual_device": actual_device,
+                        "start_time": start_time,
+                        "end_time": end_time,
+                        "error_msg": metadata.get("error_msg"),
+                        "error_type": metadata.get("error_type"),
+                    }
+                )
 
             ret.append(data)
 
@@ -291,15 +293,14 @@ class SchedulerJobsAPI(ExposedV2API):
         try:
             job = TestJob.get_by_job_number(job_id)
         except TestJob.DoesNotExist:
-            raise xmlrpc.client.Fault(
-                404, "Job '%s' was not found." % job_id)
+            raise xmlrpc.client.Fault(404, "Job '%s' was not found." % job_id)
 
         if not job.can_view(self.user):
             raise xmlrpc.client.Fault(
-                403, "Job '%s' not available to user '%s'." %
-                (job_id, self.user))
+                403, "Job '%s' not available to user '%s'." % (job_id, self.user)
+            )
 
-        job_finished = (job.state == TestJob.STATE_FINISHED)
+        job_finished = job.state == TestJob.STATE_FINISHED
 
         try:
             data = read_logs(job.output_dir, start, end)
@@ -329,13 +330,12 @@ class SchedulerJobsAPI(ExposedV2API):
         try:
             job = TestJob.get_by_job_number(job_id)
         except TestJob.DoesNotExist:
-            raise xmlrpc.client.Fault(
-                404, "Job '%s' was not found." % job_id)
+            raise xmlrpc.client.Fault(404, "Job '%s' was not found." % job_id)
 
         if not job.can_view(self.user):
             raise xmlrpc.client.Fault(
-                403, "Job '%s' not available to user '%s'." %
-                (job_id, self.user))
+                403, "Job '%s' not available to user '%s'." % (job_id, self.user)
+            )
 
         device_hostname = None
         if job.actual_device is not None:
@@ -345,22 +345,23 @@ class SchedulerJobsAPI(ExposedV2API):
         if job.requested_device_type is not None:
             device_type = job.requested_device_type.name
 
-        return {"id": job.display_id,
-                "description": job.description,
-                "device": device_hostname,
-                "device_type": device_type,
-                "health_check": job.health_check,
-                "pipeline": True,
-                "health": job.get_health_display(),
-                "state": job.get_state_display(),
-                "submitter": job.submitter.username,
-                "submit_time": job.submit_time,
-                "start_time": job.start_time,
-                "end_time": job.end_time,
-                "tags": [t.name for t in job.tags.all()],
-                "visibility": job.get_visibility_display(),
-                "failure_comment": job.failure_comment,
-                }
+        return {
+            "id": job.display_id,
+            "description": job.description,
+            "device": device_hostname,
+            "device_type": device_type,
+            "health_check": job.health_check,
+            "pipeline": True,
+            "health": job.get_health_display(),
+            "state": job.get_state_display(),
+            "submitter": job.submitter.username,
+            "submit_time": job.submit_time,
+            "start_time": job.start_time,
+            "end_time": job.end_time,
+            "tags": [t.name for t in job.tags.all()],
+            "visibility": job.get_visibility_display(),
+            "failure_comment": job.failure_comment,
+        }
 
     def resubmit(self, job_id):
         """

@@ -8,12 +8,14 @@ import xmlrpc.client
 from django.test.client import Client
 from django.contrib.auth.models import Permission
 from lava_scheduler_app.dbutils import validate_yaml
-from lava_scheduler_app.models import (
-    DeviceType,
-    Alias,
+from lava_scheduler_app.models import DeviceType, Alias
+from lava_scheduler_app.schema import (
+    validate_submission,
+    validate_device,
+    SubmissionException,
 )
-from lava_scheduler_app.schema import validate_submission, validate_device, SubmissionException
 from lava_scheduler_app.tests.test_submission import TestCaseWithFactory
+
 # pylint: disable=invalid-name
 
 
@@ -34,26 +36,25 @@ class TestTransport(xmlrpc.client.Transport, object):
 
     def request(self, host, handler, request_body, verbose=0):
         self.verbose = verbose
-        response = self.client.post(
-            handler, request_body, content_type="text/xml")
+        response = self.client.post(handler, request_body, content_type="text/xml")
         res = StringIO(response.content)
         res.seek(0)
         return self.parse_response(res)
 
 
 class TestSchedulerAPI(TestCaseWithFactory):  # pylint: disable=too-many-ancestors
-
     def setUp(self):
         super().setUp()
-        logger = logging.getLogger('lava-master')
+        logger = logging.getLogger("lava-master")
         logger.disabled = True
-        logger = logging.getLogger('lava_scheduler_app')
+        logger = logging.getLogger("lava_scheduler_app")
         logger.disabled = True
 
     def server_proxy(self, user=None, password=None):  # pylint: disable=no-self-use
         return xmlrpc.client.ServerProxy(
-            'http://localhost/RPC2/',
-            transport=TestTransport(user=user, password=password))
+            "http://localhost/RPC2/",
+            transport=TestTransport(user=user, password=password),
+        )
 
     def test_submit_job_rejects_anonymous(self):
         server = self.server_proxy()
@@ -65,8 +66,8 @@ class TestSchedulerAPI(TestCaseWithFactory):  # pylint: disable=too-many-ancesto
             self.fail("fault not raised")
 
     def test_submit_job_rejects_unpriv_user(self):
-        self.factory.ensure_user('unpriv-test', 'e@mail.invalid', 'test')
-        server = self.server_proxy('unpriv-test', 'test')
+        self.factory.ensure_user("unpriv-test", "e@mail.invalid", "test")
+        server = self.server_proxy("unpriv-test", "test")
         try:
             server.scheduler.submit_job("{}")
         except xmlrpc.client.Fault as f:
@@ -75,67 +76,66 @@ class TestSchedulerAPI(TestCaseWithFactory):  # pylint: disable=too-many-ancesto
             self.fail("fault not raised")
 
     def test_new_devices(self):
-        user = self.factory.ensure_user('test', 'e@mail.invalid', 'test')
-        user.user_permissions.add(
-            Permission.objects.get(codename='add_testjob'))
+        user = self.factory.ensure_user("test", "e@mail.invalid", "test")
+        user.user_permissions.add(Permission.objects.get(codename="add_testjob"))
         user.save()
-        device_type = self.factory.make_device_type('beaglebone-black')
+        device_type = self.factory.make_device_type("beaglebone-black")
         device = self.factory.make_device(device_type=device_type, hostname="black01")
         device.save()
-        server = self.server_proxy('test', 'test')
+        server = self.server_proxy("test", "test")
         self.assertEqual(
-            {'status': 'offline', 'job': None, 'offline_since': None, 'hostname': 'black01',
-                'offline_by': None, 'is_pipeline': True},
-            server.scheduler.get_device_status('black01'))
+            {
+                "status": "offline",
+                "job": None,
+                "offline_since": None,
+                "hostname": "black01",
+                "offline_by": None,
+                "is_pipeline": True,
+            },
+            server.scheduler.get_device_status("black01"),
+        )
 
     def test_type_aliases(self):
-        aliases = DeviceType.objects.filter(aliases__name__contains='black')
-        retval = {
-            'black': [device_type.name for device_type in aliases]
-        }
-        self.assertEqual(retval, {'black': []})
-        device_type = self.factory.make_device_type('beaglebone-black')
-        alias = Alias.objects.create(name='am335x-boneblack')
+        aliases = DeviceType.objects.filter(aliases__name__contains="black")
+        retval = {"black": [device_type.name for device_type in aliases]}
+        self.assertEqual(retval, {"black": []})
+        device_type = self.factory.make_device_type("beaglebone-black")
+        alias = Alias.objects.create(name="am335x-boneblack")
         device_type.aliases.add(alias)
-        aliases = DeviceType.objects.filter(aliases__name__contains='black')
-        retval = {
-            'black': [dt.name for dt in aliases]
-        }
-        self.assertEqual(retval, {'black': ['beaglebone-black']})
+        aliases = DeviceType.objects.filter(aliases__name__contains="black")
+        retval = {"black": [dt.name for dt in aliases]}
+        self.assertEqual(retval, {"black": ["beaglebone-black"]})
         alias.delete()
-        aliases = DeviceType.objects.filter(aliases__name__contains='black')
-        retval = {
-            'black': [dt.name for dt in aliases]
-        }
-        self.assertEqual(retval, {'black': []})
+        aliases = DeviceType.objects.filter(aliases__name__contains="black")
+        retval = {"black": [dt.name for dt in aliases]}
+        self.assertEqual(retval, {"black": []})
 
 
 class TestVoluptuous(unittest.TestCase):
-
     def test_submission_schema(self):
         files = []
         path = os.path.normpath(os.path.dirname(__file__))
         for name in os.listdir(path):
-            if name.endswith('.yaml'):
+            if name.endswith(".yaml"):
                 files.append(name)
         device_files = [
             # device files supporting unit tests
-            'bbb-01.yaml'
+            "bbb-01.yaml"
         ]
         # these files have already been split by utils as multinode sub_id jobs.
         # FIXME: validate the schema of split files using lava-dispatcher.
         split_files = [
-            'kvm-multinode-client.yaml',
-            'kvm-multinode-server.yaml',
-            'qemu-ssh-guest-1.yaml',
-            'qemu-ssh-guest-2.yaml',
-            'qemu-ssh-parent.yaml'
+            "kvm-multinode-client.yaml",
+            "kvm-multinode-server.yaml",
+            "qemu-ssh-guest-1.yaml",
+            "qemu-ssh-guest-2.yaml",
+            "qemu-ssh-parent.yaml",
         ]
 
         for filename in files:
             # some files are dispatcher-level test files, e.g. after the multinode split
             try:
-                yaml_data = yaml.safe_load(open(os.path.join(path, filename), 'r'))
+                yaml_data = yaml.safe_load(open(os.path.join(path, filename), "r"))
             except yaml.YAMLError as exc:
                 raise RuntimeError("Decoding YAML job submission failed: %s." % exc)
             if filename in device_files:
@@ -148,7 +148,7 @@ class TestVoluptuous(unittest.TestCase):
                     ret = validate_submission(yaml_data)
                     self.assertTrue(ret)
                 except SubmissionException as exc:
-                    msg = '########## %s ###########\n%s' % (filename, exc)
+                    msg = "########## %s ###########\n%s" % (filename, exc)
                     self.fail(msg)
 
     def test_breakage_detection(self):
@@ -159,45 +159,51 @@ timeouts:
   action:
     minutes: 5
                 """
-        self.assertRaises(SubmissionException, validate_submission, yaml.safe_load(bad_submission))
+        self.assertRaises(
+            SubmissionException, validate_submission, yaml.safe_load(bad_submission)
+        )
         try:
             validate_submission(yaml.safe_load(bad_submission))
         except SubmissionException as exc:
             # with more than one omission, which one gets mentioned is undefined
-            self.assertIn('required key not provided', str(exc))
+            self.assertIn("required key not provided", str(exc))
         bad_submission += """
 actions:
   - deploy:
       to: tmpfs
                 """
-        self.assertRaises(SubmissionException, validate_submission, yaml.safe_load(bad_submission))
+        self.assertRaises(
+            SubmissionException, validate_submission, yaml.safe_load(bad_submission)
+        )
         try:
             validate_submission(yaml.safe_load(bad_submission))
         except SubmissionException as exc:
-            self.assertIn('required key not provided', str(exc))
+            self.assertIn("required key not provided", str(exc))
             # with more than one omission, which one gets mentioned is undefined
-            self.assertTrue('visibility' in str(exc) or 'job_name' in str(exc))
+            self.assertTrue("visibility" in str(exc) or "job_name" in str(exc))
         bad_submission += """
 visibility: public
                 """
-        self.assertRaises(SubmissionException, validate_submission, yaml.safe_load(bad_submission))
+        self.assertRaises(
+            SubmissionException, validate_submission, yaml.safe_load(bad_submission)
+        )
         try:
             validate_submission(yaml.safe_load(bad_submission))
         except SubmissionException as exc:
-            self.assertIn('required key not provided', str(exc))
-            self.assertIn('job_name', str(exc))
+            self.assertIn("required key not provided", str(exc))
+            self.assertIn("job_name", str(exc))
         bad_submission += """
 job_name: qemu-pipeline
                 """
         self.assertTrue(validate_submission(yaml.safe_load(bad_submission)))
         bad_yaml = yaml.safe_load(bad_submission)
-        del bad_yaml['timeouts']['job']
+        del bad_yaml["timeouts"]["job"]
         try:
             validate_submission(yaml.safe_load(bad_submission))
         except SubmissionException as exc:
-            self.assertIn('required key not provided', str(exc))
-            self.assertIn('job', str(exc))
-            self.assertIn('timeouts', str(exc))
+            self.assertIn("required key not provided", str(exc))
+            self.assertIn("job", str(exc))
+            self.assertIn("timeouts", str(exc))
         bad_submission += """
 notify:
   criteria:
@@ -209,8 +215,9 @@ notify:
     query:
       entity: testrunfilter
         """
-        self.assertRaises(SubmissionException, validate_yaml,
-                          yaml.safe_load(bad_submission))
+        self.assertRaises(
+            SubmissionException, validate_yaml, yaml.safe_load(bad_submission)
+        )
 
         invalid_monitors_name_char_yaml_def = r"""
 # Zephyr JOB definition
@@ -251,8 +258,11 @@ actions:
         FAIL: fail
 """
 
-        self.assertRaises(SubmissionException, validate_submission,
-                          yaml.safe_load(invalid_monitors_name_char_yaml_def))
+        self.assertRaises(
+            SubmissionException,
+            validate_submission,
+            yaml.safe_load(invalid_monitors_name_char_yaml_def),
+        )
 
     def test_compression_change(self):
 
@@ -282,9 +292,9 @@ actions:
         try:
             validate_submission(yaml.safe_load(bad_submission))
         except SubmissionException as exc:
-            self.assertIn('required key not provided', str(exc))
-            self.assertIn('dtb', str(exc))
-            self.assertIn('url', str(exc))
+            self.assertIn("required key not provided", str(exc))
+            self.assertIn("dtb", str(exc))
+            self.assertIn("url", str(exc))
 
         bad_submission = """
 job_name: bbb-ramdisk
@@ -311,9 +321,9 @@ actions:
         try:
             validate_submission(yaml.safe_load(bad_submission))
         except SubmissionException as exc:
-            self.assertIn('expected a dictionary for dictionary value', str(exc))
-            self.assertIn('dtb', str(exc))
-            self.assertNotIn('url', str(exc))
+            self.assertIn("expected a dictionary for dictionary value", str(exc))
+            self.assertIn("dtb", str(exc))
+            self.assertNotIn("url", str(exc))
 
     def test_secrets(self):
         secrets = """
@@ -357,7 +367,9 @@ secrets:
   foo: bar
   username: secret
 """
-        self.assertRaises(SubmissionException, validate_submission, yaml.safe_load(secrets))
+        self.assertRaises(
+            SubmissionException, validate_submission, yaml.safe_load(secrets)
+        )
 
     def test_multinode(self):
         # Without protocols
@@ -440,7 +452,9 @@ protocols:
         host_role: server
       host: {}
 """
-        self.assertRaises(SubmissionException, validate_submission, yaml.safe_load(data))
+        self.assertRaises(
+            SubmissionException, validate_submission, yaml.safe_load(data)
+        )
 
         data = """
 job_name: test
@@ -459,7 +473,9 @@ protocols:
         expect_role: server
       host: {}
 """
-        self.assertRaises(SubmissionException, validate_submission, yaml.safe_load(data))
+        self.assertRaises(
+            SubmissionException, validate_submission, yaml.safe_load(data)
+        )
 
         # host_role without expect_role
         data = """
@@ -478,7 +494,9 @@ protocols:
         host_role: host
       host: {}
 """
-        self.assertRaises(SubmissionException, validate_submission, yaml.safe_load(data))
+        self.assertRaises(
+            SubmissionException, validate_submission, yaml.safe_load(data)
+        )
 
         # expect_role without host_role
         data = """
@@ -497,4 +515,6 @@ protocols:
         expect_role: host
       host: {}
 """
-        self.assertRaises(SubmissionException, validate_submission, yaml.safe_load(data))
+        self.assertRaises(
+            SubmissionException, validate_submission, yaml.safe_load(data)
+        )

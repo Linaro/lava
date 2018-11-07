@@ -3,18 +3,10 @@ import sys
 from nose.tools import nottest
 from django.contrib.auth.models import User, AnonymousUser
 from django_testscenarios.ubertest import TestCase
-from lava_scheduler_app.models import (
-    Device,
-    DeviceType,
-    TestJob,
-)
+from lava_scheduler_app.models import Device, DeviceType, TestJob
 from lava_scheduler_app.views import filter_device_types
 from lava.utils.lavatable import LavaTable, LavaView
-from lava_scheduler_app.tables import (
-    JobTable,
-    DeviceTable,
-    all_jobs_with_custom_sort,
-)
+from lava_scheduler_app.tables import JobTable, DeviceTable, all_jobs_with_custom_sort
 
 LOGGER = logging.getLogger()
 LOGGER.level = logging.INFO  # change to DEBUG to see *all* output
@@ -73,16 +65,17 @@ class TestDeviceTable(DeviceTable):
 
 @nottest
 class TestDeviceView(LavaView):
-
     def get_queryset(self):
         visible = filter_device_types(AnonymousUser())
-        return Device.objects.select_related("device_type")\
-            .order_by("hostname").filter(device_type__in=visible)
+        return (
+            Device.objects.select_related("device_type")
+            .order_by("hostname")
+            .filter(device_type__in=visible)
+        )
 
 
 @nottest
 class TestJobView(LavaView):
-
     def get_queryset(self):
         return all_jobs_with_custom_sort()
 
@@ -96,9 +89,9 @@ class TestTestJobTable(TestCase):
         view = TestJobView(None)
         logging.debug("Testing with a View derived from FilteredSingleTableView")
         table = TestJobTable(view.get_table_data())
-        self.assertEqual(table.prepare_search_data(view), {'search': []})
-        self.assertEqual(table.prepare_terms_data(view), {'terms': {}})
-        self.assertEqual(table.prepare_times_data(view), {'times': []})
+        self.assertEqual(table.prepare_search_data(view), {"search": []})
+        self.assertEqual(table.prepare_terms_data(view), {"terms": {}})
+        self.assertEqual(table.prepare_times_data(view), {"times": []})
 
     def test_shell_data_model(self):
         view = TestJobView(None, model=TestJob, table_class=TestJobTable)
@@ -110,10 +103,15 @@ class TestTestJobTable(TestCase):
             if isinstance(value, list):
                 for item in value:
                     proxied[key].append(str(item))
-        self.assertEqual(proxied,
-                         {'search': ['Description', 'device', 'ID', 'state', 'Sub ID', 'submitter']})
-        self.assertEqual(table.prepare_terms_data(view), {'terms': {}})
-        self.assertEqual(table.prepare_times_data(view), {'times': ['End time (hours)', 'Submit time (hours)']})
+        self.assertEqual(
+            proxied,
+            {"search": ["Description", "device", "ID", "state", "Sub ID", "submitter"]},
+        )
+        self.assertEqual(table.prepare_terms_data(view), {"terms": {}})
+        self.assertEqual(
+            table.prepare_times_data(view),
+            {"times": ["End time (hours)", "Submit time (hours)"]},
+        )
 
 
 class TestPrefixJobTable(TestCase):
@@ -138,10 +136,24 @@ class TestPrefixJobTable(TestCase):
                 for item in value:
                     proxied[key].append(str(item))
 
-        self.assertEqual(proxied,
-                         {self.prefix: ['Description', 'device', 'ID', 'state', 'Sub ID', 'submitter']})
+        self.assertEqual(
+            proxied,
+            {
+                self.prefix: [
+                    "Description",
+                    "device",
+                    "ID",
+                    "state",
+                    "Sub ID",
+                    "submitter",
+                ]
+            },
+        )
         self.assertEqual(table.prepare_terms_data(view), {self.prefix: {}})
-        self.assertEqual(table.prepare_times_data(view), {self.prefix: ['End time (hours)', 'Submit time (hours)']})
+        self.assertEqual(
+            table.prepare_times_data(view),
+            {self.prefix: ["End time (hours)", "Submit time (hours)"]},
+        )
 
 
 class TestForDeviceTable(TestCase):
@@ -154,23 +166,28 @@ class TestForDeviceTable(TestCase):
         logging.debug("Testing with a View derived from LavaView")
         view = TestDeviceView(None)
         table = DeviceTable(view.get_table_data())
-        self.assertEqual(table.prepare_search_data(view), {'search': []})
-        self.assertEqual(table.prepare_terms_data(view), {'terms': {}})
-        self.assertEqual(table.prepare_times_data(view), {'times': []})
+        self.assertEqual(table.prepare_search_data(view), {"search": []})
+        self.assertEqual(table.prepare_terms_data(view), {"terms": {}})
+        self.assertEqual(table.prepare_times_data(view), {"times": []})
 
     def test_device_table_model(self):
         view = TestDeviceView(None, model=Device, table_class=DeviceTable)
         table = DeviceTable(view.get_table_data())
-        self.assertEqual(table.prepare_search_data(view),
-                         {'search': ['device_type',
-                                     'health',
-                                     u'Hostname',
-                                     'restrictions',
-                                     'state',
-                                     'tags'
-                                     ]})
-        self.assertEqual(table.prepare_terms_data(view), {'terms': {}})
-        self.assertEqual(table.prepare_times_data(view), {'times': []})
+        self.assertEqual(
+            table.prepare_search_data(view),
+            {
+                "search": [
+                    "device_type",
+                    "health",
+                    u"Hostname",
+                    "restrictions",
+                    "state",
+                    "tags",
+                ]
+            },
+        )
+        self.assertEqual(table.prepare_terms_data(view), {"terms": {}})
+        self.assertEqual(table.prepare_times_data(view), {"times": []})
 
     def test_device_table_prefix(self):
         view = TestDeviceView(None)
@@ -183,16 +200,21 @@ class TestForDeviceTable(TestCase):
     def test_device_table_model2(self):
         view = TestDeviceView(None, model=Device, table_class=TestDeviceTable)
         table = TestDeviceTable(view.get_table_data())
-        self.assertEqual(table.prepare_search_data(view),
-                         {'search': ['device_type',
-                                     'health',
-                                     u'Hostname',
-                                     'restrictions',
-                                     'state',
-                                     'tags',
-                                     ]})
-        self.assertEqual(table.prepare_terms_data(view), {'terms': {}})
-        self.assertEqual(table.prepare_times_data(view), {'times': []})
+        self.assertEqual(
+            table.prepare_search_data(view),
+            {
+                "search": [
+                    "device_type",
+                    "health",
+                    u"Hostname",
+                    "restrictions",
+                    "state",
+                    "tags",
+                ]
+            },
+        )
+        self.assertEqual(table.prepare_terms_data(view), {"terms": {}})
+        self.assertEqual(table.prepare_times_data(view), {"times": []})
 
 
 class TestHiddenDevicesInDeviceTable(TestCase):
@@ -201,19 +223,20 @@ class TestHiddenDevicesInDeviceTable(TestCase):
     device types
     """
 
-    def getUniqueString(self, prefix='generic'):
-        return '%s-%d' % (prefix, self.getUniqueInteger())
+    def getUniqueString(self, prefix="generic"):
+        return "%s-%d" % (prefix, self.getUniqueInteger())
 
     def make_user(self):
         return User.objects.create_user(
             self.getUniqueString(),
-            '%s@mail.invalid' % (self.getUniqueString(),),
-            self.getUniqueString())
+            "%s@mail.invalid" % (self.getUniqueString(),),
+            self.getUniqueString(),
+        )
 
     def test_device_table_view(self):
         device_type = DeviceType(name="generic", owners_only=False)
         device_type.save()  # pylint: disable=no-member
-        device = Device(device_type=device_type, hostname='generic1')
+        device = Device(device_type=device_type, hostname="generic1")
         user = self.make_user()
         device.user = user
         device.save()  # pylint: disable=no-member
@@ -223,7 +246,7 @@ class TestHiddenDevicesInDeviceTable(TestCase):
     def test_device_table_hidden(self):
         hidden = DeviceType(name="hidden", owners_only=True)
         hidden.save()  # pylint: disable=no-member
-        device = Device(device_type=hidden, hostname='hidden1')
+        device = Device(device_type=hidden, hostname="hidden1")
         device.save()  # pylint: disable=no-member
         view = TestDeviceView(None)
         self.assertEqual(len(view.get_queryset()), 0)
