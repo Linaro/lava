@@ -46,9 +46,8 @@ else
         VERSION=`grep Version ${CHANGES} | cut -d' ' -f2`
         dcmd rm ${LAVA_BUILDD}/build/lava_*buster_amd64.changes
 
-        # restore once ready to be merged.
-        # reprepro -b ${BASEDIR} include buster ${LAVA_BUILDD}/build/lava_*buster_arm64.changes
-        # dcmd rm ${LAVA_BUILDD}/build/lava_*buster_arm64.changes
+        reprepro -b ${BASEDIR} include buster ${LAVA_BUILDD}/build/lava_*buster_arm64.changes
+        dcmd rm ${LAVA_BUILDD}/build/lava_*buster_arm64.changes
 
         reprepro -b ${BASEDIR} list buster
         echo "Updating latest"
