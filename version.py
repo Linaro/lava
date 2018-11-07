@@ -22,6 +22,7 @@
 import re
 import subprocess  # nosec - internal
 import os
+import sys
 
 
 # pylint: disable=superfluous-parens,too-many-locals
@@ -37,14 +38,17 @@ def version_tag():
     from that.
     :return: a version string based on the tag and short hash
     """
+    args = ["git", "describe"]
+    if len(sys.argv) == 2:
+        args.append(sys.argv[1])
     if os.path.exists("./.git/"):
         pattern = re.compile(r"(?P<tag>.+)\.(?P<commits>\d+)\.g(?P<hash>[abcdef\d]+)")
         describe = (
-            subprocess.check_output(["git", "describe"])
+            subprocess.check_output(args)  # nosec - internal
             .strip()
             .decode("utf-8")
             .replace("-", ".")
-        )  # nosec - internal
+        )
         m = pattern.match(describe)
         if m is None:
             return describe
@@ -62,4 +66,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
