@@ -136,5 +136,5 @@ class CallDockerAction(Action):
         super().cleanup(connection)
         if self.cleanup_required:
             self.logger.debug("Stopping container %s", self.container)
-            self.run_command(["docker", "stop", self.container], allow_fail=True)
+            self.run_cmd(["docker", "stop", self.container], allow_fail=True)
             self.cleanup_required = False

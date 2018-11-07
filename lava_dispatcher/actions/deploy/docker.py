@@ -81,16 +81,11 @@ class DockerAction(DeployAction):
         if self.local:
             cmd = ["docker", "image", "inspect", "--format", "image exists",
                    self.image_name]
-            out = self.run_command(cmd, allow_fail=False, allow_silent=False)
-            if not out:
-                msg = "Unable to inspect docker image '%s'" % self.image_name
-                raise JobError(msg)
+            error_msg = "Unable to inspect docker image '%s'" % self.image_name
+            self.run_cmd(cmd, error_msg=error_msg)
         else:
-            cmd = ["docker", "pull", self.image_name]
-            out = self.run_command(cmd, allow_fail=False, allow_silent=False)
-            if not out:
-                msg = "Unable to pull docker image '%s'" % self.image_name
-                raise JobError(msg)
+            self.run_cmd(["docker", "pull", self.image_name],
+                         error_msg="Unable to pull docker image '%s'" % self.image_name)
 
         return super().run(connection, max_end_time)
 
