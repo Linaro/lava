@@ -751,13 +751,13 @@ class AdbOverlayUnpack(Action):
         adb_cmd = ['adb', '-s', serial_number, 'push', host_dir,
                    target_dir]
         command_output = self.run_command(adb_cmd)
-        if command_output and 'pushed' not in command_output:
+        if command_output and 'pushed' not in command_output.lower():
             raise JobError("Unable to push overlay files with adb: %s" %
                            command_output)
         adb_cmd = ['adb', '-s', serial_number, 'shell', '/system/bin/chmod',
                    '-R', '0777', os.path.join(target_dir, 'tmp')]
         command_output = self.run_command(adb_cmd)
-        if command_output and 'pushed' not in command_output:
+        if command_output and 'pushed' not in command_output.lower():
             raise JobError("Unable to chmod overlay files with adb: %s" %
                            command_output)
         return connection

@@ -247,6 +247,7 @@ class FastbootFlashAction(Action):
             'fastboot', '-s', serial_number, 'flash', self.command, src
         ] + fastboot_opts
         self.logger.info("Handling %s", self.command)
+        # needs to move to self.run_cmd with support for raising InfrastructureError
         command_output = self.run_command(fastboot_cmd)
         if not command_output:
             raise InfrastructureError("Unable to flash %s using fastboot" %
@@ -270,6 +271,7 @@ class FastbootReboot(Action):
         self.logger.info("fastboot rebooting device.")
         fastboot_cmd = lxc_cmd_prefix(self.job) + ['fastboot', '-s', serial_number,
                                                    'reboot'] + fastboot_opts
+        # needs to move to self.run_cmd with support
         command_output = self.run_command(fastboot_cmd)
         if not command_output:
             raise InfrastructureError("Unable to reboot")
@@ -292,6 +294,7 @@ class FastbootRebootBootloader(Action):
         fastboot_cmd = lxc_cmd_prefix(self.job) + [
             'fastboot', '-s', serial_number, 'reboot-bootloader'
         ] + fastboot_opts
+        # needs to move to self.run_cmd with support
         command_output = self.run_command(fastboot_cmd)
         if not command_output:
             raise InfrastructureError("Unable to reboot to bootloader")

@@ -315,6 +315,8 @@ class Action:  # pylint: disable=too-many-instance-attributes,too-many-public-me
     summary = None
     # Exception to raise when this action is timing out
     timeout_exception = JobError
+    # Exception to raise when a command run by the action fails
+    command_exception = JobError
 
     @property
     def data(self):
@@ -464,8 +466,86 @@ class Action:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         """
         pass
 
+    def parsed_command(self, command_list, allow_fail=False, cwd=None):
+        """
+        Support for external command operations on the dispatcher with output handling,
+        without using a shell and with full structured logging.
+        Ensure that output for the YAML logger is a serialisable object
+        and strip embedded newlines / whitespace where practical.
+        Returns the output of the command (after logging the output)
+        Includes default support for proxy settings in the environment.
+        Blocks until the command returns then processes & logs the output.
+
+        Note: logs the returncode in all circumstances as a result in the lava test suite.
+
+        :param: command_list - the command to run, with arguments
+        :param: allow_fail - if True, the command may exist non-zero without
+        being considered to have failed. Use to determine the kind of error
+        by checking the output or in Finalize.
+        :return: On success (command exited zero), returns the command output.
+        On failure (command exited non-zero and allow_fail not set)
+          sets self.errors and raises self.command_exception
+        """
+        if not isinstance(command_list, list):
+            raise LAVABug("commands to parsed_command need to be a list")
+        log = ""
+        # nice is assumed to always exist (coreutils)
+        command_list = ["nice"] + [str(s) for s in command_list]
+        self.logger.debug("%s", " ".join(command_list))
+        try:
+            log = subprocess.check_output(  # nosec - internal
+                command_list, stderr=subprocess.STDOUT, cwd=cwd
+            )
+            log = log.decode("utf-8", errors="replace")
+            if allow_fail:
+                self.results = {"returncode": "0"}
+                self.results = {"output_len": len(log)}
+                self.logger.info(
+                    "Parsed command exited zero with allow_fail set, returning %s bytes."
+                    % len(log)
+                )
+        except subprocess.CalledProcessError as exc:
+            # the errors property doesn't support removing errors
+            errors = []
+            retcode = exc.returncode
+            if exc.output:
+                output = exc.output.strip().decode("utf-8", errors="replace")
+            else:
+                output = str(exc)
+            errors.append(output)
+            self.results = {"returncode": "%s" % exc.returncode}
+            self.logger.info("Parsed command exited %s." % retcode)
+            base = (
+                "action: {0}\ncommand: {1}\nmessage: {2}\noutput: {3}\nreturn code: {4}"
+            )
+            msg = base.format(
+                self.name,
+                [i.strip() for i in exc.cmd],
+                str(exc),
+                "\n".join(errors),
+                retcode,
+            )
+            self.results = {"output": output}
+
+            # the exception is raised due to a non-zero exc.returncode
+            if allow_fail:
+                self.logger.info(msg)
+                log = exc.output.strip().decode("utf-8", errors="replace")
+            else:
+                for error in errors:
+                    self.errors = error
+                self.logger.error(msg)
+                # if not allow_fail, fail the command with the specified exception.
+                raise self.command_exception(exc) from exc
+
+        for line in log.split("\n"):
+            self.logger.debug("output: %s", line)
+        return log
+
     def run_command(self, command_list, allow_silent=False, allow_fail=False, cwd=None):  # pylint: disable=too-many-branches
         """
+        Deprecated - use run_cmd or parsed_command instead.
+
         Single location for all external command operations on the
         dispatcher, without using a shell and with full structured logging.
         Ensure that output for the YAML logger is a serialisable object

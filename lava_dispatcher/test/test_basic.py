@@ -27,7 +27,13 @@ import logging
 import yaml
 
 from lava_dispatcher.action import Pipeline, Action
-from lava_common.exceptions import JobError, LAVABug, LAVAError, ConfigurationError
+from lava_common.exceptions import (
+    InfrastructureError,
+    JobError,
+    LAVABug,
+    LAVAError,
+    ConfigurationError,
+)
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.job import Job
 from lava_dispatcher.device import NewDevice
@@ -94,6 +100,33 @@ class TestPipelineInit(StdoutTestCase):  # pylint: disable=too-many-public-metho
         self.assertIsNotNone(self.sub1)
         # prevent reviews leaving update_ref set to True.
         self.assertFalse(self.update_ref)
+
+    def test_parsed_commands(self):
+        command_list = ["false"]
+        self.assertRaises(JobError, self.sub0.parsed_command, command_list)
+        self.assertEqual("", self.sub0.parsed_command(command_list, allow_fail=True))
+        self.sub1.command_exception = InfrastructureError
+        self.assertRaises(InfrastructureError, self.sub1.parsed_command, command_list)
+        command_list = ["true"]
+        self.assertEqual("", self.sub0.parsed_command(command_list))
+        self.assertEqual("", self.sub0.parsed_command(command_list, allow_fail=True))
+        command_list = ["echo", "01234556789"]
+        self.assertEqual("01234556789", self.sub0.parsed_command(command_list).strip())
+        self.assertEqual(
+            "01234556789",
+            self.sub0.parsed_command(command_list, allow_fail=True).strip(),
+        )
+        command_list = ["ls", "./01234556789"]
+        self.assertRaises(JobError, self.sub0.parsed_command, command_list)
+        self.assertRaises(InfrastructureError, self.sub1.parsed_command, command_list)
+        self.assertIn(
+            "No such file or directory",
+            self.sub0.parsed_command(command_list, allow_fail=True),
+        )
+        self.assertIn(
+            "No such file or directory",
+            self.sub1.parsed_command(command_list, allow_fail=True),
+        )
 
 
 class TestJobParser(StdoutTestCase):  # pylint: disable=too-many-public-methods

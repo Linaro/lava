@@ -59,7 +59,7 @@ class ConnectAdb(Action):
         # start the adb daemon
         adb_cmd = ['adb', 'start-server']
         command_output = self.run_command(adb_cmd, allow_fail=True)
-        if command_output and 'successfully' in command_output:
+        if command_output and 'successfully' in command_output.lower():
             self.logger.debug("adb daemon started: %s", command_output)
         # wait for adb device before connecting to adb shell
         adb_cmd = ['adb', '-s', adb_serial_number, 'wait-for-device']

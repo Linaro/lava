@@ -1,4 +1,4 @@
-# Copyright (C) 2015 Linaro Limited
+# Copyright (C) 2015-2018 Linaro Limited
 #
 # Author: Senthil Kumaran S <senthil.kumaran@linaro.org>
 #
@@ -241,13 +241,16 @@ class FastbootBootAction(Action):
         fastboot_cmd = lxc_cmd_prefix(self.job) + [
             'fastboot', '-s', serial_number, 'boot', boot_img
         ] + self.job.device['fastboot_options']
-        command_output = self.run_command(fastboot_cmd, allow_fail=True)
-        if command_output and 'booting' not in command_output:
+        command_output = self.parsed_command(fastboot_cmd, allow_fail=True)
+        if command_output and 'booting' not in command_output.lower():
             raise JobError("Unable to boot with fastboot: %s" % command_output)
         else:
-            status = [status.strip() for status in command_output.split(
-                '\n') if 'finished' in status][0]
-            self.results = {'status': status}
+            lines = [status for status in command_output.split(
+                '\n') if 'finished' in status.lower()]
+            if lines:
+                self.results = {'status': lines[0].strip()}
+            else:
+                self.results = {'fail': self.name}
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection
 
@@ -278,13 +281,16 @@ class FastbootRebootAction(Action):
         fastboot_opts = self.job.device['fastboot_options']
         fastboot_cmd = lxc_cmd_prefix(self.job) + ['fastboot', '-s', serial_number,
                                                    'reboot'] + fastboot_opts
-        command_output = self.run_command(fastboot_cmd, allow_fail=True)
-        if command_output and 'rebooting' not in command_output:
+        command_output = self.parsed_command(fastboot_cmd, allow_fail=True)
+        if command_output and 'rebooting' not in command_output.lower():
             raise JobError("Unable to fastboot reboot: %s" % command_output)
         else:
-            status = [status.strip() for status in command_output.split(
-                '\n') if 'finished' in status][0]
-            self.results = {'status': status}
+            lines = [status for status in command_output.split(
+                '\n') if 'finished' in status.lower()]
+            if lines:
+                self.results = {'status': lines[0].strip()}
+            else:
+                self.results = {'fail': self.name}
         self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
         return connection
 
@@ -297,6 +303,7 @@ class EnterFastbootAction(Action):
     name = "enter-fastboot-action"
     description = "enter fastboot bootloader"
     summary = "enter fastboot"
+    command_exception = InfrastructureError
 
     def validate(self):
         super().validate()
@@ -321,11 +328,11 @@ class EnterFastbootAction(Action):
         adb_serial_number = self.job.device['adb_serial_number']
         # start the adb daemon
         adb_cmd = cmd_prefix + ['adb', 'start-server']
-        command_output = self.run_command(adb_cmd, allow_fail=True)
+        command_output = self.parsed_command(adb_cmd, allow_fail=True)
         if command_output and 'successfully' in command_output:
             self.logger.debug("adb daemon started: %s", command_output)
         adb_cmd = cmd_prefix + ['adb', '-s', adb_serial_number, 'devices']
-        command_output = self.run_command(adb_cmd, allow_fail=True)
+        command_output = self.parsed_command(adb_cmd, allow_fail=True)
         if command_output and adb_serial_number in command_output:
             self.logger.debug("Device is in adb: %s", command_output)
             adb_cmd = cmd_prefix + ['adb', '-s', adb_serial_number,
@@ -338,14 +345,14 @@ class EnterFastbootAction(Action):
         fastboot_opts = self.job.device['fastboot_options']
         fastboot_cmd = cmd_prefix + ['fastboot', '-s', fastboot_serial_number,
                                      'devices'] + fastboot_opts
-        command_output = self.run_command(fastboot_cmd)
+        command_output = self.parsed_command(fastboot_cmd)
         if command_output and fastboot_serial_number in command_output:
             self.logger.debug("Device is in fastboot: %s", command_output)
             fastboot_cmd = cmd_prefix + [
                 'fastboot', '-s', fastboot_serial_number, 'reboot-bootloader'
             ] + fastboot_opts
-            command_output = self.run_command(fastboot_cmd)
-            if command_output and 'OKAY' not in command_output:
+            command_output = self.parsed_command(fastboot_cmd)
+            if command_output and 'okay' not in command_output.lower():
                 raise InfrastructureError("Unable to enter fastboot: %s" %
                                           command_output)
             else:
@@ -354,5 +361,5 @@ class EnterFastbootAction(Action):
                 if lines:
                     self.results = {'status': lines[0].strip()}
                 else:
-                    self.results = {'fail': 'fastboot'}
+                    self.results = {'fail': self.name}
         return connection

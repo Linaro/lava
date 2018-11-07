@@ -185,6 +185,7 @@ class LxcCreateAction(DeployAction):
                                     '--release', self.lxc_data['lxc_release']]
         if self.lxc_data['lxc_arch']:
             lxc_cmd += ['--arch', self.lxc_data['lxc_arch']]
+        # FIXME: check if persistent name already exists and then drop allow_fail & allow_silent
         cmd_out = self.run_command(lxc_cmd, allow_fail=True, allow_silent=True)
         if isinstance(cmd_out, str):
             if 'exists' in cmd_out and self.lxc_data['lxc_persist']:
@@ -313,6 +314,7 @@ class LxcCreateUdevRuleAction(DeployAction):
 
         # Reload udev rules.
         reload_cmd = ['udevadm', 'control', '--reload-rules']
+        # FIXME: if reload fails, that is a LAVABug.
         cmd_out = self.run_command(reload_cmd, allow_fail=True,
                                    allow_silent=True)
         if cmd_out is False:
