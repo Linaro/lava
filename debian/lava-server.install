@@ -1,5 +1,4 @@
 debian/lava/usr/lib/python3/dist-packages/lava_server ./usr/lib/python3/dist-packages/
-debian/lava/usr/lib/python3/dist-packages/dashboard_app ./usr/lib/python3/dist-packages/
 debian/lava/usr/lib/python3/dist-packages/lava_scheduler_app ./usr/lib/python3/dist-packages/
 debian/lava/usr/lib/python3/dist-packages/lava_results_app ./usr/lib/python3/dist-packages/
 debian/lava/usr/lib/python3/dist-packages/lava_rest_app ./usr/lib/python3/dist-packages/
