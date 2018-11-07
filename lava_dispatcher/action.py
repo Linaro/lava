@@ -24,6 +24,7 @@ from functools import reduce
 import time
 import types
 import traceback
+import select
 import subprocess  # nosec - internal
 from collections import OrderedDict
 from nose.tools import nottest
@@ -541,6 +542,68 @@ class Action:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         for line in log.split("\n"):
             self.logger.debug("output: %s", line)
         return log
+
+    def run_cmd(self, command_list, allow_fail=False, error_msg=None, cwd=None):
+        """
+        Run the given command on the dispatcher. If the command fail, a
+        JobError will be raised unless allow_fail is set to True.
+        The command output will be visible (almost) in real time.
+
+        :param: command_list - the command to run (as a list)
+        :param: allow_fail - if True, do not raise a JobError when the command fail (return non 0)
+        :param: error_msg - the exception message.
+        :param: cwd - the current working directory for this command
+        """
+        # Build the command list (adding 'nice' at the front)
+        if not isinstance(command_list, list):
+            raise LAVABug("commands to run_cmd need to be a list")
+        command_list = ["nice"] + [str(s) for s in command_list]
+
+        # Start the subprocess
+        self.logger.debug("Calling '%s'", ' '.join(command_list))
+        start = time.time()
+        # TODO: when python >= 3.6 use encoding and errors
+        # see https://docs.python.org/3.6/library/subprocess.html#subprocess.Popen
+        proc = subprocess.Popen(
+            command_list,
+            cwd=cwd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            bufsize=1,  # line buffered
+            universal_newlines=True  # text stream
+        )
+
+        # Poll stdout and stderr until the process terminate
+        poller = select.epoll()
+        poller.register(proc.stdout, select.EPOLLIN)
+        poller.register(proc.stderr, select.EPOLLIN)
+        while proc.poll() is None:
+            for fd, event in poller.poll():
+                # When the process terminate, we might get an EPOLLHUP
+                if event is not select.EPOLLIN:
+                    continue
+                # Print stdout or stderr
+                # We can't use readlines as it will block.
+                if fd == proc.stdout.fileno():
+                    line = proc.stdout.readline()
+                    self.logger.debug(">> %s", line)
+                elif fd == proc.stderr.fileno():
+                    line = proc.stderr.readline()
+                    self.logger.error(">> %s", line)
+
+        # The process has terminated but some output might be remaining.
+        # readlines won't block now because the process has terminated.
+        for line in proc.stdout.readlines():
+            self.logger.debug(">> %s", line)
+        for line in proc.stderr.readlines():
+            self.logger.error(">> %s", line)
+
+        # Check the return code
+        ret = proc.wait()
+        self.logger.debug("Returned %d in %s seconds", ret, int(time.time() - start))
+        if ret and not allow_fail:
+            self.logger.error("Unable to run '%s'", command_list)
+            raise self.command_exception(error_msg)
 
     def run_command(self, command_list, allow_silent=False, allow_fail=False, cwd=None):  # pylint: disable=too-many-branches
         """
