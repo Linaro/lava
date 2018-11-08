@@ -177,7 +177,7 @@ def can_view(record, user):
 def split_definition(data):
     # preserve comments
     # rstrip() gets rid of the empty new line.
-    return data.rstrip().split('\n')
+    return data.rstrip().split('\n') if data else []
 
 
 @register.filter()
