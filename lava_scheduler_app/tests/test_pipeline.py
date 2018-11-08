@@ -595,9 +595,9 @@ def check_rpcinfo(server="127.0.0.1"):
     returns True on failure.
     """
     try:
-        subprocess.check_output(
+        subprocess.check_output(  # nosec unit test
             ["/usr/sbin/rpcinfo", "-u", server, "nfs", "3"]
-        )  # nosec unit test
+        )
     except (OSError, subprocess.CalledProcessError):
         return True
     return False
@@ -1222,8 +1222,8 @@ class TestYamlMultinode(TestCaseWithFactory):
             meta_dict,
         )
         # simulate dynamic connection
-        dynamic = yaml.load(
-            open(  # nosec - not suitable for safe_load
+        dynamic = yaml.load(  # nosec - not suitable for safe_load
+            open(
                 os.path.join(
                     os.path.dirname(__file__),
                     "pipeline_refs",

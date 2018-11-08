@@ -31,16 +31,12 @@ from django.core.urlresolvers import reverse
 from django.db import IntegrityError
 
 from lava_scheduler_app import utils
-from lava_results_app.models import (
-    Query,
-    TestCase,
-    TestSuite
-)
+from lava_results_app.models import Query, TestCase, TestSuite
 from lava_scheduler_app.models import (
     Notification,
     NotificationCallback,
     NotificationRecipient,
-    TestJob
+    TestJob,
 )
 from linaro_django_xmlrpc.models import AuthToken
 
@@ -54,38 +50,42 @@ def get_token_from_description(user, description):
 
 def get_query_results(notification):
     if notification.query_name:
-        query = Query.objects.get(name=notification.query_name,
-                                  owner=notification.query_owner)
+        query = Query.objects.get(
+            name=notification.query_name, owner=notification.query_owner
+        )
         # We use query_owner as user here since we show only status.
-        return query.get_results(notification.query_owner)[:notification.QUERY_LIMIT]
+        return query.get_results(notification.query_owner)[: notification.QUERY_LIMIT]
     else:
         return Query.get_queryset(
             notification.entity,
             Query.parse_conditions(notification.entity, notification.conditions),
-            notification.QUERY_LIMIT)
+            notification.QUERY_LIMIT,
+        )
 
 
 def get_query_link(notification):
     if notification.query_name:
-        query = Query.objects.get(name=notification.query_name,
-                                  owner=notification.query_owner)
+        query = Query.objects.get(
+            name=notification.query_name, owner=notification.query_owner
+        )
         return query.get_absolute_url()
     else:
         # Make absolute URL manually.
         return "%s?entity=%s&conditions=%s" % (
             reverse("lava.results.query_custom"),
             notification.entity.model,
-            notification.conditions)
+            notification.conditions,
+        )
 
 
 def substitute_callback_url_variables(job, callback_url):
     # Substitute variables in callback_url with field values from job.
     # Format: { FIELD_NAME }
     # If field name is non-existing, return None.
-    logger = logging.getLogger('lava_scheduler_app')
+    logger = logging.getLogger("lava_scheduler_app")
 
-    for sub in re.findall(r'{\s*[A-Z_-]*\s*}', callback_url):
-        attribute_name = sub.replace('{', '').replace('}', '').strip().lower()
+    for sub in re.findall(r"{\s*[A-Z_-]*\s*}", callback_url):
+        attribute_name = sub.replace("{", "").replace("}", "").strip().lower()
         # FIXME: Keep legacy behavior. Should be removed.
         if attribute_name == "status":
             attr = job.get_legacy_status()
@@ -95,7 +95,9 @@ def substitute_callback_url_variables(job, callback_url):
             try:
                 attr = getattr(job, attribute_name)
             except AttributeError:
-                logger.error("Attribute '%s' does not exist in TestJob.", attribute_name)
+                logger.error(
+                    "Attribute '%s' does not exist in TestJob.", attribute_name
+                )
                 continue
         callback_url = callback_url.replace(str(sub), str(attr))
 
@@ -105,12 +107,22 @@ def substitute_callback_url_variables(job, callback_url):
 def create_callback(job, callback_data, notification):
     notification_callback = NotificationCallback(notification=notification)
 
-    notification_callback.url = substitute_callback_url_variables(job, callback_data["url"])
+    notification_callback.url = substitute_callback_url_variables(
+        job, callback_data["url"]
+    )
     if callback_data.get("token"):
-        notification_callback.token = get_token_from_description(job.submitter, callback_data['token'])
-    notification_callback.method = NotificationCallback.METHOD_MAP[callback_data.get("method", "GET")]
-    notification_callback.dataset = NotificationCallback.DATASET_MAP[callback_data.get("dataset", "minimal")]
-    notification_callback.content_type = NotificationCallback.CONTENT_TYPE_MAP[callback_data.get('content-type', 'urlencoded')]
+        notification_callback.token = get_token_from_description(
+            job.submitter, callback_data["token"]
+        )
+    notification_callback.method = NotificationCallback.METHOD_MAP[
+        callback_data.get("method", "GET")
+    ]
+    notification_callback.dataset = NotificationCallback.DATASET_MAP[
+        callback_data.get("dataset", "minimal")
+    ]
+    notification_callback.content_type = NotificationCallback.CONTENT_TYPE_MAP[
+        callback_data.get("content-type", "urlencoded")
+    ]
 
     notification_callback.save()
 
@@ -121,9 +133,9 @@ def get_notification_args(job):
     args["url_prefix"] = "http://%s" % utils.get_domain()
     # Get lava.job result if available
     with contextlib.suppress(TestCase.DoesNotExist):
-        lava_job_obj = TestCase.objects.get(suite__job=job,
-                                            suite__name="lava",
-                                            name="job")
+        lava_job_obj = TestCase.objects.get(
+            suite__job=job, suite__name="lava", name="job"
+        )
         args["lava_job_result"] = lava_job_obj.action_metadata
 
     args["query"] = {}
@@ -142,65 +154,73 @@ def get_notification_args(job):
         if compare_index is not None and job.notification.blacklist:
             # Get testsuites diffs between current job and latest complete
             # job from query.
-            new_suites = job.testsuite_set.all().exclude(name__in=job.notification.blacklist)
-            old_suites = args["query"]["results"][
-                compare_index].testsuite_set.all().exclude(name__in=job.notification.blacklist)
-            left_suites_diff = new_suites.exclude(name__in=old_suites.values_list(
-                'name', flat=True))
+            new_suites = job.testsuite_set.all().exclude(
+                name__in=job.notification.blacklist
+            )
+            old_suites = (
+                args["query"]["results"][compare_index]
+                .testsuite_set.all()
+                .exclude(name__in=job.notification.blacklist)
+            )
+            left_suites_diff = new_suites.exclude(
+                name__in=old_suites.values_list("name", flat=True)
+            )
             right_suites_diff = old_suites.exclude(
-                name__in=new_suites.values_list('name', flat=True))
+                name__in=new_suites.values_list("name", flat=True)
+            )
 
             args["query"]["left_suites_diff"] = left_suites_diff
             args["query"]["right_suites_diff"] = right_suites_diff
 
             # Get testcases diffs between current job and latest complete
             # job from query.
-            new_cases = TestCase.objects.filter(suite__job=job).exclude(
-                name__in=job.notification.blacklist).exclude(
-                    suite__name__in=job.notification.blacklist)
-            old_cases = TestCase.objects.filter(suite__job=args["query"]["results"][compare_index]).exclude(
-                name__in=job.notification.blacklist).exclude(
-                    suite__name__in=job.notification.blacklist)
+            new_cases = (
+                TestCase.objects.filter(suite__job=job)
+                .exclude(name__in=job.notification.blacklist)
+                .exclude(suite__name__in=job.notification.blacklist)
+            )
+            old_cases = (
+                TestCase.objects.filter(
+                    suite__job=args["query"]["results"][compare_index]
+                )
+                .exclude(name__in=job.notification.blacklist)
+                .exclude(suite__name__in=job.notification.blacklist)
+            )
 
             left_cases_diff = new_cases.exclude(
-                name__in=old_cases.values_list(
-                    'name', flat=True))
+                name__in=old_cases.values_list("name", flat=True)
+            )
             right_cases_diff = old_cases.exclude(
-                name__in=new_cases.values_list('name', flat=True))
+                name__in=new_cases.values_list("name", flat=True)
+            )
 
             args["query"]["left_cases_diff"] = left_cases_diff
             args["query"]["right_cases_diff"] = right_cases_diff
 
             left_suites_intersection = new_suites.filter(
-                name__in=old_suites.values_list(
-                    'name', flat=True))
+                name__in=old_suites.values_list("name", flat=True)
+            )
 
             # Format results.
             left_suites_count = {}
             for suite in left_suites_intersection:
                 left_suites_count[suite.name] = (
-                    suite.testcase_set.filter(
-                        result=TestCase.RESULT_PASS).count(),
-                    suite.testcase_set.filter(
-                        result=TestCase.RESULT_FAIL).count(),
-                    suite.testcase_set.filter(
-                        result=TestCase.RESULT_SKIP).count()
+                    suite.testcase_set.filter(result=TestCase.RESULT_PASS).count(),
+                    suite.testcase_set.filter(result=TestCase.RESULT_FAIL).count(),
+                    suite.testcase_set.filter(result=TestCase.RESULT_SKIP).count(),
                 )
 
             right_suites_intersection = old_suites.filter(
-                name__in=new_suites.values_list(
-                    'name', flat=True))
+                name__in=new_suites.values_list("name", flat=True)
+            )
 
             # Format results.
             right_suites_count = {}
             for suite in right_suites_intersection:
                 right_suites_count[suite.name] = (
-                    suite.testcase_set.filter(
-                        result=TestCase.RESULT_PASS).count(),
-                    suite.testcase_set.filter(
-                        result=TestCase.RESULT_FAIL).count(),
-                    suite.testcase_set.filter(
-                        result=TestCase.RESULT_SKIP).count()
+                    suite.testcase_set.filter(result=TestCase.RESULT_PASS).count(),
+                    suite.testcase_set.filter(result=TestCase.RESULT_FAIL).count(),
+                    suite.testcase_set.filter(result=TestCase.RESULT_SKIP).count(),
                 )
 
             args["query"]["left_suites_count"] = left_suites_count
@@ -211,22 +231,26 @@ def get_notification_args(job):
             for suite in left_suites_intersection:
                 try:
                     old_suite = TestSuite.objects.get(
-                        name=suite.name,
-                        job=args["query"]["results"][compare_index])
+                        name=suite.name, job=args["query"]["results"][compare_index]
+                    )
                 except TestSuite.DoesNotExist:
                     continue  # No matching suite, move on.
                 for testcase in suite.testcase_set.all():
                     try:
                         old_testcase = TestCase.objects.get(
-                            suite=old_suite, name=testcase.name)
-                        if old_testcase and \
-                           testcase.result != old_testcase.result:
-                            testcases_changed[testcase] = old_testcase.get_result_display()
+                            suite=old_suite, name=testcase.name
+                        )
+                        if old_testcase and testcase.result != old_testcase.result:
+                            testcases_changed[
+                                testcase
+                            ] = old_testcase.get_result_display()
                     except TestCase.DoesNotExist:
                         continue  # No matching TestCase, move on.
                     except TestCase.MultipleObjectsReturned:
-                        logging.info("Multiple Test Cases with the equal name in TestSuite %s, could not compare",
-                                     old_suite)
+                        logging.info(
+                            "Multiple Test Cases with the equal name in TestSuite %s, could not compare",
+                            old_suite,
+                        )
 
             args["query"]["testcases_changed"] = testcases_changed
 
@@ -254,7 +278,7 @@ def get_recipient_args(recipient):
 
 
 def send_notifications(job):
-    logger = logging.getLogger('lava_scheduler_app')
+    logger = logging.getLogger("lava_scheduler_app")
     notification = job.notification
     # Prep template args.
     kwargs = get_notification_args(job)
@@ -266,46 +290,68 @@ def send_notifications(job):
         if recipient.method == NotificationRecipient.EMAIL:
             if recipient.status == NotificationRecipient.NOT_SENT:
                 try:
-                    logger.info("[%d] sending email notification to %s",
-                                job.id, recipient.email_address)
+                    logger.info(
+                        "[%d] sending email notification to %s",
+                        job.id,
+                        recipient.email_address,
+                    )
                     title = "LAVA notification for Test Job %s %s" % (
-                        job.id, job.description[:200])
+                        job.id,
+                        job.description[:200],
+                    )
                     kwargs["user"] = get_recipient_args(recipient)
                     body = create_notification_body(notification.template, **kwargs)
                     result = send_mail(
-                        title, body, settings.SERVER_EMAIL,
-                        [recipient.email_address])
+                        title, body, settings.SERVER_EMAIL, [recipient.email_address]
+                    )
                     if result:
                         recipient.status = NotificationRecipient.SENT
                         recipient.save()
-                except (smtplib.SMTPRecipientsRefused, jinja2.exceptions.TemplateError,
-                        smtplib.SMTPSenderRefused, OSError) as exc:
+                except (
+                    smtplib.SMTPRecipientsRefused,
+                    jinja2.exceptions.TemplateError,
+                    smtplib.SMTPSenderRefused,
+                    OSError,
+                ) as exc:
                     logger.exception(exc)
-                    logger.warning("[%d] failed to send email notification to %s",
-                                   job.id, recipient.email_address)
+                    logger.warning(
+                        "[%d] failed to send email notification to %s",
+                        job.id,
+                        recipient.email_address,
+                    )
         else:  # IRC method
             if recipient.status == NotificationRecipient.NOT_SENT:
                 if recipient.irc_server_name:
 
-                    logger.info("[%d] sending IRC notification to %s on %s",
-                                job.id, recipient.irc_handle_name,
-                                recipient.irc_server_name)
+                    logger.info(
+                        "[%d] sending IRC notification to %s on %s",
+                        job.id,
+                        recipient.irc_handle_name,
+                        recipient.irc_server_name,
+                    )
                     try:
                         irc_message = create_irc_notification(job)
                         utils.send_irc_notification(
                             Notification.DEFAULT_IRC_HANDLE,
                             recipient=recipient.irc_handle_name,
                             message=irc_message,
-                            server=recipient.irc_server_name)
+                            server=recipient.irc_server_name,
+                        )
                         recipient.status = NotificationRecipient.SENT
                         recipient.save()
-                        logger.info("[%d] IRC notification sent to %s",
-                                    job.id, recipient.irc_handle_name)
+                        logger.info(
+                            "[%d] IRC notification sent to %s",
+                            job.id,
+                            recipient.irc_handle_name,
+                        )
                     # FIXME: this bare except should be constrained
                     except Exception as e:
                         logger.warning(
                             "[%d] IRC notification not sent. Reason: %s - %s",
-                            job.id, e.__class__.__name__, str(e))
+                            job.id,
+                            e.__class__.__name__,
+                            str(e),
+                        )
 
 
 def notification_criteria(criteria, state, health, old_health):
@@ -327,12 +373,16 @@ def notification_criteria(criteria, state, health, old_health):
     if health == const:
         if "type" in criteria:
             if criteria["type"] == "regression":
-                if old_health == TestJob.HEALTH_COMPLETE and \
-                   health == TestJob.HEALTH_INCOMPLETE:
+                if (
+                    old_health == TestJob.HEALTH_COMPLETE
+                    and health == TestJob.HEALTH_INCOMPLETE
+                ):
                     return True
             if criteria["type"] == "progression":
-                if old_health == TestJob.HEALTH_INCOMPLETE and \
-                   health == TestJob.HEALTH_COMPLETE:
+                if (
+                    old_health == TestJob.HEALTH_INCOMPLETE
+                    and health == TestJob.HEALTH_COMPLETE
+                ):
                     return True
         else:
             return True
@@ -364,8 +414,13 @@ def create_notification(job, data):
                 notification.entity = Query.get_content_type(query_data["entity"])
                 if "conditions" in query_data:
                     # Save conditions as a string.
-                    conditions = ['%s%s%s' % (key, Query.CONDITION_DIVIDER, value) for (key, value) in query_data["conditions"].items()]
-                    notification.conditions = Query.CONDITIONS_SEPARATOR.join(conditions)
+                    conditions = [
+                        "%s%s%s" % (key, Query.CONDITION_DIVIDER, value)
+                        for (key, value) in query_data["conditions"].items()
+                    ]
+                    notification.conditions = Query.CONDITIONS_SEPARATOR.join(
+                        conditions
+                    )
 
     notification.test_job = job
     notification.template = Notification.DEFAULT_TEMPLATE
@@ -374,7 +429,9 @@ def create_notification(job, data):
     if "recipients" in data:
         for recipient in data["recipients"]:
             notification_recipient = NotificationRecipient(notification=notification)
-            notification_recipient.method = NotificationRecipient.METHOD_MAP[recipient["to"]["method"]]
+            notification_recipient.method = NotificationRecipient.METHOD_MAP[
+                recipient["to"]["method"]
+            ]
             if "user" in recipient["to"]:
                 user = User.objects.get(username=recipient["to"]["user"])
                 notification_recipient.user = user
@@ -398,8 +455,8 @@ def create_notification(job, data):
             # Ignore unique constraint violation.
             with contextlib.suppress(IntegrityError):
                 notification_recipient = NotificationRecipient.objects.create(
-                    user=job.submitter,
-                    notification=notification)
+                    user=job.submitter, notification=notification
+                )
 
     # Add callbacks.
     if "callbacks" in data:

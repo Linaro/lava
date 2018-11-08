@@ -28,18 +28,13 @@ from zmq.utils.strtypes import b
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
-from django.db.models.signals import (
-    post_init,
-    post_save,
-    pre_delete,
-    pre_save
-)
+from django.db.models.signals import post_init, post_save, pre_delete, pre_save
 
 from lava_scheduler_app.models import Device, TestJob, Worker
 from lava_scheduler_app.notifications import (
     create_notification,
     notification_criteria,
-    send_notifications
+    send_notifications,
 )
 
 
@@ -65,7 +60,7 @@ def send_event(topic, user, data):
             b(str(uuid.uuid1())),
             b(datetime.datetime.utcnow().isoformat()),
             b(user),
-            b(simplejson.dumps(data))
+            b(simplejson.dumps(data)),
         ]
         # Send the message in the non-blockng mode.
         # If the consumer (lava-publisher) is not active, the message will be lost.
@@ -88,7 +83,9 @@ def device_post_handler(sender, **kwargs):
     instance = kwargs["instance"]
 
     # Send a signal if the state or health changed
-    if (instance.health != instance._old_health) or (instance.state != instance._old_state):
+    if (instance.health != instance._old_health) or (
+        instance.state != instance._old_state
+    ):
         # Update the states as some objects are save many times.
         # Even if an object is saved many time, we will send messages only when
         # the state change.
@@ -132,7 +129,9 @@ def testjob_notifications(sender, **kwargs):
 
     job_def = yaml.safe_load(job.definition)
     if "notify" in job_def:
-        if notification_criteria(job_def["notify"]["criteria"], job.state, job.health, job._old_health):
+        if notification_criteria(
+            job_def["notify"]["criteria"], job.state, job.health, job._old_health
+        ):
             try:
                 job.notification
             except ObjectDoesNotExist:
@@ -145,7 +144,11 @@ def testjob_post_handler(sender, **kwargs):
     instance = kwargs["instance"]
 
     # Send a signal if the state or health changed
-    if (instance.health != instance._old_health) or (instance.state != instance._old_state) or instance.state == TestJob.STATE_SUBMITTED:
+    if (
+        (instance.health != instance._old_health)
+        or (instance.state != instance._old_state)
+        or instance.state == TestJob.STATE_SUBMITTED
+    ):
         # Update the states as some objects are save many times.
         # Even if an object is saved many time, we will send messages only when
         # the states change.
@@ -165,11 +168,11 @@ def testjob_post_handler(sender, **kwargs):
             "health_check": instance.health_check,
         }
         if instance.is_multinode:
-            data['sub_id'] = instance.sub_id
+            data["sub_id"] = instance.sub_id
         if instance.actual_device:
             data["device"] = instance.actual_device.hostname
         if instance.requested_device_type:
-            data['device_type'] = instance.requested_device_type.name
+            data["device_type"] = instance.requested_device_type.name
         if instance.start_time:
             data["start_time"] = instance.start_time.isoformat()
         if instance.end_time:
@@ -197,7 +200,9 @@ def worker_post_handler(sender, **kwargs):
     # Called only when a Worker is saved into the database
     instance = kwargs["instance"]
 
-    if (instance.health != instance._old_health) or (instance.state != instance._old_state):
+    if (instance.health != instance._old_health) or (
+        instance.state != instance._old_state
+    ):
         # Update the states as some objects are save many times.
         # Even if an object is saved many time, we will send messages only when
         # the state change.
@@ -215,15 +220,55 @@ def worker_post_handler(sender, **kwargs):
         send_event(".worker", "lavaserver", data)
 
 
-pre_delete.connect(testjob_pre_delete_handler, sender=TestJob, weak=False, dispatch_uid="testjob_pre_delete_handler")
+pre_delete.connect(
+    testjob_pre_delete_handler,
+    sender=TestJob,
+    weak=False,
+    dispatch_uid="testjob_pre_delete_handler",
+)
 # This handler is used for the notification and the events
-post_init.connect(testjob_init_handler, sender=TestJob, weak=False, dispatch_uid="testjob_init_handler")
-pre_save.connect(testjob_notifications, sender=TestJob, weak=False, dispatch_uid="testjob_notifications")
+post_init.connect(
+    testjob_init_handler,
+    sender=TestJob,
+    weak=False,
+    dispatch_uid="testjob_init_handler",
+)
+pre_save.connect(
+    testjob_notifications,
+    sender=TestJob,
+    weak=False,
+    dispatch_uid="testjob_notifications",
+)
 
 # Only activate theses signals when EVENT_NOTIFICATION is in use
 if settings.EVENT_NOTIFICATION:
-    post_init.connect(device_init_handler, sender=Device, weak=False, dispatch_uid="device_init_handler")
-    post_save.connect(device_post_handler, sender=Device, weak=False, dispatch_uid="device_post_handler")
-    post_save.connect(testjob_post_handler, sender=TestJob, weak=False, dispatch_uid="testjob_post_handler")
-    post_init.connect(worker_init_handler, sender=Worker, weak=False, dispatch_uid="worker_init_handler")
-    post_save.connect(worker_post_handler, sender=Worker, weak=False, dispatch_uid="worker_post_handler")
+    post_init.connect(
+        device_init_handler,
+        sender=Device,
+        weak=False,
+        dispatch_uid="device_init_handler",
+    )
+    post_save.connect(
+        device_post_handler,
+        sender=Device,
+        weak=False,
+        dispatch_uid="device_post_handler",
+    )
+    post_save.connect(
+        testjob_post_handler,
+        sender=TestJob,
+        weak=False,
+        dispatch_uid="testjob_post_handler",
+    )
+    post_init.connect(
+        worker_init_handler,
+        sender=Worker,
+        weak=False,
+        dispatch_uid="worker_init_handler",
+    )
+    post_save.connect(
+        worker_post_handler,
+        sender=Worker,
+        weak=False,
+        dispatch_uid="worker_post_handler",
+    )

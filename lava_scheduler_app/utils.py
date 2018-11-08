@@ -55,7 +55,7 @@ class IRCHandleNotFoundError(IRCSendError):
 
 
 def get_domain():
-    domain = '???'
+    domain = "???"
     with contextlib.suppress(Site.DoesNotExist, ImproperlyConfigured):
         site = Site.objects.get_current()
         domain = site.domain
@@ -64,7 +64,7 @@ def get_domain():
 
 
 def is_member(user, group):
-    return user.groups.filter(name='%s' % group).exists()
+    return user.groups.filter(name="%s" % group).exists()
 
 
 def _split_multinode_vland(submission, jobs):
@@ -72,12 +72,18 @@ def _split_multinode_vland(submission, jobs):
     for role, _ in jobs.items():
         # populate the lava-vland protocol metadata
         if len(jobs[role]) != 1:
-            raise SubmissionException("vland protocol only supports one device per role.")
-        jobs[role][0]['protocols'].update({'lava-vland': submission['protocols']['lava-vland'][role]})
+            raise SubmissionException(
+                "vland protocol only supports one device per role."
+            )
+        jobs[role][0]["protocols"].update(
+            {"lava-vland": submission["protocols"]["lava-vland"][role]}
+        )
     return jobs
 
 
-def split_multinode_yaml(submission, target_group):  # pylint: disable=too-many-branches,too-many-locals,too-many-statements
+def split_multinode_yaml(
+    submission, target_group
+):  # pylint: disable=too-many-branches,too-many-locals,too-many-statements
     """
     Handles the lava-multinode protocol requirements.
     Uses the multinode protocol requirements to generate as many YAML
@@ -97,17 +103,22 @@ def split_multinode_yaml(submission, target_group):  # pylint: disable=too-many-
     # FIXME: needs a Protocol base class in the server and protocol-specific split handlers
 
     copies = [
-        'job_name',
-        'timeouts',
-        'priority',
-        'visibility',
-        'notify',
-        'metadata',
-        'reboot_to_fastboot',
+        "job_name",
+        "timeouts",
+        "priority",
+        "visibility",
+        "notify",
+        "metadata",
+        "reboot_to_fastboot",
     ]
-    skip = ['role', 'roles']
-    scheduling = ['device_type', 'connection', 'host_role', 'context']  # top level values to be preserved
-    maps = ['count']  # elements to be matched but not listed at top level.
+    skip = ["role", "roles"]
+    scheduling = [
+        "device_type",
+        "connection",
+        "host_role",
+        "context",
+    ]  # top level values to be preserved
+    maps = ["count"]  # elements to be matched but not listed at top level.
 
     roles = {}
     actions = {}
@@ -115,13 +126,17 @@ def split_multinode_yaml(submission, target_group):  # pylint: disable=too-many-
 
     # FIXME: check structure using a schema
 
-    role_data = submission['protocols']['lava-multinode']['roles']
+    role_data = submission["protocols"]["lava-multinode"]["roles"]
     group_size = sum(
-        [role_data[count]['count'] for count in role_data if 'count' in role_data[count]]
+        [
+            role_data[count]["count"]
+            for count in role_data
+            if "count" in role_data[count]
+        ]
     )
 
     # populate the lava-multinode protocol metadata
-    for role, value in submission['protocols']['lava-multinode']['roles'].items():
+    for role, value in submission["protocols"]["lava-multinode"]["roles"].items():
         roles[role] = {}
         for item in copies:
             if item in submission:
@@ -134,65 +149,72 @@ def split_multinode_yaml(submission, target_group):  # pylint: disable=too-many-
                 roles[role][name] = value[name]
         tags = set(value) - set(maps) - set(scheduling)
         params = {
-            'target_group': target_group,
-            'role': role,
-            'group_size': group_size,
-            'sub_id': subid,
+            "target_group": target_group,
+            "role": role,
+            "group_size": group_size,
+            "sub_id": subid,
         }
-        if 'essential' in value:
-            params['essential'] = value
+        if "essential" in value:
+            params["essential"] = value
         for tag in tags:
             params[tag] = value[tag]
-        roles[role].update({'protocols': {'lava-multinode': params}})
+        roles[role].update({"protocols": {"lava-multinode": params}})
         subid += 1
 
     # split the submission based on the roles specified for the actions, retaining order.
     for role in roles:
-        for action in submission['actions']:
+        for action in submission["actions"]:
             for key, value in action.items():
                 try:
-                    value['role']
+                    value["role"]
                 except (KeyError, TypeError):
-                    raise SubmissionException("Invalid YAML - Did not find a role in action '%s', check for consistent use of whitespace indents." % action.keys()[0])
-                if role in value['role']:
-                    actions.setdefault(role, {'actions': []})
-                    actions[role]['actions'].append({copy.deepcopy(key): copy.deepcopy(value)})
+                    raise SubmissionException(
+                        "Invalid YAML - Did not find a role in action '%s', check for consistent use of whitespace indents."
+                        % action.keys()[0]
+                    )
+                if role in value["role"]:
+                    actions.setdefault(role, {"actions": []})
+                    actions[role]["actions"].append(
+                        {copy.deepcopy(key): copy.deepcopy(value)}
+                    )
 
     # add other parameters from the lava-multinode protocol
-    for key, value in submission['protocols']['lava-multinode'].items():
+    for key, value in submission["protocols"]["lava-multinode"].items():
         if key in skip:
             continue
         for role in roles:
-            roles[role]['protocols']['lava-multinode'][key] = value
+            roles[role]["protocols"]["lava-multinode"][key] = value
 
     # set the role for each action to the role of the job instead of the original list..
     for role in actions:
-        for action in actions[role]['actions']:
+        for action in actions[role]["actions"]:
             for key, value in action.items():
-                value['role'] = role
+                value["role"] = role
 
     # jobs dictionary lists the jobs per role,
     jobs = {}
     # check the count of the host_roles
     check_count = None
     for role in roles:
-        if 'host_role' in roles[role]:
-            check_count = roles[role]['host_role']
+        if "host_role" in roles[role]:
+            check_count = roles[role]["host_role"]
     for role in roles:
         if role == check_count:
-            if roles[role]['count'] != 1:
-                raise SubmissionException('The count for a role designated as a host_role must be 1.')
+            if roles[role]["count"] != 1:
+                raise SubmissionException(
+                    "The count for a role designated as a host_role must be 1."
+                )
     sub_id_count = 0
     for role in roles:
         jobs[role] = []
-        for sub in range(0, roles[role]['count']):
+        for sub in range(0, roles[role]["count"]):
             job = {}
             job.update(actions[role])
             job.update(roles[role])
             # only here do multiple jobs for the same role differ
-            params = job['protocols']['lava-multinode']
-            params.update({'sub_id': sub_id_count})
-            job['protocols']['lava-multinode'].update(params)
+            params = job["protocols"]["lava-multinode"]
+            params.update({"sub_id": sub_id_count})
+            job["protocols"]["lava-multinode"].update(params)
             del params
             for item in maps:
                 if item in job:
@@ -201,17 +223,19 @@ def split_multinode_yaml(submission, target_group):  # pylint: disable=too-many-
             sub_id_count += 1
 
     # populate the lava-vland protocol metadata
-    if 'lava-vland' in submission['protocols']:
+    if "lava-vland" in submission["protocols"]:
         _split_multinode_vland(submission, jobs)
 
     # populate the lava-lxc protocol data
-    if 'lava-lxc' in submission['protocols']:
+    if "lava-lxc" in submission["protocols"]:
         for role, _ in jobs.items():
-            if role not in submission['protocols']['lava-lxc']:
+            if role not in submission["protocols"]["lava-lxc"]:
                 continue
             # populate the lava-lxc protocol metadata
             for job in jobs[role]:
-                job['protocols'].update({'lava-lxc': submission['protocols']['lava-lxc'][role]})
+                job["protocols"].update(
+                    {"lava-lxc": submission["protocols"]["lava-lxc"][role]}
+                )
 
     return jobs
 
@@ -226,8 +250,9 @@ def mkdir(path):
             raise
 
 
-def send_irc_notification(nick, recipient, message,
-                          server=DEFAULT_IRC_SERVER, port=DEFAULT_IRC_PORT):
+def send_irc_notification(
+    nick, recipient, message, server=DEFAULT_IRC_SERVER, port=DEFAULT_IRC_PORT
+):
     """
     Sends private IRC msg with netcat.
     parameters:
@@ -240,24 +265,28 @@ def send_irc_notification(nick, recipient, message,
       If there is an error, raise an exception and pass stderr message.
     """
 
-    netcat_cmd = "echo -e 'NICK %s\nUSER %s 8 * %s\nPRIVMSG %s :%s\nQUIT\n' | nc -i 5 -q 15 %s %s" % (
-        nick, nick, nick, recipient, message,
-        server, port)
+    netcat_cmd = (
+        "echo -e 'NICK %s\nUSER %s 8 * %s\nPRIVMSG %s :%s\nQUIT\n' | nc -i 5 -q 15 %s %s"
+        % (nick, nick, nick, recipient, message, server, port)
+    )
 
-    proc = subprocess.Popen(['/bin/bash', '-c', netcat_cmd],  # nosec managed.
-                            stdin=subprocess.PIPE,
-                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    proc = subprocess.Popen(  # nosec managed.
+        ["/bin/bash", "-c", netcat_cmd],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
 
     if proc.stderr:
         with proc.stderr:
-            for line in iter(proc.stderr.readline, b''):
+            for line in iter(proc.stderr.readline, b""):
                 if SERVICE_UNKNOWN_ERROR in line:
                     raise IRCServerIncorrectError(line)
                 else:
                     raise IRCSendError(line)
 
     with proc.stdout:
-        for line in iter(proc.stdout.readline, b''):
+        for line in iter(proc.stdout.readline, b""):
             if NO_SUCH_NICK_ERROR in line:
                 raise IRCHandleNotFoundError(line)
     proc.wait()
@@ -282,15 +311,16 @@ def get_ldap_user_properties(ldap_user):
     user_search = settings.AUTH_LDAP_USER_SEARCH
 
     search_scope = ldap.SCOPE_SUBTREE
-    attributes = ['uid', 'givenName', 'sn', 'mail']
+    attributes = ["uid", "givenName", "sn", "mail"]
     search_filter = "cn=*"
 
     if user_dn_template:
-        user_dn = user_dn_template % {'user': ldap_user}
+        user_dn = user_dn_template % {"user": ldap_user}
     if user_search is not None:
         from django_auth_ldap.config import LDAPSearch
+
         user_dn = user_search.base_dn
-        search_filter = user_search.filterstr % {'user': ldap_user}
+        search_filter = user_search.filterstr % {"user": ldap_user}
 
     user_properties = {}
     if server_uri is not None:
@@ -298,16 +328,15 @@ def get_ldap_user_properties(ldap_user):
         if user_dn:
             conn.simple_bind_s(bind_dn, bind_password)
             try:
-                result = conn.search_s(user_dn, search_scope,
-                                       search_filter, attributes)
+                result = conn.search_s(user_dn, search_scope, search_filter, attributes)
                 if len(result) == 1:
                     result_type, result_data = result[0]
-                    user_properties['uid'] = result_data.get('uid', [None])[0]
-                    user_properties['mail'] = result_data.get('mail',
-                                                              [None])[0]
-                    user_properties['sn'] = result_data.get('sn', [None])[0]
-                    user_properties['given_name'] = result_data.get('givenName',
-                                                                    [None])[0]
+                    user_properties["uid"] = result_data.get("uid", [None])[0]
+                    user_properties["mail"] = result_data.get("mail", [None])[0]
+                    user_properties["sn"] = result_data.get("sn", [None])[0]
+                    user_properties["given_name"] = result_data.get(
+                        "givenName", [None]
+                    )[0]
                     return user_properties
             except ldap.NO_SUCH_OBJECT:
                 raise

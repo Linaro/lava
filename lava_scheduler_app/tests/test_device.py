@@ -139,9 +139,9 @@ class DeviceTypeTest(TestCaseWithFactory):
             data = None
             try:
                 data = template.render()
-                yaml_data = yaml.load(
+                yaml_data = yaml.load(  # nosec - safe_load implemented directly
                     data, Loader=yaml.CSafeLoader
-                )  # nosec - safe_load implemented directly
+                )
             except yaml.YAMLError as exc:
                 print(data)  # for easier debugging - use the online yaml parser
                 self.fail("%s: %s" % (template_name, exc))

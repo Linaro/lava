@@ -164,7 +164,7 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
                         "cpus": 2.1,
                         "memory": "120M",
                         "devices": [],
-                        "volumes": ["/home", "/tmp"],
+                        "volumes": ["/home", "/tmp"],  # nosec - unit test support.
                     }
                 }
             },

@@ -31,7 +31,7 @@ from lava_scheduler_app.models import (
     _create_pipeline_job,
     _check_submit_to_device,
     TestJob,
-    Worker
+    Worker,
 )
 
 
@@ -56,14 +56,20 @@ def schedule_health_checks(logger, available_dt=None):
             # Add all devices of that type to the list of available devices
             devices = dt.device_set.filter(state=Device.STATE_IDLE)
             devices = devices.filter(worker_host__state=Worker.STATE_ONLINE)
-            devices = devices.filter(health__in=[Device.HEALTH_GOOD,
-                                                 Device.HEALTH_UNKNOWN])
+            devices = devices.filter(
+                health__in=[Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN]
+            )
             devices = devices.order_by("hostname")
-            available_devices[dt.name] = list(devices.values_list("hostname", flat=True))
+            available_devices[dt.name] = list(
+                devices.values_list("hostname", flat=True)
+            )
 
         else:
             with transaction.atomic():
-                (available_devices[dt.name], new_jobs) = schedule_health_checks_for_device_type(logger, dt)
+                (
+                    available_devices[dt.name],
+                    new_jobs,
+                ) = schedule_health_checks_for_device_type(logger, dt)
                 jobs.extend(new_jobs)
 
     # Print disabled device types
@@ -77,9 +83,9 @@ def schedule_health_checks_for_device_type(logger, dt):
     devices = dt.device_set.select_for_update()
     devices = devices.filter(state=Device.STATE_IDLE)
     devices = devices.filter(worker_host__state=Worker.STATE_ONLINE)
-    devices = devices.filter(health__in=[Device.HEALTH_GOOD,
-                                         Device.HEALTH_UNKNOWN,
-                                         Device.HEALTH_LOOPING])
+    devices = devices.filter(
+        health__in=[Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN, Device.HEALTH_LOOPING]
+    )
     devices = devices.order_by("hostname")
 
     print_header = True
@@ -101,8 +107,9 @@ def schedule_health_checks_for_device_type(logger, dt):
         else:
             submit_time = device.last_health_report_job.submit_time
             if dt.health_denominator == DeviceType.HEALTH_PER_JOB:
-                count = device.testjobs.filter(health_check=False,
-                                               start_time__gte=submit_time).count()
+                count = device.testjobs.filter(
+                    health_check=False, start_time__gte=submit_time
+                ).count()
 
                 scheduling = count >= dt.health_frequency
             else:
@@ -120,19 +127,25 @@ def schedule_health_checks_for_device_type(logger, dt):
             logger.debug("- %s", dt.name)
             print_header = False
 
-        logger.debug(" -> %s (%s, %s)", device.hostname,
-                     device.get_state_display(),
-                     device.get_health_display())
+        logger.debug(
+            " -> %s (%s, %s)",
+            device.hostname,
+            device.get_state_display(),
+            device.get_health_display(),
+        )
         if not device.is_valid():
             prev_health_display = device.get_health_display()
             device.health = Device.HEALTH_BAD
             device.log_admin_entry(
-                None, "%s → %s (Invalid device configuration)" % (
-                    prev_health_display, device.get_health_display()))
+                None,
+                "%s → %s (Invalid device configuration)"
+                % (prev_health_display, device.get_health_display()),
+            )
             device.save()
             logger.debug(
-                "%s → %s (Invalid device configuration for %s)" % (
-                    prev_health_display, device.get_health_display(), device.hostname))
+                "%s → %s (Invalid device configuration for %s)"
+                % (prev_health_display, device.get_health_display(), device.hostname)
+            )
             continue
         logger.debug("  |--> scheduling health check")
         try:
@@ -143,7 +156,11 @@ def schedule_health_checks_for_device_type(logger, dt):
             logger.exception(exc)
             prev_health_display = device.get_health_display()
             device.health = Device.HEALTH_BAD
-            device.log_admin_entry(None, "%s → %s (Invalid health check)" % (prev_health_display, device.get_health_display()))
+            device.log_admin_entry(
+                None,
+                "%s → %s (Invalid health check)"
+                % (prev_health_display, device.get_health_display()),
+            )
             device.save()
 
     return (available_devices, jobs)
@@ -152,8 +169,14 @@ def schedule_health_checks_for_device_type(logger, dt):
 def schedule_health_check(device, definition):
     user = User.objects.get(username="lava-health")
     job = _create_pipeline_job(
-        yaml.safe_load(definition), user, [], device=device, device_type=device.device_type,
-        orig=definition, health_check=True)
+        yaml.safe_load(definition),
+        user,
+        [],
+        device=device,
+        device_type=device.device_type,
+        orig=definition,
+        health_check=True,
+    )
     job.go_state_scheduled(device)
     job.save()
     return job.id
@@ -167,7 +190,9 @@ def schedule_jobs(logger, available_devices):
         if not available_devices.get(dt.name):
             continue
         with transaction.atomic():
-            jobs.extend(schedule_jobs_for_device_type(logger, dt, available_devices[dt.name]))
+            jobs.extend(
+                schedule_jobs_for_device_type(logger, dt, available_devices[dt.name])
+            )
 
     with transaction.atomic():
         # Transition multinode if needed
@@ -181,8 +206,7 @@ def schedule_jobs_for_device_type(logger, dt, available_devices):
     devices = dt.device_set.select_for_update()
     devices = devices.filter(state=Device.STATE_IDLE)
     devices = devices.filter(worker_host__state=Worker.STATE_ONLINE)
-    devices = devices.filter(health__in=[Device.HEALTH_GOOD,
-                                         Device.HEALTH_UNKNOWN])
+    devices = devices.filter(health__in=[Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN])
     devices = devices.order_by("is_public", "hostname")
 
     jobs = []
@@ -199,8 +223,9 @@ def schedule_jobs_for_device_type(logger, dt, available_devices):
 
 
 def schedule_jobs_for_device(logger, device):
-    jobs = TestJob.objects.filter(state__in=[TestJob.STATE_SUBMITTED,
-                                             TestJob.STATE_SCHEDULING])
+    jobs = TestJob.objects.filter(
+        state__in=[TestJob.STATE_SUBMITTED, TestJob.STATE_SCHEDULING]
+    )
     jobs = jobs.filter(actual_device__isnull=True)
     jobs = jobs.filter(requested_device_type__pk=device.device_type.pk)
     jobs = jobs.order_by("-state", "-priority", "submit_time", "target_group", "id")
@@ -218,22 +243,28 @@ def schedule_jobs_for_device(logger, device):
             prev_health_display = device.get_health_display()
             device.health = Device.HEALTH_BAD
             device.log_admin_entry(
-                None, "%s → %s (Invalid device configuration)" % (
-                    prev_health_display, device.get_health_display()))
+                None,
+                "%s → %s (Invalid device configuration)"
+                % (prev_health_display, device.get_health_display()),
+            )
             device.save()
             logger.debug(
-                "%s → %s (Invalid device configuration for %s)" % (
-                    prev_health_display, device.get_health_display(), device.hostname))
+                "%s → %s (Invalid device configuration for %s)"
+                % (prev_health_display, device.get_health_display(), device.hostname)
+            )
             continue
 
         job_dict = yaml.safe_load(job.definition)
-        if 'protocols' in job_dict and 'lava-vland' in job_dict['protocols']:
+        if "protocols" in job_dict and "lava-vland" in job_dict["protocols"]:
             if not match_vlan_interface(device, job_dict):
                 continue
 
-        logger.debug(" -> %s (%s, %s)", device.hostname,
-                     device.get_state_display(),
-                     device.get_health_display())
+        logger.debug(
+            " -> %s (%s, %s)",
+            device.hostname,
+            device.get_state_display(),
+            device.get_health_display(),
+        )
         logger.debug("  |--> [%d] scheduling", job.id)
         if job.is_multinode:
             # TODO: keep track of the multinode jobs
@@ -258,7 +289,12 @@ def transition_multinode_jobs(logger):
     new_jobs = []
     for job in jobs:
         sub_jobs = job.sub_jobs_list
-        if not all([j.state == TestJob.STATE_SCHEDULING or j.dynamic_connection for j in sub_jobs]):
+        if not all(
+            [
+                j.state == TestJob.STATE_SCHEDULING or j.dynamic_connection
+                for j in sub_jobs
+            ]
+        ):
             continue
 
         logger.debug("-> multinode [%d] scheduled", job.id)
@@ -270,12 +306,12 @@ def transition_multinode_jobs(logger):
             if sub_job.dynamic_connection:
                 continue
             definition = yaml.safe_load(sub_job.definition)
-            devices[str(sub_job.id)] = definition['protocols']['lava-multinode']['role']
+            devices[str(sub_job.id)] = definition["protocols"]["lava-multinode"]["role"]
 
         for sub_job in sub_jobs:
             # apply the complete list to all jobs in this group
             definition = yaml.safe_load(sub_job.definition)
-            definition['protocols']['lava-multinode']['roles'] = devices
+            definition["protocols"]["lava-multinode"]["roles"] = devices
             sub_job.definition = yaml.safe_dump(definition)
             # transition the job and device
             sub_job.go_state_scheduled()

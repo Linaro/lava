@@ -42,12 +42,9 @@ from lava_scheduler_app.models import (
     DeviceType,
     NotificationRecipient,
     TestJob,
-    Worker
+    Worker,
 )
-from lava_scheduler_app.schema import (
-    validate_submission,
-    SubmissionException,
-)
+from lava_scheduler_app.schema import validate_submission, SubmissionException
 from lava_results_app.dbutils import map_metadata
 from lava_results_app.models import Query
 
@@ -57,31 +54,51 @@ from lava_results_app.models import Query
 def match_vlan_interface(device, job_def):
     if not isinstance(job_def, dict):
         raise RuntimeError("Invalid vlan interface data")
-    if 'protocols' not in job_def or 'lava-vland' not in job_def['protocols'] or not device:
+    if (
+        "protocols" not in job_def
+        or "lava-vland" not in job_def["protocols"]
+        or not device
+    ):
         return False
     interfaces = []
-    logger = logging.getLogger('lava-master')
+    logger = logging.getLogger("lava-master")
     device_dict = device.load_configuration()
-    if not device_dict or device_dict.get('parameters', {}).get('interfaces') is None:
+    if not device_dict or device_dict.get("parameters", {}).get("interfaces") is None:
         return False
 
-    for vlan_name in job_def['protocols']['lava-vland']:
-        tag_list = job_def['protocols']['lava-vland'][vlan_name]['tags']
-        for interface in device_dict['parameters']['interfaces']:
-            tags = device_dict['parameters']['interfaces'][interface]['tags']
+    for vlan_name in job_def["protocols"]["lava-vland"]:
+        tag_list = job_def["protocols"]["lava-vland"][vlan_name]["tags"]
+        for interface in device_dict["parameters"]["interfaces"]:
+            tags = device_dict["parameters"]["interfaces"][interface]["tags"]
             if not tags:
                 continue
             logger.info(
                 "Job requests %s for %s, device %s provides %s for %s",
-                tag_list, vlan_name, device.hostname, tags, interface)
-            if set(tags) & set(tag_list) == set(tag_list) and interface not in interfaces:
-                logger.info("Matched vlan %s to interface %s on %s", vlan_name, interface, device)
+                tag_list,
+                vlan_name,
+                device.hostname,
+                tags,
+                interface,
+            )
+            if (
+                set(tags) & set(tag_list) == set(tag_list)
+                and interface not in interfaces
+            ):
+                logger.info(
+                    "Matched vlan %s to interface %s on %s",
+                    vlan_name,
+                    interface,
+                    device,
+                )
                 interfaces.append(interface)
                 # matched, do not check any further interfaces of this device for this vlan
                 break
 
-    logger.info("Matched: %s", (len(interfaces) == len(job_def['protocols']['lava-vland'].keys())))
-    return len(interfaces) == len(job_def['protocols']['lava-vland'].keys())
+    logger.info(
+        "Matched: %s",
+        (len(interfaces) == len(job_def["protocols"]["lava-vland"].keys())),
+    )
+    return len(interfaces) == len(job_def["protocols"]["lava-vland"].keys())
 
 
 # TODO: check the list of exception that can be raised
@@ -114,10 +131,10 @@ def testjob_submission(job_definition, user, original_job=None):
 
 
 def parse_job_description(job):
-    filename = os.path.join(job.output_dir, 'description.yaml')
-    logger = logging.getLogger('lava-master')
+    filename = os.path.join(job.output_dir, "description.yaml")
+    logger = logging.getLogger("lava-master")
     try:
-        with open(filename, 'r') as f_describe:
+        with open(filename, "r") as f_describe:
             description = f_describe.read()
         pipeline = yaml.load(description)
     except (OSError, yaml.YAMLError):
@@ -129,45 +146,68 @@ def parse_job_description(job):
 
     # add the compatibility result from the master to the definition for comparison on the slave.
     try:
-        compat = int(pipeline['compatibility'])
+        compat = int(pipeline["compatibility"])
     except (TypeError, ValueError):
-        compat = pipeline['compatibility'] if pipeline is not None else None
-        logger.error("[%d] Unable to parse job compatibility: %s",
-                     job.id, compat)
+        compat = pipeline["compatibility"] if pipeline is not None else None
+        logger.error("[%d] Unable to parse job compatibility: %s", job.id, compat)
         compat = 0
     job.pipeline_compatibility = compat
-    job.save(update_fields=['pipeline_compatibility'])
+    job.save(update_fields=["pipeline_compatibility"])
 
 
 def device_type_summary(visible=None):
-    devices = Device.objects.filter(
-        ~Q(health=Device.HEALTH_RETIRED) & Q(device_type__in=visible)).only(
-            'state', 'health', 'is_public', 'device_type', 'hostname').values('device_type').annotate(
-                idle=Sum(
-                    Case(
-                        When(state=Device.STATE_IDLE, health__in=[Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN], worker_host__state=Worker.STATE_ONLINE, then=1),
-                        default=0, output_field=IntegerField()
-                    )
-                ),
-                busy=Sum(
-                    Case(
-                        When(state__in=[Device.STATE_RESERVED, Device.STATE_RUNNING], then=1),
-                        default=0, output_field=IntegerField()
-                    )
-                ),
-                offline=Sum(
-                    Case(
-                        When(Q(state=Device.STATE_IDLE) & (Q(worker_host__state=Worker.STATE_OFFLINE) | ~Q(health__in=[Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN])),
-                             then=1),
-                        default=0, output_field=IntegerField()
-                    )
-                ),
-                restricted=Sum(
-                    Case(
-                        When(is_public=False, then=1),
-                        default=0, output_field=IntegerField()
-                    )
-                ),).order_by('device_type')
+    devices = (
+        Device.objects.filter(
+            ~Q(health=Device.HEALTH_RETIRED) & Q(device_type__in=visible)
+        )
+        .only("state", "health", "is_public", "device_type", "hostname")
+        .values("device_type")
+        .annotate(
+            idle=Sum(
+                Case(
+                    When(
+                        state=Device.STATE_IDLE,
+                        health__in=[Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN],
+                        worker_host__state=Worker.STATE_ONLINE,
+                        then=1,
+                    ),
+                    default=0,
+                    output_field=IntegerField(),
+                )
+            ),
+            busy=Sum(
+                Case(
+                    When(
+                        state__in=[Device.STATE_RESERVED, Device.STATE_RUNNING], then=1
+                    ),
+                    default=0,
+                    output_field=IntegerField(),
+                )
+            ),
+            offline=Sum(
+                Case(
+                    When(
+                        Q(state=Device.STATE_IDLE)
+                        & (
+                            Q(worker_host__state=Worker.STATE_OFFLINE)
+                            | ~Q(health__in=[Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN])
+                        ),
+                        then=1,
+                    ),
+                    default=0,
+                    output_field=IntegerField(),
+                )
+            ),
+            restricted=Sum(
+                Case(
+                    When(is_public=False, then=1),
+                    default=0,
+                    output_field=IntegerField(),
+                )
+            ),
+        )
+        .order_by("device_type")
+    )
     return devices
 
 
@@ -185,16 +225,26 @@ if list(Device.objects.filter(Q(device_type=dt), ~Q(health=Device.HEALTH_RETIRED
     Returns a RestrictedQuerySet of DeviceType objects.
     """
     not_retired_devices = Device.objects.filter(
-        Q(device_type__display=True), ~Q(health=Device.HEALTH_RETIRED)).select_related('device_type')
+        Q(device_type__display=True), ~Q(health=Device.HEALTH_RETIRED)
+    ).select_related("device_type")
     retired_devices = Device.objects.filter(
-        Q(device_type__display=True), health=Device.HEALTH_RETIRED).select_related('device_type')
-    not_all_retired = set()  # set of device_type.names where some devices of that device_type are retired but *not* all.
+        Q(device_type__display=True), health=Device.HEALTH_RETIRED
+    ).select_related("device_type")
+    not_all_retired = (
+        set()
+    )  # set of device_type.names where some devices of that device_type are retired but *not* all.
     for device in retired_devices:
         # identify device_types which can be added back because not all devices of that type are retired.
-        if list(Device.objects.filter(Q(device_type=device.device_type), ~Q(health=Device.HEALTH_RETIRED))):
+        if list(
+            Device.objects.filter(
+                Q(device_type=device.device_type), ~Q(health=Device.HEALTH_RETIRED)
+            )
+        ):
             not_all_retired.add(device.device_type.name)
     # join the two sets as a union.
-    candidates = {device.device_type.name for device in not_retired_devices}.union(not_all_retired)
+    candidates = {device.device_type.name for device in not_retired_devices}.union(
+        not_all_retired
+    )
     device_types = DeviceType.objects.filter(name__in=candidates)
     return device_types
 
@@ -211,10 +261,10 @@ def load_devicetype_template(device_type_name, raw=False):
     :return: None or a dictionary of the device type template.
     """
     path = os.path.dirname(Device.CONFIG_PATH)
-    type_loader = jinja2.FileSystemLoader([os.path.join(path, 'device-types')])
+    type_loader = jinja2.FileSystemLoader([os.path.join(path, "device-types")])
     env = jinja2.Environment(  # nosec - YAML, not HTML, no XSS scope.
-        loader=jinja2.ChoiceLoader([type_loader]),
-        trim_blocks=True, autoescape=False)
+        loader=jinja2.ChoiceLoader([type_loader]), trim_blocks=True, autoescape=False
+    )
     try:
         template = env.get_template("%s.jinja2" % device_type_name)
         data = template.render()
@@ -231,9 +281,13 @@ def invalid_template(dt):
     Return True if the template is invalid.
     See unit tests in test_device.py
     """
-    d_template = bool(load_devicetype_template(dt.name))  # returns None on error ( == False)
+    d_template = bool(
+        load_devicetype_template(dt.name)
+    )  # returns None on error ( == False)
     if not d_template:
-        queryset = list(Device.objects.filter(Q(device_type=dt), ~Q(health=Device.HEALTH_RETIRED)))
+        queryset = list(
+            Device.objects.filter(Q(device_type=dt), ~Q(health=Device.HEALTH_RETIRED))
+        )
         if not queryset:
             return False
         extends = set([device.get_extends() for device in queryset])
@@ -242,7 +296,9 @@ def invalid_template(dt):
         for extend in extends:
             if not extend:
                 return True
-            d_template = not bool(load_devicetype_template(extend.replace('.jinja2', '')))
+            d_template = not bool(
+                load_devicetype_template(extend.replace(".jinja2", ""))
+            )
             # if d_template is False, template is valid, invalid_template returns False
             if d_template:
                 return True
@@ -266,53 +322,61 @@ def validate_yaml(yaml_data):
     if "notify" in yaml_data:
         if "recipients" in yaml_data["notify"]:
             for recipient in yaml_data["notify"]["recipients"]:
-                if recipient["to"]["method"] == \
-                   NotificationRecipient.EMAIL_STR:
-                    if "email" not in recipient["to"] and \
-                       "user" not in recipient["to"]:
-                        raise SubmissionException("No valid user or email address specified.")
+                if recipient["to"]["method"] == NotificationRecipient.EMAIL_STR:
+                    if "email" not in recipient["to"] and "user" not in recipient["to"]:
+                        raise SubmissionException(
+                            "No valid user or email address specified."
+                        )
                 else:
-                    if "handle" not in recipient["to"] and \
-                       "user" not in recipient["to"]:
-                        raise SubmissionException("No valid user or IRC handle specified.")
+                    if (
+                        "handle" not in recipient["to"]
+                        and "user" not in recipient["to"]
+                    ):
+                        raise SubmissionException(
+                            "No valid user or IRC handle specified."
+                        )
                 if "user" in recipient["to"]:
                     try:
                         User.objects.get(username=recipient["to"]["user"])
                     except User.DoesNotExist:
-                        raise SubmissionException("%r is not an existing user in LAVA." % recipient["to"]["user"])
+                        raise SubmissionException(
+                            "%r is not an existing user in LAVA."
+                            % recipient["to"]["user"]
+                        )
                 elif "email" in recipient["to"]:
                     try:
                         validate_email(recipient["to"]["email"])
                     except ValidationError:
-                        raise SubmissionException("%r is not a valid email address." % recipient["to"]["email"])
+                        raise SubmissionException(
+                            "%r is not a valid email address."
+                            % recipient["to"]["email"]
+                        )
 
-        if "compare" in yaml_data["notify"] and \
-           "query" in yaml_data["notify"]["compare"]:
+        if (
+            "compare" in yaml_data["notify"]
+            and "query" in yaml_data["notify"]["compare"]
+        ):
             query_yaml_data = yaml_data["notify"]["compare"]["query"]
             if "username" in query_yaml_data:
                 try:
                     query = Query.objects.get(
                         owner__username=query_yaml_data["username"],
-                        name=query_yaml_data["name"])
+                        name=query_yaml_data["name"],
+                    )
                     if query.content_type.model_class() != TestJob:
-                        raise SubmissionException(
-                            "Only TestJob queries allowed.")
+                        raise SubmissionException("Only TestJob queries allowed.")
                 except Query.DoesNotExist:
                     raise SubmissionException(
-                        "Query ~%s/%s does not exist" % (
-                            query_yaml_data["username"],
-                            query_yaml_data["name"]))
+                        "Query ~%s/%s does not exist"
+                        % (query_yaml_data["username"], query_yaml_data["name"])
+                    )
             else:  # Custom query.
                 if query_yaml_data["entity"] != "testjob":
-                    raise SubmissionException(
-                        "Only TestJob queries allowed.")
+                    raise SubmissionException("Only TestJob queries allowed.")
                 try:
                     conditions = None
                     if "conditions" in query_yaml_data:
                         conditions = query_yaml_data["conditions"]
-                    Query.validate_custom_query(
-                        query_yaml_data["entity"],
-                        conditions
-                    )
+                    Query.validate_custom_query(query_yaml_data["entity"], conditions)
                 except Exception as e:
                     raise SubmissionException(e)

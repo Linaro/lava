@@ -21,16 +21,12 @@ from pwd import getpwuid
 import stat
 import subprocess  # nosec system
 
-from django.core.checks import (
-    Error,
-    register,
-    Info,
-    Warning,
-)
+from django.core.checks import Error, register, Info, Warning
 
 from lava_scheduler_app.dbutils import invalid_template, validate_job
 from lava_scheduler_app.models import Device, DeviceType
 from lava_scheduler_app.schema import SubmissionException
+
 # pylint: disable=unused-argument,missing-docstring,invalid-name
 
 
@@ -61,8 +57,9 @@ def check_health_checks(app_configs, **kwargs):
             try:
                 validate_job(ht)
             except SubmissionException as exc:
-                errors.append(Error("Invalid health check: '%s'" % exc,
-                                    obj=device.hostname))
+                errors.append(
+                    Error("Invalid health check: '%s'" % exc, obj=device.hostname)
+                )
 
     return errors
 
@@ -74,7 +71,7 @@ def check_device_configuration(app_configs, **kwargs):
 
     for device in Device.objects.exclude(health=Device.HEALTH_RETIRED):
         if not device.is_valid():
-            errors.append(Error('Invalid configuration', obj=device.hostname))
+            errors.append(Error("Invalid configuration", obj=device.hostname))
 
     return errors
 
@@ -86,7 +83,7 @@ def check_dt_templates(app_configs, **kwargs):
 
     for dt in DeviceType.objects.filter(display=True):
         if invalid_template(dt):
-            errors.append(Error('Invalid template', obj=dt.name))
+            errors.append(Error("Invalid template", obj=dt.name))
 
     return errors
 
@@ -94,37 +91,39 @@ def check_dt_templates(app_configs, **kwargs):
 # Check permissions
 @register(deploy=True)
 def check_permissions(app_configs, **kwargs):
-    files = ["/etc/lava-server/instance.conf",
-             "/etc/lava-server/secret_key.conf"]
+    files = ["/etc/lava-server/instance.conf", "/etc/lava-server/secret_key.conf"]
     errors = []
     for filename in files:
         st = os.stat(filename)
         if stat.S_IMODE(st.st_mode) != 416:
-            errors.append(Error('Invalid permissions (should be 0o640)',
-                                obj=filename))
+            errors.append(Error("Invalid permissions (should be 0o640)", obj=filename))
         if getpwuid(st.st_uid).pw_name != "lavaserver":
-            errors.append(Error('Invalid owner (should be lavaserver)',
-                                obj=filename))
+            errors.append(Error("Invalid owner (should be lavaserver)", obj=filename))
     return errors
 
 
 def _package_status(name, errors, info=False):
     try:
-        out = subprocess.check_output(["dpkg-query", "--status", name],  # nosec system
-                                      stderr=subprocess.STDOUT).decode("utf-8").split("\n")
+        out = (
+            subprocess.check_output(  # nosec system
+                ["dpkg-query", "--status", name], stderr=subprocess.STDOUT
+            )
+            .decode("utf-8")
+            .split("\n")
+        )
         if out[1] != "Status: install ok installed":
-            errors.append(Error('not installed correctly', obj=name))
+            errors.append(Error("not installed correctly", obj=name))
     except subprocess.CalledProcessError:
         if info:
-            errors.append(Info('not installed from a Debian package', obj=name))
+            errors.append(Info("not installed from a Debian package", obj=name))
         else:
-            errors.append(Error('not installed from a Debian package', obj=name))
+            errors.append(Error("not installed from a Debian package", obj=name))
 
 
 def _package_symlinks(name, errors):
     dirname = os.path.join("/usr/lib/python3/dist-packages/", name)
     if os.path.islink(dirname):
-        errors.append(Error('symlink to %s' % os.path.realpath(dirname), obj=name))
+        errors.append(Error("symlink to %s" % os.path.realpath(dirname), obj=name))
 
 
 @register(deploy=True)
@@ -150,26 +149,32 @@ def check_services(app_configs, **kwargs):
 
     errors = []
     services = [
-        'apache2',
-        'lava-server-gunicorn',
-        'lava-master',
-        'lava-publisher',
-        'lava-logs',
-        'postgresql',
+        "apache2",
+        "lava-server-gunicorn",
+        "lava-master",
+        "lava-publisher",
+        "lava-logs",
+        "postgresql",
     ]
-    optional = [
-        'lava-slave',
-    ]
+    optional = ["lava-slave"]
 
     for service in services:
         try:
-            subprocess.check_call(['systemctl', '-q', 'is-active', service])  # nosec system
+            subprocess.check_call(  # nosec system
+                ["systemctl", "-q", "is-active", service]
+            )
         except subprocess.CalledProcessError:
-            errors.append(Error("%s service is not active." % service, obj="lava service"))
+            errors.append(
+                Error("%s service is not active." % service, obj="lava service")
+            )
 
     for service in optional:
         try:
-            subprocess.check_call(['systemctl', '-q', 'is-active', service])  # nosec system
+            subprocess.check_call(  # nosec system
+                ["systemctl", "-q", "is-active", service]
+            )
         except subprocess.CalledProcessError:
-            errors.append(Info("%s service is not active." % service, obj="lava service"))
+            errors.append(
+                Info("%s service is not active." % service, obj="lava service")
+            )
     return errors

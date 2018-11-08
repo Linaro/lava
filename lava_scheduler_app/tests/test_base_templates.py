@@ -78,8 +78,10 @@ class BaseTemplate:
             rendered = self.render_device_dictionary(hostname, data, job_ctx, raw=True)
             try:
                 ret = validate_device(
-                    yaml.load(rendered, Loader=yaml.CSafeLoader)
-                )  # nosec - safe_load implemented directly
+                    yaml.load(  # nosec - safe_load implemented directly
+                        rendered, Loader=yaml.CSafeLoader
+                    )
+                )
             except SubmissionException as exc:
                 print("#######")
                 print(rendered)
@@ -97,18 +99,18 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
         # keep this out of the loop, as creating the environment is slow.
         path = os.path.dirname(CONFIG_PATH)
         fs_loader = jinja2.FileSystemLoader([os.path.join(path, "device-types")])
-        env = jinja2.Environment(
+        env = jinja2.Environment(  # nosec - YAML, not HTML, no XSS scope.
             loader=fs_loader, trim_blocks=True, autoescape=False
-        )  # nosec - YAML, not HTML, no XSS scope.
+        )
 
         for template in templates:
             data = "{%% extends '%s' %%}" % os.path.basename(template)
             try:
                 test_template = env.from_string(data)
                 rendered = test_template.render()
-                template_dict = yaml.load(
+                template_dict = yaml.load(  # nosec - safe_load implemented directly
                     rendered, Loader=yaml.CLoader
-                )  # nosec - safe_load implemented directly
+                )
                 validate_device(template_dict)
             except AssertionError as exc:
                 self.fail("Template %s failed: %s" % (os.path.basename(template), exc))
@@ -121,9 +123,9 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
         # keep this out of the loop, as creating the environment is slow.
         path = os.path.dirname(CONFIG_PATH)
         fs_loader = jinja2.FileSystemLoader([os.path.join(path, "device-types")])
-        env = jinja2.Environment(
+        env = jinja2.Environment(  # nosec - YAML, not HTML, no XSS scope.
             loader=fs_loader, trim_blocks=True, autoescape=False
-        )  # nosec - YAML, not HTML, no XSS scope.
+        )
 
         for template in templates:
             name = os.path.basename(template)
@@ -131,9 +133,9 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
             data += "{% set connection_command = 'telnet calvin 6080' %}"
             test_template = env.from_string(data)
             rendered = test_template.render()
-            template_dict = yaml.load(
+            template_dict = yaml.load(  # nosec - safe_load implemented directly
                 rendered, Loader=yaml.CSafeLoader
-            )  # nosec - safe_load implemented directly
+            )
             validate_device(template_dict)
             self.assertIn("connect", template_dict["commands"])
             self.assertNotIn(
@@ -147,9 +149,9 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
             data += "{% set connection_tags = {'uart1': ['primary']} %}"
             test_template = env.from_string(data)
             rendered = test_template.render()
-            template_dict = yaml.load(
+            template_dict = yaml.load(  # nosec - safe_load implemented directly
                 rendered, Loader=yaml.CSafeLoader
-            )  # nosec - safe_load implemented directly
+            )
             validate_device(template_dict)
             self.assertNotIn("connect", template_dict["commands"])
             self.assertIn(
@@ -164,9 +166,9 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
             os.path.join(os.path.dirname(__file__), "devices", "db410c.jinja2")
         ) as hikey:
             data = hikey.read()
-        env = jinja2.Environment(
+        env = jinja2.Environment(  # nosec - YAML, not HTML, no XSS scope.
             autoescape=False
-        )  # nosec - YAML, not HTML, no XSS scope.
+        )
         ast = env.parse(data)
         device_dict = {}
         count = 0
