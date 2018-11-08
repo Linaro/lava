@@ -11,6 +11,8 @@ else
     DAILY="daily"
     R_OPT="--ignore=wrongdistribution"
     BASEDIR="${HOME}/repository/${DAILY}"
+    # location of snapshot directory
+    SNAPSHOT="${HOME}/repository/snapshot/"
 
     ls -l ${LAVA_BUILDD}/build/
     find ${LAVA_BUILDD}/build/ -type f -name 'lava_*.changes'
@@ -28,10 +30,16 @@ else
         fi
     fi
 
+    YEAR=`date +%Y`
+    MONTH=`date +%m`
+    DAY=`date +%d`
+
     echo "Updating ${BASEDIR}"
     echo "reprepro-master.sh daily update running in " ${LAVA_BUILDD}
     if [ -d "${BASEDIR}/dists/stretch-backports" ]; then
         reprepro -b ${BASEDIR} ${R_OPT} include stretch-backports ${LAVA_BUILDD}/build/lava_*stretch_amd64.changes
+        mkdir -p ${SNAPSHOT}/stretch/${YEAR}/${MONTH}/${DAY}/
+        dcmd cp ${LAVA_BUILDD}/build/lava_*stretch_*.changes ${SNAPSHOT}/stretch/${YEAR}/${MONTH}/${DAY}/
         dcmd rm ${LAVA_BUILDD}/build/lava_*stretch_amd64.changes
 
         # enable if stretch_arm64 is enabled.
@@ -44,6 +52,8 @@ else
         reprepro -b ${BASEDIR} include buster ${LAVA_BUILDD}/build/lava_*buster_amd64.changes
         CHANGES=`find ${LAVA_BUILDD}/build/ -type f -name 'lava_*buster_amd64.changes'`
         VERSION=`grep Version ${CHANGES} | cut -d' ' -f2`
+        mkdir -p ${SNAPSHOT}/buster/${YEAR}/${MONTH}/${DAY}/
+        dcmd cp ${LAVA_BUILDD}/build/lava_*buster_*.changes ${SNAPSHOT}/buster/${YEAR}/${MONTH}/${DAY}/
         dcmd rm ${LAVA_BUILDD}/build/lava_*buster_amd64.changes
 
         reprepro -b ${BASEDIR} include buster ${LAVA_BUILDD}/build/lava_*buster_arm64.changes
