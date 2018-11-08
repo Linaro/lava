@@ -30,11 +30,12 @@ from lava_dispatcher.utils.strings import substitute
 
 
 class InstallerFactory(Factory):  # pylint: disable=too-few-public-methods
-
     def create_qemu_installer_job(self):
-        (rendered, _) = self.create_device('kvm01.jinja2')
+        (rendered, _) = self.create_device("kvm01.jinja2")
         device = NewDevice(yaml.safe_load(rendered))
-        sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/qemu-debian-installer.yaml')
+        sample_job_file = os.path.join(
+            os.path.dirname(__file__), "sample_jobs/qemu-debian-installer.yaml"
+        )
         parser = JobParser()
         try:
             with open(sample_job_file) as sample_job_data:
@@ -47,7 +48,6 @@ class InstallerFactory(Factory):  # pylint: disable=too-few-public-methods
 
 
 class TestIsoJob(StdoutTestCase):
-
     def setUp(self):
         super().setUp()
         factory = InstallerFactory()
@@ -57,47 +57,78 @@ class TestIsoJob(StdoutTestCase):
         self.assertIsInstance(self.job.pipeline, Pipeline)
 
     def test_job_reference(self):
-        description_ref = self.pipeline_reference('qemu-debian-installer.yaml')
+        description_ref = self.pipeline_reference("qemu-debian-installer.yaml")
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
     def test_iso_preparation(self):
         self.job.validate()
-        deploy_iso = [action for action in self.job.pipeline.actions if action.name == 'deploy-iso-installer'][0]
-        empty = [action for action in deploy_iso.internal_pipeline.actions
-                 if action.name == 'prepare-empty-image'][0]
+        deploy_iso = [
+            action
+            for action in self.job.pipeline.actions
+            if action.name == "deploy-iso-installer"
+        ][0]
+        empty = [
+            action
+            for action in deploy_iso.internal_pipeline.actions
+            if action.name == "prepare-empty-image"
+        ][0]
         self.assertEqual(empty.size, 2 * 1024 * 1024 * 1024)
-        pull = [action for action in deploy_iso.internal_pipeline.actions if action.name == 'pull-installer-files'][0]
-        self.assertEqual(pull.files['kernel'], '/install.amd/vmlinuz')
-        self.assertEqual(pull.files['initrd'], '/install.amd/initrd.gz')
+        pull = [
+            action
+            for action in deploy_iso.internal_pipeline.actions
+            if action.name == "pull-installer-files"
+        ][0]
+        self.assertEqual(pull.files["kernel"], "/install.amd/vmlinuz")
+        self.assertEqual(pull.files["initrd"], "/install.amd/initrd.gz")
         self.assertEqual(len(pull.files.keys()), 2)
 
     def test_command_line(self):
         self.job.validate()
-        deploy_iso = [action for action in self.job.pipeline.actions if action.name == 'deploy-iso-installer'][0]
-        prepare = [action for action in deploy_iso.internal_pipeline.actions if action.name == 'prepare-qemu-commands'][0]
-        self.assertEqual(prepare.boot_order, '-boot c')
-        self.assertEqual(prepare.console, 'console=ttyS0,115200')
+        deploy_iso = [
+            action
+            for action in self.job.pipeline.actions
+            if action.name == "deploy-iso-installer"
+        ][0]
+        prepare = [
+            action
+            for action in deploy_iso.internal_pipeline.actions
+            if action.name == "prepare-qemu-commands"
+        ][0]
+        self.assertEqual(prepare.boot_order, "-boot c")
+        self.assertEqual(prepare.console, "console=ttyS0,115200")
         self.assertIsNotNone(prepare.preseed_url)
-        self.assertIn('-nographic', prepare.sub_command)
+        self.assertIn("-nographic", prepare.sub_command)
         self.assertIn(prepare.boot_order, prepare.sub_command)
-        self.assertIn(' -drive format=raw,file={emptyimage} ', prepare.sub_command)
-        self.assertIn('-append', prepare.command_line)
-        self.assertIn('auto=true', prepare.command_line)
-        self.assertIn('DEBIAN_FRONTEND=text', prepare.command_line)
-        self.assertIn('{preseed} ---', prepare.command_line)
-        self.assertIn('tftp://', prepare.command_line)
-        self.assertIsNotNone(prepare.parameters['deployment_data']['prompts'])
+        self.assertIn(" -drive format=raw,file={emptyimage} ", prepare.sub_command)
+        self.assertIn("-append", prepare.command_line)
+        self.assertIn("auto=true", prepare.command_line)
+        self.assertIn("DEBIAN_FRONTEND=text", prepare.command_line)
+        self.assertIn("{preseed} ---", prepare.command_line)
+        self.assertIn("tftp://", prepare.command_line)
+        self.assertIsNotNone(prepare.parameters["deployment_data"]["prompts"])
 
     def test_substitutions(self):
         sub_command = [
-            '/usr/bin/qemu-system-x86_64', '-nographic', '-enable-kvm',
-            '-cpu host', '-net nic,model=virtio,macaddr=52:54:00:12:34:58 -net user',
-            '-m 2048', ' -drive format=raw,file={emptyimage} ', '-boot c']
-        substitutions = {'{emptyimage}': '/tmp/tmp.00000/hd.img'}  # nosec unit test support.
+            "/usr/bin/qemu-system-x86_64",
+            "-nographic",
+            "-enable-kvm",
+            "-cpu host",
+            "-net nic,model=virtio,macaddr=52:54:00:12:34:58 -net user",
+            "-m 2048",
+            " -drive format=raw,file={emptyimage} ",
+            "-boot c",
+        ]
+        substitutions = {
+            "{emptyimage}": "/tmp/tmp.00000/hd.img"  # nosec unit test support.
+        }
         sub_command = substitute(sub_command, substitutions)
-        self.assertNotIn('{emptyimage}', sub_command)
-        self.assertNotIn('/tmp/tmp.00000/hd.img', sub_command)  # nosec unit test support.
-        self.assertIn('/tmp/tmp.00000/hd.img', ' '.join(sub_command))  # nosec unit test support.
+        self.assertNotIn("{emptyimage}", sub_command)
+        self.assertNotIn(
+            "/tmp/tmp.00000/hd.img", sub_command  # nosec unit test support.
+        )
+        self.assertIn(
+            "/tmp/tmp.00000/hd.img", " ".join(sub_command)  # nosec unit test support.
+        )
 
     def test_timeout_inheritance(self):
         """
@@ -106,25 +137,26 @@ class TestIsoJob(StdoutTestCase):
         Each action in the internal_pipeline needs to pick up the timeout
         specified in the job definition block for the top level parent action.
         """
-        test_retry = [action for action in self.job.pipeline.actions if action.name == 'lava-test-retry'][0]
-        sample_job_file = os.path.join(os.path.dirname(__file__), 'sample_jobs/qemu-debian-installer.yaml')
-        with open(sample_job_file, 'r') as jobdef:
+        test_retry = [
+            action
+            for action in self.job.pipeline.actions
+            if action.name == "lava-test-retry"
+        ][0]
+        sample_job_file = os.path.join(
+            os.path.dirname(__file__), "sample_jobs/qemu-debian-installer.yaml"
+        )
+        with open(sample_job_file, "r") as jobdef:
             data = yaml.safe_load(jobdef)
-        testdata = [block['test'] for block in data['actions'] if 'test' in block][0]
-        duration = (Timeout.parse(testdata['timeout']))
-        self.assertEqual(
-            duration,
-            test_retry.timeout.duration
-        )
-        shell = [action for action in test_retry.internal_pipeline.actions if action.name == 'lava-test-shell'][0]
-        self.assertEqual(
-            duration,
-            shell.timeout.duration
-        )
+        testdata = [block["test"] for block in data["actions"] if "test" in block][0]
+        duration = Timeout.parse(testdata["timeout"])
+        self.assertEqual(duration, test_retry.timeout.duration)
+        shell = [
+            action
+            for action in test_retry.internal_pipeline.actions
+            if action.name == "lava-test-shell"
+        ][0]
+        self.assertEqual(duration, shell.timeout.duration)
         if shell.timeout.duration > shell.connection_timeout.duration:
-            self.assertEqual(
-                duration,
-                shell.timeout.duration
-            )
+            self.assertEqual(duration, shell.timeout.duration)
         else:
             self.fail("Incorrect timeout calculation")

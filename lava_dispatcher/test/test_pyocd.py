@@ -31,24 +31,31 @@ class PyocdFactory(Factory):  # pylint: disable=too-few-public-methods
     of any database objects.
     """
 
-    @unittest.skipIf(infrastructure_error('pyocd-flashtool'), 'pyocd-flashtool not installed')
+    @unittest.skipIf(
+        infrastructure_error("pyocd-flashtool"), "pyocd-flashtool not installed"
+    )
     def create_k64f_job(self, filename):
-        return self.create_job('frdm-k64f-01.jinja2', filename)
+        return self.create_job("frdm-k64f-01.jinja2", filename)
 
-    @unittest.skipIf(infrastructure_error('pyocd-flashtool'), 'pyocd-flashtool not installed')
+    @unittest.skipIf(
+        infrastructure_error("pyocd-flashtool"), "pyocd-flashtool not installed"
+    )
     def create_k64f_job_with_power(self, filename):  # pylint: disable=no-self-use
-        return self.create_job('frdm-k64f-power-01.jinja2', filename)
+        return self.create_job("frdm-k64f-power-01.jinja2", filename)
 
 
 class TestPyocdAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
-
     def test_pyocd_pipeline(self):
         factory = PyocdFactory()
-        job = factory.create_k64f_job('sample_jobs/zephyr-frdm-k64f-pyocd-test-kernel-common.yaml')
+        job = factory.create_k64f_job(
+            "sample_jobs/zephyr-frdm-k64f-pyocd-test-kernel-common.yaml"
+        )
         job.validate()
-        description_ref = self.pipeline_reference('pyocd.yaml', job=job)
+        description_ref = self.pipeline_reference("pyocd.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
-        job = factory.create_k64f_job_with_power('sample_jobs/zephyr-frdm-k64f-pyocd-test-kernel-common.yaml')
+        job = factory.create_k64f_job_with_power(
+            "sample_jobs/zephyr-frdm-k64f-pyocd-test-kernel-common.yaml"
+        )
         job.validate()
-        description_ref = self.pipeline_reference('pyocd-with-power.yaml', job=job)
+        description_ref = self.pipeline_reference("pyocd-with-power.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))

@@ -23,14 +23,13 @@ from lava_dispatcher.test.test_basic import Factory, StdoutTestCase
 
 class UserCommandFactory(Factory):
     def create_b2260_job(self, filename):
-        return self.create_job('b2260-01.jinja2', filename)
+        return self.create_job("b2260-01.jinja2", filename)
 
 
 class TestUserCommand(StdoutTestCase):
-
     def test_pipeline(self):
         factory = UserCommandFactory()
-        job = factory.create_b2260_job('sample_jobs/b2260-user-command.yaml')
+        job = factory.create_b2260_job("sample_jobs/b2260-user-command.yaml")
         job.validate()
-        description_ref = self.pipeline_reference('b2260-user-command.yaml', job=job)
+        description_ref = self.pipeline_reference("b2260-user-command.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))

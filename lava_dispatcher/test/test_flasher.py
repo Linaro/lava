@@ -28,10 +28,11 @@ from lava_dispatcher.test.utils import DummyLogger
 
 
 class FlasherFactory(Factory):
-
     def create_b2260_job(self, filename):
         # FIXME: b2260 Jinja2 template does not have flasher support.
-        device = NewDevice(os.path.join(os.path.dirname(__file__), "../devices/b2260-01.yaml"))
+        device = NewDevice(
+            os.path.join(os.path.dirname(__file__), "../devices/b2260-01.yaml")
+        )
         with open(os.path.join(os.path.dirname(__file__), filename)) as f_in:
             parser = JobParser()
             job = parser.parse(f_in, device, 456, None, "")
@@ -40,10 +41,9 @@ class FlasherFactory(Factory):
 
 
 class TestFlasher(StdoutTestCase):
-
     def test_pipeline(self):
         factory = FlasherFactory()
-        job = factory.create_b2260_job('sample_jobs/b2260-flasher.yaml')
+        job = factory.create_b2260_job("sample_jobs/b2260-flasher.yaml")
         job.validate()
-        description_ref = self.pipeline_reference('b2260-flasher.yaml', job=job)
+        description_ref = self.pipeline_reference("b2260-flasher.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))

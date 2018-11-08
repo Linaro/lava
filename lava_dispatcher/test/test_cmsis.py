@@ -33,23 +33,31 @@ class Cmsis_Factory(Factory):  # pylint: disable=too-few-public-methods
     Factory objects are dispatcher based classes, independent
     of any database objects.
     """
+
     def create_k64f_job(self, filename):
-        return self.create_job('frdm-k64f-01.jinja2', filename)
+        return self.create_job("frdm-k64f-01.jinja2", filename)
 
     def create_k64f_job_with_power(self, filename):
-        return self.create_job('frdm-k64f-power-01.jinja2', filename)
+        return self.create_job("frdm-k64f-power-01.jinja2", filename)
 
 
 class TestCMSISAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
-
     def test_usb_mass_exists(self):
         factory = Cmsis_Factory()
-        job = factory.create_k64f_job('sample_jobs/zephyr-frdm-k64f-cmsis-test-kernel-common.yaml')
-        job.device['actions']['boot']['methods']['cmsis-dap']['parameters']['usb_mass_device'] = ''
+        job = factory.create_k64f_job(
+            "sample_jobs/zephyr-frdm-k64f-cmsis-test-kernel-common.yaml"
+        )
+        job.device["actions"]["boot"]["methods"]["cmsis-dap"]["parameters"][
+            "usb_mass_device"
+        ] = ""
         self.assertRaises(JobError, job.validate)
-        self.assertIn('usb_mass_device unset', job.pipeline.errors)
-        job = factory.create_k64f_job('sample_jobs/zephyr-frdm-k64f-cmsis-test-kernel-common.yaml')
-        job.device['actions']['boot']['methods']['cmsis-dap']['parameters']['usb_mass_device'] = '/dev/null'
+        self.assertIn("usb_mass_device unset", job.pipeline.errors)
+        job = factory.create_k64f_job(
+            "sample_jobs/zephyr-frdm-k64f-cmsis-test-kernel-common.yaml"
+        )
+        job.device["actions"]["boot"]["methods"]["cmsis-dap"]["parameters"][
+            "usb_mass_device"
+        ] = "/dev/null"
         try:
             job.validate()
         except Exception as e:
@@ -58,13 +66,21 @@ class TestCMSISAction(StdoutTestCase):  # pylint: disable=too-many-public-method
 
     def test_cmsis_pipeline(self):
         factory = Cmsis_Factory()
-        job = factory.create_k64f_job('sample_jobs/zephyr-frdm-k64f-cmsis-test-kernel-common.yaml')
-        job.device['actions']['boot']['methods']['cmsis-dap']['parameters']['usb_mass_device'] = '/dev/null'
+        job = factory.create_k64f_job(
+            "sample_jobs/zephyr-frdm-k64f-cmsis-test-kernel-common.yaml"
+        )
+        job.device["actions"]["boot"]["methods"]["cmsis-dap"]["parameters"][
+            "usb_mass_device"
+        ] = "/dev/null"
         job.validate()
-        description_ref = self.pipeline_reference('cmsis.yaml', job=job)
+        description_ref = self.pipeline_reference("cmsis.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
-        job = factory.create_k64f_job_with_power('sample_jobs/zephyr-frdm-k64f-cmsis-test-kernel-common.yaml')
-        job.device['actions']['boot']['methods']['cmsis-dap']['parameters']['usb_mass_device'] = '/dev/null'
+        job = factory.create_k64f_job_with_power(
+            "sample_jobs/zephyr-frdm-k64f-cmsis-test-kernel-common.yaml"
+        )
+        job.device["actions"]["boot"]["methods"]["cmsis-dap"]["parameters"][
+            "usb_mass_device"
+        ] = "/dev/null"
         job.validate()
-        description_ref = self.pipeline_reference('cmsis-with-power.yaml', job=job)
+        description_ref = self.pipeline_reference("cmsis-with-power.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))

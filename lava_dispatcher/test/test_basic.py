@@ -26,23 +26,15 @@ import unittest
 import logging
 import yaml
 
-from lava_dispatcher.action import (
-    Pipeline,
-    Action,
-)
-from lava_common.exceptions import (
-    JobError,
-    LAVABug,
-    LAVAError,
-    ConfigurationError,
-)
+from lava_dispatcher.action import Pipeline, Action
+from lava_common.exceptions import JobError, LAVABug, LAVAError, ConfigurationError
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.job import Job
 from lava_dispatcher.device import NewDevice
 from lava_scheduler_app.schema import (
     validate_device,
     validate_submission,
-    SubmissionException
+    SubmissionException,
 )
 from lava_dispatcher.actions.deploy.image import DeployImages
 from lava_dispatcher.test.utils import DummyLogger
@@ -51,10 +43,9 @@ from lava_dispatcher.test.utils import DummyLogger
 
 
 class StdoutTestCase(unittest.TestCase):  # pylint: disable=too-many-public-methods
-
     def setUp(self):
         super().setUp()
-        logger = logging.getLogger('dispatcher')
+        logger = logging.getLogger("dispatcher")
         logger.disabled = True
         logger.propagate = False
         # set to True to update pipeline_references automatically.
@@ -62,19 +53,18 @@ class StdoutTestCase(unittest.TestCase):  # pylint: disable=too-many-public-meth
         self.job = None
 
     def pipeline_reference(self, filename, job=None):
-        y_file = os.path.join(os.path.dirname(__file__), 'pipeline_refs', filename)
+        y_file = os.path.join(os.path.dirname(__file__), "pipeline_refs", filename)
         if self.update_ref:
             if not job:
                 job = self.job
-            sys.stderr.write('WARNING: modifying pipeline references!')
-            with open(y_file, 'w') as describe:
+            sys.stderr.write("WARNING: modifying pipeline references!")
+            with open(y_file, "w") as describe:
                 yaml.dump(job.pipeline.describe(False), describe)
-        with open(y_file, 'r') as f_ref:
+        with open(y_file, "r") as f_ref:
             return yaml.safe_load(f_ref)
 
 
 class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
-
     def test_references_a_device(self):
         device = object()
         cmd = Action()
@@ -83,9 +73,7 @@ class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
 
 class TestPipelineInit(StdoutTestCase):  # pylint: disable=too-many-public-methods
-
     class FakeAction(Action):
-
         def __init__(self):
             self.ran = False
             super().__init__()
@@ -109,11 +97,10 @@ class TestPipelineInit(StdoutTestCase):  # pylint: disable=too-many-public-metho
 
 
 class TestJobParser(StdoutTestCase):  # pylint: disable=too-many-public-methods
-
     def setUp(self):
         super().setUp()
         factory = Factory()
-        self.job = factory.create_kvm_job('sample_jobs/basics.yaml')
+        self.job = factory.create_kvm_job("sample_jobs/basics.yaml")
 
     def test_parser_creates_a_job_with_a_pipeline(self):  # pylint: disable=invalid-name
         if not self.job:
@@ -128,15 +115,18 @@ class TestJobParser(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
 
 class TestValidation(StdoutTestCase):  # pylint: disable=too-many-public-methods
-
-    def test_action_is_valid_if_there_are_not_errors(self):  # pylint: disable=invalid-name
+    def test_action_is_valid_if_there_are_not_errors(
+        self
+    ):  # pylint: disable=invalid-name
         action = Action()
         action.__errors__ = [1]
         self.assertFalse(action.valid)
         action.__errors__ = []
         self.assertTrue(action.valid)
 
-    def test_composite_action_aggregates_errors_from_sub_actions(self):  # pylint: disable=invalid-name
+    def test_composite_action_aggregates_errors_from_sub_actions(
+        self
+    ):  # pylint: disable=invalid-name
         # Unable to call Action.validate() as there is no job in this unit test
         sub1 = Action()
         sub1.__errors__ = [1]
@@ -160,26 +150,34 @@ class Factory:
 
     def __init__(self):
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
-        logger = logging.getLogger('unittests')
+        logger = logging.getLogger("unittests")
         logger.disabled = True
         logger.propagate = False
-        logger = logging.getLogger('dispatcher')
+        logger = logging.getLogger("dispatcher")
         logger.disabled = True
         logger.propagate = False
         self.debug = False
 
     CONFIG_PATH = os.path.abspath(
         os.path.join(
-            os.path.dirname(__file__), "..", "..",
-            "lava_scheduler_app", "tests", "devices"))
+            os.path.dirname(__file__),
+            "..",
+            "..",
+            "lava_scheduler_app",
+            "tests",
+            "devices",
+        )
+    )
 
     def prepare_jinja_template(self, hostname, jinja_data):
-        string_loader = jinja2.DictLoader({'%s.jinja2' % hostname: jinja_data})
+        string_loader = jinja2.DictLoader({"%s.jinja2" % hostname: jinja_data})
         path = os.path.dirname(self.CONFIG_PATH)
-        type_loader = jinja2.FileSystemLoader([os.path.join(path, 'device-types')])
+        type_loader = jinja2.FileSystemLoader([os.path.join(path, "device-types")])
         env = jinja2.Environment(  # nosec - YAML, not HTML, no XSS scope.
             loader=jinja2.ChoiceLoader([string_loader, type_loader]),
-            trim_blocks=True, autoescape=False)
+            trim_blocks=True,
+            autoescape=False,
+        )
         return env.get_template("%s.jinja2" % hostname)
 
     def render_device_dictionary(self, hostname, data, job_ctx=None):
@@ -197,9 +195,9 @@ class Factory:
         try:
             ret = validate_device(yaml.safe_load(rendered))
         except (SubmissionException, ConfigurationError) as exc:
-            print('#######')
+            print("#######")
             print(rendered)
-            print('#######')
+            print("#######")
             self.fail(exc)
         return ret
 
@@ -211,31 +209,37 @@ class Factory:
         with open(
             os.path.join(
                 os.path.dirname(__file__),
-                '..', '..', 'lava_scheduler_app', 'tests',
-                'devices', template)) as hikey:
+                "..",
+                "..",
+                "lava_scheduler_app",
+                "tests",
+                "devices",
+                template,
+            )
+        ) as hikey:
             data = hikey.read()
-        hostname = template.replace('.jinja2', '')
+        hostname = template.replace(".jinja2", "")
         rendered = self.render_device_dictionary(hostname, data, job_ctx)
         return (rendered, data)
 
     def create_custom_job(self, template, job_data, job_ctx=None):
         if job_ctx:
-            job_data['context'] = job_ctx
+            job_data["context"] = job_ctx
         else:
-            job_ctx = job_data.get('context')
+            job_ctx = job_data.get("context")
         (data, device_dict) = self.create_device(template, job_ctx)
         device = NewDevice(yaml.safe_load(data))
         if self.debug:
-            print('####### Device configuration #######')
+            print("####### Device configuration #######")
             print(data)
-            print('#######')
+            print("#######")
         try:
             parser = JobParser()
             job = parser.parse(yaml.dump(job_data), device, 4999, None, "")
         except (ConfigurationError, TypeError) as exc:
-            print('####### Parser exception ########')
+            print("####### Parser exception ########")
             print(device)
-            print('#######')
+            print("#######")
             raise ConfigurationError("Invalid device: %s" % exc)
         job.logger = DummyLogger()
         return job
@@ -247,27 +251,30 @@ class Factory:
         return self.create_custom_job(template, job_data, job_ctx)
 
     def create_fake_qemu_job(self):
-        return self.create_job('qemu01.jinja2', 'sample_jobs/basics.yaml')
+        return self.create_job("qemu01.jinja2", "sample_jobs/basics.yaml")
 
     def create_kvm_job(self, filename, check_job=False):  # pylint: disable=no-self-use
         """
         Custom function to allow for extra exception handling.
         """
-        job_ctx = {'arch': 'amd64', 'no_kvm': True}  # override to allow unit tests on all types of systems
-        (data, device_dict) = self.create_device('kvm01.jinja2', job_ctx)
+        job_ctx = {
+            "arch": "amd64",
+            "no_kvm": True,
+        }  # override to allow unit tests on all types of systems
+        (data, device_dict) = self.create_device("kvm01.jinja2", job_ctx)
         device = NewDevice(yaml.safe_load(data))
         if self.debug:
-            print('####### Device configuration #######')
+            print("####### Device configuration #######")
             print(data)
-            print('#######')
-        self.validate_data('hi6220-hikey-01', device_dict)
+            print("#######")
+        self.validate_data("hi6220-hikey-01", device_dict)
         kvm_yaml = os.path.join(os.path.dirname(__file__), filename)
         parser = JobParser()
-        job_data = ''
+        job_data = ""
         with open(kvm_yaml) as sample_job_data:
             job_data = yaml.safe_load(sample_job_data.read())
         if self.debug:
-            print('########## Test Job Submission validation #######')
+            print("########## Test Job Submission validation #######")
         if check_job:  # FIXME: all submissions should validate.
             validate_submission(job_data)
         try:
@@ -281,7 +288,6 @@ class Factory:
 
 
 class TestPipeline(StdoutTestCase):  # pylint: disable=too-many-public-methods
-
     class FakeAction(Action):
 
         name = "fake-action"
@@ -322,11 +328,11 @@ class TestPipeline(StdoutTestCase):  # pylint: disable=too-many-public-methods
             self.fail(exc)
         self.assertIsNotNone(description)
         self.assertIsInstance(description, list)
-        self.assertIn('description', description[0])
-        self.assertIn('level', description[0])
-        self.assertIn('summary', description[0])
-        self.assertIn('max_retries', description[0])
-        self.assertIn('timeout', description[0])
+        self.assertIn("description", description[0])
+        self.assertIn("level", description[0])
+        self.assertIn("summary", description[0])
+        self.assertIn("max_retries", description[0])
+        self.assertIn("timeout", description[0])
 
     def test_create_internal_pipeline(self):
         action = Action()
@@ -414,21 +420,21 @@ class TestPipeline(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def test_simulated_action(self):
         factory = Factory()
-        job = factory.create_kvm_job('sample_jobs/basics.yaml')
+        job = factory.create_kvm_job("sample_jobs/basics.yaml")
         if not job:
             return unittest.skip("not all deployments have been implemented")
         self.assertIsNotNone(job)
 
     def test_describe(self):
         factory = Factory()
-        job = factory.create_kvm_job('sample_jobs/kvm.yaml')
+        job = factory.create_kvm_job("sample_jobs/kvm.yaml")
         self.assertIsNotNone(job)
         pipe = job.pipeline.describe()
         for item in pipe:
-            self.assertNotIn('match', item)
-            if 'pipeline' in item:
-                for element in item['pipeline']:
-                    self.assertNotIn('match', element)
+            self.assertNotIn("match", item)
+            if "pipeline" in item:
+                for element in item["pipeline"]:
+                    self.assertNotIn("match", element)
 
     def test_compatibility(self):
         """
@@ -438,16 +444,16 @@ class TestPipeline(StdoutTestCase):  # pylint: disable=too-many-public-methods
         is related to the change which caused the compatibility to be modified.
         """
         factory = Factory()
-        job = factory.create_kvm_job('sample_jobs/kvm.yaml')
+        job = factory.create_kvm_job("sample_jobs/kvm.yaml")
         pipe = job.describe()
-        self.assertEqual(pipe['compatibility'], DeployImages.compatibility)
+        self.assertEqual(pipe["compatibility"], DeployImages.compatibility)
         self.assertEqual(job.compatibility, DeployImages.compatibility)
-        kvm_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/kvm.yaml')
-        with open(kvm_yaml, 'r') as kvm_yaml:
+        kvm_yaml = os.path.join(os.path.dirname(__file__), "sample_jobs/kvm.yaml")
+        with open(kvm_yaml, "r") as kvm_yaml:
             job_def = yaml.safe_load(kvm_yaml)
-        job_def['compatibility'] = job.compatibility
+        job_def["compatibility"] = job.compatibility
         parser = JobParser()
-        (rendered, data) = factory.create_device('kvm01.jinja2')
+        (rendered, data) = factory.create_device("kvm01.jinja2")
         device = yaml.safe_load(rendered)
         try:
             job = parser.parse(yaml.dump(job_def), device, 4212, None, "")
@@ -455,11 +461,11 @@ class TestPipeline(StdoutTestCase):  # pylint: disable=too-many-public-methods
             # some deployments listed in basics.yaml are not implemented yet
             pass
         self.assertIsNotNone(job)
-        job_def['compatibility'] = job.compatibility + 1
+        job_def["compatibility"] = job.compatibility + 1
         self.assertRaises(
             JobError, parser.parse, yaml.dump(job_def), device, 4212, None, ""
         )
-        job_def['compatibility'] = 0
+        job_def["compatibility"] = 0
         try:
             job = parser.parse(yaml.dump(job_def), device, 4212, None, "")
         except NotImplementedError:
@@ -469,31 +475,39 @@ class TestPipeline(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def test_pipeline_actions(self):
         factory = Factory()
-        job = factory.create_kvm_job('sample_jobs/kvm.yaml')
+        job = factory.create_kvm_job("sample_jobs/kvm.yaml")
         self.assertEqual(
-            ['deploy', 'boot', 'test', 'finalize'],
-            [action.section for action in job.pipeline.actions]
+            ["deploy", "boot", "test", "finalize"],
+            [action.section for action in job.pipeline.actions],
         )
 
     def test_namespace_data(self):
         factory = Factory()
-        job = factory.create_kvm_job('sample_jobs/kvm.yaml')
+        job = factory.create_kvm_job("sample_jobs/kvm.yaml")
         self.assertIsNotNone(job)
         test_action = job.pipeline.actions[0]
         test_action.validate()
-        test_action.set_namespace_data('common', 'label', 'simple', 1)
-        self.assertEqual(test_action.get_namespace_data('common', 'label', 'simple'), 1)
-        test_action.set_namespace_data('common', 'ns', 'dict', {'key': False})
-        self.assertEqual(test_action.get_namespace_data('common', 'ns', 'dict'), {'key': False})
-        test_action.set_namespace_data('common', 'ns', 'list', [1, 2, 3, '4'])
-        self.assertEqual(test_action.get_namespace_data('common', 'ns', 'list'), [1, 2, 3, '4'])
-        test_action.set_namespace_data('common', 'ns', 'dict2', {'key': {'nest': True}})
-        self.assertEqual(test_action.get_namespace_data('common', 'ns', 'dict2'), {'key': {'nest': True}})
-        self.assertNotEqual(test_action.get_namespace_data('common', 'unknown', 'simple'), 1)
+        test_action.set_namespace_data("common", "label", "simple", 1)
+        self.assertEqual(test_action.get_namespace_data("common", "label", "simple"), 1)
+        test_action.set_namespace_data("common", "ns", "dict", {"key": False})
+        self.assertEqual(
+            test_action.get_namespace_data("common", "ns", "dict"), {"key": False}
+        )
+        test_action.set_namespace_data("common", "ns", "list", [1, 2, 3, "4"])
+        self.assertEqual(
+            test_action.get_namespace_data("common", "ns", "list"), [1, 2, 3, "4"]
+        )
+        test_action.set_namespace_data("common", "ns", "dict2", {"key": {"nest": True}})
+        self.assertEqual(
+            test_action.get_namespace_data("common", "ns", "dict2"),
+            {"key": {"nest": True}},
+        )
+        self.assertNotEqual(
+            test_action.get_namespace_data("common", "unknown", "simple"), 1
+        )
 
 
 class TestFakeActions(StdoutTestCase):  # pylint: disable=too-many-public-methods
-
     class KeepConnection(Action):
         name = "keep-connection"
 
@@ -551,6 +565,7 @@ class TestStrategySelector(StdoutTestCase):
     """
     Check the lambda operation
     """
+
     class Base:
         priority = 0
 
@@ -564,6 +579,10 @@ class TestStrategySelector(StdoutTestCase):
         priority = 3
 
     def test_willing(self):
-        willing = [TestStrategySelector.First(), TestStrategySelector.Third(), TestStrategySelector.Second()]
+        willing = [
+            TestStrategySelector.First(),
+            TestStrategySelector.Third(),
+            TestStrategySelector.Second(),
+        ]
         willing.sort(key=lambda x: x.priority, reverse=True)
         self.assertIsInstance(willing[0], TestStrategySelector.Third)

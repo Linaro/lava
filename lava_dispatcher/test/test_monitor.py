@@ -33,16 +33,15 @@ def find_autologin(job):
 
 
 class TestMonitorPipeline(StdoutTestCase):
-
     def test_autologin_normal_kvm(self):
         factory = Factory()
-        job = factory.create_kvm_job('sample_jobs/kvm.yaml')
+        job = factory.create_kvm_job("sample_jobs/kvm.yaml")
         job.validate()
         self.assertTrue(find_autologin(job))
 
     def test_qemu_monitor_no_prompts(self):
         factory = Factory()
-        job = factory.create_kvm_job('sample_jobs/qemu-monitor.yaml')
+        job = factory.create_kvm_job("sample_jobs/qemu-monitor.yaml")
         job.validate()
         self.assertIsNotNone(job)
         self.assertIsNotNone(job.pipeline)
@@ -54,7 +53,7 @@ class TestMonitorPipeline(StdoutTestCase):
 
     def test_qemu_monitor_notest_noprompts(self):
         factory = Factory()
-        job = factory.create_kvm_job('sample_jobs/kvm-notest-noprompts.yaml')
+        job = factory.create_kvm_job("sample_jobs/kvm-notest-noprompts.yaml")
         job.validate()
         self.assertIsNotNone(job)
         self.assertIsNotNone(job.pipeline)
@@ -66,7 +65,7 @@ class TestMonitorPipeline(StdoutTestCase):
 
     def test_qemu_monitor_zephyr_job(self):
         factory = Factory()
-        job = factory.create_kvm_job('sample_jobs/zephyr-qemu-test-task.yaml')
+        job = factory.create_kvm_job("sample_jobs/zephyr-qemu-test-task.yaml")
         job.validate()
         self.assertIsNotNone(job)
         self.assertIsNotNone(job.pipeline)
@@ -78,7 +77,7 @@ class TestMonitorPipeline(StdoutTestCase):
 
     def test_qemu_notest(self):
         factory = Factory()
-        job = factory.create_kvm_job('sample_jobs/kvm-notest.yaml')
+        job = factory.create_kvm_job("sample_jobs/kvm-notest.yaml")
         job.validate()
         self.assertIsNotNone(job)
         self.assertIsNotNone(job.pipeline)

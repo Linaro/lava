@@ -29,26 +29,28 @@ from lava_dispatcher.test.utils import infrastructure_error_multi_paths
 
 
 class TestDownloadDeploy(StdoutTestCase):  # pylint: disable=too-many-public-methods
-
     def setUp(self):
         super().setUp()
         self.factory = Factory()
-        self.job = self.factory.create_job('db410c-01.jinja2', 'sample_jobs/download.yaml')
+        self.job = self.factory.create_job(
+            "db410c-01.jinja2", "sample_jobs/download.yaml"
+        )
 
     def test_deploy_job(self):
         self.assertEqual(self.job.pipeline.job, self.job)
-        self.assertIsInstance(self.job.device['device_info'], list)
+        self.assertIsInstance(self.job.device["device_info"], list)
         for action in self.job.pipeline.actions:
             if isinstance(action, DeployAction):
                 self.assertEqual(action.job, self.job)
 
     def test_pipeline(self):
-        description_ref = self.pipeline_reference('download.yaml')
+        description_ref = self.pipeline_reference("download.yaml")
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
-    @unittest.skipIf(infrastructure_error_multi_paths(
-        ['lxc-info', 'img2simg', 'simg2img']),
-        "lxc or img2simg or simg2img not installed")
+    @unittest.skipIf(
+        infrastructure_error_multi_paths(["lxc-info", "img2simg", "simg2img"]),
+        "lxc or img2simg or simg2img not installed",
+    )
     def test_validate(self):
         try:
             self.job.pipeline.validate_actions()
@@ -58,6 +60,6 @@ class TestDownloadDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
             self.assertEqual([], action.errors)
 
     def test_directories(self):
-        job = self.factory.create_job('bbb-01.jinja2', 'sample_jobs/download_dir.yaml')
+        job = self.factory.create_job("bbb-01.jinja2", "sample_jobs/download_dir.yaml")
         with self.assertRaises(JobError):
             job.validate()

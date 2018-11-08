@@ -29,14 +29,13 @@ from lava_dispatcher.actions.test.shell import TestShellRetry
 
 
 class TestKExec(StdoutTestCase):
-
     def test_deploy_parameters(self):
         factory = UBootFactory()
-        job = factory.create_bbb_job('sample_jobs/kexec.yaml')
+        job = factory.create_bbb_job("sample_jobs/kexec.yaml")
         self.assertIsNotNone(job)
 
         # Check Pipeline
-        description_ref = self.pipeline_reference('kexec.yaml', job=job)
+        description_ref = self.pipeline_reference("kexec.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
 
         # Check kexec specific options
@@ -47,24 +46,24 @@ class TestKExec(StdoutTestCase):
         self.assertIsInstance(kexec.internal_pipeline.actions[0], KexecAction)
         self.assertIsInstance(kexec.internal_pipeline.actions[1], AutoLoginAction)
         self.assertIsInstance(kexec.internal_pipeline.actions[2], ExpectShellSession)
-        self.assertIsInstance(kexec.internal_pipeline.actions[3],
-                              ExportDeviceEnvironment)
-        self.assertIn('kernel', kexec.parameters)
-        self.assertIn('command', kexec.parameters)
-        self.assertIn('method', kexec.parameters)
-        self.assertIn('dtb', kexec.parameters)
-        self.assertIn('options', kexec.parameters)
-        self.assertIn('kernel-config', kexec.parameters)
+        self.assertIsInstance(
+            kexec.internal_pipeline.actions[3], ExportDeviceEnvironment
+        )
+        self.assertIn("kernel", kexec.parameters)
+        self.assertIn("command", kexec.parameters)
+        self.assertIn("method", kexec.parameters)
+        self.assertIn("dtb", kexec.parameters)
+        self.assertIn("options", kexec.parameters)
+        self.assertIn("kernel-config", kexec.parameters)
         self.assertTrue(kexec.valid)
         self.assertEqual(
-            '/sbin/kexec --load /home/vmlinux --dtb /home/dtb --initrd /home/initrd --reuse-cmdline',
-            kexec.internal_pipeline.actions[0].load_command
+            "/sbin/kexec --load /home/vmlinux --dtb /home/dtb --initrd /home/initrd --reuse-cmdline",
+            kexec.internal_pipeline.actions[0].load_command,
         )
-        self.assertEqual(
-            '/sbin/kexec -e',
-            kexec.internal_pipeline.actions[0].command
+        self.assertEqual("/sbin/kexec -e", kexec.internal_pipeline.actions[0].command)
+        self.assertIsNotNone(
+            kexec.internal_pipeline.actions[0].parameters["boot_message"]
         )
-        self.assertIsNotNone(kexec.internal_pipeline.actions[0].parameters['boot_message'])
 
         self.assertIsNotNone(kexec.internal_pipeline.actions[0].name)
         self.assertIsNotNone(kexec.internal_pipeline.actions[0].level)

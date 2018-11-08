@@ -26,10 +26,11 @@ from lava_dispatcher.test.utils import DummyLogger
 
 
 class MpsFactory(Factory):
-
     def create_mps_job(self, filename):  # pylint: disable=no-self-use
         # FIXME - create a device dictionary for mps2plus
-        device = NewDevice(os.path.join(os.path.dirname(__file__), '../devices/mps2plus_01.yaml'))
+        device = NewDevice(
+            os.path.join(os.path.dirname(__file__), "../devices/mps2plus_01.yaml")
+        )
         y_file = os.path.join(os.path.dirname(__file__), filename)
         with open(y_file) as sample_job_data:
             parser = JobParser()
@@ -39,7 +40,6 @@ class MpsFactory(Factory):
 
 
 class TestMps(StdoutTestCase):
-
     def setUp(self):
         super().setUp()
         self.factory = MpsFactory()
@@ -48,5 +48,5 @@ class TestMps(StdoutTestCase):
     def test_mps_reference(self):
         self.job.validate()
         self.assertEqual([], self.job.pipeline.errors)
-        description_ref = self.pipeline_reference('mps2plus.yaml')
+        description_ref = self.pipeline_reference("mps2plus.yaml")
         self.assertEqual(description_ref, self.job.pipeline.describe(False))

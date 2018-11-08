@@ -23,10 +23,7 @@ import yaml
 import datetime
 from lava_dispatcher.action import Action, Pipeline
 from lava_common.timeout import Timeout
-from lava_common.exceptions import (
-    InfrastructureError,
-    JobError,
-)
+from lava_common.exceptions import InfrastructureError, JobError
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.actions.deploy.testdef import get_test_action_namespaces
@@ -42,11 +39,10 @@ from lava_dispatcher.actions.test.shell import TestShellRetry, TestShellAction
 
 
 class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public-methods
-
     def setUp(self):
         super().setUp()
         self.factory = Factory()
-        self.job = self.factory.create_kvm_job('sample_jobs/kvm.yaml')
+        self.job = self.factory.create_kvm_job("sample_jobs/kvm.yaml")
 
     def test_testshell(self):
         testshell = None
@@ -58,23 +54,23 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
         self.assertIsInstance(testshell, TestShellAction)
         self.assertTrue(testshell.valid)
 
-        if 'timeout' in testshell.parameters:
-            time_int = Timeout.parse(testshell.parameters['timeout'])
+        if "timeout" in testshell.parameters:
+            time_int = Timeout.parse(testshell.parameters["timeout"])
         else:
             time_int = Timeout.default_duration()
         self.assertEqual(
             datetime.timedelta(seconds=time_int).total_seconds(),
-            testshell.timeout.duration
+            testshell.timeout.duration,
         )
 
     def test_missing_handler(self):
-        (rendered, _) = self.factory.create_device('kvm01.jinja2')
+        (rendered, _) = self.factory.create_device("kvm01.jinja2")
         device = NewDevice(yaml.safe_load(rendered))
-        kvm_yaml = os.path.join(os.path.dirname(__file__), 'sample_jobs/kvm.yaml')
+        kvm_yaml = os.path.join(os.path.dirname(__file__), "sample_jobs/kvm.yaml")
         parser = JobParser()
         with open(kvm_yaml) as sample_job_data:
             data = yaml.safe_load(sample_job_data)
-        data['actions'][2]['test']['definitions'][0]['from'] = 'unusable-handler'
+        data["actions"][2]["test"]["definitions"][0]["from"] = "unusable-handler"
         try:
             job = parser.parse(yaml.dump(data), device, 4212, None, "")
             job.logger = DummyLogger()
@@ -83,7 +79,7 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
         except Exception as exc:  # pylint: disable=broad-except
             self.fail(exc)
         else:
-            self.fail('JobError not raised')
+            self.fail("JobError not raised")
 
     def test_eventpatterns(self):
         testshell = None
@@ -93,52 +89,67 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
                 testshell = action.pipeline.actions[0]
                 break
         self.assertTrue(testshell.valid)
-        self.assertFalse(testshell.check_patterns('exit', None, ''))
-        self.assertRaises(InfrastructureError, testshell.check_patterns, 'eof', None, '')
-        self.assertTrue(testshell.check_patterns('timeout', None, ''))
+        self.assertFalse(testshell.check_patterns("exit", None, ""))
+        self.assertRaises(
+            InfrastructureError, testshell.check_patterns, "eof", None, ""
+        )
+        self.assertTrue(testshell.check_patterns("timeout", None, ""))
 
 
 class X86Factory(Factory):
-
     def create_x86_job(self, filename, device):
         return self.create_job(device, filename)
 
 
 class TestMultiNodeOverlay(StdoutTestCase):  # pylint: disable=too-many-public-methods
-
     def setUp(self):
         super().setUp()
         factory = X86Factory()
-        self.server_job = factory.create_x86_job('sample_jobs/test_action-1.yaml', 'lng-generator-01.jinja2')
-        self.client_job = factory.create_x86_job('sample_jobs/test_action-2.yaml', 'lng-generator-02.jinja2')
+        self.server_job = factory.create_x86_job(
+            "sample_jobs/test_action-1.yaml", "lng-generator-01.jinja2"
+        )
+        self.client_job = factory.create_x86_job(
+            "sample_jobs/test_action-2.yaml", "lng-generator-02.jinja2"
+        )
 
     def test_action_namespaces(self):
         self.assertIsNotNone(self.server_job)
         self.assertIsNotNone(self.client_job)
-        deploy_server = [action for action in self.server_job.pipeline.actions if action.name == 'tftp-deploy'][0]
+        deploy_server = [
+            action
+            for action in self.server_job.pipeline.actions
+            if action.name == "tftp-deploy"
+        ][0]
         self.assertIn(MultinodeProtocol.name, deploy_server.parameters.keys())
         self.assertIn(VlandProtocol.name, deploy_server.parameters.keys())
-        self.assertEqual(['common'], get_test_action_namespaces(self.server_job.parameters))
-        namespace = self.server_job.parameters.get('namespace')
+        self.assertEqual(
+            ["common"], get_test_action_namespaces(self.server_job.parameters)
+        )
+        namespace = self.server_job.parameters.get("namespace")
         self.assertIsNone(namespace)
-        namespace = self.client_job.parameters.get('namespace')
+        namespace = self.client_job.parameters.get("namespace")
         self.assertIsNone(namespace)
-        deploy_client = [action for action in self.client_job.pipeline.actions if action.name == 'tftp-deploy'][0]
+        deploy_client = [
+            action
+            for action in self.client_job.pipeline.actions
+            if action.name == "tftp-deploy"
+        ][0]
         self.assertIn(MultinodeProtocol.name, deploy_client.parameters.keys())
         self.assertIn(VlandProtocol.name, deploy_client.parameters.keys())
         key_list = []
-        for block in self.client_job.parameters['actions']:
+        for block in self.client_job.parameters["actions"]:
             key_list.extend(block.keys())
-        self.assertEqual(key_list, ['deploy', 'boot', 'test'])  # order is important
-        self.assertEqual(['common'], get_test_action_namespaces(self.client_job.parameters))
+        self.assertEqual(key_list, ["deploy", "boot", "test"])  # order is important
+        self.assertEqual(
+            ["common"], get_test_action_namespaces(self.client_job.parameters)
+        )
         key_list = []
-        for block in self.server_job.parameters['actions']:
+        for block in self.server_job.parameters["actions"]:
             key_list.extend(block.keys())
-        self.assertEqual(key_list, ['deploy', 'boot', 'test'])  # order is important
+        self.assertEqual(key_list, ["deploy", "boot", "test"])  # order is important
 
 
-class TestShellResults(StdoutTestCase):   # pylint: disable=too-many-public-methods
-
+class TestShellResults(StdoutTestCase):  # pylint: disable=too-many-public-methods
     class FakeJob(Job):
         pass
 
@@ -147,6 +158,7 @@ class TestShellResults(StdoutTestCase):   # pylint: disable=too-many-public-meth
         Derived from object, *not* Deployment as this confuses python -m unittest discover
         - leads to the FakeDeploy being called instead.
         """
+
         def __init__(self, parent):
             self.__parameters__ = {}
             self.pipeline = parent
@@ -154,7 +166,6 @@ class TestShellResults(StdoutTestCase):   # pylint: disable=too-many-public-meth
             self.action = TestShellResults.FakeAction()
 
     class FakePipeline(Pipeline):
-
         def __init__(self, parent=None, job=None):
             super().__init__(parent, job)
 

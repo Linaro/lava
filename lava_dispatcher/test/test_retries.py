@@ -19,20 +19,10 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import time
-from lava_dispatcher.action import (
-    Action,
-    Pipeline,
-)
+from lava_dispatcher.action import Action, Pipeline
 from lava_common.timeout import Timeout
-from lava_common.exceptions import (
-    JobError,
-    LAVABug,
-    InfrastructureError,
-)
-from lava_dispatcher.logical import (
-    RetryAction,
-    DiagnosticAction,
-)
+from lava_common.exceptions import JobError, LAVABug, InfrastructureError
+from lava_dispatcher.logical import RetryAction, DiagnosticAction
 from lava_dispatcher.power import FinalizeAction
 from lava_dispatcher.job import Job
 from lava_dispatcher.test.test_basic import StdoutTestCase
@@ -41,10 +31,9 @@ from lava_dispatcher.test.utils import DummyLogger
 
 # pylint: disable=too-few-public-methods
 
+
 class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
-
     class FakeJob(Job):
-
         def __init__(self, parameters):
             super().__init__(4212, parameters, None)
 
@@ -53,6 +42,7 @@ class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         Derived from object, *not* Deployment as this confuses python -m unittest discover
         - leads to the FakeDeploy being called instead.
         """
+
         def __init__(self, parent):
             self.__parameters__ = {}
             self.pipeline = parent
@@ -61,7 +51,6 @@ class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
             self.action.job = self.job
 
     class MissingCleanupDeploy:
-
         def __init__(self, parent):
             self.__parameters__ = {}
             self.pipeline = parent
@@ -70,7 +59,6 @@ class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
             self.action.job = self.job
 
     class FakePipeline(Pipeline):
-
         def __init__(self, parent=None, job=None):
             super().__init__(parent, job)
             job.pipeline = self
@@ -97,7 +85,7 @@ class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         Always fails, always triggers a diagnostic
         """
 
-        section = 'internal'
+        section = "internal"
         name = "trigger-action"
         description = "fake, do not use outside unit tests"
         summary = "fake trigger action for unit tests"
@@ -105,7 +93,7 @@ class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         def __init__(self):
             super().__init__()
             self.count = 1
-            self.parameters['namespace'] = 'common'
+            self.parameters["namespace"] = "common"
 
         def run(self, connection, max_end_time):
             self.count += 1
@@ -120,7 +108,7 @@ class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     class InternalRetryAction(RetryAction):
 
-        section = 'internal'
+        section = "internal"
         name = "internal-retry-action"
         description = "internal, do not use outside unit tests"
         summary = "internal retry action for unit tests"
@@ -131,7 +119,7 @@ class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     class CleanupRetryAction(RetryAction):
 
-        section = 'internal'
+        section = "internal"
         name = "internal-retry-action"
         description = "internal, do not use outside unit tests"
         summary = "internal retry action for unit tests"
@@ -144,13 +132,12 @@ class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
             pass
 
     class DiagnoseCheck(DiagnosticAction):
-
         def __init__(self):
             super().__init__()
 
         @classmethod
         def trigger(cls):
-            return 'fake-check'
+            return "fake-check"
 
     def setUp(self):
         super().setUp()
@@ -158,20 +145,11 @@ class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
             "job_name": "fakejob",
             "actions": [
                 {
-                    'deploy': {
-                        'namespace': 'common',
-                        'failure_retry': 3
-                    },
-                    'boot': {
-                        'namespace': 'common',
-                        'failure_retry': 4
-                    },
-                    'test': {
-                        'namespace': 'common',
-                        'failure_retry': 5
-                    }
+                    "deploy": {"namespace": "common", "failure_retry": 3},
+                    "boot": {"namespace": "common", "failure_retry": 4},
+                    "test": {"namespace": "common", "failure_retry": 5},
                 }
-            ]
+            ],
         }
         self.fakejob = TestAction.FakeJob(self.parameters)
 
@@ -180,8 +158,8 @@ class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         while actions:
             try:
                 action = next(actions)
-                if 'deploy' in action:
-                    yield action['deploy']
+                if "deploy" in action:
+                    yield action["deploy"]
             except StopIteration:
                 break
 
@@ -203,7 +181,7 @@ class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
     def test_cleanup_deploy(self):
         fakepipeline = TestAction.FakePipeline(job=self.fakejob)
         deploy = TestAction.MissingCleanupDeploy(fakepipeline)
-        for actions in self.lookup_deploy(self.parameters['actions']):
+        for actions in self.lookup_deploy(self.parameters["actions"]):
             deploy.action.parameters = actions
         self.assertEqual(deploy.action.max_retries, 3)
         fakepipeline.add_action(deploy.action)
@@ -215,7 +193,7 @@ class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
     def test_internal_retry(self):
         fakepipeline = TestAction.FakePipeline(job=self.fakejob)
         deploy = TestAction.FakeDeploy(fakepipeline)
-        for actions in self.lookup_deploy(self.parameters['actions']):
+        for actions in self.lookup_deploy(self.parameters["actions"]):
             deploy.action.parameters = actions
         self.assertEqual(deploy.action.max_retries, 3)
         fakepipeline.add_action(deploy.action)
@@ -237,7 +215,10 @@ class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def test_diagnostic(self):
         self.fakejob.diagnostics.append(TestAction.DiagnoseCheck)
-        self.assertIn(TestAction.DiagnoseCheck.trigger(), [a.trigger() for a in self.fakejob.diagnostics])
+        self.assertIn(
+            TestAction.DiagnoseCheck.trigger(),
+            [a.trigger() for a in self.fakejob.diagnostics],
+        )
         fakepipeline = TestAction.FakePipeline(job=self.fakejob)
         fakepipeline.add_action(TestAction.FakeTriggerAction())
         self.assertIsNone(fakepipeline.validate_actions())
@@ -253,42 +234,89 @@ class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         pipeline = TestAction.FakePipeline(job=self.fakejob)
         action = TestAction.FakeTriggerAction()
         pipeline.add_action(action)
-        self.assertEqual({'namespace': 'common'}, action.parameters)
-        action.set_namespace_data(action='test', label="fake", key="string value", value="test string")
-        self.assertEqual(action.get_namespace_data(action='test', label='fake', key='string value'), 'test string')
-        test_string = action.get_namespace_data(action='test', label='fake', key='string value')
-        self.assertEqual(action.get_namespace_data(action='test', label='fake', key='string value'), 'test string')
-        self.assertEqual(test_string, 'test string')
+        self.assertEqual({"namespace": "common"}, action.parameters)
+        action.set_namespace_data(
+            action="test", label="fake", key="string value", value="test string"
+        )
+        self.assertEqual(
+            action.get_namespace_data(action="test", label="fake", key="string value"),
+            "test string",
+        )
+        test_string = action.get_namespace_data(
+            action="test", label="fake", key="string value"
+        )
+        self.assertEqual(
+            action.get_namespace_data(action="test", label="fake", key="string value"),
+            "test string",
+        )
+        self.assertEqual(test_string, "test string")
         test_string += "extra data"
-        self.assertEqual(action.get_namespace_data(action='test', label='fake', key='string value'), 'test string')
-        self.assertNotEqual(test_string, 'test string')
-        self.assertNotEqual(action.get_namespace_data(action='test', label='fake', key='string value'), test_string)
-        action.set_namespace_data(action='test', label="fake", key="list value", value=[1, 2, 3])
-        self.assertEqual(action.get_namespace_data(action='test', label='fake', key='list value'), [1, 2, 3])
-        test_list = action.get_namespace_data(action='test', label='fake', key='list value')
-        self.assertEqual(action.get_namespace_data(action='test', label='fake', key='list value'), [1, 2, 3])
-        self.assertEqual(action.get_namespace_data(action='test', label='fake', key='list value'), test_list)
+        self.assertEqual(
+            action.get_namespace_data(action="test", label="fake", key="string value"),
+            "test string",
+        )
+        self.assertNotEqual(test_string, "test string")
+        self.assertNotEqual(
+            action.get_namespace_data(action="test", label="fake", key="string value"),
+            test_string,
+        )
+        action.set_namespace_data(
+            action="test", label="fake", key="list value", value=[1, 2, 3]
+        )
+        self.assertEqual(
+            action.get_namespace_data(action="test", label="fake", key="list value"),
+            [1, 2, 3],
+        )
+        test_list = action.get_namespace_data(
+            action="test", label="fake", key="list value"
+        )
+        self.assertEqual(
+            action.get_namespace_data(action="test", label="fake", key="list value"),
+            [1, 2, 3],
+        )
+        self.assertEqual(
+            action.get_namespace_data(action="test", label="fake", key="list value"),
+            test_list,
+        )
         test_list.extend([4, 5, 6])
-        self.assertEqual(action.get_namespace_data(action='test', label='fake', key='list value'), [1, 2, 3])
-        self.assertNotEqual(action.get_namespace_data(action='test', label='fake', key='list value'), test_list)
+        self.assertEqual(
+            action.get_namespace_data(action="test", label="fake", key="list value"),
+            [1, 2, 3],
+        )
+        self.assertNotEqual(
+            action.get_namespace_data(action="test", label="fake", key="list value"),
+            test_list,
+        )
         self.assertEqual(test_list, [1, 2, 3, 4, 5, 6])
 
         # test support for the more risky reference method
-        reference_list = action.get_namespace_data(action='test', label='fake', key='list value', deepcopy=False)
-        self.assertEqual(action.get_namespace_data(action='test', label='fake', key='list value'), [1, 2, 3])
-        self.assertEqual(action.get_namespace_data(action='test', label='fake', key='list value'), reference_list)
+        reference_list = action.get_namespace_data(
+            action="test", label="fake", key="list value", deepcopy=False
+        )
+        self.assertEqual(
+            action.get_namespace_data(action="test", label="fake", key="list value"),
+            [1, 2, 3],
+        )
+        self.assertEqual(
+            action.get_namespace_data(action="test", label="fake", key="list value"),
+            reference_list,
+        )
         reference_list.extend([7, 8, 9])
-        self.assertEqual(action.get_namespace_data(action='test', label='fake', key='list value'), [1, 2, 3, 7, 8, 9])
+        self.assertEqual(
+            action.get_namespace_data(action="test", label="fake", key="list value"),
+            [1, 2, 3, 7, 8, 9],
+        )
         self.assertEqual(reference_list, [1, 2, 3, 7, 8, 9])
         reference_list = [4, 5, 6]
-        self.assertEqual(action.get_namespace_data(action='test', label='fake', key='list value'), [1, 2, 3, 7, 8, 9])
+        self.assertEqual(
+            action.get_namespace_data(action="test", label="fake", key="list value"),
+            [1, 2, 3, 7, 8, 9],
+        )
         self.assertNotEqual(reference_list, [1, 2, 3, 7, 8, 9])
 
 
 class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
-
     class FakeJob(Job):
-
         def __init__(self, parameters):
             super().__init__(4212, parameters, None)
             self.logger = DummyLogger()
@@ -298,13 +326,12 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     class FakeDevice(dict):
         def __init__(self):
-            self.update({'parameters': {}, 'commands': {}})
+            self.update({"parameters": {}, "commands": {}})
 
         def __get_item__(self):
             return {}
 
     class FakePipeline(Pipeline):
-
         def __init__(self, parent=None, job=None):
             super().__init__(parent, job)
 
@@ -318,14 +345,16 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
         summary = "fake action for unit tests"
 
         def populate(self, parameters):
-            self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+            self.internal_pipeline = Pipeline(
+                parent=self, job=self.job, parameters=parameters
+            )
             self.internal_pipeline.add_action(TestAction.FakeAction())
 
         def run(self, connection, max_end_time):
             if connection:
                 raise LAVABug("Fake action not meant to have a real connection")
             time.sleep(3)
-            self.results = {'status': "failed"}
+            self.results = {"status": "failed"}
             return connection
 
     class SafeAction(Action):
@@ -339,12 +368,12 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
         def __init__(self):
             super().__init__()
-            self.parameters['namespace'] = 'common'
+            self.parameters["namespace"] = "common"
 
         def run(self, connection, max_end_time):
             if connection:
                 raise LAVABug("Fake action not meant to have a real connection")
-            self.results = {'status': "passed"}
+            self.results = {"status": "passed"}
             return connection
 
     class LongAction(Action):
@@ -358,13 +387,13 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
         def __init__(self):
             super().__init__()
-            self.parameters['namespace'] = 'common'
+            self.parameters["namespace"] = "common"
 
         def run(self, connection, max_end_time):
             if connection:
                 raise LAVABug("Fake action not meant to have a real connection")
             time.sleep(5)
-            self.results = {'status': "passed"}
+            self.results = {"status": "passed"}
             return connection
 
     class SkippedAction(Action):
@@ -377,7 +406,9 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
         summary = "fake action without adjuvant"
 
         def run(self, connection, max_end_time):
-            raise LAVABug("Fake action not meant to actually run - should have timed out")
+            raise LAVABug(
+                "Fake action not meant to actually run - should have timed out"
+            )
 
     class FakeSafeAction(Action):
         """
@@ -393,48 +424,37 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
             self.timeout.duration = 4
 
         def populate(self, parameters):
-            self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+            self.internal_pipeline = Pipeline(
+                parent=self, job=self.job, parameters=parameters
+            )
             self.internal_pipeline.add_action(TestAction.FakeAction())
 
         def run(self, connection, max_end_time):
             if connection:
                 raise LAVABug("Fake action not meant to have a real connection")
             time.sleep(3)
-            self.results = {'status': "failed"}
+            self.results = {"status": "failed"}
             return connection
 
     def setUp(self):
         super().setUp()
         self.parameters = {
             "job_name": "fakejob",
-            'timeouts': {
-                'job': {
-                    'seconds': 3
-                }
-            },
+            "timeouts": {"job": {"seconds": 3}},
             "actions": [
                 {
-                    'deploy': {
-                        'namespace': 'common',
-                        'failure_retry': 3
-                    },
-                    'boot': {
-                        'namespace': 'common',
-                        'failure_retry': 4
-                    },
-                    'test': {
-                        'namespace': 'common',
-                        'failure_retry': 5
-                    }
+                    "deploy": {"namespace": "common", "failure_retry": 3},
+                    "boot": {"namespace": "common", "failure_retry": 4},
+                    "test": {"namespace": "common", "failure_retry": 5},
                 }
-            ]
+            ],
         }
         self.fakejob = TestTimeout.FakeJob(self.parameters)
         # copy of the _timeout function from parser.
-        if 'timeouts' in self.parameters:
-            if 'job' in self.parameters['timeouts']:
-                duration = Timeout.parse(self.parameters['timeouts']['job'])
-                self.fakejob.timeout = Timeout(self.parameters['job_name'], duration)
+        if "timeouts" in self.parameters:
+            if "job" in self.parameters["timeouts"]:
+                duration = Timeout.parse(self.parameters["timeouts"]["job"])
+                self.fakejob.timeout = Timeout(self.parameters["job_name"], duration)
 
     def test_action_timeout(self):
         """
@@ -456,7 +476,9 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
         seconds = 2
         pipeline = TestTimeout.FakePipeline(job=self.fakejob)
         action = TestTimeout.FakeAction()
-        action.timeout = Timeout(action.name, duration=seconds, exception=InfrastructureError)
+        action.timeout = Timeout(
+            action.name, duration=seconds, exception=InfrastructureError
+        )
         pipeline.add_action(action)
         self.fakejob.pipeline = pipeline
         self.fakejob.device = TestTimeout.FakeDevice()
@@ -481,7 +503,7 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
         pipeline.add_action(action)
         pipeline.add_action(TestTimeout.SafeAction())
         finalize = FinalizeAction()
-        finalize.parameters['namespace'] = 'common'
+        finalize.parameters["namespace"] = "common"
         pipeline.add_action(finalize)
         self.fakejob.pipeline = pipeline
         self.fakejob.device = TestTimeout.FakeDevice()
@@ -495,7 +517,7 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
         pipeline.add_action(action)
         pipeline.add_action(TestTimeout.SafeAction())
         finalize = FinalizeAction()
-        finalize.parameters['namespace'] = 'common'
+        finalize.parameters["namespace"] = "common"
         pipeline.add_action(finalize)
         self.fakejob.pipeline = pipeline
         self.fakejob.device = TestTimeout.FakeDevice()
@@ -514,7 +536,7 @@ class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
         pipeline.add_action(TestTimeout.FakeSafeAction())
         pipeline.add_action(TestTimeout.FakeSafeAction())
         finalize = FinalizeAction()
-        finalize.parameters['namespace'] = 'common'
+        finalize.parameters["namespace"] = "common"
         pipeline.add_action(finalize)
         self.fakejob.pipeline = pipeline
         self.fakejob.device = TestTimeout.FakeDevice()

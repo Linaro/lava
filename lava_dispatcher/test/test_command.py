@@ -22,16 +22,19 @@ from lava_dispatcher.test.test_basic import Factory, StdoutTestCase
 
 
 class TestCommand(StdoutTestCase):
-
     def setUp(self):
         super().setUp()
         factory = Factory()
-        self.job = factory.create_kvm_job('sample_jobs/kvm-command.yaml')
+        self.job = factory.create_kvm_job("sample_jobs/kvm-command.yaml")
 
     def test_pipeline(self):
-        description_ref = self.pipeline_reference('kvm-command.yaml')
+        description_ref = self.pipeline_reference("kvm-command.yaml")
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
-        command = [action for action in self.job.pipeline.actions if action.name == 'user-command'][0]
-        self.assertEqual(command.parameters['name'], 'user_command_to_run')
+        command = [
+            action
+            for action in self.job.pipeline.actions
+            if action.name == "user-command"
+        ][0]
+        self.assertEqual(command.parameters["name"], "user_command_to_run")
         self.assertEqual(command.timeout.duration, 60)
