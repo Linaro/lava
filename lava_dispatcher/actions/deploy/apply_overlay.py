@@ -43,6 +43,7 @@ from lava_dispatcher.utils.installers import (
 from lava_dispatcher.utils.filesystem import (
     lxc_path,
     mkdtemp,
+    is_sparse_image,
     prepare_guestfs,
     copy_in_overlay,
     copy_overlay_to_sparse_fs,
@@ -144,14 +145,24 @@ class ApplyOverlaySparseImage(Action):
     def run(self, connection, max_end_time):
         overlay_file = self.get_namespace_data(action='compress-overlay',
                                                label='output', key='file')
-        if overlay_file:
-            self.logger.debug("Overlay: %s", overlay_file)
-            decompressed_image = self.get_namespace_data(
-                action='download-action', label=self.image_key, key='file')
-            self.logger.debug("Image: %s", decompressed_image)
-            copy_overlay_to_sparse_fs(decompressed_image, overlay_file)
-        else:
+        if not overlay_file:
             self.logger.debug("No overlay to deploy")
+            return connection
+        self.logger.debug("Overlay: %s", overlay_file)
+        decompressed_image = self.get_namespace_data(
+            action='download-action', label=self.image_key, key='file')
+        self.logger.debug("Image: %s", decompressed_image)
+        ext4_img = decompressed_image + '.ext4'
+        # Check if the given image is an Android sparse image
+        if not is_sparse_image(decompressed_image):
+            raise JobError("Image is not an Android sparse image: %s" % decompressed_image)
+        command_list = ["/usr/bin/simg2img", decompressed_image, ext4_img]
+        self.run_cmd(command_list, error_msg="simg2img failed for %s" % decompressed_image)
+        self.logger.debug("Copying overlay")
+        copy_overlay_to_sparse_fs(ext4_img, overlay_file)
+        command_list = ["/usr/bin/img2simg", ext4_img, decompressed_image]
+        self.run_cmd(command_list, error_msg="img2simg failed for %s" % ext4_img)
+        os.remove(ext4_img)
         return connection
 
 

@@ -24,7 +24,6 @@ import shutil
 import tarfile
 import tempfile
 import guestfs
-import subprocess  # nosec - internal use.
 import glob
 import logging
 import magic
@@ -348,18 +347,13 @@ def copy_overlay_to_lxc(lxc_name, src, dispatcher_config, namespace):
 @replace_exception(RuntimeError, JobError)
 def copy_overlay_to_sparse_fs(image, overlay):
     """copy_overlay_to_sparse_fs
+
+    Only copies the overlay to an image
+    which has already been converted from sparse.
     """
-    ext4_img = image + '.ext4'
     logger = logging.getLogger('dispatcher')
     guest = guestfs.GuestFS(python_return_dict=True)
-
-    # Check if the given image is an Android sparse image
-    if not is_sparse_image(image):
-        raise JobError("Image is not an Android sparse image: %s" % image)
-
-    subprocess.check_output(['/usr/bin/simg2img', image, ext4_img],  # nosec - internal use.
-                            stderr=subprocess.STDOUT)
-    guest.add_drive(ext4_img)
+    guest.add_drive(image)
     _launch_guestfs(guest)
     devices = guest.list_devices()
     if not devices:
@@ -379,9 +373,6 @@ def copy_overlay_to_sparse_fs(image, overlay):
     guest.umount(devices[0])
     if int(available) is 0 or percent == '100%':
         raise JobError("No space in image after applying overlay: %s" % image)
-    subprocess.check_output(['/usr/bin/img2simg', ext4_img, image],  # nosec - internal use.
-                            stderr=subprocess.STDOUT)
-    os.remove(ext4_img)
 
 
 def copy_directory_contents(root_dir, dst_dir):
