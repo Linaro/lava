@@ -560,7 +560,7 @@ class Action:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         command_list = ["nice"] + [str(s) for s in command_list]
 
         # Start the subprocess
-        self.logger.debug("Calling '%s'", ' '.join(command_list))
+        self.logger.debug("Calling: '%s'", "' '".join(command_list))
         start = time.time()
         # TODO: when python >= 3.6 use encoding and errors
         # see https://docs.python.org/3.6/library/subprocess.html#subprocess.Popen
