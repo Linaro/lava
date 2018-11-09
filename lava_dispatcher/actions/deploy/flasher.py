@@ -18,9 +18,9 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import shlex
 import yaml
 
-from lava_common.exceptions import JobError
 from lava_dispatcher.action import Pipeline
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.download import DownloaderAction
@@ -87,9 +87,8 @@ class FlasherAction(DeployAction):
 
         # Run the commands
         for cmd in self.commands:
-            cmds = substitute(cmd.split(" "), substitutions)
-            if not self.run_command(cmds, allow_fail=False, allow_silent=True, cwd=self.path):
-                raise JobError("Unable to flash the device")
+            cmds = substitute(shlex.split(cmd), substitutions)
+            self.run_cmd(cmds, error_msg="Unable to flash the device", cwd=self.path)
 
         return connection
 
