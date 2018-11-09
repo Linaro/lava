@@ -27,10 +27,7 @@ from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.actions.boot import BootAction
 from lava_dispatcher.power import ResetDevice
-from lava_dispatcher.shell import (
-    ShellCommand,
-    ShellSession
-)
+from lava_dispatcher.shell import ShellCommand, ShellSession
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.strings import substitute
 from lava_dispatcher.utils.udev import WaitUSBSerialDeviceAction
@@ -49,19 +46,22 @@ class GDB(Boot):
 
     @classmethod
     def accepts(cls, device, parameters):
-        methods = device['actions']['boot']['methods']
-        if 'gdb' not in methods:
+        methods = device["actions"]["boot"]["methods"]
+        if "gdb" not in methods:
             return False, '"gdb" is not in the device configuration boot methods'
-        if 'method' not in parameters:
+        if "method" not in parameters:
             return False, '"method" not in parameters'
-        if parameters['method'] != 'gdb':
+        if parameters["method"] != "gdb":
             return False, '"method" was not "gdb"'
-        if 'commands' not in parameters:
+        if "commands" not in parameters:
             return False, '"commands" not in parameters'
-        if parameters['commands'] not in methods['gdb']:
-            return False, 'commands "%s" undefined for the device' % parameters['commands']
+        if parameters["commands"] not in methods["gdb"]:
+            return (
+                False,
+                'commands "%s" undefined for the device' % parameters["commands"],
+            )
 
-        return True, 'accepted'
+        return True, "accepted"
 
 
 class BootGDB(BootAction):
@@ -71,7 +71,9 @@ class BootGDB(BootAction):
     summary = "boot with gdb"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.internal_pipeline = Pipeline(
+            parent=self, job=self.job, parameters=parameters
+        )
         self.internal_pipeline.add_action(BootGDBRetry())
 
 
@@ -93,42 +95,48 @@ class BootGDBRetry(RetryAction):
 
     def validate(self):
         super().validate()
-        method = self.job.device['actions']['boot']['methods']['gdb']
-        if 'parameters' not in method:
+        method = self.job.device["actions"]["boot"]["methods"]["gdb"]
+        if "parameters" not in method:
             self.errors = '"parameters" not defined in device configuration'
             return
-        if 'command' not in method['parameters']:
-            self.errors = '"command" not defined under "parameters" in device configuration'
+        if "command" not in method["parameters"]:
+            self.errors = (
+                '"command" not defined under "parameters" in device configuration'
+            )
             return
-        self.gdb = method['parameters']['command']
+        self.gdb = method["parameters"]["command"]
         which(self.gdb)
 
-        commands = self.parameters['commands']
+        commands = self.parameters["commands"]
         if commands not in method:
             self.errors = "'%s' not available" % commands
             return
-        self.commands = method[commands].get('commands')
+        self.commands = method[commands].get("commands")
         if not isinstance(self.commands, list):
             self.errors = "'commands' should be a list"
 
-        self.arguments = method[commands].get('arguments')
+        self.arguments = method[commands].get("arguments")
         if not isinstance(self.arguments, list):
             self.errors = "'arguments' should be a list"
-        self.wait_before_continue = method['parameters'].get('wait_before_continue', 0)
+        self.wait_before_continue = method["parameters"].get("wait_before_continue", 0)
 
         # If this is defined, we have to use docker
-        if method[commands].get('docker', {}).get('use', False):
+        if method[commands].get("docker", {}).get("use", False):
             which("docker")
-            self.container = method[commands]['docker'].get('container')
-            self.container = self.parameters.get('container', self.container)
+            self.container = method[commands]["docker"].get("container")
+            self.container = self.parameters.get("container", self.container)
             if self.container is None:
-                self.errors = 'a docker container should be defined'
-            self.devices = method[commands]['docker'].get('devices', [])
-        elif self.parameters.get('container'):
-            self.errors = 'Requesting a docker container while docker is not used for this device'
+                self.errors = "a docker container should be defined"
+            self.devices = method[commands]["docker"].get("devices", [])
+        elif self.parameters.get("container"):
+            self.errors = (
+                "Requesting a docker container while docker is not used for this device"
+            )
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.internal_pipeline = Pipeline(
+            parent=self, job=self.job, parameters=parameters
+        )
         if self.job.device.hard_reset_command:
             self.internal_pipeline.add_action(ResetDevice())
         self.internal_pipeline.add_action(WaitUSBSerialDeviceAction())
@@ -140,10 +148,15 @@ class BootGDBRetry(RetryAction):
         # Build the substitutions dictionary
         substitutions = {}
         paths = set()
-        for action in self.get_namespace_keys('download-action'):
-            filename = self.get_namespace_data(action='download-action', label=action, key='file')
+        for action in self.get_namespace_keys("download-action"):
+            filename = self.get_namespace_data(
+                action="download-action", label=action, key="file"
+            )
             if filename is None:
-                self.logger.warning("Empty value for action='download-action' label='%s' key='file'", action)
+                self.logger.warning(
+                    "Empty value for action='download-action' label='%s' key='file'",
+                    action,
+                )
                 continue
             substitutions["{%s}" % action.upper()] = filename
             paths.add(os.path.dirname(filename))
@@ -152,7 +165,10 @@ class BootGDBRetry(RetryAction):
         if self.container is None:
             cmd = self.gdb
         else:
-            cmd = "docker run --rm -it --name lava-%s-%s" % (self.job.job_id, self.level)
+            cmd = "docker run --rm -it --name lava-%s-%s" % (
+                self.job.job_id,
+                self.level,
+            )
             for path in paths:
                 cmd += " --volume %s:%s" % (path, path)
             for device in self.devices:
@@ -177,7 +193,9 @@ class BootGDBRetry(RetryAction):
 
         # "continue" is send last
         if self.wait_before_continue:
-            self.logger.debug("Sleeping %ss before sending 'continue'", self.wait_before_continue)
+            self.logger.debug(
+                "Sleeping %ss before sending 'continue'", self.wait_before_continue
+            )
             time.sleep(self.wait_before_continue)
         self.gdb_connection.sendline("continue")
 

@@ -41,45 +41,44 @@ class DeployDeviceEnvironment(Action):
 
     def validate(self):
         super().validate()
-        shell_file = self.get_constant('lava_test_shell_file', 'posix')
+        shell_file = self.get_constant("lava_test_shell_file", "posix")
         if not shell_file:
             self.errors = "Invalid deployment data - missing lava_test_shell_file"
 
-        if 'env_dut' in self.job.parameters and self.job.parameters['env_dut']:
+        if "env_dut" in self.job.parameters and self.job.parameters["env_dut"]:
             # Check that the file is valid yaml
             try:
-                yaml.safe_load(self.job.parameters['env_dut'])
+                yaml.safe_load(self.job.parameters["env_dut"])
             except (TypeError, yaml.scanner.ScannerError) as exc:
                 self.errors = exc
                 return
 
-            self.env = self.job.parameters['env_dut']
+            self.env = self.job.parameters["env_dut"]
             environment = self._create_environment()
 
             self.set_namespace_data(
                 action=self.name,
-                label='environment',
-                key='shell_file',
-                value=shell_file
+                label="environment",
+                key="shell_file",
+                value=shell_file,
             )
 
             self.set_namespace_data(
-                action=self.name,
-                label='environment',
-                key='env_dict',
-                value=environment
+                action=self.name, label="environment", key="env_dict", value=environment
             )
 
         self.set_namespace_data(
             action=self.name,
-            label='environment',
-            key='line_separator',
-            value=self.parameters['deployment_data'].get('line_separator', LINE_SEPARATOR)
+            label="environment",
+            key="line_separator",
+            value=self.parameters["deployment_data"].get(
+                "line_separator", LINE_SEPARATOR
+            ),
         )
 
     def _create_environment(self):
         """Generate the env variables for the device."""
-        conf = yaml.safe_load(self.env) if self.env != '' else {}
+        conf = yaml.safe_load(self.env) if self.env != "" else {}
         if conf.get("purge", False):
             environ = {}
         else:

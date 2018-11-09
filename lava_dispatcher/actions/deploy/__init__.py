@@ -14,4 +14,4 @@ class DeployAction(Action):
     accepted by a different subclass.
     """
 
-    name = 'deploy'
+    name = "deploy"

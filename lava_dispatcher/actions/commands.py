@@ -25,7 +25,7 @@ from lava_common.exceptions import ConfigurationError
 class CommandAction(Action):
 
     compatibility = 1
-    name = 'user-command'
+    name = "user-command"
     description = "execute one of the commands listed by the admin"
     summary = "execute commands"
 
@@ -37,18 +37,21 @@ class CommandAction(Action):
 
     def validate(self):
         super().validate()
-        cmd_name = self.parameters['name']
+        cmd_name = self.parameters["name"]
         try:
-            user_commands = self.job.device['commands']['users']
+            user_commands = self.job.device["commands"]["users"]
         except KeyError:
             raise ConfigurationError("Unable to get device.commands.users dictionary")
 
         try:
             self.cmd = user_commands[cmd_name]
-            if not isinstance(self.cmd['do'], str) or \
-               not isinstance(self.cmd.get('undo', ""), str):
-                raise ConfigurationError("User command \"%s\" is invalid: "
-                                         "'do' and 'undo' should be strings" % cmd_name)
+            if not isinstance(self.cmd["do"], str) or not isinstance(
+                self.cmd.get("undo", ""), str
+            ):
+                raise ConfigurationError(
+                    'User command "%s" is invalid: '
+                    "'do' and 'undo' should be strings" % cmd_name
+                )
             return True
         except KeyError:
             self.errors = "Unknown user command '%s'" % cmd_name
@@ -57,9 +60,9 @@ class CommandAction(Action):
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
 
-        self.logger.debug("Running user command '%s'", self.parameters['name'])
+        self.logger.debug("Running user command '%s'", self.parameters["name"])
         self.ran = True
-        self.run_command(self.cmd['do'].split(' '), allow_silent=True)
+        self.run_command(self.cmd["do"].split(" "), allow_silent=True)
         return connection
 
     def cleanup(self, connection):
@@ -67,9 +70,11 @@ class CommandAction(Action):
             self.logger.debug("Skipping %s 'undo' as 'do' was not called", self.name)
             return
 
-        if self.cmd is not None and 'undo' in self.cmd:
-            self.logger.debug("Running cleanup for user command '%s'", self.parameters['name'])
-            if not isinstance(self.cmd['undo'], str):
+        if self.cmd is not None and "undo" in self.cmd:
+            self.logger.debug(
+                "Running cleanup for user command '%s'", self.parameters["name"]
+            )
+            if not isinstance(self.cmd["undo"], str):
                 self.logger.error("Unable to run cleanup: 'undo' is not a string")
             else:
-                self.run_command(self.cmd['undo'].split(' '), allow_silent=True)
+                self.run_command(self.cmd["undo"].split(" "), allow_silent=True)

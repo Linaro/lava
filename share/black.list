@@ -1,15 +1,2 @@
-doc/
-lava/
-lava_common/
-lava_dispatcher/actions/boot/bootloader.py
-lava_dispatcher/actions/test/interactive.py
-lava_dispatcher/test/
-lava_rest_app/
-lava_results_app/
-lava_scheduler_app/
-lava_server/
-linaro_django_xmlrpc/
-man/
-share/
-setup.py
-version.py
+lava_dispatcher/action.py
+lava_dispatcher/parser.py

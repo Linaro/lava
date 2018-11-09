@@ -21,10 +21,7 @@
 import json
 from lava_dispatcher.actions.test.shell import TestShellAction
 from lava_common.timeout import Timeout
-from lava_common.exceptions import (
-    TestError,
-    MultinodeProtocolTimeoutError
-)
+from lava_common.exceptions import TestError, MultinodeProtocolTimeoutError
 from lava_dispatcher.actions.test import LavaTest
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
 
@@ -33,6 +30,7 @@ class MultinodeTestShell(LavaTest):
     """
     LavaTestShell Strategy object for Multinode
     """
+
     # higher priority than the plain TestShell
     priority = 2
 
@@ -45,14 +43,18 @@ class MultinodeTestShell(LavaTest):
 
     @classmethod
     def accepts(cls, device, parameters):  # pylint: disable=unused-argument
-        if 'role' in parameters:
+        if "role" in parameters:
             if MultinodeProtocol.name in parameters:
-                if 'target_group' in parameters[MultinodeProtocol.name]:
-                    return True, 'accepted'
+                if "target_group" in parameters[MultinodeProtocol.name]:
+                    return True, "accepted"
                 else:
-                    return False, '"target_group" was not in parameters for %s' % MultinodeProtocol.name
+                    return (
+                        False,
+                        '"target_group" was not in parameters for %s'
+                        % MultinodeProtocol.name,
+                    )
             else:
-                return False, '%s was not in parameters' % MultinodeProtocol.name
+                return False, "%s was not in parameters" % MultinodeProtocol.name
         return False, '"role" not in parameters'
 
     @classmethod
@@ -78,14 +80,14 @@ class MultinodeTestAction(TestShellAction):
 
     def __init__(self):
         super().__init__()
-        self.multinode_dict = {
-            'multinode': r'<LAVA_MULTI_NODE> <LAVA_(\S+) ([^>]+)>',
-        }
+        self.multinode_dict = {"multinode": r"<LAVA_MULTI_NODE> <LAVA_(\S+) ([^>]+)>"}
 
     def validate(self):
         super().validate()
         # MultinodeProtocol is required, others can be optional
-        if MultinodeProtocol.name not in [protocol.name for protocol in self.job.protocols]:
+        if MultinodeProtocol.name not in [
+            protocol.name for protocol in self.job.protocols
+        ]:
             self.errors = "Invalid job - missing protocol"
         if MultinodeProtocol.name not in [protocol.name for protocol in self.protocols]:
             self.errors = "Missing protocol"
@@ -103,7 +105,11 @@ class MultinodeTestAction(TestShellAction):
         """
         Select the appropriate protocol supported by this action from the list available from the job
         """
-        self.protocols = [protocol for protocol in self.job.protocols if protocol.name == MultinodeProtocol.name]
+        self.protocols = [
+            protocol
+            for protocol in self.job.protocols
+            if protocol.name == MultinodeProtocol.name
+        ]
         self.signal_director = self.SignalDirector(self.protocols[0])
 
     def check_patterns(self, event, test_connection, check_char):
@@ -111,7 +117,7 @@ class MultinodeTestAction(TestShellAction):
         Calls the parent check_patterns first, then checks for subclass pattern.
         """
         ret = super().check_patterns(event, test_connection, check_char)
-        if event == 'multinode':
+        if event == "multinode":
             name, params = test_connection.match.groups()
             self.logger.debug("Received Multi_Node API <LAVA_%s>" % name)
             params = params.split()
@@ -122,20 +128,23 @@ class MultinodeTestAction(TestShellAction):
             try:
                 ret = self.signal_director.signal(name, params)
             except MultinodeProtocolTimeoutError as exc:
-                self.logger.warning("Sync error in %s signal: %s %s" % (event, exc, name))
+                self.logger.warning(
+                    "Sync error in %s signal: %s %s" % (event, exc, name)
+                )
 
                 self.signal_test_case(
-                    test_case_params.format(test_case_name.lower(), "fail").split())
+                    test_case_params.format(test_case_name.lower(), "fail").split()
+                )
 
                 return False
 
             self.signal_test_case(
-                test_case_params.format(test_case_name.lower(), "pass").split())
+                test_case_params.format(test_case_name.lower(), "pass").split()
+            )
             return ret
         return ret
 
     class SignalDirector(TestShellAction.SignalDirector):
-
         def __init__(self, protocol):
             super().__init__(protocol)
             self.base_message = {}
@@ -146,9 +155,11 @@ class MultinodeTestAction(TestShellAction):
             """
             if MultinodeProtocol.name not in parameters:
                 return
-            if 'timeout' in parameters[MultinodeProtocol.name]:
+            if "timeout" in parameters[MultinodeProtocol.name]:
                 self.base_message = {
-                    'timeout': Timeout.parse(parameters[MultinodeProtocol.name]['timeout'])
+                    "timeout": Timeout.parse(
+                        parameters[MultinodeProtocol.name]["timeout"]
+                    )
                 }
 
         def _on_send(self, *args):
@@ -184,7 +195,7 @@ class MultinodeTestAction(TestShellAction):
             else:
                 message_str = ""
             self.connection.sendline("<LAVA_SYNC_COMPLETE%s>" % message_str)
-            self.connection.sendline('\n')
+            self.connection.sendline("\n")
 
         def _on_wait(self, message_id):
             self.logger.debug("Handling signal <LAVA_WAIT %s>" % message_id)
@@ -200,7 +211,7 @@ class MultinodeTestAction(TestShellAction):
                     for key, value in messages.items():
                         message_str += " %s:%s=%s" % (target, key, value)
             self.connection.sendline("<LAVA_WAIT_COMPLETE%s>" % message_str)
-            self.connection.sendline('\n')
+            self.connection.sendline("\n")
 
         def _on_wait_all(self, message_id, role=None):
             self.logger.debug("Handling signal <LAVA_WAIT_ALL %s>" % message_id)
@@ -218,4 +229,4 @@ class MultinodeTestAction(TestShellAction):
                     for key, value in messages.items():
                         message_str += " %s:%s=%s" % (target, key, value)
             self.connection.sendline("<LAVA_WAIT_ALL_COMPLETE%s>" % message_str)
-            self.connection.sendline('\n')
+            self.connection.sendline("\n")

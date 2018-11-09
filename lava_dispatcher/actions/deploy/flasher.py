@@ -31,7 +31,6 @@ from lava_dispatcher.utils.strings import substitute
 
 
 class FlasherAction(DeployAction):
-
     def __init__(self):
         super().__init__()
         self.name = "deploy-flasher"
@@ -42,17 +41,19 @@ class FlasherAction(DeployAction):
 
     def validate(self):
         super().validate()
-        method = self.job.device['actions']['deploy']['methods']['flasher']
+        method = self.job.device["actions"]["deploy"]["methods"]["flasher"]
         self.commands = method.get("commands")
         if not isinstance(self.commands, list):
             self.errors = "'commands' should be a list"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.internal_pipeline = Pipeline(
+            parent=self, job=self.job, parameters=parameters
+        )
 
         # Download the images
         self.path = self.mkdtemp()
-        for image in [key for key in parameters['images'].keys() if key != "yaml_line"]:
+        for image in [key for key in parameters["images"].keys() if key != "yaml_line"]:
             self.internal_pipeline.add_action(DownloaderAction(image, self.path))
 
         if self.test_needs_deployment(parameters):
@@ -64,9 +65,13 @@ class FlasherAction(DeployAction):
         connection = super().run(connection, max_end_time)
         # Substitute in the device commands
         substitutions = {}
-        for key in [key for key in self.parameters['images'].keys() if key != "yaml_line"]:
-            filename = self.get_namespace_data(action='download-action', label=key, key='file')
-            filename = filename[len(self.path) + 1:]
+        for key in [
+            key for key in self.parameters["images"].keys() if key != "yaml_line"
+        ]:
+            filename = self.get_namespace_data(
+                action="download-action", label=key, key="file"
+            )
+            filename = filename[len(self.path) + 1 :]
             substitutions["{%s}" % key.upper()] = filename
 
         # Add power commands
@@ -74,16 +79,22 @@ class FlasherAction(DeployAction):
         substitutions["{SOFT_RESET_COMMAND}"] = self.job.device.soft_reset_command
         substitutions["{PRE_OS_COMMAND}"] = self.job.device.pre_os_command
         if substitutions["{PRE_OS_COMMAND}"] is None:
-            substitutions["{PRE_OS_COMMAND}"] = ''
+            substitutions["{PRE_OS_COMMAND}"] = ""
         substitutions["{PRE_POWER_COMMAND}"] = self.job.device.pre_power_command
         if substitutions["{PRE_POWER_COMMAND}"] is None:
-            substitutions["{PRE_POWER_COMMAND}"] = ''
+            substitutions["{PRE_POWER_COMMAND}"] = ""
         substitutions["{POWER_ON_COMMAND}"] = self.job.device.power_command
-        substitutions["{POWER_OFF_COMMAND}"] = self.job.device.get('commands', {}).get('power_off', '')
+        substitutions["{POWER_OFF_COMMAND}"] = self.job.device.get("commands", {}).get(
+            "power_off", ""
+        )
 
         # Add some device configuration
-        substitutions["{DEVICE_INFO}"] = yaml.dump(self.job.device.get("device_info", []))
-        substitutions["{STATIC_INFO}"] = yaml.dump(self.job.device.get("static_info", []))
+        substitutions["{DEVICE_INFO}"] = yaml.dump(
+            self.job.device.get("device_info", [])
+        )
+        substitutions["{STATIC_INFO}"] = yaml.dump(
+            self.job.device.get("static_info", [])
+        )
 
         # Run the commands
         for cmd in self.commands:
@@ -95,7 +106,7 @@ class FlasherAction(DeployAction):
 
 class Flasher(Deployment):
     compatibility = 4
-    name = 'flasher'
+    name = "flasher"
 
     def __init__(self, parent, parameters):
         super().__init__(parent)
@@ -106,8 +117,8 @@ class Flasher(Deployment):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if 'flasher' not in device['actions']['deploy']['methods']:
+        if "flasher" not in device["actions"]["deploy"]["methods"]:
             return False, "'flasher' not in the device configuration deploy methods"
-        if parameters['to'] != 'flasher':
+        if parameters["to"] != "flasher":
             return False, '"to" parameter is not "flasher"'
-        return True, 'accepted'
+        return True, "accepted"

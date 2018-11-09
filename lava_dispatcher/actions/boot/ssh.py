@@ -49,11 +49,11 @@ class SshLogin(Boot):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if 'ssh' not in device['actions']['boot']['methods']:
+        if "ssh" not in device["actions"]["boot"]["methods"]:
             return False, '"ssh" not in device configuration boot methods'
-        if 'ssh' not in parameters['method']:
+        if "ssh" not in parameters["method"]:
             return False, '"ssh" not in "method"'
-        return True, 'accepted'
+        return True, "accepted"
 
 
 class SshAction(RetryAction):
@@ -61,14 +61,16 @@ class SshAction(RetryAction):
     Simple action to wrap AutoLoginAction and ExpectShellSession
     """
 
-    section = 'boot'
+    section = "boot"
     name = "login-ssh"
     description = "connect over ssh and ensure a shell is found"
     summary = "login over ssh"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        scp = Scp('overlay')
+        self.internal_pipeline = Pipeline(
+            parent=self, job=self.job, parameters=parameters
+        )
+        scp = Scp("overlay")
         self.internal_pipeline.add_action(scp)
         self.internal_pipeline.add_action(PrepareSsh())
         self.internal_pipeline.add_action(ConnectSsh())
@@ -99,47 +101,80 @@ class Scp(ConnectSsh):
     def validate(self):
         super().validate()
         params = self._check_params()
-        which('scp')
-        if 'ssh' not in self.job.device['actions']['deploy']['methods']:
+        which("scp")
+        if "ssh" not in self.job.device["actions"]["deploy"]["methods"]:
             self.errors = "Unable to use %s without ssh deployment" % self.name
-        if 'ssh' not in self.job.device['actions']['boot']['methods']:
+        if "ssh" not in self.job.device["actions"]["boot"]["methods"]:
             self.errors = "Unable to use %s without ssh boot" % self.name
-        if self.get_namespace_data(action='prepare-scp-overlay', label="prepare-scp-overlay", key=self.key):
+        if self.get_namespace_data(
+            action="prepare-scp-overlay", label="prepare-scp-overlay", key=self.key
+        ):
             self.primary = False
-        elif 'host' not in self.job.device['actions']['deploy']['methods']['ssh']:
+        elif "host" not in self.job.device["actions"]["deploy"]["methods"]["ssh"]:
             self.errors = "Invalid device or job configuration, missing host."
-        if not self.primary and len(
-                self.get_namespace_data(action='prepare-scp-overlay', label="prepare-scp-overlay", key=self.key)) != 1:
+        if (
+            not self.primary
+            and len(
+                self.get_namespace_data(
+                    action="prepare-scp-overlay",
+                    label="prepare-scp-overlay",
+                    key=self.key,
+                )
+            )
+            != 1
+        ):
             self.errors = "Invalid number of host_keys"
         if self.primary:
-            host_address = self.job.device['actions']['deploy']['methods']['ssh']['host']
+            host_address = self.job.device["actions"]["deploy"]["methods"]["ssh"][
+                "host"
+            ]
             if not host_address:
-                self.errors = "Unable to retrieve ssh_host address for primary connection."
-        if 'port' in self.job.device['actions']['deploy']['methods']['ssh']:
-            port = str(self.job.device['actions']['deploy']['methods']['ssh']['port'])
+                self.errors = (
+                    "Unable to retrieve ssh_host address for primary connection."
+                )
+        if "port" in self.job.device["actions"]["deploy"]["methods"]["ssh"]:
+            port = str(self.job.device["actions"]["deploy"]["methods"]["ssh"]["port"])
             if not port.isdigit():
                 self.errors = "Port was set but was not a digit"
         if self.valid:
-            self.scp.append('scp')
-            if 'options' in params:
-                self.scp.extend(params['options'])
+            self.scp.append("scp")
+            if "options" in params:
+                self.scp.extend(params["options"])
 
     def run(self, connection, max_end_time):
-        path = self.get_namespace_data(action='prepare-scp-overlay', label='scp-deploy', key=self.key)
+        path = self.get_namespace_data(
+            action="prepare-scp-overlay", label="scp-deploy", key=self.key
+        )
         if not path:
             error_msg = "%s: could not find details of '%s'" % (self.name, self.key)
             self.logger.error(error_msg)
             raise JobError(error_msg)
 
-        overrides = self.get_namespace_data(action='prepare-scp-overlay', label="prepare-scp-overlay", key=self.key)
+        overrides = self.get_namespace_data(
+            action="prepare-scp-overlay", label="prepare-scp-overlay", key=self.key
+        )
         if self.primary:
-            host_address = self.job.device['actions']['deploy']['methods']['ssh']['host']
+            host_address = self.job.device["actions"]["deploy"]["methods"]["ssh"][
+                "host"
+            ]
         else:
-            self.logger.info("Retrieving common data for prepare-scp-overlay using %s", ','.join(overrides))
-            host_address = str(self.get_namespace_data(action='prepare-scp-overlay', label="prepare-scp-overlay", key=overrides[0]))
+            self.logger.info(
+                "Retrieving common data for prepare-scp-overlay using %s",
+                ",".join(overrides),
+            )
+            host_address = str(
+                self.get_namespace_data(
+                    action="prepare-scp-overlay",
+                    label="prepare-scp-overlay",
+                    key=overrides[0],
+                )
+            )
             self.logger.debug("Using common data for host: %s", host_address)
         if not host_address:
-            error_msg = "%s: could not find host for deployment using %s" % (self.name, self.key)
+            error_msg = "%s: could not find host for deployment using %s" % (
+                self.name,
+                self.key,
+            )
             self.logger.error(error_msg)
             raise JobError(error_msg)
 
@@ -149,21 +184,32 @@ class Scp(ConnectSsh):
         command.extend(self.scp_port)
         connection = super().run(connection, max_end_time)
         if self.identity_file:
-            command.extend(['-i', self.identity_file])
+            command.extend(["-i", self.identity_file])
         # add arguments to ignore host key checking of the host device
-        command.extend(['-o', 'UserKnownHostsFile=/dev/null', '-o', 'StrictHostKeyChecking=no'])
+        command.extend(
+            ["-o", "UserKnownHostsFile=/dev/null", "-o", "StrictHostKeyChecking=no"]
+        )
         # add the local file as source
         command.append(path)
         command_str = " ".join(str(item) for item in command)
-        self.logger.info("Copying %s using %s to %s", self.key, command_str, host_address)
+        self.logger.info(
+            "Copying %s using %s to %s", self.key, command_str, host_address
+        )
         # add the remote as destination, with :/ top level directory
         command.extend(["%s@%s:/%s" % (self.ssh_user, host_address, destination)])
         self.logger.info(yaml.dump(command))
         self.run_command(command)
         connection = super().run(connection, max_end_time)
-        self.results = {'success': 'ssh deployment'}
-        self.set_namespace_data(action=self.name, label='scp-overlay-unpack', key='overlay', value=destination)
-        self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
+        self.results = {"success": "ssh deployment"}
+        self.set_namespace_data(
+            action=self.name,
+            label="scp-overlay-unpack",
+            key="overlay",
+            value=destination,
+        )
+        self.set_namespace_data(
+            action="shared", label="shared", key="connection", value=connection
+        )
         return connection
 
 
@@ -181,10 +227,17 @@ class PrepareSsh(Action):
         self.primary = False
 
     def validate(self):
-        if 'parameters' in self.parameters and 'hostID' in self.parameters['parameters']:
-            self.set_namespace_data(action=self.name, label='ssh-connection', key='host', value=True)
+        if (
+            "parameters" in self.parameters
+            and "hostID" in self.parameters["parameters"]
+        ):
+            self.set_namespace_data(
+                action=self.name, label="ssh-connection", key="host", value=True
+            )
         else:
-            self.set_namespace_data(action=self.name, label='ssh-connection', key='host', value=False)
+            self.set_namespace_data(
+                action=self.name, label="ssh-connection", key="host", value=False
+            )
             self.primary = True
 
     def run(self, connection, max_end_time):
@@ -193,14 +246,18 @@ class PrepareSsh(Action):
             host_data = self.get_namespace_data(
                 action=MultinodeProtocol.name,
                 label=MultinodeProtocol.name,
-                key=self.parameters['parameters']['hostID'])
+                key=self.parameters["parameters"]["hostID"],
+            )
             if not host_data:
-                raise JobError("Unable to retrieve %s - missing ssh deploy?" % self.parameters['parameters']['hostID'])
+                raise JobError(
+                    "Unable to retrieve %s - missing ssh deploy?"
+                    % self.parameters["parameters"]["hostID"]
+                )
             self.set_namespace_data(
                 action=self.name,
-                label='ssh-connection',
-                key='host_address',
-                value=host_data[self.parameters['parameters']['host_key']]
+                label="ssh-connection",
+                key="host_address",
+                value=host_data[self.parameters["parameters"]["host_key"]],
             )
         return connection
 
@@ -215,17 +272,22 @@ class ScpOverlayUnpack(Action):
         connection = super().run(connection, max_end_time)
         if not connection:
             raise LAVABug("Cannot unpack, no connection available.")
-        filename = self.get_namespace_data(action='scp-deploy', label='scp-overlay-unpack', key='overlay')
-        tar_flags = self.get_namespace_data(action='scp-overlay', label='scp-overlay', key='tar_flags')
+        filename = self.get_namespace_data(
+            action="scp-deploy", label="scp-overlay-unpack", key="overlay"
+        )
+        tar_flags = self.get_namespace_data(
+            action="scp-overlay", label="scp-overlay", key="tar_flags"
+        )
         cmd = "tar %s -C / -xzf /%s" % (tar_flags, filename)
         connection.sendline(cmd)
         self.wait(connection)
-        self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
+        self.set_namespace_data(
+            action="shared", label="shared", key="connection", value=connection
+        )
         return connection
 
 
 class Schroot(Boot):
-
     def __init__(self, parent, parameters):
         super().__init__(parent)
         self.action = SchrootAction()
@@ -234,17 +296,17 @@ class Schroot(Boot):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if 'actions' not in device or 'boot' not in device['actions']:
+        if "actions" not in device or "boot" not in device["actions"]:
             return False, '"boot" was not in the device configuration actions'
-        if 'methods' not in device['actions']['boot']:
+        if "methods" not in device["actions"]["boot"]:
             return False, '"methods" was not in the device config'
-        if 'schroot' not in device['actions']['boot']['methods']:
+        if "schroot" not in device["actions"]["boot"]["methods"]:
             return False, '"schroot" was not in the device configuration boot methods'
-        if 'method' not in parameters:
+        if "method" not in parameters:
             return False, '"method" was not in parameters'
-        if 'schroot' not in parameters['method']:
+        if "schroot" not in parameters["method"]:
             return False, '"method" was not "schroot"'
-        return True, 'accepted'
+        return True, "accepted"
 
 
 class SchrootAction(Action):
@@ -260,7 +322,7 @@ class SchrootAction(Action):
 
     def __init__(self):
         super().__init__()
-        self.section = 'boot'
+        self.section = "boot"
         self.schroot = None
         self.command = None
 
@@ -269,22 +331,22 @@ class SchrootAction(Action):
         The unit test skips if schroot is not installed, the action marks the
         pipeline as invalid if schroot is not installed.
         """
-        if 'schroot' not in self.parameters:
+        if "schroot" not in self.parameters:
             return
-        if 'schroot' not in self.job.device['actions']['boot']['methods']:
+        if "schroot" not in self.job.device["actions"]["boot"]["methods"]:
             self.errors = "No schroot support in device boot methods"
             return
-        which('schroot')
+        which("schroot")
         # device parameters are for ssh
-        params = self.job.device['actions']['boot']['methods']
-        if 'command' not in params['schroot']:
+        params = self.job.device["actions"]["boot"]["methods"]
+        if "command" not in params["schroot"]:
             self.errors = "Missing schroot command in device configuration"
             return
-        if 'name' not in params['schroot']:
+        if "name" not in params["schroot"]:
             self.errors = "Missing schroot name in device configuration"
             return
-        self.schroot = params['schroot']['name']
-        self.command = params['schroot']['command']
+        self.schroot = params["schroot"]["name"]
+        self.command = params["schroot"]["command"]
 
     def run(self, connection, max_end_time):
         if not connection:

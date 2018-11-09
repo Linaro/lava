@@ -26,23 +26,12 @@ import logging
 import pexpect
 from nose.tools import nottest
 from collections import OrderedDict
-from lava_common.exceptions import (
-    JobError,
-    InfrastructureError,
-    TestError,
-    LAVABug,
-)
+from lava_common.exceptions import JobError, InfrastructureError, TestError, LAVABug
 from lava_dispatcher.actions.test import TestAction
 from lava_dispatcher.action import Pipeline
-from lava_dispatcher.logical import (
-    LavaTest,
-    RetryAction
-)
+from lava_dispatcher.logical import LavaTest, RetryAction
 from lava_dispatcher.connection import SignalMatch
-from lava_common.constants import (
-    DEFAULT_V1_PATTERN,
-    DEFAULT_V1_FIXUP,
-)
+from lava_common.constants import DEFAULT_V1_PATTERN, DEFAULT_V1_FIXUP
 
 # pylint: disable=too-many-branches,too-many-statements,too-many-instance-attributes,logging-not-lazy
 
@@ -50,14 +39,13 @@ from lava_common.constants import (
 def handle_testcase(params):
     data = {}
     for param in params:
-        parts = param.split('=')
+        parts = param.split("=")
         if len(parts) == 2:
             key, value = parts
             key = key.lower()
             data[key] = value
         else:
-            raise JobError(
-                "Ignoring malformed parameter for signal: \"%s\". " % param)
+            raise JobError('Ignoring malformed parameter for signal: "%s". ' % param)
     return data
 
 
@@ -65,6 +53,7 @@ class TestShell(LavaTest):
     """
     LavaTestShell Strategy object
     """
+
     def __init__(self, parent, parameters):
         super().__init__(parent)
         self.action = TestShellRetry()
@@ -74,8 +63,8 @@ class TestShell(LavaTest):
 
     @classmethod
     def accepts(cls, device, parameters):  # pylint: disable=unused-argument
-        if ('definition' in parameters) or ('definitions' in parameters):
-            return True, 'accepted'
+        if ("definition" in parameters) or ("definitions" in parameters):
+            return True, "accepted"
         return False, '"definition" or "definitions" not in parameters'
 
     @classmethod
@@ -100,13 +89,14 @@ class TestShellRetry(RetryAction):
     summary = "Retry support for Lava Test Shell"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.internal_pipeline = Pipeline(
+            parent=self, job=self.job, parameters=parameters
+        )
         self.internal_pipeline.add_action(TestShellAction())
 
 
 # FIXME: move to utils and call inside the overlay
 class PatternFixup:
-
     def __init__(self, testdef, count):
         """
         Like all good arrays, the count is expected to start at zero.
@@ -116,7 +106,7 @@ class PatternFixup:
         super().__init__()
         self.pat = DEFAULT_V1_PATTERN
         self.fixup = DEFAULT_V1_FIXUP
-        if isinstance(testdef, dict) and 'metadata' in testdef:
+        if isinstance(testdef, dict) and "metadata" in testdef:
             self.testdef = testdef
             self.name = "%d_%s" % (count, testdef["metadata"].get("name"))
         else:
@@ -132,23 +122,29 @@ class PatternFixup:
         try:
             self.pat = re.compile(pattern, re.M)
         except re.error as exc:
-            raise TestError("Error parsing regular expression %r: %s" % (self.pat, exc.message))
+            raise TestError(
+                "Error parsing regular expression %r: %s" % (self.pat, exc.message)
+            )
         self.fixup = fixupdict
 
     def fixupdict(self):
-        if 'parse' in self.testdef and 'fixupdict' in self.testdef['parse']:
-            self.fixup = self.testdef['parse']['fixupdict']
+        if "parse" in self.testdef and "fixupdict" in self.testdef["parse"]:
+            self.fixup = self.testdef["parse"]["fixupdict"]
         return self.fixup
 
     def pattern(self):
-        if 'parse' in self.testdef and 'pattern' in self.testdef['parse']:
-            self.pat = self.testdef['parse']['pattern']
+        if "parse" in self.testdef and "pattern" in self.testdef["parse"]:
+            self.pat = self.testdef["parse"]["pattern"]
             if not isinstance(self.pat, str):
-                raise TestError("Unrecognised test parse pattern type: %s" % type(self.pat))
+                raise TestError(
+                    "Unrecognised test parse pattern type: %s" % type(self.pat)
+                )
             try:
                 self.pat = re.compile(self.pat, re.M)
             except re.error as exc:
-                raise TestError("Error parsing regular expression %r: %s" % (self.pat, exc.message))
+                raise TestError(
+                    "Error parsing regular expression %r: %s" % (self.pat, exc.message)
+                )
         return self.pat
 
 
@@ -205,21 +201,27 @@ class TestShellAction(TestAction):
         super().run(connection, max_end_time)
 
         # Get the connection, specific to this namespace
-        connection_namespace = self.parameters.get('connection-namespace')
+        connection_namespace = self.parameters.get("connection-namespace")
         parameters = None
         if self.timeout.can_skip(self.parameters):
             self.logger.info(
                 "The timeout has 'skip' enabled. "
-                "If this test action block times out, the job will continue at the next action block.")
+                "If this test action block times out, the job will continue at the next action block."
+            )
 
         if connection_namespace:
             self.logger.debug("Using connection namespace: %s", connection_namespace)
             parameters = {"namespace": connection_namespace}
         else:
-            parameters = {'namespace': self.parameters.get('namespace', 'common')}
-            self.logger.debug("Using namespace: %s", parameters['namespace'])
+            parameters = {"namespace": self.parameters.get("namespace", "common")}
+            self.logger.debug("Using namespace: %s", parameters["namespace"])
         connection = self.get_namespace_data(
-            action='shared', label='shared', key='connection', deepcopy=False, parameters=parameters)
+            action="shared",
+            label="shared",
+            key="connection",
+            deepcopy=False,
+            parameters=parameters,
+        )
 
         if not connection:
             raise LAVABug("No connection retrieved from namespace data")
@@ -228,15 +230,25 @@ class TestShellAction(TestAction):
 
         pattern_dict = {self.pattern.name: self.pattern}
         # pattern dictionary is the lookup from the STARTRUN to the parse pattern.
-        self.set_namespace_data(action=self.name, label=self.name, key='pattern_dictionary', value=pattern_dict)
+        self.set_namespace_data(
+            action=self.name,
+            label=self.name,
+            key="pattern_dictionary",
+            value=pattern_dict,
+        )
         if self.character_delay > 0:
-            self.logger.debug("Using a character delay of %i (ms)", self.character_delay)
+            self.logger.debug(
+                "Using a character delay of %i (ms)", self.character_delay
+            )
 
         if not connection.prompt_str:
-            connection.prompt_str = [self.job.device.get_constant(
-                'default-shell-prompt')]
+            connection.prompt_str = [
+                self.job.device.get_constant("default-shell-prompt")
+            ]
             # FIXME: This should be logged whenever prompt_str is changed, by the connection object.
-            self.logger.debug("Setting default test shell prompt %s", connection.prompt_str)
+            self.logger.debug(
+                "Setting default test shell prompt %s", connection.prompt_str
+            )
         connection.timeout = self.connection_timeout
         # force an initial prompt - not all shells will respond without an excuse.
         connection.sendline(connection.check_char)
@@ -244,11 +256,16 @@ class TestShellAction(TestAction):
 
         # use the string instead of self.name so that inheriting classes (like multinode)
         # still pick up the correct command.
-        running = self.parameters['stage']
-        pre_command_list = self.get_namespace_data(action='test', label="lava-test-shell", key='pre-command-list')
+        running = self.parameters["stage"]
+        pre_command_list = self.get_namespace_data(
+            action="test", label="lava-test-shell", key="pre-command-list"
+        )
         lava_test_results_dir = self.get_namespace_data(
-            action='test', label='results', key='lava_test_results_dir')
-        lava_test_sh_cmd = self.get_namespace_data(action='test', label='shared', key='lava_test_sh_cmd')
+            action="test", label="results", key="lava_test_results_dir"
+        )
+        lava_test_sh_cmd = self.get_namespace_data(
+            action="test", label="shared", key="lava_test_sh_cmd"
+        )
 
         # Any errors arising from this command are not checked.
         # If the result of the command means that lava-test-runner cannot be found,
@@ -258,43 +275,57 @@ class TestShellAction(TestAction):
                 connection.sendline(command, delay=self.character_delay)
 
         if lava_test_results_dir is None:
-            raise JobError("Nothing to run. Maybe the 'deploy' stage is missing, "
-                           "otherwise this is a bug which should be reported.")
+            raise JobError(
+                "Nothing to run. Maybe the 'deploy' stage is missing, "
+                "otherwise this is a bug which should be reported."
+            )
 
         self.logger.debug("Using %s" % lava_test_results_dir)
         if lava_test_sh_cmd:
-            connection.sendline('export SHELL=%s' % lava_test_sh_cmd, delay=self.character_delay)
+            connection.sendline(
+                "export SHELL=%s" % lava_test_sh_cmd, delay=self.character_delay
+            )
 
         try:
             feedbacks = []
             for feedback_ns in self.data.keys():  # pylint: disable=no-member
-                if feedback_ns == self.parameters.get('namespace'):
+                if feedback_ns == self.parameters.get("namespace"):
                     continue
                 feedback_connection = self.get_namespace_data(
-                    action='shared', label='shared', key='connection',
-                    deepcopy=False, parameters={"namespace": feedback_ns})
+                    action="shared",
+                    label="shared",
+                    key="connection",
+                    deepcopy=False,
+                    parameters={"namespace": feedback_ns},
+                )
                 if feedback_connection:
-                    self.logger.debug("Will listen to feedbacks from '%s' for 1 second",
-                                      feedback_ns)
+                    self.logger.debug(
+                        "Will listen to feedbacks from '%s' for 1 second", feedback_ns
+                    )
                     feedbacks.append((feedback_ns, feedback_connection))
 
             with connection.test_connection() as test_connection:
                 # the structure of lava-test-runner means that there is just one TestAction and it must run all definitions
                 test_connection.sendline(
-                    "%s/bin/lava-test-runner %s/%s" % (
-                        lava_test_results_dir,
-                        lava_test_results_dir,
-                        running),
-                    delay=self.character_delay)
+                    "%s/bin/lava-test-runner %s/%s"
+                    % (lava_test_results_dir, lava_test_results_dir, running),
+                    delay=self.character_delay,
+                )
 
-                test_connection.timeout = min(self.timeout.duration, self.connection_timeout.duration)
-                self.logger.info("Test shell timeout: %ds (minimum of the action and connection timeout)",
-                                 test_connection.timeout)
+                test_connection.timeout = min(
+                    self.timeout.duration, self.connection_timeout.duration
+                )
+                self.logger.info(
+                    "Test shell timeout: %ds (minimum of the action and connection timeout)",
+                    test_connection.timeout,
+                )
 
                 # Because of the feedbacks, we use a small value for the
                 # timeout.  This allows to grab feedback regularly.
                 last_check = time.time()
-                while self._keep_running(test_connection, test_connection.timeout, connection.check_char):
+                while self._keep_running(
+                    test_connection, test_connection.timeout, connection.check_char
+                ):
                     # Only grab the feedbacks every test_connection.timeout
                     if feedbacks and time.time() - last_check > test_connection.timeout:
                         for feedback in feedbacks:
@@ -305,7 +336,10 @@ class TestShellAction(TestAction):
                             # the performances of the overall loop.
                             bytes_read = feedback[1].listen_feedback(timeout=1)
                             if bytes_read > 1:
-                                self.logger.debug("Listened to connection for namespace '%s' done", feedback[0])
+                                self.logger.debug(
+                                    "Listened to connection for namespace '%s' done",
+                                    feedback[0],
+                                )
                         last_check = time.time()
         finally:
             if self.current_run is not None:
@@ -322,17 +356,14 @@ class TestShellAction(TestAction):
         return connection
 
     def pattern_error(self, test_connection):
-        (testrun, ) = test_connection.match.groups()
-        self.logger.error("Unable to start testrun %s. "
-                          "Read the log for more details.", testrun)
+        (testrun,) = test_connection.match.groups()
+        self.logger.error(
+            "Unable to start testrun %s. " "Read the log for more details.", testrun
+        )
         self.errors = "Unable to start testrun %s" % testrun
         # This is not accurate but required when exiting.
         self.start = time.time()
-        self.current_run = {
-            "definition": "lava",
-            "case": testrun,
-            "result": "fail"
-        }
+        self.current_run = {"definition": "lava", "case": testrun, "result": "fail"}
         return True
 
     def signal_start_run(self, params):
@@ -342,30 +373,36 @@ class TestShellAction(TestAction):
         self.start = time.time()
         self.logger.info("Starting test lava.%s (%s)", self.definition, uuid)
         # set the pattern for this run from pattern_dict
-        testdef_index = self.get_namespace_data(action='test-definition', label='test-definition',
-                                                key='testdef_index')
-        uuid_list = self.get_namespace_data(action='repo-action', label='repo-action', key='uuid-list')
+        testdef_index = self.get_namespace_data(
+            action="test-definition", label="test-definition", key="testdef_index"
+        )
+        uuid_list = self.get_namespace_data(
+            action="repo-action", label="repo-action", key="uuid-list"
+        )
         for (key, value) in enumerate(testdef_index):
             if self.definition == "%s_%s" % (key, value):
-                pattern_dict = self.get_namespace_data(action='test', label=uuid_list[key], key='testdef_pattern')
-                pattern = pattern_dict['testdef_pattern']['pattern']
-                fixup = pattern_dict['testdef_pattern']['fixupdict']
-                self.patterns.update({'test_case_result': re.compile(pattern, re.M)})
+                pattern_dict = self.get_namespace_data(
+                    action="test", label=uuid_list[key], key="testdef_pattern"
+                )
+                pattern = pattern_dict["testdef_pattern"]["pattern"]
+                fixup = pattern_dict["testdef_pattern"]["fixupdict"]
+                self.patterns.update({"test_case_result": re.compile(pattern, re.M)})
                 self.pattern.update(pattern, fixup)
                 self.logger.info("Enabling test definition pattern %r" % pattern)
-                self.logger.info("Enabling test definition fixup %r" % self.pattern.fixup)
+                self.logger.info(
+                    "Enabling test definition fixup %r" % self.pattern.fixup
+                )
         self.current_run = {
             "definition": "lava",
             "case": self.definition,
             "uuid": uuid,
-            "result": "fail"
+            "result": "fail",
         }
         testdef_commit = self.get_namespace_data(
-            action='test', label=uuid, key='commit-id')
+            action="test", label=uuid, key="commit-id"
+        )
         if testdef_commit:
-            self.current_run.update({
-                'commit_id': testdef_commit
-            })
+            self.current_run.update({"commit_id": testdef_commit})
 
     def signal_end_run(self, params):
         self.definition = params[0]
@@ -376,30 +413,33 @@ class TestShellAction(TestAction):
         if not self.start:
             self.start = time.time()
         self.logger.info("Ending use of test pattern.")
-        self.logger.info("Ending test lava.%s (%s), duration %.02f",
-                         self.definition, uuid,
-                         time.time() - self.start)
+        self.logger.info(
+            "Ending test lava.%s (%s), duration %.02f",
+            self.definition,
+            uuid,
+            time.time() - self.start,
+        )
         self.current_run = None
         res = {
             "definition": "lava",
             "case": self.definition,
             "uuid": uuid,
-            'repository': self.get_namespace_data(
-                action='test', label=uuid, key='repository'),
-            'path': self.get_namespace_data(
-                action='test', label=uuid, key='path'),
+            "repository": self.get_namespace_data(
+                action="test", label=uuid, key="repository"
+            ),
+            "path": self.get_namespace_data(action="test", label=uuid, key="path"),
             "duration": "%.02f" % (time.time() - self.start),
-            "result": "pass"
+            "result": "pass",
         }
-        revision = self.get_namespace_data(action='test', label=uuid, key='revision')
-        res['revision'] = revision if revision else 'unspecified'
-        res['namespace'] = self.parameters['namespace']
-        connection_namespace = self.parameters.get('connection_namespace')
+        revision = self.get_namespace_data(action="test", label=uuid, key="revision")
+        res["revision"] = revision if revision else "unspecified"
+        res["namespace"] = self.parameters["namespace"]
+        connection_namespace = self.parameters.get("connection_namespace")
         if connection_namespace:
-            res['connection-namespace'] = connection_namespace
-        commit_id = self.get_namespace_data(action='test', label=uuid, key='commit-id')
+            res["connection-namespace"] = connection_namespace
+        commit_id = self.get_namespace_data(action="test", label=uuid, key="commit-id")
         if commit_id:
-            res['commit_id'] = commit_id
+            res["commit_id"] = commit_id
 
         self.logger.results(res)  # pylint: disable=no-member
         self.start = None
@@ -410,7 +450,9 @@ class TestShellAction(TestAction):
         # as the test_uuid is missing.
         # This is only happening when the signal string is split by some kernel messages.
         if self.signal_director.test_uuid is None:
-            self.logger.error("Unknown test uuid. The STARTRUN signal for this test action was not received correctly.")
+            self.logger.error(
+                "Unknown test uuid. The STARTRUN signal for this test action was not received correctly."
+            )
             raise TestError("Invalid TESTCASE signal")
         try:
             data = handle_testcase(params)
@@ -420,41 +462,49 @@ class TestShellAction(TestAction):
             self.logger.error(str(exc))
             return True
 
-        p_res = self.get_namespace_data(action='test', label=self.signal_director.test_uuid, key='results')
+        p_res = self.get_namespace_data(
+            action="test", label=self.signal_director.test_uuid, key="results"
+        )
         if not p_res:
             p_res = OrderedDict()
             self.set_namespace_data(
-                action='test', label=self.signal_director.test_uuid, key='results', value=p_res)
+                action="test",
+                label=self.signal_director.test_uuid,
+                key="results",
+                value=p_res,
+            )
 
         # prevent losing data in the update
         # FIXME: support parameters and retries
         if res["test_case_id"] in p_res:
-            raise JobError("Duplicate test_case_id in results: %s" % res["test_case_id"])
+            raise JobError(
+                "Duplicate test_case_id in results: %s" % res["test_case_id"]
+            )
         # turn the result dict inside out to get the unique
         # test_case_id/testset_name as key and result as value
         res_data = {
-            'definition': self.definition,
-            'case': res["test_case_id"],
-            'result': res["result"]
+            "definition": self.definition,
+            "case": res["test_case_id"],
+            "result": res["result"],
         }
         # check for measurements
-        if 'measurement' in res:
+        if "measurement" in res:
             try:
-                measurement = decimal.Decimal(res['measurement'])
+                measurement = decimal.Decimal(res["measurement"])
             except decimal.InvalidOperation:
-                raise TestError("Invalid measurement %s" % res['measurement'])
-            res_data['measurement'] = measurement
-            if 'units' in res:
-                res_data['units'] = res['units']
+                raise TestError("Invalid measurement %s" % res["measurement"])
+            res_data["measurement"] = measurement
+            if "units" in res:
+                res_data["units"] = res["units"]
 
         if self.testset_name:
-            res_data['set'] = self.testset_name
-            self.report[res['test_case_id']] = {
-                'set': self.testset_name,
-                'result': res['result']
+            res_data["set"] = self.testset_name
+            self.report[res["test_case_id"]] = {
+                "set": self.testset_name,
+                "result": res["result"],
             }
         else:
-            self.report[res['test_case_id']] = res['result']
+            self.report[res["test_case_id"]] = res["result"]
         # Send the results back
         self.logger.results(res_data)  # pylint: disable=no-member
 
@@ -463,13 +513,13 @@ class TestShellAction(TestAction):
         if len(params) != 3:
             raise TestError("Invalid use of TESTREFERENCE")
         res_dict = {
-            'case': params[0],
-            'definition': self.definition,
-            'result': params[1],
-            'reference': params[2],
+            "case": params[0],
+            "definition": self.definition,
+            "result": params[1],
+            "reference": params[2],
         }
         if self.testset_name:
-            res_dict.update({'set': self.testset_name})
+            res_dict.update({"set": self.testset_name})
         self.logger.results(res_dict)  # pylint: disable=no-member
 
     @nottest
@@ -480,8 +530,12 @@ class TestShellAction(TestAction):
             return
         self.logger.info("Requesting feedback from namespace: %s", feedback_ns)
         feedback_connection = self.get_namespace_data(
-            action='shared', label='shared', key='connection',
-            deepcopy=False, parameters={"namespace": feedback_ns})
+            action="shared",
+            label="shared",
+            key="connection",
+            deepcopy=False,
+            parameters={"namespace": feedback_ns},
+        )
         feedback_connection.listen_feedback(timeout=1)
 
     @nottest
@@ -507,7 +561,9 @@ class TestShellAction(TestAction):
         if match is pexpect.TIMEOUT:
             self.logger.warning("err: lava_test_shell has timed out (test_case)")
             return False
-        res = self.signal_match.match(match.groupdict(), fixupdict=self.pattern.fixupdict())
+        res = self.signal_match.match(
+            match.groupdict(), fixupdict=self.pattern.fixupdict()
+        )
         self.logger.debug("outer_loop_result: %s" % res)
         return True
 
@@ -515,37 +571,39 @@ class TestShellAction(TestAction):
     def pattern_test_case_result(self, test_connection):
         res = test_connection.match.groupdict()
         fixupdict = self.pattern.fixupdict()
-        if res['result'] in fixupdict:
-            res['result'] = fixupdict[res['result']]
+        if res["result"] in fixupdict:
+            res["result"] = fixupdict[res["result"]]
         if res:
             # disallow whitespace in test_case_id
-            test_case_id = "%s" % res['test_case_id'].replace('/', '_')
-            self.logger.marker(
-                {"case": res["test_case_id"],
-                 "type": "test_case"})
-            if ' ' in test_case_id.strip():
-                self.logger.debug("Skipping invalid test_case_id '%s'", test_case_id.strip())
+            test_case_id = "%s" % res["test_case_id"].replace("/", "_")
+            self.logger.marker({"case": res["test_case_id"], "type": "test_case"})
+            if " " in test_case_id.strip():
+                self.logger.debug(
+                    "Skipping invalid test_case_id '%s'", test_case_id.strip()
+                )
                 return True
             res_data = {
-                'definition': self.definition,
-                'case': res["test_case_id"],
-                'result': res["result"]
+                "definition": self.definition,
+                "case": res["test_case_id"],
+                "result": res["result"],
             }
             # check for measurements
-            if 'measurement' in res:
+            if "measurement" in res:
                 try:
-                    measurement = decimal.Decimal(res['measurement'])
+                    measurement = decimal.Decimal(res["measurement"])
                 except decimal.InvalidOperation:
-                    raise TestError("Invalid measurement %s" % res['measurement'])
-                res_data['measurement'] = measurement
-                if 'units' in res:
-                    res_data['units'] = res['units']
+                    raise TestError("Invalid measurement %s" % res["measurement"])
+                res_data["measurement"] = measurement
+                if "units" in res:
+                    res_data["units"] = res["units"]
 
             self.logger.results(res_data)  # pylint: disable=no-member
             self.report[res["test_case_id"]] = res["result"]
         return True
 
-    def check_patterns(self, event, test_connection, check_char):  # pylint: disable=unused-argument
+    def check_patterns(
+        self, event, test_connection, check_char
+    ):  # pylint: disable=unused-argument
         """
         Defines the base set of pattern responses.
         Stores the results of testcases inside the TestAction
@@ -577,15 +635,16 @@ class TestShellAction(TestAction):
             elif name == "ENDRUN":
                 self.signal_end_run(params)
             elif name == "STARTTC":
-                self.logger.marker({"case": params[0],
-                                    "type": "start_test_case"})
+                self.logger.marker({"case": params[0], "type": "start_test_case"})
             elif name == "ENDTC":
-                self.logger.marker({"case": params[0],
-                                    "type": "end_test_case"})
+                self.logger.marker({"case": params[0], "type": "end_test_case"})
             elif name == "TESTCASE":
                 self.logger.marker(
-                    {"case": params[0].replace('TEST_CASE_ID=', ''),
-                     "type": "test_case"})
+                    {
+                        "case": params[0].replace("TEST_CASE_ID=", ""),
+                        "type": "test_case",
+                    }
+                )
                 self.signal_test_case(params)
             elif name == "TESTFEEDBACK":
                 self.signal_test_feedback(params)
@@ -596,24 +655,28 @@ class TestShellAction(TestAction):
                 if ret:
                     name = ret
             elif name == "TESTRAISE":
-                raise TestError(' '.join(params))
+                raise TestError(" ".join(params))
             elif name == "TESTEVENT":
-                self.logger.event(' '.join(params))
+                self.logger.event(" ".join(params))
 
             self.signal_director.signal(name, params)
             ret_val = True
 
         elif event == "test_case":
             ret_val = self.pattern_test_case(test_connection)
-        elif event == 'test_case_result':
+        elif event == "test_case_result":
             ret_val = self.pattern_test_case_result(test_connection)
         return ret_val
 
     def _keep_running(self, test_connection, timeout, check_char):
-        if 'test_case_results' in self.patterns:
-            self.logger.info("Test case result pattern: %r" % self.patterns['test_case_results'])
+        if "test_case_results" in self.patterns:
+            self.logger.info(
+                "Test case result pattern: %r" % self.patterns["test_case_results"]
+            )
         retval = test_connection.expect(list(self.patterns.values()), timeout=timeout)
-        return self.check_patterns(list(self.patterns.keys())[retval], test_connection, check_char)
+        return self.check_patterns(
+            list(self.patterns.keys())[retval], test_connection, check_char
+        )
 
     class SignalDirector:
 
@@ -650,8 +713,13 @@ class TestShellAction(TestAction):
                 except TypeError as exc:
                     # handle serial corruption which can overlap kernel messages onto test output.
                     self.logger.exception(str(exc))
-                    raise TestError("Unable to handle the test shell signal correctly: %s" % str(exc))
+                    raise TestError(
+                        "Unable to handle the test shell signal correctly: %s"
+                        % str(exc)
+                    )
                 except JobError as exc:
-                    self.logger.error("job error: handling signal %s failed: %s", name, exc)
+                    self.logger.error(
+                        "job error: handling signal %s failed: %s", name, exc
+                    )
                     return False
                 return True

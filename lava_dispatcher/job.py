@@ -27,15 +27,13 @@ import time
 import pytz
 import traceback
 import os
-from lava_common.exceptions import (
-    LAVABug,
-    LAVAError,
-    JobError,
-)
+from lava_common.exceptions import LAVABug, LAVAError, JobError
 from lava_common.utils import debian_package_version
 from lava_dispatcher.logical import PipelineContext
 from lava_dispatcher.diagnostics import DiagnoseNetwork
-from lava_dispatcher.protocols.multinode import MultinodeProtocol  # pylint: disable=unused-import
+from lava_dispatcher.protocols.multinode import (  # pylint: disable=unused-import
+    MultinodeProtocol,
+)
 from lava_common.constants import DISPATCHER_DOWNLOAD_DIR
 
 
@@ -43,6 +41,7 @@ class ZMQConfig:
     """
     Namespace for the ZMQ logging configuration
     """
+
     def __init__(self, logging_url, master_cert, slave_cert, ipv6):
         self.logging_url = logging_url
         self.master_cert = master_cert
@@ -67,7 +66,7 @@ class Job:  # pylint: disable=too-many-instance-attributes
     device for this job - one job, one device.
     """
 
-    def __init__(self, job_id, parameters, logger):  # pylint: disable=too-many-arguments
+    def __init__(self, job_id, parameters, logger):
         self.job_id = job_id
         self.logger = logger
         self.device = None
@@ -76,9 +75,7 @@ class Job:  # pylint: disable=too-many-instance-attributes
         self.pipeline = None
         self.connection = None
         self.triggers = []  # actions can add trigger strings to the run a diagnostic
-        self.diagnostics = [
-            DiagnoseNetwork,
-        ]
+        self.diagnostics = [DiagnoseNetwork]
         self.timeout = None
         self.protocols = []
         self.compatibility = 2
@@ -110,10 +107,12 @@ class Job:  # pylint: disable=too-many-instance-attributes
         return None
 
     def describe(self):
-        return {'device': dict(self.device),
-                'job': self.parameters,
-                'compatibility': self.compatibility,
-                'pipeline': self.pipeline.describe()}
+        return {
+            "device": dict(self.device),
+            "job": self.parameters,
+            "compatibility": self.compatibility,
+            "pipeline": self.pipeline.describe(),
+        }
 
     def mkdtemp(self, action_name, override=None):
         """
@@ -145,7 +144,7 @@ class Job:  # pylint: disable=too-many-instance-attributes
             except OSError as exc:
                 if exc.errno != errno.EEXIST:
                     # When running unit tests
-                    base_dir = tempfile.mkdtemp(prefix='pipeline-')
+                    base_dir = tempfile.mkdtemp(prefix="pipeline-")
                     atexit.register(shutil.rmtree, base_dir, ignore_errors=True)
             # Save the path for the next calls (only if that's not an override)
             if override is None:
@@ -154,7 +153,7 @@ class Job:  # pylint: disable=too-many-instance-attributes
                 self.base_overrides[override] = base_dir
 
         # Create the sub-directory
-        tmp_dir = tempfile.mkdtemp(prefix=action_name + '-', dir=base_dir)
+        tmp_dir = tempfile.mkdtemp(prefix=action_name + "-", dir=base_dir)
         os.chmod(tmp_dir, 0o755)  # nosec - automatic cleanup.
         return tmp_dir
 
@@ -163,7 +162,9 @@ class Job:  # pylint: disable=too-many-instance-attributes
         Validate the pipeline and raise an exception (that inherit from
         LAVAError) if it fails.
         """
-        self.logger.info("Start time: %s (UTC)", pytz.utc.localize(datetime.datetime.utcnow()))
+        self.logger.info(
+            "Start time: %s (UTC)", pytz.utc.localize(datetime.datetime.utcnow())
+        )
         for protocol in self.protocols:
             try:
                 protocol.configure(self.device, self)
@@ -188,7 +189,7 @@ class Job:  # pylint: disable=too-many-instance-attributes
 
         # 'common' is a reserved namespace that should not be present with
         # other namespaces.
-        if len(namespaces) > 1 and 'common' in namespaces:
+        if len(namespaces) > 1 and "common" in namespaces:
             msg = "'common' is a reserved namespace that should not be present with other namespaces"
             self.logger.error(msg)
             self.logger.debug("Namespaces: %s", ", ".join(namespaces))
@@ -202,7 +203,9 @@ class Job:  # pylint: disable=too-many-instance-attributes
         Public wrapper for the pipeline validation.
         Send a "fail" results if needed.
         """
-        label = "lava-dispatcher, installed at version: %s" % debian_package_version(pkg='lava-dispatcher', split=False)
+        label = "lava-dispatcher, installed at version: %s" % debian_package_version(
+            pkg="lava-dispatcher", split=False
+        )
         self.logger.info(label)
         self.logger.info("start: 0 validate")
         start = time.time()
@@ -219,9 +222,13 @@ class Job:  # pylint: disable=too-many-instance-attributes
             raise LAVABug(exc)
         finally:
             self.logger.info("validate duration: %.02f", time.time() - start)
-            self.logger.results({"definition": "lava",
-                                 "case": "validate",
-                                 "result": "pass" if success else "fail"})
+            self.logger.results(
+                {
+                    "definition": "lava",
+                    "case": "validate",
+                    "result": "pass" if success else "fail",
+                }
+            )
             if not success:
                 self.cleanup(connection=None)
 
@@ -281,8 +288,9 @@ class Job:  # pylint: disable=too-many-instance-attributes
                 shutil.rmtree(tmp_dir)
             except OSError as exc:
                 if exc.errno != errno.ENOENT:
-                    self.logger.error("Unable to remove the directory: %s",
-                                      exc.strerror)
+                    self.logger.error(
+                        "Unable to remove the directory: %s", exc.strerror
+                    )
 
         if self.tmp_dir is not None:
             self.logger.info("Root tmp directory removed at %s", self.tmp_dir)
@@ -290,8 +298,9 @@ class Job:  # pylint: disable=too-many-instance-attributes
                 shutil.rmtree(self.tmp_dir)
             except OSError as exc:
                 if exc.errno != errno.ENOENT:
-                    self.logger.error("Unable to remove the directory: %s",
-                                      exc.strerror)
+                    self.logger.error(
+                        "Unable to remove the directory: %s", exc.strerror
+                    )
 
         # Mark cleanup as done to avoid calling it many times
         self.cleaned = True

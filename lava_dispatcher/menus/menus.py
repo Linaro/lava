@@ -29,7 +29,6 @@ from lava_dispatcher.connections.serial import ConnectDevice
 
 
 class MovementMenu:
-
     def __init__(self):
         self.start_pos = 0
         self.label = None
@@ -49,7 +48,6 @@ class MenuInterrupt(Action):
 
 
 class SelectorMenu:
-
     def __init__(self):
         self.item_markup = None
         self.item_class = None
@@ -71,12 +69,14 @@ class SelectorMenu:
             self.item_class,
             re.escape(self.item_markup[1]),
             self.separator,
-            self.label_class
+            self.label_class,
         )
 
     def select(self, output, label):
-        output_list = output.split('\n')
-        for line in output_list[::-1]:  # start from the end of the list to catch the latest menu first.
+        output_list = output.split("\n")
+        for line in output_list[
+            ::-1
+        ]:  # start from the end of the list to catch the latest menu first.
             line = line.strip()
             match = re.search(self.pattern, line)
             if match:
@@ -86,7 +86,6 @@ class SelectorMenu:
 
 
 class MenuSession(ShellSession):
-
     def wait(self, max_end_time=None):
         """
         Simple wait without sendling blank lines as that causes the menu
@@ -95,7 +94,9 @@ class MenuSession(ShellSession):
         """
         while True:
             try:
-                self.raw_connection.expect(self.prompt_str, timeout=self.timeout.duration)
+                self.raw_connection.expect(
+                    self.prompt_str, timeout=self.timeout.duration
+                )
             except pexpect.TIMEOUT:
                 raise JobError("wait for prompt timed out")
             else:
@@ -117,17 +118,19 @@ class MenuConnect(ConnectDevice):
         self.session_class = MenuSession
 
     def validate(self):
-        if self.job.device.connect_command == '':
+        if self.job.device.connect_command == "":
             self.errors = "Unable to connect to device"
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
         if not connection:
             raise LAVABug("%s needs a Connection")
-        connection.check_char = '\n'
-        connection.sendline('\n')  # to catch the first prompt (remove for PDU?)
-        connection.prompt_str = self.parameters['prompts']
-        if hasattr(self.job.device, 'power_state') and self.job.device.power_state not in ['on', 'off']:
+        connection.check_char = "\n"
+        connection.sendline("\n")  # to catch the first prompt (remove for PDU?)
+        connection.prompt_str = self.parameters["prompts"]
+        if hasattr(
+            self.job.device, "power_state"
+        ) and self.job.device.power_state not in ["on", "off"]:
             self.wait(connection)
         return connection
 
@@ -147,16 +150,16 @@ class MenuReset(ConnectDevice):
         if not connection:
             raise LAVABug("%s needs a Connection")
 
-        connection.check_char = '\n'
-        connection.sendline('\n')  # to catch the first prompt (remove for PDU?)
+        connection.check_char = "\n"
+        connection.sendline("\n")  # to catch the first prompt (remove for PDU?)
         return connection
 
 
 class SelectorMenuAction(Action):
 
-    name = 'menu-selector'
-    description = 'select specified menu items'
-    summary = 'select options in a menu'
+    name = "menu-selector"
+    description = "select specified menu items"
+    summary = "select options in a menu"
 
     def __init__(self):
         super().__init__()
@@ -171,10 +174,17 @@ class SelectorMenuAction(Action):
         if not isinstance(self.items, list):
             self.errors = "menu sequence must be a list"
         for item in self.items:
-            if 'select' in item:
-                for _ in item['select']:
-                    item_keys[list(item['select'].keys())[0]] = None
-        disallowed = set(item_keys) - {'items', 'prompt', 'enter', 'escape', 'wait', 'fallback'}
+            if "select" in item:
+                for _ in item["select"]:
+                    item_keys[list(item["select"].keys())[0]] = None
+        disallowed = set(item_keys) - {
+            "items",
+            "prompt",
+            "enter",
+            "escape",
+            "wait",
+            "fallback",
+        }
         if disallowed:
             self.errors = "Unable to recognise item %s" % disallowed
 
@@ -201,40 +211,43 @@ class SelectorMenuAction(Action):
             self.logger.error("%s called without a Connection", self.name)
             return connection
         for block in self.items:
-            if 'select' in block:
+            if "select" in block:
                 change_prompt = False
                 # ensure the prompt is changed just before sending the action to allow it to be matched.
-                if 'wait' in block['select']:
-                    connection.prompt_str = block['select']['wait']
+                if "wait" in block["select"]:
+                    connection.prompt_str = block["select"]["wait"]
                     change_prompt = True
-                if 'items' in block['select']:
-                    for selector in block['select']['items']:
+                if "items" in block["select"]:
+                    for selector in block["select"]["items"]:
                         menu_text = connection.raw_connection.before
                         action = self.selector.select(menu_text, selector)
                         if action:
                             self.logger.debug("Selecting option %s", action)
-                        elif 'fallback' in block['select']:
-                            action = self.selector.select(menu_text, block['select']['fallback'])
+                        elif "fallback" in block["select"]:
+                            action = self.selector.select(
+                                menu_text, block["select"]["fallback"]
+                            )
                         if not action:
                             raise JobError("No selection was made")
                         connection.sendline(action, delay=self.character_delay)
                         self._change_prompt(connection, change_prompt)
-                if 'escape' in block['select']:
+                if "escape" in block["select"]:
                     self.logger.debug("Sending escape")
-                    connection.raw_connection.sendcontrol('[')
+                    connection.raw_connection.sendcontrol("[")
                     self._change_prompt(connection, change_prompt)
-                if 'enter' in block['select']:
-                    self.logger.debug("Sending %s Ctrl-M", block['select']['enter'])
-                    connection.raw_connection.send(block['select']['enter'], delay=self.character_delay)
-                    connection.raw_connection.sendcontrol('M')
+                if "enter" in block["select"]:
+                    self.logger.debug("Sending %s Ctrl-M", block["select"]["enter"])
+                    connection.raw_connection.send(
+                        block["select"]["enter"], delay=self.character_delay
+                    )
+                    connection.raw_connection.sendcontrol("M")
                     self._change_prompt(connection, change_prompt)
             else:
-                raise JobError("Unable to recognise selection %s" % block['select'])
+                raise JobError("Unable to recognise selection %s" % block["select"])
         return connection
 
 
 class DebianInstallerMenu(MovementMenu):
-
     def __init__(self):
         super().__init__()
-        self.down_command = '[1B'
+        self.down_command = "[1B"

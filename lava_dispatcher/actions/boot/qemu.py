@@ -22,17 +22,11 @@ import os
 from lava_common.constants import SYS_CLASS_KVM
 from lava_common.exceptions import JobError
 from lava_common.utils import debian_package_arch, debian_package_version
-from lava_dispatcher.action import (
-    Pipeline,
-    Action,
-)
+from lava_dispatcher.action import Pipeline, Action
 from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.actions.boot import BootAction
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
-from lava_dispatcher.shell import (
-    ExpectShellSession,
-    ShellCommand,
-)
+from lava_dispatcher.shell import ExpectShellSession, ShellCommand
 from lava_dispatcher.connections.serial import QemuSession
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.strings import substitute
@@ -64,42 +58,49 @@ class BootQEMU(Boot):
 
     @classmethod
     def accepts(cls, device, parameters):
-        methods = device['actions']['boot']['methods']
-        if 'qemu' not in methods and 'qemu-nfs' not in methods:
-            return False, '"qemu" or "qemu-nfs" was not in the device configuration boot methods'
-        if 'method' not in parameters:
+        methods = device["actions"]["boot"]["methods"]
+        if "qemu" not in methods and "qemu-nfs" not in methods:
+            return (
+                False,
+                '"qemu" or "qemu-nfs" was not in the device configuration boot methods',
+            )
+        if "method" not in parameters:
             return False, '"method" was not in parameters'
-        if parameters['method'] not in ['qemu', 'qemu-nfs', 'monitor']:
+        if parameters["method"] not in ["qemu", "qemu-nfs", "monitor"]:
             return False, '"method" was not "qemu" or "qemu-nfs"'
-        return True, 'accepted'
+        return True, "accepted"
 
 
 class BootQEMUImageAction(BootAction):
 
-    name = 'boot-image-retry'
+    name = "boot-image-retry"
     description = "boot image with retry"
     summary = "boot with retry"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.internal_pipeline = Pipeline(
+            parent=self, job=self.job, parameters=parameters
+        )
         self.internal_pipeline.add_action(BootQemuRetry())
         if self.has_prompts(parameters):
             self.internal_pipeline.add_action(AutoLoginAction())
             if self.test_has_shell(parameters):
                 self.internal_pipeline.add_action(ExpectShellSession())
-                if 'transfer_overlay' in parameters:
+                if "transfer_overlay" in parameters:
                     self.internal_pipeline.add_action(OverlayUnpack())
                 self.internal_pipeline.add_action(ExportDeviceEnvironment())
 
 
 class BootQemuRetry(RetryAction):
 
-    name = 'boot-qemu-image'
+    name = "boot-qemu-image"
     description = "boot image using QEMU command line"
     summary = "boot QEMU image"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.internal_pipeline = Pipeline(
+            parent=self, job=self.job, parameters=parameters
+        )
         self.internal_pipeline.add_action(CallQemuAction())
 
 
@@ -124,75 +125,105 @@ class CallQemuAction(Action):
         super().validate()
 
         # 'arch' must be defined in job definition context.
-        architecture = self.job.parameters['context']['arch']
-        if 'available_architectures' not in self.job.device:
+        architecture = self.job.parameters["context"]["arch"]
+        if "available_architectures" not in self.job.device:
             self.errors = "Device lacks list of available architectures."
         try:
-            if architecture not in \
-               self.job.device['available_architectures']:
+            if architecture not in self.job.device["available_architectures"]:
                 self.errors = "Non existing architecture specified in context arch parameter. Please check the device configuration for available options."
                 return
         except KeyError:
             self.errors = "Arch parameter must be set in the context section. Please check the device configuration for available architectures."
             return
-        if architecture in ['amd64', 'x86_64']:
-            ver_str = debian_package_version(pkg='qemu-system-x86', split=False)
-            arch_str = debian_package_arch(pkg='qemu-system-x86')
-            self.qemu_data = {'qemu_version': ver_str, 'host_arch': arch_str, 'job_arch': architecture}
-            self.logger.info("qemu-system-x86, installed at version: %s, host architecture: %s", ver_str, arch_str)
-        if architecture in ['arm64', 'arm', 'armhf', 'aarch64']:
-            ver_str = debian_package_version(pkg='qemu-system-arm', split=False)
-            arch_str = debian_package_arch(pkg='qemu-system-arm')
-            self.qemu_data = {'qemu_version': ver_str, 'host_arch': arch_str, 'job_arch': architecture}
-            self.logger.info("qemu-system-arm, installed at version: %s, host architecture: %s", ver_str, arch_str)
+        if architecture in ["amd64", "x86_64"]:
+            ver_str = debian_package_version(pkg="qemu-system-x86", split=False)
+            arch_str = debian_package_arch(pkg="qemu-system-x86")
+            self.qemu_data = {
+                "qemu_version": ver_str,
+                "host_arch": arch_str,
+                "job_arch": architecture,
+            }
+            self.logger.info(
+                "qemu-system-x86, installed at version: %s, host architecture: %s",
+                ver_str,
+                arch_str,
+            )
+        if architecture in ["arm64", "arm", "armhf", "aarch64"]:
+            ver_str = debian_package_version(pkg="qemu-system-arm", split=False)
+            arch_str = debian_package_arch(pkg="qemu-system-arm")
+            self.qemu_data = {
+                "qemu_version": ver_str,
+                "host_arch": arch_str,
+                "job_arch": architecture,
+            }
+            self.logger.info(
+                "qemu-system-arm, installed at version: %s, host architecture: %s",
+                ver_str,
+                arch_str,
+            )
 
-        if self.parameters['method'] in ['qemu', 'qemu-nfs']:
-            if 'prompts' not in self.parameters:
+        if self.parameters["method"] in ["qemu", "qemu-nfs"]:
+            if "prompts" not in self.parameters:
                 if self.test_has_shell(self.parameters):
                     self.errors = "Unable to identify boot prompts from job definition."
-        self.methods = self.job.device['actions']['boot']['methods']
-        method = self.parameters['method']
-        boot = self.methods['qemu'] if 'qemu' in self.methods else self.methods['qemu-nfs']
+        self.methods = self.job.device["actions"]["boot"]["methods"]
+        method = self.parameters["method"]
+        boot = (
+            self.methods["qemu"] if "qemu" in self.methods else self.methods["qemu-nfs"]
+        )
         try:
-            if 'parameters' not in boot or 'command' not in boot['parameters']:
+            if "parameters" not in boot or "command" not in boot["parameters"]:
                 self.errors = "Invalid device configuration - missing parameters"
-            elif not boot['parameters']['command']:
+            elif not boot["parameters"]["command"]:
                 self.errors = "No QEMU binary command found - missing context."
-            qemu_binary = which(boot['parameters']['command'])
+            qemu_binary = which(boot["parameters"]["command"])
             self.sub_command = [qemu_binary]
-            self.sub_command.extend(boot['parameters'].get('options', []))
+            self.sub_command.extend(boot["parameters"].get("options", []))
             self.sub_command.extend(
-                ['%s' % item for item in boot['parameters'].get('extra', [])])
+                ["%s" % item for item in boot["parameters"].get("extra", [])]
+            )
         except AttributeError as exc:
             self.errors = "Unable to parse device options: %s %s" % (
-                exc, self.job.device['actions']['boot']['methods'][method])
+                exc,
+                self.job.device["actions"]["boot"]["methods"][method],
+            )
         except (KeyError, TypeError):
             self.errors = "Invalid parameters for %s" % self.name
 
-        for label in self.get_namespace_keys('download-action'):
-            if label in ['offset', 'available_loops', 'uefi', 'nfsrootfs']:
+        for label in self.get_namespace_keys("download-action"):
+            if label in ["offset", "available_loops", "uefi", "nfsrootfs"]:
                 continue
-            image_arg = self.get_namespace_data(action='download-action', label=label, key='image_arg')
-            action_arg = self.get_namespace_data(action='download-action', label=label, key='file')
+            image_arg = self.get_namespace_data(
+                action="download-action", label=label, key="image_arg"
+            )
+            action_arg = self.get_namespace_data(
+                action="download-action", label=label, key="file"
+            )
             if not image_arg or not action_arg:
                 self.errors = "Missing image_arg for %s. " % label
                 continue
             self.substitutions["{%s}" % label] = action_arg
             self.commands.append(image_arg)
-        self.substitutions["{NFS_SERVER_IP}"] = dispatcher_ip(self.job.parameters['dispatcher'])
+        self.substitutions["{NFS_SERVER_IP}"] = dispatcher_ip(
+            self.job.parameters["dispatcher"]
+        )
         self.sub_command.extend(substitute(self.commands, self.substitutions))
         if not self.sub_command:
             self.errors = "No QEMU command to execute"
-        uefi_dir = self.get_namespace_data(action='deployimages', label='image', key='uefi_dir')
+        uefi_dir = self.get_namespace_data(
+            action="deployimages", label="image", key="uefi_dir"
+        )
         if uefi_dir:
-            self.sub_command.extend(['-L', uefi_dir, '-monitor', 'none'])
+            self.sub_command.extend(["-L", uefi_dir, "-monitor", "none"])
 
         # Check for enable-kvm command line option in device configuration.
-        if method not in self.job.device['actions']['boot']['methods']:
+        if method not in self.job.device["actions"]["boot"]["methods"]:
             self.errors = "Unknown boot method '%s'" % method
             return
 
-        options = self.job.device['actions']['boot']['methods'][method]['parameters']['options']
+        options = self.job.device["actions"]["boot"]["methods"][method]["parameters"][
+            "options"
+        ]
         if "-enable-kvm" in options:
             # Check if the worker has kvm enabled.
             if not os.path.exists(SYS_CLASS_KVM):
@@ -213,51 +244,75 @@ class CallQemuAction(Action):
             connection.finalise()
         # initialise the first Connection object, a command line shell into the running QEMU.
         self.results = self.qemu_data
-        guest = self.get_namespace_data(action='apply-overlay-guest', label='guest', key='filename')
+        guest = self.get_namespace_data(
+            action="apply-overlay-guest", label="guest", key="filename"
+        )
         # check for NFS
-        if 'qemu-nfs' in self.methods and self.parameters.get('media') == 'nfs':
+        if "qemu-nfs" in self.methods and self.parameters.get("media") == "nfs":
             self.logger.debug("Adding NFS arguments to kernel command line.")
-            root_dir = self.get_namespace_data(action='extract-rootfs', label='file', key='nfsroot')
+            root_dir = self.get_namespace_data(
+                action="extract-rootfs", label="file", key="nfsroot"
+            )
             self.substitutions["{NFSROOTFS}"] = root_dir
-            params = self.methods['qemu-nfs']['parameters']['append']
+            params = self.methods["qemu-nfs"]["parameters"]["append"]
             # console=ttyAMA0 root=/dev/nfs nfsroot=10.3.2.1:/var/lib/lava/dispatcher/tmp/dirname,tcp,hard,intr ip=dhcp
             append = [
-                'console=%s' % params['console'],
-                'root=/dev/nfs',
-                '%s rw' % substitute([params['nfsrootargs']], self.substitutions)[0],
-                "%s" % params['ipargs']
+                "console=%s" % params["console"],
+                "root=/dev/nfs",
+                "%s rw" % substitute([params["nfsrootargs"]], self.substitutions)[0],
+                "%s" % params["ipargs"],
             ]
-            self.sub_command.append('--append')
-            self.sub_command.append('"%s"' % ' '.join(append))
+            self.sub_command.append("--append")
+            self.sub_command.append('"%s"' % " ".join(append))
         elif guest:
             self.logger.info("Extending command line for qcow2 test overlay")
             # interface is ide by default in qemu
-            interface = self.job.device['actions']['deploy']['methods']['image']['parameters']['guest'].get('interface', 'ide')
-            self.sub_command.append('-drive format=qcow2,file=%s,media=disk,if=%s' %
-                                    (os.path.realpath(guest), interface))
+            interface = self.job.device["actions"]["deploy"]["methods"]["image"][
+                "parameters"
+            ]["guest"].get("interface", "ide")
+            self.sub_command.append(
+                "-drive format=qcow2,file=%s,media=disk,if=%s"
+                % (os.path.realpath(guest), interface)
+            )
             # push the mount operation to the test shell pre-command to be run
             # before the test shell tries to execute.
             shell_precommand_list = []
-            mountpoint = self.get_namespace_data(action='test', label='results', key='lava_test_results_dir')
-            uuid = '/dev/disk/by-uuid/%s' % self.get_namespace_data(action='apply-overlay-guest', label='guest', key='UUID')
-            shell_precommand_list.append('mkdir %s' % mountpoint)
+            mountpoint = self.get_namespace_data(
+                action="test", label="results", key="lava_test_results_dir"
+            )
+            uuid = "/dev/disk/by-uuid/%s" % self.get_namespace_data(
+                action="apply-overlay-guest", label="guest", key="UUID"
+            )
+            shell_precommand_list.append("mkdir %s" % mountpoint)
             # prepare_guestfs always uses ext2
-            shell_precommand_list.append('mount %s -t ext2 %s' % (uuid, mountpoint))
+            shell_precommand_list.append("mount %s -t ext2 %s" % (uuid, mountpoint))
             # debug line to show the effect of the mount operation
             # also allows time for kernel messages from the mount operation to be processed.
-            shell_precommand_list.append('ls -la %s/bin/lava-test-runner' % mountpoint)
-            self.set_namespace_data(action='test', label='lava-test-shell', key='pre-command-list', value=shell_precommand_list)
+            shell_precommand_list.append("ls -la %s/bin/lava-test-runner" % mountpoint)
+            self.set_namespace_data(
+                action="test",
+                label="lava-test-shell",
+                key="pre-command-list",
+                value=shell_precommand_list,
+            )
 
-        self.logger.info("Boot command: %s", ' '.join(self.sub_command))
-        shell = self.shell_class(' '.join(self.sub_command), self.timeout, logger=self.logger)
+        self.logger.info("Boot command: %s", " ".join(self.sub_command))
+        shell = self.shell_class(
+            " ".join(self.sub_command), self.timeout, logger=self.logger
+        )
         if shell.exitstatus:
-            raise JobError("%s command exited %d: %s" % (self.sub_command, shell.exitstatus, shell.readlines()))
+            raise JobError(
+                "%s command exited %d: %s"
+                % (self.sub_command, shell.exitstatus, shell.readlines())
+            )
         self.logger.debug("started a shell command")
 
         shell_connection = self.session_class(self.job, shell)
         shell_connection = super().run(shell_connection, max_end_time)
 
-        self.set_namespace_data(action='shared', label='shared', key='connection', value=shell_connection)
+        self.set_namespace_data(
+            action="shared", label="shared", key="connection", value=shell_connection
+        )
         return shell_connection
 
 

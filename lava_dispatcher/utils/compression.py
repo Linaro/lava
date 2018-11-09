@@ -28,23 +28,24 @@ import os
 import subprocess  # nosec - internal use.
 import tarfile
 
-from lava_common.exceptions import (
-    InfrastructureError,
-    JobError
-)
+from lava_common.exceptions import InfrastructureError, JobError
 
 from lava_dispatcher.utils.contextmanager import chdir
 from lava_dispatcher.utils.shell import which
 
 
 # https://www.kernel.org/doc/Documentation/xz.txt
-compress_command_map = {'xz': ['xz', '--check=crc32'],  # pylint: disable=invalid-name
-                        'gz': ['gzip'],
-                        'bz2': ['bzip2']}
-decompress_command_map = {'xz': ['unxz'],  # pylint: disable=invalid-name
-                          'gz': ['gunzip'],
-                          'bz2': ['bunzip2'],
-                          'zip': ['unzip']}
+compress_command_map = {
+    "xz": ["xz", "--check=crc32"],  # pylint: disable=invalid-name
+    "gz": ["gzip"],
+    "bz2": ["bzip2"],
+}
+decompress_command_map = {
+    "xz": ["unxz"],  # pylint: disable=invalid-name
+    "gz": ["gunzip"],
+    "bz2": ["bunzip2"],
+    "zip": ["unzip"],
+}
 
 
 def compress_file(infile, compression):
@@ -64,7 +65,7 @@ def compress_file(infile, compression):
             subprocess.check_output(cmd)  # nosec - internal use.
             return "%s.%s" % (infile, compression)
         except (OSError, subprocess.CalledProcessError) as exc:
-            raise InfrastructureError('unable to compress file %s: %s' % (infile, exc))
+            raise InfrastructureError("unable to compress file %s: %s" % (infile, exc))
 
 
 def decompress_file(infile, compression):
@@ -82,12 +83,14 @@ def decompress_file(infile, compression):
         cmd.append(infile)
         outfile = infile
         if infile.endswith(compression):
-            outfile = infile[:-(len(compression) + 1)]
+            outfile = infile[: -(len(compression) + 1)]
         try:
             subprocess.check_output(cmd)  # nosec - internal use.
             return outfile
         except (OSError, subprocess.CalledProcessError) as exc:
-            raise InfrastructureError('unable to decompress file %s: %s' % (infile, exc))
+            raise InfrastructureError(
+                "unable to decompress file %s: %s" % (infile, exc)
+            )
 
 
 def untar_file(infile, outdir, member=None, outfile=None):
@@ -95,7 +98,7 @@ def untar_file(infile, outdir, member=None, outfile=None):
         tar = tarfile.open(infile)
         if member:
             file_obj = tar.extractfile(member)
-            target = open(outfile, 'wb')
+            target = open(outfile, "wb")
             target.write(file_obj.read())
             target.close()
             file_obj.close()

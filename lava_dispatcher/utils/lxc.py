@@ -37,4 +37,4 @@ def lxc_cmd_prefix(job):
     name = is_lxc_requested(job)
     if not name:
         return []
-    return ['lxc-attach', '-n', name, '--']
+    return ["lxc-attach", "-n", name, "--"]

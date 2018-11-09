@@ -21,10 +21,7 @@
 import pyudev
 import time
 from lava_dispatcher.action import Action
-from lava_common.exceptions import (
-    LAVABug,
-    InfrastructureError,
-)
+from lava_common.exceptions import LAVABug, InfrastructureError
 
 
 class WaitUSBSerialDeviceAction(Action):
@@ -40,30 +37,34 @@ class WaitUSBSerialDeviceAction(Action):
 
     def validate(self):
         super().validate()
-        board_id = self.job.device.get('board_id', '')
-        usb_vendor_id = self.job.device.get('usb_vendor_id', '')
-        usb_product_id = self.job.device.get('usb_product_id', '')
-        usb_serial_driver = self.job.device.get('usb_serial_driver', 'cdc_acm')
-        if board_id == '0000000000':
+        board_id = self.job.device.get("board_id", "")
+        usb_vendor_id = self.job.device.get("usb_vendor_id", "")
+        usb_product_id = self.job.device.get("usb_product_id", "")
+        usb_serial_driver = self.job.device.get("usb_serial_driver", "cdc_acm")
+        if board_id == "0000000000":
             self.errors = "[USBSERIAL] board_id unset"
-        if usb_vendor_id == '0000':
-            self.errors = 'usb_vendor_id unset'
-        if usb_product_id == '0000':
-            self.errors = 'usb_product_id unset'
-        self.serial_device = {'ID_SERIAL_SHORT': str(board_id),
-                              'ID_VENDOR_ID': str(usb_vendor_id),
-                              'ID_MODEL_ID': str(usb_product_id),
-                              'ID_USB_DRIVER': str(usb_serial_driver)}
-        self.usb_sleep = self.job.device.get('usb_sleep', 0)
+        if usb_vendor_id == "0000":
+            self.errors = "usb_vendor_id unset"
+        if usb_product_id == "0000":
+            self.errors = "usb_product_id unset"
+        self.serial_device = {
+            "ID_SERIAL_SHORT": str(board_id),
+            "ID_VENDOR_ID": str(usb_vendor_id),
+            "ID_MODEL_ID": str(usb_product_id),
+            "ID_USB_DRIVER": str(usb_serial_driver),
+        }
+        self.usb_sleep = self.job.device.get("usb_sleep", 0)
         if not isinstance(self.usb_sleep, int):
-            self.errors = 'usb_sleep should be an integer'
+            self.errors = "usb_sleep should be an integer"
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
         self.logger.debug("Waiting for usb serial device: %s", self.serial_device)
-        wait_udev_event(action='add', match_dict=self.serial_device, subsystem='tty')
+        wait_udev_event(action="add", match_dict=self.serial_device, subsystem="tty")
         if self.usb_sleep:
-            self.logger.debug("Waiting for the board to setup, sleeping %ds", self.usb_sleep)
+            self.logger.debug(
+                "Waiting for the board to setup, sleeping %ds", self.usb_sleep
+            )
             time.sleep(self.usb_sleep)
         return connection
 
@@ -80,23 +81,30 @@ class WaitDFUDeviceAction(Action):
 
     def validate(self):
         super().validate()
-        board_id = self.job.device.get('board_id', '')
-        usb_vendor_id = self.job.device.get('usb_vendor_id', '')
-        usb_product_id = self.job.device.get('usb_product_id', '')
-        if board_id == '0000000000':
+        board_id = self.job.device.get("board_id", "")
+        usb_vendor_id = self.job.device.get("usb_vendor_id", "")
+        usb_product_id = self.job.device.get("usb_product_id", "")
+        if board_id == "0000000000":
             self.errors = "[DFU] board_id unset"
-        if usb_vendor_id == '0000':
-            self.errors = 'usb_vendor_id unset'
-        if usb_product_id == '0000':
-            self.errors = 'usb_product_id unset'
-        self.dfu_device = {'ID_SERIAL_SHORT': str(board_id),
-                           'ID_VENDOR_ID': str(usb_vendor_id),
-                           'ID_MODEL_ID': str(usb_product_id)}
+        if usb_vendor_id == "0000":
+            self.errors = "usb_vendor_id unset"
+        if usb_product_id == "0000":
+            self.errors = "usb_product_id unset"
+        self.dfu_device = {
+            "ID_SERIAL_SHORT": str(board_id),
+            "ID_VENDOR_ID": str(usb_vendor_id),
+            "ID_MODEL_ID": str(usb_product_id),
+        }
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
         self.logger.debug("Waiting for DFU device: %s", self.dfu_device)
-        wait_udev_event(action='add', match_dict=self.dfu_device, subsystem='usb', devtype='usb_device')
+        wait_udev_event(
+            action="add",
+            match_dict=self.dfu_device,
+            subsystem="usb",
+            devtype="usb_device",
+        )
         return connection
 
 
@@ -112,15 +120,20 @@ class WaitUSBMassStorageDeviceAction(Action):
 
     def validate(self):
         super().validate()
-        usb_fs_label = self.job.device.get('usb_filesystem_label')
+        usb_fs_label = self.job.device.get("usb_filesystem_label")
         if not isinstance(usb_fs_label, str):
-            self.errors = 'usb_fs_label unset'
-        self.ms_device = {'ID_FS_LABEL': str(usb_fs_label)}
+            self.errors = "usb_fs_label unset"
+        self.ms_device = {"ID_FS_LABEL": str(usb_fs_label)}
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
         self.logger.debug("Waiting for USB mass storage device: %s", self.ms_device)
-        wait_udev_event(action='add', match_dict=self.ms_device, subsystem='block', devtype='partition')
+        wait_udev_event(
+            action="add",
+            match_dict=self.ms_device,
+            subsystem="block",
+            devtype="partition",
+        )
         return connection
 
 
@@ -142,7 +155,7 @@ class WaitDevicePathAction(Action):
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
         self.logger.debug("Waiting for udev device path: %s", self.devicepath)
-        wait_udev_event(action='add', devicepath=self.devicepath)
+        wait_udev_event(action="add", devicepath=self.devicepath)
         return connection
 
 
@@ -156,7 +169,7 @@ class WaitDeviceBoardID(Action):
         super().__init__()
         self.udev_device = None
         if not board_id:
-            self.board_id = self.job.device.get('board_id')
+            self.board_id = self.job.device.get("board_id")
         else:
             self.board_id = board_id
 
@@ -164,12 +177,12 @@ class WaitDeviceBoardID(Action):
         super().validate()
         if not isinstance(self.board_id, str):
             self.errors = "invalid board_id"
-        self.udev_device = {'ID_SERIAL_SHORT': str(self.board_id)}
+        self.udev_device = {"ID_SERIAL_SHORT": str(self.board_id)}
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
         self.logger.debug("Waiting for udev device with ID: %s", self.board_id)
-        wait_udev_event(action='add', match_dict=self.udev_device)
+        wait_udev_event(action="add", match_dict=self.udev_device)
         return connection
 
 
@@ -180,9 +193,14 @@ def _dict_compare(d1, d2):  # pylint: disable=invalid-name
     return set(o for o in intersect_keys if d1[o] == d2[o])
 
 
-def wait_udev_event(action='add', match_dict=None, subsystem=None, devtype=None, devicepath=None):
-    if action not in ['add', 'remove', 'change']:
-        raise LAVABug("Invalid action for udev to wait for: %s, expected 'add' or 'remove'" % action)
+def wait_udev_event(
+    action="add", match_dict=None, subsystem=None, devtype=None, devicepath=None
+):
+    if action not in ["add", "remove", "change"]:
+        raise LAVABug(
+            "Invalid action for udev to wait for: %s, expected 'add' or 'remove'"
+            % action
+        )
     if match_dict:
         if not isinstance(match_dict, dict):
             raise LAVABug("match_dict was not a dict")
@@ -195,7 +213,7 @@ def wait_udev_event(action='add', match_dict=None, subsystem=None, devtype=None,
             raise LAVABug("Neither match_dict nor devicepath were set")
     if devtype and not subsystem:
         raise LAVABug("Cannot filter udev by devtype without a subsystem")
-    match_dict['ACTION'] = action
+    match_dict["ACTION"] = action
     context = pyudev.Context()
     monitor = pyudev.Monitor.from_netlink(context)
     if devtype and subsystem:
@@ -207,8 +225,9 @@ def wait_udev_event(action='add', match_dict=None, subsystem=None, devtype=None,
         same = _dict_compare(dict(device), match_dict)
         if same == set(match_dict.keys()):
             if devicepath:
-                if devicepath in dict(device).get('DEVLINKS', '') or \
-                   devicepath in dict(device).get('DEVNAME', ''):
+                if devicepath in dict(device).get("DEVLINKS", "") or devicepath in dict(
+                    device
+                ).get("DEVNAME", ""):
                     break
             else:
                 break
@@ -225,7 +244,7 @@ def get_udev_devices(job=None, logger=None, device_info=None):
     device_paths = set()
     devices = []
     if job:
-        devices = job.device.get('device_info', [])
+        devices = job.device.get("device_info", [])
     # device_info argument overrides job device_info
     if device_info:
         devices = device_info
@@ -233,18 +252,20 @@ def get_udev_devices(job=None, logger=None, device_info=None):
         return []
     added = set()
     for usb_device in devices:
-        board_id = str(usb_device.get('board_id', ''))
-        usb_vendor_id = str(usb_device.get('usb_vendor_id', ''))
-        usb_product_id = str(usb_device.get('usb_product_id', ''))
-        usb_fs_label = str(usb_device.get('fs_label', ''))
+        board_id = str(usb_device.get("board_id", ""))
+        usb_vendor_id = str(usb_device.get("usb_vendor_id", ""))
+        usb_product_id = str(usb_device.get("usb_product_id", ""))
+        usb_fs_label = str(usb_device.get("fs_label", ""))
         # check if device is already connected
         # try with all parameters such as board id, usb_vendor_id and
         # usb_product_id
         for device in context.list_devices():
             if board_id and usb_vendor_id and usb_product_id:
-                if (device.get('ID_SERIAL_SHORT') == board_id) \
-                   and (device.get('ID_VENDOR_ID') == usb_vendor_id) \
-                   and (device.get('ID_MODEL_ID') == usb_product_id):
+                if (
+                    (device.get("ID_SERIAL_SHORT") == board_id)
+                    and (device.get("ID_VENDOR_ID") == usb_vendor_id)
+                    and (device.get("ID_MODEL_ID") == usb_product_id)
+                ):
                     device_paths.add(device.device_node)
                     added.add(board_id)
                     for child in device.children:
@@ -254,8 +275,9 @@ def get_udev_devices(job=None, logger=None, device_info=None):
                         device_paths.add(link)
             elif board_id and usb_vendor_id and not usb_product_id:
                 # try with parameters such as board id, usb_vendor_id
-                if (device.get('ID_SERIAL_SHORT') == board_id) \
-                   and (device.get('ID_VENDOR_ID') == usb_vendor_id):
+                if (device.get("ID_SERIAL_SHORT") == board_id) and (
+                    device.get("ID_VENDOR_ID") == usb_vendor_id
+                ):
                     device_paths.add(device.device_node)
                     added.add(board_id)
                     for child in device.children:
@@ -265,7 +287,7 @@ def get_udev_devices(job=None, logger=None, device_info=None):
                         device_paths.add(link)
             elif board_id and not usb_vendor_id and not usb_product_id:
                 # try with board id alone
-                if device.get('ID_SERIAL_SHORT') == board_id:
+                if device.get("ID_SERIAL_SHORT") == board_id:
                     device_paths.add(device.device_node)
                     added.add(board_id)
                     for child in device.children:
@@ -275,7 +297,7 @@ def get_udev_devices(job=None, logger=None, device_info=None):
                         device_paths.add(link)
             elif usb_fs_label:
                 # Just restrict by filesystem label.
-                if device.get('ID_FS_LABEL') == usb_fs_label:
+                if device.get("ID_FS_LABEL") == usb_fs_label:
                     device_paths.add(device.device_node)
                     added.add(usb_fs_label)
                     for child in device.children:
@@ -287,9 +309,12 @@ def get_udev_devices(job=None, logger=None, device_info=None):
         for static_device in device_info:
             for _, value in static_device.items():
                 if value not in added:
-                    raise InfrastructureError("Unable to add all static devices: board_id '%s' was not found" % value)
+                    raise InfrastructureError(
+                        "Unable to add all static devices: board_id '%s' was not found"
+                        % value
+                    )
     if logger and device_paths:
-        logger.debug("Adding %s", ', '.join(device_paths))
+        logger.debug("Adding %s", ", ".join(device_paths))
     return list(device_paths)
 
 
@@ -297,38 +322,44 @@ def usb_device_wait(job, device_actions=None):
     context = pyudev.Context()
     if device_actions is None:
         device_actions = []
-    for usb_device in job.device.get('device_info', []):
-        board_id = str(usb_device.get('board_id', ''))
-        usb_vendor_id = str(usb_device.get('usb_vendor_id', ''))
-        usb_product_id = str(usb_device.get('usb_product_id', ''))
-        usb_fs_label = str(usb_device.get('fs_label', ''))
+    for usb_device in job.device.get("device_info", []):
+        board_id = str(usb_device.get("board_id", ""))
+        usb_vendor_id = str(usb_device.get("usb_vendor_id", ""))
+        usb_product_id = str(usb_device.get("usb_product_id", ""))
+        usb_fs_label = str(usb_device.get("fs_label", ""))
         # monitor for device
         monitor = pyudev.Monitor.from_netlink(context)
         if board_id and usb_vendor_id and usb_product_id:
             for device in iter(monitor.poll, None):
-                if (device.get('ID_SERIAL_SHORT') == board_id) \
-                   and (device.get('ID_VENDOR_ID') == usb_vendor_id) \
-                   and (device.get('ID_MODEL_ID') == usb_product_id) \
-                   and device.action in device_actions:
+                if (
+                    (device.get("ID_SERIAL_SHORT") == board_id)
+                    and (device.get("ID_VENDOR_ID") == usb_vendor_id)
+                    and (device.get("ID_MODEL_ID") == usb_product_id)
+                    and device.action in device_actions
+                ):
                     break
             return
         elif board_id and usb_vendor_id and not usb_product_id:
             for device in iter(monitor.poll, None):
-                if (device.get('ID_SERIAL_SHORT') == board_id) \
-                   and (device.get('ID_VENDOR_ID') == usb_vendor_id) \
-                   and device.action in device_actions:
+                if (
+                    (device.get("ID_SERIAL_SHORT") == board_id)
+                    and (device.get("ID_VENDOR_ID") == usb_vendor_id)
+                    and device.action in device_actions
+                ):
                     break
             return
         elif board_id and not usb_vendor_id and not usb_product_id:
             for device in iter(monitor.poll, None):
-                if (device.get('ID_SERIAL_SHORT') == board_id) \
-                   and device.action in device_actions:
+                if (
+                    device.get("ID_SERIAL_SHORT") == board_id
+                ) and device.action in device_actions:
                     break
             return
         elif usb_fs_label:
             for device in iter(monitor.poll, None):
-                if (device.get('ID_FS_LABEL') == usb_fs_label) \
-                        and device.action in device_actions:
+                if (
+                    device.get("ID_FS_LABEL") == usb_fs_label
+                ) and device.action in device_actions:
                     break
             return
 
@@ -338,14 +369,16 @@ def allow_fs_label(device):
     # will require a filesystem label to identify a device.
     # So far, mps devices are supported, but these don't provide a
     # unique serial, so fs label must be used.
-    fs_label_methods = ['mps', 'recovery']
+    fs_label_methods = ["mps", "recovery"]
 
     # Don't allow using filesystem labels by default as they are
     # unreliable, and can be changed via a malicious job.
     _allow_fs_label = False
     for method in fs_label_methods:
-        if method in device['actions']['boot']['methods'] \
-                or method in device['actions']['deploy']['methods']:
+        if (
+            method in device["actions"]["boot"]["methods"]
+            or method in device["actions"]["deploy"]["methods"]
+        ):
             _allow_fs_label = True
     return _allow_fs_label
 
@@ -353,7 +386,7 @@ def allow_fs_label(device):
 def lxc_udev_rule(data):
     """Construct the udev rule string."""
     rule = 'ACTION=="add", '
-    if data['serial_number']:
+    if data["serial_number"]:
         rule += 'ATTR{{serial}}=="{serial_number}", '
     if data["vendor_id"] is not None:
         rule += 'ATTR{{idVendor}}=="{vendor_id}", '
@@ -361,11 +394,13 @@ def lxc_udev_rule(data):
         rule += 'ATTR{{idProduct}}=="{product_id}", '
     if data["fs_label"] is not None:
         rule += 'ENV{{ID_FS_LABEL}}=="{fs_label}", '
-    rule += 'RUN+="/usr/share/lava-dispatcher/lava_lxc_device_add.py ' \
-            '--lxc-name {lxc_name} --device-node $name ' \
-            '--job-id {job_id}'
-    if data['logging_url']:
-        rule += ' --logging-url {logging_url}'
+    rule += (
+        'RUN+="/usr/share/lava-dispatcher/lava_lxc_device_add.py '
+        "--lxc-name {lxc_name} --device-node $name "
+        "--job-id {job_id}"
+    )
+    if data["logging_url"]:
+        rule += " --logging-url {logging_url}"
     rule = rule.format(**data)
 
     if data["master_cert"] is not None:
@@ -389,11 +424,13 @@ def lxc_udev_rule_parent(data):
         rule += 'ATTRS{{idProduct}}=="{product_id}", '
     if data["fs_label"] is not None:
         rule += 'ENV{{ID_FS_LABEL}}=="{fs_label}", '
-    rule += 'RUN+="/usr/share/lava-dispatcher/lava_lxc_device_add.py ' \
-            '--lxc-name {lxc_name} --device-node $name ' \
-            '--job-id {job_id}'
-    if data['logging_url']:
-        rule += ' --logging-url {logging_url}'
+    rule += (
+        'RUN+="/usr/share/lava-dispatcher/lava_lxc_device_add.py '
+        "--lxc-name {lxc_name} --device-node $name "
+        "--job-id {job_id}"
+    )
+    if data["logging_url"]:
+        rule += " --logging-url {logging_url}"
     rule = rule.format(**data)
 
     if data["master_cert"] is not None:

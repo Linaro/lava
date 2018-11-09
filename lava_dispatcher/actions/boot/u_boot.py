@@ -31,7 +31,7 @@ from lava_dispatcher.actions.boot import (
     BootloaderCommandsAction,
     BootloaderSecondaryMedia,
     OverlayUnpack,
-    BootloaderInterruptAction
+    BootloaderInterruptAction,
 )
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.shell import ExpectShellSession
@@ -64,12 +64,12 @@ class UBoot(Boot):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if parameters['method'] != 'u-boot':
+        if parameters["method"] != "u-boot":
             return False, '"method" was not "u-boot"'
-        if 'commands' not in parameters:
+        if "commands" not in parameters:
             raise ConfigurationError("commands not specified in boot parameters")
-        if 'u-boot' in device['actions']['boot']['methods']:
-            return True, 'accepted'
+        if "u-boot" in device["actions"]["boot"]["methods"]:
+            return True, "accepted"
         return False, '"u-boot" was not in the device configuration boot methods'
 
 
@@ -85,12 +85,16 @@ class UBootAction(BootAction):
 
     def validate(self):
         super().validate()
-        if 'type' in self.parameters:
-            self.logger.warning("Specifying a type in the boot action is deprecated. "
-                                "Please specify the kernel type in the deploy parameters.")
+        if "type" in self.parameters:
+            self.logger.warning(
+                "Specifying a type in the boot action is deprecated. "
+                "Please specify the kernel type in the deploy parameters."
+            )
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.internal_pipeline = Pipeline(
+            parent=self, job=self.job, parameters=parameters
+        )
         # customize the device configuration for this job
         self.internal_pipeline.add_action(UBootSecondaryMedia())
         self.internal_pipeline.add_action(BootloaderCommandOverlay())
@@ -110,15 +114,23 @@ class UBootRetry(BootAction):
         self.usb_mass_device = None
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.method_params = self.job.device['actions']['boot']['methods']['u-boot']['parameters']
-        self.usb_mass_device = self.method_params.get('uboot_mass_storage_device')
+        self.internal_pipeline = Pipeline(
+            parent=self, job=self.job, parameters=parameters
+        )
+        self.method_params = self.job.device["actions"]["boot"]["methods"]["u-boot"][
+            "parameters"
+        ]
+        self.usb_mass_device = self.method_params.get("uboot_mass_storage_device")
         # establish a new connection before trying the reset
         self.internal_pipeline.add_action(ResetDevice())
         self.internal_pipeline.add_action(BootloaderInterruptAction())
-        if self.method_params.get('uboot_ums_flash', False):
-            self.internal_pipeline.add_action(BootloaderCommandsAction(expect_final=False))
-            self.internal_pipeline.add_action(WaitDevicePathAction(self.usb_mass_device))
+        if self.method_params.get("uboot_ums_flash", False):
+            self.internal_pipeline.add_action(
+                BootloaderCommandsAction(expect_final=False)
+            )
+            self.internal_pipeline.add_action(
+                WaitDevicePathAction(self.usb_mass_device)
+            )
             self.internal_pipeline.add_action(FlashUBootUMSAction(self.usb_mass_device))
             self.internal_pipeline.add_action(ResetDevice())
         else:
@@ -127,7 +139,7 @@ class UBootRetry(BootAction):
             self.internal_pipeline.add_action(AutoLoginAction())
             if self.test_has_shell(parameters):
                 self.internal_pipeline.add_action(ExpectShellSession())
-                if 'transfer_overlay' in parameters:
+                if "transfer_overlay" in parameters:
                     self.internal_pipeline.add_action(OverlayUnpack())
                 self.internal_pipeline.add_action(ExportDeviceEnvironment())
 
@@ -135,14 +147,18 @@ class UBootRetry(BootAction):
         super().validate()
         self.set_namespace_data(
             action=self.name,
-            label='bootloader_prompt',
-            key='prompt',
-            value=self.job.device['actions']['boot']['methods']['u-boot']['parameters']['bootloader_prompt']
+            label="bootloader_prompt",
+            key="prompt",
+            value=self.job.device["actions"]["boot"]["methods"]["u-boot"]["parameters"][
+                "bootloader_prompt"
+            ],
         )
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
-        self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
+        self.set_namespace_data(
+            action="shared", label="shared", key="connection", value=connection
+        )
         return connection
 
 
@@ -153,43 +169,68 @@ class UBootSecondaryMedia(BootloaderSecondaryMedia):
     """
 
     name = "uboot-from-media"
-    description = "let uboot know where to find the kernel in the image on secondary media"
+    description = (
+        "let uboot know where to find the kernel in the image on secondary media"
+    )
     summary = "set uboot strings for deployed media"
 
     def validate(self):
-        if 'media' not in self.job.device.get('parameters', []):
+        if "media" not in self.job.device.get("parameters", []):
             return
-        media_keys = self.job.device['parameters']['media'].keys()
-        if self.parameters['commands'] not in list(media_keys):
+        media_keys = self.job.device["parameters"]["media"].keys()
+        if self.parameters["commands"] not in list(media_keys):
             return
         super().validate()
-        if 'kernel_type' not in self.parameters:
+        if "kernel_type" not in self.parameters:
             self.errors = "Missing kernel_type for secondary media boot"
-        self.logger.debug("Mapping kernel_type: %s", self.parameters['kernel_type'])
-        bootcommand = map_kernel_uboot(self.parameters['kernel_type'], self.job.device.get('parameters'))
+        self.logger.debug("Mapping kernel_type: %s", self.parameters["kernel_type"])
+        bootcommand = map_kernel_uboot(
+            self.parameters["kernel_type"], self.job.device.get("parameters")
+        )
         self.logger.debug("Using bootcommand: %s", bootcommand)
         self.set_namespace_data(
-            action='uboot-prepare-kernel', label='kernel-type',
-            key='kernel-type', value=self.parameters.get('kernel_type', ''))
+            action="uboot-prepare-kernel",
+            label="kernel-type",
+            key="kernel-type",
+            value=self.parameters.get("kernel_type", ""),
+        )
         self.set_namespace_data(
-            action='uboot-prepare-kernel', label='bootcommand', key='bootcommand', value=bootcommand)
+            action="uboot-prepare-kernel",
+            label="bootcommand",
+            key="bootcommand",
+            value=bootcommand,
+        )
 
-        media_params = self.job.device['parameters']['media'][self.parameters['commands']]
-        if self.get_namespace_data(action='storage-deploy', label='u-boot', key='device') not in media_params:
+        media_params = self.job.device["parameters"]["media"][
+            self.parameters["commands"]
+        ]
+        if (
+            self.get_namespace_data(
+                action="storage-deploy", label="u-boot", key="device"
+            )
+            not in media_params
+        ):
             self.errors = "%s does not match requested media type %s" % (
                 self.get_namespace_data(
-                    action='storage-deploy', label='u-boot', key='device'), self.parameters['commands']
+                    action="storage-deploy", label="u-boot", key="device"
+                ),
+                self.parameters["commands"],
             )
         if not self.valid:
             return
         self.set_namespace_data(
             action=self.name,
-            label='uuid',
-            key='boot_part',
-            value='%s:%s' % (
-                media_params[self.get_namespace_data(action='storage-deploy', label='u-boot', key='device')]['device_id'],
-                self.parameters['boot_part']
-            )
+            label="uuid",
+            key="boot_part",
+            value="%s:%s"
+            % (
+                media_params[
+                    self.get_namespace_data(
+                        action="storage-deploy", label="u-boot", key="device"
+                    )
+                ]["device_id"],
+                self.parameters["boot_part"],
+            ),
         )
 
 
@@ -204,8 +245,9 @@ class UBootEnterFastbootAction(BootAction):
         self.params = {}
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(parent=self, job=self.job,
-                                          parameters=parameters)
+        self.internal_pipeline = Pipeline(
+            parent=self, job=self.job, parameters=parameters
+        )
         # establish a new connection before trying the reset
         self.internal_pipeline.add_action(ResetDevice())
         # need to look for Hit any key to stop autoboot
@@ -214,20 +256,29 @@ class UBootEnterFastbootAction(BootAction):
 
     def validate(self):
         super().validate()
-        if 'u-boot' not in self.job.device['actions']['deploy']['methods']:
+        if "u-boot" not in self.job.device["actions"]["deploy"]["methods"]:
             self.errors = "uboot method missing"
 
-        self.params = self.job.device['actions']['deploy']['methods']['u-boot']['parameters']
-        if 'commands' not in self.job.device['actions']['deploy']['methods']['u-boot']['parameters']['fastboot']:
+        self.params = self.job.device["actions"]["deploy"]["methods"]["u-boot"][
+            "parameters"
+        ]
+        if (
+            "commands"
+            not in self.job.device["actions"]["deploy"]["methods"]["u-boot"][
+                "parameters"
+            ]["fastboot"]
+        ):
             self.errors = "uboot command missing"
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
-        connection.prompt_str = self.params['bootloader_prompt']
+        connection.prompt_str = self.params["bootloader_prompt"]
         self.logger.debug("Changing prompt to %s", connection.prompt_str)
         self.wait(connection)
         i = 1
-        commands = self.job.device['actions']['deploy']['methods']['u-boot']['parameters']['fastboot']['commands']
+        commands = self.job.device["actions"]["deploy"]["methods"]["u-boot"][
+            "parameters"
+        ]["fastboot"]["commands"]
 
         for line in commands:
             connection.sendline(line, delay=self.character_delay)

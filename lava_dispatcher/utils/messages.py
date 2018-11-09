@@ -61,12 +61,12 @@ class LinuxKernelMessages(Action):
     FREE_INIT = 5
 
     MESSAGE_CHOICES = (
-        (EXCEPTION, KERNEL_EXCEPTION_MSG, 'exception'),
-        (FAULT, KERNEL_FAULT_MSG, 'fault'),
-        (PANIC, KERNEL_PANIC_MSG, 'panic'),
-        (TRACE, KERNEL_TRACE_MSG, 'trace'),
-        (FREE_UNUSED, KERNEL_FREE_UNUSED_MSG, 'success'),
-        (FREE_INIT, KERNEL_FREE_INIT_MSG, 'success'),
+        (EXCEPTION, KERNEL_EXCEPTION_MSG, "exception"),
+        (FAULT, KERNEL_FAULT_MSG, "fault"),
+        (PANIC, KERNEL_PANIC_MSG, "panic"),
+        (TRACE, KERNEL_TRACE_MSG, "trace"),
+        (FREE_UNUSED, KERNEL_FREE_UNUSED_MSG, "success"),
+        (FREE_INIT, KERNEL_FREE_INIT_MSG, "success"),
     )
 
     def __init__(self):
@@ -82,10 +82,12 @@ class LinuxKernelMessages(Action):
 
     @classmethod
     def get_init_prompts(cls):
-        return [prompt[1] for prompt in cls.MESSAGE_CHOICES[:cls.FREE_UNUSED]]
+        return [prompt[1] for prompt in cls.MESSAGE_CHOICES[: cls.FREE_UNUSED]]
 
     @classmethod
-    def parse_failures(cls, connection, action=None, max_end_time=None, fail_msg=None):  # pylint: disable=too-many-branches
+    def parse_failures(
+        cls, connection, action=None, max_end_time=None, fail_msg=None
+    ):  # pylint: disable=too-many-branches
         """
         Returns a list of dictionaries of matches for failure strings and
         other kernel messages.
@@ -121,7 +123,9 @@ class LinuxKernelMessages(Action):
             if action:
                 action.logger.debug(
                     "[%s] Waiting for messages, (timeout %s)",
-                    action.name, seconds_to_str(remaining))
+                    action.name,
+                    seconds_to_str(remaining),
+                )
             try:
                 index = connection.force_prompt_wait(remaining)
             except (pexpect.EOF, pexpect.TIMEOUT, TestError):
@@ -132,63 +136,80 @@ class LinuxKernelMessages(Action):
                 break
 
             if action and index:
-                action.logger.debug("Matched prompt #%s: %s", index, connection.prompt_str[index])
+                action.logger.debug(
+                    "Matched prompt #%s: %s", index, connection.prompt_str[index]
+                )
             message = connection.raw_connection.after
             if index == cls.TRACE or index == cls.EXCEPTION:
                 res = "fail"
                 if action:
-                    action.logger.warning("%s: %s" % (action.name, cls.MESSAGE_CHOICES[index][2]))
+                    action.logger.warning(
+                        "%s: %s" % (action.name, cls.MESSAGE_CHOICES[index][2])
+                    )
                 # TRACE may need a newline to force a prompt
                 connection.sendline(connection.check_char)
                 # this is allowable behaviour, not a failure.
-                results.append({
-                    cls.MESSAGE_CHOICES[index][2]: cls.MESSAGE_CHOICES[index][1],
-                    'message': message[:METADATA_MESSAGE_LIMIT]
-                })
+                results.append(
+                    {
+                        cls.MESSAGE_CHOICES[index][2]: cls.MESSAGE_CHOICES[index][1],
+                        "message": message[:METADATA_MESSAGE_LIMIT],
+                    }
+                )
                 continue
             elif index == cls.PANIC:
                 res = "fail"
                 if action:
-                    action.logger.error("%s %s" % (action.name, cls.MESSAGE_CHOICES[index][2]))
-                results.append({
-                    cls.MESSAGE_CHOICES[index][2]: cls.MESSAGE_CHOICES[index][1],
-                    'message': message[:METADATA_MESSAGE_LIMIT]
-                })
+                    action.logger.error(
+                        "%s %s" % (action.name, cls.MESSAGE_CHOICES[index][2])
+                    )
+                results.append(
+                    {
+                        cls.MESSAGE_CHOICES[index][2]: cls.MESSAGE_CHOICES[index][1],
+                        "message": message[:METADATA_MESSAGE_LIMIT],
+                    }
+                )
                 halt = message[:METADATA_MESSAGE_LIMIT]
                 break
-            elif action and fail_msg and index and fail_msg == connection.prompt_str[index]:
+            elif (
+                action
+                and fail_msg
+                and index
+                and fail_msg == connection.prompt_str[index]
+            ):
                 res = "fail"
                 # user has declared this message to be terminal for this test job.
                 halt = "Matched job-specific failure message: '%s'" % fail_msg
                 action.logger.error("%s %s" % (action.name, halt))
-                results.append({
-                    'message': 'kernel-messages'
-                })
+                results.append({"message": "kernel-messages"})
             elif index and index == cls.FREE_UNUSED or index == cls.FREE_INIT:
                 if init and index <= cls.FREE_INIT:
-                    results.append({
-                        cls.MESSAGE_CHOICES[index][2]: cls.MESSAGE_CHOICES[index][1],
-                        'message': 'kernel-messages'
-                    })
+                    results.append(
+                        {
+                            cls.MESSAGE_CHOICES[index][2]: cls.MESSAGE_CHOICES[index][
+                                1
+                            ],
+                            "message": "kernel-messages",
+                        }
+                    )
                     continue
                 else:
-                    results.append({
-                        'success': connection.prompt_str[index]
-                    })
+                    results.append({"success": connection.prompt_str[index]})
                     break
             else:
                 break
         # record a specific result for the kernel messages for later debugging.
         if action and isinstance(action.logger, YAMLLogger):
-            action.logger.results({  # pylint: disable=no-member
-                "definition": "lava",
-                "namespace": action.parameters.get('namespace', 'common'),
-                "case": cls.name,
-                "level": action.level,
-                "duration": "%.02f" % (time.time() - start),
-                "result": res,
-                "extra": {'extra': results}
-            })
+            action.logger.results(
+                {  # pylint: disable=no-member
+                    "definition": "lava",
+                    "namespace": action.parameters.get("namespace", "common"),
+                    "case": cls.name,
+                    "level": action.level,
+                    "duration": "%.02f" % (time.time() - start),
+                    "result": res,
+                    "extra": {"extra": results},
+                }
+            )
         if halt:
             # end this job early, kernel is unable to continue
             raise JobError(halt)
@@ -215,12 +236,12 @@ class LinuxKernelMessages(Action):
         self.logger.debug(connection.prompt_str)
         results = self.parse_failures(connection)
         if len(results) > 1:
-            self.results = {'fail': results}
+            self.results = {"fail": results}
         elif len(results) == 1:
             self.results = {
-                'success': self.name,
-                'message': results[0]['message']  # the matching prompt
+                "success": self.name,
+                "message": results[0]["message"],  # the matching prompt
             }
         else:
-            self.results = {'result': 'skipped'}
+            self.results = {"result": "skipped"}
         return connection

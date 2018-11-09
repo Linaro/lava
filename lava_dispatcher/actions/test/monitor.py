@@ -24,19 +24,15 @@ import pexpect
 from collections import OrderedDict
 from lava_dispatcher.action import Pipeline
 from lava_common.exceptions import InfrastructureError
-from lava_dispatcher.actions.test import (
-    TestAction,
-)
-from lava_dispatcher.logical import (
-    LavaTest,
-    RetryAction,
-)
+from lava_dispatcher.actions.test import TestAction
+from lava_dispatcher.logical import LavaTest, RetryAction
 
 
 class TestMonitor(LavaTest):
     """
     LavaTestMonitor Strategy object
     """
+
     def __init__(self, parent, parameters):
         super().__init__(parent)
         self.action = TestMonitorRetry()
@@ -47,13 +43,15 @@ class TestMonitor(LavaTest):
     @classmethod
     def accepts(cls, device, parameters):
         # TODO: Add configurable timeouts
-        required_parms = ['name', 'start',
-                          'end', 'pattern']
-        if 'monitors' in parameters:
-            for monitor in parameters['monitors']:
+        required_parms = ["name", "start", "end", "pattern"]
+        if "monitors" in parameters:
+            for monitor in parameters["monitors"]:
                 if not all([x for x in required_parms if x in monitor]):
-                    return False, 'missing a required parameter from %s' % required_parms
-            return True, 'accepted'
+                    return (
+                        False,
+                        "missing a required parameter from %s" % required_parms,
+                    )
+            return True, "accepted"
         return False, '"monitors" not in parameters'
 
     @classmethod
@@ -76,7 +74,9 @@ class TestMonitorRetry(RetryAction):
     summary = "Retry support for Lava Test Monitoring"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.internal_pipeline = Pipeline(
+            parent=self, job=self.job, parameters=parameters
+        )
         self.internal_pipeline.add_action(TestMonitorAction())
 
 
@@ -103,27 +103,29 @@ class TestMonitorAction(TestAction):  # pylint: disable=too-many-instance-attrib
 
         if not connection:
             raise InfrastructureError("Connection closed")
-        for monitor in self.parameters['monitors']:
-            self.test_suite_name = monitor['name']
+        for monitor in self.parameters["monitors"]:
+            self.test_suite_name = monitor["name"]
 
-            self.fixupdict = monitor.get('fixupdict')
+            self.fixupdict = monitor.get("fixupdict")
 
             # pattern order is important because we want to match the end before
             # it can possibly get confused with a test result
             self.patterns = OrderedDict()
             self.patterns["eof"] = pexpect.EOF
             self.patterns["timeout"] = pexpect.TIMEOUT
-            self.patterns["end"] = monitor['end']
-            self.patterns["test_result"] = monitor['pattern']
+            self.patterns["end"] = monitor["end"]
+            self.patterns["test_result"] = monitor["pattern"]
 
             # Find the start string before parsing any output.
-            self.logger.info("Waiting for start message: %s", monitor['start'])
-            connection.prompt_str = monitor['start']
+            self.logger.info("Waiting for start message: %s", monitor["start"])
+            connection.prompt_str = monitor["start"]
             connection.wait()
             self.logger.info("ok: start string found, lava test monitoring started")
 
             with connection.test_connection() as test_connection:
-                while self._keep_running(test_connection, timeout=test_connection.timeout):
+                while self._keep_running(
+                    test_connection, timeout=test_connection.timeout
+                ):
                     pass
 
         return connection
@@ -133,7 +135,9 @@ class TestMonitorAction(TestAction):  # pylint: disable=too-many-instance-attrib
         retval = test_connection.expect(list(self.patterns.values()), timeout=timeout)
         return self.check_patterns(list(self.patterns.keys())[retval], test_connection)
 
-    def check_patterns(self, event, test_connection):  # pylint: disable=too-many-branches
+    def check_patterns(
+        self, event, test_connection
+    ):  # pylint: disable=too-many-branches
         """
         Defines the base set of pattern responses.
         Stores the results of testcases inside the TestAction
@@ -142,55 +146,59 @@ class TestMonitorAction(TestAction):  # pylint: disable=too-many-instance-attrib
         ret_val = False
         if event == "end":
             self.logger.info("ok: end string found, lava test monitoring stopped")
-            self.results.update({'status': 'passed'})
+            self.results.update({"status": "passed"})
         elif event == "timeout":
             self.logger.warning("err: lava test monitoring has timed out")
             self.errors = "lava test monitoring has timed out"
-            self.results.update({'status': 'failed'})
+            self.results.update({"status": "failed"})
         elif event == "test_result":
             self.logger.info("ok: test case found")
             match = test_connection.match.groupdict()
-            if 'result' in match:
+            if "result" in match:
                 if self.fixupdict:
-                    if match['result'] in self.fixupdict:
-                        match['result'] = self.fixupdict[match['result']]
-                if match['result'] not in ('pass', 'fail', 'skip', 'unknown'):
-                    self.logger.error("error: bad test results: %s", match['result'])
+                    if match["result"] in self.fixupdict:
+                        match["result"] = self.fixupdict[match["result"]]
+                if match["result"] not in ("pass", "fail", "skip", "unknown"):
+                    self.logger.error("error: bad test results: %s", match["result"])
                 else:
-                    if 'test_case_id' in match:
-                        case_id = match['test_case_id'].strip().lower()
+                    if "test_case_id" in match:
+                        case_id = match["test_case_id"].strip().lower()
                         # remove special characters to form a valid test case id
-                        case_id = re.sub(r'\W+', '_', case_id)
-                        self.logger.debug('test_case_id: %s', case_id)
+                        case_id = re.sub(r"\W+", "_", case_id)
+                        self.logger.debug("test_case_id: %s", case_id)
                         results = {
-                            'definition': self.test_suite_name.replace(' ', '-').lower(),
-                            'case': case_id,
-                            'level': self.level,
-                            'result': match['result'],
-                            'extra': {'test_case_id': match['test_case_id'].strip()}
+                            "definition": self.test_suite_name.replace(
+                                " ", "-"
+                            ).lower(),
+                            "case": case_id,
+                            "level": self.level,
+                            "result": match["result"],
+                            "extra": {"test_case_id": match["test_case_id"].strip()},
                         }
-                        if 'measurement' in match:
-                            results.update({'measurement': match['measurement']})
-                        if 'units' in match:
-                            results.update({'units': match['units']})
+                        if "measurement" in match:
+                            results.update({"measurement": match["measurement"]})
+                        if "units" in match:
+                            results.update({"units": match["units"]})
                         self.logger.results(results)  # pylint: disable=no-member
             else:
-                if all(x in match for x in ['test_case_id', 'measurement']):
-                    if match['measurement'] and match['test_case_id']:
-                        case_id = match['test_case_id'].strip().lower()
+                if all(x in match for x in ["test_case_id", "measurement"]):
+                    if match["measurement"] and match["test_case_id"]:
+                        case_id = match["test_case_id"].strip().lower()
                         # remove special characters to form a valid test case id
-                        case_id = re.sub(r'\W+', '_', case_id)
-                        self.logger.debug('test_case_id: %s', case_id)
+                        case_id = re.sub(r"\W+", "_", case_id)
+                        self.logger.debug("test_case_id: %s", case_id)
                         results = {
-                            'definition': self.test_suite_name.replace(' ', '-').lower(),
-                            'case': case_id,
-                            'level': self.level,
-                            'result': 'pass',
-                            'measurement': float(match['measurement']),
-                            'extra': {'test_case_id': match['test_case_id'].strip()}
+                            "definition": self.test_suite_name.replace(
+                                " ", "-"
+                            ).lower(),
+                            "case": case_id,
+                            "level": self.level,
+                            "result": "pass",
+                            "measurement": float(match["measurement"]),
+                            "extra": {"test_case_id": match["test_case_id"].strip()},
                         }
-                        if 'units' in match:
-                            results.update({'units': match['units']})
+                        if "units" in match:
+                            results.update({"units": match["units"]})
                         self.logger.results(results)  # pylint: disable=no-member
             ret_val = True
         return ret_val

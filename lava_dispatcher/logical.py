@@ -49,7 +49,9 @@ class RetryAction(Action):
         """
         super().validate()
         if not self.internal_pipeline:
-            raise LAVABug("Retry action %s needs to implement an internal pipeline" % self.name)
+            raise LAVABug(
+                "Retry action %s needs to implement an internal pipeline" % self.name
+            )
 
     def run(self, connection, max_end_time):
         retries = 0
@@ -58,8 +60,10 @@ class RetryAction(Action):
         while retries < self.max_retries:
             retries += 1
             try:
-                connection = self.internal_pipeline.run_actions(connection, max_end_time)
-                if 'repeat' not in self.parameters:
+                connection = self.internal_pipeline.run_actions(
+                    connection, max_end_time
+                )
+                if "repeat" not in self.parameters:
                     # failure_retry returns on first success. repeat returns only at max_retries.
                     return connection
             # Do not retry for LAVABug (as it's a bug in LAVA)
@@ -69,8 +73,12 @@ class RetryAction(Action):
                 max_end_time += time.time() - self.timeout.start
                 self.timeout.start = time.time()
                 # Print the error message
-                msg = "%s failed: %d of %d attempts. '%s'" % (self.name, retries,
-                                                              self.max_retries, exc)
+                msg = "%s failed: %d of %d attempts. '%s'" % (
+                    self.name,
+                    retries,
+                    self.max_retries,
+                    exc,
+                )
                 self.logger.error(msg)
                 # Cleanup the action to allow for a safe restart
                 self.cleanup(connection)
@@ -78,14 +86,22 @@ class RetryAction(Action):
                 # re-raise if this is the last loop
                 if retries == self.max_retries:
                     self.errors = "%s retries failed for %s" % (retries, self.name)
-                    self.set_namespace_data(action='shared', label='shared',
-                                            key='connection', value=connection)
+                    self.set_namespace_data(
+                        action="shared",
+                        label="shared",
+                        key="connection",
+                        value=connection,
+                    )
                     raise
 
                 # Wait some time before retrying
                 time.sleep(self.sleep)
-                self.logger.warning("Retrying: %s %s (%s sec)", self.level,
-                                    self.name, int(max_end_time - self.timeout.start))
+                self.logger.warning(
+                    "Retrying: %s %s (%s sec)",
+                    self.level,
+                    self.name,
+                    int(max_end_time - self.timeout.start),
+                )
 
         # If we are repeating, check that all repeat were a success.
         if has_failed:
@@ -100,7 +116,7 @@ class DiagnosticAction(Action):
     Diagnostics have no level and are not intended to be added to Pipeline.
     """
 
-    section = 'diagnostic'
+    section = "diagnostic"
     name = "diagnose"
     description = "action-specific diagnostics in case of failure"
     summary = "diagnose action failure"
@@ -130,9 +146,9 @@ class Deployment:
     """
 
     priority = 0
-    action_type = 'deploy'
+    action_type = "deploy"
     compatibility = 0
-    name = 'unset-deployment-name'
+    name = "unset-deployment-name"
 
     def __init__(self, parent):
         self.__parameters__ = {}
@@ -175,14 +191,20 @@ class Deployment:
     def deploy_check(cls, device, parameters):
         if not device:
             raise JobError('job "device" was None')
-        if 'actions' not in device:
-            raise ConfigurationError('Invalid device configuration, no "actions" in device configuration')
-        if 'to' not in parameters:
+        if "actions" not in device:
+            raise ConfigurationError(
+                'Invalid device configuration, no "actions" in device configuration'
+            )
+        if "to" not in parameters:
             raise ConfigurationError('"to" not specified in deploy parameters')
-        if 'deploy' not in device['actions']:
-            raise ConfigurationError('"deploy" is not in the device configuration actions')
-        if 'methods' not in device['actions']['deploy']:
-            raise ConfigurationError('Device misconfiguration, no "methods" in device configuration deploy actions')
+        if "deploy" not in device["actions"]:
+            raise ConfigurationError(
+                '"deploy" is not in the device configuration actions'
+            )
+        if "methods" not in device["actions"]["deploy"]:
+            raise ConfigurationError(
+                'Device misconfiguration, no "methods" in device configuration deploy actions'
+            )
 
     @classmethod
     def uses_deployment_data(cls):
@@ -197,7 +219,9 @@ class Deployment:
         for c in candidates:
             res = c.accepts(device, parameters)
             if not isinstance(res, tuple):
-                raise LAVABug('class %s accept function did not return a tuple' % c.__name__)
+                raise LAVABug(
+                    "class %s accept function did not return a tuple" % c.__name__
+                )
             if res[0]:
                 willing.append(c)
             else:
@@ -206,9 +230,11 @@ class Deployment:
         if not willing:
             replies_string = ""
             for name, reply in replies.items():
-                replies_string += ("%s: %s\n" % (name, reply))
+                replies_string += "%s: %s\n" % (name, reply)
             raise JobError(
-                "None of the deployment strategies accepted your deployment parameters, reasons given:\n%s" % replies_string)
+                "None of the deployment strategies accepted your deployment parameters, reasons given:\n%s"
+                % replies_string
+            )
 
         willing.sort(key=lambda x: x.priority, reverse=True)
         return willing[0]
@@ -220,7 +246,7 @@ class Boot:
     """
 
     priority = 0
-    action_type = 'boot'
+    action_type = "boot"
     compatibility = 0
 
     def __init__(self, parent):
@@ -233,14 +259,20 @@ class Boot:
     def boot_check(cls, device, parameters):
         if not device:
             raise JobError('job "device" was None')
-        if 'method' not in parameters:
+        if "method" not in parameters:
             raise ConfigurationError("method not specified in boot parameters")
-        if 'actions' not in device:
-            raise ConfigurationError('Invalid device configuration, no "actions" in device configuration')
-        if 'boot' not in device['actions']:
-            raise ConfigurationError('"boot" is not in the device configuration actions')
-        if 'methods' not in device['actions']['boot']:
-            raise ConfigurationError('Device misconfiguration, no "methods" in device configuration boot action')
+        if "actions" not in device:
+            raise ConfigurationError(
+                'Invalid device configuration, no "actions" in device configuration'
+            )
+        if "boot" not in device["actions"]:
+            raise ConfigurationError(
+                '"boot" is not in the device configuration actions'
+            )
+        if "methods" not in device["actions"]["boot"]:
+            raise ConfigurationError(
+                'Device misconfiguration, no "methods" in device configuration boot action'
+            )
 
     @classmethod
     def accepts(cls, device, parameters):  # pylint: disable=unused-argument
@@ -261,19 +293,23 @@ class Boot:
         for c in candidates:
             res = c.accepts(device, parameters)
             if not isinstance(res, tuple):
-                raise LAVABug('class %s accept function did not return a tuple' % c.__name__)
+                raise LAVABug(
+                    "class %s accept function did not return a tuple" % c.__name__
+                )
             if res[0]:
                 willing.append(c)
             else:
-                class_name = c.name if hasattr(c, 'name') else c.__name__
+                class_name = c.name if hasattr(c, "name") else c.__name__
                 replies[class_name] = res[1]
 
         if not willing:
             replies_string = ""
             for name, reply in replies.items():
-                replies_string += ("%s: %s\n" % (name, reply))
+                replies_string += "%s: %s\n" % (name, reply)
             raise JobError(
-                "None of the boot strategies accepted your boot parameters, reasons given:\n%s" % replies_string)
+                "None of the boot strategies accepted your boot parameters, reasons given:\n%s"
+                % replies_string
+            )
 
         willing.sort(key=lambda x: x.priority, reverse=True)
         return willing[0]
@@ -285,7 +321,7 @@ class LavaTest:
     """
 
     priority = 1
-    action_type = 'test'
+    action_type = "test"
     compatibility = 1  # used directly
 
     def __init__(self, parent):
@@ -312,19 +348,23 @@ class LavaTest:
         for c in candidates:
             res = c.accepts(device, parameters)
             if not isinstance(res, tuple):
-                raise LAVABug('class %s accept function did not return a tuple' % c.__name__)
+                raise LAVABug(
+                    "class %s accept function did not return a tuple" % c.__name__
+                )
             if res[0]:
                 willing.append(c)
             else:
-                class_name = c.name if hasattr(c, 'name') else c.__name__
+                class_name = c.name if hasattr(c, "name") else c.__name__
                 replies[class_name] = res[1]
 
         if not willing:
             replies_string = ""
             for name, reply in replies.items():
-                replies_string += ("%s: %s\n" % (name, reply))
+                replies_string += "%s: %s\n" % (name, reply)
             raise JobError(
-                "None of the test strategies accepted your test parameters, reasons given:\n%s" % replies_string)
+                "None of the test strategies accepted your test parameters, reasons given:\n%s"
+                % replies_string
+            )
 
         willing.sort(key=lambda x: x.priority, reverse=True)
         return willing[0]

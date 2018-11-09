@@ -24,11 +24,7 @@
 import time
 import traceback
 
-from lava_common.exceptions import (
-    InfrastructureError,
-    JobError,
-    TestError,
-)
+from lava_common.exceptions import InfrastructureError, JobError, TestError
 from lava_common.constants import REBOOT_COMMAND_LIST
 from lava_dispatcher.action import Action, Pipeline
 
@@ -47,7 +43,9 @@ class ResetDevice(Action):
     summary = "reboot the device"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.internal_pipeline = Pipeline(
+            parent=self, job=self.job, parameters=parameters
+        )
         if self.job.device.hard_reset_command:
             self.internal_pipeline.add_action(PDUReboot())
         else:
@@ -60,17 +58,20 @@ class SendRebootCommands(Action):
     """
 
     name = "send-reboot-commands"
-    description = 'Issue a reboot command on the device'
-    summary = 'Issue a reboot command on the device'
+    description = "Issue a reboot command on the device"
+    summary = "Issue a reboot command on the device"
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
-        reboot_commands = self.parameters.get('soft_reboot', [])  # list
-        if not self.parameters.get('soft_reboot'):  # unit test
-            self.logger.warning('No soft reboot command defined in the test job. Using defaults.')
+        reboot_commands = self.parameters.get("soft_reboot", [])  # list
+        if not self.parameters.get("soft_reboot"):  # unit test
+            self.logger.warning(
+                "No soft reboot command defined in the test job. Using defaults."
+            )
             reboot_commands = REBOOT_COMMAND_LIST
-        connection.prompt_str = self.parameters.get(
-            'parameters', {}).get('shutdown-message', self.job.device.get_constant('shutdown-message'))
+        connection.prompt_str = self.parameters.get("parameters", {}).get(
+            "shutdown-message", self.job.device.get_constant("shutdown-message")
+        )
         connection.timeout = self.connection_timeout
         for cmd in reboot_commands:
             connection.sendline(cmd)
@@ -78,7 +79,7 @@ class SendRebootCommands(Action):
             self.wait(connection)
         except TestError:
             raise JobError("Soft reboot failed.")
-        self.results = {'commands': reboot_commands}
+        self.results = {"commands": reboot_commands}
         return connection
 
 
@@ -109,9 +110,9 @@ class PDUReboot(Action):
         if not isinstance(command, list):
             command = [command]
         for cmd in command:
-            if not self.run_command(cmd.split(' '), allow_silent=True):
+            if not self.run_command(cmd.split(" "), allow_silent=True):
                 raise InfrastructureError("%s failed" % cmd)
-        self.results = {'status': 'success'}
+        self.results = {"status": "success"}
         return connection
 
 
@@ -130,7 +131,7 @@ class PrePower(Action):
     timeout_exception = InfrastructureError
 
     def run(self, connection, max_end_time):
-        if self.job.device.pre_power_command == '':
+        if self.job.device.pre_power_command == "":
             self.logger.warning("Pre power command does not exist")
             return connection
         connection = super().run(connection, max_end_time)
@@ -140,9 +141,9 @@ class PrePower(Action):
             if not isinstance(command, list):
                 command = [command]
             for cmd in command:
-                if not self.run_command(cmd.split(' '), allow_silent=True):
+                if not self.run_command(cmd.split(" "), allow_silent=True):
                     raise InfrastructureError("%s failed" % cmd)
-        self.results = {'success': self.name}
+        self.results = {"success": self.name}
         return connection
 
 
@@ -161,7 +162,7 @@ class PreOs(Action):
     timeout_exception = InfrastructureError
 
     def run(self, connection, max_end_time):
-        if self.job.device.pre_os_command == '':
+        if self.job.device.pre_os_command == "":
             self.logger.warning("Pre OS command does not exist")
             return connection
         connection = super().run(connection, max_end_time)
@@ -171,9 +172,9 @@ class PreOs(Action):
             if not isinstance(command, list):
                 command = [command]
             for cmd in command:
-                if not self.run_command(cmd.split(' '), allow_silent=True):
+                if not self.run_command(cmd.split(" "), allow_silent=True):
                     raise InfrastructureError("%s failed" % cmd)
-        self.results = {'success': self.name}
+        self.results = {"success": self.name}
         return connection
 
 
@@ -189,7 +190,7 @@ class PowerOn(Action):
 
     def run(self, connection, max_end_time):
         # to enable power to a device, either power_on or hard_reset are needed.
-        if self.job.device.power_command == '':
+        if self.job.device.power_command == "":
             self.logger.warning("Unable to power on the device")
             return connection
         connection = super().run(connection, max_end_time)
@@ -199,7 +200,7 @@ class PowerOn(Action):
             if not isinstance(command, list):
                 command = [command]
             for cmd in command:
-                if not self.run_command(cmd.split(' '), allow_silent=True):
+                if not self.run_command(cmd.split(" "), allow_silent=True):
                     raise InfrastructureError("%s failed" % cmd)
         command = self.job.device.power_command
         if not command:
@@ -207,9 +208,11 @@ class PowerOn(Action):
         if not isinstance(command, list):
             command = [command]
         for cmd in command:
-            if not self.run_command(cmd.split(' '), allow_silent=True):  # pylint: disable=no-member
+            if not self.run_command(
+                cmd.split(" "), allow_silent=True
+            ):  # pylint: disable=no-member
                 raise InfrastructureError("%s failed" % cmd)
-        self.results = {'success': self.name}
+        self.results = {"success": self.name}
         return connection
 
 
@@ -225,17 +228,17 @@ class PowerOff(Action):
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
-        if not self.job.device.get('commands'):
+        if not self.job.device.get("commands"):
             return connection
-        command = self.job.device['commands'].get('power_off', [])
+        command = self.job.device["commands"].get("power_off", [])
         # QEMU cannot use a power_off_command because that would be run
         # on the worker, not the VM.
         if not isinstance(command, list):
             command = [command]
         for cmd in command:
-            if not self.run_command(cmd.split(' '), allow_silent=True):
+            if not self.run_command(cmd.split(" "), allow_silent=True):
                 raise InfrastructureError("%s failed" % cmd)
-        self.results = {'status': 'success'}
+        self.results = {"status": "success"}
         return connection
 
 
@@ -245,26 +248,30 @@ class ReadFeedback(Action):
     to any pipeline.
     """
 
-    name = 'read-feedback'
-    description = 'Check for messages on all other namespaces'
-    summary = 'Read from other namespaces'
+    name = "read-feedback"
+    description = "Check for messages on all other namespaces"
+    summary = "Read from other namespaces"
 
     def __init__(self, finalize=False, repeat=False):
         super().__init__()
         self.finalize = finalize
-        self.parameters['namespace'] = 'common'
+        self.parameters["namespace"] = "common"
         self.duration = 1  # FIXME: needs to be a constant set in the base template.
         self.repeat = repeat
 
     def run(self, connection, max_end_time):
         feedbacks = []
         for feedback_ns in self.data.keys():  # pylint: disable=no-member
-            if feedback_ns == self.parameters.get('namespace'):
+            if feedback_ns == self.parameters.get("namespace"):
                 if not self.repeat:
                     continue
             feedback_connection = self.get_namespace_data(
-                action='shared', label='shared', key='connection',
-                deepcopy=False, parameters={"namespace": feedback_ns})
+                action="shared",
+                label="shared",
+                key="connection",
+                deepcopy=False,
+                parameters={"namespace": feedback_ns},
+            )
             if feedback_connection:
                 feedbacks.append((feedback_ns, feedback_connection))
             else:
@@ -274,9 +281,14 @@ class ReadFeedback(Action):
             # ignore empty or single newline-only content
             if bytes_read > 1:
                 self.logger.debug(
-                    "Listened to connection for namespace '%s' for %ds", feedback[0], self.duration)
+                    "Listened to connection for namespace '%s' for %ds",
+                    feedback[0],
+                    self.duration,
+                )
             if self.finalize:
-                self.logger.info("Finalising connection for namespace '%s'", feedback[0])
+                self.logger.info(
+                    "Finalising connection for namespace '%s'", feedback[0]
+                )
                 # Finalize all connections associated with each namespace.
                 feedback[1].finalise()
         super().run(connection, max_end_time)
@@ -300,7 +312,9 @@ class FinalizeAction(Action):
         self.ran = False
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(job=self.job, parent=self, parameters=parameters)
+        self.internal_pipeline = Pipeline(
+            job=self.job, parent=self, parameters=parameters
+        )
         self.internal_pipeline.add_action(PowerOff())
         self.internal_pipeline.add_action(ReadFeedback(finalize=True, repeat=True))
 

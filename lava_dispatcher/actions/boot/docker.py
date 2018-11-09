@@ -20,18 +20,11 @@
 
 import os
 
-from lava_dispatcher.action import (
-    Pipeline,
-    Action,
-)
+from lava_dispatcher.action import Pipeline, Action
 from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.actions.boot import BootAction
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
-from lava_dispatcher.shell import (
-    ExpectShellSession,
-    ShellCommand,
-    ShellSession
-)
+from lava_dispatcher.shell import ExpectShellSession, ShellCommand, ShellSession
 
 
 class BootDocker(Boot):
@@ -46,23 +39,25 @@ class BootDocker(Boot):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if "docker" not in device['actions']['boot']['methods']:
+        if "docker" not in device["actions"]["boot"]["methods"]:
             return False, '"docker" was not in the device configuration boot methods'
         if parameters["method"] != "docker":
             return False, '"method" was not "docker"'
         if "command" not in parameters:
             return False, '"command" was not in boot parameters'
-        return True, 'accepted'
+        return True, "accepted"
 
 
 class BootDockerAction(BootAction):
 
-    name = 'boot-docker'
+    name = "boot-docker"
     description = "boot docker image"
     summary = "boot docker image"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.internal_pipeline = Pipeline(
+            parent=self, job=self.job, parameters=parameters
+        )
         self.internal_pipeline.add_action(BootDockerRetry())
         if self.has_prompts(parameters):
             if self.test_has_shell(parameters):
@@ -72,12 +67,14 @@ class BootDockerAction(BootAction):
 
 class BootDockerRetry(RetryAction):
 
-    name = 'boot-docker-retry'
+    name = "boot-docker-retry"
     description = "boot docker image with retry"
     summary = "boot docker image"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.internal_pipeline = Pipeline(
+            parent=self, job=self.job, parameters=parameters
+        )
         self.internal_pipeline.add_action(CallDockerAction())
 
 
@@ -90,37 +87,46 @@ class CallDockerAction(Action):
     def __init__(self):
         super().__init__()
         self.cleanup_required = False
-        self.extra_options = ''
-        self.container = ''
+        self.extra_options = ""
+        self.container = ""
 
     def validate(self):
         super().validate()
         self.container = "lava-%s-%s" % (self.job.job_id, self.level)
 
-        options = self.job.device['actions']['boot']['methods']['docker']['options']
+        options = self.job.device["actions"]["boot"]["methods"]["docker"]["options"]
 
-        if options['cpus']:
-            self.extra_options += ' --cpus %s' % options['cpus']
-        if options['memory']:
-            self.extra_options += ' --memory %s' % options['memory']
-        if options['devices']:
-            for device in options['devices']:
-                self.extra_options += ' --device %s' % device
-        if options['volumes']:
-            for volume in options['volumes']:
-                self.extra_options += ' --volume %s' % volume
+        if options["cpus"]:
+            self.extra_options += " --cpus %s" % options["cpus"]
+        if options["memory"]:
+            self.extra_options += " --memory %s" % options["memory"]
+        if options["devices"]:
+            for device in options["devices"]:
+                self.extra_options += " --device %s" % device
+        if options["volumes"]:
+            for volume in options["volumes"]:
+                self.extra_options += " --volume %s" % volume
 
     def run(self, connection, max_end_time):
-        location = self.get_namespace_data(action='test', label='shared', key='location')
-        docker_image = self.get_namespace_data(action='deploy-docker', label='image', key='name')
+        location = self.get_namespace_data(
+            action="test", label="shared", key="location"
+        )
+        docker_image = self.get_namespace_data(
+            action="deploy-docker", label="image", key="name"
+        )
 
         # Build the command line
         # The docker image is safe to be included in the command line
         cmd = "docker run --rm --interactive --tty --hostname lava"
         cmd += " --name %s" % self.container
         if self.test_needs_overlay(self.parameters):
-            overlay = self.get_namespace_data(action='test', label='results', key='lava_test_results_dir')
-            cmd += " --volume %s:%s" % (os.path.join(location, overlay.strip("/")), overlay)
+            overlay = self.get_namespace_data(
+                action="test", label="results", key="lava_test_results_dir"
+            )
+            cmd += " --volume %s:%s" % (
+                os.path.join(location, overlay.strip("/")),
+                overlay,
+            )
         cmd += self.extra_options
         cmd += " %s %s" % (docker_image, self.parameters["command"])
 
@@ -131,7 +137,9 @@ class CallDockerAction(Action):
         shell_connection = ShellSession(self.job, shell)
         shell_connection = super().run(shell_connection, max_end_time)
 
-        self.set_namespace_data(action='shared', label='shared', key='connection', value=shell_connection)
+        self.set_namespace_data(
+            action="shared", label="shared", key="connection", value=shell_connection
+        )
         return shell_connection
 
     def cleanup(self, connection):

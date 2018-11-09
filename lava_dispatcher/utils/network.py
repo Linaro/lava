@@ -30,10 +30,7 @@ import random
 import socket
 import subprocess  # nosec - internal use.
 from lava_common.exceptions import InfrastructureError
-from lava_common.constants import (
-    XNBD_PORT_RANGE_MIN,
-    XNBD_PORT_RANGE_MAX,
-)
+from lava_common.constants import XNBD_PORT_RANGE_MIN, XNBD_PORT_RANGE_MAX
 
 # pylint: disable=no-member
 
@@ -43,9 +40,9 @@ def dispatcher_gateway():
     Retrieves the IP address of the current default gateway.
     """
     gateways = netifaces.gateways()
-    if 'default' not in gateways:
+    if "default" not in gateways:
         raise InfrastructureError("Unable to find default gateway")
-    return gateways['default'][netifaces.AF_INET][0]
+    return gateways["default"][netifaces.AF_INET][0]
 
 
 def dispatcher_ip(dispatcher_config):
@@ -56,11 +53,11 @@ def dispatcher_ip(dispatcher_config):
     with contextlib.suppress(KeyError, TypeError):
         return dispatcher_config["dispatcher_ip"]
     gateways = netifaces.gateways()
-    if 'default' not in gateways:
+    if "default" not in gateways:
         raise InfrastructureError("Unable to find dispatcher 'default' gateway")
-    iface = gateways['default'][netifaces.AF_INET][1]
+    iface = gateways["default"][netifaces.AF_INET][1]
     addr = netifaces.ifaddresses(iface)
-    return addr[netifaces.AF_INET][0]['addr']
+    return addr[netifaces.AF_INET][0]["addr"]
 
 
 def rpcinfo_nfs(server, version=3):
@@ -70,8 +67,12 @@ def rpcinfo_nfs(server, version=3):
     :param server: the NFS server to check
     :return: None if success, message if fail
     """
-    with open(os.devnull, 'w') as devnull:
-        proc = subprocess.Popen(['/usr/sbin/rpcinfo', '-u', server, 'nfs', "%s" % version], stdout=devnull, stderr=subprocess.PIPE)  # nosec - internal use.
+    with open(os.devnull, "w") as devnull:
+        proc = subprocess.Popen(
+            ["/usr/sbin/rpcinfo", "-u", server, "nfs", "%s" % version],
+            stdout=devnull,
+            stderr=subprocess.PIPE,
+        )  # nosec - internal use.
         msg = proc.communicate()
         if msg[1]:
             return "%s %s" % (server, msg[1])
@@ -87,7 +88,7 @@ def get_free_port(dispatcher_config):
     port = None
     with contextlib.suppress(KeyError, TypeError):
         dcport = dispatcher_config["nbd_server_port"]
-        if 'auto' in dcport:
+        if "auto" in dcport:
             pass
         elif dcport.isdigit():
             return dcport

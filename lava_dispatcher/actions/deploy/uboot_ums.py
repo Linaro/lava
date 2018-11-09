@@ -35,8 +35,9 @@ class UBootUMS(Deployment):
     Strategy class for a UBoot USB Mass Storage deployment.
     Downloads the relevant parts, and applies the test overlay into the image.
     """
+
     compatibility = 1
-    name = 'uboot-ums'
+    name = "uboot-ums"
 
     def __init__(self, parent, parameters):
         super().__init__(parent)
@@ -47,16 +48,16 @@ class UBootUMS(Deployment):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if 'to' not in parameters:
+        if "to" not in parameters:
             return False, '"to" is not in deploy parameters'
-        if parameters['to'] != 'u-boot-ums':
+        if parameters["to"] != "u-boot-ums":
             return False, '"to" parameter is not "u-boot-ums"'
-        if 'deploy' not in device['actions']:
+        if "deploy" not in device["actions"]:
             return False, '"deploy" is not in the device configuration actions'
-        if 'image' not in parameters:
+        if "image" not in parameters:
             return False, '"image" was not in the deploy parameters'
-        if 'u-boot-ums' in device['actions']['deploy']['methods']:
-            return True, 'accepted'
+        if "u-boot-ums" in device["actions"]["deploy"]["methods"]:
+            return True, "accepted"
         return False, '"u-boot-ums" was not in the device configuration deploy methods"'
 
 
@@ -67,9 +68,11 @@ class UBootUMSAction(DeployAction):  # pylint:disable=too-many-instance-attribut
     summary = "uboot-ums deployment"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.internal_pipeline = Pipeline(
+            parent=self, job=self.job, parameters=parameters
+        )
         path = self.mkdtemp()
-        self.internal_pipeline.add_action(DownloaderAction('image', path=path))
+        self.internal_pipeline.add_action(DownloaderAction("image", path=path))
         if self.test_needs_overlay(parameters):
             self.internal_pipeline.add_action(OverlayAction())
             self.internal_pipeline.add_action(ApplyOverlayImage())

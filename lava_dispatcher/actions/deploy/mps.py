@@ -23,10 +23,7 @@
 
 import os
 import shutil
-from lava_dispatcher.action import (
-    Action,
-    Pipeline,
-)
+from lava_dispatcher.action import Action, Pipeline
 from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.logical import Deployment
 from lava_dispatcher.actions.deploy import DeployAction
@@ -48,8 +45,9 @@ class Mps(Deployment):
     Strategy class for a booting Arm MPS devices.
     Downloads board recovery image and deploys to target
     """
+
     compatibility = 1
-    name = 'mps'
+    name = "mps"
 
     def __init__(self, parent, parameters):
         super().__init__(parent)
@@ -60,15 +58,15 @@ class Mps(Deployment):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if 'mps' not in device['actions']['deploy']['methods']:
+        if "mps" not in device["actions"]["deploy"]["methods"]:
             return False, '"mps" was not in the device configuration deploy methods'
-        if 'to' not in parameters:
+        if "to" not in parameters:
             return False, '"to" was not in parameters'
-        if parameters['to'] != 'mps':
+        if parameters["to"] != "mps":
             return False, '"to" was not "mps"'
-        if 'usb_filesystem_label' not in device:
+        if "usb_filesystem_label" not in device:
             return False, '"usb_filesystem_label" is not in the device configuration'
-        return True, 'accepted'
+        return True, "accepted"
 
 
 class MpsAction(DeployAction):
@@ -78,6 +76,7 @@ class MpsAction(DeployAction):
     set to true in config.txt in order for the device to come to
     a prompt after reboot.
     """
+
     def __init__(self):
         super().__init__()
         self.name = "mps-deploy"
@@ -88,23 +87,27 @@ class MpsAction(DeployAction):
         super().validate()
         if not self.valid:
             return
-        if not self.parameters.get('recovery_image'):
+        if not self.parameters.get("recovery_image"):
             return
 
     def populate(self, parameters):
         download_dir = self.mkdtemp()
-        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.internal_pipeline = Pipeline(
+            parent=self, job=self.job, parameters=parameters
+        )
         self.internal_pipeline.add_action(DisconnectDevice())
         self.internal_pipeline.add_action(ResetDevice())
         self.internal_pipeline.add_action(WaitUSBMassStorageDeviceAction())
-        for image in parameters['images'].keys():
-            if image != 'yaml_line':
-                self.internal_pipeline.add_action(DownloaderAction(image, path=download_dir))
+        for image in parameters["images"].keys():
+            if image != "yaml_line":
+                self.internal_pipeline.add_action(
+                    DownloaderAction(image, path=download_dir)
+                )
         self.internal_pipeline.add_action(MountVExpressMassStorageDevice())
-        if 'recovery_image' in parameters['images'].keys():
+        if "recovery_image" in parameters["images"].keys():
             self.internal_pipeline.add_action(ExtractVExpressRecoveryImage())
             self.internal_pipeline.add_action(DeployVExpressRecoveryImage())
-        if 'test_binary' in parameters['images'].keys():
+        if "test_binary" in parameters["images"].keys():
             self.internal_pipeline.add_action(DeployMPSTestBinary())
         self.internal_pipeline.add_action(UnmountVExpressMassStorageDevice())
         self.internal_pipeline.add_action(PowerOff())
@@ -114,6 +117,7 @@ class DeployMPSTestBinary(Action):
     """
     Copies test binary to MPS device and renames if required
     """
+
     def __init__(self):
         super().__init__()
         self.name = "deploy-mps-test-binary"
@@ -125,19 +129,25 @@ class DeployMPSTestBinary(Action):
         super().validate()
         if not self.valid:
             return
-        if not self.parameters['images'].get(self.param_key):
+        if not self.parameters["images"].get(self.param_key):
             return
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
-        mount_point = self.get_namespace_data(action='mount-vexpress-usbmsd', label='vexpress-fw', key='mount-point')
+        mount_point = self.get_namespace_data(
+            action="mount-vexpress-usbmsd", label="vexpress-fw", key="mount-point"
+        )
         try:
             os.path.realpath(mount_point)
         except OSError:
             raise InfrastructureError("Unable to locate mount point: %s" % mount_point)
 
-        dest = os.path.join(mount_point, self.parameters['images'][self.param_key].get('rename', ''))
-        test_binary = self.get_namespace_data(action='download-action', label=self.param_key, key='file')
+        dest = os.path.join(
+            mount_point, self.parameters["images"][self.param_key].get("rename", "")
+        )
+        test_binary = self.get_namespace_data(
+            action="download-action", label=self.param_key, key="file"
+        )
         self.logger.debug("Copying %s to %s", test_binary, dest)
         shutil.copy(test_binary, dest)
 

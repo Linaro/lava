@@ -42,10 +42,14 @@ class DockerAction(DeployAction):
 
         # Print docker version
         try:
-            out = subprocess.check_output(["docker", "version", "-f", "{{.Server.Version}}"])  # nosec - internal
+            out = subprocess.check_output(
+                ["docker", "version", "-f", "{{.Server.Version}}"]
+            )  # nosec - internal
             out = out.decode("utf-8", errors="replace").strip("\n")
             self.logger.debug("docker server, installed at version: %s", out)
-            out = subprocess.check_output(["docker", "version", "-f", "{{.Client.Version}}"])  # nosec - internal
+            out = subprocess.check_output(
+                ["docker", "version", "-f", "{{.Client.Version}}"]
+            )  # nosec - internal
             out = out.decode("utf-8", errors="replace").strip("\n")
             self.logger.debug("docker client, installed at version: %s", out)
         except subprocess.CalledProcessError as exc:
@@ -66,11 +70,14 @@ class DockerAction(DeployAction):
         # The string should be safe for command line inclusion
         if re.compile("^[a-z0-9._:/-]+$").match(self.image_name) is None:
             self.errors = "image name '%s' is invalid" % self.image_name
-        self.set_namespace_data(action=self.name, label='image',
-                                key='name', value=self.image_name)
+        self.set_namespace_data(
+            action=self.name, label="image", key="name", value=self.image_name
+        )
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.internal_pipeline = Pipeline(
+            parent=self, job=self.job, parameters=parameters
+        )
         if self.test_needs_deployment(parameters):
             self.internal_pipeline.add_action(DeployDeviceEnvironment())
         if self.test_needs_overlay(parameters):
@@ -79,20 +86,28 @@ class DockerAction(DeployAction):
     def run(self, connection, max_end_time):
         # Pull the image
         if self.local:
-            cmd = ["docker", "image", "inspect", "--format", "image exists",
-                   self.image_name]
+            cmd = [
+                "docker",
+                "image",
+                "inspect",
+                "--format",
+                "image exists",
+                self.image_name,
+            ]
             error_msg = "Unable to inspect docker image '%s'" % self.image_name
             self.run_cmd(cmd, error_msg=error_msg)
         else:
-            self.run_cmd(["docker", "pull", self.image_name],
-                         error_msg="Unable to pull docker image '%s'" % self.image_name)
+            self.run_cmd(
+                ["docker", "pull", self.image_name],
+                error_msg="Unable to pull docker image '%s'" % self.image_name,
+            )
 
         return super().run(connection, max_end_time)
 
 
 class Docker(Deployment):
     compatibility = 4
-    name = 'docker'
+    name = "docker"
 
     def __init__(self, parent, parameters):
         super().__init__(parent)
@@ -103,10 +118,10 @@ class Docker(Deployment):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if 'docker' not in device['actions']['deploy']['methods']:
+        if "docker" not in device["actions"]["deploy"]["methods"]:
             return False, "'docker' not in the device configuration deploy methods"
-        if parameters['to'] != 'docker':
+        if parameters["to"] != "docker":
             return False, '"to" parameter is not "docker"'
-        if 'image' not in parameters:
+        if "image" not in parameters:
             return False, '"image" is not in the deployment parameters'
-        return True, 'accepted'
+        return True, "accepted"

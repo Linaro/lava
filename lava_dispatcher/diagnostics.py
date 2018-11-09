@@ -62,6 +62,7 @@ class DiagnoseUBoot(DiagnosticAction):
     """
     Report the UBoot environment
     """
+
     name = "uboot-environment"
     description = "report the uboot environment"
     summary = "run printenv"

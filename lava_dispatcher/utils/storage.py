@@ -18,10 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from lava_dispatcher.action import (
-    Action,
-    JobError,
-)
+from lava_dispatcher.action import Action, JobError
 
 
 class FlashUBootUMSAction(Action):
@@ -41,18 +38,24 @@ class FlashUBootUMSAction(Action):
 
     def validate(self):
         super().validate()
-        self.params = self.job.device['actions']['boot']['methods'][self.parameters['method']]['parameters']
-        if self.params.get('uboot_mass_storage_device', False):
-            self.ums_device = self.params['uboot_mass_storage_device']
+        self.params = self.job.device["actions"]["boot"]["methods"][
+            self.parameters["method"]
+        ]["parameters"]
+        if self.params.get("uboot_mass_storage_device", False):
+            self.ums_device = self.params["uboot_mass_storage_device"]
         else:
             raise JobError("uboot_mass_storage_device is not set")
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
-        image_file = self.get_namespace_data(action='download-action', label='image', key='file')
-        cmd = 'dd if={} of={} bs=1M oflag=sync conv=fsync'.format(image_file, self.usb_mass_device)
-        if not self.run_command(cmd.split(' '), allow_silent=True):
+        image_file = self.get_namespace_data(
+            action="download-action", label="image", key="file"
+        )
+        cmd = "dd if={} of={} bs=1M oflag=sync conv=fsync".format(
+            image_file, self.usb_mass_device
+        )
+        if not self.run_command(cmd.split(" "), allow_silent=True):
             raise JobError("writing to the USB mass storage device failed")
 
-        connection.sendcontrol('c')
+        connection.sendcontrol("c")
         return connection

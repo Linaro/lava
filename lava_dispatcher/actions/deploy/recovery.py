@@ -33,19 +33,21 @@ class RecoveryModeAction(DeployAction):
 
     def populate(self, parameters):
         super().populate(parameters)
-        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        recovery = self.job.device['actions']['deploy']['methods']['recovery']
+        self.internal_pipeline = Pipeline(
+            parent=self, job=self.job, parameters=parameters
+        )
+        recovery = self.job.device["actions"]["deploy"]["methods"]["recovery"]
         recovery_dir = self.mkdtemp()
-        image_keys = sorted(parameters['images'].keys())
+        image_keys = sorted(parameters["images"].keys())
         for image in image_keys:
-            if image != 'yaml_line':
+            if image != "yaml_line":
                 self.internal_pipeline.add_action(DownloaderAction(image, recovery_dir))
         self.internal_pipeline.add_action(CopyToLxcAction())
 
         tags = []
-        if 'tags' in recovery:
-            tags = recovery['tags']
-        if 'serial' in tags:
+        if "tags" in recovery:
+            tags = recovery["tags"]
+        if "serial" in tags:
             # might not be a usable shell here, just power on.
             # FIXME: if used, FastbootAction must not try to reconnect
             self.internal_pipeline.add_action(ConnectDevice())
@@ -54,7 +56,7 @@ class RecoveryModeAction(DeployAction):
 class RecoveryMode(Deployment):
 
     compatibility = 4
-    name = 'recovery-mode'
+    name = "recovery-mode"
 
     def __init__(self, parent, parameters):
         super().__init__(parent)
@@ -65,10 +67,10 @@ class RecoveryMode(Deployment):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if 'recovery' not in device['actions']['deploy']['methods']:
+        if "recovery" not in device["actions"]["deploy"]["methods"]:
             return False, "'recovery' not in the device configuration deploy methods"
-        if parameters['to'] != 'recovery':
+        if parameters["to"] != "recovery":
             return False, '"to" parameter is not "recovery"'
-        if 'images' not in parameters:
+        if "images" not in parameters:
             return False, '"images" is not in the deployment parameters'
-        return True, 'accepted'
+        return True, "accepted"

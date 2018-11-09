@@ -30,7 +30,6 @@ from lava_common.exceptions import InfrastructureError
 
 
 class VCSHelper:
-
     def __init__(self, url):
         self.url = url
 
@@ -39,44 +38,71 @@ class VCSHelper:
 
 
 class BzrHelper(VCSHelper):
-
     def __init__(self, url):
         super().__init__(url)
-        self.binary = '/usr/bin/bzr'
+        self.binary = "/usr/bin/bzr"
 
     def clone(self, dest_path, shallow=None, revision=None, branch=None, history=None):
         cwd = os.getcwd()
-        logger = logging.getLogger('dispatcher')
+        logger = logging.getLogger("dispatcher")
         env = dict(os.environ)
-        env.update({'BZR_HOME': '/dev/null', 'BZR_LOG': '/dev/null'})
+        env.update({"BZR_HOME": "/dev/null", "BZR_LOG": "/dev/null"})
 
         try:
             if revision is not None:
-                logger.debug("Running '%s branch -r %s %s'", self.binary, str(revision), self.url)
-                subprocess.check_output([self.binary, 'branch', '-r',  # nosec - internal use.
-                                         str(revision), self.url,
-                                         dest_path],
-                                        stderr=subprocess.STDOUT, env=env)
+                logger.debug(
+                    "Running '%s branch -r %s %s'", self.binary, str(revision), self.url
+                )
+                subprocess.check_output(
+                    [
+                        self.binary,
+                        "branch",
+                        "-r",  # nosec - internal use.
+                        str(revision),
+                        self.url,
+                        dest_path,
+                    ],
+                    stderr=subprocess.STDOUT,
+                    env=env,
+                )
                 commit_id = revision
             else:
                 logger.debug("Running '%s branch %s'", self.binary, self.url)
-                subprocess.check_output([self.binary, 'branch', self.url,  # nosec - internal use.
-                                         dest_path],
-                                        stderr=subprocess.STDOUT, env=env)
+                subprocess.check_output(
+                    [
+                        self.binary,
+                        "branch",
+                        self.url,  # nosec - internal use.
+                        dest_path,
+                    ],
+                    stderr=subprocess.STDOUT,
+                    env=env,
+                )
                 os.chdir(dest_path)
-                commit_id = subprocess.check_output(['bzr', 'revno'],  # nosec - internal use.
-                                                    env=env).strip().decode('utf-8', errors="replace")
+                commit_id = (
+                    subprocess.check_output(
+                        ["bzr", "revno"], env=env  # nosec - internal use.
+                    )
+                    .strip()
+                    .decode("utf-8", errors="replace")
+                )
 
         except subprocess.CalledProcessError as exc:
             exc_command = [i.strip() for i in exc.cmd]
             exc_message = str(exc)
-            exc_output = str(exc).split('\n')
-            logger.exception(yaml.dump({
-                'command': exc_command,
-                'message': exc_message,
-                'output': exc_output}))
-            raise InfrastructureError("Unable to fetch bzr repository '%s'"
-                                      % (self.url))
+            exc_output = str(exc).split("\n")
+            logger.exception(
+                yaml.dump(
+                    {
+                        "command": exc_command,
+                        "message": exc_message,
+                        "output": exc_output,
+                    }
+                )
+            )
+            raise InfrastructureError(
+                "Unable to fetch bzr repository '%s'" % (self.url)
+            )
         finally:
             os.chdir(cwd)
 
@@ -97,33 +123,48 @@ class GitHelper(VCSHelper):
 
     def __init__(self, url):
         super().__init__(url)
-        self.binary = '/usr/bin/git'
+        self.binary = "/usr/bin/git"
 
     def clone(self, dest_path, shallow=False, revision=None, branch=None, history=True):
-        logger = logging.getLogger('dispatcher')
+        logger = logging.getLogger("dispatcher")
         try:
             if branch is not None:
-                cmd_args = [self.binary, 'clone', '-b', branch, self.url,
-                            dest_path]
+                cmd_args = [self.binary, "clone", "-b", branch, self.url, dest_path]
             else:
-                cmd_args = [self.binary, 'clone', self.url, dest_path]
+                cmd_args = [self.binary, "clone", self.url, dest_path]
 
             if shallow:
                 cmd_args.append("--depth=1")
 
             logger.debug("Running '%s'", " ".join(cmd_args))
-            subprocess.check_output(cmd_args, stderr=subprocess.STDOUT)  # nosec - internal use.
+            subprocess.check_output(
+                cmd_args, stderr=subprocess.STDOUT
+            )  # nosec - internal use.
 
             if revision is not None:
-                logger.debug("Running '%s checkout %s", self.binary,
-                             str(revision))
-                subprocess.check_output([self.binary, '-C', dest_path,  # nosec - internal use.
-                                         'checkout', str(revision)],
-                                        stderr=subprocess.STDOUT)
+                logger.debug("Running '%s checkout %s", self.binary, str(revision))
+                subprocess.check_output(
+                    [
+                        self.binary,
+                        "-C",
+                        dest_path,  # nosec - internal use.
+                        "checkout",
+                        str(revision),
+                    ],
+                    stderr=subprocess.STDOUT,
+                )
 
-            commit_id = subprocess.check_output([self.binary, '-C', dest_path,  # nosec - internal use.
-                                                 'log', '-1', '--pretty=%H'],
-                                                stderr=subprocess.STDOUT).strip()
+            commit_id = subprocess.check_output(
+                [
+                    self.binary,
+                    "-C",
+                    dest_path,  # nosec - internal use.
+                    "log",
+                    "-1",
+                    "--pretty=%H",
+                ],
+                stderr=subprocess.STDOUT,
+            ).strip()
 
             if not history:
                 logger.debug("Removing '.git' directory in %s", dest_path)
@@ -131,10 +172,11 @@ class GitHelper(VCSHelper):
 
         except subprocess.CalledProcessError as exc:
             logger.error(str(exc))
-            raise InfrastructureError("Unable to fetch git repository '%s'"
-                                      % (self.url))
+            raise InfrastructureError(
+                "Unable to fetch git repository '%s'" % (self.url)
+            )
 
-        return commit_id.decode('utf-8', errors="replace")
+        return commit_id.decode("utf-8", errors="replace")
 
 
 class TarHelper(VCSHelper):

@@ -29,7 +29,7 @@ from lava_dispatcher.actions.boot import (
     BootloaderCommandOverlay,
     BootloaderCommandsAction,
     OverlayUnpack,
-    BootloaderInterruptAction
+    BootloaderInterruptAction,
 )
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.shell import ExpectShellSession
@@ -58,10 +58,10 @@ class IPXE(Boot):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if parameters['method'] != 'ipxe':
+        if parameters["method"] != "ipxe":
             return False, '"method" was not "ipxe"'
-        if 'ipxe' in device['actions']['boot']['methods']:
-            return True, 'accepted'
+        if "ipxe" in device["actions"]["boot"]["methods"]:
+            return True, "accepted"
         else:
             return False, '"ipxe" was not in the device configuration boot methods'
 
@@ -77,7 +77,9 @@ class BootloaderAction(BootAction):
     summary = "pass boot commands"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.internal_pipeline = Pipeline(
+            parent=self, job=self.job, parameters=parameters
+        )
         # customize the device configuration for this job
         self.internal_pipeline.add_action(BootloaderCommandOverlay())
         self.internal_pipeline.add_action(ConnectDevice())
@@ -96,7 +98,9 @@ class BootloaderRetry(BootAction):
         self.force_prompt = False
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.internal_pipeline = Pipeline(
+            parent=self, job=self.job, parameters=parameters
+        )
         # establish a new connection before trying the reset
         self.internal_pipeline.add_action(ResetDevice())
         self.internal_pipeline.add_action(BootloaderInterruptAction())
@@ -106,22 +110,31 @@ class BootloaderRetry(BootAction):
             self.internal_pipeline.add_action(AutoLoginAction())
             if self.test_has_shell(parameters):
                 self.internal_pipeline.add_action(ExpectShellSession())
-                if 'transfer_overlay' in parameters:
+                if "transfer_overlay" in parameters:
                     self.internal_pipeline.add_action(OverlayUnpack())
                 self.internal_pipeline.add_action(ExportDeviceEnvironment())
 
     def validate(self):
         super().validate()
-        if 'bootloader_prompt' not in self.job.device['actions']['boot']['methods'][self.type]['parameters']:
+        if (
+            "bootloader_prompt"
+            not in self.job.device["actions"]["boot"]["methods"][self.type][
+                "parameters"
+            ]
+        ):
             self.errors = "Missing bootloader prompt for device"
         self.set_namespace_data(
             action=self.name,
-            label='bootloader_prompt',
-            key='prompt',
-            value=self.job.device['actions']['boot']['methods'][self.type]['parameters']['bootloader_prompt']
+            label="bootloader_prompt",
+            key="prompt",
+            value=self.job.device["actions"]["boot"]["methods"][self.type][
+                "parameters"
+            ]["bootloader_prompt"],
         )
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
-        self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
+        self.set_namespace_data(
+            action="shared", label="shared", key="connection", value=connection
+        )
         return connection

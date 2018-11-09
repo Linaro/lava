@@ -18,14 +18,8 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from lava_common.exceptions import (
-    ConfigurationError,
-    InfrastructureError,
-)
-from lava_dispatcher.action import (
-    Action,
-    Pipeline,
-)
+from lava_common.exceptions import ConfigurationError, InfrastructureError
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.actions.boot import BootAction
 from lava_dispatcher.utils.udev import WaitDFUDeviceAction
@@ -48,36 +42,40 @@ class DFU(Boot):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if 'dfu' not in device['actions']['boot']['methods']:
+        if "dfu" not in device["actions"]["boot"]["methods"]:
             return False, '"dfu" was not in the device configuration boot methods'
-        if 'method' not in parameters:
+        if "method" not in parameters:
             return False, '"method" was in the parameters'
-        if parameters['method'] != 'dfu':
+        if parameters["method"] != "dfu":
             return False, '"method" was not "dfu"'
-        if 'board_id' not in device:
+        if "board_id" not in device:
             return False, '"board_id" is not in the device configuration'
-        return True, 'accepted'
+        return True, "accepted"
 
 
 class BootDFU(BootAction):
 
-    name = 'boot-dfu-image'
+    name = "boot-dfu-image"
     description = "boot dfu image with retry"
     summary = "boot dfu image with retry"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.internal_pipeline = Pipeline(
+            parent=self, job=self.job, parameters=parameters
+        )
         self.internal_pipeline.add_action(BootDFURetry())
 
 
 class BootDFURetry(RetryAction):
 
-    name = 'boot-dfu-retry'
+    name = "boot-dfu-retry"
     description = "boot dfu image using the command line interface"
     summary = "boot dfu image"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.internal_pipeline = Pipeline(
+            parent=self, job=self.job, parameters=parameters
+        )
         self.internal_pipeline.add_action(ConnectDevice())
         self.internal_pipeline.add_action(ResetDevice())
         self.internal_pipeline.add_action(WaitDFUDeviceAction())
@@ -94,37 +92,43 @@ class FlashDFUAction(Action):
         super().__init__()
         self.base_command = []
         self.exec_list = []
-        self.board_id = '0000000000'
-        self.usb_vendor_id = '0000'
-        self.usb_product_id = '0000'
+        self.board_id = "0000000000"
+        self.usb_vendor_id = "0000"
+        self.usb_product_id = "0000"
 
     def validate(self):
         super().validate()
         try:
-            boot = self.job.device['actions']['boot']['methods']['dfu']
-            dfu_binary = which(boot['parameters']['command'])
+            boot = self.job.device["actions"]["boot"]["methods"]["dfu"]
+            dfu_binary = which(boot["parameters"]["command"])
             self.base_command = [dfu_binary]
-            self.base_command.extend(boot['parameters'].get('options', []))
-            if self.job.device['board_id'] == '0000000000':
+            self.base_command.extend(boot["parameters"].get("options", []))
+            if self.job.device["board_id"] == "0000000000":
                 self.errors = "[FLASH_DFU] board_id unset"
-            if self.job.device['usb_vendor_id'] == '0000':
-                self.errors = '[FLASH_DFU] usb_vendor_id unset'
-            if self.job.device['usb_product_id'] == '0000':
-                self.errors = '[FLASH_DFU] usb_product_id unset'
-            self.usb_vendor_id = self.job.device['usb_vendor_id']
-            self.usb_product_id = self.job.device['usb_product_id']
-            self.board_id = self.job.device['board_id']
-            self.base_command.extend(['--serial', self.board_id])
-            self.base_command.extend(['--device', '%s:%s' % (self.usb_vendor_id, self.usb_product_id)])
+            if self.job.device["usb_vendor_id"] == "0000":
+                self.errors = "[FLASH_DFU] usb_vendor_id unset"
+            if self.job.device["usb_product_id"] == "0000":
+                self.errors = "[FLASH_DFU] usb_product_id unset"
+            self.usb_vendor_id = self.job.device["usb_vendor_id"]
+            self.usb_product_id = self.job.device["usb_product_id"]
+            self.board_id = self.job.device["board_id"]
+            self.base_command.extend(["--serial", self.board_id])
+            self.base_command.extend(
+                ["--device", "%s:%s" % (self.usb_vendor_id, self.usb_product_id)]
+            )
         except AttributeError as exc:
             raise ConfigurationError(exc)
         except (KeyError, TypeError):
             self.errors = "Invalid parameters for %s" % self.name
         substitutions = {}
-        for action in self.get_namespace_keys('download-action'):
+        for action in self.get_namespace_keys("download-action"):
             dfu_full_command = []
-            image_arg = self.get_namespace_data(action='download-action', label=action, key='image_arg')
-            action_arg = self.get_namespace_data(action='download-action', label=action, key='file')
+            image_arg = self.get_namespace_data(
+                action="download-action", label=action, key="image_arg"
+            )
+            action_arg = self.get_namespace_data(
+                action="download-action", label=action, key="file"
+            )
             if not image_arg or not action_arg:
                 self.errors = "Missing image_arg for %s. " % action
                 continue
@@ -140,20 +144,25 @@ class FlashDFUAction(Action):
 
     def run(self, connection, max_end_time):
         connection = self.get_namespace_data(
-            action='shared', label='shared', key='connection', deepcopy=False)
+            action="shared", label="shared", key="connection", deepcopy=False
+        )
         connection = super().run(connection, max_end_time)
         count = 1
         for dfu_command in self.exec_list:
             if count == (len(self.exec_list)):
-                if self.job.device['actions']['boot']['methods']['dfu'].get('reset_works', True):
-                    dfu_command.extend(['--reset'])
-            dfu = ' '.join(dfu_command)
-            output = self.run_command(dfu.split(' '))
+                if self.job.device["actions"]["boot"]["methods"]["dfu"].get(
+                    "reset_works", True
+                ):
+                    dfu_command.extend(["--reset"])
+            dfu = " ".join(dfu_command)
+            output = self.run_command(dfu.split(" "))
             if output:
                 if "No error condition is present\nDone!\n" not in output:
                     raise InfrastructureError("command failed: %s" % dfu)
             else:
                 raise InfrastructureError("command failed: %s" % dfu)
             count += 1
-        self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
+        self.set_namespace_data(
+            action="shared", label="shared", key="connection", value=connection
+        )
         return connection

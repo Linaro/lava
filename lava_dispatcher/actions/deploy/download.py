@@ -36,19 +36,9 @@ from lava_dispatcher.protocols.lxc import LxcProtocol
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.connections.serial import ConnectDevice
-from lava_common.exceptions import (
-    InfrastructureError,
-    JobError,
-    LAVABug,
-)
-from lava_dispatcher.action import (
-    Action,
-    Pipeline,
-)
-from lava_dispatcher.logical import (
-    Deployment,
-    RetryAction,
-)
+from lava_common.exceptions import InfrastructureError, JobError, LAVABug
+from lava_dispatcher.action import Action, Pipeline
+from lava_dispatcher.logical import Deployment, RetryAction
 from lava_dispatcher.utils.compression import untar_file
 from lava_dispatcher.utils.filesystem import (
     copy_to_lxc,
@@ -86,24 +76,28 @@ class DownloaderAction(RetryAction):
         self.uniquify = uniquify
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.internal_pipeline = Pipeline(
+            parent=self, job=self.job, parameters=parameters
+        )
 
         # Find the right action according to the url
-        if 'images' in parameters and self.key in parameters['images']:
-            url = parameters['images'][self.key].get('url')
+        if "images" in parameters and self.key in parameters["images"]:
+            url = parameters["images"][self.key].get("url")
         else:
-            url = parameters[self.key].get('url')
+            url = parameters[self.key].get("url")
         if url is None:
-            raise JobError("Invalid deploy action: 'url' is missing for '%s'" % self.key)
+            raise JobError(
+                "Invalid deploy action: 'url' is missing for '%s'" % self.key
+            )
 
         url = lavaurl.urlparse(url)
-        if url.scheme == 'scp':
+        if url.scheme == "scp":
             action = ScpDownloadAction(self.key, self.path, url, self.uniquify)
-        elif url.scheme == 'http' or url.scheme == 'https':
+        elif url.scheme == "http" or url.scheme == "https":
             action = HttpDownloadAction(self.key, self.path, url, self.uniquify)
-        elif url.scheme == 'file':
+        elif url.scheme == "file":
             action = FileDownloadAction(self.key, self.path, url, self.uniquify)
-        elif url.scheme == 'lxc':
+        elif url.scheme == "lxc":
             action = LxcDownloadAction(self.key, self.path, url)
         else:
             raise JobError("Unsupported url protocol scheme: %s" % url.scheme)
@@ -134,7 +128,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         # path unique.
         self.path = os.path.join(path, key) if uniquify else path
         self.size = -1
-        self.decompress_command_map = {'xz': 'unxz', 'gz': 'gunzip', 'bz2': 'bunzip2'}
+        self.decompress_command_map = {"xz": "unxz", "gz": "gunzip", "bz2": "bunzip2"}
 
     def reader(self):  # pylint: disable=no-self-use
         raise LAVABug("'reader' function unimplemented")
@@ -143,73 +137,108 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         if os.path.exists(self.path):
             self.logger.debug("Cleaning up download directory: %s", self.path)
             shutil.rmtree(self.path)
-        self.set_namespace_data(action='download-action', label=self.key, key='file', value='')
+        self.set_namespace_data(
+            action="download-action", label=self.key, key="file", value=""
+        )
         super().cleanup(connection)
 
     def _url_to_fname_suffix(self, path, modify):
         filename = os.path.basename(self.url.path)
-        parts = filename.split('.')
+        parts = filename.split(".")
         # Handle unmodified filename
         # Also files without suffixes, e.g. kernel images
         # Don't rename files we don't support decompressing during download
         if not modify or len(parts) == 1 or (modify not in self.decompress_command_map):
             return (os.path.join(path, filename), None)
-        return (os.path.join(path, '.'.join(parts[:-1])), parts[-1])
+        return (os.path.join(path, ".".join(parts[:-1])), parts[-1])
 
     def validate(self):
         super().validate()
-        if 'images' in self.parameters and self.key in self.parameters['images']:
-            image = self.parameters['images'][self.key]
-            self.url = lavaurl.urlparse(image['url'])
-            compression = image.get('compression')
-            archive = image.get('archive')
+        if "images" in self.parameters and self.key in self.parameters["images"]:
+            image = self.parameters["images"][self.key]
+            self.url = lavaurl.urlparse(image["url"])
+            compression = image.get("compression")
+            archive = image.get("archive")
             image_name, _ = self._url_to_fname_suffix(self.path, compression)
-            image_arg = image.get('image_arg')
-            overlay = image.get('overlay', False)
-            self.set_namespace_data(action='download-action', label=self.key,
-                                    key='file', value=image_name)
-            self.set_namespace_data(action='download-action', label=self.key,
-                                    key='image_arg', value=image_arg)
-            self.set_namespace_data(action='download-action', label=self.key,
-                                    key='compression', value=compression)
+            image_arg = image.get("image_arg")
+            overlay = image.get("overlay", False)
+            self.set_namespace_data(
+                action="download-action", label=self.key, key="file", value=image_name
+            )
+            self.set_namespace_data(
+                action="download-action",
+                label=self.key,
+                key="image_arg",
+                value=image_arg,
+            )
+            self.set_namespace_data(
+                action="download-action",
+                label=self.key,
+                key="compression",
+                value=compression,
+            )
         else:
-            self.url = lavaurl.urlparse(self.parameters[self.key]['url'])
-            compression = self.parameters[self.key].get('compression')
-            archive = self.parameters[self.key].get('archive')
-            overlay = self.parameters.get('overlay', False)
+            self.url = lavaurl.urlparse(self.parameters[self.key]["url"])
+            compression = self.parameters[self.key].get("compression")
+            archive = self.parameters[self.key].get("archive")
+            overlay = self.parameters.get("overlay", False)
             fname, _ = self._url_to_fname_suffix(self.path, compression)
-            if fname.endswith('/'):
+            if fname.endswith("/"):
                 self.errors = "Cannot download a directory for %s" % self.key
-            self.set_namespace_data(action='download-action', label=self.key, key='file', value=fname)
-            self.set_namespace_data(action='download-action', label=self.key, key='compression', value=compression)
+            self.set_namespace_data(
+                action="download-action", label=self.key, key="file", value=fname
+            )
+            self.set_namespace_data(
+                action="download-action",
+                label=self.key,
+                key="compression",
+                value=compression,
+            )
 
         if overlay:
-            self.set_namespace_data(action='download-action', label=self.key, key='overlay', value=overlay)
+            self.set_namespace_data(
+                action="download-action", label=self.key, key="overlay", value=overlay
+            )
         if compression:
-            if compression not in ['gz', 'bz2', 'xz', 'zip']:
+            if compression not in ["gz", "bz2", "xz", "zip"]:
                 self.errors = "Unknown 'compression' format '%s'" % compression
         if archive:
-            if archive not in ['tar']:
+            if archive not in ["tar"]:
                 self.errors = "Unknown 'archive' format '%s'" % archive
         # pass kernel type to boot Action
-        if self.key == 'kernel' and ('kernel' in self.parameters):
+        if self.key == "kernel" and ("kernel" in self.parameters):
             self.set_namespace_data(
-                action='download-action', label='type', key=self.key,
-                value=self.parameters[self.key].get('type'))
+                action="download-action",
+                label="type",
+                key=self.key,
+                value=self.parameters[self.key].get("type"),
+            )
 
-    def run(self, connection, max_end_time):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
+    def run(
+        self, connection, max_end_time
+    ):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
         def progress_unknown_total(downloaded_sz, last_val):
             """ Compute progress when the size is unknown """
             condition = downloaded_sz >= last_val + 25 * 1024 * 1024
-            return (condition, downloaded_sz,
-                    "progress %dMB" % (int(downloaded_sz / (1024 * 1024))) if condition else "")
+            return (
+                condition,
+                downloaded_sz,
+                "progress %dMB" % (int(downloaded_sz / (1024 * 1024)))
+                if condition
+                else "",
+            )
 
         def progress_known_total(downloaded_sz, last_val):
             """ Compute progress when the size is known """
             percent = math.floor(downloaded_sz / float(self.size) * 100)
             condition = percent >= last_val + 5
-            return (condition, percent,
-                    "progress %3d%% (%dMB)" % (percent, int(downloaded_sz / (1024 * 1024))) if condition else "")
+            return (
+                condition,
+                percent,
+                "progress %3d%% (%dMB)" % (percent, int(downloaded_sz / (1024 * 1024)))
+                if condition
+                else "",
+            )
 
         connection = super().run(connection, max_end_time)
         # self.cookies = self.job.context.config.lava_cookies  # FIXME: work out how to restore
@@ -222,25 +251,26 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
             os.makedirs(self.path, 0o755)
         except OSError as exc:
             if exc.errno != errno.EEXIST:
-                raise InfrastructureError("Unable to create %s: %s" % (self.path, str(exc)))
+                raise InfrastructureError(
+                    "Unable to create %s: %s" % (self.path, str(exc))
+                )
 
-        if 'images' in self.parameters and self.key in self.parameters['images']:
-            remote = self.parameters['images'][self.key]
-            compression = self.parameters['images'][self.key].get(
-                'compression', False)
+        if "images" in self.parameters and self.key in self.parameters["images"]:
+            remote = self.parameters["images"][self.key]
+            compression = self.parameters["images"][self.key].get("compression", False)
 
         else:
             remote = self.parameters[self.key]
-            if self.key == 'ramdisk':
+            if self.key == "ramdisk":
                 compression = False
                 self.logger.debug(
-                    "Not decompressing ramdisk as can be used compressed.")
+                    "Not decompressing ramdisk as can be used compressed."
+                )
             else:
-                compression = self.parameters[self.key].get('compression',
-                                                            False)
+                compression = self.parameters[self.key].get("compression", False)
 
-        md5sum = remote.get('md5sum')
-        sha256sum = remote.get('sha256sum')
+        md5sum = remote.get("md5sum")
+        sha256sum = remote.get("sha256sum")
 
         fname, _ = self._url_to_fname_suffix(self.path, compression)
         if os.path.isdir(fname):
@@ -248,7 +278,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         if os.path.exists(fname):
             os.remove(fname)
 
-        self.logger.info("downloading %s", remote['url'])
+        self.logger.info("downloading %s", remote["url"])
         self.logger.debug("saving as %s", fname)
 
         downloaded_size = 0
@@ -259,7 +289,9 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
             last_value = -25 * 1024 * 1024
             progress = progress_unknown_total
         else:
-            self.logger.debug("total size: %d (%dMB)" % (self.size, int(self.size / (1024 * 1024))))
+            self.logger.debug(
+                "total size: %d (%dMB)" % (self.size, int(self.size / (1024 * 1024)))
+            )
             last_value = -5
             progress = progress_known_total
 
@@ -267,17 +299,21 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         if compression:
             if compression in self.decompress_command_map:
                 decompress_command = self.decompress_command_map[compression]
-                self.logger.info("Using %s to decompress %s", decompress_command, compression)
+                self.logger.info(
+                    "Using %s to decompress %s", decompress_command, compression
+                )
             else:
-                self.logger.info("Compression %s specified but not decompressing during download", compression)
+                self.logger.info(
+                    "Compression %s specified but not decompressing during download",
+                    compression,
+                )
         else:
             self.logger.debug("No compression specified")
 
         def update_progress():
             nonlocal downloaded_size, last_value, md5, sha256
             downloaded_size += len(buff)
-            (printing, new_value, msg) = progress(downloaded_size,
-                                                  last_value)
+            (printing, new_value, msg) = progress(downloaded_size, last_value)
             if printing:
                 last_value = new_value
                 self.logger.debug(msg)
@@ -286,10 +322,12 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
 
         if compression and decompress_command:
             try:
-                with open(fname, 'wb') as dwnld_file:
-                    proc = subprocess.Popen([decompress_command],  # nosec - internal.
-                                            stdin=subprocess.PIPE,
-                                            stdout=dwnld_file)
+                with open(fname, "wb") as dwnld_file:
+                    proc = subprocess.Popen(
+                        [decompress_command],  # nosec - internal.
+                        stdin=subprocess.PIPE,
+                        stdout=dwnld_file,
+                    )
             except OSError as exc:
                 msg = "Unable to open %s: %s" % (fname, exc.strerror)
                 self.logger.error(msg)
@@ -303,103 +341,166 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
                     except BrokenPipeError as exc:
                         error_message = str(exc)
                         self.logger.exception(error_message)
-                        msg = "Make sure the 'compression' is corresponding " \
-                              "to the image file type."
+                        msg = (
+                            "Make sure the 'compression' is corresponding "
+                            "to the image file type."
+                        )
                         self.logger.error(msg)
                         raise JobError(error_message)
             proc.wait()
         else:
-            with open(fname, 'wb') as dwnld_file:
+            with open(fname, "wb") as dwnld_file:
                 for buff in self.reader():
                     update_progress()
                     dwnld_file.write(buff)
 
         # Log the download speed
         ending = time.time()
-        self.logger.info("%dMB downloaded in %0.2fs (%0.2fMB/s)" %
-                         (downloaded_size / (1024 * 1024), round(ending - beginning, 2),
-                          round(downloaded_size / (1024 * 1024 * (ending - beginning)), 2)))
+        self.logger.info(
+            "%dMB downloaded in %0.2fs (%0.2fMB/s)"
+            % (
+                downloaded_size / (1024 * 1024),
+                round(ending - beginning, 2),
+                round(downloaded_size / (1024 * 1024 * (ending - beginning)), 2),
+            )
+        )
 
         # If the remote server uses "Content-Encoding: gzip", this calculation will be wrong
         # because requests will decompress the file on the fly, creating a larger file than
         # LAVA expects.
         if self.size:
             if self.size != downloaded_size:
-                raise InfrastructureError("Download finished (%i bytes) but was not expected size (%i bytes), check your networking." % (downloaded_size, self.size))
+                raise InfrastructureError(
+                    "Download finished (%i bytes) but was not expected size (%i bytes), check your networking."
+                    % (downloaded_size, self.size)
+                )
 
         # set the dynamic data into the context
-        self.set_namespace_data(action='download-action', label=self.key, key='file', value=fname)
-        self.set_namespace_data(action='download-action', label=self.key, key='md5', value=md5.hexdigest())
-        self.set_namespace_data(action='download-action', label=self.key, key='sha256', value=sha256.hexdigest())
+        self.set_namespace_data(
+            action="download-action", label=self.key, key="file", value=fname
+        )
+        self.set_namespace_data(
+            action="download-action", label=self.key, key="md5", value=md5.hexdigest()
+        )
+        self.set_namespace_data(
+            action="download-action",
+            label=self.key,
+            key="sha256",
+            value=sha256.hexdigest(),
+        )
 
         # handle archive files
-        if 'images' in self.parameters and self.key in self.parameters['images']:
-            archive = self.parameters['images'][self.key].get('archive', False)
+        if "images" in self.parameters and self.key in self.parameters["images"]:
+            archive = self.parameters["images"][self.key].get("archive", False)
         else:
-            archive = self.parameters[self.key].get('archive')
+            archive = self.parameters[self.key].get("archive")
         if archive:
             origin = fname
-            target_fname = os.path.basename(origin).rstrip('.' + archive)
-            target_fname_path = os.path.join(os.path.dirname(origin),
-                                             target_fname)
+            target_fname = os.path.basename(origin).rstrip("." + archive)
+            target_fname_path = os.path.join(os.path.dirname(origin), target_fname)
             if os.path.exists(target_fname_path):
                 os.remove(target_fname_path)
 
-            if archive == 'tar':
-                untar_file(origin, None, member=target_fname,
-                           outfile=target_fname_path)
-                self.set_namespace_data(action='download-action', label=self.key, key='file', value=target_fname_path)
-                self.set_namespace_data(action='download-action', label='file', key=self.key, value=target_fname)
+            if archive == "tar":
+                untar_file(origin, None, member=target_fname, outfile=target_fname_path)
+                self.set_namespace_data(
+                    action="download-action",
+                    label=self.key,
+                    key="file",
+                    value=target_fname_path,
+                )
+                self.set_namespace_data(
+                    action="download-action",
+                    label="file",
+                    key=self.key,
+                    value=target_fname,
+                )
             self.logger.debug("Using %s archive" % archive)
 
         if md5sum is not None:
-            chk_md5sum = self.get_namespace_data(action='download-action', label=self.key, key='md5')
+            chk_md5sum = self.get_namespace_data(
+                action="download-action", label=self.key, key="md5"
+            )
             if md5sum != chk_md5sum:
                 self.logger.error("md5sum of downloaded content: %s" % chk_md5sum)
-                self.logger.info("sha256sum of downloaded content: %s" % (
-                    self.get_namespace_data(action='download-action', label=self.key, key='sha256')))
-                self.results = {'fail': {
-                    'md5': md5sum, 'download': chk_md5sum}}
+                self.logger.info(
+                    "sha256sum of downloaded content: %s"
+                    % (
+                        self.get_namespace_data(
+                            action="download-action", label=self.key, key="sha256"
+                        )
+                    )
+                )
+                self.results = {"fail": {"md5": md5sum, "download": chk_md5sum}}
                 raise JobError("MD5 checksum for '%s' does not match." % fname)
-            self.results = {'success': {'md5': md5sum}}
+            self.results = {"success": {"md5": md5sum}}
 
         if sha256sum is not None:
-            chk_sha256sum = self.get_namespace_data(action='download-action', label=self.key, key='sha256')
+            chk_sha256sum = self.get_namespace_data(
+                action="download-action", label=self.key, key="sha256"
+            )
             if sha256sum != chk_sha256sum:
-                self.logger.info("md5sum of downloaded content: %s" % (
-                    self.get_namespace_data(action='download-action', label=self.key, key='md5')))
+                self.logger.info(
+                    "md5sum of downloaded content: %s"
+                    % (
+                        self.get_namespace_data(
+                            action="download-action", label=self.key, key="md5"
+                        )
+                    )
+                )
                 self.logger.error("sha256sum of downloaded content: %s" % chk_sha256sum)
-                self.results = {'fail': {
-                    'sha256': sha256sum, 'download': chk_sha256sum}}
+                self.results = {
+                    "fail": {"sha256": sha256sum, "download": chk_sha256sum}
+                }
                 raise JobError("SHA256 checksum for '%s' does not match." % fname)
-            self.results = {'success': {'sha256': sha256sum}}
+            self.results = {"success": {"sha256": sha256sum}}
 
         # certain deployments need prefixes set
-        if self.parameters['to'] == 'tftp' or self.parameters['to'] == 'nbd':
-            suffix = self.get_namespace_data(action='tftp-deploy', label='tftp',
-                                             key='suffix')
-            self.set_namespace_data(action='download-action', label='file', key=self.key,
-                                    value=os.path.join(suffix, self.key, os.path.basename(fname)))
-        elif self.parameters['to'] == 'iso-installer':
-            suffix = self.get_namespace_data(action='deploy-iso-installer',
-                                             label='iso', key='suffix')
-            self.set_namespace_data(action='download-action', label='file', key=self.key,
-                                    value=os.path.join(suffix, self.key, os.path.basename(fname)))
+        if self.parameters["to"] == "tftp" or self.parameters["to"] == "nbd":
+            suffix = self.get_namespace_data(
+                action="tftp-deploy", label="tftp", key="suffix"
+            )
+            self.set_namespace_data(
+                action="download-action",
+                label="file",
+                key=self.key,
+                value=os.path.join(suffix, self.key, os.path.basename(fname)),
+            )
+        elif self.parameters["to"] == "iso-installer":
+            suffix = self.get_namespace_data(
+                action="deploy-iso-installer", label="iso", key="suffix"
+            )
+            self.set_namespace_data(
+                action="download-action",
+                label="file",
+                key=self.key,
+                value=os.path.join(suffix, self.key, os.path.basename(fname)),
+            )
         else:
-            self.set_namespace_data(action='download-action', label='file', key=self.key, value=fname)
+            self.set_namespace_data(
+                action="download-action", label="file", key=self.key, value=fname
+            )
 
         # xnbd protocoll needs to know the location
-        nbdroot = self.get_namespace_data(action='download-action', label='file', key='nbdroot')
-        if 'lava-xnbd' in self.parameters and nbdroot:
-            self.parameters['lava-xnbd']['nbdroot'] = nbdroot
+        nbdroot = self.get_namespace_data(
+            action="download-action", label="file", key="nbdroot"
+        )
+        if "lava-xnbd" in self.parameters and nbdroot:
+            self.parameters["lava-xnbd"]["nbdroot"] = nbdroot
 
         self.results = {
-            'label': self.key,
-            'size': downloaded_size,
-            'md5sum': str(self.get_namespace_data(
-                action='download-action', label=self.key, key='md5')),
-            'sha256sum': str(self.get_namespace_data(
-                action='download-action', label=self.key, key='sha256'))
+            "label": self.key,
+            "size": downloaded_size,
+            "md5sum": str(
+                self.get_namespace_data(
+                    action="download-action", label=self.key, key="md5"
+                )
+            ),
+            "sha256sum": str(
+                self.get_namespace_data(
+                    action="download-action", label=self.key, key="sha256"
+                )
+            ),
         }
         return connection
 
@@ -419,18 +520,22 @@ class FileDownloadAction(DownloadHandler):
             self.logger.debug("Validating that %s exists", self.url.geturl())
             self.size = os.stat(self.url.path).st_size
         except OSError:
-            self.errors = "Image file '%s' does not exist or is not readable" % (self.url.path)
+            self.errors = "Image file '%s' does not exist or is not readable" % (
+                self.url.path
+            )
 
     def reader(self):
         reader = None
         try:
-            reader = open(self.url.path, 'rb')
+            reader = open(self.url.path, "rb")
             buff = reader.read(FILE_DOWNLOAD_CHUNK_SIZE)
             while buff:
                 yield buff
                 buff = reader.read(FILE_DOWNLOAD_CHUNK_SIZE)
         except OSError as exc:
-            raise InfrastructureError("Unable to write to %s: %s" % (self.url.path, str(exc)))
+            raise InfrastructureError(
+                "Unable to write to %s: %s" % (self.url.path, str(exc))
+            )
         finally:
             if reader is not None:
                 reader.close()
@@ -455,12 +560,14 @@ class HttpDownloadAction(DownloadHandler):
                 # try using (the slower) get for services with broken redirect support
                 self.logger.debug("Using GET because HEAD is not supported properly")
                 res.close()
-                res = requests.get(
-                    self.url.geturl(), allow_redirects=True, stream=True)
+                res = requests.get(self.url.geturl(), allow_redirects=True, stream=True)
                 if res.status_code != requests.codes.OK:  # pylint: disable=no-member
-                    self.errors = "Resource unavailable at '%s' (%d)" % (self.url.geturl(), res.status_code)
+                    self.errors = "Resource unavailable at '%s' (%d)" % (
+                        self.url.geturl(),
+                        res.status_code,
+                    )
 
-            self.size = int(res.headers.get('content-length', -1))
+            self.size = int(res.headers.get("content-length", -1))
         except requests.Timeout:
             self.logger.error("Request timed out")
             self.errors = "'%s' timed out" % (self.url.geturl())
@@ -476,16 +583,19 @@ class HttpDownloadAction(DownloadHandler):
         try:
             # FIXME: When requests 3.0 is released, use the enforce_content_length
             # parameter to raise an exception the file is not fully downloaded
-            res = requests.get(self.url.geturl(), allow_redirects=True,
-                               stream=True)
+            res = requests.get(self.url.geturl(), allow_redirects=True, stream=True)
             if res.status_code != requests.codes.OK:  # pylint: disable=no-member
                 # This is an Infrastructure error because the validate function
                 # checked that the file does exist.
-                raise InfrastructureError("Unable to download '%s'" % (self.url.geturl()))
+                raise InfrastructureError(
+                    "Unable to download '%s'" % (self.url.geturl())
+                )
             for buff in res.iter_content(HTTP_DOWNLOAD_CHUNK_SIZE):
                 yield buff
         except requests.RequestException as exc:
-            raise InfrastructureError("Unable to download '%s': %s" % (self.url.geturl(), str(exc)))
+            raise InfrastructureError(
+                "Unable to download '%s': %s" % (self.url.geturl(), str(exc))
+            )
         finally:
             if res is not None:
                 res.close()
@@ -503,11 +613,18 @@ class ScpDownloadAction(DownloadHandler):
     def validate(self):
         super().validate()
         try:
-            size = subprocess.check_output(['nice', 'ssh',  # nosec - internal.
-                                            self.url.netloc,
-                                            'stat', '-c', '%s',
-                                            self.url.path],
-                                           stderr=subprocess.STDOUT)
+            size = subprocess.check_output(
+                [
+                    "nice",
+                    "ssh",  # nosec - internal.
+                    self.url.netloc,
+                    "stat",
+                    "-c",
+                    "%s",
+                    self.url.path,
+                ],
+                stderr=subprocess.STDOUT,
+            )
             self.size = int(size)
         except subprocess.CalledProcessError as exc:
             self.errors = str(exc)
@@ -516,16 +633,18 @@ class ScpDownloadAction(DownloadHandler):
         process = None
         try:
             process = subprocess.Popen(  # nosec - internal.
-                ['nice', 'ssh', self.url.netloc, 'cat', self.url.path],
-                stdout=subprocess.PIPE
+                ["nice", "ssh", self.url.netloc, "cat", self.url.path],
+                stdout=subprocess.PIPE,
             )
             buff = process.stdout.read(SCP_DOWNLOAD_CHUNK_SIZE)
             while buff:
                 yield buff
                 buff = process.stdout.read(SCP_DOWNLOAD_CHUNK_SIZE)
             if process.wait() != 0:
-                raise JobError("Dowloading '%s' failed with message '%s'"
-                               % (self.url.geturl(), process.stderr.read()))
+                raise JobError(
+                    "Dowloading '%s' failed with message '%s'"
+                    % (self.url.geturl(), process.stderr.read())
+                )
         finally:
             if process is not None:
                 with contextlib.suppress(OSError):
@@ -549,7 +668,7 @@ class LxcDownloadAction(Action):
 
     def validate(self):
         super().validate()
-        if self.url.scheme != 'lxc':
+        if self.url.scheme != "lxc":
             self.errors = "lxc:/// url scheme is invalid"
         if not self.url.path:
             self.errors = "Invalid path in lxc:/// url"
@@ -558,20 +677,27 @@ class LxcDownloadAction(Action):
         connection = super().run(connection, max_end_time)
         # this is the device namespace - the lxc namespace is not accessible
         lxc_name = None
-        protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
+        protocol = [
+            protocol
+            for protocol in self.job.protocols
+            if protocol.name == LxcProtocol.name
+        ][0]
         if protocol:
             lxc_name = protocol.lxc_name
         if not lxc_name:
-            raise JobError("Erroneous lxc url '%s' without protocol %s" %
-                           self.url, LxcProtocol.name)
+            raise JobError(
+                "Erroneous lxc url '%s' without protocol %s" % self.url,
+                LxcProtocol.name,
+            )
 
         fname = os.path.basename(self.url.path)
-        lxc_home = lava_lxc_home(lxc_name, self.job.parameters['dispatcher'])
+        lxc_home = lava_lxc_home(lxc_name, self.job.parameters["dispatcher"])
         file_path = os.path.join(lxc_home, fname)
         self.logger.debug("Found '%s' matching '%s'", file_path, fname)
         if os.path.exists(file_path):
-            self.set_namespace_data(action='download-action', label=self.key,
-                                    key='file', value=file_path)
+            self.set_namespace_data(
+                action="download-action", label=self.key, key="file", value=file_path
+            )
         else:
             raise JobError("Resource unavailable: %s" % self.url.path)
         return connection
@@ -594,29 +720,40 @@ class QCowConversionAction(Action):
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
         fname = self.get_namespace_data(
-            action='download-action',
-            label=self.key,
-            key='file'
+            action="download-action", label=self.key, key="file"
         )
         origin = fname
         # Remove the '.qcow2' extension and add '.img'
-        if fname.endswith('.qcow2'):
+        if fname.endswith(".qcow2"):
             fname = fname[:-6]
         fname += ".img"
 
         self.logger.debug("Converting downloaded image from qcow2 to raw")
         try:
-            subprocess.check_output(['qemu-img', 'convert',  # nosec - checked.
-                                     '-f', 'qcow2',
-                                     '-O', 'raw', origin, fname],
-                                    stderr=subprocess.STDOUT)
+            subprocess.check_output(
+                [
+                    "qemu-img",
+                    "convert",  # nosec - checked.
+                    "-f",
+                    "qcow2",
+                    "-O",
+                    "raw",
+                    origin,
+                    fname,
+                ],
+                stderr=subprocess.STDOUT,
+            )
         except subprocess.CalledProcessError as exc:
             self.logger.error("Unable to convert the qcow2 image")
             self.logger.error(exc.output)
             raise JobError(exc.output)
 
-        self.set_namespace_data(action=self.name, label=self.key, key='file', value=fname)
-        self.set_namespace_data(action=self.name, label='file', key=self.key, value=fname)
+        self.set_namespace_data(
+            action=self.name, label=self.key, key="file", value=fname
+        )
+        self.set_namespace_data(
+            action=self.name, label="file", key=self.key, value=fname
+        )
         return connection
 
 
@@ -625,8 +762,9 @@ class Download(Deployment):
     Strategy class for a download deployment.
     Downloads the relevant parts, copies to LXC if available.
     """
+
     compatibility = 1
-    name = 'download'
+    name = "download"
 
     def __init__(self, parent, parameters):
         super().__init__(parent)
@@ -637,11 +775,11 @@ class Download(Deployment):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if 'to' not in parameters:
+        if "to" not in parameters:
             return False, '"to" is not in deploy parameters'
-        if parameters['to'] != 'download':
+        if parameters["to"] != "download":
             return False, '"to" parameter is not "download"'
-        return True, 'accepted'
+        return True, "accepted"
 
 
 class DownloadAction(DeployAction):  # pylint:disable=too-many-instance-attributes
@@ -656,12 +794,14 @@ class DownloadAction(DeployAction):  # pylint:disable=too-many-instance-attribut
 
     def validate(self):
         super().validate()
-        self.set_namespace_data(action=self.name, label='download-dir',
-                                key='dir', value=self.download_dir)
+        self.set_namespace_data(
+            action=self.name, label="download-dir", key="dir", value=self.download_dir
+        )
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(parent=self, job=self.job,
-                                          parameters=parameters)
+        self.internal_pipeline = Pipeline(
+            parent=self, job=self.job, parameters=parameters
+        )
         # Check if the device has a power command such as HiKey, Dragonboard,
         # etc. against device that doesn't like Nexus, etc.
         # This is required in order to power on the device so that when the
@@ -670,7 +810,7 @@ class DownloadAction(DeployAction):  # pylint:disable=too-many-instance-attribut
         # issuing any fastboot commands on the powered on device.
         #
         # NOTE: Add more power on strategies, if required for specific devices.
-        if self.job.device.get('fastboot_via_uboot', False):
+        if self.job.device.get("fastboot_via_uboot", False):
             self.internal_pipeline.add_action(ConnectDevice())
             self.internal_pipeline.add_action(UBootEnterFastbootAction())
         elif self.job.device.hard_reset_command:
@@ -681,11 +821,12 @@ class DownloadAction(DeployAction):  # pylint:disable=too-many-instance-attribut
             self.internal_pipeline.add_action(EnterFastbootAction())
 
         self.download_dir = self.mkdtemp()
-        image_keys = sorted(parameters['images'].keys())
+        image_keys = sorted(parameters["images"].keys())
         for image in image_keys:
-            if image != 'yaml_line':
-                self.internal_pipeline.add_action(DownloaderAction(
-                    image, self.download_dir))
+            if image != "yaml_line":
+                self.internal_pipeline.add_action(
+                    DownloaderAction(image, self.download_dir)
+                )
         if self.test_needs_overlay(parameters):
             self.internal_pipeline.add_action(OverlayAction())
         self.internal_pipeline.add_action(CopyToLxcAction())
@@ -709,16 +850,21 @@ class CopyToLxcAction(DeployAction):
         connection = super().run(connection, max_end_time)
         # this is the device namespace - the lxc namespace is not accessible
         lxc_name = None
-        protocol = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name][0]
+        protocol = [
+            protocol
+            for protocol in self.job.protocols
+            if protocol.name == LxcProtocol.name
+        ][0]
         if protocol:
             lxc_name = protocol.lxc_name
         else:
             return connection
 
         # Copy each file to LXC.
-        for image in self.get_namespace_keys('download-action'):
-            src = self.get_namespace_data(action='download-action',
-                                          label=image, key='file')
+        for image in self.get_namespace_keys("download-action"):
+            src = self.get_namespace_data(
+                action="download-action", label=image, key="file"
+            )
             # The archive extraction logic and some deploy logic in
             # DownloadHandler will set a label 'file' in the namespace but
             # that file would have been dealt with and the actual path may not
@@ -726,13 +872,17 @@ class CopyToLxcAction(DeployAction):
             # can ignore safely, hence we continue on invalid src.
             if not src:
                 continue
-            copy_to_lxc(lxc_name, src, self.job.parameters['dispatcher'])
-        overlay_file = self.get_namespace_data(action='compress-overlay',
-                                               label='output', key='file')
+            copy_to_lxc(lxc_name, src, self.job.parameters["dispatcher"])
+        overlay_file = self.get_namespace_data(
+            action="compress-overlay", label="output", key="file"
+        )
         if overlay_file is None:
             self.logger.debug("skipped %s", self.name)
         else:
-            copy_overlay_to_lxc(lxc_name, overlay_file,
-                                self.job.parameters['dispatcher'],
-                                self.parameters['namespace'])
+            copy_overlay_to_lxc(
+                lxc_name,
+                overlay_file,
+                self.job.parameters["dispatcher"],
+                self.parameters["namespace"],
+            )
         return connection

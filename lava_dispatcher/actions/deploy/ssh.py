@@ -46,7 +46,7 @@ class Ssh(Deployment):
     """
 
     compatibility = 1
-    name = 'ssh'
+    name = "ssh"
 
     def __init__(self, parent, parameters):
         super().__init__(parent)
@@ -56,11 +56,11 @@ class Ssh(Deployment):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if 'ssh' not in device['actions']['deploy']['methods']:
+        if "ssh" not in device["actions"]["deploy"]["methods"]:
             return False, '"ssh" is not in the device configuration deploy methods'
-        if parameters['to'] != 'ssh':
+        if parameters["to"] != "ssh":
             return False, '"to" parameter is not "ssh"'
-        return True, 'accepted'
+        return True, "accepted"
 
 
 class ScpOverlay(DeployAction):
@@ -68,7 +68,7 @@ class ScpOverlay(DeployAction):
     Prepares the overlay and copies it to the target
     """
 
-    section = 'deploy'
+    section = "deploy"
     name = "scp-overlay"
     description = "prepare overlay and scp to device"
     summary = "copy overlay to device"
@@ -79,23 +79,40 @@ class ScpOverlay(DeployAction):
 
     def validate(self):
         super().validate()
-        self.items = [
-            'firmware', 'kernel', 'dtb', 'rootfs', 'modules'
-        ]
+        self.items = ["firmware", "kernel", "dtb", "rootfs", "modules"]
         if not self.test_has_shell(self.parameters):
             self.errors = "Scp overlay needs a test action."
             return
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        tar_flags = parameters['deployment_data']['tar_flags'] if 'tar_flags' in parameters['deployment_data'].keys() else ''
-        self.set_namespace_data(action=self.name, label=self.name, key='tar_flags', value=tar_flags, parameters=parameters)
+        self.internal_pipeline = Pipeline(
+            parent=self, job=self.job, parameters=parameters
+        )
+        tar_flags = (
+            parameters["deployment_data"]["tar_flags"]
+            if "tar_flags" in parameters["deployment_data"].keys()
+            else ""
+        )
+        self.set_namespace_data(
+            action=self.name,
+            label=self.name,
+            key="tar_flags",
+            value=tar_flags,
+            parameters=parameters,
+        )
         self.internal_pipeline.add_action(OverlayAction())
         for item in self.items:
             if item in parameters:
-                self.internal_pipeline.add_action(DownloaderAction(item, path=self.mkdtemp()),
-                                                  parameters)
-                self.set_namespace_data(action=self.name, label='scp', key=item, value=True, parameters=parameters)
+                self.internal_pipeline.add_action(
+                    DownloaderAction(item, path=self.mkdtemp()), parameters
+                )
+                self.set_namespace_data(
+                    action=self.name,
+                    label="scp",
+                    key=item,
+                    value=True,
+                    parameters=parameters,
+                )
         # we might not have anything to download, just the overlay to push
         self.internal_pipeline.add_action(PrepareOverlayScp())
         # prepare the device environment settings in common data for enabling in the boot step
@@ -119,54 +136,86 @@ class PrepareOverlayScp(Action):
     def validate(self):
         super().validate()
         environment = self.get_namespace_data(
-            action='deploy-device-env',
-            label='environment',
-            key='env_dict'
+            action="deploy-device-env", label="environment", key="env_dict"
         )
         if not environment:
             environment = {}
         environment.update({"LC_ALL": "C.UTF-8", "LANG": "C"})
-        self.set_namespace_data(action=self.name, label='environment', key='env_dict', value=environment)
-        if 'protocols' in self.parameters:
+        self.set_namespace_data(
+            action=self.name, label="environment", key="env_dict", value=environment
+        )
+        if "protocols" in self.parameters:
             # set run to call the protocol, retrieve the data and store.
-            for params in self.parameters['protocols'][MultinodeProtocol.name]:
+            for params in self.parameters["protocols"][MultinodeProtocol.name]:
                 if isinstance(params, str):
-                    self.errors = "Invalid protocol action setting - needs to be a list."
+                    self.errors = (
+                        "Invalid protocol action setting - needs to be a list."
+                    )
                     continue
-                if 'action' not in params or params['action'] != self.name:
+                if "action" not in params or params["action"] != self.name:
                     continue
-                if 'messageID' not in params:
+                if "messageID" not in params:
                     self.errors = "Invalid protocol block: %s" % params
                     return
-                if 'message' not in params or not isinstance(params['message'], dict):
+                if "message" not in params or not isinstance(params["message"], dict):
                     self.errors = "Missing message block for scp deployment"
                     return
-                self.host_keys.append(params['messageID'])
-        self.set_namespace_data(action=self.name, label=self.name, key='overlay', value=self.host_keys)
+                self.host_keys.append(params["messageID"])
+        self.set_namespace_data(
+            action=self.name, label=self.name, key="overlay", value=self.host_keys
+        )
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.internal_pipeline.add_action(ExtractRootfs())  # idempotent, checks for nfsrootfs parameter
-        self.internal_pipeline.add_action(ExtractModules())  # idempotent, checks for a modules parameter
+        self.internal_pipeline = Pipeline(
+            parent=self, job=self.job, parameters=parameters
+        )
+        self.internal_pipeline.add_action(
+            ExtractRootfs()
+        )  # idempotent, checks for nfsrootfs parameter
+        self.internal_pipeline.add_action(
+            ExtractModules()
+        )  # idempotent, checks for a modules parameter
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
-        overlay_file = self.get_namespace_data(action='compress-overlay', label='output', key='file')
+        overlay_file = self.get_namespace_data(
+            action="compress-overlay", label="output", key="file"
+        )
         self.logger.info("Preparing to copy: %s", os.path.basename(overlay_file))
-        self.set_namespace_data(action=self.name, label='scp-deploy', key='overlay', value=overlay_file)
+        self.set_namespace_data(
+            action=self.name, label="scp-deploy", key="overlay", value=overlay_file
+        )
         for host_key in self.host_keys:
             data = self.get_namespace_data(
-                action=MultinodeProtocol.name, label=MultinodeProtocol.name, key=host_key)
+                action=MultinodeProtocol.name,
+                label=MultinodeProtocol.name,
+                key=host_key,
+            )
             if not data:
                 self.logger.warning("Missing data for host_key %s", host_key)
                 continue
-            for params in self.parameters['protocols'][MultinodeProtocol.name]:
-                replacement_key = [key for key, _ in params['message'].items() if key != 'yaml_line'][0]
+            for params in self.parameters["protocols"][MultinodeProtocol.name]:
+                replacement_key = [
+                    key for key, _ in params["message"].items() if key != "yaml_line"
+                ][0]
                 if replacement_key not in data:
-                    self.logger.error("Mismatched replacement key %s and received data %s",
-                                      replacement_key, list(data.keys()))
+                    self.logger.error(
+                        "Mismatched replacement key %s and received data %s",
+                        replacement_key,
+                        list(data.keys()),
+                    )
                     continue
-                self.set_namespace_data(action=self.name, label=self.name, key=host_key, value=str(data[replacement_key]))
-                self.logger.info("data %s replacement key is %s", host_key, self.get_namespace_data(
-                    action=MultinodeProtocol.name, label=self.name, key=host_key))
+                self.set_namespace_data(
+                    action=self.name,
+                    label=self.name,
+                    key=host_key,
+                    value=str(data[replacement_key]),
+                )
+                self.logger.info(
+                    "data %s replacement key is %s",
+                    host_key,
+                    self.get_namespace_data(
+                        action=MultinodeProtocol.name, label=self.name, key=host_key
+                    ),
+                )
         return connection

@@ -64,18 +64,22 @@ def map_kernel_uboot(kernel_type, device_params=None):
     then if a bootm address exists do the conversion.
     bootm is the last resort.
     """
-    bootcommand = 'bootm'
-    logger = logging.getLogger('lava-dispatcher')
-    if kernel_type == 'uimage':
+    bootcommand = "bootm"
+    logger = logging.getLogger("lava-dispatcher")
+    if kernel_type == "uimage":
         return bootcommand
-    elif kernel_type == 'zimage':
-        if device_params and 'bootz' in device_params:
-            bootcommand = 'bootz'
+    elif kernel_type == "zimage":
+        if device_params and "bootz" in device_params:
+            bootcommand = "bootz"
         else:
-            logger.warning("No bootz parameters available, falling back to bootm and converting zImage")
-    elif kernel_type == 'image':
-        if device_params and 'booti' in device_params:
-            bootcommand = 'booti'
+            logger.warning(
+                "No bootz parameters available, falling back to bootm and converting zImage"
+            )
+    elif kernel_type == "image":
+        if device_params and "booti" in device_params:
+            bootcommand = "booti"
         else:
-            logger.warning("No booti parameters available, falling back to bootm and converting zImage")
+            logger.warning(
+                "No booti parameters available, falling back to bootm and converting zImage"
+            )
     return bootcommand

@@ -41,7 +41,7 @@ class Nfs(Deployment):
     """
 
     compatibility = 1
-    name = 'nfs'
+    name = "nfs"
 
     def __init__(self, parent, parameters):
         super().__init__(parent)
@@ -52,14 +52,14 @@ class Nfs(Deployment):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if 'to' not in parameters:
+        if "to" not in parameters:
             return False, '"to" is not in deploy parameters'
-        if parameters['to'] != 'nfs':
+        if parameters["to"] != "nfs":
             return False, '"to" parameter is not "nfs"'
-        if 'image' in device['actions']['deploy']['methods']:
+        if "image" in device["actions"]["deploy"]["methods"]:
             return False, '"image" was in the device configuration deploy methods'
-        if 'nfs' in device['actions']['deploy']['methods']:
-            return True, 'accepted'
+        if "nfs" in device["actions"]["deploy"]["methods"]:
+            return True, "accepted"
         return False, '"nfs" was not in the device configuration deploy methods"'
 
 
@@ -73,16 +73,22 @@ class NfsAction(DeployAction):  # pylint:disable=too-many-instance-attributes
         super().validate()
         if not self.valid:
             return
-        if 'nfsrootfs' in self.parameters and 'persistent_nfs' in self.parameters:
+        if "nfsrootfs" in self.parameters and "persistent_nfs" in self.parameters:
             self.errors = "Only one of nfsrootfs or persistent_nfs can be specified"
 
     def populate(self, parameters):
         download_dir = self.mkdtemp()
-        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        if 'nfsrootfs' in parameters:
-            self.internal_pipeline.add_action(DownloaderAction('nfsrootfs', path=download_dir))
-        if 'modules' in parameters:
-            self.internal_pipeline.add_action(DownloaderAction('modules', path=download_dir))
+        self.internal_pipeline = Pipeline(
+            parent=self, job=self.job, parameters=parameters
+        )
+        if "nfsrootfs" in parameters:
+            self.internal_pipeline.add_action(
+                DownloaderAction("nfsrootfs", path=download_dir)
+            )
+        if "modules" in parameters:
+            self.internal_pipeline.add_action(
+                DownloaderAction("modules", path=download_dir)
+            )
         # NfsAction is a deployment, so once the nfsrootfs has been deployed, just do the overlay
         self.internal_pipeline.add_action(ExtractNfsRootfs())
         self.internal_pipeline.add_action(OverlayAction())

@@ -3,19 +3,19 @@ from lava_dispatcher.action import Action
 
 class RepeatAction(Action):
 
-    name = 'repeat'
+    name = "repeat"
 
 
 class IfAction(Action):
 
-    name = 'if'
+    name = "if"
 
 
 class IncludeAction(Action):
 
-    name = 'include'
+    name = "include"
 
 
 class InParallelAction(Action):
 
-    name = 'in_parallel'
+    name = "in_parallel"

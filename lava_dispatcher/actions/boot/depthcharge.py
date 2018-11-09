@@ -22,10 +22,7 @@
 
 import os.path
 from lava_common.exceptions import ConfigurationError
-from lava_dispatcher.action import (
-    Action,
-    Pipeline,
-)
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot import (
     AutoLoginAction,
     BootAction,
@@ -51,6 +48,7 @@ class Depthcharge(Boot):
     downloaded files is a FIT image that contains the kernel, ramdisk and
     device tree blob, and the other contains the kernel arguments.
     """
+
     def __init__(self, parent, parameters):
         super().__init__(parent)
         self.action = DepthchargeAction()
@@ -60,17 +58,16 @@ class Depthcharge(Boot):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if parameters['method'] != 'depthcharge':
+        if parameters["method"] != "depthcharge":
             return False, '"method" was not "depthcharge"'
-        if 'commands' not in parameters:
-            raise ConfigurationError(
-                "commands not specified in boot parameters")
-        if 'depthcharge' not in device['actions']['boot']['methods']:
+        if "commands" not in parameters:
+            raise ConfigurationError("commands not specified in boot parameters")
+        if "depthcharge" not in device["actions"]["boot"]["methods"]:
             return (
                 False,
-                '"depthcharge" was not in the device configuration boot methods'
+                '"depthcharge" was not in the device configuration boot methods',
             )
-        return True, 'accepted'
+        return True, "accepted"
 
 
 class DepthchargeCommandOverlay(BootloaderCommandOverlay):
@@ -86,10 +83,10 @@ class DepthchargeCommandOverlay(BootloaderCommandOverlay):
 
     def validate(self):
         super().validate()
-        method = self.job.device['actions']['boot']['methods'][self.method]
-        commands_name = self.parameters['commands']
+        method = self.job.device["actions"]["boot"]["methods"][self.method]
+        commands_name = self.parameters["commands"]
         method_params = method[commands_name]
-        self.cmdline = method_params.get('cmdline')
+        self.cmdline = method_params.get("cmdline")
         if self.cmdline is None:
             self.errors = "No cmdline found in {}".format(commands_name)
 
@@ -97,27 +94,31 @@ class DepthchargeCommandOverlay(BootloaderCommandOverlay):
         connection = super().run(connection, max_end_time)
 
         # Create the cmdline file, this is not set by any bootloader command
-        ip_addr = dispatcher_ip(self.job.parameters['dispatcher'])
+        ip_addr = dispatcher_ip(self.job.parameters["dispatcher"])
         kernel_path = self.get_namespace_data(
-            action='download-action', label='kernel', key='file')
-        cmdline_path = os.path.join(os.path.dirname(kernel_path), 'cmdline')
+            action="download-action", label="kernel", key="file"
+        )
+        cmdline_path = os.path.join(os.path.dirname(kernel_path), "cmdline")
         nfs_address = self.get_namespace_data(
-            action='persistent-nfs-overlay', label='nfs_address', key='nfsroot')
+            action="persistent-nfs-overlay", label="nfs_address", key="nfsroot"
+        )
         nfs_root = self.get_namespace_data(
-            action='download-action', label='file', key='nfsrootfs')
+            action="download-action", label="file", key="nfsrootfs"
+        )
 
         if nfs_root:
             substitutions = {
-                '{NFSROOTFS}': self.get_namespace_data(
-                    action='extract-rootfs', label='file', key='nfsroot'),
-                '{NFS_SERVER_IP}': ip_addr,
+                "{NFSROOTFS}": self.get_namespace_data(
+                    action="extract-rootfs", label="file", key="nfsroot"
+                ),
+                "{NFS_SERVER_IP}": ip_addr,
             }
         elif nfs_address:
             substitutions = {
-                '{NFSROOTFS}': nfs_address,
-                '{NFS_SERVER_IP}': self.get_namespace_data(
-                    action='persistent-nfs-overlay', label='nfs_address',
-                    key='serverip'),
+                "{NFSROOTFS}": nfs_address,
+                "{NFS_SERVER_IP}": self.get_namespace_data(
+                    action="persistent-nfs-overlay", label="nfs_address", key="serverip"
+                ),
             }
         else:
             substitutions = {}
@@ -128,21 +129,24 @@ class DepthchargeCommandOverlay(BootloaderCommandOverlay):
 
         # Substitute {CMDLINE} with the cmdline file TFTP path
         kernel_tftp = self.get_namespace_data(
-            action='download-action', label='file', key='kernel')
-        cmdline_tftp = os.path.join(os.path.dirname(kernel_tftp), 'cmdline')
+            action="download-action", label="file", key="kernel"
+        )
+        cmdline_tftp = os.path.join(os.path.dirname(kernel_tftp), "cmdline")
         fit_tftp = self.get_namespace_data(
-            action='prepare-fit', label='file', key='fit')
-        substitutions = {
-            '{CMDLINE}': cmdline_tftp,
-            '{FIT}': fit_tftp,
-        }
+            action="prepare-fit", label="file", key="fit"
+        )
+        substitutions = {"{CMDLINE}": cmdline_tftp, "{FIT}": fit_tftp}
         commands = self.get_namespace_data(
-            action='bootloader-overlay', label=self.method, key='commands')
+            action="bootloader-overlay", label=self.method, key="commands"
+        )
         commands = substitute(commands, substitutions)
         self.set_namespace_data(
-            action='bootloader-overlay', label=self.method, key='commands',
-            value=commands)
-        self.logger.info("Parsed boot commands: %s", '; '.join(commands))
+            action="bootloader-overlay",
+            label=self.method,
+            key="commands",
+            value=commands,
+        )
+        self.logger.info("Parsed boot commands: %s", "; ".join(commands))
 
         return connection
 
@@ -159,7 +163,8 @@ class DepthchargeAction(BootAction):
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters)
+            parent=self, job=self.job, parameters=parameters
+        )
         self.internal_pipeline.add_action(DepthchargeCommandOverlay())
         self.internal_pipeline.add_action(ConnectDevice())
         self.internal_pipeline.add_action(DepthchargeRetry())
@@ -173,7 +178,8 @@ class DepthchargeRetry(BootAction):
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters)
+            parent=self, job=self.job, parameters=parameters
+        )
         self.internal_pipeline.add_action(ResetDevice())
         self.internal_pipeline.add_action(DepthchargeStart())
         self.internal_pipeline.add_action(BootloaderCommandsAction())
@@ -181,14 +187,15 @@ class DepthchargeRetry(BootAction):
             self.internal_pipeline.add_action(AutoLoginAction())
             if self.test_has_shell(parameters):
                 self.internal_pipeline.add_action(ExpectShellSession())
-                if 'transfer_overlay' in parameters:
+                if "transfer_overlay" in parameters:
                     self.internal_pipeline.add_action(OverlayUnpack())
                 self.internal_pipeline.add_action(ExportDeviceEnvironment())
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
         self.set_namespace_data(
-            action='shared', label='shared', key='connection', value=connection)
+            action="shared", label="shared", key="connection", value=connection
+        )
         return connection
 
 
@@ -207,10 +214,10 @@ class DepthchargeStart(Action):
 
     def validate(self):
         super().validate()
-        if self.job.device.connect_command == '':
+        if self.job.device.connect_command == "":
             self.errors = "Unable to connect to device"
-        method = self.job.device['actions']['boot']['methods']['depthcharge']
-        self.start_message = method['parameters'].get('start_message')
+        method = self.job.device["actions"]["boot"]["methods"]["depthcharge"]
+        self.start_message = method["parameters"].get("start_message")
         if self.start_message is None:
             self.errors = "Missing Depthcharge start message for device"
 

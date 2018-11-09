@@ -21,15 +21,8 @@
 import os
 import re
 import glob
-from lava_common.exceptions import (
-    JobError,
-    InfrastructureError,
-    LAVABug,
-)
-from lava_dispatcher.action import (
-    Action,
-    Pipeline
-)
+from lava_common.exceptions import JobError, InfrastructureError, LAVABug
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.utils.filesystem import mkdtemp, rmtree
@@ -54,37 +47,43 @@ class OffsetAction(DeployAction):
 
     def validate(self):
         super().validate()
-        if not self.get_namespace_data(action='download-action', label=self.key, key='file'):
+        if not self.get_namespace_data(
+            action="download-action", label=self.key, key="file"
+        ):
             self.errors = "no file specified to calculate offset"
 
     def run(self, connection, max_end_time):
-        if self.get_namespace_data(action='download-action', label=self.key, key='offset'):
+        if self.get_namespace_data(
+            action="download-action", label=self.key, key="offset"
+        ):
             # idempotency
             return connection
         connection = super().run(connection, max_end_time)
-        image = self.get_namespace_data(action='download-action', label=self.key, key='file')
+        image = self.get_namespace_data(
+            action="download-action", label=self.key, key="file"
+        )
         if not os.path.exists(image):
             raise JobError("Not able to mount %s: file does not exist" % image)
-        part_data = self.run_command([
-            '/sbin/parted',
-            image,
-            '-m',
-            '-s',
-            'unit',
-            'b',
-            'print'
-        ])
+        part_data = self.run_command(
+            ["/sbin/parted", image, "-m", "-s", "unit", "b", "print"]
+        )
         if not part_data:
             raise JobError("Unable to identify offset")
-        deploy_params = self.job.device['actions']['deploy']['methods']['image']['parameters']
-        partno = deploy_params[self.parameters['deployment_data']['lava_test_results_part_attr']]
+        deploy_params = self.job.device["actions"]["deploy"]["methods"]["image"][
+            "parameters"
+        ]
+        partno = deploy_params[
+            self.parameters["deployment_data"]["lava_test_results_part_attr"]
+        ]
 
-        pattern = re.compile('%d:([0-9]+)B:' % partno)
+        pattern = re.compile("%d:([0-9]+)B:" % partno)
         for line in part_data.splitlines():
             found = re.match(pattern, line)
             if found:
-                self.set_namespace_data(action=self.name, label=self.key, key='offset', value=found.group(1))
-        if not self.get_namespace_data(action=self.name, label=self.key, key='offset'):
+                self.set_namespace_data(
+                    action=self.name, label=self.key, key="offset", value=found.group(1)
+                )
+        if not self.get_namespace_data(action=self.name, label=self.key, key="offset"):
             raise JobError(  # FIXME: JobError needs a unit test
                 "Unable to determine offset for %s" % image
             )
@@ -103,20 +102,31 @@ class LoopCheckAction(DeployAction):
 
     def validate(self):
         super().validate()
-        if not glob.glob('/sys/block/loop*'):
-            raise InfrastructureError("Could not mount the image without loopback devices. "
-                                      "Is the 'loop' kernel module activated?")
-        available_loops = len(glob.glob('/sys/block/loop*'))
-        self.set_namespace_data(action=self.name, label=self.key, key='available_loops', value=available_loops)
+        if not glob.glob("/sys/block/loop*"):
+            raise InfrastructureError(
+                "Could not mount the image without loopback devices. "
+                "Is the 'loop' kernel module activated?"
+            )
+        available_loops = len(glob.glob("/sys/block/loop*"))
+        self.set_namespace_data(
+            action=self.name,
+            label=self.key,
+            key="available_loops",
+            value=available_loops,
+        )
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
-        if not self.get_namespace_data(action=self.name, label=self.key, key='available_loops'):
+        if not self.get_namespace_data(
+            action=self.name, label=self.key, key="available_loops"
+        ):
             raise LAVABug("Unable to check available loop devices")
-        args = ['/sbin/losetup', '-a']
+        args = ["/sbin/losetup", "-a"]
         pro = self.run_command(args)
         mounted_loops = len(pro.strip().split("\n")) if pro else 0
-        available_loops = self.get_namespace_data(action=self.name, label=self.key, key='available_loops')
+        available_loops = self.get_namespace_data(
+            action=self.name, label=self.key, key="available_loops"
+        )
         # FIXME: we should retry as this can happen and be fixed automatically
         # when one is unmounted
         if mounted_loops >= available_loops:
@@ -147,30 +157,51 @@ class LoopMountAction(RetryAction):
 
     def validate(self):
         super().validate()
-        lava_test_results_base = self.parameters['deployment_data']['lava_test_results_dir']
+        lava_test_results_base = self.parameters["deployment_data"][
+            "lava_test_results_dir"
+        ]
         lava_test_results_dir = lava_test_results_base % self.job.job_id
-        self.set_namespace_data(action='test', label='results', key='lava_test_results_dir', value=lava_test_results_dir)
-        if not self.get_namespace_data(action='download-action', label=self.key, key='file'):
+        self.set_namespace_data(
+            action="test",
+            label="results",
+            key="lava_test_results_dir",
+            value=lava_test_results_dir,
+        )
+        if not self.get_namespace_data(
+            action="download-action", label=self.key, key="file"
+        ):
             self.errors = "no file specified to mount"
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
         self.mntdir = mkdtemp(autoremove=False)
-        lava_test_results_dir = self.get_namespace_data(action='test', label='results', key='lava_test_results_dir')
+        lava_test_results_dir = self.get_namespace_data(
+            action="test", label="results", key="lava_test_results_dir"
+        )
         test_mntdir = os.path.abspath("%s/%s" % (self.mntdir, lava_test_results_dir))
-        self.set_namespace_data(action=self.name, label='mntdir', key='mntdir', value=self.mntdir)
-        self.set_namespace_data(action='mount-action', label='mntdir', key='mntdir', value=test_mntdir)
-        offset = self.get_namespace_data(action='download-action', label=self.key, key='offset')
+        self.set_namespace_data(
+            action=self.name, label="mntdir", key="mntdir", value=self.mntdir
+        )
+        self.set_namespace_data(
+            action="mount-action", label="mntdir", key="mntdir", value=test_mntdir
+        )
+        offset = self.get_namespace_data(
+            action="download-action", label=self.key, key="offset"
+        )
         mount_cmd = [
-            'mount',
-            '-o',
-            'loop,offset=%s' % offset,
-            self.get_namespace_data(action='download-action', label=self.key, key='file'),
-            self.mntdir
+            "mount",
+            "-o",
+            "loop,offset=%s" % offset,
+            self.get_namespace_data(
+                action="download-action", label=self.key, key="file"
+            ),
+            self.mntdir,
         ]
         command_output = self.run_command(mount_cmd)
-        if command_output and command_output != '':
-            raise JobError("Unable to mount: %s" % command_output)  # FIXME: JobError needs a unit test
+        if command_output and command_output != "":
+            raise JobError(
+                "Unable to mount: %s" % command_output
+            )  # FIXME: JobError needs a unit test
         return connection
 
     def cleanup(self, connection):
@@ -178,7 +209,7 @@ class LoopMountAction(RetryAction):
         self.logger.debug("%s cleanup", self.name)
         if self.mntdir:
             if os.path.ismount(self.mntdir):
-                self.run_command(['umount', self.mntdir])
+                self.run_command(["umount", self.mntdir])
             if os.path.isdir(self.mntdir):
                 rmtree(self.mntdir)
             self.mntdir = None
@@ -207,7 +238,9 @@ class MountAction(DeployAction):
         if not self.job:
             raise LAVABug("No job object supplied to action")
         # FIXME: not all mount operations will need these actions
-        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.internal_pipeline = Pipeline(
+            parent=self, job=self.job, parameters=parameters
+        )
         self.internal_pipeline.add_action(OffsetAction(self.key))
         # FIXME: LoopCheckAction and LoopMountAction should be in only one Action
         self.internal_pipeline.add_action(LoopCheckAction(self.key))
@@ -221,7 +254,9 @@ class UnmountAction(RetryAction):
     summary = "retry umount"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.internal_pipeline = Pipeline(
+            parent=self, job=self.job, parameters=parameters
+        )
         self.internal_pipeline.add_action(Unmount())
 
 

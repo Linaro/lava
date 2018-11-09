@@ -31,10 +31,7 @@ import errno
 from configobj import ConfigObj
 
 from lava_common.exceptions import InfrastructureError, JobError, LAVABug
-from lava_common.constants import (
-    LXC_PATH,
-    LAVA_LXC_HOME,
-)
+from lava_common.constants import LXC_PATH, LAVA_LXC_HOME
 from lava_dispatcher.utils.compression import decompress_file
 from lava_dispatcher.utils.decorator import replace_exception
 
@@ -50,11 +47,10 @@ def rmtree(directory):
     try:
         shutil.rmtree(directory)
     except OSError as exc:
-        raise LAVABug("Error when trying to remove '%s': %s"
-                      % (directory, exc))
+        raise LAVABug("Error when trying to remove '%s': %s" % (directory, exc))
 
 
-def mkdtemp(autoremove=True, basedir='/tmp'):  # nosec - internal use.
+def mkdtemp(autoremove=True, basedir="/tmp"):  # nosec - internal use.
     """
     returns a temporary directory that's deleted when the process exits
 
@@ -74,16 +70,19 @@ def check_ssh_identity_file(params):  # pylint: disable=too-many-return-statemen
     """
     if not params or not isinstance(params, dict):
         return "Invalid parameters", None
-    if 'ssh' not in params:
+    if "ssh" not in params:
         return "Empty ssh parameter list in device configuration %s" % params, None
-    if os.path.isabs(params['ssh']['identity_file']):
-        identity_file = params['ssh']['identity_file']
+    if os.path.isabs(params["ssh"]["identity_file"]):
+        identity_file = params["ssh"]["identity_file"]
     else:
         identity_file = os.path.realpath(
             os.path.join(
                 __file__,
-                '../' * 2,  # up two directories from this file - not a constant, a result of the layout.
-                params['ssh']['identity_file']))
+                "../"
+                * 2,  # up two directories from this file - not a constant, a result of the layout.
+                params["ssh"]["identity_file"],
+            )
+        )
     if not os.path.exists(identity_file):
         return "Cannot find SSH private key %s" % identity_file, None
     if not os.path.exists("%s.pub" % identity_file):
@@ -98,16 +97,16 @@ def tftpd_dir():
     subdirectory of it. Default installation value: /srv/tftp/
     :return: real path to the TFTP directory or raises InfrastructureError
     """
-    var_name = 'TFTP_DIRECTORY'
-    if os.path.exists('/etc/default/tftpd-hpa'):
-        config = ConfigObj('/etc/default/tftpd-hpa')
+    var_name = "TFTP_DIRECTORY"
+    if os.path.exists("/etc/default/tftpd-hpa"):
+        config = ConfigObj("/etc/default/tftpd-hpa")
         value = config.get(var_name)
         return os.path.realpath(value)
     raise InfrastructureError("Unable to identify tftpd directory")
 
 
 def write_bootscript(commands, filename):
-    with open(filename, 'w') as bootscript:
+    with open(filename, "w") as bootscript:
         bootscript.write("#!ipxe\n\n")
         for line in commands:
             bootscript.write(line + "\n")
@@ -119,7 +118,7 @@ def _launch_guestfs(guest):
     try:
         guest.launch()
     except RuntimeError as exc:
-        logger = logging.getLogger('dispatcher')
+        logger = logging.getLogger("dispatcher")
         logger.exception(str(exc))
         raise InfrastructureError("Unable to start libguestfs")
 
@@ -145,7 +144,7 @@ def prepare_guestfs(output, overlay, size):
     if len(devices) != 1:
         raise InfrastructureError("Unable to prepare guestfs")
     guest_device = devices[0]
-    guest.mke2fs(guest_device, label='LAVA')
+    guest.mke2fs(guest_device, label="LAVA")
     # extract to a temp location
     tar_output = mkdtemp()
     # Now mount the filesystem so that we can add files.
@@ -153,16 +152,16 @@ def prepare_guestfs(output, overlay, size):
     tarball = tarfile.open(overlay)
     tarball.extractall(tar_output)
     guest_dir = mkdtemp()
-    guest_tar = os.path.join(guest_dir, 'guest.tar')
-    root_tar = tarfile.open(guest_tar, 'w')
+    guest_tar = os.path.join(guest_dir, "guest.tar")
+    root_tar = tarfile.open(guest_tar, "w")
     for topdir in os.listdir(tar_output):
         for dirname in os.listdir(os.path.join(tar_output, topdir)):
             root_tar.add(os.path.join(tar_output, topdir, dirname), arcname=dirname)
     root_tar.close()
-    guest.tar_in(guest_tar, '/')
+    guest.tar_in(guest_tar, "/")
     os.unlink(guest_tar)
     guest.umount(guest_device)
-    return guest.blkid(guest_device)['UUID']
+    return guest.blkid(guest_device)["UUID"]
 
 
 @replace_exception(RuntimeError, JobError)
@@ -192,17 +191,17 @@ def copy_out_files(image, filenames, destination):
     source files exist in separate directories.
     """
     if not isinstance(filenames, list):
-        raise LAVABug('filenames must be a list')
+        raise LAVABug("filenames must be a list")
     guest = guestfs.GuestFS(python_return_dict=True)
     guest.add_drive_ro(image)
     _launch_guestfs(guest)
     devices = guest.list_devices()
     if len(devices) != 1:
         raise InfrastructureError("Unable to prepare guestfs")
-    guest.mount_ro(devices[0], '/')
+    guest.mount_ro(devices[0], "/")
     for filename in filenames:
         file_buf = guest.read_file(filename)
-        with open(os.path.join(destination, os.path.basename(filename)), 'wb') as out:
+        with open(os.path.join(destination, os.path.basename(filename)), "wb") as out:
             out.write(file_buf)
     guest.shutdown()
 
@@ -224,20 +223,20 @@ def copy_in_overlay(image, root_partition, overlay):
         if not partitions:
             raise InfrastructureError("Unable to prepare guestfs")
         guest_partition = partitions[root_partition]
-        guest.mount(guest_partition, '/')
+        guest.mount(guest_partition, "/")
     else:
         devices = guest.list_devices()
         if not devices:
             raise InfrastructureError("Unable to prepare guestfs")
-        guest.mount(devices[0], '/')
+        guest.mount(devices[0], "/")
 
     # FIXME: max message length issues when using tar_in
     # on tar.gz.  Works fine with tar so decompressing
     # overlay first.
     if os.path.exists(overlay[:-3]):
         os.unlink(overlay[:-3])
-    decompressed_overlay = decompress_file(overlay, 'gz')
-    guest.tar_in(decompressed_overlay, '/')
+    decompressed_overlay = decompress_file(overlay, "gz")
+    guest.tar_in(decompressed_overlay, "/")
 
     if root_partition:
         guest.umount(guest_partition)
@@ -264,8 +263,9 @@ def lava_lxc_home(lxc_name, dispatcher_config):
     Takes into account the dispatcher specific path configured via lxc_path
     key in dispatcher_config.
     """
-    path = os.path.join(lxc_path(dispatcher_config), lxc_name, 'rootfs',
-                        LAVA_LXC_HOME.lstrip('/'))
+    path = os.path.join(
+        lxc_path(dispatcher_config), lxc_name, "rootfs", LAVA_LXC_HOME.lstrip("/")
+    )
     # Create lava_lxc_home if it is unavailable
     os.makedirs(path, 0o755, exist_ok=True)
     return path
@@ -292,10 +292,9 @@ def copy_to_lxc(lxc_name, src, dispatcher_config):
     """
     filename = os.path.basename(src)
     dst = os.path.join(lava_lxc_home(lxc_name, dispatcher_config), filename)
-    logger = logging.getLogger('dispatcher')
+    logger = logging.getLogger("dispatcher")
     if src == dst:
-        logger.debug("Not copying since src: '%s' and dst: '%s' are same",
-                     src, dst)
+        logger.debug("Not copying since src: '%s' and dst: '%s' are same", src, dst)
     else:
         logger.debug("Copying %s to %s", filename, lxc_name)
         try:
@@ -328,9 +327,13 @@ def copy_overlay_to_lxc(lxc_name, src, dispatcher_config, namespace):
 
     Raises JobError if the copy failed.
     """
-    dst = os.path.join(lava_lxc_home(lxc_name, dispatcher_config), 'overlays',
-                       namespace, 'overlay.tar.gz')
-    logger = logging.getLogger('dispatcher')
+    dst = os.path.join(
+        lava_lxc_home(lxc_name, dispatcher_config),
+        "overlays",
+        namespace,
+        "overlay.tar.gz",
+    )
+    logger = logging.getLogger("dispatcher")
     logger.debug("Copying %s to %s", os.path.basename(src), dst)
     try:
         shutil.copy(src, dst)
@@ -351,27 +354,27 @@ def copy_overlay_to_sparse_fs(image, overlay):
     Only copies the overlay to an image
     which has already been converted from sparse.
     """
-    logger = logging.getLogger('dispatcher')
+    logger = logging.getLogger("dispatcher")
     guest = guestfs.GuestFS(python_return_dict=True)
     guest.add_drive(image)
     _launch_guestfs(guest)
     devices = guest.list_devices()
     if not devices:
         raise InfrastructureError("Unable to prepare guestfs")
-    guest.mount(devices[0], '/')
+    guest.mount(devices[0], "/")
     # FIXME: max message length issues when using tar_in
     # on tar.gz.  Works fine with tar so decompressing
     # overlay first.
     if os.path.exists(overlay[:-3]):
         os.unlink(overlay[:-3])
-    decompressed_overlay = decompress_file(overlay, 'gz')
-    guest.tar_in(decompressed_overlay, '/')
+    decompressed_overlay = decompress_file(overlay, "gz")
+    guest.tar_in(decompressed_overlay, "/")
     # Check if we have space left on the mounted image.
     output = guest.df()
     logger.debug(output)
     _, _, _, available, percent, _ = output.split("\n")[1].split()
     guest.umount(devices[0])
-    if int(available) is 0 or percent == '100%':
+    if int(available) is 0 or percent == "100%":
         raise JobError("No space in image after applying overlay: %s" % image)
 
 
@@ -380,10 +383,12 @@ def copy_directory_contents(root_dir, dst_dir):
     Copies the contents of the root directory to the destination directory
     but excludes the root directory's top level folder
     """
-    files_to_copy = glob.glob(os.path.join(root_dir, '*'))
-    logger = logging.getLogger('dispatcher')
+    files_to_copy = glob.glob(os.path.join(root_dir, "*"))
+    logger = logging.getLogger("dispatcher")
     for fname in files_to_copy:
-        logger.debug("copying %s to %s", fname, os.path.join(dst_dir, os.path.basename(fname)))
+        logger.debug(
+            "copying %s to %s", fname, os.path.join(dst_dir, os.path.basename(fname))
+        )
         if os.path.isdir(fname):
             shutil.copytree(fname, os.path.join(dst_dir, os.path.basename(fname)))
         else:
@@ -394,8 +399,8 @@ def remove_directory_contents(root_dir):
     """
     Removes the contents of the root directory but not the root itself
     """
-    files_to_remove = glob.glob(os.path.join(root_dir, '*'))
-    logger = logging.getLogger('dispatcher')
+    files_to_remove = glob.glob(os.path.join(root_dir, "*"))
+    logger = logging.getLogger("dispatcher")
     for fname in files_to_remove:
         logger.debug("removing %s", fname)
         if os.path.isdir(fname):
@@ -410,4 +415,4 @@ def is_sparse_image(image):
     """
     image_magic = magic.open(magic.MAGIC_NONE)  # pylint: disable=no-member
     image_magic.load()
-    return bool(image_magic.file(image).split(',')[0] == 'Android sparse image')
+    return bool(image_magic.file(image).split(",")[0] == "Android sparse image")

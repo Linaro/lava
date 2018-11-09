@@ -30,14 +30,10 @@ from lava_common.timeout import Timeout
 # pylint: disable=unused-argument,no-self-use
 
 
-RECOGNIZED_TAGS = (
-    'telnet',
-    'ssh'
-)
+RECOGNIZED_TAGS = ("telnet", "ssh")
 
 
 class SignalMatch(InternalObject):  # pylint: disable=too-few-public-methods
-
     def match(self, data, fixupdict=None):  # pylint: disable=no-self-use
         if not fixupdict:
             fixupdict = {}
@@ -45,33 +41,37 @@ class SignalMatch(InternalObject):  # pylint: disable=too-few-public-methods
         res = {}
         for key in data:
             # Special cases for 'measurement'
-            if key == 'measurement':
+            if key == "measurement":
                 try:
-                    res['measurement'] = decimal.Decimal(data['measurement'])
+                    res["measurement"] = decimal.Decimal(data["measurement"])
                 except decimal.InvalidOperation:
-                    raise TestError("Invalid measurement %s" % data['measurement'])
+                    raise TestError("Invalid measurement %s" % data["measurement"])
 
             # and 'result'
-            elif key == 'result':
-                res['result'] = data['result']
-                if data['result'] in fixupdict:
-                    res['result'] = fixupdict[data['result']]
-                if res['result'] not in ('pass', 'fail', 'skip', 'unknown'):
-                    res['result'] = 'unknown'
-                    raise TestError('Bad test result: %s' % data['result'])
+            elif key == "result":
+                res["result"] = data["result"]
+                if data["result"] in fixupdict:
+                    res["result"] = fixupdict[data["result"]]
+                if res["result"] not in ("pass", "fail", "skip", "unknown"):
+                    res["result"] = "unknown"
+                    raise TestError("Bad test result: %s" % data["result"])
 
             # or just copy the data
             else:
                 res[key] = data[key]
 
-        if 'test_case_id' not in res:
-            raise TestError("Test case results without test_case_id (probably a sign of an "
-                            "incorrect parsing pattern being used): %s" % res)
+        if "test_case_id" not in res:
+            raise TestError(
+                "Test case results without test_case_id (probably a sign of an "
+                "incorrect parsing pattern being used): %s" % res
+            )
 
-        if 'result' not in res:
-            res['result'] = 'unknown'
-            raise TestError("Test case results without result (probably a sign of an "
-                            "incorrect parsing pattern being used): %s" % res)
+        if "result" not in res:
+            res["result"] = "unknown"
+            raise TestError(
+                "Test case results without result (probably a sign of an "
+                "incorrect parsing pattern being used): %s" % res
+            )
 
         return res
 
@@ -106,9 +106,9 @@ class Connection:
         self.results = {}
         self.match = None
         self.connected = True
-        self.check_char = '#'
+        self.check_char = "#"
         self.tags = []
-        self.recognized_names = ['LxcSession', 'QemuSession']
+        self.recognized_names = ["LxcSession", "QemuSession"]
 
     def corruption_check(self):
         self.sendline(self.check_char)
@@ -138,27 +138,26 @@ class Connection:
         raise LAVABug("'wait' not implemented")
 
     def disconnect(self, reason):
-        logger = logging.getLogger('dispatcher')
-        if not self.tags or \
-                (
-                self.name not in self.recognized_names and
-                not set(RECOGNIZED_TAGS) & set(self.tags)
-                ):
+        logger = logging.getLogger("dispatcher")
+        if not self.tags or (
+            self.name not in self.recognized_names
+            and not set(RECOGNIZED_TAGS) & set(self.tags)
+        ):
             raise LAVABug("'disconnect' not implemented")
         try:
-            if 'telnet' in self.tags:
+            if "telnet" in self.tags:
                 logger.info("Disconnecting from telnet: %s", reason)
-                self.sendcontrol(']')
-                self.sendline('quit', disconnecting=True)
-            elif 'ssh' in self.tags:
+                self.sendcontrol("]")
+                self.sendline("quit", disconnecting=True)
+            elif "ssh" in self.tags:
                 logger.info("Disconnecting from ssh: %s", reason)
-                self.sendline('', disconnecting=True)
-                self.sendline('~.', disconnecting=True)
+                self.sendline("", disconnecting=True)
+                self.sendline("~.", disconnecting=True)
             elif self.name == "LxcSession":
                 logger.info("Disconnecting from lxc: %s", reason)
-                self.sendline('', disconnecting=True)
-                self.sendline('exit', disconnecting=True)
-            elif self.name == 'QemuSession':
+                self.sendline("", disconnecting=True)
+                self.sendline("exit", disconnecting=True)
+            elif self.name == "QemuSession":
                 logger.info("Disconnecting from qemu: %s", reason)
             else:
                 raise LAVABug("'disconnect' not supported for %s" % self.tags)
@@ -173,7 +172,7 @@ class Connection:
         # logger = logging.getLogger('dispatcher')
         if self.raw_connection:
             if self.tags or self.name == "LxcSession":
-                self.disconnect(reason='Finalise')
+                self.disconnect(reason="Finalise")
         if self.raw_connection:
             try:
                 os.killpg(self.raw_connection.pid, signal.SIGKILL)
@@ -202,7 +201,8 @@ class Protocol:
     run before Protocol objects of a higher level. Protocols with the same level can be setup or run
     in an arbitrary order (as the original source data is a dictionary).
     """
-    name = 'protocol'
+
+    name = "protocol"
     level = 0
 
     def __init__(self, parameters, job_id):
@@ -243,7 +243,9 @@ class Protocol:
     def finalise_protocol(self, device=None):
         raise LAVABug("'finalise_protocol' not implemented")
 
-    def check_timeout(self, duration, data):  # pylint: disable=unused-argument,no-self-use
+    def check_timeout(
+        self, duration, data
+    ):  # pylint: disable=unused-argument,no-self-use
         """
         Use if particular protocol calls can require a connection timeout
         larger than the default_connection_duration.
@@ -269,5 +271,7 @@ class Protocol:
         # implementations will usually need a try: except: block around _api.select()
         return self._api_select(args, action=None)
 
-    def collate(self, reply_dict, params_dict):  # pylint: disable=unused-argument,no-self-use
+    def collate(
+        self, reply_dict, params_dict
+    ):  # pylint: disable=unused-argument,no-self-use
         return None

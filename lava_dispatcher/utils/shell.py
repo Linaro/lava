@@ -30,10 +30,10 @@ def _which_check(path, match):
     Debian based systems. Allows ordinary users to query
     the PATH used at runtime.
     """
-    paths = os.environ['PATH'].split(':')
+    paths = os.environ["PATH"].split(":")
     if os.getuid() != 0:
         # avoid sudo - it may ask for a password on developer systems.
-        paths.extend(['/usr/local/sbin', '/usr/sbin', '/sbin'])
+        paths.extend(["/usr/local/sbin", "/usr/sbin", "/sbin"])
     for dirname in paths:
         candidate = os.path.join(dirname, path)
         if match(candidate):

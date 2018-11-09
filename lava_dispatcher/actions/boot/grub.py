@@ -22,10 +22,7 @@
 # imported by the parser to populate the list of subclasses.
 
 from lava_common.exceptions import ConfigurationError
-from lava_dispatcher.action import (
-    Action,
-    Pipeline
-)
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.logical import Boot
 from lava_dispatcher.actions.boot import (
     BootAction,
@@ -34,20 +31,14 @@ from lava_dispatcher.actions.boot import (
     BootloaderSecondaryMedia,
     BootloaderCommandsAction,
     OverlayUnpack,
-    BootloaderInterruptAction
+    BootloaderInterruptAction,
 )
-from lava_dispatcher.actions.boot.uefi_menu import (
-    UEFIMenuInterrupt,
-    UefiMenuSelector
-)
+from lava_dispatcher.actions.boot.uefi_menu import UEFIMenuInterrupt, UefiMenuSelector
 from lava_dispatcher.actions.boot.fastboot import WaitFastBootInterrupt
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.shell import ExpectShellSession
 from lava_dispatcher.connections.serial import ConnectDevice
-from lava_dispatcher.power import (
-    ResetDevice,
-    PowerOff
-)
+from lava_dispatcher.power import ResetDevice, PowerOff
 
 
 class GrubSequence(Boot):
@@ -63,23 +54,23 @@ class GrubSequence(Boot):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if 'method' not in parameters:
+        if "method" not in parameters:
             raise ConfigurationError("method not specified in boot parameters")
         if parameters["method"] not in ["grub", "grub-efi"]:
             return False, '"method" was not "grub" or "grub-efi"'
-        if 'actions' not in device:
+        if "actions" not in device:
             raise ConfigurationError("Invalid device configuration")
-        if 'boot' not in device['actions']:
+        if "boot" not in device["actions"]:
             return False, '"boot" was not in the device configuration actions'
-        if 'methods' not in device['actions']['boot']:
+        if "methods" not in device["actions"]["boot"]:
             raise ConfigurationError("Device misconfiguration")
-        params = device['actions']['boot']['methods']
-        if 'grub' not in params:
+        params = device["actions"]["boot"]["methods"]
+        if "grub" not in params:
             return False, '"grub" was not in the device configuration boot methods'
-        if 'grub-efi' in params:
+        if "grub-efi" in params:
             return False, '"grub-efi" was not in the device configuration boot methods'
-        if 'sequence' in params['grub']:
-            return True, 'accepted'
+        if "sequence" in params["grub"]:
+            return True, "accepted"
         return False, '"sequence" not in device configuration boot methods'
 
 
@@ -96,32 +87,35 @@ class Grub(Boot):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if 'method' not in parameters:
+        if "method" not in parameters:
             raise ConfigurationError("method not specified in boot parameters")
         if parameters["method"] not in ["grub", "grub-efi"]:
             return False, '"method" was not "grub" or "grub-efi"'
-        if 'actions' not in device:
+        if "actions" not in device:
             raise ConfigurationError("Invalid device configuration")
-        if 'boot' not in device['actions']:
+        if "boot" not in device["actions"]:
             return False, '"boot" was not in the device configuration actions'
-        if 'methods' not in device['actions']['boot']:
+        if "methods" not in device["actions"]["boot"]:
             raise ConfigurationError("Device misconfiguration")
-        params = device['actions']['boot']['methods']
-        if 'grub' in params and 'sequence' in params['grub']:
+        params = device["actions"]["boot"]["methods"]
+        if "grub" in params and "sequence" in params["grub"]:
             return False, '"sequence" was in "grub" parameters'
-        if 'grub' in params or 'grub-efi' in params:
-            return True, 'accepted'
+        if "grub" in params or "grub-efi" in params:
+            return True, "accepted"
         else:
-            return False, '"grub" or "grub-efi" was not in the device configuration boot methods'
+            return (
+                False,
+                '"grub" or "grub-efi" was not in the device configuration boot methods',
+            )
 
 
 def _grub_sequence_map(sequence):
     """Maps grub sequence with corresponding class."""
     sequence_map = {
-        'wait-fastboot-interrupt': (WaitFastBootInterrupt, 'grub'),
-        'auto-login': (AutoLoginAction, None),
-        'shell-session': (ExpectShellSession, None),
-        'export-env': (ExportDeviceEnvironment, None),
+        "wait-fastboot-interrupt": (WaitFastBootInterrupt, "grub"),
+        "auto-login": (AutoLoginAction, None),
+        "shell-session": (ExpectShellSession, None),
+        "export-env": (ExportDeviceEnvironment, None),
     }
     return sequence_map.get(sequence, (None, None))
 
@@ -138,30 +132,32 @@ class GrubSequenceAction(BootAction):
 
     def validate(self):
         super().validate()
-        sequences = self.job.device['actions']['boot']['methods']['grub'].get(
-            'sequence', [])
+        sequences = self.job.device["actions"]["boot"]["methods"]["grub"].get(
+            "sequence", []
+        )
         for sequence in sequences:
             if not _grub_sequence_map(sequence):
                 self.errors = "Unknown boot sequence '%s'" % sequence
 
     def populate(self, parameters):
         super().populate(parameters)
-        self.internal_pipeline = Pipeline(parent=self, job=self.job,
-                                          parameters=parameters)
-        sequences = self.job.device['actions']['boot']['methods']['grub'].get(
-            'sequence', [])
+        self.internal_pipeline = Pipeline(
+            parent=self, job=self.job, parameters=parameters
+        )
+        sequences = self.job.device["actions"]["boot"]["methods"]["grub"].get(
+            "sequence", []
+        )
         for sequence in sequences:
             mapped = _grub_sequence_map(sequence)
             if mapped[1]:
-                self.internal_pipeline.add_action(
-                    mapped[0](itype=mapped[1]))
+                self.internal_pipeline.add_action(mapped[0](itype=mapped[1]))
             elif mapped[0]:
                 self.internal_pipeline.add_action(mapped[0]())
         if self.has_prompts(parameters):
             self.internal_pipeline.add_action(AutoLoginAction())
             if self.test_has_shell(parameters):
                 self.internal_pipeline.add_action(ExpectShellSession())
-                if 'transfer_overlay' in parameters:
+                if "transfer_overlay" in parameters:
                     self.internal_pipeline.add_action(OverlayUnpack())
                 self.internal_pipeline.add_action(ExportDeviceEnvironment())
         else:
@@ -182,20 +178,26 @@ class GrubMainAction(BootAction):
         self.expect_shell = True
 
     def populate(self, parameters):
-        self.expect_shell = parameters.get('expect_shell', True)
-        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.expect_shell = parameters.get("expect_shell", True)
+        self.internal_pipeline = Pipeline(
+            parent=self, job=self.job, parameters=parameters
+        )
         self.internal_pipeline.add_action(BootloaderSecondaryMedia())
         self.internal_pipeline.add_action(BootloaderCommandOverlay())
         self.internal_pipeline.add_action(ConnectDevice())
         # FIXME: reset_device is a hikey hack due to fastboot/OTG issues
         # remove as part of LAVA-940 - convert to use fastboot-sequence
-        reset_device = self.job.device['actions']['boot']['methods'].get('grub-efi', {}).get('reset_device', True)
-        if parameters['method'] == 'grub-efi' and reset_device:
+        reset_device = (
+            self.job.device["actions"]["boot"]["methods"]
+            .get("grub-efi", {})
+            .get("reset_device", True)
+        )
+        if parameters["method"] == "grub-efi" and reset_device:
             # added unless the device specifies not to reset the device in grub.
             self.internal_pipeline.add_action(ResetDevice())
-        elif parameters['method'] == 'grub':
+        elif parameters["method"] == "grub":
             self.internal_pipeline.add_action(ResetDevice())
-        if parameters['method'] == 'grub-efi':
+        if parameters["method"] == "grub-efi":
             self.internal_pipeline.add_action(UEFIMenuInterrupt())
             self.internal_pipeline.add_action(GrubMenuSelector())
         self.internal_pipeline.add_action(BootloaderInterruptAction())
@@ -204,7 +206,7 @@ class GrubMainAction(BootAction):
             self.internal_pipeline.add_action(AutoLoginAction())
             if self.test_has_shell(parameters):
                 self.internal_pipeline.add_action(ExpectShellSession())
-                if 'transfer_overlay' in parameters:
+                if "transfer_overlay" in parameters:
                     self.internal_pipeline.add_action(OverlayUnpack())
                 self.internal_pipeline.add_action(ExportDeviceEnvironment())
         else:
@@ -215,15 +217,19 @@ class GrubMainAction(BootAction):
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
-        self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
+        self.set_namespace_data(
+            action="shared", label="shared", key="connection", value=connection
+        )
         return connection
 
 
-class GrubMenuSelector(UefiMenuSelector):  # pylint: disable=too-many-instance-attributes
+class GrubMenuSelector(
+    UefiMenuSelector
+):  # pylint: disable=too-many-instance-attributes
 
-    name = 'grub-efi-menu-selector'
-    description = 'select specified grub-efi menu items'
-    summary = 'select grub options in the efi menu'
+    name = "grub-efi-menu-selector"
+    description = "select specified grub-efi menu items"
+    summary = "select grub options in the efi menu"
 
     def __init__(self):
         super().__init__()
@@ -233,20 +239,22 @@ class GrubMenuSelector(UefiMenuSelector):  # pylint: disable=too-many-instance-a
         self.params = None
 
     def validate(self):
-        if self.method_name not in self.job.device['actions']['boot']['methods']:
+        if self.method_name not in self.job.device["actions"]["boot"]["methods"]:
             self.errors = "No %s in device boot methods" % self.method_name
             return
-        self.params = self.job.device['actions']['boot']['methods'][self.method_name]
-        if 'menu_options' not in self.params:
+        self.params = self.job.device["actions"]["boot"]["methods"][self.method_name]
+        if "menu_options" not in self.params:
             self.errors = "Missing entry for menu item to use for %s" % self.method_name
             return
-        self.commands = self.params['menu_options']
+        self.commands = self.params["menu_options"]
         super().validate()
 
     def run(self, connection, max_end_time):
         # Needs to get the interrupt_prompt from the bootloader device config
-        interrupt_prompt = self.params['parameters'].get(
-            'interrupt_prompt', self.job.device.get_constant('interrupt-prompt', prefix='grub'))
+        interrupt_prompt = self.params["parameters"].get(
+            "interrupt_prompt",
+            self.job.device.get_constant("interrupt-prompt", prefix="grub"),
+        )
         self.logger.debug("Adding '%s' to prompt", interrupt_prompt)
         connection.prompt_str = interrupt_prompt
         # override base class behaviour to interact with grub.
@@ -275,10 +283,14 @@ class InstallerWait(Action):
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
-        wait_string = self.parameters['boot_finished']
-        msg = wait_string if isinstance(wait_string, str) else ', '.join(wait_string)
-        self.logger.debug("Not expecting a shell, so waiting for boot_finished: %s", msg)
+        wait_string = self.parameters["boot_finished"]
+        msg = wait_string if isinstance(wait_string, str) else ", ".join(wait_string)
+        self.logger.debug(
+            "Not expecting a shell, so waiting for boot_finished: %s", msg
+        )
         connection.prompt_str = wait_string
         self.wait(connection)
-        self.set_namespace_data(action='shared', label='shared', key='connection', value=connection)
+        self.set_namespace_data(
+            action="shared", label="shared", key="connection", value=connection
+        )
         return connection

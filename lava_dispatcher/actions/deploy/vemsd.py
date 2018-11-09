@@ -23,15 +23,8 @@
 
 import os
 import shutil
-from lava_common.exceptions import (
-    JobError,
-    InfrastructureError,
-    LAVABug,
-)
-from lava_dispatcher.action import (
-    Action,
-    Pipeline,
-)
+from lava_common.exceptions import JobError, InfrastructureError, LAVABug
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.logical import Deployment
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.lxc import LxcCreateUdevRuleAction
@@ -39,13 +32,8 @@ from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.utils.udev import WaitUSBMassStorageDeviceAction
-from lava_common.constants import (
-    VEXPRESS_AUTORUN_INTERRUPT_CHARACTER,
-)
-from lava_dispatcher.utils.compression import (
-    decompress_file,
-    untar_file,
-)
+from lava_common.constants import VEXPRESS_AUTORUN_INTERRUPT_CHARACTER
+from lava_dispatcher.utils.compression import decompress_file, untar_file
 from lava_dispatcher.utils.filesystem import (
     copy_directory_contents,
     remove_directory_contents,
@@ -58,8 +46,9 @@ class VExpressMsd(Deployment):
     Downloads Versatile Express board recovery image and deploys
     to target device
     """
+
     compatibility = 1
-    name = 'vemsd'
+    name = "vemsd"
 
     def __init__(self, parent, parameters):
         super().__init__(parent)
@@ -75,12 +64,12 @@ class VExpressMsd(Deployment):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if 'to' not in parameters:
+        if "to" not in parameters:
             return False, '"to" is not in deploy parameters'
-        if parameters['to'] != 'vemsd':
+        if parameters["to"] != "vemsd":
             return False, '"to" parameter is not "vemsd"'
-        if 'vemsd' in device['actions']['deploy']['methods']:
-            return True, 'accepted'
+        if "vemsd" in device["actions"]["deploy"]["methods"]:
+            return True, "accepted"
         return False, '"vemsd" was not in the device configuration deploy methods'
 
 
@@ -98,14 +87,18 @@ class VExpressMsdAction(DeployAction):
         super().validate()
         if not self.valid:
             return
-        if not self.parameters.get('recovery_image'):  # idempotency
+        if not self.parameters.get("recovery_image"):  # idempotency
             return
 
     def populate(self, parameters):
         download_dir = self.mkdtemp()
-        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        if 'recovery_image' in parameters:
-            self.internal_pipeline.add_action(DownloaderAction('recovery_image', path=download_dir))
+        self.internal_pipeline = Pipeline(
+            parent=self, job=self.job, parameters=parameters
+        )
+        if "recovery_image" in parameters:
+            self.internal_pipeline.add_action(
+                DownloaderAction("recovery_image", path=download_dir)
+            )
         self.internal_pipeline.add_action(LxcCreateUdevRuleAction())
         self.force_prompt = True
         self.internal_pipeline.add_action(ConnectDevice())
@@ -131,17 +124,19 @@ class ExtractVExpressRecoveryImage(Action):
 
     def __init__(self):
         super().__init__()
-        self.param_key = 'recovery_image'
+        self.param_key = "recovery_image"
         self.file_key = "recovery_image"
         self.compression = None
 
     def validate(self):
         super().validate()
         if not self.get_namespace_data(
-                action='download-action', label=self.param_key, key='file'):
+            action="download-action", label=self.param_key, key="file"
+        ):
             self.errors = "no file specified extract as %s" % self.param_key
         self.compression = self.get_namespace_data(
-            action='download-action', label=self.param_key, key='compression')
+            action="download-action", label=self.param_key, key="compression"
+        )
         if not self.compression:
             self.errors = "no compression set for recovery image"
 
@@ -149,10 +144,14 @@ class ExtractVExpressRecoveryImage(Action):
         connection = super().run(connection, max_end_time)
 
         # copy recovery image to a temporary directory and unpack
-        recovery_image = self.get_namespace_data(action='download-action', label=self.param_key, key='file')
+        recovery_image = self.get_namespace_data(
+            action="download-action", label=self.param_key, key="file"
+        )
         recovery_image_dir = self.mkdtemp()
         shutil.copy(recovery_image, recovery_image_dir)
-        tmp_recovery_image = os.path.join(recovery_image_dir, os.path.basename(recovery_image))
+        tmp_recovery_image = os.path.join(
+            recovery_image_dir, os.path.basename(recovery_image)
+        )
 
         if os.path.isfile(tmp_recovery_image):
             if self.compression == "zip":
@@ -160,9 +159,17 @@ class ExtractVExpressRecoveryImage(Action):
             elif self.compression == "gz":
                 untar_file(tmp_recovery_image, recovery_image_dir)
             else:
-                raise InfrastructureError("Unsupported compression for VExpress recovery: %s" % self.compression)
+                raise InfrastructureError(
+                    "Unsupported compression for VExpress recovery: %s"
+                    % self.compression
+                )
             os.remove(tmp_recovery_image)
-            self.set_namespace_data(action='extract-vexpress-recovery-image', label='file', key=self.file_key, value=recovery_image_dir)
+            self.set_namespace_data(
+                action="extract-vexpress-recovery-image",
+                label="file",
+                key=self.file_key,
+                value=recovery_image_dir,
+            )
             self.logger.debug("Extracted %s to %s", self.file_key, recovery_image_dir)
         else:
             raise InfrastructureError("Unable to decompress recovery image")
@@ -191,17 +198,21 @@ class EnterVExpressMCC(Action):
         super().validate()
         if not self.valid:
             return
-        self.device_params = self.job.device['actions']['deploy']['methods']['vemsd']['parameters']
-        self.interrupt_char = self.device_params.get('interrupt_char', VEXPRESS_AUTORUN_INTERRUPT_CHARACTER)
-        self.mcc_prompt = self.device_params.get('mcc_prompt')
-        self.autorun_prompt = self.device_params.get('autorun_prompt')
-        self.mcc_reset_msg = self.device_params.get('mcc_reset_msg')
+        self.device_params = self.job.device["actions"]["deploy"]["methods"]["vemsd"][
+            "parameters"
+        ]
+        self.interrupt_char = self.device_params.get(
+            "interrupt_char", VEXPRESS_AUTORUN_INTERRUPT_CHARACTER
+        )
+        self.mcc_prompt = self.device_params.get("mcc_prompt")
+        self.autorun_prompt = self.device_params.get("autorun_prompt")
+        self.mcc_reset_msg = self.device_params.get("mcc_reset_msg")
         if not isinstance(self.mcc_prompt, str):
-            self.errors = 'Versatile Express MCC prompt unset'
+            self.errors = "Versatile Express MCC prompt unset"
         if not isinstance(self.autorun_prompt, str):
-            self.errors = 'Versatile Express autorun prompt unset'
+            self.errors = "Versatile Express autorun prompt unset"
         if not isinstance(self.mcc_reset_msg, str):
-            self.errors = 'Versatile Express MCC reset message unset'
+            self.errors = "Versatile Express MCC reset message unset"
 
     def run(self, connection, max_end_time):
         if not connection:
@@ -217,12 +228,12 @@ class EnterVExpressMCC(Action):
 
         # Interrupt autorun if enabled
         if connection.prompt_str[index] == self.autorun_prompt:
-            self.logger.debug('Autorun enabled: interrupting..')
+            self.logger.debug("Autorun enabled: interrupting..")
             connection.sendline(self.interrupt_char)
             connection.prompt_str = [self.mcc_prompt, self.mcc_reset_msg]
             index = self.wait(connection)
         elif connection.prompt_str[index] == self.mcc_prompt:
-            self.logger.debug('Already at MCC prompt: autorun looks to be disabled')
+            self.logger.debug("Already at MCC prompt: autorun looks to be disabled")
 
         # Check that mcc_reset_msg hasn't been received
         if connection.prompt_str[index] == self.mcc_reset_msg:
@@ -246,13 +257,15 @@ class EnableVExpressMassStorage(Action):
 
     def validate(self):
         super().validate()
-        device_params = self.job.device['actions']['deploy']['methods']['vemsd']['parameters']
-        self.mcc_prompt = device_params.get('mcc_prompt')
-        self.mcc_cmd = device_params.get('msd_mount_cmd')
+        device_params = self.job.device["actions"]["deploy"]["methods"]["vemsd"][
+            "parameters"
+        ]
+        self.mcc_prompt = device_params.get("mcc_prompt")
+        self.mcc_cmd = device_params.get("msd_mount_cmd")
         if not isinstance(self.mcc_prompt, str):
-            self.errors = 'Versatile Express MCC prompt unset'
+            self.errors = "Versatile Express MCC prompt unset"
         if not isinstance(self.mcc_cmd, str):
-            self.errors = 'Versatile Express USB Mass Storage mount command unset'
+            self.errors = "Versatile Express USB Mass Storage mount command unset"
 
     def run(self, connection, max_end_time):
         if not connection:
@@ -284,9 +297,9 @@ class MountVExpressMassStorageDevice(Action):
 
     def validate(self):
         super().validate()
-        self.microsd_fs_label = self.job.device.get('usb_filesystem_label')
+        self.microsd_fs_label = self.job.device.get("usb_filesystem_label")
         if not isinstance(self.microsd_fs_label, str):
-            self.errors = 'Filesystem label unset for Versatile Express'
+            self.errors = "Filesystem label unset for Versatile Express"
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
@@ -303,12 +316,18 @@ class MountVExpressMassStorageDevice(Action):
                 self.logger.debug("Creating mount point '%s'", mount_point)
                 os.makedirs(mount_point, 0o755)
             except OSError:
-                raise InfrastructureError("Failed to create mount point %s" % mount_point)
+                raise InfrastructureError(
+                    "Failed to create mount point %s" % mount_point
+                )
 
-        mount_cmd = ['mount', device_path, mount_point]
+        mount_cmd = ["mount", device_path, mount_point]
         if not self.run_command(mount_cmd, allow_silent=True):
-            raise InfrastructureError("Failed to mount device %s to %s" % (device_path, mount_point))
-        self.set_namespace_data(action=self.name, label='vexpress-fw', key='mount-point', value=mount_point)
+            raise InfrastructureError(
+                "Failed to mount device %s to %s" % (device_path, mount_point)
+            )
+        self.set_namespace_data(
+            action=self.name, label="vexpress-fw", key="mount-point", value=mount_point
+        )
         return connection
 
 
@@ -329,25 +348,35 @@ class DeployVExpressRecoveryImage(Action):
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
-        mount_point = self.get_namespace_data(action='mount-vexpress-usbmsd', label='vexpress-fw', key='mount-point')
+        mount_point = self.get_namespace_data(
+            action="mount-vexpress-usbmsd", label="vexpress-fw", key="mount-point"
+        )
         try:
             os.path.realpath(mount_point)
         except OSError:
             raise InfrastructureError("Unable to locate mount point: %s" % mount_point)
 
-        src_dir = self.get_namespace_data(action='extract-vexpress-recovery-image', label='file', key='recovery_image')
+        src_dir = self.get_namespace_data(
+            action="extract-vexpress-recovery-image", label="file", key="recovery_image"
+        )
         try:
             os.path.realpath(src_dir)
         except OSError:
-            raise InfrastructureError("Unable to locate recovery image source directory: %s" % src_dir)
+            raise InfrastructureError(
+                "Unable to locate recovery image source directory: %s" % src_dir
+            )
 
-        self.logger.debug("Removing existing recovery image from Versatile Express mass storage device..")
+        self.logger.debug(
+            "Removing existing recovery image from Versatile Express mass storage device.."
+        )
         try:
             remove_directory_contents(mount_point)
         except Exception:
             raise JobError("Failed to erase old recovery image")
 
-        self.logger.debug("Transferring new recovery image to Versatile Express mass storage device..")
+        self.logger.debug(
+            "Transferring new recovery image to Versatile Express mass storage device.."
+        )
         try:
             copy_directory_contents(src_dir, mount_point)
         except Exception:
@@ -367,7 +396,9 @@ class UnmountVExpressMassStorageDevice(Action):
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
 
-        mount_point = self.get_namespace_data(action='mount-vexpress-usbmsd', label='vexpress-fw', key='mount-point')
+        mount_point = self.get_namespace_data(
+            action="mount-vexpress-usbmsd", label="vexpress-fw", key="mount-point"
+        )
         if not self.run_command(["umount", mount_point], allow_silent=True):
             raise InfrastructureError("Failed to unmount device %s" % mount_point)
         return connection
@@ -394,29 +425,39 @@ class VExpressFlashErase(Action):  # pylint: disable=too-many-instance-attribute
 
     def validate(self):
         super().validate()
-        device_methods = self.job.device['actions']['deploy']['methods']
-        self.mcc_prompt = device_methods['vemsd']['parameters'].get('mcc_prompt')
-        self.flash_prompt = device_methods['vemsd']['parameters'].get('flash_prompt')
-        self.flash_enter_cmd = device_methods['vemsd']['parameters'].get('flash_enter_cmd')
-        self.flash_erase_cmd = device_methods['vemsd']['parameters'].get('flash_erase_cmd')
-        self.flash_erase_msg = device_methods['vemsd']['parameters'].get('flash_erase_msg')
-        self.flash_exit_cmd = device_methods['vemsd']['parameters'].get('flash_exit_cmd')
+        device_methods = self.job.device["actions"]["deploy"]["methods"]
+        self.mcc_prompt = device_methods["vemsd"]["parameters"].get("mcc_prompt")
+        self.flash_prompt = device_methods["vemsd"]["parameters"].get("flash_prompt")
+        self.flash_enter_cmd = device_methods["vemsd"]["parameters"].get(
+            "flash_enter_cmd"
+        )
+        self.flash_erase_cmd = device_methods["vemsd"]["parameters"].get(
+            "flash_erase_cmd"
+        )
+        self.flash_erase_msg = device_methods["vemsd"]["parameters"].get(
+            "flash_erase_msg"
+        )
+        self.flash_exit_cmd = device_methods["vemsd"]["parameters"].get(
+            "flash_exit_cmd"
+        )
         if not isinstance(self.mcc_prompt, str):
-            self.errors = 'Versatile Express MCC prompt unset'
+            self.errors = "Versatile Express MCC prompt unset"
         if not isinstance(self.flash_prompt, str):
-            self.errors = 'Versatile Express flash prompt unset'
+            self.errors = "Versatile Express flash prompt unset"
         if not isinstance(self.flash_enter_cmd, str):
-            self.errors = 'Versatile Express flash enter command unset'
+            self.errors = "Versatile Express flash enter command unset"
         if not isinstance(self.flash_erase_cmd, str):
-            self.errors = 'Versatile Express flash erase command unset'
+            self.errors = "Versatile Express flash erase command unset"
         if not isinstance(self.flash_erase_msg, str):
-            self.errors = 'Versatile Express flash erase message unset'
+            self.errors = "Versatile Express flash erase message unset"
         if not isinstance(self.flash_exit_cmd, str):
-            self.errors = 'Versatile Express flash exit command unset'
+            self.errors = "Versatile Express flash exit command unset"
 
     def run(self, connection, max_end_time):
         if not connection:
-            raise RuntimeError("%s started without a connection already in use" % self.name)
+            raise RuntimeError(
+                "%s started without a connection already in use" % self.name
+            )
         connection = super().run(connection, max_end_time)
 
         # From Versatile Express MCC, enter flash menu

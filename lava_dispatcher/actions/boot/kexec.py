@@ -19,10 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 
-from lava_dispatcher.action import (
-    Pipeline,
-    Action,
-)
+from lava_dispatcher.action import Pipeline, Action
 from lava_dispatcher.logical import Boot
 from lava_dispatcher.actions.boot import BootAction
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
@@ -47,9 +44,9 @@ class BootKExec(Boot):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if 'method' in parameters:
-            if parameters['method'] == 'kexec':
-                return True, 'accepted'
+        if "method" in parameters:
+            if parameters["method"] == "kexec":
+                return True, "accepted"
         return False, '"method" was not in parameters, or "method" was not "kexec"'
 
 
@@ -63,7 +60,9 @@ class BootKexecAction(BootAction):
     description = "replace current kernel using kexec"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.internal_pipeline = Pipeline(
+            parent=self, job=self.job, parameters=parameters
+        )
         self.internal_pipeline.add_action(KexecAction())
         # Add AutoLoginAction unconditionally as this action does nothing if
         # the configuration does not contain 'auto_login'
@@ -85,24 +84,24 @@ class KexecAction(Action):
 
     def __init__(self):
         super().__init__()
-        self.command = ''
-        self.load_command = ''
+        self.command = ""
+        self.load_command = ""
 
     def validate(self):
         super().validate()
-        self.command = self.parameters.get('command', '/sbin/kexec')
+        self.command = self.parameters.get("command", "/sbin/kexec")
         self.load_command = self.command[:]  # local copy for idempotency
-        self.command += ' -e'
-        if 'kernel' in self.parameters:
-            self.load_command += ' --load %s' % self.parameters['kernel']
-        if 'dtb' in self.parameters:
-            self.load_command += ' --dtb %s' % self.parameters['dtb']
-        if 'initrd' in self.parameters:
-            self.load_command += ' --initrd %s' % self.parameters['initrd']
-        if 'options' in self.parameters:
-            for option in self.parameters['options']:
+        self.command += " -e"
+        if "kernel" in self.parameters:
+            self.load_command += " --load %s" % self.parameters["kernel"]
+        if "dtb" in self.parameters:
+            self.load_command += " --dtb %s" % self.parameters["dtb"]
+        if "initrd" in self.parameters:
+            self.load_command += " --initrd %s" % self.parameters["initrd"]
+        if "options" in self.parameters:
+            for option in self.parameters["options"]:
                 self.load_command += " %s" % option
-        if self.load_command == '/sbin/kexec':
+        if self.load_command == "/sbin/kexec":
             self.errors = "Default kexec handler needs at least a kernel to pass to the --load command"
 
     def run(self, connection, max_end_time):
@@ -111,12 +110,12 @@ class KexecAction(Action):
         Get the output prior to the call, in case this helps after the job fails.
         """
         connection = super().run(connection, max_end_time)
-        if 'kernel-config' in self.parameters:
-            cmd = "zgrep -i kexec %s |grep -v '^#'" % self.parameters['kernel-config']
+        if "kernel-config" in self.parameters:
+            cmd = "zgrep -i kexec %s |grep -v '^#'" % self.parameters["kernel-config"]
             self.logger.debug("Checking for kexec: %s", cmd)
             connection.sendline(cmd)
         connection.sendline(self.load_command)
         self.wait(connection)
-        connection.prompt = self.parameters['boot_message']
+        connection.prompt = self.parameters["boot_message"]
         connection.sendline(self.command)
         return connection

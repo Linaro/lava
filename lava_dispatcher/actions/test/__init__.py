@@ -20,10 +20,7 @@
 
 from lava_dispatcher.action import Action
 from lava_common.exceptions import LAVATimeoutError
-from lava_dispatcher.logical import (
-    LavaTest,
-    RetryAction,
-)
+from lava_dispatcher.logical import LavaTest, RetryAction
 
 
 class TestAction(Action):
@@ -39,5 +36,5 @@ class TestAction(Action):
     accepted by a different subclass.
     """
 
-    name = 'test'
+    name = "test"
     timeout_exception = LAVATimeoutError

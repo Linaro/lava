@@ -21,10 +21,7 @@
 
 from lava_dispatcher.logical import Boot
 from lava_common.exceptions import InfrastructureError
-from lava_dispatcher.action import (
-    Action,
-    Pipeline,
-)
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.power import PowerOn, PowerOff
 
 
@@ -41,9 +38,9 @@ class RecoveryBoot(Boot):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if 'method' in parameters:
-            if parameters['method'] == 'recovery':
-                return True, 'accepted'
+        if "method" in parameters:
+            if parameters["method"] == "recovery":
+                return True, "accepted"
         return False, 'boot "method" was not "recovery"'
 
 
@@ -62,15 +59,21 @@ class RecoveryBootAction(Action):
         specifies the 'exit' command.
         """
         super().populate(parameters)
-        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        if parameters['commands'] == 'recovery':
+        self.internal_pipeline = Pipeline(
+            parent=self, job=self.job, parameters=parameters
+        )
+        if parameters["commands"] == "recovery":
             # only switch into recovery mode with power off.
             self.internal_pipeline.add_action(PowerOff())
-            self.internal_pipeline.add_action(SwitchRecoveryCommand(mode='recovery_mode'))
+            self.internal_pipeline.add_action(
+                SwitchRecoveryCommand(mode="recovery_mode")
+            )
             self.internal_pipeline.add_action(PowerOn())
-        elif parameters['commands'] == 'exit':
+        elif parameters["commands"] == "exit":
             self.internal_pipeline.add_action(PowerOff())
-            self.internal_pipeline.add_action(SwitchRecoveryCommand(mode='recovery_exit'))
+            self.internal_pipeline.add_action(
+                SwitchRecoveryCommand(mode="recovery_exit")
+            )
             self.internal_pipeline.add_action(PowerOn())
         else:
             self.errors = "Invalid recovery command"
@@ -78,9 +81,9 @@ class RecoveryBootAction(Action):
 
 class SwitchRecoveryCommand(Action):
 
-    name = 'switch-recovery'
-    description = 'call commands to switch device into and out of recovery'
-    summary = 'execute recovery mode commands'
+    name = "switch-recovery"
+    description = "call commands to switch device into and out of recovery"
+    summary = "execute recovery mode commands"
 
     def __init__(self, mode):
         super().__init__()
@@ -89,20 +92,22 @@ class SwitchRecoveryCommand(Action):
 
     def validate(self):
         super().validate()
-        self.recovery = self.job.device['actions']['deploy']['methods']['recovery']
-        if 'commands' not in self.recovery:
+        self.recovery = self.job.device["actions"]["deploy"]["methods"]["recovery"]
+        if "commands" not in self.recovery:
             self.errors = "Missing commands to enter recovery mode"
-        command = self.recovery['commands'].get(self.mode)
+        command = self.recovery["commands"].get(self.mode)
         if not command:
             self.errors = "Unable to find %s recovery command" % self.mode
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
-        command = self.recovery['commands'][self.mode]
+        command = self.recovery["commands"][self.mode]
         self.logger.info("Switching using '%s' recovery command", self.mode)
         if not isinstance(command, list):
             command = [command]
         for cmd in command:
-            if not self.run_command(cmd.split(' '), allow_silent=True):
-                raise InfrastructureError("[recovery] %s failed for %s" % (cmd, self.mode))
+            if not self.run_command(cmd.split(" "), allow_silent=True):
+                raise InfrastructureError(
+                    "[recovery] %s failed for %s" % (cmd, self.mode)
+                )
         return connection

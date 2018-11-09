@@ -30,5 +30,7 @@ def replace_exception(cls_from, cls_to, limit=2048):
                 return func(*args, **kwargs)
             except cls_from as exc:
                 raise cls_to(str(exc)[:limit])
+
         return function_wrapper
+
     return replace_exception_wrapper

@@ -77,8 +77,9 @@ class YAMLLogger(logging.Logger):
         self.handler = None
 
     def addZMQHandler(self, logging_url, master_cert, slave_cert, job_id, ipv6):
-        self.handler = ZMQPushHandler(logging_url, master_cert,
-                                      slave_cert, job_id, ipv6)
+        self.handler = ZMQPushHandler(
+            logging_url, master_cert, slave_cert, job_id, ipv6
+        )
         self.addHandler(self.handler)
         return self.handler
 
@@ -88,66 +89,73 @@ class YAMLLogger(logging.Logger):
             self.removeHandler(self.handler)
             self.handler = None
 
-    def log_message(self, level, level_name, message, *args, **kwargs):  # pylint: disable=unused-argument
+    def log_message(
+        self, level, level_name, message, *args, **kwargs
+    ):  # pylint: disable=unused-argument
         # Build the dictionnary
-        data = {'dt': datetime.datetime.utcnow().isoformat(),
-                'lvl': level_name}
+        data = {"dt": datetime.datetime.utcnow().isoformat(), "lvl": level_name}
 
         if isinstance(message, str) and args:
-            data['msg'] = message % args
+            data["msg"] = message % args
         else:
-            data['msg'] = message
+            data["msg"] = message
 
         # Set width to a really large value in order to always get one line.
         # But keep this reasonable because the logs will be loaded by CLoader
         # that is limited to around 10**7 chars
-        data_str = yaml.dump(data, default_flow_style=True,
-                             default_style='"',
-                             width=10 ** 6,
-                             Dumper=yaml.CDumper)[:-1]
+        data_str = yaml.dump(
+            data,
+            default_flow_style=True,
+            default_style='"',
+            width=10 ** 6,
+            Dumper=yaml.CDumper,
+        )[:-1]
         # Test the limit and skip if the line is too long
         if len(data_str) >= 10 ** 6:
             if isinstance(message, str):
-                data['msg'] = "<line way too long ...>"
+                data["msg"] = "<line way too long ...>"
             else:
-                data['msg'] = {"skip": "line way too long ..."}
-            data_str = yaml.dump(data, default_flow_style=True,
-                                 default_style='"',
-                                 width=10 ** 6,
-                                 Dumper=yaml.CDumper)[:-1]
+                data["msg"] = {"skip": "line way too long ..."}
+            data_str = yaml.dump(
+                data,
+                default_flow_style=True,
+                default_style='"',
+                width=10 ** 6,
+                Dumper=yaml.CDumper,
+            )[:-1]
         self._log(level, data_str, ())
 
     def exception(self, exc, *args, **kwargs):
-        self.log_message(logging.ERROR, 'exception', exc, *args, **kwargs)
+        self.log_message(logging.ERROR, "exception", exc, *args, **kwargs)
 
     def error(self, message, *args, **kwargs):
-        self.log_message(logging.ERROR, 'error', message, *args, **kwargs)
+        self.log_message(logging.ERROR, "error", message, *args, **kwargs)
 
     def warning(self, message, *args, **kwargs):
-        self.log_message(logging.WARNING, 'warning', message, *args, **kwargs)
+        self.log_message(logging.WARNING, "warning", message, *args, **kwargs)
 
     def info(self, message, *args, **kwargs):
-        self.log_message(logging.INFO, 'info', message, *args, **kwargs)
+        self.log_message(logging.INFO, "info", message, *args, **kwargs)
 
     def debug(self, message, *args, **kwargs):
-        self.log_message(logging.DEBUG, 'debug', message, *args, **kwargs)
+        self.log_message(logging.DEBUG, "debug", message, *args, **kwargs)
 
     def input(self, message, *args, **kwargs):
-        self.log_message(logging.INFO, 'input', message, *args, **kwargs)
+        self.log_message(logging.INFO, "input", message, *args, **kwargs)
 
     def target(self, message, *args, **kwargs):
-        self.log_message(logging.INFO, 'target', message, *args, **kwargs)
+        self.log_message(logging.INFO, "target", message, *args, **kwargs)
 
     def feedback(self, message, *args, **kwargs):
-        self.log_message(logging.INFO, 'feedback', message, *args, **kwargs)
+        self.log_message(logging.INFO, "feedback", message, *args, **kwargs)
 
     def event(self, message, *args, **kwargs):
-        self.log_message(logging.INFO, 'event', message, *args, **kwargs)
+        self.log_message(logging.INFO, "event", message, *args, **kwargs)
 
     def marker(self, message, *args, **kwargs):
-        self.log_message(logging.INFO, 'marker', message, *args, **kwargs)
+        self.log_message(logging.INFO, "marker", message, *args, **kwargs)
 
     def results(self, results, *args, **kwargs):
-        if 'extra' in results and 'level' not in results:
+        if "extra" in results and "level" not in results:
             raise Exception("'level' is mandatory when 'extra' is used")
-        self.log_message(logging.INFO, 'results', results, *args, **kwargs)
+        self.log_message(logging.INFO, "results", results, *args, **kwargs)

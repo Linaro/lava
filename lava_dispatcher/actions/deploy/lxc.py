@@ -23,18 +23,12 @@ import yaml
 from lava_dispatcher.logical import Deployment
 from lava_common.exceptions import LAVABug
 from lava_common.utils import debian_package_version
-from lava_dispatcher.action import (
-    JobError,
-    Pipeline,
-)
+from lava_dispatcher.action import JobError, Pipeline
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.actions.deploy.apply_overlay import ApplyLxcOverlay
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
-from lava_dispatcher.actions.boot.lxc import (
-    LxcStartAction,
-    LxcStopAction,
-)
+from lava_dispatcher.actions.boot.lxc import LxcStartAction, LxcStopAction
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.protocols.lxc import LxcProtocol
 from lava_common.constants import (
@@ -55,8 +49,9 @@ class Lxc(Deployment):
     Strategy class for a lxc deployment.
     Downloads the relevant parts, copies to the locations using lxc.
     """
+
     compatibility = 1
-    name = 'lxc'
+    name = "lxc"
 
     def __init__(self, parent, parameters):
         super().__init__(parent)
@@ -67,12 +62,12 @@ class Lxc(Deployment):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if 'to' not in parameters:
+        if "to" not in parameters:
             return False, '"to" is not in deploy parameters'
-        if parameters['to'] != 'lxc':
+        if parameters["to"] != "lxc":
             return False, '"to" parameter is not "lxc"'
-        if 'lxc' in device['actions']['deploy']['methods']:
-            return True, 'accepted'
+        if "lxc" in device["actions"]["deploy"]["methods"]:
+            return True, "accepted"
         return False, '"lxc" was not in the device configuration deploy methods'
 
 
@@ -88,26 +83,29 @@ class LxcAction(DeployAction):  # pylint:disable=too-many-instance-attributes
 
     def validate(self):
         super().validate()
-        lxc_version = debian_package_version(pkg='lxc', split=False)
-        if lxc_version is not '':
+        lxc_version = debian_package_version(pkg="lxc", split=False)
+        if lxc_version is not "":
             self.logger.info("lxc, installed at version: %s", lxc_version)
         else:
-            self.logger.info("lava-lxc-mocker, installed at version: %s",
-                             debian_package_version(pkg='lava-lxc-mocker',
-                                                    split=False))
+            self.logger.info(
+                "lava-lxc-mocker, installed at version: %s",
+                debian_package_version(pkg="lava-lxc-mocker", split=False),
+            )
         protocols = [protocol.name for protocol in self.job.protocols]
         if LxcProtocol.name not in protocols:
-            self.logger.debug("Missing protocol '%s' in %s",
-                              LxcProtocol.name, protocols)
+            self.logger.debug(
+                "Missing protocol '%s' in %s", LxcProtocol.name, protocols
+            )
             self.errors = "Missing protocol '%s'" % LxcProtocol.name
-        which('lxc-create')
+        which("lxc-create")
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(parent=self, job=self.job,
-                                          parameters=parameters)
+        self.internal_pipeline = Pipeline(
+            parent=self, job=self.job, parameters=parameters
+        )
         self.internal_pipeline.add_action(LxcCreateAction())
         self.internal_pipeline.add_action(LxcCreateUdevRuleAction())
-        if 'packages' in parameters:
+        if "packages" in parameters:
             self.internal_pipeline.add_action(LxcStartAction())
             self.internal_pipeline.add_action(LxcAptUpdateAction())
             self.internal_pipeline.add_action(LxcAptInstallAction())
@@ -135,21 +133,26 @@ class LxcCreateAction(DeployAction):
         self.lxc_data = {}
 
     def _set_lxc_data(self):
-        protocols = [protocol for protocol in self.job.protocols
-                     if protocol.name == LxcProtocol.name]
+        protocols = [
+            protocol
+            for protocol in self.job.protocols
+            if protocol.name == LxcProtocol.name
+        ]
         if protocols:
             protocol = protocols[0]
-            self.set_namespace_data(action=self.name, label='lxc', key='name', value=protocol.lxc_name)
-            self.lxc_data['lxc_name'] = protocol.lxc_name
-            self.lxc_data['lxc_distribution'] = protocol.lxc_dist
-            self.lxc_data['lxc_release'] = protocol.lxc_release
-            self.lxc_data['lxc_arch'] = protocol.lxc_arch
-            self.lxc_data['lxc_template'] = protocol.lxc_template
-            self.lxc_data['lxc_mirror'] = protocol.lxc_mirror
-            self.lxc_data['lxc_security_mirror'] = protocol.lxc_security_mirror
-            self.lxc_data['verbose'] = protocol.verbose
-            self.lxc_data['lxc_persist'] = protocol.persistence
-            self.lxc_data['custom_lxc_path'] = protocol.custom_lxc_path
+            self.set_namespace_data(
+                action=self.name, label="lxc", key="name", value=protocol.lxc_name
+            )
+            self.lxc_data["lxc_name"] = protocol.lxc_name
+            self.lxc_data["lxc_distribution"] = protocol.lxc_dist
+            self.lxc_data["lxc_release"] = protocol.lxc_release
+            self.lxc_data["lxc_arch"] = protocol.lxc_arch
+            self.lxc_data["lxc_template"] = protocol.lxc_template
+            self.lxc_data["lxc_mirror"] = protocol.lxc_mirror
+            self.lxc_data["lxc_security_mirror"] = protocol.lxc_security_mirror
+            self.lxc_data["verbose"] = protocol.verbose
+            self.lxc_data["lxc_persist"] = protocol.persistence
+            self.lxc_data["custom_lxc_path"] = protocol.custom_lxc_path
 
     def validate(self):
         super().validate()
@@ -158,52 +161,64 @@ class LxcCreateAction(DeployAction):
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
-        verbose = '' if self.lxc_data['verbose'] else '-q'
-        lxc_default_path = lxc_path(self.job.parameters['dispatcher'])
-        if self.lxc_data['custom_lxc_path']:
-            lxc_create = ['lxc-create', '-P', lxc_default_path]
+        verbose = "" if self.lxc_data["verbose"] else "-q"
+        lxc_default_path = lxc_path(self.job.parameters["dispatcher"])
+        if self.lxc_data["custom_lxc_path"]:
+            lxc_create = ["lxc-create", "-P", lxc_default_path]
         else:
-            lxc_create = ['lxc-create']
-        if self.lxc_data['lxc_template'] in LXC_TEMPLATE_WITH_MIRROR:
-            lxc_cmd = lxc_create + [verbose, '-t',
-                                    self.lxc_data['lxc_template'], '-n',
-                                    self.lxc_data['lxc_name'], '--',
-                                    '--release', self.lxc_data['lxc_release']]
-            if self.lxc_data['lxc_mirror']:
-                lxc_cmd += ['--mirror', self.lxc_data['lxc_mirror']]
-            if self.lxc_data['lxc_security_mirror']:
-                lxc_cmd += ['--security-mirror',
-                            self.lxc_data['lxc_security_mirror']]
+            lxc_create = ["lxc-create"]
+        if self.lxc_data["lxc_template"] in LXC_TEMPLATE_WITH_MIRROR:
+            lxc_cmd = lxc_create + [
+                verbose,
+                "-t",
+                self.lxc_data["lxc_template"],
+                "-n",
+                self.lxc_data["lxc_name"],
+                "--",
+                "--release",
+                self.lxc_data["lxc_release"],
+            ]
+            if self.lxc_data["lxc_mirror"]:
+                lxc_cmd += ["--mirror", self.lxc_data["lxc_mirror"]]
+            if self.lxc_data["lxc_security_mirror"]:
+                lxc_cmd += ["--security-mirror", self.lxc_data["lxc_security_mirror"]]
             # FIXME: Should be removed when LAVA's supported distro is bumped
             #        to Debian Stretch or any distro that supports systemd
-            lxc_cmd += ['--packages', LXC_DEFAULT_PACKAGES]
+            lxc_cmd += ["--packages", LXC_DEFAULT_PACKAGES]
         else:
-            lxc_cmd = lxc_create + [verbose, '-t',
-                                    self.lxc_data['lxc_template'], '-n',
-                                    self.lxc_data['lxc_name'], '--', '--dist',
-                                    self.lxc_data['lxc_distribution'],
-                                    '--release', self.lxc_data['lxc_release']]
-        if self.lxc_data['lxc_arch']:
-            lxc_cmd += ['--arch', self.lxc_data['lxc_arch']]
+            lxc_cmd = lxc_create + [
+                verbose,
+                "-t",
+                self.lxc_data["lxc_template"],
+                "-n",
+                self.lxc_data["lxc_name"],
+                "--",
+                "--dist",
+                self.lxc_data["lxc_distribution"],
+                "--release",
+                self.lxc_data["lxc_release"],
+            ]
+        if self.lxc_data["lxc_arch"]:
+            lxc_cmd += ["--arch", self.lxc_data["lxc_arch"]]
         # FIXME: check if persistent name already exists and then drop allow_fail & allow_silent
         cmd_out = self.run_command(lxc_cmd, allow_fail=True, allow_silent=True)
         if isinstance(cmd_out, str):
-            if 'exists' in cmd_out and self.lxc_data['lxc_persist']:
-                self.logger.debug('Persistant container exists')
-                self.results = {'status': self.lxc_data['lxc_name']}
+            if "exists" in cmd_out and self.lxc_data["lxc_persist"]:
+                self.logger.debug("Persistant container exists")
+                self.results = {"status": self.lxc_data["lxc_name"]}
         elif not cmd_out:
             raise JobError("Unable to create lxc container")
         else:
-            self.logger.debug('Container created successfully')
-            self.results = {'status': self.lxc_data['lxc_name']}
+            self.logger.debug("Container created successfully")
+            self.results = {"status": self.lxc_data["lxc_name"]}
         # Create symlink in default container path ie., /var/lib/lxc defined by
         # LXC_PATH so that we need not add '-P' option to every lxc-* command.
-        dst = os.path.join(LXC_PATH, self.lxc_data['lxc_name'])
-        if self.lxc_data['custom_lxc_path'] and not os.path.exists(dst):
-            os.symlink(os.path.join(lxc_default_path,
-                                    self.lxc_data['lxc_name']),
-                       os.path.join(LXC_PATH,
-                                    self.lxc_data['lxc_name']))
+        dst = os.path.join(LXC_PATH, self.lxc_data["lxc_name"])
+        if self.lxc_data["custom_lxc_path"] and not os.path.exists(dst):
+            os.symlink(
+                os.path.join(lxc_default_path, self.lxc_data["lxc_name"]),
+                os.path.join(LXC_PATH, self.lxc_data["lxc_name"]),
+            )
         return connection
 
 
@@ -223,23 +238,26 @@ class LxcCreateUdevRuleAction(DeployAction):
 
     def validate(self):
         super().validate()
-        which('udevadm')
-        if 'device_info' in self.job.device \
-           and not isinstance(self.job.device.get('device_info'), list):
+        which("udevadm")
+        if "device_info" in self.job.device and not isinstance(
+            self.job.device.get("device_info"), list
+        ):
             self.errors = "device_info unset"
         # If we are allowed to use a filesystem label, we don't require a board_id
         # By default, we do require a board_id (serial)
         requires_board_id = not allow_fs_label(self.job.device)
         try:
-            if 'device_info' in self.job.device:
-                for usb_device in self.job.device['device_info']:
-                    if usb_device.get('board_id', '') in ['', '0000000000'] \
-                            and requires_board_id:
+            if "device_info" in self.job.device:
+                for usb_device in self.job.device["device_info"]:
+                    if (
+                        usb_device.get("board_id", "") in ["", "0000000000"]
+                        and requires_board_id
+                    ):
                         self.errors = "[LXC_CREATE] board_id unset"
-                    if usb_device.get('usb_vendor_id', '') == '0000':
-                        self.errors = '[LXC_CREATE] usb_vendor_id unset'
-                    if usb_device.get('usb_product_id', '') == '0000':
-                        self.errors = '[LXC_CREATE] usb_product_id unset'
+                    if usb_device.get("usb_vendor_id", "") == "0000":
+                        self.errors = "[LXC_CREATE] usb_vendor_id unset"
+                    if usb_device.get("usb_product_id", "") == "0000":
+                        self.errors = "[LXC_CREATE] usb_product_id unset"
         except TypeError:
             self.errors = "Invalid parameters for %s" % self.name
 
@@ -248,7 +266,11 @@ class LxcCreateUdevRuleAction(DeployAction):
         # this may be the device namespace - the lxc namespace may not be
         # accessible
         lxc_name = None
-        protocols = [protocol for protocol in self.job.protocols if protocol.name == LxcProtocol.name]
+        protocols = [
+            protocol
+            for protocol in self.job.protocols
+            if protocol.name == LxcProtocol.name
+        ]
         if protocols:
             lxc_name = protocols[0].lxc_name
         if not lxc_name:
@@ -256,15 +278,16 @@ class LxcCreateUdevRuleAction(DeployAction):
             return connection
 
         # If there is no device_info then this action should be idempotent.
-        if 'device_info' not in self.job.device:
+        if "device_info" not in self.job.device:
             return connection
 
-        device_info = self.job.device.get('device_info', [])
-        device_info_file = os.path.join(self.mkdtemp(), 'device-info.yaml')
-        with open(device_info_file, 'w') as device_info_obj:
+        device_info = self.job.device.get("device_info", [])
+        device_info_file = os.path.join(self.mkdtemp(), "device-info.yaml")
+        with open(device_info_file, "w") as device_info_obj:
             yaml.dump(device_info, device_info_obj)
-        self.logger.debug("device info file '%s' created with:\n %s",
-                          device_info_file, device_info)
+        self.logger.debug(
+            "device info file '%s' created with:\n %s", device_info_file, device_info
+        )
         logging_url = master_cert = slave_cert = ipv6 = None
         job_id = self.job.job_id
         # pylint: disable=no-member
@@ -279,23 +302,25 @@ class LxcCreateUdevRuleAction(DeployAction):
         # where, 100 is just an arbitrary number which specifies loading
         # priority for udevd
         job_prefix = self.job.parameters["dispatcher"].get("prefix", "")
-        rules_file_name = '100-lava-' + job_prefix + lxc_name + '.rules'
+        rules_file_name = "100-lava-" + job_prefix + lxc_name + ".rules"
         rules_file = os.path.join(self.mkdtemp(), rules_file_name)
         lines = []
         for device in device_info:
-            data = {'serial_number': str(device.get('board_id', '')),
-                    'vendor_id': device.get('usb_vendor_id'),
-                    'product_id': device.get('usb_product_id'),
-                    'fs_label': device.get('fs_label'),
-                    'lxc_name': lxc_name,
-                    'device_info_file': device_info_file,
-                    'logging_url': logging_url,
-                    'master_cert': master_cert,
-                    'slave_cert': slave_cert,
-                    'ipv6': ipv6,
-                    'job_id': job_id}
+            data = {
+                "serial_number": str(device.get("board_id", "")),
+                "vendor_id": device.get("usb_vendor_id"),
+                "product_id": device.get("usb_product_id"),
+                "fs_label": device.get("fs_label"),
+                "lxc_name": lxc_name,
+                "device_info_file": device_info_file,
+                "logging_url": logging_url,
+                "master_cert": master_cert,
+                "slave_cert": slave_cert,
+                "ipv6": ipv6,
+                "job_id": job_id,
+            }
             str_lxc_udev_rule = lxc_udev_rule(data)
-            if device.get('parent', False):
+            if device.get("parent", False):
                 str_lxc_udev_rule += lxc_udev_rule_parent(data)
             lines.append(str_lxc_udev_rule)
         if lines:
@@ -306,21 +331,21 @@ class LxcCreateUdevRuleAction(DeployAction):
             self.logger.debug(line)
         # Create symlink to rules file inside UDEV_RULES_DIR
         # See https://projects.linaro.org/browse/LAVA-1227
-        os.symlink(rules_file, os.path.join(UDEV_RULES_DIR,
-                                            rules_file_name))
-        self.logger.info("'%s' symlinked to '%s'",
-                         os.path.join(UDEV_RULES_DIR, rules_file_name),
-                         rules_file)
+        os.symlink(rules_file, os.path.join(UDEV_RULES_DIR, rules_file_name))
+        self.logger.info(
+            "'%s' symlinked to '%s'",
+            os.path.join(UDEV_RULES_DIR, rules_file_name),
+            rules_file,
+        )
 
         # Reload udev rules.
-        reload_cmd = ['udevadm', 'control', '--reload-rules']
+        reload_cmd = ["udevadm", "control", "--reload-rules"]
         # FIXME: if reload fails, that is a LAVABug.
-        cmd_out = self.run_command(reload_cmd, allow_fail=True,
-                                   allow_silent=True)
+        cmd_out = self.run_command(reload_cmd, allow_fail=True, allow_silent=True)
         if cmd_out is False:
-            self.logger.debug('Reloading udev rules failed')
+            self.logger.debug("Reloading udev rules failed")
         else:
-            self.logger.debug('udev rules reloaded.')
+            self.logger.debug("udev rules reloaded.")
         return connection
 
 
@@ -340,10 +365,10 @@ class LxcAptUpdateAction(DeployAction):
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
-        lxc_name = self.get_namespace_data(action='lxc-create-action',
-                                           label='lxc', key='name')
-        cmd = ['lxc-attach', '-n', lxc_name, '--', 'apt-get', '-y', '-q',
-               'update']
+        lxc_name = self.get_namespace_data(
+            action="lxc-create-action", label="lxc", key="name"
+        )
+        cmd = ["lxc-attach", "-n", lxc_name, "--", "apt-get", "-y", "-q", "update"]
         if not self.run_command(cmd, allow_silent=True):
             raise JobError("Unable to apt-get update in lxc container")
         return connection
@@ -365,16 +390,27 @@ class LxcAptInstallAction(DeployAction):
 
     def validate(self):
         super().validate()
-        if 'packages' not in self.parameters:
+        if "packages" not in self.parameters:
             raise LAVABug("%s package list unavailable" % self.name)
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
-        lxc_name = self.get_namespace_data(action='lxc-create-action',
-                                           label='lxc', key='name')
-        packages = self.parameters['packages']
-        cmd = ['lxc-attach', '-v', 'DEBIAN_FRONTEND=noninteractive', '-n',
-               lxc_name, '--', 'apt-get', '-y', '-q', 'install'] + packages
+        lxc_name = self.get_namespace_data(
+            action="lxc-create-action", label="lxc", key="name"
+        )
+        packages = self.parameters["packages"]
+        cmd = [
+            "lxc-attach",
+            "-v",
+            "DEBIAN_FRONTEND=noninteractive",
+            "-n",
+            lxc_name,
+            "--",
+            "apt-get",
+            "-y",
+            "-q",
+            "install",
+        ] + packages
         if not self.run_command(cmd):
             raise JobError("Unable to install using apt-get in lxc container")
         return connection
