@@ -412,7 +412,7 @@ class ExtractModules(Action):
         if self.parameters.get('ramdisk'):
             if not self.parameters['ramdisk'].get('install_modules', True):
                 self.logger.info("Not adding modules to the ramdisk.")
-                return
+                return connection
             root = self.get_namespace_data(
                 action='extract-overlay-ramdisk', label='extracted_ramdisk', key='directory')
             self.logger.info("extracting modules file %s to %s", modules, root)
@@ -448,7 +448,6 @@ class ExtractRamdisk(Action):
         if not self.parameters['ramdisk'].get('install_modules', True) and \
                 not self.parameters['ramdisk'].get('install_overlay', True):
             self.skip = True
-            return
 
     def run(self, connection, max_end_time):
         if not self.parameters.get('ramdisk'):  # idempotency
@@ -460,7 +459,7 @@ class ExtractRamdisk(Action):
             filename = os.path.join(suffix, "ramdisk", os.path.basename(ramdisk))
             # declare the original ramdisk as the name to be used later.
             self.set_namespace_data(action='compress-ramdisk', label='file', key='ramdisk', value=filename)
-            return
+            return connection
         connection = super().run(connection, max_end_time)
         ramdisk_dir = self.mkdtemp()
         extracted_ramdisk = os.path.join(ramdisk_dir, 'ramdisk')
