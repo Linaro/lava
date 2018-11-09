@@ -471,6 +471,20 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
                 "bootloader_prompt"
             ],
         )
+        self.assertIn("nfs", template_dict["actions"]["boot"]["methods"]["u-boot"])
+        self.assertIn(
+            "commands", template_dict["actions"]["boot"]["methods"]["u-boot"]["nfs"]
+        )
+        commands = template_dict["actions"]["boot"]["methods"]["u-boot"]["nfs"][
+            "commands"
+        ]
+        check = 0
+        for line in commands:
+            if line.startswith("setenv nfsargs "):
+                check = 1
+                self.assertIn(",vers=3 ", line)
+        if not check:
+            self.fail("Unable to find setenv nfsargs")
 
     def test_imx8m_template(self):
         fastboot_cmd_order = [
