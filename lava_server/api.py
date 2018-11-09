@@ -159,10 +159,10 @@ class LavaSystemAPI(SystemAPI):
         }
 
         master = {"ERROR": "invalid master config"}
-        filename = os.path.join(settings.MEDIA_ROOT, 'lava-master-config.yaml')
+        filename = os.path.join(settings.MEDIA_ROOT, "lava-master-config.yaml")
         if os.path.exists(filename):
             try:
-                with open(filename, 'r') as output:
+                with open(filename, "r") as output:
                     master = yaml.safe_load(output)
             except yaml.YAMLError as exc:
                 return master
@@ -170,20 +170,20 @@ class LavaSystemAPI(SystemAPI):
             data.update(master)
 
         log_config = {"ERROR": "invalid logging config"}
-        filename = os.path.join(settings.MEDIA_ROOT, 'lava-logs-config.yaml')
+        filename = os.path.join(settings.MEDIA_ROOT, "lava-logs-config.yaml")
         if os.path.exists(filename):
             try:
-                with open(filename, 'r') as output:
+                with open(filename, "r") as output:
                     log_config = yaml.safe_load(output)
             except yaml.YAMLError as exc:
                 return log_config
         if log_config:
             data.update(log_config)
         return {
-            "MASTER_URL": data['master_socket'],
-            "LOGGING_URL": data['socket'],
-            "IPv6": data['ipv6'],
-            "ENCRYPT": data.get('encrypt', False),
+            "MASTER_URL": data["master_socket"],
+            "LOGGING_URL": data["socket"],
+            "IPv6": data["ipv6"],
+            "ENCRYPT": data.get("encrypt", False),
             "EVENT_TOPIC": settings.EVENT_TOPIC,
             "EVENT_SOCKET": settings.EVENT_SOCKET,
             "EVENT_NOTIFICATION": settings.EVENT_NOTIFICATION,
@@ -238,8 +238,8 @@ class LavaSystemAPI(SystemAPI):
         self._authenticate()
         if not isinstance(job_list, list):
             raise xmlrpc.client.Fault(
-                errors.BAD_REQUEST,
-                "job list argument must be a list")
+                errors.BAD_REQUEST, "job list argument must be a list"
+            )
         username = self._switch_user(username)
         retval = {}
         for job_id in job_list:
@@ -354,8 +354,8 @@ class LavaSystemAPI(SystemAPI):
         self._authenticate()
         if not isinstance(device_list, list):
             raise xmlrpc.client.Fault(
-                errors.BAD_REQUEST,
-                "device list argument must be a list")
+                errors.BAD_REQUEST, "device list argument must be a list"
+            )
         username = self._switch_user(username)
         retval = {}
         for hostname in device_list:
@@ -369,17 +369,17 @@ class LavaSystemAPI(SystemAPI):
             retval.setdefault(device_type.name, [])
             visible = device.is_visible_to(username)
             if visible:
-                retval[device_type.name].append({
-                    hostname: {
-                        'is_pipeline': True,
-                        'visible': visible,
-                        'exclusive': True
+                retval[device_type.name].append(
+                    {
+                        hostname: {
+                            "is_pipeline": True,
+                            "visible": visible,
+                            "exclusive": True,
+                        }
                     }
-                })
+                )
             else:
-                retval[device_type.name].append({
-                    hostname: {'visible': visible}
-                })
+                retval[device_type.name].append({hostname: {"visible": visible}})
         return retval
 
     def user_can_submit_to_types(self, type_list, username=None):
@@ -434,13 +434,13 @@ class LavaSystemAPI(SystemAPI):
         self._authenticate()
         if not isinstance(type_list, list):
             raise xmlrpc.client.Fault(
-                errors.BAD_REQUEST,
-                "type list argument must be a list")
+                errors.BAD_REQUEST, "type list argument must be a list"
+            )
         username = self._switch_user(username)
-        if not username.has_perm('lava_scheduler_app.add_testjob'):
+        if not username.has_perm("lava_scheduler_app.add_testjob"):
             raise xmlrpc.client.Fault(
                 errors.FORBIDDEN,
-                "User '%s' does not have permissiont to submit jobs." % username
+                "User '%s' does not have permissiont to submit jobs." % username,
             )
         retval = {}
         for type_name in type_list:
@@ -491,38 +491,41 @@ class LavaSystemAPI(SystemAPI):
         self._authenticate()
         # get all device dictionaries, build the entire map.
         dictionaries = [
-            (device.hostname, device.load_configuration()) for device in Device.objects.all()
+            (device.hostname, device.load_configuration())
+            for device in Device.objects.all()
         ]
-        network_map = {'switches': {}}
+        network_map = {"switches": {}}
         for (hostname, params) in dictionaries:
-            if 'interfaces' not in params:
+            if "interfaces" not in params:
                 continue
-            for interface in params['interfaces']:
-                for map_switch, port in params['map'][interface].items():
+            for interface in params["interfaces"]:
+                for map_switch, port in params["map"][interface].items():
                     port_list = []
                     device = {
-                        'interface': interface,
-                        'mac': params['mac_addr'][interface],
-                        'sysfs': params['sysfs'][interface],
-                        'hostname': hostname
+                        "interface": interface,
+                        "mac": params["mac_addr"][interface],
+                        "sysfs": params["sysfs"][interface],
+                        "hostname": hostname,
                     }
-                    port_list.append({'port': port, 'device': device})
-                    switch_port = network_map['switches'].setdefault(map_switch, [])
+                    port_list.append({"port": port, "device": device})
+                    switch_port = network_map["switches"].setdefault(map_switch, [])
                     # Any switch can only have one entry for one port
                     if port not in switch_port:
                         switch_port.extend(port_list)
 
         if switch:
-            if switch in network_map['switches']:
-                return yaml.dump(network_map['switches'][switch])
+            if switch in network_map["switches"]:
+                return yaml.dump(network_map["switches"][switch])
             else:
                 return xmlrpc.client.Fault(
-                    404, "No switch '%s' was found in the network map of supported devices." % switch)
+                    404,
+                    "No switch '%s' was found in the network map of supported devices."
+                    % switch,
+                )
         return yaml.dump(network_map)
 
 
 class LavaMapper(Mapper):
-
     def register_introspection_methods(self):
         """
         Register LavaSystemAPI as 'system' object.
@@ -530,4 +533,4 @@ class LavaMapper(Mapper):
         LavaSystemAPI adds a 'whoami' system method above what the default
         has.
         """
-        self.register(LavaSystemAPI, 'system')
+        self.register(LavaSystemAPI, "system")

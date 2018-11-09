@@ -45,7 +45,9 @@ class Command(LAVADaemonCommand):
             # remove the message from the queue
             os.read(self.pipe_r, 1)
             if leaving:
-                self.logger.warning("[POLL] signal already handled, please wait for the process to exit")
+                self.logger.warning(
+                    "[POLL] signal already handled, please wait for the process to exit"
+                )
                 return True
             else:
                 self.logger.info("[POLL] received a signal, leaving")
@@ -66,20 +68,24 @@ class Command(LAVADaemonCommand):
         return not leaving
 
     def handle(self, *args, **options):
-        self.setup_logging("lava-publisher", options["level"],
-                           options["log_file"], FORMAT)
+        self.setup_logging(
+            "lava-publisher", options["level"], options["log_file"], FORMAT
+        )
 
         self.logger.info("[INIT] Dropping privileges")
-        if not self.drop_privileges(options['user'], options['group']):
+        if not self.drop_privileges(options["user"], options["group"]):
             self.logger.error("[INIT] Unable to drop privileges")
             return
 
         if not settings.EVENT_NOTIFICATION:
-            self.logger.error("[INIT] 'EVENT_NOTIFICATION' is set to False, "
-                              "LAVA won't generated any events")
+            self.logger.error(
+                "[INIT] 'EVENT_NOTIFICATION' is set to False, "
+                "LAVA won't generated any events"
+            )
 
-        self.logger.info("[INIT] Creating the input socket at %s",
-                         settings.INTERNAL_EVENT_SOCKET)
+        self.logger.info(
+            "[INIT] Creating the input socket at %s", settings.INTERNAL_EVENT_SOCKET
+        )
         context = zmq.Context.instance()
         self.pull = context.socket(zmq.PULL)
         self.pull.bind(settings.INTERNAL_EVENT_SOCKET)
@@ -91,8 +97,9 @@ class Command(LAVADaemonCommand):
         self.poller.register(self.pipe_r, zmq.POLLIN)
 
         # Create the default publishing socket
-        self.logger.info("[INIT] Creating the publication socket at %s",
-                         settings.EVENT_SOCKET)
+        self.logger.info(
+            "[INIT] Creating the publication socket at %s", settings.EVENT_SOCKET
+        )
         self.pub = context.socket(zmq.PUB)
         self.pub.bind(settings.EVENT_SOCKET)
         # Create the additional PUSH sockets

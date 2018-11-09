@@ -25,13 +25,16 @@ import os
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 
 from lava_scheduler_app.models import DeviceType, Alias
+
 # pylint: disable=invalid-name,no-self-use
 
 
 class Command(BaseCommand):
-    help = "Manage device types according to which templates are available " \
-           "and which device-types are defined in the database. When counting " \
-           "the number of devices, Retired devices are included."
+    help = (
+        "Manage device types according to which templates are available "
+        "and which device-types are defined in the database. When counting "
+        "the number of devices, Retired devices are included."
+    )
 
     def add_arguments(self, parser):
         cmd = self
@@ -41,57 +44,84 @@ class Command(BaseCommand):
             Sub-parsers constructor that mimic Django constructor.
             See http://stackoverflow.com/a/37414551
             """
+
             def __init__(self, **kwargs):
                 super().__init__(cmd, **kwargs)
 
-        sub = parser.add_subparsers(dest="sub_command", help="Sub commands", parser_class=SubParser)
+        sub = parser.add_subparsers(
+            dest="sub_command", help="Sub commands", parser_class=SubParser
+        )
         sub.required = True
 
         # "add" sub-command
-        add_parser = sub.add_parser("add", help="Add V2 device type(s) to the database.")
-        add_parser.add_argument("device-type",
-                                help="The device type name. "
-                                     "Passing '*' will add all known V2 device types.")
-        alias = add_parser.add_argument_group("alias",
-                                              "Only supported when creating a single device-type")
-        alias.add_argument("--alias", default='', help='Name of an alias for this device-type.')
-        health = add_parser.add_argument_group("health check",
-                                               "Only supported when creating a single device-type")
-        health.add_argument("--health-frequency",
-                            default=24,
-                            help="How often to run health checks.")
-        health.add_argument("--health-denominator",
-                            default="hours",
-                            choices=["hours", "jobs"],
-                            help="Initiate health checks by hours or by jobs.")
+        add_parser = sub.add_parser(
+            "add", help="Add V2 device type(s) to the database."
+        )
+        add_parser.add_argument(
+            "device-type",
+            help="The device type name. "
+            "Passing '*' will add all known V2 device types.",
+        )
+        alias = add_parser.add_argument_group(
+            "alias", "Only supported when creating a single device-type"
+        )
+        alias.add_argument(
+            "--alias", default="", help="Name of an alias for this device-type."
+        )
+        health = add_parser.add_argument_group(
+            "health check", "Only supported when creating a single device-type"
+        )
+        health.add_argument(
+            "--health-frequency", default=24, help="How often to run health checks."
+        )
+        health.add_argument(
+            "--health-denominator",
+            default="hours",
+            choices=["hours", "jobs"],
+            help="Initiate health checks by hours or by jobs.",
+        )
 
         # "update" sub-command
-        update_parser = sub.add_parser("update", help="Update an existing V2 device type in the database.")
+        update_parser = sub.add_parser(
+            "update", help="Update an existing V2 device type in the database."
+        )
         update_parser.add_argument("device-type", help="The device type name.")
         update_alias = update_parser.add_argument_group("alias")
-        update_alias.add_argument("--alias", required=True, help='Name of an alias for this device-type.')
+        update_alias.add_argument(
+            "--alias", required=True, help="Name of an alias for this device-type."
+        )
 
         # "details" sub-command
         details_parser = sub.add_parser("details", help="Details about a device-type")
-        details_parser.add_argument("name",
-                                    help="Name of the device-type")
-        details_parser.add_argument("--devices", action="store_true",
-                                    default=False,
-                                    help="Print the corresponding devices")
+        details_parser.add_argument("name", help="Name of the device-type")
+        details_parser.add_argument(
+            "--devices",
+            action="store_true",
+            default=False,
+            help="Print the corresponding devices",
+        )
 
         # "list" sub-command
         list_parser = sub.add_parser("list", help="List the installed device types")
-        list_parser.add_argument("--all", "-a", dest="show_all",
-                                 default=False, action="store_true",
-                                 help="Show all device types in the database, "
-                                      "including non-installed ones")
-        list_parser.add_argument("--csv", dest="csv", default=False,
-                                 action="store_true", help="Print as csv")
+        list_parser.add_argument(
+            "--all",
+            "-a",
+            dest="show_all",
+            default=False,
+            action="store_true",
+            help="Show all device types in the database, "
+            "including non-installed ones",
+        )
+        list_parser.add_argument(
+            "--csv", dest="csv", default=False, action="store_true", help="Print as csv"
+        )
 
     def available_device_types(self):
         """ List avaiable device types by looking at the configuration files """
         available_types = []
-        for fname in glob.iglob("/etc/lava-server/dispatcher-config/device-types/*.jinja2"):
+        for fname in glob.iglob(
+            "/etc/lava-server/dispatcher-config/device-types/*.jinja2"
+        ):
             device_type = os.path.basename(fname[:-7])
             if not device_type.startswith("base"):
                 available_types.append(device_type)
@@ -101,14 +131,16 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         """ Forward to the right sub-handler """
         if options["sub_command"] == "add":
-            self.handle_add(options["device-type"],
-                            options['alias'],
-                            options["health_denominator"],
-                            options["health_frequency"])
+            self.handle_add(
+                options["device-type"],
+                options["alias"],
+                options["health_denominator"],
+                options["health_frequency"],
+            )
         elif options["sub_command"] == "details":
             self.handle_details(options["name"], options["devices"])
         elif options["sub_command"] == "update":
-            self.handle_update(options['device-type'], options['alias'])
+            self.handle_update(options["device-type"], options["alias"])
         else:
             self.handle_list(options["show_all"], options["csv"])
 
@@ -123,8 +155,7 @@ class Command(BaseCommand):
         alias_item, _ = Alias.objects.get_or_create(name=alias)
         dt.aliases.add(alias_item)
 
-    def handle_add(self, device_type, alias, health_denominator,
-                   health_frequency):
+    def handle_add(self, device_type, alias, health_denominator, health_frequency):
         """ Add a device type """
         with contextlib.suppress(DeviceType.DoesNotExist):
             DeviceType.objects.get(name=device_type)
@@ -154,7 +185,8 @@ class Command(BaseCommand):
             dt = DeviceType.objects.create(
                 name=device_type,
                 health_frequency=health_frequency,
-                health_denominator=health_denominator)
+                health_denominator=health_denominator,
+            )
             if alias_item:
                 dt.aliases.add(alias_item)
 
@@ -183,7 +215,7 @@ class Command(BaseCommand):
         """ List the device types """
         available_types = self.available_device_types()
         device_type_names = []
-        device_types = DeviceType.objects.all().order_by('name')
+        device_types = DeviceType.objects.all().order_by("name")
         if show_all:
             device_type_names = [dt.name for dt in device_types]
             available_types = self.available_device_types()
@@ -193,27 +225,33 @@ class Command(BaseCommand):
             writer = csv.DictWriter(self.stdout, fieldnames=fields)
             writer.writeheader()
             for dt in device_types:
-                writer.writerow({
-                    "name": dt.name,
-                    "devices": dt.device_set.count(),
-                    "installed": True,
-                    "template": dt.name in available_types
-                })
+                writer.writerow(
+                    {
+                        "name": dt.name,
+                        "devices": dt.device_set.count(),
+                        "installed": True,
+                        "template": dt.name in available_types,
+                    }
+                )
 
             if show_all:
                 for dt in available_types:
                     if dt not in device_type_names:
-                        writer.writerow({
-                            "name": dt,
-                            "devices": 0,
-                            "installed": False,
-                            "template": True,
-                        })
+                        writer.writerow(
+                            {
+                                "name": dt,
+                                "devices": 0,
+                                "installed": False,
+                                "template": True,
+                            }
+                        )
         else:
             self.stdout.write("Installed device types:")
             for dt in device_types:
-                v2msg = '' if dt.name in available_types else "- No V2 template."
-                self.stdout.write("* %s (%d devices) %s" % (dt.name, dt.device_set.count(), v2msg))
+                v2msg = "" if dt.name in available_types else "- No V2 template."
+                self.stdout.write(
+                    "* %s (%d devices) %s" % (dt.name, dt.device_set.count(), v2msg)
+                )
 
             if show_all:
                 self.stdout.write("Available V2 device types:")

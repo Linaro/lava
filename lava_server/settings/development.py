@@ -20,6 +20,8 @@
 import contextlib
 import os
 
+# pylint: disable=unused-import,unused-wildcard-import,wildcard-import
+
 from lava_server.settings.common import *
 
 
@@ -33,10 +35,8 @@ USE_TZ = False
 
 # Top-level directory of the project.
 PROJECT_SRC_DIR = os.path.normpath(
-    os.path.join(
-        os.path.dirname(
-            os.path.abspath(__file__)),
-        ".."))
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
+)
 
 # Top-level directory for nonvolatile files
 PRECIOUS_DIR = os.path.join(PROJECT_SRC_DIR, "precious")
@@ -52,13 +52,15 @@ PROJECT_STATE_DIR = os.path.join(PRECIOUS_DIR, "var/lib/lava-server/")
 os.makedirs(PROJECT_STATE_DIR, exist_ok=True)
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'devel',
-        'USER': 'devel',
-        'PASSWORD': 'devel',
-        'HOST': 'localhost',
-        'PORT': ''}}
+    "default": {
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "NAME": "devel",
+        "USER": "devel",
+        "PASSWORD": "devel",
+        "HOST": "localhost",
+        "PORT": "",
+    }
+}
 
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 # Example: "/home/media/media.lawrence.com/"
@@ -74,7 +76,7 @@ STATIC_ROOT = os.path.join(PROJECT_STATE_DIR, "static")
 
 
 # Make this unique, and don't share it with anybody.
-SECRET_KEY = '00000000000000000000000000000000000000000000000000'
+SECRET_KEY = "00000000000000000000000000000000000000000000000000"
 
 # Try using devserver if available, devserver is a very useful extension that
 # makes debugging applications easier. It shows a lot of interesting output,
@@ -83,23 +85,24 @@ SECRET_KEY = '00000000000000000000000000000000000000000000000000'
 # achieved.
 with contextlib.suppress(ImportError):
     import devserver
-    INSTALLED_APPS += ['devserver']
+
+    INSTALLED_APPS += ["devserver"]
 
 USE_DEBUG_TOOLBAR = False
 
 # Any emails that would normally be sent are redirected to stdout.
 # This setting is only used for django 1.2 and newer.
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 # default branding details
 BRANDING_ALT = "LAVA Software logo"
-BRANDING_ICON = 'lava_server/images/logo.png'
-BRANDING_URL = 'http://www.lavasoftware.org'
+BRANDING_ICON = "lava_server/images/logo.png"
+BRANDING_URL = "http://www.lavasoftware.org"
 BRANDING_HEIGHT = "BRANDING_HEIGHT", 22
 BRANDING_WIDTH = "BRANDING_WIDTH", 22
 BRANDING_BUG_URL = "https://git.lavasoftware.org/lava/lava/issues"
 BRANDING_SOURCE_URL = "https://git.lavasoftware.org/lava/lava"
-BRANDING_MESSAGE = ''
+BRANDING_MESSAGE = ""
 
 # Use default instance name
 INSTANCE_NAME = "default"
@@ -107,48 +110,38 @@ INSTANCE_NAME = "default"
 # Logging
 
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'filters': {
-        'require_debug_false': {
-            '()': 'django.utils.log.RequireDebugFalse'
+    "version": 1,
+    "disable_existing_loggers": False,
+    "filters": {"require_debug_false": {"()": "django.utils.log.RequireDebugFalse"}},
+    "formatters": {
+        "lava": {"format": "%(levelname)s %(asctime)s %(module)s %(message)s"}
+    },
+    "handlers": {
+        "logfile": {
+            "class": "logging.handlers.WatchedFileHandler",
+            "filename": "django.log",
+            "formatter": "lava",
         }
     },
-    'formatters': {
-        'lava': {
-            'format': '%(levelname)s %(asctime)s %(module)s %(message)s'
-        }
-    },
-    'handlers': {
-        'logfile': {
-            'class': 'logging.handlers.WatchedFileHandler',
-            'filename': 'django.log',
-            'formatter': 'lava'
-        }
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['logfile'],
+    "loggers": {
+        "django": {
+            "handlers": ["logfile"],
             # DEBUG outputs all SQL statements
-            'level': 'ERROR',
-            'propagate': True,
+            "level": "ERROR",
+            "propagate": True,
         },
-        'django_auth_ldap': {
-            'handlers': ['logfile'],
-            'level': 'INFO',
-            'propagate': True,
+        "django_auth_ldap": {
+            "handlers": ["logfile"],
+            "level": "INFO",
+            "propagate": True,
         },
-        'lava_scheduler_app': {
-            'handlers': ['logfile'],
-            'level': 'INFO',
-            'propagate': True,
-        }
-    }
+        "lava_scheduler_app": {
+            "handlers": ["logfile"],
+            "level": "INFO",
+            "propagate": True,
+        },
+    },
 }
 
 # Do not use caching as it interfere with test
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
-    }
-}
+CACHES = {"default": {"BACKEND": "django.core.cache.backends.dummy.DummyCache"}}

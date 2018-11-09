@@ -22,14 +22,13 @@ from django.core.management.base import BaseCommand, CommandError
 
 
 class Command(BaseCommand):
-    help = 'Authorize superuser.'
+    help = "Authorize superuser."
 
     def add_arguments(self, parser):
-        parser.add_argument('--username', type=str,
-                            help='Username to authorize.')
+        parser.add_argument("--username", type=str, help="Username to authorize.")
 
     def handle(self, *args, **options):
-        username = options['username']
+        username = options["username"]
         if username is None:
             raise CommandError("Username not specified.")
 

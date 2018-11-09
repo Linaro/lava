@@ -27,9 +27,7 @@ from django.core.management.base import BaseCommand, CommandError, CommandParser
 from django.db import transaction
 from django.utils import timezone
 
-from lava_scheduler_app.models import (
-    TestJob
-)
+from lava_scheduler_app.models import TestJob
 
 
 class Command(BaseCommand):
@@ -41,7 +39,7 @@ class Command(BaseCommand):
         "SCHEDULED": TestJob.STATE_SCHEDULED,
         "RUNNING": TestJob.STATE_RUNNING,
         "CANCELING": TestJob.STATE_CANCELING,
-        "FINISHED": TestJob.STATE_FINISHED
+        "FINISHED": TestJob.STATE_FINISHED,
     }
 
     def add_arguments(self, parser):
@@ -52,42 +50,77 @@ class Command(BaseCommand):
             Sub-parsers constructor that mimic Django constructor.
             See http://stackoverflow.com/a/37414551
             """
+
             def __init__(self, **kwargs):
                 super().__init__(cmd, **kwargs)
 
-        sub = parser.add_subparsers(dest="sub_command", help="Sub commands",
-                                    parser_class=SubParser)
+        sub = parser.add_subparsers(
+            dest="sub_command", help="Sub commands", parser_class=SubParser
+        )
         sub.required = True
 
-        fail = sub.add_parser("fail", help="Force the job status in the database. Keep "
-                                           "in mind that any corresponding lava-run "
-                                           "process will NOT be stopped by this operation.")
+        fail = sub.add_parser(
+            "fail",
+            help="Force the job status in the database. Keep "
+            "in mind that any corresponding lava-run "
+            "process will NOT be stopped by this operation.",
+        )
         fail.add_argument("job_id", help="job id", type=int)
 
-        rm = sub.add_parser("rm", help="Remove selected jobs. Keep in mind "
-                                       "that v1 bundles won't be removed, "
-                                       "leading to strange behavior when "
-                                       "browsing the bundle pages.")
-        rm.add_argument("--older-than", default=None, type=str,
-                        help="Remove jobs older than this. The time is of the "
-                             "form: 1h (one hour) or 2d (two days). "
-                             "By default, all jobs will be removed.")
-        rm.add_argument("--state", default=None,
-                        choices=["SUBMITTED", "SCHEDULING", "SCHEDULED", "RUNNING", "CANCELING",
-                                 "FINISHED"],
-                        help="Filter by job state")
-        rm.add_argument("--submitter", default=None, type=str,
-                        help="Filter jobs by submitter")
-        rm.add_argument("--dry-run", default=False, action="store_true",
-                        help="Do not remove any data, simulate the output")
-        rm.add_argument("--slow", default=False, action="store_true",
-                        help="Be nice with the system by sleeping regularly")
+        rm = sub.add_parser(
+            "rm",
+            help="Remove selected jobs. Keep in mind "
+            "that v1 bundles won't be removed, "
+            "leading to strange behavior when "
+            "browsing the bundle pages.",
+        )
+        rm.add_argument(
+            "--older-than",
+            default=None,
+            type=str,
+            help="Remove jobs older than this. The time is of the "
+            "form: 1h (one hour) or 2d (two days). "
+            "By default, all jobs will be removed.",
+        )
+        rm.add_argument(
+            "--state",
+            default=None,
+            choices=[
+                "SUBMITTED",
+                "SCHEDULING",
+                "SCHEDULED",
+                "RUNNING",
+                "CANCELING",
+                "FINISHED",
+            ],
+            help="Filter by job state",
+        )
+        rm.add_argument(
+            "--submitter", default=None, type=str, help="Filter jobs by submitter"
+        )
+        rm.add_argument(
+            "--dry-run",
+            default=False,
+            action="store_true",
+            help="Do not remove any data, simulate the output",
+        )
+        rm.add_argument(
+            "--slow",
+            default=False,
+            action="store_true",
+            help="Be nice with the system by sleeping regularly",
+        )
 
     def handle(self, *_, **options):
         """ forward to the right sub-handler """
         if options["sub_command"] == "rm":
-            self.handle_rm(options["older_than"], options["submitter"],
-                           options["state"], options["dry_run"], options["slow"])
+            self.handle_rm(
+                options["older_than"],
+                options["submitter"],
+                options["state"],
+                options["dry_run"],
+                options["slow"],
+            )
         elif options["sub_command"] == "fail":
             self.handle_fail(options["job_id"])
 
@@ -107,7 +140,7 @@ class Command(BaseCommand):
         if simulate:
             transaction.set_autocommit(False)
 
-        jobs = TestJob.objects.all().order_by('id')
+        jobs = TestJob.objects.all().order_by("id")
         if older_than is not None:
             pattern = re.compile(r"^(?P<time>\d+)(?P<unit>(h|d))$")
             match = pattern.match(older_than)
@@ -136,12 +169,16 @@ class Command(BaseCommand):
             count = 0
             for job in jobs[0:100]:
                 count += 1
-                self.stdout.write("* %d (%s): %s" % (job.id, job.end_time, job.output_dir))
+                self.stdout.write(
+                    "* %d (%s): %s" % (job.id, job.end_time, job.output_dir)
+                )
                 try:
                     if not simulate:
                         rmtree(job.output_dir)
                 except OSError as exc:
-                    self.stderr.write("  -> Unable to remove the directory: %s" % str(exc))
+                    self.stderr.write(
+                        "  -> Unable to remove the directory: %s" % str(exc)
+                    )
                 job.delete()
 
             if count == 0:

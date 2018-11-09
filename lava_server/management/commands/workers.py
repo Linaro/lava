@@ -37,56 +37,76 @@ class Command(BaseCommand):
             Sub-parsers constructor that mimic Django constructor.
             See http://stackoverflow.com/a/37414551
             """
+
             def __init__(self, **kwargs):
                 super().__init__(cmd, **kwargs)
 
-        sub = parser.add_subparsers(dest="sub_command", help="Sub commands", parser_class=SubParser)
+        sub = parser.add_subparsers(
+            dest="sub_command", help="Sub commands", parser_class=SubParser
+        )
         sub.required = True
 
         add_parser = sub.add_parser("add", help="Create a worker")
-        add_parser.add_argument("hostname", type=str,
-                                help="Hostname of the worker")
-        add_parser.add_argument("--description", type=str, default="",
-                                help="Worker description")
-        add_parser.add_argument("--health", type=str, default="ACTIVE",
-                                choices=["ACTIVE", "MAINTENANCE", "RETIRED"],
-                                help="Worker health")
+        add_parser.add_argument("hostname", type=str, help="Hostname of the worker")
+        add_parser.add_argument(
+            "--description", type=str, default="", help="Worker description"
+        )
+        add_parser.add_argument(
+            "--health",
+            type=str,
+            default="ACTIVE",
+            choices=["ACTIVE", "MAINTENANCE", "RETIRED"],
+            help="Worker health",
+        )
 
         details_parser = sub.add_parser("details", help="Details of a worker")
-        details_parser.add_argument("hostname", type=str,
-                                    help="Hostname of the worker")
-        details_parser.add_argument("--devices", action="store_true",
-                                    default=False,
-                                    help="Print the list of attached devices")
+        details_parser.add_argument("hostname", type=str, help="Hostname of the worker")
+        details_parser.add_argument(
+            "--devices",
+            action="store_true",
+            default=False,
+            help="Print the list of attached devices",
+        )
 
         list_parser = sub.add_parser("list", help="List the workers")
-        list_parser.add_argument("-a", "--all", default=False, action="store_true",
-                                 help="Show all workers (including retired ones)")
-        list_parser.add_argument("--csv", dest="csv", default=False,
-                                 action="store_true", help="Print as csv")
+        list_parser.add_argument(
+            "-a",
+            "--all",
+            default=False,
+            action="store_true",
+            help="Show all workers (including retired ones)",
+        )
+        list_parser.add_argument(
+            "--csv", dest="csv", default=False, action="store_true", help="Print as csv"
+        )
 
-        update_parser = sub.add_parser("update",
-                                       help="Update worker properties")
-        update_parser.add_argument("hostname", type=str,
-                                   help="Hostname of the worker")
-        update_parser.add_argument("--description", type=str, default=None,
-                                   help="Worker description")
-        update_parser.add_argument("--health", type=str, default=None,
-                                   choices=["ACTIVE", "MAINTENANCE", "RETIRED"],
-                                   help="Set worker health")
+        update_parser = sub.add_parser("update", help="Update worker properties")
+        update_parser.add_argument("hostname", type=str, help="Hostname of the worker")
+        update_parser.add_argument(
+            "--description", type=str, default=None, help="Worker description"
+        )
+        update_parser.add_argument(
+            "--health",
+            type=str,
+            default=None,
+            choices=["ACTIVE", "MAINTENANCE", "RETIRED"],
+            help="Set worker health",
+        )
 
     def handle(self, *args, **options):
         """ Forward to the right sub-handler """
         if options["sub_command"] == "add":
-            self.handle_add(options["hostname"], options["description"],
-                            options["health"])
+            self.handle_add(
+                options["hostname"], options["description"], options["health"]
+            )
         elif options["sub_command"] == "details":
             self.handle_details(options["hostname"], options["devices"])
         elif options["sub_command"] == "list":
             self.handle_list(options["all"], options["csv"])
         elif options["sub_command"] == "update":
-            self.handle_update(options["hostname"], options["description"],
-                               options["health"])
+            self.handle_update(
+                options["hostname"], options["description"], options["health"]
+            )
 
     def handle_add(self, hostname, description, health_str):
         """ Create a worker """
@@ -100,9 +120,7 @@ class Command(BaseCommand):
             health = Worker.HEALTH_MAINTENANCE
         else:
             health = Worker.HEALTH_RETIRED
-        Worker.objects.create(hostname=hostname,
-                              description=description,
-                              health=health)
+        Worker.objects.create(hostname=hostname, description=description, health=health)
 
     def handle_details(self, hostname, print_devices):
         try:
@@ -133,16 +151,21 @@ class Command(BaseCommand):
             writer = csv.DictWriter(self.stdout, fieldnames=fields)
             writer.writeheader()
             for worker in workers:
-                writer.writerow({
-                    "hostname": worker.hostname,
-                    "description": worker.description,
-                    "state": worker.get_state_display(),
-                    "health": worker.get_health_display(),
-                    "devices": worker.device_set.count()})
+                writer.writerow(
+                    {
+                        "hostname": worker.hostname,
+                        "description": worker.description,
+                        "state": worker.get_state_display(),
+                        "health": worker.get_health_display(),
+                        "devices": worker.device_set.count(),
+                    }
+                )
         else:
             self.stdout.write("Workers:")
             for worker in workers:
-                self.stdout.write("* %s (%d devices)" % (worker.hostname, worker.device_set.count()))
+                self.stdout.write(
+                    "* %s (%d devices)" % (worker.hostname, worker.device_set.count())
+                )
 
     def handle_update(self, hostname, description, health):
         """ Update worker properties """

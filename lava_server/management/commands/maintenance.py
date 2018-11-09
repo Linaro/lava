@@ -30,17 +30,29 @@ class Command(BaseCommand):
     help = "Switch to maintenance mode"
 
     def add_arguments(self, parser):
-        parser.add_argument("--force", action="store_true", default=False,
-                            help="Force maintenance by canceling all running jobs")
-        parser.add_argument("--dry-run", action="store_true", default=False,
-                            help="Simulate the execution (rollback the transaction)")
-        parser.add_argument("--user", type=str, default="lava-health",
-                            help="Username of the current admin")
+        parser.add_argument(
+            "--force",
+            action="store_true",
+            default=False,
+            help="Force maintenance by canceling all running jobs",
+        )
+        parser.add_argument(
+            "--dry-run",
+            action="store_true",
+            default=False,
+            help="Simulate the execution (rollback the transaction)",
+        )
+        parser.add_argument(
+            "--user",
+            type=str,
+            default="lava-health",
+            help="Username of the current admin",
+        )
 
     def handle(self, *args, **options):
         # Disable the internal loggers
-        logging.getLogger('lava-master').disabled = True
-        logging.getLogger('lava_scheduler_app').disabled = True
+        logging.getLogger("lava-master").disabled = True
+        logging.getLogger("lava_scheduler_app").disabled = True
         # Find the user
         try:
             user = User.objects.get(username=options["user"])
@@ -51,9 +63,11 @@ class Command(BaseCommand):
         transaction.set_autocommit(False)
 
         self.stdout.write("Setting all devices to maintenance mode:")
-        devices = Device.objects.exclude(status=Device.OFFLINE) \
-                                .exclude(status=Device.RETIRED) \
-                                .order_by("hostname")
+        devices = (
+            Device.objects.exclude(status=Device.OFFLINE)
+            .exclude(status=Device.RETIRED)
+            .order_by("hostname")
+        )
         for device in devices:
             # Print the device hostname only if it has been put OFFLINE
             if device.put_into_maintenance_mode(user, "Maintenance", None):

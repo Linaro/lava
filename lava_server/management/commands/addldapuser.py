@@ -25,25 +25,27 @@ from lava_scheduler_app.utils import get_ldap_user_properties
 
 
 class Command(BaseCommand):
-    help = 'Add given username from the configured LDAP server.'
+    help = "Add given username from the configured LDAP server."
 
     def add_arguments(self, parser):
-        parser.add_argument('--username', type=str,
-                            help='Username to be added.')
-        parser.add_argument('--superuser', action='store_true',
-                            dest='superuser', default=False,
-                            help='User added will be made as superuser.')
+        parser.add_argument("--username", type=str, help="Username to be added.")
+        parser.add_argument(
+            "--superuser",
+            action="store_true",
+            dest="superuser",
+            default=False,
+            help="User added will be made as superuser.",
+        )
 
     def handle(self, *args, **options):
-        username = options['username']
+        username = options["username"]
         if username is None:
             raise CommandError("Username not specified.")
 
         try:
             user_properties = get_ldap_user_properties(username)
             if user_properties is None:
-                self.stderr.write('LDAP user "%s" properties incomplete'
-                                  % username)
+                self.stderr.write('LDAP user "%s" properties incomplete' % username)
                 return
         except ldap.NO_SUCH_OBJECT:
             self.stderr.write("User %s does not exist in LDAP" % username)

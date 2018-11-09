@@ -32,28 +32,35 @@ from django.core.management.base import BaseCommand
 
 
 class LAVADaemonCommand(BaseCommand):
-
     def add_arguments(self, parser):
         log = parser.add_argument_group("logging")
-        log.add_argument('-l', '--level',
-                         default='DEBUG',
-                         help="Logging level (ERROR, WARN, INFO, DEBUG) "
-                              "Default: DEBUG")
+        log.add_argument(
+            "-l",
+            "--level",
+            default="DEBUG",
+            help="Logging level (ERROR, WARN, INFO, DEBUG) " "Default: DEBUG",
+        )
 
-        log.add_argument('-o', '--log-file',
-                         default=self.default_logfile,
-                         help="Logging file path")
+        log.add_argument(
+            "-o", "--log-file", default=self.default_logfile, help="Logging file path"
+        )
 
         priv = parser.add_argument_group("privileges")
-        priv.add_argument('-u', '--user',
-                          default='lavaserver',
-                          help="Run the process under this user. It should "
-                               "be the same user as the gunicorn process.")
+        priv.add_argument(
+            "-u",
+            "--user",
+            default="lavaserver",
+            help="Run the process under this user. It should "
+            "be the same user as the gunicorn process.",
+        )
 
-        priv.add_argument('-g', '--group',
-                          default='lavaserver',
-                          help="Run the process under this group. It should "
-                               "be the same group as the gunicorn process.")
+        priv.add_argument(
+            "-g",
+            "--group",
+            default="lavaserver",
+            help="Run the process under this group. It should "
+            "be the same group as the gunicorn process.",
+        )
 
     def drop_privileges(self, user, group):
         try:
@@ -62,15 +69,15 @@ class LAVADaemonCommand(BaseCommand):
         except KeyError:
             self.logger.error("Unable to lookup the user or the group")
             return False
-        self.logger.debug("Switching to (%s(%d), %s(%d))",
-                          user, user_id, group, group_id)
+        self.logger.debug(
+            "Switching to (%s(%d), %s(%d))", user, user_id, group, group_id
+        )
 
         try:
             os.setgid(group_id)
             os.setuid(user_id)
         except OSError:
-            self.logger.error("Unable to the set (user, group)=(%s, %s)",
-                              user, group)
+            self.logger.error("Unable to the set (user, group)=(%s, %s)", user, group)
             return False
 
         # Set a restrictive umask (rwxr-xr-x)
@@ -91,11 +98,11 @@ class LAVADaemonCommand(BaseCommand):
         self.logger.addHandler(handler)
 
         # Set log level
-        if level == 'ERROR':
+        if level == "ERROR":
             self.logger.setLevel(logging.ERROR)
-        elif level == 'WARN':
+        elif level == "WARN":
             self.logger.setLevel(logging.WARN)
-        elif level == 'INFO':
+        elif level == "INFO":
             self.logger.setLevel(logging.INFO)
         else:
             self.logger.setLevel(logging.DEBUG)
@@ -129,12 +136,20 @@ def watch_directory(directory):
     IN_DELETE_SELF = 0x00000400
     IN_MOVE_SELF = 0x00000800
 
-    IN_EVENTS = (IN_MODIFY | IN_ATTRIB | IN_MOVED_FROM | IN_MOVED_TO |
-                 IN_CREATE | IN_DELETE | IN_DELETE_SELF | IN_MOVE_SELF)
+    IN_EVENTS = (
+        IN_MODIFY
+        | IN_ATTRIB
+        | IN_MOVED_FROM
+        | IN_MOVED_TO
+        | IN_CREATE
+        | IN_DELETE
+        | IN_DELETE_SELF
+        | IN_MOVE_SELF
+    )
 
     # watch a directory using inotify
     # return the corresponding file descriptor
-    libc_name = ctypes.util.find_library('c')
+    libc_name = ctypes.util.find_library("c")
     libc = ctypes.cdll.LoadLibrary(libc_name)
 
     # create the inotify file descriptor

@@ -77,7 +77,10 @@ class BreadCrumb:
 
     def __str__(self):
         return "<BreadCrumb name=%r view=%r parent=%r>" % (
-            self.name, self.view, self.parent)
+            self.name,
+            self.view,
+            self.parent,
+        )
 
     def __call__(self, view):
         """
@@ -101,7 +104,8 @@ class BreadCrumb:
             return self.name.format(**kwargs)
         except Exception:
             logging.exception(
-                "Unable to construct breadcrumb name for view %r", self.view)
+                "Unable to construct breadcrumb name for view %r", self.view
+            )
             raise
 
     def get_absolute_url(self, kwargs):
@@ -114,12 +118,11 @@ class BreadCrumb:
         the kwargs dictionary.
         """
         try:
-            return reverse(
-                self.view,
-                args=[kwargs[name] for name in self.needs])
+            return reverse(self.view, args=[kwargs[name] for name in self.needs])
         except Exception:
             logging.exception(
-                "Unable to construct breadcrumb URL for view %r", self.view)
+                "Unable to construct breadcrumb URL for view %r", self.view
+            )
             raise
 
 

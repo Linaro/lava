@@ -37,25 +37,33 @@ class Command(BaseCommand):
             Sub-parsers constructor that mimic Django constructor.
             See http://stackoverflow.com/a/37414551
             """
+
             def __init__(self, **kwargs):
                 super().__init__(cmd, **kwargs)
 
-        sub = parser.add_subparsers(dest="sub_command", help="Sub commands", parser_class=SubParser)
+        sub = parser.add_subparsers(
+            dest="sub_command", help="Sub commands", parser_class=SubParser
+        )
         sub.required = True
 
         add_parser = sub.add_parser("add", help="Create a token")
-        add_parser.add_argument("--user", "-u", type=str, required=True,
-                                help="The token owner")
-        add_parser.add_argument("--description", "-d", type=str, default="",
-                                help="The token description")
-        add_parser.add_argument("--secret", type=str, default=None,
-                                help="The token to import")
+        add_parser.add_argument(
+            "--user", "-u", type=str, required=True, help="The token owner"
+        )
+        add_parser.add_argument(
+            "--description", "-d", type=str, default="", help="The token description"
+        )
+        add_parser.add_argument(
+            "--secret", type=str, default=None, help="The token to import"
+        )
 
         list_parser = sub.add_parser("list", help="List the tokens")
-        list_parser.add_argument("--user", "-u", type=str, required=True,
-                                 help="The tokens owner")
-        list_parser.add_argument("--csv", dest="csv", default=False,
-                                 action="store_true", help="Print as csv")
+        list_parser.add_argument(
+            "--user", "-u", type=str, required=True, help="The tokens owner"
+        )
+        list_parser.add_argument(
+            "--csv", dest="csv", default=False, action="store_true", help="Print as csv"
+        )
 
         del_parser = sub.add_parser("rm", help="Remove a token")
         del_parser.add_argument("token", type=str, help="The token to remove")
@@ -63,8 +71,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         """ Forward to the right sub-handler """
         if options["sub_command"] == "add":
-            self.handle_add(options["user"], options["description"],
-                            options["secret"])
+            self.handle_add(options["user"], options["description"], options["secret"])
         elif options["sub_command"] == "list":
             self.handle_list(options["user"], options["csv"])
         else:
@@ -80,7 +87,9 @@ class Command(BaseCommand):
             token = AuthToken.objects.create(user=user, description=description)
         else:
             try:
-                token = AuthToken.objects.create(user=user, description=description, secret=secret)
+                token = AuthToken.objects.create(
+                    user=user, description=description, secret=secret
+                )
             except IntegrityError:
                 raise CommandError("Check that the token secret is not already used")
         self.stdout.write(token.secret)
@@ -92,16 +101,19 @@ class Command(BaseCommand):
         except User.DoesNotExist:
             raise CommandError("Unable to find user '%s'" % username)
 
-        tokens = AuthToken.objects.filter(user=user).order_by('id')
+        tokens = AuthToken.objects.filter(user=user).order_by("id")
         if format_as_csv:
             fields = ["id", "secret", "description"]
             writer = csv.DictWriter(self.stdout, fieldnames=fields)
             writer.writeheader()
             for token in tokens:
-                writer.writerow({
-                    "id": token.id,
-                    "secret": token.secret,
-                    "description": token.description})
+                writer.writerow(
+                    {
+                        "id": token.id,
+                        "secret": token.secret,
+                        "description": token.description,
+                    }
+                )
         else:
             self.stdout.write("Tokens for user '%s':" % username)
             for token in tokens:

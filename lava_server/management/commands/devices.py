@@ -21,19 +21,12 @@ import os
 import contextlib
 import csv
 
-from django.core.management.base import (
-    BaseCommand,
-    CommandError,
-    CommandParser
-)
+from django.core.management.base import BaseCommand, CommandError, CommandParser
 from django.db import transaction
 from django.contrib.auth.models import User, Group
-from lava_scheduler_app.models import (
-    Device,
-    DeviceType,
-    Tag,
-    Worker
-)
+from lava_scheduler_app.models import Device, DeviceType, Tag, Worker
+
+# pylint: disable=bad-continuation
 
 
 class Command(BaseCommand):
@@ -42,7 +35,7 @@ class Command(BaseCommand):
     device_state = {
         "IDLE": Device.STATE_IDLE,
         "RESERVED": Device.STATE_RESERVED,
-        "RUNNING": Device.STATE_RUNNING
+        "RUNNING": Device.STATE_RUNNING,
     }
     device_health = {
         "GOOD": Device.HEALTH_GOOD,
@@ -50,7 +43,7 @@ class Command(BaseCommand):
         "LOOPING": Device.HEALTH_LOOPING,
         "BAD": Device.HEALTH_BAD,
         "MAINTENANCE": Device.HEALTH_MAINTENANCE,
-        "RETIRED": Device.HEALTH_RETIRED
+        "RETIRED": Device.HEALTH_RETIRED,
     }
 
     def add_arguments(self, parser):
@@ -61,105 +54,167 @@ class Command(BaseCommand):
             Sub-parsers constructor that mimic Django constructor.
             See http://stackoverflow.com/a/37414551
             """
+
             def __init__(self, **kwargs):
                 super().__init__(cmd, **kwargs)
 
-        sub = parser.add_subparsers(dest="sub_command", help="Sub commands", parser_class=SubParser)
+        sub = parser.add_subparsers(
+            dest="sub_command", help="Sub commands", parser_class=SubParser
+        )
         sub.required = True
 
         # "add" sub-command
         add_parser = sub.add_parser("add", help="Add a device")
-        add_parser.add_argument("hostname",
-                                help="Hostname of the device")
-        add_parser.add_argument("--device-type", required=True,
-                                help="Device type")
-        add_parser.add_argument("--description", default=None,
-                                help="Device description")
-        add_parser.add_argument("--offline", action="store_false",
-                                dest="online", default=True,
-                                help="Create the device offline (online by default)")
-        add_parser.add_argument("--private", action="store_false",
-                                dest="public", default=True,
-                                help="Make the device private (public by default)")
-        add_parser.add_argument("--worker", required=True,
-                                help="The name of the worker")
-        add_parser.add_argument("--tags", nargs="*", required=False,
-                                help="List of tags to add to the device")
+        add_parser.add_argument("hostname", help="Hostname of the device")
+        add_parser.add_argument("--device-type", required=True, help="Device type")
+        add_parser.add_argument(
+            "--description", default=None, help="Device description"
+        )
+        add_parser.add_argument(
+            "--offline",
+            action="store_false",
+            dest="online",
+            default=True,
+            help="Create the device offline (online by default)",
+        )
+        add_parser.add_argument(
+            "--private",
+            action="store_false",
+            dest="public",
+            default=True,
+            help="Make the device private (public by default)",
+        )
+        add_parser.add_argument(
+            "--worker", required=True, help="The name of the worker"
+        )
+        add_parser.add_argument(
+            "--tags",
+            nargs="*",
+            required=False,
+            help="List of tags to add to the device",
+        )
         physical = add_parser.add_mutually_exclusive_group()
-        physical.add_argument("--physical-user",
-                              help="Username of the user with physical access to the device")
-        physical.add_argument("--physical-group",
-                              help="Name of the group with physical access to the device")
+        physical.add_argument(
+            "--physical-user",
+            help="Username of the user with physical access to the device",
+        )
+        physical.add_argument(
+            "--physical-group",
+            help="Name of the group with physical access to the device",
+        )
         owner = add_parser.add_mutually_exclusive_group()
-        owner.add_argument("--owner",
-                           help="Username of the user with ownership of the device")
-        owner.add_argument("--group",
-                           help="Name of the group with ownership of the device")
+        owner.add_argument(
+            "--owner", help="Username of the user with ownership of the device"
+        )
+        owner.add_argument(
+            "--group", help="Name of the group with ownership of the device"
+        )
 
         # "copy" sub-command
-        add_parser = sub.add_parser("copy", help="Copy an existing device as a new hostname")
+        add_parser = sub.add_parser(
+            "copy", help="Copy an existing device as a new hostname"
+        )
+        add_parser.add_argument("original", help="Hostname of the existing device")
+        add_parser.add_argument("target", help="Hostname of the device to create")
         add_parser.add_argument(
-            "original", help="Hostname of the existing device")
+            "--offline",
+            action="store_false",
+            dest="online",
+            default=True,
+            help="Create the device offline (online by default)",
+        )
         add_parser.add_argument(
-            "target", help="Hostname of the device to create")
+            "--private",
+            action="store_false",
+            dest="public",
+            default=True,
+            help="Make the device private (public by default)",
+        )
         add_parser.add_argument(
-            "--offline", action="store_false", dest="online", default=True,
-            help="Create the device offline (online by default)")
+            "--worker", required=True, help="The name of the worker (required)"
+        )
         add_parser.add_argument(
-            "--private", action="store_false", dest="public", default=True,
-            help="Make the device private (public by default)")
-        add_parser.add_argument(
-            "--worker", required=True, help="The name of the worker (required)")
-        add_parser.add_argument(
-            "--copy-with-tags", action="store_true", dest='copytags', default=False,
-            help="Set all the tags of the original device on the target device")
+            "--copy-with-tags",
+            action="store_true",
+            dest="copytags",
+            default=False,
+            help="Set all the tags of the original device on the target device",
+        )
 
         # "details" sub-command
         details_parser = sub.add_parser("details", help="Details about a device")
-        details_parser.add_argument("hostname",
-                                    help="Hostname of the device")
+        details_parser.add_argument("hostname", help="Hostname of the device")
 
         # "list" sub-command
         list_parser = sub.add_parser("list", help="List the installed devices")
-        list_parser.add_argument("--state", default=None,
-                                 choices=["IDLE", "RESERVED", "RUNNING"],
-                                 help="Show only devices with the given state")
+        list_parser.add_argument(
+            "--state",
+            default=None,
+            choices=["IDLE", "RESERVED", "RUNNING"],
+            help="Show only devices with the given state",
+        )
         health = list_parser.add_mutually_exclusive_group()
-        health.add_argument("--all", "-a", dest="show_all",
-                            default=None, action="store_true",
-                            help="Show all devices, including retired ones")
-        health.add_argument("--health", default=None,
-                            choices=["GOOD", "UNKNOWN", "LOOPING", "BAD", "MAINTENANCE", "RETIRED"],
-                            help="Show only devices with the given health")
-        list_parser.add_argument("--csv", dest="csv", default=False,
-                                 action="store_true", help="Print as csv")
+        health.add_argument(
+            "--all",
+            "-a",
+            dest="show_all",
+            default=None,
+            action="store_true",
+            help="Show all devices, including retired ones",
+        )
+        health.add_argument(
+            "--health",
+            default=None,
+            choices=["GOOD", "UNKNOWN", "LOOPING", "BAD", "MAINTENANCE", "RETIRED"],
+            help="Show only devices with the given health",
+        )
+        list_parser.add_argument(
+            "--csv", dest="csv", default=False, action="store_true", help="Print as csv"
+        )
 
         # "update" sub-command
-        update_parser = sub.add_parser("update", help="Update properties of the given device")
-        update_parser.add_argument("hostname",
-                                   help="Hostname of the device")
-        update_parser.add_argument("--description", default=None,
-                                   help="Set the description")
-        update_parser.add_argument("--health", default=None,
-                                   choices=["GOOD", "UNKNOWN", "LOOPING", "BAD", "MAINTENANCE", "RETIRED"],
-                                   help="Update the device health")
-        update_parser.add_argument("--worker", default=None,
-                                   help="Update the worker")
+        update_parser = sub.add_parser(
+            "update", help="Update properties of the given device"
+        )
+        update_parser.add_argument("hostname", help="Hostname of the device")
+        update_parser.add_argument(
+            "--description", default=None, help="Set the description"
+        )
+        update_parser.add_argument(
+            "--health",
+            default=None,
+            choices=["GOOD", "UNKNOWN", "LOOPING", "BAD", "MAINTENANCE", "RETIRED"],
+            help="Update the device health",
+        )
+        update_parser.add_argument("--worker", default=None, help="Update the worker")
         display = update_parser.add_mutually_exclusive_group()
-        display.add_argument("--public", default=None, action="store_true",
-                             help="make the device public")
-        display.add_argument("--private", dest="public", action="store_false",
-                             help="Make the device private")
+        display.add_argument(
+            "--public", default=None, action="store_true", help="make the device public"
+        )
+        display.add_argument(
+            "--private",
+            dest="public",
+            action="store_false",
+            help="Make the device private",
+        )
         physical = update_parser.add_mutually_exclusive_group()
-        physical.add_argument("--physical-user",
-                              help="Username of the user with physical access to the device")
-        physical.add_argument("--physical-group",
-                              help="Name of the group with physical access to the device")
+        physical.add_argument(
+            "--physical-user",
+            help="Username of the user with physical access to the device",
+        )
+        physical.add_argument(
+            "--physical-group",
+            help="Name of the group with physical access to the device",
+        )
         owner = update_parser.add_mutually_exclusive_group()
-        owner.add_argument("--owner",
-                           help="Username of the user with ownership of the device")
-        owner.add_argument("--group", dest='group',
-                           help="Name of the group with ownership of the device")
+        owner.add_argument(
+            "--owner", help="Username of the user with ownership of the device"
+        )
+        owner.add_argument(
+            "--group",
+            dest="group",
+            help="Name of the group with ownership of the device",
+        )
 
     def handle(self, *args, **options):
         """ Forward to the right sub-handler """
@@ -170,12 +225,15 @@ class Command(BaseCommand):
         elif options["sub_command"] == "details":
             self.handle_details(options["hostname"])
         elif options["sub_command"] == "list":
-            self.handle_list(options["state"], options["health"],
-                             options["show_all"], options["csv"])
+            self.handle_list(
+                options["state"], options["health"], options["show_all"], options["csv"]
+            )
         else:
             self.handle_update(options)
 
-    def _assign(self, name, device, physical=False, owner=False, user=False, group=False):
+    def _assign(
+        self, name, device, physical=False, owner=False, user=False, group=False
+    ):
         if user:
             try:
                 user = User.objects.get(username=name)
@@ -210,13 +268,13 @@ class Command(BaseCommand):
             raise CommandError("Invalid combination of options.")
 
     def handle_add(self, options):
-        hostname = options['hostname']
-        device_type = options['device_type']
-        worker_name = options['worker']
-        description = options['description']
-        public = options['public']
-        online = options['online']
-        tags = options['tags']
+        hostname = options["hostname"]
+        device_type = options["device_type"]
+        worker_name = options["worker"]
+        description = options["description"]
+        public = options["public"]
+        online = options["online"]
+        tags = options["tags"]
 
         with contextlib.suppress(Device.DoesNotExist):
             Device.objects.get(hostname=hostname)
@@ -233,33 +291,38 @@ class Command(BaseCommand):
             raise CommandError("Unable to find worker '%s'" % worker_name)
 
         health = Device.HEALTH_GOOD if online else Device.HEALTH_MAINTENANCE
-        device = Device.objects.create(hostname=hostname, device_type=dt,
-                                       description=description,
-                                       state=Device.STATE_IDLE, health=health,
-                                       worker_host=worker, is_public=public)
+        device = Device.objects.create(
+            hostname=hostname,
+            device_type=dt,
+            description=description,
+            state=Device.STATE_IDLE,
+            health=health,
+            worker_host=worker,
+            is_public=public,
+        )
 
         if tags is not None:
             for tag in tags:
                 device.tags.add(Tag.objects.get_or_create(name=tag)[0])
 
-        if options['physical_user']:
-            self._assign(options['physical_user'], device, user=True, physical=True)
-        elif options['physical_group']:
-            self._assign(options['physical_group'], device, group=True, physical=True)
+        if options["physical_user"]:
+            self._assign(options["physical_user"], device, user=True, physical=True)
+        elif options["physical_group"]:
+            self._assign(options["physical_group"], device, group=True, physical=True)
 
-        if options['owner']:
-            self._assign(options['owner'], device, user=True, owner=True)
-        elif options['group']:
-            self._assign(options['group'], device, group=True, owner=True)
+        if options["owner"]:
+            self._assign(options["owner"], device, user=True, owner=True)
+        elif options["group"]:
+            self._assign(options["group"], device, group=True, owner=True)
         device.save()
 
     def handle_copy(self, options):
-        original = options['original']
-        target = options['target']
-        worker_name = options['worker']
-        public = options['public']
-        online = options['online']
-        tags = options['copytags']
+        original = options["original"]
+        target = options["target"]
+        worker_name = options["worker"]
+        public = options["public"]
+        online = options["online"]
+        tags = options["copytags"]
 
         try:
             from_device = Device.objects.get(hostname=original)
@@ -281,7 +344,9 @@ class Command(BaseCommand):
                     "Refusing to copy %s to new device %s with health 'Good' -"
                     " no device dictionary exists for target device, yet. "
                     "Use --offline or copy %s.jinja2 to "
-                    "/etc/lava-server/dispatcher-config/devices/ and try again." % (original, target, target))
+                    "/etc/lava-server/dispatcher-config/devices/ and try again."
+                    % (original, target, target)
+                )
 
         try:
             worker = Worker.objects.get(hostname=worker_name)
@@ -312,8 +377,14 @@ class Command(BaseCommand):
 
         with transaction.atomic():
             device = Device.objects.create(
-                hostname=target, device_type=device_type, description=description,
-                state=Device.STATE_IDLE, health=health, worker_host=worker, is_public=public)
+                hostname=target,
+                device_type=device_type,
+                description=description,
+                state=Device.STATE_IDLE,
+                health=health,
+                worker_host=worker,
+                is_public=public,
+            )
 
             if from_tags is not None:
                 for tag in from_tags:
@@ -354,7 +425,7 @@ class Command(BaseCommand):
         elif device.group:
             owner = device.group.name
         else:
-            owner = ''
+            owner = ""
         self.stdout.write("owner      : %s" % owner)
 
         if device.physical_owner:
@@ -362,7 +433,7 @@ class Command(BaseCommand):
         elif device.physical_group:
             physical = device.physical_group.name
         else:
-            physical = ''
+            physical = ""
         self.stdout.write("physical   : %s" % physical)
 
         config = device.load_configuration(output_format="raw")
@@ -386,19 +457,26 @@ class Command(BaseCommand):
             writer = csv.DictWriter(self.stdout, fieldnames=fields)
             writer.writeheader()
             for device in devices:
-                writer.writerow({
-                    "hostname": device.hostname,
-                    "device-type": device.device_type.name,
-                    "state": device.get_state_display(),
-                    "health": device.get_health_display()
-                })
+                writer.writerow(
+                    {
+                        "hostname": device.hostname,
+                        "device-type": device.device_type.name,
+                        "state": device.get_state_display(),
+                        "health": device.get_health_display(),
+                    }
+                )
         else:
             self.stdout.write("Available devices:")
             for device in devices:
-                self.stdout.write("* %s (%s) %s, %s" % (device.hostname,
-                                                        device.device_type.name,
-                                                        device.get_state_display(),
-                                                        device.get_health_display()))
+                self.stdout.write(
+                    "* %s (%s) %s, %s"
+                    % (
+                        device.hostname,
+                        device.device_type.name,
+                        device.get_state_display(),
+                        device.get_health_display(),
+                    )
+                )
 
     def handle_update(self, options):
         """ Update device properties """
@@ -429,15 +507,17 @@ class Command(BaseCommand):
             if public is not None:
                 device.is_public = public
 
-            if options['physical_user']:
-                self._assign(options['physical_user'], device, user=True, physical=True)
-            elif options['physical_group']:
-                self._assign(options['physical_group'], device, group=True, physical=True)
+            if options["physical_user"]:
+                self._assign(options["physical_user"], device, user=True, physical=True)
+            elif options["physical_group"]:
+                self._assign(
+                    options["physical_group"], device, group=True, physical=True
+                )
 
-            if options['owner']:
-                self._assign(options['owner'], device, user=True, owner=True)
-            elif options['group']:
-                self._assign(options['group'], device, group=True, owner=True)
+            if options["owner"]:
+                self._assign(options["owner"], device, user=True, owner=True)
+            elif options["group"]:
+                self._assign(options["group"], device, group=True, owner=True)
 
             # Save the modifications
             device.save()

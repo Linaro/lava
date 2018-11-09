@@ -27,34 +27,37 @@ from django.core.management import execute_from_command_line
 
 
 def find_sources():
-    base_path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "..")
+    base_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
     if os.path.exists(os.path.join(base_path, "lava_server")):
         sys.path.insert(0, base_path)
 
 
 def main():
     # Is the script called from an installed packages or from a source install?
-    installed = not sys.argv[0].endswith('manage.py')
+    installed = not sys.argv[0].endswith("manage.py")
 
     # Create the command line parser
     parser = argparse.ArgumentParser()
     manage = parser
     if installed:
-        subparser = parser.add_subparsers(dest='subcommand', help='Manage LAVA')
+        subparser = parser.add_subparsers(dest="subcommand", help="Manage LAVA")
         subparser.required = True
         manage = subparser.add_parser("manage")
 
     group = manage.add_argument_group("Server configuration")
 
-    group.add_argument("-I", "--instance-template",
-                       action="store",
-                       default="/etc/lava-server/{filename}.conf",
-                       help="Template used for constructing instance pathname."
-                            " The default value is: %(default)s")
+    group.add_argument(
+        "-I",
+        "--instance-template",
+        action="store",
+        default="/etc/lava-server/{filename}.conf",
+        help="Template used for constructing instance pathname."
+        " The default value is: %(default)s",
+    )
 
-    manage.add_argument("command", nargs="...",
-                        help="Invoke this Django management command")
+    manage.add_argument(
+        "command", nargs="...", help="Invoke this Django management command"
+    )
 
     # Parse the command line
     options = parser.parse_args()

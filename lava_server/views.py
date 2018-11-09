@@ -25,7 +25,7 @@ from django.core.urlresolvers import reverse
 from django.http import (
     HttpResponseServerError,
     HttpResponseForbidden,
-    HttpResponseRedirect
+    HttpResponseRedirect,
 )
 from django.shortcuts import render
 from django.template import loader
@@ -33,40 +33,37 @@ from django.utils.translation import ugettext_lazy as _
 from django.views.decorators.csrf import requires_csrf_token
 from django.views.decorators.http import require_POST
 
-from lava_server.bread_crumbs import (
-    BreadCrumb,
-    BreadCrumbTrail,
-)
+from lava_server.bread_crumbs import BreadCrumb, BreadCrumbTrail
 
 from lava_scheduler_app.models import ExtendedUser
 
 
 class ExtendedUserIRCForm(forms.ModelForm):
-
     class Meta:
         model = ExtendedUser
-        fields = ('irc_server', 'irc_handle', 'user')
-        widgets = {'user': forms.HiddenInput}
+        fields = ("irc_server", "irc_handle", "user")
+        widgets = {"user": forms.HiddenInput}
 
 
 @BreadCrumb(_("LAVA"))
 def index(request):
     # Load and render the template
-    return render(request, 'index.html',
-                  {'bread_crumb_trail': BreadCrumbTrail.leading_to(index)})
+    return render(
+        request, "index.html", {"bread_crumb_trail": BreadCrumbTrail.leading_to(index)}
+    )
 
 
-@BreadCrumb(_("About you ({you})"),
-            parent=index)
+@BreadCrumb(_("About you ({you})"), parent=index)
 @login_required
 def me(request):  # pylint: disable=invalid-name
     ExtendedUser.objects.get_or_create(user=request.user)
     data = {
-        'irc_form': ExtendedUserIRCForm(instance=request.user.extendeduser),
-        'bread_crumb_trail': BreadCrumbTrail.leading_to(
-            me, you=request.user.get_full_name() or request.user.username),
+        "irc_form": ExtendedUserIRCForm(instance=request.user.extendeduser),
+        "bread_crumb_trail": BreadCrumbTrail.leading_to(
+            me, you=request.user.get_full_name() or request.user.username
+        ),
     }
-    return render(request, 'me.html', data)
+    return render(request, "me.html", data)
 
 
 @login_required
@@ -76,24 +73,24 @@ def update_irc_settings(request):
     form = ExtendedUserIRCForm(request.POST, instance=extended_user)
     if form.is_valid():
         extended_user = form.save()
-    return HttpResponseRedirect(reverse('lava.me'))
+    return HttpResponseRedirect(reverse("lava.me"))
 
 
 @requires_csrf_token
-def server_error(request, template_name='500.html'):
+def server_error(request, template_name="500.html"):
     exc_type, value, _ = sys.exc_info()
     context_dict = {
-        'STATIC_URL': settings.STATIC_URL,
-        'user': request.user,
-        'request': request,
-        'exception_type': exc_type,
-        'exception_value': value
+        "STATIC_URL": settings.STATIC_URL,
+        "user": request.user,
+        "request": request,
+        "exception_type": exc_type,
+        "exception_value": value,
     }
     template = loader.get_template(template_name)
     return HttpResponseServerError(template.render(context_dict, request))
 
 
 @requires_csrf_token
-def permission_error(request, template_name='403.html'):
+def permission_error(request, template_name="403.html"):
     template = loader.get_template(template_name)
     return HttpResponseForbidden(template.render({}, request))

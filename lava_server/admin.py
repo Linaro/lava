@@ -28,7 +28,6 @@ admin.site.site_url = "/" + settings.MOUNT_POINT
 
 
 class LogEntryAdmin(admin.ModelAdmin):
-
     def has_delete_permission(self, request, obj=None):
         return settings.ALLOW_ADMIN_DELETE
 
@@ -43,9 +42,15 @@ class LogEntryAdmin(admin.ModelAdmin):
 
     get_action_flag_display.short_description = "Action"
 
-    list_display = ('action_time', 'user', 'content_type', 'object_repr',
-                    'change_message', 'get_action_flag_display')
-    list_filter = ('action_time', 'user')
+    list_display = (
+        "action_time",
+        "user",
+        "content_type",
+        "object_repr",
+        "change_message",
+        "get_action_flag_display",
+    )
+    list_filter = ("action_time", "user")
 
 
 admin.site.register(LogEntry, LogEntryAdmin)

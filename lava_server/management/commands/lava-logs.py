@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-# pylint: disable=wrong-import-order
+# pylint: disable=wrong-import-order,bad-continuation
 
 import contextlib
 import logging
@@ -51,14 +51,13 @@ FD_TIMEOUT = 60
 class JobHandler:  # pylint: disable=too-few-public-methods
     def __init__(self, job):
         self.output_dir = job.output_dir
-        self.output = open(os.path.join(self.output_dir, 'output.yaml'), 'ab')
-        self.index = open(os.path.join(self.output_dir, 'output.idx'), 'ab')
+        self.output = open(os.path.join(self.output_dir, "output.yaml"), "ab")
+        self.index = open(os.path.join(self.output_dir, "output.idx"), "ab")
         self.last_usage = time.time()
         self.markers = {}
 
     def write(self, message):
-        write_logs(self.output, self.index,
-                   (message + '\n').encode("utf-8"))
+        write_logs(self.output, self.index, (message + "\n").encode("utf-8"))
 
     def line_count(self):
         return line_count(self.index)
@@ -95,36 +94,48 @@ class Command(LAVADaemonCommand):
         super().add_arguments(parser)
 
         net = parser.add_argument_group("network")
-        net.add_argument('--socket',
-                         default='tcp://*:5555',
-                         help="Socket waiting for logs. Default: tcp://*:5555")
-        net.add_argument('--master-socket',
-                         default='tcp://localhost:5556',
-                         help="Socket for master-slave communication. Default: tcp://localhost:5556")
-        net.add_argument('--ipv6', default=False, action='store_true',
-                         help="Enable IPv6 on the listening sockets")
-        net.add_argument('--encrypt', default=False, action='store_true',
-                         help="Encrypt messages")
-        net.add_argument('--master-cert',
-                         default='/etc/lava-dispatcher/certificates.d/master.key_secret',
-                         help="Certificate for the master socket")
-        net.add_argument('--slaves-certs',
-                         default='/etc/lava-dispatcher/certificates.d',
-                         help="Directory for slaves certificates")
+        net.add_argument(
+            "--socket",
+            default="tcp://*:5555",
+            help="Socket waiting for logs. Default: tcp://*:5555",
+        )
+        net.add_argument(
+            "--master-socket",
+            default="tcp://localhost:5556",
+            help="Socket for master-slave communication. Default: tcp://localhost:5556",
+        )
+        net.add_argument(
+            "--ipv6",
+            default=False,
+            action="store_true",
+            help="Enable IPv6 on the listening sockets",
+        )
+        net.add_argument(
+            "--encrypt", default=False, action="store_true", help="Encrypt messages"
+        )
+        net.add_argument(
+            "--master-cert",
+            default="/etc/lava-dispatcher/certificates.d/master.key_secret",
+            help="Certificate for the master socket",
+        )
+        net.add_argument(
+            "--slaves-certs",
+            default="/etc/lava-dispatcher/certificates.d",
+            help="Directory for slaves certificates",
+        )
 
     def handle(self, *args, **options):
         # Initialize logging.
-        self.setup_logging("lava-logs", options["level"],
-                           options["log_file"], FORMAT)
+        self.setup_logging("lava-logs", options["level"], options["log_file"], FORMAT)
 
         self.logger.info("[INIT] Dropping privileges")
-        if not self.drop_privileges(options['user'], options['group']):
+        if not self.drop_privileges(options["user"], options["group"]):
             self.logger.error("[INIT] Unable to drop privileges")
             return
 
-        filename = os.path.join(settings.MEDIA_ROOT, 'lava-logs-config.yaml')
+        filename = os.path.join(settings.MEDIA_ROOT, "lava-logs-config.yaml")
         self.logger.debug("[INIT] Dumping config to %s", filename)
-        with open(filename, 'w') as output:
+        with open(filename, "w") as output:
             yaml.dump(options, output)
 
         # Create the sockets
@@ -138,20 +149,26 @@ class Command(LAVADaemonCommand):
         # "Immediately readies that connection for data transfer with the master"
         self.controler.setsockopt(zmq.CONNECT_RID, b"master")
 
-        if options['ipv6']:
+        if options["ipv6"]:
             self.logger.info("[INIT] Enabling IPv6")
             self.log_socket.setsockopt(zmq.IPV6, 1)
             self.controler.setsockopt(zmq.IPV6, 1)
 
-        if options['encrypt']:
+        if options["encrypt"]:
             self.logger.info("[INIT] Starting encryption")
             try:
                 self.auth = ThreadAuthenticator(context)
                 self.auth.start()
-                self.logger.debug("[INIT] Opening master certificate: %s", options['master_cert'])
-                master_public, master_secret = zmq.auth.load_certificate(options['master_cert'])
-                self.logger.debug("[INIT] Using slaves certificates from: %s", options['slaves_certs'])
-                self.auth.configure_curve(domain='*', location=options['slaves_certs'])
+                self.logger.debug(
+                    "[INIT] Opening master certificate: %s", options["master_cert"]
+                )
+                master_public, master_secret = zmq.auth.load_certificate(
+                    options["master_cert"]
+                )
+                self.logger.debug(
+                    "[INIT] Using slaves certificates from: %s", options["slaves_certs"]
+                )
+                self.auth.configure_curve(domain="*", location=options["slaves_certs"])
             except OSError as err:
                 self.logger.error("[INIT] %s", err)
                 self.auth.stop()
@@ -169,8 +186,8 @@ class Command(LAVADaemonCommand):
         if self.inotify_fd is None:
             self.logger.error("[INIT] Unable to start inotify")
 
-        self.log_socket.bind(options['socket'])
-        self.controler.connect(options['master_socket'])
+        self.log_socket.bind(options["socket"])
+        self.controler.connect(options["master_socket"])
 
         # Poll on the sockets. This allow to have a
         # nice timeout along with polling.
@@ -219,7 +236,7 @@ class Command(LAVADaemonCommand):
             self.flush_test_cases()
             self.logger.info("[EXIT] Closing the logging socket: the queue is empty")
             self.log_socket.close()
-            if options['encrypt']:
+            if options["encrypt"]:
                 self.auth.stop()
             context.term()
 
@@ -235,13 +252,17 @@ class Command(LAVADaemonCommand):
         except DatabaseError as exc:
             self.logger.error("Unable to flush the test cases")
             self.logger.exception(exc)
-            self.logger.warning("Saving test cases one by one and dropping the faulty ones")
+            self.logger.warning(
+                "Saving test cases one by one and dropping the faulty ones"
+            )
             saved = 0
             for tc in self.test_cases:
                 with contextlib.suppress(DatabaseError):
                     tc.save()
                     saved += 1
-            self.logger.info("%d test cases saved, %d dropped", saved, len(self.test_cases) - saved)
+            self.logger.info(
+                "%d test cases saved, %d dropped", saved, len(self.test_cases) - saved
+            )
             self.test_cases = []
 
     def main_loop(self):
@@ -262,7 +283,7 @@ class Command(LAVADaemonCommand):
             if now - last_gc > FD_TIMEOUT:
                 last_gc = now
                 # Iterate while removing keys is not compatible with iterator
-                for job_id in list(self.jobs.keys()):  # pylint: disable=consider-iterating-dictionary
+                for job_id in list(self.jobs.keys()):
                     if now - self.jobs[job_id].last_usage > FD_TIMEOUT:
                         self.logger.info("[%s] closing log file", job_id)
                         self.jobs[job_id].close()
@@ -296,7 +317,9 @@ class Command(LAVADaemonCommand):
                     self.logger.info("[POLL] received a signal, leaving")
                     return False
                 else:
-                    self.logger.warning("[POLL] signal already handled, please wait for the process to exit")
+                    self.logger.warning(
+                        "[POLL] signal already handled, please wait for the process to exit"
+                    )
                     return True
 
             # Pong received
@@ -307,10 +330,10 @@ class Command(LAVADaemonCommand):
             # Inotify socket
             if sockets.get(self.inotify_fd) == zmq.POLLIN:
                 os.read(self.inotify_fd, 4096)
-                self.logger.debug("[AUTH] Reloading certificates from %s",
-                                  self.cert_dir_path)
-                self.auth.configure_curve(domain='*',
-                                          location=self.cert_dir_path)
+                self.logger.debug(
+                    "[AUTH] Reloading certificates from %s", self.cert_dir_path
+                )
+                self.auth.configure_curve(domain="*", location=self.cert_dir_path)
 
             # Nothing received
             else:
@@ -324,7 +347,9 @@ class Command(LAVADaemonCommand):
     def logging_socket(self):
         msg = self.log_socket.recv_multipart()
         try:
-            (job_id, message) = (u(m) for m in msg)  # pylint: disable=unbalanced-tuple-unpacking
+            (job_id, message) = (
+                u(m) for m in msg
+            )  # pylint: disable=unbalanced-tuple-unpacking
         except ValueError:
             # do not let a bad message stop the master.
             self.logger.error("[POLL] failed to parse log message, skipping: %s", msg)
@@ -345,8 +370,10 @@ class Command(LAVADaemonCommand):
             return
         except KeyError:
             self.logger.error(
-                "[%s] invalid log line, missing \"lvl\" or \"msg\" keys: %s",
-                job_id, message)
+                '[%s] invalid log line, missing "lvl" or "msg" keys: %s',
+                job_id,
+                message,
+            )
             return
 
         # Find the handler (if available)
@@ -364,22 +391,29 @@ class Command(LAVADaemonCommand):
             self.jobs[job_id] = JobHandler(job)
 
         # For 'event', send an event and log as 'debug'
-        if message_lvl == 'event':
+        if message_lvl == "event":
             self.logger.debug("[%s] event: %s", job_id, message_msg)
             send_event(".event", "lavaserver", {"message": message_msg, "job": job_id})
             message_lvl = "debug"
         # For 'marker', save in the database and log as 'debug'
-        elif message_lvl == 'marker':
+        elif message_lvl == "marker":
             # TODO: save on the file system in case of lava-logs restart
             m_type = message_msg.get("type")
             case = message_msg.get("case")
             if m_type is None or case is None:
                 self.logger.error("[%s] invalid marker: %s", job_id, message_msg)
                 return
-            self.jobs[job_id].markers.setdefault(case, {})[m_type] = self.jobs[job_id].line_count()
+            self.jobs[job_id].markers.setdefault(case, {})[m_type] = self.jobs[
+                job_id
+            ].line_count()
             # This is in fact the previous line
             self.jobs[job_id].markers[case][m_type] -= 1
-            self.logger.debug("[%s] marker: %s line: %s", job_id, message_msg, self.jobs[job_id].markers[case][m_type])
+            self.logger.debug(
+                "[%s] marker: %s line: %s",
+                job_id,
+                message_msg,
+                self.jobs[job_id].markers[case][m_type],
+            )
             return
 
         # Mark the file handler as used
@@ -394,19 +428,25 @@ class Command(LAVADaemonCommand):
                 self.logger.error("[%s] unknown job id", job_id)
                 return
             meta_filename = create_metadata_store(message_msg, job)
-            new_test_case = map_scanned_results(results=message_msg, job=job,
-                                                markers=self.jobs[job_id].markers,
-                                                meta_filename=meta_filename)
+            new_test_case = map_scanned_results(
+                results=message_msg,
+                job=job,
+                markers=self.jobs[job_id].markers,
+                meta_filename=meta_filename,
+            )
 
             if new_test_case is None:
                 self.logger.warning(
-                    "[%s] unable to map scanned results: %s",
-                    job_id, message)
+                    "[%s] unable to map scanned results: %s", job_id, message
+                )
             else:
                 self.test_cases.append(new_test_case)
 
             # Look for lava.job result
-            if message_msg.get("definition") == "lava" and message_msg.get("case") == "job":
+            if (
+                message_msg.get("definition") == "lava"
+                and message_msg.get("case") == "job"
+            ):
                 # Flush cached test cases
                 self.flush_test_cases()
 
@@ -418,17 +458,18 @@ class Command(LAVADaemonCommand):
                     health_msg = "Incomplete"
                 self.logger.info("[%s] job status: %s", job_id, health_msg)
 
-                infrastructure_error = (message_msg.get("error_type") in ["Bug",
-                                                                          "Configuration",
-                                                                          "Infrastructure"])
+                infrastructure_error = message_msg.get("error_type") in [
+                    "Bug",
+                    "Configuration",
+                    "Infrastructure",
+                ]
                 if infrastructure_error:
                     self.logger.info("[%s] Infrastructure error", job_id)
 
                 # Update status.
                 with transaction.atomic():
                     # TODO: find a way to lock actual_device
-                    job = TestJob.objects.select_for_update() \
-                                         .get(id=job_id)
+                    job = TestJob.objects.select_for_update().get(id=job_id)
                     job.go_state_finished(health, infrastructure_error)
                     job.save()
 
@@ -442,12 +483,12 @@ class Command(LAVADaemonCommand):
             ping_interval = int(msg[2])
 
             if master_id != "master":
-                self.logger.error("Invalid master id '%s'. Should be 'master'",
-                                  master_id)
+                self.logger.error(
+                    "Invalid master id '%s'. Should be 'master'", master_id
+                )
                 return
             if action != "PONG":
-                self.logger.error("Invalid answer '%s'. Should be 'PONG'",
-                                  action)
+                self.logger.error("Invalid answer '%s'. Should be 'PONG'", action)
                 return
         except (IndexError, ValueError):
             self.logger.error("Invalid message '%s'", msg)

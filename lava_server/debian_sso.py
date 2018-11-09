@@ -43,33 +43,35 @@ class DebianSsoUserMiddleware(RemoteUserMiddleware):
     NOT supported to have Debian SSO and LDAP configured on the same instance.
 
     """
-    dacs_header = 'REMOTE_USER'
-    cert_header = 'SSL_CLIENT_S_DN_CN'
+
+    dacs_header = "REMOTE_USER"
+    cert_header = "SSL_CLIENT_S_DN_CN"
 
     @staticmethod
     def dacs_user_to_email(username):
-        parts = [part for part in username.split(':') if part]
+        parts = [part for part in username.split(":") if part]
         federation, jurisdiction = parts[:2]
-        if (federation, jurisdiction) != ('DEBIANORG', 'DEBIAN'):
+        if (federation, jurisdiction) != ("DEBIANORG", "DEBIAN"):
             return
         username = parts[-1]
-        if '@' in username:
+        if "@" in username:
             return username  # Full email already
-        return username + '@debian.org'
+        return username + "@debian.org"
 
     @staticmethod
     def is_debian_member(user):
-        return user.email.endswith('@debian.org')
+        return user.email.endswith("@debian.org")
 
     def process_request(self, request):
         # AuthenticationMiddleware is required so that request.user exists.
-        if not hasattr(request, 'user'):
+        if not hasattr(request, "user"):
             raise ImproperlyConfigured(
                 "The Django remote user auth middleware requires the"
                 " authentication middleware to be installed.  Edit your"
                 " MIDDLEWARE_CLASSES setting to insert"
                 " 'django.contrib.auth.middleware.AuthenticationMiddleware'"
-                " before the DebianSsoUserMiddleware class.")
+                " before the DebianSsoUserMiddleware class."
+            )
 
         dacs_user = request.META.get(self.dacs_header)
         cert_user = request.META.get(self.cert_header)
@@ -111,7 +113,7 @@ class DebianSsoUserBackend(RemoteUserBackend):
     """
 
     def generate_unique_username(self, count, slug):
-        username = '%s%d' % (slug, count)
+        username = "%s%d" % (slug, count)
         try:
             User.objects.get(username=username)
             count += 1
@@ -139,7 +141,7 @@ class DebianSsoUserBackend(RemoteUserBackend):
         if names:
             kwargs.update(names)
         username = "sso-user"
-        email_list = remote_user.split('@')
+        email_list = remote_user.split("@")
         if len(email_list) > 1:
             username = email_list[0]
         username = self.ensure_unique_username(username)
@@ -149,7 +151,7 @@ class DebianSsoUserBackend(RemoteUserBackend):
     @staticmethod
     def get_uid(remote_user):
         # Strips off the @debian.org part of the email leaving the uid
-        if remote_user.endswith('@debian.org'):
+        if remote_user.endswith("@debian.org"):
             return remote_user[:-11]
         return remote_user
 
@@ -161,21 +163,22 @@ class DebianSsoUserBackend(RemoteUserBackend):
         """
         if ldap is None:
             return None
-        if not remote_user.endswith('@debian.org'):
+        if not remote_user.endswith("@debian.org"):
             # We only know how to extract data for DD via LDAP
             return None
 
-        service = ldap.initialize('ldap://db.debian.org')
+        service = ldap.initialize("ldap://db.debian.org")
         result_set = service.search_s(
-            'dc=debian,dc=org',
+            "dc=debian,dc=org",
             ldap.SCOPE_SUBTREE,  # pylint: disable=no-member
-            'uid={}'.format(self.get_uid(remote_user)),
-            None)
+            "uid={}".format(self.get_uid(remote_user)),
+            None,
+        )
         if not result_set:
             return None
 
         result = result_set[0]
         return {
-            'first_name': result[1]['cn'][0].decode('utf-8'),
-            'last_name': result[1]['sn'][0].decode('utf-8'),
+            "first_name": result[1]["cn"][0].decode("utf-8"),
+            "last_name": result[1]["sn"][0].decode("utf-8"),
         }
