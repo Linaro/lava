@@ -149,12 +149,12 @@ class OverlayAction(DeployAction):
         * create test runner directories beneath the temporary location
         * copy runners into test runner directories
         """
+        namespace = self.parameters.get("namespace")
+        if not self.test_needs_overlay(self.parameters):
+            self.logger.info("[%s] skipped %s - no test action.", namespace, self.name)
+            return connection
+
         tmp_dir = self.mkdtemp()
-        namespace = self.parameters.get('namespace')
-        if namespace:
-            if namespace not in get_test_action_namespaces(self.job.parameters):
-                self.logger.info("[%s] skipped %s - no test action.", namespace, self.name)
-                return connection
         self.set_namespace_data(action='test', label='shared', key='location', value=tmp_dir)
         lava_test_results_dir = self.get_namespace_data(action='test', label='results', key='lava_test_results_dir')
         if not lava_test_results_dir:
