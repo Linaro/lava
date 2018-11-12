@@ -19,8 +19,8 @@ else
   fi
 
   git clone https://git.lavasoftware.org/lava/pkg/docker.git
-  pkg_common=$(find build -name "lava-common_*.deb")
-  pkg_dispatcher=$(find build -name "lava-dispatcher_*arm64.deb")
+  pkg_common=$(find _build -name "lava-common_*.deb")
+  pkg_dispatcher=$(find _build -name "lava-dispatcher_*arm64.deb")
   cp $pkg_common docker/aarch64/lava-dispatcher/lava-common.deb
   cp $pkg_dispatcher docker/aarch64/lava-dispatcher/lava-dispatcher.deb
   docker build -t $IMAGE_TAG docker/aarch64/lava-dispatcher

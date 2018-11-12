@@ -14,7 +14,6 @@
 _build
 _trial_temp
 bin
-build
 dist
 django.log
 doc/html

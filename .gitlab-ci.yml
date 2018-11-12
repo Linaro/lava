@@ -112,12 +112,12 @@ amd64/pkg-debian-9:
   image: hub.lavasoftware.org/lava/ci-images/amd64/pkg-debian-9
   artifacts:
     paths:
-    - build/*.deb
+    - _build/*.deb
     # handle native package - need to publish the source
-    - build/*.tar.xz
-    - build/*.dsc
-    - build/*.changes
-    - build/*.buildinfo
+    - _build/*.tar.xz
+    - _build/*.dsc
+    - _build/*.changes
+    - _build/*.buildinfo
 
 amd64/pkg-debian-10:
   <<: *job
@@ -125,12 +125,12 @@ amd64/pkg-debian-10:
   image: hub.lavasoftware.org/lava/ci-images/amd64/pkg-debian-10
   artifacts:
     paths:
-    - build/*.deb
+    - _build/*.deb
     # handle native package - need to publish the source
-    - build/*.tar.xz
-    - build/*.dsc
-    - build/*.changes
-    - build/*.buildinfo
+    - _build/*.tar.xz
+    - _build/*.dsc
+    - _build/*.changes
+    - _build/*.buildinfo
 
 aarch64/pkg-debian-10:
   <<: *job_aarch64
@@ -143,9 +143,9 @@ aarch64/pkg-debian-10:
   artifacts:
     # binary only build, no .dsc or .tar.xz
     paths:
-    - build/*.deb
-    - build/*.changes
-    - build/*.buildinfo
+    - _build/*.deb
+    - _build/*.changes
+    - _build/*.buildinfo
 
 ###########
 # Publish #

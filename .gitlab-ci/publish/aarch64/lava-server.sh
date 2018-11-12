@@ -19,9 +19,9 @@ else
   fi
 
   git clone https://git.lavasoftware.org/lava/pkg/docker.git
-  pkg_common=$(find build -name "lava-common_*.deb")
-  pkg_server=$(find build -name "lava-server_*.deb")
-  pkg_server_doc=$(find build -name "lava-server-doc_*.deb")
+  pkg_common=$(find _build -name "lava-common_*.deb")
+  pkg_server=$(find _build -name "lava-server_*.deb")
+  pkg_server_doc=$(find _build -name "lava-server-doc_*.deb")
   cp $pkg_common docker/aarch64/lava-server/lava-common.deb
   cp $pkg_server docker/aarch64/lava-server/lava-server.deb
   cp $pkg_server_doc docker/aarch64/lava-server/lava-server-doc.deb
