@@ -1,3 +1,4 @@
+lava_dispatcher/actions/boot/bootloader.py
 lava_dispatcher/test/conftest.py
 lava_dispatcher/test/fake_coordinator.py
 lava_dispatcher/test/test_auto_login.py

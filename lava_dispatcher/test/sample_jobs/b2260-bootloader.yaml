@@ -1,0 +1,15 @@
+device_type: b2260
+job_name: boot to bootloader
+timeouts:
+  job:
+    minutes: 10
+priority: medium
+visibility: public
+
+actions:
+- boot:
+    method: bootloader
+    bootloader: u-boot
+    commands: []
+    prompts:
+    - '=>'

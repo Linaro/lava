@@ -379,10 +379,10 @@ class BootloaderCommandOverlay(Action):
     description = "substitute job data into bootloader command list"
     summary = "replace placeholders with job data"
 
-    def __init__(self):
+    def __init__(self, method=None):
         super().__init__()
         self.commands = None
-        self.method = ""
+        self.method = method
         self.use_bootscript = False
         self.lava_mac = None
         self.bootcommand = ''
@@ -390,7 +390,8 @@ class BootloaderCommandOverlay(Action):
 
     def validate(self):
         super().validate()
-        self.method = self.parameters['method']
+        if self.method is None:
+            self.method = self.parameters['method']
         device_methods = self.job.device['actions']['boot']['methods']
         if isinstance(self.parameters['commands'], list):
             self.commands = self.parameters['commands']
@@ -603,10 +604,10 @@ class BootloaderInterruptAction(Action):
     summary = "interrupt bootloader to get an interactive shell"
     timeout_exception = InfrastructureError
 
-    def __init__(self):
+    def __init__(self, method=None):
         super().__init__()
         self.params = {}
-        self.method = None
+        self.method = method
         self.needs_interrupt = False
 
     def validate(self):
@@ -614,11 +615,12 @@ class BootloaderInterruptAction(Action):
         # 'to' only exists in deploy, this action can be used in boot too.
         deployment = self.parameters.get('to', "")
         boot_method = self.parameters.get('method', "")
-        if deployment in ['fastboot', 'download'] or boot_method in ['fastboot', 'download']:
-            if self.job.device.get('fastboot_via_uboot', False):
-                self.method = 'u-boot'
-        else:
-            self.method = self.parameters['method']
+        if self.method is None:
+            if deployment in ['fastboot', 'download'] or boot_method in ['fastboot', 'download']:
+                if self.job.device.get('fastboot_via_uboot', False):
+                    self.method = 'u-boot'
+            else:
+                self.method = self.parameters['method']
         self.params = self.job.device['actions']['boot']['methods'][self.method]['parameters']
         if self.job.device.connect_command is '':
             self.errors = "Unable to connect to device %s"
@@ -672,16 +674,17 @@ class BootloaderCommandsAction(Action):
     summary = "interactive bootloader"
     timeout_exception = InfrastructureError
 
-    def __init__(self, expect_final=True):
+    def __init__(self, expect_final=True, method=None):
         super().__init__()
         self.params = None
         self.timeout = Timeout(self.name, BOOTLOADER_DEFAULT_CMD_TIMEOUT)
-        self.method = ""
+        self.method = method
         self.expect_final = expect_final
 
     def validate(self):
         super().validate()
-        self.method = self.parameters['method']
+        if self.method is None:
+            self.method = self.parameters['method']
         self.params = self.job.device['actions']['boot']['methods'][self.method]['parameters']
 
     def line_separator(self):

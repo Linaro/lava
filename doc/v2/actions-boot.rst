@@ -384,6 +384,34 @@ method
 The boot ``method`` determines how the device is booted and which commands and
 prompts are used to determine a successful boot.
 
+.. index:: boot method bootloader
+
+.. _boot_method_bootloader:
+
+bootloader
+==========
+
+The ``bootloader`` method is used to power-on the :term:`DUT`, interrupt the
+bootloader, and wait for the bootloader prompt.
+
+In order to interrupt the bootloader, the bootloader type should be specified
+in the ``bootloader`` parameter:
+
+.. code-block:: yaml
+
+    method: bootloader
+    bootloader: u-boot
+    commands: []
+    prompts: ['=>']
+
+.. note:: the bootloader method type should match a boot method supported by
+          the give device-type.
+          For example ``fastboot``, ``minimal``, ``pyocd``, ``u-boot``, ...
+
+The ``commands`` parameter is required but can be kept empty.
+If some commands should be sent to the bootloader before the end of the action,
+give the list in the ``commands`` parameter.
+
 .. index:: boot method cmsis-dap
 
 .. _boot_method_cmsis_dap:
