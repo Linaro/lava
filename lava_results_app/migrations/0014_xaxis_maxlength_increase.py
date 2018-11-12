@@ -5,14 +5,14 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('lava_results_app', '0013_buglinks'),
-    ]
+    dependencies = [("lava_results_app", "0013_buglinks")]
 
     operations = [
         migrations.AlterField(
-            model_name='chartquery',
-            name='xaxis_attribute',
-            field=models.CharField(blank=True, max_length=100, null=True, verbose_name='X-axis attribute'),
-        ),
+            model_name="chartquery",
+            name="xaxis_attribute",
+            field=models.CharField(
+                blank=True, max_length=100, null=True, verbose_name="X-axis attribute"
+            ),
+        )
     ]

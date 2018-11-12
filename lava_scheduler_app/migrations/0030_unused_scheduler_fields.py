@@ -5,32 +5,13 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('lava_scheduler_app', '0029_remove_testjob__results_bundle'),
-    ]
+    dependencies = [("lava_scheduler_app", "0029_remove_testjob__results_bundle")]
 
     operations = [
-        migrations.RemoveField(
-            model_name='devicetype',
-            name='health_check_job',
-        ),
-        migrations.RemoveField(
-            model_name='testjob',
-            name='vm_group',
-        ),
-        migrations.RemoveField(
-            model_name='testjob',
-            name='vmgroup_definition',
-        ),
-        migrations.RemoveField(
-            model_name='worker',
-            name='is_master',
-        ),
-        migrations.RemoveField(
-            model_name='worker',
-            name='rpc2_url',
-        ),
-        migrations.DeleteModel(
-            name='TemporaryDevice',
-        ),
+        migrations.RemoveField(model_name="devicetype", name="health_check_job"),
+        migrations.RemoveField(model_name="testjob", name="vm_group"),
+        migrations.RemoveField(model_name="testjob", name="vmgroup_definition"),
+        migrations.RemoveField(model_name="worker", name="is_master"),
+        migrations.RemoveField(model_name="worker", name="rpc2_url"),
+        migrations.DeleteModel(name="TemporaryDevice"),
     ]

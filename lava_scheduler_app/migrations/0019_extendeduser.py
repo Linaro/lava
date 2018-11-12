@@ -9,17 +9,49 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('lava_scheduler_app', '0018_notifications'),
+        ("lava_scheduler_app", "0018_notifications"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='ExtendedUser',
+            name="ExtendedUser",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('irc_handle', models.CharField(blank=True, default=None, max_length=40, null=True, verbose_name='IRC handle')),
-                ('irc_server', models.CharField(blank=True, default=None, max_length=40, null=True, verbose_name='IRC server')),
-                ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "irc_handle",
+                    models.CharField(
+                        blank=True,
+                        default=None,
+                        max_length=40,
+                        null=True,
+                        verbose_name="IRC handle",
+                    ),
+                ),
+                (
+                    "irc_server",
+                    models.CharField(
+                        blank=True,
+                        default=None,
+                        max_length=40,
+                        null=True,
+                        verbose_name="IRC server",
+                    ),
+                ),
+                (
+                    "user",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
-        ),
+        )
     ]

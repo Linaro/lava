@@ -5,13 +5,10 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('lava_results_app', '0011_namedtestattribute'),
-    ]
+    dependencies = [("lava_results_app", "0011_namedtestattribute")]
 
     operations = [
         migrations.AlterModelOptions(
-            name='namedtestattribute',
-            options={'verbose_name': 'metadata'},
-        ),
+            name="namedtestattribute", options={"verbose_name": "metadata"}
+        )
     ]

@@ -19,11 +19,11 @@ def devicedictionary_to_jinja2(data_dict, extends):
     if not isinstance(data_dict, dict):
         return None
     pp = pprint.PrettyPrinter(indent=0, width=80)  # simulate human readable input
-    data = '{%% extends \'%s\' %%}\n' % extends
+    data = "{%% extends '%s' %%}\n" % extends
     for key, value in data_dict.items():
-        if key == 'extends':
+        if key == "extends":
             continue
-        data += '{%% set %s = %s %%}\n' % (str(key), pp.pformat(value).strip())
+        data += "{%% set %s = %s %%}\n" % (str(key), pp.pformat(value).strip())
     return data
 
 
@@ -34,7 +34,9 @@ def revert_migrate_device_dict_to_filesystem(apps, schema_editor):
 def migrate_device_dict_to_filesystem(apps, schema_editor):
     # Get the right version of the models
     Device = apps.get_model("lava_scheduler_app", "Device")
-    DeviceDictionaryTable = apps.get_model("lava_scheduler_app", "DeviceDictionaryTable")
+    DeviceDictionaryTable = apps.get_model(
+        "lava_scheduler_app", "DeviceDictionaryTable"
+    )
     dd_dir = "/etc/lava-server/dispatcher-config/devices"
 
     # Create the directory
@@ -47,14 +49,18 @@ def migrate_device_dict_to_filesystem(apps, schema_editor):
     # Load the device dictionaries
     DDT = {}
     for device_dict in DeviceDictionaryTable.objects.all():
-        hostname = device_dict.kee.replace('__KV_STORE_::lava_scheduler_app.models.DeviceDictionary:', '')
+        hostname = device_dict.kee.replace(
+            "__KV_STORE_::lava_scheduler_app.models.DeviceDictionary:", ""
+        )
         value64 = device_dict.value
         valuepickled = base64.b64decode(value64)
         value = pickle.loads(valuepickled)  # nosec - no longer in active use
-        DDT[hostname] = devicedictionary_to_jinja2(value['parameters'], value['parameters']['extends'])
+        DDT[hostname] = devicedictionary_to_jinja2(
+            value["parameters"], value["parameters"]["extends"]
+        )
 
     # Dump the device dictionaries to file system
-    for device in Device.objects.filter(is_pipeline=True).order_by('hostname'):
+    for device in Device.objects.filter(is_pipeline=True).order_by("hostname"):
         if device.hostname not in DDT:
             print("Skip %s" % device.hostname)
             continue
@@ -66,16 +72,12 @@ def migrate_device_dict_to_filesystem(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('lava_scheduler_app', '0026_devicetype_disable_health_check'),
-    ]
+    dependencies = [("lava_scheduler_app", "0026_devicetype_disable_health_check")]
 
     operations = [
-        migrations.RunPython(migrate_device_dict_to_filesystem, revert_migrate_device_dict_to_filesystem),
-        migrations.DeleteModel(
-            name='PipelineStore',
+        migrations.RunPython(
+            migrate_device_dict_to_filesystem, revert_migrate_device_dict_to_filesystem
         ),
-        migrations.DeleteModel(
-            name='DeviceDictionaryTable',
-        ),
+        migrations.DeleteModel(name="PipelineStore"),
+        migrations.DeleteModel(name="DeviceDictionaryTable"),
     ]

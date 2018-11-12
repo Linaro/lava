@@ -5,14 +5,17 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('lava_scheduler_app', '0012_auto_20160208_1600'),
-    ]
+    dependencies = [("lava_scheduler_app", "0012_auto_20160208_1600")]
 
     operations = [
         migrations.AlterField(
-            model_name='devicetype',
-            name='health_denominator',
-            field=models.IntegerField(choices=[(0, 'hours'), (1, 'jobs')], default=0, help_text='Choose to submit a health check every N hours or every N jobs. Balance against the duration of a health check job and the average job duration.', verbose_name='Initiate health checks by hours or by jobs.'),
-        ),
+            model_name="devicetype",
+            name="health_denominator",
+            field=models.IntegerField(
+                choices=[(0, "hours"), (1, "jobs")],
+                default=0,
+                help_text="Choose to submit a health check every N hours or every N jobs. Balance against the duration of a health check job and the average job duration.",
+                verbose_name="Initiate health checks by hours or by jobs.",
+            ),
+        )
     ]

@@ -17,13 +17,14 @@ def forwards_func(apps, schema_editor):
     #       UI, fixing it for the node which is designated as the master.
     rpc2_url = "http://{0}/RPC2".format(localhost)
 
-    if localhost == 'example.com' or localhost == 'www.example.com':
+    if localhost == "example.com" or localhost == "www.example.com":
         rpc2_url = "http://{0}/RPC2".format(ipaddr)
 
     try:
         with transaction.atomic():
             worker, created = Worker.objects.using(db_alias).get_or_create(
-                hostname=localhost)
+                hostname=localhost
+            )
             worker.is_master = is_master
             worker.ip_address = ipaddr
             worker.rpc2_url = rpc2_url
@@ -38,13 +39,6 @@ def backwards_func(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('lava_scheduler_app', '0002_add_lava-health_user'),
-    ]
+    dependencies = [("lava_scheduler_app", "0002_add_lava-health_user")]
 
-    operations = [
-        migrations.RunPython(
-            forwards_func,
-            backwards_func,
-        ),
-    ]
+    operations = [migrations.RunPython(forwards_func, backwards_func)]

@@ -6,14 +6,16 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('lava_results_app', '0008_auto_20160405_1543'),
-    ]
+    dependencies = [("lava_results_app", "0008_auto_20160405_1543")]
 
     operations = [
         migrations.AddField(
-            model_name='query',
-            name='limit',
-            field=models.PositiveIntegerField(default=200, validators=[django.core.validators.MinValueValidator(20)], verbose_name='Results limit'),
-        ),
+            model_name="query",
+            name="limit",
+            field=models.PositiveIntegerField(
+                default=200,
+                validators=[django.core.validators.MinValueValidator(20)],
+                verbose_name="Results limit",
+            ),
+        )
     ]

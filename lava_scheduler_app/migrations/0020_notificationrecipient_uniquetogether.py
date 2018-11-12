@@ -5,13 +5,11 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('lava_scheduler_app', '0019_extendeduser'),
-    ]
+    dependencies = [("lava_scheduler_app", "0019_extendeduser")]
 
     operations = [
         migrations.AlterUniqueTogether(
-            name='notificationrecipient',
-            unique_together=set([('user', 'notification', 'method')]),
-        ),
+            name="notificationrecipient",
+            unique_together=set([("user", "notification", "method")]),
+        )
     ]

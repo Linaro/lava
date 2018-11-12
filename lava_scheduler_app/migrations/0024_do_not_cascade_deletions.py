@@ -7,34 +7,65 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('lava_scheduler_app', '0023_update_aliases'),
-    ]
+    dependencies = [("lava_scheduler_app", "0023_update_aliases")]
 
     operations = [
         migrations.AlterField(
-            model_name='device',
-            name='physical_owner',
-            field=models.ForeignKey(blank=True, default=None, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='physicalowner', to=settings.AUTH_USER_MODEL, verbose_name='User with physical access'),
+            model_name="device",
+            name="physical_owner",
+            field=models.ForeignKey(
+                blank=True,
+                default=None,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="physicalowner",
+                to=settings.AUTH_USER_MODEL,
+                verbose_name="User with physical access",
+            ),
         ),
         migrations.AlterField(
-            model_name='device',
-            name='worker_host',
-            field=models.ForeignKey(blank=True, default=None, null=True, on_delete=django.db.models.deletion.SET_NULL, to='lava_scheduler_app.Worker', verbose_name='Worker Host'),
+            model_name="device",
+            name="worker_host",
+            field=models.ForeignKey(
+                blank=True,
+                default=None,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                to="lava_scheduler_app.Worker",
+                verbose_name="Worker Host",
+            ),
         ),
         migrations.AlterField(
-            model_name='devicetype',
-            name='architecture',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='device_types', to='lava_scheduler_app.Architecture'),
+            model_name="devicetype",
+            name="architecture",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="device_types",
+                to="lava_scheduler_app.Architecture",
+            ),
         ),
         migrations.AlterField(
-            model_name='devicetype',
-            name='bits',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='device_types', to='lava_scheduler_app.BitWidth'),
+            model_name="devicetype",
+            name="bits",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="device_types",
+                to="lava_scheduler_app.BitWidth",
+            ),
         ),
         migrations.AlterField(
-            model_name='devicetype',
-            name='processor',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='device_types', to='lava_scheduler_app.ProcessorFamily'),
+            model_name="devicetype",
+            name="processor",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="device_types",
+                to="lava_scheduler_app.ProcessorFamily",
+            ),
         ),
     ]

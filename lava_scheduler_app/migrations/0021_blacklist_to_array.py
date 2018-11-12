@@ -6,18 +6,17 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('lava_scheduler_app', '0020_notificationrecipient_uniquetogether'),
-    ]
+    dependencies = [("lava_scheduler_app", "0020_notificationrecipient_uniquetogether")]
 
     operations = [
-        migrations.RemoveField(
-            model_name='notification',
-            name='blacklist',
-        ),
+        migrations.RemoveField(model_name="notification", name="blacklist"),
         migrations.AddField(
-            model_name='notification',
-            name='blacklist',
-            field=django.contrib.postgres.fields.ArrayField(base_field=models.CharField(blank=True, max_length=100), blank=True, null=True),
+            model_name="notification",
+            name="blacklist",
+            field=django.contrib.postgres.fields.ArrayField(
+                base_field=models.CharField(blank=True, max_length=100),
+                blank=True,
+                null=True,
+            ),
         ),
     ]

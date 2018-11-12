@@ -7,19 +7,17 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('lava_results_app', '0015_add_test_case_result_index'),
-    ]
+    dependencies = [("lava_results_app", "0015_add_test_case_result_index")]
 
     operations = [
         migrations.AddField(
-            model_name='testcase',
-            name='end_log_line',
+            model_name="testcase",
+            name="end_log_line",
             field=models.PositiveIntegerField(blank=True, editable=False, null=True),
         ),
         migrations.AddField(
-            model_name='testcase',
-            name='start_log_line',
+            model_name="testcase",
+            name="start_log_line",
             field=models.PositiveIntegerField(blank=True, editable=False, null=True),
         ),
     ]

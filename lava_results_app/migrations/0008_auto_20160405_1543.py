@@ -19,13 +19,10 @@ def noop(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('lava_results_app', '0007_auto_20160225_1256'),
-    ]
+    dependencies = [("lava_results_app", "0007_auto_20160225_1256")]
 
     operations = [
         migrations.RunPython(remove_views, noop),
-
         migrations.RunSQL(
             sql=r"""CREATE OR REPLACE FUNCTION chartonumeric(convertvalue character varying)
   RETURNS numeric AS
@@ -35,19 +32,25 @@ class Migration(migrations.Migration):
         ELSE NULL END;
     $BODY$
 LANGUAGE 'sql' IMMUTABLE STRICT;""",
-            reverse_sql="DROP FUNCTION chartonumeric(convertvalue character varying)"),
-
+            reverse_sql="DROP FUNCTION chartonumeric(convertvalue character varying)",
+        ),
         migrations.RunSQL(
             sql="ALTER TABLE lava_results_app_testcase ALTER COLUMN measurement SET DATA TYPE numeric using chartonumeric(measurement)",
             reverse_sql="ALTER TABLE lava_results_app_testcase ALTER COLUMN measurement SET DATA TYPE character varying(512)",
             state_operations=[
                 migrations.AlterField(
-                    model_name='testcase',
-                    name='measurement',
-                    field=models.DecimalField(blank=True, decimal_places=10, help_text='Arbitrary value that was measured as a part of this test.', max_digits=30, null=True, verbose_name='Measurement'),
+                    model_name="testcase",
+                    name="measurement",
+                    field=models.DecimalField(
+                        blank=True,
+                        decimal_places=10,
+                        help_text="Arbitrary value that was measured as a part of this test.",
+                        max_digits=30,
+                        null=True,
+                        verbose_name="Measurement",
+                    ),
                 )
-            ]
+            ],
         ),
-
         migrations.RunPython(noop, remove_views),
     ]

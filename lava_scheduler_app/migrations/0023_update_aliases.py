@@ -5,14 +5,14 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('lava_scheduler_app', '0022_create_devicetype_alias'),
-    ]
+    dependencies = [("lava_scheduler_app", "0022_create_devicetype_alias")]
 
     operations = [
         migrations.AlterField(
-            model_name='devicetype',
-            name='aliases',
-            field=models.ManyToManyField(blank=True, related_name='device_types', to='lava_scheduler_app.Alias'),
-        ),
+            model_name="devicetype",
+            name="aliases",
+            field=models.ManyToManyField(
+                blank=True, related_name="device_types", to="lava_scheduler_app.Alias"
+            ),
+        )
     ]

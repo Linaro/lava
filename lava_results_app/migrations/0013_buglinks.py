@@ -7,22 +7,35 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('contenttypes', '0002_remove_content_type_name'),
-        ('lava_results_app', '0012_namedtestattribute_metadata'),
+        ("contenttypes", "0002_remove_content_type_name"),
+        ("lava_results_app", "0012_namedtestattribute_metadata"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='BugLink',
+            name="BugLink",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('url', models.URLField(max_length=1024, verbose_name='Bug Link URL')),
-                ('object_id', models.PositiveIntegerField()),
-                ('content_type', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='contenttypes.ContentType')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("url", models.URLField(max_length=1024, verbose_name="Bug Link URL")),
+                ("object_id", models.PositiveIntegerField()),
+                (
+                    "content_type",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="contenttypes.ContentType",
+                    ),
+                ),
             ],
         ),
         migrations.AlterUniqueTogether(
-            name='buglink',
-            unique_together=set([('object_id', 'url', 'content_type')]),
+            name="buglink", unique_together=set([("object_id", "url", "content_type")])
         ),
     ]

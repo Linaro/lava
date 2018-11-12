@@ -5,46 +5,26 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('lava_scheduler_app', '0014_add_testjob_index'),
-    ]
+    dependencies = [("lava_scheduler_app", "0014_add_testjob_index")]
 
     operations = [
-        migrations.RemoveField(
-            model_name='worker',
-            name='arch',
-        ),
-        migrations.RemoveField(
-            model_name='worker',
-            name='hardware_info',
-        ),
-        migrations.RemoveField(
-            model_name='worker',
-            name='ip_address',
-        ),
-        migrations.RemoveField(
-            model_name='worker',
-            name='last_heartbeat',
-        ),
-        migrations.RemoveField(
-            model_name='worker',
-            name='last_master_scheduler_tick',
-        ),
-        migrations.RemoveField(
-            model_name='worker',
-            name='platform',
-        ),
-        migrations.RemoveField(
-            model_name='worker',
-            name='software_info',
-        ),
-        migrations.RemoveField(
-            model_name='worker',
-            name='uptime',
-        ),
+        migrations.RemoveField(model_name="worker", name="arch"),
+        migrations.RemoveField(model_name="worker", name="hardware_info"),
+        migrations.RemoveField(model_name="worker", name="ip_address"),
+        migrations.RemoveField(model_name="worker", name="last_heartbeat"),
+        migrations.RemoveField(model_name="worker", name="last_master_scheduler_tick"),
+        migrations.RemoveField(model_name="worker", name="platform"),
+        migrations.RemoveField(model_name="worker", name="software_info"),
+        migrations.RemoveField(model_name="worker", name="uptime"),
         migrations.AlterField(
-            model_name='worker',
-            name='hostname',
-            field=models.CharField(default=None, max_length=200, primary_key=True, serialize=False, verbose_name='Hostname'),
+            model_name="worker",
+            name="hostname",
+            field=models.CharField(
+                default=None,
+                max_length=200,
+                primary_key=True,
+                serialize=False,
+                verbose_name="Hostname",
+            ),
         ),
     ]

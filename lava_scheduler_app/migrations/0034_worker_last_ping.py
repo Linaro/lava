@@ -6,14 +6,14 @@ import django.utils.timezone
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('lava_scheduler_app', '0033_remove_old_status_fields'),
-    ]
+    dependencies = [("lava_scheduler_app", "0033_remove_old_status_fields")]
 
     operations = [
         migrations.AddField(
-            model_name='worker',
-            name='last_ping',
-            field=models.DateTimeField(default=django.utils.timezone.now, verbose_name='Last ping'),
-        ),
+            model_name="worker",
+            name="last_ping",
+            field=models.DateTimeField(
+                default=django.utils.timezone.now, verbose_name="Last ping"
+            ),
+        )
     ]

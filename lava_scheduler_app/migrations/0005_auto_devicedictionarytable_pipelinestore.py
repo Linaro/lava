@@ -4,43 +4,57 @@ from django.db import models, migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('lava_scheduler_app', '0004_add_pipeline_marks'),
-    ]
+    dependencies = [("lava_scheduler_app", "0004_add_pipeline_marks")]
 
     operations = [
         migrations.CreateModel(
-            name='DeviceDictionaryTable',
+            name="DeviceDictionaryTable",
             fields=[
-                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('kee', models.CharField(max_length=255)),
-                ('value', models.TextField()),
+                (
+                    "id",
+                    models.AutoField(
+                        verbose_name="ID",
+                        serialize=False,
+                        auto_created=True,
+                        primary_key=True,
+                    ),
+                ),
+                ("kee", models.CharField(max_length=255)),
+                ("value", models.TextField()),
             ],
-            options={
-            },
+            options={},
             bases=(models.Model,),
         ),
         migrations.CreateModel(
-            name='PipelineStore',
+            name="PipelineStore",
             fields=[
-                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('kee', models.CharField(max_length=255)),
-                ('value', models.TextField()),
+                (
+                    "id",
+                    models.AutoField(
+                        verbose_name="ID",
+                        serialize=False,
+                        auto_created=True,
+                        primary_key=True,
+                    ),
+                ),
+                ("kee", models.CharField(max_length=255)),
+                ("value", models.TextField()),
             ],
-            options={
-            },
+            options={},
             bases=(models.Model,),
         ),
         migrations.AlterField(
-            model_name='device',
-            name='is_pipeline',
-            field=models.BooleanField(default=False, verbose_name='Pipeline device?'),
+            model_name="device",
+            name="is_pipeline",
+            field=models.BooleanField(default=False, verbose_name="Pipeline device?"),
             preserve_default=True,
         ),
         migrations.AlterField(
-            model_name='testjob',
-            name='is_pipeline',
-            field=models.BooleanField(default=False, verbose_name='Pipeline job?', editable=False),
+            model_name="testjob",
+            name="is_pipeline",
+            field=models.BooleanField(
+                default=False, verbose_name="Pipeline job?", editable=False
+            ),
             preserve_default=True,
         ),
     ]

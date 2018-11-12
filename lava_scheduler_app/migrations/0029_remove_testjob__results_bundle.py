@@ -5,13 +5,6 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('lava_scheduler_app', '0028_notify_callback'),
-    ]
+    dependencies = [("lava_scheduler_app", "0028_notify_callback")]
 
-    operations = [
-        migrations.RemoveField(
-            model_name='testjob',
-            name='_results_bundle',
-        ),
-    ]
+    operations = [migrations.RemoveField(model_name="testjob", name="_results_bundle")]

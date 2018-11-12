@@ -5,20 +5,32 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('lava_scheduler_app', '0021_blacklist_to_array'),
-    ]
+    dependencies = [("lava_scheduler_app", "0021_blacklist_to_array")]
 
     operations = [
         migrations.CreateModel(
-            name='Alias',
+            name="Alias",
             fields=[
-                ('name', models.CharField(help_text='e.g. the device tree name(s)', max_length=200, primary_key=True, serialize=False, verbose_name='Alias for this device-type')),
+                (
+                    "name",
+                    models.CharField(
+                        help_text="e.g. the device tree name(s)",
+                        max_length=200,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="Alias for this device-type",
+                    ),
+                )
             ],
         ),
         migrations.AddField(
-            model_name='devicetype',
-            name='aliases',
-            field=models.ManyToManyField(blank=True, null=True, related_name='device_types', to='lava_scheduler_app.Alias'),
+            model_name="devicetype",
+            name="aliases",
+            field=models.ManyToManyField(
+                blank=True,
+                null=True,
+                related_name="device_types",
+                to="lava_scheduler_app.Alias",
+            ),
         ),
     ]

@@ -5,14 +5,22 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('lava_results_app', '0014_xaxis_maxlength_increase'),
-    ]
+    dependencies = [("lava_results_app", "0014_xaxis_maxlength_increase")]
 
     operations = [
         migrations.AlterField(
-            model_name='testcase',
-            name='result',
-            field=models.PositiveSmallIntegerField(choices=[(0, 'Test passed'), (1, 'Test failed'), (2, 'Test skipped'), (3, 'Unknown outcome')], db_index=True, help_text='Result classification to pass/fail group', verbose_name='Result'),
-        ),
+            model_name="testcase",
+            name="result",
+            field=models.PositiveSmallIntegerField(
+                choices=[
+                    (0, "Test passed"),
+                    (1, "Test failed"),
+                    (2, "Test skipped"),
+                    (3, "Unknown outcome"),
+                ],
+                db_index=True,
+                help_text="Result classification to pass/fail group",
+                verbose_name="Result",
+            ),
+        )
     ]

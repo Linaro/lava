@@ -7,7 +7,9 @@ import django.db.models.deletion
 OFFLINE, IDLE, RUNNING, OFFLINING, RETIRED, RESERVED = range(6)
 OLD_HEALTH_UNKNOWN, OLD_HEALTH_PASS, OLD_HEALTH_FAIL, OLD_HEALTH_LOOPING = range(4)
 STATE_IDLE, STATE_RESERVED, STATE_RUNNING = range(3)
-HEALTH_GOOD, HEALTH_UNKNOWN, HEALTH_LOOPING, HEALTH_BAD, HEALTH_MAINTENANCE, HEALTH_RETIRED = range(6)
+HEALTH_GOOD, HEALTH_UNKNOWN, HEALTH_LOOPING, HEALTH_BAD, HEALTH_MAINTENANCE, HEALTH_RETIRED = range(
+    6
+)
 
 
 def revert_set_device_state_health(apps, schema_editor):
@@ -21,10 +23,16 @@ def revert_set_device_state_health(apps, schema_editor):
         elif new_state == STATE_RUNNING:
             return RUNNING
 
-    Device.objects.filter(health=HEALTH_MAINTENANCE).update(status=OFFLINE, health_status=OLD_HEALTH_FAIL)
-    Device.objects.filter(health=HEALTH_RETIRED).update(status=RETIRED, health_status=OLD_HEALTH_FAIL)
+    Device.objects.filter(health=HEALTH_MAINTENANCE).update(
+        status=OFFLINE, health_status=OLD_HEALTH_FAIL
+    )
+    Device.objects.filter(health=HEALTH_RETIRED).update(
+        status=RETIRED, health_status=OLD_HEALTH_FAIL
+    )
 
-    for device in Device.objects.filter(health__in=[HEALTH_GOOD, HEALTH_UNKNOWN, HEALTH_LOOPING, HEALTH_BAD]):
+    for device in Device.objects.filter(
+        health__in=[HEALTH_GOOD, HEALTH_UNKNOWN, HEALTH_LOOPING, HEALTH_BAD]
+    ):
         if device.health == HEALTH_GOOD:
             device.health_status = OLD_HEALTH_PASS
             device.status = translate_state(device.state)
@@ -57,8 +65,12 @@ def set_device_state_health(apps, schema_editor):
         elif health_status == OLD_HEALTH_LOOPING:
             return HEALTH_LOOPING
 
-    Device.objects.filter(status=OFFLINING).update(state=STATE_RUNNING, health=HEALTH_MAINTENANCE)
-    Device.objects.filter(status=RETIRED).update(state=STATE_IDLE, health=HEALTH_RETIRED)
+    Device.objects.filter(status=OFFLINING).update(
+        state=STATE_RUNNING, health=HEALTH_MAINTENANCE
+    )
+    Device.objects.filter(status=RETIRED).update(
+        state=STATE_IDLE, health=HEALTH_RETIRED
+    )
 
     for device in Device.objects.filter(status__in=[OFFLINE, IDLE, RUNNING, RESERVED]):
         if device.status == OFFLINE:
@@ -81,7 +93,9 @@ def set_device_state_health(apps, schema_editor):
 
 
 SUBMITTED, RUNNING, COMPLETE, INCOMPLETE, CANCELED, CANCELING = range(6)
-STATE_SUBMITTED, STATE_SCHEDULING, STATE_SCHEDULED, STATE_RUNNING, STATE_CANCELING, STATE_FINISHED = range(6)
+STATE_SUBMITTED, STATE_SCHEDULING, STATE_SCHEDULED, STATE_RUNNING, STATE_CANCELING, STATE_FINISHED = range(
+    6
+)
 HEALTH_UNKNOWN, HEALTH_COMPLETE, HEALTH_INCOMPLETE, HEALTH_CANCELED = range(4)
 
 
@@ -93,9 +107,15 @@ def revert_set_testjob_state_health(apps, schema_editor):
     TestJob.objects.filter(state=STATE_SCHEDULED).update(status=SUBMITTED)
     TestJob.objects.filter(state=STATE_RUNNING).update(status=RUNNING)
     TestJob.objects.filter(state=STATE_CANCELING).update(status=CANCELING)
-    TestJob.objects.filter(state=STATE_FINISHED, health=HEALTH_COMPLETE).update(status=COMPLETE)
-    TestJob.objects.filter(state=STATE_FINISHED, health=HEALTH_INCOMPLETE).update(status=INCOMPLETE)
-    TestJob.objects.filter(state=STATE_FINISHED, health=HEALTH_CANCELED).update(status=CANCELED)
+    TestJob.objects.filter(state=STATE_FINISHED, health=HEALTH_COMPLETE).update(
+        status=COMPLETE
+    )
+    TestJob.objects.filter(state=STATE_FINISHED, health=HEALTH_INCOMPLETE).update(
+        status=INCOMPLETE
+    )
+    TestJob.objects.filter(state=STATE_FINISHED, health=HEALTH_CANCELED).update(
+        status=CANCELED
+    )
 
 
 def set_testjob_state_health(apps, schema_editor):
@@ -103,47 +123,91 @@ def set_testjob_state_health(apps, schema_editor):
 
     TestJob.objects.filter(status=SUBMITTED).update(state=STATE_SUBMITTED)
     TestJob.objects.filter(status=RUNNING).update(state=STATE_RUNNING)
-    TestJob.objects.filter(status=COMPLETE).update(state=STATE_FINISHED, health=HEALTH_COMPLETE)
-    TestJob.objects.filter(status=INCOMPLETE).update(state=STATE_FINISHED, health=HEALTH_INCOMPLETE)
-    TestJob.objects.filter(status=CANCELED).update(state=STATE_FINISHED, health=HEALTH_CANCELED)
+    TestJob.objects.filter(status=COMPLETE).update(
+        state=STATE_FINISHED, health=HEALTH_COMPLETE
+    )
+    TestJob.objects.filter(status=INCOMPLETE).update(
+        state=STATE_FINISHED, health=HEALTH_INCOMPLETE
+    )
+    TestJob.objects.filter(status=CANCELED).update(
+        state=STATE_FINISHED, health=HEALTH_CANCELED
+    )
     TestJob.objects.filter(status=CANCELING).update(state=STATE_CANCELING)
 
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('lava_scheduler_app', '0031_add_worker_state_and_health'),
-    ]
+    dependencies = [("lava_scheduler_app", "0031_add_worker_state_and_health")]
 
     operations = [
         migrations.AddField(
-            model_name='device',
-            name='health',
-            field=models.IntegerField(choices=[(0, 'Good'), (1, 'Unknown'), (2, 'Looping'), (3, 'Bad'), (4, 'Maintenance'), (5, 'Retired')], default=1),
+            model_name="device",
+            name="health",
+            field=models.IntegerField(
+                choices=[
+                    (0, "Good"),
+                    (1, "Unknown"),
+                    (2, "Looping"),
+                    (3, "Bad"),
+                    (4, "Maintenance"),
+                    (5, "Retired"),
+                ],
+                default=1,
+            ),
         ),
         migrations.AddField(
-            model_name='device',
-            name='state',
-            field=models.IntegerField(choices=[(0, 'Idle'), (1, 'Reserved'), (2, 'Running')], default=0, editable=False),
+            model_name="device",
+            name="state",
+            field=models.IntegerField(
+                choices=[(0, "Idle"), (1, "Reserved"), (2, "Running")],
+                default=0,
+                editable=False,
+            ),
         ),
         migrations.AddField(
-            model_name='testjob',
-            name='health',
-            field=models.IntegerField(choices=[(0, 'Unknown'), (1, 'Complete'), (2, 'Incomplete'), (3, 'Canceled')], default=0),
+            model_name="testjob",
+            name="health",
+            field=models.IntegerField(
+                choices=[
+                    (0, "Unknown"),
+                    (1, "Complete"),
+                    (2, "Incomplete"),
+                    (3, "Canceled"),
+                ],
+                default=0,
+            ),
         ),
         migrations.AddField(
-            model_name='testjob',
-            name='state',
-            field=models.IntegerField(choices=[(0, 'Submitted'), (1, 'Scheduling'), (2, 'Scheduled'), (3, 'Running'), (4, 'Canceling'), (5, 'Finished')], default=0, editable=False),
+            model_name="testjob",
+            name="state",
+            field=models.IntegerField(
+                choices=[
+                    (0, "Submitted"),
+                    (1, "Scheduling"),
+                    (2, "Scheduled"),
+                    (3, "Running"),
+                    (4, "Canceling"),
+                    (5, "Finished"),
+                ],
+                default=0,
+                editable=False,
+            ),
         ),
         migrations.AlterField(
-            model_name='testjob',
-            name='actual_device',
-            field=models.ForeignKey(blank=True, default=None, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='testjobs', to='lava_scheduler_app.Device'),
+            model_name="testjob",
+            name="actual_device",
+            field=models.ForeignKey(
+                blank=True,
+                default=None,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="testjobs",
+                to="lava_scheduler_app.Device",
+            ),
         ),
         migrations.AlterIndexTogether(
-            name='testjob',
-            index_together=set([('health', 'state', 'requested_device_type')]),
+            name="testjob",
+            index_together=set([("health", "state", "requested_device_type")]),
         ),
         migrations.RunPython(set_device_state_health, revert_set_device_state_health),
         migrations.RunPython(set_testjob_state_health, revert_set_testjob_state_health),

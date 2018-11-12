@@ -5,17 +5,9 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('lava_scheduler_app', '0035_remove_testjob__results_link'),
-    ]
+    dependencies = [("lava_scheduler_app", "0035_remove_testjob__results_link")]
 
     operations = [
-        migrations.RemoveField(
-            model_name='device',
-            name='is_pipeline',
-        ),
-        migrations.RemoveField(
-            model_name='testjob',
-            name='is_pipeline',
-        ),
+        migrations.RemoveField(model_name="device", name="is_pipeline"),
+        migrations.RemoveField(model_name="testjob", name="is_pipeline"),
     ]

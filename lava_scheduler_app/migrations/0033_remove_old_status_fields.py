@@ -6,51 +6,19 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('lava_scheduler_app', '0032_add_state_health_to_testjob_and_device'),
+        ("lava_scheduler_app", "0032_add_state_health_to_testjob_and_device")
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='devicestatetransition',
-            name='created_by',
-        ),
-        migrations.RemoveField(
-            model_name='devicestatetransition',
-            name='device',
-        ),
-        migrations.RemoveField(
-            model_name='devicestatetransition',
-            name='job',
-        ),
-        migrations.RemoveField(
-            model_name='device',
-            name='current_job',
-        ),
-        migrations.RemoveField(
-            model_name='device',
-            name='health_status',
-        ),
-        migrations.RemoveField(
-            model_name='device',
-            name='status',
-        ),
-        migrations.RemoveField(
-            model_name='notification',
-            name='job_status_trigger',
-        ),
-        migrations.RemoveField(
-            model_name='testjob',
-            name='requested_device',
-        ),
-        migrations.RemoveField(
-            model_name='testjob',
-            name='status',
-        ),
-        migrations.RemoveField(
-            model_name='testjob',
-            name='submit_token',
-        ),
-        migrations.DeleteModel(
-            name='DeviceStateTransition',
-        ),
+        migrations.RemoveField(model_name="devicestatetransition", name="created_by"),
+        migrations.RemoveField(model_name="devicestatetransition", name="device"),
+        migrations.RemoveField(model_name="devicestatetransition", name="job"),
+        migrations.RemoveField(model_name="device", name="current_job"),
+        migrations.RemoveField(model_name="device", name="health_status"),
+        migrations.RemoveField(model_name="device", name="status"),
+        migrations.RemoveField(model_name="notification", name="job_status_trigger"),
+        migrations.RemoveField(model_name="testjob", name="requested_device"),
+        migrations.RemoveField(model_name="testjob", name="status"),
+        migrations.RemoveField(model_name="testjob", name="submit_token"),
+        migrations.DeleteModel(name="DeviceStateTransition"),
     ]

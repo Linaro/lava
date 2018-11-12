@@ -5,14 +5,14 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('lava_scheduler_app', '0015_drop_heartbeat'),
-    ]
+    dependencies = [("lava_scheduler_app", "0015_drop_heartbeat")]
 
     operations = [
         migrations.AlterField(
-            model_name='testjob',
-            name='submit_time',
-            field=models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='Submit time'),
-        ),
+            model_name="testjob",
+            name="submit_time",
+            field=models.DateTimeField(
+                auto_now_add=True, db_index=True, verbose_name="Submit time"
+            ),
+        )
     ]
