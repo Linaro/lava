@@ -135,6 +135,41 @@ are uploaded to the LAVA Software Community Project repository which
 uses the :ref:`lava_archive_signing_key` - a copy of the key is
 available in the repository and on keyservers.
 
+When using LAVA repositories on Stretch, make sure to enable
+``stretch-backports`` from your regular Debian mirror as well as the
+LAVA repository. Create an apt source based on your existing apt source
+for Stretch::
+
+ deb http://deb.debian.org/debian stretch-backports main
+
+Update apt to find the new packages::
+
+ $ sudo apt update
+
+The list of packages to obtain from ``stretch-backports`` in the main
+Debian archive is maintained using the
+``/usr/share/lava-server/requires.py`` script in the ``lava-dev``
+package::
+
+ $ /usr/share/lava-server/requires.py -d debian -s stretch-backports -p lava-server -n
+ python3-django-auth-ldap python3-django-tables2 python3-requests
+
+::
+
+ $ sudo apt -t stretch-backports install python3-django-auth-ldap python3-django-tables2 python3-requests
+
+Workers also need support from `stretch-backports`::
+
+ $ /usr/share/lava-server/requires.py -d debian -s stretch-backports -p lava-dispatcher -n
+ python3-requests
+
+::
+
+ $ sudo apt -t stretch-backports install python3-requests
+
+..seealso:: :ref:`install_debian_stretch` and
+  :ref:`dependency_requirements`.
+
 Releases
 --------
 
@@ -176,6 +211,9 @@ Stretch users
 -------------
 
 .. note:: The recommended base for LAVA is Debian Stretch, as of 2018.1.
+   When using LAVA repositories on Stretch, make sure to enable
+   `stretch-backports` from your regular Debian mirror as well as the
+   LAVA repository. See :ref:`install_debian_stretch`.
 
 .. code-block:: none
 
@@ -345,6 +383,19 @@ Then install ``lava-server`` from ``stretch-backports`` using the
  $ sudo a2enmod proxy_http
  $ sudo a2ensite lava-server.conf
  $ sudo service apache2 restart
+
+This will also bring in other dependencies from ``stretch-backports``.
+The list of packages is maintained using the
+``/usr/share/lava-server/requires.py`` script in the ``lava-dev``
+package::
+
+ $ /usr/share/lava-server/requires.py -d debian -s stretch-backports -p lava-server -n
+ python3-django-auth-ldap python3-django-tables2 python3-requests
+
+Workers also need support from `stretch-backports`::
+
+ $ /usr/share/lava-server/requires.py -d debian -s stretch-backports -p lava-dispatcher -n
+ python3-requests
 
 Once backports are enabled, the packages which the admin has selected
 from backports (using the ``-t`` switch) will continue to upgrade using

@@ -194,6 +194,24 @@ spending time on code which relies on such modules or which relies on
 newer versions of the modules than are currently available in Debian
 testing.
 
+The dependencies required by LAVA are tracked using the
+``./share/requires.py`` script which is also available in the
+``lava-dev`` package as ``/usr/share/lava-server/requires.py``.
+Merge requests which need extra modules which already exist in Debian
+can add the relevant information to the ``share/requirements/debian`
+files.
+
+.. note:: For the CI to pass, the extra module(s) **must** be available
+   for unstable, testing and stretch-backports. Pay particular
+   attention to the version available in stretch and stretch-backports
+   and ensure that your change works on Stretch. If a minimum version
+   is required, this can be specified in the requirements, as long as
+   that version or newer is available in stretch-backports. :ref:`talk
+   to us <mailing_lists>` if your change involves new files that may
+   need changes in the packaging code. All CI tests must pass before
+   any new code can be merged, including building working packages
+   containing the new support.
+
 .. seealso:: :ref:`quick_fixes` and :ref:`testing_pipeline_code`
 
 .. index:: code locations
@@ -218,6 +236,7 @@ Includes:
 * ``linaro_django_xmlrpc``
 * ``lava_dispatcher``
 * ``lava_test_shell``
+* ``debian``
 
   .. seealso:: :ref:`developing_new_classes`
 

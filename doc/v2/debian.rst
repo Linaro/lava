@@ -30,6 +30,146 @@ compared to the old lava-deployment-tool buildouts.
    stable in Debian are always built in a stable chroot or VM for this
    reason.
 
+Why Debian?
+***********
+
+In the very early stages, LAVA was deployed using a custom script based
+on PyPi and a lot of manual effort. This deployment tool frequently
+failed in complex and unexpected ways. It become clear that this would
+block successful and reliable deployment and upgrades of LAVA,
+particularly in larger scale environments.
+
+The main LAVA developer at the time was also a Debian developer with
+the rights and familiarity with Debian to convert the deployment tool
+into a packaged format which solved these issues.
+
+LAVA is not inherently tied to Debian but following the route of
+packaging LAVA in Debian solved many issues very easily. By using a
+well supported and readily understood distribution as our base, many
+users have been able to install and operate LAVA without needing direct
+help from the developers. We have also gained a stable and reliable
+platform for our internal CI which was an enormous aid during the V2
+development cycle.
+
+Whilst it might seem that lots of developer time is spent doing Debian
+specific development, equivalent (and possibly more) work would be
+needed to develop and support LAVA on any platform. Debian provides a
+very large collection of packaged software, removing the need for us to
+package and maintain the full stack which LAVA needs.
+
+.. index:: lava on other distributions, distributions
+
+.. _lava_on_other_distros:
+
+Options for other distributions
+********************************
+
+Although LAVA is not inherently tied to the Debian distribution, there
+would be a lot of work involved to ensure that another method of
+deploying LAVA would work well enough for the upstream LAVA team to
+support that method.
+
+If you are thinking about packaging LAVA, please consider the
+commitment level needed **carefully** before taking on this work. It
+represents a relatively large, long term commitment to the LAVA
+Software Community Project and to the distribution involved.
+
+On top of developing LAVA itself, full support of LAVA in Debian
+includes:
+
+#. Maintenance of packaging code, either upstream or in a public git
+   repository.
+
+#. Preparation of LAVA releases for inclusion into the distribution.
+
+#. Rights to upload LAVA releases to the distribution and access
+   within the distribution to apply local patches, upload security
+   fixes and provide for backporting newer dependencies to maintain
+   support for existing releases.
+
+#. Maintenance of a LAVA lab using this distribution and running CI
+   on LAVA devices. (This is to ensure that the functionality of LAVA
+   is being tested on this distribution. It would be very useful, for
+   example. for such a lab to participate in functional testing of LAVA
+   upstream.)
+
+#. Sufficient involvement in the distribution and familiarity with
+   the distribution release process to provide full support for both
+   installing new instances and smoothly upgrading established
+   instances to each new release of the distribution.
+
+   This includes planning ahead to ensure that new dependencies are
+   packaged for the distribution in time for the next distribution
+   release.
+
+#. Maintenance of LAVA releases within the distribution across more
+   than one distribution release cycle, at the same time.
+
+   This is to ensure that users have continuity of support and can
+   choose when to migrate the base operating system of their labs.
+
+#. Involvement on IRC and mailing lists to promptly support users
+   experiencing problems with using LAVA on the distribution.
+
+#. Maintenance of the LAVA documentation covering how to use LAVA on
+   the distribution.
+
+#. Triage and fixing of issues in LAVA which are specific to the
+   distribution.
+
+#. Discussion with the rest of LAVA Software Community Project
+   development team around issues related to this distribution.
+
+#. Use of all available tools within the distribution to anticipate
+   problems. Where possible, implementation of fixes before users are
+   affected.
+
+#. Maintenance of dependencies using ``./share/requires.py`` to enable
+   automated testing. This includes testing the versions of specific
+   dependencies and ensuring that the minimum version is available in
+   all supported releases of the distribution.
+
+#. Maintenance of scripts which build Docker images for and using that
+   distribution, including publishing such images. These images will be
+   required to support the internal CI.
+
+#. Maintenance of upstream LAVA CI using that distribution in Docker to
+   run the unit tests as well as build and test the packaging of LAVA
+   for that distribution. This CI will involve, at a minimum, running
+   such tests on the currently supported distribution release **and**
+   the candidate for the next distribution release.
+
+#. Maintenance of upstream CI using ``gitlab-runner`` on a machine
+   running the relevant distribution so that CI jobs on the new
+   distribution run in parallel to the CI jobs running on Debian.
+
+#. Maintenance of LAVA tools and support scripts for running a LAVA lab
+   using the distribution.
+
+#. Consideration that support for the distribution may involve
+   supporting more than one system architecture.
+
+As an example from LAVA's history, support for migrations between
+releases was the main problem for LAVA support of Ubuntu. It became
+impossible to provide a smooth upgrade path from one Ubuntu LTS release
+(14.04 Trusty) to the next LTS release (16.04 Xenial). LAVA needs to
+provide long term stability to provide reliable CI whilst keeping up
+with changes across supported distributions and tools. For the sake of
+lab admin workload, support needs to concentrate on LTS or server level
+releases rather than developer releases or interim updates. Even though
+Ubuntu is closely related to Debian, the timing of Ubuntu releases made
+it very difficult to manage complex transitions like the change from
+Django 1.4 to 1.8 and this was also a concern for the transition to
+Python3.
+
+You may find that more than one person will be required to meet all
+these criteria and to maintain that support across several releases of
+the distribution. The current LAVA Software Community Project team does
+not have enough resources to do this work for any distribution other
+than Debian.
+
+:ref:`Talk to us <mailing_lists>` before spending time on such work.
+
 .. index:: developer: preparation, lava-dev
 
 .. _developer_preparations:
@@ -462,13 +602,17 @@ and the ``requirements.txt`` file is therefore misleading. However, the
 format of this file is still useful in building the LAVA packages.
 
 Therefore, LAVA has the ``./share/requires.py`` script which can be
-used to output the preferred format, depending on the arguments.
+used to output the preferred format, depending on the arguments. The
+script is also included in the ``lava-dev`` package as
+``/usr/share/lava-server/requires.py``.
 
-The dependencies **MUST** be installed in the specified suite of the
+The dependencies **MUST** be installed in the specified release of the
 specified distribution for LAVA to work, so take care before pushing a
 merge request to add package names to the support. Make sure your merge
 request includes a change to the relevant requirement YAML files for
 **all** supported distributions or the CI will fail.
+
+.. seealso:: :ref:`developer_workflow`
 
 Some distributions support ``Recommends`` level dependencies. These are
 typically intended to be installed by ~90% of installations but give
