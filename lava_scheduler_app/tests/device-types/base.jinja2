@@ -291,7 +291,7 @@ timeouts:
     nfs-deploy:
       minutes: {{ action_timeout_nfs_deploy | default(10) }}
     power-off:
-      seconds: {{ action_timeout_power_off | default(5) }}
+      seconds: {{ action_timeout_power_off | default(10) }}
     bootloader-commands:
       minutes: {{ action_timeout_bootloader_commands | default(3) }}
     bootloader-interrupt:
