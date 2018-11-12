@@ -45,10 +45,10 @@ from lava_scheduler_app.schema import (
 from lava_dispatcher.actions.deploy.image import DeployImages
 from lava_dispatcher.test.utils import DummyLogger
 
-# pylint: disable=superfluous-parens,too-few-public-methods
+# pylint: disable=invalid-name,C0330,no-self-use
 
 
-class StdoutTestCase(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class StdoutTestCase(unittest.TestCase):
     def setUp(self):
         super().setUp()
         logger = logging.getLogger("dispatcher")
@@ -129,7 +129,7 @@ class TestPipelineInit(StdoutTestCase):  # pylint: disable=too-many-public-metho
         )
 
 
-class TestJobParser(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestJobParser(StdoutTestCase):
     def setUp(self):
         super().setUp()
         factory = Factory()
@@ -147,19 +147,15 @@ class TestJobParser(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertTrue(self.job.actions > 1)  # pylint: disable=no-member
 
 
-class TestValidation(StdoutTestCase):  # pylint: disable=too-many-public-methods
-    def test_action_is_valid_if_there_are_not_errors(
-        self
-    ):  # pylint: disable=invalid-name
+class TestValidation(StdoutTestCase):
+    def test_action_is_valid_if_there_are_not_errors(self):  # pylint: invalid-name
         action = Action()
         action.__errors__ = [1]
         self.assertFalse(action.valid)
         action.__errors__ = []
         self.assertTrue(action.valid)
 
-    def test_composite_action_aggregates_errors_from_sub_actions(
-        self
-    ):  # pylint: disable=invalid-name
+    def test_composite_action_aggregates_errors_from_sub_actions(self):
         # Unable to call Action.validate() as there is no job in this unit test
         sub1 = Action()
         sub1.__errors__ = [1]
@@ -255,7 +251,9 @@ class Factory:
         rendered = self.render_device_dictionary(hostname, data, job_ctx)
         return (rendered, data)
 
-    def create_custom_job(self, template, job_data, job_ctx=None):
+    def create_custom_job(self, template, job_data, job_ctx=None, validate_job=True):
+        if validate_job:
+            validate_submission(job_data)
         if job_ctx:
             job_data["context"] = job_ctx
         else:
@@ -277,16 +275,16 @@ class Factory:
         job.logger = DummyLogger()
         return job
 
-    def create_job(self, template, filename, job_ctx=None):
+    def create_job(self, template, filename, job_ctx=None, validate_job=True):
         y_file = os.path.join(os.path.dirname(__file__), filename)
         with open(y_file) as sample_job_data:
             job_data = yaml.safe_load(sample_job_data.read())
-        return self.create_custom_job(template, job_data, job_ctx)
+        return self.create_custom_job(template, job_data, job_ctx, validate_job)
 
     def create_fake_qemu_job(self):
         return self.create_job("qemu01.jinja2", "sample_jobs/basics.yaml")
 
-    def create_kvm_job(self, filename, check_job=False):  # pylint: disable=no-self-use
+    def create_kvm_job(self, filename, validate_job=False):
         """
         Custom function to allow for extra exception handling.
         """
@@ -308,7 +306,7 @@ class Factory:
             job_data = yaml.safe_load(sample_job_data.read())
         if self.debug:
             print("########## Test Job Submission validation #######")
-        if check_job:  # FIXME: all submissions should validate.
+        if validate_job:
             validate_submission(job_data)
         try:
             job = parser.parse(yaml.dump(job_data), device, 4212, None, "")

@@ -1,5 +1,5 @@
 device_type: x86
-
+job_name: unit test support for NBD iPXE
 timeouts:
   job:
     minutes: 15

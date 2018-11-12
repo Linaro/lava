@@ -12,7 +12,7 @@ priority: medium
 visibility: public
 
 metadata:
-    rpb.build: 16.12
+    rpb.build: '16.12'
     reference.job: https://validation.linaro.org/scheduler/job/1490640/definition
 
 protocols:

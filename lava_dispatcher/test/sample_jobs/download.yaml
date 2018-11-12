@@ -1,4 +1,4 @@
-type: dragonboard-410c
+device_type: dragonboard-410c
 job_name: Boot artifact conversion in LXC with db410c
 timeouts:
   job:
@@ -22,30 +22,6 @@ protocols:
     release: jessie
     verbose: true
     mirror: http://mirror.bytemark.co.uk/debian
-
-notify:
-  criteria:
-    status: incomplete
-  verbosity: quiet
-  recipients:
-  - to:
-     user: neil.williams
-     method: email
-  - to:
-     user: matthew.hart
-     method: email
-  - to:
-     user: stevan.radakovic
-     method: email
-  - to:
-     user: remi.duraffort
-     method: email
-  - to:
-     user: senthil.kumaran
-     method: email
-  - to:
-     user: dean.arnold
-     method: email
 
 actions:
 - deploy:

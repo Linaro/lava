@@ -40,10 +40,10 @@ class ConnectionFactory(Factory):  # pylint: disable=too-few-public-methods
     """
 
     def create_ssh_job(self, filename):
-        return self.create_job("ssh-host-01.jinja2", filename)
+        return self.create_job("ssh-host-01.jinja2", filename, validate_job=False)
 
     def create_bbb_job(self, filename):
-        return self.create_job("bbb-02.jinja2", filename)
+        return self.create_job("bbb-02.jinja2", filename, validate_job=False)
 
 
 class TestConnection(StdoutTestCase):  # pylint: disable=too-many-public-methods
