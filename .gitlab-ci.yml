@@ -147,6 +147,21 @@ aarch64/pkg-debian-10:
     - _build/*.changes
     - _build/*.buildinfo
 
+aarch64/pkg-debian-9:
+  <<: *job_aarch64
+  stage: build
+  image: hub.lavasoftware.org/lava/ci-images/aarch64/pkg-debian-9
+  only:
+    refs:
+    - master
+    - tags
+  artifacts:
+    # binary only build, no .dsc or .tar.xz
+    paths:
+    - _build/*.deb
+    - _build/*.changes
+    - _build/*.buildinfo
+
 ###########
 # Publish #
 ###########

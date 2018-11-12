@@ -42,9 +42,8 @@ else
         dcmd cp ${LAVA_BUILDD}/_build/lava_*stretch_*.changes ${SNAPSHOT}/stretch/${YEAR}/${MONTH}/${DAY}/
         dcmd rm ${LAVA_BUILDD}/_build/lava_*stretch_amd64.changes
 
-        # enable if stretch_arm64 is enabled.
-        # reprepro -b ${BASEDIR} ${R_OPT} include stretch-backports ${LAVA_BUILDD}/_build/lava_*stretch_arm64.changes
-        # dcmd rm ${LAVA_BUILDD}/_build/lava_*stretch_arm64.changes
+        reprepro -b ${BASEDIR} ${R_OPT} include stretch-backports ${LAVA_BUILDD}/_build/lava_*stretch_arm64.changes
+        dcmd rm ${LAVA_BUILDD}/_build/lava_*stretch_arm64.changes
 
         reprepro -b ${BASEDIR} list stretch-backports
     fi
