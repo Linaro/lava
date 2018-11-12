@@ -48,6 +48,8 @@ class BootDocker(Boot):
     def accepts(cls, device, parameters):
         if "docker" not in device['actions']['boot']['methods']:
             return False, '"docker" was not in the device configuration boot methods'
+        if parameters["method"] != "docker":
+            return False, '"method" was not "docker"'
         if "command" not in parameters:
             return False, '"command" was not in boot parameters'
         return True, 'accepted'
