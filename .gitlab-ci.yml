@@ -179,7 +179,7 @@ aarch64/pkg-debian-9:
     - master
     - tags
   tags: [dind, aarch64]
-  dependencies: [aarch64/pkg-debian-10, amd64/pkg-debian-9]
+  dependencies: [aarch64/pkg-debian-10, amd64/pkg-debian-10]
 
 amd64/lava-dispatcher: *publish
 amd64/lava-server: *publish
