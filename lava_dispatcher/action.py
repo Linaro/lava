@@ -25,6 +25,7 @@ import time
 import types
 import traceback
 import select
+import shlex
 import subprocess  # nosec - internal
 from collections import OrderedDict
 from nose.tools import nottest
@@ -585,8 +586,10 @@ class Action:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         :param: cwd - the current working directory for this command
         """
         # Build the command list (adding 'nice' at the front)
-        if not isinstance(command_list, list):
-            raise LAVABug("commands to run_cmd need to be a list")
+        if isinstance(command_list, str):
+            command_list = shlex.split(command_list)
+        elif not isinstance(command_list, list):
+            raise LAVABug("commands to run_cmd need to be a list or a string")
         command_list = ["nice"] + [str(s) for s in command_list]
 
         # Start the subprocess

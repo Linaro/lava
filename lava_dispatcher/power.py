@@ -97,6 +97,7 @@ class PDUReboot(Action):
     description = "issue commands to a PDU to power cycle a device"
     summary = "hard reboot using PDU"
     timeout_exception = InfrastructureError
+    command_exception = InfrastructureError
 
     def __init__(self):
         super().__init__()
@@ -110,8 +111,7 @@ class PDUReboot(Action):
         if not isinstance(command, list):
             command = [command]
         for cmd in command:
-            if not self.run_command(cmd.split(" "), allow_silent=True):
-                raise InfrastructureError("%s failed" % cmd)
+            self.run_cmd(cmd, error_msg="Unable to reboot: '%s' failed" % cmd)
         self.results = {"status": "success"}
         return connection
 
@@ -129,6 +129,7 @@ class PrePower(Action):
     description = "issue pre power command"
     summary = "send pre-power-command"
     timeout_exception = InfrastructureError
+    command_exception = InfrastructureError
 
     def run(self, connection, max_end_time):
         if self.job.device.pre_power_command == "":
@@ -141,8 +142,9 @@ class PrePower(Action):
             if not isinstance(command, list):
                 command = [command]
             for cmd in command:
-                if not self.run_command(cmd.split(" "), allow_silent=True):
-                    raise InfrastructureError("%s failed" % cmd)
+                self.run_cmd(
+                    cmd, error_msg="Unable to run pre-power: '%s' faield" % cmd
+                )
         self.results = {"success": self.name}
         return connection
 
@@ -160,6 +162,7 @@ class PreOs(Action):
     description = "issue pre os command"
     summary = "send pre-os-command"
     timeout_exception = InfrastructureError
+    command_exception = InfrastructureError
 
     def run(self, connection, max_end_time):
         if self.job.device.pre_os_command == "":
@@ -172,8 +175,7 @@ class PreOs(Action):
             if not isinstance(command, list):
                 command = [command]
             for cmd in command:
-                if not self.run_command(cmd.split(" "), allow_silent=True):
-                    raise InfrastructureError("%s failed" % cmd)
+                self.run_cmd(cmd, error_msg="Unable to run pre-os: '%s' failed" % cmd)
         self.results = {"success": self.name}
         return connection
 
@@ -187,6 +189,7 @@ class PowerOn(Action):
     description = "supply power to device"
     summary = "send power_on command"
     timeout_exception = InfrastructureError
+    command_exception = InfrastructureError
 
     def run(self, connection, max_end_time):
         # to enable power to a device, either power_on or hard_reset are needed.
@@ -200,18 +203,14 @@ class PowerOn(Action):
             if not isinstance(command, list):
                 command = [command]
             for cmd in command:
-                if not self.run_command(cmd.split(" "), allow_silent=True):
-                    raise InfrastructureError("%s failed" % cmd)
+                self.run_cmd(cmd, error_msg="Unable to power-on: '%s' failed" % cmd)
         command = self.job.device.power_command
         if not command:
             return connection
         if not isinstance(command, list):
             command = [command]
         for cmd in command:
-            if not self.run_command(
-                cmd.split(" "), allow_silent=True
-            ):  # pylint: disable=no-member
-                raise InfrastructureError("%s failed" % cmd)
+            self.run_cmd(cmd, error_msg="Unable to power-on: '%s' failed" % cmd)
         self.results = {"success": self.name}
         return connection
 
@@ -225,6 +224,7 @@ class PowerOff(Action):
     description = "discontinue power to device"
     summary = "send power_off command"
     timeout_exception = InfrastructureError
+    command_exception = InfrastructureError
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
@@ -236,8 +236,7 @@ class PowerOff(Action):
         if not isinstance(command, list):
             command = [command]
         for cmd in command:
-            if not self.run_command(cmd.split(" "), allow_silent=True):
-                raise InfrastructureError("%s failed" % cmd)
+            self.run_cmd(cmd, error_msg="Unable to power-off: '%s' failed" % cmd)
         self.results = {"status": "success"}
         return connection
 

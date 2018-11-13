@@ -18,7 +18,6 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import shlex
 import yaml
 
 from lava_dispatcher.action import Pipeline
@@ -111,8 +110,8 @@ class FlasherAction(DeployAction):
 
         # Run the commands
         for cmd in self.commands:
-            cmds = substitute(shlex.split(cmd), substitutions)
-            self.run_cmd(cmds, error_msg="Unable to flash the device", cwd=self.path)
+            cmds = substitute([cmd], substitutions)
+            self.run_cmd(cmds[0], error_msg="Unable to flash the device", cwd=self.path)
 
         return connection
 
