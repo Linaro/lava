@@ -51,9 +51,9 @@ class TestMonitor(LavaTest):
                           'end', 'pattern']
         if 'monitors' in parameters:
             for monitor in parameters['monitors']:
-                if all([x for x in required_parms if x in monitor]):
-                    return True, 'accepted'
-            return False, 'missing a required parameter from %s' % required_parms
+                if not all([x for x in required_parms if x in monitor]):
+                    return False, 'missing a required parameter from %s' % required_parms
+            return True, 'accepted'
         return False, '"monitors" not in parameters'
 
     @classmethod
