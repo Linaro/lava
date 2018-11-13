@@ -208,7 +208,7 @@ reprepro-master:
   # will overwrite the latest deployment."
   tags: [deploy]
   dependencies:
-  # - aarch64/pkg-debian-9
+  - aarch64/pkg-debian-9
   - aarch64/pkg-debian-10
   - amd64/pkg-debian-9
   - amd64/pkg-debian-10
