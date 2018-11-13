@@ -20,6 +20,8 @@ lava-server:
   django:
     version: ">=1.10"
     name: python3-django
+  djangorestframework:
+    name: python3-djangorestframework
   docutils:
     version: ">=0.6"
     name: python3-docutils

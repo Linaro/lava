@@ -1,0 +1,39 @@
+{% extends "rest_framework/base.html" %}
+{% load i18n %}
+{% load utils %}
+
+{% block title %}API{% endblock %}
+
+{% block bootstrap_theme %}
+  <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava_server/css/bootstrap-3.3.7.css">
+{% endblock %}
+{% block bootstrap_navbar_variant %}navbar-default{% endblock %}
+{% block branding %}
+    {% if 'lava_server/images' in lava.branding_icon %}
+    <a class="navbar-brand" href="{{ lava.branding_url }}"><p><img height={{ lava.branding_height }}
+            width={{ lava.branding_width }} src="{{ STATIC_URL }}{{ lava.branding_icon }}" alt="{{ lava.branding_alt }}" /> LAVA</p></a>
+    {% else %}
+    <a class="navbar-brand" href="{{ lava.branding_url }}"><p><img height={{ lava.branding_height }}
+            width={{ lava.branding_width }} src="{{ lava.branding_icon }}" alt="{{ lava.branding_alt }}" /> LAVA</p></a>
+    {% endif %}
+    {% include 'layouts/_navbar.html' %}
+{% endblock %}
+
+{% block userlinks %}
+    {% include 'layouts/_userlinks.html' %}
+{% endblock %}
+
+{% block breadcrumbs %}
+  <ul class="breadcrumb">
+        <li><a href="{% url 'lava.home' %}">LAVA</a></li>
+    {% for breadcrumb_name, breadcrumb_url in breadcrumblist %}
+      {% if forloop.last %}
+        <li class="active"><a href="{{ breadcrumb_url }}">{{ breadcrumb_name }}</a></li>
+      {% else %}
+        <li><a href="{{ breadcrumb_url }}">{{ breadcrumb_name }}</a></li>
+      {% endif %}
+    {% empty %}
+      {% block breadcrumbs_empty %}&nbsp;{% endblock breadcrumbs_empty %}
+    {% endfor %}
+  </ul>
+{% endblock %}

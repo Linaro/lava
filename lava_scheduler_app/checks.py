@@ -137,6 +137,7 @@ def check_packaging(app_configs, **kwargs):
     _package_symlinks("lava_common", errors)
     _package_symlinks("lava_dispatcher", errors)
     _package_symlinks("lava_results_app", errors)
+    _package_symlinks("lava_rest_app", errors)
     _package_symlinks("lava_scheduler_app", errors)
     _package_symlinks("lava_server", errors)
     _package_symlinks("", errors)

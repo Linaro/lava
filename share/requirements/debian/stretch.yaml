@@ -14,6 +14,8 @@ lava-server:
   django-restricted-resource:
     version: ">=2016.8"
     name: python3-django-restricted-resource
+  djangorestframework:
+    name: python3-djangorestframework
   docutils:
     version: ">=0.6"
     name: python3-docutils

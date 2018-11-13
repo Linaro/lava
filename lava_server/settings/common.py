@@ -25,6 +25,7 @@ import imp
 
 # Import application settings
 from lava_scheduler_app.settings import *
+from lava_rest_app.versions import versions as REST_VERSIONS
 
 
 # List of people who get code error notifications
@@ -45,9 +46,11 @@ INSTALLED_APPS = [
     'dashboard_app',
     'lava_results_app',
     'lava_scheduler_app',
+    'lava_rest_app',
     # Add LAVA dependencies
     'django_tables2',
     'linaro_django_xmlrpc',
+    'rest_framework',
     # Add contrib
     'django.contrib.admin',
     'django.contrib.auth',
@@ -202,3 +205,23 @@ ALLOW_ADMIN_DELETE = True
 
 # Default callback http timeout in seconds
 CALLBACK_TIMEOUT = 5
+
+# Properly resolve URL for DRF
+USE_X_FORWARDED_HOST = True
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.URLPathVersioning',
+    'ALLOWED_VERSIONS': REST_VERSIONS,
+    'DEFAULT_FILTER_BACKENDS': (
+        'rest_framework.filters.OrderingFilter',
+        'rest_framework.filters.SearchFilter',
+    ),
+    'PAGE_SIZE': 50,
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.SessionAuthentication',
+        'lava_rest_app.authentication.LavaTokenAuthentication',
+    )
+}

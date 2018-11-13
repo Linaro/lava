@@ -77,7 +77,7 @@ echo
 if [ -z "${DISPATCH}"  -a -z "${TEMPLATE}" -a -z "${PYTEST}" ]
 then
     echo "If it exists, a broken test database will be deleted without prompting."
-    python3 ./lava_server/manage.py test --noinput -v 2 lava_scheduler_app linaro_django_xmlrpc.tests lava_results_app
+    python3 ./lava_server/manage.py test --noinput -v 2 lava_scheduler_app linaro_django_xmlrpc.tests lava_results_app lava_rest_app
     if [ -n "${SERVER}" ]
     then
         exit

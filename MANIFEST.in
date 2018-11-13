@@ -47,6 +47,7 @@ recursive-include etc/dispatcher-config README
 recursive-include share/requirements *.yaml
 recursive-include lava_dispatcher/devices *.yaml
 recursive-include lava_dispatcher/test *.yaml *.txt
+recursive-include lava_rest_app/templates *.html
 recursive-include lava_results_app/templates *.html
 recursive-include lava_results_app/tests *.yaml
 recursive-include lava_results_app/static *.png *.js *.css *.gif

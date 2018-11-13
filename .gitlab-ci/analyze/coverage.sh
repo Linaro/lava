@@ -17,6 +17,6 @@ then
 else
   set -x
   PYTHONPATH=. pytest-3 --cache-clear -v --cov --cov-report= lava_dispatcher/test
-  PYTHONPATH=. pytest-3 --cache-clear -v --ds lava_server.settings.development --cov --cov-append --cov-report= lava_scheduler_app/tests lava_results_app/tests linaro_django_xmlrpc/tests.py
+  PYTHONPATH=. pytest-3 --cache-clear -v --ds lava_server.settings.development --cov --cov-append --cov-report= lava_scheduler_app/tests lava_results_app/tests linaro_django_xmlrpc/tests.py lava_rest_app/tests.py
   PYTHONPATH=. pytest-3 --cache-clear -v --cov --cov-append --cov-report=term --cov-report=html lava_common/test
 fi

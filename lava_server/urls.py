@@ -101,6 +101,10 @@ urlpatterns = [
         include('lava_results_app.urls')),
     url(r'^{mount_point}scheduler/'.format(mount_point=settings.MOUNT_POINT),
         include('lava_scheduler_app.urls')),
+
+    # REST API
+    url(r'^{mount_point}api/'.format(mount_point=settings.MOUNT_POINT),
+        include('lava_rest_app.urls')),
 ]
 
 if settings.USE_DEBUG_TOOLBAR:
