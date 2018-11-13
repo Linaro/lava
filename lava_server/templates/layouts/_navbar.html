@@ -1,0 +1,54 @@
+{% load i18n %}
+{% load utils %}
+        <ul class="nav navbar-nav">
+          <li><a href="{% url 'lava.home' %}"><span class="glyphicon glyphicon-home"></span> Home</a></li>
+          <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><span class="glyphicon glyphicon-signal"></span> Results <b class="caret"></b></a>
+            <ul class="dropdown-menu">
+              <li><a href="{% url 'lava_results' %}">Results</a></li>
+              <li><a href="{% url 'lava.results.query_list' %}">Queries</a></li>
+              <li><a href="{% url 'lava.results.chart_list' %}">Charts</a></li>
+            </ul>
+          </li>
+          <li class="dropdown">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><span class="glyphicon glyphicon-calendar"></span> Scheduler <b class="caret"></b></a>
+            <ul class="dropdown-menu">
+              <li><a href="{% url 'lava.scheduler' %}">Status</a></li>
+              <li><a href="{% url 'lava.scheduler.reports' %}">Reports</a></li>
+              <li role="separator" class="divider"></li>
+              <li><a href="{% url 'lava.scheduler.device_types' %}">Device Types</a></li>
+              <li><a href="{% url 'lava.scheduler.alldevices' %}">Devices</a></li>
+              <li><a href="{% url 'lava.scheduler.job.list' %}">Jobs</a></li>
+              <li><a href="{% url 'lava.scheduler.workers' %}">Workers</a></li>
+              {% if perms.lava_scheduler_app.add_testjob %}
+              <li role="separator" class="divider"></li>
+              <li><a href="{% url 'lava.scheduler.job.submit' %}">Submit</a></li>
+              {% endif %}
+            </ul>
+          </li>
+          <li class="dropdown">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><span class="glyphicon glyphicon-flash"></span> API <b class="caret"></b></a>
+            <ul class="dropdown-menu">
+              <li><a href="{% url 'lava.api_help' %}">Available Methods</a></li>
+              <li><a href="{% url 'linaro_django_xmlrpc_tokens' %}">Authentication Tokens</a></li>
+            </ul>
+          </li>
+          {% assign_setting 'CUSTOM_DOCS' as userdocs %}
+              {% if userdocs %}
+                  <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><span class="glyphicon glyphicon-question-sign"></span> Help <b class="caret"></b></a>
+                  <ul class="dropdown-menu">
+                      <li><a href="{{ STATIC_URL }}docs/v2">Help</a></li>
+                  {% for label, url in userdocs.items %}
+                      {% if label and url %}
+                         <li role="separator" class="divider"></li>
+                         <li><a href="{{ url }}">{{ label }}</a></li>
+                      {% endif %}
+                  {% endfor %}
+                  </ul>
+                  </li>
+              {% else %}
+                  <li><a href="{{ STATIC_URL }}docs/v2"><span class="glyphicon glyphicon-question-sign"></span> Help</a></li>
+              {% endif %}
+        </ul>
+
