@@ -502,6 +502,10 @@ class BootloaderCommandOverlay(Action):
 
         substitutions['{ROOT}'] = self.get_namespace_data(action='bootloader-from-media', label='uuid', key='root')  # UUID label, not a file
         substitutions['{ROOT_PART}'] = self.get_namespace_data(action='bootloader-from-media', label='uuid', key='boot_part')
+
+        # Save the substitutions
+        self.set_namespace_data(action=self.name, label=self.method, key='substitutions', value=substitutions)
+
         if self.use_bootscript:
             script = "/script.ipxe"
             bootscript = self.get_namespace_data(action='tftp-deploy', label='tftp', key='tftp_dir') + script

@@ -181,6 +181,52 @@ def _monitor_def_schema():
     )
 
 
+def _job_interactive_schema():
+    return Schema(
+        {
+            Required("interactive"): _interactive_def_schema(),
+            Optional("timeout"): _timeout_schema(),
+        }
+    )
+
+
+def _interactive_def_schema():
+    return Schema(
+        [
+            {
+                Required("name"): str,
+                Required("prompts"): list,
+                Required("script"): _interactive_script_schema(),
+            }
+        ]
+    )
+
+
+def _interactive_script_schema():
+    return Schema(
+        [
+            {
+                Optional("name"): Match(
+                    r"^[a-zA-Z0-9-_]+$", msg=INVALID_CHARACTER_ERROR_MSG
+                ),
+                Required("command"): str,
+                Optional("patterns"): Schema(
+                    [
+                        {
+                            Required("message"): str,
+                            Required("result"): Any("success", "failure"),
+                            Optional("exception"): Any(
+                                "InfrastructureError", "JobError", "TestError"
+                            ),
+                            Optional("error"): str,
+                        }
+                    ]
+                ),
+            }
+        ]
+    )
+
+
 def _job_command_schema():
     return Schema({Required("name"): str, Optional("timeout"): _timeout_schema()})
 
@@ -191,7 +237,9 @@ def _job_actions_schema():
             {
                 "deploy": Any(_deploy_tftp_schema(), _job_deploy_schema()),
                 "boot": _job_boot_schema(),
-                "test": Any(_job_monitor_schema(), _job_test_schema()),
+                "test": Any(
+                    _job_monitor_schema(), _job_interactive_schema(), _job_test_schema()
+                ),
                 "command": _job_command_schema(),
             }
         ]

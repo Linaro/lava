@@ -1,0 +1,44 @@
+device_type: b2260
+job_name: interactive boot
+timeouts:
+  job:
+    minutes: 10
+priority: medium
+visibility: public
+
+actions:
+- boot:
+    method: bootloader
+    bootloader: u-boot
+    commands: []
+    prompts:
+    - '=>'
+- test:
+    timeout:
+      minutes: 4
+    interactive:
+    - name: network
+      prompts: ["=> ", "/ # "]
+      script:
+      - command: dhcp
+        name: dhcp
+        patterns:
+        - message: "DHCP client bound to address"
+          result: success
+        - message: "TIMEOUT"
+          result: failure
+          exception: InfrastructureError
+          error: "dhcp failed"
+    - name: boot-manually
+      prompts: ["=> ", "/ # "]
+      script:
+      - command: "setenv serverip {SERVER_IP}"
+        name: setenv
+      - command: "tftp {KERNEL_ADDR} {KERNEL}"
+      - command: "tftp {RAMDISK_ADDR} {RAMDISK}"
+      - command: "tftp {DTB_ADDR} {DTB}"
+      - command: "{BOOTX}"
+        name: bootx
+        patterns:
+        - message: "Starting kernel"
+          result: success

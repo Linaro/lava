@@ -25,6 +25,9 @@ shell environment (``/bin/ash``, ``/bin/dash`` or ``/bin/bash`` are the
 most common) so that LAVA can execute the LAVA Test Shell Helper
 scripts.
 
+:ref:`interactive_test_action` are used for non-POSIX compliant shell like
+bootloader (u-boot for instance) shells.
+
 :ref:`monitor_test_action` are used for devices which have no POSIX
 shell and start the test immediately, for example IoT boards.
 
@@ -314,6 +317,65 @@ The ``date`` and ``mount`` test cases are referenced via the TestSet:
 
 A single test definition can start and stop different TestSets in sequence, as
 long as the name of each TestSet is unique for that test definition.
+
+.. index:: test action interactive
+
+.. _interactive_test_action:
+
+Interactive
+***********
+
+An interactive test action allows to interact with a non-POSIX test shell. For
+instance a u-boot shell.
+
+A u-boot interactive test might look like:
+
+.. code-block:: yaml
+
+ - name: network
+   prompts: ["=>", "/ # "]
+   script:
+   - name: dhcp
+     command: dhcp
+     patterns:
+     - message: "DHCP client bound to address"
+       result: success
+     - message: "TIMEOUT"
+       result: failure
+       exception: InfrastructureError
+       error: "dhcp failed"
+   - name: setenv
+     command: "setenv serverip {SERVER_IP}"
+
+A script is a list of commands to send:
+
+* ``command``: the command to type in the shell
+* ``name``: if present, log the result of this command under the given name
+* ``patterns``: if present, check the logs for the given patterns
+
+``patterns`` should be a list of dictionaries with:
+
+* ``message``: the string (or regexp) to match
+* ``result``: the result of the command if this message was found (**success** or **failure**)
+
+If the message indicates a fatal problem, an exception can be raised:
+
+* ``exception``: the exception to raise:
+
+  * :ref:`InfrastructureError <infrastructure_error_exception>`
+  * :ref:`JobError <job_error_exception>`
+  * :ref:`TestError <test_error_exception>`
+
+* ``error``: if defined, the exception message
+
+.. warning:: by default, an error is *not* fatal.
+
+.. note:: without a ``name`` the result of a command will not be recorded in the
+  test job results.
+
+.. note:: whenever needed, the command can use variables that will be
+  subtituted with live data like ``{SERVER_IP}``.
+
 
 .. index:: test action monitors
 
