@@ -1,0 +1,154 @@
+.. index:: deploy to vemsd, deploy to mps
+
+.. _deploy_to_vemsd:
+
+to: vemsd
+*********
+
+``VEMSD`` or Versatile Express MicroSD is a deployment method to
+write a new recovery image.
+
+.. index:: deploy to vemsd recovery_image
+
+.. _deploy_to_vemsd_recovery:
+
+recovery_image
+==============
+
+Download the URL ready to be unpacked onto the MicroSD.
+
+.. _deploy_to_vemsd_recovery_url:
+
+url *
+-----
+
+Specifies the URL to download. All downloads are check-summed using ``md5sum``
+and ``sha256sum``
+
+URLs are checked during the test job validation to ensure that the file can be
+downloaded. Missing files will cause the test job to end as Incomplete.
+
+URLs **must** use one of the supported schemes, the first element of the URL.
+
+.. topic:: Supported schema
+
+ * ``http://``
+ * ``https://``
+ * ``file://``
+ * ``lxc://``
+
+.. _deploy_to_vemsd_recovery_compression:
+
+compression
+-----------
+
+If the image is compressed, the compression method **must** be specified.
+
+``zip`` files are downloaded without decompression and unpacked
+directly onto the filesystem of the VEMSD.
+
+``gz`` files are required to be a ``.tar.gz`` and will be decompressed
+during download and then unpacked onto the filesystem of the VEMSD.
+
+.. topic:: Allowed values
+
+ * ``gz``
+ * ``zip``
+
+.. _deploy_to_mps:
+
+to: mps
+*******
+
+MPS is a deployment method used by the MPS2 device which is similar to
+the support for :ref:`deploy_to_vemsd`
+
+.. index:: deploy to mps recovery_image
+
+.. _deploy_to_mps_recovery:
+
+recovery_image
+==============
+
+Download the URL ready to be unpacked onto the USB filesystem of the
+MPS2 device.
+
+.. _deploy_to_mps_recovery_url:
+
+url *
+-----
+
+Specifies the URL to download. All downloads are check-summed using ``md5sum``
+and ``sha256sum``
+
+URLs are checked during the test job validation to ensure that the file can be
+downloaded. Missing files will cause the test job to end as Incomplete.
+
+URLs **must** use one of the supported schemes, the first element of the URL.
+
+.. topic:: Supported schema
+
+ * ``http://``
+ * ``https://``
+ * ``file://``
+ * ``lxc://``
+
+.. _deploy_to_mps_recovery_compression:
+
+compression
+-----------
+
+If the image is compressed, the compression method **must** be specified.
+
+``zip`` files are downloaded without decompression and unpacked
+directly onto the filesystem of the USB filesystem of the MPS2.
+
+``gz`` files are required to be a ``.tar.gz`` and will be decompressed
+during download and then unpacked onto the filesystem of the VEMSD.
+
+.. topic:: Allowed values
+
+ * ``gz``
+ * ``zip``
+
+.. index:: deploy to mps test_binary
+
+.. _deploy_to_mps_test_binary:
+
+test_binary
+===========
+
+Download test binary to MPS device and rename if required.
+
+.. _deploy_to_mps_binary_url:
+
+url *
+-----
+
+Specifies the URL to download. All downloads are check-summed using ``md5sum``
+and ``sha256sum``
+
+URLs are checked during the test job validation to ensure that the file can be
+downloaded. Missing files will cause the test job to end as Incomplete.
+
+URLs **must** use one of the supported schemes, the first element of the URL.
+
+.. topic:: Supported schema
+
+ * ``http://``
+ * ``https://``
+ * ``file://``
+ * ``lxc://``
+
+.. _deploy_to_mps_binary_rename:
+
+rename
+------
+
+Renames the test_binary if required
+
+If the recovery_image expects to flash a specific image and the file downloaded
+is not named this way, this option will save it with a different name on the
+board.
+
+If not specified, the the test_binary is copied as-is, no renaming takes place.
