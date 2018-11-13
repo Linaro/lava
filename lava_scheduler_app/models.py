@@ -665,10 +665,10 @@ class Device(RestrictedResource):
         return self.is_owned_by(user)
 
     def is_valid(self, system=True):
-        rendered = self.load_configuration()
         try:
+            rendered = self.load_configuration()
             validate_device(rendered)
-        except SubmissionException:
+        except (SubmissionException, yaml.YAMLError):
             return False
         return True
 
