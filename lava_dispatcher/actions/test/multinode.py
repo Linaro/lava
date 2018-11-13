@@ -95,7 +95,9 @@ class MultinodeTestAction(TestShellAction):
             self.errors = "Invalid base class TestAction"
             return
         self.patterns.update(self.multinode_dict)
-        self.signal_director.setup(self.parameters)
+        self.signal_director.setup(
+            self.parameters, character_delay=self.character_delay
+        )
 
     def _reset_patterns(self):
         super()._reset_patterns()
@@ -147,12 +149,14 @@ class MultinodeTestAction(TestShellAction):
     class SignalDirector(TestShellAction.SignalDirector):
         def __init__(self, protocol):
             super().__init__(protocol)
+            self.character_delay = 0
             self.base_message = {}
 
-        def setup(self, parameters):
+        def setup(self, parameters, character_delay=0):
             """
             Retrieve the poll_timeout from the protocol parameters which are set after init.
             """
+            super().setup(parameters)
             if MultinodeProtocol.name not in parameters:
                 return
             if "timeout" in parameters[MultinodeProtocol.name]:
@@ -161,6 +165,7 @@ class MultinodeTestAction(TestShellAction):
                         parameters[MultinodeProtocol.name]["timeout"]
                     )
                 }
+            self.character_delay = character_delay
 
         def _on_send(self, *args):
             self.logger.debug("%s lava-send" % MultinodeProtocol.name)
@@ -194,7 +199,9 @@ class MultinodeTestAction(TestShellAction):
                 message_str = " nack"
             else:
                 message_str = ""
-            self.connection.sendline("<LAVA_SYNC_COMPLETE%s>" % message_str)
+            self.connection.sendline(
+                "<LAVA_SYNC_COMPLETE%s>" % message_str, delay=self.character_delay
+            )
             self.connection.sendline("\n")
 
         def _on_wait(self, message_id):
@@ -210,7 +217,9 @@ class MultinodeTestAction(TestShellAction):
                 for target, messages in reply.items():
                     for key, value in messages.items():
                         message_str += " %s:%s=%s" % (target, key, value)
-            self.connection.sendline("<LAVA_WAIT_COMPLETE%s>" % message_str)
+            self.connection.sendline(
+                "<LAVA_WAIT_COMPLETE%s>" % message_str, delay=self.character_delay
+            )
             self.connection.sendline("\n")
 
         def _on_wait_all(self, message_id, role=None):
@@ -228,5 +237,7 @@ class MultinodeTestAction(TestShellAction):
                 for target, messages in reply.items():
                     for key, value in messages.items():
                         message_str += " %s:%s=%s" % (target, key, value)
-            self.connection.sendline("<LAVA_WAIT_ALL_COMPLETE%s>" % message_str)
+            self.connection.sendline(
+                "<LAVA_WAIT_ALL_COMPLETE%s>" % message_str, delay=self.character_delay
+            )
             self.connection.sendline("\n")

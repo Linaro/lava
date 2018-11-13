@@ -245,6 +245,8 @@ class TestMultinode(StdoutTestCase):  # pylint: disable=too-many-public-methods
         ][0]
         self.assertIsNotNone(testshell)
         testshell.validate()
+        self.assertEqual(30, testshell.character_delay)
+        self.assertEqual(30, testshell.signal_director.character_delay)
         self.assertIsNotNone(testshell.protocols)
         self.assertEqual(testshell.timeout.duration, 180)
         self.assertIn(
