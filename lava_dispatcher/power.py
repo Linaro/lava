@@ -143,7 +143,7 @@ class PrePower(Action):
                 command = [command]
             for cmd in command:
                 self.run_cmd(
-                    cmd, error_msg="Unable to run pre-power: '%s' faield" % cmd
+                    cmd, error_msg="Unable to run pre-power: '%s' failed" % cmd
                 )
         self.results = {"success": self.name}
         return connection
