@@ -692,6 +692,12 @@ class DeviceTable(LavaTable):
         return pklink(record.device_type)
 
     def render_worker_host(self, record):
+        if not record.worker_host and record.health == Device.HEALTH_RETIRED:
+            return "..."
+        if not record.worker_host and record.health != Device.HEALTH_RETIRED:
+            return mark_safe(  # nosec - internal data
+                '<span class="text-danger"><i>No worker</i> <span class="glyphicon glyphicon-fire"></span></span>'
+            )
         if (
             record.worker_host.state == Worker.STATE_ONLINE
             and record.worker_host.health == Worker.HEALTH_ACTIVE
