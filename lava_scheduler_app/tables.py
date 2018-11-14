@@ -697,7 +697,7 @@ class DeviceTable(LavaTable):
             and record.worker_host.health == Worker.HEALTH_ACTIVE
         ):
             return mark_safe(  # nosec - internal data
-                '<a href="%s">%s</span></a>'
+                '<a href="%s">%s</a>'
                 % (record.worker_host.get_absolute_url(), record.worker_host)
             )
         elif record.worker_host.health == Worker.HEALTH_ACTIVE:
