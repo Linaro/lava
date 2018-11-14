@@ -3,7 +3,7 @@ device_type: qemu
 job_name: QEMU NFS using Jessie
 timeouts:
   job:
-    minutes: 30
+    hours: 1
   action:
     minutes: 1
 priority: medium
@@ -57,7 +57,7 @@ actions:
 
 - test:
     timeout:
-      minutes: 25
+      minutes: 45
     definitions:
     - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
       from: git

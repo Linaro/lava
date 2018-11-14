@@ -5,7 +5,7 @@ job_name: Second MultiNode job - NFS
 # Reasonable defaults for a simple job
 timeouts:
   job:
-    minutes: 15
+    minutes: 30
   action:
     minutes: 5
   connection:
@@ -41,7 +41,7 @@ actions:
     role:
     - server
     timeout:
-      minutes: 2
+      minutes: 10
     to: tftp
     kernel:
       url: https://files.lavasoftware.org/components/lava/standard/debian/stretch/armhf/3/vmlinuz-4.9.0-4-armmp
@@ -68,7 +68,7 @@ actions:
     role:
     - client
     timeout:
-      minutes: 2
+      minutes: 10
     to: tftp
     kernel:
       url: https://files.lavasoftware.org/components/lava/standard/debian/stretch/armhf/3/vmlinuz-4.9.0-4-armmp
