@@ -693,7 +693,7 @@ class DeviceTable(LavaTable):
 
     def render_worker_host(self, record):
         if not record.worker_host and record.health == Device.HEALTH_RETIRED:
-            return "..."
+            return mark_safe("<i>...</i>")  # nosec - internal data
         if not record.worker_host and record.health != Device.HEALTH_RETIRED:
             return mark_safe(  # nosec - internal data
                 '<span class="text-danger"><i>No worker</i> <span class="glyphicon glyphicon-fire"></span></span>'
