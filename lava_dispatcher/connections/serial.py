@@ -19,6 +19,8 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import time
+
+from lava_dispatcher.connection import RECOGNIZED_TAGS
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.action import Action
 from lava_common.exceptions import JobError, InfrastructureError
@@ -199,3 +201,52 @@ class QemuSession(ShellSession):
         self.listen_feedback(5)
         self.connected = False
         super().disconnect()
+
+
+class DisconnectDevice(ConnectDevice):
+    """
+    Breaks the serial connection made by ConnectDevice.
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.name = "disconnect-device"
+        self.description = "disconnect from console"
+        self.summary = self.description
+
+    def validate(self):
+        super().validate()
+        if 'connections' not in self.job.device['commands']:
+            self.errors = "Unable to connect to shell - missing connections block."
+            return
+        primary_connection_has_correct_tags = False
+        for connection in self.job.device['commands']['connections']:
+            tags = self.job.device['commands']['connections'][connection]['tags']
+            if 'primary' in tags:
+                # This is the primary connection that will be disconnected.
+                # Check we know how to disconnect.
+                if set(tags) & set(RECOGNIZED_TAGS):
+                    primary_connection_has_correct_tags = True
+        if not primary_connection_has_correct_tags:
+            self.errors = "LAVA does not know how to disconnect: " \
+                          "ensure that primary connection has one of the following tags: {}".format(RECOGNIZED_TAGS)
+
+    def run(self, connection, max_end_time):
+        connection_namespace = self.parameters.get('connection-namespace')
+        parameters = None
+        if connection_namespace:
+            parameters = {"namespace": connection_namespace}
+        else:
+            parameters = {'namespace': self.parameters.get('namespace', 'common')}
+        connection = self.get_namespace_data(
+            action='shared', label='shared', key='connection', deepcopy=False, parameters=parameters)
+
+        if connection:
+            self.logger.debug("Stopping connection")
+            connection.disconnect()
+            connection.connected = False
+            self.set_namespace_data(action='shared', label='shared', key='connection', value=None, parameters=parameters)
+            return None
+        else:
+            self.logger.debug("Not connected, no need to disconnect.")
+        return connection

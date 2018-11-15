@@ -23,9 +23,10 @@ import os
 import yaml
 import logging
 import unittest
-from lava_common.exceptions import JobError
+from lava_common.exceptions import JobError, InfrastructureError
 from lava_common.timeout import Timeout
 from lava_dispatcher.actions.boot.ssh import SchrootAction
+from lava_dispatcher.connection import RECOGNIZED_TAGS
 from lava_dispatcher.test.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.test.utils import infrastructure_error
 from lava_dispatcher.utils.filesystem import check_ssh_identity_file
@@ -641,3 +642,58 @@ class TestTimeouts(StdoutTestCase):
             retry.timeout.duration, 90
         )  # Set by the job global action timeout
         self.assertEqual(retry.connection_timeout.duration, 45)
+
+
+class TestDisconnect(StdoutTestCase):
+    """
+    Test disconnect action
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.factory = ConnectionFactory()
+
+    def test_handled_disconnect(self):
+        factory = ConnectionFactory()
+        job = factory.create_job(
+            "mps2plus-01.jinja2", "sample_jobs/mps2plus.yaml", validate_job=False
+        )
+        job.validate()
+        deploy = [
+            action for action in job.pipeline.actions if action.name == "mps-deploy"
+        ][0]
+        self.assertIsNotNone(deploy)
+
+    def test_disconnect_with_plain_connection_command(self):
+        factory = ConnectionFactory()
+        job = factory.create_job(
+            "mps2plus-02.jinja2", "sample_jobs/mps2plus.yaml", validate_job=False
+        )
+        # mps2plus-02.jinja2 does not use tags for it's connection
+        with self.assertRaises(JobError):
+            job.validate()
+
+    def test_unhandled_disconnect(self):
+        factory = ConnectionFactory()
+        job = factory.create_job(
+            "mps2plus-03.jinja2", "sample_jobs/mps2plus.yaml", validate_job=False
+        )
+        try:
+            job.validate()
+        except InfrastructureError:
+            raise self.skipTest("Cannot validate if minicom is not on PATH")
+        # mps2plus-03.jinja2 does use a tag, but minicom cannot be disconnected from currently
+        with self.assertRaises(JobError):
+            job.validate()
+        # Want to check the exception message gives some useful information
+        # on how to amend the device dictionary.
+        try:
+            job.validate()
+        except JobError as e:
+            err_msg = (
+                "LAVA does not know how to disconnect: "
+                "ensure that primary connection has one of the following tags: {}".format(
+                    RECOGNIZED_TAGS
+                )
+            )
+            self.assertEqual(str(e), err_msg)

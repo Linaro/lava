@@ -30,6 +30,12 @@ from lava_common.timeout import Timeout
 # pylint: disable=unused-argument,no-self-use
 
 
+RECOGNIZED_TAGS = (
+    'telnet',
+    'ssh'
+)
+
+
 class SignalMatch(InternalObject):  # pylint: disable=too-few-public-methods
 
     def match(self, data, fixupdict=None):  # pylint: disable=no-self-use
@@ -102,6 +108,7 @@ class Connection:
         self.connected = True
         self.check_char = '#'
         self.tags = []
+        self.recognized_names = ['LxcSession', 'QemuSession']
 
     def corruption_check(self):
         self.sendline(self.check_char)
@@ -132,7 +139,11 @@ class Connection:
 
     def disconnect(self, reason):
         logger = logging.getLogger('dispatcher')
-        if not self.tags:
+        if not self.tags or \
+                (
+                self.name not in self.recognized_names and
+                not set(RECOGNIZED_TAGS) & set(self.tags)
+                ):
             raise LAVABug("'disconnect' not implemented")
         try:
             if 'telnet' in self.tags:

@@ -12,7 +12,10 @@ constants:
      grub-interrupt-character: 'c'
 
 commands:
-    connect: telnet 192.168.0.43 10031
+    connections:
+      uart0:
+        connect: telnet localhost 10020
+        tags: [primary, telnet]
     hard_reset: /opt/lava-lab/shared/lab-scripts/snmp_pdu_control --hostname 192.168.0.53 --port 14 --delay 20 --command reboot
     power_off: /opt/lava-lab/shared/lab-scripts/snmp_pdu_control --hostname 192.168.0.53 --port 14 --delay 20 --command off
     power_on: /opt/lava-lab/shared/lab-scripts/snmp_pdu_control --hostname 192.168.0.53 --port 14 --delay 20 --command on

@@ -1,0 +1,11 @@
+{% extends 'mps.jinja2' %}
+
+{# Primary connection must be something LAVA knows how to disconnect from, e.g. telnet #}
+{# Therefore as this connection command has no tags, this will not work #}
+{% set connection_command = 'telnet localhost 10020' %}
+
+{% set power_on_command = '/opt/lava-lab/shared/lab-scripts/snmp_pdu_control --hostname 192.168.0.23 --port 1 --delay 20 --command on' %}
+{% set power_off_command = '/opt/lava-lab/shared/lab-scripts/snmp_pdu_control --hostname 192.168.0.23 --port 1 --delay 20 --command off' %}
+{% set hard_reset_command = '/opt/lava-lab/shared/lab-scripts/snmp_pdu_control --hostname 192.168.0.23 --port 1 --delay 20 --command reboot' %}
+
+{% set usb_filesystem_label = 'V2M-MPS' %}

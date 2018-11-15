@@ -27,16 +27,7 @@ from lava_dispatcher.test.utils import DummyLogger
 
 class MpsFactory(Factory):
     def create_mps_job(self, filename):  # pylint: disable=no-self-use
-        # FIXME - create a device dictionary for mps2plus
-        device = NewDevice(
-            os.path.join(os.path.dirname(__file__), "../devices/mps2plus_01.yaml")
-        )
-        y_file = os.path.join(os.path.dirname(__file__), filename)
-        with open(y_file) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "")
-        job.logger = DummyLogger()
-        return job
+        return self.create_job("mps2plus-01.jinja2", filename)
 
 
 class TestMps(StdoutTestCase):

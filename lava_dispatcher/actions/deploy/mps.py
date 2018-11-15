@@ -31,8 +31,9 @@ from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.logical import Deployment
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.download import DownloaderAction
-from lava_dispatcher.connections.serial import ConnectDevice
+from lava_dispatcher.connections.serial import DisconnectDevice
 from lava_dispatcher.power import ResetDevice
+from lava_dispatcher.power import PowerOff
 from lava_dispatcher.utils.udev import WaitUSBMassStorageDeviceAction
 from lava_dispatcher.actions.deploy.vemsd import (
     MountVExpressMassStorageDevice,
@@ -93,7 +94,7 @@ class MpsAction(DeployAction):
     def populate(self, parameters):
         download_dir = self.mkdtemp()
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.internal_pipeline.add_action(ConnectDevice())
+        self.internal_pipeline.add_action(DisconnectDevice())
         self.internal_pipeline.add_action(ResetDevice())
         self.internal_pipeline.add_action(WaitUSBMassStorageDeviceAction())
         for image in parameters['images'].keys():
@@ -106,6 +107,7 @@ class MpsAction(DeployAction):
         if 'test_binary' in parameters['images'].keys():
             self.internal_pipeline.add_action(DeployMPSTestBinary())
         self.internal_pipeline.add_action(UnmountVExpressMassStorageDevice())
+        self.internal_pipeline.add_action(PowerOff())
 
 
 class DeployMPSTestBinary(Action):
