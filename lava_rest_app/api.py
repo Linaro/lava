@@ -17,6 +17,10 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
+import io
+import junit_xml
+import tap
+
 from lava_scheduler_app.models import Device, DeviceType, TestJob
 from lava_results_app.models import TestSuite, TestCase
 from lava_scheduler_app.views import filter_device_types
@@ -153,6 +157,21 @@ class TestCaseSerializer(serializers.ModelSerializer):
 
 
 class TestJobViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    List TestJobs visible to the current user.
+
+    The logs, test results and test suites of a specific TestJob are available at:
+
+    * `/jobs/<job_id>/logs/`
+    * `/jobs/<job_id>/suites/`
+    * `/jobs/<job_id>/tests/`
+
+    The test results are also available in JUnit and TAP13 at:
+
+    * `/jobs/<job_id>/junit/`
+    * `/jobs/<job_id>/tap13/`
+    """
+
     queryset = TestJob.objects
     serializer_class = TestJobSerializer
     filter_fields = (
@@ -184,6 +203,51 @@ class TestJobViewSet(viewsets.ReadOnlyModelViewSet):
             "tags", "failure_tags", "viewing_groups"
         ).visible_by_user(self.request.user)
 
+    @detail_route(methods=["get"], suffix="junit")
+    def junit(self, request, **kwargs):
+        suites = []
+        for suite in self.get_object().testsuite_set.all().order_by("id"):
+            cases = []
+            for case in suite.testcase_set.all().order_by("id"):
+                # Grab the duration
+                md = case.action_metadata
+                if md is not None:
+                    duration = md.get("duration")
+                if duration is not None:
+                    duration = float(duration)
+
+                # Build the test case junit object
+                tc = junit_xml.TestCase(
+                    case.name,
+                    elapsed_sec=duration,
+                    classname=case.suite.name,
+                    timestamp=case.logged,
+                )
+                if case.result == TestCase.RESULT_FAIL:
+                    logs = None
+                    # TODO: is this of any use? (yaml inside xml!)
+                    if (
+                        case.start_log_line is not None
+                        and case.end_log_line is not None
+                    ):
+                        logs = read_logs(
+                            self.get_object().output_dir,
+                            case.start_log_line,
+                            case.end_log_line,
+                        )
+                    tc.add_error_info("failed", output=logs)
+                elif case.result == TestCase.RESULT_SKIP:
+                    tc.add_skipped_info("skipped")
+                cases.append(tc)
+            suites.append(junit_xml.TestSuite(suite.name, test_cases=cases))
+
+        data = junit_xml.TestSuite.to_xml_string(suites, encoding="utf-8")
+        response = HttpResponse(data, content_type="application/xml")
+        response["Content-Disposition"] = (
+            "attachment; filename=job_%d.xml" % self.get_object().id
+        )
+        return response
+
     @detail_route(methods=["get"], suffix="logs")
     def logs(self, request, **kwargs):
         start = safe_str2int(request.query_params.get("start", 0))
@@ -207,6 +271,46 @@ class TestJobViewSet(viewsets.ReadOnlyModelViewSet):
         page = paginator.paginate_queryset(suites, request)
         serializer = TestSuiteSerializer(page, many=True, context={"request": request})
         return paginator.get_paginated_response(serializer.data)
+
+    @detail_route(methods=["get"], suffix="tap13")
+    def tap13(self, request, **kwargs):
+        stream = io.StringIO()
+        count = TestCase.objects.filter(suite__job=self.get_object()).count()
+        tracker = tap.tracker.Tracker(plan=count, streaming=True, stream=stream)
+
+        # Loop on all test cases
+        for suite in self.get_object().testsuite_set.all().order_by("id"):
+            for case in suite.testcase_set.all().order_by("id"):
+                if case.result == TestCase.RESULT_FAIL:
+                    if (
+                        case.start_log_line is not None
+                        and case.end_log_line is not None
+                    ):
+                        logs = read_logs(
+                            self.get_object().output_dir,
+                            case.start_log_line,
+                            case.end_log_line,
+                        )
+                        logs = "\n ".join(logs.split("\n"))
+                        tracker.add_not_ok(
+                            suite.name, case.name, diagnostics=" ---\n " + logs + "..."
+                        )
+                    else:
+                        tracker.add_not_ok(suite.name, case.name)
+                elif case.result == TestCase.RESULT_SKIP:
+                    tracker.add_skip(suite.name, case.name, "test skipped")
+                elif case.result == TestCase.RESULT_UNKNOWN:
+                    tracker.add_not_ok(suite.name, case.name, "TODO unknow result")
+                else:
+                    tracker.add_ok(suite.name, case.name)
+
+        # Send back the stream
+        stream.seek(0)
+        response = HttpResponse(stream, content_type="application/yaml")
+        response["Content-Disposition"] = (
+            "attachment; filename=job_%d.yaml" % self.get_object().id
+        )
+        return response
 
     @detail_route(methods=["get"], suffix="tests")
     def tests(self, request, **kwargs):

@@ -37,11 +37,15 @@ lava-server:
     name: python3-zmq
   requests:
     name: python3-requests
+  tap:
+    name: python3-tap
   simplejson:
     name: python3-simplejson
   voluptuous:
     version: ">=0.8.8"
     name: python3-voluptuous
+  junit.xml:
+    name: python3-junit.xml
   guestfs:
     name: python3-guestfs
     unittests: true

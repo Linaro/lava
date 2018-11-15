@@ -116,6 +116,10 @@ In addition TestJob object (/api/v0.1/jobs/id/) contains following routes:
  - suites (/api/v0.1/jobs/<job_id>/suites)
  - tests (/api/v0.1/jobs/<job_id>/tests)
 
+The results are also available in JUnit or TAP13 format at:
+ - junit (/api/v0.1/jobs/<job_id>/junit/)
+ - tap13 (/api/v0.1/jobs/<job_id>/tap13/)
+
 Objects in all endpoints can be sorted as described
 in django-rest-framework docs: http://www.django-rest-framework.org/api-guide/filtering/
 Filtering and searching is currently disabled.
