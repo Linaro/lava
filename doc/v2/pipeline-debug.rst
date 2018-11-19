@@ -143,6 +143,10 @@ them.
 .. seealso:: https://docs.djangoproject.com/en/dev/ref/checks/ to know more
              about Django system check framework.
 
+If the JSON syntax of ``/etc/lava-server/settings.conf`` is invalid,
+this check will display a warning: ``settings.conf is not a valid json
+file``.
+
 LAVA sets the following values by default::
 
   SECURE_CONTENT_TYPE_NOSNIFF = True
@@ -163,3 +167,64 @@ The following checks are silenced and does not show any errors or warnings:
    values to suit the requirements of each LAVA instance.
 
 .. seealso:: :ref:`django_localhost`
+
+.. _diff_settings:
+
+Displaying current settings
+===========================
+
+The django developer shell can be used to check the value which is
+currently set:
+
+.. code-block:: none
+
+  $ sudo lava-server manage shell
+  Python 3.6.7 (default, Oct 21 2018, 08:08:16)
+  [GCC 8.2.0] on linux
+  Type "help", "copyright", "credits" or "license" for more information.
+  (InteractiveConsole)
+
+.. code-block:: python
+
+  >>> from django.conf import settings
+  >>> settings.CSRF_COOKIE_HTTPONLY
+  False
+
+.. seealso:: :ref:`developer_access_to_django_shell`
+
+.. caution:: Avoid making changes to the defaults inside the LAVA code.
+   These will be replaced when you upgrade to future versions of the
+   lava-server package. If you need to make changes, instead edit
+   ``/etc/lava-server/settings.conf`` where they will be preserved.
+   Whenever you make changes, be sure to restart the LAVA daemons
+   before checking for the effects of the change::
+
+    $ sudo service lava-server-gunicorn restart
+
+   In some situations, you may also need to restart ``lava-logs``,
+   ``lava-master`` and ``lava-publisher`` in the same way.
+
+   .. seealso:: Installing a new release or a set of :ref:`Developer
+      packages <testing_packaging>` will also restart all LAVA daemons.
+
+Django support in 1.11
+----------------------
+
+If your local instance is using ``python3-django`` from
+``stretch-backports`` or ``buster``, the new support in 1.11 and later
+can be used to display the settings as well::
+
+ $ sudo lava-server manage diffsettings --all
+
+.. seealso:: https://docs.djangoproject.com/en/1.11/ref/django-admin/#diffsettings
+
+Settings that don’t appear in the defaults are followed by "###",
+e.g.::
+
+ BRANDING_MESSAGE = 'Master branch instance on Debian Stretch.'  ###
+
+.. danger:: Access to ``lava-server manage`` needs to be restricted
+   in the same way as read permissions on
+   ``/etc/lava-server/settings.conf`` as the current settings will
+   include the **database secret_key**, authentication passwords for
+   services like LDAP and other sensitive information.

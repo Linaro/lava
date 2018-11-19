@@ -18,6 +18,7 @@
 
 import os
 from pwd import getpwuid
+import simplejson
 import stat
 import subprocess  # nosec system
 
@@ -179,3 +180,15 @@ def check_services(app_configs, **kwargs):
                 Info("%s service is not active." % service, obj="lava service")
             )
     return errors
+
+
+@register(deploy=True)
+def check_settings(app_configs, **kwargs):
+    settings = {}
+    try:
+        with open("/etc/lava-server/settings.conf", "r") as f_conf:
+            for (k, v) in simplejson.load(f_conf).items():
+                settings[k] = v
+    except (AttributeError, ValueError):
+        return [Error("settings.conf is not a valid json file", obj="settings.conf")]
+    return []
