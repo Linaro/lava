@@ -70,12 +70,12 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
             self.parent = parent
 
     def _check_action(self, action):  # pylint: disable=no-self-use
-        if not action or not issubclass(type(action), Action):
+        if not action:
+            raise LAVABug("Need an action to add to the pipeline, not None.")
+        elif not issubclass(type(action), Action):
             raise LAVABug("Only actions can be added to a pipeline: %s" % action)
         # if isinstance(action, DiagnosticAction):
         #     raise LAVABug("Diagnostic actions need to be triggered, not added to a pipeline.")
-        if not action:
-            raise LAVABug("Unable to add empty action to pipeline")
 
     def add_action(self, action, parameters=None):  # pylint: disable=too-many-branches
         self._check_action(action)
