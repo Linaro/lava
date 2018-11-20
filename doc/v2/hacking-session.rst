@@ -134,7 +134,7 @@ connection into the LAVA log file. To access the log file, you can use a web
 browser; navigate to your hacking session and scroll to the end of the job to
 see this command line, For an example see:
 
-* https://validation.linaro.org/scheduler/job/116632/log_file#L_5_7
+* https://validation.linaro.org/scheduler/job/1126092#L2222
 
 SSH tunnels
 -----------
@@ -176,7 +176,7 @@ will output to the LAVA log like::
  This is a test statement
 
 There is an example of this online at
-https://validation.linaro.org/scheduler/job/116632/log_file#L_5_12
+https://validation.linaro.org/scheduler/job/1126092#L2300
 
 .. _stop_hacking:
 
