@@ -18,6 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+from lava_common.utils import debian_filename_version
 from lava_dispatcher.action import (
     Pipeline,
     Action,
@@ -97,7 +98,8 @@ class FlashPyOCDAction(Action):
         super().validate()
         boot = self.job.device['actions']['boot']['methods']['pyocd']
         pyocd_binary = boot['parameters']['command']
-        which(pyocd_binary)
+        binary = which(pyocd_binary)
+        self.logger.info(debian_filename_version(binary, split=False, label=True))
         self.base_command = [pyocd_binary]
         self.base_command.extend(boot['parameters'].get('options', []))
         if self.job.device['board_id'] == '0000000000':

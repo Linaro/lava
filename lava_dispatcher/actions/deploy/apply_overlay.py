@@ -34,6 +34,7 @@ from lava_common.constants import (
     RAMDISK_FNAME,
     UBOOT_DEFAULT_HEADER_LENGTH,
 )
+from lava_common.utils import debian_filename_version
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.utils.contextmanager import chdir
 from lava_dispatcher.utils.installers import (
@@ -137,10 +138,12 @@ class ApplyOverlaySparseImage(Action):
 
     def validate(self):
         super().validate()
-        which('simg2img')
+        binary = which('simg2img')
+        self.logger.info(debian_filename_version(binary, split=False, label=True))
         which('mount')
         which('umount')
-        which('img2simg')
+        binary = which('img2simg')
+        self.logger.info(debian_filename_version(binary, split=False, label=True))
 
     def run(self, connection, max_end_time):
         overlay_file = self.get_namespace_data(action='compress-overlay',

@@ -30,9 +30,11 @@ from lava_dispatcher.actions.boot.u_boot import UBootAction, UBootRetry
 from lava_dispatcher.power import ResetDevice, PDUReboot
 from lava_dispatcher.test.utils import infrastructure_error
 from lava_common.exceptions import InfrastructureError, JobError
+from lava_common.utils import debian_filename_version
 from lava_dispatcher.action import Action
 from lava_dispatcher.utils import vcs, installers
 from lava_dispatcher.utils.decorator import replace_exception
+from lava_dispatcher.utils.shell import which
 
 
 class TestGit(StdoutTestCase):  # pylint: disable=too-many-public-methods
@@ -445,3 +447,10 @@ class TestInstallers(StdoutTestCase):
             self.assertTrue(
                 "d-i preseed/late_command string cmd1; cmd2; cmd3" in file_content
             )
+
+
+class TestVersions(StdoutTestCase):
+    def test_dpkg(self):
+        # avoid checking the actual version
+        binary = which("dpkg-query")
+        self.assertIsNotNone(debian_filename_version(binary, split=False, label=True))

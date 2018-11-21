@@ -20,6 +20,7 @@
 
 import os
 import subprocess  # nosec dpkg
+from lava_common.exceptions import InfrastructureError
 
 
 def debian_package_arch(pkg):
@@ -59,3 +60,22 @@ def debian_package_version(pkg, split):
             return deb_version.split('-')[0]
         return deb_version
     return ''
+
+
+def debian_filename_version(binary, split, label=False):
+    """
+    Relies on Debian Policy rules for the existence of the
+    changelog. Distributions not derived from Debian will
+    return an empty string.
+    """
+    # if binary is not absolute, fail.
+    pkg_str = subprocess.check_output((  # nosec dpkg-query
+        "dpkg-query", "-S", binary)).strip().decode('utf-8', errors="replace")
+    if not pkg_str:
+        msg = "Unable to retrieve version of %s" % binary
+        raise InfrastructureError(msg)
+    pkg = pkg_str.split(":")[0]
+    pkg_ver = debian_package_version(pkg, split=split)
+    if not label:
+        return pkg_ver
+    return "%s for <%s>, installed at version: %s" % (pkg, binary, pkg_ver)
