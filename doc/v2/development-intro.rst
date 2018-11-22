@@ -198,7 +198,7 @@ The dependencies required by LAVA are tracked using the
 ``./share/requires.py`` script which is also available in the
 ``lava-dev`` package as ``/usr/share/lava-server/requires.py``.
 Merge requests which need extra modules which already exist in Debian
-can add the relevant information to the ``share/requirements/debian`
+can add the relevant information to the ``share/requirements/debian``
 files.
 
 .. note:: For the CI to pass, the extra module(s) **must** be available
