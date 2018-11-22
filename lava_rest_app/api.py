@@ -180,7 +180,9 @@ class TestJobViewSet(viewsets.ReadOnlyModelViewSet):
     ordering_fields = ("id", "start_time", "end_time", "submit_time")
 
     def get_queryset(self):
-        return self.queryset.visible_by_user(self.request.user)
+        return self.queryset.prefetch_related(
+            "tags", "failure_tags", "viewing_groups"
+        ).visible_by_user(self.request.user)
 
     @detail_route(methods=["get"], suffix="logs")
     def logs(self, request, **kwargs):
