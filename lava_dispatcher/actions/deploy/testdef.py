@@ -154,7 +154,7 @@ class RepoAction(Action):
         candidates = cls.__subclasses__()  # pylint: disable=no-member
         willing = [c for c in candidates if c.accepts(repo_type)]
 
-        if len(willing) == 0:
+        if not willing:
             raise JobError(
                 "No testdef_repo handler is available for the given repository type"
                 " '%s'." % repo_type)

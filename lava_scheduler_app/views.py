@@ -179,14 +179,14 @@ class JobTableView(LavaView):
         )
         for users in user_list:
             query_list.append(users.id)
-        if len(query_list) > 0:
+        if query_list:
             device_list = User.objects.filter(id__in=query_list).filter(
                 email__contains=term
             )
         query_list = []
         for users in device_list:
             query_list.append(users.id)
-        if len(query_list) > 0:
+        if query_list:
             q = q.__or__(Q(user__in=query_list))
 
         query_list = []
@@ -196,14 +196,14 @@ class JobTableView(LavaView):
         )
         for groups in group_list:
             query_list.append(groups.id)
-        if len(query_list) > 0:
+        if query_list:
             device_list = Group.objects.filter(id__in=query_list).filter(
                 name__contains=term
             )
         query_list = []
         for groups in device_list:
             query_list.append(groups.id)
-        if len(query_list) > 0:
+        if query_list:
             q = q.__or__(Q(group__in=query_list))
 
         # if the render function is changed, these will need to change too
@@ -1647,7 +1647,7 @@ def job_timing(request, pk):
     for index, action in enumerate(summary):
         summary[index][2] = action[1] / total_duration * 100
 
-    if len(pipeline) == 0:
+    if not pipeline:
         response_dict = {"timing": "", "graph": []}
     else:
         timing = render_to_string(

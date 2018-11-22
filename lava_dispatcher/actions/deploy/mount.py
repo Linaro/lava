@@ -103,7 +103,7 @@ class LoopCheckAction(DeployAction):
 
     def validate(self):
         super().validate()
-        if len(glob.glob('/sys/block/loop*')) <= 0:
+        if not glob.glob('/sys/block/loop*'):
             raise InfrastructureError("Could not mount the image without loopback devices. "
                                       "Is the 'loop' kernel module activated?")
         available_loops = len(glob.glob('/sys/block/loop*'))

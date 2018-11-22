@@ -1294,7 +1294,7 @@ closer to the actual cause within the log file.
 
     values = []
     # other processing populates the values list
-    if len(values) == 0:
+    if not values:
         if _which_check(path='lava-test-raise', match=os.path.isfile):
             subprocess.check_call(['lava-test-raise', 'setup failed'])
         else:

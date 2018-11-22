@@ -594,7 +594,7 @@ class SystemAPI(ExposedAPI):
                 FaultCodes.ServerError.INVALID_METHOD_PARAMETERS,
                 "system.multicall params must be an array",
             )
-        if len(subcall) > 0:
+        if subcall:
             return xmlrpc.client.Fault(
                 FaultCodes.ServerError.INVALID_METHOD_PARAMETERS,
                 "system.multicall specified additional arguments %s"

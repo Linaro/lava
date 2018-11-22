@@ -203,7 +203,7 @@ class Deployment:
             else:
                 replies[c.name] = res[1]
 
-        if len(willing) == 0:
+        if not willing:
             replies_string = ""
             for name, reply in replies.items():
                 replies_string += ("%s: %s\n" % (name, reply))
@@ -268,7 +268,7 @@ class Boot:
                 class_name = c.name if hasattr(c, 'name') else c.__name__
                 replies[class_name] = res[1]
 
-        if len(willing) == 0:
+        if not willing:
             replies_string = ""
             for name, reply in replies.items():
                 replies_string += ("%s: %s\n" % (name, reply))
@@ -319,7 +319,7 @@ class LavaTest:
                 class_name = c.name if hasattr(c, 'name') else c.__name__
                 replies[class_name] = res[1]
 
-        if len(willing) == 0:
+        if not willing:
             replies_string = ""
             for name, reply in replies.items():
                 replies_string += ("%s: %s\n" % (name, reply))

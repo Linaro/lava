@@ -573,9 +573,9 @@ class Device(RestrictedResource):
         """
 
         default_user_list = DefaultDeviceOwner.objects.all()[:1]
-        if not default_user_list or len(default_user_list) == 0:
+        if not default_user_list:
             superusers = User.objects.filter(is_superuser=True).order_by("id")[:1]
-            if len(superusers) > 0:
+            if superusers:
                 first_super_user = superusers[0]
                 if self.group is None:
                     self.user = User.objects.filter(username=first_super_user.username)[
@@ -951,7 +951,7 @@ def _check_tags(taglist, device_type=None, hostname=None):
     if not device_type and not hostname:
         # programming error
         return []
-    if len(taglist) == 0:
+    if not taglist:
         # no tags specified in the job, any device can be used.
         return []
     q = models.Q()
@@ -965,12 +965,12 @@ def _check_tags(taglist, device_type=None, hostname=None):
     for device in tag_devices:
         if set(device.tags.all()) & set(taglist) == set(taglist):
             matched_devices.append(device)
-    if len(matched_devices) == 0 and device_type:
+    if not matched_devices and device_type:
         raise DevicesUnavailableException(
             "No devices of type %s are available which have all of the tags '%s'."
             % (device_type, ", ".join([x.name for x in taglist]))
         )
-    if len(matched_devices) == 0 and hostname:
+    if not matched_devices and hostname:
         raise DevicesUnavailableException(
             "Device %s does not support all of the tags '%s'."
             % (hostname, ", ".join([x.name for x in taglist]))
@@ -991,7 +991,7 @@ def _check_submit_to_device(device_list, user):
     allow = []
     # ensure device_list is or can be converted to a list
     # DB queries result in a RestrictedResourceQuerySet
-    if not isinstance(list(device_list), list) or len(device_list) == 0:
+    if not isinstance(list(device_list), list) or not device_list:
         # logic error
         return allow
     device_type = None
@@ -999,7 +999,7 @@ def _check_submit_to_device(device_list, user):
         device_type = device.device_type
         if device.health != Device.HEALTH_RETIRED and device.can_submit(user):
             allow.append(device)
-    if len(allow) == 0:
+    if not allow:
         raise DevicesUnavailableException(
             "No devices of type %s are currently available to user %s"
             % (device_type, user)
@@ -1024,7 +1024,7 @@ def _check_tags_support(tag_devices, device_list, count=1):
     :raise: DevicesUnavailableException if there is no overlap between
     the two sets.
     """
-    if len(tag_devices) == 0:
+    if not tag_devices:
         # no tags requested in the job: proceed.
         return
     if len(set(tag_devices) & set(device_list)) < count:

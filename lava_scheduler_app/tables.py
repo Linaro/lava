@@ -403,7 +403,7 @@ class TagsColumn(tables.Column):
         )
         tags = ""
         values = list(value.all())
-        if len(values) > 0:
+        if values:
             tags = '<p class="collapse" id="%s">' % tag_id
             tags += ",<br>".join(
                 '<abbr data-toggle="tooltip" title="%s">%s</abbr>'

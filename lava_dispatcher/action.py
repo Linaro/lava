@@ -356,7 +356,7 @@ class Action:  # pylint: disable=too-many-instance-attributes,too-many-public-me
 
     @property
     def valid(self):
-        return len([x for x in self.errors if x]) == 0
+        return not bool([x for x in self.errors if x])
 
     @property
     def parameters(self):

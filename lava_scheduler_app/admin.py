@@ -356,11 +356,11 @@ class VisibilityForm(forms.ModelForm):
             raise ValidationError(
                 "Group visibility must have exactly one viewing group."
             )
-        elif len(viewing_groups) != 0 and visibility == TestJob.VISIBLE_PERSONAL:
+        elif viewing_groups and visibility == TestJob.VISIBLE_PERSONAL:
             raise ValidationError(
                 "Personal visibility cannot have any viewing groups assigned."
             )
-        elif len(viewing_groups) != 0 and visibility == TestJob.VISIBLE_PUBLIC:
+        elif viewing_groups and visibility == TestJob.VISIBLE_PUBLIC:
             raise ValidationError(
                 "Pulibc visibility cannot have any viewing groups assigned."
             )

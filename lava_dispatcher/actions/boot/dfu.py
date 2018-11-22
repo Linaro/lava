@@ -135,7 +135,7 @@ class FlashDFUAction(Action):
             dfu_full_command.extend(self.base_command)
             dfu_full_command.extend(substitute([image_arg], substitutions))
             self.exec_list.append(dfu_full_command)
-        if len(self.exec_list) < 1:
+        if not self.exec_list:
             self.errors = "No DFU command to execute"
 
     def run(self, connection, max_end_time):

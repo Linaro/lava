@@ -1084,7 +1084,7 @@ class Query(models.Model):
             return ContentType.objects.get_for_model(TestCase)
 
         content_types = ContentType.objects.filter(model=model_name)
-        if (len(content_types) == 0):
+        if not content_types:
             raise InvalidContentTypeError(
                 "Wrong table name in entity param. Please refer to query docs.")
         else:

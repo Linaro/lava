@@ -232,7 +232,7 @@ class Protocol:
 
     @property
     def valid(self):
-        return len([x for x in self.errors if x]) == 0
+        return not bool([x for x in self.errors if x])
 
     def set_up(self):
         raise LAVABug("'set_up' not implemented")
