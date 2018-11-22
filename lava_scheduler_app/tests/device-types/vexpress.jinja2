@@ -191,7 +191,45 @@ actions:
           separator: '{{ separator|default(' ') }}'
           label_class: '{{ label_class|default('a-zA-Z0-9 \s\:') }}'
           bootloader_prompt: '{{ uefi_menu_bootloader_prompt|default('Start:') }}'
-          boot_message: '{{ boot_message|default('Linux version') }}'
+        nfs:
+        - select:
+            items:
+            - 'Boot Manager'
+            wait: "Choice:"
+        - select:
+            items:
+               - 'Add Boot Device Entry'
+            wait: "Select the Boot Device:"
+        - select:
+            enter: '3'  # Resolves to 1st NOR Flash device
+            wait: "File path of the EFI Application or the kernel:"
+        - select:
+            enter: '{{ kernel_filename | default("zImage") }}'
+            wait: 'Is an EFI Application?'
+        - select:
+            enter: n
+            wait: 'Has FDT support?'
+        - select:
+            enter: y
+            wait: "Add an initrd:"
+        - select:
+            enter: y
+        - select:
+            enter: '{{ ramdisk_filename | default("ramdisk.img") }}'
+            wait: "Arguments to pass to the binary:"
+        - select:
+            enter: "console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs rw {{ base_nfsroot_args }} {{ base_kernel_args }} {{ base_ip_args }}"
+            wait: "Description for this new Entry:"
+        - select:
+            enter: LAVA TEST NFS
+            wait: "Choice:"
+        - select:
+            items:
+              - "Return to main menu"
+            wait: "Start:"
+        - select:
+            items:
+              - LAVA TEST NFS
         tftp:
         - select:
             items:
@@ -210,7 +248,7 @@ actions:
             wait: "Get the TFTP server IP address:"
         - select:
             enter: '{SERVER_IP}'
-            wait: "File path of the EFI Application or the kernel :"
+            wait: "File path of the EFI Application or the kernel:"
         - select:
             enter: '{KERNEL}'
             wait: 'Is an EFI Application?'
@@ -224,7 +262,7 @@ actions:
             enter: n
             wait: "Arguments to pass to the binary:"
         - select:
-            enter: "console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs rw nfsroot={SERVER_IP}:{NFSROOTFS},tcp,hard,intr {{ base_kernel_args }} {{ base_ip_args }}"
+            enter: "console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs rw {{ base_nfsroot_args }} {{ base_kernel_args }} {{ base_ip_args }}"
             wait: "Description for this new Entry:"
         - select:
             enter: LAVA TEST TFTP

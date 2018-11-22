@@ -1,0 +1,7 @@
+{% extends 'vexpress.jinja2' %}
+
+{% set device_type = 'tc2' %}
+{% set vexpress_kernel_args = 'rootwait debug systemd.log_target=null user_debug=31 loglevel=9' %}
+{% set action_timeout_power_off = 15 %}
+{% set extra_nfsroot_args = ",vers=3" %}
+{% set baud_rate = 38400 %}

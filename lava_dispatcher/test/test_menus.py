@@ -213,3 +213,23 @@ class TestUefi(StdoutTestCase):  # pylint: disable=too-many-public-methods
         for item in selector.items:
             self.assertEqual(item["select"], check_block[count])
             count += 1
+
+    def test_tc2_uefi_job(self):
+        factory = Factory()
+        job = factory.create_job("tc2-01.jinja2", "sample_jobs/tc2.yaml")
+        job.validate()
+        self.assertEqual([], job.pipeline.errors)
+        description_ref = self.pipeline_reference("tc2.yaml")
+        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+        self.assertIn("uefi-menu", job.device["actions"]["boot"]["methods"])
+        uefi_menu_block = job.device["actions"]["boot"]["methods"]["uefi-menu"]
+        nfs_boot = uefi_menu_block["nfs"]
+        block = [
+            step
+            for step in nfs_boot
+            if step["select"].get("wait") == "Description for this new Entry:"
+        ]
+        self.assertIsNotNone(block)
+        self.assertEqual(len(block), 1)
+        expected_nfs_args = "console=ttyAMA0,38400n8 root=/dev/nfs rw nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr,vers=3 rootwait debug systemd.log_target=null user_debug=31 loglevel=9 ip=dhcp"
+        self.assertEqual(block[0]["select"]["enter"], expected_nfs_args)

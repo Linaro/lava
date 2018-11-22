@@ -1,0 +1,40 @@
+device_type: tc2
+job_name: tc2-basic
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 6
+priority: medium
+visibility: public
+
+actions:
+- deploy:
+    namespace: recovery
+    timeout:
+      minutes: 10
+    to: vemsd
+    recovery_image:
+      url: http://releases.linaro.org/members/arm/platforms/15.12/tc2-latest-oe-uefi.zip
+      compression: zip
+
+- deploy:
+    namespace: target
+    timeout:
+      minutes: 2
+    to: nfs
+    os: oe
+    nfsrootfs:
+      url: http://releases.linaro.org/openembedded/vexpress-lsk/15.07/linaro-image-alip-genericarmv7a-20150710-336.rootfs.tar.gz
+      compression: gz
+
+- boot:
+    namespace: target
+    connection-namespace: recovery
+    method: uefi-menu
+    line_separator: unix
+    commands: nfs
+    parameters:
+      shutdown-message: 'reboot: Restarting system'
+    prompts:
+    - root@genericarmv7a:~#

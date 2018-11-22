@@ -1,0 +1,11 @@
+{% extends 'tc2.jinja2' %}
+
+{% set connection_command = 'telnet localhost 10003' %}
+{% set power_on_command = '/opt/lava-lab/shared/lab-scripts/snmp_pdu_control --hostname 192.168.0.33 --port 12 --delay 10 --command on' %}
+{% set power_off_command = '/opt/lava-lab/shared/lab-scripts/snmp_pdu_control --hostname 192.168.0.33 --port 12 --delay 10 --command off' %}
+{% set hard_reset_command = '/opt/lava-lab/shared/lab-scripts/snmp_pdu_control --hostname 192.168.0.33 --port 12 --delay 10 --command reboot' %}
+
+{% set device_ip = '192.168.0.43' %}
+{% set device_mac = '00:11:22:77:44:55' %}
+{% set usb_device_id = 0 %}
+{% set usb_filesystem_label = 'TC2' %}
