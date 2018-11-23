@@ -69,10 +69,16 @@ def debian_filename_version(binary, split, label=False):
     return an empty string.
     """
     # if binary is not absolute, fail.
-    pkg_str = subprocess.check_output((  # nosec dpkg-query
-        "dpkg-query", "-S", binary)).strip().decode('utf-8', errors="replace")
-    if not pkg_str:
-        msg = "Unable to retrieve version of %s" % binary
+    msg = "Unable to retrieve version of %s" % binary
+    try:
+        pkg_str = (
+            subprocess.check_output(("dpkg-query", "-S", binary))  # nosec dpkg-query
+            .strip()
+            .decode("utf-8", errors="replace")
+        )
+        if not pkg_str:
+            raise InfrastructureError(msg)
+    except subprocess.CalledProcessError:
         raise InfrastructureError(msg)
     pkg = pkg_str.split(":")[0]
     pkg_ver = debian_package_version(pkg, split=split)
