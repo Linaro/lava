@@ -130,6 +130,7 @@ class TestLxcWithDevices(StdoutTestCase):
         self.factory = LxcFactory()
         self.job = self.factory.create_bbb_lxc_job("sample_jobs/bbb-lxc.yaml")
 
+    @unittest.skipIf(infrastructure_error("lxc-start"), "lxc-start not installed")
     def test_lxc_feedback(self):  # pylint: disable=too-many-locals
         self.assertIsNotNone(self.job)
         # validate with two test actions, lxc and device
@@ -147,6 +148,7 @@ class TestLxcWithDevices(StdoutTestCase):
         ][0]
         self.assertEqual(10, drone_shell.connection_timeout.duration)
 
+    @unittest.skipIf(infrastructure_error("lxc-start"), "lxc-start not installed")
     def test_lxc_with_device(self):  # pylint: disable=too-many-locals
         self.assertIsNotNone(self.job)
         # validate with two test actions, lxc and device
@@ -258,6 +260,7 @@ class TestLxcWithDevices(StdoutTestCase):
         ][0]
         self.assertIsNotNone(runner.testdef_levels)
 
+    @unittest.skipIf(infrastructure_error("lxc-start"), "lxc-start not installed")
     def test_lxc_with_static_device(self):  # pylint: disable=too-many-locals
         self.job = self.factory.create_hikey_aep_job("sample_jobs/hi6220-hikey.yaml")
         self.job.validate()
@@ -279,6 +282,7 @@ class TestLxcWithDevices(StdoutTestCase):
         description_ref = self.pipeline_reference("hi6220-hikey.yaml", job=self.job)
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
+    @unittest.skipIf(infrastructure_error("lxc-start"), "lxc-start not installed")
     def test_lxc_without_lxctest(self):  # pylint: disable=too-many-locals
         lxc_yaml = os.path.join(
             os.path.dirname(__file__), "sample_jobs/bbb-lxc-notest.yaml"
@@ -350,6 +354,7 @@ class TestLxcWithDevices(StdoutTestCase):
         description_ref = self.pipeline_reference("adb-nuc.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
 
+    @unittest.skipIf(infrastructure_error("lxc-start"), "lxc-start not installed")
     def test_iot_lxc(self):
         self.factory = Factory()
         job = self.factory.create_job(

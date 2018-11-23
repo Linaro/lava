@@ -310,6 +310,7 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         ][0]
         self.assertEqual("pxe-grub", grub_efi.commands)
 
+    @unittest.skipIf(infrastructure_error("lxc-start"), "lxc-start not installed")
     def test_hikey_grub_efi(self):
         job = self.factory.create_hikey_job("sample_jobs/hikey-grub-lxc.yaml")
         self.assertIsNotNone(job)
@@ -390,6 +391,7 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertIn("hikey-oe", autologin.parameters["test_info"])
         self.assertIn("tlxc", autologin.parameters["test_info"])
 
+    @unittest.skipIf(infrastructure_error("lxc-start"), "lxc-start not installed")
     def test_hikey960_grub(self):
         job = self.factory.create_hikey960_job("sample_jobs/hikey960-oe.yaml")
         self.assertIsNotNone(job)

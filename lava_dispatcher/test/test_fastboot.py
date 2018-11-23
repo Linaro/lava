@@ -245,6 +245,7 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
             action for action in job.pipeline.actions if action.name == "fastboot-boot"
         ][0]
 
+    @unittest.skipIf(infrastructure_error("lxc-start"), "lxc-start not installed")
     def test_x15_job(self):
         self.factory = FastBootFactory()
         job = self.factory.create_x15_job("sample_jobs/x15.yaml")
@@ -361,6 +362,7 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
         self.assertIsInstance(flash_order, FastbootFlashOrderAction)
         self.assertEqual(expected_flash_cmds, flash_cmds)
 
+    @unittest.skipIf(infrastructure_error("lxc-start"), "lxc-start not installed")
     def test_hikey960_fastboot(self):
         job = self.factory.create_hikey960_job("sample_jobs/hikey960-aosp.yaml")
         self.assertIsNotNone(job)

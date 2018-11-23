@@ -173,6 +173,7 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
                 self.assertEqual(action.mkimage_arch, "arm")
             self.assertTrue(action.valid)
 
+    @unittest.skipIf(infrastructure_error("lxc-start"), "lxc-start not installed")
     def test_fastboot_uboot(self):  # pylint: disable=too-many-locals
         job = self.factory.create_x15_job("sample_jobs/x15-uboot.yaml")
         job.validate()
@@ -197,6 +198,7 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         self.assertNotEqual(interrupt.params, {})
         self.assertEqual("u-boot", interrupt.method)
 
+    @unittest.skipIf(infrastructure_error("lxc-start"), "lxc-start not installed")
     def test_x15_uboot_nfs(self):  # pylint: disable=too-many-locals
         job = self.factory.create_x15_job("sample_jobs/x15-nfs.yaml")
         job.validate()
@@ -577,6 +579,7 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         description_ref = self.pipeline_reference("zcu102-ramdisk.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
 
+    @unittest.skipIf(infrastructure_error("lxc-start"), "lxc-start not installed")
     def test_imx8m(self):
         job = self.factory.create_job("imx8m-01.jinja2", "sample_jobs/imx8m.yaml")
         self.assertIsNotNone(job)
