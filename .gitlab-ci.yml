@@ -93,7 +93,8 @@ sast:
   stage: analyze
   allow_failure: true
   artifacts:
-    paths: [gl-sast-report.json]
+    reports:
+      sast: gl-sast-report.json
 
 #########
 # Build #
