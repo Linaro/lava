@@ -157,7 +157,6 @@ lava_server/management/commands/linaro_ldapuserlist.py
 lava_server/management/commands/maintenance.py
 lava_server/management/commands/mergeldapuser.py
 lava_server/management/commands/migrate-job-output.py
-lava_server/management/commands/migrate-lava.py
 lava_server/management/commands/tokens.py
 lava_server/management/commands/users.py
 lava_server/management/commands/workers.py

@@ -181,7 +181,6 @@ LAVA administration guide
    ipxe
    proxy
    hijack-user
-   migrate-lava
    vland-admin
    pipeline-debug
    docker-admin
