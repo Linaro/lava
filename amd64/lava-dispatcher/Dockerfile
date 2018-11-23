@@ -1,5 +1,10 @@
 FROM hub.lavasoftware.org/lava/pkg/docker/amd64/lava-dispatcher-base
 
+ARG pkg_common=lava-lxc.deb
+COPY $pkg_common /tmp/lxc.deb
+RUN dpkg -i /tmp/lxc.deb && \
+    rm -f /tmp/lxc.deb
+
 ARG pkg_common=lava-common.deb
 COPY $pkg_common /tmp/common.deb
 RUN dpkg -i /tmp/common.deb && \
