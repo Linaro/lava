@@ -77,7 +77,8 @@ echo
 if [ -z "${DISPATCH}"  -a -z "${TEMPLATE}" -a -z "${PYTEST}" ]
 then
     echo "If it exists, a broken test database will be deleted without prompting."
-    python3 ./lava_server/manage.py test --noinput -v 2 lava_scheduler_app linaro_django_xmlrpc.tests lava_results_app lava_rest_app
+    # lava_rest_app is pytest only
+    python3 ./lava_server/manage.py test --noinput -v 2 lava_scheduler_app linaro_django_xmlrpc.tests lava_results_app
     if [ -n "${SERVER}" ]
     then
         exit
@@ -105,7 +106,8 @@ fi
 
 if [ -z "${DISPATCH}" -a -z "${TEMPLATE}" -a -n "${PYTEST}" ]
 then
-    PYTHONPATH=. pytest-3 --cache-clear --ds lava_server.settings.development -v lava_scheduler_app/tests lava_results_app/tests linaro_django_xmlrpc/tests.py
+    PYTHONPATH=. pytest-3 --cache-clear --ds lava_server.settings.development -v \
+        lava_scheduler_app/tests lava_results_app/tests linaro_django_xmlrpc/tests.py lava_rest_app/tests.py
     PYTHONPATH=. pytest-3 --cache-clear -v lava_dispatcher/test
     PYTHONPATH=. pytest-3 --cache-clear -v lava_common/test
 fi
