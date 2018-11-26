@@ -64,14 +64,18 @@ class Command(BaseCommand):
 
         self.stdout.write("Setting all devices to maintenance mode:")
         devices = (
-            Device.objects.exclude(status=Device.OFFLINE)
-            .exclude(status=Device.RETIRED)
+            Device.objects.exclude(health=Device.HEALTH_MAINTENANCE)
+            .exclude(health=Device.HEALTH_RETIRED)
             .order_by("hostname")
         )
         for device in devices:
-            # Print the device hostname only if it has been put OFFLINE
-            if device.put_into_maintenance_mode(user, "Maintenance", None):
-                self.stdout.write("* %s" % device.hostname)
+            prev_health = device.get_health_display()
+            device.health = Device.HEALTH_MAINTENANCE
+            device.log_admin_entry(
+                user, "%s → %s (cmdline)" % (prev_health, device.get_health_display())
+            )
+            device.save()
+            self.stdout.write("* %s" % device.hostname)
 
         if options["force"]:
             self.stdout.write("Cancel all running jobs")
@@ -81,7 +85,7 @@ class Command(BaseCommand):
                 testjob.cancel(user)
 
         if options["dry_run"]:
-            self.stdout.write("Rollback the changes")
+            self.stdout.write("Roll back changes")
             transaction.rollback()
         else:
             self.stdout.write("Commit the changes")
