@@ -268,6 +268,57 @@ class SchedulerJobsAPI(ExposedV2API):
 
         return ret
 
+    def queue(self, device_types=None, start=0, limit=25):
+        """
+        Name
+        ----
+        `scheduler.jobs.queue` (`device_types=None`, `start=0`, `limit=25`)
+
+        Description
+        -----------
+        List the queued jobs (state.SUBMITTED), within the specified range,
+        in descending order of job ID.
+        Jobs can be filtered by `requested_device_type` (if provided).
+
+        Arguments
+        ---------
+        `device_types`: Array of str
+          If provided, list jobs whose requested_device_type match any of the
+          provided device-types. None by default (no filtering).
+        `start`: int
+          Skip the first N job(s) in the list
+        `limit`: int
+          Max number of jobs to return.
+          This value will be clamped to 100
+
+        Return value
+        ------------
+        This function returns an array of jobs with keys:
+            "id", "description", "requested_device_type", "submitter"
+
+        If no queued test jobs exist to match the criteria, an empty array
+        is returned.
+        """
+        ret = []
+        start = max(0, start)
+        limit = min(limit, 100)
+        jobs = TestJob.objects.filter(state=TestJob.STATE_SUBMITTED).select_related(
+            "requested_device_type", "submitter"
+        )
+        if device_types is not None:
+            jobs = jobs.filter(requested_device_type__name__in=device_types)
+
+        for job in jobs.order_by("-id")[start : start + limit]:
+            data = {
+                "id": job.display_id,
+                "description": job.description,
+                "requested_device_type": job.requested_device_type.name,
+                "submitter": job.submitter.username,
+            }
+            ret.append(data)
+
+        return ret
+
     def logs(self, job_id, start=0, end=None):
         """
         Name

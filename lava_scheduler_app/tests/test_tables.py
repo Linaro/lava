@@ -105,7 +105,17 @@ class TestTestJobTable(TestCase):
                     proxied[key].append(str(item))
         self.assertEqual(
             proxied,
-            {"search": ["Description", "device", "ID", "state", "Sub ID", "submitter"]},
+            {
+                "search": [
+                    "Description",
+                    "device",
+                    "ID",
+                    "requested_device_type",
+                    "state",
+                    "Sub ID",
+                    "submitter",
+                ]
+            },
         )
         self.assertEqual(table.prepare_terms_data(view), {"terms": {}})
         self.assertEqual(
@@ -143,6 +153,7 @@ class TestPrefixJobTable(TestCase):
                     "Description",
                     "device",
                     "ID",
+                    "requested_device_type",
                     "state",
                     "Sub ID",
                     "submitter",

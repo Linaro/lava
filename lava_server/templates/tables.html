@@ -48,15 +48,23 @@
             <dl class="dl-horizontal">
               {% if table.Meta.searches|get_search_data:table.prefix %}
                 <dt>Simple text</dt>
-                <dd>{{ table.Meta.searches|get_search_data:table.prefix|join:", " }} <abbr title="text entered in the search box will be used in case sensitive matches - any field can match.">(?)</abbr></dd>
+                <dd>{{ table.Meta.searches|get_search_data:table.prefix|join:", " }} <abbr
+                title="text entered in the search box will be used in case sensitive matches - any field can match.">(?)</abbr></dd>
+              {% endif %}
+              {% if table.Meta.queries|get_search_data:table.prefix %}
+                <dt>Custom query text</dt>
+                <dd>{{ table.Meta.queries|get_search_data:table.prefix|join:", " }} <abbr
+                title="add the filter and a value in the query string, e.g. requested_device_type=qemu - all rows must match">(?)</abbr></dd>
               {% endif %}
               {% if table.Meta.times|get_search_data:table.prefix %}
                 <dt>Time based</dt>
-                <dd>{{ table.Meta.times|get_search_data:table.prefix|join:", " }} <abbr title="add the filter and a number in the query string, e.g. end_time=48 - all rows must match.">(?)</abbr></dd>
+                <dd>{{ table.Meta.times|get_search_data:table.prefix|join:", " }} <abbr
+                title="add the filter and a number in the query string, e.g. end_time=48 - all rows must match.">(?)</abbr></dd>
               {% endif %}
               {% if table.Meta.discrete|get_discrete_data:table.prefix %}
                 <dt>Exclusive text</dt>
-                <dd>{{ table.Meta.discrete|get_discrete_data:table.prefix|join:", " }} <abbr title="add field=text in the querystring to make case sensitive matches - all fields must match.">(?)</abbr></dd>
+                <dd>{{ table.Meta.discrete|get_discrete_data:table.prefix|join:", " }} <abbr
+                title="add field=text in the querystring to make case sensitive matches - all fields must match.">(?)</abbr></dd>
               {% endif %}
               {% if table.Meta.terms|get_terms_data:table.prefix %}
                 <dt>Case-sensitive text</dt>

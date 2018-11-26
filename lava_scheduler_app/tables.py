@@ -345,6 +345,7 @@ class JobTable(LavaTable):
             "device_query": "device",  # active_device
             "owner_query": "submitter",  # submitter
             "job_state_query": "state",
+            "requested_device_type_query": "requested_device_type",
         }
         # fields which can be searched with default __contains queries
         # note the enums cannot be searched this way.
@@ -921,8 +922,19 @@ class QueueJobsTable(JobTable):
     actions = tables.TemplateColumn(
         template_name="lava_scheduler_app/job_actions_field.html"
     )
+
+    def render_requested_device_type(self, record):  # pylint: disable=no-self-use
+        return mark_safe(  # nosec - internal data
+            '<a href="%s" title="%s device_type">%s</a>'
+            % (
+                record.requested_device_type.get_absolute_url(),
+                record.requested_device_type,
+                record.requested_device_type,
+            )
+        )
+
     actions.orderable = False
-    device = tables.Column(accessor="device_sort")
+    requested_device_type = tables.Column()
     in_queue = tables.TemplateColumn(
         """
     for {{ record.submit_time|timesince }}
@@ -936,13 +948,11 @@ class QueueJobsTable(JobTable):
         super().__init__(*args, **kwargs)
         self.length = 50
 
-    class Meta(
-        JobTable.Meta
-    ):  # pylint: disable=too-few-public-methods,no-init,no-self-use
+    class Meta(JobTable.Meta):
         fields = (
             "id",
             "actions",
-            "device",
+            "requested_device_type",
             "description",
             "submitter",
             "submit_time",
@@ -951,7 +961,7 @@ class QueueJobsTable(JobTable):
         sequence = (
             "id",
             "actions",
-            "device",
+            "requested_device_type",
             "description",
             "submitter",
             "submit_time",

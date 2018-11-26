@@ -144,6 +144,11 @@ class JobTableView(LavaView):
         owner = list(User.objects.filter(username__contains=term))
         return Q(submitter__in=owner)
 
+    def requested_device_type_query(self, term):
+        visible = filter_device_types(self.request.user)
+        dt = list(DeviceType.objects.filter(name__contains=term, name__in=visible))
+        return Q(requested_device_type__in=dt)
+
     def device_type_query(self, term):
         visible = filter_device_types(self.request.user)
         dt = list(DeviceType.objects.filter(name__contains=term, name__in=visible))
