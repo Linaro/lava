@@ -111,6 +111,7 @@ doc:
 amd64/pkg-debian-9:
   <<: *job
   stage: build
+  except: []
   image: hub.lavasoftware.org/lava/ci-images/amd64/pkg-debian-9
   artifacts:
     paths:
@@ -124,6 +125,7 @@ amd64/pkg-debian-9:
 amd64/pkg-debian-10:
   <<: *job
   stage: build
+  except: []
   image: hub.lavasoftware.org/lava/ci-images/amd64/pkg-debian-10
   artifacts:
     paths:
@@ -137,6 +139,7 @@ amd64/pkg-debian-10:
 aarch64/pkg-debian-10:
   <<: *job_aarch64
   stage: build
+  except: []
   image: hub.lavasoftware.org/lava/ci-images/aarch64/pkg-debian-10
   only:
     refs:
@@ -153,6 +156,7 @@ aarch64/pkg-debian-9:
   <<: *job_aarch64
   stage: build
   image: hub.lavasoftware.org/lava/ci-images/aarch64/pkg-debian-9
+  except: []
   only:
     refs:
     - master
