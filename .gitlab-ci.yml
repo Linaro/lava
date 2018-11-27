@@ -215,6 +215,7 @@ reprepro-master:
   - aarch64/pkg-debian-10
   - amd64/pkg-debian-9
   - amd64/pkg-debian-10
+  except: []
   only: [schedules]
   environment:
     name: reprepro-master
