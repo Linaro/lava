@@ -329,8 +329,8 @@ def build_action(action_data, testdata, submission):
     match_case = None
     test_cases = TestCase.objects.filter(suite__job=testdata.testjob, suite__name='lava')
     for case in test_cases:
-        if 'level' in case.action_metadata:
-            if case.action_metadata['level'] == action_data['level']:
+        if case.action_metadata:
+            if case.action_metadata.get('level') == action_data['level']:
                 match_case = case
 
     # maps the static testdata derived from the definition to the runtime pipeline construction
