@@ -98,9 +98,9 @@ lava-dispatcher
 To run a single test, use the test class name as output by a failing test,
 without the call to ``discover``::
 
- $ python3 -m unittest lava_dispatcher.test.test_basic.TestPipelineInit.test_pipeline_init
+ $ python3 -m unittest lava_dispatcher.tests.test_basic.TestPipelineInit.test_pipeline_init
 
- $ python3 -m unittest -v -c -f lava_dispatcher.test.test_basic.TestPipelineInit.test_pipeline_init
+ $ python3 -m unittest -v -c -f lava_dispatcher.tests.test_basic.TestPipelineInit.test_pipeline_init
 
 The call references the path to the python module, the class and then the test
 function within that class. To run all tests in a class, omit the function. To
@@ -820,7 +820,7 @@ statements in the device configuration or job submission show up inside the
 classes is to use a unit test. To run a single unit-test, for example
 test_function in a class called TestExtra in a file called test_extra.py, use::
 
- $ python3 -m unittest -v -c -f lava_dispatcher.test.test_extra.TestExtra.test_function
+ $ python3 -m unittest -v -c -f lava_dispatcher.tests.test_extra.TestExtra.test_function
 
 Example python code:
 

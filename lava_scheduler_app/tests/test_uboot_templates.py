@@ -9,7 +9,7 @@ import tempfile
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.action import Timeout
-from lava_dispatcher.test.utils import DummyLogger, infrastructure_error
+from lava_dispatcher.tests.utils import DummyLogger, infrastructure_error
 from lava_scheduler_app.tests.test_base_templates import (
     BaseTemplate,
     prepare_jinja_template,

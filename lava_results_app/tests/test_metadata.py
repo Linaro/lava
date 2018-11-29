@@ -24,7 +24,7 @@ from lava_results_app.models import ActionData, MetaType, TestData, TestCase, Te
 from lava_results_app.utils import export_testcase, testcase_export_fields
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.device import PipelineDevice
-from lava_dispatcher.test.test_defs import allow_missing_path
+from lava_dispatcher.tests.test_defs import allow_missing_path
 
 # pylint: disable=invalid-name,too-few-public-methods,too-many-public-methods,no-member,too-many-ancestors
 

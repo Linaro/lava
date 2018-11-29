@@ -576,8 +576,8 @@ test.
 .. code-block:: python
 
     import unittest
-    from lava_dispatcher.test.test_basic import Factory, StdoutTestCase
-    from lava_dispatcher.test.utils import infrastructure_error_multi_paths
+    from lava_dispatcher.tests.test_basic import Factory, StdoutTestCase
+    from lava_dispatcher.tests.utils import infrastructure_error_multi_paths
 
     class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-methods
 

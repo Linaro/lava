@@ -83,14 +83,14 @@ then
     then
         exit
     fi
-    python3 -m unittest discover -v lava_dispatcher/test
+    python3 -m unittest discover -v lava_dispatcher/tests
     exit
 fi
 
 
 if [ -n "${DISPATCH}" -a  -z "${TEMPLATE}" -a -z "${PYTEST}" ]
 then
-    python3 -m unittest discover -v lava_dispatcher/test
+    python3 -m unittest discover -v lava_dispatcher/tests
 fi
 
 if [ -z "${DISPATCH}" -a  -n "${TEMPLATE}" -a -z "${PYTEST}" ]
@@ -108,6 +108,6 @@ if [ -z "${DISPATCH}" -a -z "${TEMPLATE}" -a -n "${PYTEST}" ]
 then
     PYTHONPATH=. pytest-3 --cache-clear --ds lava_server.settings.development -v \
         lava_scheduler_app/tests lava_results_app/tests linaro_django_xmlrpc/tests.py lava_rest_app/tests.py
-    PYTHONPATH=. pytest-3 --cache-clear -v lava_dispatcher/test
+    PYTHONPATH=. pytest-3 --cache-clear -v lava_dispatcher/tests
     PYTHONPATH=. pytest-3 --cache-clear -v lava_common/test
 fi

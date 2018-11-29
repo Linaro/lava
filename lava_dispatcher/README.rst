@@ -8,7 +8,7 @@ See also the full documentation in lava-server:
 http://localhost/static/docs/dispatcher-design.html
 http://localhost/static/docs/dispatcher-format.html
 
-Note that lava_dispatcher/test/sample_jobs/basics.yaml is not intended
+Note that lava_dispatcher/tests/sample_jobs/basics.yaml is not intended
 as a workable test job but as an outline of all possible layouts.
 
 Functional:

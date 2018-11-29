@@ -27,7 +27,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from django.utils import timezone
 
-from lava_dispatcher.test.utils import DummyLogger
+from lava_dispatcher.tests.utils import DummyLogger
 from lava_scheduler_app.models import Device, DeviceType, TestJob, Worker
 from lava_scheduler_app.scheduler import schedule, schedule_health_checks
 

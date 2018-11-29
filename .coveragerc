@@ -9,8 +9,8 @@ source =
     linaro_django_xmlrpc
 
 omit =
-    */test/*
     */tests/*
+    */tests.py
 
 [report]
 precision = 2
