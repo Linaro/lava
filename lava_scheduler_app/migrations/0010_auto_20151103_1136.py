@@ -41,6 +41,7 @@ class Migration(migrations.Migration):
                 to="auth.Group",
                 null=True,
                 verbose_name="Group with physical access",
+                on_delete=models.CASCADE,
             ),
         ),
         migrations.AlterField(
@@ -53,6 +54,7 @@ class Migration(migrations.Migration):
                 to=settings.AUTH_USER_MODEL,
                 null=True,
                 verbose_name="User with physical access",
+                on_delete=models.CASCADE,
             ),
         ),
         migrations.AlterField(

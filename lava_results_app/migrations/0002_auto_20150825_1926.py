@@ -60,7 +60,9 @@ class Migration(migrations.Migration):
                 (
                     "content_type",
                     models.ForeignKey(
-                        verbose_name="Query object set", to="contenttypes.ContentType"
+                        verbose_name="Query object set",
+                        to="contenttypes.ContentType",
+                        on_delete=models.CASCADE,
                     ),
                 ),
                 (
@@ -72,7 +74,12 @@ class Migration(migrations.Migration):
                         null=True,
                     ),
                 ),
-                ("owner", models.ForeignKey(to=settings.AUTH_USER_MODEL)),
+                (
+                    "owner",
+                    models.ForeignKey(
+                        to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE
+                    ),
+                ),
             ],
             options={},
             bases=(models.Model,),
@@ -105,11 +112,18 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 ("value", models.CharField(max_length=50, verbose_name="Field value")),
-                ("query", models.ForeignKey(to="lava_results_app.Query")),
+                (
+                    "query",
+                    models.ForeignKey(
+                        to="lava_results_app.Query", on_delete=models.CASCADE
+                    ),
+                ),
                 (
                     "table",
                     models.ForeignKey(
-                        verbose_name="Condition model", to="contenttypes.ContentType"
+                        verbose_name="Condition model",
+                        to="contenttypes.ContentType",
+                        on_delete=models.CASCADE,
                     ),
                 ),
             ],
@@ -137,7 +151,10 @@ class Migration(migrations.Migration):
             model_name="query",
             name="query_group",
             field=models.ForeignKey(
-                default=None, to="lava_results_app.QueryGroup", null=True
+                default=None,
+                to="lava_results_app.QueryGroup",
+                null=True,
+                on_delete=models.CASCADE,
             ),
             preserve_default=True,
         ),

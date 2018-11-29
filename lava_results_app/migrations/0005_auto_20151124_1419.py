@@ -34,7 +34,11 @@ class Migration(migrations.Migration):
             model_name="query",
             name="query_group",
             field=models.ForeignKey(
-                default=None, blank=True, to="lava_results_app.QueryGroup", null=True
+                default=None,
+                blank=True,
+                to="lava_results_app.QueryGroup",
+                null=True,
+                on_delete=models.CASCADE,
             ),
             preserve_default=True,
         ),

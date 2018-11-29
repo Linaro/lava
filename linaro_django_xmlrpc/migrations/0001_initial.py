@@ -58,7 +58,9 @@ class Migration(migrations.Migration):
                 (
                     "user",
                     models.ForeignKey(
-                        related_name="auth_tokens", to=settings.AUTH_USER_MODEL
+                        related_name="auth_tokens",
+                        to=settings.AUTH_USER_MODEL,
+                        on_delete=models.CASCADE,
                     ),
                 ),
             ],

@@ -30,7 +30,7 @@ class RestrictedTestJobQuerySet(RestrictedResourceQuerySet):
 
         conditions = Q()
         # Pipeline jobs.
-        if not user or user.is_anonymous():
+        if not user or user.is_anonymous:
             conditions = Q(is_public=True)
         elif (
             not user.is_superuser

@@ -157,7 +157,9 @@ class Migration(migrations.Migration):
                 (
                     "testjob",
                     models.ForeignKey(
-                        related_name="test_data", to="lava_scheduler_app.TestJob"
+                        related_name="test_data",
+                        to="lava_scheduler_app.TestJob",
+                        on_delete=models.CASCADE,
                     ),
                 ),
             ],
@@ -207,7 +209,9 @@ class Migration(migrations.Migration):
                 (
                     "job",
                     models.ForeignKey(
-                        related_name="test_suites", to="lava_scheduler_app.TestJob"
+                        related_name="test_suites",
+                        to="lava_scheduler_app.TestJob",
+                        on_delete=models.CASCADE,
                     ),
                 ),
             ],
@@ -218,7 +222,9 @@ class Migration(migrations.Migration):
             model_name="testset",
             name="suite",
             field=models.ForeignKey(
-                related_name="test_sets", to="lava_results_app.TestSuite"
+                related_name="test_sets",
+                to="lava_results_app.TestSuite",
+                on_delete=models.CASCADE,
             ),
             preserve_default=True,
         ),
@@ -226,7 +232,9 @@ class Migration(migrations.Migration):
             model_name="testcase",
             name="suite",
             field=models.ForeignKey(
-                related_name="test_cases", to="lava_results_app.TestSuite"
+                related_name="test_cases",
+                to="lava_results_app.TestSuite",
+                on_delete=models.CASCADE,
             ),
             preserve_default=True,
         ),
@@ -239,6 +247,7 @@ class Migration(migrations.Migration):
                 blank=True,
                 to="lava_results_app.TestSet",
                 null=True,
+                on_delete=models.CASCADE,
             ),
             preserve_default=True,
         ),
@@ -246,7 +255,9 @@ class Migration(migrations.Migration):
             model_name="actiondata",
             name="meta_type",
             field=models.ForeignKey(
-                related_name="actionlevels", to="lava_results_app.MetaType"
+                related_name="actionlevels",
+                to="lava_results_app.MetaType",
+                on_delete=models.CASCADE,
             ),
             preserve_default=True,
         ),
@@ -258,6 +269,7 @@ class Migration(migrations.Migration):
                 blank=True,
                 to="lava_results_app.TestCase",
                 null=True,
+                on_delete=models.CASCADE,
             ),
             preserve_default=True,
         ),
@@ -269,6 +281,7 @@ class Migration(migrations.Migration):
                 blank=True,
                 to="lava_results_app.TestData",
                 null=True,
+                on_delete=models.CASCADE,
             ),
             preserve_default=True,
         ),

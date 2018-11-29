@@ -81,7 +81,7 @@ class YamlFactory(ModelFactory):
             device_type=device_type, is_public=is_public, hostname=hostname, **kw
         )
         if tags:
-            device.tags = tags
+            device.tags.set(tags)
         if DEBUG:
             print(
                 "making a device of type %s %s %s with tags '%s'",

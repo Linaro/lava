@@ -112,14 +112,12 @@ if AUTH_LDAP_SERVER_URI:
             AUTH_LDAP_GROUP_TYPE = eval(group_type)
 
 elif AUTH_DEBIAN_SSO:
-    MIDDLEWARE_CLASSES.append("lava_server.debian_sso.DebianSsoUserMiddleware")
+    MIDDLEWARE.append("lava_server.debian_sso.DebianSsoUserMiddleware")
     AUTHENTICATION_BACKENDS.append("lava_server.debian_sso.DebianSsoUserBackend")
 
 if USE_DEBUG_TOOLBAR:
     INSTALLED_APPS.append("debug_toolbar")
-    MIDDLEWARE_CLASSES = [
-        "debug_toolbar.middleware.DebugToolbarMiddleware"
-    ] + MIDDLEWARE_CLASSES
+    MIDDLEWARE = ["debug_toolbar.middleware.DebugToolbarMiddleware"] + MIDDLEWARE
     INTERNAL_IPS.extend(["127.0.0.1", "::1"])
 
 # List of compiled regular expression objects representing User-Agent strings

@@ -48,7 +48,12 @@ class Migration(migrations.Migration):
                         verbose_name="Default owner of unrestricted devices",
                     ),
                 ),
-                ("user", models.OneToOneField(to=settings.AUTH_USER_MODEL)),
+                (
+                    "user",
+                    models.OneToOneField(
+                        to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE
+                    ),
+                ),
             ],
             options={},
             bases=(models.Model,),
@@ -244,6 +249,7 @@ class Migration(migrations.Migration):
                         primary_key=True,
                         serialize=False,
                         to="lava_scheduler_app.Device",
+                        on_delete=models.CASCADE,
                     ),
                 ),
                 (
@@ -379,6 +385,7 @@ class Migration(migrations.Migration):
                         blank=True,
                         to="lava_scheduler_app.Device",
                         null=True,
+                        on_delete=models.CASCADE,
                     ),
                 ),
                 (
@@ -389,7 +396,12 @@ class Migration(migrations.Migration):
                         blank=True,
                     ),
                 ),
-                ("group", models.ForeignKey(blank=True, to="auth.Group", null=True)),
+                (
+                    "group",
+                    models.ForeignKey(
+                        blank=True, to="auth.Group", null=True, on_delete=models.CASCADE
+                    ),
+                ),
                 (
                     "requested_device",
                     models.ForeignKey(
@@ -398,6 +410,7 @@ class Migration(migrations.Migration):
                         blank=True,
                         to="lava_scheduler_app.Device",
                         null=True,
+                        on_delete=models.CASCADE,
                     ),
                 ),
                 (
@@ -408,6 +421,7 @@ class Migration(migrations.Migration):
                         blank=True,
                         to="lava_scheduler_app.DeviceType",
                         null=True,
+                        on_delete=models.CASCADE,
                     ),
                 ),
                 (
@@ -425,6 +439,7 @@ class Migration(migrations.Migration):
                         related_name="+",
                         verbose_name="Submitter",
                         to=settings.AUTH_USER_MODEL,
+                        on_delete=models.CASCADE,
                     ),
                 ),
                 (
@@ -434,7 +449,10 @@ class Migration(migrations.Migration):
                 (
                     "user",
                     models.ForeignKey(
-                        blank=True, to=settings.AUTH_USER_MODEL, null=True
+                        blank=True,
+                        to=settings.AUTH_USER_MODEL,
+                        null=True,
+                        on_delete=models.CASCADE,
                     ),
                 ),
             ],
@@ -457,8 +475,18 @@ class Migration(migrations.Migration):
                     "is_favorite",
                     models.BooleanField(default=False, verbose_name="Favorite job"),
                 ),
-                ("test_job", models.ForeignKey(to="lava_scheduler_app.TestJob")),
-                ("user", models.ForeignKey(to=settings.AUTH_USER_MODEL)),
+                (
+                    "test_job",
+                    models.ForeignKey(
+                        to="lava_scheduler_app.TestJob", on_delete=models.CASCADE
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE
+                    ),
+                ),
             ],
             options={},
             bases=(models.Model,),
@@ -599,7 +627,9 @@ class Migration(migrations.Migration):
             model_name="devicestatetransition",
             name="device",
             field=models.ForeignKey(
-                related_name="transitions", to="lava_scheduler_app.Device"
+                related_name="transitions",
+                to="lava_scheduler_app.Device",
+                on_delete=models.CASCADE,
             ),
             preserve_default=True,
         ),
@@ -631,14 +661,18 @@ class Migration(migrations.Migration):
             model_name="device",
             name="device_type",
             field=models.ForeignKey(
-                verbose_name="Device type", to="lava_scheduler_app.DeviceType"
+                verbose_name="Device type",
+                to="lava_scheduler_app.DeviceType",
+                on_delete=models.CASCADE,
             ),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name="device",
             name="group",
-            field=models.ForeignKey(blank=True, to="auth.Group", null=True),
+            field=models.ForeignKey(
+                blank=True, to="auth.Group", null=True, on_delete=models.CASCADE
+            ),
             preserve_default=True,
         ),
         migrations.AddField(
@@ -664,6 +698,7 @@ class Migration(migrations.Migration):
                 to="auth.Group",
                 null=True,
                 verbose_name="Group with physical access",
+                on_delete=models.CASCADE,
             ),
             preserve_default=True,
         ),
@@ -677,6 +712,7 @@ class Migration(migrations.Migration):
                 to=settings.AUTH_USER_MODEL,
                 null=True,
                 verbose_name="User with physical access",
+                on_delete=models.CASCADE,
             ),
             preserve_default=True,
         ),
@@ -689,7 +725,12 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="device",
             name="user",
-            field=models.ForeignKey(blank=True, to=settings.AUTH_USER_MODEL, null=True),
+            field=models.ForeignKey(
+                blank=True,
+                to=settings.AUTH_USER_MODEL,
+                null=True,
+                on_delete=models.CASCADE,
+            ),
             preserve_default=True,
         ),
         migrations.AddField(
@@ -701,6 +742,7 @@ class Migration(migrations.Migration):
                 to="lava_scheduler_app.Worker",
                 null=True,
                 verbose_name="Worker Host",
+                on_delete=models.CASCADE,
             ),
             preserve_default=True,
         ),

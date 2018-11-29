@@ -175,10 +175,9 @@ class CallContext:
     """
 
     def __init__(self, user, mapper, dispatcher, request=None):
-        if user is not None and user.is_authenticated() and user.is_active:
+        self.user = None
+        if user is not None and user.is_authenticated and user.is_active:
             self.user = user
-        else:
-            self.user = None
         self.mapper = mapper
         self.dispatcher = dispatcher
         self.request = request

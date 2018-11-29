@@ -52,6 +52,7 @@ class MockUser:
     def is_active(self):
         return self._is_active
 
+    @property
     def is_authenticated(self):
         return self._is_authenticated
 

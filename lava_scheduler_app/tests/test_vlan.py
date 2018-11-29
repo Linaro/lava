@@ -97,10 +97,8 @@ class TestVlandDevices(TestCaseWithFactory):
         devices = [self.bbb3, self.cubie2]
         self.factory.ensure_tag("usb-eth")
         self.factory.ensure_tag("sata")
-        self.factory.bbb1.tags = Tag.objects.filter(name="usb-eth")
-        self.factory.bbb1.save()
-        self.factory.cubie1.tags = Tag.objects.filter(name="sata")
-        self.factory.cubie1.save()
+        self.factory.bbb1.tags.set(Tag.objects.filter(name="usb-eth"))
+        self.factory.cubie1.tags.set(Tag.objects.filter(name="sata"))
         user = self.factory.make_user()
         sample_job_file = os.path.join(
             os.path.dirname(__file__), "sample_jobs", "bbb-cubie-vlan-group.yaml"
@@ -146,10 +144,8 @@ class TestVlandProtocolSplit(TestCaseWithFactory):
     def test_job_protocols(self):
         self.factory.ensure_tag("usb-eth")
         self.factory.ensure_tag("sata")
-        self.factory.bbb1.tags = Tag.objects.filter(name="usb-eth")
-        self.factory.bbb1.save()
-        self.factory.cubie1.tags = Tag.objects.filter(name="sata")
-        self.factory.cubie1.save()
+        self.factory.bbb1.tags.set(Tag.objects.filter(name="usb-eth"))
+        self.factory.cubie1.tags.set(Tag.objects.filter(name="sata"))
         target_group = "unit-test-only"
         job_dict = split_multinode_yaml(self.factory.make_vland_job(), target_group)
         client_job = job_dict["client"][0]

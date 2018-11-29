@@ -147,7 +147,7 @@ class TestHealthCheckScheduling(TestCase):
         self.assertEqual(self.device03.get_health_check(), None)
         # Schedule without health check
         available_devices = schedule_health_checks(DummyLogger())[0]
-        self.assertEquals(available_devices, {"panda": ["panda01", "panda03"]})
+        self.assertEqual(available_devices, {"panda": ["panda01", "panda03"]})
 
     def test_disabled_hc(self):
         # Make sure that get_health_check does return something
@@ -159,7 +159,7 @@ class TestHealthCheckScheduling(TestCase):
         self.device_type01.disable_health_check = True
         self.device_type01.save()
         available_devices = schedule_health_checks(DummyLogger())[0]
-        self.assertEquals(available_devices, {"panda": ["panda01", "panda03"]})
+        self.assertEqual(available_devices, {"panda": ["panda01", "panda03"]})
 
     def test_no_devicedict(self):
         Device.get_health_check = _minimal_valid_job
@@ -187,7 +187,7 @@ class TestHealthCheckScheduling(TestCase):
         self.assertNotEqual(self.device03.get_health_check(), None)
 
         available_devices = schedule_health_checks(DummyLogger())[0]
-        self.assertEquals(available_devices, {"panda": []})
+        self.assertEqual(available_devices, {"panda": []})
         self._check_hc_scheduled(self.device01)
         self._check_hc_not_scheduled(self.device02)
         self._check_hc_scheduled(self.device03)
@@ -206,7 +206,7 @@ class TestHealthCheckScheduling(TestCase):
         self.device03.health = Device.HEALTH_GOOD
         self.device03.save()
         available_devices = schedule_health_checks(DummyLogger())[0]
-        self.assertEquals(available_devices, {"panda": ["panda03"]})
+        self.assertEqual(available_devices, {"panda": ["panda03"]})
         self._check_hc_scheduled(self.device01)
         self._check_hc_not_scheduled(self.device02)
         self._check_hc_not_scheduled(self.device03)
@@ -225,7 +225,7 @@ class TestHealthCheckScheduling(TestCase):
         self.device03.health = Device.HEALTH_LOOPING
         self.device03.save()
         available_devices = schedule_health_checks(DummyLogger())[0]
-        self.assertEquals(available_devices, {"panda": []})
+        self.assertEqual(available_devices, {"panda": []})
         self._check_hc_scheduled(self.device01)
         self._check_hc_not_scheduled(self.device02)
         self._check_hc_scheduled(self.device03)
@@ -250,7 +250,7 @@ class TestHealthCheckScheduling(TestCase):
             self.device03.health = health
             self.device03.save()
             available_devices = schedule_health_checks(DummyLogger())[0]
-            self.assertEquals(available_devices, {"panda": []})
+            self.assertEqual(available_devices, {"panda": []})
             self._check_hc_not_scheduled(self.device01)
             self._check_hc_not_scheduled(self.device02)
             self._check_hc_not_scheduled(self.device03)

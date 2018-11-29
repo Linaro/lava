@@ -149,8 +149,18 @@ class Migration(migrations.Migration):
                         blank=True,
                     ),
                 ),
-                ("chart", models.ForeignKey(to="lava_results_app.Chart")),
-                ("query", models.ForeignKey(to="lava_results_app.Query")),
+                (
+                    "chart",
+                    models.ForeignKey(
+                        to="lava_results_app.Chart", on_delete=models.CASCADE
+                    ),
+                ),
+                (
+                    "query",
+                    models.ForeignKey(
+                        to="lava_results_app.Query", on_delete=models.CASCADE
+                    ),
+                ),
             ],
             options={"ordering": ["relative_index"]},
             bases=(models.Model,),
@@ -176,8 +186,18 @@ class Migration(migrations.Migration):
                     "is_delta",
                     models.BooleanField(default=False, verbose_name="Delta reporting"),
                 ),
-                ("chart_query", models.ForeignKey(to="lava_results_app.ChartQuery")),
-                ("user", models.ForeignKey(to=settings.AUTH_USER_MODEL)),
+                (
+                    "chart_query",
+                    models.ForeignKey(
+                        to="lava_results_app.ChartQuery", on_delete=models.CASCADE
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE
+                    ),
+                ),
             ],
             options={},
             bases=(models.Model,),
@@ -189,7 +209,10 @@ class Migration(migrations.Migration):
             model_name="chart",
             name="chart_group",
             field=models.ForeignKey(
-                default=None, to="lava_results_app.ChartGroup", null=True
+                default=None,
+                to="lava_results_app.ChartGroup",
+                null=True,
+                on_delete=models.CASCADE,
             ),
             preserve_default=True,
         ),
@@ -207,7 +230,9 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="chart",
             name="owner",
-            field=models.ForeignKey(default=None, to=settings.AUTH_USER_MODEL),
+            field=models.ForeignKey(
+                default=None, to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE
+            ),
             preserve_default=True,
         ),
         migrations.AddField(

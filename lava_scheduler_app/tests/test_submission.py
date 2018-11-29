@@ -117,7 +117,7 @@ class ModelFactory:
             hostname=hostname,
             **kw
         )
-        device.tags = tags
+        device.tags.set(tags)
         logging.debug(
             "making a device of type %s %s %s with tags '%s'",
             device_type,

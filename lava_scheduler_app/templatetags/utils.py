@@ -47,7 +47,7 @@ def udecode(obj):
 action_id_regexp = re.compile(r'^start: ([\d.]+) [\w_-]+ ')
 
 
-@register.assignment_tag
+@register.simple_tag
 def get_action_id(string):
     try:
         return action_id_regexp.match(string).group(1).replace('.', '-')
@@ -60,7 +60,7 @@ def replace_dots(string):
     return string.replace('.', '-')
 
 
-@register.assignment_tag()
+@register.simple_tag()
 def assign_setting(value):
     """Returns the value of the setting"""
     if hasattr(settings, value):
@@ -84,7 +84,7 @@ def _get_pipeline_data(pipeline, levels):
             _get_pipeline_data(action['pipeline'], levels)
 
 
-@register.assignment_tag()
+@register.simple_tag()
 def get_pipeline_sections(pipeline):
     """
     Just a top level view of the pipeline sections
@@ -96,7 +96,7 @@ def get_pipeline_sections(pipeline):
     return sections
 
 
-@register.assignment_tag()
+@register.simple_tag()
 def get_pipeline_levels(pipeline):
     """
     Retrieve the full set of action levels in this pipeline.
@@ -117,7 +117,7 @@ def deploy_methods(device_type, methods):
     return [methods]
 
 
-@register.assignment_tag()
+@register.simple_tag()
 def device_type_timeouts(device_type):
     data = load_devicetype_template(device_type)
     if not data or 'timeouts' not in data:
@@ -165,7 +165,7 @@ def markup_metadata(key, value):
         return value
 
 
-@register.assignment_tag
+@register.simple_tag
 def can_view(record, user):
     try:
         return record.can_view(user)

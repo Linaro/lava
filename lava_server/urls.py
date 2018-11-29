@@ -82,7 +82,7 @@ urlpatterns = [
 
     url(r'^admin/jsi18n', javascript_catalog),
     url(r'^{mount_point}admin/'.format(mount_point=settings.MOUNT_POINT),
-        include(admin.site.urls)),
+        admin.site.urls),
 
     # RPC endpoints
     url(r'^{mount_point}RPC2/?'.format(mount_point=settings.MOUNT_POINT),

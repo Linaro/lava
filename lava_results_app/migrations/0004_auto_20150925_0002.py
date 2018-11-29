@@ -33,19 +33,25 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="testcase",
             name="suite",
-            field=models.ForeignKey(to="lava_results_app.TestSuite"),
+            field=models.ForeignKey(
+                to="lava_results_app.TestSuite", on_delete=models.CASCADE
+            ),
             preserve_default=True,
         ),
         migrations.AlterField(
             model_name="testdata",
             name="testjob",
-            field=models.ForeignKey(to="lava_scheduler_app.TestJob"),
+            field=models.ForeignKey(
+                to="lava_scheduler_app.TestJob", on_delete=models.CASCADE
+            ),
             preserve_default=True,
         ),
         migrations.AlterField(
             model_name="testsuite",
             name="job",
-            field=models.ForeignKey(to="lava_scheduler_app.TestJob"),
+            field=models.ForeignKey(
+                to="lava_scheduler_app.TestJob", on_delete=models.CASCADE
+            ),
             preserve_default=True,
         ),
     ]
