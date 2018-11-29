@@ -143,6 +143,23 @@ pairs are in a single dictionary within the list of dictionaries::
     pydev: S_NO44440001
     static_info: {% set static_info = [{'board_id': 'S_NO44440001'}] %}
 
+.. note:: LAVA instances running systemd newer than build 232 (e.g.
+   Buster) need to allow scripts called by ``udev`` rules to access the
+   network to get proper logging of the addition of dynamic USB devices
+   to the LXC. LAVA achieves this by providing an override file for the
+   ``systemd-udev.service` in
+   ``/etc/systemd/system/systemd-udevd.service.d/override.conf``. The
+   actual network change is not visible in the systemd show support for
+   the udev service, so the override also updates the unit description
+   to make it obvious. When this override is in effect, you will be
+   able to see the change::
+
+    $ sudo systemctl status udev
+    systemd-udevd.service - udev Kernel Device Manager (LAVA)
+    Loaded: loaded (/lib/systemd/system/systemd-udevd.service; static; vendor preset: enabled)
+    Drop-In: /etc/systemd/system/systemd-udevd.service.d
+             -override.conf
+
 Other related devices
 =====================
 
@@ -234,8 +251,8 @@ Architecture and distribution issues
 If you are configuring a LAVA instance with a range of dispatchers, there can
 be issues if those dispatchers are both ``amd64`` and ``arm64`` architectures.
 
-On Debian Stretch, the ``lxc`` package does not support mapping the kernel 
-architecture name (``aarch64``) to the Debian release architecture name 
+On Debian Stretch, the ``lxc`` package does not support mapping the kernel
+architecture name (``aarch64``) to the Debian release architecture name
 (``arm64``). This mapping has been added to newer versions of LXC.
 
 ::
@@ -248,11 +265,11 @@ Once the cache exists, test jobs do not need to specify the arch again:
 
  $ sudo lxc-create  -t debian -n server-unittests -- --release stretch
 
-However, the cache will invalidate from time to time, so this is an 
+However, the cache will invalidate from time to time, so this is an
 administrative burden.
 
-To avoid this burden, admins can choose to have two LXC device-types defined 
-with slightly different health checks and test jobs to specify the 
+To avoid this burden, admins can choose to have two LXC device-types defined
+with slightly different health checks and test jobs to specify the
 architecture.
 
 .. seealso:: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=895432
