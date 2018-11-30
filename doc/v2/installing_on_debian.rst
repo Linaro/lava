@@ -481,6 +481,13 @@ proxy to proxify the same base URL. For instance you can have::
 
   http://example.com/lava => http://lava.example.com/lava
 
+In order to serve LAVA under ``/lava`` you should update the settings and add::
+
+  "STATIC_URL": "/lava/static/",
+  "MOUNT_POINT": "/lava",
+  "LOGIN_URL": "/lava/accounts/login/",
+  "LOGIN_REDIRECT_URL": "/lava/",
+
 Having two different base URLs is more awkward to setup. In this case
 you will have to also setup Apache modules like `Substitute` to alter
 the HTML content on the fly. This is not a recommended setup.
