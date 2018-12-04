@@ -86,6 +86,7 @@ class Job:  # pylint: disable=too-many-instance-attributes
         # override in use
         self.base_overrides = {}
         self.started = False
+        self.test_info = {}
 
     @property
     def context(self):

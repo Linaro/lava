@@ -42,7 +42,6 @@ def parse_action(job_data, name, device, pipeline, test_info, test_count):
     If protocols are defined, each Action may need to be aware of the protocol parameters.
     """
     parameters = job_data[name]
-    parameters["test_info"] = test_info
     if "protocols" in pipeline.job.parameters:
         parameters.update(pipeline.job.parameters["protocols"])
 
@@ -149,7 +148,6 @@ class JobParser:
         # on the test action type they are linked with (via namespacing).
         # This code builds an information dict for each namespace which is then
         # passed as a parameter to each Action class to use.
-        test_info = {}
         test_actions = [action for action in data["actions"] if "test" in action]
         for test_action in test_actions:
             test_parameters = test_action["test"]
@@ -158,16 +156,16 @@ class JobParser:
             connection_namespace = test_parameters.get(
                 "connection-namespace", namespace
             )
-            if namespace in test_info:
-                test_info[namespace].append(
+            if namespace in job.test_info:
+                job.test_info[namespace].append(
                     {"class": test_type, "parameters": test_parameters}
                 )
             else:
-                test_info.update(
+                job.test_info.update(
                     {namespace: [{"class": test_type, "parameters": test_parameters}]}
                 )
             if namespace != connection_namespace:
-                test_info.update(
+                job.test_info.update(
                     {
                         connection_namespace: [
                             {"class": test_type, "parameters": test_parameters}
@@ -190,7 +188,7 @@ class JobParser:
                         name,
                         device,
                         pipeline,
-                        test_info,
+                        job.test_info,
                         test_counts[namespace],
                     )
                     if name == "test" and action.needs_overlay():
@@ -217,7 +215,7 @@ class JobParser:
                                     repeat_action,
                                     device,
                                     pipeline,
-                                    test_info,
+                                    job.test_info,
                                     test_counts[namespace],
                                 )
                                 if repeat_action == "test" and action.needs_overlay():

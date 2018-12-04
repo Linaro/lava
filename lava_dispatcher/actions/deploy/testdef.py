@@ -657,7 +657,7 @@ class TestDefinitionAction(TestAction):
             parent=self, job=self.job, parameters=parameters
         )
         self.test_list = identify_test_definitions(
-            parameters["test_info"], parameters["namespace"]
+            self.job.test_info, parameters["namespace"]
         )
         if self.test_list:
             self.set_namespace_data(

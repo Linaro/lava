@@ -988,8 +988,8 @@ class Action:  # pylint: disable=too-many-instance-attributes,too-many-public-me
 
     @nottest
     def test_needs_deployment(self, parameters):  # pylint: disable=no-self-use
-        if parameters["namespace"] in parameters["test_info"]:
-            testclasses = parameters["test_info"][parameters["namespace"]]
+        if parameters["namespace"] in self.job.test_info:
+            testclasses = self.job.test_info[parameters["namespace"]]
             for testclass in testclasses:
                 if testclass["class"].needs_deployment_data():
                     return True
@@ -997,8 +997,8 @@ class Action:  # pylint: disable=too-many-instance-attributes,too-many-public-me
 
     @nottest
     def test_has_shell(self, parameters):  # pylint: disable=no-self-use
-        if parameters["namespace"] in parameters["test_info"]:
-            testclasses = parameters["test_info"][parameters["namespace"]]
+        if parameters["namespace"] in self.job.test_info:
+            testclasses = self.job.test_info[parameters["namespace"]]
             for testclass in testclasses:
                 if testclass["class"].has_shell():
                     return True
@@ -1006,8 +1006,8 @@ class Action:  # pylint: disable=too-many-instance-attributes,too-many-public-me
 
     @nottest
     def test_needs_overlay(self, parameters):  # pylint: disable=no-self-use
-        if parameters["namespace"] in parameters["test_info"]:
-            testclasses = parameters["test_info"][parameters["namespace"]]
+        if parameters["namespace"] in self.job.test_info:
+            testclasses = self.job.test_info[parameters["namespace"]]
             for testclass in testclasses:
                 if testclass["class"].needs_overlay():
                     return True

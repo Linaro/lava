@@ -386,10 +386,9 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
             if action.name == "auto-login-action"
         ][0]
         self.assertIsNotNone(autologin.parameters)
-        self.assertIn("test_info", autologin.parameters)
-        self.assertIn("isolation", autologin.parameters["test_info"])
-        self.assertIn("hikey-oe", autologin.parameters["test_info"])
-        self.assertIn("tlxc", autologin.parameters["test_info"])
+        self.assertIn("isolation", autologin.job.test_info)
+        self.assertIn("hikey-oe", autologin.job.test_info)
+        self.assertIn("tlxc", autologin.job.test_info)
 
     @unittest.skipIf(infrastructure_error("lxc-start"), "lxc-start not installed")
     def test_hikey960_grub(self):
