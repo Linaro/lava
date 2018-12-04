@@ -190,7 +190,7 @@ class TestMultinode(StdoutTestCase):  # pylint: disable=too-many-public-methods
                     ]["roles"]
                 ]
             ),
-            {"kvm02", "kvm01", "yaml_line"},
+            {"kvm02", "kvm01"},
         )
         self.assertEqual(
             set(
@@ -201,7 +201,7 @@ class TestMultinode(StdoutTestCase):  # pylint: disable=too-many-public-methods
                     ]["roles"]
                 ]
             ),
-            {"kvm02", "kvm01", "yaml_line"},
+            {"kvm02", "kvm01"},
         )
         self.assertEqual(
             client_protocol.parameters["protocols"][client_protocol.name]["roles"][
@@ -558,10 +558,9 @@ class TestMultinode(StdoutTestCase):  # pylint: disable=too-many-public-methods
             [
                 {
                     "action": "execute-qemu",
-                    "message": {"ipv4": "$IPV4", "yaml_line": 23},
+                    "message": {"ipv4": "$IPV4"},
                     "messageID": "test",
                     "request": "lava-wait",
-                    "yaml_line": 22,
                 }
             ],
         )
@@ -588,7 +587,7 @@ class TestMultinode(StdoutTestCase):  # pylint: disable=too-many-public-methods
         # :lava-wait
         reply = {mn_protocol.job_id: {"ipaddr": "10.15.206.133"}}
         cparams = {
-            "timeout": {"minutes": 5, "yaml_line": 11},
+            "timeout": {"minutes": 5},
             "messageID": "ipv4",
             "action": "prepare-scp-overlay",
             "message": {"ipaddr": "$ipaddr"},
@@ -606,9 +605,7 @@ class TestMultinode(StdoutTestCase):  # pylint: disable=too-many-public-methods
         )
 
         replaceables = [
-            key
-            for key, value in params["message"].items()
-            if key != "yaml_line" and value.startswith("$")
+            key for key, value in params["message"].items() if value.startswith("$")
         ]
         for item in replaceables:
             target_list = [val for val in reply["message"].items()]
@@ -619,11 +616,7 @@ class TestMultinode(StdoutTestCase):  # pylint: disable=too-many-public-methods
             client_calls,
             {
                 "action": "execute-qemu",
-                "message": {
-                    "ipv4": reply["message"][mn_protocol.job_id]["ipv4"],
-                    "yaml_line": 23,
-                },
-                "yaml_line": 22,
+                "message": {"ipv4": reply["message"][mn_protocol.job_id]["ipv4"]},
                 "request": "lava-wait",
                 "messageID": "test",
             },

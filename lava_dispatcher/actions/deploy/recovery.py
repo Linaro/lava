@@ -40,8 +40,7 @@ class RecoveryModeAction(DeployAction):
         recovery_dir = self.mkdtemp()
         image_keys = sorted(parameters["images"].keys())
         for image in image_keys:
-            if image != "yaml_line":
-                self.internal_pipeline.add_action(DownloaderAction(image, recovery_dir))
+            self.internal_pipeline.add_action(DownloaderAction(image, recovery_dir))
         self.internal_pipeline.add_action(CopyToLxcAction())
 
         tags = []

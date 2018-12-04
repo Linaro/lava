@@ -456,7 +456,6 @@ class TestKVMInlineTestDeploy(
                 "name": "smoke-tests-basic",
                 "os": ["ubuntu"],
                 "scope": ["functional"],
-                "yaml_line": 39,
             },
             "run": {
                 "steps": [
@@ -467,10 +466,8 @@ class TestKVMInlineTestDeploy(
                     "lava-test-case linux-INLINE-lscpu --shell lscpu",
                     "lava-test-case linux-INLINE-lsusb --shell lsusb",
                     "lava-test-case linux-INLINE-lsb_release --shell lsb_release -a",
-                ],
-                "yaml_line": 53,
+                ]
             },
-            "yaml_line": 38,
         }
         self.assertEqual(set(testdef), set(expected_testdef))
 

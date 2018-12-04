@@ -115,22 +115,21 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
         fastboot_dir = self.mkdtemp()
         image_keys = sorted(parameters["images"].keys())
         for image in image_keys:
-            if image != "yaml_line":
-                self.internal_pipeline.add_action(DownloaderAction(image, fastboot_dir))
-                if parameters["images"][image].get("apply-overlay", False):
-                    if self.test_needs_overlay(parameters):
-                        if parameters["images"][image].get("sparse", True):
-                            self.internal_pipeline.add_action(
-                                ApplyOverlaySparseImage(image)
-                            )
-                        else:
-                            self.internal_pipeline.add_action(
-                                ApplyOverlayImage(image, use_root_partition=False)
-                            )
-                if self.test_needs_overlay(parameters) and self.test_needs_deployment(
-                    parameters
-                ):
-                    self.internal_pipeline.add_action(DeployDeviceEnvironment())
+            self.internal_pipeline.add_action(DownloaderAction(image, fastboot_dir))
+            if parameters["images"][image].get("apply-overlay", False):
+                if self.test_needs_overlay(parameters):
+                    if parameters["images"][image].get("sparse", True):
+                        self.internal_pipeline.add_action(
+                            ApplyOverlaySparseImage(image)
+                        )
+                    else:
+                        self.internal_pipeline.add_action(
+                            ApplyOverlayImage(image, use_root_partition=False)
+                        )
+            if self.test_needs_overlay(parameters) and self.test_needs_deployment(
+                parameters
+            ):
+                self.internal_pipeline.add_action(DeployDeviceEnvironment())
         self.internal_pipeline.add_action(FastbootFlashOrderAction())
 
 
@@ -157,7 +156,6 @@ class FastbootFlashOrderAction(DeployAction):
         )
         flash_cmds_order = self.job.device["flash_cmds_order"]
         userlist = list(parameters["images"].keys())
-        userlist.remove("yaml_line")
         flash_cmds = set(userlist).difference(set(flash_cmds_order))
         flash_cmds = flash_cmds_order + list(flash_cmds)
         self.internal_pipeline.add_action(ReadFeedback(repeat=True))

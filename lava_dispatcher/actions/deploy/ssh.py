@@ -195,9 +195,7 @@ class PrepareOverlayScp(Action):
                 self.logger.warning("Missing data for host_key %s", host_key)
                 continue
             for params in self.parameters["protocols"][MultinodeProtocol.name]:
-                replacement_key = [
-                    key for key, _ in params["message"].items() if key != "yaml_line"
-                ][0]
+                replacement_key = [key for key, _ in params["message"].items()][0]
                 if replacement_key not in data:
                     self.logger.error(
                         "Mismatched replacement key %s and received data %s",

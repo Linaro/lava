@@ -53,7 +53,7 @@ class FlasherAction(DeployAction):
 
         # Download the images
         self.path = self.mkdtemp()
-        for image in [key for key in parameters["images"].keys() if key != "yaml_line"]:
+        for image in parameters["images"].keys():
             self.internal_pipeline.add_action(DownloaderAction(image, self.path))
 
         if self.test_needs_deployment(parameters):
@@ -65,9 +65,7 @@ class FlasherAction(DeployAction):
         connection = super().run(connection, max_end_time)
         # Substitute in the device commands
         substitutions = {}
-        for key in [
-            key for key in self.parameters["images"].keys() if key != "yaml_line"
-        ]:
+        for key in self.parameters["images"].keys():
             filename = self.get_namespace_data(
                 action="download-action", label=key, key="file"
             )

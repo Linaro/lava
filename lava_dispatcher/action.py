@@ -722,11 +722,6 @@ class Action:  # pylint: disable=too-many-instance-attributes,too-many-public-me
                 if "action" in call and call["action"] == self.name
             ]
             for call_dict in names:
-                del call_dict["yaml_line"]
-                if "message" in call_dict:
-                    del call_dict["message"]["yaml_line"]
-                if "timeout" in call_dict:
-                    del call_dict["timeout"]["yaml_line"]
                 protocol.check_timeout(self.connection_timeout.duration, call_dict)
                 self.logger.info(
                     "Making protocol call for %s using %s", self.name, protocol.name

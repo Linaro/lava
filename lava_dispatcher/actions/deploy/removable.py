@@ -318,8 +318,6 @@ class MassStorage(DeployAction):  # pylint: disable=too-many-instance-attributes
         uniquify = parameters.get("uniquify", True)
         if "images" in parameters:
             for k in sorted(parameters["images"].keys()):
-                if k == "yaml_line":
-                    continue
                 self.internal_pipeline.add_action(
                     DownloaderAction(k, path=self.image_path, uniquify=uniquify)
                 )

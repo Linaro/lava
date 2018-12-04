@@ -366,15 +366,11 @@ class VlandProtocol(Protocol):
                 available.extend(device["parameters"]["interfaces"][iface]["tags"])
         requested = []
         for friendly_name in self.parameters["protocols"][self.name]:
-            if friendly_name == "yaml_line":
-                continue
             base_jobid = "%s" % job.job_id
             base = "%s%s" % (base_jobid[-8:], friendly_name[:8])
             self.names[friendly_name] = "".join(e for e in base if e.isalnum())[:16]
         self.params = copy.deepcopy(self.parameters["protocols"][self.name])
         for vlan_name in self.params:
-            if vlan_name == "yaml_line":
-                continue
             if "tags" not in self.params[vlan_name]:
                 self.errors = "device already configured for %s" % self.name
             else:
@@ -390,8 +386,6 @@ class VlandProtocol(Protocol):
         # one vlan_name, one combination of switch & port, one interface, any supported link speed.
         # this may need more work with more complex vlan jobs
         for vlan_name in self.params:
-            if vlan_name == "yaml_line":
-                continue
             for iface in interfaces:
                 device_info = device["parameters"]["interfaces"][iface]
                 if (

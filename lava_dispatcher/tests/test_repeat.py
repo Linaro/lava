@@ -26,7 +26,6 @@ from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.actions.boot.qemu import BootQEMUImageAction
 from lava_dispatcher.actions.test.shell import TestShellRetry
 from lava_dispatcher.tests.test_basic import Factory, StdoutTestCase
-from lava_dispatcher.actions.deploy.testdef import get_deployment_testdefs
 from lava_dispatcher.tests.test_defs import allow_missing_path
 
 
@@ -64,7 +63,7 @@ def test_repeat_yaml(job):
     assert "boot" in repeat_block["actions"][2]  # nosec - unit test support.
     assert "test" in repeat_block["actions"][3]  # nosec - unit test support.
     # count the "namespace" parameter
-    assert len(params) == 3  # nosec - unit test support.
+    assert len(params) == 2  # nosec - unit test support.
 
 
 def test_nested_structure(job):

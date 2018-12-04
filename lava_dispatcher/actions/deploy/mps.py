@@ -99,10 +99,9 @@ class MpsAction(DeployAction):
         self.internal_pipeline.add_action(ResetDevice())
         self.internal_pipeline.add_action(WaitUSBMassStorageDeviceAction())
         for image in parameters["images"].keys():
-            if image != "yaml_line":
-                self.internal_pipeline.add_action(
-                    DownloaderAction(image, path=download_dir)
-                )
+            self.internal_pipeline.add_action(
+                DownloaderAction(image, path=download_dir)
+            )
         self.internal_pipeline.add_action(MountVExpressMassStorageDevice())
         if "recovery_image" in parameters["images"].keys():
             self.internal_pipeline.add_action(ExtractVExpressRecoveryImage())

@@ -220,8 +220,6 @@ class OverlayAction(DeployAction):
                         fout.write('LAVA_STORAGE="\n')
                         for method in self.job.device.get("storage_info", [{}]):
                             for key, value in method.items():
-                                if key == "yaml_line":
-                                    continue
                                 self.logger.debug(
                                     "storage methods:\t%s\t%s", key, value
                                 )
@@ -235,8 +233,6 @@ class OverlayAction(DeployAction):
             self.logger.debug("Creating %s/secrets", lava_path)
             with open(os.path.join(lava_path, "secrets"), "w") as fout:
                 for key, value in self.job.parameters["secrets"].items():
-                    if key == "yaml_line":
-                        continue
                     fout.write("%s=%s\n" % (key, value))
 
         connection = super().run(connection, max_end_time)
@@ -330,8 +326,6 @@ class MultinodeOverlayAction(OverlayAction):
                         for client_name in self.job.parameters["protocols"][
                             self.protocol
                         ]["roles"]:
-                            if client_name == "yaml_line":
-                                continue
                             role_line = self.job.parameters["protocols"][self.protocol][
                                 "roles"
                             ][client_name]
@@ -413,7 +407,7 @@ class VlandOverlayAction(OverlayAction):
         ][0]
         # needs to be the configured interface for each vlan.
         for key, _ in self.params.items():
-            if key == "yaml_line" or key not in vprotocol.params:
+            if key not in vprotocol.params:
                 continue
             self.names.append(",".join([key, vprotocol.params[key]["iface"]]))
         for interface in device_params:

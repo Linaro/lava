@@ -230,8 +230,6 @@ class TestVland(StdoutTestCase):  # pylint: disable=too-many-public-methods
         )
         self.assertTrue(vprotocol.check_timeout(120, {"request": "deploy_vlans"}))
         for vlan_name in job.parameters["protocols"][VlandProtocol.name]:
-            if vlan_name == "yaml_line":
-                continue
             self.assertIn(vlan_name, vprotocol.params)
             self.assertIn("switch", vprotocol.params[vlan_name])
             self.assertIn("port", vprotocol.params[vlan_name])
@@ -239,8 +237,6 @@ class TestVland(StdoutTestCase):  # pylint: disable=too-many-public-methods
         params = job.parameters["protocols"][vprotocol.name]
         names = []
         for key, _ in params.items():
-            if key == "yaml_line":
-                continue
             names.append(",".join([key, vprotocol.params[key]["iface"]]))
         # this device only has one interface with interface tags
         self.assertEqual(names, ["vlan_one,eth1"])
@@ -309,8 +305,6 @@ class TestVland(StdoutTestCase):  # pylint: disable=too-many-public-methods
         )
         self.assertTrue(vprotocol.check_timeout(120, {"request": "deploy_vlans"}))
         for vlan_name in job.parameters["protocols"][VlandProtocol.name]:
-            if vlan_name == "yaml_line":
-                continue
             self.assertIn(vlan_name, vprotocol.params)
             self.assertIn("switch", vprotocol.params[vlan_name])
             self.assertIn("port", vprotocol.params[vlan_name])

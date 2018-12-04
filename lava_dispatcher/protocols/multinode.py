@@ -421,8 +421,6 @@ class MultinodeProtocol(Protocol):  # pylint: disable=too-many-instance-attribut
                 if not isinstance(send_msg, dict):
                     send_msg = {json_data["message"]: None}
                 self.logger.debug("message: %s", json.dumps(send_msg))
-                if "yaml_line" in send_msg:
-                    del send_msg["yaml_line"]
                 self.logger.debug(
                     "requesting lava_send %s with args %s",
                     message_id,
@@ -474,9 +472,7 @@ class MultinodeProtocol(Protocol):  # pylint: disable=too-many-instance-attribut
         )
         if "message" in params and reply:
             replaceables = [
-                key
-                for key, value in params["message"].items()
-                if key != "yaml_line" and value.startswith("$")
+                key for key, value in params["message"].items() if value.startswith("$")
             ]
             for item in replaceables:
                 if "message" in reply:

@@ -58,7 +58,6 @@ class Job:  # pylint: disable=too-many-instance-attributes
         job_name
         priority
         device_type (mapped to target by scheduler)
-        yaml_line
         logging_level
         job_timeout
     Job also provides the primary access to the Device.

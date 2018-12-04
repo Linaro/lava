@@ -94,25 +94,6 @@ class JobParser:
 
     # FIXME: needs a Schema and a check routine
 
-    loader = None
-
-    # annotate every object in data with line numbers so we can use
-    # them is user-friendly validation messages, combined with the action.level
-    # each action will also include an output_line to map to the stdout log,
-    # once executed.
-
-    def compose_node(self, parent, index):
-        # the line number where the previous token has ended (plus empty lines)
-        line = self.loader.line
-        node = Composer.compose_node(self.loader, parent, index)
-        node.__line__ = line + 1
-        return node
-
-    def construct_mapping(self, node, deep=False):
-        mapping = Constructor.construct_mapping(self.loader, node, deep=deep)
-        mapping["yaml_line"] = node.__line__
-        return mapping
-
     def _timeouts(self, data, job):  # pylint: disable=no-self-use
         if "job" in data.get("timeouts", {}):
             duration = Timeout.parse(data["timeouts"]["job"])
@@ -120,10 +101,7 @@ class JobParser:
 
     # pylint: disable=too-many-locals,too-many-statements
     def parse(self, content, device, job_id, logger, dispatcher_config, env_dut=None):
-        self.loader = yaml.SafeLoader(content)
-        self.loader.compose_node = self.compose_node
-        self.loader.construct_mapping = self.construct_mapping
-        data = self.loader.get_single_data()
+        data = yaml.safe_load(content)
         job = Job(job_id, data, logger)
         test_counts = {}
         job.device = device
@@ -176,7 +154,6 @@ class JobParser:
         # FIXME: also read permissable overrides from device config and set from job data
         # FIXME: ensure that a timeout for deployment 0 does not get set as the timeout for deployment 1 if 1 is default
         for action_data in data["actions"]:
-            action_data.pop("yaml_line", None)
             for name in action_data:
                 # Set a default namespace if needed
                 namespace = action_data[name].setdefault("namespace", "common")
@@ -203,8 +180,6 @@ class JobParser:
                             for (
                                 repeat_action
                             ) in repeating:  # name of the action for this block
-                                if repeat_action == "yaml_line":
-                                    continue
                                 repeating[repeat_action]["repeat-count"] = c_iter
                                 namespace = repeating[repeat_action].setdefault(
                                     "namespace", "common"

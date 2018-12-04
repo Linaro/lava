@@ -57,54 +57,6 @@ def identify_test_definitions(test_info, namespace):
 
 
 @nottest
-def get_deployment_testdefs(parameters=None):
-    """
-    Identify the test definitions for each deployment within the job.
-    """
-    test_dict = OrderedDict()
-    if parameters is None:
-        return test_dict
-    deploy_list = []
-    for action in parameters["actions"]:
-        yaml_line = None
-        namespace = None
-        if "deploy" in action:
-            yaml_line = action["deploy"]["yaml_line"]
-            namespace = action["deploy"].get("namespace")
-            test_dict[yaml_line] = []
-            deploy_list = get_deployment_tests(parameters, yaml_line)
-        for deploy_action in deploy_list:
-            if "test" in deploy_action:
-                if namespace and namespace == deploy_action["test"].get("namespace"):
-                    test_dict[yaml_line].append(deploy_action["test"]["definitions"])
-        deploy_list = []
-    return test_dict
-
-
-@nottest
-def get_deployment_tests(parameters, yaml_line):
-    """
-    Get the test YAML blocks according to which deployment precedes that test
-    This allows multiple deployments to use distinct test definitions.
-    """
-    deploy = []
-    seen = False
-    for action in parameters["actions"]:
-        if "deploy" in action:
-            seen = False
-        if "deploy" in action and action["deploy"]["yaml_line"] == yaml_line:
-            seen = True
-            continue
-        if "repeat" in action and seen:
-            for repeat_action in action["repeat"]["actions"]:
-                if "test" in repeat_action:
-                    deploy.append(repeat_action)
-        if "test" in action and seen:
-            deploy.append(action)
-    return deploy
-
-
-@nottest
 def get_test_action_namespaces(parameters=None):
     """Iterates through the job parameters to identify all the test action
     namespaces."""
@@ -850,16 +802,12 @@ class TestOverlayAction(TestAction):  # pylint: disable=too-many-instance-attrib
         if "params" in testdef:
             raise_if_not_dict(testdef, "params")
             for def_param_name, def_param_value in list(testdef["params"].items()):
-                if def_param_name == "yaml_line":
-                    continue
                 if not def_param_value:
                     def_param_value = ""
                 ret_val.append("%s='%s'\n" % (def_param_name, def_param_value))
         if "parameters" in testdef:
             raise_if_not_dict(testdef, "parameters")
             for def_param_name, def_param_value in list(testdef["parameters"].items()):
-                if def_param_name == "yaml_line":
-                    continue
                 if not def_param_value:
                     def_param_value = ""
                 ret_val.append("%s='%s'\n" % (def_param_name, def_param_value))
@@ -870,8 +818,6 @@ class TestOverlayAction(TestAction):  # pylint: disable=too-many-instance-attrib
             raise_if_not_dict(self.parameters, "parameters")
             # turn a string into a local variable.
             for param_name, param_value in list(self.parameters["parameters"].items()):
-                if param_name == "yaml_line":
-                    continue
                 if not param_value:
                     param_value = ""
                 ret_val.append("%s='%s'\n" % (param_name, param_value))
@@ -880,8 +826,6 @@ class TestOverlayAction(TestAction):  # pylint: disable=too-many-instance-attrib
             raise_if_not_dict(self.parameters, "params")
             # turn a string into a local variable.
             for param_name, param_value in list(self.parameters["params"].items()):
-                if param_name == "yaml_line":
-                    continue
                 if not param_value:
                     param_value = ""
                 ret_val.append("%s='%s'\n" % (param_name, param_value))

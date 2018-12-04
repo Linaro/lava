@@ -60,10 +60,9 @@ class DeployImagesAction(DeployAction):  # FIXME: Rename to DeployPosixImages
             )
             # alternatively use the -bios option and standard image args
         for image in parameters["images"].keys():
-            if image != "yaml_line":
-                self.internal_pipeline.add_action(DownloaderAction(image, path))
-                if parameters["images"][image].get("format", "") == "qcow2":
-                    self.internal_pipeline.add_action(QCowConversionAction(image))
+            self.internal_pipeline.add_action(DownloaderAction(image, path))
+            if parameters["images"][image].get("format", "") == "qcow2":
+                self.internal_pipeline.add_action(QCowConversionAction(image))
         if self.test_needs_overlay(parameters):
             self.internal_pipeline.add_action(
                 OverlayAction()
@@ -133,10 +132,9 @@ class DeployQemuNfsAction(DeployAction):
             )
             # alternatively use the -bios option and standard image args
         for image in parameters["images"].keys():
-            if image != "yaml_line":
-                self.internal_pipeline.add_action(DownloaderAction(image, path))
-                if parameters["images"][image].get("format", "") == "qcow2":
-                    self.internal_pipeline.add_action(QCowConversionAction(image))
+            self.internal_pipeline.add_action(DownloaderAction(image, path))
+            if parameters["images"][image].get("format", "") == "qcow2":
+                self.internal_pipeline.add_action(QCowConversionAction(image))
         self.internal_pipeline.add_action(ExtractNfsAction())
         self.internal_pipeline.add_action(OverlayAction())
         self.internal_pipeline.add_action(ApplyOverlayTftp())

@@ -321,11 +321,6 @@ class TestConnection(StdoutTestCase):  # pylint: disable=too-many-public-methods
             for call in params
             if "action" in call and call["action"] == prepare.name
         ]:
-            del call_dict["yaml_line"]
-            if "message" in call_dict:
-                del call_dict["message"]["yaml_line"]
-            if "timeout" in call_dict:
-                del call_dict["timeout"]["yaml_line"]
             self.assertEqual(
                 call_dict,
                 {
@@ -400,9 +395,7 @@ class TestConnection(StdoutTestCase):  # pylint: disable=too-many-public-methods
         if "protocols" in scp_overlay.parameters:
             for params in scp_overlay.parameters["protocols"][MultinodeProtocol.name]:
                 (replacement_key, placeholder) = [
-                    (key, value)
-                    for key, value in params["message"].items()
-                    if key != "yaml_line"
+                    (key, value) for key, value in params["message"].items()
                 ][0]
                 self.assertEqual(data[replacement_key], "172.16.200.165")
                 self.assertEqual(placeholder, "$ipaddr")
@@ -430,8 +423,6 @@ class TestConnection(StdoutTestCase):  # pylint: disable=too-many-public-methods
             "message"
         ]
         for key, value in msg_dict.items():
-            if key == "yaml_line":
-                continue
             self.assertTrue(value.startswith("$"))
             self.assertFalse(key.startswith("$"))
         self.assertIn(

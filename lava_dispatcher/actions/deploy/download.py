@@ -823,10 +823,9 @@ class DownloadAction(DeployAction):  # pylint:disable=too-many-instance-attribut
         self.download_dir = self.mkdtemp()
         image_keys = sorted(parameters["images"].keys())
         for image in image_keys:
-            if image != "yaml_line":
-                self.internal_pipeline.add_action(
-                    DownloaderAction(image, self.download_dir)
-                )
+            self.internal_pipeline.add_action(
+                DownloaderAction(image, self.download_dir)
+            )
         if self.test_needs_overlay(parameters):
             self.internal_pipeline.add_action(OverlayAction())
         self.internal_pipeline.add_action(CopyToLxcAction())
