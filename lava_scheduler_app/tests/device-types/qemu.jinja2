@@ -24,6 +24,9 @@ available_architectures:
 - amd64
 - x86_64
 - i386
+- mips64
+- sparc
+- sparc64
 {% for arch in qemu_misc_architectures %}
 - {{ arch }}
 {% endfor %}
@@ -55,6 +58,12 @@ actions:
             qemu-system-x86_64
 {% elif arch == 'i386' %}
             qemu-system-i386
+{% elif arch == 'mips64' %}
+            qemu-system-mips64
+{% elif arch == 'sparc' %}
+            qemu-system-sparc
+{% elif arch == 'sparc64' %}
+            qemu-system-sparc64
 {% else %}
 {# binary comes from the qemu-system-misc package #}
             qemu-system-{{ arch }}
