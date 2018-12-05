@@ -170,7 +170,10 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
 
     def validate_actions(self):
         for action in self.actions:
-            action.validate()
+            try:
+                action.validate()
+            except JobError as exc:
+                action.errors = "%s %s: %s" % (action.level, action.name, str(exc))
 
         # If this is the root pipeline, raise the errors
         if self.parent is None and self.errors:
