@@ -55,16 +55,17 @@ Parameter List
 .. contents::
    :backlinks: top
 
+.. include:: actions-deploy-to-docker.rsti
+.. include:: actions-deploy-to-download.rsti
 .. include:: actions-deploy-to-fastboot.rsti
 .. include:: actions-deploy-to-isoinstaller.rsti
 .. include:: actions-deploy-to-lxc.rsti
+.. include:: actions-deploy-to-nbd.rsti
+.. include:: actions-deploy-to-recovery.rsti
 .. include:: actions-deploy-to-sata.rsti
 .. include:: actions-deploy-to-ssh.rsti
 .. include:: actions-deploy-to-tftp.rsti
-.. include:: actions-deploy-to-nbd.rsti
 .. include:: actions-deploy-to-usb.rsti
-.. include:: actions-deploy-to-download.rsti
-.. include:: actions-deploy-to-recovery.rsti
 .. include:: actions-deploy-to-vemsd.rsti
 
 .. index:: deploy os
