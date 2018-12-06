@@ -130,7 +130,9 @@ class TestInteractiveAction(TestAction):
         cmds = script["script"]
 
         for (index, cmd) in zip(range(0, len(cmds)), cmds):
-            command = substitute([cmd["command"]], substitutions)[0]
+            command = cmd["command"]
+            if command is not None:
+                command = substitute([cmd["command"]], substitutions)[0]
             start = time.time()
             result = {
                 "definition": "%s_%s" % (self.parameters["stage"], script["name"]),
@@ -139,9 +141,15 @@ class TestInteractiveAction(TestAction):
             }
 
             try:
-                self.logger.info("Sending '%s'", command)
+                # If the command is None, we should not send anything, just
+                # wait.
+                if command is None:
+                    self.logger.info("Sending nothing, waiting")
+                else:
+                    self.logger.info("Sending '%s'", command)
+                    test_connection.sendline(command, delay=self.character_delay)
+
                 expect = prompts + [p["message"] for p in cmd.get("patterns", [])]
-                test_connection.sendline(command, delay=self.character_delay)
                 self.logger.debug("Waiting for '%s'", "', '".join(expect))
                 ret = test_connection.expect(expect, timeout=self.timeout.duration)
 

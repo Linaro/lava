@@ -131,6 +131,18 @@ def test_run_script(monkeypatch):
     action.parameters = {"stage": 0}
     action.logger = Logger(
         [
+            ("info", "Sending nothing, waiting"),
+            ("debug", "Waiting for '=> ', '/ # '"),
+            ("debug", "Matched a prompt: '=> '"),
+            (
+                "results",
+                {
+                    "definition": "0_setup",
+                    "case": "wait prompt",
+                    "result": "pass",
+                    "duration": "1.00",
+                },
+            ),
             ("info", "Sending 'help'"),
             ("debug", "Waiting for '=> ', '/ # '"),
             ("debug", "Matched a prompt: '=> '"),
@@ -190,6 +202,7 @@ def test_run_script(monkeypatch):
     action.validate()
 
     conn_data = [
+        ("expect", ["=> ", "/ # "], 0),
         ("sendline", "help"),
         ("expect", ["=> ", "/ # "], 0),
         ("sendline", "dhcp"),
@@ -208,6 +221,7 @@ def test_run_script(monkeypatch):
         "prompts": ["=> ", "/ # "],
         "name": "setup",
         "script": [
+            {"command": None, "name": "wait prompt"},
             {"command": "help", "name": "network.help"},
             {
                 "command": "dhcp",

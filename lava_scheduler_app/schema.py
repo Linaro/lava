@@ -209,7 +209,7 @@ def _interactive_script_schema():
                 Optional("name"): Match(
                     r"^[a-zA-Z0-9-_]+$", msg=INVALID_CHARACTER_ERROR_MSG
                 ),
-                Required("command"): str,
+                Required("command"): Any(None, str),
                 Optional("patterns"): Schema(
                     [
                         {

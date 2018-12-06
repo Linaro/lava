@@ -20,6 +20,7 @@ actions:
     - name: network
       prompts: ["=> ", "/ # "]
       script:
+      - command:
       - command: dhcp
         name: dhcp
         patterns:

@@ -328,6 +328,20 @@ Interactive
 An interactive test action allows to interact with a non-POSIX test shell. For
 instance a u-boot shell.
 
+The workflow of the interactive test shell is::
+
+* send the command to the DUT
+* wait for the prompts or the messages
+* if a name is defined, log the result for this command (as soon a a prompt or a message is matched)
+* if a message was matched and this is not the last command, wait for the prompts
+
+.. note:: if the ``command`` is None ("command:" in yaml), the test shell will
+  wait for the prompts and messages without sending anything to the device.
+
+.. note:: the interactive shell is expecting the prompt to be already matched
+  before it starts. If this is not the case, then wait for the prompt by
+  adding a ``None`` ``command``.
+
 A u-boot interactive test might look like:
 
 .. code-block:: yaml
@@ -346,6 +360,8 @@ A u-boot interactive test might look like:
        error: "dhcp failed"
    - name: setenv
      command: "setenv serverip {SERVER_IP}"
+   - name: wait for the prompt
+     command:
 
 A script is a list of commands to send:
 
