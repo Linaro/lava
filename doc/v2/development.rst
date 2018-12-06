@@ -49,7 +49,7 @@ Functional testing
 
 Unit tests cannot replicate all tests required on LAVA code, some tests
 will need to be run with real devices under test. On Debian based
-distributions, see :ref:`dev_builds`. See :ref:`writing_tests` for
+distributions, see :ref:`dev_builds`. See :ref:`test_developer` for
 information on writing LAVA test jobs to test particular device
 functionality.
 

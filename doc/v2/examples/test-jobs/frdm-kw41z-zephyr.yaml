@@ -1,0 +1,39 @@
+# Zephyr JOB definition for IoT
+device_type: frdm-kw41z
+job_name: frdm-kw41z zephyr IoT example
+
+timeouts:
+  job:
+    minutes: 6
+  action:
+    minutes: 3
+  actions:
+    wait-usb-device:
+      seconds: 40
+
+priority: medium
+visibility: public
+
+actions:
+- deploy:
+    timeout:
+      minutes: 3
+    to: tmpfs
+    images:
+        zephyr:
+            url:  http://images.validation.linaro.org/snapshots.linaro.org/components/kernel/zephyr/master/zephyr/frdm_kw41z/737/tests/kernel/libs/test/zephyr.bin
+
+- boot:
+    method: pyocd
+    timeout:
+      minutes: 10
+
+- test:
+    monitors:
+    - name: tests
+      start: BOOTING ZEPHYR
+      end: PROJECT EXECUTION SUCCESSFUL
+      pattern: '(?P<test_case_id>.*) (?P<measurement>.*) tcs = [0-9]* nsec'
+      fixupdict:
+        PASS: pass
+        FAIL: fail

@@ -19,6 +19,12 @@ Assumptions
 
 * The test job deployment raises a usable networking interface.
 
+* The test job deployment starts a suitable daemon, ``sshd`` or
+  ``dropbear``
+
+* The test action uses :ref:`Lava-Test Test Definition 1.0
+  <writing_tests_1_0>`
+
 .. _hacking_session_limitations:
 
 Limitations
@@ -47,8 +53,9 @@ the user to log in to the hacking session. e.g. QEMU jobs need to setup a
 Definitions
 ===========
 
-There are test definitions for hacking sessions provided by the LAVA developers
-at https://git.linaro.org/lava-team/hacking-session.git . Currently the
+There are Lava-Test Test Definition 1.0 test definitions for hacking
+sessions provided by the LAVA developers at
+https://git.linaro.org/lava-team/hacking-session.git . Currently the
 following definitions are supported:
 
 * `hacking-session-debian.yaml`_ - Run the hacking session on a Debian or
@@ -115,6 +122,8 @@ Starting a Hacking Session
            parameters:
               "IRC_USER": "TYPE YOUR IRC NICK HERE"
               "PUB_KEY": "PASTE_PUBKEY(S) HERE"
+
+Other types of test action are **not** supported for hacking sessions.
 
 It is possible to include multiple hacking sessions in the same job, even
 interleaved with other test actions.

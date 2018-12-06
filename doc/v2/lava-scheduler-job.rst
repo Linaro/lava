@@ -25,7 +25,7 @@ LAVA jobs and LAVA test cases may fail for a number of reasons, including:
 
 * Failures on the device
 
-See :ref:`writing_tests`
+See :ref:`test_developer`
 
 Dispatcher error or test failure
 ********************************

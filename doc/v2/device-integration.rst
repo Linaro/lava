@@ -398,7 +398,7 @@ familiar with:
 
 * :ref:`create_device_dictionary`
 
-* :ref:`writing_tests`
+* :ref:`test_developer`
 
 * :ref:`debian_installation`
 

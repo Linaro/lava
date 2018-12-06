@@ -133,7 +133,7 @@ Using ``lava_test_shell`` in all health checks has several benefits:
    simply booting an image and each device type can have custom tests to pick
    up common hardware issues
 
-See also :ref:`writing_tests`.
+See also :ref:`test_developer`.
 
 Infrastructure issues
 =====================

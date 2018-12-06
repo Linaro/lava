@@ -1,0 +1,56 @@
+device_type: qemu
+job_name: qemu, Debian stretch with parameters
+
+timeouts:
+  job:
+    minutes: 20
+  action:
+    minutes: 5
+priority: medium
+visibility: public
+context:
+  arch: amd64
+  # comment out or change to user if the dispatcher does not support bridging.
+  # netdevice: tap
+
+metadata:
+  source: https://git.lavasoftware.org/lava/lava.git
+  path: doc/v2/examples/test-jobs/qemu-stretch-params.yaml
+  readme: https://files.lavasoftware.org/components/lava/standard/debian/stretch/amd64/2/debian-stretch-amd64-readme.html
+  build-log: https://files.lavasoftware.org/components/lava/standard/debian/stretch/amd64/2/vmdebootstrap.log
+
+actions:
+- deploy:
+    timeout:
+      minutes: 5
+    to: tmpfs
+    images:
+        rootfs:
+          image_arg: -drive format=raw,file={rootfs}
+          url: https://files.lavasoftware.org/components/lava/standard/debian/stretch/amd64/2/stretch.img.gz
+          compression: gz
+    root_partition: 1
+
+- boot:
+    method: qemu
+    media: tmpfs
+    timeout:
+      minutes: 5
+    prompts:
+    - "root@debian:"
+    auto_login:
+      login_prompt: "debian login:"
+      username: root
+
+- test:
+    timeout:
+      minutes: 5
+    definitions:
+    - repository: https://git.lavasoftware.org/lava/functional-tests.git
+      from: git
+      path: posix/parameters.yaml
+      name: parse-params
+      parameters:
+        VARIABLE_NAME_1: "first variable value"
+        VARIABLE_NAME_1: "first variable value"
+        EMPTY_VARIABLE:

@@ -1,0 +1,23 @@
+metadata:
+    format: Lava-Test Test Definition 1.0
+    name: params-test
+    description: "test commands for Linux POSIX images with params"
+    version: "1.0"
+    maintainer:
+        - neil.williams@linaro.org
+
+params:
+    VARIABLE_NAME_1: value_1
+    VARIABLE_NAME_2: value_2
+
+run:
+    steps:
+        - lava-test-case test3 --result pass
+        - lava-test-case test4 --result fail
+        - lava-test-case test5 --result pass --measurement 99 --units bottles
+        - lava-test-case test6 --result fail --measurement 0 --units mugs
+        - echo $VARIABLE_NAME_1
+        - echo $VARIABLE_NAME_2
+        - echo $SPACED_VAR
+        - echo $PUB_KEY
+

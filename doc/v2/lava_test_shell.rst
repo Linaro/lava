@@ -2,15 +2,17 @@
 
 .. _lava_test_shell:
 
-LAVA Test Shell
-***************
+Lava-Test Test Definition 1.0
+*****************************
 
-The ``lava_test_shell`` action provides a way to employ a black-box style
-testing appoach with the target device. The test definition format is designed
-to be flexible, allowing many options on how to do things.
+The ``lava_test_shell`` action provides a way to employ a black-box
+style testing appoach with the target device. It does this by
+deploying an ``overlay`` to the target device; it requires a POSIX
+system to be running on the target. The test definition format is
+designed to be flexible, allowing many options on how to do things.
 
-Quick start
-===========
+Quick start to Test Definition 1.0
+**********************************
 
 A minimal test definition looks like this:
 
@@ -20,36 +22,19 @@ A minimal test definition looks like this:
     name: passfail
     format: "Lava-Test-Shell Test Definition 1.0"
     description: "A simple passfail test for demo."
-    os:
-      - ubuntu
-      - openembedded
-    devices:
-      - origen
-      - panda
-    environment:
-      - lava-test-shell
-
-  params:
-    TEST_1: pass
 
   run:
     steps:
-      - echo "test-1: $TEST_1"
-      - echo "test-2: fail"
+      - lava-test-case test-1 --result pass
+      - lava-test-case test-2 --result fail
 
-  parse:
-    pattern: "(?P<test_case_id>.*-*):\\s+(?P<result>(pass|fail))"
-
-.. note::  The parse pattern has similar quoting rules as Python, so
-          \\s must be escaped as \\\\s and similar.
-
-Some of the parameters here (os, devices, environment) are optional in the
-metadata section. Others are mandatory (name, format, description).
+Only the mandatory metadata parameters have been included (name, format,
+description).
 
 .. _versioned_test_definitions:
 
 Versioned test definitions
---------------------------
+==========================
 
 If your test definition is not part of a git or bzr repository then it is must
 include a **version** parameter in the metadata section like in the following
@@ -60,21 +45,13 @@ example.
   metadata:
     name: passfail
     format: "Lava-Test-Shell Test Definition 1.0"
-    version: "1.0"
     description: "A simple passfail test for demo."
-    os:
-      - ubuntu
-      - openembedded
-    devices:
-      - origen
-      - panda
-    environment:
-      - lava-test-shell
+    version: "1.0"
 
 .. _lava_test_shell_setx:
 
 How a lava test shell is run
-----------------------------
+============================
 
 A lava-test-shell is run by:
 
@@ -85,8 +62,10 @@ A lava-test-shell is run by:
       finish the command with ``|| true`` to make that failure **not** abort
       the test run.
 
-* copying this script onto the device and arranging for it to be run when the
-  device boots
+* copying an ``overlay`` onto the device. The ``overlay`` containins
+  both the test script and the rest of the
+  :ref:`lava_test_helpers`. and setup code to run the test script when
+  the device boots
 
 * booting the device and letting the test run
 
@@ -102,17 +81,21 @@ shell code that outputs "test-case-id: result" for each test case you are
 interested in. See the Test Developer Guide:
 
 * :ref:`test_developer`.
-* :ref:`writing_tests`.
-* :ref:`parsing_output`.
+* :ref:`writing_tests_1_0`.
 
-A possible advantage of the parsing approach is that it means your test is easy
-to work on independently from LAVA: simply write a script that produces the
-right sort of output, and then provide a very small amount of glue to wire it
-up in LAVA. However, using the parsing option will mean writing potentially
-complicated regular expressions.
+.. warning:: Older support for parse patterns and fixup dictionaries
+   is **deprecated** because the support has proven too difficult to
+   use and very hard to debug. The syntax is Python but converted
+   through YAML and the scope is global. The support remains only for
+   compatibility with existing Lava Test Shell Definitions. In future,
+   any desired parsing should be moved into a :ref:`custom script
+   <custom_scripts>` contained within the test definition
+   repository. This script can simply call ``lava-test-case`` directly
+   with the relevant options once the data is parsed. This has the
+   advantage that the log output from LAVA can be tested directly as
+   input for the script.
 
-When you need it, there is also a more powerful, LAVA-specific, way of writing
-tests. When a test runs, ``$PATH`` is arranged so that some LAVA-specific
+When a test runs, ``$PATH`` is arranged so that some LAVA-specific
 utilities are available:
 
 * :ref:`lava-test-case`
@@ -124,7 +107,7 @@ utilities are available:
 .. _lava-test-case:
 
 lava-test-case
---------------
+==============
 
 lava-test-case records the results of a single test case. For example:
 
@@ -141,7 +124,7 @@ command is used to produce the test result.
 Both forms take the name of the testcase as the first argument.
 
 Specifying results directly
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+---------------------------
 
 The first form takes these additional arguments:
 
@@ -200,7 +183,7 @@ The custom scripts themselves can be called from a ``lava-test-case`` using the
 failure in the custom script.
 
 Using the exit status of a command
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+----------------------------------
 
 The second form of ``lava-test-case`` is indicated by the ``--shell``
 argument, for example:
@@ -213,28 +196,43 @@ argument, for example:
       - "lava-test-case pass-test --shell true"
 
 The result of a ``shell`` call will only be recorded as a pass or fail,
-dependent on the exit code of the command. The output of the command can,
-however, be parsed as a separate result if the command produces output suitable
-for the parser in the YAML:
+dependent on the exit code of the command.
 
-.. code-block:: yaml
+.. _yaml_parameters:
 
- run:
-    steps:
-    - lava-test-case echo2 --shell echo "test2b:" "fail"
- parse:
-    pattern: "(?P<test_case_id>.*-*):\\s+(?P<result>(pass|fail))"
+Using parameters in the job to update the definition
+====================================================
 
-This example generates **two** test results to indicate that the shell command
-executed correctly but that the result of that execution was a failure::
+Parameters used in the test definition YAML can be controlled from the
+YAML job file. See the following YAML test definition for ean example
+of how it works.
 
-#. **echo2** - pass
-#. **test2b** - fail
+.. literalinclude:: examples/test-definitions/params.yaml
+   :language: yaml
+   :linenos:
+   :lines: 1-23
+   :emphasize-lines: 9-11, 19-21
+
+Download or view params.yaml: `examples/test-definitions/params.yaml
+<examples/test-definitions/params.yaml>`_
+
+This Lava-Test Test Definition 1.0 can be used in a simple QEMU test
+job:
+
+.. literalinclude:: examples/test-jobs/qemu-stretch-params.yaml
+   :language: yaml
+   :linenos:
+   :lines: 43-54
+   :emphasize-lines: 10-12
+
+Download or view the test job:
+`examples/test-jobs/qemu-stretch-params.yaml
+<examples/test-jobs/qemu-stretch-params.yaml>`_
 
 .. _lava-background-process-start:
 
 lava-background-process-start
------------------------------
+=============================
 
 This starts a process in the background, for example:
 
@@ -258,7 +256,7 @@ See :ref:`test_attach`.
 .. _lava-background-process-stop:
 
 lava-background-process-stop
-----------------------------
+============================
 
 This stops a process previously started in the background using
 :ref:`lava-background-process-start`. The user can attach files to the test run
@@ -290,10 +288,18 @@ the contents into the log file.
 
 .. seealso:: :ref:`publishing_artifacts`
 
-.. _handling_dependencies:
+Deprecated elements
+*******************
+
+.. _handling_dependencies_deprecated:
 
 Handling Dependencies (Debian)
 ==============================
+
+.. warning:: The ``install`` element of Lava-Test Test Definition 1.0
+   is **DEPRECATED**. See :ref:`test_definition_portability`. Newly
+   written Lava-Test Test Definition 1.0 files should not use
+   ``install``.
 
 If your test requires some packages to be installed before its run it can
 express that in the ``install`` section with:
@@ -305,12 +311,17 @@ express that in the ``install`` section with:
           - linux-libc-dev
           - build-essential
 
-.. _adding_repositories:
+.. _adding_repositories_deprecated:
 
 Adding Git/BZR Repositories
 ===========================
 
-If your test needs code from a shared repository, the action can clone this
+.. warning:: The ``install`` element of Lava-Test Test Definition 1.0
+   is **DEPRECATED**. See :ref:`test_definition_portability`. Newly
+   written Lava-Test Test Definition 1.0 files should not use
+   ``install``.
+
+If the test needs code from a shared repository, the action can clone this
 data on your behalf with:
 
 .. code-block:: yaml
@@ -357,20 +368,15 @@ the git-repos action, for example:
 * `branch` (optional) is the branch within the git repository given in `url`
   that should be checked out after cloning.
 
-.. _yaml_parameters:
-
-Using parameters in the job to update the definition
-====================================================
-
-Parameters used in the test definition YAML can be controlled from the YAML job
-file. See the following YAML test definition to get an understanding of how it
-works.
-
-* YAML test definition - https://git.linaro.org/lava-team/lava-functional-tests.git/tree/lava-test-shell/params/params.yaml
-* YAML job submission - https://git.linaro.org/lava-team/refactoring.git/tree/qemu-stretch-params.yaml
+.. _install_steps_deprecated:
 
 Install Steps
 =============
+
+.. warning:: The ``install`` element of Lava-Test Test Definition 1.0
+   is **DEPRECATED**. See :ref:`test_definition_portability`. Newly
+   written Lava-Test Test Definition 1.0 files should not use
+   ``install``.
 
 Before the test shell code is executed, it will optionally do some install work
 if needed. For example if you needed to build some code from a git repo you
@@ -389,8 +395,10 @@ could do:
 .. note:: The repo steps are done in the dispatcher itself. The install steps
           are run directly on the target.
 
-Advanced Parsing
-================
+.. _parse_patterns_1_0_deprecated:
+
+Parse patterns
+==============
 
 .. warning:: Parse patterns and fixup dictionaries are confusing and hard to
    debug. The syntax is Python and the support remains for compatibility with

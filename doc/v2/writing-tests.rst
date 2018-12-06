@@ -1,9 +1,9 @@
-.. index:: writing test definition
+.. index:: writing test - Lava-Test Test definition 1.0
 
-.. _writing_tests:
+.. _writing_tests_1_0:
 
-Writing a LAVA test shell definition
-####################################
+Writing a Lava-Test Test Definition 1.0
+#######################################
 
 .. note:: A Lava Test Shell Definition is distinct from a test job
    definition, although both use YAML. Typically, the test job definition
@@ -30,6 +30,9 @@ environments and purposes, the test can use a repository of YAML files.
 Writing a test definition YAML file
 ***********************************
 
+Metadata
+========
+
 The YAML is downloaded from the repository (or handled inline) and installed
 into the test image, either as a single file or as part of a git or bzr
 repository. (See :ref:`test_repos`)
@@ -48,7 +51,6 @@ Metadata includes:
       name: singlenode-advanced
       description: "Advanced (level 3): single node test commands for Linux Linaro ubuntu Images"
 
-
 .. note:: the short name of the purpose of the test definition, i.e.,
           value of field **name**, must not contain any non-ascii
           characters or special characters from the following list,
@@ -64,6 +66,9 @@ the **version** of the file must also be specified in the metadata:
       name: singlenode-advanced
       description: "Advanced (level 3): single node test commands for Linux Linaro ubuntu Images"
       version: "1.0"
+
+Optional metadata
+-----------------
 
 There are also optional metadata fields:
 
@@ -87,6 +92,17 @@ There are also optional metadata fields:
           - beaglebone-black
           - beagle-xm
 
+These fields are ignored by LAVA itself; they exist only for test
+writers to use for their own requirements.
+
+Deprecated installation commands
+================================
+
+.. warning:: The ``install`` element of Lava-Test Test Definition 1.0
+   is **DEPRECATED**. See :ref:`test_definition_portability`. Newly
+   written Lava-Test Test Definition 1.0 files should not use
+   ``install``.
+
 The instructions within the YAML file can include installation requirements for
 images based on supported distributions (currently, Ubuntu or Debian):
 
@@ -99,7 +115,6 @@ images based on supported distributions (currently, Ubuntu or Debian):
           - ntpdate
           - lsb-release
           - usbutils
-
 
 .. note:: for an `install` step to work, the test **must** first raise
           a usable network interface without running any instructions
@@ -202,14 +217,14 @@ Writing commands to run on the device
 
 #. Take care with YAML syntax. These lines will fail with wrong syntax:
 
-.. code-block:: yaml
+   .. code-block:: yaml
 
     - echo "test1: pass"
     - echo test2: fail
 
    While this syntax will pass:
 
-.. code-block:: yaml
+   .. code-block:: yaml
 
     - echo "test1:" "pass"
     - echo "test2:" "fail"
@@ -293,7 +308,7 @@ It is possible to use different scripts, with the test job selecting which
 scripts to use for a particular deployment as it runs.
 
 Each line in the definition must be a single line of shell, with no redirects,
-functions or pipes. Ideally, the Test Shell Definition will consist of a
+functions or pipes. Ideally, the Lava-Test Test Definition 1.0 will consist of a
 single ``run`` step which simply calls the appropriate test writer script.
 
 .. _lava_test_helpers:
@@ -383,8 +398,8 @@ Writing custom scripts to support tests
 ***************************************
 
 .. note:: Custom scripts are not available in an :term:`inline` definition,
-   *unless* the definition itself downloads the script and makes it
-   executable.
+   *unless* the definition itself downloads the script, adds any
+   dependencies and makes the script executable.
 
 When multiple actions are necessary to get usable output, write a custom script
 to go alongside the YAML and execute that script as a run step:
@@ -417,6 +432,38 @@ https://git.linaro.org/lava-team/refactoring.git/tree/functional/server-jessie-s
 .. note:: Make sure that your custom scripts output some useful information,
    including some indication of progress, in all test jobs but control the
    total amount of output to make the logs easier to read.
+
+Advantages of custom scripts
+============================
+
+.. seealso:: :ref:`test_definition_portability`
+
+Detailed knowledge of the output
+--------------------------------
+
+Custom scripts can be written to take advantage of detailed knowledge
+of the expected output and the test environment. They don't have to be
+generic (i.e. they can be specifically targeted to one test
+suite). They can use a variety of tools or programming language
+support to parse the test output.
+
+Increased portability
+---------------------
+
+Custom scripts can also allow test writers to make the Test Shell
+Definition more portable, to be run outside LAVA. It is recommeneded
+to do this wherever possible and not rely on LAVA-specific helper
+scripts. This allows developers who do not have access to the test
+framework to reproduce bugs found by the test framework whilst
+retaining the benefits of scripts which are specific to particular
+test output styles.
+
+Problem reports can be difficult for developers to debug if they
+cannot reproduce the bug manually, without using the complete CI
+system. Every effort should be made to support running the test action
+instructions on a DUT which has been manually deployed so that
+developers can add specialised debug tools and equipment which are not
+available within the CI.
 
 .. _interpreters_scripts:
 
@@ -478,53 +525,6 @@ another command:
 For more details on the contents of the YAML file and how to construct YAML for
 your own tests, see the :ref:`test_developer`.
 
-.. _parsing_output:
-
-Parsing command outputs
-***********************
-
-.. comment This duplicates lava_test_shell.rst Advanced Parsing
-
-.. warning:: Parse patterns and fixup dictionaries are confusing and
-   hard to debug. The syntax is Python and the support remains for
-   compatibility with existing Lava Test Shell Definitions. With LAVA V2, it is
-   recommended to move parsing into a :ref:`custom script <custom_scripts>`
-   contained within the test definition repository. The script can simply call
-   ``lava-test-case`` directly with the relevant options once the data is
-   parsed. This has the advantage that the log output from LAVA can be tested
-   directly as input for the script.
-
-If the test involves parsing the output of a command rather than simply relying
-on the exit value, LAVA can use a pass/fail/skip/unknown output:
-
-.. code-block:: yaml
-
-  run:
-     steps:
-        - echo "test1:" "pass"
-        - echo "test2:" "fail"
-        - echo "test3:" "skip"
-        - echo "test4:" "unknown"
-
-The quotes are required to ensure correct YAML parsing.
-
-The parse section can supply a parser to convert the output into
-test case results:
-
-.. code-block:: yaml
-
-  parse:
-      pattern: "(?P<test_case_id>.*-*):\\s+(?P<result>(pass|fail))"
-
-The result of the above test would be a set of results:
-
-.. code-block:: yaml
-
-  test1 -> pass
-  test2 -> fail
-  test3 -> pass
-  test4 -> pass
-
 .. _recording_test_results:
 
 Recording test case results
@@ -537,34 +537,23 @@ checking the exit value of the call:
 
   run:
      steps:
-        - echo "test1:" "pass"
-        - echo "test2:" "fail"
-        - lava-test-case echo1 --shell echo "test3:" "pass"
-        - lava-test-case echo2 --shell echo "test4:" "fail"
+      - "lava-test-case fail-test --shell false"
+      - "lava-test-case pass-test --shell true"
 
 This syntax will result in extra test results:
 
 .. code-block:: yaml
 
-  test1 -> pass
-  test2 -> fail
-  test3 -> pass
-  test4 -> fail
-  echo1 -> pass
-  echo2 -> pass
+  fail-test -> fail
+  pass-test -> pass
 
-Note that ``echo2`` **passed** because the ``echo "test4:" "fail"`` returned
-an exit code of zero.
-
-Alternatively, the ``--result`` command can be used to output the value
-to be picked up by the parser:
+Alternatively, the ``--result`` command can be used to output the
+result directly:
 
 .. code-block:: yaml
 
   run:
      steps:
-        - echo "test1:" "pass"
-        - echo "test2:" "fail"
         - lava-test-case test5 --result pass
         - lava-test-case test6 --result fail
 
@@ -572,11 +561,8 @@ This syntax will result in the test results:
 
 .. code-block:: yaml
 
-  test1 -> pass
-  test2 -> fail
   test5 -> pass
   test6 -> fail
-
 
 .. _recording_test_measurements:
 
@@ -595,8 +581,6 @@ as measurements (to support charts based on measurement trends).
 
   run:
      steps:
-        - echo "test1:" "pass"
-        - echo "test2:" "fail"
         - lava-test-case test5 --result pass --measurement 99 --units bottles
         - lava-test-case test6 --result fail --measurement 0 --units mugs
 
@@ -604,8 +588,6 @@ This syntax will result in the test results:
 
 .. code-block:: yaml
 
-  test1 -> pass
-  test2 -> fail
   test5 -> pass -> 99.0000000000 bottles
   test6 -> fail -> 0E-10 mugs
 

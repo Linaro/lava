@@ -1,9 +1,44 @@
-.. index:: writing tests
+.. index:: writing tests - introduction
 
 .. _test_developer:
 
 Writing Tests
 #############
+
+The LAVA dispatcher currently supports tests being run in a number of
+ways:
+
+* :ref:`Lava-Test Test Definition 1.0 <writing_tests_1_0>` (POSIX
+  shell based testing) using an overlay.
+
+  * lava-test-case handling
+
+  * MultiNode support
+
+  * inline test definitions
+
+  * regular expression pattern matching
+
+* :ref:`LAVA Test Monitor <writing_tests_monitor>` (simple pass/fail
+  pattern matching)
+
+* :ref:`Interactive <writing_tests_interactive>` (direct control over
+  the test device)
+
+.. PatternFixup does not make it into Lava-Test Test Definition 2.0
+
+The most common style of test currently in use is the ``Lava-Test Test
+Definition 1.0`` using ``lava-test-case``. During the deploy action, an
+overlay is added to the :term:`DUT` filesystem including the test
+writer commmands and LAVA helper scripts. The test action uses a helper
+script to execute the test writer commands and other helper scripts are
+used to report test results back to the dispatcher, wrapping results in
+special marker text to allow for easy identification. The dispatcher
+parses out those test results and reports them alongside the test job
+log output. Test Shell Definitions contain individual inline commands
+or references to repositories to deploy custom scripts using a variety
+of programming languages, according to the support available on the
+DUT.
 
 Introduction to the LAVA Test Developer Guide
 *********************************************
@@ -16,9 +51,11 @@ This guide aims to enable users to be able to
 #. Understand how test job files need to be written so that jobs get submitted
    properly.
 
-#. Understand how test shell definitions need to be written.
+#. Understand the options for running the test operation. No one test
+   method can suit all test operations or all devices.
 
-Ensure you have read through the introduction on :ref:`writing_tests`.
+#. Understand how test shell definitions need to be written, depending
+   on how the test should be executed.
 
 Pay particular attention to sections on:
 
@@ -32,6 +69,9 @@ Guide Contents
 
 * :ref:`dispatcher_actions`
 * :ref:`lava_test_shell`
+* :ref:`test_definition_portability`
+* :ref:`writing_tests_monitor`
+* :ref:`writing_tests_interactive`
 
 Assumptions at the start of this guide
 ======================================
@@ -41,8 +81,8 @@ Assumptions at the start of this guide
 #. A user account (username, password, email address) is already created by a
    LAVA administrator on your behalf, with permissions to submit jobs.
 
-#. ``lava-tool`` is already installed on your test system and a
-   suitable authentication token has been added.
+#. ``lavacli`` is already installed on your test system and a suitable
+   authentication token has been added.
 
 #. You are familiar with submitting jobs written by someone else, including
    viewing the logs file for a job, viewing the definition used for that job
@@ -51,9 +91,9 @@ Assumptions at the start of this guide
 .. If your desired board is not available in the LAVA instance you want to
    use, see :ref:`deploy_boards`.
 
-To install ``lava-tool``, see :ref:`lava_tool`.
+To install ``lavacli``, see :ref:`lavacli`.
 
-To authenticate ``lava-tool``, see :ref:`authentication_tokens`.
+To authenticate ``lavacli``, see :ref:`authentication_tokens`.
 
 To find out more about submitting tests written by someone else, see
 :ref:`submit_first_job`.
@@ -82,10 +122,10 @@ check the Devices pages:
 For a :ref:`MultiNode <writing_multinode>` job, you may need to check
 more than one :term:`device type`.
 
-LAVA looks at the :ref:`device status <device_status>` when working
+LAVA looks at the :ref:`device health <device_status>` when working
 out if a particular device is available for a new job:
 
-* Idle, Reserved, Offline, Offlining - jobs can be submitted OK.
+* Good, Unknown - jobs can be submitted OK.
 
 * Restricted - only specific users may submit jobs.
 
@@ -117,10 +157,16 @@ for a LAVA test:
    device. Each device type may support a range of different boot
    methods.
 
-#. **Test**: Run the lava test shell, running the specified tests.
+#. **Test**: Run the lava test definition, running the specified tests.
+   All methods use the ``test`` action. Syntax varies according to
+   the method chosen.
 
-Examples
-********
+Example of Lava Test
+********************
+
+This example will use syntax for the Lava-Test Test Definition 1.0 as
+well as covering device tags and checksums which may be useful for all
+test jobs.
 
 Deploying a pre-built QEMU image
 ================================
@@ -135,7 +181,7 @@ Deploying a pre-built QEMU image
         images:
             rootfs:
               image_arg: -drive format=raw,file={rootfs}
-              url: https://images.validation.linaro.org/kvm/standard/stretch-2.img.gz
+              url: https://files.lavasoftware.org/components/lava/standard/debian/stretch/amd64/2/stretch.img.gz
               compression: gz
 
 .. index:: device tag example
@@ -238,11 +284,11 @@ the checksum. Specify the full URL to ensure consistency between tests.
 
 .. seealso:: :ref:`make_tests_verbose`
 
-Using LAVA Test Shell
-=====================
+Using Lava-Test Test Definition 1.0
+===================================
 
-The ``lava_test_shell`` action provides a way to employ a black-box
-approach to testing on the target device. Its format is:
+The ``Lava-Test Test Definition 1.0`` action provides a way to employ a
+black-box approach to testing on the target device. Its format is:
 
 .. code-block:: yaml
 

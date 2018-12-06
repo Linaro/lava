@@ -1,0 +1,40 @@
+device_type: beaglebone-black
+
+job_name: run tests in U-Boot
+timeouts:
+  job:
+    minutes: 10
+  action:
+    minutes: 5
+  connection:
+    minutes: 2
+priority: medium
+visibility: public
+
+metadata:
+  source: https://git.lavasoftware.org/lava/lava.git
+  path: doc/v2/examples/test-jobs/bbb-uboot-interactive.yaml
+
+actions:
+- boot:
+    method: bootloader
+    bootloader: u-boot
+    commands: []
+    prompts: ['=>']
+
+- test:
+    timeout:
+      minutes: 4
+    scripts:
+    - name: boot-manually
+      prompts: ["=> ", "/ # "]
+      script:
+      - cmd: dhcp
+        patterns:
+        - str: "DHCP client bound to address"
+          res: success
+          name: dhcp
+        - str: "TIMEOUT"
+          res: failure
+          exc: InfrastructureError
+          msg: "dhcp failed"

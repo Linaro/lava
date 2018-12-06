@@ -119,11 +119,13 @@ Writing tests for LAVA
    :maxdepth: 1
 
    developing-tests
-   writing-tests
    timeouts
+   writing-tests
    test-repositories
    lava_test_shell
    publishing-artifacts
+   monitors
+   interactive
    healthchecks
    hacking-session
    qemu_options

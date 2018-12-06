@@ -130,7 +130,8 @@ value of each command is used to determine whether the test case passed or
 failed. You can try any of these commands on a Ubuntu or Debian system to see
 what the commands should create as output.
 
-.. seealso:: :ref:`writing_tests` and :ref:`job_metadata`
+.. seealso:: :ref:`test_developer`, :ref:`writing_tests_1_0` and
+   :ref:`job_metadata`
 
 .. index: results
 
