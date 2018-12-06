@@ -1,0 +1,39 @@
+device_type: docker
+job_name: test interactive
+priority: medium
+
+timeouts:
+  connection: {minutes: 2}
+  job: {minutes: 10}
+visibility: public
+
+actions:
+- deploy:
+    image: base/archlinux
+    os: archlinux
+    timeout: {minutes: 4}
+    to: docker
+- boot:
+    command: bash
+    method: docker
+    prompts: ['root@lava ']
+    timeout: {minutes: 2}
+- test:
+    timeout:
+      minutes: 4
+    interactive:
+    - name: listing
+      prompts: ['root@lava ']
+      script:
+      - command: ls
+- test:
+    definitions:
+    - from: inline
+      name: env-dut-inline
+      path: inline/env-dut.yaml
+      repository:
+        metadata: {description: Basic system test command for Linaro Ubuntu images,
+          format: Lava-Test Test Definition 1.0, name: smoke-tests-basic}
+        run:
+          steps: [printenv]
+    timeout: {minutes: 5}

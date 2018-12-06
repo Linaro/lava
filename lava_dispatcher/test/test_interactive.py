@@ -19,6 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import pytest
+import subprocess  # nosec - only for mocking
 import time
 
 from lava_common.exceptions import InfrastructureError, JobError
@@ -26,19 +27,44 @@ from lava_dispatcher.actions.test.interactive import TestInteractiveAction
 
 from lava_dispatcher.test.test_basic import Factory, StdoutTestCase
 
-
-class BootloaderFactory(Factory):
-    def create_interactive_job(self, filename):
-        return self.create_job("b2260-01.jinja2", filename)
+# This will be monkey patched
+import lava_dispatcher.actions.deploy.docker
 
 
-class TestBootBootloader(StdoutTestCase):
-    def test_pipeline(self):
-        factory = BootloaderFactory()
-        job = factory.create_interactive_job("sample_jobs/b2260-interactive.yaml")
-        job.validate()
-        description_ref = self.pipeline_reference("b2260-interactive.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+class InteractiveFactory(Factory):
+    def create_interactive_job(self, device, filename):
+        return self.create_job(device, filename)
+
+
+def test_pipeline():
+    factory = InteractiveFactory()
+    job = factory.create_interactive_job(
+        "b2260-01.jinja2", "sample_jobs/b2260-interactive.yaml"
+    )
+    job.validate()
+    description_ref = StdoutTestCase.pipeline_reference(
+        "b2260-interactive.yaml", job=job
+    )
+    assert description_ref == job.pipeline.describe(False)  # nosec
+
+
+def test_stages(monkeypatch):
+    monkeypatch.setattr(subprocess, "check_output", lambda cmd: b"")
+    monkeypatch.setattr(
+        lava_dispatcher.actions.deploy.docker, "which", lambda a: "/usr/bin/docker"
+    )
+    factory = InteractiveFactory()
+    job = factory.create_interactive_job(
+        "docker-01.jinja2", "sample_jobs/docker-interactive.yaml"
+    )
+    job.validate()
+    description_ref = StdoutTestCase.pipeline_reference(
+        "docker-interactive.yaml", job=job
+    )
+    assert description_ref == job.pipeline.describe(False)  # nosec
+    assert (  # nosec  - assert is part of the test process.
+        job.pipeline.actions[3].internal_pipeline.actions[0].parameters["stage"] == 0
+    )
 
 
 def test_raise_exception():

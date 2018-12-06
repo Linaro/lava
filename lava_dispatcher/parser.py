@@ -58,7 +58,9 @@ def parse_action(job_data, name, device, pipeline, test_info, test_count):
     elif name == 'test':
         # stage starts at 0
         parameters['stage'] = test_count - 1
-        LavaTest.select(device, parameters)(pipeline, parameters)
+        action = LavaTest.select(device, parameters)
+        action(pipeline, parameters)
+        return action
     elif name == 'deploy':
         candidate = Deployment.select(device, parameters)
         if parameters['namespace'] in test_info and candidate.uses_deployment_data():
@@ -166,9 +168,9 @@ class JobParser:
                 test_counts.setdefault(namespace, 1)
 
                 if name == 'deploy' or name == 'boot' or name == 'test':
-                    parse_action(action_data, name, device, pipeline,
-                                 test_info, test_counts[namespace])
-                    if name == 'test':
+                    action = parse_action(action_data, name, device, pipeline,
+                                          test_info, test_counts[namespace])
+                    if name == 'test' and action.needs_overlay():
                         test_counts[namespace] += 1
                 elif name == 'repeat':
                     count = action_data[name]['count']  # first list entry must be the count dict
@@ -181,9 +183,9 @@ class JobParser:
                                 repeating[repeat_action]['repeat-count'] = c_iter
                                 namespace = repeating[repeat_action].setdefault('namespace', 'common')
                                 test_counts.setdefault(namespace, 1)
-                                parse_action(repeating, repeat_action, device,
-                                             pipeline, test_info, test_counts[namespace])
-                                if repeat_action == 'test':
+                                action = parse_action(repeating, repeat_action, device,
+                                                      pipeline, test_info, test_counts[namespace])
+                                if repeat_action == 'test' and action.needs_overlay():
                                     test_counts[namespace] += 1
 
                 elif name == 'command':
