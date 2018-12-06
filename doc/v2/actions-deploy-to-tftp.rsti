@@ -128,7 +128,7 @@ URLs **must** use one of the supported schemes, the first element of the URL.
 
 .. include:: examples/test-jobs/standard-armmp-ramdisk-bbb.yaml
      :code: yaml
-     :start-after: add-header: u-boot
+     :start-after: # modules
      :end-before: # despite this being
 
 .. topic:: Supported schema
@@ -199,7 +199,7 @@ url *
 
 .. include:: examples/test-jobs/standard-armmp-ramdisk-bbb.yaml
      :code: yaml
-     :start-after: add-header: u-boot
+     :start-after: # modules
      :end-before: # despite this being
 
 .. _deploy_to_tftp_ramdisk_archive:
@@ -238,17 +238,6 @@ header
 If a header is already applied, the ``header`` value **must** specify the type
 of header, e.g. ``u-boot``. This header will be removed before unpacking, ready
 for the LAVA overlay files.
-
-.. index:: ramdisk add-header
-
-.. _deploy_to_tftp_ramdisk_add_header:
-
-add-header
-----------
-
-If a header needs to be applied after any LAVA overlay files are added to the
-ramdisk, the ``add-header`` value must specify the type of header to add, e.g.
-``u-boot``.
 
 .. _deploy_to_tftp_nfsrootfs:
 

@@ -199,8 +199,13 @@ Using mkimage
 
 U-Boot typically requires use of the ``mkimage`` binary in various ways. Most
 commonly, a test job which only boots a ramdisk needs to have the LAVA overlay
-added to the ramdisk. Many devices then require a U-Boot header to be added to
-the ramdisk, requiring the ``add-header`` flag in the test job submission.
+added to the ramdisk.
+Many devices require a U-Boot header on the ramdisk. The device configuration
+controls how to add a new U-Boot header when LAVA needs to modify the
+downloaded ramdisk (to add modules or a test shell overlay). The device
+configuration deploy parameters use the default ``add-header: u-boot`` setting
+from `base-uboot.jinja2`.
+
 ``mkimage`` creates a different header for ``arm`` than for ``arm64``. The
 ``uboot_mkimage_arch`` value will need to be set according to the requirements
 of the device.

@@ -27,8 +27,6 @@ actions:
       compression: gz
     ramdisk:
       url: http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lite/rocko/zcu102-zynqmp/1/poky/core-image-minimal-zcu102-zynqmp-20180118171031.rootfs.cpio.gz.u-boot
-      # the bootloader needs a u-boot header on the modified ramdisk
-      add-header: u-boot
       header: u-boot
       compression: gz
     os: oe

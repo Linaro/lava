@@ -30,8 +30,6 @@ actions:
     ramdisk:
       url: http://people.linaro.org/~steve.mcintyre/lava/images/stretch-armhf-multi-serial/initrd.img-4.9.0-4-armmp
       compression: gz
-      # the bootloader needs a u-boot header on the modified ramdisk
-      add-header: u-boot
     modules:
       url: http://people.linaro.org/~steve.mcintyre/lava/images/stretch-armhf-multi-serial/modules.tar.gz
       compression: gz

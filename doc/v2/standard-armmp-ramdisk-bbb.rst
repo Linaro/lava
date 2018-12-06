@@ -126,10 +126,6 @@ Specific options
 The ``modules.tar.gz`` and ``initramfs.cpio.gz`` are both compressed using
 ``gzip`` and this **must** be specified in the test job definition.
 
-In addition, the ramdisk on a beaglebone-black using U-Boot needs to have a
-suitable U-Boot header. This means that the ``add-header: u-boot`` option is
-required.
-
 Finally, although the ramdisk was built on a Debian system, the ramdisk itself
 does not behave in the same way as a full Debian system. It lacks critical
 components like ``apt``, so the test job specifies that the test shell can only

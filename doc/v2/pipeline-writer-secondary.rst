@@ -350,8 +350,6 @@ https://git.linaro.org/lava-team/refactoring.git/plain/release/bbb-ssh-guest.yam
           ramdisk:
             url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/initramfs.cpio.gz
             compression: gz
-            # the bootloader needs a u-boot header on the modified ramdisk
-            add-header: u-boot
           modules:
             url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/modules.tar.gz
             compression: gz

@@ -260,7 +260,6 @@ provide a ramdisk instead of an nfsrootfs:
      ramdisk:
        url: https://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot
        compression: gz
-       add-header: u-boot
      dtb:
        url: https://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
 

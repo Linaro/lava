@@ -51,7 +51,6 @@ actions:
       url: https://files.lavasoftware.org/components/lava/standard/debian/stretch/armhf/3/initrd.img-4.9.0-4-armmp
       sha256sum: 4cc25f499ae74e72b5d74c9c5e65e143de8c2e3b019f5d1781abbf519479b843
       compression: gz
-      add-header: u-boot
     modules:
       url: https://files.lavasoftware.org/components/lava/standard/debian/stretch/armhf/3/modules.tar.gz
       sha256sum: 10e6930e9282dd44905cfd3f3a2d5a5058a1d400374afb2619412554e1067d58
@@ -78,8 +77,6 @@ actions:
       url: https://files.lavasoftware.org/components/lava/standard/debian/stretch/armhf/3/initrd.img-4.9.0-4-armmp
       sha256sum: 4cc25f499ae74e72b5d74c9c5e65e143de8c2e3b019f5d1781abbf519479b843
       compression: gz
-      # the bootloader needs a u-boot header on the modified ramdisk
-      add-header: u-boot
     modules:
       url: https://files.lavasoftware.org/components/lava/standard/debian/stretch/armhf/3/modules.tar.gz
       sha256sum: 10e6930e9282dd44905cfd3f3a2d5a5058a1d400374afb2619412554e1067d58

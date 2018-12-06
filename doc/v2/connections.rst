@@ -132,7 +132,7 @@ blocks:
 .. literalinclude:: examples/test-jobs/namespace-connections-example1.yaml
      :language: yaml
      :linenos:
-     :lines: 31-92
+     :lines: 31-90
      :emphasize-lines: 3, 15, 36, 42, 54
 
 
@@ -506,7 +506,7 @@ Finally, we start our tests.
 .. literalinclude:: examples/test-jobs/bbb-2serial.yaml
      :language: yaml
      :linenos:
-     :lines: 71-81
+     :lines: 71-79
      :emphasize-lines: 3,5
 
 Download or view the complete example:

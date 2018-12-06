@@ -57,7 +57,6 @@ actions:
       url: http://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot
       compression: gz
       header: u-boot
-      add-header: u-boot
     os: oe
     dtb:
       url: http://people.linaro.org/~neil.williams/opentac/am335x-boneblack.dtb

@@ -282,7 +282,6 @@ actions:
         ramdisk:
           url: http://test.com/bar
           header: u-boot
-          add-header: u-boot
           compression: gz
         os: oe
         # breakage at the dtb block of a tftp deploy
@@ -312,7 +311,6 @@ actions:
         ramdisk:
           url: http://test.com/bar
           header: u-boot
-          add-header: u-boot
           compression: gz
         os: oe
         # breakage using the original syntax
