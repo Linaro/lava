@@ -18,8 +18,6 @@ visibility: public
 
 actions:
   - deploy:
-     parameters:
-       mkimage_arch: arm
      timeout:
        minutes: 2
      to: tftp

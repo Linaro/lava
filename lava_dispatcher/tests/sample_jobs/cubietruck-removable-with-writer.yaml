@@ -14,8 +14,6 @@ visibility: public
 
 actions:
   - deploy:
-      parameters:
-        mkimage_arch: arm # uses 32bit UBoot
       namespace: boot1
       timeout:
         minutes: 4
