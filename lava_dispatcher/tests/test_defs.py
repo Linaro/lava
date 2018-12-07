@@ -596,7 +596,6 @@ class TestDefinitions(StdoutTestCase):
             for action in prepare.internal_pipeline.actions
             if action.name == "apply-overlay-tftp"
         ][0]
-        self.assertIsNone(apply_o.parameters.get("nfs_url"))
         self.assertIsInstance(apply_o.parameters.get("persistent_nfs"), dict)
         self.assertIsInstance(apply_o.parameters["persistent_nfs"].get("address"), str)
         definition = [

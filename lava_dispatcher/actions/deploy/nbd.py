@@ -88,8 +88,8 @@ class NbdAction(DeployAction):  # pylint:disable=too-many-instance-attributes
         if "initrd" not in self.parameters:
             self.errors = "NBD deployment needs an 'initrd' parameter"
         # we cannot work with these when using nbd
-        if "nfsrootfs" in self.parameters or "nfs_url" in self.parameters:
-            self.errors = "nfsrootfs or nfs_url cannot be used with NBD deployment, use a e.g. ext3/4 filesystem as 'nbdroot=' parameter"
+        if "nfsrootfs" in self.parameters:
+            self.errors = "nfsrootfs cannot be used with NBD deployment, use a e.g. ext3/4 filesystem as 'nbdroot=' parameter"
         if "ramdisk" in self.parameters:
             self.errors = "ramdisk cannot be used with NBD deployment, use a e.g. ext3/4 filesystem as 'initrd' parameter"
 

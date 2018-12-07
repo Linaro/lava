@@ -81,8 +81,6 @@ class TftpAction(DeployAction):  # pylint:disable=too-many-instance-attributes
             self.errors = "%s needs a kernel to deploy" % self.name
         if not self.valid:
             return
-        if "nfs_url" in self.parameters:
-            self.errors = "Use a persistent_nfs dictionary instead of nfs_url"
         if "nfsrootfs" in self.parameters and "persistent_nfs" in self.parameters:
             self.errors = "Only one of nfsrootfs or persistent_nfs can be specified"
         # Extract the 3 last path elements. See action.mkdtemp()
