@@ -191,7 +191,9 @@ class SchedulerJobsAPI(ExposedV2API):
         ret = []
         start = max(0, start)
         limit = min(limit, 100)
-        jobs = TestJob.objects.all()
+        jobs = TestJob.objects.all().select_related(
+            "requested_device_type", "submitter"
+        )
         if state:
             try:
                 jobs = jobs.filter(state=TestJob.STATE_REVERSE[state.capitalize()])

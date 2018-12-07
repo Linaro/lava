@@ -232,9 +232,9 @@ class SchedulerDevicesAPI(ExposedV2API):
         This function returns an XML-RPC array in which each item is a
         dictionary with device information
         """
-        devices = Device.objects.all()
+        devices = Device.objects.all().select_related("device_type")
         if not show_all:
-            devices = Device.objects.exclude(health=Device.HEALTH_RETIRED)
+            devices = devices.exclude(health=Device.HEALTH_RETIRED)
         devices = devices.order_by("hostname")
 
         ret = []
