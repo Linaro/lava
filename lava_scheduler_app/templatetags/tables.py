@@ -37,8 +37,8 @@ def get_search_data(data, prefix):
         return []
     if prefix in data:
         return data[prefix]
-    if 'search' in data:
-        return data['search']
+    if "search" in data:
+        return data["search"]
     return data
 
 
@@ -48,8 +48,8 @@ def get_terms_data(data, prefix):
         return []
     if prefix in data:
         return data[prefix].values()
-    if 'terms' in data:
-        return data['terms'].values()
+    if "terms" in data:
+        return data["terms"].values()
     return data
 
 
@@ -59,8 +59,8 @@ def get_discrete_data(data, prefix):
         return []
     if prefix in data:
         return data[prefix]
-    if 'discrete' in data:
-        return data['discrete']
+    if "discrete" in data:
+        return data["discrete"]
     return data
 
 
@@ -77,5 +77,9 @@ def get_length_select(table, string):
         val.append(num)
         val.sort()
     for option in val:
-        select += "<option selected>%d</option>" % option if option == num else "<option>%d</option>" % option
+        select += (
+            "<option selected>%d</option>" % option
+            if option == num
+            else "<option>%d</option>" % option
+        )
     return mark_safe(select)

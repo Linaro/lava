@@ -17,4 +17,4 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-default_app_config = 'lava_scheduler_app.apps.LAVASchedulerConfig'
+default_app_config = "lava_scheduler_app.apps.LAVASchedulerConfig"
