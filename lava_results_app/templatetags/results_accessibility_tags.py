@@ -44,7 +44,7 @@ def check_chart_access(record, user):
 @register.assignment_tag()
 def get_extra_source(record, data):
     if not data:
-        return ''
+        return ""
     if record.id in data:
         return data[record.id]
-    return ''
+    return ""

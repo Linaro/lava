@@ -28,5 +28,5 @@ register = template.Library()
 @register.filter(is_safe=True)
 @stringfilter
 def keep_spacing(value):
-    value = mark_safe(value.replace(' ', '&nbsp;'))
+    value = mark_safe(value.replace(" ", "&nbsp;"))
     return value

@@ -19,10 +19,7 @@
 
 import sys
 from django.core.management.base import BaseCommand
-from lava_results_app.models import (
-    Query,
-    QueryMaterializedView
-)
+from lava_results_app.models import Query, QueryMaterializedView
 
 
 class Command(BaseCommand):

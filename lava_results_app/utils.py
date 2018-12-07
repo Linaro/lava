@@ -29,9 +29,8 @@ from linaro_django_xmlrpc.models import AuthToken
 
 def help_max_length(max_length):
     return ungettext_lazy(  # pylint: disable=no-member
-        u"Maximum length: {0} character",
-        u"Maximum length: {0} characters",
-        max_length).format(max_length)
+        u"Maximum length: {0} character", u"Maximum length: {0} characters", max_length
+    ).format(max_length)
 
 
 class StreamEcho:  # pylint: disable=too-few-public-methods
@@ -40,7 +39,7 @@ class StreamEcho:  # pylint: disable=too-few-public-methods
 
 
 def description_filename(job):
-    filename = os.path.join(job.output_dir, 'description.yaml')
+    filename = os.path.join(job.output_dir, "description.yaml")
     if not os.path.exists(filename):
         return None
     return filename
@@ -48,49 +47,57 @@ def description_filename(job):
 
 class V2Loader(yaml.Loader):
     def remove_pipeline_module(self, suffix, node):
-        if 'lava_dispatcher.pipeline' in suffix:
-            suffix = suffix.replace('lava_dispatcher.pipeline', 'lava_dispatcher')
+        if "lava_dispatcher.pipeline" in suffix:
+            suffix = suffix.replace("lava_dispatcher.pipeline", "lava_dispatcher")
         return self.construct_python_object(suffix, node)
 
     def remove_pipeline_module_name(self, suffix, node):
         # Fix old dumps when "pipeline" was a module
-        if 'lava_dispatcher.pipeline' in suffix:
-            suffix = suffix.replace('lava_dispatcher.pipeline', 'lava_dispatcher')
+        if "lava_dispatcher.pipeline" in suffix:
+            suffix = suffix.replace("lava_dispatcher.pipeline", "lava_dispatcher")
         # Fix dumps when dispatcher exceptions where not in lava_common.
-        exceptions = ["ConfigurationError", "InfrastructureError",
-                      "JobCanceled", "JobError", "LAVABug",
-                      "MultinodeProtocolTimeoutError", "TestError"]
+        exceptions = [
+            "ConfigurationError",
+            "InfrastructureError",
+            "JobCanceled",
+            "JobError",
+            "LAVABug",
+            "MultinodeProtocolTimeoutError",
+            "TestError",
+        ]
         for exc in exceptions:
-            if 'lava_dispatcher.action.%s' % exc in suffix:
-                suffix = suffix.replace('lava_dispatcher.action.%s' % exc, 'lava_common.exceptions.%s' % exc)
+            if "lava_dispatcher.action.%s" % exc in suffix:
+                suffix = suffix.replace(
+                    "lava_dispatcher.action.%s" % exc, "lava_common.exceptions.%s" % exc
+                )
         return self.construct_python_name(suffix, node)
 
     def remove_pipeline_module_new(self, suffix, node):
-        if 'lava_dispatcher.pipeline' in suffix:
-            suffix = suffix.replace('lava_dispatcher.pipeline', 'lava_dispatcher')
+        if "lava_dispatcher.pipeline" in suffix:
+            suffix = suffix.replace("lava_dispatcher.pipeline", "lava_dispatcher")
         return self.construct_python_object_new(suffix, node)
 
 
 V2Loader.add_multi_constructor(
-    u'tag:yaml.org,2002:python/name:',
-    V2Loader.remove_pipeline_module_name)
+    u"tag:yaml.org,2002:python/name:", V2Loader.remove_pipeline_module_name
+)
 V2Loader.add_multi_constructor(
-    u'tag:yaml.org,2002:python/object:',
-    V2Loader.remove_pipeline_module)
+    u"tag:yaml.org,2002:python/object:", V2Loader.remove_pipeline_module
+)
 V2Loader.add_multi_constructor(
-    u'tag:yaml.org,2002:python/object/new:',
-    V2Loader.remove_pipeline_module_new)
+    u"tag:yaml.org,2002:python/object/new:", V2Loader.remove_pipeline_module_new
+)
 
 
 def description_data(job):
-    logger = logging.getLogger('lava_results_app')
+    logger = logging.getLogger("lava_results_app")
     filename = description_filename(job)
     if not filename:
         return {}
 
     data = None
     try:
-        data = yaml.load(open(filename, 'r'), Loader=V2Loader)
+        data = yaml.load(open(filename, "r"), Loader=V2Loader)
     except yaml.YAMLError as exc:
         logger.error("Unable to parse description for %s", job.id)
         logger.exception(exc)
@@ -105,8 +112,8 @@ def description_data(job):
 # other functions in utils can be run outside django. Remove import of AuthToken.
 def anonymous_token(request, job):
     querydict = request.GET
-    user = querydict.get('user', default=None)
-    token = querydict.get('token', default=None)
+    user = querydict.get("user", default=None)
+    token = querydict.get("token", default=None)
     # safe to call with (None, None) - returns None
     auth_user = AuthToken.get_user_for_secret(username=user, secret=token)
     if not user and not job.is_public:
@@ -129,23 +136,23 @@ def check_request_auth(request, job):
 
 
 def get_testcases_with_limit(testsuite, limit=None, offset=None):
-    logger = logging.getLogger('lava_results_app')
+    logger = logging.getLogger("lava_results_app")
     if limit:
         try:
             if not offset:
-                testcases = list(testsuite.testcase_set.all().order_by('id')[:limit])
+                testcases = list(testsuite.testcase_set.all().order_by("id")[:limit])
             else:
-                testcases = list(testsuite.testcase_set.all().order_by('id')[offset:][:limit])
+                testcases = list(
+                    testsuite.testcase_set.all().order_by("id")[offset:][:limit]
+                )
         except ValueError as e:
-            logger.warning(
-                "Offset and limit must be integers: %s" % str(e))
+            logger.warning("Offset and limit must be integers: %s", str(e))
             return []
         except DataError as e:
-            logger.warning(
-                "Offset must be positive integer: %s" % str(e))
+            logger.warning("Offset must be positive integer: %s", str(e))
             return []
     else:
-        testcases = list(testsuite.testcase_set.all().order_by('id'))
+        testcases = list(testsuite.testcase_set.all().order_by("id"))
 
     return testcases
 
@@ -156,10 +163,21 @@ def testcase_export_fields():
     :return: list of fields used in export_testcase
     """
     return [
-        'job', 'suite', 'result', 'measurement', 'unit',
-        'duration', 'timeout',
-        'logged', 'level', 'metadata', 'url', 'name', 'id',
-        'log_start_line', 'log_end_line'
+        "job",
+        "suite",
+        "result",
+        "measurement",
+        "unit",
+        "duration",
+        "timeout",
+        "logged",
+        "level",
+        "metadata",
+        "url",
+        "name",
+        "id",
+        "log_start_line",
+        "log_end_line",
     ]
 
 
@@ -173,31 +191,35 @@ def export_testcase(testcase, with_buglinks=False):
     """
     metadata = dict(testcase.action_metadata) if testcase.action_metadata else {}
     extra_source = []
-    extra_data = metadata.get('extra')
+    extra_data = metadata.get("extra")
     if isinstance(extra_data, str) and os.path.exists(extra_data):
-        with open(metadata['extra'], 'r') as extra_file:
+        with open(metadata["extra"], "r") as extra_file:
             # TODO: this can fail!
             items = yaml.load(extra_file, Loader=yaml.CLoader)
         # hide the !!python OrderedDict prefix from the output.
         for key, value in items.items():
             extra_source.append({key: value})
-        metadata['extra'] = extra_source
+        metadata["extra"] = extra_source
     casedict = {
-        'name': str(testcase.name),
-        'job': str(testcase.suite.job_id),
-        'suite': str(testcase.suite.name),
-        'result': str(testcase.result_code),
-        'measurement': str(testcase.measurement),
-        'unit': str(testcase.units),
-        'level': metadata.get('level', ''),
-        'url': str(testcase.get_absolute_url()),
-        'id': str(testcase.id),
-        'logged': str(testcase.logged),
-        'log_start_line': str(testcase.start_log_line) if testcase.start_log_line else '',
-        'log_end_line': str(testcase.end_log_line) if testcase.end_log_line else '',
-        'metadata': metadata,
+        "name": str(testcase.name),
+        "job": str(testcase.suite.job_id),
+        "suite": str(testcase.suite.name),
+        "result": str(testcase.result_code),
+        "measurement": str(testcase.measurement),
+        "unit": str(testcase.units),
+        "level": metadata.get("level", ""),
+        "url": str(testcase.get_absolute_url()),
+        "id": str(testcase.id),
+        "logged": str(testcase.logged),
+        "log_start_line": str(testcase.start_log_line)
+        if testcase.start_log_line
+        else "",
+        "log_end_line": str(testcase.end_log_line) if testcase.end_log_line else "",
+        "metadata": metadata,
     }
     if with_buglinks:
-        casedict['buglinks'] = [str(url) for url in testcase.buglinks.values_list('url', flat=True)]
+        casedict["buglinks"] = [
+            str(url) for url in testcase.buglinks.values_list("url", flat=True)
+        ]
 
     return casedict

@@ -30,5 +30,5 @@ register = template.Library()
 def make_jquery_safe(value):
     chars = "!()<>=$%&^!@+*#?~|'\\;`"
     for char in chars:
-        value = mark_safe(value.replace(char, '\\\\%s' % char))
+        value = mark_safe(value.replace(char, "\\\\%s" % char))
     return value

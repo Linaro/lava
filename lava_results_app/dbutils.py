@@ -43,7 +43,7 @@ from lava_common.timeout import Timeout
 
 
 def yaml_decimal_str(dumper, value):
-    return yaml.ScalarNode(tag=u'tag:yaml.org,2002:str', value=str(value))
+    return yaml.ScalarNode(tag=u"tag:yaml.org,2002:str", value=str(value))
 
 
 yaml.add_representer(decimal.Decimal, yaml_decimal_str)
@@ -57,10 +57,10 @@ def _check_for_testset(result_dict, suite):
     :param result_dict: lava-test-shell results
     :param suite: current test suite
     """
-    logger = logging.getLogger('lava-master')
+    logger = logging.getLogger("lava-master")
     testset = None
-    if 'set' in result_dict:
-        set_name = result_dict['set']
+    if "set" in result_dict:
+        set_name = result_dict["set"]
         if set_name != quote(set_name):
             msg = "Invalid testset name '%s', ignoring." % set_name
             suite.job.set_failure_comment(msg)
@@ -73,7 +73,7 @@ def _check_for_testset(result_dict, suite):
 
 def append_failure_comment(job, msg):
     if not job.failure_comment:
-        job.failure_comment = ''
+        job.failure_comment = ""
     job.failure_comment += msg[:256]
     job.save(update_fields=["failure_comment"])
 
@@ -83,24 +83,24 @@ def create_metadata_store(results, job):
     Uses the OrderedDict import to correctly handle
     the yaml.load
     """
-    if 'extra' not in results:
+    if "extra" not in results:
         return None
-    level = results.get('level')
+    level = results.get("level")
     if level is None:
         return None
 
-    logger = logging.getLogger('lava-master')
-    stub = "%s-%s-%s.yaml" % (results['definition'], results['case'], level)
-    meta_filename = os.path.join(job.output_dir, 'metadata', stub)
+    logger = logging.getLogger("lava-master")
+    stub = "%s-%s-%s.yaml" % (results["definition"], results["case"], level)
+    meta_filename = os.path.join(job.output_dir, "metadata", stub)
     os.makedirs(os.path.dirname(meta_filename), mode=0o755, exist_ok=True)
     if os.path.exists(meta_filename):
-        with open(meta_filename, 'r') as existing_store:
+        with open(meta_filename, "r") as existing_store:
             data = yaml.load(existing_store)
-        data.update(results['extra'])
+        data.update(results["extra"])
     else:
-        data = results['extra']
+        data = results["extra"]
     try:
-        with open(meta_filename, 'w') as extra_store:
+        with open(meta_filename, "w") as extra_store:
             yaml.dump(data, extra_store)
     except OSError as exc:  # LAVA-847
         msg = "[%d] Unable to create metadata store: %s" % (job.id, exc)
@@ -110,7 +110,9 @@ def create_metadata_store(results, job):
     return meta_filename
 
 
-def map_scanned_results(results, job, markers, meta_filename):  # pylint: disable=too-many-branches,too-many-statements,too-many-return-statements
+def map_scanned_results(
+    results, job, markers, meta_filename
+):  # pylint: disable=too-many-branches,too-many-statements,too-many-return-statements
     """
     Sanity checker on the logged results dictionary
     :param results: results logged via the slave
@@ -119,18 +121,20 @@ def map_scanned_results(results, job, markers, meta_filename):  # pylint: disabl
     :return: the TestCase object that should be saved to the database.
              None on error.
     """
-    logger = logging.getLogger('lava-master')
+    logger = logging.getLogger("lava-master")
 
     if not isinstance(results, dict):
         append_failure_comment(job, "[%d] %s is not a dictionary" % (job.id, results))
         return None
 
     if not {"definition", "case", "result"}.issubset(set(results.keys())):
-        append_failure_comment(job, "Missing some keys (\"definition\", \"case\" or \"result\") in %s" % results)
+        append_failure_comment(
+            job, 'Missing some keys ("definition", "case" or "result") in %s' % results
+        )
         return None
 
-    if 'extra' in results:
-        results['extra'] = meta_filename
+    if "extra" in results:
+        results["extra"] = meta_filename
 
     metadata = yaml.dump(results)
     if len(metadata) > 4096:  # bug 2471 - test_length unit test
@@ -147,211 +151,258 @@ def map_scanned_results(results, job, markers, meta_filename):  # pylint: disabl
     test_case = None
     if suite.name == "lava":
         try:
-            result_val = TestCase.RESULT_MAP[results['result']]
+            result_val = TestCase.RESULT_MAP[results["result"]]
         except KeyError:
-            logger.error("[%d] Unable to MAP result \"%s\"", job.id, results['result'])
+            logger.error('[%d] Unable to MAP result "%s"', job.id, results["result"])
             return None
 
         measurement = None
-        units = ''
-        if 'duration' in results:
-            measurement = results['duration']
-            units = 'seconds'
-        test_case = TestCase(name=name,
-                             suite=suite,
-                             test_set=testset,
-                             metadata=metadata,
-                             measurement=measurement,
-                             units=units,
-                             result=result_val)
+        units = ""
+        if "duration" in results:
+            measurement = results["duration"]
+            units = "seconds"
+        test_case = TestCase(
+            name=name,
+            suite=suite,
+            test_set=testset,
+            metadata=metadata,
+            measurement=measurement,
+            units=units,
+            result=result_val,
+        )
 
     else:
         result = results["result"]
         measurement = None
-        units = ''
+        units = ""
         if testset:
             logger.debug("%s/%s/%s %s", suite, testset, name, result)
         else:
             logger.debug("%s/%s %s", suite, name, result)
-        if 'measurement' in results:
-            measurement = results['measurement']
-        if 'units' in results:
-            units = results['units']
+        if "measurement" in results:
+            measurement = results["measurement"]
+        if "units" in results:
+            units = results["units"]
             logger.debug("%s/%s %s%s", suite, name, measurement, units)
         if result not in TestCase.RESULT_MAP:
-            logger.warning("[%d] Unrecognised result: '%s' for test case '%s'", job.id, result, name)
+            logger.warning(
+                "[%d] Unrecognised result: '%s' for test case '%s'",
+                job.id,
+                result,
+                name,
+            )
             return None
         # Add the marker if available
         starttc = endtc = None
         if name in markers:
-            test_case = markers[name].get('test_case')
+            test_case = markers[name].get("test_case")
             starttc = markers[name].get("start_test_case", test_case)
             endtc = markers[name].get("end_test_case", test_case)
             del markers[name]
         try:
-            test_case = TestCase(name=name,
-                                 suite=suite,
-                                 test_set=testset,
-                                 result=TestCase.RESULT_MAP[result],
-                                 metadata=metadata,
-                                 measurement=measurement,
-                                 units=units,
-                                 start_log_line=starttc,
-                                 end_log_line=endtc)
+            test_case = TestCase(
+                name=name,
+                suite=suite,
+                test_set=testset,
+                result=TestCase.RESULT_MAP[result],
+                metadata=metadata,
+                measurement=measurement,
+                units=units,
+                start_log_line=starttc,
+                end_log_line=endtc,
+            )
         except decimal.InvalidOperation:
             logger.exception("[%d] Unable to create test case %s", job.id, name)
     return test_case
 
 
 def _add_parameter_metadata(prefix, definition, dictionary, label):
-    if 'parameters' in definition and isinstance(definition['parameters'], dict):
-        for paramkey, paramvalue in definition['parameters'].items():
-            if paramkey == 'yaml_line':
+    if "parameters" in definition and isinstance(definition["parameters"], dict):
+        for paramkey, paramvalue in definition["parameters"].items():
+            if paramkey == "yaml_line":
                 continue
-            dictionary['%s.%s.parameters.%s' % (prefix, label, paramkey)] = paramvalue
+            dictionary["%s.%s.parameters.%s" % (prefix, label, paramkey)] = paramvalue
 
 
 def _get_job_metadata(job):
     retval = {}
     # Add original_definition checksum to metadata
-    retval.update({
-        'definition-checksum': hashlib.md5(  # nosec - not used for crypto
-            job.original_definition.encode('utf-8')).hexdigest()
-    })
+    retval.update(
+        {
+            "definition-checksum": hashlib.md5(  # nosec - not used for crypto
+                job.original_definition.encode("utf-8")
+            ).hexdigest()
+        }
+    )
     # Add lava-server-version to metadata
     packaged = debian_package_version(pkg="lava-server", split=False)
     if packaged:
-        retval.update({
-            'lava-server-version': packaged
-        })
+        retval.update({"lava-server-version": packaged})
     return retval
 
 
-def _get_action_metadata(data):  # pylint: disable=too-many-branches,too-many-nested-blocks,too-many-statements
+def _get_action_metadata(
+    data
+):  # pylint: disable=too-many-branches,too-many-nested-blocks,too-many-statements
     if not isinstance(data, list):
         return None
     retval = {}
     for action in data:
-        deploy = [dict.get(action, 'deploy')]
+        deploy = [dict.get(action, "deploy")]
         count = 0
         for block in deploy:
             if not block:
                 continue
-            namespace = block.get('namespace')
-            prefix = "deploy.%d.%s" % (count, namespace) if namespace else 'deploy.%d' % count
-            value = block.get('method')
+            namespace = block.get("namespace")
+            prefix = (
+                "deploy.%d.%s" % (count, namespace)
+                if namespace
+                else "deploy.%d" % count
+            )
+            value = block.get("method")
             if value:
-                retval['%s.method' % prefix] = value
+                retval["%s.method" % prefix] = value
                 count += 1
-        boot = [dict.get(action, 'boot')]
+        boot = [dict.get(action, "boot")]
         count = 0
         for block in boot:
             if not block:
                 continue
-            namespace = block.get('namespace')
-            prefix = "boot.%d.%s" % (count, namespace) if namespace else 'boot.%d' % count
-            value = block.get('commands')
+            namespace = block.get("namespace")
+            prefix = (
+                "boot.%d.%s" % (count, namespace) if namespace else "boot.%d" % count
+            )
+            value = block.get("commands")
             if value:
-                retval['%s.commands' % prefix] = value
-            value = block.get('method')
+                retval["%s.commands" % prefix] = value
+            value = block.get("method")
             if value:
-                retval['%s.method' % prefix] = value
-            value = block.get('type')
+                retval["%s.method" % prefix] = value
+            value = block.get("type")
             if value:
-                retval['%s.type' % prefix] = value
+                retval["%s.type" % prefix] = value
             count += 1
-        test = [dict.get(action, 'test')]
+        test = [dict.get(action, "test")]
         count = 0
         for block in test:
             if not block:
                 continue
-            namespace = block.get('namespace')
-            definitions = [dict.get(block, 'definitions')][0]
+            namespace = block.get("namespace")
+            definitions = [dict.get(block, "definitions")][0]
             if not definitions:
-                monitors = [dict.get(block, 'monitors')][0]
+                monitors = [dict.get(block, "monitors")][0]
                 if monitors:
                     if isinstance(monitors, list):
                         for monitor in monitors:
-                            prefix = "test.%d.%s" % (count, namespace) if namespace else 'test.%d' % count
-                            retval['%s.monitor.name' % prefix] = monitor['name']
+                            prefix = (
+                                "test.%d.%s" % (count, namespace)
+                                if namespace
+                                else "test.%d" % count
+                            )
+                            retval["%s.monitor.name" % prefix] = monitor["name"]
                             count += 1
             else:
                 for definition in definitions:
-                    if definition['from'] == 'inline':
-                        run = definition['repository'].get('run')
+                    if definition["from"] == "inline":
+                        run = definition["repository"].get("run")
                         # an inline repo without test cases will not get reported.
-                        steps = [dict.get(run, 'steps')][0] if run else None
-                        if steps is not None and 'lava-test-case' in steps:
-                            prefix = "test.%d.%s" % (count, namespace) if namespace else 'test.%d' % count
+                        steps = [dict.get(run, "steps")][0] if run else None
+                        if steps is not None and "lava-test-case" in steps:
+                            prefix = (
+                                "test.%d.%s" % (count, namespace)
+                                if namespace
+                                else "test.%d" % count
+                            )
                         else:
                             # store the fact that an inline exists but would not generate any testcases
-                            prefix = 'omitted.%d.%s' % (count, namespace) if namespace else 'omitted.%d' % count
-                        retval['%s.inline.name' % prefix] = definition['name']
-                        _add_parameter_metadata(prefix=prefix, definition=definition,
-                                                dictionary=retval, label='inline')
-                        retval['%s.inline.path' % prefix] = definition['path']
+                            prefix = (
+                                "omitted.%d.%s" % (count, namespace)
+                                if namespace
+                                else "omitted.%d" % count
+                            )
+                        retval["%s.inline.name" % prefix] = definition["name"]
+                        _add_parameter_metadata(
+                            prefix=prefix,
+                            definition=definition,
+                            dictionary=retval,
+                            label="inline",
+                        )
+                        retval["%s.inline.path" % prefix] = definition["path"]
                     else:
-                        prefix = "test.%d.%s" % (count, namespace) if namespace else 'test.%d' % count
+                        prefix = (
+                            "test.%d.%s" % (count, namespace)
+                            if namespace
+                            else "test.%d" % count
+                        )
                         # FIXME: what happens with remote definition without lava-test-case?
-                        retval['%s.definition.name' % prefix] = definition['name']
-                        retval['%s.definition.path' % prefix] = definition['path']
-                        retval['%s.definition.from' % prefix] = definition['from']
-                        retval['%s.definition.repository' % prefix] = definition['repository']
-                        _add_parameter_metadata(prefix=prefix, definition=definition,
-                                                dictionary=retval, label='definition')
+                        retval["%s.definition.name" % prefix] = definition["name"]
+                        retval["%s.definition.path" % prefix] = definition["path"]
+                        retval["%s.definition.from" % prefix] = definition["from"]
+                        retval["%s.definition.repository" % prefix] = definition[
+                            "repository"
+                        ]
+                        _add_parameter_metadata(
+                            prefix=prefix,
+                            definition=definition,
+                            dictionary=retval,
+                            label="definition",
+                        )
                     count += 1
     return retval
 
 
 def build_action(action_data, testdata, submission):
     # test for a known section
-    logger = logging.getLogger('lava-master')
-    if 'section' not in action_data:
+    logger = logging.getLogger("lava-master")
+    if "section" not in action_data:
         logger.warning("Invalid action data - missing section")
         return
 
-    metatype = MetaType.get_section(action_data['section'])
+    metatype = MetaType.get_section(action_data["section"])
     if metatype is None:  # 0 is allowed
-        logger.debug("Unrecognised metatype in action_data: %s", action_data['section'])
+        logger.debug("Unrecognised metatype in action_data: %s", action_data["section"])
         return
     # lookup the type from the job definition.
     type_name = MetaType.get_type_name(action_data, submission)
     if not type_name:
         logger.debug(
             "type_name failed for %s metatype %s",
-            action_data['section'], MetaType.TYPE_CHOICES[metatype])
+            action_data["section"],
+            MetaType.TYPE_CHOICES[metatype],
+        )
         return
-    action_meta, _ = MetaType.objects.get_or_create(name=type_name,
-                                                    metatype=metatype)
-    max_retry = action_data.get('max_retries')
+    action_meta, _ = MetaType.objects.get_or_create(name=type_name, metatype=metatype)
+    max_retry = action_data.get("max_retries")
 
     # find corresponding test case
     match_case = None
-    test_cases = TestCase.objects.filter(suite__job=testdata.testjob, suite__name='lava')
+    test_cases = TestCase.objects.filter(
+        suite__job=testdata.testjob, suite__name="lava"
+    )
     for case in test_cases:
         if case.action_metadata:
-            if case.action_metadata.get('level') == action_data['level']:
+            if case.action_metadata.get("level") == action_data["level"]:
                 match_case = case
 
     # maps the static testdata derived from the definition to the runtime pipeline construction
     ActionData.objects.create(
-        action_name=action_data['name'],
-        action_level=action_data['level'],
-        action_summary=action_data['summary'],
+        action_name=action_data["name"],
+        action_level=action_data["level"],
+        action_summary=action_data["summary"],
         testdata=testdata,
-        action_description=action_data['description'],
+        action_description=action_data["description"],
         meta_type=action_meta,
         max_retries=max_retry,
-        timeout=int(Timeout.parse(action_data['timeout'])),
-        testcase=match_case
+        timeout=int(Timeout.parse(action_data["timeout"])),
+        testcase=match_case,
     )
 
 
 def walk_actions(data, testdata, submission):
     for action in data:
         build_action(action, testdata, submission)
-        if 'pipeline' in action:
-            walk_actions(action['pipeline'], testdata, submission)
+        if "pipeline" in action:
+            walk_actions(action["pipeline"], testdata, submission)
 
 
 def map_metadata(description, job):
@@ -365,7 +416,7 @@ def map_metadata(description, job):
     :param job: the TestJob to associate
     :return: True on success, False on error
     """
-    logger = logging.getLogger('lava-master')
+    logger = logging.getLogger("lava-master")
     try:
         submission_data = yaml.safe_load(job.definition)
         description_data = yaml.load(description)
@@ -390,13 +441,13 @@ def map_metadata(description, job):
     if not description_data:
         logger.warning("[%s] skipping invalid description data", job.id)
         return False
-    if 'job' not in description_data:
+    if "job" not in description_data:
         logger.warning("[%s] skipping description without a job.", job.id)
         return False
-    action_values = _get_action_metadata(description_data['job']['actions'])
+    action_values = _get_action_metadata(description_data["job"]["actions"])
     for key, value in action_values.items():
         if not key or not value:
-            logger.warning('[%s] Missing element in job. %s: %s', job.id, key, value)
+            logger.warning("[%s] Missing element in job. %s: %s", job.id, key, value)
             continue
         testdata.attributes.create(name=key, value=value)
 
@@ -407,10 +458,10 @@ def map_metadata(description, job):
 
     # get metadata from device
     device_values = {}
-    device_values['target.device_type'] = job.requested_device_type
+    device_values["target.device_type"] = job.requested_device_type
     for key, value in device_values.items():
         if not key or not value:
-            logger.warning('[%s] Missing element in device. %s: %s', job.id, key, value)
+            logger.warning("[%s] Missing element in device. %s: %s", job.id, key, value)
             continue
         testdata.attributes.create(name=key, value=value)
 
@@ -419,11 +470,13 @@ def map_metadata(description, job):
         for key in submission_data["metadata"]:
             value = submission_data["metadata"][key]
             if not key or not value:
-                logger.warning('[%s] Missing element in job. %s: %s', job.id, key, value)
+                logger.warning(
+                    "[%s] Missing element in job. %s: %s", job.id, key, value
+                )
                 continue
             testdata.attributes.create(name=key, value=value)
 
-    walk_actions(description_data['pipeline'], testdata, submission_data)
+    walk_actions(description_data["pipeline"], testdata, submission_data)
     return True
 
 
@@ -432,9 +485,7 @@ def testsuite_export_fields():
     Keep this list in sync with the keys in export_testsuite
     :return: list of fields used in export_testsuite
     """
-    return [
-        'name', 'job', 'id'
-    ]
+    return ["name", "job", "id"]
 
 
 def export_testsuite(testsuite):
@@ -444,8 +495,8 @@ def export_testsuite(testsuite):
     :return: Dictionary containing relevant information formatted for export
     """
     suitedict = {
-        'name': str(testsuite.name),
-        'job': str(testsuite.job_id),
-        'id': str(testsuite.id),
+        "name": str(testsuite.name),
+        "job": str(testsuite.job_id),
+        "id": str(testsuite.id),
     }
     return suitedict

@@ -18,19 +18,14 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 from django import forms
-from lava_results_app.models import (
-    Chart,
-    ChartQuery,
-    ChartQueryUser,
-    TestCase,
-)
+from lava_results_app.models import Chart, ChartQuery, ChartQueryUser, TestCase
 
 
 class ChartForm(forms.ModelForm):
     class Meta:
         model = Chart
-        exclude = ('is_published', 'chart_group', 'group', 'queries')
-        widgets = {'owner': forms.HiddenInput}
+        exclude = ("is_published", "chart_group", "group", "queries")
+        widgets = {"owner": forms.HiddenInput}
 
     def __init__(self, owner, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -44,9 +39,11 @@ class ChartQueryForm(forms.ModelForm):
     class Meta:
         model = ChartQuery
         exclude = ()
-        widgets = {'chart': forms.HiddenInput,
-                   'query': forms.HiddenInput,
-                   'relative_index': forms.HiddenInput}
+        widgets = {
+            "chart": forms.HiddenInput,
+            "query": forms.HiddenInput,
+            "relative_index": forms.HiddenInput,
+        }
 
     def __init__(self, user, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -60,11 +57,14 @@ class ChartQueryForm(forms.ModelForm):
 
         try:
             # Chart type validation.
-            if form_data["query"].content_type.model_class() == TestCase and \
-               form_data["chart_type"] == "pass/fail":
+            if (
+                form_data["query"].content_type.model_class() == TestCase
+                and form_data["chart_type"] == "pass/fail"
+            ):
                 self.add_error(
                     "chart_type",
-                    "Pass/fail is incorrect value for 'chart_type' with TestCase based queries.")
+                    "Pass/fail is incorrect value for 'chart_type' with TestCase based queries.",
+                )
 
         except KeyError:
             # form_data will pick up the rest of validation errors.
@@ -76,7 +76,7 @@ class ChartQueryForm(forms.ModelForm):
 class ChartQueryUserForm(forms.ModelForm):
     class Meta:
         model = ChartQueryUser
-        exclude = ['user', 'chart_query']
+        exclude = ["user", "chart_query"]
 
     def __init__(self, user, *args, **kwargs):
         super().__init__(*args, **kwargs)

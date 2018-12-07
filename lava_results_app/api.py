@@ -26,10 +26,7 @@ from linaro_django_xmlrpc.models import ExposedAPI
 
 from django.db.models.fields import FieldDoesNotExist
 
-from lava_results_app.dbutils import (
-    export_testsuite,
-    testsuite_export_fields
-)
+from lava_results_app.dbutils import export_testsuite, testsuite_export_fields
 from lava_results_app.models import (
     Query,
     QueryCondition,
@@ -48,7 +45,6 @@ from lava_scheduler_app.models import TestJob
 
 
 class ResultsAPI(ExposedAPI):
-
     def make_custom_query(self, entity, conditions, limit=200):
         """
         Name
@@ -99,23 +95,28 @@ class ResultsAPI(ExposedAPI):
             content_type = Query.get_content_type(entity)
         except InvalidContentTypeError:
             raise xmlrpc.client.Fault(
-                400, "Wrong table name in entity parameter. "
-                "Please refer to query docs.")
+                400,
+                "Wrong table name in entity parameter. " "Please refer to query docs.",
+            )
 
         if content_type.model_class() not in QueryCondition.RELATION_MAP:
             raise xmlrpc.client.Fault(
-                400, "Wrong table name in entity parameter. "
-                "Please refer to query docs.")
+                400,
+                "Wrong table name in entity parameter. " "Please refer to query docs.",
+            )
 
         conditions = Query.parse_conditions(content_type, conditions)
 
         try:
-            results = Query.get_queryset(content_type,
-                                         conditions).visible_by_user(self.user)
+            results = Query.get_queryset(content_type, conditions).visible_by_user(
+                self.user
+            )
         except FieldDoesNotExist:
             raise xmlrpc.client.Fault(
-                400, "Conditions URL incorrect: Field does not exist. "
-                "Please refer to query docs.")
+                400,
+                "Conditions URL incorrect: Field does not exist. "
+                "Please refer to query docs.",
+            )
         return list(results[:limit])
 
     def run_query(self, query_name, limit=200, username=None):
@@ -155,16 +156,18 @@ class ResultsAPI(ExposedAPI):
             username = self.user.username
 
         try:
-            query = Query.objects.get(name=query_name,
-                                      owner__username=username)
+            query = Query.objects.get(name=query_name, owner__username=username)
         except Query.DoesNotExist:
             raise xmlrpc.client.Fault(
-                404, "Query with name %s owned by user %s does not exist." %
-                (query_name, username))
+                404,
+                "Query with name %s owned by user %s does not exist."
+                % (query_name, username),
+            )
 
         if not query.is_accessible_by(self.user):
             raise xmlrpc.client.Fault(
-                403, "Permission denied for user to query %s" % query_name)
+                403, "Permission denied for user to query %s" % query_name
+            )
 
         return list(query.get_results(self.user)[:limit])
 
@@ -199,28 +202,39 @@ class ResultsAPI(ExposedAPI):
             username = self.user.username
 
         try:
-            query = Query.objects.get(name=query_name,
-                                      owner__username=username)
+            query = Query.objects.get(name=query_name, owner__username=username)
         except Query.DoesNotExist:
             raise xmlrpc.client.Fault(
-                400, "Query with name %s owned by user %s does not exist." %
-                (query_name, username))
+                400,
+                "Query with name %s owned by user %s does not exist."
+                % (query_name, username),
+            )
 
         if not query.is_accessible_by(self.user):
             raise xmlrpc.client.Fault(
-                401, "Permission denied for user to query %s" % query_name)
+                401, "Permission denied for user to query %s" % query_name
+            )
 
         try:
             query.refresh_view()
         except QueryUpdatedError:
             raise xmlrpc.client.Fault(
-                400, "Query with name %s owned by user %s was recently refreshed." % (query_name, username))
+                400,
+                "Query with name %s owned by user %s was recently refreshed."
+                % (query_name, username),
+            )
         except RefreshLiveQueryError:
             raise xmlrpc.client.Fault(
-                400, "Query with name %s owned by user %s cannot be refreshed since it's a live query." % (query_name, username))
+                400,
+                "Query with name %s owned by user %s cannot be refreshed since it's a live query."
+                % (query_name, username),
+            )
         except Exception as exc:
             raise xmlrpc.client.Fault(
-                401, "Query refresh failed. Please contact system administrator: %s" % str(exc))
+                401,
+                "Query refresh failed. Please contact system administrator: %s"
+                % str(exc),
+            )
 
     def refresh_all_queries(self):
         """
@@ -244,18 +258,26 @@ class ResultsAPI(ExposedAPI):
 
         if not self.user.is_superuser:
             raise xmlrpc.client.Fault(
-                401, "Permission denied for user %s. Must be a superuser to "
-                "refresh all queries." % self.user.username)
+                401,
+                "Permission denied for user %s. Must be a superuser to "
+                "refresh all queries." % self.user.username,
+            )
 
         for query in Query.objects.all().filter(is_live=False):
             try:
                 query.refresh_view()
             except QueryUpdatedError:
                 raise xmlrpc.client.Fault(
-                    400, "Query with name %s owned by user %s was recently refreshed." % (query.name, self.user.username))
+                    400,
+                    "Query with name %s owned by user %s was recently refreshed."
+                    % (query.name, self.user.username),
+                )
             except Exception as exc:
                 raise xmlrpc.client.Fault(
-                    401, "Refresh operation for query with name %s owned by user %s failed. Please contact system administrator. Error: %s" % (query.name, query.owner.username, str(exc)))
+                    401,
+                    "Refresh operation for query with name %s owned by user %s failed. Please contact system administrator. Error: %s"
+                    % (query.name, query.owner.username, str(exc)),
+                )
 
     def get_testjob_results_yaml(self, job_id):
         """
@@ -280,13 +302,13 @@ class ResultsAPI(ExposedAPI):
 
         self._authenticate()
         if not job_id:
-            raise xmlrpc.client.Fault(
-                400, "Bad request: TestJob id was not specified.")
+            raise xmlrpc.client.Fault(400, "Bad request: TestJob id was not specified.")
         try:
             job = TestJob.get_by_job_number(job_id)
             if not job.can_view(self.user):
                 raise xmlrpc.client.Fault(
-                    401, "Permission denied for user to job %s" % job_id)
+                    401, "Permission denied for user to job %s" % job_id
+                )
             yaml_list = []
             for test_suite in job.testsuite_set.all():
                 for test_case in test_suite.testcase_set.all():
@@ -333,13 +355,13 @@ class ResultsAPI(ExposedAPI):
         """
         self._authenticate()
         if not job_id:
-            raise xmlrpc.client.Fault(
-                400, "Bad request: TestJob id was not specified.")
+            raise xmlrpc.client.Fault(400, "Bad request: TestJob id was not specified.")
         try:
             job = TestJob.get_by_job_number(job_id)
             if not job.can_view(self.user):
                 raise xmlrpc.client.Fault(
-                    401, "Permission denied for user to job %s" % job_id)
+                    401, "Permission denied for user to job %s" % job_id
+                )
         except TestJob.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Specified job not found.")
 
@@ -368,19 +390,20 @@ class ResultsAPI(ExposedAPI):
 
         self._authenticate()
         if not job_id:
-            raise xmlrpc.client.Fault(
-                400, "Bad request: TestJob id was not specified.")
+            raise xmlrpc.client.Fault(400, "Bad request: TestJob id was not specified.")
         try:
             job = TestJob.get_by_job_number(job_id)
             if not job.can_view(self.user):
                 raise xmlrpc.client.Fault(
-                    401, "Permission denied for user to job %s" % job_id)
+                    401, "Permission denied for user to job %s" % job_id
+                )
             output = io.StringIO()
             writer = csv.DictWriter(
                 output,
                 quoting=csv.QUOTE_ALL,
-                extrasaction='ignore',
-                fieldnames=testcase_export_fields())
+                extrasaction="ignore",
+                fieldnames=testcase_export_fields(),
+            )
             writer.writeheader()
             for test_suite in job.testsuite_set.all():
                 for row in test_suite.testcase_set.all():
@@ -415,19 +438,20 @@ class ResultsAPI(ExposedAPI):
 
         self._authenticate()
         if not job_id:
-            raise xmlrpc.client.Fault(
-                400, "Bad request: TestJob id was not specified.")
+            raise xmlrpc.client.Fault(400, "Bad request: TestJob id was not specified.")
         try:
             job = TestJob.get_by_job_number(job_id)
             if not job.can_view(self.user):
                 raise xmlrpc.client.Fault(
-                    401, "Permission denied for user to job %s" % job_id)
+                    401, "Permission denied for user to job %s" % job_id
+                )
             output = io.StringIO()
             writer = csv.DictWriter(
                 output,
                 quoting=csv.QUOTE_ALL,
-                extrasaction='ignore',
-                fieldnames=testsuite_export_fields())
+                extrasaction="ignore",
+                fieldnames=testsuite_export_fields(),
+            )
             writer.writeheader()
             for test_suite in job.testsuite_set.all():
                 writer.writerow(export_testsuite(test_suite))
@@ -461,13 +485,13 @@ class ResultsAPI(ExposedAPI):
 
         self._authenticate()
         if not job_id:
-            raise xmlrpc.client.Fault(
-                400, "Bad request: TestJob id was not specified.")
+            raise xmlrpc.client.Fault(400, "Bad request: TestJob id was not specified.")
         try:
             job = TestJob.get_by_job_number(job_id)
             if not job.can_view(self.user):
                 raise xmlrpc.client.Fault(
-                    401, "Permission denied for user to job %s" % job_id)
+                    401, "Permission denied for user to job %s" % job_id
+                )
             yaml_list = []
             for test_suite in job.testsuite_set.all():
                 yaml_list.append(export_testsuite(test_suite))
@@ -477,8 +501,7 @@ class ResultsAPI(ExposedAPI):
 
         return yaml.dump(yaml_list)
 
-    def get_testsuite_results_yaml(self, job_id, suite_name, limit=None,
-                                   offset=None):
+    def get_testsuite_results_yaml(self, job_id, suite_name, limit=None, offset=None):
         """
         Name
         ----
@@ -507,17 +530,16 @@ class ResultsAPI(ExposedAPI):
 
         self._authenticate()
         if not job_id:
-            raise xmlrpc.client.Fault(
-                400, "Bad request: TestJob id was not specified.")
+            raise xmlrpc.client.Fault(400, "Bad request: TestJob id was not specified.")
         try:
             job = TestJob.get_by_job_number(job_id)
             if not job.can_view(self.user):
                 raise xmlrpc.client.Fault(
-                    401, "Permission denied for user to job %s" % job_id)
+                    401, "Permission denied for user to job %s" % job_id
+                )
             yaml_list = []
             test_suite = job.testsuite_set.get(name=suite_name)
-            for test_case in get_testcases_with_limit(test_suite,
-                                                      limit, offset):
+            for test_case in get_testcases_with_limit(test_suite, limit, offset):
                 yaml_list.append(export_testcase(test_case))
 
         except TestJob.DoesNotExist:
@@ -527,8 +549,7 @@ class ResultsAPI(ExposedAPI):
 
         return yaml.dump(yaml_list)
 
-    def get_testsuite_results_csv(self, job_id, suite_name, limit=None,
-                                  offset=None):
+    def get_testsuite_results_csv(self, job_id, suite_name, limit=None, offset=None):
         """
         Name
         ----
@@ -557,19 +578,20 @@ class ResultsAPI(ExposedAPI):
 
         self._authenticate()
         if not job_id:
-            raise xmlrpc.client.Fault(
-                400, "Bad request: TestJob id was not specified.")
+            raise xmlrpc.client.Fault(400, "Bad request: TestJob id was not specified.")
         try:
             job = TestJob.get_by_job_number(job_id)
             if not job.can_view(self.user):
                 raise xmlrpc.client.Fault(
-                    401, "Permission denied for user to job %s" % job_id)
+                    401, "Permission denied for user to job %s" % job_id
+                )
             output = io.StringIO()
             writer = csv.DictWriter(
                 output,
                 quoting=csv.QUOTE_ALL,
-                extrasaction='ignore',
-                fieldnames=testcase_export_fields())
+                extrasaction="ignore",
+                fieldnames=testcase_export_fields(),
+            )
             writer.writeheader()
             test_suite = job.testsuite_set.get(name=suite_name)
             for row in get_testcases_with_limit(test_suite, limit, offset):
@@ -607,13 +629,13 @@ class ResultsAPI(ExposedAPI):
 
         self._authenticate()
         if not job_id:
-            raise xmlrpc.client.Fault(
-                400, "Bad request: TestJob id was not specified.")
+            raise xmlrpc.client.Fault(400, "Bad request: TestJob id was not specified.")
         try:
             job = TestJob.get_by_job_number(job_id)
             if not job.can_view(self.user):
                 raise xmlrpc.client.Fault(
-                    401, "Permission denied for user to job %s" % job_id)
+                    401, "Permission denied for user to job %s" % job_id
+                )
 
             test_suite = job.testsuite_set.get(name=suite_name)
             test_case_count = test_suite.testcase_set.all().count()
@@ -654,13 +676,13 @@ class ResultsAPI(ExposedAPI):
 
         self._authenticate()
         if not job_id:
-            raise xmlrpc.client.Fault(
-                400, "Bad request: TestJob id was not specified.")
+            raise xmlrpc.client.Fault(400, "Bad request: TestJob id was not specified.")
         try:
             job = TestJob.get_by_job_number(job_id)
             if not job.can_view(self.user):
                 raise xmlrpc.client.Fault(
-                    401, "Permission denied for user to job %s" % job_id)
+                    401, "Permission denied for user to job %s" % job_id
+                )
             test_suite = job.testsuite_set.get(name=suite_name)
             test_cases = test_suite.testcase_set.filter(name=case_name)
             yaml_list = [export_testcase(test_case) for test_case in test_cases]
@@ -703,20 +725,21 @@ class ResultsAPI(ExposedAPI):
 
         self._authenticate()
         if not job_id:
-            raise xmlrpc.client.Fault(
-                400, "Bad request: TestJob id was not specified.")
+            raise xmlrpc.client.Fault(400, "Bad request: TestJob id was not specified.")
         try:
             job = TestJob.get_by_job_number(job_id)
             if not job.can_view(self.user):
                 raise xmlrpc.client.Fault(
-                    401, "Permission denied for user to job %s" % job_id)
+                    401, "Permission denied for user to job %s" % job_id
+                )
 
             output = io.StringIO()
             writer = csv.DictWriter(
                 output,
                 quoting=csv.QUOTE_ALL,
-                extrasaction='ignore',
-                fieldnames=testcase_export_fields())
+                extrasaction="ignore",
+                fieldnames=testcase_export_fields(),
+            )
             writer.writeheader()
             test_suite = job.testsuite_set.get(name=suite_name)
             test_case = test_suite.testcase_set.get(name=case_name)

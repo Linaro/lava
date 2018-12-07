@@ -35,8 +35,8 @@ from lava_results_app.models import (
 
 
 class ActionDataAdmin(admin.ModelAdmin):
-    list_display = ('job_pk', 'action_level', 'action_name')
-    ordering = ('-testdata__testjob__pk', '-action_level', )
+    list_display = ("job_pk", "action_level", "action_name")
+    ordering = ("-testdata__testjob__pk", "-action_level")
 
     def job_pk(self, action):
         return action.testdata.testjob.pk
@@ -49,8 +49,8 @@ class ActionDataAdmin(admin.ModelAdmin):
 
 
 class QueryAdmin(admin.ModelAdmin):
-    list_display = ('name', 'owner', 'query_group', 'is_published', 'is_archived')
-    ordering = ('name', 'owner', 'query_group', 'is_published', 'is_archived')
+    list_display = ("name", "owner", "query_group", "is_published", "is_archived")
+    ordering = ("name", "owner", "query_group", "is_published", "is_archived")
     save_as = True
 
     def has_add_permission(self, request):
@@ -61,8 +61,8 @@ class QueryAdmin(admin.ModelAdmin):
 
 
 class TestCaseAdmin(admin.ModelAdmin):
-    list_display = ('job_pk', 'suite_name', 'name', 'result')
-    ordering = ('-suite__job__pk', 'suite__name', 'name')
+    list_display = ("job_pk", "suite_name", "name", "result")
+    ordering = ("-suite__job__pk", "suite__name", "name")
 
     def job_pk(self, testcase):
         return testcase.suite.job.pk
@@ -78,7 +78,7 @@ class TestCaseAdmin(admin.ModelAdmin):
 
 
 class TestSetAdmin(admin.ModelAdmin):
-    list_display = ('suite', 'name')
+    list_display = ("suite", "name")
 
     def has_add_permission(self, request):
         return False
@@ -88,8 +88,8 @@ class TestSetAdmin(admin.ModelAdmin):
 
 
 class TestSuiteAdmin(admin.ModelAdmin):
-    list_display = ('job_pk', 'name')
-    ordering = ('-job__pk', 'name')
+    list_display = ("job_pk", "name")
+    ordering = ("-job__pk", "name")
 
     def job_pk(self, testsuite):
         return testsuite.job.pk
@@ -102,15 +102,17 @@ class TestSuiteAdmin(admin.ModelAdmin):
 
 
 class BugLinkAdmin(admin.ModelAdmin):
-    list_display = ('url', 'content_type', 'content_object')
+    list_display = ("url", "content_type", "content_object")
 
     def content_type(self, buglink):
         return ContentType.objects.get_for_id(buglink.content_type_id)
 
     def content_object(self, buglink):
-        return ContentType.objects.get_for_id(
-            buglink.content_type_id).get_object_for_this_type(
-                pk=buglink.object_id).get_absolute_url()
+        return (
+            ContentType.objects.get_for_id(buglink.content_type_id)
+            .get_object_for_this_type(pk=buglink.object_id)
+            .get_absolute_url()
+        )
 
 
 admin.site.register(ActionData, ActionDataAdmin)
