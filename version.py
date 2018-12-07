@@ -40,7 +40,7 @@ def version_tag():
     """
     args = ["git", "describe"]
     if len(sys.argv) == 2:
-        if sys.argv[1] != 'sdist':
+        if sys.argv[1] != "sdist":
             args.append(sys.argv[1])
     if os.path.exists("./.git/"):
         pattern = re.compile(r"(?P<tag>.+)\.(?P<commits>\d+)\.g(?P<hash>[abcdef\d]+)")
@@ -56,9 +56,15 @@ def version_tag():
         else:
             d = m.groupdict()
             return "%s.%04d.g%s" % (d["tag"], int(d["commits"]), d["hash"])
-    if os.path.exists('debian/changelog'):
-        return subprocess.check_output(('dpkg-parsechangelog', '--show-field',  # nosec - internal
-                                        'Version')).strip().decode('utf-8').split('-')[0]
+    if os.path.exists("debian/changelog"):
+        return (
+            subprocess.check_output(
+                ("dpkg-parsechangelog", "--show-field", "Version")  # nosec - internal
+            )
+            .strip()
+            .decode("utf-8")
+            .split("-")[0]
+        )
 
 
 def main():
@@ -66,5 +72,5 @@ def main():
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

@@ -25,10 +25,21 @@ import subprocess  # nosec - internal
 import sys
 
 
-modules = ["lava_common", "lava_results_app", "lava_scheduler_app",
-           "lava_server", "linaro_django_xmlrpc"]
-services = ["lava-coordinator", "lava-logs", "lava-master", "lava-publisher",
-            "lava-server-gunicorn", "lava-slave"]
+modules = [
+    "lava_common",
+    "lava_results_app",
+    "lava_scheduler_app",
+    "lava_server",
+    "linaro_django_xmlrpc",
+]
+services = [
+    "lava-coordinator",
+    "lava-logs",
+    "lava-master",
+    "lava-publisher",
+    "lava-server-gunicorn",
+    "lava-slave",
+]
 
 
 def handle_on(options):
@@ -105,9 +116,11 @@ def main():
 
     # "on"
     on_parser = sub.add_parser("on", help="Activate the developer mode")
-    on_parser.add_argument("--url",
-                           default="https://git.linaro.org/lava/lava-server.git",
-                           help="Url to the lava-master git")
+    on_parser.add_argument(
+        "--url",
+        default="https://git.linaro.org/lava/lava-server.git",
+        help="Url to the lava-master git",
+    )
 
     # "off"
     sub.add_parser("off", help="Deactivate the developer mode")
@@ -116,8 +129,9 @@ def main():
     options = parser.parse_args()
 
     # Check that we are running this script on a debian machine
-    out = subprocess.check_output(["lsb_release", "--id"],  # nosec - internal
-                                  stderr=subprocess.STDOUT).decode("utf-8")
+    out = subprocess.check_output(
+        ["lsb_release", "--id"], stderr=subprocess.STDOUT  # nosec - internal
+    ).decode("utf-8")
     if out != "Distributor ID:\tDebian\n":
         print("Not running on a Debian system")
         sys.exit(1)

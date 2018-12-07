@@ -20,9 +20,6 @@ lava_scheduler_app/views.py
 lava_scheduler_app/tests/
 lava_server/
 linaro_django_xmlrpc/
-share/check-devices.py
-share/validate_devices.py
-share/create_certificate.py
-share/download-test-suites-api.py
-share/dump_pipeline.py
-share/lava_lxc_device_add.py
+share/
+setup.py
+version.py

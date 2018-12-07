@@ -50,26 +50,27 @@ def handle_embedded(os_name, data, dirname, simulate=False):
     os_check = check_os(os_name, data)
     for os_data in next(os_check):
         for dkey, value in os_data.items():
-            if dkey == 'python_dir':
+            if dkey == "python_dir":
                 python_dir = value
-                if python_dir.startswith('/'):
+                if python_dir.startswith("/"):
                     python_dir = str(python_dir[1:])
-            elif dkey == 'package':
+            elif dkey == "package":
                 package = os_data
-                print('Linking files from "%s" into "%s"' % (
-                    package['package'],
-                    package['lava_directory']
-                ))
-                if 'version' in package:
-                    dependencies[package['package']] = "(>= %s)" % package['version']
+                print(
+                    'Linking files from "%s" into "%s"'
+                    % (package["package"], package["lava_directory"])
+                )
+                if "version" in package:
+                    dependencies[package["package"]] = "(>= %s)" % package["version"]
                 else:
-                    dependencies[package['package']] = None
-            elif dkey == 'replacements':
+                    dependencies[package["package"]] = None
+            elif dkey == "replacements":
                 package = os_data
-                for ours, external in package['replacements'].items():
-                    ext_path = os.path.join(package['directory'], external)
+                for ours, external in package["replacements"].items():
+                    ext_path = os.path.join(package["directory"], external)
                     our_path = os.path.join(
-                        dirname, python_dir, package['lava_directory'], ours)
+                        dirname, python_dir, package["lava_directory"], ours
+                    )
                     if not os.path.exists(ext_path):
                         print("skipping symlink for %s" % ext_path)
                         continue
@@ -91,41 +92,49 @@ def uglify(os_name, data, dirname, remove=False, simulate=False):
     os_check = check_os(os_name, data)
     for os_data in next(os_check):
         for dkey, value in os_data.items():
-            if dkey == 'python_dir':
+            if dkey == "python_dir":
                 python_dir = value
-                if python_dir.startswith('/'):
+                if python_dir.startswith("/"):
                     python_dir = str(python_dir[1:])
-            elif dkey == 'uglify':
+            elif dkey == "uglify":
                 package = os_data
-                lava_dir = package['lava_directory']
-                dest_dir = package['destination']
+                lava_dir = package["lava_directory"]
+                dest_dir = package["destination"]
 
-                for file_name, dest_name in package['files'].items():
+                for file_name, dest_name in package["files"].items():
 
                     orig_path = os.path.join(lava_dir, file_name)
-                    install_path = os.path.join(dirname, python_dir, lava_dir,
-                                                file_name)
-                    dest_path = os.path.join(dirname, python_dir,
-                                             dest_dir, dest_name)
+                    install_path = os.path.join(
+                        dirname, python_dir, lava_dir, file_name
+                    )
+                    dest_path = os.path.join(dirname, python_dir, dest_dir, dest_name)
 
                     if not simulate:
                         try:
                             subprocess.check_call(  # nosec - internal
-                                ['/usr/bin/uglifyjs', orig_path, '-o',
-                                 dest_path, '-c', '-m'],
-                                stderr=open(os.devnull, 'wb'))
+                                [
+                                    "/usr/bin/uglifyjs",
+                                    orig_path,
+                                    "-o",
+                                    dest_path,
+                                    "-c",
+                                    "-m",
+                                ],
+                                stderr=open(os.devnull, "wb"),
+                            )
                         except Exception as e:
                             print(e)
 
                         if remove:
                             if not os.path.exists(install_path):
-                                print("WARNING: JS file %s does not exist" % (
-                                    install_path))
+                                print(
+                                    "WARNING: JS file %s does not exist"
+                                    % (install_path)
+                                )
                                 continue
                             os.unlink(install_path)
                     else:
-                        print("uglifyjs %s -o %s -c -m" % (orig_path,
-                                                           dest_path))
+                        print("uglifyjs %s -o %s -c -m" % (orig_path, dest_path))
 
     return None
 
@@ -135,22 +144,24 @@ def main():
     Parse options and load the supporting YAML file.
     Where debian is used, debian === debian-based
     """
-    parser = argparse.ArgumentParser(
-        description='Handle embedded javascript')
+    parser = argparse.ArgumentParser(description="Handle embedded javascript")
     parser.add_argument(
-        '-f', '--filename', required=True,
-        help='YAML file describing embedded javascript')
+        "-f",
+        "--filename",
+        required=True,
+        help="YAML file describing embedded javascript",
+    )
     parser.add_argument(
-        '-r', '--remove',
-        action='store_true', help='Remove original js files from .deb')
+        "-r", "--remove", action="store_true", help="Remove original js files from .deb"
+    )
     parser.add_argument(
-        '-s', '--simulate',
-        action='store_true', help='Only echo the commands')
+        "-s", "--simulate", action="store_true", help="Only echo the commands"
+    )
 
     args = parser.parse_args()
-    data = yaml.safe_load(open(args.filename, 'r'))
+    data = yaml.safe_load(open(args.filename, "r"))
     # only have data for debian-based packages so far.
-    dependencies = handle_embedded('debian', data, os.getcwd(), args.simulate)
+    dependencies = handle_embedded("debian", data, os.getcwd(), args.simulate)
     dep_list = []
     for package, constraint in dependencies.items():
         if constraint:
@@ -163,9 +174,9 @@ def main():
         print("Build-Depends:", ", ".join(sorted(dep_list)))
         print("Depends:", ", ".join(sorted(dep_list)))
 
-    uglify('debian', data, os.getcwd(), args.remove, args.simulate)
+    uglify("debian", data, os.getcwd(), args.remove, args.simulate)
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

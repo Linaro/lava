@@ -52,25 +52,31 @@ from jinja2 import Environment, FileSystemLoader
 
 def main():
 
-    parser = argparse.ArgumentParser(description='LAVA Dispatcher template helper')
+    parser = argparse.ArgumentParser(description="LAVA Dispatcher template helper")
     parser.add_argument(
-        '--device',
-        type=str,
-        required=True,
-        help='Path to the device template file')
+        "--device", type=str, required=True, help="Path to the device template file"
+    )
     parser.add_argument(
-        '--path',
-        default='/etc/lava-server/dispatcher-config/',
+        "--path",
+        default="/etc/lava-server/dispatcher-config/",
         type=str,
-        help='Path to the device-types template folder')
+        help="Path to the device-types template folder",
+    )
     args = parser.parse_args()
 
     env = Environment(  # nosec rendering to YAML
         loader=FileSystemLoader(
-            [os.path.join(args.path, 'devices'),
-             os.path.join(args.path, 'device-types')]),
-        trim_blocks=True, autoescape=False)
-    if not os.path.exists(os.path.join(args.path, 'devices', "%s.jinja2" % args.device)):
+            [
+                os.path.join(args.path, "devices"),
+                os.path.join(args.path, "device-types"),
+            ]
+        ),
+        trim_blocks=True,
+        autoescape=False,
+    )
+    if not os.path.exists(
+        os.path.join(args.path, "devices", "%s.jinja2" % args.device)
+    ):
         print("Cannot find %s device configuration file" % args.device)
         return
     template = env.get_template("%s.jinja2" % args.device)
@@ -85,5 +91,5 @@ def main():
     print(yaml.safe_load(config))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
