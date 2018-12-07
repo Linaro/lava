@@ -30,80 +30,80 @@ from lava_rest_app.versions import versions as REST_VERSIONS
 
 # List of people who get code error notifications
 # https://docs.djangoproject.com/en/1.8/ref/settings/#admins
-ADMINS = [['lava-server Administrator', 'root@localhost']]
+ADMINS = [["lava-server Administrator", "root@localhost"]]
 # List of people who get broken link notifications
 # https://docs.djangoproject.com/en/1.8/ref/settings/#managers
 MANAGERS = ADMINS
 
 # Allow only the connection through the reverse proxy
-ALLOWED_HOSTS = ['[::1]', '127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ["[::1]", "127.0.0.1", "localhost"]
 INTERNAL_IPS = []
 
 # Application definition
 INSTALLED_APPS = [
     # Add LAVA applications
-    'lava_server',
-    'dashboard_app',
-    'lava_results_app',
-    'lava_scheduler_app',
-    'lava_rest_app',
+    "lava_server",
+    "dashboard_app",
+    "lava_results_app",
+    "lava_scheduler_app",
+    "lava_rest_app",
     # Add LAVA dependencies
-    'django_tables2',
-    'linaro_django_xmlrpc',
-    'rest_framework',
+    "django_tables2",
+    "linaro_django_xmlrpc",
+    "rest_framework",
     # Add contrib
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'django.contrib.humanize',
-    'django.contrib.sites',  # FIXME: should not be needed anymore
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "django.contrib.humanize",
+    "django.contrib.sites",  # FIXME: should not be needed anymore
 ]
 
 MIDDLEWARE = [
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'django.middleware.security.SecurityMiddleware',
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.auth.middleware.SessionAuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django.middleware.security.SecurityMiddleware",
 ]
 
-ROOT_URLCONF = 'lava_server.urls'
+ROOT_URLCONF = "lava_server.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-                'django.template.context_processors.i18n',
-                'django.template.context_processors.static',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+                "django.template.context_processors.i18n",
+                "django.template.context_processors.static",
                 # LAVA context processors
-                'lava_server.context_processors.lava',
-                'lava_server.context_processors.ldap_available',
-            ],
+                "lava_server.context_processors.lava",
+                "lava_server.context_processors.ldap_available",
+            ]
         },
-    },
+    }
 ]
 
-WSGI_APPLICATION = 'lava_server.wsgi.application'
+WSGI_APPLICATION = "lava_server.wsgi.application"
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = "UTC"
 
 USE_I18N = True
 
@@ -155,15 +155,15 @@ SITE_ID = 1
 # Silence some checks that should be explicitly configured by administrators
 # on need basis.
 SILENCED_SYSTEM_CHECKS = [
-    'security.W004',  # silence SECURE_HSTS_SECONDS
-    'security.W008',  # silence SECURE_SSL_REDIRECT
+    "security.W004",  # silence SECURE_HSTS_SECONDS
+    "security.W008",  # silence SECURE_SSL_REDIRECT
 ]
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 CSRF_COOKIE_HTTPONLY = True
-X_FRAME_OPTIONS = 'DENY'
+X_FRAME_OPTIONS = "DENY"
 HTTPS_XML_RPC = True
 
 # Branding support
@@ -209,19 +209,19 @@ CALLBACK_TIMEOUT = 5
 # Properly resolve URL for DRF
 USE_X_FORWARDED_HOST = True
 REST_FRAMEWORK = {
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly"
     ],
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
-    'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.URLPathVersioning',
-    'ALLOWED_VERSIONS': REST_VERSIONS,
-    'DEFAULT_FILTER_BACKENDS': (
-        'rest_framework.filters.OrderingFilter',
-        'rest_framework.filters.SearchFilter',
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
+    "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.URLPathVersioning",
+    "ALLOWED_VERSIONS": REST_VERSIONS,
+    "DEFAULT_FILTER_BACKENDS": (
+        "rest_framework.filters.OrderingFilter",
+        "rest_framework.filters.SearchFilter",
     ),
-    'PAGE_SIZE': 50,
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework.authentication.SessionAuthentication',
-        'lava_rest_app.authentication.LavaTokenAuthentication',
-    )
+    "PAGE_SIZE": 50,
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework.authentication.SessionAuthentication",
+        "lava_rest_app.authentication.LavaTokenAuthentication",
+    ),
 }
