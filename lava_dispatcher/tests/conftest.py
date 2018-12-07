@@ -26,7 +26,7 @@ import requests
 
 @pytest.fixture(autouse=True)
 def no_network(monkeypatch, request):
-    def get(url, allow_redirects, stream):
+    def get(url, allow_redirects, stream, headers):
         assert allow_redirects is True  # nosec - unit test support
         assert stream is True  # nosec - unit test support
         res = requests.Response()
@@ -34,7 +34,7 @@ def no_network(monkeypatch, request):
         res.close = lambda: None
         return res
 
-    def head(url, allow_redirects):
+    def head(url, allow_redirects, headers):
         assert allow_redirects is True  # nosec - unit test support
         print(url)
         res = requests.Response()
