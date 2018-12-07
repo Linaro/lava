@@ -37,6 +37,7 @@ class Timeout:
     If a connection is set, this timeout is used per pexpect operation on that connection.
     If a connection is not set, this timeout applies for the entire run function of the action.
     """
+
     def __init__(self, name, duration=ACTION_TIMEOUT, exception=JobError):
         self.name = name
         self.start = 0
@@ -56,16 +57,18 @@ class Timeout:
         """
         if not isinstance(data, dict):
             raise ConfigurationError("Invalid timeout data")
-        duration = datetime.timedelta(days=data.get('days', 0),
-                                      hours=data.get('hours', 0),
-                                      minutes=data.get('minutes', 0),
-                                      seconds=data.get('seconds', 0))
+        duration = datetime.timedelta(
+            days=data.get("days", 0),
+            hours=data.get("hours", 0),
+            minutes=data.get("minutes", 0),
+            seconds=data.get("seconds", 0),
+        )
         if not duration:
             return Timeout.default_duration()
         return int(duration.total_seconds())
 
     def can_skip(self, parameters):  # pylint: disable=no-self-use
-        return parameters.get('timeout', {}).get('skip', False)
+        return parameters.get("timeout", {}).get("skip", False)
 
     def _timed_out(self, signum, frame):  # pylint: disable=unused-argument
         duration = int(time.time() - self.start)
@@ -101,11 +104,15 @@ class Timeout:
             if parent is None:
                 signal.alarm(0)
             else:
-                signal.signal(signal.SIGALRM, parent.timeout._timed_out)  # pylint: disable=protected-access
+                signal.signal(
+                    signal.SIGALRM, parent.timeout._timed_out
+                )  # pylint: disable=protected-access
                 duration = round(action_max_end_time - time.time())
                 if duration <= 0:
                     signal.alarm(0)
-                    parent.timeout._timed_out(None, None)  # pylint: disable=protected-access
+                    parent.timeout._timed_out(
+                        None, None
+                    )  # pylint: disable=protected-access
                 signal.alarm(duration)
         except Exception:
             # clear the timeout alarm, the action has returned an error

@@ -23,6 +23,7 @@ from nose.tools import nottest
 
 class LAVAError(Exception):
     """ Base class for all exceptions in LAVA """
+
     error_help = ""
     error_type = ""
 
@@ -39,13 +40,17 @@ class InfrastructureError(LAVAError):
 
     Use LAVABug for errors arising from bugs in LAVA code.
     """
-    error_help = "InfrastructureError: The Infrastructure is not working " \
-                 "correctly. Please report this error to LAVA admins."
+
+    error_help = (
+        "InfrastructureError: The Infrastructure is not working "
+        "correctly. Please report this error to LAVA admins."
+    )
     error_type = "Infrastructure"
 
 
 class JobCanceled(LAVAError):
     """ The job was canceled """
+
     error_help = "JobCanceled: The job was canceled"
     error_type = "Canceled"
 
@@ -57,6 +62,7 @@ class JobError(LAVAError):
     the TestJob or a download which results in a file which tar or gzip
     does not recognise.
     """
+
     error_help = "JobError: Your job cannot terminate cleanly."
     error_type = "Job"
 
@@ -66,6 +72,7 @@ class LAVABug(LAVAError):
     An error that is raised when an un-expected error is catched. Only happen
     when a bug is encountered.
     """
+
     error_help = "LAVABug: This is probably a bug in LAVA, please report it."
     error_type = "Bug"
 
@@ -77,13 +84,16 @@ class TestError(LAVAError):
     in parsing measurements or commands which fail.
     Always ensure TestError is caught, logged and cleared. It is not fatal.
     """
+
     error_help = "TestError: A test failed to run, look at the error message."
     error_type = "Test"
 
 
 class ConfigurationError(LAVAError):
-    error_help = "ConfigurationError: The LAVA instance is not configured " \
-                 "correctly. Please report this error to LAVA admins."
+    error_help = (
+        "ConfigurationError: The LAVA instance is not configured "
+        "correctly. Please report this error to LAVA admins."
+    )
     error_type = "Configuration"
 
 
@@ -93,6 +103,7 @@ class LAVATimeoutError(LAVAError):
 
 
 class MultinodeProtocolTimeoutError(LAVAError):
-    error_help = "MultinodeProtocolTimeoutError: Multinode wait/sync call " \
-                 "has timed out."
+    error_help = (
+        "MultinodeProtocolTimeoutError: Multinode wait/sync call " "has timed out."
+    )
     error_type = "MultinodeTimeout"

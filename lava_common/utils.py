@@ -30,15 +30,24 @@ def debian_package_arch(pkg):
     return an empty string.
     """
     # release path
-    changelog = '/usr/share/doc/%s/changelog.Debian.gz' % pkg
+    changelog = "/usr/share/doc/%s/changelog.Debian.gz" % pkg
     if not os.path.exists(changelog):
-        changelog = '/usr/share/doc/%s/changelog.gz' % pkg
+        changelog = "/usr/share/doc/%s/changelog.gz" % pkg
     if os.path.exists(changelog):
-        deb_arch = subprocess.check_output((  # nosec dpkg-query
-            'dpkg-query', '-W', "-f=${Architecture}\n",
-            "%s" % pkg)).strip().decode('utf-8', errors="replace")
+        deb_arch = (
+            subprocess.check_output(
+                (  # nosec dpkg-query
+                    "dpkg-query",
+                    "-W",
+                    "-f=${Architecture}\n",
+                    "%s" % pkg,
+                )
+            )
+            .strip()
+            .decode("utf-8", errors="replace")
+        )
         return deb_arch
-    return ''
+    return ""
 
 
 def debian_package_version(pkg, split):
@@ -48,18 +57,22 @@ def debian_package_version(pkg, split):
     return an empty string.
     """
     # release path
-    changelog = '/usr/share/doc/%s/changelog.Debian.gz' % pkg
+    changelog = "/usr/share/doc/%s/changelog.Debian.gz" % pkg
     if not os.path.exists(changelog):
-        changelog = '/usr/share/doc/%s/changelog.gz' % pkg
+        changelog = "/usr/share/doc/%s/changelog.gz" % pkg
     if os.path.exists(changelog):
-        deb_version = subprocess.check_output((  # nosec dpkg-query
-            'dpkg-query', '-W', "-f=${Version}\n",
-            "%s" % pkg)).strip().decode('utf-8', errors="replace")
+        deb_version = (
+            subprocess.check_output(
+                ("dpkg-query", "-W", "-f=${Version}\n", "%s" % pkg)  # nosec dpkg-query
+            )
+            .strip()
+            .decode("utf-8", errors="replace")
+        )
         # example version returned would be '2016.11'
         if split:
-            return deb_version.split('-')[0]
+            return deb_version.split("-")[0]
         return deb_version
-    return ''
+    return ""
 
 
 def debian_filename_version(binary, split, label=False):
