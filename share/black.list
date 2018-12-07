@@ -1,3 +1,5 @@
+doc/
+lava_common/
 lava_dispatcher/actions/boot/bootloader.py
 lava_dispatcher/actions/test/interactive.py
 lava_dispatcher/test/
@@ -20,6 +22,7 @@ lava_scheduler_app/views.py
 lava_scheduler_app/tests/
 lava_server/
 linaro_django_xmlrpc/
+man/
 share/
 setup.py
 version.py

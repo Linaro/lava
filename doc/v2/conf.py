@@ -26,38 +26,44 @@ import sphinx_bootstrap_theme
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.doctest',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.todo',
-    'sphinx.ext.coverage',
-    'sphinx.ext.viewcode']
+    "sphinx.ext.autodoc",
+    "sphinx.ext.doctest",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.todo",
+    "sphinx.ext.coverage",
+    "sphinx.ext.viewcode",
+]
 
 # Configuration for sphinx.ext.todo
 todo_include_todos = True
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # The suffix of source filenames.
-source_suffix = '.rst'
+source_suffix = ".rst"
 
 # The encoding of source files.
 # source_encoding = 'utf-8'
 
 # The master toctree document.
-master_doc = 'index'
+master_doc = "index"
 
 # General information about the project.
-project = u'LAVA'
-copyright = u'2010-2018, Linaro Limited'
+project = u"LAVA"
+copyright = u"2010-2018, Linaro Limited"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
 # The short X.Y version.
-version = subprocess.Popen(r'./version.py', cwd=r'../..', stdout=subprocess.PIPE).stdout.read().rstrip().decode('utf-8')  # nosec - internal
+version = (
+    subprocess.Popen(r"./version.py", cwd=r"../..", stdout=subprocess.PIPE)
+    .stdout.read()
+    .rstrip()
+    .decode("utf-8")
+)  # nosec - internal
 # The full version, including alpha/beta/rc tags.
 release = version
 
@@ -78,7 +84,7 @@ release = version
 # for source files.
 exclude_trees = []
 
-exclude_patterns = ['pages/reference-architecture']
+exclude_patterns = ["pages/reference-architecture"]
 
 # The reST default role (used for this markup: `text`) to use for all documents.
 # default_role = None
@@ -95,7 +101,7 @@ exclude_patterns = ['pages/reference-architecture']
 # show_authors = False
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = "sphinx"
 
 # A list of ignored prefixes for module index sorting.
 # modindex_common_prefix = []
@@ -105,18 +111,15 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  Major themes that come with
 # Sphinx are currently 'default' and 'sphinxdoc'.
-html_theme = 'bootstrap'
+html_theme = "bootstrap"
 html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 html_theme_options = {
-    'navbar_sidebarrel': True,
-    'navbar_links': [
-        ("Index", "genindex"),
-        ("Contents", "contents"),
-    ],
+    "navbar_sidebarrel": True,
+    "navbar_links": [("Index", "genindex"), ("Contents", "contents")],
 }
 
 # Add any paths that contain custom themes here, relative to this directory.
@@ -142,7 +145,7 @@ html_favicon = "./favicon.ico"
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_static_path = ["_static"]
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
@@ -183,7 +186,7 @@ html_show_sphinx = True
 # html_file_suffix = ''
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'LAVADocumentation'
+htmlhelp_basename = "LAVADocumentation"
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -197,8 +200,7 @@ htmlhelp_basename = 'LAVADocumentation'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-    ('index', 'LAVAServer.tex', u'LAVA Manual',
-     u'Linaro Validation Team', 'manual'),
+    ("index", "LAVAServer.tex", u"LAVA Manual", u"Linaro Validation Team", "manual")
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -220,4 +222,4 @@ latex_documents = [
 
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'https://docs.python.org/2': None}
+intersphinx_mapping = {"https://docs.python.org/2": None}

@@ -41,12 +41,14 @@ CONFIG_PATH = os.getcwd()  # set this to your local needs.
 job_ctx = {"first_key": 9}
 
 
-with open("details.jinja2", 'r') as details:
+with open("details.jinja2", "r") as details:
     data = details.read()
-string_loader = jinja2.DictLoader({'details.jinja2': data})
+string_loader = jinja2.DictLoader({"details.jinja2": data})
 type_loader = jinja2.FileSystemLoader([CONFIG_PATH])
 env = jinja2.Environment(  # nosec - YAML, not HTML, no XSS scope.
     loader=jinja2.ChoiceLoader([string_loader, type_loader]),
-    trim_blocks=True, autoescape=False)
+    trim_blocks=True,
+    autoescape=False,
+)
 test_template = env.get_template("details.jinja2")
 print(test_template.render(**job_ctx))

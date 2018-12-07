@@ -19,7 +19,7 @@ import subprocess  # nosec - internal
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 # sys.path.insert(0, os.path.abspath('.'))
-sys.path.append(os.path.abspath('..'))
+sys.path.append(os.path.abspath(".."))
 
 # -- General configuration -----------------------------------------------------
 
@@ -29,12 +29,13 @@ sys.path.append(os.path.abspath('..'))
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.doctest',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.todo',
-    'sphinx.ext.coverage',
-    'sphinx.ext.viewcode']
+    "sphinx.ext.autodoc",
+    "sphinx.ext.doctest",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.todo",
+    "sphinx.ext.coverage",
+    "sphinx.ext.viewcode",
+]
 
 # Configuration for sphinx.ext.todo
 
@@ -44,24 +45,28 @@ todo_include_todos = True
 templates_path = []
 
 # The suffix of source filenames.
-source_suffix = '.rst'
+source_suffix = ".rst"
 
 # The encoding of source files.
 # source_encoding = 'utf-8'
 
 # The master toctree document.
-master_doc = 'index'
+master_doc = "index"
 
 # General information about the project.
-project = u'LAVA'
-copyright = u'2010-2018, Linaro Limited'
+project = u"LAVA"
+copyright = u"2010-2018, Linaro Limited"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
 # The short X.Y version.
-version = subprocess.Popen(r'./version.py', cwd=r'..', stdout=subprocess.PIPE).stdout.read().decode('utf-8')  # nosec - internal
+version = (
+    subprocess.Popen(r"./version.py", cwd=r"..", stdout=subprocess.PIPE)
+    .stdout.read()
+    .decode("utf-8")
+)  # nosec - internal
 # The full version, including alpha/beta/rc tags.
 release = version
 
@@ -77,7 +82,7 @@ release = version
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ['_build']
+exclude_patterns = ["_build"]
 
 # The reST default role (used for this markup: `text`) to use for all documents.
 # default_role = None
@@ -94,7 +99,7 @@ exclude_patterns = ['_build']
 # show_authors = False
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = "sphinx"
 
 # A list of ignored prefixes for module index sorting.
 # modindex_common_prefix = []
@@ -104,7 +109,7 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'default'
+html_theme = "default"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -177,7 +182,7 @@ html_static_path = []
 # html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'LAVADocumentation'
+htmlhelp_basename = "LAVADocumentation"
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -191,8 +196,7 @@ htmlhelp_basename = 'LAVADocumentation'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-    ('index', 'LAVA.tex', 'LAVA Documentation',
-     'Linaro Validation Team', 'manual'),
+    ("index", "LAVA.tex", "LAVA Documentation", "Linaro Validation Team", "manual")
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -224,26 +228,81 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('lava-server', 'lava-server', u'lava-server command line support',
-     [u'Linaro Validation Team'], 1),
-    ('lava-run', 'lava-run', u'run jobs on LAVA devices',
-     [u'Linaro Validation Team'], 1),
-    ('lava-slave', 'lava-slave', u'manage connections to lava master',
-     [u'Linaro Validation Team'], 8),
-    ('lava-lxc-mocker', 'lava-lxc-mocker', u'mock LXC commands used by LAVA',
-     [u'Senthil Kumaran S <senthil.kumaran@linaro.org>'], 7),
-    ('lxc-attach', 'lxc-attach', u'mock lxc-attach command used by LAVA',
-     [u'Senthil Kumaran S <senthil.kumaran@linaro.org>'], 1),
-    ('lxc-create', 'lxc-create', u'mock lxc-create command used by LAVA',
-     [u'Senthil Kumaran S <senthil.kumaran@linaro.org>'], 1),
-    ('lxc-destroy', 'lxc-destroy', u'mock lxc-destroy command used by LAVA',
-     [u'Senthil Kumaran S <senthil.kumaran@linaro.org>'], 1),
-    ('lxc-device', 'lxc-device', u'mock lxc-device command used by LAVA',
-     [u'Senthil Kumaran S <senthil.kumaran@linaro.org>'], 1),
-    ('lxc-info', 'lxc-info', u'mock lxc-info command used by LAVA',
-     [u'Senthil Kumaran S <senthil.kumaran@linaro.org>'], 1),
-    ('lxc-start', 'lxc-start', u'mock lxc-start command used by LAVA',
-     [u'Senthil Kumaran S <senthil.kumaran@linaro.org>'], 1),
-    ('lxc-stop', 'lxc-stop', u'mock lxc-stop command used by LAVA',
-     [u'Senthil Kumaran S <senthil.kumaran@linaro.org>'], 1)
+    (
+        "lava-server",
+        "lava-server",
+        u"lava-server command line support",
+        [u"Linaro Validation Team"],
+        1,
+    ),
+    (
+        "lava-run",
+        "lava-run",
+        u"run jobs on LAVA devices",
+        [u"Linaro Validation Team"],
+        1,
+    ),
+    (
+        "lava-slave",
+        "lava-slave",
+        u"manage connections to lava master",
+        [u"Linaro Validation Team"],
+        8,
+    ),
+    (
+        "lava-lxc-mocker",
+        "lava-lxc-mocker",
+        u"mock LXC commands used by LAVA",
+        [u"Senthil Kumaran S <senthil.kumaran@linaro.org>"],
+        7,
+    ),
+    (
+        "lxc-attach",
+        "lxc-attach",
+        u"mock lxc-attach command used by LAVA",
+        [u"Senthil Kumaran S <senthil.kumaran@linaro.org>"],
+        1,
+    ),
+    (
+        "lxc-create",
+        "lxc-create",
+        u"mock lxc-create command used by LAVA",
+        [u"Senthil Kumaran S <senthil.kumaran@linaro.org>"],
+        1,
+    ),
+    (
+        "lxc-destroy",
+        "lxc-destroy",
+        u"mock lxc-destroy command used by LAVA",
+        [u"Senthil Kumaran S <senthil.kumaran@linaro.org>"],
+        1,
+    ),
+    (
+        "lxc-device",
+        "lxc-device",
+        u"mock lxc-device command used by LAVA",
+        [u"Senthil Kumaran S <senthil.kumaran@linaro.org>"],
+        1,
+    ),
+    (
+        "lxc-info",
+        "lxc-info",
+        u"mock lxc-info command used by LAVA",
+        [u"Senthil Kumaran S <senthil.kumaran@linaro.org>"],
+        1,
+    ),
+    (
+        "lxc-start",
+        "lxc-start",
+        u"mock lxc-start command used by LAVA",
+        [u"Senthil Kumaran S <senthil.kumaran@linaro.org>"],
+        1,
+    ),
+    (
+        "lxc-stop",
+        "lxc-stop",
+        u"mock lxc-stop command used by LAVA",
+        [u"Senthil Kumaran S <senthil.kumaran@linaro.org>"],
+        1,
+    ),
 ]

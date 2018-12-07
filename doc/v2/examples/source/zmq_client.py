@@ -42,6 +42,7 @@ class JobEndTimeoutError(Exception):
 
 class Timeout:
     """ Timeout error class with ALARM signal. Accepts time in seconds. """
+
     class TimeoutError(Exception):
         pass
 
@@ -62,7 +63,6 @@ class Timeout:
 
 
 class JobListener:
-
     def __init__(self, url):
         self.context = zmq.Context.instance()
         self.sock = self.context.socket(zmq.SUB)
@@ -77,7 +77,9 @@ class JobListener:
                 while True:
                     msg = self.sock.recv_multipart()
                     try:
-                        (topic, uuid, dt, username, data) = msg[:]  # pylint: disable=unbalanced-tuple-unpacking
+                        (topic, uuid, dt, username, data) = msg[
+                            :
+                        ]  # pylint: disable=unbalanced-tuple-unpacking
                     except IndexError:
                         # Droping invalid message
                         continue
@@ -90,7 +92,8 @@ class JobListener:
 
         except Timeout.TimeoutError:
             raise JobEndTimeoutError(
-                "JobListener timed out after %s seconds." % timeout)
+                "JobListener timed out after %s seconds." % timeout
+            )
 
 
 def lookup_publisher(hostname, https):
@@ -105,10 +108,10 @@ def lookup_publisher(hostname, https):
     try:
         socket = server.scheduler.get_publisher_event_socket()
     except ssl.SSLError as exc:
-        sys.stderr.write('ERROR %s\n' % exc)
+        sys.stderr.write("ERROR %s\n" % exc)
         return None
     port = urlsplit(socket).port
-    listener_url = 'tcp://%s:%s' % (hostname, port)
+    listener_url = "tcp://%s:%s" % (hostname, port)
     print("Using %s" % listener_url)
     return listener_url
 
@@ -121,27 +124,21 @@ def main():
     a test job as well as watching the events, use lava-tool.
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-j", "--job-id", type=int,
-        help="Job ID to wait for")
+    parser.add_argument("-j", "--job-id", type=int, help="Job ID to wait for")
 
     parser.add_argument(
-        "--https", action="store_true",
-        help="Use https:// for this hostname"
+        "--https", action="store_true", help="Use https:// for this hostname"
     )
 
-    parser.add_argument(
-        "-t", "--timeout", type=int,
-        help="Timeout in seconds")
-    parser.add_argument(
-        "--hostname", required=True, help="hostname of the instance")
+    parser.add_argument("-t", "--timeout", type=int, help="Timeout in seconds")
+    parser.add_argument("--hostname", required=True, help="hostname of the instance")
 
     options = parser.parse_args()
 
     try:
         publisher = lookup_publisher(options.hostname, options.https)
     except xmlrpc.client.ProtocolError as exc:
-        sys.stderr.write('ERROR %s\n' % exc)
+        sys.stderr.write("ERROR %s\n" % exc)
         return 1
 
     if not publisher:
@@ -150,11 +147,11 @@ def main():
     if options.job_id:
         listener = JobListener(publisher)
         print(listener.wait_for_job_end(options.job_id, options.timeout))
-    print('\n')
+    print("\n")
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
 
 # END_CLIENT
