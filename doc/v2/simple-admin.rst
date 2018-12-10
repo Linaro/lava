@@ -61,6 +61,33 @@ tasks, including:
     interface. Only the master needs to be configured to send email,
     notifications from workers are handled via the master.
 
+Debian package management
+=========================
+
+The rest of the system needs updates to be applied, especially security
+updates. If you are upgrading a python package on an instance already
+running LAVA, especially if that package is directly listed as a
+dependency of LAVA, then all LAVA daemons should be restarted. All LAVA
+daemons are safe to restart without affecting running tasks. There will
+be a brief moment where the UI will pause but that is all:
+
+.. code-block:: none
+
+ service lava-server-gunicorn restart
+ service lava-logs restart
+ service lava-publisher restart
+ service lava-master restart
+ service lava-slave restart
+
+.. note:: This applies to workers as well as masters but the
+   ``lava-slave`` daemon has only minimal dependencies. Most of the
+   work is done by lava-run which gets a new process at the start of
+   each test job. It is NOT possible to restart lava-run - any affected
+   test jobs will need to be resubmitted but this is considered
+   unlikely.
+
+.. seealso:: :ref:`unattended_upgrades`
+
 Infrastructure
 **************
 
