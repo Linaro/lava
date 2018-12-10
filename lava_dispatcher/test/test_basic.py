@@ -49,20 +49,13 @@ from lava_dispatcher.test.utils import DummyLogger
 
 
 class StdoutTestCase(unittest.TestCase):
-    def setUp(self):
-        super().setUp()
-        logger = logging.getLogger("dispatcher")
-        logger.disabled = True
-        logger.propagate = False
-        # set to True to update pipeline_references automatically.
-        self.update_ref = False
-        self.job = None
+    # set to True to update pipeline_references automatically.
+    update_ref = False
 
-    def pipeline_reference(self, filename, job=None):
+    @classmethod
+    def pipeline_reference(cls, filename, job=None):
         y_file = os.path.join(os.path.dirname(__file__), "pipeline_refs", filename)
-        if self.update_ref:
-            if not job:
-                job = self.job
+        if cls.update_ref:
             sys.stderr.write("WARNING: modifying pipeline references!")
             with open(y_file, "w") as describe:
                 yaml.dump(job.pipeline.describe(False), describe)
