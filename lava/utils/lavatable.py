@@ -6,7 +6,6 @@ from django.db.models import Q
 
 
 class LavaView(tables.SingleTableView):
-
     def __init__(self, request, **kwargs):
         super().__init__(**kwargs)
         self.request = request
@@ -23,20 +22,26 @@ class LavaView(tables.SingleTableView):
         local_namespace = locals()
         local_namespace["q"] = query
         time_queries = {}
-        if hasattr(self.table_class.Meta, 'times'):
+        if hasattr(self.table_class.Meta, "times"):
             # filter the possible list by the request
             for key, value in self.table_class.Meta.times.items():
                 # check if the request includes the current time filter & get the value
                 match = self.request.GET.get(key)
                 if match and match != "":
-                    self.terms[key] = "%s within %s %s" % (key, match, value)  # the label for this query in the search list
+                    self.terms[key] = "%s within %s %s" % (
+                        key,
+                        match,
+                        value,
+                    )  # the label for this query in the search list
                     time_queries[key] = value
             for key, value in time_queries.items():
                 match = escape(self.request.GET.get(key))
                 # escape converts None into u'None'
                 if not match or match == "" or match == "None":
                     continue
-                args = 'q = q.__and__(Q({0}__gte=datetime.now()-timedelta({1}={2})))'.format(key, value, match)
+                args = "q = q.__and__(Q({0}__gte=datetime.now()-timedelta({1}={2})))".format(
+                    key, value, match
+                )
                 try:
                     exec(args, globals(), local_namespace)  # sets the value of q
                 except SyntaxError:
@@ -57,33 +62,49 @@ class LavaView(tables.SingleTableView):
         """
         distinct = {}
         data = self.get_queryset()
-        if not self.table_class or not hasattr(self.table_class, 'Meta'):
+        if not self.table_class or not hasattr(self.table_class, "Meta"):
             return data
         if prefix:
             table_search = "%ssearch" % prefix
         else:
             table_search = "search"
-        if hasattr(self.table_class.Meta, 'queries'):
+        if hasattr(self.table_class.Meta, "queries"):
             self.search.extend(self.table_class.Meta.queries.values())
             self.search.sort()
-        if hasattr(self.table_class.Meta, 'times'):
+        if hasattr(self.table_class.Meta, "times"):
             for key, value in self.table_class.Meta.times.items():
-                field = next((f for f in self.model._meta.get_fields() if f.name == key))
+                field = next(
+                    (f for f in self.model._meta.get_fields() if f.name == key)
+                )
                 column = self.table_class.base_columns.get(key)
-                if column and hasattr(column, 'verbose_name') and column.verbose_name is not None:
+                if (
+                    column
+                    and hasattr(column, "verbose_name")
+                    and column.verbose_name is not None
+                ):
                     self.times.append("%s (%s)" % (str(column.verbose_name), value))
-                elif field and hasattr(field, 'verbose_name') and field.verbose_name is not None:
+                elif (
+                    field
+                    and hasattr(field, "verbose_name")
+                    and field.verbose_name is not None
+                ):
                     self.times.append("%s (%s)" % (str(field.verbose_name), value))
                 else:
                     self.times.append("%s (%s)" % (key, value))
             self.times.sort()
-        if hasattr(self.table_class.Meta, 'searches'):
+        if hasattr(self.table_class.Meta, "searches"):
             for key in self.table_class.Meta.searches.keys():
-                field = next((f for f in self.model._meta.get_fields() if f.name == key))
+                field = next(
+                    (f for f in self.model._meta.get_fields() if f.name == key)
+                )
                 column = self.table_class.base_columns.get(key)
-                if column and hasattr(column, 'verbose_name') and column.verbose_name is not None:
+                if (
+                    column
+                    and hasattr(column, "verbose_name")
+                    and column.verbose_name is not None
+                ):
                     self.search.append(column.verbose_name)
-                elif field and hasattr(field, 'verbose_name'):
+                elif field and hasattr(field, "verbose_name"):
                     self.search.append(field.verbose_name)
                 else:
                     self.search.append(field)
@@ -92,7 +113,7 @@ class LavaView(tables.SingleTableView):
                 if self.request and self.request.GET.get(discrete_key):
                     distinct[discrete_key] = escape(self.request.GET.get(discrete_key))
             self.search = sorted(self.search, key=lambda s: s.lower())
-        if hasattr(self.table_class.Meta, 'queries'):
+        if hasattr(self.table_class.Meta, "queries"):
             for func, argument in self.table_class.Meta.queries.items():
                 request_argument = "%s%s" % (prefix, argument) if prefix else argument
                 self.discrete.append(request_argument)  # for __and__ queries
@@ -114,7 +135,10 @@ class LavaView(tables.SingleTableView):
                 except SyntaxError:
                     # should log exception somewhere...
                     continue  # just skip this term - results in a query matching All.
-            if hasattr(self.table_class.Meta, 'queries') and key in self.table_class.Meta.queries.keys():
+            if (
+                hasattr(self.table_class.Meta, "queries")
+                and key in self.table_class.Meta.queries.keys()
+            ):
                 # note that this calls the function 'key' with the argument from the search
                 args = 'q = q.__and__(self.{0}("{1}"))'.format(key, val)
                 try:
@@ -125,7 +149,7 @@ class LavaView(tables.SingleTableView):
         # general OR searches
         if self.request.GET.get(table_search):
             self.terms["search"] = escape(self.request.GET.get(table_search))
-        if hasattr(self.table_class.Meta, 'searches') and 'search' in self.terms:
+        if hasattr(self.table_class.Meta, "searches") and "search" in self.terms:
             for key, val in self.table_class.Meta.searches.items():
                 # this is a little bit of magic - creates an OR clause in the query based
                 # on the iterable search hash passed in via the table_class
@@ -138,10 +162,12 @@ class LavaView(tables.SingleTableView):
                     # should log exception somewhere...
                     continue  # just skip this term - results in a query matching All.
             # call explicit handlers as simple text searches of relational fields.
-            if hasattr(self.table_class.Meta, 'queries'):
+            if hasattr(self.table_class.Meta, "queries"):
                 for key in self.table_class.Meta.queries:
                     # note that this calls the function 'key' with the argument from the search
-                    args = 'q = q.__or__(self.{0}("{1}"))'.format(key, self.terms["search"].encode("utf-8"))
+                    args = 'q = q.__or__(self.{0}("{1}"))'.format(
+                        key, self.terms["search"].encode("utf-8")
+                    )
                     try:
                         exec(args, globals(), local_namespace)
                     except SyntaxError:
@@ -159,10 +185,13 @@ class LavaTable(tables.Table):
     Provides search wrapper support for single tables
     and tables using prefixes, as well as a default page length.
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.length = 10
-        self._empty_text = mark_safe('<div style="text-align: center">No data available in table</div>')
+        self._empty_text = mark_safe(
+            '<div style="text-align: center">No data available in table</div>'
+        )
 
     def prepare_search_data(self, data):
         if not hasattr(data, "search"):
@@ -170,7 +199,7 @@ class LavaTable(tables.Table):
         if self.prefix:
             return {self.prefix: data.search}
         else:
-            return {'search': data.search}
+            return {"search": data.search}
 
     def prepare_terms_data(self, data):
         if not hasattr(data, "terms"):
@@ -178,7 +207,7 @@ class LavaTable(tables.Table):
         if self.prefix:
             return {self.prefix: data.terms}
         else:
-            return {'terms': data.terms}
+            return {"terms": data.terms}
 
     def prepare_times_data(self, data):
         if not hasattr(data, "times"):
@@ -186,7 +215,7 @@ class LavaTable(tables.Table):
         if self.prefix:
             return {self.prefix: data.times}
         else:
-            return {'times': data.times}
+            return {"times": data.times}
 
     def prepare_discrete_data(self, data):
         """
@@ -201,7 +230,7 @@ class LavaTable(tables.Table):
         if self.prefix:
             return {self.prefix: data.discrete} if len(data.discrete) > 1 else {}
         else:
-            return {'discrete': data.discrete} if len(data.discrete) > 1 else {}
+            return {"discrete": data.discrete} if len(data.discrete) > 1 else {}
 
     class Meta:
         attrs = {"class": "table table-striped", "width": "100%"}

@@ -1,4 +1,5 @@
 doc/
+lava/
 lava_common/
 lava_dispatcher/actions/boot/bootloader.py
 lava_dispatcher/actions/test/interactive.py

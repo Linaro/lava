@@ -24,6 +24,7 @@ import os
 import sys
 import optparse
 import daemon
+
 try:
     import daemon.pidlockfile as pidlockfile
 except ImportError:
@@ -40,7 +41,7 @@ def getDaemonLogger(filePath, log_format=None, loglevel=logging.INFO):
     except Exception as e:
         return e
 
-    watchedHandler.setFormatter(logging.Formatter(log_format or '%(asctime)s %(msg)s'))
+    watchedHandler.setFormatter(logging.Formatter(log_format or "%(asctime)s %(msg)s"))
     logger.addHandler(watchedHandler)
     return logger, watchedHandler
 
@@ -50,22 +51,24 @@ def readSettings(filename):
     NodeDispatchers need to use the same port and blocksize as the Coordinator,
     so read the same conffile.
     """
-    settings = {"port": 3079,
-                "coordinator_hostname": "localhost",
-                "blocksize": 4 * 1024}
+    settings = {
+        "port": 3079,
+        "coordinator_hostname": "localhost",
+        "blocksize": 4 * 1024,
+    }
     with open(filename) as stream:
         jobdata = stream.read()
         json_default = json.loads(jobdata)
     if "port" in json_default:
-        settings['port'] = json_default['port']
+        settings["port"] = json_default["port"]
     if "blocksize" in json_default:
-        settings['blocksize'] = json_default["blocksize"]
+        settings["blocksize"] = json_default["blocksize"]
     if "coordinator_hostname" in json_default:
-        settings['coordinator_hostname'] = json_default['coordinator_hostname']
+        settings["coordinator_hostname"] = json_default["coordinator_hostname"]
     return settings
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # instance settings come from django - the coordinator doesn't use django and is
     # not necessarily per-instance, so use the command line and a default conf file.
     pidfile = "/var/run/lava-coordinator.pid"
@@ -73,24 +76,36 @@ if __name__ == '__main__':
     conffile = "/etc/lava-coordinator/lava-coordinator.conf"
     settings = readSettings(conffile)
     usage = "Usage: %prog [--logfile] --[loglevel]"
-    description = "LAVA Coordinator singleton for LAVA (MultiNode support). The singleton " \
-                  "can support multiple instances. If more than one " \
-                  "Coordinator exists on one machine, each must use a unique port " \
-                  "and should probably use a unique log-file. The directory specified for " \
-                  "the logfile must exist or the default will be used instead." \
-                  "Port number and blocksize are handled in %s" % conffile
+    description = (
+        "LAVA Coordinator singleton for LAVA (MultiNode support). The singleton "
+        "can support multiple instances. If more than one "
+        "Coordinator exists on one machine, each must use a unique port "
+        "and should probably use a unique log-file. The directory specified for "
+        "the logfile must exist or the default will be used instead."
+        "Port number and blocksize are handled in %s" % conffile
+    )
     parser = optparse.OptionParser(usage=usage, description=description)
-    parser.add_option("--logfile", dest="logfile", action="store",
-                      type="string", help="log file for the LAVA Coordinator daemon [%s]" % logfile)
-    parser.add_option("--loglevel", dest="loglevel", action="store",
-                      type="string", help="logging level [INFO]")
+    parser.add_option(
+        "--logfile",
+        dest="logfile",
+        action="store",
+        type="string",
+        help="log file for the LAVA Coordinator daemon [%s]" % logfile,
+    )
+    parser.add_option(
+        "--loglevel",
+        dest="loglevel",
+        action="store",
+        type="string",
+        help="logging level [INFO]",
+    )
     (options, args) = parser.parse_args()
     if options.logfile:
         if os.path.exists(os.path.dirname(options.logfile)):
             logfile = options.logfile
         else:
             print("No such directory for specified logfile '%s'" % logfile)
-    open(logfile, 'w').close()
+    open(logfile, "w").close()
     level = logging.INFO
     if options.loglevel == "DEBUG":
         level = logging.DEBUG
@@ -113,13 +128,18 @@ if __name__ == '__main__':
         pidfile=lockfile,
         files_preserve=[watched_file_handler.stream],
         stderr=watched_file_handler.stream,
-        stdout=watched_file_handler.stream)
-    starter = {"coordinator": True,
-               "logging_level": options.loglevel,
-               "host": settings['coordinator_hostname'],
-               "port": settings['port'],
-               "blocksize": settings['blocksize']}
+        stdout=watched_file_handler.stream,
+    )
+    starter = {
+        "coordinator": True,
+        "logging_level": options.loglevel,
+        "host": settings["coordinator_hostname"],
+        "port": settings["port"],
+        "blocksize": settings["blocksize"],
+    }
     with context:
-        logging.info("Running LAVA Coordinator %s %s %d."
-                     % (logfile, settings['coordinator_hostname'], settings['port']))
+        logging.info(
+            "Running LAVA Coordinator %s %s %d."
+            % (logfile, settings["coordinator_hostname"], settings["port"])
+        )
         LavaCoordinator(starter).run()

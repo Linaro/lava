@@ -26,6 +26,7 @@ class MaterializedViewManager(models.Manager):
     Inherits the django Manager class and prevents users from doing view
     create, update and delete calls.
     """
+
     def bulk_create(self, *args, **kwargs):
         raise NotImplementedError
 
