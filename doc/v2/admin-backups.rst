@@ -233,6 +233,23 @@ Restoring a master from a backup
 
 .. warning:: These steps **must** be done in order or data loss is likely,
    at which point the whole restoration process may have to start again.
+   However, each lab will differ and some steps can be achieved using more
+   than one method. The important objectives are:
+
+   * A maintenance window needs to be declared for this instance as
+     soon as possible and needs to remain in place until admins are
+     fully satisfied that the restore has completed successfully.
+
+   * No users (other than the admins directly involved in the restore)
+     should have any access to the LAVA UI of the affected instance. This
+     explicitly includes automated submission services in the rest of your
+     CI system like Jenkins. It is imperative that no new test jobs are
+     submitted during the maintenance window.
+
+   * Admins need to consider the state of the instance as it will be once
+     restored. It is likely that a queue of test jobs will exist within
+     the restored database and the state of various devices in the
+     database will typically need adjustment to set maintenance mode.
 
 #. Disable access to the system while restoring. For example, set up routing to
    prevent a newly installed apache service from responding on the expected IP
@@ -242,6 +259,16 @@ Restoring a master from a backup
    .. caution:: Users must **not** be allowed to access the instance during the
       restore. There must be **no** database accesses outside the explicit
       control of the admin performing the restore.
+
+   Some admins may already have alternative apache configuration which
+   can replace the LAVA interface with a maintenance page whilst still
+   allowing admins to access the LAVA interface, e.g. on a different
+   hostname or IP address, to do some of the steps below. Such
+   arrangements can be very useful but are outside the scope of the
+   LAVA documentation, so command line operations are shown instead.
+   The goal is the same in each case - cancel test jobs already running
+   and in the queue and set all devices to Maintenance. Make sure that
+   the instance is in full maintenance before re-enabling the LAVA UI.
 
 #. If you are restoring multiple machines, start with the master and only start
    to restore workers when the master is fully restored but whilst the master
@@ -259,10 +286,15 @@ Restoring a master from a backup
    was running when the backup was created. This installation will use an
    **empty** database and this is expected.
 
-#. **Stop all LAVA services** - until the database state can be updated, there
-   must be no attempt to reserve devices for jobs in the queue.
+#. **Stop all LAVA services** - the new installation will have
+   automatically started all services using the empty database but
+   until the database state can be updated, there must be no attempt to
+   reserve devices for jobs in the queue or add test jobs to the queue.
 
    * ``service lava-server-gunicorn stop``
+
+     * If your local configuration permits only admins to see the LAVA UI,
+       then this one LAVA service can be left running.
 
    * ``service lava-master stop``
 
@@ -272,37 +304,50 @@ Restoring a master from a backup
 
    * ``service lava-publisher stop``
 
-#.  Make sure that this instance actually works by browsing a few (empty)
-    instance pages.
+#.  Make sure that this instance actually works. On the command line,
+    you can use:
+
+    .. code-block:: none
+
+     $ sudo lava-server manage check --deploy
 
 #. Dump the (emtpy) initial database and restore the database from the backup.
 
    .. seealso:: :ref:`migrating_postgresql_versions` for how to drop the
       initial cluster and replace with the cluster from the backup.
 
-#. In the :ref:`django_admin_interface`, take **all** devices which are not
-   ``Retired`` into ``Offline``. If the backup was taken when any jobs were in
-   ``Running``, all those jobs **must** be set to status ``Cancelled``. If any
-   devices are in ``Reserved`` state, these devices must be set back to
-   ``Idle`` and any ``current job`` for that device must be cleared.
+#. Using the command line, change the ``health`` of **all** devices
+   which are not ``Retired`` to ``Maintenance``.
 
-#. Use the filters available in the admin interface to check that there are
+   Device health can be changed by looping over each device:
 
-   #. **no** TestJobs in status ``Running``.
+   .. code-block:: none
 
-   #. **no** Devices in status ``Reserved`` or ``Running``.
+    $ sudo lava-server manage devices update --health MAINTENANCE --hostname ${HOSTNAME}
 
-   #. **no** Devices in status ``Idle`` with a current job. (Clear the current
-      job)
+   or, with 2018.12 and newer, you can use the updated maintenance
+   helper:
 
-#. Restore the device configuration on the master
+   .. code-block:: none
 
-#. Restore the service configuration on the master. Remember that the apache
-   service must still not be visible to users.
+    $ sudo lava-server manage maintenance --force
+
+   Check the status of all devices. There should be no devices in the
+   following listings:
+
+   .. code-block:: none
+
+    $ sudo lava-server manage devices list --health GOOD
+    $ sudo lava-server manage devices list --health LOOPING
+    $ sudo lava-server manage devices list --health UNKNOWN
+
+#. Restore the device configuration on the master:
+
+   * Any template changes from the packaged defaults
+   * Device dictionaries
+   * Per-dispatcher configuration
 
 #. Start all LAVA services
-
-   * ``service lava-server-gunicorn start``
 
    * ``service lava-master start``
 
@@ -312,6 +357,23 @@ Restoring a master from a backup
 
    * ``service lava-publisher start``
 
+   * ``service lava-server-gunicorn restart``
+
+     * If your local configuration cannot restrict the LAVA UI to only
+       admins, then take note that this will restore visibility to
+       users. **Before** restarting ``lava-server-gunicorn``:
+
+       * Check that the other services are all running correctly
+
+       * Check that the ``health`` for all devices is set to
+         ``MAINTENANCE`` or ``RETIRED``.
+
+       * Fail any running test jobs:
+
+         .. code-block:: none
+
+          $ lava-server manage jobs fail <job_id>
+
 #. Check the logs to ensure that all services are running without errors.
 
 #. If there are any devices on the master, put some of those devices online and
@@ -319,14 +381,17 @@ Restoring a master from a backup
    master and then move to restoring the workers, if that is necessary.
 
 #. Once all workers are restored and all devices are both online and have
-   passed a health check, the holding page can be taken down and the normal
-   access to the instance restored to users.
+   passed a health check, the restoration is complete. If a holding
+   page was used, it can be taken down and the normal access to the
+   instance restored to users.
 
 Restoring a worker from backups
 ###############################
 
-This is a much simpler process than a master (or a V1 worker which is arguably
-more complex to restore than a master).
+This is a much simpler process than a master (or a V1 worker which is
+arguably more complex to restore than a master). Workers should only be
+restored **after** the master has been restored and whilst all devices
+are still in maintenance.
 
 The only critical LAVA element for a worker to be restored from backup is the
 :term:`ZMQ` communication back to the master. This is retained in
