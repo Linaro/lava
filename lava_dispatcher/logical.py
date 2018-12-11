@@ -56,6 +56,7 @@ class RetryAction(Action):
         has_failed = False
         self.call_protocols()
         while retries < self.max_retries:
+            retries += 1
             try:
                 connection = self.internal_pipeline.run_actions(connection, max_end_time)
                 if 'repeat' not in self.parameters:
@@ -68,7 +69,6 @@ class RetryAction(Action):
                 max_end_time += time.time() - self.timeout.start
                 self.timeout.start = time.time()
                 # Print the error message
-                retries += 1
                 msg = "%s failed: %d of %d attempts. '%s'" % (self.name, retries,
                                                               self.max_retries, exc)
                 self.logger.error(msg)
