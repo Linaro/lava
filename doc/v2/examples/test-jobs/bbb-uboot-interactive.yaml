@@ -20,21 +20,21 @@ actions:
     method: bootloader
     bootloader: u-boot
     commands: []
-    prompts: ['=>']
-
+    prompts:
+    - '=>'
 - test:
     timeout:
       minutes: 4
-    scripts:
-    - name: boot-manually
+    interactive:
+    - name: network
       prompts: ["=> ", "/ # "]
       script:
-      - cmd: dhcp
+      - command: dhcp
+        name: dhcp
         patterns:
-        - str: "DHCP client bound to address"
-          res: success
-          name: dhcp
-        - str: "TIMEOUT"
-          res: failure
-          exc: InfrastructureError
-          msg: "dhcp failed"
+        - message: "DHCP client bound to address"
+          result: success
+        - message: "TIMEOUT"
+          result: failure
+          exception: InfrastructureError
+          error: "dhcp failed"
