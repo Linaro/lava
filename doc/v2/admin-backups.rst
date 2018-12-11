@@ -286,6 +286,13 @@ Restoring a master from a backup
    was running when the backup was created. This installation will use an
    **empty** database and this is expected.
 
+#.  Make sure that this instance actually works. On the command line,
+    you can use:
+
+    .. code-block:: none
+
+     $ sudo lava-server manage check --deploy
+
 #. **Stop all LAVA services** - the new installation will have
    automatically started all services using the empty database but
    until the database state can be updated, there must be no attempt to
@@ -303,13 +310,6 @@ Restoring a master from a backup
    * ``service lava-slave stop``
 
    * ``service lava-publisher stop``
-
-#.  Make sure that this instance actually works. On the command line,
-    you can use:
-
-    .. code-block:: none
-
-     $ sudo lava-server manage check --deploy
 
 #. Dump the (emtpy) initial database and restore the database from the backup.
 
@@ -341,11 +341,13 @@ Restoring a master from a backup
     $ sudo lava-server manage devices list --health LOOPING
     $ sudo lava-server manage devices list --health UNKNOWN
 
-#. Restore the device configuration on the master:
+#. Restore the other configuration on the master:
 
    * Any template changes from the packaged defaults
    * Device dictionaries
    * Per-dispatcher configuration
+   * Test job log files from your backup
+   * Other elements, as required.
 
 #. Start all LAVA services
 
