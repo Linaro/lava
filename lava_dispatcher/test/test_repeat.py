@@ -120,3 +120,25 @@ def test_single_repeat(job):
     assert (  # nosec - unit test support.
         "repeat-count" not in job.pipeline.actions[25].parameters
     )
+
+
+class DummyAction(Action):
+    def __init__(self):
+        super().__init__()
+        self.ran = 0
+
+    def run(self, connection, max_end_time):
+        assert connection is None  # nosec - unit test support.
+        assert max_end_time == 1  # nosec - unit test support.
+        self.ran += 1
+
+
+def test_repeat_action(monkeypatch):
+    monkeypatch.setattr(time, "time", lambda: 0)
+    ra = RetryAction()
+    ra.parameters = {"repeat": 5}
+    ra.level = "1"
+    ra.internal_pipeline = Pipeline(parent=ra)
+    ra.internal_pipeline.add_action(DummyAction())
+    ra.run(None, 1)
+    assert ra.internal_pipeline.actions[0].ran == 5  # nosec - unit test support.
