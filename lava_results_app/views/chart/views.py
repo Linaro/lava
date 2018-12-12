@@ -23,7 +23,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group
 from django.core import serializers
 from django.core.exceptions import PermissionDenied
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, loader
@@ -133,7 +133,7 @@ def chart_list(request):
     discrete_data.update(other_chart_table.prepare_discrete_data(other_view))
     terms_data.update(other_chart_table.prepare_terms_data(other_view))
 
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         prefix = "user_"
         view = UserChartView(request, model=Chart, table_class=UserChartTable)
         user_chart_table = UserChartTable(view.get_table_data(prefix), prefix=prefix)

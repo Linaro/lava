@@ -53,8 +53,7 @@ try:
     from rest_framework.routers import APIRootView
 except ImportError:
     from collections import OrderedDict
-    from django.core.urlresolvers import reverse
-    from django.urls import NoReverseMatch
+    from django.urls import NoReverseMatch, reverse
 
     class APIRootView(views.APIView):
         """

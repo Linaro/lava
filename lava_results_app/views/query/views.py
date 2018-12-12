@@ -31,7 +31,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group
 from django.core import serializers
 from django.core.exceptions import PermissionDenied, FieldDoesNotExist, FieldError
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, loader
 from django.template import defaultfilters

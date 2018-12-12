@@ -27,7 +27,7 @@ import socket
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.db import IntegrityError
 
 from lava_scheduler_app import utils

@@ -48,7 +48,7 @@ will result in logged warnings (either a name of the URL being not
 constructible). To fix that simply add the missing keyword argument and reload.
 """
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 import logging
 
 

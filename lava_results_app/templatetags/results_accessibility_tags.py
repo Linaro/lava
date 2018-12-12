@@ -24,7 +24,7 @@ from django import template
 register = template.Library()
 
 
-@register.assignment_tag
+@register.simple_tag
 def is_accessible_by(record, user):
     try:
         return record.is_accessible_by(user)
@@ -41,7 +41,7 @@ def check_chart_access(record, user):
     return access
 
 
-@register.assignment_tag()
+@register.simple_tag
 def get_extra_source(record, data):
     if not data:
         return ""

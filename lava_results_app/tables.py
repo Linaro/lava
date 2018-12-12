@@ -109,7 +109,7 @@ class ResultsTable(LavaTable):
         ).count()
 
         user = table.context.get("request").user
-        if not user.is_anonymous():
+        if not user.is_anonymous:
             return mark_safe(
                 '<a href="#" class="buglink" id="buglink_%s" data-content-type="%s">[%s]</a> (%s)'
                 % (
@@ -222,7 +222,7 @@ class SuiteTable(LavaTable):
         ).count()
 
         user = table.context.get("request").user
-        if not user.is_anonymous():
+        if not user.is_anonymous:
             return mark_safe(
                 '<a href="#" class="buglink" id="buglink_%s" data-content-type="%s">[%s]</a>'
                 % (

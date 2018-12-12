@@ -126,7 +126,7 @@ def anonymous_token(request, job):
 def check_request_auth(request, job):
     if job.is_public:
         return
-    if not request.user.is_authenticated():
+    if not request.user.is_authenticated:
         # handle anonymous access
         auth_user = anonymous_token(request, job)
         if not auth_user or not job.can_view(auth_user):

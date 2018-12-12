@@ -36,7 +36,7 @@ from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.contrib.admin.models import LogEntry
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied, FieldDoesNotExist
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.db import transaction
 from django.template.loader import render_to_string
 from django.http import (
@@ -1242,7 +1242,7 @@ def job_detail(request, pk):
 
     # Is the job favorite?
     is_favorite = False
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         try:
             testjob_user = TestJobUser.objects.get(user=request.user, test_job=job)
             is_favorite = testjob_user.is_favorite
@@ -1855,7 +1855,7 @@ def job_change_priority(request, pk):
 
 def job_toggle_favorite(request, pk):
 
-    if not request.user.is_authenticated():
+    if not request.user.is_authenticated:
         raise PermissionDenied()
 
     job = TestJob.objects.get(pk=pk)
