@@ -100,12 +100,10 @@ class CallDockerAction(Action):
             self.extra_options += " --cpus %s" % options["cpus"]
         if options["memory"]:
             self.extra_options += " --memory %s" % options["memory"]
-        if options["devices"]:
-            for device in options["devices"]:
-                self.extra_options += " --device %s" % device
-        if options["volumes"]:
-            for volume in options["volumes"]:
-                self.extra_options += " --volume %s" % volume
+        for device in options["devices"]:
+            self.extra_options += " --device %s" % device
+        for volume in options["volumes"]:
+            self.extra_options += " --volume %s" % volume
 
     def run(self, connection, max_end_time):
         location = self.get_namespace_data(
