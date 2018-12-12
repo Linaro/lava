@@ -78,7 +78,7 @@ def main():
             print('* %s (ERROR): "%s" not found' % (device_name, exc))
             errors = True
         except jinja2.exceptions.TemplateRuntimeError as exc:
-            print('* %s (ERROR): redering error "%s"' % (device_name, exc))
+            print('* %s (ERROR): rendering error "%s"' % (device_name, exc))
             errors = True
         except jinja2.exceptions.TemplateSyntaxError as exc:
             print(
