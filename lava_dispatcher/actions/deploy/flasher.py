@@ -44,11 +44,13 @@ class FlasherRetryAction(RetryAction):
 
 
 class FlasherAction(DeployAction):
+
+    name = "deploy-flasher"
+    description = "deploy flasher"
+    summary = "deploy custom flasher"
+
     def __init__(self):
         super().__init__()
-        self.name = "deploy-flasher"
-        self.description = "deploy flasher"
-        self.summary = "deploy custom flasher"
         self.commands = []
         self.path = None
 

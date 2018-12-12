@@ -77,11 +77,9 @@ class MpsAction(DeployAction):
     a prompt after reboot.
     """
 
-    def __init__(self):
-        super().__init__()
-        self.name = "mps-deploy"
-        self.description = "deploy image to MPS device"
-        self.summary = "MPS device image deployment"
+    name = "mps-deploy"
+    description = "deploy image to MPS device"
+    summary = "MPS device image deployment"
 
     def validate(self):
         super().validate()
@@ -117,11 +115,12 @@ class DeployMPSTestBinary(Action):
     Copies test binary to MPS device and renames if required
     """
 
+    name = "deploy-mps-test-binary"
+    description = "deploy test binary to usb msd"
+    summary = "copy test binary to MPS device and rename if required"
+
     def __init__(self):
         super().__init__()
-        self.name = "deploy-mps-test-binary"
-        self.description = "deploy test binary to usb msd"
-        self.summary = "copy test binary to MPS device and rename if required"
         self.param_key = "test_binary"
 
     def validate(self):
