@@ -26,8 +26,21 @@ from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
-from lava_dispatcher.logical import Deployment
+from lava_dispatcher.logical import Deployment, RetryAction
 from lava_dispatcher.utils.strings import substitute
+
+
+class FlasherRetryAction(RetryAction):
+
+    name = "deploy-flasher-retry"
+    description = "deploy flasher with retry"
+    summary = "deploy custom flasher"
+
+    def populate(self, parameters):
+        self.internal_pipeline = Pipeline(
+            parent=self, job=self.job, parameters=parameters
+        )
+        self.internal_pipeline.add_action(FlasherAction())
 
 
 class FlasherAction(DeployAction):
@@ -108,7 +121,7 @@ class Flasher(Deployment):
 
     def __init__(self, parent, parameters):
         super().__init__(parent)
-        self.action = FlasherAction()
+        self.action = FlasherRetryAction()
         self.action.section = self.action_type
         self.action.job = self.job
         parent.add_action(self.action, parameters)
