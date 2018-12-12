@@ -54,7 +54,7 @@ MANAGERS = [tuple(v) for v in MANAGERS]
 config = ConfigFile.load("/etc/lava-server/instance.conf")
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "ENGINE": "django.db.backends.postgresql",
         "NAME": getattr(config, "LAVA_DB_NAME", ""),
         "USER": getattr(config, "LAVA_DB_USER", ""),
         "PASSWORD": getattr(config, "LAVA_DB_PASSWORD", ""),

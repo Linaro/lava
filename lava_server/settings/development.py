@@ -53,7 +53,7 @@ os.makedirs(PROJECT_STATE_DIR, exist_ok=True)
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "ENGINE": "django.db.backends.postgresql",
         "NAME": "devel",
         "USER": "devel",
         "PASSWORD": "devel",
