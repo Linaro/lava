@@ -256,8 +256,8 @@ class MultinodeOverlayAction(OverlayAction):
             "%s/../../lava_test_shell/multi_node" % os.path.dirname(__file__)
         )
         self.lava_multi_node_cache_file = (
-            "/tmp/lava_multi_node_cache.txt"
-        )  # nosec - on the DUT
+            "/tmp/lava_multi_node_cache.txt"  # nosec - on the DUT
+        )
         self.role = None
         self.protocol = MultinodeProtocol.name
 

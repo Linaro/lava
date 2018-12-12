@@ -209,13 +209,13 @@ class TestMetaTypes(TestCaseWithFactory):
         self.assertIsNotNone(ret)
         ret.save()
         self.assertEqual(TestCase.objects.filter(name="unit-test").count(), 1)
-        test_data = yaml.load(
+        test_data = yaml.load(  # nosec - unit test
             TestCase.objects.filter(name="unit-test")[0].metadata, Loader=yaml.CLoader
         )
         self.assertEqual(test_data["extra"], meta_filename)
         self.assertTrue(os.path.exists(meta_filename))
         with open(test_data["extra"], "r") as extra_file:
-            data = yaml.load(extra_file, Loader=yaml.CLoader)
+            data = yaml.load(extra_file, Loader=yaml.CLoader)  # nosec - unit test
         self.assertIsNotNone(data)
         os.unlink(meta_filename)
         shutil.rmtree(job.output_dir)

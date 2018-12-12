@@ -302,9 +302,9 @@ class ApplyOverlayTftp(Action):
             # not be removed if umount fails.
             directory = mkdtemp(autoremove=False)
             try:
-                subprocess.check_output(
+                subprocess.check_output(  # nosec - internal.
                     ["mount", "-t", "nfs", nfs_address, directory]
-                )  # nosec - internal.
+                )
             except subprocess.CalledProcessError as exc:
                 raise JobError(exc)
         elif self.parameters.get("ramdisk") is not None:
@@ -680,9 +680,9 @@ class CompressRamdisk(Action):
             )
             cmd = "find . | cpio --create --format='newc' > %s" % ramdisk_data
             try:
-                log = subprocess.check_output(
+                log = subprocess.check_output(  # nosec - safe to use shell=True here, no external arguments
                     cmd, shell=True, stderr=subprocess.STDOUT
-                )  # nosec - safe to use shell=True here, no external arguments
+                )
                 log = log.decode("utf-8", errors="replace")
             except OSError as exc:
                 raise InfrastructureError("Unable to create cpio filesystem: %s" % exc)

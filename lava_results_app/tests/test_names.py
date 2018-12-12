@@ -46,7 +46,7 @@ class ModelFactory:
     def make_job_data(self, actions=None, **kw):
         sample_job_file = os.path.join(os.path.dirname(__file__), "qemu.yaml")
         with open(sample_job_file, "r") as test_support:
-            data = yaml.load(test_support)
+            data = yaml.load(test_support)  # nosec - unit test
         data.update(kw)
         return data
 
