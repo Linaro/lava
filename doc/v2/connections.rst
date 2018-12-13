@@ -133,7 +133,7 @@ blocks:
      :language: yaml
      :linenos:
      :lines: 31-90
-     :emphasize-lines: 3, 15, 36, 42, 54
+     :emphasize-lines: 3, 14, 31, 40, 52
 
 
 Download or view the complete example:
@@ -459,7 +459,7 @@ test this way. Note the explicit namespace ``bbb`` defined in the
      :language: yaml
      :linenos:
      :lines: 23-53
-     :emphasize-lines: 2,24,28-29
+     :emphasize-lines: 2,21,25-26
 
 A ``boot`` action would typically include an ``auto_login`` section,
 but in this test we're not going to be doing any testing using the
@@ -481,7 +481,7 @@ for testing, we now run ``auto_login`` here.
      :language: yaml
      :linenos:
      :lines: 55-69
-     :emphasize-lines: 5-7
+     :emphasize-lines: 2-3
 
 .. _multiple_serial_ports_example1_test_connection:
 
@@ -506,8 +506,8 @@ Finally, we start our tests.
 .. literalinclude:: examples/test-jobs/bbb-2serial.yaml
      :language: yaml
      :linenos:
-     :lines: 71-79
-     :emphasize-lines: 3,5
+     :lines: 70-79
+     :emphasize-lines: 1,3
 
 Download or view the complete example:
 `examples/test-jobs/bbb-2serial.yaml
@@ -572,7 +572,7 @@ command from the device configuration.
      :language: yaml
      :linenos:
      :lines: 27-44
-     :emphasize-lines: 3, 12
+     :emphasize-lines: 3, 11
 
 .. seealso:: :ref:`boot_connection_namespace` and :ref:`namespaces_with_lxc`
 
@@ -593,7 +593,7 @@ a connection command specified in the device configuration).
      :language: yaml
      :linenos:
      :lines: 46-87
-     :emphasize-lines: 2, 28
+     :emphasize-lines: 2, 27
 
 .. _multiple_serial_ports_example2_boot_connection:
 
@@ -613,7 +613,7 @@ boot actions of the device.
      :language: yaml
      :linenos:
      :lines: 89-103
-     :emphasize-lines: 5
+     :emphasize-lines: 4
 
 .. _multiple_serial_ports_example2_test_connection:
 
@@ -646,7 +646,7 @@ This is where it all comes together.
      :language: yaml
      :linenos:
      :lines: 105-113
-     :emphasize-lines: 3-4
+     :emphasize-lines: 1-2
 
 Download or view the complete example:
 `examples/test-jobs/multiple-serial-ports-lxc.yaml
