@@ -48,6 +48,18 @@ def test_pipeline():
     assert description_ref == job.pipeline.describe(False)  # nosec
 
 
+def test_bbb():
+    factory = InteractiveFactory()
+    job = factory.create_interactive_job(
+        "bbb-01.jinja2", "../../doc/v2/examples/test-jobs/bbb-uboot-interactive.yaml"
+    )
+    job.validate()
+    description_ref = StdoutTestCase.pipeline_reference(
+        "bbb-uboot-interactive.yaml", job=job
+    )
+    assert description_ref == job.pipeline.describe(False)  # nosec
+
+
 def test_stages(monkeypatch):
     monkeypatch.setattr(subprocess, "check_output", lambda cmd: b"")
     monkeypatch.setattr(

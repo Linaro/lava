@@ -420,15 +420,15 @@ class BootloaderCommandOverlay(Action):
         if self.method is None:
             self.method = self.parameters["method"]
         device_methods = self.job.device["actions"]["boot"]["methods"]
-        if isinstance(self.parameters["commands"], list):
+        if self.parameters["method"] == "bootloader":
+            self.commands = self.parameters["commands"]
+        elif isinstance(self.parameters["commands"], list):
             self.commands = self.parameters["commands"]
             self.logger.warning(
                 "WARNING: Using boot commands supplied in the job definition, NOT the LAVA device configuration"
             )
         else:
-            if self.method not in device_methods:
-                self.errors = "%s boot method not found" % self.method
-            elif "commands" not in self.parameters:
+            if "commands" not in self.parameters:
                 self.errors = "missing commands"
             elif self.parameters["commands"] not in device_methods[self.method]:
                 self.errors = "Command not found in supported methods"
