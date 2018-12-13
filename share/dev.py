@@ -129,8 +129,8 @@ def main():
     options = parser.parse_args()
 
     # Check that we are running this script on a debian machine
-    out = subprocess.check_output(
-        ["lsb_release", "--id"], stderr=subprocess.STDOUT  # nosec - internal
+    out = subprocess.check_output(  # nosec - internal
+        ["lsb_release", "--id"], stderr=subprocess.STDOUT
     ).decode("utf-8")
     if out != "Distributor ID:\tDebian\n":
         print("Not running on a Debian system")

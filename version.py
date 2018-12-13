@@ -58,8 +58,8 @@ def version_tag():
             return "%s.%04d.g%s" % (d["tag"], int(d["commits"]), d["hash"])
     if os.path.exists("debian/changelog"):
         return (
-            subprocess.check_output(
-                ("dpkg-parsechangelog", "--show-field", "Version")  # nosec - internal
+            subprocess.check_output(  # nosec - internal
+                ("dpkg-parsechangelog", "--show-field", "Version")
             )
             .strip()
             .decode("utf-8")

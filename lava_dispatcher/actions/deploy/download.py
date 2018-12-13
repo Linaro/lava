@@ -323,10 +323,8 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         if compression and decompress_command:
             try:
                 with open(fname, "wb") as dwnld_file:
-                    proc = subprocess.Popen(
-                        [decompress_command],  # nosec - internal.
-                        stdin=subprocess.PIPE,
-                        stdout=dwnld_file,
+                    proc = subprocess.Popen(  # nosec - internal.
+                        [decompress_command], stdin=subprocess.PIPE, stdout=dwnld_file
                     )
             except OSError as exc:
                 msg = "Unable to open %s: %s" % (fname, exc.strerror)
@@ -613,16 +611,8 @@ class ScpDownloadAction(DownloadHandler):
     def validate(self):
         super().validate()
         try:
-            size = subprocess.check_output(
-                [
-                    "nice",
-                    "ssh",  # nosec - internal.
-                    self.url.netloc,
-                    "stat",
-                    "-c",
-                    "%s",
-                    self.url.path,
-                ],
+            size = subprocess.check_output(  # nosec - internal.
+                ["nice", "ssh", self.url.netloc, "stat", "-c", "%s", self.url.path],
                 stderr=subprocess.STDOUT,
             )
             self.size = int(size)
@@ -730,17 +720,8 @@ class QCowConversionAction(Action):
 
         self.logger.debug("Converting downloaded image from qcow2 to raw")
         try:
-            subprocess.check_output(
-                [
-                    "qemu-img",
-                    "convert",  # nosec - checked.
-                    "-f",
-                    "qcow2",
-                    "-O",
-                    "raw",
-                    origin,
-                    fname,
-                ],
+            subprocess.check_output(  # nosec - checked.
+                ["qemu-img", "convert", "-f", "qcow2", "-O", "raw", origin, fname],
                 stderr=subprocess.STDOUT,
             )
         except subprocess.CalledProcessError as exc:

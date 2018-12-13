@@ -35,13 +35,8 @@ def debian_package_arch(pkg):
         changelog = "/usr/share/doc/%s/changelog.gz" % pkg
     if os.path.exists(changelog):
         deb_arch = (
-            subprocess.check_output(
-                (  # nosec dpkg-query
-                    "dpkg-query",
-                    "-W",
-                    "-f=${Architecture}\n",
-                    "%s" % pkg,
-                )
+            subprocess.check_output(  # nosec dpkg-query
+                ("dpkg-query", "-W", "-f=${Architecture}\n", "%s" % pkg)
             )
             .strip()
             .decode("utf-8", errors="replace")
@@ -62,8 +57,8 @@ def debian_package_version(pkg, split):
         changelog = "/usr/share/doc/%s/changelog.gz" % pkg
     if os.path.exists(changelog):
         deb_version = (
-            subprocess.check_output(
-                ("dpkg-query", "-W", "-f=${Version}\n", "%s" % pkg)  # nosec dpkg-query
+            subprocess.check_output(  # nosec dpkg-query
+                ("dpkg-query", "-W", "-f=${Version}\n", "%s" % pkg)
             )
             .strip()
             .decode("utf-8", errors="replace")

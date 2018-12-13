@@ -65,16 +65,14 @@ class TestRestApi:
         self.user_no_token = User.objects.create(username="user2")
         self.user_no_token.set_password(self.user_no_token_pwd)
         self.user_no_token.save()
-        admintoken = AuthToken.objects.create(
+        admintoken = AuthToken.objects.create(  # nosec - unit test support
             user=self.admin, secret="adminkey"
-        )  # nosec - unit test support
-        self.usertoken = AuthToken.objects.create(
+        )
+        self.usertoken = AuthToken.objects.create(  # nosec - unit test support
             user=self.user, secret="userkey"
-        )  # nosec - unit test support
+        )
         # create second token to check whether authentication still works
-        AuthToken.objects.create(
-            user=self.user, secret="userkey2"
-        )  # nosec - unit test support
+        AuthToken.objects.create(user=self.user, secret="userkey2")  # nosec - unittest
 
         self.userclient = APIClient()
         self.userclient.credentials(HTTP_AUTHORIZATION="Token " + self.usertoken.secret)

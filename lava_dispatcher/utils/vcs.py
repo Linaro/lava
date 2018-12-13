@@ -53,35 +53,23 @@ class BzrHelper(VCSHelper):
                 logger.debug(
                     "Running '%s branch -r %s %s'", self.binary, str(revision), self.url
                 )
-                subprocess.check_output(
-                    [
-                        self.binary,
-                        "branch",
-                        "-r",  # nosec - internal use.
-                        str(revision),
-                        self.url,
-                        dest_path,
-                    ],
+                subprocess.check_output(  # nosec - internal use.
+                    [self.binary, "branch", "-r", str(revision), self.url, dest_path],
                     stderr=subprocess.STDOUT,
                     env=env,
                 )
                 commit_id = revision
             else:
                 logger.debug("Running '%s branch %s'", self.binary, self.url)
-                subprocess.check_output(
-                    [
-                        self.binary,
-                        "branch",
-                        self.url,  # nosec - internal use.
-                        dest_path,
-                    ],
+                subprocess.check_output(  # nosec - internal use.
+                    [self.binary, "branch", self.url, dest_path],
                     stderr=subprocess.STDOUT,
                     env=env,
                 )
                 os.chdir(dest_path)
                 commit_id = (
-                    subprocess.check_output(
-                        ["bzr", "revno"], env=env  # nosec - internal use.
+                    subprocess.check_output(  # nosec - internal use.
+                        ["bzr", "revno"], env=env
                     )
                     .strip()
                     .decode("utf-8", errors="replace")
@@ -137,32 +125,19 @@ class GitHelper(VCSHelper):
                 cmd_args.append("--depth=1")
 
             logger.debug("Running '%s'", " ".join(cmd_args))
-            subprocess.check_output(
+            subprocess.check_output(  # nosec - internal use.
                 cmd_args, stderr=subprocess.STDOUT
-            )  # nosec - internal use.
+            )
 
             if revision is not None:
                 logger.debug("Running '%s checkout %s", self.binary, str(revision))
-                subprocess.check_output(
-                    [
-                        self.binary,
-                        "-C",
-                        dest_path,  # nosec - internal use.
-                        "checkout",
-                        str(revision),
-                    ],
+                subprocess.check_output(  # nosec - internal use.
+                    [self.binary, "-C", dest_path, "checkout", str(revision)],
                     stderr=subprocess.STDOUT,
                 )
 
-            commit_id = subprocess.check_output(
-                [
-                    self.binary,
-                    "-C",
-                    dest_path,  # nosec - internal use.
-                    "log",
-                    "-1",
-                    "--pretty=%H",
-                ],
+            commit_id = subprocess.check_output(  # nosec - internal use.
+                [self.binary, "-C", dest_path, "log", "-1", "--pretty=%H"],
                 stderr=subprocess.STDOUT,
             ).strip()
 

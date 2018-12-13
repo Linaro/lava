@@ -68,11 +68,11 @@ def rpcinfo_nfs(server, version=3):
     :return: None if success, message if fail
     """
     with open(os.devnull, "w") as devnull:
-        proc = subprocess.Popen(
+        proc = subprocess.Popen(  # nosec - internal use.
             ["/usr/sbin/rpcinfo", "-u", server, "nfs", "%s" % version],
             stdout=devnull,
             stderr=subprocess.PIPE,
-        )  # nosec - internal use.
+        )
         msg = proc.communicate()
         if msg[1]:
             return "%s %s" % (server, msg[1])

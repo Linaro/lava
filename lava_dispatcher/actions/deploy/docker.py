@@ -42,14 +42,14 @@ class DockerAction(DeployAction):
 
         # Print docker version
         try:
-            out = subprocess.check_output(
+            out = subprocess.check_output(  # nosec - internal
                 ["docker", "version", "-f", "{{.Server.Version}}"]
-            )  # nosec - internal
+            )
             out = out.decode("utf-8", errors="replace").strip("\n")
             self.logger.debug("docker server, installed at version: %s", out)
-            out = subprocess.check_output(
+            out = subprocess.check_output(  # nosec - internal
                 ["docker", "version", "-f", "{{.Client.Version}}"]
-            )  # nosec - internal
+            )
             out = out.decode("utf-8", errors="replace").strip("\n")
             self.logger.debug("docker client, installed at version: %s", out)
         except subprocess.CalledProcessError as exc:

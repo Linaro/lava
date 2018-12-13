@@ -127,9 +127,9 @@ def main():
 
     lxc_cmd = ["lxc-device", "-n", lxc_name, "add", device]
     try:
-        output = subprocess.check_output(
+        output = subprocess.check_output(  # nosec - internal
             lxc_cmd, stderr=subprocess.STDOUT
-        )  # nosec - internal
+        )
         output = output.decode("utf-8", errors="replace")
         logger.debug(output)
         logger.info("[%s] device %s added", uniq_str, device)

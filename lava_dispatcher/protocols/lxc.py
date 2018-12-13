@@ -146,8 +146,8 @@ class LxcProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
     def _call_handler(self, command):
         try:
             self.logger.debug("%s protocol: executing '%s'", self.name, command)
-            output = subprocess.check_output(
-                command.split(" "), stderr=subprocess.STDOUT  # nosec - internal
+            output = subprocess.check_output(  # nosec - internal
+                command.split(" "), stderr=subprocess.STDOUT
             )
             if output:
                 self.logger.debug(output)
