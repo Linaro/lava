@@ -31,6 +31,7 @@ import re
 import yaml
 
 from django import forms
+from django.conf import settings
 from django.contrib.humanize.templatetags.humanize import naturaltime
 
 from django.contrib.admin.models import LogEntry
@@ -1294,22 +1295,23 @@ def job_detail(request, pk):
                 # Go back to the start and load the file
                 f_in.seek(0, 0)
                 log_data = yaml.load(f_in, Loader=yaml.CLoader)
-
-        # list all related results
-        for line in log_data:
-            if line["lvl"] == "results":
-                case_id = TestCase.objects.filter(
-                    suite__job=job,
-                    suite__name=line["msg"].get("definition"),
-                    name=line["msg"].get("case"),
-                ).values_list("id", flat=True)
-                if case_id:
-                    line["msg"]["case_id"] = case_id[0]
-
     except OSError:
         log_data = []
     except yaml.YAMLError:
         log_data = None
+
+    if log_data:
+        test_case_count = TestCase.objects.filter(suite__job=job).count()
+        if test_case_count <= settings.TESTCASE_COUNT_LIMIT:
+            results = {
+                (t.suite.name, t.name): t.id
+                for t in TestCase.objects.filter(suite__job=job).select_related("suite")
+            }
+            # list all related results
+            for line in [line for line in log_data if line["msg"] == "results"]:
+                key = (line["msg"].get("definition"), line["msg"].get("case"))
+                if key in results:
+                    line["msg"]["case_id"] = results[key]
 
     # Get lava.job result if available
     lava_job_result = None

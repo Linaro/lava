@@ -510,3 +510,16 @@ limit, in MiB. For example::
 will limit the maximum display size to 10 MiB. To find the right size
 for your needs, check on the sizes of the ``output.yaml`` log files on
 your lava-master server.
+
+Some test jobs are generating a lot of test cases. For such test jobs,
+rendering the log page could be really slow while the server query the database
+for every test case ids.
+In order to improve the page rendering speed, if more than
+``TESTCASE_COUNT_LIMIT`` (10000 by default) test cases exists for a job, the
+server will not query the test case table. The logs will still be visible, but
+without the links to the result pages.
+
+You can change the default value by editing
+``/etc/lava-server/settings.conf``::
+
+  "TESTCASE_COUNT_LIMIT": 1000,

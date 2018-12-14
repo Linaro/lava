@@ -128,7 +128,11 @@ MEDIA_ROOT = "/var/lib/lava-server/default/media/"
 ARCHIVE_ROOT = "/var/lib/lava-server/default/archive/"
 
 # LOG_SIZE_LIMIT in megabytes
-LOG_SIZE_LIMIT = 25
+LOG_SIZE_LIMIT = 5
+
+# When rendering the logs, above this limit, the testcase urls won't be
+# resolved.
+TESTCASE_COUNT_LIMIT = 10000
 
 # Default URL after login
 LOGIN_REDIRECT_URL = "/"
