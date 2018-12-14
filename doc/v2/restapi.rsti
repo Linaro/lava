@@ -86,7 +86,7 @@ Full REST API
 =============
 
 .. _`django-rest-framework`:
-   http://www.django-rest-framework.org
+   https://www.django-rest-framework.org
 
 Full REST API is available with /api URL. The API is based on
 `django-rest-framework`_. All of the docs from django-rest-framework apply.
@@ -121,7 +121,7 @@ The results are also available in JUnit or TAP13 format at:
  - tap13 (/api/v0.1/jobs/<job_id>/tap13/)
 
 Objects in all endpoints can be sorted as described
-in django-rest-framework docs: http://www.django-rest-framework.org/api-guide/filtering/
+in django-rest-framework docs: https://www.django-rest-framework.org/api-guide/filtering/
 Filtering and searching is currently disabled.
 
 Examples specific to LAVA objects:

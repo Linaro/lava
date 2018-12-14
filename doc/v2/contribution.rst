@@ -78,7 +78,7 @@ Other elements involved in LAVA development
 
 * The Django backend used with LAVA is PostgreSQL_ and some
   `postgres-specific support
-  <http://www.postgresql.org/docs/9.5/static/rules-materializedviews.html>`_
+  <https://www.postgresql.org/docs/9.5/static/rules-materializedviews.html>`_
   is used.
 
 * The LAVA UI includes Javascript_ and CSS_.
@@ -102,18 +102,18 @@ devices and debug test jobs.
 
 .. _Python: http://www.python.org/
 .. _Django: https://www.djangoproject.com/
-.. _YAML: http://yaml.org/
+.. _YAML: https://yaml.org/
 .. _RST: http://sphinx-doc.org/rest.html
 .. _Jinja2: http://jinja.pocoo.org/docs/dev/
-.. _git: http://www.git-scm.org/
-.. _PostgreSQL: http://www.postgresql.org/
+.. _git: https://www.git-scm.org/
+.. _PostgreSQL: https://www.postgresql.org/
 .. _Debian: https://www.debian.org/
 .. _Javascript: https://www.javascript.com/
 .. _CSS: https://www.w3.org/Style/CSS/Overview.en.html
 .. _GuestFS: http://libguestfs.org/
 .. _ZMQ: http://zeromq.org/
 .. _XML-RPC: http://xmlrpc.scripting.com/
-.. _ADB: http://developer.android.com/tools/help/adb.html
+.. _ADB: https://developer.android.com/studio/command-line/adb
 .. _QEMU: http://wiki.qemu.org/Main_Page
 .. _Grub: https://www.gnu.org/software/grub/
 .. _U-Boot: http://www.denx.de/wiki/U-Boot

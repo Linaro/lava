@@ -216,7 +216,7 @@ Hacking Session timeouts
 ========================
 
 .. note:: This behaviour changed after a session at
-   `Connect HKG15 <http://www.slideshare.net/linaroorg/hkg15402-orphan-hacking-sessions>`_
+   `Connect HKG15 <https://www.slideshare.net/linaroorg/hkg15402-orphan-hacking-sessions>`_
 
 All hacking sessions will **time out after 1 hour** if a login has not been
 detected. If an ``IRC_USER`` is specified, another IRC private messages will be

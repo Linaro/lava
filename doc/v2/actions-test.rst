@@ -203,7 +203,7 @@ the same definition:
 Inline test definition example
 ==============================
 
-https://git.lavasoftware.org/lava/lava/blob/master/lava_dispatcher/test/sample_jobs/kvm-inline.yaml
+https://git.lavasoftware.org/lava/lava/blob/master/lava_dispatcher/tests/sample_jobs/kvm-inline.yaml
 
 .. code-block:: yaml
 
