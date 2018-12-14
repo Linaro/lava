@@ -109,5 +109,5 @@ then
     PYTHONPATH=. pytest-3 --cache-clear --ds lava_server.settings.development -v \
         lava_scheduler_app/tests lava_results_app/tests linaro_django_xmlrpc/tests.py lava_rest_app/tests.py
     PYTHONPATH=. pytest-3 --cache-clear -v lava_dispatcher/tests
-    PYTHONPATH=. pytest-3 --cache-clear -v lava_common/test
+    PYTHONPATH=. pytest-3 --cache-clear -v lava_common/tests
 fi
