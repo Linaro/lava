@@ -24,6 +24,7 @@ Views for the Results application
 Keep to just the response rendering functions
 """
 
+import contextlib
 import os
 import csv
 import logging
@@ -133,43 +134,9 @@ def testjob(request, job):
     suite_table = TestJobResultsTable(data.get_table_data().filter(job=job))
     failed_definitions = []
     yaml_dict = OrderedDict()
-    if TestData.objects.filter(testjob=job).exists():
+    with contextlib.suppress(TestData.DoesNotExist):
         # some duplicates can exist, so get would fail here and [0] is quicker than try except.
-        testdata = TestData.objects.filter(testjob=job).prefetch_related(
-            "actionlevels__testcase", "actionlevels__testcase__suite"
-        )[0]
-        if job.state == TestJob.STATE_FINISHED:
-            # returns something like ['singlenode-advanced', 'smoke-tests-basic', 'smoke-tests-basic']
-            executed = [
-                {
-                    case.action_metadata[
-                        "test_definition_start"
-                    ]: case.action_metadata.get("success", "")
-                }
-                for case in TestCase.objects.filter(
-                    suite__in=TestSuite.objects.filter(job=job)
-                )
-                if case.action_metadata
-                and "test_definition_start" in case.action_metadata
-                and case.suite.name == "lava"
-            ]
-
-            submitted = [
-                actiondata.testcase.action_metadata
-                for actiondata in testdata.actionlevels.all()
-                if actiondata.testcase
-                and "test-runscript-overlay" in actiondata.action_name
-            ]
-            # compare with a dict similar to created in executed
-            for item in submitted:
-                if executed and {item["name"]: item["success"]} not in executed:
-                    comparison = {}
-                    if item["from"] != "inline":
-                        comparison["repository"] = item["repository"]
-                    comparison["path"] = item["path"]
-                    comparison["name"] = item["name"]
-                    comparison["uuid"] = item["success"]
-                    failed_definitions.append(comparison)
+        testdata = TestData.objects.filter(testjob=job)[0]
 
         # hide internal python objects, like OrderedDict
         for data in testdata.attributes.all().order_by("name"):
@@ -187,7 +154,6 @@ def testjob(request, job):
                 "job_link": pklink(job),
                 "suite_table": suite_table,
                 "metadata": yaml_dict,
-                "failed_definitions": failed_definitions,
                 "condition_choices": simplejson.dumps(
                     QueryCondition.get_condition_choices(job)
                 ),

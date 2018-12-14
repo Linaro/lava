@@ -6,30 +6,11 @@
 
 {% block content %}
     <h2>LAVA Results for {{ job_link }}
-    {% if not failed_definitions %}
       <span
           class="label {% if job.health == job.HEALTH_COMPLETE %}label-success{% else %}label-warning{% endif %}"
           {% if job.health == job.HEALTH_COMPLETE %}title="All submitted definitions have started execution."{% endif %}>{{ job.get_state_display }}
       </span>
-    {% endif %}
     </h2>
-
-    {% if failed_definitions %}
-        <div class="alert alert-warning alert-dismissable">
-        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-        <p><b>Warning</b>: some submitted test definitions did not start execution.</p>
-        <ul>
-            {% for item in failed_definitions %}
-            <li><dl class="dl-horizontal">
-                {% for key, value in item.items %}
-                    <dt>{{ key }}</dt>
-                    <dd>{{ value }}</dd>
-                {% endfor %}
-            </dl></li>
-            {% endfor %}
-        </ul>
-        </div>
-    {% endif %}
 
 <div class="row">
   <div class="col-md-4">
