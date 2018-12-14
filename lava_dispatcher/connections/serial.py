@@ -65,6 +65,8 @@ class ConnectDevice(Action):
     def validate(self):
         super().validate()
         matched = False
+        if "serial" not in self.job.device["actions"]["boot"]["connections"]:
+            self.errors = "Device not configured to support serial connection."
         if "commands" not in self.job.device:
             self.errors = "Invalid device configuration - missing 'commands'"
             return

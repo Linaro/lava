@@ -130,6 +130,8 @@ class ConnectSsh(Action):
         super().validate()
         params = self._check_params()
         which("ssh")
+        if "serial" not in self.job.device["actions"]["boot"]["connections"]:
+            self.errors = "Device not configured to support serial connection."
         if "host" in self.job.device["actions"]["deploy"]["methods"]["ssh"]:
             self.primary = True
             self.host = self.job.device["actions"]["deploy"]["methods"]["ssh"]["host"]

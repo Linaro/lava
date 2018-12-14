@@ -42,10 +42,14 @@ actions:
 {{- fastboot_deploy_uboot }}
 {{- fastboot_interrupt_params }}
     connections:
+      adb:
+      fastboot:
       lxc:
       serial:
   boot:
     connections:
+      adb:
+      fastboot:
       lxc:
       serial:
       adb:

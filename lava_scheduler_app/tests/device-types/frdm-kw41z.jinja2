@@ -7,12 +7,15 @@ usb_product_id: '0204'
 
 actions:
   deploy:
+    connections:
+      lxc:
     methods:
       image:
         parameters:
 
   boot:
     connections:
+      lxc:
       serial:
       ssh:
     methods:

@@ -117,6 +117,7 @@ actions:
       use_xip: {{ use_xip|default(false) }}
     connections:
       lxc:
+      fastboot:
       serial:
     methods:
 {% if uboot_ums_flash %}
@@ -147,6 +148,7 @@ actions:
   boot:
     connections:
       lxc:
+      fastboot:
       serial:
     methods:
       minimal:

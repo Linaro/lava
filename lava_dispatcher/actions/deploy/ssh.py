@@ -83,6 +83,8 @@ class ScpOverlay(DeployAction):
         if not self.test_has_shell(self.parameters):
             self.errors = "Scp overlay needs a test action."
             return
+        if "serial" not in self.job.device["actions"]["deploy"]["connections"]:
+            self.errors = "Device not configured to support serial connection."
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(

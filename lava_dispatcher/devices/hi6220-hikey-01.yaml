@@ -101,10 +101,13 @@ actions:
         interrupt_prompt: 'Android Fastboot mode'
         interrupt_string: ' '
     connections:
+      fastboot:
       lxc:
       serial:
   boot:
     connections:
+      adb:
+      fastboot:
       lxc:
       serial:
     methods:

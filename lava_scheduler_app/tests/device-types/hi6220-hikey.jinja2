@@ -25,10 +25,12 @@ actions:
         user: {{ ssh_user|default('root') }}
         identity_file: {{ ssh_identity_file }}
     connections:
+      fastboot:
       lxc:
       serial:
   boot:
     connections:
+      fastboot:
       lxc:
       serial:
     methods:

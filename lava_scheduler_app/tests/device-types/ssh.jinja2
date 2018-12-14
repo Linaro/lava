@@ -3,6 +3,8 @@
 
 actions:
   deploy:
+    connections:
+      serial:
     methods:
       ssh:
         options:
@@ -15,7 +17,7 @@ actions:
 
   boot:
     connections:
-      ssh:
+      serial:
     methods:
 # can be removed by defining this block empty in the device config
 {% block schroot %}
