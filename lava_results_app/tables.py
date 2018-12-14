@@ -90,9 +90,12 @@ class ResultsTable(LavaTable):
     def render_logged(self, record, table=None):
         if not self._check_job(record, table):
             return ""
-        if not TestCase.objects.filter(suite__job=record.job, suite=record):
+        try:
+            return TestCase.objects.filter(suite__job=record.job, suite=record)[
+                0
+            ].logged
+        except TestCase.DoesNotExist:
             return record.job.start_time
-        return TestCase.objects.filter(suite__job=record.job, suite=record)[0].logged
 
     def render_buglinks(self, record, table=None):
 
