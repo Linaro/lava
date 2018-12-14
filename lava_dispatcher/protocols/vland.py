@@ -19,11 +19,13 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 
+import os
 import copy
 import time
 import json
 import socket
 import logging
+import subprocess  # nosec - vland
 from lava_dispatcher.connection import Protocol
 from lava_common.exceptions import JobError, TestError
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
@@ -413,6 +415,15 @@ class VlandProtocol(Protocol):
             self.logger.info("[%s] Job will deploy requested VLANs.", self.name)
         else:
             self.logger.info("[%s] Job will wait for VLANs to be deployed.", self.name)
+        vland = "/usr/sbin/vland-admin"
+        if os.path.exists(vland):
+            # allow the unit tests to run
+            vers = (
+                subprocess.check_output([vland, "vland_version"])  # nosec vland
+                .strip()
+                .decode("utf-8", errors="replace")
+            )
+            self.logger.info("[%s] Job will use vland version: %s", self.name, vers)
         self.logger.debug("[%s] parameters: %s", self.name, self.params)
         super().configure(device, job)
         return True
@@ -454,6 +465,7 @@ class VlandProtocol(Protocol):
                 )
                 if not tag:  # error state from create_vlan
                     raise JobError("Unable to create vlan %s" % friendly_name)
+                # FIXME: _declare_created may return False but this is not checked.
                 self._declare_created(friendly_name, tag)
         for friendly_name, _ in self.names.items():
             params = self.params[friendly_name]
@@ -478,7 +490,7 @@ class VlandProtocol(Protocol):
             self.logger.exception(msg)
             raise JobError(msg)
 
-    def _api_select(self, data):
+    def _api_select(self, data, action=None):
         if not data:
             raise TestError("Protocol called without any data")
         if "request" not in data:
@@ -487,7 +499,6 @@ class VlandProtocol(Protocol):
             self.deploy_vlans()
         else:
             raise JobError("Unrecognised API call in request.")
-        return None
 
     def check_timeout(self, duration, data):
         if not data:
