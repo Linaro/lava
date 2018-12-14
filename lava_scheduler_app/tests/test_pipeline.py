@@ -95,7 +95,7 @@ class YamlFactory(ModelFactory):
 
     def make_job_data(self, actions=None, **kw):
         sample_job_file = os.path.join(
-            os.path.dirname(__file__), "devices", "qemu.yaml"
+            os.path.dirname(__file__), "sample_jobs", "qemu.yaml"
         )
         with open(sample_job_file, "r") as test_support:
             data = yaml.safe_load(test_support)

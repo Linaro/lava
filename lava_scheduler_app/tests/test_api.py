@@ -114,7 +114,7 @@ class TestSchedulerAPI(TestCaseWithFactory):  # pylint: disable=too-many-ancesto
 class TestVoluptuous(unittest.TestCase):
     def test_submission_schema(self):
         files = []
-        path = os.path.normpath(os.path.dirname(__file__))
+        path = os.path.join(os.path.normpath(os.path.dirname(__file__)), "sample_jobs")
         for name in os.listdir(path):
             if name.endswith(".yaml"):
                 files.append(name)

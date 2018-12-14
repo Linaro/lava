@@ -341,7 +341,7 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
         os.write(fdesc, yaml.dump(template_dict).encode())
         panda = NewDevice(device_yaml)
         lxc_yaml = os.path.join(
-            os.path.dirname(__file__), "devices", "panda-lxc-aep.yaml"
+            os.path.dirname(__file__), "sample_jobs", "panda-lxc-aep.yaml"
         )
         with open(lxc_yaml) as sample_job_data:
             parser = JobParser()

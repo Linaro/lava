@@ -23,6 +23,7 @@ protocols:
         count: 2
         # each ssh connection will attempt to connect to the device of role 'host'
         host_role: host
+        expect_role: host
     timeout:
       seconds: 60
 

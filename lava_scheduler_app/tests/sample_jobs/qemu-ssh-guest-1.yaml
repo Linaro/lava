@@ -28,6 +28,7 @@ protocols:
   lava-multinode:
     group_size: 3
     role: guest
+    expect_role: host
     target_group: replaced
     timeout: {seconds: 60}
 timeouts:
