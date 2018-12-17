@@ -142,27 +142,14 @@ class RestrictedDeviceColumn(tables.Column):
 
 
 def all_jobs_with_custom_sort():
-    jobs = (
-        TestJob.objects.select_related(
-            "actual_device",
-            "actual_device__user",
-            "actual_device__group",
-            "actual_device__device_type",
-            "requested_device_type",
-            "submitter",
-            "user",
-            "group",
-        )
-        .extra(
-            select={
-                "device_sort": "coalesce("
-                "actual_device_id, "
-                "requested_device_type_id)",
-                "duration_sort": "date_trunc('second', end_time - start_time)",
-            }
-        )
-        .all()
-    )
+    jobs = TestJob.objects.select_related(
+        "actual_device",
+        "actual_device__user",
+        "actual_device__group",
+        "submitter",
+        "user",
+        "group",
+    ).all()
     return jobs.order_by("-submit_time")
 
 
@@ -238,8 +225,11 @@ class JobTable(LavaTable):
         template_name="lava_scheduler_app/job_actions_field.html"
     )
     actions.orderable = False
-    device = tables.Column(accessor="device_sort")
-    duration = tables.Column(accessor="duration_sort")
+    device = tables.Column(accessor="actual_device", verbose_name="Device")
+    device_type = tables.Column(
+        accessor="requested_device_type", verbose_name="Device type"
+    )
+    duration = tables.Column()
     duration.orderable = False
     submit_time = tables.DateColumn(format="Nd, g:ia")
     end_time = tables.DateColumn(format="Nd, g:ia")
@@ -271,19 +261,23 @@ class JobTable(LavaTable):
                 % record.get_state_display()
             )
 
+    def render_device_type(self, record):
+        if record.requested_device_type:
+            return pklink(record.requested_device_type)
+        return record
+
     def render_device(self, record):
         if record.actual_device:
-            device_type = record.actual_device.device_type
             retval = pklink(record.actual_device)
-        elif record.requested_device_type:
-            device_type = record.requested_device_type
-            retval = mark_safe(  # nosec - internal data
-                "<i>%s</i>" % escape(record.requested_device_type.pk)
-            )
         elif record.dynamic_connection:
             return "connection"
         else:
             return "-"
+        device_type = None
+        if record.requested_device_type:
+            device_type = record.requested_device_type
+        if not device_type:
+            return "Error"
         if not device_type.some_devices_visible_to(self.context.get("request").user):
             return "Unavailable"
         return retval
@@ -322,6 +316,7 @@ class JobTable(LavaTable):
             "state",
             "health",
             "device",
+            "device_type",
             "description",
             "submitter",
             "submit_time",
@@ -333,6 +328,7 @@ class JobTable(LavaTable):
             "actions",
             "state",
             "device",
+            "device_type",
             "description",
             "submitter",
             "submit_time",
@@ -360,13 +356,34 @@ class IndexJobTable(JobTable):
         template_name="lava_scheduler_app/job_actions_field.html"
     )
     actions.orderable = False
-    device = tables.Column(accessor="device_sort")
     submit_time = tables.DateColumn("Nd, g:ia")
     end_time = tables.DateColumn("Nd, g:ia")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.length = 25
+
+    def render_health(self, record):
+        if record.health == Device.HEALTH_GOOD:
+            return mark_safe(  # nosec - internal data
+                '<strong class="text-success">Good</strong>'
+            )
+        elif record.health in [Device.HEALTH_UNKNOWN, Device.HEALTH_LOOPING]:
+            return mark_safe(  # nosec - internal data
+                '<span class="text-info">%s</span>' % record.get_health_display()
+            )
+        elif record.health == Device.HEALTH_BAD:
+            return mark_safe(  # nosec - internal data
+                '<span class="text-danger">Bad</span>'
+            )
+        elif record.health == Device.HEALTH_MAINTENANCE:
+            return mark_safe(  # nosec - internal data
+                '<span class="text-warning">Maintenance</span>'
+            )
+        else:
+            return mark_safe(  # nosec - internal data
+                '<span class="text-muted">Retired</span>'
+            )
 
     class Meta(
         JobTable.Meta
@@ -378,6 +395,8 @@ class IndexJobTable(JobTable):
             "health",
             "priority",
             "device",
+            "device_type",
+            "health",
             "description",
             "submitter",
             "submit_time",
@@ -388,6 +407,8 @@ class IndexJobTable(JobTable):
             "state",
             "priority",
             "device",
+            "device_type",
+            "health",
             "description",
             "submitter",
             "submit_time",
@@ -424,8 +445,8 @@ class FailedJobTable(JobTable):
         template_name="lava_scheduler_app/job_actions_field.html"
     )
     actions.orderable = False
-    device = tables.Column(accessor="device_sort")
-    duration = tables.Column(accessor="duration_sort")
+    device = tables.Column(accessor="actual_device")
+    duration = tables.Column()
     duration.orderable = False
     failure_tags = TagsColumn()
     failure_comment = tables.Column(empty_values=())
@@ -515,8 +536,8 @@ class OverviewJobsTable(JobTable):
         template_name="lava_scheduler_app/job_actions_field.html"
     )
     actions.orderable = False
-    device = tables.Column(accessor="device_sort")
-    duration = tables.Column(accessor="duration_sort")
+    device = tables.Column(accessor="actual_device", verbose_name="Device")
+    duration = tables.Column()
     duration.orderable = False
     submit_time = tables.DateColumn("Nd, g:ia")
     end_time = tables.DateColumn("Nd, g:ia")
@@ -538,7 +559,8 @@ class OverviewJobsTable(JobTable):
             "end_time",
             "duration",
         )
-        sequence = ("id", "actions")
+        sequence = ("id", "actions", "device")
+        exclude = ("device_type",)
 
 
 class RecentJobsTable(JobTable):
@@ -549,8 +571,7 @@ class RecentJobsTable(JobTable):
         template_name="lava_scheduler_app/job_actions_field.html"
     )
     actions.orderable = False
-    device = tables.Column(accessor="device_sort")
-    duration = tables.Column(accessor="duration_sort")
+    duration = tables.Column()
     duration.orderable = False
     submit_time = tables.DateColumn("Nd, g:ia")
     end_time = tables.DateColumn("Nd, g:ia")
@@ -581,7 +602,7 @@ class RecentJobsTable(JobTable):
             "end_time",
             "duration",
         )
-        exclude = ("device",)
+        exclude = ("actual_device", "requested_device_type")
 
 
 class DeviceHealthTable(LavaTable):
@@ -966,7 +987,15 @@ class QueueJobsTable(JobTable):
             "submit_time",
             "in_queue",
         )
-        exclude = ("state", "health", "priority", "end_time", "duration")
+        exclude = (
+            "state",
+            "health",
+            "priority",
+            "end_time",
+            "duration",
+            "device_type",
+            "device",
+        )
 
 
 class PassingHealthTable(DeviceHealthTable):

@@ -1089,13 +1089,6 @@ class LongestJobsView(JobTableView):
             TestJob.objects.select_related(
                 "actual_device", "requested_device_type", "group"
             )
-            .extra(
-                select={
-                    "device_sort": "coalesce(actual_device_id, "
-                    "requested_device_type_id)",
-                    "duration_sort": "end_time - start_time",
-                }
-            )
             .all()
             .filter(state__in=[TestJob.STATE_RUNNING, TestJob.STATE_CANCELING])
         )
