@@ -1,0 +1,14 @@
+{% extends 'imx8m-common.jinja2' %}
+{% set root_device = root_device | default('/dev/ttymxc1') %}
+{% set baud_rate = baud_rate|default('115200') %}
+{% set kernel_args = kernel_args | default("earlycon=ec_imx6q,0x30890000") %}
+{% set console_device = console_device|default('ttymcx1') %}
+{% set booti_kernel_addr = booti_kernel_addr | default('0x40480000') %}
+{% set booti_ramdisk_addr = booti_ramdisk_addr | default('0x44000000') %}
+{% set booti_dtb_addr = booti_dtb_addr | default('0x43000000') %}
+{% set bootz_kernel_addr = booti_kernel_addr %}
+{% set bootz_ramdisk_addr = booti_ramdisk_addr %}
+{% set bootz_dtb_addr = booti_dtb_addr %}
+{% set bootm_kernel_addr = bootz_kernel_addr %}
+{% set bootm_ramdisk_addr = bootz_ramdisk_addr %}
+{% set bootm_dtb_addr = bootz_dtb_addr %}
