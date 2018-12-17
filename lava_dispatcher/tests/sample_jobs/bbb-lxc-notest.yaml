@@ -60,7 +60,6 @@ actions:
 
 - boot:
     namespace: probe
-    connection: lxc
     prompts:
     - 'root@(.*):/#'
     timeout:
@@ -69,7 +68,6 @@ actions:
 
 - boot:
     namespace: testdevice
-    connection: serial
     method: u-boot
     commands: ramdisk
     prompts:
@@ -81,7 +79,6 @@ actions:
 
 - test:
     namespace: testdevice
-    connection: serial
     timeout:
       minutes: 5
     definitions:

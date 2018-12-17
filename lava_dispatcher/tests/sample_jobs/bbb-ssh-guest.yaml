@@ -1,6 +1,5 @@
 actions:
 - deploy:
-    connection: ssh
     os: debian
     protocols:
       lava-multinode:

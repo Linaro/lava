@@ -43,7 +43,6 @@ actions:
 
   - test:
       failure_retry: 3
-      name: download-kexec-files
       definitions:
           - repository:
               metadata:

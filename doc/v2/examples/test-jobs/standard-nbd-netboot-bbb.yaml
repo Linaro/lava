@@ -29,7 +29,6 @@ actions:
       url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/vmlinuz
     initrd:
       url: http://fix.me/initramfs-netboot-image-raspberrypi3.ext4.gz.u-boot
-      allow_modify: false
     nbdroot:
       url: http://fix.me/rootfs.ext4.xz
       compression: xz

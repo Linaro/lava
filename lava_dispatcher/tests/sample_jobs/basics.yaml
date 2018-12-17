@@ -8,7 +8,6 @@ timeouts:
     hours: 8             # timeout for the whole job (default: ??h)
   action:
    minutes: 30         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
-logging_level: DEBUG
 priority: medium
 visibility: public
 
@@ -161,7 +160,6 @@ actions:
     #- in_parallel:
     #    # a list of other commands that will run in parallel
     #    - sequence:
-    #        - connection: serial2
     #        - test:
     #            commands:
     #                - ls -l
@@ -172,7 +170,6 @@ actions:
     #            commands:
     #                - something else
     #    - sequence:
-    #        - connection: ssh
     #        - sync: foobar # will wait for the sync in the sequence above
     #        - test:
     #            commands:

@@ -36,7 +36,6 @@ actions:
     initrd:
       url: https://files.lavasoftware.org/components/lava/standard/debian/stretch/armhf/3/initramfs.cpio.gz
       # url: https://download.automotivelinux.org/AGL/snapshots/master/latest/intel-corei7-64/deploy/images/intel-corei7-64/initramfs-netboot-image-intel-corei7-64.ext4.gz
-      allow_modify: false
     nbdroot:
       url: https://files.lavasoftware.org/components/lava/standard/debian/stretch/armhf/3/stretch-armhf-nfs.tar.gz
       # url: https://download.automotivelinux.org/AGL/snapshots/master/latest/intel-corei7-64/deploy/images/intel-corei7-64/agl-demo-platform-crosssdk-intel-corei7-64.ext4.xz

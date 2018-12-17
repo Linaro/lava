@@ -47,7 +47,6 @@ actions:
 
 - test:
      failure_retry: 3
-     name: kvm-basic-singlenode
      timeout:
        minutes: 5 # uses install:deps, so takes longer than singlenode01
      definitions:

@@ -54,7 +54,6 @@ actions:
       minutes: 20
     to: fastboot
     namespace: hikey-oe
-    connection: lxc
     images:
       ptable:
         url: http://images.validation.linaro.org/builds.96boards.org/snapshots/reference-platform/components/uefi-staging/23/hikey960/release/prm_ptable.img

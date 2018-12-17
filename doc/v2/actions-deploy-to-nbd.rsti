@@ -118,7 +118,7 @@ nbdroot
 
 .. include:: examples/test-jobs/standard-nbd-netboot-bbb.yaml
      :code: yaml
-     :start-after: allow_modify: false
+     :start-after: url: http://fix.me/initramfs-netboot-image-raspberrypi3.ext4.gz.u-boot
      :end-before:       compression: xz
 
 .. _deploy_to_nbd_nbdroot_url:
