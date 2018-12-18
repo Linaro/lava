@@ -841,8 +841,14 @@ class Device(RestrictedResource):
             "constants": data["constants"],
             "timeouts": data["timeouts"],
             "actions": {
-                "deploy": {"methods": data["actions"]["deploy"]["methods"]},
-                "boot": {"methods": data["actions"]["boot"]["methods"]},
+                "deploy": {
+                    "connections": data["actions"]["deploy"]["connections"],
+                    "methods": data["actions"]["deploy"]["methods"],
+                },
+                "boot": {
+                    "connections": data["actions"]["boot"]["connections"],
+                    "methods": data["actions"]["boot"]["methods"],
+                },
             },
         }
         return device_configuration
