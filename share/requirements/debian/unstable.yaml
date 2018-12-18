@@ -139,6 +139,9 @@ lava-dispatcher:
   lxc-info:
     name: lxc
     unittests: true
+  lxc-templates:
+    name: lxc-templates
+    unittests: true
   img2simg:
     name: img2simg
     unittests: true
