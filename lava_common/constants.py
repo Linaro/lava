@@ -108,15 +108,6 @@ LOGIN_TIMED_OUT_MSG = "Login timed out"
 INSTALLER_IMAGE_MAX_SIZE = 8 * 1024  # 8Gb
 INSTALLER_QUIET_MSG = "Loading initial ramdisk"
 
-# V1 compatibility
-DEFAULT_V1_PATTERN = "(?P<test_case_id>.*-*)\\s+:\\s+(?P<result>(PASS|pass|FAIL|fail|SKIP|skip|UNKNOWN|unknown))"
-DEFAULT_V1_FIXUP = {
-    "PASS": "pass",
-    "FAIL": "fail",
-    "SKIP": "skip",
-    "UNKNOWN": "unknown",
-}
-
 # List of DD output prompts for notifying completion of secondary deployment
 DD_PROMPTS = [r"[0-9]+\+[0-9]+ records out", r"[0-9]+ bytes \(.*\) copied"]
 

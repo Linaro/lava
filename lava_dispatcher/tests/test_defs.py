@@ -95,24 +95,10 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
             testdef.run_levels, {"smoke-tests": 0, "singlenode-advanced": 0}
         )
         if not testdef.valid:
-            # python3 compatible
-            print(testdef.errors)  # pylint: disable=superfluous-parens
+            print(testdef.errors)
         self.assertTrue(testdef.valid)
         for repo_action in testdef.internal_pipeline.actions:
             if isinstance(repo_action, GitRepoAction):
-                self.assertEqual(
-                    repo_action.default_pattern,
-                    "(?P<test_case_id>.*-*)\\s+:\\s+(?P<result>(PASS|pass|FAIL|fail|SKIP|skip|UNKNOWN|unknown))",
-                )
-                self.assertEqual(
-                    repo_action.default_fixupdict,
-                    {
-                        "PASS": "pass",
-                        "FAIL": "fail",
-                        "SKIP": "skip",
-                        "UNKNOWN": "unknown",
-                    },
-                )
                 self.assertTrue(hasattr(repo_action, "accepts"))
                 self.assertTrue(hasattr(repo_action, "priority"))
             elif isinstance(repo_action, TestOverlayAction):

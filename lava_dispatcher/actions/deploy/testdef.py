@@ -33,12 +33,7 @@ from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.test import TestAction
 from lava_dispatcher.utils.strings import indices
 from lava_dispatcher.utils.vcs import BzrHelper, GitHelper
-from lava_common.constants import (
-    DEFAULT_V1_FIXUP,
-    DEFAULT_V1_PATTERN,
-    DEFAULT_TESTDEF_NAME_CLASS,
-    DISPATCHER_DOWNLOAD_DIR,
-)
+from lava_common.constants import DEFAULT_TESTDEF_NAME_CLASS, DISPATCHER_DOWNLOAD_DIR
 
 
 @nottest
@@ -92,8 +87,6 @@ class RepoAction(Action):
         super().__init__()
         self.vcs = None
         self.runner = None
-        self.default_pattern = DEFAULT_V1_PATTERN
-        self.default_fixupdict = DEFAULT_V1_FIXUP
         self.uuid = None
 
     @classmethod
@@ -234,10 +227,9 @@ class RepoAction(Action):
         if "parse" in testdef:
             pattern = testdef["parse"].get("pattern", "")
             fixup = testdef["parse"].get("fixupdict", "")
+            ret = {"testdef_pattern": {"pattern": pattern, "fixupdict": fixup}}
         else:
-            pattern = self.default_pattern
-            fixup = self.default_fixupdict
-        ret = {"testdef_pattern": {"pattern": pattern, "fixupdict": fixup}}
+            ret = None
         self.set_namespace_data(
             action="test", label=self.uuid, key="testdef_pattern", value=ret
         )

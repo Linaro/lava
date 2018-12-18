@@ -31,7 +31,6 @@ from lava_dispatcher.actions.test import TestAction
 from lava_dispatcher.action import Pipeline
 from lava_dispatcher.logical import LavaTest, RetryAction
 from lava_dispatcher.connection import SignalMatch
-from lava_common.constants import DEFAULT_V1_PATTERN, DEFAULT_V1_FIXUP
 
 # pylint: disable=too-many-branches,too-many-statements,too-many-instance-attributes,logging-not-lazy
 
@@ -104,8 +103,8 @@ class PatternFixup:
         RepoAction to be running.
         """
         super().__init__()
-        self.pat = DEFAULT_V1_PATTERN
-        self.fixup = DEFAULT_V1_FIXUP
+        self.pat = None
+        self.fixup = None
         if isinstance(testdef, dict) and "metadata" in testdef:
             self.testdef = testdef
             self.name = "%d_%s" % (count, testdef["metadata"].get("name"))
@@ -384,6 +383,9 @@ class TestShellAction(TestAction):
                 pattern_dict = self.get_namespace_data(
                     action="test", label=uuid_list[key], key="testdef_pattern"
                 )
+                if not pattern_dict:
+                    self.logger.info("Skipping test definition patterns.")
+                    continue
                 pattern = pattern_dict["testdef_pattern"]["pattern"]
                 fixup = pattern_dict["testdef_pattern"]["fixupdict"]
                 self.patterns.update({"test_case_result": re.compile(pattern, re.M)})
@@ -571,7 +573,7 @@ class TestShellAction(TestAction):
     def pattern_test_case_result(self, test_connection):
         res = test_connection.match.groupdict()
         fixupdict = self.pattern.fixupdict()
-        if res["result"] in fixupdict:
+        if fixupdict and res["result"] in fixupdict:
             res["result"] = fixupdict[res["result"]]
         if res:
             # disallow whitespace in test_case_id
