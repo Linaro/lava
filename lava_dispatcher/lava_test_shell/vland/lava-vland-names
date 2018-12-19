@@ -6,4 +6,4 @@
 #
 # Usage: ``lava-vland-names``
 
-echo -e ${LAVA_VLAND_NAMES}
+echo ${LAVA_VLAND_NAMES}

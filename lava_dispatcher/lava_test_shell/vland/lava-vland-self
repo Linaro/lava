@@ -6,4 +6,4 @@
 #
 # Usage: ``lava-vland-self``
 
-echo -e ${LAVA_VLAND_SELF}
+echo ${LAVA_VLAND_SELF}

@@ -6,4 +6,4 @@
 #
 # Usage: ``lava-vland-tags``
 
-echo -e ${LAVA_VLAND_TAGS}
+echo ${LAVA_VLAND_TAGS}
