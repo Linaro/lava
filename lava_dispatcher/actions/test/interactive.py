@@ -19,9 +19,15 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 from nose.tools import nottest
+import pexpect
 import time
 
-from lava_common.exceptions import InfrastructureError, JobError, TestError
+from lava_common.exceptions import (
+    InfrastructureError,
+    JobError,
+    LAVATimeoutError,
+    TestError,
+)
 from lava_dispatcher.action import Pipeline
 from lava_dispatcher.actions.test import TestAction
 from lava_dispatcher.logical import LavaTest, RetryAction
@@ -83,12 +89,10 @@ class TestInteractiveRetry(RetryAction):
 
 @nottest
 class TestInteractiveAction(TestAction):
+
     name = "lava-test-interactive"
     description = "Executing lava-test-interactive"
     summary = "Lava Test Interactive"
-
-    def __init__(self):
-        super().__init__()
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
@@ -149,31 +153,43 @@ class TestInteractiveAction(TestAction):
                     self.logger.info("Sending '%s'", command)
                     test_connection.sendline(command, delay=self.character_delay)
 
-                expect = prompts + [p["message"] for p in cmd.get("patterns", [])]
+                failures = [p["message"] for p in cmd.get("failures", [])]
+                successes = [p["message"] for p in cmd.get("successes", [])]
+                expect = prompts + failures + successes
                 self.logger.debug("Waiting for '%s'", "', '".join(expect))
                 ret = test_connection.expect(expect, timeout=self.timeout.duration)
 
+                match = expect[ret]
                 # Is this a prompt?
-                if ret < len(prompts):
-                    self.logger.debug("Matched a prompt: '%s'", prompts[ret])
-                    result["result"] = "pass"
+                if match in prompts:
+                    # If we match a prompt while successes are defined, that's an error
+                    if successes:
+                        self.logger.error(
+                            "Matched a prompt (was expecting a success): '%s'", match
+                        )
+                    else:
+                        self.logger.debug("Matched a prompt: '%s'", match)
+                        result["result"] = "pass"
                 else:
-                    pattern = cmd["patterns"][ret - len(prompts)]
-                    if pattern["result"] == "failure":
-                        self.logger.error("Matched a failure: '%s'", expect[ret])
-                        if "exception" in pattern:
+                    if match in failures:
+                        failure = cmd["failures"][ret - len(prompts)]
+                        self.logger.error("Matched a failure: '%s'", match)
+                        if "exception" in failure:
                             self.raise_exception(
-                                pattern["exception"], pattern.get("error", expect[ret])
+                                failure["exception"], failure.get("error", match)
                             )
-                    elif pattern["result"] == "success":
-                        self.logger.info("Matched a success: '%s'", expect[ret])
+                    else:
+                        failure = cmd["successes"][ret - len(prompts) - len(failures)]
+                        self.logger.info("Matched a success: '%s'", match)
                         # Wait for the prompt to send the next command
                         # Except for the last loop iteration
                         if index + 1 < len(cmds):
                             test_connection.expect(prompts)
                         result["result"] = "pass"
-                    else:
-                        raise JobError("Unknown result '%s'" % pattern["result"])
+            except pexpect.TIMEOUT:
+                raise LAVATimeoutError("interactive connection timed out")
+            except pexpect.EOF:
+                raise InfrastructureError("interactive connection dropped")
             finally:
                 if "name" in cmd:
                     result["duration"] = "%.02f" % (time.time() - start)

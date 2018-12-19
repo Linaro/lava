@@ -194,7 +194,9 @@ def _interactive_def_schema():
     return Schema(
         [
             {
-                Required("name"): str,
+                Required("name"): Match(
+                    r"^[a-zA-Z0-9-_]+$", msg=INVALID_CHARACTER_ERROR_MSG
+                ),
                 Required("prompts"): list,
                 Required("script"): _interactive_script_schema(),
             }
@@ -210,18 +212,16 @@ def _interactive_script_schema():
                     r"^[a-zA-Z0-9-_]+$", msg=INVALID_CHARACTER_ERROR_MSG
                 ),
                 Required("command"): Any(None, str),
-                Optional("patterns"): Schema(
-                    [
-                        {
-                            Required("message"): str,
-                            Required("result"): Any("success", "failure"),
-                            Optional("exception"): Any(
-                                "InfrastructureError", "JobError", "TestError"
-                            ),
-                            Optional("error"): str,
-                        }
-                    ]
-                ),
+                Optional("failures"): [
+                    {
+                        Required("message"): str,
+                        Optional("exception"): Any(
+                            "InfrastructureError", "JobError", "TestError"
+                        ),
+                        Optional("error"): str,
+                    }
+                ],
+                Optional("successes"): [{Required("message"): str}],
             }
         ]
     )

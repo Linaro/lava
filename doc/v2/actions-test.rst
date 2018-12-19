@@ -351,11 +351,10 @@ A u-boot interactive test might look like:
    script:
    - name: dhcp
      command: dhcp
-     patterns:
+     successes:
      - message: "DHCP client bound to address"
-       result: success
+     failures:
      - message: "TIMEOUT"
-       result: failure
        exception: InfrastructureError
        error: "dhcp failed"
    - name: setenv
@@ -367,16 +366,20 @@ A script is a list of commands to send:
 
 * ``command``: the command to type in the shell
 * ``name``: if present, log the result of this command under the given name
-* ``patterns``: if present, check the logs for the given patterns
+* ``failures`` and ``successes``: if present, check the logs for the given patterns
 
-``patterns`` should be a list of dictionaries with:
+``successes`` should be a list of dictionaries with only one key:
 
 * ``message``: the string (or regexp) to match
-* ``result``: the result of the command if this message was found (**success** or **failure**)
 
-If the message indicates a fatal problem, an exception can be raised:
+.. note:: if LAVA matches one of the prompt and ``successes`` is defined, an
+  error will be recorded. If ``successes`` is not defined, then matching a prompt
+  will generate a passing result.
 
-* ``exception``: the exception to raise:
+``failures`` should be a list of dictionaries with:
+
+* ``message``: the string (or regexp) to match
+* ``exception``: If the message indicates a fatal problem, an exception can be raised:
 
   * :ref:`InfrastructureError <infrastructure_error_exception>`
   * :ref:`JobError <job_error_exception>`

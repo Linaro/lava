@@ -23,11 +23,10 @@ actions:
       - command:
       - command: dhcp
         name: dhcp
-        patterns:
+        successes:
         - message: "DHCP client bound to address"
-          result: success
+        failures:
         - message: "TIMEOUT"
-          result: failure
           exception: InfrastructureError
           error: "dhcp failed"
     - name: boot-manually
@@ -40,6 +39,5 @@ actions:
       - command: "tftp {DTB_ADDR} {DTB}"
       - command: "{BOOTX}"
         name: bootx
-        patterns:
+        successes:
         - message: "Starting kernel"
-          result: success

@@ -185,6 +185,18 @@ def test_run_script(monkeypatch):
                     "duration": "1.00",
                 },
             ),
+            ("info", "Sending 'dig lavasoftware.org'"),
+            ("debug", "Waiting for '=> ', '/ # ', '192.168.0.1'"),
+            ("error", "Matched a prompt (was expecting a success): '=> '"),
+            (
+                "results",
+                {
+                    "definition": "0_setup",
+                    "case": "network.dig",
+                    "result": "fail",
+                    "duration": "1.00",
+                },
+            ),
             ("info", "Sending 'ping -c 1 lavasoftware.org'"),
             ("debug", "Waiting for '=> ', '/ # ', 'Name or service not known'"),
             ("error", "Matched a failure: 'Name or service not known'"),
@@ -214,6 +226,8 @@ def test_run_script(monkeypatch):
             ["=> ", "/ # ", "Host lavasoftware.org not found: 3(NXDOMAIN)", "TIMEOUT"],
             2,
         ),
+        ("sendline", "dig lavasoftware.org"),
+        ("expect", ["=> ", "/ # ", "192.168.0.1"], 0),
         ("sendline", "ping -c 1 lavasoftware.org"),
         ("expect", ["=> ", "/ # ", "Name or service not known"], 2),
     ]
@@ -226,28 +240,27 @@ def test_run_script(monkeypatch):
             {
                 "command": "dhcp",
                 "name": "network.dhcp",
-                "patterns": [
-                    {"message": "DHCP client bound to address", "result": "success"}
-                ],
+                "successes": [{"message": "DHCP client bound to address"}],
             },
             {
                 "command": "host {HOST}",
                 "name": "network.host",
-                "patterns": [
-                    {
-                        "message": "Host lavasoftware.org not found: 3(NXDOMAIN)",
-                        "result": "failure",
-                    },
-                    {"message": "TIMEOUT", "result": "failure"},
+                "failures": [
+                    {"message": "Host lavasoftware.org not found: 3(NXDOMAIN)"},
+                    {"message": "TIMEOUT"},
                 ],
+            },
+            {
+                "command": "dig {HOST}",
+                "name": "network.dig",
+                "successes": [{"message": "192.168.0.1"}],
             },
             {
                 "command": "ping -c 1 {HOST}",
                 "name": "network.ping",
-                "patterns": [
+                "failures": [
                     {
                         "message": "Name or service not known",
-                        "result": "failure",
                         "exception": "InfrastructureError",
                         "error": "network setup failed",
                     }
