@@ -27,11 +27,9 @@ from lava_common.schemas import boot
 
 def schema(live=False):
     base = {
-        Required("method"): Msg("qemu", "'method' should be 'qemu'"),
-        Optional("connection"): "serial",  # FIXME: is this needed or required?
-        Optional("media"): "tmpfs",
+        Required("method"): Msg("qemu-iso", "'method' should be 'qemu-iso'"),
+        Required("media"): "img",
         Optional("prompts"): boot.prompts(),
-        Optional("transfer_overlay"): boot.transfer_overlay(),
         Optional(
             "auto_login"
         ): boot.auto_login(),  # TODO: if auto_login => prompt is required

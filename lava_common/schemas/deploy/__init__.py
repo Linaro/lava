@@ -36,7 +36,7 @@ def url():
 
 
 def schema(live=False):
-    base = {**action(live), Optional("os"): str}
+    base = {**action(live), Optional("os"): str, Optional("authorize"): "ssh"}
 
     if not live:
         return base

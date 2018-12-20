@@ -20,7 +20,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from voluptuous import Msg, Optional, Required
+from voluptuous import Msg, Required
 
 from lava_common.schemas import boot
 

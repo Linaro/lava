@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2018 Linaro Limited
+# Copyright (C) 2019 Linaro Limited
 #
 # Author: Rémi Duraffort <remi.duraffort@linaro.org>
 #
@@ -20,20 +20,24 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from voluptuous import Msg, Optional, Required
+from voluptuous import Any, Optional, Required
 
-from lava_common.schemas import boot
+from lava_common.schemas import deploy
 
 
 def schema(live=False):
-    base = {
-        Required("method"): Msg("qemu", "'method' should be 'qemu'"),
-        Optional("connection"): "serial",  # FIXME: is this needed or required?
-        Optional("media"): "tmpfs",
-        Optional("prompts"): boot.prompts(),
-        Optional("transfer_overlay"): boot.transfer_overlay(),
-        Optional(
-            "auto_login"
-        ): boot.auto_login(),  # TODO: if auto_login => prompt is required
-    }
-    return {**boot.schema(live), **base}
+    return Any(
+        {
+            Required("to"): "nfs",
+            Optional("nfsrootfs"): deploy.url(),
+            Optional("modules"): deploy.url(),
+            **deploy.schema(live),
+        },
+        {
+            Required("to"): "nfs",
+            Required("images"): {
+                Required(str, "'images' is empty"): {**deploy.url(), "image_arg": str}
+            },
+            **deploy.schema(live),
+        },
+    )

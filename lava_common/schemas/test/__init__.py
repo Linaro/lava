@@ -20,18 +20,13 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from voluptuous import Optional, Range, Required
+from voluptuous import Range, Required
 
 from lava_common.schemas import action
 
 
 def schema(live=False):
-    base = {
-        **action(live),
-        Optional("repeat"): Range(min=1),  # TODO: where to put it?
-        Optional("failure_retry"): Range(min=1),  # TODO: where to put it?
-    }
     if not live:
-        return base
+        return action(live)
 
-    return {**base, Required("stage"): Range(min=0)}
+    return {**action(live), Required("stage"): Range(min=0)}

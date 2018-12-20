@@ -20,17 +20,22 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from voluptuous import Any, Optional, Range, Required
+from voluptuous import Any, Exclusive, Optional, Required
 
 from lava_common.schemas import deploy
 
 # TODO: one of download or writer should be defined
+# TODO: one of images or image should be defined
 
 
 def schema(live=False):
     base = {
         Required("to"): Any("sata", "sd", "usb"),
-        Required("images"): {Required(str): deploy.url()},
+        Exclusive("images", "image"): {
+            Required("image"): deploy.url(),
+            Optional(str): deploy.url(),
+        },
+        Exclusive("image", "image"): deploy.url(),
         Required("device"): str,
         Optional("download"): {
             Required("tool"): str,
@@ -43,5 +48,6 @@ def schema(live=False):
             Required("prompt"): str,
         },
         Optional("uniquify"): bool,
+        **deploy.schema(live),
     }
     return {**deploy.schema(live), **base}

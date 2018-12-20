@@ -20,7 +20,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from voluptuous import Exclusive, Optional, Required
+from voluptuous import Any, Optional, Required
 
 from lava_common.schemas import deploy
 
@@ -32,7 +32,7 @@ def schema(live=False):
         Required("to"): "nbd",
         Required("kernel", msg="needs a kernel to deploy"): {
             **resource,
-            Optional("type"): str,  # TODO: check 'type'
+            Optional("type"): Any("image", "uimage", "zimage"),
         },
         Required("nbdroot"): resource,
         Required("initrd"): resource,

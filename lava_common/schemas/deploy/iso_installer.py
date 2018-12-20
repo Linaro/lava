@@ -20,20 +20,25 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from voluptuous import Msg, Optional, Required
+from voluptuous import Any, Match, Optional, Range, Required
 
-from lava_common.schemas import boot
+from lava_common.schemas import deploy
 
 
 def schema(live=False):
     base = {
-        Required("method"): Msg("qemu", "'method' should be 'qemu'"),
-        Optional("connection"): "serial",  # FIXME: is this needed or required?
-        Optional("media"): "tmpfs",
-        Optional("prompts"): boot.prompts(),
-        Optional("transfer_overlay"): boot.transfer_overlay(),
-        Optional(
-            "auto_login"
-        ): boot.auto_login(),  # TODO: if auto_login => prompt is required
+        Required("to"): "iso-installer",
+        Required("images"): {
+            Required("iso"): {
+                **deploy.url(),
+                Optional("image_arg"): str,  # TODO: is this optional?
+            },
+            Required("preseed"): deploy.url(),
+        },
+        Required("iso"): {
+            Required("installation_size"): str,
+            Optional("kernel"): str,
+            Optional("initrd"): str,
+        },
     }
-    return {**boot.schema(live), **base}
+    return {**deploy.schema(live), **base}

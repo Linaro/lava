@@ -20,7 +20,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from voluptuous import Any, Match, Optional, Required
+from voluptuous import Any, Optional, Required
 
 from lava_common.schemas import test
 
@@ -42,16 +42,18 @@ def schema(live=False):
                     Required("repository"): str,
                     Required("from"): Any("git", "bzr"),
                     Optional("branch"): str,
+                    Optional("lava-signal"): Any("kmsg", "stdout"),
+                    Optional("history"): bool,
                     Optional("revision"): str,
-                    Optional("parameters"): {str: str},
-                    Optional("params"): {str: str},
+                    Optional("parameters"): {str: Any(str, None)},
+                    Optional("params"): {str: Any(str, None)},
                     **common,
                 },
                 {
                     Required("repository"): {
                         Required("metadata"): dict,  # TODO: what's required?
                         Optional("install"): dict,  # TODO: check
-                        Required("run"): {Required("steps"): [str]},
+                        Optional("run"): {Required("steps"): [str]},
                     },
                     Required("from"): "inline",
                     **common,

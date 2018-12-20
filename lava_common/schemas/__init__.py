@@ -27,7 +27,7 @@ from voluptuous import Any, Invalid, Optional, Range, Required, Schema
 from lava_common.exceptions import JobError, LAVABug
 
 
-def validate(name, data, live=False):
+def validate(name, data, live=False, strict=True):
     # Import the module
     try:
         module = importlib.import_module("lava_common.schemas." + name)
@@ -35,7 +35,7 @@ def validate(name, data, live=False):
         raise LAVABug("unable to find module 'lava_common.schemas.%s'" % name)
 
     try:
-        Schema(module.schema(live))(data)
+        Schema(module.schema(live), extra=not strict)(data)
         return None
     except Invalid as exc:
         raise JobError(
@@ -55,9 +55,12 @@ def timeout():
 def action(live=False):
     base = {
         Optional("namespace"): str,
+        Optional("connection-namespace"): str,
         Optional("protocols"): object,
-        Optional("role"): str,
+        Optional("role"): [str],
         Optional("timeout"): timeout(),
+        Optional("repeat"): Range(min=1),  # TODO: where to put it?
+        Optional("failure_retry"): Range(min=1),  # TODO: where to put it?
     }
 
     if not live:
@@ -65,7 +68,11 @@ def action(live=False):
     return {
         **base,
         Optional("lava-lxc"): object,
-        Optional("lava-multinode"): object,
+        Optional("lava-multinode"): {
+            Optional("timeout"): timeout(),
+            Optional("roles"): dict,
+        },
         Optional("lava-vland"): object,
+        Optional("lava-xnbd"): object,
         Optional("repeat-count"): Range(min=0),
     }

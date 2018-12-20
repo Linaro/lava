@@ -20,7 +20,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from voluptuous import All, Any, Length, Required, Optional, Range
+from voluptuous import All, Any, Length, Required, Optional
 
 from lava_common.schemas import action
 
@@ -54,11 +54,10 @@ def prompts():
 def schema(live=False):
     base = {
         **action(live),
-        Optional("repeat"): Range(min=1),  # TODO: where to put it?
-        Optional("failure_retry"): Range(min=1),  # TODO: where to put it?
         Optional("parameters"): {
             Optional("kernel-start-message"): str,
             Optional("shutdown-message"): str,
         },
+        Optional("soft_reboot"): str,
     }
     return base
