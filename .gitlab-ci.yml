@@ -1,11 +1,20 @@
+stages:
+- test
+- build
+
+dependencies:
+  stage: test
+  image: hub.lavasoftware.org/lava/ci-images/amd64/dispatcher-debian-10
+  script:
+  - ./share/generate.py
+  - '[ -n "$(git diff)" ] && exit 1 || :'
+
 .job: &job
+  stage: build
   image: docker:stable
   before_script:
   - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
-  - apk add git python3 py3-jinja2 py3-yaml
   script:
-#  - ./share/generate.py
-#  - '[ -n "$(git diff)" ] && exit 1 || :'
   - docker build -t $IMAGE_TAG $CI_JOB_NAME
   - 'docker run --rm --volume "$PWD/$CI_JOB_NAME/test.sh":/root/test.sh $IMAGE_TAG /root/test.sh'
   - '[ "$CI_COMMIT_REF_NAME" = "master" ] && docker push $IMAGE_TAG || :'
