@@ -95,7 +95,7 @@ sys.exit(0)"
 }
 
 wait_postgresql() {
-    until check_pg
+    until check_pgsql
     do
         echo -n "."
         sleep 1
@@ -117,6 +117,7 @@ echo "done"
 echo
 
 echo "Waiting for postgresql"
+wait_postgresql
 echo "[done]"
 echo
 
