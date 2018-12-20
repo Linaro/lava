@@ -53,7 +53,7 @@ from lava_common.constants import (
 from lava_dispatcher.actions.boot.fastboot import EnterFastbootAction
 from lava_dispatcher.actions.boot.u_boot import UBootEnterFastbootAction
 
-import urllib.parse as lavaurl
+from urllib.parse import urlparse
 
 # pylint: disable=logging-not-lazy
 
@@ -90,7 +90,7 @@ class DownloaderAction(RetryAction):
                 "Invalid deploy action: 'url' is missing for '%s'" % self.key
             )
 
-        url = lavaurl.urlparse(url)
+        url = urlparse(url)
         if url.scheme == "scp":
             action = ScpDownloadAction(self.key, self.path, url, self.uniquify)
         elif url.scheme == "http" or url.scheme == "https":
@@ -156,7 +156,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         super().validate()
         if "images" in self.parameters and self.key in self.parameters["images"]:
             image = self.parameters["images"][self.key]
-            self.url = lavaurl.urlparse(image["url"])
+            self.url = urlparse(image["url"])
             compression = image.get("compression")
             archive = image.get("archive")
             image_name, _ = self._url_to_fname_suffix(self.path, compression)
@@ -178,7 +178,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
                 value=compression,
             )
         else:
-            self.url = lavaurl.urlparse(self.parameters[self.key]["url"])
+            self.url = urlparse(self.parameters[self.key]["url"])
             compression = self.parameters[self.key].get("compression")
             archive = self.parameters[self.key].get("archive")
             overlay = self.parameters.get("overlay", False)
