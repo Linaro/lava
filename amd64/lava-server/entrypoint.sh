@@ -81,6 +81,28 @@ start_lava_server_gunicorn() {
 }
 
 
+#######################
+# wait for postgresql #
+#######################
+check_pgsql() {
+    lava-server manage shell -c "import sys
+from django.db import connections
+try:
+  connections['default'].cursor()
+except Exception:
+  sys.exit(1)
+sys.exit(0)"
+}
+
+wait_postgresql() {
+    until check_pg
+    do
+        echo -n "."
+        sleep 1
+    done
+}
+
+
 ########
 # Main #
 ########
@@ -92,6 +114,10 @@ trap 'handler' INT QUIT TERM
 echo "Starting postgresql"
 /etc/init.d/postgresql start
 echo "done"
+echo
+
+echo "Waiting for postgresql"
+echo "[done]"
 echo
 
 echo "Applying migrations"
