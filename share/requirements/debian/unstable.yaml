@@ -175,3 +175,6 @@ lava-common:
     name: python3-nose
   pyzmq:
     name: python3-zmq
+  voluptuous:
+    version: ">=0.8.8"
+    name: python3-voluptuous
