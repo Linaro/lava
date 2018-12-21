@@ -37,7 +37,7 @@ def _which_check(path, match):
     for dirname in paths:
         candidate = os.path.join(dirname, path)
         if match(candidate):
-            return candidate
+            return os.path.realpath(candidate)
     return None
 
 
