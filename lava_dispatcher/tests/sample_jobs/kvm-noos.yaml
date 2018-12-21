@@ -43,7 +43,6 @@ actions:
         failure_retry: 3
         timeout:
           minutes: 10
-        name: kvm-basic-singlenode  # is not present, use "test $N"
         definitions:
             - repository: git://git.linaro.org/lava-team/lava-functional-tests.git
               from: git

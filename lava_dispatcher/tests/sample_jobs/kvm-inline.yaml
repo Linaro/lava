@@ -36,7 +36,6 @@ actions:
         timeout:
           minutes: 3
         failure_retry: 3
-        name: kvm-basic-singlenode  # is not present, use "test $N"
         definitions:
             - repository:
                 metadata:

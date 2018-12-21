@@ -54,7 +54,6 @@ actions:
           minutes: 3
         failure_retry: 3
         role: server
-        name: kvm-basic-singlenode
         definitions:
             - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
               from: git
