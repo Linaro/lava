@@ -85,20 +85,17 @@ class VExpressMsdAction(DeployAction):
 
     def validate(self):
         super().validate()
-        if not self.valid:
-            return
-        if not self.parameters.get("recovery_image"):  # idempotency
-            return
+        if "recovery_image" not in self.parameters:
+            self.errors = "recovery_image is required"
 
     def populate(self, parameters):
         download_dir = self.mkdtemp()
         self.internal_pipeline = Pipeline(
             parent=self, job=self.job, parameters=parameters
         )
-        if "recovery_image" in parameters:
-            self.internal_pipeline.add_action(
-                DownloaderAction("recovery_image", path=download_dir)
-            )
+        self.internal_pipeline.add_action(
+            DownloaderAction("recovery_image", path=download_dir)
+        )
         self.internal_pipeline.add_action(LxcCreateUdevRuleAction())
         self.force_prompt = True
         self.internal_pipeline.add_action(ConnectDevice())
