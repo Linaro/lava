@@ -189,3 +189,28 @@ out the anomalous results against the risk of missing an unusual corner case
 which genuinely only affects devices in a specific set of circumstances.
 
 .. _KernelCI: https://kernelci.org/faq/
+
+SQUAD
+#####
+
+SQUAD_ is a general purpose reporting dashboard. It was started  with idea
+to display the testing results from different sources together. SQUAD supports
+both direct data submissions from testing tools as well as integration with
+test execution backends. One of the supported backends is LAVA. SQUAD is able
+to work with multiple LAVA instances. It supports test jobs submission, data
+collection, data post processing and test job re-submission (in case test job
+fails due to infrastructure error).
+
+qa-reports.linaro.org_ is an instance of SQUAD maintained at Linaro. It hosts data
+collected by LKFT_ project. Main source of testing data for LKFT is LAVA.
+The CI loop for LKFT is constructed from Jenkins (building artifacts),
+AWS S3 (storing artifacts), LAVA (test execution) and SQUAD (data dashboard).
+SQUAD proxies test job submission between Jenkins and LAVA. Than it
+subscribes to LAVA's ZMQ publisher for test job status updates. Finally,
+when test jobs are completed, downloads test results and logs to local
+database. Storing all data locally is important for features like regression
+detection or log post processing.
+
+.. _SQUAD: https://github.com/Linaro/squad
+.. _qa-reports.linaro.org: https://qa-reports.linaro.org
+.. _LKFT: https://lkft.linaro.org/
