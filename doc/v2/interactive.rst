@@ -89,8 +89,8 @@ Example interactive test job
 .. literalinclude:: examples/test-jobs/bbb-uboot-interactive.yaml
    :language: yaml
    :linenos:
-   :lines: 1-40
-   :emphasize-lines: 19-23, 28-40
+   :lines: 1-39
+   :emphasize-lines: 19-24, 28-39
 
 Download or view example interactive test job:
 `examples/test-jobs/bbb-uboot-interactive.yaml
@@ -127,7 +127,7 @@ It is fully supported to then add an interactive test action:
 .. literalinclude:: examples/test-jobs/bbb-uboot-interactive.yaml
    :language: yaml
    :linenos:
-   :lines: 25-40
+   :lines: 25-39
 
 However, until Test Definition 2.0 is fully scoped and delivered, it
 is not possible to add another Lava-Test Test Definition 1.0 action.

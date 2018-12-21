@@ -31,10 +31,9 @@ actions:
       script:
       - command: dhcp
         name: dhcp
-        patterns:
+        successes:
         - message: "DHCP client bound to address"
-          result: success
+        failures:
         - message: "TIMEOUT"
-          result: failure
           exception: InfrastructureError
           error: "dhcp failed"

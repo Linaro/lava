@@ -27,6 +27,7 @@ actions:
     to: tftp
     kernel:
       url: http://people.linaro.org/~steve.mcintyre/lava/images/stretch-armhf-multi-serial/vmlinuz-4.9.0-4-armmp
+      type: zimage
     ramdisk:
       url: http://people.linaro.org/~steve.mcintyre/lava/images/stretch-armhf-multi-serial/initrd.img-4.9.0-4-armmp
       compression: gz
@@ -43,7 +44,6 @@ actions:
     namespace: bbb
     method: u-boot
     commands: nfs
-    type: bootz
     prompts:
     - 'login:'
     timeout:

@@ -23,7 +23,7 @@ actions:
           rootfs:
             url: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
             image_arg: -drive format=raw,file={rootfs}
-        compression: gz
+            compression: gz
         os: debian
         # if root_partition partition is not present:
         # - look for a partitions labelled "root" or "ROOT" or "Root" (i.e. case insensitive)
@@ -38,7 +38,6 @@ actions:
 
     - test:
         failure_retry: 3
-        name: kvm-basic-singlenode  # is not present, use "test $N"
         # only s, m & h are supported.
         timeout:
           minutes: 5 # uses install:deps, so takes longer than singlenode01
