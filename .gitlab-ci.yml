@@ -112,6 +112,12 @@ sast:
     refs:
     - tags
 
+job-schema:
+  <<: *job
+  stage: analyze
+  image: debian:buster
+
+
 #########
 # Build #
 #########
