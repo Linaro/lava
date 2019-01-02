@@ -12,7 +12,6 @@ visibility: public
 actions:
   - boot:
       method: grub
-      os: debian
       commands: debian-installed
       auto_login:
         login_prompt: 'login:'

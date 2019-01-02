@@ -51,7 +51,6 @@ actions:
 - test:
     timeout:
       minutes: 5
-    name: singlenode-mustang-demo
     definitions:
       - from: git
         repository: http://git.linaro.org/lava-team/lava-functional-tests.git

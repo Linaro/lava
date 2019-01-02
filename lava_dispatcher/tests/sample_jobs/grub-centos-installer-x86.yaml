@@ -34,7 +34,6 @@ actions:
 
   - boot:
       method: grub
-      os: centos
       commands: centos-installed
       auto_login:
         login_prompt: 'login:'
@@ -48,7 +47,6 @@ actions:
 
   - test:
      failure_retry: 3
-     name: kvm-basic-singlenode
      timeout:
        minutes: 5
      definitions:

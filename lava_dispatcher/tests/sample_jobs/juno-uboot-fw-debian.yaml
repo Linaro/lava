@@ -29,6 +29,7 @@ actions:
     os: debian
     kernel:
       url: http://images.validation.linaro.org/functional-test-images/juno/16.10/juno-latest-oe-uboot/SOFTWARE/Image
+      type: image
     dtb:
       url: http://images.validation.linaro.org/functional-test-images/juno/16.10/juno-latest-oe-uboot/SOFTWARE/juno.dtb
     ramdisk:
@@ -49,7 +50,6 @@ actions:
     method: u-boot
     connection-namespace: recovery
     commands: ramdisk-tftp
-    type: booti
     auto_login:
       login_prompt: 'login:'
       username: root

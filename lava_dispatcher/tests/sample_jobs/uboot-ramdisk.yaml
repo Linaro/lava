@@ -55,7 +55,6 @@ actions:
 
   - test:
      failure_retry: 3
-     name: kvm-basic-singlenode
      timeout:
        minutes: 5
      definitions:
