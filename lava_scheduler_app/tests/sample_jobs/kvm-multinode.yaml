@@ -44,10 +44,9 @@ actions:
         images:
           rootfs:
             url: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
-            image_args: -drive format=raw,file={rootfs}
-        compression: gz
+            image_arg: -drive format=raw,file={rootfs}
+            compression: gz
         os: debian
-        root_partition: 1
         role:
         - server
 
@@ -58,10 +57,9 @@ actions:
         images:
           rootfs:
             url: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
-            image_args: -drive format=raw,file={rootfs}
-        compression: gz
+            image_arg: -drive format=raw,file={rootfs}
+            compression: gz
         os: debian
-        root_partition: 1
         role:
         - client
 

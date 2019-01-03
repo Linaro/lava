@@ -38,7 +38,6 @@ actions:
       initrd:
         image_arg: -initrd {initrd}
         url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/sid/arm64/8/initrd.img-4.9.0-2-arm64
-    root_partition: 1
 
 - boot:
     timeout:

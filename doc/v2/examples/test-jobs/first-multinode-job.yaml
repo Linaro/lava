@@ -57,7 +57,6 @@ actions:
           url: http://files.lavasoftware.org/components/lava/standard/debian/stretch/amd64/2/stretch.img.gz
           sha256sum: b5cdb3b9e65fec2d3654a05dcdf507281f408b624535b33375170d1e852b982c
           compression: gz
-    root_partition: 1
 # END-DEPLOY-BLOCK
 
 # START-BOOT-BLOCK

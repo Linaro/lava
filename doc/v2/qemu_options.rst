@@ -58,7 +58,7 @@ final paths to the files will be determined by LAVA. These paths need
 to be substituted into the commands so that QEMU is able to locate the
 files.
 
-This is handled in the test job definition using ``image_args`` with
+This is handled in the test job definition using ``image_arg`` with
 placeholders like ``{{KERNEL}}``. The :ref:`first_job_definition` uses
 this method.
 
@@ -124,7 +124,7 @@ This example, on an x86_64 worker, would break into:
   * ``-enable-kvm``
   * ``-nographic``
 
-* **Substituted** using ``image_args`` in the test job definition.
+* **Substituted** using ``image_arg`` in the test job definition.
 
   * ``-drive format=raw,file=/tmp/tmpUHeIM6/large-stable-6.img``
   * ``-drive format=qcow2,file=/tmp/tmp2sbOlI/lava-guest.qcow2,media=disk``
@@ -155,10 +155,10 @@ This example would break into:
   * ``-nographic``
   * ``-m 2048``
 
-* **Substituted** using ``image_args`` in the test job definition.
+* **Substituted** using ``image_arg`` in the test job definition.
 
   Use *substituted* for the complete argument. Include any other
-  options which relate to the filepath into the ``image_args``.
+  options which relate to the filepath into the ``image_arg``.
 
   * ``-kernel /tmp/tmpQi2ZR3/Image --append "console=ttyAMA0 root=/dev/vda rw"``
   * ``-drive format=raw,file=/tmp/tmpQi2ZR3/ubuntu-core-14.04.1-core-arm64-ext4.img``
@@ -192,7 +192,7 @@ How to override variables
 * Substitution support is handled by the test job pipeline once the
   relevant files have been downloaded. The test writer has the ability
   to add relevant options and flags to these commands using the
-  ``image_args`` support in the test job definition.
+  ``image_arg`` support in the test job definition.
 
   .. include:: examples/test-jobs/qemu-pipeline-first-job.yaml
      :code: yaml

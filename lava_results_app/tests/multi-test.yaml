@@ -22,7 +22,6 @@ actions:
           url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/amd64/latest/large-stable.img.gz
           compression: gz
     os: debian
-    root_partition: 1
 
 - boot:
     method: qemu

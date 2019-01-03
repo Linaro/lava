@@ -54,9 +54,9 @@ The name of the option and the value of that option should be listed as
 separate items in the ``extra_options`` list for correct parsing by QEMU.
 
 Test writers can choose which QEMU options are specified as ``extra_options``
-and which as ``image_args``. In some situations, this can matter as some
+and which as ``image_arg``. In some situations, this can matter as some
 options to QEMU need to be in a specific order. ``extra_options`` are added to
-the command line **before** ``image_args`` and ``image_args`` are added in the
+the command line **before** ``image_arg`` and ``image_arg`` are added in the
 order specified in the test job.
 
 .. note:: Check the syntax carefully - the option is **-smp** so the line in
@@ -72,7 +72,7 @@ Deploying the kernel
      :end-before: # BOOT_BLOCK
 
 Deploying a kernel and initramfs without a root filesystem can be done using
-the ``image_args`` support. In this example, the kernel command line is built
+the ``image_arg`` support. In this example, the kernel command line is built
 using the ``--append`` option to QEMU.
 
 The example also uses the ``sha256sum`` checksum support to ensure that the

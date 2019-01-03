@@ -69,13 +69,12 @@ An example pipeline job for a QEMU device looks like:
         timeout:
           minutes: 20
         to: tmpfs
-        image: https://images.validation.linaro.org/kvm/standard/stretch-2.img.gz
-        compression: gz
+        images:
+          rootfs:
+            url: https://images.validation.linaro.org/kvm/standard/stretch-2.img.gz
+            image_arg: -drive format=raw,file={rootfs}
+            compression: gz
         os: debian
-        # if root_partition partition is not present:
-        # - look for a partitions labelled "root" or "ROOT" or "Root" (i.e. case insensitive)
-        # - look into device configuration
-        root_partition: 1
 
     - boot:
         prompts:

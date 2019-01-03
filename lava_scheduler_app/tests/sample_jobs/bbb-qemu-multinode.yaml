@@ -32,7 +32,6 @@ actions:
           url: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
           compression: gz
     os: debian
-    root_partition: 1
 
 - deploy:
     role:

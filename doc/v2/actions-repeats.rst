@@ -103,7 +103,6 @@ and :ref:`test_action` actions in a repeat block.
           minutes: 20
         to: tmpfs
         image: https://images.validation.linaro.org/kvm/standard/stretch-2.img.gz
-        root_partition: 1
 
     - repeat:
         count: 6

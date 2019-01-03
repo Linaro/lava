@@ -35,7 +35,6 @@ def schema(live=False):
                 Optional("image_arg"): str,  # TODO: is this optional?
             }
         },
-        Optional("root_partition"): Range(min=0),
         Optional("type"): "monitor",
         Optional("uefi"): deploy.url(),  # TODO: check the exact syntax
     }

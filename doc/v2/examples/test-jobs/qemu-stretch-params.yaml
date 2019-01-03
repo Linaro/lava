@@ -29,7 +29,6 @@ actions:
           image_arg: -drive format=raw,file={rootfs}
           url: https://files.lavasoftware.org/components/lava/standard/debian/stretch/amd64/2/stretch.img.gz
           compression: gz
-    root_partition: 1
 
 - boot:
     method: qemu

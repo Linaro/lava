@@ -72,7 +72,11 @@ as an indented block of lines **without** a preceding hyphen.
         timeout:
           minutes: 20
         to: tmpfs
-        image: https://images.validation.linaro.org/kvm/standard/stretch-2.img.gz
+        images:
+          rootfs:
+            url: https://images.validation.linaro.org/kvm/standard/stretch-2.img.gz
+            image_arg: -drive format=raw,file={rootfs}
+            compression: gz
 
 This stanza describes a deployment strategy where the timeout for the entire
 deployment action is 20 minutes, the deployment happens to ``tmpfs`` (it is up
@@ -113,11 +117,11 @@ Sample JOB definition for a KVM
         timeout:
           minutes: 20
         to: tmpfs
-        image: https://images.validation.linaro.org/kvm/standard/stretch-2.img.gz
-        # if root_partition partition is not present:
-        # - look for a partitions labelled "root" or "ROOT" or "Root" (i.e. case insensitive)
-        # - look into device configuration
-        root_partition: 1
+        images:
+          rootfs:
+            url: https://images.validation.linaro.org/kvm/standard/stretch-2.img.gz
+            image_arg: -drive format=raw,file={rootfs}
+            compression: gz
 
     - boot:
         method: kvm
@@ -517,11 +521,11 @@ Supported methods
         timeout:
           minutes: 20
         to: tmpfs
-        image: https://images.validation.linaro.org/kvm/standard/stretch-2.img.gz
-        # if root_partition partition is not present:
-        # - look for a partitions labelled "root" or "ROOT" or "Root" (i.e. case insensitive)
-        # - look into device configuration
-        root_partition: 1
+        images:
+          rootfs:
+            url: https://images.validation.linaro.org/kvm/standard/stretch-2.img.gz
+            image_arg: -drive format=raw,file={rootfs}
+            compression: gz
 
 Boot actions
 ============
