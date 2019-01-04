@@ -24,7 +24,11 @@ available_architectures:
 - amd64
 - x86_64
 - i386
+- mips
+- mipsel
 - mips64
+- ppc
+- ppc64
 - sparc
 - sparc64
 {% for arch in qemu_misc_architectures %}
@@ -58,8 +62,16 @@ actions:
             qemu-system-x86_64
 {% elif arch == 'i386' %}
             qemu-system-i386
+{% elif arch == 'mips' %}
+            qemu-system-mips
+{% elif arch == 'mipsel' %}
+            qemu-system-mipsel
 {% elif arch == 'mips64' %}
             qemu-system-mips64
+{% elif arch == 'ppc' %}
+            qemu-system-ppc
+{% elif arch == 'ppc64' %}
+            qemu-system-ppc64
 {% elif arch == 'sparc' %}
             qemu-system-sparc
 {% elif arch == 'sparc64' %}
@@ -86,6 +98,24 @@ actions:
           options:
 {% block qemu_options %}
 {# arch cpu #}
+{% if arch == 'mips' %}
+          - -machine {{ machine|default('malta') }}
+{% endif %}
+{% if arch == 'mips64' %}
+          - -machine {{ machine|default('malta') }}
+{% endif %}
+{% if arch == 'ppc' %}
+          - -machine {{ machine|default('g3beige') }}
+{% endif %}
+{% if arch == 'ppc64' %}
+          - -machine {{ machine|default('pseries') }}
+{% endif %}
+{% if arch == 'sparc' %}
+          - -machine {{ machine|default('SS-5') }}
+{% endif %}
+{% if arch == 'sparc64' %}
+          - -machine {{ machine|default('sun4u') }}
+{% endif %}
 {% if arch == 'arm64' or arch == 'aarch64' or arch == 'arm' %}
           - -cpu {{ cpu|default('cortex-a57') }}
           - -machine {{ machine|default('virt') }}
