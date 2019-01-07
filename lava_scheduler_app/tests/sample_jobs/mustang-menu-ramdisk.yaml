@@ -23,6 +23,7 @@ actions:
        url: http://images.validation.linaro.org/mustang/mustang.dtb_1.11
      kernel:
        url: http://images.validation.linaro.org/mustang/uImage_1.11
+       type: uimage
      nfsrootfs:
        url: http://people.linaro.org/~neil.williams/arm64/debian-jessie-arm64-rootfs.tar.gz
        # nfsrootfs: file:///tmp/debian-jessie-arm64-rootfs.tar.gz
@@ -35,13 +36,11 @@ actions:
      method: uefi-menu
      auto_login: {login_prompt: 'login:', username: root}
      commands: nfs
-     type: bootm
      parameters:
        shutdown-message: "reboot: Restarting system"
 
   - test:
      failure_retry: 3
-     name: kvm-basic-singlenode  # is not present, use "test $N"
      # only s, m & h are supported.
      timeout:
        minutes: 5 # uses install:deps, so takes longer than singlenode01

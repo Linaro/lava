@@ -37,10 +37,8 @@ actions:
       preseed:
         url: http://images.validation.linaro.org/kvm/debian-8.3.0-cd1-preseed.cfg
     iso:
-      iso_index: 2
       kernel: /install.amd/vmlinuz
       initrd: /install.amd/initrd.gz
-      console: ttyS0,38400,n8
       # typically a maximum of 5G
       # use megabytes for a smaller image, although ~1G is likely to be the smallest practical size
       installation_size: 2G

@@ -25,7 +25,6 @@ actions:
 - test:
     timeout:
       minutes: 5
-    name: tests
     definitions:
       - repository: http://git.enea.se/cgit/eltf/lava.git
         from: git

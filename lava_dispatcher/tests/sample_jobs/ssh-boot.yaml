@@ -30,7 +30,6 @@ actions:
         timeout:
           minutes: 3
         failure_retry: 3
-        name: kvm-basic-singlenode
         definitions:
             - repository: git://git.linaro.org/lava-team/lava-functional-tests.git
               from: git

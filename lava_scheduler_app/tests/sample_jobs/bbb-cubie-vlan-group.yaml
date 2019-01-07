@@ -86,7 +86,6 @@ actions:
     - test:
         failure_retry: 3
         role: server
-        name: kvm-basic-multinode
         definitions:
             - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
               from: git
