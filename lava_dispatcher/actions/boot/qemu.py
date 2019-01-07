@@ -270,9 +270,12 @@ class CallQemuAction(Action):
             interface = self.job.device["actions"]["deploy"]["methods"]["image"][
                 "parameters"
             ]["guest"].get("interface", "ide")
+            driveid = self.job.device["actions"]["deploy"]["methods"]["image"][
+                "parameters"
+            ]["guest"].get("driveid", "lavatest")
             self.sub_command.append(
-                "-drive format=qcow2,file=%s,media=disk,if=%s"
-                % (os.path.realpath(guest), interface)
+                "-drive format=qcow2,file=%s,media=disk,if=%s,id=%s"
+                % (os.path.realpath(guest), interface, driveid)
             )
             # push the mount operation to the test shell pre-command to be run
             # before the test shell tries to execute.

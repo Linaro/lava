@@ -1,0 +1,69 @@
+device_type: qemu
+job_name: Boot with tests on qemu-vexpress-a9
+
+actions:
+- deploy:
+    images:
+      dtb:
+        image_arg: -dtb {dtb}
+        url: __FQDN__/vexpress-v2p-ca9.dtb
+      kernel:
+        image_arg: -kernel {kernel}
+        url: __FQDN__/zImage
+      ramdisk:
+        image_arg: -initrd {ramdisk}
+        url: __FQDN__/rootfs.cpio.gz
+    os: oe
+    timeout:
+      minutes: 3
+    to: tmpfs
+- boot:
+    media: tmpfs
+    method: qemu
+    prompts:
+    - '/ #'
+    timeout:
+      minutes: 5
+
+- test:
+    definitions:
+    - from: inline
+      name: downloadmodule
+      path: inline/dm.yaml
+      repository:
+        metadata:
+          description: Download modules
+          format: Lava-Test Test Definition 1.0
+          name: download_modules
+        run:
+          steps:
+          - wget __FQDN__/modules.tar.gz
+          - tar xvzf modules.tar.gz -C /
+    - from: git
+      name: Boot
+      path: execs/boot.yaml
+      repository: https://github.com/montjoie/lava-tests.git
+    timeout:
+      minutes: 25
+
+context:
+  arch: arm
+  cpu: cortex-a9
+  extra_options:
+  - -append "console=ttyAMA0 root=/dev/ram0"
+  - -device virtio-bk-device,drive=lavatest
+  guestfs_interface: none
+  machine: vexpress-a9
+  model: model=lan9118
+
+priority: high
+timeouts:
+  action:
+    minutes: 10
+  actions:
+    power-off:
+      seconds: 30
+  job:
+    minutes: 30
+visibility: public
+

@@ -1,0 +1,69 @@
+device_type: qemu
+job_name: Boot with tests on qemu-cubieboard
+
+actions:
+- deploy:
+    images:
+      dtb:
+        image_arg: -dtb {dtb}
+        url: __FQDN__/sun4i-a10-cubieboard.dtb
+      kernel:
+        image_arg: -kernel {kernel}
+        url: __FQDN__/zImage
+      ramdisk:
+        image_arg: -initrd {ramdisk}
+        url: __FQDN__/rootfs.cpio.gz
+    os: oe
+    timeout:
+      minutes: 3
+    to: tmpfs
+- boot:
+    media: tmpfs
+    method: qemu
+    prompts:
+    - '/ #'
+    timeout:
+      minutes: 5
+
+- test:
+    definitions:
+    - from: inline
+      name: downloadmodule
+      path: inline/dm.yaml
+      repository:
+        metadata:
+          description: Download modules
+          format: Lava-Test Test Definition 1.0
+          name: download_modules
+        run:
+          steps:
+          - wget __FQDN__/modules.tar.gz
+          - tar xvzf modules.tar.gz -C /
+    - from: git
+      name: Boot
+      path: execs/boot.yaml
+      repository: https://github.com/montjoie/lava-tests.git
+    timeout:
+      minutes: 25
+
+context:
+  arch: arm
+  cpu: cortex-a7
+  extra_options:
+  - -append "console=ttyS0 root=/dev/ram0"
+  - -device ide-hd,drive=lavatest
+  guestfs_interface: none
+  machine: cubieboard
+  model: model=allwinner-emac
+
+priority: high
+timeouts:
+  action:
+    minutes: 10
+  actions:
+    power-off:
+      seconds: 30
+  job:
+    minutes: 30
+visibility: public
+

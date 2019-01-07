@@ -361,3 +361,55 @@ require running the 64bit QEMU binary:
    will still need to be a suitable health check and it is recommended
    to have a copy of the Jinja2 template in case an x86_64 worker is
    added later.
+
+LAVA test storage
+*****************
+
+If one or more test actions are included in a QEMU job, LAVA will
+create a disk image and will attach it to QEMU using a command like:
+
+.. code-block:: none
+
+ -drive format=qcow2,file=<temporary_path>/lava-guest.qcow2,media=disk,if=<interface>,id=lavatest
+
+The interface can be set in the device_type template or in the test job
+context using the ``guestfs_interface`` key in the context. Supported
+values include ``ide scsi virtio none`` with a default of ``ide``. The
+size of the image is controlled via the ``guestfs_size`` parameter
+(default 512M).
+
+Some emulated devices have no bus available for attaching this image
+(Ex: cubieboard). Some emulated devices have an available bus but qemu
+is unable to attach to it due to the selected architecture (like
+vexpress). For these boards, you need to set ``guestfs_interface`` to
+``None`` and add a device with ``drive=lavatest``. The "lavatest" id
+can be set via the ``guestfs_driveid`` job option. If no storage bus is
+available, you will also need to attach a device which permit to attach
+a storage bus.
+
+Example for qemu cubieboard:
+(Cubieboard have an AHCI bus, but the support is incomplete)
+
+.. literalinclude:: examples/test-jobs/qemu-cubieboard.yaml
+     :language: yaml
+     :linenos:
+     :lines: 49-57
+     :emphasize-lines: 6
+
+Example for qemu vexpress-a9:
+(vexpress have a virtio bus, but by default, qemu try to add the drive as PCI virtio)
+
+.. literalinclude:: examples/test-jobs/qemu-vexpress-a9.yaml
+     :language: yaml
+     :linenos:
+     :lines: 49-57
+     :emphasize-lines: 6
+
+Example for Qemu PPC bamboo:
+
+.. literalinclude:: examples/test-jobs/qemu-ppc-bamboo.yaml
+     :language: yaml
+     :linenos:
+     :lines: 33-42
+     :emphasize-lines: 6,7
+
