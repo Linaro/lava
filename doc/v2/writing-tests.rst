@@ -1199,7 +1199,38 @@ command is executed without needing ``lava-test-case`` or
 ``lava-test-raise``. The calling script is responsible for handling the
 return code, typically by using ``set -e``.
 
-.. seealso:: https://git.linaro.org/lava-team/refactoring.git/tree/testdefs
+The above snippet is just an example to show the principle. The
+function itself continues to develop as ``lava-common`` - a small shell
+library which also supports a ``testcase`` function which reports a
+failed test case instead of ``lava-test-raise``. Use ``testcase`` for
+non-fatal checks and ``command`` for fatal checks.
+
+.. code-block:: shell
+
+    command(){
+        # setup command - will abort the test job upon failure.
+        # expects two quoted arguments
+        # $1 - valid lava test case name (no spaces)
+        # $2 - the full command line to execute
+        # Note: avoid trying to set environment variables.
+        # use an explicit export.
+        CMD=""
+        PREFIX=$1
+        shift
+        while [ "$1" != "" ]; do
+          CMD="${CMD} $1" && shift;
+        done;
+        if [ -n "$(which lava-test-case || true)" ]; then
+            echo "${CMD}"
+            $CMD && lava-test-case "${PREFIX}" --result pass || lava-test-raise "${PREFIX}"
+        else
+            echo "${CMD}"
+            $CMD
+        fi
+    }
+
+
+.. seealso:: https://git.lavasoftware.org/lava/functional-tests/blob/master/testdefs/lava-common
 
 Calling shell script
 --------------------
@@ -1282,6 +1313,17 @@ closer to the actual cause within the log file.
         else:
             print("setup failed")
         return 1
+
+Example of lava-test-raise
+==========================
+
+This is an example of using lava-test-raise from a python custom script
+
+https://staging.validation.linaro.org/scheduler/job/246700/definition
+
+https://git.lavasoftware.org/lava/functional-tests/blob/master/testdefs/arm-probe.yaml
+
+https://git.lavasoftware.org/lava/functional-tests/blob/master/testdefs/aep-parse-output.py
 
 .. index:: test shell - control output
 

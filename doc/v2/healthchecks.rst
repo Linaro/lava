@@ -3,7 +3,7 @@
 .. _health_checks:
 
 Writing Health Checks for devices
-*********************************
+#################################
 
 A health check is a special type of test job, designed to validate that the a
 test device and the infrastructure around it are suitable for running LAVA
@@ -36,7 +36,7 @@ used by the device. Health checks are run as the lava-health user.
 .. _yaml_health_checks:
 
 LAVA YAML health checks
-=======================
+***********************
 
 .. note:: Before enabling a health check, ensure that all devices of the
    specified type have been enabled as pipeline devices or the health check
@@ -53,7 +53,7 @@ The rest of the job needs no changes.
 .. _health_check_device_type:
 
 Device Types and templates
---------------------------
+==========================
 
 Some jinja2 device-type templates use multiple inheritance, e.g. ``juno``. This
 is to allow devices to use multiple types of firmware in test jobs. Admins need
@@ -79,7 +79,7 @@ This situation can be avoided by converting a working test job into the health
 check on the same instance.
 
 Tasks within health checks
-==========================
+**************************
 
 The health check needs to at least check that the device will boot and deploy a
 test image. Multiple deploy tasks can be set, if required, although this will
@@ -87,6 +87,53 @@ mean that each health check takes longer.
 
 Wherever a particular device type has common issues, a specific test for that
 behaviour should be added to the health check for that device type.
+
+.. _health_check_setup_checks:
+
+Checking infrastructure and peripherals in health checks
+========================================================
+
+A device in LAVA increasingly includes not just the base board but
+peripherals and external hardware. Test writers may rely on such
+elements functioning correctly. Each case is different but there are
+ways that test writers and admins can work together to ensure that this
+support remains available.
+
+One special case is where the external hardware is defined using
+``static_info`` in the device dictionary and the test jobs (including
+health checks) use LXC:
+
+.. code-block:: jinja
+
+ {% set static_info = [{'board_id': 'S_NO18080201'}] %}
+
+When the test job starts, this USB device needs to be added to the LXC,
+so LAVA will raise an :ref:`infrastructure issue
+<infrastructure_issues_health>` if the device cannot be found in
+``udev``.
+
+For other hardware, peripherals etc., it can be necessary to write a
+test script which can:
+
+* download any tools needed to do the investigation
+
+* use parameters from the test job (or the device dictionary in some
+  cases) to do the check.
+
+* ensure that the necessary element(s) are not only present but also
+  functional (e.g. at a minimal level).
+
+These scripts need to use :ref:`lava-test-raise <call_test_raise>` if
+any errors are detected. This will trigger an :ref:`infrastructure
+issue <infrastructure_issues_health>` to fail the health check and take
+the device offline.
+
+The scripts need to be used in health checks but also in all test jobs
+using the extra hardware or peripherals. Write a portable test shell
+definition for each element and add to start of each test action.
+
+.. seealso:: :ref:`call_test_raise` for information on writing setup
+   scripts using shell (``.. lava-common``) and Python.
 
 .. _health_check_tests:
 
@@ -134,6 +181,8 @@ Using ``lava_test_shell`` in all health checks has several benefits:
    up common hardware issues
 
 See also :ref:`test_developer`.
+
+.. _infrastructure_issues_health:
 
 Infrastructure issues
 =====================
