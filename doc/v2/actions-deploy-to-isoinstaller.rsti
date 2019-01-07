@@ -108,13 +108,6 @@ URLs **must** use one of the supported schemes, the first element of the URL.
 iso
 ===
 
-..    .. _deploy_to_iso_installer_iso_iso_index:
-
-      iso_index
-      ---------
-
-       iso_index: 2
-
 .. _deploy_to_iso_installer_iso_kernel:
 
 kernel
