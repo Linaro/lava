@@ -69,37 +69,108 @@ class FastBootFactory(Factory):  # pylint: disable=too-few-public-methods
         return job
 
 
+class UBootFactory(Factory):  # pylint: disable=too-few-public-methods
+    """
+    Not Model based, this is not a Django factory.
+    Factory objects are dispatcher based classes, independent
+    of any database objects.
+    """
+
+    def create_x15_bl_device(self, hostname):
+        """
+        Create a device configuration on-the-fly from in-tree
+        device-type Jinja2 template.
+        """
+        with open(
+            os.path.join(
+                os.path.dirname(__file__),
+                "..",
+                "..",
+                "lava_scheduler_app",
+                "tests",
+                "devices",
+                "x15-bl-01.jinja2",
+            )
+        ) as x15:
+            data = x15.read()
+        test_template = self.prepare_jinja_template(hostname, data)
+        rendered = test_template.render()
+        return (rendered, data)
+
+    def create_x15_bl_job(self, filename):
+        (data, device_dict) = self.create_x15_bl_device("x15-bl-01")
+        device = NewDevice(yaml.safe_load(data))
+        self.validate_data("x15-bl-01", device_dict)
+        uboot_yaml = os.path.join(os.path.dirname(__file__), filename)
+        with open(uboot_yaml) as sample_job_data:
+            parser = JobParser()
+            job = parser.parse(sample_job_data, device, 4213, None, "")
+            job.logger = DummyLogger()
+        return job
+
+
 class TestRecoveryMode(StdoutTestCase):  # pylint: disable=too-many-public-methods
     def setUp(self):
         super().setUp()
-        self.factory = FastBootFactory()
-        self.job = self.factory.create_hikey_bl_job("sample_jobs/hi6220-recovery.yaml")
+        self.fastboot_factory = FastBootFactory()
+        self.uboot_factory = UBootFactory()
+        self.fastboot_job = self.fastboot_factory.create_hikey_bl_job(
+            "sample_jobs/hi6220-recovery.yaml"
+        )
+        self.uboot_job = self.uboot_factory.create_x15_bl_job(
+            "sample_jobs/x15-recovery.yaml"
+        )
 
     @unittest.skipIf(
         infrastructure_error_multi_paths(["lxc-info", "img2simg", "simg2img"]),
         "lxc or img2simg or simg2img not installed",
     )
-    def test_structure(self):
-        self.assertIsNotNone(self.job)
-        self.job.validate()
+    def test_structure_fastboot(self):
+        self.assertIsNotNone(self.fastboot_job)
+        self.fastboot_job.validate()
 
-        description_ref = self.pipeline_reference("hi6220-recovery.yaml", job=self.job)
-        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+        description_ref = self.pipeline_reference(
+            "hi6220-recovery.yaml", job=self.fastboot_job
+        )
+        self.assertEqual(description_ref, self.fastboot_job.pipeline.describe(False))
 
-        requires_board_id = not allow_fs_label(self.job.device)
+        requires_board_id = not allow_fs_label(self.fastboot_job.device)
         self.assertFalse(requires_board_id)
-        if "device_info" in self.job.device:
-            for usb_device in self.job.device["device_info"]:
+        if "device_info" in self.fastboot_job.device:
+            for usb_device in self.fastboot_job.device["device_info"]:
                 if (
                     usb_device.get("board_id", "") in ["", "0000000000"]
                     and requires_board_id
                 ):
                     self.fail("[LXC_CREATE] board_id unset")
 
-    def test_commands(self):
+    @unittest.skipIf(
+        infrastructure_error_multi_paths(["lxc-info", "img2simg", "simg2img"]),
+        "lxc or img2simg or simg2img not installed",
+    )
+    def test_structure_uboot(self):
+        self.assertIsNotNone(self.uboot_job)
+        self.uboot_job.validate()
+
+        description_ref = self.pipeline_reference(
+            "x15-recovery.yaml", job=self.uboot_job
+        )
+        self.assertEqual(description_ref, self.uboot_job.pipeline.describe(False))
+
+        requires_board_id = not allow_fs_label(self.uboot_job.device)
+        self.assertFalse(requires_board_id)
+        if "device_info" in self.uboot_job.device:
+            for usb_device in self.uboot_job.device["device_info"]:
+                if (
+                    usb_device.get("board_id", "") in ["", "1900d00f3b1400a2"]
+                    and requires_board_id
+                ):
+                    self.fail("[LXC_CREATE] board_id unset")
+
+    def test_fastboot_commands(self):
         enter = [
             action
-            for action in self.job.pipeline.actions
+            for action in self.fastboot_job.pipeline.actions
             if action.name == "recovery-boot"
         ][0]
         mode = [
@@ -107,7 +178,7 @@ class TestRecoveryMode(StdoutTestCase):  # pylint: disable=too-many-public-metho
             for action in enter.internal_pipeline.actions
             if action.name == "switch-recovery"
         ][0]
-        recovery = self.job.device["actions"]["deploy"]["methods"]["recovery"]
+        recovery = self.fastboot_job.device["actions"]["deploy"]["methods"]["recovery"]
         self.assertIsNotNone(recovery["commands"].get(mode.mode))
         self.assertEqual(
             [
@@ -119,7 +190,7 @@ class TestRecoveryMode(StdoutTestCase):  # pylint: disable=too-many-public-metho
         self.assertEqual("recovery_mode", mode.mode)
         exit_mode = [
             action
-            for action in self.job.pipeline.actions
+            for action in self.fastboot_job.pipeline.actions
             if action.name == "recovery-boot"
         ][1]
         mode = [
@@ -132,6 +203,51 @@ class TestRecoveryMode(StdoutTestCase):  # pylint: disable=too-many-public-metho
             [
                 "/home/neil/lava-lab/shared/lab-scripts/eth008_control -a 10.15.0.171 -r 1 -s on",
                 "/home/neil/lava-lab/shared/lab-scripts/eth008_control -a 10.15.0.171 -r 2 -s off",
+            ],
+            recovery["commands"][mode.mode],
+        )
+        self.assertEqual("recovery_exit", mode.mode)
+
+    def test_uboot_commands(self):
+        enter = [
+            action
+            for action in self.uboot_job.pipeline.actions
+            if action.name == "recovery-boot"
+        ][0]
+        mode = [
+            action
+            for action in enter.internal_pipeline.actions
+            if action.name == "switch-recovery"
+        ][0]
+        recovery = self.uboot_job.device["actions"]["deploy"]["methods"]["recovery"]
+        self.assertIsNotNone(recovery["commands"].get(mode.mode))
+        self.assertEqual(
+            [
+                "/usr/local/lab-scripts/eth008_control -a 192.168.0.32 -r 1 -s off",
+                "/usr/local/lab-scripts/eth008_control -a 192.168.0.32 -r 2 -s off",
+                "/usr/local/lab-scripts/eth008_control -a 192.168.0.32 -r 3 -s off",
+                "/usr/local/lab-scripts/eth008_control -a 192.168.0.32 -r 4 -s off",
+            ],
+            recovery["commands"][mode.mode],
+        )
+        self.assertEqual("recovery_mode", mode.mode)
+        exit_mode = [
+            action
+            for action in self.fastboot_job.pipeline.actions
+            if action.name == "recovery-boot"
+        ][1]
+        mode = [
+            action
+            for action in exit_mode.internal_pipeline.actions
+            if action.name == "switch-recovery"
+        ][0]
+        self.assertIsNotNone(recovery["commands"].get(mode.mode))
+        self.assertEqual(
+            [
+                "/usr/local/lab-scripts/eth008_control -a 192.168.0.32 -r 1 -s on",
+                "/usr/local/lab-scripts/eth008_control -a 192.168.0.32 -r 2 -s on",
+                "/usr/local/lab-scripts/eth008_control -a 192.168.0.32 -r 3 -s on",
+                "/usr/local/lab-scripts/eth008_control -a 192.168.0.32 -r 4 -s on",
             ],
             recovery["commands"][mode.mode],
         )

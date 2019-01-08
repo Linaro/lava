@@ -1,0 +1,8 @@
+{# device_type = "x15-bl" #}
+{% extends 'x15.jinja2' %}
+{% set recovery_mode_command = recovery_mode_command|default('') %}
+{# Different device-types will have different types and numbers of commands. #}
+{% set recovery_mode = "
+      recovery:
+        commands:
+"%}
