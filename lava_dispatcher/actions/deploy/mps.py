@@ -83,10 +83,12 @@ class MpsAction(DeployAction):
 
     def validate(self):
         super().validate()
-        if not self.valid:
+        if "images" not in self.parameters:
+            self.errors = "Missing 'images'"
             return
-        if not self.parameters.get("recovery_image"):
-            return
+        images = self.parameters["images"]
+        if "recovery_image" not in images and "test_binary" not in images:
+            self.errors = "Missing 'recovery_image' or 'test_binary'"
 
     def populate(self, parameters):
         download_dir = self.mkdtemp()
@@ -125,10 +127,8 @@ class DeployMPSTestBinary(Action):
 
     def validate(self):
         super().validate()
-        if not self.valid:
-            return
         if not self.parameters["images"].get(self.param_key):
-            return
+            self.errors = "Missing '%s' in 'images'" % self.param_key
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)

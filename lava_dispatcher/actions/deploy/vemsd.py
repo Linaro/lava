@@ -338,11 +338,6 @@ class DeployVExpressRecoveryImage(Action):
     description = "deploy vexpress recovery image to usb msd"
     summary = "copy recovery image contents to vexpress usb mass storage device"
 
-    def validate(self):
-        super().validate()
-        if not self.valid:
-            return
-
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
         mount_point = self.get_namespace_data(

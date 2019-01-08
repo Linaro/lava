@@ -67,8 +67,11 @@ the support for :ref:`deploy_to_vemsd`
 
 .. _deploy_to_mps_recovery:
 
+images
+======
+
 recovery_image
-==============
+--------------
 
 Download the URL ready to be unpacked onto the USB filesystem of the
 MPS2 device.
@@ -76,7 +79,7 @@ MPS2 device.
 .. _deploy_to_mps_recovery_url:
 
 url *
------
+^^^^^
 
 Specifies the URL to download. All downloads are check-summed using ``md5sum``
 and ``sha256sum``
@@ -96,7 +99,7 @@ URLs **must** use one of the supported schemes, the first element of the URL.
 .. _deploy_to_mps_recovery_compression:
 
 compression
------------
+^^^^^^^^^^^
 
 If the image is compressed, the compression method **must** be specified.
 
@@ -116,14 +119,14 @@ during download and then unpacked onto the filesystem of the VEMSD.
 .. _deploy_to_mps_test_binary:
 
 test_binary
-===========
+-----------
 
 Download test binary to MPS device and rename if required.
 
 .. _deploy_to_mps_binary_url:
 
 url *
------
+^^^^^
 
 Specifies the URL to download. All downloads are check-summed using ``md5sum``
 and ``sha256sum``
@@ -143,7 +146,7 @@ URLs **must** use one of the supported schemes, the first element of the URL.
 .. _deploy_to_mps_binary_rename:
 
 rename
-------
+^^^^^^
 
 Renames the test_binary if required
 

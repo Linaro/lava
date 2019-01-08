@@ -32,13 +32,13 @@ actions:
         compression: gz
     namespace: target
 # Single test
-#- deploy:
-#    to: mps
-#    images:
-#      test_binary:
-#        url: http://example.com/example.elf
-#        rename: mbed.elf
-#    namespace: target
+- deploy:
+    to: mps
+    images:
+      test_binary:
+        url: http://images.validation.linaro.org/people.linaro.org/~maria.hogberg/mbed/SOFTWARE/zephyr.elf
+        rename: mbed.elf
+    namespace: target
 - boot:
     method: minimal
     timeout:

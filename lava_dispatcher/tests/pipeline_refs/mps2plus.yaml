@@ -16,6 +16,23 @@
   - {class: actions.deploy.vemsd.DeployVExpressRecoveryImage, name: deploy-vexpress-recovery-image}
   - {class: actions.deploy.vemsd.UnmountVExpressMassStorageDevice, name: unmount-vexpress-usbmsd}
   - {class: power.PowerOff, name: power-off}
+- class: actions.deploy.mps.MpsAction
+  name: mps-deploy
+  pipeline:
+  - {class: connections.serial.DisconnectDevice, name: disconnect-device}
+  - class: power.ResetDevice
+    name: reset-device
+    pipeline:
+    - {class: power.PDUReboot, name: pdu-reboot}
+  - {class: utils.udev.WaitUSBMassStorageDeviceAction, name: wait-usb-mass-storage-device}
+  - class: actions.deploy.download.DownloaderAction
+    name: download-retry
+    pipeline:
+    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
+  - {class: actions.deploy.vemsd.MountVExpressMassStorageDevice, name: mount-vexpress-usbmsd}
+  - {class: actions.deploy.mps.DeployMPSTestBinary, name: deploy-mps-test-binary}
+  - {class: actions.deploy.vemsd.UnmountVExpressMassStorageDevice, name: unmount-vexpress-usbmsd}
+  - {class: power.PowerOff, name: power-off}
 - class: actions.boot.minimal.MinimalBoot
   name: minimal-boot
   pipeline:
