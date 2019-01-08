@@ -37,6 +37,7 @@ class LAVADaemonCommand(BaseCommand):
         log.add_argument(
             "-l",
             "--level",
+            choices=["ERROR", "WARN", "INFO", "DEBUG"],
             default="DEBUG",
             help="Logging level (ERROR, WARN, INFO, DEBUG) " "Default: DEBUG",
         )
