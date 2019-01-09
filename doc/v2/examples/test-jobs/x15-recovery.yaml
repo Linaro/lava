@@ -1,0 +1,121 @@
+device_type: x15-bl
+
+job_name: X15 u-boot-recovery
+timeouts:
+  job:
+    minutes: 60
+  action:
+    minutes: 15
+  connection:
+    minutes: 10
+priority: medium
+visibility: public
+
+protocols:
+  lava-lxc:
+    name: lxc-x15-test
+    template: debian
+    distribution: debian
+    release: jessie
+    mirror: http://mirror.bytemark.co.uk/debian
+
+actions:
+- deploy:
+    namespace: tlxc
+    timeout:
+      minutes: 5
+    to: lxc
+    os: debian
+
+- boot:
+    namespace: tlxc
+    prompts:
+    - 'root@(.*):/#'
+    - 'shell@am57xevm:/'
+    timeout:
+      minutes: 5
+    method: lxc
+
+- deploy:
+    timeout:
+      minutes: 10
+    to: recovery
+    namespace: recovery
+    connection: lxc
+    images:
+      mlo:
+        url: http://images.validation.linaro.org/people.linaro.org/~maria.hogberg/x15-b75/MLO
+      u-boot:
+        url: http://images.validation.linaro.org/people.linaro.org/~maria.hogberg/x15-b75/u-boot.img
+    os: debian
+
+- boot:
+    namespace: recovery
+    timeout:
+      minutes: 5
+    method: recovery
+    commands: recovery
+
+- test:
+    namespace: tlxc
+    connection: lxc
+    timeout:
+      minutes: 10
+    definitions:
+    - repository: http://git.linaro.org/qa/ti-uboot-recovery.git
+      from: git
+      path: u-boot-recovery.yaml
+      parameters:
+        UBOOT_IMAGE: u-boot.img
+        UBOOT_MLO: MLO
+      name: x15-recovery
+
+- boot:
+    namespace: recovery
+    timeout:
+      minutes: 5
+    method: recovery
+    commands: exit
+
+- deploy:
+    timeout:
+      minutes: 25
+    to: fastboot
+    namespace: droid
+    connection: lxc
+    images:
+      userdata:
+        url: http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lkft/morty/am57xx-evm/rpb/linux-mainline/631/rpb-console-image-am57xx-evm-20180205221320-631.rootfs.img.gz
+        compression: gz
+        apply-overlay: true
+    os: oe
+
+- boot:
+    namespace: droid
+    auto_login:
+      login_prompt: 'am57xx-evm login:'
+      username: root
+    prompts:
+    - 'root@am57xx-evm:'
+    - 'am57xevm:'
+    commands:
+    - setenv fdtfile am57xx-beagle-x15.dtb
+    - setenv console ttyS2,115200n8
+    - setenv mmcdev 1
+    - setenv bootpart 1:f
+    - run mmcboot
+    timeout:
+      minutes: 15
+    method: u-boot
+
+- test:
+    namespace: droid
+    timeout:
+      minutes: 60
+    definitions:
+    - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+      from: git
+      path: lava-test-shell/smoke-tests-basic.yaml
+      name: smoke-tests-x15
+
+

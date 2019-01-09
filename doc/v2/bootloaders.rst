@@ -72,11 +72,11 @@ manufacture.
 Bootloader recovery criteria
 ****************************
 
-The Juno and HiKey 6220 are the only boards capable of supporting
+Juno, HiKey 6220 and X15 GPEVM are the only boards capable of supporting
 bootloader testing and recovery out of the hundreds of boards which
 have been integrated into LAVA over the years.
 
-.. note:: Of the two supported boards, the HiKey 6220 has noticeable
+.. note:: Of the supported boards, the HiKey 6220 has noticeable
    limitations. It is possible to workaround some difficulties on some
    boards but this will limit the usefulness and scope of any
    bootloader testing on those boards.
@@ -193,21 +193,21 @@ The hardest problems to solve are intermittent faults in a complex
 stack Every requirement which is not fully supported adds complexity to
 the final automation and risks increasing the failure rate.
 
-+------------------------------------------+-----------------+-----------+
-| Requirement                              |  HiKey 6220 BL  |  Juno     |
-+==========================================+=================+===========+
-| Interrupt boot before bootloader [#f2]_  |    Yes          |   Yes     |
-+------------------------------------------+-----------------+-----------+
-| Presence of a recovery mode [#f3]_       |    Yes          |   Yes     |
-+------------------------------------------+-----------------+-----------+
-| Automated access to recovery [#f4]_      |  Needs relays   |   Yes     |
-+------------------------------------------+-----------------+-----------+
-| Writing data in recovery mode [#f5]_     | Dynamic USB TTY |   Yes     |
-+------------------------------------------+-----------------+-----------+
-| Unique identification in recovery [#f6]_ |   **NO**        |   Yes     |
-+------------------------------------------+-----------------+-----------+
-| Stable operation in recovery             |    Yes          |   Yes     |
-+------------------------------------------+-----------------+-----------+
++------------------------------------------+-----------------+------+-----------------+
+| Requirement                              | HiKey 6220 BL   | Juno | X15 GPEVM BL    |
++==========================================+=================+======+=================+
+| Interrupt boot before bootloader [#f2]_  | Yes             | Yes  | Yes             |
++------------------------------------------+-----------------+------+-----------------+
+| Presence of a recovery mode [#f3]_       | Yes             | Yes  | Yes             |
++------------------------------------------+-----------------+------+-----------------+
+| Automated access to recovery [#f4]_      | Needs relays    | Yes  | Needs relays    |
++------------------------------------------+-----------------+------+-----------------+
+| Writing data in recovery mode [#f5]_     | Dynamic USB TTY | Yes  | Dynamic USB TTY |
++------------------------------------------+-----------------+------+-----------------+
+| Unique identification in recovery [#f6]_ | **NO**          | Yes  | Yes             |
++------------------------------------------+-----------------+------+-----------------+
+| Stable operation in recovery             | Yes             | Yes  | Yes             |
++------------------------------------------+-----------------+------+-----------------+
 
 .. [#f2] See :ref:`recovery_deployment` - most boards in LAVA cannot
    provide this support.
@@ -222,8 +222,8 @@ the final automation and risks increasing the failure rate.
    recovery mode must be as simple as possible - complexity always
    increases the failure rate.
 
-   The HiKey 6220 has jumpers to select recovery mode which is easier
-   to automate than buttons but still requires external hardware which
+   HiKey 6220 and X15 GPEVM have jumpers to select recovery mode which is
+   easier to automate than buttons but still requires external hardware which
    then needs additional software to be written to automate the control
    of the board. Attaching relays to jumpers is very different to
    soldering connections onto a DIP switch. Many lab admin teams do not
@@ -478,3 +478,47 @@ sufficiently reliable that all test jobs use recovery deployments to
 ensure that the test job starts with a known bootloader. (Test jobs
 would otherwise fail when sending U-Boot commands if the previous test
 job deployed UEFI firmware and vice versa.)
+
+X15 GPEVM
+*********
+
+Most of the TI boards provide means to load bootloader using
+serial interface. This is the case for X15 GPEVM. As compared to
+other X15 family boards, GPEVM is wired to provide jumpers to switch
+boot mode. The only HW modification required is populating J5 in order
+to avoid board powering down before bootloader is loaded to memory and
+started.
+
+In order to start board in recovery mode, the following HW settings
+should be set:
+
+#. Jumpers J3, J4 and J6 should have 1-2 link closed
+
+#. Jumper J5 should be populated and closed
+
+Example LAVA recovery test job loads 'known good' u-boot to memory and
+follows with flashing the same u-boot to eMMC. This means that host has
+to have the board connected as USB slave. Example LAVA settings assume that
+all jumpers are controlled with relay.
+
+Recovery deployment
+===================
+
+.. literalinclude:: examples/test-jobs/x15-recovery.yaml
+     :language: yaml
+     :linenos:
+     :lines: 39-44
+     :emphasize-lines: 4
+
+OpenEmbedded deployment
+=======================
+
+.. literalinclude:: examples/test-jobs/x15-recovery.yaml
+     :language: yaml
+     :linenos:
+     :lines: 80-85
+     :emphasize-lines: 4
+
+`Download / view complete x15
+<examples/test-jobs/x15-recovery.yaml>`_ complete test job YAML.
+
