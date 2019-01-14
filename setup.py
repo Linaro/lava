@@ -118,7 +118,7 @@ setup(
     data_files=[
         ("/usr/share/lava-dispatcher/", ["etc/tftpd-hpa", "etc/dispatcher.yaml"]),
         ("/etc/exports.d", ["etc/lava-dispatcher-nfs.exports"]),
-        ("/etc/modules-load.d/", ["etc/lava-modules.conf"]),
+        ("/etc/modprobe.d/", ["etc/lava-modules.conf"]),
         ("/etc/logrotate.d/", ["etc/logrotate.d/lava-slave-log"]),
         ("/usr/share/lava-dispatcher/", ["etc/lava-slave.service"]),
         ("/etc/lava-server", ["etc/settings.conf", "etc/env.yaml"]),
