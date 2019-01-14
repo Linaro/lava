@@ -1,6 +1,6 @@
 {% extends 'base-grub.jinja2' %}
 {% set efinet = True %}
 {% set efi_grub = True %}
-{% set boot_character_delay = 100 %}
+{% set boot_character_delay = boot_character_delay | default(100) %}
 {% set console_device = false %}
 {% set extra_nfsroot_args = ",vers=3" %}

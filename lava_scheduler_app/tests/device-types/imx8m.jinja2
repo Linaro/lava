@@ -2,7 +2,7 @@
 {% set root_device = root_device | default('/dev/ttyUSB0') %}
 {% set console_device = console_device|default('ttyUSB0') %}
 {% set baud_rate = baud_rate|default(115200) %}
-{% set boot_character_delay = 5 %}
+{% set boot_character_delay = boot_character_delay | default(5) %}
 {% set uboot_bootx_cmd = 'boot' %}
 {% set base_uboot_bootcmd = uboot_bootcmd|default(
  "          - '" + uboot_bootx_cmd|default('{BOOTX}')) + "'" -%}

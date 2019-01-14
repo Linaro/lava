@@ -17,5 +17,5 @@
 
 {% set extra_kernel_args = "earlycon=uart8250,mmio32,0x3f215040" %}
 
-{% set boot_character_delay = 10 %}
-{% set test_character_delay = 10 %}
+{% set boot_character_delay = boot_character_delay | default(10) %}
+{% set test_character_delay = test_character_delay | default(10) %}

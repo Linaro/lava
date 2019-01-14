@@ -1,7 +1,7 @@
 {% extends 'base-grub.jinja2' %}
 
 {% set grub_autoboot_prompt = 'SecStartup' %}
-{% set boot_character_delay = 1 %}
+{% set boot_character_delay = boot_character_delay | default(1) %}
 {% set boot_message = 'Booting in blind mode' %}
 
 {% block ramdisk_commands %}

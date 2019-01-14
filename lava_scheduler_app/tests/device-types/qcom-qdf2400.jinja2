@@ -1,5 +1,5 @@
 {% extends 'base-grub.jinja2' %}
-{% set boot_character_delay = 200 %}
+{% set boot_character_delay = boot_character_delay | default(200) %}
 {% set efi_grub = True %}
 {% set action_timeout_bootloader_interrupt = 300 %}
 {% set efinet = True %}

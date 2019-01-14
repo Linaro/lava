@@ -1,6 +1,6 @@
 {# device_type: mustang-uefi #}
 {% extends 'base.jinja2' %}
-{% set boot_character_delay = 10 %}
+{% set boot_character_delay = boot_character_delay | default(10) %}
 
 {% block vland %}
 {% endblock vland %}

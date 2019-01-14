@@ -25,4 +25,4 @@
 {% set extra_kernel_args = custom_kernel_args %}
 {% endif %}
 
-{% set boot_character_delay = 10 %}
+{% set boot_character_delay = boot_character_delay | default(10) %}

@@ -1,5 +1,5 @@
 {% extends 'base-grub.jinja2' %}
-{% set boot_character_delay = 100 %}
+{% set boot_character_delay = boot_character_delay | default(100) %}
 {% set efi_grub = True %}
 {% set console_device = "ttyS0" %}
 {% set baud_rate = 9600 %}

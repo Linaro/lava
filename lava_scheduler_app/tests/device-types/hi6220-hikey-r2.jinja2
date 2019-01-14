@@ -1,6 +1,6 @@
 {# device_type = "hi6220-hikey-r2" #}
 {% extends 'base-fastboot.jinja2' %}
-{% set boot_character_delay = 10 %}
+{% set boot_character_delay = boot_character_delay | default(10) %}
 {% set root_device = root_device | default('/dev/mmcblk0p9') %}
 {% set base_kernel_args = base_kernel_args|default('') %}
 {% set console_device = console_device|default('ttyAMA3') %}

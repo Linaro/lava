@@ -46,7 +46,7 @@
 
 {% set uboot_set_mac = uboot_set_mac|default(false) %}
 
-{% set boot_character_delay = 30 %}
+{% set boot_character_delay = boot_character_delay | default(30) %}
 
 {# adds the parameters: top level block #}
 {% block vland %}
