@@ -20,8 +20,9 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from voluptuous import All, Any, Exclusive, Length, Optional, Range, Required
+from voluptuous import All, Any, Exclusive, Invalid, Length, Optional, Range, Required
 
+from lava_common.timeout import Timeout
 from lava_common.schemas import timeout
 
 
@@ -70,6 +71,41 @@ def notify():
     }
 
 
+def check_job_timeouts(data):
+    job_duration = Timeout.parse(data["timeouts"]["job"])
+
+    def _check_timeout(prefix, path, local_data):
+        if local_data is None:
+            return
+        duration = Timeout.parse(local_data)
+        if duration > job_duration:
+            raise Invalid("%s timeout is larger than job timeout" % prefix, path=path)
+
+    # global timeouts
+    _check_timeout("Global", ["timeouts", "action"], data["timeouts"].get("action"))
+    for key in data["timeouts"].get("actions", []):
+        _check_timeout(
+            "Global", ["timeouts", "actions", key], data["timeouts"]["actions"][key]
+        )
+    _check_timeout(
+        "Global", ["timeouts", "connection"], data["timeouts"].get("connection")
+    )
+    for key in data["timeouts"].get("connections", []):
+        _check_timeout(
+            "Global",
+            ["timeouts", "connections", key],
+            data["timeouts"]["connections"][key],
+        )
+
+    # action timeouts
+    for (index, action) in enumerate(data["actions"]):
+        action_type = next(iter(action.keys()))
+        t = action[action_type].get("timeout")
+        if t is None:
+            continue
+        _check_timeout("Action", ["actions", str(index)], t)
+
+
 def schema():
     lava_lxc = {
         Required("name"): str,
@@ -84,57 +120,60 @@ def schema():
         Optional("verbose"): bool,
     }
 
-    return {
-        Required("job_name"): All(str, Length(min=1, max=200)),
-        Required("device_type"): All(str, Length(min=1, max=200)),
-        Required("timeouts"): {
-            Required("job"): timeout(),
-            Optional("action"): timeout(),
-            Optional("actions"): {str: timeout()},
-            Optional("connection"): timeout(),
-            Optional("connections"): {str: timeout()},
-        },
-        Optional("context"): dict,
-        Optional("metadata"): {str: object},
-        Optional("priority"): Any("high", "medium", "low", Range(min=0, max=100)),
-        Optional("tags"): [str],
-        Optional("secrets"): dict,  # FIXME: validate that job is not public
-        Optional("visibility"): Any("public", "personal", {"group": [str]}),
-        Optional("protocols"): {
-            Optional("lava-lxc"): Any(lava_lxc, {str: lava_lxc}),
-            Optional("lava-multinode"): {
-                Required("roles"): {
-                    str: Any(
-                        {
-                            Required("device_type"): str,
-                            Required("count"): Range(min=1),
-                            Optional("context"): dict,
-                            Optional("tags"): [str],
-                            Optional("timeout"): timeout(),
-                        },
-                        {
-                            Required("connection"): str,
-                            Required("count"): Range(min=1),
-                            Required("expect_role"): str,
-                            Required("host_role"): str,
-                            Optional("request"): str,
-                            Optional("tags"): [str],
-                            Optional("timeout"): timeout(),
-                        },
-                    )
+    return All(
+        {
+            Required("job_name"): All(str, Length(min=1, max=200)),
+            Required("device_type"): All(str, Length(min=1, max=200)),
+            Required("timeouts"): {
+                Required("job"): timeout(),
+                Optional("action"): timeout(),
+                Optional("actions"): {str: timeout()},
+                Optional("connection"): timeout(),
+                Optional("connections"): {str: timeout()},
+            },
+            Optional("context"): dict,
+            Optional("metadata"): {str: object},
+            Optional("priority"): Any("high", "medium", "low", Range(min=0, max=100)),
+            Optional("tags"): [str],
+            Optional("secrets"): dict,  # FIXME: validate that job is not public
+            Optional("visibility"): Any("public", "personal", {"group": [str]}),
+            Optional("protocols"): {
+                Optional("lava-lxc"): Any(lava_lxc, {str: lava_lxc}),
+                Optional("lava-multinode"): {
+                    Required("roles"): {
+                        str: Any(
+                            {
+                                Required("device_type"): str,
+                                Required("count"): Range(min=1),
+                                Optional("context"): dict,
+                                Optional("tags"): [str],
+                                Optional("timeout"): timeout(),
+                            },
+                            {
+                                Required("connection"): str,
+                                Required("count"): Range(min=1),
+                                Required("expect_role"): str,
+                                Required("host_role"): str,
+                                Optional("request"): str,
+                                Optional("tags"): [str],
+                                Optional("timeout"): timeout(),
+                            },
+                        )
+                    },
+                    Optional("timeout"): timeout(),
                 },
-                Optional("timeout"): timeout(),
+                Optional("lava-vland"): Any(
+                    {str: {str: {Required("tags"): [str]}}},
+                    {str: {Required("tags"): [str]}},
+                ),
+                Optional("lava-xnbd"): {
+                    Required("port"): Any("auto", int),
+                    Optional("timeout"): timeout(),
+                },
             },
-            Optional("lava-vland"): Any(
-                {str: {str: {Required("tags"): [str]}}},
-                {str: {Required("tags"): [str]}},
-            ),
-            Optional("lava-xnbd"): {
-                Required("port"): Any("auto", int),
-                Optional("timeout"): timeout(),
-            },
+            Optional("notify"): notify(),
+            Optional("reboot_to_fastboot"): bool,
+            Required("actions"): [{Any("boot", "command", "deploy", "test"): dict}],
         },
-        Optional("notify"): notify(),
-        Optional("reboot_to_fastboot"): bool,
-        Required("actions"): [{Any("boot", "command", "deploy", "test"): dict}],
-    }
+        check_job_timeouts,
+    )
