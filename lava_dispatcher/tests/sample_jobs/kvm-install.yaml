@@ -3,7 +3,7 @@ device_type: qemu
 job_name: kvm-pipeline
 timeouts:
   job:
-    minutes: 15
+    minutes: 20
   action:
     minutes: 5
 priority: medium

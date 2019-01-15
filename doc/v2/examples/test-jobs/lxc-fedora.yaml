@@ -2,7 +2,7 @@ device_type: lxc
 job_name: lxc-fedora
 timeouts:
   job:
-    minutes: 15
+    minutes: 30
   action:
     minutes: 5
 priority: medium

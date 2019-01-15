@@ -3,7 +3,7 @@ job_name: imx8m simple deployment
 
 timeouts:
   job:
-    minutes: 30
+    minutes: 45
   action:
     minutes: 15
   connection:

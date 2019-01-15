@@ -4,7 +4,7 @@ job_name: frdm-k64f-zephyr-latency-benchmark
 
 timeouts:
   job:
-    minutes: 6
+    minutes: 10
   action:
     minutes: 3
   actions:

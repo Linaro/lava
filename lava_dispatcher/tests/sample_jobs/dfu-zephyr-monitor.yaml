@@ -7,7 +7,7 @@ device_type: qemu
 job_name: qemu-zephyr-normaltest
 timeouts:
   job:
-    minutes: 5
+    minutes: 10
   action:
     minutes: 1
 priority: medium

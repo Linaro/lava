@@ -2,7 +2,7 @@ device_type: hi960-hikey
 job_name: HiKey 960 Android boot test
 timeouts:
   job:
-    minutes: 10
+    minutes: 120
   action:
     minutes: 10
   connection:

@@ -3,7 +3,7 @@ device_type: qemu
 job_name: kvm-jessie-uefi
 timeouts:
   job:
-    minutes: 5
+    minutes: 10
   action:
     minutes: 1
 

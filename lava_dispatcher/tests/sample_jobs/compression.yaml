@@ -1,7 +1,7 @@
 job_name: Compression download unit test
 timeouts:
   job:
-    minutes: 5
+    minutes: 40
   action:
     minutes: 1
   connection:

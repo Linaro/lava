@@ -4,7 +4,7 @@ job_name: zephyr-test-kernel-common
 
 timeouts:
   job:
-    minutes: 6
+    minutes: 10
   action:
     minutes: 3
 

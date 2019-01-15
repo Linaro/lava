@@ -3,7 +3,7 @@ device_type: qemu
 job_name: kvm command
 timeouts:
   job:
-    minutes: 5
+    minutes: 10
 
 priority: medium
 visibility: public
