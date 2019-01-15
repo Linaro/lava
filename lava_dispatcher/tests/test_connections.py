@@ -676,18 +676,16 @@ class TestDisconnect(StdoutTestCase):
         except InfrastructureError:
             raise self.skipTest("Cannot validate if minicom is not on PATH")
         # mps2plus-03.jinja2 does use a tag, but minicom cannot be disconnected from currently
-        with self.assertRaises(JobError):
-            job.validate()
         # Want to check the exception message gives some useful information
         # on how to amend the device dictionary.
         with self.assertRaises(JobError) as exc:
             job.validate()
         the_exception = exc.exception
         err_msg = (
-            'Invalid job data: ["LAVA does not know how to disconnect: ensure that primary '
-            "connection has one of the following tags: ('telnet', 'ssh')\", \"LAVA does not know how to "
-            "disconnect: ensure that primary connection has one of the following "
-            "tags: ('telnet', 'ssh')\", \"LAVA does not know how to disconnect: ensure that primary "
-            "connection has one of the following tags: ('telnet', 'ssh')\"]"
+            "Invalid job data: ["
+            "\"LAVA does not know how to disconnect: ensure that primary connection has one of the following tags: ('telnet', 'ssh')\", "
+            "\"LAVA does not know how to disconnect: ensure that primary connection has one of the following tags: ('telnet', 'ssh')\", "
+            "\"LAVA does not know how to disconnect: ensure that primary connection has one of the following tags: ('telnet', 'ssh')\", "
+            "\"LAVA does not know how to disconnect: ensure that primary connection has one of the following tags: ('telnet', 'ssh')\"]"
         )
         self.assertEqual(str(the_exception).strip(), err_msg)

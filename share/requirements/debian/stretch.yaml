@@ -123,6 +123,9 @@ lava-dispatcher:
   lxc-info:
     name: lxc
     unittests: true
+  minicom:
+    name: minicom
+    unittests: true
   mkimage:
     name: u-boot-tools
     unittests: true

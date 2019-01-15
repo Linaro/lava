@@ -148,6 +148,9 @@ lava-dispatcher:
   simg2img:
     name: simg2img
     unittests: true
+  minicom:
+    name: minicom
+    unittests: true
   mkimage:
     name: u-boot-tools
     unittests: true
