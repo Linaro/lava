@@ -10,7 +10,7 @@ adb_serial_number: "{{ adb_serial_number|default('0000000000') }}"
 fastboot_serial_number: "{{ fastboot_serial_number|default('0000000000') }}"
 fastboot_options: {{ fastboot_options|default([]) }}
 
-{% if fastboot_deploy_uboot %}
+{% if fastboot_deploy_uboot_commands %}
 # This attribute identifies whether a device should get into fastboot mode by
 # interrupting uboot and issuing commands at the bootloader prompt.
 fastboot_via_uboot: True
@@ -39,7 +39,17 @@ actions:
 {% endfor %}
 {% endif %}
       fastboot:
-{{- fastboot_deploy_uboot }}
+{% if fastboot_deploy_uboot_commands %}
+      u-boot:
+        parameters:
+          bootloader_prompt: "{{ bootloader_prompt }}"
+          interrupt_prompt: "{{ interrupt_prompt }}"
+          interrupt_char: "{{ interrupt_char }}"
+          send_char: False
+          fastboot:
+            commands:
+{% for command in fastboot_deploy_uboot_commands %}              - {{ command }}{% endfor %}
+{% endif %}
 {{- fastboot_interrupt_params }}
     connections:
       adb:

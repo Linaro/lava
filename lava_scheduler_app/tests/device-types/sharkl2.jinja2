@@ -1,6 +1,9 @@
 {# device_type = "sharkl2" #}
 {% extends 'base-uboot.jinja2' %}
 {% set bootloader_prompt = bootloader_prompt|default('=>') %}
+{% set interrupt_prompt = interrupt_prompt|default('Hit any key to stop autoboot') %}
+{% set interrupt_char = interrupt_char|default(' ') %}
+
 {% set uboot_mkimage_arch = 'arm' %}
 {% set adb_serial_number = adb_serial_number|default("'0000000000'") %}
 {% set fastboot_serial_number = fastboot_serial_number|default("'0000000000'") %}
@@ -10,17 +13,5 @@
 {% set uboot_extra_error_message = 'Invalid partition' %}
 {% set fastboot_sequence = [
     'reboot'] %}
-{% set fastboot_deploy_uboot = "
-      u-boot:
-        parameters:
-          bootloader_prompt: '=>'
-          interrupt_prompt: 'Hit any key to stop autoboot: '
-          # character needed to interrupt u-boot, single whitespace by default
-          interrupt_char: " "
-          send_char: False
-          # method specific stanza
-          fastboot:
-            commands:
-              - cboot fastboot
-"%}
+{% set fastboot_deploy_uboot_commands = fastboot_deploy_uboot_commands|default(["cboot fastboot"]) %}
 {% set fastboot_boot_uboot = " " %}

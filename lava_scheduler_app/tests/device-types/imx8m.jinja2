@@ -27,19 +27,7 @@
 {% set fastboot_serial_number = fastboot_serial_number|default("'0000000000'") %}
 {% set device_info = device_info|default([{'board_id': fastboot_serial_number}]) %}
 {% set uboot_extra_error_message = 'Invalid partition' %}
-{% set fastboot_deploy_uboot = "
-      u-boot:
-        parameters:
-          bootloader_prompt: " + bootloader_prompt + "
-          interrupt_prompt: " + interrupt_prompt + "
-          # character needed to interrupt u-boot, single whitespace by default
-          interrupt_char: "  + interrupt_char + "
-          send_char: False
-          # method specific imx8m
-          fastboot:
-            commands:
-              - fastboot 0
-"%}
+{% set fastboot_deploy_uboot_commands = fastboot_deploy_uboot_commands|default(["fastboot 0"]) %}
 {% set fastboot_boot_uboot = "
         # method specific stanza
         mmc:

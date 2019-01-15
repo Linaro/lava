@@ -99,7 +99,7 @@
 {% set action_timeout_bootloader_commands = action_timeout_bootloader_commands | default(3) %}
 {% set connection_timeout_bootloader_commands = connection_timeout_bootloader_commands | default(30) %}
 
-{% if fastboot_deploy_uboot %}
+{% if fastboot_deploy_uboot_commands %}
 adb_serial_number: "{{ adb_serial_number|default('0000000000') }}"
 fastboot_serial_number: "{{ fastboot_serial_number|default('0000000000') }}"
 fastboot_options: {{ fastboot_options|default([]) }}
@@ -150,9 +150,17 @@ actions:
           - {{ url }}
 {% endfor %}
 {% endif %}
-{% if fastboot_deploy_uboot %}
+{% if fastboot_deploy_uboot_commands %}
       fastboot:
-{{- fastboot_deploy_uboot }}
+      u-boot:
+        parameters:
+          bootloader_prompt: "{{ bootloader_prompt }}"
+          interrupt_prompt: "{{ interrupt_prompt }}"
+          interrupt_char: "{{ interrupt_char }}"
+          send_char: False
+          fastboot:
+            commands:
+{% for command in fastboot_deploy_uboot_commands %}              - {{ command }}{% endfor %}
 {{- fastboot_interrupt_params }}
 {% endif %}
 

@@ -549,6 +549,22 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
                 checked = True
         self.assertTrue(checked)
 
+    def test_x15_template(self):
+        # Test that we can override fastboot_deploy_uboot_commands
+        rendered = self.render_device_dictionary_file("x15-01.jinja2", raw=False)
+        params = rendered["actions"]["deploy"]["methods"]["u-boot"]["parameters"]
+        self.assertEqual(params["fastboot"]["commands"], ["fastboot 1"])
+        self.assertIsNone(rendered["actions"]["deploy"]["methods"]["fastboot"])
+
+        rendered = self.render_device_dictionary_file(
+            "x15-01.jinja2",
+            raw=False,
+            job_ctx={"fastboot_deploy_uboot_commands": ["fastboot 0"]},
+        )
+        params = rendered["actions"]["deploy"]["methods"]["u-boot"]["parameters"]
+        self.assertEqual(params["fastboot"]["commands"], ["fastboot 0"])
+        self.assertIsNone(rendered["actions"]["deploy"]["methods"]["fastboot"])
+
     def test_xilinx_zcu102(self):
         with open(
             os.path.join(os.path.dirname(__file__), "devices", "zcu102.jinja2")
