@@ -111,65 +111,35 @@ free to use either hub.
    is included in the image name ``amd64-lava-server`` when tagged for
    hub.docker.com.
 
-lava-dispatcher for amd64
-=========================
+lava-dispatcher
+===============
 
-https://hub.docker.com/r/lavasoftware/amd64-lava-dispatcher/
+https://hub.docker.com/r/lavasoftware/lava-dispatcher
 
 .. code-block:: none
 
- docker pull lavasoftware/amd64-lava-dispatcher:2018.11
+ docker pull lavasoftware/lava-dispatcher:2019.01
 
 or
 
 .. code-block:: none
 
- docker pull hub.lavasoftware.org/lava/lava/amd64/lava-dispatcher:2018.11
+ docker pull hub.lavasoftware.org/lava/lava/lava-dispatcher:2019.01
 
-lava-dispatcher for aarch64 (arm64)
-===================================
+lava-server
+===========
 
-https://hub.docker.com/r/lavasoftware/aarch64-lava-dispatcher/
+https://hub.docker.com/r/lavasoftware/lava-server/
 
 .. code-block:: none
 
- docker pull lavasoftware/aarch64-lava-dispatcher:2018.11
+ docker pull lavasoftware/lava-server:2019.01
 
 or
 
 .. code-block:: none
 
- docker pull hub.lavasoftware.org/lava/lava/aarch64/lava-dispatcher:2018.11
-
-lava-server for amd64
-=====================
-
-https://hub.docker.com/r/lavasoftware/amd64-lava-server/
-
-.. code-block:: none
-
- docker pull lavasoftware/amd64-lava-server:2018.11
-
-or
-
-.. code-block:: none
-
- docker pull hub.lavasoftware.org/lava/lava/amd64/lava-server:2018.11
-
-lava-server for aarch64 (arm64)
-================================
-
-https://hub.docker.com/r/lavasoftware/aarch64-lava-server/
-
-.. code-block:: none
-
- docker pull lavasoftware/aarch64-lava-server:2018.11
-
-or
-
-.. code-block:: none
-
- docker pull hub.lavasoftware.org/lava/lava/aarch64/lava-server:2018.11
+ docker pull hub.lavasoftware.org/lava/lava/lava-server:2019.01
 
 Command lines
 *************

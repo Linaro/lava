@@ -2,6 +2,7 @@ stages:
 - test
 - analyze
 - build
+- docker
 - publish
 - deploy
 
@@ -168,18 +169,18 @@ aarch64/pkg-debian-9:
     - _build/*.changes
     - _build/*.buildinfo
 
-###########
-# Publish #
-###########
-.publish: &publish
+##########
+# Docker #
+##########
+.docker: &docker
   <<: *dind
-  stage: publish
+  stage: docker
   dependencies: [amd64/pkg-debian-9]
   variables:
     IMAGE_TAG: $CI_REGISTRY_IMAGE/$CI_JOB_NAME
 
-.publish_aarch64: &publish_aarch64
-  <<: *publish
+.docker_aarch64: &docker_aarch64
+  <<: *docker
   only:
     refs:
     - master
@@ -187,10 +188,23 @@ aarch64/pkg-debian-9:
   tags: [dind, aarch64]
   dependencies: [aarch64/pkg-debian-10, amd64/pkg-debian-10]
 
-amd64/lava-dispatcher: *publish
-amd64/lava-server: *publish
-aarch64/lava-dispatcher: *publish_aarch64
-aarch64/lava-server: *publish_aarch64
+amd64/lava-dispatcher: *docker
+amd64/lava-server: *docker
+aarch64/lava-dispatcher: *docker_aarch64
+aarch64/lava-server: *docker_aarch64
+
+###########
+# Publish #
+###########
+manifest:
+  <<: *dind
+  stage: publish
+  variables:
+    IMAGE_TAG: $CI_REGISTRY_IMAGE
+  only:
+    refs:
+    - master
+    - tags
 
 ##########
 # Deploy #
