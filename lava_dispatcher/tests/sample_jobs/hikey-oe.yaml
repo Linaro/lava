@@ -19,7 +19,7 @@ tags:
   - oe-only
 
 metadata:
-  source: https://git.linaro.org/lava/lava-dispatcher.git/
+  source: https://git.lavasoftware.org/lava/lava.git
   unit-test: test_lxc_api
 
 protocols:

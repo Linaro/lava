@@ -1,9 +1,9 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: lava
-Source: https://git.linaro.org/lava/lava.git
+Source: https://git.lavasoftware.org/lava/lava
 
 Files: *
-Copyright: 2010-2018, Linaro Limited
+Copyright: 2010-2019, Linaro Limited
 License: GPL-3.0+
 
 Files: lava/lxc-mocker/*

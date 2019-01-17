@@ -14,7 +14,7 @@ priority: medium
 visibility: public
 
 metadata:
-  source: https://git.linaro.org/lava/lava-dispatcher.git
+  source: https://git.lavasoftware.org/lava/lava.git
   path: lava_dispatcher/tests/sample_jobs/uboot.yaml
 
 actions:

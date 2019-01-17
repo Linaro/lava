@@ -10,7 +10,7 @@ priority: medium
 visibility: public
 
 metadata:
-  source: http://git.linaro.org/lava/lava-server.git
+  source: https://git.lavasoftware.org/lava/lava.git
   path: lava_scheduler_app/tests/sample_jobs/hikey_multinode.yaml
 
 # run udhcpc in the hikey OE test shell before accessing the internet

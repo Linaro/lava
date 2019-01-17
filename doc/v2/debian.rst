@@ -349,7 +349,7 @@ Example
 The helper supports ``lava``::
 
  $ sudo apt install lava-dev
- $ git clone https://git.linaro.org/git/lava/lava.git
+ $ git clone https://git.lavasoftware.org/lava/lava.git
  $ cd lava
  $ ./share/debian-dev-build.sh
 

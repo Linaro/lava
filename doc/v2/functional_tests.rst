@@ -46,15 +46,15 @@ by replaying a static log against changes in the codebase.
 then checks that the inputs from LAVA are correct for that specific use
 case.
 
-https://framagit.org/ivoire/meta-lava/
+https://git.lavasoftware.org/lava/meta-lava
 
 ``meta-lava`` is a python script that will:
 
 * build lava-server and lava-dispatcher docker image
 
-  * installs lava-server or lava-dispatcher using debian packaging
+  * install lava-server or lava-dispatcher using debian packaging
 
-  * fetches the source from git.linaro.org and adds the right symlinks
+  * fetch the source from git and add the right symlinks
 
 * start the containers and link them in the same network (lava-slave,
   lava-master)

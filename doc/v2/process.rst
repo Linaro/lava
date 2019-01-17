@@ -6,8 +6,8 @@ Development process
 ===================
 
 The LAVA development process is based on git. The various source code
-repositories are hosted on `Linaro's git server
-<https://git.linaro.org/?a=project_list;pf=lava>`_.
+repositories are hosted on `the lavasoftware GitLab instance
+<https://git.lavasoftware.org/>`_.
 
 Most of the LAVA development work is done by the members of the Linaro
 Validation Team. The code is all Free and Open Source Software, and we welcome

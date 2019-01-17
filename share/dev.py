@@ -118,7 +118,7 @@ def main():
     on_parser = sub.add_parser("on", help="Activate the developer mode")
     on_parser.add_argument(
         "--url",
-        default="https://git.linaro.org/lava/lava-server.git",
+        default="https://git.lavasoftware.org/lava/lava.git",
         help="Url to the lava-master git",
     )
 

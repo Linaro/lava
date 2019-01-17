@@ -14,7 +14,7 @@ priority: medium
 visibility: public
 
 metadata:
-  source: https://git.linaro.org/lava/lava-server.git
+  source: https://git.lavasoftware.org/lava/lava.git
   path: doc/v2/examples/test-jobs/standard-armmp-nfs-bbb.yaml
   build-readme: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/armhf/3/debian-stretch-armmp-armhf-readme.html
   build-console: https://ci.linaro.org/view/lava-ci/job/lava-debian-stretch-armmp-armhf/3/console
