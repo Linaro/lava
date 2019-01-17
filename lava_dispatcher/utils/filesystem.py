@@ -200,9 +200,7 @@ def copy_out_files(image, filenames, destination):
         raise InfrastructureError("Unable to prepare guestfs")
     guest.mount_ro(devices[0], "/")
     for filename in filenames:
-        file_buf = guest.read_file(filename)
-        with open(os.path.join(destination, os.path.basename(filename)), "wb") as out:
-            out.write(file_buf)
+        guest.copy_out(filename, destination)
     guest.shutdown()
 
 

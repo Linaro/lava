@@ -119,7 +119,6 @@ debian_installer = {  # pylint: disable=invalid-name
         "ERROR: Failed to retrieve the preconfiguration file",
         "Press enter to continue",
         "reboot: Power down",
-        "Requesting system poweroff",
     ],
     # for lava-test-shell
     "distro": "debian",
