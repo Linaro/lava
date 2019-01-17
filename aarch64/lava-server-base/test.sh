@@ -3,6 +3,7 @@
 set -e
 
 echo "Install git"
+apt-get update
 apt-get install --no-install-recommends --yes git
 echo "done"
 echo
