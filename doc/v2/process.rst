@@ -9,15 +9,38 @@ The LAVA development process is based on git. The various source code
 repositories are hosted on `the lavasoftware GitLab instance
 <https://git.lavasoftware.org/>`_.
 
-Most of the LAVA development work is done by the members of the Linaro
-Validation Team. The code is all Free and Open Source Software, and we welcome
-third party contributions and new team members.
+The LAVA team is spread geographically around the world, with members
+in multiple countries. We can often be found talking on our IRC
+channel ``#lavasoftware`` on ``irc.freenode.net``.
 
-Our team is spread geographically around the world, with members in multiple
-countries. We are usually talking on our IRC channel ``#linaro-lava`` on
-``irc.freenode.net``.
+The LAVA codebase is all Free and Open Source Software, and we welcome
+third party contributions and new team members. Developers are
+recommended to join us on the :ref:`lava_devel` mailing list to
+discuss development ideas and issues.
 
 .. seealso:: :ref:`getting_support`
+
+.. index:: lava design meeting
+
+.. _lava_design_meeting:
+
+Design meeting
+^^^^^^^^^^^^^^
+
+The LAVA design meeting is where the team gets together to work out
+deep technical issues, and to agree on future development goals and
+ideas. We set priorities for core LAVA development here, and agree on
+what will go into upcoming releases.
+
+We hold this meeting weekly every Wednesday at 13:00 to 14:00 UTC as a
+video conference using Google Hangouts Meet:
+https://meet.google.com/qre-rgen-zwc . Summaries of the discussions
+are posted to the :ref:`lava_devel` mailing list afterwards for the
+benefit of those unable to attend.
+
+If you wish to attend to discuss an issue, it is worth mentioning it
+in advance on the mailing list first so that your topic is expected
+and can be added to the agenda.
 
 .. _lava_release_process:
 
