@@ -186,7 +186,8 @@ def _job_interactive_schema():
         {
             Required("interactive"): _interactive_def_schema(),
             Optional("timeout"): _timeout_schema(),
-        }
+        },
+        extra=True,
     )
 
 
