@@ -212,7 +212,8 @@ files.
    any new code can be merged, including building working packages
    containing the new support.
 
-.. seealso:: :ref:`quick_fixes` and :ref:`testing_pipeline_code`
+.. seealso:: :ref:`developer_python3`, :ref:`quick_fixes` and
+   :ref:`testing_pipeline_code`
 
 .. index:: code locations
 

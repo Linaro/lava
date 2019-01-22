@@ -383,7 +383,7 @@ From August 2015, LAVA uses git tags without a leading zero on the
 month number, in accordance with PEP440, so the git tag will be
 ``2015.8`` instead of ``2015.07`` used for the previous release tag.
 
-.. index:: developer: python3 dependencies
+.. index:: developer: python3 dependencies, developer: requirements
 
 .. _developer_python3:
 
@@ -392,7 +392,7 @@ Development using Python3
 
 LAVA has moved to exclusive Python3 support as the final stage of the
 migration to V2. See
-<https://lists.lavasoftware.org/pipermail/lava-announce/2017-June/000032.html>`_
+https://lists.lavasoftware.org/pipermail/lava-announce/2017-June/000032.html
 
 Both lava-server and lava-dispatcher only support running the unit tests with
 Python3. **All** reviews **must** pass the unit tests when run with Python3.
@@ -400,34 +400,47 @@ Python3. **All** reviews **must** pass the unit tests when run with Python3.
 Builds for Debian Jessie have ceased, support for Python2 has been dropped and
 **only** Python3 is be supported.
 
-Python3 dependencies include:
+Python3 and other dependencies are tracked using files in
+``share/requirements`` using the ``./share/requires.py`` script.
+Required arguments are:
 
- python3-django (>= 1.8), python3-django-auth-ldap (>= 1.1.8),
- python3-django-restricted-resource (>= 2015.09),
- python3-django-tables2 (>=1.2), python3-docutils, python3-jinja2,
- python3-psycopg2, python3-simplejson,
- python3-voluptuous (>= 0.8.8), python3:any (>= 3.3.2-2~),
- python3-configobj, python3-magic, python3-netifaces (>=0.10.0),
- python3-nose, python3-pexpect (>= 4.2), python3-pyudev (>= 0.21),
- python3-requests, python3-serial, python3-setproctitle (>= 1.1.8),
- python3-tz, python3-yaml, python3-zmq, python3-guestfs (>= 1.32.7)
+.. code-block:: none
+
+  -d, --distribution    Name of a distribution directory in ./share/requirements
+  -s, --suite           Name of a suite in the specified distribution directory
+  -p, --package         A LAVA package name in the distribution and suite
+
+Optional arguments are:
+
+.. code-block:: none
+
+  -n, --names           List the distribution package names
+  -u, --unittests       Distribution package names for unittest support -
+                        requires --names
+
+.. code-block:: none
+
+ ./share/requires.py --distribution debian --suite buster --package lava-dispatcher --names
+ python3-configobj python3-guestfs python3-jinja2 python3-magic 
+ python3-netifaces python3-nose python3-pexpect python3-pyudev 
+ python3-requests python3-setproctitle python3-tz python3-yaml
+ python3-zmq
+
+.. seealso:: :ref:`developer_workflow` and :ref:`running_black`
 
 .. _quick_fixes:
 
 Quick fixes and testing
 ***********************
 
-The paths to execute LAVA python scripts have changed and developing LAVA based
-on packages has a different workflow.
+The paths to execute LAVA python scripts and run unit tests have
+changed and developing LAVA based on packages has a different workflow.
 
 Modified files can be copied to the equivalent python path. The current LAVA
 packages use python3, so the path is beneath
 ``/usr/lib/python3/dist-packages/`` with sudo::
 
  $ sudo cp <git-path> /usr/lib/python3/dist-packages/<git-path>
-
-.. warning:: To fix failures in the Python3 unit tests, the **same** change
-   will also need to be copied to ``/usr/lib/python3/dist-packages/``.
 
 Viewing changes
 ***************
