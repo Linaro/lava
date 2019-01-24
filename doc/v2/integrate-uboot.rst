@@ -101,6 +101,45 @@ after each command is sent to the bootloader.
 Many U-Boot configurations use the same prompt strings as the defaults
 in ``base-uboot.jinja2``, as shown above.
 
+.. _uboot_interrupting:
+
+Interrupting U-Boot
+===================
+
+The default behavior when interrupting U-Boot is to send a single newline
+character. This behavior is controlled with the following variables:
+
+.. code-block:: jinja
+
+  interrupt_char: "{{ interrupt_char | default('') }}"
+  interrupt-newline: {{ uboot_interrupt_newline | default(True) }}
+
+If U-Boot requires a special character, set ``interrupt_char`` accordingly. For
+example, set to SPACE by setting the following in the device template.
+
+.. code-block:: jinja
+
+  {% set uboot_interrupt_character = ' ' %}
+
+If ``interrupt_char`` is used, LAVA will still send it followed by a newline.
+To prevent the newline from being sent, disable ``uboot_interrupt_newline``.
+
+.. code-block:: jinja
+
+  {% set uboot_interrupt_newline = False %}
+
+.. _uboot_interrupting_troubleshooting:
+
+Troubleshooting Interrupting U-Boot
+-----------------------------------
+
+An extra newline during U-Boot interruption can cause LAVA to send U-Boot
+commands before the previous command completes. The error message ``*** ERROR:
+`serverip' not set`` may be seen, due to the delay of the ``dhcp`` command,
+which preceeds the ``setenv serverip`` command, causing the latter to be sent
+too soon. If U-Boot interrupt does not need a newline to be sent, set
+uboot_interrupt_newline to False in the device template.
+
 .. _uboot_load_addresses:
 
 Load addresses

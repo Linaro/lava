@@ -81,6 +81,7 @@ constants:
     interrupt-prompt: '{{ uboot_autoboot_prompt | default("Hit any key to stop autoboot") }}'
     interrupt-character: '{{ uboot_interrupt_character | default(" ") }}'
     interrupt_ctrl_list: {{ interrupt_ctrl_list  | default([]) }}
+    interrupt-newline: {{ uboot_interrupt_newline | default(True) }}
     final-message: '{{ uboot_final_message | default("Starting kernel") }}'
     error-messages:
       - 'Resetting CPU'
