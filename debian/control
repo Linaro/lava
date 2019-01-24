@@ -97,7 +97,8 @@ Depends: lava-server (>= ${source:Version}), lava-server-doc,
  lavacli, lavapdu-client, ntp | ntpdate, tftpd-hpa, sudo,
  telnet, debootstrap (>= 1.0.86~),
  openssh-client, lxc (>= 1:2.0.6), rsync, bridge-utils, ${misc:Depends}
-Recommends: lavapdu-daemon, schroot, img2simg, simg2img, docker.io
+Recommends: lavapdu-daemon, schroot, img2simg, simg2img, docker.io,
+ python3-docker
 Description: Linaro Automated Validation Architecture metapackage
  LAVA is a continuous integration system for deploying operating
  systems onto physical and virtual hardware for running tests.

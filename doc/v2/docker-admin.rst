@@ -21,11 +21,13 @@ Prerequisites
 #. Ensure that your docker installation has created a suitable
    network bridge (often called ``docker0``).
 
+   .. seealso:: :ref:`docker_networking`
+
 #. Not all docker images are available for all architectures. LAVA
    has support for amd64 and arm64 docker images.
 
-   .. seealso:: :ref:`docker_networking`
-
+Using LAVA with Docker is also a regular topic of discussion on the 
+:ref:`lava_devel` mailing list.
 
 https://docs.docker.com/engine/reference/commandline/run/
 
@@ -144,6 +146,15 @@ or
 Command lines
 *************
 
+The use of docker with LAVA is an active area of development, including 
+how to configure containers for a variety of situations and how to 
+manage a LAVA lab where docker is in use. If you are doing work in 
+this area, please subscribe to the :ref:`lava_devel` mailing list and 
+ask for advice on how to use LAVA and docker for your use case.
+
+POSIX shell
+===========
+
 Command lines get long, so use wrapper scripts, e.g.:
 
 .. code-block:: none
@@ -158,6 +169,32 @@ Command lines get long, so use wrapper scripts, e.g.:
  -e "MASTER_URL=tcp://calvin:5556" \
  --name calvin-docker-88-3 \
  hub.lavasoftware.org/lava/lava/lava-dispatcher/master:2018.7-88-ga7b7939dd
+
+Python
+======
+
+If you are using docker for more than a few test containers, you will
+probably find the Python docker SDK library very useful.
+
+* Debian (stretch-backports and later)
+  ``apt install python3-docker``
+  https://packages.debian.org/unstable/python3-docker - If you install
+  the full ``lava`` set on Debian Buster or newer, ``python3-docker``
+  and ``docker.io`` will be installed by the ``lava`` metapackage.
+
+* GitHub https://github.com/docker/docker-py
+
+* Documentation: https://docker-py.readthedocs.io/en/stable/
+
+The Python Docker SDK lets you do anything the docker command does, 
+but from within Python apps – run containers, manage containers, manage 
+Swarms, etc.
+
+.. code-block:: python
+
+  import docker
+  client = docker.from_env()
+  container_id = client.containers.run("debian", detach=True)
 
 Supporting encryption
 *********************
