@@ -1,3 +1,155 @@
+lava (2019.01-1) unstable; urgency=medium
+
+  * 2019.01-1 LAVA Software 2019.01 release
+    ec7875b05 Enhance the Docker admin documentation
+    ffe2c0751 Build architecture aware docker images
+    e0c651aae Update docs for development changes
+    c0eeb4b28 schema: allow for namespaces with interactive tests
+    aa94f3ac4 Allow to set uboot_needs_interrupt in the device dict
+    79fb10a12 Fix debian installer deploy method
+    8b6b53be0 Allow to set fastboot deploy uboot commands
+    3975eb4f4 doc: add documentation about x15-bl device-type
+    b87dc6816 scheduler: add x15-bl device type
+    5d8227c91 scheduler: add recovery support for base-uboot.jinja2
+    4ddd44ad6 Tweak the development process doc
+    2bbf5c6e5 Update git repository links
+    1a9f51494 Drop bashism in vland helper scripts
+    7ebb3feab Retrieve the vland version in the protocol
+    f2f933399 Improve docs on health check setup actions
+    1e596b6ff Improve server|logs|publisher command line parser
+    68dd8ff79 device-types: allow to set boot_character_delay in device dict
+    92fa46213 scheduler: randomise the device list
+    c0c3eb0ef lava-modules.conf should be in /etc/modprobe.d/
+    2412366c9 Fix sample jobs timeouts
+    68edafac9 CI: install minicom for mps2plus tests
+    f3cbdac58 Add lava-server manage command for site
+    cc16e4b38 mps2: fix validation and documentation
+    32d18fa3b device-types: add rzn1 template
+    7a992201c device-types: qemu: Add support for MIPS/PPC/PPC64
+    e114b354e qemu: Remove root_partition from sample jobs
+    407d857f9 Fix sample job syntax
+    049eb5afc sample jobs: move kernel type to the deploy action
+    25f37dc62 vemsd: recovery_image is mandatory
+    596aa3b29 Enforce realpath for which check
+    68b8e54b1 doc: add information about SQUAD to custom-results-handling
+    1282c4a25 Remove leftover from py2 to py3 conversion
+    dd76f0797 Add voluptuous to lava-common dependencies
+    8041e1012 Rework interactive test
+    f6bb9de2f Improve job page rendering with large jobs
+    e9fa46977 Improve schema validator and move to lava_common
+    f116ef3af Add check-devices.py to lava-dev
+    02e4d9e88 Fix sample jobs syntax
+    b4d84f82f Drop default patterns and fixup dicts
+    9fbcca0e4 Separate device and device-type as distinct types
+    fb4d5785e Action: name is a class variable
+    e990310e0 Remove deprecated functions since django 1.9
+    eb25d433e Reorder middlewares according to django default config
+    ebf17cbe6 Remove deprecated module
+    8a317b0b2 Record JobError in validate()
+    3bc657e7b Fix sample jobs syntax
+    b7eb162a1 Ensure lxc-templates is installed
+    a3524ce9a Expand minimal configuration for connections
+    ef2fa8594 Results table: decrease the number of sql queries
+    4df8e8464 Handle downloads using "Content-Encoding: gzip"
+    f37c03159 Move sample job to the right directory
+    37a2fe7fa Remove "connection" from job definition
+    d70e2623c Add checks for the connection type
+    5260ae1b9 doc: fix broken links
+    33918bcb4 Update ./ci-run for lava_common/tests change
+    5af8543b1 Simplify docker boot command line build
+    f6be3692c Update emphasis lines of literalinclude blocks
+    da1d472b5 Fix problems with the purge maintainer script
+    28afc08eb Remove add-header mentions
+    832fb942b Use render() shortcut
+    7ef4ac466 Fix bandit warnings after black formatting
+    d483d94a5 Make flasher deploy retriable
+    7f3e23ee1 Do not add yaml_line to the job definition
+    c76620a55 sample jobs: remove mkimage_arch
+    5be4be588 Move test_info to the job level
+    9eb721166 'nfs_url' option does not exist anymore
+    7c347e04e Fix the increased SAST count from formatting changes
+    017285ce5 Remove outdated README file
+    b471ee62f Unify test directory name
+    46f298251 fix prospector warnings
+    f7973476b Final black changes for lava_dispatcher
+    6cae9e765 CI: fix black check
+    816a47b9b Fix typo in check-devices error message
+    bc844be5c Apply black to lava_dispatcher
+    40e6a25f8 Apply black to lava/
+    93a70fcfc Update restore instructions
+    4ef3b776a Test repeat fix
+    01432ba06 Convert test_repeat to pytest
+    f9e782cc8 Fix repeat logic
+    72d563661 Update advice on restoring backups
+    bee7cc6da Update documentation example to use correct syntax
+    71276203a Fix inline example test job indent error
+    3d8cd9e88 Advise on upgrading python dependencies
+    e22dbf0c3 Fix states in maintenance.py
+    2cf6b51ab interactive: allow to only wait, not sending any command
+    bfb7cb47c Fix test stages computation when mixing test types
+    8bdc42ef3 Make StdoutTestCase.pipeline_reference a class method
+    989b21688 Search the queue by requested_device_type
+    32a4c821b notification: protect against potential crashes
+    b7254aec6 XMLRPC-API: decrease the number of sql requests
+    e65cfdc09 device-types: qemu: Add support for SPARC/SPARC64/MIPS64
+    ade4b7e0c Apply black to lava_scheduler_app
+    95aa92f9f Apply black to doc/
+    54c18a449 Apply black to share/, setup.py and version.py
+    c74c15d06 Simplify black listing
+    fd04401a9 Apply black to lava_results_app
+    8f100d82b Apply black to lava_server
+    7aa96e077 Apply black to lava_common
+    5e6e902fa Update documentation for new test action support
+    bfa253f9b Document the docker deploy
+    84d202b28 Device table: tag with <i> when worker is undefined.
+    009e21b53 doc: explain how to serve LAVA under /lava
+    d86d457f7 device-types: add meson-gxl-s805x-p241
+    8fb830b3d REST API: allow to export results in JUnit and TAP13
+    b50800bfc Add a new test method for non-posix shells
+    ce2627669 Let udev_trigger use the network from udev
+    172c6f22c Add a new boot method called "bootloader"
+    4e7248342 Add a qemu-aarch64 device-type
+    c715f5252 lava_results_app: fix exception when no action_metadata
+    229242900 Fix deprecation warnings
+    6cc1c7966 Set ProxyPreserveHost on.
+    b801a30f4 Create an out-of-tree symlink for djangorestframework
+    e6678963c Fix rest_framework static symlink
+    cac2cbb7f Allow dependencies of reprepro-master on schedules
+    438e23cab Enable reprepro-master
+    9788877eb checks: log an error when settings.conf is invalid
+    ad6a2c61d CI: only run deploy jobs for scheduled jobs
+    f4530df6b TC2 device jinja changes
+    349ee8175 Remove unused command migrate-lava
+    6690af7cf CI: skip some tests when lxc-start is not installed
+    cd7d9e21b Fix crash if dpkg-query does not know about a file
+    b9cb118ef Add docs on vemsd and mps deployments
+    d0fd22894 Update the docker-admin page for new links
+    9bac98720 REST API reduce the number of SQL requests
+    4bfad2969 Copy lava-lxc-mocker in the publish stage
+    dacd2a41c Fix lava_rest_app support in ci-run
+    421e5283d CI: use new sast syntax
+    0d75252a4 Apply black to lava_server files
+    b28764d28 Fix unit test exception handling
+    8e38d322e Add REST API for LAVA
+    5a55d6646 Update the release repository only on a tag
+    b55b1c1ba Report the version of tools
+    3e8f0eb5e Replace with a more pythonic way.
+    cef780613 Fix doc typo causing build error.
+    62150f062 Apply black to all migrations
+    7d040ca09 Optimise to reduce the compare cost.
+    688df87de Fix: MPS Serial Buffer
+    8a3d6a587 monitor: fix accepts logic
+    ade6320a2 Replace the expired job link with a valid one.
+    bfa558f30 CI build aarch64 docker image using debian 10
+    ef1c54427 Make navbar and userlinks seperate templates
+    9270725c9 Correct the path of file "commands.py"
+    4e7d05696 Tidy up ci-run
+    73d3a74a4 Ensure sample_jobs validate against the schema
+    0be0739ab Extend timeouts of example test jobs
+    b024c2c69 Skip OverlayAction if the overlay is not needed
+
+ -- Steve McIntyre <93sam@debian.org>  Thu, 24 Jan 2019 11:43:27 +0000
+
 lava (2018.11-1) unstable; urgency=medium
 
   * 2018.11-1 LAVA Software 2018.11 release
