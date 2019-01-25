@@ -67,19 +67,23 @@ server-debian-10: *server
 ###########
 # Analyze #
 ###########
-black:
+.analyze: &analyze
   <<: *job
   stage: analyze
+  except:
+    refs:
+    - tags
+
+black:
+  <<: *analyze
   image: hub.lavasoftware.org/lava/ci-images/amd64/codestyle
 
 codestyle:
-  <<: *job
-  stage: analyze
+  <<: *analyze
   image: hub.lavasoftware.org/lava/ci-images/amd64/codestyle
 
 coverage:
-  <<: *job
-  stage: analyze
+  <<: *analyze
   image: hub.lavasoftware.org/lava/ci-images/amd64/server-debian-9
   coverage: '/^TOTAL.+ (\d+\.\d+)%$/'
   artifacts:
@@ -88,7 +92,6 @@ coverage:
   only:
     refs:
     - master
-    - tags
 
 sast:
   <<: *dind
@@ -97,6 +100,9 @@ sast:
   artifacts:
     reports:
       sast: gl-sast-report.json
+  except:
+    refs:
+    - tags
 
 #########
 # Build #
