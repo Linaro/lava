@@ -33,4 +33,5 @@ COPY settings.conf /etc/lava-server/settings.conf
 
 # Install the entry point
 COPY entrypoint.sh /root/
+RUN mkdir /root/entrypoint.d
 ENTRYPOINT ["/root/entrypoint.sh"]

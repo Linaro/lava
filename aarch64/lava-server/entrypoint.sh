@@ -152,6 +152,11 @@ start_lava_master
 echo "done"
 echo
 
+for f in /root/entrypoint.d/*; do
+    echo "$0: running ${f}"
+    "${f}"
+done
+
 ################
 # Wait forever #
 ################

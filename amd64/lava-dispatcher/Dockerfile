@@ -17,4 +17,5 @@ RUN dpkg -i /tmp/dispatcher.deb && \
 
 # Install the entry point
 COPY entrypoint.sh /root/
+RUN mkdir /root/entrypoint.d
 ENTRYPOINT ["/root/entrypoint.sh"]
