@@ -1308,7 +1308,7 @@ def job_detail(request, pk):
                 for t in TestCase.objects.filter(suite__job=job).select_related("suite")
             }
             # list all related results
-            for line in [line for line in log_data if line["msg"] == "results"]:
+            for line in [line for line in log_data if line["lvl"] == "results"]:
                 key = (line["msg"].get("definition"), line["msg"].get("case"))
                 if key in results:
                     line["msg"]["case_id"] = results[key]
