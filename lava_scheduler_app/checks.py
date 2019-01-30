@@ -146,6 +146,57 @@ def check_packaging(app_configs, **kwargs):
     return errors
 
 
+def find_our_daemons():
+    """
+    Allow check that all daemons are running without relying
+    on systemd which cannot connect to DBus in Docker.
+    """
+    daemons = {
+        "lava-server-gunicorn": None,
+        "lava-master": None,
+        "lava-logs": None,
+        "lava-publisher": None,
+        "lava-slave": None,
+    }
+
+    for dirname in os.listdir("/proc"):
+        if dirname == "curproc":
+            continue
+
+        try:
+            with open("/proc/{}/cmdline".format(dirname), mode="rb") as fd:
+                content = fd.read().decode().split("\x00")
+        except Exception:  # nosec bare except ok here.
+            continue
+
+        if "gunicorn: master [lava_server.wsgi]" in content[0]:
+            daemons["lava-server-gunicorn"] = "%s" % dirname
+            continue
+        elif "/usr/bin/gunicorn3" in content[1] and "lava_server.wsgi" in content[2]:
+            daemons["lava-server-gunicorn"] = "%s" % dirname
+            continue
+
+        if "python3" not in content[0]:
+            continue
+
+        if "/usr/bin/lava-server" in content[1]:
+            if "manage" not in content[2]:
+                continue
+            if "lava-master" in content[3]:
+                daemons["lava-master"] = "%s" % dirname
+            elif "lava-logs" in content[3]:
+                daemons["lava-logs"] = "%s" % dirname
+            elif "lava-publisher" in content[3]:
+                daemons["lava-publisher"] = "%s" % dirname
+            continue
+
+        if "/usr/bin/lava-slave" in content[1]:
+            daemons["lava-slave"] = "%s" % dirname
+            continue
+
+    return daemons
+
+
 @register(deploy=True)
 def check_services(app_configs, **kwargs):
 
@@ -160,25 +211,42 @@ def check_services(app_configs, **kwargs):
     ]
     optional = ["lava-slave"]
 
-    for service in services:
-        try:
-            subprocess.check_call(  # nosec system
-                ["systemctl", "-q", "is-active", service]
-            )
-        except subprocess.CalledProcessError:
-            errors.append(
-                Error("%s service is not active." % service, obj="lava service")
-            )
+    # identify command line of PID 1
+    if "/lib/systemd/systemd" in os.readlink("/proc/1/exe"):
+        # we can call systemctl
+        for service in services:
+            try:
+                subprocess.check_call(  # nosec system
+                    ["systemctl", "-q", "is-active", service]
+                )
+            except subprocess.CalledProcessError:
+                errors.append(
+                    Error("%s service is not active." % service, obj="lava service")
+                )
 
-    for service in optional:
-        try:
-            subprocess.check_call(  # nosec system
-                ["systemctl", "-q", "is-active", service]
-            )
-        except subprocess.CalledProcessError:
-            errors.append(
-                Info("%s service is not active." % service, obj="lava service")
-            )
+        for service in optional:
+            try:
+                subprocess.check_call(  # nosec system
+                    ["systemctl", "-q", "is-active", service]
+                )
+            except subprocess.CalledProcessError:
+                errors.append(
+                    Info("%s service is not active." % service, obj="lava service")
+                )
+    else:
+        # systemd is not PID 1, check /proc directly.
+        daemons = find_our_daemons()
+        for key, value in daemons.items():
+            if key in services:
+                if not value:
+                    errors.append(
+                        Error("%s daemon is not active." % key, obj="lava daemon")
+                    )
+            if key in optional:
+                if not value:
+                    errors.append(
+                        Info("%s daemon is not active." % key, obj="lava daemon")
+                    )
     return errors
 
 
