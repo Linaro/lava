@@ -3,7 +3,7 @@ device_type: mustang
 job_name: test secondary media commands
 timeouts:
   job:
-    minutes: 10
+    minutes: 45
   action:
     minutes: 5
   connection:

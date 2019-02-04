@@ -3,7 +3,7 @@ device_type: qemu
 job_name: QEMU NFS example
 timeouts:
   job:
-    minutes: 5
+    minutes: 15
   action:
     minutes: 1
 

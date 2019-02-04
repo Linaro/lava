@@ -949,6 +949,8 @@ class Action:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         if not isinstance(timeout, dict):
             raise JobError("Invalid timeout %s" % str(timeout))
         self.timeout.duration = Timeout.parse(timeout)
+        if self.timeout.duration > self.job.timeout.duration:
+            raise JobError("Action timeout for %s exceeds Job timeout" % self.name)
 
     def _override_connection_timeout(self, timeout):
         """

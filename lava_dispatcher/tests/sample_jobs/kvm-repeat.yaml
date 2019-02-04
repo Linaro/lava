@@ -1,6 +1,10 @@
 device_type: qemu
 job_name: kvm-repeat
 
+timeouts:
+  job:
+    minutes: 30
+
 actions:
 
     - deploy:

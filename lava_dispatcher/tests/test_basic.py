@@ -469,6 +469,7 @@ class TestPipeline(StdoutTestCase):  # pylint: disable=too-many-public-methods
         """
         factory = Factory()
         job = factory.create_kvm_job("sample_jobs/kvm.yaml")
+        self.assertIsNotNone(job)
         pipe = job.describe()
         self.assertEqual(pipe["compatibility"], DeployImages.compatibility)
         self.assertEqual(job.compatibility, DeployImages.compatibility)

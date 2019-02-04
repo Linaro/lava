@@ -46,6 +46,6 @@ protocols:
 timeouts:
   action: {minutes: 30}
   connection: {minutes: 30}
-  job: {minutes: 30}
+  job: {minutes: 90}
 visibility: public
 
