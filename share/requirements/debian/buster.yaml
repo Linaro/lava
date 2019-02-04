@@ -46,6 +46,7 @@ lava-server:
     name: python3-voluptuous
   junit.xml:
     name: python3-junit.xml
+    version: ">=1.8"
   guestfs:
     name: python3-guestfs
     unittests: true

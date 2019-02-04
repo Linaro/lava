@@ -43,6 +43,7 @@ lava-server:
     name: python3-simplejson
   junit.xml:
     name: python3-junit.xml
+    version: ">=1.8"
   voluptuous:
     version: ">=0.8.8"
     name: python3-voluptuous
