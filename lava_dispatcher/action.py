@@ -597,7 +597,7 @@ class Action:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         start = time.time()
         # TODO: when python >= 3.6 use encoding and errors
         # see https://docs.python.org/3.6/library/subprocess.html#subprocess.Popen
-        proc = subprocess.Popen(
+        proc = subprocess.Popen(  # nosec - managed
             command_list,
             cwd=cwd,
             stdout=subprocess.PIPE,
@@ -669,8 +669,8 @@ class Action:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         command_list = ["nice"] + [str(s) for s in command_list]
         self.logger.debug("%s", " ".join(command_list))
         try:
-            log = subprocess.check_output(
-                command_list, stderr=subprocess.STDOUT, cwd=cwd  # nosec - internal
+            log = subprocess.check_output(  # nosec - managed
+                command_list, stderr=subprocess.STDOUT, cwd=cwd
             )
             log = log.decode("utf-8", errors="replace")
         except subprocess.CalledProcessError as exc:
