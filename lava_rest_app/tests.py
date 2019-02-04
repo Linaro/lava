@@ -19,6 +19,7 @@
 
 import json
 import pytest
+import tap
 import yaml
 
 from django.urls import reverse
@@ -281,6 +282,31 @@ class TestRestApi:
             + "jobs/%s/tests/" % self.public_testjob1.id,
         )
         assert len(data["results"]) == 2  # nosec - unit test support
+
+    def test_testjob_tap13(self):
+        data = self.hit(
+            self.userclient,
+            reverse("api-root", args=[self.version])
+            + "jobs/%s/tap13/" % self.public_testjob1.id,
+        )
+        if hasattr(tap.tracker.Tracker, "set_plan"):
+            assert (
+                data
+                == """TAP version 13
+1..2
+# TAP results for lava
+not ok 1 foo
+ok 2 bar
+"""
+            )
+        else:
+            assert (
+                data
+                == """# TAP results for lava
+not ok 1 - foo
+ok 2 - bar
+"""
+            )
 
     def test_devicetypes(self):
         data = self.hit(
