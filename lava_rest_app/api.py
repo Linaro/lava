@@ -210,10 +210,11 @@ class TestJobViewSet(viewsets.ReadOnlyModelViewSet):
             for case in suite.testcase_set.all().order_by("id"):
                 # Grab the duration
                 md = case.action_metadata
+                duration = None
                 if md is not None:
                     duration = md.get("duration")
-                if duration is not None:
-                    duration = float(duration)
+                    if duration is not None:
+                        duration = float(duration)
 
                 # Build the test case junit object
                 tc = junit_xml.TestCase(

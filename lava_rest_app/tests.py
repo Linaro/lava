@@ -283,6 +283,40 @@ class TestRestApi:
         )
         assert len(data["results"]) == 2  # nosec - unit test support
 
+    def test_testjob_junit(self):
+        data = self.hit(
+            self.userclient,
+            reverse("api-root", args=[self.version])
+            + "jobs/%s/junit/" % self.public_testjob1.id,
+        )
+        lines = data.rstrip("\n").split("\n")
+        assert len(lines) == 9  # nosec - unit test support
+        assert (  # nosec - unit test support
+            lines[0] == """<?xml version="1.0" encoding="utf-8"?>"""
+        )
+        assert (  # nosec - unit test support
+            lines[1]
+            == """<testsuites disabled="0" errors="1" failures="0" tests="2" time="0.0">"""
+        )
+        assert (  # nosec - unit test support
+            lines[2]
+            == """	<testsuite disabled="0" errors="1" failures="0" name="lava" skipped="0" tests="2" time="0">"""
+        )
+        assert lines[3].startswith(  # nosec - unit test support
+            """		<testcase classname="lava" name="foo" timestamp="""
+        )
+        assert lines[3].endswith('">')  # nosec - unit test support
+        assert (  # nosec - unit test support
+            lines[4] == """			<error message="failed" type="error"/>"""
+        )
+        assert lines[5] == """		</testcase>"""  # nosec - unit test support
+        assert lines[6].startswith(  # nosec - unit test support
+            """		<testcase classname="lava" name="bar" timestamp="""
+        )
+        assert lines[6].endswith('"/>')  # nosec - unit test support
+        assert lines[7] == """	</testsuite>"""  # nosec - unit test support
+        assert lines[8] == """</testsuites>"""  # nosec - unit test support
+
     def test_testjob_tap13(self):
         data = self.hit(
             self.userclient,
