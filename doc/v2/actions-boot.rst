@@ -588,6 +588,26 @@ lxc
 
 .. _boot_method_pyocd:
 
+
+.. index:: boot method minimal
+
+.. _boot_method_minimal:
+
+minimal
+=======
+
+The ``minimal`` method is used to power-on the :term:`DUT` and to let the
+:term:`DUT` boot without any interaction.
+
+.. code-block:: yaml
+
+    method: minimal
+    prompts:
+    - 'root@debian:~#'
+    - '/ #'
+
+.. note:: auto-login and transfer_overlay are both supported for this method.
+
 pyocd
 =====
 
