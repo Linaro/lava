@@ -354,15 +354,19 @@ class TestShellAction(TestAction):
             raise TestError(self.errors)
         return connection
 
-    def pattern_error(self, test_connection):
-        (testrun,) = test_connection.match.groups()
+    def pattern_error(self):
+        stage = self.parameters["stage"]
         self.logger.error(
-            "Unable to start testrun %s. " "Read the log for more details.", testrun
+            "Unable to start stage %s. " "Read the log for more details.", stage
         )
-        self.errors = "Unable to start testrun %s" % testrun
+        self.errors = "Unable to start test stage %s" % stage
         # This is not accurate but required when exiting.
         self.start = time.time()
-        self.current_run = {"definition": "lava", "case": testrun, "result": "fail"}
+        self.current_run = {
+            "definition": "lava",
+            "case": "stage_%d" % stage,
+            "result": "fail",
+        }
         return True
 
     def signal_start_run(self, params):
@@ -618,7 +622,7 @@ class TestShellAction(TestAction):
 
         elif event == "error":
             # Parsing is not finished
-            ret_val = self.pattern_error(test_connection)
+            ret_val = self.pattern_error()
 
         elif event == "eof":
             self.testset_name = None
