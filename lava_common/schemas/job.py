@@ -71,6 +71,11 @@ def notify():
     }
 
 
+def extra_checks(data):
+    check_job_timeouts(data)
+    check_secrets_visibility(data)
+
+
 def check_job_timeouts(data):
     job_duration = Timeout.parse(data["timeouts"]["job"])
 
@@ -106,6 +111,11 @@ def check_job_timeouts(data):
         _check_timeout("Action", ["actions", str(index)], t)
 
 
+def check_secrets_visibility(data):
+    if "secrets" in data and data["visibility"] == "public":
+        raise Invalid('When using "secrets", visibility shouldn\'t be "public"')
+
+
 def schema():
     lava_lxc = {
         Required("name"): str,
@@ -135,7 +145,7 @@ def schema():
             Optional("metadata"): {str: object},
             Optional("priority"): Any("high", "medium", "low", Range(min=0, max=100)),
             Optional("tags"): [str],
-            Optional("secrets"): dict,  # FIXME: validate that job is not public
+            Optional("secrets"): dict,
             Optional("visibility"): Any("public", "personal", {"group": [str]}),
             Optional("protocols"): {
                 Optional("lava-lxc"): Any(lava_lxc, {str: lava_lxc}),
@@ -175,5 +185,5 @@ def schema():
             Optional("reboot_to_fastboot"): bool,
             Required("actions"): [{Any("boot", "command", "deploy", "test"): dict}],
         },
-        check_job_timeouts,
+        extra_checks,
     )
