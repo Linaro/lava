@@ -14,9 +14,9 @@ Files: lava_dispatcher/*  lava/coordinator/*
  lava_common/*
  lava_scheduler_app/tests/test_scheduler.py
  lava_scheduler_app/tests/test_state_machine.py
+ lava_server/debian_sso.py
  share/create_certificate.py
  share/render-template.py
- share/check-devices.py
  share/lava_lxc_device_add.py
  share/dev.py
 Copyright: 2010-2018, Linaro Limited
