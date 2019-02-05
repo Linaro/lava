@@ -385,6 +385,7 @@ class AutoLoginAction(Action):
                 self.logger.debug("Running login commands")
                 for command in login_commands:
                     connection.sendline(command)
+                    connection.wait()
 
         return connection
 
@@ -733,7 +734,6 @@ class OverlayUnpack(Action):
         connection = super().run(connection, max_end_time)
         if not connection:
             raise LAVABug("Cannot transfer overlay, no connection available.")
-        ip_addr = dispatcher_ip(self.job.parameters["dispatcher"])
         overlay_full_path = self.get_namespace_data(
             action="compress-overlay", label="output", key="file"
         )
@@ -745,11 +745,18 @@ class OverlayUnpack(Action):
             )
         overlay_path = overlay_full_path[len(DISPATCHER_DOWNLOAD_DIR) + 1 :]
         overlay = os.path.basename(overlay_path)
-        dwnld = self.parameters["transfer_overlay"]["download_command"]
-        dwnld += " http://%s/tmp/%s" % (ip_addr, overlay_path)
+        connection.sendline("rm %s" % overlay)
+        connection.wait()
+
+        cmd = self.parameters["transfer_overlay"]["download_command"]
+        ip_addr = dispatcher_ip(self.job.parameters["dispatcher"])
+        connection.sendline("%s http://%s/tmp/%s" % (cmd, ip_addr, overlay_path))
+        connection.wait()
+
         unpack = self.parameters["transfer_overlay"]["unpack_command"]
-        unpack += " " + overlay
-        connection.sendline("rm %s; %s && %s" % (overlay, dwnld, unpack))
+        connection.sendline(unpack + " " + overlay)
+        connection.wait()
+
         return connection
 
 

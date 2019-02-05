@@ -272,6 +272,7 @@ class TestShellAction(TestAction):
         if pre_command_list:
             for command in pre_command_list:
                 connection.sendline(command, delay=self.character_delay)
+                connection.wait()
 
         if lava_test_results_dir is None:
             raise JobError(
@@ -284,6 +285,7 @@ class TestShellAction(TestAction):
             connection.sendline(
                 "export SHELL=%s" % lava_test_sh_cmd, delay=self.character_delay
             )
+            connection.wait()
 
         try:
             feedbacks = []
