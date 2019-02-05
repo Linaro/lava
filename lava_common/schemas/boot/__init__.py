@@ -37,7 +37,7 @@ def auto_login():
             Required("username"): str,
             Required("password_prompt"): str,
             Required("password"): str,
-            Optional("login_commands"): [All(str, Length(min=1))],
+            Optional("login_commands"): [str],
         },
     )
 
