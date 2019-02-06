@@ -110,15 +110,12 @@ class AuthToken(models.Model):
         This also bumps last_used_on if successful
         """
         try:
-            token = cls.objects.get(secret=secret)
-        except cls.DoesNotExist:
-            return None
-        else:
-            if token.user.username != username:
-                return None  # bad username for this secret
+            token = cls.objects.get(user__username=username, secret=secret)
             token.last_used_on = timezone.now()
             token.save()
             return token.user
+        except cls.DoesNotExist:
+            return None
 
 
 def xml_rpc_signature(*sig):
