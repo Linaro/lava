@@ -112,7 +112,7 @@ VLANd support
 
 The "download" button present in the :term:`device dictionary` page is used to
 download a YAML file of the :term:`device dictionary`, which is the equivalent
-of contents returned by `get-pipeline-device-config` in `lava-tool`. This file
+of contents returned by `lavacli devices dict get`. This file
 is not intended for admin support and cannot be used to modify the
 :term:`device dictionary` itself.
 

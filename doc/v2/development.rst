@@ -778,7 +778,7 @@ Unit-tests
 LAVA has set of unit tests which the developers can run on a regular
 basis for each change they make in order to check for regressions if
 any. Most of the LAVA components such as ``lava-server``,
-``lava-dispatcher``, :ref:`lava-tool <lava_tool>` have unit tests.
+``lava-dispatcher``, :ref:`lavacli <lavacli>` have unit tests.
 
 Extra dependencies are required to run the tests. On Debian based
 distributions, you need to install ``lava-dev`` and

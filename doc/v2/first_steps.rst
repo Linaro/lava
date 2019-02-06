@@ -9,7 +9,7 @@ First steps as a user
 .. #
    first-job
    explain_first_job
-   lava-tool
+   lavacli
 
    .. include:: first-job.rsti
    .. include:: lava-tool.rsti

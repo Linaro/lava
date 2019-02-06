@@ -1,5 +1,5 @@
 LAVA makes the test results available directly from the instance,
-without needing to go through ``lava-tool``. The results for any test
+without needing to go through ``lavacli``. The results for any test
 job which the user can view can be downloaded in :abbr:`CSV
 (comma-separated value)` or YAML format.
 

@@ -5,7 +5,7 @@
 Authentication Tokens
 =====================
 
-In order to securely access LAVA resources via XML-RPC APIs using lava-tool or
+In order to securely access LAVA resources via XML-RPC APIs using lavacli or
 XML-RPC clients, users first need to create an authentication token.
 
 .. _note: An authentication token and a username are sufficient to allow any

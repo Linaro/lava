@@ -81,19 +81,19 @@ Command line debugging
 
 * **lava-dispatcher** - The actions of ``lava-slave`` can be replicated
   on the command line. The relevant device configuration can be obtained using
-  ``lava-tool``, e.g.::
+  ``lavacli``, e.g.::
 
-   $ lava-tool get-pipeline-device-config --stdout SERVER DEVICE_HOSTNAME
+   $ lavacli devices dict get --render DEVICE_HOSTNAME
 
-  This config can then be passed to ``lava-dispatch``, in this example in a
+  This config can then be passed to ``lava-run``, in this example in a
   file named ``device.yaml``::
 
-   $ sudo lava-dispatch --target device.yaml --output-dir /tmp/debug/ job.yaml
+   $ sudo lava-run --device device.yaml --output-dir /tmp/debug/ job.yaml
 
   Every job is validated before starting and the validate check can be run
   directly by adding the ``--validate`` option::
 
-   $ sudo lava-dispatch --target device.yaml --validate --output-dir /tmp/debug/ job.yaml
+   $ sudo lava-dispatch --device device.yaml --validate --output-dir /tmp/debug/ job.yaml
 
   The job will not start when ``--validate`` is used - if validation passes,
   the complete pipeline will be described. If errors are found, these will be
@@ -120,7 +120,7 @@ Configuration files
   * to validate the combination of the template with the device
     dictionary content, use::
 
-     $ lava-tool get-pipeline-device-config --stdout SERVER DEVICE_HOSTNAME
+     $ lavacli devices dict get --render DEVICE_HOSTNAME
 
 * **device dictionaries** - ``/etc/lava-server/dispatcher-config/devices``
   These files are specific to each instance and need to be named according to

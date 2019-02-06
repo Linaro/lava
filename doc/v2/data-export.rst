@@ -230,7 +230,7 @@ definition.
      :start-after:       name: smoke-tests
      :end-before:    - repository: https://git.linaro.org/lava-team/lava-functional-tests.git
 
-.. FIXME: change the output to what would be shown by lava-tool wait-job-events or lavacli wait
+.. FIXME: change the output to what would be shown by lavacli wait
 
 ::
 
@@ -273,5 +273,3 @@ wait for the job to start and then monitor it directly as it
 runs. Recent versions of :ref:`lava_tool` support this directly - look
 at its `source code <https://git.linaro.org/lava/lava-tool.git/>`_ if
 you want to do something similar in your own code.
-
-.. FIXME: add example here for lavacli and deprecate the lava-tool example.

@@ -415,16 +415,12 @@ like the following for a nexus 10 device:
      uboot-retry:
        seconds: 60
 
-Use the following :ref:`lava_tool <lava_tool>` command to get the device
+Use the following :ref:`lavacli <lavacli>` command to get the device
 configuration in the command line::
 
-  lava-tool get-pipeline-device-config http://localhost/RPC2 qemu01
+  lavacli --uri http://localhost/RPC2 devices dict get --render qemu01
 
-which will download the device configuration to a file called
-`qemu01_config.yaml`, alternatively the following command can be used in order
-to print the device configuration to stdout::
-
-  lava-tool get-pipeline-device-config http://localhost/RPC2 qemu01 --stdout
+which will download the device configuration and print it to stdout.
 
 Viewing the Device Dictionary
 =============================

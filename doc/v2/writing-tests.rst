@@ -138,7 +138,7 @@ section as follows:
       deps:
           - curl
           - ntpdate
-          - lava-tool
+          - lavacli
 
 Debian and Ubuntu repositories must be signed for the apt package management
 tool to trust them as package sources. To tell the system to trust extra

@@ -35,40 +35,36 @@ Job Submission
 
 Jobs may be submitted to LAVA in one of three ways:
 
-* the command line (using the ``lava-tool`` program); or
+* the command line (using the ``lavacli`` program); or
 * the :ref:`XML-RPC <xml_rpc>` API
 * the :ref:`web UI <web_ui_submit>`
 
-.. note:: ``lava-tool`` is a general-purpose command line interface for LAVA
-   which can be used directly on the LAVA server machines and also remotely on
-   any computer running a Debian-based distribution. See :ref:`lava_tool` for
-   more information.
-
-.. seealso:: To configure a fresh installation of lava-tool to be able to
-   submit test jobs see :ref:`lava_tool`
-
-For now, lava-tool is the easiest option to demonstrate. Once you have copied
-the above job definition to a file, (for example */tmp/job.yaml*), use
-``lava-tool`` to submit it as a test job in Linaro's main LAVA lab:
+Once you have copied the above job definition to a file, (for example
+*/tmp/job.yaml*), use ``lavacli`` to submit it as a test job in Linaro's main
+LAVA lab:
 
 ::
 
-  $ lava-tool submit-job https://<username>@validation.linaro.org/RPC2/
-  /tmp/job.yaml
-  submitted as job: https://validation.linaro.org/scheduler/job/1303132
+  $ lavacli --uri https://<username>:<token>@validation.linaro.org/RPC2/ jobs submit /tmp/job.yaml
+  1303132
 
-.. note:: Replace *username* with your username. Enter the password for the
-   encrypted keyring (if using older versions of ``lava-tool``) - this is the
-   same that was used when adding the authentication token
+.. note:: Replace *username* with your username and <token> with your private
+   token.
 
 Once the job is submitted successfully, the job id is returned; this may be
 used in order to check the status of the job via the web UI. In the above
-submission the job id returned is 82287. Visit the link provided -
-``https://validation.linaro.org/scheduler/job/<job-id>`` - in order to see the
-details of the job run: the test device chosen, the test results, etc. (Older
-versions of ``lava-tool`` only return the job ID number.)
+submission the job id returned is 1303132. Go to
+``https://validation.linaro.org/scheduler/job/<job-id>`` in order to see the
+details of the job run: the test device chosen, the test results, etc.
 
 .. image:: images/first-job-submitted.png
+
+
+You can also use lavacli directly to see the logs:
+
+::
+
+  $ lavacli --uri https://<username>:<token>@validation.linaro.org/RPC2/ jobs logs 1303132
 
 It may take some time before the job actually starts, depending on the number
 of jobs waiting in the queue for a device of this type. Once the job starts,
@@ -160,7 +156,7 @@ Downloading test results
 ========================
 
 LAVA makes the test results available directly from the instance,
-without needing to go through ``lava-tool``. The results for any test
+without needing to go through ``lavacli``. The results for any test
 job which the user can view can be downloaded in :abbr:`CSV
 (comma-separated value)` or YAML format.
 
@@ -221,7 +217,7 @@ jobs was created, the first job in the list will be displayed.)
 XML-RPC Job Submission
 ======================
 
-:ref:`lava_tool` is a wrapper around the XML-RPC API with helpers for personal
+:ref:`lavacli` is a wrapper around the XML-RPC API with helpers for personal
 usage. The XML-RPC API itself supports a variety of queries and operations
 which can assist in creating a frontend to LAVA which can automate the
 submission of test jobs.
@@ -232,5 +228,5 @@ requires using an :ref:`authentication token <authentication_tokens>` and
 should use ``https`` wherever possible to protect the token.
 
 .. seealso:: For help using the XML-RPC API to submit jobs, see the sections on
-   :ref:`lava_tool` and the **Available methods** link from the API menu of the
+   :ref:`lavacli` and the **Available methods** link from the API menu of the
    LAVA instance. For example: ``http://localhost/api/help``.
