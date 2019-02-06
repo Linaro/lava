@@ -116,15 +116,19 @@ class DownloadHandler(Action):
     summary = "download-action"
     timeout_exception = InfrastructureError
 
+    # Supported decompression commands
+    decompress_command_map = {"xz": "unxz", "gz": "gunzip", "bz2": "bunzip2"}
+
     def __init__(self, key, path, url, uniquify=True):
         super().__init__()
         self.url = url
         self.key = key
-        # If uniquify is True, store the files in a sub-directory to keep the
-        # path unique.
-        self.path = os.path.join(path, key) if uniquify else path
         self.size = -1
-        self.decompress_command_map = {"xz": "unxz", "gz": "gunzip", "bz2": "bunzip2"}
+
+        self.path = path
+        # Store the files in a sub-directory to keep the path unique.
+        if uniquify:
+            self.path = os.path.join(path, key)
         self.fname = None
 
     def reader(self):
@@ -139,15 +143,18 @@ class DownloadHandler(Action):
         )
         super().cleanup(connection)
 
-    def _url_to_fname_suffix(self, path, modify):
+    def _url_to_fname(self, path, compression):
         filename = os.path.basename(self.url.path)
+
+        # Don't rename files we don't decompress during download
+        if not compression or (compression not in self.decompress_command_map):
+            return os.path.join(path, filename)
+
         parts = filename.split(".")
-        # Handle unmodified filename
-        # Also files without suffixes, e.g. kernel images
-        # Don't rename files we don't support decompressing during download
-        if not modify or len(parts) == 1 or (modify not in self.decompress_command_map):
-            return (os.path.join(path, filename), None)
-        return (os.path.join(path, ".".join(parts[:-1])), parts[-1])
+        # Files without suffixes, e.g. kernel images
+        if len(parts) == 1:
+            return os.path.join(path, filename)
+        return os.path.join(path, ".".join(parts[:-1]))
 
     def validate(self):
         super().validate()
@@ -156,7 +163,7 @@ class DownloadHandler(Action):
             self.url = urlparse(image["url"])
             compression = image.get("compression")
             archive = image.get("archive")
-            self.fname, _ = self._url_to_fname_suffix(self.path, compression)
+            self.fname = self._url_to_fname(self.path, compression)
             image_arg = image.get("image_arg")
             overlay = image.get("overlay", False)
             self.set_namespace_data(
@@ -179,7 +186,7 @@ class DownloadHandler(Action):
             compression = self.parameters[self.key].get("compression")
             archive = self.parameters[self.key].get("archive")
             overlay = self.parameters.get("overlay", False)
-            self.fname, _ = self._url_to_fname_suffix(self.path, compression)
+            self.fname = self._url_to_fname(self.path, compression)
             if self.fname.endswith("/"):
                 self.errors = "Cannot download a directory for %s" % self.key
             self.set_namespace_data(
