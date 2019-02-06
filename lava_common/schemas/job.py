@@ -73,6 +73,7 @@ def notify():
 
 def extra_checks(data):
     check_job_timeouts(data)
+    check_namespace(data)
     check_secrets_visibility(data)
 
 
@@ -109,6 +110,19 @@ def check_job_timeouts(data):
         if t is None:
             continue
         _check_timeout("Action", ["actions", str(index)], t)
+
+
+def check_namespace(data):
+    # If namespace is used in one action, every actions should use namespaces.
+    actions_with_ns = 0
+    for (index, action) in enumerate(data["actions"]):
+        action_type = next(iter(action.keys()))
+        ns = action[action_type].get("namespace")
+        if ns is not None:
+            actions_with_ns += 1
+
+    if actions_with_ns and (len(data["actions"]) != actions_with_ns):
+        raise Invalid("When using namespaces, every action should have a namespace")
 
 
 def check_secrets_visibility(data):

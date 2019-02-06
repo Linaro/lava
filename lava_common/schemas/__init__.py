@@ -22,7 +22,7 @@
 
 import importlib
 
-from voluptuous import Any, Invalid, Optional, Range, Required, Schema
+from voluptuous import All, Any, Invalid, NotIn, Optional, Range, Required, Schema
 
 from lava_common.exceptions import JobError, LAVABug
 
@@ -54,7 +54,7 @@ def timeout():
 
 def action(live=False):
     base = {
-        Optional("namespace"): str,
+        Optional("namespace"): All(str, NotIn(["common"], msg="'common' is reserved")),
         Optional("connection-namespace"): str,
         Optional("protocols"): object,
         Optional("role"): [str],
