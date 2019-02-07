@@ -30,6 +30,7 @@ from django.core.mail import send_mail
 from django.urls import reverse
 from django.db import IntegrityError
 
+from lava_scheduler_app import dbutils
 from lava_scheduler_app import utils
 from lava_results_app.models import Query, TestCase, TestSuite
 from lava_scheduler_app.models import (
@@ -130,7 +131,7 @@ def create_callback(job, callback_data, notification):
 def get_notification_args(job):
     args = {}
     args["job"] = job
-    args["url_prefix"] = "http://%s" % utils.get_domain()
+    args["url_prefix"] = "http://%s" % dbutils.get_domain()
     # Get lava.job result if available
     with contextlib.suppress(TestCase.DoesNotExist):
         lava_job_obj = TestCase.objects.get(
@@ -260,7 +261,7 @@ def get_notification_args(job):
 def create_irc_notification(job):
     args = {}
     args["job"] = job
-    args["url_prefix"] = "http://%s" % utils.get_domain()
+    args["url_prefix"] = "http://%s" % dbutils.get_domain()
     return create_notification_body(Notification.DEFAULT_IRC_TEMPLATE, **args)
 
 

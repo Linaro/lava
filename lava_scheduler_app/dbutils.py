@@ -36,6 +36,7 @@ from django.db.models import Q, Case, When, IntegerField, Sum
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
+from django.contrib.sites.models import Site
 
 from lava_scheduler_app.models import (
     Device,
@@ -380,3 +381,12 @@ def validate_yaml(yaml_data):
                     Query.validate_custom_query(query_yaml_data["entity"], conditions)
                 except Exception as e:
                     raise SubmissionException(e)
+
+
+def get_domain():
+    domain = "???"
+    with contextlib.suppress(Site.DoesNotExist, ImproperlyConfigured):
+        site = Site.objects.get_current()
+        domain = site.domain
+
+    return domain

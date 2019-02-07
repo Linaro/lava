@@ -23,9 +23,10 @@ import copy
 import errno
 import ldap
 import os
+import jinja2
+import yaml
 import subprocess  # nosec verified
 
-from django.contrib.sites.models import Site
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
@@ -48,15 +49,6 @@ class IRCServerIncorrectError(IRCSendError):
 
 class IRCHandleNotFoundError(IRCSendError):
     """Error raised when user handle is not found on specific server."""
-
-
-def get_domain():
-    domain = "???"
-    with contextlib.suppress(Site.DoesNotExist, ImproperlyConfigured):
-        site = Site.objects.get_current()
-        domain = site.domain
-
-    return domain
 
 
 def is_member(user, group):
