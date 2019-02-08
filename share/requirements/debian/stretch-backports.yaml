@@ -12,7 +12,7 @@ lava-server:
     version: ">=1.2.12"
     name: python3-django-auth-ldap
   django-tables2:
-    version: ">=1.14.2"
+    version: ">=1.21.2"
     name: python3-django-tables2
   junit.xml:
     name: python3-junit.xml
