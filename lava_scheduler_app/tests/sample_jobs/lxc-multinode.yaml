@@ -1,4 +1,3 @@
-device_type: lxc
 job_name: lxc-pipeline
 timeouts:
   job:

@@ -5,13 +5,12 @@ timeouts:
     job:
         hours: 4
     action:
-        hours: 5
+        hours: 4
     connection:
         minutes: 10
 
 visibility: public
 priority: medium
-device_type: x86
 
 protocols:
     lava-multinode:

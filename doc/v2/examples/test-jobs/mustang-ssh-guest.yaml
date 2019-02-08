@@ -1,4 +1,3 @@
-device_type: mustang
 job_name: ssh guest with standard images
 
 timeouts:

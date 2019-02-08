@@ -25,7 +25,8 @@ protocols:
 
 actions:
 - deploy:
-    role: device
+    role:
+    - device
     namespace: tlxc
     timeout:
       minutes: 5
@@ -36,7 +37,8 @@ actions:
     os: debian
 
 - boot:
-    role: device
+    role:
+    - device
     namespace: tlxc
     prompts:
     - 'root@(.*):/#'
@@ -45,7 +47,8 @@ actions:
     method: lxc
 
 - deploy:
-    role: device
+    role:
+    - device
     timeout:
       minutes: 5
     to: fastboot
@@ -60,14 +63,16 @@ actions:
     os: debian
 
 - boot:
-    role: device
+    role:
+    - device
     namespace: droid
     timeout:
       minutes: 15
     method: fastboot
 
 - test:
-    role: device
+    role:
+    - device
     namespace: tlxc
     timeout:
       minutes: 5
@@ -79,7 +84,8 @@ actions:
 
 - test:
     namespace: tlxc
-    role: device
+    role:
+    - device
     timeout:
       minutes: 10
     definitions:

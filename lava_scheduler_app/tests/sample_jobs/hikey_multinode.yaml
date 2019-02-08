@@ -45,7 +45,8 @@ protocols:
 
 actions:
 - deploy:
-    role: server
+    role:
+    - server
     namespace: tlxc
     timeout:
       minutes: 15
@@ -55,7 +56,8 @@ actions:
     os: debian
 
 - boot:
-    role: server
+    role:
+    - server
     namespace: tlxc
     prompts:
     - "root@(.*):/#"
@@ -65,7 +67,8 @@ actions:
     method: lxc
 
 - deploy:
-    role: server
+    role:
+    - server
     timeout:
       minutes: 15
     to: fastboot
@@ -86,7 +89,8 @@ actions:
     os: oe
 
 - boot:
-    role: server
+    role:
+    - server
     namespace: hikey-oe
     auto_login:
       login_prompt: "login:"
@@ -136,7 +140,8 @@ actions:
       name: dmidecode
 
 - test:
-    role: server
+    role:
+    - server
     namespace: hikey-oe
     timeout:
       minutes: 5
@@ -166,12 +171,13 @@ actions:
       path: inline/network.yaml
 
 - test:
-   role: server
-   namespace: tlxc
-   timeout:
-     minutes: 5
-   definitions:
-   - repository: git://git.linaro.org/lava-team/lava-functional-tests.git
-     from: git
-     path: lava-test-shell/smoke-tests-basic.yaml
-     name: smoke-tests-basic-ubuntu
+    role:
+    - server
+    namespace: tlxc
+    timeout:
+      minutes: 5
+    definitions:
+    - repository: git://git.linaro.org/lava-team/lava-functional-tests.git
+      from: git
+      path: lava-test-shell/smoke-tests-basic.yaml
+      name: smoke-tests-basic-ubuntu

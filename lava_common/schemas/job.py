@@ -73,6 +73,7 @@ def notify():
 
 def extra_checks(data):
     check_job_timeouts(data)
+    check_multinode_or_device_type(data)
     check_namespace(data)
     check_secrets_visibility(data)
 
@@ -112,6 +113,16 @@ def check_job_timeouts(data):
         _check_timeout("Action", ["actions", str(index)], t)
 
 
+def check_multinode_or_device_type(data):
+    device_type = data.get("device_type")
+    multinode = data.get("protocols", {}).get("lava-multinode")
+
+    if device_type and multinode:
+        raise Invalid('"device_type" shoud not be used with multinode')
+    if not device_type and not multinode:
+        raise Invalid('"device_type" or multinode should be defined')
+
+
 def check_namespace(data):
     # If namespace is used in one action, every actions should use namespaces.
     actions_with_ns = 0
@@ -147,7 +158,7 @@ def schema():
     return All(
         {
             Required("job_name"): All(str, Length(min=1, max=200)),
-            Required("device_type"): All(str, Length(min=1, max=200)),
+            Optional("device_type"): All(str, Length(min=1, max=200)),
             Required("timeouts"): {
                 Required("job"): timeout(),
                 Optional("action"): timeout(),
