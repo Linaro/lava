@@ -23,16 +23,7 @@
         {% if user.is_superuser %}<a href="{% url 'admin:lava_scheduler_app_worker_change' worker %}" title="admin this worker"><span class="glyphicon glyphicon-wrench"></span></a>{% endif %}
       </dd>
       <dt>Description</dt>
-      {% if can_admin %}
-      <form method="POST" action="{% url 'lava.scheduler.edit_worker_desc' %}">
-        <dd>
-          {% csrf_token %}
-          <div class="edit_desc" id="{{ worker.pk }}">{{ worker.get_description|default:"<i>...</i>" }}</div>
-        </dd>
-      </form>
-      {% else %}
       <dd>{{ worker.get_description|default:"<i>...</i>" }}</dd>
-      {% endif %}
     </dl>
   </div>
   <div class="col-md-4">
@@ -106,22 +97,4 @@
 <h3>Transitions</h3>
 {% render_table worker_log_table %}
 
-{% endblock %}
-
-{% block scripts %}
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.details.min.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.jeditable.min.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/tables.min.js"></script>
-<script>
-$(document).ready(
-  function() {
-    $('.edit_desc').editable('{% url 'lava.scheduler.edit_worker_desc' %}',
-    {
-        indicator  : 'Saving ...',
-        tooltip    : 'Click to edit ...',
-        submit     : 'OK',
-        submitdata : {"csrfmiddlewaretoken": $("[name='csrfmiddlewaretoken']").val()}
-    });
-});
-</script>
 {% endblock %}

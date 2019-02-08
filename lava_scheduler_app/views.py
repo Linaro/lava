@@ -1072,7 +1072,6 @@ def health_job_list(request, pk):
             "device": device,
             "health_job_table": health_table,
             "can_admin": device_can_admin,
-            "edit_description": device_can_admin,
             "bread_crumb_trail": BreadCrumbTrail.leading_to(health_job_list, pk=pk),
         },
     )
@@ -1964,7 +1963,6 @@ def device_detail(request, pk):
             "recent_job_table": recent_ptable,
             "device_log_table": device_log_ptable,
             "can_admin": device_can_admin,
-            "edit_description": device_can_admin,
             "bread_crumb_trail": BreadCrumbTrail.leading_to(device_detail, pk=pk),
             "context_help": BreadCrumbTrail.show_help(device_detail, pk="help"),
             "next_device": next_device,
@@ -2045,19 +2043,6 @@ def device_reports(request, pk):
             "bread_crumb_trail": BreadCrumbTrail.leading_to(device_reports, pk=pk),
         },
     )
-
-
-def device_edit_description(request, pk):
-    device = Device.objects.get(pk=pk)
-    if device.can_admin(request.user):
-        device.description = request.POST.get("desc")
-        device.save()
-        device.log_admin_entry(request.user, "changed description")
-        return redirect(device)
-    else:
-        return HttpResponseForbidden(
-            "you cannot edit the description of this device", content_type="text/plain"
-        )
 
 
 @require_POST
@@ -2184,22 +2169,6 @@ def worker_health(request, pk):
             )
     except Worker.DoesNotExist:
         raise Http404("Worker %s not found" % pk)
-
-
-@require_POST
-def edit_worker_desc(request):
-    """Edit worker description, based on user permission."""
-
-    pk = request.POST.get("id")
-    value = request.POST.get("value")
-    worker_obj = get_object_or_404(Worker, pk=pk)
-
-    if worker_obj.can_admin(request.user):
-        worker_obj.description = value
-        worker_obj.save()
-        return HttpResponse(worker_obj.get_description())
-    else:
-        return HttpResponseForbidden("Permission denied.", content_type="text/plain")
 
 
 def username_list_json(request):
