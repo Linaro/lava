@@ -45,26 +45,26 @@ def debian(args, depends):
     calls, 1 for backports and one for the parent.
     """
     if args.unittests:
-        unittests = []
+        unittests = set({})
         if args.names and depends[args.package]:
             for key, item in depends[args.package].items():
                 if depends[args.package][key].get("unittests"):
-                    unittests.append(item["name"])
+                    unittests.add(item["name"])
             if unittests:
                 print(" ".join(sorted(unittests)))
         return 0
     if args.names:
-        msg = []
-        backports = []
+        msg = set({})
+        backports = set({})
         if not depends.get(args.package):
             return 0
         for key, item in depends[args.package].items():
             if depends[args.package][key].get("unittests"):
                 continue
             if args.suite.endswith("-backports"):
-                backports.append(item["name"])
+                backports.add(item["name"])
                 continue
-            msg.append(item["name"])
+            msg.add(item["name"])
         if backports:
             print(" ".join(sorted(backports)))
         elif msg:
