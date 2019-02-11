@@ -334,8 +334,8 @@ class ExpectShellSession(Action):
         connection.prompt_str = self.parameters["prompts"]
         connection.timeout = self.connection_timeout
         self.logger.debug(
-            "Forcing a shell prompt, looking for %s" % connection.prompt_str
-        )  # pylint: disable=logging-not-lazy
+            "Forcing a shell prompt, looking for %s", connection.prompt_str
+        )
         connection.sendline("")
         self.wait(connection)
         return connection

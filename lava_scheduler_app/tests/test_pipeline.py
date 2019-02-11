@@ -515,14 +515,14 @@ class TestPipelineSubmit(TestCaseWithFactory):
             device_config = device.load_configuration(job_ctx)  # raw dict
         except (jinja2.TemplateError, yaml.YAMLError, OSError) as exc:
             # FIXME: report the exceptions as useful user messages
-            self.fail("[%d] jinja2 error: %s" % (job.id, exc))
+            self.fail("[%s] jinja2 error: %s" % (job.id, exc))
         if not device_config or not isinstance(device_config, dict):
             # it is an error to have a pipeline device without a device dictionary as it will never get any jobs.
             msg = (
                 "Administrative error. Device '%s' has no device dictionary."
                 % device.hostname
             )
-            self.fail("[%d] device-dictionary error: %s" % (job.id, msg))
+            self.fail("[%s] device-dictionary error: %s" % (job.id, msg))
 
         self.assertTrue(device.is_valid(system=False))
         device_object = PipelineDevice(

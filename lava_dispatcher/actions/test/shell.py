@@ -121,9 +121,7 @@ class PatternFixup:
         try:
             self.pat = re.compile(pattern, re.M)
         except re.error as exc:
-            raise TestError(
-                "Error parsing regular expression %r: %s" % (self.pat, exc.message)
-            )
+            raise TestError("Error parsing regular expression %r: %s" % (self.pat, exc))
         self.fixup = fixupdict
 
     def fixupdict(self):
@@ -142,7 +140,7 @@ class PatternFixup:
                 self.pat = re.compile(self.pat, re.M)
             except re.error as exc:
                 raise TestError(
-                    "Error parsing regular expression %r: %s" % (self.pat, exc.message)
+                    "Error parsing regular expression %r: %s" % (self.pat, exc)
                 )
         return self.pat
 

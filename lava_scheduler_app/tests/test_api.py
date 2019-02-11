@@ -21,7 +21,7 @@ from lava_scheduler_app.tests.test_submission import TestCaseWithFactory
 
 # Based on http://www.technobabble.dk/2008/apr/02/xml-rpc-dispatching-through-django-test-client/
 @nottest
-class TestTransport(xmlrpc.client.Transport, object):
+class TestTransport(xmlrpc.client.Transport):
     """Handles connections to XML-RPC server through Django test client."""
 
     def __init__(self, user=None, password=None):

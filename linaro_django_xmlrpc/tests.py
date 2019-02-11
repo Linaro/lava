@@ -392,7 +392,7 @@ class SystemAPITest(TestCase):
     def test_methodSignature_returns_signature_when_defined(self):
         class TestAPI(ExposedAPI):
             @xml_rpc_signature("str", "int")
-            def int_to_str(value):
+            def int_to_str(self, value):
                 return "%s" % value
 
         self.mapper.register(TestAPI, "TestAPI")

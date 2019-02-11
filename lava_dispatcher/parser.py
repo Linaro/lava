@@ -19,8 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import yaml
-from yaml.composer import Composer
-from yaml.constructor import Constructor
+
 from lava_dispatcher.job import Job
 from lava_dispatcher.action import Pipeline, Timeout, JobError
 from lava_dispatcher.logical import Deployment, Boot, LavaTest

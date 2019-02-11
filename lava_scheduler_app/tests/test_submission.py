@@ -153,19 +153,6 @@ class ModelFactory:
             data = test_support.read()
         return data
 
-    def make_notification(self, job):
-        notification = Notification()
-        notification.test_job = job
-        notification.verbosity = Notification.QUIET
-
-        notification.callback_url = "http://localhost/"
-        notification.callback_token = "token"
-        notification.callback_method = Notification.POST
-        notification.callback_dataset = Notification.MINIMAL
-        notification.save()
-
-        return notification
-
 
 class TestCaseWithFactory(TestCase):  # pylint: disable=too-many-ancestors
     def setUp(self):
@@ -196,7 +183,7 @@ class TestTestJob(
         job = TestJob.from_yaml_and_user(definition, user)
         job.refresh_from_db()
         self.assertEqual(user, job.submitter)
-        for line in job.original_definition:
+        for line in job.original_definition.split():
             if line.startswith("#"):
                 break
             self.fail("Comments have not been preserved after submission")

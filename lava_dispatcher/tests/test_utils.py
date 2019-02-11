@@ -334,15 +334,15 @@ class TestConstants(StdoutTestCase):  # pylint: disable=too-many-public-methods
 class TestClasses(StdoutTestCase):
     def setUp(self):
         super().setUp()
-        from lava_dispatcher.actions.deploy import (
+        from lava_dispatcher.actions.deploy import (  # pylint: disable=unused-variable
             strategies,
-        )  # pylint: disable=unused-variable
-        from lava_dispatcher.actions.boot import (
+        )
+        from lava_dispatcher.actions.boot import (  # pylint: disable=reimported
             strategies,
-        )  # pylint: disable=reimported
-        from lava_dispatcher.actions.test import (
+        )
+        from lava_dispatcher.actions.test import (  # pylint: disable=reimported
             strategies,
-        )  # pylint: disable=reimported
+        )
 
         self.allowed = ["commands", "deploy", "test"]  # pipeline.actions.commands.py
 

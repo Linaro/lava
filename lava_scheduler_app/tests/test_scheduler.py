@@ -431,7 +431,7 @@ class TestVisibility(TestCase):
         for job in TestJob.objects.filter(
             state__in=[TestJob.STATE_SUBMITTED, TestJob.STATE_SCHEDULING]
         ):
-            job.go_state_finished(TestJob.HEALTH_GOOD)
+            job.go_state_finished(TestJob.HEALTH_COMPLETE)
 
     def _minimal_personal_job(self):
         return """

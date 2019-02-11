@@ -151,7 +151,7 @@ class MultinodeProtocol(Protocol):  # pylint: disable=too-many-instance-attribut
                 self.logger.debug("zero bytes sent for message - connection closed?")
                 return False
         except OSError as exc:
-            self.logger.exception("socket error '%s' on send", exc.message)
+            self.logger.exception("socket error '%s' on send", exc)
             self.sock.close()
             return False
         return True

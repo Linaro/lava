@@ -240,7 +240,6 @@ class TestMetaTypes(TestCaseWithFactory):
             testdata, _ = TestData.objects.get_or_create(testjob=job)
         except (MultipleObjectsReturned):
             self.fail("multiple objects")
-            testdata.attributes.create(name=key, value=value)
         retval = _get_action_metadata(pipeline["job"]["actions"])
         self.assertEqual(
             retval,
@@ -284,7 +283,6 @@ class TestMetaTypes(TestCaseWithFactory):
             testdata, _ = TestData.objects.get_or_create(testjob=job)
         except (MultipleObjectsReturned):
             self.fail("multiple objects")
-            testdata.attributes.create(name=key, value=value)
         retval = _get_action_metadata(pipeline["job"]["actions"])
         self.assertIn("test.0.common.definition.parameters.VARIABLE_NAME_2", retval)
         self.assertIn("test.0.common.definition.parameters.VARIABLE_NAME_1", retval)
