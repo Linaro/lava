@@ -25,6 +25,7 @@ Used to allow models.py to be shortened and easier to follow.
 
 # pylint: disable=wrong-import-order
 
+import contextlib
 import os
 import yaml
 import jinja2
@@ -32,6 +33,7 @@ import json
 import logging
 from nose.tools import nottest
 
+from django.core.exceptions import ImproperlyConfigured
 from django.db.models import Q, Case, When, IntegerField, Sum
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError

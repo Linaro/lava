@@ -18,7 +18,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-import contextlib
 import copy
 import errno
 import ldap
@@ -28,7 +27,6 @@ import yaml
 import subprocess  # nosec verified
 
 from django.conf import settings
-from django.core.exceptions import ImproperlyConfigured
 
 from lava_scheduler_app.schema import SubmissionException
 
