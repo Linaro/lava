@@ -19,11 +19,13 @@
 import os
 from pwd import getpwuid
 import simplejson
+import yaml
 import stat
 import subprocess  # nosec system
 
 from django.core.checks import Error, register, Info, Warning
-
+from voluptuous import MultipleInvalid
+from lava_common.schemas import job
 from lava_scheduler_app.dbutils import invalid_template, validate_job
 from lava_scheduler_app.models import Device, DeviceType
 from lava_scheduler_app.schema import SubmissionException
@@ -35,6 +37,7 @@ from lava_scheduler_app.schema import SubmissionException
 def check_health_checks(app_configs, **kwargs):
     errors = []
 
+    schema = job.schema()
     for device in Device.objects.all():
         ht = device.get_health_check()
         ht_disabled = device.device_type.disable_health_check
@@ -43,24 +46,40 @@ def check_health_checks(app_configs, **kwargs):
         # provided that health checks are not disabled for this device type.
         if device.health == Device.HEALTH_RETIRED:
             continue
-        if ht is None and not ht_disabled:
-            errors.append(Warning("No health check", obj=device.hostname))
+        if ht is None:
+            if not ht_disabled:
+                errors.append(Warning("No health check", obj=device.hostname))
             continue
 
-        # An empty file is an error, provided health checks are not disabled
-        # for this device type.
-        if not ht and not ht_disabled:
-            errors.append(Warning("Empty health check", obj=device.hostname))
-            continue
-
-        # Check that the health check job is valid
-        if ht:
-            try:
-                validate_job(ht)
-            except SubmissionException as exc:
-                errors.append(
-                    Error("Invalid health check: '%s'" % exc, obj=device.hostname)
+        # check the health-check YAML syntax
+        try:
+            data = yaml.safe_load(ht)
+        except yaml.YAMLError as exc:
+            errors.append(
+                Error(
+                    "Invalid health check YAML: '%s' '%s'." % (device.hostname, exc),
+                    obj=device.hostname,
                 )
+            )
+            continue
+
+        # check the schema
+        try:
+            schema(data)
+        except MultipleInvalid as exc:
+            errors.append(
+                Error(
+                    "Invalid health check schema: '%s' '%s'." % (device.hostname, exc),
+                    obj=device.hostname,
+                )
+            )
+
+        try:
+            validate_job(ht)
+        except SubmissionException as exc:
+            errors.append(
+                Error("Invalid health check test job: '%s'" % exc, obj=device.hostname)
+            )
 
     return errors
 
