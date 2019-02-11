@@ -29,7 +29,8 @@ import subprocess  # nosec - internal
 def main(args):
     data = []
     p = subprocess.Popen(  # nosec - internal
-        ["/usr/bin/radon", "cc", "--codeclimate", "."], stdout=subprocess.PIPE
+        ["/usr/bin/radon", "cc", "--min", "D", "--codeclimate", "."],
+        stdout=subprocess.PIPE,
     )
     with p.stdout:
         for line in iter(p.stdout.readline, b""):
