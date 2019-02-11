@@ -12,20 +12,20 @@ RUN apt -q update
 # Install local packages (stretch-backports)
 ARG pkg_common=lava-common.deb
 COPY $pkg_common /tmp/common.deb
-RUN apt install --yes -t stretch-backports /tmp/common.deb && \
+RUN apt install --yes -t stretch-backports --no-install-recommends /tmp/common.deb && \
     rm -f /tmp/common.deb
+
+ARG pkg_server_doc=lava-server-doc.deb
+COPY $pkg_server_doc /tmp/server-doc.deb
+RUN apt install --yes -t stretch-backports --no-install-recommends /tmp/server-doc.deb && \
+    rm -f /tmp/server-doc.deb
 
 ARG pkg_server=lava-server.deb
 COPY $pkg_server /tmp/server.deb
 RUN service postgresql start && \
-    apt install --yes -t stretch-backports /tmp/server.deb && \
+    apt install --yes -t stretch-backports --no-install-recommends /tmp/server.deb && \
     rm -f /tmp/server.deb && \
     service postgresql stop
-
-ARG pkg_server_doc=lava-server-doc.deb
-COPY $pkg_server_doc /tmp/server-doc.deb
-RUN apt install --yes -t stretch-backports /tmp/server-doc.deb && \
-    rm -f /tmp/server-doc.deb
 
 # Activate the apache2 configuration and module
 RUN a2dissite 000-default && \
