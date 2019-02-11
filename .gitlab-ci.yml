@@ -101,6 +101,11 @@ code_quality:
     reports:
       codequality: gl-code-quality-report.json
 
+pylint:
+  <<: *job
+  stage: analyze
+  image: hub.lavasoftware.org/lava/ci-images/amd64/codestyle
+
 sast:
   <<: *dind
   stage: analyze
