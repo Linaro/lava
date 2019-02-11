@@ -5,6 +5,8 @@ EXPOSE 5500
 EXPOSE 5555
 EXPOSE 5556
 
+RUN apt -q update
+
 # Install local packages
 ARG pkg_common=lava-common.deb
 COPY $pkg_common /tmp/common.deb
