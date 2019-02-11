@@ -1254,7 +1254,7 @@ class QueryCondition(models.Model):
         if field_object.choices:
             operator_keys = [cls.EXACT, cls.NOTEQUAL, cls.ICONTAINS]
         elif isinstance(field_object, models.DateTimeField):
-            operator_keys = [cls.GT]
+            operator_keys = [cls.GT, cls.LT, cls.EXACT]
         elif isinstance(field_object, models.ForeignKey):
             operator_keys = [cls.EXACT, cls.IEXACT, cls.NOTEQUAL, cls.ICONTAINS]
         elif isinstance(field_object, models.BooleanField):
