@@ -8,19 +8,19 @@ EXPOSE 5556
 # Install local packages
 ARG pkg_common=lava-common.deb
 COPY $pkg_common /tmp/common.deb
-RUN dpkg -i /tmp/common.deb && \
+RUN apt install --yes /tmp/common.deb && \
     rm -f /tmp/common.deb
 
 ARG pkg_server=lava-server.deb
 COPY $pkg_server /tmp/server.deb
 RUN service postgresql start && \
-    dpkg -i /tmp/server.deb && \
+    apt install --yes /tmp/server.deb \
     rm -f /tmp/server.deb && \
     service postgresql stop
 
 ARG pkg_server_doc=lava-server-doc.deb
 COPY $pkg_server_doc /tmp/server-doc.deb
-RUN dpkg -i /tmp/server-doc.deb && \
+RUN apt install --yes /tmp/server-doc.deb \
     rm -f /tmp/server-doc.deb
 
 # Activate the apache2 configuration and module
