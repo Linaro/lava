@@ -79,11 +79,10 @@ class Command(BaseCommand):
 
         if options["force"]:
             self.stdout.write("Cancel all running jobs")
-            testjobs = TestJob.objects.filter(status=TestJob.RUNNING)
+            testjobs = TestJob.objects.filter(state=TestJob.STATE_RUNNING)
             for testjob in testjobs:
                 self.stdout.write("* %d" % testjob.id)
-                testjob.cancel(user)
-
+                testjob.go_state_canceling()
         if options["dry_run"]:
             self.stdout.write("Roll back changes")
             transaction.rollback()
