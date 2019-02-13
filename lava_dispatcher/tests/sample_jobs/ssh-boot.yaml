@@ -3,7 +3,7 @@
 # the tmpfs early so that the job can fail early if there is a 404.
 # See https://git.linaro.org/lava-team/refactoring.git
 
-
+device_type: ssh
 job_name: ssh-boot
 timeouts:
   job:

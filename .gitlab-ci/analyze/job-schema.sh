@@ -13,7 +13,7 @@ else
   PYTHONPATH=. ./share/lava-schema.py job ${CMD} doc/v2/examples/test-jobs/*.yaml
 
   # lava_dispatcher
-  EXCLUDE="basics.yaml bbb-group-vland-alpha.yaml bbb-group-vland-beta.yaml bbb-ssh-guest.yaml download.yaml hi6220-recovery.yaml hikey-console.yaml kvm-multinode-client.yaml kvm-multinode-server.yaml kvm-repeat.yaml ssh-boot.yaml ssh-deploy.yaml test_action-1.yaml test_action-2.yaml x15-recovery.yaml"
+  EXCLUDE="basics.yaml bbb-group-vland-alpha.yaml bbb-group-vland-beta.yaml bbb-ssh-guest.yaml download.yaml hi6220-recovery.yaml hikey-console.yaml kvm-multinode-client.yaml kvm-multinode-server.yaml kvm-repeat.yaml test_action-1.yaml test_action-2.yaml x15-recovery.yaml"
   CMD="--exclude $(echo ${EXCLUDE} | sed "s# # --exclude #g#")"
   PYTHONPATH=. ./share/lava-schema.py job ${CMD} lava_dispatcher/tests/sample_jobs/*.yaml
 
