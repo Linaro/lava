@@ -320,8 +320,11 @@ class TestKVMDownloadLocalDeploy(
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
 
-def prepare_test_connection():
-    logfile = os.path.join(os.path.dirname(__file__), "kernel-1.txt")
+def prepare_test_connection(failure=False):
+    if failure:
+        logfile = os.path.join(os.path.dirname(__file__), "kernel-login-error.txt")
+    else:
+        logfile = os.path.join(os.path.dirname(__file__), "kernel-1.txt")
     if not os.path.exists(logfile):
         raise OSError("Missing test support file.")
     child = pexpect.spawn("cat", [logfile])
@@ -746,14 +749,19 @@ class TestAutoLogin(StdoutTestCase):
         autologinaction.validate()
 
         # initialise the first Connection object, a command line shell
-        shell_connection = prepare_test_connection()
+        shell_connection = prepare_test_connection(True)
 
         # Test the AutoLoginAction directly
-        conn = autologinaction.run(shell_connection, max_end_time=self.max_end_time)
-
-        self.assertIn("root@debian:~#", conn.prompt_str)
-        self.assertIn("Login incorrect", conn.prompt_str)
-        self.assertIn("Login timed out", conn.prompt_str)
+        try:
+            conn = autologinaction.run(shell_connection, max_end_time=self.max_end_time)
+        except JobError as exc:
+            self.assertEqual(str(exc), "Login incorrect")
+        else:
+            self.assertFalse("Should raise a JobError")
+        self.assertIn("root@debian:~#", shell_connection.prompt_str)
+        self.assertIn("Login incorrect", shell_connection.prompt_str)
+        self.assertIn("Login timed out", shell_connection.prompt_str)
+        self.assertIn("Login incorrect", autologinaction.errors)
 
 
 class TestChecksum(StdoutTestCase):

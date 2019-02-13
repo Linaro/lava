@@ -380,6 +380,9 @@ class AutoLoginAction(Action):
                     self.errors = LOGIN_TIMED_OUT_MSG
                     raise JobError(LOGIN_TIMED_OUT_MSG)
 
+            # clear the login patterns
+            connection.prompt_str = list(self.parameters.get("prompts", []))
+
             login_commands = params.get("login_commands")
             if login_commands is not None:
                 self.logger.debug("Running login commands")
