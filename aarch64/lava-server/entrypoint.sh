@@ -20,25 +20,25 @@ handler() {
     tail_pid="${!}"
     echo "Killing:"
     echo "* lava-logs \$$LAVA_LOGS_PID"
-    kill $LAVA_LOGS_PID
+    [[ "$LAVA_LOGS_PID" != "0" ]] && kill $LAVA_LOGS_PID
     echo "* lava-master \$$LAVA_MASTER_PID"
-    kill $LAVA_MASTER_PID
+    [[ "$LAVA_MASTER_PID" != "0" ]] && kill $LAVA_MASTER_PID
     echo "* lava-publisher \$$LAVA_PUBLISHER_PID"
-    kill $LAVA_PUBLISHER_PID
+    [[ "$LAVA_PUBLISHER_PID" != "0" ]] && kill $LAVA_PUBLISHER_PID
     echo "* gunicorn \$$GUNICORN_PID"
-    kill $GUNICORN_PID
+    [[ "$GUNICORN_PID" != "0" ]] && kill $GUNICORN_PID
     echo "* apache2"
     /etc/init.d/apache2 stop
 
     echo "Waiting for:"
     echo "* lava-logs"
-    wait $LAVA_LOGS_PID || true
+    [[ "$LAVA_LOGS_PID" != "0" ]] && wait $LAVA_LOGS_PID || true
     echo "* lava-master"
-    wait $LAVA_MASTER_PID || true
+    [[ "$LAVA_MASTER_PID" != "0" ]] && wait $LAVA_MASTER_PID || true
     echo "* lava-publisher"
-    wait $LAVA_PUBLISHER_PID || true
+    [[ "$LAVA_PUBLISHER_PID" != "0" ]] && wait $LAVA_PUBLISHER_PID || true
     echo "* gunicorn"
-    wait $GUNICORN_PID || true
+    [[ "$GUNICORN_PID" != "0" ]] && wait $GUNICORN_PID || true
 
     echo "Killing postgresql"
     /etc/init.d/postgresql stop
@@ -110,47 +110,80 @@ wait_postgresql() {
 # setup handlers
 trap 'handler' INT QUIT TERM
 
-# Start all services
-echo "Starting postgresql"
-/etc/init.d/postgresql start
-echo "done"
-echo
+# List of services to start
+SERVICES=${SERVICES-"apache2 lava-logs lava-master lava-publisher gunicorn postgresql"}
+[[ "$SERVICES" == *"apache2"* ]] && APACHE2=1 || APACHE2=0
+[[ "$SERVICES" == *"lava-logs"* ]] && LAVA_LOGS=1 || LAVA_LOGS=0
+[[ "$SERVICES" == *"lava-master"* ]] && LAVA_MASTER=1 || LAVA_MASTER=0
+[[ "$SERVICES" == *"lava-publisher"* ]] && LAVA_PUBLISHER=1 || LAVA_PUBLISHER=0
+[[ "$SERVICES" == *"gunicorn"* ]] && GUNICORN=1 || GUNICORN=0
+[[ "$SERVICES" == *"postgresql"* ]] && POSTGRESQL=1 || POSTGRESQL=0
 
-echo "Waiting for postgresql"
-wait_postgresql
-echo "[done]"
-echo
+# Is the database needed
+NEED_DB=$((LAVA_LOGS+LAVA_MASTER+GUNICORN+POSTGRESQL))
 
-echo "Applying migrations"
-lava-server manage migrate
-echo "done"
-echo
+# Start requested services
+if [[ "$POSTGRESQL" == "1" ]]
+then
+    echo "Starting postgresql"
+    /etc/init.d/postgresql start
+    echo "done"
+    echo
+fi
 
-echo "Starting gunicorn3"
-start_lava_server_gunicorn
-echo "done"
-echo
+if [[ "$NEED_DB" != "0" ]]
+then
+    echo "Waiting for postgresql"
+    wait_postgresql
+    echo "[done]"
+    echo
+    echo "Applying migrations"
+    lava-server manage migrate
+    echo "done"
+    echo
+fi
 
-echo "Starting apache2"
-/etc/init.d/apache2 start
-echo "done"
-echo
+if [[ "$GUNICORN" == "1" ]]
+then
+    echo "Starting gunicorn3"
+    start_lava_server_gunicorn
+    echo "done"
+    echo
+fi
 
-echo "Starting lava-logs"
-start_lava_logs
-echo "done"
-echo
+if [[ "$APACHE2" == "1" ]]
+then
+    echo "Starting apache2"
+    /etc/init.d/apache2 start
+    echo "done"
+    echo
+fi
 
-echo "Starting lava-publisher"
-lava-server manage lava-publisher &
-LAVA_PUBLISHER_PID=$!
-echo "done"
-echo
+if [[ "$LAVA_LOGS" == "1" ]]
+then
+    echo "Starting lava-logs"
+    start_lava_logs
+    echo "done"
+    echo
+fi
 
-echo "Starting lava-master"
-start_lava_master
-echo "done"
-echo
+
+if [[ "$LAVA_PUBLISHER" == "1" ]]
+then
+    echo "Starting lava-publisher"
+    lava-server manage lava-publisher &
+    LAVA_PUBLISHER_PID=$!
+    echo "done"
+    echo
+fi
+
+if [[ "$LAVA_MASTER" == "1" ]]
+then
+    echo "Starting lava-master"
+    start_lava_master
+    echo "done"
+    echo
+fi
 
 for f in /root/entrypoint.d/*; do
     case "$f" in
