@@ -1,0 +1,4 @@
+{% extends 'base-grub.jinja2' %}
+
+{# set device_type = "upsquare" #}
+{% set console_device = console_device|default('ttyS0') %}
