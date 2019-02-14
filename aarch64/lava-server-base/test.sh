@@ -31,5 +31,9 @@ do
   echo "* $pkg"
   VERSION=$(dpkg-query --show --showformat '${Version}\n' "$pkg")
   echo "  => $VERSION"
-  dpkg-query --show --showformat '${Version}\n' "$pkg" | grep -q bpo
+  # python3-django-tables2 comes from apt.lavasoftware.org
+  if [[ "$pkg" != "python3-django-tables2" ]]
+  then
+    dpkg-query --show --showformat '${Version}\n' "$pkg" | grep -q bpo
+  fi
 done
