@@ -93,7 +93,7 @@ Architecture: all
 Section: metapackages
 Depends: lava-server (>= ${source:Version}), lava-server-doc,
  lava-dispatcher (>= ${source:Version}), lava-coordinator, lava-dev,
- lavacli, lavapdu-client, ntp | ntpdate, tftpd-hpa, sudo,
+ lavacli, lavapdu-client, ntp | ntpdate | chrony, tftpd-hpa, sudo,
  telnet, debootstrap (>= 1.0.86~),
  openssh-client, lxc (>= 1:2.0.6), rsync, bridge-utils, ${misc:Depends}
 Recommends: lavapdu-daemon, schroot, img2simg, simg2img, docker.io,
