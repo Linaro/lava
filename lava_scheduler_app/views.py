@@ -769,7 +769,7 @@ def maintenance_devices(request):
             "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
             "discrete_data": ptable.prepare_discrete_data(data),
-            "bread_crumb_trail": BreadCrumbTrail.leading_to(active_device_list),
+            "bread_crumb_trail": BreadCrumbTrail.leading_to(maintenance_devices),
         },
     )
 
