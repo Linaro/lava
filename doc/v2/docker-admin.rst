@@ -240,6 +240,40 @@ images.
    <https://docs.docker.com/engine/reference/commandline/build/>`_
    images.
 
+.. index:: lava_lxc_mocker
+
+.. _lava_lxc_mocker:
+
+Mocking up LXC inside docker
+============================
+
+LXC cannot be installed/used inside a Docker container and the Docker
+container can replace the need for the LXC. This has the useful
+advantages that specialised tools which need to be isolated inside an
+LXC can be pre-installed in a docker container instead of needing to be
+installed or compiled within the LXC.
+
+However, there are also disadvantages:
+
+*  **The Docker is persistent** - currently, ``lava-slave`` and
+   ``lava-run`` need to be inside the container, so the next test job
+   for that slave picks up the changes to the docker from this test
+   job.
+
+* The test job would need modification to not call LXC.
+
+Work is underway to solve the persistence problem. In the meantime, it
+is possible to run test jobs using Docker if the persistence is handled
+correctly but this is usually only practical for single-user developer
+instances.
+
+``lava-lxc-mocker`` exists to solve the second problem. By mocking up
+the calls to ``lxc-*`` utilities, ``lava-lxc-mocker`` allows the same
+test job to be run on a device managed by a ``lava-slave`` in Docker
+as on a device managed by a ``lava-slave`` running on bare metal.
+
+``lava-lxc-mocker`` is pre-installed in all :ref:`lava_docker_images`.
+
 .. _docker_master:
 
 lava-server in docker
