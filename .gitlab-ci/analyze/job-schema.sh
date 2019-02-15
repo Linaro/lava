@@ -8,12 +8,12 @@ then
   apt-get install --no-install-recommends --yes python3 python3-nose python3-voluptuous python3-yaml
 else
   # documentation
-  EXCLUDE="artifact-conversion-download.yaml bbb-2serial.yaml bbb-lxc-ssh-guest.yaml hi6220-hikey-bl.yaml hikey-new-connection.yaml multiple-serial-ports-lxc.yaml mustang-ssh-guest.yaml x15-recovery.yaml"
+  EXCLUDE="bbb-2serial.yaml bbb-lxc-ssh-guest.yaml hi6220-hikey-bl.yaml hikey-new-connection.yaml multiple-serial-ports-lxc.yaml mustang-ssh-guest.yaml x15-recovery.yaml"
   CMD="--exclude $(echo ${EXCLUDE} | sed "s# # --exclude #g#")"
   PYTHONPATH=. ./share/lava-schema.py job ${CMD} doc/v2/examples/test-jobs/*.yaml
 
   # lava_dispatcher
-  EXCLUDE="basics.yaml bbb-group-vland-alpha.yaml bbb-group-vland-beta.yaml bbb-ssh-guest.yaml download.yaml hi6220-recovery.yaml hikey-console.yaml kvm-multinode-client.yaml kvm-multinode-server.yaml kvm-repeat.yaml test_action-1.yaml test_action-2.yaml x15-recovery.yaml"
+  EXCLUDE="basics.yaml bbb-group-vland-alpha.yaml bbb-group-vland-beta.yaml bbb-ssh-guest.yaml hi6220-recovery.yaml hikey-console.yaml kvm-multinode-client.yaml kvm-multinode-server.yaml kvm-repeat.yaml test_action-1.yaml test_action-2.yaml x15-recovery.yaml"
   CMD="--exclude $(echo ${EXCLUDE} | sed "s# # --exclude #g#")"
   PYTHONPATH=. ./share/lava-schema.py job ${CMD} lava_dispatcher/tests/sample_jobs/*.yaml
 
