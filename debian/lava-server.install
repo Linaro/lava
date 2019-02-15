@@ -17,5 +17,6 @@ etc/logrotate.d/lava-server-gunicorn-log ./etc/logrotate.d/
 etc/env.yaml ./etc/lava-server/
 etc/lava-publisher.service ./usr/share/lava-server/
 etc/lava-master ./etc/lava-server/
+etc/lava-server-gunicorn ./etc/lava-server/
 etc/lava-logs ./etc/lava-server/
 share/postinst.py ./usr/share/lava-server/

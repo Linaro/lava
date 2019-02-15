@@ -399,6 +399,99 @@ daemons:
  $ sudo service lava-server-gunicorn restart
  $ sudo service lava-master restart
 
+.. _configuring_ui:
+
+Configuring the LAVA UI
+***********************
+
+Initial settings for a LAVA instance change over time as the
+requirements change and dependencies improve internal security
+implementations. Most instances will need some adjustment to the apache
+configuration for the main LAVA UI in
+``/etc/apache2/sites-available/lava-server.conf`` and LAVA does not
+attempt to patch this file once admins have made changes. Admins
+therefore need to subscribe to the :ref:`lava_announce` mailing list
+and make changes using separate configuration management.
+
+Gunicorn3 bind addresses
+========================
+
+Work is beginning to extend the :ref:`Docker support <docker_admin>` to
+have different parts of LAVA in different containers. Some parts of
+this are easier to implement than others, so the support will arrive in
+stages.
+
+``gunicorn3`` supports changing the bind addresss which will allow to run
+the ``lava-server-gunicorn`` service to run alone in a container while
+having the reverse proxy in another container. The bind address and
+other ``gunicorn3`` options can be changed by editing:
+``/etc/lava-server/lava-server-gunicorn``
+
+.. seealso:: http://docs.gunicorn.org/en/stable/settings.html
+
+Apache proxy configuration
+==========================
+
+.. seealso:: :ref:`django_localhost`
+
+Django requires the allowed hosts to be explicitly set in the LAVA
+settings, as a list of hostnames or IP addresses which LAVA is allowed
+to use. If this is wrongly configured, the UI will raise a HTTP500 and
+you will get information in the output of ``lava-server manage check
+--deploy`` or in ``/var/log/lava-server/django.log``. For example,
+``/etc/lava-server/settings.conf`` for https://lava.codehelp.co.uk/
+contains:
+
+.. code-block:: none
+
+    "ALLOWED_HOSTS": ["lava.codehelp.co.uk"],
+
+.. seealso:: https://docs.djangoproject.com/en/1.11/ref/settings/#allowed-hosts
+
+It is also important to enable ``ProxyPreserveHost`` in
+``/etc/apache2/sites-available/lava-server.conf``:
+
+.. code-block:: none
+
+    ProxyPreserveHost On
+
+In some situations, you may also need to set ``USE_X_FORWARDED_HOST``
+to ``False`` in ``/etc/lava-server/settings.conf``
+
+.. seealso:: https://docs.djangoproject.com/en/1.11/ref/settings/#std:setting-USE_X_FORWARDED_HOST
+
+Apache headers
+==============
+
+Browser caching can be improved by enabling ``mod_header`` in Apache
+to allow LAVA to send appropriate cache control headers as well as
+``mod proxy`` and ``mod proxy_http``::
+
+ $ sudo a2enmod header
+ $ sudo a2enmod expires
+ $ sudo service apache2 restart
+
+.. controlling_bots:
+
+Banning badly behaved bots
+==========================
+
+Despite setting ``robots.txt``, LAVA instances can sometimes come under
+high load due to badly behaved web crawling bots. Typically, this will
+show up as an unusually slow LAVA UI and large apache log files showing
+a lot of unusual activity. For example, recursively retrieving every
+query string variation for every table or trying to access every
+possible URL without being signed in.
+
+To control these bots, the ``DISALLOWED_USER_AGENTS`` setting can be
+extended. By default, LAVA blocks ``yandex``, ``SemrushBot``, ``bing``
+and ``WOW64``. The list can be extended in
+``/etc/lava-server/settings.conf``. If you do extend the list, please
+let us know by subscribing to the :ref:`lava_devel` mailing list and
+posting your updated list.
+
+.. seealso:: https://docs.djangoproject.com/en/1.11/ref/settings/#std:setting-DISALLOWED_USER_AGENTS
+
 .. _admin_control:
 
 Controlling the Django Admin Interface

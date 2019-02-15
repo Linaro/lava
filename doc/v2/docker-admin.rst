@@ -26,7 +26,7 @@ Prerequisites
 #. Not all docker images are available for all architectures. LAVA
    has support for amd64 and arm64 docker images.
 
-Using LAVA with Docker is also a regular topic of discussion on the 
+Using LAVA with Docker is also a regular topic of discussion on the
 :ref:`lava_devel` mailing list.
 
 https://docs.docker.com/engine/reference/commandline/run/
@@ -146,10 +146,10 @@ or
 Command lines
 *************
 
-The use of docker with LAVA is an active area of development, including 
-how to configure containers for a variety of situations and how to 
-manage a LAVA lab where docker is in use. If you are doing work in 
-this area, please subscribe to the :ref:`lava_devel` mailing list and 
+The use of docker with LAVA is an active area of development, including
+how to configure containers for a variety of situations and how to
+manage a LAVA lab where docker is in use. If you are doing work in
+this area, please subscribe to the :ref:`lava_devel` mailing list and
 ask for advice on how to use LAVA and docker for your use case.
 
 POSIX shell
@@ -186,8 +186,8 @@ probably find the Python docker SDK library very useful.
 
 * Documentation: https://docker-py.readthedocs.io/en/stable/
 
-The Python Docker SDK lets you do anything the docker command does, 
-but from within Python apps – run containers, manage containers, manage 
+The Python Docker SDK lets you do anything the docker command does,
+but from within Python apps – run containers, manage containers, manage
 Swarms, etc.
 
 .. code-block:: python
@@ -402,3 +402,16 @@ worker, on the same docker network.
 (This is why docker start up scripts are going to be so useful.)
 
 .. seealso:: :ref:`docker_networking`
+
+.. _docker_microservices:
+
+Separate services in separate Docker containers
+***********************************************
+
+Work is beginning to extend the :ref:`Docker support <docker_admin>` to
+have different parts of LAVA in different containers. Some parts of
+this are easier to implement than others, so the support will arrive in
+stages.
+
+.. seealso:: :ref:`configuring_ui`
+
