@@ -32,13 +32,13 @@ handler() {
 
     echo "Waiting for:"
     echo "* lava-logs"
-    [[ "$LAVA_LOGS_PID" != "0" ]] && wait $LAVA_LOGS_PID || true
+    [[ "$LAVA_LOGS_PID" != "0" ]] && wait $LAVA_LOGS_PID
     echo "* lava-master"
-    [[ "$LAVA_MASTER_PID" != "0" ]] && wait $LAVA_MASTER_PID || true
+    [[ "$LAVA_MASTER_PID" != "0" ]] && wait $LAVA_MASTER_PID
     echo "* lava-publisher"
-    [[ "$LAVA_PUBLISHER_PID" != "0" ]] && wait $LAVA_PUBLISHER_PID || true
+    [[ "$LAVA_PUBLISHER_PID" != "0" ]] && wait $LAVA_PUBLISHER_PID
     echo "* gunicorn"
-    [[ "$GUNICORN_PID" != "0" ]] && wait $GUNICORN_PID || true
+    [[ "$GUNICORN_PID" != "0" ]] && wait $GUNICORN_PID
 
     echo "Killing postgresql"
     /etc/init.d/postgresql stop
@@ -52,12 +52,27 @@ handler() {
 #################
 # Start helpers #
 #################
+start_apache2() {
+    if [[ "$CAN_EXEC" == "1" ]]; then
+        export APACHE_CONFDIR=/etc/apache2
+        export APACHE_ENVVARS=/etc/apache2/envvars
+        exec apache2ctl -DFOREGROUND
+    else
+        /etc/init.d/apache2 start
+    fi
+}
+
+
 start_lava_logs() {
     LOGLEVEL=DEBUG
     [ -e /etc/default/lava-logs ] && . /etc/default/lava-logs
     [ -e /etc/lava-server/lava-logs ] && . /etc/lava-server/lava-logs
-    /usr/bin/lava-server manage lava-logs --level $LOGLEVEL $SOCKET $MASTER_SOCKET $IPV6 $ENCRYPT $MASTER_CERT $SLAVES_CERTS &
-    LAVA_LOGS_PID=$!
+    if [[ "$CAN_EXEC" == "1" ]]; then
+        exec /usr/bin/lava-server manage lava-logs --log-file - --level $LOGLEVEL $SOCKET $MASTER_SOCKET $IPV6 $ENCRYPT $MASTER_CERT $SLAVES_CERTS
+    else
+        /usr/bin/lava-server manage lava-logs --level $LOGLEVEL $SOCKET $MASTER_SOCKET $IPV6 $ENCRYPT $MASTER_CERT $SLAVES_CERTS &
+        LAVA_LOGS_PID=$!
+    fi
 }
 
 
@@ -65,10 +80,23 @@ start_lava_master() {
     LOGLEVEL=DEBUG
     [ -e /etc/default/lava-master ] && . /etc/default/lava-master
     [ -e /etc/lava-server/lava-master ] && . /etc/lava-server/lava-master
-    /usr/bin/lava-server manage lava-master --level $LOGLEVEL $MASTER_SOCKET $IPV6 $ENCRYPT $MASTER_CERT $SLAVES_CERTS &
-    LAVA_MASTER_PID=$!
+    if [[ "$CAN_EXEC" == "1" ]]; then
+        exec /usr/bin/lava-server manage lava-master --log-file - --level $LOGLEVEL $MASTER_SOCKET $IPV6 $ENCRYPT $MASTER_CERT $SLAVES_CERTS
+    else
+        /usr/bin/lava-server manage lava-master --level $LOGLEVEL $MASTER_SOCKET $IPV6 $ENCRYPT $MASTER_CERT $SLAVES_CERTS &
+        LAVA_MASTER_PID=$!
+    fi
 }
 
+
+start_lava_publisher() {
+    if [[ "$CAN_EXEC" == "1" ]]; then
+        exec /usr/bin/lava-server manage lava-publisher --log-file -
+    else
+        /usr/bin/lava-server manage lava-publisher &
+        LAVA_PUBLISHER_PID=$!
+    fi
+}
 
 start_lava_server_gunicorn() {
     LOGLEVEL="DEBUG"
@@ -76,8 +104,12 @@ start_lava_server_gunicorn() {
     LOGFILE="/var/log/lava-server/gunicorn.log"
     [ -e /etc/default/lava-server-gunicorn ] && . /etc/default/lava-server-gunicorn
     [ -e /etc/lava-server/lava-server-gunicorn ] && . /etc/lava-server/lava-server-gunicorn
-    /usr/bin/gunicorn3 lava_server.wsgi --log-level $LOGLEVEL --log-file $LOGFILE -u lavaserver -g lavaserver --workers $WORKERS $RELOAD &
-    GUNICORN_PID=$!
+    if [[ "$CAN_EXEC" == "1" ]]; then
+        exec /usr/bin/gunicorn3 lava_server.wsgi --log-level $LOGLEVEL --log-file - -u lavaserver -g lavaserver --workers $WORKERS $RELOAD $BIND
+    else
+        /usr/bin/gunicorn3 lava_server.wsgi --log-level $LOGLEVEL --log-file $LOGFILE -u lavaserver -g lavaserver --workers $WORKERS $RELOAD $BIND &
+        GUNICORN_PID=$!
+    fi
 }
 
 
@@ -121,6 +153,7 @@ SERVICES=${SERVICES-"apache2 lava-logs lava-master lava-publisher gunicorn postg
 
 # Is the database needed
 NEED_DB=$((LAVA_LOGS+LAVA_MASTER+GUNICORN+POSTGRESQL))
+CAN_EXEC=$((APACHE2+LAVA_LOGS+LAVA_MASTER+LAVA_PUBLISHER+GUNICORN+POSTGRESQL))
 
 # Start requested services
 if [[ "$POSTGRESQL" == "1" ]]
@@ -154,7 +187,7 @@ fi
 if [[ "$APACHE2" == "1" ]]
 then
     echo "Starting apache2"
-    /etc/init.d/apache2 start
+    start_apache2
     echo "done"
     echo
 fi
@@ -171,8 +204,7 @@ fi
 if [[ "$LAVA_PUBLISHER" == "1" ]]
 then
     echo "Starting lava-publisher"
-    lava-server manage lava-publisher &
-    LAVA_PUBLISHER_PID=$!
+    start_lava_publisher
     echo "done"
     echo
 fi
