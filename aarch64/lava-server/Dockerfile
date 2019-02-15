@@ -27,10 +27,12 @@ RUN service postgresql start && \
     rm -f /tmp/server.deb && \
     service postgresql stop
 
-# Activate the apache2 configuration and module
+# Activate the apache2 configuration and modules
 RUN a2dissite 000-default && \
     a2ensite lava-server && \
-    a2enmod proxy_http
+    a2enmod proxy_http && \
+    a2enmod expires && \
+    a2enmod headers
 
 # Copy lava settings
 COPY settings.conf /etc/lava-server/settings.conf
