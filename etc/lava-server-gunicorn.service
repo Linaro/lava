@@ -4,10 +4,10 @@ After=network.target remote-fs.target
 
 [Service]
 Type=simple
-Environment=LOGLEVEL=DEBUG WORKERS=4 LOGFILE=/var/log/lava-server/gunicorn.log RELOAD=
+Environment=LOGLEVEL=DEBUG WORKERS=4 LOGFILE=/var/log/lava-server/gunicorn.log RELOAD= BIND=
 EnvironmentFile=-/etc/default/lava-server-gunicorn
 EnvironmentFile=-/etc/lava-server/lava-server-gunicorn
-ExecStart=/usr/bin/gunicorn3 lava_server.wsgi --log-level $LOGLEVEL --log-file $LOGFILE -u lavaserver -g lavaserver --workers $WORKERS $RELOAD
+ExecStart=/usr/bin/gunicorn3 lava_server.wsgi --log-level $LOGLEVEL --log-file $LOGFILE -u lavaserver -g lavaserver --workers $WORKERS $RELOAD $BIND
 Restart=always
 
 [Install]

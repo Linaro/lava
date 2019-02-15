@@ -9,3 +9,6 @@
 
 # When working on the python files, gunicorn can reload on any change
 # RELOAD="--reload"
+
+# Address to bind the server
+# BIND="--bind 127.0.0.1:8000"
