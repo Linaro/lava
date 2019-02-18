@@ -1,0 +1,9 @@
+{# device_type: docker #}
+{% extends 'docker.jinja2' %}
+{% set docker_volumes = [
+"/srv/tftp:/srv/tftp",
+"/var/lib/lava/dispatcher/tmp:/var/lib/lava/dispatcher/tmp",
+"/etc/lava-coordinator:/etc/lava-coordinator",
+"/boot:/boot",
+"/lib/modules:/lib/modules"
+]%}

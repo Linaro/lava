@@ -194,6 +194,27 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
             template_dict["actions"]["boot"]["methods"],
         )
 
+    def test_lava_slave_docker(self):
+        data = "{% extends 'lava-slave-docker.jinja2' %}"
+        self.assertTrue(self.validate_data("docker-01", data))
+        template_dict = prepare_jinja_template("docker-01", data, raw=False)
+        self.assertEqual(
+            set(
+                [
+                    "/srv/tftp:/srv/tftp",
+                    "/var/lib/lava/dispatcher/tmp:/var/lib/lava/dispatcher/tmp",
+                    "/etc/lava-coordinator:/etc/lava-coordinator",
+                    "/boot:/boot",
+                    "/lib/modules:/lib/modules",
+                ]
+            ),
+            set(
+                template_dict["actions"]["boot"]["methods"]["docker"]["options"][
+                    "volumes"
+                ]
+            ),
+        )
+
     def test_qemu_misc(self):
         job_ctx = {"arch": "microblaze"}
         template_dict = self.render_device_dictionary_file(
