@@ -60,6 +60,7 @@ Parameter List
 .. include:: actions-deploy-to-fastboot.rsti
 .. include:: actions-deploy-to-isoinstaller.rsti
 .. include:: actions-deploy-to-lxc.rsti
+.. include:: actions-deploy-to-musca.rsti
 .. include:: actions-deploy-to-nbd.rsti
 .. include:: actions-deploy-to-recovery.rsti
 .. include:: actions-deploy-to-sata.rsti

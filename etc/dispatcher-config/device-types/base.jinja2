@@ -339,6 +339,14 @@ timeouts:
       minutes: {{ action_timeout_boot_image_retry | default(2) }}
     flash-uboot-ums:
       minutes: {{ action_timeout_flash_uboot_ums | default(20) }}
+    musca-deploy:
+      minutes: {{ action_timeout_musca_deploy | default(3) }}
+    musca-boot:
+      minutes: {{ action_timeout_musca_boot | default(1) }}
+    pdu-reboot:
+      seconds: {{ action_timeout_pdu_reboot | default(30) }}
+    reset-device:
+      seconds: {{ action_timeout_reset_device | default(30) }}
   connections:
     dd-image:
       minutes: {{ connection_timeout_dd_image | default(10) }}

@@ -36,6 +36,7 @@ from lava_dispatcher.actions.boot.ipxe import IPXE
 from lava_dispatcher.actions.boot.kexec import BootKExec
 from lava_dispatcher.actions.boot.lxc import BootLxc
 from lava_dispatcher.actions.boot.minimal import Minimal
+from lava_dispatcher.actions.boot.musca import Musca
 from lava_dispatcher.actions.boot.openocd import OpenOCD
 from lava_dispatcher.actions.boot.pyocd import PyOCD
 from lava_dispatcher.actions.boot.jlink import JLink

@@ -1,0 +1,67 @@
+.. index:: deploy to musca
+
+.. _deploy_to_musca:
+
+to: musca
+*********
+
+This deployment method allows deployment of software to `musca devices
+<https://developer.arm.com/products/system-design/development-boards/iot-test-chips-and-boards/musca-a-test-chip-board>`__.
+
+The board is powered on and the mass storage device is mounted.
+The test binary is copied to the MSD and then the MSD is unmounted.
+When the board processes it, the MSD will be re-exposed to the dispatcher,
+at which point this is re-mounted and LAVA will check for the presence of a ``FAIL.TXT``
+file, in case of errors.
+
+.. note:: Some initial setup steps are required to ensure that the Musca device serves it's MSD when it is powered on.
+          Check `here <https://github.com/ARMmbed/DAPLink/blob/master/docs/MSD_COMMANDS.md>`__ for details
+          on how to setup the board to auto-boot when it is programmed or turned on.
+          Ensure ``DETAILS.TXT`` on the MSD shows "Auto Reset" and "Auto Power" are activated.
+
+.. note:: LAVA won't deploy firmware to the Musca board and so it must be fixed per device.
+          Firmware used is available `here
+          <https://community.arm.com/developer/tools-software/oss-platforms/w/docs/318/musca-a-firmware-update-qspi-boot-recovery>`__.
+
+
+.. code-block:: yaml
+
+  - deploy:
+      to: musca
+      images:
+        test_binary:
+          url: https://community.arm.com/cfs-file/__key/communityserver-wikis-components-files/00-00-00-00-10/MuscaBlinky_5F00_v002.hex
+
+
+images
+======
+
+.. index:: deploy to musca test_binary
+
+.. _deploy_to_musca_test_binary:
+
+test_binary
+-----------
+
+Download test binary to the Musca device.
+
+.. _deploy_to_musca_binary_url:
+
+url *
+^^^^^
+
+Specifies the URL to download. All downloads are check-summed using ``md5sum``
+and ``sha256sum``
+
+URLs are checked during the test job validation to ensure that the file can be
+downloaded. Missing files will cause the test job to end as Incomplete.
+
+URLs **must** use one of the supported schemes, the first element of the URL.
+
+.. topic:: Supported schema
+
+ * ``http://``
+ * ``https://``
+ * ``file://``
+ * ``lxc://``
+

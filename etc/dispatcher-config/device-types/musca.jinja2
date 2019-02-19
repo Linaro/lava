@@ -1,0 +1,30 @@
+{# device_type: 'musca' #}
+
+{% set action_timeout_power_off = action_timeout_power_off | default(35) %}
+{% set action_timeout_reset_device = action_timeout_reset_device | default(60) %}
+{% set action_timeout_pdu_reboot = action_timeout_pdu_reboot | default(60) %}
+{% set kernel_start_message = '' %}
+
+{% extends 'base.jinja2' %}
+
+{% block body %}
+{# ID_SERIAL_SHORT #}
+board_id: '{{ board_id }}'
+usb_vendor_id: '{{ usb_vendor_id | default('0d28') }}'
+usb_product_id: '{{ usb_product_id | default('0204') }}'
+
+actions:
+  deploy:
+    methods:
+      lxc:
+      musca:
+        # ID_SERIAL value (not ID_SERIAL_SHORT)
+        id_serial: '{{ id_serial }}'
+  boot:
+    connections:
+      lxc:
+      serial:
+    methods:
+      lxc:
+      musca:
+{% endblock body -%}
