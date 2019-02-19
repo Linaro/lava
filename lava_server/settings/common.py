@@ -209,8 +209,8 @@ ALLOW_ADMIN_DELETE = True
 # Default callback http timeout in seconds
 CALLBACK_TIMEOUT = 5
 
-# Properly resolve URL for DRF
-USE_X_FORWARDED_HOST = True
+# DRF may need this to be true when used in some instances.
+USE_X_FORWARDED_HOST = False
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly"

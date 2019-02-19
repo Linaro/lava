@@ -456,7 +456,7 @@ It is also important to enable ``ProxyPreserveHost`` in
     ProxyPreserveHost On
 
 In some situations, you may also need to set ``USE_X_FORWARDED_HOST``
-to ``False`` in ``/etc/lava-server/settings.conf``
+to ``True`` in ``/etc/lava-server/settings.conf``
 
 .. seealso:: https://docs.djangoproject.com/en/1.11/ref/settings/#std:setting-USE_X_FORWARDED_HOST
 
