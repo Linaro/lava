@@ -1,2 +1,3 @@
 debian/lava/usr/lib/python3/dist-packages/lava_common ./usr/lib/python3/dist-packages/
 share/create_certificate.py ./usr/share/lava-common/
+share/lava-schema.py ./usr/share/lava-common/
