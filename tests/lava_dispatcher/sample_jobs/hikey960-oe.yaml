@@ -83,4 +83,3 @@ actions:
       minutes: 5
     method: grub
     commands: installed
-

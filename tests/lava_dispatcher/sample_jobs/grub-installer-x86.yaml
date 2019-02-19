@@ -28,7 +28,7 @@ actions:
      namespace: installer
      method: grub
      commands: debian-installer
-     expect_shell: False
+     expect_shell: false
      timeout:
        minutes: 50
      boot_finished:

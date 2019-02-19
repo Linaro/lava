@@ -40,10 +40,8 @@ actions:
 
     - test:
         timeout:
-           minutes: 3
+           minutes: 10
         failure_retry: 3
-        timeout:
-          minutes: 10
         definitions:
             - repository: git://git.linaro.org/lava-team/lava-functional-tests.git
               from: git

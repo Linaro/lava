@@ -113,9 +113,6 @@ actions:
       name: ssh-inline
       path: inline/ssh-install.yaml
       repository:
-        install:
-          deps:
-          - openssh-server
         metadata:
           description: install step
           format: Lava-Test Test Definition 1.0

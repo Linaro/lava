@@ -51,5 +51,5 @@ actions:
       name: parse-params
       parameters:
         VARIABLE_NAME_1: "first variable value"
-        VARIABLE_NAME_1: "first variable value"
+        VARIABLE_NAME_2: "second variable value"
         EMPTY_VARIABLE:

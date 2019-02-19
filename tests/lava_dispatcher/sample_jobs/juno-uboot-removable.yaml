@@ -50,8 +50,8 @@ actions:
      ramdisk:
          url: http://images.validation.linaro.org/juno/removable/juno-latest-oe-uboot/SOFTWARE/ramdisk.img
          header: u-boot
-         install_overlay: False
-         install_modules: False
+         install_overlay: false
+         install_modules: false
      nfsrootfs:
          url: http://images.validation.linaro.org/juno/removable/linaro-image-lamp-genericarmv8-20150921-770.rootfs.tar.gz
          compression: gz
@@ -92,8 +92,8 @@ actions:
      ramdisk:
          url: http://images.validation.linaro.org/juno/removable/juno-lsk-android-uboot/SOFTWARE/ramdisk.img
          header: u-boot
-         install_overlay: False
-         install_modules: False
+         install_overlay: false
+         install_modules: false
      dtb:
          url: http://images.validation.linaro.org/juno/removable/juno-lsk-android-uboot/SOFTWARE/juno.dtb
 

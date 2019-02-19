@@ -105,4 +105,3 @@ actions:
       from: git
       path: android/lava-android-basic-lxc.yaml
       name: v2-make-adb-connection
-

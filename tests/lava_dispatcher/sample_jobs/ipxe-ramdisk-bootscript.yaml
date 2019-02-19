@@ -33,7 +33,7 @@ actions:
   - boot:
      method: ipxe
      commands: ramdisk
-     use_bootscript: True
+     use_bootscript: true
      parameters:
        shutdown-message: "reboot: Restarting system"
      prompts:

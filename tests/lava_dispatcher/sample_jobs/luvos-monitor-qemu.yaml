@@ -66,5 +66,3 @@ actions:
         passed: pass
         failures: fail
         skipped: skip
-
-

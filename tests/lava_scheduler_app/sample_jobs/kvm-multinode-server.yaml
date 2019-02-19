@@ -59,9 +59,6 @@ actions:
               path: lava-test-shell/multi-node/multinode01.yaml
               name: multinode-basic
 
-context:
-  arch: amd64
-
 notify:
   criteria:
     status: complete

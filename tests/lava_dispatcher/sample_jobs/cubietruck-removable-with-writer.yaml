@@ -56,8 +56,8 @@ actions:
         path: lava-test-shell/smoke-tests-basic.yaml
         name: smoke-tests
 
-    # secondary media - use the first deploy to get to a system which can
-    # deploy the next in testing, assumed to already be deployed
+  # secondary media - use the first deploy to get to a system which can
+  # deploy the next in testing, assumed to already be deployed
   - deploy:
         namespace: boot2
         timeout:

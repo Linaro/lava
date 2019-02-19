@@ -17,7 +17,7 @@ actions:
   # needs to be a list of hashes to retain the order
   - deploy:
      timeout:
-       minutes: 2
+       minutes: 5
      to: tftp
      dtb:
        url: http://images.validation.linaro.org/mustang/mustang.dtb_1.11
@@ -29,8 +29,6 @@ actions:
        # nfsrootfs: file:///tmp/debian-jessie-arm64-rootfs.tar.gz
        compression: gz
      os: debian
-     timeout: {minutes: 5}
-     to: tftp
 
   - boot:
      method: uefi-menu

@@ -70,13 +70,13 @@ The test shell sends:
 
 .. literalinclude:: examples/test-jobs/mustang-ssh-guest.yaml
     :language: yaml
-    :lines: 135
+    :lines: 132
 
 Then it tells the secondary connections to start:
 
 .. literalinclude:: examples/test-jobs/mustang-ssh-guest.yaml
     :language: yaml
-    :lines: 136
+    :lines: 133
 
 This tells the dispatcher for the ``guest`` role to start the deployment. The
 test definition files for secondary connection jobs are copied onto the host
@@ -142,7 +142,7 @@ Notes
 .. literalinclude:: examples/test-jobs/mustang-ssh-guest.yaml
     :language: yaml
     :linenos:
-    :emphasize-lines: 22-24, 67-74, 101-103, 137, 171
+    :emphasize-lines: 22-24, 67-74, 101-103, 134, 168
 
 .. _running_inside_vm:
 

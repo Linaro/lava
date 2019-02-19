@@ -31,7 +31,6 @@ metadata:
   source: lava_scheduler_app unit tests
 
 actions:
-
     - deploy:
         timeout:
           minutes: 2
@@ -59,9 +58,6 @@ actions:
               from: git
               path: lava-test-shell/multi-node/multinode01.yaml
               name: multinode-basic
-
-context:
-  arch: amd64
 
 notify:
   criteria:

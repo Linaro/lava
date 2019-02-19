@@ -81,4 +81,3 @@ actions:
       from: git
       path: lava-test-shell/smoke-tests-basic.yaml
       name: smoke-tests-lxc
-
