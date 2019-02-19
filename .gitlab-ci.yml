@@ -94,16 +94,14 @@ coverage:
     - master
 
 code_quality:
-  <<: *job
-  stage: analyze
+  <<: *analyze
   image: hub.lavasoftware.org/lava/ci-images/amd64/codestyle
   artifacts:
     reports:
       codequality: gl-code-quality-report.json
 
 pylint:
-  <<: *job
-  stage: analyze
+  <<: *analyze
   image: hub.lavasoftware.org/lava/ci-images/amd64/codestyle
 
 sast:
@@ -118,8 +116,7 @@ sast:
     - tags
 
 job-schema:
-  <<: *job
-  stage: analyze
+  <<: *analyze
   image: debian:buster
 
 
@@ -130,6 +127,9 @@ doc:
   <<: *job
   stage: build
   image: debian:9
+  except:
+    refs:
+    - tags
   artifacts:
     paths:
     - doc/v2/_build/html
