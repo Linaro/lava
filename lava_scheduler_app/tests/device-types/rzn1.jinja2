@@ -13,8 +13,11 @@
 {% set bootloader_prompt = bootloader_prompt|default("=>") %}
 {% set extra_nfsroot_args = ",vers=3" %}
 
-{% set bootm_kernel_addr = "0x80008000" %}
+{% set bootm_kernel_addr = "0x84000000" %}
 {% set bootm_ramdisk_addr = "-" %}
 {% set bootm_dtb_addr = "0x80f00000" %}
+
+{% set uboot_method_fit = true %}
+{% set bootm_device_tree_config = "1" %}
 
 {% set uboot_mkimage_arch = "arm" %}

@@ -194,6 +194,15 @@ actions:
         ums:
           commands:
           - {{ ums_command|default('ums 0 mmc 0')}}
+{% if uboot_method_fit %}
+        fit:
+          commands:
+{{ base_uboot_commands }}
+{{ base_uboot_dhcp_command }}
+          - tftp {KERNEL_ADDR} {KERNEL}
+          - "setenv bootargs '{{ console_device }}{{ baud_rate }} rootfstype=ramfs {{ base_kernel_args }}'"
+          - bootm {KERNEL_ADDR}#conf@{{ bootm_device_tree_config }}
+{% endif %}
         nfs:
           commands:
 {% if uboot_needs_usb %}

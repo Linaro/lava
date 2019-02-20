@@ -640,3 +640,8 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
                 self.fail("rzn1 should not have initrd_high set")
             if "setenv fdt_high" in line:
                 self.fail("rzn1 should not have fdt_high set")
+        # Check that "fit" boot command is available
+        commands = template_dict["actions"]["boot"]["methods"]["u-boot"]["fit"][
+            "commands"
+        ]
+        self.assertTrue(isinstance(commands, list))
