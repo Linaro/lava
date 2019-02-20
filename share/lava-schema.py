@@ -81,13 +81,18 @@ def handle_job(options):
         else:
             job_iter = [jobfile]
         for job in job_iter:
-            if not job.is_file():
+            if not job.as_posix() == "-" and not job.is_file():
                 continue
             if job.name in options.exclude:
                 print("* %s [skip]" % str(job))
                 continue
-            print("* %s" % str(job))
-            if check_job(job.read_text(encoding="utf-8"), options, prefix="  -> "):
+            if job.as_posix() == "-":
+                print("* stdin")
+                data = sys.stdin.read()
+            else:
+                print("* %s" % str(job))
+                data = job.read_text(encoding="utf-8")
+            if check_job(data, options, prefix="  -> "):
                 failed += 1
 
     return failed
