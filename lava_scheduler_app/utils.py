@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2013-2018 Linaro Limited
+# Copyright (C) 2013-2019 Linaro Limited
 #
 # Author: Neil Williams <neil.williams@linaro.org>
 #         Senthil Kumaran <senthil.kumaran@linaro.org>

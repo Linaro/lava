@@ -1,4 +1,4 @@
-# Copyright (C) 2015 Linaro Limited
+# Copyright (C) 2015-2019 Linaro Limited
 #
 # Author: Stevan Radakovic <stevan.radakovic@linaro.org>
 #

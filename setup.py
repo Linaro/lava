@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2010 Linaro Limited
+# Copyright (C) 2010-2019 Linaro Limited
 #
 # Author: Neil Williams <neil.williams@linaro.org>
 #

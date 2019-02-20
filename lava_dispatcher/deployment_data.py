@@ -1,4 +1,4 @@
-# Copyright (C) 2013, 2018 Linaro Limited
+# Copyright (C) 2013-2019 Linaro Limited
 #
 # Author: Antonio Terceiro <antonio.terceiro@linaro.org>
 # Author: Neil Williams <neil.williams@linaro.org>

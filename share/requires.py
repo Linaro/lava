@@ -3,7 +3,7 @@
 #
 #  requires.py
 #
-#  Copyright 2018 Linaro
+#  Copyright 2018-2019 Linaro Limited
 #  Author: Neil Williams <neil.williams@linaro.org>
 #
 #  This program is free software; you can redistribute it and/or modify

@@ -1,4 +1,4 @@
-# Copyright (C) 2018 Linaro Limited
+# Copyright (C) 2018-2019 Linaro Limited
 #
 # Author: Neil Williams <neil.williams@linaro.org>
 #

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2016 Linaro Limited
+# Copyright (C) 2016-2018 Linaro Limited
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # This file is part of LAVA Dispatcher.

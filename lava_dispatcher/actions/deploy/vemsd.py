@@ -1,4 +1,4 @@
-# Copyright (C) 2017 Linaro Limited
+# Copyright (C) 2017-2019 Linaro Limited
 #
 # Author: Dean Arnold <dean.arnold@linaro.org>
 #

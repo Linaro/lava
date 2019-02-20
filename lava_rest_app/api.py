@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2018 Linaro Limited
+# Copyright (C) 2018-2019 Linaro Limited
 #
 # Author: Milosz Wasilewski <milosz.wasilewski@linaro.org>
 #
