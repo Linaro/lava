@@ -1,0 +1,8 @@
+{% extends 'qcs404-evb-1k.jinja2' %}
+{% set power_on_command = 'dut-ssh-ctrl.py qcs404-evb-1k-1 power_on' %}
+{% set power_off_command = 'dut-ssh-ctrl.py qcs404-evb-1k-1 power_off' %}
+{% set hard_reset_command = 'dut-ssh-ctrl.py qcs404-evb-1k-1 hard_reset' %}
+{% set connection_command = 'dut-ssh-ctrl.py qcs404-evb-1k-1 console' %}
+{% set fastboot_serial_number = 'c336884d' %}
+{% set device_info = [{'board_id': 'c336884d'}] %}
+{% set adb_serial_number = 'c336884d' %}
