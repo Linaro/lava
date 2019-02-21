@@ -19,10 +19,13 @@
 
 import os
 from datetime import datetime, timedelta
-import pytz
+import voluptuous
 import xmlrpc.client
-from django.utils import timezone
+import yaml
+
 from linaro_django_xmlrpc.models import ExposedV2API
+
+import lava_common.schemas as schemas
 from lava_scheduler_app.api import SchedulerAPI
 from lava_scheduler_app.logutils import read_logs
 from lava_scheduler_app.models import TestJob
@@ -463,3 +466,33 @@ class SchedulerJobsAPI(ExposedV2API):
         """
         cls = SchedulerAPI(self._context)
         return cls.submit_job(definition)
+
+    def validate(self, definition, strict=False):
+        """
+        Name
+        ----
+        `scheduler.jobs.validate` (`definition`, `strict=False`)
+
+        Description
+        -----------
+        Validate the given job definition against the schema validator.
+
+        Arguments
+        ---------
+        `definition`: string
+            Job YAML string.
+        `strict`: boolean
+            If set to True, the validator will reject any extra keys that are
+            present in the job definition but not defined in the schema.
+
+        Return value
+        ------------
+        This function returns None if the job definition is valid. Returns a
+        dictionary in case of error with the key and msg.
+        """
+        data = yaml.safe_load(definition)
+        try:
+            schemas.validate(data, strict=strict)
+            return {}
+        except voluptuous.Invalid as exc:
+            return {"path": exc.path, "msg": exc.msg}
