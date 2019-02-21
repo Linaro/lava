@@ -27,49 +27,18 @@ import voluptuous as v
 import yaml
 
 from lava_common.exceptions import JobError, LAVABug
-from lava_common.schemas import job, validate
+from lava_common.schemas import validate
 
 
 def check_job(data, options, prefix=""):
     data = yaml.safe_load(data)
-    schema = v.Schema(job.schema(), extra=not options.strict)
     try:
-        schema(data)
-        for action in data["actions"]:
-            # The job schema does already check the we have only one key
-            action_type = next(iter(action.keys()))
-            data = action[action_type]
-            cls = None
-            if action_type == "boot":
-                cls = "boot." + data.get("method", "")
-            elif action_type == "command":
-                cls = "command"
-            elif action_type == "deploy":
-                cls = "deploy." + data.get("to", "")
-            elif action_type == "test":
-                if "definitions" in data:
-                    cls = "test.definition"
-                elif "interactive" in data:
-                    cls = "test.interactive"
-                elif "monitors" in data:
-                    cls = "test.monitor"
-            if cls is None:
-                raise v.Invalid("invalid action", path=["actions", action_type])
-            cls = cls.replace("-", "_")
-            validate(cls, data, strict=options.strict)
+        validate(data, options.strict)
     except v.Invalid as exc:
         print("%sInvalid job definition:" % prefix)
         print("%skey: %s" % (prefix, exc.path))
         print("%smgs: %s" % (prefix, exc.msg))
         return 1
-    except LAVABug as exc:
-        print("%sInvalid job definition:" % prefix)
-        print("%sUnknown action type '%s'" % (prefix, cls))
-        return 2
-    except JobError as exc:
-        print("%sInvalid job definition:" % prefix)
-        print("%sInvalid action '%s': %s" % (prefix, cls, exc))
-        return 3
     return 0
 
 
