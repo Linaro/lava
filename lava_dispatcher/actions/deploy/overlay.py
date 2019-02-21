@@ -26,10 +26,7 @@ import tarfile
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.action import Action, Pipeline
 from lava_common.exceptions import InfrastructureError, LAVABug
-from lava_dispatcher.actions.deploy.testdef import (
-    TestDefinitionAction,
-    get_test_action_namespaces,
-)
+from lava_dispatcher.actions.deploy.testdef import TestDefinitionAction
 from lava_dispatcher.logical import Deployment
 from lava_dispatcher.utils.contextmanager import chdir
 from lava_dispatcher.utils.filesystem import check_ssh_identity_file

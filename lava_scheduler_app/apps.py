@@ -18,7 +18,6 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 from django.apps import AppConfig
-from django.conf import settings
 
 
 class LAVASchedulerConfig(AppConfig):

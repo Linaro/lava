@@ -26,7 +26,6 @@ import sys
 import voluptuous as v
 import yaml
 
-from lava_common.exceptions import JobError, LAVABug
 from lava_common.schemas import validate
 
 

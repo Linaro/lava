@@ -23,7 +23,8 @@
 # Pre install some usefull tools when stating a python script with:
 # PYTHONSTARTUP=./share/startup.py python
 #
-import django
+
+import django  # pylint: disable=unused-import
 from dashboard_app.models import *
 from lava_scheduler_app.models import *
 from linaro_django_xmlrpc.models import *

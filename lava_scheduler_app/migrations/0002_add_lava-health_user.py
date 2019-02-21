@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from django.db import models, migrations, transaction, IntegrityError
+from django.db import migrations, transaction, IntegrityError
 from django.utils import timezone
 
 import uuid

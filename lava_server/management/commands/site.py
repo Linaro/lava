@@ -18,7 +18,7 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 from django.contrib.sites.models import Site
-from django.core.management.base import BaseCommand, CommandError, CommandParser
+from django.core.management.base import BaseCommand, CommandParser
 
 
 class Command(BaseCommand):

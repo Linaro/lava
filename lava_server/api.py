@@ -19,7 +19,6 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import subprocess  # nosec internal
 import xmlrpc.client
 import yaml
 

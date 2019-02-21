@@ -21,7 +21,7 @@
 import re
 import subprocess  # nosec - internal
 
-from lava_common.exceptions import InfrastructureError, JobError
+from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.action import Pipeline
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment

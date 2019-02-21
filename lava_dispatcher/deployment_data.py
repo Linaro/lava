@@ -18,9 +18,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
-import sys
-from lava_common.exceptions import JobError
-
 
 android = {  # pylint: disable=invalid-name
     "TESTER_PS1": "root@linaro# ",

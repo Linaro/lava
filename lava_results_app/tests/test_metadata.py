@@ -6,7 +6,6 @@ import shutil
 import logging
 import decimal
 
-import django
 from django.core.exceptions import MultipleObjectsReturned
 from django.urls.exceptions import NoReverseMatch
 from django.urls import reverse

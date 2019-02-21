@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from django.db import models, migrations, transaction
+from django.db import migrations, transaction
 
 
 def forwards_func(apps, schema_editor):

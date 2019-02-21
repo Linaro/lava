@@ -22,8 +22,6 @@ import copy
 import errno
 import ldap
 import os
-import jinja2
-import yaml
 import subprocess  # nosec verified
 
 from django.conf import settings

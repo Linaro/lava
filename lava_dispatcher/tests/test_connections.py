@@ -26,7 +26,6 @@ import unittest
 from lava_common.exceptions import JobError, InfrastructureError
 from lava_common.timeout import Timeout
 from lava_dispatcher.actions.boot.ssh import SchrootAction
-from lava_dispatcher.connection import RECOGNIZED_TAGS
 from lava_dispatcher.tests.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.tests.utils import infrastructure_error
 from lava_dispatcher.utils.filesystem import check_ssh_identity_file

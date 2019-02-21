@@ -68,7 +68,6 @@ from lava_scheduler_app.models import (
     DevicesUnavailableException,
     Worker,
 )
-from lava_scheduler_app import utils
 from lava_scheduler_app.dbutils import (
     device_type_summary,
     invalid_template,

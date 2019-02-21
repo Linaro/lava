@@ -11,8 +11,6 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys
-import os
 import subprocess  # nosec - internal
 import sphinx_bootstrap_theme
 

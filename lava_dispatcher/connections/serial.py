@@ -18,8 +18,6 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import time
-
 from lava_dispatcher.connection import RECOGNIZED_TAGS
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.action import Action

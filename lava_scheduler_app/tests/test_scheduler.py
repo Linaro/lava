@@ -21,7 +21,6 @@
 
 import os
 from datetime import timedelta
-import yaml
 
 from django.contrib.auth.models import User
 from django.test import TestCase

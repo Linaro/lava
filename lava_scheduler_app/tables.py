@@ -19,7 +19,6 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 import yaml
-import logging
 import random
 from django.contrib.admin.models import LogEntry
 from django.utils.html import escape

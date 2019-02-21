@@ -33,7 +33,6 @@ import jinja2.exceptions
 import glob
 import os
 import sys
-import yaml
 
 
 def main():

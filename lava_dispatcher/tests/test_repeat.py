@@ -26,7 +26,6 @@ from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.actions.boot.qemu import BootQEMUImageAction
 from lava_dispatcher.actions.test.shell import TestShellRetry
 from lava_dispatcher.tests.test_basic import Factory, StdoutTestCase
-from lava_dispatcher.tests.test_defs import allow_missing_path
 
 
 @pytest.fixture

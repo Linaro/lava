@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-from lava_server.settings.config_file import ConfigFile
 from django.conf import settings
 
 

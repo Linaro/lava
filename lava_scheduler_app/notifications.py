@@ -18,11 +18,8 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
-import jinja2
 import logging
 import re
-import smtplib
-import socket
 
 from django.conf import settings
 from django.contrib.auth.models import User

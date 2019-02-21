@@ -18,10 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import os
 import unittest
-from lava_dispatcher.device import NewDevice
-from lava_dispatcher.parser import JobParser
 from lava_common.exceptions import JobError
 from lava_dispatcher.tests.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.actions.deploy import DeployAction

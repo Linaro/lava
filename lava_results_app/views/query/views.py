@@ -65,7 +65,6 @@ from lava_results_app.views.query.tables import (
 
 from lava_scheduler_app.models import TestJob
 
-from django.contrib.contenttypes.models import ContentType
 from django_tables2 import RequestConfig
 
 from lava.utils.lavatable import LavaView

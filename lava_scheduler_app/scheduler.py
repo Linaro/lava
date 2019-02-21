@@ -29,7 +29,6 @@ from lava_scheduler_app.models import (
     DeviceType,
     Device,
     _create_pipeline_job,
-    _check_submit_to_device,
     TestJob,
     Worker,
 )

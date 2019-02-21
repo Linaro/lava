@@ -13,7 +13,6 @@ from lava_scheduler_app.models import (
     Device,
     DeviceType,
     DevicesUnavailableException,
-    Notification,
     Tag,
     TestJob,
 )

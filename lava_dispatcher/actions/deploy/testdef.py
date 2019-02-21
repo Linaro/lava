@@ -26,7 +26,6 @@ import base64
 import hashlib
 import tarfile
 import shutil
-from collections import OrderedDict
 from nose.tools import nottest
 from lava_common.exceptions import InfrastructureError, JobError, LAVABug, TestError
 from lava_dispatcher.action import Action, Pipeline

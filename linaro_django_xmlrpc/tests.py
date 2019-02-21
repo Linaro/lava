@@ -24,8 +24,7 @@ import logging
 import xmlrpc.client
 from nose.tools import nottest
 from django.contrib.auth.models import User
-from django.urls import reverse
-from django_testscenarios.ubertest import TestCase, TestCaseWithScenarios
+from django_testscenarios.ubertest import TestCase
 
 from linaro_django_xmlrpc.models import (
     AuthToken,
