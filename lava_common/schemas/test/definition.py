@@ -60,6 +60,11 @@ def schema(live=False):
                             Optional("steps"): [str],
                             Optional("sources"): [str],
                         },
+                        Optional("parse"): {
+                            Optional("fixupdict"): {
+                                str: Any("pass", "fail", "skip", "unknown")
+                            }
+                        },
                         Optional("run"): {Required("steps"): [str]},
                     },
                     Required("from"): "inline",

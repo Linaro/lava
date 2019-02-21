@@ -20,7 +20,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from voluptuous import Any, Optional, Range, Required
+from voluptuous import Any, Optional, Required
 
 from lava_common.schemas import deploy
 
