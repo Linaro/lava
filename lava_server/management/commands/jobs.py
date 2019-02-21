@@ -21,13 +21,15 @@ import datetime
 import re
 from shutil import rmtree
 import time
-
+import yaml
+import voluptuous
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 from django.db import transaction
 from django.utils import timezone
 
 from lava_scheduler_app.models import TestJob
+from lava_common.schemas import validate
 
 
 class Command(BaseCommand):
@@ -111,6 +113,29 @@ class Command(BaseCommand):
             help="Be nice with the system by sleeping regularly",
         )
 
+        valid = sub.add_parser(
+            "validate",
+            help="Validate selected historical jobs against the current schema. ",
+        )
+        valid.add_argument(
+            "--submitter", default=None, type=str, help="Filter jobs by submitter"
+        )
+        valid.add_argument(
+            "--newer-than",
+            default="1d",
+            type=str,
+            help="Validate jobs newer than this. The time is of the "
+            "form: 1h (one hour) or 2d (two days). "
+            "By default, only jobs in the last 24 hours will be validated.",
+        )
+        valid.add_argument(
+            "--strict",
+            default=False,
+            action="store_true",
+            help="If set to True, the validator will reject any extra keys "
+            "that are present in the job definition but not defined in the schema",
+        )
+
     def handle(self, *_, **options):
         """ forward to the right sub-handler """
         if options["sub_command"] == "rm":
@@ -123,6 +148,10 @@ class Command(BaseCommand):
             )
         elif options["sub_command"] == "fail":
             self.handle_fail(options["job_id"])
+        elif options["sub_command"] == "validate":
+            self.handle_validate(
+                options["newer_than"], options["submitter"], options["strict"]
+            )
 
     def handle_fail(self, job_id):
         try:
@@ -189,3 +218,40 @@ class Command(BaseCommand):
 
         if simulate:
             transaction.rollback()
+
+    def handle_validate(self, newer_than, submitter, strict):
+        jobs = TestJob.objects.all().order_by("id")
+        if newer_than is not None:
+            pattern = re.compile(r"^(?P<time>\d+)(?P<unit>(h|d))$")
+            match = pattern.match(newer_than)
+            if match is None:
+                raise CommandError("Invalid newer-than format")
+
+            if match.groupdict()["unit"] == "d":
+                delta = datetime.timedelta(days=int(match.groupdict()["time"]))
+            else:
+                delta = datetime.timedelta(hours=int(match.groupdict()["time"]))
+            jobs = jobs.filter(end_time__gt=(timezone.now() - delta))
+
+        if submitter is not None:
+            try:
+                user = User.objects.get(username=submitter)
+            except User.DoesNotExist:
+                raise CommandError("Unable to find submitter '%s'" % submitter)
+            jobs = jobs.filter(submitter=user)
+
+        invalid = False
+        for job in jobs:
+            data = yaml.safe_load(job.original_definition)
+            try:
+                validate(data, strict)
+                print("[%s] Passed " % job.id)
+            except voluptuous.Invalid as exc:
+                invalid = True
+                print("\n[%s] Invalid job definition," % job.id)
+                print(" submitted by %s" % job.submitter)
+                print(" for %s:" % job.requested_device_type)
+                print(" key: %s" % exc.path)
+                print(" msg: %s" % exc.msg)
+        if invalid:
+            raise CommandError("Some jobs are invalid")
