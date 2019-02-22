@@ -24,8 +24,9 @@ import stat
 import subprocess  # nosec system
 
 from django.core.checks import Error, register, Info, Warning
-from voluptuous import MultipleInvalid
-from lava_common.schemas import job
+from voluptuous import Invalid
+
+from lava_common.schemas import validate
 from lava_scheduler_app.dbutils import invalid_template, validate_job
 from lava_scheduler_app.models import Device, DeviceType
 from lava_scheduler_app.schema import SubmissionException
@@ -37,7 +38,6 @@ from lava_scheduler_app.schema import SubmissionException
 def check_health_checks(app_configs, **kwargs):
     errors = []
 
-    schema = job.schema()
     for device in Device.objects.all():
         ht = device.get_health_check()
         ht_disabled = device.device_type.disable_health_check
@@ -65,8 +65,8 @@ def check_health_checks(app_configs, **kwargs):
 
         # check the schema
         try:
-            schema(data)
-        except MultipleInvalid as exc:
+            validate(data, strict=False)
+        except Invalid as exc:
             errors.append(
                 Error(
                     "Invalid health check schema: '%s' '%s'." % (device.hostname, exc),
