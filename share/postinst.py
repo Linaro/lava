@@ -68,11 +68,10 @@ def db_setup(config, pg_admin_username, pg_admin_password):
     run(
         [
             "pg_isready",
-            "-d",
-            config.LAVA_DB_NAME,
-            "-p",
-            "%s" % config.LAVA_DB_PORT,
-            "-q",
+            "--dbname=%s" % config.LAVA_DB_NAME,
+            "--host=%s" % config.LAVA_DB_SERVER,
+            "--port=%s" % config.LAVA_DB_PORT,
+            "--quiet",
         ],
         "Failed to connect to postgres.",
     )
