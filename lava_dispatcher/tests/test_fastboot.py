@@ -305,7 +305,7 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
     def test_sdm845_qcs(self):
         self.factory = FastBootFactory()
         job = self.factory.create_job(
-            "qcs404-evb-1k-01.jinja2", "sample_jobs/qcs404-evb-4k.yaml"
+            "qcs404-evb-1k-01.jinja2", "sample_jobs/qcs404-evb-1k.yaml"
         )
         # do not run job.validate() - power urls do not exist.
         description_ref = self.pipeline_reference("qcs404-evb-1k.yaml", job=job)
