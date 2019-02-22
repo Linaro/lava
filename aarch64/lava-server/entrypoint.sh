@@ -135,6 +135,27 @@ wait_postgresql() {
 }
 
 
+###########################
+# wait for the migrations #
+###########################
+check_migration() {
+    migrations=$(lava-server manage showmigrations --plan)
+    if [[ "$?" != "0" ]]
+    then
+        return 1
+    fi
+    return $(echo $migrations | grep "\[ \]" | wc -l)
+}
+
+wait_migration() {
+    until check_migration
+    do
+        echo "."
+        sleep 1
+    done
+}
+
+
 ########
 # Main #
 ########
@@ -151,8 +172,13 @@ SERVICES=${SERVICES-"apache2 lava-logs lava-master lava-publisher gunicorn postg
 [[ "$SERVICES" == *"gunicorn"* ]] && GUNICORN=1 || GUNICORN=0
 [[ "$SERVICES" == *"postgresql"* ]] && POSTGRESQL=1 || POSTGRESQL=0
 
-# Is the database needed
+# Is the database needed?
 NEED_DB=$((LAVA_LOGS+LAVA_MASTER+GUNICORN+POSTGRESQL))
+# Migrate if LAVA_DB_MIGRATE is undefined and lava-master is running in this
+# container.
+[[ "$LAVA_MASTER" == "1" ]] && MIGRATE_DEFAULT="yes" || MIGRATE_DEFAULT="no"
+LAVA_DB_MIGRATE=${LAVA_DB_MIGRATE:-$MIGRATE_DEFAULT}
+# Should we use "exec"?
 CAN_EXEC=$((APACHE2+LAVA_LOGS+LAVA_MASTER+LAVA_PUBLISHER+GUNICORN+POSTGRESQL))
 
 # Start requested services
@@ -168,10 +194,16 @@ if [[ "$NEED_DB" != "0" ]]
 then
     echo "Waiting for postgresql"
     wait_postgresql
-    echo "[done]"
+    echo "done"
     echo
-    echo "Applying migrations"
-    lava-server manage migrate
+    if [[ "$LAVA_DB_MIGRATE" == "yes" ]]
+    then
+        echo "Applying migrations"
+        lava-server manage migrate
+    else
+        echo "Waiting for migrations"
+        wait_migration
+    fi
     echo "done"
     echo
 fi
