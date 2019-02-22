@@ -449,6 +449,7 @@ class TestInstallers(StdoutTestCase):
 
 
 class TestVersions(StdoutTestCase):
+    @unittest.skipIf(infrastructure_error("dpkg-query"), "dpkg-query not installed")
     def test_dpkg(self):
         # avoid checking the actual version
         binary = which("dpkg-query")
