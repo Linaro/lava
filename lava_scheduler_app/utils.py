@@ -20,7 +20,6 @@
 
 import copy
 import errno
-import ldap
 import os
 import subprocess  # nosec verified
 
@@ -288,6 +287,8 @@ def get_ldap_user_properties(ldap_user):
 
     If given ldap_user does not exist, then raise ldap.NO_SUCH_OBJECT
     """
+    import ldap
+
     server_uri = settings.AUTH_LDAP_SERVER_URI
     bind_dn = settings.AUTH_LDAP_BIND_DN
     bind_password = settings.AUTH_LDAP_BIND_PASSWORD
