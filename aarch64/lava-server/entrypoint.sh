@@ -138,17 +138,38 @@ wait_postgresql() {
 ###########################
 # wait for the migrations #
 ###########################
-check_migration() {
+check_initial_migrations() {
+    lava-server manage shell -c "import sys
+import django
+from django.db import connections
+try:
+    connections['default'].cursor().execute('SELECT * from django_migrations')
+except django.db.utils.Error:
+    sys.exit(1)
+sys.exit(0)"
+}
+
+check_migrations() {
     migrations=$(lava-server manage showmigrations --plan)
     if [[ "$?" != "0" ]]
     then
         return 1
     fi
-    return $(echo $migrations | grep "\[ \]" | wc -l)
+    return $(echo $migrations | grep -c "\\[ \\]")
 }
 
 wait_migration() {
-    until check_migration
+    # Check that the django_migrations table exist before calling 'showmigrations'.
+    # In fact, 'showmigrations' will create the table if it's missing. But if
+    # two processes try to create the table at the same time, the last to
+    # commit will crash.
+    until check_initial_migrations
+    do
+        echo "."
+        sleep 1
+    done
+    # The table exist, calling 'showmigrations' is now idempotent.
+    until check_migrations
     do
         echo "."
         sleep 1
