@@ -8,7 +8,7 @@ then
     true
 else
     LAVA_BUILDD=`pwd`
-    RELEASE="active"
+    RELEASE="notreleased"
     R_OPT="--ignore=wrongdistribution"
     BASEDIR="${HOME}/repository/${RELEASE}"
     # location of snapshot directory
