@@ -44,7 +44,7 @@ handler() {
     /etc/init.d/postgresql stop
 
     echo "Killing log reader"
-    kill "$tail_pid"
+    [[ -n "$tail_pid" ]] && kill "$tail_pid"
     exit 0
 }
 
