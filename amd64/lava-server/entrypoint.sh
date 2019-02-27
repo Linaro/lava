@@ -229,6 +229,19 @@ then
     echo
 fi
 
+# Run user scripts. The database is running and migrations has been run.
+for f in /root/entrypoint.d/*; do
+    case "$f" in
+        *.sh)
+            echo "$0: running ${f}"
+            "${f}"
+            ;;
+        *)
+        echo "$0: ignoring ${f}"
+        ;;
+    esac
+done
+
 if [[ "$GUNICORN" == "1" ]]
 then
     echo "Starting gunicorn3"
@@ -269,18 +282,6 @@ then
     echo "done"
     echo
 fi
-
-for f in /root/entrypoint.d/*; do
-    case "$f" in
-        *.sh)
-            echo "$0: running ${f}"
-            "${f}"
-            ;;
-        *)
-        echo "$0: ignoring ${f}"
-        ;;
-    esac
-done
 
 ################
 # Wait forever #
