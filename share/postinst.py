@@ -191,19 +191,6 @@ def configure():
 
     os.makedirs("%s/media/job-output/" % LAVA_SYS_MOUNTDIR, exist_ok=True)
 
-    run(
-        [
-            "adduser",
-            "--quiet",
-            "--system",
-            "--group",
-            "--home=%s" % LAVA_SYS_HOME,
-            config.LAVA_SYS_USER,
-            "--shell=/bin/sh",
-        ],
-        "adduser",
-    )
-
     shutil.chown(LAVA_SYS_MOUNTDIR, config.LAVA_SYS_USER, config.LAVA_SYS_USER)
     shutil.chown(
         "%s/media/" % LAVA_SYS_MOUNTDIR, config.LAVA_SYS_USER, config.LAVA_SYS_USER
