@@ -7,9 +7,8 @@ Build-Depends:
  debhelper (>= 9.20160709), dh-python, po-debconf,
  python3, python3-sphinx (>= 1.4), python3-setuptools (>= 3),
  python3-yaml, python3-sphinx-bootstrap-theme,
- node-uglify, libjs-excanvas, libjs-jquery-cookie, libjs-jquery,
- libjs-jquery-watermark, libjs-jquery-flot (>= 0.8.2),
- libjs-jquery-typeahead, libjs-jquery-ui
+ node-uglify, libjs-excanvas, libjs-jquery,
+ libjs-jquery-flot (>= 0.8.2), libjs-jquery-typeahead
 X-Python3-Version: >=3.5
 Standards-Version: 4.2.1
 Homepage: https://www.lavasoftware.org/
@@ -47,10 +46,9 @@ Package: lava-server
 Architecture: all
 Pre-Depends: debconf | debconf-2.0
 Depends: apache2, adduser, gunicorn3, iproute2, python3-setuptools,
- libjs-excanvas, libjs-jquery-cookie, libjs-jquery, libjs-jquery-ui,
- libjs-jquery-watermark, libjs-jquery-flot (>= 0.8.2),
- libjs-jquery-typeahead, systemd-sysv,
- postgresql, postgresql-client, postgresql-common,
+ libjs-excanvas, libjs-jquery, libjs-jquery-flot (>=0.8.2),
+ libjs-jquery-typeahead, systemd-sysv, postgresql,
+ postgresql-client, postgresql-common,
  lava-common (>= ${source:Version}), ${python3:Depends}, ${misc:Depends}
 Recommends: ntp, openssh-client,
  lava-coordinator, lava-server-doc, lava-dispatcher,
@@ -135,10 +133,10 @@ Section: devel
 Depends: build-essential, ca-certificates, devscripts, dpkg-dev,
  debootstrap (>= 1.0.86), debhelper (>= 9.20160709), dh-python,
  fakeroot, git, libdistro-info-perl, node-uglify, libjs-excanvas,
- libjs-jquery-cookie, libjs-jquery, libjs-jquery-watermark,
- libjs-jquery-flot (>= 0.8.2), libjs-jquery-ui, python3:any,
- python3-setuptools, python3-dateutil, python3-guestfs, python3-nose,
- python3-netifaces, python3-pexpect (>= 4.2), pep8 | python3-pep8,
+ libjs-jquery, libjs-jquery-flot (>= 0.8.2), libjs-jquery-typeahead,
+ python3:any, python3-setuptools, python3-dateutil, python3-guestfs,
+ python3-nose, python3-netifaces,
+ python3-pexpect (>= 4.2), pep8 | python3-pep8,
  python3-guestfs, python3-netifaces, python3-magic,
  python3-sphinx (>= 1.4), python3-sphinx-bootstrap-theme, python3-requests,
  python3-zmq, python3-yaml, python3-voluptuous (>= 0.8.8), python3-tz,
