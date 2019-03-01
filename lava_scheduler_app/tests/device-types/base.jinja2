@@ -77,6 +77,14 @@ constants:
     lava_test_shell_file: {{ lava_test_shell_file | default('~/.bashrc') }}
 
   # bootloader specific
+  barebox:
+    interrupt-prompt: '{{ barebox_autoboot_prompt | default("Hit m for menu or any other key to stop autoboot") }}'
+    interrupt-character: '{{ barebox_interrupt_character | default("\n") }}'
+    final-message: '{{ barebox_final_message | default("Starting kernel") }}'
+    error-messages:
+      - '### ERROR ### Please RESET the board ###'
+      - 'ERROR: .*'
+      - '.*: Out of memory'
   u-boot:
     interrupt-prompt: '{{ uboot_autoboot_prompt | default("Hit any key to stop autoboot") }}'
     interrupt-character: '{{ uboot_interrupt_character | default(" ") }}'

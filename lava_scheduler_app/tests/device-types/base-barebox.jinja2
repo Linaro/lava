@@ -1,0 +1,42 @@
+{% extends 'base.jinja2' %}
+
+{% set baud_rate = baud_rate | default(115200) %}
+{% set console_device = console_device | default('ttyS0') %}
+
+{% if load_addr %}
+{% set load_addr = '-a '+load_addr %}
+{% endif %}
+
+{% if initrd_load_addr %}
+{% set initrd_load_addr = '-L '+initrd_load_addr %}
+{% endif %}
+
+{% block body %}
+
+actions:
+  deploy:
+    connections:
+      serial:
+    methods:
+      tftp:
+  boot:
+    connections:
+      serial:
+    methods:
+      barebox:
+        parameters:
+          bootloader_prompt: {{ bootloader_prompt|default('barebox') }}
+          interrupt_prompt: {{ interrupt_prompt|default('stop autoboot') }}
+          send_char: False
+        tftp:
+          commands:
+            - boot net
+        nfs:
+          commands:
+            - global linux.bootargs.nfs="'root=/dev/nfs rw nfsroot={SERVER_IP}:{NFSROOTFS},tcp,hard,intr ip=dhcp'"
+            - bootm -v -o /mnt/tftp/{DTB} /mnt/tftp/{KERNEL} {{ load_addr }} {{ initrd_load_addr }}
+        ramdisk:
+          commands:
+            - bootm -v -r /mnt/tftp/{RAMDISK} -o /mnt/tftp/{DTB} /mnt/tftp/{KERNEL} {{ load_addr }} {{ initrd_load_addr }}
+
+{% endblock body %}
