@@ -41,6 +41,7 @@ from lava_dispatcher.actions.boot.pyocd import PyOCD
 from lava_dispatcher.actions.boot.qemu import BootQEMU
 from lava_dispatcher.actions.boot.ssh import SshLogin, Schroot
 from lava_dispatcher.actions.boot.u_boot import UBoot
+from lava_dispatcher.actions.boot.barebox import Barebox
 from lava_dispatcher.actions.boot.uefi import UefiShell
 from lava_dispatcher.actions.boot.uefi_menu import UefiMenu
 from lava_dispatcher.actions.boot.recovery import RecoveryBoot
