@@ -1,0 +1,4 @@
+{% extends 'base-barebox.jinja2' %}
+
+{% set bootloader_prompt = 'Technexion Pico i.MX6UL Board:/' %}
+{% set console_device = console_device | default('ttymxc0') %}
