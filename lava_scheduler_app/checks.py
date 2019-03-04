@@ -191,9 +191,10 @@ def find_our_daemons():
         if "gunicorn: master [lava_server.wsgi]" in content[0]:
             daemons["lava-server-gunicorn"] = "%s" % dirname
             continue
-        elif "/usr/bin/gunicorn3" in content[1] and "lava_server.wsgi" in content[2]:
-            daemons["lava-server-gunicorn"] = "%s" % dirname
-            continue
+        elif len(content) >= 3:
+            if "/usr/bin/gunicorn3" in content[1] and "lava_server.wsgi" in content[2]:
+                daemons["lava-server-gunicorn"] = "%s" % dirname
+                continue
 
         if "python3" not in content[0]:
             continue
