@@ -1,3 +1,91 @@
+lava (2019.03-1) unstable; urgency=medium
+
+  * 2019.03-1 LAVA Software 2019.03 release
+    60b9c653f checks: fix crash if the cmdline is not in the expected format
+    86cfe1ac2 Update reprepro-release.sh
+    6129fe7c0 tweak reprepro-release for new directory
+    b0cf8d779 rzn1: allow to boot using a fit image available over tftp
+    3e4faf6e1 Add qcs404-evb-1k-specific health check and fix a typo
+    9fd571b3e Fix crash in "check --deploy"
+    07a89fab3 device-type: Add Qualcomm's qcs404-1k and qcs404-4k
+    dcf3f2c6c debian: lava meta pkg: allow to use chrony instead of ntp
+    2d8e09126 (codehelp/master) schema: improve schema validator
+    8fa55d888 xmlrpc: allow to validate job definition schema
+    5aa407f04 Add default volumes for lava-slave-docker types
+    8f2a8cbe6 schema: move validate function to lava_common.schema
+    0b38b5805 Update copyright years across the LAVA source tree
+    5c17463e1 Package lava-schema.py in lava-common
+    a846ad088 Provide symlink for favicon
+    785906e1b Make timeout check non-fatal
+    6373b6869 lava-schema: allow to read from stdin
+    25812ecc7 schema: allow for any objects for test def params
+    861ec2fb3 Revert change to USE_X_FORWARDED_HOST
+    f26f61ee7 Avoid spurious boot command list warning
+    4915231e4 Skip analysis jobs on tags
+    d53814cc0 Add docs on advanced Apache and container usage
+    b42520584 Mention lava-lxc-mocker in docs
+    93828f63d device-types: add Intel upsquare
+    170dc7547 device-types: add pine64+
+    f1bbb9bb8 lava-server-gunicorn: allow to set the bind address
+    354077cb4 Schema: handle recovery deploy and boot methods
+    ae39f9004 Schema: add deploy to "download" method
+    7b9119bd7 CI check more sample jobs
+    168c4db20 Bump version of django-tables2 backport
+    1b0749092 Fix more sample jobs and ad schroot boot
+    e30c2f03d Fix typo
+    ea2987a08 Fix error in maintenance breadcrumb
+    291aa4ddb Make kernel messages wait sensitive to force_prompt
+    f3adeb798 Add cls.LT and cls.EXACT to models.DateTimeField
+    84ad3683a Check health-check YAML and schema
+    9299d5263 REST API: test /junit
+    1d5ea3cf7 Require python3-junitxml >= 1.8 for REST API calls
+    dc5a6fe48 templates: handle multinode vs singlenode
+    5f01a79c6 CI: run pylint to find common errors
+    00db03351 Fix some crashes found by pylint3
+    5a92736ad CI: test templates against the schema
+    3b5c9d5ef Add extra U-Boot bootloader error
+    2929ba8f3 Raise the codeclimate complexity threshold
+    d84756688 apache2: send the right cache-control headers when available
+    3cc42420f rzn1: do not set uboot_needs_interrupt explicitely
+    656666cb7 maintenance: fix crash after new state machine
+    00cea9df4 Device/Worker: remove deprecated method
+    576146730 Fix missing imports
+    32960bdd5 Handle duplicate listings in requires
+    19fdfd969 Move get_domain() to dbutils
+    01d354d1b img2simg and simg2img now available in a new package
+    bb62625f3 Fixup changes in the bandit overrides
+    ae25f1fe1 Update copyright for recent changes
+    4c33f7a54 Wait for the prompt when using shell on DUT
+    5662f734a code_quality: install radeo in the setup step
+    19bda4ac5 Support using radon to output code-climate data
+    489bc8416 schema: check namespace syntax
+    6406e1368 Improve inline test schema
+    0ae489101 Schema: check that jobs with secrets are not public
+    36d7f4ebb Check that timeouts are shorter than job timeout
+    fd225060e Improve schema validator
+    3a2fc459b Prevent action.timeout exceeding job.timeout
+    e6bfc3f43 Allow check --deploy inside Docker
+    69053fb82 Ignore DeprecatedWarnings on buster in CI
+    01fa79469 ci-run: use pytest-3 by default
+    075bf1f28 Fix crash when pre-test install failed
+    0c1372f9d Fix crash with older python3-tap versions
+    02097dd41 Fixup 4ebbc234 - put new test in correct location
+    feff6c914 CI do not run analyze for tags
+    9d4a91251 Fix documentation
+    2354f3899 doc: mention the minimal boot method
+    354f33ac2 imx8m device type restructuration.
+    4e1090982 base.jinja2: Allow interrupt-newline to be disabled in u-boot
+    958068fc6 Fix more sample job syntax
+    27fdc5107 device-types: add hsdk
+    dd4663b0a multinode: use character_delay
+    4ebbc234b power: use run_cmd instead of run_command run_cmd: accept
+              command as a string
+    9d9650939 Add missing pytest dependency for autopkgtest
+    d5bf2c248 Fix typo in f6bb9de2
+    b3eefdedb Fix missing change which breaks Debian CI testing    
+    
+ -- Steve McIntyre <93sam@debian.org>  Mon, 04 Mar 2019 12:55:07 +0000
+
 lava (2019.01-1) unstable; urgency=medium
 
   * 2019.01-1 LAVA Software 2019.01 release
