@@ -1,0 +1,51 @@
+#!/bin/sh
+
+# Push the given version to lavasoftware docker registry
+# If the manifest creation fails, you might have to clean ~/.docker/manifests/
+
+set -e
+
+CI_REGISTRY_IMAGE="hub.lavasoftware.org/lava/lava"
+IMAGE_TAG="$1"
+
+echo "lava-dispatcher"
+echo "==============="
+echo "* aarch64"
+docker pull "$CI_REGISTRY_IMAGE/aarch64/lava-dispatcher:$IMAGE_TAG"
+docker tag "$CI_REGISTRY_IMAGE/aarch64/lava-dispatcher:$IMAGE_TAG" "lavasoftware/aarch64-lava-dispatcher:$IMAGE_TAG"
+docker push "lavasoftware/aarch64-lava-dispatcher:$IMAGE_TAG"
+docker tag "$CI_REGISTRY_IMAGE/aarch64/lava-dispatcher:$IMAGE_TAG" "lavasoftware/aarch64-lava-dispatcher:latest"
+docker push "lavasoftware/aarch64-lava-dispatcher:latest"
+echo "* amd64"
+docker pull "$CI_REGISTRY_IMAGE/amd64/lava-dispatcher:$IMAGE_TAG"
+docker tag "$CI_REGISTRY_IMAGE/amd64/lava-dispatcher:$IMAGE_TAG" "lavasoftware/amd64-lava-dispatcher:$IMAGE_TAG"
+docker push "lavasoftware/amd64-lava-dispatcher:$IMAGE_TAG"
+docker tag "$CI_REGISTRY_IMAGE/amd64/lava-dispatcher:$IMAGE_TAG" "lavasoftware/amd64-lava-dispatcher:latest"
+docker push "lavasoftware/amd64-lava-dispatcher:latest"
+echo "* manifests ($IMAGE_TAG)"
+DOCKER_CLI_EXPERIMENTAL=enabled docker manifest create "lavasoftware/lava-dispatcher:$IMAGE_TAG" "lavasoftware/aarch64-lava-dispatcher:$IMAGE_TAG" "lavasoftware/amd64-lava-dispatcher:$IMAGE_TAG"
+DOCKER_CLI_EXPERIMENTAL=enabled docker manifest push --purge "lavasoftware/lava-dispatcher:$IMAGE_TAG"
+echo "* manifests (latest)"
+DOCKER_CLI_EXPERIMENTAL=enabled docker manifest create "lavasoftware/lava-dispatcher:latest" "lavasoftware/aarch64-lava-dispatcher:latest" "lavasoftware/amd64-lava-dispatcher:latest"
+DOCKER_CLI_EXPERIMENTAL=enabled docker manifest push --purge "lavasoftware/lava-dispatcher:latest"
+
+echo "lava-server"
+echo "==========="
+echo "* aarch64"
+docker pull "$CI_REGISTRY_IMAGE/aarch64/lava-server:$IMAGE_TAG"
+docker tag "$CI_REGISTRY_IMAGE/aarch64/lava-server:$IMAGE_TAG" "lavasoftware/aarch64-lava-server:$IMAGE_TAG"
+docker push "lavasoftware/aarch64-lava-server:$IMAGE_TAG"
+docker tag "$CI_REGISTRY_IMAGE/aarch64/lava-server:$IMAGE_TAG" "lavasoftware/aarch64-lava-server:latest"
+docker push "lavasoftware/aarch64-lava-server:latest"
+echo "* amd64"
+docker pull "$CI_REGISTRY_IMAGE/amd64/lava-server:$IMAGE_TAG"
+docker tag "$CI_REGISTRY_IMAGE/amd64/lava-server:$IMAGE_TAG" "lavasoftware/amd64-lava-server:$IMAGE_TAG"
+docker push "lavasoftware/amd64-lava-server:$IMAGE_TAG"
+docker tag "$CI_REGISTRY_IMAGE/amd64/lava-server:$IMAGE_TAG" "lavasoftware/amd64-lava-server:latest"
+docker push "lavasoftware/amd64-lava-server:latest"
+echo "* manifests ($IMAGE_TAG)"
+DOCKER_CLI_EXPERIMENTAL=enabled docker manifest create "lavasoftware/lava-server:$IMAGE_TAG" "lavasoftware/aarch64-lava-server:$IMAGE_TAG" "lavasoftware/amd64-lava-server:$IMAGE_TAG"
+DOCKER_CLI_EXPERIMENTAL=enabled docker manifest push --purge "lavasoftware/lava-server:$IMAGE_TAG"
+echo "* manifests (latest)"
+DOCKER_CLI_EXPERIMENTAL=enabled docker manifest create "lavasoftware/lava-server:latest" "lavasoftware/aarch64-lava-server:latest" "lavasoftware/amd64-lava-server:latest"
+DOCKER_CLI_EXPERIMENTAL=enabled docker manifest push --purge "lavasoftware/lava-server:latest"
