@@ -68,4 +68,4 @@ debian:
     destination: lava_server/static/lava_server/js/
     files:
       bootbox.js: bootbox.min.js
-      bootstrap-3.3.7.js: bootstrap-3.3.7.min.js
+      bootstrap-3.4.1.js: bootstrap-3.4.1.min.js
