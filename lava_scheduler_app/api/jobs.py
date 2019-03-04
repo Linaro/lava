@@ -212,15 +212,7 @@ class SchedulerJobsAPI(ExposedV2API):
             end_time = datetime.now()
             # search back in time
             start_time = end_time - timedelta(minutes=since)
-            try:
-                jobs = jobs.filter(end_time__range=[start_time, end_time])
-            except TestJob.DoesNotExist:
-                raise xmlrpc.client.Fault(
-                    404, "No jobs exist since %s minutes ago" % since
-                )
-
-        if not jobs:
-            raise xmlrpc.client.Fault(404, "No jobs match the specified criteria.")
+            jobs = jobs.filter(end_time__range=[start_time, end_time])
 
         for job in jobs.order_by("-id")[start : start + limit]:
             device_type = None
