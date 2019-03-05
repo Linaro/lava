@@ -116,6 +116,11 @@ class LavaObtainAuthToken(ObtainAuthToken):
 
 
 class TestJobSerializer(serializers.ModelSerializer):
+    health = serializers.CharField(source="get_health_display")
+    state = serializers.CharField(source="get_state_display")
+    visibility = serializers.CharField(source="get_visibility_display")
+    submitter = serializers.CharField(source="submitter.username")
+
     class Meta:
         model = TestJob
         fields = (
@@ -328,6 +333,8 @@ class TestJobViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class DeviceTypeSerializer(serializers.ModelSerializer):
+    health_denominator = serializers.CharField(source="get_health_denominator_display")
+
     class Meta:
         model = DeviceType
         fields = (
@@ -374,6 +381,12 @@ class DeviceTypeViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class DeviceSerializer(serializers.ModelSerializer):
+    health = serializers.CharField(source="get_health_display")
+    state = serializers.CharField(source="get_state_display")
+    physical_owner = serializers.CharField(
+        source="physical_owner.username", default=None
+    )
+
     class Meta:
         model = Device
         fields = (
