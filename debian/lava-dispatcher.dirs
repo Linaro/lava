@@ -1,4 +1,3 @@
-usr/sbin
 etc/lava-dispatcher/devices
 etc/lava-dispatcher/device-types
 var/lib/lava/dispatcher/tmp
