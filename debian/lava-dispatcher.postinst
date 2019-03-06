@@ -26,11 +26,6 @@ case "$1" in
         if [ ! -f /etc/lava-dispatcher/lava-slave ]; then
             cp /usr/share/lava-dispatcher/lava-slave /etc/lava-dispatcher/lava-slave
         fi
-        # only used by V1 and can be overriden using LAVA_NETWORK_INTERFACE
-        if [ ! -f /etc/lava-dispatcher/lava-dispatcher.conf ]; then
-            sed -e "s/#LAVANETWORKIFACE#//" /usr/share/lava-dispatcher/lava-dispatcher.conf > /etc/lava-dispatcher/lava-dispatcher.conf
-            perl -pi -e "s/#LAVASERVERIP#/${LAVA_SERVER_IP}/g" /etc/lava-dispatcher/lava-dispatcher.conf
-        fi
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)
