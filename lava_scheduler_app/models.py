@@ -1630,10 +1630,6 @@ class TestJob(RestrictedResource):
     # calculated by the master validation process.
     pipeline_compatibility = models.IntegerField(default=0, editable=False)
 
-    # only one value can be set as there is only one opportunity
-    # to transition a device from Running to Offlining.
-    admin_notifications = models.TextField(editable=False, blank=True)
-
     @property
     def size_limit(self):
         return settings.LOG_SIZE_LIMIT * 1024 * 1024

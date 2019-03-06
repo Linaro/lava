@@ -142,7 +142,6 @@ class TestJobSerializer(serializers.ModelSerializer):
             "definition",
             "original_definition",
             "multinode_definition",
-            "admin_notifications",
             "failure_tags",
             "failure_comment",
         )
@@ -196,7 +195,6 @@ class TestJobViewSet(viewsets.ReadOnlyModelViewSet):
         "definition",
         "original_definition",
         "multinode_definition",
-        "admin_notifications",
         "failure_tags",
         "failure_comment",
     )

@@ -816,10 +816,10 @@ class SchedulerAPI(ExposedAPI):
         _state, submitter_id, is_pipeline, id, failure_comment,
         multinode_definition, user_id, priority, _actual_device_cache,
         original_definition, status, health_check, description,
-        admin_notifications, start_time, target_group, visibility,
-        pipeline_compatibility, submit_time, is_public, _old_status,
-        actual_device_id, definition, sub_id, requested_device_type_id,
-        end_time, group_id, absolute_url, submitter_username
+        start_time, target_group, visibility, pipeline_compatibility,
+        submit_time, is_public, _old_status, actual_device_id, definition,
+        sub_id, requested_device_type_id, end_time, group_id, absolute_url,
+        submitter_username
         """
         self._authenticate()
         if not job_id:

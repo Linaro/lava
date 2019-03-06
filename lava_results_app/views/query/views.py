@@ -716,7 +716,6 @@ def _export_query(query_results, content_type, filename):
         "user_id",
         "actual_device_id",
         "definition",
-        "admin_notifications",
         "group_id",
         "multinode_definition",
         "original_definition",
