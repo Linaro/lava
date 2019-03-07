@@ -289,5 +289,5 @@ fi
 cd /var/log/lava-server
 while true
 do
-  tail -f --retry django.log gunicorn.log lava-logs.log lava-master.log lava-publisher.log & wait ${!}
+  tail -F django.log gunicorn.log lava-logs.log lava-master.log lava-publisher.log & wait ${!}
 done
