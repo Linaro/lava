@@ -28,7 +28,7 @@ handler() {
     echo "* gunicorn \$$GUNICORN_PID"
     [[ "$GUNICORN_PID" != "0" ]] && kill $GUNICORN_PID
     echo "* apache2"
-    /etc/init.d/apache2 stop
+    apache2ctl stop
 
     echo "Waiting for:"
     echo "* lava-logs"
@@ -53,12 +53,12 @@ handler() {
 # Start helpers #
 #################
 start_apache2() {
+    export APACHE_CONFDIR=/etc/apache2
+    export APACHE_ENVVARS=/etc/apache2/envvars
     if [[ "$CAN_EXEC" == "1" ]]; then
-        export APACHE_CONFDIR=/etc/apache2
-        export APACHE_ENVVARS=/etc/apache2/envvars
         exec apache2ctl -DFOREGROUND
     else
-        /etc/init.d/apache2 start
+        apache2ctl -DFOREGROUND &
     fi
 }
 
