@@ -25,7 +25,7 @@ from voluptuous import Any, Msg, Optional, Required
 from lava_common.schemas import boot
 
 
-def schema(live=False):
+def schema():
     base = {
         Required("method"): Msg("ipxe", "'method' should be 'ipxe'"),
         Required("commands"): Any(str, [str]),
@@ -36,4 +36,4 @@ def schema(live=False):
         ): boot.auto_login(),  # TODO: if auto_login => prompt is required
         Optional("use_bootscript"): bool,
     }
-    return {**boot.schema(live), **base}
+    return {**boot.schema(), **base}

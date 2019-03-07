@@ -25,11 +25,11 @@ from voluptuous import Any, Msg, Optional, Required
 from lava_common.schemas import boot
 
 
-def schema(live=False):
+def schema():
     base = {
         Required("method"): Msg("depthcharge", "'method' should be 'depthcharge'"),
         Required("commands"): Any(str, [str]),
         Optional("use_bootscript"): bool,
         Optional("transfer_overlay"): boot.transfer_overlay(),
     }
-    return {**boot.schema(live), **base}
+    return {**boot.schema(), **base}

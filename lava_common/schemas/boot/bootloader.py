@@ -25,7 +25,7 @@ from voluptuous import Msg, Optional, Required
 from lava_common.schemas import boot
 
 
-def schema(live=False):
+def schema():
     base = {
         Required("method"): Msg("bootloader", "'method' should be 'bootloader'"),
         Required("bootloader"): str,
@@ -33,4 +33,4 @@ def schema(live=False):
         Optional("use_bootscript"): bool,
         Optional("prompts"): boot.prompts(),
     }
-    return {**boot.schema(live), **base}
+    return {**boot.schema(), **base}

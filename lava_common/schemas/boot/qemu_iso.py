@@ -25,7 +25,7 @@ from voluptuous import Msg, Optional, Required
 from lava_common.schemas import boot
 
 
-def schema(live=False):
+def schema():
     base = {
         Required("method"): Msg("qemu-iso", "'method' should be 'qemu-iso'"),
         Required("media"): "img",
@@ -34,4 +34,4 @@ def schema(live=False):
             "auto_login"
         ): boot.auto_login(),  # TODO: if auto_login => prompt is required
     }
-    return {**boot.schema(live), **base}
+    return {**boot.schema(), **base}

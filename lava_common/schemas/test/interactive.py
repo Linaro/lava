@@ -25,7 +25,7 @@ from voluptuous import All, Length, Any, Optional, Required
 from lava_common.schemas import test
 
 
-def schema(live=False):
+def schema():
     base = {
         Required("interactive"): [
             {
@@ -52,4 +52,4 @@ def schema(live=False):
             }
         ]
     }
-    return {**test.schema(live), **base}
+    return {**test.schema(), **base}

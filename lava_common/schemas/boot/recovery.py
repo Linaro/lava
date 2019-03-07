@@ -25,9 +25,9 @@ from voluptuous import Any, Msg, Required
 from lava_common.schemas import boot
 
 
-def schema(live=False):
+def schema():
     base = {
         Required("method"): Msg("recovery", "'method' should be 'recovery'"),
         Required("commands"): Any("recovery", "exit"),
     }
-    return {**boot.schema(live), **base}
+    return {**boot.schema(), **base}

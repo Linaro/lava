@@ -25,19 +25,19 @@ from voluptuous import Any, Optional, Required
 from lava_common.schemas import deploy
 
 
-def schema(live=False):
+def schema():
     return Any(
         {
             Required("to"): "nfs",
             Optional("nfsrootfs"): deploy.url(),
             Optional("modules"): deploy.url(),
-            **deploy.schema(live),
+            **deploy.schema(),
         },
         {
             Required("to"): "nfs",
             Required("images"): {
                 Required(str, "'images' is empty"): {**deploy.url(), "image_arg": str}
             },
-            **deploy.schema(live),
+            **deploy.schema(),
         },
     )

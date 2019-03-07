@@ -25,9 +25,9 @@ from voluptuous import Required
 from lava_common.schemas import deploy
 
 
-def schema(live=False):
+def schema():
     base = {
         Required("to"): "download",
         Required("images"): {Required(str, "'images' is empty"): {**deploy.url()}},
     }
-    return {**deploy.schema(live), **base}
+    return {**deploy.schema(), **base}

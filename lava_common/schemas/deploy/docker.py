@@ -25,7 +25,7 @@ from voluptuous import Any, Match, Optional, Range, Required
 from lava_common.schemas import deploy
 
 
-def schema(live=False):
+def schema():
     image_name = Match("^[a-z0-9._:/-]+$", msg="Invalid docker image name")
     base = {
         Required("to"): "docker",
@@ -34,4 +34,4 @@ def schema(live=False):
         ),
         Optional("repeat"): Range(min=1),
     }
-    return {**deploy.schema(live), **base}
+    return {**deploy.schema(), **base}

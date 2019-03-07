@@ -25,7 +25,7 @@ from voluptuous import Optional, Required
 from lava_common.schemas import deploy
 
 
-def schema(live=False):
+def schema():
     base = {
         Required("to"): "iso-installer",
         Required("images"): {
@@ -41,4 +41,4 @@ def schema(live=False):
             Optional("initrd"): str,
         },
     }
-    return {**deploy.schema(live), **base}
+    return {**deploy.schema(), **base}

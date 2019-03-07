@@ -25,7 +25,7 @@ from voluptuous import Any, Msg, Optional, Required
 from lava_common.schemas import boot
 
 
-def schema(live=False):
+def schema():
     base = {
         Required("method"): Msg("barebox", "'method' should be 'barebox'"),
         Required("commands"): Any(str, [str]),
@@ -35,4 +35,4 @@ def schema(live=False):
         ): boot.auto_login(),  # TODO: if auto_login => prompt is required
         Optional("transfer_overlay"): boot.transfer_overlay(),
     }
-    return {**boot.schema(live), **base}
+    return {**boot.schema(), **base}

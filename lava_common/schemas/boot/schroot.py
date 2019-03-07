@@ -25,11 +25,11 @@ from voluptuous import Msg, Optional, Required
 from lava_common.schemas import boot
 
 
-def schema(live=False):
+def schema():
     base = {
         Required("method"): Msg("schroot", "'method' should be 'schroot'"),
         Optional("prompts"): boot.prompts(),
         Required("connection"): "ssh",
         Required("schroot"): str,
     }
-    return {**boot.schema(live), **base}
+    return {**boot.schema(), **base}

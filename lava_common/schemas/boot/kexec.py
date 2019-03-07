@@ -25,7 +25,7 @@ from voluptuous import Msg, Optional, Required
 from lava_common.schemas import boot
 
 
-def schema(live=False):
+def schema():
     base = {
         Required("method"): Msg("kexec", "'method' should be 'kexec'"),
         Required("boot_message"): str,
@@ -40,4 +40,4 @@ def schema(live=False):
         Optional("options"): [str],
         Optional("kernel-config"): str,
     }
-    return {**boot.schema(live), **base}
+    return {**boot.schema(), **base}

@@ -25,9 +25,9 @@ from voluptuous import Optional, Range, Required
 from lava_common.schemas import deploy
 
 
-def schema(live=False):
+def schema():
     base = {
         Required("to"): "u-boot-ums",
         Required("image"): {**deploy.url(), Optional("root_partition"): Range(min=0)},
     }
-    return {**deploy.schema(live), **base}
+    return {**deploy.schema(), **base}

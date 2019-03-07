@@ -51,13 +51,12 @@ def prompts():
     return Any(All(str, Length(min=1)), [All(str, Length(min=1))])
 
 
-def schema(live=False):
-    base = {
-        **action(live),
+def schema():
+    return {
+        **action(),
         Optional("parameters"): {
             Optional("kernel-start-message"): str,
             Optional("shutdown-message"): str,
         },
         Optional("soft_reboot"): str,
     }
-    return base

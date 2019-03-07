@@ -28,7 +28,7 @@ from lava_common.schemas import deploy
 # TODO: one of images or image should be defined
 
 
-def schema(live=False):
+def schema():
     base = {
         Required("to"): Any("sata", "sd", "usb"),
         Exclusive("images", "image"): {
@@ -48,6 +48,6 @@ def schema(live=False):
             Required("prompt"): str,
         },
         Optional("uniquify"): bool,
-        **deploy.schema(live),
+        **deploy.schema(),
     }
-    return {**deploy.schema(live), **base}
+    return {**deploy.schema(), **base}

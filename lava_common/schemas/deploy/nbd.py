@@ -25,7 +25,7 @@ from voluptuous import Any, Optional, Required
 from lava_common.schemas import deploy
 
 
-def schema(live=False):
+def schema():
     resource = deploy.url()
 
     base = {
@@ -38,4 +38,4 @@ def schema(live=False):
         Required("initrd"): resource,
         Optional("dtb"): resource,
     }
-    return {**deploy.schema(live), **base}
+    return {**deploy.schema(), **base}

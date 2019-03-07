@@ -39,11 +39,11 @@ from voluptuous import (
 from lava_common.timeout import Timeout
 
 
-def validate_action(name, data, live=False, strict=True):
+def validate_action(name, data, strict=True):
     # Import the module
     try:
         module = importlib.import_module("lava_common.schemas." + name)
-        Schema(module.schema(live), extra=not strict)(data)
+        Schema(module.schema(), extra=not strict)(data)
     except ImportError:
         raise Invalid("unknown action type", path=["actions"] + name.split("."))
     except MultipleInvalid as exc:
@@ -86,8 +86,8 @@ def timeout():
     )
 
 
-def action(live=False):
-    base = {
+def action():
+    return {
         Optional("namespace"): All(str, NotIn(["common"], msg="'common' is reserved")),
         Optional("connection-namespace"): str,
         Optional("protocols"): object,
@@ -95,20 +95,6 @@ def action(live=False):
         Optional("timeout"): timeout(),
         Optional("repeat"): Range(min=1),  # TODO: where to put it?
         Optional("failure_retry"): Range(min=1),  # TODO: where to put it?
-    }
-
-    if not live:
-        return base
-    return {
-        **base,
-        Optional("lava-lxc"): object,
-        Optional("lava-multinode"): {
-            Optional("timeout"): timeout(),
-            Optional("roles"): dict,
-        },
-        Optional("lava-vland"): object,
-        Optional("lava-xnbd"): object,
-        Optional("repeat-count"): Range(min=0),
     }
 
 

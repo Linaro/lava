@@ -25,7 +25,7 @@ from voluptuous import All, Length, Optional, Required
 from lava_common.schemas import deploy
 
 
-def schema(live=False):
+def schema():
     base = {
         Required("to"): "mps",
         Required("images"): All(
@@ -36,4 +36,4 @@ def schema(live=False):
             Length(min=1),
         ),
     }
-    return {**deploy.schema(live), **base}
+    return {**deploy.schema(), **base}

@@ -39,9 +39,9 @@ def base_schema():
     }
 
 
-def schema(live=False):
+def schema():
     base = {
         Required("method"): Msg("grub", "'method' should be 'grub'"),
         **base_schema(),
     }
-    return {**boot.schema(live), **base}
+    return {**boot.schema(), **base}

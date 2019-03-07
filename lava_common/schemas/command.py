@@ -25,5 +25,5 @@ from voluptuous import Required
 from lava_common.schemas import action
 
 
-def schema(live=False):
-    return {**action(live), Required("name"): str}
+def schema():
+    return {**action(), Required("name"): str}

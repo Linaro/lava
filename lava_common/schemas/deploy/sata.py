@@ -23,5 +23,5 @@
 from . import usb
 
 
-def schema(live=False):
-    return usb.schema(live)
+def schema():
+    return usb.schema()

@@ -25,6 +25,6 @@ from voluptuous import Msg, Required
 from lava_common.schemas import boot
 
 
-def schema(live=False):
+def schema():
     base = {Required("method"): Msg("dfu", "'method' should be 'dfu'")}
-    return {**boot.schema(live), **base}
+    return {**boot.schema(), **base}

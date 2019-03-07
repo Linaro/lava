@@ -25,7 +25,7 @@ from voluptuous import Any, Exclusive, Optional, Required
 from lava_common.schemas import deploy
 
 
-def schema(live=False):
+def schema():
     resource = deploy.url()
     resource_ext = {
         **resource,
@@ -49,4 +49,4 @@ def schema(live=False):
             Optional("install_overlay"): bool,
         },
     }
-    return {**deploy.schema(live), **base}
+    return {**deploy.schema(), **base}

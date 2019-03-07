@@ -25,6 +25,6 @@ from voluptuous import Required
 from lava_common.schemas import deploy
 
 
-def schema(live=False):
+def schema():
     base = {Required("to"): "vemsd", Required("recovery_image"): deploy.url()}
-    return {**deploy.schema(live), **base}
+    return {**deploy.schema(), **base}

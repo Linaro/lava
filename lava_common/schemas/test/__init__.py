@@ -25,8 +25,5 @@ from voluptuous import Range, Required
 from lava_common.schemas import action
 
 
-def schema(live=False):
-    if not live:
-        return action(live)
-
-    return {**action(live), Required("stage"): Range(min=0)}
+def schema():
+    return action()

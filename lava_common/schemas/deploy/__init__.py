@@ -35,9 +35,5 @@ def url():
     }
 
 
-def schema(live=False):
-    base = {**action(live), Optional("os"): str, Optional("authorize"): "ssh"}
-
-    if not live:
-        return base
-    return {**base, Optional("deployment_data"): {str: Any(str, bool, float, int)}}
+def schema():
+    return {**action(), Optional("os"): str, Optional("authorize"): "ssh"}

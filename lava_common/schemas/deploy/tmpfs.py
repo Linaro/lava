@@ -25,7 +25,7 @@ from voluptuous import Optional, Required
 from lava_common.schemas import deploy
 
 
-def schema(live=False):
+def schema():
     base = {
         Required("to"): "tmpfs",
         Required("images"): {
@@ -38,4 +38,4 @@ def schema(live=False):
         Optional("type"): "monitor",
         Optional("uefi"): deploy.url(),  # TODO: check the exact syntax
     }
-    return {**deploy.schema(live), **base}
+    return {**deploy.schema(), **base}

@@ -25,7 +25,7 @@ from voluptuous import Any, Match, Optional, Required
 from lava_common.schemas import test
 
 
-def schema(live=False):
+def schema():
     common = {
         Required("path"): str,
         Required("name"): str,
@@ -82,4 +82,4 @@ def schema(live=False):
             )
         ]
     }
-    return {**test.schema(live), **base}
+    return {**test.schema(), **base}

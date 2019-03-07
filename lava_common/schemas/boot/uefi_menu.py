@@ -25,7 +25,7 @@ from voluptuous import Msg, Optional, Required
 from lava_common.schemas import boot
 
 
-def schema(live=False):
+def schema():
     base = {
         Required("method"): Msg("uefi-menu", "'method' should be 'uefi-menu'"),
         Optional("commands"): str,
@@ -35,4 +35,4 @@ def schema(live=False):
             "auto_login"
         ): boot.auto_login(),  # TODO: if auto_login => prompt is required
     }
-    return {**boot.schema(live), **base}
+    return {**boot.schema(), **base}

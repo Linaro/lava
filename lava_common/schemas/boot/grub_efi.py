@@ -27,9 +27,9 @@ from lava_common.schemas import boot
 from .grub import base_schema
 
 
-def schema(live=False):
+def schema():
     base = {
         Required("method"): Msg("grub-efi", "'method' should be 'grub-efi'"),
         **base_schema(),
     }
-    return {**boot.schema(live), **base}
+    return {**boot.schema(), **base}

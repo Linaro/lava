@@ -25,6 +25,6 @@ from voluptuous import Msg, Required
 from lava_common.schemas import boot
 
 
-def schema(live=False):
+def schema():
     base = {Required("method"): Msg("pyocd", "'method' should be 'pyocd'")}
-    return {**boot.schema(live), **base}
+    return {**boot.schema(), **base}
