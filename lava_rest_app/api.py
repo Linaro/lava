@@ -21,7 +21,7 @@ import io
 import junit_xml
 import tap
 
-from lava_scheduler_app.models import Device, DeviceType, TestJob
+from lava_scheduler_app.models import Device, DeviceType, TestJob, Worker
 from lava_results_app.models import TestSuite, TestCase
 from lava_scheduler_app.views import filter_device_types
 from lava_scheduler_app.logutils import read_logs
@@ -427,7 +427,27 @@ class DeviceViewSet(viewsets.ReadOnlyModelViewSet):
         return query
 
 
+class WorkerSerializer(serializers.ModelSerializer):
+    health = serializers.CharField(source="get_health_display")
+    state = serializers.CharField(source="get_state_display")
+
+    class Meta:
+        model = Worker
+        fields = "__all__"
+
+
+class WorkerViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Worker.objects
+    serializer_class = WorkerSerializer
+    filter_fields = "__all__"
+    ordering_fields = "__all__"
+
+    def get_queryset(self):
+        return self.queryset.all()
+
+
 router = API()
-router.register(r"jobs", TestJobViewSet)
-router.register(r"devicetypes", DeviceTypeViewSet)
 router.register(r"devices", DeviceViewSet)
+router.register(r"devicetypes", DeviceTypeViewSet)
+router.register(r"jobs", TestJobViewSet)
+router.register(r"workers", WorkerViewSet)

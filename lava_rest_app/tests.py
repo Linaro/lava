@@ -26,7 +26,7 @@ from django.urls import reverse
 from django.contrib.auth.models import User
 from rest_framework.test import APIClient
 
-from lava_scheduler_app.models import TestJob, DeviceType, Device
+from lava_scheduler_app.models import Device, DeviceType, TestJob, Worker
 from lava_results_app import models as result_models
 from linaro_django_xmlrpc.models import AuthToken
 
@@ -80,6 +80,17 @@ class TestRestApi:
         self.userclient_no_token = APIClient()
         self.adminclient = APIClient()
         self.adminclient.credentials(HTTP_AUTHORIZATION="Token " + admintoken.secret)
+
+        # Create workers
+        self.worker1 = Worker.objects.create(
+            hostname="worker1", state=Worker.STATE_ONLINE, health=Worker.HEALTH_ACTIVE
+        )
+        self.worker2 = Worker.objects.create(
+            hostname="worker2",
+            state=Worker.STATE_OFFLINE,
+            health=Worker.HEALTH_MAINTENANCE,
+        )
+
         # create devicetypes
         self.public_device_type1 = DeviceType.objects.create(name="public_device_type1")
         self.invisible_device_type1 = DeviceType.objects.create(
@@ -91,18 +102,22 @@ class TestRestApi:
 
         # create devices
         self.public_device1 = Device.objects.create(
-            hostname="public01", device_type=self.public_device_type1
+            hostname="public01",
+            device_type=self.public_device_type1,
+            worker_host=self.worker1,
         )
         self.private_device1 = Device.objects.create(
             hostname="private01",
             user=self.admin,
             is_public=False,
             device_type=self.private_device_type1,
+            worker_host=self.worker1,
         )
         self.retired_device1 = Device.objects.create(
             hostname="retired01",
             device_type=self.public_device_type1,
             health=Device.HEALTH_RETIRED,
+            worker_host=self.worker2,
         )
 
         # create testjobs
@@ -367,3 +382,22 @@ ok 2 - bar
             self.adminclient, reverse("api-root", args=[self.version]) + "devices/"
         )
         assert len(data["results"]) == 2  # nosec - unit test support
+
+    def test_workers(self):
+        data = self.hit(
+            self.userclient, reverse("api-root", args=[self.version]) + "workers/"
+        )
+        # We get 3 workers because the default one (example.com) is always
+        # created by the migrations
+        assert len(data["results"]) == 3  # nosec - unit test support
+        assert (  # nosec - unit test support
+            data["results"][0]["hostname"] == "example.com"
+        )
+        assert data["results"][1]["hostname"] == "worker1"  # nosec - unit test support
+        assert data["results"][1]["health"] == "Active"  # nosec - unit test support
+        assert data["results"][1]["state"] == "Online"  # nosec - unit test support
+        assert data["results"][2]["hostname"] == "worker2"  # nosec - unit test support
+        assert (  # nosec - unit test support
+            data["results"][2]["health"] == "Maintenance"
+        )
+        assert data["results"][2]["state"] == "Offline"  # nosec - unit test support
