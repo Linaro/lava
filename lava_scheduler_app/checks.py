@@ -236,8 +236,14 @@ def check_services(app_configs, **kwargs):
     ]
     optional = ["lava-slave"]
 
-    # identify command line of PID 1
-    if "/lib/systemd/systemd" in os.readlink("/proc/1/exe"):
+    # check if systemd is running
+    try:
+        subprocess.check_output(["systemctl"], stderr=subprocess.PIPE)
+        running_systemd = True
+    except subprocess.CalledProcessError:
+        running_systemd = False
+
+    if running_systemd:
         # we can call systemctl
         for service in services:
             try:
@@ -259,7 +265,7 @@ def check_services(app_configs, **kwargs):
                     Info("%s service is not active." % service, obj="lava service")
                 )
     else:
-        # systemd is not PID 1, check /proc directly.
+        # systemd is not running, check /proc directly.
         daemons = find_our_daemons()
         for key, value in daemons.items():
             if key in services:
