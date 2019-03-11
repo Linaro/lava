@@ -96,7 +96,7 @@ if [ -n "${TEMPLATE}" ]
 then
     echo "Testing templates"
     echo
-    PYTHONPATH=. pytest-3 --cache-clear -v lava_scheduler_app/tests/test_base_templates.py lava_scheduler_app/tests/test_templates.py lava_scheduler_app/tests/test_uboot_templates.py lava_scheduler_app/tests/test_fastboot_templates.py lava_scheduler_app/tests/test_grub_templates.py lava_scheduler_app/tests/test_qemu_templates.py
+    PYTHONPATH=. pytest-3 --cache-clear -v lava_scheduler_app/tests/test_base_templates.py lava_scheduler_app/tests/test_templates.py lava_scheduler_app/tests/test_barebox_templates.py lava_scheduler_app/tests/test_uboot_templates.py lava_scheduler_app/tests/test_fastboot_templates.py lava_scheduler_app/tests/test_grub_templates.py lava_scheduler_app/tests/test_qemu_templates.py
 fi
 
 if [ -n "${COMMON}" ]
