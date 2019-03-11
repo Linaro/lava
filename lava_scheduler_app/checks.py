@@ -117,8 +117,13 @@ def check_permissions(app_configs, **kwargs):
         st = os.stat(filename)
         if stat.S_IMODE(st.st_mode) != 416:
             errors.append(Error("Invalid permissions (should be 0o640)", obj=filename))
-        if getpwuid(st.st_uid).pw_name != "lavaserver":
-            errors.append(Error("Invalid owner (should be lavaserver)", obj=filename))
+        try:
+            if getpwuid(st.st_uid).pw_name != "lavaserver":
+                errors.append(
+                    Error("Invalid owner (should be lavaserver)", obj=filename)
+                )
+        except KeyError:
+            errors.append(Error("Unknown user id %d" % st.st_uid, obj=filename))
     return errors
 
 
