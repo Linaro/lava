@@ -900,7 +900,6 @@ class BootloaderCommandsAction(Action):
         )
         if not at_bootloader_prompt:
             self.wait(connection, max_end_time)
-        i = 1
         commands = self.get_namespace_data(
             action="bootloader-overlay", label=self.method, key="commands"
         )
@@ -915,17 +914,17 @@ class BootloaderCommandsAction(Action):
                 connection.prompt_str = [connection.prompt_str]
             connection.prompt_str = connection.prompt_str + error_messages
 
-        for line in commands:
+        for (index, line) in enumerate(commands):
             connection.sendline(line, delay=self.character_delay)
-            if i != (len(commands)):
-                res = self.wait(connection, max_end_time)
-                if res != 0:
-                    msg = "matched a bootloader error message: '%s' (%d)" % (
-                        connection.prompt_str[res],
-                        res,
-                    )
-                    raise InfrastructureError(msg)
-                i += 1
+            if index + 1 == len(commands):
+                continue
+            res = self.wait(connection, max_end_time)
+            if res != 0:
+                msg = "matched a bootloader error message: '%s' (%d)" % (
+                    connection.prompt_str[res],
+                    res,
+                )
+                raise InfrastructureError(msg)
 
         if final_message and self.expect_final:
             connection.prompt_str = final_message

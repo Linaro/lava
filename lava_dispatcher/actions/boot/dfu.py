@@ -147,9 +147,8 @@ class FlashDFUAction(Action):
             action="shared", label="shared", key="connection", deepcopy=False
         )
         connection = super().run(connection, max_end_time)
-        count = 1
-        for dfu_command in self.exec_list:
-            if count == (len(self.exec_list)):
+        for (index, dfu_command) in enumerate(self.exec_list):
+            if index + 1 == len(self.exec_list):
                 if self.job.device["actions"]["boot"]["methods"]["dfu"].get(
                     "reset_works", True
                 ):
@@ -161,7 +160,6 @@ class FlashDFUAction(Action):
                     raise InfrastructureError("command failed: %s" % dfu)
             else:
                 raise InfrastructureError("command failed: %s" % dfu)
-            count += 1
         self.set_namespace_data(
             action="shared", label="shared", key="connection", value=connection
         )

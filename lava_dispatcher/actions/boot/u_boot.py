@@ -275,15 +275,13 @@ class UBootEnterFastbootAction(BootAction):
         connection.prompt_str = self.params["bootloader_prompt"]
         self.logger.debug("Changing prompt to %s", connection.prompt_str)
         self.wait(connection)
-        i = 1
         commands = self.job.device["actions"]["deploy"]["methods"]["u-boot"][
             "parameters"
         ]["fastboot"]["commands"]
 
-        for line in commands:
+        for (index, line) in enumerate(commands):
             connection.sendline(line, delay=self.character_delay)
-            if i != (len(commands)):
+            if index + 1 < len(commands):
                 self.wait(connection)
-                i += 1
 
         return connection
