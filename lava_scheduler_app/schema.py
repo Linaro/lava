@@ -229,7 +229,13 @@ def _interactive_script_schema():
 
 
 def _job_command_schema():
-    return Schema({Required("name"): str, Optional("timeout"): _timeout_schema()})
+    return Schema(
+        {
+            Required("name"): str,
+            Optional("timeout"): _timeout_schema(),
+            Optional("namespace"): str,
+        }
+    )
 
 
 def _job_actions_schema():
