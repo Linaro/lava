@@ -1,0 +1,5 @@
+{# device_type = "meson-g12a-x96-max" #}
+{% extends 'meson-g12-common.jinja2' %}
+
+{% set interrupt_prompt = interrupt_prompt|default('stop autoboot') %}
+{% set interrupt_ctrl_list = ['c'] %}
