@@ -60,9 +60,9 @@ class CommandAction(Action):
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
 
-        self.logger.debug("Running user command '%s'", self.parameters["name"])
+        self.logger.info("Running user command '%s'", self.parameters["name"])
         self.ran = True
-        self.run_command(self.cmd["do"].split(" "), allow_silent=True)
+        self.run_cmd(self.cmd["do"])
         return connection
 
     def cleanup(self, connection):
@@ -71,10 +71,7 @@ class CommandAction(Action):
             return
 
         if self.cmd is not None and "undo" in self.cmd:
-            self.logger.debug(
+            self.logger.info(
                 "Running cleanup for user command '%s'", self.parameters["name"]
             )
-            if not isinstance(self.cmd["undo"], str):
-                self.logger.error("Unable to run cleanup: 'undo' is not a string")
-            else:
-                self.run_command(self.cmd["undo"].split(" "), allow_silent=True)
+            self.run_cmd(self.cmd["undo"])
