@@ -15,7 +15,7 @@ else
   then
     IMAGE_TAG="$CI_COMMIT_TAG"
   else
-    IMAGE_TAG="$(./version.py)-$CI_COMMIT_REF_SLUG"
+    IMAGE_TAG="$(./version.py)"
   fi
 
   DOCKER_CLI_EXPERIMENTAL=enabled docker manifest create $CI_REGISTRY_IMAGE/lava-dispatcher:$IMAGE_TAG $CI_REGISTRY_IMAGE/amd64/lava-dispatcher:$IMAGE_TAG $CI_REGISTRY_IMAGE/aarch64/lava-dispatcher:$IMAGE_TAG

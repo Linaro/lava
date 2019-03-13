@@ -15,7 +15,7 @@ else
   then
     IMAGE_TAG="$IMAGE_TAG:$CI_COMMIT_TAG"
   else
-    IMAGE_TAG="$IMAGE_TAG:$(./version.py)-$CI_COMMIT_REF_SLUG"
+    IMAGE_TAG="$IMAGE_TAG:$(./version.py)"
   fi
 
   git clone https://git.lavasoftware.org/lava/pkg/docker.git
