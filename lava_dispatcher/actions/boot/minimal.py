@@ -60,7 +60,8 @@ class MinimalBoot(BootAction):
             parent=self, job=self.job, parameters=parameters
         )
         self.internal_pipeline.add_action(ConnectDevice())
-        self.internal_pipeline.add_action(ResetDevice())
+        if parameters.get("reset", True):
+            self.internal_pipeline.add_action(ResetDevice())
         if self.has_prompts(parameters):
             self.internal_pipeline.add_action(AutoLoginAction())
             if self.test_has_shell(parameters):

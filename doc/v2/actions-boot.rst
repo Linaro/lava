@@ -608,6 +608,10 @@ The ``minimal`` method is used to power-on the :term:`DUT` and to let the
 
 .. note:: auto-login and transfer_overlay are both supported for this method.
 
+By default LAVA will reset the board power when executing this action. Users
+can skip this step by adding ``reset: false``. This can be useful when testing
+bootloader in interactive tests and then booting to the OS.
+
 pyocd
 =====
 

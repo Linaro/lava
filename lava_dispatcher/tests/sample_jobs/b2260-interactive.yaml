@@ -41,3 +41,13 @@ actions:
         name: bootx
         successes:
         - message: "Starting kernel"
+- boot:
+    method: minimal
+    reset: false
+    prompts:
+    - 'linaro-test'
+    - 'root@debian:~#'
+    - '/ #'
+    transfer_overlay:
+      download_command: cd /tmp ; wget
+      unpack_command: tar -C / -xzf

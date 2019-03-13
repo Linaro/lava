@@ -16,6 +16,11 @@
   name: lava-test-interactive-retry
   pipeline:
   - {class: actions.test.interactive.TestInteractiveAction, name: lava-test-interactive}
+- class: actions.boot.minimal.MinimalBoot
+  name: minimal-boot
+  pipeline:
+  - {class: connections.serial.ConnectDevice, name: connect-device}
+  - {class: actions.boot.AutoLoginAction, name: auto-login-action}
 - class: power.FinalizeAction
   name: finalize
   pipeline:
