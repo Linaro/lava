@@ -628,18 +628,18 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
             template_dict["constants"]["u-boot"]["interrupt_ctrl_list"], ["c"]
         )
 
-    def test_rzn1_template(self):
-        data = """{% extends 'rzn1.jinja2' %}"""
-        self.assertTrue(self.validate_data("rzn1-01", data))
-        template_dict = prepare_jinja_template("rzn1-01", data, raw=False)
+    def test_rzn1d_template(self):
+        data = """{% extends 'rzn1d.jinja2' %}"""
+        self.assertTrue(self.validate_data("rzn1d-01", data))
+        template_dict = prepare_jinja_template("rzn1d-01", data, raw=False)
         commands = template_dict["actions"]["boot"]["methods"]["u-boot"]["ramdisk"][
             "commands"
         ]
         for line in commands:
             if "setenv initrd_high" in line:
-                self.fail("rzn1 should not have initrd_high set")
+                self.fail("rzn1d should not have initrd_high set")
             if "setenv fdt_high" in line:
-                self.fail("rzn1 should not have fdt_high set")
+                self.fail("rzn1d should not have fdt_high set")
         # Check that "fit" boot command is available
         commands = template_dict["actions"]["boot"]["methods"]["u-boot"]["fit"][
             "commands"
