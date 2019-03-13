@@ -922,7 +922,7 @@ Local Users
 
 Local django user accounts can be created with the ``manage users`` command::
 
-  $ sudo lava-server manage users add <username>  --password <password>
+  $ sudo lava-server manage users add <username>  --passwd <password>
 
 If ``--password`` is omitted, a random password is generated and output by
 the script.
