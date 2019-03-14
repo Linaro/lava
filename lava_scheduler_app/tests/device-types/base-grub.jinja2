@@ -64,6 +64,7 @@ actions:
       serial:
     methods:
       tftp:
+      nbd:
   boot:
     connections:
       serial:
@@ -87,6 +88,17 @@ actions:
           - clear
           - boot
 {% endblock ramdisk_commands %}
+        nbd:
+          commands:
+          - clear
+          - insmod linux
+          - clear
+          - insmod tftp
+          - clear
+          - 'linux (tftp,{SERVER_IP})/{KERNEL} {{ console_args }} {{ base_ip_args }} {{ base_nbdroot_args }} rw {{ base_kernel_args }}'
+          - clear
+          - initrd (tftp,{SERVER_IP})/{RAMDISK}
+          - boot
         nfs:
           commands:
 {% block nfs_commands %}

@@ -1,0 +1,54 @@
+device_type: upsquare
+job_name: upsquare-nbd-boot
+
+timeouts:
+  job:
+    minutes: 70
+  action:
+    minutes: 15
+  connection:
+    minutes: 5
+  connections:
+    lava-test-shell:
+      minutes: 10
+
+priority: medium
+visibility: public
+
+protocols:
+  lava-xnbd:
+    port: auto
+
+actions:
+- deploy:
+    timeout:
+      minutes: 15
+    to: nbd
+    os: oe
+    failure_retry: 2
+    protocols:
+      lava-xnbd:
+      - action: nbd-deploy
+        request: set_port
+    kernel:
+      url: http://example.com//bzImage
+    initrd:
+      url: http://example.com/initramfs-netboot-image-intel-corei7-64.ext4.gz
+      allow_modify: true
+    nbdroot:
+      url: http://example.com/agl-demo-platform-crosssdk-intel-corei7-64.ext4
+
+- boot:
+    timeout:
+      minutes: 10
+    method: grub
+    prompts:
+      - '/ #'
+
+    auto_login:
+      login_prompt: "login:"
+      username: root
+    commands: nbd
+    transfer_overlay:
+      download_command: wget
+      unpack_command: tar -C / -xvpf
