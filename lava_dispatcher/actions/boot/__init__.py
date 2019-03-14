@@ -431,7 +431,10 @@ class BootloaderCommandOverlay(Action):
             if "commands" not in self.parameters:
                 self.errors = "missing commands"
             elif self.parameters["commands"] not in device_methods[self.method]:
-                self.errors = "Command not found in supported methods"
+                self.errors = (
+                    "Command '%s' not found in supported methods"
+                    % self.parameters["commands"]
+                )
             elif (
                 "commands"
                 not in device_methods[self.method][self.parameters["commands"]]
