@@ -584,10 +584,10 @@ class TestExtendsSubmit(TestCaseWithFactory):
         logger.propagate = False
 
     def test_health_checks_extends(self):
-        device1 = Device.objects.get(hostname="juno-r2-uboot-01")
+        device1 = Device.objects.get(hostname="juno-r2-01")
         self.assertIsNotNone(Device.CONFIG_PATH)
         self.assertIsNotNone(device1.load_configuration(output_format="raw"))
-        self.assertEqual("juno-r2-uboot", device1.get_extends())
+        self.assertEqual("juno", device1.get_extends())
         self.assertIsNotNone(device1.HEALTH_CHECK_PATH)
         self.assertTrue(
             os.path.exists(
