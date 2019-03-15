@@ -1,17 +1,18 @@
 {% extends "rest_framework/base.html" %}
 {% load i18n %}
+{% load static %}
 {% load utils %}
 
 {% block title %}API{% endblock %}
 
 {% block bootstrap_theme %}
-  <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava_server/css/bootstrap-3.4.1.min.css">
+  <link rel="stylesheet" type="text/css" href="{% static "lava_server/css/bootstrap-3.4.1.min.css" %}">
 {% endblock %}
 {% block bootstrap_navbar_variant %}navbar-default{% endblock %}
 {% block branding %}
     {% if 'lava_server/images' in lava.branding_icon %}
     <a class="navbar-brand" href="{{ lava.branding_url }}"><p><img height={{ lava.branding_height }}
-            width={{ lava.branding_width }} src="{{ STATIC_URL }}{{ lava.branding_icon }}" alt="{{ lava.branding_alt }}" /> LAVA</p></a>
+            width={{ lava.branding_width }} src="{% static lava.branding_icon %}" alt="{{ lava.branding_alt }}" /> LAVA</p></a>
     {% else %}
     <a class="navbar-brand" href="{{ lava.branding_url }}"><p><img height={{ lava.branding_height }}
             width={{ lava.branding_width }} src="{{ lava.branding_icon }}" alt="{{ lava.branding_alt }}" /> LAVA</p></a>

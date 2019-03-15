@@ -1,11 +1,12 @@
 {% extends "layouts/content.html" %}
+{% load django_tables2 %}
 {% load i18n %}
 {% load keep_spacing %}
-{% load django_tables2 %}
 {% load results_accessibility_tags %}
+{% load static %}
 
 {% block styles %}
-<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava_results_app/css/query.css"/>
+<link rel="stylesheet" type="text/css" href="{% static "lava_results_app/css/query.css" %}"/>
 {% endblock %}
 
 {% block content %}
@@ -300,10 +301,10 @@
 {% block scripts %}
 
 {% is_accessible_by query request.user as is_accessible %}
-<script type="text/javascript" src="{{ STATIC_URL }}lava_server/js/jquery.typeahead.min.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}lava_results_app/js/query.min.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}lava_server/js/bootbox.min.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}lava_results_app/js/bootbox.data.toggle.min.js"></script>
+<script type="text/javascript" src="{% static "lava_server/js/jquery.typeahead.min.js" %}"></script>
+<script type="text/javascript" src="{% static "lava_results_app/js/query.min.js" %}"></script>
+<script type="text/javascript" src="{% static "lava_server/js/bootbox.min.js" %}"></script>
+<script type="text/javascript" src="{% static "lava_results_app/js/bootbox.data.toggle.min.js" %}"></script>
 <script type="text/javascript">
   csrf_token = '{{csrf_token}}';
   query_name = '{{ query.name }}';

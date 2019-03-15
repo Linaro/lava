@@ -1,7 +1,8 @@
 {% extends "layouts/content.html" %}
+{% load static %}
 
 {% block styles %}
-<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava_results_app/css/chart.css"/>
+<link rel="stylesheet" type="text/css" href="{% static "lava_results_app/css/chart.css" %}"/>
 {% endblock %}
 
 {% block content %}
@@ -82,7 +83,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script type="text/javascript" src="{{ STATIC_URL }}lava_server/js/jquery.typeahead.min.js"></script>
+<script type="text/javascript" src="{% static "lava_server/js/jquery.typeahead.min.js" %}"></script>
 <script>
 
 $(document).ready(function () {

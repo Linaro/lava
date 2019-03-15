@@ -1,9 +1,10 @@
 {% extends "layouts/content.html" %}
-{% load i18n %}
 {% load django_tables2 %}
+{% load i18n %}
+{% load static %}
 
 {% block styles %}
-<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava_results_app/css/chart.css"/>
+<link rel="stylesheet" type="text/css" href="{% static "lava_results_app/css/chart.css" %}"/>
 {% endblock %}
 
 {% block content %}
@@ -34,9 +35,9 @@
 {% endblock %}
 
 {% block scripts %}
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/tables.min.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}lava_server/js/bootbox.min.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}lava_results_app/js/bootbox.data.toggle.min.js"></script>
+<script type="text/javascript" src="{% static "lava_scheduler_app/js/tables.min.js" %}"></script>
+<script type="text/javascript" src="{% static "lava_server/js/bootbox.min.js" %}"></script>
+<script type="text/javascript" src="{% static "lava_results_app/js/bootbox.data.toggle.min.js" %}"></script>
 <script type="text/javascript">
 $(document).ready(function () {
   add_bootbox_data_toggle();

@@ -1,10 +1,11 @@
 {% extends "layouts/content.html" %}
+{% load django_tables2 %}
 {% load i18n %}
 {% load keep_spacing %}
-{% load django_tables2 %}
+{% load static %}
 
 {% block styles %}
-<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava_results_app/css/query.css"/>
+<link rel="stylesheet" type="text/css" href="{% static "lava_results_app/css/query.css" %}"/>
 {% endblock %}
 
 {% block content %}
@@ -55,7 +56,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/tables.min.js"></script>
+<script type="text/javascript" src="{% static "lava_scheduler_app/js/tables.min.js" %}"></script>
 <script type="text/javascript">
   $(function() {
   $('#bookmark_query').click(function() {

@@ -1,6 +1,7 @@
 {% extends "layouts/content.html" %}
-{% load utils %}
 {% load humanize %}
+{% load static %}
+{% load utils %}
 
 {% block styles %}
   <style>
@@ -338,7 +339,7 @@
         {% endif %}
       {% endfor %}
       {% if job.state != job.STATE_FINISHED %}
-      <img id="log-messages" src="{{ STATIC_URL }}lava_scheduler_app/images/ajax-loader.gif" />
+      <img id="log-messages" src="{% static "lava_scheduler_app/images/ajax-loader.gif" %}" />
       {% endif %}
     </div>
     {% if not size_warning %}
@@ -573,10 +574,10 @@
   var condition_choices = JSON.parse($("#id_condition_choices").val());
   var content_types = JSON.parse($("#id_available_content_types").val());
 </script>
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/anchor-v3.2.0.min.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}lava_server/js/jquery.typeahead.min.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/similar-jobs.min.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.flot.min.js"></script>
+<script type="text/javascript" src="{% static "lava_scheduler_app/js/anchor-v3.2.0.min.js" %}"></script>
+<script type="text/javascript" src="{% static "lava_server/js/jquery.typeahead.js" %}"></script>
+<script type="text/javascript" src="{% static "lava_scheduler_app/js/similar-jobs.min.js" %}"></script>
+<script type="text/javascript" src="{% static "lava_scheduler_app/js/jquery.flot.min.js" %}"></script>
 <script type="text/javascript">
   $(document).ready(
     function() {

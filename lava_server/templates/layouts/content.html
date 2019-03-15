@@ -1,5 +1,6 @@
 {% extends "layouts/base.html" %}
 {% load i18n %}
+{% load static %}
 {% load utils %}
 
 {% block title %}{{ bread_crumb_trail|join:" | " }}{% endblock %}
@@ -21,10 +22,10 @@
         </button>
         {% if 'lava_server/images' in lava.branding_icon %}
         <a class="navbar-brand" href="{{ lava.branding_url }}"><p><img height={{ lava.branding_height }}
-                width={{ lava.branding_width }} src="{{ STATIC_URL }}{{ lava.branding_icon }}" alt="{{ lava.branding_alt }}" /> LAVA</p></a>
+                width={{ lava.branding_width }} src="{% static lava.branding_icon %}" alt="{{ lava.branding_alt }}" /> LAVA</p></a>
         {% else %}
         <a class="navbar-brand" href="{{ lava.branding_url }}"><p><img height={{ lava.branding_height }}
-                width={{ lava.branding_width }} src="{{ lava.branding_icon }}" alt="{{ lava.branding_alt }}" /> LAVA</p></a>
+                width={{ lava.branding_width }} src="{% static lava.branding_icon %}" alt="{{ lava.branding_alt }}" /> LAVA</p></a>
         {% endif %}
       </div>
       <div id="navbar" class="navbar-collapse collapse">

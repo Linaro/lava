@@ -19,7 +19,6 @@
 
 import sys
 from django import forms
-from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 from django.http import (
@@ -80,7 +79,6 @@ def update_irc_settings(request):
 def server_error(request, template_name="500.html"):
     exc_type, value, _ = sys.exc_info()
     context_dict = {
-        "STATIC_URL": settings.STATIC_URL,
         "user": request.user,
         "request": request,
         "exception_type": exc_type,

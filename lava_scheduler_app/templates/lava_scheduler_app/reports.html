@@ -1,4 +1,5 @@
 {% extends "layouts/content.html" %}
+{% load static %}
 
 {% block styles %}
 <style>
@@ -46,7 +47,7 @@ title="Longest Running Jobs"><span class="glyphicon glyphicon-exclamation-sign">
 {% endblock %}
 
 {% block scripts %}
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.flot.min.js"></script>
+<script type="text/javascript" src="{% static "lava_scheduler_app/js/jquery.flot.min.js" %}"></script>
 
 <script>
   $(function() {

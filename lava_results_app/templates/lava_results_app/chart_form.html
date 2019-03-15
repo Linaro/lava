@@ -1,7 +1,8 @@
 {% extends "layouts/content.html" %}
+{% load static %}
 
 {% block styles %}
-<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava_results_app/css/chart.css"/>
+<link rel="stylesheet" type="text/css" href="{% static "lava_results_app/css/chart.css" %}"/>
 {% endblock %}
 
 {% block content %}

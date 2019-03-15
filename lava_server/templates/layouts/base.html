@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+{% load static %}<!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE }}">
 <head>
   <meta charset="utf-8">
@@ -6,8 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}{% endblock %}</title>
 
-  <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava_server/css/bootstrap-3.4.1.min.css">
-  <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava_server/css/jquery.typeahead.min.css"/>
+  <link rel="stylesheet" type="text/css" href="{% static "lava_server/css/bootstrap-3.4.1.min.css" %}">
+  <link rel="stylesheet" type="text/css" href="{% static "lava_server/css/jquery.typeahead.min.css" %}"/>
 
   <script>
     // Hack for fixed navbar anchor problem.
@@ -70,8 +70,8 @@
 <body onload="fix_anchor_offset()">
 {% block body %}{% endblock %}
 
-<script type="text/javascript" src="{{ STATIC_URL }}lava_server/js/jquery-3.4.0.min.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}lava_server/js/bootstrap-3.4.1.min.js"></script>
+<script type="text/javascript" src="{% static "lava_server/js/jquery-3.4.0.min.js" %}"></script>
+<script type="text/javascript" src="{% static "lava_server/js/bootstrap-3.4.1.min.js" %}"></script>
 {% block scripts %}
 {% endblock scripts %}
 </body>

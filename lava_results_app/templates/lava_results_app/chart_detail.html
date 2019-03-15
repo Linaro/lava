@@ -1,11 +1,12 @@
 {% extends "layouts/content.html" %}
+{% load django_tables2 %}
 {% load i18n %}
 {% load keep_spacing %}
-{% load django_tables2 %}
+{% load static %}
 {% load results_accessibility_tags %}
 
 {% block styles %}
-<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava_results_app/css/chart.css"/>
+<link rel="stylesheet" type="text/css" href="{% static "lava_results_app/css/chart.css" %}"/>
 {% endblock %}
 
 {% block content %}
@@ -209,10 +210,10 @@
 {% endblock %}
 
 {% block scripts %}
-<script type="text/javascript" src="{{ STATIC_URL }}lava_server/js/jquery.typeahead.min.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}lava_results_app/js/sortable.min.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}lava_server/js/bootbox.min.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}lava_results_app/js/bootbox.data.toggle.min.js"></script>
+<script type="text/javascript" src="{% static "lava_server/js/jquery.typeahead.min.js" %}"></script>
+<script type="text/javascript" src="{% static "lava_results_app/js/sortable.min.js" %}"></script>
+<script type="text/javascript" src="{% static "lava_server/js/bootbox.min.js" %}"></script>
+<script type="text/javascript" src="{% static "lava_results_app/js/bootbox.data.toggle.min.js" %}"></script>
 <script>
 
   $("#queries").on("mouseup", function(event, ui) {

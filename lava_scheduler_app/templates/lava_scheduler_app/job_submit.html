@@ -1,8 +1,9 @@
 {% extends "layouts/content.html" %}
+{% load static %}
 
 {% block styles %}
-<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava_scheduler_app/css/jquery-linedtextarea.css"/>
-<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava_scheduler_app/css/scheduler.css"/>
+<link rel="stylesheet" type="text/css" href="{% static "lava_scheduler_app/css/jquery-linedtextarea.css" %}"/>
+<link rel="stylesheet" type="text/css" href="{% static "lava_scheduler_app/css/scheduler.css" %}"/>
 {% endblock %}
 
 {% block content %}
@@ -79,8 +80,8 @@
 {% endblock %}
 
 {% block scripts %}
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery-linedtextarea.min.js"></script>
+<script type="text/javascript" src="{% static "lava_scheduler_app/js/jquery-linedtextarea.min.js" %}"></script>
 {% if not job_id %}
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/job-submit.min.js"></script>
+<script type="text/javascript" src="{% static "lava_scheduler_app/js/job-submit.min.js" %}"></script>
 {% endif %}
 {% endblock %}

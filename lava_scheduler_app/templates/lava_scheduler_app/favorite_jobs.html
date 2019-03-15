@@ -1,6 +1,7 @@
 {% extends "lava_scheduler_app/_content.html" %}
 
 {% load django_tables2 %}
+{% load static %}
 
 {% block content %}
 {% if username != request.user.username %}
@@ -48,7 +49,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script type="text/javascript" src="{{ STATIC_URL }}lava_server/js/jquery.typeahead.min.js"></script>
+<script type="text/javascript" src="{% static "lava_server/js/jquery.typeahead.min.js" %}"></script>
 <script>
   $("#user_select_modal").on('show.bs.modal', function (e) {
     $("#username").typeahead({

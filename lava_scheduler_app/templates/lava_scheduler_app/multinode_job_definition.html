@@ -1,5 +1,7 @@
 {% extends "layouts/content.html" %}
+{% load static %}
 {% load utils %}
+
 {% block styles %}
 <style>
 .noselect {
@@ -125,5 +127,5 @@ style="display: none" id="job_definition_text">{{ job.multinode_definition }}</s
 {% endblock content %}
 
 {% block scripts %}
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/job-definition.min.js"></script>
+<script type="text/javascript" src="{% static "lava_scheduler_app/js/job-definition.min.js" %}"></script>
 {% endblock %}

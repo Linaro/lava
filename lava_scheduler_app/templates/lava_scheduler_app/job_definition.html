@@ -1,5 +1,7 @@
 {% extends "layouts/content.html" %}
+{% load static %}
 {% load utils %}
+
 {% block styles %}
 <style>
 .noselect {
@@ -216,7 +218,7 @@ timeouts:
 {% endblock content %}
 
 {% block scripts %}
-<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/job-definition.min.js"></script>
+<script type="text/javascript" src="{% static "lava_scheduler_app/js/job-definition.min.js" %}"></script>
 <script type="text/javascript">
   $(document).ready(
     function() {
