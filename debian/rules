@@ -82,6 +82,10 @@ override_dh_auto_install:
 	rm -rf $(CURDIR)/build
 	# handle embedded JS
 	python3 ./share/javascript.py -f ./share/javascript.yaml --remove
+	DJANGO_BASE_DIR="debian/lava-server/usr/share/lava-server/" python3 manage.py collectstatic
+	$(RM) -rf debian/lava-server/$(PYTHONDIR)/lava_results_app/static
+	$(RM) -rf debian/lava-server/$(PYTHONDIR)/lava_scheduler_app/static
+	$(RM) -rf debian/lava-server/$(PYTHONDIR)/lava_server/static
 
 override_dh_fixperms-arch:
 	dh_fixperms -X debian/lava-dispatcher/usr/lib/python3/dist-packages/lava_dispatcher/dynamic_vm_keys/lava
