@@ -127,9 +127,6 @@ doc:
   <<: *job
   stage: build
   image: debian:9
-  except:
-    refs:
-    - tags
   artifacts:
     paths:
     - doc/v2/_build/html
@@ -284,3 +281,15 @@ reprepro-release:
   environment:
     name: reprepro-release
     url: https://apt.lavasoftware.org
+
+doc-deploy:
+  stage: deploy
+  tags: [deploy]
+  only:
+    refs:
+    - tags
+  dependencies:
+  - doc
+  script:
+  - mkdir -p ${HOME}/docs/lava
+  - rsync -av --delete doc/v2/_build/html ${HOME}/docs/lava/
