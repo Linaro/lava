@@ -1,0 +1,5 @@
+{# device_type = "beaglebone-black-barebox" #}
+{% extends 'base-barebox.jinja2' %}
+
+{% set bootloader_prompt = 'TI AM335x BeagleBone black:/' %}
+{% set console_device = console_device|default('ttyO0') %}

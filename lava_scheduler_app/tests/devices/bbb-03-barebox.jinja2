@@ -1,0 +1,4 @@
+{% extends 'beaglebone-black-barebox.jinja2' %}
+{% set connection_commands = {'uart0': "telnet localhost 6000"} %}
+{% set connection_tags = {'uart0': ['primary', 'telnet']} %}
+{% set connection_list = ['uart0'] %}
