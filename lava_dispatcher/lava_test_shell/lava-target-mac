@@ -4,4 +4,4 @@
 #
 #Usage: ``lava-target-mac``
 
-echo ${TARGET_DEVICE_MAC}
+echo "${TARGET_DEVICE_MAC}"

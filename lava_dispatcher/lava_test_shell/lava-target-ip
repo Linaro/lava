@@ -4,4 +4,4 @@
 #
 #Usage: ``lava-target-ip``
 
-echo ${TARGET_DEVICE_IP}
+echo "${TARGET_DEVICE_IP}"

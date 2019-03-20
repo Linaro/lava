@@ -15,6 +15,6 @@ if [ -z "$_NETWORK_INTERFACE" ]; then
 fi
 
 if [ -x /sbin/ifconfig ]; then
-    _RAW_STREAM_V4=`/sbin/ifconfig $_NETWORK_INTERFACE |grep -o -E '([[:xdigit:]]{1,3}\.){3}[[:xdigit:]]{1,3}'`
+    _RAW_STREAM_V4=$(/sbin/ifconfig $_NETWORK_INTERFACE |grep -o -E '([[:xdigit:]]{1,3}\.){3}[[:xdigit:]]{1,3}')
     echo $_RAW_STREAM_V4 | awk '{print$1}'
 fi

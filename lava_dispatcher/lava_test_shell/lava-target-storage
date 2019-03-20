@@ -12,7 +12,7 @@
 # by a TAB character::
 #
 #	UMS /dev/disk/by-id/usb-Linux_UMS_disk_0_WaRP7-0xac2400d300000054-0:0
-#	SATA    /dev/disk/by-id/ata-ST500DM002-1BD142_W3T79GCW
+#	SATA /dev/disk/by-id/ata-ST500DM002-1BD142_W3T79GCW
 #
 # Usage: ``lava-target-storage method``
 #
@@ -29,7 +29,7 @@ if [ -z "$FILTER" ]; then
   printf ${LAVA_STORAGE}
   exit 0
 fi
-MATCH=$(printf ${LAVA_STORAGE} | awk "/^\t$FILTER\t/" | sed -e "s/^\t$FILTER\t//")
+MATCH=$(printf "${LAVA_STORAGE}" | awk "/^\\t$FILTER\\t/" | sed -e "s/^\\t$FILTER\\t//")
 if [ "$MATCH" = "${LAVA_STORAGE}" ] || [ -z "$MATCH" ]; then
   # failed to find the filter in the group
   exit 1

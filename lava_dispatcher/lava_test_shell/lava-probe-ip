@@ -4,4 +4,4 @@
 #
 #Usage: ``lava-probe-ip``
 
-echo ${PROBE_DEVICE_IP}
+echo "${PROBE_DEVICE_IP}"

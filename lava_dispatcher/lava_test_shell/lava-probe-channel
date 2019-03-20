@@ -4,4 +4,4 @@
 #
 #Usage: ``lava-probe-channel``
 
-echo ${PROBE_DEVICE_CHANNEL}
+echo "${PROBE_DEVICE_CHANNEL}"

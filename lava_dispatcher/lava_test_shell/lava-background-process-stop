@@ -14,11 +14,11 @@ fi
 # $LAVA_RESULT_DIR is set by lava-test-shell
 result_dir="$LAVA_RESULT_DIR/results/$NAME"
 
-PID=`cat $result_dir/pid`
+PID=$(cat $result_dir/pid)
 
 if ps -p $PID > /dev/null;
 then
-    kill $PID 2>&1 > /dev/null
+    kill $PID > /dev/null 2>&1
 fi
 
 exit 0
