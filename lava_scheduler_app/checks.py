@@ -48,7 +48,12 @@ def check_health_checks(app_configs, **kwargs):
             continue
         if ht is None:
             if not ht_disabled:
-                errors.append(Warning("No health check", obj=device.hostname))
+                errors.append(
+                    Warning(
+                        "No health check for '%s'" % device.hostname,
+                        obj="health-checks",
+                    )
+                )
             continue
 
         # check the health-check YAML syntax
@@ -57,8 +62,8 @@ def check_health_checks(app_configs, **kwargs):
         except yaml.YAMLError as exc:
             errors.append(
                 Error(
-                    "Invalid health check YAML: '%s' '%s'." % (device.hostname, exc),
-                    obj=device.hostname,
+                    "Invalid YAML syntax for '%s': '%s'" % (device.hostname, exc),
+                    obj="health-checks",
                 )
             )
             continue
@@ -69,8 +74,8 @@ def check_health_checks(app_configs, **kwargs):
         except Invalid as exc:
             errors.append(
                 Error(
-                    "Invalid health check schema: '%s' '%s'." % (device.hostname, exc),
-                    obj=device.hostname,
+                    "Invalid schema for '%s': '%s'" % (device.hostname, exc),
+                    obj="health-checks",
                 )
             )
 
@@ -78,7 +83,10 @@ def check_health_checks(app_configs, **kwargs):
             validate_job(ht)
         except SubmissionException as exc:
             errors.append(
-                Error("Invalid health check test job: '%s'" % exc, obj=device.hostname)
+                Error(
+                    "Invalid schema for '%s': '%s'" % (device.hostname, exc),
+                    obj="health-checks",
+                )
             )
 
     return errors
@@ -91,7 +99,9 @@ def check_device_configuration(app_configs, **kwargs):
 
     for device in Device.objects.exclude(health=Device.HEALTH_RETIRED):
         if not device.is_valid():
-            errors.append(Error("Invalid configuration", obj=device.hostname))
+            errors.append(
+                Error("Invalid configuration for '%s'" % device.hostname, obj="devices")
+            )
 
     return errors
 
@@ -103,7 +113,9 @@ def check_dt_templates(app_configs, **kwargs):
 
     for dt in DeviceType.objects.filter(display=True):
         if invalid_template(dt):
-            errors.append(Error("Invalid template", obj=dt.name))
+            errors.append(
+                Error("Invalid template for '%s'" % dt.name, obj="device-types")
+            )
 
     return errors
 
@@ -116,14 +128,27 @@ def check_permissions(app_configs, **kwargs):
     for filename in files:
         st = os.stat(filename)
         if stat.S_IMODE(st.st_mode) != 416:
-            errors.append(Error("Invalid permissions (should be 0o640)", obj=filename))
+            errors.append(
+                Error(
+                    "Invalid permissions (should be 0o640) for '%s'" % filename,
+                    obj="permissions",
+                )
+            )
         try:
             if getpwuid(st.st_uid).pw_name != "lavaserver":
                 errors.append(
-                    Error("Invalid owner (should be lavaserver)", obj=filename)
+                    Error(
+                        "Invalid owner (should be lavaserver) for '%s'" % filename,
+                        obj="permissions",
+                    )
                 )
         except KeyError:
-            errors.append(Error("Unknown user id %d" % st.st_uid, obj=filename))
+            errors.append(
+                Error(
+                    "Unknown user id %d for '%s'" % (st.st_uid, filename),
+                    obj="permissions",
+                )
+            )
     return errors
 
 
@@ -137,18 +162,35 @@ def _package_status(name, errors, info=False):
             .split("\n")
         )
         if out[1] != "Status: install ok installed":
-            errors.append(Error("not installed correctly", obj=name))
+            errors.append(
+                Error("'%s' not installed correctly" % name, obj="debian pkg")
+            )
+    except FileNotFoundError:
+        errors.append(Warning("Unable to query %s" % name, obj="debian pkg"))
     except subprocess.CalledProcessError:
         if info:
-            errors.append(Info("not installed from a Debian package", obj=name))
+            errors.append(
+                Info(
+                    "'%s' not installed from a Debian package" % name, obj="debian pkg"
+                )
+            )
         else:
-            errors.append(Error("not installed from a Debian package", obj=name))
+            errors.append(
+                Error(
+                    "'%s' not installed from a Debian package" % name, obj="debian pkg"
+                )
+            )
 
 
 def _package_symlinks(name, errors):
     dirname = os.path.join("/usr/lib/python3/dist-packages/", name)
     if os.path.islink(dirname):
-        errors.append(Error("symlink to %s" % os.path.realpath(dirname), obj=name))
+        errors.append(
+            Error(
+                "%s symlinked to %s" % (name, os.path.realpath(dirname)),
+                obj="debian pkg",
+            )
+        )
 
 
 @register(deploy=True)
@@ -252,7 +294,7 @@ def check_services(app_configs, **kwargs):
                 )
             except subprocess.CalledProcessError:
                 errors.append(
-                    Error("%s service is not active." % service, obj="lava service")
+                    Error("%s service is not active." % service, obj="lava services")
                 )
 
         for service in optional:
@@ -262,7 +304,7 @@ def check_services(app_configs, **kwargs):
                 )
             except subprocess.CalledProcessError:
                 errors.append(
-                    Info("%s service is not active." % service, obj="lava service")
+                    Info("%s service is not active." % service, obj="lava services")
                 )
     else:
         # systemd is not running, check /proc directly.
@@ -271,12 +313,12 @@ def check_services(app_configs, **kwargs):
             if key in services:
                 if not value:
                     errors.append(
-                        Error("%s daemon is not active." % key, obj="lava daemon")
+                        Error("%s daemon is not active." % key, obj="lava daemons")
                     )
             if key in optional:
                 if not value:
                     errors.append(
-                        Info("%s daemon is not active." % key, obj="lava daemon")
+                        Info("%s daemon is not active." % key, obj="lava daemons")
                     )
     return errors
 
