@@ -1,10 +1,12 @@
-FROM debian:stretch-backports
+FROM debian:stretch-slim
 
 LABEL maintainer="Rémi Duraffort <remi.duraffort@linaro.org>"
 
 ENV DEBIAN_FRONTEND noninteractive
 
-RUN apt-get update -q && \
+RUN echo 'deb http://deb.debian.org/debian stretch-backports main' > /etc/apt/sources.list.d/backports.list && \
+    mkdir -p /usr/share/man/man1 /usr/share/man/man7 && \
+    apt-get update -q && \
     apt-get install --no-install-recommends --yes wget gnupg ca-certificates && \
     wget https://apt.lavasoftware.org/lavasoftware.key.asc && \
     apt-key add lavasoftware.key.asc && \
