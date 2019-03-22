@@ -65,14 +65,9 @@ Options for other distributions
 ********************************
 
 Although LAVA is not inherently tied to the Debian distribution, there
-would be a lot of work involved to ensure that another method of
+would be some work involved to ensure that another method of
 deploying LAVA would work well enough for the upstream LAVA team to
-support that method.
-
-If you are thinking about packaging LAVA, please consider the
-commitment level needed **carefully** before taking on this work. It
-represents a relatively large, long term commitment to the LAVA
-Software Community Project and to the distribution involved.
+officially support that method.
 
 On top of developing LAVA itself, full support of LAVA in Debian
 includes:

@@ -156,12 +156,12 @@ Developer workflows
 
 .. note:: LAVA is developed using Debian packaging to ensure that
    daemons and system-wide configuration is correctly updated with
-   changes in the codebase. There is **no support for pypi or python
+   changes in the codebase. There is **no official support for pypi or python
    virtual environments or installing directly from a git directory**.
    ``python-setuptools`` is used but only with ``sdist`` to create the
    tarballs to be used for the Debian packaging, not for ``install``.
    Some dependencies of LAVA are not available with pypi, for example
-   ``python-guestfs``.
+   ``python-guestfs`` would need installing using another method.
 
 .. seealso:: :ref:`lava_on_debian` and a summary of the
   `Debian LAVA team activity <https://qa.debian.org/developer.php?email=pkg-linaro-lava-devel%40lists.alioth.debian.org>`_

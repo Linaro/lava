@@ -5,8 +5,8 @@
 Packaging lava-server for distributions
 ***************************************
 
-LAVA currently only has support for Debian packaging. Additional support for
-other distributions needs someone to maintain the packaging and to maintain a
+LAVA currently only has official support for Debian packaging. Additional support
+for other distributions needs someone to maintain the packaging and to maintain a
 test instance, provide backports and manage migrations to new upstream releases
 of dependencies like ``python-django``.
 

@@ -25,8 +25,8 @@ Software Requirements
 
 .. note:: LAVA is developed using Debian packaging to ensure that daemons and
    system-wide configuration is correctly updated with changes in the codebase.
-   There is **no support for pypi or python virtual environments or installing
-   directly from a git directory**. See :ref:`debian_installation` for
+   There is **no official support for pypi or python virtual environments or
+   installing directly from a git directory**. See :ref:`debian_installation` for
    detailed instructions.
 
 We currently recommend installing LAVA on `Debian`_ stretch, buster or
@@ -36,8 +36,7 @@ release) should use updates available in ``backports``.
 LAVA software has now moved to Python3 support. This also means that Jessie
 is no longer supported.
 
-Contributions to support other distributions are welcome as long as there is a
-commitment to maintain LAVA on those distributions.
+Contributions to support other distributions are welcome.
 
 .. mention docker support here once that is merged.
 
