@@ -1,0 +1,26 @@
+{# device_type = "am6" #}
+{% extends 'base-uboot.jinja2' %}
+{% set bootloader_prompt = bootloader_prompt|default('=>') %}
+{% set interrupt_prompt = interrupt_prompt|default('Hit any key to stop autoboot') %}
+{% set interrupt_char = interrupt_char|default('') %}
+{% set bootm_kernel_addr = '0x82000000' %}
+{% set bootm_ramdisk_addr = '0x88080000' %}
+{% set bootm_dtb_addr = '0x88000000' %}
+{% set bootz_kernel_addr = bootm_kernel_addr %}
+{% set bootz_ramdisk_addr = bootm_ramdisk_addr %}
+{% set bootz_dtb_addr = bootm_dtb_addr %}
+{% set uboot_mkimage_arch = 'arm' %}
+{% set adb_serial_number = adb_serial_number|default("'0000000000'") %}
+{% set fastboot_serial_number = fastboot_serial_number|default("'0000000000'") %}
+{% set device_info = device_info|default([{'board_id': fastboot_serial_number}]) %}
+{% set console_device = console_device|default('ttyS2') %}
+{% set baud_rate = baud_rate|default(115200) %}
+{% set uboot_extra_error_message = 'Invalid partition' %}
+{% set fastboot_sequence = ['reboot'] %}
+{% set fastboot_deploy_uboot_commands = fastboot_deploy_uboot_commands|default(["fastboot 0"]) %}
+{% set fastboot_boot_uboot = "
+        # method specific stanza
+        mmc:
+          commands:
+          - boot
+" %}
