@@ -3,3 +3,10 @@
 
 {# Custom CSS overrides #}
 {% set bootswatch_css_custom = ['_static/lava-styles.css'] %}
+
+{# Add some extra stuff before and use existing with 'super()' call. #}
+{# Added so we can add the rel=canonical link #}
+{% block extrahead %}
+    <link rel="canonical" href="https://docs.lavasoftware.org/lava/{{pagename}}.html" />
+  {{ super() }}
+{% endblock %}
