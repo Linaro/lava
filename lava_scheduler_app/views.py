@@ -33,12 +33,12 @@ import yaml
 from django import forms
 from django.conf import settings
 from django.contrib.humanize.templatetags.humanize import naturaltime
-
 from django.contrib.admin.models import LogEntry
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied, FieldDoesNotExist
 from django.urls import reverse
 from django.db import transaction
+from django.db.models import Case, IntegerField, Sum, When
 from django.template.loader import render_to_string
 from django.http import (
     Http404,
@@ -480,20 +480,36 @@ def job_report(start_day, end_day, health_check):
     start_date = now + datetime.timedelta(start_day)
     end_date = now + datetime.timedelta(end_day)
 
-    res = (
-        TestJob.objects.filter(
-            health_check=health_check, start_time__range=(start_date, end_date)
-        )
-        .filter(state=TestJob.STATE_FINISHED)
-        .values("health")
+    res = TestJob.objects.filter(
+        health_check=health_check, start_time__range=(start_date, end_date)
     )
+    res = res.filter(state=TestJob.STATE_FINISHED)
+    res = res.values("health")
+    res = res.aggregate(
+        passing=Sum(
+            Case(
+                When(health=TestJob.HEALTH_COMPLETE, then=1),
+                default=0,
+                output_field=IntegerField(),
+            )
+        ),
+        failing=Sum(
+            Case(
+                When(
+                    health__in=[TestJob.HEALTH_CANCELED, TestJob.HEALTH_INCOMPLETE],
+                    then=1,
+                ),
+                default=0,
+                output_field=IntegerField(),
+            )
+        ),
+    )
+
     url = reverse("lava.scheduler.failure_report")
     params = "start=%s&end=%s&health_check=%d" % (start_day, end_day, health_check)
     return {
-        "pass": res.filter(health=TestJob.HEALTH_COMPLETE).count(),
-        "fail": res.filter(
-            health__in=[TestJob.HEALTH_CANCELED, TestJob.HEALTH_INCOMPLETE]
-        ).count(),
+        "pass": res["passing"] or 0,
+        "fail": res["failing"] or 0,
         "date": start_date.strftime("%m-%d"),
         "failure_url": "%s?%s" % (url, params),
     }
