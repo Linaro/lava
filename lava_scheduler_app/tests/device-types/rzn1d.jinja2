@@ -1,5 +1,14 @@
 {% extends "base-uboot.jinja2" %}
 
+{% block body %}
+
+board_id: '{{ board_id|default('LCES2-0x0000000000000000') }}'
+usb_vendor_id: '045b'
+usb_product_id: '0239'
+
+{{ super() }}
+{% endblock body %}
+
 {% set console_device = console_device|default("ttyS0") %}
 {% set baud_rate = baud_rate|default(115200) %}
 

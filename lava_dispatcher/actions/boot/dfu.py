@@ -19,12 +19,13 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 from lava_common.exceptions import ConfigurationError, InfrastructureError
+
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.logical import Boot, RetryAction
-from lava_dispatcher.actions.boot import BootAction
-from lava_dispatcher.utils.udev import WaitDFUDeviceAction
+from lava_dispatcher.actions.boot import BootAction, BootloaderInterruptAction
 from lava_dispatcher.connections.serial import ConnectDevice
+from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.power import ResetDevice
+from lava_dispatcher.utils.udev import WaitDFUDeviceAction
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.strings import substitute
 
@@ -73,13 +74,46 @@ class BootDFURetry(RetryAction):
     summary = "boot dfu image"
 
     def populate(self, parameters):
+        dfu = self.job.device["actions"]["boot"]["methods"]["dfu"]
+        parameters = dfu["parameters"]
+
         self.internal_pipeline = Pipeline(
             parent=self, job=self.job, parameters=parameters
         )
         self.internal_pipeline.add_action(ConnectDevice())
         self.internal_pipeline.add_action(ResetDevice())
+        if dfu.get("implementation") == "u-boot":
+            self.internal_pipeline.add_action(
+                BootloaderInterruptAction(method="u-boot")
+            )
+            self.internal_pipeline.add_action(EnterDFU())
         self.internal_pipeline.add_action(WaitDFUDeviceAction())
         self.internal_pipeline.add_action(FlashDFUAction())
+
+
+class EnterDFU(Action):
+
+    name = "enter-dfu"
+    description = "enter software dfu mode"
+    summary = "enter software dfu mode"
+
+    def validate(self):
+        super().validate()
+        parameters = self.job.device["actions"]["boot"]["methods"]["dfu"]["parameters"]
+        if "enter-commands" not in parameters:
+            self.errors = '"enter-commands" is not defined'
+        elif not isinstance(parameters["enter-commands"], list):
+            self.errors = '"enter-commands" should be a list'
+
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
+        parameters = self.job.device["actions"]["boot"]["methods"]["dfu"]["parameters"]
+        for (index, cmd) in enumerate(parameters["enter-commands"]):
+            connection.sendline(cmd)
+            # Do not wait for the bootloader prompt for the last command.
+            # This command does not return.
+            if index + 1 < len(parameters["enter-commands"]):
+                connection.wait()
 
 
 class FlashDFUAction(Action):
@@ -147,19 +181,38 @@ class FlashDFUAction(Action):
             action="shared", label="shared", key="connection", deepcopy=False
         )
         connection = super().run(connection, max_end_time)
+        dfu = self.job.device["actions"]["boot"]["methods"]["dfu"]
+        reset_works = dfu.get("reset_works", True)
+        implementation = dfu.get("implementation", "hardware")
+
+        # Store the previous prompt_str to restore it afterward
+        prompt_str = connection.prompt_str
+        if implementation != "hardware":
+            connection.prompt_str = self.job.device.get_constant(
+                "dfu-download", prefix=implementation
+            )
+
         for (index, dfu_command) in enumerate(self.exec_list):
-            if index + 1 == len(self.exec_list):
-                if self.job.device["actions"]["boot"]["methods"]["dfu"].get(
-                    "reset_works", True
-                ):
-                    dfu_command.extend(["--reset"])
+            # add --reset for the last command (if reset works)
+            if index + 1 == len(self.exec_list) and reset_works:
+                dfu_command.extend(["--reset"])
             dfu = " ".join(dfu_command)
             output = self.run_command(dfu.split(" "))
+            # Check the output as dfu-util can return 0 in case of errors.
             if output:
                 if "No error condition is present\nDone!\n" not in output:
                     raise InfrastructureError("command failed: %s" % dfu)
             else:
                 raise InfrastructureError("command failed: %s" % dfu)
+
+            # Wait only for non-hardware implementations
+            # In fact, the booloader will print some strings when the transfert
+            # is finished.
+            if implementation != "hardware":
+                connection.wait()
+
+        # Restore the prompts
+        connection.prompt_str = prompt_str
         self.set_namespace_data(
             action="shared", label="shared", key="connection", value=connection
         )

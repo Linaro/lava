@@ -1,0 +1,82 @@
+- class: actions.deploy.image.DeployImagesAction
+  name: deployimages
+  pipeline:
+  - class: actions.deploy.download.DownloaderAction
+    name: download-retry
+    pipeline:
+    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
+  - class: actions.deploy.download.DownloaderAction
+    name: download-retry
+    pipeline:
+    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
+  - class: actions.deploy.download.DownloaderAction
+    name: download-retry
+    pipeline:
+    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
+  - class: actions.deploy.download.DownloaderAction
+    name: download-retry
+    pipeline:
+    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
+- {class: actions.commands.CommandAction, name: user-command}
+- class: actions.boot.dfu.BootDFU
+  name: boot-dfu-image
+  pipeline:
+  - class: actions.boot.dfu.BootDFURetry
+    name: boot-dfu-retry
+    pipeline:
+    - {class: connections.serial.ConnectDevice, name: connect-device}
+    - class: power.ResetDevice
+      name: reset-device
+      pipeline:
+      - {class: power.PDUReboot, name: pdu-reboot}
+    - {class: actions.boot.BootloaderInterruptAction, name: bootloader-interrupt}
+    - {class: actions.boot.dfu.EnterDFU, name: enter-dfu}
+    - {class: utils.udev.WaitDFUDeviceAction, name: wait-dfu-device}
+    - {class: actions.boot.dfu.FlashDFUAction, name: flash-dfu}
+- {class: actions.commands.CommandAction, name: user-command}
+- class: actions.deploy.overlay.OverlayAction
+  name: lava-overlay
+  pipeline:
+  - {class: actions.deploy.overlay.SshAuthorize, name: ssh-authorize}
+  - {class: actions.deploy.overlay.VlandOverlayAction, name: lava-vland-overlay}
+  - {class: actions.deploy.overlay.MultinodeOverlayAction, name: lava-multinode-overlay}
+  - class: actions.deploy.testdef.TestDefinitionAction
+    name: test-definition
+    pipeline:
+    - {class: actions.deploy.testdef.GitRepoAction, name: git-repo-action}
+    - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
+    - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
+    - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
+  - {class: actions.deploy.overlay.CompressOverlay, name: compress-overlay}
+  - {class: actions.deploy.overlay.PersistentNFSOverlay, name: persistent-nfs-overlay}
+- class: actions.boot.bootloader.BootBootloaderAction
+  name: boot-bootloader
+  pipeline:
+  - {class: connections.serial.ConnectDevice, name: connect-device}
+  - {class: actions.boot.BootloaderCommandOverlay, name: bootloader-overlay}
+  - class: actions.boot.bootloader.BootBootloaderRetry
+    name: boot-bootloader-retry
+    pipeline:
+    - class: power.ResetDevice
+      name: reset-device
+      pipeline:
+      - {class: power.PDUReboot, name: pdu-reboot}
+    - {class: actions.boot.BootloaderInterruptAction, name: bootloader-interrupt}
+    - {class: actions.boot.BootloaderCommandsAction, name: bootloader-commands}
+- class: actions.boot.minimal.MinimalBoot
+  name: minimal-boot
+  pipeline:
+  - {class: connections.serial.ConnectDevice, name: connect-device}
+  - {class: actions.boot.AutoLoginAction, name: auto-login-action}
+  - {class: shell.ExpectShellSession, name: expect-shell-connection}
+  - {class: actions.boot.OverlayUnpack, name: overlay-unpack}
+  - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
+- class: actions.test.shell.TestShellRetry
+  name: lava-test-retry
+  pipeline:
+  - {class: actions.test.shell.TestShellAction, name: lava-test-shell}
+- class: power.FinalizeAction
+  name: finalize
+  pipeline:
+  - {class: power.PowerOff, name: power-off}
+  - {class: power.ReadFeedback, name: read-feedback}

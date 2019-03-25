@@ -102,6 +102,7 @@ constants:
 {% if uboot_extra_error_message %}
       - '{{ uboot_extra_error_message }}'
 {% endif %}
+    dfu-download: '{{ dfu_download|default("DOWNLOAD \\.\\.\\. OK\\r\\nCtrl\\+C to exit \\.\\.\\.") }}'
   grub:
     interrupt-prompt: '{{ grub_autoboot_prompt | default("for a command-line") }}'
     interrupt-character: '{{ grub_interrupt_character | default ("c") }}'

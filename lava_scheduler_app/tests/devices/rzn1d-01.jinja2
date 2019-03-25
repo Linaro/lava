@@ -1,0 +1,15 @@
+{% extends 'rzn1d.jinja2' %}
+
+{% set power_off_command = 'webrelay --host 192.168.0.15 --port 1234 --relay 6 off' %}
+{% set hard_reset_command = 'webrelay --host 192.168.0.15 --port 1234 --relay 6 reset' %}
+{% set power_on_command = 'webrelay --host 192.168.0.15 --port 1234 --relay 6 on' %}
+
+{% set connection_command = 'telnet localhost 2002' %}
+{% set uboot_needs_interrupt = False %}
+
+{% set user_commands = {'set_boot_to_qspi': {'do': 'webrelay --host 192.168.0.15 --port 1234 --relay 1 on',
+                                             'undo': 'webrelay --host 192.168.0.15 --port 1234 --relay 1 off'},
+                        'set_boot_to_nand': {'do': 'webrelay --host 192.168.0.15 --port 1234 --relay 1 off',
+                                             'undo': 'webrelay --host 192.168.0.15 --port 1234 --relay 1 off'}} %}
+
+{% set board_id = "LCES2-0xf775916400000000" %}
