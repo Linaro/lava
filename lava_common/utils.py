@@ -18,7 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import os
+import contextlib
 import subprocess  # nosec dpkg
 from lava_common.exceptions import InfrastructureError
 
@@ -29,33 +29,23 @@ def debian_package_arch(pkg):
     changelog. Distributions not derived from Debian will
     return an empty string.
     """
-    # release path
-    changelog = "/usr/share/doc/%s/changelog.Debian.gz" % pkg
-    if not os.path.exists(changelog):
-        changelog = "/usr/share/doc/%s/changelog.gz" % pkg
-    if os.path.exists(changelog):
-        deb_arch = (
+    with contextlib.suppress(FileNotFoundError, subprocess.CalledProcessError):
+        return (
             subprocess.check_output(  # nosec dpkg-query
                 ("dpkg-query", "-W", "-f=${Architecture}\n", "%s" % pkg)
             )
             .strip()
             .decode("utf-8", errors="replace")
         )
-        return deb_arch
     return ""
 
 
 def debian_package_version(pkg, split):
     """
-    Relies on Debian Policy rules for the existence of the
-    changelog. Distributions not derived from Debian will
-    return an empty string.
+    Use dpkg-query to retrive the version of the given package.
+    Distributions not derived from Debian will return an empty string.
     """
-    # release path
-    changelog = "/usr/share/doc/%s/changelog.Debian.gz" % pkg
-    if not os.path.exists(changelog):
-        changelog = "/usr/share/doc/%s/changelog.gz" % pkg
-    if os.path.exists(changelog):
+    with contextlib.suppress(FileNotFoundError, subprocess.CalledProcessError):
         deb_version = (
             subprocess.check_output(  # nosec dpkg-query
                 ("dpkg-query", "-W", "-f=${Version}\n", "%s" % pkg)
