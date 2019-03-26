@@ -40,27 +40,23 @@ def debian_package_arch(pkg):
     return ""
 
 
-def debian_package_version(pkg, split):
+def debian_package_version(pkg):
     """
     Use dpkg-query to retrive the version of the given package.
     Distributions not derived from Debian will return an empty string.
     """
     with contextlib.suppress(FileNotFoundError, subprocess.CalledProcessError):
-        deb_version = (
+        return (
             subprocess.check_output(  # nosec dpkg-query
                 ("dpkg-query", "-W", "-f=${Version}\n", "%s" % pkg)
             )
             .strip()
             .decode("utf-8", errors="replace")
         )
-        # example version returned would be '2016.11'
-        if split:
-            return deb_version.split("-")[0]
-        return deb_version
     return ""
 
 
-def debian_filename_version(binary, split, label=False):
+def debian_filename_version(binary, label=False):
     """
     Relies on Debian Policy rules for the existence of the
     changelog. Distributions not derived from Debian will
@@ -79,7 +75,7 @@ def debian_filename_version(binary, split, label=False):
     except subprocess.CalledProcessError:
         raise InfrastructureError(msg)
     pkg = pkg_str.split(":")[0]
-    pkg_ver = debian_package_version(pkg, split=split)
+    pkg_ver = debian_package_version(pkg)
     if not label:
         return pkg_ver
     return "%s for <%s>, installed at version: %s" % (pkg, binary, pkg_ver)

@@ -136,7 +136,7 @@ class CallQemuAction(Action):
             self.errors = "Arch parameter must be set in the context section. Please check the device configuration for available architectures."
             return
         if architecture in ["amd64", "x86_64"]:
-            ver_str = debian_package_version(pkg="qemu-system-x86", split=False)
+            ver_str = debian_package_version(pkg="qemu-system-x86")
             arch_str = debian_package_arch(pkg="qemu-system-x86")
             self.qemu_data = {
                 "qemu_version": ver_str,
@@ -149,7 +149,7 @@ class CallQemuAction(Action):
                 arch_str,
             )
         if architecture in ["arm64", "arm", "armhf", "aarch64"]:
-            ver_str = debian_package_version(pkg="qemu-system-arm", split=False)
+            ver_str = debian_package_version(pkg="qemu-system-arm")
             arch_str = debian_package_arch(pkg="qemu-system-arm")
             self.qemu_data = {
                 "qemu_version": ver_str,

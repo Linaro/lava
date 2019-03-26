@@ -78,7 +78,7 @@ class LavaSystemAPI(SystemAPI):
         ------------
         lava-server version string
         """
-        return debian_package_version(pkg="lava-server", split=False)
+        return debian_package_version(pkg="lava-server")
 
     # Update the integer return value when adding arguments to
     # existing functions anywhere in the XML-RPC API or

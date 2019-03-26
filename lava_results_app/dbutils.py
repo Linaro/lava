@@ -235,7 +235,7 @@ def _get_job_metadata(job):
         }
     )
     # Add lava-server-version to metadata
-    packaged = debian_package_version(pkg="lava-server", split=False)
+    packaged = debian_package_version(pkg="lava-server")
     if packaged:
         retval.update({"lava-server-version": packaged})
     return retval

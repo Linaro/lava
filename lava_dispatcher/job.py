@@ -204,7 +204,7 @@ class Job:  # pylint: disable=too-many-instance-attributes
         Send a "fail" results if needed.
         """
         label = "lava-dispatcher, installed at version: %s" % debian_package_version(
-            pkg="lava-dispatcher", split=False
+            pkg="lava-dispatcher"
         )
         self.logger.info(label)
         self.logger.info("start: 0 validate")
