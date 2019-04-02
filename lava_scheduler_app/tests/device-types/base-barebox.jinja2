@@ -15,6 +15,9 @@
 
 actions:
   deploy:
+    parameters:
+      append_dtb: {{ append_dtb|default(false) }}
+      use_xip: {{ use_xip|default(false) }}
     connections:
       serial:
     methods:
