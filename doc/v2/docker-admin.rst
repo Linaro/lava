@@ -227,7 +227,7 @@ lava-dispatcher in docker
 *************************
 
 The official LAVA Software docker images for ``lava-dispatcher`` do not
-include details like ``ser2net`` configuration or ``pduclient`` or
+include details like ``ser2net`` configuration or ``pdudaemon`` or
 other remote power control scripts. These will need to be added
 according to your local lab configuration. Depending on the size of
 your lab, you may choose to use a docker volume or ``docker build`` to
@@ -414,4 +414,3 @@ this are easier to implement than others, so the support will arrive in
 stages.
 
 .. seealso:: :ref:`configuring_ui`
-

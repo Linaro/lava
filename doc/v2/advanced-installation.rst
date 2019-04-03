@@ -292,8 +292,8 @@ supports LAVA V1, PostgreSQL will need to be added to the
 updates and these updates **are** important to apply, ``unattended-upgrades``
 does not currently restart other services which are dependent on the service
 being upgraded. Admins still need to watch for security updates to PostgreSQL
-and apply the update manually, restarting services like ``lavapdu-runner``,
-``lava-master``, ``lava-server`` and ``vland`` afterwards::
+and apply the update manually, restarting services like ``lava-master``,
+``lava-server`` and ``vland`` afterwards::
 
    Unattended-Upgrade::Package-Blacklist {
         "postgresql-9.4";

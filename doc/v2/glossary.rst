@@ -368,7 +368,7 @@ Glossary of terms
   PDU
     PDU is an abbreviation for Power Distribution Unit - a network-controlled
     set of relays which allow the power to the devices to be turned off and on
-    remotely. Certain PDUs are supported by ``lavapdu-daemon`` to be able to
+    remotely. Many PDUs are supported by ``pdudaemon`` to be able to
     hard reset devices in LAVA.
 
   physical access

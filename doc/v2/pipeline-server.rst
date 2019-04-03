@@ -26,11 +26,6 @@ This will install lava-dispatcher and lava-server.
 
 Other packages to consider:
 
-* ``lavapdu-client`` to control a :term:`PDU` to allow LAVA to
-  automatically power cycle a device.
-
-* ``lavapdu-daemon`` - only one daemon is required to run multiple PDUs.
-
 * ``ntp`` - some actions within LAVA can be time-sensitive, so ensuring
   that devices within your lab keep time correctly can be important.
 
@@ -72,12 +67,6 @@ sThe ``lava`` package installs support for:
      typically used on a production master or worker.
 
 * ``vmdebootstrap`` for building your own Debian based KVM images.
-
-* ``lavapdu-client`` to control a :term:`PDU` to allow LAVA to
-  automatically power cycle a device.
-
-* ``lavapdu-daemon`` is recommended or you can use a single daemon for
-  multiple PDUs.
 
 * ``ntp`` - some actions within LAVA can be time-sensitive, so ensuring
   that devices within your lab keep time correctly can be important.

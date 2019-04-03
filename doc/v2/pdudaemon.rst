@@ -1,9 +1,14 @@
-.. _pdu_daemon:
+.. _pdudaemon:
 
-PDU Daemon
+PDUDaemon
 **********
 
-APC PDUs (Power Distribution Unit) only support one control session at a time.
+The `PDUDaemon project <https://github.com/pdudaemon/pdudaemon>` presents a
+simple interface to control most popular PDU (Power Distribution Unit) models.
+LAVA can be configured to use PDUDaemon requests to control power on devices in
+your lab.
+
+Some PDUs only support one control session at a time.
 In a :term:`distributed deployment` LAVA installation with multiple
 :term:`remote worker` machines there is a possibility that more than one
 dispatcher may attempt to access a PDU simultaneously. In this case the power
@@ -12,34 +17,16 @@ control request will only succeed from the dispatcher which was first.
 Multinode jobs are more likely to trigger this issue as they cause many jobs to
 be started at the same time.
 
-To solve this problem we use a project called `pdudaemon
-<https://github.com/pdudaemon/pdudaemon>`_. Instead of each dispatcher accessing
-the PDUs directly, dispatchers make requests to a queueing daemon which
-executes them sequentially.
+To avoid this problem, instead of each dispatcher accessing the PDUs directly,
+dispatchers can make requests to PDUDaemon which executes them sequentially.
 
 The project source is available here: https://github.com/pdudaemon/pdudaemon
 Packages for Debian and Ubuntu will be available shortly.
+An earlier version of PDUDaemon was called lavapdu, but the packages in
+Debian are out of date and should not be used.
 
-A Postgres server is required with a database created, and postgres credentials
-to read/write to the database.
+Example config file for PDUDaemon
+`here <https://github.com/pdudaemon/pdudaemon/blob/master/share/pdudaemon.conf>``
 
-Example config file for lavapdu server::
-
- {
-   "hostname": "0.0.0.0",
-   "port": 16421,
-   "dbhost": "127.0.0.1",
-   "dbuser": "pdudaemon",
-   "dbpass": "pdudaemon",
-   "dbname": "lavapdu"
- }
-
-Hostname is the interface IP address that PDU Daemon will attempt to bind to.
-
-Example invocation of pduclient::
-
- # ./pduclient --daemon pdu_daemon_hostname --hostname pdu_hostname --command pdu_command --port pdu_port_number
- $ ./pduclient --daemon services --hostname pdu12 --command reboot --port 01
-
-this will ask the PDU Daemon running on "services" to reboot port 1 on the pdu
-with hostname pdu12.
+For more information see the `PDUDeamon README
+<https://github.com/pdudaemon/pdudaemon/blob/master/README.md>`
