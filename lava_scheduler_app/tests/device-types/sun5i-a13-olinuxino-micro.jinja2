@@ -1,0 +1,5 @@
+{% extends 'sunxi-common.jinja2' %}
+
+{% set uboot_mkimage_arch = 'arm' %}
+# Without this, all uboot cmdline are truncated
+{% set boot_character_delay = 10 %}
