@@ -540,25 +540,6 @@ which can help.
 The default settings should work out of the box. This might not be the case for
 some optimisations that should be tested carefully.
 
-Caching
-=======
-
-The different assets (CSS, js, images, etc.) are already handled directly by
-apache but without any caching.
-
-To add browser caching, update the apache2 configuration to add Expires header
-for every static assets.
-
-.. code-block:: apache
-
-  <location /static>
-    ExpiresActive On
-    ExpiresDefault "access plus 1 month"
-  </location>
-
-.. note:: For the complete documentation see the `apache documentation
-   <https://httpd.apache.org/docs/2.4/mod/mod_expires.html>`__
-
 Template caching
 ================
 
@@ -577,6 +558,9 @@ You should then restart *lava-server-gunicorn*.
 .. code-block:: shell
 
   $ sudo service lava-server-gunicorn restart
+
+.. warning:: This feature is not needed anymore (and crashing) for Django
+   version >= 1.11
 
 .. index:: configuring display of logs, log size limit
 
