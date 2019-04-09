@@ -45,8 +45,8 @@ def schema(live=False):
                     Optional("lava-signal"): Any("kmsg", "stdout"),
                     Optional("history"): bool,
                     Optional("revision"): str,
-                    Optional("parameters"): {},
-                    Optional("params"): {},
+                    Optional("parameters"): dict,
+                    Optional("params"): dict,
                     **common,
                 },
                 {
