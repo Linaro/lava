@@ -265,14 +265,14 @@ def job():
                         str: Any(
                             {
                                 Required("device_type"): str,
-                                Required("count"): Range(min=1),
+                                Required("count"): Range(min=0),
                                 Optional("context"): dict,
                                 Optional("tags"): [str],
                                 Optional("timeout"): timeout(),
                             },
                             {
                                 Required("connection"): str,
-                                Required("count"): Range(min=1),
+                                Required("count"): Range(min=0),
                                 Required("expect_role"): str,
                                 Required("host_role"): str,
                                 Optional("request"): str,
