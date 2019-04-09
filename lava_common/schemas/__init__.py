@@ -160,6 +160,7 @@ def notify():
 def extra_checks(data):
     check_job_timeouts(data)
     check_multinode_or_device_type(data)
+    check_multinode_roles(data)
     check_namespace(data)
     check_secrets_visibility(data)
 
@@ -207,6 +208,17 @@ def check_multinode_or_device_type(data):
         raise Invalid('"device_type" shoud not be used with multinode')
     if not device_type and not multinode:
         raise Invalid('"device_type" or multinode should be defined')
+
+
+def check_multinode_roles(data):
+    # When using multinode, each action should have a role
+    if not data.get("protocols", {}).get("lava-multinode"):
+        return
+
+    for action in data.get("actions", []):
+        action_type = next(iter(action.keys()))
+        if "role" not in action[action_type]:
+            raise Invalid("Every action of a multinode job should have roles")
 
 
 def check_namespace(data):
