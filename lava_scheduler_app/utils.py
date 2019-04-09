@@ -154,7 +154,7 @@ def split_multinode_yaml(
                 except (KeyError, TypeError):
                     raise SubmissionException(
                         "Invalid YAML - Did not find a role in action '%s', check for consistent use of whitespace indents."
-                        % action.keys()[0]
+                        % next(iter(action.keys()))
                     )
                 if role in value["role"]:
                     actions.setdefault(role, {"actions": []})
