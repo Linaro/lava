@@ -16,7 +16,6 @@ actions:
     - {from: git, name: singlenode-intermediate, path: lava-test-shell/single-node/singlenode02.yaml,
       repository: 'http://git.linaro.org/lava-team/lava-functional-tests.git'}
     failure_retry: 3
-    name: kvm-basic-singlenode
     role: guest
     timeout: {minutes: 5}
 job_name: qemu-guest-ssh

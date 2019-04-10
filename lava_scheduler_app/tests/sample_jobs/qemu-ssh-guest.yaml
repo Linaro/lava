@@ -62,7 +62,6 @@ actions:
 
   - test:
      failure_retry: 3
-     name: install-ssh-server
      timeout:
        minutes: 5
      definitions:
@@ -90,7 +89,6 @@ actions:
 
   - test:
      failure_retry: 3
-     name: kvm-basic-singlenode
      timeout:
        minutes: 5
      definitions:

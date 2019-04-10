@@ -27,7 +27,6 @@ actions:
         run:
           steps: [lava-send ipv4 ipaddr=10.15.0.15]
     failure_retry: 3
-    name: install-ssh-server
     role: host
     timeout: {minutes: 5}
 context: {arch: amd64}
