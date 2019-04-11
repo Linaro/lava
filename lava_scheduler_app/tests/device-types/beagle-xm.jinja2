@@ -12,4 +12,4 @@
 {% set bootz_dtb_addr = '0x81f00000' %}
 {% set uboot_mkimage_arch = 'arm' %}
 {% set uboot_needs_usb = true %}
-{% set uboot_usb_commands = '          - "setenv usbethaddr 00:40:5c:26:0a:6c; usb start"' %}
+{% set uboot_usb_commands = ["setenv usbethaddr 00:40:5c:26:0a:6c; usb start"] %}

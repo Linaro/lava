@@ -10,6 +10,8 @@
 {% set uboot_mkimage_arch = 'arm' %}
 {% set uboot_bootx_cmd = "bootz {KERNEL_ADDR}" %}
 {% set append_dtb = true %}
-{% set uboot_tftp_commands = ("          - setenv loadkernel 'tftp {KERNEL_ADDR} {KERNEL}'
-          - setenv loadinitrd ''
-          - setenv loadfdt 'tftp {DTB_ADDR} {DTB}'") -%}
+{% set uboot_tftp_commands = [
+    "setenv loadkernel 'tftp {KERNEL_ADDR} {KERNEL}'",
+    "setenv loadinitrd ''",
+    "setenv loadfdt 'tftp {DTB_ADDR} {DTB}'"]
+-%}
