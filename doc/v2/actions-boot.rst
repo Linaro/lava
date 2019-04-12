@@ -124,7 +124,7 @@ become root with su. For example:
     password_prompt: 'Password:'
     password: pass
     login_commands:
-      - sudo su
+    - sudo su
 
 .. note:: No interactive input such as a password can be provided with the list
    of ``login_commands``.
@@ -157,7 +157,7 @@ included in the prompt, this can be included in the ``prompt``:
 
      - boot:
          prompts:
-           - 'root@debian:'
+         - 'root@debian:'
 
 When using the :term:`lxc` :term:`protocol`, the hostname element of the
 prompt will vary:
@@ -166,7 +166,7 @@ prompt will vary:
 
      - boot:
          prompts:
-           - 'root@(.*):'
+         - 'root@(.*):'
 
 When using a ramdisk, the prompt is likely to need to contain brackets which
 will need to be escaped:
