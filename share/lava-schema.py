@@ -30,7 +30,12 @@ from lava_common.schemas import validate
 
 
 def check_job(data, options, prefix=""):
-    data = yaml.safe_load(data)
+    try:
+        data = yaml.safe_load(data)
+    except yaml.YAMLError as exc:
+        print("%sInvalid job definition:" % prefix)
+        print("%sinvalid yaml" % prefix)
+        return 1
     try:
         validate(data, options.strict)
     except v.Invalid as exc:
