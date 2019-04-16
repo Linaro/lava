@@ -28,7 +28,7 @@ from lava_common.schemas import action
 def url():
     return {
         Required("url"): str,
-        Optional("compression"): Any("bz2", "gz", "xz", "zip"),
+        Optional("compression"): Any("bz2", "gz", "xz", "zip", None),
         Optional("archive"): "tar",
         Optional("md5sum"): str,
         Optional("sha256sum"): str,
