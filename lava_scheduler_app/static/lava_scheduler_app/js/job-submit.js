@@ -53,24 +53,28 @@ validate_job_definition = function(data) {
 validate_definition_callback = function(result) {
     // Updates the css of the definition validation container with
     // appropriate msg.
-    if (result == "success") {
-        $("#valid_container").html("Valid definition.");
-        $("#valid_container").css("backgound-color", "#50ef53");
-        $("#valid_container").css("color", "#139a16");
-        $("#valid_container").css("border-color", "#139a16");
+    if (result["result"] == "success") {
+        if(result["warnings"]) {
+            $("#valid_container").html("Valid definition with warnings: " + result["warnings"]);
+            $("#valid_container").css("color", "#ec971f");
+            $("#valid_container").css("border-color", "#d58512");
+        } else {
+            $("#valid_container").html("Valid definition.");
+            $("#valid_container").css("color", "#5cb85c");
+            $("#valid_container").css("border-color", "#4cae4c");
+        }
         $("#valid_container").show();
         $("#submit").removeAttr("disabled");
         $("#validation_note").hide();
         unselect_error_line();
     } else {
-        $("#valid_container").html("Invalid definition: " + result);
-        $("#valid_container").css("backgound-color", "#ff8383");
-        $("#valid_container").css("color", "#da110a");
-        $("#valid_container").css("border-color", "#da110a");
+        $("#valid_container").html("Invalid definition: " + result["errors"]);
+        $("#valid_container").css("color", "#d9534f");
+        $("#valid_container").css("border-color", "#d43f3a");
         $("#valid_container").show();
         $("#submit").attr("disabled", "disabled");
         $("#validation_note").hide();
-        select_error_line(result);
+        select_error_line(result["errors"]);
     }
 }
 

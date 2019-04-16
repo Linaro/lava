@@ -28,6 +28,7 @@ import os
 import simplejson
 import tarfile
 import re
+import voluptuous
 import yaml
 
 from django import forms
@@ -46,6 +47,7 @@ from django.http import (
     HttpResponseBadRequest,
     HttpResponseForbidden,
     HttpResponseRedirect,
+    JsonResponse,
 )
 from django.http.response import StreamingHttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -54,6 +56,8 @@ from django.utils import timezone
 from django.utils.timesince import timeuntil
 from django.views.decorators.http import require_POST
 from django_tables2 import RequestConfig
+
+from lava_common.schemas import validate
 
 from lava_server.views import index as lava_index
 from lava_server.bread_crumbs import BreadCrumb, BreadCrumbTrail
@@ -1199,13 +1203,23 @@ def job_submit(request):
 
     if request.method == "POST" and is_authorized:
         if request.is_ajax():
+            warnings = ""
+            errors = ""
             try:
                 validate_job(request.POST.get("definition-input"))
-                return HttpResponse(simplejson.dumps("success"))
+                try:
+                    validate(yaml.safe_load(request.POST.get("definition-input")))
+                except voluptuous.Invalid as exc:
+                    warnings = str(exc)
             except Exception as e:
-                return HttpResponse(
-                    simplejson.dumps(str(e)), content_type="application/json"
-                )
+                errors = str(e)
+            return JsonResponse(
+                {
+                    "result": "failure" if errors else "success",
+                    "errors": errors,
+                    "warnings": warnings,
+                }
+            )
 
         else:
             try:
@@ -1814,13 +1828,24 @@ def job_resubmit(request, pk):
                 )
         else:
             if request.is_ajax():
+                warnings = ""
+                errors = ""
                 try:
                     validate_job(request.POST.get("definition-input"))
-                    return HttpResponse(simplejson.dumps("success"))
+                    try:
+                        validate(yaml.safe_load(request.POST.get("definition-input")))
+                    except voluptuous.Invalid as exc:
+                        warnings = str(exc)
                 except Exception as e:
-                    return HttpResponse(
-                        simplejson.dumps(str(e)), content_type="application/json"
-                    )
+                    errors = str(e)
+                return JsonResponse(
+                    {
+                        "result": "failure" if errors else "success",
+                        "errors": errors,
+                        "warnings": warnings,
+                    }
+                )
+
             if job.is_multinode:
                 definition = job.multinode_definition
             else:
