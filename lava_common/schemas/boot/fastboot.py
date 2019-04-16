@@ -31,6 +31,9 @@ def schema(live=False):
         Optional("commands"): [str],
         Optional("use_bootscript"): bool,
         Optional("prompts"): boot.prompts(),
+        Optional(
+            "auto_login"
+        ): boot.auto_login(),  # TODO: if auto_login => prompt is required
         Optional("transfer_overlay"): boot.transfer_overlay(),
     }
     return {**boot.schema(live), **base}

@@ -30,6 +30,9 @@ def schema(live=False):
         Required("method"): Msg("kexec", "'method' should be 'kexec'"),
         Required("boot_message"): str,
         Optional("prompts"): boot.prompts(),
+        Optional(
+            "auto_login"
+        ): boot.auto_login(),  # TODO: if auto_login => prompt is required
         Optional("command"): str,
         Optional("kernel"): str,
         Optional("dtb"): str,
