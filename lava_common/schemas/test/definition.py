@@ -51,7 +51,16 @@ def schema(live=False):
                 },
                 {
                     Required("repository"): {
-                        Required("metadata"): dict,  # TODO: what's required?
+                        Required("metadata"): {
+                            Required("format"): "Lava-Test Test Definition 1.0",
+                            Required("name"): str,
+                            Optional("description"): str,
+                            Optional("environment"): [str],
+                            Optional("devices"): [str],
+                            Optional("maintainer"): [str],
+                            Optional("scope"): [str],
+                            Optional("os"): [str],
+                        },
                         Optional("install"): {
                             Optional("deps"): [str],
                             Optional(Match(r"deps-.+")): [str],
