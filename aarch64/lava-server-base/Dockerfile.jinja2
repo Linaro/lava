@@ -4,7 +4,7 @@
 {% set use_apt_lavasoftware_org = True %}
 
 {% set dependencies = [
-    {"pkgs": "adduser apache2 gunicorn3 iproute2 libjs-excanvas libjs-jquery libjs-jquery-cookie libjs-jquery-flot libjs-jquery-typeahead libjs-jquery-ui libjs-jquery-watermark postgresql postgresql-client postgresql-common python3-setuptools systemd-sysv" },
+    {"pkgs": "adduser apache2 gunicorn3 iproute2 libjs-excanvas libjs-jquery libjs-jquery-flot libjs-jquery-typeahead postgresql postgresql-client postgresql-common python3-setuptools systemd-sysv" },
     {"pkgs": requires("debian", "stretch", "lava-common") },
     {"pkgs": requires("debian", "stretch-backports", "lava-common"), "from": "stretch-backports" },
     {"pkgs": requires("debian", "stretch", "lava-server") },

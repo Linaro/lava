@@ -13,7 +13,7 @@ RUN echo 'deb http://deb.debian.org/debian stretch-backports main' > /etc/apt/so
     rm lavasoftware.key.asc && \
     echo "deb http://apt.lavasoftware.org/daily stretch-backports main" > /etc/apt/sources.list.d/lava-daily.list && \
     apt-get update -q && \
-    apt-get install --no-install-recommends --yes adduser apache2 gunicorn3 iproute2 libjs-excanvas libjs-jquery libjs-jquery-cookie libjs-jquery-flot libjs-jquery-typeahead libjs-jquery-ui libjs-jquery-watermark postgresql postgresql-client postgresql-common python3-setuptools systemd-sysv && \
+    apt-get install --no-install-recommends --yes adduser apache2 gunicorn3 iproute2 libjs-excanvas libjs-jquery libjs-jquery-flot libjs-jquery-typeahead postgresql postgresql-client postgresql-common python3-setuptools systemd-sysv && \
     apt-get install --no-install-recommends --yes python3-nose python3-voluptuous python3-zmq && \
     apt-get install --no-install-recommends --yes python3-dateutil python3-django python3-django-restricted-resource python3-djangorestframework python3-docutils python3-jinja2 python3-nose python3-psycopg2 python3-simplejson python3-tap python3-tz python3-voluptuous python3-yaml python3-zmq && \
     apt-get install --no-install-recommends --yes -t stretch-backports python3-django-auth-ldap python3-django-tables2 python3-junit.xml python3-requests && \
