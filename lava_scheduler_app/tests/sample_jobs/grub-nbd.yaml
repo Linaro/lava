@@ -34,7 +34,6 @@ actions:
       url: http://example.com//bzImage
     initrd:
       url: http://example.com/initramfs-netboot-image-intel-corei7-64.ext4.gz
-      allow_modify: true
     nbdroot:
       url: http://example.com/agl-demo-platform-crosssdk-intel-corei7-64.ext4
 
