@@ -6,6 +6,8 @@ ENV DEBIAN_FRONTEND noninteractive
 
 RUN echo 'deb http://deb.debian.org/debian stretch-backports main' > /etc/apt/sources.list.d/backports.list && \
     mkdir -p /usr/share/man/man1 /usr/share/man/man7 && \
+    addgroup --system --gid 200 lavaserver && \
+    adduser --system --home /var/lib/lava-server/home/ --uid 200 --gid 200 --shell /bin/sh lavaserver && \
     apt-get update -q && \
     apt-get install --no-install-recommends --yes wget gnupg ca-certificates && \
     wget https://apt.lavasoftware.org/lavasoftware.key.asc && \
