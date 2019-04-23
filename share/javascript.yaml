@@ -5,9 +5,9 @@ debian:
     lava_directory: lava_server/static/lava_server/js/
     replacements:
       # our name first, external name second
-      jquery-1.11.0.js: jquery.js
-      jquery-1.11.0.min.js: jquery.min.js
-    version: '1.10'
+      jquery-3.4.0.js: jquery.js
+      jquery-3.4.0.min.js: jquery.min.js
+    version: '3.4.0'
   - package: libjs-jquery-flot
     directory: /usr/share/javascript/jquery-flot/
     lava_directory: lava_results_app/static/lava_results_app/js/

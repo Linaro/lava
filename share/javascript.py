@@ -43,7 +43,7 @@ def handle_embedded(os_name, data, dirname, simulate=False):
     """
     Remove the packaged duplicate
     Create a symlink from the external package to the old name
-    $(RM) $(CURDIR)/$(JS_DIR)/lava_server/static/lava_server/js/jquery-1.11.0.min.js
+    $(RM) $(CURDIR)/$(JS_DIR)/lava_server/static/lava_server/js/jquery-3.4.0.min.js
     """
     python_dir = None
     dependencies = {}
