@@ -299,8 +299,8 @@ def suite_csv(request, job, pk):
     check_request_auth(request, job)
     test_suite = get_object_or_404(TestSuite, name=pk, job=job)
     querydict = request.GET
-    offset = querydict.get("offset", default=None)
-    limit = querydict.get("limit", default=None)
+    offset = int(querydict.get("offset", default=0))
+    limit = int(querydict.get("limit", default=0))
     response = HttpResponse(content_type="text/csv")
     filename = "lava_%s.csv" % test_suite.name
     response["Content-Disposition"] = 'attachment; filename="%s"' % filename
@@ -331,8 +331,8 @@ def suite_csv_stream(request, job, pk):
     test_suite = get_object_or_404(TestSuite, name=pk, job=job)
     check_request_auth(request, job)
     querydict = request.GET
-    offset = querydict.get("offset", default=None)
-    limit = querydict.get("limit", default=None)
+    offset = int(querydict.get("offset", default=0))
+    limit = int(querydict.get("limit", default=0))
 
     pseudo_buffer = StreamEcho()
     writer = csv.writer(pseudo_buffer)
@@ -351,8 +351,8 @@ def suite_yaml(request, job, pk):
     check_request_auth(request, job)
     test_suite = get_object_or_404(TestSuite, name=pk, job=job)
     querydict = request.GET
-    offset = querydict.get("offset", default=None)
-    limit = querydict.get("limit", default=None)
+    offset = int(querydict.get("offset", default=0))
+    limit = int(querydict.get("limit", default=0))
     response = HttpResponse(content_type="text/yaml")
     filename = "lava_%s.yaml" % test_suite.name
     response["Content-Disposition"] = 'attachment; filename="%s"' % filename
