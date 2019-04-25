@@ -500,10 +500,7 @@ class DeviceTypeAdmin(admin.ModelAdmin):
         "bit_count",
     )
     fieldsets = (
-        (
-            "Properties",
-            {"fields": ("name", "description", "display", "owners_only", "aliases")},
-        ),
+        ("Properties", {"fields": ("name", "description", "display", "owners_only")}),
         (
             "Health checks",
             {

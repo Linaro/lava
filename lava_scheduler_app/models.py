@@ -135,6 +135,7 @@ class Alias(models.Model):
         max_length=200,
         editable=True,
     )
+    device_type = models.ForeignKey("DeviceType", related_name="aliases", null=True)
 
     def __str__(self):
         return self.pk
@@ -199,8 +200,6 @@ class DeviceType(models.Model):
         editable=True,
     )
 
-    aliases = models.ManyToManyField(Alias, related_name="device_types", blank=True)
-
     bits = models.ForeignKey(
         BitWidth,
         related_name="device_types",
@@ -219,6 +218,10 @@ class DeviceType(models.Model):
     )
 
     def __str__(self):
+        if self.aliases.all():
+            return (
+                self.name + "(" + ",".join([a.name for a in self.aliases.all()]) + ")"
+            )
         return self.name
 
     description = models.TextField(
@@ -1047,12 +1050,17 @@ def _get_device_type(user, name):
     :param user: the user submitting the TestJob
     """
     logger = logging.getLogger("lava_scheduler_app")
-    try:
-        device_type = DeviceType.objects.get(name=name)
-    except (ObjectDoesNotExist, MultipleObjectsReturned) as e:
-        msg = "Device type '%s' is unavailable. %s" % (name, e)
-        logger.error(msg)
-        raise DevicesUnavailableException(msg)
+    # try to find matching alias first
+    device_alias = Alias.objects.filter(name=name)
+    if len(device_alias) == 0:
+        try:
+            device_type = DeviceType.objects.get(name=name)
+        except (ObjectDoesNotExist, MultipleObjectsReturned) as e:
+            msg = "Device type '%s' is unavailable. %s" % (name, e)
+            logger.error(msg)
+            raise DevicesUnavailableException(msg)
+    else:  # there can be at most 1 as name is a primary key
+        device_type = device_alias[0].device_type
     if not device_type.some_devices_visible_to(user):
         msg = "Device type '%s' is unavailable to user '%s'" % (name, user.username)
         logger.error(msg)

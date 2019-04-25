@@ -64,8 +64,9 @@ class RestrictedIDLinkColumn(IDLinkColumn):
 
 
 def pklink(record):
-    job_id = record.pk
+    job_id = record
     if isinstance(record, TestJob):
+        job_id = record.pk
         if record.sub_jobs_list:
             job_id = record.sub_id
     return mark_safe(  # nosec - internal data
