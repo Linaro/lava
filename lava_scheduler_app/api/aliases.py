@@ -23,12 +23,12 @@ from django.forms import ValidationError
 
 from linaro_django_xmlrpc.models import ExposedV2API
 from lava_scheduler_app.api import check_perm
-from lava_scheduler_app.models import Alias
+from lava_scheduler_app.models import Alias, DeviceType
 
 
 class SchedulerAliasesAPI(ExposedV2API):
     @check_perm("lava_scheduler_app.add_alias")
-    def add(self, name):
+    def add(self, name, device_type_name):
         """
         Name
         ----
@@ -43,17 +43,26 @@ class SchedulerAliasesAPI(ExposedV2API):
         ---------
         `name`: string
           Name of the alias
+        'device_type_name': string
+          Name of the device type to alias
 
         Return value
         ------------
         None
         """
         try:
-            alias = Alias(name=name)
+            dt = DeviceType.objects.get(name=device_type_name)
+            if not dt.some_devices_visible_to(self.user):
+                raise xmlrpc.client.Fault(
+                    404, "Device-type '%s' was not found." % device_type_name
+                )
+            alias = Alias(name=name, device_type=dt)
             alias.full_clean()
             alias.save()
         except ValidationError as e:
             raise xmlrpc.client.Fault(404, e.message)
+        except DeviceType.DoesNotExist as nf:
+            raise xmlrpc.client.Fault(400, "Bad request. DeviceType does not exist")
         except IntegrityError:
             raise xmlrpc.client.Fault(
                 400, "Bad request. Alias or DeviceType name already exists."
@@ -132,10 +141,9 @@ class SchedulerAliasesAPI(ExposedV2API):
         except Alias.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Alias '%s' was not found." % name)
 
-        device_types = []
-        for dt in alias.device_types.all():
-            if dt.owners_only and dt.some_devices_visible_to(self.user):
-                continue
-            device_types.append(dt.name)
+        if alias.device_type.owners_only and alias.device_type.some_devices_visible_to(
+            self.user
+        ):
+            return {"name": alias.name, "device_type": ""}
 
-        return {"name": alias.name, "device_types": device_types}
+        return {"name": alias.name, "device_type": alias.device_type.name}
