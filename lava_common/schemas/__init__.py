@@ -26,6 +26,7 @@ from voluptuous import (
     All,
     Any,
     Exclusive,
+    In,
     Invalid,
     Length,
     MultipleInvalid,
@@ -250,7 +251,43 @@ def job():
                 Optional("connection"): timeout(),
                 Optional("connections"): {str: timeout()},
             },
-            Optional("context"): dict,
+            Optional("context"): Schema(
+                {
+                    In(
+                        [
+                            # qemu variables
+                            "arch",
+                            "boot_console",
+                            "boot_root",
+                            "cpu",
+                            "extra_options",
+                            "guestfs_driveid",
+                            "guestfs_interface",
+                            "guestfs_size",
+                            "machine",
+                            "memory",
+                            "model",
+                            "monitor",
+                            "netdevice",
+                            "serial",
+                            "vga",
+                            # others
+                            "bootloader_prompt",
+                            "console_device",
+                            "extra_kernel_args",
+                            "extra_nfsroot_args",
+                            "kernel_loglevel",
+                            "kernel_start_message",
+                            "lava_test_results_dir",
+                            "menu_interrupt_prompt",
+                            "mustang_menu_list",
+                            "test_character_delay",
+                            "tftp_mac_address",
+                        ]
+                    ): Any(int, str, [int, str])
+                },
+                extra=False,
+            ),
             Optional("metadata"): {str: object},
             Optional("priority"): Any("high", "medium", "low", Range(min=0, max=100)),
             Optional("tags"): [str],
