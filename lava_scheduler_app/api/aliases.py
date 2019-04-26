@@ -19,6 +19,7 @@
 
 import xmlrpc.client
 from django.db import IntegrityError
+from django.forms import ValidationError
 
 from linaro_django_xmlrpc.models import ExposedV2API
 from lava_scheduler_app.api import check_perm
@@ -48,9 +49,15 @@ class SchedulerAliasesAPI(ExposedV2API):
         None
         """
         try:
-            Alias.objects.create(name=name)
-        except IntegrityError as exc:
-            raise xmlrpc.client.Fault(400, "Bad request: %s" % exc.message)
+            alias = Alias(name=name)
+            alias.full_clean()
+            alias.save()
+        except ValidationError as e:
+            raise xmlrpc.client.Fault(404, e.message)
+        except IntegrityError:
+            raise xmlrpc.client.Fault(
+                400, "Bad request. Alias or DeviceType name already exists."
+            )
 
     @check_perm("lava_scheduler_app.delete_alias")
     def delete(self, name):

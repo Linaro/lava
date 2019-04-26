@@ -140,6 +140,14 @@ class Alias(models.Model):
     def __str__(self):
         return self.pk
 
+    def full_clean(self, exclude=None, validate_unique=True):
+        dt_list = DeviceType.objects.filter(name=self.name)
+        if len(dt_list.all()) > 0:
+            raise ValidationError(
+                "DeviceType with name '%s' already exists." % self.name
+            )
+        super().full_clean(exclude=exclude, validate_unique=validate_unique)
+
 
 class BitWidth(models.Model):
     width = models.PositiveSmallIntegerField(
@@ -223,6 +231,12 @@ class DeviceType(models.Model):
                 self.name + "(" + ",".join([a.name for a in self.aliases.all()]) + ")"
             )
         return self.name
+
+    def full_clean(self, exclude=None, validate_unique=True):
+        alias_list = Alias.objects.filter(name=self.name)
+        if len(alias_list.all()) > 0:
+            raise ValidationError("Alias with name '%s' already exists." % self.name)
+        super().full_clean(exclude=exclude, validate_unique=validate_unique)
 
     description = models.TextField(
         verbose_name=_("Device Type Description"),

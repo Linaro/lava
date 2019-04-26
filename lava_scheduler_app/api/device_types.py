@@ -24,6 +24,7 @@ import os
 import xmlrpc.client
 
 from django.db import IntegrityError
+from django.forms import ValidationError
 
 from linaro_django_xmlrpc.models import ExposedV2API
 from lava_scheduler_app.api import check_perm
@@ -92,7 +93,7 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
             raise xmlrpc.client.Fault(400, "Bad request: invalid health_denominator.")
 
         try:
-            DeviceType.objects.create(
+            dt = DeviceType(
                 name=name,
                 description=description,
                 display=display,
@@ -100,6 +101,10 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
                 health_frequency=health_frequency,
                 health_denominator=health_denominator,
             )
+            dt.full_clean()
+            dt.save()
+        except ValidationError as e:
+            raise xmlrpc.client.Fault(404, e.message)
         except IntegrityError:
             raise xmlrpc.client.Fault(
                 400, "Bad request: device-type name is already used."
