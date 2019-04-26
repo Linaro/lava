@@ -18,7 +18,10 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import unittest
+
 from lava_dispatcher.tests.test_basic import Factory, StdoutTestCase
+from lava_dispatcher.tests.utils import infrastructure_error
 
 
 class UBootDFUFactory(Factory):
@@ -31,6 +34,7 @@ class TestUbootDFUAction(StdoutTestCase):
         super().setUp()
         self.factory = UBootDFUFactory()
 
+    @unittest.skipIf(infrastructure_error("dfu-util"), "dfu-util not installed")
     def test_enter_dfu_action(self):
         job = self.factory.create_rzn1d_job("sample_jobs/rzn1d-dfu.yaml")
         self.assertIsNotNone(job)
