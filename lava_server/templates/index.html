@@ -46,18 +46,16 @@ of each type are available for tests and currently running jobs.</p>
     <li>
         <span class="glyphicon glyphicon-user"></span>
         <b><a href="{% url 'lava.me' %}">Profile</a></b> - you are logged in as
-    <b>{{ user.get_full_name|default:user.username }}</b>. Your profile
-    provides access to jobs you have submitted or marked as favourites,
-    your bundle streams and your filter or image report subscriptions.
-    </li>
+    <b>{{ user.get_full_name|default:user.username }}</b>. Your
+    profile provides access to jobs you have submitted or marked as
+    favourites and details of devices owned by you. </li>
     {% else %}
     <li>
         <span class="glyphicon glyphicon-user"></span>
-        <b><a href="{% url 'login' %}?next={{ request.get_full_path }}">Sign In</a></b> - once you
-    are logged in, LAVA will build a profile for you which provides access
-    to jobs you submit or mark as favourites, your bundle streams containing
-    results of those tests and your filter or image report subscriptions
-    which can alert you to changes in sets of results.</li>
+        <b><a href="{% url 'login' %}?next={{ request.get_full_path
+    }}">Sign In</a></b>- once you are logged in, LAVA will build a
+    profile for you which provides access to jobs you have submitted
+    or marked as favourites and details of devices owned by you.</li>
     {% endif %}
 </ul>
 
