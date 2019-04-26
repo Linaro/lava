@@ -15,11 +15,11 @@ are:
 +---------------+------------------------+--------+----------------------+
 | Debian        | Sid (unstable)         | n/a    | Yes [#f5]_           |
 +---------------+------------------------+--------+----------------------+
-| Debian        | Buster (testing)       | n/a    | Yes [#f4]_           |
+| Debian        | Buster (testing)       | 10.*   | Yes [#f4]_           |
 +---------------+------------------------+--------+----------------------+
 | Debian        | Stretch (stable)       | 9.*    | Yes [#f2]_           |
 +---------------+------------------------+--------+----------------------+
-| Debian        | Jessie (oldstable)     | 8.0    | **No** [#f3]_        |
+| Debian        | Jessie (oldstable)     | 8.*    | **No** [#f3]_        |
 +---------------+------------------------+--------+----------------------+
 
 Debian uses codenames for releases (buster, stretch, jessie, wheezy,
@@ -59,15 +59,15 @@ that point will include that codename in the table.
          for each point release of Debian.
 
 .. [#f3] Jessie was released on April 25th, 2015 and security support
-         for Jessie is expected to terminate in June 2018. LAVA
-         software has removed support for building and installing in
-         Jessie as part of the move to :ref:`Python3 <lava_python3>`.
+         for Jessie terminated during 2018. LAVA software has removed
+         support for building and installing in Jessie as part of the
+         move to :ref:`Python3 <lava_python3>`.
 
 .. [#f4] `buster` is the name of the next Debian release after Stretch,
          which is supported automatically via uploads to Sid
          (unstable). Buster is **not** recommended for production
          instances of LAVA at this time. The release process for buster
-         is scheduled to start in Jan 2019.
+         started in Jan 2019.
 
          When buster is released as Debian 10, it will use the suite
          name ``stable``, testing will get the codename of the next
@@ -109,7 +109,7 @@ jobs which can run simultaneously. For example, experience has shown
 that any test job using ``fastboot`` requires a single CPU core (not
 hyperthread) per attached device, as well as at least one core for the
 base OS. ``armhf`` in particular can struggle to provide enough
-processing power (CPU or I/O or RAM) for such devices. EAch QEMU device
+processing power (CPU or I/O or RAM) for such devices. Each QEMU device
 can require more RAM than would be available on most 32bit systems.
 
 LAVA is routinely used on ``amd64`` and ``arm64`` architectures.
@@ -130,10 +130,11 @@ your lab one step at a time <growing_your_lab>`. If in doubt,
 LAVA repositories
 =================
 
-As well as being uploaded to Debian, :ref:`production_releases` of LAVA
-are uploaded to the LAVA Software Community Project repository which
-uses the :ref:`lava_archive_signing_key` - a copy of the key is
-available in the repository and on keyservers.
+As well as being uploaded to Debian, :ref:`production_releases` of
+LAVA are also uploaded to the LAVA Software Community Project
+repository at https://apt.lavasoftware.org/ . This uses the
+:ref:`lava_archive_signing_key` - a copy of the key is available in
+the repository and on keyservers.
 
 When using LAVA repositories on Stretch, make sure to enable
 ``stretch-backports`` from your regular Debian mirror as well as the
@@ -158,7 +159,7 @@ package::
 
  $ sudo apt -t stretch-backports install python3-django-auth-ldap python3-django-tables2 python3-requests
 
-Workers also need support from `stretch-backports`::
+Workers will also need support packages from `stretch-backports`::
 
  $ /usr/share/lava-server/requires.py -d debian -s stretch-backports -p lava-dispatcher -n
  python3-requests
@@ -183,8 +184,8 @@ Releases
 
 In times when the current production release has not made it into
 either ``stretch-backports`` or ``testing`` (e.g. due to a migration
-issue or a pre-release package freeze in Debian), this repository can
-be used instead.
+issue or a pre-release package freeze in Debian), this repository
+should be used instead.
 
 Daily builds
 ------------
@@ -201,7 +202,8 @@ Snapshots
 ---------
 
 When a build is updated in the repositories, a copy of the same build
-is created in the snapshot folder.
+is created in the snapshot folder:
+
 https://apt.lavasoftware.org/snapshot/
 
 Entries are created according to the suite for which it was built and
@@ -228,7 +230,8 @@ Buster users
 
  deb https://apt.lavasoftware.org/release buster main
 
-.. index:: lava archive signing key
+.. index:: lava archive signing key, lava repository,
+	   apt.lavasoftware.org, fingerprint
 
 .. _lava_archive_signing_key:
 
@@ -254,17 +257,17 @@ Production releases are signed using:
  uid                 [ultimate] LAVA Software release key <release@lavasoftware.org>
  sub   rsa4096/42124FB9C30943EC 2018-10-02 [E]
 
-Both keys can be downloaded and added to apt::
+Both keys can be downloaded and added to apt easily::
 
  $ wget https://apt.lavasoftware.org/lavasoftware.key.asc
  $ sudo apt-key add lavasoftware.key.asc
  OK
 
-Then update to locate the required dependencies::
+After that step, run apt update again to locate the required dependencies::
 
  $ sudo apt update
 
-.. note:: The above repositories use `https` hence install the package
+.. note:: The above repositories use `https`, hence install the package
           `apt-transport-https` if it is not already installed or
           change the apt source URL to `http://`
 
@@ -329,7 +332,7 @@ devices configured.
 
 * ``/etc/default/lava-slave`` or ``/etc/lava-server/lava-slave``.
 
-.. index:: stretch, install on stretch
+.. index:: stretch, install on stretch, stretch backports
 
 .. _install_debian_stretch:
 
@@ -353,15 +356,15 @@ the base stable system. Only those packages (and dependencies, if not
 available in stable already) will then be installed from backports.
 
 The ``lava-server`` backports and dependencies are **fully supported**
-by the LAVA software team and admins of **all** LAVA instances need to
-update the base ``2016.12`` to the version available in current
-backports. Subscribe to the :ref:`lava_announce` mailing list for
-details of when new releases are made. Backports will be available
+by the LAVA software team and admins of **all** LAVA instances should
+be updated from the base ``2016.12`` to the version available in
+current backports. Subscribe to the :ref:`lava_announce` mailing list
+for details of when new releases are made. Backports will be available
 about a week after the initial release.
 
-Updates for LAVA on Debian Stretch will be uploaded to `the
-stretch-backports suite <https://backports.debian.org/>`_ once this
-becomes available.
+Updates for LAVA on Debian Stretch are uploaded to `the
+stretch-backports suite <https://backports.debian.org/>`_ and also to
+the LAVA repo at https://apt.lavasoftware.org/ .
 
 Create an apt source for backports, either by editing
 ``/etc/apt/sources.list`` or adding a file with a ``.list`` suffix into
@@ -413,24 +416,26 @@ existing backports require updates from backports.
 Installing on Debian Buster
 ---------------------------
 
-.. note:: Buster is currently Debian testing, not yet released as
-   stable and frequent updates may be required. Buster will soon be
-   entering the release freeze, but some breakage is still possible as
-   packages may be removed from buster. For example, if a dependency of
-   a LAVA package has been removed due to a release-critical bug in
-   buster then all LAVA packages would also be removed from Buster.
-   This would also affect the ability to install developer builds
-   unless all the relevant dependencies are either already installed or
-   still present in Buster. Admins can choose to use buster for
-   production instances, with these constraints in mind.
+.. note:: Buster is currently the ``testing`` release of Debian. It is
+	  not yet released as stable, and frequent updates may be
+	  required. Buster is currently (as of April 2019) in release
+	  freeze, but some breakage is still possible as packages are
+	  updated or removed. For example, if a dependency of a LAVA
+	  package has been removed due to a release-critical bug in
+	  buster then all LAVA packages would also be removed from
+	  Buster. This would also affect the ability to install
+	  developer builds unless all the relevant dependencies are
+	  either already installed or still present in Buster. Admins
+	  can choose to use buster for production instances, with
+	  these constraints in mind.
 
 Buster brings in a number of updated dependencies, e.g. postgresql-10,
 docker.io and QEMU 2.12 as well as a more recent kernel. The
 installation process is similar to :ref:`installing on Stretch
 <install_debian_stretch>` with two differences:
 
-* There is no need for backports as buster has no backports until after
-  release.
+* There is no need (yet!) for backports, as buster has no backports
+  until after release.
 
 * QEMU supports installation without the dependencies required to run a
   GUI.
