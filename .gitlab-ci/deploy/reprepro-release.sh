@@ -8,9 +8,9 @@ then
     true
 else
     LAVA_BUILDD=`pwd`
-    RELEASE="notreleased"
+
     R_OPT="--ignore=wrongdistribution"
-    BASEDIR="${HOME}/repository/${RELEASE}"
+    BASEDIR="${HOME}/repository/current-release"
     # location of snapshot directory
     SNAPSHOT="${HOME}/repository/snapshot/"
 
@@ -34,6 +34,14 @@ else
     MONTH=`date +%m`
     DAY=`date +%d`
 
+    # Copy current repo to old-release, and update the release symlink
+    # to point there atomically
+    cd ${HOME}/repository
+    cp -a current-release old-release
+    ln -snfv old-release release
+
+    # Now work in the (not linked) current-release directory, leaving
+    # the existing working config in old-release
     echo "Updating ${BASEDIR}"
     echo "reprepro-master.sh release update running in " ${LAVA_BUILDD}
     if [ -d "${BASEDIR}/dists/stretch-backports" ]; then
@@ -62,5 +70,10 @@ else
         echo "Updating latest"
         echo ${VERSION} > ${BASEDIR}/latest
     fi
+
+    # Assuming this all worked, the release manager will now check and
+    # sign the final Release files that reprepro created, then
+    # ln -snf current-release release
+    # rm -rf old-release
 
 fi
