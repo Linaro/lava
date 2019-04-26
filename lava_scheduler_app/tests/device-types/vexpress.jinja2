@@ -6,39 +6,34 @@
 {% set vexpress_supports_uefi = vexpress_supports_uefi|default(true) %}
 
 {% set base_high_limits = base_high_limits|default(true) %}
-{% set base_uboot_commands = [
-    "setenv autoload no",
-    "setenv bootdelay 1",
-    "setenv ethact smc911x-0"]
--%}
+{% set base_uboot_commands = (
+"          - setenv autoload no
+          - setenv bootdelay 1
+          - setenv ethact smc911x-0") -%}
 
-{% set base_uboot_high_limits = [
-    "setenv initrd_high " + vexpress_uboot_initrd_high|default('0xffffffff'),
-    "setenv fdt_high " + vexpress_uboot_fdt_high|default('0xffffffff')]
--%}
+{% set base_uboot_high_limits =(
+"          - setenv initrd_high " + vexpress_uboot_initrd_high|default('0xffffffff') + "
+          - setenv fdt_high " + vexpress_uboot_fdt_high|default('0xffffffff') ) -%}
 
-{% set base_uboot_tftp_commands = uboot_tftp_commands|default([
-    "setenv loadkernel 'tftp {KERNEL_ADDR} {KERNEL}'",
-    "setenv loadinitrd 'tftp {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'",
-    "setenv loadfdt 'tftp {DTB_ADDR} {DTB}'"])
--%}
+{% set base_uboot_tftp_commands = uboot_tftp_commands|default(
+"          - setenv loadkernel 'tftp {KERNEL_ADDR} {KERNEL}'
+          - setenv loadinitrd 'tftp {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'
+          - setenv loadfdt 'tftp {DTB_ADDR} {DTB}'") -%}
 
-{% set base_uboot_bootcmd = uboot_bootcmd|default([
-    "setenv bootcmd 'run loadkernel; run loadinitrd; run loadfdt; " + uboot_bootx_cmd|default('{BOOTX}') + "'",
-    "run bootcmd"])
--%}
+{% set base_uboot_bootcmd = uboot_bootcmd|default(
+"          - setenv bootcmd 'run loadkernel; run loadinitrd; run loadfdt; " + uboot_bootx_cmd|default('{BOOTX}') + "'
+          - run bootcmd") -%}
 
-{% set base_uboot_tftp_bootcmd = uboot_tftp_bootcmd|default([
-    "setenv bootcmd '" + uboot_ipaddr_cmd|default('dhcp') + "; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; " + uboot_bootx_cmd|default('{BOOTX}') + "'",
-    "run bootcmd"])
--%}
+{% set base_uboot_tftp_bootcmd = uboot_tftp_bootcmd|default(
+"          - setenv bootcmd '" + uboot_ipaddr_cmd|default('dhcp') + "; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; " + uboot_bootx_cmd|default('{BOOTX}') + "'
+          - run bootcmd") -%}
 
-{% set base_uboot_nfs_bootcmd = uboot_nfs_bootcmd|default([
-    "setenv bootcmd '" + uboot_ipaddr_cmd|default('dhcp') + "; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; run nfsargs; " + uboot_bootx_cmd|default('{BOOTX}') + "'",
-    "run bootcmd"])
--%}
+{% set base_uboot_nfs_bootcmd = uboot_nfs_bootcmd|default(
+"          - setenv bootcmd '" + uboot_ipaddr_cmd|default('dhcp') + "; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; run nfsargs; " + uboot_bootx_cmd|default('{BOOTX}') + "'
+          - run bootcmd") -%}
 
-{% set base_uboot_usb_commands = uboot_usb_commands|default(["usb start"]) -%}
+{% set base_uboot_usb_commands = uboot_usb_commands|default(
+"          - usb start") -%}
 
 {% set uboot_needs_usb = uboot_needs_usb|default(false) %}
 
@@ -46,22 +41,10 @@
 {% set usb_device_id = usb_device_id|default(0) %}
 
 {% set uboot_mac_addr = uboot_mac_addr|default('') %}
-{% set base_uboot_set_mac = ["setenv ethaddr " + uboot_mac_addr] -%}
+{% set base_uboot_set_mac = (
+"          - setenv ethaddr " + uboot_mac_addr) -%}
 
 {% set uboot_set_mac = uboot_set_mac|default(false) %}
-
-{% set uboot_common_cmds = [] %}
-{% if uboot_needs_usb %}
-{% set uboot_common_cmds = uboot_common_cmds + base_uboot_usb_commands %}
-{% endif %}
-{% set uboot_common_cmds = uboot_common_cmds + base_uboot_commands %}
-{% if base_high_limits %}
-{% set uboot_common_cmds = uboot_common_cmds + base_uboot_high_limits %}
-{% endif %}
-{% if uboot_set_mac %}
-{% set uboot_common_cmds = uboot_common_cmds + base_uboot_set_mac %}
-{% endif %}
-{% set uboot_common_cmds = uboot_common_cmds + base_uboot_tftp_commands %}
 
 {% set boot_character_delay = boot_character_delay | default(30) %}
 
@@ -360,10 +343,20 @@ actions:
           - "boot"
         nfs:
           commands:
-          - "{{ uboot_common_cmds|join('"\n          - "') }}"
+{% if uboot_needs_usb %}
+{{ base_uboot_usb_commands }}
+{% endif -%}
+{{ base_uboot_commands }}
+{% if base_high_limits %}
+{{ base_uboot_high_limits }}
+{% endif %}
+{% if uboot_set_mac %}
+{{ base_uboot_set_mac }}
+{% endif -%}
+{{ base_uboot_tftp_commands }}
           - "setenv nfsargs 'setenv bootargs console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs rw
             {{ base_nfsroot_args }} {{ base_kernel_args }} {{ base_ip_args }}'"
-          - "{{ base_uboot_nfs_bootcmd|join('"\n          - "') }}"
+{{ base_uboot_nfs_bootcmd }}
         norflash:
           commands:
           - "setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs rw
@@ -371,25 +364,37 @@ actions:
           - "boot"
         ramdisk:
           commands:
-          - "{{ uboot_common_cmds|join('"\n          - "') }}"
+{% if uboot_needs_usb %}
+{{ base_uboot_usb_commands }}
+{% endif -%}
+{{ base_uboot_commands }}
+{% if base_high_limits %}
+{{ base_uboot_high_limits }}
+{% endif %}
+{% if uboot_set_mac %}
+{{ base_uboot_set_mac }}
+{% endif -%}
+{{ base_uboot_tftp_commands }}
           - "setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=/dev/ram0 {{ base_kernel_args }} {{ base_ip_args }}'"
-          - "{{ base_uboot_tftp_bootcmd|join('"\n          - "') }}"
+{{ base_uboot_tftp_bootcmd }}
         sata:
           commands:
           - scsi scan
-          - "{{ base_uboot_commands|join('"\n          - "') }}"
+{{ base_uboot_commands }}
           - "setenv loadkernel 'load scsi {ROOT_PART} {KERNEL_ADDR} {KERNEL}'"
           - "setenv loadinitrd 'load scsi {ROOT_PART} {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'"
           - "setenv loadfdt 'load scsi {ROOT_PART} {DTB_ADDR} {DTB}'"
           - "setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root={ROOT} {{ base_kernel_args }} {{ base_ip_args }}'"
-          - "{{ base_uboot_bootcmd|join('"\n          - "') }}"
+{{ base_uboot_bootcmd }}
         usb:
           commands:
-          - "{{ (base_uboot_usb_commands + base_uboot_commands)|join('"\n          - "') }}"
+{{ base_uboot_usb_commands }}
+{{ base_uboot_commands }}
+{{ base_uboot_addr_commands }}
           - "setenv loadkernel 'load usb {{ usb_device_id }}:{ROOT_PART} {KERNEL_ADDR} {KERNEL}'"
           - "setenv loadinitrd 'load usb {{ usb_device_id }}:{ROOT_PART} {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'"
           - "setenv loadfdt 'load usb {{ usb_device_id }}:{ROOT_PART} {DTB_ADDR} {DTB}'"
           - "setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root={ROOT} {{ base_kernel_args }} {{ base_ip_args }}'"
-          - "{{ base_uboot_bootcmd|join('"\n          - "') }}"
+{{ base_uboot_bootcmd }}
 {% endif %}
 {% endblock body %}

@@ -5,19 +5,15 @@
 {% set bootm_ramdisk_addr = '0x43300000' %}
 {% set bootm_dtb_addr = '0x43000000' %}
 {% set uboot_mkimage_arch = 'arm' %}
-{% set uboot_tftp_commands = [
-    "setenv loadkernel 'tftp {KERNEL_ADDR} {KERNEL}'",
-    "setenv loadinitrd 'tftp {RAMDISK_ADDR} {RAMDISK}'",
-    "setenv initrd_size ${filesize}",
-    "setenv loadfdt 'tftp {DTB_ADDR} {DTB}'"]
--%}
+{% set uboot_tftp_commands = ("          - setenv loadkernel 'tftp {KERNEL_ADDR} {KERNEL}'
+          - setenv loadinitrd 'tftp {RAMDISK_ADDR} {RAMDISK}'
+          - setenv initrd_size ${filesize}
+          - setenv loadfdt 'tftp {DTB_ADDR} {DTB}'") -%}
 {# Need to split the long line in many small ones since U-boot breaks the end of
 too long commands.  #}
-{% set uboot_tftp_bootcmd = [
-    "usb reset",
-    uboot_ipaddr_cmd|default('dhcp'),
-    "setenv serverip {SERVER_IP}",
-    "run loadkernel",
-    "run loadinitrd",
-    "run loadfdt; " + uboot_bootx_cmd|default('{BOOTX}')]
--%}
+{% set uboot_tftp_bootcmd = ("          - usb reset
+          - " + uboot_ipaddr_cmd|default('dhcp') + "
+          - setenv serverip {SERVER_IP}
+          - run loadkernel
+          - run loadinitrd
+          - \"run loadfdt; " + uboot_bootx_cmd|default('{BOOTX}') + "\"") -%}

@@ -3,7 +3,6 @@
 
 {% set uboot_mkimage_arch = 'arm' %}
 {% set uboot_needs_usb = true %}
-{% set uboot_usb_commands = [
-    "usb reset",
-    "setenv ethact 'asix_eth'"]
--%}
+{% set uboot_usb_commands = (
+"          - usb reset
+          - setenv ethact 'asix_eth'") -%}

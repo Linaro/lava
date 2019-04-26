@@ -9,7 +9,7 @@
 {% set base_ip_args = 'ip=dhcp' %}
 {% set uboot_mkimage_arch = 'arm' %}
 {# This board has no `tftp` command available in U-boot, and no `run` command either. #}
-{% set uboot_tftp_commands = [] %}
+{% set uboot_tftp_commands = ("") %}
 {% set uboot_nfs_bootcmd = ("          - " + uboot_ipaddr_cmd|default("dhcp") + "
           - setenv serverip {SERVER_IP}
           - setenv bootargs 'console=ttyS0,115200n8 root=/dev/nfs rw nfsroot={SERVER_IP}:{NFSROOTFS},tcp,hard,intr ip=dhcp'

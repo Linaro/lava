@@ -8,7 +8,7 @@
 {% set bootm_dtb_addr = '0x24000000' %}
 {% set base_ip_args = 'ip=dhcp' %}
 {% set uboot_mkimage_arch = 'arm' %}
-{% set uboot_tftp_commands = ["setenv loadkernel 'tftp {KERNEL_ADDR} {KERNEL}'"] -%}
+{% set uboot_tftp_commands = ("          - setenv loadkernel 'tftp {KERNEL_ADDR} {KERNEL}'") -%}
 {% set uboot_bootx_cmd = "bootm {KERNEL_ADDR}" %}
 {% set append_dtb = true %}
 {% set use_xip = true %}
