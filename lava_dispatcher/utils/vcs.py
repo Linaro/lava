@@ -146,7 +146,10 @@ class GitHelper(VCSHelper):
                 shutil.rmtree(os.path.join(dest_path, ".git"))
 
         except subprocess.CalledProcessError as exc:
-            logger.error(str(exc))
+            if exc.stdout:
+                logger.warning(exc.stdout.decode("utf-8", errors="replace"))
+            if exc.stderr:
+                logger.error(exc.stderr.decode("utf-8", errors="replace"))
             raise InfrastructureError(
                 "Unable to fetch git repository '%s'" % (self.url)
             )
