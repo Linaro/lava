@@ -21,6 +21,7 @@
 # pylint: disable=too-many-lines
 
 import contextlib
+import datetime
 import jinja2
 import logging
 import os
@@ -1416,7 +1417,8 @@ class TestJob(RestrictedResource):
     def duration(self):
         if self.end_time is None or self.start_time is None:
             return None
-        return self.end_time - self.start_time
+        # Only return seconds and not milliseconds
+        return datetime.timedelta(seconds=(self.end_time - self.start_time).seconds)
 
     STATE_SUBMITTED, STATE_SCHEDULING, STATE_SCHEDULED, STATE_RUNNING, STATE_CANCELING, STATE_FINISHED = range(
         6
