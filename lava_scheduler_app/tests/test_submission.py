@@ -10,6 +10,7 @@ from django.contrib.auth.models import Group, Permission, User
 from django_testscenarios.ubertest import TestCase
 from lava_scheduler_app.dbutils import testjob_submission
 from lava_scheduler_app.models import (
+    Alias,
     Device,
     DeviceType,
     DevicesUnavailableException,
@@ -88,6 +89,13 @@ class ModelFactory:
         device_type, _ = DeviceType.objects.get_or_create(name=name)
         logging.debug("asking for a device of type %s", device_type.name)
         return device_type
+
+    def make_device_type_alias(self, dt, name=None):
+        if name is None:
+            name = self.getUniqueString("name")
+        alias, _ = Alias.objects.get_or_create(name=name, device_type=dt)
+        logging.debug("asking for alias %s for device type %s", name, dt.name)
+        return alias
 
     def make_hidden_device_type(self, name=None):
         if name is None:
@@ -288,6 +296,35 @@ class TestTestJob(
         self.assertEqual(data["start_time"], "None")
         self.assertEqual(
             data["state_string"], TestJob.STATE_CHOICES[TestJob.STATE_SUBMITTED][1]
+        )
+
+    def test_device_type_alias(self):
+        self.factory.cleanup()
+        user = self.factory.make_user()
+        user.user_permissions.add(Permission.objects.get(codename="add_testjob"))
+        user.save()
+        dt = self.factory.make_device_type(name="qemu")
+        device = self.factory.make_device(device_type=dt, hostname="qemu-1")
+        device.save()
+        alias_name = "qemu_foo"
+        alias = self.factory.make_device_type_alias(dt, name=alias_name)
+        definition = self.factory.make_job_data_from_file("qemu-foo.yaml")
+        job = testjob_submission(definition, user, None)
+        self.assertEqual(job.requested_device_type, dt)
+
+    def test_nonexisting_device_type_alias(self):
+        self.factory.cleanup()
+        user = self.factory.make_user()
+        user.user_permissions.add(Permission.objects.get(codename="add_testjob"))
+        user.save()
+        dt = self.factory.make_device_type(name="qemu")
+        device = self.factory.make_device(device_type=dt, hostname="qemu-1")
+        device.save()
+        alias_name = "qemu_foo"
+        alias = self.factory.make_device_type_alias(dt, name=alias_name)
+        definition = self.factory.make_job_data_from_file("qemu-foo-nonexisting.yaml")
+        self.assertRaises(
+            DevicesUnavailableException, testjob_submission, definition, user, None
         )
 
 
