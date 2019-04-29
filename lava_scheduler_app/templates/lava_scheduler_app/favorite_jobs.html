@@ -49,7 +49,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script type="text/javascript" src="{% static "lava_server/js/jquery.typeahead.min.js" %}"></script>
+<script type="text/javascript" src="{% static "lava_server/js/jquery.typeahead.js" %}"></script>
 <script>
   $("#user_select_modal").on('show.bs.modal', function (e) {
     $("#username").typeahead({

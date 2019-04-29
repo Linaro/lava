@@ -6,24 +6,18 @@ debian:
     replacements:
       # our name first, external name second
       jquery-3.4.0.js: jquery.js
-      jquery-3.4.0.min.js: jquery.min.js
     version: '3.4.0'
   - package: libjs-jquery-flot
     directory: /usr/share/javascript/jquery-flot/
     lava_directory: lava_results_app/static/lava_results_app/js/
     replacements:
-      jquery.flot.navigate.min.js: jquery.flot.navigate.min.js
       jquery.flot.navigate.js: jquery.flot.navigate.js
-      jquery.flot.canvas.min.js: jquery.flot.canvas.min.js
       jquery.flot.canvas.js: jquery.flot.canvas.js
-      jquery.flot.min.js: jquery.flot.min.js
       jquery.flot.js: jquery.flot.js
-      jquery.flot.time.js: jquery.flot.time.js
   - package: libjs-jquery-flot
     directory: /usr/share/javascript/jquery-flot/
     lava_directory: lava_scheduler_app/static/lava_scheduler_app/js/
     replacements:
-      jquery.flot.min.js: jquery.flot.min.js
       jquery.flot.js: jquery.flot.js
       jquery.flot.stack.js: jquery.flot.stack.js
   - package: libjs-jquery-typeahead
@@ -31,41 +25,10 @@ debian:
     lava_directory: lava_server/static/lava_server/js/
     replacements:
       jquery.typeahead.js: jquery.typeahead.js
-      jquery.typeahead.min.js: jquery.typeahead.min.js
     version: '2.10.4'
   - package: libjs-jquery-typeahead
     directory: /usr/share/javascript/jquery-typeahead/
     lava_directory: lava_server/static/lava_server/css/
     replacements:
       jquery.typeahead.css: jquery.typeahead.css
-      jquery.typeahead.min.css: jquery.typeahead.min.css
     version: '2.10.4'
-  - uglify:
-    lava_directory: lava_scheduler_app/static/lava_scheduler_app/js/
-    destination: lava_scheduler_app/static/lava_scheduler_app/js/
-    files:
-      tables.js: tables.min.js
-      jquery-linedtextarea.js: jquery-linedtextarea.min.js
-      job-submit.js: job-submit.min.js
-      job-definition.js: job-definition.min.js
-      jquery.details.js: jquery.details.min.js
-      similar-jobs.js: similar-jobs.min.js
-      anchor-v3.2.0.js: anchor-v3.2.0.min.js
-  - uglify:
-    lava_directory: lava_results_app/static/lava_results_app/js/
-    destination: lava_results_app/static/lava_results_app/js/
-    files:
-      bug-links.js: bug-links.min.js
-      jquery.flot.labels.js: jquery.flot.labels.min.js
-      jquery.flot.dashes.js: jquery.flot.dashes.min.js
-      jquery.flot.axislabels.js: jquery.flot.axislabels.min.js
-      query.js: query.min.js
-      chart.js: chart.min.js
-      bootbox.data.toggle.js: bootbox.data.toggle.min.js
-      sortable.js: sortable.min.js
-  - uglify:
-    lava_directory: lava_server/static/lava_server/js/
-    destination: lava_server/static/lava_server/js/
-    files:
-      bootbox.js: bootbox.min.js
-      bootstrap-3.4.1.js: bootstrap-3.4.1.min.js
