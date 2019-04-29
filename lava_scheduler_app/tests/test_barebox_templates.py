@@ -51,8 +51,8 @@ class TestBareboxTemplates(BaseTemplate.BaseTemplateCases):
     def test_imx27_phytec_phycard_s_rdk_template(self):
         barebox_helper(self, "imx27-phytec-phycard-s-rdk")
 
-    def test_imx53_qsbr_template(self):
-        barebox_helper(self, "imx53-qsbr")
+    def test_imx53_qsrb_template(self):
+        barebox_helper(self, "imx53-qsrb")
 
     def test_imx6l_riotboard_template(self):
         barebox_helper(self, "imx6dl-riotboard")
