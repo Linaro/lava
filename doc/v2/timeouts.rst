@@ -259,7 +259,7 @@ block override.
 
  timeouts:
    actions:
-     http_download:
+     http-download:
        minutes: 2
 
 .. _individual_connection_timeout_overrides:
@@ -275,7 +275,7 @@ specific connection timeout which can be longer or shorter than the default.
 
  timeouts:
    connections:
-     http_download:
+     http-download:
        minutes: 2
 
 .. _action_block_timeout_overrides:
