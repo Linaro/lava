@@ -5,7 +5,7 @@
 Writing a monitors test action
 ##############################
 
-..seealso:: :ref:`monitor_test_action` and :ref:`test_developer`
+.. seealso:: :ref:`monitor_test_action` and :ref:`test_developer`
 
 :ref:`writing_tests_1_0` involves adding an overlay of POSIX scripts to
 the DUT but some devices cannot support an overlay. The ``monitors``

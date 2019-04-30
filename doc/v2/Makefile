@@ -38,10 +38,18 @@ help:
 	@echo "  linkcheck  to check all external links for integrity"
 	@echo "  doctest    to run all doctests embedded in the documentation (if enabled)"
 
+check:
+	@if (find . -name '*.rst' | xargs grep -E '\.\.[a-z]+:'); then \
+		echo broken sphinx directive\(s\) found - see above ; \
+		false ; \
+	else \
+		true; \
+	fi
+
 clean:
 	-rm -rf $(BUILDDIR)/*
 
-html:
+html: check
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."

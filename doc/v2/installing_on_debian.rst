@@ -168,7 +168,7 @@ Workers will also need support packages from `stretch-backports`::
 
  $ sudo apt -t stretch-backports install python3-requests
 
-..seealso:: :ref:`install_debian_stretch` and
+.. seealso:: :ref:`install_debian_stretch` and
   :ref:`dependency_requirements`.
 
 Releases
