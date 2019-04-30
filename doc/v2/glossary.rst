@@ -89,9 +89,8 @@ Glossary of terms
     A string which can be used to relate the descriptive device-type name to a
     particular list of aliases which could be used to lookup the matching
     device-type. This can be useful to list the :term:`device tree blobs <DTB>`
-    which can be used with this device-type. (Aliases cannot be used in job
-    submissions directly.) Multiple device-types are allowed to share the one
-    or more aliases.
+    which can be used with this device-type. (Aliases can be used in job
+    submissions directly.)
 
   BMC
     A Baseboard Management Controller (BMC) is an embedded controller
