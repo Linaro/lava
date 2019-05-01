@@ -32,4 +32,5 @@ actions:
       cmsis-dap:
         parameters:
           usb_mass_device: '{{ usb_mass_device|default('/notset') }}'
+          resets_after_flash: {{ resets_after_flash|default(True) }}
 {% endblock body -%}
