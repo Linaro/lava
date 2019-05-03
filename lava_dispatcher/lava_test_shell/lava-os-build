@@ -1,5 +1,11 @@
 #!/bin/sh
 
+if [ -f /etc/os-release ]
+then
+   awk -F'=' '$1=="PRETTY_NAME" {gsub("\"",""); print $2}' /etc/os-release
+   exit 0
+fi
+
 if [ -f /etc/issue ]
 then
     sed -e 's/\\n.\\l//' /etc/issue | tr -s '\n' '\n' | dd bs=100 count=1 2>/dev/null
