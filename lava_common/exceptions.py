@@ -107,3 +107,13 @@ class MultinodeProtocolTimeoutError(LAVAError):
         "MultinodeProtocolTimeoutError: Multinode wait/sync call " "has timed out."
     )
     error_type = "MultinodeTimeout"
+
+
+class ObjectNotPersisted(LAVAError):
+    error_help = "ObjectNotPersisted: Object is not persisted."
+    error_type = "ObjectNotPersisted"
+
+
+class PermissionNameError(LAVAError):
+    error_help = "PermissionNameError: Unexisting permission codename."
+    error_type = "Unexisting permission codename."

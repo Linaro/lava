@@ -24,11 +24,12 @@ import yaml
 
 from django.http import Http404
 from django.conf import settings
+from django.contrib.auth.models import Group
 from django.core.exceptions import PermissionDenied
 
 from lava_common.utils import debian_package_version
 from lava_scheduler_app.views import get_restricted_job
-from lava_scheduler_app.models import Device, DeviceType
+from lava_scheduler_app.models import Device, DeviceType, GroupObjectPermission, TestJob
 from linaro_django_xmlrpc.models import errors, Mapper, SystemAPI
 
 
@@ -522,6 +523,169 @@ class LavaSystemAPI(SystemAPI):
                     % switch,
                 )
         return yaml.dump(network_map)
+
+    def assign_perm_device_types(self, perm, device_type_list, group):
+        """
+        Name
+        ----
+        assign_perm_device_types(`perm`, `device_type_list`, `group`):
+
+        Description
+        -----------
+
+        Grant a permission to a specific group over a list of device types.
+
+        This function requires a superuser authentication.
+
+        Arguments
+        ---------
+        perm: string
+            Permission codename string. Currently supported permissions for
+            Device_Types are 'view_devicetype', 'submit_to_devicetype' and
+            'admin_devicetype'.
+        device_type_list: list
+            list of device type names to assign permissions for. Non-exising
+            device types will be ignored.
+        group: string
+            group name to which the permission will be granted
+
+        Return value
+        ------------
+        A list of device types for which the permission was successfully
+        assigned.
+        """
+        self._authenticate()
+        if not self.user.is_superuser:
+            raise xmlrpc.client.Fault(
+                errors.FORBIDDEN,
+                "Permission denied for user '%s' to assign permissions. Needs administrator privileges."
+                % self.user,
+            )
+        if not isinstance(device_type_list, list):
+            raise xmlrpc.client.Fault(
+                errors.BAD_REQUEST, "device_type_list argument must be a list"
+            )
+        try:
+            group = Group.objects.get(name=group)
+        except Group.DoesNotExist:
+            raise xmlrpc.client.Fault(
+                errors.BAD_REQUEST, "please use existing group name"
+            )
+
+        device_types = DeviceType.objects.filter(name__in=device_type_list)
+        obj_permissions = GroupObjectPermission.objects.bulk_assign_perm(
+            perm, group, device_types
+        )
+
+        return [obj_perm.object_id for obj_perm in obj_permissions]
+
+    def assign_perm_devices(self, perm, device_list, group):
+        """
+        Name
+        ----
+        assign_perm_devices(`perm`, `device_list`, `group`):
+
+        Description
+        -----------
+
+        Grant a permission to a specific group over a list of devices.
+
+        This function requires a superuser authentication.
+
+        Arguments
+        ---------
+        perm: string
+            Permission codename string. Currently supported permissions for
+            Devices are 'view_device', 'submit_to_device' and
+            'admin_device'.
+        device_list: list
+            list of device hostnames to assign permissions for. Non-exising
+            device names will be ignored.
+        group: string
+            group name to which the permission will be granted
+
+        Return value
+        ------------
+        A list of devices for which the permission was successfully assigned.
+        """
+        self._authenticate()
+        if not self.user.is_superuser:
+            raise xmlrpc.client.Fault(
+                errors.FORBIDDEN,
+                "Permission denied for user '%s' to assign permissions. Needs administrator privileges."
+                % self.user,
+            )
+        if not isinstance(device_list, list):
+            raise xmlrpc.client.Fault(
+                errors.BAD_REQUEST, "device_list argument must be a list"
+            )
+        try:
+            group = Group.objects.get(name=group)
+        except Group.DoesNotExist:
+            raise xmlrpc.client.Fault(
+                errors.BAD_REQUEST, "please use existing group name"
+            )
+
+        devices = Device.objects.filter(hostname__in=device_list)
+        obj_permissions = GroupObjectPermission.objects.bulk_assign_perm(
+            perm, group, devices
+        )
+
+        return [obj_perm.object_id for obj_perm in obj_permissions]
+
+    def assign_perm_testjobs(self, perm, testjob_list, group):
+        """
+        Name
+        ----
+        assign_perm_testjobs(`perm`, `testjob_list`, `group`):
+
+        Description
+        -----------
+
+        Grant a permission to a specific group over a list of test jobs.
+
+        This function requires a superuser authentication.
+
+        Arguments
+        ---------
+        perm: string
+            Permission codename string. Currently supported permissions for
+            Testjobs are 'view_testjob', 'cancel_resubmit_testjob' and
+            'admin_testjob'.
+        testjob_list: list
+            list of test job IDs to assign permissions for. Non-exising
+            test jobs will be ignored.
+        group: string
+            group name to which the permission will be granted
+
+        Return value
+        ------------
+        A list of test job IDs for which the permission was successfully assigned.
+        """
+        self._authenticate()
+        if not self.user.is_superuser:
+            raise xmlrpc.client.Fault(
+                errors.FORBIDDEN,
+                "Permission denied for user '%s' to assign permissions. Needs administrator privileges."
+                % self.user,
+            )
+        if not isinstance(testjob_list, list):
+            raise xmlrpc.client.Fault(
+                errors.BAD_REQUEST, "testjob_list argument must be a list"
+            )
+        try:
+            group = Group.objects.get(name=group)
+        except Group.DoesNotExist:
+            raise xmlrpc.client.Fault(
+                errors.BAD_REQUEST, "please use existing group name"
+            )
+
+        testjobs = TestJob.objects.filter(id__in=testjob_list)
+        obj_permissions = GroupObjectPermission.objects.bulk_assign_perm(
+            perm, group, testjobs
+        )
+
+        return [obj_perm.object_id for obj_perm in obj_permissions]
 
 
 class LavaMapper(Mapper):

@@ -22,6 +22,8 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.admin import GenericTabularInline
 from django.db import transaction
 from django.conf import settings
 
@@ -33,6 +35,7 @@ from lava_scheduler_app.models import (
     DefaultDeviceOwner,
     Device,
     DeviceType,
+    GroupObjectPermission,
     JobFailureTag,
     NotificationRecipient,
     ProcessorFamily,
@@ -45,6 +48,20 @@ from linaro_django_xmlrpc.models import AuthToken
 
 # django admin API itself isn't pylint clean, so some settings must be suppressed.
 # pylint: disable=no-self-use,function-redefined
+
+
+class GroupObjectPermissionInline(GenericTabularInline):
+    model = GroupObjectPermission
+    extra = 0
+
+    def formfield_for_foreignkey(self, db_field, request=None, **kwargs):
+        if db_field.name == "permission":
+            kwargs["queryset"] = Permission.objects.filter(
+                content_type__model=self.parent_model._meta.object_name.lower()
+            )
+        return super(GroupObjectPermissionInline, self).formfield_for_foreignkey(
+            db_field, request, **kwargs
+        )
 
 
 class AliasAdmin(admin.ModelAdmin):
@@ -346,6 +363,7 @@ class DeviceAdmin(admin.ModelAdmin):
         device_health_maintenance,
         device_health_retired,
     ]
+    inlines = [GroupObjectPermissionInline]
 
 
 class VisibilityForm(forms.ModelForm):
@@ -417,6 +435,7 @@ class TestJobAdmin(admin.ModelAdmin):
         "end_time",
     )
     ordering = ["-submit_time"]
+    inlines = [GroupObjectPermissionInline]
 
 
 def disable_health_check_action(
@@ -524,6 +543,7 @@ class DeviceTypeAdmin(admin.ModelAdmin):
         ),
     )
     ordering = ["name"]
+    inlines = [GroupObjectPermissionInline]
 
 
 def worker_health_active(ModelAdmin, request, queryset):
