@@ -41,6 +41,7 @@ Other test job elements
 .. toctree::
    :maxdepth: 6
 
+   actions-command.rst
    actions-repeats.rst
    actions-protocols.rst
    actions-timeout.rst
