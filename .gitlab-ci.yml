@@ -3,7 +3,6 @@ stages:
 - analyze
 - build
 - docker
-- publish
 - deploy
 
 include:
@@ -213,19 +212,6 @@ amd64/lava-dispatcher: *docker
 amd64/lava-server: *docker
 aarch64/lava-dispatcher: *docker_aarch64
 aarch64/lava-server: *docker_aarch64
-
-###########
-# Publish #
-###########
-manifest:
-  <<: *dind
-  stage: publish
-  variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE
-  only:
-    refs:
-    - master
-    - tags
 
 ##########
 # Deploy #
