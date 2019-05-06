@@ -152,6 +152,7 @@ actions:
       hostID: ipv4  # messageID
       host_key: ipaddr  # message key
     method: ssh
+    connection: ssh
 
 - test:
     role:
