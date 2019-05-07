@@ -17,7 +17,12 @@ RUN apt install --yes -t stretch-backports --no-install-recommends /tmp/common.d
 
 ARG pkg_server_doc=lava-server-doc.deb
 COPY $pkg_server_doc /tmp/server-doc.deb
-RUN apt install --yes -t stretch-backports --no-install-recommends /tmp/server-doc.deb && \
+
+# As we are using debian slim version we should explicitely list the
+# documentation that we want to include.
+# By default, only copyright files are kept in /usr/share/doc/
+RUN echo "path-include /usr/share/doc/lava-server-doc/html/v2/*" >> /etc/dpkg/dpkg.cfg.d/docker && \
+    apt install --yes -t stretch-backports --no-install-recommends /tmp/server-doc.deb && \
     rm -f /tmp/server-doc.deb
 
 ARG pkg_server=lava-server.deb
