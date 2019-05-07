@@ -19,4 +19,5 @@ RUN echo 'deb http://deb.debian.org/debian stretch-backports main' > /etc/apt/so
     apt-get install --no-install-recommends --yes -t stretch-backports python3-requests && \
     apt-get install --no-install-recommends --yes bridge-utils debootstrap dfu-util git libguestfs-tools nfs-kernel-server ntp openbsd-inetd qemu-system-arm qemu-system-x86 rpcbind rsync ser2net telnet tftpd-hpa u-boot-tools unzip xz-utils && \
     apt-get install --no-install-recommends --yes apache2 docker-ce-cli img2simg simg2img && \
+    apt-get install --no-install-recommends --yes -t stretch-backports libudev1 && \
     rm -rf /var/lib/apt/lists/*
