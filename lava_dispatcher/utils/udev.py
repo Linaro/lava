@@ -323,52 +323,6 @@ def get_udev_devices(job=None, logger=None, device_info=None):
     return list(device_paths)
 
 
-def usb_device_wait(job, device_actions=None):
-    context = pyudev.Context()
-    if device_actions is None:
-        device_actions = []
-    for usb_device in job.device.get("device_info", []):
-        board_id = str(usb_device.get("board_id", ""))
-        usb_vendor_id = str(usb_device.get("usb_vendor_id", ""))
-        usb_product_id = str(usb_device.get("usb_product_id", ""))
-        usb_fs_label = str(usb_device.get("fs_label", ""))
-        # monitor for device
-        monitor = pyudev.Monitor.from_netlink(context)
-        if board_id and usb_vendor_id and usb_product_id:
-            for device in iter(monitor.poll, None):
-                if (
-                    (device.get("ID_SERIAL_SHORT") == board_id)
-                    and (device.get("ID_VENDOR_ID") == usb_vendor_id)
-                    and (device.get("ID_MODEL_ID") == usb_product_id)
-                    and device.action in device_actions
-                ):
-                    break
-            return
-        elif board_id and usb_vendor_id and not usb_product_id:
-            for device in iter(monitor.poll, None):
-                if (
-                    (device.get("ID_SERIAL_SHORT") == board_id)
-                    and (device.get("ID_VENDOR_ID") == usb_vendor_id)
-                    and device.action in device_actions
-                ):
-                    break
-            return
-        elif board_id and not usb_vendor_id and not usb_product_id:
-            for device in iter(monitor.poll, None):
-                if (
-                    device.get("ID_SERIAL_SHORT") == board_id
-                ) and device.action in device_actions:
-                    break
-            return
-        elif usb_fs_label:
-            for device in iter(monitor.poll, None):
-                if (
-                    device.get("ID_FS_LABEL") == usb_fs_label
-                ) and device.action in device_actions:
-                    break
-            return
-
-
 def allow_fs_label(device):
     # boot/deploy methods that indicate that the device in question
     # will require a filesystem label to identify a device.
