@@ -15,7 +15,7 @@ lava-server:
     version: ">=2016.8"
     name: python3-django-restricted-resource
   django-tables2:
-    version: ">=1.14.2"
+    version: ">=1.21.2"
     name: python3-django-tables2
   django:
     version: ">=1.10"
@@ -36,6 +36,7 @@ lava-server:
   pyzmq:
     name: python3-zmq
   requests:
+    version: ">=2.20.0"
     name: python3-requests
   tap:
     name: python3-tap
@@ -112,6 +113,7 @@ lava-dispatcher:
   pyzmq:
     name: python3-zmq
   requests:
+    version: ">=2.20.0"
     name: python3-requests
   setproctitle:
     version: ">=1.1.8"
