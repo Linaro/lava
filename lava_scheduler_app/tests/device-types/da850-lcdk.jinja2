@@ -1,0 +1,15 @@
+# device-type for Davinci da850-lcdk board
+
+{% extends 'base-uboot.jinja2' %}
+
+{# device_type = "da850-lcdk" #}
+
+{% set uboot_mkimage_arch = 'arm' %}
+{% set console_device = console_device|default('ttyS2') %}
+{% set baud_rate = baud_rate|default(115200) %}
+
+{% set bootm_kernel_addr = '0xc1000000' %}
+{% set bootm_dtb_addr = '0xc2f00000' %}
+{% set bootm_ramdisk_addr = '0xc3000000' %}
+
+{% set bootloader_prompt = "U-Boot >" %}
