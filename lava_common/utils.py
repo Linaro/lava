@@ -23,6 +23,26 @@ import subprocess  # nosec dpkg
 from lava_common.exceptions import InfrastructureError
 
 
+def binary_version(binary, flags=""):
+    """
+    Returns a string with the version of the binary by running it with
+    the provided flags.
+    """
+    # if binary is not absolute, fail.
+    msg = "Unable to retrieve version of %s" % binary
+    try:
+        ver_str = (
+            subprocess.check_output((binary, flags))
+            .strip()
+            .decode("utf-8", errors="replace")
+        )
+        if not ver_str:
+            raise InfrastructureError(msg)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        raise InfrastructureError(msg)
+    return "%s, version %s" % (binary, ver_str)
+
+
 def debian_package_arch(pkg):
     """
     Relies on Debian Policy rules for the existence of the
