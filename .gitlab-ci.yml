@@ -27,11 +27,11 @@ dependencies:
 
 .aarch64: &aarch64
   <<: *job
-  tags: [aarch64, dind]
+  tags: [aarch64-dind]
 
 .amd64: &amd64
   <<: *job
-  tags: [amd64, dind]
+  tags: [amd64-dind]
 
 aarch64/lava-dispatcher-base: *aarch64
 aarch64/lava-server-base: *aarch64
