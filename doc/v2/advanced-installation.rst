@@ -531,41 +531,6 @@ interface, with suitable safeguards).
 Restart the ``lava-server-gunicorn`` service each time
 ``/etc/lava-server/settings.conf`` is modified.
 
-LAVA server performance
-***********************
-
-If the load on the master becomes an issue, there may be some optimisations
-which can help.
-
-The default settings should work out of the box. This might not be the case for
-some optimisations that should be tested carefully.
-
-Template caching
-================
-
-Django does also provide a way to store in memory the compiled version of the
-templates using the `cached loader
-<https://docs.djangoproject.com/en/1.10/ref/templates/api/#django.template.loaders.cached.Loader>`__.
-
-To enable the cached loader, in */etc/lava-server/settings.conf* add:
-
-.. code-block:: none
-
-  "USE_TEMPLATE_CACHE": true
-
-You should then restart *lava-server-gunicorn*.
-
-.. code-block:: shell
-
-  $ sudo service lava-server-gunicorn restart
-
-.. warning:: This feature is not needed anymore (and crashing) for Django
-   version >= 1.11
-
-.. index:: configuring display of logs, log size limit
-
-.. _log_size_limit:
-
 Configuring log file display
 ****************************
 

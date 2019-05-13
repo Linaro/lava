@@ -187,9 +187,6 @@ DJANGO_LOGFILE = "/var/log/lava-server/django.log"
 # Django debug toolbar
 USE_DEBUG_TOOLBAR = False
 
-# Template caching
-USE_TEMPLATE_CACHE = False
-
 # LDAP support
 AUTH_LDAP_SERVER_URI = None
 AUTH_LDAP_BIND_DN = None

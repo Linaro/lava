@@ -178,9 +178,3 @@ LOGGING = {
         },
     },
 }
-
-# Add template caching
-if USE_TEMPLATE_CACHE:
-    TEMPLATES[0]["OPTIONS"]["loaders"] = [
-        ("django.template.loaders.cached.Loader", TEMPLATES[0]["OPTIONS"]["loaders"])
-    ]
