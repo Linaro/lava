@@ -2,7 +2,7 @@
 
 {% set base_image = "debian:stretch-slim" %}
 
-{% set use_docker_com = True %}
+{% set use_docker_com = true %}
 
 {% set dependencies = [
     {"pkgs": "file python3-setuptools systemd-sysv tar"},
@@ -10,7 +10,7 @@
     {"pkgs": requires("debian", "stretch-backports", "lava-common"), "from": "stretch-backports" },
     {"pkgs": requires("debian", "stretch", "lava-dispatcher") },
     {"pkgs": requires("debian", "stretch-backports", "lava-dispatcher"), "from": "stretch-backports" },
-    {"pkgs": "bridge-utils debootstrap dfu-util git libguestfs-tools nfs-kernel-server ntp openbsd-inetd qemu-system-arm qemu-system-x86 rpcbind rsync ser2net telnet tftpd-hpa u-boot-tools unzip xz-utils" },
-    {"pkgs": "apache2 docker-ce-cli" },
+    {"pkgs": "debootstrap dfu-util git libguestfs-tools nfs-kernel-server qemu-system-arm qemu-system-x86 rpcbind ser2net telnet tftpd-hpa u-boot-tools unzip xz-utils" },
+    {"pkgs": "docker-ce-cli" },
     {"pkgs": "libudev1", "from": "stretch-backports"},
 ] %}
