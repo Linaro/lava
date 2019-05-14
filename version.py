@@ -42,7 +42,7 @@ def version_tag():
     if len(sys.argv) == 2:
         if sys.argv[1] != "sdist":
             args.append(sys.argv[1])
-    if os.path.exists("./.git/"):
+    if os.path.exists("./.git"):
         pattern = re.compile(r"(?P<tag>.+)\.(?P<commits>\d+)\.g(?P<hash>[abcdef\d]+)")
         describe = (
             subprocess.check_output(args)  # nosec - internal
