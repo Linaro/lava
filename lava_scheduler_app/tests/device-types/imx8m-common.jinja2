@@ -26,5 +26,4 @@
           - setenv console ttyUSB0,115200n8
           - " + base_uboot_bootcmd + "
 " %}
-{% set fastboot_sequence = [
-    'reboot'] %}
+{% set fastboot_sequence = fastboot_sequence|default(['reboot']) %}
