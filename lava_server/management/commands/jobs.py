@@ -242,16 +242,20 @@ class Command(BaseCommand):
 
         invalid = False
         for job in jobs:
-            data = yaml.safe_load(job.original_definition)
+            if job.is_multinode:
+                definition = job.multinode_definition
+            else:
+                definition = job.original_definition
+            data = yaml.safe_load(definition)
             try:
                 validate(data, strict)
-                print("[%s] Passed " % job.id)
+                print("* %s" % job.id)
             except voluptuous.Invalid as exc:
                 invalid = True
-                print("\n[%s] Invalid job definition," % job.id)
-                print(" submitted by %s" % job.submitter)
-                print(" for %s:" % job.requested_device_type)
-                print(" key: %s" % exc.path)
-                print(" msg: %s" % exc.msg)
+                print("* %s Invalid job definition" % job.id)
+                print("    submitter: %s" % job.submitter)
+                print("    device-type: %s" % job.requested_device_type)
+                print("    key: %s" % exc.path)
+                print("    msg: %s" % exc.msg)
         if invalid:
             raise CommandError("Some jobs are invalid")
