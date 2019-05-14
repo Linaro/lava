@@ -23,7 +23,9 @@ from shutil import rmtree
 import time
 import yaml
 import voluptuous
+
 from django.contrib.auth.models import User
+from django.core.mail import mail_admins
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 from django.db import transaction
 from django.utils import timezone
@@ -118,6 +120,12 @@ class Command(BaseCommand):
             help="Validate selected historical jobs against the current schema. ",
         )
         valid.add_argument(
+            "--mail-admins",
+            action="store_true",
+            default=False,
+            help="Send a mail to the admins with a list of failing jobs",
+        )
+        valid.add_argument(
             "--submitter", default=None, type=str, help="Filter jobs by submitter"
         )
         valid.add_argument(
@@ -150,7 +158,10 @@ class Command(BaseCommand):
             self.handle_fail(options["job_id"])
         elif options["sub_command"] == "validate":
             self.handle_validate(
-                options["newer_than"], options["submitter"], options["strict"]
+                options["newer_than"],
+                options["submitter"],
+                options["strict"],
+                options["mail_admins"],
             )
 
     def handle_fail(self, job_id):
@@ -219,7 +230,7 @@ class Command(BaseCommand):
         if simulate:
             transaction.rollback()
 
-    def handle_validate(self, newer_than, submitter, strict):
+    def handle_validate(self, newer_than, submitter, strict, should_mail_admins):
         jobs = TestJob.objects.all().order_by("id")
         if newer_than is not None:
             pattern = re.compile(r"^(?P<time>\d+)(?P<unit>(h|d))$")
@@ -240,7 +251,7 @@ class Command(BaseCommand):
                 raise CommandError("Unable to find submitter '%s'" % submitter)
             jobs = jobs.filter(submitter=user)
 
-        invalid = False
+        invalid = {}
         for job in jobs:
             if job.is_multinode:
                 definition = job.multinode_definition
@@ -251,11 +262,25 @@ class Command(BaseCommand):
                 validate(data, strict)
                 print("* %s" % job.id)
             except voluptuous.Invalid as exc:
-                invalid = True
+                invalid[job.id] = {
+                    "submitter": job.submitter,
+                    "dt": job.requested_device_type,
+                    "key": exc.path,
+                    "msg": exc.msg,
+                }
                 print("* %s Invalid job definition" % job.id)
                 print("    submitter: %s" % job.submitter)
                 print("    device-type: %s" % job.requested_device_type)
                 print("    key: %s" % exc.path)
                 print("    msg: %s" % exc.msg)
         if invalid:
+            if should_mail_admins:
+                body = "Hello,\n\nthe following jobs schema are invalid:\n"
+                for job_id in invalid.keys():
+                    body += "* %s\n" % job_id
+                    body += "  submitter: {submitter}\n  device-type: {dt}\n  key: {key}\n  msg: {msg}\n".format(
+                        **invalid[job_id]
+                    )
+                body += "\n-- \nlava-server manage jobs validate"
+                mail_admins("Invalid jobs", body)
             raise CommandError("Some jobs are invalid")
