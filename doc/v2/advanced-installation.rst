@@ -531,6 +531,8 @@ interface, with suitable safeguards).
 Restart the ``lava-server-gunicorn`` service each time
 ``/etc/lava-server/settings.conf`` is modified.
 
+.. _log_size_limit:
+
 Configuring log file display
 ****************************
 
