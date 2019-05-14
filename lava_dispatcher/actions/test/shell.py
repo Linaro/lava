@@ -292,6 +292,12 @@ class TestShellAction(TestAction):
             )
             connection.wait()
 
+        # source the environment file containing device-specific shell variables
+        connection.sendline(
+            ". %s/environment" % lava_test_results_dir, delay=self.character_delay
+        )
+        connection.wait()
+
         try:
             feedbacks = []
             for feedback_ns in self.data.keys():  # pylint: disable=no-member

@@ -477,6 +477,7 @@ def _device_schema():
             "device_info": [dict],
             "static_info": [dict],
             "storage_info": [dict],
+            "environment": dict,
             "flash_cmds_order": list,
             "parameters": dict,
             "board_id": str,

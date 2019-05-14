@@ -152,6 +152,18 @@ dictionary. The information will then be populated into the
 
    {% set storage_info = [{'SATA': '/dev/disk/by-id/ata-ST500DM002-1BD142_W3T79GCW'}] %}
 
+* **environment** - a dictionary containing device-specific shell variables,
+  which will be available in the LAVA test shell. These can be used, for
+  example, to describe physical hardware connections between the :term:`DUT` and
+  interfaces on the worker or other addressable hardware.
+
+  .. code-block:: jinja
+
+  {% set environment = {
+      'RELAY_ADDRESS': '10.66.16.103',
+      'REMOTE_SERIAL_PORT': '/dev/ttyUSB2',
+  } %}
+
 .. _device_dictionary_other_parameters:
 
 Other parameters

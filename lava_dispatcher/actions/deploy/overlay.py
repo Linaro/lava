@@ -225,6 +225,14 @@ class OverlayAction(DeployAction):
                     fout.write(fin.read())
                     os.fchmod(fout.fileno(), self.xmod)
 
+        # Generate environment file
+        self.logger.debug("Creating %s/environment", lava_path)
+        environment = self.job.device.get("environment", {})
+        self.logger.debug("environment: %s", environment)
+        with open(os.path.join(lava_path, "environment"), "w") as fout:
+            for key, value in environment.items():
+                fout.write("export %s=%s\n" % (key, value))
+
         # Generate the file containing the secrets
         if "secrets" in self.job.parameters:
             self.logger.debug("Creating %s/secrets", lava_path)

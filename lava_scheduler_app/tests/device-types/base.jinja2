@@ -219,6 +219,12 @@ value of the block device ID such as '/dev/disk/by-id/ata-ST500DM002-1BD142_W3T7
 storage_info: {{ storage_info }}
 {% endif -%}
 
+{% if environment %}
+{# Test shell support for exposing device-specific environment variables. #}
+{# admins need to ensure that the device dictionary sets this as a dictionary #}
+environment: {{ environment }}
+{% endif -%}
+
 {% block fastboot %}
 {% if fastboot_serial_number %}
 flash_cmds_order: {{ flash_cmds_order|default(['update', 'ptable',
