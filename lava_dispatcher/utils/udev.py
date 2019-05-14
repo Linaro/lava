@@ -29,6 +29,7 @@ class WaitUSBSerialDeviceAction(Action):
     name = "wait-usb-serial"
     description = "wait for USB serial device"
     summary = "wait for USB serial device"
+    timeout_exception = InfrastructureError
 
     def __init__(self):
         super().__init__()
@@ -74,6 +75,7 @@ class WaitDFUDeviceAction(Action):
     name = "wait-dfu-device"
     description = "wait for DFU device"
     summary = "wait for DFU device"
+    timeout_exception = InfrastructureError
 
     def __init__(self):
         super().__init__()
@@ -113,6 +115,7 @@ class WaitUSBMassStorageDeviceAction(Action):
     name = "wait-usb-mass-storage-device"
     description = "wait for USB mass storage device"
     summary = "wait for USB mass storage device"
+    timeout_exception = InfrastructureError
 
     def __init__(self):
         super().__init__()
@@ -142,6 +145,7 @@ class WaitDevicePathAction(Action):
     name = "wait-device-path"
     description = "wait for udev device path"
     summary = "wait for udev device path"
+    timeout_exception = InfrastructureError
 
     def __init__(self, path=None):
         super().__init__()
@@ -164,6 +168,7 @@ class WaitDeviceBoardID(Action):
     name = "wait-device-boardid"
     description = "wait for udev device with board ID"
     summary = "wait for udev device with board ID"
+    timeout_exception = InfrastructureError
 
     def __init__(self, board_id=None):
         super().__init__()
