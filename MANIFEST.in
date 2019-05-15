@@ -34,7 +34,7 @@ include lava_dispatcher/lava_test_shell/distro/ubuntu/*
 include lava_server/templates/robots.txt
 include man/*
 include requirements.txt
-include README
+include README.md
 include share/*
 include share/apache2/*
 include share/zmq/*
