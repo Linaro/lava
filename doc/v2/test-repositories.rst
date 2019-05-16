@@ -260,7 +260,7 @@ support and which continue to use ``stdout``.
      :language: yaml
      :linenos:
      :lines: 47-56
-     :emphasize-lines: 4
+     :emphasize-lines: 3
 
 By specifying ``lava-signal: kmsg`` for the first test shell definition
 in the test job submission example above, LAVA can output the test
