@@ -33,6 +33,7 @@ def schema():
             Any("keys", "sources", "deps", "steps", "git-repos", "all")
         ],
         # Optional("parameters"):
+        Optional("lava-signal"): Any("kmsg", "stdout"),
     }
 
     base = {
@@ -42,7 +43,6 @@ def schema():
                     Required("repository"): str,
                     Required("from"): Any("git", "bzr"),
                     Optional("branch"): str,
-                    Optional("lava-signal"): Any("kmsg", "stdout"),
                     Optional("history"): bool,
                     Optional("revision"): str,
                     Optional("parameters"): dict,
