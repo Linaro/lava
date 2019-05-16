@@ -134,6 +134,7 @@ def _context_schema():
                     "mustang_menu_list",
                     "test_character_delay",
                     "tftp_mac_address",
+                    "uboot_extra_error_message",
                 ]
             ): Any(int, str, [int, str])
         },
