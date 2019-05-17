@@ -54,6 +54,7 @@ from django_restricted_resource.models import (
 from lava_common.exceptions import ConfigurationError
 from lava_results_app.utils import export_testcase
 from lava_scheduler_app import utils
+from lava_scheduler_app.logutils import read_logs
 from lava_scheduler_app.managers import (
     RestrictedTestJobQuerySet,
     GroupObjectPermissionManager,
@@ -1790,13 +1791,6 @@ class TestJob(RestrictedResource, RestrictedObject):
             str(self.id),
         )
 
-    def output_file(self):
-        output_path = os.path.join(self.output_dir, "output.yaml")
-        if os.path.exists(output_path):
-            return open(output_path, encoding="utf-8", errors="replace")
-        else:
-            return None
-
     failure_tags = models.ManyToManyField(
         JobFailureTag, blank=True, related_name="failure_tags"
     )
@@ -2062,9 +2056,8 @@ class TestJob(RestrictedResource, RestrictedObject):
             data["token"] = token
 
         # Logs.
-        output_file = self.output_file()
-        if output_file and output:
-            data["log"] = self.output_file().read()
+        with contextlib.suppress(OSError):
+            data["log"] = read_logs(self.output_dir)
 
         # Results.
         if results:

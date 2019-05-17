@@ -79,7 +79,7 @@ from lava_scheduler_app.dbutils import (
     testjob_submission,
     validate_job,
 )
-from lava_scheduler_app.logutils import read_logs
+from lava_scheduler_app.logutils import size_logs, read_logs
 from lava_scheduler_app.templatetags.utils import udecode
 
 from lava.utils.lavatable import LavaView
@@ -1313,18 +1313,13 @@ def job_detail(request, pk):
     }
 
     try:
-        with open(os.path.join(job.output_dir, "output.yaml"), "r") as f_in:
-            # Compute the size of the file
-            f_in.seek(0, 2)
-            job_file_size = f_in.tell()
-
-            if job_file_size >= job.size_limit:
-                log_data = []
-                data["size_warning"] = job.size_limit
-            else:
-                # Go back to the start and load the file
-                f_in.seek(0, 0)
-                log_data = yaml.load(f_in, Loader=yaml.CLoader)
+        job_file_size = size_logs(job.output_dir)
+        if job_file_size >= job.size_limit:
+            log_data = []
+            data["size_warning"] = job.size_limit
+        else:
+            log_data = read_logs(job.output_dir)
+            log_data = yaml.load(log_data, Loader=yaml.CLoader)
     except OSError:
         log_data = []
     except yaml.YAMLError:
@@ -1567,9 +1562,8 @@ def job_status(request, pk):
 def job_timing(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
     try:
-        logs = yaml.load(
-            open(os.path.join(job.output_dir, "output.yaml")), Loader=yaml.CLoader
-        )
+        data = read_logs(job.output_dir)
+        logs = yaml.load(data, Loader=yaml.CLoader)
     except OSError:
         raise Http404
 
@@ -1688,24 +1682,11 @@ def job_configuration(request, pk):
 
 def job_log_file_plain(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
-    # Old style jobs
-    log_file = job.output_file()
-    if log_file:
-        response = StreamingHttpResponse(
-            log_file, content_type="text/plain; charset=utf-8"
-        )
-        response["Content-Transfer-Encoding"] = "quoted-printable"
+    try:
+        data = read_logs(job.output_dir)
+        response = StreamingHttpResponse(data, content_type="application/yaml")
         response["Content-Disposition"] = "attachment; filename=job_%d.log" % job.id
         return response
-
-    # New pipeline jobs
-    try:
-        with open(os.path.join(job.output_dir, "output.yaml"), "r") as log_file:
-            response = StreamingHttpResponse(
-                log_file.readlines(), content_type="application/yaml"
-            )
-            response["Content-Disposition"] = "attachment; filename=job_%d.log" % job.id
-            return response
     except OSError:
         raise Http404
 

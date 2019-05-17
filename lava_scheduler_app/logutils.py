@@ -68,6 +68,13 @@ def read_logs(dir_name, start=0, end=None):
             return f_log.read(end_offset - start_offset).decode("utf-8")
 
 
+def size_logs(dir_name):
+    directory = pathlib.Path(dir_name)
+    with (directory / "output.yaml").open("rb") as f_log:
+        f_log.seek(0, 2)
+        return f_log.tell()
+
+
 def write_logs(f_log, f_idx, line):
     f_idx.write(struct.pack(PACK_FORMAT, f_log.tell()))
     f_idx.flush()

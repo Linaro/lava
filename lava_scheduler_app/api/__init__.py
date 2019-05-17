@@ -20,9 +20,11 @@
 
 from functools import wraps
 from simplejson import JSONDecodeError
-import yaml
+import os
 import sys
 import xmlrpc.client
+import yaml
+
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Q
@@ -295,11 +297,14 @@ class SchedulerAPI(ExposedAPI):
         except TestJob.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Specified job not found.")
 
-        output_file = job.output_file()
-        if output_file:
-            output_file.seek(offset)
-            return xmlrpc.client.Binary(output_file.read().encode("UTF-8"))
-        else:
+        # Open the logs
+        output_path = os.path.join(job.output_dir, "output.yaml")
+        try:
+            with open(output_path, encoding="utf-8", errors="replace") as f_logs:
+                if f_logs:
+                    f_logs.seek(offset)
+                return xmlrpc.client.Binary(f_logs.read().encode("UTF-8"))
+        except OSError:
             raise xmlrpc.client.Fault(404, "Job output not found.")
 
     def all_devices(self):
