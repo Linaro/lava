@@ -1367,7 +1367,6 @@ def job_detail(request, pk):
 @BreadCrumb("Definition", parent=job_detail, needs=["pk"])
 def job_definition(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
-    log_file = job.output_file()
     description = description_data(job)
     return render(
         request,
@@ -1375,7 +1374,6 @@ def job_definition(request, pk):
         {
             "job": job,
             "pipeline": description.get("pipeline", []),
-            "job_file_present": bool(log_file),
             "bread_crumb_trail": BreadCrumbTrail.leading_to(job_definition, pk=pk),
             "show_cancel": job.can_cancel(request.user),
             "show_fail": job.state == TestJob.STATE_CANCELING
@@ -1410,13 +1408,11 @@ def job_definition_plain(request, pk):
 @BreadCrumb("Multinode definition", parent=job_detail, needs=["pk"])
 def multinode_job_definition(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
-    log_file = job.output_file()
     return render(
         request,
         "lava_scheduler_app/multinode_job_definition.html",
         {
             "job": job,
-            "job_file_present": bool(log_file),
             "bread_crumb_trail": BreadCrumbTrail.leading_to(
                 multinode_job_definition, pk=pk
             ),
