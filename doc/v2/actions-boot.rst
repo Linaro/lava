@@ -584,6 +584,29 @@ lxc
     timeout:
       minutes: 5
 
+.. index:: boot method openocd
+
+.. _boot_method_openocd:
+
+openocd
+=======
+
+The ``openocd`` boot method takes no arguments or parameters.
+
+The method works by passing through the command line options for the
+openocd command. It downloads and runs the executable specified by ``binary``
+in the job definition. It also allows an openocd script file to be downloaded
+from the location specified by ``openocd_script`` in the job definition, if
+a custom script file should be used instead of the one specified by the
+device type.
+
+.. code-block:: yaml
+
+ - boot:
+    method: openocd
+    timeout:
+      minutes: 3
+
 .. index:: boot method pyocd
 
 .. _boot_method_pyocd:
