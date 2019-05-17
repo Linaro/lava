@@ -7,7 +7,7 @@ Type=simple
 Environment=MASTER_URL=tcp://localhost:5556 LOGGER_URL=tcp://localhost:5555 LOGLEVEL=DEBUG
 EnvironmentFile=-/etc/default/lava-slave
 EnvironmentFile=-/etc/lava-dispatcher/lava-slave
-ExecStart=/usr/bin/lava-slave --level $LOGLEVEL --master $MASTER_URL --socket-addr $LOGGER_URL $IPV6 $ENCRYPT $MASTER_CERT $SLAVE_CERT $HOSTNAME
+ExecStart=/usr/bin/lava-slave --level $LOGLEVEL --master $MASTER_URL --socket-addr $LOGGER_URL $IPV6 $SOCKS_PROXY $ENCRYPT $MASTER_CERT $SLAVE_CERT $HOSTNAME
 TimeoutStopSec=20
 Restart=always
 KillMode=process

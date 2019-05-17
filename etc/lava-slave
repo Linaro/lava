@@ -7,6 +7,9 @@
 # Enable IPv6 to connect to the master and logger
 # IPV6="--ipv6"
 
+# Use a socks proxy
+# SOCKS_PROXY="--socks-proxy localhost:8081"
+
 # Slave hostname
 # Should be set for host that have random hostname (containers, ...)
 # The hostname can be any unique string, except "lava-logs" which is reserved

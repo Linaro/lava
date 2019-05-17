@@ -405,6 +405,10 @@ def create_context(options):
     # "Immediately readies that connection for data transfer with the master"
     sock.setsockopt(zmq.CONNECT_RID, b"master")
 
+    if options.socks_proxy:
+        LOG.info("[INIT] Using a socks proxy")
+        sock.setsockopt(zmq.SOCKS_PROXY, b(options.socks_proxy))
+
     if options.ipv6:
         LOG.info("[INIT] Enabling IPv6")
         sock.setsockopt(zmq.IPV6, 1)
@@ -841,6 +845,8 @@ def setup_parser():
                      help="Main master socket")
     net.add_argument("--socket-addr", type=str, required=True,
                      help="Log socket")
+    net.add_argument("--socks-proxy", type=str, default=None,
+                     help="Connect using a socks proxy")
     net.add_argument("--ipv6", default=False,
                      action="store_true",
                      help="Enable IPv6")
