@@ -1797,19 +1797,6 @@ class TestJob(RestrictedResource, RestrictedObject):
         else:
             return None
 
-    def archived_job_file(self):
-        """Checks if the current job's log output file was archived.
-        """
-        last_info = os.path.join(settings.ARCHIVE_ROOT, "job-output", "last.info")
-
-        if not os.path.exists(last_info):
-            return False
-
-        with open(last_info, "r") as last:
-            last_archived_job = int(last.read())
-
-        return self.id <= last_archived_job
-
     failure_tags = models.ManyToManyField(
         JobFailureTag, blank=True, related_name="failure_tags"
     )

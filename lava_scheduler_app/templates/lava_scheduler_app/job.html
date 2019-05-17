@@ -206,11 +206,6 @@
 </div>
 {% endif %}
 
-{% if job.archived_job_file %}
-<div class="alert alert-info">
-  <p><strong>Job log file archived</strong> Please contact the administrator for job log file.</p>
-</div>
-{% endif %}
 <div id="failure_block" {% if not job.failure_comment %}style="display: none;" {% endif %}>
   <pre class="alert alert-danger failure_comment">{{ job.failure_comment }}</pre>
 </div>
