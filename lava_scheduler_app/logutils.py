@@ -17,6 +17,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
+import lzma
 import pathlib
 import struct
 
@@ -25,7 +27,7 @@ PACK_SIZE = struct.calcsize(PACK_FORMAT)
 
 
 def _build_index(directory):
-    with open(str(directory / "output.yaml"), "rb") as f_log:
+    with _open_logs(directory) as f_log:
         with open(str(directory / "output.idx"), "wb") as f_idx:
             f_idx.write(struct.pack(PACK_FORMAT, 0))
             line = f_log.readline()
@@ -47,6 +49,12 @@ def line_count(f_idx):
     return int(f_idx.tell() / PACK_SIZE)
 
 
+def _open_logs(directory):
+    with contextlib.suppress(FileNotFoundError):
+        return open(str(directory / "output.yaml"), "rb")
+    return lzma.open(str(directory / "output.yaml.xz"), "rb")
+
+
 def read_logs(dir_name, start=0, end=None):
     directory = pathlib.Path(dir_name)
     if not (directory / "output.idx").exists():
@@ -56,7 +64,7 @@ def read_logs(dir_name, start=0, end=None):
         start_offset = _get_line_offset(f_idx, start)
         if start_offset is None:
             return ""
-        with open(str(directory / "output.yaml"), "rb") as f_log:
+        with _open_logs(directory) as f_log:
             f_log.seek(start_offset)
             if end is None:
                 return f_log.read().decode("utf-8")
@@ -70,9 +78,11 @@ def read_logs(dir_name, start=0, end=None):
 
 def size_logs(dir_name):
     directory = pathlib.Path(dir_name)
-    with (directory / "output.yaml").open("rb") as f_log:
-        f_log.seek(0, 2)
-        return f_log.tell()
+    with contextlib.suppress(FileNotFoundError):
+        return (directory / "output.yaml").stat().st_size
+    with contextlib.suppress(FileNotFoundError, ValueError):
+        return int((directory / "output.yaml.size").read_text(encoding="utf-8"))
+    return None
 
 
 def write_logs(f_log, f_idx, line):

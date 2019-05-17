@@ -1314,7 +1314,7 @@ def job_detail(request, pk):
 
     try:
         job_file_size = size_logs(job.output_dir)
-        if job_file_size >= job.size_limit:
+        if job_file_size is not None and job_file_size >= job.size_limit:
             log_data = []
             data["size_warning"] = job.size_limit
         else:
