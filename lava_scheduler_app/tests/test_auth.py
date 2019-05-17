@@ -53,7 +53,9 @@ class PermissionAuthTest(TestCaseWithFactory):
     def test_anonymous_unrestricted_device_type(self):
         guy_fawkes = AnonymousUser()
         auth = PermissionAuth(guy_fawkes)
-        self.assertTrue(auth.has_perm("view_devicetype", self.device_type))
+        self.assertTrue(
+            auth.has_perm("lava_scheduler_app.view_devicetype", self.device_type)
+        )
 
     def test_anonymous_restricted_device_type(self):
         guy_fawkes = AnonymousUser()
@@ -61,7 +63,9 @@ class PermissionAuthTest(TestCaseWithFactory):
         GroupObjectPermission.objects.assign_perm(
             "view_devicetype", self.group, self.device_type
         )
-        self.assertFalse(auth.has_perm("view_devicetype", self.device_type))
+        self.assertFalse(
+            auth.has_perm("lava_scheduler_app.view_devicetype", self.device_type)
+        )
 
     def test_anonymous_restricted_device_type_by_non_view_permission(self):
         guy_fawkes = AnonymousUser()
@@ -69,12 +73,14 @@ class PermissionAuthTest(TestCaseWithFactory):
         GroupObjectPermission.objects.assign_perm(
             "admin_devicetype", self.group, self.device_type
         )
-        self.assertTrue(auth.has_perm("view_devicetype", self.device_type))
+        self.assertTrue(
+            auth.has_perm("lava_scheduler_app.view_devicetype", self.device_type)
+        )
 
     def test_anonymous_unrestricted_device(self):
         guy_fawkes = AnonymousUser()
         auth = PermissionAuth(guy_fawkes)
-        self.assertTrue(auth.has_perm("view_device", self.device))
+        self.assertTrue(auth.has_perm("lava_scheduler_app.view_device", self.device))
 
     def test_anonymous_restricted_device(self):
         guy_fawkes = AnonymousUser()
@@ -82,7 +88,7 @@ class PermissionAuthTest(TestCaseWithFactory):
         GroupObjectPermission.objects.assign_perm(
             "view_device", self.group, self.device
         )
-        self.assertFalse(auth.has_perm("view_device", self.device))
+        self.assertFalse(auth.has_perm("lava_scheduler_app.view_device", self.device))
 
     def test_anonymous_restricted_device_by_non_view_permission(self):
         guy_fawkes = AnonymousUser()
@@ -90,24 +96,24 @@ class PermissionAuthTest(TestCaseWithFactory):
         GroupObjectPermission.objects.assign_perm(
             "admin_device", self.group, self.device
         )
-        self.assertTrue(auth.has_perm("view_device", self.device))
+        self.assertTrue(auth.has_perm("lava_scheduler_app.view_device", self.device))
 
     def test_anonymous_unrestricted_testjob(self):
         guy_fawkes = AnonymousUser()
         auth = PermissionAuth(guy_fawkes)
-        self.assertTrue(auth.has_perm("view_testjob", self.job))
+        self.assertTrue(auth.has_perm("lava_scheduler_app.view_testjob", self.job))
 
     def test_anonymous_restricted_testjob(self):
         guy_fawkes = AnonymousUser()
         auth = PermissionAuth(guy_fawkes)
         GroupObjectPermission.objects.assign_perm("view_testjob", self.group, self.job)
-        self.assertFalse(auth.has_perm("view_testjob", self.job))
+        self.assertFalse(auth.has_perm("lava_scheduler_app.view_testjob", self.job))
 
     def test_anonymous_restricted_testjob_by_non_view_permission(self):
         guy_fawkes = AnonymousUser()
         auth = PermissionAuth(guy_fawkes)
         GroupObjectPermission.objects.assign_perm("admin_testjob", self.group, self.job)
-        self.assertTrue(auth.has_perm("view_testjob", self.job))
+        self.assertTrue(auth.has_perm("lava_scheduler_app.view_testjob", self.job))
 
     def test_has_perm_unsupported_model(self):
         # Unsupported content_types check will return False.
@@ -116,7 +122,7 @@ class PermissionAuthTest(TestCaseWithFactory):
         GroupObjectPermission.objects.assign_perm(
             "change_group", self.group, self.group
         )
-        self.assertFalse(auth.has_perm("change_group", self.group))
+        self.assertFalse(auth.has_perm("auth.change_group", self.group))
 
     def test_superuser(self):
         user = User.objects.create(username="superuser", is_superuser=True)
@@ -131,7 +137,9 @@ class PermissionAuthTest(TestCaseWithFactory):
         )
         self.assertEqual(perms, auth.get_perms(self.job))
         for perm in perms:
-            self.assertTrue(auth.has_perm(perm, self.job))
+            self.assertTrue(
+                auth.has_perm("%s.%s" % (content_type.app_label, perm), self.job)
+            )
 
     def test_not_active_superuser(self):
         user = User.objects.create(
@@ -148,7 +156,9 @@ class PermissionAuthTest(TestCaseWithFactory):
         )
         self.assertEqual(check.get_perms(self.job), [])
         for perm in perms:
-            self.assertFalse(check.has_perm(perm, self.job))
+            self.assertFalse(
+                check.has_perm("%s.%s" % (content_type.app_label, perm), self.job)
+            )
 
     def test_not_active_user(self):
         user = User.objects.create(username="notactive")
@@ -156,18 +166,18 @@ class PermissionAuthTest(TestCaseWithFactory):
         GroupObjectPermission.objects.assign_perm("admin_testjob", self.group, self.job)
 
         check = PermissionAuth(user)
-        self.assertTrue(check.has_perm("admin_testjob", self.job))
+        self.assertTrue(check.has_perm("lava_scheduler_app.admin_testjob", self.job))
         user.is_active = False
-        self.assertFalse(check.has_perm("admin_testjob", self.job))
+        self.assertFalse(check.has_perm("lava_scheduler_app.admin_testjob", self.job))
 
         user = User.objects.create(username="notactive-cache")
         user.groups.add(self.group)
         GroupObjectPermission.objects.assign_perm("admin_testjob", self.group, self.job)
 
         check = PermissionAuth(user)
-        self.assertTrue(check.has_perm("admin_testjob", self.job))
+        self.assertTrue(check.has_perm("lava_scheduler_app.admin_testjob", self.job))
         user.is_active = False
-        self.assertFalse(check.has_perm("admin_testjob", self.job))
+        self.assertFalse(check.has_perm("lava_scheduler_app.admin_testjob", self.job))
 
     def test_get_perms(self):
         device1 = self.factory.make_device(
@@ -214,23 +224,23 @@ class PermissionAuthTest(TestCaseWithFactory):
             self.assertEqual(len(auth._cache), len(prefetched_objects))
 
             # Permission check shouldn't spawn any queries
-            self.assertTrue(auth.has_perm("admin_testjob", job1))
+            self.assertTrue(auth.has_perm("lava_scheduler_app.admin_testjob", job1))
             self.assertEqual(len(connection.queries), query_count)
 
             # Check for other permission with same object shouldn't spawn any
             # queries as well
-            auth.has_perm("admin_testjob", job1)
+            auth.has_perm("lava_scheduler_app.admin_testjob", job1)
             self.assertEqual(len(connection.queries), query_count)
 
             # Check for same model but other object shouldn't spawn any
             # queries
-            self.assertTrue(auth.has_perm("admin_testjob", job2))
+            self.assertTrue(auth.has_perm("lava_scheduler_app.admin_testjob", job2))
             self.assertEqual(len(connection.queries), query_count)
 
             # Check for same model but other object shouldn't spawn
             # any queries. Even though user doesn't have perms on job2, we
             # still should not hit DB.
-            auth.has_perm("admin_testjob", job2)
+            auth.has_perm("lava_scheduler_app.admin_testjob", job2)
             self.assertEqual(len(connection.queries), query_count)
         finally:
             settings.DEBUG = False
@@ -244,19 +254,19 @@ class PermissionAuthTest(TestCaseWithFactory):
             auth = PermissionAuth(self.user)
 
             query_count = len(connection.queries)
-            res = auth.has_perm("admin_device", self.device)
+            res = auth.has_perm("lava_scheduler_app.admin_device", self.device)
             expected = 2
             self.assertEqual(len(connection.queries), query_count + expected)
 
             # Another check shouldn't spawn any queries
             query_count = len(connection.queries)
-            res_new = auth.has_perm("admin_device", self.device)
+            res_new = auth.has_perm("lava_scheduler_app.admin_device", self.device)
             self.assertEqual(res, res_new)
             self.assertEqual(len(connection.queries), query_count)
 
             # Check for same model but other object shouldn't spawn any
             # queries
-            auth.has_perm("submit_to_device", self.device)
+            auth.has_perm("lava_scheduler_app.submit_to_device", self.device)
             self.assertEqual(len(connection.queries), query_count)
 
             # Checking for same model but other instance should spawn 1 query
@@ -264,13 +274,13 @@ class PermissionAuthTest(TestCaseWithFactory):
                 device_type=self.device_type, hostname="qemu-11"
             )
             query_count = len(connection.queries)
-            auth.has_perm("view_device", new_device)
+            auth.has_perm("lava_scheduler_app.view_device", new_device)
             self.assertEqual(len(connection.queries), query_count + 1)
 
             # Checking for permission for other model should spawn 2 queries
             # every added direct relation adds one more query..
             query_count = len(connection.queries)
-            auth.has_perm("admin_testjob", self.job)
+            auth.has_perm("lava_scheduler_app.admin_testjob", self.job)
             self.assertEqual(len(connection.queries), query_count + 2)
         finally:
             settings.DEBUG = False
@@ -279,14 +289,16 @@ class PermissionAuthTest(TestCaseWithFactory):
         auth = PermissionAuth(self.user)
         # Cannot use device permissions with TestJob content_type.
         with TestCase.assertRaises(self, ValueError):
-            auth.filter_queryset_by_perms(["submit_to_device"], TestJob.objects.all())
+            auth.filter_queryset_by_perms(
+                ["lava_scheduler_app.submit_to_device"], TestJob.objects.all()
+            )
 
     def test_filter_queryset_by_perms_non_existing_permission(self):
         auth = PermissionAuth(self.user)
         # Cannot use non existing permissions.
         with TestCase.assertRaises(self, ValueError):
             auth.filter_queryset_by_perms(
-                ["wrong_permission_name"], TestJob.objects.all()
+                ["lava_scheduler_app.wrong_permission_name"], TestJob.objects.all()
             )
 
     def test_filter_queryset_by_perms_match_any_single_group(self):
@@ -311,26 +323,38 @@ class PermissionAuthTest(TestCaseWithFactory):
             queryset = testjobs.filter(
                 Q(
                     pk__in=auth.filter_queryset_by_perms(
-                        ["cancel_resubmit_testjob"], testjobs
+                        ["lava_scheduler_app.cancel_resubmit_testjob"], testjobs
                     )
                 )
             )
             self.assertEqual(list(queryset), [job1, job2])
 
             queryset = testjobs.filter(
-                Q(pk__in=auth.filter_queryset_by_perms(["admin_testjob"], testjobs))
+                Q(
+                    pk__in=auth.filter_queryset_by_perms(
+                        ["lava_scheduler_app.admin_testjob"], testjobs
+                    )
+                )
             )
             self.assertEqual(list(queryset), [job1])
 
             queryset = testjobs.filter(
-                Q(pk__in=auth.filter_queryset_by_perms(["view_testjob"], testjobs))
+                Q(
+                    pk__in=auth.filter_queryset_by_perms(
+                        ["lava_scheduler_app.view_testjob"], testjobs
+                    )
+                )
             )
             self.assertEqual(list(queryset), [job1, job2])
 
             queryset = testjobs.filter(
                 Q(
                     pk__in=auth.filter_queryset_by_perms(
-                        ["cancel_resubmit_testjob", "admin_testjob"], testjobs
+                        [
+                            "lava_scheduler_app.cancel_resubmit_testjob",
+                            "lava_scheduler_app.admin_testjob",
+                        ],
+                        testjobs,
                     )
                 )
             )
@@ -342,7 +366,7 @@ class PermissionAuthTest(TestCaseWithFactory):
             query_count = len(connection.queries)
 
             queryset = auth.filter_queryset_by_perms(
-                ["cancel_resubmit_testjob"], testjobs
+                ["lava_scheduler_app.cancel_resubmit_testjob"], testjobs
             )
             self.assertEqual(set(queryset), {str(job1.pk), str(job2.pk)})
             self.assertEqual(len(connection.queries), query_count + 3)
@@ -371,26 +395,38 @@ class PermissionAuthTest(TestCaseWithFactory):
         queryset = testjobs.filter(
             Q(
                 pk__in=auth.filter_queryset_by_perms(
-                    ["cancel_resubmit_testjob"], testjobs
+                    ["lava_scheduler_app.cancel_resubmit_testjob"], testjobs
                 )
             )
         )
         self.assertEqual(list(queryset), [job1, job2])
 
         queryset = testjobs.filter(
-            Q(pk__in=auth.filter_queryset_by_perms(["admin_testjob"], testjobs))
+            Q(
+                pk__in=auth.filter_queryset_by_perms(
+                    ["lava_scheduler_app.admin_testjob"], testjobs
+                )
+            )
         )
         self.assertEqual(list(queryset), [job1])
 
         queryset = testjobs.filter(
-            Q(pk__in=auth.filter_queryset_by_perms(["view_testjob"], testjobs))
+            Q(
+                pk__in=auth.filter_queryset_by_perms(
+                    ["lava_scheduler_app.view_testjob"], testjobs
+                )
+            )
         )
         self.assertEqual(list(queryset), [job1, job2])
 
         queryset = testjobs.filter(
             Q(
                 pk__in=auth.filter_queryset_by_perms(
-                    ["cancel_resubmit_testjob", "admin_testjob"], testjobs
+                    [
+                        "lava_scheduler_app.cancel_resubmit_testjob",
+                        "lava_scheduler_app.admin_testjob",
+                    ],
+                    testjobs,
                 )
             )
         )
@@ -402,7 +438,7 @@ class PermissionAuthTest(TestCaseWithFactory):
         queryset = testjobs.filter(
             Q(
                 pk__in=auth.filter_queryset_by_perms(
-                    ["cancel_resubmit_testjob"], testjobs
+                    ["lava_scheduler_app.cancel_resubmit_testjob"], testjobs
                 )
             )
         )
@@ -427,7 +463,10 @@ class PermissionAuthTest(TestCaseWithFactory):
         queryset = testjobs.filter(
             Q(
                 pk__in=auth.filter_queryset_by_perms(
-                    ["cancel_resubmit_testjob", "admin_testjob"],
+                    [
+                        "lava_scheduler_app.cancel_resubmit_testjob",
+                        "lava_scheduler_app.admin_testjob",
+                    ],
                     testjobs,
                     match_all=True,
                 )
@@ -447,7 +486,9 @@ class PermissionAuthTest(TestCaseWithFactory):
         queryset = testjobs.filter(
             Q(
                 pk__in=auth.filter_queryset_by_perms(
-                    ["cancel_resubmit_testjob"], testjobs, match_all=True
+                    ["lava_scheduler_app.cancel_resubmit_testjob"],
+                    testjobs,
+                    match_all=True,
                 )
             )
         )
@@ -456,7 +497,7 @@ class PermissionAuthTest(TestCaseWithFactory):
         queryset = testjobs.filter(
             Q(
                 pk__in=auth.filter_queryset_by_perms(
-                    ["admin_testjob"], testjobs, match_all=True
+                    ["lava_scheduler_app.admin_testjob"], testjobs, match_all=True
                 )
             )
         )

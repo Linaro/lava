@@ -36,11 +36,10 @@ class PermissionAuth:
 
         Checks for unsupported models will return False.
 
-        :param perm: permission as string, may or may not contain app_label
+        :param perm: permission as string, must contain app_label
         :param obj: Django model instance for which permission should be checked
         """
-        if "." in perm:
-            _, perm = perm.split(".", 1)
+        _, perm = perm.split(".", 1)
 
         # Handle anonymous users.
         if not self.user.is_authenticated:
@@ -59,6 +58,7 @@ class PermissionAuth:
     def get_group_perms(self, obj):
         from lava_scheduler_app.models import GroupObjectPermission
 
+        content_type = ContentType.objects.get_for_model(obj)
         perms_queryset = Permission.objects.filter(
             content_type=ContentType.objects.get_for_model(obj)
         )
@@ -69,9 +69,7 @@ class PermissionAuth:
             get_user_model().groups.field.related_query_name(),
         )
         group_filters = {fieldname: self.user}
-        group_filters[
-            "%s__content_type" % rel_name
-        ] = ContentType.objects.get_for_model(obj)
+        group_filters["%s__content_type" % rel_name] = content_type
         group_filters["%s__object_id" % rel_name] = obj.pk
 
         group_perms_queryset = perms_queryset.filter(**group_filters)
@@ -187,7 +185,7 @@ class PermissionAuth:
         permissions perms.
         Permission must match the content_type of the specified queryset.
 
-        :param perms: permissions as a list, may or may not contain app_label
+        :param perms: permissions as a list, must contain app_label
         :param queryset: Django queryset to be filtered by perms
         :param match_all: If True, then user needs to have all requested
                           permissions for each object. Otherwise, at least one.
@@ -197,16 +195,12 @@ class PermissionAuth:
         perm_codenames = set()
 
         for perm in perms:
-            if "." in perm:
-                app_label, codename = perm.split(".", 1)
-                if app_label is not None:
-                    if app_label != content_type.app_label:
-                        raise ValueError(
-                            "perm should belong to the same app as queryset content type provided (%s, %s)"
-                            % (app_label, content_type.app_label)
-                        )
-            else:
-                codename = perm
+            app_label, codename = perm.split(".", 1)
+            if app_label != content_type.app_label:
+                raise ValueError(
+                    "perm should belong to the same app as queryset content type provided (%s, %s)"
+                    % (app_label, content_type.app_label)
+                )
             # Raise if the permission does not belong to the provided
             # content_type or is generally non existing.
             try:

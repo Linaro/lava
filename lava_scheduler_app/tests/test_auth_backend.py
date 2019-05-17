@@ -1,5 +1,4 @@
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Permission
 from django.test import TestCase
 
 from lava_server.backends import GroupPermissionBackend, is_object_supported
@@ -69,23 +68,20 @@ class BackendAuthTest(TestCaseWithFactory):
 
     def test_has_perm(self):
         GroupObjectPermission.objects.assign_perm("admin_testjob", self.group, self.job)
-        self.assertTrue(self.backend.has_perm(self.user, "admin_testjob", self.job))
         self.assertTrue(
             self.backend.has_perm(
                 self.user, "lava_scheduler_app.admin_testjob", self.job
             )
         )
         self.assertTrue(
-            self.backend.has_perm(self.user, "cancel_resubmit_testjob", self.job)
+            self.backend.has_perm(
+                self.user, "lava_scheduler_app.cancel_resubmit_testjob", self.job
+            )
         )
-        self.assertFalse(self.backend.has_perm(self.user, "view_device", self.device))
-
-    def test_has_global_perm(self):
-        user = self.factory.make_user()
-        user.user_permissions.add(Permission.objects.get(codename="admin_testjob"))
-        self.assertTrue(self.backend.has_perm(user, "admin_testjob", self.job))
-        self.assertTrue(
-            self.backend.has_perm(user, "lava_scheduler_app.admin_testjob", self.job)
+        self.assertFalse(
+            self.backend.has_perm(
+                self.user, "lava_scheduler_app.view_device", self.device
+            )
         )
 
     def test_has_perm_wrong_app_label(self):

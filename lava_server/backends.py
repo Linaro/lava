@@ -47,18 +47,14 @@ class GroupPermissionBackend(ModelBackend):
         if not is_object_supported(obj):
             return False
 
-        if "." not in perm:
-            # need to append app_label so we can check for global perms.
-            perm = "%s.%s" % (obj._meta.app_label, perm)
-        else:
-            app_label, _ = perm.split(".", maxsplit=1)
-            if app_label != obj._meta.app_label:
-                raise ValueError("Passed perm has wrong app label: '%s'" % app_label)
+        app_label, _ = perm.split(".", maxsplit=1)
+        if app_label != obj._meta.app_label:
+            raise ValueError("Passed perm has wrong app label: '%s'" % app_label)
 
         # Check global permissions. This is also done in ModelBackend.has_perm
         # but it does not support shortened permission codenames.
-        if perm in super().get_all_permissions(user):
-            return True
+        # if perm in super().get_all_permissions(user):
+        #    return True
 
         auth = PermissionAuth(user)
         return auth.has_perm(perm, obj)
