@@ -18,21 +18,25 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import re
 import contextlib
 import subprocess  # nosec dpkg
 from lava_common.exceptions import InfrastructureError
 
 
-def binary_version(binary, flags=""):
+def binary_version(binary, flags="", pattern=""):
     """
     Returns a string with the version of the binary by running it with
-    the provided flags.
+    the provided flags. If the output from running the binary is verbose
+    and contains more than just the version number, a pattern can be
+    provided for the function to parse the output to pick out the
+    substring that contains the version number.
     """
     # if binary is not absolute, fail.
     msg = "Unable to retrieve version of %s" % binary
     try:
         ver_str = (
-            subprocess.check_output((binary, flags))
+            subprocess.check_output((binary, flags), stderr=subprocess.STDOUT)
             .strip()
             .decode("utf-8", errors="replace")
         )
@@ -40,6 +44,15 @@ def binary_version(binary, flags=""):
             raise InfrastructureError(msg)
     except (subprocess.CalledProcessError, FileNotFoundError):
         raise InfrastructureError(msg)
+
+    if pattern is not "":
+        p = re.compile(pattern)
+        result = p.search(ver_str)
+        if result is not None:
+            ver_str = result.group(1)
+        else:
+            raise InfrastructureError(msg)
+
     return "%s, version %s" % (binary, ver_str)
 
 
