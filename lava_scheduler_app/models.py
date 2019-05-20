@@ -121,8 +121,7 @@ class GroupObjectPermission(models.Model):
         # Get or create a group that matches the users' username.
         # Then ensure that only this user is belonging to his group.
         group, _ = Group.objects.get_or_create(name=user.username)
-        group.user_set.clear()
-        group.user_set.add(user)
+        group.user_set.set({user}, clear=True)
         return group
 
 
@@ -222,9 +221,7 @@ class RestrictedObject(models.Model):
             "object_id": self.pk,
             "permission__codename": perm,
         }
-        if GroupObjectPermission.objects.filter(**filters).exists():
-            return True
-        return False
+        return GroupObjectPermission.objects.filter(**filters).exists()
 
     def has_any_permission_restrictions(self, perm):
         raise NotImplementedError("Should implement this")
@@ -739,9 +736,10 @@ class Device(RestrictedResource, RestrictedObject):
         if not self.is_permission_restricted(perm):
             if self.device_type.has_any_permission_restrictions(perm):
                 return True
+            else:
+                return False
         else:
             return True
-        return False
 
     def is_visible_to(self, user):
         """
@@ -1955,9 +1953,10 @@ class TestJob(RestrictedResource, RestrictedObject):
                 return True
             elif self.requested_device_type.has_any_permission_restrictions(perm):
                 return True
+            else:
+                return False
         else:
             return True
-        return False
 
     def can_view(self, user):
         """

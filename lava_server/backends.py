@@ -51,11 +51,6 @@ class GroupPermissionBackend(ModelBackend):
         if app_label != obj._meta.app_label:
             raise ValueError("Passed perm has wrong app label: '%s'" % app_label)
 
-        # Check global permissions. This is also done in ModelBackend.has_perm
-        # but it does not support shortened permission codenames.
-        # if perm in super().get_all_permissions(user):
-        #    return True
-
         auth = PermissionAuth(user)
         return auth.has_perm(perm, obj)
 
