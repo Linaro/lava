@@ -367,6 +367,7 @@ def _validate_multinode(data_object):
 
     # List the roles
     roles = list(multi["roles"].keys())
+    context_schema = _context_schema()
     # Check that "host_role" and "expect_role" does exist
     for role in roles:
         host_role = multi["roles"][role].get("host_role")
@@ -384,6 +385,9 @@ def _validate_multinode(data_object):
                 )
         elif expect_role is not None:
             raise SubmissionException("'expect_role' without 'host_role'")
+        # Check context
+        context = multi["roles"][role].get("context", {})
+        context_schema(context)
 
 
 def _job_protocols_schema():

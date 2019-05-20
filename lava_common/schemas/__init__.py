@@ -240,6 +240,37 @@ def job():
         Optional("verbose"): bool,
     }
 
+    context_variables = [  # qemu variables
+        "arch",
+        "boot_console",
+        "boot_root",
+        "cpu",
+        "extra_options",
+        "guestfs_driveid",
+        "guestfs_interface",
+        "guestfs_size",
+        "machine",
+        "memory",
+        "model",
+        "monitor",
+        "netdevice",
+        "serial",
+        "vga",
+        # others
+        "bootloader_prompt",
+        "console_device",
+        "extra_kernel_args",
+        "extra_nfsroot_args",
+        "kernel_loglevel",
+        "kernel_start_message",
+        "lava_test_results_dir",
+        "menu_interrupt_prompt",
+        "mustang_menu_list",
+        "test_character_delay",
+        "tftp_mac_address",
+        "uboot_extra_error_message",
+    ]
+
     return All(
         {
             Required("job_name"): All(str, Length(min=1, max=200)),
@@ -252,42 +283,7 @@ def job():
                 Optional("connections"): {str: timeout()},
             },
             Optional("context"): Schema(
-                {
-                    In(
-                        [
-                            # qemu variables
-                            "arch",
-                            "boot_console",
-                            "boot_root",
-                            "cpu",
-                            "extra_options",
-                            "guestfs_driveid",
-                            "guestfs_interface",
-                            "guestfs_size",
-                            "machine",
-                            "memory",
-                            "model",
-                            "monitor",
-                            "netdevice",
-                            "serial",
-                            "vga",
-                            # others
-                            "bootloader_prompt",
-                            "console_device",
-                            "extra_kernel_args",
-                            "extra_nfsroot_args",
-                            "kernel_loglevel",
-                            "kernel_start_message",
-                            "lava_test_results_dir",
-                            "menu_interrupt_prompt",
-                            "mustang_menu_list",
-                            "test_character_delay",
-                            "tftp_mac_address",
-                            "uboot_extra_error_message",
-                        ]
-                    ): Any(int, str, [int, str])
-                },
-                extra=False,
+                {In(context_variables): Any(int, str, [int, str])}, extra=False
             ),
             Optional("metadata"): {str: object},
             Optional("priority"): Any("high", "medium", "low", Range(min=0, max=100)),
@@ -302,7 +298,10 @@ def job():
                             {
                                 Required("device_type"): str,
                                 Required("count"): Range(min=0),
-                                Optional("context"): dict,
+                                Optional("context"): Schema(
+                                    {In(context_variables): Any(int, str, [int, str])},
+                                    extra=False,
+                                ),
                                 Optional("tags"): [str],
                                 Optional("timeout"): timeout(),
                             },
@@ -314,6 +313,10 @@ def job():
                                 Optional("request"): str,
                                 Optional("tags"): [str],
                                 Optional("timeout"): timeout(),
+                                Optional("context"): Schema(
+                                    {In(context_variables): Any(int, str, [int, str])},
+                                    extra=False,
+                                ),
                             },
                         )
                     },
