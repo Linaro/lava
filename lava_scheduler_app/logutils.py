@@ -57,9 +57,16 @@ def _open_logs(directory):
 
 def read_logs(dir_name, start=0, end=None):
     directory = pathlib.Path(dir_name)
+
+    # Only create the index if needed
+    if start == 0 and end is None:
+        with _open_logs(directory) as f_log:
+            return f_log.read().decode("utf-8")
+
+    # Create the index
     if not (directory / "output.idx").exists():
         _build_index(directory)
-
+    # use it now
     with open(str(directory / "output.idx"), "rb") as f_idx:
         start_offset = _get_line_offset(f_idx, start)
         if start_offset is None:
