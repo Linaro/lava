@@ -87,6 +87,7 @@ actions:
     role:
     - guest
     method: ssh
+    connection: ssh
     prompts:
     - 'root@linaro-developer:'
     parameters:
