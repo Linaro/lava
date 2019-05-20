@@ -159,10 +159,10 @@ dictionary. The information will then be populated into the
 
   .. code-block:: jinja
 
-  {% set environment = {
-      'RELAY_ADDRESS': '10.66.16.103',
-      'REMOTE_SERIAL_PORT': '/dev/ttyUSB2',
-  } %}
+   {% set environment = {
+       'RELAY_ADDRESS': '10.66.16.103',
+       'REMOTE_SERIAL_PORT': '/dev/ttyUSB2',
+   } %}
 
 .. _device_dictionary_other_parameters:
 
