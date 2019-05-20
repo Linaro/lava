@@ -18,8 +18,10 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 import datetime
+import lzma
+import pathlib
 import re
-from shutil import rmtree
+from shutil import chown, rmtree
 import time
 import yaml
 import voluptuous
@@ -145,6 +147,39 @@ class Command(BaseCommand):
             "that are present in the job definition but not defined in the schema",
         )
 
+        comp = sub.add_parser("compress", help="Compress the corresponding job logs")
+        comp.add_argument(
+            "--newer-than",
+            default=None,
+            type=str,
+            help="Compress jobs newer than this. The time is of the "
+            "form: 1h (one hour) or 2d (two days). "
+            "By default, all jobs will be compressed.",
+        )
+        comp.add_argument(
+            "--older-than",
+            default=None,
+            type=str,
+            help="Compress jobs older than this. The time is of the "
+            "form: 1h (one hour) or 2d (two days). "
+            "By default, all jobs logs will be compressed.",
+        )
+        comp.add_argument(
+            "--submitter", default=None, type=str, help="Filter jobs by submitter"
+        )
+        comp.add_argument(
+            "--dry-run",
+            default=False,
+            action="store_true",
+            help="Do not compress any logs, simulate the output",
+        )
+        comp.add_argument(
+            "--slow",
+            default=False,
+            action="store_true",
+            help="Be nice with the system by sleeping regularly",
+        )
+
     def handle(self, *_, **options):
         """ forward to the right sub-handler """
         if options["sub_command"] == "rm":
@@ -163,6 +198,14 @@ class Command(BaseCommand):
                 options["submitter"],
                 options["strict"],
                 options["mail_admins"],
+            )
+        elif options["sub_command"] == "compress":
+            self.handle_compress(
+                options["older_than"],
+                options["newer_than"],
+                options["submitter"],
+                options["dry_run"],
+                options["slow"],
             )
 
     def handle_fail(self, job_id):
@@ -285,3 +328,71 @@ class Command(BaseCommand):
                 body += "\n-- \nlava-server manage jobs validate"
                 mail_admins("Invalid jobs", body)
             raise CommandError("Some jobs are invalid")
+
+    def handle_compress(self, older_than, newer_than, submitter, simulate, slow):
+        if not older_than and not newer_than and not submitter:
+            raise CommandError("You should specify at least one filtering option")
+
+        jobs = TestJob.objects.all().order_by("id").filter(state=TestJob.STATE_FINISHED)
+        if older_than is not None:
+            pattern = re.compile(r"^(?P<time>\d+)(?P<unit>(h|d))$")
+            match = pattern.match(older_than)
+            if match is None:
+                raise CommandError("Invalid older-than format")
+
+            if match.groupdict()["unit"] == "d":
+                delta = datetime.timedelta(days=int(match.groupdict()["time"]))
+            else:
+                delta = datetime.timedelta(hours=int(match.groupdict()["time"]))
+            jobs = jobs.filter(end_time__lt=(timezone.now() - delta))
+
+        if newer_than is not None:
+            pattern = re.compile(r"^(?P<time>\d+)(?P<unit>(h|d))$")
+            match = pattern.match(newer_than)
+            if match is None:
+                raise CommandError("Invalid newer-than format")
+
+            if match.groupdict()["unit"] == "d":
+                delta = datetime.timedelta(days=int(match.groupdict()["time"]))
+            else:
+                delta = datetime.timedelta(hours=int(match.groupdict()["time"]))
+            jobs = jobs.filter(end_time__gt=(timezone.now() - delta))
+
+        if submitter is not None:
+            try:
+                user = User.objects.get(username=submitter)
+            except User.DoesNotExist:
+                raise CommandError("Unable to find submitter '%s'" % submitter)
+            jobs = jobs.filter(submitter=user)
+
+        self.stdout.write("Compressing %d jobs:" % jobs.count())
+
+        for (index, job) in enumerate(jobs):
+            base = pathlib.Path(job.output_dir)
+            if not (base / "output.yaml").exists():
+                self.stdout.write(
+                    "* %d (%s): %s [SKIP]" % (job.id, job.end_time, job.output_dir)
+                )
+                continue
+            self.stdout.write("* %d (%s): %s" % (job.id, job.end_time, job.output_dir))
+            try:
+                if not simulate:
+                    # Read the logs
+                    data = (base / "output.yaml").read_bytes()
+                    # Save the uncompressed size for later use
+                    (base / "output.yaml.size").write_text(
+                        str(len(data)), encoding="utf-8"
+                    )
+                    chown(str(base / "output.yaml.size"), "lavaserver", "lavaserver")
+                    # Compresse the logs
+                    with lzma.open(str(base / "output.yaml.xz"), "wb") as f_out:
+                        f_out.write(data)
+                    chown(str(base / "output.yaml.xz"), "lavaserver", "lavaserver")
+                    # Remove the original file
+                    (base / "output.yaml").unlink()
+            except OSError as exc:
+                self.stderr.write("  -> Unable to compress the logs: %s" % str(exc))
+
+            if slow and index % 100 == 99:
+                self.stdout.write("sleeping 2s...")
+                time.sleep(2)
