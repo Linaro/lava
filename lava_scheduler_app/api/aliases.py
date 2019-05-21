@@ -36,8 +36,8 @@ class SchedulerAliasesAPI(ExposedV2API):
 
         Description
         -----------
-        [superuser only]
         Create a device-type alias
+        Permission: lava_scheduler_app.add_alias
 
         Arguments
         ---------
@@ -77,8 +77,8 @@ class SchedulerAliasesAPI(ExposedV2API):
 
         Description
         -----------
-        [superuser only]
         Remove a device-type alias
+        Permission: lava_scheduler_app.delete_alias
 
         Arguments
         ---------
@@ -141,9 +141,8 @@ class SchedulerAliasesAPI(ExposedV2API):
         except Alias.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Alias '%s' was not found." % name)
 
-        if alias.device_type.owners_only and alias.device_type.some_devices_visible_to(
-            self.user
-        ):
+        dt = alias.device_type
+        if dt is None or (dt.owners_only and dt.some_devices_visible_to(self.user)):
             return {"name": alias.name, "device_type": ""}
 
         return {"name": alias.name, "device_type": alias.device_type.name}
