@@ -524,16 +524,16 @@ class LavaSystemAPI(SystemAPI):
                 )
         return yaml.dump(network_map)
 
-    def assign_perm_device_types(self, perm, device_type_list, group):
+    def assign_perm_device_type(self, perm, device_type, group):
         """
         Name
         ----
-        assign_perm_device_types(`perm`, `device_type_list`, `group`):
+        assign_perm_device_type(`perm`, `device_type`, `group`):
 
         Description
         -----------
 
-        Grant a permission to a specific group over a list of device types.
+        Grant a permission to a specific group over a device type.
 
         This function requires a superuser authentication.
 
@@ -543,16 +543,15 @@ class LavaSystemAPI(SystemAPI):
             Permission codename string. Currently supported permissions for
             Device_Types are 'view_devicetype', 'submit_to_devicetype' and
             'admin_devicetype'.
-        device_type_list: list
-            list of device type names to assign permissions for. Non-exising
-            device types will be ignored.
+        device_type: string
+            name of device type to assign permission for. Device type with
+            specified name must exist in LAVA.
         group: string
             group name to which the permission will be granted
 
         Return value
         ------------
-        A list of device types for which the permission was successfully
-        assigned.
+        No return value.
         """
         self._authenticate()
         if not self.user.is_superuser:
@@ -561,9 +560,9 @@ class LavaSystemAPI(SystemAPI):
                 "Permission denied for user '%s' to assign permissions. Needs administrator privileges."
                 % self.user,
             )
-        if not isinstance(device_type_list, list):
+        if not isinstance(device_type, str):
             raise xmlrpc.client.Fault(
-                errors.BAD_REQUEST, "device_type_list argument must be a list"
+                errors.BAD_REQUEST, "device_type name must be a string"
             )
         try:
             group = Group.objects.get(name=group)
@@ -572,23 +571,25 @@ class LavaSystemAPI(SystemAPI):
                 errors.BAD_REQUEST, "please use existing group name"
             )
 
-        device_types = DeviceType.objects.filter(name__in=device_type_list)
-        obj_permissions = GroupObjectPermission.objects.bulk_assign_perm(
-            perm, group, device_types
-        )
+        try:
+            device_type = DeviceType.objects.get(name=device_type)
+        except DeviceType.DoesNotExist:
+            raise xmlrpc.client.Fault(
+                errors.BAD_REQUEST, "please use existing device type name"
+            )
 
-        return [obj_perm.object_id for obj_perm in obj_permissions]
+        GroupObjectPermission.objects.assign_perm(perm, group, device_type)
 
-    def assign_perm_devices(self, perm, device_list, group):
+    def assign_perm_device(self, perm, device, group):
         """
         Name
         ----
-        assign_perm_devices(`perm`, `device_list`, `group`):
+        assign_perm_device(`perm`, `device`, `group`):
 
         Description
         -----------
 
-        Grant a permission to a specific group over a list of devices.
+        Grant a permission to a specific group over a device.
 
         This function requires a superuser authentication.
 
@@ -598,15 +599,15 @@ class LavaSystemAPI(SystemAPI):
             Permission codename string. Currently supported permissions for
             Devices are 'view_device', 'submit_to_device' and
             'admin_device'.
-        device_list: list
-            list of device hostnames to assign permissions for. Non-exising
-            device names will be ignored.
+        device: string
+            device hostname to assign permission for. Device with the specific
+            hostname must exist in LAVA.
         group: string
             group name to which the permission will be granted
 
         Return value
         ------------
-        A list of devices for which the permission was successfully assigned.
+        No return value.
         """
         self._authenticate()
         if not self.user.is_superuser:
@@ -615,9 +616,9 @@ class LavaSystemAPI(SystemAPI):
                 "Permission denied for user '%s' to assign permissions. Needs administrator privileges."
                 % self.user,
             )
-        if not isinstance(device_list, list):
+        if not isinstance(device, str):
             raise xmlrpc.client.Fault(
-                errors.BAD_REQUEST, "device_list argument must be a list"
+                errors.BAD_REQUEST, "device argument must be a string"
             )
         try:
             group = Group.objects.get(name=group)
@@ -626,23 +627,25 @@ class LavaSystemAPI(SystemAPI):
                 errors.BAD_REQUEST, "please use existing group name"
             )
 
-        devices = Device.objects.filter(hostname__in=device_list)
-        obj_permissions = GroupObjectPermission.objects.bulk_assign_perm(
-            perm, group, devices
-        )
+        try:
+            device = Device.objects.get(hostname=device)
+        except Device.DoesNotExist:
+            raise xmlrpc.client.Fault(
+                errors.BAD_REQUEST, "please use existing device hostname"
+            )
 
-        return [obj_perm.object_id for obj_perm in obj_permissions]
+        GroupObjectPermission.objects.assign_perm(perm, group, device)
 
-    def assign_perm_testjobs(self, perm, testjob_list, group):
+    def assign_perm_testjob(self, perm, testjob, group):
         """
         Name
         ----
-        assign_perm_testjobs(`perm`, `testjob_list`, `group`):
+        assign_perm_testjob(`perm`, `testjob`, `group`):
 
         Description
         -----------
 
-        Grant a permission to a specific group over a list of test jobs.
+        Grant a permission to a specific group over a test job.
 
         This function requires a superuser authentication.
 
@@ -652,15 +655,15 @@ class LavaSystemAPI(SystemAPI):
             Permission codename string. Currently supported permissions for
             Testjobs are 'view_testjob', 'cancel_resubmit_testjob' and
             'admin_testjob'.
-        testjob_list: list
-            list of test job IDs to assign permissions for. Non-exising
-            test jobs will be ignored.
+        testjob: int
+            test job ID to assign permission for. test job with specified ID
+            must exist in LAVA.
         group: string
             group name to which the permission will be granted
 
         Return value
         ------------
-        A list of test job IDs for which the permission was successfully assigned.
+        No return value.
         """
         self._authenticate()
         if not self.user.is_superuser:
@@ -669,9 +672,9 @@ class LavaSystemAPI(SystemAPI):
                 "Permission denied for user '%s' to assign permissions. Needs administrator privileges."
                 % self.user,
             )
-        if not isinstance(testjob_list, list):
+        if not isinstance(testjob, int):
             raise xmlrpc.client.Fault(
-                errors.BAD_REQUEST, "testjob_list argument must be a list"
+                errors.BAD_REQUEST, "testjob argument must be an int"
             )
         try:
             group = Group.objects.get(name=group)
@@ -680,12 +683,14 @@ class LavaSystemAPI(SystemAPI):
                 errors.BAD_REQUEST, "please use existing group name"
             )
 
-        testjobs = TestJob.objects.filter(id__in=testjob_list)
-        obj_permissions = GroupObjectPermission.objects.bulk_assign_perm(
-            perm, group, testjobs
-        )
+        try:
+            testjob = TestJob.objects.get(id=testjob)
+        except TestJob.DoesNotExist:
+            raise xmlrpc.client.Fault(
+                errors.BAD_REQUEST, "please use existing testjob ID"
+            )
 
-        return [obj_perm.object_id for obj_perm in obj_permissions]
+        GroupObjectPermission.objects.assign_perm(perm, group, testjob)
 
 
 class LavaMapper(Mapper):
