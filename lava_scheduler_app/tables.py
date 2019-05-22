@@ -601,7 +601,7 @@ class RecentJobsTable(JobTable):
             "end_time",
             "duration",
         )
-        exclude = ("actual_device", "requested_device_type")
+        exclude = ("device", "device_type", "actual_device", "requested_device_type")
 
 
 class DeviceHealthTable(LavaTable):
