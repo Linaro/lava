@@ -104,7 +104,6 @@ override_dh_auto_clean:
 	find . -path '*/__pycache__/*' -delete
 	$(RM) -r lava.egg-info setup.cfg .idea/ build/
 	$(RM) -r .eggs/ versiontools-*.egg/ doc/build/ doc/html/
-	$(RM) debian/lava-slave.service
 	find . -type d -name '__pycache__' -empty -delete
 	$(RM) -r dist/
 	$(RM) debian/*.service
