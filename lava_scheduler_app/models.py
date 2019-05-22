@@ -38,12 +38,7 @@ from django.contrib.admin.models import LogEntry, ADDITION, CHANGE
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.sites.models import Site
 from django.core.cache import cache
-from django.core.exceptions import (
-    ImproperlyConfigured,
-    ValidationError,
-    ObjectDoesNotExist,
-    MultipleObjectsReturned,
-)
+from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.urls import reverse
 from django.db import models
 from django.utils import timezone
@@ -141,8 +136,7 @@ class Alias(models.Model):
         return self.pk
 
     def full_clean(self, exclude=None, validate_unique=True):
-        dt_list = DeviceType.objects.filter(name=self.name)
-        if len(dt_list.all()) > 0:
+        if DeviceType.objects.filter(name=self.name).exists():
             raise ValidationError(
                 "DeviceType with name '%s' already exists." % self.name
             )
@@ -228,13 +222,12 @@ class DeviceType(models.Model):
     def __str__(self):
         if self.aliases.all():
             return (
-                self.name + "(" + ",".join([a.name for a in self.aliases.all()]) + ")"
+                self.name + " (" + ", ".join([a.name for a in self.aliases.all()]) + ")"
             )
         return self.name
 
     def full_clean(self, exclude=None, validate_unique=True):
-        alias_list = Alias.objects.filter(name=self.name)
-        if len(alias_list.all()) > 0:
+        if Alias.objects.filter(name=self.name).exists():
             raise ValidationError("Alias with name '%s' already exists." % self.name)
         super().full_clean(exclude=exclude, validate_unique=validate_unique)
 
@@ -1065,16 +1058,17 @@ def _get_device_type(user, name):
     """
     logger = logging.getLogger("lava_scheduler_app")
     # try to find matching alias first
-    device_alias = Alias.objects.filter(name=name)
-    if len(device_alias) == 0:
+    try:
+        alias = Alias.objects.get(name=name)
+        device_type = alias.device_type
+    except Alias.DoesNotExist:
         try:
             device_type = DeviceType.objects.get(name=name)
-        except (ObjectDoesNotExist, MultipleObjectsReturned) as e:
-            msg = "Device type '%s' is unavailable. %s" % (name, e)
+        except DeviceType.DoesNotExist:
+            msg = "Device type '%s' is unavailable." % name
             logger.error(msg)
             raise DevicesUnavailableException(msg)
-    else:  # there can be at most 1 as name is a primary key
-        device_type = device_alias[0].device_type
+
     if not device_type.some_devices_visible_to(user):
         msg = "Device type '%s' is unavailable to user '%s'" % (name, user.username)
         logger.error(msg)
