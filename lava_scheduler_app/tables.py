@@ -64,14 +64,14 @@ class RestrictedIDLinkColumn(IDLinkColumn):
 
 
 def pklink(record):
-    job_id = record
+    pk = record.pk
     if isinstance(record, TestJob):
-        job_id = record.pk
         if record.sub_jobs_list:
-            job_id = record.sub_id
+            pk = record.sub_id
+    verbose_name = record._meta.verbose_name.capitalize()
     return mark_safe(  # nosec - internal data
-        '<a href="%s" title="job summary">%s</a>'
-        % (record.get_absolute_url(), escape(job_id))
+        '<a href="%s" title="%s summary">%s</a>'
+        % (record.get_absolute_url(), escape(verbose_name), escape(pk))
     )
 
 

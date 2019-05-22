@@ -123,6 +123,9 @@ class ProcessorFamily(models.Model):
 
 
 class Alias(models.Model):
+    class Meta:
+        verbose_name_plural = "Aliases"
+
     name = models.CharField(
         primary_key=True,
         verbose_name="Alias for this device-type",
@@ -220,10 +223,6 @@ class DeviceType(models.Model):
     )
 
     def __str__(self):
-        if self.aliases.all():
-            return (
-                self.name + " (" + ", ".join([a.name for a in self.aliases.all()]) + ")"
-            )
         return self.name
 
     def full_clean(self, exclude=None, validate_unique=True):
