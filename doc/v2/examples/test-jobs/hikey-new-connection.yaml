@@ -65,8 +65,8 @@ actions:
 - boot:
     # make the connection to the second uart for use in the test shell
     namespace: isolation
-    uart: uart0
-    method: console
+    connection: uart0
+    method: new_connection
 
 # boot hikey block
 - boot:
