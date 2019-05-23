@@ -26,46 +26,64 @@ import sys
 import voluptuous as v
 import yaml
 
-from lava_common.schemas import validate
+from lava_common.schemas import validate as validate_job
+from lava_common.schemas.device import validate as validate_device
 
 
-def check_job(data, options, prefix=""):
+def check_device(data, options, prefix=""):
     try:
         data = yaml.safe_load(data)
-    except yaml.YAMLError as exc:
-        print("%sInvalid job definition:" % prefix)
+    except yaml.yamlerror as exc:
+        print("%sinvalid device definition:" % prefix)
         print("%sinvalid yaml" % prefix)
         return 1
     try:
-        validate(data, options.strict)
+        validate_device(data)
     except v.Invalid as exc:
-        print("%sInvalid job definition:" % prefix)
+        print("%sinvalid device definition:" % prefix)
         print("%skey: %s" % (prefix, exc.path))
         print("%smgs: %s" % (prefix, exc.msg))
         return 1
     return 0
 
 
-def handle_job(options):
+def check_job(data, options, prefix=""):
+    try:
+        data = yaml.safe_load(data)
+    except yaml.yamlerror as exc:
+        print("%sinvalid job definition:" % prefix)
+        print("%sinvalid yaml" % prefix)
+        return 1
+    try:
+        validate_job(data, options.strict)
+    except v.Invalid as exc:
+        print("%sinvalid job definition:" % prefix)
+        print("%skey: %s" % (prefix, exc.path))
+        print("%smgs: %s" % (prefix, exc.msg))
+        return 1
+    return 0
+
+
+def handle(options, files, check):
     failed = 0
-    for jobfile in options.jobs:
-        if jobfile.is_dir() and options.recursive:
-            job_iter = jobfile.rglob("*.yaml")
+    for fileobj in files:
+        if fileobj.is_dir() and options.recursive:
+            files_iter = fileobj.rglob("*.yaml")
         else:
-            job_iter = [jobfile]
-        for job in job_iter:
-            if not job.as_posix() == "-" and not job.is_file():
+            files_iter = [fileobj]
+        for f in files_iter:
+            if not f.as_posix() == "-" and not f.is_file():
                 continue
-            if job.name in options.exclude:
-                print("* %s [skip]" % str(job))
+            if f.name in options.exclude:
+                print("* %s [skip]" % str(f))
                 continue
-            if job.as_posix() == "-":
+            if f.as_posix() == "-":
                 print("* stdin")
                 data = sys.stdin.read()
             else:
-                print("* %s" % str(job))
-                data = job.read_text(encoding="utf-8")
-            if check_job(data, options, prefix="  -> "):
+                print("* %s" % str(f))
+                data = f.read_text(encoding="utf-8")
+            if check(data, options, prefix="  -> "):
                 failed += 1
 
     return failed
@@ -75,6 +93,8 @@ def main():
     parser = argparse.ArgumentParser()
     sub = parser.add_subparsers(dest="sub_command")
     sub.required = True
+
+    # "job"
     job_parser = sub.add_parser("job", help="check job schema")
 
     job_parser.add_argument("jobs", type=pathlib.Path, nargs="+", help="job definition")
@@ -92,10 +112,29 @@ def main():
         "--strict", action="store_true", default=False, help="make the validator strict"
     )
 
+    # "device"
+    device_parser = sub.add_parser("device", help="check device schema")
+    device_parser.add_argument(
+        "devices", type=pathlib.Path, nargs="+", help="device definition"
+    )
+    device_parser.add_argument(
+        "--exclude", type=str, default=[], action="append", help="exclude some devices"
+    )
+    device_parser.add_argument(
+        "--recursive",
+        "-r",
+        action="store_true",
+        default=False,
+        help="recurse on directories",
+    )
+
+    # Parse the command line
     options = parser.parse_args()
 
     if options.sub_command == "job":
-        return handle_job(options)
+        return handle(options, options.jobs, check_job)
+    elif options.sub_command == "device":
+        return handle(options, options.devices, check_device)
     raise NotImplementedError("Unsupported command")
 
 
