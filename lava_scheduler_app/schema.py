@@ -34,6 +34,10 @@ from voluptuous import (
     Schema,
 )
 
+from lava_common.schemas import CONTEXT_VARIABLES
+
+from django.conf import settings
+
 INVALID_CHARACTER_ERROR_MSG = "Invalid character"
 
 
@@ -102,45 +106,8 @@ def _simple_params():
 
 
 def _context_schema():
-    return Schema(
-        {
-            In(
-                [
-                    # qemu variables
-                    "arch",
-                    "boot_console",
-                    "boot_root",
-                    "cpu",
-                    "extra_options",
-                    "guestfs_driveid",
-                    "guestfs_interface",
-                    "guestfs_size",
-                    "machine",
-                    "memory",
-                    "model",
-                    "monitor",
-                    "netdevice",
-                    "serial",
-                    "vga",
-                    # others
-                    "bootloader_prompt",
-                    "console_device",
-                    "extra_kernel_args",
-                    "extra_nfsroot_args",
-                    "kernel_loglevel",
-                    "kernel_start_message",
-                    "lava_test_results_dir",
-                    "menu_interrupt_prompt",
-                    "mustang_menu_list",
-                    "test_character_delay",
-                    "tftp_mac_address",
-                    "uboot_extra_error_message",
-                    "uboot_needs_interrupt",
-                ]
-            ): Any(int, str, [int, str])
-        },
-        extra=False,
-    )
+    context_variables = CONTEXT_VARIABLES + settings.EXTRA_CONTEXT_VARIABLES
+    return Schema({In(context_variables): Any(int, str, [int, str])}, extra=False)
 
 
 def _job_boot_schema():

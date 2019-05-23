@@ -567,3 +567,15 @@ You can change the default value by editing
 ``/etc/lava-server/settings.conf``::
 
   "TESTCASE_COUNT_LIMIT": 1000,
+
+
+Extending the schema white list
+*******************************
+
+Since LAVA 2019.04, the keys that can be used in the job definition **context**
+dictionary is restricted. Admins can extend this white list by updating
+``EXTRA_CONTEXT_VARIABLES`` in the settings:
+
+Add to ``/etc/lava-server/settings.conf``::
+
+  "EXTRA_CONTEXT_VARIABLES": ["custom_variable1", "variable_2"],

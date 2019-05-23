@@ -40,6 +40,40 @@ from voluptuous import (
 from lava_common.timeout import Timeout
 
 
+CONTEXT_VARIABLES = [
+    # qemu variables
+    "arch",
+    "boot_console",
+    "boot_root",
+    "cpu",
+    "extra_options",
+    "guestfs_driveid",
+    "guestfs_interface",
+    "guestfs_size",
+    "machine",
+    "memory",
+    "model",
+    "monitor",
+    "netdevice",
+    "serial",
+    "vga",
+    # others
+    "bootloader_prompt",
+    "console_device",
+    "extra_kernel_args",
+    "extra_nfsroot_args",
+    "kernel_loglevel",
+    "kernel_start_message",
+    "lava_test_results_dir",
+    "menu_interrupt_prompt",
+    "mustang_menu_list",
+    "test_character_delay",
+    "tftp_mac_address",
+    "uboot_extra_error_message",
+    "uboot_needs_interrupt",
+]
+
+
 def validate_action(name, data, strict=True):
     # Import the module
     try:
@@ -51,8 +85,8 @@ def validate_action(name, data, strict=True):
         raise Invalid(exc.msg, path=["actions"] + name.split(".")) from exc
 
 
-def validate(data, strict=True):
-    schema = Schema(job(), extra=not strict)
+def validate(data, strict=True, extra_context_variables=[]):
+    schema = Schema(job(extra_context_variables), extra=not strict)
     schema(data)
     for action in data["actions"]:
         # The job schema does already check the we have only one key
@@ -226,7 +260,8 @@ def check_secrets_visibility(data):
         raise Invalid('When using "secrets", visibility shouldn\'t be "public"')
 
 
-def job():
+def job(extra_context_variables=[]):
+    context_variables = CONTEXT_VARIABLES + extra_context_variables
     lava_lxc = {
         Required("name"): str,
         Required("distribution"): str,
@@ -239,38 +274,6 @@ def job():
         Optional("timeout"): timeout(),
         Optional("verbose"): bool,
     }
-
-    context_variables = [  # qemu variables
-        "arch",
-        "boot_console",
-        "boot_root",
-        "cpu",
-        "extra_options",
-        "guestfs_driveid",
-        "guestfs_interface",
-        "guestfs_size",
-        "machine",
-        "memory",
-        "model",
-        "monitor",
-        "netdevice",
-        "serial",
-        "vga",
-        # others
-        "bootloader_prompt",
-        "console_device",
-        "extra_kernel_args",
-        "extra_nfsroot_args",
-        "kernel_loglevel",
-        "kernel_start_message",
-        "lava_test_results_dir",
-        "menu_interrupt_prompt",
-        "mustang_menu_list",
-        "test_character_delay",
-        "tftp_mac_address",
-        "uboot_extra_error_message",
-        "uboot_needs_interrupt",
-    ]
 
     return All(
         {

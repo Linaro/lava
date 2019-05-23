@@ -137,7 +137,6 @@ TESTCASE_COUNT_LIMIT = 10000
 LOGIN_REDIRECT_URL = "/"
 
 # Automatically install some applications
-available_modules = list()
 for module_name in ["devserver", "django_extensions", "django_openid_auth", "hijack"]:
     with contextlib.suppress(ImportError):
         imp.find_module(module_name)
@@ -224,3 +223,6 @@ REST_FRAMEWORK = {
         "lava_rest_app.authentication.LavaTokenAuthentication",
     ),
 }
+
+# Extra context variables when validating the job definition schema
+EXTRA_CONTEXT_VARIABLES = []

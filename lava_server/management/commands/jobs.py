@@ -24,6 +24,7 @@ import time
 import yaml
 import voluptuous
 
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.mail import mail_admins
 from django.core.management.base import BaseCommand, CommandError, CommandParser
@@ -259,7 +260,7 @@ class Command(BaseCommand):
                 definition = job.original_definition
             data = yaml.safe_load(definition)
             try:
-                validate(data, strict)
+                validate(data, strict, settings.EXTRA_CONTEXT_VARIABLES)
                 print("* %s" % job.id)
             except voluptuous.Invalid as exc:
                 invalid[job.id] = {

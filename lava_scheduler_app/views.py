@@ -1206,9 +1206,11 @@ def job_submit(request):
             warnings = ""
             errors = ""
             try:
-                validate_job(request.POST.get("definition-input"))
                 try:
-                    validate(yaml.safe_load(request.POST.get("definition-input")))
+                    validate(
+                        yaml.safe_load(request.POST.get("definition-input")),
+                        extra_context_variables=settings.EXTRA_CONTEXT_VARIABLES,
+                    )
                 except voluptuous.Invalid as exc:
                     warnings = str(exc)
             except Exception as e:
@@ -1833,7 +1835,10 @@ def job_resubmit(request, pk):
                 try:
                     validate_job(request.POST.get("definition-input"))
                     try:
-                        validate(yaml.safe_load(request.POST.get("definition-input")))
+                        validate(
+                            yaml.safe_load(request.POST.get("definition-input")),
+                            extra_context_variables=settings.EXTRA_CONTEXT_VARIABLES,
+                        )
                     except voluptuous.Invalid as exc:
                         warnings = str(exc)
                 except Exception as e:

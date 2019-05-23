@@ -23,6 +23,8 @@ import voluptuous
 import xmlrpc.client
 import yaml
 
+from django.conf import settings
+
 from linaro_django_xmlrpc.models import ExposedV2API
 
 import lava_common.schemas as schemas
@@ -484,7 +486,11 @@ class SchedulerJobsAPI(ExposedV2API):
         """
         data = yaml.safe_load(definition)
         try:
-            schemas.validate(data, strict=strict)
+            schemas.validate(
+                data,
+                strict=strict,
+                extra_context_variables=settings.EXTRA_CONTEXT_VARIABLES,
+            )
             return {}
         except voluptuous.Invalid as exc:
             return {"path": exc.path, "msg": exc.msg}

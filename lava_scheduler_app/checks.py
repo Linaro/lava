@@ -23,6 +23,7 @@ import yaml
 import stat
 import subprocess  # nosec system
 
+from django.conf import settings
 from django.core.checks import Error, register, Info, Warning
 from voluptuous import Invalid
 
@@ -70,7 +71,11 @@ def check_health_checks(app_configs, **kwargs):
 
         # check the schema
         try:
-            validate(data, strict=False)
+            validate(
+                data,
+                strict=False,
+                extra_context_variables=settings.EXTRA_CONTEXT_VARIABLES,
+            )
         except Invalid as exc:
             errors.append(
                 Error(

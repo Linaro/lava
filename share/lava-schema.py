@@ -55,7 +55,7 @@ def check_job(data, options, prefix=""):
         print("%sinvalid yaml" % prefix)
         return 1
     try:
-        validate_job(data, options.strict)
+        validate_job(data, options.strict, options.context)
     except v.Invalid as exc:
         print("%sinvalid job definition:" % prefix)
         print("%skey: %s" % (prefix, exc.path))
@@ -110,6 +110,13 @@ def main():
     )
     job_parser.add_argument(
         "--strict", action="store_true", default=False, help="make the validator strict"
+    )
+    job_parser.add_argument(
+        "--context",
+        action="append",
+        default=[],
+        type=str,
+        help="extra context variables",
     )
 
     # "device"
