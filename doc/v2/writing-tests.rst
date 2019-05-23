@@ -419,7 +419,7 @@ directory at the end of the script.
 
 Example of a custom script wrapping the output:
 
-https://git.linaro.org/lava-team/refactoring.git/tree/functional/unittests.sh
+https://git.linaro.org/lava-team/refactoring.git/tree/functional/dispatcher-unittests.sh
 
 The script is simply called directly from the test shell definition:
 
