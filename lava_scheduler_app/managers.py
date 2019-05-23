@@ -37,13 +37,10 @@ class GroupObjectPermissionManager(models.Manager):
         if getattr(obj, "pk", None) is None:
             raise ObjectNotPersisted("Object needs to be persisted first")
         ctype = ContentType.objects.get_for_model(obj)
-        if not isinstance(perm, Permission):
-            try:
-                permission = Permission.objects.get(content_type=ctype, codename=perm)
-            except Permission.DoesNotExist:
-                raise PermissionNameError("Please use existing permission codename")
-        else:
-            permission = perm
+        try:
+            permission = Permission.objects.get(content_type=ctype, codename=perm)
+        except Permission.DoesNotExist:
+            raise PermissionNameError("Please use existing permission codename")
 
         kwargs = {
             "permission": permission,
@@ -60,10 +57,10 @@ class GroupObjectPermissionManager(models.Manager):
         """
 
         ctype = ContentType.objects.get_for_model(queryset.model)
-        if not isinstance(perm, Permission):
+        try:
             permission = Permission.objects.get(content_type=ctype, codename=perm)
-        else:
-            permission = perm
+        except Permission.DoesNotExist:
+            raise PermissionNameError("Please use existing permission codename")
 
         assigned_perms = []
         for instance in queryset:
@@ -82,10 +79,10 @@ class GroupObjectPermissionManager(models.Manager):
         Bulk assigns given permission for the object to a set of groups.
         """
         ctype = ContentType.objects.get_for_model(obj)
-        if not isinstance(perm, Permission):
+        try:
             permission = Permission.objects.get(content_type=ctype, codename=perm)
-        else:
-            permission = perm
+        except Permission.DoesNotExist:
+            raise PermissionNameError("Please use existing permission codename")
 
         kwargs = {"permission": permission}
         kwargs["content_type"] = ctype
@@ -111,10 +108,7 @@ class GroupObjectPermissionManager(models.Manager):
         filters = Q(**{"group": group})
 
         ctype = ContentType.objects.get_for_model(obj)
-        if isinstance(perm, Permission):
-            filters &= Q(permission=perm)
-        else:
-            filters &= Q(permission__codename=perm, permission__content_type=ctype)
+        filters &= Q(permission__codename=perm, permission__content_type=ctype)
 
         filters &= Q(content_type=ctype, object_id=obj.pk)
         return self.filter(filters).delete()
