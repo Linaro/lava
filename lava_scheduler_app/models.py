@@ -2135,8 +2135,8 @@ class Notification(models.Model):
 
     verbosity = models.IntegerField(choices=VERBOSITY_CHOICES, default=QUIET)
 
-    template = models.CharField(
-        max_length=50, default=None, null=True, blank=True, verbose_name="Template name"
+    template = models.TextField(
+        default=None, null=True, blank=True, verbose_name="Template name"
     )
 
     blacklist = ArrayField(
@@ -2155,13 +2155,13 @@ class Notification(models.Model):
         verbose_name="Query owner",
     )
 
-    query_name = models.CharField(
+    query_name = models.TextField(
         max_length=1024, default=None, null=True, blank=True, verbose_name="Query name"
     )
 
     entity = models.ForeignKey(ContentType, null=True, blank=True)
 
-    conditions = models.CharField(
+    conditions = models.TextField(
         max_length=400, default=None, null=True, blank=True, verbose_name="Conditions"
     )
 
@@ -2182,20 +2182,16 @@ class NotificationRecipient(models.Model):
         verbose_name="Notification user recipient",
     )
 
-    email = models.CharField(
-        max_length=100,
-        default=None,
-        null=True,
-        blank=True,
-        verbose_name="recipient email",
+    email = models.TextField(
+        default=None, null=True, blank=True, verbose_name="recipient email"
     )
 
-    irc_handle = models.CharField(
-        max_length=40, default=None, null=True, blank=True, verbose_name="IRC handle"
+    irc_handle = models.TextField(
+        default=None, null=True, blank=True, verbose_name="IRC handle"
     )
 
-    irc_server = models.CharField(
-        max_length=40, default=None, null=True, blank=True, verbose_name="IRC server"
+    irc_server = models.TextField(
+        default=None, null=True, blank=True, verbose_name="IRC server"
     )
 
     notification = models.ForeignKey(
@@ -2267,8 +2263,8 @@ class NotificationCallback(models.Model):
         Notification, null=False, on_delete=models.CASCADE, verbose_name="Notification"
     )
 
-    url = models.CharField(
-        max_length=200, default=None, null=True, blank=True, verbose_name="Callback URL"
+    url = models.TextField(
+        default=None, null=True, blank=True, verbose_name="Callback URL"
     )
 
     GET = 0
@@ -2284,12 +2280,8 @@ class NotificationCallback(models.Model):
         verbose_name=_("Callback method"),
     )
 
-    token = models.CharField(
-        max_length=200,
-        default=None,
-        null=True,
-        blank=True,
-        verbose_name="Callback token",
+    token = models.TextField(
+        default=None, null=True, blank=True, verbose_name="Callback token"
     )
 
     MINIMAL = 0
