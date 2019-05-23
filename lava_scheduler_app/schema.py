@@ -135,6 +135,7 @@ def _context_schema():
                     "test_character_delay",
                     "tftp_mac_address",
                     "uboot_extra_error_message",
+                    "uboot_needs_interrupt",
                 ]
             ): Any(int, str, [int, str])
         },
