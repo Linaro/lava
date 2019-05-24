@@ -1,0 +1,19 @@
+{% extends 'base-uboot.jinja2' %}
+
+
+{% set uboot_mkimage_arch = 'arm' %}
+{% set console_device = console_device|default('ttyS0') %}
+{% set baud_rate = baud_rate|default(115200) %}
+
+{% set base_high_limits = False %}
+{% if extra_kernel_args %}
+{% set extra_kernel_args = "root=/dev/mmcblk0p2 rw rootwait coherent_pool=2M; " + extra_kernel_args %}
+{% else %}
+{% set extra_kernel_args = "root=/dev/mmcblk0p2 rw rootwait coherent_pool=2M;" %}
+{% endif %}
+
+{% set bootloader_prompt = bootloader_prompt|default("=>") %}
+
+{% set bootz_kernel_addr = "0x01000000" %}
+{% set bootz_ramdisk_addr = "-" %}
+{% set bootz_dtb_addr = "0x00000100" %}
