@@ -40,10 +40,10 @@ class ConnectionFactory(Factory):  # pylint: disable=too-few-public-methods
     """
 
     def create_ssh_job(self, filename):
-        return self.create_job("ssh-host-01.jinja2", filename, validate_job=False)
+        return self.create_job("ssh-host-01.jinja2", filename, validate=False)
 
     def create_bbb_job(self, filename):
-        return self.create_job("bbb-02.jinja2", filename, validate_job=False)
+        return self.create_job("bbb-02.jinja2", filename, validate=False)
 
 
 class TestConnection(StdoutTestCase):  # pylint: disable=too-many-public-methods
@@ -646,7 +646,7 @@ class TestDisconnect(StdoutTestCase):
     def test_handled_disconnect(self):
         factory = ConnectionFactory()
         job = factory.create_job(
-            "mps2plus-01.jinja2", "sample_jobs/mps2plus.yaml", validate_job=False
+            "mps2plus-01.jinja2", "sample_jobs/mps2plus.yaml", validate=False
         )
         job.validate()
         deploy = [
@@ -657,7 +657,7 @@ class TestDisconnect(StdoutTestCase):
     def test_disconnect_with_plain_connection_command(self):
         factory = ConnectionFactory()
         job = factory.create_job(
-            "mps2plus-02.jinja2", "sample_jobs/mps2plus.yaml", validate_job=False
+            "mps2plus-02.jinja2", "sample_jobs/mps2plus.yaml", validate=False
         )
         # mps2plus-02.jinja2 does not use tags for it's connection
         with self.assertRaises(JobError):
@@ -666,7 +666,7 @@ class TestDisconnect(StdoutTestCase):
     def test_unhandled_disconnect(self):
         factory = ConnectionFactory()
         job = factory.create_job(
-            "mps2plus-03.jinja2", "sample_jobs/mps2plus.yaml", validate_job=False
+            "mps2plus-03.jinja2", "sample_jobs/mps2plus.yaml", validate=False
         )
         try:
             job.validate()

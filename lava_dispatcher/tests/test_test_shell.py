@@ -42,9 +42,7 @@ class TestSkipTimeouts(StdoutTestCase):
             os.path.dirname(__file__), "testdefs", "result-data.txt"
         )
         factory = Factory()
-        self.job = factory.create_kvm_job(
-            "sample_jobs/qemu-reboot.yaml", validate_job=True
-        )
+        self.job = factory.create_kvm_job("sample_jobs/qemu-reboot.yaml", validate=True)
         self.job.logger = DummyLogger()
         self.job.validate()
         self.ret = False

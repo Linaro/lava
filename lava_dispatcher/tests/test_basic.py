@@ -22,6 +22,7 @@ import os
 import sys
 import time
 import jinja2
+import voluptuous
 import unittest
 import logging
 import yaml
@@ -34,14 +35,11 @@ from lava_common.exceptions import (
     LAVAError,
     ConfigurationError,
 )
+from lava_common.schemas import validate as validate_job
+from lava_common.schemas.device import validate as validate_device
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.job import Job
 from lava_dispatcher.device import NewDevice
-from lava_scheduler_app.schema import (
-    validate_device,
-    validate_submission,
-    SubmissionException,
-)
 from lava_dispatcher.actions.deploy.image import DeployImages
 from lava_dispatcher.tests.utils import DummyLogger
 
@@ -216,11 +214,11 @@ class Factory:
         rendered = self.render_device_dictionary(hostname, data, job_ctx)
         try:
             ret = validate_device(yaml.safe_load(rendered))
-        except (SubmissionException, ConfigurationError) as exc:
+        except (voluptuous.Invalid, ConfigurationError) as exc:
             print("#######")
             print(rendered)
             print("#######")
-            self.fail(exc)
+            raise exc
         return ret
 
     def create_device(self, template, job_ctx=None):
@@ -244,9 +242,9 @@ class Factory:
         rendered = self.render_device_dictionary(hostname, data, job_ctx)
         return (rendered, data)
 
-    def create_custom_job(self, template, job_data, job_ctx=None, validate_job=True):
-        if validate_job:
-            validate_submission(job_data)
+    def create_custom_job(self, template, job_data, job_ctx=None, validate=True):
+        if validate:
+            validate_job(job_data, strict=False)
         if job_ctx:
             job_data["context"] = job_ctx
         else:
@@ -268,16 +266,16 @@ class Factory:
         job.logger = DummyLogger()
         return job
 
-    def create_job(self, template, filename, job_ctx=None, validate_job=True):
+    def create_job(self, template, filename, job_ctx=None, validate=True):
         y_file = os.path.join(os.path.dirname(__file__), filename)
         with open(y_file) as sample_job_data:
             job_data = yaml.safe_load(sample_job_data.read())
-        return self.create_custom_job(template, job_data, job_ctx, validate_job)
+        return self.create_custom_job(template, job_data, job_ctx, validate)
 
     def create_fake_qemu_job(self):
         return self.create_job("qemu01.jinja2", "sample_jobs/basics.yaml")
 
-    def create_kvm_job(self, filename, validate_job=False):
+    def create_kvm_job(self, filename, validate=False):
         """
         Custom function to allow for extra exception handling.
         """
@@ -299,8 +297,8 @@ class Factory:
             job_data = yaml.safe_load(sample_job_data.read())
         if self.debug:
             print("########## Test Job Submission validation #######")
-        if validate_job:
-            validate_submission(job_data)
+        if validate:
+            validate_job(job_data, strict=False)
         try:
             job = parser.parse(yaml.dump(job_data), device, 4212, None, "")
             job.logger = DummyLogger()

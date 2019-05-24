@@ -97,8 +97,8 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
 
 
 class X86Factory(Factory):
-    def create_x86_job(self, filename, device, validate_job=True):
-        return self.create_job(device, filename, validate_job=validate_job)
+    def create_x86_job(self, filename, device, validate=True):
+        return self.create_job(device, filename, validate=validate)
 
 
 class TestMultiNodeOverlay(StdoutTestCase):  # pylint: disable=too-many-public-methods
@@ -106,14 +106,10 @@ class TestMultiNodeOverlay(StdoutTestCase):  # pylint: disable=too-many-public-m
         super().setUp()
         factory = X86Factory()
         self.server_job = factory.create_x86_job(
-            "sample_jobs/test_action-1.yaml",
-            "lng-generator-01.jinja2",
-            validate_job=False,
+            "sample_jobs/test_action-1.yaml", "lng-generator-01.jinja2", validate=False
         )
         self.client_job = factory.create_x86_job(
-            "sample_jobs/test_action-2.yaml",
-            "lng-generator-02.jinja2",
-            validate_job=False,
+            "sample_jobs/test_action-2.yaml", "lng-generator-02.jinja2", validate=False
         )
 
     def test_action_namespaces(self):
