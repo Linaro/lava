@@ -164,7 +164,6 @@ class DDAction(Action):
                 if not msg:
                     self.errors = "items of 'tool prompts' cannot be empty"
 
-        uuid_required = False
         self.boot_params = self.job.device["parameters"]["media"][self.parameters["to"]]
         uuid_required = self.boot_params.get("UUID-required", False)
 
