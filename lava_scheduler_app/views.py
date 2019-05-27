@@ -916,7 +916,7 @@ def device_type_detail(request, pk):
         core_string = ""
 
     bits_width = dt.bits.width if dt.bits else ""
-    aliases = ", ".join([alias.name for alias in dt.aliases.all()])
+    aliases = ", ".join([alias.name for alias in dt.aliases.order_by("name")])
 
     all_devices = dt.device_set.count()
     available_devices = dt.device_set.filter(
