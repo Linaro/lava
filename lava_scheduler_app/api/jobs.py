@@ -493,4 +493,4 @@ class SchedulerJobsAPI(ExposedV2API):
             )
             return {}
         except voluptuous.Invalid as exc:
-            return {"path": exc.path, "msg": exc.msg}
+            return {"path": str(exc.path), "msg": exc.msg}
