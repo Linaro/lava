@@ -5,6 +5,7 @@
 
 device_type: ssh
 job_name: ssh-boot
+visibility: public
 timeouts:
   job:
     minutes: 5

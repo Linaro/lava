@@ -1,6 +1,7 @@
 device_type: grub-x86
 
 job_name: grub-x86-centos-installed
+visibility: public
 timeouts:
   job:
     minutes: 300

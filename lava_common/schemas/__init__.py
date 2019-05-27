@@ -286,6 +286,7 @@ def job(extra_context_variables=[]):
                 Optional("connection"): timeout(),
                 Optional("connections"): {str: timeout()},
             },
+            Required("visibility"): Any("public", "personal", {"group": [str]}),
             Optional("context"): Schema(
                 {In(context_variables): Any(int, str, [int, str])}, extra=False
             ),
@@ -293,7 +294,6 @@ def job(extra_context_variables=[]):
             Optional("priority"): Any("high", "medium", "low", Range(min=0, max=100)),
             Optional("tags"): [str],
             Optional("secrets"): dict,
-            Optional("visibility"): Any("public", "personal", {"group": [str]}),
             Optional("protocols"): {
                 Optional("lava-lxc"): Any(lava_lxc, {str: lava_lxc}),
                 Optional("lava-multinode"): {
