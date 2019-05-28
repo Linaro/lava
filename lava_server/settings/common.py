@@ -230,3 +230,6 @@ REST_FRAMEWORK = {
 
 # Extra context variables when validating the job definition schema
 EXTRA_CONTEXT_VARIABLES = []
+
+# Default length value for all tables
+DEFAULT_TABLE_LENGTH = 25

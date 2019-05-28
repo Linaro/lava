@@ -29,7 +29,6 @@ from lava_results_app.tables import ResultsTable, SuiteTable
 class UserQueryTable(LavaTable):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.length = 10
 
     name = tables.Column()
 
@@ -78,7 +77,6 @@ class UserQueryTable(LavaTable):
 class OtherQueryTable(UserQueryTable):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.length = 10
 
     name = tables.Column()
 
@@ -102,7 +100,6 @@ class OtherQueryTable(UserQueryTable):
 class GroupQueryTable(UserQueryTable):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.length = 10
         self.base_columns["query_group"].visible = False
 
     name = tables.Column()
@@ -150,7 +147,6 @@ class QueryTestJobTable(JobTable):
 
     def __init__(self, query, user, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.length = 25
         if query and query.is_accessible_by(user):
             self.base_columns["omit"].visible = True
         else:
@@ -180,7 +176,6 @@ class QueryTestCaseTable(SuiteTable):
 
     def __init__(self, query, user, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.length = 25
         if query and query.is_accessible_by(user):
             self.base_columns["omit"].visible = True
         else:
@@ -210,7 +205,6 @@ class QueryTestSuiteTable(ResultsTable):
 
     def __init__(self, query, user, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.length = 25
         if query and query.is_accessible_by(user):
             self.base_columns["omit"].visible = True
         else:

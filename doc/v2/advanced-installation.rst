@@ -494,6 +494,17 @@ posting your updated list.
 
 .. seealso:: https://docs.djangoproject.com/en/1.11/ref/settings/#std:setting-DISALLOWED_USER_AGENTS
 
+Configuring default table length
+================================
+
+The LAVA UI mainly consists of tables. The length of each table can be
+configured by the user right above it ("Show 10..100 entries"). A default
+value for the table length can be set in ``/etc/lava-server/settings.conf``:
+
+.. code-block:: python
+
+ "DEFAULT_TABLE_LENGTH": 50,
+
 .. _admin_control:
 
 Controlling the Django Admin Interface

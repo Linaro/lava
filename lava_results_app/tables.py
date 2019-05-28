@@ -58,7 +58,6 @@ class ResultsTable(LavaTable):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.length = 25
 
     def _check_job(self, record, table=None):  # pylint: disable=no-self-use
         """
@@ -180,7 +179,6 @@ class SuiteTable(LavaTable):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.length = 25
 
     name = tables.Column()
     test_set = tables.Column(verbose_name="Test Set")

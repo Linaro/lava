@@ -25,7 +25,7 @@ class TestTable(LavaTable):
 class TestLengthTable(LavaTable):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.length = 25
+        self.length = 50
 
 
 class TestTestTable(TestCase):
@@ -34,12 +34,12 @@ class TestTestTable(TestCase):
     def test_default_length(self):
         table = TestTable(self.data)
         logging.debug("Creating an empty LavaTable")
-        self.assertEqual(table.length, 10)
+        self.assertEqual(table.length, 25)
 
     def test_default_length_table(self):
         table = TestLengthTable(self.data)
         logging.debug("Creating a derived LavaTable")
-        self.assertEqual(table.length, 25)
+        self.assertEqual(table.length, 50)
 
     def test_empty_data(self):
         table = TestTable(self.data)

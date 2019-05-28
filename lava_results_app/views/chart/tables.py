@@ -26,7 +26,6 @@ from lava_results_app.models import Chart
 class UserChartTable(LavaTable):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.length = 10
 
     name = tables.TemplateColumn(
         """
@@ -82,7 +81,6 @@ class UserChartTable(LavaTable):
 class OtherChartTable(UserChartTable):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.length = 10
 
     name = tables.TemplateColumn(
         """
@@ -105,7 +103,6 @@ class OtherChartTable(UserChartTable):
 class GroupChartTable(UserChartTable):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.length = 10
         self.base_columns["chart_group"].visible = False
 
     name = tables.TemplateColumn(

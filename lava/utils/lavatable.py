@@ -3,6 +3,7 @@ import django_tables2 as tables
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
 from django.db.models import Q
+from django.conf import settings
 
 
 class LavaView(tables.SingleTableView):
@@ -188,7 +189,7 @@ class LavaTable(tables.Table):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.length = 10
+        self.length = settings.DEFAULT_TABLE_LENGTH
         self._empty_text = mark_safe(
             '<div style="text-align: center">No data available in table</div>'
         )
