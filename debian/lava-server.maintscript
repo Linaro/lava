@@ -1,0 +1,6 @@
+# Clean up old conffiles
+rm_conffile /etc/logrotate.d/lava-server-uwsgi-log 2019.01-5~
+rm_conffile /etc/lava-server/lava-server.wsgi 2019.01-5~
+rm_conffile /etc/lava-server/debug.wsgi 2019.01-5~
+rm_conffile /etc/lava-server/uwsgi.ini 2019.01-5~
+rm_conffile /etc/lava-server/uwsgi.reload 2019.01-5~
