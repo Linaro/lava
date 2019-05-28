@@ -64,6 +64,11 @@
 
   </style>
   {% block styles %}{% endblock %}
+
+  {% if lava.branding_css %}
+  <link rel="stylesheet" type="text/css" href="{% static lava.branding_css %}"/>
+  {% endif %}
+
   {% block extrahead %}{% endblock %}
 </head>
 

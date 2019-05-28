@@ -176,6 +176,7 @@ BRANDING_WIDTH = 22
 BRANDING_BUG_URL = "https://git.lavasoftware.org/lava/lava/issues"
 BRANDING_SOURCE_URL = "https://git.lavasoftware.org/lava/lava"
 BRANDING_MESSAGE = ""
+BRANDING_CSS = ""
 
 # Custom documentation
 CUSTOM_DOCS = {}

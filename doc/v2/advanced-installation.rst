@@ -216,6 +216,7 @@ LAVA link on each page can be changed in the settings
    "BRANDING_WIDTH": 32,
    "BRANDING_BUG_URL": "http://bugs.example.org/lava",
    "BRANDING_SOURCE_URL": "https://github.com/example/lava-server",
+   "BRANDING_CSS": "https://www.example.org/css/style.css",
 
 Admins can include a sentence describing the purpose of the instance to give more
 detail than is available via the instance name. This will be added in a paragraph
@@ -224,9 +225,10 @@ on the home page under "About the {{instance_name}} LAVA instance"::
    "BRANDING_MESSAGE": "Example site for local testing",
    "INSTANCE_NAME": "dev-box",
 
-If the icon is available under the django static files location, this location
-can be specified instead of a URL::
+If the stylesheet or icon is available under the django static files location,
+this location can be specified instead of a URL::
 
+   "BRANDING_CSS": "path/to/style.css",
    "BRANDING_ICON": "path/to/image.png",
 
 There are limits to the size of the image, approximately 32x32 pixels, to avoid
