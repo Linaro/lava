@@ -37,7 +37,7 @@ class DepthchargeFactory:
 
     def create_jaq_job(self, filename):  # pylint: disable=no-self-use
         device = NewDevice(
-            os.path.join(os.path.dirname(__file__), "../devices/jaq-01.yaml")
+            os.path.join(os.path.dirname(__file__), "devices/jaq-01.yaml")
         )
         yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(yaml) as sample_job_data:

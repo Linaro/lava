@@ -73,7 +73,7 @@ class TestMultiDeploy(StdoutTestCase):
             pass
 
         def __init__(self):
-            filename = os.path.join(os.path.dirname(__file__), "../devices/bbb-01.yaml")
+            filename = os.path.join(os.path.dirname(__file__), "devices/bbb-01.yaml")
             super().__init__(filename)
 
     @nottest
@@ -160,7 +160,7 @@ class TestMultiDefinition(StdoutTestCase):  # pylint: disable=too-many-public-me
     def setUp(self):
         super().setUp()
         self.device = NewDevice(
-            os.path.join(os.path.dirname(__file__), "../devices/bbb-01.yaml")
+            os.path.join(os.path.dirname(__file__), "devices/bbb-01.yaml")
         )
         bbb_yaml = os.path.join(os.path.dirname(__file__), "sample_jobs/uboot-nfs.yaml")
         with open(bbb_yaml) as sample_job_data:

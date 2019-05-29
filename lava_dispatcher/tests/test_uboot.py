@@ -248,7 +248,7 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
             },
         }
         device = NewDevice(
-            os.path.join(os.path.dirname(__file__), "../devices/bbb-01.yaml")
+            os.path.join(os.path.dirname(__file__), "devices/bbb-01.yaml")
         )
         job = Job(4212, parameters, None)
         job.device = device
@@ -614,7 +614,7 @@ class TestKernelConversion(StdoutTestCase):
         logger.disabled = True
         logger.propagate = False
         self.device = NewDevice(
-            os.path.join(os.path.dirname(__file__), "../devices/bbb-01.yaml")
+            os.path.join(os.path.dirname(__file__), "devices/bbb-01.yaml")
         )
         bbb_yaml = os.path.join(
             os.path.dirname(__file__), "sample_jobs/uboot-ramdisk.yaml"

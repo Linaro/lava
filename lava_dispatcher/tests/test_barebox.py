@@ -200,7 +200,7 @@ class TestKernelConversion(StdoutTestCase):
         logger.disabled = True
         logger.propagate = False
         self.device = NewDevice(
-            os.path.join(os.path.dirname(__file__), "../devices/bbb-01-barebox.yaml")
+            os.path.join(os.path.dirname(__file__), "devices/bbb-01-barebox.yaml")
         )
         bbb_yaml = os.path.join(
             os.path.dirname(__file__), "sample_jobs/barebox-ramdisk.yaml"

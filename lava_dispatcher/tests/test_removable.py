@@ -238,7 +238,7 @@ class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
     def test_juno_deployment(self):
         factory = RemovableFactory()
         job = factory.create_job(
-            "sample_jobs/juno-uboot-removable.yaml", "../devices/juno-uboot.yaml"
+            "sample_jobs/juno-uboot-removable.yaml", "devices/juno-uboot.yaml"
         )
         job.logger = DummyLogger()
         job.validate()
@@ -288,7 +288,7 @@ class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
     def test_mustang_deployment(self):
         factory = RemovableFactory()
         job = factory.create_job(
-            "sample_jobs/mustang-secondary-media.yaml", "../devices/mustang-media.yaml"
+            "sample_jobs/mustang-secondary-media.yaml", "devices/mustang-media.yaml"
         )
         job.validate()
         description_ref = self.pipeline_reference("mustang-media.yaml", job=job)
@@ -330,7 +330,7 @@ class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
     def test_secondary_media(self):
         factory = RemovableFactory()
         job = factory.create_job(
-            "sample_jobs/mustang-secondary-media.yaml", "../devices/mustang-media.yaml"
+            "sample_jobs/mustang-secondary-media.yaml", "devices/mustang-media.yaml"
         )
         job.validate()
         grub_nfs = [

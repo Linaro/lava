@@ -40,7 +40,7 @@ class FlasherFactory(Factory):
     def create_b2260_job(self, filename):
         # FIXME: b2260 Jinja2 template does not have flasher support.
         device = NewDevice(
-            os.path.join(os.path.dirname(__file__), "../devices/b2260-01.yaml")
+            os.path.join(os.path.dirname(__file__), "devices/b2260-01.yaml")
         )
         with open(os.path.join(os.path.dirname(__file__), filename)) as f_in:
             parser = JobParser()

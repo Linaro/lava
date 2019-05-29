@@ -46,7 +46,7 @@ class LxcFactory(Factory):  # pylint: disable=too-few-public-methods
 
     def create_adb_nuc_job(self, filename):  # pylint: disable=no-self-use
         device = NewDevice(
-            os.path.join(os.path.dirname(__file__), "../devices/adb-nuc-01.yaml")
+            os.path.join(os.path.dirname(__file__), "devices/adb-nuc-01.yaml")
         )
         job_yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(job_yaml) as sample_job_data:
@@ -57,7 +57,7 @@ class LxcFactory(Factory):  # pylint: disable=too-few-public-methods
 
     def create_hikey_aep_job(self, filename):  # pylint: disable=no-self-use
         device = NewDevice(
-            os.path.join(os.path.dirname(__file__), "../devices/hi6220-hikey-01.yaml")
+            os.path.join(os.path.dirname(__file__), "devices/hi6220-hikey-01.yaml")
         )
         job_yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(job_yaml) as sample_job_data:

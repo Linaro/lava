@@ -80,7 +80,7 @@ class MenuFactory(Factory):  # pylint: disable=too-few-public-methods
 
     def create_uefi_job(self, filename):  # pylint: disable=no-self-use
         device = NewDevice(
-            os.path.join(os.path.dirname(__file__), "../devices/mustang-uefi.yaml")
+            os.path.join(os.path.dirname(__file__), "devices/mustang-uefi.yaml")
         )
         mustang_yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(mustang_yaml) as sample_job_data:
