@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 import datetime
 import lzma
 import pathlib
@@ -35,6 +36,11 @@ from django.utils import timezone
 
 from lava_scheduler_app.models import TestJob
 from lava_common.schemas import validate
+
+
+def _create_output_size(base, size):
+    (base / "output.yaml.size").write_text(str(size), encoding="utf-8")
+    chown(str(base / "output.yaml.size"), "lavaserver", "lavaserver")
 
 
 class Command(BaseCommand):
@@ -366,24 +372,31 @@ class Command(BaseCommand):
             jobs = jobs.filter(submitter=user)
 
         self.stdout.write("Compressing %d jobs:" % jobs.count())
-
+        # Loop on all jobs
         for (index, job) in enumerate(jobs):
             base = pathlib.Path(job.output_dir)
             if not (base / "output.yaml").exists():
-                self.stdout.write(
-                    "* %d (%s): %s [SKIP]" % (job.id, job.end_time, job.output_dir)
-                )
+                if (base / "output.yaml.size").exists():
+                    self.stdout.write(
+                        "* %d (%s): %s [SKIP]" % (job.id, job.end_time, job.output_dir)
+                    )
+                else:
+                    self.stdout.write(
+                        "* %d (%s): %s [create size file]"
+                        % (job.id, job.end_time, job.output_dir)
+                    )
+                    with contextlib.suppress(FileNotFoundError):
+                        with lzma.open(str(base / "output.yaml.xz"), "rb") as f_in:
+                            _create_output_size(base, f_in.seek(0, 2))
                 continue
+
             self.stdout.write("* %d (%s): %s" % (job.id, job.end_time, job.output_dir))
             try:
                 if not simulate:
                     # Read the logs
                     data = (base / "output.yaml").read_bytes()
                     # Save the uncompressed size for later use
-                    (base / "output.yaml.size").write_text(
-                        str(len(data)), encoding="utf-8"
-                    )
-                    chown(str(base / "output.yaml.size"), "lavaserver", "lavaserver")
+                    _create_output_size(base, len(data))
                     # Compresse the logs
                     with lzma.open(str(base / "output.yaml.xz"), "wb") as f_out:
                         f_out.write(data)
