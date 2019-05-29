@@ -1,3 +1,101 @@
+lava (2019.05-1) unstable; urgency=medium
+
+  * LAVA Software 2019.05 release
+    5e4a36956 jobs compress: create the output.yaml.size file
+              if needed.
+    412b73788 device-type: add SoCA9 from Schneider
+    aab54ce66 Revert "Auth refactoring part 1."
+    396c7342f logutils: test the module functions
+    15bb54214 logutils: only create the index when needed
+    ed60e521b Add a command line helper to compress logs
+    e19c9a2cf Read logs from either output.yaml or output.yaml.xz
+    41672feee job logs: replace TestJob.output_file by logutils
+              functions
+    c3bf98bd6 job: remove unused/uneeded job_file_present variable
+    c5c881347 Remove the archived_job_file function
+    1e32ed252 LAVA branding: add possibility to include custom CSS
+    417c8b14b release: add a script to remove old docker images
+    0e08fa08e Clean up obsolete conffiles causing piuparts failures
+    1e9778114 Present the codeclimate data in human readable format
+    2fa918740 schema: the job visibility is required.
+    2fbc72031 Order aliases by name when rendering
+    1a10f4903 scheduler.jobs.validate: fix return value
+    e7ce9d63c schema: allow admins to extend the white list of
+              context variable
+    a615696cb lava-schema: factorize and allow to check device config
+    0c68b065c schema: add a device schema into lava_common
+    1ac122efe Add fastboot support to the meson-g12a-sei510
+    56583c703 debian: remove unused or redondant files
+    9654c526a Remove permission object support from
+              GroupObjectPermission methods.
+    8d13f2def Change API to update single object permissions.
+    f365005b1 Small code review changes.
+    444404943 Add LAVAServerError exception tree.
+    7c533d5c4 Remove shortened codename support.
+    c991c3c5c Auth refactoring part 1.
+    c2acdbdd8 debian: remove unused py3dist overrides
+    dadce92a6 doc: fix sample job schema
+    c505f1322 schema: add missing uboot_needs_interrupt to the context
+    ccfbf2aed schema: fix boot.minimal by adding reset and auto_login
+    b17b24e94 schema: also validate the multinode context variable
+    0f13bc60a Change notification CharField types to TextField instead
+    4be183e2d unittests.sh was renamed to dispatcher-unittests.sh.
+    d6b642471 Partially revert 3d0ddb402 to fix some tables issues
+    ff613da21 device: improve the recent test jobs table
+    e21f2ddbb Use .exists() instead of len(.all())
+    bb3ca4525 XMLRPC API: fix crash in scheduler.aliases
+    85fc254b7 schema: fix remaining syntax error in the sample jobs
+    9cccb2e3a docs: Update docs for DeviceType alias
+    5b6424218 scheduler: add test for alias submissions
+    62c0e08ec scheduler/api: fix XML-RPC API for Aliases
+    ec74e9ed7 scheduler: avoid device type-alias name conflict
+    3d0ddb402 scheduler: modify alias to be 1-many relation
+    a6e9c6d2f lava-slave: add an option to use a socks proxy
+    7a18fc022 schema: allow uboot_extra_error_message in the context
+    711a20131 schema: fix definition of test definition option
+              "lava-signal"
+    b0088485c doc: fix emphasis
+    aefc87b26 Improve the README and use markdown for Gitlab rendering
+    a4b350516 fix pyocd boot action method to print out version of
+              binary used
+    c045401d1 Do not use minified version of JS and CSS files
+    55afae484 schema: add "new_connection" boot method
+    ed4eeda0a doc: add missing label
+    851b4bc33 version.py: fix git check when using worktrees
+    72b9dd18c Change the 'fastboot_sequence'
+    383525981 user commands: use run_cmd instead of run_command
+    b1c84a1d6 validate: allow to report invalid jobs to admins
+    82aa705b8 Fix multinode jobs validation
+    b10bc826f Use the static template function
+    d48ba02c6 Make USB/DFU/UDEV timeouts into Infra Errors
+    643180264 debian: list every minimun versions for buster
+    0dd5dc1d6 lava_common: remove unused dependency on pyzmq
+    f1c1372ca doc: fix syntax to match schema
+    759740e1c device-types: rpi: allow extra space for kernel image
+    3bd8f0d8a Fix file permissions
+    8139950b1 Remove USE_TEMPLATE_CACHE option
+    44c5e6ca5 scheduler: update rzn1d device-type to boot zImage
+    3fced42f5 Fix the dtb/ramdisk addresses
+    750d8f298 Document the "command" action block
+    0447e8327 doc: replace lava-tool by lavacli whenever possible
+    8c73a28ed Update packaging for dashboard removal
+    1c6be7f71 Remove leftover from v1 dashboard
+    cc7e86fa7 Remove dashboard_app
+    c4a4c3e3b device-type: add da850-lcdk
+    3a16ca954 Remove admin_notifications field
+    1a20620be CI: do not build anymore multiarch images
+    796c98eb3 CI: fix tag selection
+    cc2bc7509 add systemd support for lava-os-build
+    a7c483bdb Add overriding resets_after_flash to support newer
+              FRDM-K64F boards
+    537773c9e TestJob duration: return only seconds (and not
+              miliseconds)
+    5ae7f5a1a Add a helper script for Debian release
+    4b2c07da7 Fix broken seealso syntax in docs
+    447bc9344 doc/v2/timeouts: fix http-download action name typos
+
+ -- Steve McIntyre <steve@einval.com>  Wed, 29 May 2019 16:17:03 +0000
+
 lava (2019.04-1) unstable; urgency=medium
 
   * 2019.04-1 LAVA Software 2019.04 release
