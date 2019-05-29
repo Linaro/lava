@@ -32,9 +32,8 @@ import yaml
 from nose.tools import nottest
 from django.db.models import Q
 from django.conf import settings
-from django.contrib.auth.models import User, Group, Permission
+from django.contrib.auth.models import User, Group
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.admin.models import LogEntry, ADDITION, CHANGE
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.sites.models import Site
@@ -55,10 +54,7 @@ from lava_common.exceptions import ConfigurationError
 from lava_results_app.utils import export_testcase
 from lava_scheduler_app import utils
 from lava_scheduler_app.logutils import read_logs
-from lava_scheduler_app.managers import (
-    RestrictedTestJobQuerySet,
-    GroupObjectPermissionManager,
-)
+from lava_scheduler_app.managers import RestrictedTestJobQuerySet
 from lava_scheduler_app.schema import SubmissionException, validate_device
 
 import requests
@@ -89,41 +85,6 @@ class ExtendedUser(models.Model):
 
     def __str__(self):
         return "%s: %s@%s" % (self.user, self.irc_handle, self.irc_server)
-
-
-class GroupObjectPermission(models.Model):
-
-    objects = GroupObjectPermissionManager()
-
-    class Meta:
-        unique_together = ("group", "permission", "content_type", "object_id")
-
-    permission = models.ForeignKey(Permission, on_delete=models.CASCADE)
-
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    object_id = models.CharField(_("object ID"), max_length=255)
-    content_object = GenericForeignKey()
-
-    group = models.ForeignKey(Group, on_delete=models.CASCADE)
-
-    def save(self, *args, **kwargs):
-        super().full_clean()
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return "Permission '%s' for %s %s" % (
-            self.permission.codename,
-            self.content_type.model,
-            self.object_id,
-        )
-
-    @classmethod
-    def ensure_users_group(cls, user):
-        # Get or create a group that matches the users' username.
-        # Then ensure that only this user is belonging to his group.
-        group, _ = Group.objects.get_or_create(name=user.username)
-        group.user_set.set({user}, clear=True)
-        return group
 
 
 class Tag(models.Model):
@@ -211,41 +172,10 @@ class Core(models.Model):
         return self.pk
 
 
-class RestrictedObject(models.Model):
-    class Meta:
-        abstract = True
-
-    def is_permission_restricted(self, perm):
-
-        filters = {
-            "content_type": ContentType.objects.get_for_model(self),
-            "object_id": self.pk,
-            "permission__codename": perm,
-        }
-        return GroupObjectPermission.objects.filter(**filters).exists()
-
-    def has_any_permission_restrictions(self, perm):
-        raise NotImplementedError("Should implement this")
-
-
-class DeviceType(RestrictedObject):
+class DeviceType(models.Model):
     """
     A class of device, for example a pandaboard or a snowball.
     """
-
-    class Meta:
-        permissions = (
-            ("view_devicetype", "Can view device type"),
-            ("submit_to_devicetype", "Can submit jobs to device type"),
-            ("admin_devicetype", "Can admin device type"),
-        )
-
-    VIEW_PERMISSION = "view_devicetype"
-    ADMIN_PERMISSION = "admin_devicetype"
-    SUBMIT_PERMISSION = "submit_to_devicetype"
-
-    # Order of permission importance from most to least.
-    PERMISSIONS_PRIORITY = [ADMIN_PERMISSION, SUBMIT_PERMISSION, VIEW_PERMISSION]
 
     name = models.SlugField(
         primary_key=True, editable=True
@@ -400,9 +330,6 @@ class DeviceType(RestrictedObject):
         cache.set(self.name, result, 30, version=version)
         return result
 
-    def has_any_permission_restrictions(self, perm):
-        return self.is_permission_restricted(perm)
-
 
 class DefaultDeviceOwner(models.Model):
     """
@@ -539,31 +466,10 @@ class Worker(models.Model):
         )
 
 
-class Device(RestrictedResource, RestrictedObject):
+class Device(RestrictedResource):
     """
     A device that we can run tests on.
     """
-
-    class Meta:
-        permissions = (
-            ("view_device", "Can view device"),
-            ("submit_to_device", "Can submit jobs to device"),
-            ("admin_device", "Can admin device"),
-        )
-
-    VIEW_PERMISSION = "view_device"
-    ADMIN_PERMISSION = "admin_device"
-    SUBMIT_PERMISSION = "submit_to_device"
-
-    # This maps the corresponding permissions for 'parent' dependencies.
-    DEVICE_TYPE_PERMISSION_MAP = {
-        VIEW_PERMISSION: DeviceType.VIEW_PERMISSION,
-        ADMIN_PERMISSION: DeviceType.ADMIN_PERMISSION,
-        SUBMIT_PERMISSION: DeviceType.SUBMIT_PERMISSION,
-    }
-
-    # Order of permission importance from most to least.
-    PERMISSIONS_PRIORITY = [ADMIN_PERMISSION, SUBMIT_PERMISSION, VIEW_PERMISSION]
 
     CONFIG_PATH = "/etc/lava-server/dispatcher-config/devices"
     HEALTH_CHECK_PATH = "/etc/lava-server/dispatcher-config/health-checks"
@@ -732,12 +638,6 @@ class Device(RestrictedResource, RestrictedObject):
 
     def get_description(self):
         return mark_safe(self.description) if self.description else None
-
-    def has_any_permission_restrictions(self, perm):
-        if not self.is_permission_restricted(perm):
-            return self.device_type.has_any_permission_restrictions(perm)
-        else:
-            return True
 
     def is_visible_to(self, user):
         """
@@ -1406,25 +1306,15 @@ def _pipeline_protocols(
 
 
 @nottest
-class TestJob(RestrictedResource, RestrictedObject):
+class TestJob(RestrictedResource):
     """
     A test job is a test process that will be run on a Device.
     """
 
     class Meta:
         index_together = ["health", "state", "requested_device_type"]
-        permissions = (
-            ("view_testjob", "Can view device type"),
-            ("admin_testjob", "Can admin test job"),
-            ("submit_testjob", "Can submit test job"),
-            ("cancel_resubmit_testjob", "Can cancel/resubmit job"),
-        )
 
     objects = RestrictedResourceManager.from_queryset(RestrictedTestJobQuerySet)()
-
-    VIEW_PERMISSION = "view_testjob"
-    ADMIN_PERMISSION = "admin_testjob"
-    RESUBMIT_PERMISSION = "cancel_resubmit_testjob"
 
     # VISIBILITY levels are subject to any device restrictions and hidden device type rules
     VISIBLE_PUBLIC = 0  # anyone can view, submit or resubmit
@@ -1432,18 +1322,6 @@ class TestJob(RestrictedResource, RestrictedObject):
     VISIBLE_GROUP = (
         2
     )  # A single group is specified, all users in that group (and that group only) can view.
-
-    # This maps the corresponding permissions for 'parent' dependencies.
-    DEVICE_PERMISSION_MAP = {
-        VIEW_PERMISSION: Device.VIEW_PERMISSION,
-        ADMIN_PERMISSION: Device.ADMIN_PERMISSION,
-        RESUBMIT_PERMISSION: Device.ADMIN_PERMISSION,
-    }
-    DEVICE_TYPE_PERMISSION_MAP = {
-        VIEW_PERMISSION: DeviceType.VIEW_PERMISSION,
-        ADMIN_PERMISSION: DeviceType.ADMIN_PERMISSION,
-        RESUBMIT_PERMISSION: DeviceType.ADMIN_PERMISSION,
-    }
 
     VISIBLE_CHOICES = (
         (
@@ -1453,10 +1331,6 @@ class TestJob(RestrictedResource, RestrictedObject):
         (VISIBLE_PERSONAL, "Personal only"),
         (VISIBLE_GROUP, "Group only"),
     )
-
-    # Order of permission importance from most to least. We ignore submit
-    # permission since it's not relevant for per-object authorization.
-    PERMISSIONS_PRIORITY = [ADMIN_PERMISSION, RESUBMIT_PERMISSION, VIEW_PERMISSION]
 
     NOTIFY_EMAIL_METHOD = "email"
     NOTIFY_IRC_METHOD = "irc"
@@ -1921,20 +1795,6 @@ class TestJob(RestrictedResource, RestrictedObject):
         elif not self.is_public and self.visibility == TestJob.VISIBLE_PUBLIC:
             raise ValidationError("is_public is not set but visibility is public.")
         return super().clean()
-
-    def has_any_permission_restrictions(self, perm):
-        if not self.is_permission_restricted(perm):
-            if (
-                self.actual_device
-                and self.actual_device.has_any_permission_restrictions(perm)
-            ):
-                return True
-            elif self.requested_device_type.has_any_permission_restrictions(perm):
-                return True
-            else:
-                return False
-        else:
-            return True
 
     def can_view(self, user):
         """

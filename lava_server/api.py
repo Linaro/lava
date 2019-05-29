@@ -24,12 +24,11 @@ import yaml
 
 from django.http import Http404
 from django.conf import settings
-from django.contrib.auth.models import Group
 from django.core.exceptions import PermissionDenied
 
 from lava_common.utils import debian_package_version
 from lava_scheduler_app.views import get_restricted_job
-from lava_scheduler_app.models import Device, DeviceType, GroupObjectPermission, TestJob
+from lava_scheduler_app.models import Device, DeviceType
 from linaro_django_xmlrpc.models import errors, Mapper, SystemAPI
 
 
@@ -523,174 +522,6 @@ class LavaSystemAPI(SystemAPI):
                     % switch,
                 )
         return yaml.dump(network_map)
-
-    def assign_perm_device_type(self, perm, device_type, group):
-        """
-        Name
-        ----
-        assign_perm_device_type(`perm`, `device_type`, `group`):
-
-        Description
-        -----------
-
-        Grant a permission to a specific group over a device type.
-
-        This function requires a superuser authentication.
-
-        Arguments
-        ---------
-        perm: string
-            Permission codename string. Currently supported permissions for
-            Device_Types are 'view_devicetype', 'submit_to_devicetype' and
-            'admin_devicetype'.
-        device_type: string
-            name of device type to assign permission for. Device type with
-            specified name must exist in LAVA.
-        group: string
-            group name to which the permission will be granted
-
-        Return value
-        ------------
-        No return value.
-        """
-        self._authenticate()
-        if not self.user.is_superuser:
-            raise xmlrpc.client.Fault(
-                errors.FORBIDDEN,
-                "Permission denied for user '%s' to assign permissions. Needs administrator privileges."
-                % self.user,
-            )
-        if not isinstance(device_type, str):
-            raise xmlrpc.client.Fault(
-                errors.BAD_REQUEST, "device_type name must be a string"
-            )
-        try:
-            group = Group.objects.get(name=group)
-        except Group.DoesNotExist:
-            raise xmlrpc.client.Fault(
-                errors.BAD_REQUEST, "please use existing group name"
-            )
-
-        try:
-            device_type = DeviceType.objects.get(name=device_type)
-        except DeviceType.DoesNotExist:
-            raise xmlrpc.client.Fault(
-                errors.BAD_REQUEST, "please use existing device type name"
-            )
-
-        GroupObjectPermission.objects.assign_perm(perm, group, device_type)
-
-    def assign_perm_device(self, perm, device, group):
-        """
-        Name
-        ----
-        assign_perm_device(`perm`, `device`, `group`):
-
-        Description
-        -----------
-
-        Grant a permission to a specific group over a device.
-
-        This function requires a superuser authentication.
-
-        Arguments
-        ---------
-        perm: string
-            Permission codename string. Currently supported permissions for
-            Devices are 'view_device', 'submit_to_device' and
-            'admin_device'.
-        device: string
-            device hostname to assign permission for. Device with the specific
-            hostname must exist in LAVA.
-        group: string
-            group name to which the permission will be granted
-
-        Return value
-        ------------
-        No return value.
-        """
-        self._authenticate()
-        if not self.user.is_superuser:
-            raise xmlrpc.client.Fault(
-                errors.FORBIDDEN,
-                "Permission denied for user '%s' to assign permissions. Needs administrator privileges."
-                % self.user,
-            )
-        if not isinstance(device, str):
-            raise xmlrpc.client.Fault(
-                errors.BAD_REQUEST, "device argument must be a string"
-            )
-        try:
-            group = Group.objects.get(name=group)
-        except Group.DoesNotExist:
-            raise xmlrpc.client.Fault(
-                errors.BAD_REQUEST, "please use existing group name"
-            )
-
-        try:
-            device = Device.objects.get(hostname=device)
-        except Device.DoesNotExist:
-            raise xmlrpc.client.Fault(
-                errors.BAD_REQUEST, "please use existing device hostname"
-            )
-
-        GroupObjectPermission.objects.assign_perm(perm, group, device)
-
-    def assign_perm_testjob(self, perm, testjob, group):
-        """
-        Name
-        ----
-        assign_perm_testjob(`perm`, `testjob`, `group`):
-
-        Description
-        -----------
-
-        Grant a permission to a specific group over a test job.
-
-        This function requires a superuser authentication.
-
-        Arguments
-        ---------
-        perm: string
-            Permission codename string. Currently supported permissions for
-            Testjobs are 'view_testjob', 'cancel_resubmit_testjob' and
-            'admin_testjob'.
-        testjob: int
-            test job ID to assign permission for. test job with specified ID
-            must exist in LAVA.
-        group: string
-            group name to which the permission will be granted
-
-        Return value
-        ------------
-        No return value.
-        """
-        self._authenticate()
-        if not self.user.is_superuser:
-            raise xmlrpc.client.Fault(
-                errors.FORBIDDEN,
-                "Permission denied for user '%s' to assign permissions. Needs administrator privileges."
-                % self.user,
-            )
-        if not isinstance(testjob, int):
-            raise xmlrpc.client.Fault(
-                errors.BAD_REQUEST, "testjob argument must be an int"
-            )
-        try:
-            group = Group.objects.get(name=group)
-        except Group.DoesNotExist:
-            raise xmlrpc.client.Fault(
-                errors.BAD_REQUEST, "please use existing group name"
-            )
-
-        try:
-            testjob = TestJob.objects.get(id=testjob)
-        except TestJob.DoesNotExist:
-            raise xmlrpc.client.Fault(
-                errors.BAD_REQUEST, "please use existing testjob ID"
-            )
-
-        GroupObjectPermission.objects.assign_perm(perm, group, testjob)
 
 
 class LavaMapper(Mapper):

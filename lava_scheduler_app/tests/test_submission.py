@@ -210,12 +210,10 @@ class TestTestJob(
         self.assertEqual(
             user.get_all_permissions(), {u"lava_scheduler_app.add_testjob"}
         )
-        cancel_resubmit = Permission.objects.filter(
-            codename="cancel_resubmit_testjob"
-        ).first()
+        cancel_resubmit = Permission.objects.get(codename="cancel_resubmit_testjob")
         self.assertEqual("lava_scheduler_app", cancel_resubmit.content_type.app_label)
         self.assertIsNotNone(cancel_resubmit)
-        self.assertEqual(cancel_resubmit.name, "Can cancel/resubmit job")
+        self.assertEqual(cancel_resubmit.name, "Can cancel or resubmit test jobs")
         user.user_permissions.add(cancel_resubmit)
         user.save()
         delattr(
