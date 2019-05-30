@@ -1,0 +1,38 @@
+device_type: cc3220SF
+job_name: cc3220SF health check
+timeouts:
+  job:
+    minutes: 3
+  action:
+    minutes: 3
+  actions:
+    wait-usb-device:
+      seconds: 40
+
+priority: medium
+visibility: public
+actions:
+- deploy:
+    timeout:
+      minutes: 3
+    to: tmpfs
+    images:
+      binary:
+        url: 'https://snapshots.linaro.org/components/kernel/zephyr/master/zephyr/cc3220sf_launchxl/3885/tests/subsys/logging/log_list/logging.log_list/zephyr/zephyr.elf'
+      #openocd_script:
+      #  url: http://ivoire.dinauz.org/linaro/lava/cc3220SF/cc3220_xds110.cfg
+- boot:
+    method: openocd
+    timeout:
+      minutes: 2
+- test:
+    timeout:
+      minutes: 2
+    monitors:
+    - name: tests
+      start: (tc_start\(\)|starting .*test|BOOTING ZEPHYR OS)
+      end: PROJECT EXECUTION SUCCESSFUL
+      pattern: (?P<result>(PASS|FAIL))\s-\s(?P<test_case_id>\w+)\r\n
+      fixupdict:
+        PASS: pass
+        FAIL: fail
