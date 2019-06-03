@@ -81,7 +81,7 @@ fi
 
 SRCPKG=$(dpkg-parsechangelog -S Source)
 tmpch=$(mktemp)
-output "$SRCPKG ($VERSION) unstable; urgency=medium"
+output "$SRCPKG (${VERSION}-1) unstable; urgency=medium"
 output ""
 output "  * $MESSAGE"
 git log --no-merges --oneline $OLDTAG..HEAD | \
