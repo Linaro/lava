@@ -352,10 +352,29 @@
      The file represents the data sent to the dispatcher at the start of the job, including
      details of the device as well as the job parameters and the details of the parameters
      sent to each of the deploy, boot and test actions in the job pipeline.</p>
-     <p>Click on the Device or Job Actions headings below to see some of the information
+     <p>Click on the Metadata, Device or Job Actions headings below to see some of the information
      from the description file for this job or download the complete file as YAML using
      the link above.</p>
     <div class="panel-group" id="job_accordion">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h4 class="panel-title"><a data-toggle="collapse" data-parent="#job_accordion" href="#metadata_collapse">Metadata</a></h4>
+        </div>
+        <div id="metadata_collapse" class="panel-collapse collapse{% if 'section' not in request.GET %} in{% endif %}">
+          <div class="panel-body">
+            <dl class="dl-horizontal">
+              {% for key, value in job_data.metadata.items %}
+                <dt>{{ key }}</dt>
+                {% if "http://" in value or "https://" in value %}
+                  <dd><a href="{{ value }}">{{value}}</a></dd>
+                {% else %}
+                  <dd>{{value}}</dd>
+                {% endif %}
+              {% endfor %}
+            </dl>
+          </div>
+        </div>
+      </div>
       <div class="panel panel-default">
         <div class="panel-heading">
           <h4 class="panel-title"><a data-toggle="collapse" data-parent="#job_accordion" href="#device_collapse">Device</a></h4>
