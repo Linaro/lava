@@ -22,4 +22,7 @@ class Migration(migrations.Migration):
                 to="lava_scheduler_app.DeviceType",
             ),
         ),
+        migrations.AlterModelOptions(
+            name="alias", options={"verbose_name_plural": "Aliases"}
+        ),
     ]
