@@ -74,7 +74,7 @@ CONTEXT_VARIABLES = [
 ]
 
 
-def validate_action(name, data, strict=True):
+def validate_action(name, index, data, strict=True):
     # Import the module
     try:
         module = importlib.import_module("lava_common.schemas." + name)
@@ -82,13 +82,13 @@ def validate_action(name, data, strict=True):
     except ImportError:
         raise Invalid("unknown action type", path=["actions"] + name.split("."))
     except MultipleInvalid as exc:
-        raise Invalid(exc.msg, path=["actions"] + name.split(".")) from exc
+        raise Invalid(exc.msg, path=["actions[%d]" % index] + name.split(".")) from exc
 
 
 def validate(data, strict=True, extra_context_variables=[]):
     schema = Schema(job(extra_context_variables), extra=not strict)
     schema(data)
-    for action in data["actions"]:
+    for index, action in enumerate(data["actions"]):
         # The job schema does already check the we have only one key
         action_type = next(iter(action.keys()))
         data = action[action_type]
@@ -107,9 +107,9 @@ def validate(data, strict=True, extra_context_variables=[]):
             elif "monitors" in data:
                 cls = "test.monitor"
         if cls is None:
-            raise Invalid("invalid action", path=["actions", action_type])
+            raise Invalid("invalid action", path=["actions[%s]" % index, action_type])
         cls = cls.replace("-", "_")
-        validate_action(cls, data, strict=strict)
+        validate_action(cls, index, data, strict=strict)
 
 
 def timeout():
