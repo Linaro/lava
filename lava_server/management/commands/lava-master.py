@@ -230,10 +230,14 @@ class Command(LAVADaemonCommand):
         # by (and for) developers
         # self.logger.debug("[CC] Receiving: %s", msg)
 
-        # 1: the hostname (see ZMQ documentation)
-        hostname = u(msg[0])
-        # 2: the action
-        action = u(msg[1])
+        try:
+            # 1: the hostname (see ZMQ documentation)
+            hostname = u(msg[0])
+            # 2: the action
+            action = u(msg[1])
+        except (IndexError, ValueError):
+            self.logger.error("Invalid message from <%s> '%s'", hostname, msg)
+            return True
 
         # Check that lava-logs only send PINGs
         if hostname == "lava-logs" and action != "PING":
