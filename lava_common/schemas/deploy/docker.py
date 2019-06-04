@@ -26,7 +26,10 @@ from lava_common.schemas import deploy
 
 
 def schema():
-    image_name = Match("^[a-z0-9._:/-]+$", msg="Invalid docker image name")
+    image_name = Match(
+        "^[a-z0-9]+[a-z0-9._/-]*[a-z0-9]+(:[a-zA-Z0-9_]+[a-zA-Z0-9._-]*)?$",
+        msg="Invalid docker image name",
+    )
     base = {
         Required("to"): "docker",
         Required("image"): Any(
