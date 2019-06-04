@@ -142,7 +142,13 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
         self.assertEqual(
             {
                 "docker": {
-                    "options": {"cpus": 0.0, "memory": 0, "devices": [], "volumes": []}
+                    "options": {
+                        "cpus": 0.0,
+                        "memory": 0,
+                        "privileged": False,
+                        "devices": [],
+                        "volumes": [],
+                    }
                 }
             },
             template_dict["actions"]["boot"]["methods"],
@@ -163,6 +169,7 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
                     "options": {
                         "cpus": 2.1,
                         "memory": "120M",
+                        "privileged": False,
                         "devices": [],
                         "volumes": ["/home", "/tmp"],  # nosec - unit test support.
                     }
@@ -174,7 +181,8 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
         data = """{% extends 'docker.jinja2' %}
 {% set docker_cpus=2.1 %}
 {% set docker_memory="120M" %}
-{% set docker_devices=["/dev/kvm"] %}"""
+{% set docker_devices=["/dev/kvm"] %}
+{% set docker_privileged = True %}"""
         self.assertTrue(self.validate_data("docker-01", data))
         template_dict = prepare_jinja_template("docker-01", data, raw=False)
         self.assertEqual(
@@ -186,6 +194,7 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
                     "options": {
                         "cpus": 2.1,
                         "memory": "120M",
+                        "privileged": True,
                         "devices": ["/dev/kvm"],
                         "volumes": [],
                     }

@@ -15,6 +15,7 @@ actions:
         options:
           cpus: {{ docker_cpus|default(0.0) }}
           memory: {{ docker_memory|default(0) }}
+          privileged: {{ docker_privileged|default(False) }}
 {% if docker_devices|default([]) %}
           devices:
 {% for device in docker_devices %}
