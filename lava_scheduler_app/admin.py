@@ -53,6 +53,8 @@ class AliasAdmin(admin.ModelAdmin):
             return self.readonly_fields + ("name",)
         return self.readonly_fields
 
+    list_display = ("name", "device_type")
+
 
 class ArchitectureAdmin(admin.ModelAdmin):
     def get_readonly_fields(self, _, obj=None):
