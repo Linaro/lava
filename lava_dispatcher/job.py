@@ -42,10 +42,11 @@ class ZMQConfig:
     Namespace for the ZMQ logging configuration
     """
 
-    def __init__(self, logging_url, master_cert, slave_cert, ipv6):
+    def __init__(self, logging_url, master_cert, slave_cert, socks_proxy, ipv6):
         self.logging_url = logging_url
         self.master_cert = master_cert
         self.slave_cert = slave_cert
+        self.socks_proxy = socks_proxy
         self.ipv6 = ipv6
 
 

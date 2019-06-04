@@ -28,19 +28,23 @@ from zmq.utils.strtypes import b
 
 
 class ZMQPushHandler(logging.Handler):
-    def __init__(self, logging_url, master_cert, slave_cert, job_id, ipv6):
+    def __init__(self, logging_url, master_cert, slave_cert, job_id, socks_proxy, ipv6):
         super().__init__()
 
         # Keep track of the parameters
         self.logging_url = logging_url
         self.master_cert = master_cert
         self.slave_cert = slave_cert
+        self.socks_proxy = socks_proxy
         self.ipv6 = ipv6
 
         # Create the PUSH socket
         # pylint: disable=no-member
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.PUSH)
+
+        if socks_proxy:
+            self.sock.setsockopt(zmq.SOCKS_PROXY, b(socks_proxy))
 
         if ipv6:
             self.socket.setsockopt(zmq.IPV6, 1)
@@ -76,9 +80,11 @@ class YAMLLogger(logging.Logger):
         super().__init__(name)
         self.handler = None
 
-    def addZMQHandler(self, logging_url, master_cert, slave_cert, job_id, ipv6):
+    def addZMQHandler(
+        self, logging_url, master_cert, slave_cert, job_id, socks_proxy, ipv6
+    ):
         self.handler = ZMQPushHandler(
-            logging_url, master_cert, slave_cert, job_id, ipv6
+            logging_url, master_cert, slave_cert, job_id, socks_proxy, ipv6
         )
         self.addHandler(self.handler)
         return self.handler

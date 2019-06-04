@@ -173,6 +173,9 @@ def start_job(job_id, definition, device_definition, zmq_config,
             os.path.join(base_dir, "job.yaml"),
         ]
 
+        if zmq_config.socks_proxy:
+            args.extend(["--socks-proxy", zmq_config.socks_proxy])
+
         if zmq_config.ipv6:
             args.append("--ipv6")
 
@@ -928,9 +931,9 @@ def main():
     last_jobs_check = time.time()
     if options.encrypt:
         zmq_config = ZMQConfig(options.socket_addr, options.master_cert,
-                               options.slave_cert, options.ipv6)
+                               options.slave_cert, options.socks_proxy, options.ipv6)
     else:
-        zmq_config = ZMQConfig(options.socket_addr, None, None, options.ipv6)
+        zmq_config = ZMQConfig(options.socket_addr, None, None, options.socks_proxy, options.ipv6)
 
     # Main loop
     try:
