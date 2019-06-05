@@ -66,7 +66,6 @@ class TestHealthCheckScheduling(TestCase):
             hostname="panda01",
             device_type=self.device_type01,
             worker_host=self.worker01,
-            is_public=True,
             health=Device.HEALTH_UNKNOWN,
         )
         # This device should never be considered (his worker is OFFLINE)
@@ -74,14 +73,12 @@ class TestHealthCheckScheduling(TestCase):
             hostname="panda02",
             device_type=self.device_type01,
             worker_host=self.worker02,
-            is_public=True,
             health=Device.HEALTH_UNKNOWN,
         )
         self.device03 = Device.objects.create(
             hostname="panda03",
             device_type=self.device_type01,
             worker_host=self.worker03,
-            is_public=True,
             health=Device.HEALTH_UNKNOWN,
         )
         # ignored by other tests, used to check device.is_valid handling
@@ -89,7 +86,6 @@ class TestHealthCheckScheduling(TestCase):
             hostname="unknown-01",
             device_type=self.device_type02,
             worker_host=self.worker01,
-            is_public=True,
             health=Device.HEALTH_RETIRED,
         )
 
@@ -97,10 +93,8 @@ class TestHealthCheckScheduling(TestCase):
         self.last_hc03 = TestJob.objects.create(
             health_check=True,
             actual_device=self.device03,
-            user=self.user,
             submitter=self.user,
             start_time=timezone.now(),
-            is_public=True,
             state=TestJob.STATE_FINISHED,
             health=TestJob.HEALTH_COMPLETE,
         )
@@ -152,7 +146,6 @@ class TestHealthCheckScheduling(TestCase):
         Device.get_health_check = _minimal_valid_job
         self.device_type02.disable_health_check = False
         self.device_type02.display = True
-        self.device_type02.owners_only = False
         self.device_type02.save()
 
         self.device04.state = Device.STATE_IDLE
@@ -261,9 +254,7 @@ class TestHealthCheckScheduling(TestCase):
         # Create a job that should be scheduled now
         j = TestJob.objects.create(
             requested_device_type=self.device_type01,
-            user=self.user,
             submitter=self.user,
-            is_public=True,
             definition=_minimal_valid_job(None),
         )
         schedule(DummyLogger())
@@ -277,9 +268,7 @@ class TestHealthCheckScheduling(TestCase):
         # Create a job that should be scheduled after the health check
         j = TestJob.objects.create(
             requested_device_type=self.device_type01,
-            user=self.user,
             submitter=self.user,
-            is_public=True,
             definition=_minimal_valid_job(None),
         )
         self.device03.refresh_from_db()
@@ -313,23 +302,17 @@ class TestHealthCheckScheduling(TestCase):
         # Create a job that should be scheduled now
         j01 = TestJob.objects.create(
             requested_device_type=self.device_type01,
-            user=self.user,
             submitter=self.user,
-            is_public=True,
             definition=_minimal_valid_job(None),
         )
         j02 = TestJob.objects.create(
             requested_device_type=self.device_type01,
-            user=self.user,
             submitter=self.user,
-            is_public=True,
             definition=_minimal_valid_job(None),
         )
         j03 = TestJob.objects.create(
             requested_device_type=self.device_type01,
-            user=self.user,
             submitter=self.user,
-            is_public=True,
             definition=_minimal_valid_job(None),
         )
 
@@ -378,7 +361,6 @@ class TestVisibility(TestCase):
             hostname="panda01",
             device_type=self.device_type01,
             worker_host=self.worker01,
-            is_public=True,
             health=Device.HEALTH_UNKNOWN,
         )
         # This device should never be considered (his worker is OFFLINE)
@@ -386,14 +368,12 @@ class TestVisibility(TestCase):
             hostname="panda02",
             device_type=self.device_type01,
             worker_host=self.worker02,
-            is_public=True,
             health=Device.HEALTH_UNKNOWN,
         )
         self.device03 = Device.objects.create(
             hostname="panda03",
             device_type=self.device_type01,
             worker_host=self.worker03,
-            is_public=False,
             health=Device.HEALTH_UNKNOWN,
         )
         self.user = User.objects.create(username="user-01")
@@ -448,42 +428,10 @@ actions: []
         self._check_initial_state()
 
         self.device_type01.disable_health_check = False
-        self.device_type01.owners_only = False
         self.device_type01.save()
 
         schedule_health_checks(DummyLogger())[0]
 
-        self._check_hc_scheduled(self.device01)
-        self._check_hc_not_scheduled(self.device02)
-        self._check_hc_scheduled(self.device03)
-
-    def test_health_visibility_owners(self):
-        self._check_initial_state()
-
-        self.device_type01.disable_health_check = False
-        self.device_type01.owners_only = True
-        self.device_type01.save()
-
-        schedule_health_checks(DummyLogger())[0]
-
-        # no health checks can be scheduled for _minimal_valid_job
-        self._check_hc_not_scheduled(self.device01)
-        self._check_hc_not_scheduled(self.device02)
-        self._check_hc_not_scheduled(self.device03)
-
-    def test_health_visibility_owners_personal(self):
-        self._check_initial_state()
-
-        # repeat test_health_visibility_owners with suitable test job
-        Device.get_health_check = self._minimal_personal_job
-
-        self.device_type01.disable_health_check = False
-        self.device_type01.owners_only = True
-        self.device_type01.save()
-
-        schedule_health_checks(DummyLogger())[0]
-
-        # health checks can be scheduled for _minimal_personal_job
         self._check_hc_scheduled(self.device01)
         self._check_hc_not_scheduled(self.device02)
         self._check_hc_scheduled(self.device03)
@@ -492,7 +440,6 @@ actions: []
         self._check_initial_state()
 
         self.device_type01.disable_health_check = False
-        self.device_type01.owners_only = False
         self.device_type01.save()
 
         schedule_health_checks(DummyLogger())[0]
@@ -506,9 +453,7 @@ actions: []
         self._check_initial_state()
 
         self.device_type01.disable_health_check = False
-        self.device_type01.owners_only = False
         self.device_type01.save()
-        self.device01.is_public = False
 
         schedule_health_checks(DummyLogger())[0]
 
@@ -528,7 +473,6 @@ class TestPriorities(TestCase):
             device_type=self.device_type01,
             worker_host=self.worker01,
             health=Device.HEALTH_GOOD,
-            is_public=True,
         )
         self.user = User.objects.create(username="user-01")
         self.original_health_check = Device.get_health_check
@@ -555,9 +499,7 @@ class TestPriorities(TestCase):
         ]:
             j = TestJob.objects.create(
                 requested_device_type=self.device_type01,
-                user=self.user,
                 submitter=self.user,
-                is_public=True,
                 definition=_minimal_valid_job(None),
                 priority=p,
             )
@@ -662,9 +604,7 @@ class TestPriorities(TestCase):
         ]:
             j = TestJob.objects.create(
                 requested_device_type=self.device_type01,
-                user=self.user,
                 submitter=self.user,
-                is_public=True,
                 definition=_minimal_valid_job(None),
                 priority=p,
             )

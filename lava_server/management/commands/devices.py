@@ -299,7 +299,6 @@ class Command(BaseCommand):
             state=Device.STATE_IDLE,
             health=health,
             worker_host=worker,
-            is_public=public,
         )
 
         if tags is not None:
@@ -384,7 +383,6 @@ class Command(BaseCommand):
                 state=Device.STATE_IDLE,
                 health=health,
                 worker_host=worker,
-                is_public=public,
             )
 
             if from_tags is not None:
@@ -420,7 +418,6 @@ class Command(BaseCommand):
         self.stdout.write("health     : %s" % device.get_health_display())
         self.stdout.write("health job : %s" % bool(device.get_health_check()))
         self.stdout.write("description: %s" % device.description)
-        self.stdout.write("public     : %s" % device.is_public)
         if device.user:
             owner = device.user.username
         elif device.group:
@@ -503,10 +500,6 @@ class Command(BaseCommand):
                     device.worker_host = worker
                 except Worker.DoesNotExist:
                     raise CommandError("Unable to find worker '%s'" % worker_name)
-
-            public = options["public"]
-            if public is not None:
-                device.is_public = public
 
             if options["physical_user"]:
                 self._assign(options["physical_user"], device, user=True, physical=True)

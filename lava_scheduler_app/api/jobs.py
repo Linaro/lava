@@ -195,7 +195,7 @@ class SchedulerJobsAPI(ExposedV2API):
         ret = []
         start = max(0, start)
         limit = min(limit, 100)
-        jobs = TestJob.objects.all().select_related(
+        jobs = TestJob.objects.visible_by_user(self.user).select_related(
             "requested_device_type", "submitter"
         )
         if state:
@@ -298,8 +298,10 @@ class SchedulerJobsAPI(ExposedV2API):
         ret = []
         start = max(0, start)
         limit = min(limit, 100)
-        jobs = TestJob.objects.filter(state=TestJob.STATE_SUBMITTED).select_related(
-            "requested_device_type", "submitter"
+        jobs = (
+            TestJob.objects.filter(state=TestJob.STATE_SUBMITTED)
+            .visible_by_user(self.user)
+            .select_related("requested_device_type", "submitter")
         )
         if device_types is not None:
             jobs = jobs.filter(requested_device_type__name__in=device_types)
@@ -408,7 +410,6 @@ class SchedulerJobsAPI(ExposedV2API):
             "start_time": job.start_time,
             "end_time": job.end_time,
             "tags": [t.name for t in job.tags.all()],
-            "visibility": job.get_visibility_display(),
             "failure_comment": job.failure_comment,
         }
 

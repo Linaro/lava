@@ -13,7 +13,7 @@ from lava_scheduler_app.models import (
     _pipeline_protocols,
 )
 from lava_scheduler_app.dbutils import match_vlan_interface
-from django.contrib.auth.models import Group, Permission, User
+from django.contrib.auth.models import User
 from lava_scheduler_app.utils import split_multinode_yaml
 from lava_scheduler_app.tests.test_submission import ModelFactory, TestCaseWithFactory
 from lava_scheduler_app.schema import (
@@ -51,26 +51,20 @@ class YamlFactory(ModelFactory):
         device_type.save()
         return device_type
 
-    def make_device(
-        self, device_type=None, hostname=None, tags=None, is_public=True, **kw
-    ):
+    def make_device(self, device_type=None, hostname=None, tags=None, **kw):
         if device_type is None:
             device_type = self.ensure_device_type()
         if hostname is None:
             hostname = self.getUniqueString()
         if tags and not isinstance(tags, list):
             tags = []
-        # a hidden device type will override is_public
-        device = Device(
-            device_type=device_type, is_public=is_public, hostname=hostname, **kw
-        )
+        device = Device(device_type=device_type, hostname=hostname, **kw)
         if tags:
             device.tags.set(tags)
         if DEBUG:
             print(
-                "making a device of type %s %s %s with tags '%s'",
+                "making a device of type %s %s with tags '%s'",
                 device_type,
-                device.is_public,
                 device.hostname,
                 ", ".join([x.name for x in device.tags.all()]),
             )
@@ -126,15 +120,13 @@ class PipelineDeviceTags(TestCaseWithFactory):
 
     def test_no_tags(self):
         self.factory.make_device(self.device_type, "fakeqemu3")
-        TestJob.from_yaml_and_user(
-            self.factory.make_job_yaml(), self.factory.make_user()
-        )
+        user = self.factory.make_user()
+        TestJob.from_yaml_and_user(self.factory.make_job_yaml(), user)
 
     def test_priority(self):
         self.factory.make_device(self.device_type, "fakeqemu3")
-        job = TestJob.from_yaml_and_user(
-            self.factory.make_job_yaml(), self.factory.make_user()
-        )
+        user = self.factory.make_user()
+        job = TestJob.from_yaml_and_user(self.factory.make_job_yaml(), user)
         self.assertEqual(TestJob.LOW, job.priority)
 
     def test_yaml_device_tags(self):
@@ -155,21 +147,22 @@ class PipelineDeviceTags(TestCaseWithFactory):
     def test_undefined_tags(self):
         Tag.objects.all().delete()
         self.factory.make_device(self.device_type, "fakeqemu1")
+        user = self.factory.make_user()
         self.assertRaises(
             yaml.YAMLError,
             TestJob.from_yaml_and_user,
             self.factory.make_job_yaml(tags=["tag1", "tag2"]),
-            self.factory.make_user(),
+            user,
         )
 
     def test_from_yaml_unsupported_tags(self):
         self.factory.make_device(self.device_type, "fakeqemu1")
         self.factory.ensure_tag("usb")
         self.factory.ensure_tag("sata")
+        user = self.factory.make_user()
         try:
             TestJob.from_yaml_and_user(
-                self.factory.make_job_yaml(tags=["usb", "sata"]),
-                self.factory.make_user(),
+                self.factory.make_job_yaml(tags=["usb", "sata"]), user
             )
         except DevicesUnavailableException:
             pass
@@ -181,8 +174,9 @@ class PipelineDeviceTags(TestCaseWithFactory):
     def test_from_yaml_and_user_sets_multiple_tag_from_device_tags(self):
         tag_list = [self.factory.ensure_tag("tag1"), self.factory.ensure_tag("tag2")]
         self.factory.make_device(self.device_type, hostname="fakeqemu1", tags=tag_list)
+        user = self.factory.make_user()
         job = TestJob.from_yaml_and_user(
-            self.factory.make_job_yaml(tags=["tag1", "tag2"]), self.factory.make_user()
+            self.factory.make_job_yaml(tags=["tag1", "tag2"]), user
         )
         self.assertEqual(set(tag.name for tag in job.tags.all()), {"tag1", "tag2"})
 
@@ -192,11 +186,12 @@ class PipelineDeviceTags(TestCaseWithFactory):
         self.factory.make_device(
             device_type=self.device_type, hostname="fakeqemu1", tags=tags
         )
+        user = self.factory.make_user()
         job1 = TestJob.from_yaml_and_user(
-            self.factory.make_job_yaml(tags=["tag"]), self.factory.make_user()
+            self.factory.make_job_yaml(tags=["tag"]), user
         )
         job2 = TestJob.from_yaml_and_user(
-            self.factory.make_job_yaml(tags=["tag"]), self.factory.make_user()
+            self.factory.make_job_yaml(tags=["tag"]), user
         )
         self.assertEqual(
             set(tag.pk for tag in job1.tags.all()),
@@ -221,11 +216,12 @@ class PipelineDeviceTags(TestCaseWithFactory):
         self.factory.make_device(
             device_type=self.device_type, hostname="fakeqemu2", tags=tag_list
         )
+        user = self.factory.make_user()
         job = TestJob.from_yaml_and_user(
             self.factory.make_job_yaml(
                 tags=["common_tag1", "common_tag2", "unique_tag"]
             ),
-            self.factory.make_user(),
+            user,
         )
         self.assertEqual(set(tag for tag in job.tags.all()), set(tag_list))
 
@@ -240,7 +236,8 @@ class TestPipelineSubmit(TestCaseWithFactory):
 
     def test_from_yaml_and_user_sets_definition(self):
         definition = self.factory.make_job_yaml()
-        job = TestJob.from_yaml_and_user(definition, self.factory.make_user())
+        user = self.factory.make_user()
+        job = TestJob.from_yaml_and_user(definition, user)
         self.assertEqual(definition, job.definition)
 
     def test_from_yaml_and_user_sets_submitter(self):
@@ -417,63 +414,6 @@ class TestPipelineSubmit(TestCaseWithFactory):
         auto_login["login_commands"] = ["whoami", "sudo su"]
         validate_submission(data)
 
-    def test_visibility(self):
-        user = self.factory.make_user()
-        user2 = self.factory.make_user()
-        user3 = self.factory.make_user()
-
-        # public set in the YAML
-        yaml_str = self.factory.make_job_yaml()
-        yaml_data = yaml.safe_load(yaml_str)
-        job = TestJob.from_yaml_and_user(yaml_str, user)
-        self.assertTrue(job.is_public)
-        self.assertTrue(job.can_view(user))
-        self.assertTrue(job.can_view(user2))
-        self.assertTrue(job.can_view(user3))
-
-        yaml_data["visibility"] = "personal"
-        self.assertEqual(yaml_data["visibility"], "personal")
-        job2 = TestJob.from_yaml_and_user(yaml.dump(yaml_data), user3)
-        self.assertFalse(job2.is_public)
-        self.assertFalse(job2.can_view(user))
-        self.assertFalse(job2.can_view(user2))
-        self.assertTrue(job2.can_view(user3))
-
-        group1, _ = Group.objects.get_or_create(name="group1")
-        group1.user_set.add(user2)
-        job2.viewing_groups.add(group1)
-        job2.visibility = TestJob.VISIBLE_GROUP
-        job2.save()
-        self.assertFalse(job2.is_public)
-        self.assertEqual(job2.visibility, TestJob.VISIBLE_GROUP)
-        self.assertEqual(len(job2.viewing_groups.all()), 1)
-        self.assertIn(group1, job2.viewing_groups.all())
-        self.assertTrue(job.can_view(user2))
-        self.assertFalse(job2.can_view(user))
-        self.assertTrue(job2.can_view(user3))
-
-        job_data = yaml.safe_load(self.factory.make_job_yaml())
-        job_data["visibility"] = {"group": [group1.name]}
-        param = job_data["visibility"]
-        if isinstance(param, dict):
-            self.assertIn("group", param)
-            self.assertIsInstance(param["group"], list)
-            self.assertIn(group1.name, param["group"])
-            self.assertIn(group1, Group.objects.filter(name__in=param["group"]))
-
-        job3 = TestJob.from_yaml_and_user(yaml.dump(job_data), user2)
-        self.assertEqual(
-            TestJob.VISIBLE_CHOICES[job3.visibility],
-            TestJob.VISIBLE_CHOICES[TestJob.VISIBLE_GROUP],
-        )
-        self.assertEqual(list(job3.viewing_groups.all()), [group1])
-        job3.refresh_from_db()
-        self.assertEqual(
-            TestJob.VISIBLE_CHOICES[job3.visibility],
-            TestJob.VISIBLE_CHOICES[TestJob.VISIBLE_GROUP],
-        )
-        self.assertEqual(list(job3.viewing_groups.all()), [group1])
-
     # FIXME: extend once the master validation code is exposed for unit tests
     def test_compatibility(self):  # pylint: disable=too-many-locals
         user = self.factory.make_user()
@@ -481,7 +421,6 @@ class TestPipelineSubmit(TestCaseWithFactory):
         yaml_str = self.factory.make_job_yaml()
         yaml_data = yaml.safe_load(yaml_str)
         job = TestJob.from_yaml_and_user(yaml_str, user)
-        self.assertTrue(job.is_public)
         self.assertTrue(job.can_view(user))
         # initial state prior to validation
         self.assertEqual(job.pipeline_compatibility, 0)
@@ -1344,7 +1283,6 @@ class VlanInterfaces(TestCaseWithFactory):
         super().setUp()
         # YAML, pipeline only
         user = User.objects.create_user("test", "e@mail.invalid", "test")
-        user.user_permissions.add(Permission.objects.get(codename="add_testjob"))
         user.save()
         bbb_type = self.factory.make_device_type("beaglebone-black")
         self.factory.make_device(hostname="bbb-01", device_type=bbb_type)

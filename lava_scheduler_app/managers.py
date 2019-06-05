@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2015-2018 Linaro Limited
+# Copyright (C) 2015-2019 Linaro Limited
 #
 # Author: Stevan Radakovic <stevan.radakovic@linaro.org>
 #
@@ -17,48 +17,242 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.auth.models import Permission, Group
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, Count
 
-from django_restricted_resource.managers import RestrictedResourceQuerySet
+from lava_common.exceptions import ObjectNotPersisted, PermissionNameError
 
 
-class RestrictedTestJobQuerySet(RestrictedResourceQuerySet):
+class GroupObjectPermissionManager(models.Manager):
+    def assign_perm(self, perm, group, obj):
+        """
+        Assigns permission for an instance and a group.
+        """
+        if not getattr(obj, "pk", None):
+            raise ObjectNotPersisted("Object needs to be persisted first")
+        ctype = ContentType.objects.get_for_model(obj)
+
+        try:
+            permission = Permission.objects.get(
+                content_type=ctype, codename=perm.split(".", 1)[-1]
+            )
+        except Permission.DoesNotExist:
+            raise PermissionNameError("Please use existing permission codename")
+
+        kwargs = {"permission": permission, "group": group, ctype.model: obj}
+        obj_perm, _ = self.get_or_create(**kwargs)
+        return obj_perm
+
+    def bulk_assign_perm(self, perm, group, queryset):
+        """
+        Bulk assigns permissions for an objects in queryset.
+        """
+
+        ctype = ContentType.objects.get_for_model(queryset.model)
+        try:
+            permission = Permission.objects.get(content_type=ctype, codename=perm)
+        except Permission.DoesNotExist:
+            raise PermissionNameError("Please use existing permission codename")
+
+        assigned_perms = []
+        for instance in queryset:
+            kwargs = {"permission": permission, "group": group, ctype.model: instance}
+            perm, _ = self.get_or_create(**kwargs)
+            assigned_perms.append(perm)
+
+        return assigned_perms
+
+    def assign_perm_to_many(self, perm, groups, obj):
+        """
+        Bulk assigns given permission for the object to a set of groups.
+        """
+        ctype = ContentType.objects.get_for_model(obj)
+        try:
+            permission = Permission.objects.get(content_type=ctype, codename=perm)
+        except Permission.DoesNotExist:
+            raise PermissionNameError("Please use existing permission codename")
+
+        kwargs = {"permission": permission, ctype.model: obj}
+        to_add = []
+        for group in groups:
+            kwargs["group"] = group
+            to_add.append(self.model(**kwargs))
+
+        return self.model.objects.bulk_create(to_add)
+
+    def remove_perm(self, perm, group, obj):
+        """
+        Removes permission for an instance and given group.
+
+        We use Queryset.delete method for removing the permission.
+        The post_delete signals will not be fired.
+        """
+        if getattr(obj, "pk", None) is None:
+            raise ObjectNotPersisted("Object %s needs to be persisted first" % obj)
+
+        ctype = ContentType.objects.get_for_model(obj)
+        kwargs = {
+            "group": group,
+            "permission__codename": perm,
+            "permission__content_type": ctype,
+            ctype.model: obj,
+        }
+        return self.filter(**kwargs).delete()
+
+
+class RestrictedObjectQuerySet(models.QuerySet):
+    class Meta:
+        abstract = True
+
+    def accessible_by_user(self, user, perm):
+        raise NotImplementedError("Should implement this method")
+
     def visible_by_user(self, user):
+        return self.accessible_by_user(user, self.model.VIEW_PERMISSION)
 
-        from lava_scheduler_app.models import TestJob
+    def restricted_by_perm(self, perm):
+        """Add annotation used to determine if an object has any permissions"""
+        return self.annotate(
+            existing_permissions=models.Sum(
+                models.Case(
+                    models.When(
+                        permissions__permission__codename=perm.split(".", 1)[-1], then=1
+                    ),
+                    default=0,
+                    output_field=models.IntegerField(),
+                )
+            )
+        )
 
-        conditions = Q()
-        # Pipeline jobs.
-        if not user or user.is_anonymous:
-            conditions = Q(is_public=True)
-        elif (
-            not user.is_superuser
-            and not user.has_perm("lava_scheduler_app.cancel_resubmit_testjob")
-            and not user.has_perm("lava_scheduler_app.change_device")
-        ):
-            # continue adding conditions only if user is not superuser and
-            # does not have admin permission for jobs or devices.
-            conditions = (
-                Q(is_public=True)
-                | Q(submitter=user)
-                | (~Q(actual_device=None) & Q(actual_device__user=user))
-                | Q(visibility=TestJob.VISIBLE_PUBLIC)
-                | Q(visibility=TestJob.VISIBLE_PERSONAL, submitter=user)
-                |
-                # NOTE: this supposedly does OR and we need user to be in
-                # all the visibility groups if we allow multiple groups in
-                # field viewing groups.
-                Q(
-                    visibility=TestJob.VISIBLE_GROUP,
-                    viewing_groups__in=user.groups.all(),
+    def filter_by_perm(self, perm, user):
+        """Add annotation used to filter queryset by specific permission.
+
+        Returns queryset object based on user authorization with permission
+        perm over objects from queryset with annotation which shows how many
+        GroupPermission objects are related to each object.
+
+        :param perm: permission, must contain app_label
+        :param queryset: Django queryset to be filtered by perms
+        """
+        perms = [
+            x.split(".", 1)[-1]
+            for i, x in enumerate(self.model.PERMISSIONS_PRIORITY)
+            if self.model.PERMISSIONS_PRIORITY.index(perm) >= i
+        ]
+
+        return self.annotate(
+            perm_count=models.Sum(
+                models.Case(
+                    models.When(
+                        permissions__permission__codename__in=perms,
+                        permissions__group__user=user,
+                        then=1,
+                    ),
+                    default=0,
+                    output_field=models.IntegerField(),
+                )
+            )
+        )
+
+
+class RestrictedDeviceTypeQuerySet(RestrictedObjectQuerySet):
+    def accessible_by_user(self, user, perm):
+        if user.is_superuser or perm in user.get_all_permissions():
+            return self
+        else:
+            # Always false Q object which does not produce a query.
+            filters = Q(pk__in=[])
+            # If the requested permission is view or the requested permission
+            # is submit and user is authenticated, add unrestricted device
+            # types to the filter result.
+            if (perm == self.model.VIEW_PERMISSION) or (
+                perm == self.model.SUBMIT_PERMISSION and user.is_authenticated
+            ):
+                filters |= Q(existing_permissions=0)
+            # If the user is authenticated add the main permission filter.
+            if user.is_authenticated:
+                self = self.filter_by_perm(perm, user)
+                filters |= ~Q(perm_count=0)
+
+            return self.restricted_by_perm(perm).filter(filters)
+
+
+class RestrictedDeviceQuerySet(RestrictedObjectQuerySet):
+    def accessible_by_user(self, user, perm):
+        from lava_scheduler_app.models import DeviceType, Device
+
+        if user.is_superuser or perm in user.get_all_permissions():
+            return self
+        else:
+            accessible_device_types = DeviceType.objects.accessible_by_user(
+                user, Device.DEVICE_TYPE_PERMISSION_MAP[perm]
+            )
+
+            # For non-authenticated users, accessible device types will always
+            # be empty for non-view permissions, so this will also return no
+            # results. Similar for submit permissions.
+            filters = Q(existing_permissions=0) & Q(
+                device_type__in=accessible_device_types
+            )
+            # If the user is authenticated add the main permission filter.
+            if user.is_authenticated:
+                self = self.filter_by_perm(perm, user)
+                filters |= ~Q(perm_count=0)
+
+            return self.restricted_by_perm(perm).filter(filters)
+
+
+class RestrictedTestJobQuerySet(RestrictedObjectQuerySet):
+    def accessible_by_user(self, user, perm):
+        from lava_scheduler_app.models import Device, DeviceType, TestJob
+
+        if user.is_superuser or perm in user.get_all_permissions():
+            return self
+        else:
+            # Here we gather accessible devices and device types. If it would
+            # be possible to filter only from the devices (types) actually
+            # related to jobs in this queryset, that'd be better.
+            accessible_devices = Device.objects.accessible_by_user(
+                user, TestJob.DEVICE_PERMISSION_MAP[perm]
+            )
+            accessible_device_types = DeviceType.objects.accessible_by_user(
+                user, TestJob.DEVICE_TYPE_PERMISSION_MAP[perm]
+            )
+
+            # Similar to device filters, we first check if jobs are
+            # unrestricted and if yes, we check for accessibility of either
+            # actual_device or requested_device_type (depending on whether the
+            # job is scheduled or not.
+            filters = Q(num_viewing_groups=0) & (
+                (
+                    Q(actual_device__isnull=False)
+                    & Q(actual_device__in=accessible_devices)
+                )
+                | (
+                    Q(actual_device__isnull=True)
+                    & Q(requested_device_type__in=accessible_device_types)
                 )
             )
 
-        return self.filter(conditions)
+            # Add viewing_groups filter.
+            if perm == self.model.VIEW_PERMISSION:
+                # Needed to determing in viewing_groups is subset of all users
+                # groups.
+                nonuser_groups = Group.objects.exclude(
+                    pk__in=[g.id for g in user.groups.all()]
+                )
+                filters |= ~Q(num_viewing_groups=0) & ~Q(
+                    viewing_groups__in=nonuser_groups
+                )
+
+            return self.annotate(num_viewing_groups=Count("viewing_groups")).filter(
+                filters
+            )
 
 
-class RestrictedTestCaseQuerySet(RestrictedResourceQuerySet):
+class RestrictedTestCaseQuerySet(models.QuerySet):
     def visible_by_user(self, user):
 
         from lava_scheduler_app.models import TestJob
@@ -66,7 +260,6 @@ class RestrictedTestCaseQuerySet(RestrictedResourceQuerySet):
         jobs = TestJob.objects.filter(testsuite__testcase__in=self).visible_by_user(
             user
         )
-
         return self.filter(suite__job__in=jobs)
 
 
@@ -76,5 +269,4 @@ class RestrictedTestSuiteQuerySet(models.QuerySet):
         from lava_scheduler_app.models import TestJob
 
         jobs = TestJob.objects.filter(testsuite__in=self).visible_by_user(user)
-
         return self.filter(job__in=jobs)

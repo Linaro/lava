@@ -15,14 +15,6 @@
 {% endblock %}
 {% block content %}
 
-{% if device.device_type.owners_only %}
-<div class="alert alert-warning alert-dismissable">
-  <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-  <p><strong><i>{{  device.device_type.name }}</i> is a hidden device type.</strong></p>
-  Only owners of one or more devices of type <i>{{ device.device_type }}</i> can see this information.
-</div>
-{% endif %}
-
 <h2>Device dictionary
   <a class="btn btn-xs btn-info"
      href="{% url 'lava.scheduler.device.dictionary.plain' device.hostname %}"

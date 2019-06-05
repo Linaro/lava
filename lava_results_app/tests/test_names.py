@@ -56,25 +56,20 @@ class ModelFactory:
     def make_device_type(self, name="qemu"):
         return DeviceType.objects.get_or_create(name=name)[0]
 
-    def make_device(
-        self, device_type=None, hostname=None, tags=None, is_public=True, **kw
-    ):
+    def make_device(self, device_type=None, hostname=None, tags=None, **kw):
         if device_type is None:
             device_type = self.make_device_type()
         if hostname is None:
             hostname = self.getUniqueString()
         if tags and type(tags) != list:
             tags = []
-        device = Device(
-            device_type=device_type, is_public=is_public, hostname=hostname, **kw
-        )
+        device = Device(device_type=device_type, hostname=hostname, **kw)
         if tags:
             device.tags = tags
         logging.debug(
-            "making a device of type %s %s %s with tags '%s'"
+            "making a device of type %s %s with tags '%s'"
             % (
                 device_type,
-                device.is_public,
                 device.hostname,
                 ", ".join([x.name for x in device.tags.all()]),
             )

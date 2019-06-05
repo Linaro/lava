@@ -15,9 +15,7 @@ from lava_scheduler_app.models import (
     Tag,
     TestJob,
 )
-from lava_scheduler_app.schema import SubmissionException
-from lava_scheduler_app.scheduler import schedule_health_check
-from lava_common.exceptions import ConfigurationError
+
 
 
 # pylint gets confused with TestCase
@@ -88,38 +86,23 @@ class ModelFactory:
         logging.debug("asking for alias %s for device type %s", name, dt.name)
         return alias
 
-    def make_hidden_device_type(self, name=None):
-        if name is None:
-            name = self.getUniqueString("name")
-        device_type, _ = DeviceType.objects.get_or_create(owners_only=True, name=name)
-        logging.debug("asking for a device of type %s", device_type.name)
-        return device_type
-
     def ensure_tag(self, name):  # pylint: disable=no-self-use
         return Tag.objects.get_or_create(name=name)[0]
 
-    def make_device(
-        self, device_type=None, hostname=None, tags=None, is_public=True, **kw
-    ):
+    def make_device(self, device_type=None, hostname=None, tags=None, **kw):
         if device_type is None:
             device_type = self.ensure_device_type()
         if hostname is None:
             hostname = self.getUniqueString()
         if not isinstance(tags, list):
             tags = []
-        # a hidden device type will override is_public
         device = Device(
-            device_type=device_type,
-            is_public=is_public,
-            state=Device.STATE_IDLE,
-            hostname=hostname,
-            **kw
+            device_type=device_type, state=Device.STATE_IDLE, hostname=hostname, **kw
         )
         device.tags.set(tags)
         logging.debug(
-            "making a device of type %s %s %s with tags '%s'",
+            "making a device of type %s %s with tags '%s'",
             device_type,
-            device.is_public,
             device.hostname,
             ", ".join([x.name for x in device.tags.all()]),
         )
@@ -174,10 +157,7 @@ class TestTestJob(
             self.fail("Comments have not been preserved")
         dt = self.factory.make_device_type(name="qemu")
         device = self.factory.make_device(device_type=dt, hostname="qemu-1")
-        device.save()
         user = self.factory.make_user()
-        user.user_permissions.add(Permission.objects.get(codename="add_testjob"))
-        user.save()
         job = TestJob.from_yaml_and_user(definition, user)
         job.refresh_from_db()
         self.assertEqual(user, job.submitter)
@@ -188,7 +168,7 @@ class TestTestJob(
 
     def test_user_permission(self):
         self.assertIn(
-            "cancel_resubmit_testjob",
+            "submit_testjob",
             [
                 permission.codename
                 for permission in Permission.objects.all()
@@ -196,64 +176,31 @@ class TestTestJob(
             ],
         )
         user = self.factory.make_user()
-        user.user_permissions.add(Permission.objects.get(codename="add_testjob"))
+        user.user_permissions.add(Permission.objects.get(codename="submit_testjob"))
         user.save()
         self.assertEqual(
-            user.get_all_permissions(), {u"lava_scheduler_app.add_testjob"}
+            user.get_all_permissions(), {u"lava_scheduler_app.submit_testjob"}
         )
-        cancel_resubmit = Permission.objects.get(codename="cancel_resubmit_testjob")
-        self.assertEqual("lava_scheduler_app", cancel_resubmit.content_type.app_label)
-        self.assertIsNotNone(cancel_resubmit)
-        self.assertEqual(cancel_resubmit.name, "Can cancel or resubmit test jobs")
-        user.user_permissions.add(cancel_resubmit)
+        admin_perm = Permission.objects.get(codename="admin_device")
+        self.assertEqual("lava_scheduler_app", admin_perm.content_type.app_label)
+        self.assertIsNotNone(admin_perm)
+        self.assertEqual(admin_perm.name, "Can admin device")
+        user.user_permissions.add(admin_perm)
         user.save()
         delattr(
             user, "_perm_cache"
         )  # force a refresh of the user permissions as well as the user
         user = User.objects.get(username=user.username)
         self.assertEqual(
-            {
-                u"lava_scheduler_app.cancel_resubmit_testjob",
-                u"lava_scheduler_app.add_testjob",
-            },
+            {u"lava_scheduler_app.admin_device", u"lava_scheduler_app.submit_testjob"},
             user.get_all_permissions(),
         )
-        self.assertTrue(user.has_perm("lava_scheduler_app.add_testjob"))
-        self.assertTrue(user.has_perm("lava_scheduler_app.cancel_resubmit_testjob"))
-
-    def test_group_visibility(self):
-        self.factory.cleanup()
-        dt = self.factory.make_device_type(name="name")
-        device = self.factory.make_device(device_type=dt, hostname="name-1")
-        device.save()
-        definition = self.factory.make_job_data()
-        definition["visibility"] = {"group": ["newgroup"]}
-        definition["job_name"] = "unittest_visibility"
-        self.assertIsNotNone(yaml.safe_dump(definition))
-        self.assertIsNotNone(list(Device.objects.filter(device_type=dt)))
-        user = self.factory.make_user()
-        user.user_permissions.add(Permission.objects.get(codename="add_testjob"))
-        user.save()
-        self.assertRaises(
-            SubmissionException,
-            TestJob.from_yaml_and_user,
-            yaml.safe_dump(definition),
-            user,
-        )
-        self.factory.make_group("newgroup")
-        known_groups = list(Group.objects.filter(name__in=["newgroup"]))
-        job = TestJob.from_yaml_and_user(yaml.safe_dump(definition), user)
-        job.refresh_from_db()
-        self.assertEqual(user, job.submitter)
-        self.assertEqual(job.visibility, TestJob.VISIBLE_GROUP)
-        self.assertEqual(known_groups, list(job.viewing_groups.all()))
-        self.factory.cleanup()
+        self.assertTrue(user.has_perm("lava_scheduler_app.submit_testjob"))
+        self.assertTrue(user.has_perm("lava_scheduler_app.admin_device"))
 
     def test_json_yaml(self):
         self.factory.cleanup()
         user = self.factory.make_user()
-        user.user_permissions.add(Permission.objects.get(codename="add_testjob"))
-        user.save()
         dt = self.factory.make_device_type(name="qemu")
         device = self.factory.make_device(device_type=dt, hostname="qemu-1")
         device.save()
@@ -271,7 +218,7 @@ class TestTestJob(
     def test_job_data(self):
         self.factory.cleanup()
         user = self.factory.make_user()
-        user.user_permissions.add(Permission.objects.get(codename="add_testjob"))
+        user.user_permissions.add(Permission.objects.get(codename="submit_testjob"))
         user.save()
         dt = self.factory.make_device_type(name="qemu")
         device = self.factory.make_device(device_type=dt, hostname="qemu-1")
@@ -317,68 +264,3 @@ class TestTestJob(
         self.assertRaises(
             DevicesUnavailableException, testjob_submission, definition, user, None
         )
-
-
-class TestHiddenTestJob(TestCaseWithFactory):  # pylint: disable=too-many-ancestors
-    def test_hidden_device_type_sets_restricted_device(self):
-        device_type = self.factory.make_hidden_device_type("hidden")
-        device = self.factory.make_device(device_type=device_type, hostname="hidden1")
-        device.save()
-        self.assertEqual(device.is_public, False)
-
-    def test_visibility_and_hidden(self):
-        self.factory.cleanup()
-        device_type = self.factory.make_hidden_device_type("hidden")
-        device = self.factory.make_device(device_type=device_type, hostname="hidden1")
-        device.save()
-        self.assertEqual(device.is_public, False)
-        definition = self.factory.make_job_data()
-        definition["visibility"] = "public"
-        user = self.factory.make_user()
-        user.user_permissions.add(Permission.objects.get(codename="add_testjob"))
-        user.save()
-        self.assertRaises(
-            DevicesUnavailableException,
-            TestJob.from_yaml_and_user,
-            yaml.safe_dump(definition),
-            user,
-        )
-
-    def test_hidden_healthcheck(self):
-        self.factory.cleanup()
-        device_type = self.factory.make_hidden_device_type("hidden")
-        device = self.factory.make_device(device_type=device_type, hostname="hidden1")
-        device.save()
-        device.refresh_from_db()
-        self.assertEqual(Device.STATE_IDLE, device.state)
-        self.assertEqual(device.is_public, False)
-        definition = self.factory.make_job_data()
-        definition["job_name"] = "job_should_fail"
-        definition["visibility"] = "public"
-        self.assertIsNotNone(device)
-        self.factory.ensure_user("lava-health", "test@l.org", "pass")
-        self.assertRaises(
-            ConfigurationError,
-            schedule_health_check,
-            device,
-            yaml.safe_dump(definition),
-        )
-
-        # reset device state.
-        definition["job_name"] = "job_should_schedule"
-        self.factory.make_group("hide")
-        device.state = Device.STATE_IDLE
-        device.save(update_fields=["state"])
-        definition["visibility"] = {"group": ["hide"]}
-        job_id = schedule_health_check(device, yaml.safe_dump(definition))
-        job = TestJob.objects.get(id=job_id)
-        self.assertEqual(job.is_public, False)
-        self.assertEqual(job.visibility, TestJob.VISIBLE_GROUP)
-
-        device.state = Device.STATE_IDLE
-        device.save(update_fields=["state"])
-        definition["visibility"] = "personal"
-        job_id = schedule_health_check(device, yaml.safe_dump(definition))
-        job = TestJob.objects.get(id=job_id)
-        self.assertEqual(job.is_public, False)
-        self.assertEqual(job.visibility, TestJob.VISIBLE_PERSONAL)

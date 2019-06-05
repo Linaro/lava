@@ -32,12 +32,11 @@ import yaml
 from nose.tools import nottest
 from django.db.models import Q
 from django.conf import settings
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import User, Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.admin.models import LogEntry, ADDITION, CHANGE
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.sites.models import Site
-from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.urls import reverse
 from django.db import models
@@ -45,16 +44,15 @@ from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
 
-from django_restricted_resource.models import (
-    RestrictedResource,
-    RestrictedResourceManager,
-)
-
-from lava_common.exceptions import ConfigurationError
 from lava_results_app.utils import export_testcase
 from lava_scheduler_app import utils
 from lava_scheduler_app.logutils import read_logs
-from lava_scheduler_app.managers import RestrictedTestJobQuerySet
+from lava_scheduler_app.managers import (
+    RestrictedDeviceTypeQuerySet,
+    RestrictedDeviceQuerySet,
+    RestrictedTestJobQuerySet,
+    GroupObjectPermissionManager,
+)
 from lava_scheduler_app.schema import SubmissionException, validate_device
 
 import requests
@@ -93,6 +91,29 @@ class ExtendedUser(models.Model):
 
     def __str__(self):
         return "%s: %s@%s" % (self.user, self.irc_handle, self.irc_server)
+
+
+class GroupObjectPermission(models.Model):
+
+    objects = GroupObjectPermissionManager()
+
+    class Meta:
+        abstract = True
+
+    permission = models.ForeignKey(Permission, on_delete=models.CASCADE)
+    group = models.ForeignKey(Group, on_delete=models.CASCADE)
+
+    def save(self, *args, **kwargs):
+        super().full_clean()
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def ensure_users_group(cls, user):
+        # Get or create a group that matches the users' username.
+        # Then ensure that only this user is belonging to his group.
+        group, _ = Group.objects.get_or_create(name=user.username)
+        group.user_set.set({user}, clear=True)
+        return group
 
 
 class Tag(models.Model):
@@ -182,10 +203,41 @@ class Core(models.Model):
         return self.pk
 
 
-class DeviceType(models.Model):
+class RestrictedObject(models.Model):
+    class Meta:
+        abstract = True
+
+    def is_permission_restricted(self, perm):
+        app_label, codename = perm.split(".", 1)
+        perm_count = self.permissions.filter(
+            permission__content_type__app_label=app_label, permission__codename=codename
+        ).count()
+        return perm_count > 0
+
+    def has_any_permission_restrictions(self, perm):
+        raise NotImplementedError("Should implement this")
+
+
+class DeviceType(RestrictedObject):
     """
     A class of device, for example a pandaboard or a snowball.
     """
+
+    class Meta:
+        permissions = (
+            ("view_devicetype", "Can view device type"),
+            ("submit_to_devicetype", "Can submit jobs to device type"),
+            ("admin_devicetype", "Can admin device type"),
+        )
+
+    VIEW_PERMISSION = "lava_scheduler_app.view_devicetype"
+    ADMIN_PERMISSION = "lava_scheduler_app.admin_devicetype"
+    SUBMIT_PERMISSION = "lava_scheduler_app.submit_to_devicetype"
+
+    # Order of permission importance from most to least.
+    PERMISSIONS_PRIORITY = [ADMIN_PERMISSION, SUBMIT_PERMISSION, VIEW_PERMISSION]
+
+    objects = RestrictedDeviceTypeQuerySet.as_manager()
 
     name = models.SlugField(
         primary_key=True, editable=True
@@ -281,80 +333,21 @@ class DeviceType(models.Model):
         ),
     )
 
-    owners_only = models.BooleanField(
-        default=False,
-        help_text="Hide this device type for all users except owners of "
-        "devices of this type.",
-    )
-
     def get_absolute_url(self):
         return reverse("lava.scheduler.device_type.detail", args=[self.pk])
 
-    def num_devices_visible_to(self, user):
-        """
-        Prepare a list of devices of this DeviceType which
-        this user can see. If the DeviceType is not hidden,
-        returns all devices of this type.
-        :param user: User to check
-        :return: the number of devices of this DeviceType which the
-        user can see. This may be 0 if the type is hidden
-        and the user owns none of the devices of this type.
-        """
-        devices = (
-            Device.objects.filter(device_type=self)
-            .only("user", "group")
-            .select_related("user", "group")
-        )
-        if self.owners_only:
-            return len([d for d in devices if d.is_owned_by(user)])
-        else:
-            return devices.count()
+    def can_view(self, user):
+        if user.has_perm(self.VIEW_PERMISSION, self):
+            return True
+        if not self.is_permission_restricted(self.VIEW_PERMISSION):
+            return True
+        return False
 
-    def some_devices_visible_to(self, user):
-        """
-        :param user: User to check
-        :return: True if some devices of this DeviceType are visible
-        """
-        # Grab the key from the cache if available
-        version = user.id if user.id is not None else -1
-        cached_value = cache.get(self.name, version=version)
-        if cached_value is not None:
-            return cached_value
+    def can_admin(self, user):
+        return user.has_perm(self.ADMIN_PERMISSION, self)
 
-        devices = (
-            Device.objects.filter(device_type=self)
-            .only("state", "health", "user", "group")
-            .select_related("user", "group")
-        )
-
-        if self.owners_only:
-            result = False
-            for d in devices:
-                if d.is_owned_by(user):
-                    result = True
-                    break
-        else:
-            result = devices.exists()
-        # Cache the value for 30 seconds
-        cache.set(self.name, result, 30, version=version)
-        return result
-
-
-class DefaultDeviceOwner(models.Model):
-    """
-    Used to override the django User model to allow one individual
-    user to be specified as the default device owner.
-    """
-
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    default_owner = models.BooleanField(
-        verbose_name="Default owner of unrestricted devices", unique=True, default=False
-    )
-
-    def __str__(self):
-        if self.user:
-            return self.user.username
-        return ""
+    def has_any_permission_restrictions(self, perm):
+        return self.is_permission_restricted(perm)
 
 
 class Worker(models.Model):
@@ -474,10 +467,33 @@ class Worker(models.Model):
         )
 
 
-class Device(RestrictedResource):
+class Device(RestrictedObject):
     """
     A device that we can run tests on.
     """
+
+    class Meta:
+        permissions = (
+            ("view_device", "Can view device"),
+            ("submit_to_device", "Can submit jobs to device"),
+            ("admin_device", "Can admin device"),
+        )
+
+    VIEW_PERMISSION = "lava_scheduler_app.view_device"
+    ADMIN_PERMISSION = "lava_scheduler_app.admin_device"
+    SUBMIT_PERMISSION = "lava_scheduler_app.submit_to_device"
+
+    # This maps the corresponding permissions for 'parent' dependencies.
+    DEVICE_TYPE_PERMISSION_MAP = {
+        VIEW_PERMISSION: DeviceType.VIEW_PERMISSION,
+        ADMIN_PERMISSION: DeviceType.ADMIN_PERMISSION,
+        SUBMIT_PERMISSION: DeviceType.SUBMIT_PERMISSION,
+    }
+
+    # Order of permission importance from most to least.
+    PERMISSIONS_PRIORITY = [ADMIN_PERMISSION, SUBMIT_PERMISSION, VIEW_PERMISSION]
+
+    objects = RestrictedDeviceQuerySet.as_manager()
 
     hostname = models.CharField(
         verbose_name=_("Hostname"),
@@ -582,44 +598,7 @@ class Device(RestrictedResource):
     )
 
     def clean(self):
-        """
-        Complies with the RestrictedResource constraints
-        by specifying the default device owner as the superuser
-        upon save if none was set.
-        Devices become public if no User or Group is specified
-        First superuser by id is the default user if default user is None
-        Devices move to that superuser if default user is None.
-        """
-
-        default_user_list = DefaultDeviceOwner.objects.all()[:1]
-        if not default_user_list:
-            superusers = User.objects.filter(is_superuser=True).order_by("id")[:1]
-            if superusers:
-                first_super_user = superusers[0]
-                if self.group is None:
-                    self.user = User.objects.filter(username=first_super_user.username)[
-                        0
-                    ]
-                default_owner = DefaultDeviceOwner()
-                default_owner.user = User.objects.filter(
-                    username=first_super_user.username
-                )[0]
-                default_owner.save()
-                first_super_user.defaultdeviceowner.user = first_super_user
-                first_super_user.save()
-            if self.device_type.owners_only:
-                self.is_public = False
-            return
-        default_user = default_user_list[0]
-        if self.user is None and self.group is None:
-            if self.device_type.owners_only:
-                self.is_public = False
-            if default_user:
-                self.user = User.objects.filter(id=default_user.user_id)[0]
-        if self.user is not None and self.group is not None:
-            raise ValidationError(
-                "Cannot be owned by a user and a group at the same time"
-            )
+        pass
 
     def __str__(self):
         return "%s (%s, health %s)" % (
@@ -646,41 +625,54 @@ class Device(RestrictedResource):
     def get_description(self):
         return mark_safe(self.description) if self.description else None
 
-    def is_visible_to(self, user):
+    def has_any_permission_restrictions(self, perm):
+        if not self.is_permission_restricted(perm):
+            return self.device_type.has_any_permission_restrictions(
+                self.DEVICE_TYPE_PERMISSION_MAP[perm]
+            )
+        else:
+            return True
+
+    def can_view(self, user):
         """
         Checks if this device is visible to the specified user.
         Retired devices are deemed to be visible - filter these out
         explicitly where necessary.
-        :param user: If empty, restricted or hidden devices always return False
+        :param user: User trying to view the device
         :return: True if the user can see this device
         """
-        if self.device_type.owners_only:
-            if not user:
-                return False
-            if not self.device_type.some_devices_visible_to(user):
-                return False
-        if not self.is_public:
-            if not user:
-                return False
-            if not self.can_submit(user):
-                return False
-        return True
+        if user.has_perm(self.VIEW_PERMISSION, self):
+            return True
+        if not self.is_permission_restricted(self.VIEW_PERMISSION):
+            if self.device_type.can_view(user):
+                return True
+        return False
 
     def can_admin(self, user):
-        if self.is_owned_by(user):
+        if user.has_perm(self.ADMIN_PERMISSION, self):
             return True
-        if user.has_perm("lava_scheduler_app.change_device"):
-            return True
+        if not self.is_permission_restricted(self.ADMIN_PERMISSION):
+            if user.has_perm(self.device_type.ADMIN_PERMISSION, self.device_type):
+                return True
         return False
 
     def can_submit(self, user):
         if self.health == Device.HEALTH_RETIRED:
             return False
-        if self.is_public:
-            return True
         if user.username == "lava-health":
             return True
-        return self.is_owned_by(user)
+        if user.has_perm(self.SUBMIT_PERMISSION, self):
+            return True
+        if not self.is_permission_restricted(self.SUBMIT_PERMISSION):
+            if not self.device_type.is_permission_restricted(
+                DeviceType.SUBMIT_PERMISSION
+            ):
+                if user.is_authenticated():
+                    return True
+            elif user.has_perm(self.device_type.SUBMIT_PERMISSION, self.device_type):
+                return True
+
+        return False
 
     def is_valid(self, system=True):
         try:
@@ -1006,10 +998,10 @@ def _check_tags(taglist, device_type=None, hostname=None):
     return list(set(matched_devices))
 
 
-def _check_submit_to_device(device_list, user):
+def _check_submit_to_devices(device_list, user):
     """
-    Handles the affects of Device Ownership on job submission
-    :param device_list: A list of device objects to check
+    Handles the affects of Device Permissions on job submission
+    :param device_list: A device queryset to check
     :param user: The user submitting the job
     :return: a subset of the device_list to which the user
     is allowed to submit a TestJob.
@@ -1017,20 +1009,13 @@ def _check_submit_to_device(device_list, user):
     devices in device_list are available for submission by this user.
     """
     allow = []
-    # ensure device_list is or can be converted to a list
-    # DB queries result in a RestrictedResourceQuerySet
-    if not isinstance(list(device_list), list) or not device_list:
-        # logic error
+    if not device_list.exists():
         return allow
-    device_type = None
-    for device in device_list:
-        device_type = device.device_type
-        if device.health != Device.HEALTH_RETIRED and device.can_submit(user):
-            allow.append(device)
+    allow = list(device_list.accessible_by_user(user, Device.SUBMIT_PERMISSION))
     if not allow:
         raise DevicesUnavailableException(
-            "No devices of type %s are currently available to user %s"
-            % (device_type, user)
+            "No devices from [%s] pool are currently available to user %s"
+            % (device_list.values_list("hostname", flat=True), user)
         )
     return allow
 
@@ -1080,7 +1065,7 @@ def _get_device_type(user, name):
             logger.error(msg)
             raise DevicesUnavailableException(msg)
 
-    if not device_type.some_devices_visible_to(user):
+    if not device_type.can_view(user):
         msg = "Device type '%s' is unavailable to user '%s'" % (name, user.username)
         logger.error(msg)
         raise DevicesUnavailableException(msg)
@@ -1130,36 +1115,26 @@ def _create_pipeline_job(
             if priority is None:
                 raise SubmissionException("Invalid job priority: %r" % key)
 
-    public_state = True
-    visibility = TestJob.VISIBLE_PUBLIC
+    if not orig:
+        orig = yaml.safe_dump(job_data)
+
+    is_public = False
     viewing_groups = []
     param = job_data["visibility"]
-
-    if health_check and device.device_type.owners_only:
-        # 'lava-health' user is normally allowed to "ignore" visibility
-        if isinstance(param, str):
-            if param == "public":
-                raise ConfigurationError(
-                    "Publicly visible health check requested for a hidden device-type."
-                )
-
     if isinstance(param, str):
-        if param == "personal":
-            public_state = False
-            visibility = TestJob.VISIBLE_PERSONAL
+        # Ignore all other cases, i.e. we will leave is_public as False.
+        # Those cases include 'personal' and 'group' visibility.
+        # We might want to deprecate group visibility in the future.
+        if param == "public":
+            is_public = True
     elif isinstance(param, dict):
-        public_state = False
         if "group" in param:
-            visibility = TestJob.VISIBLE_GROUP
-            known_groups = list(Group.objects.filter(name__in=param["group"]))
-            if not known_groups:
+            viewing_groups = list(Group.objects.filter(name__in=param["group"]))
+            if not viewing_groups:
                 raise SubmissionException(
                     "No known groups were found in the visibility list."
                 )
-            viewing_groups.extend(known_groups)
 
-    if not orig:
-        orig = yaml.safe_dump(job_data)
     job = TestJob(
         definition=yaml.safe_dump(job_data),
         original_definition=orig,
@@ -1168,10 +1143,8 @@ def _create_pipeline_job(
         target_group=target_group,
         description=job_data["job_name"],
         health_check=health_check,
-        user=user,
-        is_public=public_state,
-        visibility=visibility,
         priority=priority,
+        is_public=is_public,
     )
     job.save()
 
@@ -1249,11 +1222,10 @@ def _pipeline_protocols(
                 device_type = _get_device_type(user, params["device_type"])
                 role_dictionary[role]["device_type"] = device_type
 
-                allowed_devices = []
                 device_list = Device.objects.filter(
                     Q(device_type=device_type), ~Q(health=Device.HEALTH_RETIRED)
                 )
-                allowed_devices.extend(_check_submit_to_device(list(device_list), user))
+                allowed_devices = _check_submit_to_devices(device_list, user)
 
                 if len(allowed_devices) < params["count"]:
                     raise DevicesUnavailableException(
@@ -1317,31 +1289,29 @@ def _pipeline_protocols(
 
 
 @nottest
-class TestJob(RestrictedResource):
+class TestJob(models.Model):
     """
     A test job is a test process that will be run on a Device.
     """
 
     class Meta:
         index_together = ["health", "state", "requested_device_type"]
+        permissions = (("submit_testjob", "Can submit test job"),)
 
-    objects = RestrictedResourceManager.from_queryset(RestrictedTestJobQuerySet)()
+    # Permission strings. Not real permissions.
+    VIEW_PERMISSION = "lava_scheduler_app.view_testjob"
+    ADMIN_PERMISSION = "lava_scheduler_app.admin_testjob"
+    # This maps the corresponding permissions for 'parent' dependencies.
+    DEVICE_PERMISSION_MAP = {
+        VIEW_PERMISSION: Device.VIEW_PERMISSION,
+        ADMIN_PERMISSION: Device.ADMIN_PERMISSION,
+    }
+    DEVICE_TYPE_PERMISSION_MAP = {
+        VIEW_PERMISSION: DeviceType.VIEW_PERMISSION,
+        ADMIN_PERMISSION: DeviceType.ADMIN_PERMISSION,
+    }
 
-    # VISIBILITY levels are subject to any device restrictions and hidden device type rules
-    VISIBLE_PUBLIC = 0  # anyone can view, submit or resubmit
-    VISIBLE_PERSONAL = 1  # only the submitter can view, submit or resubmit
-    VISIBLE_GROUP = (
-        2
-    )  # A single group is specified, all users in that group (and that group only) can view.
-
-    VISIBLE_CHOICES = (
-        (
-            VISIBLE_PUBLIC,
-            "Publicly visible",
-        ),  # publicly and publically are equivalent meaning
-        (VISIBLE_PERSONAL, "Personal only"),
-        (VISIBLE_GROUP, "Group only"),
-    )
+    objects = RestrictedTestJobQuerySet.as_manager()
 
     NOTIFY_EMAIL_METHOD = "email"
     NOTIFY_IRC_METHOD = "irc"
@@ -1349,6 +1319,8 @@ class TestJob(RestrictedResource):
     id = models.AutoField(primary_key=True)
 
     sub_id = models.CharField(verbose_name=_("Sub ID"), blank=True, max_length=200)
+
+    is_public = models.BooleanField(default=False)
 
     target_group = models.CharField(
         verbose_name=_("Target Group"),
@@ -1362,26 +1334,11 @@ class TestJob(RestrictedResource):
         User, verbose_name=_("Submitter"), related_name="+", on_delete=models.CASCADE
     )
 
-    visibility = models.IntegerField(
-        verbose_name=_("Visibility type"),
-        help_text=_(
-            "Visibility affects the TestJob and all results arising from that job, "
-            "including Queries and Reports."
-        ),
-        choices=VISIBLE_CHOICES,
-        default=VISIBLE_PUBLIC,
-        editable=True,
-    )
-
     viewing_groups = models.ManyToManyField(
         # functionally, may be restricted to only one group at a time
         # depending on implementation complexity
         Group,
         verbose_name=_("Viewing groups"),
-        help_text=_(
-            "Adding groups to an intersection of groups reduces visibility."
-            "Adding groups to a union of groups expands visibility."
-        ),
         related_name="viewing_groups",
         blank=True,
         default=None,
@@ -1768,7 +1725,6 @@ class TestJob(RestrictedResource):
         # visibility checks
         if "visibility" not in job_data:
             raise SubmissionException("Job visibility must be specified.")
-            # handle view and admin users and groups
 
         # pipeline protocol handling, e.g. lava-multinode
         job_list = _pipeline_protocols(job_data, user, yaml_data)
@@ -1777,9 +1733,10 @@ class TestJob(RestrictedResource):
             return job_list
         # singlenode only
         device_type = _get_device_type(user, job_data["device_type"])
-        allow = _check_submit_to_device(
-            list(Device.objects.filter(device_type=device_type)), user
+        devices = Device.objects.filter(
+            Q(device_type=device_type), ~Q(health=Device.HEALTH_RETIRED)
         )
+        allow = _check_submit_to_devices(devices, user)
         if not allow:
             raise DevicesUnavailableException(
                 "No devices of type %s are available." % device_type
@@ -1806,91 +1763,56 @@ class TestJob(RestrictedResource):
             orig=yaml_data,
         )
 
-    def clean(self):
-        """
-        Implement the schema constraints for visibility for jobs so that
-        admins cannot set a job into a logically inconsistent state.
-        """
-        # public settings must match
-        if self.is_public and self.visibility != TestJob.VISIBLE_PUBLIC:
-            raise ValidationError("is_public is set but visibility is not public.")
-        elif not self.is_public and self.visibility == TestJob.VISIBLE_PUBLIC:
-            raise ValidationError("is_public is not set but visibility is public.")
-        return super().clean()
-
     def can_view(self, user):
-        """
-        Take over the checks behind RestrictedIDLinkColumn, for
-        jobs which support a view user list or view group.
-        For speed, the lookups on the user/group tables are only by id
-        Any elements which would need admin access must be checked
-        separately using can_admin instead.
-        :param user:  the user making the request
-        :return: True or False
-        """
-        if self._can_admin(user, resubmit=False):
+        if user == self.submitter:
             return True
-        device_type = self.requested_device_type
-        if device_type and device_type.owners_only:
-            if not device_type.some_devices_visible_to(user):
-                return False
         if self.is_public:
             return True
-        logger = logging.getLogger("lava_scheduler_app")
-        if self.visibility == self.VISIBLE_PUBLIC:
-            # logical error
-            logger.exception(
-                "job [%s] visibility is public but job is not public.", self.id
-            )
-        elif self.visibility == self.VISIBLE_PERSONAL:
-            return user == self.submitter
-        elif self.visibility == self.VISIBLE_GROUP:
-            # The user should be member of every groups
-            user_groups = user.groups.all()
-            return all([g in user_groups for g in self.viewing_groups.all()])
+        if self.viewing_groups.exists():
+            # If viewing_groups is set, user must belong to all the specified
+            # groups.
+            return set(self.viewing_groups.all()).issubset(set(user.groups.all()))
+
+        if self.actual_device:
+            return self.actual_device.can_view(user)
+        elif self.requested_device_type.can_view(user):
+            return True
 
         return False
 
-    def _can_admin(self, user, resubmit=True):
-        """
-        used to check for things like if the user can cancel or annotate
-        a job failure.
-        Failure to allow admin access returns HIDE_ACCESS or DENY_ACCESS
-        For speed, the lookups on the user/group tables are only by id
-        :param user:  the user making the request
-        :param resubmit: if this check should also consider resumbit/cancel permission
-        :return: access level, up to a maximum of FULL_ACCESS
-        """
-        # FIXME: move resubmit permission check to a separate function & rationalise.
-        owner = False
-        if self.actual_device is not None:
-            owner = self.actual_device.can_admin(user)
-        perm = user.is_superuser or user == self.submitter or owner
-        if resubmit:
-            perm = (
-                user.is_superuser
-                or user == self.submitter
-                or owner
-                or user.has_perm("lava_scheduler_app.cancel_resubmit_testjob")
-            )
-        return perm
+    def can_admin(self, user):
+        if user == self.submitter:
+            return True
+
+        if self.actual_device:
+            return self.actual_device.can_admin(user)
+        elif user.has_perm(DeviceType.ADMIN_PERMISSION, self.requested_device_type):
+            return True
+
+        return False
 
     def can_change_priority(self, user):
         """
         Permission and state required to change job priority.
         Multinode jobs cannot have their priority changed.
         """
-        return (
-            user.is_superuser
-            or user == self.submitter
-            or user.has_perm("lava_scheduler_app.cancel_resubmit_testjob")
-        )
+        if user == self.submitter:
+            return True
+        if self.can_admin(user):
+            return True
+
+        return False
 
     def can_annotate(self, user):
         """
         Permission required for user to add failure information to a job
         """
-        return self._can_admin(user) and self.state == TestJob.STATE_FINISHED
+        if not self.state == TestJob.STATE_FINISHED:
+            return False
+        if not self.can_admin(user):
+            return False
+
+        return True
 
     def can_cancel(self, user):
         states = [
@@ -1899,12 +1821,22 @@ class TestJob(RestrictedResource):
             TestJob.STATE_SCHEDULED,
             TestJob.STATE_RUNNING,
         ]
-        return self._can_admin(user) and self.state in states
+        return self.can_admin(user) and self.state in states
 
     def can_resubmit(self, user):
-        return user.is_superuser or user.has_perm(
-            "lava_scheduler_app.cancel_resubmit_testjob"
-        )
+        if self.can_admin(user):
+            return True
+
+        # Allow users who are able to submit to device or devicetype to also
+        # resubmit jobs.
+        if self.actual_device:
+            return self.actual_device.can_submit(user)
+        elif user.has_perm(
+            self.device_type.SUBMIT_PERMISSION, self.requested_device_type
+        ):
+            return True
+
+        return False
 
     def create_job_data(self, token=None, output=False, results=False):
         """
@@ -2381,7 +2313,6 @@ class NotificationCallback(models.Model):
 class TestJobUser(models.Model):
     class Meta:
         unique_together = ("test_job", "user")
-        permissions = (("cancel_resubmit_testjob", "Can cancel or resubmit test jobs"),)
 
     user = models.ForeignKey(User, null=False, on_delete=models.CASCADE)
 
@@ -2393,3 +2324,30 @@ class TestJobUser(models.Model):
         if self.user:
             return self.user.username
         return ""
+
+
+class GroupDeviceTypePermission(GroupObjectPermission):
+    class Meta:
+        unique_together = ("group", "permission", "devicetype")
+
+    devicetype = models.ForeignKey(
+        DeviceType, null=False, on_delete=models.CASCADE, related_name="permissions"
+    )
+
+    def __str__(self):
+        return "Permission '%s' for device type %s" % (
+            self.permission.codename,
+            self.devicetype,
+        )
+
+
+class GroupDevicePermission(GroupObjectPermission):
+    class Meta:
+        unique_together = ("group", "permission", "device")
+
+    device = models.ForeignKey(
+        Device, null=False, on_delete=models.CASCADE, related_name="permissions"
+    )
+
+    def __str__(self):
+        return "Permission '%s' for device %s" % (self.permission.codename, self.device)

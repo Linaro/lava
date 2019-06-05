@@ -19,13 +19,14 @@
 
 import pytest
 
-from django.contrib.auth.models import Permission, User
+from django.contrib.auth.models import Group, Permission, User
 from django.urls import reverse
 
 from lava_scheduler_app.models import (
     Alias,
     Device,
     DeviceType,
+    GroupDevicePermission,
     TestJob,
     TestJobUser,
     Worker,
@@ -45,8 +46,10 @@ actions: []
 
 @pytest.fixture
 def setup(db):
+    group = Group.objects.create(name="group1")
     user = User.objects.create_user(username="tester", password="tester")  # nosec
-    user.user_permissions.add(Permission.objects.get(codename="add_testjob"))
+    user.user_permissions.add(Permission.objects.get(codename="submit_testjob"))
+    user.groups.add(group)
     dt_qemu = DeviceType.objects.create(name="qemu")
     Alias.objects.create(name="kvm", device_type=dt_qemu)
     Alias.objects.create(name="qemu-system", device_type=dt_qemu)
@@ -65,33 +68,27 @@ def setup(db):
         state=Device.STATE_RUNNING,
         health=Device.HEALTH_GOOD,
         worker_host=worker_02,
-        owner=user,
     )
+    GroupDevicePermission.objects.assign_perm(Device.ADMIN_PERMISSION, group, juno_01)
     job_01 = TestJob.objects.create(
         description="test job 01",
-        is_public=True,
-        owner=user,
         submitter=user,
         requested_device_type=dt_juno,
         actual_device=juno_01,
         state=TestJob.STATE_FINISHED,
         health=TestJob.HEALTH_COMPLETE,
+        is_public=True,
     )
     job_02 = TestJob.objects.create(
         description="test job 02",
-        is_public=True,
-        owner=user,
         submitter=user,
         requested_device_type=dt_juno,
         actual_device=juno_01,
         state=TestJob.STATE_RUNNING,
+        is_public=True,
     )
     job_03 = TestJob.objects.create(
-        description="test job 03",
-        is_public=True,
-        owner=user,
-        submitter=user,
-        requested_device_type=dt_juno,
+        description="test job 03", submitter=user, requested_device_type=dt_juno
     )
 
 

@@ -212,9 +212,6 @@ CALLBACK_TIMEOUT = 5
 # DRF may need this to be true when used in some instances.
 USE_X_FORWARDED_HOST = False
 REST_FRAMEWORK = {
-    "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly"
-    ],
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
     "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.URLPathVersioning",
     "ALLOWED_VERSIONS": REST_VERSIONS,

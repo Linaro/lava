@@ -203,7 +203,6 @@ class DeviceTypeFilter(filters.FilterSet):
             "disable_health_check": ["exact", "in"],
             "health_denominator": ["exact", "in"],
             "display": ["exact", "in"],
-            "owners_only": ["exact", "in"],
             "core_count": ["exact", "in"],
         }
 
@@ -283,7 +282,6 @@ class TestJobFilter(filters.FilterSet):
     )
     health = ChoiceFilter(choices=TestJob.HEALTH_CHOICES)
     state = ChoiceFilter(choices=TestJob.STATE_CHOICES)
-    visibility = ChoiceFilter(choices=TestJob.VISIBLE_CHOICES)
 
     class Meta:
         model = TestJob
@@ -329,5 +327,4 @@ class TestJobFilter(filters.FilterSet):
                 "endswith",
                 "isnull",
             ],
-            "visibility": ["exact", "in"],
         }

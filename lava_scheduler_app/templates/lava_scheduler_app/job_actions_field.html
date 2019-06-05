@@ -1,32 +1,21 @@
 {% load utils %}
 
-{% can_view record request.user as can_view %}
-
 <div class="text-nowrap">
-  <a class="btn btn-xs btn-success {% if not can_view or not record.results_link %}disabled{% endif %}"
-     title="{% if can_view and record.results_link %}View job results{% elif not can_view %}Insufficient permissions{% elif not record.results_link %}Disabled for V1 jobs{% endif %}"
-     {% if not can_view or not record.results_link %}
+  <a class="btn btn-xs btn-success {% if not record.results_link %}disabled{% endif %}"
+     title="{% if record.results_link %}View job results{% elif not record.results_link %}Disabled for V1 jobs{% endif %}"
+     {% if not record.results_link %}
      onclick="javascript:void(0)" style="pointer-events: auto;"
      {% else %}
      href="{{ record.results_link }}"
      {% endif %}>
     <span class="glyphicon glyphicon-signal"></span>
   </a>
-    <a class="btn btn-xs btn-info {% if not can_view %}disabled{% endif %}"
-     title="{% if can_view %}View job details{% else %}Insufficient permissions{% endif %}"
-     {% if not can_view %}
-     onclick="javascript:void(0)" style="pointer-events: auto;"
-     {% else %}
-     href="{{ record.get_absolute_url }}"
-     {% endif %}>
+    <a class="btn btn-xs btn-info" title="View job details"
+     href="{{ record.get_absolute_url }}">
     <span class="glyphicon glyphicon-eye-open"></span>
   </a>
-    <a class="btn btn-xs btn-primary {% if not can_view %}disabled{% endif %}" title="{% if can_view %}End of log{% else %}Insufficient permissions{% endif %}"
-     {% if not can_view %}
-     onclick="javascript:void(0)" style="pointer-events: auto;"
-     {% else %}
-     href="{{ record.get_absolute_url }}#bottom"
-     {% endif %}>
+    <a class="btn btn-xs btn-primary" title="End of log"
+     href="{{ record.get_absolute_url }}#bottom">
     <span class="glyphicon glyphicon-fast-forward"></span>
   </a>
 </div>

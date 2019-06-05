@@ -209,7 +209,7 @@ def schedule_jobs_for_device_type(logger, dt, available_devices):
     # Add a random sort: with N devices and num(jobs) < N, if we don't sort
     # randomly, the same devices will always be used while the others will
     # never be used.
-    devices = devices.order_by("is_public", "?")
+    devices = devices.order_by("?")
 
     jobs = []
     for device in devices:

@@ -66,6 +66,11 @@ DATABASES = {
 # Load secret key from distro integration
 SECRET_KEY = get_secret_key("/etc/lava-server/secret_key.conf")
 
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "lava_server.backends.GroupPermissionBackend",
+]
+
 # LDAP authentication config
 if AUTH_LDAP_SERVER_URI:
     INSTALLED_APPS.append("ldap")
@@ -85,10 +90,7 @@ if AUTH_LDAP_SERVER_URI:
 
         return types
 
-    AUTHENTICATION_BACKENDS = [
-        "django_auth_ldap.backend.LDAPBackend",
-        "django.contrib.auth.backends.ModelBackend",
-    ]
+    AUTHENTICATION_BACKENDS.append("django_auth_ldap.backend.LDAPBackend")
 
     # Available variables: AUTH_LDAP_BIND_DN, AUTH_LDAP_BIND_PASSWORD,
     # AUTH_LDAP_USER_DN_TEMPLATE AUTH_LDAP_USER_ATTR_MAP
@@ -114,6 +116,7 @@ if AUTH_LDAP_SERVER_URI:
 elif AUTH_DEBIAN_SSO:
     MIDDLEWARE.append("lava_server.debian_sso.DebianSsoUserMiddleware")
     AUTHENTICATION_BACKENDS.append("lava_server.debian_sso.DebianSsoUserBackend")
+
 
 if USE_DEBUG_TOOLBAR:
     INSTALLED_APPS.append("debug_toolbar")

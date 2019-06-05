@@ -96,11 +96,11 @@ from lava_results_app.models import (
     TestData,
 )
 
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import User
 from lava_scheduler_app.tables import (
     JobErrorsTable,
     JobTable,
-    all_jobs_with_custom_sort,
+    visible_jobs_with_custom_sort,
     IndexJobTable,
     FailedJobTable,
     DeviceLogEntryTable,
@@ -133,9 +133,10 @@ def _str_to_bool(string):
 
 class JobTableView(LavaView):
     def device_query(self, term):  # pylint: disable=no-self-use
-        visible = filter_device_types(self.request.user)
         device = list(
-            Device.objects.filter(hostname__contains=term, device_type__in=visible)
+            Device.objects.filter(hostname__contains=term).visible_by_user(
+                self.request.user
+            )
         )
         return Q(actual_device__in=device)
 
@@ -148,13 +149,19 @@ class JobTableView(LavaView):
         return Q(submitter__in=owner)
 
     def requested_device_type_query(self, term):
-        visible = filter_device_types(self.request.user)
-        dt = list(DeviceType.objects.filter(name__contains=term, name__in=visible))
+        dt = list(
+            DeviceType.objects.filter(name__contains=term).visible_by_user(
+                self.request.user
+            )
+        )
         return Q(requested_device_type__in=dt)
 
     def device_type_query(self, term):
-        visible = filter_device_types(self.request.user)
-        dt = list(DeviceType.objects.filter(name__contains=term, name__in=visible))
+        dt = list(
+            DeviceType.objects.filter(name__contains=term).visible_by_user(
+                self.request.user
+            )
+        )
         return Q(device_type__in=dt)
 
     def job_state_query(self, term):
@@ -172,62 +179,13 @@ class JobTableView(LavaView):
         matches = [p[0] for p in Device.HEALTH_CHOICES if term in p[1]]
         return Q(health__in=matches)
 
-    def restriction_query(self, term):
-        """
-        This may turn out to be too much work for search to support.
-        :param term: user submitted string
-        :return: a query for devices which match the rendered restriction text
-        """
-        q = Q()
-
-        query_list = []
-        device_list = []
-        user_list = User.objects.filter(
-            id__in=Device.objects.filter(user__isnull=False).values("user")
-        )
-        for users in user_list:
-            query_list.append(users.id)
-        if query_list:
-            device_list = User.objects.filter(id__in=query_list).filter(
-                email__contains=term
-            )
-        query_list = []
-        for users in device_list:
-            query_list.append(users.id)
-        if query_list:
-            q = q.__or__(Q(user__in=query_list))
-
-        query_list = []
-        device_list = []
-        group_list = Group.objects.filter(
-            id__in=Device.objects.filter(group__isnull=False).values("group")
-        )
-        for groups in group_list:
-            query_list.append(groups.id)
-        if query_list:
-            device_list = Group.objects.filter(id__in=query_list).filter(
-                name__contains=term
-            )
-        query_list = []
-        for groups in device_list:
-            query_list.append(groups.id)
-        if query_list:
-            q = q.__or__(Q(group__in=query_list))
-
-        # if the render function is changed, these will need to change too
-        if term in "all users in group":
-            q = q.__or__(Q(group__isnull=False))
-        if term in "Unrestricted usage" or term in "Device owner by":
-            q = q.__or__(Q(is_public=True))
-        elif term in "Job submissions restricted to %s":
-            q = q.__or__(Q(is_public=False))
-        return q
-
 
 class FailureTableView(JobTableView):
     def get_queryset(self):
         failures = [TestJob.HEALTH_INCOMPLETE, TestJob.HEALTH_CANCELED]
-        jobs = all_jobs_with_custom_sort().filter(health__in=failures)
+        jobs = visible_jobs_with_custom_sort(self.request.user).filter(
+            health__in=failures
+        )
 
         health = self.request.GET.get("health_check")
         if health:
@@ -314,6 +272,8 @@ class DeviceLogView(LavaView):
 
 
 def health_jobs_in_hr():
+    # Only used for count on scheduler home page so we're not filtering
+    # for view accessibilty atm.
     return (
         TestJob.objects.values("actual_device")
         .filter(Q(health_check=True) & ~Q(actual_device=None))
@@ -335,25 +295,26 @@ def _online_total():
 
 class IndexTableView(JobTableView):
     def get_queryset(self):
-        return all_jobs_with_custom_sort().filter(
+        return visible_jobs_with_custom_sort(self.request.user).filter(
             state__in=[TestJob.STATE_RUNNING, TestJob.STATE_CANCELING]
         )
 
 
 class DeviceTableView(JobTableView):
     def get_queryset(self):
-        visible = filter_device_types(self.request.user)
         return (
-            Device.objects.select_related("device_type", "worker_host", "user", "group")
+            Device.objects.select_related("device_type")
             .prefetch_related("tags")
-            .filter(device_type__in=visible)
+            .visible_by_user(self.request.user)
             .order_by("hostname")
         )
 
 
 class JobErrorsView(LavaView):
     def get_queryset(self):
-        q = TestCase.objects.filter(suite__name="lava", result=TestCase.RESULT_FAIL)
+        q = TestCase.objects.filter(
+            suite__name="lava", result=TestCase.RESULT_FAIL
+        ).visible_by_user(self.request.user)
         q = q.filter(metadata__regex="error_type: (Configuration|Infrastructure|Bug)")
         q = q.select_related("suite", "suite__job__actual_device")
         return q.order_by("-suite__job__id")
@@ -670,7 +631,9 @@ def passing_health_checks(request):
 
 class MyDeviceView(DeviceTableView):
     def get_queryset(self):
-        return Device.objects.owned_by_principal(self.request.user).order_by("hostname")
+        return Device.objects.accessible_by_user(
+            self.request.user, Device.ADMIN_PERMISSION
+        ).order_by("hostname")
 
 
 @BreadCrumb("My Devices", parent=index)
@@ -695,7 +658,7 @@ def mydevice_list(request):
 
 @BreadCrumb("My Devices Health History", parent=index)
 def mydevices_health_history_log(request):
-    devices = Device.objects.owned_by_principal(request.user)
+    devices = Device.objects.accessible_by_user(request.user, Device.ADMIN_PERMISSION)
     devices_log_data = DevicesLogView(
         devices, request, model=LogEntry, table_class=DeviceLogEntryTable
     )
@@ -731,24 +694,6 @@ def get_restricted_job(user, pk, request=None, for_update=False):
     return job
 
 
-def filter_device_types(user):
-
-    """
-    Filters the available DeviceType names to exclude DeviceTypes
-    which are hidden from this user.
-    :param user: User to check
-    :return: A list of DeviceType.name which all contain
-    at least one device this user can see.
-    """
-    visible = []
-    for device_type in DeviceType.objects.filter(display=True).only(
-        "name", "owners_only"
-    ):
-        if device_type.some_devices_visible_to(user):
-            visible.append(device_type.name)
-    return visible
-
-
 class ActiveDeviceView(DeviceTableView):
     def get_queryset(self):
         q = super().get_queryset()
@@ -769,13 +714,16 @@ class DeviceHealthView(DeviceTableView):
 
 class DeviceTypeOverView(JobTableView):
     def get_queryset(self):
-        visible = filter_device_types(self.request.user)
-        return device_type_summary(visible)
+        return device_type_summary(self.request.user)
 
 
 class NoDTDeviceView(DeviceTableView):
     def get_queryset(self):
-        return Device.objects.exclude(health=Device.HEALTH_RETIRED).order_by("hostname")
+        return (
+            Device.objects.exclude(health=Device.HEALTH_RETIRED)
+            .visible_by_user(self.request.user)
+            .order_by("hostname")
+        )
 
 
 @BreadCrumb("Maintenance", parent=device_list)
@@ -821,14 +769,17 @@ def device_type_detail(request, pk):
         )
     except DeviceType.DoesNotExist:
         raise Http404()
-    # Check that at least one device is visible to the current user
-    if dt.owners_only:
-        if not dt.some_devices_visible_to(request.user):
-            raise Http404("No device type matches the given query.")
+
+    if not dt.can_view(request.user):
+        raise PermissionDenied()
 
     # Get some test job statistics
     now = timezone.now()
-    devices = list(Device.objects.filter(device_type=dt).values_list("pk", flat=True))
+    devices = list(
+        Device.objects.filter(device_type=dt)
+        .values_list("pk", flat=True)
+        .visible_by_user(request.user)
+    )
     daily_complete = TestJob.objects.filter(
         actual_device__in=devices,
         health_check=True,
@@ -1035,10 +986,14 @@ def device_type_reports(request, pk):
             type_report_data(week * -7 - 7, week * -7, device_type, False)
         )
 
-    long_running = TestJob.objects.filter(
-        actual_device__in=Device.objects.filter(device_type=device_type),
-        state__in=[TestJob.STATE_RUNNING, TestJob.STATE_CANCELING],
-    ).order_by("start_time")[:5]
+    long_running = (
+        TestJob.objects.filter(
+            actual_device__in=Device.objects.filter(device_type=device_type),
+            state__in=[TestJob.STATE_RUNNING, TestJob.STATE_CANCELING],
+        )
+        .visible_by_user(request.user)
+        .order_by("start_time")[:5]
+    )
     return render(
         request,
         "lava_scheduler_app/devicetype_reports.html",
@@ -1108,17 +1063,15 @@ def health_job_list(request, pk):
 
 class MyJobsView(JobTableView):
     def get_queryset(self):
-        query = all_jobs_with_custom_sort()
+        query = visible_jobs_with_custom_sort(self.request.user)
         return query.filter(submitter=self.request.user)
 
 
 class LongestJobsView(JobTableView):
     def get_queryset(self):
         jobs = (
-            TestJob.objects.select_related(
-                "actual_device", "requested_device_type", "group"
-            )
-            .all()
+            TestJob.objects.select_related("actual_device", "requested_device_type")
+            .visible_by_user(self.request.user)
             .filter(state__in=[TestJob.STATE_RUNNING, TestJob.STATE_CANCELING])
         )
         return jobs.order_by("start_time")
@@ -1128,18 +1081,17 @@ class FavoriteJobsView(JobTableView):
     def get_queryset(self):
         user = self.user if self.user else self.request.user
 
-        query = all_jobs_with_custom_sort()
+        query = visible_jobs_with_custom_sort(self.request.user)
         return query.filter(testjobuser__user=user, testjobuser__is_favorite=True)
 
 
 class AllJobsView(JobTableView):
     def get_queryset(self):
-        return all_jobs_with_custom_sort()
+        return visible_jobs_with_custom_sort(self.request.user)
 
 
 @BreadCrumb("Jobs", parent=index)
 def job_list(request):
-
     data = AllJobsView(request, model=TestJob, table_class=JobTable)
     ptable = JobTable(data.get_table_data(), request=request)
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
@@ -1205,7 +1157,7 @@ def active_jobs(request):
 def job_submit(request):
 
     is_authorized = False
-    if request.user and request.user.has_perm("lava_scheduler_app.add_testjob"):
+    if request.user and request.user.has_perm("lava_scheduler_app.submit_testjob"):
         is_authorized = True
 
     response_data = {
@@ -1940,26 +1892,26 @@ class RecentJobsView(JobTableView):
         self.device = device
 
     def get_queryset(self):
-        return all_jobs_with_custom_sort().filter(actual_device=self.device)
+        return visible_jobs_with_custom_sort(self.request.user).filter(
+            actual_device=self.device
+        )
 
 
 @BreadCrumb("{pk}", parent=device_list, needs=["pk"])
 def device_detail(request, pk):
     # Find the device and raise 404 if we are not allowed to see it
     try:
-        device = Device.objects.select_related("device_type", "user").get(pk=pk)
+        device = Device.objects.select_related("device_type").get(pk=pk)
     except Device.DoesNotExist:
         raise Http404("No device matches the given query.")
 
-    # Any user that can access to a device_type can
-    # see all the devices even if they are for owners_only
-    if device.device_type.owners_only:
-        if not device.device_type.some_devices_visible_to(request.user):
-            raise Http404("No device matches the given query.")
+    if not device.can_view(request.user):
+        raise Http404("No device matches the given query.")
 
     # Find previous and next device
     devices = (
         Device.objects.filter(device_type_id=device.device_type_id)
+        .visible_by_user(request.user)
         .only("hostname", "state", "health")
         .order_by("hostname")
     )
@@ -2034,15 +1986,12 @@ def device_detail(request, pk):
 def device_dictionary(request, pk):
     # Find the device and raise 404 if we are not allowed to see it
     try:
-        device = Device.objects.select_related("device_type", "user").get(pk=pk)
+        device = Device.objects.select_related("device_type").get(pk=pk)
     except Device.DoesNotExist:
         raise Http404("No device matches the given query.")
 
-    # Any user that can access to a device_type can
-    # see all the devices even if they are for owners_only
-    if device.device_type.owners_only:
-        if not device.device_type.some_devices_visible_to(request.user):
-            raise Http404("No device matches the given query.")
+    if not device.can_view(request.user):
+        raise Http404("No device matches the given query.")
 
     raw_device_dict = device.load_configuration(output_format="raw")
     if not raw_device_dict:
@@ -2067,6 +2016,8 @@ def device_dictionary(request, pk):
 @BreadCrumb("Report", parent=device_detail, needs=["pk"])
 def device_reports(request, pk):
     device = get_object_or_404(Device, pk=pk)
+    if not device.can_view(request.user):
+        raise Http404("No device matches the given query.")
     health_day_report = []
     health_week_report = []
     job_day_report = []
@@ -2084,9 +2035,14 @@ def device_reports(request, pk):
             device_report_data(week * -7 - 7, week * -7, device, False)
         )
 
-    long_running = TestJob.objects.filter(
-        actual_device=device, state__in=[TestJob.STATE_RUNNING, TestJob.STATE_CANCELING]
-    ).order_by("start_time")[:5]
+    long_running = (
+        TestJob.objects.filter(
+            actual_device=device,
+            state__in=[TestJob.STATE_RUNNING, TestJob.STATE_CANCELING],
+        )
+        .visible_by_user(request.user)
+        .order_by("start_time")[:5]
+    )
     return render(
         request,
         "lava_scheduler_app/device_reports.html",
@@ -2100,37 +2056,6 @@ def device_reports(request, pk):
             "bread_crumb_trail": BreadCrumbTrail.leading_to(device_reports, pk=pk),
         },
     )
-
-
-@require_POST
-def device_restrict_device(request, pk):
-    device = Device.objects.get(pk=pk)
-    if device.can_admin(request.user):
-        message = "added a restriction: %s" % request.POST.get("reason")
-        device.is_public = False
-        device.save(update_fields=["is_public"])
-        device.log_admin_entry(request.user, message)
-        return redirect(device)
-    else:
-        return HttpResponseForbidden(
-            "you cannot restrict submissions to this device", content_type="text/plain"
-        )
-
-
-@require_POST
-def device_derestrict_device(request, pk):
-    device = Device.objects.get(pk=pk)
-    if device.can_admin(request.user):
-        message = "removed restriction: %s" % request.POST.get("reason")
-        device.is_public = True
-        device.save(update_fields=["is_public"])
-        device.log_admin_entry(request.user, message)
-        return redirect(device)
-    else:
-        return HttpResponseForbidden(
-            "you cannot derestrict submissions to this device",
-            content_type="text/plain",
-        )
 
 
 @require_POST
@@ -2240,7 +2165,9 @@ def username_list_json(request):
 
 class HealthCheckJobsView(JobTableView):
     def get_queryset(self):
-        return all_jobs_with_custom_sort().filter(health_check=True)
+        return visible_jobs_with_custom_sort(self.request.user).filter(
+            health_check=True
+        )
 
 
 @BreadCrumb("Healthcheck", parent=job_list)
@@ -2269,7 +2196,9 @@ def healthcheck(request):
 
 class QueueJobsView(JobTableView):
     def get_queryset(self):
-        return all_jobs_with_custom_sort().filter(state=TestJob.STATE_SUBMITTED)
+        return visible_jobs_with_custom_sort(self.request.user).filter(
+            state=TestJob.STATE_SUBMITTED
+        )
 
 
 @BreadCrumb("Queue", parent=job_list)
@@ -2294,7 +2223,11 @@ def queue(request):
 
 class RunningView(LavaView):
     def get_queryset(self):
-        return DeviceType.objects.filter(display=True).order_by("name")
+        return (
+            DeviceType.objects.filter(display=True)
+            .visible_by_user(self.request.user)
+            .order_by("name")
+        )
 
 
 @BreadCrumb("Running", parent=index)
@@ -2308,7 +2241,7 @@ def running(request):
     for dt in running_data.get_queryset():
         if not Device.objects.filter(
             ~Q(health=Device.HEALTH_RETIRED) & Q(device_type=dt)
-        ):
+        ).visible_by_user(request.user):
             retirements.append(dt.name)
 
     return render(
@@ -2317,7 +2250,7 @@ def running(request):
         {
             "running_table": running_ptable,
             "bread_crumb_trail": BreadCrumbTrail.leading_to(running),
-            "is_admin": request.user.has_perm("lava_scheduler_app.change_devicetype"),
+            "is_admin": request.user.has_perm(DeviceType.ADMIN_PERMISSION),
             "retirements": retirements,
         },
     )
@@ -2325,9 +2258,9 @@ def running(request):
 
 def download_device_type_template(request, pk):
     dt = get_object_or_404(DeviceType, name=pk)
-    if dt.owners_only:
-        if not dt.some_devices_visible_to(request.user):
-            raise Http404("No device type matches the given query.")
+
+    if not dt.can_view(request.user):
+        raise Http404("No device type matches the given query.")
 
     data = load_devicetype_template(dt.name, raw=True)
     if not data:

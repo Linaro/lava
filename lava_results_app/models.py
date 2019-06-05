@@ -1161,8 +1161,6 @@ class QueryCondition(models.Model):
             "actual_device",
             "requested_device_type",
             "health_check",
-            "user",
-            "group",
             "priority",
             "description",
         ],

@@ -113,43 +113,8 @@ class ExpandedStatusColumn(tables.Column):
             return record.get_simple_state_display()
 
 
-class RestrictedDeviceColumn(tables.Column):
-    def __init__(self, verbose_name="Submissions restricted to", **kw):
-        kw["verbose_name"] = verbose_name
-        super().__init__(**kw)
-
-    def render(self, record):
-        """
-        If the strings here are changed, ensure the strings in the restriction_query
-        are changed to match.
-        :param record: a database record
-        :return: a text string describing the restrictions on this device.
-        """
-        label = None
-        if record.health == Device.HEALTH_BAD:
-            return "Health check failed: no test jobs will be scheduled."
-        if record.health == Device.HEALTH_MAINTENANCE:
-            return "No test jobs will be scheduled."
-        if record.health == Device.HEALTH_RETIRED:
-            return "Retired: no submissions possible."
-        if record.is_public:
-            return ""
-        if record.user:
-            label = record.user.email
-        if record.group:
-            label = "group %s" % record.group
-        return label
-
-
-def all_jobs_with_custom_sort():
-    jobs = TestJob.objects.select_related(
-        "actual_device",
-        "actual_device__user",
-        "actual_device__group",
-        "submitter",
-        "user",
-        "group",
-    ).all()
+def visible_jobs_with_custom_sort(user):
+    jobs = TestJob.objects.visible_by_user(user)
     return jobs.order_by("-submit_time")
 
 
@@ -276,8 +241,6 @@ class JobTable(LavaTable):
             device_type = record.requested_device_type
         if not device_type:
             return "Error"
-        if not device_type.some_devices_visible_to(self.context.get("request").user):
-            return "Unavailable"
         return retval
 
     def render_description(self, value):  # pylint: disable=no-self-use
@@ -293,8 +256,6 @@ class JobTable(LavaTable):
         # alternatively, use 'fields' value to include specific fields.
         exclude = [
             "is_public",
-            "user",
-            "group",
             "sub_id",
             "target_group",
             "health_check",
@@ -651,9 +612,6 @@ class DeviceTypeTable(LavaTable):
     def render_busy(self, record):  # pylint: disable=no-self-use
         return record["busy"] if record["busy"] > 0 else ""
 
-    def render_restricted(self, record):  # pylint: disable=no-self-use
-        return record["restricted"] if record["restricted"] > 0 else ""
-
     def render_name(self, record):  # pylint: disable=no-self-use
         return pklink(DeviceType.objects.get(name=record["device_type"]))
 
@@ -670,7 +628,6 @@ class DeviceTypeTable(LavaTable):
     idle = tables.Column()
     offline = tables.Column()
     busy = tables.Column()
-    restricted = tables.Column()
     # sadly, this needs to be not orderable as it would otherwise sort by the accessor.
     queue = tables.Column(accessor="idle", verbose_name="Queue", orderable=False)
 
@@ -681,7 +638,6 @@ class DeviceTypeTable(LavaTable):
         exclude = [
             "display",
             "disable_health_check",
-            "owners_only",
             "architecture",
             "health_denominator",
             "health_frequency",
@@ -761,8 +717,6 @@ class DeviceTable(LavaTable):
     )
     device_type = tables.Column()
     state = ExpandedStatusColumn("state")
-    owner = RestrictedDeviceColumn()
-    owner.orderable = False
     health = tables.Column(verbose_name="Health")
     tags = TagsColumn()
 
@@ -771,9 +725,6 @@ class DeviceTable(LavaTable):
     ):  # pylint: disable=too-few-public-methods,no-init,no-self-use
         model = Device
         exclude = [
-            "user",
-            "group",
-            "is_public",
             "device_version",
             "physical_owner",
             "physical_group",
@@ -781,20 +732,12 @@ class DeviceTable(LavaTable):
             "current_job",
             "last_health_report_job",
         ]
-        sequence = [
-            "hostname",
-            "worker_host",
-            "device_type",
-            "state",
-            "health",
-            "owner",
-        ]
+        sequence = ["hostname", "worker_host", "device_type", "state", "health"]
         searches = {"hostname": "contains"}
         queries = {
             "device_type_query": "device_type",
             "device_state_query": "state",
             "device_health_query": "health",
-            "restriction_query": "restrictions",
             "tags_query": "tags",
         }
 
@@ -896,9 +839,6 @@ class NoWorkerDeviceTable(DeviceTable):
     ):  # pylint: disable=too-few-public-methods,no-init,no-self-use
         exclude = [
             "worker_host",
-            "user",
-            "group",
-            "is_public",
             "device_version",
             "physical_owner",
             "physical_group",
@@ -1057,7 +997,6 @@ class RunningTable(LavaTable):
         exclude = [
             "display",
             "disable_health_check",
-            "owners_only",
             "architecture",
             "processor",
             "cpu_model",

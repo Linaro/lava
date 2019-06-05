@@ -52,7 +52,7 @@ class SchedulerAliasesAPI(ExposedV2API):
         """
         try:
             dt = DeviceType.objects.get(name=device_type_name)
-            if not dt.some_devices_visible_to(self.user):
+            if not self.user.has_perm(DeviceType.VIEW_PERMISSION, dt):
                 raise xmlrpc.client.Fault(
                     404, "Device-type '%s' was not found." % device_type_name
                 )
@@ -142,7 +142,7 @@ class SchedulerAliasesAPI(ExposedV2API):
             raise xmlrpc.client.Fault(404, "Alias '%s' was not found." % name)
 
         dt = alias.device_type
-        if dt is None or (dt.owners_only and dt.some_devices_visible_to(self.user)):
+        if dt is None or not self.user.has_perm(DeviceType.VIEW_PERMISSION, dt):
             return {"name": alias.name, "device_type": ""}
 
         return {"name": alias.name, "device_type": alias.device_type.name}

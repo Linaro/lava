@@ -21,9 +21,11 @@
 import os
 import yaml
 import logging
+
 from django.db import DataError
-from django.utils.translation import ungettext_lazy
 from django.core.exceptions import PermissionDenied
+from django.utils.translation import ungettext_lazy
+
 from linaro_django_xmlrpc.models import AuthToken
 
 

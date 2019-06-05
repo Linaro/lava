@@ -159,12 +159,13 @@ def parse_job_description(job):
     job.save(update_fields=["pipeline_compatibility"])
 
 
-def device_type_summary(visible=None):
+def device_type_summary(user):
     devices = (
         Device.objects.filter(
-            ~Q(health=Device.HEALTH_RETIRED) & Q(device_type__in=visible)
+            ~Q(health=Device.HEALTH_RETIRED),
+            Q(device_type__in=DeviceType.objects.visible_by_user(user)),
         )
-        .only("state", "health", "is_public", "device_type", "hostname")
+        .only("state", "health", "device_type", "hostname")
         .values("device_type")
         .annotate(
             idle=Sum(
@@ -198,13 +199,6 @@ def device_type_summary(visible=None):
                         ),
                         then=1,
                     ),
-                    default=0,
-                    output_field=IntegerField(),
-                )
-            ),
-            restricted=Sum(
-                Case(
-                    When(is_public=False, then=1),
                     default=0,
                     output_field=IntegerField(),
                 )

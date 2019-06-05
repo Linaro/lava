@@ -4,15 +4,23 @@ import pathlib
 import pytest
 import yaml
 import unittest
-from nose.tools import nottest
-from io import BytesIO as StringIO
 import xmlrpc.client
 
 from django.contrib.auth.models import Group, Permission, User
 from django.test.client import Client
+from nose.tools import nottest
+from io import BytesIO as StringIO
 
 from lava_scheduler_app.dbutils import validate_yaml
-from lava_scheduler_app.models import Alias, Device, DeviceType, Tag, Worker
+from lava_scheduler_app.models import (
+    Alias,
+    Device,
+    DeviceType,
+    GroupDevicePermission,
+    GroupDeviceTypePermission,
+    Tag,
+    Worker,
+)
 from lava_scheduler_app.schema import (
     validate_submission,
     validate_device,
@@ -74,7 +82,6 @@ class TestSchedulerAPI(TestCaseWithFactory):  # pylint: disable=too-many-ancesto
 
     def test_new_devices(self):
         user = self.factory.ensure_user("test", "e@mail.invalid", "test")
-        user.user_permissions.add(Permission.objects.get(codename="add_testjob"))
         user.save()
         device_type = self.factory.make_device_type("beaglebone-black")
         device = self.factory.make_device(device_type=device_type, hostname="black01")
@@ -519,17 +526,11 @@ protocols:
 def setup(db):
     user = User.objects.create_user(username="user", password="user")  # nosec
     group = Group.objects.create(name="group")
-    admin = User.objects.create_user(username="admin", password="admin")  # nosec
-    admin.user_permissions.add(Permission.objects.get(codename="add_alias"))
-    admin.user_permissions.add(Permission.objects.get(codename="delete_alias"))
-    admin.user_permissions.add(Permission.objects.get(codename="add_device"))
-    admin.user_permissions.add(Permission.objects.get(codename="change_device"))
-    admin.user_permissions.add(Permission.objects.get(codename="add_tag"))
-    admin.user_permissions.add(Permission.objects.get(codename="add_devicetype"))
-    admin.user_permissions.add(Permission.objects.get(codename="change_devicetype"))
-    admin.user_permissions.add(Permission.objects.get(codename="delete_tag"))
-    admin.user_permissions.add(Permission.objects.get(codename="add_worker"))
-    admin.user_permissions.add(Permission.objects.get(codename="change_worker"))
+    admin = User.objects.create_user(
+        username="admin", password="admin", is_superuser=True
+    )  # nosec
+    user.user_permissions.add(Permission.objects.get(codename="add_alias"))
+    user.user_permissions.add(Permission.objects.get(codename="delete_alias"))
 
 
 def server(user=None, password=None):
@@ -544,11 +545,14 @@ def server(user=None, password=None):
 def test_aliases_add(setup):
     # 1. existing device-type not-visible
     dt = DeviceType.objects.create(name="qemu")
+    group = Group.objects.create(name="group1")
+    GroupDeviceTypePermission.objects.assign_perm("view_devicetype", group, dt)
     with pytest.raises(xmlrpc.client.Fault) as exc:
-        server("admin", "admin").scheduler.aliases.add("kvm", "qemu")
+        server("user", "user").scheduler.aliases.add("kvm", "qemu")
     assert exc.value.faultCode == 404  # nosec
     assert exc.value.faultString == "Device-type 'qemu' was not found."  # nosec
     assert Alias.objects.count() == 0  # nosec
+    GroupDeviceTypePermission.objects.remove_perm("view_devicetype", group, dt)
 
     # 2. existing device-type visible
     device = Device.objects.create(hostname="device01", device_type=dt)
@@ -641,44 +645,21 @@ def test_devices_add(setup):
     Device.objects.all()[0].worker_host.hostname == "worker01"
     Device.objects.all()[0].get_health_display() == "Unknown"
 
-    # 2. test description, user, health, group
+    # 2. test description, health
     server("admin", "admin").scheduler.devices.add(
-        "black02",
-        "black",
-        "worker01",
-        "user",
-        "group",
-        True,
-        "MAINTENANCE",
-        "second device",
+        "black02", "black", "worker01", "MAINTENANCE", "second device"
     )
 
     Device.objects.count() == 2
     Device.objects.all()[1].hostname == "black02"
     Device.objects.all()[1].device_type.name == "black"
     Device.objects.all()[1].worker_host.hostname == "worker01"
-    Device.objects.all()[1].user.username == "user"
-    Device.objects.all()[1].group.name == "group"
     Device.objects.all()[1].get_health_display() == "Maintenance"
 
-    # 3. wrong user, group or health
+    # 3. wrong health
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server("admin", "admin").scheduler.devices.add(
-            "black03", "black", "worker01", "nope", "wrong"
-        )
-    assert exc.value.faultCode == 404  # nosec
-    assert exc.value.faultString == "User 'nope' was not found."  # nosec
-
-    with pytest.raises(xmlrpc.client.Fault) as exc:
-        server("admin", "admin").scheduler.devices.add(
-            "black03", "black", "worker01", None, "wrong"
-        )
-    assert exc.value.faultCode == 404  # nosec
-    assert exc.value.faultString == "Group 'wrong' was not found."  # nosec
-
-    with pytest.raises(xmlrpc.client.Fault) as exc:
-        server("admin", "admin").scheduler.devices.add(
-            "black03", "black", "worker01", None, None, True, "wrong"
+            "black03", "black", "worker01", "wrong"
         )
     assert exc.value.faultCode == 400  # nosec
     assert exc.value.faultString == "Invalid health"  # nosec
@@ -700,7 +681,9 @@ def test_devices_get_dictionary(setup, monkeypatch):
 
     # 2. device is not visible to anonymous
     dt = DeviceType.objects.create(name="black")
-    device = Device.objects.create(hostname="device01", device_type=dt, is_public=False)
+    device = Device.objects.create(hostname="device01", device_type=dt)
+    group = Group.objects.create(name="group1")
+    GroupDevicePermission.objects.assign_perm("view_device", group, device)
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server().scheduler.devices.get_dictionary("device01")
     assert exc.value.faultCode == 403  # nosec
@@ -708,9 +691,7 @@ def test_devices_get_dictionary(setup, monkeypatch):
         exc.value.faultString
         == "Device 'device01' not available to user 'AnonymousUser'."
     )
-
-    device.is_public = True
-    device.save()
+    GroupDevicePermission.objects.remove_perm("view_device", group, device)
 
     # 3. invalid context
     with pytest.raises(xmlrpc.client.Fault) as exc:
@@ -754,7 +735,7 @@ def test_devices_set_dictionary(setup, monkeypatch):
     assert exc.value.faultString.startswith("Device 'device01' was not found.")  # nosec
 
     dt = DeviceType.objects.create(name="black")
-    device = Device.objects.create(hostname="device01", device_type=dt, is_public=False)
+    device = Device.objects.create(hostname="device01", device_type=dt)
     assert (  # nosec
         server("admin", "admin").scheduler.devices.set_dictionary("device01", "hello")
         is None
@@ -766,8 +747,10 @@ def test_devices_list(setup):
     assert server().scheduler.devices.list() == []  # nosec
 
     dt = DeviceType.objects.create(name="black")
-    Device.objects.create(hostname="device01", device_type=dt, is_public=True)
-    Device.objects.create(hostname="device02", device_type=dt, is_public=False)
+    device1 = Device.objects.create(hostname="device01", device_type=dt)
+    device2 = Device.objects.create(hostname="device02", device_type=dt)
+    group = Group.objects.create(name="group1")
+    GroupDevicePermission.objects.assign_perm("view_device", group, device2)
     assert server().scheduler.devices.list() == [  # nosec
         {
             "current_job": None,
@@ -785,8 +768,10 @@ def test_devices_show(setup):
     assert server().scheduler.devices.list() == []  # nosec
 
     dt = DeviceType.objects.create(name="black")
-    device = Device.objects.create(hostname="device01", device_type=dt, is_public=True)
-    Device.objects.create(hostname="device02", device_type=dt, is_public=False)
+    device1 = Device.objects.create(hostname="device01", device_type=dt)
+    device2 = Device.objects.create(hostname="device02", device_type=dt)
+    group = Group.objects.create(name="group1")
+    GroupDevicePermission.objects.assign_perm("view_device", group, device2)
 
     # 1. device does not exist
     with pytest.raises(xmlrpc.client.Fault) as exc:
@@ -809,38 +794,32 @@ def test_devices_show(setup):
         "current_job": None,
         "description": None,
         "device_type": "black",
-        "group": None,
         "has_device_dict": False,
         "health": "Maintenance",
         "health_job": False,
         "hostname": "device01",
         "pipeline": True,
-        "public": True,
         "state": "Idle",
         "tags": [],
-        "user": None,
         "worker": None,
     }
 
     # 4. add a worker
     worker = Worker.objects.create(hostname="worker01")
-    device.worker_host = worker
-    device.save()
+    device1.worker_host = worker
+    device1.save()
     data = server().scheduler.devices.show("device01")
     assert data == {  # nosec
         "current_job": None,
         "description": None,
         "device_type": "black",
-        "group": None,
         "has_device_dict": False,
         "health": "Maintenance",
         "health_job": False,
         "hostname": "device01",
         "pipeline": True,
-        "public": True,
         "state": "Idle",
         "tags": [],
-        "user": None,
         "worker": "worker01",
     }
 
@@ -854,7 +833,7 @@ def test_devices_update(setup):
     assert exc.value.faultString == "Device 'black01' was not found."  # nosec
 
     dt = DeviceType.objects.create(name="black")
-    device = Device.objects.create(hostname="black01", device_type=dt, is_public=False)
+    device = Device.objects.create(hostname="black01", device_type=dt)
 
     # 2. update the worker (worker does not exist)
     with pytest.raises(xmlrpc.client.Fault) as exc:
@@ -868,49 +847,19 @@ def test_devices_update(setup):
     device.refresh_from_db()
     assert device.worker_host.hostname == "worker01"  # nosec
 
-    # 4. update the user (does not exist)
+    # 4. update health (wrong value)
     with pytest.raises(xmlrpc.client.Fault) as exc:
-        server("admin", "admin").scheduler.devices.update("black01", None, "notin")
-    assert exc.value.faultCode == 404  # nosec
-    assert exc.value.faultString == "User 'notin' was not found."  # nosec
-
-    # 5. update the user
-    server("admin", "admin").scheduler.devices.update("black01", None, "user")
-    device.refresh_from_db()
-    assert device.user.username == "user"  # nosec
-
-    # 6. update the user (does not exist)
-    with pytest.raises(xmlrpc.client.Fault) as exc:
-        server("admin", "admin").scheduler.devices.update(
-            "black01", None, None, "notgroup"
-        )
-    assert exc.value.faultCode == 404  # nosec
-    assert exc.value.faultString == "Group 'notgroup' was not found."  # nosec
-
-    # 7. update the user
-    server("admin", "admin").scheduler.devices.update("black01", None, None, "group")
-    device.refresh_from_db()
-    assert device.group.name == "group"  # nosec
-
-    # 8. update health (wrong value)
-    with pytest.raises(xmlrpc.client.Fault) as exc:
-        server("admin", "admin").scheduler.devices.update(
-            "black01", None, None, None, None, "bad"
-        )
+        server("admin", "admin").scheduler.devices.update("black01", None, "wrong")
     assert exc.value.faultCode == 400  # nosec
-    assert exc.value.faultString == "Health 'bad' is invalid"  # nosec
+    assert exc.value.faultString == "Health 'wrong' is invalid"  # nosec
 
-    # 7. update health
-    server("admin", "admin").scheduler.devices.update(
-        "black01", None, None, None, None, "GOOD"
-    )
+    # 5. update health
+    server("admin", "admin").scheduler.devices.update("black01", None, "GOOD")
     device.refresh_from_db()
     assert device.health == Device.HEALTH_GOOD  # nosec
 
-    # 8. update description
-    server("admin", "admin").scheduler.devices.update(
-        "black01", None, None, None, None, None, "hello"
-    )
+    # 6. update description
+    server("admin", "admin").scheduler.devices.update("black01", None, None, "hello")
     device.refresh_from_db()
     assert device.description == "hello"  # nosec
 
@@ -918,7 +867,7 @@ def test_devices_update(setup):
 @pytest.mark.django_db
 def test_devices_tags_add(setup):
     dt = DeviceType.objects.create(name="black")
-    device = Device.objects.create(hostname="device01", device_type=dt, is_public=True)
+    device = Device.objects.create(hostname="device01", device_type=dt)
     assert device.tags.count() == 0  # nosec
 
     # 1. device does not exist
@@ -937,7 +886,7 @@ def test_devices_tags_add(setup):
 @pytest.mark.django_db
 def test_devices_tags_list(setup):
     dt = DeviceType.objects.create(name="black")
-    device = Device.objects.create(hostname="device01", device_type=dt, is_public=True)
+    device = Device.objects.create(hostname="device01", device_type=dt)
     tag = Tag.objects.create(name="hdd")
     device.tags.add(tag)
     device.refresh_from_db()
@@ -957,7 +906,7 @@ def test_devices_tags_list(setup):
 @pytest.mark.django_db
 def test_devices_tags_delete(setup):
     dt = DeviceType.objects.create(name="black")
-    device = Device.objects.create(hostname="device01", device_type=dt, is_public=True)
+    device = Device.objects.create(hostname="device01", device_type=dt)
     tag = Tag.objects.create(name="hdd")
     device.tags.add(tag)
     device.refresh_from_db()
@@ -986,26 +935,22 @@ def test_device_types_add(setup):
     # 1. Check that the arguments are used
     assert DeviceType.objects.count() == 0  # nosec
     server("admin", "admin").scheduler.device_types.add(
-        "qemu", "emulated devices", True, False, 12, "hours"
+        "qemu", "emulated devices", True, 12, "hours"
     )
     assert DeviceType.objects.count() == 1  # nosec
     assert DeviceType.objects.all()[0].name == "qemu"  # nosec
     assert DeviceType.objects.all()[0].display  # nosec
     assert DeviceType.objects.all()[0].description == "emulated devices"  # nosec
-    assert not DeviceType.objects.all()[0].owners_only  # nosec
     assert DeviceType.objects.all()[0].health_frequency == 12  # nosec
     assert (  # nosec
         DeviceType.objects.all()[0].health_denominator == DeviceType.HEALTH_PER_HOUR
     )
 
-    server("admin", "admin").scheduler.device_types.add(
-        "b2260", None, True, False, 12, "jobs"
-    )
+    server("admin", "admin").scheduler.device_types.add("b2260", None, True, 12, "jobs")
     assert DeviceType.objects.count() == 2  # nosec
     assert DeviceType.objects.all()[1].name == "b2260"  # nosec
     assert DeviceType.objects.all()[1].display  # nosec
     assert DeviceType.objects.all()[1].description is None  # nosec
-    assert not DeviceType.objects.all()[1].owners_only  # nosec
     assert DeviceType.objects.all()[1].health_frequency == 12  # nosec
     assert (  # nosec
         DeviceType.objects.all()[1].health_denominator == DeviceType.HEALTH_PER_JOB
@@ -1014,7 +959,7 @@ def test_device_types_add(setup):
     # 2. Invalid health_denominator
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server("admin", "admin").scheduler.device_types.add(
-            "docker", None, True, False, 12, "job"
+            "docker", None, True, 12, "job"
         )
     assert exc.value.faultCode == 400  # nosec
     assert exc.value.faultString == "Bad request: invalid health_denominator."  # nosec
@@ -1022,7 +967,7 @@ def test_device_types_add(setup):
     # 3. Already exists
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server("admin", "admin").scheduler.device_types.add(
-            "b2260", None, True, False, 12, "jobs"
+            "b2260", None, True, 12, "jobs"
         )
     assert exc.value.faultCode == 400  # nosec
     assert (  # nosec
@@ -1233,21 +1178,19 @@ def test_device_types_show(setup):
         "name": "qemu",
         "description": None,
         "display": True,
-        "owners_only": False,
         "health_disabled": False,
         "aliases": [],
         "devices": [],
     }
 
     # 3. More details
-    Device.objects.create(hostname="device01", device_type=dt, is_public=True)
+    Device.objects.create(hostname="device01", device_type=dt)
     data = server("admin", "admin").scheduler.device_types.show("qemu")
 
     assert data == {  # nosec
         "name": "qemu",
         "description": None,
         "display": True,
-        "owners_only": False,
         "health_disabled": False,
         "aliases": [],
         "devices": ["device01"],
@@ -1259,7 +1202,7 @@ def test_device_types_update(setup):
     # 1. Device-type does not exist
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server("admin", "admin").scheduler.device_types.update(
-            "qemu", None, None, None, None, None, None
+            "qemu", None, None, None, None, None
         )
     assert exc.value.faultCode == 404  # nosec
     assert exc.value.faultString == "Device-type 'qemu' was not found."  # nosec
@@ -1267,35 +1210,33 @@ def test_device_types_update(setup):
     # 2. Normal case
     dt = DeviceType.objects.create(name="qemu")
     server("admin", "admin").scheduler.device_types.update(
-        "qemu", None, None, None, None, None, None
+        "qemu", None, None, None, None, None
     )
     dt = DeviceType.objects.get(name="qemu")
     assert dt.description == None  # nosec
 
     server("admin", "admin").scheduler.device_types.update(
-        "qemu", "emulated", True, False, 12, "jobs", True
+        "qemu", "emulated", True, 12, "jobs", True
     )
     dt = DeviceType.objects.get(name="qemu")
     assert dt.description == "emulated"  # nosec
     assert dt.display is True  # nosec
-    assert dt.owners_only is False  # nosec
     assert dt.health_frequency == 12  # nosec
     assert dt.health_denominator == DeviceType.HEALTH_PER_JOB  # nosec
 
     server("admin", "admin").scheduler.device_types.update(
-        "qemu", None, None, None, None, "hours", None
+        "qemu", None, None, None, "hours", None
     )
     dt = DeviceType.objects.get(name="qemu")
     assert dt.description == "emulated"  # nosec
     assert dt.display is True  # nosec
-    assert dt.owners_only is False  # nosec
     assert dt.health_frequency == 12  # nosec
     assert dt.health_denominator == DeviceType.HEALTH_PER_HOUR  # nosec
 
     # 3. wrong health denominator
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server("admin", "admin").scheduler.device_types.update(
-            "qemu", None, None, None, None, "job", None
+            "qemu", None, None, None, "job", None
         )
     assert exc.value.faultCode == 400  # nosec
     assert exc.value.faultString == "Bad request: invalid health_denominator."  # nosec
@@ -1430,7 +1371,7 @@ def test_tags_show(setup):
 
     # Create some devices
     dt = DeviceType.objects.create(name="dt-01")
-    device = Device.objects.create(hostname="d-01", device_type=dt, is_public=True)
+    device = Device.objects.create(hostname="d-01", device_type=dt)
     device.tags.add(tag1)
 
     data = server().scheduler.tags.show("hdd")

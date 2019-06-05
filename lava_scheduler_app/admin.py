@@ -22,6 +22,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.models import Permission
 from django.db import transaction
 from django.conf import settings
 
@@ -30,9 +31,10 @@ from lava_scheduler_app.models import (
     Alias,
     BitWidth,
     Core,
-    DefaultDeviceOwner,
     Device,
     DeviceType,
+    GroupDeviceTypePermission,
+    GroupDevicePermission,
     JobFailureTag,
     NotificationRecipient,
     ProcessorFamily,
@@ -45,6 +47,29 @@ from linaro_django_xmlrpc.models import AuthToken
 
 # django admin API itself isn't pylint clean, so some settings must be suppressed.
 # pylint: disable=no-self-use,function-redefined
+
+
+class GroupObjectPermissionInline(admin.TabularInline):
+    extra = 0
+
+    def formfield_for_foreignkey(self, db_field, request=None, **kwargs):
+        if db_field.name == "permission":
+            kwargs["queryset"] = Permission.objects.filter(
+                content_type__model=self.parent_model._meta.object_name.lower()
+            )
+        return super(GroupObjectPermissionInline, self).formfield_for_foreignkey(
+            db_field, request, **kwargs
+        )
+
+
+class GroupDeviceTypePermissionInline(GroupObjectPermissionInline):
+    model = GroupDeviceTypePermission
+    extra = 0
+
+
+class GroupDevicePermissionInline(GroupObjectPermissionInline):
+    model = GroupDevicePermission
+    extra = 0
 
 
 class AliasAdmin(admin.ModelAdmin):
@@ -77,16 +102,6 @@ class CoreAdmin(admin.ModelAdmin):
         return self.readonly_fields
 
 
-class DefaultOwnerInline(admin.StackedInline):
-    """
-    Exposes the default owner override class
-    in the Django admin interface
-    """
-
-    model = DefaultDeviceOwner
-    can_delete = False
-
-
 def expire_user_action(
     modeladmin, request, queryset
 ):  # pylint: disable=unused-argument
@@ -106,11 +121,7 @@ expire_user_action.short_description = "Expire user account"
 
 
 class CustomUserAdmin(UserAdmin):
-    """
-    Defines the override class for DefaultOwnerInline
-    """
 
-    inlines = (DefaultOwnerInline,)
     actions = [expire_user_action]
 
     def has_delete_permission(self, request, obj=None):
@@ -300,16 +311,7 @@ class DeviceAdmin(admin.ModelAdmin):
             "Properties",
             {"fields": ("hostname", "device_type", "worker_host", "device_version")},
         ),
-        (
-            "Device owner",
-            {
-                "fields": (
-                    ("user", "group"),
-                    ("physical_owner", "physical_group"),
-                    "is_public",
-                )
-            },
-        ),
+        ("Device owner", {"fields": (("physical_owner", "physical_group"),)}),
         (
             "Status",
             {
@@ -337,7 +339,6 @@ class DeviceAdmin(admin.ModelAdmin):
         "health",
         "has_health_check",
         "health_check_enabled",
-        "is_public",
         "valid_device",
     )
     search_fields = ("hostname", "device_type__name")
@@ -348,28 +349,28 @@ class DeviceAdmin(admin.ModelAdmin):
         device_health_maintenance,
         device_health_retired,
     ]
+    inlines = [GroupDevicePermissionInline]
 
 
 class VisibilityForm(forms.ModelForm):
     def clean_viewing_groups(self):
         viewing_groups = self.cleaned_data["viewing_groups"]
-        visibility = self.cleaned_data["visibility"]
-        if len(viewing_groups) != 1 and visibility == TestJob.VISIBLE_GROUP:
+        is_public = self.cleaned_data["is_public"]
+        if viewing_groups and is_public:
             raise ValidationError(
-                "Group visibility must have exactly one viewing group."
-            )
-        elif viewing_groups and visibility == TestJob.VISIBLE_PERSONAL:
-            raise ValidationError(
-                "Personal visibility cannot have any viewing groups assigned."
-            )
-        elif viewing_groups and visibility == TestJob.VISIBLE_PUBLIC:
-            raise ValidationError(
-                "Pulibc visibility cannot have any viewing groups assigned."
+                "Public test jobs cannot have any viewing groups assigned."
             )
         return self.cleaned_data["viewing_groups"]
 
 
 class TestJobAdmin(admin.ModelAdmin):
+    def get_queryset(self, request):
+        return (
+            super(TestJobAdmin, self)
+            .get_queryset(request)
+            .select_related("requested_device_type", "actual_device", "submitter")
+        )
+
     def requested_device_type_name(self, obj):
         return "" if obj.requested_device_type is None else obj.requested_device_type
 
@@ -384,19 +385,7 @@ class TestJobAdmin(admin.ModelAdmin):
     actions = [cancel_action, fail_action]
     list_filter = ("state", RequestedDeviceTypeFilter, ActualDeviceFilter)
     fieldsets = (
-        (
-            "Owner",
-            {
-                "fields": (
-                    "user",
-                    "group",
-                    "submitter",
-                    "is_public",
-                    "visibility",
-                    "viewing_groups",
-                )
-            },
-        ),
+        ("Owner", {"fields": ("submitter", "viewing_groups")}),
         ("Request", {"fields": ("requested_device_type", "priority", "health_check")}),
         (
             "Advanced properties",
@@ -492,7 +481,6 @@ class DeviceTypeAdmin(admin.ModelAdmin):
     list_display = (
         "name",
         "display",
-        "owners_only",
         "health_check_enabled",
         "health_check_frequency",
         "architecture_name",
@@ -502,7 +490,7 @@ class DeviceTypeAdmin(admin.ModelAdmin):
         "bit_count",
     )
     fieldsets = (
-        ("Properties", {"fields": ("name", "description", "display", "owners_only")}),
+        ("Properties", {"fields": ("name", "description", "display")}),
         (
             "Health checks",
             {
@@ -526,6 +514,7 @@ class DeviceTypeAdmin(admin.ModelAdmin):
         ),
     )
     ordering = ["name"]
+    inlines = [GroupDeviceTypePermissionInline]
 
 
 def worker_health_active(ModelAdmin, request, queryset):

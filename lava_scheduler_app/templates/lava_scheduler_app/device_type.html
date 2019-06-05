@@ -13,14 +13,6 @@
 </div>
 {% endif %}
 
-{% if dt.owners_only %}
-<div class="alert alert-warning alert-dismissable">
-  <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-  <p><strong><i>{{ dt.name }}</i> is a hidden device type.</strong></p>
-  Only owners of one or more devices of type <i>{{ dt }}</i> can see this information.
-</div>
-{% endif %}
-
 <div class="row">
   <div class="col-md-4">
     <div class="dl-horizontal">

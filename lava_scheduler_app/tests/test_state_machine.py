@@ -57,8 +57,6 @@ class TestTestJobStateMachine(TestCase):
         self.job = TestJob.objects.create(
             requested_device_type=self.device_type,
             submitter=self.user,
-            user=self.user,
-            is_public=True,
             definition=minimal_valid_job,
         )
 
@@ -279,9 +277,7 @@ class TestTestJobStateMachine(TestCase):
         self.sub_job1 = TestJob.objects.create(
             requested_device_type=self.device_type,
             submitter=self.user,
-            user=self.user,
             target_group="target_group",
-            is_public=True,
         )
         self.sub_job1.definition = yaml.safe_dump(
             {"protocols": {"lava-multinode": {"role": "worker", "essential": False}}}
@@ -291,9 +287,7 @@ class TestTestJobStateMachine(TestCase):
         self.sub_job2 = TestJob.objects.create(
             requested_device_type=self.device_type,
             submitter=self.user,
-            user=self.user,
             target_group="target_group",
-            is_public=True,
         )
         self.sub_job2.definition = yaml.safe_dump(
             {"protocols": {"lava-multinode": {"role": "worker", "essential": False}}}
@@ -589,9 +583,7 @@ class TestTestJobStateMachine(TestCase):
         self.sub_job1 = TestJob.objects.create(
             requested_device_type=self.device_type,
             submitter=self.user,
-            user=self.user,
             target_group="target_group",
-            is_public=True,
         )
         self.sub_job1.definition = yaml.safe_dump(
             {"protocols": {"lava-multinode": {"role": "worker", "essential": False}}}
@@ -601,9 +593,7 @@ class TestTestJobStateMachine(TestCase):
         self.sub_job2 = TestJob.objects.create(
             requested_device_type=self.device_type,
             submitter=self.user,
-            user=self.user,
             target_group="target_group",
-            is_public=True,
         )
         self.sub_job2.definition = yaml.safe_dump(
             {"protocols": {"lava-multinode": {"role": "worker", "essential": False}}}
@@ -779,10 +769,7 @@ class TestWorkerStateMachine(TestCase):
         )
         self.user = User.objects.create(username="user-01")
         self.job = TestJob.objects.create(
-            requested_device_type=self.device_type,
-            submitter=self.user,
-            user=self.user,
-            is_public=True,
+            requested_device_type=self.device_type, submitter=self.user
         )
 
     def check_device(self, state, health):

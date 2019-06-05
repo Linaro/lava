@@ -96,21 +96,11 @@ class TestRestApi:
         self.invisible_device_type1 = DeviceType.objects.create(
             name="invisible_device_type1", display=False
         )
-        self.private_device_type1 = DeviceType.objects.create(
-            name="private_device_type1", owners_only=True
-        )
 
         # create devices
         self.public_device1 = Device.objects.create(
             hostname="public01",
             device_type=self.public_device_type1,
-            worker_host=self.worker1,
-        )
-        self.private_device1 = Device.objects.create(
-            hostname="private01",
-            user=self.admin,
-            is_public=False,
-            device_type=self.private_device_type1,
             worker_host=self.worker1,
         )
         self.retired_device1 = Device.objects.create(
@@ -124,18 +114,12 @@ class TestRestApi:
         self.public_testjob1 = TestJob.objects.create(
             definition=yaml.safe_dump(EXAMPLE_JOB),
             submitter=self.user,
-            user=self.user,
             requested_device_type=self.public_device_type1,
-            is_public=True,
-            visibility=TestJob.VISIBLE_PUBLIC,
         )
         self.private_testjob1 = TestJob.objects.create(
             definition=yaml.safe_dump(EXAMPLE_JOB),
             submitter=self.admin,
-            user=self.admin,
             requested_device_type=self.public_device_type1,
-            is_public=False,
-            visibility=TestJob.VISIBLE_PERSONAL,
         )
         # create logs
 
@@ -210,8 +194,7 @@ class TestRestApi:
         data = self.hit(
             self.userclient, reverse("api-root", args=[self.version]) + "jobs/"
         )
-        # only public test jobs should be available without logging in
-        assert len(data["results"]) == 1  # nosec - unit test support
+        assert len(data["results"]) == 2  # nosec - unit test support
 
     def test_testjobs_admin(self):
         data = self.hit(
@@ -361,14 +344,12 @@ ok 2 - bar
         data = self.hit(
             self.userclient, reverse("api-root", args=[self.version]) + "devicetypes/"
         )
-        # only public device types should be available without logging in
-        assert len(data["results"]) == 1  # nosec - unit test support
+        assert len(data["results"]) == 2  # nosec - unit test support
 
     def test_devices(self):
         data = self.hit(
             self.userclient, reverse("api-root", args=[self.version]) + "devices/"
         )
-        # only public devices should be available without logging in
         assert len(data["results"]) == 1  # nosec - unit test support
 
     def test_devicetypes_admin(self):
@@ -381,7 +362,7 @@ ok 2 - bar
         data = self.hit(
             self.adminclient, reverse("api-root", args=[self.version]) + "devices/"
         )
-        assert len(data["results"]) == 2  # nosec - unit test support
+        assert len(data["results"]) == 1  # nosec - unit test support
 
     def test_workers(self):
         data = self.hit(

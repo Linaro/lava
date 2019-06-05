@@ -23,7 +23,6 @@ import tap
 
 from lava_scheduler_app.models import Device, DeviceType, TestJob, Worker
 from lava_results_app.models import TestSuite, TestCase
-from lava_scheduler_app.views import filter_device_types
 from lava_scheduler_app.logutils import read_logs
 from linaro_django_xmlrpc.models import AuthToken
 
@@ -120,7 +119,6 @@ class LavaObtainAuthToken(ObtainAuthToken):
 class TestJobSerializer(serializers.ModelSerializer):
     health = serializers.CharField(source="get_health_display")
     state = serializers.CharField(source="get_state_display")
-    visibility = serializers.CharField(source="get_visibility_display")
     submitter = serializers.CharField(source="submitter.username")
 
     class Meta:
@@ -128,7 +126,6 @@ class TestJobSerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "submitter",
-            "visibility",
             "viewing_groups",
             "description",
             "health_check",
@@ -181,7 +178,6 @@ class TestJobViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = TestJobSerializer
     filter_fields = (
         "submitter",
-        "visibility",
         "viewing_groups",
         "description",
         "health_check",
@@ -352,7 +348,6 @@ class DeviceTypeSerializer(serializers.ModelSerializer):
             "disable_health_check",
             "health_denominator",
             "display",
-            "owners_only",
         )
 
 
@@ -373,13 +368,11 @@ class DeviceTypeViewSet(viewsets.ReadOnlyModelViewSet):
         "disable_health_check",
         "health_denominator",
         "display",
-        "owners_only",
     )
     filter_class = filters.DeviceTypeFilter
 
     def get_queryset(self):
-        visible = filter_device_types(self.request.user)
-        return DeviceType.objects.filter(name__in=visible)
+        return DeviceType.objects.visible_by_user(self.request.user)
 
 
 class DeviceSerializer(serializers.ModelSerializer):
@@ -436,8 +429,7 @@ class DeviceViewSet(viewsets.ReadOnlyModelViewSet):
     filter_class = filters.DeviceFilter
 
     def get_queryset(self):
-        visible = filter_device_types(self.request.user)
-        query = Device.objects.filter(device_type__in=visible)
+        query = Device.objects.visible_by_user(self.request.user)
         if not self.request.query_params.get("all", False):
             query = query.exclude(health=Device.HEALTH_RETIRED)
         return query

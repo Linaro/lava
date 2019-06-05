@@ -203,7 +203,6 @@ class Command(BaseCommand):
         self.stdout.write("device_type    : %s" % name)
         self.stdout.write("description    : %s" % device_type.description)
         self.stdout.write("display        : %s" % device_type.display)
-        self.stdout.write("owners_only    : %s" % device_type.owners_only)
         self.stdout.write("health disabled: %s" % device_type.disable_health_check)
         self.stdout.write("aliases        : %s" % aliases)
         if not devices:

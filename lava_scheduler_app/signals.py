@@ -164,7 +164,6 @@ def testjob_post_handler(sender, **kwargs):
             "priority": instance.priority,
             "submit_time": instance.submit_time.isoformat(),
             "submitter": str(instance.submitter),
-            "visibility": instance.get_visibility_display(),
             "health_check": instance.health_check,
         }
         if instance.is_multinode:

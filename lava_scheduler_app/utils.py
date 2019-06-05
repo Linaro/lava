@@ -46,10 +46,6 @@ class IRCHandleNotFoundError(IRCSendError):
     """Error raised when user handle is not found on specific server."""
 
 
-def is_member(user, group):
-    return user.groups.filter(name="%s" % group).exists()
-
-
 def _split_multinode_vland(submission, jobs):
 
     for role, _ in jobs.items():

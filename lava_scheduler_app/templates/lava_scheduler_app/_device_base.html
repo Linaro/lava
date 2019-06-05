@@ -20,13 +20,6 @@
 </div>
 {% endif %}
 
-{% if device.device_type.owners_only %}
-<div class="alert alert-warning alert-dismissable">
-  <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-  <strong><i>{{ device.device_type.name }}</i> is a hidden device type:</strong> Only owners of one or more devices of that type can see this page.
-</div>
-{% endif %}
-
 {% if user.is_staff and not device.get_health_check and not device.device_type.disable_health_check and device.health != device.HEALTH_RETIRED %}
   <div class="alert alert-warning alert-dismissable">
     <button type="button" class="close" data-dismiss="alert">&times;</button>
@@ -51,18 +44,6 @@
       </dd>
       <dt>Device-type</dt>
       <dd><a href="{{ device.device_type.get_absolute_url }}">{{ device.device_type.name }}</a> <a href="{% url 'lava.scheduler.device_type_report' device.device_type.pk %}"><span class="glyphicon glyphicon-stats"></span></a></dd>
-      <dt><abbr title="If specified, submissions are restricted to this user or group">Owner</abbr></dt>
-      <dd>
-      {% if device.user %}
-      <a href="mailto:{{ device.user.email }}">{{ device.user.get_full_name|default:user.username }}</a>
-      {% elif device.group %}
-      Group <em>{{ device.group }}</em>
-      {% else %}
-      ...
-      {% endif %}
-      </dd>
-      <dt>Restriction</dt>
-      <dd><span class="label label-{{ device.is_public|yesno:"success,warning" }}">{{ device.is_public|yesno:"Public,Private" }}</span></dd>
       <dt>Tags</dt>
       {% if device.tags.all %}
       <dd>

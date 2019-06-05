@@ -135,7 +135,7 @@
       <dt>Priority</dt>
       <dd>{{ job.get_priority_display }}</dd>
       <dt>Visibility</dt>
-      <dd>{{ job.get_visibility_display }}{% if job.visibility == job.VISIBLE_GROUP %} ({{ job.viewing_groups.all|join:', ' }}){% endif %}</dd>
+      <dd>{{ job.get_is_public_display }}{% if job.viewing_groups %} ({{ job.viewing_groups.all|join:', ' }}){% endif %}</dd>
       {% if job_tags %}
       <dt>Required Tags</dt>
       <dd>

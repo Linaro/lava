@@ -43,20 +43,12 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
         available_types.sort()
         return available_types
 
-    @check_perm("lava_scheduler_app.add_devicetype")
-    def add(
-        self,
-        name,
-        description,
-        display,
-        owners_only,
-        health_frequency,
-        health_denominator,
-    ):
+    @check_perm("lava_scheduler_app.admin_devicetype")
+    def add(self, name, description, display, health_frequency, health_denominator):
         """
         Name
         ----
-        `scheduler.device_types.add` (`name`, `description`, `display`, `owners_only`,
+        `scheduler.device_types.add` (`name`, `description`, `display`,
                                       `health_frequency`, health_denominator`)
 
         Description
@@ -73,8 +65,6 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
           Device-type description
         `display`: bool
           Is the device-type displayed in the GUI?
-        `owners_only`: bool
-          Is the device-type only available to owners?
         `health_frequency`: int
           How often to run health checks
         `health_denominator`: string ("hours" or "jobs")
@@ -96,7 +86,6 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
                 name=name,
                 description=description,
                 display=display,
-                owners_only=owners_only,
                 health_frequency=health_frequency,
                 health_denominator=health_denominator,
             )
@@ -134,7 +123,7 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
         """
         with contextlib.suppress(DeviceType.DoesNotExist):
             dt = DeviceType.objects.get(name=name)
-            if dt.owners_only and not dt.some_devices_visible_to(self.user):
+            if not dt.can_view(self.user):
                 raise xmlrpc.client.Fault(404, "Device-type '%s' was not found." % name)
 
         # Filename should not be a path or starting with a dot
@@ -182,7 +171,7 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
         """
         with contextlib.suppress(DeviceType.DoesNotExist):
             dt = DeviceType.objects.get(name=name)
-            if dt.owners_only and not dt.some_devices_visible_to(self.user):
+            if not dt.can_view(self.user):
                 raise xmlrpc.client.Fault(404, "Device-type '%s' was not found." % name)
 
         # Filename should not be a path or starting with a dot
@@ -203,7 +192,7 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
                 400, "Unable to read device-type configuration: %s" % exc.strerror
             )
 
-    @check_perm("lava_scheduler_app.change_devicetype")
+    @check_perm("lava_scheduler_app.admin_devicetype")
     def set_health_check(self, name, config):
         """
         Name
@@ -248,7 +237,7 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
                 400, "Unable to write health-check: %s" % exc.strerror
             )
 
-    @check_perm("lava_scheduler_app.change_devicetype")
+    @check_perm("lava_scheduler_app.admin_devicetype")
     def set_template(self, name, config):
         """
         Name
@@ -314,10 +303,12 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
         This function returns an XML-RPC array of device-types
         """
         available_types = self._available_device_types()
+
         device_types = [
             dt
-            for dt in DeviceType.objects.all().order_by("name")
-            if not dt.owners_only or dt.some_devices_visible_to(self.user)
+            for dt in DeviceType.objects.all()
+            .visible_by_user(self.user)
+            .order_by("name")
         ]
         ret = []
         for dt in device_types:
@@ -367,19 +358,17 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
             dt = DeviceType.objects.get(name=name)
         except DeviceType.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Device-type '%s' was not found." % name)
-
-        if dt.owners_only and not dt.some_devices_visible_to(self.user):
+        if not dt.can_view(self.user):
             raise xmlrpc.client.Fault(404, "Device-type '%s' was not found." % name)
 
         aliases = [str(alias.name) for alias in dt.aliases.all()]
         devices = [
-            str(d.hostname) for d in dt.device_set.all() if d.is_visible_to(self.user)
+            str(d.hostname) for d in dt.device_set.all() if d.can_view(self.user)
         ]
         dt_dict = {
             "name": dt.name,
             "description": dt.description,
             "display": dt.display,
-            "owners_only": dt.owners_only,
             "health_disabled": dt.disable_health_check,
             "aliases": aliases,
             "devices": devices,
@@ -387,13 +376,11 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
 
         return dt_dict
 
-    @check_perm("lava_scheduler_app.change_devicetype")
     def update(
         self,
         name,
         description,
         display,
-        owners_only,
         health_frequency,
         health_denominator,
         health_disabled,
@@ -402,7 +389,7 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
         Name
         ----
         `scheduler.device_types.update` (`name`, `description=None`,
-                                         `display=None`, `owners_only=None`,
+                                         `display=None`,
                                          `health_frequency=None`,
                                          `health_denominator=None`,
                                          `health_disabled=None`)
@@ -420,8 +407,6 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
           Device-type description
         `display`: bool
           Is the device-type displayed in the GUI?
-        `owners_only`: bool
-          Hide this device type for all users except owners of devices of this type.
         `health_frequency`: int
           How often to run health checks
         `health_denominator`: string ("hours" or "jobs")
@@ -437,15 +422,16 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
             dt = DeviceType.objects.get(name=name)
         except DeviceType.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Device-type '%s' was not found." % name)
+        if not dt.can_admin(self.user):
+            raise xmlrpc.client.Fault(
+                403, "No 'admin' permissions for device-type '%s'." % name
+            )
 
         if description is not None:
             dt.description = description
 
         if display is not None:
             dt.display = display
-
-        if owners_only is not None:
-            dt.owners_only = owners_only
 
         if health_frequency is not None:
             dt.health_frequency = health_frequency
@@ -470,7 +456,6 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
 
 class SchedulerDeviceTypesAliasesAPI(ExposedV2API):
     @check_perm("lava_scheduler_app.add_alias")
-    @check_perm("lava_scheduler_app.change_devicetype")
     def add(self, name, alias):
         """
         Name
@@ -497,6 +482,10 @@ class SchedulerDeviceTypesAliasesAPI(ExposedV2API):
             dt = DeviceType.objects.get(name=name)
         except DeviceType.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Device-type '%s' was not found." % name)
+        if not dt.can_admin(self.user):
+            raise xmlrpc.client.Fault(
+                403, "No 'admin' permissions for device-type '%s'." % name
+            )
 
         alias_obj, _ = Alias.objects.get_or_create(name=alias)
         dt.aliases.add(alias_obj)
@@ -524,13 +513,10 @@ class SchedulerDeviceTypesAliasesAPI(ExposedV2API):
             dt = DeviceType.objects.get(name=name)
         except DeviceType.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Device-type '%s' was not found." % name)
-
-        if dt.owners_only and not dt.some_devices_visible_to(self.user):
+        if not dt.can_view(self.user):
             raise xmlrpc.client.Fault(404, "Device-type '%s' was not found." % name)
-
         return [a.name for a in dt.aliases.all().order_by("name")]
 
-    @check_perm("lava_scheduler_app.change_devicetype")
     def delete(self, name, alias):
         """
         Name
@@ -556,6 +542,10 @@ class SchedulerDeviceTypesAliasesAPI(ExposedV2API):
             dt = DeviceType.objects.get(name=name)
         except DeviceType.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Device-type '%s' was not found." % name)
+        if not dt.can_admin(self.user):
+            raise xmlrpc.client.Fault(
+                403, "No 'admin' permissions for device-type '%s'." % name
+            )
 
         try:
             alias_obj = Alias.objects.get(name=alias)

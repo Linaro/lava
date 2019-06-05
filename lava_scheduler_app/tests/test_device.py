@@ -6,14 +6,19 @@ import jinja2
 
 from django.conf import settings
 from django.db.models import Q
-from lava_scheduler_app.models import Device, DeviceType
+from lava_scheduler_app.models import (
+    Device,
+    DeviceType,
+    GroupDevicePermission,
+    GroupDeviceTypePermission,
+)
 from lava_scheduler_app.dbutils import (
     load_devicetype_template,
     invalid_template,
     active_device_types,
 )
 from django_testscenarios.ubertest import TestCase
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group, Permission
 
 # pylint: disable=blacklisted-name,too-many-ancestors,invalid-name
 # python3 needs print to be a function, so disable pylint
@@ -35,12 +40,18 @@ class ModelFactory:
     def get_unique_user(self, prefix="generic"):  # pylint: disable=no-self-use
         return "%s-%d" % (prefix, User.objects.count() + 1)
 
+    def get_unique_group(self, prefix="group"):  # pylint: disable=no-self-use
+        return "%s-%d" % (prefix, Group.objects.count() + 1)
+
     def make_user(self):
         return User.objects.create_user(
             self.get_unique_user(),
             "%s@mail.invalid" % (self.getUniqueString(),),
             self.getUniqueString(),
         )
+
+    def make_group(self):
+        return Group.objects.create(name=self.get_unique_group())
 
 
 class TestCaseWithFactory(TestCase):
@@ -50,32 +61,55 @@ class TestCaseWithFactory(TestCase):
 
 
 class DeviceTest(TestCaseWithFactory):
-    def test_access_while_private(self):
-        hidden = DeviceType(name="hidden", owners_only=True)
-        device = Device(device_type=hidden, hostname="hidden1", is_public=False)
-        user = self.factory.make_user()
-        device.user = user
-        device.save()
-        self.assertEqual(device.is_public, False)
-        self.assertEqual(device.user, user)
-        user2 = self.factory.make_user()
-        self.assertEqual(device.can_submit(user2), False)
-        self.assertEqual(device.can_submit(user), True)
+    def setUp(self):
+        super().setUp()
+        logger = logging.getLogger("lava-master")
+        logger.disabled = True
 
-    def test_access_retired_hidden(self):
-        hidden = DeviceType(name="hidden", owners_only=True)
-        device = Device(
-            device_type=hidden, hostname="hidden2", health=Device.HEALTH_RETIRED
-        )
-        user = self.factory.make_user()
-        device.user = user
+    def test_device_permissions_test(self):
+        dt = DeviceType(name="type1")
+        dt.save()
+        device = Device(device_type=dt, hostname="device1")
         device.save()
-        self.assertEqual(device.is_public, False)
-        self.assertEqual(device.user, user)
+
+        group = self.factory.make_group()
+        user1 = self.factory.make_user()
+        user1.groups.add(group)
+
+        group2 = self.factory.make_group()
         user2 = self.factory.make_user()
+        user2.groups.add(group2)
+
+        GroupDevicePermission.objects.assign_perm("submit_to_device", group, device)
         self.assertEqual(device.can_submit(user2), False)
-        # user cannot submit as the device is retired
-        self.assertEqual(device.can_submit(user), False)
+        self.assertEqual(device.can_submit(user1), True)
+        GroupDevicePermission.objects.remove_perm("submit_to_device", group, device)
+
+        self.assertEqual(device.can_view(user2), True)
+        self.assertEqual(device.can_view(user1), True)
+
+        GroupDeviceTypePermission.objects.assign_perm("view_devicetype", group, dt)
+        self.assertEqual(device.can_view(user2), False)
+        self.assertEqual(device.can_view(user1), True)
+
+        GroupDeviceTypePermission.objects.remove_perm("view_devicetype", group, dt)
+        GroupDevicePermission.objects.assign_perm("view_device", group, device)
+        self.assertEqual(device.can_view(user2), False)
+        self.assertEqual(device.can_view(user1), True)
+
+        GroupDevicePermission.objects.assign_perm("view_device", group2, device)
+        self.assertEqual(device.can_view(user2), True)
+        self.assertEqual(device.can_view(user1), True)
+
+        device.health = Device.HEALTH_RETIRED
+        device.save()
+        self.assertEqual(device.can_submit(user2), False)
+        self.assertEqual(device.can_submit(user1), False)
+
+        # Test that global permission works as intended.
+        user3 = self.factory.make_user()
+        user3.user_permissions.add(Permission.objects.get(codename="admin_device"))
+        self.assertEqual(device.can_admin(user3), True)
 
 
 class DeviceTypeTest(TestCaseWithFactory):

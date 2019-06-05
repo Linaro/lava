@@ -28,7 +28,6 @@ Worker: {{ job.actual_device.worker_host.hostname }}
 
 Job details:
 Priority: {{ job.get_priority_display() }}
-Visibility: {{ job.get_visibility_display() }}
 Description: {{ job.description }}
 Submitted: {{ job.submit_time.strftime("%Y-%m-%d %H:%M:%S (%z %Z)") }}
 Started: {{ job.start_time.strftime("%Y-%m-%d %H:%M:%S (%z %Z)") }}

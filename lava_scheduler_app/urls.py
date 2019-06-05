@@ -22,14 +22,12 @@ from django.conf.urls import url
 from lava_scheduler_app.views import (
     active_device_list,
     active_jobs,
-    device_derestrict_device,
     device_detail,
     device_health,
     device_type_health_history_log,
     mydevices_health_history_log,
     device_list,
     device_reports,
-    device_restrict_device,
     all_device_types,
     device_type_detail,
     device_dictionary,
@@ -219,16 +217,6 @@ urlpatterns = [  # pylint: disable=invalid-name
         r"^job/(?P<pk>[0-9]+|[0-9]+\.[0-9]+)/priority$",
         job_change_priority,
         name="lava.scheduler.job.priority",
-    ),
-    url(
-        r"^device/(?P<pk>[-_a-zA-Z0-9.@]+)/restrict$",
-        device_restrict_device,
-        name="lava.scheduler.device.restrict_device",
-    ),
-    url(
-        r"^device/(?P<pk>[-_a-zA-Z0-9.@]+)/derestrict$",
-        device_derestrict_device,
-        name="lava.scheduler.device.derestrict_device",
     ),
     url(
         r"^device/(?P<pk>[-_a-zA-Z0-9.@]+)/health$",

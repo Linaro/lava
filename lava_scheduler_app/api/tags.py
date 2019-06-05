@@ -127,7 +127,5 @@ class SchedulerTagsAPI(ExposedV2API):
         except Tag.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Tag '%s' was not found." % name)
 
-        devices = [
-            d.hostname for d in tag.device_set.all() if d.is_visible_to(self.user)
-        ]
+        devices = [d.hostname for d in tag.device_set.all() if d.can_view(self.user)]
         return {"name": name, "description": tag.description, "devices": devices}

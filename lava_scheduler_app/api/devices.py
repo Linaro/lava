@@ -20,7 +20,6 @@
 import yaml
 import xmlrpc.client
 
-from django.contrib.auth.models import User, Group
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 
@@ -30,25 +29,13 @@ from lava_scheduler_app.models import Device, DeviceType, Tag, Worker
 
 
 class SchedulerDevicesAPI(ExposedV2API):
-    @check_perm("lava_scheduler_app.add_device")
-    def add(
-        self,
-        hostname,
-        type_name,
-        worker_hostname,
-        user_name=None,
-        group_name=None,
-        public=True,
-        health=None,
-        description=None,
-    ):
+    @check_perm("lava_scheduler_app.admin_device")
+    def add(self, hostname, type_name, worker_hostname, health=None, description=None):
         """
         Name
         ----
         `scheduler.devices.add` (`hostname`, `type_name`, `worker_hostname`,
-                                 `user_name=None`, `group_name=None`,
-                                 `public=True`, `health=None`,
-                                 `description=None`)
+                                 `health=None`, `description=None`)
 
         Description
         -----------
@@ -65,12 +52,6 @@ class SchedulerDevicesAPI(ExposedV2API):
           Type of the new device
         `worker_hostname`: string
           Worker hostname
-        `user_name`: string
-          Device owner, None by default
-        `group_name`: string
-          Device group owner, None by default
-        `public`: boolean
-          Is the device public?
         `health`: string
           Device health, among ["GOOD", "UNKNOWN", "LOOPING", "BAD", "MAINTENANCE", "RETIRED"]
         `description`: string
@@ -80,24 +61,15 @@ class SchedulerDevicesAPI(ExposedV2API):
         ------------
         None
         """
-        user = group = None
         try:
             device_type = DeviceType.objects.get(name=type_name)
             worker = Worker.objects.get(hostname=worker_hostname)
-            if user_name is not None:
-                user = User.objects.get(username=user_name)
-            if group_name is not None:
-                group = Group.objects.get(name=group_name)
         except DeviceType.DoesNotExist:
             raise xmlrpc.client.Fault(404, "DeviceType '%s' was not found." % type_name)
         except Worker.DoesNotExist:
             raise xmlrpc.client.Fault(
                 404, "Worker '%s' was not found." % worker_hostname
             )
-        except User.DoesNotExist:
-            raise xmlrpc.client.Fault(404, "User '%s' was not found." % user_name)
-        except Group.DoesNotExist:
-            raise xmlrpc.client.Fault(404, "Group '%s' was not found." % group_name)
 
         health_val = Device.HEALTH_UNKNOWN
         try:
@@ -110,9 +82,6 @@ class SchedulerDevicesAPI(ExposedV2API):
             Device.objects.create(
                 hostname=hostname,
                 device_type=device_type,
-                user=user,
-                group=group,
-                is_public=public,
                 state=Device.STATE_IDLE,
                 health=health_val,
                 worker_host=worker,
@@ -155,7 +124,7 @@ class SchedulerDevicesAPI(ExposedV2API):
         except Device.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Device '%s' was not found." % hostname)
 
-        if not device.is_visible_to(self.user):
+        if not device.can_view(self.user):
             raise xmlrpc.client.Fault(
                 403, "Device '%s' not available to user '%s'." % (hostname, self.user)
             )
@@ -178,7 +147,6 @@ class SchedulerDevicesAPI(ExposedV2API):
             )
         return xmlrpc.client.Binary(config.encode("utf-8"))
 
-    @check_perm("lava_scheduler_app.change_device")
     def set_dictionary(self, hostname, dictionary):
         """
         Name
@@ -187,7 +155,7 @@ class SchedulerDevicesAPI(ExposedV2API):
 
         Description
         -----------
-        [superuser only]
+        [user with admin permission only]
         Set the device dictionary
 
         Arguments
@@ -205,6 +173,13 @@ class SchedulerDevicesAPI(ExposedV2API):
             device = Device.objects.get(hostname=hostname)
         except Device.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Device '%s' was not found." % hostname)
+
+        if not device.can_admin(self.user):
+            raise xmlrpc.client.Fault(
+                403,
+                "User '%s' needs admin permission on device %s."
+                % (self.user, hostname),
+            )
 
         return device.save_configuration(dictionary)
 
@@ -232,24 +207,27 @@ class SchedulerDevicesAPI(ExposedV2API):
         This function returns an XML-RPC array in which each item is a
         dictionary with device information
         """
-        devices = Device.objects.all().select_related("device_type")
+        devices = (
+            Device.objects.all()
+            .visible_by_user(self.user)
+            .select_related("device_type")
+        )
         if not show_all:
             devices = devices.exclude(health=Device.HEALTH_RETIRED)
         devices = devices.order_by("hostname")
 
         ret = []
         for device in devices:
-            if device.is_visible_to(self.user):
-                current_job = device.current_job()
-                device_dict = {
-                    "hostname": device.hostname,
-                    "type": device.device_type.name,
-                    "health": device.get_health_display(),
-                    "state": device.get_state_display(),
-                    "current_job": current_job.pk if current_job else None,
-                    "pipeline": True,
-                }
-                ret.append(device_dict)
+            current_job = device.current_job()
+            device_dict = {
+                "hostname": device.hostname,
+                "type": device.device_type.name,
+                "health": device.get_health_display(),
+                "state": device.get_state_display(),
+                "current_job": current_job.pk if current_job else None,
+                "pipeline": True,
+            }
+            ret.append(device_dict)
 
         return ret
 
@@ -277,7 +255,7 @@ class SchedulerDevicesAPI(ExposedV2API):
         except Device.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Device '%s' was not found." % hostname)
 
-        if not device.is_visible_to(self.user):
+        if not device.can_view(self.user):
             raise xmlrpc.client.Fault(
                 403, "Device '%s' not available to user '%s'." % (hostname, self.user)
             )
@@ -290,12 +268,9 @@ class SchedulerDevicesAPI(ExposedV2API):
             "state": device.get_state_display(),
             "health_job": bool(device.get_health_check()),
             "description": device.description,
-            "public": device.is_public,
             "pipeline": True,
             "has_device_dict": bool(device.load_configuration(output_format="raw")),
             "worker": None,
-            "user": device.user.username if device.user else None,
-            "group": device.group.name if device.group else None,
             "current_job": current_job.pk if current_job else None,
             "tags": [t.name for t in device.tags.all().order_by("name")],
         }
@@ -304,28 +279,16 @@ class SchedulerDevicesAPI(ExposedV2API):
 
         return device_dict
 
-    @check_perm("lava_scheduler_app.change_device")
-    def update(
-        self,
-        hostname,
-        worker_hostname=None,
-        user_name=None,
-        group_name=None,
-        public=True,
-        health=None,
-        description=None,
-    ):
+    def update(self, hostname, worker_hostname=None, health=None, description=None):
         """
         Name
         ----
         `scheduler.devices.update` (`hostname`, `worker_hostname=None`,
-                                    `user_name=None`, `group_name=None`,
-                                    `public=True`, `health=None`,
-                                    `description=None`)
+                                    `health=None`, `description=None`)
 
         Description
         -----------
-        [superuser only]
+        [user with admin permission only]
         Update device parameters. Only the non-None values will be updated.
         Owner and group are always updated at the same time.
 
@@ -335,12 +298,6 @@ class SchedulerDevicesAPI(ExposedV2API):
           Hostname of the device
         `worker_hostname`: string
           Worker hostname
-        `user_name`: string
-          Device owner
-        `group_name`: string
-          Device group owner
-        `public`: boolean
-          Is the device public?
         `health`: string
           Device health, among ["GOOD", "UNKNOWN", "LOOPING", "BAD", "MAINTENANCE", "RETIRED"]
         `description`: string
@@ -354,6 +311,13 @@ class SchedulerDevicesAPI(ExposedV2API):
             with transaction.atomic():
                 device = Device.objects.get(hostname=hostname)
 
+                if not device.can_admin(self.user):
+                    raise xmlrpc.client.Fault(
+                        403,
+                        "User '%s' needs admin permission on device %s."
+                        % (self.user, hostname),
+                    )
+
                 if worker_hostname is not None:
                     try:
                         device.worker_host = Worker.objects.get(
@@ -363,28 +327,6 @@ class SchedulerDevicesAPI(ExposedV2API):
                         raise xmlrpc.client.Fault(
                             404, "Unable to find worker '%s'" % worker_hostname
                         )
-
-                user = group = None
-                try:
-                    if user_name is not None:
-                        user = User.objects.get(username=user_name)
-                    if group_name is not None:
-                        group = Group.objects.get(name=group_name)
-                except User.DoesNotExist:
-                    raise xmlrpc.client.Fault(
-                        404, "User '%s' was not found." % user_name
-                    )
-                except Group.DoesNotExist:
-                    raise xmlrpc.client.Fault(
-                        404, "Group '%s' was not found." % group_name
-                    )
-
-                if user is not None or group is not None:
-                    device.user = user
-                    device.group = group
-
-                if public is not None:
-                    device.is_public = public
 
                 try:
                     if health is not None:
@@ -410,7 +352,6 @@ class SchedulerDevicesAPI(ExposedV2API):
 
 class SchedulerDevicesTagsAPI(ExposedV2API):
     @check_perm("lava_scheduler_app.add_tag")
-    @check_perm("lava_scheduler_app.change_device")
     def add(self, hostname, name):
         """
         Name
@@ -419,7 +360,7 @@ class SchedulerDevicesTagsAPI(ExposedV2API):
 
         Description
         -----------
-        [superuser only]
+        [user with admin device and add tag permissions only]
         Add a device tag to the specific device
 
         Arguments
@@ -437,6 +378,12 @@ class SchedulerDevicesTagsAPI(ExposedV2API):
             device = Device.objects.get(hostname=hostname)
         except Device.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Device '%s' was not found." % hostname)
+        if not device.can_admin(self.user):
+            raise xmlrpc.client.Fault(
+                403,
+                "User '%s' needs admin permission on device %s."
+                % (self.user, hostname),
+            )
 
         tag, _ = Tag.objects.get_or_create(name=name)
         device.tags.add(tag)
@@ -467,7 +414,6 @@ class SchedulerDevicesTagsAPI(ExposedV2API):
 
         return [t.name for t in device.tags.all()]
 
-    @check_perm("lava_scheduler_app.change_device")
     def delete(self, hostname, name):
         """
         Name
@@ -476,7 +422,7 @@ class SchedulerDevicesTagsAPI(ExposedV2API):
 
         Description
         -----------
-        [superuser only]
+        [user with admin permission only]
         Remove a device tag from the device
 
         Arguments
@@ -493,6 +439,13 @@ class SchedulerDevicesTagsAPI(ExposedV2API):
             device = Device.objects.get(hostname=hostname)
         except Device.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Device '%s' was not found." % hostname)
+
+        if not device.can_admin(self.user):
+            raise xmlrpc.client.Fault(
+                403,
+                "User '%s' needs admin permission on device %s."
+                % (self.user, hostname),
+            )
 
         try:
             tag = Tag.objects.get(name=name)
