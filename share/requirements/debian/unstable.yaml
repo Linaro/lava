@@ -11,6 +11,8 @@ lava-server:
     name: python3-yaml
   dateutil:
     name: python3-dateutil
+  django-filter:
+    name: python3-django-filters
   django-restricted-resource:
     version: ">=2016.8"
     name: python3-django-restricted-resource
@@ -22,6 +24,8 @@ lava-server:
     name: python3-django
   djangorestframework:
     name: python3-djangorestframework
+  djangorestframework-filters:
+    name: python3-djangorestframework-filters
   docutils:
     version: ">=0.6"
     name: python3-docutils

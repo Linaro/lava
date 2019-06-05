@@ -120,24 +120,42 @@ The results are also available in JUnit or TAP13 format at:
  - junit (/api/v0.1/jobs/<job_id>/junit/)
  - tap13 (/api/v0.1/jobs/<job_id>/tap13/)
 
-Objects in all endpoints can be sorted as described
-in django-rest-framework docs: https://www.django-rest-framework.org/api-guide/filtering/
-Filtering and searching is currently disabled.
+Objects in all endpoints can be filered and sorted as described
+in django-rest-framework docs: http://www.django-rest-framework.org/api-guide/filtering/
+Searching is currently disabled.
 
 Examples specific to LAVA objects:
-Sorting
+
+Filtering
+---------
 
 .. code-block:: none
 
-    https://master.lavasoftware.org/api/v0.1/jobs/?ordering=-start_time
+    https://validation.linaro.org/restapi/v0.1/jobs/?health_check=true
 
-Sorting fields for test jobs:
- - id
+Filtering fields for test jobs:
+ - submitter
+ - visibility
+ - viewing_groups
+ - description
+ - health_check
+ - requested_device_type
+ - tags
+ - actual_device
  - submit_time
  - start_time
  - end_time
+ - state
+ - health
+ - priority
+ - definition
+ - original_definition
+ - multinode_definition
+ - admin_notifications
+ - failure_tags
+ - failure_comment
 
-Sorting fields for device types:
+Filtering fields for device types:
  - name
  - architecture
  - processor
@@ -152,6 +170,74 @@ Sorting fields for device types:
  - health_denominator
  - display
  - owners_only
+
+Filtering fields for devices:
+ - hostname
+ - device_type
+ - device_version
+ - physical_owner
+ - physical_group
+ - description
+ - tags
+ - state
+ - health
+ - worker_host
+
+Nested filtering
+----------------
+
+It is possible to filter objects using their relations. This is achieved
+by using double underscore notation fron django. Example:
+
+.. code-block:: shell
+
+    https://validation.linaro.org/restapi/v0.1/jobs/?requested_device_type__cores__name=kirin
+
+In the example above *requested_device_type* comes from TestJob object.
+It's a related field of DeviceType. DeviceType contains *cores* field which
+is of type Core. Core object contains *name* field. So the example above
+queries database for all TestJob objects which requested device type that
+use cores with name *kirin*.
+
+Additional filter fields for objects:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TestJob
+ - requested_device_type
+ - actual_device
+ - tags
+ - viewing_groups
+ - submitter
+ - failure_tags
+
+DeviceType
+ - architecture
+ - processor
+ - alias
+ - bits
+ - cores
+
+Device
+ - device_type
+ - physical_owner
+ - physical_group
+ - tags
+ - last_health_report_job
+ - worker_host
+
+
+Sorting
+-------
+
+.. code-block:: shell
+
+    https://validation.linaro.org/restapi/v0.1/jobs/?ordering=start_time
+
+Sorting fields for test jobs:
+ - id
+ - start_time
+ - end_time
+ - submit_time
 
 Sorting fields for devices:
  - hostname

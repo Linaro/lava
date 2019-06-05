@@ -11,6 +11,11 @@ lava-server:
   django-auth-ldap:
     version: ">=1.2.12"
     name: python3-django-auth-ldap
+  django-filter:
+    version: ">=1.1.0"
+    name: python3-django-filters
+  djangorestframework-filters:
+    name: python3-djangorestframework-filters
   django-tables2:
     version: ">=1.21.2"
     name: python3-django-tables2

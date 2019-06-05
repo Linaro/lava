@@ -50,6 +50,8 @@ INSTALLED_APPS = [
     "django_tables2",
     "linaro_django_xmlrpc",
     "rest_framework",
+    "django_filters",
+    "rest_framework_filters",
     # Add contrib
     "django.contrib.admin",
     "django.contrib.auth",
@@ -215,6 +217,7 @@ REST_FRAMEWORK = {
     "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.URLPathVersioning",
     "ALLOWED_VERSIONS": REST_VERSIONS,
     "DEFAULT_FILTER_BACKENDS": (
+        "rest_framework_filters.backends.DjangoFilterBackend",
         "rest_framework.filters.OrderingFilter",
         "rest_framework.filters.SearchFilter",
     ),

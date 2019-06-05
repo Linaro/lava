@@ -10,3 +10,4 @@ guestfs python3-guestfs; PEP386
 dateutil python3-dateutil; PEP386
 tap python3-tap; PEP386
 junit.xml python3-junit.xml; PEP386
+djangorestframework_filters python3-djangorestframework-filters; PEP386

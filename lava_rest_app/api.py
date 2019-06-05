@@ -36,6 +36,8 @@ from rest_framework.exceptions import NotFound, AuthenticationFailed
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
+from . import filters
+
 
 def safe_str2int(in_value):
     out_value = in_value
@@ -199,6 +201,7 @@ class TestJobViewSet(viewsets.ReadOnlyModelViewSet):
         "failure_comment",
     )
     ordering_fields = ("id", "start_time", "end_time", "submit_time")
+    filter_class = filters.TestJobFilter
 
     def get_queryset(self):
         return self.queryset.prefetch_related(
@@ -372,6 +375,7 @@ class DeviceTypeViewSet(viewsets.ReadOnlyModelViewSet):
         "display",
         "owners_only",
     )
+    filter_class = filters.DeviceTypeFilter
 
     def get_queryset(self):
         visible = filter_device_types(self.request.user)
@@ -429,6 +433,7 @@ class DeviceViewSet(viewsets.ReadOnlyModelViewSet):
         "health",
         "worker_host",
     )
+    filter_class = filters.DeviceFilter
 
     def get_queryset(self):
         visible = filter_device_types(self.request.user)
