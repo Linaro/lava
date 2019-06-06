@@ -136,10 +136,10 @@ actions:
       ssh:
         options:
 {{ ssh_options }}
-        host: '{{ ssh_host|default('') }}'
+        host: "{{ ssh_host|default('') }}"
         port: {{ ssh_port|default(22) }}
-        user: {{ ssh_user|default('root') }}
-        identity_file: {{ ssh_identity_file }}
+        user: "{{ ssh_user|default('root') }}"
+        identity_file: "{{ ssh_identity_file }}"
 {% if recovery_mode %}
 {{ recovery_mode }}
           recovery_mode:

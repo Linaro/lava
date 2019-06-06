@@ -24,7 +24,7 @@
 "
 ) -%}
 
-{% set ssh_user = 'root' -%}
+{% set ssh_user = ssh_user|default('root') -%}
 
 {# The code will create the correct port arguments for SCP and SSH, as they are different #}
 {% set ssh_port = ssh_port|default('22') -%}
