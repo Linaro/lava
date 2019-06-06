@@ -176,8 +176,9 @@ class ConnectSsh(Action):
             )
             command_str = " ".join(str(item) for item in command)
             self.logger.info(
-                "%s Connecting to device %s using '%s'",
+                "%s Connecting to device %s@%s using '%s'",
                 self.name,
+                self.ssh_user,
                 host_address,
                 command_str,
             )
@@ -186,8 +187,9 @@ class ConnectSsh(Action):
             self.logger.info("Using device data host_address for primary connection.")
             command_str = " ".join(str(item) for item in command)
             self.logger.info(
-                "%s Connecting to device %s using '%s'",
+                "%s Connecting to device %s@%s using '%s'",
                 self.name,
+                self.ssh_user,
                 self.host,
                 command_str,
             )

@@ -21,7 +21,7 @@
 # pylint: disable=too-many-return-statements,too-many-instance-attributes
 
 import os
-import yaml
+
 from lava_common.exceptions import LAVABug, JobError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.logical import Boot, RetryAction
@@ -178,7 +178,10 @@ class Scp(ConnectSsh):
             self.logger.error(error_msg)
             raise JobError(error_msg)
 
-        destination = "%s-%s" % (self.job.job_id, os.path.basename(path))
+        destination = self.get_namespace_data(
+            action="test", label="results", key="lava_test_results_dir"
+        )
+        destination = "%s-%s" % (destination, os.path.basename(path))
         command = self.scp[:]  # local copy
         # add the argument for setting the port (-P port)
         command.extend(self.scp_port)
@@ -196,9 +199,8 @@ class Scp(ConnectSsh):
             "Copying %s using %s to %s", self.key, command_str, host_address
         )
         # add the remote as destination, with :/ top level directory
-        command.extend(["%s@%s:/%s" % (self.ssh_user, host_address, destination)])
-        self.logger.info(yaml.dump(command))
-        self.run_command(command)
+        command.extend(["%s@%s:%s" % (self.ssh_user, host_address, destination)])
+        self.run_cmd(command, error_msg="Unable to copy %s" % self.key)
         connection = super().run(connection, max_end_time)
         self.results = {"success": "ssh deployment"}
         self.set_namespace_data(
@@ -278,7 +280,7 @@ class ScpOverlayUnpack(Action):
         tar_flags = self.get_namespace_data(
             action="scp-overlay", label="scp-overlay", key="tar_flags"
         )
-        cmd = "tar %s -C / -xzf /%s" % (tar_flags, filename)
+        cmd = "tar %s -C / -xzf %s" % (tar_flags, filename)
         connection.sendline(cmd)
         self.wait(connection)
         self.set_namespace_data(
