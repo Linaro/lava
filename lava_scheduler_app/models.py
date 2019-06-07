@@ -846,19 +846,25 @@ class Device(RestrictedResource):
         Principally drop top level parameters and commands
         like power.
         """
+
+        def get(data, keys):
+            for key in keys:
+                data = data.get(key, {})
+            return data
+
         data["constants"]["kernel-start-message"] = ""
         device_configuration = {
             "hostname": self.hostname,
-            "constants": data["constants"],
-            "timeouts": data["timeouts"],
+            "constants": data.get("constants", {}),
+            "timeouts": data.get("timeouts", {}),
             "actions": {
                 "deploy": {
-                    "connections": data["actions"]["deploy"]["connections"],
-                    "methods": data["actions"]["deploy"]["methods"],
+                    "connections": get(data, ["actions", "deploy", "connections"]),
+                    "methods": get(data, ["actions", "deploy", "methods"]),
                 },
                 "boot": {
-                    "connections": data["actions"]["boot"]["connections"],
-                    "methods": data["actions"]["boot"]["methods"],
+                    "connections": get(data, ["actions", "boot", "connections"]),
+                    "methods": get(data, ["actions", "boot", "methods"]),
                 },
             },
         }
