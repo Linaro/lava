@@ -104,7 +104,7 @@ about the environment in each namespace.
      :language: yaml
      :linenos:
      :lines: 26-106
-     :emphasize-lines: 3, 12, 24, 46, 64, 74
+     :emphasize-lines: 3, 11, 23, 45, 64, 74
 
 .. note:: The two test shells are *almost* identical but remember that all the
    results of this one test job will be reported together. The name of each
