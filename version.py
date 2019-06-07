@@ -19,6 +19,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import argparse
 import re
 import subprocess  # nosec - internal
 import os
@@ -28,7 +29,7 @@ import sys
 # pylint: disable=superfluous-parens,too-many-locals
 
 
-def version_tag():
+def version_tag(ref=None):
     """
     Parses the git status to determine if this is a git tag
     or a developer commit and builds a version string combining
@@ -39,9 +40,9 @@ def version_tag():
     :return: a version string based on the tag and short hash
     """
     args = ["git", "describe"]
-    if len(sys.argv) == 2:
-        if sys.argv[1] != "sdist":
-            args.append(sys.argv[1])
+    if ref is not None:
+        args.append(ref)
+
     if os.path.exists("./.git"):
         pattern = re.compile(r"(?P<tag>.+)\.(?P<commits>\d+)\.g(?P<hash>[abcdef\d]+)")
         describe = (
@@ -68,7 +69,11 @@ def version_tag():
 
 
 def main():
-    print(version_tag())
+    parser = argparse.ArgumentParser()
+    parser.add_argument("ref", nargs="?", default=None, help="reference")
+
+    options = parser.parse_args()
+    print(version_tag(options.ref))
     return 0
 
 
