@@ -23,6 +23,7 @@ import glob
 import os
 
 from django.core.management.base import BaseCommand, CommandError, CommandParser
+from django.db import IntegrityError
 
 from lava_scheduler_app.models import DeviceType, Alias
 
@@ -150,10 +151,13 @@ class Command(BaseCommand):
             raise CommandError("No alias was specified to update '%s'" % device_type)
         try:
             dt = device_type = DeviceType.objects.get(name=device_type)
+            _, created = Alias.objects.get_or_create(name=alias, device_type=dt)
+            if not created:
+                self.stdout.write("Alias '%s' already exists" % alias)
         except DeviceType.DoesNotExist:
             raise CommandError("Unable to find device-type '%s'" % device_type)
-        alias_item, _ = Alias.objects.get_or_create(name=alias)
-        dt.aliases.add(alias_item)
+        except IntegrityError:
+            raise CommandError("Alias '%s' already used by other device type")
 
     def handle_add(self, device_type, alias, health_denominator, health_frequency):
         """ Add a device type """
@@ -161,8 +165,6 @@ class Command(BaseCommand):
             DeviceType.objects.get(name=device_type)
             raise CommandError("Device-type '%s' already exists" % device_type)
 
-        aliases = []
-        alias_item = None
         if device_type == "*":
             self.stdout.write("Adding all known device types")
             available_types = self.available_device_types()
@@ -174,9 +176,6 @@ class Command(BaseCommand):
                 self.stdout.write("* %s" % dt_name)
                 DeviceType.objects.create(name=dt_name)
         else:
-            if alias:
-                aliases.append(alias)
-                alias_item, _ = Alias.objects.get_or_create(name=alias)
             if health_denominator == "hours":
                 health_denominator = DeviceType.HEALTH_PER_HOUR
             else:
@@ -187,8 +186,11 @@ class Command(BaseCommand):
                 health_frequency=health_frequency,
                 health_denominator=health_denominator,
             )
-            if alias_item:
-                dt.aliases.add(alias_item)
+            if alias:
+                try:
+                    Alias.objects.create(name=alias, device_type=dt)
+                except IntegrityError:
+                    raise CommandError("Alias '%s' already used by other device type")
 
     def handle_details(self, name, devices):
         """ Print some details about the device-type """
