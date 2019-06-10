@@ -23,4 +23,9 @@ else
   ./share/debian-dev-build.sh -o _build -s stretch -B
   debc $(find _build -name 'lava_*_arm64.changes' 2>/dev/null|head -n1)
   git branch -D cibase || true
+
+  # Check dependencies
+  .gitlab-ci/build/check-debian-deps.py --suite stretch-backports --package lava-common _build/lava-common_*
+  .gitlab-ci/build/check-debian-deps.py --suite stretch-backports --package lava-dispatcher _build/lava-dispatcher_*
+  .gitlab-ci/build/check-debian-deps.py --suite stretch-backports --package lava-server _build/lava-server_*
 fi
