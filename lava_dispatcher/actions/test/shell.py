@@ -104,7 +104,14 @@ class PatternFixup:
         """
         super().__init__()
         self.pat = None
-        self.fixup = None
+        # Use the same default dict from previous LAVA versions to keep
+        # compatibility.
+        self.fixup = {
+            "PASS": "pass",
+            "FAIL": "fail",
+            "SKIP": "skip",
+            "UNKNOWN": "unknown",
+        }
         if isinstance(testdef, dict) and "metadata" in testdef:
             self.testdef = testdef
             self.name = "%d_%s" % (count, testdef["metadata"].get("name"))
