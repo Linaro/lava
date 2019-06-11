@@ -58,6 +58,7 @@ CONTEXT_VARIABLES = [
     "serial",
     "vga",
     # others
+    "boot_character_delay",
     "bootloader_prompt",
     "console_device",
     "extra_kernel_args",
