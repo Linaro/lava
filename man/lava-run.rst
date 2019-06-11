@@ -6,7 +6,7 @@ Summary
 *******
 
 ``lava-run`` runs a LAVA test job on the reserved device, as
-scheduled by the ``lava-server`` and publish the test result back to
+scheduled by the ``lava-master`` and publish the test result back to
 the server. Jobs are scheduled by the server but can also be run by
 calling ``lava-run`` directly.
 
@@ -18,7 +18,8 @@ Usage
 
 lava-run [-h] --job-id ID --output-dir DIR [--validate]
          [--logging-url URL] [--master-cert PATH] [--slave-cert PATH]
-         [--ipv6] --device PATH [--dispatcher PATH] [--env-dut PATH]
+         [--socks-proxy SOCKS_PROXY] [--ipv6] --device PATH
+         [--dispatcher PATH] [--env-dut PATH]
          definition
 
 Options
@@ -39,6 +40,8 @@ logging:
   --logging-url URL   URL of the ZMQ socket to send the logs to the master
   --master-cert PATH  Master certificate file
   --slave-cert PATH   Slave certificate file
+  --socks-proxy SOCKS_PROXY
+                      Connect using a socks proxy
   --ipv6              Enable IPv6
 
 configuration files:

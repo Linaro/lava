@@ -12,10 +12,9 @@ Usage
 *****
 
 lava-slave [-h] [--hostname HOSTNAME] --master MASTER --socket-addr
-           SOCKET_ADDR [--log-file LOG_FILE]
-           [--level {DEBUG,ERROR,INFO,WARN}] [--timeout TIMEOUT]
-           [--ipv6] [--encrypt] [--master-cert MASTER_CERT]
-           [--slave-cert SLAVE_CERT]
+           SOCKET_ADDR [--socks-proxy SOCKS_PROXY] [--ipv6] [--encrypt]
+           [--master-cert MASTER_CERT] [--slave-cert SLAVE_CERT]
+           [--log-file LOG_FILE] [--level {DEBUG,ERROR,INFO,WARN}]
 
 Options
 *******
@@ -26,19 +25,26 @@ Options can be passed by editing /etc/default/lava-slave or
 optional arguments:
   -h, --help            show this help message and exit
   --hostname HOSTNAME   Name of the slave
+
+network:
   --master MASTER       Main master socket
   --socket-addr SOCKET_ADDR
                         Log socket
-  --log-file LOG_FILE   Log file for the slave logs
-  --level, -l           Log level (DEBUG, ERROR, INFO, WARN); default to INFO
-  --timeout TIMEOUT, -t TIMEOUT
-                        Socket connection timeout in seconds; default to 5
+  --socks-proxy SOCKS_PROXY
+                        Connect using a socks proxy
   --ipv6                Enable IPv6
+
+encryption:
   --encrypt             Encrypt messages
   --master-cert MASTER_CERT
                         Master certificate file
   --slave-cert SLAVE_CERT
                         Slave certificate file
+
+logging:
+  --log-file LOG_FILE   Log file for the slave logs
+  --level {DEBUG,ERROR,INFO,WARN}, -l {DEBUG,ERROR,INFO,WARN}
+                        Log level, default to INFO
 
 Encryption
 **********
@@ -51,13 +57,3 @@ https://validation.linaro.org/static/docs/v2/pipeline-server.html#zmq-curve
 
 You will need to contact the admin of the instance to obtain the
 certificate of the master to which this slave should connect.
-
-Systemd support
-###############
-
-The default install uses systemd translation of the sysvinit script
-but a systemd service file is available, if desired::
-
- /usr/share/lava-dispatcher/lava-slave.service
-
-This file can be copied to ``/lib/systemd/system/``.
