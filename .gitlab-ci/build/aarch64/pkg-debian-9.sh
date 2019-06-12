@@ -25,7 +25,5 @@ else
   git branch -D cibase || true
 
   # Check dependencies
-  .gitlab-ci/build/check-debian-deps.py --suite stretch-backports --package lava-common _build/lava-common_*
   .gitlab-ci/build/check-debian-deps.py --suite stretch-backports --package lava-dispatcher _build/lava-dispatcher_*
-  .gitlab-ci/build/check-debian-deps.py --suite stretch-backports --package lava-server _build/lava-server_*
 fi
