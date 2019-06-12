@@ -455,6 +455,14 @@ class ExtractNfsRootfs(ExtractRootfs):
             self.set_namespace_data(
                 action="extract-rootfs", label="file", key=self.file_key, value=root_dir
             )
+
+        self.job.device["dynamic_data"]["NFS_ROOTFS"] = self.get_namespace_data(
+            action="extract-rootfs", label="file", key=self.file_key
+        )
+        self.job.device["dynamic_data"]["NFS_SERVER_IP"] = dispatcher_ip(
+            self.job.parameters["dispatcher"]
+        )
+
         return connection
 
 
