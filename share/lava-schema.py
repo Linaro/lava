@@ -33,7 +33,7 @@ from lava_common.schemas.device import validate as validate_device
 def check_device(data, options, prefix=""):
     try:
         data = yaml.safe_load(data)
-    except yaml.yamlerror as exc:
+    except yaml.YAMLError as exc:
         print("%sinvalid device definition:" % prefix)
         print("%sinvalid yaml" % prefix)
         return 1
@@ -50,7 +50,7 @@ def check_device(data, options, prefix=""):
 def check_job(data, options, prefix=""):
     try:
         data = yaml.safe_load(data)
-    except yaml.yamlerror as exc:
+    except yaml.YAMLError as exc:
         print("%sinvalid job definition:" % prefix)
         print("%sinvalid yaml" % prefix)
         return 1
