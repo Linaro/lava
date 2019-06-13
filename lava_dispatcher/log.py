@@ -44,7 +44,7 @@ class ZMQPushHandler(logging.Handler):
         self.socket = self.context.socket(zmq.PUSH)
 
         if socks_proxy:
-            self.sock.setsockopt(zmq.SOCKS_PROXY, b(socks_proxy))
+            self.socket.setsockopt(zmq.SOCKS_PROXY, b(socks_proxy))
 
         if ipv6:
             self.socket.setsockopt(zmq.IPV6, 1)
