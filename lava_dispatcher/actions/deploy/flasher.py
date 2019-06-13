@@ -87,17 +87,17 @@ class FlasherAction(DeployAction):
             substitutions["{%s}" % key.upper()] = filename
 
         # Add power commands
-        substitutions["{HARD_RESET_COMMAND}"] = self.job.device.hard_reset_command
-        substitutions["{SOFT_RESET_COMMAND}"] = self.job.device.soft_reset_command
-        substitutions["{PRE_OS_COMMAND}"] = self.job.device.pre_os_command
-        if substitutions["{PRE_OS_COMMAND}"] is None:
+        substitutions["{HARD_RESET_COMMAND}"] = str(self.job.device.hard_reset_command)
+        substitutions["{SOFT_RESET_COMMAND}"] = str(self.job.device.soft_reset_command)
+        substitutions["{PRE_OS_COMMAND}"] = str(self.job.device.pre_os_command)
+        if self.job.device.pre_os_command is None:
             substitutions["{PRE_OS_COMMAND}"] = ""
-        substitutions["{PRE_POWER_COMMAND}"] = self.job.device.pre_power_command
-        if substitutions["{PRE_POWER_COMMAND}"] is None:
+        substitutions["{PRE_POWER_COMMAND}"] = str(self.job.device.pre_power_command)
+        if self.job.device.pre_power_command is None:
             substitutions["{PRE_POWER_COMMAND}"] = ""
-        substitutions["{POWER_ON_COMMAND}"] = self.job.device.power_command
-        substitutions["{POWER_OFF_COMMAND}"] = self.job.device.get("commands", {}).get(
-            "power_off", ""
+        substitutions["{POWER_ON_COMMAND}"] = str(self.job.device.power_command)
+        substitutions["{POWER_OFF_COMMAND}"] = str(
+            self.job.device.get("commands", {}).get("power_off", "")
         )
 
         # Add some device configuration
