@@ -17,7 +17,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
+import contextlib
+import pathlib
 import xmlrpc.client
 
 from django.db import IntegrityError, transaction
@@ -70,6 +71,9 @@ class SchedulerWorkersAPI(ExposedV2API):
         Description
         -----------
         Return the worker configuration
+        The server will first try
+        /etc/lava-server/dispatcher.d/<hostname>/dispatcher.yaml and fallback to
+        /etc/lava-server/dispatcher.d/<hostname>.yaml
 
         Arguments
         ---------
@@ -80,19 +84,75 @@ class SchedulerWorkersAPI(ExposedV2API):
         ------------
         This function returns the worker configuration
         """
+        # Sanitize hostname as we will use it in a path
+        if len(pathlib.Path(hostname).parts) != 1:
+            raise xmlrpc.client.Fault(400, "Invalid worker name")
+
+        # Find the worker in the database
         try:
             Worker.objects.get(hostname=hostname)
         except Worker.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Worker '%s' was not found." % hostname)
 
-        filename = os.path.join("/etc/lava-server/dispatcher.d", "%s.yaml" % hostname)
+        base = pathlib.Path("/etc/lava-server/dispatcher.d")
+        with contextlib.suppress(OSError):
+            data = (base / hostname / "dispatcher.yaml").read_text(encoding="utf-8")
+            return xmlrpc.client.Binary(data.encode("utf-8"))
+
+        with contextlib.suppress(OSError):
+            data = (base / ("%s.yaml" % hostname)).read_text(encoding="utf-8")
+            return xmlrpc.client.Binary(data.encode("utf-8"))
+
+        raise xmlrpc.client.Fault(
+            404, "Worker '%s' does not have a configuration" % hostname
+        )
+
+    def get_env(self, hostname):
+        """
+        Name
+        ----
+        `scheduler.workers.get_env` (`hostname`)
+
+        Description
+        -----------
+        Return the worker environment
+        The server will first try
+        /etc/lava-server/dispatcher.d/<hostname>/env.yaml and fallback to
+        /etc/lava-server/env.yaml
+
+        Arguments
+        ---------
+        `hostname`: string
+          Hostname of the worker
+
+        Return value
+        ------------
+        This function returns the worker environment
+        """
+        # Sanitize hostname as we will use it in a path
+        if len(pathlib.Path(hostname).parts) != 1:
+            raise xmlrpc.client.Fault(400, "Invalid worker name")
+
+        # Find the worker in the database
         try:
-            with open(filename, "r") as f_in:
-                return xmlrpc.client.Binary(f_in.read().encode("utf-8"))
-        except OSError:
-            raise xmlrpc.client.Fault(
-                404, "Worker '%s' does not have a configuration" % hostname
+            Worker.objects.get(hostname=hostname)
+        except Worker.DoesNotExist:
+            raise xmlrpc.client.Fault(404, "Worker '%s' was not found." % hostname)
+
+        base = pathlib.Path("/etc/lava-server/")
+        with contextlib.suppress(OSError):
+            data = (base / "dispatcher.d" / hostname / "env.yaml").read_text(
+                encoding="utf-8"
             )
+            return xmlrpc.client.Binary(data.encode("utf-8"))
+
+        with contextlib.suppress(OSError):
+            data = (base / "env.yaml").read_text(encoding="utf-8")
+            return xmlrpc.client.Binary(data.encode("utf-8"))
+
+        raise xmlrpc.client.Fault(
+            404, "Worker '%s' does not have a configuration" % hostname
+        )
 
     @check_perm("lava_scheduler_app.change_worker")
     def set_config(self, hostname, config):
@@ -103,7 +163,6 @@ class SchedulerWorkersAPI(ExposedV2API):
 
         Description
         -----------
-        [superuser only]
         Set the worker configuration
 
         Arguments
@@ -117,18 +176,63 @@ class SchedulerWorkersAPI(ExposedV2API):
         ------------
         True if the configuration was saved to file, False otherwise.
         """
+        # Sanitize hostname as we will use it in a path
+        if len(pathlib.Path(hostname).parts) != 1:
+            raise xmlrpc.client.Fault(400, "Invalid worker name")
+
         try:
             Worker.objects.get(hostname=hostname)
         except Worker.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Worker '%s' was not found." % hostname)
 
-        filename = os.path.join("/etc/lava-server/dispatcher.d", "%s.yaml" % hostname)
+        path = (
+            pathlib.Path("/etc/lava-server/dispatcher.d") / hostname / "dispatcher.yaml"
+        )
+        with contextlib.suppress(OSError):
+            path.parent.mkdir(mode=0o755, parents=True, exist_ok=True)
+            path.write_text(config, encoding="utf-8")
+            return True
+
+        return False
+
+    @check_perm("lava_scheduler_app.change_worker")
+    def set_env(self, hostname, env):
+        """
+        Name
+        ----
+        `scheduler.workers.set_env` (`hostname`, `env`)
+
+        Description
+        -----------
+        Set the worker environment
+
+        Arguments
+        ---------
+        `hostname`: string
+          Hostname of the worker
+        `env`: string
+          The worker environment as a yaml file
+
+        Return value
+        ------------
+        True if the environment was saved to file, False otherwise.
+        """
+        # Sanitize hostname as we will use it in a path
+        if len(pathlib.Path(hostname).parts) != 1:
+            raise xmlrpc.client.Fault(400, "Invalid worker name")
+
         try:
-            with open(filename, "w") as f_out:
-                f_out.write(config)
-                return True
-        except OSError:
-            return False
+            Worker.objects.get(hostname=hostname)
+        except Worker.DoesNotExist:
+            raise xmlrpc.client.Fault(404, "Worker '%s' was not found." % hostname)
+
+        path = pathlib.Path("/etc/lava-server/dispatcher.d") / hostname / "env.yaml"
+        with contextlib.suppress(OSError):
+            path.parent.mkdir(mode=0o755, parents=True, exist_ok=True)
+            path.write_text(env, encoding="utf-8")
+            return True
+
+        return False
 
     def list(self):
         """
