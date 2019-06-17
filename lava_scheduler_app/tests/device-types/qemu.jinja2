@@ -28,6 +28,7 @@ available_architectures:
 - mips
 - mipsel
 - mips64
+- nios2
 - ppc
 - ppc64
 - sparc
@@ -70,6 +71,8 @@ actions:
             qemu-system-mipsel
 {% elif arch == 'mips64' %}
             qemu-system-mips64
+{% elif arch == 'nios2' %}
+            qemu-system-nios2
 {% elif arch == 'ppc' %}
             qemu-system-ppc
 {% elif arch == 'ppc64' %}
@@ -106,6 +109,9 @@ actions:
 {% if arch == 'mips64' %}
           - -machine {{ machine|default('malta') }}
 {% endif %}
+{% if arch == 'nios2' %}
+          - -machine {{ machine|default('10m50-ghrd') }}
+{% endif %}
 {% if arch == 'ppc' %}
           - -machine {{ machine|default('g3beige') }}
 {% endif %}
@@ -117,6 +123,9 @@ actions:
 {% endif %}
 {% if arch == 'sparc64' %}
           - -machine {{ machine|default('sun4u') }}
+{% endif %}
+{% if arch == 'xtensa' %}
+          - -machine {{ machine|default('sim') }}
 {% endif %}
 {% if arch == 'arm64' or arch == 'aarch64' or arch == 'arm' %}
           - -cpu {{ cpu|default('cortex-a57') }}

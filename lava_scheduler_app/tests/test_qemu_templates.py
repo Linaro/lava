@@ -249,6 +249,7 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
                     "mipsel",
                     "mips64",
                     "moxie",
+                    "nios2",
                     "or32",
                     "ppc",
                     "ppc64",
