@@ -55,6 +55,15 @@ def _open_logs(directory):
     return lzma.open(str(directory / "output.yaml.xz"), "rb")
 
 
+def chunked_logs(dir_name, chunk_size=4096):
+    with _open_logs(pathlib.Path(dir_name)) as f_log:
+        while True:
+            data = f_log.read(chunk_size).decode("utf-8")
+            if not data:
+                break
+            yield data
+
+
 def read_logs(dir_name, start=0, end=None):
     directory = pathlib.Path(dir_name)
 
