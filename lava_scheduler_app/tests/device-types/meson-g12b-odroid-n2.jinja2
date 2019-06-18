@@ -1,0 +1,6 @@
+{# device_type = "meson-g12b-odroid-n2" #}
+{% extends 'meson-g12-common.jinja2' %}
+
+{% set interrupt_prompt = interrupt_prompt|default('stop autoboot') %}
+{% set interrupt_ctrl_list = ['c'] %}
+
