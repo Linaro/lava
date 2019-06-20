@@ -1310,13 +1310,14 @@ def job_detail(request, pk):
         "boot_list": boot_list,
         "test_list": test_list,
         "job_tags": job.tags.all(),
+        "size_limit": job.size_limit,
     }
 
     try:
         job_file_size = size_logs(job.output_dir)
         if job_file_size is not None and job_file_size >= job.size_limit:
             log_data = []
-            data["size_warning"] = job.size_limit
+            data["size_warning"] = True
         else:
             log_data = read_logs(job.output_dir)
             log_data = yaml.load(log_data, Loader=yaml.CLoader)
@@ -1698,6 +1699,12 @@ def job_log_incremental(request, pk):
         first_line = int(request.GET.get("line", 0))
     except ValueError:
         first_line = 0
+
+    job_file_size = size_logs(job.output_dir)
+    if job_file_size is not None and job_file_size >= job.size_limit:
+        response = HttpResponse(simplejson.dumps([]), content_type="application/json")
+        response["X-Size-Warning"] = "1"
+        return response
 
     try:
         data = read_logs(job.output_dir, first_line)

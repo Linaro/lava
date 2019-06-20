@@ -209,13 +209,11 @@
 <div id="failure_block" {% if not job.failure_comment %}style="display: none;" {% endif %}>
   <pre class="alert alert-danger failure_comment">{{ job.failure_comment }}</pre>
 </div>
-{% if size_warning %}
-<div class="alert alert-danger" id="size-warning">
-<p><strong>This log file is too large to view</strong>, (over {{ size_warning|filesizeformat }}).
+<div class="alert alert-danger" id="size-warning" {% if not size_warning %}style="display: none;"{% endif %}>
+<p><strong>This log file is too large to view</strong>, (over {{ size_limit|filesizeformat }}).
     It can only be downloaded:
 <a href="{% url 'lava.scheduler.job.log_file.plain' job.pk %}"><span class="glyphicon glyphicon-save-file"></span> Plain log</a></p>
 </div>
-{% endif %}
 <div class="affix hidden-xs hidden-sm">
   <h4>Pipeline <span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span></h4>
   <div id="affix-full">
@@ -837,7 +835,12 @@
               }
           }
           // Relaunch the timer
-          if(xhr.getResponseHeader('X-Is-Finished')) {
+          if(xhr.getResponseHeader('X-Size-Warning')) {
+            $('#log-messages').css('display', 'none');
+            $('#sectionlogs').css('display', 'none');
+            $('#size-warning').css('display', 'block');
+            poll_logs = 0;
+          } else if(xhr.getResponseHeader('X-Is-Finished')) {
             $('#log-messages').css('display', 'none');
             poll_logs = 0;
           } else {
