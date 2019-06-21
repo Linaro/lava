@@ -65,6 +65,7 @@ def setup_logger(options):
             options.master_cert,
             options.slave_cert,
             options.job_id,
+            None,
             options.ipv6,
         )
     else:
