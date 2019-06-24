@@ -58,8 +58,8 @@ class SchedulerWorkersAPI(ExposedV2API):
             Worker.objects.create(
                 hostname=hostname, description=description, health=health
             )
-        except IntegrityError as exc:
-            raise xmlrpc.client.Fault(400, "Bad request: %s" % exc.message)
+        except IntegrityError:
+            raise xmlrpc.client.Fault(400, "Bad request: worker already exists?")
 
     def get_config(self, hostname):
         """
