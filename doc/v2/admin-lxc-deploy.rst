@@ -179,7 +179,7 @@ These values can be retrieved by test writers inside a LAVA test shell in the
 LXC by using the associated test shell helpers.
 
 * **lava-probe-ip** - echoes the ``probe_ip`` specified in the device
-  dictioanry.
+  dictionary.
 
 * **lava-probe-channel** - echoes the ``probe_channel`` specified in the device
   dictionary.
