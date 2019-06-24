@@ -42,6 +42,7 @@ from django.db import transaction
 from django.db.models import Case, IntegerField, Sum, When
 from django.template.loader import render_to_string
 from django.http import (
+    FileResponse,
     Http404,
     HttpResponse,
     HttpResponseBadRequest,
@@ -49,7 +50,6 @@ from django.http import (
     HttpResponseRedirect,
     JsonResponse,
 )
-from django.http.response import StreamingHttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.db.models import Q
 from django.utils import timezone
@@ -79,7 +79,7 @@ from lava_scheduler_app.dbutils import (
     testjob_submission,
     validate_job,
 )
-from lava_scheduler_app.logutils import size_logs, read_logs, chunked_logs
+from lava_scheduler_app.logutils import open_logs, size_logs, read_logs
 from lava_scheduler_app.templatetags.utils import udecode
 
 from lava.utils.lavatable import LavaView
@@ -1696,8 +1696,8 @@ def job_configuration(request, pk):
 def job_log_file_plain(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
     try:
-        data = chunked_logs(job.output_dir)
-        response = StreamingHttpResponse(data, content_type="application/yaml")
+        data = open_logs(job.output_dir)
+        response = FileResponse(data, content_type="application/yaml")
         response["Content-Disposition"] = "attachment; filename=job_%d.log" % job.id
         return response
     except OSError:

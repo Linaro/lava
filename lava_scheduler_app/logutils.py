@@ -27,7 +27,7 @@ PACK_SIZE = struct.calcsize(PACK_FORMAT)
 
 
 def _build_index(directory):
-    with _open_logs(directory) as f_log:
+    with open_logs(directory) as f_log:
         with open(str(directory / "output.idx"), "wb") as f_idx:
             f_idx.write(struct.pack(PACK_FORMAT, 0))
             line = f_log.readline()
@@ -49,19 +49,11 @@ def line_count(f_idx):
     return int(f_idx.tell() / PACK_SIZE)
 
 
-def _open_logs(directory):
+def open_logs(dir_name):
+    directory = pathlib.Path(dir_name)
     with contextlib.suppress(FileNotFoundError):
         return open(str(directory / "output.yaml"), "rb")
     return lzma.open(str(directory / "output.yaml.xz"), "rb")
-
-
-def chunked_logs(dir_name, chunk_size=4096):
-    with _open_logs(pathlib.Path(dir_name)) as f_log:
-        while True:
-            data = f_log.read(chunk_size).decode("utf-8")
-            if not data:
-                break
-            yield data
 
 
 def read_logs(dir_name, start=0, end=None):
@@ -69,7 +61,7 @@ def read_logs(dir_name, start=0, end=None):
 
     # Only create the index if needed
     if start == 0 and end is None:
-        with _open_logs(directory) as f_log:
+        with open_logs(directory) as f_log:
             return f_log.read().decode("utf-8")
 
     # Create the index
@@ -80,7 +72,7 @@ def read_logs(dir_name, start=0, end=None):
         start_offset = _get_line_offset(f_idx, start)
         if start_offset is None:
             return ""
-        with _open_logs(directory) as f_log:
+        with open_logs(directory) as f_log:
             f_log.seek(start_offset)
             if end is None:
                 return f_log.read().decode("utf-8")
