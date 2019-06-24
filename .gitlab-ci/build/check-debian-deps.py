@@ -34,12 +34,12 @@ def load_requirements(suite, package):
     requirements = {}
     if suite.endswith("-backports"):
         base_suite = suite.replace("-backports", "")
-        data = yaml.load(
+        data = yaml.safe_load(
             (debian / ("%s.yaml" % base_suite)).read_text(encoding="utf-8")
         )[package]
         if data is not None:
             requirements = data
-    data = yaml.load((debian / ("%s.yaml" % suite)).read_text(encoding="utf-8"))[
+    data = yaml.safe_load((debian / ("%s.yaml" % suite)).read_text(encoding="utf-8"))[
         package
     ]
     if data is not None:
