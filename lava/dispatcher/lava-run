@@ -33,12 +33,7 @@ import sys
 import traceback
 import yaml
 
-from lava_common.exceptions import (
-    InfrastructureError,
-    JobCanceled,
-    LAVABug,
-    LAVAError
-)
+from lava_common.exceptions import InfrastructureError, JobCanceled, LAVABug, LAVAError
 from lava_dispatcher.log import YAMLLogger
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
@@ -48,42 +43,70 @@ def parser():
     """ Configure the parser """
     p_obj = argparse.ArgumentParser()
 
-    p_obj.add_argument("--job-id", required=True, metavar="ID",
-                       help="Job identifier. "
-                            "This alters process name for easier debugging")
-    p_obj.add_argument("--output-dir", required=True, metavar="DIR",
-                       help="Directory for temporary ressources")
-    p_obj.add_argument("--validate", action="store_true", default=False,
-                       help="validate the job file, do not execute any steps. "
-                            "The description is saved into description.yaml")
+    p_obj.add_argument(
+        "--job-id",
+        required=True,
+        metavar="ID",
+        help="Job identifier. " "This alters process name for easier debugging",
+    )
+    p_obj.add_argument(
+        "--output-dir",
+        required=True,
+        metavar="DIR",
+        help="Directory for temporary ressources",
+    )
+    p_obj.add_argument(
+        "--validate",
+        action="store_true",
+        default=False,
+        help="validate the job file, do not execute any steps. "
+        "The description is saved into description.yaml",
+    )
 
     group = p_obj.add_argument_group("logging")
-    group.add_argument("--logging-url", metavar="URL", default=None,
-                       help="URL of the ZMQ socket to send the logs to the master")
+    group.add_argument(
+        "--logging-url",
+        metavar="URL",
+        default=None,
+        help="URL of the ZMQ socket to send the logs to the master",
+    )
     # zmq.auth.load_certificate expects a filename, avoid opening the file here
-    group.add_argument("--master-cert", default=None, metavar="PATH",
-                       help="Master certificate file")
+    group.add_argument(
+        "--master-cert", default=None, metavar="PATH", help="Master certificate file"
+    )
     # zmq.auth.load_certificate expects a filename, avoid opening the file here
-    group.add_argument("--slave-cert", default=None, metavar="PATH",
-                       help="Slave certificate file")
-    group.add_argument("--socks-proxy", type=str, default=None,
-                       help="Connect using a socks proxy")
-    group.add_argument("--ipv6", action="store_true", default=False,
-                       help="Enable IPv6")
+    group.add_argument(
+        "--slave-cert", default=None, metavar="PATH", help="Slave certificate file"
+    )
+    group.add_argument(
+        "--socks-proxy", type=str, default=None, help="Connect using a socks proxy"
+    )
+    group.add_argument("--ipv6", action="store_true", default=False, help="Enable IPv6")
 
     group = p_obj.add_argument_group("configuration files")
-    group.add_argument("--device", metavar="PATH",
-                       type=argparse.FileType("r"), required=True,
-                       help="Device configuration")
-    group.add_argument("--dispatcher", metavar="PATH",
-                       type=argparse.FileType("r"), default=None,
-                       help="Dispatcher configuration")
-    group.add_argument("--env-dut", metavar="PATH",
-                       type=argparse.FileType("r"), default=None,
-                       help="DUT environment")
+    group.add_argument(
+        "--device",
+        metavar="PATH",
+        type=argparse.FileType("r"),
+        required=True,
+        help="Device configuration",
+    )
+    group.add_argument(
+        "--dispatcher",
+        metavar="PATH",
+        type=argparse.FileType("r"),
+        default=None,
+        help="Dispatcher configuration",
+    )
+    group.add_argument(
+        "--env-dut",
+        metavar="PATH",
+        type=argparse.FileType("r"),
+        default=None,
+        help="DUT environment",
+    )
 
-    p_obj.add_argument("definition", type=argparse.FileType("r"),
-                       help="job definition")
+    p_obj.add_argument("definition", type=argparse.FileType("r"), help="job definition")
 
     return p_obj
 
@@ -94,18 +117,22 @@ def setup_logger(options):
     logging.setLoggerClass(YAMLLogger)
 
     # The logger can be used by the parser and the Job object in all phases.
-    logger = logging.getLogger('dispatcher')
+    logger = logging.getLogger("dispatcher")
     if options.logging_url is not None:
         if options.master_cert and options.slave_cert:
-            if not os.path.exists(options.master_cert) or not os.path.exists(options.slave_cert):
+            if not os.path.exists(options.master_cert) or not os.path.exists(
+                options.slave_cert
+            ):
                 return None
         # pylint: disable=no-member
-        logger.addZMQHandler(options.logging_url,
-                             options.master_cert,
-                             options.slave_cert,
-                             options.job_id,
-                             options.socks_proxy,
-                             options.ipv6)
+        logger.addZMQHandler(
+            options.logging_url,
+            options.master_cert,
+            options.slave_cert,
+            options.job_id,
+            options.socks_proxy,
+            options.ipv6,
+        )
     else:
         logger.addHandler(logging.StreamHandler())
 
@@ -132,11 +159,14 @@ def parse_job_file(logger, options):
         dispatcher_config = options.dispatcher.read()
 
     # Generate the pipeline
-    return parser.parse(options.definition.read(),
-                        device, options.job_id,
-                        logger=logger,
-                        dispatcher_config=dispatcher_config,
-                        env_dut=env_dut)
+    return parser.parse(
+        options.definition.read(),
+        device,
+        options.job_id,
+        logger=logger,
+        dispatcher_config=dispatcher_config,
+        env_dut=env_dut,
+    )
 
 
 def cancelling_handler(*_):
@@ -245,8 +275,7 @@ def main():
     else:
         success = True
     finally:
-        result_dict = {"definition": "lava",
-                       "case": "job"}
+        result_dict = {"definition": "lava", "case": "job"}
         if success:
             result_dict["result"] = "pass"
             logger.info("Job finished correctly")
@@ -262,9 +291,8 @@ def main():
 
     # Generate the description
     # A missing description.yaml indicate that lava-run crashed
-    description_file = os.path.join(options.output_dir,
-                                    'description.yaml')
-    with open(description_file, 'w') as f_describe:
+    description_file = os.path.join(options.output_dir, "description.yaml")
+    with open(description_file, "w") as f_describe:
         f_describe.write(description)
 
     return 0 if success else 1
