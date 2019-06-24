@@ -13,7 +13,7 @@ MASTER_URL=${MASTER_URL:-tcp://localhost:5556}
 # Import variables
 [ -e /etc/lava-dispatcher/lava-slave ] && . /etc/lava-dispatcher/lava-slave
 
-for f in /root/entrypoint.d/*; do
+for f in $(find /root/entrypoint.d/ -type f); do
     case "$f" in
         *.sh)
             echo "$0: running ${f}"

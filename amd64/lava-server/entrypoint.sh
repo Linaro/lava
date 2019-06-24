@@ -230,7 +230,7 @@ then
 fi
 
 # Run user scripts. The database is running and migrations has been run.
-for f in /root/entrypoint.d/*; do
+for f in $(find /root/entrypoint.d/ -type f); do
     case "$f" in
         *.sh)
             echo "$0: running ${f}"
