@@ -152,6 +152,9 @@ class FlashCMSISAction(Action):
         for f in self.filelist:
             self.logger.debug("Copying %s to %s", f, dstdir)
             shutil.copy2(f, dstdir)
+        # sync
+        sync_command = "sync %s" % dstdir
+        self.run_command(sync_command.split(" "), allow_silent=True)
         # umount
         umount_command = "umount %s" % self.usb_mass_device
         self.run_command(umount_command.split(" "), allow_silent=True)
