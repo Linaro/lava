@@ -288,13 +288,14 @@ class LxcCreateUdevRuleAction(DeployAction):
         self.logger.debug(
             "device info file '%s' created with:\n %s", device_info_file, device_info
         )
-        logging_url = master_cert = slave_cert = ipv6 = None
+        logging_url = master_cert = slave_cert = socks_proxy = ipv6 = None
         job_id = self.job.job_id
         # pylint: disable=no-member
         if self.logger.handler:
             logging_url = self.logger.handler.logging_url
             master_cert = self.logger.handler.master_cert
             slave_cert = self.logger.handler.slave_cert
+            socks_proxy = self.logger.handler.socks_proxy
             ipv6 = self.logger.handler.ipv6
             job_id = self.logger.handler.job_id
         # The rules file will be created in job's temporary directory with
@@ -316,6 +317,7 @@ class LxcCreateUdevRuleAction(DeployAction):
                 "logging_url": logging_url,
                 "master_cert": master_cert,
                 "slave_cert": slave_cert,
+                "socks_proxy": socks_proxy,
                 "ipv6": ipv6,
                 "job_id": job_id,
             }

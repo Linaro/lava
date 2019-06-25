@@ -412,6 +412,8 @@ def lxc_udev_rule(data):
         rule += " --master-cert %s" % data["master_cert"]
     if data["slave_cert"] is not None:
         rule += " --slave-cert %s" % data["slave_cert"]
+    if data["socks_proxy"] is not None:
+        rule += " --socks-proxy %s" % data["socks_proxy"]
     if data["ipv6"]:
         rule += " --ipv6"
     if data["fs_label"] is not None:
@@ -442,6 +444,8 @@ def lxc_udev_rule_parent(data):
         rule += " --master-cert %s" % data["master_cert"]
     if data["slave_cert"] is not None:
         rule += " --slave-cert %s" % data["slave_cert"]
+    if data["socks_proxy"] is not None:
+        rule += " --socks-proxy %s" % data["socks_proxy"]
     if data["ipv6"]:
         rule += " --ipv6"
     if data["fs_label"] is not None:

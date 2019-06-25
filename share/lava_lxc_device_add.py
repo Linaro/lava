@@ -65,7 +65,7 @@ def setup_logger(options):
             options.master_cert,
             options.slave_cert,
             options.job_id,
-            None,
+            options.socks_proxy,
             options.ipv6,
         )
     else:
@@ -95,6 +95,9 @@ def main():
     )
     group.add_argument(
         "--slave-cert", default=None, metavar="PATH", help="Slave certificate file"
+    )
+    group.add_argument(
+        "--socks-proxy", type=str, default=None, help="Connect using a socks proxy"
     )
     group.add_argument("--ipv6", action="store_true", default=False, help="Enable IPv6")
 
