@@ -5,8 +5,20 @@
 
 actions:
   deploy:
+    connections:
+      serial:
     methods:
       docker:
+      ssh:
+        options:
+{{ ssh_options }}
+        # primary connections get this from the device dictionary.
+        # secondary connections get this from the lava-multinode protocol support.
+        host: "{{ ssh_host|default('') }}"
+        port: {{ ssh_port|default(22) }}
+        user: "{{ ssh_user|default('root') }}"
+        identity_file: "{{ ssh_identity_file }}"
+
   boot:
     connections:
       serial:
@@ -32,4 +44,5 @@ actions:
 {% else %}
           volumes: []
 {% endif %}
+      ssh:
 {% endblock body %}

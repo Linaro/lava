@@ -137,7 +137,24 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
         self.assertTrue(self.validate_data("docker-01", data))
         template_dict = prepare_jinja_template("docker-01", data, raw=False)
         self.assertEqual(
-            {"docker": None}, template_dict["actions"]["deploy"]["methods"]
+            {
+                "docker": None,
+                "ssh": {
+                    "options": [
+                        "-o",
+                        "Compression=yes",
+                        "-o",
+                        "PasswordAuthentication=no",
+                        "-o",
+                        "LogLevel=FATAL",
+                    ],
+                    "host": "",
+                    "port": 22,
+                    "user": "root",
+                    "identity_file": "dynamic_vm_keys/lava",
+                },
+            },
+            template_dict["actions"]["deploy"]["methods"],
         )
         self.assertEqual(
             {
@@ -149,7 +166,8 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
                         "devices": [],
                         "volumes": [],
                     }
-                }
+                },
+                "ssh": None,
             },
             template_dict["actions"]["boot"]["methods"],
         )
@@ -161,7 +179,24 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
         self.assertTrue(self.validate_data("docker-01", data))
         template_dict = prepare_jinja_template("docker-01", data, raw=False)
         self.assertEqual(
-            {"docker": None}, template_dict["actions"]["deploy"]["methods"]
+            {
+                "docker": None,
+                "ssh": {
+                    "options": [
+                        "-o",
+                        "Compression=yes",
+                        "-o",
+                        "PasswordAuthentication=no",
+                        "-o",
+                        "LogLevel=FATAL",
+                    ],
+                    "host": "",
+                    "port": 22,
+                    "user": "root",
+                    "identity_file": "dynamic_vm_keys/lava",
+                },
+            },
+            template_dict["actions"]["deploy"]["methods"],
         )
         self.assertEqual(
             {
@@ -173,7 +208,8 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
                         "devices": [],
                         "volumes": ["/home", "/tmp"],  # nosec - unit test support.
                     }
-                }
+                },
+                "ssh": None,
             },
             template_dict["actions"]["boot"]["methods"],
         )
@@ -186,7 +222,24 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
         self.assertTrue(self.validate_data("docker-01", data))
         template_dict = prepare_jinja_template("docker-01", data, raw=False)
         self.assertEqual(
-            {"docker": None}, template_dict["actions"]["deploy"]["methods"]
+            {
+                "docker": None,
+                "ssh": {
+                    "options": [
+                        "-o",
+                        "Compression=yes",
+                        "-o",
+                        "PasswordAuthentication=no",
+                        "-o",
+                        "LogLevel=FATAL",
+                    ],
+                    "host": "",
+                    "port": 22,
+                    "user": "root",
+                    "identity_file": "dynamic_vm_keys/lava",
+                },
+            },
+            template_dict["actions"]["deploy"]["methods"],
         )
         self.assertEqual(
             {
@@ -198,7 +251,8 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
                         "devices": ["/dev/kvm"],
                         "volumes": [],
                     }
-                }
+                },
+                "ssh": None,
             },
             template_dict["actions"]["boot"]["methods"],
         )
