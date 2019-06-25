@@ -94,7 +94,7 @@ def main():
     parser.add_argument(
         "repository",
         type=str,
-        help="repository id or (aarch64|amd64)-(dispatcher|server)",
+        help="repository id or (aarch64|amd64)/lava-(dispatcher|server)",
     )
 
     # parse the command line
