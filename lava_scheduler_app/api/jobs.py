@@ -17,8 +17,9 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
+import contextlib
 from datetime import timedelta
+import pathlib
 import voluptuous
 import xmlrpc.client
 
@@ -35,12 +36,10 @@ from lava_scheduler_app.models import TestJob
 from lava_results_app.models import TestCase
 
 
-def load_optional_file(filename):
-    try:
-        with open(filename, "r") as f_in:
-            return f_in.read().encode("utf-8")
-    except OSError:
-        return None
+def load_optional_file(filepath):
+    with contextlib.suppress(OSError):
+        return filepath.read_text(encoding="utf-8")
+    return None
 
 
 class SchedulerJobsAPI(ExposedV2API):
@@ -105,12 +104,12 @@ class SchedulerJobsAPI(ExposedV2API):
         ]:
             raise xmlrpc.client.Fault(404, "Job '%s' has not started yet" % job_id)
 
-        output_dir = job.output_dir
-        definition = load_optional_file(os.path.join(output_dir, "job.yaml"))
-        device = load_optional_file(os.path.join(output_dir, "device.yaml"))
-        dispatcher = load_optional_file(os.path.join(output_dir, "dispatcher.yaml"))
-        env = load_optional_file(os.path.join(output_dir, "env.yaml"))
-        env_dut = load_optional_file(os.path.join(output_dir, "env-dut.yaml"))
+        output_dir = pathlib.Path(job.output_dir)
+        definition = load_optional_file(output_dir / "job.yaml")
+        device = load_optional_file(output_dir / "device.yaml")
+        dispatcher = load_optional_file(output_dir / "dispatcher.yaml")
+        env = load_optional_file(output_dir / "env.yaml")
+        env_dut = load_optional_file(output_dir / "env-dut.yaml")
         return [definition, device, dispatcher, env, env_dut]
 
     def definition(self, job_id):
