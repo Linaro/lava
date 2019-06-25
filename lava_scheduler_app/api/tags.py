@@ -51,8 +51,8 @@ class SchedulerTagsAPI(ExposedV2API):
         """
         try:
             Tag.objects.create(name=name, description=description)
-        except IntegrityError as exc:
-            raise xmlrpc.client.Fault(400, "Bad request: %s" % exc.message)
+        except IntegrityError:
+            raise xmlrpc.client.Fault(400, "Bad request: tag already exists?")
 
     @check_perm("lava_scheduler_app.delete_tag")
     def delete(self, name):

@@ -119,8 +119,8 @@ class SchedulerDevicesAPI(ExposedV2API):
                 description=description,
             )
 
-        except (IntegrityError, ValidationError) as exc:
-            raise xmlrpc.client.Fault(400, "Bad request: %s" % exc.message)
+        except (IntegrityError, ValidationError):
+            raise xmlrpc.client.Fault(400, "Bad request: device already exists?")
 
     def get_dictionary(self, hostname, render=False, context=None):
         """
