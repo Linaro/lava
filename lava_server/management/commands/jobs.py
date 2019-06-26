@@ -380,14 +380,15 @@ class Command(BaseCommand):
                     self.stdout.write(
                         "* %d (%s): %s [SKIP]" % (job.id, job.end_time, job.output_dir)
                     )
-                else:
+                elif (base / "output.yaml.xz").exists():
                     self.stdout.write(
                         "* %d (%s): %s [create size file]"
                         % (job.id, job.end_time, job.output_dir)
                     )
-                    with contextlib.suppress(FileNotFoundError):
-                        with lzma.open(str(base / "output.yaml.xz"), "rb") as f_in:
-                            _create_output_size(base, f_in.seek(0, 2))
+                    if not simulate:
+                        with contextlib.suppress(FileNotFoundError):
+                            with lzma.open(str(base / "output.yaml.xz"), "rb") as f_in:
+                                _create_output_size(base, f_in.seek(0, 2))
                 continue
 
             self.stdout.write("* %d (%s): %s" % (job.id, job.end_time, job.output_dir))
