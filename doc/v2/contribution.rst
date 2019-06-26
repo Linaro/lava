@@ -175,9 +175,11 @@ The LAVA contribution process
 To contribute changes to LAVA, there is a simple process:
 
 * :ref:`creating_gitlab_account`
+* :ref:`request_gitlab_fork_permissions`
 * :ref:`Fork the current code <fork_the_code>`
 * :ref:`create_development_branch`
 * :ref:`develop_your_changes`
+* :ref:`dind_access`
 * :ref:`push_development_branch`
 * :ref:`submit_merge_request`
 * :ref:`review_and_fix_mr`
@@ -199,6 +201,34 @@ creating an account on https://git.lavasoftware.org/lava/ . Fill in
 details in your profie, and make sure you add a public SSH key to your
 account. You will need that to be able to push code changes.
 
+.. index:: gitlab fork permissions
+
+.. _request_gitlab_fork_permissions:
+
+Request GitLab Fork Permissions
+===============================
+
+Next, you will need to be given permissions to create forks of our
+repositories on the LAVA GitLab instance
+(https://git.lavasoftware.org/lava/). This is an unfortunate step that
+has only become necessary recently - spammers and trolls are
+everywhere on the Internet and will apparently abuse any resources
+that are not locked down. :-(
+
+To counter the spam problem, all new accounts are tagged as
+``external`` by default, which means that they do not have permissions
+to fork projects or create their own new projects. If you are
+genuinely looking to work on LAVA, please `file an issue
+<https://git.lavasoftware.org/lava/lava/issues/new>`_ to ask for
+access once you have created your account. The GitLab admins should
+respond quickly and give you access.
+
+.. note:: To be able to later push changes and trigger CI, you will
+	  also need to :ref:`request access <dind_access>` to the
+	  ``DinD`` ("Docker in Docker") based CI
+	  runners. Unfortunately, you can only do that once you have
+	  created repositories within your account (e.g. by forking).
+
 .. index:: forking the code
 
 .. _fork_the_code:
@@ -209,6 +239,24 @@ Fork the code
 Fork the lava project in the GitLab web interface. This will set up a
 copy of the lava project in your own personal namespace. From here, you
 can create new branches as you like, ready for making changes.
+
+.. index:: dind access, CI runner access
+
+.. _dind_access:
+
+Access to the CI runners
+========================
+
+If you want to contribute to LAVA projects, you will also need to ask
+the GitLab admins to grant access to our ``DinD`` (Docker in Docker)
+CI runners. Due to the way that permissions for CI runners is handled
+within GitLab, this can **only** be done on a per-project basis rather
+than by user account. It's therefore worth asking for this DinD access
+straight away once you have made your first fork of each
+repository. Please `file an issue
+<https://git.lavasoftware.org/lava/lava/issues/new>`_ to ask for
+access once you have forked. The GitLab admins should respond quickly
+and give you access.
 
 .. index:: development branch, git branch
 
