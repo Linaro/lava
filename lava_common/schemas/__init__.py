@@ -57,6 +57,16 @@ CONTEXT_VARIABLES = [
     "netdevice",
     "serial",
     "vga",
+    # u-boot variables
+    "booti_dtb_addr",
+    "booti_kernel_addr",
+    "booti_ramdisk_addr",
+    "bootm_dtb_addr",
+    "bootm_kernel_addr",
+    "bootm_ramdisk_addr",
+    "bootz_dtb_addr",
+    "bootz_kernel_addr",
+    "bootz_ramdisk_addr",
     # others
     "boot_character_delay",
     "bootloader_prompt",
