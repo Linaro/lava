@@ -54,6 +54,7 @@ def device():
         Optional("device_info"): [dict],
         Optional("static_info"): [dict],
         Optional("storage_info"): [dict],
+        Optional("environment"): dict,
         Optional("flash_cmds_order"): [str],
         Optional("parameters"): {
             # TODO: having a more precise schema make this fail on debian 9,
