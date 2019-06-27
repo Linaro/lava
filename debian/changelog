@@ -1,3 +1,79 @@
+lava (2019.06-1) unstable; urgency=medium
+
+  * LAVA Software 2019.06 release
+    0090a2e9d overlay: export more details from the device dictionary
+    894025764 lava_scheduler_app/tests/device-types: Add
+              dragonboard-845c
+    10dbef1aa Fix indentation in environment documentation
+    230fad501 Add support for setting test shell variables in device
+              dictionary
+    2b5495c4f schema: allow to set u-boot load addresses in job
+              context
+    c57624b9b add unit test for openocd boot action method
+    9e560e118 add openocd to list of supported boot methods for
+              cc3220SF
+    fe3878461 add openocd boot action method
+    d22ef8789 make binary_version() in utils.py more generic
+    ec1cd9061 Stop getting logs when log file exceeds max limit.
+    7be89a934 jobs compress: only create the .size file if the
+              .xz exists
+    62941732c Document how to request extra permissions for GitLab
+    f287c3449 flasher: fix crash when power commands are lists
+    0bca1bd5c clean-docker-hub: fix the help
+    b6eaa67cf Test the scheduler.workers xmlrpc api
+    39d5ecad4 scheduler.workers api: allow to get/set dispatcher env
+    5bbe29e85 lava_lxc_device_add: use the socks proxy if needed
+    e001b1120 Apply black to lava-run
+    f9c58ce92 scheduler api: fix crashes on integrity errors
+    4399e7ccc CI: use yaml.safe_load
+    7391e5175 Add stm32mp157c-dk2 device-type
+    3f35fc162 scheduler.workers.add: fix a server crash
+    761ab72cf device-type: add meson-g12b-odroid-n2
+    b57cfad43 Fix trivial typo in doc
+    015a85693 Update lava_lxc_device_add.py
+    8b309eadb Pass iterator to StreamingHttpReponse.
+    2a13b3e58 device-types: qemu: Add support for nios2/xtensa
+    722023f54 device-types: Add more sunxi devices
+    2ba0a1b2e css: remove missing fonts
+    1b51e33b0 Fix crash introduced in a615696c
+    a28b90f9c Only import ldap when needed
+    0f0c7b958 schema: allow boot_character_delay in the context
+    02ccdaea1 version.py: do not use sys.argv in a sub-function
+    0981bae09 dispatcher logs: fix crash when using socks proxy
+    f419bb791 lava-server: update device-types command
+    d5a0e15b7 lava-server: add management command for aliases
+    86e218fa7 CI: move lava_dispatcher device test samples under tests
+    c2f98e7e0 CI: extend the test for lava_scheduler.views
+    f6eff1bca CI: fix debian package builds on aarch64
+    baac90b7a schema: report the action index when raising an error
+    ee12a2b85 lava-master: do not crash when receiving invalid
+              messages
+    0f470c3cd Aliases: fix missing dummy migration after d6b642471
+    7b5f0c71b schema: fully validate the docker image name
+    71e2130cd Aliases: improve listing in admin page
+    b015497b9 docker: add an option to start docker containers
+              as privileged
+    b9d107034 master: do not crash if the device config is incomplete
+    86b977b71 Use the new documentation website
+    97d3dce53 Update man pages
+    c107bd095 testdef: retain compatibility with fixup dict
+    739bf0553 CI: check for debian dependencies after build
+    7d4454923 doc: fix higlighted lines
+    0cdbe0769 ssh device: improve the fault tolerance
+    e6dc463f7 device-types: allow to set the ssh user
+    04bd8bca0 Force dh_python3 to set the version for some
+              dependencies
+    befefba4f Add setting for default table length
+    539557694 REST API: add filtering
+    20e23dc13 lava-run: allow to use a socks proxy to send logs
+    2a6c5ea84 device-types: add ox820-cloudengines-pogoplug-series-3
+    c2c76cc29 Fix docker image name regexp
+    d474aac6f Display metadata on job page
+    3cfaeaa15 Append the -1 on the debian version
+    f1f1f7828 Add back missing changelog details for 2019.03-1
+
+ -- Steve McIntyre <93sam@debian.org>  Thu, 27 Jun 2019 14:52:45 +0000
+
 lava (2019.05-1) unstable; urgency=medium
 
   * LAVA Software 2019.05 release
