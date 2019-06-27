@@ -128,8 +128,6 @@ where it is safe to do so. Each parameter must be explicitly set in each device
 dictionary. The information will then be populated into the
 :ref:`lava_test_helpers`.
 
-.. seealso:: :ref:`test_device_info` and :ref:`extra_device_configuration`.
-
 * **device_ip** - A single fixed IPv4 address of this device. The value will be
   exported into the test shell using ``lava-target-ip``.
 
@@ -152,10 +150,11 @@ dictionary. The information will then be populated into the
 
    {% set storage_info = [{'SATA': '/dev/disk/by-id/ata-ST500DM002-1BD142_W3T79GCW'}] %}
 
-* **environment** - a dictionary containing device-specific shell variables,
-  which will be available in the LAVA test shell. These can be used, for
-  example, to describe physical hardware connections between the :term:`DUT` and
-  interfaces on the worker or other addressable hardware.
+* **environment** - a dictionary containing device-specific shell
+  variables, which will be available in the LAVA test shell. These can
+  be used, for example, to describe physical hardware connections
+  between the :term:`DUT` and interfaces on the worker or other
+  addressable hardware.
 
   .. code-block:: jinja
 
@@ -163,6 +162,26 @@ dictionary. The information will then be populated into the
        'RELAY_ADDRESS': '10.66.16.103',
        'REMOTE_SERIAL_PORT': '/dev/ttyUSB2',
    } %}
+
+For ease of use, LAVA will directly export the content of the
+**device_info**, **environment**, **static_info** and **storage_info**
+dictionaries into the test shell environment. The dictionaries and
+lists will be unrolled, for example:
+
+.. code-block:: jinja
+
+   {% set static_info = [{"board_id": "S_NO81730000"}, {"board_id": "S_NO81730001"}] %}
+   {% set storage_info = [{'SATA': '/dev/disk/by-id/ata-ST500DM002-1BD142_W3T79GCW'}] %}
+
+will become:
+
+.. code-block:: shell
+
+   export LAVA_STATIC_INFO_0_board_id='S_NO81730000'
+   export LAVA_STATIC_INFO_1_board_id='S_NO81730001'
+   export LAVA_STORAGE_INFO_0_SATA='/dev/disk/by-id/ata-ST500DM002-1BD142_W3T79GCW'
+
+.. seealso:: :ref:`test_device_info` and :ref:`extra_device_configuration`.
 
 .. _device_dictionary_other_parameters:
 

@@ -163,6 +163,27 @@ class OverlayAction(DeployAction):
             self.internal_pipeline.add_action(CompressOverlay())
             self.internal_pipeline.add_action(PersistentNFSOverlay())  # idempotent
 
+    def _export_data(self, fout, data, prefix):
+        if isinstance(data, dict):
+            if prefix:
+                prefix += "_"
+            for key, value in data.items():
+                self._export_data(fout, value, "%s%s" % (prefix, key))
+        elif isinstance(data, (list, tuple)):
+            if prefix:
+                prefix += "_"
+            for index, value in enumerate(data):
+                self._export_data(fout, value, "%s%s" % (prefix, index))
+        else:
+            if isinstance(data, bool):
+                data = "1" if data else "0"
+            elif isinstance(data, int):
+                data = data
+            else:
+                data = "'%s'" % data
+            self.logger.debug("- %s=%s", prefix, data)
+            fout.write("export %s=%s\n" % (prefix, data))
+
     def run(self, connection, max_end_time):  # pylint: disable=too-many-locals
         """
         Check if a lava-test-shell has been requested, implement the overlay
@@ -227,11 +248,18 @@ class OverlayAction(DeployAction):
 
         # Generate environment file
         self.logger.debug("Creating %s/environment", lava_path)
-        environment = self.job.device.get("environment", {})
-        self.logger.debug("environment: %s", environment)
         with open(os.path.join(lava_path, "environment"), "w") as fout:
-            for key, value in environment.items():
-                fout.write("export %s=%s\n" % (key, value))
+            sources = [
+                ("environment", ""),
+                ("device_info", "LAVA_DEVICE_INFO"),
+                ("static_info", "LAVA_STATIC_INFO"),
+                ("storage_info", "LAVA_STORAGE_INFO"),
+            ]
+            for source, prefix in sources:
+                data = self.job.device.get(source, {})
+                if data:
+                    self.logger.debug("%s:", source)
+                    self._export_data(fout, data, prefix)
 
         # Generate the file containing the secrets
         if "secrets" in self.job.parameters:
