@@ -45,7 +45,7 @@ actions: []
 
 @pytest.fixture
 def setup(db):
-    user = User.objects.create_user(username="tester", password="tester")
+    user = User.objects.create_user(username="tester", password="tester")  # nosec
     user.user_permissions.add(Permission.objects.get(codename="add_testjob"))
     dt_qemu = DeviceType.objects.create(name="qemu")
     Alias.objects.create(name="kvm", device_type=dt_qemu)
@@ -98,42 +98,42 @@ def setup(db):
 @pytest.mark.django_db
 def test_index(client, setup):
     ret = client.get(reverse("lava.scheduler"))
-    assert ret.status_code == 200
-    assert ret.templates[0].name == "lava_scheduler_app/index.html"
-    assert ret.context["device_status"] == "1/2"
-    assert ret.context["num_online"] == 1
-    assert ret.context["num_not_retired"] == 2
-    assert ret.context["num_jobs_running"] == 1
-    assert ret.context["num_devices_running"] == 1
+    assert ret.status_code == 200  # nosec
+    assert ret.templates[0].name == "lava_scheduler_app/index.html"  # nosec
+    assert ret.context["device_status"] == "1/2"  # nosec
+    assert ret.context["num_online"] == 1  # nosec
+    assert ret.context["num_not_retired"] == 2  # nosec
+    assert ret.context["num_jobs_running"] == 1  # nosec
+    assert ret.context["num_devices_running"] == 1  # nosec
 
 
 @pytest.mark.django_db
 def test_devices(client, setup):
     ret = client.get(reverse("lava.scheduler.alldevices"))
-    assert ret.status_code == 200
-    assert ret.templates[0].name == "lava_scheduler_app/alldevices.html"
-    assert len(ret.context["devices_table"].data) == 2
-    assert ret.context["devices_table"].data[0].hostname == "juno-01"
-    assert ret.context["devices_table"].data[1].hostname == "qemu-01"
+    assert ret.status_code == 200  # nosec
+    assert ret.templates[0].name == "lava_scheduler_app/alldevices.html"  # nosec
+    assert len(ret.context["devices_table"].data) == 2  # nosec
+    assert ret.context["devices_table"].data[0].hostname == "juno-01"  # nosec
+    assert ret.context["devices_table"].data[1].hostname == "qemu-01"  # nosec
 
 
 @pytest.mark.django_db
 def test_devices_active(client, setup):
     ret = client.get(reverse("lava.scheduler.active_devices"))
-    assert ret.status_code == 200
-    assert ret.templates[0].name == "lava_scheduler_app/activedevices.html"
-    assert len(ret.context["active_devices_table"].data) == 2
-    assert ret.context["active_devices_table"].data[0].hostname == "juno-01"
-    assert ret.context["active_devices_table"].data[1].hostname == "qemu-01"
+    assert ret.status_code == 200  # nosec
+    assert ret.templates[0].name == "lava_scheduler_app/activedevices.html"  # nosec
+    assert len(ret.context["active_devices_table"].data) == 2  # nosec
+    assert ret.context["active_devices_table"].data[0].hostname == "juno-01"  # nosec
+    assert ret.context["active_devices_table"].data[1].hostname == "qemu-01"  # nosec
 
 
 @pytest.mark.django_db
 def test_devices_online(client, setup):
     ret = client.get(reverse("lava.scheduler.online_devices"))
-    assert ret.status_code == 200
-    assert ret.templates[0].name == "lava_scheduler_app/onlinedevices.html"
-    assert len(ret.context["online_devices_table"].data) == 1
-    assert ret.context["online_devices_table"].data[0].hostname == "juno-01"
+    assert ret.status_code == 200  # nosec
+    assert ret.templates[0].name == "lava_scheduler_app/onlinedevices.html"  # nosec
+    assert len(ret.context["online_devices_table"].data) == 1  # nosec
+    assert ret.context["online_devices_table"].data[0].hostname == "juno-01"  # nosec
 
 
 @pytest.mark.django_db
@@ -141,81 +141,91 @@ def test_device_dcionary_plain(client, setup):
     ret = client.get(
         reverse("lava.scheduler.device.dictionary.plain", args=["qemu-01"])
     )
-    assert ret.status_code == 200
-    assert ret.content != ""
+    assert ret.status_code == 200  # nosec
+    assert ret.content != ""  # nosec
 
 
 @pytest.mark.django_db
 def test_devices_passing_health_check(client, setup):
     ret = client.get(reverse("lava.scheduler.passing_health_checks"))
-    assert ret.status_code == 200
-    assert ret.templates[0].name == "lava_scheduler_app/passinghealthchecks.html"
-    assert len(ret.context["passing_health_checks_table"].data) == 2
-    assert ret.context["passing_health_checks_table"].data[0].hostname == "qemu-01"
-    assert ret.context["passing_health_checks_table"].data[1].hostname == "juno-01"
+    assert ret.status_code == 200  # nosec
+    assert (  # nosec
+        ret.templates[0].name == "lava_scheduler_app/passinghealthchecks.html"
+    )
+    assert len(ret.context["passing_health_checks_table"].data) == 2  # nosec
+    assert (  # nosec
+        ret.context["passing_health_checks_table"].data[0].hostname == "qemu-01"
+    )
+    assert (  # nosec
+        ret.context["passing_health_checks_table"].data[1].hostname == "juno-01"
+    )
 
 
 @pytest.mark.django_db
 def test_devices_my(client, setup):
     ret = client.get(reverse("lava.scheduler.mydevice_list"))
-    assert ret.status_code == 200
-    assert ret.templates[0].name == "lava_scheduler_app/mydevices.html"
-    assert len(ret.context["my_device_table"].data) == 0
+    assert ret.status_code == 200  # nosec
+    assert ret.templates[0].name == "lava_scheduler_app/mydevices.html"  # nosec
+    assert len(ret.context["my_device_table"].data) == 0  # nosec
 
-    client.login(username="tester", password="tester")
+    client.login(username="tester", password="tester")  # nosec
     ret = client.get(reverse("lava.scheduler.mydevice_list"))
-    assert ret.status_code == 200
-    assert len(ret.context["my_device_table"].data) == 1
-    assert ret.context["my_device_table"].data[0].hostname == "juno-01"
+    assert ret.status_code == 200  # nosec
+    assert len(ret.context["my_device_table"].data) == 1  # nosec
+    assert ret.context["my_device_table"].data[0].hostname == "juno-01"  # nosec
 
 
 @pytest.mark.django_db
 def test_devices_my_history_log(client, setup):
     ret = client.get(reverse("lava.scheduler.mydevices_health_history_log"))
-    assert ret.status_code == 200
-    assert (
+    assert ret.status_code == 200  # nosec
+    assert (  # nosec
         ret.templates[0].name == "lava_scheduler_app/mydevices_health_history_log.html"
     )
-    assert len(ret.context["mydeviceshealthhistory_table"].data) == 0
+    assert len(ret.context["mydeviceshealthhistory_table"].data) == 0  # nosec
 
-    client.login(username="tester", password="tester")
+    client.login(username="tester", password="tester")  # nosec
     ret = client.get(reverse("lava.scheduler.mydevices_health_history_log"))
-    assert ret.status_code == 200
-    assert len(ret.context["mydeviceshealthhistory_table"].data) == 0
+    assert ret.status_code == 200  # nosec
+    assert len(ret.context["mydeviceshealthhistory_table"].data) == 0  # nosec
 
 
 @pytest.mark.django_db
 def test_devices_maintenance(client, setup):
     ret = client.get(reverse("lava.scheduler.maintenance_devices"))
-    assert ret.status_code == 200
-    assert ret.templates[0].name == "lava_scheduler_app/maintenance_devices.html"
-    assert len(ret.context["maintenance_devices_table"].data) == 1
-    assert ret.context["maintenance_devices_table"].data[0].hostname == "qemu-01"
+    assert ret.status_code == 200  # nosec
+    assert (  # nosec
+        ret.templates[0].name == "lava_scheduler_app/maintenance_devices.html"
+    )
+    assert len(ret.context["maintenance_devices_table"].data) == 1  # nosec
+    assert (  # nosec
+        ret.context["maintenance_devices_table"].data[0].hostname == "qemu-01"
+    )
 
 
 @pytest.mark.django_db
 def test_device_report(client, setup):
     ret = client.get(reverse("lava.scheduler.device_report", args=["juno-01"]))
-    assert ret.status_code == 200
-    assert ret.templates[0].name == "lava_scheduler_app/device_reports.html"
-    assert ret.context["device"].hostname == "juno-01"
-    assert len(ret.context["health_week_report"]) == 10
-    assert len(ret.context["job_week_report"]) == 10
-    assert len(ret.context["health_day_report"]) == 7
-    assert len(ret.context["job_day_report"]) == 7
+    assert ret.status_code == 200  # nosec
+    assert ret.templates[0].name == "lava_scheduler_app/device_reports.html"  # nosec
+    assert ret.context["device"].hostname == "juno-01"  # nosec
+    assert len(ret.context["health_week_report"]) == 10  # nosec
+    assert len(ret.context["job_week_report"]) == 10  # nosec
+    assert len(ret.context["health_day_report"]) == 7  # nosec
+    assert len(ret.context["job_day_report"]) == 7  # nosec
 
 
 @pytest.mark.django_db
 def test_device_types(client, setup):
     ret = client.get(reverse("lava.scheduler.device_types"))
-    assert ret.status_code == 200
-    assert ret.templates[0].name == "lava_scheduler_app/alldevice_types.html"
-    assert len(ret.context["dt_table"].data) == 2
-    assert ret.context["dt_table"].data[0]["device_type"] == "juno"
-    assert ret.context["dt_table"].data[0]["idle"] == 0
-    assert ret.context["dt_table"].data[0]["busy"] == 1
-    assert ret.context["dt_table"].data[1]["device_type"] == "qemu"
-    assert ret.context["dt_table"].data[1]["idle"] == 0
+    assert ret.status_code == 200  # nosec
+    assert ret.templates[0].name == "lava_scheduler_app/alldevice_types.html"  # nosec
+    assert len(ret.context["dt_table"].data) == 2  # nosec
+    assert ret.context["dt_table"].data[0]["device_type"] == "juno"  # nosec
+    assert ret.context["dt_table"].data[0]["idle"] == 0  # nosec
+    assert ret.context["dt_table"].data[0]["busy"] == 1  # nosec
+    assert ret.context["dt_table"].data[1]["device_type"] == "qemu"  # nosec
+    assert ret.context["dt_table"].data[1]["idle"] == 0  # nosec
 
 
 @pytest.mark.django_db
@@ -223,122 +233,126 @@ def test_device_type_health_history_log(client, setup):
     ret = client.get(
         reverse("lava.scheduler.device_type_health_history_log", args=["qemu"])
     )
-    assert ret.status_code == 200
-    assert (
+    assert ret.status_code == 200  # nosec
+    assert (  # nosec
         ret.templates[0].name
         == "lava_scheduler_app/device_type_health_history_log.html"
     )
-    assert len(ret.context["dthealthhistory_table"].data) == 0
+    assert len(ret.context["dthealthhistory_table"].data) == 0  # nosec
 
 
 @pytest.mark.django_db
 def test_device_type_report(client, setup):
     ret = client.get(reverse("lava.scheduler.device_type_report", args=["juno"]))
-    assert ret.status_code == 200
-    assert ret.templates[0].name == "lava_scheduler_app/devicetype_reports.html"
-    assert ret.context["device_type"].name == "juno"
-    assert len(ret.context["health_week_report"]) == 10
-    assert len(ret.context["job_week_report"]) == 10
-    assert len(ret.context["health_day_report"]) == 7
-    assert len(ret.context["job_day_report"]) == 7
+    assert ret.status_code == 200  # nosec
+    assert (  # nosec
+        ret.templates[0].name == "lava_scheduler_app/devicetype_reports.html"
+    )
+    assert ret.context["device_type"].name == "juno"  # nosec
+    assert len(ret.context["health_week_report"]) == 10  # nosec
+    assert len(ret.context["job_week_report"]) == 10  # nosec
+    assert len(ret.context["health_day_report"]) == 7  # nosec
+    assert len(ret.context["job_day_report"]) == 7  # nosec
 
 
 @pytest.mark.django_db
 def test_device_types_detail(client, setup):
     ret = client.get(reverse("lava.scheduler.device_type.detail", args=["qemu"]))
-    assert ret.status_code == 200
-    assert ret.templates[0].name == "lava_scheduler_app/device_type.html"
-    assert ret.context["dt"].name == "qemu"
-    assert ret.context["cores"] == ""
-    assert ret.context["aliases"] == "kvm, qemu-system"
-    assert ret.context["all_devices_count"] == 1
-    assert ret.context["retired_devices_count"] == 0
-    assert ret.context["available_devices_count"] == 0
-    assert ret.context["available_devices_label"] == "danger"
-    assert ret.context["running_devices_count"] == 0
-    assert ret.context["queued_jobs_count"] == 0
-    assert ret.context["invalid_template"] is False
+    assert ret.status_code == 200  # nosec
+    assert ret.templates[0].name == "lava_scheduler_app/device_type.html"  # nosec
+    assert ret.context["dt"].name == "qemu"  # nosec
+    assert ret.context["cores"] == ""  # nosec
+    assert ret.context["aliases"] == "kvm, qemu-system"  # nosec
+    assert ret.context["all_devices_count"] == 1  # nosec
+    assert ret.context["retired_devices_count"] == 0  # nosec
+    assert ret.context["available_devices_count"] == 0  # nosec
+    assert ret.context["available_devices_label"] == "danger"  # nosec
+    assert ret.context["running_devices_count"] == 0  # nosec
+    assert ret.context["queued_jobs_count"] == 0  # nosec
+    assert ret.context["invalid_template"] is False  # nosec
 
     ret = client.get(reverse("lava.scheduler.device_type.detail", args=["juno"]))
-    assert ret.status_code == 200
-    assert ret.templates[0].name == "lava_scheduler_app/device_type.html"
-    assert ret.context["dt"].name == "juno"
-    assert ret.context["cores"] == ""
-    assert ret.context["aliases"] == ""
-    assert ret.context["all_devices_count"] == 1
-    assert ret.context["retired_devices_count"] == 0
-    assert ret.context["available_devices_count"] == 0
-    assert ret.context["available_devices_label"] == "warning"
-    assert ret.context["running_devices_count"] == 1
-    assert ret.context["queued_jobs_count"] == 1
-    assert ret.context["invalid_template"] is False
+    assert ret.status_code == 200  # nosec
+    assert ret.templates[0].name == "lava_scheduler_app/device_type.html"  # nosec
+    assert ret.context["dt"].name == "juno"  # nosec
+    assert ret.context["cores"] == ""  # nosec
+    assert ret.context["aliases"] == ""  # nosec
+    assert ret.context["all_devices_count"] == 1  # nosec
+    assert ret.context["retired_devices_count"] == 0  # nosec
+    assert ret.context["available_devices_count"] == 0  # nosec
+    assert ret.context["available_devices_label"] == "warning"  # nosec
+    assert ret.context["running_devices_count"] == 1  # nosec
+    assert ret.context["queued_jobs_count"] == 1  # nosec
+    assert ret.context["invalid_template"] is False  # nosec
 
 
 @pytest.mark.django_db
 def test_failure_report(client, setup):
     ret = client.get(reverse("lava.scheduler.failure_report"))
-    assert ret.status_code == 200
-    assert ret.templates[0].name == "lava_scheduler_app/failure_report.html"
-    assert ret.context["device_type"] is None
-    assert ret.context["device"] is None
+    assert ret.status_code == 200  # nosec
+    assert ret.templates[0].name == "lava_scheduler_app/failure_report.html"  # nosec
+    assert ret.context["device_type"] is None  # nosec
+    assert ret.context["device"] is None  # nosec
 
     ret = client.get(reverse("lava.scheduler.failure_report") + "?device=juno-01")
-    assert ret.status_code == 200
-    assert ret.templates[0].name == "lava_scheduler_app/failure_report.html"
-    assert ret.context["device_type"] is None
-    assert ret.context["device"] == "juno-01"
+    assert ret.status_code == 200  # nosec
+    assert ret.templates[0].name == "lava_scheduler_app/failure_report.html"  # nosec
+    assert ret.context["device_type"] is None  # nosec
+    assert ret.context["device"] == "juno-01"  # nosec
 
 
 @pytest.mark.django_db
 def test_health_job_list(client, setup):
     ret = client.get(reverse("lava.scheduler.labhealth.detail", args=["juno-01"]))
-    assert ret.status_code == 200
-    assert ret.templates[0].name == "lava_scheduler_app/health_jobs.html"
-    assert ret.context["device"].hostname == "juno-01"
-    assert len(ret.context["health_job_table"].data) == 0
+    assert ret.status_code == 200  # nosec
+    assert ret.templates[0].name == "lava_scheduler_app/health_jobs.html"  # nosec
+    assert ret.context["device"].hostname == "juno-01"  # nosec
+    assert len(ret.context["health_job_table"].data) == 0  # nosec
 
 
 @pytest.mark.django_db
 def test_jobs(client, setup):
     ret = client.get(reverse("lava.scheduler.job.list"))
-    assert ret.status_code == 200
-    assert ret.templates[0].name == "lava_scheduler_app/alljobs.html"
-    assert len(ret.context["alljobs_table"].data) == 3
-    assert ret.context["alljobs_table"].data[0].description == "test job 03"
-    assert ret.context["alljobs_table"].data[1].description == "test job 02"
-    assert ret.context["alljobs_table"].data[2].description == "test job 01"
+    assert ret.status_code == 200  # nosec
+    assert ret.templates[0].name == "lava_scheduler_app/alljobs.html"  # nosec
+    assert len(ret.context["alljobs_table"].data) == 3  # nosec
+    assert ret.context["alljobs_table"].data[0].description == "test job 03"  # nosec
+    assert ret.context["alljobs_table"].data[1].description == "test job 02"  # nosec
+    assert ret.context["alljobs_table"].data[2].description == "test job 01"  # nosec
 
 
 @pytest.mark.django_db
 def test_jobs_active(client, setup):
     ret = client.get(reverse("lava.scheduler.job.active"))
-    assert ret.status_code == 200
-    assert ret.templates[0].name == "lava_scheduler_app/active_jobs.html"
-    assert len(ret.context["active_jobs_table"].data) == 1
-    assert ret.context["active_jobs_table"].data[0].description == "test job 02"
+    assert ret.status_code == 200  # nosec
+    assert ret.templates[0].name == "lava_scheduler_app/active_jobs.html"  # nosec
+    assert len(ret.context["active_jobs_table"].data) == 1  # nosec
+    assert (  # nosec
+        ret.context["active_jobs_table"].data[0].description == "test job 02"
+    )
 
 
 @pytest.mark.django_db
 def test_jobs_my(client, setup):
     ret = client.get(reverse("lava.scheduler.myjobs"))
-    assert ret.status_code == 404
+    assert ret.status_code == 404  # nosec
 
-    assert client.login(username="tester", password="tester") is True
+    assert client.login(username="tester", password="tester") is True  # nosec
     ret = client.get(reverse("lava.scheduler.myjobs"))
-    assert ret.status_code == 200
-    assert ret.templates[0].name == "lava_scheduler_app/myjobs.html"
-    assert len(ret.context["myjobs_table"].data) == 3
-    assert ret.context["myjobs_table"].data[0].description == "test job 03"
-    assert ret.context["myjobs_table"].data[1].description == "test job 02"
-    assert ret.context["myjobs_table"].data[2].description == "test job 01"
+    assert ret.status_code == 200  # nosec
+    assert ret.templates[0].name == "lava_scheduler_app/myjobs.html"  # nosec
+    assert len(ret.context["myjobs_table"].data) == 3  # nosec
+    assert ret.context["myjobs_table"].data[0].description == "test job 03"  # nosec
+    assert ret.context["myjobs_table"].data[1].description == "test job 02"  # nosec
+    assert ret.context["myjobs_table"].data[2].description == "test job 01"  # nosec
 
 
 @pytest.mark.django_db
 def test_job_errors(client, setup):
     ret = client.get(reverse("lava.scheduler.job.errors"))
-    assert ret.status_code == 200
-    assert ret.templates[0].name == "lava_scheduler_app/job_errors.html"
-    assert len(ret.context["job_errors_table"].data) == 0
+    assert ret.status_code == 200  # nosec
+    assert ret.templates[0].name == "lava_scheduler_app/job_errors.html"  # nosec
+    assert len(ret.context["job_errors_table"].data) == 0  # nosec
 
 
 @pytest.mark.django_db
@@ -349,9 +363,9 @@ def test_job_detail(client, setup):
             args=[TestJob.objects.get(description="test job 01").pk],
         )
     )
-    assert ret.status_code == 200
-    assert ret.templates[0].name == "lava_scheduler_app/job.html"
-    assert ret.context["log_data"] == []
+    assert ret.status_code == 200  # nosec
+    assert ret.templates[0].name == "lava_scheduler_app/job.html"  # nosec
+    assert ret.context["log_data"] == []  # nosec
 
 
 @pytest.mark.django_db
@@ -362,9 +376,9 @@ def test_job_definition(client, setup):
             args=[TestJob.objects.get(description="test job 01").pk],
         )
     )
-    assert ret.status_code == 200
-    assert ret.templates[0].name == "lava_scheduler_app/job_definition.html"
-    assert ret.context["job"].description == "test job 01"
+    assert ret.status_code == 200  # nosec
+    assert ret.templates[0].name == "lava_scheduler_app/job_definition.html"  # nosec
+    assert ret.context["job"].description == "test job 01"  # nosec
 
 
 @pytest.mark.django_db
@@ -375,8 +389,8 @@ def test_job_definition_plain(client, setup):
             args=[TestJob.objects.get(description="test job 01").pk],
         )
     )
-    assert ret.status_code == 200
-    assert ret.content == b""
+    assert ret.status_code == 200  # nosec
+    assert ret.content == b""  # nosec
 
 
 @pytest.mark.django_db
@@ -389,29 +403,29 @@ def test_job_description(client, monkeypatch, setup, tmpdir):
 
     job = TestJob.objects.get(description="test job 01")
     ret = client.get(reverse("lava.scheduler.job.description.yaml", args=[job.pk]))
-    assert ret.status_code == 200
-    assert ret.content == b"Job description"
+    assert ret.status_code == 200  # nosec
+    assert ret.content == b"Job description"  # nosec
 
 
 @pytest.mark.django_db
 def test_job_submit(client, setup):
     # Anonymous user GET
     ret = client.get(reverse("lava.scheduler.job.submit"))
-    assert ret.status_code == 200
-    assert ret.templates[0].name == "lava_scheduler_app/job_submit.html"
-    assert ret.context["is_authorized"] is False
+    assert ret.status_code == 200  # nosec
+    assert ret.templates[0].name == "lava_scheduler_app/job_submit.html"  # nosec
+    assert ret.context["is_authorized"] is False  # nosec
     # Anonymous user POST
     ret = client.post(reverse("lava.scheduler.job.submit"), {"definition-input": ""})
-    assert ret.status_code == 200
-    assert ret.templates[0].name == "lava_scheduler_app/job_submit.html"
-    assert ret.context["is_authorized"] is False
+    assert ret.status_code == 200  # nosec
+    assert ret.templates[0].name == "lava_scheduler_app/job_submit.html"  # nosec
+    assert ret.context["is_authorized"] is False  # nosec
 
     # Logged-user GET
-    assert client.login(username="tester", password="tester") is True
+    assert client.login(username="tester", password="tester") is True  # nosec
     ret = client.get(reverse("lava.scheduler.job.submit"))
-    assert ret.status_code == 200
-    assert ret.templates[0].name == "lava_scheduler_app/job_submit.html"
-    assert ret.context["is_authorized"] is True
+    assert ret.status_code == 200  # nosec
+    assert ret.templates[0].name == "lava_scheduler_app/job_submit.html"  # nosec
+    assert ret.context["is_authorized"] is True  # nosec
 
     # Logged-user POST as JSON
     ret = client.post(
@@ -419,8 +433,8 @@ def test_job_submit(client, setup):
         {"definition-input": ""},
         HTTP_X_REQUESTED_WITH="XMLHttpRequest",
     )
-    assert ret.status_code == 200
-    assert ret.json() == {
+    assert ret.status_code == 200  # nosec
+    assert ret.json() == {  # nosec
         "result": "success",
         "errors": "",
         "warnings": "expected a dictionary",
@@ -430,31 +444,31 @@ def test_job_submit(client, setup):
         {"definition-input": JOB_DEFINITION},
         HTTP_X_REQUESTED_WITH="XMLHttpRequest",
     )
-    assert ret.status_code == 200
-    assert ret.json() == {"result": "success", "errors": "", "warnings": ""}
+    assert ret.status_code == 200  # nosec
+    assert ret.json() == {"result": "success", "errors": "", "warnings": ""}  # nosec
 
     # Logged-user POST
     ret = client.post(reverse("lava.scheduler.job.submit"), {"definition-input": "re"})
-    assert ret.status_code == 200
-    assert ret.context["error"] == "expected a dictionary"
-    assert ret.context["context_help"] == "lava scheduler submit job"
-    assert ret.context["definition_input"] == "re"
+    assert ret.status_code == 200  # nosec
+    assert ret.context["error"] == "expected a dictionary"  # nosec
+    assert ret.context["context_help"] == "lava scheduler submit job"  # nosec
+    assert ret.context["definition_input"] == "re"  # nosec
 
     # Success
     ret = client.post(
         reverse("lava.scheduler.job.submit"), {"definition-input": JOB_DEFINITION}
     )
-    assert ret.status_code == 302
-    assert ret.url == "/scheduler/job/%d" % TestJob.objects.last().pk
+    assert ret.status_code == 302  # nosec
+    assert ret.url == "/scheduler/job/%d" % TestJob.objects.last().pk  # nosec
 
     # Success + is_favorite
     ret = client.post(
         reverse("lava.scheduler.job.submit"),
         {"definition-input": JOB_DEFINITION, "is_favorite": True},
     )
-    assert ret.status_code == 302
-    assert ret.url == "/scheduler/job/%d" % TestJob.objects.last().pk
-    assert (
+    assert ret.status_code == 302  # nosec
+    assert ret.url == "/scheduler/job/%d" % TestJob.objects.last().pk  # nosec
+    assert (  # nosec
         TestJobUser.objects.filter(user=User.objects.get(username="tester")).count()
         == 1
     )
@@ -463,41 +477,41 @@ def test_job_submit(client, setup):
 @pytest.mark.django_db
 def test_lab_health(client, setup):
     ret = client.get(reverse("lava.scheduler.labhealth"))
-    assert ret.status_code == 200
-    assert ret.templates[0].name == "lava_scheduler_app/labhealth.html"
-    assert len(ret.context["device_health_table"].data) == 2
-    assert ret.context["device_health_table"].data[0].hostname == "juno-01"
-    assert ret.context["device_health_table"].data[1].hostname == "qemu-01"
+    assert ret.status_code == 200  # nosec
+    assert ret.templates[0].name == "lava_scheduler_app/labhealth.html"  # nosec
+    assert len(ret.context["device_health_table"].data) == 2  # nosec
+    assert ret.context["device_health_table"].data[0].hostname == "juno-01"  # nosec
+    assert ret.context["device_health_table"].data[1].hostname == "qemu-01"  # nosec
 
 
 @pytest.mark.django_db
 def test_report(client, setup):
     ret = client.get(reverse("lava.scheduler.reports"))
-    assert ret.status_code == 200
-    assert ret.templates[0].name == "lava_scheduler_app/reports.html"
-    assert len(ret.context["health_week_report"]) == 10
-    assert len(ret.context["job_week_report"]) == 10
-    assert len(ret.context["health_day_report"]) == 7
-    assert len(ret.context["job_day_report"]) == 7
+    assert ret.status_code == 200  # nosec
+    assert ret.templates[0].name == "lava_scheduler_app/reports.html"  # nosec
+    assert len(ret.context["health_week_report"]) == 10  # nosec
+    assert len(ret.context["job_week_report"]) == 10  # nosec
+    assert len(ret.context["health_day_report"]) == 7  # nosec
+    assert len(ret.context["job_day_report"]) == 7  # nosec
 
 
 @pytest.mark.django_db
 def test_workers(client, setup):
     ret = client.get(reverse("lava.scheduler.workers"))
-    assert ret.status_code == 200
-    assert ret.templates[0].name == "lava_scheduler_app/allworkers.html"
-    assert len(ret.context["worker_table"].data) == 3
-    assert ret.context["worker_table"].data[0].hostname == "example.com"
-    assert ret.context["worker_table"].data[1].hostname == "worker-01"
-    assert ret.context["worker_table"].data[2].hostname == "worker-02"
+    assert ret.status_code == 200  # nosec
+    assert ret.templates[0].name == "lava_scheduler_app/allworkers.html"  # nosec
+    assert len(ret.context["worker_table"].data) == 3  # nosec
+    assert ret.context["worker_table"].data[0].hostname == "example.com"  # nosec
+    assert ret.context["worker_table"].data[1].hostname == "worker-01"  # nosec
+    assert ret.context["worker_table"].data[2].hostname == "worker-02"  # nosec
 
 
 @pytest.mark.django_db
 def test_worker_detail(client, setup):
     ret = client.get(reverse("lava.scheduler.worker.detail", args=["worker-01"]))
-    assert ret.status_code == 200
-    assert ret.templates[0].name == "lava_scheduler_app/worker.html"
-    assert ret.context["worker"].hostname == "worker-01"
-    assert len(ret.context["worker_device_table"].data) == 1
-    assert ret.context["worker_device_table"].data[0].hostname == "qemu-01"
-    assert ret.context["can_admin"] is False
+    assert ret.status_code == 200  # nosec
+    assert ret.templates[0].name == "lava_scheduler_app/worker.html"  # nosec
+    assert ret.context["worker"].hostname == "worker-01"  # nosec
+    assert len(ret.context["worker_device_table"].data) == 1  # nosec
+    assert ret.context["worker_device_table"].data[0].hostname == "qemu-01"  # nosec
+    assert ret.context["can_admin"] is False  # nosec
