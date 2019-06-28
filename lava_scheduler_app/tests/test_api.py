@@ -524,9 +524,9 @@ protocols:
 
 @pytest.fixture
 def setup(db):
-    user = User.objects.create_user(username="user", password="user")
+    user = User.objects.create_user(username="user", password="user")  # nosec
     group = Group.objects.create(name="group")
-    admin = User.objects.create_user(username="admin", password="admin")
+    admin = User.objects.create_user(username="admin", password="admin")  # nosec
     admin.user_permissions.add(Permission.objects.get(codename="add_device"))
     admin.user_permissions.add(Permission.objects.get(codename="add_tag"))
     admin.user_permissions.add(Permission.objects.get(codename="delete_tag"))
@@ -547,15 +547,15 @@ def test_devices_add(setup):
     # 1. missing device-type and worker
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server("admin", "admin").scheduler.devices.add("black01", "black", "worker01")
-    assert exc.value.faultCode == 404
-    assert exc.value.faultString == "DeviceType 'black' was not found."
+    assert exc.value.faultCode == 404  # nosec
+    assert exc.value.faultString == "DeviceType 'black' was not found."  # nosec
 
     # Create the device-type
     DeviceType.objects.create(name="black")
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server("admin", "admin").scheduler.devices.add("black01", "black", "worker01")
-    assert exc.value.faultCode == 404
-    assert exc.value.faultString == "Worker 'worker01' was not found."
+    assert exc.value.faultCode == 404  # nosec
+    assert exc.value.faultString == "Worker 'worker01' was not found."  # nosec
 
     Worker.objects.create(hostname="worker01")
     server("admin", "admin").scheduler.devices.add("black01", "black", "worker01")
@@ -590,28 +590,28 @@ def test_devices_add(setup):
         server("admin", "admin").scheduler.devices.add(
             "black03", "black", "worker01", "nope", "wrong"
         )
-    assert exc.value.faultCode == 404
-    assert exc.value.faultString == "User 'nope' was not found."
+    assert exc.value.faultCode == 404  # nosec
+    assert exc.value.faultString == "User 'nope' was not found."  # nosec
 
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server("admin", "admin").scheduler.devices.add(
             "black03", "black", "worker01", None, "wrong"
         )
-    assert exc.value.faultCode == 404
-    assert exc.value.faultString == "Group 'wrong' was not found."
+    assert exc.value.faultCode == 404  # nosec
+    assert exc.value.faultString == "Group 'wrong' was not found."  # nosec
 
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server("admin", "admin").scheduler.devices.add(
             "black03", "black", "worker01", None, None, True, "wrong"
         )
-    assert exc.value.faultCode == 400
-    assert exc.value.faultString == "Invalid health"
+    assert exc.value.faultCode == 400  # nosec
+    assert exc.value.faultString == "Invalid health"  # nosec
 
     # 4. Generate an IntegrityError (same device name)
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server("admin", "admin").scheduler.devices.add("black02", "black", "worker01")
-    assert exc.value.faultCode == 400
-    assert exc.value.faultString == "Bad request: device already exists?"
+    assert exc.value.faultCode == 400  # nosec
+    assert exc.value.faultString == "Bad request: device already exists?"  # nosec
 
 
 @pytest.mark.django_db
@@ -619,16 +619,16 @@ def test_devices_get_dictionary(setup, monkeypatch):
     # 1. no device
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server().scheduler.devices.get_dictionary("device01")
-    assert exc.value.faultCode == 404
-    assert exc.value.faultString == "Device 'device01' was not found."
+    assert exc.value.faultCode == 404  # nosec
+    assert exc.value.faultString == "Device 'device01' was not found."  # nosec
 
     # 2. device is not visible to anonymous
     dt = DeviceType.objects.create(name="black")
     device = Device.objects.create(hostname="device01", device_type=dt, is_public=False)
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server().scheduler.devices.get_dictionary("device01")
-    assert exc.value.faultCode == 403
-    assert (
+    assert exc.value.faultCode == 403  # nosec
+    assert (  # nosec
         exc.value.faultString
         == "Device 'device01' not available to user 'AnonymousUser'."
     )
@@ -639,8 +639,8 @@ def test_devices_get_dictionary(setup, monkeypatch):
     # 3. invalid context
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server().scheduler.devices.get_dictionary("device01", True, "{{")
-    assert exc.value.faultCode == 400
-    assert exc.value.faultString.startswith("Job Context '{{' is not valid: ")
+    assert exc.value.faultCode == 400  # nosec
+    assert exc.value.faultString.startswith("Job Context '{{' is not valid: ")  # nosec
 
     # 4. no device dict
     monkeypatch.setattr(
@@ -648,8 +648,10 @@ def test_devices_get_dictionary(setup, monkeypatch):
     )
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server().scheduler.devices.get_dictionary("device01")
-    assert exc.value.faultCode == 404
-    assert exc.value.faultString == "Device 'device01' does not have a configuration"
+    assert exc.value.faultCode == 404  # nosec
+    assert (  # nosec
+        exc.value.faultString == "Device 'device01' does not have a configuration"
+    )
 
     # 5. success
     monkeypatch.setattr(
@@ -657,7 +659,9 @@ def test_devices_get_dictionary(setup, monkeypatch):
         "load_configuration",
         (lambda self, job_ctx, output_format: "device: dict"),
     )
-    assert str(server().scheduler.devices.get_dictionary("device01")) == "device: dict"
+    assert (  # nosec
+        str(server().scheduler.devices.get_dictionary("device01")) == "device: dict"
+    )
 
 
 @pytest.mark.django_db
@@ -665,40 +669,42 @@ def test_tags_add(setup):
     # 1. as anonymous => error
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server().scheduler.tags.add("hdd")
-    assert exc.value.faultCode == 401
-    assert (
+    assert exc.value.faultCode == 401  # nosec
+    assert (  # nosec
         exc.value.faultString
         == "Authentication with user and token required for this API."
     )
-    assert Tag.objects.count() == 0
+    assert Tag.objects.count() == 0  # nosec
 
     # 2. as user => error
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server("user", "user").scheduler.tags.add("hdd")
-    assert exc.value.faultCode == 403
-    assert (
+    assert exc.value.faultCode == 403  # nosec
+    assert (  # nosec
         exc.value.faultString
         == "User 'user' is missing permission lava_scheduler_app.add_tag ."
     )
-    assert Tag.objects.count() == 0
+    assert Tag.objects.count() == 0  # nosec
 
     # 3. as admin => success
-    assert server("admin", "admin").scheduler.tags.add("hdd") is None
-    assert Tag.objects.count() == 1
-    assert Tag.objects.all()[0].name == "hdd"
-    assert Tag.objects.all()[0].description is None
+    assert server("admin", "admin").scheduler.tags.add("hdd") is None  # nosec
+    assert Tag.objects.count() == 1  # nosec
+    assert Tag.objects.all()[0].name == "hdd"  # nosec
+    assert Tag.objects.all()[0].description is None  # nosec
 
     # 4. as admin set description => success
-    assert server("admin", "admin").scheduler.tags.add("audio", "audio capture") is None
-    assert Tag.objects.count() == 2
-    assert Tag.objects.all()[1].name == "audio"
-    assert Tag.objects.all()[1].description == "audio capture"
+    assert (  # nosec
+        server("admin", "admin").scheduler.tags.add("audio", "audio capture") is None
+    )
+    assert Tag.objects.count() == 2  # nosec
+    assert Tag.objects.all()[1].name == "audio"  # nosec
+    assert Tag.objects.all()[1].description == "audio capture"  # nosec
 
     # 5. already used name => exception
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server("admin", "admin").scheduler.tags.add("hdd")
-    assert exc.value.faultCode == 400
-    assert exc.value.faultString == "Bad request: tag already exists?"
+    assert exc.value.faultCode == 400  # nosec
+    assert exc.value.faultString == "Bad request: tag already exists?"  # nosec
 
 
 @pytest.mark.django_db
@@ -707,16 +713,16 @@ def test_tags_delete(setup):
     Tag.objects.create(name="audio", description="audio capture")
 
     server("admin", "admin").scheduler.tags.delete("hdd")
-    assert Tag.objects.count() == 1
-    assert Tag.objects.all()[0].name == "audio"
+    assert Tag.objects.count() == 1  # nosec
+    assert Tag.objects.all()[0].name == "audio"  # nosec
 
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server("admin", "admin").scheduler.tags.delete("hdd")
-    assert exc.value.faultCode == 404
-    assert exc.value.faultString == "Tag 'hdd' was not found."
+    assert exc.value.faultCode == 404  # nosec
+    assert exc.value.faultString == "Tag 'hdd' was not found."  # nosec
 
     server("admin", "admin").scheduler.tags.delete("audio")
-    assert Tag.objects.count() == 0
+    assert Tag.objects.count() == 0  # nosec
 
 
 @pytest.mark.django_db
@@ -725,7 +731,7 @@ def test_tags_show(setup):
     tag2 = Tag.objects.create(name="audio", description="audio capture")
 
     data = server().scheduler.tags.show("hdd")
-    assert data == {"name": "hdd", "description": None, "devices": []}
+    assert data == {"name": "hdd", "description": None, "devices": []}  # nosec
 
     # Create some devices
     dt = DeviceType.objects.create(name="dt-01")
@@ -733,26 +739,26 @@ def test_tags_show(setup):
     device.tags.add(tag1)
 
     data = server().scheduler.tags.show("hdd")
-    assert data == {"name": "hdd", "description": None, "devices": ["d-01"]}
+    assert data == {"name": "hdd", "description": None, "devices": ["d-01"]}  # nosec
 
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server().scheduler.tags.show("ssd")
-    assert exc.value.faultCode == 404
-    assert exc.value.faultString == "Tag 'ssd' was not found."
+    assert exc.value.faultCode == 404  # nosec
+    assert exc.value.faultString == "Tag 'ssd' was not found."  # nosec
 
 
 @pytest.mark.django_db
 def test_tags_list(setup):
     data = server().scheduler.tags.list()
-    assert data == []
+    assert data == []  # nosec
 
     Tag.objects.create(name="hdd")
     data = server().scheduler.tags.list()
-    assert data == [{"name": "hdd", "description": None}]
+    assert data == [{"name": "hdd", "description": None}]  # nosec
 
     Tag.objects.create(name="audio", description="audio capture")
     data = server().scheduler.tags.list()
-    assert data == [
+    assert data == [  # nosec
         {"name": "audio", "description": "audio capture"},
         {"name": "hdd", "description": None},
     ]
@@ -763,49 +769,53 @@ def test_workers_add(setup):
     # 1. as anonymous => error
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server().scheduler.workers.add("dispatcher.example.com")
-    assert exc.value.faultCode == 401
-    assert (
+    assert exc.value.faultCode == 401  # nosec
+    assert (  # nosec
         exc.value.faultString
         == "Authentication with user and token required for this API."
     )
-    assert Worker.objects.count() == 1  # "example.com" is part of the migrations
+    assert (  # nosec
+        Worker.objects.count() == 1
+    )  # "example.com" is part of the migrations
 
     # 2. as user => error
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server("user", "user").scheduler.workers.add("dispatcher.example.com")
-    assert exc.value.faultCode == 403
-    assert (
+    assert exc.value.faultCode == 403  # nosec
+    assert (  # nosec
         exc.value.faultString
         == "User 'user' is missing permission lava_scheduler_app.add_worker ."
     )
-    assert Worker.objects.count() == 1  # "example.com" is part of the migrations
+    assert (  # nosec
+        Worker.objects.count() == 1
+    )  # "example.com" is part of the migrations
 
     # 3. as admin => success
-    assert (
+    assert (  # nosec
         server("admin", "admin").scheduler.workers.add("dispatcher.example.com") is None
     )
-    assert Worker.objects.count() == 2
-    assert Worker.objects.all()[1].hostname == "dispatcher.example.com"
-    assert Worker.objects.all()[1].description is None
-    assert Worker.objects.all()[1].health == Worker.HEALTH_ACTIVE
+    assert Worker.objects.count() == 2  # nosec
+    assert Worker.objects.all()[1].hostname == "dispatcher.example.com"  # nosec
+    assert Worker.objects.all()[1].description is None  # nosec
+    assert Worker.objects.all()[1].health == Worker.HEALTH_ACTIVE  # nosec
 
     # 4. as admin set description and health => success
-    assert (
+    assert (  # nosec
         server("admin", "admin").scheduler.workers.add(
             "worker.example.com", "worker", True
         )
         is None
     )
-    assert Worker.objects.count() == 3
-    assert Worker.objects.all()[2].hostname == "worker.example.com"
-    assert Worker.objects.all()[2].description == "worker"
-    assert Worker.objects.all()[2].health == Worker.HEALTH_RETIRED
+    assert Worker.objects.count() == 3  # nosec
+    assert Worker.objects.all()[2].hostname == "worker.example.com"  # nosec
+    assert Worker.objects.all()[2].description == "worker"  # nosec
+    assert Worker.objects.all()[2].health == Worker.HEALTH_RETIRED  # nosec
 
     # 5. already used hostname => exception
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server("admin", "admin").scheduler.workers.add("dispatcher.example.com")
-    assert exc.value.faultCode == 400
-    assert exc.value.faultString == "Bad request: worker already exists?"
+    assert exc.value.faultCode == 400  # nosec
+    assert exc.value.faultString == "Bad request: worker already exists?"  # nosec
 
 
 @pytest.mark.django_db
@@ -819,10 +829,10 @@ def test_workers_get_config_old_config(setup, monkeypatch, tmpdir):
             elif path == "/etc/lava-server/dispatcher.d":
                 return super().__new__(cls, str(tmpdir), *args, **kwargs)
             else:
-                assert 0
+                assert 0  # nosec
 
     monkeypatch.setattr(pathlib, "Path", MyPath)
-    assert (
+    assert (  # nosec
         str(server("admin", "admin").scheduler.workers.get_config("example.com"))
         == "hello"
     )
@@ -846,10 +856,10 @@ def test_workers_get_config_new_config(setup, monkeypatch, tmpdir):
                     cls, str(tmpdir / "example.com"), *args, **kwargs
                 )
             else:
-                assert 0
+                assert 0  # nosec
 
     monkeypatch.setattr(pathlib, "Path", MyPath)
-    assert (
+    assert (  # nosec
         str(server("admin", "admin").scheduler.workers.get_config("example.com"))
         == "hello world"
     )
@@ -864,27 +874,31 @@ def test_workers_get_config_exceptions(setup, monkeypatch, tmpdir):
             elif path == "/etc/lava-server/dispatcher.d":
                 return super().__new__(cls, str(tmpdir), *args, **kwargs)
             else:
-                assert path == 0
+                assert path == 0  # nosec
 
     monkeypatch.setattr(pathlib, "Path", MyPath)
 
     # 1. invalid worker name (should not be a path)
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server("admin", "admin").scheduler.workers.get_config("example.com/../")
-    assert exc.value.faultCode == 400
-    assert exc.value.faultString == "Invalid worker name"
+    assert exc.value.faultCode == 400  # nosec
+    assert exc.value.faultString == "Invalid worker name"  # nosec
 
     # 2. worker does not exists
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server("admin", "admin").scheduler.workers.get_config("worker.example.com")
-    assert exc.value.faultCode == 404
-    assert exc.value.faultString == "Worker 'worker.example.com' was not found."
+    assert exc.value.faultCode == 404  # nosec
+    assert (  # nosec
+        exc.value.faultString == "Worker 'worker.example.com' was not found."
+    )
 
     # 3. no configuration file
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server("admin", "admin").scheduler.workers.get_config("example.com")
-    assert exc.value.faultCode == 404
-    assert exc.value.faultString == "Worker 'example.com' does not have a configuration"
+    assert exc.value.faultCode == 404  # nosec
+    assert (  # nosec
+        exc.value.faultString == "Worker 'example.com' does not have a configuration"
+    )
 
 
 @pytest.mark.django_db
@@ -898,10 +912,10 @@ def test_workers_get_env_old_config(setup, monkeypatch, tmpdir):
             elif path == "/etc/lava-server/":
                 return super().__new__(cls, str(tmpdir), *args, **kwargs)
             else:
-                assert 0
+                assert 0  # nosec
 
     monkeypatch.setattr(pathlib, "Path", MyPath)
-    assert (
+    assert (  # nosec
         str(server("admin", "admin").scheduler.workers.get_env("example.com"))
         == "hello"
     )
@@ -922,10 +936,10 @@ def test_workers_get_env_new_config(setup, monkeypatch, tmpdir):
             elif path == "/etc/lava-server/":
                 return super().__new__(cls, str(tmpdir), *args, **kwargs)
             else:
-                assert 0
+                assert 0  # nosec
 
     monkeypatch.setattr(pathlib, "Path", MyPath)
-    assert (
+    assert (  # nosec
         str(server("admin", "admin").scheduler.workers.get_env("example.com"))
         == "hello world"
     )
@@ -940,27 +954,31 @@ def test_workers_get_env_exceptions(setup, monkeypatch, tmpdir):
             elif path == "/etc/lava-server/":
                 return super().__new__(cls, str(tmpdir), *args, **kwargs)
             else:
-                assert path == 0
+                assert path == 0  # nosec
 
     monkeypatch.setattr(pathlib, "Path", MyPath)
 
     # 1. invalid worker name (should not be a path)
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server("admin", "admin").scheduler.workers.get_env("example.com/../")
-    assert exc.value.faultCode == 400
-    assert exc.value.faultString == "Invalid worker name"
+    assert exc.value.faultCode == 400  # nosec
+    assert exc.value.faultString == "Invalid worker name"  # nosec
 
     # 2. worker does not exists
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server("admin", "admin").scheduler.workers.get_env("worker.example.com")
-    assert exc.value.faultCode == 404
-    assert exc.value.faultString == "Worker 'worker.example.com' was not found."
+    assert exc.value.faultCode == 404  # nosec
+    assert (  # nosec
+        exc.value.faultString == "Worker 'worker.example.com' was not found."
+    )
 
     # 3. no configuration file
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server("admin", "admin").scheduler.workers.get_env("example.com")
-    assert exc.value.faultCode == 404
-    assert exc.value.faultString == "Worker 'example.com' does not have a configuration"
+    assert exc.value.faultCode == 404  # nosec
+    assert (  # nosec
+        exc.value.faultString == "Worker 'example.com' does not have a configuration"
+    )
 
 
 @pytest.mark.django_db
@@ -972,14 +990,14 @@ def test_workers_set_config(setup, monkeypatch, tmpdir):
             elif path == "/etc/lava-server/dispatcher.d":
                 return super().__new__(cls, str(tmpdir), *args, **kwargs)
             else:
-                assert 0
+                assert 0  # nosec
 
     monkeypatch.setattr(pathlib, "Path", MyPath)
-    assert (
+    assert (  # nosec
         server("admin", "admin").scheduler.workers.set_config("example.com", "hello")
         is True
     )
-    assert (tmpdir / "example.com" / "dispatcher.yaml").read_text(
+    assert (tmpdir / "example.com" / "dispatcher.yaml").read_text(  # nosec
         encoding="utf-8"
     ) == "hello"
 
@@ -993,7 +1011,7 @@ def test_workers_set_config_exceptions(setup, monkeypatch, tmpdir):
             elif path == "/etc/lava-server/dispatcher.d":
                 return super().__new__(cls, str(tmpdir), *args, **kwargs)
             else:
-                assert path == 0
+                assert path == 0  # nosec
 
     monkeypatch.setattr(pathlib, "Path", MyPath)
 
@@ -1002,23 +1020,25 @@ def test_workers_set_config_exceptions(setup, monkeypatch, tmpdir):
         server("admin", "admin").scheduler.workers.set_config(
             "example.com/../", "error"
         )
-    assert exc.value.faultCode == 400
-    assert exc.value.faultString == "Invalid worker name"
+    assert exc.value.faultCode == 400  # nosec
+    assert exc.value.faultString == "Invalid worker name"  # nosec
 
     # 2. worker does not exists
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server("admin", "admin").scheduler.workers.set_config(
             "worker.example.com", "error"
         )
-    assert exc.value.faultCode == 404
-    assert exc.value.faultString == "Worker 'worker.example.com' was not found."
+    assert exc.value.faultCode == 404  # nosec
+    assert (  # nosec
+        exc.value.faultString == "Worker 'worker.example.com' was not found."
+    )
     # 3. as user => error
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server("user", "user").scheduler.workers.set_config(
             "worker.example.com", "error"
         )
-    assert exc.value.faultCode == 403
-    assert (
+    assert exc.value.faultCode == 403  # nosec
+    assert (  # nosec
         exc.value.faultString
         == "User 'user' is missing permission lava_scheduler_app.change_worker ."
     )
@@ -1033,14 +1053,16 @@ def test_workers_set_env(setup, monkeypatch, tmpdir):
             elif path == "/etc/lava-server/dispatcher.d":
                 return super().__new__(cls, str(tmpdir), *args, **kwargs)
             else:
-                assert 0
+                assert 0  # nosec
 
     monkeypatch.setattr(pathlib, "Path", MyPath)
-    assert (
+    assert (  # nosec
         server("admin", "admin").scheduler.workers.set_env("example.com", "hello")
         is True
     )
-    assert (tmpdir / "example.com" / "env.yaml").read_text(encoding="utf-8") == "hello"
+    assert (tmpdir / "example.com" / "env.yaml").read_text(  # nosec
+        encoding="utf-8"
+    ) == "hello"
 
 
 @pytest.mark.django_db
@@ -1052,28 +1074,30 @@ def test_workers_set_env_exceptions(setup, monkeypatch, tmpdir):
             elif path == "/etc/lava-server/dispatcher.d":
                 return super().__new__(cls, str(tmpdir), *args, **kwargs)
             else:
-                assert path == 0
+                assert path == 0  # nosec
 
     monkeypatch.setattr(pathlib, "Path", MyPath)
 
     # 1. invalid worker name (should not be a path)
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server("admin", "admin").scheduler.workers.set_env("example.com/../", "error")
-    assert exc.value.faultCode == 400
-    assert exc.value.faultString == "Invalid worker name"
+    assert exc.value.faultCode == 400  # nosec
+    assert exc.value.faultString == "Invalid worker name"  # nosec
 
     # 2. worker does not exists
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server("admin", "admin").scheduler.workers.set_env(
             "worker.example.com", "error"
         )
-    assert exc.value.faultCode == 404
-    assert exc.value.faultString == "Worker 'worker.example.com' was not found."
+    assert exc.value.faultCode == 404  # nosec
+    assert (  # nosec
+        exc.value.faultString == "Worker 'worker.example.com' was not found."
+    )
     # 3. as user => error
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server("user", "user").scheduler.workers.set_env("worker.example.com", "error")
-    assert exc.value.faultCode == 403
-    assert (
+    assert exc.value.faultCode == 403  # nosec
+    assert (  # nosec
         exc.value.faultString
         == "User 'user' is missing permission lava_scheduler_app.change_worker ."
     )
@@ -1082,25 +1106,25 @@ def test_workers_set_env_exceptions(setup, monkeypatch, tmpdir):
 @pytest.mark.django_db
 def test_workers_list(setup):
     data = server().scheduler.workers.list()
-    assert data == ["example.com"]
+    assert data == ["example.com"]  # nosec
 
     Worker.objects.create(hostname="worker01")
     data = server().scheduler.workers.list()
-    assert data == ["example.com", "worker01"]
+    assert data == ["example.com", "worker01"]  # nosec
 
 
 @pytest.mark.django_db
 def test_workers_show(setup):
     data = server().scheduler.workers.show("example.com")
-    assert set(data.keys()) == set(
+    assert set(data.keys()) == set(  # nosec
         ["hostname", "description", "state", "health", "devices", "last_ping"]
     )
-    assert data["hostname"] == "example.com"
+    assert data["hostname"] == "example.com"  # nosec
 
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server().scheduler.workers.show("bla")
-    assert exc.value.faultCode == 404
-    assert exc.value.faultString == "Worker 'bla' was not found."
+    assert exc.value.faultCode == 404  # nosec
+    assert exc.value.faultString == "Worker 'bla' was not found."  # nosec
 
 
 @pytest.mark.django_db
@@ -1108,8 +1132,8 @@ def test_workers_update(setup):
     # 1. as anonymous => failure
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server().scheduler.workers.update("example.com")
-    assert exc.value.faultCode == 401
-    assert (
+    assert exc.value.faultCode == 401  # nosec
+    assert (  # nosec
         exc.value.faultString
         == "Authentication with user and token required for this API."
     )
@@ -1117,55 +1141,69 @@ def test_workers_update(setup):
     # 2. as user => failure
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server("user", "user").scheduler.workers.update("example.com")
-    assert exc.value.faultCode == 403
-    assert (
+    assert exc.value.faultCode == 403  # nosec
+    assert (  # nosec
         exc.value.faultString
         == "User 'user' is missing permission lava_scheduler_app.change_worker ."
     )
 
     # 3. as admin
-    assert server("admin", "admin").scheduler.workers.update("example.com") is None
-    assert Worker.objects.get(hostname="example.com").description is None
-    assert Worker.objects.get(hostname="example.com").health == Worker.HEALTH_ACTIVE
+    assert (  # nosec
+        server("admin", "admin").scheduler.workers.update("example.com") is None
+    )
+    assert Worker.objects.get(hostname="example.com").description is None  # nosec
+    assert (  # nosec
+        Worker.objects.get(hostname="example.com").health == Worker.HEALTH_ACTIVE
+    )
 
-    assert (
+    assert (  # nosec
         server("admin", "admin").scheduler.workers.update("example.com", "dummy worker")
         is None
     )
-    assert Worker.objects.get(hostname="example.com").description == "dummy worker"
-    assert Worker.objects.get(hostname="example.com").health == Worker.HEALTH_ACTIVE
+    assert (  # nosec
+        Worker.objects.get(hostname="example.com").description == "dummy worker"
+    )
+    assert (  # nosec
+        Worker.objects.get(hostname="example.com").health == Worker.HEALTH_ACTIVE
+    )
 
-    assert (
+    assert (  # nosec
         server("admin", "admin").scheduler.workers.update(
             "example.com", None, "MAINTENANCE"
         )
         is None
     )
-    assert Worker.objects.get(hostname="example.com").description == "dummy worker"
-    assert (
+    assert (  # nosec
+        Worker.objects.get(hostname="example.com").description == "dummy worker"
+    )
+    assert (  # nosec
         Worker.objects.get(hostname="example.com").health == Worker.HEALTH_MAINTENANCE
     )
-    assert (
+    assert (  # nosec
         server("admin", "admin").scheduler.workers.update(
             "example.com", None, "RETIRED"
         )
         is None
     )
-    assert Worker.objects.get(hostname="example.com").health == Worker.HEALTH_RETIRED
-    assert (
+    assert (  # nosec
+        Worker.objects.get(hostname="example.com").health == Worker.HEALTH_RETIRED
+    )
+    assert (  # nosec
         server("admin", "admin").scheduler.workers.update("example.com", None, "ACTIVE")
         is None
     )
-    assert Worker.objects.get(hostname="example.com").health == Worker.HEALTH_ACTIVE
+    assert (  # nosec
+        Worker.objects.get(hostname="example.com").health == Worker.HEALTH_ACTIVE
+    )
 
     # worker does not exists
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server("admin", "admin").scheduler.workers.update("something")
-    assert exc.value.faultCode == 404
-    assert exc.value.faultString == "Worker 'something' was not found."
+    assert exc.value.faultCode == 404  # nosec
+    assert exc.value.faultString == "Worker 'something' was not found."  # nosec
 
     # invalid health
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server("admin", "admin").scheduler.workers.update("example.com", None, "wrong")
-    assert exc.value.faultCode == 400
-    assert exc.value.faultString == "Invalid health: wrong"
+    assert exc.value.faultCode == 400  # nosec
+    assert exc.value.faultString == "Invalid health: wrong"  # nosec
