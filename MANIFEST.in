@@ -1,6 +1,7 @@
 include .testr.conf
 include .gitreview
-include COPYING.AGPL-3
+include COPYING
+include COPYING.GPL-2
 include doc/v2/*
 include doc/v2/_static/*
 include etc/*
