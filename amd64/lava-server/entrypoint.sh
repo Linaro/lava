@@ -49,6 +49,25 @@ handler() {
 }
 
 
+#####################
+# Check file owners #
+#####################
+check_owners() {
+    files=$(find /etc/lava-server/dispatcher-config/ /var/lib/lava-server/default/media/ -not -user lavaserver)
+    if [ "$files" ]; then
+        echo "The following files should belong to 'lavaserver' user:"
+        echo "$files"
+        exit 1
+    fi
+    files=$(find /etc/lava-server/dispatcher-config/ /var/lib/lava-server/default/media/ -not -group lavaserver)
+    if [ "$files" ]; then
+        echo "The following files should belong to 'lavaserver' group:"
+        echo "$files"
+        exit 1
+    fi
+}
+
+
 #################
 # Start helpers #
 #################
@@ -244,6 +263,10 @@ done
 
 if [ "$GUNICORN" = "1" ]
 then
+    echo "Checking file permissions"
+    check_owners
+    echo "done"
+    echo
     echo "Starting gunicorn3"
     start_lava_server_gunicorn
     echo "done"
@@ -260,6 +283,10 @@ fi
 
 if [ "$LAVA_LOGS" = "1" ]
 then
+    echo "Checking file permissions"
+    check_owners
+    echo "done"
+    echo
     echo "Starting lava-logs"
     start_lava_logs
     echo "done"
