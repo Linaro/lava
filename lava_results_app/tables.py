@@ -93,7 +93,7 @@ class ResultsTable(LavaTable):
             return TestCase.objects.filter(suite__job=record.job, suite=record)[
                 0
             ].logged
-        except TestCase.DoesNotExist:
+        except IndexError:
             return record.job.start_time
 
     def render_buglinks(self, record, table=None):
