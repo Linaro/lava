@@ -44,10 +44,12 @@ else
   then
     echo "Stopping the container"
     docker container stop --time 20 "$LAVAFED_CONTAINER_NAME"
+    docker container rm "$LAVAFED_CONTAINER_NAME"
   fi
 
   cd "$LAVAFED_PATH"
-  docker run --name "$LAVAFED_CONTAINER_NAME" --rm -d \
+  docker run --name "$LAVAFED_CONTAINER_NAME" -d \
+      --restart always \
       -p 9000:80 -p 6500:5500 -p 6555:5555 -p 6556:5556 \
       -v "/home/lavafed/lava-master/certificates.d/:/etc/lava-dispatcher/certificates.d/" \
       -v "/home/lavafed/lava-master/instance.conf:/etc/lava-server/instance.conf" \
