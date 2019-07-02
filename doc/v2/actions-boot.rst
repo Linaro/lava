@@ -600,6 +600,11 @@ from the location specified by ``openocd_script`` in the job definition, if
 a custom script file should be used instead of the one specified by the
 device type.
 
+``board_selection_cmd`` can be used in the device-type to specify a command to
+pass the board id/serial number to OpenOCD. See OpenOCD documentation for
+details on the command to set the serial number for the interface your
+device type is using.
+
 .. code-block:: yaml
 
  - boot:

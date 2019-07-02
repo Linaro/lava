@@ -28,6 +28,8 @@ from lava_dispatcher.utils.strings import substitute
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.utils.udev import WaitDeviceBoardID
 
+import os
+
 
 class OpenOCD(Boot):
 
@@ -106,6 +108,7 @@ class FlashOpenOCDAction(Action):
         )
         self.base_command = [openocd_binary]
         job_cfg_file = ""
+        self.logger.info("Board ID: %s", self.job.device["board_id"])
 
         # Build the substitutions dictionary and set cfg script based on
         # job definition
@@ -132,6 +135,16 @@ class FlashOpenOCDAction(Action):
         if job_cfg_file is "":
             for item in boot["parameters"]["options"].get("file", []):
                 self.base_command.extend(["-f", item])
+
+        if "board_selection_cmd" in boot:
+            # Add an extra tcl script to select the board to be used
+            temp_dir = self.mkdtemp()
+            board_selection_cfg = os.path.join(temp_dir, "board_selection.cfg")
+            board_select_cmd = boot["board_selection_cmd"]
+            with open(board_selection_cfg, "w") as f:
+                f.write(board_select_cmd)
+            self.base_command.extend(["-f", board_selection_cfg])
+
         debug = boot["parameters"]["options"]["debug"]
         self.base_command.extend(["-d" + str(debug)])
         for item in boot["parameters"]["options"].get("search", []):

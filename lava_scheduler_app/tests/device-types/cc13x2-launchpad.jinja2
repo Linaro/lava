@@ -17,6 +17,7 @@ actions:
       serial:
     methods:
       openocd:
+        board_selection_cmd: "xds110_serial {{ board_id|default('00000000') }}"
         parameters:
           command:
             # Can set 'openocd_bin_override' in device dictionary to
@@ -30,6 +31,7 @@ actions:
             # point to TI OpenOCD scripts if necessary
             search: [{{ openocd_scripts_dir_override }}]
             command:
+              - gdb_port disabled
               - init
               - targets
               - 'reset halt'
