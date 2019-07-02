@@ -21,6 +21,8 @@
       <dd><a href="{% url 'password_change' %}"><span class="glyphicon glyphicon-lock"></span> Update</a></dd>
       <dt>IRC settings</dt>
       <dd>Server: {{ user.extendeduser.irc_server|default:"None" }}; Handle: {{ user.extendeduser.irc_handle|default:"None" }};<a data-toggle="modal" href="#irc_modal"> Update</a></dd>
+      <dt>Default table length</dt>
+      <dd>{{ user.extendeduser.table_length|default:"System default" }} <a data-toggle="modal" href="#table_length_modal">Update</a></dd>
     </dl>
   </div>
 
@@ -37,6 +39,30 @@
         <div class="modal-body well">
 	  <div id="irc_errors" class="errorlist" style="color: red;"></div>
 	    {{ irc_form.as_p }}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <input class="btn btn-primary" type="submit" value="Save" />
+        </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal HTML -->
+  <div id="table_length_modal" class="modal fade">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+          <h4 class="modal-title">Update table length setting</h4>
+        </div>
+        <form id="table_length_form" method="post" action="{% url 'lava.update_table_length_setting' %}">
+	  {% csrf_token %}
+        <div class="modal-body well">
+	  <div id="irc_errors" class="errorlist" style="color: red;"></div>
+	    {{ table_length_form.as_p }}
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
