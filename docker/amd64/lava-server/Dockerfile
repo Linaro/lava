@@ -1,4 +1,5 @@
-FROM hub.lavasoftware.org/lava/pkg/docker/amd64/lava-server-base
+ARG base_image=hub.lavasoftware.org/lava/lava/amd64/lava-server-base
+FROM $base_image
 
 EXPOSE 80
 EXPOSE 5500

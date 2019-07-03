@@ -1,4 +1,5 @@
-FROM hub.lavasoftware.org/lava/pkg/docker/aarch64/lava-dispatcher-base
+ARG base_image=hub.lavasoftware.org/lava/lava/aarch64/lava-dispatcher-base
+FROM $base_image
 
 ARG pkg_lxc=lava-lxc.deb
 COPY $pkg_lxc /tmp/lxc.deb
