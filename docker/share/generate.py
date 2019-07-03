@@ -5,38 +5,18 @@ import pathlib
 import shutil
 import subprocess
 import sys
-import tempfile
-
-#############
-# Constants #
-#############
-GIT_URL = "https://git.lavasoftware.org/lava/lava.git"
-
-
-###########
-# Helpers #
-###########
-def clone(dst):
-    subprocess.check_output(
-        ["git", "clone", GIT_URL, str(dst)], stderr=subprocess.STDOUT
-    )
 
 
 ###############
 # Entry point #
 ###############
 def main():
-    base = pathlib.Path(__name__).parent
+    base = pathlib.Path(sys.argv[0]).parent.parent
     templates = base / "share" / "templates"
-
-    # Clone the git directory
-    tmpdir = pathlib.Path(tempfile.mkdtemp())
-    clonedir = tmpdir / "lava"
-    clone(clonedir)
 
     def requires(distribution, suite, package, unittest=False):
         args = [
-            str(clonedir / "share" / "requires.py"),
+            str(base / ".." / "share" / "requires.py"),
             "-d",
             distribution,
             "-s",
@@ -60,8 +40,6 @@ def main():
         data = file.read_text(encoding="utf-8")
         generated = env.from_string(data).render({"requires": requires}).strip()
         dockerfile.write_text(generated + "\n", encoding="utf-8")
-
-    shutil.rmtree(str(tmpdir))
 
     return 0
 
