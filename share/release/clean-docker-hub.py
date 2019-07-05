@@ -31,9 +31,13 @@ PROJECT = {"lava": 2}
 
 REPOSITORIES = {
     "aarch64/lava-dispatcher": 74,
+    "aarch64/lava-dispatcher-base": 149,
     "aarch64/lava-server": 75,
+    "aarch64/lava-server-base": 152,
     "amd64/lava-dispatcher": 72,
+    "amd64/lava-dispatcher-base": 150,
     "amd64/lava-server": 73,
+    "amd64/lava-server-base": 151,
 }
 
 
