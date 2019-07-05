@@ -405,7 +405,7 @@ class SchedulerDevicesAPI(ExposedV2API):
         except Device.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Device '%s' was not found." % hostname)
         except (IntegrityError, ValidationError) as exc:
-            raise xmlrpc.client.Fault(400, "Bad request: %s" % exc.message)
+            raise xmlrpc.client.Fault(400, "Bad request")
 
 
 class SchedulerDevicesTagsAPI(ExposedV2API):
@@ -440,7 +440,6 @@ class SchedulerDevicesTagsAPI(ExposedV2API):
 
         tag, _ = Tag.objects.get_or_create(name=name)
         device.tags.add(tag)
-        device.save()
 
     def list(self, hostname):
         """
@@ -501,4 +500,3 @@ class SchedulerDevicesTagsAPI(ExposedV2API):
             raise xmlrpc.client.Fault(404, "Tag '%s' was not found." % name)
 
         device.tags.remove(tag)
-        device.save()

@@ -60,7 +60,7 @@ class SchedulerAliasesAPI(ExposedV2API):
             alias.full_clean()
             alias.save()
         except ValidationError as e:
-            raise xmlrpc.client.Fault(404, e.message)
+            raise xmlrpc.client.Fault(404, "\n".join(e.messages))
         except DeviceType.DoesNotExist as nf:
             raise xmlrpc.client.Fault(400, "Bad request. DeviceType does not exist")
         except IntegrityError:
