@@ -236,7 +236,7 @@ class PrepareFITAction(Action):
             "-T",
             "kernel",
             "-C",
-            "None",
+            params.get("compression", "none"),
             "-d",
             params["kernel"],
             "-a",
@@ -259,10 +259,19 @@ class PrepareFITAction(Action):
             )
             for label in ["kernel", "dtb", "ramdisk"]
         }
-        fit_path = os.path.join(os.path.dirname(params["kernel"]), "image.itb")
+        kernel_path = params["kernel"]
+        kernel_dir, kernel_image = os.path.split(kernel_path)
+        arch = self.deploy_params["mkimage_arch"]
+
+        if arch == "arm64":
+            lzma_kernel = os.path.join(kernel_dir, ".".join([kernel_image, "lzma"]))
+            self.run_cmd(["lzma", "--keep", kernel_path])
+            params.update({"kernel": lzma_kernel, "compression": "lzma"})
+
+        fit_path = os.path.join(kernel_dir, "image.itb")
         params.update(
             {
-                "arch": self.deploy_params["mkimage_arch"],
+                "arch": arch,
                 "load_addr": self.device_params["load_address"],
                 "fit_path": fit_path,
             }

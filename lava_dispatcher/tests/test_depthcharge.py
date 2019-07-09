@@ -104,7 +104,7 @@ class TestDepthchargeAction(StdoutTestCase):
 -A {arch} \
 -O linux \
 -T kernel \
--C None \
+-C none \
 -d {kernel} \
 -a {load_addr} \
 -b {dtb} \
