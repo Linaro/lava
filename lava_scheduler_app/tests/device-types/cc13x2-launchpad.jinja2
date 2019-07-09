@@ -1,0 +1,42 @@
+{# device_type: cc13x2-launchpad #}
+{% extends 'base.jinja2' %}
+{% block body %}
+board_id: '{{ board_id|default('00000000') }}'
+usb_vendor_id: '0451'
+usb_product_id: 'bef3'
+usb_sleep: {{ usb_sleep|default(10) }}
+
+actions:
+  deploy:
+    methods:
+      image:
+        parameters:
+
+  boot:
+    connections:
+      serial:
+    methods:
+      openocd:
+        parameters:
+          command:
+            # Can set 'openocd_bin_override' in device dictionary to
+            # override location of OpenOCD executable to point to TI OpenOCD
+            # if necessary
+            {{ openocd_bin_override|default('openocd') }}
+          options:
+            file:
+              - board/ti_cc13x2_launchpad.cfg
+            # Set 'openocd_scripts_dir_override' in device dictionary to
+            # point to TI OpenOCD scripts if necessary
+            search: [{{ openocd_scripts_dir_override }}]
+            command:
+              - init
+              - targets
+              - 'reset halt'
+              - 'flash write_image erase {BINARY}'
+              - 'reset halt'
+              - 'verify_image {BINARY}'
+              - 'reset run'
+              - shutdown
+            debug: 2
+{% endblock body %}
