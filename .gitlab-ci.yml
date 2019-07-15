@@ -79,10 +79,6 @@ black:
   <<: *analyze
   image: hub.lavasoftware.org/lava/ci-images/amd64/codestyle
 
-codestyle:
-  <<: *analyze
-  image: hub.lavasoftware.org/lava/ci-images/amd64/codestyle
-
 coverage:
   <<: *analyze
   image: hub.lavasoftware.org/lava/ci-images/amd64/server-debian-9
@@ -117,6 +113,9 @@ job-schema:
   <<: *analyze
   image: debian:buster
 
+dockerfiles:
+  <<: *analyze
+  image: debian:buster
 
 #########
 # Build #
