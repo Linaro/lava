@@ -28,10 +28,6 @@ while getopts ":bcdopst" opt; do
       # lava_common
       COMMON=true
       ;;
-    p)
-      # pep8
-      PEP8=true
-      ;;
     s)
       # lava_server
       SERVER=true
@@ -45,7 +41,6 @@ while getopts ":bcdopst" opt; do
       echo "Usage:"
       echo "-c - clean targets only"
       echo "-b - run black"
-      echo "-p - run pep8"
       echo "-d - test dispatcher"
       echo "-o - test common"
       echo "-s - test server"
@@ -58,10 +53,9 @@ done
 
 shift $((OPTIND -1))
 
-if [ -z "${BLACK}" ] && [ -z "${CLEAN}" ] && [ -z "${DISPATCH}" ] && [ -z "${COMMON}" ] && [ -z "${PEP8}" ] && [ -z "${SERVER}" ] && [ -z "${TEMPLATE}" ]
+if [ -z "${BLACK}" ] && [ -z "${CLEAN}" ] && [ -z "${DISPATCH}" ] && [ -z "${COMMON}" ] && [ -z "${SERVER}" ] && [ -z "${TEMPLATE}" ]
 then
     BLACK=true
-    PEP8=true
     COMMON=true
     DISPATCH=true
     SERVER=true
@@ -77,13 +71,6 @@ rm -rf .pytest_cache/
 find . -name __pycache__ -exec rmdir "{}" \; 2>/dev/null || true
 find . -name precious -type d -exec rm -rf "{}" \; 2>/dev/null || true
 [ -n "${CLEAN}" ] && exit 0
-
-if [ "${PEP8}" ]
-then
-    echo "Calling pep8"
-    echo
-    .gitlab-ci/analyze/codestyle.sh
-fi
 
 if [ "${BLACK}" ]
 then
