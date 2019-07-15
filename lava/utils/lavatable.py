@@ -189,16 +189,7 @@ class LavaTable(tables.Table):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.request = kwargs.pop("request", None)
-        if (
-            self.request
-            and self.request.user.is_authenticated()
-            and hasattr(self.request.user, "extendeduser")
-            and self.request.user.extendeduser.table_length
-        ):
-            self.length = self.request.user.extendeduser.table_length
-        else:
-            self.length = settings.DEFAULT_TABLE_LENGTH
+        self.length = settings.DEFAULT_TABLE_LENGTH
         self._empty_text = mark_safe(
             '<div style="text-align: center">No data available in table</div>'
         )

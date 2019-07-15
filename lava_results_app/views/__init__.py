@@ -99,7 +99,7 @@ class SuiteView(LavaView):
 @BreadCrumb("Results", parent=lava_index)
 def index(request):
     data = ResultsView(request, model=TestSuite, table_class=ResultsTable)
-    result_table = ResultsIndexTable(data.get_table_data(), request=request)
+    result_table = ResultsIndexTable(data.get_table_data())
     RequestConfig(request, paginate={"per_page": result_table.length}).configure(
         result_table
     )
@@ -130,9 +130,7 @@ def query(request):
 def testjob(request, job):
     job = get_restricted_job(request.user, pk=job, request=request)
     data = ResultsView(request, model=TestSuite, table_class=TestJobResultsTable)
-    suite_table = TestJobResultsTable(
-        data.get_table_data().filter(job=job), request=request
-    )
+    suite_table = TestJobResultsTable(data.get_table_data().filter(job=job))
     failed_definitions = []
     yaml_dict = OrderedDict()
     if TestData.objects.filter(testjob=job).exists():
@@ -267,9 +265,7 @@ def suite(request, job, pk):
     job = get_restricted_job(request.user, pk=job, request=request)
     test_suite = get_object_or_404(TestSuite, name=pk, job=job)
     data = SuiteView(request, model=TestCase, table_class=SuiteTable)
-    suite_table = SuiteTable(
-        data.get_table_data().filter(suite=test_suite), request=request
-    )
+    suite_table = SuiteTable(data.get_table_data().filter(suite=test_suite))
     RequestConfig(request, paginate={"per_page": suite_table.length}).configure(
         suite_table
     )

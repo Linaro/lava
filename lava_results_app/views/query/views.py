@@ -153,9 +153,7 @@ def query_list(request):
             group_view = GroupQueryView(
                 request, group, model=Query, table_class=GroupQueryTable
             )
-            table = GroupQueryTable(
-                group_view.get_table_data(prefix), request=request, prefix=prefix
-            )
+            table = GroupQueryTable(group_view.get_table_data(prefix), prefix=prefix)
             search_data.update(table.prepare_search_data(group_view))
             discrete_data.update(table.prepare_discrete_data(group_view))
             terms_data.update(table.prepare_terms_data(group_view))
@@ -166,7 +164,7 @@ def query_list(request):
     prefix = "other_"
     other_view = OtherQueryView(request, model=Query, table_class=OtherQueryTable)
     other_query_table = OtherQueryTable(
-        other_view.get_table_data(prefix), request=request, prefix=prefix
+        other_view.get_table_data(prefix), prefix=prefix
     )
     config = RequestConfig(request, paginate={"per_page": other_query_table.length})
     config.configure(other_query_table)
@@ -176,9 +174,7 @@ def query_list(request):
 
     prefix = "user_"
     view = UserQueryView(request, model=Query, table_class=UserQueryTable)
-    user_query_table = UserQueryTable(
-        view.get_table_data(prefix), request=request, prefix=prefix
-    )
+    user_query_table = UserQueryTable(view.get_table_data(prefix), prefix=prefix)
     config = RequestConfig(request, paginate={"per_page": user_query_table.length})
     config.configure(user_query_table)
     search_data.update(user_query_table.prepare_search_data(view))

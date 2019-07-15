@@ -83,14 +83,6 @@ class ExtendedUser(models.Model):
         max_length=40, default=None, null=True, blank=True, verbose_name="IRC server"
     )
 
-    table_length = models.PositiveSmallIntegerField(
-        verbose_name="Table length",
-        help_text="leave empty for system default",
-        default=None,
-        null=True,
-        blank=True,
-    )
-
     def __str__(self):
         return "%s: %s@%s" % (self.user, self.irc_handle, self.irc_server)
 

@@ -40,12 +40,7 @@ from lava_scheduler_app.api.tags import SchedulerTagsAPI
 from lava_scheduler_app.api.workers import SchedulerWorkersAPI
 
 from lava_server.api import LavaMapper
-from lava_server.views import (
-    index,
-    me,
-    update_irc_settings,
-    update_table_length_setting,
-)
+from lava_server.views import index, me, update_irc_settings
 
 handler403 = "lava_server.views.permission_error"
 handler500 = "lava_server.views.server_error"
@@ -89,13 +84,6 @@ urlpatterns = [
         r"^{mount_point}update-irc-settings/$".format(mount_point=settings.MOUNT_POINT),
         update_irc_settings,
         name="lava.update_irc_settings",
-    ),
-    url(
-        r"^{mount_point}update-table-length-setting/$".format(
-            mount_point=settings.MOUNT_POINT
-        ),
-        update_table_length_setting,
-        name="lava.update_table_length_setting",
     ),
     url(
         r"^{mount_point}accounts/".format(mount_point=settings.MOUNT_POINT),

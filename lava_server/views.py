@@ -44,13 +44,6 @@ class ExtendedUserIRCForm(forms.ModelForm):
         widgets = {"user": forms.HiddenInput}
 
 
-class ExtendedUserTableLengthForm(forms.ModelForm):
-    class Meta:
-        model = ExtendedUser
-        fields = ("table_length", "user")
-        widgets = {"user": forms.HiddenInput}
-
-
 @BreadCrumb(_("LAVA"))
 def index(request):
     # Load and render the template
@@ -65,9 +58,6 @@ def me(request):  # pylint: disable=invalid-name
     ExtendedUser.objects.get_or_create(user=request.user)
     data = {
         "irc_form": ExtendedUserIRCForm(instance=request.user.extendeduser),
-        "table_length_form": ExtendedUserTableLengthForm(
-            instance=request.user.extendeduser
-        ),
         "bread_crumb_trail": BreadCrumbTrail.leading_to(
             me, you=request.user.get_full_name() or request.user.username
         ),
@@ -80,16 +70,6 @@ def me(request):  # pylint: disable=invalid-name
 def update_irc_settings(request):
     extended_user = request.user.extendeduser
     form = ExtendedUserIRCForm(request.POST, instance=extended_user)
-    if form.is_valid():
-        extended_user = form.save()
-    return HttpResponseRedirect(reverse("lava.me"))
-
-
-@login_required
-@require_POST
-def update_table_length_setting(request):
-    extended_user = request.user.extendeduser
-    form = ExtendedUserTableLengthForm(request.POST, instance=extended_user)
     if form.is_valid():
         extended_user = form.save()
     return HttpResponseRedirect(reverse("lava.me"))
