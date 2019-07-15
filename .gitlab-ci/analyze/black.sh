@@ -4,7 +4,8 @@ set -e
 
 if [ "$1" = "setup" ]
 then
-  echo "nothing to do"
+  apt-get -q update
+  apt-get install --no-install-recommends --yes black
 else
   set -x
   LC_ALL=C.UTF-8 LANG=C.UTF-8 black  --exclude "dashboard_app" --check . lava/dispatcher/lava-run

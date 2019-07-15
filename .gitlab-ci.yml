@@ -70,6 +70,7 @@ server-debian-10: *server
 ###########
 .analyze: &analyze
   <<: *job
+  image: hub.lavasoftware.org/lava/ci-images/amd64/analyze
   stage: analyze
   except:
     refs:
@@ -77,7 +78,12 @@ server-debian-10: *server
 
 black:
   <<: *analyze
-  image: hub.lavasoftware.org/lava/ci-images/amd64/codestyle
+
+code_quality:
+  <<: *analyze
+  artifacts:
+    reports:
+      codequality: gl-code-quality-report.json
 
 coverage:
   <<: *analyze
@@ -90,16 +96,14 @@ coverage:
     refs:
     - master
 
-code_quality:
+dockerfiles:
   <<: *analyze
-  image: hub.lavasoftware.org/lava/ci-images/amd64/codestyle
-  artifacts:
-    reports:
-      codequality: gl-code-quality-report.json
+
+job-schema:
+  <<: *analyze
 
 pylint:
   <<: *analyze
-  image: hub.lavasoftware.org/lava/ci-images/amd64/codestyle
 
 sast:
   stage: analyze
@@ -108,14 +112,6 @@ sast:
   variables:
     DOCKER_DRIVER: overlay2
     SAST_DEFAULT_ANALYZERS: "bandit"
-
-job-schema:
-  <<: *analyze
-  image: debian:buster
-
-dockerfiles:
-  <<: *analyze
-  image: debian:buster
 
 #########
 # Build #

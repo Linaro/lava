@@ -4,7 +4,8 @@ set -e
 
 if [ "$1" = "setup" ]
 then
-  apt -y -q install python3 radon
+  apt-get -q update
+  apt-get install --no-install-recommends --yes python3 radon
 else
   set -x
   export LC_ALL=C.UTF-8
