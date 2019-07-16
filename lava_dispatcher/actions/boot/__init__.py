@@ -202,17 +202,16 @@ class AutoLoginAction(Action):
             for prompt in prompts:
                 if not prompt:
                     self.errors = "Items of 'prompts' can't be empty"
-        if self.job:  # unit test protection
-            methods = self.job.device["actions"]["boot"]["methods"]
-            if self.method not in methods:
-                # second uart
-                self.booting = False
-            elif not methods[self.method]:
-                # secondary connections
-                self.booting = False
-            elif "parameters" in methods[self.method]:
-                # fastboot devices usually lack method parameters
-                self.params = methods[self.method]["parameters"]
+        methods = self.job.device["actions"]["boot"]["methods"]
+        if self.method not in methods:
+            # second uart
+            self.booting = False
+        elif not methods[self.method]:
+            # secondary connections
+            self.booting = False
+        elif "parameters" in methods[self.method]:
+            # fastboot devices usually lack method parameters
+            self.params = methods[self.method]["parameters"]
 
     def check_kernel_messages(self, connection, max_end_time, fail_msg):
         """
