@@ -659,7 +659,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         self.assertEqual(len(jobs), 2)
         for role, job_list in jobs.items():
             for job in job_list:
-                del (job["protocols"]["lava-multinode"]["sub_id"])
+                del job["protocols"]["lava-multinode"]["sub_id"]
                 yaml.dump(job)  # ensure the jobs can be serialised as YAML
                 if role == "client":
                     self.assertEqual(job, yaml.safe_load(open(client_check, "r")))

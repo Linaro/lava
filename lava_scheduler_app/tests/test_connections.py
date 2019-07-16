@@ -71,8 +71,8 @@ class SecondaryConnections(TestCaseWithFactory):
                 self.assertIn("protocols", data)
                 self.assertIn("lava-multinode", data["protocols"])
                 self.assertIn("sub_id", data["protocols"]["lava-multinode"])
-                del (comparison["protocols"]["lava-multinode"]["sub_id"])
-                del (data["protocols"]["lava-multinode"]["sub_id"])
+                del comparison["protocols"]["lava-multinode"]["sub_id"]
+                del data["protocols"]["lava-multinode"]["sub_id"]
                 self.assertEqual(data, comparison)
                 self.assertEqual(job.device_role, "host")
                 host_role.append(job.device_role)
@@ -84,7 +84,7 @@ class SecondaryConnections(TestCaseWithFactory):
                 deploy = [action for action in data["actions"] if "deploy" in action][0]
                 self.assertEqual(deploy["deploy"]["connection"], "ssh")
                 # validate each job
-                del (data["protocols"]["lava-multinode"]["sub_id"])
+                del data["protocols"]["lava-multinode"]["sub_id"]
                 self.assertEqual(
                     data,
                     yaml.safe_load(
