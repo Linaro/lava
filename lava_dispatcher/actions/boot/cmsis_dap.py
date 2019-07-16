@@ -118,6 +118,7 @@ class FlashCMSISAction(Action):
     name = "flash-cmsis"
     description = "flash cmsis to usb mass storage"
     summary = "flash cmsis to usb mass storage"
+    command_exception = InfrastructureError
 
     def __init__(self):
         super().__init__()
@@ -146,22 +147,23 @@ class FlashCMSISAction(Action):
         )
         connection = super().run(connection, max_end_time)
         dstdir = mkdtemp()
-        mount_command = "mount -t vfat %s %s" % (self.usb_mass_device, dstdir)
-        self.run_command(mount_command.split(" "), allow_silent=True)
         # mount
+        self.run_cmd(
+            ["mount", "-t", "vfat", self.usb_mass_device, dstdir],
+            error_msg="Unable to mount USB device %s" % self.usb_mass_device,
+        )
+        # copy files
         for f in self.filelist:
             self.logger.debug("Copying %s to %s", f, dstdir)
             shutil.copy2(f, dstdir)
         # sync
-        sync_command = "sync %s" % dstdir
-        self.run_command(sync_command.split(" "), allow_silent=True)
+        self.run_cmd(["sync", dstdir], error_msg="Unable to sync %s" % dstdir)
         # umount
-        umount_command = "umount %s" % self.usb_mass_device
-        self.run_command(umount_command.split(" "), allow_silent=True)
-        if self.errors:
-            raise InfrastructureError(
-                "Unable to (un)mount USB device: %s" % self.usb_mass_device
-            )
+        self.run_cmd(
+            ["umount", self.usb_mass_device],
+            error_msg="Unable to unmount USB device %s" % self.usb_mass_device,
+        )
+
         self.set_namespace_data(
             action="shared", label="shared", key="connection", value=connection
         )
