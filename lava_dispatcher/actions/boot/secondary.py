@@ -74,7 +74,7 @@ class SecondaryShellAction(BootAction):
         name = parameters["connection"]
         self.internal_pipeline.add_action(ConnectShell(name=name))
         if self.has_prompts(parameters):
-            self.internal_pipeline.add_action(AutoLoginAction())
+            self.internal_pipeline.add_action(AutoLoginAction(booting=False))
             if self.test_has_shell(parameters):
                 self.internal_pipeline.add_action(ExpectShellSession())
                 if "transfer_overlay" in parameters:

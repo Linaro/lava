@@ -18,6 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import contextlib
 import os
 import re
 from lava_dispatcher.action import Action, Pipeline
@@ -91,7 +92,7 @@ class AutoLoginAction(Action):
     )
     summary = "Auto-login after boot with support for kernel messages."
 
-    def __init__(self):
+    def __init__(self, booting=True):
         super().__init__()
         self.check_prompt_characters_warning = (
             "The string '%s' does not look like a typical prompt and"
@@ -101,7 +102,7 @@ class AutoLoginAction(Action):
         )
         self.force_prompt = False
         self.params = None
-        self.booting = True  # if a boot is expected, False for second UART or ssh.
+        self.booting = booting  # if a boot is expected, False for second UART or ssh.
 
     def validate(self):  # pylint: disable=too-many-branches
         super().validate()
@@ -146,16 +147,12 @@ class AutoLoginAction(Action):
             for prompt in prompts:
                 if not prompt:
                     self.errors = "Items of 'prompts' can't be empty"
+
         methods = self.job.device["actions"]["boot"]["methods"]
-        if self.method not in methods:
-            # second uart
-            self.booting = False
-        elif not methods[self.method]:
-            # secondary connections
-            self.booting = False
-        elif "parameters" in methods[self.method]:
-            # fastboot devices usually lack method parameters
-            self.params = methods[self.method]["parameters"]
+        with contextlib.suppress(KeyError, TypeError):
+            if "parameters" in methods[self.method]:
+                # fastboot devices usually lack method parameters
+                self.params = methods[self.method]["parameters"]
 
     def check_kernel_messages(self, connection, max_end_time, fail_msg):
         """
