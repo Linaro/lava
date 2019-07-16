@@ -25,7 +25,7 @@ from django.conf.urls import include, url
 from django.contrib import admin
 from linaro_django_xmlrpc.views import handler as linaro_django_xmlrpc_views_handler
 from linaro_django_xmlrpc.views import help as linaro_django_xmlrpc_views_help
-from django.views.i18n import javascript_catalog
+from django.views.i18n import JavaScriptCatalog
 
 from lava_results_app.api import ResultsAPI
 from lava_scheduler_app.api import SchedulerAPI
@@ -89,7 +89,7 @@ urlpatterns = [
         r"^{mount_point}accounts/".format(mount_point=settings.MOUNT_POINT),
         include("django.contrib.auth.urls"),
     ),
-    url(r"^admin/jsi18n", javascript_catalog),
+    url(r"^admin/jsi18n", JavaScriptCatalog.as_view()),
     url(
         r"^{mount_point}admin/".format(mount_point=settings.MOUNT_POINT),
         admin.site.urls,

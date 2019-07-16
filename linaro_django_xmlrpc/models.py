@@ -97,7 +97,7 @@ class AuthToken(models.Model):
         null=True, help_text="Time and date when the token was last used"
     )
 
-    user = models.ForeignKey(User, related_name="auth_tokens")
+    user = models.ForeignKey(User, related_name="auth_tokens", on_delete=models.CASCADE)
 
     def __str__(self):
         return u"security token {pk}".format(pk=self.pk)

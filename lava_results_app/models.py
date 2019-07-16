@@ -46,6 +46,7 @@ from django.db.models import Q, Lookup
 from django.db.models.fields import Field
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
+from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
 
@@ -164,7 +165,7 @@ class BugLink(models.Model):
         max_length=1024, blank=False, null=False, verbose_name=_(u"Bug Link URL")
     )
 
-    content_type = models.ForeignKey(ContentType)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
     content_object = fields.GenericForeignKey("content_type", "object_id")
 
@@ -190,7 +191,7 @@ class TestSuite(models.Model, Queryable):
 
     objects = models.Manager.from_queryset(RestrictedTestSuiteQuerySet)()
 
-    job = models.ForeignKey(TestJob)
+    job = models.ForeignKey(TestJob, on_delete=models.CASCADE)
     name = models.CharField(
         verbose_name=u"Suite name", blank=True, null=True, default=None, max_length=200
     )
@@ -245,12 +246,11 @@ class TestSuite(models.Model, Queryable):
     def get_xaxis_attribute(self, xaxis_attribute=None):
         return self.job.get_xaxis_attribute(xaxis_attribute)
 
-    @models.permalink
     def get_absolute_url(self):
         """
         Web friendly name for the test suite
         """
-        return ("lava.results.suite", [self.job.id, self.name])
+        return reverse("lava.results.suite", args=[self.job.id, self.name])
 
     def __str__(self):
         """
@@ -272,7 +272,9 @@ class TestSet(models.Model):
         verbose_name=u"Suite name", blank=True, null=True, default=None, max_length=200
     )
 
-    suite = models.ForeignKey(TestSuite, related_name="test_sets")
+    suite = models.ForeignKey(
+        TestSuite, related_name="test_sets", on_delete=models.CASCADE
+    )
 
     def get_absolute_url(self):
         return quote(
@@ -362,7 +364,7 @@ class TestCase(models.Model, Queryable):
         verbose_name=_(u"Action meta data as a YAML string"),
     )
 
-    suite = models.ForeignKey(TestSuite)
+    suite = models.ForeignKey(TestSuite, on_delete=models.CASCADE)
 
     # Store start and end of the TestCase in the log file
     # We are countaing the lines
@@ -371,7 +373,12 @@ class TestCase(models.Model, Queryable):
     end_log_line = models.PositiveIntegerField(blank=True, null=True, editable=False)
 
     test_set = models.ForeignKey(
-        TestSet, related_name="test_cases", null=True, blank=True, default=None
+        TestSet,
+        related_name="test_cases",
+        null=True,
+        blank=True,
+        default=None,
+        on_delete=models.CASCADE,
     )
 
     logged = models.DateTimeField(auto_now=True)
@@ -430,9 +437,8 @@ class TestCase(models.Model, Queryable):
     def get_xaxis_attribute(self, xaxis_attribute=None):
         return self.suite.job.get_xaxis_attribute(xaxis_attribute)
 
-    @models.permalink
     def get_absolute_url(self):
-        return ("lava.results.testcase", [self.id])
+        return reverse("lava.results.testcase", args=[self.id])
 
     def _get_value(self):
         if self.measurement:
@@ -592,7 +598,7 @@ class NamedTestAttribute(models.Model):
     value = models.TextField()
 
     # Content type plumbing
-    content_type = models.ForeignKey(ContentType)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
     content_object = fields.GenericForeignKey("content_type", "object_id")
 
@@ -613,7 +619,7 @@ class TestData(models.Model):
     available for result processing when the job is running.
     """
 
-    testjob = models.ForeignKey(TestJob)
+    testjob = models.ForeignKey(TestJob, on_delete=models.CASCADE)
 
     # Attributes
 
@@ -641,9 +647,15 @@ class ActionData(models.Model):
     action_summary = models.CharField(max_length=100, blank=False, null=False)
     action_description = models.CharField(max_length=200, blank=False, null=False)
     # each actionlevel points at a single MetaType, then to a single TestData and TestJob
-    meta_type = models.ForeignKey(MetaType, related_name="actionlevels")
+    meta_type = models.ForeignKey(
+        MetaType, related_name="actionlevels", on_delete=models.CASCADE
+    )
     testdata = models.ForeignKey(
-        TestData, blank=True, null=True, related_name="actionlevels"
+        TestData,
+        blank=True,
+        null=True,
+        related_name="actionlevels",
+        on_delete=models.CASCADE,
     )
     yaml_line = models.PositiveIntegerField(blank=True, null=True)
     description_line = models.PositiveIntegerField(blank=True, null=True)
@@ -660,7 +672,11 @@ class ActionData(models.Model):
     timeout = models.PositiveIntegerField(blank=True, null=True)
     # maps a TestCase back to the Job metadata and description
     testcase = models.ForeignKey(
-        TestCase, blank=True, null=True, related_name="actionlevels"
+        TestCase,
+        blank=True,
+        null=True,
+        related_name="actionlevels",
+        on_delete=models.CASCADE,
     )
     # only retry actions set a count or max_retries
     count = models.PositiveIntegerField(blank=True, null=True)
@@ -715,7 +731,7 @@ def TestSuiteViewFactory(query):
 
 class Query(models.Model):
 
-    owner = models.ForeignKey(User)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
 
     group = models.ForeignKey(
         Group, default=None, null=True, blank=True, on_delete=models.SET_NULL
@@ -743,6 +759,7 @@ class Query(models.Model):
         limit_choices_to=Q(model__in=["testsuite", "testjob"])
         | (Q(app_label="lava_results_app") & Q(model="testcase")),
         verbose_name="Query object set",
+        on_delete=models.CASCADE,
     )
 
     CONDITIONS_SEPARATOR = ","
@@ -1086,9 +1103,10 @@ class Query(models.Model):
             return True
         return False
 
-    @models.permalink
     def get_absolute_url(self):
-        return ("lava.results.query_display", [self.owner.username, self.name])
+        return reverse(
+            "lava.results.query_display", args=[self.owner.username, self.name]
+        )
 
 
 @receiver(pre_save, sender=Query)
@@ -1107,6 +1125,7 @@ class QueryCondition(models.Model):
         limit_choices_to=Q(model__in=["testsuite", "testjob", "namedtestattribute"])
         | (Q(app_label="lava_results_app") & Q(model="testcase")),
         verbose_name="Condition model",
+        on_delete=models.CASCADE,
     )
 
     # Map the relationship spanning.
@@ -1152,7 +1171,7 @@ class QueryCondition(models.Model):
         NamedTestAttribute: [],
     }
 
-    query = models.ForeignKey(Query)
+    query = models.ForeignKey(Query, on_delete=models.CASCADE)
 
     field = models.CharField(max_length=50, verbose_name="Field name")
 
@@ -1299,7 +1318,7 @@ class QueryOmitResult(models.Model):
 
     query = models.ForeignKey(Query, on_delete=models.CASCADE)
 
-    content_type = models.ForeignKey(ContentType)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
     content_object = fields.GenericForeignKey("content_type", "object_id")
 
@@ -1352,9 +1371,8 @@ class Chart(models.Model):
     def __str__(self):
         return self.name
 
-    @models.permalink
     def get_absolute_url(self):
-        return ("lava.results.chart_display", (), dict(name=self.name))
+        return reverse("lava.results.chart_display", args=[self.name])
 
     def can_admin(self, user):
         return (
@@ -1630,13 +1648,8 @@ class ChartQuery(models.Model):
     def __str__(self):
         return self.name
 
-    @models.permalink
     def get_absolute_url(self):
-        return (
-            "lava.results.chart_query_edit",
-            (),
-            dict(name=self.chart.name, id=self.id),
-        )
+        return reverse("lava.results.chart_query_edit", args=[self.chart.name, self.id])
 
 
 class ChartQueryUser(models.Model):

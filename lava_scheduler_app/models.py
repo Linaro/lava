@@ -73,7 +73,7 @@ class DevicesUnavailableException(UserWarning):
 
 class ExtendedUser(models.Model):
 
-    user = models.OneToOneField(User)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
 
     irc_handle = models.CharField(
         max_length=40, default=None, null=True, blank=True, verbose_name="IRC handle"
@@ -134,7 +134,9 @@ class Alias(models.Model):
         max_length=200,
         editable=True,
     )
-    device_type = models.ForeignKey("DeviceType", related_name="aliases", null=True)
+    device_type = models.ForeignKey(
+        "DeviceType", related_name="aliases", null=True, on_delete=models.CASCADE
+    )
 
     def __str__(self):
         return self.pk
@@ -277,9 +279,8 @@ class DeviceType(models.Model):
         "devices of this type.",
     )
 
-    @models.permalink
     def get_absolute_url(self):
-        return ("lava.scheduler.device_type.detail", [self.pk])
+        return reverse("lava.scheduler.device_type.detail", args=[self.pk])
 
     def num_devices_visible_to(self, user):
         """
@@ -337,7 +338,7 @@ class DefaultDeviceOwner(models.Model):
     user to be specified as the default device owner.
     """
 
-    user = models.OneToOneField(User)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
     default_owner = models.BooleanField(
         verbose_name="Default owner of unrestricted devices", unique=True, default=False
     )
@@ -400,9 +401,8 @@ class Worker(models.Model):
         else:
             return False
 
-    @models.permalink
     def get_absolute_url(self):
-        return ("lava.scheduler.worker.detail", [self.pk])
+        return reverse("lava.scheduler.worker.detail", args=[self.pk])
 
     def get_description(self):
         return mark_safe(self.description) if self.description else None
@@ -481,7 +481,9 @@ class Device(RestrictedResource):
         editable=True,  # read-only after create via admin.py
     )
 
-    device_type = models.ForeignKey(DeviceType, verbose_name=_("Device type"))
+    device_type = models.ForeignKey(
+        DeviceType, verbose_name=_("Device type"), on_delete=models.CASCADE
+    )
 
     device_version = models.CharField(
         verbose_name=_("Device Version"),
@@ -508,6 +510,7 @@ class Device(RestrictedResource):
         blank=True,
         default=None,
         verbose_name=_("Group with physical access"),
+        on_delete=models.CASCADE,
     )
 
     description = models.TextField(
@@ -626,9 +629,8 @@ class Device(RestrictedResource):
         except TestJob.DoesNotExist:
             return None
 
-    @models.permalink
     def get_absolute_url(self):
-        return ("lava.scheduler.device.detail", [self.pk])
+        return reverse("lava.scheduler.device.detail", args=[self.pk])
 
     def get_simple_state_display(self):
         if self.state == Device.STATE_IDLE:
@@ -1353,7 +1355,9 @@ class TestJob(RestrictedResource):
         default=None,
     )
 
-    submitter = models.ForeignKey(User, verbose_name=_("Submitter"), related_name="+")
+    submitter = models.ForeignKey(
+        User, verbose_name=_("Submitter"), related_name="+", on_delete=models.CASCADE
+    )
 
     visibility = models.IntegerField(
         verbose_name=_("Visibility type"),
@@ -1394,7 +1398,12 @@ class TestJob(RestrictedResource):
     # Only one of requested_device_type or dynamic_connection should be
     # non-null. Dynamic connections have no device.
     requested_device_type = models.ForeignKey(
-        DeviceType, null=True, default=None, related_name="+", blank=True
+        DeviceType,
+        null=True,
+        default=None,
+        related_name="+",
+        blank=True,
+        on_delete=models.CASCADE,
     )
 
     @property
@@ -1412,7 +1421,12 @@ class TestJob(RestrictedResource):
 
     # This is set once the job starts or is reserved.
     actual_device = models.ForeignKey(
-        Device, null=True, default=None, related_name="testjobs", blank=True
+        Device,
+        null=True,
+        default=None,
+        related_name="testjobs",
+        blank=True,
+        on_delete=models.CASCADE,
     )
 
     submit_time = models.DateTimeField(
@@ -1731,9 +1745,8 @@ class TestJob(RestrictedResource):
         r += " (%d)" % (self.id)
         return r
 
-    @models.permalink
     def get_absolute_url(self):
-        return ("lava.scheduler.job.detail", [self.display_id])
+        return reverse("lava.scheduler.job.detail", args=[self.display_id])
 
     @classmethod
     def from_yaml_and_user(cls, yaml_data, user, original_job=None):
@@ -2145,7 +2158,9 @@ class Notification(models.Model):
         max_length=1024, default=None, null=True, blank=True, verbose_name="Query name"
     )
 
-    entity = models.ForeignKey(ContentType, null=True, blank=True)
+    entity = models.ForeignKey(
+        ContentType, null=True, blank=True, on_delete=models.CASCADE
+    )
 
     conditions = models.TextField(
         max_length=400, default=None, null=True, blank=True, verbose_name="Conditions"
