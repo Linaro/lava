@@ -23,7 +23,6 @@
 
 # pylint: disable=unused-import
 
-from lava_dispatcher.actions.boot import SecondaryShell
 from lava_dispatcher.actions.boot.bootloader import BootBootloader
 from lava_dispatcher.actions.boot.cmsis_dap import CMSIS
 from lava_dispatcher.actions.boot.depthcharge import Depthcharge
@@ -40,6 +39,7 @@ from lava_dispatcher.actions.boot.minimal import Minimal
 from lava_dispatcher.actions.boot.openocd import OpenOCD
 from lava_dispatcher.actions.boot.pyocd import PyOCD
 from lava_dispatcher.actions.boot.qemu import BootQEMU
+from lava_dispatcher.actions.boot.secondary import SecondaryShell
 from lava_dispatcher.actions.boot.ssh import SshLogin, Schroot
 from lava_dispatcher.actions.boot.u_boot import UBoot
 from lava_dispatcher.actions.boot.barebox import Barebox

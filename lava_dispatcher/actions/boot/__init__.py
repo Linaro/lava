@@ -44,7 +44,6 @@ from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.filesystem import write_bootscript
 from lava_dispatcher.utils.compression import untar_file
 from lava_dispatcher.connections.ssh import SShSession
-from lava_dispatcher.connections.serial import ConnectShell
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.shell import ExpectShellSession
 
@@ -75,61 +74,6 @@ class BootAction(RetryAction):
 
     def has_boot_finished(self, parameters):  # pylint: disable=no-self-use
         return "boot_finished" in parameters
-
-
-class SecondaryShell(Boot):
-    """
-    SecondaryShell method can be used by a variety of other boot methods to
-    read from the kernel console independently of the shell interaction
-    required to interact with the bootloader and test shell.
-    It is also the updated way to connect to the primary console.
-    """
-
-    compatibility = 6
-
-    def __init__(self, parent, parameters):
-        super().__init__(parent)
-        self.action = SecondaryShellAction()
-        self.action.section = self.action_type
-        self.action.job = self.job
-        parent.add_action(self.action, parameters)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if "method" not in parameters:
-            raise ConfigurationError("method not specified in boot parameters")
-        if parameters["method"] != "new_connection":
-            return False, "new_connection not in method"
-        if "actions" not in device:
-            raise ConfigurationError("Invalid device configuration")
-        if "boot" not in device["actions"]:
-            return False, "boot not in device actions"
-        if "methods" not in device["actions"]["boot"]:
-            raise ConfigurationError("Device misconfiguration")
-        if "method" not in parameters:
-            return False, "no boot method"
-        return True, "accepted"
-
-
-class SecondaryShellAction(BootAction):
-
-    name = "secondary-shell-action"
-    description = "Connect to a secondary shell on specified hardware"
-    summary = "connect to a specified second shell"
-
-    def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
-        name = parameters["connection"]
-        self.internal_pipeline.add_action(ConnectShell(name=name))
-        if self.has_prompts(parameters):
-            self.internal_pipeline.add_action(AutoLoginAction())
-            if self.test_has_shell(parameters):
-                self.internal_pipeline.add_action(ExpectShellSession())
-                if "transfer_overlay" in parameters:
-                    self.internal_pipeline.add_action(OverlayUnpack())
-                self.internal_pipeline.add_action(ExportDeviceEnvironment())
 
 
 # FIXME: move to it's own file
