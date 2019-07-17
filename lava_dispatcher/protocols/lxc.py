@@ -18,8 +18,8 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-
 import re
+import shutil
 import os
 import yaml
 import logging
@@ -188,8 +188,11 @@ class LxcProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
             else:
                 destroy_cmd = "lxc-destroy -n {0} -f".format(self.lxc_name)
             self._call_handler(destroy_cmd)
-            if self.custom_lxc_path and not self.persistence:
-                os.remove(os.path.join(LXC_PATH, self.lxc_name))
+
+            dirname = os.path.join(LXC_PATH, self.lxc_name)
+            self.logger.debug("%s protocol: removing %s", self.name, dirname)
+            shutil.rmtree(dirname, ignore_errors=True)
+
         # Remove udev rule which added device to the container and then reload
         # udev rules.
         rules_file_name = "100-lava-" + self.job_prefix + self.lxc_name + ".rules"
