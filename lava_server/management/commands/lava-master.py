@@ -20,7 +20,6 @@
 # pylint: disable=wrong-import-order
 
 import contextlib
-import errno
 import jinja2
 import simplejson
 import lzma
@@ -127,14 +126,12 @@ def load_optional_yaml_file(filename, fallback=None):
             data_str = f_in.read()
         yaml.safe_load(data_str)
         return data_str
-    except OSError as exc:
-        if exc.errno == errno.ENOENT:
-            # This is ok if the file does not exist
-            if fallback is None:
-                return ""
-            # Use the fallback filename
-            return load_optional_yaml_file(fallback)
-        raise
+    except FileNotFoundError:
+        # This is ok if the file does not exist
+        if fallback is None:
+            return ""
+        # Use the fallback filename
+        return load_optional_yaml_file(fallback)
     except yaml.YAMLError:
         # Raise an OSError because the caller uses yaml.YAMLError for a
         # specific usage. Allows here to specify the faulty filename.
