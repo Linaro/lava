@@ -18,7 +18,6 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
-import errno
 import glob
 import os
 import xmlrpc.client
@@ -103,9 +102,7 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
             )
             dt.full_clean()
             dt.save()
-        except ValidationError as e:
-            raise xmlrpc.client.Fault(404, e.message)
-        except IntegrityError:
+        except (IntegrityError, ValidationError):
             raise xmlrpc.client.Fault(
                 400, "Bad request: device-type name is already used."
             )
@@ -151,13 +148,12 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
             filename += ".yaml" if not filename.endswith(".yaml") else ""
             with open(filename, "r") as f_in:
                 return xmlrpc.client.Binary(f_in.read().encode("utf-8"))
+        except FileNotFoundError:
+            raise xmlrpc.client.Fault(404, "Device-type '%s' was not found." % name)
         except OSError as exc:
-            if exc.errno == errno.ENOENT:
-                raise xmlrpc.client.Fault(404, "Device-type '%s' was not found." % name)
-            else:
-                raise xmlrpc.client.Fault(
-                    400, "Unable to read health-check: %s" % exc.strerror
-                )
+            raise xmlrpc.client.Fault(
+                400, "Unable to read health-check: %s" % exc.strerror
+            )
 
     def get_template(self, name):
         """
@@ -200,13 +196,12 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
             filename += ".jinja2" if not filename.endswith(".jinja2") else ""
             with open(filename, "r") as f_in:
                 return xmlrpc.client.Binary(f_in.read().encode("utf-8"))
+        except FileNotFoundError:
+            raise xmlrpc.client.Fault(404, "Device-type '%s' was not found." % name)
         except OSError as exc:
-            if exc.errno == errno.ENOENT:
-                raise xmlrpc.client.Fault(404, "Device-type '%s' was not found." % name)
-            else:
-                raise xmlrpc.client.Fault(
-                    400, "Unable to read device-type configuration: %s" % exc.strerror
-                )
+            raise xmlrpc.client.Fault(
+                400, "Unable to read device-type configuration: %s" % exc.strerror
+            )
 
     @check_perm("lava_scheduler_app.change_devicetype")
     def set_health_check(self, name, config):
@@ -501,11 +496,10 @@ class SchedulerDeviceTypesAliasesAPI(ExposedV2API):
         try:
             dt = DeviceType.objects.get(name=name)
         except DeviceType.DoesNotExist:
-            raise xmlrpc.client.Fault(404, "DeviceType '%s' was not found." % name)
+            raise xmlrpc.client.Fault(404, "Device-type '%s' was not found." % name)
 
         alias_obj, _ = Alias.objects.get_or_create(name=alias)
         dt.aliases.add(alias_obj)
-        dt.save()
 
     def list(self, name):
         """
@@ -529,7 +523,7 @@ class SchedulerDeviceTypesAliasesAPI(ExposedV2API):
         try:
             dt = DeviceType.objects.get(name=name)
         except DeviceType.DoesNotExist:
-            raise xmlrpc.client.Fault(404, "DeviceType '%s' was not found." % name)
+            raise xmlrpc.client.Fault(404, "Device-type '%s' was not found." % name)
 
         if dt.owners_only and not dt.some_devices_visible_to(self.user):
             raise xmlrpc.client.Fault(404, "Device-type '%s' was not found." % name)
@@ -561,12 +555,11 @@ class SchedulerDeviceTypesAliasesAPI(ExposedV2API):
         try:
             dt = DeviceType.objects.get(name=name)
         except DeviceType.DoesNotExist:
-            raise xmlrpc.client.Fault(404, "DeviceType '%s' was not found." % name)
+            raise xmlrpc.client.Fault(404, "Device-type '%s' was not found." % name)
 
         try:
             alias_obj = Alias.objects.get(name=alias)
         except Alias.DoesNotExist:
-            raise xmlrpc.client.Fault(404, "Alias '%s' was not found." % name)
+            raise xmlrpc.client.Fault(404, "Alias '%s' was not found." % alias)
 
         dt.aliases.remove(alias_obj)
-        dt.save()
