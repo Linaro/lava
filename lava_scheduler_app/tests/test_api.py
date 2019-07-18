@@ -1,3 +1,4 @@
+import glob
 import os
 import pathlib
 import pytest
@@ -532,6 +533,8 @@ def setup(db):
     admin.user_permissions.add(Permission.objects.get(codename="add_device"))
     admin.user_permissions.add(Permission.objects.get(codename="change_device"))
     admin.user_permissions.add(Permission.objects.get(codename="add_tag"))
+    admin.user_permissions.add(Permission.objects.get(codename="add_devicetype"))
+    admin.user_permissions.add(Permission.objects.get(codename="change_devicetype"))
     admin.user_permissions.add(Permission.objects.get(codename="delete_tag"))
     admin.user_permissions.add(Permission.objects.get(codename="add_worker"))
     admin.user_permissions.add(Permission.objects.get(codename="change_worker"))
@@ -984,6 +987,384 @@ def test_devices_tags_delete(setup):
         server("admin", "admin").scheduler.devices.tags.delete("device01", "ssd")
     assert exc.value.faultCode == 404  # nosec
     assert exc.value.faultString == "Tag 'ssd' was not found."  # nosec
+
+
+@pytest.mark.django_db
+def test_device_types_add(setup):
+    # 1. Check that the arguments are used
+    assert DeviceType.objects.count() == 0  # nosec
+    server("admin", "admin").scheduler.device_types.add(
+        "qemu", "emulated devices", True, False, 12, "hours"
+    )
+    assert DeviceType.objects.count() == 1  # nosec
+    assert DeviceType.objects.all()[0].name == "qemu"  # nosec
+    assert DeviceType.objects.all()[0].display  # nosec
+    assert DeviceType.objects.all()[0].description == "emulated devices"  # nosec
+    assert not DeviceType.objects.all()[0].owners_only  # nosec
+    assert DeviceType.objects.all()[0].health_frequency == 12  # nosec
+    assert (  # nosec
+        DeviceType.objects.all()[0].health_denominator == DeviceType.HEALTH_PER_HOUR
+    )
+
+    server("admin", "admin").scheduler.device_types.add(
+        "b2260", None, True, False, 12, "jobs"
+    )
+    assert DeviceType.objects.count() == 2  # nosec
+    assert DeviceType.objects.all()[1].name == "b2260"  # nosec
+    assert DeviceType.objects.all()[1].display  # nosec
+    assert DeviceType.objects.all()[1].description is None  # nosec
+    assert not DeviceType.objects.all()[1].owners_only  # nosec
+    assert DeviceType.objects.all()[1].health_frequency == 12  # nosec
+    assert (  # nosec
+        DeviceType.objects.all()[1].health_denominator == DeviceType.HEALTH_PER_JOB
+    )
+
+    # 2. Invalid health_denominator
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("admin", "admin").scheduler.device_types.add(
+            "docker", None, True, False, 12, "job"
+        )
+    assert exc.value.faultCode == 400  # nosec
+    assert exc.value.faultString == "Bad request: invalid health_denominator."  # nosec
+
+    # 3. Already exists
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("admin", "admin").scheduler.device_types.add(
+            "b2260", None, True, False, 12, "jobs"
+        )
+    assert exc.value.faultCode == 400  # nosec
+    assert (  # nosec
+        exc.value.faultString == "Bad request: device-type name is already used."
+    )
+
+
+@pytest.mark.django_db
+def test_device_types_get_health_check(setup, monkeypatch, tmpdir):
+    real_open = open
+    (tmpdir / "qemu.yaml").write_text("hello", encoding="utf-8")
+
+    def monkey_open(path, *args):
+        if path == "/etc/lava-server/dispatcher-config/health-checks/qemu.yaml":
+            return real_open(str(tmpdir / "qemu.yaml"), *args)
+        if path == "/etc/lava-server/dispatcher-config/health-checks/docker.yaml":
+            raise FileNotFoundError()
+        if path == "/etc/lava-server/dispatcher-config/health-checks/docker2.yaml":
+            raise PermissionError("permission denied", "permission denied")
+        return real_open(path, *args)
+
+    monkeypatch.setitem(__builtins__, "open", monkey_open)
+
+    # 1. normal case
+    DeviceType.objects.create(name="qemu")
+    hc = server("admin", "admin").scheduler.device_types.get_health_check("qemu")
+    assert str(hc) == "hello"  # nosec
+
+    # 2. DeviceType does not exists
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("admin", "admin").scheduler.device_types.get_health_check("docker")
+    assert exc.value.faultCode == 404  # nosec
+    assert exc.value.faultString == "Device-type 'docker' was not found."  # nosec
+
+    # 3. Can't read the health-check
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("admin", "admin").scheduler.device_types.get_health_check("docker2")
+    assert exc.value.faultCode == 400  # nosec
+    assert (  # nosec
+        exc.value.faultString == "Unable to read health-check: permission denied"
+    )
+
+    # 4. Invalid name
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("admin", "admin").scheduler.device_types.get_health_check("../../passwd")
+    assert exc.value.faultCode == 400  # nosec
+    assert exc.value.faultString == "Invalid device-type '../../passwd'"  # nosec
+
+
+@pytest.mark.django_db
+def test_device_types_get_template(setup, monkeypatch, tmpdir):
+    real_open = open
+    (tmpdir / "qemu.jinja2").write_text("hello", encoding="utf-8")
+
+    def monkey_open(path, *args):
+        if path == "/etc/lava-server/dispatcher-config/device-types/qemu.jinja2":
+            return real_open(str(tmpdir / "qemu.jinja2"), *args)
+        if path == "/etc/lava-server/dispatcher-config/device-types/docker.jinja2":
+            raise FileNotFoundError()
+        if path == "/etc/lava-server/dispatcher-config/device-types/docker2.jinja2":
+            raise PermissionError("permission denied", "permission denied")
+        return real_open(path, *args)
+
+    monkeypatch.setitem(__builtins__, "open", monkey_open)
+
+    # 1. normal case
+    DeviceType.objects.create(name="qemu")
+    hc = server("admin", "admin").scheduler.device_types.get_template("qemu")
+    assert str(hc) == "hello"  # nosec
+
+    # 2. DeviceType does not exists
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("admin", "admin").scheduler.device_types.get_template("docker")
+    assert exc.value.faultCode == 404  # nosec
+    assert exc.value.faultString == "Device-type 'docker' was not found."  # nosec
+
+    # 3. Can't read the template
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("admin", "admin").scheduler.device_types.get_template("docker2")
+    assert exc.value.faultCode == 400  # nosec
+    assert (  # nosec
+        exc.value.faultString
+        == "Unable to read device-type configuration: permission denied"
+    )
+
+    # 4. Invalid name
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("admin", "admin").scheduler.device_types.get_template("../../passwd")
+    assert exc.value.faultCode == 400  # nosec
+    assert exc.value.faultString == "Invalid device-type '../../passwd'"  # nosec
+
+
+@pytest.mark.django_db
+def test_device_types_set_health_check(setup, monkeypatch, tmpdir):
+    real_open = open
+
+    def monkey_open(path, *args):
+        print(path)
+        if path == "/etc/lava-server/dispatcher-config/health-checks/qemu.yaml":
+            return real_open(str(tmpdir / "qemu.yaml"), *args)
+        if path == "/etc/lava-server/dispatcher-config/health-checks/docker2.yaml":
+            raise PermissionError("permission denied", "permission denied")
+        return real_open(path, *args)
+
+    monkeypatch.setitem(__builtins__, "open", monkey_open)
+
+    # 1. normal case
+    DeviceType.objects.create(name="qemu")
+    server("admin", "admin").scheduler.device_types.set_health_check(
+        "qemu", "hello world"
+    )
+    assert (tmpdir / "qemu.yaml").read_text(encoding="utf-8") == "hello world"  # nosec
+
+    # 3. Can't write the health-check
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("admin", "admin").scheduler.device_types.set_health_check("docker2", "")
+    assert exc.value.faultCode == 400  # nosec
+    assert (  # nosec
+        exc.value.faultString == "Unable to write health-check: permission denied"
+    )
+
+    # 4. Invalid name
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("admin", "admin").scheduler.device_types.set_health_check(
+            "../../passwd", ""
+        )
+    assert exc.value.faultCode == 400  # nosec
+    assert exc.value.faultString == "Invalid device-type '../../passwd'"  # nosec
+
+
+@pytest.mark.django_db
+def test_device_types_set_template(setup, monkeypatch, tmpdir):
+    real_open = open
+
+    def monkey_open(path, *args):
+        print(path)
+        if path == "/etc/lava-server/dispatcher-config/device-types/qemu.jinja2":
+            return real_open(str(tmpdir / "qemu.jinja2"), *args)
+        if path == "/etc/lava-server/dispatcher-config/device-types/docker2.jinja2":
+            raise PermissionError("permission denied", "permission denied")
+        return real_open(path, *args)
+
+    monkeypatch.setitem(__builtins__, "open", monkey_open)
+
+    # 1. normal case
+    DeviceType.objects.create(name="qemu")
+    server("admin", "admin").scheduler.device_types.set_template("qemu", "hello world")
+    assert (tmpdir / "qemu.jinja2").read_text(  # nosec
+        encoding="utf-8"
+    ) == "hello world"
+
+    # 3. Can't write the template
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("admin", "admin").scheduler.device_types.set_template("docker2", "")
+    assert exc.value.faultCode == 400  # nosec
+    assert (  # nosec
+        exc.value.faultString
+        == "Unable to write device-type configuration: permission denied"
+    )
+
+    # 4. Invalid name
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("admin", "admin").scheduler.device_types.set_template("../../passwd", "")
+    assert exc.value.faultCode == 400  # nosec
+    assert exc.value.faultString == "Invalid device-type '../../passwd'"  # nosec
+
+
+@pytest.mark.django_db
+def test_device_types_list(setup, monkeypatch):
+    real_iglob = glob.iglob
+
+    def iglob(path):
+        if path == "/etc/lava-server/dispatcher-config/device-types/*.jinja2":
+            return ["qemu.jinja2", "base.jinja2", "base-uboot.jinja2", "b2260.jinja2"]
+        else:
+            return real_iglob(path)
+
+    monkeypatch.setattr(glob, "iglob", iglob)
+    data = server("admin", "admin").scheduler.device_types.list()
+    assert data == []  # nosec
+
+    DeviceType.objects.create(name="qemu")
+    data = server("admin", "admin").scheduler.device_types.list()
+    assert data == [  # nosec
+        {"name": "qemu", "devices": 0, "installed": True, "template": True}
+    ]
+
+    data = server("admin", "admin").scheduler.device_types.list(True)
+    assert data == [  # nosec
+        {"name": "qemu", "devices": 0, "installed": True, "template": True},
+        {"name": "b2260", "devices": 0, "installed": False, "template": True},
+    ]
+
+
+@pytest.mark.django_db
+def test_device_types_show(setup):
+    # 1. Device-type does not exist
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("admin", "admin").scheduler.device_types.show("qemu")
+    assert exc.value.faultCode == 404  # nosec
+    assert exc.value.faultString == "Device-type 'qemu' was not found."  # nosec
+
+    # 2. Normal case
+    dt = DeviceType.objects.create(name="qemu")
+    data = server("admin", "admin").scheduler.device_types.show("qemu")
+
+    assert data == {  # nosec
+        "name": "qemu",
+        "description": None,
+        "display": True,
+        "owners_only": False,
+        "health_disabled": False,
+        "aliases": [],
+        "devices": [],
+    }
+
+    # 3. More details
+    Device.objects.create(hostname="device01", device_type=dt, is_public=True)
+    data = server("admin", "admin").scheduler.device_types.show("qemu")
+
+    assert data == {  # nosec
+        "name": "qemu",
+        "description": None,
+        "display": True,
+        "owners_only": False,
+        "health_disabled": False,
+        "aliases": [],
+        "devices": ["device01"],
+    }
+
+
+@pytest.mark.django_db
+def test_device_types_update(setup):
+    # 1. Device-type does not exist
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("admin", "admin").scheduler.device_types.update(
+            "qemu", None, None, None, None, None, None
+        )
+    assert exc.value.faultCode == 404  # nosec
+    assert exc.value.faultString == "Device-type 'qemu' was not found."  # nosec
+
+    # 2. Normal case
+    dt = DeviceType.objects.create(name="qemu")
+    server("admin", "admin").scheduler.device_types.update(
+        "qemu", None, None, None, None, None, None
+    )
+    dt = DeviceType.objects.get(name="qemu")
+    assert dt.description == None  # nosec
+
+    server("admin", "admin").scheduler.device_types.update(
+        "qemu", "emulated", True, False, 12, "jobs", True
+    )
+    dt = DeviceType.objects.get(name="qemu")
+    assert dt.description == "emulated"  # nosec
+    assert dt.display is True  # nosec
+    assert dt.owners_only is False  # nosec
+    assert dt.health_frequency == 12  # nosec
+    assert dt.health_denominator == DeviceType.HEALTH_PER_JOB  # nosec
+
+    server("admin", "admin").scheduler.device_types.update(
+        "qemu", None, None, None, None, "hours", None
+    )
+    dt = DeviceType.objects.get(name="qemu")
+    assert dt.description == "emulated"  # nosec
+    assert dt.display is True  # nosec
+    assert dt.owners_only is False  # nosec
+    assert dt.health_frequency == 12  # nosec
+    assert dt.health_denominator == DeviceType.HEALTH_PER_HOUR  # nosec
+
+    # 3. wrong health denominator
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("admin", "admin").scheduler.device_types.update(
+            "qemu", None, None, None, None, "job", None
+        )
+    assert exc.value.faultCode == 400  # nosec
+    assert exc.value.faultString == "Bad request: invalid health_denominator."  # nosec
+
+
+@pytest.mark.django_db
+def test_device_types_aliases_add(setup):
+    # 1. Device-type does not exist
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("admin", "admin").scheduler.device_types.aliases.add("qemu", "kvm")
+    assert exc.value.faultCode == 404  # nosec
+    assert exc.value.faultString == "Device-type 'qemu' was not found."  # nosec
+
+    # 2. Normal case
+    dt = DeviceType.objects.create(name="qemu")
+    server("admin", "admin").scheduler.device_types.aliases.add("qemu", "kvm")
+    assert Alias.objects.count() == 1  # nosec
+    assert Alias.objects.all()[0].name == "kvm"  # nosec
+    assert DeviceType.objects.get(name="qemu").aliases.count() == 1  # nosec
+    assert DeviceType.objects.get(name="qemu").aliases.all()[0].name == "kvm"  # nosec
+
+
+@pytest.mark.django_db
+def test_device_types_aliases_list(setup):
+    # 1. Device-type does not exist
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("admin", "admin").scheduler.device_types.aliases.list("qemu")
+    assert exc.value.faultCode == 404  # nosec
+    assert exc.value.faultString == "Device-type 'qemu' was not found."  # nosec
+
+    # 2. Normal case
+    dt = DeviceType.objects.create(name="qemu")
+    data = server("admin", "admin").scheduler.device_types.aliases.list("qemu")
+    assert data == []  # nosec
+
+    dt.aliases.add(Alias.objects.create(name="kvm"))
+    data = server("admin", "admin").scheduler.device_types.aliases.list("qemu")
+    assert data == ["kvm"]  # nosec
+
+
+@pytest.mark.django_db
+def test_device_types_aliases_delete(setup):
+    # 1. Device-type does not exist
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("admin", "admin").scheduler.device_types.aliases.delete("qemu", "kvm")
+    assert exc.value.faultCode == 404  # nosec
+    assert exc.value.faultString == "Device-type 'qemu' was not found."  # nosec
+
+    # 2. Alias does not exist
+    dt = DeviceType.objects.create(name="qemu")
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("admin", "admin").scheduler.device_types.aliases.delete("qemu", "kvm")
+    assert exc.value.faultCode == 404  # nosec
+    assert exc.value.faultString == "Alias 'kvm' was not found."  # nosec
+
+    # 3. Normal case
+    dt.aliases.add(Alias.objects.create(name="kvm"))
+    server("admin", "admin").scheduler.device_types.aliases.delete("qemu", "kvm")
+    assert Alias.objects.count() == 1  # nosec
+    assert Alias.objects.all()[0].name == "kvm"  # nosec
+    assert DeviceType.objects.get(name="qemu").aliases.count() == 0  # nosec
 
 
 @pytest.mark.django_db
