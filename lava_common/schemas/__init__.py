@@ -145,7 +145,7 @@ def timeout():
 def action():
     return {
         Optional("namespace"): All(str, NotIn(["common"], msg="'common' is reserved")),
-        Optional("connection-namespace"): str,
+        Optional("connection-namespace"): str,  # TODO: is this in the right level?
         Optional("protocols"): object,
         Optional("role"): [str],
         Optional("timeout"): timeout(),

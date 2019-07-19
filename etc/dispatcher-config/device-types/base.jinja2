@@ -41,8 +41,8 @@
 ) -%}
 
 {# UEFI menu support #}
-{% set base_menu_interrupt_prompt = 'The default boot selection will start in' -%}
-{% set base_menu_interrupt_string = ' ' -%}
+{% set base_menu_interrupt_prompt = base_menu_interrupt_prompt|default('The default boot selection will start in') -%}
+{% set base_menu_interrupt_string = base_menu_interrupt_string|default(' ') -%}
 {% set base_item_markup_list = (
 '            - "["
             - "]"'
@@ -269,8 +269,8 @@ parameters:
   interfaces:
 {% if device_ip or device_mac %}
     target:
-      ip: {{ device_ip|default('') }}
-      mac: '{{ device_mac|default('') }}'
+      ip: "{{ device_ip|default('') }}"
+      mac: "{{ device_mac|default('') }}"
 {% endif %}  # device_ip or device_mac
 {% for interface in interfaces %}
     {{ interface }}:

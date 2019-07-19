@@ -3,5 +3,5 @@
 {% extends 'exynos4-5-common.jinja2' %}
 
 {% set base_high_limits = false %}
-{% set bootloader_prompt = bootloader_prompt|default('ODROID-XU3') %}
+{% set bootloader_prompt = bootloader_prompt|default('ODROID-XU3 # ') %}
 {% set console_device = console_device|default('ttySAC2') %}

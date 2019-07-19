@@ -181,7 +181,7 @@ class TestFastbootTemplates(BaseTemplate.BaseTemplateCases):
         self.assertNotEqual(
             "", template_dict["parameters"]["interfaces"]["target"]["mac"]
         )
-        self.assertIsNone(template_dict["parameters"]["interfaces"]["target"]["ip"])
+        self.assertEqual(template_dict["parameters"]["interfaces"]["target"]["ip"], "")
 
     def test_hikey_grub_efi(self):
         with open(
@@ -302,7 +302,7 @@ class TestFastbootTemplates(BaseTemplate.BaseTemplateCases):
             "00:E0:4C:53:44:58",
             template_dict["parameters"]["interfaces"]["target"]["mac"],
         )
-        self.assertIsNone(template_dict["parameters"]["interfaces"]["target"]["ip"])
+        self.assertEqual(template_dict["parameters"]["interfaces"]["target"]["ip"], "")
 
     def test_nexus5x_template(self):
         data = """{% extends 'nexus5x.jinja2' %}

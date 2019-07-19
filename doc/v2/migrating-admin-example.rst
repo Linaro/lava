@@ -591,7 +591,6 @@ can be added later.
         nfs:
           commands:
  {{ base_uboot_commands }}
- {{ base_uboot_addr_commands }}
  {{ base_tftp_commands }}
           # Always quote the entire string if the command includes a colon to support correct YAML.
           - "setenv nfsargs 'setenv bootargs console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs rw {{ base_nfsroot_args }} panic=1 earlyprintk=uart8250-32bit,0x1c020000 debug ip=dhcp'"
@@ -632,7 +631,6 @@ Completed mustang template
           nfs:
             commands:
             - setenv autoload no
- {{ base_uboot_addr_commands }}
  {{ base_tftp_commands }}
             # Always quote the entire string if the command includes a colon to support correct YAML.
             - "setenv nfsargs 'setenv bootargs console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs rw {{ base_nfsroot_args }} panic=1 earlyprintk=uart8250-32bit,0x1c020000 debug ip=dhcp'"

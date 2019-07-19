@@ -181,6 +181,7 @@ class Alias(models.Model):
         "DeviceType", related_name="aliases", null=True, on_delete=models.CASCADE
     )
 
+    # TODO: calling full_clean into save?
     def __str__(self):
         return self.pk
 

@@ -228,7 +228,7 @@ class TestInteractiveAction(Action):
 
             command = cmd["command"]
             if command is not None:
-                command = substitute([cmd["command"]], substitutions)[0]
+                command = substitute([command], substitutions)[0]
             start = time.time()
             result = {
                 "definition": "%s_%s" % (self.parameters["stage"], script["name"]),

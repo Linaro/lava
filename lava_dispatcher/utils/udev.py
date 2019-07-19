@@ -247,10 +247,10 @@ def wait_udev_event_setup(devicepath, devtype, match_dict, subsystem):
     # Create and configure the monitor
     context = pyudev.Context()
     monitor = pyudev.Monitor.from_netlink(context)
-    if devtype and subsystem:
-        monitor.filter_by(subsystem, devtype)
-    else:
-        if subsystem:
+    if subsystem:
+        if devtype:
+            monitor.filter_by(subsystem, devtype)
+        else:
             monitor.filter_by(subsystem)
     return context, match_dict, monitor
 

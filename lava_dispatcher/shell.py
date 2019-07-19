@@ -318,6 +318,7 @@ class ShellSession(Connection):
         if timeout < 0:
             raise LAVABug("Invalid timeout value passed to listen_feedback()")
         try:
+            # TODO: is this not matching prompts?
             self.raw_connection.logfile.is_feedback = True
             self.raw_connection.logfile.namespace = namespace
             index = self.raw_connection.expect(
