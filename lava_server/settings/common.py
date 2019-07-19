@@ -125,9 +125,6 @@ STATIC_ROOT = "/usr/share/lava-server/static"
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 MEDIA_ROOT = "/var/lib/lava-server/default/media/"
 
-# Absolute filesystem path to the directory that will hold archived files.
-ARCHIVE_ROOT = "/var/lib/lava-server/default/archive/"
-
 # LOG_SIZE_LIMIT in megabytes
 LOG_SIZE_LIMIT = 5
 
