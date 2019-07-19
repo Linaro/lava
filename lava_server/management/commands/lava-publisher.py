@@ -101,6 +101,12 @@ class Command(LAVADaemonCommand):
             "[INIT] Creating the publication socket at %s", settings.EVENT_SOCKET
         )
         self.pub = context.socket(zmq.PUB)
+        # Ask zmq to send heart beats
+        # See api.zeromq.org/4-2:zmq-setsockopt#toc17
+        self.pub.setsockopt(zmq.HEARTBEAT_IVL, 5000)
+        self.pub.setsockopt(zmq.HEARTBEAT_TIMEOUT, 15000)
+        self.pub.setsockopt(zmq.HEARTBEAT_TTL, 15000)
+        # bind
         self.pub.bind(settings.EVENT_SOCKET)
         # Create the additional PUSH sockets
         if settings.EVENT_ADDITIONAL_SOCKETS:
@@ -111,6 +117,12 @@ class Command(LAVADaemonCommand):
             sock = context.socket(zmq.PUSH)
             # Allow zmq to keep 10000 pending messages in each queue
             sock.setsockopt(zmq.SNDHWM, 10000)
+            # Ask zmq to send heart beats
+            # See api.zeromq.org/4-2:zmq-setsockopt#toc17
+            self.pub.setsockopt(zmq.HEARTBEAT_IVL, 5000)
+            self.pub.setsockopt(zmq.HEARTBEAT_TIMEOUT, 15000)
+            self.pub.setsockopt(zmq.HEARTBEAT_TTL, 15000)
+            # connect
             sock.connect(url)
             self.additional_sockets.append(sock)
 
