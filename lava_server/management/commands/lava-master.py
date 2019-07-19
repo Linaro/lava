@@ -666,6 +666,7 @@ class Command(LAVADaemonCommand):
         self.controler.setsockopt(zmq.ROUTER_HANDOVER, 1)
         self.controler.bind(options["master_socket"])
 
+        # Set the topic and connect
         self.event_socket.setsockopt(zmq.SUBSCRIBE, b(settings.EVENT_TOPIC))
         self.event_socket.connect(options["event_url"])
 
@@ -734,6 +735,7 @@ class Command(LAVADaemonCommand):
 
                 # Events socket
                 if sockets.get(self.event_socket) == zmq.POLLIN:
+                    self.logger.info("[EVENT] handling events")
                     while self.read_event_socket():  # Unqueue all pending messages
                         pass
                     # Wait for the next iteration to handle the event.
@@ -747,7 +749,7 @@ class Command(LAVADaemonCommand):
                 # Inotify socket
                 if sockets.get(self.inotify_fd) == zmq.POLLIN:
                     os.read(self.inotify_fd, 4096)
-                    self.logger.debug(
+                    self.logger.info(
                         "[AUTH] Reloading certificates from %s", options["slaves_certs"]
                     )
                     self.auth.configure_curve(
