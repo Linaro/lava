@@ -105,7 +105,7 @@ def expire_user_action(
 expire_user_action.short_description = "Expire user account"
 
 
-class UserAdmin(UserAdmin):
+class CustomUserAdmin(UserAdmin):
     """
     Defines the override class for DefaultOwnerInline
     """
@@ -119,7 +119,7 @@ class UserAdmin(UserAdmin):
 
 #  Setup the override in the django admin interface at startup.
 admin.site.unregister(User)
-admin.site.register(User, UserAdmin)
+admin.site.register(User, CustomUserAdmin)
 
 
 def cancel_action(modeladmin, request, queryset):  # pylint: disable=unused-argument
