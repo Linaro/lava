@@ -48,7 +48,7 @@ class Removable(Deployment):
     """
 
     compatibility = 1
-    name = "removeable"
+    name = "removable"
 
     def __init__(self, parent, parameters):
         super().__init__(parent)
