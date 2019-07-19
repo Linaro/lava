@@ -27,10 +27,12 @@ from lava_dispatcher.actions.deploy.download import (
     DownloaderAction,
     QCowConversionAction,
 )
-from lava_dispatcher.actions.deploy.apply_overlay import ApplyOverlayGuest
+from lava_dispatcher.actions.deploy.apply_overlay import (
+    ApplyOverlayGuest,
+    ApplyOverlayTftp,
+)
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
-from lava_dispatcher.actions.deploy.apply_overlay import ApplyOverlayTftp
 from lava_dispatcher.utils.compression import untar_file
 
 # pylint: disable=too-many-instance-attributes
