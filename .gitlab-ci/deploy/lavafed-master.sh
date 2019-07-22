@@ -9,11 +9,7 @@ else
   set -x
 
   # Check if the variables are defined
-  if [ -z "$LAVAFED_PATH" ]
-  then
-    echo "LAVAFED_PATH is empty"
-    exit 1
-  elif [ -z "$LAVAFED_CONTAINER_NAME" ]
+  if [ -z "$LAVAFED_CONTAINER_NAME" ]
   then
     echo "LAVAFED_CONTAINER_NAME is empty"
     exit 1
@@ -47,17 +43,17 @@ else
     docker container rm "$LAVAFED_CONTAINER_NAME"
   fi
 
-  cd "$LAVAFED_PATH"
   docker run --name "$LAVAFED_CONTAINER_NAME" -d \
       --restart always \
+      --add-host "postgresql:172.17.0.1" \
       -p 9000:80 -p 6500:5500 -p 6555:5555 -p 6556:5556 \
-      -v "/home/lavafed/lava-master/certificates.d/:/etc/lava-dispatcher/certificates.d/" \
-      -v "/home/lavafed/lava-master/instance.conf:/etc/lava-server/instance.conf" \
-      -v "/home/lavafed/lava-master/lava-logs:/etc/lava-server/lava-logs" \
-      -v "/home/lavafed/lava-master/lava-master:/etc/lava-server/lava-master" \
-      -v "/home/lavafed/lava-master/lava-server.conf:/etc/apache2/sites-enabled/lava-server.conf" \
-      -v "/home/lavafed/lava-master/settings.conf:/etc/lava-server/settings.conf" \
-      -v "lavafed-master-db:/var/lib/postgresql/9.6/main/" \
+      -v "/etc/lavafed/lava-dispatcher/certificates.d/:/etc/lava-dispatcher/certificates.d/" \
+      -v "/etc/lavafed/lava-server/instance.conf:/etc/lava-server/instance.conf" \
+      -v "/etc/lavafed/lava-server/lava-logs:/etc/lava-server/lava-logs" \
+      -v "/etc/lavafed/lava-server/lava-master:/etc/lava-server/lava-master" \
+      -v "/etc/lavafed/lava-server/lava-server.conf:/etc/apache2/sites-enabled/lava-server.conf" \
+      -v "/etc/lavafed/lava-server/settings.conf:/etc/lava-server/settings.conf" \
       -v "lavafed-master-jobs:/var/lib/lava-server/default/media/" \
+      -e SERVICES="apache2 lava-logs lava-master lava-publisher gunicorn" \
       "$IMAGE_TAG"
 fi
