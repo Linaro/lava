@@ -494,6 +494,19 @@ posting your updated list.
 
 .. seealso:: https://docs.djangoproject.com/en/1.11/ref/settings/#std:setting-DISALLOWED_USER_AGENTS
 
+
+.. _tracking_errors:
+
+Tracking errors
+===============
+
+In order to track server errors, admins can enable `sentry <https://sentry.io>`_ error tacking.
+In ``/etc/lava-server/settings.conf`` add::
+
+    "SENTRY_DSN": "https://<public_key>@<server>/<project_id>"
+
+When any of the services is crashing, an error will be recorded along with some metadata.
+
 Configuring default table length
 ================================
 

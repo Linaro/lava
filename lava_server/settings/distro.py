@@ -178,3 +178,10 @@ LOGGING = {
         },
     },
 }
+
+# Setup sentry if needed
+if "SENTRY_DSN" in globals():
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+
+    sentry_sdk.init(dsn=globals()["SENTRY_DSN"], integrations=[DjangoIntegration()])
