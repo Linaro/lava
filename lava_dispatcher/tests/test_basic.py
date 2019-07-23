@@ -172,8 +172,8 @@ class Factory:
             os.path.dirname(__file__),
             "..",
             "..",
-            "lava_scheduler_app",
-            "tests",
+            "etc",
+            "dispatcher-config",
             "device-types",
         )
     )
