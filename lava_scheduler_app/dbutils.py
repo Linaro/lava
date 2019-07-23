@@ -33,6 +33,7 @@ import json
 import logging
 from nose.tools import nottest
 
+from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models import Q, Case, When, IntegerField, Sum
 from django.contrib.auth.models import User
@@ -263,8 +264,7 @@ def load_devicetype_template(device_type_name, raw=False):
     :param raw: if True, return the raw yaml
     :return: None or a dictionary of the device type template.
     """
-    path = os.path.dirname(Device.CONFIG_PATH)
-    type_loader = jinja2.FileSystemLoader([os.path.join(path, "device-types")])
+    type_loader = jinja2.FileSystemLoader([settings.DEVICE_TYPES_PATH])
     env = jinja2.Environment(  # nosec - YAML, not HTML, no XSS scope.
         loader=jinja2.ChoiceLoader([type_loader]), trim_blocks=True, autoescape=False
     )

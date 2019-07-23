@@ -19,7 +19,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
-import os
 from datetime import timedelta
 
 from django.contrib.auth.models import User
@@ -46,17 +45,6 @@ actions: []
 
 class TestHealthCheckScheduling(TestCase):
     def setUp(self):
-        Device.CONFIG_PATH = os.path.abspath(
-            os.path.join(
-                os.path.dirname(__file__),
-                "..",
-                "..",
-                "lava_scheduler_app",
-                "tests",
-                "devices",
-            )
-        )
-
         self.worker01 = Worker.objects.create(
             hostname="worker-01", state=Worker.STATE_ONLINE
         )
@@ -374,16 +362,6 @@ class TestHealthCheckScheduling(TestCase):
 
 class TestVisibility(TestCase):
     def setUp(self):
-        Device.CONFIG_PATH = os.path.abspath(
-            os.path.join(
-                os.path.dirname(__file__),
-                "..",
-                "..",
-                "lava_scheduler_app",
-                "tests",
-                "devices",
-            )
-        )
         self.worker01 = Worker.objects.create(
             hostname="worker-01", state=Worker.STATE_ONLINE
         )
@@ -541,16 +519,6 @@ actions: []
 
 class TestPriorities(TestCase):
     def setUp(self):
-        Device.CONFIG_PATH = os.path.abspath(
-            os.path.join(
-                os.path.dirname(__file__),
-                "..",
-                "..",
-                "lava_scheduler_app",
-                "tests",
-                "devices",
-            )
-        )
         self.worker01 = Worker.objects.create(
             hostname="worker-01", state=Worker.STATE_ONLINE
         )

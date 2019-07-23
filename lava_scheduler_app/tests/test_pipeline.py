@@ -49,9 +49,6 @@ class YamlFactory(ModelFactory):
 
     def __init__(self):
         super().__init__()
-        Device.CONFIG_PATH = os.path.join(
-            os.getcwd(), "lava_scheduler_app", "tests", "devices"
-        )
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
         logger = logging.getLogger("unittests")
         logger.disabled = True
@@ -585,7 +582,6 @@ class TestExtendsSubmit(TestCaseWithFactory):
 
     def test_health_checks_extends(self):
         device1 = Device.objects.get(hostname="juno-r2-01")
-        self.assertIsNotNone(Device.CONFIG_PATH)
         self.assertIsNotNone(device1.load_configuration(output_format="raw"))
         self.assertEqual("juno", device1.get_extends())
         self.assertIsNotNone(device1.HEALTH_CHECK_PATH)

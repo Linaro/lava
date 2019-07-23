@@ -8,10 +8,3 @@ def suite():
     return unittest.TestLoader().discover(
         "lava_results_app.tests", pattern="*.py", top_level_dir="lava_results_app"
     )
-
-
-Device.CONFIG_PATH = os.path.abspath(
-    os.path.join(
-        os.path.dirname(__file__), "..", "..", "lava_scheduler_app", "tests", "devices"
-    )
-)

@@ -471,9 +471,6 @@ class Device(RestrictedResource):
     A device that we can run tests on.
     """
 
-    CONFIG_PATH = "/etc/lava-server/dispatcher-config/devices"
-    HEALTH_CHECK_PATH = "/etc/lava-server/dispatcher-config/health-checks"
-
     hostname = models.CharField(
         verbose_name=_("Hostname"),
         max_length=200,
@@ -812,7 +809,8 @@ class Device(RestrictedResource):
         if output_format == "raw":
             try:
                 with open(
-                    os.path.join(Device.CONFIG_PATH, "%s.jinja2" % self.hostname), "r"
+                    os.path.join(settings.DEVICES_PATH, "%s.jinja2" % self.hostname),
+                    "r",
                 ) as f_in:
                     return f_in.read()
             except OSError:
@@ -822,10 +820,7 @@ class Device(RestrictedResource):
         env = jinja2.Environment(  # nosec - YAML, not HTML, no XSS scope.
             autoescape=False,
             loader=jinja2.FileSystemLoader(
-                [
-                    Device.CONFIG_PATH,
-                    os.path.join(os.path.dirname(Device.CONFIG_PATH), "device-types"),
-                ]
+                [settings.DEVICES_PATH, settings.DEVICE_TYPES_PATH]
             ),
             trim_blocks=True,
         )
@@ -875,7 +870,7 @@ class Device(RestrictedResource):
     def save_configuration(self, data):
         try:
             with open(
-                os.path.join(self.CONFIG_PATH, "%s.jinja2" % self.hostname), "w"
+                os.path.join(settings.DEVICES_PATH, "%s.jinja2" % self.hostname), "w"
             ) as f_out:
                 f_out.write(data)
             return True
@@ -914,10 +909,10 @@ class Device(RestrictedResource):
         if not extends:
             return None
 
-        filename = os.path.join(Device.HEALTH_CHECK_PATH, "%s.yaml" % extends)
+        filename = os.path.join(settings.HEALTH_CHECKS_PATH, "%s.yaml" % extends)
         # Try if health check file is having a .yml extension
         if not os.path.exists(filename):
-            filename = os.path.join(Device.HEALTH_CHECK_PATH, "%s.yml" % extends)
+            filename = os.path.join(settings.HEALTH_CHECKS_PATH, "%s.yml" % extends)
         try:
             with open(filename, "r") as f_in:
                 return f_in.read()

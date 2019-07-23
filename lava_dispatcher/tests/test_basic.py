@@ -178,21 +178,20 @@ class Factory:
         logger.propagate = False
         self.debug = False
 
-    CONFIG_PATH = os.path.abspath(
+    DEVICE_TYPES_PATH = os.path.abspath(
         os.path.join(
             os.path.dirname(__file__),
             "..",
             "..",
             "lava_scheduler_app",
             "tests",
-            "devices",
+            "device-types",
         )
     )
 
     def prepare_jinja_template(self, hostname, jinja_data):
         string_loader = jinja2.DictLoader({"%s.jinja2" % hostname: jinja_data})
-        path = os.path.dirname(self.CONFIG_PATH)
-        type_loader = jinja2.FileSystemLoader([os.path.join(path, "device-types")])
+        type_loader = jinja2.FileSystemLoader([self.DEVICE_TYPES_PATH])
         env = jinja2.Environment(  # nosec - YAML, not HTML, no XSS scope.
             loader=jinja2.ChoiceLoader([string_loader, type_loader]),
             trim_blocks=True,

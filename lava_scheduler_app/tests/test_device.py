@@ -4,6 +4,8 @@ import os
 import yaml
 import jinja2
 import logging
+
+from django.conf import settings
 from django.db.models import Q
 from lava_scheduler_app.models import Device, DeviceType
 from lava_scheduler_app.dbutils import (
@@ -23,17 +25,6 @@ from django.contrib.auth.models import User
 class ModelFactory:
     def __init__(self):
         self._int = 0
-
-        Device.CONFIG_PATH = os.path.abspath(
-            os.path.join(
-                os.path.dirname(__file__),
-                "..",
-                "..",
-                "lava_scheduler_app",
-                "tests",
-                "devices",
-            )
-        )
 
     def getUniqueInteger(self):
         self._int += 1
@@ -96,7 +87,6 @@ class DeviceTest(TestCaseWithFactory):
 class DeviceTypeTest(TestCaseWithFactory):
     def setUp(self):
         super().setUp()
-        self.types_dir = os.path.join(Device.CONFIG_PATH, "..", "device-types")
         self.basedir = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 
     def tearDown(self):
@@ -119,17 +109,14 @@ class DeviceTypeTest(TestCaseWithFactory):
         """
         Ensure each template renders valid YAML
         """
-        jinja2_path = os.path.dirname(Device.CONFIG_PATH)
-        type_loader = jinja2.FileSystemLoader(
-            [os.path.join(jinja2_path, "device-types")]
-        )
+        type_loader = jinja2.FileSystemLoader([settings.DEVICE_TYPES_PATH])
         env = jinja2.Environment(  # nosec - YAML, not HTML, no XSS scope.
             loader=jinja2.ChoiceLoader([type_loader]),
             trim_blocks=True,
             autoescape=False,
         )
 
-        for template_name in os.listdir(os.path.join(jinja2_path, "device-types")):
+        for template_name in os.listdir(settings.DEVICE_TYPES_PATH):
             if not template_name.endswith("jinja2"):
                 continue
             try:
@@ -164,7 +151,7 @@ class DeviceTypeTest(TestCaseWithFactory):
             ),
         )
         self.assertIsNotNone([d for d in Device.objects.filter(device_type=dt)])
-        self.assertTrue(Device.CONFIG_PATH.startswith(self.basedir))
+        self.assertTrue(settings.DEVICES_PATH.startswith(self.basedir))
         self.assertFalse(invalid_template(device.device_type))
 
     def test_bbb_valid_template(self):
@@ -176,16 +163,16 @@ class DeviceTypeTest(TestCaseWithFactory):
         device.save()
         device.refresh_from_db()
         self.assertIsNotNone([d for d in Device.objects.filter(device_type=dt)])
-        self.assertTrue(Device.CONFIG_PATH.startswith(self.basedir))
+        self.assertTrue(settings.DEVICES_PATH.startswith(self.basedir))
         found = False
-        for device_file in os.listdir(self.types_dir):
+        for device_file in os.listdir(settings.DEVICE_TYPES_PATH):
             if device_file == "%s.jinja2" % name:
                 found = True
                 break
         if not found:
             self.fail(
                 "Configuration error - %s.jinja2 should exist in %s"
-                % (name, self.types_dir)
+                % (name, settings.DEVICE_TYPES_PATH)
             )
         self.assertIsNotNone([device in Device.objects.filter(device_type=dt)])
         self.assertIsNotNone(device.load_configuration())
@@ -201,13 +188,13 @@ class DeviceTypeTest(TestCaseWithFactory):
         device.save()
         device.refresh_from_db()
         self.assertIsNotNone([d for d in Device.objects.filter(device_type=dt)])
-        self.assertTrue(Device.CONFIG_PATH.startswith(self.basedir))
+        self.assertTrue(settings.DEVICES_PATH.startswith(self.basedir))
         found = False
-        for device_file in os.listdir(self.types_dir):
+        for device_file in os.listdir(settings.DEVICE_TYPES_PATH):
             if device_file == "%s.jinja2" % name:
                 self.fail(
                     "Configuration error - %s.jinja2 should NOT exist in %s"
-                    % (name, self.types_dir)
+                    % (name, settings.DEVICE_TYPES_PATH)
                 )
         self.assertIsNone(device.load_configuration())
         self.assertIsNotNone([device in Device.objects.filter(device_type=dt)])
@@ -225,13 +212,13 @@ class DeviceTypeTest(TestCaseWithFactory):
         device.save()
         device.refresh_from_db()
         self.assertIsNotNone([d for d in Device.objects.filter(device_type=dt)])
-        for device_file in os.listdir(self.types_dir):
+        for device_file in os.listdir(settings.DEVICE_TYPES_PATH):
             if device_file == "juno-r2.jinja2":
                 self.fail(
                     "Configuration error - %s.jinja2 should NOT exist in %s"
-                    % (name, self.types_dir)
+                    % (name, settings.DEVICE_TYPES_PATH)
                 )
-        self.assertTrue(Device.CONFIG_PATH.startswith(self.basedir))
+        self.assertTrue(settings.DEVICES_PATH.startswith(self.basedir))
         self.assertEqual("juno-r2-01", device.hostname)
         self.assertIsNotNone(device.load_configuration())
         self.assertEqual(

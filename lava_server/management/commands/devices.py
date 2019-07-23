@@ -22,6 +22,7 @@ import contextlib
 import csv
 
 from django.core.management.base import BaseCommand, CommandError, CommandParser
+from django.conf import settings
 from django.db import transaction
 from django.contrib.auth.models import User, Group
 from lava_scheduler_app.models import Device, DeviceType, Tag, Worker
@@ -338,7 +339,7 @@ class Command(BaseCommand):
             raise CommandError("Device dictionary does not exist for %s" % original)
 
         if online:
-            target_dict = os.path.join(Device.CONFIG_PATH, "%s.jinja2" % target)
+            target_dict = os.path.join(settings.DEVICES_PATH, "%s.jinja2" % target)
             if not os.path.exists(target_dict):
                 raise CommandError(
                     "Refusing to copy %s to new device %s with health 'Good' -"

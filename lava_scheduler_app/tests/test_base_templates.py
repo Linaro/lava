@@ -4,6 +4,8 @@ import yaml
 import jinja2
 import unittest
 
+from django.conf import settings
+
 # pylint: disable=superfluous-parens,ungrouped-imports
 from lava_scheduler_app.schema import validate_device, SubmissionException
 
@@ -11,19 +13,11 @@ from lava_scheduler_app.schema import validate_device, SubmissionException
 # pylint: disable=too-many-nested-blocks
 
 
-CONFIG_PATH = os.path.abspath(
-    os.path.join(
-        os.path.dirname(__file__), "..", "..", "lava_scheduler_app", "tests", "devices"
-    )
-)
-
-
 def prepare_jinja_template(hostname, jinja_data, job_ctx=None, raw=True):
     if not job_ctx:
         job_ctx = {}
     string_loader = jinja2.DictLoader({"%s.jinja2" % hostname: jinja_data})
-    path = os.path.dirname(CONFIG_PATH)
-    type_loader = jinja2.FileSystemLoader([os.path.join(path, "device-types")])
+    type_loader = jinja2.FileSystemLoader([settings.DEVICE_TYPES_PATH])
     env = jinja2.Environment(  # nosec - YAML, not HTML, no XSS scope.
         loader=jinja2.ChoiceLoader([string_loader, type_loader]),
         trim_blocks=True,
@@ -92,13 +86,11 @@ class BaseTemplate:
 
 class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
     def test_all_templates(self):
-        path = os.path.dirname(CONFIG_PATH)
-        templates = glob.glob(os.path.join(path, "device-types", "*.jinja2"))
+        templates = glob.glob(os.path.join(settings.DEVICE_TYPES_PATH, "*.jinja2"))
         self.assertNotEqual([], templates)
 
         # keep this out of the loop, as creating the environment is slow.
-        path = os.path.dirname(CONFIG_PATH)
-        fs_loader = jinja2.FileSystemLoader([os.path.join(path, "device-types")])
+        fs_loader = jinja2.FileSystemLoader([settings.DEVICE_TYPES_PATH])
         env = jinja2.Environment(  # nosec - YAML, not HTML, no XSS scope.
             loader=fs_loader, trim_blocks=True, autoescape=False
         )
@@ -116,13 +108,11 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
                 self.fail("Template %s failed: %s" % (os.path.basename(template), exc))
 
     def test_all_template_connections(self):
-        path = os.path.dirname(CONFIG_PATH)
-        templates = glob.glob(os.path.join(path, "device-types", "*.jinja2"))
+        templates = glob.glob(os.path.join(settings.DEVICE_TYPES_PATH, "*.jinja2"))
         self.assertNotEqual([], templates)
 
         # keep this out of the loop, as creating the environment is slow.
-        path = os.path.dirname(CONFIG_PATH)
-        fs_loader = jinja2.FileSystemLoader([os.path.join(path, "device-types")])
+        fs_loader = jinja2.FileSystemLoader([settings.DEVICE_TYPES_PATH])
         env = jinja2.Environment(  # nosec - YAML, not HTML, no XSS scope.
             loader=fs_loader, trim_blocks=True, autoescape=False
         )
@@ -161,7 +151,6 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
             )
 
     def test_rendering(self):
-        self.assertFalse(CONFIG_PATH.startswith("/etc/"))
         with open(
             os.path.join(os.path.dirname(__file__), "devices", "db410c.jinja2")
         ) as hikey:
