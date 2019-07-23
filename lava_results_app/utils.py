@@ -49,6 +49,11 @@ class V2Loader(yaml.Loader):
     def remove_pipeline_module(self, suffix, node):
         if "lava_dispatcher.pipeline" in suffix:
             suffix = suffix.replace("lava_dispatcher.pipeline", "lava_dispatcher")
+
+        # Fix deployment_data
+        if "deployment_data_dict" in suffix:
+            return self.construct_mapping(node.value[0][1])
+
         return self.construct_python_object(suffix, node)
 
     def remove_pipeline_module_name(self, suffix, node):
