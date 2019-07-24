@@ -3,7 +3,6 @@ import os
 import pathlib
 import pytest
 import yaml
-import logging
 import unittest
 from nose.tools import nottest
 from io import BytesIO as StringIO
@@ -48,13 +47,6 @@ class TestTransport(xmlrpc.client.Transport):
 
 
 class TestSchedulerAPI(TestCaseWithFactory):  # pylint: disable=too-many-ancestors
-    def setUp(self):
-        super().setUp()
-        logger = logging.getLogger("lava-master")
-        logger.disabled = True
-        logger = logging.getLogger("lava_scheduler_app")
-        logger.disabled = True
-
     def server_proxy(self, user=None, password=None):  # pylint: disable=no-self-use
         return xmlrpc.client.ServerProxy(
             "http://localhost/RPC2/",

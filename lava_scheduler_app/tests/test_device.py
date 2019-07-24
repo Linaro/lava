@@ -3,7 +3,6 @@
 import os
 import yaml
 import jinja2
-import logging
 
 from django.conf import settings
 from django.db.models import Q
@@ -51,11 +50,6 @@ class TestCaseWithFactory(TestCase):
 
 
 class DeviceTest(TestCaseWithFactory):
-    def setUp(self):
-        super().setUp()
-        logger = logging.getLogger("lava-master")
-        logger.disabled = True
-
     def test_access_while_private(self):
         hidden = DeviceType(name="hidden", owners_only=True)
         device = Device(device_type=hidden, hostname="hidden1", is_public=False)

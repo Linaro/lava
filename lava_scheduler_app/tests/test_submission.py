@@ -1,9 +1,7 @@
-# pylint: disable=invalid-name,logging-not-lazy
+# pylint: disable=invalid-name
 import logging
-import sys
 import os
 import json
-import warnings
 import yaml
 
 from django.contrib.auth.models import Group, Permission, User
@@ -20,13 +18,6 @@ from lava_scheduler_app.models import (
 from lava_scheduler_app.schema import SubmissionException
 from lava_scheduler_app.scheduler import schedule_health_check
 from lava_common.exceptions import ConfigurationError
-
-LOGGER = logging.getLogger()
-LOGGER.level = logging.INFO  # change to DEBUG to see *all* output
-LOGGER.addHandler(logging.StreamHandler(sys.stdout))
-# filter out warnings from django sub systems like httpresponse
-warnings.filterwarnings("ignore", r"Using mimetype keyword argument is deprecated")
-warnings.filterwarnings("ignore", r"StrAndUnicode is deprecated")
 
 
 # pylint gets confused with TestCase

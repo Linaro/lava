@@ -21,7 +21,6 @@
 
 import os
 import yaml
-import logging
 import unittest
 from lava_common.exceptions import JobError, InfrastructureError
 from lava_common.timeout import Timeout
@@ -52,7 +51,6 @@ class TestConnection(StdoutTestCase):  # pylint: disable=too-many-public-methods
         factory = ConnectionFactory()
         self.job = factory.create_ssh_job("sample_jobs/ssh-deploy.yaml")
         self.guest_job = factory.create_bbb_job("sample_jobs/bbb-ssh-guest.yaml")
-        logging.getLogger("dispatcher").addHandler(logging.NullHandler())
 
     @unittest.skipIf(infrastructure_error("schroot"), "schroot not installed")
     def test_ssh_job(self):
@@ -444,7 +442,6 @@ class TestConsoleConnections(StdoutTestCase):
         factory = ConnectionFactory()
         self.job = factory.create_ssh_job("sample_jobs/ssh-deploy.yaml")
         self.guest_job = factory.create_bbb_job("sample_jobs/bbb-ssh-guest.yaml")
-        logging.getLogger("dispatcher").addHandler(logging.NullHandler())
 
     def test_device_commands(self):
         device_data = """

@@ -21,7 +21,6 @@
 
 import os
 import yaml
-import logging
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.actions.boot.barebox import BareboxAction
@@ -193,12 +192,6 @@ class TestBareboxAction(StdoutTestCase):  # pylint: disable=too-many-public-meth
 
 class TestKernelConversion(StdoutTestCase):
     def setUp(self):
-        logger = logging.getLogger("dispatcher")
-        logger.disabled = True
-        logger.propagate = False
-        logger = logging.getLogger("lava-dispatcher")
-        logger.disabled = True
-        logger.propagate = False
         self.device = NewDevice(
             os.path.join(os.path.dirname(__file__), "devices/bbb-01-barebox.yaml")
         )

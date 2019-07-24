@@ -1,8 +1,6 @@
 import os
-import sys
 import yaml
 import unittest
-import logging
 import tempfile
 
 # pylint: disable=superfluous-parens,ungrouped-imports
@@ -168,10 +166,6 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
         self.assertTrue(checked)
 
     def test_panda_template(self):
-        logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
-        logger = logging.getLogger("unittests")
-        logger.disabled = True
-        logger.propagate = False
         data = """{% extends 'panda.jinja2' %}
 {% set connection_command = 'telnet serial4 7012' %}
 {% set hard_reset_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command reboot --port 05' %}
@@ -322,14 +316,6 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
 
     @unittest.skipIf(infrastructure_error("lxc-info"), "lxc-info not installed")
     def test_panda_lxc_template(self):
-        logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
-        logger = logging.getLogger("unittests")
-        logger.disabled = True
-        logger.propagate = False
-        logger = logging.getLogger("dispatcher")
-        logging.disable(logging.DEBUG)
-        logger.disabled = True
-        logger.propagate = False
         data = """{% extends 'panda.jinja2' %}
 {% set power_off_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu15 --command off --port 07' %}
 {% set hard_reset_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu15 --command reboot --port 07' %}
@@ -348,8 +334,6 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
             job = parser.parse(sample_job_data, panda, 4577, None, "")
         os.close(fdesc)
         job.logger = DummyLogger()
-        job.logger.disabled = True
-        job.logger.propagate = False
         job.validate()
 
     def test_ethaddr(self):

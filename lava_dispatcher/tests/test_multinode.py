@@ -23,7 +23,6 @@ import os
 import yaml
 import uuid
 import json
-import logging
 from lava_common.constants import LAVA_MULTINODE_SYSTEM_TIMEOUT
 from lava_common.timeout import Timeout
 from lava_common.exceptions import TestError, JobError, InfrastructureError
@@ -373,8 +372,6 @@ class TestMultinode(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertTrue(ret == "completed")
 
     def test_client(self):
-        logger = logging.getLogger()
-        logger.disabled = True
         client = TestMultinode.TestClient(
             self.coord, self.client_job.parameters, self.job_id
         )

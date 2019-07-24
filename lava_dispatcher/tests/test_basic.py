@@ -24,7 +24,6 @@ import time
 import jinja2
 import voluptuous
 import unittest
-import logging
 import yaml
 
 from lava_dispatcher.action import Pipeline, Action
@@ -168,16 +167,6 @@ class Factory:
     of any database objects.
     """
 
-    def __init__(self):
-        logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
-        logger = logging.getLogger("unittests")
-        logger.disabled = True
-        logger.propagate = False
-        logger = logging.getLogger("dispatcher")
-        logger.disabled = True
-        logger.propagate = False
-        self.debug = False
-
     DEVICE_TYPES_PATH = os.path.abspath(
         os.path.join(
             os.path.dirname(__file__),
@@ -250,10 +239,9 @@ class Factory:
             job_ctx = job_data.get("context")
         (data, device_dict) = self.create_device(template, job_ctx)
         device = NewDevice(yaml.safe_load(data))
-        if self.debug:
-            print("####### Device configuration #######")
-            print(data)
-            print("#######")
+        print("####### Device configuration #######")
+        print(data)
+        print("#######")
         try:
             parser = JobParser()
             job = parser.parse(yaml.dump(job_data), device, 4999, None, "")
@@ -284,18 +272,16 @@ class Factory:
         }  # override to allow unit tests on all types of systems
         (data, device_dict) = self.create_device("kvm01.jinja2", job_ctx)
         device = NewDevice(yaml.safe_load(data))
-        if self.debug:
-            print("####### Device configuration #######")
-            print(data)
-            print("#######")
+        print("####### Device configuration #######")
+        print(data)
+        print("#######")
         self.validate_data("hi6220-hikey-01", device_dict)
         kvm_yaml = os.path.join(os.path.dirname(__file__), filename)
         parser = JobParser()
         job_data = ""
         with open(kvm_yaml) as sample_job_data:
             job_data = yaml.safe_load(sample_job_data.read())
-        if self.debug:
-            print("########## Test Job Submission validation #######")
+        print("########## Test Job Submission validation #######")
         if validate:
             validate_job(job_data, strict=False)
         try:

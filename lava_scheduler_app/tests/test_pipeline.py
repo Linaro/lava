@@ -1,9 +1,7 @@
 import os
-import sys
 import yaml
 import jinja2
 import unittest
-import logging
 import subprocess  # nosec unit test support
 from nose.tools import nottest
 from lava_scheduler_app.models import (
@@ -46,17 +44,6 @@ class YamlFactory(ModelFactory):
     The YAML **must** be valid for the current pipeline to be able to
     save a TestJob into the database. Hence qemu.yaml.
     """
-
-    def __init__(self):
-        super().__init__()
-        logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
-        logger = logging.getLogger("unittests")
-        logger.disabled = True
-        logger.propagate = False
-        logger = logging.getLogger("dispatcher")
-        logging.disable(logging.DEBUG)
-        logger.disabled = True
-        logger.propagate = False
 
     def make_device_type(self, name="qemu"):
 
@@ -571,14 +558,6 @@ class TestExtendsSubmit(TestCaseWithFactory):
             device_type=self.device_type, hostname="juno-r2-uboot-01"
         )
         self.factory.make_device(device_type=self.device_type, hostname="juno-r2-01")
-        logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
-        logger = logging.getLogger("lava_scheduler_app")
-        logger.disabled = True
-        logger.propagate = False
-        logger = logging.getLogger("lava-master")
-        logging.disable(logging.DEBUG)
-        logger.disabled = True
-        logger.propagate = False
 
     def test_health_checks_extends(self):
         device1 = Device.objects.get(hostname="juno-r2-01")
@@ -615,14 +594,6 @@ class TestYamlMultinode(TestCaseWithFactory):
     def setUp(self):
         super().setUp()
         self.factory = YamlFactory()
-        logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
-        logger = logging.getLogger("unittests")
-        logger.disabled = True
-        logger.propagate = False
-        logger = logging.getLogger("dispatcher")
-        logging.disable(logging.DEBUG)
-        logger.disabled = True
-        logger.propagate = False
 
     def tearDown(self):
         super().tearDown()

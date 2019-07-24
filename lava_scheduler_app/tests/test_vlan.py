@@ -1,6 +1,5 @@
 import os
 import yaml
-import logging
 import tempfile
 from lava_scheduler_app.utils import split_multinode_yaml
 from lava_scheduler_app.dbutils import match_vlan_interface
@@ -81,8 +80,6 @@ class TestVlandDevices(TestCaseWithFactory):
         super().setUp()
         self.factory = VlandFactory()
         self.factory.setUp()
-        logger = logging.getLogger("lava-master")
-        logger.disabled = True
 
     def test_match_devices_without_map(self):
         """
