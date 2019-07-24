@@ -1287,6 +1287,19 @@ def job_detail(request, pk):
             sections.append({action["section"]: action["level"]})
     default_section = "boot"  # to come from user profile later.
 
+    # Validate the job definition
+    validation_errors = ""
+    try:
+        job_def = (
+            job.multinode_definition if job.is_multinode else job.original_definition
+        )
+        validate(
+            yaml.safe_load(job_def),
+            extra_context_variables=settings.EXTRA_CONTEXT_VARIABLES,
+        )
+    except voluptuous.Invalid as exc:
+        validation_errors = str(exc)
+
     data = {
         "job": job,
         "show_cancel": job.can_cancel(request.user),
@@ -1311,6 +1324,7 @@ def job_detail(request, pk):
         "test_list": test_list,
         "job_tags": job.tags.all(),
         "size_limit": job.size_limit,
+        "validation_errors": validation_errors,
     }
 
     try:
