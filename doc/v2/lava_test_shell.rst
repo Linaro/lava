@@ -316,11 +316,6 @@ express that in the ``install`` section with:
 Adding Git/BZR Repositories
 ===========================
 
-.. warning:: The ``install`` element of Lava-Test Test Definition 1.0
-   is **DEPRECATED**. See :ref:`test_definition_portability`. Newly
-   written Lava-Test Test Definition 1.0 files should not use
-   ``install``.
-
 If the test needs code from a shared repository, the action can clone this
 data on your behalf with:
 
