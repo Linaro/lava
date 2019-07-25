@@ -652,6 +652,22 @@ The ``pyocd`` boot method takes no arguments or parameters.
     timeout:
       minutes: 10
 
+.. index:: boot method jlink
+
+.. _boot_method_jlink:
+
+jlink
+=====
+
+The ``jlink`` boot method takes no arguments or parameters.
+
+.. code-block:: yaml
+
+ - boot:
+    method: jlink
+    timeout:
+      minutes: 10
+
 .. index:: boot method console
 
 .. _boot_method_console:

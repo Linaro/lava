@@ -38,6 +38,7 @@ from lava_dispatcher.actions.boot.lxc import BootLxc
 from lava_dispatcher.actions.boot.minimal import Minimal
 from lava_dispatcher.actions.boot.openocd import OpenOCD
 from lava_dispatcher.actions.boot.pyocd import PyOCD
+from lava_dispatcher.actions.boot.jlink import JLink
 from lava_dispatcher.actions.boot.qemu import BootQEMU
 from lava_dispatcher.actions.boot.secondary import SecondaryShell
 from lava_dispatcher.actions.boot.ssh import SshLogin, Schroot

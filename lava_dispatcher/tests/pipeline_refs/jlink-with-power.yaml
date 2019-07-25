@@ -1,0 +1,29 @@
+- class: actions.deploy.image.DeployImagesAction
+  name: deployimages
+  pipeline:
+  - class: actions.deploy.download.DownloaderAction
+    name: download-retry
+    pipeline:
+    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
+- class: actions.boot.jlink.BootJLink
+  name: boot-jlink-image
+  pipeline:
+  - class: actions.boot.jlink.BootJLinkRetry
+    name: boot-jlink-image
+    pipeline:
+    - class: power.ResetDevice
+      name: reset-device
+      pipeline:
+      - {class: power.PDUReboot, name: pdu-reboot}
+    - {class: utils.udev.WaitDeviceBoardID, name: wait-device-boardid}
+    - {class: actions.boot.jlink.FlashJLinkAction, name: flash-jlink}
+    - {class: connections.serial.ConnectDevice, name: connect-device}
+- class: actions.test.monitor.TestMonitorRetry
+  name: lava-test-monitor-retry
+  pipeline:
+  - {class: actions.test.monitor.TestMonitorAction, name: lava-test-monitor}
+- class: power.FinalizeAction
+  name: finalize
+  pipeline:
+  - {class: power.PowerOff, name: power-off}
+  - {class: power.ReadFeedback, name: read-feedback}
