@@ -189,7 +189,7 @@ USE_DEBUG_TOOLBAR = False
 # Configuration directories
 DEVICES_PATH = "/etc/lava-server/dispatcher-config/devices"
 DEVICE_TYPES_PATH = "/etc/lava-server/dispatcher-config/device-types"
-HEALTH_CHECK_PATH = "/etc/lava-server/dispatcher-config/health-checks"
+HEALTH_CHECKS_PATH = "/etc/lava-server/dispatcher-config/health-checks"
 
 # LDAP support
 AUTH_LDAP_SERVER_URI = None
