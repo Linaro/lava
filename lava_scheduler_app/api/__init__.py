@@ -1177,7 +1177,9 @@ class SchedulerAPI(ExposedAPI):
                 )
         else:
             raise xmlrpc.client.Fault(
-                403, "Permission denied for user to put %s into online mode." % hostname
+                403,
+                "Permission denied for user to store the configuration for %s on disk."
+                % hostname,
             )
 
         return "Device dictionary updated for %s" % hostname
@@ -1218,7 +1220,9 @@ class SchedulerAPI(ExposedAPI):
                 )
         else:
             raise xmlrpc.client.Fault(
-                403, "Permission denied for user to put %s into online mode." % hostname
+                403,
+                "Permission denied for user to retrieve device dictionary for '%s'."
+                % hostname,
             )
 
         return xmlrpc.client.Binary(device_dict.encode("UTF-8"))
