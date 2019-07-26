@@ -366,7 +366,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         # If the remote server uses "Content-Encoding: gzip", this calculation will be wrong
         # because requests will decompress the file on the fly, creating a larger file than
         # LAVA expects.
-        if self.size:
+        if self.size > 0:
             if self.size != downloaded_size:
                 raise InfrastructureError(
                     "Download finished (%i bytes) but was not expected size (%i bytes), check your networking."
