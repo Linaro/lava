@@ -597,9 +597,6 @@ class Device(RestrictedObject):
         on_delete=models.SET_NULL,
     )
 
-    def clean(self):
-        pass
-
     def __str__(self):
         return "%s (%s, health %s)" % (
             self.hostname,
