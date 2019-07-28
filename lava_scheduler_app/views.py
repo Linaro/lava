@@ -303,7 +303,7 @@ class IndexTableView(JobTableView):
 class DeviceTableView(JobTableView):
     def get_queryset(self):
         return (
-            Device.objects.select_related("device_type")
+            Device.objects.select_related("device_type", "worker_host")
             .prefetch_related("tags")
             .visible_by_user(self.request.user)
             .order_by("hostname")

@@ -277,6 +277,13 @@ class DeviceAdmin(admin.ModelAdmin):
     )
     raw_id_fields = ["last_health_report_job"]
 
+    def get_queryset(self, request):
+        return (
+            super(DeviceAdmin, self)
+            .get_queryset(request)
+            .select_related("worker_host", "device_type")
+        )
+
     def has_health_check(self, obj):
         return bool(obj.get_health_check())
 
@@ -420,6 +427,13 @@ disable_health_check_action.short_description = "disable health checks"
 
 
 class DeviceTypeAdmin(admin.ModelAdmin):
+    def get_queryset(self, request):
+        return (
+            super(DeviceTypeAdmin, self)
+            .get_queryset(request)
+            .select_related("architecture", "bits", "processor")
+        )
+
     def architecture_name(self, obj):
         if obj.architecture:
             return obj.architecture
