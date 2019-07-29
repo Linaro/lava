@@ -1,3 +1,78 @@
+lava (2019.07-1) unstable; urgency=medium
+
+  * LAVA Software 2019.07 release
+    5cbec974a download: fix wrong check when size is unknown
+    ea9fe6bfb Fix typo in the settings
+    5e608d865 docker: the pypi package is called sentry-sdk
+    669455f10 doc: remove deprecation warning for git-deps and
+              bzr-deps
+    0c0873969 lava-server-base: install sentry_sdk from pip
+    639ea3abb Fix crash when loading old description.yaml
+    bc0988955 Allow to use sentry in lava-server
+    576d4fe44 job: show schema validation errors on the main page
+    67b088bac tests: remove hacks that are not of any use with pytest
+    2e9909940 Move configuration path to settings module
+    5494b954a Fix OpenOCD tests after bf1291d937
+    f2cc34534 lava-master: log when receiving events
+    70971ab46 Add heartbeat to lava-publisher sockets
+    8010c5451 CI: use the host postgresql database
+    981b6f142 Fix removable action name
+    553ede032 settings: removed unused variable "ARCHIVE_ROOT"
+    f90d8d688 CI: remove logger override
+    08895dd3d Remove double imports
+    4d5b38ca5 admin: fix class name clash
+    5c9f83466 device-types: Add sun8i-a33-olinuxino and
+              sun50i-h6-orangepi-one-plus
+    6b389df71 Remove juno-r1-uboot and juno-r2-uboot
+    2c5aa9b7d Port to Django 2.2
+    bf1291d93 add support for multiple boards of same type in OpenOCD
+              boot method
+    a67f53761 Most of the source code of lava is under the AGPLv3
+    acb42e6f7 Add missing License headers
+    febc6a304 xmlrpc: test the device-type and aliases api
+    ded2bfc46 xmlrpc: fix crashes and clean the code
+    4746ba5f1 Apply new black code format
+    40afe0bb3 Results: remove non-working code
+    17a611d97 lxc: remove the lxc directory when cleaning
+    25ff9a7ed Use FileNotFoundError whene appropriate
+    1613170e4 cmsis_dap: use run_cmd and raise the right error
+    6b5698a2d Fix AutoLoginAction boot detection
+    2da3cc5da AuthToken: improve query and simplify code
+    3db6051d3 cmsis_dap: Explicitly perform filesystem sync before
+              umount.
+    47a2d10d8 Move SecondaryShell into a specific module
+    082bdeb88 CI: remove hack for unit tests
+    8459fd3af Enable LZMA compression for arm64 kernel Image with
+              Depthcharge
+    29df0a120 Add new cc13x2-launchpad device type
+    bb87b331d ci-run: .gitlab-ci/analyze/codestyle.sh has been removed
+    96b2edc2a CI: use the new lava/ci-images/amd64/analyze image
+    d6470bae3 CI: check the dockerfiles
+    5430c8807 Revert "Add user setting for default table length"
+    d4707dda2 xmlrpc: improve testing
+    21a18dbac release: add new docker registry names
+    23cca4bec use FileResponse instead of StreamingHttpResponse
+    711400f0d Add user setting for default table length
+    fcbd050c8 Use base_kernel_args for Depthcharge device types
+    86ea620b9 docker: no need to clone as we are now part of the
+              lava sources
+    8b7397e7b CI: build and push base images on the fly
+    b6ce0e371 Move everything into docker/ before the merge
+    311585ca4 CI: automatically restart lavafed-master container
+    a8d47b415 device-types: allow to use secondary ssh connection
+              with docker
+    58d250b5f lava-server: check file permissions before starting
+              gunicorn or lava-logs
+    563fec3a3 When starting gunicorn, specify worker-tmp-dir
+    4ac8c7039 results: fix intermitent crash
+    b1cd40c5d Fix entrypoint.d handling
+    af81e38b2 CI: fix bandit false positives
+    a943bd82e CI: fix bandit false positives
+    0beb0d7a2 Remove dead usb_device_wait
+    c4700505c Update the claimed copyright year for our docs
+
+ -- Steve McIntyre <93sam@debian.org>  Mon, 29 Jul 2019 13:43:14 +0000
+
 lava (2019.06-1) unstable; urgency=medium
 
   * LAVA Software 2019.06 release
