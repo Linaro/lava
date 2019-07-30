@@ -61,11 +61,6 @@ class TestCaseWithFactory(TestCase):
 
 
 class DeviceTest(TestCaseWithFactory):
-    def setUp(self):
-        super().setUp()
-        logger = logging.getLogger("lava-master")
-        logger.disabled = True
-
     def test_device_permissions_test(self):
         dt = DeviceType(name="type1")
         dt.save()

@@ -17,7 +17,6 @@ from lava_scheduler_app.models import (
 )
 
 
-
 # pylint gets confused with TestCase
 # pylint: disable=no-self-use,invalid-name,too-many-ancestors,too-many-public-methods
 
