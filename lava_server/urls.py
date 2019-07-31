@@ -17,8 +17,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-import contextlib
-
 from django.views.generic import TemplateView
 from django.conf import settings
 from django.conf.urls import include, url
@@ -142,8 +140,3 @@ if settings.USE_DEBUG_TOOLBAR:
     import debug_toolbar
 
     urlpatterns.append(url(r"^__debug__/", include(debug_toolbar.urls)))
-
-with contextlib.suppress(ImportError):
-    from hijack.urls import urlpatterns as hijack_urlpatterns
-
-    urlpatterns.append(url(r"^hijack/", include(hijack_urlpatterns)))

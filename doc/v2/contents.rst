@@ -182,7 +182,6 @@ LAVA administration guide
    ipmi-pxe-deploy
    ipxe
    proxy
-   hijack-user
    vland-admin
    pipeline-debug
    docker-admin

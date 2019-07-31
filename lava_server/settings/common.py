@@ -136,7 +136,7 @@ TESTCASE_COUNT_LIMIT = 10000
 LOGIN_REDIRECT_URL = "/"
 
 # Automatically install some applications
-for module_name in ["devserver", "django_extensions", "django_openid_auth", "hijack"]:
+for module_name in ["devserver", "django_extensions", "django_openid_auth"]:
     with contextlib.suppress(ImportError):
         imp.find_module(module_name)
         INSTALLED_APPS.append(module_name)
