@@ -832,7 +832,6 @@ class ManagersTest(TestCaseWithFactory):
             {self.qemu_job1, self.bbb_job1, self.bbb_job2},
         )
 
-
     def test_testjob_manager_viewing_groups(self):
 
         GroupDeviceTypePermission.objects.assign_perm(

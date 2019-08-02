@@ -277,13 +277,10 @@ class ModelPermissionsTest(TestCaseWithFactory):
         self.assertTrue(self.bbb_job1.can_view(AnonymousUser()))
 
     def test_testjob_can_view(self):
-
-        print(self.qemu_job1.viewing_groups.all())
         self.assertTrue(self.qemu_job1.can_view(self.user1))
         self.assertTrue(self.qemu_job1.can_view(self.user2))
 
     def test_testjob_can_view_public(self):
-
         GroupDeviceTypePermission.objects.assign_perm(
             DeviceType.VIEW_PERMISSION, self.group1, self.qemu_device_type
         )
@@ -300,6 +297,7 @@ class ModelPermissionsTest(TestCaseWithFactory):
         self.qemu_job1.viewing_groups.add(self.group2)
         self.assertFalse(self.qemu_job1.can_view(self.user1))
         self.assertTrue(self.qemu_job1.can_view(self.user2))
+        self.assertTrue(self.qemu_job1.can_view(self.admin_user))
 
     def test_testjob_can_view_viewing_groups_multiple_groups(self):
         self.qemu_job1.viewing_groups.add(self.group1, self.group2)
@@ -307,6 +305,7 @@ class ModelPermissionsTest(TestCaseWithFactory):
         self.assertFalse(self.qemu_job1.can_view(self.user2))
         self.user3.groups.add(self.group1, self.group2)
         self.assertTrue(self.qemu_job1.can_view(self.user3))
+        self.assertTrue(self.qemu_job1.can_view(self.admin_user))
 
     def test_testjob_can_view_viewing_groups_with_perm_restrictions(self):
 

@@ -359,17 +359,6 @@ class DeviceAdmin(admin.ModelAdmin):
     inlines = [GroupDevicePermissionInline]
 
 
-class VisibilityForm(forms.ModelForm):
-    def clean_viewing_groups(self):
-        viewing_groups = self.cleaned_data["viewing_groups"]
-        is_public = self.cleaned_data["is_public"]
-        if viewing_groups and is_public:
-            raise ValidationError(
-                "Public test jobs cannot have any viewing groups assigned."
-            )
-        return self.cleaned_data["viewing_groups"]
-
-
 class TestJobAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         return (
@@ -388,11 +377,10 @@ class TestJobAdmin(admin.ModelAdmin):
         return settings.ALLOW_ADMIN_DELETE
 
     requested_device_type_name.short_description = "Request device type"
-    form = VisibilityForm
     actions = [cancel_action, fail_action]
     list_filter = ("state", RequestedDeviceTypeFilter, ActualDeviceFilter)
     fieldsets = (
-        ("Owner", {"fields": ("submitter", "viewing_groups")}),
+        ("Owner", {"fields": ("submitter", "viewing_groups", "is_public")}),
         ("Request", {"fields": ("requested_device_type", "priority", "health_check")}),
         (
             "Advanced properties",

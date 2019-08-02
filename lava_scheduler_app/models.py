@@ -1765,7 +1765,7 @@ class TestJob(models.Model):
             return True
         if self.is_public:
             return True
-        if self.viewing_groups.exists():
+        if self.viewing_groups.exists() and not user.is_superuser:
             # If viewing_groups is set, user must belong to all the specified
             # groups.
             return set(self.viewing_groups.all()).issubset(set(user.groups.all()))

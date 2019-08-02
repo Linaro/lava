@@ -225,7 +225,7 @@ class RestrictedTestJobQuerySet(RestrictedObjectQuerySet):
             # unrestricted and if yes, we check for accessibility of either
             # actual_device or requested_device_type (depending on whether the
             # job is scheduled or not.
-            filters = (Q(num_viewing_groups=0) & (
+            filters = Q(num_viewing_groups=0) & (
                 (
                     Q(actual_device__isnull=False)
                     & Q(actual_device__in=accessible_devices)
@@ -234,7 +234,7 @@ class RestrictedTestJobQuerySet(RestrictedObjectQuerySet):
                     Q(actual_device__isnull=True)
                     & Q(requested_device_type__in=accessible_device_types)
                 )
-            ))
+            )
 
             # Add is_public and viewing_groups filter.
             if perm == self.model.VIEW_PERMISSION:
@@ -244,9 +244,9 @@ class RestrictedTestJobQuerySet(RestrictedObjectQuerySet):
                 nonuser_groups = Group.objects.exclude(
                     pk__in=[g.id for g in user.groups.all()]
                 )
-                filters |= (~Q(num_viewing_groups=0) & ~Q(
+                filters |= ~Q(num_viewing_groups=0) & ~Q(
                     viewing_groups__in=nonuser_groups
-                ))
+                )
 
             return self.annotate(num_viewing_groups=Count("viewing_groups")).filter(
                 filters
