@@ -212,7 +212,7 @@ class LavaTable(tables.Table):
         self.request = kwargs.pop("request", None)
         if (
             self.request
-            and self.request.user.is_authenticated()
+            and self.request.user.is_authenticated
             and hasattr(self.request.user, "extendeduser")
             and self.request.user.extendeduser.table_length
         ):
