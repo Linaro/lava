@@ -3,5 +3,5 @@
 {% set efi_grub = True %}
 {% set action_timeout_bootloader_interrupt = 300 %}
 {% set efinet = True %}
-{% set extra_nfsroot_args = ",vers=3" %}
+{% set extra_nfsroot_args = ",vers=3" + extra_nfsroot_args|default('') %}
 {% set console_device = False %}

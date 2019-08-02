@@ -2,7 +2,7 @@
 {# device_type = "jetson-tk1" #}
 {% extends 'tegra124-common.jinja2' %}
 
-{% set extra_nfsroot_args = ",vers=3" %}
+{% set extra_nfsroot_args = ",vers=3" + extra_nfsroot_args|default('') %}
 {% set bootloader_prompt = bootloader_prompt|default('Jetson TK1') %}
 
 {% set base_ip_args = 'ip=:::::eth0:dhcp' %}

@@ -3,4 +3,4 @@
 {% set efi_grub = True %}
 {% set boot_character_delay = boot_character_delay | default(100) %}
 {% set console_device = false %}
-{% set extra_nfsroot_args = ",vers=3" %}
+{% set extra_nfsroot_args = ",vers=3" + extra_nfsroot_args|default('') %}
