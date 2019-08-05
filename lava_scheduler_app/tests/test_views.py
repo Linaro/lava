@@ -312,10 +312,9 @@ def test_jobs(client, setup):
     ret = client.get(reverse("lava.scheduler.job.list"))
     assert ret.status_code == 200  # nosec
     assert ret.templates[0].name == "lava_scheduler_app/alljobs.html"  # nosec
-    assert len(ret.context["alljobs_table"].data) == 3  # nosec
-    assert ret.context["alljobs_table"].data[0].description == "test job 03"  # nosec
-    assert ret.context["alljobs_table"].data[1].description == "test job 02"  # nosec
-    assert ret.context["alljobs_table"].data[2].description == "test job 01"  # nosec
+    assert len(ret.context["alljobs_table"].data) == 2  # nosec
+    assert ret.context["alljobs_table"].data[0].description == "test job 02"  # nosec
+    assert ret.context["alljobs_table"].data[1].description == "test job 01"  # nosec
 
 
 @pytest.mark.django_db

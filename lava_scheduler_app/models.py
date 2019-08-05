@@ -1119,11 +1119,11 @@ def _create_pipeline_job(
     viewing_groups = []
     param = job_data["visibility"]
     if isinstance(param, str):
-        # Ignore all other cases, i.e. we will leave is_public as False.
-        # Those cases include 'personal' and 'group' visibility.
-        # We might want to deprecate group visibility in the future.
         if param == "public":
             is_public = True
+        else:
+            group, _ = Group.objects.get_or_create(name=user.username)
+            viewing_groups = [group]
     elif isinstance(param, dict):
         if "group" in param:
             viewing_groups = list(Group.objects.filter(name__in=param["group"]))
@@ -1763,17 +1763,15 @@ class TestJob(models.Model):
     def can_view(self, user):
         if user == self.submitter:
             return True
-        if self.is_public:
-            return True
         if self.viewing_groups.exists() and not user.is_superuser:
             # If viewing_groups is set, user must belong to all the specified
             # groups.
             return set(self.viewing_groups.all()).issubset(set(user.groups.all()))
-
-        if self.actual_device:
-            return self.actual_device.can_view(user)
-        elif self.requested_device_type.can_view(user):
-            return True
+        if self.is_public:
+            if self.actual_device:
+                return self.actual_device.can_view(user)
+            elif self.requested_device_type.can_view(user):
+                return True
 
         return False
 

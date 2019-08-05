@@ -101,10 +101,6 @@ class ManagersTest(TestCaseWithFactory):
         self.bbb_job2 = self.all_bbb_jobs[1]
         self.all_qemu_jobs = [self.qemu_job1, self.qemu_job2]
         self.all_jobs = self.all_qemu_jobs + self.all_bbb_jobs
-        # We're mostly testing group permissions so make them all private.
-        for job in self.all_jobs:
-            job.is_public = False
-            job.save()
 
     def tearDown(self):
         super().tearDown()
@@ -807,29 +803,38 @@ class ManagersTest(TestCaseWithFactory):
         # AnonymousUser can see also see all jobs which are not view
         # restricted.
         self.assertEqual(
-            set(TestJob.objects.all().visible_by_user(self.user2)),
+            set(TestJob.objects.all().visible_by_user(AnonymousUser())),
             {self.bbb_job1, self.bbb_job2},
         )
 
-    def test_testjob_manager_view_public(self):
+    def test_testjob_manager_view_private(self):
 
         GroupDeviceTypePermission.objects.assign_perm(
             DeviceType.VIEW_PERMISSION, self.group1, self.qemu_device_type
         )
-        self.qemu_job1.is_public = True
+        self.qemu_job1.is_public = False
         self.qemu_job1.save()
+
+        self.user1_job = TestJob.from_yaml_and_user(self.definition, self.user1)
+        self.user1_job.is_public = False
+        self.user1_job.save()
 
         # user2 should see only jobs which are not view restricted
         # and qemu_job1.
         self.assertEqual(
             set(TestJob.objects.all().visible_by_user(self.user2)),
-            {self.qemu_job1, self.bbb_job1, self.bbb_job2},
+            {self.bbb_job1, self.bbb_job2},
+        )
+        # user1 should see user1_job because he's a submitter.
+        self.assertEqual(
+            set(TestJob.objects.all().visible_by_user(self.user1)),
+            {self.qemu_job2, self.bbb_job1, self.bbb_job2, self.user1_job},
         )
         # AnonymousUser can see also see all jobs which are not view
         # restricted and qemu_job1.
         self.assertEqual(
-            set(TestJob.objects.all().visible_by_user(self.user2)),
-            {self.qemu_job1, self.bbb_job1, self.bbb_job2},
+            set(TestJob.objects.all().visible_by_user(AnonymousUser())),
+            {self.bbb_job1, self.bbb_job2},
         )
 
     def test_testjob_manager_viewing_groups(self):

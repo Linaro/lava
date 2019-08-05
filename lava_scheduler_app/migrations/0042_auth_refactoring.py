@@ -118,6 +118,10 @@ def forwards_func(apps, schema_editor):
             kwargs["permission"] = admin_permission
             GroupDevicePermission.objects.get_or_create(**kwargs)
 
+    for job in TestJob.objects.using(db_alias).filter(visibility=1):
+        group = Group.objects.using(db_alias).get(name=job.submitter.username)
+        job.viewing_groups.add(group)
+
 
 def noop(apps, schema_editor):
     pass

@@ -84,7 +84,7 @@ class ModelPermissionsTest(TestCaseWithFactory):
 
         self.all_devices = self.all_qemu_devices + self.all_bbb_devices
 
-        self.definition = self.factory.make_job_data_from_file("qemu-private.yaml")
+        self.definition = self.factory.make_job_data_from_file("qemu.yaml")
         # Create testjobs.
         self.qemu_job1 = TestJob.from_yaml_and_user(self.definition, self.admin_user)
         self.qemu_job2 = TestJob.from_yaml_and_user(self.definition, self.admin_user)
@@ -280,7 +280,7 @@ class ModelPermissionsTest(TestCaseWithFactory):
         self.assertTrue(self.qemu_job1.can_view(self.user1))
         self.assertTrue(self.qemu_job1.can_view(self.user2))
 
-    def test_testjob_can_view_public(self):
+    def test_testjob_can_view_private(self):
         GroupDeviceTypePermission.objects.assign_perm(
             DeviceType.VIEW_PERMISSION, self.group1, self.qemu_device_type
         )
@@ -288,10 +288,10 @@ class ModelPermissionsTest(TestCaseWithFactory):
         self.assertTrue(self.qemu_job1.can_view(self.user1))
         self.assertFalse(self.qemu_job1.can_view(self.user2))
 
-        self.qemu_job1.is_public = True
+        self.qemu_job1.is_public = False
         self.qemu_job1.save()
-        self.assertTrue(self.qemu_job1.can_view(self.user1))
-        self.assertTrue(self.qemu_job1.can_view(self.user2))
+        self.assertFalse(self.qemu_job1.can_view(self.user1))
+        self.assertFalse(self.qemu_job1.can_view(self.user2))
 
     def test_testjob_can_view_viewing_groups(self):
         self.qemu_job1.viewing_groups.add(self.group2)

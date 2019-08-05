@@ -194,7 +194,7 @@ class TestRestApi:
         data = self.hit(
             self.userclient, reverse("api-root", args=[self.version]) + "jobs/"
         )
-        assert len(data["results"]) == 2  # nosec - unit test support
+        assert len(data["results"]) == 1  # nosec - unit test support
 
     def test_testjobs_admin(self):
         data = self.hit(

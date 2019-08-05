@@ -221,24 +221,31 @@ class RestrictedTestJobQuerySet(RestrictedObjectQuerySet):
                 user, TestJob.DEVICE_TYPE_PERMISSION_MAP[perm]
             )
 
+            # Check for private jobs where this user is submitter.
+            filters = Q(pk__in=[])  # Always empty Q object for anonymous users
+            if user.is_authenticated():
+                filters = Q(is_public=False) & Q(submitter=user)
             # Similar to device filters, we first check if jobs are
-            # unrestricted and if yes, we check for accessibility of either
+            # public and if yes, we check for accessibility of either
             # actual_device or requested_device_type (depending on whether the
             # job is scheduled or not.
-            filters = Q(num_viewing_groups=0) & (
-                (
-                    Q(actual_device__isnull=False)
-                    & Q(actual_device__in=accessible_devices)
-                )
-                | (
-                    Q(actual_device__isnull=True)
-                    & Q(requested_device_type__in=accessible_device_types)
+            filters |= (
+                Q(num_viewing_groups=0)
+                & Q(is_public=True)
+                & (
+                    (
+                        Q(actual_device__isnull=False)
+                        & Q(actual_device__in=accessible_devices)
+                    )
+                    | (
+                        Q(actual_device__isnull=True)
+                        & Q(requested_device_type__in=accessible_device_types)
+                    )
                 )
             )
 
-            # Add is_public and viewing_groups filter.
+            # Add viewing_groups filter.
             if perm == self.model.VIEW_PERMISSION:
-                filters |= Q(is_public=True)
                 # Needed to determine if viewing_groups is subset of all users
                 # groups.
                 nonuser_groups = Group.objects.exclude(
