@@ -58,16 +58,16 @@
   - {class: power.PowerOn, name: power-on}
 - class: actions.deploy.fastboot.FastbootAction
   name: fastboot-deploy
-  pipeline: 
+  pipeline:
   - class: actions.deploy.overlay.OverlayAction
     name: lava-overlay
-    pipeline: 
+    pipeline:
     - {class: actions.deploy.overlay.SshAuthorize, name: ssh-authorize}
     - {class: actions.deploy.overlay.VlandOverlayAction, name: lava-vland-overlay}
     - {class: actions.deploy.overlay.MultinodeOverlayAction, name: lava-multinode-overlay}
     - class: actions.deploy.testdef.TestDefinitionAction
       name: test-definition
-      pipeline: 
+      pipeline:
       - {class: actions.deploy.testdef.GitRepoAction, name: git-repo-action}
       - {class: actions.deploy.testdef.TestOverlayAction, name: test-overlay}
       - {class: actions.deploy.testdef.TestInstallAction, name: test-install-overlay}
@@ -77,22 +77,22 @@
   - {class: connections.serial.ConnectDevice, name: connect-device}
   - class: actions.boot.u_boot.UBootEnterFastbootAction
     name: uboot-enter-fastboot
-    pipeline: 
+    pipeline:
     - class: power.ResetDevice
       name: reset-device
-      pipeline: 
+      pipeline:
       - {class: power.PDUReboot, name: pdu-reboot}
     - {class: actions.boot.BootloaderInterruptAction, name: bootloader-interrupt}
     - {class: connections.lxc.ConnectLxc, name: connect-lxc}
   - class: actions.deploy.download.DownloaderAction
     name: download-retry
-    pipeline: 
+    pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
   - {class: actions.deploy.apply_overlay.ApplyOverlaySparseImage, name: apply-overlay-sparse-image}
   - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
   - class: actions.deploy.fastboot.FastbootFlashOrderAction
     name: fastboot-flash-order-action
-    pipeline: 
+    pipeline:
     - {class: power.ReadFeedback, name: read-feedback}
     - {class: actions.deploy.fastboot.FastbootFlashAction, name: fastboot-flash-action}
 - class: actions.boot.u_boot.UBootAction
