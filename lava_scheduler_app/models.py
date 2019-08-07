@@ -1761,9 +1761,9 @@ class TestJob(models.Model):
         )
 
     def can_view(self, user):
-        if user == self.submitter:
+        if user == self.submitter or user.is_superuser:
             return True
-        if self.viewing_groups.exists() and not user.is_superuser:
+        if self.viewing_groups.exists():
             # If viewing_groups is set, user must belong to all the specified
             # groups.
             return set(self.viewing_groups.all()).issubset(set(user.groups.all()))

@@ -123,21 +123,16 @@ def anonymous_token(request, job):
     token = querydict.get("token", default=None)
     # safe to call with (None, None) - returns None
     auth_user = AuthToken.get_user_for_secret(username=user, secret=token)
-    if not user and not job.is_public:
-        raise PermissionDenied()
-    if not auth_user:
-        raise PermissionDenied()
     return auth_user
 
 
 def check_request_auth(request, job):
-    if job.is_public:
-        return
     if not request.user.is_authenticated:
-        # handle anonymous access
-        auth_user = anonymous_token(request, job)
-        if not auth_user or not job.can_view(auth_user):
-            raise PermissionDenied()
+        if not job.can_view(request.user):
+            # handle anonymous access
+            auth_user = anonymous_token(request, job)
+            if not auth_user or not job.can_view(auth_user):
+                raise PermissionDenied()
     elif not job.can_view(request.user):
         raise PermissionDenied()
 

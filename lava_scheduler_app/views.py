@@ -1906,7 +1906,7 @@ def device_detail(request, pk):
         raise Http404("No device matches the given query.")
 
     if not device.can_view(request.user):
-        raise Http404("No device matches the given query.")
+        raise PermissionDenied()
 
     # Find previous and next device
     devices = (
@@ -1991,7 +1991,7 @@ def device_dictionary(request, pk):
         raise Http404("No device matches the given query.")
 
     if not device.can_view(request.user):
-        raise Http404("No device matches the given query.")
+        raise PermissionDenied()
 
     raw_device_dict = device.load_configuration(output_format="raw")
     if not raw_device_dict:
@@ -2017,7 +2017,7 @@ def device_dictionary(request, pk):
 def device_reports(request, pk):
     device = get_object_or_404(Device, pk=pk)
     if not device.can_view(request.user):
-        raise Http404("No device matches the given query.")
+        raise PermissionDenied()
     health_day_report = []
     health_week_report = []
     job_day_report = []
@@ -2260,7 +2260,7 @@ def download_device_type_template(request, pk):
     dt = get_object_or_404(DeviceType, name=pk)
 
     if not dt.can_view(request.user):
-        raise Http404("No device type matches the given query.")
+        raise PermissionDenied()
 
     data = load_devicetype_template(dt.name, raw=True)
     if not data:
