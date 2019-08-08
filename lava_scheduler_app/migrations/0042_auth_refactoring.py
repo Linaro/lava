@@ -251,16 +251,5 @@ class Migration(migrations.Migration):
         migrations.RemoveField(model_name="testjob", name="group"),
         migrations.RemoveField(model_name="testjob", name="user"),
         migrations.RemoveField(model_name="testjob", name="visibility"),
-        migrations.AlterField(
-            model_name="testjob",
-            name="viewing_groups",
-            field=models.ManyToManyField(
-                blank=True,
-                default=None,
-                related_name="viewing_groups",
-                to="auth.Group",
-                verbose_name="Viewing groups",
-            ),
-        ),
         migrations.DeleteModel(name="DefaultDeviceOwner"),
     ]

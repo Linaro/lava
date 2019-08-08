@@ -1336,6 +1336,10 @@ class TestJob(models.Model):
         # depending on implementation complexity
         Group,
         verbose_name=_("Viewing groups"),
+        help_text=_(
+            "Adding groups to an intersection of groups reduces visibility."
+            "Adding groups to a union of groups expands visibility."
+        ),
         related_name="viewing_groups",
         blank=True,
         default=None,
