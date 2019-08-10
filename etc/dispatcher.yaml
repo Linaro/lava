@@ -17,3 +17,9 @@
 # /var/lib/lava/dispatcher/tmp/<prefix><job_id> instead of
 # /var/lib/lava/dispatcher/tmp/<job_id>
 # prefix: <prefix>
+
+# Set this variable when using http caching service based on url substitution
+# like KissCache
+# When downloading resources, lava dispatcher will use this formating string
+# instead of the original url.
+# http_url_format_string: "https://cache.lavasoftware.org/api/v1/fetch/?url=%s"
