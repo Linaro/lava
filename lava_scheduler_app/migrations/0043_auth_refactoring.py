@@ -131,7 +131,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("auth", "0008_alter_user_username_max_length"),
-        ("lava_scheduler_app", "0041_notification_charfield_to_textfield"),
+        ("lava_scheduler_app", "0042_add-table-length-setting"),
     ]
 
     operations = [
