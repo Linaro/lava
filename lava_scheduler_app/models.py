@@ -44,6 +44,7 @@ from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
 
+from lava_common.compat import add_permissions
 from lava_results_app.utils import export_testcase
 from lava_scheduler_app import utils
 from lava_scheduler_app.logutils import read_logs
@@ -224,10 +225,12 @@ class DeviceType(RestrictedObject):
     """
 
     class Meta:
-        permissions = (
-            ("view_devicetype", "Can view device type"),
-            ("submit_to_devicetype", "Can submit jobs to device type"),
-            ("admin_devicetype", "Can admin device type"),
+        permissions = add_permissions(
+            (("view_devicetype", "Can view device type"),),
+            (
+                ("submit_to_devicetype", "Can submit jobs to device type"),
+                ("admin_devicetype", "Can admin device type"),
+            ),
         )
 
     VIEW_PERMISSION = "lava_scheduler_app.view_devicetype"
@@ -473,10 +476,12 @@ class Device(RestrictedObject):
     """
 
     class Meta:
-        permissions = (
-            ("view_device", "Can view device"),
-            ("submit_to_device", "Can submit jobs to device"),
-            ("admin_device", "Can admin device"),
+        permissions = add_permissions(
+            (("view_device", "Can view device"),),
+            (
+                ("submit_to_device", "Can submit jobs to device"),
+                ("admin_device", "Can admin device"),
+            ),
         )
 
     VIEW_PERMISSION = "lava_scheduler_app.view_device"
