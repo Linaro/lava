@@ -26,6 +26,10 @@ from django.contrib.admin.models import LogEntry
 # Fix for the admin "view site" link
 admin.site.site_url = "/" + settings.MOUNT_POINT
 
+# Customize titles
+admin.site.site_title = "LAVA"
+admin.site.site_header = "LAVA Administration"
+
 
 class LogEntryAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
