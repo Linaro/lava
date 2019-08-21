@@ -18,6 +18,7 @@ dist
 django.log
 doc/html
 lava_server/precious
+lava_server/settings/local_settings.py
 tags
 testrepository/
 tmp*/

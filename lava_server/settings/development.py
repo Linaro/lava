@@ -148,3 +148,8 @@ AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
     "lava_server.backends.GroupPermissionBackend",
 ]
+
+try:
+    from lava_server.settings.local_settings import *  # noqa
+except ImportError:
+    pass
