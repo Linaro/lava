@@ -76,6 +76,11 @@ STATIC_ROOT = os.path.join(PROJECT_STATE_DIR, "static")
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = "00000000000000000000000000000000000000000000000000"
 
+# Relax security settings to simplify local development
+ALLOWED_HOSTS = ["*"]
+CSRF_COOKIE_SECURE = False
+SESSION_COOKIE_SECURE = False
+
 # Try using devserver if available, devserver is a very useful extension that
 # makes debugging applications easier. It shows a lot of interesting output,
 # like SQL queries and timings for each request. It also supports
