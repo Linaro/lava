@@ -216,7 +216,7 @@ REST_FRAMEWORK = {
     "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.URLPathVersioning",
     "ALLOWED_VERSIONS": REST_VERSIONS,
     "DEFAULT_FILTER_BACKENDS": (
-        "rest_framework_filters.backends.DjangoFilterBackend",
+        "lava_common.compat.FilterBackend",
         "rest_framework.filters.OrderingFilter",
         "rest_framework.filters.SearchFilter",
     ),
