@@ -664,7 +664,7 @@ class Device(RestrictedObject):
             if not self.device_type.is_permission_restricted(
                 DeviceType.SUBMIT_PERMISSION
             ):
-                if user.is_authenticated():
+                if user.is_authenticated:
                     return True
             elif user.has_perm(self.device_type.SUBMIT_PERMISSION, self.device_type):
                 return True

@@ -223,7 +223,7 @@ class RestrictedTestJobQuerySet(RestrictedObjectQuerySet):
 
             # Check for private jobs where this user is submitter.
             filters = Q(pk__in=[])  # Always empty Q object for anonymous users
-            if user.is_authenticated():
+            if user.is_authenticated:
                 filters = Q(is_public=False) & Q(submitter=user)
             # Similar to device filters, we first check if jobs are
             # public and if yes, we check for accessibility of either
