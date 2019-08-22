@@ -190,7 +190,9 @@ actions:
         reset_works: False
         parameters:
           enter-commands:
-          - dfu
+{% for command in deploy_dfu_commands %}
+            - {{ command }}
+{% endfor %}
           command: dfu-util
 {% if fastboot_boot_uboot %}
       fastboot: {{ fastboot_sequence }}
