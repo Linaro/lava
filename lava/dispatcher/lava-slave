@@ -61,7 +61,12 @@ PROTOCOL_VERSION = 3
 SEND_QUEUE = 10  # zmq high water mark
 TIMEOUT = 5  # zmq timeout
 SLAVE_DIR = "/var/lib/lava/dispatcher/slave"
-TMP_DIR = os.path.join(SLAVE_DIR, "tmp")
+
+#########
+# Globals
+#########
+tmp_dir = os.path.join(SLAVE_DIR, "tmp")
+
 
 # Create the logger that will be configured later
 logging.Formatter.convert = time.gmtime
@@ -143,7 +148,7 @@ def start_job(job_id, definition, device_definition, zmq_config,
     """
     # Create the base directory
     dispatcher_cfg = yaml.safe_load(dispatcher_config)
-    base_dir = os.path.join(TMP_DIR, "{prefix}{job_id}".format(prefix=get_prefix(dispatcher_cfg), job_id=str(job_id)))
+    base_dir = os.path.join(tmp_dir, "{prefix}{job_id}".format(prefix=get_prefix(dispatcher_cfg), job_id=str(job_id)))
     mkdir(base_dir)
 
     # Write back the job, device and dispatcher configuration
@@ -225,7 +230,7 @@ class Job:
         self.prefix = row["prefix"]
         self.last_update = row["last_update"]
         # Create the base directory
-        self.base_dir = os.path.join(TMP_DIR, "{prefix}{job_id}".format(prefix=self.prefix, job_id=str(self.job_id)))
+        self.base_dir = os.path.join(tmp_dir, "{prefix}{job_id}".format(prefix=self.prefix, job_id=str(self.job_id)))
         mkdir(self.base_dir)
 
     def errors(self):
@@ -843,6 +848,10 @@ def setup_parser():
     parser.add_argument("--hostname", type=str, default=get_fqdn(),
                         help="Name of the slave")
 
+    storage = parser.add_argument_group("storage")
+    storage.add_argument('--slave-dir', type=str, default=SLAVE_DIR,
+                         help="Path to slave data storage")
+
     net = parser.add_argument_group("network")
     net.add_argument("--master", type=str, required=True,
                      help="Main master socket")
@@ -925,9 +934,14 @@ def main():
 
     # slave states
     master = Master()
-    mkdir(SLAVE_DIR)
+
+    mkdir(options.slave_dir)
+    if options.slave_dir != SLAVE_DIR:
+        global tmp_dir
+        tmp_dir = os.path.join(options.slave_dir, "tmp")
+
     # TODO: make this configurable
-    jobs = JobsDB(os.path.join(SLAVE_DIR, "db.sqlite3"))
+    jobs = JobsDB(os.path.join(options.slave_dir, "db.sqlite3"))
     last_jobs_check = time.time()
     if options.encrypt:
         zmq_config = ZMQConfig(options.socket_addr, options.master_cert,
