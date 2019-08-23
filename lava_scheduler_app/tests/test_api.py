@@ -6,6 +6,7 @@ import yaml
 import unittest
 import xmlrpc.client
 
+from django.conf import settings
 from django.contrib.auth.models import Group, Permission, User
 from django.test.client import Client
 from nose.tools import nottest
@@ -29,6 +30,10 @@ from lava_scheduler_app.schema import (
 from lava_scheduler_app.tests.test_submission import TestCaseWithFactory
 
 # pylint: disable=invalid-name
+
+
+def device_type(name):
+    return os.path.join(settings.DEVICE_TYPES_PATH, name)
 
 
 # Based on http://www.technobabble.dk/2008/apr/02/xml-rpc-dispatching-through-django-test-client/
@@ -1038,11 +1043,11 @@ def test_device_types_get_template(setup, monkeypatch, tmpdir):
     (tmpdir / "qemu.jinja2").write_text("hello", encoding="utf-8")
 
     def monkey_open(path, *args):
-        if path == "/etc/lava-server/dispatcher-config/device-types/qemu.jinja2":
+        if path == device_type("qemu.jinja2"):
             return real_open(str(tmpdir / "qemu.jinja2"), *args)
-        if path == "/etc/lava-server/dispatcher-config/device-types/docker.jinja2":
+        if path == device_type("docker.jinja2"):
             raise FileNotFoundError()
-        if path == "/etc/lava-server/dispatcher-config/device-types/docker2.jinja2":
+        if path == device_type("docker2.jinja2"):
             raise PermissionError("permission denied", "permission denied")
         return real_open(path, *args)
 
@@ -1119,9 +1124,9 @@ def test_device_types_set_template(setup, monkeypatch, tmpdir):
 
     def monkey_open(path, *args):
         print(path)
-        if path == "/etc/lava-server/dispatcher-config/device-types/qemu.jinja2":
+        if path == device_type("qemu.jinja2"):
             return real_open(str(tmpdir / "qemu.jinja2"), *args)
-        if path == "/etc/lava-server/dispatcher-config/device-types/docker2.jinja2":
+        if path == device_type("docker2.jinja2"):
             raise PermissionError("permission denied", "permission denied")
         return real_open(path, *args)
 
@@ -1155,7 +1160,7 @@ def test_device_types_list(setup, monkeypatch):
     real_iglob = glob.iglob
 
     def iglob(path):
-        if path == "/etc/lava-server/dispatcher-config/device-types/*.jinja2":
+        if path == device_type("*.jinja2"):
             return ["qemu.jinja2", "base.jinja2", "base-uboot.jinja2", "b2260.jinja2"]
         else:
             return real_iglob(path)

@@ -22,6 +22,7 @@ import glob
 import os
 import xmlrpc.client
 
+from django.conf import settings
 from django.db import IntegrityError
 from django.forms import ValidationError
 
@@ -34,9 +35,8 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
     def _available_device_types(self):
         """ List avaiable device types by looking at the configuration files """
         available_types = []
-        for fname in glob.iglob(
-            "/etc/lava-server/dispatcher-config/device-types/*.jinja2"
-        ):
+        pattern = os.path.join(settings.DEVICE_TYPES_PATH, "*.jinja2")
+        for fname in glob.iglob(pattern):
             device_type = os.path.basename(fname[:-7])
             if not device_type.startswith("base"):
                 available_types.append(device_type)
@@ -188,9 +188,7 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
             raise xmlrpc.client.Fault(400, "Invalid device-type '%s'" % name)
 
         try:
-            filename = os.path.join(
-                "/etc/lava-server/dispatcher-config/device-types", name
-            )
+            filename = os.path.join(settings.DEVICE_TYPES_PATH, name)
             filename += ".jinja2" if not filename.endswith(".jinja2") else ""
             with open(filename, "r") as f_in:
                 return xmlrpc.client.Binary(f_in.read().encode("utf-8"))
@@ -280,9 +278,7 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
             raise xmlrpc.client.Fault(400, "Invalid device-type '%s'" % name)
 
         try:
-            filename = os.path.join(
-                "/etc/lava-server/dispatcher-config/device-types", name
-            )
+            filename = os.path.join(settings.DEVICE_TYPES_PATH, name)
             filename += ".jinja2" if not filename.endswith(".jinja2") else ""
             with open(filename, "w") as f_out:
                 f_out.write(config)

@@ -120,9 +120,8 @@ class Command(BaseCommand):
     def available_device_types(self):
         """ List avaiable device types by looking at the configuration files """
         available_types = []
-        for fname in glob.iglob(
-            "/etc/lava-server/dispatcher-config/device-types/*.jinja2"
-        ):
+        pattern = os.path.join(settings.DEVICE_TYPES_PATH, "*.jinja2")
+        for fname in glob.iglob(pattern):
             device_type = os.path.basename(fname[:-7])
             if not device_type.startswith("base"):
                 available_types.append(device_type)
