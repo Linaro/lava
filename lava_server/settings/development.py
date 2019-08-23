@@ -33,11 +33,11 @@ USE_TZ = True
 
 # Top-level directory of the project.
 PROJECT_SRC_DIR = os.path.normpath(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "../..")
 )
 
 # Top-level directory for nonvolatile files
-PRECIOUS_DIR = os.path.join(PROJECT_SRC_DIR, "precious")
+PRECIOUS_DIR = os.path.join(PROJECT_SRC_DIR, "lava_server", "precious")
 
 # Top-level directory of the precious project state.
 #
@@ -72,6 +72,9 @@ ARCHIVE_ROOT = os.path.join(PROJECT_STATE_DIR, "archive")
 # Example: "/home/media/static.lawrence.com/"
 STATIC_ROOT = os.path.join(PROJECT_STATE_DIR, "static")
 
+# Use device configuration files from source tree
+DEVICES_PATH = os.path.join(PROJECT_SRC_DIR, "etc/dispatcher-config/devices")
+DEVICE_TYPES_PATH = os.path.join(PROJECT_SRC_DIR, "etc/dispatcher-config/device-types")
 
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = "00000000000000000000000000000000000000000000000000"
