@@ -344,8 +344,8 @@ class Command(BaseCommand):
                     "Refusing to copy %s to new device %s with health 'Good' -"
                     " no device dictionary exists for target device, yet. "
                     "Use --offline or copy %s.jinja2 to "
-                    "/etc/lava-server/dispatcher-config/devices/ and try again."
-                    % (original, target, target)
+                    "%s and try again."
+                    % (original, target, target, settings.DEVICES_PATH)
                 )
 
         try:

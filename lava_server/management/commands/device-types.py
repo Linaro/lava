@@ -22,6 +22,7 @@ import csv
 import glob
 import os
 
+from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 from django.db import IntegrityError
 
