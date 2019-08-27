@@ -9,6 +9,7 @@ actions:
       serial:
     methods:
       docker:
+      fvp:
       ssh:
         options:
 {{ ssh_options }}
@@ -71,4 +72,5 @@ actions:
           extra_arguments: []
 {% endif %}
       ssh:
+      fvp:
 {% endblock body %}

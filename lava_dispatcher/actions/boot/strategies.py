@@ -29,6 +29,7 @@ from lava_dispatcher.actions.boot.depthcharge import Depthcharge
 from lava_dispatcher.actions.boot.dfu import DFU
 from lava_dispatcher.actions.boot.docker import BootDocker
 from lava_dispatcher.actions.boot.fastboot import BootFastboot
+from lava_dispatcher.actions.boot.fvp import BootFVP
 from lava_dispatcher.actions.boot.gdb import GDB
 from lava_dispatcher.actions.boot.grub import Grub, GrubSequence
 from lava_dispatcher.actions.boot.iso import BootIsoInstaller
