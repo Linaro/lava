@@ -1,4 +1,4 @@
-lava (2019.08-1-1) unstable; urgency=medium
+lava (2019.08-1) unstable; urgency=medium
 
   * LAVA Software 2019.08-1 release
     6024fde6 u-boot: use array instead of sting concatenation
@@ -26,7 +26,7 @@ lava (2019.08-1-1) unstable; urgency=medium
     d75038bf device-types: add more amlogic boards
     495d8423 device-type: adds meson-gxl-s905d-p230
 
- -- Stevan Radaković <stevan.radakovic@linaro.org>  Wed, 28 Aug 2019 12:51:23 +0000
+ -- Steve McIntyre <93sam@debian.org>  Wed, 28 Aug 2019 12:51:23 +0000
 
 lava (2019.07-1) unstable; urgency=medium
 
