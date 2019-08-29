@@ -1,32 +1,43 @@
 lava (2019.08-1) unstable; urgency=medium
 
-  * LAVA Software 2019.08-1 release
-    6024fde6 u-boot: use array instead of sting concatenation
-    b59fc8f4 Update migration file after rebase.
-    b5a95b19 Remove any viewing_group table altering.
-    8a6de0c6 Minor fixes.
-    71059476 Reorganize public and private jobs view permissions.
-    fb072474 Fix UI issues for visibility and superuser access when
-             viewing_groups is set.
-    6ac164a8 Add is_public filter to test job manager for view_permission.
-    af960012 Fix rebase issue.
-    654773fb Reduce number of queries for device and device type models.
-    f62d1f64 Remove bogus clean() override from Device model.
-    3c232a0c Fix copy-paste issue for error strings.
-    ab53069d Auth refactoring.
-    7c3c02c6 Move remaining device-types to etc/
-    c118900d Move device-types to etc/dispatcher-config/device-types/
-    31e8ac83 Remove the dependency on django-hijack
-    bcaca0fa device-types: ox820-cloudengines-pogoplug-series-3: Change
-             ramdisk address
-    f8951295 device-type: add pineh64
-    07aece72 Allow to set extra_nfsroot_args in every templates
-    6c6e5205 is_authenticated is a variable and not a function anymore
-    6c5b8afb Add user setting for default table length
-    d75038bf device-types: add more amlogic boards
-    495d8423 device-type: adds meson-gxl-s905d-p230
+  * LAVA Software 2019.08 release
+    655a34159 Fix device_type reference for TestJob object.
+    757fe4824 Revert xmlrpc API changes to device and device_type
+              calls.
+    73edd10c8 device-types: allow for custom commands to enter
+              DFU mode
+    181823456 device-types: add meson-g12a-u200
+    dd1089b78 Fix up Debian changelog
+    8db19f175 Prepare for 2019.08 release.
+    6024fde6e u-boot: use array instead of sting concatenation
+    b59fc8f4c Update migration file after rebase.
+    b5a95b195 Remove any viewing_group table altering.
+    8a6de0c6a Minor fixes.
+    710594762 Reorganize public and private jobs view permissions.
+    fb072474a Fix UI issues for visibility and superuser access when
+              viewing_groups is set.
+    6ac164a89 Add is_public filter to test job manager for
+              view_permission.
+    af960012d Fix rebase issue.
+    654773fbc Reduce number of queries for device and device type
+              models.
+    f62d1f647 Remove bogus clean() override from Device model.
+    3c232a0cc Fix copy-paste issue for error strings.
+    ab53069d7 Auth refactoring.
+    7c3c02c6b Move remaining device-types to etc/
+    c118900dc Move device-types to etc/dispatcher-config/device-types/
+    31e8ac83c Remove the dependency on django-hijack
+    bcaca0faa device-types: ox820-cloudengines-pogoplug-series-3:
+              Change ramdisk address
+    f89512958 device-type: add pineh64
+    07aece72b Allow to set extra_nfsroot_args in every templates
+    6c6e5205a is_authenticated is a variable and not a function
+              anymore Signed-off-by: Rémi Duraffort <remi.duraffort@linaro.org>
+    6c5b8afbe Add user setting for default table length
+    d75038bf9 device-types: add more amlogic boards
+    495d8423e device-type: adds meson-gxl-s905d-p230
 
- -- Steve McIntyre <93sam@debian.org>  Wed, 28 Aug 2019 12:51:23 +0000
+ -- Steve McIntyre <93sam@debian.org>  Thu, 29 Aug 2019 15:43:59 +0000
 
 lava (2019.07-1) unstable; urgency=medium
 
