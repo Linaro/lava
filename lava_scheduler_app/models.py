@@ -1830,9 +1830,7 @@ class TestJob(models.Model):
         # resubmit jobs.
         if self.actual_device:
             return self.actual_device.can_submit(user)
-        elif user.has_perm(
-            self.device_type.SUBMIT_PERMISSION, self.requested_device_type
-        ):
+        elif user.has_perm(DeviceType.SUBMIT_PERMISSION, self.requested_device_type):
             return True
 
         return False
