@@ -647,7 +647,14 @@ def test_devices_add(setup):
 
     # 2. test description, health
     server("admin", "admin").scheduler.devices.add(
-        "black02", "black", "worker01", "MAINTENANCE", "second device"
+        "black02",
+        "black",
+        "worker01",
+        "user",
+        "group",
+        True,
+        "MAINTENANCE",
+        "second device",
     )
 
     Device.objects.count() == 2
@@ -659,7 +666,7 @@ def test_devices_add(setup):
     # 3. wrong health
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server("admin", "admin").scheduler.devices.add(
-            "black03", "black", "worker01", "wrong"
+            "black03", "black", "worker01", None, None, True, "wrong"
         )
     assert exc.value.faultCode == 400  # nosec
     assert exc.value.faultString == "Invalid health"  # nosec
@@ -849,17 +856,23 @@ def test_devices_update(setup):
 
     # 4. update health (wrong value)
     with pytest.raises(xmlrpc.client.Fault) as exc:
-        server("admin", "admin").scheduler.devices.update("black01", None, "wrong")
+        server("admin", "admin").scheduler.devices.update(
+            "black01", None, None, None, None, "wrong"
+        )
     assert exc.value.faultCode == 400  # nosec
     assert exc.value.faultString == "Health 'wrong' is invalid"  # nosec
 
     # 5. update health
-    server("admin", "admin").scheduler.devices.update("black01", None, "GOOD")
+    server("admin", "admin").scheduler.devices.update(
+        "black01", None, None, None, None, "GOOD"
+    )
     device.refresh_from_db()
     assert device.health == Device.HEALTH_GOOD  # nosec
 
     # 6. update description
-    server("admin", "admin").scheduler.devices.update("black01", None, None, "hello")
+    server("admin", "admin").scheduler.devices.update(
+        "black01", None, None, None, None, None, "hello"
+    )
     device.refresh_from_db()
     assert device.description == "hello"  # nosec
 
@@ -935,7 +948,7 @@ def test_device_types_add(setup):
     # 1. Check that the arguments are used
     assert DeviceType.objects.count() == 0  # nosec
     server("admin", "admin").scheduler.device_types.add(
-        "qemu", "emulated devices", True, 12, "hours"
+        "qemu", "emulated devices", True, None, 12, "hours"
     )
     assert DeviceType.objects.count() == 1  # nosec
     assert DeviceType.objects.all()[0].name == "qemu"  # nosec
@@ -946,7 +959,9 @@ def test_device_types_add(setup):
         DeviceType.objects.all()[0].health_denominator == DeviceType.HEALTH_PER_HOUR
     )
 
-    server("admin", "admin").scheduler.device_types.add("b2260", None, True, 12, "jobs")
+    server("admin", "admin").scheduler.device_types.add(
+        "b2260", None, True, None, 12, "jobs"
+    )
     assert DeviceType.objects.count() == 2  # nosec
     assert DeviceType.objects.all()[1].name == "b2260"  # nosec
     assert DeviceType.objects.all()[1].display  # nosec
@@ -959,7 +974,7 @@ def test_device_types_add(setup):
     # 2. Invalid health_denominator
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server("admin", "admin").scheduler.device_types.add(
-            "docker", None, True, 12, "job"
+            "docker", None, True, None, 12, "job"
         )
     assert exc.value.faultCode == 400  # nosec
     assert exc.value.faultString == "Bad request: invalid health_denominator."  # nosec
@@ -967,7 +982,7 @@ def test_device_types_add(setup):
     # 3. Already exists
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server("admin", "admin").scheduler.device_types.add(
-            "b2260", None, True, 12, "jobs"
+            "b2260", None, True, None, 12, "jobs"
         )
     assert exc.value.faultCode == 400  # nosec
     assert (  # nosec
@@ -1202,7 +1217,7 @@ def test_device_types_update(setup):
     # 1. Device-type does not exist
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server("admin", "admin").scheduler.device_types.update(
-            "qemu", None, None, None, None, None
+            "qemu", None, None, None, None, None, None
         )
     assert exc.value.faultCode == 404  # nosec
     assert exc.value.faultString == "Device-type 'qemu' was not found."  # nosec
@@ -1210,13 +1225,13 @@ def test_device_types_update(setup):
     # 2. Normal case
     dt = DeviceType.objects.create(name="qemu")
     server("admin", "admin").scheduler.device_types.update(
-        "qemu", None, None, None, None, None
+        "qemu", None, None, None, None, None, None
     )
     dt = DeviceType.objects.get(name="qemu")
     assert dt.description == None  # nosec
 
     server("admin", "admin").scheduler.device_types.update(
-        "qemu", "emulated", True, 12, "jobs", True
+        "qemu", "emulated", True, None, 12, "jobs", True
     )
     dt = DeviceType.objects.get(name="qemu")
     assert dt.description == "emulated"  # nosec
@@ -1225,7 +1240,7 @@ def test_device_types_update(setup):
     assert dt.health_denominator == DeviceType.HEALTH_PER_JOB  # nosec
 
     server("admin", "admin").scheduler.device_types.update(
-        "qemu", None, None, None, "hours", None
+        "qemu", None, None, None, None, "hours", None
     )
     dt = DeviceType.objects.get(name="qemu")
     assert dt.description == "emulated"  # nosec
@@ -1236,7 +1251,7 @@ def test_device_types_update(setup):
     # 3. wrong health denominator
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server("admin", "admin").scheduler.device_types.update(
-            "qemu", None, None, None, "job", None
+            "qemu", None, None, None, None, "job", None
         )
     assert exc.value.faultCode == 400  # nosec
     assert exc.value.faultString == "Bad request: invalid health_denominator."  # nosec

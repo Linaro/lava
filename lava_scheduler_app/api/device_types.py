@@ -44,12 +44,19 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
         return available_types
 
     @check_perm("lava_scheduler_app.admin_devicetype")
-    def add(self, name, description, display, health_frequency, health_denominator):
+    def add(
+        self,
+        name,
+        description,
+        display,
+        owners_only,
+        health_frequency,
+        health_denominator,
+    ):
         """
         Name
         ----
-        `scheduler.device_types.add` (`name`, `description`, `display`,
-                                      `health_frequency`, health_denominator`)
+        `scheduler.device_types.add` (`name`, `description`, `display`, `owners_only`, `health_frequency`, health_denominator`)
 
         Description
         -----------
@@ -65,6 +72,8 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
           Device-type description
         `display`: bool
           Is the device-type displayed in the GUI?
+        `owners_only`: bool
+          DEPRECATED: this field is not used any more
         `health_frequency`: int
           How often to run health checks
         `health_denominator`: string ("hours" or "jobs")
@@ -381,6 +390,7 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
         name,
         description,
         display,
+        owners_only,
         health_frequency,
         health_denominator,
         health_disabled,
@@ -390,6 +400,7 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
         ----
         `scheduler.device_types.update` (`name`, `description=None`,
                                          `display=None`,
+                                         `owners_only=None`,
                                          `health_frequency=None`,
                                          `health_denominator=None`,
                                          `health_disabled=None`)
@@ -407,6 +418,8 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
           Device-type description
         `display`: bool
           Is the device-type displayed in the GUI?
+        `owners_only`: bool
+          DEPRECATED: this field is not used any more
         `health_frequency`: int
           How often to run health checks
         `health_denominator`: string ("hours" or "jobs")

@@ -30,12 +30,24 @@ from lava_scheduler_app.models import Device, DeviceType, Tag, Worker
 
 class SchedulerDevicesAPI(ExposedV2API):
     @check_perm("lava_scheduler_app.admin_device")
-    def add(self, hostname, type_name, worker_hostname, health=None, description=None):
+    def add(
+        self,
+        hostname,
+        type_name,
+        worker_hostname,
+        user_name=None,
+        group_name=None,
+        public=True,
+        health=None,
+        description=None,
+    ):
         """
         Name
         ----
         `scheduler.devices.add` (`hostname`, `type_name`, `worker_hostname`,
-                                 `health=None`, `description=None`)
+                                 `user_name=None`, `group_name=None`,
+                                 `public=True`, `health=None`,
+                                 `description=None`)
 
         Description
         -----------
@@ -52,6 +64,12 @@ class SchedulerDevicesAPI(ExposedV2API):
           Type of the new device
         `worker_hostname`: string
           Worker hostname
+        `user_name`: string
+          DEPRECATED: This field is not used any more
+        `group_name`: string
+          DEPRECATED: This field is not used any more
+        `public`: boolean
+          DEPRECATED: This field is not used any more
         `health`: string
           Device health, among ["GOOD", "UNKNOWN", "LOOPING", "BAD", "MAINTENANCE", "RETIRED"]
         `description`: string
@@ -279,12 +297,23 @@ class SchedulerDevicesAPI(ExposedV2API):
 
         return device_dict
 
-    def update(self, hostname, worker_hostname=None, health=None, description=None):
+    def update(
+        self,
+        hostname,
+        worker_hostname=None,
+        user_name=None,
+        group_name=None,
+        public=True,
+        health=None,
+        description=None,
+    ):
         """
         Name
         ----
         `scheduler.devices.update` (`hostname`, `worker_hostname=None`,
-                                    `health=None`, `description=None`)
+                                    `user_name=None`, `group_name=None`,
+                                    `public=True`,  `health=None`,
+                                    `description=None`)
 
         Description
         -----------
@@ -298,6 +327,12 @@ class SchedulerDevicesAPI(ExposedV2API):
           Hostname of the device
         `worker_hostname`: string
           Worker hostname
+        `user_name`: string
+          DEPRECATED: This field is not used any more
+        `group_name`: string
+          DEPRECATED: This field is not used any more
+        `public`: boolean
+          DEPRECATED: This field is not used any more
         `health`: string
           Device health, among ["GOOD", "UNKNOWN", "LOOPING", "BAD", "MAINTENANCE", "RETIRED"]
         `description`: string
