@@ -373,6 +373,31 @@ class ModelPermissionsTest(TestCaseWithFactory):
         self.assertTrue(self.qemu_job1.can_admin(self.user1))
         self.assertFalse(self.qemu_job1.can_admin(self.user2))
 
+    def test_testjob_can_resubmit(self):
+
+        self.qemu_job1.actual_device = self.qemu_device1
+        self.qemu_job1.save()
+        self.assertTrue(self.qemu_job1.can_resubmit(self.user1))
+        self.assertTrue(self.qemu_job1.can_resubmit(self.user2))
+        self.assertFalse(self.qemu_job1.can_resubmit(AnonymousUser()))
+
+        GroupDevicePermission.objects.assign_perm(
+            Device.SUBMIT_PERMISSION, self.group1, self.qemu_device1
+        )
+        self.assertTrue(self.qemu_job1.can_resubmit(self.user1))
+        self.assertFalse(self.qemu_job1.can_resubmit(self.user2))
+
+    def test_testjob_can_resubmit_through_device_type(self):
+
+        self.assertFalse(self.qemu_job1.can_resubmit(self.user1))
+        self.assertFalse(self.qemu_job1.can_resubmit(self.user2))
+
+        GroupDeviceTypePermission.objects.assign_perm(
+            DeviceType.SUBMIT_PERMISSION, self.group1, self.qemu_device_type
+        )
+        self.assertTrue(self.qemu_job1.can_resubmit(self.user1))
+        self.assertFalse(self.qemu_job1.can_resubmit(self.user2))
+
     def test_testjob_can_view_global_permission(self):
         self.user2.user_permissions.add(
             Permission.objects.get(name="Can submit jobs to device")
