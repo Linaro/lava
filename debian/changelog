@@ -1,6 +1,7 @@
-lava (2019.08-1) unstable; urgency=medium
+lava (2019.09-1) unstable; urgency=medium
 
-  * LAVA Software 2019.08 release
+  * LAVA Software 2019.09 release
+    2019.08 was delayed, so renamed.
     655a34159 Fix device_type reference for TestJob object.
     757fe4824 Revert xmlrpc API changes to device and device_type
               calls.
@@ -37,7 +38,7 @@ lava (2019.08-1) unstable; urgency=medium
     d75038bf9 device-types: add more amlogic boards
     495d8423e device-type: adds meson-gxl-s905d-p230
 
- -- Steve McIntyre <93sam@debian.org>  Thu, 29 Aug 2019 15:43:59 +0000
+ -- Steve McIntyre <93sam@debian.org>  Mon, 02 Sep 2019 12:39:34 +0100
 
 lava (2019.07-1) unstable; urgency=medium
 
