@@ -23,7 +23,7 @@ import time
 
 import pexpect
 
-from lava_common.exceptions import JobError
+from lava_common.exceptions import InfrastructureError, JobError
 from lava_dispatcher.action import Action
 from lava_dispatcher.utils.messages import LinuxKernelMessages
 from tests.lava_dispatcher.test_basic import StdoutTestCase
@@ -132,6 +132,14 @@ class TestBootMessages(StdoutTestCase):
             results = LinuxKernelMessages.parse_failures(
                 connection, action=Action(), max_end_time=self.max_end_time, fail_msg=""
             )
+
+    def test_kernel_5(self):
+        logfile = os.path.join(os.path.dirname(__file__), "kernel-5.txt")
+        self.assertTrue(os.path.exists(logfile))
+        message_list = LinuxKernelMessages.get_init_prompts()
+        self.assertIsNotNone(message_list)
+        connection = FakeConnection(logfile, message_list)
+        self.assertRaises(InfrastructureError)
 
     def test_kernel_kasan(self):
         logfile = os.path.join(os.path.dirname(__file__), "kernel-kasan.txt")
