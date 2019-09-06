@@ -222,6 +222,7 @@ class Command(BaseCommand):
                 writer.writerow(
                     {
                         "username": user.username,
+                        "fullname": user.get_full_name(),
                         "email": user.email,
                         "staff": user.is_staff,
                         "superuser": user.is_superuser,
