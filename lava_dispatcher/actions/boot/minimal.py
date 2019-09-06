@@ -69,13 +69,3 @@ class MinimalBoot(BootAction):
                 if "transfer_overlay" in parameters:
                     self.internal_pipeline.add_action(OverlayUnpack())
                 self.internal_pipeline.add_action(ExportDeviceEnvironment())
-
-    def run(self, connection, max_end_time):
-        connection = self.get_namespace_data(
-            action="shared", label="shared", key="connection", deepcopy=False
-        )
-        connection = super().run(connection, max_end_time)
-        self.set_namespace_data(
-            action="shared", label="shared", key="connection", value=connection
-        )
-        return connection

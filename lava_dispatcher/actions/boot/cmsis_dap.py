@@ -142,9 +142,6 @@ class FlashCMSISAction(Action):
             self.filelist.extend([action_arg])
 
     def run(self, connection, max_end_time):
-        connection = self.get_namespace_data(
-            action="shared", label="shared", key="connection", deepcopy=False
-        )
         connection = super().run(connection, max_end_time)
         dstdir = mkdtemp()
         # mount
@@ -164,7 +161,4 @@ class FlashCMSISAction(Action):
             error_msg="Unable to unmount USB device %s" % self.usb_mass_device,
         )
 
-        self.set_namespace_data(
-            action="shared", label="shared", key="connection", value=connection
-        )
         return connection

@@ -135,11 +135,18 @@ class ConnectDevice(Action):
         )
         if connection:
             self.logger.debug("Already connected")
+            # Save the connection in the current namespace
+            self.set_namespace_data(
+                action="shared", label="shared", key="connection", value=connection
+            )
             return connection
         elif connection_namespace:
             self.logger.warning(
                 "connection_namespace provided but no connection found. "
                 "Please ensure that this parameter is correctly set to existing namespace."
+            )
+            raise JobError(
+                "Unable to reuse connection from namespace '%s'" % connection_namespace
             )
 
         self.logger.info(
