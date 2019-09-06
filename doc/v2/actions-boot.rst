@@ -196,7 +196,7 @@ connection-namespace
 
 When using :term:`namespaces <namespace>` in job definition, you can reuse the
 existing serial connection from another namespace via ``connection-namespace``
-parameter. Example:
+parameter. This applies only to *boot* action Example:
 
 .. code-block:: yaml
 
