@@ -22,6 +22,7 @@ import csv
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 from django.db.utils import IntegrityError
+from django.utils.version import get_version
 
 from linaro_django_xmlrpc.models import AuthToken
 
@@ -39,7 +40,10 @@ class Command(BaseCommand):
             """
 
             def __init__(self, **kwargs):
-                super().__init__(cmd, **kwargs)
+                if get_version() >= "2":
+                    super().__init__(**kwargs)
+                else:
+                    super().__init__(cmd, **kwargs)
 
         sub = parser.add_subparsers(
             dest="sub_command", help="Sub commands", parser_class=SubParser

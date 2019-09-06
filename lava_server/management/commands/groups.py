@@ -20,6 +20,7 @@
 # pylint: disable=superfluous-parens,no-self-use
 
 from django.core.management.base import BaseCommand, CommandError, CommandParser
+from django.utils.version import get_version
 
 from django.contrib.auth.models import User, Group, Permission
 
@@ -37,7 +38,10 @@ class Command(BaseCommand):
             """
 
             def __init__(self, **kwargs):
-                super().__init__(cmd, **kwargs)
+                if get_version() >= "2":
+                    super().__init__(**kwargs)
+                else:
+                    super().__init__(cmd, **kwargs)
 
         sub = parser.add_subparsers(
             dest="sub_command", help="Sub commands", parser_class=SubParser

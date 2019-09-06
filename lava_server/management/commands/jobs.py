@@ -33,6 +33,7 @@ from django.core.mail import mail_admins
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 from django.db import transaction
 from django.utils import timezone
+from django.utils.version import get_version
 
 from lava_scheduler_app.models import TestJob
 from lava_common.schemas import validate
@@ -65,7 +66,10 @@ class Command(BaseCommand):
             """
 
             def __init__(self, **kwargs):
-                super().__init__(cmd, **kwargs)
+                if get_version() >= "2":
+                    super().__init__(**kwargs)
+                else:
+                    super().__init__(cmd, **kwargs)
 
         sub = parser.add_subparsers(
             dest="sub_command", help="Sub commands", parser_class=SubParser
