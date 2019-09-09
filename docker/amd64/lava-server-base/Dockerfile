@@ -21,5 +21,5 @@ RUN echo 'deb http://deb.debian.org/debian stretch-backports main' > /etc/apt/so
     apt-get install --no-install-recommends --yes -t stretch-backports python3-django-auth-ldap python3-django-filters python3-django-tables2 python3-djangorestframework-filters python3-junit.xml python3-requests && \
     apt-get install --no-install-recommends --yes libjs-sphinxdoc && \
     apt-get install --no-install-recommends --yes python3-pip && \
-    python3 -m pip install sentry-sdk==0.10.2 && \
+    python3 -m pip install sentry-sdk==0.11.2 && \
     rm -rf /var/lib/apt/lists/*
