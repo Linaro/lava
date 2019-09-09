@@ -318,6 +318,41 @@ This mechanism holds for variables set by the base template as well::
 
  {% set base_kernel_args = extra_kernel_args | default(base_kernel_args) %}
 
+.. _job_environment_support:
+
+Provide environment variables for the device in the job description
+===================================================================
+
+The job can define environment variables for the device:
+
+.. code-block:: yaml
+
+ environment:
+   FOO: bar
+   BAR: baz
+
+The variables are available in the test shell environment and can be referenced
+in test scripts then.
+
+For multinode jobs, the environment has to be defined for each multinode role
+separately:
+
+.. code-block:: yaml
+
+ protocols:
+   lava-multinode:
+     roles:
+       node_a:
+         environment:
+           FOO: bar
+       node_b:
+         environment:
+           BAR: baz
+
+Environment variables defined in the job will override environment variables of
+the same name defined in the device dictionary. See
+:ref:`device_dictionary_exported_parameters`.
+
 Pipeline Device Configuration
 =============================
 

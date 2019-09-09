@@ -406,6 +406,7 @@ def _job_schema():
             Optional("context"): _context_schema(),
             Optional("metadata"): All({metadata_types: metadata_types}),
             Optional("secrets"): dict,
+            Optional("environment"): dict,
             Optional("tags"): [str],
             Required("visibility"): visibility_schema(),
             Required("timeouts"): _job_timeout_schema(),

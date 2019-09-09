@@ -259,6 +259,18 @@ class OverlayAction(DeployAction):
                 if data:
                     self.logger.debug("%s:", source)
                     self._export_data(fout, data, prefix)
+            data = None
+            if (
+                "protocols" in self.job.parameters
+                and "lava-multinode" in self.job.parameters["protocols"]
+                and "environment" in self.job.parameters["protocols"]["lava-multinode"]
+            ):
+                data = self.job.parameters["protocols"]["lava-multinode"]["environment"]
+            elif "environment" in self.job.parameters:
+                data = self.job.parameters["environment"]
+            if data:
+                self.logger.debug("job environment:")
+                self._export_data(fout, data, "")
 
         # Generate the file containing the secrets
         if "secrets" in self.job.parameters:
