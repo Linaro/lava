@@ -168,8 +168,9 @@ def start_job(job_id, definition, device_definition, zmq_config,
         out_file = os.path.join(base_dir, "stdout")
         err_file = os.path.join(base_dir, "stderr")
         env = create_environ(env_str)
+        lava_run = os.path.join(os.path.dirname(__file__), "lava-run")
         args = [
-            "lava-run",
+            lava_run,
             "--device=%s" % os.path.join(base_dir, "device.yaml"),
             "--dispatcher=%s" % os.path.join(base_dir, "dispatcher.yaml"),
             "--output-dir=%s" % base_dir,
