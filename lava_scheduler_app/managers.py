@@ -52,7 +52,9 @@ class GroupObjectPermissionManager(models.Manager):
 
         ctype = ContentType.objects.get_for_model(queryset.model)
         try:
-            permission = Permission.objects.get(content_type=ctype, codename=perm)
+            permission = Permission.objects.get(
+                content_type=ctype, codename=perm.split(".", 1)[-1]
+            )
         except Permission.DoesNotExist:
             raise PermissionNameError("Please use existing permission codename")
 
@@ -70,7 +72,9 @@ class GroupObjectPermissionManager(models.Manager):
         """
         ctype = ContentType.objects.get_for_model(obj)
         try:
-            permission = Permission.objects.get(content_type=ctype, codename=perm)
+            permission = Permission.objects.get(
+                content_type=ctype, codename=perm.split(".", 1)[-1]
+            )
         except Permission.DoesNotExist:
             raise PermissionNameError("Please use existing permission codename")
 
@@ -95,7 +99,7 @@ class GroupObjectPermissionManager(models.Manager):
         ctype = ContentType.objects.get_for_model(obj)
         kwargs = {
             "group": group,
-            "permission__codename": perm,
+            "permission__codename": perm.split(".", 1)[-1],
             "permission__content_type": ctype,
             ctype.model: obj,
         }

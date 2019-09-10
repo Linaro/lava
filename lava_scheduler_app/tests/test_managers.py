@@ -133,6 +133,7 @@ class ManagersTest(TestCaseWithFactory):
         GroupDevicePermission.objects.assign_perm(
             "admin_device", self.group1, self.qemu_device1
         )
+        self.assertTrue(self.user1.has_perm(Device.ADMIN_PERMISSION, self.qemu_device1))
         GroupDevicePermission.objects.remove_perm(
             "admin_device", self.group1, self.qemu_device1
         )

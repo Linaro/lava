@@ -28,8 +28,14 @@ from django.contrib.auth.models import Group
 from django.core.exceptions import PermissionDenied
 
 from lava_common.utils import debian_package_version
+from lava_scheduler_app.api import check_perm
 from lava_scheduler_app.views import get_restricted_job
-from lava_scheduler_app.models import Device, DeviceType, GroupObjectPermission
+from lava_scheduler_app.models import (
+    Device,
+    DeviceType,
+    GroupDevicePermission,
+    GroupDeviceTypePermission,
+)
 from linaro_django_xmlrpc.models import errors, Mapper, SystemAPI
 
 
@@ -515,6 +521,7 @@ class LavaSystemAPI(SystemAPI):
                 )
         return yaml.dump(network_map)
 
+    @check_perm("lava_scheduler_app.admin_devicetype")
     def assign_perm_device_type(self, perm, device_type, group):
         """
         Name
@@ -544,13 +551,6 @@ class LavaSystemAPI(SystemAPI):
         ------------
         No return value.
         """
-        self._authenticate()
-        if not self.user.has_perm(DeviceType.ADMIN_PERMISSION, device_type):
-            raise xmlrpc.client.Fault(
-                errors.FORBIDDEN,
-                "Permission denied for user '%s' to assign permissions. Needs administrator privileges."
-                % self.user,
-            )
         if not isinstance(device_type, str):
             raise xmlrpc.client.Fault(
                 errors.BAD_REQUEST, "device_type name must be a string"
@@ -569,8 +569,9 @@ class LavaSystemAPI(SystemAPI):
                 errors.BAD_REQUEST, "please use existing device type name"
             )
 
-        GroupObjectPermission.objects.assign_perm(perm, group, device_type)
+        GroupDeviceTypePermission.objects.assign_perm(perm, group, device_type)
 
+    @check_perm("lava_scheduler_app.admin_devicetype")
     def revoke_perm_device_type(self, perm, device_type, group):
         """
         Name
@@ -600,13 +601,6 @@ class LavaSystemAPI(SystemAPI):
         ------------
         No return value.
         """
-        self._authenticate()
-        if not self.user.has_perm(DeviceType.ADMIN_PERMISSION, device_type):
-            raise xmlrpc.client.Fault(
-                errors.FORBIDDEN,
-                "Permission denied for user '%s' to revoke permissions. Needs administrator privileges."
-                % self.user,
-            )
         if not isinstance(device_type, str):
             raise xmlrpc.client.Fault(
                 errors.BAD_REQUEST, "device_type name must be a string"
@@ -625,8 +619,9 @@ class LavaSystemAPI(SystemAPI):
                 errors.BAD_REQUEST, "please use existing device type name"
             )
 
-        GroupObjectPermission.objects.remove_perm(perm, group, device_type)
+        GroupDeviceTypePermission.objects.remove_perm(perm, group, device_type)
 
+    @check_perm("lava_scheduler_app.admin_device")
     def assign_perm_device(self, perm, device, group):
         """
         Name
@@ -656,13 +651,6 @@ class LavaSystemAPI(SystemAPI):
         ------------
         No return value.
         """
-        self._authenticate()
-        if not self.user.has_perm(Device.ADMIN_PERMISSION, device):
-            raise xmlrpc.client.Fault(
-                errors.FORBIDDEN,
-                "Permission denied for user '%s' to assign permissions. Needs administrator privileges."
-                % self.user,
-            )
         if not isinstance(device, str):
             raise xmlrpc.client.Fault(
                 errors.BAD_REQUEST, "device argument must be a string"
@@ -681,8 +669,9 @@ class LavaSystemAPI(SystemAPI):
                 errors.BAD_REQUEST, "please use existing device hostname"
             )
 
-        GroupObjectPermission.objects.assign_perm(perm, group, device)
+        GroupDevicePermission.objects.assign_perm(perm, group, device)
 
+    @check_perm("lava_scheduler_app.admin_device")
     def revoke_perm_device(self, perm, device, group):
         """
         Name
@@ -712,13 +701,6 @@ class LavaSystemAPI(SystemAPI):
         ------------
         No return value.
         """
-        self._authenticate()
-        if not self.user.has_perm(Device.ADMIN_PERMISSION, device):
-            raise xmlrpc.client.Fault(
-                errors.FORBIDDEN,
-                "Permission denied for user '%s' to revoke permissions. Needs administrator privileges."
-                % self.user,
-            )
         if not isinstance(device, str):
             raise xmlrpc.client.Fault(
                 errors.BAD_REQUEST, "device argument must be a string"
@@ -737,7 +719,7 @@ class LavaSystemAPI(SystemAPI):
                 errors.BAD_REQUEST, "please use existing device hostname"
             )
 
-        GroupObjectPermission.objects.remove_perm(perm, group, device)
+        GroupDevicePermission.objects.remove_perm(perm, group, device)
 
 
 class LavaMapper(Mapper):

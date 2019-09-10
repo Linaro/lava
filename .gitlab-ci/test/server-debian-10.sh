@@ -15,5 +15,5 @@ else
   PYTHONPATH=. pytest-3 --cache-clear -W ignore::DeprecationWarning -v --junitxml=common.xml lava_common/tests
   PYTHONPATH=. pytest-3 --cache-clear -W ignore::DeprecationWarning \
   --ds lava_server.settings.development -v --junitxml=server.xml \
-  lava_scheduler_app/tests lava_results_app/tests linaro_django_xmlrpc/tests.py lava_rest_app/tests.py
+  lava_scheduler_app/tests lava_results_app/tests linaro_django_xmlrpc/tests.py lava_rest_app/tests.py lava_server/tests.py
 fi

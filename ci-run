@@ -104,5 +104,5 @@ if [ -n "${SERVER}" ]
 then
     echo "Testing server"
     echo
-    PYTHONPATH=. pytest-3 --cache-clear --ds lava_server.settings.development -v --reuse-db lava_scheduler_app/tests lava_results_app/tests linaro_django_xmlrpc/tests.py lava_rest_app/tests.py
+    PYTHONPATH=. pytest-3 --cache-clear --ds lava_server.settings.development -v --reuse-db lava_scheduler_app/tests lava_results_app/tests linaro_django_xmlrpc/tests.py lava_rest_app/tests.py lava_server/tests.py
 fi
