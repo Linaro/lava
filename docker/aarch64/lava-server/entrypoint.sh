@@ -100,9 +100,9 @@ start_lava_master() {
     [ -e /etc/default/lava-master ] && . /etc/default/lava-master
     [ -e /etc/lava-server/lava-master ] && . /etc/lava-server/lava-master
     if [ "$CAN_EXEC" = "1" ]; then
-        exec /usr/bin/lava-server manage lava-master --log-file - --level "$LOGLEVEL" $MASTER_SOCKET $IPV6 $ENCRYPT $MASTER_CERT $SLAVES_CERTS
+        exec /usr/bin/lava-server manage lava-master --log-file - --level "$LOGLEVEL" $MASTER_SOCKET $IPV6 $ENCRYPT $MASTER_CERT $SLAVES_CERTS $EVENT_URL
     else
-        /usr/bin/lava-server manage lava-master --level "$LOGLEVEL" $MASTER_SOCKET $IPV6 $ENCRYPT $MASTER_CERT $SLAVES_CERTS &
+        /usr/bin/lava-server manage lava-master --level "$LOGLEVEL" $MASTER_SOCKET $IPV6 $ENCRYPT $MASTER_CERT $SLAVES_CERTS $EVENT_URL &
         LAVA_MASTER_PID=$!
     fi
 }
