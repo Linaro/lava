@@ -34,7 +34,7 @@ what will go into upcoming releases.
 
 We hold this meeting weekly every Wednesday at 13:00 to 14:00 UTC as a
 video conference using Google Hangouts Meet:
-https://meet.google.com/qre-rgen-zwc . Summaries of the discussions
+https://meet.google.com/usu-aatj-fht. Summaries of the discussions
 are posted to the :ref:`lava_devel` mailing list afterwards for the
 benefit of those unable to attend.
 
