@@ -1,16 +1,11 @@
 {% extends "base.jinja2" %}
 
-{% set base_image = "debian:stretch-slim" %}
-
 {% set use_docker_com = true %}
 
 {% set dependencies = [
     {"pkgs": "file python3-setuptools systemd-sysv tar"},
-    {"pkgs": requires("debian", "stretch", "lava-common") },
-    {"pkgs": requires("debian", "stretch-backports", "lava-common"), "from": "stretch-backports" },
-    {"pkgs": requires("debian", "stretch", "lava-dispatcher") },
-    {"pkgs": requires("debian", "stretch-backports", "lava-dispatcher"), "from": "stretch-backports" },
-    {"pkgs": "debootstrap dfu-util git libguestfs-tools nfs-kernel-server qemu-system-arm qemu-system-x86 rpcbind ser2net telnet tftpd-hpa u-boot-tools unzip xz-utils" },
+    {"pkgs": requires("debian", "buster", "lava-common") },
+    {"pkgs": requires("debian", "buster", "lava-dispatcher") },
+    {"pkgs": "android-sdk-libsparse-utils debootstrap dfu-util git libguestfs-tools nfs-kernel-server qemu-system-arm qemu-system-x86 rpcbind ser2net telnet tftpd-hpa u-boot-tools unzip xz-utils" },
     {"pkgs": "docker-ce-cli" },
-    {"pkgs": "libudev1", "from": "stretch-backports"},
 ] %}
