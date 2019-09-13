@@ -9,8 +9,6 @@ lava-server:
     name: python3-django-auth-ldap
   PyYAML:
     name: python3-yaml
-  dateutil:
-    name: python3-dateutil
   django-filter:
     name: python3-django-filters
   django-restricted-resource:
