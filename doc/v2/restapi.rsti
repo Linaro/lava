@@ -169,7 +169,6 @@ Filtering fields for device types:
  - disable_health_check
  - health_denominator
  - display
- - owners_only
 
 Filtering fields for devices:
  - hostname

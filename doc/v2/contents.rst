@@ -167,6 +167,7 @@ LAVA administration guide
    :maxdepth: 1
 
    simple-admin
+   authorization
    admin-backups
    advanced-installation
    admin-secondary-media
