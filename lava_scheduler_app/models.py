@@ -1298,7 +1298,10 @@ class TestJob(models.Model):
 
     class Meta:
         index_together = ["health", "state", "requested_device_type"]
-        permissions = (("submit_testjob", "Can submit test job"),)
+        permissions = (
+            ("submit_testjob", "Can submit test job"),
+            ("cancel_resubmit_testjob", "Can cancel or resubmit test jobs"),
+        )
 
     # Permission strings. Not real permissions.
     VIEW_PERMISSION = "lava_scheduler_app.view_testjob"
@@ -1825,10 +1828,15 @@ class TestJob(models.Model):
             TestJob.STATE_SCHEDULED,
             TestJob.STATE_RUNNING,
         ]
-        return self.can_admin(user) and self.state in states
+        can_cancel = self.can_admin(user) or user.has_perm(
+            "lava_scheduler_app.cancel_resubmit_testjob"
+        )
+        return can_cancel and self.state in states
 
     def can_resubmit(self, user):
-        if self.can_admin(user):
+        if self.can_admin(user) or user.has_perm(
+            "lava_scheduler_app.cancel_resubmit_testjob"
+        ):
             return True
 
         # Allow users who are able to submit to device or devicetype to also
