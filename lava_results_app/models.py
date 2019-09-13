@@ -50,8 +50,8 @@ from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
 
-from lava.utils.managers import MaterializedView
 from lava_common.compat import yaml_load
+from lava_server.managers import MaterializedView
 from lava_scheduler_app.models import TestJob, Device
 from lava_scheduler_app.managers import (
     RestrictedTestJobQuerySet,

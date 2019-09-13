@@ -18,7 +18,7 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 import django_tables2 as tables
-from lava.utils.lavatable import LavaTable
+from lava_server.lavatable import LavaTable
 from lava_results_app.models import Query, TestCase, TestSuite
 
 from lava_scheduler_app.models import TestJob

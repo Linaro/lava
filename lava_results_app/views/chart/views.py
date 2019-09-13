@@ -58,7 +58,7 @@ from lava_results_app.views.chart.tables import (
 
 from django_tables2 import RequestConfig
 
-from lava.utils.lavatable import LavaView
+from lava_server.lavatable import LavaView
 
 
 CONDITIONS_SEPARATOR = ","

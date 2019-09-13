@@ -71,7 +71,7 @@ from lava_scheduler_app.models import TestJob
 from lava_scheduler_app.tables import pklink
 from lava_scheduler_app.views import get_restricted_job
 
-from lava.utils.lavatable import LavaView
+from lava_server.lavatable import LavaView
 
 # pylint: disable=too-many-ancestors,invalid-name
 

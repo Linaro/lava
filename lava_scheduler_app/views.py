@@ -83,7 +83,7 @@ from lava_scheduler_app.dbutils import (
 from lava_scheduler_app.logutils import open_logs, size_logs, read_logs
 from lava_scheduler_app.templatetags.utils import udecode
 
-from lava.utils.lavatable import LavaView
+from lava_server.lavatable import LavaView
 from lava_results_app.utils import (
     check_request_auth,
     description_data,

@@ -27,7 +27,7 @@ from django.utils.timesince import timesince
 import django_tables2 as tables
 from lava_results_app.models import TestCase
 from lava_scheduler_app.models import TestJob, Device, DeviceType, Worker
-from lava.utils.lavatable import LavaTable
+from lava_server.lavatable import LavaTable
 from django.db.models import Q
 from django.utils import timezone
 

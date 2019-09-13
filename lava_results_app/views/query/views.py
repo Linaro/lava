@@ -67,7 +67,7 @@ from lava_scheduler_app.models import TestJob
 
 from django_tables2 import RequestConfig
 
-from lava.utils.lavatable import LavaView
+from lava_server.lavatable import LavaView
 
 
 class QueryViewDoesNotExistError(Exception):

@@ -24,7 +24,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
 
-from lava.utils.lavatable import LavaTable
+from lava_server.lavatable import LavaTable
 from lava_scheduler_app.tables import RestrictedIDLinkColumn
 from lava_results_app.models import TestCase, BugLink, TestSuite
 

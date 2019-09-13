@@ -19,7 +19,7 @@
 
 import django_tables2 as tables
 
-from lava.utils.lavatable import LavaTable
+from lava_server.lavatable import LavaTable
 from lava_results_app.models import Chart
 
 
