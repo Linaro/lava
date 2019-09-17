@@ -75,6 +75,7 @@ STATIC_ROOT = os.path.join(PROJECT_STATE_DIR, "static")
 # Use device configuration files from source tree
 DEVICES_PATH = os.path.join(PROJECT_SRC_DIR, "etc/dispatcher-config/devices")
 DEVICE_TYPES_PATH = os.path.join(PROJECT_SRC_DIR, "etc/dispatcher-config/device-types")
+HEALTH_CHECKS_PATH = os.path.join(PROJECT_SRC_DIR, "etc/dispatcher-config/health-checks")
 
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = "00000000000000000000000000000000000000000000000000"
