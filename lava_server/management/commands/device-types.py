@@ -23,10 +23,10 @@ import glob
 import os
 
 from django.conf import settings
-from django.core.management.base import BaseCommand, CommandError, CommandParser
+from django.core.management.base import BaseCommand, CommandError
 from django.db import IntegrityError
-from django.utils.version import get_version
 
+from lava_common.compat import get_sub_parser_class
 from lava_scheduler_app.models import DeviceType, Alias
 
 # pylint: disable=invalid-name,no-self-use
@@ -40,19 +40,7 @@ class Command(BaseCommand):
     )
 
     def add_arguments(self, parser):
-        cmd = self
-
-        class SubParser(CommandParser):
-            """
-            Sub-parsers constructor that mimic Django constructor.
-            See http://stackoverflow.com/a/37414551
-            """
-
-            def __init__(self, **kwargs):
-                if get_version() >= "2":
-                    super().__init__(**kwargs)
-                else:
-                    super().__init__(cmd, **kwargs)
+        SubParser = get_sub_parser_class(self)
 
         sub = parser.add_subparsers(
             dest="sub_command", help="Sub commands", parser_class=SubParser
