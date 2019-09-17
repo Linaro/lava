@@ -1,15 +1,15 @@
-# Copyright (C) 2014 Linaro Limited
+# Copyright (C) 2014-2019 Linaro Limited
 #
 # Author: Remi Duraffort <remi.duraffort@linaro.org>
 #
-# This file is part of LAVA Dispatcher.
+# This file is part of LAVA.
 #
-# LAVA Dispatcher is free software; you can redistribute it and/or modify
+# LAVA is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
 #
-# LAVA Dispatcher is distributed in the hope that it will be useful,
+# LAVA is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
@@ -20,8 +20,6 @@
 
 # Overrides are only supported when and as declared in the comments for
 # each constant.
-
-# pylint: disable=anomalous-backslash-in-string
 
 # Retry at most 5 times
 MAX_RETRY = 5
