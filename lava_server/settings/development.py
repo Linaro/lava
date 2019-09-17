@@ -33,18 +33,17 @@ USE_TZ = True
 
 # Top-level directory of the project.
 PROJECT_SRC_DIR = os.path.normpath(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), "../..")
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
 )
 
-# Top-level directory for nonvolatile files
-PRECIOUS_DIR = os.path.join(PROJECT_SRC_DIR, "lava_server", "precious")
-
-# Top-level directory of the precious project state.
+# Top-level directory of the static files
 #
 # In short: this is where your non-source content ends up at, this place should
 # keep the database file(s), user uploaded media files as well as the cache of
 # static files, if built.
-PROJECT_STATE_DIR = os.path.join(PRECIOUS_DIR, "var/lib/lava-server/")
+PROJECT_STATE_DIR = os.environ.get(
+    "LAVA_BASE_DIR", os.path.join(PROJECT_SRC_DIR, "tmp")
+)
 
 # Create state directory if needed
 os.makedirs(PROJECT_STATE_DIR, exist_ok=True)
@@ -75,7 +74,9 @@ STATIC_ROOT = os.path.join(PROJECT_STATE_DIR, "static")
 # Use device configuration files from source tree
 DEVICES_PATH = os.path.join(PROJECT_SRC_DIR, "etc/dispatcher-config/devices")
 DEVICE_TYPES_PATH = os.path.join(PROJECT_SRC_DIR, "etc/dispatcher-config/device-types")
-HEALTH_CHECKS_PATH = os.path.join(PROJECT_SRC_DIR, "etc/dispatcher-config/health-checks")
+HEALTH_CHECKS_PATH = os.path.join(
+    PROJECT_SRC_DIR, "etc/dispatcher-config/health-checks"
+)
 
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = "00000000000000000000000000000000000000000000000000"

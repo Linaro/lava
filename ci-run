@@ -69,7 +69,6 @@ rm -rf ./__init__.py
 rm -rf lava.egg-info/
 rm -rf .pytest_cache/
 find . -name __pycache__ -exec rmdir "{}" \; 2>/dev/null || true
-find . -name precious -type d -exec rm -rf "{}" \; 2>/dev/null || true
 [ -n "${CLEAN}" ] && exit 0
 
 if [ "${BLACK}" ]
