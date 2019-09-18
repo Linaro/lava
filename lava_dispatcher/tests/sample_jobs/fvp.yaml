@@ -1,0 +1,83 @@
+device_type: docker
+job_name: FVP Example Job
+priority: medium
+
+timeouts:
+  connection: {minutes: 3}
+  job: {minutes: 10}
+  actions:
+    auto-login-action:
+      minutes: 5
+visibility: public
+
+actions:
+- deploy:
+    namespace: docker
+    image:
+      # Replace this with an image that contains the FVP binary you want to run
+      name: "my-fvp-image"
+      local: True
+    os: ubuntu  # Tweak as appropriate
+    timeout: {minutes: 5}
+    to: docker
+- deploy:
+    namespace: docker
+    to: fvp
+    ramdisk:
+      install_overlay: true
+    images:
+      fip_uefi:
+        url: http://file-server/fip-uefi.bin
+      rootfs:
+        url: http://file-server/disk.img
+        # The following lines apply a LAVA overlay to ramdisk in file ramdisk.img
+        # in the first partition in the disk.img file.
+        # Also requires the "ramdisk" key earlier in the deploy step.
+        apply-overlay: true
+        ramdisk_partition: 1
+        ramdisk_file: ramdisk.img
+      mcp_ram:
+        url: http://file-server/mcp-ram.bin
+      mcp_rom:
+        url: http://file-server/mcp-rom.bin
+      scp_ram:
+        url: http://file-server/scp-ram.bin
+      scp_rom:
+        url: http://file-server/scp-rom.bin
+      tf_bl1:
+        url: http://file-server/tf-bl1.bin
+
+- boot:
+    namespace: docker
+    method: fvp
+    fvp_image: /path/to/FVP_BINARY
+    timeout: {minutes: 3}
+    console_string: 'terminal_s0: Listening for serial connection on port (?P<PORT>\d+)'
+    fvp_license_variable: ARMLMD_LICENSE_FILE=foo  # Replace LICENSE details
+    fvp_arguments: |-
+      -C board.flashloader0.fname="{FIP_UEFI}"
+      -C board.virtioblockdevice.image_path={ROOTFS}
+      -C board.hostbridge.interfaceName="tap01"
+    prompts:
+    - "/ #"
+
+- test:
+    namespace: docker
+    timeout:
+      minutes: 5
+    definitions:
+    - repository:
+        metadata:
+          format: Lava-Test Test Definition 1.0
+          name: shell-test
+          description: '"test"'
+          os:
+          - busybox
+          scope:
+          - functional
+        run:
+          steps:
+          - uname -a
+      from: inline
+      name: shell-test
+      path: inline/shell-test.yaml
