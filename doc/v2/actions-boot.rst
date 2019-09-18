@@ -601,6 +601,40 @@ The job needs a require set of 3 primary actions:
 
 .. seealso:: :ref:`boot method fastboot <boot_method_fastboot>`.
 
+.. index:: boot method fvp
+
+.. _boot_method_fvp:
+
+fvp
+===
+
+The ``fvp`` boot method takes no arguments or parameters.
+This is currently supported by the docker device type.
+
+.. code-block:: yaml
+
+  - boot:
+      method: fvp
+      namespace: docker
+      prompts:
+        - 'root@(.*):/#'
+      fvp_image: /path/to/FVP_Binary
+      fvp_licence_variable: ARMLMD_LICENSE_FILE=foo
+      fvp_arguments: >
+        -C board.virtioblockdevice.image_path={ROOTFS}
+        ...
+      timeout:
+        minutes: 5
+
+This boot method will launch the ``fvp_image`` file,
+with the ``fvp_arguments`` as parameters,
+and the ``fvp_licence_variable`` set as an environment variable.
+
+You can use ``{IMAGE_NAME}`` which will be replaced with the path to the
+image with the same key under ``images`` in the previous ``fvp`` deploy stage.
+
+.. note:: Previous to running an ``fvp`` boot, you should do both a ``fvp`` deploy and a ``docker`` deploy, in which the docker image has the required tools, such as ``telnet``.
+
 .. index:: boot method grub
 
 .. _boot_method_grub:

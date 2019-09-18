@@ -185,6 +185,7 @@ LAVA administration guide
    vland-admin
    pipeline-debug
    docker-admin
+   fvp
 
 .. _contents_contribution_guide:
 

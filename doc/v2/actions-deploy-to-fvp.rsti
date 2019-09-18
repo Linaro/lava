@@ -1,0 +1,87 @@
+.. index:: deploy to fvp
+
+.. _deploy_to_fvp:
+
+to: fvp
+*******
+
+Allows running of ``FVP`` (or Fixed Virtual Platforms) from a Docker container.
+Generally speaking, ``FVP`` are launched in Docker and UART output is served over a telnet connection locally.
+A pattern is given in the job definition to find the port of the UART from the ``FVP`` output.
+LAVA will then connect via ``telnet`` to view UART output.
+
+::
+
+   - deploy:
+       namespace: docker
+       to: fvp
+       images:
+         fvp_image:
+           url: http://fileserver/path/to/fvp/FVP_BaseAEM
+           permissions: 755  # make executable
+         rootfs:
+           url: http://fileserver/path/to/fvp/grub-busybox.img
+           # Remaining settings allow adding overlay to the
+           # ramdisk on second partition (0 based index) of
+           # image file.
+           apply-overlay: true
+           ramdisk_partition: 1
+           ramdisk_file: ramdisk-busybox.img
+       ramdisk:
+         install_overlay: true
+
+
+.. _deploy_to_fvp_images:
+
+images
+======
+
+A dictionary of images.
+
+url *
+-----
+
+Specifies the URL to download. All downloads are checksummed using ``md5sum``
+and ``sha256sum``
+
+URLs are checked during the test job validation to ensure that the file can be
+downloaded. Missing files will cause the test job to end as Incomplete.
+
+URLs **must** use one of the supported schemes, the first element of the URL.
+
+.. topic:: Supported schema
+
+ * ``http://``
+ * ``https://``
+ * ``file://``
+ * ``lxc://``
+
+.. _deploy_to_fvp_images_compression:
+
+apply-overlay
+-------------
+
+Use this to apply LAVA specific overlays to image.
+
+::
+
+   apply-overlay: true
+
+ramdisk-partition
+-----------------
+
+Partition of this image that contains a ramdisk that you want to add a LAVA overlay to.
+
+ramdisk-file
+------------
+
+The filename of a ramdisk file to extract from this file
+at the partition given by ``ramdisk_partition`` in which to add
+the LAVA overlay into.
+
+permissions
+-----------
+
+Some files will need to be executable.
+Specify a permission to give to ``chmod``, e.g. '755'
+when modifying the permissions of the file.
