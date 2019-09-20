@@ -23,7 +23,7 @@ from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand, CommandError
 from django.db.utils import IntegrityError
 
-from lava_common.compat import get_sub_parser_class
+from lava_server.compat import get_sub_parser_class
 from linaro_django_xmlrpc.models import AuthToken
 
 

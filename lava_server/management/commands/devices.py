@@ -26,8 +26,8 @@ from django.conf import settings
 from django.db import transaction
 from django.contrib.auth.models import User, Group
 
-from lava_common.compat import get_sub_parser_class
 from lava_scheduler_app.models import Device, DeviceType, Tag, Worker
+from lava_server.compat import get_sub_parser_class
 
 # pylint: disable=bad-continuation
 

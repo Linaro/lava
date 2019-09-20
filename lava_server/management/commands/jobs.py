@@ -34,9 +34,9 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.utils import timezone
 
-from lava_scheduler_app.models import TestJob
-from lava_common.compat import get_sub_parser_class
 from lava_common.schemas import validate
+from lava_scheduler_app.models import TestJob
+from lava_server.compat import get_sub_parser_class
 
 
 def _create_output_size(base, size):

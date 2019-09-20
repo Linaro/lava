@@ -20,8 +20,8 @@
 from django.core.management.base import BaseCommand, CommandError
 from django.db import IntegrityError
 
-from lava_common.compat import get_sub_parser_class
 from lava_scheduler_app.models import DeviceType, Alias
+from lava_server.compat import get_sub_parser_class
 
 
 class Command(BaseCommand):

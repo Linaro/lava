@@ -44,7 +44,6 @@ from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
 
-from lava_common.compat import add_permissions
 from lava_results_app.utils import export_testcase
 from lava_scheduler_app import utils
 from lava_scheduler_app.logutils import read_logs
@@ -55,6 +54,7 @@ from lava_scheduler_app.managers import (
     GroupObjectPermissionManager,
 )
 from lava_scheduler_app.schema import SubmissionException, validate_device
+from lava_server.compat import add_permissions
 
 import requests
 

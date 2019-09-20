@@ -20,7 +20,7 @@
 from django.contrib.sites.models import Site
 from django.core.management.base import BaseCommand
 
-from lava_common.compat import get_sub_parser_class
+from lava_server.compat import get_sub_parser_class
 
 
 class Command(BaseCommand):

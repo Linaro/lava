@@ -23,8 +23,8 @@ import csv
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
-from lava_common.compat import get_sub_parser_class
 from lava_scheduler_app.models import Worker
+from lava_server.compat import get_sub_parser_class
 
 
 class Command(BaseCommand):
