@@ -40,6 +40,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.contrib.sites.models import Site
 
+from lava_common.compat import yaml_load
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
@@ -128,7 +129,7 @@ def parse_job_description(job):
     try:
         with open(filename, "r") as f_describe:
             description = f_describe.read()
-        pipeline = yaml.load(description)
+        pipeline = yaml_load(description)
     except (OSError, yaml.YAMLError):
         logger.error("'Unable to open and parse '%s'", filename)
         return

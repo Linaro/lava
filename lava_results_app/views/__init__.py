@@ -40,6 +40,8 @@ from django.http import Http404
 from django.http.response import HttpResponse, StreamingHttpResponse
 from django.views.decorators.http import require_POST
 from django.shortcuts import render, loader
+
+from lava_common.compat import yaml_load
 from lava_server.views import index as lava_index
 from lava_server.bread_crumbs import BreadCrumb, BreadCrumbTrail
 from django.shortcuts import get_object_or_404
@@ -433,7 +435,7 @@ def testcase(request, case_id, job=None, pk=None):
     logger = logging.getLogger("lava-master")
     for extra_case in test_cases:
         try:
-            f_metadata = yaml.load(extra_case.metadata, Loader=yaml.CLoader)
+            f_metadata = yaml_load(extra_case.metadata)
             if not f_metadata:
                 continue
         except TypeError:
@@ -443,7 +445,7 @@ def testcase(request, case_id, job=None, pk=None):
         try:
             if extra_data and os.path.exists(extra_data):
                 with open(f_metadata["extra"], "r") as extra_file:
-                    items = yaml.load(extra_file, Loader=yaml.CLoader)
+                    items = yaml_load(extra_file)
                 # hide the !!python OrderedDict prefix from the output.
                 for key, value in items.items():
                     extra_source.setdefault(extra_case.id, "")

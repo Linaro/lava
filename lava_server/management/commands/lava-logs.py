@@ -32,6 +32,7 @@ from django.conf import settings
 from django.db import connection, transaction
 from django.db.utils import DatabaseError, InterfaceError, OperationalError
 
+from lava_common.compat import yaml_load
 from lava_results_app.models import TestCase
 from lava_server.cmdutils import LAVADaemonCommand, watch_directory
 from lava_scheduler_app.models import TestJob
@@ -356,7 +357,7 @@ class Command(LAVADaemonCommand):
             return
 
         try:
-            scanned = yaml.load(message, Loader=yaml.CLoader)
+            scanned = yaml_load(message)
         except yaml.YAMLError:
             self.logger.error("[%s] data are not valid YAML, dropping", job_id)
             return

@@ -71,11 +71,7 @@ class BaseTemplate:
         def validate_data(self, hostname, data, job_ctx=None):
             rendered = self.render_device_dictionary(hostname, data, job_ctx, raw=True)
             try:
-                ret = validate_device(
-                    yaml.load(  # nosec - safe_load implemented directly
-                        rendered, Loader=yaml.CSafeLoader
-                    )
-                )
+                ret = validate_device(yaml.safe_load(rendered))
             except SubmissionException as exc:
                 print("#######")
                 print(rendered)
@@ -100,9 +96,7 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
             try:
                 test_template = env.from_string(data)
                 rendered = test_template.render()
-                template_dict = yaml.load(  # nosec - safe_load implemented directly
-                    rendered, Loader=yaml.CLoader
-                )
+                template_dict = yaml.safe_load(rendered)
                 validate_device(template_dict)
             except AssertionError as exc:
                 self.fail("Template %s failed: %s" % (os.path.basename(template), exc))
@@ -123,9 +117,7 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
             data += "{% set connection_command = 'telnet calvin 6080' %}"
             test_template = env.from_string(data)
             rendered = test_template.render()
-            template_dict = yaml.load(  # nosec - safe_load implemented directly
-                rendered, Loader=yaml.CSafeLoader
-            )
+            template_dict = yaml.safe_load(rendered)
             validate_device(template_dict)
             self.assertIn("connect", template_dict["commands"])
             self.assertNotIn(
@@ -139,9 +131,7 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
             data += "{% set connection_tags = {'uart1': ['primary']} %}"
             test_template = env.from_string(data)
             rendered = test_template.render()
-            template_dict = yaml.load(  # nosec - safe_load implemented directly
-                rendered, Loader=yaml.CSafeLoader
-            )
+            template_dict = yaml.safe_load(rendered)
             validate_device(template_dict)
             self.assertNotIn("connect", template_dict["commands"])
             self.assertIn(

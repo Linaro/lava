@@ -57,6 +57,7 @@ from django.utils.timesince import timeuntil
 from django.views.decorators.http import require_POST
 from django_tables2 import RequestConfig
 
+from lava_common.compat import yaml_load
 from lava_common.schemas import validate
 
 from lava_server.views import index as lava_index
@@ -1298,7 +1299,7 @@ def job_detail(request, pk):
             data["size_warning"] = True
         else:
             log_data = read_logs(job.output_dir)
-            log_data = yaml.load(log_data, Loader=yaml.CLoader)
+            log_data = yaml_load(log_data)
     except OSError:
         log_data = []
     except yaml.YAMLError:
@@ -1542,7 +1543,7 @@ def job_timing(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
     try:
         data = read_logs(job.output_dir)
-        logs = yaml.load(data, Loader=yaml.CLoader)
+        logs = yaml_load(data)
     except OSError:
         raise Http404
 
@@ -1686,7 +1687,7 @@ def job_log_incremental(request, pk):
 
     try:
         data = read_logs(job.output_dir, first_line)
-        data = yaml.load(data, Loader=yaml.CLoader)
+        data = yaml_load(data)
         # When reaching EOF, yaml.load does return None instead of []
         if not data:
             data = []

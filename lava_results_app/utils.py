@@ -26,6 +26,7 @@ from django.db import DataError
 from django.core.exceptions import PermissionDenied
 from django.utils.translation import ungettext_lazy
 
+from lava_common.compat import yaml_load
 from linaro_django_xmlrpc.models import AuthToken
 
 
@@ -47,7 +48,13 @@ def description_filename(job):
     return filename
 
 
-class V2Loader(yaml.Loader):
+try:
+    from yaml import FullLoader as Loader
+except ImportError:
+    from yaml import Loader
+
+
+class V2Loader(Loader):
     def remove_pipeline_module(self, suffix, node):
         if "lava_dispatcher.pipeline" in suffix:
             suffix = suffix.replace("lava_dispatcher.pipeline", "lava_dispatcher")
@@ -197,7 +204,7 @@ def export_testcase(testcase, with_buglinks=False):
     if isinstance(extra_data, str) and os.path.exists(extra_data):
         with open(metadata["extra"], "r") as extra_file:
             # TODO: this can fail!
-            items = yaml.load(extra_file, Loader=yaml.CLoader)
+            items = yaml_load(extra_file)
         # hide the !!python OrderedDict prefix from the output.
         for key, value in items.items():
             extra_source.append({key: value})

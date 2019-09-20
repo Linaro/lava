@@ -21,6 +21,8 @@ from lava_scheduler_app.schema import (
     validate_device,
     SubmissionException,
 )
+
+from lava_common.compat import yaml_load
 from lava_dispatcher.device import PipelineDevice
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.tests.test_defs import check_missing_path
@@ -1140,7 +1142,7 @@ class TestYamlMultinode(TestCaseWithFactory):
             meta_dict,
         )
         # simulate dynamic connection
-        dynamic = yaml.load(  # nosec - not suitable for safe_load
+        dynamic = yaml_load(  # nosec - not suitable for safe_load
             open(
                 os.path.join(
                     os.path.dirname(__file__),

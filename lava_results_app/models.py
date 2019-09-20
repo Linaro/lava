@@ -51,6 +51,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
 
 from lava.utils.managers import MaterializedView
+from lava_common.compat import yaml_load
 from lava_scheduler_app.models import TestJob, Device
 from lava_scheduler_app.managers import (
     RestrictedTestJobQuerySet,
@@ -390,7 +391,7 @@ class TestCase(models.Model, Queryable):
         if not self.metadata:
             return None
         try:
-            ret = yaml.load(self.metadata, Loader=yaml.CLoader)
+            ret = yaml_load(self.metadata)
         except yaml.YAMLError:
             return None
         return ret

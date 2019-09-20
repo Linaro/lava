@@ -9,6 +9,7 @@ from django.core.exceptions import MultipleObjectsReturned
 from django.urls.exceptions import NoReverseMatch
 from django.urls import reverse
 
+from lava_common.compat import yaml_load
 from lava_results_app.tests.test_names import TestCaseWithFactory
 from lava_scheduler_app.models import TestJob, Device
 from lava_scheduler_app.utils import mkdir
@@ -132,7 +133,7 @@ class TestMetaTypes(TestCaseWithFactory):
             "result": "pass",
         }
         test_case = map_scanned_results(test_dict, job, {}, None)
-        self.assertEqual(yaml.load(test_case.metadata)["measurement"], "1234.5")
+        self.assertEqual(yaml_load(test_case.metadata)["measurement"], "1234.5")
 
     def test_case_as_url(self):
         job = TestJob.from_yaml_and_user(self.factory.make_job_yaml(), self.user)
@@ -201,13 +202,11 @@ class TestMetaTypes(TestCaseWithFactory):
         self.assertIsNotNone(ret)
         ret.save()
         self.assertEqual(TestCase.objects.filter(name="unit-test").count(), 1)
-        test_data = yaml.load(  # nosec - unit test
-            TestCase.objects.filter(name="unit-test")[0].metadata, Loader=yaml.CLoader
-        )
+        test_data = yaml_load(TestCase.objects.filter(name="unit-test")[0].metadata)
         self.assertEqual(test_data["extra"], meta_filename)
         self.assertTrue(os.path.exists(meta_filename))
         with open(test_data["extra"], "r") as extra_file:
-            data = yaml.load(extra_file, Loader=yaml.CLoader)  # nosec - unit test
+            data = yaml_load(extra_file)
         self.assertIsNotNone(data)
         os.unlink(meta_filename)
         shutil.rmtree(job.output_dir)

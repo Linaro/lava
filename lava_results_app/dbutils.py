@@ -29,6 +29,7 @@ from urllib.parse import quote
 
 from collections import OrderedDict  # pylint: disable=unused-import
 
+from lava_common.compat import yaml_load
 from lava_common.utils import debian_package_version
 from lava_results_app.models import (
     TestSuite,
@@ -95,7 +96,7 @@ def create_metadata_store(results, job):
     os.makedirs(os.path.dirname(meta_filename), mode=0o755, exist_ok=True)
     if os.path.exists(meta_filename):
         with open(meta_filename, "r") as existing_store:
-            data = yaml.load(existing_store)
+            data = yaml_load(existing_store)
         data.update(results["extra"])
     else:
         data = results["extra"]
@@ -419,7 +420,7 @@ def map_metadata(description, job):
     logger = logging.getLogger("lava-master")
     try:
         submission_data = yaml.safe_load(job.definition)
-        description_data = yaml.load(description)
+        description_data = yaml_load(description)
     except yaml.YAMLError as exc:
         logger.exception("[%s] %s", job.id, exc)
         return False
