@@ -1,0 +1,184 @@
+# names must exist as binary packages in the suite
+# for this distribution at a version which matches the constraint.
+# else move the dependency to a new file for a suite which
+# contains the dependency, e.g. backports.
+
+lava-server:
+  django-auth-ldap:
+    version: ">=1.2.12"
+    name: python3-django-auth-ldap
+  PyYAML:
+    name: python3-yaml
+  django-filter:
+    name: python3-django-filters
+  django-restricted-resource:
+    version: ">=2016.8"
+    name: python3-django-restricted-resource
+  django-tables2:
+    version: ">=1.14.2"
+    name: python3-django-tables2
+  django:
+    version: ">=1.10"
+    name: python3-django
+  djangorestframework:
+    name: python3-djangorestframework
+  djangorestframework-filters:
+    name: python3-djangorestframework-filters
+  docutils:
+    version: ">=0.6"
+    name: python3-docutils
+  jinja2:
+    name: python3-jinja2
+  nose:
+    name: python3-nose
+  psycopg2:
+    name: python3-psycopg2
+  pytz:
+    name: python3-tz
+  pyzmq:
+    name: python3-zmq
+  requests:
+    name: python3-requests
+  tap:
+    name: python3-tap
+  simplejson:
+    name: python3-simplejson
+  junit.xml:
+    name: python3-junit.xml
+    version: ">=1.8"
+  voluptuous:
+    version: ">=0.8.8"
+    name: python3-voluptuous
+  guestfs:
+    name: python3-guestfs
+    unittests: true
+  magic:
+    name: python3-magic
+    unittests: true
+  configobj:
+    name: python3-configobj
+    unittests: true
+  netifaces:
+    version: ">=0.10.0"
+    name: python3-netifaces
+    unittests: true
+  pexpect:
+    version: ">=4.2"
+    name: python3-pexpect
+    unittests: true
+  pyudev:
+    version: ">=0.21"
+    name: python3-pyudev
+    unittests: true
+  django-test-scenarios:
+    name: python3-django-testscenarios
+    unittests: true
+  pytest-django:
+    name: python3-pytest-django
+    unittests: true
+  pytest:
+    name: python3-pytest
+    unittests: true
+  pytest-cov:
+    name: python3-pytest-cov
+    unittests: true
+  tftpd-hpa:
+    name: tftpd-hpa
+    unittests: true
+
+lava-dispatcher:
+  PyYAML:
+    name: python3-yaml
+  configobj:
+    name: python3-configobj
+  file-magic:
+    name: python3-magic
+  jinja2:
+    name: python3-jinja2
+  netifaces:
+    version: ">=0.10.0"
+    name: python3-netifaces
+  nose:
+    name: python3-nose
+  pexpect:
+    version: ">=4.2"
+    name: python3-pexpect
+  pytest:
+    name: python3-pytest
+    unittests: true
+  pytz:
+    name: python3-tz
+  pyudev:
+    version: ">=0.21"
+    name: python3-pyudev
+  pyzmq:
+    name: python3-zmq
+  requests:
+    name: python3-requests
+  setproctitle:
+    version: ">=1.1.8"
+    name: python3-setproctitle
+  guestfs:
+    name: python3-guestfs
+  pyocd:
+    name: python3-pyocd
+    unittests: true
+  voluptuous:
+    version: ">=0.8.8"
+    name: python3-voluptuous
+    unittests: true
+  gdb-multiarch:
+    name: gdb-multiarch
+    unittests: true
+  git:
+    name: git
+    unittests: true
+  bzr:
+    name: bzr
+    unittests: true
+  schroot:
+    name: schroot
+    unittests: true
+  lxc-info:
+    name: lxc
+    unittests: true
+  lxc-templates:
+    name: lxc-templates
+    unittests: true
+  img2simg:
+    name: android-sdk-libsparse-utils
+    unittests: true
+  simg2img:
+    name: android-sdk-libsparse-utils
+    unittests: true
+  minicom:
+    name: minicom
+    unittests: true
+  mkimage:
+    name: u-boot-tools
+    unittests: true
+  docker:
+    name: docker.io
+    unittests: true
+  xnbd-server:
+    name: xnbd-server
+    unittests: true
+  telnet:
+    name: telnet
+    unittests: true
+  tftpd-hpa:
+    name: tftpd-hpa
+    unittests: true
+  qemu-system-x86_64:
+    name: qemu-system-x86
+    unittests: true
+  qemu-system-aarch64:
+    name: qemu-system-arm
+    unittests: true
+
+lava-common:
+  nose:
+    name: python3-nose
+  voluptuous:
+    version: ">=0.8.8"
+    name: python3-voluptuous
