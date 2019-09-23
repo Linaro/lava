@@ -20,7 +20,8 @@
 import logging
 import json
 import uuid
-from nose.tools import nottest
+
+from lava_common.decorators import nottest
 
 
 # disable pylint warnings until lava-coordinator is updated to make it easier to port other changes.

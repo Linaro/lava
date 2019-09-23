@@ -30,7 +30,6 @@ TestCase is a single lava-test-case record or Action result.
 
 from datetime import timedelta
 import logging
-from nose.tools import nottest
 from urllib.parse import quote
 import yaml
 import contextlib
@@ -51,6 +50,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
 
 from lava_common.compat import yaml_load
+from lava_common.decorators import nottest
 from lava_server.managers import MaterializedView
 from lava_scheduler_app.models import TestJob, Device
 from lava_scheduler_app.managers import (

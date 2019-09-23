@@ -21,7 +21,8 @@
 
 import os
 import yaml
-from nose.tools import nottest
+
+from lava_common.decorators import nottest
 from lava_dispatcher.tests.test_basic import StdoutTestCase
 from lava_dispatcher.job import Job
 from lava_dispatcher.action import Pipeline, Timeout

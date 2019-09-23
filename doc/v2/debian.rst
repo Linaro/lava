@@ -417,7 +417,7 @@ Optional arguments are:
 
  ./share/requires.py --distribution debian --suite buster --package lava-dispatcher --names
  python3-configobj python3-guestfs python3-jinja2 python3-magic 
- python3-netifaces python3-nose python3-pexpect python3-pyudev 
+ python3-netifaces python3-pexpect python3-pyudev
  python3-requests python3-setproctitle python3-tz python3-yaml
  python3-zmq
 
@@ -647,7 +647,6 @@ format which mimics ``requirements.txt``::
     django-restricted-resource>=2016.8
     docutils>=0.6
     jinja2
-    nose
     psycopg2
     pytz
     pyzmq
@@ -671,7 +670,7 @@ other ``apt-get`` commands before appending the list of packages.
 
     $ ./share/requires.py --package lava-server --distribution debian --suite stretch --names
     python3-django python3-yaml python3-django-restricted-resource python3-docutils \
-    python3-jinja2 python3-nose python3-psycopg2 python3-tz python3-zmq python3-requests \
+    python3-jinja2 python3-psycopg2 python3-tz python3-zmq python3-requests \
     python3-simplejson python3-voluptuous
 
 Adding packages needed for the unittests

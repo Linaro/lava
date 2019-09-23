@@ -28,7 +28,8 @@ import select
 import shlex
 import subprocess  # nosec - internal
 from collections import OrderedDict
-from nose.tools import nottest
+
+from lava_common.decorators import nottest
 from lava_common.timeout import Timeout
 from lava_common.exceptions import (
     LAVABug,
