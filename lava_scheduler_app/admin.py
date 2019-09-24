@@ -18,6 +18,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
+import warnings
+
 from django import forms
 from django.core.exceptions import ValidationError
 from django.contrib import admin
@@ -163,7 +165,14 @@ admin.site.register(Group, CustomGroupAdmin)
 
 def cancel_action(modeladmin, request, queryset):  # pylint: disable=unused-argument
     with transaction.atomic():
-        for testjob in queryset.select_for_update():
+        for testjob in queryset:
+            # TODO: hacky. until django 2.0+ is used and select_for_update gets
+            # the 'of' argument.
+            warnings.warn(
+                "select_for_update should be applied to the whole queryset at once, once we upgrade to django 2+",
+                DeprecationWarning,
+            )
+            testjob = TestJob.objects.select_for_update().get(pk=testjob.pk)
             if testjob.can_cancel(request.user):
                 if testjob.is_multinode:
                     for job in testjob.sub_jobs_list:
