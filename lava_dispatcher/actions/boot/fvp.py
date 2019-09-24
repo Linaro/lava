@@ -26,7 +26,6 @@ from lava_common.exceptions import JobError
 from lava_dispatcher.action import Pipeline, Action
 from lava_dispatcher.logical import Boot
 from lava_dispatcher.actions.boot import BootAction, AutoLoginAction
-from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.shell import ExpectShellSession, ShellCommand, ShellSession
 
 
@@ -281,7 +280,7 @@ class StartFVPAction(BaseFVPAction):
         # We should now have the matched output
         if "PORT" not in shell_connection.raw_connection.match.groupdict():
             raise JobError(
-                "'console_string' should contain a regular expression section, such as '(?P<PORT>\d+)' to extract the serial port of the FVP. Group name must be 'PORT'"
+                "'console_string' should contain a regular expression section, such as '(?P<PORT>\\d+)' to extract the serial port of the FVP. Group name must be 'PORT'"
             )
 
         serial_port = shell_connection.raw_connection.match.groupdict()["PORT"]
@@ -309,9 +308,6 @@ class GetFVPSerialAction(Action):
     name = "fvp-serial-connect"
     description = "connect to the fvp serial connection via telnet"
     summary = "connect to the fvp serial output"
-
-    def __init__(self):
-        super().__init__()
 
     def run(self, connection, max_end_time):
         serial_port = self.get_namespace_data(

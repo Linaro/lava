@@ -23,7 +23,6 @@ import os
 import shutil
 import subprocess  # nosec - internal use.
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.logical import RetryAction
 from lava_common.exceptions import InfrastructureError, JobError, LAVABug
 from lava_common.constants import RAMDISK_FNAME, UBOOT_DEFAULT_HEADER_LENGTH
 from lava_common.utils import debian_filename_version

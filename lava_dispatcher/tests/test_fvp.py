@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
-import unittest
 
 from lava_dispatcher.tests.test_basic import StdoutTestCase, Factory
 from lava_dispatcher.actions.deploy import docker
