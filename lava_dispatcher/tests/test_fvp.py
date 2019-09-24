@@ -17,21 +17,26 @@
 # You should have received a copy of the GNU General Public License
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
-
+import unittest
 
 from lava_dispatcher.tests.test_basic import StdoutTestCase, Factory
+from lava_dispatcher.actions.deploy import docker
+import subprocess
 
 
 class TestFVPActions(StdoutTestCase):
     def setUp(self):
         super().setUp()
         self.factory = Factory()
-        self.job = self.factory.create_job(
-            "docker-01.jinja2", "sample_jobs/fvp.yaml"
-        )
+        self.job = self.factory.create_job("docker-01.jinja2", "sample_jobs/fvp.yaml")
 
-    def test_shell_reference(self):
-        self.job.validate()
-        self.assertEqual([], self.job.pipeline.errors)
-        description_ref = self.pipeline_reference("fvp.yaml", job=self.job)
-        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+
+def test_shell_reference(monkeypatch):
+    monkeypatch.setattr(subprocess, "check_output", lambda cmd: b"")
+    monkeypatch.setattr(docker, "which", lambda a: "/usr/bin/docker")
+    factory = TestFVPActions()
+    factory.setUp()
+    factory.job.validate()
+    assert [] == factory.job.pipeline.errors
+    description_ref = factory.pipeline_reference("fvp.yaml", job=factory.job)
+    assert description_ref == factory.job.pipeline.describe(False)

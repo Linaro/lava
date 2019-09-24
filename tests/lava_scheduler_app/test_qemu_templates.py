@@ -148,6 +148,7 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
                     "user": "root",
                     "identity_file": "dynamic_vm_keys/lava",
                 },
+                "fvp": None,
             },
             template_dict["actions"]["deploy"]["methods"],
         )
@@ -166,6 +167,7 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
                     }
                 },
                 "ssh": None,
+                "fvp": None,
             },
             template_dict["actions"]["boot"]["methods"],
         )
@@ -196,6 +198,7 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
                     "user": "root",
                     "identity_file": "dynamic_vm_keys/lava",
                 },
+                "fvp": None,
             },
             template_dict["actions"]["deploy"]["methods"],
         )
@@ -214,6 +217,7 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
                     }
                 },
                 "ssh": None,
+                "fvp": None,
             },
             template_dict["actions"]["boot"]["methods"],
         )
@@ -242,6 +246,7 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
                     "user": "root",
                     "identity_file": "dynamic_vm_keys/lava",
                 },
+                "fvp": None,
             },
             template_dict["actions"]["deploy"]["methods"],
         )
@@ -260,6 +265,7 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
                     }
                 },
                 "ssh": None,
+                "fvp": None,
             },
             template_dict["actions"]["boot"]["methods"],
         )
