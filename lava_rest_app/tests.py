@@ -45,6 +45,19 @@ actions: []
 protocols: {}
 """
 
+EXAMPLE_WORKING_JOB = """
+device_type: public_device_type1
+job_name: test
+visibility: public
+timeouts:
+  job:
+    minutes: 10
+  action:
+    minutes: 5
+actions: []
+protocols: {}
+"""
+
 LOG_FILE = """
 - {"dt": "2018-10-03T16:28:28.199903", "lvl": "info", "msg": "lava-dispatcher, installed at version: 2018.7-1+stretch"}
 - {"dt": "2018-10-03T16:28:28.200807", "lvl": "info", "msg": "start: 0 validate"}
@@ -382,3 +395,31 @@ ok 2 - bar
             data["results"][2]["health"] == "Maintenance"
         )
         assert data["results"][2]["state"] == "Offline"  # nosec - unit test support
+
+    def test_submit_unauthorized(self):
+        response = self.userclient.post(
+            reverse("api-root", args=[self.version]) + "jobs/",
+            {"definition": EXAMPLE_JOB},
+        )
+        assert response.status_code == 403  # nosec - unit test support
+
+    def test_submit_bad_request_no_device_type(self):
+        response = self.adminclient.post(
+            reverse("api-root", args=[self.version]) + "jobs/",
+            {"definition": EXAMPLE_JOB},
+            format="json",
+        )
+        assert response.status_code == 400  # nosec - unit test support
+        content = json.loads(response.content.decode("utf-8"))
+        assert (
+            content["message"] == "job submission failed: 'device_type'."
+        )  # nosec - unit test support
+
+    def test_submit(self):
+        response = self.adminclient.post(
+            reverse("api-root", args=[self.version]) + "jobs/",
+            {"definition": EXAMPLE_WORKING_JOB},
+            format="json",
+        )
+        assert response.status_code == 201  # nosec - unit test support
+        assert TestJob.objects.count() == 3  # nosec - unit test support
