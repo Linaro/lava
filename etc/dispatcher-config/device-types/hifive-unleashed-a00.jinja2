@@ -1,0 +1,13 @@
+{% extends 'base-uboot.jinja2' %}
+
+{% set uboot_mkimage_arch = 'riscv' %}
+{% set console_device = console_device|default('ttySIF0') %}
+{% set baud_rate = baud_rate|default(115200) %}
+
+{# bootm does not work with ramdisk #}
+{% set booti_kernel_addr = '0x80200000' %}
+{% set booti_dtb_addr = '0x83500000' %}
+{% set booti_ramdisk_addr = '0x83000000' %}
+
+{% set uboot_initrd_high = '0xffffffffffffffff' %}
+{% set uboot_fdt_high = '0xffffffffffffffff' %}
