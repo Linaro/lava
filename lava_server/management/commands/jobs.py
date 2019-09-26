@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
+import argparse
 import contextlib
 import datetime
 import lzma
@@ -36,6 +37,7 @@ from django.utils import timezone
 
 from lava_common.compat import yaml_safe_load
 from lava_common.schemas import validate
+from lava_scheduler_app.dbutils import testjob_submission
 from lava_scheduler_app.models import TestJob
 from lava_server.compat import get_sub_parser_class
 
@@ -202,6 +204,11 @@ class Command(BaseCommand):
             help="Be nice with the system by sleeping regularly",
         )
 
+        # "submit"
+        submit = sub.add_parser("submit", help="Submit a job")
+        submit.add_argument("submitter", type=str, help="job submitter")
+        submit.add_argument("job", type=argparse.FileType("r"), help="job definition")
+
     def handle(self, *_, **options):
         """forward to the right sub-handler"""
         if options["sub_command"] == "list":
@@ -236,6 +243,8 @@ class Command(BaseCommand):
                 options["dry_run"],
                 options["slow"],
             )
+        elif options["sub_command"] == "submit":
+            self.handle_submit(options["submitter"], options["job"])
 
     def handle_fail(self, job_id):
         try:
@@ -490,3 +499,19 @@ class Command(BaseCommand):
             if slow and index % 100 == 99:
                 self.stdout.write("sleeping 2s...")
                 time.sleep(2)
+
+    def handle_submit(self, submitter, definition):
+        try:
+            user = User.objects.get(username=submitter)
+        except User.DoesNotExist:
+            raise CommandError("Unknown user '%s'" % submitter)
+        try:
+            job = testjob_submission(definition.read(), user)
+        except Exception as exc:
+            raise CommandError("Unable to submit '%s'" % str(exc))
+
+        if isinstance(job, list):
+            for j in job:
+                print(j.sub_id)
+        else:
+            print(job.id)
