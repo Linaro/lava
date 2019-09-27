@@ -21,8 +21,8 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin
-from django.contrib.auth.models import Permission
+from django.contrib.auth.admin import UserAdmin, GroupAdmin
+from django.contrib.auth.models import Permission, Group
 from django.db import transaction
 from django.conf import settings
 
@@ -120,6 +120,32 @@ def expire_user_action(
 expire_user_action.short_description = "Expire user account"
 
 
+class CustomGroupAdminForm(forms.ModelForm):
+    users = forms.ModelMultipleChoiceField(
+        User.objects.all(),
+        widget=admin.widgets.FilteredSelectMultiple("Users", False),
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(CustomGroupAdminForm, self).__init__(*args, **kwargs)
+        if self.instance.pk:
+            initial_users = self.instance.user_set.values_list("pk", flat=True)
+            self.initial["users"] = initial_users
+
+    def save(self, *args, **kwargs):
+        kwargs["commit"] = True
+        return super(CustomGroupAdminForm, self).save(*args, **kwargs)
+
+    def save_m2m(self):
+        self.instance.user_set.clear()
+        self.instance.user_set.add(*self.cleaned_data["users"])
+
+
+class CustomGroupAdmin(GroupAdmin):
+    form = CustomGroupAdminForm
+
+
 class CustomUserAdmin(UserAdmin):
 
     actions = [expire_user_action]
@@ -131,6 +157,8 @@ class CustomUserAdmin(UserAdmin):
 #  Setup the override in the django admin interface at startup.
 admin.site.unregister(User)
 admin.site.register(User, CustomUserAdmin)
+admin.site.unregister(Group)
+admin.site.register(Group, CustomGroupAdmin)
 
 
 def cancel_action(modeladmin, request, queryset):  # pylint: disable=unused-argument
