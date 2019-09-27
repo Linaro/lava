@@ -18,7 +18,7 @@ Vcs-Browser: https://git.lavasoftware.org/lava/pkg-lava-debian
 Package: lava-dispatcher
 Architecture: amd64 arm64 armhf i386 ppc64el s390x ppc64
 Depends: file, systemd-sysv, python3-setuptools,
- lava-common (>= ${source:Version}), tar (>= 1.27),
+ lava-common (= ${binary:Version}), tar (>= 1.27),
  ${python3:Depends}, ${misc:Depends}
 Multi-Arch: foreign
 Recommends: ntp, git, tftpd-hpa, openbsd-inetd, ser2net,
@@ -49,7 +49,7 @@ Depends: apache2, adduser, gunicorn3, iproute2, python3-setuptools,
  libjs-excanvas, libjs-jquery, libjs-jquery-flot (>=0.8.2),
  libjs-jquery-typeahead, systemd-sysv, postgresql,
  postgresql-client, postgresql-common,
- lava-common (>= ${source:Version}), ${python3:Depends}, ${misc:Depends}
+ lava-common (= ${binary:Version}), ${python3:Depends}, ${misc:Depends}
 Recommends: ntp, openssh-client,
  lava-coordinator, lava-server-doc, lava-dispatcher,
 Suggests: lavacli, python3-django-debug-toolbar
@@ -89,8 +89,8 @@ Description: Linaro Automated Validation Architecture common
 Package: lava
 Architecture: all
 Section: metapackages
-Depends: lava-server (>= ${source:Version}), lava-server-doc,
- lava-dispatcher (>= ${source:Version}), lava-coordinator, lava-dev,
+Depends: lava-server (= ${binary:Version}), lava-server-doc,
+ lava-dispatcher (= ${binary:Version}), lava-coordinator, lava-dev,
  lavacli, ntp | ntpdate | chrony, tftpd-hpa, sudo,
  telnet, debootstrap (>= 1.0.86~),
  openssh-client, lxc (>= 1:2.0.6), rsync, bridge-utils, ${misc:Depends}
