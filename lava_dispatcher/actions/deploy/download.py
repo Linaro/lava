@@ -508,20 +508,16 @@ class FileDownloadAction(DownloadHandler):
             )
 
     def reader(self):
-        reader = None
         try:
-            reader = open(self.url.path, "rb")
-            buff = reader.read(FILE_DOWNLOAD_CHUNK_SIZE)
-            while buff:
-                yield buff
+            with open(self.url.path, "rb") as reader:
                 buff = reader.read(FILE_DOWNLOAD_CHUNK_SIZE)
+                while buff:
+                    yield buff
+                    buff = reader.read(FILE_DOWNLOAD_CHUNK_SIZE)
         except OSError as exc:
             raise InfrastructureError(
                 "Unable to read from %s: %s" % (self.url.path, str(exc))
             )
-        finally:
-            if reader is not None:
-                reader.close()
 
 
 class HttpDownloadAction(DownloadHandler):
