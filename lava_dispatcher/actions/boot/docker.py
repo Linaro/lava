@@ -20,6 +20,7 @@
 
 import os
 
+from lava_common.exceptions import JobError
 from lava_dispatcher.action import Pipeline, Action
 from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.actions.boot import BootAction
@@ -95,6 +96,12 @@ class CallDockerAction(Action):
         self.container = "lava-%s-%s" % (self.job.job_id, self.level)
 
         options = self.job.device["actions"]["boot"]["methods"]["docker"]["options"]
+
+        docker_image = self.get_namespace_data(
+            action="deploy-docker", label="image", key="name"
+        )
+        if docker_image is None:
+            raise JobError("Missing deploy action before boot")
 
         if options["cpus"]:
             self.extra_options += " --cpus %s" % options["cpus"]
