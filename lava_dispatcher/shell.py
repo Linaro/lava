@@ -22,7 +22,6 @@ import contextlib
 import logging
 import pexpect
 import sre_constants
-import sys
 import time
 from lava_dispatcher.action import Action
 from lava_common.exceptions import InfrastructureError, JobError, LAVABug, TestError
@@ -68,9 +67,9 @@ class ShellLogger:
             self.line = lines
         return
 
-    def flush(self):
-        sys.stdout.flush()
-        sys.stderr.flush()
+    def flush(self, force=False):
+        if force and self.line:
+            self.write("\n")
 
 
 class ShellCommand(pexpect.spawn):
@@ -181,6 +180,10 @@ class ShellCommand(pexpect.spawn):
         while index == 0:
             index = self.expect([".+", pexpect.EOF, pexpect.TIMEOUT], timeout=1)
 
+    def flush(self):
+        """ Will be called by pexpect itself when closing the connection """
+        self.logfile.flush(force=True)
+
 
 class ShellSession(Connection):
 
@@ -243,7 +246,8 @@ class ShellSession(Connection):
         # connection_prompt_limit
         partial_timeout = remaining / 2.0
         logger.debug(
-            "Waiting using forced prompt support. %ss timeout" % partial_timeout
+            "Waiting using forced prompt support (timeout %s)"
+            % seconds_to_str(partial_timeout)
         )
         while True:
             try:
