@@ -19,9 +19,8 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
+import pexpect
 import pytest  # pylint: disable=unused-import
-import select
-import subprocess  # nosec - unit tests
 
 from lava_dispatcher.device import NewDevice, PipelineDevice
 from lava_dispatcher.parser import JobParser
@@ -59,42 +58,28 @@ class TestFlasher(StdoutTestCase):
 
 
 def test_run(monkeypatch):
-    class FD:
-        def readlines(self):
-            return []
-
     class Proc:
-        def __init__(self):
-            self.stderr = FD()
-            self.stdout = FD()
-
-        def poll(self):
-            return 0
-
         def wait(self):
             return 0
 
-    class Poller:
-        def register(self, fd, flag):
-            pass
+        def expect(self, arg):
+            assert arg == pexpect.EOF
 
     commands = [
         ["nice", "/home/lava/bin/PiCtrl.py", "PowerPlug", "0", "off"],
         ["nice", "touch"],
     ]
 
-    def Popen(
-        cmd, cwd, stdout, stderr, bufsize, universal_newlines
-    ):  # nosec - unit test
-        assert cmd == commands.pop(0)  # nosec - unit test
-        assert stdout == subprocess.PIPE  # nosec - unit test
-        assert stderr == subprocess.PIPE  # nosec - unit test
-        assert bufsize == 1  # nosec - unit test
-        assert universal_newlines  # nosec - unit test
+    def spawn(cmd, args, encoding, codec_errors, logfile, timeout, searchwindowsize):
+        command = commands.pop(0)
+        assert cmd == command[0]
+        assert args == command[1:]
+        assert encoding == "utf-8"
+        assert codec_errors == "replace"
+        assert searchwindowsize == 10
         return Proc()
 
-    monkeypatch.setattr(subprocess, "Popen", Popen)
-    monkeypatch.setattr(select, "epoll", lambda: Poller())
+    monkeypatch.setattr(pexpect, "spawn", spawn)
 
     action = FlasherAction()
     device = PipelineDevice(

@@ -21,10 +21,10 @@
 import logging
 import copy
 from functools import reduce
+import pexpect
 import time
 import types
 import traceback
-import select
 import shlex
 import subprocess  # nosec - internal
 from collections import OrderedDict
@@ -290,6 +290,33 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
             if new_connection:
                 connection = new_connection
         return connection
+
+
+class CommandLogger:
+    """
+    Grab output of a command line tool and stream it to the logger
+    """
+
+    def __init__(self, logger):
+        self.line = ""
+        self.logger = logger
+
+    def write(self, new_line):
+        lines = self.line + new_line
+
+        # Print one full line at a time. A partial line is kept in memory.
+        if "\n" in lines:
+            last_ret = lines.rindex("\n")
+            self.line = lines[last_ret + 1 :]
+            lines = lines[:last_ret]
+            for line in lines.split("\n"):
+                self.logger.debug(">> %s", line)
+        else:
+            self.line = lines
+
+    def flush(self, force=False):
+        if force and self.line:
+            self.write("\n")
 
 
 class Action:  # pylint: disable=too-many-instance-attributes,too-many-public-methods
@@ -590,52 +617,48 @@ class Action:  # pylint: disable=too-many-instance-attributes,too-many-public-me
             command_list = shlex.split(command_list)
         elif not isinstance(command_list, list):
             raise LAVABug("commands to run_cmd need to be a list or a string")
-        command_list = ["nice"] + [str(s) for s in command_list]
+        command_list = [str(s) for s in command_list]
+
+        # Build the error message
+        log_error_msg = "Unable to run 'nice' '%s'" % "' '".join(command_list)
+        if error_msg is None:
+            error_msg = log_error_msg
 
         # Start the subprocess
-        self.logger.debug("Calling: '%s'", "' '".join(command_list))
+        self.logger.debug("Calling: 'nice' '%s'", "' '".join(command_list))
         start = time.time()
-        # TODO: when python >= 3.6 use encoding and errors
-        # see https://docs.python.org/3.6/library/subprocess.html#subprocess.Popen
-        proc = subprocess.Popen(  # nosec - managed
-            command_list,
-            cwd=cwd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            bufsize=1,  # line buffered
-            universal_newlines=True,  # text stream
-        )
 
-        # Poll stdout and stderr until the process terminate
-        poller = select.epoll()
-        poller.register(proc.stdout, select.EPOLLIN)
-        poller.register(proc.stderr, select.EPOLLIN)
-        while proc.poll() is None:
-            for fd, event in poller.poll():
-                # When the process terminate, we might get an EPOLLHUP
-                if event is not select.EPOLLIN:
-                    continue
-                # Print stdout or stderr
-                # We can't use readlines as it will block.
-                if fd == proc.stdout.fileno():
-                    line = proc.stdout.readline()
-                    self.logger.debug(">> %s", line)
-                elif fd == proc.stderr.fileno():
-                    line = proc.stderr.readline()
-                    self.logger.error(">> %s", line)
+        cmd_logger = CommandLogger(self.logger)
+        ret = None
+        try:
+            proc = pexpect.spawn(
+                "nice",
+                command_list,
+                encoding="utf-8",
+                codec_errors="replace",
+                logfile=cmd_logger,
+                timeout=self.timeout.duration,
+                searchwindowsize=10,
+            )
+            proc.expect(pexpect.EOF)
+            # wait for the process and record the return value
+            ret = proc.wait()
+        except pexpect.TIMEOUT:
+            self.logger.error("Timed out after %s seconds", int(time.time() - start))
+            proc.terminate()
+            proc.wait()
+        except pexpect.ExceptionPexpect as exc:
+            self.logger.error("Unable to run: %s", exc)
 
-        # The process has terminated but some output might be remaining.
-        # readlines won't block now because the process has terminated.
-        for line in proc.stdout.readlines():
-            self.logger.debug(">> %s", line)
-        for line in proc.stderr.readlines():
-            self.logger.error(">> %s", line)
+        cmd_logger.flush(force=True)
+        if ret is not None:
+            self.logger.debug(
+                "Returned %d in %s seconds", ret, int(time.time() - start)
+            )
 
-        # Check the return code
-        ret = proc.wait()
-        self.logger.debug("Returned %d in %s seconds", ret, int(time.time() - start))
-        if ret and not allow_fail:
-            self.logger.error("Unable to run '%s'", command_list)
+        # Check the return value
+        if ret != 0 and not allow_fail:
+            self.logger.error("Unable to run 'nice' '%s'", command_list)
             raise self.command_exception(error_msg)
 
     def run_command(self, command_list, allow_silent=False, allow_fail=False, cwd=None):
