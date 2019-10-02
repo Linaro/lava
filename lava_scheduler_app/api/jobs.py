@@ -395,6 +395,14 @@ class SchedulerJobsAPI(ExposedV2API):
         device_type = None
         if job.requested_device_type is not None:
             device_type = job.requested_device_type.name
+        if job.is_public:
+            visibility = "Public"
+        elif job.viewing_groups.count() == 0:
+            visibility = "Personal"
+        else:
+            visibility = "Group (%s)" % ", ".join(
+                [g.name for g in job.viewing_groups.all()]
+            )
 
         return {
             "id": job.display_id,
@@ -410,7 +418,7 @@ class SchedulerJobsAPI(ExposedV2API):
             "start_time": job.start_time,
             "end_time": job.end_time,
             "tags": [t.name for t in job.tags.all()],
-            "visibility": job.get_visibility_display(),
+            "visibility": visibility,
             "failure_comment": job.failure_comment,
         }
 
