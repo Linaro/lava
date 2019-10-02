@@ -138,11 +138,9 @@ def testjob(request, job):
     )
     failed_definitions = []
     yaml_dict = OrderedDict()
-    with contextlib.suppress(TestData.DoesNotExist):
-        # some duplicates can exist, so get would fail here and [0] is quicker than try except.
-        testdata = TestData.objects.filter(testjob=job)[0]
 
-        # hide internal python objects, like OrderedDict
+    testdata = TestData.objects.filter(testjob=job).first()
+    if testdata:
         for data in testdata.attributes.all().order_by("name"):
             yaml_dict[str(data.name)] = str(data.value)
 
