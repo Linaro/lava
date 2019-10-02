@@ -290,7 +290,7 @@ class Command(LAVADaemonCommand):
     def _handle_end(self, hostname, action, msg):  # pylint: disable=unused-argument
         try:
             job_id = int(msg[2])
-            error_msg = msg[3]
+            error_msg = u(msg[3])
             compressed_description = msg[4]
         except (IndexError, ValueError):
             self.logger.error("Invalid message from <%s> '%s'", hostname, msg)
