@@ -21,14 +21,22 @@ import io
 import junit_xml
 import tap
 
-from lava_scheduler_app.models import Device, DeviceType, TestJob, Worker
+from lava_scheduler_app.models import (
+    Device,
+    DeviceType,
+    DevicesUnavailableException,
+    TestJob,
+    Worker,
+)
+from lava_scheduler_app.dbutils import testjob_submission
+from lava_scheduler_app.schema import SubmissionException
 from lava_results_app.models import TestSuite, TestCase
 from lava_scheduler_app.logutils import read_logs
 from linaro_django_xmlrpc.models import AuthToken
 
 from django.http.response import HttpResponse
 
-from rest_framework import routers, serializers, views, viewsets
+from rest_framework import routers, serializers, status, views, viewsets
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import detail_route
 from rest_framework.exceptions import NotFound, AuthenticationFailed
@@ -117,9 +125,10 @@ class LavaObtainAuthToken(ObtainAuthToken):
 
 
 class TestJobSerializer(serializers.ModelSerializer):
-    health = serializers.CharField(source="get_health_display")
-    state = serializers.CharField(source="get_state_display")
-    submitter = serializers.CharField(source="submitter.username")
+    health = serializers.CharField(source="get_health_display", read_only=True)
+    state = serializers.CharField(source="get_state_display", read_only=True)
+    submitter = serializers.CharField(source="submitter.username", read_only=True)
+    definition = serializers.CharField(style={"base_template": "textarea.html"})
 
     class Meta:
         model = TestJob
@@ -144,6 +153,26 @@ class TestJobSerializer(serializers.ModelSerializer):
             "failure_tags",
             "failure_comment",
         )
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "submitter": {"read_only": True},
+            "viewing_groups": {"read_only": True},
+            "description": {"read_only": True},
+            "health_check": {"read_only": True},
+            "requested_device_type": {"read_only": True},
+            "tags": {"read_only": True},
+            "actual_device": {"read_only": True},
+            "submit_time": {"read_only": True},
+            "start_time": {"read_only": True},
+            "end_time": {"read_only": True},
+            "state": {"read_only": True},
+            "health": {"read_only": True},
+            "priority": {"read_only": True},
+            "original_definition": {"read_only": True},
+            "multinode_definition": {"read_only": True},
+            "failure_tags": {"read_only": True},
+            "failure_comment": {"read_only": True},
+        }
 
 
 class TestSuiteSerializer(serializers.ModelSerializer):
@@ -158,9 +187,13 @@ class TestCaseSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class TestJobViewSet(viewsets.ReadOnlyModelViewSet):
+class TestJobViewSet(viewsets.ModelViewSet):
     """
     List TestJobs visible to the current user.
+
+    You can submit a job via POST request on:
+
+    * `/jobs/`
 
     The logs, test results and test suites of a specific TestJob are available at:
 
@@ -327,6 +360,51 @@ class TestJobViewSet(viewsets.ReadOnlyModelViewSet):
         page = paginator.paginate_queryset(tests, request)
         serializer = TestCaseSerializer(page, many=True, context={"request": request})
         return paginator.get_paginated_response(serializer.data)
+
+    def create(self, request, **kwargs):
+        serializer = TestJobSerializer(data=request.data)
+
+        serializer.is_valid(raise_exception=True)
+        definition = serializer.validated_data["definition"]
+
+        if not self.request.user.has_perm("lava_scheduler_app.submit_testjob"):
+            return Response(
+                {"message": "Permission denied. Please contact system administrator"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        try:
+            job = testjob_submission(definition, self.request.user)
+        except SubmissionException as exc:
+            return Response(
+                {"message": "Problem with submitted job data: %s" % exc},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except (ValueError, KeyError) as exc:
+            return Response(
+                {"message": "job submission failed: %s." % exc},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except (Device.DoesNotExist, DeviceType.DoesNotExist):
+            return Response(
+                {"message": "Specified device or device type not found."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except DevicesUnavailableException as exc:
+            return Response(
+                {"message": "Device unavailable: %s" % exc},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if isinstance(job, list):
+            job_ids = [j.sub_id for j in job]
+        else:
+            job_ids = [job.id]
+
+        return Response(
+            {"message": "job(s) successfully submitted", "job_ids": job_ids},
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class DeviceTypeSerializer(serializers.ModelSerializer):
