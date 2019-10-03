@@ -45,7 +45,7 @@ Description: Linaro Automated Validation Architecture dispatcher
 Package: lava-server
 Architecture: all
 Pre-Depends: debconf | debconf-2.0
-Depends: apache2, adduser, gunicorn3, iproute2, python3-setuptools,
+Depends: apache2, adduser, gunicorn (>= 19.9.0-4) | gunicorn3, iproute2, python3-setuptools,
  libjs-excanvas, libjs-jquery, libjs-jquery-flot (>=0.8.2),
  libjs-jquery-typeahead, systemd-sysv, postgresql,
  postgresql-client, postgresql-common,
