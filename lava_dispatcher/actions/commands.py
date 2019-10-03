@@ -18,8 +18,8 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+from lava_common.exceptions import ConfigurationError, InfrastructureError
 from lava_dispatcher.action import Action
-from lava_common.exceptions import ConfigurationError
 
 
 class CommandAction(Action):
@@ -28,6 +28,8 @@ class CommandAction(Action):
     name = "user-command"
     description = "execute one of the commands listed by the admin"
     summary = "execute commands"
+    command_exception = InfrastructureError
+    timeout_exception = InfrastructureError
 
     def __init__(self):
         super().__init__()
