@@ -7,4 +7,9 @@
 	su lavaserver lavaserver
 	notifempty
 	create 644 lavaserver adm
+	postrotate
+                if invoke-rc.d lava-server-gunicorn status > /dev/null 2>&1; then \
+                    invoke-rc.d lava-server-gunicorn reload > /dev/null 2>&1; \
+                fi;
+	endscript
 }
