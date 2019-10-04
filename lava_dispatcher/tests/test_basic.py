@@ -55,7 +55,9 @@ class StdoutTestCase(unittest.TestCase):
         if cls.update_ref:
             sys.stderr.write("WARNING: modifying pipeline references!")
             with open(y_file, "w") as describe:
-                yaml.dump(job.pipeline.describe(False), describe)
+                yaml.dump(
+                    job.pipeline.describe(False), describe, default_flow_style=None
+                )
         with open(y_file, "r") as f_ref:
             return yaml.safe_load(f_ref)
 
