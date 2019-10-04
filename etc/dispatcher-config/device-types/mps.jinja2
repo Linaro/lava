@@ -8,6 +8,8 @@ actions:
     methods:
       lxc:
       mps:
+        parameters:
+          hard-reboot: {{ mps_hard_reboot|default(false) }}
   boot:
     connections:
       lxc:

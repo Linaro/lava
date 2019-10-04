@@ -119,8 +119,17 @@ class MpsAction(DeployAction):
                 self.internal_pipeline.add_action(DeployVExpressRecoveryImage())
             else:
                 self.internal_pipeline.add_action(DeployMPSTestBinary(image))
-        self.internal_pipeline.add_action(UnmountVExpressMassStorageDevice())
-        self.internal_pipeline.add_action(PowerOff())
+
+        # Should we hard reboot the board after flash?
+        params = self.job.device["actions"]["deploy"]["methods"]["mps"]["parameters"]
+        if params["hard-reboot"]:
+            # Unmount the mass storage device before rebooting
+            self.internal_pipeline.add_action(UnmountVExpressMassStorageDevice())
+            self.internal_pipeline.add_action(PowerOff())
+        else:
+            # Unmount the mass storage device after the creation of reboot.txt
+            self.internal_pipeline.add_action(DeployMPSRebootTxt())
+            self.internal_pipeline.add_action(UnmountVExpressMassStorageDevice())
 
 
 class DeployMPSTestBinary(Action):
@@ -158,4 +167,28 @@ class DeployMPSTestBinary(Action):
         self.logger.debug("Copying %s to %s", test_binary, dest)
         shutil.copy(test_binary, dest)
 
+        return connection
+
+
+class DeployMPSRebootTxt(Action):
+    """
+    Copies on a 'reboot.txt' onto MPS device to trigger a soft-reset
+    """
+
+    name = "deploy-mps-reboot-txt"
+    description = "deploy reboot.txt to mps"
+    summary = "copy reboot.txt to MPS device to trigger restart"
+
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
+        mount_point = self.get_namespace_data(
+            action="mount-vexpress-usbmsd", label="vexpress-fw", key="mount-point"
+        )
+        if not os.path.exists(mount_point):
+            raise InfrastructureError("Unable to locate mount point: %s" % mount_point)
+
+        dest = os.path.join(mount_point, "reboot.txt")
+        self.logger.debug("Touching file %s", dest)
+        with open(dest, "w"):
+            pass
         return connection

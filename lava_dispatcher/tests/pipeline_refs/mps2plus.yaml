@@ -14,8 +14,8 @@
   - {class: actions.deploy.vemsd.MountVExpressMassStorageDevice, name: mount-vexpress-usbmsd}
   - {class: actions.deploy.vemsd.ExtractVExpressRecoveryImage, name: extract-vexpress-recovery-image}
   - {class: actions.deploy.vemsd.DeployVExpressRecoveryImage, name: deploy-vexpress-recovery-image}
+  - {class: actions.deploy.mps.DeployMPSRebootTxt, name: deploy-mps-reboot-txt}
   - {class: actions.deploy.vemsd.UnmountVExpressMassStorageDevice, name: unmount-vexpress-usbmsd}
-  - {class: power.PowerOff, name: power-off}
 - class: actions.deploy.mps.MpsAction
   name: mps-deploy
   pipeline:
@@ -31,8 +31,8 @@
     - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
   - {class: actions.deploy.vemsd.MountVExpressMassStorageDevice, name: mount-vexpress-usbmsd}
   - {class: actions.deploy.mps.DeployMPSTestBinary, name: deploy-mps-test-binary}
+  - {class: actions.deploy.mps.DeployMPSRebootTxt, name: deploy-mps-reboot-txt}
   - {class: actions.deploy.vemsd.UnmountVExpressMassStorageDevice, name: unmount-vexpress-usbmsd}
-  - {class: power.PowerOff, name: power-off}
 - class: actions.boot.minimal.MinimalBoot
   name: minimal-boot
   pipeline:
