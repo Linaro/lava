@@ -135,9 +135,7 @@ class DeployMPSTestBinary(Action):
         mount_point = self.get_namespace_data(
             action="mount-vexpress-usbmsd", label="vexpress-fw", key="mount-point"
         )
-        try:
-            os.path.realpath(mount_point)
-        except OSError:
+        if not os.path.exists(mount_point):
             raise InfrastructureError("Unable to locate mount point: %s" % mount_point)
 
         dest = os.path.join(

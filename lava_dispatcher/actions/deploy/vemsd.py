@@ -287,6 +287,8 @@ class MountVExpressMassStorageDevice(Action):
     name = "mount-vexpress-usbmsd"
     description = "mount vexpress usb msd"
     summary = "mount vexpress usb mass storage device on the dispatcher"
+    command_exception = InfrastructureError
+    timeout_exception = InfrastructureError
 
     def __init__(self):
         super().__init__()
@@ -302,9 +304,7 @@ class MountVExpressMassStorageDevice(Action):
         connection = super().run(connection, max_end_time)
 
         device_path = "/dev/disk/by-label/%s" % self.microsd_fs_label
-        try:
-            os.path.realpath(device_path)
-        except OSError:
+        if not os.path.exists(device_path):
             raise InfrastructureError("Unable to find disk by label %s" % device_path)
 
         mount_point = "/mnt/%s" % self.microsd_fs_label
@@ -317,11 +317,11 @@ class MountVExpressMassStorageDevice(Action):
                     "Failed to create mount point %s" % mount_point
                 )
 
-        mount_cmd = ["mount", device_path, mount_point]
-        if not self.run_command(mount_cmd, allow_silent=True):
-            raise InfrastructureError(
-                "Failed to mount device %s to %s" % (device_path, mount_point)
-            )
+        self.run_cmd(
+            ["mount", device_path, mount_point],
+            error_msg="Failed to mount device %s to %s" % (device_path, mount_point),
+        )
+
         self.set_namespace_data(
             action=self.name, label="vexpress-fw", key="mount-point", value=mount_point
         )
@@ -343,17 +343,13 @@ class DeployVExpressRecoveryImage(Action):
         mount_point = self.get_namespace_data(
             action="mount-vexpress-usbmsd", label="vexpress-fw", key="mount-point"
         )
-        try:
-            os.path.realpath(mount_point)
-        except OSError:
+        if not os.path.exists(mount_point):
             raise InfrastructureError("Unable to locate mount point: %s" % mount_point)
 
         src_dir = self.get_namespace_data(
             action="extract-vexpress-recovery-image", label="file", key="recovery_image"
         )
-        try:
-            os.path.realpath(src_dir)
-        except OSError:
+        if not os.path.exists(src_dir):
             raise InfrastructureError(
                 "Unable to locate recovery image source directory: %s" % src_dir
             )
@@ -384,6 +380,8 @@ class UnmountVExpressMassStorageDevice(Action):
     name = "unmount-vexpress-usbmsd"
     description = "unmount vexpress usb msd"
     summary = "unmount vexpress usb mass storage device"
+    command_exception = InfrastructureError
+    timeout_exception = InfrastructureError
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
@@ -391,10 +389,13 @@ class UnmountVExpressMassStorageDevice(Action):
         mount_point = self.get_namespace_data(
             action="mount-vexpress-usbmsd", label="vexpress-fw", key="mount-point"
         )
-        if not self.run_command(["sync", mount_point], allow_silent=True):
-            raise InfrastructureError("Failed to sync device %s" % mount_point)
-        if not self.run_command(["umount", mount_point], allow_silent=True):
-            raise InfrastructureError("Failed to unmount device %s" % mount_point)
+        self.run_cmd(
+            ["sync", mount_point], error_msg="Failed to sync device %s" % mount_point
+        )
+        self.run_cmd(
+            ["umount", mount_point],
+            error_msg="Failed to unmount device %s" % mount_point,
+        )
         return connection
 
 
