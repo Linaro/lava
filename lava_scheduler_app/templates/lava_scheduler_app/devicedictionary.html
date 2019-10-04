@@ -15,6 +15,14 @@
 {% endblock %}
 {% block content %}
 
+{% if device_yaml is None %}
+<div class="alert alert-danger alert-dismissible">
+  <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+  <strong>Configuration Error: invalid device dictionary.</strong>
+  <p>No jobs will be running in this device ({{ device.hostname }}) until the device dictionary is fixed on the master.</p>
+</div>
+{% endif %}
+
 <h2>Device dictionary
   <a class="btn btn-xs btn-info"
      href="{% url 'lava.scheduler.device.dictionary.plain' device.hostname %}"
