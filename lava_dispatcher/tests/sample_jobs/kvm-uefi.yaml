@@ -26,6 +26,7 @@ actions:
           disk1:
             # not actually a UEFI image, just for the unit test
             url: http://images.validation.linaro.org/kvm/jessie-grub.img.gz
+            compression: gz
             image_arg: -drive format=raw,file={disk1}
     - boot:
         method: qemu

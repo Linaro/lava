@@ -37,10 +37,13 @@ actions:
 
 - boot:
     method: qemu-nfs
+    media: nfs
     auto_login: {login_prompt: 'login:', username: root}
     prompts:
       - 'linaro-test'
       - 'root@debian:~#'
+      - '\(initramfs\)'
+      - '# '
 
 - test:
     failure_retry: 3
