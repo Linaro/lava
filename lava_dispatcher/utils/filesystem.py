@@ -397,13 +397,15 @@ def remove_directory_contents(root_dir):
     """
     Removes the contents of the root directory but not the root itself
     """
-    files_to_remove = glob.glob(os.path.join(root_dir, "*"))
+    files_to_remove = list(glob.glob(os.path.join(root_dir, "*")))
+    files_to_remove += list(glob.glob(os.path.join(root_dir, ".*")))
     logger = logging.getLogger("dispatcher")
-    for fname in files_to_remove:
-        logger.debug("removing %s", fname)
+    for fname in sorted(files_to_remove):
         if os.path.isdir(fname):
+            logger.debug("removing %s/", fname)
             shutil.rmtree(fname)
         else:
+            logger.debug("removing %s", fname)
             os.remove(fname)
 
 
