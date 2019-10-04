@@ -86,9 +86,18 @@ class MpsAction(DeployAction):
         if "images" not in self.parameters:
             self.errors = "Missing 'images'"
             return
-        images = self.parameters["images"]
-        if "recovery_image" not in images and "test_binary" not in images:
-            self.errors = "Missing 'recovery_image' or 'test_binary'"
+        images = list(self.parameters["images"].keys())
+        if len(images) == 1:
+            if images[0] not in ["recovery_image", "test_binary"]:
+                self.errors = "Missing 'recovery_image' or 'test_binary'"
+        else:
+            for image in images:
+                if not image == "recovery_image" and not image.startswith(
+                    "test_binary_"
+                ):
+                    self.errors = (
+                        "Missing 'recovery_image' or not starting with 'test_binary_'"
+                    )
 
     def populate(self, parameters):
         download_dir = self.mkdtemp()
@@ -103,11 +112,13 @@ class MpsAction(DeployAction):
                 DownloaderAction(image, path=download_dir)
             )
         self.internal_pipeline.add_action(MountVExpressMassStorageDevice())
-        if "recovery_image" in parameters["images"].keys():
-            self.internal_pipeline.add_action(ExtractVExpressRecoveryImage())
-            self.internal_pipeline.add_action(DeployVExpressRecoveryImage())
-        if "test_binary" in parameters["images"].keys():
-            self.internal_pipeline.add_action(DeployMPSTestBinary())
+        # Sort the keys so recovery_image will be first
+        for image in sorted(parameters["images"].keys()):
+            if image == "recovery_image":
+                self.internal_pipeline.add_action(ExtractVExpressRecoveryImage())
+                self.internal_pipeline.add_action(DeployVExpressRecoveryImage())
+            else:
+                self.internal_pipeline.add_action(DeployMPSTestBinary(image))
         self.internal_pipeline.add_action(UnmountVExpressMassStorageDevice())
         self.internal_pipeline.add_action(PowerOff())
 
@@ -121,9 +132,9 @@ class DeployMPSTestBinary(Action):
     description = "deploy test binary to usb msd"
     summary = "copy test binary to MPS device and rename if required"
 
-    def __init__(self):
+    def __init__(self, key):
         super().__init__()
-        self.param_key = "test_binary"
+        self.param_key = key
 
     def validate(self):
         super().validate()
