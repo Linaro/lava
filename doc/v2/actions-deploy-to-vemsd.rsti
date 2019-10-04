@@ -123,6 +123,22 @@ test_binary
 
 Download test binary to MPS device and rename if required.
 
+Multiple test binaries can be flashed in the same deploy action by listing all
+of them. The keys should start with ``test_binary_``.
+
+.. code-block:: yaml
+
+  - deploy:
+      to: mps
+      images:
+        recovery_image:
+          url: mps2_sse200_an512.tar.gz
+          compression: gz
+        test_binary_1:
+          url: tfm_sign.bin
+        test_binary_2:
+          url: mcuboot.bin
+
 .. _deploy_to_mps_binary_url:
 
 url *
