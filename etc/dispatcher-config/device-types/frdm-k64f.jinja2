@@ -33,4 +33,14 @@ actions:
         parameters:
           usb_mass_device: '{{ usb_mass_device|default('/notset') }}'
           resets_after_flash: {{ resets_after_flash|default(True) }}
+      jlink:
+        parameters:
+          command:
+            JLinkExe
+          address:
+            0x00000000
+          options:
+          - '-device MK64FN1M0xxx12'
+          - '-if SWD'
+          - '-speed 4000'
 {% endblock body -%}
