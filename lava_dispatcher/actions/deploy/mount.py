@@ -209,6 +209,7 @@ class LoopMountAction(RetryAction):
         self.logger.debug("%s cleanup", self.name)
         if self.mntdir:
             if os.path.ismount(self.mntdir):
+                self.run_command(["sync"], self.mntdir)
                 self.run_command(["umount", self.mntdir])
             if os.path.isdir(self.mntdir):
                 rmtree(self.mntdir)
