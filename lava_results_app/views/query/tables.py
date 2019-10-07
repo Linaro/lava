@@ -27,9 +27,6 @@ from lava_results_app.tables import ResultsTable, SuiteTable
 
 
 class UserQueryTable(LavaTable):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     name = tables.Column()
 
     is_published = tables.Column()
@@ -75,9 +72,6 @@ class UserQueryTable(LavaTable):
 
 
 class OtherQueryTable(UserQueryTable):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     name = tables.Column()
 
     actions = tables.TemplateColumn(

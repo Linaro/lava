@@ -56,9 +56,6 @@ class ResultsTable(LavaTable):
     List of LAVA TestSuite results
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     def _check_job(self, record, table=None):  # pylint: disable=no-self-use
         """
         Slightly different purpose to RestrictedIDLinkColumn.render
@@ -176,9 +173,6 @@ class SuiteTable(LavaTable):
     """
     Details of the test sets or test cases in a test suite
     """
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
 
     name = tables.Column()
     test_set = tables.Column(verbose_name="Test Set")
