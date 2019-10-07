@@ -31,6 +31,7 @@ def schema():
         Required("console_string"): str,
         Required("fvp_image"): str,
         Optional("fvp_license_variable"): str,
+        Optional("fvp_version_string"): str,
         Required("fvp_arguments"): str,
         Required("prompts"): boot.prompts(),
     }

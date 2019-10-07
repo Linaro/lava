@@ -30,6 +30,7 @@ from lava_dispatcher.actions.deploy.apply_overlay import (
     InjectIntoDiskImage,
     ApplyOverlayTftp,
     ExtractRamdiskFromDisk,
+    ApplyOverlayImage,
 )
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.logical import Deployment
@@ -98,6 +99,7 @@ class FVPDeploy(DeployAction):  # pylint: disable=too-many-instance-attributes
                         "ramdisk_partition", None
                     )
                     ramdisk_file = parameters["images"][k].get("ramdisk_file", None)
+                    root_partition = parameters["images"][k].get("root_partition", None)
                     if self.test_needs_overlay(parameters):
                         if ramdisk_partition and ramdisk_file:
                             self.internal_pipeline.add_action(
@@ -121,6 +123,12 @@ class FVPDeploy(DeployAction):  # pylint: disable=too-many-instance-attributes
                             )
                             self.internal_pipeline.add_action(
                                 InjectIntoDiskImage(file=ramdisk_file, key=k)
+                            )
+                        elif root_partition:
+                            self.internal_pipeline.add_action(
+                                ApplyOverlayImage(
+                                    image_key=k, root_partition=root_partition
+                                )
                             )
 
 

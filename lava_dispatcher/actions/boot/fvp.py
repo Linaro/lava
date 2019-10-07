@@ -189,9 +189,9 @@ class CheckFVPVersionAction(BaseFVPAction):
     def validate(self):
         super().validate()
         self.container = "lava-%s-%s" % (self.job.job_id, self.level)
-        self.fvp_version_string = self.job.device["actions"]["boot"]["methods"][
-            "docker"
-        ]["options"].get("fvp_version_string", "Fast Models[^\\n]+")
+        self.fvp_version_string = self.parameters.get(
+            "fvp_version_string", "Fast Models[^\\n]+"
+        )
 
     def run(self, connection, max_end_time):
         docker_image = self.get_namespace_data(
