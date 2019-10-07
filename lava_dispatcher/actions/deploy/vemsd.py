@@ -391,6 +391,8 @@ class UnmountVExpressMassStorageDevice(Action):
         mount_point = self.get_namespace_data(
             action="mount-vexpress-usbmsd", label="vexpress-fw", key="mount-point"
         )
+        if not self.run_command(["sync", mount_point]), allow_silent=True):
+            raise InfrastructureError("Failed to sync device %s" % mount_point)
         if not self.run_command(["umount", mount_point], allow_silent=True):
             raise InfrastructureError("Failed to unmount device %s" % mount_point)
         return connection
