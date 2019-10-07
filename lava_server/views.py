@@ -109,6 +109,6 @@ def server_error(request, template_name="500.html"):
 
 
 @requires_csrf_token
-def permission_error(request, template_name="403.html"):
+def permission_error(request, exception, template_name="403.html"):
     template = loader.get_template(template_name)
     return HttpResponseForbidden(template.render({}, request))
