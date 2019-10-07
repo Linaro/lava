@@ -125,7 +125,9 @@ class CallQemuAction(Action):
         super().validate()
 
         # 'arch' must be defined in job definition context.
-        architecture = self.job.parameters["context"]["arch"]
+        architecture = self.job.parameters.get("context", {}).get("arch")
+        if architecture is None:
+            raise JobError("Missing 'arch' in job context")
         if "available_architectures" not in self.job.device:
             self.errors = "Device lacks list of available architectures."
         try:
