@@ -676,7 +676,7 @@ class Device(RestrictedObject):
 
         return False
 
-    def is_valid(self, system=True):
+    def is_valid(self):
         try:
             rendered = self.load_configuration()
             validate_device(rendered)
