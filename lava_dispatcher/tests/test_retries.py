@@ -132,9 +132,6 @@ class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
             pass
 
     class DiagnoseCheck(DiagnosticAction):
-        def __init__(self):
-            super().__init__()
-
         @classmethod
         def trigger(cls):
             return "fake-check"

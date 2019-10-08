@@ -24,9 +24,6 @@ from lava_results_app.models import Chart
 
 
 class UserChartTable(LavaTable):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     name = tables.TemplateColumn(
         """
     <a href="{{ record.get_absolute_url }}">{{ record.name }}</a>
@@ -79,9 +76,6 @@ class UserChartTable(LavaTable):
 
 
 class OtherChartTable(UserChartTable):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     name = tables.TemplateColumn(
         """
     <a href="{{ record.get_absolute_url }}">{{ record.name }}</a>

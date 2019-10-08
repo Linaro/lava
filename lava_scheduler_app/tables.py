@@ -119,9 +119,6 @@ def visible_jobs_with_custom_sort(user):
 
 
 class JobErrorsTable(LavaTable):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     job = tables.Column(verbose_name="Job", empty_values=[""])
     job.orderable = False
     end_time = tables.DateColumn(format="Nd, g:ia")
@@ -179,9 +176,6 @@ class JobTable(LavaTable):
     To preserve custom handling of fields like id, device and duration,
     ensure those are copied into the new class.
     """
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
 
     id = tables.Column(verbose_name="ID")
     actions = tables.TemplateColumn(
@@ -317,9 +311,6 @@ class IndexJobTable(JobTable):
     submit_time = tables.DateColumn("Nd, g:ia")
     end_time = tables.DateColumn("Nd, g:ia")
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     def render_health(self, record):
         if record.health == Device.HEALTH_GOOD:
             return mark_safe(  # nosec - internal data
@@ -410,9 +401,6 @@ class FailedJobTable(JobTable):
     submit_time = tables.DateColumn("Nd, g:ia")
     end_time = tables.DateColumn("Nd, g:ia")
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     def render_failure_comment(self, record):
         if record.failure_comment:
             return record.failure_comment
@@ -462,9 +450,6 @@ class LongestJobTable(JobTable):
     running = tables.Column(accessor="start_time", verbose_name="Running")
     running.orderable = False
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     def render_running(self, record):  # pylint: disable=no-self-use
         if not record.start_time:
             return ""
@@ -497,9 +482,6 @@ class OverviewJobsTable(JobTable):
     submit_time = tables.DateColumn("Nd, g:ia")
     end_time = tables.DateColumn("Nd, g:ia")
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     class Meta(
         JobTable.Meta
     ):  # pylint: disable=too-few-public-methods,no-init,no-self-use
@@ -530,9 +512,6 @@ class RecentJobsTable(JobTable):
     submit_time = tables.DateColumn("Nd, g:ia")
     end_time = tables.DateColumn("Nd, g:ia")
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     class Meta(
         JobTable.Meta
     ):  # pylint: disable=too-few-public-methods,no-init,no-self-use
@@ -559,9 +538,6 @@ class RecentJobsTable(JobTable):
 
 
 class DeviceHealthTable(LavaTable):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     def render_last_health_report_job(self, record):  # pylint: disable=no-self-use
         report = record.last_health_report_job
         if report is None:
@@ -600,9 +576,6 @@ class DeviceHealthTable(LavaTable):
 
 
 class DeviceTypeTable(LavaTable):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     def render_idle(self, record):  # pylint: disable=no-self-use
         return record["idle"] if record["idle"] > 0 else ""
 
@@ -651,9 +624,6 @@ class DeviceTypeTable(LavaTable):
 
 
 class DeviceTable(LavaTable):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     def render_device_type(self, record):  # pylint: disable=no-self-use
         return pklink(record.device_type)
 
@@ -798,9 +768,6 @@ class WorkerTable(LavaTable):  # pylint: disable=too-few-public-methods,no-init
 
 
 class LogEntryTable(LavaTable):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     action_time = tables.DateColumn(format="Nd, g:ia")
     object_id = tables.Column(verbose_name="Name")
     change_message = tables.Column(verbose_name="Reason", empty_values=[None])
@@ -891,9 +858,6 @@ class QueueJobsTable(JobTable):
     submit_time = tables.DateColumn("Nd, g:ia")
     end_time = tables.DateColumn("Nd, g:ia")
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     class Meta(JobTable.Meta):
         fields = (
             "id",
@@ -925,9 +889,6 @@ class QueueJobsTable(JobTable):
 
 
 class PassingHealthTable(DeviceHealthTable):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     def render_device_type(self, record):  # pylint: disable=no-self-use
         return pklink(record.device_type)
 
@@ -955,9 +916,6 @@ class RunningTable(LavaTable):
     Except for dynamic connections, there should not be more active jobs than active devices of
     any particular DeviceType.
     """
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
 
     # deprecated: dynamic connections are TestJob without a device
 

@@ -727,9 +727,6 @@ class TestProtocol(StdoutTestCase):  # pylint: disable=too-many-public-methods
             """
             pass
 
-        def __call__(self, *args, **kwargs):
-            super().__call__(*args, **kwargs)
-
     def test_fake_protocol(self):
         self.protocol._connect(1)
 
