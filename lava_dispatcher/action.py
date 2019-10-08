@@ -634,6 +634,7 @@ class Action:  # pylint: disable=too-many-instance-attributes,too-many-public-me
             proc = pexpect.spawn(
                 "nice",
                 command_list,
+                cwd=cwd,
                 encoding="utf-8",
                 codec_errors="replace",
                 logfile=cmd_logger,
