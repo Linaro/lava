@@ -1157,16 +1157,12 @@ def active_jobs(request):
 @BreadCrumb("Submit", parent=job_list)
 def job_submit(request):
 
-    is_authorized = False
-    if request.user and request.user.has_perm("lava_scheduler_app.submit_testjob"):
-        is_authorized = True
-
     response_data = {
-        "is_authorized": is_authorized,
+        "is_authorized": request.user.is_authenticated,
         "bread_crumb_trail": BreadCrumbTrail.leading_to(job_submit),
     }
 
-    if request.method == "POST" and is_authorized:
+    if request.method == "POST" and request.user.is_authenticated:
         if request.is_ajax():
             warnings = ""
             errors = ""

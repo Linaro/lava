@@ -367,12 +367,6 @@ class TestJobViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         definition = serializer.validated_data["definition"]
 
-        if not self.request.user.has_perm("lava_scheduler_app.submit_testjob"):
-            return Response(
-                {"message": "Permission denied. Please contact system administrator"},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-
         try:
             job = testjob_submission(definition, self.request.user)
         except SubmissionException as exc:
@@ -392,7 +386,7 @@ class TestJobViewSet(viewsets.ModelViewSet):
             )
         except DevicesUnavailableException as exc:
             return Response(
-                {"message": "Device unavailable: %s" % exc},
+                {"message": "Devices unavailable: %s" % exc},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 

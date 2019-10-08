@@ -114,13 +114,6 @@ class SchedulerAPI(ExposedAPI):
         job IDs.
         """
         self._authenticate()
-        if not self.user.has_perm("lava_scheduler_app.submit_testjob"):
-            raise xmlrpc.client.Fault(
-                403,
-                "Permission denied.  User %r does not have the "
-                "'lava_scheduler_app.submit_testjob' permission.  Contact "
-                "the administrators." % self.user.username,
-            )
         try:
             job = testjob_submission(job_data, self.user)
         except SubmissionException as exc:
@@ -159,13 +152,6 @@ class SchedulerAPI(ExposedAPI):
         token.
         """
         self._authenticate()
-        if not self.user.has_perm("lava_scheduler_app.submit_testjob"):
-            raise xmlrpc.client.Fault(
-                403,
-                "Permission denied.  User %r does not have the "
-                "'lava_scheduler_app.submit_testjob' permission.  Contact "
-                "the administrators." % self.user.username,
-            )
         try:
             job = get_restricted_job(self.user, job_id)
         except TestJob.DoesNotExist:

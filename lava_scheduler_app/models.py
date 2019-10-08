@@ -1298,10 +1298,7 @@ class TestJob(models.Model):
 
     class Meta:
         index_together = ["health", "state", "requested_device_type"]
-        permissions = (
-            ("submit_testjob", "Can submit test job"),
-            ("cancel_resubmit_testjob", "Can cancel or resubmit test jobs"),
-        )
+        permissions = (("cancel_resubmit_testjob", "Can cancel or resubmit test jobs"),)
 
     # Permission strings. Not real permissions.
     VIEW_PERMISSION = "lava_scheduler_app.view_testjob"
