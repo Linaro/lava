@@ -70,7 +70,9 @@ def test_run(monkeypatch):
         ["nice", "touch"],
     ]
 
-    def spawn(cmd, args, encoding, codec_errors, logfile, timeout, searchwindowsize):
+    def spawn(
+        cmd, args, cwd, encoding, codec_errors, logfile, timeout, searchwindowsize
+    ):
         command = commands.pop(0)
         assert cmd == command[0]
         assert args == command[1:]
