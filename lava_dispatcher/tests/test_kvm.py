@@ -122,7 +122,8 @@ class TestKVMSimulation(StdoutTestCase):  # pylint: disable=too-many-public-meth
                 "-hda" "%s" % "tbd",
                 "-nographic",
                 "-net",
-                "nic,model=virtio" "-net user",
+                "nic,model=virtio",
+                "-net user",
             ]
         }
         pipe.add_action(action)

@@ -117,7 +117,7 @@ class FlashJLinkAction(Action):
         host_ver = "none"
         fw_ver = "none"
         hw_ver = "none"
-        temp = re.search("J-Link Commander (.+?) \(Compiled", output_str)
+        temp = re.search("J-Link Commander (.+?) \\(Compiled", output_str)
         if temp:
             host_ver = temp.group(1)
 
