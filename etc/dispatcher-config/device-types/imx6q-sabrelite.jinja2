@@ -5,9 +5,10 @@
 {% set bootloader_prompt = bootloader_prompt|default('U-Boot') %}
 {% set console_device = console_device|default('ttymxc1') %}
 
-{% set bootm_kernel_addr = '0x10000000' %}
-{% set bootm_ramdisk_addr = '0x12800000' %}
-{% set bootm_dtb_addr = '0x13f80000' %}
+{% set bootm_dtb_addr     = '0x13f00000' %}
+{% set bootm_kernel_addr  = '0x10000000' %}
+{% set bootm_ramdisk_addr = '0x14000000' %}
+
 {% set bootz_kernel_addr = bootm_kernel_addr %}
 {% set bootz_ramdisk_addr = bootm_ramdisk_addr %}
 {% set bootz_dtb_addr = bootm_dtb_addr %}
