@@ -48,6 +48,7 @@ from lava_common.decorators import nottest
 from lava_results_app.utils import export_testcase
 from lava_scheduler_app import utils
 from lava_scheduler_app.logutils import read_logs
+import lava_scheduler_app.environment as environment
 from lava_scheduler_app.managers import (
     RestrictedDeviceTypeQuerySet,
     RestrictedDeviceQuerySet,
@@ -810,17 +811,8 @@ class Device(RestrictedObject):
             except OSError:
                 return None
 
-        # Create the environment
-        env = jinja2.Environment(  # nosec - YAML, not HTML, no XSS scope.
-            autoescape=False,
-            loader=jinja2.FileSystemLoader(
-                [settings.DEVICES_PATH, settings.DEVICE_TYPES_PATH]
-            ),
-            trim_blocks=True,
-        )
-
         try:
-            template = env.get_template("%s.jinja2" % self.hostname)
+            template = environment.devices().get_template("%s.jinja2" % self.hostname)
             device_template = template.render(**job_ctx)
         except jinja2.TemplateError:
             return None

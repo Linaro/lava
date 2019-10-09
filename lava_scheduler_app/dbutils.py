@@ -30,7 +30,6 @@ import yaml
 import jinja2
 import logging
 
-from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models import Q, Case, When, IntegerField, Sum
 from django.contrib.auth.models import User
@@ -40,6 +39,7 @@ from django.contrib.sites.models import Site
 
 from lava_common.compat import yaml_load, yaml_safe_load
 from lava_common.decorators import nottest
+import lava_scheduler_app.environment as environment
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
@@ -244,12 +244,10 @@ def load_devicetype_template(device_type_name, raw=False):
     :param raw: if True, return the raw yaml
     :return: None or a dictionary of the device type template.
     """
-    type_loader = jinja2.FileSystemLoader([settings.DEVICE_TYPES_PATH])
-    env = jinja2.Environment(  # nosec - YAML, not HTML, no XSS scope.
-        loader=jinja2.ChoiceLoader([type_loader]), trim_blocks=True, autoescape=False
-    )
     try:
-        template = env.get_template("%s.jinja2" % device_type_name)
+        template = environment.device_types().get_template(
+            "%s.jinja2" % device_type_name
+        )
         data = template.render()
         if not data:
             return None
