@@ -27,7 +27,7 @@ class TestFVPActions(StdoutTestCase):
     def setUp(self):
         super().setUp()
         self.factory = Factory()
-        self.job = self.factory.create_job("docker-01.jinja2", "sample_jobs/fvp.yaml")
+        self.job = self.factory.create_job("fvp-01.jinja2", "sample_jobs/fvp.yaml")
 
 
 def test_shell_reference(monkeypatch):

@@ -1,4 +1,4 @@
-{# device_type: docker #}
+{# device_type: fvp #}
 {% extends 'base.jinja2' %}
 
 {% block body %}
@@ -9,6 +9,7 @@ actions:
       serial:
     methods:
       docker:
+      fvp:
       ssh:
         options:
 {{ ssh_options }}
@@ -28,47 +29,22 @@ actions:
           cpus: {{ docker_cpus|default(0.0) }}
           memory: {{ docker_memory|default(0) }}
           privileged: {{ docker_privileged|default(False) }}
-{% if docker_capabilities|default([]) %}
-          capabilities:
-{% for cap in docker_capabilities %}
-          - "{{ cap }}"
-{% endfor %}
-{% else %}
-          capabilities: []
-{% endif %}
-
 {% if docker_devices|default([]) %}
           devices:
 {% for device in docker_devices %}
-          - "{{ device }}"
+            - {{ device }}
 {% endfor %}
 {% else %}
           devices: []
 {% endif %}
-{% if docker_networks|default([]) %}
-          networks:
-{% for network in docker_networks %}
-          - "{{ network }}"
-{% endfor %}
-{% else %}
-          networks: []
-{% endif %}
-
 {% if docker_volumes|default([]) %}
           volumes:
 {% for volume in docker_volumes %}
-          - "{{ volume }}"
+            - {{ volume }}
 {% endfor %}
 {% else %}
           volumes: []
 {% endif %}
-{% if docker_extra_arguments|default([]) %}
-          extra_arguments:
-{% for extra_argument in docker_extra_arguments %}
-          - "{{ extra_argument }}"
-{% endfor %}
-{% else %}
-          extra_arguments: []
-{% endif %}
       ssh:
+      fvp:
 {% endblock body %}

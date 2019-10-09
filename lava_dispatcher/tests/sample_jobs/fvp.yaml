@@ -1,4 +1,4 @@
-device_type: docker
+device_type: fvp
 job_name: FVP Example Job
 priority: medium
 
@@ -12,7 +12,6 @@ visibility: public
 
 actions:
 - deploy:
-    namespace: docker
     image:
       # Replace this with an image that contains the FVP binary you want to run
       name: "my-fvp-image"
@@ -21,7 +20,6 @@ actions:
     timeout: {minutes: 5}
     to: docker
 - deploy:
-    namespace: docker
     to: fvp
     ramdisk:
       install_overlay: true
@@ -48,7 +46,6 @@ actions:
         url: http://file-server/tf-bl1.bin
 
 - boot:
-    namespace: docker
     method: fvp
     fvp_image: /path/to/FVP_BINARY
     timeout: {minutes: 3}
@@ -62,7 +59,6 @@ actions:
     - "/ #"
 
 - test:
-    namespace: docker
     timeout:
       minutes: 5
     definitions:
