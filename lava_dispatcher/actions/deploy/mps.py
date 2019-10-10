@@ -179,6 +179,13 @@ class DeployMPSRebootTxt(Action):
     description = "deploy reboot.txt to mps"
     summary = "copy reboot.txt to MPS device to trigger restart"
 
+    def validate(self):
+        super().validate()
+        params = self.job.device["actions"]["deploy"]["methods"]["mps"]["parameters"]
+        self.reboot_string = params.get("reboot-string")
+        if self.reboot_string is None:
+            self.errors = "Missing 'reboot_string' in device configuration"
+
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
         mount_point = self.get_namespace_data(
@@ -187,8 +194,14 @@ class DeployMPSRebootTxt(Action):
         if not os.path.exists(mount_point):
             raise InfrastructureError("Unable to locate mount point: %s" % mount_point)
 
+        self.logger.debug("Forcing a 'sync' on the mount point")
+        self.run_cmd(
+            ["sync", mount_point], error_msg="Failed to sync device %s" % mount_point
+        )
+
         dest = os.path.join(mount_point, "reboot.txt")
         self.logger.debug("Touching file %s", dest)
-        with open(dest, "w"):
-            pass
+        # https://community.arm.com/developer/tools-software/oss-platforms/w/docs/441/mps2-firmware-update-for-reboot-txt-method
+        with open(dest, "w") as fout:
+            fout.write(self.reboot_string)
         return connection
