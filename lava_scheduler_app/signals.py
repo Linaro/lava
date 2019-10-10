@@ -18,6 +18,8 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 import datetime
+from functools import wraps
+import logging
 import simplejson
 import threading
 import uuid
@@ -40,6 +42,21 @@ from lava_scheduler_app.notifications import (
 
 # Thread local storage for zmq socket and context
 thread_local = threading.local()
+
+
+# Wrapper to except every exception and only log them
+# If signal handlers are raising, this is breaking many important stuffs
+def log_exception(func):
+    @wraps(func)
+    def function_wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as exc:
+            logger = logging.getLogger("lava_scheduler_app")
+            logger.error("Unable to execute signal '%s', ignoring", func.__name__)
+            logger.exception(exc)
+
+    return function_wrapper
 
 
 def send_event(topic, user, data):
@@ -70,6 +87,7 @@ def send_event(topic, user, data):
         print("Unable to send the zmq event %s" % (settings.EVENT_TOPIC + topic))
 
 
+@log_exception
 def device_init_handler(sender, **kwargs):
     # This function is called for every Device object created
     # Save the old states
@@ -78,6 +96,7 @@ def device_init_handler(sender, **kwargs):
     instance._old_state = instance.state
 
 
+@log_exception
 def device_post_handler(sender, **kwargs):
     # Called only when a Device is saved into the database
     instance = kwargs["instance"]
@@ -107,6 +126,7 @@ def device_post_handler(sender, **kwargs):
         send_event(".device", "lavaserver", data)
 
 
+@log_exception
 def testjob_init_handler(sender, **kwargs):
     # This function is called for every testJob object created
     # Save the old states
@@ -115,6 +135,7 @@ def testjob_init_handler(sender, **kwargs):
     instance._old_state = instance.state
 
 
+@log_exception
 def testjob_notifications(sender, **kwargs):
     job = kwargs["instance"]
     # If it's a new TestJob, no need to send notifications.
@@ -139,6 +160,7 @@ def testjob_notifications(sender, **kwargs):
             send_notifications(job)
 
 
+@log_exception
 def testjob_post_handler(sender, **kwargs):
     # Called only when a Device is saved into the database
     instance = kwargs["instance"]
@@ -181,12 +203,14 @@ def testjob_post_handler(sender, **kwargs):
         send_event(".testjob", str(instance.submitter), data)
 
 
+@log_exception
 def testjob_pre_delete_handler(sender, **kwargs):
     instance = kwargs["instance"]
     with transaction.atomic():
         instance.go_state_finished(TestJob.HEALTH_CANCELED, True)
 
 
+@log_exception
 def worker_init_handler(sender, **kwargs):
     # This function is called for every testJob object created
     # Save the old states
@@ -195,6 +219,7 @@ def worker_init_handler(sender, **kwargs):
     instance._old_state = instance.state
 
 
+@log_exception
 def worker_post_handler(sender, **kwargs):
     # Called only when a Worker is saved into the database
     instance = kwargs["instance"]
