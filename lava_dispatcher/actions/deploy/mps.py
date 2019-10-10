@@ -140,6 +140,8 @@ class DeployMPSTestBinary(Action):
     name = "deploy-mps-test-binary"
     description = "deploy test binary to usb msd"
     summary = "copy test binary to MPS device and rename if required"
+    command_exception = InfrastructureError
+    timeout_exception = InfrastructureError
 
     def __init__(self, key):
         super().__init__()
@@ -178,6 +180,8 @@ class DeployMPSRebootTxt(Action):
     name = "deploy-mps-reboot-txt"
     description = "deploy reboot.txt to mps"
     summary = "copy reboot.txt to MPS device to trigger restart"
+    command_exception = InfrastructureError
+    timeout_exception = InfrastructureError
 
     def validate(self):
         super().validate()
