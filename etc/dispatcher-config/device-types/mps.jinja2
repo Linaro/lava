@@ -8,6 +8,9 @@ actions:
     methods:
       lxc:
       mps:
+        parameters:
+          hard-reboot: {{ mps_hard_reboot|default(false) }}
+          reboot-string: "{{ mps_reboot_string|default("hsyxhj") }}"
   boot:
     connections:
       lxc:

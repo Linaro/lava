@@ -86,9 +86,18 @@ class MpsAction(DeployAction):
         if "images" not in self.parameters:
             self.errors = "Missing 'images'"
             return
-        images = self.parameters["images"]
-        if "recovery_image" not in images and "test_binary" not in images:
-            self.errors = "Missing 'recovery_image' or 'test_binary'"
+        images = list(self.parameters["images"].keys())
+        if len(images) == 1:
+            if images[0] not in ["recovery_image", "test_binary"]:
+                self.errors = "Missing 'recovery_image' or 'test_binary'"
+        else:
+            for image in images:
+                if not image == "recovery_image" and not image.startswith(
+                    "test_binary_"
+                ):
+                    self.errors = (
+                        "Missing 'recovery_image' or not starting with 'test_binary_'"
+                    )
 
     def populate(self, parameters):
         download_dir = self.mkdtemp()
@@ -103,13 +112,24 @@ class MpsAction(DeployAction):
                 DownloaderAction(image, path=download_dir)
             )
         self.internal_pipeline.add_action(MountVExpressMassStorageDevice())
-        if "recovery_image" in parameters["images"].keys():
-            self.internal_pipeline.add_action(ExtractVExpressRecoveryImage())
-            self.internal_pipeline.add_action(DeployVExpressRecoveryImage())
-        if "test_binary" in parameters["images"].keys():
-            self.internal_pipeline.add_action(DeployMPSTestBinary())
-        self.internal_pipeline.add_action(UnmountVExpressMassStorageDevice())
-        self.internal_pipeline.add_action(PowerOff())
+        # Sort the keys so recovery_image will be first
+        for image in sorted(parameters["images"].keys()):
+            if image == "recovery_image":
+                self.internal_pipeline.add_action(ExtractVExpressRecoveryImage())
+                self.internal_pipeline.add_action(DeployVExpressRecoveryImage())
+            else:
+                self.internal_pipeline.add_action(DeployMPSTestBinary(image))
+
+        # Should we hard reboot the board after flash?
+        params = self.job.device["actions"]["deploy"]["methods"]["mps"]["parameters"]
+        if params["hard-reboot"]:
+            # Unmount the mass storage device before rebooting
+            self.internal_pipeline.add_action(UnmountVExpressMassStorageDevice())
+            self.internal_pipeline.add_action(PowerOff())
+        else:
+            # Unmount the mass storage device after the creation of reboot.txt
+            self.internal_pipeline.add_action(DeployMPSRebootTxt())
+            self.internal_pipeline.add_action(UnmountVExpressMassStorageDevice())
 
 
 class DeployMPSTestBinary(Action):
@@ -120,10 +140,12 @@ class DeployMPSTestBinary(Action):
     name = "deploy-mps-test-binary"
     description = "deploy test binary to usb msd"
     summary = "copy test binary to MPS device and rename if required"
+    command_exception = InfrastructureError
+    timeout_exception = InfrastructureError
 
-    def __init__(self):
+    def __init__(self, key):
         super().__init__()
-        self.param_key = "test_binary"
+        self.param_key = key
 
     def validate(self):
         super().validate()
@@ -135,9 +157,7 @@ class DeployMPSTestBinary(Action):
         mount_point = self.get_namespace_data(
             action="mount-vexpress-usbmsd", label="vexpress-fw", key="mount-point"
         )
-        try:
-            os.path.realpath(mount_point)
-        except OSError:
+        if not os.path.exists(mount_point):
             raise InfrastructureError("Unable to locate mount point: %s" % mount_point)
 
         dest = os.path.join(
@@ -149,4 +169,43 @@ class DeployMPSTestBinary(Action):
         self.logger.debug("Copying %s to %s", test_binary, dest)
         shutil.copy(test_binary, dest)
 
+        return connection
+
+
+class DeployMPSRebootTxt(Action):
+    """
+    Copies on a 'reboot.txt' onto MPS device to trigger a soft-reset
+    """
+
+    name = "deploy-mps-reboot-txt"
+    description = "deploy reboot.txt to mps"
+    summary = "copy reboot.txt to MPS device to trigger restart"
+    command_exception = InfrastructureError
+    timeout_exception = InfrastructureError
+
+    def validate(self):
+        super().validate()
+        params = self.job.device["actions"]["deploy"]["methods"]["mps"]["parameters"]
+        self.reboot_string = params.get("reboot-string")
+        if self.reboot_string is None:
+            self.errors = "Missing 'reboot_string' in device configuration"
+
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
+        mount_point = self.get_namespace_data(
+            action="mount-vexpress-usbmsd", label="vexpress-fw", key="mount-point"
+        )
+        if not os.path.exists(mount_point):
+            raise InfrastructureError("Unable to locate mount point: %s" % mount_point)
+
+        self.logger.debug("Forcing a 'sync' on the mount point")
+        self.run_cmd(
+            ["sync", mount_point], error_msg="Failed to sync device %s" % mount_point
+        )
+
+        dest = os.path.join(mount_point, "reboot.txt")
+        self.logger.debug("Touching file %s", dest)
+        # https://community.arm.com/developer/tools-software/oss-platforms/w/docs/441/mps2-firmware-update-for-reboot-txt-method
+        with open(dest, "w") as fout:
+            fout.write(self.reboot_string)
         return connection

@@ -20,7 +20,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from voluptuous import All, Length, Optional, Required
+from voluptuous import All, Length, Match, Optional, Required
 
 from lava_common.schemas import deploy
 
@@ -31,7 +31,10 @@ def schema():
         Required("images"): All(
             {
                 Optional("recovery_image"): deploy.url(),
-                Optional("test_binary"): {**deploy.url(), Optional("rename"): str},
+                Optional(Match("test_binary(_\\w+)?$")): {
+                    **deploy.url(),
+                    Optional("rename"): str,
+                },
             },
             Length(min=1),
         ),

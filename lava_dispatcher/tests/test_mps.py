@@ -30,10 +30,17 @@ class TestMps(StdoutTestCase):
     def setUp(self):
         super().setUp()
         self.factory = MpsFactory()
-        self.job = self.factory.create_mps_job("sample_jobs/mps2plus.yaml")
 
     def test_mps_reference(self):
-        self.job.validate()
-        self.assertEqual([], self.job.pipeline.errors)
-        description_ref = self.pipeline_reference("mps2plus.yaml")
-        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+        job = self.factory.create_mps_job("sample_jobs/mps2plus.yaml")
+        job.validate()
+        self.assertEqual([], job.pipeline.errors)
+        description_ref = self.pipeline_reference("mps2plus.yaml", job)
+        self.assertEqual(description_ref, job.pipeline.describe(False))
+
+    def test_mps_reference_multiple(self):
+        job = self.factory.create_mps_job("sample_jobs/mps2plus-multiple.yaml")
+        job.validate()
+        self.assertEqual([], job.pipeline.errors)
+        description_ref = self.pipeline_reference("mps2plus-multiple.yaml", job)
+        self.assertEqual(description_ref, job.pipeline.describe(False))

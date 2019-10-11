@@ -1,0 +1,41 @@
+# MPS2+ Firmware is not readily available for download.
+# The firmware is available for download off a page here:
+# https://developer.arm.com/products/system-design/development-boards/fpga-prototyping-boards/download-fpga-images
+# HOWEVER:
+# - The zips are behind a click-through licence
+# - The zips often contain the firmware in a folder inside that zip. E.g.
+#   at time of writing, Cortex-M23_IoT_kit_3_0.zip contains the contents of the recovery.zip
+#   at /IoT23-3-0/boards/Recovery/ inside the zip. This will have to be extracted, rezipped
+#   into a correct format and then hosted somewhere for download for LAVA to use.
+#
+# Therefore this sample job will not work, the firmware url will have to be changed.
+
+device_type: mps2plus
+job_name: mps2plus-test
+
+timeouts:
+  job:
+    minutes: 20
+  action:
+    minutes: 10
+
+priority: medium
+visibility: public
+
+actions:
+# Full firmware image
+- deploy:
+    to: mps
+    images:
+      recovery_image:
+        url: http://images.validation.linaro.org/debian-jessie-rootfs.tar.gz  # Replace this url!
+        compression: gz
+      test_binary_1:
+        url: http://images.validation.linaro.org/people.linaro.org/~maria.hogberg/mbed/SOFTWARE/zephyr.elf
+        rename: mbed.elf
+    namespace: target
+- boot:
+    method: minimal
+    timeout:
+      minutes: 10
+    namespace: target
