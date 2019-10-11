@@ -1609,8 +1609,9 @@ def job_timing(request, pk):
         )
 
     # Compute the percentage
-    for index, action in enumerate(summary):
-        summary[index][2] = action[1] / total_duration * 100
+    if total_duration:
+        for index, action in enumerate(summary):
+            summary[index][2] = action[1] / total_duration * 100
 
     if not pipeline:
         response_dict = {"timing": "", "graph": []}
