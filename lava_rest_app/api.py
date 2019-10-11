@@ -242,9 +242,11 @@ class TestJobViewSet(viewsets.ModelViewSet):
     filter_class = filters.TestJobFilter
 
     def get_queryset(self):
-        return self.queryset.prefetch_related(
-            "tags", "failure_tags", "viewing_groups"
-        ).visible_by_user(self.request.user)
+        return (
+            self.queryset.select_related("submitter")
+            .prefetch_related("tags", "failure_tags", "viewing_groups")
+            .visible_by_user(self.request.user)
+        )
 
     @detail_route(methods=["get"], suffix="junit")
     def junit(self, request, **kwargs):
@@ -510,7 +512,9 @@ class DeviceViewSet(viewsets.ReadOnlyModelViewSet):
     filter_class = filters.DeviceFilter
 
     def get_queryset(self):
-        query = Device.objects.visible_by_user(self.request.user)
+        query = Device.objects.prefetch_related("tags").visible_by_user(
+            self.request.user
+        )
         if not self.request.query_params.get("all", False):
             query = query.exclude(health=Device.HEALTH_RETIRED)
         return query
