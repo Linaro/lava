@@ -239,7 +239,7 @@ then
     if [ "$LAVA_DB_MIGRATE" = "yes" ]
     then
         echo "Applying migrations"
-        lava-server manage migrate
+        lava-server manage migrate --no-input
     else
         echo "Waiting for migrations"
         wait_migration
