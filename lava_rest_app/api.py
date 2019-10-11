@@ -38,7 +38,16 @@ from django.http.response import HttpResponse
 
 from rest_framework import routers, serializers, status, views, viewsets
 from rest_framework.authtoken.views import ObtainAuthToken
-from rest_framework.decorators import detail_route
+
+try:
+    from rest_framework.decorators import detail_route
+except ImportError:
+    from rest_framework.decorators import action
+
+    def detail_route(methods, suffix):
+        return action(detail=True, methods=methods, suffix=suffix)
+
+
 from rest_framework.exceptions import NotFound, AuthenticationFailed
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
