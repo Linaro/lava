@@ -161,13 +161,7 @@ class FlashOpenOCDAction(Action):
             self.errors = "No OpenOCD command to execute"
 
     def run(self, connection, max_end_time):
-        connection = self.get_namespace_data(
-            action="shared", label="shared", key="connection", deepcopy=False
-        )
         connection = super().run(connection, max_end_time)
         for openocd_command in self.exec_list:
             self.run_cmd(openocd_command)
-        self.set_namespace_data(
-            action="shared", label="shared", key="connection", value=connection
-        )
         return connection

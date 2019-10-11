@@ -256,9 +256,6 @@ class FastbootBootAction(Action):
                 self.results = {"status": lines[0].strip()}
             else:
                 self.results = {"fail": self.name}
-        self.set_namespace_data(
-            action="shared", label="shared", key="connection", value=connection
-        )
         return connection
 
 
@@ -304,9 +301,6 @@ class FastbootRebootAction(Action):
                 self.results = {"status": lines[0].strip()}
             else:
                 self.results = {"fail": self.name}
-        self.set_namespace_data(
-            action="shared", label="shared", key="connection", value=connection
-        )
         return connection
 
 

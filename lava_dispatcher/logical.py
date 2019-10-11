@@ -86,12 +86,6 @@ class RetryAction(Action):
                 # re-raise if this is the last loop
                 if retries == self.max_retries:
                     self.errors = "%s retries failed for %s" % (retries, self.name)
-                    self.set_namespace_data(
-                        action="shared",
-                        label="shared",
-                        key="connection",
-                        value=connection,
-                    )
                     raise
 
                 # Wait some time before retrying

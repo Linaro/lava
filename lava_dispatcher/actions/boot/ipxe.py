@@ -131,10 +131,3 @@ class BootloaderRetry(BootAction):
                 "parameters"
             ]["bootloader_prompt"],
         )
-
-    def run(self, connection, max_end_time):
-        connection = super().run(connection, max_end_time)
-        self.set_namespace_data(
-            action="shared", label="shared", key="connection", value=connection
-        )
-        return connection
