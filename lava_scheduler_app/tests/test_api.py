@@ -81,7 +81,7 @@ class TestSchedulerAPI(TestCaseWithFactory):  # pylint: disable=too-many-ancesto
         try:
             server.scheduler.submit_job("{}")
         except xmlrpc.client.Fault as f:
-            self.assertEqual(403, f.faultCode)
+            self.assertEqual(400, f.faultCode)
         else:
             self.fail("fault not raised")
 

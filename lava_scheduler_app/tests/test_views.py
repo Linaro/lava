@@ -19,7 +19,7 @@
 
 import pytest
 
-from django.contrib.auth.models import Group, Permission, User
+from django.contrib.auth.models import Group, User
 from django.urls import reverse
 
 from lava_scheduler_app.models import (
@@ -48,7 +48,6 @@ actions: []
 def setup(db):
     group = Group.objects.create(name="group1")
     user = User.objects.create_user(username="tester", password="tester")  # nosec
-    user.user_permissions.add(Permission.objects.get(codename="submit_testjob"))
     user.groups.add(group)
     dt_qemu = DeviceType.objects.create(name="qemu")
     Alias.objects.create(name="kvm", device_type=dt_qemu)
@@ -409,19 +408,19 @@ def test_job_submit(client, setup):
     ret = client.get(reverse("lava.scheduler.job.submit"))
     assert ret.status_code == 200  # nosec
     assert ret.templates[0].name == "lava_scheduler_app/job_submit.html"  # nosec
-    assert ret.context["is_authorized"] is False  # nosec
+    assert ret.context["is_authorized"] == False  # nosec
     # Anonymous user POST
     ret = client.post(reverse("lava.scheduler.job.submit"), {"definition-input": ""})
     assert ret.status_code == 200  # nosec
     assert ret.templates[0].name == "lava_scheduler_app/job_submit.html"  # nosec
-    assert ret.context["is_authorized"] is False  # nosec
+    assert ret.context["is_authorized"] == False  # nosec
 
     # Logged-user GET
     assert client.login(username="tester", password="tester") is True  # nosec
     ret = client.get(reverse("lava.scheduler.job.submit"))
     assert ret.status_code == 200  # nosec
     assert ret.templates[0].name == "lava_scheduler_app/job_submit.html"  # nosec
-    assert ret.context["is_authorized"] is True  # nosec
+    assert ret.context["is_authorized"] == True  # nosec
 
     # Logged-user POST as JSON
     ret = client.post(

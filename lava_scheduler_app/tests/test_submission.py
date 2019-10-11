@@ -166,35 +166,17 @@ class TestTestJob(
             self.fail("Comments have not been preserved after submission")
 
     def test_user_permission(self):
-        self.assertIn(
-            "submit_testjob",
-            [
-                permission.codename
-                for permission in Permission.objects.all()
-                if "lava_scheduler_app" in permission.content_type.app_label
-            ],
-        )
         user = self.factory.make_user()
-        user.user_permissions.add(Permission.objects.get(codename="submit_testjob"))
-        user.save()
-        self.assertEqual(
-            user.get_all_permissions(), {u"lava_scheduler_app.submit_testjob"}
-        )
         admin_perm = Permission.objects.get(codename="admin_device")
         self.assertEqual("lava_scheduler_app", admin_perm.content_type.app_label)
         self.assertIsNotNone(admin_perm)
         self.assertEqual(admin_perm.name, "Can admin device")
         user.user_permissions.add(admin_perm)
         user.save()
-        delattr(
-            user, "_perm_cache"
-        )  # force a refresh of the user permissions as well as the user
         user = User.objects.get(username=user.username)
         self.assertEqual(
-            {u"lava_scheduler_app.admin_device", u"lava_scheduler_app.submit_testjob"},
-            user.get_all_permissions(),
+            {u"lava_scheduler_app.admin_device"}, user.get_all_permissions()
         )
-        self.assertTrue(user.has_perm("lava_scheduler_app.submit_testjob"))
         self.assertTrue(user.has_perm("lava_scheduler_app.admin_device"))
 
     def test_json_yaml(self):
@@ -217,8 +199,6 @@ class TestTestJob(
     def test_job_data(self):
         self.factory.cleanup()
         user = self.factory.make_user()
-        user.user_permissions.add(Permission.objects.get(codename="submit_testjob"))
-        user.save()
         dt = self.factory.make_device_type(name="qemu")
         device = self.factory.make_device(device_type=dt, hostname="qemu-1")
         device.save()
