@@ -20,6 +20,7 @@
 
 from django.utils.version import get_version
 from django.core.management.base import CommandParser
+import rest_framework_filters as filters
 
 
 DJANGO_VERSION = get_version()
@@ -28,10 +29,21 @@ DJANGO_VERSION = get_version()
 # Handles compatibility for django_restframework_filters
 try:
     from rest_framework_filters.backends import RestFrameworkFilterBackend  # noqa
+
+    # RelatedFilter argument "name" as been renamed "field_name"
+    def RelatedFilter(cls, name, queryset):
+        return filters.RelatedFilter(cls, field_name=name, queryset=queryset)
+
+
 except ImportError:
     from rest_framework_filters.backends import (
         DjangoFilterBackend as RestFrameworkFilterBackend,
     )  # noqa
+
+    # Keep the original version
+    def RelatedFilter(cls, name, queryset):
+        return filters.RelatedFilter(cls, name=name, queryset=queryset)
+
 
 FilterBackend = RestFrameworkFilterBackend
 
