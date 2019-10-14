@@ -29,7 +29,7 @@ import uuid
 import gzip
 import simplejson
 import yaml
-from nose.tools import nottest
+
 from django.db.models import Q
 from django.conf import settings
 from django.contrib.auth.models import User, Group, Permission
@@ -44,6 +44,7 @@ from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
 
+from lava_common.decorators import nottest
 from lava_results_app.utils import export_testcase
 from lava_scheduler_app import utils
 from lava_scheduler_app.logutils import read_logs
@@ -2317,6 +2318,7 @@ class NotificationCallback(models.Model):
             logger.warning("Problem sending request to %s: %s" % (self.url, ex))
 
 
+@nottest
 class TestJobUser(models.Model):
     class Meta:
         unique_together = ("test_job", "user")

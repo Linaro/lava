@@ -24,8 +24,9 @@ import yaml
 import decimal
 import logging
 import pexpect
-from nose.tools import nottest
 from collections import OrderedDict
+
+from lava_common.decorators import nottest
 from lava_common.exceptions import JobError, InfrastructureError, TestError, LAVABug
 from lava_dispatcher.actions.test import TestAction
 from lava_dispatcher.action import Pipeline

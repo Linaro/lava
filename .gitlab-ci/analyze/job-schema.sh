@@ -5,7 +5,7 @@ set -e
 if [ "$1" = "setup" ]
 then
   apt-get -q update
-  apt-get install --no-install-recommends --yes python3 python3-nose python3-voluptuous python3-yaml
+  apt-get install --no-install-recommends --yes python3 python3-voluptuous python3-yaml
 else
   # documentation
   PYTHONPATH=. ./share/lava-schema.py job doc/v2/examples/test-jobs/*.yaml

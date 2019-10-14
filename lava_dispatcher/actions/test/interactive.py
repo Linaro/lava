@@ -18,10 +18,10 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from nose.tools import nottest
 import pexpect
 import time
 
+from lava_common.decorators import nottest
 from lava_common.exceptions import (
     InfrastructureError,
     JobError,

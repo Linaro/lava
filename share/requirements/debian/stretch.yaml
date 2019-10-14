@@ -19,8 +19,6 @@ lava-server:
     name: python3-docutils
   jinja2:
     name: python3-jinja2
-  nose:
-    name: python3-nose
   psycopg2:
     name: python3-psycopg2
   pytz:
@@ -80,8 +78,6 @@ lava-dispatcher:
   netifaces:
     version: ">=0.10.0"
     name: python3-netifaces
-  nose:
-    name: python3-nose
   pexpect:
     version: ">=4.2"
     name: python3-pexpect
@@ -142,8 +138,6 @@ lava-dispatcher:
     unittests: true
 
 lava-common:
-  nose:
-    name: python3-nose
   voluptuous:
     version: ">=0.8.8"
     name: python3-voluptuous

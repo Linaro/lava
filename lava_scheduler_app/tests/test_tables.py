@@ -1,8 +1,9 @@
 import logging
 import sys
-from nose.tools import nottest
 from django.contrib.auth.models import AnonymousUser
 from django_testscenarios.ubertest import TestCase
+
+from lava_common.decorators import nottest
 from lava_scheduler_app.models import Device, DeviceType, TestJob
 from lava_server.lavatable import LavaTable, LavaView
 from lava_scheduler_app.tables import (

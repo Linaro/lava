@@ -9,9 +9,9 @@ import xmlrpc.client
 from django.conf import settings
 from django.contrib.auth.models import Group, Permission, User
 from django.test.client import Client
-from nose.tools import nottest
 from io import BytesIO as StringIO
 
+from lava_common.decorators import nottest
 from lava_scheduler_app.dbutils import validate_yaml
 from lava_scheduler_app.models import (
     Alias,

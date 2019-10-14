@@ -21,10 +21,11 @@ Unit tests for Linaro Django XML-RPC Application
 """
 import re
 import xmlrpc.client
-from nose.tools import nottest
+
 from django.contrib.auth.models import User
 from django_testscenarios.ubertest import TestCase
 
+from lava_common.decorators import nottest
 from linaro_django_xmlrpc.models import (
     AuthToken,
     CallContext,

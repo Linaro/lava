@@ -18,7 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from nose.tools import nottest
+from lava_common.decorators import nottest
 
 
 class LAVAError(Exception):

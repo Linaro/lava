@@ -30,7 +30,6 @@ import os
 import yaml
 import jinja2
 import logging
-from nose.tools import nottest
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
@@ -41,6 +40,7 @@ from django.core.validators import validate_email
 from django.contrib.sites.models import Site
 
 from lava_common.compat import yaml_load
+from lava_common.decorators import nottest
 from lava_scheduler_app.models import (
     Device,
     DeviceType,

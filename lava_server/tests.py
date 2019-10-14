@@ -22,7 +22,7 @@ import xmlrpc.client
 
 from django.contrib.auth.models import Group, User
 
-from nose.tools import nottest
+from lava_common.decorators import nottest
 from lava_scheduler_app.models import Device, DeviceType, Worker
 from lava_scheduler_app.tests.test_api import TestTransport
 

@@ -28,7 +28,8 @@ import pexpect
 import tempfile
 import unittest
 import subprocess  # nosec - unit test support.
-from nose.tools import nottest
+
+from lava_common.decorators import nottest
 from lava_dispatcher.power import FinalizeAction
 from lava_dispatcher.parser import JobParser
 from lava_common.exceptions import InfrastructureError

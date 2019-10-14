@@ -3,7 +3,8 @@ import yaml
 import jinja2
 import unittest
 import subprocess  # nosec unit test support
-from nose.tools import nottest
+
+from lava_common.decorators import nottest
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
