@@ -27,6 +27,7 @@ from django.conf import settings
 from django.core.checks import Error, register, Info, Warning
 from voluptuous import Invalid
 
+from lava_common.compat import yaml_safe_load
 from lava_common.schemas import validate
 from lava_scheduler_app.dbutils import invalid_template, validate_job
 from lava_scheduler_app.models import Device, DeviceType
@@ -59,7 +60,7 @@ def check_health_checks(app_configs, **kwargs):
 
         # check the health-check YAML syntax
         try:
-            data = yaml.safe_load(ht)
+            data = yaml_safe_load(ht)
         except yaml.YAMLError as exc:
             errors.append(
                 Error(

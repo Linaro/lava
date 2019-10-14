@@ -24,7 +24,6 @@ import pathlib
 import re
 from shutil import chown, rmtree
 import time
-import yaml
 import voluptuous
 
 from django.conf import settings
@@ -34,6 +33,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.utils import timezone
 
+from lava_common.compat import yaml_safe_load
 from lava_common.schemas import validate
 from lava_scheduler_app.models import TestJob
 from lava_server.compat import get_sub_parser_class
@@ -299,7 +299,7 @@ class Command(BaseCommand):
                 definition = job.multinode_definition
             else:
                 definition = job.original_definition
-            data = yaml.safe_load(definition)
+            data = yaml_safe_load(definition)
             try:
                 validate(data, strict, settings.EXTRA_CONTEXT_VARIABLES)
                 print("* %s" % job.id)

@@ -23,7 +23,6 @@ import logging
 import simplejson
 import threading
 import uuid
-import yaml
 import zmq
 from zmq.utils.strtypes import b
 
@@ -32,6 +31,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models.signals import post_init, post_save, pre_delete, pre_save
 
+from lava_common.compat import yaml_safe_load
 from lava_scheduler_app.models import Device, TestJob, Worker
 from lava_scheduler_app.notifications import (
     create_notification,
@@ -148,7 +148,7 @@ def testjob_notifications(sender, **kwargs):
     if job.state not in [TestJob.STATE_RUNNING, TestJob.STATE_FINISHED]:
         return
 
-    job_def = yaml.safe_load(job.definition)
+    job_def = yaml_safe_load(job.definition)
     if "notify" in job_def:
         if notification_criteria(
             job_def["notify"]["criteria"], job.state, job.health, job._old_health

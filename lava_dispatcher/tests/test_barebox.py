@@ -20,7 +20,8 @@
 
 
 import os
-import yaml
+
+from lava_common.compat import yaml_safe_load
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.actions.boot.barebox import BareboxAction
@@ -199,7 +200,7 @@ class TestKernelConversion(StdoutTestCase):
             os.path.dirname(__file__), "sample_jobs/barebox-ramdisk.yaml"
         )
         with open(bbb_yaml) as sample_job_data:
-            self.base_data = yaml.safe_load(sample_job_data)
+            self.base_data = yaml_safe_load(sample_job_data)
         self.deploy_block = [
             block for block in self.base_data["actions"] if "deploy" in block
         ][0]["deploy"]

@@ -1,7 +1,6 @@
 import os
-import yaml
 
-# pylint: disable=superfluous-parens,ungrouped-imports
+from lava_common.compat import yaml_safe_load
 from lava_scheduler_app.schema import validate_device
 from lava_scheduler_app.tests.test_base_templates import (
     BaseTemplate,
@@ -425,7 +424,7 @@ class TestFastbootTemplates(BaseTemplate.BaseTemplateCases):
         ]
 
         rendered = self.render_device_dictionary_file("sdm845-mtp-05.jinja2")
-        template_dict = yaml.safe_load(rendered)
+        template_dict = yaml_safe_load(rendered)
         self.assertEqual("5c302cef", template_dict["adb_serial_number"])
         self.assertEqual("5c302cef", template_dict["fastboot_serial_number"])
         self.assertEqual([], template_dict["fastboot_options"])

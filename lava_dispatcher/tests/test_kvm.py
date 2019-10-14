@@ -26,6 +26,7 @@ import unittest
 import yaml
 import pexpect
 
+from lava_common.compat import yaml_safe_load
 from lava_common.constants import SYS_CLASS_KVM
 from lava_common.exceptions import JobError, InfrastructureError
 from lava_dispatcher.utils.filesystem import mkdtemp
@@ -359,15 +360,15 @@ class TestKVMInlineTestDeploy(
 
     def test_extra_options(self):
         (rendered, _) = self.factory.create_device("kvm01.jinja2")
-        device = NewDevice(yaml.safe_load(rendered))
+        device = NewDevice(yaml_safe_load(rendered))
         kvm_yaml = os.path.join(
             os.path.dirname(__file__), "sample_jobs/kvm-inline.yaml"
         )
         with open(kvm_yaml) as sample_job_data:
-            job_data = yaml.safe_load(sample_job_data)
+            job_data = yaml_safe_load(sample_job_data)
         device["actions"]["boot"]["methods"]["qemu"]["parameters"][
             "extra"
-        ] = yaml.safe_load(
+        ] = yaml_safe_load(
             """
                   - -smp
                   - 1
@@ -445,7 +446,7 @@ class TestKVMInlineTestDeploy(
         )
         self.assertTrue(os.path.exists(yaml_file))
         with open(yaml_file, "r") as f_in:
-            testdef = yaml.safe_load(f_in)
+            testdef = yaml_safe_load(f_in)
         expected_testdef = {
             "metadata": {
                 "description": "Basic system test command for Linaro Ubuntu images",
@@ -964,7 +965,7 @@ class TestChecksum(StdoutTestCase):
 
     def test_uboot_checksum(self):
         (rendered, _) = self.factory.create_device("bbb-01.jinja2")
-        device = NewDevice(yaml.safe_load(rendered))
+        device = NewDevice(yaml_safe_load(rendered))
         bbb_yaml = os.path.join(
             os.path.dirname(__file__), "sample_jobs/bbb-ramdisk-nfs.yaml"
         )

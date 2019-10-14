@@ -21,9 +21,10 @@
 import os
 import yaml
 import datetime
-from lava_dispatcher.action import Action, Pipeline
+from lava_common.compat import yaml_safe_load
 from lava_common.timeout import Timeout
 from lava_common.exceptions import InfrastructureError, JobError
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.actions.deploy.testdef import get_test_action_namespaces
@@ -65,11 +66,11 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
 
     def test_missing_handler(self):
         (rendered, _) = self.factory.create_device("kvm01.jinja2")
-        device = NewDevice(yaml.safe_load(rendered))
+        device = NewDevice(yaml_safe_load(rendered))
         kvm_yaml = os.path.join(os.path.dirname(__file__), "sample_jobs/kvm.yaml")
         parser = JobParser()
         with open(kvm_yaml) as sample_job_data:
-            data = yaml.safe_load(sample_job_data)
+            data = yaml_safe_load(sample_job_data)
         data["actions"][2]["test"]["definitions"][0]["from"] = "unusable-handler"
         try:
             job = parser.parse(yaml.dump(data), device, 4212, None, "")

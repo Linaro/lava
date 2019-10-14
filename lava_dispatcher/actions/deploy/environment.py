@@ -22,8 +22,9 @@ import contextlib
 import os
 import yaml
 
-from lava_dispatcher.action import Action
+from lava_common.compat import yaml_safe_load
 from lava_common.constants import LINE_SEPARATOR
+from lava_dispatcher.action import Action
 
 
 class DeployDeviceEnvironment(Action):
@@ -48,7 +49,7 @@ class DeployDeviceEnvironment(Action):
         if "env_dut" in self.job.parameters and self.job.parameters["env_dut"]:
             # Check that the file is valid yaml
             try:
-                yaml.safe_load(self.job.parameters["env_dut"])
+                yaml_safe_load(self.job.parameters["env_dut"])
             except (TypeError, yaml.scanner.ScannerError) as exc:
                 self.errors = exc
                 return
@@ -78,7 +79,7 @@ class DeployDeviceEnvironment(Action):
 
     def _create_environment(self):
         """Generate the env variables for the device."""
-        conf = yaml.safe_load(self.env) if self.env != "" else {}
+        conf = yaml_safe_load(self.env) if self.env != "" else {}
         if conf.get("purge", False):
             environ = {}
         else:

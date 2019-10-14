@@ -22,6 +22,7 @@
 import os
 import yaml
 
+from lava_common.compat import yaml_safe_load
 from lava_common.decorators import nottest
 from lava_dispatcher.tests.test_basic import StdoutTestCase
 from lava_dispatcher.job import Job
@@ -162,7 +163,7 @@ class TestMultiDefinition(StdoutTestCase):  # pylint: disable=too-many-public-me
         )
         bbb_yaml = os.path.join(os.path.dirname(__file__), "sample_jobs/uboot-nfs.yaml")
         with open(bbb_yaml) as sample_job_data:
-            self.job_data = yaml.safe_load(sample_job_data)
+            self.job_data = yaml_safe_load(sample_job_data)
 
     def test_multidefinition(self):
         block = [

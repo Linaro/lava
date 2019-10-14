@@ -29,10 +29,11 @@ import tempfile
 import unittest
 import subprocess  # nosec - unit test support.
 
+from lava_common.compat import yaml_safe_load
 from lava_common.decorators import nottest
+from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.power import FinalizeAction
 from lava_dispatcher.parser import JobParser
-from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.actions.test.shell import TestShellRetry, PatternFixup
 from lava_dispatcher.tests.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.tests.test_uboot import UBootFactory
@@ -80,7 +81,7 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
         with open(
             os.path.join(os.path.dirname(__file__), "testdefs", "params.yaml"), "r"
         ) as params:
-            self.testdef = yaml.safe_load(params)
+            self.testdef = yaml_safe_load(params)
 
     def test_testdef(self):
         testdef = overlay = None
@@ -145,11 +146,11 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
         testdef.validate()
         self.assertEqual([], testdef.errors)
         (rendered, _) = self.factory.create_device("kvm01.jinja2")
-        device = yaml.safe_load(rendered)
+        device = yaml_safe_load(rendered)
         kvm_yaml = os.path.join(os.path.dirname(__file__), "sample_jobs/kvm.yaml")
         parser = JobParser()
         with open(kvm_yaml, "r") as sample_job_data:
-            content = yaml.safe_load(sample_job_data)
+            content = yaml_safe_load(sample_job_data)
         data = [block["test"] for block in content["actions"] if "test" in block][0]
         definitions = [block for block in data["definitions"] if "path" in block][0]
         definitions["name"] = "smoke tests"
@@ -405,7 +406,7 @@ class TestDefinitionParams(StdoutTestCase):  # pylint: disable=too-many-public-m
         yaml_file = os.path.join(os.path.dirname(__file__), "./testdefs/install.yaml")
         self.assertTrue(os.path.exists(yaml_file))
         with open(yaml_file, "r") as test_file:
-            testdef = yaml.safe_load(test_file)
+            testdef = yaml_safe_load(test_file)
         repos = testdef["install"].get("git-repos", [])
         self.assertIsNotNone(repos)
         self.assertIsInstance(repos, list)
@@ -538,7 +539,7 @@ class TestDefinitions(StdoutTestCase):
     def test_pattern(self):
         self.assertTrue(os.path.exists(self.testdef))
         with open(self.testdef, "r") as par:
-            params = yaml.safe_load(par)
+            params = yaml_safe_load(par)
         self.assertIn("parse", params.keys())
         line = "test1a: pass"
         self.assertEqual(
@@ -556,7 +557,7 @@ class TestDefinitions(StdoutTestCase):
         # without a name from a testdef, the pattern is not valid.
         self.assertFalse(pattern.valid())
         with open(self.testdef, "r") as par:
-            params = yaml.safe_load(par)
+            params = yaml_safe_load(par)
         pattern = PatternFixup(testdef=params, count=0)
         self.assertTrue(pattern.valid())
 
@@ -633,7 +634,7 @@ class TestDefinitions(StdoutTestCase):
         )
         # fake up a run step
         with open(self.testdef, "r") as par:
-            params = yaml.safe_load(par)
+            params = yaml_safe_load(par)
         self.assertEqual(
             r"(?P<test_case_id>.*-*):\s+(?P<result>(pass|fail))",
             params["parse"]["pattern"],
@@ -691,7 +692,7 @@ test3a: skip
 \"test4a:\" \"unknown\"
         """
         with open(self.testdef, "r") as par:
-            params = yaml.safe_load(par)
+            params = yaml_safe_load(par)
         pattern = params["parse"]["pattern"]
         re_pat = re.compile(pattern, re.M)
         match = re.search(re_pat, data)

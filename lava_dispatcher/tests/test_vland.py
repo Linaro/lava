@@ -22,9 +22,10 @@
 import os
 import yaml
 import socket
+from lava_common.compat import yaml_safe_load
+from lava_common.exceptions import JobError
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
-from lava_common.exceptions import JobError
 from lava_dispatcher.connection import Protocol
 from lava_dispatcher.protocols.vland import VlandProtocol
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
@@ -45,12 +46,12 @@ class TestVland(StdoutTestCase):  # pylint: disable=too-many-public-methods
         )
         self.factory = Factory()
         (rendered, _) = self.factory.create_device("bbb-01.jinja2")
-        self.device = NewDevice(yaml.safe_load(rendered))
+        self.device = NewDevice(yaml_safe_load(rendered))
         self.job_id = "100"
 
     def test_file_structure(self):
         with open(self.filename) as yaml_data:
-            alpha_data = yaml.safe_load(yaml_data)
+            alpha_data = yaml_safe_load(yaml_data)
         self.assertIn("protocols", alpha_data)
         self.assertTrue(VlandProtocol.accepts(alpha_data))
         level_tuple = Protocol.select_all(alpha_data)
@@ -127,7 +128,7 @@ class TestVland(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def test_configure(self):
         with open(self.filename) as yaml_data:
-            alpha_data = yaml.safe_load(yaml_data)
+            alpha_data = yaml_safe_load(yaml_data)
         self.assertIn("protocols", alpha_data)
         self.assertTrue(VlandProtocol.accepts(alpha_data))
         vprotocol = VlandProtocol(alpha_data, self.job_id)
@@ -153,7 +154,7 @@ class TestVland(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertIsNotNone(vprotocol.multinode_protocol)
 
         (rendered, _) = self.factory.create_device("bbb-01.jinja2")
-        bbb2 = NewDevice(yaml.safe_load(rendered))
+        bbb2 = NewDevice(yaml_safe_load(rendered))
         bbb2["parameters"]["interfaces"]["eth0"]["switch"] = "192.168.0.2"
         bbb2["parameters"]["interfaces"]["eth0"]["port"] = "6"
         bbb2["parameters"]["interfaces"]["eth1"]["switch"] = "192.168.0.2"
@@ -187,7 +188,7 @@ class TestVland(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def test_job(self):
         with open(self.filename) as yaml_data:
-            alpha_data = yaml.safe_load(yaml_data)
+            alpha_data = yaml_safe_load(yaml_data)
         self.assertIn("protocols", alpha_data)
         self.assertIn(VlandProtocol.name, alpha_data["protocols"])
         with open(self.filename) as sample_job_data:
@@ -243,7 +244,7 @@ class TestVland(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def test_vland_overlay(self):
         with open(self.filename) as yaml_data:
-            alpha_data = yaml.safe_load(yaml_data)
+            alpha_data = yaml_safe_load(yaml_data)
         for vlan_key, _ in alpha_data["protocols"][VlandProtocol.name].items():
             alpha_data["protocols"][VlandProtocol.name][vlan_key] = {"tags": []}
         # removed tags from original job to simulate job where any interface tags will be acceptable
@@ -280,7 +281,7 @@ class TestVland(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def test_job_no_tags(self):
         with open(self.filename) as yaml_data:
-            alpha_data = yaml.safe_load(yaml_data)
+            alpha_data = yaml_safe_load(yaml_data)
         for vlan_key, _ in alpha_data["protocols"][VlandProtocol.name].items():
             alpha_data["protocols"][VlandProtocol.name][vlan_key] = {"tags": []}
         # removed tags from original job to simulate job where any interface tags will be acceptable
@@ -311,7 +312,7 @@ class TestVland(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def test_job_bad_tags(self):
         with open(self.filename) as yaml_data:
-            alpha_data = yaml.safe_load(yaml_data)
+            alpha_data = yaml_safe_load(yaml_data)
         for vlan_key, _ in alpha_data["protocols"][VlandProtocol.name].items():
             alpha_data["protocols"][VlandProtocol.name][vlan_key] = {
                 "tags": ["spurious"]
@@ -328,7 +329,7 @@ class TestVland(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def test_primary_interface(self):
         with open(self.filename) as yaml_data:
-            alpha_data = yaml.safe_load(yaml_data)
+            alpha_data = yaml_safe_load(yaml_data)
         for interface in self.device["parameters"]["interfaces"]:
             # jinja2 processing of tags: [] results in tags:
             if self.device["parameters"]["interfaces"][interface]["tags"] == []:
@@ -360,7 +361,7 @@ class TestVland(StdoutTestCase):  # pylint: disable=too-many-public-methods
     # pylint: disable=protected-access
     def demo(self):
         with open(self.filename) as yaml_data:
-            alpha_data = yaml.safe_load(yaml_data)
+            alpha_data = yaml_safe_load(yaml_data)
         vprotocol = VlandProtocol(alpha_data, 422)
         vprotocol.settings = vprotocol.read_settings()
         self.assertIn("port", vprotocol.settings)

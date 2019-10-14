@@ -1,6 +1,7 @@
 # unit tests for primary and secondary connections
 import os
 import yaml
+from lava_common.compat import yaml_safe_load
 from lava_scheduler_app.models import (
     TestJob,
     DevicesUnavailableException,
@@ -20,7 +21,7 @@ class YamlSshFactory(YamlFactory):
             os.path.dirname(__file__), "sample_jobs", "qemu-ssh-guest.yaml"
         )
         with open(sample_job_file, "r") as test_support:
-            data = yaml.safe_load(test_support)
+            data = yaml_safe_load(test_support)
         data.update(kw)
         return data
 
@@ -32,7 +33,7 @@ class SecondaryConnections(TestCaseWithFactory):
         self.device_type = self.factory.make_device_type()
 
     def test_ssh_job_data(self):
-        data = yaml.safe_load(self.factory.make_job_yaml())
+        data = yaml_safe_load(self.factory.make_job_yaml())
         self.assertNotIn("context", data)
         self.assertNotIn("timeout", data)
         self.assertIn("timeouts", data)
@@ -53,7 +54,7 @@ class SecondaryConnections(TestCaseWithFactory):
         path = os.path.join(os.path.dirname(os.path.join(__file__)), "sample_jobs")
         host_role = []
         for job in jobs:
-            data = yaml.safe_load(job.definition)
+            data = yaml_safe_load(job.definition)
             params = data["protocols"]["lava-multinode"]
             params["target_group"] = "replaced"
             if not group_size:
@@ -65,7 +66,7 @@ class SecondaryConnections(TestCaseWithFactory):
                 )
                 self.assertIn(params["sub_id"], [0, 1, 2])
                 sub_id.append(params["sub_id"])
-                comparison = yaml.safe_load(
+                comparison = yaml_safe_load(
                     open(os.path.join(path, "qemu-ssh-parent.yaml"), "r").read()
                 )
                 self.assertIn("protocols", data)
@@ -87,7 +88,7 @@ class SecondaryConnections(TestCaseWithFactory):
                 del data["protocols"]["lava-multinode"]["sub_id"]
                 self.assertEqual(
                     data,
-                    yaml.safe_load(
+                    yaml_safe_load(
                         open(os.path.join(path, "qemu-ssh-guest-1.yaml"), "r").read()
                     ),
                 )
@@ -106,7 +107,7 @@ class SecondaryConnections(TestCaseWithFactory):
         # create a new device to allow the submission to reach the multinode YAML test.
         hostname = "fakeqemu4"
         self.factory.make_device(self.device_type, hostname)
-        data = yaml.safe_load(self.factory.make_job_yaml())
+        data = yaml_safe_load(self.factory.make_job_yaml())
         data["protocols"]["lava-multinode"]["roles"]["host"]["count"] = 2
         self.assertRaises(
             SubmissionException,
@@ -121,7 +122,7 @@ class SecondaryConnections(TestCaseWithFactory):
         # create a new device to allow the submission to reach the multinode YAML test.
         hostname = "fakeqemu4"
         self.factory.make_device(self.device_type, hostname)
-        data = yaml.safe_load(self.factory.make_job_yaml())
+        data = yaml_safe_load(self.factory.make_job_yaml())
         deploy = [action["deploy"] for action in data["actions"] if "deploy" in action]
         # replace working image with a broken URL
         for block in deploy:

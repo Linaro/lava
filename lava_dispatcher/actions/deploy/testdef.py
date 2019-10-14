@@ -27,6 +27,7 @@ import hashlib
 import tarfile
 import shutil
 
+from lava_common.compat import yaml_safe_load
 from lava_common.decorators import nottest
 from lava_common.exceptions import InfrastructureError, JobError, LAVABug, TestError
 from lava_dispatcher.action import Action, Pipeline
@@ -321,7 +322,7 @@ class GitRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
         self.logger.debug("Tests stored (tmp) in %s", yaml_file)
         try:
             with open(yaml_file, "r") as test_file:
-                testdef = yaml.safe_load(test_file)
+                testdef = yaml_safe_load(test_file)
         except OSError as exc:
             raise JobError(
                 "Unable to open test definition '%s': %s"
@@ -394,7 +395,7 @@ class BzrRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
         yaml_file = os.path.join(runner_path, self.parameters["path"])
         try:
             with open(yaml_file, "r") as test_file:
-                self.testdef = yaml.safe_load(test_file)
+                self.testdef = yaml_safe_load(test_file)
         except OSError as exc:
             raise JobError(
                 "Unable to open test definition '%s': %s"
@@ -835,7 +836,7 @@ class TestOverlayAction(TestAction):  # pylint: disable=too-many-instance-attrib
         yaml_file = os.path.join(runner_path, self.parameters["path"])
         try:
             with open(yaml_file, "r") as test_file:
-                testdef = yaml.safe_load(test_file)
+                testdef = yaml_safe_load(test_file)
         except OSError as exc:
             raise JobError(
                 "Unable to open test definition '%s': %s"
@@ -998,7 +999,7 @@ class TestInstallAction(TestOverlayAction):
         yaml_file = os.path.join(runner_path, self.parameters["path"])
         try:
             with open(yaml_file, "r") as test_file:
-                testdef = yaml.safe_load(test_file)
+                testdef = yaml_safe_load(test_file)
         except OSError as exc:
             raise JobError(
                 "Unable to open test definition '%s': %s"
@@ -1119,7 +1120,7 @@ class TestRunnerAction(TestOverlayAction):
         yaml_file = os.path.join(runner_path, self.parameters["path"])
         try:
             with open(yaml_file, "r") as test_file:
-                testdef = yaml.safe_load(test_file)
+                testdef = yaml_safe_load(test_file)
         except OSError as exc:
             raise JobError(
                 "Unable to open test definition '%s': %s"

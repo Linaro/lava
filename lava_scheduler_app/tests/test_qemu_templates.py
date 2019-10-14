@@ -1,6 +1,4 @@
-import yaml
-
-# pylint: disable=superfluous-parens,ungrouped-imports
+from lava_common.compat import yaml_safe_load
 from lava_scheduler_app.tests.test_base_templates import (
     BaseTemplate,
     prepare_jinja_template,
@@ -37,14 +35,14 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
             "staging-qemu-01", data, job_ctx=None, raw=True
         )
         rendered = test_template.render(**job_ctx)
-        template_dict = yaml.safe_load(rendered)
+        template_dict = yaml_safe_load(rendered)
         options = template_dict["actions"]["boot"]["methods"]["qemu"]["parameters"][
             "options"
         ]
         self.assertNotIn("-enable-kvm", options)
         job_ctx = {"arch": "amd64", "no_kvm": False}
         rendered = test_template.render(**job_ctx)
-        template_dict = yaml.safe_load(rendered)
+        template_dict = yaml_safe_load(rendered)
         options = template_dict["actions"]["boot"]["methods"]["qemu"]["parameters"][
             "options"
         ]

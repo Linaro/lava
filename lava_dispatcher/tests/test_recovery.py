@@ -20,8 +20,9 @@
 
 
 import os
-import yaml
 import unittest
+
+from lava_common.compat import yaml_safe_load
 from lava_dispatcher.tests.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
@@ -59,7 +60,7 @@ class FastBootFactory(Factory):  # pylint: disable=too-few-public-methods
 
     def create_hikey_bl_job(self, filename):
         (data, device_dict) = self.create_hikey_bl_device("hi6220-hikey-01")
-        device = NewDevice(yaml.safe_load(data))
+        device = NewDevice(yaml_safe_load(data))
         self.validate_data("hi6220-hikey-01", device_dict)
         fastboot_yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(fastboot_yaml) as sample_job_data:
@@ -99,7 +100,7 @@ class UBootFactory(Factory):  # pylint: disable=too-few-public-methods
 
     def create_x15_bl_job(self, filename):
         (data, device_dict) = self.create_x15_bl_device("x15-bl-01")
-        device = NewDevice(yaml.safe_load(data))
+        device = NewDevice(yaml_safe_load(data))
         self.validate_data("x15-bl-01", device_dict)
         uboot_yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(uboot_yaml) as sample_job_data:

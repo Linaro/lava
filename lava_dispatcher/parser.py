@@ -18,9 +18,8 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import yaml
-
 from lava_dispatcher.job import Job
+from lava_common.compat import yaml_safe_load
 from lava_dispatcher.action import Pipeline, Timeout, JobError
 from lava_dispatcher.logical import Deployment, Boot, LavaTest
 from lava_dispatcher.deployment_data import get_deployment_data
@@ -100,7 +99,7 @@ class JobParser:
 
     # pylint: disable=too-many-locals,too-many-statements
     def parse(self, content, device, job_id, logger, dispatcher_config, env_dut=None):
-        data = yaml.safe_load(content)
+        data = yaml_safe_load(content)
         job = Job(job_id, data, logger)
         test_counts = {}
         job.device = device
@@ -108,7 +107,7 @@ class JobParser:
         # Load the dispatcher config
         job.parameters["dispatcher"] = {}
         if dispatcher_config is not None:
-            config = yaml.safe_load(dispatcher_config)
+            config = yaml_safe_load(dispatcher_config)
             if isinstance(config, dict):
                 job.parameters["dispatcher"] = config
 
