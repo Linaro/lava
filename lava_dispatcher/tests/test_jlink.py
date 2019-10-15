@@ -19,43 +19,49 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 
-import unittest
+from lava_common.exceptions import JobError
 from lava_dispatcher.tests.test_basic import Factory, StdoutTestCase
-from lava_dispatcher.tests.utils import infrastructure_error
 
 
-class JLinkFactory(Factory):  # pylint: disable=too-few-public-methods
+class JLinkFactory(Factory):
     """
     Not Model based, this is not a Django factory.
     Factory objects are dispatcher based classes, independent
     of any database objects.
     """
 
-    @unittest.skipIf(
-        infrastructure_error("jlink-flashtool"), "jlink-flashtool not installed"
-    )
     def create_k64f_job(self, filename):
         return self.create_job("frdm-k64f-01.jinja2", filename)
 
-    @unittest.skipIf(
-        infrastructure_error("jlink-flashtool"), "jlink-flashtool not installed"
-    )
-    def create_k64f_job_with_power(self, filename):  # pylint: disable=no-self-use
+    def create_k64f_job_with_power(self, filename):
         return self.create_job("frdm-k64f-power-01.jinja2", filename)
 
 
-class TestJLinkAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestJLinkAction(StdoutTestCase):
     def test_jlink_pipeline(self):
         factory = JLinkFactory()
         job = factory.create_k64f_job(
             "sample_jobs/zephyr-frdm-k64f-jlink-test-kernel-common.yaml"
         )
-        job.validate()
+        try:
+            job.validate()
+        except JobError as exc:
+            assert (  # nosec
+                str(exc)
+                == "Invalid job data: ['2.1.1 flash-jlink: Unable to retrieve version of JLinkExe']\n"
+            )
         description_ref = self.pipeline_reference("jlink.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
+
         job = factory.create_k64f_job_with_power(
             "sample_jobs/zephyr-frdm-k64f-jlink-test-kernel-common.yaml"
         )
-        job.validate()
+        try:
+            job.validate()
+        except JobError as exc:
+            assert (  # nosec
+                str(exc)
+                == "Invalid job data: ['2.1.3 flash-jlink: Unable to retrieve version of JLinkExe']\n"
+            )
         description_ref = self.pipeline_reference("jlink-with-power.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
