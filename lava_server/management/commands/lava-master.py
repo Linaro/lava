@@ -247,11 +247,11 @@ class Command(LAVADaemonCommand):
         if action == "HELLO" or action == "HELLO_RETRY":
             self._handle_hello(hostname, action, msg)
         elif action == "PING":
-            self._handle_ping(hostname, action, msg)
+            self._handle_ping(hostname, msg)
         elif action == "END":
-            self._handle_end(hostname, action, msg)
+            self._handle_end(hostname, msg)
         elif action == "START_OK":
-            self._handle_start_ok(hostname, action, msg)
+            self._handle_start_ok(hostname, msg)
         else:
             self.logger.error(
                 "<%s> sent unknown action=%s, args=(%s)", hostname, action, msg[1:]
@@ -287,7 +287,7 @@ class Command(LAVADaemonCommand):
 
         return True
 
-    def _handle_end(self, hostname, action, msg):  # pylint: disable=unused-argument
+    def _handle_end(self, hostname, msg):
         try:
             job_id = int(msg[2])
             error_msg = u(msg[3])
@@ -384,15 +384,13 @@ class Command(LAVADaemonCommand):
         # Mark the dispatcher as alive
         self.dispatcher_alive(hostname)
 
-    def _handle_ping(self, hostname, action, msg):  # pylint: disable=unused-argument
+    def _handle_ping(self, hostname, msg):
         self.logger.debug("%s => PING(%d)", hostname, PING_INTERVAL)
         # Send back a signal
         send_multipart_u(self.controler, [hostname, "PONG", str(PING_INTERVAL)])
         self.dispatcher_alive(hostname)
 
-    def _handle_start_ok(
-        self, hostname, action, msg
-    ):  # pylint: disable=unused-argument
+    def _handle_start_ok(self, hostname, msg):
         try:
             job_id = int(msg[2])
         except (IndexError, ValueError):
