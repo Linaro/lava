@@ -19,8 +19,9 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
-import yaml
 import unittest
+
+from lava_common.compat import yaml_safe_load
 from lava_dispatcher.tests.test_basic import Factory, StdoutTestCase
 from lava_common.exceptions import JobError
 from lava_dispatcher.device import NewDevice
@@ -59,7 +60,7 @@ class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
         Test that the correct parameters have been set for the device
         """
         (rendered, _) = self.factory.create_device("cubie2.jinja2")
-        cubie = NewDevice(yaml.safe_load(rendered))
+        cubie = NewDevice(yaml_safe_load(rendered))
         self.assertIsNotNone(cubie["parameters"]["media"].get("usb"))
         self.assertIsNotNone(cubie.get("commands"))
         self.assertIsNotNone(cubie.get("actions"))
@@ -130,7 +131,7 @@ class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
         Test that the job parameters match expected structure
         """
         (rendered, _) = self.factory.create_device("cubie1.jinja2")
-        cubie = NewDevice(yaml.safe_load(rendered))
+        cubie = NewDevice(yaml_safe_load(rendered))
         job = self._check_valid_job(cubie, "cubietruck-removable.yaml")
         self._check_job_parameters(cubie, job, "download")
 
@@ -139,7 +140,7 @@ class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
         Test that the job parameters with a writer tool match expected structure
         """
         (rendered, _) = self.factory.create_device("cubie1.jinja2")
-        cubie = NewDevice(yaml.safe_load(rendered))
+        cubie = NewDevice(yaml_safe_load(rendered))
         job = self._check_valid_job(cubie, "cubietruck-removable-with-writer.yaml")
         self._check_job_parameters(cubie, job, "writer")
 
@@ -227,12 +228,12 @@ class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def test_deployment(self):
         (rendered, _) = self.factory.create_device("cubie1.jinja2")
-        cubie = NewDevice(yaml.safe_load(rendered))
+        cubie = NewDevice(yaml_safe_load(rendered))
         self._check_deployment(cubie, "cubietruck-removable.yaml")
 
     def test_writer_deployment(self):
         (rendered, _) = self.factory.create_device("cubie1.jinja2")
-        cubie = NewDevice(yaml.safe_load(rendered))
+        cubie = NewDevice(yaml_safe_load(rendered))
         self._check_deployment(cubie, "cubietruck-removable-with-writer.yaml")
 
     def test_juno_deployment(self):
@@ -419,7 +420,7 @@ class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
         """
         job_parser = JobParser()
         (rendered, _) = self.factory.create_device("bbb-01.jinja2")
-        bbb = NewDevice(yaml.safe_load(rendered))
+        bbb = NewDevice(yaml_safe_load(rendered))
         sample_job_file = os.path.join(
             os.path.dirname(__file__), "sample_jobs/uboot-ramdisk.yaml"
         )
@@ -440,7 +441,7 @@ class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
         """
         job_parser = JobParser()
         (rendered, _) = self.factory.create_device("cubie1.jinja2")
-        cubie = NewDevice(yaml.safe_load(rendered))
+        cubie = NewDevice(yaml_safe_load(rendered))
         sample_job_file = os.path.join(
             os.path.dirname(__file__), "sample_jobs/cubietruck-removable.yaml"
         )

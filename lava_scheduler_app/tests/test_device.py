@@ -6,6 +6,7 @@ import jinja2
 
 from django.conf import settings
 from django.db.models import Q
+from lava_common.compat import yaml_safe_load
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
@@ -149,7 +150,7 @@ class DeviceTypeTest(TestCaseWithFactory):
             data = None
             try:
                 data = template.render()
-                yaml_data = yaml.safe_load(data)
+                yaml_data = yaml_safe_load(data)
             except yaml.YAMLError as exc:
                 print(data)  # for easier debugging - use the online yaml parser
                 self.fail("%s: %s" % (template_name, exc))

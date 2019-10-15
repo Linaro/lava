@@ -39,7 +39,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.contrib.sites.models import Site
 
-from lava_common.compat import yaml_load
+from lava_common.compat import yaml_load, yaml_safe_load
 from lava_common.decorators import nottest
 from lava_scheduler_app.models import (
     Device,
@@ -256,7 +256,7 @@ def load_devicetype_template(device_type_name, raw=False):
         data = template.render()
         if not data:
             return None
-        return data if raw else yaml.safe_load(data)
+        return data if raw else yaml_safe_load(data)
     except (jinja2.TemplateError, yaml.error.YAMLError):
         return None
 
@@ -295,7 +295,7 @@ def invalid_template(dt):
 
 def validate_job(data):
     try:
-        yaml_data = yaml.safe_load(data)
+        yaml_data = yaml_safe_load(data)
     except yaml.YAMLError as exc:
         raise SubmissionException("Loading job submission failed: %s." % exc)
 

@@ -38,12 +38,12 @@ import subprocess
 import sys
 import time
 import traceback
-import yaml
 import zmq
 import zmq.auth
 from urllib.parse import urlparse
 from zmq.utils.strtypes import b, u
 
+from lava_common.compat import yaml_safe_load
 from lava_dispatcher.job import ZMQConfig
 
 # pylint: disable=no-member
@@ -91,7 +91,7 @@ def create_environ(env):
     """
     Generate the env variables for the job.
     """
-    conf = yaml.safe_load(env) if env else None
+    conf = yaml_safe_load(env) if env else None
     environ = dict(os.environ)
     if conf:
         if conf.get("purge", False):
@@ -147,7 +147,7 @@ def start_job(job_id, definition, device_definition, zmq_config,
     Start the lava-run process and return the pid
     """
     # Create the base directory
-    dispatcher_cfg = yaml.safe_load(dispatcher_config)
+    dispatcher_cfg = yaml_safe_load(dispatcher_config)
     base_dir = os.path.join(tmp_dir, "{prefix}{job_id}".format(prefix=get_prefix(dispatcher_cfg), job_id=str(job_id)))
     mkdir(base_dir)
 
@@ -787,13 +787,13 @@ def handle_start(msg, jobs, sock, master, zmq_config):
             job.send_start_ok(sock)
     else:
         # Pretty print configuration
-        dispatcher_cfg = yaml.safe_load(dispatcher_config)
+        dispatcher_cfg = yaml_safe_load(dispatcher_config)
         dispatcher_str = str(dispatcher_cfg) if dispatcher_config else ""
-        env_str = str(yaml.safe_load(env)) if env else ""
-        env_dut_str = str(yaml.safe_load(env_dut)) if env_dut else ""
+        env_str = str(yaml_safe_load(env)) if env else ""
+        env_dut_str = str(yaml_safe_load(env_dut)) if env_dut else ""
 
         LOG.info("[%d] Starting job", job_id)
-        LOG.debug("[%d]         : %s", job_id, yaml.safe_load(job_definition))
+        LOG.debug("[%d]         : %s", job_id, yaml_safe_load(job_definition))
         LOG.debug("[%d] device  : %s", job_id, device_definition)
         LOG.debug("[%d] dispatch: %s", job_id, dispatcher_str)
         LOG.debug("[%d] env     : %s", job_id, env_str)

@@ -4,6 +4,7 @@ import os
 import json
 import yaml
 
+from lava_common.compat import yaml_safe_load
 from django.contrib.auth.models import Group, Permission, User
 from django_testscenarios.ubertest import TestCase
 from lava_scheduler_app.dbutils import testjob_submission
@@ -189,11 +190,11 @@ class TestTestJob(
             "qemu-pipeline-first-job.yaml"
         )
         # convert content of file to JSON string
-        json_def = json.dumps(yaml.safe_load(definition))
+        json_def = json.dumps(yaml_safe_load(definition))
         job = testjob_submission(json_def, user, None)
         # check that submitted JSON is now YAML
         self.assertRaises(json.decoder.JSONDecodeError, json.loads, job.definition)
-        yaml.safe_load(job.definition)
+        yaml_safe_load(job.definition)
         self.assertIsInstance(job.definition, str)
 
     def test_job_data(self):

@@ -37,8 +37,21 @@ for (name, warn) in loaders:
             warnings.warn("Using unsafe yaml.%s" % name, DeprecationWarning)
         break
 if Loader is None:
-    raise NotImplementedError("Loader is undefined")
+    raise NotImplementedError("yaml Loader is undefined")
+
+
+# Handle compatibility with system without C yaml
+try:
+    from yaml import CSafeLoader as SafeLoader
+except ImportError:
+    from yaml import SafeLoader
+
 
 # handle compatibility for yaml.load
 def yaml_load(data):
     return yaml.load(data, Loader=Loader)  # nosec
+
+
+# handle compatibility for yaml.safe_load
+def yaml_safe_load(data):
+    return yaml.load(data, Loader=SafeLoader)

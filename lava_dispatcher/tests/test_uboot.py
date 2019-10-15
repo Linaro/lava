@@ -22,6 +22,8 @@
 import os
 import yaml
 import unittest
+from lava_common.compat import yaml_safe_load
+from lava_common.exceptions import JobError
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.actions.boot.u_boot import UBootAction, UBootSecondaryMedia
@@ -30,7 +32,6 @@ from lava_dispatcher.actions.deploy.apply_overlay import CompressRamdisk
 from lava_dispatcher.actions.deploy.tftp import TftpAction
 from lava_dispatcher.job import Job
 from lava_dispatcher.action import Pipeline
-from lava_common.exceptions import JobError
 from lava_dispatcher.tests.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.tests.utils import DummyLogger, infrastructure_error
 from lava_dispatcher.utils.network import dispatcher_ip
@@ -464,7 +465,7 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         """
         job_parser = JobParser()
         (rendered, _) = self.factory.create_device("cubie1.jinja2")
-        cubie = NewDevice(yaml.safe_load(rendered))
+        cubie = NewDevice(yaml_safe_load(rendered))
         sample_job_file = os.path.join(
             os.path.dirname(__file__), "sample_jobs/cubietruck-removable.yaml"
         )
@@ -613,7 +614,7 @@ class TestKernelConversion(StdoutTestCase):
             os.path.dirname(__file__), "sample_jobs/uboot-ramdisk.yaml"
         )
         with open(bbb_yaml) as sample_job_data:
-            self.base_data = yaml.safe_load(sample_job_data)
+            self.base_data = yaml_safe_load(sample_job_data)
         self.deploy_block = [
             block for block in self.base_data["actions"] if "deploy" in block
         ][0]["deploy"]

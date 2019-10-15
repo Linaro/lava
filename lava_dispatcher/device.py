@@ -21,6 +21,7 @@
 
 import yaml
 
+from lava_common.compat import yaml_safe_load
 from lava_common.exceptions import ConfigurationError
 
 
@@ -114,12 +115,12 @@ class NewDevice(PipelineDevice):
             if isinstance(target, str):
                 with open(target) as f_in:
                     data = f_in.read()
-                data = yaml.safe_load(data)
+                data = yaml_safe_load(data)
             elif isinstance(target, dict):
                 data = target
             else:
                 data = target.read()
-                data = yaml.safe_load(data)
+                data = yaml_safe_load(data)
             if data is None:
                 raise ConfigurationError("Missing device configuration")
             self.update(data)

@@ -20,8 +20,8 @@
 
 import re
 import os
-import yaml
 import decimal
+from lava_common.compat import yaml_safe_load
 from lava_common.exceptions import TestError, JobError, LAVATimeoutError
 from lava_dispatcher.tests.test_basic import StdoutTestCase, Factory
 from lava_dispatcher.tests.test_multi import DummyLogger
@@ -112,7 +112,7 @@ class TestPatterns(StdoutTestCase):
         self.assertEqual([], self.job.pipeline.errors)
         self.assertTrue(os.path.exists(self.testdef))
         with open(self.testdef, "r") as par:
-            params = yaml.safe_load(par)
+            params = yaml_safe_load(par)
         self.assertIn("parse", params.keys())
 
         line = "test1a: pass"

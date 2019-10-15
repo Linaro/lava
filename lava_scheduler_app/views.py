@@ -57,7 +57,7 @@ from django.utils.timesince import timeuntil
 from django.views.decorators.http import require_POST
 from django_tables2 import RequestConfig
 
-from lava_common.compat import yaml_load
+from lava_common.compat import yaml_load, yaml_safe_load
 from lava_common.schemas import validate
 
 from lava_server.views import index as lava_index
@@ -1169,7 +1169,7 @@ def job_submit(request):
             try:
                 try:
                     validate(
-                        yaml.safe_load(request.POST.get("definition-input")),
+                        yaml_safe_load(request.POST.get("definition-input")),
                         extra_context_variables=settings.EXTRA_CONTEXT_VARIABLES,
                     )
                 except voluptuous.Invalid as exc:
@@ -1255,7 +1255,7 @@ def job_detail(request, pk):
             job.multinode_definition if job.is_multinode else job.original_definition
         )
         validate(
-            yaml.safe_load(job_def),
+            yaml_safe_load(job_def),
             extra_context_variables=settings.EXTRA_CONTEXT_VARIABLES,
         )
     except voluptuous.Invalid as exc:
@@ -1796,7 +1796,7 @@ def job_resubmit(request, pk):
                     validate_job(request.POST.get("definition-input"))
                     try:
                         validate(
-                            yaml.safe_load(request.POST.get("definition-input")),
+                            yaml_safe_load(request.POST.get("definition-input")),
                             extra_context_variables=settings.EXTRA_CONTEXT_VARIABLES,
                         )
                     except voluptuous.Invalid as exc:

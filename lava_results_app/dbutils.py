@@ -29,7 +29,7 @@ from urllib.parse import quote
 
 from collections import OrderedDict  # pylint: disable=unused-import
 
-from lava_common.compat import yaml_load
+from lava_common.compat import yaml_load, yaml_safe_load
 from lava_common.utils import debian_package_version
 from lava_results_app.models import (
     TestSuite,
@@ -419,7 +419,7 @@ def map_metadata(description, job):
     """
     logger = logging.getLogger("lava-master")
     try:
-        submission_data = yaml.safe_load(job.definition)
+        submission_data = yaml_safe_load(job.definition)
         description_data = yaml_load(description)
     except yaml.YAMLError as exc:
         logger.exception("[%s] %s", job.id, exc)

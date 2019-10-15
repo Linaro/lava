@@ -20,8 +20,9 @@
 
 
 import os
-import yaml
 import unittest
+
+from lava_common.compat import yaml_safe_load
 from lava_common.exceptions import JobError, InfrastructureError
 from lava_common.timeout import Timeout
 from lava_dispatcher.actions.boot.ssh import SchrootAction
@@ -456,7 +457,7 @@ commands:
       uart0:
         connect: telnet localhost 7020
         """
-        data = yaml.safe_load(device_data)
+        data = yaml_safe_load(device_data)
         self.assertIn("commands", data)
         self.assertIn("connections", data["commands"])
         self.assertNotIn("connect", data["commands"])
@@ -556,7 +557,7 @@ class TestTimeouts(StdoutTestCase):
             os.path.dirname(__file__), "./sample_jobs/uboot-ramdisk.yaml"
         )
         with open(y_file, "r") as uboot_ramdisk:
-            data = yaml.safe_load(uboot_ramdisk)
+            data = yaml_safe_load(uboot_ramdisk)
         data["timeouts"]["connection"] = {"seconds": 20}
         job = self.factory.create_custom_job("bbb-01.jinja2", data)
         for action in job.pipeline.actions:
@@ -607,7 +608,7 @@ class TestTimeouts(StdoutTestCase):
             os.path.dirname(__file__), "./sample_jobs/uboot-ramdisk.yaml"
         )
         with open(y_file, "r") as uboot_ramdisk:
-            data = yaml.safe_load(uboot_ramdisk)
+            data = yaml_safe_load(uboot_ramdisk)
         connection_timeout = Timeout.parse(
             data["timeouts"]["connections"]["lava-test-shell"]
         )

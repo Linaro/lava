@@ -44,6 +44,7 @@ from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
 
+from lava_common.compat import yaml_safe_load
 from lava_common.decorators import nottest
 from lava_results_app.utils import export_testcase
 from lava_scheduler_app import utils
@@ -837,7 +838,7 @@ class Device(RestrictedObject):
         if output_format == "yaml":
             return device_template
         else:
-            return yaml.safe_load(device_template)
+            return yaml_safe_load(device_template)
 
     def minimise_configuration(self, data):
         """
@@ -1381,7 +1382,7 @@ class TestJob(models.Model):
         """
         if not self.is_multinode or not self.definition:
             return False
-        job_data = yaml.safe_load(self.definition)
+        job_data = yaml_safe_load(self.definition)
         return "connection" in job_data
 
     tags = models.ManyToManyField(Tag, blank=True)
@@ -1665,7 +1666,7 @@ class TestJob(models.Model):
     def essential_role(self):  # pylint: disable=too-many-return-statements
         if not self.is_multinode:
             return False
-        data = yaml.safe_load(self.definition)
+        data = yaml_safe_load(self.definition)
         # would be nice to use reduce here but raising and catching TypeError is slower
         # than checking 'if .. in ' - most jobs will return False.
         if "protocols" not in data:
@@ -1683,10 +1684,7 @@ class TestJob(models.Model):
         if not self.is_multinode:
             return "Error"
         try:
-            # For some old definition (when migrating from python2 to python3)
-            # includes "!!python/unicode" statements that are not accepted by
-            # yaml.safe_load().
-            data = yaml.safe_load(self.definition)
+            data = yaml_safe_load(self.definition)
         except yaml.YAMLError:
             return "Error"
         if "protocols" not in data:
@@ -1727,7 +1725,7 @@ class TestJob(models.Model):
         :return: a single TestJob object or a list
         (explicitly, a list, not a QuerySet) of evaluated TestJob objects
         """
-        job_data = yaml.safe_load(yaml_data)
+        job_data = yaml_safe_load(yaml_data)
 
         # visibility checks
         if "visibility" not in job_data:
@@ -1918,7 +1916,7 @@ class TestJob(models.Model):
         if not self.is_multinode:
             return None
         try:
-            data = yaml.safe_load(self.definition)
+            data = yaml_safe_load(self.definition)
         except yaml.YAMLError:
             return None
         if "host_role" not in data:

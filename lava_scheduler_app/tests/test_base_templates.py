@@ -1,12 +1,11 @@
 import os
 import glob
-import yaml
 import jinja2
 import unittest
 
 from django.conf import settings
 
-# pylint: disable=superfluous-parens,ungrouped-imports
+from lava_common.compat import yaml_safe_load
 from lava_scheduler_app.schema import validate_device, SubmissionException
 
 # pylint: disable=too-many-branches,too-many-public-methods,too-few-public-methods
@@ -29,7 +28,7 @@ def prepare_jinja_template(hostname, jinja_data, job_ctx=None, raw=True):
     rendered = test_template.render(**job_ctx)
     if not rendered:
         return None
-    return yaml.safe_load(rendered)
+    return yaml_safe_load(rendered)
 
 
 class BaseTemplate:
@@ -53,7 +52,7 @@ class BaseTemplate:
             rendered = test_template.render(**job_ctx)
             if raw:
                 return rendered
-            return yaml.safe_load(rendered)
+            return yaml_safe_load(rendered)
 
         def render_device_dictionary(self, hostname, data, job_ctx=None, raw=True):
             if not job_ctx:
@@ -66,12 +65,12 @@ class BaseTemplate:
                 print("#######")
             if raw:
                 return rendered
-            return yaml.safe_load(rendered)
+            return yaml_safe_load(rendered)
 
         def validate_data(self, hostname, data, job_ctx=None):
             rendered = self.render_device_dictionary(hostname, data, job_ctx, raw=True)
             try:
-                ret = validate_device(yaml.safe_load(rendered))
+                ret = validate_device(yaml_safe_load(rendered))
             except SubmissionException as exc:
                 print("#######")
                 print(rendered)
@@ -96,7 +95,7 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
             try:
                 test_template = env.from_string(data)
                 rendered = test_template.render()
-                template_dict = yaml.safe_load(rendered)
+                template_dict = yaml_safe_load(rendered)
                 validate_device(template_dict)
             except AssertionError as exc:
                 self.fail("Template %s failed: %s" % (os.path.basename(template), exc))
@@ -117,7 +116,7 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
             data += "{% set connection_command = 'telnet calvin 6080' %}"
             test_template = env.from_string(data)
             rendered = test_template.render()
-            template_dict = yaml.safe_load(rendered)
+            template_dict = yaml_safe_load(rendered)
             validate_device(template_dict)
             self.assertIn("connect", template_dict["commands"])
             self.assertNotIn(
@@ -131,7 +130,7 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
             data += "{% set connection_tags = {'uart1': ['primary']} %}"
             test_template = env.from_string(data)
             rendered = test_template.render()
-            template_dict = yaml.safe_load(rendered)
+            template_dict = yaml_safe_load(rendered)
             validate_device(template_dict)
             self.assertNotIn("connect", template_dict["commands"])
             self.assertIn(
@@ -217,7 +216,7 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
 {% set ssh_host = 'localhost' %}"""
         device_dict = self.render_device_dictionary("staging-x86-01", data)
         self.assertRaises(
-            SubmissionException, validate_device, yaml.safe_load(device_dict)
+            SubmissionException, validate_device, yaml_safe_load(device_dict)
         )
 
     def test_primary_connection_power_commands_empty_ssh_host(
@@ -230,7 +229,7 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
 {% set connection_command = 'telnet localhost 7302' %}
 {% set ssh_host = '' %}"""
         device_dict = self.render_device_dictionary("staging-x86-01", data)
-        self.assertTrue(validate_device(yaml.safe_load(device_dict)))
+        self.assertTrue(validate_device(yaml_safe_load(device_dict)))
 
     def test_primary_connection_power_commands(self):  # pylint: disable=invalid-name
         data = """{% extends 'x86.jinja2' %}
@@ -239,7 +238,7 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
 {% set power_on_command = '/usr/bin/pduclient --command on' %}
 {% set connection_command = 'telnet localhost 7302' %}"""
         device_dict = self.render_device_dictionary("staging-x86-01", data)
-        self.assertTrue(validate_device(yaml.safe_load(device_dict)))
+        self.assertTrue(validate_device(yaml_safe_load(device_dict)))
 
     def test_pexpect_spawn_window(self):
         template_dict = self.render_device_dictionary_file(

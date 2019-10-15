@@ -19,8 +19,8 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 
-import yaml
 import unittest
+from lava_common.compat import yaml_safe_load
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.tests.utils import (
     infrastructure_error,
@@ -184,7 +184,7 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
             },
         }
         (rendered, _) = self.factory.create_device("d02-01.jinja2")
-        device = NewDevice(yaml.safe_load(rendered))
+        device = NewDevice(yaml_safe_load(rendered))
         job = Job(4212, parameters, None)
         job.device = device
         pipeline = Pipeline(job=job, parameters=parameters["actions"]["boot"])

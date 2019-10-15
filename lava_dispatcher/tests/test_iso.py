@@ -19,7 +19,8 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
-import yaml
+
+from lava_common.compat import yaml_safe_load
 from lava_dispatcher.action import Pipeline, Timeout
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.job import Job
@@ -32,7 +33,7 @@ from lava_dispatcher.utils.strings import substitute
 class InstallerFactory(Factory):  # pylint: disable=too-few-public-methods
     def create_qemu_installer_job(self):
         (rendered, _) = self.create_device("kvm01.jinja2")
-        device = NewDevice(yaml.safe_load(rendered))
+        device = NewDevice(yaml_safe_load(rendered))
         sample_job_file = os.path.join(
             os.path.dirname(__file__), "sample_jobs/qemu-debian-installer.yaml"
         )
@@ -146,7 +147,7 @@ class TestIsoJob(StdoutTestCase):
             os.path.dirname(__file__), "sample_jobs/qemu-debian-installer.yaml"
         )
         with open(sample_job_file, "r") as jobdef:
-            data = yaml.safe_load(jobdef)
+            data = yaml_safe_load(jobdef)
         testdata = [block["test"] for block in data["actions"] if "test" in block][0]
         duration = Timeout.parse(testdata["timeout"])
         self.assertEqual(duration, test_retry.timeout.duration)

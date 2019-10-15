@@ -26,7 +26,7 @@ import voluptuous
 import unittest
 import yaml
 
-from lava_dispatcher.action import Pipeline, Action
+from lava_common.compat import yaml_safe_load
 from lava_common.exceptions import (
     InfrastructureError,
     JobError,
@@ -36,6 +36,7 @@ from lava_common.exceptions import (
 )
 from lava_common.schemas import validate as validate_job
 from lava_common.schemas.device import validate as validate_device
+from lava_dispatcher.action import Pipeline, Action
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.job import Job
 from lava_dispatcher.device import NewDevice
@@ -59,7 +60,7 @@ class StdoutTestCase(unittest.TestCase):
                     job.pipeline.describe(False), describe, default_flow_style=None
                 )
         with open(y_file, "r") as f_ref:
-            return yaml.safe_load(f_ref)
+            return yaml_safe_load(f_ref)
 
 
 class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
@@ -203,7 +204,7 @@ class Factory:
         """
         rendered = self.render_device_dictionary(hostname, data, job_ctx)
         try:
-            ret = validate_device(yaml.safe_load(rendered))
+            ret = validate_device(yaml_safe_load(rendered))
         except (voluptuous.Invalid, ConfigurationError) as exc:
             print("#######")
             print(rendered)
@@ -240,7 +241,7 @@ class Factory:
         else:
             job_ctx = job_data.get("context")
         (data, device_dict) = self.create_device(template, job_ctx)
-        device = NewDevice(yaml.safe_load(data))
+        device = NewDevice(yaml_safe_load(data))
         print("####### Device configuration #######")
         print(data)
         print("#######")
@@ -258,7 +259,7 @@ class Factory:
     def create_job(self, template, filename, job_ctx=None, validate=True):
         y_file = os.path.join(os.path.dirname(__file__), filename)
         with open(y_file) as sample_job_data:
-            job_data = yaml.safe_load(sample_job_data.read())
+            job_data = yaml_safe_load(sample_job_data.read())
         return self.create_custom_job(template, job_data, job_ctx, validate)
 
     def create_fake_qemu_job(self):
@@ -273,7 +274,7 @@ class Factory:
             "no_kvm": True,
         }  # override to allow unit tests on all types of systems
         (data, device_dict) = self.create_device("kvm01.jinja2", job_ctx)
-        device = NewDevice(yaml.safe_load(data))
+        device = NewDevice(yaml_safe_load(data))
         print("####### Device configuration #######")
         print(data)
         print("#######")
@@ -282,7 +283,7 @@ class Factory:
         parser = JobParser()
         job_data = ""
         with open(kvm_yaml) as sample_job_data:
-            job_data = yaml.safe_load(sample_job_data.read())
+            job_data = yaml_safe_load(sample_job_data.read())
         print("########## Test Job Submission validation #######")
         if validate:
             validate_job(job_data, strict=False)
@@ -460,11 +461,11 @@ class TestPipeline(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertEqual(job.compatibility, DeployImages.compatibility)
         kvm_yaml = os.path.join(os.path.dirname(__file__), "sample_jobs/kvm.yaml")
         with open(kvm_yaml, "r") as kvm_yaml:
-            job_def = yaml.safe_load(kvm_yaml)
+            job_def = yaml_safe_load(kvm_yaml)
         job_def["compatibility"] = job.compatibility
         parser = JobParser()
         (rendered, data) = factory.create_device("kvm01.jinja2")
-        device = yaml.safe_load(rendered)
+        device = yaml_safe_load(rendered)
         try:
             job = parser.parse(yaml.dump(job_def), device, 4212, None, "")
         except NotImplementedError:

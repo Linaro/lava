@@ -1,5 +1,6 @@
 import os
-import yaml
+
+from lava_common.compat import yaml_safe_load
 from lava_scheduler_app.tests.test_pipeline import YamlFactory
 from lava_scheduler_app.tests.test_submission import TestCaseWithFactory
 
@@ -15,7 +16,7 @@ class YamlMenuFactory(YamlFactory):
             os.path.dirname(__file__), "sample_jobs", "mustang-menu-ramdisk.yaml"
         )
         with open(sample_job_file, "r") as test_support:
-            data = yaml.safe_load(test_support)
+            data = yaml_safe_load(test_support)
         data.update(kw)
         return data
 
@@ -31,7 +32,7 @@ class TestPipelineMenu(TestCaseWithFactory):  # pylint: disable=too-many-ancesto
         self.device_type = self.factory.make_device_type(name="mustang-uefi")
 
     def test_make_job_yaml(self):
-        data = yaml.safe_load(self.factory.make_job_yaml())
+        data = yaml_safe_load(self.factory.make_job_yaml())
         self.assertIn("device_type", data)
         self.assertNotIn("timeout", data)
         self.assertIn("timeouts", data)

@@ -24,6 +24,7 @@ from django.contrib.auth.models import User
 from django.db import transaction
 from django.utils import timezone
 
+from lava_common.compat import yaml_safe_load
 from lava_scheduler_app.dbutils import match_vlan_interface
 from lava_scheduler_app.models import (
     DeviceType,
@@ -168,7 +169,7 @@ def schedule_health_checks_for_device_type(logger, dt):
 def schedule_health_check(device, definition):
     user = User.objects.get(username="lava-health")
     job = _create_pipeline_job(
-        yaml.safe_load(definition),
+        yaml_safe_load(definition),
         user,
         [],
         device=device,
@@ -256,7 +257,7 @@ def schedule_jobs_for_device(logger, device):
             )
             continue
 
-        job_dict = yaml.safe_load(job.definition)
+        job_dict = yaml_safe_load(job.definition)
         if "protocols" in job_dict and "lava-vland" in job_dict["protocols"]:
             if not match_vlan_interface(device, job_dict):
                 continue
@@ -307,12 +308,12 @@ def transition_multinode_jobs(logger):
             # build a list of all devices in this group
             if sub_job.dynamic_connection:
                 continue
-            definition = yaml.safe_load(sub_job.definition)
+            definition = yaml_safe_load(sub_job.definition)
             devices[str(sub_job.id)] = definition["protocols"]["lava-multinode"]["role"]
 
         for sub_job in sub_jobs:
             # apply the complete list to all jobs in this group
-            definition = yaml.safe_load(sub_job.definition)
+            definition = yaml_safe_load(sub_job.definition)
             definition["protocols"]["lava-multinode"]["roles"] = devices
             sub_job.definition = yaml.safe_dump(definition)
             # transition the job and device

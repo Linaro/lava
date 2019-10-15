@@ -3,7 +3,7 @@ import yaml
 import unittest
 import tempfile
 
-# pylint: disable=superfluous-parens,ungrouped-imports
+from lava_common.compat import yaml_safe_load
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.action import Timeout
@@ -409,7 +409,7 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
         self.assertTrue(self.validate_data("staging-juno-01", data))
         test_template = prepare_jinja_template("staging-juno-01", data, raw=True)
         rendered = test_template.render()
-        template_dict = yaml.safe_load(rendered)
+        template_dict = yaml_safe_load(rendered)
         self.assertIsNotNone(template_dict)
         self.assertEqual({"boot": 30}, template_dict["character_delays"])
         self.assertIn("error-messages", template_dict["constants"]["u-boot"])
@@ -433,7 +433,7 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
         )
 
         rendered = test_template.render(bootloader_prompt="vexpress>")
-        template_dict = yaml.safe_load(rendered)
+        template_dict = yaml_safe_load(rendered)
         self.assertIsNotNone(template_dict)
         self.assertEqual({"boot": 30}, template_dict["character_delays"])
         self.assertIn("error-messages", template_dict["constants"]["u-boot"])
@@ -492,7 +492,7 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
         ]
 
         rendered = self.render_device_dictionary_file("imx8m-01.jinja2")
-        template_dict = yaml.safe_load(rendered)
+        template_dict = yaml_safe_load(rendered)
         self.assertIsNotNone(template_dict)
         self.assertIn("error-messages", template_dict["constants"]["u-boot"])
         self.assertEqual(
@@ -504,7 +504,7 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
 
         context = {"bootloader_prompt": "imx8m=>"}
         rendered = self.render_device_dictionary_file("imx8m-01.jinja2", context)
-        template_dict = yaml.safe_load(rendered)
+        template_dict = yaml_safe_load(rendered)
         self.assertIsNotNone(template_dict)
         self.assertIn("error-messages", template_dict["constants"]["u-boot"])
         self.assertEqual(
@@ -521,7 +521,7 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
         checked = False
         context = {"console_device": "ttyUSB1"}
         rendered = self.render_device_dictionary_file("imx8m-01.jinja2", context)
-        template_dict = yaml.safe_load(rendered)
+        template_dict = yaml_safe_load(rendered)
         commands = template_dict["actions"]["boot"]["methods"]["u-boot"]["ramdisk"][
             "commands"
         ]

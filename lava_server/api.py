@@ -27,6 +27,7 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.exceptions import PermissionDenied
 
+from lava_common.compat import yaml_safe_load
 from lava_common.utils import debian_package_version
 from lava_scheduler_app.api import check_perm
 from lava_scheduler_app.views import get_restricted_job
@@ -169,7 +170,7 @@ class LavaSystemAPI(SystemAPI):
         if os.path.exists(filename):
             try:
                 with open(filename, "r") as output:
-                    master = yaml.safe_load(output)
+                    master = yaml_safe_load(output)
             except yaml.YAMLError as exc:
                 return master
         if master:
@@ -180,7 +181,7 @@ class LavaSystemAPI(SystemAPI):
         if os.path.exists(filename):
             try:
                 with open(filename, "r") as output:
-                    log_config = yaml.safe_load(output)
+                    log_config = yaml_safe_load(output)
             except yaml.YAMLError as exc:
                 return log_config
         if log_config:
