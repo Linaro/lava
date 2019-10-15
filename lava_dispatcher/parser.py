@@ -168,32 +168,6 @@ class JobParser:
                     )
                     if name == "test" and action.needs_overlay():
                         test_counts[namespace] += 1
-                elif name == "repeat":
-                    count = action_data[name][
-                        "count"
-                    ]  # first list entry must be the count dict
-                    repeats = action_data[name]["actions"]
-                    for c_iter in range(count):
-                        for repeating in repeats:  # block of YAML to repeat
-                            for (
-                                repeat_action
-                            ) in repeating:  # name of the action for this block
-                                repeating[repeat_action]["repeat-count"] = c_iter
-                                namespace = repeating[repeat_action].setdefault(
-                                    "namespace", "common"
-                                )
-                                test_counts.setdefault(namespace, 1)
-                                action = parse_action(
-                                    repeating,
-                                    repeat_action,
-                                    device,
-                                    pipeline,
-                                    job.test_info,
-                                    test_counts[namespace],
-                                )
-                                if repeat_action == "test" and action.needs_overlay():
-                                    test_counts[namespace] += 1
-
                 elif name == "command":
                     action = CommandAction()
                     action.parameters = action_data[name]
