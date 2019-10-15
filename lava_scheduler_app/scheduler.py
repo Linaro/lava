@@ -219,28 +219,6 @@ def schedule_jobs_for_device_type(logger, dt, available_devices):
         # IDLE between the two functions.
         if device.hostname not in available_devices:
             continue
-        new_job = schedule_jobs_for_device(logger, device)
-        if new_job is not None:
-            jobs.append(new_job)
-    return jobs
-
-
-def schedule_jobs_for_device(logger, device):
-    jobs = TestJob.objects.filter(
-        state__in=[TestJob.STATE_SUBMITTED, TestJob.STATE_SCHEDULING]
-    )
-    jobs = jobs.filter(actual_device__isnull=True)
-    jobs = jobs.filter(requested_device_type__pk=device.device_type.pk)
-    jobs = jobs.order_by("-state", "-priority", "submit_time", "target_group", "id")
-
-    for job in jobs:
-        if not device.can_submit(job.submitter):
-            continue
-
-        device_tags = set(device.tags.all())
-        job_tags = set(job.tags.all())
-        if not job_tags.issubset(device_tags):
-            continue
 
         if not device.is_valid():
             prev_health_display = device.get_health_display()
@@ -255,6 +233,29 @@ def schedule_jobs_for_device(logger, device):
                 "%s → %s (Invalid device configuration for %s)"
                 % (prev_health_display, device.get_health_display(), device.hostname)
             )
+            continue
+
+        new_job = schedule_jobs_for_device(logger, device)
+        if new_job is not None:
+            jobs.append(new_job)
+    return jobs
+
+
+def schedule_jobs_for_device(logger, device):
+    jobs = TestJob.objects.filter(
+        state__in=[TestJob.STATE_SUBMITTED, TestJob.STATE_SCHEDULING]
+    )
+    jobs = jobs.filter(actual_device__isnull=True)
+    jobs = jobs.filter(requested_device_type__pk=device.device_type.pk)
+    jobs = jobs.order_by("-state", "-priority", "submit_time", "target_group", "id")
+
+    device_tags = set(device.tags.all())
+    for job in jobs:
+        if not device.can_submit(job.submitter):
+            continue
+
+        job_tags = set(job.tags.all())
+        if not job_tags.issubset(device_tags):
             continue
 
         job_dict = yaml_safe_load(job.definition)
