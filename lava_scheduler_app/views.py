@@ -633,7 +633,7 @@ def passing_health_checks(request):
 class MyDeviceView(DeviceTableView):
     def get_queryset(self):
         return Device.objects.accessible_by_user(
-            self.request.user, Device.ADMIN_PERMISSION
+            self.request.user, Device.CHANGE_PERMISSION
         ).order_by("hostname")
 
 
@@ -659,7 +659,7 @@ def mydevice_list(request):
 
 @BreadCrumb("My Devices Health History", parent=index)
 def mydevices_health_history_log(request):
-    devices = Device.objects.accessible_by_user(request.user, Device.ADMIN_PERMISSION)
+    devices = Device.objects.accessible_by_user(request.user, Device.CHANGE_PERMISSION)
     devices_log_data = DevicesLogView(
         devices, request, model=LogEntry, table_class=DeviceLogEntryTable
     )
@@ -1049,14 +1049,14 @@ def health_job_list(request, pk):
     config = RequestConfig(request, paginate={"per_page": health_table.length})
     config.configure(health_table)
 
-    device_can_admin = device.can_admin(request.user)
+    device_can_change = device.can_change(request.user)
     return render(
         request,
         "lava_scheduler_app/health_jobs.html",
         {
             "device": device,
             "health_job_table": health_table,
-            "can_admin": device_can_admin,
+            "can_change": device_can_change,
             "bread_crumb_trail": BreadCrumbTrail.leading_to(health_job_list, pk=pk),
         },
     )
@@ -1957,7 +1957,7 @@ def device_detail(request, pk):
     except yaml.YAMLError:
         mismatch = True
 
-    device_can_admin = device.can_admin(request.user)
+    device_can_change = device.can_change(request.user)
     return render(
         request,
         "lava_scheduler_app/device.html",
@@ -1969,7 +1969,7 @@ def device_detail(request, pk):
             "discrete_data": discrete_data,
             "recent_job_table": recent_ptable,
             "device_log_table": device_log_ptable,
-            "can_admin": device_can_admin,
+            "can_change": device_can_change,
             "bread_crumb_trail": BreadCrumbTrail.leading_to(device_detail, pk=pk),
             "context_help": BreadCrumbTrail.show_help(device_detail, pk="help"),
             "next_device": next_device,
@@ -2061,7 +2061,7 @@ def device_health(request, pk):
     try:
         with transaction.atomic():
             device = Device.objects.select_for_update().get(pk=pk)
-            if not device.can_admin(request.user):
+            if not device.can_change(request.user):
                 return HttpResponseForbidden("Permission denied")
 
             health = request.POST.get("health").upper()
@@ -2119,7 +2119,7 @@ def worker_detail(request, pk):
             "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
             "discrete_data": ptable.prepare_discrete_data(data),
-            "can_admin": worker.can_admin(request.user),
+            "can_change": worker.can_change(request.user),
             "bread_crumb_trail": BreadCrumbTrail.leading_to(worker_detail, pk=pk),
         },
     )
@@ -2130,7 +2130,7 @@ def worker_health(request, pk):
     try:
         with transaction.atomic():
             worker = Worker.objects.select_for_update().get(pk=pk)
-            if not worker.can_admin(request.user):
+            if not worker.can_change(request.user):
                 return HttpResponseForbidden("Permission denied")
 
             health = request.POST.get("health")
@@ -2248,7 +2248,7 @@ def running(request):
         {
             "running_table": running_ptable,
             "bread_crumb_trail": BreadCrumbTrail.leading_to(running),
-            "is_admin": request.user.has_perm(DeviceType.ADMIN_PERMISSION),
+            "is_admin": request.user.has_perm(DeviceType.CHANGE_PERMISSION),
             "retirements": retirements,
         },
     )

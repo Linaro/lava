@@ -656,7 +656,7 @@ class SchedulerAPI(ExposedAPI):
                 device = Device.objects.select_for_update().get(hostname=hostname)
             except Device.DoesNotExist:
                 raise xmlrpc.client.Fault(404, "Device '%s' was not found." % hostname)
-            if device.can_admin(self.user):
+            if device.can_change(self.user):
                 device.health = Device.HEALTH_MAINTENANCE
                 device.save()
             else:
@@ -703,7 +703,7 @@ class SchedulerAPI(ExposedAPI):
                 device = Device.objects.select_for_update().get(hostname=hostname)
             except Device.DoesNotExist:
                 raise xmlrpc.client.Fault(404, "Device '%s' was not found." % hostname)
-            if device.can_admin(self.user):
+            if device.can_change(self.user):
                 device.health = Device.HEALTH_UNKNOWN
                 device.save()
             else:
@@ -1136,7 +1136,7 @@ class SchedulerAPI(ExposedAPI):
 
         Description
         -----------
-        [user with admin_device permission only]
+        [user with change_device permission only]
         Import or update the device dictionary key value store for a
         pipeline device.
 
@@ -1156,7 +1156,7 @@ class SchedulerAPI(ExposedAPI):
             device = Device.objects.get(hostname=hostname)
         except DeviceType.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Device '%s' was not found." % hostname)
-        if device.can_admin(self.user):
+        if device.can_change(self.user):
             if not device.save_configuration(jinja_str):
                 raise xmlrpc.client.Fault(
                     400, "Unable to store the configuration for %s on disk" % hostname
@@ -1198,7 +1198,7 @@ class SchedulerAPI(ExposedAPI):
             device = Device.objects.get(hostname=hostname)
         except DeviceType.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Device '%s' was not found." % hostname)
-        if device.can_admin(self.user):
+        if device.can_change(self.user):
             device_dict = device.load_configuration(output_format="raw")
             if not device_dict:
                 raise xmlrpc.client.Fault(

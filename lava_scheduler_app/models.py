@@ -228,18 +228,15 @@ class DeviceType(RestrictedObject):
     class Meta:
         permissions = add_permissions(
             (("view_devicetype", "Can view device type"),),
-            (
-                ("submit_to_devicetype", "Can submit jobs to device type"),
-                ("admin_devicetype", "Can admin device type"),
-            ),
+            (("submit_to_devicetype", "Can submit jobs to device type"),),
         )
 
     VIEW_PERMISSION = "lava_scheduler_app.view_devicetype"
-    ADMIN_PERMISSION = "lava_scheduler_app.admin_devicetype"
+    CHANGE_PERMISSION = "lava_scheduler_app.change_devicetype"
     SUBMIT_PERMISSION = "lava_scheduler_app.submit_to_devicetype"
 
     # Order of permission importance from most to least.
-    PERMISSIONS_PRIORITY = [ADMIN_PERMISSION, SUBMIT_PERMISSION, VIEW_PERMISSION]
+    PERMISSIONS_PRIORITY = [CHANGE_PERMISSION, SUBMIT_PERMISSION, VIEW_PERMISSION]
 
     objects = RestrictedDeviceTypeQuerySet.as_manager()
 
@@ -347,8 +344,8 @@ class DeviceType(RestrictedObject):
             return True
         return False
 
-    def can_admin(self, user):
-        return user.has_perm(self.ADMIN_PERMISSION, self)
+    def can_change(self, user):
+        return user.has_perm(self.CHANGE_PERMISSION, self)
 
     def has_any_permission_restrictions(self, perm):
         return self.is_permission_restricted(perm)
@@ -395,7 +392,7 @@ class Worker(models.Model):
     def __str__(self):
         return self.hostname
 
-    def can_admin(self, user):
+    def can_change(self, user):
         return user.has_perm("lava_scheduler_app.change_worker")
 
     def can_update(self, user):
@@ -479,25 +476,22 @@ class Device(RestrictedObject):
     class Meta:
         permissions = add_permissions(
             (("view_device", "Can view device"),),
-            (
-                ("submit_to_device", "Can submit jobs to device"),
-                ("admin_device", "Can admin device"),
-            ),
+            (("submit_to_device", "Can submit jobs to device"),),
         )
 
     VIEW_PERMISSION = "lava_scheduler_app.view_device"
-    ADMIN_PERMISSION = "lava_scheduler_app.admin_device"
+    CHANGE_PERMISSION = "lava_scheduler_app.change_device"
     SUBMIT_PERMISSION = "lava_scheduler_app.submit_to_device"
 
     # This maps the corresponding permissions for 'parent' dependencies.
     DEVICE_TYPE_PERMISSION_MAP = {
         VIEW_PERMISSION: DeviceType.VIEW_PERMISSION,
-        ADMIN_PERMISSION: DeviceType.ADMIN_PERMISSION,
+        CHANGE_PERMISSION: DeviceType.CHANGE_PERMISSION,
         SUBMIT_PERMISSION: DeviceType.SUBMIT_PERMISSION,
     }
 
     # Order of permission importance from most to least.
-    PERMISSIONS_PRIORITY = [ADMIN_PERMISSION, SUBMIT_PERMISSION, VIEW_PERMISSION]
+    PERMISSIONS_PRIORITY = [CHANGE_PERMISSION, SUBMIT_PERMISSION, VIEW_PERMISSION]
 
     objects = RestrictedDeviceQuerySet.as_manager()
 
@@ -651,11 +645,11 @@ class Device(RestrictedObject):
                 return True
         return False
 
-    def can_admin(self, user):
-        if user.has_perm(self.ADMIN_PERMISSION, self):
+    def can_change(self, user):
+        if user.has_perm(self.CHANGE_PERMISSION, self):
             return True
-        if not self.is_permission_restricted(self.ADMIN_PERMISSION):
-            if user.has_perm(self.device_type.ADMIN_PERMISSION, self.device_type):
+        if not self.is_permission_restricted(self.CHANGE_PERMISSION):
+            if user.has_perm(self.device_type.CHANGE_PERMISSION, self.device_type):
                 return True
         return False
 
@@ -1299,19 +1293,19 @@ class TestJob(models.Model):
 
     class Meta:
         index_together = ["health", "state", "requested_device_type"]
-        permissions = (("cancel_resubmit_testjob", "Can cancel or resubmit test jobs"),)
+        default_permissions = ("change", "delete")
 
     # Permission strings. Not real permissions.
     VIEW_PERMISSION = "lava_scheduler_app.view_testjob"
-    ADMIN_PERMISSION = "lava_scheduler_app.admin_testjob"
+    CHANGE_PERMISSION = "lava_scheduler_app.change_testjob"
     # This maps the corresponding permissions for 'parent' dependencies.
     DEVICE_PERMISSION_MAP = {
         VIEW_PERMISSION: Device.VIEW_PERMISSION,
-        ADMIN_PERMISSION: Device.ADMIN_PERMISSION,
+        CHANGE_PERMISSION: Device.CHANGE_PERMISSION,
     }
     DEVICE_TYPE_PERMISSION_MAP = {
         VIEW_PERMISSION: DeviceType.VIEW_PERMISSION,
-        ADMIN_PERMISSION: DeviceType.ADMIN_PERMISSION,
+        CHANGE_PERMISSION: DeviceType.CHANGE_PERMISSION,
     }
 
     objects = RestrictedTestJobQuerySet.as_manager()
@@ -1785,13 +1779,13 @@ class TestJob(models.Model):
 
         return False
 
-    def can_admin(self, user):
+    def can_change(self, user):
         if user == self.submitter:
             return True
 
         if self.actual_device:
-            return self.actual_device.can_admin(user)
-        elif user.has_perm(DeviceType.ADMIN_PERMISSION, self.requested_device_type):
+            return self.actual_device.can_change(user)
+        elif user.has_perm(DeviceType.CHANGE_PERMISSION, self.requested_device_type):
             return True
 
         return False
@@ -1803,7 +1797,7 @@ class TestJob(models.Model):
         """
         if user == self.submitter:
             return True
-        if self.can_admin(user):
+        if self.can_change(user):
             return True
 
         return False
@@ -1814,7 +1808,7 @@ class TestJob(models.Model):
         """
         if not self.state == TestJob.STATE_FINISHED:
             return False
-        if not self.can_admin(user):
+        if not self.can_change(user):
             return False
 
         return True
@@ -1826,15 +1820,13 @@ class TestJob(models.Model):
             TestJob.STATE_SCHEDULED,
             TestJob.STATE_RUNNING,
         ]
-        can_cancel = self.can_admin(user) or user.has_perm(
-            "lava_scheduler_app.cancel_resubmit_testjob"
+        can_cancel = self.can_change(user) or user.has_perm(
+            "lava_scheduler_app.change_testjob"
         )
         return can_cancel and self.state in states
 
     def can_resubmit(self, user):
-        if self.can_admin(user) or user.has_perm(
-            "lava_scheduler_app.cancel_resubmit_testjob"
-        ):
+        if self.can_change(user) or user.has_perm("lava_scheduler_app.change_testjob"):
             return True
 
         # Allow users who are able to submit to device or devicetype to also

@@ -43,7 +43,7 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
         available_types.sort()
         return available_types
 
-    @check_perm("lava_scheduler_app.admin_devicetype")
+    @check_perm("lava_scheduler_app.change_devicetype")
     def add(
         self,
         name,
@@ -199,7 +199,7 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
                 400, "Unable to read device-type configuration: %s" % exc.strerror
             )
 
-    @check_perm("lava_scheduler_app.admin_devicetype")
+    @check_perm("lava_scheduler_app.change_devicetype")
     def set_health_check(self, name, config):
         """
         Name
@@ -244,7 +244,7 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
                 400, "Unable to write health-check: %s" % exc.strerror
             )
 
-    @check_perm("lava_scheduler_app.admin_devicetype")
+    @check_perm("lava_scheduler_app.change_devicetype")
     def set_template(self, name, config):
         """
         Name
@@ -431,7 +431,7 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
             dt = DeviceType.objects.get(name=name)
         except DeviceType.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Device-type '%s' was not found." % name)
-        if not dt.can_admin(self.user):
+        if not dt.can_change(self.user):
             raise xmlrpc.client.Fault(
                 403, "No 'admin' permissions for device-type '%s'." % name
             )
@@ -491,7 +491,7 @@ class SchedulerDeviceTypesAliasesAPI(ExposedV2API):
             dt = DeviceType.objects.get(name=name)
         except DeviceType.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Device-type '%s' was not found." % name)
-        if not dt.can_admin(self.user):
+        if not dt.can_change(self.user):
             raise xmlrpc.client.Fault(
                 403, "No 'admin' permissions for device-type '%s'." % name
             )
@@ -551,7 +551,7 @@ class SchedulerDeviceTypesAliasesAPI(ExposedV2API):
             dt = DeviceType.objects.get(name=name)
         except DeviceType.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Device-type '%s' was not found." % name)
-        if not dt.can_admin(self.user):
+        if not dt.can_change(self.user):
             raise xmlrpc.client.Fault(
                 403, "No 'admin' permissions for device-type '%s'." % name
             )

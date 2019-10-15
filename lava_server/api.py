@@ -521,7 +521,7 @@ class LavaSystemAPI(SystemAPI):
                 )
         return yaml.dump(network_map)
 
-    @check_perm("lava_scheduler_app.admin_devicetype")
+    @check_perm("lava_scheduler_app.change_devicetype")
     def assign_perm_device_type(self, perm, device_type, group):
         """
         Name
@@ -533,14 +533,14 @@ class LavaSystemAPI(SystemAPI):
 
         Grant a permission to a specific group over a device type.
 
-        This function requires ``admin_devicetype`` permission.
+        This function requires ``change_devicetype`` permission.
 
         Arguments
         ---------
         perm: string
             Permission codename string. Currently supported permissions for
             Device_Types are 'view_devicetype', 'submit_to_devicetype' and
-            'admin_devicetype'.
+            'change_devicetype'.
         device_type: string
             name of device type to assign permission for. Device type with
             specified name must exist in LAVA.
@@ -571,7 +571,7 @@ class LavaSystemAPI(SystemAPI):
 
         GroupDeviceTypePermission.objects.assign_perm(perm, group, device_type)
 
-    @check_perm("lava_scheduler_app.admin_devicetype")
+    @check_perm("lava_scheduler_app.change_devicetype")
     def revoke_perm_device_type(self, perm, device_type, group):
         """
         Name
@@ -583,14 +583,14 @@ class LavaSystemAPI(SystemAPI):
 
         Revoke a permission from a specific group over a device type.
 
-        This function requires ``admin_devicetype`` permission.
+        This function requires ``change_devicetype`` permission.
 
         Arguments
         ---------
         perm: string
             Permission codename string. Currently supported permissions for
             Device_Types are 'view_devicetype', 'submit_to_devicetype' and
-            'admin_devicetype'.
+            'change_devicetype'.
         device_type: string
             name of device type to revoke permission for. Device type with
             specified name must exist in LAVA.
@@ -621,7 +621,7 @@ class LavaSystemAPI(SystemAPI):
 
         GroupDeviceTypePermission.objects.remove_perm(perm, group, device_type)
 
-    @check_perm("lava_scheduler_app.admin_device")
+    @check_perm("lava_scheduler_app.change_device")
     def assign_perm_device(self, perm, device, group):
         """
         Name
@@ -633,14 +633,14 @@ class LavaSystemAPI(SystemAPI):
 
         Grant a permission to a specific group over a device.
 
-        This function requires ``admin_device`` permission.
+        This function requires ``change_device`` permission.
 
         Arguments
         ---------
         perm: string
             Permission codename string. Currently supported permissions for
             Devices are 'view_device', 'submit_to_device' and
-            'admin_device'.
+            'change_device'.
         device: string
             device hostname to assign permission for. Device with the specific
             hostname must exist in LAVA.
@@ -671,7 +671,7 @@ class LavaSystemAPI(SystemAPI):
 
         GroupDevicePermission.objects.assign_perm(perm, group, device)
 
-    @check_perm("lava_scheduler_app.admin_device")
+    @check_perm("lava_scheduler_app.change_device")
     def revoke_perm_device(self, perm, device, group):
         """
         Name
@@ -683,14 +683,13 @@ class LavaSystemAPI(SystemAPI):
 
         Revoke a permission from a specific group over a device.
 
-        This function requires ``admin_device`` permission.
+        This function requires ``change_device`` permission.
 
         Arguments
         ---------
         perm: string
             Permission codename string. Currently supported permissions for
-            Devices are 'view_device', 'submit_to_device' and
-            'admin_device'.
+            Devices are 'view_device', 'submit_to_device' and 'change_device'.
         device: string
             device hostname to revoke permission for. Device with the specific
             hostname must exist in LAVA.

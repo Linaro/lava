@@ -29,7 +29,7 @@ from lava_scheduler_app.models import Device, DeviceType, Tag, Worker
 
 
 class SchedulerDevicesAPI(ExposedV2API):
-    @check_perm("lava_scheduler_app.admin_device")
+    @check_perm("lava_scheduler_app.change_device")
     def add(
         self,
         hostname,
@@ -192,7 +192,7 @@ class SchedulerDevicesAPI(ExposedV2API):
         except Device.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Device '%s' was not found." % hostname)
 
-        if not device.can_admin(self.user):
+        if not device.can_change(self.user):
             raise xmlrpc.client.Fault(
                 403,
                 "User '%s' needs admin permission on device %s."
@@ -346,7 +346,7 @@ class SchedulerDevicesAPI(ExposedV2API):
             with transaction.atomic():
                 device = Device.objects.get(hostname=hostname)
 
-                if not device.can_admin(self.user):
+                if not device.can_change(self.user):
                     raise xmlrpc.client.Fault(
                         403,
                         "User '%s' needs admin permission on device %s."
@@ -413,7 +413,7 @@ class SchedulerDevicesTagsAPI(ExposedV2API):
             device = Device.objects.get(hostname=hostname)
         except Device.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Device '%s' was not found." % hostname)
-        if not device.can_admin(self.user):
+        if not device.can_change(self.user):
             raise xmlrpc.client.Fault(
                 403,
                 "User '%s' needs admin permission on device %s."
@@ -475,7 +475,7 @@ class SchedulerDevicesTagsAPI(ExposedV2API):
         except Device.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Device '%s' was not found." % hostname)
 
-        if not device.can_admin(self.user):
+        if not device.can_change(self.user):
             raise xmlrpc.client.Fault(
                 403,
                 "User '%s' needs admin permission on device %s."

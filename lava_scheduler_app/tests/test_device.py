@@ -103,8 +103,8 @@ class DeviceTest(TestCaseWithFactory):
 
         # Test that global permission works as intended.
         user3 = self.factory.make_user()
-        user3.user_permissions.add(Permission.objects.get(codename="admin_device"))
-        self.assertEqual(device.can_admin(user3), True)
+        user3.user_permissions.add(Permission.objects.get(codename="change_device"))
+        self.assertEqual(device.can_change(user3), True)
 
 
 class DeviceTypeTest(TestCaseWithFactory):

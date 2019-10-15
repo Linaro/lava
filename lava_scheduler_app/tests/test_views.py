@@ -68,7 +68,7 @@ def setup(db):
         health=Device.HEALTH_GOOD,
         worker_host=worker_02,
     )
-    GroupDevicePermission.objects.assign_perm(Device.ADMIN_PERMISSION, group, juno_01)
+    GroupDevicePermission.objects.assign_perm(Device.CHANGE_PERMISSION, group, juno_01)
     job_01 = TestJob.objects.create(
         description="test job 01",
         submitter=user,
@@ -509,4 +509,4 @@ def test_worker_detail(client, setup):
     assert ret.context["worker"].hostname == "worker-01"  # nosec
     assert len(ret.context["worker_device_table"].data) == 1  # nosec
     assert ret.context["worker_device_table"].data[0].hostname == "qemu-01"  # nosec
-    assert ret.context["can_admin"] is False  # nosec
+    assert ret.context["can_change"] is False  # nosec

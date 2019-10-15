@@ -111,63 +111,75 @@ class ManagersTest(TestCaseWithFactory):
     def test_assign_perm(self):
         # Test assign permission.
         GroupDevicePermission.objects.assign_perm(
-            "admin_device", self.group1, self.qemu_device1
+            "change_device", self.group1, self.qemu_device1
         )
-        self.assertTrue(self.user1.has_perm(Device.ADMIN_PERMISSION, self.qemu_device1))
+        self.assertTrue(
+            self.user1.has_perm(Device.CHANGE_PERMISSION, self.qemu_device1)
+        )
 
     def test_assign_perm_not_persisted(self):
         device = Device()
         with TestCase.assertRaises(self, ObjectNotPersisted):
             GroupDevicePermission.objects.assign_perm(
-                "admin_device", self.group1, device
+                "change_device", self.group1, device
             )
 
     def test_assign_perm_wrong_permission_name(self):
         # Test wrong permission name when assigning permission.
         with TestCase.assertRaises(self, PermissionNameError):
             GroupDevicePermission.objects.assign_perm(
-                Device.ADMIN_PERMISSION, self.group1, self.qemu_device_type
+                Device.CHANGE_PERMISSION, self.group1, self.qemu_device_type
             )
 
     def test_remove_perm(self):
         GroupDevicePermission.objects.assign_perm(
-            "admin_device", self.group1, self.qemu_device1
+            "change_device", self.group1, self.qemu_device1
         )
-        self.assertTrue(self.user1.has_perm(Device.ADMIN_PERMISSION, self.qemu_device1))
+        self.assertTrue(
+            self.user1.has_perm(Device.CHANGE_PERMISSION, self.qemu_device1)
+        )
         GroupDevicePermission.objects.remove_perm(
-            "admin_device", self.group1, self.qemu_device1
+            "change_device", self.group1, self.qemu_device1
         )
         self.assertFalse(
-            self.user1.has_perm(Device.ADMIN_PERMISSION, self.qemu_device1)
+            self.user1.has_perm(Device.CHANGE_PERMISSION, self.qemu_device1)
         )
 
     def test_bulk_assign_perm(self):
         # Test bulk assign permission.
         GroupDevicePermission.objects.bulk_assign_perm(
-            "admin_device", self.group1, Device.objects.all()
+            "change_device", self.group1, Device.objects.all()
         )
-        self.assertTrue(self.user1.has_perm(Device.ADMIN_PERMISSION, self.qemu_device1))
-        self.assertTrue(self.user1.has_perm(Device.ADMIN_PERMISSION, self.qemu_device2))
-        self.assertTrue(self.user1.has_perm(Device.ADMIN_PERMISSION, self.bbb_device1))
-        self.assertTrue(self.user1.has_perm(Device.ADMIN_PERMISSION, self.bbb_device2))
+        self.assertTrue(
+            self.user1.has_perm(Device.CHANGE_PERMISSION, self.qemu_device1)
+        )
+        self.assertTrue(
+            self.user1.has_perm(Device.CHANGE_PERMISSION, self.qemu_device2)
+        )
+        self.assertTrue(self.user1.has_perm(Device.CHANGE_PERMISSION, self.bbb_device1))
+        self.assertTrue(self.user1.has_perm(Device.CHANGE_PERMISSION, self.bbb_device2))
         self.assertFalse(
-            self.user2.has_perm(Device.ADMIN_PERMISSION, self.qemu_device1)
+            self.user2.has_perm(Device.CHANGE_PERMISSION, self.qemu_device1)
         )
 
     def test_assign_perm_to_many(self):
         # Test assign perm to many groups.
         GroupDevicePermission.objects.assign_perm_to_many(
-            "admin_device", [self.group1, self.group2], self.qemu_device1
+            "change_device", [self.group1, self.group2], self.qemu_device1
         )
-        self.assertTrue(self.user1.has_perm(Device.ADMIN_PERMISSION, self.qemu_device1))
-        self.assertTrue(self.user2.has_perm(Device.ADMIN_PERMISSION, self.qemu_device1))
+        self.assertTrue(
+            self.user1.has_perm(Device.CHANGE_PERMISSION, self.qemu_device1)
+        )
+        self.assertTrue(
+            self.user2.has_perm(Device.CHANGE_PERMISSION, self.qemu_device1)
+        )
         self.assertFalse(
-            self.user2.has_perm(Device.ADMIN_PERMISSION, self.qemu_device2)
+            self.user2.has_perm(Device.CHANGE_PERMISSION, self.qemu_device2)
         )
 
     def test_restricted_by_perm(self):
         GroupDeviceTypePermission.objects.assign_perm(
-            DeviceType.ADMIN_PERMISSION, self.group1, self.qemu_device_type
+            DeviceType.CHANGE_PERMISSION, self.group1, self.qemu_device_type
         )
         GroupDeviceTypePermission.objects.assign_perm(
             DeviceType.VIEW_PERMISSION, self.group1, self.bbb_device_type
@@ -190,7 +202,7 @@ class ManagersTest(TestCaseWithFactory):
         self.assertEqual(
             set(
                 DeviceType.objects.restricted_by_perm(
-                    DeviceType.ADMIN_PERMISSION
+                    DeviceType.CHANGE_PERMISSION
                 ).filter(existing_permissions=0)
             ),
             {self.lxc_device_type, self.bbb_device_type},
@@ -214,7 +226,7 @@ class ManagersTest(TestCaseWithFactory):
             ContentType.objects.clear_cache()
 
             GroupDevicePermission.objects.assign_perm(
-                "admin_device", self.group1, self.qemu_device1
+                "change_device", self.group1, self.qemu_device1
             )
             GroupDevicePermission.objects.assign_perm(
                 "submit_to_device", self.group1, self.qemu_device2
@@ -230,7 +242,7 @@ class ManagersTest(TestCaseWithFactory):
             self.assertEqual(set(queryset), {self.qemu_device1, self.qemu_device2})
 
             queryset = qemu_devices_queryset.filter_by_perm(
-                "lava_scheduler_app.admin_device", self.user1
+                "lava_scheduler_app.change_device", self.user1
             ).filter(~Q(perm_count=0))
             self.assertEqual(set(queryset), {self.qemu_device1})
 
@@ -266,7 +278,7 @@ class ManagersTest(TestCaseWithFactory):
 
         # Assign permissions.
         GroupDevicePermission.objects.assign_perm(
-            "admin_device", group1, self.qemu_device1
+            "change_device", group1, self.qemu_device1
         )
         GroupDevicePermission.objects.assign_perm(
             "submit_to_device", group2, self.qemu_device2
@@ -282,7 +294,7 @@ class ManagersTest(TestCaseWithFactory):
 
         # user1 has admin permission for device1.
         queryset = qemu_devices_queryset.filter_by_perm(
-            "lava_scheduler_app.admin_device", user1
+            "lava_scheduler_app.change_device", user1
         ).filter(~Q(perm_count=0))
         self.assertEqual(set(queryset), {self.qemu_device1})
 
@@ -308,7 +320,7 @@ class ManagersTest(TestCaseWithFactory):
         self.assertEqual(set(queryset), {self.qemu_device2})
 
         queryset = qemu_devices_queryset.filter_by_perm(
-            "lava_scheduler_app.admin_device", user2
+            "lava_scheduler_app.change_device", user2
         ).filter(~Q(perm_count=0))
         self.assertEqual(set(queryset), set())
 
@@ -320,7 +332,7 @@ class ManagersTest(TestCaseWithFactory):
     def test_devicetype_manager_view(self):
 
         GroupDeviceTypePermission.objects.assign_perm(
-            DeviceType.ADMIN_PERMISSION, self.group1, self.qemu_device_type
+            DeviceType.CHANGE_PERMISSION, self.group1, self.qemu_device_type
         )
         GroupDeviceTypePermission.objects.assign_perm(
             DeviceType.VIEW_PERMISSION, self.group1, self.bbb_device_type
@@ -360,7 +372,7 @@ class ManagersTest(TestCaseWithFactory):
     def test_devicetype_manager_accessible(self):
 
         GroupDeviceTypePermission.objects.assign_perm(
-            DeviceType.ADMIN_PERMISSION, self.group1, self.qemu_device_type
+            DeviceType.CHANGE_PERMISSION, self.group1, self.qemu_device_type
         )
         GroupDeviceTypePermission.objects.assign_perm(
             DeviceType.SUBMIT_PERMISSION, self.group1, self.qemu_device_type
@@ -370,7 +382,7 @@ class ManagersTest(TestCaseWithFactory):
         self.assertEqual(
             set(
                 DeviceType.objects.all().accessible_by_user(
-                    self.user1, DeviceType.ADMIN_PERMISSION
+                    self.user1, DeviceType.CHANGE_PERMISSION
                 )
             ),
             {self.qemu_device_type},
@@ -389,7 +401,7 @@ class ManagersTest(TestCaseWithFactory):
         self.assertEqual(
             list(
                 DeviceType.objects.all().accessible_by_user(
-                    self.user2, DeviceType.ADMIN_PERMISSION
+                    self.user2, DeviceType.CHANGE_PERMISSION
                 )
             ),
             [],
@@ -408,7 +420,7 @@ class ManagersTest(TestCaseWithFactory):
         self.assertEqual(
             list(
                 DeviceType.objects.all().accessible_by_user(
-                    AnonymousUser(), DeviceType.ADMIN_PERMISSION
+                    AnonymousUser(), DeviceType.CHANGE_PERMISSION
                 )
             ),
             [],
@@ -666,7 +678,7 @@ class ManagersTest(TestCaseWithFactory):
         self.assertEqual(
             set(
                 Device.objects.all().accessible_by_user(
-                    self.user1, Device.ADMIN_PERMISSION
+                    self.user1, Device.CHANGE_PERMISSION
                 )
             ),
             set(),
@@ -674,20 +686,20 @@ class ManagersTest(TestCaseWithFactory):
         self.assertEqual(
             set(
                 Device.objects.all().accessible_by_user(
-                    AnonymousUser(), Device.ADMIN_PERMISSION
+                    AnonymousUser(), Device.CHANGE_PERMISSION
                 )
             ),
             set(),
         )
 
         GroupDevicePermission.objects.assign_perm(
-            Device.ADMIN_PERMISSION, self.group1, self.qemu_device2
+            Device.CHANGE_PERMISSION, self.group1, self.qemu_device2
         )
         # user1 should be able to admin only qemu_device2
         self.assertEqual(
             set(
                 Device.objects.all().accessible_by_user(
-                    self.user1, Device.ADMIN_PERMISSION
+                    self.user1, Device.CHANGE_PERMISSION
                 )
             ),
             {self.qemu_device2},
@@ -696,7 +708,7 @@ class ManagersTest(TestCaseWithFactory):
         self.assertEqual(
             set(
                 Device.objects.all().accessible_by_user(
-                    self.user2, Device.ADMIN_PERMISSION
+                    self.user2, Device.CHANGE_PERMISSION
                 )
             ),
             set(),
@@ -705,7 +717,7 @@ class ManagersTest(TestCaseWithFactory):
         self.assertEqual(
             set(
                 Device.objects.all().accessible_by_user(
-                    AnonymousUser(), Device.ADMIN_PERMISSION
+                    AnonymousUser(), Device.CHANGE_PERMISSION
                 )
             ),
             set(),
@@ -714,13 +726,13 @@ class ManagersTest(TestCaseWithFactory):
     def test_device_manager_admin_through_device_type(self):
         # Allow admin on qemu device type to group1 (user1).
         GroupDeviceTypePermission.objects.assign_perm(
-            DeviceType.ADMIN_PERMISSION, self.group1, self.qemu_device_type
+            DeviceType.CHANGE_PERMISSION, self.group1, self.qemu_device_type
         )
 
         self.assertEqual(
             set(
                 Device.objects.all().accessible_by_user(
-                    self.user1, Device.ADMIN_PERMISSION
+                    self.user1, Device.CHANGE_PERMISSION
                 )
             ),
             set(self.all_qemu_devices),
@@ -728,7 +740,7 @@ class ManagersTest(TestCaseWithFactory):
         self.assertEqual(
             set(
                 Device.objects.all().accessible_by_user(
-                    self.user2, Device.ADMIN_PERMISSION
+                    self.user2, Device.CHANGE_PERMISSION
                 )
             ),
             set(),
@@ -736,7 +748,7 @@ class ManagersTest(TestCaseWithFactory):
         self.assertEqual(
             set(
                 Device.objects.all().accessible_by_user(
-                    AnonymousUser(), Device.ADMIN_PERMISSION
+                    AnonymousUser(), Device.CHANGE_PERMISSION
                 )
             ),
             set(),
@@ -746,13 +758,13 @@ class ManagersTest(TestCaseWithFactory):
         # to admin device3 but user1 should not anymore.
         # Anonymous still cannot admin any devices.
         GroupDevicePermission.objects.assign_perm(
-            Device.ADMIN_PERMISSION, self.group2, self.qemu_device3
+            Device.CHANGE_PERMISSION, self.group2, self.qemu_device3
         )
         self.assertEqual(
             set(
                 Device.objects.filter(
                     device_type=self.qemu_device_type
-                ).accessible_by_user(self.user1, Device.ADMIN_PERMISSION)
+                ).accessible_by_user(self.user1, Device.CHANGE_PERMISSION)
             ),
             {self.qemu_device1, self.qemu_device2},
         )
@@ -760,14 +772,14 @@ class ManagersTest(TestCaseWithFactory):
             set(
                 Device.objects.filter(
                     device_type=self.qemu_device_type
-                ).accessible_by_user(self.user2, Device.ADMIN_PERMISSION)
+                ).accessible_by_user(self.user2, Device.CHANGE_PERMISSION)
             ),
             {self.qemu_device3},
         )
         self.assertEqual(
             set(
                 Device.objects.all().accessible_by_user(
-                    AnonymousUser(), Device.ADMIN_PERMISSION
+                    AnonymousUser(), Device.CHANGE_PERMISSION
                 )
             ),
             set(),
@@ -974,7 +986,7 @@ class ManagersTest(TestCaseWithFactory):
         self.assertEqual(
             set(
                 TestJob.objects.all().accessible_by_user(
-                    self.user1, TestJob.ADMIN_PERMISSION
+                    self.user1, TestJob.CHANGE_PERMISSION
                 )
             ),
             set(),
@@ -982,20 +994,20 @@ class ManagersTest(TestCaseWithFactory):
         self.assertEqual(
             set(
                 TestJob.objects.all().accessible_by_user(
-                    AnonymousUser(), TestJob.ADMIN_PERMISSION
+                    AnonymousUser(), TestJob.CHANGE_PERMISSION
                 )
             ),
             set(),
         )
 
         GroupDeviceTypePermission.objects.assign_perm(
-            DeviceType.ADMIN_PERMISSION, self.group1, self.qemu_device_type
+            DeviceType.CHANGE_PERMISSION, self.group1, self.qemu_device_type
         )
         # user1 should be able to admin only qemu jobs
         self.assertEqual(
             set(
                 TestJob.objects.all().accessible_by_user(
-                    self.user1, TestJob.ADMIN_PERMISSION
+                    self.user1, TestJob.CHANGE_PERMISSION
                 )
             ),
             {self.qemu_job1, self.qemu_job2},
@@ -1004,7 +1016,7 @@ class ManagersTest(TestCaseWithFactory):
         self.assertEqual(
             set(
                 TestJob.objects.all().accessible_by_user(
-                    self.user2, TestJob.ADMIN_PERMISSION
+                    self.user2, TestJob.CHANGE_PERMISSION
                 )
             ),
             set(),
@@ -1013,7 +1025,7 @@ class ManagersTest(TestCaseWithFactory):
         self.assertEqual(
             set(
                 TestJob.objects.all().accessible_by_user(
-                    AnonymousUser(), TestJob.ADMIN_PERMISSION
+                    AnonymousUser(), TestJob.CHANGE_PERMISSION
                 )
             ),
             set(),
@@ -1022,13 +1034,13 @@ class ManagersTest(TestCaseWithFactory):
     def test_testjob_manager_admin_through_device_type(self):
         # Allow admin on qemu device type to group1 (user1).
         GroupDeviceTypePermission.objects.assign_perm(
-            DeviceType.ADMIN_PERMISSION, self.group1, self.qemu_device_type
+            DeviceType.CHANGE_PERMISSION, self.group1, self.qemu_device_type
         )
 
         self.assertEqual(
             set(
                 TestJob.objects.all().accessible_by_user(
-                    self.user1, TestJob.ADMIN_PERMISSION
+                    self.user1, TestJob.CHANGE_PERMISSION
                 )
             ),
             set(self.all_qemu_jobs),
@@ -1036,7 +1048,7 @@ class ManagersTest(TestCaseWithFactory):
         self.assertEqual(
             set(
                 TestJob.objects.all().accessible_by_user(
-                    self.user2, TestJob.ADMIN_PERMISSION
+                    self.user2, TestJob.CHANGE_PERMISSION
                 )
             ),
             set(),
@@ -1044,7 +1056,7 @@ class ManagersTest(TestCaseWithFactory):
         self.assertEqual(
             set(
                 TestJob.objects.all().accessible_by_user(
-                    AnonymousUser(), TestJob.ADMIN_PERMISSION
+                    AnonymousUser(), TestJob.CHANGE_PERMISSION
                 )
             ),
             set(),
@@ -1059,12 +1071,12 @@ class ManagersTest(TestCaseWithFactory):
         self.qemu_job2.save()
 
         GroupDevicePermission.objects.assign_perm(
-            Device.ADMIN_PERMISSION, self.group2, self.qemu_device1
+            Device.CHANGE_PERMISSION, self.group2, self.qemu_device1
         )
         self.assertEqual(
             set(
                 TestJob.objects.all().accessible_by_user(
-                    self.user1, TestJob.ADMIN_PERMISSION
+                    self.user1, TestJob.CHANGE_PERMISSION
                 )
             ),
             set(),
@@ -1072,7 +1084,7 @@ class ManagersTest(TestCaseWithFactory):
         self.assertEqual(
             set(
                 TestJob.objects.all().accessible_by_user(
-                    self.user2, TestJob.ADMIN_PERMISSION
+                    self.user2, TestJob.CHANGE_PERMISSION
                 )
             ),
             {self.qemu_job1, self.qemu_job2},
@@ -1080,7 +1092,7 @@ class ManagersTest(TestCaseWithFactory):
         self.assertEqual(
             set(
                 TestJob.objects.all().accessible_by_user(
-                    AnonymousUser(), TestJob.ADMIN_PERMISSION
+                    AnonymousUser(), TestJob.CHANGE_PERMISSION
                 )
             ),
             set(),
@@ -1095,13 +1107,13 @@ class ManagersTest(TestCaseWithFactory):
 
         # Allow admin on qemu device1 to group1 (user1).
         GroupDevicePermission.objects.assign_perm(
-            Device.ADMIN_PERMISSION, self.group1, self.qemu_device1
+            Device.CHANGE_PERMISSION, self.group1, self.qemu_device1
         )
 
         self.assertEqual(
             set(
                 TestJob.objects.all().accessible_by_user(
-                    self.user1, TestJob.ADMIN_PERMISSION
+                    self.user1, TestJob.CHANGE_PERMISSION
                 )
             ),
             {self.qemu_job1},
@@ -1109,7 +1121,7 @@ class ManagersTest(TestCaseWithFactory):
         self.assertEqual(
             set(
                 TestJob.objects.all().accessible_by_user(
-                    self.user2, TestJob.ADMIN_PERMISSION
+                    self.user2, TestJob.CHANGE_PERMISSION
                 )
             ),
             set(),
@@ -1117,7 +1129,7 @@ class ManagersTest(TestCaseWithFactory):
         self.assertEqual(
             set(
                 TestJob.objects.all().accessible_by_user(
-                    AnonymousUser(), TestJob.ADMIN_PERMISSION
+                    AnonymousUser(), TestJob.CHANGE_PERMISSION
                 )
             ),
             set(),
@@ -1127,12 +1139,12 @@ class ManagersTest(TestCaseWithFactory):
         # able to admin qemu job2 but user1 should not anymore.
         # Anonymous still cannot admin any devices.
         GroupDevicePermission.objects.assign_perm(
-            Device.ADMIN_PERMISSION, self.group2, self.qemu_device2
+            Device.CHANGE_PERMISSION, self.group2, self.qemu_device2
         )
         self.assertEqual(
             set(
                 TestJob.objects.all().accessible_by_user(
-                    self.user1, TestJob.ADMIN_PERMISSION
+                    self.user1, TestJob.CHANGE_PERMISSION
                 )
             ),
             {self.qemu_job1},
@@ -1140,7 +1152,7 @@ class ManagersTest(TestCaseWithFactory):
         self.assertEqual(
             set(
                 TestJob.objects.all().accessible_by_user(
-                    self.user2, TestJob.ADMIN_PERMISSION
+                    self.user2, TestJob.CHANGE_PERMISSION
                 )
             ),
             {self.qemu_job2},
@@ -1148,7 +1160,7 @@ class ManagersTest(TestCaseWithFactory):
         self.assertEqual(
             set(
                 TestJob.objects.all().accessible_by_user(
-                    AnonymousUser(), TestJob.ADMIN_PERMISSION
+                    AnonymousUser(), TestJob.CHANGE_PERMISSION
                 )
             ),
             set(),
