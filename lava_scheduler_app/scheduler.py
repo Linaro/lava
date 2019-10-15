@@ -46,11 +46,11 @@ def schedule_health_checks(logger, available_dt=None):
     available_devices = {}
     jobs = []
     hc_disabled = []
+    query = DeviceType.objects.filter(display=True)
     if available_dt:
         query = DeviceType.objects.filter(name__in=available_dt, display=True)
-    else:
-        query = DeviceType.objects.filter(display=True)
-    for dt in query.order_by("name"):
+    query = query.order_by("name").only("disable_health_check", "name")
+    for dt in query:
         if dt.disable_health_check:
             hc_disabled.append(dt.name)
             # Add all devices of that type to the list of available devices
@@ -247,6 +247,7 @@ def schedule_jobs_for_device(logger, device):
     )
     jobs = jobs.filter(actual_device__isnull=True)
     jobs = jobs.filter(requested_device_type__pk=device.device_type.pk)
+    jobs = jobs.select_related("submitter")
     jobs = jobs.order_by("-state", "-priority", "submit_time", "target_group", "id")
 
     device_tags = set(device.tags.all())
