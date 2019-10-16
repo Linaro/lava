@@ -48,6 +48,13 @@ except ImportError:
 FilterBackend = RestFrameworkFilterBackend
 
 
+class NoMarkupFilterBackend(FilterBackend):
+    def to_html(self, request, queryset, view):
+        # In order to prevent a huge performance issue when rendering the
+        # browsable API, do not render the choice fields.
+        return ""
+
+
 def add_permissions(default_in_django2, local):
     if DJANGO_VERSION >= "2":
         return local
