@@ -14,10 +14,6 @@ Selected Actions within the dispatcher support repeating an individual action
 (along with any internal pipelines created by that action) - these are
 determined within the codebase.
 
-Blocks of actions can also be repeated to allow a boot and test cycle to be
-repeated. Only :ref:`boot_action` and :ref:`test_action` are supported inside
-repeat blocks.
-
 .. _repeat_single_action:
 
 Repeating single actions
@@ -90,37 +86,6 @@ Resulting in::
 Repeating blocks of actions
 ===========================
 
-To repeat a specific boot and a specific test definition as one block (``[boot,
-test], [boot, test], [boot, test] ...``), nest the relevant :ref:`boot_action`
-and :ref:`test_action` actions in a repeat block.
-
-.. code-block:: yaml
-
- actions:
-
-    - deploy:
-        timeout:
-          minutes: 20
-        to: tmpfs
-        image: https://images.validation.linaro.org/kvm/standard/stretch-2.img.gz
-
-    - repeat:
-        count: 6
-
-        actions:
-        - boot:
-            method: qemu
-            media: tmpfs
-            prompts:
-              - 'linaro-test'
-              - 'root@debian:~#'
-
-        - test:
-            failure_retry: 3
-            name: kvm-smoke-test
-            timeout:
-              minutes: 5
-            definitions:
-
-This provides a shorthand which will get expanded by the parser into a
-deployment and (in this case) 6 identical blocks of boot and test.
+To repeat block of actions, it's adviced to use a templating engine, like
+jinja2, and to use it to generate a job definition where the block are
+repeated.

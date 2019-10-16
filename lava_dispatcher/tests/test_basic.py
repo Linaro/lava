@@ -38,7 +38,6 @@ from lava_common.schemas import validate as validate_job
 from lava_common.schemas.device import validate as validate_device
 from lava_dispatcher.action import Pipeline, Action
 from lava_dispatcher.parser import JobParser
-from lava_dispatcher.job import Job
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.actions.deploy.image import DeployImages
 from lava_dispatcher.tests.utils import DummyLogger
@@ -120,24 +119,6 @@ class TestPipelineInit(StdoutTestCase):  # pylint: disable=too-many-public-metho
             "No such file or directory",
             self.sub1.parsed_command(command_list, allow_fail=True),
         )
-
-
-class TestJobParser(StdoutTestCase):
-    def setUp(self):
-        super().setUp()
-        factory = Factory()
-        self.job = factory.create_kvm_job("sample_jobs/basics.yaml")
-
-    def test_parser_creates_a_job_with_a_pipeline(self):  # pylint: disable=invalid-name
-        if not self.job:
-            return unittest.skip("not all deployments have been implemented")
-        self.assertIsInstance(self.job, Job)
-        self.assertIsInstance(self.job.pipeline, Pipeline)
-
-    def test_pipeline_gets_multiple_actions_in_it(self):  # pylint: disable=invalid-name
-        if not self.job:
-            return unittest.skip("not all deployments have been implemented")
-        self.assertTrue(self.job.actions > 1)  # pylint: disable=no-member
 
 
 class TestValidation(StdoutTestCase):
@@ -262,9 +243,6 @@ class Factory:
             job_data = yaml_safe_load(sample_job_data.read())
         return self.create_custom_job(template, job_data, job_ctx, validate)
 
-    def create_fake_qemu_job(self):
-        return self.create_job("qemu01.jinja2", "sample_jobs/basics.yaml")
-
     def create_kvm_job(self, filename, validate=False):
         """
         Custom function to allow for extra exception handling.
@@ -292,7 +270,6 @@ class Factory:
             job.logger = DummyLogger()
         except LAVAError as exc:
             print(exc)
-            # some deployments listed in basics.yaml are not implemented yet
             return None
         return job
 
@@ -428,13 +405,6 @@ class TestPipeline(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertEqual(action.level, "3")
         self.assertEqual(len(pipe.describe()), 3)
 
-    def test_simulated_action(self):
-        factory = Factory()
-        job = factory.create_kvm_job("sample_jobs/basics.yaml")
-        if not job:
-            return unittest.skip("not all deployments have been implemented")
-        self.assertIsNotNone(job)
-
     def test_describe(self):
         factory = Factory()
         job = factory.create_kvm_job("sample_jobs/kvm.yaml")
@@ -466,22 +436,14 @@ class TestPipeline(StdoutTestCase):  # pylint: disable=too-many-public-methods
         parser = JobParser()
         (rendered, data) = factory.create_device("kvm01.jinja2")
         device = yaml_safe_load(rendered)
-        try:
-            job = parser.parse(yaml.dump(job_def), device, 4212, None, "")
-        except NotImplementedError:
-            # some deployments listed in basics.yaml are not implemented yet
-            pass
+        job = parser.parse(yaml.dump(job_def), device, 4212, None, "")
         self.assertIsNotNone(job)
         job_def["compatibility"] = job.compatibility + 1
         self.assertRaises(
             JobError, parser.parse, yaml.dump(job_def), device, 4212, None, ""
         )
         job_def["compatibility"] = 0
-        try:
-            job = parser.parse(yaml.dump(job_def), device, 4212, None, "")
-        except NotImplementedError:
-            # some deployments listed in basics.yaml are not implemented yet
-            pass
+        job = parser.parse(yaml.dump(job_def), device, 4212, None, "")
         self.assertIsNotNone(job)
 
     def test_pipeline_actions(self):

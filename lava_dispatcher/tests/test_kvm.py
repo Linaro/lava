@@ -32,7 +32,6 @@ from lava_common.exceptions import JobError, InfrastructureError
 from lava_dispatcher.utils.filesystem import mkdtemp
 from lava_dispatcher.action import Pipeline, Action
 from lava_dispatcher.tests.test_basic import Factory, StdoutTestCase
-from lava_dispatcher.job import Job
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.boot.qemu import BootAction
 from lava_dispatcher.device import NewDevice
@@ -45,17 +44,6 @@ from lava_dispatcher.utils.strings import substitute
 from lava_dispatcher.connections.serial import QemuSession
 
 # pylint: disable=invalid-name
-
-
-class TestBasicJob(StdoutTestCase):  # pylint: disable=too-many-public-methods
-    def test_basic_actions(self):
-        factory = Factory()
-        job = factory.create_kvm_job("sample_jobs/basics.yaml")
-        if not job:
-            return unittest.skip("not all deployments have been implemented")
-        self.assertIsInstance(job, Job)
-        self.assertIsInstance(job.pipeline, Pipeline)
-        return None
 
 
 class TestKVMSimulation(StdoutTestCase):  # pylint: disable=too-many-public-methods

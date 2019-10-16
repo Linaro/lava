@@ -38,13 +38,9 @@ class InstallerFactory(Factory):  # pylint: disable=too-few-public-methods
             os.path.dirname(__file__), "sample_jobs/qemu-debian-installer.yaml"
         )
         parser = JobParser()
-        try:
-            with open(sample_job_file) as sample_job_data:
-                job = parser.parse(sample_job_data, device, 4212, None, "")
-            job.logger = DummyLogger()
-        except NotImplementedError:
-            # some deployments listed in basics.yaml are not implemented yet
-            return None
+        with open(sample_job_file) as sample_job_data:
+            job = parser.parse(sample_job_data, device, 4212, None, "")
+        job.logger = DummyLogger()
         return job
 
 
