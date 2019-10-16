@@ -455,7 +455,9 @@ class DeviceTypeViewSet(viewsets.ReadOnlyModelViewSet):
     filter_class = filters.DeviceTypeFilter
 
     def get_queryset(self):
-        return DeviceType.objects.visible_by_user(self.request.user)
+        return DeviceType.objects.visible_by_user(self.request.user).prefetch_related(
+            "cores", "aliases"
+        )
 
 
 class DeviceSerializer(serializers.ModelSerializer):
