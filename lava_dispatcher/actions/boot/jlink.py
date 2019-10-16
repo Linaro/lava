@@ -143,9 +143,9 @@ class FlashJLinkAction(Action):
         load_address = boot["parameters"]["address"]
         self.base_command = [jlink_binary]
         for option in boot["parameters"].get("options", []):
-            self.base_command.append(shlex.slit(option))
+            self.base_command.extend(shlex.split(option))
 
-        self.base_command.append("-autoconnect 1")
+        self.base_command.extend(["-autoconnect", "1"])
         self.path = self.mkdtemp()
         self.fname = os.path.join(self.path, "cmd.jlink")
         self.base_command.append("-CommanderScript")
