@@ -189,9 +189,14 @@ cancel_action.short_description = "cancel selected jobs"
 def fail_action(modeladmin, request, queryset):
     if request.user.is_superuser:
         with transaction.atomic():
-            for testjob in queryset.select_for_update().filter(
-                state=TestJob.STATE_CANCELING
-            ):
+            for testjob in queryset.filter(state=TestJob.STATE_CANCELING):
+                # TODO: hacky. until django 2.0+ is used and select_for_update
+                # gets the 'of' argument.
+                warnings.warn(
+                    "select_for_update should be applied to the whole queryset at once, once we upgrade to django 2+",
+                    DeprecationWarning,
+                )
+                testjob = TestJob.objects.select_for_update().get(pk=testjob.pk)
                 testjob.go_state_finished(TestJob.HEALTH_INCOMPLETE)
                 testjob.save()
 
@@ -270,7 +275,15 @@ class RequestedDeviceTypeFilter(admin.SimpleListFilter):
 
 def _update_devices_health(request, queryset, health):
     with transaction.atomic():
-        for device in queryset.select_for_update():
+        for device in queryset:
+            # TODO: hacky. until django 2.0+ is used and select_for_update gets
+            # the 'of' argument.
+            warnings.warn(
+                "select_for_update should be applied to the whole queryset at once, once we upgrade to django 2+",
+                DeprecationWarning,
+            )
+            device = Device.objects.select_for_update().get(pk=device.pk)
+
             old_health_display = device.get_health_display()
             device.health = health
             device.save()
