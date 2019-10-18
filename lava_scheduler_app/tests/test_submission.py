@@ -1,9 +1,8 @@
 import logging
 import os
 import json
-import yaml
 
-from lava_common.compat import yaml_safe_load
+from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from django.contrib.auth.models import Group, Permission, User
 from django_testscenarios.ubertest import TestCase
 from lava_scheduler_app.dbutils import testjob_submission
@@ -122,7 +121,7 @@ class ModelFactory:
         return data
 
     def make_job_yaml(self, **kw):
-        return yaml.safe_dump(self.make_job_data(**kw))
+        return yaml_safe_dump(self.make_job_data(**kw))
 
     def make_job_data_from_file(self, sample_job_file):
         sample_job_file = os.path.join(

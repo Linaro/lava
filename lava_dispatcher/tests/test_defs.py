@@ -22,7 +22,6 @@ import re
 import os
 import glob
 import stat
-import yaml
 import shutil
 import pexpect
 import tempfile
@@ -30,7 +29,7 @@ import unittest
 import subprocess  # nosec - unit test support.
 from unittest.mock import patch
 
-from lava_common.compat import yaml_safe_load
+from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_common.decorators import nottest
 from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.power import FinalizeAction
@@ -154,7 +153,7 @@ class TestDefinitionHandlers(StdoutTestCase):
         data = [block["test"] for block in content["actions"] if "test" in block][0]
         definitions = [block for block in data["definitions"] if "path" in block][0]
         definitions["name"] = "smoke tests"
-        job = parser.parse(yaml.dump(content), device, 4212, None, "")
+        job = parser.parse(yaml_safe_dump(content), device, 4212, None, "")
         deploy = [
             action for action in job.pipeline.actions if action.name == "deployimages"
         ][0]

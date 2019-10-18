@@ -1,9 +1,8 @@
 import os
-import yaml
 import unittest
 import tempfile
 
-from lava_common.compat import yaml_safe_load
+from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.action import Timeout
@@ -321,7 +320,7 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
         self.assertTrue(self.validate_data("staging-panda-01", data))
         template_dict = prepare_jinja_template("staging-panda-01", data, raw=False)
         fdesc, device_yaml = tempfile.mkstemp()
-        os.write(fdesc, yaml.dump(template_dict).encode())
+        os.write(fdesc, yaml_safe_dump(template_dict).encode())
         panda = NewDevice(device_yaml)
         lxc_yaml = os.path.join(
             os.path.dirname(__file__), "sample_jobs", "panda-lxc-aep.yaml"

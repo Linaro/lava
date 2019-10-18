@@ -20,12 +20,12 @@
 
 import re
 import time
-import yaml
 import decimal
 import logging
 import pexpect
 from collections import OrderedDict
 
+from lava_common.compat import yaml_safe_dump
 from lava_common.decorators import nottest
 from lava_common.exceptions import JobError, InfrastructureError, TestError, LAVABug
 from lava_dispatcher.actions.test import TestAction
@@ -361,7 +361,7 @@ class TestShellAction(TestAction):
 
         # Only print if the report is not empty
         if self.report:
-            self.logger.debug(yaml.dump(self.report, default_flow_style=False))
+            self.logger.debug(yaml_safe_dump(self.report, default_flow_style=False))
         if self.errors:
             raise TestError(self.errors)
         return connection

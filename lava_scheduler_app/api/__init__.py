@@ -30,6 +30,9 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Q
 from django.db import transaction
 from linaro_django_xmlrpc.models import ExposedAPI
+
+from lava_common.compat import yaml_safe_dump, yaml_safe_load
+
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
@@ -238,7 +241,7 @@ class SchedulerAPI(ExposedAPI):
         """
         try:
             # YAML can parse JSON as YAML, JSON cannot parse YAML at all
-            yaml_data = yaml.safe_load(yaml_string)
+            yaml_data = yaml_safe_load(yaml_string)
         except yaml.YAMLError as exc:
             raise xmlrpc.client.Fault(400, "Decoding job submission failed: %s." % exc)
         try:
@@ -1105,7 +1108,7 @@ class SchedulerAPI(ExposedAPI):
         job_ctx = None
         if context is not None:
             try:
-                job_ctx = yaml.safe_load(context)
+                job_ctx = yaml_safe_load(context)
             except yaml.YAMLError as exc:
                 raise xmlrpc.client.Fault(
                     400, "Job context '%s' is not valid. %s" % (context, exc)
@@ -1123,7 +1126,7 @@ class SchedulerAPI(ExposedAPI):
         config = device.load_configuration(job_ctx=job_ctx, output_format="yaml")
 
         # validate against the device schema
-        validate_device(yaml.safe_load(config))
+        validate_device(yaml_safe_load(config))
 
         return xmlrpc.client.Binary(config.encode("UTF-8"))
 
@@ -1280,12 +1283,12 @@ class SchedulerAPI(ExposedAPI):
                 continue
             try:
                 # validate against the device schema
-                validate_device(yaml.safe_load(config))
+                validate_device(yaml_safe_load(config))
             except SubmissionException as exc:
                 results[key] = {"Invalid": exc}
                 continue
             results[key] = {"Valid": None}
-        return xmlrpc.client.Binary(yaml.dump(results).encode("UTF-8"))
+        return xmlrpc.client.Binary(yaml_safe_dump(results).encode("UTF-8"))
 
     def get_publisher_event_socket(self):
         """

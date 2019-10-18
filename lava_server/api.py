@@ -27,7 +27,7 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.exceptions import PermissionDenied
 
-from lava_common.compat import yaml_safe_load
+from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_common.version import __version__
 from lava_scheduler_app.api import check_perm
 from lava_scheduler_app.views import get_restricted_job
@@ -513,14 +513,14 @@ class LavaSystemAPI(SystemAPI):
 
         if switch:
             if switch in network_map["switches"]:
-                return yaml.dump(network_map["switches"][switch])
+                return yaml_safe_dump(network_map["switches"][switch])
             else:
                 return xmlrpc.client.Fault(
                     404,
                     "No switch '%s' was found in the network map of supported devices."
                     % switch,
                 )
-        return yaml.dump(network_map)
+        return yaml_safe_dump(network_map)
 
     @check_perm("lava_scheduler_app.change_devicetype")
     def assign_perm_device_type(self, perm, device_type, group):

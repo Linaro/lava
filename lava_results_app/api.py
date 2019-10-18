@@ -19,13 +19,13 @@
 
 import csv
 import io
-import yaml
 import xmlrpc.client
 
 from linaro_django_xmlrpc.models import ExposedAPI
 
 from django.db.models.fields import FieldDoesNotExist
 
+from lava_common.compat import yaml_dump
 from lava_results_app.dbutils import export_testsuite, testsuite_export_fields
 from lava_results_app.models import (
     Query,
@@ -317,7 +317,7 @@ class ResultsAPI(ExposedAPI):
         except TestJob.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Specified job not found.")
 
-        return yaml.dump(yaml_list, Dumper=yaml.CDumper)
+        return yaml_dump(yaml_list)
 
     def get_testjob_metadata(self, job_id):
         """
@@ -499,7 +499,7 @@ class ResultsAPI(ExposedAPI):
         except TestJob.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Specified job not found.")
 
-        return yaml.dump(yaml_list, Dumper=yaml.CDumper)
+        return yaml_dump(yaml_list)
 
     def get_testsuite_results_yaml(self, job_id, suite_name, limit=None, offset=None):
         """
@@ -547,7 +547,7 @@ class ResultsAPI(ExposedAPI):
         except TestSuite.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Specified test suite not found.")
 
-        return yaml.dump(yaml_list, Dumper=yaml.CDumper)
+        return yaml_dump(yaml_list)
 
     def get_testsuite_results_csv(self, job_id, suite_name, limit=None, offset=None):
         """
@@ -694,7 +694,7 @@ class ResultsAPI(ExposedAPI):
         except TestCase.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Specified test case not found.")
 
-        return yaml.dump(yaml_list, Dumper=yaml.CDumper)
+        return yaml_dump(yaml_list)
 
     def get_testcase_results_csv(self, job_id, suite_name, case_name):
         """

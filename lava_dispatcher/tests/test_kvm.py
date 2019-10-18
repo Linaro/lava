@@ -23,10 +23,9 @@ import os
 import glob
 import time
 import unittest
-import yaml
 import pexpect
 
-from lava_common.compat import yaml_safe_load
+from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_common.constants import SYS_CLASS_KVM
 from lava_common.exceptions import JobError, InfrastructureError
 from lava_dispatcher.utils.filesystem import mkdtemp
@@ -364,7 +363,7 @@ class TestKVMInlineTestDeploy(StdoutTestCase):
             device["actions"]["boot"]["methods"]["qemu"]["parameters"]["extra"][1], int
         )
         parser = JobParser()
-        job = parser.parse(yaml.dump(job_data), device, 4212, None, "")
+        job = parser.parse(yaml_safe_dump(job_data), device, 4212, None, "")
         job.logger = DummyLogger()
         job.validate()
         boot_image = [

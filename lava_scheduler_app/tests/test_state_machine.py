@@ -19,15 +19,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
-import yaml
-
 from django.contrib.auth.models import User
 from django.test import TestCase
 
+from lava_common.compat import yaml_safe_dump
 from lava_scheduler_app.models import Device, DeviceType, TestJob, Worker
 
 
-minimal_valid_job = yaml.safe_dump(
+minimal_valid_job = yaml_safe_dump(
     """
 job_name: minimal valid job
 visibility: public
@@ -269,7 +268,7 @@ class TestTestJobStateMachine(TestCase):
             hostname="device-03", device_type=self.device_type, worker_host=self.worker
         )
 
-        self.job.definition = yaml.safe_dump(
+        self.job.definition = yaml_safe_dump(
             {"protocols": {"lava-multinode": {"role": "master", "essential": True}}}
         )
         self.job.target_group = "target_group"
@@ -279,7 +278,7 @@ class TestTestJobStateMachine(TestCase):
             submitter=self.user,
             target_group="target_group",
         )
-        self.sub_job1.definition = yaml.safe_dump(
+        self.sub_job1.definition = yaml_safe_dump(
             {"protocols": {"lava-multinode": {"role": "worker", "essential": False}}}
         )
         self.sub_job1.actual_device = self.device2
@@ -289,7 +288,7 @@ class TestTestJobStateMachine(TestCase):
             submitter=self.user,
             target_group="target_group",
         )
-        self.sub_job2.definition = yaml.safe_dump(
+        self.sub_job2.definition = yaml_safe_dump(
             {"protocols": {"lava-multinode": {"role": "worker", "essential": False}}}
         )
         self.sub_job2.actual_device = self.device3
@@ -330,7 +329,7 @@ class TestTestJobStateMachine(TestCase):
         self.assertEqual(self.sub_job2.state, TestJob.STATE_CANCELING)
 
         # 2/ Non-essential role
-        self.job.definition = yaml.safe_dump(
+        self.job.definition = yaml_safe_dump(
             {"protocols": {"lava-multinode": {"role": "master", "essential": False}}}
         )
         self.job.state = TestJob.STATE_RUNNING
@@ -575,7 +574,7 @@ class TestTestJobStateMachine(TestCase):
             hostname="device-03", device_type=self.device_type
         )
 
-        self.job.definition = yaml.safe_dump(
+        self.job.definition = yaml_safe_dump(
             {"protocols": {"lava-multinode": {"role": "master", "essential": True}}}
         )
         self.job.target_group = "target_group"
@@ -585,7 +584,7 @@ class TestTestJobStateMachine(TestCase):
             submitter=self.user,
             target_group="target_group",
         )
-        self.sub_job1.definition = yaml.safe_dump(
+        self.sub_job1.definition = yaml_safe_dump(
             {"protocols": {"lava-multinode": {"role": "worker", "essential": False}}}
         )
         self.sub_job1.actual_device = self.device2
@@ -595,7 +594,7 @@ class TestTestJobStateMachine(TestCase):
             submitter=self.user,
             target_group="target_group",
         )
-        self.sub_job2.definition = yaml.safe_dump(
+        self.sub_job2.definition = yaml_safe_dump(
             {"protocols": {"lava-multinode": {"role": "worker", "essential": False}}}
         )
         self.sub_job2.actual_device = self.device3
@@ -672,7 +671,7 @@ class TestTestJobStateMachine(TestCase):
 
         # 2/ Non-essential role
         # 1.1/ Success
-        self.job.definition = yaml.safe_dump(
+        self.job.definition = yaml_safe_dump(
             {"protocols": {"lava-multinode": {"role": "master", "essential": False}}}
         )
         self.job.state = TestJob.STATE_RUNNING

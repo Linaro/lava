@@ -19,9 +19,8 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
-import yaml
 import unittest
-from lava_common.compat import yaml_safe_load
+from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_common.exceptions import JobError
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
@@ -235,7 +234,7 @@ class TestLxcWithDevices(StdoutTestCase):
         parser = JobParser()
         (rendered, _) = self.factory.create_device("bbb-01.jinja2")
         device = NewDevice(yaml_safe_load(rendered))
-        job = parser.parse(yaml.dump(data), device, 4577, None, "")
+        job = parser.parse(yaml_safe_dump(data), device, 4577, None, "")
         job.logger = DummyLogger()
         job.validate()
         lxc_deploy = [
@@ -293,7 +292,7 @@ class TestLxcWithDevices(StdoutTestCase):
         parser = JobParser()
         (rendered, _) = self.factory.create_device("bbb-01.jinja2")
         device = NewDevice(yaml_safe_load(rendered))
-        job = parser.parse(yaml.dump(data), device, 4577, None, "")
+        job = parser.parse(yaml_safe_dump(data), device, 4577, None, "")
         job.logger = DummyLogger()
         job.validate()
         lxc_deploy = [

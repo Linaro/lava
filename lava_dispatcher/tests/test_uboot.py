@@ -20,10 +20,10 @@
 
 
 import os
-import yaml
 import unittest
 from unittest.mock import patch, MagicMock
-from lava_common.compat import yaml_safe_load
+
+from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_common.exceptions import JobError
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
@@ -675,7 +675,9 @@ class TestKernelConversion(StdoutTestCase):
     )
     def test_zimage_bootz(self, which_mock):
         self.deploy_block["kernel"]["type"] = "zimage"
-        job = self.parser.parse(yaml.dump(self.base_data), self.device, 4212, None, "")
+        job = self.parser.parse(
+            yaml_safe_dump(self.base_data), self.device, 4212, None, ""
+        )
         job.logger = DummyLogger()
         job.validate()
         deploy = [
@@ -705,7 +707,9 @@ class TestKernelConversion(StdoutTestCase):
     )
     def test_image(self, which_mock):
         self.deploy_block["kernel"]["type"] = "image"
-        job = self.parser.parse(yaml.dump(self.base_data), self.device, 4212, None, "")
+        job = self.parser.parse(
+            yaml_safe_dump(self.base_data), self.device, 4212, None, ""
+        )
         job.logger = DummyLogger()
         job.validate()
         deploy = [
@@ -736,7 +740,9 @@ class TestKernelConversion(StdoutTestCase):
     )
     def test_uimage(self, which_mock):
         self.deploy_block["kernel"]["type"] = "uimage"
-        job = self.parser.parse(yaml.dump(self.base_data), self.device, 4212, None, "")
+        job = self.parser.parse(
+            yaml_safe_dump(self.base_data), self.device, 4212, None, ""
+        )
         job.logger = DummyLogger()
         job.validate()
         deploy = [
@@ -769,7 +775,9 @@ class TestKernelConversion(StdoutTestCase):
         # drop bootz from the device for this part of the test
         del self.device["parameters"]["bootz"]
         self.deploy_block["kernel"]["type"] = "zimage"
-        job = self.parser.parse(yaml.dump(self.base_data), self.device, 4212, None, "")
+        job = self.parser.parse(
+            yaml_safe_dump(self.base_data), self.device, 4212, None, ""
+        )
         job.logger = DummyLogger()
         job.validate()
         deploy = [

@@ -18,13 +18,12 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 import datetime
-import yaml
 
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.utils import timezone
 
-from lava_common.compat import yaml_safe_load
+from lava_common.compat import yaml_safe_load, yaml_safe_dump
 from lava_scheduler_app.dbutils import match_vlan_interface
 from lava_scheduler_app.models import (
     DeviceType,
@@ -317,7 +316,7 @@ def transition_multinode_jobs(logger):
             # apply the complete list to all jobs in this group
             definition = yaml_safe_load(sub_job.definition)
             definition["protocols"]["lava-multinode"]["roles"] = devices
-            sub_job.definition = yaml.safe_dump(definition)
+            sub_job.definition = yaml_safe_dump(definition)
             # transition the job and device
             sub_job.go_state_scheduled()
             sub_job.save()

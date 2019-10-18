@@ -19,9 +19,8 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
-import yaml
 import datetime
-from lava_common.compat import yaml_safe_load
+from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_common.timeout import Timeout
 from lava_common.exceptions import InfrastructureError, JobError
 from lava_dispatcher.action import Action, Pipeline
@@ -70,7 +69,7 @@ class TestDefinitionHandlers(StdoutTestCase):
             data = yaml_safe_load(sample_job_data)
         data["actions"][2]["test"]["definitions"][0]["from"] = "unusable-handler"
         try:
-            job = parser.parse(yaml.dump(data), device, 4212, None, "")
+            job = parser.parse(yaml_safe_dump(data), device, 4212, None, "")
             job.logger = DummyLogger()
         except JobError:
             pass

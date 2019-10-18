@@ -43,7 +43,7 @@ from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
 
-from lava_common.compat import yaml_safe_load
+from lava_common.compat import yaml_dump, yaml_safe_load, yaml_safe_dump
 from lava_common.decorators import nottest
 from lava_results_app.utils import export_testcase
 from lava_scheduler_app import utils
@@ -1101,7 +1101,7 @@ def _create_pipeline_job(
                 raise SubmissionException("Invalid job priority: %r" % key)
 
     if not orig:
-        orig = yaml.safe_dump(job_data)
+        orig = yaml_safe_dump(job_data)
 
     is_public = False
     viewing_groups = []
@@ -1121,7 +1121,7 @@ def _create_pipeline_job(
                 )
 
     job = TestJob(
-        definition=yaml.safe_dump(job_data),
+        definition=yaml_safe_dump(job_data),
         original_definition=orig,
         submitter=user,
         requested_device_type=device_type,
@@ -1178,7 +1178,7 @@ def _pipeline_protocols(job_data, user, yaml_data=None):
         return device_list
 
     if not yaml_data:
-        yaml_data = yaml.safe_dump(job_data)
+        yaml_data = yaml_safe_dump(job_data)
     role_dictionary = {}  # map of the multinode group
     if "lava-multinode" in job_data["protocols"]:
         # create target_group uuid, just a label for the coordinator.
@@ -1863,7 +1863,7 @@ class TestJob(models.Model):
                 yaml_list = []
                 for test_case in test_suite.testcase_set.all():
                     yaml_list.append(export_testcase(test_case))
-                data["results"][test_suite.name] = yaml.dump(yaml_list)
+                data["results"][test_suite.name] = yaml_dump(yaml_list)
 
         return data
 

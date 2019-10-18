@@ -21,10 +21,11 @@
 
 import datetime
 import logging
-import yaml
 import zmq
 import zmq.auth
 from zmq.utils.strtypes import b
+
+from lava_common.compat import yaml_dump
 
 
 class ZMQPushHandler(logging.Handler):
@@ -107,12 +108,8 @@ class YAMLLogger(logging.Logger):
         # Set width to a really large value in order to always get one line.
         # But keep this reasonable because the logs will be loaded by CLoader
         # that is limited to around 10**7 chars
-        data_str = yaml.dump(
-            data,
-            default_flow_style=True,
-            default_style='"',
-            width=10 ** 6,
-            Dumper=yaml.CDumper,
+        data_str = yaml_dump(
+            data, default_flow_style=True, default_style='"', width=10 ** 6
         )[:-1]
         # Test the limit and skip if the line is too long
         if len(data_str) >= 10 ** 6:
@@ -120,12 +117,8 @@ class YAMLLogger(logging.Logger):
                 data["msg"] = "<line way too long ...>"
             else:
                 data["msg"] = {"skip": "line way too long ..."}
-            data_str = yaml.dump(
-                data,
-                default_flow_style=True,
-                default_style='"',
-                width=10 ** 6,
-                Dumper=yaml.CDumper,
+            data_str = yaml_dump(
+                data, default_flow_style=True, default_style='"', width=10 ** 6
             )[:-1]
         self._log(level, data_str, ())
 
