@@ -11,9 +11,6 @@ lava-server:
     name: python3-yaml
   django-filter:
     name: python3-django-filters
-  django-restricted-resource:
-    version: ">=2016.8"
-    name: python3-django-restricted-resource
   django-tables2:
     version: ">=1.21.2"
     name: python3-django-tables2

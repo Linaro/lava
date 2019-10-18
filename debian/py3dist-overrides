@@ -15,7 +15,6 @@ djangorestframework_filters python3-djangorestframework-filters; PEP386
 # List dependencies that dh_python3 success to guess but fails to set the
 # required version.
 # Listing the packages here, force dj_python3 to set the right version.
-django_restricted_resource python3-django-restricted-resource; PEP386
 django_tables2 python3-django-tables2; PEP386
 django-filter python3-django-filters; PEP386
 docutils python3-docutils; PEP386
