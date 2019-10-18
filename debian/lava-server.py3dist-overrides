@@ -7,7 +7,6 @@ setproctitle python3-setproctitle; PEP386
 pytz python3-tz; PEP386
 file-magic python3-magic; PEP386
 django python3-django; PEP386
-django_restricted_resource python3-django-restricted-resource; PEP386
 django_tables2 python3-django-tables2; PEP386
 linaro_django_xmlrpc linaro-django-xmlrpc; PEP386
 lava_dispatcher lava-dispatcher; PEP386

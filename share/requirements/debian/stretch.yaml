@@ -9,9 +9,6 @@ lava-server:
     name: python3-django
   PyYAML:
     name: python3-yaml
-  django-restricted-resource:
-    version: ">=2016.8"
-    name: python3-django-restricted-resource
   djangorestframework:
     name: python3-djangorestframework
   docutils:
