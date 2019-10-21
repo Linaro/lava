@@ -52,17 +52,19 @@ It is split accoss the following permissions:
 
 * **view**
 * **submit**
-* **admin**
+* **change**
 
-LAVA per-object authorization works in an inverse manner, meaning that if there
-are no permissions assigned for an object, it is unprotected. Once a permission
-is assigned to it for a specific group, the system will check that the specific
-user belongs to the group and allow/disallow the access rights.
+.. important:: LAVA per-object authorization works in an **inverse** manner,
+               meaning that if there are no permissions assigned for an object,
+               that object is considered unprotected. Once a permission is
+               assigned to it for a specific group, the system will check that
+               the specific user belongs to the group and allow/disallow the
+               access rights.
 
-It is also **inheritable** meaning that the permissions from ``device type``
-are passed over to a ``device`` and permissions from a ``device`` are passed
-over to ``test job``. More in depth explanation on this can be found later in
-this chapter.
+Auth system is also working in **inheritable** manner, meaning that the
+permissions from ``device type`` are passed over to a ``device`` and
+permissions from a ``device`` are passed over to ``test job``. More in depth
+explanation on this can be found later in this chapter.
 
 Permission inheritance
 **********************
@@ -88,12 +90,19 @@ and it will be applied to all the lower level objects, i.e. if you set the
 **view** permission for aforementioned 'lkft' group for the ``device type``,
 all the devices and test job will be automagically hidden for non-lkft users.
 
+Higher level permission settings will always have advantage over the lower
+level ones. For example if a group has a specific permission over a device, it
+does not matter if the same group does not have any permissions over a device
+type, that group will be able to access that particular device using said
+permission.
+
+
 Anonymous users vs authenticated users
 **************************************
 
 For out of the box LAVA installation, device types, devices and test jobs are
 publicly visible meaning that a non-authenticated users can view everything.
-This does not apply to **submit** and **admin** permissions.
+This does not apply to **submit** and **change** permissions.
 
 But if the object is ``permission restricted`` for **view** permission, or it
 inherits the permission restriction, anonymous users will not be able to see
@@ -156,6 +165,37 @@ by introducing the new model.
    per-object settings to so some users might see a change in behavior (i.e.
    not being able to view a test job where previously they could)
 
+Examples
+********
+
+For the sake of simplicity, let's say we have 'device-type1', 'device1' (of
+device-type1), and groups 'group1' and 'group2'.
+
+1) no per-object permissions set on device-type1 nor device1: All authenticated
+   as well as anonymous users are able to access device-type1, device1 page and
+   all test jobs view pages (i.e. /scheduler/device_type/qemu etc.) as well
+   as plain logs etc. All authenticated users are able to submit jobs to
+   device1. No anonymous users can submit jobs (ever).
+
+2) device1 has a per-object permission 'Can submit to device' set to group1:
+   Now only users from group1 are able to submit jobs to device1.
+   All authenticated and anonymous users are still able to **view** device1 and
+   all jobs running on it since there's no restriction for **view** permission.
+
+3) group1 has a per-object permission **view** for device-type1 and device1 has
+   no per-object permissions set: only users from group1 can **view** the
+   device-type1, device1 and all associated test jobs. No-one else.
+
+4) group1 has a per-object permission **view** for device-type1 and group2 has
+   a per-object permission **view** for device1: users from group1 are not able
+   to **view** device1 (nor any testjobs running on it) but they will be able
+   to access device-type1 details page.
+   Users from group1 will be able to **view** other devices (if any) of
+   the device-type1, but only if those devices have no **view** permissions set
+   for them (or they belong to some other groups that are included in those
+   permissions). users from group2 will be able to **view** the device1 and all
+   the test jobs running on it but will not be able to access the device-type1
+   detail page.
 
 Visibility decision trees
 *************************
