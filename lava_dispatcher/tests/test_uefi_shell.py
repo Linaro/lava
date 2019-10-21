@@ -33,7 +33,7 @@ class TestUefiShell(StdoutTestCase):
     def test_shell_reference(self):
         self.job.validate()
         self.assertEqual([], self.job.pipeline.errors)
-        description_ref = self.pipeline_reference("juno-uefi-nfs.yaml")
+        description_ref = self.pipeline_reference("juno-uefi-nfs.yaml", job=self.job)
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
     def test_device_juno_uefi(self):

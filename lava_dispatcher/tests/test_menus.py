@@ -152,7 +152,7 @@ class TestUefi(StdoutTestCase):  # pylint: disable=too-many-public-methods
         ][0]
         self.assertEqual(selector.selector.prompt, "Start:")
         self.assertIsInstance(selector.items, list)
-        description_ref = self.pipeline_reference("mustang-uefi.yaml")
+        description_ref = self.pipeline_reference("mustang-uefi.yaml", job=self.job)
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
         # just dummy strings
         substitution_dictionary = {
@@ -219,7 +219,7 @@ class TestUefi(StdoutTestCase):  # pylint: disable=too-many-public-methods
         job = factory.create_job("tc2-01.jinja2", "sample_jobs/tc2.yaml")
         job.validate()
         self.assertEqual([], job.pipeline.errors)
-        description_ref = self.pipeline_reference("tc2.yaml")
+        description_ref = self.pipeline_reference("tc2.yaml", job=self.job)
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
         self.assertIn("uefi-menu", job.device["actions"]["boot"]["methods"])
         uefi_menu_block = job.device["actions"]["boot"]["methods"]["uefi-menu"]

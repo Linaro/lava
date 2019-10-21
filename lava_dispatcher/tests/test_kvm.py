@@ -157,7 +157,7 @@ class TestKVMBasicDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
                 self.assertEqual(action.job, self.job)
 
     def test_pipeline(self):
-        description_ref = self.pipeline_reference("kvm.yaml")
+        description_ref = self.pipeline_reference("kvm.yaml", job=self.job)
         deploy = [
             action
             for action in self.job.pipeline.actions
@@ -250,7 +250,7 @@ class TestKVMPortable(StdoutTestCase):  # pylint: disable=too-many-public-method
                 self.assertEqual(action.job, self.job)
 
     def test_pipeline(self):
-        description_ref = self.pipeline_reference("kvm-noos.yaml")
+        description_ref = self.pipeline_reference("kvm-noos.yaml", job=self.job)
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
     def test_validate(self):
@@ -277,7 +277,7 @@ class TestKVMQcow2Deploy(StdoutTestCase):  # pylint: disable=too-many-public-met
                 self.assertEqual(action.job, self.job)
 
     def test_pipeline(self):
-        description_ref = self.pipeline_reference("kvm-qcow2.yaml")
+        description_ref = self.pipeline_reference("kvm-qcow2.yaml", job=self.job)
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
     def test_validate(self):
@@ -306,7 +306,7 @@ class TestKVMDownloadLocalDeploy(
                 self.assertEqual(action.job, self.job)
 
     def test_pipeline(self):
-        description_ref = self.pipeline_reference("kvm-local.yaml")
+        description_ref = self.pipeline_reference("kvm-local.yaml", job=self.job)
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
 
@@ -397,7 +397,7 @@ class TestKVMInlineTestDeploy(
         self.assertNotIn(1, qemu.sub_command)
 
     def test_pipeline(self):
-        description_ref = self.pipeline_reference("kvm-inline.yaml")
+        description_ref = self.pipeline_reference("kvm-inline.yaml", job=self.job)
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
         self.assertEqual(len(self.job.pipeline.describe()), 4)
@@ -475,7 +475,7 @@ class TestKvmConnection(StdoutTestCase):
 
     def test_kvm_connection(self):
         self.job.validate()
-        description_ref = self.pipeline_reference("qemu-reboot.yaml")
+        description_ref = self.pipeline_reference("qemu-reboot.yaml", job=self.job)
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
         bootaction = [
             action
@@ -1064,7 +1064,7 @@ class TestQemuNFS(StdoutTestCase):
     @unittest.skipIf(not os.path.exists(SYS_CLASS_KVM), "Cannot use --enable-kvm")
     def test_qemu_nfs(self):
         self.assertIsNotNone(self.job)
-        description_ref = self.pipeline_reference("qemu-nfs.yaml")
+        description_ref = self.pipeline_reference("qemu-nfs.yaml", job=self.job)
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
         boot = [

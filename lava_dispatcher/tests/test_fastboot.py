@@ -77,7 +77,7 @@ class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
                 self.assertEqual(action.job, self.job)
 
     def test_pipeline(self):
-        description_ref = self.pipeline_reference("fastboot.yaml")
+        description_ref = self.pipeline_reference("fastboot.yaml", job=self.job)
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
     @unittest.skipIf(

@@ -28,7 +28,7 @@ class TestCommand(StdoutTestCase):
         self.job = factory.create_kvm_job("sample_jobs/kvm-command.yaml")
 
     def test_pipeline(self):
-        description_ref = self.pipeline_reference("kvm-command.yaml")
+        description_ref = self.pipeline_reference("kvm-command.yaml", job=self.job)
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
         command = [
