@@ -53,11 +53,16 @@ from linaro_django_xmlrpc.models import AuthToken
 
 class GroupObjectPermissionInline(admin.TabularInline):
     extra = 0
+    supported_permissions = (
+        DeviceType.PERMISSIONS_PRIORITY + Device.PERMISSIONS_PRIORITY
+    )
 
     def formfield_for_foreignkey(self, db_field, request=None, **kwargs):
+        supported_codenames = [x.split(".")[1] for x in self.supported_permissions]
         if db_field.name == "permission":
             kwargs["queryset"] = Permission.objects.filter(
-                content_type__model=self.parent_model._meta.object_name.lower()
+                content_type__model=self.parent_model._meta.object_name.lower(),
+                codename__in=supported_codenames,
             )
         return super(GroupObjectPermissionInline, self).formfield_for_foreignkey(
             db_field, request, **kwargs
