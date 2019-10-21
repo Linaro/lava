@@ -38,7 +38,16 @@ from django.http.response import HttpResponse
 
 from rest_framework import routers, serializers, status, views, viewsets
 from rest_framework.authtoken.views import ObtainAuthToken
-from rest_framework.decorators import detail_route
+
+try:
+    from rest_framework.decorators import detail_route
+except ImportError:
+    from rest_framework.decorators import action
+
+    def detail_route(methods, suffix):
+        return action(detail=True, methods=methods, suffix=suffix)
+
+
 from rest_framework.exceptions import NotFound, AuthenticationFailed
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
@@ -233,9 +242,11 @@ class TestJobViewSet(viewsets.ModelViewSet):
     filter_class = filters.TestJobFilter
 
     def get_queryset(self):
-        return self.queryset.prefetch_related(
-            "tags", "failure_tags", "viewing_groups"
-        ).visible_by_user(self.request.user)
+        return (
+            self.queryset.select_related("submitter")
+            .prefetch_related("tags", "failure_tags", "viewing_groups")
+            .visible_by_user(self.request.user)
+        )
 
     @detail_route(methods=["get"], suffix="junit")
     def junit(self, request, **kwargs):
@@ -444,7 +455,9 @@ class DeviceTypeViewSet(viewsets.ReadOnlyModelViewSet):
     filter_class = filters.DeviceTypeFilter
 
     def get_queryset(self):
-        return DeviceType.objects.visible_by_user(self.request.user)
+        return DeviceType.objects.visible_by_user(self.request.user).prefetch_related(
+            "cores", "aliases"
+        )
 
 
 class DeviceSerializer(serializers.ModelSerializer):
@@ -501,7 +514,9 @@ class DeviceViewSet(viewsets.ReadOnlyModelViewSet):
     filter_class = filters.DeviceFilter
 
     def get_queryset(self):
-        query = Device.objects.visible_by_user(self.request.user)
+        query = Device.objects.prefetch_related("tags").visible_by_user(
+            self.request.user
+        )
         if not self.request.query_params.get("all", False):
             query = query.exclude(health=Device.HEALTH_RETIRED)
         return query

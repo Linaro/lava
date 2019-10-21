@@ -35,6 +35,8 @@ from django_filters.filters import ChoiceFilter
 
 import rest_framework_filters as filters
 
+from lava_server.compat import RelatedFilter
+
 
 class GroupFilter(filters.FilterSet):
     class Meta:
@@ -45,9 +47,7 @@ class GroupFilter(filters.FilterSet):
 
 
 class UserFilter(filters.FilterSet):
-    group = filters.RelatedFilter(
-        GroupFilter, name="group", queryset=Group.objects.all()
-    )
+    group = RelatedFilter(GroupFilter, name="group", queryset=Group.objects.all())
 
     class Meta:
         model = User
@@ -164,19 +164,15 @@ class WorkerFilter(filters.FilterSet):
 
 
 class DeviceTypeFilter(filters.FilterSet):
-    architecture = filters.RelatedFilter(
+    architecture = RelatedFilter(
         ArchitectureFilter, name="architecture", queryset=Architecture.objects.all()
     )
-    processor = filters.RelatedFilter(
+    processor = RelatedFilter(
         ProcessorFamilyFilter, name="processor", queryset=ProcessorFamily.objects.all()
     )
-    alias = filters.RelatedFilter(
-        AliasFilter, name="alias", queryset=Alias.objects.all()
-    )
-    bits = filters.RelatedFilter(
-        BitWidthFilter, name="bits", queryset=BitWidth.objects.all()
-    )
-    cores = filters.RelatedFilter(CoreFilter, name="cores", queryset=Core.objects.all())
+    alias = RelatedFilter(AliasFilter, name="alias", queryset=Alias.objects.all())
+    bits = RelatedFilter(BitWidthFilter, name="bits", queryset=BitWidth.objects.all())
+    cores = RelatedFilter(CoreFilter, name="cores", queryset=Core.objects.all())
     health_denominator = ChoiceFilter(choices=DeviceType.HEALTH_DENOMINATOR)
 
     class Meta:
@@ -208,22 +204,22 @@ class DeviceTypeFilter(filters.FilterSet):
 
 
 class DeviceFilter(filters.FilterSet):
-    device_type = filters.RelatedFilter(
+    device_type = RelatedFilter(
         DeviceTypeFilter, name="device_type", queryset=DeviceType.objects.all()
     )
-    physical_owner = filters.RelatedFilter(
+    physical_owner = RelatedFilter(
         UserFilter, name="physical_owner", queryset=User.objects.all()
     )
-    physical_group = filters.RelatedFilter(
+    physical_group = RelatedFilter(
         GroupFilter, name="physical_group", queryset=Group.objects.all()
     )
-    tags = filters.RelatedFilter(TagFilter, name="tags", queryset=Tag.objects.all())
-    last_health_report_job = filters.RelatedFilter(
+    tags = RelatedFilter(TagFilter, name="tags", queryset=Tag.objects.all())
+    last_health_report_job = RelatedFilter(
         "TestJobFilter",
         name="last_health_report_job",
         queryset=TestJob.objects.filter(health_check=True),
     )
-    worker_host = filters.RelatedFilter(
+    worker_host = RelatedFilter(
         WorkerFilter, name="worker_host", queryset=Worker.objects.all()
     )
     health = ChoiceFilter(choices=Device.HEALTH_CHOICES)
@@ -262,22 +258,20 @@ class DeviceFilter(filters.FilterSet):
 
 
 class TestJobFilter(filters.FilterSet):
-    requested_device_type = filters.RelatedFilter(
+    requested_device_type = RelatedFilter(
         DeviceTypeFilter,
         name="requested_device_type",
         queryset=DeviceType.objects.all(),
     )
-    actual_device = filters.RelatedFilter(
+    actual_device = RelatedFilter(
         DeviceFilter, name="actual_device", queryset=Device.objects.all()
     )
-    tags = filters.RelatedFilter(TagFilter, name="tags", queryset=Tag.objects.all())
-    viewing_groups = filters.RelatedFilter(
+    tags = RelatedFilter(TagFilter, name="tags", queryset=Tag.objects.all())
+    viewing_groups = RelatedFilter(
         GroupFilter, name="viewing_groups", queryset=Group.objects.all()
     )
-    submitter = filters.RelatedFilter(
-        UserFilter, name="submitter", queryset=User.objects.all()
-    )
-    failure_tags = filters.RelatedFilter(
+    submitter = RelatedFilter(UserFilter, name="submitter", queryset=User.objects.all())
+    failure_tags = RelatedFilter(
         JobFailureTagFilter, name="failure_tags", queryset=JobFailureTag.objects.all()
     )
     health = ChoiceFilter(choices=TestJob.HEALTH_CHOICES)

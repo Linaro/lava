@@ -423,3 +423,36 @@ ok 2 - bar
         )
         assert response.status_code == 201  # nosec - unit test support
         assert TestJob.objects.count() == 3  # nosec - unit test support
+
+
+def test_view_root(client):
+    ret = client.get(reverse("api-root", args=[versions.versions[-1]]) + "?format=api")
+    assert ret.status_code == 200
+
+
+def test_view_devices(client, db):
+    ret = client.get(
+        reverse("api-root", args=[versions.versions[-1]]) + "devices/?format=api"
+    )
+    assert ret.status_code == 200
+
+
+def test_view_devicetypes(client, db):
+    ret = client.get(
+        reverse("api-root", args=[versions.versions[-1]]) + "devicetypes/?format=api"
+    )
+    assert ret.status_code == 200
+
+
+def test_view_jobs(client, db):
+    ret = client.get(
+        reverse("api-root", args=[versions.versions[-1]]) + "jobs/?format=api"
+    )
+    assert ret.status_code == 200
+
+
+def test_view_workers(client, db):
+    ret = client.get(
+        reverse("api-root", args=[versions.versions[-1]]) + "workers/?format=api"
+    )
+    assert ret.status_code == 200
