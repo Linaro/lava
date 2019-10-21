@@ -27,9 +27,4 @@ service lava-slave restart
 service lava-logs restart
 
 # scenario files are not packaged & need django support, test the local tree only.
-python3 ./lava_server/manage.py test --noinput -v2 \
-	lava_scheduler_app \
-	linaro_django_xmlrpc.tests \
-	lava_results_app
-
-python3 -m unittest discover -v lava_dispatcher/tests
+./ci-run -dots
