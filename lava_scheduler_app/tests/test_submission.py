@@ -168,17 +168,17 @@ class TestTestJob(
 
     def test_user_permission(self):
         user = self.factory.make_user()
-        admin_perm = Permission.objects.get(codename="admin_device")
-        self.assertEqual("lava_scheduler_app", admin_perm.content_type.app_label)
-        self.assertIsNotNone(admin_perm)
-        self.assertEqual(admin_perm.name, "Can admin device")
-        user.user_permissions.add(admin_perm)
+        change_perm = Permission.objects.get(codename="change_device")
+        self.assertEqual("lava_scheduler_app", change_perm.content_type.app_label)
+        self.assertIsNotNone(change_perm)
+        self.assertEqual(change_perm.name, "Can change device")
+        user.user_permissions.add(change_perm)
         user.save()
         user = User.objects.get(username=user.username)
         self.assertEqual(
-            {u"lava_scheduler_app.admin_device"}, user.get_all_permissions()
+            {u"lava_scheduler_app.change_device"}, user.get_all_permissions()
         )
-        self.assertTrue(user.has_perm("lava_scheduler_app.admin_device"))
+        self.assertTrue(user.has_perm("lava_scheduler_app.change_device"))
 
     def test_json_yaml(self):
         self.factory.cleanup()
@@ -219,8 +219,6 @@ class TestTestJob(
     def test_device_type_alias(self):
         self.factory.cleanup()
         user = self.factory.make_user()
-        user.user_permissions.add(Permission.objects.get(codename="add_testjob"))
-        user.save()
         dt = self.factory.make_device_type(name="qemu")
         device = self.factory.make_device(device_type=dt, hostname="qemu-1")
         device.save()
@@ -233,8 +231,6 @@ class TestTestJob(
     def test_nonexisting_device_type_alias(self):
         self.factory.cleanup()
         user = self.factory.make_user()
-        user.user_permissions.add(Permission.objects.get(codename="add_testjob"))
-        user.save()
         dt = self.factory.make_device_type(name="qemu")
         device = self.factory.make_device(device_type=dt, hostname="qemu-1")
         device.save()

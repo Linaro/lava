@@ -77,7 +77,7 @@
         {% endif %}
           {{ device.get_health_display }}
         </span>
-        {% if can_admin %}
+        {% if can_change %}
         &nbsp;<a href="#healthModal" data-toggle="modal" data-target="#healthModal"><span class="glyphicon glyphicon-pencil"></span></a>
         <div class="modal fade" id="healthModal" tabindex="-1" role="dialog" aria-labelledby="healthModalLabel">
           <div class="modal-dialog" role="document">

@@ -65,11 +65,11 @@ class PermissionAuthTest(TestCaseWithFactory):
         # Test group permission queries.
         auth = PermissionAuth(self.user)
         GroupDevicePermission.objects.assign_perm(
-            "admin_device", self.group, self.device
+            "change_device", self.group, self.device
         )
         permissions = auth.get_group_perms(self.device)
         self.assertEqual(
-            permissions, {"admin_device", "view_device", "submit_to_device"}
+            permissions, {"change_device", "view_device", "submit_to_device"}
         )
 
     def test_anonymous_unrestricted_device_type(self):
@@ -93,7 +93,7 @@ class PermissionAuthTest(TestCaseWithFactory):
         guy_fawkes = AnonymousUser()
         auth = PermissionAuth(guy_fawkes)
         GroupDeviceTypePermission.objects.assign_perm(
-            "admin_devicetype", self.group, self.device_type
+            "change_devicetype", self.group, self.device_type
         )
         self.assertTrue(
             auth.has_perm("lava_scheduler_app.view_devicetype", self.device_type)
@@ -116,7 +116,7 @@ class PermissionAuthTest(TestCaseWithFactory):
         guy_fawkes = AnonymousUser()
         auth = PermissionAuth(guy_fawkes)
         GroupDevicePermission.objects.assign_perm(
-            "admin_device", self.group, self.device
+            "change_device", self.group, self.device
         )
         self.assertTrue(auth.has_perm("lava_scheduler_app.view_device", self.device))
 
@@ -169,13 +169,15 @@ class PermissionAuthTest(TestCaseWithFactory):
         user = User.objects.create(username="notactive")
         user.groups.add(self.group)
         GroupDevicePermission.objects.assign_perm(
-            "admin_device", self.group, self.device
+            "change_device", self.group, self.device
         )
 
         check = PermissionAuth(user)
-        self.assertTrue(check.has_perm("lava_scheduler_app.admin_device", self.device))
+        self.assertTrue(check.has_perm("lava_scheduler_app.change_device", self.device))
         user.is_active = False
-        self.assertFalse(check.has_perm("lava_scheduler_app.admin_device", self.device))
+        self.assertFalse(
+            check.has_perm("lava_scheduler_app.change_device", self.device)
+        )
 
     def test_get_perms(self):
         device1 = self.factory.make_device(
@@ -185,7 +187,7 @@ class PermissionAuthTest(TestCaseWithFactory):
             device_type=self.device_type, hostname="qemu-tmp-02"
         )
 
-        assign_perms = {device1: ("admin_device",), device2: ("view_device",)}
+        assign_perms = {device1: ("change_device",), device2: ("view_device",)}
 
         auth = PermissionAuth(self.user)
 

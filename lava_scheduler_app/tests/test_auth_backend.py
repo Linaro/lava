@@ -54,10 +54,10 @@ class BackendAuthTest(TestCaseWithFactory):
             set(self.backend.get_all_permissions(self.user, self.device)),
         )
         GroupDevicePermission.objects.assign_perm(
-            "admin_device", self.group, self.device
+            "change_device", self.group, self.device
         )
         self.assertEqual(
-            set(["admin_device", "submit_to_device", "view_device"]),
+            set(["change_device", "submit_to_device", "view_device"]),
             set(self.backend.get_all_permissions(self.user, self.device)),
         )
 
@@ -69,20 +69,20 @@ class BackendAuthTest(TestCaseWithFactory):
             set(self.backend.get_all_permissions(self.user, self.device_type)),
         )
         GroupDeviceTypePermission.objects.assign_perm(
-            "admin_devicetype", self.group, self.device_type
+            "change_devicetype", self.group, self.device_type
         )
         self.assertEqual(
-            set(["admin_devicetype", "view_devicetype", "submit_to_devicetype"]),
+            set(["change_devicetype", "view_devicetype", "submit_to_devicetype"]),
             self.backend.get_all_permissions(self.user, self.device_type),
         )
 
     def test_has_perm(self):
         GroupDevicePermission.objects.assign_perm(
-            "admin_device", self.group, self.device
+            "change_device", self.group, self.device
         )
         self.assertTrue(
             self.backend.has_perm(
-                self.user, "lava_scheduler_app.admin_device", self.device
+                self.user, "lava_scheduler_app.change_device", self.device
             )
         )
         self.assertTrue(
@@ -98,13 +98,13 @@ class BackendAuthTest(TestCaseWithFactory):
 
     def test_has_global_perm(self):
         user = self.factory.make_user()
-        user.user_permissions.add(Permission.objects.get(codename="admin_device"))
+        user.user_permissions.add(Permission.objects.get(codename="change_device"))
         self.assertTrue(
-            self.backend.has_perm(user, "lava_scheduler_app.admin_device", self.device)
+            self.backend.has_perm(user, "lava_scheduler_app.change_device", self.device)
         )
 
     def test_has_perm_wrong_app_label(self):
         with TestCase.assertRaises(self, ValueError):
             self.backend.has_perm(
-                self.user, "lava_results_app.admin_device", self.device
+                self.user, "lava_results_app.change_device", self.device
             )
