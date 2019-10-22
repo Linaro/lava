@@ -12,7 +12,7 @@ LAVA jobs and LAVA test cases may fail for a number of reasons, including:
   * YAML files copied from a repository to a location outside VCS without
     adding a Version to the YAML
 
-  * Custom scriptsfailing, not available or not executable - see
+  * Custom scripts failing, not available or not executable - see
     :ref:`custom_scripts`
 
   * missing dependencies
@@ -49,7 +49,7 @@ Job failure tags
 Failure tags allow the same failure reason to be marked on a variety of
 different jobs which may otherwise be unrelated. If a particular failure starts
 to become common with a particular piece of hardware or due to a specific
-cause, a tag can be created by the lab aministrators.
+cause, a tag can be created by the lab administrators.
 
 Failure tags can be used whether the job was marked as ``Incomplete`` in LAVA
 or not. The tags will show on the job output but only ``Incomplete`` jobs will

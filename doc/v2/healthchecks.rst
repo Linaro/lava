@@ -86,7 +86,7 @@ test image. Multiple deploy tasks can be set, if required, although this will
 mean that each health check takes longer.
 
 Wherever a particular device type has common issues, a specific test for that
-behaviour should be added to the health check for that device type.
+behavior should be added to the health check for that device type.
 
 .. _health_check_setup_checks:
 

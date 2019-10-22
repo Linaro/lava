@@ -902,13 +902,13 @@ straight away.
       unpack_command: tar -C / -xzf
 
 .. note:: The ``-C /`` command to tar is **essential** or the test shell will
-   not be able to start. The overlay will use ``gzip`` compresssion, so pass
+   not be able to start. The overlay will use ``gzip`` compression, so pass
    the ``z`` option to ``tar``.
 
 Deployment differences
 ----------------------
 
-The ``-S --progress=dot:giga`` options to wget in the example above optimise
+The ``-S --progress=dot:giga`` options to wget in the example above optimize
 the output for serial console logging to avoid wasting line upon line of
 progress percentage dots. If the system uses ``busybox``, these options may not
 be supported by the version of ``wget`` on the device.

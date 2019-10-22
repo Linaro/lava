@@ -78,7 +78,7 @@ Make your changes
     message. Everything which is intended to help users to add this
     support to their own test jobs must be in the documentation.
 
-  * Avoid duplicating or summarising the documentation in the commit
+  * Avoid duplicating or summarizing the documentation in the commit
     message, reviewers will be reading the documentation as well.
 
   * Use comments in the code in preference to detailed commit messages.
@@ -409,8 +409,7 @@ when modifying the documentation.
 #. When you build your changes from clean, make sure there are no
    warning or error messages from the build.
 
-#. Use ``en_GB`` unless referring to elements of code which use
-   ``en_US``.
+#. Use ``en_US`` in both code and documentation.
 
 #. Use syntax highlighting for code and check the rendered page. For
    example, ``code-block:: shell`` relates to the contents of shell
@@ -654,7 +653,7 @@ Some additional Python3 dependencies will be required. In particular,
 ``python3-django-auth-ldap`` and ``python3-django-testscenarios`` will
 need to be installed from ``stretch-backports``.
 
-.. warning:: Django wil be dropping python2.7 support with the 2.2LTS
+.. warning:: Django will be dropping python2.7 support with the 2.2LTS
    release, *frozen* instances of LAVA will not be able to use django
    updates after that point.
 
@@ -850,7 +849,7 @@ Other useful features from `django_extensions`_ are as follows:
 Developer access to django shell
 ================================
 
-Default configurations use a side-effect of the logging behaviour to
+Default configurations use a side-effect of the logging behavior to
 restrict access to the ``lava-server manage`` operations which typical
 Django apps expose through the ``manage.py`` interface. This is because
 ``lava-server manage shell`` provides read-write access to the

@@ -105,7 +105,7 @@ For each test job, two variables are describing the current status:
 Scheduler
 #########
 
-The scheduler is called by ``lava-master`` approximatively every 20 seconds.
+The scheduler is called by ``lava-master`` approximately every 20 seconds.
 The scheduler starts by scheduling health-checks. The remaining devices are
 then considered for test jobs.
 

@@ -24,7 +24,7 @@ Configure Squid
 
 You will need to customize according to your server, like disk layout, space.
 
-Need to analyse and tune by collecting information when squid running with real
+Need to analyze and tune by collecting information when squid running with real
 cases, like cache policy, file system.
 
 Mandatory configuration options

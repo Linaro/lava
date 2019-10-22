@@ -163,7 +163,7 @@ can be easily converted or compared:
 
 .. note:: Since test case name can be generated in such ways that no character
    validation is viable, the test case URL has been changed and is now
-   generated using the test case ID. Old URL behaviour is still supported when
+   generated using the test case ID. Old URL behavior is still supported when
    looking up the test case in the results but test case URLs with non
    supported characters will return a Not Found (404) page. Links within test
    job log files all use the test case ID.
@@ -176,7 +176,7 @@ can be easily converted or compared:
 Test Raise
 ----------
 
-Some test definitions are designed to configure or initialise a service or
+Some test definitions are designed to configure or initialize a service or
 operation or peripheral device. If this setup task fails, the later
 test definitions will fail but that will take time and the failure messages
 may not be obvious.
@@ -214,7 +214,7 @@ In the log file this section looks like:
    created before moving on, so there can be an offset between the point linked
    from the result (where the test case entry was created) to the point
    slightly earlier in the log where the test itself was executed. This wait
-   behaviour caused various bugs as it needs to block at the shell read command
+   behavior caused various bugs as it needs to block at the shell read command
    which gets confused by other messages on the serial console.
 
 There is a REST API using the name of the test definition and the name of the

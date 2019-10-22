@@ -56,7 +56,7 @@ Results
 
 #. Visibility of test job results is determined solely by the job submission.
 
-#. Results are part of the test job and cannot be manully created.
+#. Results are part of the test job and cannot be manually created.
 
 #. Result analysis is primarily a task for other engines, results can be
    exported in full but the principle emphasis is on data generation.
@@ -214,7 +214,7 @@ the type of boot is specified as part of a single deploy action which covers
 all devices and all jobs.
 
 Equally, a pipeline job submission requires that assumptions are removed in
-favour of explicit settings. Just because a URL ends in ``.gz`` does not mean
+favor of explicit settings. Just because a URL ends in ``.gz`` does not mean
 that the dispatcher will assume that ``gz`` decompression can be used - this
 must be specified or no decompression is done at all.
 

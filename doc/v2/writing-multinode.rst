@@ -32,7 +32,7 @@ Writing a MultiNode job file
 ****************************
 
 Our first example is the simplest possible MultiNode test job - the same job
-runs on two devices of the same type, without using any of the synchronisation
+runs on two devices of the same type, without using any of the synchronization
 calls.
 
 .. index:: MultiNode - job context, MultiNode - roles
@@ -182,9 +182,9 @@ bootup, so we can just use a single ``boot`` block and list both ``client`` and
      :start-after: # START-BOOT-BLOCK
      :end-before: # END-BOOT-BLOCK
 
-.. _using_multinode_synchronisation:
+.. _using_multinode_synchronization:
 
-Using MultiNode commands to synchronise devices
+Using MultiNode commands to synchronize devices
 ***********************************************
 
 A very common requirement in a MultiNode test is that a device (or devices)
@@ -196,12 +196,12 @@ only way to be sure that the server is ready for client connections is to make
 every client in the group wait until the server confirms that it is ready.
 
 Continuing with the same ``panda`` and ``beaglebone-black`` example, let's look
-at synchronising devices within a MultiNode group.
+at synchronizing devices within a MultiNode group.
 
-Controlling synchronisation from the test shell
+Controlling synchronization from the test shell
 ===============================================
 
-Synchronisation is done using the :ref:`multinode_api`, specifically the
+Synchronization is done using the :ref:`multinode_api`, specifically the
 :ref:`lava_send` and :ref:`lava_wait` calls.
 
 .. seealso:: :ref:`multinode_further_features`
@@ -217,9 +217,9 @@ clients that the server is ready using :ref:`lava_send`:
      :end-before: # END-TEST-SERVER-BLOCK
 
 .. note:: It is recommended to use :term:`inline` definitions for the
-   calls to the synchronisation helpers. This makes it much easier to debug
-   when a synchronisation call times out and will allow the *flow* of the
-   MultiNode job to be summarised in the UI.
+   calls to the synchronization helpers. This makes it much easier to debug
+   when a synchronization call times out and will allow the *flow* of the
+   MultiNode job to be summarized in the UI.
 
 The test definition specified for the ``client`` role causes the client devices
 to wait until the test definition specified for the ``server`` role uses
@@ -242,7 +242,7 @@ the complete example test job: `second-multinode-job.yaml
 HERE. Remember, you'll need specific hardware devices for this to
 work.
 
-Controlling synchronisation from the dispatcher
+Controlling synchronization from the dispatcher
 ===============================================
 
 The MultiNode protocol *also* provides support for using the MultiNode API
@@ -288,7 +288,7 @@ the messageID using :ref:`lava_wait` or :ref:`lava_wait_all`. Data is sent as
 key-value pairs.
 
 .. note:: The message data is stored in a cache file which will be
-   overwritten when the next synchronisation call is made. Ensure that your
+   overwritten when the next synchronization call is made. Ensure that your
    scripts make use of (or copy aside) any MultiNode cache data before calling
    any other MultiNode API helpers that may clear the cache.
 
@@ -427,7 +427,7 @@ installed and configured, ready to be used in the deploy stage of the device.
 Just as with the protocols block, the MultiNode requirements take priority over
 the LXC, so the LXC deploy and boot actions **must** declare a role. To be
 useful with the device, the role must match the role assigned to the device. In
-this example, that role is labelled ``host`` and uses the ``probe`` namespace.
+this example, that role is labeled ``host`` and uses the ``probe`` namespace.
 
 .. include:: examples/test-jobs/bbb-lxc-ssh-guest.yaml
      :code: yaml

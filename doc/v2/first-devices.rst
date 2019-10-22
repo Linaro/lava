@@ -44,14 +44,14 @@ database. When viewing a specific element (for example a single Test Job or a
 single Device), click on the **History** link to view all changes relating to
 that element. There is also a link back to the UI view of the same element.
 
-.. note:: the organisation, layout and content of the django administration
+.. note:: the organization, layout and content of the django administration
    interface is subject to change with upgrades to django itself and these
    changes are outside the control of LAVA.
 
 .. _django_admin_interface_sites:
 
-Administative interface site links
-==================================
+Administrative interface site links
+===================================
 
 The django administrative interface offers links back to your LAVA instance
 *if* the ``Sites`` element is modified. (The default django value is
@@ -123,7 +123,7 @@ on your username to see the Profile menu.
 The django administrative interface is accessed from the ``Administration``
 link in the profile menu.
 
-#. Scroll down to the group labelled ``LAVA_SCHEDULER_APP``.
+#. Scroll down to the group labeled ``LAVA_SCHEDULER_APP``.
 #. Click on ``Device types``
 
 Just before you add the device type, take a look at the available

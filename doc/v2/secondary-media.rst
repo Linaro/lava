@@ -94,7 +94,7 @@ use case.
 
 .. _secondary_media_commands:
 
-Occassional debugging
+Occasional debugging
 =====================
 
 Combined with a :ref:`hacking session <hacking_session>`, the boot commands can
@@ -455,5 +455,5 @@ bootloader, e.g.::
 
 The dispatcher does NOT analyze the incoming image - internal UUIDs inside an
 image do not change as the refactored dispatcher does **not** break up or
-reorganise the partitions. Therefore, the UUIDs of partitions inside the image
+reorganize the partitions. Therefore, the UUIDs of partitions inside the image
 **MUST** be declared by the job submissions.

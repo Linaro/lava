@@ -8,7 +8,7 @@ LAVA Software Project Contribution - Introduction
 There are clear benefits to contributing to open-source projects like
 the LAVA Software Community Project. You may solve your own problems
 more quickly than working alone, and you may also have a positive
-effect on your favourite projects.
+effect on your favorite projects.
 
 LAVA is complex and it can be hard to get started as a contributor. If
 this is your first time contributing to open source, there may be
@@ -48,7 +48,7 @@ As you learn to use LAVA, keep track of where you notice gaps in the
 documentation. Most of the documentation is written by experienced
 LAVA maintainers and there are plenty of hidden assumptions. One great
 way to start contributing is to provide new documentation to fill in
-the gaps or help to reorganise some of the existing documentation to
+the gaps or help to reorganize some of the existing documentation to
 make it easier for new users to follow. If you experienced and
 overcame a challenge because the documentation was lacking, please get
 involved and improve the documentation!
@@ -104,7 +104,7 @@ LAVA codebase as part of our internal :ref:`continuous_integration` by
 running unchanging reference LAVA test jobs against the evolving LAVA
 codebase, using as many different :term:`device types <device type>`
 as possible. As a long term project, it is important to get wide
-coverage of devices yet also to minimise changes outside the LAVA
+coverage of devices yet also to minimize changes outside the LAVA
 codebase.
 
 Historically, this testing was done using Linaro's staging test lab

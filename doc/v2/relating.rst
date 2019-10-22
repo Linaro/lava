@@ -8,7 +8,7 @@ Correlating a test result with the source code
 As part of a CI loop, the results of the LAVA test job may indicate a
 bug or regression in the source code which initiated the CI loop. These
 issues would be distinct from infrastructure or job errors and
-reporting these issues is a customised process for each team involved.
+reporting these issues is a customized process for each team involved.
 
 The details of how and why the test failed will typically be essential
 to identifying how to fix the issue, so developers need help from test
@@ -24,10 +24,10 @@ So the first problem can be correlating the test output with the actual
 failure. Test writers often need to modify how the original test
 behaves, to be able to identify which pieces of output are relevant to
 any particular test failure. Each test is different and uses different
-ways to describe, summarise, report and fail test operations. Test
-writers already need to write customised wrappers to run different
+ways to describe, summarize, report and fail test operations. Test
+writers already need to write customized wrappers to run different
 tests in similar ways. To be able to relate the failures back to the
-source code, a lot more customisation is likely to be required.
+source code, a lot more customization is likely to be required.
 
 Overall, LAVA can only be one part of the effort to triage test
 failures and debug the original source code. Results need to be
@@ -134,7 +134,7 @@ To be able to properly correlate the test results to the source code,
 it may become necessary to rewrite the test suite itself and then
 consider pushing the changes upstream.
 
-LAVA is investigating ways to help test writers standardise the ways
+LAVA is investigating ways to help test writers standardize the ways
 of running tests to be able to provide more benefit from automated
 log files. :ref:`Talk to us <getting_support>` if you have ideas for or
 experience of such changes.

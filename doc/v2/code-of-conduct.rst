@@ -9,7 +9,7 @@ Version 1.1 - September 2018
 
 The LAVA Software Community Project (LSCP), the producer of the LAVA
 Software, has adopted a code of conduct for participants. This is
-intended to cover interactions and behaviour everywhere within the
+intended to cover interactions and behavior everywhere within the
 project, including but not limited to its mailing lists, IRC channels
 and other modes of communication.
 
@@ -21,7 +21,7 @@ Be respectful
 In a project of any size, inevitably there will be people with whom
 you may disagree, or find it difficult to cooperate. Accept that, but
 even so remain respectful. Disagreement is no excuse for poor
-behaviour or personal attacks, and a community in which people feel
+behavior or personal attacks, and a community in which people feel
 threatened is not a healthy community.
 
 .. _code_of_conduct_good_faith:
@@ -97,7 +97,7 @@ be in public or in private, whatever is most appropriate. However,
 regardless of whether the message is public or not, it should still
 adhere to the relevant parts of this code of conduct; in particular, it
 should not be abusive or disrespectful. Assume good faith; it is more
-likely that participants are unaware of their bad behaviour than that
+likely that participants are unaware of their bad behavior than that
 they are intentionally trying to degrade the quality of the discussion.
 
 Serious or persistent offenders will be temporarily or permanently

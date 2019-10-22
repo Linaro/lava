@@ -54,7 +54,7 @@ images are prepared.
 Device changes
 --------------
 
-The DUT should be roooted or unlocked whereever applicable (mostly phones,
+The DUT should be roooted or unlocked wherever applicable (mostly phones,
 tabs, etc.) ``fastboot oem unlock`` or ``fastboot flash unlock``
 
 Images

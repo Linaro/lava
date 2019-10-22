@@ -299,7 +299,7 @@ list of ``connection_commands`` in the :ref:`device dictionary
 ``boot`` action) , and will keep this connection open right until the end of
 the test job.
 
-In earler versions of LAVA, only a single connection command could be used:
+In earlier versions of LAVA, only a single connection command could be used:
 
 .. code-block:: jinja
 
@@ -344,7 +344,7 @@ Or with two serial connections:
  {% set connection_commands = {'uart0': 'telnet dispatcher01 7001', 'uart1': 'telnet dispatcher01 7002'} %}
  {% set connection_tags = {'uart0': ['primary', 'telnet'], 'uart1': ['telnet']} %}
 
-This defines two serial ports (labelled ``uart0`` and ``uart``), then
+This defines two serial ports (labeled ``uart0`` and ``uart``), then
 describes how to connect to each one. Finally, it sets a ``tag`` of
 ``primary`` on ``uart0`` - this tells LAVA that ``uart0`` is the
 primary connection, the one used for boot and kernel messages. This
@@ -463,7 +463,7 @@ test this way. Note the explicit namespace ``bbb`` defined in the
 
 A ``boot`` action would typically include an ``auto_login`` section,
 but in this test we're not going to be doing any testing using the
-primary serial connection. Hence, we just add a ``prompts`` secion
+primary serial connection. Hence, we just add a ``prompts`` section
 looking for ``login:`` to check when this boot is complete.
 
 .. _multiple_serial_ports_example1_boot_connection:
@@ -793,7 +793,7 @@ deployment will be erased when the job completes.
    connections but do not mean the same thing.
 
 .. note:: Avoid using constrained resources (like ``dpkg`` or ``apt``) from
-   multiple tests (unless you take care with synchronisation calls to ensure
+   multiple tests (unless you take care with synchronization calls to ensure
    that each operation happens independently). Check through the test
    definitions for installation steps or direct calls to ``apt`` and change the
    test definitions.
@@ -825,7 +825,7 @@ The implementation of VMGroups created a role for a delayed start MultiNode
 job. This would allow one job to operate over serial, publish the IP address,
 start an SSH server and signal the second job that a connection is ready to be
 established. This may be useful for situations where a debugging shell needs to
-be opened around a virtualisation boundary.
+be opened around a virtualization boundary.
 
 There is an option for downloading or preparing the guest VM image on the host
 device within a test shell, prior to the VM delayed start. Alternatively, a

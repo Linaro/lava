@@ -77,7 +77,7 @@ Glossary of terms
 .. glossary::
 
   action level
-    The :term:`pipeline` is organised into sections and levels. The first
+    The :term:`pipeline` is organized into sections and levels. The first
     section of the pipeline is given level 1. Sub tasks of that section start
     with level 1.1 and so on. Log files and job definitions will refer to
     actions using the level. Details of the action can then be accessed using
@@ -102,7 +102,7 @@ Glossary of terms
     :term:`queries <query>`.
 
   ci loop
-    Continous Integration (CI) typically involves repeated automated
+    Continuous Integration (CI) typically involves repeated automated
     submissions using automated builds of the artifacts prompted by
     modifications made by developers. Providing feedback to the developers on
     whether the automated build passed or failed creates a loop. LAVA is
@@ -191,13 +191,13 @@ Glossary of terms
   frontend
     ``lava-server`` provides a generic `frontend` consisting of the Results,
     Queries, Job tables, Device tables and Charts. Many projects will need to
-    customise this data to make it directly relevant to the developers. This is
+    customize this data to make it directly relevant to the developers. This is
     supported using the :ref:`xml_rpc` and REST API support.
 
     .. seealso:: :ref:`what_is_lava_not` and :ref:`custom_result_handling`.
 
   group
-    LAVA uses the Django local group configuration (synchronising
+    LAVA uses the Django local group configuration (synchronizing
     Django groups with external groups like LDAP is **not** supported).
     Users can be added to groups after the specified group has been
     created by admins using the :ref:`django_admin_interface` or the
@@ -237,7 +237,7 @@ Glossary of terms
   inline
     A type of test definition which is contained within the job submission
     instead of being fetched from a URL. These are useful for debugging tests
-    and are recommended for the synchronisation support within
+    and are recommended for the synchronization support within
     :term:`multinode` test jobs.
 
     .. seealso:: :ref:`inline_test_definitions`
@@ -562,7 +562,7 @@ Glossary of terms
 
   VLANd
     VLANd is a daemon to support virtual local area networks in LAVA. This
-    support is specialised and requires careful configuration of the entire
+    support is specialized and requires careful configuration of the entire
     LAVA instance, including the physical layout of the switches and the
     devices of that instance.
 

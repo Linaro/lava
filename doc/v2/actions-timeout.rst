@@ -3,7 +3,7 @@
 Timeout Reference
 #################
 
-.. note:: The behaviour of actions and connections has changed during the
+.. note:: The behavior of actions and connections has changed during the
    development of the V2 dispatcher. See :ref:`connection_timeout` and
    :ref:`default_action_timeout`. Action timeouts can be specified for the
    default for all actions or for a specific action. Connection timeouts can be
@@ -109,7 +109,7 @@ ID, in the form::
  http://<INSTANCE_URL>/scheduler/job/<JOB_ID>/definition#<ACTION_LEVEL>
 
 The level string represents the sequence within the pipeline and is a key
-component of how the pipeline data is organised. See also
+component of how the pipeline data is organized. See also
 :ref:`pipeline_construction`.
 
 This allows typical action timeouts to be as short as practical, so that jobs

@@ -93,7 +93,7 @@ Results are transmitted live during any part of the job.
 |             |                    |   TestAction     |                   |
 +-------------+--------------------+------------------+-------------------+
 
-The Job manages the Actions using a Pipeline structure. Actions can specialise
+The Job manages the Actions using a Pipeline structure. Actions can specialize
 actions by using internal pipelines and an Action can include support for
 retries and other logical functions:
 
@@ -250,7 +250,7 @@ the pipeline moves on to processing level 1.3 or 2::
 #. A NewDevice is built from the target specified (commands.py)
 #. A Job is generated from the YAML by the parser.
 #. The top level Pipeline is constructed by the parser.
-#. Strategy classes are initialised by the parser
+#. Strategy classes are initialized by the parser
 
    #. Strategy classes add the top level Action for that strategy to the top
       level pipeline.
@@ -304,7 +304,7 @@ the Strategy selection using classmethod support.
 Where a class is used in lots of different strategies, identify whether there
 is a match between particular strategies always needing particular options
 within the class. At this point, the class can be split and particular
-strategies use a specialised class implementing the optional behaviour and
+strategies use a specialized class implementing the optional behavior and
 calling down to the base class for the rest.
 
 If there is no clear match, for example in ``testdef.py`` where any particular

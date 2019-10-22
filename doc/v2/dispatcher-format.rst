@@ -466,7 +466,7 @@ Mapping deployment actions to the python code
    (the ``name`` in ``action_data``).
 
 #. If a specific strategy class exists and is included in the parser, the
-   Strategy class will be initialised with the current pipeline using the
+   Strategy class will be initialized with the current pipeline using the
    ``select`` classmethod of the strategy. Only subclasses of the Strategy
    class will be considered in the selection. The subclasses exist in the
    actions/ directory in a sub-directory named after the strategy and a python
@@ -477,7 +477,7 @@ Mapping deployment actions to the python code
    parser to be considered. (``pylint`` will complain, so mark these import
    lines to disable ``unused-import``.)
 
-#. The initialisation of the Strategy subclass instantiates the top-level
+#. The initialization of the Strategy subclass instantiates the top-level
    Action for this Strategy.
 
 #. The named Action then populates an internal pipeline when the Strategy

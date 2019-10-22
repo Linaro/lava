@@ -93,7 +93,7 @@ UEFI graphical interfaces
 
 Other UEFI implementations (like the D02 and D03 below) use a system which is
 closer to `BIOS`_. **These are not possible to drive through serial at all** as
-changes are indicated by changing the colour highlight and other similar
+changes are indicated by changing the color highlight and other similar
 mechanisms. Admins would need to configure the system to use a boot order or
 other supported mechanism so that LAVA does not interact with the UEFI at all.
 

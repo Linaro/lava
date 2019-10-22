@@ -879,7 +879,7 @@ both apache2 and django::
 Performance overhead
 ====================
 
-Keep in mind that django-debug-toolbar has some overhead on the webpage
+Keep in mind that django-debug-toolbar has some overhead on the web page
 generation and should only be used while debugging.
 
 Django-debug-toolbar can be disabled, while not debugging, by changing the

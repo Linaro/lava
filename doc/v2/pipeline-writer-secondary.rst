@@ -7,7 +7,7 @@ Writing jobs using Secondary Connections
 
 Secondary connections involve Multinode submissions and some of the setup can
 require some thought. As with other Multinode test writing tasks, it is helpful
-to draw out the flow of each role, matching the synchronisation points, to make
+to draw out the flow of each role, matching the synchronization points, to make
 it clear which role is waiting at each point of the test.
 
 Even if the test definitions will eventually reside in external repositories,
@@ -78,7 +78,7 @@ The flow for the job will be:
 +------------------------------+---------------------------+
 | ``lava-sync`` finish         | ``lava-sync`` finish      |
 +------------------------------+---------------------------+
-| further test actions         | Finalise action & logout  |
+| further test actions         | Finalize action & logout  |
 +------------------------------+---------------------------+
 | Finalize action & power off  |                           |
 +------------------------------+---------------------------+

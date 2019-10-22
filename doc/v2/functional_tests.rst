@@ -37,10 +37,10 @@ paths required to schedule, run and cleanup test jobs.
 meta-lava
 *********
 
-``meta-lava`` is a way of running idealised test jobs to test changes
+``meta-lava`` is a way of running idealized test jobs to test changes
 in the LAVA codebase. It was developed to provide limited test coverage
 when suitable hardware was not available. It can be used to provide
-test coverage for code which detects unusual or intermittent behaviour
+test coverage for code which detects unusual or intermittent behavior
 by replaying a static log against changes in the codebase.
 ``meta-lava`` creates a DummySys device based on real log files and
 then checks that the inputs from LAVA are correct for that specific use
@@ -143,7 +143,7 @@ able to run successfully.
    distribution like Debian).
 
 #. Use the deployment tools from the distribution to ensure that the
-   behaviour of those tools does not change unexpectedly.
+   behavior of those tools does not change unexpectedly.
 
 #. Use checksums to ensure the downloaded files have not changed.
 

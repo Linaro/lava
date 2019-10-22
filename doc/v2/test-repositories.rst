@@ -287,7 +287,7 @@ shell messages to ``/dev/kmsg``, resulting in output like:
 .. note::
    * The LAVA test shell messages are now prefixed with the kernel
      message time stamp - this does not affect processing which is
-     restricted to the content betweent the ``<`` and ``>`` markers.
+     restricted to the content between the ``<`` and ``>`` markers.
 
    * The ``STARTRUN`` message is not sent to ``/dev/kmsg`` (see
      :ref:`kmsg_signal_limitations`) and is still vulnerable to kernel

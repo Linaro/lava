@@ -172,7 +172,7 @@ Advanced use cases
 
 Advanced use cases expand on this support to include:
 
-* creating and deleting customised virtual networks, where suitable hardware
+* creating and deleting customized virtual networks, where suitable hardware
   and software support exists.
 
 * extracting data from LAVA to manage job submission and result handling to

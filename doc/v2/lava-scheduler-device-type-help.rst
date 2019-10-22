@@ -49,7 +49,7 @@ Dynamic device-type information
 
 * Number of retired devices
 
-* Lenght of the job queue
+* Length of the job queue
 
 * Number of running jobs
 

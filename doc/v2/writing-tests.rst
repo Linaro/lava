@@ -40,7 +40,7 @@ repository. (See :ref:`test_repos`)
 Each test definition YAML file contains metadata and instructions.
 Metadata includes:
 
-#. A format string recognised by LAVA
+#. A format string recognized by LAVA
 #. A short name of the purpose of the file
 #. A description of the instructions contained in the file.
 
@@ -122,7 +122,7 @@ images based on supported distributions (currently, Ubuntu or Debian):
           raise a network interface manually as a `run` step and
           install or build the components directly then.
 
-When an external PPA or package repository (specific to debian based distros)
+When an external PPA or package repository (specific to debian based distributions)
 is required for installation of packages, it can be added in the `install`
 section as follows:
 
@@ -265,7 +265,7 @@ Inline test definitions will be written out as **single files**, so if the test
 definition needs to call any scripts or programs, those need to be downloaded
 or installed before being called in the inline test definition.
 
-Download or view the comple example:
+Download or view the complete example:
 `examples/test-jobs/inline-test-definition-example.yaml
 <examples/test-jobs/inline-test-definition-example.yaml>`_
 
@@ -290,7 +290,7 @@ This design is quite different from LAVA V1 because V1 used to perform *magic*
 implicit steps. In V2 test jobs need to be explicit about all steps required.
 
 Inline definitions are often used for prototyping test definitions. They are
-also the recommended choice for MultiNode synchronisation primitives, inserted
+also the recommended choice for MultiNode synchronization primitives, inserted
 between the other LAVA Test Shell Definitions which do the bulk of the work.
 
 The test job definition is what is submitted to LAVA to generate a test job.
@@ -319,7 +319,7 @@ LAVA Test Helpers
 The LAVA Test Helpers are scripts maintained in the LAVA codebase, like
 ``lava-test-case``. These are designed to work using only the barest
 minimum of operating system support, to make them portable to all deployments.
-Where necessary they will use ``deployment_data`` to customise content.
+Where necessary they will use ``deployment_data`` to customize content.
 
 The helpers have two main uses:
 
@@ -451,7 +451,7 @@ Increased portability
 ---------------------
 
 Custom scripts can also allow test writers to make the Test Shell
-Definition more portable, to be run outside LAVA. It is recommeneded
+Definition more portable, to be run outside LAVA. It is recommended
 to do this wherever possible and not rely on LAVA-specific helper
 scripts. This allows developers who do not have access to the test
 framework to reproduce bugs found by the test framework whilst
@@ -462,7 +462,7 @@ Problem reports can be difficult for developers to debug if they
 cannot reproduce the bug manually, without using the complete CI
 system. Every effort should be made to support running the test action
 instructions on a DUT which has been manually deployed so that
-developers can add specialised debug tools and equipment which are not
+developers can add specialized debug tools and equipment which are not
 available within the CI.
 
 .. _interpreters_scripts:
@@ -834,10 +834,10 @@ Best practices for writing a LAVA test job
 
 A test job may consist of several LAVA test definitions and multiple
 deployments, but this flexibility needs to be balanced against the complexity
-of the job and the ways to analyse the results.
+of the job and the ways to analyze the results.
 
 As with all things in automation, the core principles of best practice
-can be summarised as:
+can be summarized as:
 
 #. Start small
 
@@ -936,7 +936,7 @@ Whilst compatibility with V1 has been retained in most areas of the test shell,
 there can be differences in how the install steps behave between V1 and V2.
 Once V1 is removed, other changes are planned for the test shell to make it
 easier for test writers to create portable tests. It is possible that the
-``install:`` behaviour of the test shell could be restricted at this time.
+``install:`` behavior of the test shell could be restricted at this time.
 
 Consider moving ``install: git-repos:`` into a run step or directly into a
 :ref:`custom_script <custom_scripts>` along with the other setup (for example,
@@ -1349,7 +1349,7 @@ Specific tools
 Progress bars, in general, are a particular problem. Instead of overwriting a
 single line of output, every iteration of the bar creates a complete new line
 over the serial connection and in the logs. Wherever possible, disable the
-progress bar behaviour of all operations.
+progress bar behavior of all operations.
 
 * **apt** - When calling ``apt update`` or ``apt-get update``, **always** use
   the ``-q`` option to avoid filling the log file with repeated progress output
@@ -1410,7 +1410,7 @@ patterns match and this can cause the test to run more slowly.
    early for any reason, the file might not be uploaded at all.
 
 When performance is important, for example benchmarking, use a wrapper script
-to optimise your test shell output.
+to optimize your test shell output.
 
 * If a progress bar is used and cannot be turned off without losing other
   useful content, wrap the output of the command in a script which omits the
@@ -1467,7 +1467,7 @@ Control the number of test cases reported
 *****************************************
 
 Creating a lava-test-case involves a database operation on the master. LAVA
-tries to optimise these calls to allow test jobs to report several tens of
+tries to optimize these calls to allow test jobs to report several tens of
 thousands of test cases per test job, including supporting streaming of test
 cases exported through the API. However, there will always be a practical limit
 to the total number of test cases per test job.

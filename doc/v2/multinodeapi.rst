@@ -48,7 +48,7 @@ lava-self
 .. caution:: ``lava-self`` reports the job ID in V2 as the dispatcher has no
    knowledge of the hostname of the deployed system or the original database
    name of the device. The output of ``lava-group`` can still be used. This
-   behaviour changed in the 2017.9 release.
+   behavior changed in the 2017.9 release.
 
 Usage:
 ^^^^^^
@@ -109,7 +109,7 @@ character::
     12347     backend
     12348     backend
 
-.. caution:: This behaviour changed in 2017.9 as V2 does not have knowledge
+.. caution:: This behavior changed in 2017.9 as V2 does not have knowledge
    of the device hostname, only the job ID for each role.
 
 Usage:
@@ -282,7 +282,7 @@ Usage:
 
 A :ref:`lava test result <recording_test_result_data>` is generated within the
 current :ref:`results_test_suite`, recording the completion or failure of the
-synchronisation.
+synchronization.
 
 .. seealso:: :ref:`flow_tables`
 
@@ -430,7 +430,7 @@ Single role: ``peer``, any number of devices
 Using a flow table to plan the job
 ----------------------------------
 
-Synchronisation of any type needs to be planned and the simplest way to manage
+Synchronization of any type needs to be planned and the simplest way to manage
 the messages between roles within a group is to set out a strict table of the
 flow.
 

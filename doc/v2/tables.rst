@@ -41,7 +41,7 @@ The fields which support text search are listed above each table.
 Custom table queries
 --------------------
 
-Some tables also support customised queries on specific fields, typically these
+Some tables also support customized queries on specific fields, typically these
 will be **time based fields** like *submit_time*, *end_time* and *duration*.
 These queries allow a specific function to be called within the filter to match
 only results where the timestamp occurred within the specified number of

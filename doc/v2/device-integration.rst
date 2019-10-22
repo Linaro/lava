@@ -33,7 +33,7 @@ us **before** starting on the integration of a new device using the
 bootloader specifications, hardware support and anything you have done
 so far to automate the device. Sometimes, the supplied bootloader
 **must** be modified to allow automation. Some devices need electrical
-modifications or specialised hardware to be automated.
+modifications or specialized hardware to be automated.
 
 Integrating a new device type will involve some level of development
 work, the device type templates are more than configuration. Testing
@@ -84,7 +84,7 @@ more devices are deployed in any lab, the more it will be necessary for
 every device to fully comply or such labs will quickly deteriorate,
 generating unreliable results.
 
-These guidelines describe device behaviour as a whole. This is a
+These guidelines describe device behavior as a whole. This is a
 combination of the device hardware and the firmware. Some devices
 support replacing the firmware. Sometimes this can aid automation,
 sometimes is can cause more problems and complexity.
@@ -121,7 +121,7 @@ Example One
 
 Some devices have a mode which boots one boot method on the first boot
 and then a different boot method on the second boot without allowing
-for failures or cancelled boot operations. This alternating boot is
+for failures or canceled boot operations. This alternating boot is
 **not** suitable for automation because it would require the automation
 to keep state and does not take account of test job failures and
 cancellations.
@@ -150,9 +150,9 @@ need for excessive :ref:`timeouts`.
 
 The same hardware configuration and infrastructure **must** always
 behave in precisely the same way. The same commands and operations to
-the device **must** always generate the same behaviour.
+the device **must** always generate the same behavior.
 
-* If a device does not always recognise a critical component, for
+* If a device does not always recognize a critical component, for
   example the network hardware, then that device cannot be automated.
 
 * If a device drops the serial connection or resets the connection in
@@ -178,7 +178,7 @@ the device **must** always generate the same behaviour.
    Sometimes, the only way to tackle reliability problems is to scale
    back, take devices offline or disconnect entire groups of devices
    and infrastructure. Debug your reliability issues **before** putting
-   such devices into a production lab to minimise the risk of scheduled
+   such devices into a production lab to minimize the risk of scheduled
    downtime.
 
 .. _integration_scriptable:
@@ -216,7 +216,7 @@ Some devices may need:
 
 * relays to work around buttons,
 
-* specialised hardware to work around deployment limitations,
+* specialized hardware to work around deployment limitations,
 
 * complex scripting around power control,
 

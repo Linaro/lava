@@ -29,7 +29,7 @@ LAVA:
   This can lead to reliability and stability issues.
 
 * Extra hardware may be needed for automation which is not commonly found in
-  generic hosting locations like data centres.
+  generic hosting locations like data centers.
 
 * Depending on the type of hardware in use, it may have significant problems
   with automation. Some devices may need security measures disabling, for
@@ -333,7 +333,7 @@ Before considering installing LAVA workers in remote locations, it is
 Remote Infrastructure
 =====================
 
-Remember that devices need additional, often highly specialised, infrastructure
+Remember that devices need additional, often highly specialized, infrastructure
 support alongside the devices. Some of this hardware is used outside the
 expected design limits. For example, a typical :term:`PDU` may be designed to
 switch mains AC once or twice a month on each port. In LAVA, that unit will be
@@ -342,7 +342,7 @@ each port. Monitoring and replacing this infrastructure before it fails can
 have a significant impact on the ongoing cost of your proposed layout as well
 as your expected scheduled downtime.
 
-.. caution:: A typical datacentre will not have the infrastructure to handle
+.. caution:: A typical datacenter will not have the infrastructure to handle
    LAVA devices and is unlikely to provide the kind of prompt physical access
    which will be needed by the admins.
 
@@ -361,7 +361,7 @@ often much more demanding. Sometimes the data needs to be modified as it is
 pushed *and* it is common that the device receiving the data cares about the
 timing of the incoming data. A small delay at an inconvenient point may cause
 an unexpected failure. When running multiple tests in parallel, the software
-pushing the files may cause problems - it is designed to maximise the speed of
+pushing the files may cause problems - it is designed to maximize the speed of
 the first transfer at the expense of anything else. This "greedy" model means
 that later requests running concurrently may block, thereby causing test jobs
 to fail.

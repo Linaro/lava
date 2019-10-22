@@ -71,7 +71,7 @@ Some disadvantages using this support are as follows:
 
 * Some test images that gets deployed to the :term:`DUT` may have issues in
   retaining battery charge due to poor configuration. In such cases the
-  :term:`DUT` runs out of charge and becomes unsuable for the next job, which
+  :term:`DUT` runs out of charge and becomes unusable for the next job, which
   should be handled by manual intervention, thus hindering automation.
 * `Android` test images which are not built with USB debugging enabled,
   cannot be communicated with ``adb``, thus hindering automation. Since,

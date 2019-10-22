@@ -31,7 +31,7 @@ Top level elements of a test job
 * **job_name** - your own free text name for this job. This name is used in the
   server side tables but has no further relevance for the dispatcher. There is
   no need to make this into a single long word, any valid YAML string is
-  allowed, so commas, capitalisation and whitespace are fine. Long job names,
+  allowed, so commas, capitalization and whitespace are fine. Long job names,
   in particular, need to include whitespace. Avoid the temptation to use a
   build URL as the job name, use :ref:`job_metadata` instead.
 
@@ -72,7 +72,7 @@ Top level elements of a test job
   ``qemu-system-x86_64`` executable when starting the emulation.
 
 * **metadata** - Once the test job becomes part of an automated submission or
-  a :abbr:`CI (Continous Integration)` :term:`loop <ci loop>`, metadata needs
+  a :abbr:`CI (Continuous Integration)` :term:`loop <ci loop>`, metadata needs
   to be used to identify each submission, provide information on exactly what
   changed from the last test job and information on how other users can modify
   the test job artifacts to extend or debug the results.
@@ -134,7 +134,7 @@ additional dependencies to be installed in the running system. The test scripts
 need to know whether to use ``apt`` or ``yum`` or something else to do the
 installation work. Some other OS deployments may change other elements within
 the test, so the test job submission will **fail** if the ``os`` parameter is
-not set or is set to an unrecognised string.
+not set or is set to an unrecognized string.
 
 Supported operating systems include ``debian``, ``ubuntu``, ``oe`` (for
 OpenEmbedded) and ``fedora``.
@@ -158,7 +158,7 @@ to match against the available boot methods. In this case, the boot method is
 to call QEMU. The ``qemu`` boot method also needs the ``media`` parameter set
 to ``tmpfs`` to distinguish this from other boot methods. The first job uses a
 :term:`test shell` and needs to specify the list of :term:`prompts` which LAVA
-can recognise to start the operation of the test shell.
+can recognize to start the operation of the test shell.
 
 .. include:: examples/test-jobs/qemu-pipeline-first-job.yaml
    :code: yaml

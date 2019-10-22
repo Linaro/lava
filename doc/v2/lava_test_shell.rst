@@ -6,7 +6,7 @@ Lava-Test Test Definition 1.0
 *****************************
 
 The ``lava_test_shell`` action provides a way to employ a black-box
-style testing appoach with the target device. It does this by
+style testing approach with the target device. It does this by
 deploying an ``overlay`` to the target device; it requires a POSIX
 system to be running on the target. The test definition format is
 designed to be flexible, allowing many options on how to do things.
@@ -62,7 +62,7 @@ A lava-test-shell is run by:
       finish the command with ``|| true`` to make that failure **not** abort
       the test run.
 
-* copying an ``overlay`` onto the device. The ``overlay`` containins
+* copying an ``overlay`` onto the device. The ``overlay`` contains
   both the test script and the rest of the
   :ref:`lava_test_helpers`. and setup code to run the test script when
   the device boots
@@ -335,7 +335,7 @@ data on your behalf with:
 git-repos
 ---------
 
-There are several options for customising git repository handling in
+There are several options for customizing git repository handling in
 the git-repos action, for example:
 
 .. code-block:: yaml
@@ -358,7 +358,7 @@ the git-repos action, for example:
   jobs directly in the job submission YAML, and vice versa.
 
 * `destination` (optional) is the directory in which the git repository given
-  in `url` should be cloned, to override normal git behaviour.
+  in `url` should be cloned, to override normal git behavior.
 
 * `branch` (optional) is the branch within the git repository given in `url`
   that should be checked out after cloning.

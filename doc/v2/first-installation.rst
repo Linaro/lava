@@ -77,19 +77,19 @@ If the instance is going to be sent any job submissions from third parties or
 if your own job submissions are going to use MultiNode, there are additional
 considerations for hardware requirements.
 
-MultiNode is explicitly designed to synchronise test operations across multiple
+MultiNode is explicitly designed to synchronize test operations across multiple
 test devices and running MultiNode jobs on a particular instance will have
 implications for the workload of that instance. This can become a particular
-problem if the instance is running on virtualised hardware with shared I/O, a
+problem if the instance is running on virtualized hardware with shared I/O, a
 limited amount of RAM or a limited number of available cores.
 
 .. note:: Downloading, preparing and deploying test images can result in a lot
    of synchronous I/O and if a single machine is running both the LAVA server
-   and dispatcher, running synchronised MultiNode jobs can cause the load on
+   and dispatcher, running synchronized MultiNode jobs can cause the load on
    that machine to rise significantly, possibly causing the server to become
    unresponsive. For this reason, it is strongly recommended that MultiNode
-   instances use a separate dispatcher running on non-virtualised hardware so
-   that the (possibly virtualised) server can continue to operate.
+   instances use a separate dispatcher running on non-virtualized hardware so
+   that the (possibly virtualized) server can continue to operate.
 
 Also, consider the number of test devices connected to any one dispatcher.
 MultiNode jobs will commonly compress and decompress several large test image
@@ -180,7 +180,7 @@ expand beyond that, start adding workers one at a time. For this configuration:
      <setting_up_pipeline_instance>`.
 
 As you expand your setup, you will also need to do some configuration of
-communications between the master and the worker(s), which reliy on :term:`ZMQ`
+communications between the master and the worker(s), which rely on :term:`ZMQ`
 as an underlying technology. Workers on the same (trusted) network as the
 master can work fine without using authentication and encryption, but if you
 are going to be hosting workers on a remote network then it is **strongly**
