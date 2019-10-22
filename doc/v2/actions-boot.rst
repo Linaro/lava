@@ -632,6 +632,7 @@ and the ``fvp_licence_variable`` set as an environment variable.
 
 You can use ``{IMAGE_NAME}`` which will be replaced with the path to the
 image with the same key under ``images`` in the previous ``fvp`` deploy stage.
+``{ARTIFACT_DIR}`` can also be used for the directory where all images are deployed.
 
 .. note:: Previous to running an ``fvp`` boot, you should do both a ``fvp`` deploy and a ``docker`` deploy, in which the docker image has the required tools, such as ``telnet``.
 

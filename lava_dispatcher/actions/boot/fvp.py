@@ -142,6 +142,8 @@ class BaseFVPAction(Action):
             # Add downloaded images to container, ensuring they are all in a single
             # directory.  This is required for FVP libraries.
             cmd += " --volume %s:%s" % (filename, location_in_container)
+
+        substitutions['ARTIFACT_DIR'] = os.path.join("/", self.container)
         if not self.fvp_license:
             self.logger.warning(
                 "'fvp_license_variable' not set, model may not function."
