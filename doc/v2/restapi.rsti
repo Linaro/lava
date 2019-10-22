@@ -249,3 +249,15 @@ Sorting fields for devices:
  - state
  - health
  - worker_host
+
+Submitting a test job:
+Sending a POST request on a /jobs/ endpoint will result in attempted job
+submission in LAVA. There is only one argument which needs to be passed in the
+request and that is ``job definition``.
+In order to submit jobs you will need to send an authentication info and have
+sufficient permission to use the device/device type specified in the ``job
+definition``. Example:
+
+.. code-block:: shell
+
+    $ curl -d '{"user": "username", "token": "yourtokenhere", "definition": "your-testjob-definition-here"}' -H "Content-Type: application/json" -X POST "https://your.lava.hostname/api/v0.1/jobs/"
