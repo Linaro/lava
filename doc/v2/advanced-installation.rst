@@ -33,7 +33,7 @@ Virtual Machines
 
 LAVA installations inside a virtual machine (or container) have
 particular constraints. A QEMU device or container may suffer from
-being executed within the constraints of the existing virtualisation
+being executed within the constraints of the existing virtualization
 and other devices may need USB device nodes to be passed through to
 the VM. Depending on the VM, it is also possible that storage space
 for the logs may become an issue.
@@ -423,7 +423,7 @@ have different parts of LAVA in different containers. Some parts of
 this are easier to implement than others, so the support will arrive in
 stages.
 
-``gunicorn3`` supports changing the bind addresss which will allow to run
+``gunicorn3`` supports changing the bind address which will allow to run
 the ``lava-server-gunicorn`` service to run alone in a container while
 having the reverse proxy in another container. The bind address and
 other ``gunicorn3`` options can be changed by editing:

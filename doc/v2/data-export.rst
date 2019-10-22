@@ -166,7 +166,7 @@ Event notification types
 
 * :ref:`Test Shell event <example_testshell_event>` notifications are
   emitted only when requested within a Lava Test Shell by a test writer
-  and contain a customised message.
+  and contain a customized message.
 
 .. _example_device_event:
 

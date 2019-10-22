@@ -120,7 +120,7 @@ Skipping elements of test definitions
 When a single test definition is to be used across multiple deployment types
 (e.g. Debian and OpenEmbedded), it may become necessary to only perform certain
 actions within that definition in specific jobs. The ``skip_install`` support
-has been migrated from V1 for compatibility. Other methods of optimising test
+has been migrated from V1 for compatibility. Other methods of optimizing test
 definitions for specific deployments may be implemented in V2 later.
 
 The available steps which can be (individually) skipped are:
@@ -391,7 +391,7 @@ A script is a list of commands to send:
   test job results.
 
 .. note:: whenever needed, the command can use variables that will be
-  subtituted with live data like ``{SERVER_IP}``.
+  substituted with live data like ``{SERVER_IP}``.
 
 
 .. index:: test action monitors

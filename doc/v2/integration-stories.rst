@@ -65,7 +65,7 @@ messages while Nexus device boots. We need a mechanism such as
 fastboot mode, since most of these devices do not charge in fastboot mode,
 hence the battery drains if the device is in fastboot mode which calls for
 manual intervention to juggle with the volume and power buttons at different
-combinations to make the device useable for automation. Nexus devices have
+combinations to make the device usable for automation. Nexus devices have
 inbuilt battery, hence these are not suitable for controlling them with a Power
 Distribution Unit (PDU). So hard reset literally means ``adb reboot
 bootloader`` (provided the AOSP build installed on the Nexus device is stable)
@@ -152,7 +152,7 @@ Unstable UEFI firmware
 ======================
 
 * For every new release of the firmware which happens once in two months the
-  behaviour or the interface changes.
+  behavior or the interface changes.
 
 * Text used for interrupting UEFI bootloader has changed many times.
 

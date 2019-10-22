@@ -5,7 +5,7 @@ Command Action Reference
 
 The ``command`` action is used to execute a pre-defined command on the
 dispatcher itself.
-A typical use case would be to set the bootmode for a board by crontroling a
+A typical use case would be to set the bootmode for a board by controlling a
 relay.
 
 In order to use the action, the action block should only define the name of the

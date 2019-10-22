@@ -43,7 +43,7 @@ Basics
    live as the test job runs. Results can be downloaded or exported using the
    :ref:`results API <results_rest_api>`.
 
-#. If the resuults of your V1 jobs were being retrieved or processed by another
+#. If the results of your V1 jobs were being retrieved or processed by another
    service, ensure that the calls are adapted to the new :ref:`results API
    <results_rest_api>`.
 

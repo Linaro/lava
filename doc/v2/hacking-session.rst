@@ -215,7 +215,7 @@ complete your session immediately:
 Hacking Session timeouts
 ========================
 
-.. note:: This behaviour changed after a session at
+.. note:: This behavior changed after a session at
    `Connect HKG15 <https://www.slideshare.net/linaroorg/hkg15402-orphan-hacking-sessions>`_
 
 All hacking sessions will **time out after 1 hour** if a login has not been
@@ -256,7 +256,7 @@ the sessions. It is possible to have multiple hacking sessions per person or
 one hacking session each for multiple users. Secondary connections separate
 each session as a single node in the MultiNode group.
 
-.. note:: The :ref:`multinode_api` does **not** support the synchronisation or
+.. note:: The :ref:`multinode_api` does **not** support the synchronization or
    message sending primitives inside hacking sessions. Interactive users are
    required to exchange information between users in other means, either by
    using common files on a shared filesystem or other external methods like

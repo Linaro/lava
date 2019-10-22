@@ -33,7 +33,7 @@ will require other parameters to provide the data on how to deploy to the
 requested location. Additionally, all the required parameters are marked with
 a *****
 
-.. # comment - WARNING: respect the capitalisation (or lack of such) in all the
+.. # comment - WARNING: respect the capitalization (or lack of such) in all the
    following sections as these are intended to exactly match the examples.
    Also, ignore the repetition - this is a *reference* guide like the glossary,
    it is not meant to be readable from top to bottom. Each section needs to

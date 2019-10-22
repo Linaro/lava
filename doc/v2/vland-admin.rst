@@ -9,13 +9,13 @@ Mandatory Constraints
 *********************
 
 VLANd is a daemon to support virtual local area networks. It can be used alone
-and can also be used within LAVA. VLANd is a specialised tool and the LAVA
+and can also be used within LAVA. VLANd is a specialized tool and the LAVA
 support cannot and will not protect against misconfiguration causing the
 network to become unusable. Admins require careful consideration of the risks
 and time to manually prepare a configuration map of the entire LAVA instance,
 including the physical layout of the switches, all cables connected to all of
 those switches and all the devices of that instance (not just test devices).
-These constraints **must all be met** and can be summarised as:
+These constraints **must all be met** and can be summarized as:
 
 * :ref:`single_set_switches`
 * :ref:`vland_switch_support`
@@ -117,7 +117,7 @@ Additional advice
 In addition, the following advice is strongly recommended:
 
 * Admins should keep the device dictionary data in VCS and keep those copies
-  synchronised with the database.
+  synchronized with the database.
 
 * Admins need to use the XML-RPC support to periodically **verify** that all
   the devices have the correct configuration.

@@ -20,7 +20,7 @@ to be short and specific to one dedicated application executing on the
 DUT. Applications need to be written to emit a ``START`` and ``STOP``
 message which have to be unique across all test job output, not just
 the test action. Test writers then need to correlate specific pattern
-match expressions in the test job with the behaviour of the application
+match expressions in the test job with the behavior of the application
 deployed in that test job. This puts the work of creating a parser into
 the hands of the writers of the test application and can thus interfere
 with development of the test application.

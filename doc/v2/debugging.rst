@@ -6,7 +6,7 @@ Debugging LAVA test failures
 ############################
 
 There are many potential reasons why tests running in LAVA might fail, or
-produce unexpected behaviour. Some of them can be easy to track down, but
+produce unexpected behavior. Some of them can be easy to track down, but
 others may be more difficult. The devices, software and test suites can vary
 massively from one test job to the next, but nonetheless a few common ideas may
 help you to work out what's going wrong.
@@ -26,7 +26,7 @@ much earlier in the test - don't assume that the final few lines of the logfile
 will tell the whole story:
 
 * A kernel message about failing to load a module or a device failing to
-  initialise may be very easily missed in a long stream of kernel boot
+  initialize may be very easily missed in a long stream of kernel boot
   messages. Equally, check that the expected device and module messages are
   present.
 
@@ -295,7 +295,7 @@ Test your result parsers
 If you use a custom result parser, configure one of your YAML files to output
 the entire test result output to stdout so that you can reliably capture a
 representative block of output. Test your proposed result parser against the
-block using your favourite language.
+block using your favorite language.
 
 Comment out the parser from the YAML if there are particular problems, just to
 see what the default LAVA parsers can provide.
@@ -483,7 +483,7 @@ Debugging MultiNode tests
 
 MultiNode tests are necessarily more complex than jobs running on single test
 devices, and so there are extra places where errors can creep in and cause
-unexpected failuures.
+unexpected failures.
 
 .. _simplify_multinode:
 
@@ -493,7 +493,7 @@ Simplify your MultiNode test
 This may seem obvious, but one of the most common causes of MultiNode test
 failure is nothing to do with MultiNode. If your MultiNode tests are failing to
 boot correctly, check that the basics of each of the desired roles works
-independently. Remove the MultiNode pieces and just check that the specifiied
+independently. Remove the MultiNode pieces and just check that the specified
 deploy and boot actions work alone in a single-node test with the right
 device-type. Then add back the MultiNode configuration, :ref:`changing one
 thing at a time<change_one_thing>` and ensuring that things still work as you
@@ -509,7 +509,7 @@ other device in the group, or the waiting device will :ref:`timeout <timeouts>`
 
 This can be a particular problem if you remove test definitions or edit a YAML
 file without checking other uses of the same file. The simplest (and hence
-recommened) way to use the MultiNode synchronisation calls is using
+recommended) way to use the MultiNode synchronization calls is using
 :ref:`inline definitions<inline_test_definitions>`.
 
 .. _failed_tests:

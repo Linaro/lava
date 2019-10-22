@@ -25,7 +25,7 @@ The basic setup of the ``notify`` block in job definitions will have
 The basic **email** template includes job details, device details and results,
 based on the level of **verbosity** (``verbose``, ``quiet``, ``status-only``).
 verbose level job information will only be included if the job finished as
-complete or incomplete, not when the job was cancelled.
+complete or incomplete, not when the job was canceled.
 
 Notification recipients
 =======================

@@ -104,7 +104,7 @@ https://git.lavasoftware.org/lava/lava/container_registry
 Official LAVA Releases using Docker
 ***********************************
 
-The ``lavasoftware`` organisation on ``hub.docker.com`` hosts releases
+The ``lavasoftware`` organization on ``hub.docker.com`` hosts releases
 of LAVA (https://hub.docker.com/u/lavasoftware/) by retagging images
 from hub.lavasoftware.org and pushing to hub.docker.com . Users are
 free to use either hub.
@@ -231,7 +231,7 @@ include details like ``ser2net`` configuration or ``pdudaemon`` or
 other remote power control scripts. These will need to be added
 according to your local lab configuration. Depending on the size of
 your lab, you may choose to use a docker volume or ``docker build`` to
-create one or more customised docker images based on the official
+create one or more customized docker images based on the official
 images.
 
 .. seealso:: `Docker documentation on volumes
@@ -249,7 +249,7 @@ Mocking up LXC inside docker
 
 LXC cannot be installed/used inside a Docker container and the Docker
 container can replace the need for the LXC. This has the useful
-advantages that specialised tools which need to be isolated inside an
+advantages that specialized tools which need to be isolated inside an
 LXC can be pre-installed in a docker container instead of needing to be
 installed or compiled within the LXC.
 

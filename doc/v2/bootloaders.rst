@@ -145,7 +145,7 @@ with each increase in complexity.
   to make modifications to a board.
 
 * Custom hardware peripherals can interfere with board hardware or
-  software causing intermittent failures or non-standard behaviour.
+  software causing intermittent failures or non-standard behavior.
 
 * Security requirements of a production / consumer device are typically
   incompatible with automation requirements. Access to recovery mode
@@ -367,7 +367,7 @@ three deploy actions: recovery, fastboot, and operating system
 (OpenEmbedded or AOSP). This is to ensure that the firmware is tested
 in a wide range of modes after being deployed. (Specifically, the test
 ensures that the firmware continues to allow changes to the partition
-tables without affecting serial numbers or other device behaviour.)
+tables without affecting serial numbers or other device behavior.)
 This example is used as a health check, deploying a known good build of
 the firmware, so can be used to recover from a broken build.
 

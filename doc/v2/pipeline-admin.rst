@@ -25,7 +25,7 @@ Device type templates exist on the master in the
 Although the example templates include jinja markup, the template itself is
 YAML. The files use the ``.jinja2`` filename extension to make it easier for
 editors to pick up the correct syntax highlighting, but whatever jinja does not
-recognise is passed through unchanged. The output of rendering the template
+recognize is passed through unchanged. The output of rendering the template
 **must always** be valid YAML.
 
 If you are starting with just a single device of the relevant device type on a
@@ -326,7 +326,7 @@ Software Requirements
 =====================
 
 * **Interruptable** - for example, ``uBoot`` must be configured to emit a
-  recognisable message and wait for a sufficient number of seconds for a
+  recognizable message and wait for a sufficient number of seconds for a
   keyboard interrupt to get to a prompt.
 
 * **Network aware** - most common deployments will need to pull files

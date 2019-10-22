@@ -106,7 +106,7 @@ Configuration files
 
 * **lava-server** - ``/etc/lava-server/settings.conf`` - restart ``apache``
   and ``lava-server`` if this is changed. Holds details for django settings
-  including the authentication methods and site customisation settings.
+  including the authentication methods and site customization settings.
 
 * **jinja2 templates** - ``/etc/lava-server/dispatcher-config/device-types``
   These files are updated from ``lava_scheduler_app/tests/device-types``

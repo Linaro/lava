@@ -90,7 +90,7 @@ Full REST API
 
 Full REST API is available with /api URL. The API is based on
 `django-rest-framework`_. All of the docs from django-rest-framework apply.
-LAVA uses token based authendication. To obtain a token POST request has to
+LAVA uses token based authentication. To obtain a token POST request has to
 be made to /api/<version>/token/ endpoint. The request has to contain
 username and password fields. These are the same as used for web UI
 authentication. Call returns either existing AuthToken or creates new one.
@@ -120,7 +120,7 @@ The results are also available in JUnit or TAP13 format at:
  - junit (/api/v0.1/jobs/<job_id>/junit/)
  - tap13 (/api/v0.1/jobs/<job_id>/tap13/)
 
-Objects in all endpoints can be filered and sorted as described
+Objects in all endpoints can be filtered and sorted as described
 in django-rest-framework docs: http://www.django-rest-framework.org/api-guide/filtering/
 Searching is currently disabled.
 

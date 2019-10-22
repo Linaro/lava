@@ -71,7 +71,7 @@ reproduced here to show how automation and LAVA relate to CI:
      within the LAVA software team, deployments to the staging instance are
      **not** done with LAVA but using standard OS build and upgrade tools. This
      is in addition to using these same build and upgrade tools within
-     virtualised containers to test fresh installs and clean upgrades.
+     virtualized containers to test fresh installs and clean upgrades.
 
 .. index:: lava and ci
 
@@ -120,7 +120,7 @@ for how relevant the results will be to the developers.
 #. Automation requires that devices are always recovered from a test failure,
    i.e. often termed "unbrickable".
 
-#. Automation requires a level of administative setup and integration of new
+#. Automation requires a level of administrative setup and integration of new
    devices far beyond what would be needed for setting up a single device for
    human testing.
 
@@ -171,7 +171,7 @@ LAVA is the best choice of test system for these systems.
   which enable debug access which all production builds will need to block.
 
 * **Automation relies on remote power control** - battery powered devices can
-  be a signficant problem in this area. On the one hand, testing can be
+  be a significant problem in this area. On the one hand, testing can be
   expected to involve tests of battery performance, low power conditions and
   recharge support. However, testing will also involve broken builds and failed
   deployments where the only recourse is to hard reset the device by killing

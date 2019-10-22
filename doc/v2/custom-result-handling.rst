@@ -22,13 +22,13 @@ make those results meaningful to the developers who originally caused the
    :align: center
    :alt: A CI Loop
 
-The stages in light blue, (**analyse**, **develop** and **commit**) are the
+The stages in light blue, (**analyze**, **develop** and **commit**) are the
 developer input. (The *develop* stage is here assumed to include some amount of
 local testing). Building the tree after a commit is typically handed off to a
 dedicated service like Jenkins_. Jenkins in turn is able to hand off the
 testing of the build to LAVA.
 
-The missing step here is the reporting. Each team needs customised reports and
+The missing step here is the reporting. Each team needs customized reports and
 data based on custom criteria. LAVA cannot meet all these requirements at the
 same time. Instead, teams are advised to design a custom frontend which
 collects data from LAVA, the build system and the VCS and presents that data in
@@ -63,7 +63,7 @@ Where LAVA fits into the testing
 ================================
 
 Build tools like Jenkins can also do an amount of testing on the built files,
-for example unit tests. On the basis of always optimising the CI loop to fail
+for example unit tests. On the basis of always optimizing the CI loop to fail
 early, it is always worth balancing the number of tests run after the build
 against how long those tests take to run. It may be pointless to test a build
 in LAVA when that a unit test on that build would have failed. It is also
@@ -79,7 +79,7 @@ LAVA.
 LAVA combines the benefits of ready access to a multiple types of device with a
 genuinely scalable scheduler. LAVA is capable of running thousands of test jobs
 a day across hundreds of devices on a single instance. With a custom frontend
-organising the submissions and collating the results, this can scale to larger
+organizing the submissions and collating the results, this can scale to larger
 groups using multiple LAVA instances.
 
 Splitting the testing
@@ -88,7 +88,7 @@ Splitting the testing
 Not all tests need to be run on every commit. Identify which tests can be run
 on a daily or weekly cycle or as a bespoke per-release test.
 
-It is not necessarily appropiate for all commits to go through the entire CI
+It is not necessarily appropriate for all commits to go through the entire CI
 loop. The hook in the version control system which triggers the Jenkins build
 could be based on merges rather than commits.
 
@@ -102,10 +102,10 @@ Questions to ask
     the results being available to what will become your frontend.
 
   * Investigate where the hardware involved in each stage can be improved and
-    analyse what kind of hardware upgrades may be useful.
+    analyze what kind of hardware upgrades may be useful.
 
   * Reassess the entire loop design and look at splitting the testing if the
-    loop cannot be optimised to the time limits required by the team. The loop
+    loop cannot be optimized to the time limits required by the team. The loop
     exists to serve the team but the expectations of the team may need to be
     managed compared to the cost of hardware upgrades or finite time limits.
 
@@ -152,7 +152,7 @@ Questions to ask
 
   * Different results for different members of the team or different teams?
 
-  * Is the data to be summarised and if so, how?
+  * Is the data to be summarized and if so, how?
 
 * **Resourcing** - a frontend has the potential to become complex and need
   long term maintenance and development.

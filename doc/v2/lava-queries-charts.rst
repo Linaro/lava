@@ -9,7 +9,7 @@ The most important use of test results is to :ref:`close the CI loop <ci_loop>`
 and a good way to do that is to distribute the results directly to the
 developers in a format which those developers find to be the most useful.
 
-LAVA, as a generic automation framework, cannot offer customised solutions for
+LAVA, as a generic automation framework, cannot offer customized solutions for
 all development teams. A dedicated :term:`frontend` should always be considered
 as this can collate LAVA results with build system data and commit history to
 provide a complete picture of the meaning of the results. Bare results are
@@ -330,7 +330,7 @@ review, add and remove queries associated with this chart from this page.
 
 User can also create new charts from queries. On the query display page, a
 simple click on the button will create the chart with this particular query
-already added to the chart (with default settings). There's also a posibility
+already added to the chart (with default settings). There's also a possibility
 of only viewing the chart for particular query without making it permanent in
 the system (also from query display).
 
@@ -405,7 +405,7 @@ that pass/fail charts are unavailable for test case based queries.
 **Measurement** charts will collect the measurement value from each of the
 corresponding test results. Unless the query object set is test job, each plot
 line in chart will represent one test case. Otherwise, the chart will calculate
-average value of each test case accross related test suites and diplay that
+average value of each test case accross related test suites and display that
 value.
 
 **Attributes** chart will let you enter one or more of the custom attributes
@@ -477,7 +477,7 @@ There are three options in the print menu:
 Chart using metadata
 ********************
 
-By default, charts will use date and time to diplay results. User can change
+By default, charts will use date and time to display results. User can change
 this behavior and use a custom attribute (i.e. build number) to plot the result
 data. This setting can be changed in the chart settings - 'xaxis attribute'
 field.
@@ -506,8 +506,8 @@ Chart by URL
 ============
 
 Similar as for queries (see :ref:`query_by_url`), user can view charts by
-typing in the entity and conditions in URL. There is one aditional option
-compared to queries, the chart type. New URL paramater is named "type" and can
+typing in the entity and conditions in URL. There is one additional option
+compared to queries, the chart type. New URL parameter is named "type" and can
 take values of pass/fail, measurement and attributes.
 
 `Example Chart by URL <https://staging.validation.linaro.org/results/chart/+custom?type=pass/fail&entity=testjob&conditions=testjob__priority__exact__Medium,testjob__submitter__contains__code>`_

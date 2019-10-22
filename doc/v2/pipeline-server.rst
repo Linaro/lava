@@ -57,7 +57,7 @@ installing ``lava-server`` to run a production LAVA instance.
       and `details of the lava package in Debian
       <https://packages.debian.org/sid/lava>`_
 
-sThe ``lava`` package installs support for:
+The ``lava`` package installs support for:
 
 * ``lava-dev`` - scripts to build developer packages based on your
   current git tree of ``lava-server`` or ``lava-dispatcher``, including

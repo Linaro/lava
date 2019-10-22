@@ -16,7 +16,7 @@ devices too. Comprehensive documentation is available on the `U-Boot website
 
 If your new device includes U-Boot then this can be a useful beginning.
 However, the build of U-Boot on the device may potentially hinder integration
-due to the wide range of configuration options and behavioural changes
+due to the wide range of configuration options and behavioral changes
 available inside a patched U-Boot build.
 
 .. seealso:: :ref:`uboot_vendor_builds`
@@ -136,7 +136,7 @@ Troubleshooting Interrupting U-Boot
 An extra newline during U-Boot interruption can cause LAVA to send U-Boot
 commands before the previous command completes. The error message ``*** ERROR:
 `serverip' not set`` may be seen, due to the delay of the ``dhcp`` command,
-which preceeds the ``setenv serverip`` command, causing the latter to be sent
+which preceded the ``setenv serverip`` command, causing the latter to be sent
 too soon. If U-Boot interrupt does not need a newline to be sent, set
 uboot_interrupt_newline to False in the device template.
 
@@ -279,7 +279,7 @@ Additional U-Boot support
 *************************
 
 Some developers integrating new U-Boot devices may need to consider more
-elements of U-Boot behaviour and configuration.
+elements of U-Boot behavior and configuration.
 
 .. _uboot_filesystems:
 
@@ -304,12 +304,12 @@ interface (e.g. ``sata``, ``scsi``, ``usb``, ``mmc``).
 
 .. _uboot_subsystems:
 
-Initialising subsystems
+Initializing subsystems
 =======================
 
 Some U-Boot devices will not enable some of the onboard storage or peripheral
-devices without explicitly initialising them first. Some may need other
-subsystems to be initialised first - for example the Panda needs ``usb start``
+devices without explicitly initializing them first. Some may need other
+subsystems to be initialized first - for example the Panda needs ``usb start``
 before networking will work, as the onboard network interface is attached via
 USB.
 

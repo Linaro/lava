@@ -31,7 +31,7 @@ be found _`here`: https://docs.djangoproject.com/en/2.2/topics/auth/default/#top
 
 Specific user can have a global permission for any system entity in which case
 this global permission is checked first and has higher priority than
-per-object permission setup when detemining this users' access rights.
+per-object permission setup when determining this users' access rights.
 This kind of setup can be managed in admin user settings.
 
 Per-object authorization
@@ -48,7 +48,7 @@ following entities exclusively:
 * **Device**
 * **Test Job**
 
-It is split accoss the following permissions:
+It is split across the following permissions:
 
 * **view**
 * **submit**
@@ -83,9 +83,9 @@ from this particular group will be able to see device qemu01 even if it's not
 restriction. Same goes for test jobs. If the test job is not ``permission
 restricted`` it will be visible (example) only if device and device type it
 belongs to are unrestricted (or the user belongs to one of the groups the
-view permission aplies to).
+view permission applies to).
 
-This particular behaviour allows admin to set the permissions on higher level
+This particular behavior allows admin to set the permissions on higher level
 and it will be applied to all the lower level objects, i.e. if you set the
 **view** permission for aforementioned 'lkft' group for the ``device type``,
 all the devices and test job will be automagically hidden for non-lkft users.
@@ -153,7 +153,7 @@ Django migration in this version includes a data migration as well so that
 permission entries are automatically created so that no user access is modified
 by introducing the new model.
 
-.. caution:: Downgrades are not recomended after the system 2019.09 upgrade.
+.. caution:: Downgrades are not recommended after the system 2019.09 upgrade.
    The reason for this is that the backward database migration will **not**
    recreate previous settings regarding ``device type`` and ``device``
    authorization.

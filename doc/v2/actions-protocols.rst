@@ -115,7 +115,7 @@ action:
 
 * The :ref:`multinode_api` asserts that repeated calls to :ref:`lava_sync` with
   the same messageID will return immediately, so this protocol call in a Retry
-  action will only synchronise the first attempt at the action.
+  action will only synchronize the first attempt at the action.
 
 * Some actions may make the protocol call at the end of the run step.
 
@@ -131,13 +131,13 @@ lava-start API call
 other jobs in the same MultiNode group. This allows jobs with one ``role`` to
 determine when jobs of a different ``role`` start, so that the delayed jobs can
 be sure that particular services required for those jobs are available. For
-example, if the ``server`` role is actually providing a virtualisation platform
+example, if the ``server`` role is actually providing a virtualization platform
 and the ``client`` is a VM to be started on the ``server``, then a delayed
 start is necessary as the first action of the ``client`` role will be to
 attempt to connect to the server in order to boot the VM, before the ``server``
 has even been deployed. The ``lava-start`` API call allows the test writer to
 control when the ``client`` is started, allowing the ``server`` test image to
-setup the virtualisation support in a way that allows attaching of debuggers or
+setup the virtualization support in a way that allows attaching of debuggers or
 other interventions, before the VM starts.
 
 The client enables a delayed start by declaring which ``role`` the client can
@@ -291,16 +291,16 @@ the MultiNode definition) where you will find a Pipeline Description.
 Creating MultiNode jobs has always been complex. The consistent use of inline
 definitions can significantly improve the experience and once the support is
 complete, it may be used to invalidate submissions which fail to match the
-synchronisation primitives.
+synchronization primitives.
 
-The principle is to separate the synchronisation from the test operation. By
-only using synchronisation primitives inside an inline definition, the flow of
+The principle is to separate the synchronization from the test operation. By
+only using synchronization primitives inside an inline definition, the flow of
 the complete MultiNode group can be displayed. This becomes impractical as soon
 as the requirement involves downloading a test definition repository and
-possibly fishing inside custom scripts for the synchronisation primitives.
+possibly fishing inside custom scripts for the synchronization primitives.
 
-Inline blocks using synchronisation calls can still do other checks and tasks
-as well but keeping the synchronisation at the level of the submitted YAML
+Inline blocks using synchronization calls can still do other checks and tasks
+as well but keeping the synchronization at the level of the submitted YAML
 allows much easier checking of the job before the job starts to run.
 
 .. code-block:: yaml

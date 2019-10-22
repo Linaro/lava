@@ -30,10 +30,10 @@ What is LAVA?
   of supported boards every day. LAVA tests proposed android changes in gerrit
   before they are landed, and does the same for other projects like gcc. Linaro
   runs a central validation lab in Cambridge, containing racks full of
-  computers supplied by Linaro members and the necessary infrastucture to
+  computers supplied by Linaro members and the necessary infrastructure to
   control them (servers, serial console servers, network switches etc.)
 
-* LAVA is good for providing developers with the ability to run customised test
+* LAVA is good for providing developers with the ability to run customized test
   on a variety of different types of hardware, some of which may be difficult
   to obtain or integrate. Although LAVA has support for emulation (based on
   QEMU), LAVA is best at providing test support for real hardware devices.
@@ -41,7 +41,7 @@ What is LAVA?
 * LAVA is principally aimed at testing changes made by developers across
   multiple hardware platforms to aid portability and encourage multi-platform
   development. Systems which are already platform independent or which have
-  been optimised for production may not necessarily be able to be tested in
+  been optimized for production may not necessarily be able to be tested in
   LAVA or may provide no overall gain.
 
 .. note:: This overview document explains LAVA using
@@ -96,7 +96,7 @@ Features
   tests involving multiple devices.
 
 * **Hardware sharing** - uncommon hardware is shared between disparate
-  groups to maximise usage
+  groups to maximize usage
 
 * **Wide device coverage** - a large number of types of device can be
   supported with instances ranging from one to more than a hundred
@@ -113,7 +113,7 @@ Features
   up to the point of failure are retained.
 
 * **UNIX and Android test support** - Test jobs can be run on systems
-  running various UNIX flavours or using the Android Debug Bridge to
+  running various UNIX flavors or using the Android Debug Bridge to
   interface with mobile devices.
 
 * **Complex network testing** - reconfigurable networking across multiple

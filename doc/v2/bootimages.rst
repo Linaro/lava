@@ -126,7 +126,7 @@ image needs to be modified outside LAVA.
    test job).
 
 #. **root password** - one thing that many people forget when creating
-   a rootfs using their favourite Linux distribution is that the root password
+   a rootfs using their favorite Linux distribution is that the root password
    is typically created by an installer and **not** by the bootstrap tool.
    Depending on the security of the OS, you may need to ``chroot`` into the new
    rootfs before finishing the image and set a usable root password with the

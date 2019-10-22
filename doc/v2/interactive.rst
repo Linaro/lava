@@ -61,7 +61,7 @@ Advantages of interactive pattern matching
 Limits of interactive pattern matching
 **************************************
 
-#. Lacks support for optimisations when specific sections of the test
+#. Lacks support for optimizations when specific sections of the test
    output comply with a known and strictly enforced format.
 
 #. Can be difficult to convert into test action methods which aid
@@ -70,7 +70,7 @@ Limits of interactive pattern matching
    using the same CI.
 
 #. Supporting test jobs with multiple, different, test action
-   behaviours for each stage of the test operation. For example,
+   behaviors for each stage of the test operation. For example,
    dependency resolution and setup commands could be done with an
    overlay and Lava Test Shell Definition whilst running the test to
    output a known result format could use a parser specific to that

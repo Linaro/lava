@@ -31,7 +31,7 @@ available for that type.
 
 In the end, LAVA lab administrators are free to make their own choices
 about what qualifies as a distinct device type. Some factors to
-consider in this judgement call include:
+consider in this judgment call include:
 
 * **Interchangeable jobs**: Does a single health check work for all
   devices of this type? It is recommended to always test all of the

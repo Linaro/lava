@@ -29,7 +29,7 @@ then checked that the equivalent files exist in each.
 Avoid backup solutions which try to image the entire drive. For such systems to
 work reliably with a database, the database server would have to be stopped.
 That first requires that all ``lava-server`` services are stopped and all
-running TestJobs are cancelled. i.e. A backup like this would require a
+running TestJobs are canceled. i.e. A backup like this would require a
 maintenance window (scheduled downtime) every time the backup was to be
 performed.
 
@@ -311,7 +311,7 @@ Restoring a master from a backup
 
    * ``service lava-publisher stop``
 
-#. Dump the (emtpy) initial database and restore the database from the backup.
+#. Dump the (empty) initial database and restore the database from the backup.
 
    .. seealso:: :ref:`migrating_postgresql_versions` for how to drop the
       initial cluster and replace with the cluster from the backup.

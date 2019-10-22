@@ -476,7 +476,7 @@ Start with the top level structures:
    job:
      minutes: 15
 
-``device_type`` isn't stricly necessary at this point but it will become
+``device_type`` isn't strictly necessary at this point but it will become
 necessary once this job is able to be submitted via the server rather than
 directly to the dispatcher.
 

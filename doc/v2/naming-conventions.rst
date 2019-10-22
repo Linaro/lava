@@ -66,7 +66,7 @@ consistent in the use of the following terms:
   jobs, the two models are incompatible.
 
   Device tags frequently apply to multiple devices. This allows the
-  queue of test jobs to be optimised and get results back to the
+  queue of test jobs to be optimized and get results back to the
   developers as quickly as possible without compromising reliability.
 
   .. seealso:: :term:`device tag`

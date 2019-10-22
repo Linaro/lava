@@ -565,7 +565,7 @@ Using localhost or non HTTPS instance URL
 
 Newer versions of django include improved security features which can
 affect how LAVA is used as ``http://localhost``. By default, django
-enforces behaviour to ensure safe use of ``https://`` which can prevent
+enforces behavior to ensure safe use of ``https://`` which can prevent
 attempts to sign in to a LAVA instance using ``http://localhost/``.
 
 To enable localhost, you may need to disable at least these security

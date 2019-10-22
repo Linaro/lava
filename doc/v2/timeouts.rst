@@ -34,7 +34,7 @@ not supported for some reason.
 
 When operating the same test interactively, a human will typically notice that
 a step has failed and either not attempt the operation that would later time
-out or recognise that the operation should have completed by some point in time
+out or recognize that the operation should have completed by some point in time
 and intervene. It is not always possible to check the success or failure of
 operations within a test in an automated fashion - command outputs change from
 one distribution to another or from one version of a package to another.
@@ -232,7 +232,7 @@ Inheriting timeouts from the device configuration
 
 In addition, individual device types can set an action override or connection
 override for all pipelines using devices of that type. This is to allow for
-certain devices which need to initialise certain hardware that takes longer
+certain devices which need to initialize certain hardware that takes longer
 than most other devices with similar support.
 
 Details of these timeouts can be seen on the device type page on the *Support*

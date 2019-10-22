@@ -137,7 +137,7 @@ generate html format files for LAVA V2::
  (or whatever browser you prefer)
 
 We welcome contributions to improve our documentation. If you are
-considering adding new features to LAVA or changing current behaviour,
+considering adding new features to LAVA or changing current behavior,
 also please ensure that the changes include matching updates for the
 documentation. Great new features may go unused (or unmerged!) without
 documentation to help people use them.
@@ -198,7 +198,7 @@ Creating a GitLab Account
 
 To be able to work with the LAVA Software Community Project, start by
 creating an account on https://git.lavasoftware.org/lava/ . Fill in
-details in your profie, and make sure you add a public SSH key to your
+details in your profile, and make sure you add a public SSH key to your
 account. You will need that to be able to push code changes.
 
 .. index:: gitlab fork permissions
@@ -298,7 +298,7 @@ https://chris.beams.io/posts/git-commit/
 
 When you commit, use the ``--signoff`` or ``-s`` option to ``git
 commit`` to acknowledge that you have the rights to submit this change
-under the terms of the licences applicable to the LAVA Software. This
+under the terms of the licenses applicable to the LAVA Software. This
 is commonly known as the "Developer's Certificate of Origin" (DCO_),
 and is used in a wide variety of other Open Source projects like the
 Linux kernel.
@@ -363,7 +363,7 @@ Submit a Merge Request (MR)
 When your code is clean and ready to be reviewed, create a merge
 request against the *master* branch of the original lava project.
 GitLab will track all the changes that you have pushed to your
-develpment branch, and present them together for review in one
+development branch, and present them together for review in one
 patchset. To create the MR, use the link that gitlab gave you when you
 pushed your branch or visit the "Merge Requests" area in the web UI.
 

@@ -101,9 +101,9 @@ LAVA instances will need some level of infrastructure, including:
 
 * master and worker hardware
 
-Many instances will also require specialised hardware to assist with the
+Many instances will also require specialized hardware to assist with the
 automation of specific :term:`devices <DUT>`, including switchable USB hubs or
-specialised relay boards.
+specialized relay boards.
 
 .. _simple_admin_small:
 
@@ -111,7 +111,7 @@ Start small
 ***********
 
 These rules may seem harsh or obvious or tedious. However, multiple people have
-skipped one or more of these requirements and have learnt that these steps
+skipped one or more of these requirements and have learned that these steps
 provide valuable advice and assistance that can dramatically improve your
 experience of LAVA. Everyone setting up LAVA, is **strongly** advised to follow
 all of these rules.
@@ -359,7 +359,7 @@ Administrators need to be mindful of the situations from which users can
 (mistakenly or otherwise) modify the device configuration such that the device
 is unable to boot without intervention when the next job starts. This is one of
 the key reasons for :term:`health checks <health check>` to run sufficiently
-often that the impact on other users is minimised.
+often that the impact on other users is minimized.
 
 .. index:: administrator
 
@@ -496,7 +496,7 @@ Power up failures
   (yet) exist on the worker. e.g. check the ``ser2net`` configuration and the
   specified device node for the port being used.
 
-* Check whether the device needs specialised support to avoid issues with
+* Check whether the device needs specialized support to avoid issues with
   power reset buttons or other hardware modes where the device does not start
   to boot as soon as power is applied. Check that any such support is actually
   working.
@@ -517,7 +517,7 @@ compatibility number - the highest integer in the strategy classes used for
 that job. The worker also calculates the number and unless these match, the job
 is failed.
 
-The compatilibilty check allows the master to detect if the worker is running
+The compatibility check allows the master to detect if the worker is running
 older software, allowing the job to fail early. Compatibility is changed when
 existing support is removed, rather than when new code is added. Admins remain
 responsible for ensuring that if a new device needs new functionality, the
@@ -551,7 +551,7 @@ Checking for MultiNode issues
    status check complete. No errors
 
 * Use the :ref:`example test jobs <running_multinode_tests>` to distinguish
-  between adminstration errors and test job errors. Simplify and make your test
+  between administration errors and test job errors. Simplify and make your test
   conditions portable. MultiNode is necessarily complex and can be hard to
   debug.
 
@@ -784,7 +784,7 @@ test jobs from setting a different value) would be:
  {% set memory = 1024 %}
 
 Admins need to balance the memory constraint against the number of other
-devices on the same dispatcher. There are occassions when multiple test jobs
+devices on the same dispatcher. There are occasions when multiple test jobs
 can start at the same time, so admins may also want to limit the number of
 emulated devices on any one dispatcher to the number of cores on that
 dispatcher and set the amount of memory so that with all devices in use there
@@ -825,7 +825,7 @@ in the device configuration.
 .. FIXME: add links to the dispatcher actions which support overrides
 
 A common override used when operating devices on your desk or when a
-:term:`PDU` is not available, allows the dispatcher to recognise a soft reboot.
+:term:`PDU` is not available, allows the dispatcher to recognize a soft reboot.
 Another example is setting up the kernel starting message that the LAVA will
 recognize during boot time.
 This uses the ``shutdown_message`` and ``boot_message`` keys in the

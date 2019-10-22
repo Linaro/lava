@@ -89,7 +89,7 @@ This is not supported in the deployment strategy. Modules must be part of the fi
 initrd
 =======
 
-The initrd contains all necessary files, deamons and scripts to
+The initrd contains all necessary files, daemons and scripts to
 bring-up the nbd-client and pivot_root to the final rootfs.
 There are a few important aspects:
 

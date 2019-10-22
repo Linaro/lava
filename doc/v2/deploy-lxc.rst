@@ -185,8 +185,8 @@ Requirements and Limitations
 #. The LXC depends on underlying kernel architecture. For armel, armhf, etc.
    dispatcher should run on these architectures.
 
-#. Each distro has its own template and the templates do not have common
-   options. It can be difficult to have generic support for all distros.
+#. Each distribution has its own template and the templates do not have common
+   options. It can be difficult to have generic support for all distributions.
 
 #. :term:`namespaces <namespace>` to relate different job actions to run in the
    LXC and for the device.

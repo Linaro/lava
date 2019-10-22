@@ -435,7 +435,7 @@ Getting files to the target::
   (initrd) wget http://server/file
 
 
-Getting an image to the target\u2019s hard disk::
+Getting an image to the target's hard disk::
 
   (initrd)  wget http://server/lava.img -O - | dd of=/dev/sda
 

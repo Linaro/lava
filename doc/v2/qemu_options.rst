@@ -7,10 +7,10 @@ QEMU options
 
 There are two ways to use QEMU in LAVA.
 
-Virtualisation testing
+Virtualization testing
 **********************
 
-If you want to test virtualisation on a :term:`DUT`, then you have
+If you want to test virtualization on a :term:`DUT`, then you have
 complete freedom to launch QEMU in any way you desire, including from a
 locally compiled source tree with custom patches. It is often useful to
 separate the output of the virtual machine from the host device or to
@@ -93,7 +93,7 @@ Specific support
 ****************
 
 The breadth of the possible options available with QEMU means that
-there is a lot of scope for customisation. Some of these elements have
+there is a lot of scope for customization. Some of these elements have
 defaults in the device type template which can be overridden by the
 test writer. Other options can be specific to individual test jobs.
 
@@ -272,7 +272,7 @@ How to specify QEMU environment options
 
 * One example is the use of ``-soundhw hda`` which emulates a soundcard
   on the target. To avoid having any sound output on the host (or
-  worker fwiw), you can specify QEMU_AUDIO_DRV like so in
+  worker), you can specify QEMU_AUDIO_DRV like so in
   ``/etc/lava-server/env.yaml``:
 
   .. code-block:: yaml

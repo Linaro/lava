@@ -5,7 +5,7 @@
 Replacing VMGroups using Secondary Connections
 ##############################################
 
-One of the primary use cases for secondary connections is the abilty to *watch*
+One of the primary use cases for secondary connections is the ability to *watch*
 a job from multiple perspectives. This includes being able to start a task in
 one job and interact with that task from another job. For example, if one job
 runs QEMU to start a VM on the host machine, another connection can test that
@@ -16,7 +16,7 @@ and to the output of the debugger in another job. This does not necessarily
 require the watching job to do anything, the job could just record the output.
 
 The role of a Virtual Machine Group is to arrange a test job such that a host
-device, which **must** have virtualisation support, boots into a base image and
+device, which **must** have virtualization support, boots into a base image and
 installs a daemon to allow other test jobs to connect - typically this will be
 :ref:`secure_secondary_shells`.
 
@@ -30,9 +30,9 @@ and preferably **before** the secondary connection jobs start. So the
 ``install: deps:`` of all jobs in the group should all be collated into the
 test definition(s) of the host role.
 
-The secondary connection support performs all the synchronisation steps that
+The secondary connection support performs all the synchronization steps that
 are required prior to the test shell starting in each of the secondary test
-jobs. The :ref:`multinode_api` remains available for any synchronisation
+jobs. The :ref:`multinode_api` remains available for any synchronization
 requirements during the test shell operation. **Importantly** the test shell
 running on the host device should wait for a :ref:`lava_sync` before completing
 the test shell definition. Otherwise the secondary connection jobs may find
@@ -123,7 +123,7 @@ Notes
 
 * **Use inlines** - this example keeps all of the :ref:`multinode_api` calls to
   the inline definitions. This is a recommended practice and future
-  developments will make it easier to match up the synchronisation calls from
+  developments will make it easier to match up the synchronization calls from
   inline definitions. So, to adapt this job to do other tasks while the
   secondary connections jobs are running those test shells, move the final
   ``lava-sync clients`` to another inline definition and do the other calls in
@@ -183,5 +183,5 @@ to consider to be able to automate tests like these.
 .. note:: The :ref:`lava_start` **only acts once** - i.e. the host role starts,
    then the other jobs wait until ``lava-start`` is sent - at which point these
    jobs will download any test shell definitions and try to connect to the IP
-   address declared. It is better to have a synchronisation which the test
+   address declared. It is better to have a synchronization which the test
    writer controls, after all the jobs have connected to the host device.

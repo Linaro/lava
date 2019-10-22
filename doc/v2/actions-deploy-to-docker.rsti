@@ -5,7 +5,7 @@
 to: docker
 **********
 
-Pull a docker image from the offical or a private docker hub.
+Pull a docker image from the official or a private docker hub.
 
 .. index:: deploy to docker image
 
@@ -14,7 +14,7 @@ Pull a docker image from the offical or a private docker hub.
 image
 =====
 
-Either the name of the docker image to pull or a dictionnary with:
+Either the name of the docker image to pull or a dictionary with:
 
 * *name*: name of the docker image to pull
 * *local*: ``True`` if the image is local, ``False`` by default.

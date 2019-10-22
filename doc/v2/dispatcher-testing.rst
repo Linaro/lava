@@ -239,15 +239,15 @@ Sample pipeline description output
       summary: loopback mount
   - - '1.4'
     - content:
-        description: customise image during deployment
+        description: customize image during deployment
         level: '1.4'
-        name: customise
+        name: customize
         parameters:
           deployment_data: *id001
-        summary: customise image
+        summary: customize image
         valid: true
-      description: customise image during deployment
-      summary: customise image
+      description: customize image during deployment
+      summary: customize image
   - - '1.5'
     - content:
         description: load test definitions into image
@@ -403,7 +403,7 @@ Current possible issues include:
   use wget on the device to apply the test definition overlay as a separate
   operation during LavaTestShell. The new classes should be capable of creating
   a complete overlay prior to the device being booted which allows for the
-  entire VCS repo to be retained. This may change behaviour.
+  entire VCS repo to be retained. This may change behavior.
 
 * If dependent test definitions use custom signal handlers, this may not work
   - it would depend on how the job parameters are handled by the new classes.
@@ -424,7 +424,7 @@ An Action which needs to support ``failure_retry`` or which wants to use
 RetryAction support internally, needs a new class added which derives from
 RetryAction, sets a useful name, summary and description and defines a
 populate() function which creates the internal_pipeline. The Action with the
-customised run() function then gets added to the internal_pipeline of the
+customized run() function then gets added to the internal_pipeline of the
 RetryAction subclass - without changing the inheritance of the original Action.
 
 .. _diagnostic_actions:
@@ -506,7 +506,7 @@ necessary, without causing the test itself to fail simply because the job
 didn't use a hard reset.
 
 If the ResetDevice Action determines that a reboot happened (by matching a
-pexpect on the bootloader initialisation), then nothing happens and the
+pexpect on the bootloader initialization), then nothing happens and the
 Adjuvant action (in this case, HardResetDevice) is marked in the results as
 skipped. If the soft reboot fails, the ResetDevice Action marks this result as
 failed but also sets a key in the PipelineContext so that the HardResetDevice
@@ -718,13 +718,13 @@ Adding new classes
 See also :ref:`mapping_yaml_to_code`:
 
 The expectation is that new tasks for the dispatcher will be created by adding
-more specialist Actions and organising the existing Action classes into a new
+more specialist Actions and organizing the existing Action classes into a new
 pipeline for the new task.
 
-Adding new behaviour is a two step process:
+Adding new behavior is a two step process:
 
 - always add a new Action, usually with an internal pipeline, to implement the
-  new behaviour
+  new behavior
 
 - add a new Strategy class which creates a suitable pipeline to use that
   Action.
@@ -752,8 +752,8 @@ overlay during deployment.
 
 Re-use existing Action classes wherever these can be used without changes.
 
-If two or more Action classes have very similar behaviour, re-factor to make a
-new base class for the common behaviour and retain the specialised classes.
+If two or more Action classes have very similar behavior, re-factor to make a
+new base class for the common behavior and retain the specialized classes.
 
 Strategy selection via select() must only ever rely on the device and the job
 parameters. Add new parameters to the job to distinguish strategies, e.g. the
@@ -807,7 +807,7 @@ Always add unit tests for new classes
 =====================================
 
 Wherever a new class is added, that new class can be tested - if only to be
-sure that it is correctly initialised and added to the pipeline at the correct
+sure that it is correctly initialized and added to the pipeline at the correct
 level. Always create a new file in the tests directory for new functionality.
 All unit tests need to be in a file with the ``test_`` prefix and add a new
 YAML file to the sample_jobs so that the strategies to select the new code can
@@ -846,7 +846,7 @@ Add documentation
 =================
 
 Add to the documentation when adding new classes which implement new dispatcher
-actions, parameters or behaviour.
+actions, parameters or behavior.
 
 Online YAML checker
 ===================
@@ -889,7 +889,7 @@ Add this python snippet to a unit test or part of the code of interest:
  from meliae import scanner
  scanner.dump_all_objects('filename.json')
 
-Once the test has run, the specified filename will exist. To analyse
+Once the test has run, the specified filename will exist. To analyze
 the results, start up a python interactive shell in the same directory::
 
  $ python
