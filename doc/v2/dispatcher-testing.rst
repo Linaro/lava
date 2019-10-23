@@ -417,14 +417,14 @@ RetryAction subclassing
 =======================
 
 For a RetryAction to validate, the RetryAction subclass must be a wrapper class
-around a new internal_pipeline to allow the RetryAction.run() function to
+around a new pipeline to allow the RetryAction.run() function to
 handle all of the retry functionality in one place.
 
 An Action which needs to support ``failure_retry`` or which wants to use
 RetryAction support internally, needs a new class added which derives from
 RetryAction, sets a useful name, summary and description and defines a
-populate() function which creates the internal_pipeline. The Action with the
-customized run() function then gets added to the internal_pipeline of the
+populate() function which creates the pipeline. The Action with the
+customized run() function then gets added to the pipeline of the
 RetryAction subclass - without changing the inheritance of the original Action.
 
 .. _diagnostic_actions:
