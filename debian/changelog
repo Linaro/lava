@@ -1,3 +1,123 @@
+lava (2019.10-1) unstable; urgency=medium
+
+  * LAVA Software 2019.09 release
+    557ab2abf Add unit tests for TestJob can_resubmit method.
+    08e15334e lava_server: load local settings if available
+    ec30dbf60 lava_server: add compatibility layer against renames
+    4d0c47cd6 lava_scheduler_app: fix usage of User.is_authenticated
+    c6eac7ad2 lava_server: drop pointless if
+    2763292c6 lava_scheduler_app: don't add view permissions on Django 2
+    429c60e36 lava_server: fix default development branding dimensions
+    0f0b9fd36 lava_server: relax security-related settings for local development
+    54960a290 lava_server: admin: customize titles
+    a4aa03f02 doc: clarify usage of connection-namespace
+    b5325a2e3 device-types: Add more uboot error messages
+    f231d80ee devce-type: Fix meson-g12a-sei510
+    c1c8e22ea Fix authorization API errors and add unit tests.
+    2a8b19674 lava-slave: accept slave dir as an option
+    cc58ec37b lava-slave: use absolute path to lava-run
+    3e8f45ec4 scheduler, server: drop harcoded device types path
+    a47517522 server: drop hardcoded usage of devices directory
+    cb0e1c1f7 settings.development: use device type configuration from source tree
+    dcceb98e3 Procfile: run all processes locally
+    215904362 doc: fix hangout link for the design meeting
+    549d97cac Add documentation file for new authorization model.
+    5b6c32814 docker: upgrade sentry-sdk to 0.11.2
+    9a048b1bf Remove deprecated support for json job definition
+    41924cf27 CI: fix failure when the yaml default format change
+    935c4e221 Reintroduce 'cancel_resubmit_testjob' permission.
+    857f011db services/docker: allow to set lava-master --event-url
+    4fd207886 Remove dependency on dateutil
+    813ed5544 lava-server manage commands: port to Django 2
+    c981d0753 lava-server manage users: in csv, print the fullname
+    ad9140324 Port management commands to Django 2
+    f2b863ba4 develoment settings: use local directory for health-checks
+    978b4fcb7 dev settings: remove references to "precious" directory
+    d62f5fd6a lava_common: fix license headers
+    45d2120e5 device-type: Add meson-g12b-a311d-khadas-vim3
+    82752014f Add debian/bullseye requirements
+    07f3bbcba Move django related functions to lava_server.compat
+    f4fd43adb yaml.load: add a compatibility layer to always use the best available loader
+    067a01726 Move the lava.utils module into lava_server
+    7bba79ba0 Show users in group admin.
+    297be49da device-type: Add hifive-unleashed-a00
+    324746e82 device-types: add two olimex-lime boards
+    dad61da61 Fix bulk cancel of test jobs in admin.
+    ba0288cae scheduler.jobs.show: fix missing value after 2019.09
+    8455b55f2 docker: do not ask for input while migrating
+    dfd9de33d debian: lava-common should have the exact same version
+    3cf3e95eb Remove dependency on nose
+    9b97254d5 Fix crash when viewing job results
+    8df38a2dc Use pexpect to run subcommand in run_cmd
+    fd752d865 lava-master: decode error messages before saving to db
+    f198c92c1 command: raise an InfrastructureError on any errors
+    794c817bf Reload gunicorn after log rotation
+    535748f38 debian package: fix gunicorn dependency
+    51fa0e164 Implement submit job endpoint for REST API.
+    dd7d4772a jlink: new boot method
+    f6b7dce19 lava_scheduler_app: frdm-k64f added jlink boot
+    8cbc550ec Fix ba0288caed5d1
+    6321d5acf is_valid: remove unused parameter
+    609f7f451 pipeline references: set the flow style when dumping
+    10e42eae2 Fix crash when raising PermissionDenied
+    6b6cdf7ea qemu: fix a crash when context.arch is missing
+    eb7e1b04f Update mount.py -  We've been seeing stale mounts for Juno and MPS2.
+    c3c3946b2 Update vemsd.py to sync before un-mounting Do a sync for ve type devices before un-mounting
+    f4276b0c7 devicedict: show an alert when the device dict is invalid
+    46d9c5940 CI: use more pylint features
+    7c362dafe Remove unused constructors
+    84d01ada0 Fix more string issues found by pylint
+    75c9d0f1d Update vemsd.py
+    7103823a0 action.run_cmd: set the CWD
+    3c366805c Remove global submit_testjob permission usage.
+    157c82cb4 Allow 63MiB for the kernel image on imx6q-sabrelite
+    30719cf73 remove_directory_contents: also remove hidden directories and files
+    cb3332cb4 deploy.vemsd: raise InfrastructureError when failing
+    3e8459d73 mps: allow to flash many binaries in on deploy action
+    6cd532f4f mps: force a soft-reboot after unmount
+    8d596e4b8 doc: add example of flashing multiple binaries
+    4be6b5a73 mps: add unittest with multiple deploy
+    51cb26028 deploy.mps: update the schema
+    857aab0c9 mps: fix soft reboot action
+    eec2579ef Mark every deploy.mps error as InfrastructureError
+    064c002b3 Ignore exception raised by the django signal handlders
+    9ba03fd90 doc: update outdated "job details" screenshot
+    175c2678a device-types: add two new boards
+    7449d64c3 timing: fix crash when the job log is invalid
+    1bb9d1880 Fix connection handling with multiple namespaces
+    1038f54c9 Remove unused build script
+    a5eccb9f5 Remove unused actions
+    94dc9a1af lava-master remove unused argument
+    4df01d5b8 yaml: use the C version by default
+    2e0f966c2 lava_dispatcher: jlink sample job
+    1d30f48f2 device-type: mimxrt1050_evk
+    814ecbd5d doc: remove mentions of the "repeat" keyword
+    5ee716b16 Remove unittest using invalid job definition
+    9bf0c919b job parser: remove references to the "repeat" keyword
+    5a1da702f etc/dispatcher-config: DB845c Add remaining GPT partitions
+    717547410 jlink: fix version check
+    6bdc77d89 Fix bulk update of devices in admin.
+    60cbe8429 etc/dispatcher-config: Dragonboards allow to override flash_cmds_order
+    9621525fd lava_scheduler_app/tests/devices: Add cdt to flash_cmds_order in db410c's
+    440961f07 Remove dependency to django-restricted-resource
+    714c32b2f Fix REST api crashes with latest drf versions
+    dd2d7ca0f rest api: improve sql efficiency
+    2a43ed4e1 Rest API: drop name argument to RelatedFilter
+    e6f1b09e2 rest-api: add test for the browsable api
+    fae1933e9 rest api: fix timeout when rendering the browsable api
+    135f809c7 rest-api: decrease the number of sql request when rendering /devicetypes/
+    9ad87c9c5 Only permissions used for per-object auth should be available in admin.
+    01f646ee4 Expand on the authorization docs.
+    b7c4ada0b Reorganize the django permissions and custom permissions.
+    80bdab409 autopkgtest: run test suite "the new way"
+    9e80f439a rest api: add some documentation about submiting a test job
+    177b1c6b5 doc: fix spelling error
+    7968337aa dragonboard-820c: flash every partition:%d tables right after the ptable
+  * Fix unsafe use of yaml.load() (Closes #933918)
+  * Remove depency on gunicorn3 package (Closes #940682)
+
+ -- Remi Duraffort <remi.duraffort@linaro.org>  Wed, 23 Oct 2019 15:25:30 +0200
+
 lava (2019.09-1) unstable; urgency=medium
 
   * LAVA Software 2019.09 release
