@@ -67,9 +67,9 @@ class TestBootloaderAction(StdoutTestCase):
         self.assertTrue(
             tftp.get_namespace_data(action=tftp.name, label="tftp", key="ramdisk")
         )
-        self.assertIsNotNone(tftp.internal_pipeline)
+        self.assertIsNotNone(tftp.pipeline)
         self.assertEqual(
-            [action.name for action in tftp.internal_pipeline.actions],
+            [action.name for action in tftp.pipeline.actions],
             [
                 "download-retry",
                 "download-retry",
@@ -81,19 +81,11 @@ class TestBootloaderAction(StdoutTestCase):
         )
         self.assertIn(
             "ramdisk",
-            [
-                action.key
-                for action in tftp.internal_pipeline.actions
-                if hasattr(action, "key")
-            ],
+            [action.key for action in tftp.pipeline.actions if hasattr(action, "key")],
         )
         self.assertIn(
             "kernel",
-            [
-                action.key
-                for action in tftp.internal_pipeline.actions
-                if hasattr(action, "key")
-            ],
+            [action.key for action in tftp.pipeline.actions if hasattr(action, "key")],
         )
 
     def test_device_x86(self):
@@ -129,12 +121,12 @@ class TestBootloaderAction(StdoutTestCase):
         ][0]
         bootloader_retry = [
             action
-            for action in bootloader_action.internal_pipeline.actions
+            for action in bootloader_action.pipeline.actions
             if action.name == "bootloader-retry"
         ][0]
         commands = [
             action
-            for action in bootloader_retry.internal_pipeline.actions
+            for action in bootloader_retry.pipeline.actions
             if action.name == "bootloader-commands"
         ][0]
         self.assertEqual(commands.character_delay, 500)
@@ -263,11 +255,11 @@ class TestBootloaderAction(StdoutTestCase):
             if action.name == "tftp-deploy":
                 deploy = action
         if deploy:
-            for action in deploy.internal_pipeline.actions:
+            for action in deploy.pipeline.actions:
                 if action.name == "prepare-tftp-overlay":
                     overlay = action
         if overlay:
-            for action in overlay.internal_pipeline.actions:
+            for action in overlay.pipeline.actions:
                 if action.name == "extract-nfsrootfs":
                     extract = action
         test_dir = overlay.get_namespace_data(
@@ -291,25 +283,21 @@ class TestBootloaderAction(StdoutTestCase):
             self.assertTrue(action.valid)
             if action.name == "bootloader-action":
                 bootloader_action = action
-        names = [
-            r_action.name for r_action in bootloader_action.internal_pipeline.actions
-        ]
+        names = [r_action.name for r_action in bootloader_action.pipeline.actions]
         self.assertIn("connect-device", names)
         self.assertIn("bootloader-retry", names)
-        for action in bootloader_action.internal_pipeline.actions:
+        for action in bootloader_action.pipeline.actions:
             if action.name == "bootloader-retry":
                 bootloader_retry = action
-        names = [
-            r_action.name for r_action in bootloader_retry.internal_pipeline.actions
-        ]
+        names = [r_action.name for r_action in bootloader_retry.pipeline.actions]
         self.assertIn("reset-device", names)
         self.assertIn("bootloader-interrupt", names)
         self.assertIn("expect-shell-connection", names)
         self.assertIn("bootloader-commands", names)
-        for action in bootloader_retry.internal_pipeline.actions:
+        for action in bootloader_retry.pipeline.actions:
             if action.name == "reset-device":
                 reset_action = action
-        names = [r_action.name for r_action in reset_action.internal_pipeline.actions]
+        names = [r_action.name for r_action in reset_action.pipeline.actions]
         self.assertIn("pdu-reboot", names)
 
     @unittest.skipIf(infrastructure_error("telnet"), "telnet not installed")
@@ -332,12 +320,12 @@ class TestBootloaderAction(StdoutTestCase):
         ][0]
         retry = [
             action
-            for action in bootloader.internal_pipeline.actions
+            for action in bootloader.pipeline.actions
             if action.name == "bootloader-retry"
         ][0]
         expect = [
             action
-            for action in retry.internal_pipeline.actions
+            for action in retry.pipeline.actions
             if action.name == "expect-shell-connection"
         ][0]
         check = expect.parameters
@@ -363,12 +351,12 @@ class TestBootloaderAction(StdoutTestCase):
         ][0]
         retry = [
             action
-            for action in bootloader.internal_pipeline.actions
+            for action in bootloader.pipeline.actions
             if action.name == "bootloader-retry"
         ][0]
         expect = [
             action
-            for action in retry.internal_pipeline.actions
+            for action in retry.pipeline.actions
             if action.name == "expect-shell-connection"
         ][0]
 
@@ -381,12 +369,12 @@ class TestBootloaderAction(StdoutTestCase):
         ][0]
         prepare = [
             action
-            for action in tftp_deploy.internal_pipeline.actions
+            for action in tftp_deploy.pipeline.actions
             if action.name == "prepare-tftp-overlay"
         ][0]
         nfs = [
             action
-            for action in prepare.internal_pipeline.actions
+            for action in prepare.pipeline.actions
             if action.name == "extract-nfsrootfs"
         ][0]
         self.assertIn("compression", nfs.parameters["nfsrootfs"])

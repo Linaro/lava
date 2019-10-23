@@ -74,10 +74,8 @@ class BootCMSIS(BootAction):
     summary = "boot cmsis usb image"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
-        self.internal_pipeline.add_action(BootCMSISRetry())
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.pipeline.add_action(BootCMSISRetry())
 
 
 class BootCMSISRetry(RetryAction):
@@ -96,21 +94,19 @@ class BootCMSISRetry(RetryAction):
             self.errors = "usb_mass_device unset"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         method_params = self.job.device["actions"]["boot"]["methods"]["cmsis-dap"][
             "parameters"
         ]
         usb_mass_device = method_params.get("usb_mass_device")
         resets_after_flash = method_params.get("resets_after_flash", True)
         if self.job.device.hard_reset_command:
-            self.internal_pipeline.add_action(ResetDevice())
-            self.internal_pipeline.add_action(WaitDevicePathAction(usb_mass_device))
-        self.internal_pipeline.add_action(FlashCMSISAction())
+            self.pipeline.add_action(ResetDevice())
+            self.pipeline.add_action(WaitDevicePathAction(usb_mass_device))
+        self.pipeline.add_action(FlashCMSISAction())
         if resets_after_flash:
-            self.internal_pipeline.add_action(WaitUSBSerialDeviceAction())
-        self.internal_pipeline.add_action(ConnectDevice())
+            self.pipeline.add_action(WaitUSBSerialDeviceAction())
+        self.pipeline.add_action(ConnectDevice())
 
 
 class FlashCMSISAction(Action):

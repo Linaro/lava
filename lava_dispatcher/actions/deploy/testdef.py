@@ -524,9 +524,7 @@ class TestDefinitionAction(TestAction):
         install:deps script and the main run script have custom Actions.
         """
         index = []
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.test_list = identify_test_definitions(
             self.job.test_info, parameters["namespace"]
         )
@@ -552,7 +550,7 @@ class TestDefinitionAction(TestAction):
                     len(index),
                     handler.parameters["name"],
                 )
-                self.internal_pipeline.add_action(handler)
+                self.pipeline.add_action(handler)
                 # a genuinely unique ID based on the *database* JobID and
                 # pipeline level for reproducibility and tracking -
                 # {DB-JobID}_{PipelineLevel}, e.g. 15432.0_3.5.4
@@ -584,9 +582,9 @@ class TestDefinitionAction(TestAction):
                 index.append(handler.parameters["name"])
 
                 # add overlay handlers to the pipeline
-                self.internal_pipeline.add_action(overlay)
-                self.internal_pipeline.add_action(installer)
-                self.internal_pipeline.add_action(runsh)
+                self.pipeline.add_action(overlay)
+                self.pipeline.add_action(installer)
+                self.pipeline.add_action(runsh)
                 self.set_namespace_data(
                     action="test-definition",
                     label="test-definition",
@@ -676,7 +674,7 @@ class TestDefinitionAction(TestAction):
             with open(
                 "%s/%s/lava-test-runner.conf" % (overlay_base, stage), "a"
             ) as runner_conf:
-                for handler in self.internal_pipeline.actions:
+                for handler in self.pipeline.actions:
                     if isinstance(handler, RepoAction) and handler.stage == stage:
                         self.logger.debug("- %s", handler.parameters["test_name"])
                         runner_conf.write(handler.runner)
@@ -815,7 +813,7 @@ class TestInstallAction(TestOverlayAction):
         exist and then it will append to it.
         TestOverlayAction will then add TestInstallAction to an
         internal pipeline followed by TestParameterAction then
-        run the internal_pipeline at the start of the TestOverlayAction
+        run the pipeline at the start of the TestOverlayAction
         run step.
         """
         super().__init__()

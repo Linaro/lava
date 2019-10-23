@@ -307,31 +307,27 @@ class MassStorage(DeployAction):
         but not the device.
         """
         self.image_path = self.mkdtemp()
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         if self.test_needs_overlay(parameters):
-            self.internal_pipeline.add_action(
-                OverlayAction()
-            )  # idempotent, includes testdef
+            self.pipeline.add_action(OverlayAction())  # idempotent, includes testdef
         uniquify = parameters.get("uniquify", True)
         if "images" in parameters:
             for k in sorted(parameters["images"].keys()):
-                self.internal_pipeline.add_action(
+                self.pipeline.add_action(
                     DownloaderAction(k, path=self.image_path, uniquify=uniquify)
                 )
                 if parameters["images"][k].get("apply-overlay", False):
                     if self.test_needs_overlay(parameters):
-                        self.internal_pipeline.add_action(ApplyOverlayImage())
-            self.internal_pipeline.add_action(DDAction())
+                        self.pipeline.add_action(ApplyOverlayImage())
+            self.pipeline.add_action(DDAction())
         elif "image" in parameters:
-            self.internal_pipeline.add_action(
+            self.pipeline.add_action(
                 DownloaderAction("image", path=self.image_path, uniquify=uniquify)
             )
             if self.test_needs_overlay(parameters):
-                self.internal_pipeline.add_action(ApplyOverlayImage())
-            self.internal_pipeline.add_action(DDAction())
+                self.pipeline.add_action(ApplyOverlayImage())
+            self.pipeline.add_action(DDAction())
 
         # FIXME: could support tarballs too
         if self.test_needs_deployment(parameters):
-            self.internal_pipeline.add_action(DeployDeviceEnvironment())
+            self.pipeline.add_action(DeployDeviceEnvironment())

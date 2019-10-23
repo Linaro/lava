@@ -92,14 +92,12 @@ class UBootAction(BootAction):
             )
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         # customize the device configuration for this job
-        self.internal_pipeline.add_action(UBootSecondaryMedia())
-        self.internal_pipeline.add_action(BootloaderCommandOverlay())
-        self.internal_pipeline.add_action(ConnectDevice())
-        self.internal_pipeline.add_action(UBootRetry())
+        self.pipeline.add_action(UBootSecondaryMedia())
+        self.pipeline.add_action(BootloaderCommandOverlay())
+        self.pipeline.add_action(ConnectDevice())
+        self.pipeline.add_action(UBootRetry())
 
 
 class UBootRetry(BootAction):
@@ -114,34 +112,28 @@ class UBootRetry(BootAction):
         self.usb_mass_device = None
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.method_params = self.job.device["actions"]["boot"]["methods"]["u-boot"][
             "parameters"
         ]
         self.usb_mass_device = self.method_params.get("uboot_mass_storage_device")
         # establish a new connection before trying the reset
-        self.internal_pipeline.add_action(ResetDevice())
-        self.internal_pipeline.add_action(BootloaderInterruptAction())
+        self.pipeline.add_action(ResetDevice())
+        self.pipeline.add_action(BootloaderInterruptAction())
         if self.method_params.get("uboot_ums_flash", False):
-            self.internal_pipeline.add_action(
-                BootloaderCommandsAction(expect_final=False)
-            )
-            self.internal_pipeline.add_action(
-                WaitDevicePathAction(self.usb_mass_device)
-            )
-            self.internal_pipeline.add_action(FlashUBootUMSAction(self.usb_mass_device))
-            self.internal_pipeline.add_action(ResetDevice())
+            self.pipeline.add_action(BootloaderCommandsAction(expect_final=False))
+            self.pipeline.add_action(WaitDevicePathAction(self.usb_mass_device))
+            self.pipeline.add_action(FlashUBootUMSAction(self.usb_mass_device))
+            self.pipeline.add_action(ResetDevice())
         else:
-            self.internal_pipeline.add_action(BootloaderCommandsAction())
+            self.pipeline.add_action(BootloaderCommandsAction())
         if self.has_prompts(parameters):
-            self.internal_pipeline.add_action(AutoLoginAction())
+            self.pipeline.add_action(AutoLoginAction())
             if self.test_has_shell(parameters):
-                self.internal_pipeline.add_action(ExpectShellSession())
+                self.pipeline.add_action(ExpectShellSession())
                 if "transfer_overlay" in parameters:
-                    self.internal_pipeline.add_action(OverlayUnpack())
-                self.internal_pipeline.add_action(ExportDeviceEnvironment())
+                    self.pipeline.add_action(OverlayUnpack())
+                self.pipeline.add_action(ExportDeviceEnvironment())
 
     def validate(self):
         super().validate()
@@ -238,14 +230,12 @@ class UBootEnterFastbootAction(BootAction):
         self.params = {}
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         # establish a new connection before trying the reset
-        self.internal_pipeline.add_action(ResetDevice())
+        self.pipeline.add_action(ResetDevice())
         # need to look for Hit any key to stop autoboot
-        self.internal_pipeline.add_action(BootloaderInterruptAction())
-        self.internal_pipeline.add_action(ConnectLxc())
+        self.pipeline.add_action(BootloaderInterruptAction())
+        self.pipeline.add_action(ConnectLxc())
 
     def validate(self):
         super().validate()

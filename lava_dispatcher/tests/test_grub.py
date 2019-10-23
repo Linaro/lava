@@ -90,9 +90,9 @@ class TestGrubAction(StdoutTestCase):
         self.assertTrue(
             tftp.get_namespace_data(action=tftp.name, label="tftp", key="ramdisk")
         )
-        self.assertIsNotNone(tftp.internal_pipeline)
+        self.assertIsNotNone(tftp.pipeline)
         self.assertEqual(
-            [action.name for action in tftp.internal_pipeline.actions],
+            [action.name for action in tftp.pipeline.actions],
             [
                 "download-retry",
                 "download-retry",
@@ -104,27 +104,15 @@ class TestGrubAction(StdoutTestCase):
         )
         self.assertIn(
             "ramdisk",
-            [
-                action.key
-                for action in tftp.internal_pipeline.actions
-                if hasattr(action, "key")
-            ],
+            [action.key for action in tftp.pipeline.actions if hasattr(action, "key")],
         )
         self.assertIn(
             "kernel",
-            [
-                action.key
-                for action in tftp.internal_pipeline.actions
-                if hasattr(action, "key")
-            ],
+            [action.key for action in tftp.pipeline.actions if hasattr(action, "key")],
         )
         self.assertIn(
             "dtb",
-            [
-                action.key
-                for action in tftp.internal_pipeline.actions
-                if hasattr(action, "key")
-            ],
+            [action.key for action in tftp.pipeline.actions if hasattr(action, "key")],
         )
         self.assertNotIn("=", tftpd_dir())
 
@@ -258,11 +246,11 @@ class TestGrubAction(StdoutTestCase):
             if action.name == "tftp-deploy":
                 deploy = action
         if deploy:
-            for action in deploy.internal_pipeline.actions:
+            for action in deploy.pipeline.actions:
                 if action.name == "prepare-tftp-overlay":
                     overlay = action
         if overlay:
-            for action in overlay.internal_pipeline.actions:
+            for action in overlay.pipeline.actions:
                 if action.name == "extract-nfsrootfs":
                     extract = action
         test_dir = overlay.get_namespace_data(
@@ -284,7 +272,7 @@ class TestGrubAction(StdoutTestCase):
             self.assertTrue(action.valid)
             if action.name == "grub-main-action":
                 grub_action = action
-        names = [r_action.name for r_action in grub_action.internal_pipeline.actions]
+        names = [r_action.name for r_action in grub_action.pipeline.actions]
         self.assertIn("connect-device", names)
         self.assertIn("reset-device", names)
         self.assertIn("bootloader-interrupt", names)
@@ -318,13 +306,13 @@ class TestGrubAction(StdoutTestCase):
         ][0]
         menu = [
             action
-            for action in grub.internal_pipeline.actions
+            for action in grub.pipeline.actions
             if action.name == "uefi-menu-interrupt"
         ][0]
         self.assertIn("item_class", menu.params)
         grub_efi = [
             action
-            for action in grub.internal_pipeline.actions
+            for action in grub.pipeline.actions
             if action.name == "grub-efi-menu-selector"
         ][0]
         self.assertEqual("pxe-grub", grub_efi.commands)
@@ -354,7 +342,7 @@ class TestGrubAction(StdoutTestCase):
         ][0]
         command = [
             action
-            for action in console.internal_pipeline.actions
+            for action in console.pipeline.actions
             if action.name == "connect-shell"
         ][0]
         self.assertEqual("isolation", command.parameters["namespace"])
@@ -375,7 +363,7 @@ class TestGrubAction(StdoutTestCase):
                 self.assertNotEqual(shell.parameters["namespace"], "isolation")
                 self.assertNotEqual(shell.parameters["namespace"], "tlxc")
                 self.assertEqual(shell.parameters["connection-namespace"], "isolation")
-                retry = [action for action in shell.internal_pipeline.actions][0]
+                retry = [action for action in shell.pipeline.actions][0]
                 self.assertEqual(retry.parameters["connection-namespace"], "isolation")
             else:
                 self.assertNotEqual(shell.parameters["namespace"], "hikey-oe")
@@ -389,7 +377,7 @@ class TestGrubAction(StdoutTestCase):
         ][0]
         autologin = [
             action
-            for action in menu.internal_pipeline.actions
+            for action in menu.pipeline.actions
             if action.name == "auto-login-action"
         ][0]
         self.assertIsNone(autologin.params)
@@ -401,7 +389,7 @@ class TestGrubAction(StdoutTestCase):
         ][0]
         autologin = [
             action
-            for action in menu.internal_pipeline.actions
+            for action in menu.pipeline.actions
             if action.name == "auto-login-action"
         ][0]
         self.assertIsNotNone(autologin.parameters)
@@ -423,12 +411,12 @@ class TestGrubAction(StdoutTestCase):
         ][0]
         flash_ord = [
             action
-            for action in deploy.internal_pipeline.actions
+            for action in deploy.pipeline.actions
             if action.name == "fastboot-flash-order-action"
         ][0]
         flash = [
             action
-            for action in flash_ord.internal_pipeline.actions
+            for action in flash_ord.pipeline.actions
             if action.name == "fastboot-flash-action"
         ][0]
         self.assertIsNotNone(flash.interrupt_prompt)
@@ -443,13 +431,13 @@ class TestGrubAction(StdoutTestCase):
         self.assertIsNotNone(grub_seq)
         wait = [
             action
-            for action in grub_seq.internal_pipeline.actions
+            for action in grub_seq.pipeline.actions
             if action.name == "wait-fastboot-interrupt"
         ][0]
         self.assertIsNotNone(wait)
         login = [
             action
-            for action in grub_seq.internal_pipeline.actions
+            for action in grub_seq.pipeline.actions
             if action.name == "auto-login-action"
         ][0]
         self.assertIsNotNone(login)

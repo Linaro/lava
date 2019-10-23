@@ -62,14 +62,12 @@ class BootBootloaderAction(BootAction):
     summary = "boot bootloader"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
-        self.internal_pipeline.add_action(ConnectDevice())
-        self.internal_pipeline.add_action(
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.pipeline.add_action(ConnectDevice())
+        self.pipeline.add_action(
             BootloaderCommandOverlay(method=parameters["bootloader"])
         )
-        self.internal_pipeline.add_action(BootBootloaderRetry())
+        self.pipeline.add_action(BootBootloaderRetry())
 
 
 class BootBootloaderRetry(RetryAction):
@@ -79,14 +77,12 @@ class BootBootloaderRetry(RetryAction):
     summary = "boot bootloader retry"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
-        self.internal_pipeline.add_action(ResetDevice())
-        self.internal_pipeline.add_action(
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.pipeline.add_action(ResetDevice())
+        self.pipeline.add_action(
             BootloaderInterruptAction(method=parameters["bootloader"])
         )
-        self.internal_pipeline.add_action(
+        self.pipeline.add_action(
             BootloaderCommandsAction(
                 expect_final=False, method=parameters["bootloader"]
             )

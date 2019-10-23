@@ -162,12 +162,12 @@ class TestKVMBasicDeploy(StdoutTestCase):
         ][0]
         overlay = [
             action
-            for action in deploy.internal_pipeline.actions
+            for action in deploy.pipeline.actions
             if action.name == "lava-overlay"
         ][0]
         self.assertIn(
             "persistent-nfs-overlay",
-            [action.name for action in overlay.internal_pipeline.actions],
+            [action.name for action in overlay.pipeline.actions],
         )
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
@@ -373,12 +373,12 @@ class TestKVMInlineTestDeploy(StdoutTestCase):
         ][0]
         boot_qemu = [
             action
-            for action in boot_image.internal_pipeline.actions
+            for action in boot_image.pipeline.actions
             if action.name == "boot-qemu-image"
         ][0]
         qemu = [
             action
-            for action in boot_qemu.internal_pipeline.actions
+            for action in boot_qemu.pipeline.actions
             if action.name == "execute-qemu"
         ][0]
         self.assertIsInstance(qemu.sub_command, list)
@@ -395,12 +395,12 @@ class TestKVMInlineTestDeploy(StdoutTestCase):
         inline_repo = None
         for action in self.job.pipeline.actions:
             if isinstance(action, DeployAction):
-                self.assertIsNotNone(action.internal_pipeline.actions[1])
+                self.assertIsNotNone(action.pipeline.actions[1])
                 overlay = action.pipeline.actions[1]
-                self.assertIsNotNone(overlay.internal_pipeline.actions[1])
-                testdef = overlay.internal_pipeline.actions[2]
-                self.assertIsNotNone(testdef.internal_pipeline.actions[0])
-                inline_repo = testdef.internal_pipeline.actions[0]
+                self.assertIsNotNone(overlay.pipeline.actions[1])
+                testdef = overlay.pipeline.actions[2]
+                self.assertIsNotNone(testdef.pipeline.actions[0])
+                inline_repo = testdef.pipeline.actions[0]
                 break
         # Test the InlineRepoAction directly
         self.assertIsNotNone(inline_repo)
@@ -475,12 +475,12 @@ class TestKvmConnection(StdoutTestCase):
         ][0]
         bootqemu = [
             action
-            for action in bootaction.internal_pipeline.actions
+            for action in bootaction.pipeline.actions
             if action.name == "boot-qemu-image"
         ][0]
         call_qemu = [
             action
-            for action in bootqemu.internal_pipeline.actions
+            for action in bootqemu.pipeline.actions
             if action.name == "execute-qemu"
         ][0]
         self.assertEqual(call_qemu.session_class, QemuSession)
@@ -491,12 +491,12 @@ class TestKvmConnection(StdoutTestCase):
         ][1]
         bootqemu = [
             action
-            for action in bootaction.internal_pipeline.actions
+            for action in bootaction.pipeline.actions
             if action.name == "boot-qemu-image"
         ][0]
         call_qemu = [
             action
-            for action in bootqemu.internal_pipeline.actions
+            for action in bootqemu.pipeline.actions
             if action.name == "execute-qemu"
         ][0]
         self.assertEqual(call_qemu.session_class, QemuSession)
@@ -521,7 +521,7 @@ class TestAutoLogin(StdoutTestCase):
         ][0]
         autologinaction = [
             action
-            for action in bootaction.internal_pipeline.actions
+            for action in bootaction.pipeline.actions
             if action.name == "auto-login-action"
         ][0]
 
@@ -560,7 +560,7 @@ class TestAutoLogin(StdoutTestCase):
         ][0]
         autologinaction = [
             action
-            for action in bootaction.internal_pipeline.actions
+            for action in bootaction.pipeline.actions
             if action.name == "auto-login-action"
         ][0]
 
@@ -585,7 +585,7 @@ class TestAutoLogin(StdoutTestCase):
         ][0]
         autologinaction = [
             action
-            for action in bootaction.internal_pipeline.actions
+            for action in bootaction.pipeline.actions
             if action.name == "auto-login-action"
         ][0]
 
@@ -606,7 +606,7 @@ class TestAutoLogin(StdoutTestCase):
         ][0]
         autologinaction = [
             action
-            for action in bootaction.internal_pipeline.actions
+            for action in bootaction.pipeline.actions
             if action.name == "auto-login-action"
         ][0]
 
@@ -626,7 +626,7 @@ class TestAutoLogin(StdoutTestCase):
         ][0]
         autologinaction = [
             action
-            for action in bootaction.internal_pipeline.actions
+            for action in bootaction.pipeline.actions
             if action.name == "auto-login-action"
         ][0]
 
@@ -646,7 +646,7 @@ class TestAutoLogin(StdoutTestCase):
         ][0]
         autologinaction = [
             action
-            for action in bootaction.internal_pipeline.actions
+            for action in bootaction.pipeline.actions
             if action.name == "auto-login-action"
         ][0]
 
@@ -672,7 +672,7 @@ class TestAutoLogin(StdoutTestCase):
         ][0]
         autologinaction = [
             action
-            for action in bootaction.internal_pipeline.actions
+            for action in bootaction.pipeline.actions
             if action.name == "auto-login-action"
         ][0]
 
@@ -692,7 +692,7 @@ class TestAutoLogin(StdoutTestCase):
         ][0]
         autologinaction = [
             action
-            for action in bootaction.internal_pipeline.actions
+            for action in bootaction.pipeline.actions
             if action.name == "auto-login-action"
         ][0]
 
@@ -718,7 +718,7 @@ class TestAutoLogin(StdoutTestCase):
         ][0]
         autologinaction = [
             action
-            for action in bootaction.internal_pipeline.actions
+            for action in bootaction.pipeline.actions
             if action.name == "auto-login-action"
         ][0]
 
@@ -761,12 +761,12 @@ class TestChecksum(StdoutTestCase):
         ][0]
         downloadretryaction = [
             action
-            for action in deployimagesaction.internal_pipeline.actions
+            for action in deployimagesaction.pipeline.actions
             if action.name == "download-retry"
         ][0]
         httpdownloadaction = [
             action
-            for action in downloadretryaction.internal_pipeline.actions
+            for action in downloadretryaction.pipeline.actions
             if action.name == "http-download"
         ][0]
 
@@ -799,12 +799,12 @@ class TestChecksum(StdoutTestCase):
         ][0]
         downloadretryaction = [
             action
-            for action in deployimagesaction.internal_pipeline.actions
+            for action in deployimagesaction.pipeline.actions
             if action.name == "download-retry"
         ][0]
         httpdownloadaction = [
             action
-            for action in downloadretryaction.internal_pipeline.actions
+            for action in downloadretryaction.pipeline.actions
             if action.name == "http-download"
         ][0]
 
@@ -838,12 +838,12 @@ class TestChecksum(StdoutTestCase):
         ][0]
         downloadretryaction = [
             action
-            for action in deployimagesaction.internal_pipeline.actions
+            for action in deployimagesaction.pipeline.actions
             if action.name == "download-retry"
         ][0]
         httpdownloadaction = [
             action
-            for action in downloadretryaction.internal_pipeline.actions
+            for action in downloadretryaction.pipeline.actions
             if action.name == "http-download"
         ][0]
 
@@ -868,12 +868,12 @@ class TestChecksum(StdoutTestCase):
         ][0]
         downloadretryaction = [
             action
-            for action in deployimagesaction.internal_pipeline.actions
+            for action in deployimagesaction.pipeline.actions
             if action.name == "download-retry"
         ][0]
         httpdownloadaction = [
             action
-            for action in downloadretryaction.internal_pipeline.actions
+            for action in downloadretryaction.pipeline.actions
             if action.name == "http-download"
         ][0]
 
@@ -905,12 +905,12 @@ class TestChecksum(StdoutTestCase):
         ][0]
         downloadretryaction = [
             action
-            for action in deployimagesaction.internal_pipeline.actions
+            for action in deployimagesaction.pipeline.actions
             if action.name == "download-retry"
         ][0]
         httpdownloadaction = [
             action
-            for action in downloadretryaction.internal_pipeline.actions
+            for action in downloadretryaction.pipeline.actions
             if action.name == "http-download"
         ][0]
 
@@ -960,12 +960,12 @@ class TestChecksum(StdoutTestCase):
         ][0]
         download = [
             action
-            for action in deploy.internal_pipeline.actions
+            for action in deploy.pipeline.actions
             if action.name == "download-retry"
         ][0]
         helper = [
             action
-            for action in download.internal_pipeline.actions
+            for action in download.pipeline.actions
             if action.name == "file-download"
         ][0]
         remote = helper.parameters[helper.key]
@@ -1013,7 +1013,7 @@ class TestKvmUefi(StdoutTestCase):
         ][0]
         downloaders = [
             action
-            for action in deploy.internal_pipeline.actions
+            for action in deploy.pipeline.actions
             if action.name == "download-retry"
         ]
         self.assertEqual(len(downloaders), 2)
@@ -1035,13 +1035,11 @@ class TestKvmUefi(StdoutTestCase):
         ][0]
         qemu = [
             action
-            for action in boot.internal_pipeline.actions
+            for action in boot.pipeline.actions
             if action.name == "boot-qemu-image"
         ][0]
         execute = [
-            action
-            for action in qemu.internal_pipeline.actions
-            if action.name == "execute-qemu"
+            action for action in qemu.pipeline.actions if action.name == "execute-qemu"
         ][0]
         self.job.validate()
         execute.run(None, 1)
@@ -1092,13 +1090,11 @@ class TestQemuNFS(StdoutTestCase):
         ][0]
         qemu = [
             action
-            for action in boot.internal_pipeline.actions
+            for action in boot.pipeline.actions
             if action.name == "boot-qemu-image"
         ][0]
         execute = [
-            action
-            for action in qemu.internal_pipeline.actions
-            if action.name == "execute-qemu"
+            action for action in qemu.pipeline.actions if action.name == "execute-qemu"
         ][0]
         self.job.validate()
         execute.run(None, 1)

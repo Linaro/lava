@@ -98,26 +98,24 @@ class UefiShellAction(BootAction):
         return True
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
-        self.internal_pipeline.add_action(BootloaderCommandOverlay())
-        self.internal_pipeline.add_action(MenuConnect())
-        self.internal_pipeline.add_action(ResetDevice())
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.pipeline.add_action(BootloaderCommandOverlay())
+        self.pipeline.add_action(MenuConnect())
+        self.pipeline.add_action(ResetDevice())
         # Newer firmware often needs no menu interaction, just press to drop to shell
         if not self._skip_menu(parameters):
             # Some older firmware, UEFI Shell has to be selected from a menu.
-            self.internal_pipeline.add_action(UefiShellMenuInterrupt())
-            self.internal_pipeline.add_action(UefiShellMenuSelector())
-        self.internal_pipeline.add_action(UefiShellInterrupt())
-        self.internal_pipeline.add_action(UefiBootloaderCommandsAction())
+            self.pipeline.add_action(UefiShellMenuInterrupt())
+            self.pipeline.add_action(UefiShellMenuSelector())
+        self.pipeline.add_action(UefiShellInterrupt())
+        self.pipeline.add_action(UefiBootloaderCommandsAction())
         if self.has_prompts(parameters):
-            self.internal_pipeline.add_action(AutoLoginAction())
+            self.pipeline.add_action(AutoLoginAction())
             if self.test_has_shell(parameters):
-                self.internal_pipeline.add_action(ExpectShellSession())
+                self.pipeline.add_action(ExpectShellSession())
                 if "transfer_overlay" in parameters:
-                    self.internal_pipeline.add_action(OverlayUnpack())
-                self.internal_pipeline.add_action(ExportDeviceEnvironment())
+                    self.pipeline.add_action(OverlayUnpack())
+                self.pipeline.add_action(ExportDeviceEnvironment())
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)

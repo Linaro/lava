@@ -44,7 +44,7 @@ class TestDecompression(StdoutTestCase):
         ][0]
         downloadactions = [
             action
-            for action in deployaction.internal_pipeline.actions
+            for action in deployaction.pipeline.actions
             if action.name == "download-retry"
         ]
         self.assertEqual(len(downloadactions), 4)
@@ -59,7 +59,7 @@ class TestDecompression(StdoutTestCase):
         for downloadaction in downloadactions:
             httpaction = [
                 action
-                for action in downloadaction.internal_pipeline.actions
+                for action in downloadaction.pipeline.actions
                 if action.name == "http-download"
             ][0]
             httpaction.validate()

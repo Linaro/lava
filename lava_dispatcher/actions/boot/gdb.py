@@ -71,10 +71,8 @@ class BootGDB(BootAction):
     summary = "boot with gdb"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
-        self.internal_pipeline.add_action(BootGDBRetry())
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.pipeline.add_action(BootGDBRetry())
 
 
 class BootGDBRetry(RetryAction):
@@ -134,13 +132,11 @@ class BootGDBRetry(RetryAction):
             )
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         if self.job.device.hard_reset_command:
-            self.internal_pipeline.add_action(ResetDevice())
-        self.internal_pipeline.add_action(WaitUSBSerialDeviceAction())
-        self.internal_pipeline.add_action(ConnectDevice())
+            self.pipeline.add_action(ResetDevice())
+        self.pipeline.add_action(WaitUSBSerialDeviceAction())
+        self.pipeline.add_action(ConnectDevice())
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)

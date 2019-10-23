@@ -210,9 +210,7 @@ class TestConstants(StdoutTestCase):
         )
         self.assertIsInstance(uboot, UBootAction)
         retry = [
-            action
-            for action in uboot.internal_pipeline.actions
-            if action.name == "uboot-retry"
+            action for action in uboot.pipeline.actions if action.name == "uboot-retry"
         ][0]
         self.assertEqual(
             "reboot: Restarting system",  # modified in the job yaml
@@ -221,7 +219,7 @@ class TestConstants(StdoutTestCase):
             ),
         )
         self.assertIsInstance(retry, UBootRetry)
-        reset = retry.internal_pipeline.actions[0]
+        reset = retry.pipeline.actions[0]
         self.assertEqual(
             "reboot: Restarting system",  # modified in the job yaml
             reset.parameters["parameters"].get(
@@ -229,7 +227,7 @@ class TestConstants(StdoutTestCase):
             ),
         )
         self.assertIsInstance(reset, ResetDevice)
-        reboot = reset.internal_pipeline.actions[0]
+        reboot = reset.pipeline.actions[0]
         self.assertEqual(
             "reboot: Restarting system",  # modified in the job yaml
             reboot.parameters["parameters"].get(

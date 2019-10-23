@@ -40,7 +40,7 @@ def test_repeat_action(monkeypatch):
     ra = RetryAction()
     ra.parameters = {"repeat": 5}
     ra.level = "1"
-    ra.internal_pipeline = Pipeline(parent=ra)
-    ra.internal_pipeline.add_action(DummyAction())
+    ra.pipeline = Pipeline(parent=ra)
+    ra.pipeline.add_action(DummyAction())
     ra.run(None, 1)
-    assert ra.internal_pipeline.actions[0].ran == 5  # nosec - unit test support.
+    assert ra.pipeline.actions[0].ran == 5  # nosec - unit test support.

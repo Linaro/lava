@@ -25,8 +25,8 @@ from lava_dispatcher.actions.boot import AutoLoginAction
 
 def find_autologin(job):
     for action in job.pipeline.actions:
-        if action.internal_pipeline:
-            for action in action.internal_pipeline.actions:
+        if action.pipeline:
+            for action in action.pipeline.actions:
                 if isinstance(action, AutoLoginAction):
                     return True
     return False

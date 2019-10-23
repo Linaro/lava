@@ -52,13 +52,11 @@ class TestUbootUMSAction(StdoutTestCase):
             action for action in job.pipeline.actions if action.name == "uboot-action"
         ][0]
         retry = [
-            action
-            for action in uboot.internal_pipeline.actions
-            if action.name == "uboot-retry"
+            action for action in uboot.pipeline.actions if action.name == "uboot-retry"
         ][0]
         flash = [
             action
-            for action in retry.internal_pipeline.actions
+            for action in retry.pipeline.actions
             if action.name == "flash-uboot-ums"
         ][0]
         self.assertEqual("ums", flash.parameters["commands"])

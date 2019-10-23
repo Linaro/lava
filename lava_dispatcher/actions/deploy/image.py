@@ -43,13 +43,11 @@ class DeployImagesAction(DeployAction):  # FIXME: Rename to DeployPosixImages
     summary = "deploy images"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         path = self.mkdtemp()
         if "uefi" in parameters:
             uefi_path = self.mkdtemp()
-            self.internal_pipeline.add_action(DownloaderAction("uefi", uefi_path))
+            self.pipeline.add_action(DownloaderAction("uefi", uefi_path))
             # uefi option of QEMU needs a directory, not the filename
             self.set_namespace_data(
                 action=self.name,
@@ -60,16 +58,14 @@ class DeployImagesAction(DeployAction):  # FIXME: Rename to DeployPosixImages
             )
             # alternatively use the -bios option and standard image args
         for image in parameters["images"].keys():
-            self.internal_pipeline.add_action(DownloaderAction(image, path))
+            self.pipeline.add_action(DownloaderAction(image, path))
             if parameters["images"][image].get("format", "") == "qcow2":
-                self.internal_pipeline.add_action(QCowConversionAction(image))
+                self.pipeline.add_action(QCowConversionAction(image))
         if self.test_needs_overlay(parameters):
-            self.internal_pipeline.add_action(
-                OverlayAction()
-            )  # idempotent, includes testdef
-            self.internal_pipeline.add_action(ApplyOverlayGuest())
+            self.pipeline.add_action(OverlayAction())  # idempotent, includes testdef
+            self.pipeline.add_action(ApplyOverlayGuest())
         if self.test_needs_deployment(parameters):
-            self.internal_pipeline.add_action(DeployDeviceEnvironment())
+            self.pipeline.add_action(DeployDeviceEnvironment())
 
 
 class DeployQemuNfs(Deployment):
@@ -115,13 +111,11 @@ class DeployQemuNfsAction(DeployAction):
     summary = "deploy NFS for QEMU"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         path = self.mkdtemp()
         if "uefi" in parameters:
             uefi_path = self.mkdtemp()
-            self.internal_pipeline.add_action(DownloaderAction("uefi", uefi_path))
+            self.pipeline.add_action(DownloaderAction("uefi", uefi_path))
             # uefi option of QEMU needs a directory, not the filename
             self.set_namespace_data(
                 action=self.name,
@@ -132,13 +126,13 @@ class DeployQemuNfsAction(DeployAction):
             )
             # alternatively use the -bios option and standard image args
         for image in parameters["images"].keys():
-            self.internal_pipeline.add_action(DownloaderAction(image, path))
+            self.pipeline.add_action(DownloaderAction(image, path))
             if parameters["images"][image].get("format", "") == "qcow2":
-                self.internal_pipeline.add_action(QCowConversionAction(image))
-        self.internal_pipeline.add_action(ExtractNfsAction())
-        self.internal_pipeline.add_action(OverlayAction())
-        self.internal_pipeline.add_action(ApplyOverlayTftp())
-        self.internal_pipeline.add_action(DeployDeviceEnvironment())
+                self.pipeline.add_action(QCowConversionAction(image))
+        self.pipeline.add_action(ExtractNfsAction())
+        self.pipeline.add_action(OverlayAction())
+        self.pipeline.add_action(ApplyOverlayTftp())
+        self.pipeline.add_action(DeployDeviceEnvironment())
 
 
 class ExtractNfsAction(Action):

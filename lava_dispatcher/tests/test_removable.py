@@ -188,7 +188,7 @@ class TestRemovable(StdoutTestCase):
         self.assertIn("image", img_params)
         dd_action = [
             action
-            for action in deploy_action.internal_pipeline.actions
+            for action in deploy_action.pipeline.actions
             if action.name == "dd-image"
         ][0]
         self.assertEqual(
@@ -287,7 +287,7 @@ class TestRemovable(StdoutTestCase):
         ][0]
         download_action = [
             action
-            for action in storage_deploy_action.internal_pipeline.actions
+            for action in storage_deploy_action.pipeline.actions
             if action.name == "download-retry"
         ][0]
         self.assertIsNotNone(download_action)
@@ -355,7 +355,7 @@ class TestRemovable(StdoutTestCase):
         ][0]
         media_action = [
             action
-            for action in grub_nfs.internal_pipeline.actions
+            for action in grub_nfs.pipeline.actions
             if action.name == "bootloader-from-media"
         ][0]
         self.assertEqual(
@@ -390,7 +390,7 @@ class TestRemovable(StdoutTestCase):
         ][0]
         media_action = [
             action
-            for action in grub_main.internal_pipeline.actions
+            for action in grub_main.pipeline.actions
             if action.name == "bootloader-from-media"
         ][0]
         self.assertIsInstance(media_action, BootloaderSecondaryMedia)
@@ -478,13 +478,13 @@ class TestRemovable(StdoutTestCase):
         self.assertIn("boot_part", boot_params)
         self.assertNotIn("type", boot_params)
         self.assertGreater(len(job.pipeline.actions), 1)
-        self.assertIsNotNone(job.pipeline.actions[1].internal_pipeline)
+        self.assertIsNotNone(job.pipeline.actions[1].pipeline)
         u_boot_action = [
             action for action in job.pipeline.actions if action.name == "uboot-action"
         ][1]
         overlay = [
             action
-            for action in u_boot_action.internal_pipeline.actions
+            for action in u_boot_action.pipeline.actions
             if action.name == "bootloader-overlay"
         ][0]
         self.assertIsNotNone(

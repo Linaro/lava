@@ -74,9 +74,7 @@ class DownloaderAction(RetryAction):
         self.uniquify = uniquify
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
 
         # Find the right action according to the url
         if "images" in parameters and self.key in parameters["images"]:
@@ -99,7 +97,7 @@ class DownloaderAction(RetryAction):
             action = LxcDownloadAction(self.key, self.path, url)
         else:
             raise JobError("Unsupported url protocol scheme: %s" % url.scheme)
-        self.internal_pipeline.add_action(action)
+        self.pipeline.add_action(action)
 
 
 class DownloadHandler(Action):
@@ -827,9 +825,7 @@ class DownloadAction(DeployAction):  # pylint:disable=too-many-instance-attribut
         )
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         # Check if the device has a power command such as HiKey, Dragonboard,
         # etc. against device that doesn't like Nexus, etc.
         # This is required in order to power on the device so that when the
@@ -839,24 +835,22 @@ class DownloadAction(DeployAction):  # pylint:disable=too-many-instance-attribut
         #
         # NOTE: Add more power on strategies, if required for specific devices.
         if self.job.device.get("fastboot_via_uboot", False):
-            self.internal_pipeline.add_action(ConnectDevice())
-            self.internal_pipeline.add_action(UBootEnterFastbootAction())
+            self.pipeline.add_action(ConnectDevice())
+            self.pipeline.add_action(UBootEnterFastbootAction())
         elif self.job.device.hard_reset_command:
             self.force_prompt = True
-            self.internal_pipeline.add_action(ConnectDevice())
-            self.internal_pipeline.add_action(ResetDevice())
+            self.pipeline.add_action(ConnectDevice())
+            self.pipeline.add_action(ResetDevice())
         else:
-            self.internal_pipeline.add_action(EnterFastbootAction())
+            self.pipeline.add_action(EnterFastbootAction())
 
         self.download_dir = self.mkdtemp()
         image_keys = sorted(parameters["images"].keys())
         for image in image_keys:
-            self.internal_pipeline.add_action(
-                DownloaderAction(image, self.download_dir)
-            )
+            self.pipeline.add_action(DownloaderAction(image, self.download_dir))
         if self.test_needs_overlay(parameters):
-            self.internal_pipeline.add_action(OverlayAction())
-        self.internal_pipeline.add_action(CopyToLxcAction())
+            self.pipeline.add_action(OverlayAction())
+        self.pipeline.add_action(CopyToLxcAction())
 
 
 class CopyToLxcAction(DeployAction):

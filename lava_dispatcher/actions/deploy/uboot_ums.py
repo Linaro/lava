@@ -65,13 +65,11 @@ class UBootUMSAction(DeployAction):  # pylint:disable=too-many-instance-attribut
     summary = "uboot-ums deployment"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         path = self.mkdtemp()
-        self.internal_pipeline.add_action(DownloaderAction("image", path=path))
+        self.pipeline.add_action(DownloaderAction("image", path=path))
         if self.test_needs_overlay(parameters):
-            self.internal_pipeline.add_action(OverlayAction())
-            self.internal_pipeline.add_action(ApplyOverlayImage())
+            self.pipeline.add_action(OverlayAction())
+            self.pipeline.add_action(ApplyOverlayImage())
             if self.test_needs_deployment(parameters):
-                self.internal_pipeline.add_action(DeployDeviceEnvironment())
+                self.pipeline.add_action(DeployDeviceEnvironment())

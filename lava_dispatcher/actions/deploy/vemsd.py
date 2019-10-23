@@ -90,24 +90,20 @@ class VExpressMsdAction(DeployAction):
 
     def populate(self, parameters):
         download_dir = self.mkdtemp()
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
-        self.internal_pipeline.add_action(
-            DownloaderAction("recovery_image", path=download_dir)
-        )
-        self.internal_pipeline.add_action(LxcCreateUdevRuleAction())
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.pipeline.add_action(DownloaderAction("recovery_image", path=download_dir))
+        self.pipeline.add_action(LxcCreateUdevRuleAction())
         self.force_prompt = True
-        self.internal_pipeline.add_action(ConnectDevice())
-        self.internal_pipeline.add_action(ResetDevice())
-        self.internal_pipeline.add_action(ExtractVExpressRecoveryImage())
-        self.internal_pipeline.add_action(EnterVExpressMCC())
-        self.internal_pipeline.add_action(EnableVExpressMassStorage())
-        self.internal_pipeline.add_action(WaitUSBMassStorageDeviceAction())
-        self.internal_pipeline.add_action(MountVExpressMassStorageDevice())
-        self.internal_pipeline.add_action(DeployVExpressRecoveryImage())
-        self.internal_pipeline.add_action(UnmountVExpressMassStorageDevice())
-        self.internal_pipeline.add_action(VExpressFlashErase())
+        self.pipeline.add_action(ConnectDevice())
+        self.pipeline.add_action(ResetDevice())
+        self.pipeline.add_action(ExtractVExpressRecoveryImage())
+        self.pipeline.add_action(EnterVExpressMCC())
+        self.pipeline.add_action(EnableVExpressMassStorage())
+        self.pipeline.add_action(WaitUSBMassStorageDeviceAction())
+        self.pipeline.add_action(MountVExpressMassStorageDevice())
+        self.pipeline.add_action(DeployVExpressRecoveryImage())
+        self.pipeline.add_action(UnmountVExpressMassStorageDevice())
+        self.pipeline.add_action(VExpressFlashErase())
 
 
 class ExtractVExpressRecoveryImage(Action):

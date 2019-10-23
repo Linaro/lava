@@ -59,17 +59,15 @@ class BootKexecAction(BootAction):
     description = "replace current kernel using kexec"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
-        self.internal_pipeline.add_action(KexecAction())
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.pipeline.add_action(KexecAction())
         # Add AutoLoginAction unconditionally as this action does nothing if
         # the configuration does not contain 'auto_login'
-        self.internal_pipeline.add_action(AutoLoginAction())
-        self.internal_pipeline.add_action(ExpectShellSession())
+        self.pipeline.add_action(AutoLoginAction())
+        self.pipeline.add_action(ExpectShellSession())
         if "transfer_overlay" in parameters:
-            self.internal_pipeline.add_action(OverlayUnpack())
-        self.internal_pipeline.add_action(ExportDeviceEnvironment())
+            self.pipeline.add_action(OverlayUnpack())
+        self.pipeline.add_action(ExportDeviceEnvironment())
 
 
 class KexecAction(Action):

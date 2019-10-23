@@ -59,10 +59,8 @@ class BootJLink(BootAction):
     summary = "boot jlink image with retry"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
-        self.internal_pipeline.add_action(BootJLinkRetry())
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.pipeline.add_action(BootJLinkRetry())
 
 
 class BootJLinkRetry(RetryAction):
@@ -72,16 +70,12 @@ class BootJLinkRetry(RetryAction):
     summary = "boot jlink image"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         if self.job.device.hard_reset_command:
-            self.internal_pipeline.add_action(ResetDevice())
-            self.internal_pipeline.add_action(
-                WaitDeviceBoardID(self.job.device.get("board_id"))
-            )
-        self.internal_pipeline.add_action(FlashJLinkAction())
-        self.internal_pipeline.add_action(ConnectDevice())
+            self.pipeline.add_action(ResetDevice())
+            self.pipeline.add_action(WaitDeviceBoardID(self.job.device.get("board_id")))
+        self.pipeline.add_action(FlashJLinkAction())
+        self.pipeline.add_action(ConnectDevice())
 
 
 class FlashJLinkAction(Action):

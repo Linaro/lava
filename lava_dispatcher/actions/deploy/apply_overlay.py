@@ -195,32 +195,28 @@ class PrepareOverlayTftp(Action):
     timeout_exception = InfrastructureError
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
-        self.internal_pipeline.add_action(
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.pipeline.add_action(
             ExtractNfsRootfs()
         )  # idempotent, checks for nfsrootfs parameter
-        self.internal_pipeline.add_action(
-            OverlayAction()
-        )  # idempotent, includes testdef
-        self.internal_pipeline.add_action(
+        self.pipeline.add_action(OverlayAction())  # idempotent, includes testdef
+        self.pipeline.add_action(
             ExtractRamdisk()
         )  # idempotent, checks for a ramdisk parameter
-        self.internal_pipeline.add_action(
+        self.pipeline.add_action(
             ExtractModules()
         )  # idempotent, checks for a modules parameter
-        self.internal_pipeline.add_action(ApplyOverlayTftp())
+        self.pipeline.add_action(ApplyOverlayTftp())
         if "kernel" in parameters and "type" in parameters["kernel"]:
-            self.internal_pipeline.add_action(PrepareKernelAction())
-        self.internal_pipeline.add_action(
+            self.pipeline.add_action(PrepareKernelAction())
+        self.pipeline.add_action(
             ConfigurePreseedFile()
         )  # idempotent, checks for a preseed parameter
-        self.internal_pipeline.add_action(
+        self.pipeline.add_action(
             CompressRamdisk()
         )  # idempotent, checks for a ramdisk parameter
         if "depthcharge" in self.job.device["actions"]["boot"]["methods"]:
-            self.internal_pipeline.add_action(PrepareKernelAction())
+            self.pipeline.add_action(PrepareKernelAction())
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)

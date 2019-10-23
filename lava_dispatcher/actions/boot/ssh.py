@@ -66,17 +66,15 @@ class SshAction(RetryAction):
     summary = "login over ssh"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         scp = Scp("overlay")
-        self.internal_pipeline.add_action(scp)
-        self.internal_pipeline.add_action(PrepareSsh())
-        self.internal_pipeline.add_action(ConnectSsh())
-        self.internal_pipeline.add_action(AutoLoginAction(booting=False))
-        self.internal_pipeline.add_action(ExpectShellSession())
-        self.internal_pipeline.add_action(ExportDeviceEnvironment())
-        self.internal_pipeline.add_action(ScpOverlayUnpack())
+        self.pipeline.add_action(scp)
+        self.pipeline.add_action(PrepareSsh())
+        self.pipeline.add_action(ConnectSsh())
+        self.pipeline.add_action(AutoLoginAction(booting=False))
+        self.pipeline.add_action(ExpectShellSession())
+        self.pipeline.add_action(ExportDeviceEnvironment())
+        self.pipeline.add_action(ScpOverlayUnpack())
 
 
 class Scp(ConnectSsh):

@@ -36,9 +36,7 @@ class TestBootBootloader(StdoutTestCase):
         self.assertEqual(description_ref, job.pipeline.describe(False))
 
         bootload_commands = (
-            job.pipeline.actions[0]
-            .internal_pipeline.actions[2]
-            .internal_pipeline.actions[2]
+            job.pipeline.actions[0].pipeline.actions[2].pipeline.actions[2]
         )
         self.assertEqual(bootload_commands.name, "bootloader-commands")
         self.assertEqual(bootload_commands.timeout.exception, InfrastructureError)

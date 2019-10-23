@@ -62,9 +62,9 @@ class TestBareboxAction(StdoutTestCase):
         self.assertTrue(
             tftp.get_namespace_data(action=tftp.name, label="tftp", key="ramdisk")
         )
-        self.assertIsNotNone(tftp.internal_pipeline)
+        self.assertIsNotNone(tftp.pipeline)
         self.assertEqual(
-            [action.name for action in tftp.internal_pipeline.actions],
+            [action.name for action in tftp.pipeline.actions],
             [
                 "download-retry",
                 "download-retry",
@@ -76,27 +76,15 @@ class TestBareboxAction(StdoutTestCase):
         )
         self.assertIn(
             "ramdisk",
-            [
-                action.key
-                for action in tftp.internal_pipeline.actions
-                if hasattr(action, "key")
-            ],
+            [action.key for action in tftp.pipeline.actions if hasattr(action, "key")],
         )
         self.assertIn(
             "kernel",
-            [
-                action.key
-                for action in tftp.internal_pipeline.actions
-                if hasattr(action, "key")
-            ],
+            [action.key for action in tftp.pipeline.actions if hasattr(action, "key")],
         )
         self.assertIn(
             "dtb",
-            [
-                action.key
-                for action in tftp.internal_pipeline.actions
-                if hasattr(action, "key")
-            ],
+            [action.key for action in tftp.pipeline.actions if hasattr(action, "key")],
         )
         self.assertNotIn("=", tftpd_dir())
         job.validate()
@@ -163,7 +151,7 @@ class TestBareboxAction(StdoutTestCase):
         ][0]
         overlay = [
             action
-            for action in barebox.internal_pipeline.actions
+            for action in barebox.pipeline.actions
             if action.name == "bootloader-overlay"
         ][0]
         self.assertEqual(
@@ -187,11 +175,11 @@ class TestBareboxAction(StdoutTestCase):
             if action.name == "tftp-deploy":
                 deploy = action
         if deploy:
-            for action in deploy.internal_pipeline.actions:
+            for action in deploy.pipeline.actions:
                 if action.name == "prepare-tftp-overlay":
                     overlay = action
         if overlay:
-            for action in overlay.internal_pipeline.actions:
+            for action in overlay.pipeline.actions:
                 if action.name == "extract-nfsrootfs":
                     extract = action
         test_dir = overlay.get_namespace_data(

@@ -63,23 +63,17 @@ class DeployIsoAction(DeployAction):
 
     def populate(self, parameters):
         self.preseed_path = self.mkdtemp(override=tftpd_dir())
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
-        self.internal_pipeline.add_action(IsoEmptyImage())
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.pipeline.add_action(IsoEmptyImage())
         # the preseed file needs to go into the dispatcher apache tmp directory.
-        self.internal_pipeline.add_action(
-            DownloaderAction("preseed", self.preseed_path)
-        )
-        self.internal_pipeline.add_action(DownloaderAction("iso", self.mkdtemp()))
-        self.internal_pipeline.add_action(IsoPullInstaller())
-        self.internal_pipeline.add_action(QemuCommandLine())
+        self.pipeline.add_action(DownloaderAction("preseed", self.preseed_path))
+        self.pipeline.add_action(DownloaderAction("iso", self.mkdtemp()))
+        self.pipeline.add_action(IsoPullInstaller())
+        self.pipeline.add_action(QemuCommandLine())
         # prepare overlay at this stage - make it available after installation.
-        self.internal_pipeline.add_action(
-            OverlayAction()
-        )  # idempotent, includes testdef
-        self.internal_pipeline.add_action(ApplyOverlayGuest())
-        self.internal_pipeline.add_action(DeployDeviceEnvironment())
+        self.pipeline.add_action(OverlayAction())  # idempotent, includes testdef
+        self.pipeline.add_action(ApplyOverlayGuest())
+        self.pipeline.add_action(DeployDeviceEnvironment())
 
 
 class DeployIso(Deployment):

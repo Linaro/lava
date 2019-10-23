@@ -72,7 +72,7 @@ class TestGDB(StdoutTestCase):
         self.assertEqual(description_ref, job.pipeline.describe(False))
 
         # Check BootGDBRetry action
-        action = job.pipeline.actions[1].internal_pipeline.actions[0]
+        action = job.pipeline.actions[1].pipeline.actions[0]
         self.assertEqual(action.name, "boot-gdb-retry")
         self.assertEqual(action.gdb, "gdb-multiarch")
         self.assertEqual(action.arguments, ["{ZEPHYR}"])
@@ -99,7 +99,7 @@ class TestGDB(StdoutTestCase):
         self.assertEqual(description_ref, job.pipeline.describe(False))
 
         # Check BootGDBRetry action
-        action = job.pipeline.actions[1].internal_pipeline.actions[0]
+        action = job.pipeline.actions[1].pipeline.actions[0]
         self.assertEqual(action.name, "boot-gdb-retry")
         self.assertEqual(action.gdb, "gdb-multiarch")
         self.assertEqual(action.arguments, ["{ZEPHYR}"])
@@ -121,7 +121,7 @@ class TestGDB(StdoutTestCase):
         self.assertEqual(description_ref, job.pipeline.describe(False))
 
         # Check BootGDBRetry action
-        action = job.pipeline.actions[1].internal_pipeline.actions[0]
+        action = job.pipeline.actions[1].pipeline.actions[0]
         self.assertEqual(action.name, "boot-gdb-retry")
         self.assertEqual(action.gdb, "gdb-multiarch")
         self.assertEqual(action.arguments, ["{ZEPHYR}"])

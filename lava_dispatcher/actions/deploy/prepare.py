@@ -36,15 +36,13 @@ class PrepareKernelAction(Action):
     summary = "add a kernel conversion"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         # the logic here can be upgraded in future if needed with more parameters to the deploy.
         methods = self.job.device["actions"]["boot"]["methods"]
         if "u-boot" in methods:
-            self.internal_pipeline.add_action(UBootPrepareKernelAction())
+            self.pipeline.add_action(UBootPrepareKernelAction())
         elif "depthcharge" in methods:
-            self.internal_pipeline.add_action(PrepareFITAction())
+            self.pipeline.add_action(PrepareFITAction())
 
 
 class UBootPrepareKernelAction(Action):

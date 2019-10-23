@@ -318,7 +318,7 @@ class TestPipeline(StdoutTestCase):
         self.assertIn("max_retries", description[0])
         self.assertIn("timeout", description[0])
 
-    def test_create_internal_pipeline(self):
+    def test_create_pipeline(self):
         action = Action()
         action.name = "internal_pipe"
         action.description = "test action only"

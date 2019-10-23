@@ -48,7 +48,7 @@ class RetryAction(Action):
         of the retry.
         """
         super().validate()
-        if not self.internal_pipeline:
+        if not self.pipeline:
             raise LAVABug(
                 "Retry action %s needs to implement an internal pipeline" % self.name
             )
@@ -60,9 +60,7 @@ class RetryAction(Action):
         while retries < self.max_retries:
             retries += 1
             try:
-                connection = self.internal_pipeline.run_actions(
-                    connection, max_end_time
-                )
+                connection = self.pipeline.run_actions(connection, max_end_time)
                 if "repeat" not in self.parameters:
                     # failure_retry returns on first success. repeat returns only at max_retries.
                     return connection

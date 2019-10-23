@@ -53,7 +53,7 @@ class TestSkipTimeouts(StdoutTestCase):
         ][0]
         self.skipped_shell = [
             action
-            for action in test_retry.internal_pipeline.actions
+            for action in test_retry.pipeline.actions
             if action.name == "lava-test-shell"
         ][0]
         print(self.skipped_shell.parameters["timeout"])
@@ -65,7 +65,7 @@ class TestSkipTimeouts(StdoutTestCase):
         ][1]
         self.fatal_shell = [
             action
-            for action in test_retry.internal_pipeline.actions
+            for action in test_retry.pipeline.actions
             if action.name == "lava-test-shell"
         ][0]
 
@@ -103,7 +103,7 @@ class TestPatterns(StdoutTestCase):
         ][0]
         self.test_shell = [
             action
-            for action in test_retry.internal_pipeline.actions
+            for action in test_retry.pipeline.actions
             if action.name == "lava-test-shell"
         ][0]
         self.test_shell.logger = DummyLogger()

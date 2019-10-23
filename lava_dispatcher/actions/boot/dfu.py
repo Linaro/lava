@@ -61,10 +61,8 @@ class BootDFU(BootAction):
     summary = "boot dfu image with retry"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
-        self.internal_pipeline.add_action(BootDFURetry())
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.pipeline.add_action(BootDFURetry())
 
 
 class BootDFURetry(RetryAction):
@@ -77,18 +75,14 @@ class BootDFURetry(RetryAction):
         dfu = self.job.device["actions"]["boot"]["methods"]["dfu"]
         parameters = dfu["parameters"]
 
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
-        self.internal_pipeline.add_action(ConnectDevice())
-        self.internal_pipeline.add_action(ResetDevice())
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.pipeline.add_action(ConnectDevice())
+        self.pipeline.add_action(ResetDevice())
         if dfu.get("implementation") == "u-boot":
-            self.internal_pipeline.add_action(
-                BootloaderInterruptAction(method="u-boot")
-            )
-            self.internal_pipeline.add_action(EnterDFU())
-        self.internal_pipeline.add_action(WaitDFUDeviceAction())
-        self.internal_pipeline.add_action(FlashDFUAction())
+            self.pipeline.add_action(BootloaderInterruptAction(method="u-boot"))
+            self.pipeline.add_action(EnterDFU())
+        self.pipeline.add_action(WaitDFUDeviceAction())
+        self.pipeline.add_action(FlashDFUAction())
 
 
 class EnterDFU(Action):

@@ -64,16 +64,14 @@ class BootLxcAction(BootAction):
     summary = "lxc boot"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
-        self.internal_pipeline.add_action(LxcStartAction())
-        self.internal_pipeline.add_action(LxcAddStaticDevices())
-        self.internal_pipeline.add_action(ConnectLxc())
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.pipeline.add_action(LxcStartAction())
+        self.pipeline.add_action(LxcAddStaticDevices())
+        self.pipeline.add_action(ConnectLxc())
         # Skip AutoLoginAction unconditionally as this action tries to parse kernel message
-        # self.internal_pipeline.add_action(AutoLoginAction())
-        self.internal_pipeline.add_action(ExpectShellSession())
-        self.internal_pipeline.add_action(ExportDeviceEnvironment())
+        # self.pipeline.add_action(AutoLoginAction())
+        self.pipeline.add_action(ExpectShellSession())
+        self.pipeline.add_action(ExportDeviceEnvironment())
 
 
 class LxcAddStaticDevices(Action):

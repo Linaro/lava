@@ -35,10 +35,8 @@ class FlasherRetryAction(RetryAction):
     summary = "deploy custom flasher"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
-        self.internal_pipeline.add_action(FlasherAction())
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.pipeline.add_action(FlasherAction())
 
 
 class FlasherAction(DeployAction):
@@ -60,19 +58,17 @@ class FlasherAction(DeployAction):
             self.errors = "'commands' should be a list"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
 
         # Download the images
         self.path = self.mkdtemp()
         for image in parameters["images"].keys():
-            self.internal_pipeline.add_action(DownloaderAction(image, self.path))
+            self.pipeline.add_action(DownloaderAction(image, self.path))
 
         if self.test_needs_deployment(parameters):
-            self.internal_pipeline.add_action(DeployDeviceEnvironment())
+            self.pipeline.add_action(DeployDeviceEnvironment())
         if self.test_needs_overlay(parameters):
-            self.internal_pipeline.add_action(OverlayAction())
+            self.pipeline.add_action(OverlayAction())
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)

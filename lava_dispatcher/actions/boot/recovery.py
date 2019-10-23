@@ -59,22 +59,16 @@ class RecoveryBootAction(Action):
         specifies the 'exit' command.
         """
         super().populate(parameters)
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         if parameters["commands"] == "recovery":
             # only switch into recovery mode with power off.
-            self.internal_pipeline.add_action(PowerOff())
-            self.internal_pipeline.add_action(
-                SwitchRecoveryCommand(mode="recovery_mode")
-            )
-            self.internal_pipeline.add_action(PowerOn())
+            self.pipeline.add_action(PowerOff())
+            self.pipeline.add_action(SwitchRecoveryCommand(mode="recovery_mode"))
+            self.pipeline.add_action(PowerOn())
         elif parameters["commands"] == "exit":
-            self.internal_pipeline.add_action(PowerOff())
-            self.internal_pipeline.add_action(
-                SwitchRecoveryCommand(mode="recovery_exit")
-            )
-            self.internal_pipeline.add_action(PowerOn())
+            self.pipeline.add_action(PowerOff())
+            self.pipeline.add_action(SwitchRecoveryCommand(mode="recovery_exit"))
+            self.pipeline.add_action(PowerOn())
         else:
             self.errors = "Invalid recovery command"
 

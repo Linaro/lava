@@ -78,21 +78,15 @@ class NfsAction(DeployAction):  # pylint:disable=too-many-instance-attributes
 
     def populate(self, parameters):
         download_dir = self.mkdtemp()
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         if "nfsrootfs" in parameters:
-            self.internal_pipeline.add_action(
-                DownloaderAction("nfsrootfs", path=download_dir)
-            )
+            self.pipeline.add_action(DownloaderAction("nfsrootfs", path=download_dir))
         if "modules" in parameters:
-            self.internal_pipeline.add_action(
-                DownloaderAction("modules", path=download_dir)
-            )
+            self.pipeline.add_action(DownloaderAction("modules", path=download_dir))
         # NfsAction is a deployment, so once the nfsrootfs has been deployed, just do the overlay
-        self.internal_pipeline.add_action(ExtractNfsRootfs())
-        self.internal_pipeline.add_action(OverlayAction())
-        self.internal_pipeline.add_action(ExtractModules())
-        self.internal_pipeline.add_action(ApplyOverlayTftp())
+        self.pipeline.add_action(ExtractNfsRootfs())
+        self.pipeline.add_action(OverlayAction())
+        self.pipeline.add_action(ExtractModules())
+        self.pipeline.add_action(ApplyOverlayTftp())
         if self.test_needs_deployment(parameters):
-            self.internal_pipeline.add_action(DeployDeviceEnvironment())
+            self.pipeline.add_action(DeployDeviceEnvironment())

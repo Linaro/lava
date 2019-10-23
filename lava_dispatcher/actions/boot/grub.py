@@ -141,30 +141,28 @@ class GrubSequenceAction(BootAction):
 
     def populate(self, parameters):
         super().populate(parameters)
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         sequences = self.job.device["actions"]["boot"]["methods"]["grub"].get(
             "sequence", []
         )
         for sequence in sequences:
             mapped = _grub_sequence_map(sequence)
             if mapped[1]:
-                self.internal_pipeline.add_action(mapped[0](itype=mapped[1]))
+                self.pipeline.add_action(mapped[0](itype=mapped[1]))
             elif mapped[0]:
-                self.internal_pipeline.add_action(mapped[0]())
+                self.pipeline.add_action(mapped[0]())
         if self.has_prompts(parameters):
-            self.internal_pipeline.add_action(AutoLoginAction())
+            self.pipeline.add_action(AutoLoginAction())
             if self.test_has_shell(parameters):
-                self.internal_pipeline.add_action(ExpectShellSession())
+                self.pipeline.add_action(ExpectShellSession())
                 if "transfer_overlay" in parameters:
-                    self.internal_pipeline.add_action(OverlayUnpack())
-                self.internal_pipeline.add_action(ExportDeviceEnvironment())
+                    self.pipeline.add_action(OverlayUnpack())
+                self.pipeline.add_action(ExportDeviceEnvironment())
         else:
             if self.has_boot_finished(parameters):
                 self.logger.debug("Doing a boot without a shell (installer)")
-                self.internal_pipeline.add_action(InstallerWait())
-                self.internal_pipeline.add_action(PowerOff())
+                self.pipeline.add_action(InstallerWait())
+                self.pipeline.add_action(PowerOff())
 
 
 class GrubMainAction(BootAction):
@@ -179,12 +177,10 @@ class GrubMainAction(BootAction):
 
     def populate(self, parameters):
         self.expect_shell = parameters.get("expect_shell", True)
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
-        self.internal_pipeline.add_action(BootloaderSecondaryMedia())
-        self.internal_pipeline.add_action(BootloaderCommandOverlay())
-        self.internal_pipeline.add_action(ConnectDevice())
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.pipeline.add_action(BootloaderSecondaryMedia())
+        self.pipeline.add_action(BootloaderCommandOverlay())
+        self.pipeline.add_action(ConnectDevice())
         # FIXME: reset_device is a hikey hack due to fastboot/OTG issues
         # remove as part of LAVA-940 - convert to use fastboot-sequence
         reset_device = (
@@ -194,26 +190,26 @@ class GrubMainAction(BootAction):
         )
         if parameters["method"] == "grub-efi" and reset_device:
             # added unless the device specifies not to reset the device in grub.
-            self.internal_pipeline.add_action(ResetDevice())
+            self.pipeline.add_action(ResetDevice())
         elif parameters["method"] == "grub":
-            self.internal_pipeline.add_action(ResetDevice())
+            self.pipeline.add_action(ResetDevice())
         if parameters["method"] == "grub-efi":
-            self.internal_pipeline.add_action(UEFIMenuInterrupt())
-            self.internal_pipeline.add_action(GrubMenuSelector())
-        self.internal_pipeline.add_action(BootloaderInterruptAction())
-        self.internal_pipeline.add_action(BootloaderCommandsAction())
+            self.pipeline.add_action(UEFIMenuInterrupt())
+            self.pipeline.add_action(GrubMenuSelector())
+        self.pipeline.add_action(BootloaderInterruptAction())
+        self.pipeline.add_action(BootloaderCommandsAction())
         if self.has_prompts(parameters):
-            self.internal_pipeline.add_action(AutoLoginAction())
+            self.pipeline.add_action(AutoLoginAction())
             if self.test_has_shell(parameters):
-                self.internal_pipeline.add_action(ExpectShellSession())
+                self.pipeline.add_action(ExpectShellSession())
                 if "transfer_overlay" in parameters:
-                    self.internal_pipeline.add_action(OverlayUnpack())
-                self.internal_pipeline.add_action(ExportDeviceEnvironment())
+                    self.pipeline.add_action(OverlayUnpack())
+                self.pipeline.add_action(ExportDeviceEnvironment())
         else:
             if self.has_boot_finished(parameters):
                 self.logger.debug("Doing a boot without a shell (installer)")
-                self.internal_pipeline.add_action(InstallerWait())
-                self.internal_pipeline.add_action(PowerOff())
+                self.pipeline.add_action(InstallerWait())
+                self.pipeline.add_action(PowerOff())
 
 
 class GrubMenuSelector(UefiMenuSelector):
