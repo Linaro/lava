@@ -54,7 +54,9 @@ class TestIsoJob(StdoutTestCase):
         self.assertIsInstance(self.job.pipeline, Pipeline)
 
     def test_job_reference(self):
-        description_ref = self.pipeline_reference("qemu-debian-installer.yaml")
+        description_ref = self.pipeline_reference(
+            "qemu-debian-installer.yaml", job=self.job
+        )
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
     def test_iso_preparation(self):

@@ -220,5 +220,5 @@ class TestMultiUBoot(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
     def test_multi_uboot(self):
         self.assertIsNotNone(self.job)
-        description_ref = self.pipeline_reference("uboot-multiple.yaml")
+        description_ref = self.pipeline_reference("uboot-multiple.yaml", job=self.job)
         self.assertEqual(description_ref, self.job.pipeline.describe(False))

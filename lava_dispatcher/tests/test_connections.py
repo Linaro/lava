@@ -59,7 +59,7 @@ class TestConnection(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.job.validate()
         self.assertEqual([], self.job.pipeline.errors)
         # Check Pipeline
-        description_ref = self.pipeline_reference("ssh-deploy.yaml")
+        description_ref = self.pipeline_reference("ssh-deploy.yaml", job=self.job)
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
     @unittest.skipIf(infrastructure_error("schroot"), "schroot not installed")

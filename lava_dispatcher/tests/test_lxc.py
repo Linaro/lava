@@ -81,7 +81,7 @@ class TestLxcDeploy(StdoutTestCase):  # pylint: disable=too-many-public-methods
                 self.assertEqual(action.job, self.job)
 
     def test_pipeline(self):
-        description_ref = self.pipeline_reference("lxc.yaml")
+        description_ref = self.pipeline_reference("lxc.yaml", job=self.job)
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
     @unittest.skipIf(infrastructure_error("lxc-create"), "lxc-create not installed")
