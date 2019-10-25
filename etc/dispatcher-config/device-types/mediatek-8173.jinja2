@@ -1,6 +1,6 @@
 {# device_type = 'mediatek-8173' #}
 {% extends 'base-fastboot.jinja2' %}
 
-{% set fastboot_sequence = [] %}
+{% set fastboot_sequence = ["no-flash-boot"] %}
 {% set flash_cmds_order = ['partition', 'lk', 'boot0', 'TEE1', 'TEE2',
                            'boot' ] %}
