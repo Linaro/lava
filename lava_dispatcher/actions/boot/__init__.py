@@ -820,7 +820,9 @@ class BootloaderCommandsAction(Action):
     def __init__(self, expect_final=True, method=None):
         super().__init__()
         self.params = None
-        self.timeout = Timeout(self.name, BOOTLOADER_DEFAULT_CMD_TIMEOUT)
+        self.timeout = Timeout(
+            self.name, BOOTLOADER_DEFAULT_CMD_TIMEOUT, exception=self.timeout_exception
+        )
         self.method = method
         self.expect_final = expect_final
 

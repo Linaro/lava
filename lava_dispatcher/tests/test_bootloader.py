@@ -18,6 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.tests.test_basic import Factory, StdoutTestCase
 
 
@@ -33,3 +34,11 @@ class TestBootBootloader(StdoutTestCase):
         job.validate()
         description_ref = self.pipeline_reference("b2260-bootloader.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
+
+        bootload_commands = (
+            job.pipeline.actions[0]
+            .internal_pipeline.actions[2]
+            .internal_pipeline.actions[2]
+        )
+        self.assertEqual(bootload_commands.name, "bootloader-commands")
+        self.assertEqual(bootload_commands.timeout.exception, InfrastructureError)
