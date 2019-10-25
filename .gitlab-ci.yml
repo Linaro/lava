@@ -273,3 +273,6 @@ doc-deploy:
   script:
   - mkdir -p ${HOME}/docs/lava
   - rsync -av --delete doc/v2/_build/html ${HOME}/docs/lava/
+  environment:
+    name: documentation
+    url: https://docs.lavasoftware.org/lava/
