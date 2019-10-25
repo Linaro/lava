@@ -198,6 +198,19 @@ def _dict_compare(d1, d2):  # pylint: disable=invalid-name
     return set(o for o in intersect_keys if d1[o] == d2[o])
 
 
+def match(device, match_dict, devicepath):
+    same = _dict_compare(dict(device), match_dict)
+    if same == set(match_dict.keys()):
+        if devicepath:
+            if devicepath in dict(device).get("DEVLINKS", "") or devicepath in dict(
+                device
+            ).get("DEVNAME", ""):
+                return True
+        else:
+            return True
+    return False
+
+
 def wait_udev_event(
     action="add", match_dict=None, subsystem=None, devtype=None, devicepath=None
 ):
@@ -218,7 +231,8 @@ def wait_udev_event(
             raise LAVABug("Neither match_dict nor devicepath were set")
     if devtype and not subsystem:
         raise LAVABug("Cannot filter udev by devtype without a subsystem")
-    match_dict["ACTION"] = action
+
+    # Create and configure the monitor
     context = pyudev.Context()
     monitor = pyudev.Monitor.from_netlink(context)
     if devtype and subsystem:
@@ -226,16 +240,21 @@ def wait_udev_event(
     else:
         if subsystem:
             monitor.filter_by(subsystem)
+
+    # Start to listen for events
+    monitor.start()
+
+    # Check if the device is already plugged-in
+    for device in context.list_devices():
+        if match(device, match_dict, devicepath):
+            return
+
+    # Wait for events.
+    # Every events that happened since the call to start() will be handled now.
+    match_dict["ACTION"] = action
     for device in iter(monitor.poll, None):
-        same = _dict_compare(dict(device), match_dict)
-        if same == set(match_dict.keys()):
-            if devicepath:
-                if devicepath in dict(device).get("DEVLINKS", "") or devicepath in dict(
-                    device
-                ).get("DEVNAME", ""):
-                    break
-            else:
-                break
+        if match(device, match_dict, devicepath):
+            return
 
 
 def get_udev_devices(job=None, logger=None, device_info=None):
