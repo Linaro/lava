@@ -61,7 +61,7 @@ class WaitUSBSerialDeviceAction(Action):
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
         self.logger.debug("Waiting for usb serial device: %s", self.serial_device)
-        wait_udev_event(action="add", match_dict=self.serial_device, subsystem="tty")
+        wait_udev_event(match_dict=self.serial_device, subsystem="tty")
         if self.usb_sleep:
             self.logger.debug(
                 "Waiting for the board to setup, sleeping %ds", self.usb_sleep
@@ -102,10 +102,7 @@ class WaitDFUDeviceAction(Action):
         connection = super().run(connection, max_end_time)
         self.logger.debug("Waiting for DFU device: %s", self.dfu_device)
         wait_udev_event(
-            action="add",
-            match_dict=self.dfu_device,
-            subsystem="usb",
-            devtype="usb_device",
+            match_dict=self.dfu_device, subsystem="usb", devtype="usb_device"
         )
         return connection
 
@@ -132,10 +129,7 @@ class WaitUSBMassStorageDeviceAction(Action):
         connection = super().run(connection, max_end_time)
         self.logger.debug("Waiting for USB mass storage device: %s", self.ms_device)
         wait_udev_event(
-            action="add",
-            match_dict=self.ms_device,
-            subsystem="block",
-            devtype="partition",
+            match_dict=self.ms_device, subsystem="block", devtype="partition"
         )
         return connection
 
@@ -159,7 +153,7 @@ class WaitDevicePathAction(Action):
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
         self.logger.debug("Waiting for udev device path: %s", self.devicepath)
-        wait_udev_event(action="add", devicepath=self.devicepath)
+        wait_udev_event(devicepath=self.devicepath)
         return connection
 
 
@@ -187,7 +181,7 @@ class WaitDeviceBoardID(Action):
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
         self.logger.debug("Waiting for udev device with ID: %s", self.board_id)
-        wait_udev_event(action="add", match_dict=self.udev_device)
+        wait_udev_event(match_dict=self.udev_device)
         return connection
 
 
@@ -211,14 +205,7 @@ def match(device, match_dict, devicepath):
     return False
 
 
-def wait_udev_event(
-    action="add", match_dict=None, subsystem=None, devtype=None, devicepath=None
-):
-    if action not in ["add", "remove", "change"]:
-        raise LAVABug(
-            "Invalid action for udev to wait for: %s, expected 'add' or 'remove'"
-            % action
-        )
+def wait_udev_event(match_dict=None, subsystem=None, devtype=None, devicepath=None):
     if match_dict:
         if not isinstance(match_dict, dict):
             raise LAVABug("match_dict was not a dict")
@@ -251,7 +238,7 @@ def wait_udev_event(
 
     # Wait for events.
     # Every events that happened since the call to start() will be handled now.
-    match_dict["ACTION"] = action
+    match_dict["ACTION"] = "add"
     for device in iter(monitor.poll, None):
         if match(device, match_dict, devicepath):
             return
