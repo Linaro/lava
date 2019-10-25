@@ -15,7 +15,7 @@
 
 <div class="row">
   <div class="col-md-4">
-    <div class="dl-horizontal">
+    <dl class="dl-horizontal">
       <dt>Name</dt>
       <dd>{{ dt.name }}
         {% if user.is_superuser %}<a href="{% url 'admin:lava_scheduler_app_devicetype_change' dt %}" title="admin this device-type"><span class="glyphicon glyphicon-wrench"></span></a>{% endif %}
@@ -27,7 +27,7 @@
       <dd>{% if dt.disable_health_check %}<span class="text-danger">{{ health_freq }}</span>{% else %}{{ health_freq }}{% endif %} <a href="{% url 'lava.scheduler.device_type_report' dt %}" title="device-type health report"><span class="glyphicon glyphicon-stats"></span></a></dd>
       <dt>Aliases</dt>
       <dd>{{ aliases|default:"<i>...</i>" }}</dd>
-    </div>
+    </dl>
   </div>
   <div class="col-md-4">
     <dl class="dl-horizontal">
@@ -42,7 +42,7 @@
     </dl>
   </div>
   <div class="col-md-4">
-    <div class="dl-horizontal">
+    <dl class="dl-horizontal">
       <dt>Architecture</dt>
       <dd>{{ dt.architecture|default:"<i>...</i>" }}{% if dt.bits.width %} ({{ dt.bits.width }} bits){% endif %}</dd>
       <dt>Processor Family</dt>
@@ -51,7 +51,7 @@
       <dd>{{ dt.cpu_model|default:"<i>...</i>" }}</dd>
       <dt>Cores</dt>
       <dd>{{ cores|default:"<i>...</i>" }}</dd>
-    </div>
+    </dl>
   </div>
 </div>
 
