@@ -348,9 +348,10 @@ class Command(LAVADaemonCommand):
     def logging_socket(self):
         msg = self.log_socket.recv_multipart()
         try:
-            (job_id, message) = (
-                u(m) for m in msg
-            )  # pylint: disable=unbalanced-tuple-unpacking
+            (job_id, message) = (u(m) for m in msg)
+        except UnicodeDecodeError:
+            self.logger.error("[POLL] Invalid log message: can't be decoded")
+            return
         except ValueError:
             # do not let a bad message stop the master.
             self.logger.error("[POLL] failed to parse log message, skipping: %s", msg)
@@ -491,6 +492,9 @@ class Command(LAVADaemonCommand):
             if action != "PONG":
                 self.logger.error("Invalid answer '%s'. Should be 'PONG'", action)
                 return
+        except UnicodeDecodeError:
+            self.logger.error("Invalid controler message: can't be decoded")
+            return
         except (IndexError, ValueError):
             self.logger.error("Invalid message '%s'", msg)
             return
