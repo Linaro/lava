@@ -1,6 +1,6 @@
 lava (2019.10-1) unstable; urgency=medium
 
-  * LAVA Software 2019.09 release
+  * LAVA Software 2019.10 release
     557ab2abf Add unit tests for TestJob can_resubmit method.
     08e15334e lava_server: load local settings if available
     ec30dbf60 lava_server: add compatibility layer against renames
@@ -16,7 +16,7 @@ lava (2019.10-1) unstable; urgency=medium
     c1c8e22ea Fix authorization API errors and add unit tests.
     2a8b19674 lava-slave: accept slave dir as an option
     cc58ec37b lava-slave: use absolute path to lava-run
-    3e8f45ec4 scheduler, server: drop harcoded device types path
+    3e8f45ec4 scheduler, server: drop hardcoded device types path
     a47517522 server: drop hardcoded usage of devices directory
     cb0e1c1f7 settings.development: use device type configuration from source tree
     dcceb98e3 Procfile: run all processes locally
@@ -31,7 +31,7 @@ lava (2019.10-1) unstable; urgency=medium
     813ed5544 lava-server manage commands: port to Django 2
     c981d0753 lava-server manage users: in csv, print the fullname
     ad9140324 Port management commands to Django 2
-    f2b863ba4 develoment settings: use local directory for health-checks
+    f2b863ba4 development settings: use local directory for health-checks
     978b4fcb7 dev settings: remove references to "precious" directory
     d62f5fd6a lava_common: fix license headers
     45d2120e5 device-type: Add meson-g12b-a311d-khadas-vim3
@@ -113,8 +113,8 @@ lava (2019.10-1) unstable; urgency=medium
     9e80f439a rest api: add some documentation about submiting a test job
     177b1c6b5 doc: fix spelling error
     7968337aa dragonboard-820c: flash every partition:%d tables right after the ptable
-  * Fix unsafe use of yaml.load() (Closes #933918)
-  * Remove depency on gunicorn3 package (Closes #940682)
+  * Fix unsafe use of yaml.load() (Closes: #933918)
+  * Remove dependency on gunicorn3 package (Closes: #940682)
 
  -- Remi Duraffort <remi.duraffort@linaro.org>  Wed, 23 Oct 2019 15:25:30 +0200
 

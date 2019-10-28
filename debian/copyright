@@ -27,7 +27,6 @@ Copyright: 2013-2018 Neil Williams <codehelp@debian.org>
 License: GPL-2.0+
 
 Files: lava_server/* lava_scheduler_app/* lava_results_app/*
- dashboard_app/*
 Copyright: 2010-2018, Linaro Limited
 License: AGPL-3.0
 
