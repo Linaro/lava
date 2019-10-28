@@ -9,6 +9,7 @@ then
   apt-get install --no-install-recommends --yes pylint3 python3-pylint-django
 else
   set -x
+  dirs=${*:-lava lava_common lava_dispatcher lava_rest_app lava_results_app lava_scheduler_app lava_server linaro_django_xmlrpc share}
   # Only run some pylint checkers
   # See https://docs.pylint.org/en/1.6.0/features.html
   # Disabled:
@@ -26,5 +27,5 @@ else
   #  W1402: Anomalous Unicode escape in byte string: '%s'.
   #  W1403: Implicit string concatenation found in %s
   #  W1505: Using deprecated method warn()
-  pylint3 --disable=all --enable=elif,exceptions,stdlib,imports,variables,string,string_constant,logging,newstyle,classes --disable=C0411,C0412,E0401,E0611,R0201,R0401,W --enable=W0235,W0404,W0611,W1401,W1402,W1403,W1505 --ignore=lava/coordinator lava lava_common lava_dispatcher lava_rest_app lava_results_app lava_scheduler_app lava_server linaro_django_xmlrpc share
+  pylint3 --disable=all --enable=elif,exceptions,stdlib,imports,variables,string,string_constant,logging,newstyle,classes --disable=C0411,C0412,E0401,E0611,R0201,R0401,W --enable=W0235,W0404,W0611,W1401,W1402,W1403,W1505 --ignore=lava/coordinator $dirs
 fi
