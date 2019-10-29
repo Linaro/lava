@@ -124,7 +124,7 @@ class FVPDeploy(DeployAction):  # pylint: disable=too-many-instance-attributes
                             self.internal_pipeline.add_action(
                                 InjectIntoDiskImage(file=ramdisk_file, key=k)
                             )
-                        elif root_partition:
+                        elif root_partition is not None:
                             self.internal_pipeline.add_action(
                                 ApplyOverlayImage(
                                     image_key=k, root_partition=root_partition
