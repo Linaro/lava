@@ -39,6 +39,7 @@ def schema():
                 Optional("apply-overlay"): bool,
                 Optional("ramdisk_file"): str,
                 Optional("ramdisk_partition"): int,
+                Optional("root_partition"): int,
             }
         },
         Optional("ramdisk"): {**resource_ext, Optional("header"): "u-boot"},
