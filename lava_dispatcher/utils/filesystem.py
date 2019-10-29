@@ -297,8 +297,9 @@ def copy_to_lxc(lxc_name, src, dispatcher_config):
         logger.debug("Copying %s to %s", filename, lxc_name)
         try:
             shutil.copyfile(src, dst)
-        except OSError:
-            raise JobError("Unable to copy image: %s" % src)
+        except OSError as exc:
+            logger.error("Unable to copy %s to lxc: %s", src, exc.strerror)
+            raise JobError("Unable to copy %s to lxc: %s" % (src, exc.strerror))
 
     return os.path.join(LAVA_LXC_HOME, filename)
 
