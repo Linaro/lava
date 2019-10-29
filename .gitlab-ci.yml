@@ -152,38 +152,6 @@ amd64/pkg-debian-10:
     - _build/*.changes
     - _build/*.buildinfo
 
-aarch64/pkg-debian-10:
-  <<: *job_aarch64
-  stage: build
-  except: []
-  image: hub.lavasoftware.org/lava/ci-images/aarch64/pkg-debian-10
-  only:
-    refs:
-    - master
-    - tags
-  artifacts:
-    # binary only build, no .dsc or .tar.xz
-    paths:
-    - _build/*.deb
-    - _build/*.changes
-    - _build/*.buildinfo
-
-aarch64/pkg-debian-9:
-  <<: *job_aarch64
-  stage: build
-  image: hub.lavasoftware.org/lava/ci-images/aarch64/pkg-debian-9
-  except: []
-  only:
-    refs:
-    - master
-    - tags
-  artifacts:
-    # binary only build, no .dsc or .tar.xz
-    paths:
-    - _build/*.deb
-    - _build/*.changes
-    - _build/*.buildinfo
-
 ##########
 # Docker #
 ##########
@@ -201,7 +169,7 @@ aarch64/pkg-debian-9:
     - master
     - tags
   tags: [aarch64-dind]
-  dependencies: [aarch64/pkg-debian-10, amd64/pkg-debian-10]
+  dependencies: [amd64/pkg-debian-10]
 
 amd64/lava-dispatcher: *docker
 amd64/lava-server: *docker
@@ -231,8 +199,6 @@ reprepro-master:
   # will overwrite the latest deployment."
   tags: [deploy]
   dependencies:
-  - aarch64/pkg-debian-9
-  - aarch64/pkg-debian-10
   - amd64/pkg-debian-9
   - amd64/pkg-debian-10
   except: []
@@ -253,8 +219,6 @@ reprepro-release:
     refs:
     - tags
   dependencies:
-  - aarch64/pkg-debian-9
-  - aarch64/pkg-debian-10
   - amd64/pkg-debian-9
   - amd64/pkg-debian-10
   except: [schedules]
