@@ -50,9 +50,6 @@ else
         dcmd cp ${LAVA_BUILDD}/_build/lava_*stretch_*.changes ${SNAPSHOT}/stretch/${YEAR}/${MONTH}/${DAY}/
         dcmd rm ${LAVA_BUILDD}/_build/lava_*stretch_amd64.changes
 
-        reprepro -b ${BASEDIR} ${R_OPT} include stretch-backports ${LAVA_BUILDD}/_build/lava_*stretch_arm64.changes
-        dcmd rm ${LAVA_BUILDD}/_build/lava_*stretch_arm64.changes
-
         reprepro -b ${BASEDIR} list stretch-backports
     fi
     if [ -d "${BASEDIR}/dists/buster" ]; then
@@ -62,9 +59,6 @@ else
         mkdir -p ${SNAPSHOT}/buster/${YEAR}/${MONTH}/${DAY}/
         dcmd cp ${LAVA_BUILDD}/_build/lava_*buster_*.changes ${SNAPSHOT}/buster/${YEAR}/${MONTH}/${DAY}/
         dcmd rm ${LAVA_BUILDD}/_build/lava_*buster_amd64.changes
-
-        reprepro -b ${BASEDIR} include buster ${LAVA_BUILDD}/_build/lava_*buster_arm64.changes
-        dcmd rm ${LAVA_BUILDD}/_build/lava_*buster_arm64.changes
 
         reprepro -b ${BASEDIR} list buster
         echo "Updating latest"

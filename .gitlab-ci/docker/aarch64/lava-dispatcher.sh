@@ -27,7 +27,7 @@ else
   # Build the image
   pkg_lxc=$(find _build -name "lava-lxc-mocker_*.deb")
   pkg_common=$(find _build -name "lava-common_*.deb")
-  pkg_dispatcher=$(find _build -name "lava-dispatcher_*arm64.deb")
+  pkg_dispatcher=$(find _build -name "lava-dispatcher_*.deb")
   cp $pkg_lxc docker/aarch64/lava-dispatcher/lava-lxc.deb
   cp $pkg_common docker/aarch64/lava-dispatcher/lava-common.deb
   cp $pkg_dispatcher docker/aarch64/lava-dispatcher/lava-dispatcher.deb
