@@ -1,6 +1,8 @@
 #!/bin/sh
 set -e
 
+export DOCKER_BUILDKIT=1
+
 ARCH=$(uname -m)
 if [ "$ARCH" = "x86_64" ]
 then
