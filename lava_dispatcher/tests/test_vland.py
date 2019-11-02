@@ -22,6 +22,7 @@
 import os
 import yaml
 import socket
+from unittest.mock import patch
 from lava_common.compat import yaml_safe_load
 from lava_common.exceptions import JobError
 from lava_dispatcher.device import NewDevice
@@ -186,7 +187,10 @@ class TestVland(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertTrue(vprotocol.valid)
         self.assertEqual(vprotocol.names, {"vlan_one": "4212vlanone"})
 
-    def test_job(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_job(self, which_mock):
         with open(self.filename) as yaml_data:
             alpha_data = yaml_safe_load(yaml_data)
         self.assertIn("protocols", alpha_data)
@@ -242,7 +246,10 @@ class TestVland(StdoutTestCase):  # pylint: disable=too-many-public-methods
         # this device only has one interface with interface tags
         self.assertEqual(names, ["vlan_one,eth1"])
 
-    def test_vland_overlay(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_vland_overlay(self, which_mock):
         with open(self.filename) as yaml_data:
             alpha_data = yaml_safe_load(yaml_data)
         for vlan_key, _ in alpha_data["protocols"][VlandProtocol.name].items():
@@ -279,7 +286,10 @@ class TestVland(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertIn("lava-vland-tags", vland_files)
         self.assertIn("lava-vland-self", vland_files)
 
-    def test_job_no_tags(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_job_no_tags(self, which_mock):
         with open(self.filename) as yaml_data:
             alpha_data = yaml_safe_load(yaml_data)
         for vlan_key, _ in alpha_data["protocols"][VlandProtocol.name].items():
@@ -327,7 +337,10 @@ class TestVland(StdoutTestCase):  # pylint: disable=too-many-public-methods
         job.logger = DummyLogger()
         self.assertRaises(JobError, job.validate)
 
-    def test_primary_interface(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_primary_interface(self, which_mock):
         with open(self.filename) as yaml_data:
             alpha_data = yaml_safe_load(yaml_data)
         for interface in self.device["parameters"]["interfaces"]:

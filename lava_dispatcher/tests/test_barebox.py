@@ -20,7 +20,7 @@
 
 
 import os
-
+from unittest.mock import patch
 from lava_common.compat import yaml_safe_load
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
@@ -47,7 +47,10 @@ class TestBareboxAction(StdoutTestCase):  # pylint: disable=too-many-public-meth
         super().setUp()
         self.factory = BareboxFactory()
 
-    def test_tftp_pipeline(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_tftp_pipeline(self, which_mock):
         job = self.factory.create_bbb_job("sample_jobs/barebox-ramdisk.yaml")
         self.assertEqual(
             [action.name for action in job.pipeline.actions],
@@ -114,7 +117,10 @@ class TestBareboxAction(StdoutTestCase):  # pylint: disable=too-many-public-meth
             "TI AM335x BeagleBone black:/",
         )
 
-    def test_barebox_action(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_barebox_action(self, which_mock):
         job = self.factory.create_bbb_job("sample_jobs/barebox-ramdisk.yaml")
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
@@ -144,7 +150,10 @@ class TestBareboxAction(StdoutTestCase):  # pylint: disable=too-many-public-meth
                 self.assertEqual(action.mkimage_arch, "arm")
             self.assertTrue(action.valid)
 
-    def test_boot_commands(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_boot_commands(self, which_mock):
         job = self.factory.create_bbb_job(
             "sample_jobs/barebox-ramdisk-inline-commands.yaml"
         )
@@ -161,7 +170,10 @@ class TestBareboxAction(StdoutTestCase):  # pylint: disable=too-many-public-meth
             overlay.commands, ["a list", "of commands", "with a load_addr substitution"]
         )
 
-    def test_download_action(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_download_action(self, which_mock):
         job = self.factory.create_bbb_job("sample_jobs/barebox.yaml")
         for action in job.pipeline.actions:
             action.validate()

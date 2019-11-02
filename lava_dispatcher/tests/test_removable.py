@@ -20,6 +20,7 @@
 
 import os
 import unittest
+from unittest.mock import patch
 
 from lava_common.compat import yaml_safe_load
 from lava_dispatcher.tests.test_basic import Factory, StdoutTestCase
@@ -76,7 +77,10 @@ class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertIn("parameters", u_boot_params)
         self.assertIn("bootloader_prompt", u_boot_params["parameters"])
 
-    def _check_valid_job(self, device, test_file):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def _check_valid_job(self, device, test_file, which_mock):
         self.maxDiff = None  # pylint: disable=invalid-name
         job_parser = JobParser()
         sample_job_file = os.path.join(
@@ -236,7 +240,10 @@ class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
         cubie = NewDevice(yaml_safe_load(rendered))
         self._check_deployment(cubie, "cubietruck-removable-with-writer.yaml")
 
-    def test_juno_deployment(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_juno_deployment(self, which_mock):
         factory = RemovableFactory()
         job = factory.create_job(
             "sample_jobs/juno-uboot-removable.yaml", "devices/juno-uboot.yaml"
@@ -286,7 +293,10 @@ class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertIsNotNone(download_action)
         self.assertEqual("android", storage_deploy_action.parameters["namespace"])
 
-    def test_mustang_deployment(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_mustang_deployment(self, which_mock):
         factory = RemovableFactory()
         job = factory.create_job(
             "sample_jobs/mustang-secondary-media.yaml", "devices/mustang-media.yaml"
@@ -328,7 +338,10 @@ class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertEqual("nfsdeploy", first_deploy.parameters["namespace"])
         self.assertEqual("satadeploy", second_deploy.parameters["namespace"])
 
-    def test_secondary_media(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_secondary_media(self, which_mock):
         factory = RemovableFactory()
         job = factory.create_job(
             "sample_jobs/mustang-secondary-media.yaml", "devices/mustang-media.yaml"
@@ -414,7 +427,10 @@ class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
         )
 
     @unittest.skipIf(infrastructure_error("mkimage"), "u-boot-tools not installed")
-    def test_primary_media(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_primary_media(self, which_mock):
         """
         Test that definitions of secondary media do not block submissions using primary media
         """
@@ -431,7 +447,10 @@ class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertEqual(job.pipeline.errors, [])
         self.assertIn("usb", bbb["parameters"]["media"].keys())
 
-    def test_substitutions(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_substitutions(self, which_mock):
         """
         Test substitution of secondary media values into u-boot commands
 

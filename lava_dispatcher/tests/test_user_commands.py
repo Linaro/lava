@@ -18,6 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+from unittest.mock import patch
 from lava_dispatcher.tests.test_basic import Factory, StdoutTestCase
 
 
@@ -27,7 +28,10 @@ class UserCommandFactory(Factory):
 
 
 class TestUserCommand(StdoutTestCase):
-    def test_pipeline(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_pipeline(self, which_mock):
         factory = UserCommandFactory()
         job = factory.create_b2260_job("sample_jobs/b2260-user-command.yaml")
         job.validate()

@@ -18,7 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-
+from unittest.mock import patch
 from lava_dispatcher.tests.test_basic import StdoutTestCase
 from lava_dispatcher.tests.test_uboot import UBootFactory
 from lava_dispatcher.actions.boot.kexec import BootKexecAction, KexecAction
@@ -29,7 +29,10 @@ from lava_dispatcher.actions.test.shell import TestShellRetry
 
 
 class TestKExec(StdoutTestCase):
-    def test_deploy_parameters(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_deploy_parameters(self, which_mock):
         factory = UBootFactory()
         job = factory.create_bbb_job("sample_jobs/kexec.yaml")
         self.assertIsNotNone(job)

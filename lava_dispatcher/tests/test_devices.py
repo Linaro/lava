@@ -20,6 +20,7 @@
 
 import os
 import unittest
+from unittest.mock import patch
 
 from lava_common.compat import yaml_safe_load
 from lava_common.exceptions import ConfigurationError, JobError
@@ -202,7 +203,10 @@ overrides:
             job.validate()
 
     @unittest.skipIf(infrastructure_error("mkimage"), "u-boot-tools not installed")
-    def test_device_environment(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_device_environment(self, which_mock):
         data = """
 # YAML syntax.
 overrides:

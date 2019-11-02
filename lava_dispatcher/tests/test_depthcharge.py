@@ -22,6 +22,7 @@
 
 import os
 import unittest
+from unittest.mock import patch
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.tests.test_basic import StdoutTestCase
@@ -53,7 +54,10 @@ class TestDepthchargeAction(StdoutTestCase):
         self.factory = DepthchargeFactory()
 
     @unittest.skipIf(infrastructure_error("mkimage"), "mkimage not installed")
-    def test_depthcharge(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_depthcharge(self, which_mock):
         job = self.factory.create_jaq_job("sample_jobs/depthcharge.yaml")
         self.assertIsNotNone(job)
 

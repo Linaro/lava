@@ -22,6 +22,7 @@
 import os
 import re
 import logging
+from unittest.mock import patch
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
 from lava_common.timeout import Timeout
@@ -109,7 +110,10 @@ class TestUefi(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertTrue(hasattr(connection, "check_char"))
         self.assertIsNotNone(connection.check_char)
 
-    def test_selector(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_selector(self, which_mock):
         self.assertIsNotNone(self.job)
         self.job.validate()
         uefi_menu = [
@@ -137,7 +141,10 @@ class TestUefi(StdoutTestCase):  # pylint: disable=too-many-public-methods
             selector.character_delay, self.job.device["character_delays"]["boot"]
         )
 
-    def test_uefi_job(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_uefi_job(self, which_mock):
         self.assertIsNotNone(self.job)
         self.job.validate()
         uefi_menu = [
@@ -214,7 +221,10 @@ class TestUefi(StdoutTestCase):  # pylint: disable=too-many-public-methods
             self.assertEqual(item["select"], check_block[count])
             count += 1
 
-    def test_tc2_uefi_job(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_tc2_uefi_job(self, which_mock):
         factory = Factory()
         job = factory.create_job("tc2-01.jinja2", "sample_jobs/tc2.yaml")
         job.validate()
