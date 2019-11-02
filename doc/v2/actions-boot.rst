@@ -21,6 +21,41 @@ responsible for providing a list of all possible prompts.
 
 .. seealso:: :ref:`boot_prompts`
 
+Boot is a top level action that is part of the ``actions`` list. Here is an
+example of full boot action from the test job definition:
+
+.. code-block:: yaml
+
+  - boot:
+    namespace: target
+    timeout:
+      minutes: 15
+    method: u-boot
+    auto_login:
+      login_prompt: 'am57xx-evm login:'
+      username: root
+      password_prompt: "Password:"
+      password: "P@ssword-1"
+      login_commands:
+      - P@ssword-1
+      - azertAZERT12345
+      - azertAZERT12345
+      - azertAZERT12345
+    prompts:
+    - 'Current password: '
+    - 'New password: '
+    - 'Retype new password: '
+    - 'root@am57xx-evm:'
+    transfer_overlay:
+      download_command: unset http_proxy ; dhclient eth1 ; cd /tmp ; wget
+      unpack_command: tar -C / -xzf
+    commands:
+    - setenv fdtfile am57xx-beagle-x15.dtb
+    - setenv console ttyS2,115200n8
+    - setenv mmcdev 1
+    - setenv bootpart 1:9
+    - run mmcboot
+
 .. contents::
    :backlinks: top
 
@@ -52,9 +87,10 @@ included in the ``login_prompt``:
 
 .. code-block:: yaml
 
-  auto_login:
-    login_prompt: 'login:'
-    username: root
+  - boot:
+    auto_login:
+      login_prompt: 'login:'
+      username: root
 
 .. note:: If login_prompt is not matched during boot LAVA will send control
    characters to the shell "thinking" that the kernel alert happened
@@ -85,11 +121,12 @@ must be specified:
 
 .. code-block:: yaml
 
-  auto_login:
-    login_prompt: 'login:'
-    username: root
-    password_prompt: 'Password:'
-    password: rootme
+  - boot:
+      auto_login:
+        login_prompt: 'login:'
+        username: root
+        password_prompt: 'Password:'
+        password: rootme
 
 .. note:: If password_prompt is not matched during login or password is
    required but not provided LAVA will recognize the ``Login timed out``
@@ -118,13 +155,14 @@ become root with su. For example:
 
 .. code-block:: yaml
 
-  auto_login:
-    login_prompt: 'login:'
-    username: user
-    password_prompt: 'Password:'
-    password: pass
-    login_commands:
-    - sudo su
+  - boot:
+      auto_login:
+        login_prompt: 'login:'
+        username: user
+        password_prompt: 'Password:'
+        password: pass
+        login_commands:
+        - sudo su
 
 .. note:: No interactive input such as a password can be provided with the list
    of ``login_commands``.
@@ -155,29 +193,29 @@ included in the prompt, this can be included in the ``prompt``:
 
 .. code-block:: yaml
 
-     - boot:
-         prompts:
-         - 'root@debian:'
+  - boot:
+      prompts:
+      - 'root@debian:'
 
 When using the :term:`lxc` :term:`protocol`, the hostname element of the
 prompt will vary:
 
 .. code-block:: yaml
 
-     - boot:
-         prompts:
-         - 'root@(.*):'
+  - boot:
+      prompts:
+      - 'root@(.*):'
 
 When using a ramdisk, the prompt is likely to need to contain brackets which
 will need to be escaped:
 
 .. code-block:: yaml
 
-     - boot:
-         prompts:
-         # escape the brackets to ensure that the prompt does not match
-         # kernel debug lines which may mention initramfs
-         - '\(initramfs\)'
+  - boot:
+      prompts:
+      # escape the brackets to ensure that the prompt does not match
+      # kernel debug lines which may mention initramfs
+      - '\(initramfs\)'
 
 .. index:: boot connection
 
@@ -238,14 +276,16 @@ As a simple example from a U-Boot template:
 
 .. code-block:: yaml
 
-  - setenv autoload no
-  - setenv initrd_high '0xffffffff'
-  - setenv fdt_high '0xffffffff'
-  - setenv loadkernel 'tftp {KERNEL_ADDR} {KERNEL}'
-  - setenv loadinitrd 'tftp {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'
-  - setenv loadfdt 'tftp {DTB_ADDR} {DTB}'
-  - setenv bootcmd 'run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
   - boot
+      commands:
+      - setenv autoload no
+      - setenv initrd_high '0xffffffff'
+      - setenv fdt_high '0xffffffff'
+      - setenv loadkernel 'tftp {KERNEL_ADDR} {KERNEL}'
+      - setenv loadinitrd 'tftp {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'
+      - setenv loadfdt 'tftp {DTB_ADDR} {DTB}'
+      - setenv bootcmd 'run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
+      - boot
 
 .. note:: In some cases, the boot commands list in the template may
    not provide **all** of the commands used; lines will also be
@@ -279,7 +319,7 @@ e.g.:
 Specifying commands in full
 ===========================
 
-During testing and development, it can **sometimes** be useful to use
+During testing and development, it can sometimes be useful to use
 a different set of boot commands instead of what is listed in the
 jinja2 template for the device-type. This allows test writers to
 change boot commands beyond the scope of existing overrides. To work
@@ -294,10 +334,10 @@ by test writers from a hacking session.)
 
 .. literalinclude:: examples/test-jobs/x86-sata-commands.yaml
    :language: yaml
-   :lines: 32, 36-42
+   :lines: 31-41
 
-.. caution:: This support is **only** recommended for use for corner
-   cases and administrator-level debugging. Accordingly, LAVA will
+.. caution:: This support is recommended for use for corner cases that can't
+   be fixed on the level of device type. Accordingly, LAVA will
    raise a warning each time this support is used. Abuse of this
    support can potentially stop devices from working in subsequent
    tests, or maybe even damage them permanently - be careful!
@@ -306,7 +346,7 @@ by test writers from a hacking session.)
    list <https://lists.lavasoftware.org/mailman/listinfo/lava-users>`_ requesting
    that a label is created in the templates for this set of commands.
    Alternatively, you can request a new override to make the existing labels
-   more flexible.
+   more flexible. You can also propose a patch yourself.
 
 .. index:: kernel command line, extra kernel arguments, boot commands - kernel
 
@@ -322,7 +362,10 @@ strings to the kernel command line:
 .. code-block:: jinja
 
   context:
-      extra_kernel_args: vsyscall=native
+    extra_kernel_args: vsyscall=native
+
+:term:`job context` is a top level element of LAVA job definition. It is not
+a part of `boot` section.
 
 Values need to be separated by whitespace and will be added to the command
 line with a prefix of a single space and a suffix of a single space.
@@ -336,7 +379,7 @@ for example to append values to the NFS options using ``extra_nfsroot_args``:
 .. code-block:: jinja
 
   context:
-      extra_nfsroot_args: ,rsize=4096 nfsrootdebug
+    extra_nfsroot_args: ,rsize=4096 nfsrootdebug
 
 .. note:: ``extra_nfsroot_args`` are appended directly to the existing NFS
    flags ``nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr`` so if the
@@ -344,8 +387,7 @@ for example to append values to the NFS options using ``extra_nfsroot_args``:
    string must start with a comma. Other options can then be separated by a
    space or can use ``extra_kernel_args``. The example above would result in
    the string ``nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr,rsize=4096
-   nfsrootdebug``. (Whether that makes sense to any particular test job is out
-   of scope for this documentation.)
+   nfsrootdebug``.
 
 .. seealso:: `Kernel documentation for NFSROOT
    <https://www.kernel.org/doc/Documentation/filesystems/nfs/nfsroot.txt>`_ ,
@@ -399,10 +441,11 @@ in the ``bootloader`` parameter:
 
 .. code-block:: yaml
 
-    method: bootloader
-    bootloader: u-boot
-    commands: []
-    prompts: ['=>']
+  - boot
+      method: bootloader
+      bootloader: u-boot
+      commands: []
+      prompts: ['=>']
 
 .. note:: the bootloader method type should match a boot method supported by
           the give device-type.
@@ -423,9 +466,10 @@ The ``cmsis-dap`` boot method takes no arguments or parameters.
 
 .. code-block:: yaml
 
-    method: cmsis-dap
-    timeout:
-      minutes: 10
+  - boot
+      method: cmsis-dap
+      timeout:
+        minutes: 10
 
 .. index:: boot method depthcharge
 
@@ -508,7 +552,7 @@ at all).
   - boot:
       method: fastboot
       commands:
-      - --set-active=_a
+      - --set-active=a
 
 .. index:: boot method grub
 
@@ -538,7 +582,7 @@ most cases, starting Grub from UEFI requires using the
 
 .. literalinclude:: examples/test-jobs/mustang-grub-efi.yaml
    :language: yaml
-   :lines: 42, 47, 48
+   :lines: 41-50
 
 Download or view the complete example:
 `examples/test-jobs/mustang-grub-efi.yaml
@@ -559,12 +603,12 @@ The ``ipxe`` boot method takes no arguments or parameters.
 
 .. code-block:: yaml
 
- - boot:
-    method: ipxe
-    commands: ramdisk
-    prompts:
-    - 'root@debian:~#'
-    - '/ #'
+  - boot:
+      method: ipxe
+      commands: ramdisk
+      prompts:
+      - 'root@debian:~#'
+      - '/ #'
 
 .. index:: boot method lxc
 
@@ -577,12 +621,12 @@ lxc
 
 .. code-block:: yaml
 
- - boot:
-    method: lxc
-    prompts:
-    - 'root@(.*):/#'
-    timeout:
-      minutes: 5
+  - boot:
+      method: lxc
+      prompts:
+      - 'root@(.*):/#'
+      timeout:
+        minutes: 5
 
 .. index:: boot method openocd
 
@@ -607,10 +651,10 @@ device type is using.
 
 .. code-block:: yaml
 
- - boot:
-    method: openocd
-    timeout:
-      minutes: 3
+  - boot:
+      method: openocd
+      timeout:
+        minutes: 3
 
 .. index:: boot method pyocd
 
@@ -629,16 +673,23 @@ The ``minimal`` method is used to power-on the :term:`DUT` and to let the
 
 .. code-block:: yaml
 
-    method: minimal
-    prompts:
-    - 'root@debian:~#'
-    - '/ #'
+  - boot
+      method: minimal
+      prompts:
+      - 'root@debian:~#'
+      - '/ #'
 
 .. note:: auto-login and transfer_overlay are both supported for this method.
 
 By default LAVA will reset the board power when executing this action. Users
 can skip this step by adding ``reset: false``. This can be useful when testing
 bootloader in interactive tests and then booting to the OS.
+
+.. code-block:: yaml
+
+  - boot
+      method: minimal
+      reset: false
 
 pyocd
 =====
@@ -647,10 +698,10 @@ The ``pyocd`` boot method takes no arguments or parameters.
 
 .. code-block:: yaml
 
- - boot:
-    method: pyocd
-    timeout:
-      minutes: 10
+  - boot:
+      method: pyocd
+      timeout:
+        minutes: 10
 
 .. index:: boot method jlink
 
@@ -663,10 +714,10 @@ The ``jlink`` boot method takes no arguments or parameters.
 
 .. code-block:: yaml
 
- - boot:
-    method: jlink
-    timeout:
-      minutes: 10
+  - boot:
+      method: jlink
+      timeout:
+        minutes: 10
 
 .. index:: boot method console
 
@@ -748,9 +799,9 @@ When booting a QEMU image file directly, the ``media`` needs to be specified as
 
 .. code-block:: yaml
 
- - boot:
-     method: qemu
-     media: tmpfs
+  - boot:
+      method: qemu
+      media: tmpfs
 
 .. index:: boot method qemu-nfs
 
@@ -777,7 +828,7 @@ media:
 
 .. literalinclude:: examples/test-jobs/qemu-nfs.yaml
     :language: yaml
-    :lines: 49-54
+    :lines: 46-54
 
 .. seealso:: :ref:`boot method qemu <boot_method_qemu>`.
 
@@ -786,7 +837,7 @@ to the worker running QEMU:
 
 .. literalinclude:: examples/test-jobs/qemu-nfs.yaml
     :language: yaml
-    :lines: 58-59
+    :lines: 46-57
 
 .. index:: boot method qemu media nfs
 
@@ -800,7 +851,7 @@ When booting a QEMU image using NFS, the ``media`` needs to be specified as
 
 .. literalinclude:: examples/test-jobs/qemu-nfs.yaml
     :language: yaml
-    :lines: 49-54
+    :lines: 46-57
 
 .. index:: boot method qemu-iso
 
@@ -825,19 +876,19 @@ in Debian is available at https://tracker.debian.org/pkg/qemu
 
 .. code-block:: yaml
 
- - boot:
-    method: qemu-iso
-    media: img
-    timeout:
-      minutes: 20
-    connection: serial
-    auto_login:
-      login_prompt: 'login:'
-      username: root
-      password_prompt: 'Password:'
-      password: root
-    prompts:
-    - 'root@debian:~#'
+  - boot:
+      method: qemu-iso
+      media: img
+      timeout:
+        minutes: 20
+      connection: serial
+      auto_login:
+        login_prompt: 'login:'
+        username: root
+        password_prompt: 'Password:'
+        password: root
+      prompts:
+      - 'root@debian:~#'
 
 .. index:: boot method qemu-iso media
 
@@ -851,9 +902,9 @@ When booting an installer using QEMU, the ``media`` needs to be specified as
 
 .. code-block:: yaml
 
- - boot:
-     method: qemu-iso
-     media: img
+  - boot:
+      method: qemu-iso
+      media: img
 
 .. index:: transfer overlay
 
@@ -897,9 +948,10 @@ straight away.
 
 .. code-block:: yaml
 
-    transfer_overlay:
-      download_command: wget -S --progress=dot:giga
-      unpack_command: tar -C / -xzf
+  - boot:
+      transfer_overlay:
+        download_command: wget -S --progress=dot:giga
+        unpack_command: tar -C / -xzf
 
 .. note:: The ``-C /`` command to tar is **essential** or the test shell will
    not be able to start. The overlay will use ``gzip`` compression, so pass
@@ -924,9 +976,10 @@ to ``/tmp`` to ensure there is enough writeable space for the download.
 
 .. code-block:: yaml
 
-    transfer_overlay:
-       download_command: cd /tmp ; wget
-       unpack_command: tar -C / -xzf
+  - boot:
+      transfer_overlay:
+        download_command: cd /tmp ; wget
+        unpack_command: tar -C / -xzf
 
 .. index:: boot method u-boot
 
@@ -968,12 +1021,12 @@ load addresses passed to U-Boot.
 
 .. code-block:: yaml
 
- - boot:
-   method: u-boot
-   commands: nfs
-   type: bootz
-   prompts:
-     - 'root@debian:~#'
+  - boot:
+      method: u-boot
+      commands: nfs
+      type: bootz
+      prompts:
+        - 'root@debian:~#'
 
 .. index:: boot method uefi-menu
 
@@ -1019,11 +1072,14 @@ the requested selector:
 
 .. code-block:: yaml
 
-          item_markup:
-            - "["
-            - "]"
-          item_class: '0-9'
-          separator: ' '
+  - boot:
+      method: uefi-menu
+      parameters:
+        item_markup:
+        - "["
+        - "]"
+        item_class: '0-9'
+        separator: ' '
 
 This allows LAVA to match a menu item matching ``\[[0-9]\] ['a-zA-Z0-9\s\:']``
 and select the correct selector when the menu item string matches one (and only
@@ -1035,13 +1091,17 @@ the ``commands`` set in the testjob:
 
 .. code-block:: yaml
 
-    method: uefi-menu
-    commands: fastboot
+  - boot:
+      method: uefi-menu
+      commands: fastboot
 
 The template would then need:
 
 .. code-block:: yaml
 
+  - boot:
+      method: uefi-menu
+      parameters:
         fastboot:
         - select:
             items:
