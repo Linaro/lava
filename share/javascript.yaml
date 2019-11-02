@@ -19,7 +19,6 @@ debian:
     lava_directory: lava_scheduler_app/static/lava_scheduler_app/js/
     replacements:
       jquery.flot.js: jquery.flot.js
-      jquery.flot.stack.js: jquery.flot.stack.js
   - package: libjs-jquery-typeahead
     directory: /usr/share/javascript/jquery-typeahead/
     lava_directory: lava_server/static/lava_server/js/
