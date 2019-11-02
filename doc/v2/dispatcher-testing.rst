@@ -20,17 +20,17 @@ lava-server
 
 ::
 
- $ ./lava_server/manage.py test
+ $ ./manage.py test
 
 ``lava-server`` has several components, see the contents of ``ci-run`` for the
 full list. Each component can be tested separately::
 
- $ ./lava_server/manage.py test lava_scheduler_app
+ $ ./manage.py test lava_scheduler_app
 
 To run particular tests in a specific file, add e.g. ``test_device.py`` to the
 command::
 
- $ ./lava_server/manage.py test lava_scheduler_app.tests.test_device
+ $ ./manage.py test lava_scheduler_app.tests.test_device
 
 .. note:: the ``tests`` directory needs to be specified (instead of the test
    process discovering all tests) but the filename in the ``tests`` directory
@@ -39,13 +39,13 @@ command::
 Add the class name to run all tests within that class within the specified
 file.::
 
- $ ./lava_server/manage.py test lava_scheduler_app.tests.test_device.DeviceTypeTest
+ $ ./manage.py test lava_scheduler_app.tests.test_device.DeviceTypeTest
 
 Add a specific test function to run only that one unit test::
 
- $ ./lava_server/manage.py test lava_scheduler_app.tests.test_device.DeviceTypeTest.test_device_type_templates
+ $ ./manage.py test lava_scheduler_app.tests.test_device.DeviceTypeTest.test_device_type_templates
 
-Useful options to ``./lava_server/manage.py test`` include ``-v2`` to follow what is
+Useful options to ``./manage.py test`` include ``-v2`` to follow what is
 being done and ``--noinput`` to automatically remove a database created by a previous
 run of the unit tests which did not complete properly.
 
