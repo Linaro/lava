@@ -115,7 +115,11 @@ setup(
             "lava_test_shell/distro/oe/*",
         ]
     },
-    scripts=["lava/dispatcher/lava-run", "lava/dispatcher/lava-slave"],
+    scripts=[
+        "lava/dispatcher/lava-run",
+        "lava/dispatcher/lava-slave",
+        "lava_dispatcher_host/lava-dispatcher-host",
+    ],
     data_files=[
         ("/usr/share/lava-dispatcher/", ["etc/tftpd-hpa", "etc/dispatcher.yaml"]),
         ("/etc/exports.d", ["etc/lava-dispatcher-nfs.exports"]),
