@@ -92,9 +92,6 @@ coverage:
   artifacts:
     paths:
     - htmlcov
-  only:
-    refs:
-    - master
 
 dockerfiles:
   <<: *analyze
