@@ -25,6 +25,7 @@ metadata:
 
 # ACTION_BLOCK
 actions:
+# DEPLOY_BLOCK
 - deploy:
     timeout:
       minutes: 5
@@ -46,6 +47,7 @@ actions:
       login_prompt: "login:"
       username: root
 
+# TEST_BLOCK
 - test:
     timeout:
       minutes: 5
