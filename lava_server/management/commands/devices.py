@@ -20,6 +20,7 @@
 import os
 import contextlib
 import csv
+import subprocess
 import voluptuous
 
 from django.core.management.base import BaseCommand, CommandError
@@ -222,6 +223,28 @@ class Command(BaseCommand):
             "hostname", type=str, nargs="*", help="Hostname of the device", default=[]
         )
 
+        # "control" sub-command
+        control_parser = sub.add_parser(
+            "control", help="Control devices power and serial"
+        )
+        control_parser.add_argument(
+            "-n",
+            "--dry-run",
+            action="store_true",
+            help="Print command instead of running it",
+        )
+        control_parser.add_argument("hostname", help="Device to control")
+        control_parser.add_argument(
+            "action",
+            choices=("on", "off", "reset", "connect"),
+            help="""
+            "on" turns the device on;
+            "off" turns the device off;
+            "reset" hard resets the device;
+            "connect" connects to the device serial port
+            """,
+        )
+
     def handle(self, *args, **options):
         """ Forward to the right sub-handler """
         if options["sub_command"] == "add":
@@ -236,6 +259,8 @@ class Command(BaseCommand):
             )
         elif options["sub_command"] == "check":
             self.handle_check(options)
+        elif options["sub_command"] == "control":
+            self.handle_control(options)
         else:
             self.handle_update(options)
 
@@ -560,3 +585,27 @@ class Command(BaseCommand):
 
         print("{hostname}: OK".format(hostname=hostname))
         return 0
+
+    def handle_control(self, options):
+        device = Device.objects.get(hostname=options["hostname"])
+        keys = {"on": "power_on", "off": "power_off", "reset": "hard_reset"}
+        config = device.load_configuration()
+        action = options["action"]
+        if action == "connect":
+            connection = None
+            for _, c in config["commands"]["connections"].items():
+                if "primary" in c["tags"]:
+                    command = c["connect"]
+                    break
+            if not command:
+                CommandError(
+                    "Device %s does not define a primary connection" % device.hostname
+                )
+        else:
+            key = keys[action]
+            command = config["commands"][key]
+
+        if options["dry_run"]:
+            print(command)
+        else:
+            subprocess.check_call(command, shell=True)
