@@ -1,5 +1,3 @@
-compression
-^^^^^^^^^^^
 
 If the image is compressed, the compression method **must** be specified. If
 image is compressed but compression method is not specified it will be

@@ -1,5 +1,3 @@
-archive
-^^^^^^^
 
 Some system images are compressed as a tarball (``.tar.*``), these images
 need the ``archive`` option specified to unpack the system image correctly.

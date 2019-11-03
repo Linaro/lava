@@ -46,10 +46,14 @@ iso
 
 .. _deploy_to_iso_installer_images_iso_archive:
 
+archive
+^^^^^^^
 .. include:: actions-deploy-images-archive.rsti
 
 .. _deploy_to_iso_installer_images_iso_compression:
 
+compression
+^^^^^^^^^^^
 .. include:: actions-deploy-images-compression.rsti
 
 .. _deploy_to_iso_installer_images_iso_image_arg:

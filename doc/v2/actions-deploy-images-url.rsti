@@ -1,5 +1,3 @@
-url *
-^^^^^
 
 Specifies the URL to download. All downloads are checksummed using ``md5sum``
 and ``sha256sum``

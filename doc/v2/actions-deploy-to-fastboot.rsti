@@ -43,6 +43,8 @@ In the example, the partition to be flashed on the :term:`DUT` is ``system``.
 
 .. _deploy_to_fastboot_images_compression:
 
+compression
+^^^^^^^^^^^
 .. include:: actions-deploy-images-compression.rsti
 
 .. _deploy_to_fastboot_images_reboot:
@@ -61,6 +63,8 @@ image, then the method **must** be specified.
 
 .. _deploy_to_fastboot_images_archive:
 
+archive
+^^^^^^^
 .. include:: actions-deploy-images-archive.rsti
 
 .. _deploy_to_fastboot_images_apply-overlay:
@@ -124,8 +128,12 @@ so that LAVA will treat the image as non-sparse ext4 image.
 
 .. _deploy_to_fastboot_images_md5sum:
 
+md5sum
+^^^^^^
 .. include:: actions-deploy-images-md5sum.rsti
 
 .. _deploy_to_fastboot_images_sha256sum:
 
+sha256sum
+^^^^^^^^^
 .. include:: actions-deploy-images-sha256sum.rsti

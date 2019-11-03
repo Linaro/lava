@@ -40,20 +40,30 @@ downloaded as specified in :ref:`deploy_to_download_label_url`
 
 .. _deploy_to_download_label_url:
 
+url *
+^^^^^
 .. include:: actions-deploy-images-url.rsti
 
 .. _deploy_to_download_label_compression:
 
+compression
+^^^^^^^^^^^
 .. include:: actions-deploy-images-compression.rsti
 
 .. _deploy_to_download_label_archive:
 
+archive
+^^^^^^^
 .. include:: actions-deploy-images-archive.rsti
 
 .. _deploy_to_download_label_md5sum:
 
+md5sum
+^^^^^^
 .. include:: actions-deploy-images-md5sum.rsti
 
 .. _deploy_to_download_label_sha256sum:
 
+sha256sum
+^^^^^^^^^
 .. include:: actions-deploy-images-sha256sum.rsti
