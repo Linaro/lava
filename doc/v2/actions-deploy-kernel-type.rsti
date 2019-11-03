@@ -1,0 +1,16 @@
+
+Specifies the type of kernel being downloaded. Some bootloaders, for example
+U-Boot_, use this information to determine the load addresses and boot commands.
+Certain :term:`device types <device type>` may also need the downloaded file to
+be converted to a ``uImage``.
+
+.. _`U-Boot`: http://www.denx.de/wiki/U-Boot
+
+.. topic:: Supported types
+
+ * ``image``
+ * ``zimage``
+ * ``uimage``
+
+(Replaces the previous support for specifying the boot type (``bootm``,
+``booti`` or ``bootz``).
