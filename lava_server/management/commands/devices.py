@@ -20,12 +20,15 @@
 import os
 import contextlib
 import csv
+import subprocess
+import voluptuous
 
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 from django.db import transaction
 from django.contrib.auth.models import User, Group
 
+from lava_common.schemas.device import validate as validate_device
 from lava_scheduler_app.models import Device, DeviceType, Tag, Worker
 from lava_server.compat import get_sub_parser_class
 
@@ -210,6 +213,38 @@ class Command(BaseCommand):
             help="Name of the group with ownership of the device",
         )
 
+        # "check" sub-command
+        check_parser = sub.add_parser("check", help="Validate device configuration")
+        check_devices = check_parser.add_mutually_exclusive_group(required=True)
+        check_devices.add_argument(
+            "-a", "--all", action="store_true", help="check all devices", default=None
+        )
+        check_devices.add_argument(
+            "hostname", type=str, nargs="*", help="Hostname of the device", default=[]
+        )
+
+        # "control" sub-command
+        control_parser = sub.add_parser(
+            "control", help="Control devices power and serial"
+        )
+        control_parser.add_argument(
+            "-n",
+            "--dry-run",
+            action="store_true",
+            help="Print command instead of running it",
+        )
+        control_parser.add_argument("hostname", help="Device to control")
+        control_parser.add_argument(
+            "action",
+            choices=("on", "off", "reset", "connect"),
+            help="""
+            "on" turns the device on;
+            "off" turns the device off;
+            "reset" hard resets the device;
+            "connect" connects to the device serial port
+            """,
+        )
+
     def handle(self, *args, **options):
         """ Forward to the right sub-handler """
         if options["sub_command"] == "add":
@@ -222,6 +257,10 @@ class Command(BaseCommand):
             self.handle_list(
                 options["state"], options["health"], options["show_all"], options["csv"]
             )
+        elif options["sub_command"] == "check":
+            self.handle_check(options)
+        elif options["sub_command"] == "control":
+            self.handle_control(options)
         else:
             self.handle_update(options)
 
@@ -508,3 +547,65 @@ class Command(BaseCommand):
 
             # Save the modifications
             device.save()
+
+    def handle_check(self, options):
+        rc = 0
+        if options["all"]:
+            devices = Device.objects.all()
+        else:
+            hostnames = options["hostname"]
+            devices = Device.objects.filter(hostname__in=hostnames)
+            for device in devices:
+                hostnames.remove(device.hostname)
+            if hostnames:
+                raise CommandError("Unable to find device(s): %r" % hostnames)
+
+        if not devices:
+            raise CommandError(
+                "No devices to validate. Pass some device hostnames, or --all to validate all devices"
+            )
+
+        for device in devices:
+            rc = rc or self._handle_check(device)
+        if rc != 0:
+            raise CommandError("One or more devices failed to validate")
+
+    def _handle_check(self, device):
+        hostname = device.hostname
+        data = device.load_configuration()
+        try:
+            validate_device(data)
+        except voluptuous.Invalid as exc:
+            print(
+                "{hostname}: {key} - {msg}".format(
+                    hostname=hostname, key=exc.path, msg=exc.msg
+                )
+            )
+            return 1
+
+        print("{hostname}: OK".format(hostname=hostname))
+        return 0
+
+    def handle_control(self, options):
+        device = Device.objects.get(hostname=options["hostname"])
+        keys = {"on": "power_on", "off": "power_off", "reset": "hard_reset"}
+        config = device.load_configuration()
+        action = options["action"]
+        if action == "connect":
+            connection = None
+            for _, c in config["commands"]["connections"].items():
+                if "primary" in c["tags"]:
+                    command = c["connect"]
+                    break
+            if not command:
+                CommandError(
+                    "Device %s does not define a primary connection" % device.hostname
+                )
+        else:
+            key = keys[action]
+            command = config["commands"][key]
+
+        if options["dry_run"]:
+            print(command)
+        else:
+            subprocess.check_call(command, shell=True)
