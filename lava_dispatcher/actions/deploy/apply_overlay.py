@@ -50,6 +50,7 @@ class ApplyOverlayGuest(Action):
     name = "apply-overlay-guest"
     description = "prepare a qcow2 drive containing the overlay"
     summary = "build a guest filesystem with the overlay"
+    timeout_exception = InfrastructureError
 
     def __init__(self):
         super().__init__()
@@ -101,6 +102,7 @@ class ApplyOverlayImage(Action):
     name = "apply-overlay-image"
     description = "apply overlay via guestfs to the test image"
     summary = "apply overlay to test image"
+    timeout_exception = InfrastructureError
 
     def __init__(self, image_key="image", use_root_partition=True):
         super().__init__()
@@ -138,6 +140,8 @@ class ApplyOverlaySparseImage(Action):
     name = "apply-overlay-sparse-image"
     description = "apply overlay to sparse image"
     summary = "apply overlay to sparse image"
+    command_exception = InfrastructureError
+    timeout_exception = InfrastructureError
 
     def __init__(self, image_key):
         super().__init__()
@@ -190,6 +194,7 @@ class PrepareOverlayTftp(Action):
     name = "prepare-tftp-overlay"
     description = "extract ramdisk or nfsrootfs in preparation for lava overlay"
     summary = "extract ramdisk or nfsrootfs"
+    timeout_exception = InfrastructureError
 
     def populate(self, parameters):
         self.internal_pipeline = Pipeline(
@@ -241,6 +246,7 @@ class ApplyOverlayTftp(Action):
     name = "apply-overlay-tftp"
     description = "unpack the overlay into the nfsrootfs or ramdisk"
     summary = "apply lava overlay test files"
+    timeout_exception = InfrastructureError
 
     def validate(self):
         super().validate()
@@ -376,6 +382,7 @@ class ExtractRootfs(Action):  # pylint: disable=too-many-instance-attributes
     name = "extract-rootfs"
     description = "unpack rootfs"
     summary = "unpack rootfs, ready to apply lava overlay"
+    timeout_exception = InfrastructureError
 
     def __init__(self):
         super().__init__()
@@ -409,6 +416,7 @@ class ExtractNfsRootfs(ExtractRootfs):
     name = "extract-nfsrootfs"
     description = "unpack nfsrootfs"
     summary = "unpack nfsrootfs, ready to apply lava overlay"
+    timeout_exception = InfrastructureError
 
     def __init__(self):
         super().__init__()
@@ -467,6 +475,7 @@ class ExtractModules(Action):
     name = "extract-modules"
     description = "extract supplied kernel modules"
     summary = "extract kernel modules"
+    timeout_exception = InfrastructureError
 
     def run(self, connection, max_end_time):
         if not self.parameters.get("modules"):  # idempotency
@@ -523,6 +532,7 @@ class ExtractRamdisk(Action):
     name = "extract-overlay-ramdisk"
     description = "extract ramdisk to a temporary directory"
     summary = "extract the ramdisk"
+    timeout_exception = InfrastructureError
 
     def __init__(self):
         super().__init__()
@@ -606,6 +616,7 @@ class CompressRamdisk(Action):
     name = "compress-ramdisk"
     description = "recreate a ramdisk with the overlay applied."
     summary = "compress ramdisk with overlay"
+    timeout_exception = InfrastructureError
 
     def __init__(self):
         super().__init__()
@@ -742,6 +753,7 @@ class ApplyLxcOverlay(Action):
     name = "apply-lxc-overlay"
     description = "apply the overlay to the container by copying"
     summary = "apply overlay on the container"
+    timeout_exception = InfrastructureError
 
     def __init__(self):
         super().__init__()
@@ -804,6 +816,7 @@ class ConfigurePreseedFile(Action):
     name = "configure-preseed-file"
     description = "add commands to automated installers, to copy the lava test overlay to the installed system"
     summary = "add commands to installer config"
+    timeout_exception = InfrastructureError
 
     def run(self, connection, max_end_time):
         if "deployment_data" not in self.parameters:
