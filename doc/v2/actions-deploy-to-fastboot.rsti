@@ -39,38 +39,11 @@ In the example, the partition to be flashed on the :term:`DUT` is ``system``.
 
 .. _deploy_to_fastboot_images_url:
 
-url *
-^^^^^
-
-Specifies the URL to download. All downloads are checksummed using ``md5sum``
-and ``sha256sum``
-
-URLs are checked during the test job validation to ensure that the file can be
-downloaded. Missing files will cause the test job to end as Incomplete.
-
-URLs **must** use one of the supported schemes, the first element of the URL.
-
-.. topic:: Supported schema
-
- * ``http://``
- * ``https://``
- * ``file://``
- * ``lxc://``
+.. include:: actions-deploy-images-url.rsti
 
 .. _deploy_to_fastboot_images_compression:
 
-compression
-^^^^^^^^^^^
-
-If the image is compressed, the compression method **must** be specified. If
-image is compressed but compression method is not specified it will be
-downloaded as uncompressed.
-
-.. topic:: Allowed values
-
- * ``gz``
- * ``bz2``
- * ``xz``
+.. include:: actions-deploy-images-compression.rsti
 
 .. _deploy_to_fastboot_images_reboot:
 
@@ -88,22 +61,7 @@ image, then the method **must** be specified.
 
 .. _deploy_to_fastboot_images_archive:
 
-archive
-^^^^^^^
-
-Some system images are compressed as a tarball (``.tar.*``), these images
-need the ``archive`` option specified to unpack the system image correctly.
-
-.. code-block:: yaml
-
-  - deploy:
-      to: fastboot
-      images:
-        ptable:
-        boot:
-          url: http://example.com/boot.tar.xz
-          compression: xz
-          archive: tar
+.. include:: actions-deploy-images-archive.rsti
 
 .. _deploy_to_fastboot_images_apply-overlay:
 
@@ -166,42 +124,8 @@ so that LAVA will treat the image as non-sparse ext4 image.
 
 .. _deploy_to_fastboot_images_md5sum:
 
-md5sum
-^^^^^^
-
-The checksum of the file to download can be provided, and if so it will be
-checked against the downloaded content. This can help to detect multiple
-potential problems such as misconfigured caching or corrupted downloads. If
-compression is used, the checksum to specify is the checksum of the compressed
-file, irrespective of whether that file is decompressed later.
-
-.. code-block:: yaml
-
-  - deploy:
-      to: fastboot
-      images:
-        system:
-          url: http://example.com/system.img.xz
-          compression: xz
-          md5sum: d8784b27867b3dcad90cbea66eacc264 
+.. include:: actions-deploy-images-md5sum.rsti
 
 .. _deploy_to_fastboot_images_sha256sum:
 
-sha256sum
-^^^^^^^^^
-
-The checksum of the file to download can be provided, and if so it will be
-checked against the downloaded content. This can help to detect multiple
-potential problems such as misconfigured caching or corrupted downloads. If
-compression is used, the checksum to specify is the checksum of the compressed
-file, irrespective of whether that file is decompressed later.:
-
-.. code-block:: yaml
-
-  - deploy:
-      to: fastboot
-      images:
-        system:
-          url: http://example.com/system.img.xz
-          compression: xz
-          sha256sum: e0e82b5adfae84ff97f4f6488e5b4c64b0dfc7ad8a37b4bcbb887d9f85a6be0a
+.. include:: actions-deploy-images-sha256sum.rsti
