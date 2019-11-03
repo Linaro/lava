@@ -42,6 +42,7 @@ actions:
       minutes: 5
     method: lxc
 
+# DEPLOY_TARGET_BLOCK
 - deploy:
     timeout:
       minutes: 15
@@ -49,20 +50,20 @@ actions:
     to: fastboot
     images:
       ptable:
-        url: http://images.validation.linaro.org/builds.96boards.org/snapshots/reference-platform/components/uefi/latest/release/hikey/ptable-aosp-8g.img
+        url: http://example.com/hikey/ptable-aosp-8g.img
         reboot: hard-reset
       boot:
-        url: http://images.validation.linaro.org/builds.96boards.org/snapshots/hikey/linaro/aosp-master/357/boot.img.xz
+        url: http://example.com/hikey/boot.img.xz
         compression: xz
         reboot: hard-reset
       cache:
-        url: http://images.validation.linaro.org/builds.96boards.org/snapshots/hikey/linaro/aosp-master/357/cache.img.xz
+        url: http://example.com/hikey/cache.img.xz
         compression: xz
       userdata:
-        url: http://images.validation.linaro.org/builds.96boards.org/snapshots/hikey/linaro/aosp-master/357/userdata.img.xz
+        url: http://example.com/hikey/userdata.img.xz
         compression: xz
       system:
-        url: http://images.validation.linaro.org/builds.96boards.org/snapshots/hikey/linaro/aosp-master/357/system.img.xz
+        url: http://example.com/hikey/system.img.xz
         sha256sum: e0e82b5adfae84ff97f4f6488e5b4c64b0dfc7ad8a37b4bcbb887d9f85a6be0a
         compression: xz
     protocols:
@@ -72,6 +73,7 @@ actions:
         timeout:
           minutes: 2
 
+# BOOT_TARGET_BLOCK
 - boot:
     namespace: droid
     prompts:

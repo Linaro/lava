@@ -34,8 +34,8 @@ In the example, the partition to be flashed on the :term:`DUT` is ``system``.
 
 .. include:: examples/test-jobs/hi6220-hikey.yaml
      :code: yaml
-     :start-after: to: fastboot
-     :end-before: reboot:
+     :start-after: # DEPLOY_TARGET_BLOCK
+     :end-before: # BOOT_TARGET_BLOCK
 
 .. _deploy_to_fastboot_images_url:
 
@@ -62,7 +62,9 @@ URLs **must** use one of the supported schemes, the first element of the URL.
 compression
 ^^^^^^^^^^^
 
-If the image is compressed, the compression method **must** be specified.
+If the image is compressed, the compression method **must** be specified. If
+image is compressed but compression method is not specified it will be
+downloaded as uncompressed.
 
 .. topic:: Allowed values
 
@@ -75,7 +77,7 @@ If the image is compressed, the compression method **must** be specified.
 reboot
 ^^^^^^
 
-If there is a need to restart or reboot the :term:`DUT` after flashing boot
+If there is a need to restart or reboot the :term:`DUT` after flashing partition
 image, then the method **must** be specified.
 
 .. topic:: Allowed values
@@ -92,9 +94,16 @@ archive
 Some system images are compressed as a tarball (``.tar.*``), these images
 need the ``archive`` option specified to unpack the system image correctly.
 
-::
+.. code-block:: yaml
 
-   archive: tar
+  - deploy:
+      to: fastboot
+      images:
+        ptable:
+        boot:
+          url: http://example.com/boot.tar.xz
+          compression: xz
+          archive: tar
 
 .. _deploy_to_fastboot_images_apply-overlay:
 
@@ -103,14 +112,31 @@ apply-overlay
 
 Use this to apply LAVA specific overlays to image.
 
-::
+.. code-block:: yaml
 
-   apply-overlay: true
+  - deploy:
+      to: fastboot
+      images:
+        system:
+          url: http://example.com/system.img.xz
+          compression: xz
+          apply-overlay: true
 
 .. _deploy_to_fastboot_images_sparse:
 
 sparse
 ^^^^^^
+
+.. code-block:: yaml
+
+  - deploy:
+      to: fastboot
+      images:
+        system:
+          url: http://example.com/system.img.xz
+          compression: xz
+          sparse: true
+
 
 The default value for this parameter is ``true``. Some system images are
 shipped as sparse images which needs special handling with tools such as
@@ -123,9 +149,15 @@ sparse image.
 If the image is not a sparse image then this should be explicitly mentioned,
 so that LAVA will treat the image as non-sparse ext4 image.
 
-::
+.. code-block:: yaml
 
-   sparse: false
+  - deploy:
+      to: fastboot
+      images:
+        system:
+          url: http://example.com/system.ext4.xz
+          compression: xz
+          sparse: false
 
 .. seealso:: The sparse image format is defined in sparse_format_ in the
    Android platform source code.
@@ -143,6 +175,16 @@ potential problems such as misconfigured caching or corrupted downloads. If
 compression is used, the checksum to specify is the checksum of the compressed
 file, irrespective of whether that file is decompressed later.
 
+.. code-block:: yaml
+
+  - deploy:
+      to: fastboot
+      images:
+        system:
+          url: http://example.com/system.img.xz
+          compression: xz
+          md5sum: d8784b27867b3dcad90cbea66eacc264 
+
 .. _deploy_to_fastboot_images_sha256sum:
 
 sha256sum
@@ -154,7 +196,12 @@ potential problems such as misconfigured caching or corrupted downloads. If
 compression is used, the checksum to specify is the checksum of the compressed
 file, irrespective of whether that file is decompressed later.:
 
-.. include:: examples/test-jobs/hi6220-hikey.yaml
-     :code: yaml
-     :start-after: system:
-     :end-before: - boot
+.. code-block:: yaml
+
+  - deploy:
+      to: fastboot
+      images:
+        system:
+          url: http://example.com/system.img.xz
+          compression: xz
+          sha256sum: e0e82b5adfae84ff97f4f6488e5b4c64b0dfc7ad8a37b4bcbb887d9f85a6be0a
