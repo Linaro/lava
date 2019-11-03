@@ -1764,7 +1764,6 @@ def job_resubmit(request, pk):
 
         if is_resubmit:
             try:
-
                 original = job
                 job = testjob_submission(
                     request.POST.get("definition-input"),
