@@ -24,6 +24,7 @@ protocols:
     verbose: true
 
 actions:
+# DEPLOY_LXC_BLOCK
 - deploy:
     namespace: tlxc
     timeout:
@@ -33,6 +34,7 @@ actions:
     - android-tools-adb
     - android-tools-fastboot
 
+# BOOT_LXC_BLOCK
 - boot:
     namespace: tlxc
     prompts:
