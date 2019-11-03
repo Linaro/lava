@@ -11,6 +11,8 @@ relay.
 In order to use the action, the action block should only define the name of the
 command to execute.
 
+Command is the top level action.
+
 .. code-block:: yaml
 
   - command:
