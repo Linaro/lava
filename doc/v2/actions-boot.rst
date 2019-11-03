@@ -334,7 +334,8 @@ by test writers from a hacking session.)
 
 .. literalinclude:: examples/test-jobs/x86-sata-commands.yaml
    :language: yaml
-   :lines: 31-41
+   :start-after: # BOOT_ACTION
+   :end-before: - boot
 
 .. caution:: This support is recommended for use for corner cases that can't
    be fixed on the level of device type. Accordingly, LAVA will
@@ -582,7 +583,8 @@ most cases, starting Grub from UEFI requires using the
 
 .. literalinclude:: examples/test-jobs/mustang-grub-efi.yaml
    :language: yaml
-   :lines: 41-50
+   :start-after: # BOOT_ACTION
+   :end-before: # TEST_ACTION
 
 Download or view the complete example:
 `examples/test-jobs/mustang-grub-efi.yaml
@@ -828,7 +830,8 @@ media:
 
 .. literalinclude:: examples/test-jobs/qemu-nfs.yaml
     :language: yaml
-    :lines: 46-54
+    :start-after: # BOOT_BLOCK
+    :end-before: # TEST_BLOCK
 
 .. seealso:: :ref:`boot method qemu <boot_method_qemu>`.
 
@@ -837,7 +840,8 @@ to the worker running QEMU:
 
 .. literalinclude:: examples/test-jobs/qemu-nfs.yaml
     :language: yaml
-    :lines: 46-57
+    :start-after: # BOOT_BLOCK
+    :end-before: # TEST_BLOCK
 
 .. index:: boot method qemu media nfs
 
@@ -851,7 +855,8 @@ When booting a QEMU image using NFS, the ``media`` needs to be specified as
 
 .. literalinclude:: examples/test-jobs/qemu-nfs.yaml
     :language: yaml
-    :lines: 46-57
+    :start-after: # BOOT_BLOCK
+    :end-before: # TEST_BLOCK
 
 .. index:: boot method qemu-iso
 
