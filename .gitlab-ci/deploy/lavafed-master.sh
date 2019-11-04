@@ -21,7 +21,7 @@ else
   then
     IMAGE_TAG="$IMAGE_TAG:$CI_COMMIT_TAG"
   else
-    IMAGE_TAG="$IMAGE_TAG:$(./version.py)"
+    IMAGE_TAG="$IMAGE_TAG:$(./lava_common/version.py)"
   fi
 
   # Check if the container is running
