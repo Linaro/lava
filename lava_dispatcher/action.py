@@ -28,6 +28,7 @@ import traceback
 import shlex
 import subprocess  # nosec - internal
 from collections import OrderedDict
+import warnings
 
 from lava_common.decorators import nottest
 from lava_common.timeout import Timeout
@@ -686,6 +687,8 @@ class Action:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         On failure (command exited non-zero), sets self.errors.
         If allow_silent is True, returns False, else returns the command output.
         """
+        warnings.warn("run_command should be replaced by run_cmd", DeprecationWarning)
+
         # FIXME: add option to only check stdout or stderr for failure output
         if not isinstance(command_list, list):
             raise LAVABug("commands to run_command need to be a list")
