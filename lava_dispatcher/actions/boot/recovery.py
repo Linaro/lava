@@ -75,6 +75,8 @@ class SwitchRecoveryCommand(Action):
     name = "switch-recovery"
     description = "call commands to switch device into and out of recovery"
     summary = "execute recovery mode commands"
+    command_exception = InfrastructureError
+    timeout_exception = InfrastructureError
 
     def __init__(self, mode):
         super().__init__()
@@ -97,8 +99,7 @@ class SwitchRecoveryCommand(Action):
         if not isinstance(command, list):
             command = [command]
         for cmd in command:
-            if not self.run_command(cmd.split(" "), allow_silent=True):
-                raise InfrastructureError(
-                    "[recovery] %s failed for %s" % (cmd, self.mode)
-                )
+            self.run_cmd(
+                cmd, error_msg="Fail to switch device in recovery mode %s" % self.mode
+            )
         return connection

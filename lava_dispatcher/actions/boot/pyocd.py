@@ -19,7 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 from lava_common.utils import binary_version
-from lava_dispatcher.action import Pipeline, Action, JobError
+from lava_dispatcher.action import Pipeline, Action
 from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.utils.shell import which
@@ -147,8 +147,6 @@ class FlashPyOCDAction(Action):
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
         for pyocd_command in self.exec_list:
-            pyocd = " ".join(pyocd_command)
-            self.logger.info("PyOCD command: %s", pyocd)
-            if not self.run_command(pyocd.split(" "), allow_silent=True):
-                raise JobError("%s command failed" % (pyocd.split(" ")))
+            self.logger.info("PyOCD command: %s", " ".join(pyocd_command))
+            self.run_cmd(pyocd_command)
         return connection

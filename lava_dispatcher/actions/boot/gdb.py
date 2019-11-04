@@ -213,4 +213,4 @@ class BootGDBRetry(RetryAction):
                 else:
                     name = "lava-%s-%s" % (self.job.job_id, self.level)
                     self.logger.debug("Stopping container %s", name)
-                    self.run_command(["docker", "stop", name], allow_fail=True)
+                    self.run_cmd(["docker", "stop", name], allow_fail=True)

@@ -106,6 +106,8 @@ class UefiMenuSelector(SelectorMenuAction):
     name = "uefi-menu-selector"
     description = "select specified uefi menu items"
     summary = "select options in the uefi menu"
+    command_exception = InfrastructureError
+    timeout_exception = InfrastructureError
 
     def __init__(self):
         super().__init__()
@@ -198,8 +200,7 @@ class UefiMenuSelector(SelectorMenuAction):
         if self.job.device.pre_os_command and not lxc_active:
             self.logger.info("Running pre OS command.")
             command = self.job.device.pre_os_command
-            if not self.run_command(command.split(" "), allow_silent=True):
-                raise InfrastructureError("%s failed" % command)
+            self.run_cmd(command)
         if not connection:
             self.logger.debug("Existing connection in %s", self.name)
             return connection

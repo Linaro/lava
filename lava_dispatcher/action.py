@@ -613,7 +613,9 @@ class Action:
             self.logger.debug("output: %s", line)
         return log
 
-    def run_cmd(self, command_list, allow_fail=False, error_msg=None, cwd=None):
+    def run_cmd(
+        self, command_list, allow_fail=False, error_msg=None, exception=None, cwd=None
+    ):
         """
         Run the given command on the dispatcher. If the command fail, a
         JobError will be raised unless allow_fail is set to True.
@@ -622,6 +624,7 @@ class Action:
         :param: command_list - the command to run (as a list)
         :param: allow_fail - if True, do not raise a JobError when the command fail (return non 0)
         :param: error_msg - the exception message.
+        :param: exception - the exception to raise.
         :param: cwd - the current working directory for this command
         :return: return code of the command
         """
@@ -631,6 +634,11 @@ class Action:
         elif not isinstance(command_list, list):
             raise LAVABug("commands to run_cmd need to be a list or a string")
         command_list = [str(s) for s in command_list]
+
+        # Default to self.command_exception
+        command_exception = (
+            exception if exception is not None else self.command_exception
+        )
 
         # Build the error message
         log_error_msg = "Unable to run 'nice' '%s'" % "' '".join(command_list)
@@ -669,11 +677,13 @@ class Action:
             self.logger.debug(
                 "Returned %d in %s seconds", ret, int(time.time() - start)
             )
+        else:
+            self.logger.debug("Failed in %s seconds", int(time.time() - start))
 
         # Check the return value
         if ret != 0 and not allow_fail:
             self.logger.error("Unable to run 'nice' '%s'", command_list)
-            raise self.command_exception(error_msg)
+            raise command_exception(error_msg)
         return ret
 
     def run_command(self, command_list, allow_silent=False, allow_fail=False, cwd=None):

@@ -596,14 +596,16 @@ class ExtractRamdisk(Action):
             suffix = ".%s" % compression
         ramdisk_compressed_data = os.path.join(ramdisk_dir, RAMDISK_FNAME + suffix)
         if self.parameters["ramdisk"].get("header") == "u-boot":
-            cmd = (
-                "dd if=%s of=%s ibs=%s skip=1"
-                % (ramdisk, ramdisk_compressed_data, UBOOT_DEFAULT_HEADER_LENGTH)
-            ).split(" ")
-            try:
-                self.run_command(cmd)
-            except Exception:
-                raise LAVABug("Unable to remove uboot header: %s" % ramdisk)
+            cmd = "dd if=%s of=%s ibs=%s skip=1" % (
+                ramdisk,
+                ramdisk_compressed_data,
+                UBOOT_DEFAULT_HEADER_LENGTH,
+            )
+            self.run_cmd(
+                cmd,
+                error_msg="Unable to remove uboot header: %s" % ramdisk,
+                exception=InfrastructureError,
+            )
         else:
             # give the file a predictable name
             shutil.move(ramdisk, ramdisk_compressed_data)
@@ -631,6 +633,7 @@ class CompressRamdisk(Action):
     name = "compress-ramdisk"
     description = "recreate a ramdisk with the overlay applied."
     summary = "compress ramdisk with overlay"
+    command_exception = InfrastructureError
     timeout_exception = InfrastructureError
 
     def __init__(self):
@@ -717,12 +720,12 @@ class CompressRamdisk(Action):
         if self.add_header == "u-boot":
             ramdisk_uboot = final_file + ".uboot"
             self.logger.debug("Adding RAMdisk u-boot header.")
-            cmd = (
-                "mkimage -A %s -T ramdisk -C none -d %s %s"
-                % (self.mkimage_arch, final_file, ramdisk_uboot)
-            ).split(" ")
-            if not self.run_command(cmd):
-                raise InfrastructureError("Unable to add uboot header to ramdisk")
+            cmd = "mkimage -A %s -T ramdisk -C none -d %s %s" % (
+                self.mkimage_arch,
+                final_file,
+                ramdisk_uboot,
+            )
+            self.run_cmd(cmd, error_msg="Unable to add uboot header to ramdisk")
             final_file = ramdisk_uboot
 
         full_path = os.path.join(tftp_dir, os.path.basename(final_file))

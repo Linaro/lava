@@ -53,6 +53,8 @@ class UBootPrepareKernelAction(Action):
     name = "uboot-prepare-kernel"
     description = "convert kernel to uimage"
     summary = "prepare/convert kernel"
+    command_exception = InfrastructureError
+    timeout_exception = InfrastructureError
 
     def __init__(self):
         super().__init__()
@@ -65,6 +67,7 @@ class UBootPrepareKernelAction(Action):
         self.logger.info("Appending %s to %s", dtb_file, kernel_file)
         # Can't use cat here because it will be called with subprocess.check_output that catches stdout
         cmd = ["dd", "if=%s" % kernel_file, "of=%s" % dest_file]
+        self.run_cmd(cmd, error_msg="DTB creation failed")
         cmd2 = [
             "dd",
             "if=%s" % dtb_file,
@@ -72,10 +75,7 @@ class UBootPrepareKernelAction(Action):
             "oflag=append",
             "conv=notrunc",
         ]
-        if not self.run_command(cmd):
-            raise InfrastructureError("DTB appending failed")
-        if not self.run_command(cmd2):
-            raise InfrastructureError("DTB appending failed")
+        self.run_cmd(cmd2, error_msg="DTB appending failed")
 
     def create_uimage(self, kernel, load_addr, xip, arch, output):
         load_addr = int(load_addr, 16)
@@ -89,10 +89,7 @@ class UBootPrepareKernelAction(Action):
             " -C none -a 0x%x -e 0x%x"
             " -d %s %s" % (arch, load_addr, entry_addr, kernel, uimage_path)
         )
-        if self.run_command(cmd.split(" ")):
-            return uimage_path
-        else:
-            raise InfrastructureError("uImage creation failed")
+        self.run_cmd(cmd, error_msg="uImage creation failed")
 
     def validate(self):
         super().validate()
@@ -192,6 +189,8 @@ class PrepareFITAction(Action):
     name = "prepare-fit"
     description = "package kernel, dtb and ramdisk into an FIT image"
     summary = "generate depthcharge FIT image"
+    command_exception = InfrastructureError
+    timeout_exception = InfrastructureError
 
     def __init__(self):
         super().__init__()
@@ -279,8 +278,7 @@ class PrepareFITAction(Action):
             params["ramdisk"] = ramdisk_with_overlay
 
         cmd = self._make_mkimage_command(params)
-        if not self.run_command(cmd):
-            raise InfrastructureError("FIT image creation failed")
+        self.run_cmd(cmd, error_msg="FIT image creation failed")
 
         kernel_tftp = self.get_namespace_data(
             action="download-action", label="file", key="kernel"
