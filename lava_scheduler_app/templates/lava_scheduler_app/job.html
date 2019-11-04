@@ -233,7 +233,7 @@
 
 <ul class="nav nav-tabs">
   <li class="active"><a href="#Log" data-toggle="tab">Summary</a></li>
-  <li><a href="#Description" data-toggle="tab">Description</a></li>
+  <li><a href="#Details" data-toggle="tab">Details</a></li>
   <li><a href="#Timing" id="TimingButton" data-toggle="tab">Timing</a></li>
   <li class="pull-right"><a href="#bottom">End of page <span class="glyphicon glyphicon-chevron-down"></span></a></li>
 </ul>
@@ -350,8 +350,8 @@
     {% endif %}
     {% endif %}
   </div>
-  <div class="tab-pane" id="Description">
-    <h2>Job Description <a class="btn btn-xs btn-info" href="{% url 'lava.scheduler.job.description.yaml' job.id %}" title="Download YAML description">
+  <div class="tab-pane" id="Details">
+    <h2>Job Details <a class="btn btn-xs btn-info" href="{% url 'lava.scheduler.job.description.yaml' job.id %}" title="Download YAML description">
       <span class="glyphicon glyphicon-download"></span> YAML</a></h2>
     <p><a href="{{ STATIC_URL }}docs/v2/glossary.html#term-pipeline">Pipeline</a> jobs use
      the job definition to generate a descriptive YAML file when the pipeline is validated.
