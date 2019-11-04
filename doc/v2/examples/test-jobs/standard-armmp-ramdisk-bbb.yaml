@@ -13,32 +13,26 @@ timeouts:
 priority: medium
 visibility: public
 
-metadata:
-  source: https://git.lavasoftware.org/lava/lava.git
-  path: doc/v2/examples/test-jobs/standard-armmp-ramdisk-bbb.yaml
-  build-readme: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/armhf/3/debian-stretch-armmp-armhf-readme.html
-  build-console: https://ci.linaro.org/view/lava-ci/job/lava-debian-stretch-armmp-armhf/3/console
-  build-script: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/armhf/3/armmp-nfs.sh
-
 # ACTION_BLOCK
 actions:
+# DEPLOY_BLOCK
 - deploy:
     timeout:
       minutes: 4
     to: tftp
     kernel:
-      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/armhf/3/vmlinuz-4.9.0-4-armmp
+      url: http://example.com/vmlinuz-4.9.0-4-armmp
       type: zimage
     ramdisk:
-      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/armhf/3/initrd.img-4.9.0-4-armmp
+      url: http://example.com/initrd.img-4.9.0-4-armmp.gz
       compression: gz
     # modules
     modules:
-      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/armhf/3/modules.tar.gz
+      url: http://example.com/modules.tar.gz
       compression: gz
     # despite this being a Debian initramfs, it is not a complete Debian rootfs, so use oe compatibility
     dtb:
-      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/armhf/3/dtbs/am335x-boneblack.dtb
+      url: http://example.com/am335x-boneblack.dtb
 
 # BOOT_BLOCK
 - boot:
