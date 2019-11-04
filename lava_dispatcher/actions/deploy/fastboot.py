@@ -23,8 +23,7 @@ from lava_dispatcher.logical import Deployment
 from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.power import ResetDevice, PrePower
 from lava_common.exceptions import InfrastructureError
-from lava_dispatcher.action import Pipeline, Action
-from lava_dispatcher.actions.deploy import DeployAction
+from lava_dispatcher.action import Pipeline
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.actions.deploy.apply_overlay import (
@@ -32,8 +31,8 @@ from lava_dispatcher.actions.deploy.apply_overlay import (
     ApplyOverlayImage,
 )
 from lava_dispatcher.actions.deploy.download import DownloaderAction
-from lava_dispatcher.utils.filesystem import copy_to_lxc
-from lava_dispatcher.utils.lxc import is_lxc_requested, lxc_cmd_prefix
+from lava_dispatcher.utils.fastboot import BaseAction
+from lava_dispatcher.utils.lxc import is_lxc_requested
 from lava_dispatcher.actions.boot.fastboot import EnterFastbootAction
 from lava_dispatcher.actions.boot.u_boot import UBootEnterFastbootAction
 from lava_dispatcher.power import PDUReboot, ReadFeedback
@@ -74,7 +73,7 @@ class Fastboot(Deployment):
         return False, '"fastboot" was not in the device configuration deploy methods"'
 
 
-class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attributes
+class FastbootAction(BaseAction):  # pylint:disable=too-many-instance-attributes
 
     name = "fastboot-deploy"
     description = "download files and deploy using fastboot"
@@ -126,7 +125,7 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
         self.pipeline.add_action(FastbootFlashOrderAction())
 
 
-class FastbootFlashOrderAction(DeployAction):
+class FastbootFlashOrderAction(BaseAction):
     """
     Fastboot flash image.
     """
@@ -189,7 +188,7 @@ class FastbootFlashOrderAction(DeployAction):
             self.errors = "device fastboot options is not a list"
 
 
-class FastbootFlashAction(Action):
+class FastbootFlashAction(BaseAction):
 
     """
     Fastboot flash image.
@@ -230,9 +229,9 @@ class FastbootFlashAction(Action):
         if not src:
             return connection
         self.logger.debug("%s bytes", os.stat(src)[6])
-        lxc_name = is_lxc_requested(self.job)
-        if lxc_name:
-            src = copy_to_lxc(lxc_name, src, self.job.parameters["dispatcher"])
+
+        src = self.maybe_copy_to_container(src)
+
         sequence = self.job.device["actions"]["boot"]["methods"].get("fastboot", [])
         if "no-flash-boot" in sequence and self.command in ["boot"]:
             return connection
@@ -247,25 +246,13 @@ class FastbootFlashAction(Action):
             self.logger.debug("Changing prompt to '%s'", connection.prompt_str)
             self.wait(connection)
 
-        serial_number = self.job.device["fastboot_serial_number"]
-        fastboot_opts = self.job.device["fastboot_options"]
-        fastboot_cmd = (
-            lxc_cmd_prefix(self.job)
-            + ["fastboot", "-s", serial_number, "flash", self.command, src]
-            + fastboot_opts
-        )
+        self.run_fastboot(["flash", self.command, src])
         self.logger.info("Handling %s", self.command)
-        # needs to move to self.run_cmd with support for raising InfrastructureError
-        command_output = self.run_command(fastboot_cmd)
-        if not command_output:
-            raise InfrastructureError(
-                "Unable to flash %s using fastboot" % self.command
-            )
         self.results = {"label": self.command}
         return connection
 
 
-class FastbootReboot(Action):
+class FastbootReboot(BaseAction):
 
     name = "fastboot-reboot"
     description = "Reset a device between flash operations using fastboot reboot."
@@ -289,19 +276,11 @@ class FastbootReboot(Action):
         fastboot_opts = self.job.device["fastboot_options"]
 
         self.logger.info("fastboot rebooting device.")
-        fastboot_cmd = (
-            lxc_cmd_prefix(self.job)
-            + ["fastboot", "-s", serial_number, "reboot"]
-            + fastboot_opts
-        )
-        # needs to move to self.run_cmd with support
-        command_output = self.run_command(fastboot_cmd)
-        if not command_output:
-            raise InfrastructureError("Unable to reboot")
+        self.run_fastboot(["reboot"])
         return connection
 
 
-class FastbootRebootBootloader(Action):
+class FastbootRebootBootloader(BaseAction):
 
     name = "fastboot-reboot-bootloader"
     description = (
@@ -327,13 +306,5 @@ class FastbootRebootBootloader(Action):
         fastboot_opts = self.job.device["fastboot_options"]
 
         self.logger.info("fastboot reboot device to bootloader.")
-        fastboot_cmd = (
-            lxc_cmd_prefix(self.job)
-            + ["fastboot", "-s", serial_number, "reboot-bootloader"]
-            + fastboot_opts
-        )
-        # needs to move to self.run_cmd with support
-        command_output = self.run_command(fastboot_cmd)
-        if not command_output:
-            raise InfrastructureError("Unable to reboot to bootloader")
+        self.run_fastboot(["reboot-bootloader"])
         return connection

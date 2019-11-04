@@ -19,7 +19,6 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 
-import os
 from lava_dispatcher.action import Action, Pipeline
 from lava_common.exceptions import InfrastructureError, JobError, LAVABug
 from lava_dispatcher.logical import Boot
@@ -30,8 +29,9 @@ from lava_dispatcher.actions.boot import (
     AdbOverlayUnpack,
 )
 from lava_dispatcher.power import ResetDevice, PreOs
-from lava_common.constants import LAVA_LXC_HOME
-from lava_dispatcher.utils.lxc import is_lxc_requested, lxc_cmd_prefix
+from lava_dispatcher.utils.fastboot import BaseAction
+from lava_dispatcher.utils.lxc import is_lxc_requested
+from lava_dispatcher.utils.udev import WaitDeviceBoardID
 from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.connections.adb import ConnectAdb
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
@@ -75,7 +75,7 @@ class BootFastboot(Boot):
         return False, 'boot "method" was not "fastboot"'
 
 
-class BootFastbootCommands(Action):
+class BootFastbootCommands(BaseAction):
 
     name = "fastboot-boot-commands"
     description = "Run custom fastboot commands before boot"
@@ -85,12 +85,7 @@ class BootFastbootCommands(Action):
         serial_number = self.job.device["fastboot_serial_number"]
         self.logger.info("Running custom fastboot boot commands....")
         for command in self.parameters.get("commands"):
-            pre_cmd = (
-                lxc_cmd_prefix(self.job)
-                + ["fastboot", "-s", serial_number, command]
-                + self.job.device["fastboot_options"]
-            )
-            self.run_command(pre_cmd)
+            self.run_fastboot([command])
 
 
 class BootFastbootAction(BootAction):
@@ -204,7 +199,7 @@ class WaitFastBootInterrupt(Action):
         return connection
 
 
-class FastbootBootAction(Action):
+class FastbootBootAction(BaseAction):
     """
     This action calls fastboot to boot into the system.
     """
@@ -226,22 +221,13 @@ class FastbootBootAction(Action):
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
-        lxc_name = is_lxc_requested(self.job)
-        serial_number = self.job.device["fastboot_serial_number"]
+
         boot_img = self.get_namespace_data(
             action="download-action", label="boot", key="file"
         )
-        if not boot_img:
-            raise JobError("Boot image not found, unable to boot")
-        else:
-            if lxc_name:
-                boot_img = os.path.join(LAVA_LXC_HOME, os.path.basename(boot_img))
-        fastboot_cmd = (
-            lxc_cmd_prefix(self.job)
-            + ["fastboot", "-s", serial_number, "boot", boot_img]
-            + self.job.device["fastboot_options"]
-        )
-        command_output = self.parsed_command(fastboot_cmd, allow_fail=True)
+        boot_img = self.maybe_copy_to_container(boot_img)
+
+        command_output = self.get_fastboot_output(["boot", boot_img], allow_fail=True)
         if command_output and "booting" not in command_output.lower():
             raise JobError("Unable to boot with fastboot: %s" % command_output)
         else:
@@ -257,7 +243,7 @@ class FastbootBootAction(Action):
         return connection
 
 
-class FastbootRebootAction(Action):
+class FastbootRebootAction(BaseAction):
     """
     This action calls fastboot to reboot into the system.
     """
@@ -279,14 +265,7 @@ class FastbootRebootAction(Action):
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
-        serial_number = self.job.device["fastboot_serial_number"]
-        fastboot_opts = self.job.device["fastboot_options"]
-        fastboot_cmd = (
-            lxc_cmd_prefix(self.job)
-            + ["fastboot", "-s", serial_number, "reboot"]
-            + fastboot_opts
-        )
-        command_output = self.parsed_command(fastboot_cmd, allow_fail=True)
+        command_output = self.get_fastboot_output(["reboot"], allow_fail=True)
         if command_output and "rebooting" not in command_output.lower():
             raise JobError("Unable to fastboot reboot: %s" % command_output)
         else:
@@ -302,7 +281,7 @@ class FastbootRebootAction(Action):
         return connection
 
 
-class EnterFastbootAction(Action):
+class EnterFastbootAction(BaseAction):
     """
     Enters fastboot bootloader.
     """
@@ -330,39 +309,26 @@ class EnterFastbootAction(Action):
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
 
-        cmd_prefix = lxc_cmd_prefix(self.job)
         # Try to enter fastboot mode with adb.
         adb_serial_number = self.job.device["adb_serial_number"]
         # start the adb daemon
-        adb_cmd = cmd_prefix + ["adb", "start-server"]
-        command_output = self.parsed_command(adb_cmd, allow_fail=True)
+        command_output = self.get_adb_output(["start-server"], allow_fail=True)
         if command_output and "successfully" in command_output:
             self.logger.debug("adb daemon started: %s", command_output)
-        adb_cmd = cmd_prefix + ["adb", "-s", adb_serial_number, "devices"]
-        command_output = self.parsed_command(adb_cmd, allow_fail=True)
+
+        command_output = self.parsed_command(["devices"], allow_fail=True)
         if command_output and adb_serial_number in command_output:
             self.logger.debug("Device is in adb: %s", command_output)
-            adb_cmd = cmd_prefix + ["adb", "-s", adb_serial_number, "reboot-bootloader"]
-            self.run_command(adb_cmd)
+            self.run_adb(["reboot-bootloader"])
             return connection
 
         # Enter fastboot mode with fastboot.
         fastboot_serial_number = self.job.device["fastboot_serial_number"]
-        fastboot_opts = self.job.device["fastboot_options"]
-        fastboot_cmd = (
-            cmd_prefix
-            + ["fastboot", "-s", fastboot_serial_number, "devices"]
-            + fastboot_opts
-        )
-        command_output = self.parsed_command(fastboot_cmd)
+        command_output = self.get_fastboot_output(["devices"])
+
         if command_output and fastboot_serial_number in command_output:
             self.logger.debug("Device is in fastboot: %s", command_output)
-            fastboot_cmd = (
-                cmd_prefix
-                + ["fastboot", "-s", fastboot_serial_number, "reboot-bootloader"]
-                + fastboot_opts
-            )
-            command_output = self.parsed_command(fastboot_cmd)
+            command_output = self.parsed_command(["reboot-bootloader"])
             if command_output and "okay" not in command_output.lower():
                 raise InfrastructureError(
                     "Unable to enter fastboot: %s" % command_output
