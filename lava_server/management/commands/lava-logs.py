@@ -331,10 +331,16 @@ class Command(LAVADaemonCommand):
             # Inotify socket
             if sockets.get(self.inotify_fd) == zmq.POLLIN:
                 os.read(self.inotify_fd, 4096)
-                self.logger.debug(
-                    "[AUTH] Reloading certificates from %s", self.cert_dir_path
-                )
-                self.auth.configure_curve(domain="*", location=self.cert_dir_path)
+                if self.auth is not None:
+                    self.logger.debug(
+                        "[AUTH] Reloading certificates from %s", self.cert_dir_path
+                    )
+                    self.auth.configure_curve(domain="*", location=self.cert_dir_path)
+                else:
+                    self.logger.error(
+                        "[AUTH] New certificates in %s but encryption is disabled",
+                        self.cert_dir_path,
+                    )
 
             # Nothing received
             else:
