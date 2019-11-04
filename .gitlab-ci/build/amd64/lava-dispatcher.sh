@@ -12,8 +12,11 @@ then
 else
   set -x
 
+  # Default values
+  IMAGE_NAME=${IMAGE_NAME:-"hub.lavasoftware.org/lava/lava/amd64/lava-dispatcher"}
+
   # Build the image name
-  IMAGE_TAG=${CI_COMMIT_TAG:-$(./lava_common/version.py)}
+  IMAGE_TAG=$(./lava_common/version.py)
   IMAGE="$IMAGE_NAME:$IMAGE_TAG"
   # Build the base image name
   BASE_IMAGE_NAME="$IMAGE_NAME-base"
@@ -22,18 +25,13 @@ else
   BASE_IMAGE_NEW="$BASE_IMAGE_NAME:$IMAGE_TAG"
 
   # Pull the base image from cache (local or remote) or build it
-  docker inspect $BASE_IMAGE 2>/dev/null || docker pull $BASE_IMAGE 2>/dev/null || docker build -t $BASE_IMAGE docker/amd64/lava-server-base
+  docker inspect $BASE_IMAGE 2>/dev/null || docker pull $BASE_IMAGE 2>/dev/null || docker build -t $BASE_IMAGE docker/amd64/lava-dispatcher-base
   # Create a tag with the current version tag
   docker tag $BASE_IMAGE $BASE_IMAGE_NEW
 
   # Build the image
-  pkg_common=$(find _build -name "lava-common_*.deb")
-  pkg_server=$(find _build -name "lava-server_*.deb")
-  pkg_server_doc=$(find _build -name "lava-server-doc_*.deb")
-  cp $pkg_common docker/amd64/lava-server/lava-common.deb
-  cp $pkg_server docker/amd64/lava-server/lava-server.deb
-  cp $pkg_server_doc docker/amd64/lava-server/lava-server-doc.deb
-  docker build -t $IMAGE --build-arg base_image="$BASE_IMAGE_NEW" docker/amd64/lava-server
+  echo "$IMAGE_TAG" > lava_common/VERSION
+  DOCKER_BUILDKIT=1 docker build -t $IMAGE --build-arg base_image="$BASE_IMAGE_NEW" -f docker/amd64/lava-dispatcher/Dockerfile .
 
   # Push only for tags or master
   if [ "$CI_COMMIT_REF_SLUG" = "master" -o -n "$CI_COMMIT_TAG" ]

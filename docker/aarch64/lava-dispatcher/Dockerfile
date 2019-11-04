@@ -1,27 +1,27 @@
+# syntax=docker/dockerfile:1.0-experimental
+
+# Argument should be defined before the first stage in multi-stage builds
+# See https://github.com/moby/moby/issues/38379#issuecomment-447835596
 ARG base_image=hub.lavasoftware.org/lava/lava/aarch64/lava-dispatcher-base
-FROM $base_image
 
-ARG pkg_lxc=lava-lxc.deb
-COPY $pkg_lxc /tmp/lxc.deb
-RUN dpkg -i /tmp/lxc.deb && \
-    rm -f /tmp/lxc.deb
+# Call the install script in a empty image
+FROM debian:buster-slim as build
+RUN apt-get update && \
+    apt-get install --no-install-recommends --yes python3 python3-distutils python3-setuptools
 
-ARG pkg_common=lava-common.deb
-COPY $pkg_common /tmp/common.deb
-RUN dpkg -i /tmp/common.deb && \
-    rm -f /tmp/common.deb
-
-ARG pkg_dispatcher_host=lava-dispatcher-host.deb
-COPY $pkg_dispatcher_host /tmp/lava-dispatcher-host.deb
-RUN dpkg -i /tmp/lava-dispatcher-host.deb && \
-    rm -f /tmp/lava-dispatcher-host.deb
-
-ARG pkg_dispatcher=lava-dispatcher.deb
-COPY $pkg_dispatcher /tmp/dispatcher.deb
-RUN dpkg -i /tmp/dispatcher.deb && \
-    rm -f /tmp/dispatcher.deb
+RUN --mount=type=bind,target=/app \
+    cd /app && \
+    python3 setup.py build -b /tmp/build egg_info --egg-base /tmp/build install --root /install --no-compile --install-layout=deb lava-common && \
+    rm -rf /tmp/build && \
+    python3 setup.py build -b /tmp/build egg_info --egg-base /tmp/build install --root /install --no-compile --install-layout=deb lava-dispatcher && \
+    rm -rf /tmp/build
 
 # Install the entry point
-COPY entrypoint.sh /root/
-RUN mkdir /root/entrypoint.d
+COPY docker/aarch64/lava-dispatcher/entrypoint.sh /install/root/
+RUN mkdir /install/root/entrypoint.d
+
+# Build the final image
+FROM $base_image
+COPY --from=build /install /
+
 ENTRYPOINT ["/root/entrypoint.sh"]

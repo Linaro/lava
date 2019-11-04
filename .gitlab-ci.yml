@@ -2,7 +2,6 @@ stages:
 - test
 - analyze
 - build
-- docker
 - deploy
 
 include:
@@ -153,13 +152,9 @@ amd64/pkg-debian-10:
     - _build/*.changes
     - _build/*.buildinfo
 
-##########
-# Docker #
-##########
 .docker: &docker
   <<: *dind
-  stage: docker
-  dependencies: [amd64/pkg-debian-10]
+  stage: build
   variables:
     IMAGE_NAME: $CI_REGISTRY_IMAGE/$CI_JOB_NAME
 
@@ -170,7 +165,6 @@ amd64/pkg-debian-10:
     - master
     - tags
   tags: [aarch64-dind]
-  dependencies: [amd64/pkg-debian-10]
 
 amd64/lava-dispatcher: *docker
 amd64/lava-server: *docker

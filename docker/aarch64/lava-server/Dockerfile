@@ -1,44 +1,72 @@
+# syntax=docker/dockerfile:1.0-experimental
+
+# Argument should be defined before the first stage in multi-stage builds
+# See https://github.com/moby/moby/issues/38379#issuecomment-447835596
 ARG base_image=hub.lavasoftware.org/lava/lava/aarch64/lava-server-base
+
+# Build the documentation
+FROM debian:buster-slim AS doc
+
+RUN apt-get update && \
+    apt-get install --yes --no-install-recommends git make python3-sphinx python3-sphinx-bootstrap-theme
+COPY ./lava_common/version.py /app/lava_common/version.py
+COPY ./lava_common/VERSION /app/lava_common/VERSION
+COPY ./doc/v2 /app/doc/v2
+RUN make -C /app/doc/v2 html
+
+# Call the install script in the lava-server-base image
+# In fact we use the lavaserver user and group
+FROM $base_image as build
+COPY --from=doc /app/doc/v2/_build/html/ /doc
+RUN --mount=type=bind,target=/app \
+    # Install using setup.py
+    cd /app && \
+    python3 setup.py build -b /tmp/build egg_info --egg-base /tmp/build install --root /install --no-compile --install-layout=deb lava-common && \
+    rm -rf /tmp/build && \
+    python3 setup.py build -b /tmp/build egg_info --egg-base /tmp/build install --root /install --no-compile --install-layout=deb lava-coordinator && \
+    rm -rf /tmp/build && \
+    python3 setup.py build -b /tmp/build egg_info --egg-base /tmp/build install --root /install --no-compile --install-layout=deb lava-server && \
+    rm -rf /tmp/build && \
+    # chown every files
+    chown -R lavaserver:lavaserver /install/etc/lava-server/dispatcher-config/ && \
+    chown -R lavaserver:lavaserver /install/etc/lava-server/dispatcher.d/ && \
+    chown -R lavaserver:lavaserver /install/var/lib/lava-server/default/ && \
+    install -d /install/var/lib/lava-server/home/ && \
+    chown -R lavaserver:lavaserver /install/var/lib/lava-server/home/ && \
+    chown -R lavaserver:adm /install/var/log/lava-server && \
+    touch /install/var/log/lava-server/django.log && \
+    chown lavaserver:adm /install/var/log/lava-server/django.log && \
+    # Install documentation
+    install -d /install/usr/share/lava-server/static/docs/v2/ && \
+    cp -R /doc /install/usr/share/lava-server/static/docs/v2/ && \
+    # Move the static files
+    mv /install/usr/lib/python3/dist-packages/lava_results_app/static/lava_results_app/ /install/usr/share/lava-server/static/lava_results_app && \
+    mv /install/usr/lib/python3/dist-packages/lava_scheduler_app/static/lava_scheduler_app/ /install/usr/share/lava-server/static/lava_scheduler_app && \
+    mv /install/usr/lib/python3/dist-packages/lava_server/static/lava_server/ /install/usr/share/lava-server/static/lava_server && \
+    ln -s /usr/lib/python3/dist-packages/django/contrib/admin/static/admin/ /install/usr/share/lava-server/static/admin && \
+    ln -s /usr/lib/python3/dist-packages/rest_framework/static/rest_framework/ /install/usr/share/lava-server/static/rest_framework
+
+
+# Build the final image
 FROM $base_image
+COPY --from=build /install /
 
 EXPOSE 80 3079 5500 5555 5556
 
-RUN apt -q update
-
-# Install local packages (buster)
-ARG pkg_common=lava-common.deb
-COPY $pkg_common /tmp/common.deb
-RUN apt install --yes --no-install-recommends /tmp/common.deb && \
-    rm -f /tmp/common.deb
-
-ARG pkg_server_doc=lava-server-doc.deb
-COPY $pkg_server_doc /tmp/server-doc.deb
-
-# As we are using debian slim version we should explicitely list the
-# documentation that we want to include.
-# By default, only copyright files are kept in /usr/share/doc/
-RUN echo "path-include /usr/share/doc/lava-server-doc/html/v2/*" >> /etc/dpkg/dpkg.cfg.d/docker && \
-    apt install --yes --no-install-recommends /tmp/server-doc.deb && \
-    rm -f /tmp/server-doc.deb
-
-ARG pkg_server=lava-server.deb
-COPY $pkg_server /tmp/server.deb
-RUN service postgresql start && \
-    apt install --yes --no-install-recommends /tmp/server.deb && \
-    rm -f /tmp/server.deb && \
-    service postgresql stop
-
 # Activate the apache2 configuration and modules
+# TODO: remove apache2 and use only gunicorn
 RUN a2dissite 000-default && \
     a2ensite lava-server && \
     a2enmod proxy_http && \
     a2enmod expires && \
     a2enmod headers
 
-# Copy lava settings
-COPY settings.conf /etc/lava-server/settings.conf
+# Setup the database
+RUN service postgresql start && \
+    /usr/share/lava-server/postinst.py && \
+    service postgresql stop
 
 # Install the entry point
-COPY entrypoint.sh /root/
+COPY docker/aarch64/lava-server/entrypoint.sh /root/
 RUN mkdir /root/entrypoint.d
 ENTRYPOINT ["/root/entrypoint.sh"]
