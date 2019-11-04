@@ -33,11 +33,11 @@ include:
   <<: *job
   tags:
   - amd64-dind
-  image: docker:stable
+  image: docker:18.09.9-dind
   variables:
     DOCKER_DRIVER: overlay2
   services:
-  - docker:stable-dind
+  - docker:18.09.9-dind
 
 #######
 # Tests
