@@ -69,8 +69,6 @@ from lava_scheduler_app.models import (
     Tag,
     TestJob,
     TestJobUser,
-    JSONDataError,
-    DevicesUnavailableException,
     Worker,
 )
 from lava_scheduler_app.dbutils import (
