@@ -6,9 +6,9 @@ export DOCKER_BUILDKIT=1
 ARCH=$(uname -m)
 if [ "$ARCH" = "x86_64" ]
 then
-  dir="amd64"
+  dir="docker/amd64"
 else
-  dir="aarch64"
+  dir="docker/aarch64"
 fi
 
 IMAGES=$(find $dir -maxdepth 1 -name "*base" -type d \( ! -path './.*' \) \( ! -path . \) | sort | sed "s#^./##")
