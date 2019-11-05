@@ -1090,6 +1090,12 @@ def test_worker_health(client, setup):
 
 
 @pytest.mark.django_db
+def test_username_list_json_no_auth(client, setup):
+    ret = client.get(reverse("lava.scheduler.username_list_json"), {"term": "t"})
+    assert ret.status_code == 403  # nosec
+
+
+@pytest.mark.django_db
 def test_username_list_json(client, setup):
     assert client.login(username="tester", password="tester") is True  # nosec
     ret = client.get(reverse("lava.scheduler.username_list_json"), {"term": "t"})

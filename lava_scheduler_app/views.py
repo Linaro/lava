@@ -2144,6 +2144,9 @@ def worker_health(request, pk):
 
 def username_list_json(request):
 
+    if not request.user.is_authenticated:
+        raise PermissionDenied()
+
     term = request.GET["term"]
     users = []
     for user in User.objects.filter(Q(username__istartswith=term)):
