@@ -69,8 +69,6 @@ from lava_scheduler_app.models import (
     Tag,
     TestJob,
     TestJobUser,
-    JSONDataError,
-    DevicesUnavailableException,
     Worker,
 )
 from lava_scheduler_app.dbutils import (
@@ -1764,7 +1762,6 @@ def job_resubmit(request, pk):
 
         if is_resubmit:
             try:
-
                 original = job
                 job = testjob_submission(
                     request.POST.get("definition-input"),
@@ -1816,17 +1813,8 @@ def job_resubmit(request, pk):
             else:
                 definition = job.display_definition
 
-            try:
-                response_data["definition_input"] = definition
-                return render(
-                    request, "lava_scheduler_app/job_submit.html", response_data
-                )
-            except (JSONDataError, ValueError, DevicesUnavailableException) as e:
-                response_data["error"] = str(e)
-                response_data["definition_input"] = definition
-                return render(
-                    request, "lava_scheduler_app/job_submit.html", response_data
-                )
+            response_data["definition_input"] = definition
+            return render(request, "lava_scheduler_app/job_submit.html", response_data)
 
     else:
         return HttpResponseForbidden(
@@ -2154,6 +2142,9 @@ def worker_health(request, pk):
 
 def username_list_json(request):
 
+    if not request.user.is_authenticated:
+        raise PermissionDenied()
+
     term = request.GET["term"]
     users = []
     for user in User.objects.filter(Q(username__istartswith=term)):
@@ -2273,8 +2264,6 @@ def download_device_type_template(request, pk):
 def similar_jobs(request, pk):
     logger = logging.getLogger("lava_scheduler_app")
     job = get_restricted_job(request.user, pk, request=request)
-    if not job.can_change_priority(request.user):
-        raise PermissionDenied()
 
     entity = ContentType.objects.get_for_model(TestJob).model
 
