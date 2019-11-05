@@ -2,6 +2,8 @@
 
 set -e
 
+export DOCKER_BUILDKIT=1
+
 if [ "$1" = "setup" ]
 then
   set -x
