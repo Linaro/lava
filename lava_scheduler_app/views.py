@@ -2272,8 +2272,6 @@ def download_device_type_template(request, pk):
 def similar_jobs(request, pk):
     logger = logging.getLogger("lava_scheduler_app")
     job = get_restricted_job(request.user, pk, request=request)
-    if not job.can_change_priority(request.user):
-        raise PermissionDenied()
 
     entity = ContentType.objects.get_for_model(TestJob).model
 

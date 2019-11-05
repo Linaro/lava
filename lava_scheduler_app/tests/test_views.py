@@ -1164,3 +1164,26 @@ def test_download_device_type_template(client, monkeypatch, setup):
     )
     assert ret.status_code == 200  # nosec
     assert ret.content == b"template data"
+
+
+@pytest.mark.django_db
+def test_similar_jobs(client, setup):
+    job_id = TestJob.objects.get(description="test job 01").pk
+    # Anonymous user POST
+    ret = client.post(reverse("lava.scheduler.job.similar_jobs", kwargs={"pk": job_id}))
+    assert ret.status_code == 302  # nosec
+    assert ret.url == "/results/query/+custom?entity=testjob&conditions="  # nosec
+    # Logged-user POST
+    assert client.login(username="tester", password="tester") is True  # nosec
+    ret = client.post(
+        reverse("lava.scheduler.job.similar_jobs", kwargs={"pk": job_id}),
+        {
+            "table": [ContentType.objects.get_for_model(TestJob).id],
+            "field": ["actual_device"],
+        },
+    )
+    assert ret.status_code == 302  # nosec
+    assert (
+        ret.url
+        == "/results/query/+custom?entity=testjob&conditions=testjob__actual_device__exact__juno-01"
+    )  # nosec
