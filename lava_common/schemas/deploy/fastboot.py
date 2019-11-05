@@ -38,6 +38,7 @@ def schema():
                 ),
             }
         },
+        Optional("docker"): {Required("image"): str},
         Optional("connection"): "lxc",  # FIXME: other possible values?
     }
     return {**deploy.schema(), **base}
