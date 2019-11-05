@@ -33,7 +33,7 @@ from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.fastboot import FastbootFlashOrderAction
 from lava_dispatcher.actions.boot.fastboot import BootAction
 from lava_dispatcher.utils.fastboot import BaseAction
-from lava_dispatcher.utils.fastboot import NullDriver, LxcDriver
+from lava_dispatcher.utils.fastboot import NullDriver, LxcDriver, DockerDriver
 from lava_dispatcher.utils.lxc import is_lxc_requested, lxc_cmd_prefix
 
 
@@ -79,6 +79,11 @@ class TestFastbootBaseAction(unittest.TestCase):
         job = self.factory.create_fastboot_job("sample_jobs/fastboot.yaml")
         action = job.pipeline.actions[2]
         self.assertIsInstance(action.driver, LxcDriver)
+
+    def test_docker_driver(self):
+        job = self.factory.create_fastboot_job("sample_jobs/fastboot-docker.yaml")
+        action = job.pipeline.actions[0]
+        self.assertIsInstance(action.driver, DockerDriver)
 
 
 class TestFastbootBaseActionDriverUsage(unittest.TestCase):
@@ -197,6 +202,41 @@ class TestLxcDriver(unittest.TestCase):
         dest = self.action.maybe_copy_to_container(src)
         copy_to_lxc.assert_called_with(self.lxc_name, src, ANY)
         self.assertEqual(dest, "/path/inside/container/to/file.img")
+
+
+class TestDockerDriver(unittest.TestCase):
+    def setUp(self):
+        self.factory = FastBootFactory()
+        job = self.factory.create_fastboot_job("sample_jobs/fastboot-docker.yaml")
+        self.action = job.pipeline.actions[0]
+        self.image = self.action.parameters["docker"]["image"]
+
+    def test_maybe_copy_to_container(self):
+        src = "/path/to/image.img"
+        dest = self.action.maybe_copy_to_container(src)
+        self.assertEqual(src, dest)
+
+    @patch("lava_dispatcher.utils.fastboot.BaseAction.run_cmd")
+    @patch(
+        "lava_dispatcher.utils.fastboot.get_udev_devices", return_value=["/dev/foo/bar"]
+    )
+    def test_run_fastboot(self, get_udev_devices, run_cmd):
+        self.action.job.device["device_info"] = {"board_id": "01234556789"}
+        self.action.maybe_copy_to_container("/path/to/image.img")
+        self.action.run_fastboot(["wait-for-devices"])
+        run_cmd.assert_called_with(
+            [
+                "docker",
+                "run",
+                "--device=/dev/foo/bar",
+                "--volume=/path/to/image.img:/path/to/image.img",
+                self.image,
+                "fastboot",
+                "-s",
+                ANY,
+                "wait-for-devices",
+            ]
+        )
 
 
 class TestFastbootDeploy(StdoutTestCase):

@@ -24,6 +24,7 @@ from lava_dispatcher.action import InternalObject
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.utils.filesystem import copy_to_lxc
 from lava_dispatcher.utils.lxc import is_lxc_requested, lxc_cmd_prefix
+from lava_dispatcher.utils.udev import get_udev_devices
 
 
 class BaseAction(DeployAction):
@@ -36,6 +37,9 @@ class BaseAction(DeployAction):
             lxc = is_lxc_requested(self.job)
             if lxc:
                 self.__driver__ = LxcDriver(self, lxc)
+            elif "docker" in self.parameters:
+                image = self.parameters["docker"]["image"]
+                self.__driver__ = DockerDriver(self, image)
             else:
                 self.__driver__ = NullDriver(self)
         return self.__driver__
@@ -93,3 +97,34 @@ class LxcDriver(NullDriver):
     def maybe_copy_to_container(self, src):
         src = copy_to_lxc(self.lxc_name, src, self.action.job.parameters["dispatcher"])
         return src
+
+
+class DockerDriver(NullDriver):
+    def __init__(self, action, image):
+        super().__init__(action)
+        self.image = image
+        self.copied_files = []
+
+    def get_command_prefix(self):
+        docker = ["docker", "run"]
+
+        for device in self.__get_device_nodes__():
+            docker.append("--device=" + device)
+
+        for f in self.copied_files:
+            docker.append("--volume={filename}:{filename}".format(filename=f))
+
+        docker.append(self.image)
+
+        return docker
+
+    def maybe_copy_to_container(self, src):
+        self.copied_files.append(src)
+        return src
+
+    def __get_device_nodes__(self):
+        device_info = self.action.job.device.get("device_info", {})
+        if device_info:
+            return get_udev_devices(device_info=device_info)
+        else:
+            return []

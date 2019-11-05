@@ -1,0 +1,43 @@
+# Sample JOB definition for a fastboot device such as Nexus4
+device_type: nexus4
+job_name: nexus4-pipeline
+timeouts:
+  job:
+    minutes: 60            # timeout for the whole job (default: ??h)
+  action:
+    minutes: 15         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
+priority: medium
+visibility: public
+
+actions:
+
+  - deploy:
+      timeout:
+        minutes: 15
+      to: fastboot
+      docker:
+        image: some-fastboot-image
+      images:
+        boot:
+          url: http://images.validation.linaro.org/functional-test-images/nexus4/boot.img
+        userdata:
+          url: http://images.validation.linaro.org/functional-test-images/nexus4/userdata.img
+        system:
+          url: http://images.validation.linaro.org/functional-test-images/nexus4/system.img
+      os: debian
+
+  - boot:
+      timeout:
+        minutes: 15
+      method: fastboot
+      docker:
+        image: some-fastboot-image
+
+  - test:
+      timeout:
+        minutes: 10
+      definitions:
+      - repository: https://git.linaro.org/lava-team/lava-functional-tests.git
+        from: git
+        path: lava-test-shell/android/get-adb-serial.yaml
+        name: get-device-serial
