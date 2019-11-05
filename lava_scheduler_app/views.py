@@ -1815,17 +1815,8 @@ def job_resubmit(request, pk):
             else:
                 definition = job.display_definition
 
-            try:
-                response_data["definition_input"] = definition
-                return render(
-                    request, "lava_scheduler_app/job_submit.html", response_data
-                )
-            except (JSONDataError, ValueError, DevicesUnavailableException) as e:
-                response_data["error"] = str(e)
-                response_data["definition_input"] = definition
-                return render(
-                    request, "lava_scheduler_app/job_submit.html", response_data
-                )
+            response_data["definition_input"] = definition
+            return render(request, "lava_scheduler_app/job_submit.html", response_data)
 
     else:
         return HttpResponseForbidden(
