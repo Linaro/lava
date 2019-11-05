@@ -21,21 +21,7 @@ Download the URL ready to be unpacked onto the MicroSD.
 
 url *
 -----
-
-Specifies the URL to download. All downloads are check-summed using ``md5sum``
-and ``sha256sum``
-
-URLs are checked during the test job validation to ensure that the file can be
-downloaded. Missing files will cause the test job to end as Incomplete.
-
-URLs **must** use one of the supported schemes, the first element of the URL.
-
-.. topic:: Supported schema
-
- * ``http://``
- * ``https://``
- * ``file://``
- * ``lxc://``
+.. include:: actions-deploy-images-url.rsti
 
 .. _deploy_to_vemsd_recovery_compression:
 
@@ -80,21 +66,7 @@ MPS2 device.
 
 url *
 ^^^^^
-
-Specifies the URL to download. All downloads are check-summed using ``md5sum``
-and ``sha256sum``
-
-URLs are checked during the test job validation to ensure that the file can be
-downloaded. Missing files will cause the test job to end as Incomplete.
-
-URLs **must** use one of the supported schemes, the first element of the URL.
-
-.. topic:: Supported schema
-
- * ``http://``
- * ``https://``
- * ``file://``
- * ``lxc://``
+.. include:: actions-deploy-images-url.rsti
 
 .. _deploy_to_mps_recovery_compression:
 
@@ -143,21 +115,7 @@ of them. The keys should start with ``test_binary_``.
 
 url *
 ^^^^^
-
-Specifies the URL to download. All downloads are check-summed using ``md5sum``
-and ``sha256sum``
-
-URLs are checked during the test job validation to ensure that the file can be
-downloaded. Missing files will cause the test job to end as Incomplete.
-
-URLs **must** use one of the supported schemes, the first element of the URL.
-
-.. topic:: Supported schema
-
- * ``http://``
- * ``https://``
- * ``file://``
- * ``lxc://``
+.. include:: actions-deploy-images-url.rsti
 
 .. _deploy_to_mps_binary_rename:
 
@@ -171,3 +129,15 @@ is not named this way, this option will save it with a different name on the
 board.
 
 If not specified, the the test_binary is copied as-is, no renaming takes place.
+
+.. code-block:: yaml
+
+  - deploy:
+      to: mps
+      images:
+        recovery_image:
+          url: mps2_sse200_an512.tar.gz
+          compression: gz
+        test_binary_1:
+          url: tfm_sign_20191121.bin
+          renam: tfm_sign.bin

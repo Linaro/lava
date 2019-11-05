@@ -26,10 +26,6 @@ be one ``RetryAction`` per top level action in each pipeline. e.g. a top level
 boot the device but not the actions which substitute values into the U-Boot
 commands as these do not change between boots (only between deployments).
 
-Any action which supports ``failure_retry`` can support ``repeat`` but not in
-the same job. (``failure_retry`` is a conditional repeat if the action fails,
-``repeat`` is an unconditional repeat).
-
 .. _failure_retry:
 
 Retry on failure
@@ -55,37 +51,9 @@ one deployment to be RetryActions without repeating unnecessary tasks. e.g.
 download is a RetryAction to allow for intermittent internet issues with third
 party downloads.
 
-Unconditional repeats
----------------------
-
-Individual actions can be repeated unconditionally using the ``repeat``
-parameter. This behaves similarly to :ref:`failure_retry` except that the
-action is repeated whether or not a failure was detected. This allows a device
-to be booted repeatedly or a test definition to be re-run repeatedly. This
-repetition takes the form:
-
-.. code-block:: yaml
-
-  - actions:
-    - deploy:
-        # deploy parameters
-    - boot:
-        method: qemu
-        media: tmpfs
-        repeat: 3
-        prompts:
-          - 'linaro-test'
-          - 'root@debian:~#'
-    - test:
-        # test parameters
-
-Resulting in::
-
- [deploy], [boot, boot, boot], [test]
-
 Repeating blocks of actions
 ===========================
 
 To repeat block of actions, it's adviced to use a templating engine, like
-jinja2, and to use it to generate a job definition where the block are
-repeated.
+jinja2, and to use it to generate a job definition where the blocks are
+repeated. ``repeat`` parameter is currently not supported in LAVA.

@@ -14,11 +14,6 @@ Lava-Test-Shell Test Definitions although the submission format has changed:
    and the same scripts will be used for all test definitions until another
    ``deploy`` block is encountered.
 
-::
-
- - test:
-     failure_retry: 3
-
 :ref:`test_action_definitions` are used for POSIX compliant operating
 systems on the DUT. The deployed system is expected to support a POSIX
 shell environment (``/bin/ash``, ``/bin/dash`` or ``/bin/bash`` are the
@@ -29,11 +24,7 @@ scripts.
 bootloader (u-boot for instance) shells.
 
 :ref:`monitor_test_action` are used for devices which have no POSIX
-shell and start the test immediately, for example IoT boards.
-
-Currently, there is no support for executing arbitrary commands on DUTs
-which cannot offer a full POSIX environment. This is being investigated
-for a future release.
+shell and start the test immediately after booting, for example IoT boards.
 
 .. seealso:: :ref:`lava_test_helpers`
 
@@ -93,26 +84,28 @@ the test shell, the value is the value of that variable.
 
 .. code-block:: yaml
 
- definitions:
- - repository: https://git.linaro.org/lava-team/hacking-session.git
-   from: git
-   path: hacking-session-debian.yaml
-   name: hacking
-   params:
-     IRC_USER: ""
-     PUB_KEY: ""
+  - test:
+      definitions:
+      - repository: https://git.linaro.org/lava-team/hacking-session.git
+        from: git
+        path: hacking-session-debian.yaml
+        name: hacking
+        params:
+          IRC_USER: ""
+          PUB_KEY: ""
 
 .. code-block:: yaml
 
- definitions:
- - repository: git://git.linaro.org/lava-team/lava-functional-tests.git
-   from: git
-   path: lava-test-shell/smoke-tests-basic.yaml
-   name: smoke-tests
- - repository: https://git.linaro.org/lava-team/lava-functional-tests.git
-   from: git
-   path: lava-test-shell/single-node/singlenode03.yaml
-   name: singlenode-advanced
+  - test:
+      definitions:
+      - repository: git://git.linaro.org/lava-team/lava-functional-tests.git
+        from: git
+        path: lava-test-shell/smoke-tests-basic.yaml
+        name: smoke-tests
+      - repository: https://git.linaro.org/lava-team/lava-functional-tests.git
+        from: git
+        path: lava-test-shell/single-node/singlenode03.yaml
+        name: singlenode-advanced
 
 Skipping elements of test definitions
 =====================================
@@ -158,45 +151,45 @@ Example syntax:
 
 .. code-block:: yaml
 
- - test:
-     failure_retry: 3
-     name: kvm-basic-singlenode
-     timeout:
-       minutes: 5
-     definitions:
-     - repository: git://git.linaro.org/lava-team/lava-functional-tests.git
-       from: git
-       path: lava-test-shell/smoke-tests-basic.yaml
-       name: smoke-tests
-     - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
-       skip_install:
-       - all
-       from: git
-       path: lava-test-shell/single-node/singlenode03.yaml
-       name: singlenode-advanced
+  - test:
+      failure_retry: 3
+      name: kvm-basic-singlenode
+      timeout:
+        minutes: 5
+      definitions:
+      - repository: git://git.linaro.org/lava-team/lava-functional-tests.git
+        from: git
+        path: lava-test-shell/smoke-tests-basic.yaml
+        name: smoke-tests
+      - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+        skip_install:
+        - all
+        from: git
+        path: lava-test-shell/single-node/singlenode03.yaml
+        name: singlenode-advanced
 
 The following will skip dependency installation and key addition in
 the same definition:
 
 .. code-block:: yaml
 
- - test:
-     failure_retry: 3
-     name: kvm-basic-singlenode
-     timeout:
-       minutes: 5
-     definitions:
-     - repository: git://git.linaro.org/lava-team/lava-functional-tests.git
-       from: git
-       path: lava-test-shell/smoke-tests-basic.yaml
-       name: smoke-tests
-     - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
-       skip_install:
-       - deps
-       - keys
-       from: git
-       path: lava-test-shell/single-node/singlenode03.yaml
-       name: singlenode-advanced
+  - test:
+      failure_retry: 3
+      name: kvm-basic-singlenode
+      timeout:
+        minutes: 5
+      definitions:
+      - repository: git://git.linaro.org/lava-team/lava-functional-tests.git
+        from: git
+        path: lava-test-shell/smoke-tests-basic.yaml
+        name: smoke-tests
+      - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+        skip_install:
+        - deps
+        - keys
+        from: git
+        path: lava-test-shell/single-node/singlenode03.yaml
+        name: singlenode-advanced
 
 .. _inline_test_definition_example:
 
@@ -207,36 +200,36 @@ https://git.lavasoftware.org/lava/lava/blob/master/lava_dispatcher/tests/sample_
 
 .. code-block:: yaml
 
- - test:
-     failure_retry: 3
-     definitions:
-     - repository:
-         metadata:
-           format: Lava-Test Test Definition 1.0
-           name: smoke-tests-basic
-           description: "Basic system test command for Linaro Ubuntu images"
-           os:
-           - ubuntu
-           scope:
-           - functional
-           devices:
-           - panda
-           - panda-es
-           - arndale
-           - vexpress-a9
-           - vexpress-tc2
-         run:
-           steps:
-           - lava-test-case linux-INLINE-pwd --shell pwd
-           - lava-test-case linux-INLINE-uname --shell uname -a
-           - lava-test-case linux-INLINE-vmstat --shell vmstat
-           - lava-test-case linux-INLINE-ifconfig --shell ifconfig -a
-           - lava-test-case linux-INLINE-lscpu --shell lscpu
-           - lava-test-case linux-INLINE-lsusb --shell lsusb
-           - lava-test-case linux-INLINE-lsb_release --shell lsb_release -a
-       from: inline
-       name: smoke-tests-inline
-       path: inline/smoke-tests-basic.yaml
+  - test:
+      failure_retry: 3
+      definitions:
+      - repository:
+          metadata:
+            format: Lava-Test Test Definition 1.0
+            name: smoke-tests-basic
+            description: "Basic system test command for Linaro Ubuntu images"
+            os:
+            - ubuntu
+            scope:
+            - functional
+            devices:
+            - panda
+            - panda-es
+            - arndale
+            - vexpress-a9
+            - vexpress-tc2
+          run:
+            steps:
+            - lava-test-case linux-INLINE-pwd --shell pwd
+            - lava-test-case linux-INLINE-uname --shell uname -a
+            - lava-test-case linux-INLINE-vmstat --shell vmstat
+            - lava-test-case linux-INLINE-ifconfig --shell ifconfig -a
+            - lava-test-case linux-INLINE-lscpu --shell lscpu
+            - lava-test-case linux-INLINE-lsusb --shell lsusb
+            - lava-test-case linux-INLINE-lsb_release --shell lsb_release -a
+        from: inline
+        name: smoke-tests-inline
+        path: inline/smoke-tests-basic.yaml
 
 
 Additional support
@@ -248,8 +241,8 @@ will not be supported in the older V1 dispatcher.
 Result checks
 -------------
 
-LAVA collects results from internal operations as well as from the submitted
-test definitions, these form the ``lava`` test suite results. The full set of
+LAVA collects results from internal operations, these form the ``lava`` test
+suite results as well as from the submitted test definitions. The full set of
 results for a job are available at:
 
 .. code-block:: none
@@ -270,14 +263,17 @@ single definition.
 
 .. code-block:: yaml
 
- run:
-   steps:
-   - lava-test-set start first_set
-   - lava-test-case date --shell ntpdate-debian
-   - ls /
-   - lava-test-case mount --shell mount
-   - lava-test-set stop
-   - lava-test-case uname --shell uname -a
+  - test:
+     definitions:
+     - repository:
+         run:
+           steps:
+           - lava-test-set start first_set
+           - lava-test-case date --shell ntpdate-debian
+           - ls /
+           - lava-test-case mount --shell mount
+           - lava-test-set stop
+           - lava-test-case uname --shell uname -a
 
 This results in the ``date`` and ``mount`` test cases being included into a
 ``first_set`` TestSet, independent of other test cases. The TestSet is
@@ -344,21 +340,23 @@ A u-boot interactive test might look like:
 
 .. code-block:: yaml
 
- - name: network
-   prompts: ["=>", "/ # "]
-   script:
-   - name: dhcp
-     command: dhcp
-     successes:
-     - message: "DHCP client bound to address"
-     failures:
-     - message: "TIMEOUT"
-       exception: InfrastructureError
-       error: "dhcp failed"
-   - name: setenv
-     command: "setenv serverip {SERVER_IP}"
-   - name: wait for the prompt
-     command:
+  - test:
+      interactive:
+      - name: network
+        prompts: ["=>", "/ # "]
+        script:
+        - name: dhcp
+          command: dhcp
+          successes:
+          - message: "DHCP client bound to address"
+          failures:
+          - message: "TIMEOUT"
+            exception: InfrastructureError
+            error: "dhcp failed"
+        - name: setenv
+          command: "setenv serverip {SERVER_IP}"
+        - name: wait for the prompt
+          command:
 
 A script is a list of commands to send:
 
@@ -478,7 +476,9 @@ The raw data will be logged as:
 .. caution:: Notice how the regular expression has not closed the match
    at the end of the "line" but has continued on to the first
    non-matching character. The test case name then concatenates all
-   whitespace and invalid characters to a single underscore.
+   whitespace and invalid characters to a single underscore. LAVA uses pexpect
+   to perform output parsing. pexpect docs explain how to find line ending
+   strings: https://pexpect.readthedocs.io/en/stable/overview.html#find-the-end-of-line-cr-lf-conventions
 
 .. code-block:: python
 

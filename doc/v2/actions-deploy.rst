@@ -28,7 +28,7 @@ Required parameters
 *******************
 
 Every deployment **must** specify a ``to`` parameter. This value is then used
-to select the appropriate Strategy class for the deployment which, in turn,
+to select the appropriate strategy class for the deployment which, in turn,
 will require other parameters to provide the data on how to deploy to the
 requested location. Additionally, all the required parameters are marked with
 a *****

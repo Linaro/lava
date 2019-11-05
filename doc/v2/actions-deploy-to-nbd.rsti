@@ -15,8 +15,8 @@ handled by the python ``requests`` module.
 
 .. include:: examples/test-jobs/standard-nbd-netboot-bbb.yaml
      :code: yaml
-     :start-after: actions:
-     :end-before: kernel:
+     :start-after: # NBD_DEPLOY_BLOCK
+     :end-before: # NBD_BOOT_BLOCK
 
 .. _deploy_to_nbd_kernel:
 
@@ -29,62 +29,34 @@ To deploy images using NBDroot, arguments will be downloaded to a configured dir
 
 url *
 -----
+.. include:: actions-deploy-images-url.rsti
 
-Specifies the URL to download. All downloads are checksummed using ``md5sum``
-and ``sha256sum``
+.. _deploy_to_nbd_kernel_type:
 
-URLs are checked during the test job validation to ensure that the file can be
-downloaded. Missing files will cause the test job to end as Incomplete.
-
-URLs **must** use one of the supported schemes, the first element of the URL.
-
-.. include:: examples/test-jobs/standard-nbd-netboot-bbb.yaml
-     :code: yaml
-     :start-after: to: nbd
-     :end-before: initrd:
-
-.. topic:: Supported schema
-
- * ``http://``
- * ``https://``
- * ``file://``
+type
+----
+.. include:: actions-deploy-kernel-type.rsti
 
 .. _deploy_to_nbd_dtb:
 
 dtb
 ===
 
-(Device Tree Blob).
+Device Tree Blob
 
 .. _deploy_to_nbd_dtb_url:
 
 url *
 -----
-
-Specifies the URL to download. All downloads are checksummed using ``md5sum``
-and ``sha256sum``
-
-URLs are checked during the test job validation to ensure that the file can be
-downloaded. Missing files will cause the test job to end as Incomplete.
-
-URLs **must** use one of the supported schemes, the first element of the URL.
-
-.. include:: examples/test-jobs/standard-nbd-netboot-bbb.yaml
-     :code: yaml
-     :start-after:       compression: xz
-     :end-before: - boot
-
-.. topic:: Supported schema
-
- * ``http://``
- * ``https://``
- * ``file://``
+.. include:: actions-deploy-images-url.rsti
 
 .. _deploy_to_nbd_modules:
 
 modules
 =======
 This is not supported in the deployment strategy. Modules must be part of the filesystem already.
+
+.. _deploy_to_nbd_initrd:
 
 initrd
 =======
@@ -97,68 +69,35 @@ There are a few important aspects:
   The filesystems are using security labels and this would alternate the fs.
   The lava test shell needs to be extracted at runtime with transfer_overlay.
 
-.. include:: examples/test-jobs/standard-nbd-netboot-bbb.yaml
-     :code: yaml
-     :start-after: vmlinuz
-     :end-before: nbdroot
-
 .. _deploy_to_nbd_initrd_url:
 
 url *
 -----
+.. include:: actions-deploy-images-url.rsti
 
-.. topic:: Supported schema
-
- * ``http://``
- * ``https://``
- * ``file://``
+.. _deploy_to_nbd_nbdroot:
 
 nbdroot
 =======
-
-.. include:: examples/test-jobs/standard-nbd-netboot-bbb.yaml
-     :code: yaml
-     :start-after: url: http://fix.me/initramfs-netboot-image-raspberrypi3.ext4.gz.u-boot
-     :end-before:       compression: xz
 
 .. _deploy_to_nbd_nbdroot_url:
 
 url *
 -----
-
-Specifies the URL to download. All downloads are checksummed using ``md5sum``
-and ``sha256sum``
-
-URLs are checked during the test job validation to ensure that the file can be
-downloaded. Missing files will cause the test job to end as Incomplete.
-
-URLs **must** use one of the supported schemes, the first element of the URL.
-
-.. topic:: Supported schema
-
- * ``http://``
- * ``https://``
- * ``file://``
+.. include:: actions-deploy-images-url.rsti
 
 .. _deploy_to_nbd_nfsroot_archive:
 
 archive
 -------
-
-Some nbdroot are compressed as a tarball (``.tar.*``), these nbdroot need the
-``archive`` option specified to unpack the nbdroot correctly.
-
-::
-
-   archive: tar
+.. include:: actions-deploy-images-archive.rsti
 
 .. _deploy_to_nbd_nfsroot_compression:
 
 compression
------------
+^^^^^^^^^^^
 
-The NBD filesystem image is unpacked into a temporary directory onto the dispatcher in a
-location supported by NBD server. The compression method **must** be specified
+The NBD filesystem image is unpacked into a temporary directory onto the dispatcher in a location supported by NBD server. The compression method **must** be specified
 so that the filesystem can be unpacked.
 
 .. topic:: Allowed values
@@ -168,23 +107,14 @@ so that the filesystem can be unpacked.
  * ``bz2``
  * ``xz``
 
+.. _deploy_to_nbd_images_md5sum:
+
 md5sum
 ------
-
-The checksum of the file to download can be provided, and if so it will be
-checked against the downloaded content. This can help to detect multiple
-potential problems such as misconfigured caching or corrupted downloads. If
-compression is used, the checksum to specify is the checksum of the compressed
-file, irrespective of whether that file is decompressed later.
+.. include:: actions-deploy-images-md5sum.rsti
 
 .. _deploy_to_nbd_images_sha256sum:
 
 sha256sum
 ---------
-
-The checksum of the file to download can be provided, and if so it will be
-checked against the downloaded content. This can help to detect multiple
-potential problems such as misconfigured caching or corrupted downloads. If
-compression is used, the checksum to specify is the checksum of the compressed
-file, irrespective of whether that file is decompressed later.
-
+.. include:: actions-deploy-images-sha256sum.rsti

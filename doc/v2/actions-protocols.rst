@@ -76,11 +76,11 @@ LAVA and relies on the test writer carefully planning how the job will work.
 
 .. code-block:: yaml
 
-        protocols:
-          lava-multinode:
-            action: umount-retry
-            request: lava-sync
-            messageID: test
+  protocols:
+    lava-multinode:
+      action: umount-retry
+      request: lava-sync
+      messageID: test
 
 This snippet would add a :ref:`lava_sync` call at the start of the UmountRetry
 action:
@@ -96,13 +96,13 @@ action:
   the matching :ref:`lava_send` and that the value in the job submission YAML
   starts with **$** ::
 
-          protocols:
-          lava-multinode:
-            action: execute-qemu
-            request: lava-wait
-            messageID: test
-            message:
-              ipv4: $IPV4
+    protocols:
+      lava-multinode:
+        action: execute-qemu
+        request: lava-wait
+        messageID: test
+        message:
+          ipv4: $IPV4
 
   This results in this data being available to the action::
 
@@ -145,12 +145,12 @@ The client enables a delayed start by declaring which ``role`` the client can
 
 .. code-block:: yaml
 
-        protocols:
-          lava-multinode:
-            request: lava-start
-            expect_role: server
-            timeout:
-              minutes: 10
+  protocols:
+    lava-multinode:
+      request: lava-start
+      expect_role: server
+      timeout:
+        minutes: 10
 
 The timeout specified for ``lava_start`` is the amount of time the job will
 wait for permission to start from the other jobs in the group.
@@ -184,9 +184,17 @@ responsible for making the ``lava-start`` call.
 
 .. code-block:: yaml
 
- run:
-   steps:
-     - lava-send lava_start
+  - test:
+      definitions:
+      - from: inline
+        repository:
+          metadata:
+            format: Lava-Test Test Definition 1.0
+            name: lava_start
+            description: "LAVA start"
+          run:
+            steps:
+            - lava-send lava_start
 
 .. _passing_data_at_startup:
 
@@ -227,17 +235,17 @@ thing the delayed start job does is a ``lava-wait`` which would be added to the
 
 .. code-block:: yaml
 
-      deploy:
-        role: client
-        protocols:
-          lava-multinode:
-          - action: prepare-scp-overlay
-            request: lava-wait
-            message:
-                ipaddr: $ipaddr
-            messageID: ipv4
-            timeout:
-              minutes: 5
+  - deploy:
+      role: client
+      protocols:
+        lava-multinode:
+        - action: prepare-scp-overlay
+          request: lava-wait
+          message:
+              ipaddr: $ipaddr
+          messageID: ipv4
+          timeout:
+            minutes: 5
 
 .. note:: Some calls can only be made against specific actions. Specifically,
    the ``prepare-scp-overlay`` action needs the IP address of the host device
@@ -260,20 +268,30 @@ role. See :ref:`inline_test_definition_example`)
 
 .. code-block:: yaml
 
- - lava-send ipv4 ipaddr=$(lava-echo-ipv4 eth0)
+  - test:
+      definitions:
+      - from: inline
+        repository:
+          metadata:
+            format: Lava-Test Test Definition 1.0
+            name: lava_send
+            description: "LAVA send"
+          run:
+            steps:
+            - lava-send ipv4 ipaddr=$(lava-echo-ipv4 eth0)
 
 ``lava-send`` takes a messageID as the first argument.
 
 .. code-block:: yaml
 
-      test:
-        role: server
-        protocols:
-          lava-multinode:
-          - action: multinode-test
-            request: lava-start
-            roles:
-              - client
+  - test:
+      role: server
+      protocols:
+        lava-multinode:
+        - action: multinode-test
+          request: lava-start
+          roles:
+            - client
 
 See also :ref:`writing_secondary_connection_jobs`.
 
@@ -305,32 +323,36 @@ allows much easier checking of the job before the job starts to run.
 
 .. code-block:: yaml
 
-         - repository:
-                metadata:
-                    format: Lava-Test Test Definition 1.0
-                    name: install-ssh
-                    description: "install step"
-                install:
-                    deps:
-                        - openssh-server
-                        - ntpdate
-                run:
-                    steps:
-                        - ntpdate-debian
-                        - lava-echo-ipv4 eth0
-                        - lava-send ipv4 ipaddr=$(lava-echo-ipv4 eth0)
-                        - lava-send lava_start
-                        - lava-sync clients
-           from: inline
-           name: ssh-inline
-           path: inline/ssh-install.yaml
+  - test:
+      definitions:
+        - repository:
+               metadata:
+                   format: Lava-Test Test Definition 1.0
+                   name: install-ssh
+                   description: "install step"
+               install:
+                   deps:
+                       - openssh-server
+                       - ntpdate
+               run:
+                   steps:
+                       - ntpdate-debian
+                       - lava-echo-ipv4 eth0
+                       - lava-send ipv4 ipaddr=$(lava-echo-ipv4 eth0)
+                       - lava-send lava_start
+                       - lava-sync clients
+          from: inline
+          name: ssh-inline
+          path: inline/ssh-install.yaml
 
 .. code-block:: yaml
 
-         - repository: git://git.linaro.org/lava-team/lava-functional-tests.git
-           from: git
-           path: lava-test-shell/smoke-tests-basic.yaml
-           name: smoke-tests
+  - test:
+      definitions:
+        - repository: git://git.linaro.org/lava-team/lava-functional-tests.git
+          from: git
+          path: lava-test-shell/smoke-tests-basic.yaml
+          name: smoke-tests
 
 This is a small deviation from how existing MultiNode jobs may be defined but
 the potential benefits are substantial when combined with the other elements of
@@ -395,41 +417,41 @@ Protocol requests from actions
 
   .. code-block:: yaml
 
-        protocols:
-          lava-multinode:
-          - action: prepare-scp-overlay
-            request: lava-sync
-            messageID: clients
-            timeout:
-              minutes: 5
+    protocols:
+      lava-multinode:
+      - action: prepare-scp-overlay
+        request: lava-sync
+        messageID: clients
+        timeout:
+          minutes: 5
 
 * ``lava-wait``
 
   .. code-block:: yaml
 
-        protocols:
-          lava-multinode:
-          - action: prepare-scp-overlay
-            request: lava-wait
-            message:
-                ipaddr: $ipaddr
-            messageID: ipv4
-            timeout:
-              minutes: 5
+    protocols:
+      lava-multinode:
+      - action: prepare-scp-overlay
+        request: lava-wait
+        message:
+            ipaddr: $ipaddr
+        messageID: ipv4
+        timeout:
+          minutes: 5
 
 * ``lava-wait-all``
 
   .. code-block:: yaml
 
-        protocols:
-          lava-multinode:
-          - action: prepare-scp-overlay
-            request: lava-wait
-            message:
-                ipaddr: $ipaddr
-            messageID: ipv4
-            timeout:
-              minutes: 5
+    protocols:
+      lava-multinode:
+      - action: prepare-scp-overlay
+        request: lava-wait
+        message:
+            ipaddr: $ipaddr
+        messageID: ipv4
+        timeout:
+          minutes: 5
 
   * ``lava-wait-all`` with a role:
 
@@ -451,15 +473,15 @@ Protocol requests from actions
 
   .. code-block:: yaml
 
-        protocols:
-          lava-multinode:
-          - action: prepare-scp-overlay
-            request: lava-send
-            message:
-                ipaddr: $ipaddr
-            messageID: ipv4
-            timeout:
-              minutes: 5
+    protocols:
+      lava-multinode:
+      - action: prepare-scp-overlay
+        request: lava-send
+        message:
+            ipaddr: $ipaddr
+        messageID: ipv4
+        timeout:
+          minutes: 5
 
 
 VLANd protocol

@@ -14,8 +14,8 @@ handled by the python ``requests`` module.
 
 .. include:: examples/test-jobs/standard-armmp-ramdisk-bbb.yaml
      :code: yaml
-     :start-after: actions:
-     :end-before: kernel:
+     :start-after: # DEPLOY_BLOCK
+     :end-before: # TEST_BLOCK
 
 .. _deploy_to_tftp_kernel:
 
@@ -29,77 +29,26 @@ directory.
 
 type
 ----
-
-Specifies the type of kernel being downloaded. Some bootloaders, for example
-U-Boot_, use this information to determine the load addresses and boot commands.
-Certain :term:`device types <device type>` may also need the downloaded file to
-be converted to a ``uImage``.
-
-.. _`U-Boot`: http://www.denx.de/wiki/U-Boot
-
-.. topic:: Supported types
-
- * ``image``
- * ``zimage``
- * ``uimage``
-
-(Replaces the previous support for specifying the boot type (``bootm``,
-``booti`` or ``bootz``).
+.. include:: actions-deploy-kernel-type.rsti
 
 .. _deploy_to_tftp_kernel_url:
 
 url *
 -----
-
-Specifies the URL to download. All downloads are checksummed using ``md5sum``
-and ``sha256sum``
-
-URLs are checked during the test job validation to ensure that the file can be
-downloaded. Missing files will cause the test job to end as Incomplete.
-
-URLs **must** use one of the supported schemes, the first element of the URL.
-
-.. include:: examples/test-jobs/standard-armmp-ramdisk-bbb.yaml
-     :code: yaml
-     :start-after: to: tftp
-     :end-before: ramdisk:
-
-.. topic:: Supported schema
-
- * ``http://``
- * ``https://``
- * ``file://``
+.. include:: actions-deploy-images-url.rsti
 
 .. _deploy_to_tftp_dtb:
 
 dtb
 ===
 
-(Device Tree Blob).
+Device Tree Blob.
 
 .. _deploy_to_tftp_dtb_url:
 
 url *
 -----
-
-Specifies the URL to download. All downloads are checksummed using ``md5sum``
-and ``sha256sum``
-
-URLs are checked during the test job validation to ensure that the file can be
-downloaded. Missing files will cause the test job to end as Incomplete.
-
-URLs **must** use one of the supported schemes, the first element of the URL.
-
-.. include:: examples/test-jobs/standard-armmp-ramdisk-bbb.yaml
-     :code: yaml
-     :start-after:  so use oe compatibility
-     :end-before: # BOOT_BLOCK
-
-.. topic:: Supported schema
-
- * ``http://``
- * ``https://``
- * ``file://``
+.. include:: actions-deploy-images-url.rsti
 
 .. _deploy_to_tftp_modules:
 
@@ -117,51 +66,19 @@ tests within the ramdisk itself.
 
 url *
 -----
-
-Specifies the URL to download. All downloads are checksummed using ``md5sum``
-and ``sha256sum``
-
-URLs are checked during the test job validation to ensure that the file can be
-downloaded. Missing files will cause the test job to end as Incomplete.
-
-URLs **must** use one of the supported schemes, the first element of the URL.
-
-.. include:: examples/test-jobs/standard-armmp-ramdisk-bbb.yaml
-     :code: yaml
-     :start-after: # modules
-     :end-before: # despite this being
-
-.. topic:: Supported schema
-
- * ``http://``
- * ``https://``
- * ``file://``
+.. include:: actions-deploy-images-url.rsti
 
 .. _deploy_to_tftp_modules_archive:
 
 archive
 -------
-
-Some modules are compressed as a tarball (``.tar.*``), these modules
-need the ``archive`` option specified to unpack the module correctly.
-
-::
-
-   archive: tar
+.. include:: actions-deploy-images-archive.rsti
 
 .. _deploy_to_tftp_modules_compression:
 
 compression
 -----------
-
-The compression method **must** be specified so that the modules can be
-unpacked.
-
-.. topic:: Allowed values
-
- * ``gz``
- * ``bz2``
- * ``xz``
+.. include:: actions-deploy-images-compression.rsti
 
 .. _deploy_to_tftp_ramdisk:
 
@@ -183,50 +100,26 @@ cases).
 
 .. include:: examples/test-jobs/standard-armmp-ramdisk-bbb.yaml
      :code: yaml
-     :start-after: vmlinuz
-     :end-before: modules:
+     :start-after: # DEPLOY_BLOCK
+     :end-before: # BOOT_BLOCK
 
 .. _deploy_to_tftp_ramdisk_url:
 
 url *
 -----
-
-.. topic:: Supported schema
-
- * ``http://``
- * ``https://``
- * ``file://``
-
-.. include:: examples/test-jobs/standard-armmp-ramdisk-bbb.yaml
-     :code: yaml
-     :start-after: # modules
-     :end-before: # despite this being
+.. include:: actions-deploy-images-url.rsti
 
 .. _deploy_to_tftp_ramdisk_archive:
 
 archive
 -------
-
-Some ramdisks are compressed as a tarball (``.tar.*``), these ramdisks
-need the ``archive`` option specified to unpack the ramdisk correctly.
-
-::
-
-   archive: tar
+.. include:: actions-deploy-images-archive.rsti
 
 .. _deploy_to_tftp_ramdisk_compression:
 
 compression
 -----------
-
-The compression method **must** be specified so that the modules can be
-unpacked.
-
-.. topic:: Allowed values
-
- * ``gz``
- * ``bz2``
- * ``xz``
+.. include:: actions-deploy-images-compression.rsti
 
 .. index:: ramdisk header
 
@@ -246,58 +139,35 @@ nfsrootfs
 
 .. include:: examples/test-jobs/standard-armmp-nfs-bbb.yaml
      :code: yaml
-     :start-after: to: tftp
-     :end-before: - boot:
+     :start-after: # DEPLOY_BLOCK
+     :end-before: # BOOT_BLOCK
 
 .. _deploy_to_tftp_nfsrootfs_url:
 
 url *
 -----
-
-Specifies the URL to download. All downloads are checksummed using ``md5sum``
-and ``sha256sum``
-
-URLs are checked during the test job validation to ensure that the file can be
-downloaded. Missing files will cause the test job to end as Incomplete.
-
-URLs **must** use one of the supported schemes, the first element of the URL.
-
-.. topic:: Supported schema
-
- * ``http://``
- * ``https://``
- * ``file://``
+.. include:: actions-deploy-images-url.rsti
 
 .. _deploy_to_tftp_nfsrootfs_archive:
 
 archive
 -------
-
-Some nfsrootfs are compressed as a tarball (``.tar.*``), these nfsrootfs
-need the ``archive`` option specified to unpack the nfsrootfs correctly.
-
-::
-
-   archive: tar
+.. include:: actions-deploy-images-archive.rsti
 
 .. _deploy_to_tftp_nfsrootfs_compression:
 
 compression
 -----------
-
-The NFS is unpacked into a temporary directory onto the dispatcher in a
-location supported by NFS exports. The compression method **must** be specified
-so that the NFS can be unpacked.
-
-.. topic:: Allowed values
-
- * ``gz``
- * ``bz2``
- * ``xz``
+.. include:: actions-deploy-images-compression.rsti
 
 .. note:: Additional NFS mount options can be added via job definition context
    i.e. ``nfsvers`` argument which specifies which version of the NFS protocol
    to use.
+
+.. code-block:: yaml
+
+  context:
+    extra_nfsroot_args: ",nolock,nfsvers=3"
 
 .. _deploy_to_tftp_persistent_nfs:
 
@@ -305,9 +175,7 @@ persistent_nfs
 ==============
 
 A persistent NFS URL can be used instead of a compressed tarball. See
-:ref:`persistence` for the limitations of persistent storage. The creation and
-maintenance of the persistent location is **solely** the responsibility of the
-test writer.
+:ref:`persistence` for the limitations of persistent storage.
 
 .. topic:: Known Caveats
 
@@ -332,8 +200,13 @@ colon. In the YAML, all values containing a colon **must** be quoted:
 
 .. code-block:: yaml
 
- persistent_nfs:
-   address: "127.0.0.1:/var/lib/lava/dispatcher/tmp/armhf/stretch"
+  - deploy:
+      to: tftp
+      kernel:
+        url: http://example.com/vmlinuz-4.9.0-4-armmp
+        type: zimage
+      persistent_nfs:
+        address: "127.0.0.1:/var/lib/lava/dispatcher/tmp/armhf/stretch"
 
 .. index:: deploy to tmpfs
 
@@ -348,7 +221,7 @@ appending specified arguments to a predetermined QEMU command line:
 
 .. include:: examples/test-jobs/qemu-amd64-standard-stretch.yaml
      :code: yaml
-     :start-after: actions:
+     :start-after: # DEPLOY_BLOCK
      :end-before: # BOOT_BLOCK
 
 .. _deploy_to_tmpfs_images:
@@ -380,8 +253,8 @@ QEMU would include ``-drive format=raw,file=/tmp/tmp.rG542e/large-stable-6.img``
 
 .. include:: examples/test-jobs/qemu-amd64-standard-stretch.yaml
      :code: yaml
-     :start-after: to: tmpfs
-     :end-before: url:
+     :start-after: # DEPLOY_BLOCK
+     :end-before: # BOOT_BLOCK
 
 .. index:: image_arg
 
@@ -401,71 +274,28 @@ make sense to QEMU.
 
 url *
 ^^^^^
-
-Specifies the URL to download. All downloads are checksummed using ``md5sum``
-and ``sha256sum``
-
-URLs are checked during the test job validation to ensure that the file can be
-downloaded. Missing files will cause the test job to end as Incomplete.
-
-URLs **must** use one of the supported schemes, the first element of the URL.
-
-.. topic:: Supported schema
-
- * ``http://``
- * ``https://``
- * ``file://``
+.. include:: actions-deploy-images-url.rsti
 
 .. _deploy_to_tmpfs_archive:
 
 archive
 ^^^^^^^
-
-Some tmpfs are compressed as a tarball (``.tar.*``), these tmpfs need the
-``archive`` option specified to unpack the tmpfs correctly.
-
-::
-
-   archive: tar
+.. include:: actions-deploy-images-archive.rsti
 
 .. _deploy_to_tmpfs_images_compression:
 
 compression
 ^^^^^^^^^^^
-
-If the image is compressed, the compression method **must** be specified if any
-``test`` actions are defined in the job.
-
-.. topic:: Allowed values
-
- * ``gz``
- * ``bz2``
- * ``xz``
+.. include:: actions-deploy-images-compression.rsti
 
 .. _deploy_to_tmpfs_images_md5sum:
 
 md5sum
 ^^^^^^
-
-The checksum of the file to download can be provided, and if so it will be
-checked against the downloaded content. This can help to detect multiple
-potential problems such as misconfigured caching or corrupted downloads. If
-compression is used, the checksum to specify is the checksum of the compressed
-file, irrespective of whether that file is decompressed later.
+.. include:: actions-deploy-images-md5sum.rsti
 
 .. _deploy_to_tmpfs_images_sha256sum:
 
 sha256sum
 ^^^^^^^^^
-
-The checksum of the file to download can be provided, and if so it will be
-checked against the downloaded content. This can help to detect multiple
-potential problems such as misconfigured caching or corrupted downloads. If
-compression is used, the checksum to specify is the checksum of the compressed
-file, irrespective of whether that file is decompressed later.:
-
-.. include:: examples/test-jobs/qemu-amd64-standard-stretch.yaml
-     :code: yaml
-     :start-after: rootfs:
-     :end-before: - boot
-
+.. include:: actions-deploy-images-sha256sum.rsti

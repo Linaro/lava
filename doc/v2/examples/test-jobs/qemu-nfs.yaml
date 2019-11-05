@@ -54,7 +54,7 @@ actions:
       username: root
     prompts:
       - 'root@(.*):'
-
+# TEST_BLOCK
 - test:
     timeout:
       minutes: 45

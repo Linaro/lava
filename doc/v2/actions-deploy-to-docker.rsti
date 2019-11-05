@@ -11,10 +11,38 @@ Pull a docker image from the official or a private docker hub.
 
 .. _deploy_to_docker_image:
 
+.. code-block:: yaml
+
+  - deploy:
+      to: docker
+      os: debian
+      image: debian:stretch
+
+os
+==
+
+Optional parameter to let LAVA know which OS the container is running
+
 image
 =====
 
 Either the name of the docker image to pull or a dictionary with:
 
-* *name*: name of the docker image to pull
-* *local*: ``True`` if the image is local, ``False`` by default.
+name
+----
+
+Name of the docker image to pull
+
+local
+-----
+
+``true`` if the image is local, ``false`` by default.
+
+.. code-block:: yaml
+
+  - deploy:
+      to: docker
+      os: debian
+      image:
+        name: my-local-docker-debian-image
+        local: true

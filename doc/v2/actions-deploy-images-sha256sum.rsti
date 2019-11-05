@@ -1,0 +1,15 @@
+
+The checksum of the file to download can be provided, and if so it will be
+checked against the downloaded content. This can help to detect multiple
+potential problems such as misconfigured caching or corrupted downloads. If
+compression is used, the checksum to specify is the checksum of the compressed
+file, irrespective of whether that file is decompressed later.:
+
+.. code-block:: yaml
+
+  - deploy:
+      images:
+        system:
+          url: http://example.com/system.img.xz
+          compression: xz
+          sha256sum: e0e82b5adfae84ff97f4f6488e5b4c64b0dfc7ad8a37b4bcbb887d9f85a6be0a

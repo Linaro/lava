@@ -1,0 +1,13 @@
+
+Some system images are compressed as a tarball (``.tar.*``), these images
+need the ``archive`` option specified to unpack the system image correctly.
+
+.. code-block:: yaml
+
+  - deploy:
+      images:
+        boot:
+          url: http://example.com/boot.tar.xz
+          compression: xz
+          archive: tar
+

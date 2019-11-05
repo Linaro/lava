@@ -38,14 +38,14 @@ and by the test writers.
 
 #. Apply power.
 
-   .. code-block:: jinja
+   .. code-block:: yaml
 
     - boot:
-      namespace: recovery
-      timeout:
-        minutes: 5
-      method: recovery
-      commands: recovery
+        namespace: recovery
+        timeout:
+          minutes: 5
+        method: recovery
+        commands: recovery
 
 The test job would then define a test action which executes the scripts
 using the downloaded files and completes recovery. This script may have
@@ -121,11 +121,11 @@ operation.
 .. code-block:: yaml
 
  - boot:
-    namespace: recovery
-    timeout:
-      minutes: 5
-    method: recovery
-    commands: exit
+     namespace: recovery
+     timeout:
+       minutes: 5
+     method: recovery
+     commands: exit
 
 A ``recovery_exit_command`` must be specified in the device dictionary.
 

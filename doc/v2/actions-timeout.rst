@@ -28,16 +28,18 @@ Job timeout
 ===========
 
 The entire job will have an overall timeout - the job will fail if this timeout
-is exceeded, whether or not any other timeout is longer.
+is exceeded, whether or not any other timeout is longer. Action timeouts longer
+than job timeout are deprecated and will result in a warning during job
+submission.
 
 A timeout for a job means that the current action will be allowed to complete
 and the job will then fail.
 
 .. code-block:: yaml
 
- timeouts:
-   job:
-     minutes: 15
+  timeouts:
+    job:
+      minutes: 15
 
 .. _default_action_timeout:
 
@@ -59,7 +61,8 @@ Think of the action timeout as::
 
 along with::
 
-  "the pipeline should wait no longer than ... to determine that the device is not responding."
+  "the pipeline should wait no longer than ... to determine that the device is
+  not responding."
 
 When changing timeouts, review the pipeline logs for each top level action,
 ``deploy``, ``boot`` and ``test``.  Check the duration of each action within
@@ -69,8 +72,8 @@ can be extended using the :ref:`individual_action_timeout` support.
 Action timeouts only determine the operation of the action, not the operation
 of any connection used by the action. See :ref:`connection_timeout`.
 
-If no action timeout is given in the job, the default action timeout of 30
-seconds will be used.
+If no action timeout is given in the job, the **default action timeout of 30
+seconds** will be used.
 
 A timeout for these actions interrupts the executing action and marks the job
 as Incomplete.
@@ -100,8 +103,12 @@ Individual actions can also be specified by name - see the pipeline description
 output by the ``validate`` command or the Pipeline Description on the job
 definition page to see the full name of action classes::
 
-   extract-nfsrootfs:
-    seconds: 60
+  timeouts:
+    job:
+      minutes: 15
+    action:
+      extract-nfsrootfs:
+        seconds: 60
 
 Individual actions can be referenced by the :term:`action level` and the job
 ID, in the form::
@@ -169,9 +176,9 @@ connection:
 
 .. code-block:: yaml
 
- timeouts:
-   connection:
-     seconds: 20
+  timeouts:
+    connection:
+      seconds: 20
 
 Individual connection timeouts
 ------------------------------
@@ -182,10 +189,10 @@ connection, this timeout will have no effect.
 
 .. code-block:: yaml
 
- timeouts:
-   connections:
-     uboot-retry:
-       seconds: 120
+  timeouts:
+    connections:
+      uboot-retry:
+        seconds: 120
 
 .. note:: Note the difference between ``connection`` followed by a value for
    the default connection timeout and ``connections``, ``<action_name>``

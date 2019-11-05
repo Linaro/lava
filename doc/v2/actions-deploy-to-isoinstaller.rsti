@@ -10,6 +10,25 @@ and then boot into the installed image to run the specified test definitions.
 
 .. note:: Currently only tested with Debian Installer.
 
+.. code-block:: yaml
+
+  - deploy:
+      timeout:
+        minutes: 4
+      to: iso-installer
+      os: debian_installer
+      images:
+        # the iso and the preseed file can be very tightly coupled.
+        iso:
+          url: http://example.com/debian-8.3.0-amd64-CD-1.iso
+          image_arg: -drive file={iso},index=2,media=cdrom,readonly
+        preseed:
+          url: http://example.com/debian-8.3.0-cd1-preseed.cfg
+      iso:
+        kernel: /install.amd/vmlinuz
+        initrd: /install.amd/initrd.gz
+        installation_size: 2G
+
 .. _deploy_to_iso_installer_images:
 
 images
@@ -29,26 +48,13 @@ iso
 
 archive
 ^^^^^^^
-
-Some images are compressed as a tarball (``.tar.*``), these images
-need the ``archive`` option specified to unpack the image correctly.
-
-::
-
-   archive: tar
+.. include:: actions-deploy-images-archive.rsti
 
 .. _deploy_to_iso_installer_images_iso_compression:
 
 compression
 ^^^^^^^^^^^
-
-If the ISO is compressed, the compression method **must** be specified.
-
-.. topic:: Allowed values
-
- * ``gz``
- * ``bz2``
- * ``xz``
+.. include:: actions-deploy-images-compression.rsti
 
 .. _deploy_to_iso_installer_images_iso_image_arg:
 
@@ -57,24 +63,18 @@ image_arg
 
 QEMU requires ``,media=cdrom,readonly`` to handle the ISO correctly.
 
+.. code-block:: yaml
+
+  - deploy:
+      to: iso-installer
+      images:
+        iso:
+          url: http://example.com/debian.iso
+          image_arg: -drive file={iso},index=2,media=cdrom,readonly
+
 .. _deploy_to_iso_installer_images_iso_url:
 
-url *
-^^^^^
-
-Specifies the URL to download. All downloads are checksummed using ``md5sum``
-and ``sha256sum``
-
-URLs are checked during the test job validation to ensure that the file can be
-downloaded. Missing files will cause the test job to end as Incomplete.
-
-URLs **must** use one of the supported schemes, the first element of the URL.
-
-.. topic:: Supported schema
-
- * ``http://``
- * ``https://``
- * ``file://``
+.. include:: actions-deploy-images-url.rsti
 
 .. _deploy_to_iso_installer_images_iso_preseed:
 
@@ -86,22 +86,7 @@ installation to proceed without prompting for information.
 
 .. _deploy_to_iso_installer_images_iso_preseed_url:
 
-url *
-^^^^^
-
-Specifies the URL to download. All downloads are checksummed using ``md5sum``
-and ``sha256sum``
-
-URLs are checked during the test job validation to ensure that the file can be
-downloaded. Missing files will cause the test job to end as Incomplete.
-
-URLs **must** use one of the supported schemes, the first element of the URL.
-
-.. topic:: Supported schema
-
- * ``http://``
- * ``https://``
- * ``file://``
+.. include:: actions-deploy-images-url.rsti
 
 .. _deploy_to_iso_installer_iso:
 
@@ -124,7 +109,11 @@ Paths to pull from the ISO must also be unique.
 
 .. code-block:: yaml
 
-      kernel: /install.amd/vmlinuz
+  - deploy:
+      to: iso-installer
+      iso:
+        kernel: /install.amd/vmlinuz
+        initrd: /install.amd/initrd.gz
 
 .. _deploy_to_iso_installer_iso_initrd:
 
@@ -142,7 +131,11 @@ Paths to pull from the ISO must also be unique.
 
 .. code-block:: yaml
 
-      initrd: /install.amd/initrd.gz
+  - deploy:
+      to: iso-installer
+      iso:
+        kernel: /install.amd/vmlinuz
+        initrd: /install.amd/initrd.gz
 
 .. _deploy_to_iso_installer_iso_console:
 
@@ -153,7 +146,10 @@ console
 
 .. code-block:: yaml
 
-      console: ttyS0,38400,n8
+  - deploy:
+      to: iso-installer
+      iso:
+        console: ttyS0,38400,n8
 
 .. _deploy_to_iso_installer_iso_installation_size:
 
@@ -166,5 +162,8 @@ smallest practical size
 
 .. code-block:: yaml
 
-      installation_size: 2G
+  - deploy:
+      to: iso-installer
+      iso:
+        installation_size: 2G
 

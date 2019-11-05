@@ -38,6 +38,7 @@ actions:
       minutes: 5
     to: tftp
 
+# BOOT_ACTION
 - boot:
     timeout:
       minutes: 4
@@ -48,6 +49,7 @@ actions:
     auto_login:
       login_prompt: "login:"
       username: root
+# TEST_ACTION
 - test:
     timeout:
       minutes: 5

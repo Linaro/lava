@@ -28,6 +28,7 @@ actions:
       url: http://people.linaro.org/~neil.williams/stretch-x86_64/initrd.img-4.8.0-2-amd64
       compression: gz
 
+# BOOT_ACTION
 - boot:
     timeout:
       minutes: 8

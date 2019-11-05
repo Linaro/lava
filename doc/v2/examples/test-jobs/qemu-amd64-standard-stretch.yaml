@@ -12,13 +12,6 @@ timeouts:
 priority: medium
 visibility: public
 
-metadata:
-  source: https://git.linaro.org/lava-team/refactoring.git
-  path: doc/v2/examples/test-jobs/qemu-amd64-standard-stretch.yaml
-  build-readme: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/amd64/2/debian-stretch-amd64-readme.html
-  build-console: https://ci.linaro.org/view/lava-ci/job/lava-debian-stretch-amd64-vm/console
-  build-log: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/amd64/2/vmdebootstrap.log
-
 # CONTEXT_BLOCK
 context:
   arch: amd64
@@ -27,6 +20,7 @@ context:
 
 # ACTIONS_BLOCK
 actions:
+# DEPLOY_BLOCK
 - deploy:
     timeout:
       minutes: 4
@@ -34,7 +28,7 @@ actions:
     images:
         rootfs:
           image_arg: -drive format=raw,file={rootfs}
-          url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/amd64/2/stretch.img.gz
+          url: http://example.com/stretch.img.gz
           sha256sum: b5cdb3b9e65fec2d3654a05dcdf507281f408b624535b33375170d1e852b982c
           compression: gz
 

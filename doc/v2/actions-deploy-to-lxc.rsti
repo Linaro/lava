@@ -13,7 +13,7 @@ Deploys / creates a LXC, based on the parameters specified as part of the
 .. _deploy_to_lxc_packages:
 
 packages
-********
+========
 
 List of packages that should be installed as part of LXC creation.
 
@@ -24,5 +24,5 @@ packages that should be installed as part of LXC creation.
 
 .. include:: examples/test-jobs/hi6220-hikey.yaml
      :code: yaml
-     :start-after: to: lxc
-     :end-before: - boot
+     :start-after: # DEPLOY_LXC_BLOCK
+     :end-before: # BOOT_LXC_BLOCK

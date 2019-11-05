@@ -21,21 +21,23 @@ metadata:
   build-script: http://fix.me
 
 actions:
+# NBD_DEPLOY_BLOCK
 - deploy:
     timeout:
       minutes: 4
     to: nbd
     kernel:
-      url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/vmlinuz
+      url: http://example.com/vmlinuz
       type: zimage
     initrd:
-      url: http://fix.me/initramfs-netboot-image-raspberrypi3.ext4.gz.u-boot
+      url: http://example.com/initramfs.ext4.gz.u-boot
     nbdroot:
-      url: http://fix.me/rootfs.ext4.xz
+      url: http://example.com/rootfs.ext4.xz
       compression: xz
     dtb:
-      url: http://snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/1/dtbs/am335x-boneblack.dtb
+      url: http://example.com/dtb.dtb
 
+# NBD_BOOT_BLOCK
 - boot:
     method: u-boot
     commands: nbd
