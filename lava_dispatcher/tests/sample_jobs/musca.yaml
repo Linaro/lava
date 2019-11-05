@@ -1,5 +1,5 @@
-device_type: musca
-job_name: example-musca-job
+device_type: musca-a
+job_name: example-musca-a-job
 
 timeouts:
   job:
