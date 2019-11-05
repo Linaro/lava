@@ -72,6 +72,10 @@ def handle(options, files, check):
         else:
             files_iter = [fileobj]
         for f in files_iter:
+            if not f.exists():
+                print("* %s [does not exists]" % str(f))
+                failed += 1
+                continue
             if not f.as_posix() == "-" and not f.is_file():
                 continue
             if f.name in options.exclude:
