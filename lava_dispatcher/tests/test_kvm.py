@@ -790,6 +790,7 @@ class TestChecksum(StdoutTestCase):
                         "url": httpdownloadaction.url,
                         "md5sum": "6ea432ac3c23210c816551782346ed1c",
                         "sha256sum": "1a76b17701b9fdf6346b88eb49b0143a9c6912701b742a6e5826d6856edccd21",
+                        "sha512sum": "33c5dad9650d7c0c33f9f64927926825563e6318fba7741148644e9f7ffdf008ede30e33f2bb9d5d75204f21179517e99f9d9de649089bd72e5c94ec6f40b759",
                     }
                 }
             }
@@ -827,6 +828,7 @@ class TestChecksum(StdoutTestCase):
                         "url": httpdownloadaction.url,
                         "md5sum": "df1bd1598699e7a89d2e111111111111",
                         "sha256sum": "92d6ff900d0c3656ab3f214ce6efd708f898fc5e259111111111111111111111",
+                        "sha512sum": "33c5dad9650d7c0c33f9f64927926825563e6318fba7741148644e9f7ffdf008ede30e33f2bb9d5d75204f21179517e99f9d9de6490111111111111111111111",
                     }
                 }
             }
@@ -895,6 +897,7 @@ class TestChecksum(StdoutTestCase):
                     "url": httpdownloadaction.url,
                     "md5sum": "6ea432ac3c23210c816551782346ed1c",
                     "sha256sum": "1a76b17701b9fdf6346b88eb49b0143a9c6912701b742a6e5826d6856edccd21",
+                    "sha512sum": "33c5dad9650d7c0c33f9f64927926825563e6318fba7741148644e9f7ffdf008ede30e33f2bb9d5d75204f21179517e99f9d9de649089bd72e5c94ec6f40b759",
                 }
             }
         )
@@ -931,6 +934,7 @@ class TestChecksum(StdoutTestCase):
                     "url": httpdownloadaction.url,
                     "md5sum": "6ea432ac3c232122222221782346ed1c",
                     "sha256sum": "1a76b17701b9fdf63444444444444444446912701b742a6e5826d6856edccd21",
+                    "sha512sum": "33c5dad9650d7c0c33f9f64927926825563e6318fba7741148644e9f7ffdf008ede30e33f2bb9d5d75204f21179517e99f9d9de649089bd72e5c94ec6f40b759",
                 }
             }
         )
@@ -978,6 +982,8 @@ class TestChecksum(StdoutTestCase):
         self.assertIsNone(md5sum)
         sha256sum = remote.get("sha256sum")
         self.assertIsNotNone(sha256sum)
+        sha512sum = remote.get("sha512sum")
+        self.assertIsNone(sha512sum)
 
 
 class TestKvmGuest(StdoutTestCase):  # pylint: disable=too-many-public-methods

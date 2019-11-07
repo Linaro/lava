@@ -244,6 +244,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         # self.cookies = self.job.context.config.lava_cookies  # FIXME: work out how to restore
         md5 = hashlib.md5()  # nosec - not being used for cryptography.
         sha256 = hashlib.sha256()
+        sha512 = hashlib.sha512()
 
         # Create a fresh directory if the old one has been removed by a previous cleanup
         # (when retrying inside a RetryAction)
@@ -271,6 +272,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
 
         md5sum = remote.get("md5sum")
         sha256sum = remote.get("sha256sum")
+        sha512sum = remote.get("sha512sum")
 
         fname, _ = self._url_to_fname_suffix(self.path, compression)
         if os.path.isdir(fname):
@@ -311,7 +313,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
             self.logger.debug("No compression specified")
 
         def update_progress():
-            nonlocal downloaded_size, last_value, md5, sha256
+            nonlocal downloaded_size, last_value, md5, sha256, sha512
             downloaded_size += len(buff)
             (printing, new_value, msg) = progress(downloaded_size, last_value)
             if printing:
@@ -319,6 +321,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
                 self.logger.debug(msg)
             md5.update(buff)
             sha256.update(buff)
+            sha512.update(buff)
 
         if compression and decompress_command:
             try:
@@ -385,6 +388,12 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
             label=self.key,
             key="sha256",
             value=sha256.hexdigest(),
+        )
+        self.set_namespace_data(
+            action="download-action",
+            label=self.key,
+            key="sha512",
+            value=sha512.hexdigest(),
         )
 
         # handle archive files
@@ -453,6 +462,26 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
                 raise JobError("SHA256 checksum for '%s' does not match." % fname)
             self.results = {"success": {"sha256": sha256sum}}
 
+        if sha512sum is not None:
+            chk_sha512sum = self.get_namespace_data(
+                action="download-action", label=self.key, key="sha512"
+            )
+            if sha512sum != chk_sha512sum:
+                self.logger.info(
+                    "sha512sum of downloaded content: %s"
+                    % (
+                        self.get_namespace_data(
+                            action="download-action", label=self.key, key="sha512"
+                        )
+                    )
+                )
+                self.logger.error("sha512sum of downloaded content: %s" % chk_sha512sum)
+                self.results = {
+                    "fail": {"sha512": sha512sum, "download": chk_sha512sum}
+                }
+                raise JobError("SHA512 checksum for '%s' does not match." % fname)
+            self.results = {"success": {"sha512": sha512sum}}
+
         # certain deployments need prefixes set
         if self.parameters["to"] == "tftp" or self.parameters["to"] == "nbd":
             suffix = self.get_namespace_data(
@@ -497,6 +526,11 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
             "sha256sum": str(
                 self.get_namespace_data(
                     action="download-action", label=self.key, key="sha256"
+                )
+            ),
+            "sha512sum": str(
+                self.get_namespace_data(
+                    action="download-action", label=self.key, key="sha512"
                 )
             ),
         }

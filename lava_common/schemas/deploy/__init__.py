@@ -32,6 +32,7 @@ def url():
         Optional("archive"): "tar",
         Optional("md5sum"): str,
         Optional("sha256sum"): str,
+        Optional("sha512sum"): str,
     }
 
 
