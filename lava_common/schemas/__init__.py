@@ -55,6 +55,7 @@ CONTEXT_VARIABLES = [
     "model",
     "monitor",
     "netdevice",
+    "no_kvm",
     "serial",
     "vga",
     # u-boot variables
@@ -71,6 +72,7 @@ CONTEXT_VARIABLES = [
     "boot_character_delay",
     "bootloader_prompt",
     "console_device",
+    "custom_kernel_args",
     "extra_kernel_args",
     "extra_nfsroot_args",
     "kernel_loglevel",
