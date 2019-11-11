@@ -1,0 +1,36 @@
+{# device_type = "meson-sm1-sei610" #}
+{% extends 'meson-g12-common.jinja2' %}
+
+{% set uboot_mkimage_arch = 'arm64' %}
+
+{% set usb_uuid = usb_uuid|default('') %}
+{% set usb_device_id = usb_device_id|default('') %}
+{% set interrupt_char = interrupt_char|default(' ') %}
+
+{% set adb_serial_number = adb_serial_number|default("'0000000000'") %}
+{% set fastboot_serial_number = fastboot_serial_number|default("0000000000") %}
+{% set device_info = device_info|default([{'board_id': fastboot_serial_number}]) %}
+{% set fastboot_deploy_uboot_commands = fastboot_deploy_uboot_commands|default(["fastboot 0"]) %}
+{% set fastboot_sequence = fastboot_sequence|default(['no-flash-boot']) %}
+{% set fastboot_boot_uboot = "
+        # method specific stanza
+        mmc:
+          commands:
+          - setenv console ttyUSB0,115200n8
+" %}
+
+{% set kernel_args = kernel_args | default("consoleblank=0 earlycon") %}
+
+{% set booti_kernel_addr = booti_kernel_addr | default('0x01080000') %}
+{% set booti_ramdisk_addr = booti_ramdisk_addr | default('0x8000000') %}
+{% set booti_dtb_addr = booti_dtb_addr | default('0x1000000') %}
+
+{% set bootz_kernel_addr = booti_kernel_addr %}
+{% set bootz_ramdisk_addr = booti_ramdisk_addr %}
+{% set bootz_dtb_addr = booti_dtb_addr %}
+
+{% set bootm_kernel_addr = bootz_kernel_addr %}
+{% set bootm_ramdisk_addr = bootz_ramdisk_addr %}
+{% set bootm_dtb_addr = bootz_dtb_addr %}
+
+{% set interrupt_ctrl_list = ['c'] %}
