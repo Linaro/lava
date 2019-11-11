@@ -232,6 +232,9 @@ class Command(LAVADaemonCommand):
             hostname = u(msg[0])
             # 2: the action
             action = u(msg[1])
+        except UnicodeDecodeError:
+            self.logger.error("Invalid message: can't be decoded")
+            return True
         except (IndexError, ValueError):
             self.logger.error("Invalid message from <%s> '%s'", hostname, msg)
             return True
@@ -267,6 +270,9 @@ class Command(LAVADaemonCommand):
         try:
             (topic, _, dt, username, data) = (u(m) for m in msg)
             data = simplejson.loads(data)
+        except UnicodeDecodeError:
+            self.logger.error("Invalid event: can't be decoded")
+            return True
         except ValueError:
             self.logger.error("Invalid event: %s", msg)
             return True
@@ -292,8 +298,11 @@ class Command(LAVADaemonCommand):
             job_id = int(msg[2])
             error_msg = u(msg[3])
             compressed_description = msg[4]
+        except UnicodeDecodeError:
+            self.logger.error("Invalid END message: can't be decoded")
+            return
         except (IndexError, ValueError):
-            self.logger.error("Invalid message from <%s> '%s'", hostname, msg)
+            self.logger.error("Invalid END message from <%s> '%s'", hostname, msg)
             return
 
         try:
@@ -352,7 +361,7 @@ class Command(LAVADaemonCommand):
         try:
             slave_version = int(msg[2])
         except (IndexError, ValueError):
-            self.logger.error("Invalid message from <%s> '%s'", hostname, msg)
+            self.logger.error("Invalid HELLO message from <%s> '%s'", hostname, msg)
             return
 
         self.logger.info("%s => %s", hostname, action)
@@ -394,7 +403,7 @@ class Command(LAVADaemonCommand):
         try:
             job_id = int(msg[2])
         except (IndexError, ValueError):
-            self.logger.error("Invalid message from <%s> '%s'", hostname, msg)
+            self.logger.error("Invalid START_OK message from <%s> '%s'", hostname, msg)
             return
         self.logger.info("[%d] %s => START_OK", job_id, hostname)
         try:
