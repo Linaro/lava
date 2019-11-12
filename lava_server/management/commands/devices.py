@@ -566,24 +566,25 @@ class Command(BaseCommand):
             )
 
         for device in devices:
-            rc = rc or self._handle_check(device)
+            rc += self._handle_check(device)
         if rc != 0:
-            raise CommandError("One or more devices failed to validate")
+            raise CommandError("%d devices failed to validate" % rc)
 
     def _handle_check(self, device):
         hostname = device.hostname
+        self.stdout.write("* %s" % hostname)
         data = device.load_configuration()
+        if data is None:
+            self.stdout.write("  -> invalid or missing template")
+            return 1
         try:
             validate_device(data)
         except voluptuous.Invalid as exc:
-            print(
-                "{hostname}: {key} - {msg}".format(
-                    hostname=hostname, key=exc.path, msg=exc.msg
-                )
-            )
+            self.stdout.write("  -> invalid configuration")
+            self.stdout.write("  -> %s" % exc.path)
+            self.stdout.write("  -> %s" % exc.msg)
             return 1
 
-        print("{hostname}: OK".format(hostname=hostname))
         return 0
 
     def handle_control(self, options):
@@ -606,6 +607,6 @@ class Command(BaseCommand):
             command = config["commands"][key]
 
         if options["dry_run"]:
-            print(command)
+            self.stdout.write(command)
         else:
             subprocess.check_call(command, shell=True)
