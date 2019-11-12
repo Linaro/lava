@@ -4,6 +4,7 @@ source =
     lava_common
     lava_dispatcher
     lava_results_app
+    lava_rest_app
     lava_scheduler_app
     lava_server
     linaro_django_xmlrpc
