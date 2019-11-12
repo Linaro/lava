@@ -71,6 +71,13 @@ def get_sub_parser_class(cmd):
 
         def __init__(self, **kwargs):
             if DJANGO_VERSION >= "2":
+                kwargs.update(
+                    {
+                        "called_from_command_line": getattr(
+                            cmd, "_called_from_command_line", None
+                        )
+                    }
+                )
                 super().__init__(**kwargs)
             else:
                 super().__init__(cmd, **kwargs)
