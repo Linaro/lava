@@ -593,18 +593,21 @@ class Command(BaseCommand):
         config = device.load_configuration()
         action = options["action"]
         if action == "connect":
-            connection = None
-            for _, c in config["commands"]["connections"].items():
-                if "primary" in c["tags"]:
-                    command = c["connect"]
-                    break
+            command = None
+            with contextlib.suppress(KeyError):
+                for _, c in config["commands"]["connections"].items():
+                    if "primary" in c["tags"]:
+                        command = c["connect"]
+                        break
             if not command:
-                CommandError(
+                raise CommandError(
                     "Device %s does not define a primary connection" % device.hostname
                 )
         else:
             key = keys[action]
-            command = config["commands"][key]
+            if key not in config["commands"]:
+                raise CommandError("The command '%s' is not defined" % action)
+            command = config["commands"].get(key)
 
         if options["dry_run"]:
             self.stdout.write(command)
