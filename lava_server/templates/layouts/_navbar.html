@@ -20,7 +20,7 @@
               <li><a href="{% url 'lava.scheduler.alldevices' %}">Devices</a></li>
               <li><a href="{% url 'lava.scheduler.job.list' %}">Jobs</a></li>
               <li><a href="{% url 'lava.scheduler.workers' %}">Workers</a></li>
-              {% if perms.lava_scheduler_app.add_testjob %}
+              {% if user.is_authenticated %}
               <li role="separator" class="divider"></li>
               <li><a href="{% url 'lava.scheduler.job.submit' %}">Submit</a></li>
               {% endif %}
