@@ -50,6 +50,35 @@ class DummyLogger:
         pass
 
 
+class RecordingLogger:
+    def __init__(self):
+        self.logs = []
+
+    def info(self, *args, **kwargs):
+        self.logs.append(("info", *args, {**kwargs}))
+
+    def debug(self, *args, **kwargs):
+        self.logs.append(("debug", *args, {**kwargs}))
+
+    def exception(self, *args, **kwargs):
+        self.logs.append(("exception", *args, {**kwargs}))
+
+    def error(self, *args, **kwargs):
+        self.logs.append(("error", *args, {**kwargs}))
+
+    def warning(self, *args, **kwargs):
+        self.logs.append(("warning", *args, {**kwargs}))
+
+    def results(self, *args, **kwargs):
+        self.logs.append(("results", *args, {**kwargs}))
+
+    def marker(self, *args, **kwargs):
+        self.logs.append(("marker", *args, {**kwargs}))
+
+    def target(self, *args, **kwargs):
+        self.logs.append(("target", *args, {**kwargs}))
+
+
 def infrastructure_error(path):
     """
     Extends which into a check which sets default messages for Action validation,
