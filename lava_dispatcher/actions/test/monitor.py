@@ -22,12 +22,15 @@ import re
 import pexpect
 
 from collections import OrderedDict
-from lava_dispatcher.action import Pipeline
+
+from lava_common.decorators import nottest
 from lava_common.exceptions import InfrastructureError
+from lava_dispatcher.action import Pipeline
 from lava_dispatcher.actions.test import TestAction
 from lava_dispatcher.logical import LavaTest, RetryAction
 
 
+@nottest
 class TestMonitor(LavaTest):
     """
     LavaTestMonitor Strategy object
@@ -46,11 +49,9 @@ class TestMonitor(LavaTest):
         required_parms = ["name", "start", "end", "pattern"]
         if "monitors" in parameters:
             for monitor in parameters["monitors"]:
-                if not all([x for x in required_parms if x in monitor]):
-                    return (
-                        False,
-                        "missing a required parameter from %s" % required_parms,
-                    )
+                for param in required_parms:
+                    if param not in monitor:
+                        return (False, "missing required parameter '%s'" % param)
             return True, "accepted"
         return False, '"monitors" not in parameters'
 
@@ -67,6 +68,7 @@ class TestMonitor(LavaTest):
         return False
 
 
+@nottest
 class TestMonitorRetry(RetryAction):
 
     name = "lava-test-monitor-retry"
@@ -80,11 +82,10 @@ class TestMonitorRetry(RetryAction):
         self.internal_pipeline.add_action(TestMonitorAction())
 
 
-class TestMonitorAction(TestAction):  # pylint: disable=too-many-instance-attributes
+@nottest
+class TestMonitorAction(TestAction):
     """
-    Sets up and runs the LAVA Test Shell Definition scripts.
-    Supports a pre-command-list of operations necessary on the
-    booted image before the test shell can be started.
+    Watch the DUT output and match known results strings without any interaction.
     """
 
     name = "lava-test-monitor"
@@ -144,13 +145,17 @@ class TestMonitorAction(TestAction):  # pylint: disable=too-many-instance-attrib
         Call from subclasses before checking subclass-specific events.
         """
         ret_val = False
-        if event == "end":
-            self.logger.info("ok: end string found, lava test monitoring stopped")
-            self.results.update({"status": "passed"})
+        if event == "eof":
+            self.logger.warning("err: lava test monitoring reached end of file")
+            self.errors = "lava test monitoring reached end of file"
+            self.results.update({"status": "failed"})
         elif event == "timeout":
             self.logger.warning("err: lava test monitoring has timed out")
             self.errors = "lava test monitoring has timed out"
             self.results.update({"status": "failed"})
+        elif event == "end":
+            self.logger.info("ok: end string found, lava test monitoring stopped")
+            self.results.update({"status": "passed"})
         elif event == "test_result":
             self.logger.info("ok: test case found")
             match = test_connection.match.groupdict()
