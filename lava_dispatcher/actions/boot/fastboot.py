@@ -114,6 +114,8 @@ class BootFastbootAction(BootAction):
         if parameters.get("commands"):
             self.pipeline.add_action(BootFastbootCommands())
 
+        board_id = self.job.device["fastboot_serial_number"]
+
         # Always ensure the device is in fastboot mode before trying to boot.
         # Check if the device has a power command such as HiKey, Dragonboard,
         # etc. against device that doesn't like Nexus, etc.
@@ -125,6 +127,7 @@ class BootFastbootAction(BootAction):
             self.pipeline.add_action(ConnectDevice())
             self.pipeline.add_action(ResetDevice())
         else:
+            self.pipeline.add_action(WaitDeviceBoardID(board_id))
             self.pipeline.add_action(EnterFastbootAction())
 
         # Based on the boot sequence defined in the device configuration, add
@@ -132,6 +135,7 @@ class BootFastbootAction(BootAction):
         sequences = self.job.device["actions"]["boot"]["methods"].get("fastboot", [])
         for sequence in sequences:
             mapped = _fastboot_sequence_map(sequence)
+            self.pipeline.add_action(WaitDeviceBoardID(board_id))
             if mapped[1]:
                 self.pipeline.add_action(mapped[0](device_actions=mapped[1]))
             elif mapped[0]:

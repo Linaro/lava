@@ -33,6 +33,7 @@ from lava_dispatcher.actions.deploy.apply_overlay import (
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.utils.fastboot import BaseAction
 from lava_dispatcher.utils.lxc import is_lxc_requested
+from lava_dispatcher.utils.udev import WaitDeviceBoardID
 from lava_dispatcher.actions.boot.fastboot import EnterFastbootAction
 from lava_dispatcher.actions.boot.u_boot import UBootEnterFastbootAction
 from lava_dispatcher.power import PDUReboot, ReadFeedback
@@ -148,10 +149,12 @@ class FastbootFlashOrderAction(BaseAction):
         userlist = list(parameters["images"].keys())
         flash_cmds = set(userlist).difference(set(flash_cmds_order))
         flash_cmds = flash_cmds_order + list(flash_cmds)
+        board_id = self.job.device["fastboot_serial_number"]
         self.pipeline.add_action(ReadFeedback(repeat=True))
         for flash_cmd in flash_cmds:
             if flash_cmd not in parameters["images"]:
                 continue
+            self.pipeline.add_action(WaitDeviceBoardID(board_id))
             self.pipeline.add_action(FastbootFlashAction(cmd=flash_cmd))
             self.reboot = parameters["images"][flash_cmd].get("reboot")
             if self.reboot == "fastboot-reboot":

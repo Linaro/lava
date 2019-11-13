@@ -96,6 +96,7 @@
     name: fastboot-flash-order-action
     pipeline:
     - {class: power.ReadFeedback, name: read-feedback}
+    - {class: utils.udev.WaitDeviceBoardID, name: wait-device-boardid}
     - {class: actions.deploy.fastboot.FastbootFlashAction, name: fastboot-flash-action}
 - class: actions.boot.fastboot.BootFastbootAction
   name: fastboot-boot
@@ -105,6 +106,7 @@
     name: reset-device
     pipeline:
     - {class: power.PDUReboot, name: pdu-reboot}
+  - {class: utils.udev.WaitDeviceBoardID, name: wait-device-boardid}
   - {class: actions.boot.fastboot.FastbootBootAction, name: boot-fastboot}
   - {class: actions.boot.AutoLoginAction, name: auto-login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}

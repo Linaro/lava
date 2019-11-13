@@ -39,12 +39,15 @@
     name: fastboot-flash-order-action
     pipeline:
     - {class: power.ReadFeedback, name: read-feedback}
+    - {class: utils.udev.WaitDeviceBoardID, name: wait-device-boardid}
     - {class: actions.deploy.fastboot.FastbootFlashAction, name: fastboot-flash-action}
     - {class: power.PDUReboot, name: pdu-reboot}
     - {class: power.ReadFeedback, name: read-feedback}
+    - {class: utils.udev.WaitDeviceBoardID, name: wait-device-boardid}
     - {class: actions.deploy.fastboot.FastbootFlashAction, name: fastboot-flash-action}
     - {class: actions.deploy.fastboot.FastbootReboot, name: fastboot-reboot}
     - {class: power.ReadFeedback, name: read-feedback}
+    - {class: utils.udev.WaitDeviceBoardID, name: wait-device-boardid}
     - {class: actions.deploy.fastboot.FastbootFlashAction, name: fastboot-flash-action}
 - class: actions.boot.grub.GrubSequenceAction
   name: grub-sequence-action
