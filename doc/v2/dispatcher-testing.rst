@@ -181,14 +181,14 @@ Sample pipeline description output
       summary: download-retry
   - - '1.2'
     - content:
-        description: md5sum and sha256sum
+        description: md5sum, sha256sum and sha512sum
         level: '1.2'
         name: checksum_action
         parameters:
           deployment_data: *id001
         summary: checksum
         valid: true
-      description: md5sum and sha256sum
+      description: md5sum, sha256sum and sha512sum
       summary: checksum
   - - '1.3'
     - content:

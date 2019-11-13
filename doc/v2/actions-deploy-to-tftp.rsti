@@ -299,3 +299,7 @@ md5sum
 sha256sum
 ^^^^^^^^^
 .. include:: actions-deploy-images-sha256sum.rsti
+
+sha512sum
+^^^^^^^^^
+.. include:: actions-deploy-images-sha512sum.rsti
