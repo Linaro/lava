@@ -1,3 +1,64 @@
+lava (2019.11-1) unstable; urgency=medium
+
+  * LAVA Software 2019.11 release
+    4a9380dfe debian/copyright: drop reference to removed directory
+    56fa1151a debian/control: adjust Uploaders: to new reality
+    62721fe12 debian/control: make lava-dispatcher Achitecture: all
+    2d0009b4e copy_to_lxc: print the exception error message
+    de5b5d286 CI: do not build debian packages on aarch64
+    a808170c8 device-types: add imx8mn-ddr4-evk and r8a7796-m3ulcb-kf
+    1812466b9 docker: remove docker/.gitlab-ci.yml leftover
+    a7e7a63cd Add unit test coverage limit.
+    d67a3e011 Procfile: make web server less verbose
+    be39f38f0 devices: add subcommand to check device config
+    6bdc53b97 Move manage.py to the top level source directory
+    6d208d9f3 pytest.ini: list required options for running pytest directly
+    957f1bca1 devices: add command to handle power and serial
+    0d38404fa Remove jquery.flot.stack.js
+    e79547b62 docker: use buildkit backend
+    1adbc0f63 Use --cov-fail-under instead of arbitrary code for test coverage failures.
+    4a1b07154 docker: raise an exception when the deploy action is missing
+    8e5c0f11a Fix daemon crash when handling invalid message
+    9a1741937 ci: set docker dind image version explicitely
+    d97465512 lava-logs: fix crash when not using encryption
+    9fbf3fad5 job page: rename description -> details
+    df75783a3 Print a warning when using Action.run_command
+    fa9d176c2 doc: add full indentation path to boot action snippets
+    8f46aac4a doc: fix 'first job' documentation page
+    98278be88 doc: replace including lines with matching strings
+    aecd71698 doc: add clarification about user commands
+    5ca9aec82 doc: add full snippets to deploy-fastboot
+    7ade6fcb9 doc: add full snippets for docker deployment
+    9ff336b21 doc: separate download parameters to separate files
+    5d6549d5c doc: add full snippets to isonstaller deployment
+    658cbc6af doc: add full code snippet to lxc deployment
+    8e7c7553b doc: remove headings from included files
+    be0b7ec61 doc: add full snippets to nbd deployments
+    198702a95 doc: fix indentation in recovery deployment
+    5594a2d83 doc: fix indentation and snippets in protocols
+    5576a72a1 doc: add full context snippets to tests
+    3a222328b doc: add full job snippets to tftp deployment
+    4c3df3a5c doc: add full snippets to action timeouts
+    b59e604f6 doc: clarify repeat options in LAVA
+    3d4d8992e doc: add full code snippets for deploy vemsd
+    3edbe32b3 doc: fix code snipped in ssh deployment
+    13e220495 Increase unit test coverage for view functions in scheduler.
+    3fe374ed7 Remove can_change permission requirement for similar_jobs view.
+    67b5ce764 Remove obsolete error handling in job_resubmit view.
+    c2a5ac666 username_list_json view should require authentication.
+    4e6179324 lava-schema: return an error when one file does not exists
+    042571e61 Remove unused imports for job_resubmit error handling fix.
+    7232b4f1a docker: use buster-slim as base image
+    a9b82d0df docker: fix the build script
+    3fad17c92 device-types: add meson-sm1-sei610
+    084546b66 schema: Add more missing parameters
+    bdf226881 CI: also compute coverage for the lava_rest_app
+    439ed3619 manage devices check: use the same output format as lava-schema
+    7eb140fda manage devices control: fix crash when the keys are undefined
+    5d6144f2a Remove usage of obsolete add_testjob permission.
+
+ -- Remi Duraffort <remi.duraffort@linaro.org>  Wed, 13 Nov 2019 10:49:54 +0100
+
 lava (2019.10-1) unstable; urgency=medium
 
   * LAVA Software 2019.10 release
