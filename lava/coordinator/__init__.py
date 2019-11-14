@@ -22,7 +22,7 @@ import json
 #  MA 02110-1301, USA.
 
 
-class LavaCoordinator(object):
+class LavaCoordinator:
 
     running = False
     delay = 1
@@ -61,7 +61,7 @@ class LavaCoordinator(object):
                 s.bind(("0.0.0.0", self.group_port))
                 break
             except socket.error as e:
-                logging.warn(
+                logging.warning(
                     "Unable to bind, trying again with delay=%d msg=%s"
                     % (self.delay, e.message)
                 )
@@ -91,7 +91,7 @@ class LavaCoordinator(object):
             try:
                 json_data = json.loads(data)
             except ValueError:
-                logging.warn("JSON error for '%s'" % data[:100])
+                logging.warning("JSON error for '%s'" % data[:100])
                 self.conn.close()
                 continue
             self.dataReceived(json_data)
