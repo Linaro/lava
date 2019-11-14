@@ -478,29 +478,30 @@ class ExtractModules(Action):
         if not self.parameters.get("ramdisk"):
             if not self.parameters.get("nfsrootfs"):
                 raise JobError("Unable to identify a location for the unpacked modules")
+
         # if both NFS and ramdisk are specified, apply modules to both
         # as the kernel may need some modules to raise the network and
         # will need other modules to support operations within the NFS
         if self.parameters.get("nfsrootfs"):
             if not self.parameters["nfsrootfs"].get("install_modules", True):
                 self.logger.info("Skipping applying overlay to NFS")
-                return connection
-            root = self.get_namespace_data(
-                action="extract-rootfs", label="file", key="nfsroot"
-            )
-            self.logger.info("extracting modules file %s to %s", modules, root)
-            untar_file(modules, root)
+            else:
+                root = self.get_namespace_data(
+                    action="extract-rootfs", label="file", key="nfsroot"
+                )
+                self.logger.info("extracting modules file %s to %s", modules, root)
+                untar_file(modules, root)
         if self.parameters.get("ramdisk"):
             if not self.parameters["ramdisk"].get("install_modules", True):
                 self.logger.info("Not adding modules to the ramdisk.")
-                return connection
-            root = self.get_namespace_data(
-                action="extract-overlay-ramdisk",
-                label="extracted_ramdisk",
-                key="directory",
-            )
-            self.logger.info("extracting modules file %s to %s", modules, root)
-            untar_file(modules, root)
+            else:
+                root = self.get_namespace_data(
+                    action="extract-overlay-ramdisk",
+                    label="extracted_ramdisk",
+                    key="directory",
+                )
+                self.logger.info("extracting modules file %s to %s", modules, root)
+                untar_file(modules, root)
         try:
             os.unlink(modules)
         except OSError as exc:
