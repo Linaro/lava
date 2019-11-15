@@ -157,7 +157,7 @@ class JobParser:
                 namespace = action_data[name].setdefault("namespace", "common")
                 test_counts.setdefault(namespace, 1)
 
-                if name == "deploy" or name == "boot" or name == "test":
+                if name in ["deploy", "boot", "test"]:
                     action = parse_action(
                         action_data,
                         name,

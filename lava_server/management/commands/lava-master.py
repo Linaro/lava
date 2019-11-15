@@ -247,7 +247,7 @@ class Command(LAVADaemonCommand):
             return True
 
         # Handle the actions
-        if action == "HELLO" or action == "HELLO_RETRY":
+        if action in ["HELLO", "HELLO_RETRY"]:
             self._handle_hello(hostname, action, msg)
         elif action == "PING":
             self._handle_ping(hostname, msg)
