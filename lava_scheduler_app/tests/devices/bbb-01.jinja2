@@ -1,5 +1,6 @@
 {% extends 'beaglebone-black.jinja2' %}
 {% set usb_uuid = 'usb-SanDisk_Ultra_20060775320F43006019-0:0' %}
+{% set usb_device_id = 0 %}
 {% set connection_command = "telnet localhost 6000" %}
 {% set hard_reset_command = (
 "/usr/bin/pduclient --daemon localhost --hostname pdu --command reboot --port 08") %}

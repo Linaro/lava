@@ -31,7 +31,7 @@ def device():
     timeout_schema = timeout()
 
     return {
-        Optional("character_delays"): dict,
+        Optional("character_delays"): {Optional("boot"): int, Optional("test"): int},
         Optional("commands"): {
             Optional("connect"): str,
             Optional("connections"): {
@@ -54,8 +54,40 @@ def device():
         Optional("device_info"): [dict],
         Optional("static_info"): [dict],
         Optional("storage_info"): [dict],
-        Optional("flash_cmds_order"): list,
-        Optional("parameters"): dict,
+        Optional("environment"): dict,
+        Optional("flash_cmds_order"): [str],
+        Optional("parameters"): {
+            # TODO: having a more precise schema make this fail on debian 9,
+            # maybe due to the dictionary key ordering in python3.5
+            Optional("interfaces"): dict,
+            Optional("media"): {
+                Optional("sata"): {
+                    Required("UUID-required"): bool,
+                    Required(str): {
+                        Required("uuid"): str,
+                        Required("device_id"): int,
+                        Required("uboot_interface"): str,
+                        Required("grub_interface"): str,
+                        Required("boot_part"): int,
+                    },
+                },
+                Optional("sd"): {
+                    Optional("UUID-required"): bool,
+                    Required(str): {Required("uuid"): str, Required("device_id"): int},
+                },
+                Optional("usb"): {
+                    Optional("UUID-required"): bool,
+                    Required(str): {Required("uuid"): str, Required("device_id"): int},
+                },
+            },
+            Optional(Any("image", "booti", "uimage", "bootm", "zimage", "bootz")): {
+                Required("kernel"): str,
+                Required("ramdisk"): str,
+                Required("dtb"): str,
+            },
+            # FIXME: should be removed when the templates are fixed
+            Optional("pass"): None,
+        },
         Optional("board_id"): str,
         Optional("usb_vendor_id"): All(
             str, Length(min=4, max=4)
