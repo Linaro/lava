@@ -147,7 +147,7 @@ class LinuxKernelMessages(Action):
                     "Matched prompt #%s: %s", index, connection.prompt_str[index]
                 )
             message = connection.raw_connection.after
-            if index == cls.TRACE or index == cls.EXCEPTION:
+            if index in [cls.TRACE, cls.EXCEPTION]:
                 res = "fail"
                 if action:
                     action.logger.warning(

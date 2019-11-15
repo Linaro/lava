@@ -17,7 +17,7 @@ def forwards_func(apps, schema_editor):
     #       UI, fixing it for the node which is designated as the master.
     rpc2_url = "http://{0}/RPC2".format(localhost)
 
-    if localhost == "example.com" or localhost == "www.example.com":
+    if localhost in ["example.com", "www.example.com"]:
         rpc2_url = "http://{0}/RPC2".format(ipaddr)
 
     try:
