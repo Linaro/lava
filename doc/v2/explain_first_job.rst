@@ -176,7 +176,7 @@ Test action for QEMU
 The test action block in the first job contains two sets of definition
 parameters, each consisting of:
 
-* **repository** - the URL to pass to git or bzr to clone the repository
+* **repository** - the URL to pass to git to clone the repository
 
 * **from** - the method of obtaining the repository.
 

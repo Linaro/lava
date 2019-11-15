@@ -22,7 +22,7 @@ import logging
 import os
 import shutil
 import subprocess  # nosec - internal use.
-import yaml
+
 from lava_common.exceptions import InfrastructureError
 
 
@@ -35,66 +35,6 @@ class VCSHelper:
 
     def clone(self, dest_path, shallow=None, revision=None, branch=None, history=None):
         raise NotImplementedError
-
-
-class BzrHelper(VCSHelper):
-    def __init__(self, url):
-        super().__init__(url)
-        self.binary = "/usr/bin/bzr"
-
-    def clone(self, dest_path, shallow=None, revision=None, branch=None, history=None):
-        cwd = os.getcwd()
-        logger = logging.getLogger("dispatcher")
-        env = dict(os.environ)
-        env.update({"BZR_HOME": "/dev/null", "BZR_LOG": "/dev/null"})
-
-        try:
-            if revision is not None:
-                logger.debug(
-                    "Running '%s branch -r %s %s'", self.binary, str(revision), self.url
-                )
-                subprocess.check_output(  # nosec - internal use.
-                    [self.binary, "branch", "-r", str(revision), self.url, dest_path],
-                    stderr=subprocess.STDOUT,
-                    env=env,
-                )
-                commit_id = revision
-            else:
-                logger.debug("Running '%s branch %s'", self.binary, self.url)
-                subprocess.check_output(  # nosec - internal use.
-                    [self.binary, "branch", self.url, dest_path],
-                    stderr=subprocess.STDOUT,
-                    env=env,
-                )
-                os.chdir(dest_path)
-                commit_id = (
-                    subprocess.check_output(  # nosec - internal use.
-                        ["bzr", "revno"], env=env
-                    )
-                    .strip()
-                    .decode("utf-8", errors="replace")
-                )
-
-        except subprocess.CalledProcessError as exc:
-            exc_command = [i.strip() for i in exc.cmd]
-            exc_message = str(exc)
-            exc_output = str(exc).split("\n")
-            logger.exception(
-                yaml.dump(
-                    {
-                        "command": exc_command,
-                        "message": exc_message,
-                        "output": exc_output,
-                    }
-                )
-            )
-            raise InfrastructureError(
-                "Unable to fetch bzr repository '%s'" % (self.url)
-            )
-        finally:
-            os.chdir(cwd)
-
-        return commit_id
 
 
 class GitHelper(VCSHelper):

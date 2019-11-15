@@ -688,7 +688,7 @@ well as the base list of packages using ``--names``.
 ::
 
  $ ./share/requires.py --package lava-dispatcher --distribution debian --suite unstable --names --unittest
- pyocd-flashtool gdb-multiarch git bzr schroot lxc img2simg simg2img u-boot-tools docker.io xnbd-server telnet qemu-system-x86 qemu-system-arm
+ pyocd-flashtool gdb-multiarch git schroot lxc img2simg simg2img u-boot-tools docker.io xnbd-server telnet qemu-system-x86 qemu-system-arm
 
 .. index:: javascript
 

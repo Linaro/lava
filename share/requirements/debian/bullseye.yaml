@@ -126,9 +126,6 @@ lava-dispatcher:
   git:
     name: git
     unittests: true
-  bzr:
-    name: bzr
-    unittests: true
   schroot:
     name: schroot
     unittests: true

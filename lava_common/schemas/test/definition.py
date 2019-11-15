@@ -41,7 +41,7 @@ def schema():
             Any(
                 {
                     Required("repository"): str,
-                    Required("from"): Any("git", "bzr"),
+                    Required("from"): "git",
                     Optional("branch"): str,
                     Optional("history"): bool,
                     Optional("revision"): str,

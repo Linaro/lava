@@ -34,8 +34,8 @@ Metadata
 ========
 
 The YAML is downloaded from the repository (or handled inline) and installed
-into the test image, either as a single file or as part of a git or bzr
-repository. (See :ref:`test_repos`)
+into the test image, either as a single file or as part of a git repository.
+(See :ref:`test_repos`)
 
 Each test definition YAML file contains metadata and instructions.
 Metadata includes:
@@ -56,7 +56,7 @@ Metadata includes:
           characters or special characters from the following list,
           including white space(s): ``$& "'`()<>/\|;``
 
-If the file is not under version control (i.e. not in a git or bzr repository),
+If the file is not under version control (i.e. not in a git repository),
 the **version** of the file must also be specified in the metadata:
 
 .. code-block:: yaml
