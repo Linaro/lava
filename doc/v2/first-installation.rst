@@ -259,15 +259,15 @@ Setting Up Serial Connections to LAVA Devices
 LAVA controls the DUT using a serial connection, except for emulated devices
 like QEMU.
 
-LAVA can support :ref:multiple serial connections <connections> per
+LAVA can support :ref:`multiple serial connections <connections>` per
 DUT. The recommended method for creating a serial connection is to use
-:ref:ser2net to provide a connection using the telnet client. This
+:ref:`ser2net` to provide a connection using the telnet client. This
 allows simple and clean disconnection and allows LAVA to use the
 connection over the network. Other tools (conmux, minicom) have been
 tried but showed reliability problems when used at scale. LAVA is not
 able to directly access a device node.
 
-.. seealso:: :ref:growing_your_lab` and :ref:`serial_console_support`
+.. seealso:: :ref:`growing_your_lab` and :ref:`serial_console_support`
    for information about hardware.
 
 `ser2net` is the recommendation based on several million test jobs.

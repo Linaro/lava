@@ -1,5 +1,5 @@
 device_type: lxc
-job_name: lxc-fedora
+job_name: lxc-debian
 timeouts:
   job:
     minutes: 30
@@ -7,31 +7,26 @@ timeouts:
     minutes: 5
 priority: medium
 visibility: public
-
 metadata:
   source: https://git.linaro.org/lava-team/refactoring.git
-  path: lxc-fedora.yaml
-
+  path: lxc-debian.yaml
 protocols:
   lava-lxc:
     name: pipeline-lxc-test
-    distribution: fedora
-    release: '26'
+    distribution: debian
+    release: sid
     arch: amd64
-
 actions:
 - deploy:
     timeout:
       minutes: 30
     to: lxc
-
 - boot:
     prompts:
     - '[root@(.*) /]#'
     timeout:
       minutes: 5
     method: lxc
-
 - test:
     timeout:
       minutes: 5

@@ -508,6 +508,30 @@ alongside the FIT image.
         url: http://storage.kernelci.org/images/rootfs/debian/stretchtests/20180627.0/armhf/rootfs.cpio.gz
         compression: gz
 
+.. index:: boot method docker
+
+.. _boot_method_docker:
+
+docker
+======
+
+Boot a docker image already deployed by a :ref:`deploy to docker action <deploy_to_docker>`.
+
+.. code-block:: yaml
+
+  - boot:
+     method: docker
+     command: bash
+     prompts:
+     - 'root@lava:'
+     timeout:
+       minutes: 2
+
+command
+-------
+
+The command to run when starting the docker container.
+
 .. index:: boot method fastboot
 
 .. _boot_method_fastboot:

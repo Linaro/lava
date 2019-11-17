@@ -39,15 +39,15 @@ actions within the job.
 Protocol elements
 =================
 
-.. include:: examples/test-jobs/lxc-fedora.yaml
+.. include:: examples/test-jobs/lxc-debian.yaml
    :code: yaml
-   :start-after: path: lxc-fedora.yaml
-   :end-before: - boot:
+   :start-after: path: lxc-debian.yaml
+   :end-before: actions:
 
 Sample Job Definition
 =====================
 
-.. include:: examples/test-jobs/lxc-fedora.yaml
+.. include:: examples/test-jobs/lxc-debian.yaml
    :code: yaml
 
 .. index:: Namespaces
