@@ -21,6 +21,7 @@
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
 import argparse
+import jinja2
 import pathlib
 import sys
 import voluptuous as v
@@ -32,7 +33,23 @@ from lava_common.schemas.device import validate as validate_device
 
 def check_device(data, options, prefix=""):
     try:
+        if options.render:
+            data = options.env.from_string(data).render()
         data = yaml.safe_load(data)
+    except jinja2.TemplateNotFound as exc:
+        print("%sinvalide device template:" % prefix)
+        print("%smissing template: %s" % (prefix, exc))
+        return 1
+    except jinja2.TemplateSyntaxError as exc:
+        print("%sinvalide device template:" % prefix)
+        print("%serror: %s" % (prefix, exc))
+        print("%sline: %d" % (prefix, exc.lineno))
+        return 1
+    except jinja2.TemplateError as exc:
+        print("%sinvalide device template:" % prefix)
+        print("%serror: %s" % (prefix, exc))
+        print("%serror at: %d" % (prefix, exc.lineno))
+        return 1
     except yaml.YAMLError as exc:
         print("%sinvalid device definition:" % prefix)
         print("%sinvalid yaml" % prefix)
@@ -64,11 +81,11 @@ def check_job(data, options, prefix=""):
     return 0
 
 
-def handle(options, files, check):
+def handle(options, files, glob, check):
     failed = 0
     for fileobj in files:
         if fileobj.is_dir() and options.recursive:
-            files_iter = fileobj.rglob("*.yaml")
+            files_iter = fileobj.rglob(glob)
         else:
             files_iter = [fileobj]
         for f in files_iter:
@@ -138,14 +155,35 @@ def main():
         default=False,
         help="recurse on directories",
     )
+    device_parser.add_argument(
+        "--path", type=str, action="append", help="templates lookup path"
+    )
+    device_parser.add_argument(
+        "--no-render",
+        action="store_false",
+        dest="render",
+        help="do not render jinja2 template but look for yaml files instead",
+    )
 
     # Parse the command line
     options = parser.parse_args()
 
     if options.sub_command == "job":
-        return handle(options, options.jobs, check_job)
+        return handle(options, options.jobs, "*.yaml", check_job)
+
     elif options.sub_command == "device":
-        return handle(options, options.devices, check_device)
+        if options.render:
+            # Add default value for --path
+            if options.path is None:
+                options.path = ["/etc/lava-server/dispatcher-config/device-types"]
+            # create the jinja2 environment once as this is a slow operation
+            options.env = jinja2.Environment(  # nosec - used to render yaml
+                autoescape=False, loader=jinja2.FileSystemLoader(options.path)
+            )
+            glob = "*.jinja2"
+        else:
+            glob = "*.yaml"
+        return handle(options, options.devices, glob, check_device)
     raise NotImplementedError("Unsupported command")
 
 
