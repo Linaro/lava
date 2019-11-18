@@ -156,7 +156,7 @@ amd64/pkg-debian-10:
 .docker: &docker
   <<: *dind
   stage: docker
-  dependencies: [amd64/pkg-debian-9]
+  dependencies: [amd64/pkg-debian-10]
   variables:
     IMAGE_NAME: $CI_REGISTRY_IMAGE/$CI_JOB_NAME
 
