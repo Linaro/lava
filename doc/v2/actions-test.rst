@@ -330,22 +330,23 @@ long as the name of each TestSet is unique for that test definition.
 Interactive
 ***********
 
-An interactive test action allows to interact with a non-POSIX test shell. For
-instance a u-boot shell.
+An interactive test action allows to interact with a non-POSIX shell or
+just arbitrary interactive application. For instance, the shell of u-boot
+bootloader.
 
-The workflow of the interactive test shell is::
+The workflow of the interactive test action is:
 
-* send the command to the DUT
-* wait for the prompts or the messages
-* if a name is defined, log the result for this command (as soon a a prompt or a message is matched)
-* if a message was matched and this is not the last command, wait for the prompts
+* send the ``command`` to the :term:`DUT`
+* wait for the ``prompts`` or the ``message``'s
+* if a ``name`` is defined, log the result for this command (as soon as a prompt or a message is matched)
+* if a ``message`` was matched and this is not the last command, wait for the ``prompts``
 
-.. note:: if the ``command`` is None ("command:" in yaml), the test shell will
-  wait for the prompts and messages without sending anything to the device.
+.. note:: If the ``command`` is None ("command:" in yaml), the test action will
+  wait for the prompts and/or messages without sending anything to the device.
 
-.. note:: the interactive shell is expecting the prompt to be already matched
+.. note:: The interactive test action expects the prompt to be already matched
   before it starts. If this is not the case, then wait for the prompt by
-  adding a ``None`` ``command``.
+  adding an empty ``command`` directive as described above.
 
 A u-boot interactive test might look like:
 
@@ -371,35 +372,38 @@ A u-boot interactive test might look like:
 
 A script is a list of commands to send:
 
-* ``command``: the command to type in the shell
 * ``name``: if present, log the result of this command under the given name
-* ``failures`` and ``successes``: if present, check the logs for the given patterns
+* ``command``: the command to send to device
+* ``failures`` and ``successes``: if present, check the device output for the given patterns
 
-``successes`` should be a list of dictionaries with only one key:
+``successes`` should be a list of dictionaries with just one key:
 
 * ``message``: the string (or regexp) to match
 
-.. note:: if LAVA matches one of the prompt and ``successes`` is defined, an
-  error will be recorded. If ``successes`` is not defined, then matching a prompt
-  will generate a passing result.
+.. note:: If ``successes`` is defined, but LAVA matches one of the prompts
+  instead, an error will be recorded (following the logic that the lack
+  of expected success output is an error). However, if ``successes`` is
+  not defined, then matching a prompt will generate a passing result
+  (this is useful for interactive commands which don't generate any
+  output on success).
 
 ``failures`` should be a list of dictionaries with:
 
 * ``message``: the string (or regexp) to match
-* ``exception``: If the message indicates a fatal problem, an exception can be raised:
+* ``exception`` (optional): If the message indicates a fatal problem, an exception can be raised:
 
   * :ref:`InfrastructureError <infrastructure_error_exception>`
   * :ref:`JobError <job_error_exception>`
   * :ref:`TestError <test_error_exception>`
 
-* ``error``: if defined, the exception message
+* ``error``: if defined, the exception message which will appear in the job log
 
-.. warning:: by default, an error is *not* fatal.
+.. warning:: By default, an error is *not* fatal.
 
-.. note:: without a ``name`` the result of a command will not be recorded in the
+.. note:: Without a ``name`` the result of a command will not be recorded in the
   test job results.
 
-.. note:: whenever needed, the command can use variables that will be
+.. note:: Whenever needed, the command can use variables that will be
   substituted with live data like ``{SERVER_IP}``.
 
 
