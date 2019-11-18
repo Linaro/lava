@@ -20,7 +20,7 @@ menu. The following page will appear
 .. image:: ./images/authentication-tokens-page.png
 
 Click on the "New" button on the above page which raises a dialog box asking
-for a "Description" of the token to help you identify and delete tokens \- if
+for a description of the token to help you identify and delete tokens \- if
 required at a later stage.
 
 .. image:: ./images/create-new-authentication-token.png

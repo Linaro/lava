@@ -111,7 +111,7 @@ consistent in the use of the following terms:
   machine running lava-master is typically also called a ``master``.
 
 **parameters**
-  A static, read-only, dictionary of values and available for the job
+  A static, read-only, dictionary of values which are available for the job
   and the device. :term:`Parameters <parameters>` must not be modified
   by the codebase - use the ``common_data`` primitives of the Action
   base class to copy parameters and store the modified values as
@@ -158,7 +158,7 @@ consistent in the use of the following terms:
 
   Test jobs are not intended to test devices or boards. Test jobs exist
   to test software on multiple devices as part of continuous
-  development of the test software, e.g. the Linux kernel. Each test
+  development of software, e.g. the Linux kernel. Each test
   job is used to test one software build using the first available
   device of the requested device-type. LAVA is not best suited to
   QA operations at the end of a production line.
