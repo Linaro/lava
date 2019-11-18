@@ -3,28 +3,39 @@
 Test Action Reference
 #####################
 
-The pipeline has retained compatibility with respect to the content of
-Lava-Test-Shell Test Definitions although the submission format has changed:
+The pipeline jobs (LAVA v2) have retained compatibility with respect to the
+content of Lava-Test-Shell Test Definitions although the submission format
+has changed:
 
-#. The :ref:`test_action` will **never** boot the device - a :ref:`boot_action`
-   **must** be specified. Multiple test operations need to be specified as
-   multiple definitions listed within the same test block.
+#. The :ref:`test action <test_action>` will **never** boot the device -
+   a :ref:`boot action <boot_action>` **must** be specified. Multiple test
+   operations need to be specified as multiple definitions listed within
+   the same test block.
 
-#. The LAVA support scripts are prepared by the :ref:`deploy_action` action
-   and the same scripts will be used for all test definitions until another
-   ``deploy`` block is encountered.
+#. The LAVA support scripts are prepared by the :ref:`deploy action <deploy_action>`
+   action and the same scripts will be used for all test definitions
+   until next ``deploy`` block is encountered.
 
-:ref:`test_action_definitions` are used for POSIX compliant operating
-systems on the DUT. The deployed system is expected to support a POSIX
-shell environment (``/bin/ash``, ``/bin/dash`` or ``/bin/bash`` are the
-most common) so that LAVA can execute the LAVA Test Shell Helper
-scripts.
+There are 3 types of test actions:
 
-:ref:`interactive_test_action` are used for non-POSIX compliant shell like
-bootloader (u-boot for instance) shells.
+* :ref:`lava-test-shell definitions <test_action_definitions>`
+  (YAML directive: ``definitions``) are used for POSIX compliant operating
+  systems on the :term:`DUT`. The deployed system is expected to support
+  a POSIX shell environment (``/bin/ash``, ``/bin/dash`` or ``/bin/bash``
+  are the most common) so that LAVA can execute the LAVA Test Shell Helper
+  scripts.
 
-:ref:`monitor_test_action` are used for devices which have no POSIX
-shell and start the test immediately after booting, for example IoT boards.
+* :ref:`Output monitors <monitor_test_action>` (YAML directive:
+  ``monitors``) are used for devices which have no POSIX shell and start
+  the test (and corresponding output) immediately after booting, for
+  example microcontroller/IoT boards.
+
+* :ref:`Interactive tests <interactive_test_action>` (YAML directive:
+  ``interactive``) are further extension of "monitor" tests idea, allowing
+  not just matching some output from a device, but also feeding some input.
+  They are useful for non-POSIX shells like bootloaders (u-boot for instance)
+  and other interactive command-line applications.
+
 
 .. seealso:: :ref:`lava_test_helpers`
 
