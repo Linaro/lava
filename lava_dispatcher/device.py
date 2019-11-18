@@ -128,6 +128,7 @@ class NewDevice(PipelineDevice):
             raise ConfigurationError("%s could not be parsed" % target)
 
         self.setdefault("power_state", "off")  # assume power is off at start of job
+        self.setdefault("dynamic_data", {})
 
     def check_config(self, job):
         """

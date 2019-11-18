@@ -56,8 +56,17 @@ def dispatcher_ip(dispatcher_config):
     if "default" not in gateways:
         raise InfrastructureError("Unable to find dispatcher 'default' gateway")
     iface = gateways["default"][netifaces.AF_INET][1]
-    addr = netifaces.ifaddresses(iface)
-    return addr[netifaces.AF_INET][0]["addr"]
+    iface_addr = None
+
+    try:
+        addr = netifaces.ifaddresses(iface)
+        iface_addr = addr[netifaces.AF_INET][0]["addr"]
+    except KeyError:
+        # TODO: This only handles first alias interface can be extended
+        # to review all alias interfaces.
+        addr = netifaces.ifaddresses(iface + ":0")
+        iface_addr = addr[netifaces.AF_INET][0]["addr"]
+    return iface_addr
 
 
 def rpcinfo_nfs(server, version=3):

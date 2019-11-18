@@ -695,3 +695,6 @@ class PersistentNFSOverlay(Action):
         self.set_namespace_data(
             action=self.name, label="nfs_address", key="serverip", value=nfs_server
         )
+
+        self.job.device["dynamic_data"]["NFS_ROOTFS"] = dirname
+        self.job.device["dynamic_data"]["NFS_SERVER_IP"] = nfs_server

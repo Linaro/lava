@@ -70,4 +70,12 @@ class ExportDeviceEnvironment(Action):
             connection.sendline(". %s" % shell_file, delay=self.character_delay)
             connection.wait()
 
+        # Export data generated during run of the Pipeline like NFS settings
+        for key in self.job.device["dynamic_data"]:
+            connection.sendline(
+                "export %s='%s'" % (key, self.job.device["dynamic_data"][key]),
+                delay=self.character_delay,
+            )
+            connection.wait()
+
         return connection

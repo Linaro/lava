@@ -463,6 +463,14 @@ class ExtractNfsRootfs(ExtractRootfs):
             self.set_namespace_data(
                 action="extract-rootfs", label="file", key=self.file_key, value=root_dir
             )
+
+        self.job.device["dynamic_data"]["NFS_ROOTFS"] = self.get_namespace_data(
+            action="extract-rootfs", label="file", key=self.file_key
+        )
+        self.job.device["dynamic_data"]["NFS_SERVER_IP"] = dispatcher_ip(
+            self.job.parameters["dispatcher"]
+        )
+
         return connection
 
 
@@ -511,12 +519,6 @@ class ExtractModules(Action):
                 )
                 self.logger.info("extracting modules file %s to %s", modules, root)
                 untar_file(modules, root)
-        try:
-            os.unlink(modules)
-        except OSError as exc:
-            raise InfrastructureError(
-                "Unable to remove tarball: '%s' - %s" % (modules, exc)
-            )
         return connection
 
 
