@@ -78,7 +78,7 @@ that point will include that codename in the table.
          released but acts as a feed for ``testing``. As the name
          suggests, ``unstable`` can be broken without warning and
          installation of complex packages like LAVA can often fail.
-         Unstable will **never** recommended for production instances
+         Unstable is **never** recommended for production instances
          of any software, including LAVA.
 
 .. _experimental: https://wiki.debian.org/DebianExperimental

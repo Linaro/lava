@@ -33,12 +33,12 @@ following.
 .. image:: ./images/local-user-login.png
 
 To log in with a username and password, enter your credentials in the provided
-text boxes and click "Sign in with username and password" button.
+text boxes and click "Login" button.
 
 Local user accounts can be particularly useful for automated users like build
-systems or continuous integration scripts using the XML-RPC API. The local
+systems or continuous integration scripts using the XML-RPC API. In this case, a local
 admin can create the user with a secure password, log in as that user to create
-a token and then supply the token to the scripts.
+an authentication token and then supply the token to the scripts.
 
 Linaro lab users
 ----------------
