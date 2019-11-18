@@ -21,6 +21,7 @@
 
 import os
 import unittest
+from unittest.mock import patch
 
 from lava_common.compat import yaml_safe_load
 from lava_common.exceptions import JobError, InfrastructureError
@@ -469,7 +470,10 @@ commands:
             else:
                 self.assertEqual("uart0", hardware)
 
-    def test_connection_tags(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_connection_tags(self, which_mock):
         factory = ConnectionFactory()
         job = factory.create_bbb_job("sample_jobs/uboot-ramdisk.yaml")
         job.validate()
@@ -505,7 +509,10 @@ class TestTimeouts(StdoutTestCase):
         super().setUp()
         self.factory = ConnectionFactory()
 
-    def test_action_timeout(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_action_timeout(self, which_mock):
         factory = ConnectionFactory()
         job = factory.create_bbb_job("sample_jobs/uboot-ramdisk.yaml")
         job.validate()

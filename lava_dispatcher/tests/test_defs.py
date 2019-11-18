@@ -28,6 +28,7 @@ import pexpect
 import tempfile
 import unittest
 import subprocess  # nosec - unit test support.
+from unittest.mock import patch
 
 from lava_common.compat import yaml_safe_load
 from lava_common.decorators import nottest
@@ -451,7 +452,10 @@ class TestSkipInstall(StdoutTestCase):  # pylint: disable=too-many-public-method
         factory = UBootFactory()
         self.job = factory.create_bbb_job("sample_jobs/bbb-skip-install.yaml")
 
-    def test_skip_install_params(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_skip_install_params(self, which_mock):
         self.assertIsNotNone(self.job)
         deploy = [
             action
@@ -562,7 +566,10 @@ class TestDefinitions(StdoutTestCase):
         self.assertTrue(pattern.valid())
 
     @unittest.skipIf(check_rpcinfo(), "rpcinfo returns non-zero for nfs")
-    def test_definition_lists(self):  # pylint: disable=too-many-locals
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_definition_lists(self, which_mock):  # pylint: disable=too-many-locals
         self.job.validate()
         tftp_deploy = [
             action

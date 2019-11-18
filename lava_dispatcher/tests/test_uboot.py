@@ -22,6 +22,7 @@
 import os
 import yaml
 import unittest
+from unittest.mock import patch, MagicMock
 from lava_common.compat import yaml_safe_load
 from lava_common.exceptions import JobError
 from lava_dispatcher.device import NewDevice
@@ -65,7 +66,10 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         self.factory = UBootFactory()
 
     @unittest.skipIf(infrastructure_error("mkimage"), "u-boot-tools not installed")
-    def test_simulated_action(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_simulated_action(self, which_mock):
         job = self.factory.create_bbb_job("sample_jobs/uboot-ramdisk.yaml")
         self.assertIsNotNone(job)
 
@@ -75,7 +79,10 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
 
         self.assertIsNone(job.validate())
 
-    def test_tftp_pipeline(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_tftp_pipeline(self, which_mock):
         job = self.factory.create_bbb_job("sample_jobs/uboot-ramdisk.yaml")
         self.assertEqual(
             [action.name for action in job.pipeline.actions],
@@ -128,7 +135,8 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         tftp.validate()
         self.assertEqual([], tftp.errors)
 
-    def test_device_bbb(self):
+    @patch("lava_dispatcher.utils.shell.which", return_value="/usr/bin/in.tftpd")
+    def test_device_bbb(self, which_mock):
         job = self.factory.create_bbb_job("sample_jobs/uboot.yaml")
         self.assertEqual(
             job.device["commands"]["connections"]["uart0"]["connect"],
@@ -142,7 +150,10 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         )
 
     @unittest.skipIf(infrastructure_error("mkimage"), "u-boot-tools not installed")
-    def test_uboot_action(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_uboot_action(self, which_mock):
         job = self.factory.create_bbb_job("sample_jobs/uboot-ramdisk.yaml")
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
@@ -199,7 +210,8 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         self.assertEqual("u-boot", interrupt.method)
 
     @unittest.skipIf(infrastructure_error("lxc-start"), "lxc-start not installed")
-    def test_x15_uboot_nfs(self):  # pylint: disable=too-many-locals
+    @patch("lava_dispatcher.utils.shell.which", return_value="/usr/bin/in.tftpd")
+    def test_x15_uboot_nfs(self, which_mock):  # pylint: disable=too-many-locals
         job = self.factory.create_x15_job("sample_jobs/x15-nfs.yaml")
         job.validate()
         description_ref = self.pipeline_reference("x15-nfs.yaml", job=job)
@@ -220,14 +232,17 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         self.assertIn("compression", nfs.parameters["nfsrootfs"])
         self.assertEqual(nfs.parameters["nfsrootfs"]["compression"], "gz")
 
-    def test_juno_uboot_nfs(self):
+    @patch("lava_dispatcher.utils.shell.which", return_value="/usr/bin/in.tftpd")
+    def test_juno_uboot_nfs(self, which_mock):
         job = self.factory.create_juno_job("sample_jobs/juno-uboot-nfs.yaml")
         job.validate()
         description_ref = self.pipeline_reference("juno-uboot-nfs.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
 
-    def test_overlay_action(self):  # pylint: disable=too-many-locals
+    @patch("lava_dispatcher.utils.shell.which", return_value="/usr/bin/in.tftpd")
+    def test_overlay_action(self, which_mock):  # pylint: disable=too-many-locals
         parameters = {
+            "dispatcher": {},  # fake dispatcher parameter. Normally added by parser
             "device_type": "beaglebone-black",
             "job_name": "uboot-pipeline",
             "job_timeout": "15m",
@@ -235,15 +250,16 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
             "priority": "medium",
             "actions": {
                 "boot": {
+                    "namespace": "common",
                     "method": "u-boot",
                     "commands": "ramdisk",
-                    "type": "bootz",
                     "prompts": ["linaro-test", "root@debian:~#"],
                 },
                 "deploy": {
-                    "ramdisk": "initrd.gz",
-                    "kernel": "zImage",
-                    "dtb": "broken.dtb",
+                    "namespace": "common",
+                    "ramdisk": {"url": "initrd.gz", "compression": "gz"},
+                    "kernel": {"url": "zImage", "type": "zimage"},
+                    "dtb": {"url": "broken.dtb"},
                 },
             },
         }
@@ -255,15 +271,25 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         pipeline = Pipeline(job=job, parameters=parameters["actions"]["boot"])
         job.pipeline = pipeline
         overlay = BootloaderCommandOverlay()
+        connection = MagicMock()
+        connection.timeout = MagicMock()
         pipeline.add_action(overlay)
+        overlay.set_namespace_data(
+            action="uboot-prepare-kernel",
+            label="bootcommand",
+            key="bootcommand",
+            value="bootz",
+        )
+        overlay.validate()
+        overlay.run(connection, 100)
         ip_addr = dispatcher_ip(None)
         parsed = []
-        kernel_addr = job.device["parameters"][overlay.parameters["type"]]["ramdisk"]
-        ramdisk_addr = job.device["parameters"][overlay.parameters["type"]]["ramdisk"]
-        dtb_addr = job.device["parameters"][overlay.parameters["type"]]["dtb"]
-        kernel = parameters["actions"]["deploy"]["kernel"]
-        ramdisk = parameters["actions"]["deploy"]["ramdisk"]
-        dtb = parameters["actions"]["deploy"]["dtb"]
+        kernel_addr = job.device["parameters"][overlay.bootcommand]["ramdisk"]
+        ramdisk_addr = job.device["parameters"][overlay.bootcommand]["ramdisk"]
+        dtb_addr = job.device["parameters"][overlay.bootcommand]["dtb"]
+        kernel = parameters["actions"]["deploy"]["kernel"]["url"]
+        ramdisk = parameters["actions"]["deploy"]["ramdisk"]["url"]
+        dtb = parameters["actions"]["deploy"]["dtb"]["url"]
 
         substitution_dictionary = {
             "{SERVER_IP}": ip_addr,
@@ -272,7 +298,7 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
             "{DTB_ADDR}": dtb_addr,
             "{RAMDISK_ADDR}": ramdisk_addr,
             "{BOOTX}": "%s %s %s %s"
-            % (overlay.parameters["type"], kernel_addr, ramdisk_addr, dtb_addr),
+            % (overlay.bootcommand, kernel_addr, ramdisk_addr, dtb_addr),
             "{RAMDISK}": ramdisk,
             "{KERNEL}": kernel,
             "{DTB}": dtb,
@@ -303,7 +329,7 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
             line = line.replace(
                 "{BOOTX}",
                 "%s %s %s %s"
-                % (overlay.parameters["type"], kernel_addr, ramdisk_addr, dtb_addr),
+                % (overlay.bootcommand, kernel_addr, ramdisk_addr, dtb_addr),
             )
             line = line.replace("{RAMDISK}", ramdisk)
             line = line.replace("{KERNEL}", kernel)
@@ -319,7 +345,10 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         self.assertNotIn("setenv initrd_addr_r '{RAMDISK_ADDR}'", parsed)
         self.assertNotIn("setenv fdt_addr_r '{DTB_ADDR}'", parsed)
 
-    def test_boot_commands(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_boot_commands(self, which_mock):
         job = self.factory.create_bbb_job(
             "sample_jobs/uboot-ramdisk-inline-commands.yaml"
         )
@@ -374,7 +403,10 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
                 self.assertIn("${extraargs}", setenv.split("'")[1])
                 self.assertEqual(3, len(setenv.split("'")))
 
-    def test_transfer_media(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_transfer_media(self, which_mock):
         """
         Test adding the overlay to existing rootfs
         """
@@ -403,7 +435,10 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         self.assertIn("download_command", transfer.parameters["transfer_overlay"])
         self.assertIn("unpack_command", transfer.parameters["transfer_overlay"])
 
-    def test_download_action(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_download_action(self, which_mock):
         job = self.factory.create_bbb_job("sample_jobs/uboot.yaml")
         for action in job.pipeline.actions:
             action.validate()
@@ -432,7 +467,10 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         self.assertIsNotNone(extract)
         self.assertEqual(extract.timeout.duration, 240)
 
-    def test_reset_actions(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_reset_actions(self, which_mock):
         job = self.factory.create_bbb_job("sample_jobs/uboot.yaml")
         uboot_action = None
         uboot_retry = None
@@ -459,7 +497,10 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         names = [r_action.name for r_action in reset_action.internal_pipeline.actions]
         self.assertIn("pdu-reboot", names)
 
-    def test_secondary_media(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_secondary_media(self, which_mock):
         """
         Test UBootSecondaryMedia validation
         """
@@ -552,7 +593,10 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         self.assertIn("compression", nfs.parameters["nfsrootfs"])
         self.assertEqual(nfs.parameters["nfsrootfs"]["compression"], "xz")
 
-    def test_prefix(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_prefix(self, which_mock):
         job = self.factory.create_bbb_job("sample_jobs/bbb-skip-install.yaml")
         job.validate()
         tftp_deploy = [
@@ -572,7 +616,10 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         self.assertEqual(nfs.parameters["nfsrootfs"]["prefix"], "jessie/")
         self.assertEqual(nfs.param_key, "nfsrootfs")
 
-    def test_zcu102(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_zcu102(self, which_mock):
         job = self.factory.create_zcu102_job("sample_jobs/zcu102-ramdisk.yaml")
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
@@ -623,7 +670,10 @@ class TestKernelConversion(StdoutTestCase):
         ][0]["boot"]
         self.parser = JobParser()
 
-    def test_zimage_bootz(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_zimage_bootz(self, which_mock):
         self.deploy_block["kernel"]["type"] = "zimage"
         job = self.parser.parse(yaml.dump(self.base_data), self.device, 4212, None, "")
         job.logger = DummyLogger()
@@ -650,7 +700,10 @@ class TestKernelConversion(StdoutTestCase):
         self.assertEqual("bootz", uboot_prepare.bootcommand)
         self.assertFalse(uboot_prepare.mkimage_conversion)
 
-    def test_image(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_image(self, which_mock):
         self.deploy_block["kernel"]["type"] = "image"
         job = self.parser.parse(yaml.dump(self.base_data), self.device, 4212, None, "")
         job.logger = DummyLogger()
@@ -678,7 +731,10 @@ class TestKernelConversion(StdoutTestCase):
         self.assertEqual("bootm", uboot_prepare.bootcommand)
         self.assertTrue(uboot_prepare.mkimage_conversion)
 
-    def test_uimage(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_uimage(self, which_mock):
         self.deploy_block["kernel"]["type"] = "uimage"
         job = self.parser.parse(yaml.dump(self.base_data), self.device, 4212, None, "")
         job.logger = DummyLogger()
@@ -705,7 +761,11 @@ class TestKernelConversion(StdoutTestCase):
         self.assertEqual("bootm", uboot_prepare.bootcommand)
         self.assertFalse(uboot_prepare.mkimage_conversion)
 
-    def test_zimage_nobootz(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_zimage_nobootz(self, which_mock):
+        print(which_mock)
         # drop bootz from the device for this part of the test
         del self.device["parameters"]["bootz"]
         self.deploy_block["kernel"]["type"] = "zimage"
@@ -733,26 +793,6 @@ class TestKernelConversion(StdoutTestCase):
         self.assertEqual("zimage", uboot_prepare.kernel_type)
         self.assertEqual("bootm", uboot_prepare.bootcommand)
         self.assertTrue(uboot_prepare.mkimage_conversion)
-
-    def test_uimage_boot_type(self):
-        # uimage in boot type
-        del self.deploy_block["kernel"]["type"]
-        self.boot_block["type"] = "bootm"
-        job = self.parser.parse(yaml.dump(self.base_data), self.device, 4212, None, "")
-        job.logger = DummyLogger()
-        job.validate()
-        deploy = [
-            action for action in job.pipeline.actions if action.name == "tftp-deploy"
-        ][0]
-        overlay = [
-            action
-            for action in deploy.internal_pipeline.actions
-            if action.name == "prepare-tftp-overlay"
-        ][0]
-        self.assertNotIn(
-            "uboot-prepare-kernel",
-            [action.name for action in overlay.internal_pipeline.actions],
-        )
 
 
 class TestOverlayCommands(StdoutTestCase):  # pylint: disable=too-many-public-methods

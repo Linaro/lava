@@ -21,6 +21,7 @@
 
 import os
 import yaml
+from unittest.mock import patch
 
 from lava_common.compat import yaml_safe_load
 from lava_common.decorators import nottest
@@ -102,7 +103,10 @@ class TestMultiDeploy(StdoutTestCase):
         def __init__(self):
             super().__init__(4122, 0, self.parameters)
 
-    def test_multi_deploy(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_multi_deploy(self, which_mock):
         self.assertIsNotNone(self.parsed_data)
         job = Job(4212, self.parsed_data, None)
         job.timeout = Timeout("Job", Timeout.parse({"minutes": 2}))
@@ -216,9 +220,12 @@ class TestMultiUBoot(StdoutTestCase):  # pylint: disable=too-many-public-methods
         factory = UBootFactory()
         self.job = factory.create_bbb_job("sample_jobs/uboot-multiple.yaml")
         self.assertIsNotNone(self.job)
-        self.assertIsNone(self.job.validate())
 
-    def test_multi_uboot(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_multi_uboot(self, which_mock):
         self.assertIsNotNone(self.job)
+        self.assertIsNone(self.job.validate())
         description_ref = self.pipeline_reference("uboot-multiple.yaml", job=self.job)
         self.assertEqual(description_ref, self.job.pipeline.describe(False))

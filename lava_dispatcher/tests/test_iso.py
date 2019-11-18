@@ -19,6 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
+from unittest.mock import patch
 
 from lava_common.compat import yaml_safe_load
 from lava_dispatcher.action import Pipeline, Timeout
@@ -59,7 +60,8 @@ class TestIsoJob(StdoutTestCase):
         )
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
-    def test_iso_preparation(self):
+    @patch("lava_dispatcher.actions.deploy.iso.which", return_value="/usr/bin/in.tftpd")
+    def test_iso_preparation(self, which_mock):
         self.job.validate()
         deploy_iso = [
             action
@@ -81,7 +83,8 @@ class TestIsoJob(StdoutTestCase):
         self.assertEqual(pull.files["initrd"], "/install.amd/initrd.gz")
         self.assertEqual(len(pull.files.keys()), 2)
 
-    def test_command_line(self):
+    @patch("lava_dispatcher.actions.deploy.iso.which", return_value="/usr/bin/in.tftpd")
+    def test_command_line(self, which_mock):
         self.job.validate()
         deploy_iso = [
             action

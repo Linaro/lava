@@ -22,6 +22,7 @@
 import os
 import yaml
 import unittest
+from unittest.mock import patch
 from lava_common.compat import yaml_safe_load
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
@@ -42,7 +43,10 @@ class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-m
         super().setUp()
         self.factory = Factory()
 
-    def test_simulated_action(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_simulated_action(self, which_mock):
         job = self.factory.create_job("x86-01.jinja2", "sample_jobs/ipxe-ramdisk.yaml")
         self.assertIsNotNone(job)
 
@@ -105,7 +109,10 @@ class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-m
             methods["ipxe"]["parameters"].get("bootloader_prompt"), "iPXE>"
         )
 
-    def test_bootloader_action(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_bootloader_action(self, which_mock):
         job = self.factory.create_job("x86-01.jinja2", "sample_jobs/ipxe-ramdisk.yaml")
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
@@ -226,7 +233,10 @@ class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-m
                 self.assertEqual("nbd", action.parameters["to"])
             self.assertTrue(action.valid)
 
-    def test_download_action(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_download_action(self, which_mock):
         job = self.factory.create_job("x86-01.jinja2", "sample_jobs/ipxe.yaml")
         for action in job.pipeline.actions:
             action.validate()
@@ -255,7 +265,10 @@ class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-m
         self.assertIsNotNone(extract)
         self.assertEqual(extract.timeout.duration, 120)
 
-    def test_reset_actions(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_reset_actions(self, which_mock):
         job = self.factory.create_job("x86-01.jinja2", "sample_jobs/ipxe.yaml")
         bootloader_action = None
         bootloader_retry = None
@@ -287,7 +300,10 @@ class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-m
         self.assertIn("pdu-reboot", names)
 
     @unittest.skipIf(infrastructure_error("telnet"), "telnet not installed")
-    def test_prompt_from_job(self):  # pylint: disable=too-many-locals
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_prompt_from_job(self, which_mock):  # pylint: disable=too-many-locals
         """
         Support setting the prompt after login via the job
 
@@ -363,7 +379,10 @@ class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-m
         self.assertIn("compression", nfs.parameters["nfsrootfs"])
         self.assertEqual(nfs.parameters["nfsrootfs"]["compression"], "xz")
 
-    def test_ipxe_with_monitor(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_ipxe_with_monitor(self, which_mock):
         job = self.factory.create_job("x86-01.jinja2", "sample_jobs/ipxe-monitor.yaml")
         job.validate()
         description_ref = self.pipeline_reference("ipxe-monitor.yaml", job=job)

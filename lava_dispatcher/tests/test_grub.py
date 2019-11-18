@@ -20,6 +20,7 @@
 
 
 import unittest
+from unittest.mock import patch
 from lava_common.compat import yaml_safe_load
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.tests.utils import (
@@ -64,7 +65,10 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.factory = GrubFactory()
 
     @unittest.skipIf(infrastructure_error("mkimage"), "u-boot-tools not installed")
-    def test_simulated_action(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_simulated_action(self, which_mock):
         job = self.factory.create_job("d02-01.jinja2", "sample_jobs/grub-ramdisk.yaml")
         self.assertIsNotNone(job)
 
@@ -139,7 +143,10 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         )
 
     @unittest.skipIf(infrastructure_error("mkimage"), "u-boot-tools not installed")
-    def test_grub_action(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_grub_action(self, which_mock):
         job = self.factory.create_job("d02-01.jinja2", "sample_jobs/grub-ramdisk.yaml")
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
@@ -232,7 +239,10 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertNotIn("initrd (tftp,{SERVER_IP})/{RAMDISK}", parsed)
         self.assertNotIn("devicetree (tftp,{SERVER_IP})/{DTB}", parsed)
 
-    def test_download_action(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_download_action(self, which_mock):
         job = self.factory.create_job("d02-01.jinja2", "sample_jobs/grub-nfs.yaml")
         for action in job.pipeline.actions:
             action.validate()
@@ -263,7 +273,10 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertIsNotNone(extract)
         self.assertEqual(extract.timeout.duration, 600)
 
-    def test_reset_actions(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_reset_actions(self, which_mock):
         job = self.factory.create_job("d02-01.jinja2", "sample_jobs/grub-ramdisk.yaml")
         grub_action = None
         for action in job.pipeline.actions:
@@ -278,7 +291,10 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertIn("expect-shell-connection", names)
         self.assertIn("bootloader-commands", names)
 
-    def test_grub_with_monitor(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_grub_with_monitor(self, which_mock):
         job = self.factory.create_job(
             "d02-01.jinja2", "sample_jobs/grub-ramdisk-monitor.yaml"
         )
@@ -286,7 +302,10 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         description_ref = self.pipeline_reference("grub-ramdisk-monitor.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
 
-    def test_grub_via_efi(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_grub_via_efi(self, which_mock):
         job = self.factory.create_mustang_job("sample_jobs/mustang-grub-efi-nfs.yaml")
         self.assertIsNotNone(job)
         job.validate()
@@ -435,7 +454,10 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         ][0]
         self.assertIsNotNone(login)
 
-    def test_synquacer_grub(self):
+    @patch(
+        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
+    )
+    def test_synquacer_grub(self, which_mock):
         job = self.factory.create_job(
             "synquacer-dtb-01.jinja2", "sample_jobs/synquacer-dtb.yaml"
         )
