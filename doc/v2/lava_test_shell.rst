@@ -36,7 +36,7 @@ description).
 Versioned test definitions
 ==========================
 
-If your test definition is not part of a git or bzr repository then it is must
+If your test definition is not part of a git repository then it is must
 include a **version** parameter in the metadata section like in the following
 example.
 
@@ -313,7 +313,7 @@ express that in the ``install`` section with:
 
 .. _adding_repositories_deprecated:
 
-Adding Git/BZR Repositories
+Adding Git Repositories
 ===========================
 
 If the test needs code from a shared repository, the action can clone this
@@ -322,8 +322,6 @@ data on your behalf with:
 .. code-block:: yaml
 
   install:
-      bzr-repos:
-          - lp:lava-test
       git-repos:
           - git://git.linaro.org/people/davelong/lt_ti_lava.git
 

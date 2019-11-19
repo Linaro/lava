@@ -33,7 +33,7 @@ from lava_common.exceptions import InfrastructureError, JobError, LAVABug, TestE
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.test import TestAction
 from lava_dispatcher.utils.strings import indices
-from lava_dispatcher.utils.vcs import BzrHelper, GitHelper
+from lava_dispatcher.utils.vcs import GitHelper
 from lava_common.constants import DEFAULT_TESTDEF_NAME_CLASS, DISPATCHER_DOWNLOAD_DIR
 
 
@@ -331,79 +331,6 @@ class GitRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
 
         # set testdef metadata in base class
         self.store_testdef(testdef, "git", commit_id)
-
-        return connection
-
-
-# TODO: merge with GitRepoAction
-class BzrRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
-    """
-    Each repo action is for a single repository,
-    tests using multiple repositories get multiple
-    actions.
-    """
-
-    priority = 1
-    name = "bzr-repo-action"
-    description = "apply bazaar repository of tests to the test image"
-    summary = "branch a bzr test repo"
-
-    def __init__(self):
-        super().__init__()
-        self.testdef = None
-
-    def validate(self):
-        if "repository" not in self.parameters:
-            self.errors = "Bzr repository not specified in job definition"
-        if "path" not in self.parameters:
-            self.errors = "Path to YAML file not specified in the job definition"
-        if not self.valid:
-            return
-        self.vcs = BzrHelper(self.parameters["repository"])
-        super().validate()
-
-    @classmethod
-    def accepts(cls, repo_type):
-        return repo_type == "bzr"
-
-    def run(self, connection, max_end_time):
-        """
-        Clone the bazar repository into a directory
-        """
-        connection = super().run(connection, max_end_time)
-
-        # NOTE: the runner_path dir must remain empty until after the VCS clone, so let the VCS clone create the final dir
-        runner_path = self.get_namespace_data(
-            action="uuid", label="overlay_path", key=self.parameters["test_name"]
-        )
-
-        commit_id = self.vcs.clone(
-            runner_path, revision=self.parameters.get("revision")
-        )
-        if commit_id is None:
-            raise InfrastructureError(
-                "Unable to get test definition from %s (%s)"
-                % (self.vcs.binary, self.parameters)
-            )
-        self.results = {
-            "commit": commit_id,
-            "repository": self.parameters["repository"],
-            "path": self.parameters["path"],
-        }
-
-        # now read the YAML to create a testdef dict to retrieve metadata
-        yaml_file = os.path.join(runner_path, self.parameters["path"])
-        try:
-            with open(yaml_file, "r") as test_file:
-                self.testdef = yaml_safe_load(test_file)
-        except OSError as exc:
-            raise JobError(
-                "Unable to open test definition '%s': %s"
-                % (self.parameters["path"], str(exc))
-            )
-
-        # set testdef metadata in base class
-        self.store_testdef(self.testdef, "bzr", commit_id)
 
         return connection
 

@@ -58,7 +58,7 @@ from
 ====
 
 The type of the repository is **not** guessed, it **must** be specified
-explicitly. Support is available for ``bzr`` and ``git``. Support is planned
+explicitly. Support is available for ``git``. Support is planned
 for ``url`` and ``tar``.
 
 git

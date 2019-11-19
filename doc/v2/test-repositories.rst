@@ -5,7 +5,7 @@
 Test definitions in version control
 ###################################
 
-LAVA supports git and bzr version control for use with test definitions, and
+LAVA supports git version control for use with test definitions, and
 this is the recommended way to host and use test definitions for LAVA. When a
 repository is listed in a test definition, the entire repository is checked
 out. This allows YAML files in the repository to reliably access scripts and
@@ -157,8 +157,6 @@ address of the repository to clone
 .. code-block:: yaml
 
   install:
-      bzr-repos:
-          - lp:lava-test
       git-repos:
           - git://git.linaro.org/people/davelong/lt_ti_lava.git
 
