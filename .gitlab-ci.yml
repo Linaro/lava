@@ -65,6 +65,8 @@ dispatcher-debian-9: *dispatcher
 server-debian-9: *server
 dispatcher-debian-10: *dispatcher
 server-debian-10: *server
+dispatcher-debian-11: *dispatcher
+server-debian-11: *server
 
 ###########
 # Analyze #
