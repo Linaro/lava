@@ -17,25 +17,11 @@ standard test jobs available for ``arndale``, ``cubietruck`` and ``panda``
 devices. "These files are very similar; typically the only substantive changes
 come down to the :abbr:`DTB (Device Tree Blob)` for the relevant device type.
 
-* `panda ramdisk <examples/test-jobs/standard-armmp-ramdisk-panda.yaml>`_
-
-  * ``omap4-panda.dtb``
-
-* `panda NFS <examples/test-jobs/standard-armmp-nfs-panda.yaml>`_
-
-  * ``omap4-panda.dtb``
-
-* `arndale <examples/test-jobs/standard-armmp-ramdisk-arndale.yaml>`_
-
-  * ``exynos5250-arndale.dtb``
-
-* `cubietruck ramdisk <examples/test-jobs/standard-armmp-ramdisk-cubietruck.yaml>`_
-
-  * ``sun7i-a20-cubietruck.dtb``
-
-* `cubietruck NFS <examples/test-jobs/standard-armmp-nfs-cubietruck.yaml>`_
-
-  * ``sun7i-a20-cubietruck.dtb``
+* `panda ramdisk <examples/test-jobs/standard-armmp-ramdisk-panda.yaml>`_: ``omap4-panda.dtb``
+* `panda NFS <examples/test-jobs/standard-armmp-nfs-panda.yaml>`_: ``omap4-panda.dtb``
+* `arndale <examples/test-jobs/standard-armmp-ramdisk-arndale.yaml>`_: ``exynos5250-arndale.dtb``
+* `cubietruck ramdisk <examples/test-jobs/standard-armmp-ramdisk-cubietruck.yaml>`_: ``sun7i-a20-cubietruck.dtb``
+* `cubietruck NFS <examples/test-jobs/standard-armmp-nfs-cubietruck.yaml>`_: ``sun7i-a20-cubietruck.dtb``
 
 .. _standard_armmp_bbb:
 
@@ -44,15 +30,8 @@ Standard test job for beaglebone-black
 
 The first standard job for a beaglebone-black is a simple ramdisk test job.
 
-.. include:: examples/test-jobs/standard-armmp-ramdisk-bbb.yaml
-     :code: yaml
-     :end-before: metadata:
-
-`Download / view standard-armmp-ramdisk-bbb.yaml
-<examples/test-jobs/standard-armmp-ramdisk-bbb.yaml>`_
-
-`Download / view standard-armmp-nfs-bbb.yaml
-<examples/test-jobs/standard-armmp-nfs-bbb.yaml>`_
+* `standard-armmp-ramdisk-bbb.yaml <examples/test-jobs/standard-armmp-ramdisk-bbb.yaml>`_
+* `standard-armmp-nfs-bbb.yaml <examples/test-jobs/standard-armmp-nfs-bbb.yaml>`_
 
 Features of a ramdisk test job
 ------------------------------
@@ -89,21 +68,8 @@ Features of an NFS test job
   operation of the test shell. If modules are provided, these are added to the
   rootfs as well.
 
-Metadata
-========
-
-When you copy this standard test job for your own testing, remember to
-**modify** this metadata to distinguish your copy from the original.
-
-.. include:: examples/test-jobs/standard-armmp-ramdisk-bbb.yaml
-     :code: yaml
-     :start-after: visibility: public
-     :end-before: # ACTION_BLOCK
-
-.. seealso:: :ref:`job_metadata`
-
 Deploy
-======
+------
 
 U-Boot support in LAVA supports a variety of deployment methods. This standard
 job will use the Debian :abbr:`ARMMP (ARM Multiple Platform)` kernel package.
@@ -121,7 +87,7 @@ modules from the package.
 * **modules** - ``modules.tar.gz``
 
 Specific options
-----------------
+================
 
 The ``modules.tar.gz`` and ``initramfs.cpio.gz`` are both compressed using
 ``gzip`` and this **must** be specified in the test job definition.
@@ -137,7 +103,7 @@ expect basic compatibility by specifying ``oe`` for OpenEmbedded.
      :end-before: # BOOT_BLOCK
 
 Boot
-====
+----
 
 U-Boot support in LAVA supports a variety of deployment methods. This standard
 job will use the ``ramdisk`` commands from the :term:`device type` template.
@@ -148,7 +114,7 @@ job will use the ``ramdisk`` commands from the :term:`device type` template.
      :end-before: # TEST_BLOCK
 
 Test
-====
+----
 
 The limitation of a ramdisk deployment is that certain tools (like ``apt``) are
 not available, so the test definition used with this test job is a fairly

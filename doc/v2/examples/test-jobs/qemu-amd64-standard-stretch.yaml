@@ -12,6 +12,10 @@ timeouts:
 priority: medium
 visibility: public
 
+metadata:
+  source: https://git.lavasoftware.org/lava/lava
+  path: doc/v2/examples/test-jobs/qemu-amd64-standard-stretch.yaml
+
 # CONTEXT_BLOCK
 context:
   arch: amd64
