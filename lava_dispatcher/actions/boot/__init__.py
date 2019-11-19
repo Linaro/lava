@@ -440,7 +440,7 @@ class BootloaderCommandOverlay(Action):
         self.bootcommand = self.get_namespace_data(
             action="uboot-prepare-kernel", label="bootcommand", key="bootcommand"
         )
-        if not self.bootcommand:
+        if not self.bootcommand and "type" in self.parameters:
             raise JobError("Kernel image type can't be determined")
         prepared_kernel = self.get_namespace_data(
             action="prepare-kernel", label="file", key="kernel"
@@ -450,58 +450,59 @@ class BootloaderCommandOverlay(Action):
                 "Using kernel file from prepare-kernel: %s", prepared_kernel
             )
             substitutions["{KERNEL}"] = prepared_kernel
-        self.logger.debug("%s", self.job.device["parameters"])
-        kernel_addr = self.job.device["parameters"][self.bootcommand]["kernel"]
-        dtb_addr = self.job.device["parameters"][self.bootcommand]["dtb"]
-        ramdisk_addr = self.job.device["parameters"][self.bootcommand]["ramdisk"]
+        if self.bootcommand:
+            self.logger.debug("%s", self.job.device["parameters"])
+            kernel_addr = self.job.device["parameters"][self.bootcommand]["kernel"]
+            dtb_addr = self.job.device["parameters"][self.bootcommand]["dtb"]
+            ramdisk_addr = self.job.device["parameters"][self.bootcommand]["ramdisk"]
 
-        if (
-            not self.get_namespace_data(
-                action="tftp-deploy", label="tftp", key="ramdisk"
+            if (
+                not self.get_namespace_data(
+                    action="tftp-deploy", label="tftp", key="ramdisk"
+                )
+                and not self.get_namespace_data(
+                    action="download-action", label="file", key="ramdisk"
+                )
+                and not self.get_namespace_data(
+                    action="download-action", label="file", key="initrd"
+                )
+            ):
+                ramdisk_addr = "-"
+            add_header = self.job.device["actions"]["deploy"]["parameters"].get(
+                "add_header"
             )
-            and not self.get_namespace_data(
-                action="download-action", label="file", key="ramdisk"
-            )
-            and not self.get_namespace_data(
+            if self.method == "u-boot" and not add_header == "u-boot":
+                self.logger.debug("No u-boot header, not passing ramdisk to bootX cmd")
+                ramdisk_addr = "-"
+
+            if self.get_namespace_data(
                 action="download-action", label="file", key="initrd"
-            )
-        ):
-            ramdisk_addr = "-"
-        add_header = self.job.device["actions"]["deploy"]["parameters"].get(
-            "add_header"
-        )
-        if self.method == "u-boot" and not add_header == "u-boot":
-            self.logger.debug("No u-boot header, not passing ramdisk to bootX cmd")
-            ramdisk_addr = "-"
+            ):
+                # no u-boot header, thus no embedded size, so we have to add it to the
+                # boot cmd with colon after the ramdisk
+                substitutions["{BOOTX}"] = "%s %s %s:%s %s" % (
+                    self.bootcommand,
+                    kernel_addr,
+                    ramdisk_addr,
+                    "${initrd_size}",
+                    dtb_addr,
+                )
+            else:
+                substitutions["{BOOTX}"] = "%s %s %s %s" % (
+                    self.bootcommand,
+                    kernel_addr,
+                    ramdisk_addr,
+                    dtb_addr,
+                )
 
-        if self.get_namespace_data(
-            action="download-action", label="file", key="initrd"
-        ):
-            # no u-boot header, thus no embedded size, so we have to add it to the
-            # boot cmd with colon after the ramdisk
-            substitutions["{BOOTX}"] = "%s %s %s:%s %s" % (
-                self.bootcommand,
-                kernel_addr,
-                ramdisk_addr,
-                "${initrd_size}",
-                dtb_addr,
-            )
-        else:
-            substitutions["{BOOTX}"] = "%s %s %s %s" % (
-                self.bootcommand,
-                kernel_addr,
-                ramdisk_addr,
-                dtb_addr,
-            )
-
-        substitutions["{KERNEL_ADDR}"] = kernel_addr
-        substitutions["{DTB_ADDR}"] = dtb_addr
-        substitutions["{RAMDISK_ADDR}"] = ramdisk_addr
-        self.results = {
-            "kernel_addr": kernel_addr,
-            "dtb_addr": dtb_addr,
-            "ramdisk_addr": ramdisk_addr,
-        }
+            substitutions["{KERNEL_ADDR}"] = kernel_addr
+            substitutions["{DTB_ADDR}"] = dtb_addr
+            substitutions["{RAMDISK_ADDR}"] = ramdisk_addr
+            self.results = {
+                "kernel_addr": kernel_addr,
+                "dtb_addr": dtb_addr,
+                "ramdisk_addr": ramdisk_addr,
+            }
 
         nfs_address = self.get_namespace_data(
             action="persistent-nfs-overlay", label="nfs_address", key="nfsroot"
