@@ -67,10 +67,10 @@ class Timeout:
             return Timeout.default_duration()
         return int(duration.total_seconds())
 
-    def can_skip(self, parameters):  # pylint: disable=no-self-use
+    def can_skip(self, parameters):
         return parameters.get("timeout", {}).get("skip", False)
 
-    def _timed_out(self, signum, frame):  # pylint: disable=unused-argument
+    def _timed_out(self, signum, frame):
         duration = int(time.time() - self.start)
         raise self.exception("%s timed out after %s seconds" % (self.name, duration))
 
@@ -104,15 +104,11 @@ class Timeout:
             if parent is None:
                 signal.alarm(0)
             else:
-                signal.signal(
-                    signal.SIGALRM, parent.timeout._timed_out
-                )  # pylint: disable=protected-access
+                signal.signal(signal.SIGALRM, parent.timeout._timed_out)
                 duration = round(action_max_end_time - time.time())
                 if duration <= 0:
                     signal.alarm(0)
-                    parent.timeout._timed_out(
-                        None, None
-                    )  # pylint: disable=protected-access
+                    parent.timeout._timed_out(None, None)
                 signal.alarm(duration)
         except Exception:
             # clear the timeout alarm, the action has returned an error
