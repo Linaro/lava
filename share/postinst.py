@@ -39,7 +39,6 @@ INSTANCE_TEMPLATE_CONF = "/usr/share/lava-server/instance.conf.template"
 SECRET_KEY = "/etc/lava-server/secret_key.conf"
 DISPATCHER_CONFIG = "/etc/lava-server/dispatcher-config/"
 LAVA_DB_SERVER = "localhost"
-# pylint: disable=line-too-long,missing-docstring
 
 
 def psql_run(cmd_list, failure_msg):

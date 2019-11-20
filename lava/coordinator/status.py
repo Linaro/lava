@@ -60,9 +60,6 @@ def read_settings(filename):
     return settings
 
 
-# pylint: disable=too-many-branches,too-many-statements,too-many-locals
-
-
 def lava_poll(port, host, name, request):
     """
     Modified poll equivalent

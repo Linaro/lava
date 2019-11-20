@@ -25,7 +25,7 @@ device configuration is valid YAML syntax for each device.
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # pylint gets confused: commands have no shebang, but the file is not a module.
-# pylint: disable=invalid-name
+
 
 import argparse
 import jinja2

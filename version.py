@@ -26,9 +26,6 @@ import os
 import sys
 
 
-# pylint: disable=superfluous-parens,too-many-locals
-
-
 def version_tag(ref=None):
     """
     Parses the git status to determine if this is a git tag

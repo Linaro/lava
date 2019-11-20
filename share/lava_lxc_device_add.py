@@ -39,8 +39,6 @@ from lava_dispatcher.log import YAMLLogger
 # Wait 10s maximum to close the socket
 LINGER = 10000
 
-# pylint: disable=line-too-long,missing-docstring
-
 
 def setup_logger(options):
     # Pipeline always log as YAML so change the base logger.
@@ -59,7 +57,7 @@ def setup_logger(options):
                     % (options.job_id, options.logging_url)
                 )
                 return None
-        # pylint: disable=no-member
+
         handler = logger.addZMQHandler(
             options.logging_url,
             options.master_cert,
@@ -143,14 +141,14 @@ def main():
         logger.error(msg)
         syslog.syslog(msg)
         syslog.syslog("[%s] Tried: %s" % (options.job_id, " ".join(lxc_cmd)))
-        logger.close(linger=LINGER)  # pylint: disable=no-member
+        logger.close(linger=LINGER)
         return 2
     except Exception as exc:
         syslog.syslog("[%s] uncaught exception: %s" % (options.job_id, exc))
-        logger.close(linger=LINGER)  # pylint: disable=no-member
+        logger.close(linger=LINGER)
         return 3
 
-    logger.close(linger=LINGER)  # pylint: disable=no-member
+    logger.close(linger=LINGER)
     return 0
 
 
