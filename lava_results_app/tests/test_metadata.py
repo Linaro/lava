@@ -1,4 +1,3 @@
-# pylint: disable=ungrouped-imports
 import os
 import re
 import yaml
@@ -17,15 +16,13 @@ from lava_results_app.dbutils import (
     map_metadata,
     map_scanned_results,
     create_metadata_store,
-    _get_action_metadata,  # pylint: disable=protected-access
+    _get_action_metadata,
 )
 from lava_results_app.models import ActionData, MetaType, TestData, TestCase, TestSuite
 from lava_results_app.utils import export_testcase, testcase_export_fields
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.device import PipelineDevice
 from lava_dispatcher.tests.test_defs import allow_missing_path
-
-# pylint: disable=invalid-name,too-few-public-methods,too-many-public-methods,no-member,too-many-ancestors
 
 
 class TestMetaTypes(TestCaseWithFactory):
@@ -211,7 +208,7 @@ class TestMetaTypes(TestCaseWithFactory):
         os.unlink(meta_filename)
         shutil.rmtree(job.output_dir)
 
-    def test_repositories(self):  # pylint: disable=too-many-locals
+    def test_repositories(self):
         job = TestJob.from_yaml_and_user(self.factory.make_job_yaml(), self.user)
         job_def = yaml_safe_load(job.definition)
         job_ctx = job_def.get("context", {})
@@ -247,7 +244,7 @@ class TestMetaTypes(TestCaseWithFactory):
             },
         )
 
-    def test_parameter_support(self):  # pylint: disable=too-many-locals
+    def test_parameter_support(self):
         data = self.factory.make_job_data()
         test_block = [block for block in data["actions"] if "test" in block][0]
         smoke = test_block["test"]["definitions"][0]

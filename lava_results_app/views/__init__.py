@@ -73,8 +73,6 @@ from lava_scheduler_app.views import get_restricted_job
 
 from lava_server.lavatable import LavaView
 
-# pylint: disable=too-many-ancestors,invalid-name
-
 
 class ResultsView(LavaView):
     """

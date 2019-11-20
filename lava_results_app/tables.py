@@ -56,7 +56,7 @@ class ResultsTable(LavaTable):
     List of LAVA TestSuite results
     """
 
-    def _check_job(self, record, table=None):  # pylint: disable=no-self-use
+    def _check_job(self, record, table=None):
         """
         Slightly different purpose to RestrictedIDLinkColumn.render
         """
@@ -132,7 +132,7 @@ class ResultsTable(LavaTable):
     buglinks = tables.Column(accessor="job", verbose_name="Bug Links")
     buglinks.orderable = False
 
-    class Meta(LavaTable.Meta):  # pylint: disable=no-init,too-few-public-methods
+    class Meta(LavaTable.Meta):
         searches = {"name": "contains"}
         sequence = {"job_id", "actions"}
 
@@ -147,7 +147,7 @@ class ResultsIndexTable(ResultsTable):
     total = tables.Column(accessor="job", verbose_name="Totals")
     logged = tables.Column(accessor="job", verbose_name="Logged")
 
-    class Meta(LavaTable.Meta):  # pylint: disable=no-init,too-few-public-methods
+    class Meta(LavaTable.Meta):
         searches = {"name": "contains"}
 
 
@@ -165,7 +165,7 @@ class TestJobResultsTable(ResultsTable):
     total = tables.Column(accessor="job", verbose_name="Totals")
     logged = tables.Column(accessor="job", verbose_name="Logged")
 
-    class Meta(LavaTable.Meta):  # pylint: disable=no-init,too-few-public-methods
+    class Meta(LavaTable.Meta):
         searches = {"name": "contains"}
 
 
@@ -183,12 +183,12 @@ class SuiteTable(LavaTable):
     buglinks = tables.Column(accessor="suite", verbose_name="Bug Links")
     buglinks.orderable = False
 
-    def render_name(self, record):  # pylint: disable=no-self-use
+    def render_name(self, record):
         return mark_safe(
             '<a href="%s">%s</a>' % (record.get_absolute_url(), record.name)
         )
 
-    def render_result(self, record):  # pylint: disable=no-self-use
+    def render_result(self, record):
         code = record.result_code
         if code == "pass":
             icon = "ok"
@@ -201,13 +201,13 @@ class SuiteTable(LavaTable):
             % (record.get_absolute_url(), icon, code)
         )
 
-    def render_test_set(self, record):  # pylint: disable=no-self-use
+    def render_test_set(self, record):
         return mark_safe(
             '<a href="%s">%s</a>'
             % (record.test_set.get_absolute_url(), record.test_set.name)
         )
 
-    def render_buglinks(self, record, table=None):  # pylint: disable=no-self-use
+    def render_buglinks(self, record, table=None):
         case_links_count = BugLink.objects.filter(
             content_type=ContentType.objects.get_for_model(TestCase),
             object_id=record.id,
@@ -226,5 +226,5 @@ class SuiteTable(LavaTable):
         else:
             return mark_safe("[%s]" % (case_links_count))
 
-    class Meta(LavaTable.Meta):  # pylint: disable=no-init,too-few-public-methods
+    class Meta(LavaTable.Meta):
         searches = {"name": "contains"}
