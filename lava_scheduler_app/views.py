@@ -1502,7 +1502,7 @@ def job_status(request, pk):
         response_dict["actual_device"] = html
 
     if job.start_time:
-        response_dict["started"] = naturaltime(job.start_time)
+        response_dict["started"] = str(naturaltime(job.start_time))
         response_dict["duration"] = timeuntil(timezone.now(), job.start_time)
 
     if job.state != job.STATE_FINISHED:
