@@ -17,9 +17,11 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
+import csv
 import json
 import pytest
 import tap
+import yaml
 
 from django.urls import reverse
 from django.contrib.auth.models import User
@@ -286,13 +288,80 @@ class TestRestApi:
         )
         assert len(data["results"]) == 1  # nosec - unit test support
 
+    # Testing the v0.1 base version 'tests' endpoint.
     def test_testjob_tests(self):
         data = self.hit(
             self.userclient,
-            reverse("api-root", args=[self.version])
+            reverse("api-root", args=[versions.versions[0]])
             + "jobs/%s/tests/" % self.public_testjob1.id,
         )
         assert len(data["results"]) == 2  # nosec - unit test support
+
+    def test_testjob_suite(self):
+        data = self.hit(
+            self.userclient,
+            reverse("api-root", args=[self.version])
+            + "jobs/%s/suites/%s/"
+            % (self.public_testjob1.id, self.public_testjob1.testsuite_set.first().id),
+        )
+        assert (
+            data["id"] == self.public_testjob1.testsuite_set.first().id
+        )  # nosec - unit test support
+
+    def test_testjob_suite_tests(self):
+        data = self.hit(
+            self.userclient,
+            reverse("api-root", args=[self.version])
+            + "jobs/%s/suites/%s/tests/"
+            % (self.public_testjob1.id, self.public_testjob1.testsuite_set.first().id),
+        )
+        assert len(data["results"]) == 2  # nosec - unit test support
+
+    def test_testjob_suite_test(self):
+        data = self.hit(
+            self.userclient,
+            reverse("api-root", args=[self.version])
+            + "jobs/%s/suites/%s/tests/%s/"
+            % (
+                self.public_testjob1.id,
+                self.public_testjob1.testsuite_set.first().id,
+                self.public_testjob1.testsuite_set.first().testcase_set.first().id,
+            ),
+        )
+        assert (
+            data["id"]
+            == self.public_testjob1.testsuite_set.first().testcase_set.first().id
+        )  # nosec - unit test support
+
+    def test_testjob_metadata(self):
+        data = self.hit(
+            self.userclient,
+            reverse("api-root", args=[self.version])
+            + "jobs/%s/metadata/" % self.public_testjob1.id,
+        )
+        assert data["metadata"] == []  # nosec - unit test support
+
+    def test_testjob_csv(self):
+        data = self.hit(
+            self.userclient,
+            reverse("api-root", args=[self.version])
+            + "jobs/%s/csv/" % self.public_testjob1.id,
+        )
+        csv_data = csv.reader(data.splitlines())
+        assert list(csv_data)[1][0] == str(
+            self.public_testjob1.id
+        )  # nosec - unit test support
+
+    def test_testjob_yaml(self):
+        data = self.hit(
+            self.userclient,
+            reverse("api-root", args=[self.version])
+            + "jobs/%s/yaml/" % self.public_testjob1.id,
+        )
+        data = yaml.load(data)
+        assert data[0]["job"] == str(
+            self.public_testjob1.id
+        )  # nosec - unit test support
 
     def test_testjob_junit(self):
         data = self.hit(
@@ -352,6 +421,31 @@ not ok 1 - foo
 ok 2 - bar
 """
             )
+
+    def test_testjob_suite_csv(self):
+        data = self.hit(
+            self.userclient,
+            reverse("api-root", args=[self.version])
+            + "jobs/%s/suites/%s/csv/"
+            % (self.public_testjob1.id, self.public_testjob1.testsuite_set.first().id),
+        )
+        csv_data = csv.reader(data.splitlines())
+        # Case id column is number 13 in a row.
+        assert list(csv_data)[1][12] == str(
+            self.public_testjob1.testsuite_set.first().testcase_set.first().id
+        )  # nosec - unit test support
+
+    def test_testjob_suite_yaml(self):
+        data = self.hit(
+            self.userclient,
+            reverse("api-root", args=[self.version])
+            + "jobs/%s/suites/%s/yaml/"
+            % (self.public_testjob1.id, self.public_testjob1.testsuite_set.first().id),
+        )
+        data = yaml.load(data)
+        assert (
+            data[0]["suite"] == self.public_testjob1.testsuite_set.first().name
+        )  # nosec - unit test support
 
     def test_devicetypes(self):
         data = self.hit(

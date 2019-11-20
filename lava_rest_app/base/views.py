@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2018-2019 Linaro Limited
+# Copyright (C) 2019 Linaro Limited
 #
-# Author: Milosz Wasilewski <milosz.wasilewski@linaro.org>
+# Author: Stevan Radaković <stevan.radakovic@linaro.org>
 #
 # This file is part of LAVA.
 #
@@ -30,14 +30,13 @@ from lava_scheduler_app.models import (
 )
 from lava_scheduler_app.dbutils import testjob_submission
 from lava_scheduler_app.schema import SubmissionException
-from lava_results_app.models import TestSuite, TestCase
+from lava_results_app.models import TestCase
 from lava_scheduler_app.logutils import read_logs
 from linaro_django_xmlrpc.models import AuthToken
 
 from django.http.response import HttpResponse
 
-from rest_framework import routers, serializers, status, views, viewsets
-from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework import status, viewsets
 
 try:
     from rest_framework.decorators import detail_route
@@ -48,11 +47,20 @@ except ImportError:
         return action(detail=True, methods=methods, suffix=suffix)
 
 
+from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.exceptions import NotFound, AuthenticationFailed
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
-from . import filters
+from lava_rest_app import filters
+from lava_rest_app.base.serializers import (
+    TestJobSerializer,
+    TestSuiteSerializer,
+    TestCaseSerializer,
+    DeviceTypeSerializer,
+    DeviceSerializer,
+    WorkerSerializer,
+)
 
 
 def safe_str2int(in_value):
@@ -62,54 +70,6 @@ def safe_str2int(in_value):
         if out_value >= 0:
             return out_value
     return out_value
-
-
-# django-rest-framework from Debian stretch (v3.8.2) does not provide this
-# class.
-# Manually backport the class from a recent version
-try:
-    from rest_framework.routers import APIRootView
-except ImportError:
-    from collections import OrderedDict
-    from django.urls import NoReverseMatch, reverse
-
-    class APIRootView(views.APIView):
-        """
-        The default basic root view for DefaultRouter
-        """
-
-        _ignore_model_permissions = True
-        schema = None  # exclude from schema
-        api_root_dict = None
-
-        def get(self, request, *args, **kwargs):
-            # Return a plain {"name": "hyperlink"} response.
-            ret = OrderedDict()
-            namespace = request.resolver_match.namespace
-            for key, url_name in self.api_root_dict.items():
-                if namespace:
-                    url_name = namespace + ":" + url_name
-                try:
-                    ret[key] = reverse(
-                        url_name,
-                        args=args,
-                        kwargs=kwargs,
-                        request=request,
-                        format=kwargs.get("format", None),
-                    )
-                except NoReverseMatch:
-                    # Don't bail out if eg. no list routes exist, only detail routes.
-                    continue
-
-            return Response(ret)
-
-
-class LavaApiRootView(APIRootView):
-    pass
-
-
-class API(routers.DefaultRouter):
-    APIRootView = LavaApiRootView
 
 
 class LavaObtainAuthToken(ObtainAuthToken):
@@ -131,69 +91,6 @@ class LavaObtainAuthToken(ObtainAuthToken):
             # this shouldn't happen
             raise AuthenticationFailed()
         return Response({"token": token.secret})
-
-
-class TestJobSerializer(serializers.ModelSerializer):
-    health = serializers.CharField(source="get_health_display", read_only=True)
-    state = serializers.CharField(source="get_state_display", read_only=True)
-    submitter = serializers.CharField(source="submitter.username", read_only=True)
-    definition = serializers.CharField(style={"base_template": "textarea.html"})
-
-    class Meta:
-        model = TestJob
-        fields = (
-            "id",
-            "submitter",
-            "viewing_groups",
-            "description",
-            "health_check",
-            "requested_device_type",
-            "tags",
-            "actual_device",
-            "submit_time",
-            "start_time",
-            "end_time",
-            "state",
-            "health",
-            "priority",
-            "definition",
-            "original_definition",
-            "multinode_definition",
-            "failure_tags",
-            "failure_comment",
-        )
-        extra_kwargs = {
-            "id": {"read_only": True},
-            "submitter": {"read_only": True},
-            "viewing_groups": {"read_only": True},
-            "description": {"read_only": True},
-            "health_check": {"read_only": True},
-            "requested_device_type": {"read_only": True},
-            "tags": {"read_only": True},
-            "actual_device": {"read_only": True},
-            "submit_time": {"read_only": True},
-            "start_time": {"read_only": True},
-            "end_time": {"read_only": True},
-            "state": {"read_only": True},
-            "health": {"read_only": True},
-            "priority": {"read_only": True},
-            "original_definition": {"read_only": True},
-            "multinode_definition": {"read_only": True},
-            "failure_tags": {"read_only": True},
-            "failure_comment": {"read_only": True},
-        }
-
-
-class TestSuiteSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = TestSuite
-        fields = "__all__"
-
-
-class TestCaseSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = TestCase
-        fields = "__all__"
 
 
 class TestJobViewSet(viewsets.ModelViewSet):
@@ -412,28 +309,6 @@ class TestJobViewSet(viewsets.ModelViewSet):
         )
 
 
-class DeviceTypeSerializer(serializers.ModelSerializer):
-    health_denominator = serializers.CharField(source="get_health_denominator_display")
-
-    class Meta:
-        model = DeviceType
-        fields = (
-            "name",
-            "architecture",
-            "processor",
-            "cpu_model",
-            "aliases",
-            "bits",
-            "cores",
-            "core_count",
-            "description",
-            "health_frequency",
-            "disable_health_check",
-            "health_denominator",
-            "display",
-        )
-
-
 class DeviceTypeViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = DeviceType.objects
     serializer_class = DeviceTypeSerializer
@@ -457,30 +332,6 @@ class DeviceTypeViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         return DeviceType.objects.visible_by_user(self.request.user).prefetch_related(
             "cores", "aliases"
-        )
-
-
-class DeviceSerializer(serializers.ModelSerializer):
-    health = serializers.CharField(source="get_health_display")
-    state = serializers.CharField(source="get_state_display")
-    physical_owner = serializers.CharField(
-        source="physical_owner.username", default=None
-    )
-
-    class Meta:
-        model = Device
-        fields = (
-            "hostname",
-            "device_type",
-            "device_version",
-            "physical_owner",
-            "physical_group",
-            "description",
-            "tags",
-            "state",
-            "health",
-            "last_health_report_job",
-            "worker_host",
         )
 
 
@@ -522,15 +373,6 @@ class DeviceViewSet(viewsets.ReadOnlyModelViewSet):
         return query
 
 
-class WorkerSerializer(serializers.ModelSerializer):
-    health = serializers.CharField(source="get_health_display")
-    state = serializers.CharField(source="get_state_display")
-
-    class Meta:
-        model = Worker
-        fields = "__all__"
-
-
 class WorkerViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Worker.objects
     serializer_class = WorkerSerializer
@@ -539,10 +381,3 @@ class WorkerViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         return self.queryset.all()
-
-
-router = API()
-router.register(r"devices", DeviceViewSet)
-router.register(r"devicetypes", DeviceTypeViewSet)
-router.register(r"jobs", TestJobViewSet)
-router.register(r"workers", WorkerViewSet)

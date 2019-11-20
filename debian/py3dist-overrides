@@ -11,6 +11,7 @@ guestfs python3-guestfs; PEP386
 tap python3-tap; PEP386
 junit.xml python3-junit.xml; PEP386
 djangorestframework_filters python3-djangorestframework-filters; PEP386
+djangorestframework_extensions python3-djangorestframework-extensions; PEP386
 
 # List dependencies that dh_python3 success to guess but fails to set the
 # required version.

@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-versions = ("v0.1",)
+versions = ("v0.1", "v0.2")
 
 
 def urlpattern():
