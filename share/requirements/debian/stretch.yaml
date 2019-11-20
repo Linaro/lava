@@ -53,6 +53,9 @@ lava-server:
   pytest-django:
     name: python3-pytest-django
     unittests: true
+  pytest-django:
+    name: python3-pytest-mock
+    unittests: true
   pytest:
     name: python3-pytest
     unittests: true
