@@ -8,9 +8,6 @@ from django.conf import settings
 from lava_common.compat import yaml_safe_load
 from lava_scheduler_app.schema import validate_device, SubmissionException
 
-# pylint: disable=too-many-branches,too-many-public-methods,too-few-public-methods
-# pylint: disable=too-many-nested-blocks
-
 
 def prepare_jinja_template(hostname, jinja_data, job_ctx=None, raw=True):
     if not job_ctx:
@@ -205,9 +202,7 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
             self.assertNotIn("115200n8", command)
             self.assertNotIn("n8", command)
 
-    def test_primary_connection_power_commands_fail(
-        self
-    ):  # pylint: disable=invalid-name
+    def test_primary_connection_power_commands_fail(self):
         data = """{% extends 'x86.jinja2' %}
 {% set power_off_command = '/usr/bin/pduclient --command off' %}
 {% set power_on_command = '/usr/bin/pduclient --command on' %}
@@ -219,9 +214,7 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
             SubmissionException, validate_device, yaml_safe_load(device_dict)
         )
 
-    def test_primary_connection_power_commands_empty_ssh_host(
-        self
-    ):  # pylint: disable=invalid-name
+    def test_primary_connection_power_commands_empty_ssh_host(self):
         data = """{% extends 'x86.jinja2' %}
 {% set power_off_command = '/usr/bin/pduclient --command off' %}
 {% set power_on_command = '/usr/bin/pduclient --command on' %}
@@ -231,7 +224,7 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
         device_dict = self.render_device_dictionary("staging-x86-01", data)
         self.assertTrue(validate_device(yaml_safe_load(device_dict)))
 
-    def test_primary_connection_power_commands(self):  # pylint: disable=invalid-name
+    def test_primary_connection_power_commands(self):
         data = """{% extends 'x86.jinja2' %}
 {% set power_off_command = '/usr/bin/pduclient --command off' %}
 {% set hard_reset_command = '/usr/bin/pduclient --command reset' %}

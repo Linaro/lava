@@ -18,7 +18,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-# pylint: disable=too-many-lines
 
 import contextlib
 import datetime
@@ -59,9 +58,6 @@ from lava_scheduler_app.schema import SubmissionException, validate_device
 from lava_server.compat import add_permissions
 
 import requests
-
-# pylint: disable=invalid-name,no-self-use,too-many-public-methods,too-few-public-methods
-# pylint: disable=too-many-branches,too-many-return-statements,too-many-instance-attributes
 
 
 class JSONDataError(ValueError):
@@ -1070,7 +1066,6 @@ def _get_device_type(user, name):
     return device_type
 
 
-# pylint: disable=too-many-arguments,too-many-locals
 def _create_pipeline_job(
     job_data,
     user,
@@ -1154,9 +1149,7 @@ def _create_pipeline_job(
     return job
 
 
-def _pipeline_protocols(
-    job_data, user, yaml_data=None
-):  # pylint: disable=too-many-locals,too-many-branches
+def _pipeline_protocols(job_data, user, yaml_data=None):
     """
     Handle supported pipeline protocols
     Check supplied parameters and change the device selection if necessary.
@@ -1657,7 +1650,7 @@ class TestJob(models.Model):
         return reverse("lava.results.testjob", args=[self.id])
 
     @property
-    def essential_role(self):  # pylint: disable=too-many-return-statements
+    def essential_role(self):
         if not self.is_multinode:
             return False
         data = yaml_safe_load(self.definition)
@@ -1674,7 +1667,7 @@ class TestJob(models.Model):
         return data["protocols"]["lava-multinode"]["essential"]
 
     @property
-    def device_role(self):  # pylint: disable=too-many-return-statements
+    def device_role(self):
         if not self.is_multinode:
             return "Error"
         try:

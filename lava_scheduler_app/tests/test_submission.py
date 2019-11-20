@@ -1,4 +1,3 @@
-# pylint: disable=invalid-name
 import logging
 import os
 import json
@@ -19,24 +18,23 @@ from lava_scheduler_app.models import (
 
 
 # pylint gets confused with TestCase
-# pylint: disable=no-self-use,invalid-name,too-many-ancestors,too-many-public-methods
 
 
 class ModelFactory:
     def __init__(self):
         self._int = 0
 
-    def getUniqueInteger(self):  # pylint: disable=invalid-name
+    def getUniqueInteger(self):
         self._int += 1
         return self._int
 
-    def getUniqueString(self, prefix="generic"):  # pylint: disable=invalid-name
+    def getUniqueString(self, prefix="generic"):
         return "%s-%d" % (prefix, self.getUniqueInteger())
 
-    def get_unique_user(self, prefix="generic"):  # pylint: disable=no-self-use
+    def get_unique_user(self, prefix="generic"):
         return "%s-%d" % (prefix, User.objects.count() + 1)
 
-    def cleanup(self):  # pylint: disable=no-self-use
+    def cleanup(self):
         DeviceType.objects.all().delete()
         # make sure the DB is in a clean state wrt devices and jobs
         Device.objects.all().delete()
@@ -44,7 +42,7 @@ class ModelFactory:
         User.objects.all().delete()
         Group.objects.all().delete()
 
-    def ensure_user(self, username, email, password):  # pylint: disable=no-self-use
+    def ensure_user(self, username, email, password):
         if User.objects.filter(username=username):
             user = User.objects.get(username=username)
         else:
@@ -86,7 +84,7 @@ class ModelFactory:
         logging.debug("asking for alias %s for device type %s", name, dt.name)
         return alias
 
-    def ensure_tag(self, name):  # pylint: disable=no-self-use
+    def ensure_tag(self, name):
         return Tag.objects.get_or_create(name=name)[0]
 
     def make_device(self, device_type=None, hostname=None, tags=None, **kw):
@@ -135,15 +133,13 @@ class ModelFactory:
         return data
 
 
-class TestCaseWithFactory(TestCase):  # pylint: disable=too-many-ancestors
+class TestCaseWithFactory(TestCase):
     def setUp(self):
         TestCase.setUp(self)
         self.factory = ModelFactory()
 
 
-class TestTestJob(
-    TestCaseWithFactory
-):  # pylint: disable=too-many-ancestors,too-many-public-methods
+class TestTestJob(TestCaseWithFactory):
     def test_preserve_comments(self):
         """
         TestJob.original_definition must preserve comments, if supplied.

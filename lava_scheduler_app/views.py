@@ -18,7 +18,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-# pylint: disable=too-many-lines,invalid-name
 
 import contextlib
 import datetime
@@ -118,9 +117,6 @@ from lava_scheduler_app.tables import (
     RunningTable,
 )
 
-# pylint: disable=too-many-ancestors,too-many-arguments,too-many-locals
-# pylint: disable=too-many-statements,too-many-branches,too-many-return-statements
-# pylint: disable=no-self-use,too-many-nested-blocks,too-few-public-methods
 
 # The only functions which need to go in this file are those directly
 # referenced in urls.py - other support functions can go in tables.py or similar.
@@ -131,7 +127,7 @@ def _str_to_bool(string):
 
 
 class JobTableView(LavaView):
-    def device_query(self, term):  # pylint: disable=no-self-use
+    def device_query(self, term):
         device = list(
             Device.objects.filter(hostname__contains=term).visible_by_user(
                 self.request.user

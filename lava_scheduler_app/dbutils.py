@@ -23,7 +23,6 @@ Database utility functions which use but are not actually models themselves
 Used to allow models.py to be shortened and easier to follow.
 """
 
-# pylint: disable=wrong-import-order
 
 import contextlib
 import os
@@ -51,8 +50,6 @@ from lava_scheduler_app.models import (
 from lava_scheduler_app.schema import validate_submission, SubmissionException
 from lava_results_app.dbutils import map_metadata
 from lava_results_app.models import Query
-
-# pylint: disable=too-many-branches,too-many-statements,too-many-locals
 
 
 def match_vlan_interface(device, job_def):

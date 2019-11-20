@@ -30,8 +30,6 @@ from lava_scheduler_app.schema import (
 )
 from lava_scheduler_app.tests.test_submission import TestCaseWithFactory
 
-# pylint: disable=invalid-name
-
 
 def device_type(name):
     return os.path.join(settings.DEVICE_TYPES_PATH, name)
@@ -60,8 +58,8 @@ class TestTransport(xmlrpc.client.Transport):
         return self.parse_response(res)
 
 
-class TestSchedulerAPI(TestCaseWithFactory):  # pylint: disable=too-many-ancestors
-    def server_proxy(self, user=None, password=None):  # pylint: disable=no-self-use
+class TestSchedulerAPI(TestCaseWithFactory):
+    def server_proxy(self, user=None, password=None):
         return xmlrpc.client.ServerProxy(
             "http://localhost/RPC2/",
             transport=TestTransport(user=user, password=password),

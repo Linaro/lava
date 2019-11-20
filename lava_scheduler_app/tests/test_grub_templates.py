@@ -1,11 +1,7 @@
-# pylint: disable=superfluous-parens,ungrouped-imports
 from lava_scheduler_app.tests.test_base_templates import (
     BaseTemplate,
     prepare_jinja_template,
 )
-
-# pylint: disable=too-many-branches,too-many-public-methods
-# pylint: disable=too-many-nested-blocks
 
 
 class TestGrubTemplates(BaseTemplate.BaseTemplateCases):
@@ -25,7 +21,7 @@ class TestGrubTemplates(BaseTemplate.BaseTemplateCases):
     system file.
     """
 
-    def test_mustang_pxe_grub_efi_template(self):  # pylint: disable=invalid-name
+    def test_mustang_pxe_grub_efi_template(self):
         data = """{% extends 'mustang-grub-efi.jinja2' %}
 {% set hard_reset_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command reboot --port 05' %}
 {% set power_off_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command off --port 05' %}

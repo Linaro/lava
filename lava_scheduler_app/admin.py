@@ -48,7 +48,6 @@ from lava_scheduler_app.models import (
 from linaro_django_xmlrpc.models import AuthToken
 
 # django admin API itself isn't pylint clean, so some settings must be suppressed.
-# pylint: disable=no-self-use,function-redefined
 
 
 class GroupObjectPermissionInline(admin.TabularInline):
@@ -109,9 +108,7 @@ class CoreAdmin(admin.ModelAdmin):
         return self.readonly_fields
 
 
-def expire_user_action(
-    modeladmin, request, queryset
-):  # pylint: disable=unused-argument
+def expire_user_action(modeladmin, request, queryset):
     for user in queryset.filter(is_active=True):
         AuthToken.objects.filter(user=user).delete()
         user.is_staff = False
@@ -168,7 +165,7 @@ admin.site.unregister(Group)
 admin.site.register(Group, CustomGroupAdmin)
 
 
-def cancel_action(modeladmin, request, queryset):  # pylint: disable=unused-argument
+def cancel_action(modeladmin, request, queryset):
     with transaction.atomic():
         for testjob in queryset:
             # TODO: hacky. until django 2.0+ is used and select_for_update gets
@@ -460,9 +457,7 @@ class TestJobAdmin(admin.ModelAdmin):
     ordering = ["-submit_time"]
 
 
-def disable_health_check_action(
-    modeladmin, request, queryset
-):  # pylint: disable=unused-argument
+def disable_health_check_action(modeladmin, request, queryset):
     queryset.update(disable_health_check=False)
 
 
