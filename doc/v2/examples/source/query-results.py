@@ -22,8 +22,6 @@
 #
 #
 
-# pylint: disable=superfluous-parens,missing-docstring,line-too-long
-# pylint: disable=wrong-import-order,invalid-name,unused-argument
 
 import sys
 import yaml
