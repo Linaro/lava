@@ -35,8 +35,6 @@ from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.utils.compression import untar_file
 
-# pylint: disable=too-many-instance-attributes
-
 
 class DeployImagesAction(DeployAction):  # FIXME: Rename to DeployPosixImages
 

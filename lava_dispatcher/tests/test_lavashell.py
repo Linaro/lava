@@ -36,10 +36,7 @@ from lava_dispatcher.tests.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.actions.test.shell import TestShellRetry, TestShellAction
 
 
-# pylint: disable=duplicate-code,too-few-public-methods
-
-
-class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestDefinitionHandlers(StdoutTestCase):
     def setUp(self):
         super().setUp()
         self.factory = Factory()
@@ -77,7 +74,7 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
             job.logger = DummyLogger()
         except JobError:
             pass
-        except Exception as exc:  # pylint: disable=broad-except
+        except Exception as exc:
             self.fail(exc)
         else:
             self.fail("JobError not raised")
@@ -102,7 +99,7 @@ class X86Factory(Factory):
         return self.create_job(device, filename, validate=validate)
 
 
-class TestMultiNodeOverlay(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestMultiNodeOverlay(StdoutTestCase):
     def setUp(self):
         super().setUp()
         factory = X86Factory()
@@ -150,7 +147,7 @@ class TestMultiNodeOverlay(StdoutTestCase):  # pylint: disable=too-many-public-m
         self.assertEqual(key_list, ["deploy", "boot", "test"])  # order is important
 
 
-class TestShellResults(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestShellResults(StdoutTestCase):
     class FakeJob(Job):
         pass
 

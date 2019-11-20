@@ -48,9 +48,6 @@ from lava_dispatcher.connections.ssh import SShSession
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.shell import ExpectShellSession
 
-# pylint: disable=too-many-locals,too-many-instance-attributes,superfluous-parens
-# pylint: disable=too-many-branches,too-many-statements
-
 
 class BootAction(RetryAction):
     """
@@ -70,10 +67,10 @@ class BootAction(RetryAction):
 
     name = "boot"
 
-    def has_prompts(self, parameters):  # pylint: disable=no-self-use
+    def has_prompts(self, parameters):
         return "prompts" in parameters
 
-    def has_boot_finished(self, parameters):  # pylint: disable=no-self-use
+    def has_boot_finished(self, parameters):
         return "boot_finished" in parameters
 
 
@@ -104,7 +101,7 @@ class AutoLoginAction(Action):
         self.params = None
         self.booting = booting  # if a boot is expected, False for second UART or ssh.
 
-    def validate(self):  # pylint: disable=too-many-branches
+    def validate(self):
         super().validate()
         # Skip auto login if the configuration is not found
         self.method = self.parameters["method"]

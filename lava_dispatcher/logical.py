@@ -172,7 +172,7 @@ class Deployment:
         self.__parameters__.update(data)
 
     @classmethod
-    def accepts(cls, device, parameters):  # pylint: disable=unused-argument
+    def accepts(cls, device, parameters):
         """
         Returns True if this deployment strategy can be used the the
         given device and details of an image in the parameters.
@@ -207,7 +207,7 @@ class Deployment:
     @classmethod
     def select(cls, device, parameters):
         cls.deploy_check(device, parameters)
-        candidates = cls.__subclasses__()  # pylint: disable=no-member
+        candidates = cls.__subclasses__()
         replies = {}
         willing = []
         for c in candidates:
@@ -269,7 +269,7 @@ class Boot:
             )
 
     @classmethod
-    def accepts(cls, device, parameters):  # pylint: disable=unused-argument
+    def accepts(cls, device, parameters):
         """
         Returns True if this deployment strategy can be used the the
         given device and details of an image in the parameters.
@@ -281,7 +281,7 @@ class Boot:
     @classmethod
     def select(cls, device, parameters):
         cls.boot_check(device, parameters)
-        candidates = cls.__subclasses__()  # pylint: disable=no-member
+        candidates = cls.__subclasses__()
         replies = {}
         willing = []
         for c in candidates:
@@ -325,7 +325,7 @@ class LavaTest:
         self.job.compatibility = max(self.compatibility, self.job.compatibility)
 
     @classmethod
-    def accepts(cls, device, parameters):  # pylint: disable=unused-argument
+    def accepts(cls, device, parameters):
         """
         Returns True if this Lava test strategy can be used on the
         given device and details of an image in the parameters.
@@ -336,7 +336,7 @@ class LavaTest:
 
     @classmethod
     def select(cls, device, parameters):
-        candidates = cls.__subclasses__()  # pylint: disable=no-member
+        candidates = cls.__subclasses__()
         replies = {}
         willing = []
         for c in candidates:
@@ -376,7 +376,7 @@ class LavaTest:
         return NotImplementedError("has_shell %s" % cls)
 
 
-class PipelineContext:  # pylint: disable=too-few-public-methods
+class PipelineContext:
     """
     Replacement for the LavaContext which only holds data for the device for the
     current pipeline.

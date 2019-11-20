@@ -25,8 +25,6 @@ from lava_dispatcher.action import Action
 from lava_common.exceptions import JobError, LAVABug
 from lava_dispatcher.connections.serial import ConnectDevice
 
-# pylint: disable=too-few-public-methods,too-many-branches
-
 
 class MovementMenu:
     def __init__(self):

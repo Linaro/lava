@@ -55,8 +55,6 @@ from lava_dispatcher.actions.boot.u_boot import UBootEnterFastbootAction
 
 from urllib.parse import urlparse
 
-# pylint: disable=logging-not-lazy
-
 
 class DownloaderAction(RetryAction):
     """
@@ -104,7 +102,7 @@ class DownloaderAction(RetryAction):
         self.internal_pipeline.add_action(action)
 
 
-class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
+class DownloadHandler(Action):
     """
     The identification of which downloader and whether to
     decompress needs to be done in the validation stage,
@@ -130,7 +128,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
         self.size = -1
         self.decompress_command_map = {"xz": "unxz", "gz": "gunzip", "bz2": "bunzip2"}
 
-    def reader(self):  # pylint: disable=no-self-use
+    def reader(self):
         raise LAVABug("'reader' function unimplemented")
 
     def cleanup(self, connection):
@@ -214,9 +212,7 @@ class DownloadHandler(Action):  # pylint: disable=too-many-instance-attributes
                 value=self.parameters[self.key].get("type"),
             )
 
-    def run(
-        self, connection, max_end_time
-    ):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
+    def run(self, connection, max_end_time):
         def progress_unknown_total(downloaded_sz, last_val):
             """ Compute progress when the size is unknown """
             condition = downloaded_sz >= last_val + 25 * 1024 * 1024
@@ -591,7 +587,7 @@ class HttpDownloadAction(DownloadHandler):
             res = requests.head(
                 self.url.geturl(), allow_redirects=True, headers={"Accept-Encoding": ""}
             )
-            if res.status_code != requests.codes.OK:  # pylint: disable=no-member
+            if res.status_code != requests.codes.OK:
                 # try using (the slower) get for services with broken redirect support
                 self.logger.debug("Using GET because HEAD is not supported properly")
                 res.close()
@@ -602,7 +598,7 @@ class HttpDownloadAction(DownloadHandler):
                     stream=True,
                     headers={"Accept-Encoding": ""},
                 )
-                if res.status_code != requests.codes.OK:  # pylint: disable=no-member
+                if res.status_code != requests.codes.OK:
                     self.errors = "Resource unavailable at '%s' (%d)" % (
                         self.url.geturl(),
                         res.status_code,
@@ -625,7 +621,7 @@ class HttpDownloadAction(DownloadHandler):
             # FIXME: When requests 3.0 is released, use the enforce_content_length
             # parameter to raise an exception the file is not fully downloaded
             res = requests.get(self.url.geturl(), allow_redirects=True, stream=True)
-            if res.status_code != requests.codes.OK:  # pylint: disable=no-member
+            if res.status_code != requests.codes.OK:
                 # This is an Infrastructure error because the validate function
                 # checked that the file does exist.
                 raise InfrastructureError(
@@ -869,7 +865,7 @@ class CopyToLxcAction(DeployAction):
         self.retries = 3
         self.sleep = 10
 
-    def run(self, connection, max_end_time):  # pylint: disable=too-many-locals
+    def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
         # this is the device namespace - the lxc namespace is not accessible
         lxc_name = None

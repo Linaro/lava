@@ -22,7 +22,7 @@
 from lava_dispatcher.tests.test_basic import Factory, StdoutTestCase
 
 
-class TestPowerAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestPowerAction(StdoutTestCase):
     def setUp(self):
         super().setUp()
         self.factory = Factory()

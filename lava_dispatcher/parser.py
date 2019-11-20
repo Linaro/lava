@@ -27,7 +27,7 @@ from lava_dispatcher.power import FinalizeAction
 from lava_dispatcher.connection import Protocol
 
 # Bring in the strategy subclass lists, ignore pylint warnings.
-# pylint: disable=unused-import,too-many-arguments,too-many-nested-blocks,too-many-branches
+# pylint: disable=unused-import
 from lava_dispatcher.actions.commands import CommandAction
 import lava_dispatcher.actions.deploy.strategies
 import lava_dispatcher.actions.boot.strategies
@@ -92,12 +92,11 @@ class JobParser:
 
     # FIXME: needs a Schema and a check routine
 
-    def _timeouts(self, data, job):  # pylint: disable=no-self-use
+    def _timeouts(self, data, job):
         if "job" in data.get("timeouts", {}):
             duration = Timeout.parse(data["timeouts"]["job"])
             job.timeout = Timeout("job", duration)
 
-    # pylint: disable=too-many-locals,too-many-statements
     def parse(self, content, device, job_id, logger, dispatcher_config, env_dut=None):
         data = yaml_safe_load(content)
         job = Job(job_id, data, logger)

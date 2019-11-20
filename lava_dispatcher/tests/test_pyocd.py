@@ -24,7 +24,7 @@ from lava_dispatcher.tests.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.tests.utils import infrastructure_error
 
 
-class PyocdFactory(Factory):  # pylint: disable=too-few-public-methods
+class PyocdFactory(Factory):
     """
     Not Model based, this is not a Django factory.
     Factory objects are dispatcher based classes, independent
@@ -40,11 +40,11 @@ class PyocdFactory(Factory):  # pylint: disable=too-few-public-methods
     @unittest.skipIf(
         infrastructure_error("pyocd-flashtool"), "pyocd-flashtool not installed"
     )
-    def create_k64f_job_with_power(self, filename):  # pylint: disable=no-self-use
+    def create_k64f_job_with_power(self, filename):
         return self.create_job("frdm-k64f-power-01.jinja2", filename)
 
 
-class TestPyocdAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestPyocdAction(StdoutTestCase):
     def test_pyocd_pipeline(self):
         factory = PyocdFactory()
         job = factory.create_k64f_job(

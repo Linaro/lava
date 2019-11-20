@@ -38,7 +38,7 @@ from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.strings import substitute
 
 
-class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestBootloaderAction(StdoutTestCase):
     def setUp(self):
         super().setUp()
         self.factory = Factory()
@@ -156,7 +156,7 @@ class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-m
                 self.assertEqual("tftp", action.parameters["to"])
             self.assertTrue(action.valid)
 
-    def test_overlay_action(self):  # pylint: disable=too-many-locals
+    def test_overlay_action(self):
         parameters = {
             "device_type": "x86",
             "job_name": "ipxe-pipeline",
@@ -303,7 +303,7 @@ class TestBootloaderAction(StdoutTestCase):  # pylint: disable=too-many-public-m
     @patch(
         "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
     )
-    def test_prompt_from_job(self, which_mock):  # pylint: disable=too-many-locals
+    def test_prompt_from_job(self, which_mock):
         """
         Support setting the prompt after login via the job
 

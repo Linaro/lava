@@ -36,7 +36,7 @@ from lava_dispatcher.utils.decorator import replace_exception
 from lava_dispatcher.utils.shell import which
 
 
-class TestGit(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestGit(StdoutTestCase):
     def setUp(self):
         super().setUp()
         self.cwd = os.getcwd()
@@ -184,7 +184,7 @@ class TestGit(StdoutTestCase):  # pylint: disable=too-many-public-methods
         )
 
 
-class TestConstants(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestConstants(StdoutTestCase):
     """
     Tests that constants set in the Job YAML as parameters in an Action stanza
     override the value of that constant set in the python code for each action
@@ -249,7 +249,7 @@ class TestConstants(StdoutTestCase):  # pylint: disable=too-many-public-methods
 class TestClasses(StdoutTestCase):
     def setUp(self):
         super().setUp()
-        from lava_dispatcher.actions.deploy import (  # pylint: disable=unused-variable
+        from lava_dispatcher.actions.deploy import (  # pylint: disable=reimported
             strategies,
         )
         from lava_dispatcher.actions.boot import (  # pylint: disable=reimported
@@ -262,14 +262,14 @@ class TestClasses(StdoutTestCase):
         self.allowed = ["commands", "deploy", "test"]  # pipeline.actions.commands.py
 
     def test_summary_exists(self):
-        for subclass in Action.__subclasses__():  # pylint: disable=no-member
+        for subclass in Action.__subclasses__():
             if not hasattr(subclass, "name"):
                 continue
             if not hasattr(subclass, "summary") and subclass.name not in self.allowed:
                 self.fail(subclass)
 
     def test_description_exists(self):
-        for subclass in Action.__subclasses__():  # pylint: disable=no-member
+        for subclass in Action.__subclasses__():
             if not hasattr(subclass, "name"):
                 continue
             if (

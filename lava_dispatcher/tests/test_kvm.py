@@ -43,11 +43,9 @@ from lava_dispatcher.tests.utils import DummyLogger, infrastructure_error
 from lava_dispatcher.utils.strings import substitute
 from lava_dispatcher.connections.serial import QemuSession
 
-# pylint: disable=invalid-name
 
-
-class TestKVMSimulation(StdoutTestCase):  # pylint: disable=too-many-public-methods
-    def test_kvm_simulation(self):  # pylint: disable=too-many-statements
+class TestKVMSimulation(StdoutTestCase):
+    def test_kvm_simulation(self):
         """
         Build a pipeline which simulates a KVM LAVA job
         without using the formal objects (to avoid validating
@@ -138,7 +136,7 @@ class TestKVMSimulation(StdoutTestCase):  # pylint: disable=too-many-public-meth
         self.assertEqual(len(pipe.describe()), 4)
 
 
-class TestKVMBasicDeploy(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestKVMBasicDeploy(StdoutTestCase):
     def setUp(self):
         super().setUp()
         self.factory = Factory()
@@ -237,7 +235,7 @@ class TestKVMBasicDeploy(StdoutTestCase):  # pylint: disable=too-many-public-met
                 self.assertEqual(len(action.parameters["definitions"]), 2)
 
 
-class TestKVMPortable(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestKVMPortable(StdoutTestCase):
     def setUp(self):
         super().setUp()
         factory = Factory()
@@ -264,7 +262,7 @@ class TestKVMPortable(StdoutTestCase):  # pylint: disable=too-many-public-method
             self.assertEqual([], action.errors)
 
 
-class TestKVMQcow2Deploy(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestKVMQcow2Deploy(StdoutTestCase):
     def setUp(self):
         super().setUp()
         factory = Factory()
@@ -291,9 +289,7 @@ class TestKVMQcow2Deploy(StdoutTestCase):  # pylint: disable=too-many-public-met
             self.assertEqual([], action.errors)
 
 
-class TestKVMDownloadLocalDeploy(
-    StdoutTestCase
-):  # pylint: disable=too-many-public-methods
+class TestKVMDownloadLocalDeploy(StdoutTestCase):
     def setUp(self):
         super().setUp()
         factory = Factory()
@@ -322,9 +318,7 @@ def prepare_test_connection(failure=False):
     return FakeConnection(child, message_list)
 
 
-class TestKVMInlineTestDeploy(
-    StdoutTestCase
-):  # pylint: disable=too-many-public-methods
+class TestKVMInlineTestDeploy(StdoutTestCase):
     def setUp(self):
         super().setUp()
         self.factory = Factory()
@@ -389,9 +383,7 @@ class TestKVMInlineTestDeploy(
             if action.name == "execute-qemu"
         ][0]
         self.assertIsInstance(qemu.sub_command, list)
-        [
-            self.assertIsInstance(item, str) for item in qemu.sub_command
-        ]  # pylint: disable=expression-not-assigned
+        [self.assertIsInstance(item, str) for item in qemu.sub_command]
         self.assertIn("virtio-blk-device.scsi=off", qemu.sub_command)
         self.assertIn("1", qemu.sub_command)
         self.assertNotIn(1, qemu.sub_command)
@@ -986,7 +978,7 @@ class TestChecksum(StdoutTestCase):
         self.assertIsNone(sha512sum)
 
 
-class TestKvmGuest(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestKvmGuest(StdoutTestCase):
     def setUp(self):
         super().setUp()
         factory = Factory()
@@ -1005,7 +997,7 @@ class TestKvmGuest(StdoutTestCase):  # pylint: disable=too-many-public-methods
         )
 
 
-class TestKvmUefi(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestKvmUefi(StdoutTestCase):
     def setUp(self):
         super().setUp()
         factory = Factory()
@@ -1142,7 +1134,7 @@ class TestQemuNFS(StdoutTestCase):
         self.assertIn("cpu host", kernel_cmdline)
 
 
-class TestMonitor(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestMonitor(StdoutTestCase):
     def setUp(self):
         super().setUp()
         factory = Factory()

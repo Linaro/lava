@@ -33,10 +33,8 @@ from lava_dispatcher.protocols.multinode import MultinodeProtocol
 from lava_dispatcher.tests.test_basic import StdoutTestCase, Factory
 from lava_dispatcher.tests.utils import DummyLogger
 
-# pylint: disable=superfluous-parens
 
-
-class TestVland(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestVland(StdoutTestCase):
     def setUp(self):
         super().setUp()
         self.filename = os.path.join(
@@ -371,7 +369,6 @@ class TestVland(StdoutTestCase):  # pylint: disable=too-many-public-methods
         job.logger = DummyLogger()
         job.validate()
 
-    # pylint: disable=protected-access
     def demo(self):
         with open(self.filename) as yaml_data:
             alpha_data = yaml_safe_load(yaml_data)

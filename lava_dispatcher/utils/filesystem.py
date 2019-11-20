@@ -62,7 +62,7 @@ def mkdtemp(autoremove=True, basedir="/tmp"):  # nosec - internal use.
     return tmpdir
 
 
-def check_ssh_identity_file(params):  # pylint: disable=too-many-return-statements
+def check_ssh_identity_file(params):
     """
     Return a tuple based on if an identity file can be determine in the params.
     If the first value returned is not None, an error occurred.
@@ -414,6 +414,6 @@ def is_sparse_image(image):
     """
     Returns True if the image is an 'Android sparse image' else False.
     """
-    image_magic = magic.open(magic.MAGIC_NONE)  # pylint: disable=no-member
+    image_magic = magic.open(magic.MAGIC_NONE)
     image_magic.load()
     return bool(image_magic.file(image).split(",")[0] == "Android sparse image")

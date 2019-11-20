@@ -56,7 +56,6 @@ class Overlay(Deployment):
         return True, "accepted"
 
 
-# pylint: disable=too-many-instance-attributes
 class OverlayAction(DeployAction):
     """
     Creates a temporary location into which the lava test shell scripts are installed.
@@ -184,7 +183,7 @@ class OverlayAction(DeployAction):
             self.logger.debug("- %s=%s", prefix, data)
             fout.write("export %s=%s\n" % (prefix, data))
 
-    def run(self, connection, max_end_time):  # pylint: disable=too-many-locals
+    def run(self, connection, max_end_time):
         """
         Check if a lava-test-shell has been requested, implement the overlay
         * create test runner directories beneath the temporary location
@@ -310,9 +309,7 @@ class MultinodeOverlayAction(OverlayAction):
             else:
                 self.role = self.job.parameters["protocols"][self.protocol]["role"]
 
-    def run(
-        self, connection, max_end_time
-    ):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
+    def run(self, connection, max_end_time):
         if self.role is None:
             self.logger.debug("skipped %s", self.name)
             return connection
@@ -460,7 +457,6 @@ class VlandOverlayAction(OverlayAction):
             for tag in device_params[interface]["tags"]:
                 self.tags.append(",".join([interface, tag]))
 
-    # pylint: disable=anomalous-backslash-in-string
     def run(self, connection, max_end_time):
         """
         Writes out file contents from lists, across multiple lines

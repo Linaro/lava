@@ -27,7 +27,7 @@ from lava_dispatcher.utils.messages import LinuxKernelMessages
 from lava_dispatcher.tests.test_basic import StdoutTestCase
 
 
-class Kernel:  # pylint: disable=too-few-public-methods
+class Kernel:
     def __init__(self):
         super().__init__()
         self.existing_prompt = None
@@ -43,7 +43,7 @@ class Kernel:  # pylint: disable=too-few-public-methods
         return prompt_list
 
 
-class Child(Kernel):  # pylint: disable=too-few-public-methods
+class Child(Kernel):
     def run(self, prompt_list):
         if KERNEL_FREE_INIT_MSG in prompt_list:
             index = prompt_list.index(KERNEL_FREE_INIT_MSG)
@@ -57,7 +57,7 @@ class Child(Kernel):  # pylint: disable=too-few-public-methods
         return prompt_list
 
 
-class FakeConnection:  # pylint: disable=too-few-public-methods
+class FakeConnection:
     def __init__(self, child, prompt_str):
         super().__init__()
         self.raw_connection = child
@@ -67,13 +67,13 @@ class FakeConnection:  # pylint: disable=too-few-public-methods
         self.connected = True
         self.name = "fake-connection"
 
-    def sendline(self, s="", delay=0):  # pylint: disable=invalid-name
+    def sendline(self, s="", delay=0):
         pass
 
-    def force_prompt_wait(self, remaining=None):  # pylint: disable=unused-argument
+    def force_prompt_wait(self, remaining=None):
         return self.wait()
 
-    def wait(self, max_end_time=None):  # pylint: disable=unused-argument
+    def wait(self, max_end_time=None):
         ret = None
         try:
             ret = self.raw_connection.expect(self.prompt_str, timeout=self.faketimeout)
@@ -82,7 +82,7 @@ class FakeConnection:  # pylint: disable=too-few-public-methods
         return ret
 
 
-class TestBootMessages(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestBootMessages(StdoutTestCase):
     def setUp(self):
         super().setUp()
         self.max_end_time = time.time() + 30

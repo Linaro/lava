@@ -216,9 +216,7 @@ class GrubMainAction(BootAction):
                 self.internal_pipeline.add_action(PowerOff())
 
 
-class GrubMenuSelector(
-    UefiMenuSelector
-):  # pylint: disable=too-many-instance-attributes
+class GrubMenuSelector(UefiMenuSelector):
 
     name = "grub-efi-menu-selector"
     description = "select specified grub-efi menu items"

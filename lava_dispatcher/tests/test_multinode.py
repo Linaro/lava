@@ -40,10 +40,7 @@ from lava_dispatcher.tests.test_defs import allow_missing_path
 from lava_dispatcher.tests.utils import DummyLogger
 
 
-# pylint: disable=protected-access,superfluous-parens
-
-
-class TestMultinode(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestMultinode(StdoutTestCase):
     def setUp(self):
         """
         Attempt to setup a valid group with clients and test the protocol
@@ -526,7 +523,7 @@ class TestMultinode(StdoutTestCase):  # pylint: disable=too-many-public-methods
                         for call in api_calls:
                             client_calls.update(call)
 
-    def test_protocol_variables(self):  # pylint: disable=too-many-locals
+    def test_protocol_variables(self):
         boot = [
             action
             for action in self.client_job.pipeline.actions
@@ -624,7 +621,7 @@ class TestMultinode(StdoutTestCase):  # pylint: disable=too-many-public-methods
         )
 
 
-class TestProtocol(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestProtocol(StdoutTestCase):
 
     coord = None
 
@@ -699,7 +696,7 @@ class TestProtocol(StdoutTestCase):  # pylint: disable=too-many-public-methods
         def close(self):
             pass
 
-        def recv(self, msg):  # pylint: disable=unused-argument
+        def recv(self, msg):
             """
             Allow the fake to send a properly formatted response.
             """
@@ -775,7 +772,7 @@ class TestProtocol(StdoutTestCase):  # pylint: disable=too-many-public-methods
             self.protocol(msg)
 
 
-class TestDelayedStart(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestDelayedStart(StdoutTestCase):
 
     coord = None
 

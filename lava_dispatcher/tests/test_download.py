@@ -25,7 +25,7 @@ from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.tests.utils import infrastructure_error_multi_paths
 
 
-class TestDownloadDeploy(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestDownloadDeploy(StdoutTestCase):
     def setUp(self):
         super().setUp()
         self.factory = Factory()

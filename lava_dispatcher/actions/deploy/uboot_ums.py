@@ -27,9 +27,6 @@ from lava_dispatcher.actions.deploy.apply_overlay import ApplyOverlayImage
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 
 
-# pylint: disable=too-many-return-statements,too-many-instance-attributes,missing-docstring
-
-
 class UBootUMS(Deployment):
     """
     Strategy class for a UBoot USB Mass Storage deployment.

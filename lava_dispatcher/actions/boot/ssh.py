@@ -18,7 +18,6 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-# pylint: disable=too-many-return-statements,too-many-instance-attributes
 
 import os
 

@@ -26,7 +26,6 @@ from lava_common.decorators import nottest
 
 # disable pylint warnings until lava-coordinator is updated to make it easier to port other changes.
 # lava-coordinator would need to be repackaged to make a module package and support a non-socket mode.
-# pylint: disable=superfluous-parens,invalid-name,logging-not-lazy,attribute-defined-outside-init,no-self-use
 
 
 class TestSignals:

@@ -32,8 +32,6 @@ import subprocess  # nosec - internal use.
 from lava_common.exceptions import InfrastructureError
 from lava_common.constants import XNBD_PORT_RANGE_MIN, XNBD_PORT_RANGE_MAX
 
-# pylint: disable=no-member
-
 
 def dispatcher_gateway():
     """

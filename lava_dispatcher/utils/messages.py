@@ -85,9 +85,7 @@ class LinuxKernelMessages(Action):
         return [prompt[1] for prompt in cls.MESSAGE_CHOICES[: cls.FREE_UNUSED]]
 
     @classmethod
-    def parse_failures(
-        cls, connection, action=None, max_end_time=None, fail_msg=None
-    ):  # pylint: disable=too-many-branches
+    def parse_failures(cls, connection, action=None, max_end_time=None, fail_msg=None):
         """
         Returns a list of dictionaries of matches for failure strings and
         other kernel messages.
@@ -207,7 +205,7 @@ class LinuxKernelMessages(Action):
         # record a specific result for the kernel messages for later debugging.
         if action and isinstance(action.logger, YAMLLogger):
             action.logger.results(
-                {  # pylint: disable=no-member
+                {
                     "definition": "lava",
                     "namespace": action.parameters.get("namespace", "common"),
                     "case": cls.name,

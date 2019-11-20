@@ -23,7 +23,7 @@ from lava_common.exceptions import JobError
 from lava_dispatcher.tests.test_basic import Factory, StdoutTestCase
 
 
-class Cmsis_Factory(Factory):  # pylint: disable=too-few-public-methods
+class Cmsis_Factory(Factory):
     """
     Not Model based, this is not a Django factory.
     Factory objects are dispatcher based classes, independent
@@ -37,7 +37,7 @@ class Cmsis_Factory(Factory):  # pylint: disable=too-few-public-methods
         return self.create_job("frdm-k64f-power-01.jinja2", filename)
 
 
-class TestCMSISAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestCMSISAction(StdoutTestCase):
     def test_usb_mass_exists(self):
         factory = Cmsis_Factory()
         job = factory.create_k64f_job(

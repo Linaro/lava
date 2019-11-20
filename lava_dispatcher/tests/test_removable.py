@@ -34,14 +34,14 @@ from lava_dispatcher.tests.utils import DummyLogger, infrastructure_error
 from lava_dispatcher.utils.strings import substitute, map_kernel_uboot
 
 
-class RemovableFactory(Factory):  # pylint: disable=too-few-public-methods
+class RemovableFactory(Factory):
     """
     Not Model based, this is not a Django factory.
     Factory objects are dispatcher based classes, independent
     of any database objects.
     """
 
-    def create_job(self, sample_job, device_file):  # pylint: disable=no-self-use
+    def create_job(self, sample_job, device_file):
         device = NewDevice(os.path.join(os.path.dirname(__file__), device_file))
         j_yaml = os.path.join(os.path.dirname(__file__), sample_job)
         with open(j_yaml) as sample_job_data:
@@ -51,7 +51,7 @@ class RemovableFactory(Factory):  # pylint: disable=too-few-public-methods
         return job
 
 
-class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestRemovable(StdoutTestCase):
     def setUp(self):
         super().setUp()
         self.factory = Factory()
@@ -81,7 +81,7 @@ class TestRemovable(StdoutTestCase):  # pylint: disable=too-many-public-methods
         "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
     )
     def _check_valid_job(self, device, test_file, which_mock):
-        self.maxDiff = None  # pylint: disable=invalid-name
+        self.maxDiff = None
         job_parser = JobParser()
         sample_job_file = os.path.join(
             os.path.dirname(__file__), "sample_jobs/{}".format(test_file)

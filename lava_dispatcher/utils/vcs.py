@@ -26,9 +26,6 @@ import subprocess  # nosec - internal use.
 from lava_common.exceptions import InfrastructureError
 
 
-# pylint: disable=too-few-public-methods
-
-
 class VCSHelper:
     def __init__(self, url):
         self.url = url

@@ -68,12 +68,12 @@ class ShellLogger:
             self.line = lines
         return
 
-    def flush(self):  # pylint: disable=no-self-use
+    def flush(self):
         sys.stdout.flush()
         sys.stderr.flush()
 
 
-class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
+class ShellCommand(pexpect.spawn):
     """
     Run a command over a connection using pexpect instead of
     subprocess, i.e. not on the dispatcher itself.
@@ -119,7 +119,7 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
         self.linesep = LINE_SEPARATOR
         self.lava_timeout = lava_timeout
 
-    def sendline(self, s="", delay=0):  # pylint: disable=arguments-differ
+    def sendline(self, s="", delay=0):
         """
         Extends pexpect.sendline so that it can support the delay argument which allows a delay
         between sending each character to get around slow serial problems (iPXE).
@@ -140,7 +140,7 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
         self.logger.input(char)
         return super().sendcontrol(char)
 
-    def send(self, string, delay=0, send_char=True):  # pylint: disable=arguments-differ
+    def send(self, string, delay=0, send_char=True):
         """
         Extends pexpect.send to support extra arguments, delay and send by character flags.
         """
@@ -156,7 +156,7 @@ class ShellCommand(pexpect.spawn):  # pylint: disable=too-many-public-methods
             sent = super().send(string)
         return sent
 
-    def expect(self, *args, **kw):  # pylint: disable=arguments-differ
+    def expect(self, *args, **kw):
         """
         No point doing explicit logging here, the SignalDirector can help
         the TestShellAction make much more useful reports of what was matched

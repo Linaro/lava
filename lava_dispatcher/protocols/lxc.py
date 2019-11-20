@@ -37,7 +37,7 @@ from lava_common.constants import (
 from lava_dispatcher.utils.filesystem import lxc_path
 
 
-class LxcProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
+class LxcProtocol(Protocol):
     """
     Lxc API protocol.
     """
@@ -73,7 +73,7 @@ class LxcProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
         self.job_prefix = parameters["dispatcher"].get("prefix", "")
 
     @classmethod
-    def accepts(cls, parameters):  # pylint: disable=too-many-return-statements
+    def accepts(cls, parameters):
         if "protocols" not in parameters:
             return False
         if "lava-lxc" not in parameters["protocols"]:

@@ -79,9 +79,7 @@ class UBootPrepareKernelAction(Action):
         if not self.run_command(cmd2):
             raise InfrastructureError("DTB appending failed")
 
-    def create_uimage(
-        self, kernel, load_addr, xip, arch, output
-    ):  # pylint: disable=too-many-arguments
+    def create_uimage(self, kernel, load_addr, xip, arch, output):
         load_addr = int(load_addr, 16)
         uimage_path = "%s/%s" % (os.path.dirname(kernel), output)
         if xip:
@@ -222,7 +220,7 @@ class PrepareFITAction(Action):
         else:
             self.device_params = device_params
 
-    def _make_mkimage_command(self, params):  # pylint: disable=no-self-use
+    def _make_mkimage_command(self, params):
         cmd = [
             "mkimage",
             "-D",

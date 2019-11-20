@@ -33,8 +33,6 @@ from lava_dispatcher.tests.utils import DummyLogger
 from lava_dispatcher.utils.strings import substitute
 from lava_dispatcher.menus.menus import SelectorMenu
 
-# pylint: disable=too-many-public-methods
-
 
 class TestSelectorMenu(StdoutTestCase):
     def setUp(self):
@@ -72,14 +70,14 @@ class TestSelectorMenu(StdoutTestCase):
                     self.assertEqual(match.group(1), selection)
 
 
-class MenuFactory(Factory):  # pylint: disable=too-few-public-methods
+class MenuFactory(Factory):
     """
     Not Model based, this is not a Django factory.
     Factory objects are dispatcher based classes, independent
     of any database objects.
     """
 
-    def create_uefi_job(self, filename):  # pylint: disable=no-self-use
+    def create_uefi_job(self, filename):
         device = NewDevice(
             os.path.join(os.path.dirname(__file__), "devices/mustang-uefi.yaml")
         )
@@ -91,7 +89,7 @@ class MenuFactory(Factory):  # pylint: disable=too-few-public-methods
         return job
 
 
-class TestUefi(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestUefi(StdoutTestCase):
     def setUp(self):
         super().setUp()
         factory = MenuFactory()

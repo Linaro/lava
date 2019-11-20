@@ -35,13 +35,9 @@ from lava_dispatcher.utils.shell import which
 
 
 # https://www.kernel.org/doc/Documentation/xz.txt
-compress_command_map = {
-    "xz": ["xz", "--check=crc32"],  # pylint: disable=invalid-name
-    "gz": ["gzip"],
-    "bz2": ["bzip2"],
-}
+compress_command_map = {"xz": ["xz", "--check=crc32"], "gz": ["gzip"], "bz2": ["bzip2"]}
 decompress_command_map = {
-    "xz": ["unxz"],  # pylint: disable=invalid-name
+    "xz": ["unxz"],
     "gz": ["gunzip"],
     "bz2": ["bunzip2"],
     "zip": ["unzip"],

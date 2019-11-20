@@ -33,8 +33,6 @@ from lava_dispatcher.action import Pipeline
 from lava_dispatcher.logical import LavaTest, RetryAction
 from lava_dispatcher.connection import SignalMatch
 
-# pylint: disable=too-many-branches,too-many-statements,too-many-instance-attributes,logging-not-lazy
-
 
 def handle_testcase(params):
     data = {}
@@ -62,7 +60,7 @@ class TestShell(LavaTest):
         parent.add_action(self.action, parameters)
 
     @classmethod
-    def accepts(cls, device, parameters):  # pylint: disable=unused-argument
+    def accepts(cls, device, parameters):
         if ("definition" in parameters) or ("definitions" in parameters):
             return True, "accepted"
         return False, '"definition" or "definitions" not in parameters'
@@ -199,7 +197,7 @@ class TestShellAction(TestAction):
         self._reset_patterns()
         super().validate()
 
-    def run(self, connection, max_end_time):  # pylint: disable=too-many-locals
+    def run(self, connection, max_end_time):
         """
         Common run function for subclasses which define custom patterns
         """
@@ -301,7 +299,7 @@ class TestShellAction(TestAction):
 
         try:
             feedbacks = []
-            for feedback_ns in self.data.keys():  # pylint: disable=no-member
+            for feedback_ns in self.data.keys():
                 if feedback_ns == self.parameters.get("namespace"):
                     continue
                 feedback_connection = self.get_namespace_data(
@@ -358,7 +356,7 @@ class TestShellAction(TestAction):
             if self.current_run is not None:
                 self.logger.error("Marking unfinished test run as failed")
                 self.current_run["duration"] = "%.02f" % (time.time() - self.start)
-                self.logger.results(self.current_run)  # pylint: disable=no-member
+                self.logger.results(self.current_run)
                 self.current_run = None
 
         # Only print if the report is not empty
@@ -461,7 +459,7 @@ class TestShellAction(TestAction):
         if commit_id:
             res["commit_id"] = commit_id
 
-        self.logger.results(res)  # pylint: disable=no-member
+        self.logger.results(res)
         self.start = None
 
     @nottest
@@ -526,7 +524,7 @@ class TestShellAction(TestAction):
         else:
             self.report[res["test_case_id"]] = res["result"]
         # Send the results back
-        self.logger.results(res_data)  # pylint: disable=no-member
+        self.logger.results(res_data)
 
     @nottest
     def signal_test_reference(self, params):
@@ -540,7 +538,7 @@ class TestShellAction(TestAction):
         }
         if self.testset_name:
             res_dict.update({"set": self.testset_name})
-        self.logger.results(res_dict)  # pylint: disable=no-member
+        self.logger.results(res_dict)
 
     @nottest
     def signal_test_feedback(self, params):
@@ -617,13 +615,11 @@ class TestShellAction(TestAction):
                 if "units" in res:
                     res_data["units"] = res["units"]
 
-            self.logger.results(res_data)  # pylint: disable=no-member
+            self.logger.results(res_data)
             self.report[res["test_case_id"]] = res["result"]
         return True
 
-    def check_patterns(
-        self, event, test_connection, check_char
-    ):  # pylint: disable=unused-argument
+    def check_patterns(self, event, test_connection, check_char):
         """
         Defines the base set of pattern responses.
         Stores the results of testcases inside the TestAction

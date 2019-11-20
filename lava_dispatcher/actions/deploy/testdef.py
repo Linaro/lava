@@ -92,7 +92,7 @@ class RepoAction(Action):
 
     @classmethod
     def select(cls, repo_type):
-        candidates = cls.__subclasses__()  # pylint: disable=no-member
+        candidates = cls.__subclasses__()
         willing = [c for c in candidates if c.accepts(repo_type)]
 
         if not willing:
@@ -237,7 +237,7 @@ class RepoAction(Action):
         self.logger.debug("uuid=%s testdef=%s", self.uuid, ret)
 
 
-class GitRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
+class GitRepoAction(RepoAction):
     """
     Each repo action is for a single repository,
     tests using multiple repositories get multiple
@@ -335,7 +335,7 @@ class GitRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
         return connection
 
 
-class InlineRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
+class InlineRepoAction(RepoAction):
 
     priority = 1
     name = "inline-repo-action"
@@ -386,7 +386,7 @@ class InlineRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
         return connection
 
 
-class TarRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
+class TarRepoAction(RepoAction):
 
     priority = 0  # FIXME: increase priority once this is working
     name = "tar-repo-action"
@@ -441,7 +441,7 @@ class TarRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
         return connection
 
 
-class UrlRepoAction(RepoAction):  # pylint: disable=too-many-public-methods
+class UrlRepoAction(RepoAction):
 
     priority = 0  # FIXME: increase priority once this is working
     name = "url-repo-action"
@@ -686,7 +686,7 @@ class TestDefinitionAction(TestAction):
 
 
 @nottest
-class TestOverlayAction(TestAction):  # pylint: disable=too-many-instance-attributes
+class TestOverlayAction(TestAction):
 
     name = "test-overlay"
     description = "overlay test support files onto image"
@@ -916,7 +916,7 @@ class TestInstallAction(TestOverlayAction):
             if commit_id is None:
                 raise JobError("Unable to clone %s" % str((repo)))
 
-    def run(self, connection, max_end_time):  # pylint: disable=too-many-statements
+    def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
         runner_path = self.get_namespace_data(
             action="uuid", label="overlay_path", key=self.parameters["test_name"]

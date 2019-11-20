@@ -42,8 +42,6 @@ from lava_dispatcher.device import NewDevice
 from lava_dispatcher.actions.deploy.image import DeployImages
 from lava_dispatcher.tests.utils import DummyLogger
 
-# pylint: disable=invalid-name,C0330,no-self-use
-
 
 class StdoutTestCase(unittest.TestCase):
     # set to True to update pipeline_references automatically.
@@ -62,7 +60,7 @@ class StdoutTestCase(unittest.TestCase):
             return yaml_safe_load(f_ref)
 
 
-class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestAction(StdoutTestCase):
     def test_references_a_device(self):
         device = object()
         cmd = Action()
@@ -70,7 +68,7 @@ class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertIs(cmd.device, device)
 
 
-class TestPipelineInit(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestPipelineInit(StdoutTestCase):
     class FakeAction(Action):
         def __init__(self):
             self.ran = False
@@ -122,7 +120,7 @@ class TestPipelineInit(StdoutTestCase):  # pylint: disable=too-many-public-metho
 
 
 class TestValidation(StdoutTestCase):
-    def test_action_is_valid_if_there_are_not_errors(self):  # pylint: invalid-name
+    def test_action_is_valid_if_there_are_not_errors(self):
         action = Action()
         action.__errors__ = [1]
         self.assertFalse(action.valid)
@@ -274,7 +272,7 @@ class Factory:
         return job
 
 
-class TestPipeline(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestPipeline(StdoutTestCase):
     class FakeAction(Action):
 
         name = "fake-action"
@@ -311,7 +309,7 @@ class TestPipeline(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertEqual(action.level, "1")
         try:
             description = pipe.describe()
-        except Exception as exc:  # pylint: disable=broad-except
+        except Exception as exc:
             self.fail(exc)
         self.assertIsNotNone(description)
         self.assertIsInstance(description, list)
@@ -349,7 +347,7 @@ class TestPipeline(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertEqual(len(retry_pipe.actions), 1)
         self.assertEqual(action.level, "2.1")
 
-    def test_complex_pipeline(self):  # pylint: disable=too-many-statements
+    def test_complex_pipeline(self):
         action = Action()
         action.name = "starter_action"
         action.description = "test action only"
@@ -480,7 +478,7 @@ class TestPipeline(StdoutTestCase):  # pylint: disable=too-many-public-methods
         )
 
 
-class TestFakeActions(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestFakeActions(StdoutTestCase):
     class KeepConnection(Action):
         name = "keep-connection"
 

@@ -34,8 +34,6 @@ from lava_dispatcher.parser import JobParser
 from lava_dispatcher.tests.test_uboot import UBootFactory
 from lava_dispatcher.tests.utils import DummyLogger
 
-# pylint: disable=too-many-public-methods,too-few-public-methods
-
 
 class TestMultiDeploy(StdoutTestCase):
     def setUp(self):
@@ -159,7 +157,7 @@ class TestMultiDeploy(StdoutTestCase):
         )
 
 
-class TestMultiDefinition(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestMultiDefinition(StdoutTestCase):
     def setUp(self):
         super().setUp()
         self.device = NewDevice(
@@ -214,7 +212,7 @@ class TestMultiDefinition(StdoutTestCase):  # pylint: disable=too-many-public-me
         self.assertIn("Test definition names need to be unique.", runscript.errors)
 
 
-class TestMultiUBoot(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestMultiUBoot(StdoutTestCase):
     def setUp(self):
         super().setUp()
         factory = UBootFactory()

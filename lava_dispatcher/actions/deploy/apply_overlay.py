@@ -42,8 +42,6 @@ from lava_dispatcher.utils.strings import substitute
 from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.actions.deploy.prepare import PrepareKernelAction
 
-# pylint: disable=superfluous-parens,too-many-statements
-
 
 class ApplyOverlayGuest(Action):
 
@@ -257,7 +255,7 @@ class ApplyOverlayTftp(Action):
             if "address" not in persist:
                 self.errors = "Missing address for persistent NFS"
 
-    def run(self, connection, max_end_time):  # pylint: disable=too-many-branches
+    def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
         directory = None
         nfs_address = None
@@ -374,7 +372,7 @@ class ApplyOverlayTftp(Action):
         return connection
 
 
-class ExtractRootfs(Action):  # pylint: disable=too-many-instance-attributes
+class ExtractRootfs(Action):
     """
     Unpacks the rootfs and applies the overlay to it
     """
@@ -654,7 +652,7 @@ class CompressRamdisk(Action):
                 else:
                     self.errors = "ramdisk: add_header: unknown header type"
 
-    def run(self, connection, max_end_time):  # pylint: disable=too-many-locals
+    def run(self, connection, max_end_time):
         if not self.parameters.get("ramdisk"):  # idempotency
             return connection
         if self.skip:
@@ -701,7 +699,7 @@ class CompressRamdisk(Action):
             except OSError as exc:
                 raise InfrastructureError("Unable to create cpio filesystem: %s" % exc)
             # lazy-logging would mean that the quoting of cmd causes invalid YAML
-            self.logger.debug("%s\n%s" % (cmd, log))  # pylint: disable=logging-not-lazy
+            self.logger.debug("%s\n%s" % (cmd, log))
 
             # we need to compress the ramdisk with the same method is was submitted with
             compression = self.parameters["ramdisk"].get("compression")

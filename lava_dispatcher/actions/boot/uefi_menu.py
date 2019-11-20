@@ -104,9 +104,7 @@ class UEFIMenuInterrupt(MenuInterrupt):
         return connection
 
 
-class UefiMenuSelector(
-    SelectorMenuAction
-):  # pylint: disable=too-many-instance-attributes
+class UefiMenuSelector(SelectorMenuAction):
 
     name = "uefi-menu-selector"
     description = "select specified uefi menu items"

@@ -39,7 +39,7 @@ class ZMQPushHandler(logging.Handler):
         self.ipv6 = ipv6
 
         # Create the PUSH socket
-        # pylint: disable=no-member
+
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.PUSH)
 
@@ -95,9 +95,7 @@ class YAMLLogger(logging.Logger):
             self.removeHandler(self.handler)
             self.handler = None
 
-    def log_message(
-        self, level, level_name, message, *args, **kwargs
-    ):  # pylint: disable=unused-argument
+    def log_message(self, level, level_name, message, *args, **kwargs):
         # Build the dictionnary
         data = {"dt": datetime.datetime.utcnow().isoformat(), "lvl": level_name}
 

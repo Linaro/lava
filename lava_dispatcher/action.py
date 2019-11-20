@@ -43,7 +43,7 @@ from lava_dispatcher.log import YAMLLogger
 from lava_dispatcher.utils.strings import seconds_to_str
 
 
-class InternalObject:  # pylint: disable=too-few-public-methods
+class InternalObject:
     """
     An object within the dispatcher pipeline which should not be included in
     the description of the pipeline.
@@ -52,7 +52,7 @@ class InternalObject:  # pylint: disable=too-few-public-methods
     pass
 
 
-class Pipeline:  # pylint: disable=too-many-instance-attributes
+class Pipeline:
     """
     Pipelines ensure that actions are run in the correct sequence whilst
     allowing for retries and other requirements.
@@ -76,7 +76,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
                 )
             self.parent = parent
 
-    def _check_action(self, action):  # pylint: disable=no-self-use
+    def _check_action(self, action):
         if not action:
             raise LAVABug("Need an action to add to the pipeline, not None.")
         elif not issubclass(type(action), Action):
@@ -84,7 +84,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         # if isinstance(action, DiagnosticAction):
         #     raise LAVABug("Diagnostic actions need to be triggered, not added to a pipeline.")
 
-    def add_action(self, action, parameters=None):  # pylint: disable=too-many-branches
+    def add_action(self, action, parameters=None):
         self._check_action(action)
         self.actions.append(action)
         # FIXME: if this is only happening in unit test, this has to be fixed later on
@@ -114,8 +114,6 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
             # Then job level overrides
             timeouts.append(self.job.parameters.get("timeouts", {}))
 
-        # pylint: disable=invalid-name
-
         def dict_merge_get(dicts, key):
             value = None
             for d in dicts:
@@ -132,7 +130,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         # 1/ the global action timeout
         # 2/ the individual action timeout
         # 3/ the action block timeout
-        # pylint: disable=protected-access
+
         action._override_action_timeout(dict_merge_get(timeouts, "action"))
         action._override_action_timeout(
             subdict_merge_get(timeouts, "actions", action.name)
@@ -321,7 +319,7 @@ class CommandLogger:
             self.write("\n")
 
 
-class Action:  # pylint: disable=too-many-instance-attributes,too-many-public-methods
+class Action:
     def __init__(self):
         """
         Actions get added to pipelines by calling the
@@ -390,7 +388,7 @@ class Action:  # pylint: disable=too-many-instance-attributes,too-many-public-me
 
     @classmethod
     def select(cls, name):
-        for subclass in cls.__subclasses__():  # pylint: disable=no-member
+        for subclass in cls.__subclasses__():
             if subclass.name == name:
                 return subclass
         raise JobError('Cannot find action named "%s"' % name)
@@ -497,13 +495,13 @@ class Action:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         if not self.name:
             self.errors = "%s action has no name set" % self
         # have already checked that self.name is not None, but pylint gets confused.
-        if " " in self.name:  # pylint: disable=unsupported-membership-test
+        if " " in self.name:
             self.errors = (
                 "Whitespace must not be used in action names, only descriptions or summaries: %s"
                 % self.name
             )
 
-        if "_" in self.name:  # pylint: disable=unsupported-membership-test
+        if "_" in self.name:
             self.errors = "Use - instead of _ in action names: %s" % self.name
 
         if not self.summary:
@@ -857,7 +855,7 @@ class Action:  # pylint: disable=too-many-instance-attributes,too-many-public-me
                     "name": self.timeout.name,
                 }
             elif attr == "url":
-                data["url"] = self.url.geturl()  # pylint: disable=no-member
+                data["url"] = self.url.geturl()
             elif attr == "vcs":
                 data[attr] = getattr(self, attr).url
             elif attr == "protocols":
@@ -912,9 +910,7 @@ class Action:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         """
         params = parameters if parameters else self.parameters
         namespace = params["namespace"]
-        value = (
-            self.data.get(namespace, {}).get(action, {}).get(label, {}).get(key)
-        )  # pylint: disable=no-member
+        value = self.data.get(namespace, {}).get(action, {}).get(label, {}).get(key)
         if value is None:
             return None
         return copy.deepcopy(value) if deepcopy else value
@@ -937,7 +933,7 @@ class Action:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         namespace = params["namespace"]
         if not label or not key:
             raise LAVABug("Invalid call to set_namespace_data: %s" % action)
-        self.data.setdefault(namespace, {})  # pylint: disable=no-member
+        self.data.setdefault(namespace, {})
         self.data[namespace].setdefault(action, {})
         self.data[namespace][action].setdefault(label, {})
         self.data[namespace][action][label][key] = value
@@ -999,7 +995,7 @@ class Action:  # pylint: disable=too-many-instance-attributes,too-many-public-me
                 # allows retries without setting errors, which make the job incomplete.
                 res = "fail"
             self.logger.results(
-                {  # pylint: disable=no-member
+                {
                     "definition": "lava",
                     "namespace": self.parameters.get("namespace", "common"),
                     "case": self.name,
@@ -1018,7 +1014,7 @@ class Action:  # pylint: disable=too-many-instance-attributes,too-many-public-me
             )
 
     @nottest
-    def test_needs_deployment(self, parameters):  # pylint: disable=no-self-use
+    def test_needs_deployment(self, parameters):
         if parameters["namespace"] in self.job.test_info:
             testclasses = self.job.test_info[parameters["namespace"]]
             for testclass in testclasses:
@@ -1027,7 +1023,7 @@ class Action:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         return False
 
     @nottest
-    def test_has_shell(self, parameters):  # pylint: disable=no-self-use
+    def test_has_shell(self, parameters):
         if parameters["namespace"] in self.job.test_info:
             testclasses = self.job.test_info[parameters["namespace"]]
             for testclass in testclasses:
@@ -1036,7 +1032,7 @@ class Action:  # pylint: disable=too-many-instance-attributes,too-many-public-me
         return False
 
     @nottest
-    def test_needs_overlay(self, parameters):  # pylint: disable=no-self-use
+    def test_needs_overlay(self, parameters):
         if parameters["namespace"] in self.job.test_info:
             testclasses = self.job.test_info[parameters["namespace"]]
             for testclass in testclasses:
