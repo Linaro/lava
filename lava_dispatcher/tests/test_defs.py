@@ -56,7 +56,6 @@ from lava_dispatcher.tests.utils import (
 )
 
 
-# pylint: disable=duplicate-code
 # Test the loading of test definitions within the deploy stage
 
 
@@ -74,7 +73,7 @@ def check_missing_path(testcase, exception, path):
             testcase.fail(exception)
 
 
-class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestDefinitionHandlers(StdoutTestCase):
     def setUp(self):
         super().setUp()
         self.factory = Factory()
@@ -271,7 +270,7 @@ class TestDefinitionHandlers(StdoutTestCase):  # pylint: disable=too-many-public
         )
 
 
-class TestDefinitionSimple(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestDefinitionSimple(StdoutTestCase):
     def setUp(self):
         super().setUp()
         factory = Factory()
@@ -298,7 +297,7 @@ class TestDefinitionSimple(StdoutTestCase):  # pylint: disable=too-many-public-m
         )  # deploy without test only needs DownloaderAction
 
 
-class TestDefinitionParams(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestDefinitionParams(StdoutTestCase):
     def setUp(self):
         super().setUp()
         self.factory = Factory()
@@ -418,7 +417,7 @@ class TestDefinitionParams(StdoutTestCase):  # pylint: disable=too-many-public-m
         shutil.rmtree(runner_path)
 
 
-class TestDefinitionRepeat(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestDefinitionRepeat(StdoutTestCase):
     def setUp(self):
         super().setUp()
         factory = Factory()
@@ -446,7 +445,7 @@ class TestDefinitionRepeat(StdoutTestCase):  # pylint: disable=too-many-public-m
         self.assertEqual(len(finalize), 1)
 
 
-class TestSkipInstall(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestSkipInstall(StdoutTestCase):
     def setUp(self):
         super().setUp()
         factory = UBootFactory()
@@ -569,7 +568,7 @@ class TestDefinitions(StdoutTestCase):
     @patch(
         "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
     )
-    def test_definition_lists(self, which_mock):  # pylint: disable=too-many-locals
+    def test_definition_lists(self, which_mock):
         self.job.validate()
         tftp_deploy = [
             action

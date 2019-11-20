@@ -28,8 +28,6 @@ from lava_common.exceptions import InfrastructureError, JobError, TestError
 from lava_common.constants import REBOOT_COMMAND_LIST
 from lava_dispatcher.action import Action, Pipeline
 
-# pylint: disable=missing-docstring
-
 
 class ResetDevice(Action):
     """
@@ -260,7 +258,7 @@ class ReadFeedback(Action):
 
     def run(self, connection, max_end_time):
         feedbacks = []
-        for feedback_ns in self.data.keys():  # pylint: disable=no-member
+        for feedback_ns in self.data.keys():
             if feedback_ns == self.parameters.get("namespace"):
                 if not self.repeat:
                     continue

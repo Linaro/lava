@@ -26,9 +26,6 @@ from lava_dispatcher.action import Action
 from lava_dispatcher.shell import ShellCommand, ShellSession
 
 
-# pylint: disable=too-many-public-methods,too-many-instance-attributes
-
-
 class SShSession(ShellSession):
     """ Extends a ShellSession to include the ability to copy files using scp
     without duplicating the SSH setup, keys etc.

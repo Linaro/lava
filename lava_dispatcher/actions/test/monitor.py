@@ -136,9 +136,7 @@ class TestMonitorAction(TestAction):
         retval = test_connection.expect(list(self.patterns.values()), timeout=timeout)
         return self.check_patterns(list(self.patterns.keys())[retval], test_connection)
 
-    def check_patterns(
-        self, event, test_connection
-    ):  # pylint: disable=too-many-branches
+    def check_patterns(self, event, test_connection):
         """
         Defines the base set of pattern responses.
         Stores the results of testcases inside the TestAction
@@ -184,7 +182,7 @@ class TestMonitorAction(TestAction):
                             results.update({"measurement": match["measurement"]})
                         if "units" in match:
                             results.update({"units": match["units"]})
-                        self.logger.results(results)  # pylint: disable=no-member
+                        self.logger.results(results)
             else:
                 if all(x in match for x in ["test_case_id", "measurement"]):
                     if match["measurement"] and match["test_case_id"]:
@@ -204,6 +202,6 @@ class TestMonitorAction(TestAction):
                         }
                         if "units" in match:
                             results.update({"units": match["units"]})
-                        self.logger.results(results)  # pylint: disable=no-member
+                        self.logger.results(results)
             ret_val = True
         return ret_val

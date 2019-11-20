@@ -31,13 +31,13 @@ from linaro_django_xmlrpc.models import AuthToken
 
 
 def help_max_length(max_length):
-    return ungettext_lazy(  # pylint: disable=no-member
+    return ungettext_lazy(
         u"Maximum length: {0} character", u"Maximum length: {0} characters", max_length
     ).format(max_length)
 
 
-class StreamEcho:  # pylint: disable=too-few-public-methods
-    def write(self, value):  # pylint: disable=no-self-use,
+class StreamEcho:
+    def write(self, value):
         return value
 
 

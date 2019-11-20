@@ -36,7 +36,7 @@ class DepthchargeFactory:
     of any database objects.
     """
 
-    def create_jaq_job(self, filename):  # pylint: disable=no-self-use
+    def create_jaq_job(self, filename):
         device = NewDevice(
             os.path.join(os.path.dirname(__file__), "devices/jaq-01.yaml")
         )
@@ -116,7 +116,7 @@ class TestDepthchargeAction(StdoutTestCase):
 {fit_path}'.format(
             **params
         )
-        cmd = prep_fit._make_mkimage_command(params)  # pylint: disable=protected-access
+        cmd = prep_fit._make_mkimage_command(params)
         self.assertEqual(cmd_ref, " ".join(cmd))
 
         depthcharge = [

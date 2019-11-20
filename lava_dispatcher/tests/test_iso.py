@@ -31,7 +31,7 @@ from lava_dispatcher.tests.utils import DummyLogger
 from lava_dispatcher.utils.strings import substitute
 
 
-class InstallerFactory(Factory):  # pylint: disable=too-few-public-methods
+class InstallerFactory(Factory):
     def create_qemu_installer_job(self):
         (rendered, _) = self.create_device("kvm01.jinja2")
         device = NewDevice(yaml_safe_load(rendered))

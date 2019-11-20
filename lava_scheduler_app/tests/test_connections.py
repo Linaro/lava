@@ -12,7 +12,6 @@ from lava_scheduler_app.tests.test_submission import TestCaseWithFactory
 
 
 # TestCaseWithFactory cannot help causing too-many-ancestors, so ignore
-# pylint: disable=too-many-ancestors
 
 
 class YamlSshFactory(YamlFactory):

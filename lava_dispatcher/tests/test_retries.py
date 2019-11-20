@@ -29,10 +29,7 @@ from lava_dispatcher.tests.test_basic import StdoutTestCase
 from lava_dispatcher.tests.utils import DummyLogger
 
 
-# pylint: disable=too-few-public-methods
-
-
-class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestAction(StdoutTestCase):
     class FakeJob(Job):
         def __init__(self, parameters):
             super().__init__(4212, parameters, None)
@@ -150,7 +147,7 @@ class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         }
         self.fakejob = TestAction.FakeJob(self.parameters)
 
-    def lookup_deploy(self, params):  # pylint: disable=no-self-use
+    def lookup_deploy(self, params):
         actions = iter(params)
         while actions:
             try:
@@ -312,7 +309,7 @@ class TestAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
         self.assertNotEqual(reference_list, [1, 2, 3, 7, 8, 9])
 
 
-class TestTimeout(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestTimeout(StdoutTestCase):
     class FakeJob(Job):
         def __init__(self, parameters):
             super().__init__(4212, parameters, None)

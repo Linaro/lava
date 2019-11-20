@@ -13,8 +13,6 @@ from lava_dispatcher.protocols.vland import VlandProtocol
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
 
 # pylint does not like TestCaseWithFactory
-# pylint: disable=too-many-ancestors,no-self-use,too-many-statements
-# pylint: disable=superfluous-parens,too-many-locals
 
 
 class VlandFactory(YamlFactory):
@@ -24,7 +22,7 @@ class VlandFactory(YamlFactory):
         self.cubie1 = None
         self.bbb_type = None
 
-    def setUp(self):  # pylint: disable=invalid-name
+    def setUp(self):
         self.bbb_type = self.make_device_type(name="bbb")
         self.cubie_type = self.make_device_type(name="cubietruck")
         self.bbb1 = self.make_device(self.bbb_type, hostname="bbb-01")

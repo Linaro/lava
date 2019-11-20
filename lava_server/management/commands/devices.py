@@ -32,8 +32,6 @@ from lava_common.schemas.device import validate as validate_device
 from lava_scheduler_app.models import Device, DeviceType, Tag, Worker
 from lava_server.compat import get_sub_parser_class
 
-# pylint: disable=bad-continuation
-
 
 class Command(BaseCommand):
     help = "Manage devices"

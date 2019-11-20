@@ -40,7 +40,7 @@ from lava_dispatcher.utils.filesystem import tftpd_dir
 from lava_dispatcher.utils.strings import substitute
 
 
-class UBootFactory(Factory):  # pylint: disable=too-few-public-methods
+class UBootFactory(Factory):
     """
     Not Model based, this is not a Django factory.
     Factory objects are dispatcher based classes, independent
@@ -60,7 +60,7 @@ class UBootFactory(Factory):  # pylint: disable=too-few-public-methods
         return self.create_job("zcu102.jinja2", filename)
 
 
-class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestUbootAction(StdoutTestCase):
     def setUp(self):
         super().setUp()
         self.factory = UBootFactory()
@@ -185,7 +185,7 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
             self.assertTrue(action.valid)
 
     @unittest.skipIf(infrastructure_error("lxc-start"), "lxc-start not installed")
-    def test_fastboot_uboot(self):  # pylint: disable=too-many-locals
+    def test_fastboot_uboot(self):
         job = self.factory.create_x15_job("sample_jobs/x15-uboot.yaml")
         job.validate()
         description_ref = self.pipeline_reference("x15-uboot.yaml", job=job)
@@ -211,7 +211,7 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
 
     @unittest.skipIf(infrastructure_error("lxc-start"), "lxc-start not installed")
     @patch("lava_dispatcher.utils.shell.which", return_value="/usr/bin/in.tftpd")
-    def test_x15_uboot_nfs(self, which_mock):  # pylint: disable=too-many-locals
+    def test_x15_uboot_nfs(self, which_mock):
         job = self.factory.create_x15_job("sample_jobs/x15-nfs.yaml")
         job.validate()
         description_ref = self.pipeline_reference("x15-nfs.yaml", job=job)
@@ -240,7 +240,7 @@ class TestUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-method
         self.assertEqual(description_ref, job.pipeline.describe(False))
 
     @patch("lava_dispatcher.utils.shell.which", return_value="/usr/bin/in.tftpd")
-    def test_overlay_action(self, which_mock):  # pylint: disable=too-many-locals
+    def test_overlay_action(self, which_mock):
         parameters = {
             "dispatcher": {},  # fake dispatcher parameter. Normally added by parser
             "device_type": "beaglebone-black",
@@ -795,7 +795,7 @@ class TestKernelConversion(StdoutTestCase):
         self.assertTrue(uboot_prepare.mkimage_conversion)
 
 
-class TestOverlayCommands(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestOverlayCommands(StdoutTestCase):
     def setUp(self):
         super().setUp()
         self.factory = UBootFactory()

@@ -7,9 +7,6 @@ from lava_scheduler_app.tests.test_base_templates import (
     prepare_jinja_template,
 )
 
-# pylint: disable=too-many-branches,too-many-public-methods
-# pylint: disable=too-many-nested-blocks
-
 
 class TestFastbootTemplates(BaseTemplate.BaseTemplateCases):
     """

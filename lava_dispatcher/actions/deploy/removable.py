@@ -180,7 +180,7 @@ class DDAction(Action):
                 value=self.boot_params[self.parameters["device"]]["device_id"],
             )
 
-    def run(self, connection, max_end_time):  # pylint: disable=too-many-locals
+    def run(self, connection, max_end_time):
         """
         Retrieve the decompressed image from the dispatcher by calling the tool specified
         by the test writer, from within the test image of the first deployment, using the
@@ -266,7 +266,7 @@ class DDAction(Action):
         return connection
 
 
-class MassStorage(DeployAction):  # pylint: disable=too-many-instance-attributes
+class MassStorage(DeployAction):
 
     name = "storage-deploy"
     description = "Deploy image to mass storage"

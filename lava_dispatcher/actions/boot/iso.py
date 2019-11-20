@@ -71,7 +71,7 @@ class BootIsoInstallerAction(BootAction):
         self.internal_pipeline.add_action(ExportDeviceEnvironment())
 
 
-class IsoCommandLine(Action):  # pylint: disable=too-many-instance-attributes
+class IsoCommandLine(Action):
 
     """
     qemu-system-x86_64 -nographic -enable-kvm -cpu host -net nic,model=virtio,macaddr=52:54:00:12:34:59 -net user -m 2048 \

@@ -36,8 +36,6 @@ from lava_dispatcher.protocols.multinode import MultinodeProtocol
 # For primary: to: ssh is used to implicitly copy the authorization
 # For secondary, authorize: ssh is needed as 'to' is already used.
 
-# pylint: disable=too-many-instance-attributes
-
 
 class Ssh(Deployment):
     """

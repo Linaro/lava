@@ -38,7 +38,7 @@ from lava_server.views import index as lava_index
 
 
 @csrf_exempt
-def handler(request, mapper, help_view):  # pylint: disable=too-many-return-statements
+def handler(request, mapper, help_view):
     """
     XML-RPC handler.
 
@@ -97,9 +97,7 @@ def handler(request, mapper, help_view):  # pylint: disable=too-many-return-stat
 
 
 @BreadCrumb("API help", parent=lava_index)
-def help(
-    request, mapper, template_name="linaro_django_xmlrpc/api.html"
-):  # pylint: disable=redefined-builtin
+def help(request, mapper, template_name="linaro_django_xmlrpc/api.html"):
     context = CallContext(user=None, mapper=mapper, dispatcher=None)
     system = SystemAPI(context)
     if settings.HTTPS_XML_RPC:

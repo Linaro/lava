@@ -34,7 +34,7 @@ from lava_dispatcher.actions.boot.fastboot import BootAction
 from lava_dispatcher.utils.lxc import is_lxc_requested, lxc_cmd_prefix
 
 
-class FastBootFactory(Factory):  # pylint: disable=too-few-public-methods
+class FastBootFactory(Factory):
     """
     Not Model based, this is not a Django factory.
     Factory objects are dispatcher based classes, independent
@@ -63,7 +63,7 @@ class FastBootFactory(Factory):  # pylint: disable=too-few-public-methods
         return self.create_job("pixel-01.jinja2", filename)
 
 
-class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestFastbootDeploy(StdoutTestCase):
     def setUp(self):
         super().setUp()
         self.factory = FastBootFactory()

@@ -26,15 +26,12 @@ from lava_dispatcher.action import InternalObject
 from lava_common.exceptions import LAVABug, TestError
 from lava_common.timeout import Timeout
 
-# pylint: disable=too-many-public-methods,too-many-instance-attributes
-# pylint: disable=unused-argument,no-self-use
-
 
 RECOGNIZED_TAGS = ("telnet", "ssh")
 
 
-class SignalMatch(InternalObject):  # pylint: disable=too-few-public-methods
-    def match(self, data, fixupdict=None):  # pylint: disable=no-self-use
+class SignalMatch(InternalObject):
+    def match(self, data, fixupdict=None):
         if not fixupdict:
             fixupdict = {}
 
@@ -219,7 +216,7 @@ class Protocol:
         Multiple protocols can apply to the same job, each with their own parameters.
         Jobs may have zero or more protocols selected.
         """
-        candidates = cls.__subclasses__()  # pylint: disable=no-member
+        candidates = cls.__subclasses__()
         return [(c, c.level) for c in candidates if c.accepts(parameters)]
 
     @property
@@ -237,15 +234,13 @@ class Protocol:
     def set_up(self):
         raise LAVABug("'set_up' not implemented")
 
-    def configure(self, device, job):  # pylint: disable=unused-argument
+    def configure(self, device, job):
         self.configured = True
 
     def finalise_protocol(self, device=None):
         raise LAVABug("'finalise_protocol' not implemented")
 
-    def check_timeout(
-        self, duration, data
-    ):  # pylint: disable=unused-argument,no-self-use
+    def check_timeout(self, duration, data):
         """
         Use if particular protocol calls can require a connection timeout
         larger than the default_connection_duration.
@@ -256,12 +251,12 @@ class Protocol:
         """
         return False
 
-    def _api_select(self, data, action=None):  # pylint: disable=no-self-use
+    def _api_select(self, data, action=None):
         if not data:
             return None
         raise LAVABug("'_api_select' not implemented")
 
-    def __call__(self, *args, **kwargs):  # pylint: disable=no-self-use
+    def __call__(self, *args, **kwargs):
         """ Makes the Protocol callable so that actions can send messages just using the protocol.
         This function may block until the specified API call returns. Some API calls may involve a
         substantial period of polling.
@@ -271,7 +266,5 @@ class Protocol:
         # implementations will usually need a try: except: block around _api.select()
         return self._api_select(args, action=None)
 
-    def collate(
-        self, reply_dict, params_dict
-    ):  # pylint: disable=unused-argument,no-self-use
+    def collate(self, reply_dict, params_dict):
         return None

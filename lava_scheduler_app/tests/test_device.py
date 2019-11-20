@@ -1,5 +1,3 @@
-# pylint: disable=ungrouped-imports
-
 import os
 import yaml
 import jinja2
@@ -21,10 +19,8 @@ from lava_scheduler_app.dbutils import (
 from django_testscenarios.ubertest import TestCase
 from django.contrib.auth.models import User, Group, Permission
 
-# pylint: disable=blacklisted-name,too-many-ancestors,invalid-name
+
 # python3 needs print to be a function, so disable pylint
-# pylint: disable=superfluous-parens
-# pylint: disable=too-many-branches,too-many-locals,too-many-nested-blocks
 
 
 class ModelFactory:
@@ -38,10 +34,10 @@ class ModelFactory:
     def getUniqueString(self, prefix="generic"):
         return "%s-%d" % (prefix, self.getUniqueInteger())
 
-    def get_unique_user(self, prefix="generic"):  # pylint: disable=no-self-use
+    def get_unique_user(self, prefix="generic"):
         return "%s-%d" % (prefix, User.objects.count() + 1)
 
-    def get_unique_group(self, prefix="group"):  # pylint: disable=no-self-use
+    def get_unique_group(self, prefix="group"):
         return "%s-%d" % (prefix, Group.objects.count() + 1)
 
     def make_user(self):

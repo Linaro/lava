@@ -17,8 +17,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-# pylint: disable=no-member,too-many-locals,too-many-nested-blocks,
-# pylint: disable=too-many-return-statements,ungrouped-imports
 
 import hashlib
 import os
@@ -111,9 +109,7 @@ def create_metadata_store(results, job):
     return meta_filename
 
 
-def map_scanned_results(
-    results, job, markers, meta_filename
-):  # pylint: disable=too-many-branches,too-many-statements,too-many-return-statements
+def map_scanned_results(results, job, markers, meta_filename):
     """
     Sanity checker on the logged results dictionary
     :param results: results logged via the slave
@@ -242,9 +238,7 @@ def _get_job_metadata(job):
     return retval
 
 
-def _get_action_metadata(
-    data
-):  # pylint: disable=too-many-branches,too-many-nested-blocks,too-many-statements
+def _get_action_metadata(data):
     if not isinstance(data, list):
         return None
     retval = {}

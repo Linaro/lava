@@ -50,10 +50,9 @@ from lava_scheduler_app.schema import (
 )
 
 # functions need to be members to be exposed in the API
-# pylint: disable=no-self-use
+
 
 # to make a function visible in the API, it must be a member of SchedulerAPI
-# pylint: disable=no-self-use
 
 
 def check_perm(perm):

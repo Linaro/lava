@@ -29,8 +29,6 @@ from django.db import IntegrityError
 from lava_scheduler_app.models import DeviceType, Alias
 from lava_server.compat import get_sub_parser_class
 
-# pylint: disable=invalid-name,no-self-use
-
 
 class Command(BaseCommand):
     help = (

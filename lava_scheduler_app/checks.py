@@ -33,8 +33,6 @@ from lava_scheduler_app.dbutils import invalid_template, validate_job
 from lava_scheduler_app.models import Device, DeviceType
 from lava_scheduler_app.schema import SubmissionException
 
-# pylint: disable=unused-argument,missing-docstring,invalid-name
-
 
 @register(deploy=True)
 def check_health_checks(app_configs, **kwargs):

@@ -31,7 +31,7 @@ from lava_dispatcher.tests.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.utils.filesystem import tftpd_dir
 
 
-class BareboxFactory(Factory):  # pylint: disable=too-few-public-methods
+class BareboxFactory(Factory):
     """
     Not Model based, this is not a Django factory.
     Factory objects are dispatcher based classes, independent
@@ -42,7 +42,7 @@ class BareboxFactory(Factory):  # pylint: disable=too-few-public-methods
         return self.create_job("bbb-03-barebox.jinja2", filename)
 
 
-class TestBareboxAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestBareboxAction(StdoutTestCase):
     def setUp(self):
         super().setUp()
         self.factory = BareboxFactory()

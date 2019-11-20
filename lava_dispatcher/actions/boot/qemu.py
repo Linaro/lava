@@ -33,8 +33,6 @@ from lava_dispatcher.utils.strings import substitute
 from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.actions.boot import AutoLoginAction, OverlayUnpack
 
-# pylint: disable=too-many-instance-attributes,too-many-branches,too-many-statements
-
 
 # FIXME: decide if 'media: tmpfs' is necessary or remove from YAML. Only removable needs 'media'
 class BootQEMU(Boot):

@@ -34,7 +34,7 @@ from lava_dispatcher.utils.network import dispatcher_ip
 from lava_common.constants import INSTALLER_IMAGE_MAX_SIZE
 
 
-class DeployIsoAction(DeployAction):  # pylint: disable=too-many-instance-attributes
+class DeployIsoAction(DeployAction):
     """
     Prepare an empty image, pull the specified kernel and initrd
     out of the iso using loopback and then start QEMU with the
@@ -220,7 +220,7 @@ class IsoPullInstaller(Action):
         return connection
 
 
-class QemuCommandLine(Action):  # pylint: disable=too-many-instance-attributes
+class QemuCommandLine(Action):
 
     name = "prepare-qemu-commands"
     description = "prepare qemu command and options to append to kernel command line"

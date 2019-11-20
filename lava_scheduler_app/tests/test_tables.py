@@ -17,7 +17,6 @@ LOGGER.level = logging.INFO  # change to DEBUG to see *all* output
 LOGGER.addHandler(logging.StreamHandler(sys.stdout))
 
 # pylint does not like TestCaseWithFactory
-# pylint: disable=too-many-ancestors
 
 
 @nottest
@@ -221,8 +220,8 @@ class TestHiddenDevicesInDeviceTable(TestCase):
 
     def test_device_table_view(self):
         device_type = DeviceType(name="generic")
-        device_type.save()  # pylint: disable=no-member
+        device_type.save()
         device = Device(device_type=device_type, hostname="generic1")
-        device.save()  # pylint: disable=no-member
+        device.save()
         view = TestDeviceView(None)
         self.assertEqual(len(view.get_queryset()), 1)

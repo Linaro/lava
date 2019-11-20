@@ -50,7 +50,7 @@ class ZMQConfig:
         self.ipv6 = ipv6
 
 
-class Job:  # pylint: disable=too-many-instance-attributes
+class Job:
     """
     Populated by the parser, the Job contains all of the
     Actions and their pipelines.

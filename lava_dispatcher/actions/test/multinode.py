@@ -42,7 +42,7 @@ class MultinodeTestShell(LavaTest):
         parent.add_action(self.action, parameters)
 
     @classmethod
-    def accepts(cls, device, parameters):  # pylint: disable=unused-argument
+    def accepts(cls, device, parameters):
         if "role" in parameters:
             if MultinodeProtocol.name in parameters:
                 if "target_group" in parameters[MultinodeProtocol.name]:

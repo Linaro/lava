@@ -170,7 +170,7 @@ class DebianSsoUserBackend(RemoteUserBackend):
         service = ldap.initialize("ldap://db.debian.org")
         result_set = service.search_s(
             "dc=debian,dc=org",
-            ldap.SCOPE_SUBTREE,  # pylint: disable=no-member
+            ldap.SCOPE_SUBTREE,
             "uid={}".format(self.get_uid(remote_user)),
             None,
         )

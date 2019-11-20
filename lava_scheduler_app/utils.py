@@ -60,9 +60,7 @@ def _split_multinode_vland(submission, jobs):
     return jobs
 
 
-def split_multinode_yaml(
-    submission, target_group
-):  # pylint: disable=too-many-branches,too-many-locals,too-many-statements
+def split_multinode_yaml(submission, target_group):
     """
     Handles the lava-multinode protocol requirements.
     Uses the multinode protocol requirements to generate as many YAML

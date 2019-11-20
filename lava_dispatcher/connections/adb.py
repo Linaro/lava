@@ -22,8 +22,6 @@ from lava_dispatcher.utils.shell import which
 from lava_dispatcher.action import Action, JobError
 from lava_dispatcher.shell import ShellCommand, ShellSession
 
-# pylint: disable=too-many-public-methods
-
 
 class ConnectAdb(Action):
     """

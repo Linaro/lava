@@ -78,7 +78,7 @@ from lava_scheduler_app.views import (
 )
 
 
-urlpatterns = [  # pylint: disable=invalid-name
+urlpatterns = [
     url(r"^$", index, name="lava.scheduler"),
     url(r"^reports$", reports, name="lava.scheduler.reports"),
     url(r"^reports/failures$", failure_report, name="lava.scheduler.failure_report"),

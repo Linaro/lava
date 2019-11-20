@@ -33,7 +33,7 @@ from lava_dispatcher.utils.filesystem import check_ssh_identity_file
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
 
 
-class ConnectionFactory(Factory):  # pylint: disable=too-few-public-methods
+class ConnectionFactory(Factory):
     """
     Not Model based, this is not a Django factory.
     Factory objects are dispatcher based classes, independent
@@ -47,7 +47,7 @@ class ConnectionFactory(Factory):  # pylint: disable=too-few-public-methods
         return self.create_job("bbb-02.jinja2", filename, validate=False)
 
 
-class TestConnection(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestConnection(StdoutTestCase):
     def setUp(self):
         super().setUp()
         factory = ConnectionFactory()
@@ -273,7 +273,7 @@ class TestConnection(StdoutTestCase):  # pylint: disable=too-many-public-methods
         )
         self.assertIsNotNone(tar_flags)
 
-    def test_guest_ssh(self):  # pylint: disable=too-many-locals,too-many-statements
+    def test_guest_ssh(self):
         self.assertIsNotNone(self.guest_job)
         description_ref = self.pipeline_reference(
             "bbb-ssh-guest.yaml", job=self.guest_job

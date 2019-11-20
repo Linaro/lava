@@ -40,14 +40,12 @@ to review in a devices/ directory.
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 # pylint gets confused: commands have no shebang, but the file is not a module.
-# pylint: disable=invalid-name
+
 
 import os
 import yaml
 import argparse
 from jinja2 import Environment, FileSystemLoader
-
-# pylint: disable=superfluous-parens,maybe-no-member
 
 
 def main():

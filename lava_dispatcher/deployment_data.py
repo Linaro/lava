@@ -19,7 +19,7 @@
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
 
-android = {  # pylint: disable=invalid-name
+android = {
     "TESTER_PS1": "root@linaro# ",
     "TESTER_PS1_PATTERN": "root@linaro# ",
     "TESTER_PS1_INCLUDES_RC": False,
@@ -34,7 +34,7 @@ android = {  # pylint: disable=invalid-name
     "lava_test_shell_file": None,
 }
 
-archlinux = {  # pylint: disable=invalid-name
+archlinux = {
     "TESTER_PS1": r"linaro-test [rc=$(echo \$?)]# ",
     "TESTER_PS1_PATTERN": r"linaro-test \[rc=(\d+)\]# ",
     "TESTER_PS1_INCLUDES_RC": True,
@@ -50,7 +50,7 @@ archlinux = {  # pylint: disable=invalid-name
     "lava_test_shell_file": "~/.bashrc",
 }
 
-centos = {  # pylint: disable=invalid-name
+centos = {
     "TESTER_PS1": r"linaro-test [rc=$(echo \$?)]# ",
     "TESTER_PS1_PATTERN": r"linaro-test \[rc=(\d+)\]# ",
     "TESTER_PS1_INCLUDES_RC": True,
@@ -66,7 +66,7 @@ centos = {  # pylint: disable=invalid-name
     "lava_test_shell_file": "~/.bashrc",
 }
 
-centos_installer = {  # pylint: disable=invalid-name
+centos_installer = {
     "TESTER_PS1": r"linaro-test [rc=$(echo \$?)]# ",
     "TESTER_PS1_PATTERN": r"linaro-test \[rc=(\d+)\]# ",
     "TESTER_PS1_INCLUDES_RC": True,
@@ -83,7 +83,7 @@ centos_installer = {  # pylint: disable=invalid-name
     "lava_test_shell_file": "~/.bashrc",
 }
 
-debian = {  # pylint: disable=invalid-name
+debian = {
     "TESTER_PS1": r"linaro-test [rc=$(echo \$?)]# ",
     "TESTER_PS1_PATTERN": r"linaro-test \[rc=(\d+)\]# ",
     "TESTER_PS1_INCLUDES_RC": True,
@@ -99,7 +99,7 @@ debian = {  # pylint: disable=invalid-name
     "lava_test_shell_file": "~/.bashrc",
 }
 
-debian_installer = {  # pylint: disable=invalid-name
+debian_installer = {
     "TESTER_PS1": r"linaro-test [rc=$(echo \$?)]# ",
     "TESTER_PS1_PATTERN": r"linaro-test \[rc=(\d+)\]# ",
     "TESTER_PS1_INCLUDES_RC": True,
@@ -126,7 +126,7 @@ debian_installer = {  # pylint: disable=invalid-name
     "lava_test_shell_file": "~/.bashrc",
 }
 
-fedora = {  # pylint: disable=invalid-name
+fedora = {
     "TESTER_PS1": r"linaro-test [rc=$(echo \$?)]# ",
     "TESTER_PS1_PATTERN": r"linaro-test \[rc=(\d+)\]# ",
     "TESTER_PS1_INCLUDES_RC": True,
@@ -142,7 +142,7 @@ fedora = {  # pylint: disable=invalid-name
     "lava_test_shell_file": "~/.bashrc",
 }
 
-lede = {  # pylint: disable=invalid-name
+lede = {
     "TESTER_PS1": r"linaro-test [rc=$(echo \$?)]# ",
     "TESTER_PS1_PATTERN": r"linaro-test \[rc=(\d+)\]# ",
     "TESTER_PS1_INCLUDES_RC": True,
@@ -157,7 +157,7 @@ lede = {  # pylint: disable=invalid-name
     "lava_test_shell_file": None,
 }
 
-oe = {  # pylint: disable=invalid-name
+oe = {
     "TESTER_PS1": r"linaro-test [rc=$(echo \$?)]# ",
     "TESTER_PS1_PATTERN": r"linaro-test \[rc=(\d+)\]# ",
     "TESTER_PS1_INCLUDES_RC": True,
@@ -172,7 +172,7 @@ oe = {  # pylint: disable=invalid-name
     "lava_test_shell_file": "~/.bashrc",
 }
 
-slackware = {  # pylint: disable=invalid-name
+slackware = {
     "TESTER_PS1": r"linaro-test [rc=$(echo \$?)]# ",
     "TESTER_PS1_PATTERN": r"linaro-test \[rc=(\d+)\]# ",
     "TESTER_PS1_INCLUDES_RC": True,
@@ -188,7 +188,7 @@ slackware = {  # pylint: disable=invalid-name
     "lava_test_shell_file": "~/.bashrc",
 }
 
-ubuntu = {  # pylint: disable=invalid-name
+ubuntu = {
     "TESTER_PS1": r"linaro-test [rc=$(echo \$?)]# ",
     "TESTER_PS1_PATTERN": r"linaro-test \[rc=(\d+)\]# ",
     "TESTER_PS1_INCLUDES_RC": True,

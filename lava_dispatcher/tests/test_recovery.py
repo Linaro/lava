@@ -30,7 +30,7 @@ from lava_dispatcher.tests.utils import DummyLogger, infrastructure_error_multi_
 from lava_dispatcher.utils.udev import allow_fs_label
 
 
-class FastBootFactory(Factory):  # pylint: disable=too-few-public-methods
+class FastBootFactory(Factory):
     """
     Not Model based, this is not a Django factory.
     Factory objects are dispatcher based classes, independent
@@ -70,7 +70,7 @@ class FastBootFactory(Factory):  # pylint: disable=too-few-public-methods
         return job
 
 
-class UBootFactory(Factory):  # pylint: disable=too-few-public-methods
+class UBootFactory(Factory):
     """
     Not Model based, this is not a Django factory.
     Factory objects are dispatcher based classes, independent
@@ -110,7 +110,7 @@ class UBootFactory(Factory):  # pylint: disable=too-few-public-methods
         return job
 
 
-class TestRecoveryMode(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestRecoveryMode(StdoutTestCase):
     def setUp(self):
         super().setUp()
         self.fastboot_factory = FastBootFactory()

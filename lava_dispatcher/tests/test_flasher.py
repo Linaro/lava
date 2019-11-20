@@ -20,7 +20,6 @@
 
 import os
 import pexpect
-import pytest  # pylint: disable=unused-import
 
 from lava_dispatcher.device import NewDevice, PipelineDevice
 from lava_dispatcher.parser import JobParser

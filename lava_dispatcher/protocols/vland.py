@@ -32,9 +32,6 @@ from lava_dispatcher.protocols.multinode import MultinodeProtocol
 from lava_common.constants import VLAND_DEPLOY_TIMEOUT
 
 
-# pylint: disable=too-many-instance-attributes
-
-
 class VlandProtocol(Protocol):
     """
     VLANd protocol - multiple vlans are possible per group
@@ -81,7 +78,7 @@ class VlandProtocol(Protocol):
             return False
         return True
 
-    def read_settings(self):  # pylint: disable=no-self-use
+    def read_settings(self):
         # FIXME: support config file
         settings = {"port": 3080, "poll_delay": 1, "vland_hostname": "localhost"}
         return settings
@@ -332,7 +329,7 @@ class VlandProtocol(Protocol):
             "client_name": socket.gethostname(),
         }
 
-    def configure(self, device, job):  # pylint: disable=too-many-branches
+    def configure(self, device, job):
         """
         Called by job.validate() to populate internal data
         Configures the vland protocol for this job for the assigned device.

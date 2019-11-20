@@ -19,8 +19,7 @@ zmq_client.py script
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# pylint: disable=missing-docstring,no-member,unused-variable,too-few-public-methods
-# pylint: disable=invalid-name,unused-argument,no-self-use,wrong-import-order
+
 # START_CLIENT
 
 import sys
@@ -77,9 +76,7 @@ class JobListener:
                 while True:
                     msg = self.sock.recv_multipart()
                     try:
-                        (topic, uuid, dt, username, data) = msg[
-                            :
-                        ]  # pylint: disable=unbalanced-tuple-unpacking
+                        (topic, uuid, dt, username, data) = msg[:]
                     except IndexError:
                         # Droping invalid message
                         continue

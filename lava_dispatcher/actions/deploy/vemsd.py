@@ -399,7 +399,7 @@ class UnmountVExpressMassStorageDevice(Action):
         return connection
 
 
-class VExpressFlashErase(Action):  # pylint: disable=too-many-instance-attributes
+class VExpressFlashErase(Action):
     """
     Enter Versatile Express Flash menu and erase NOR Flash.
     The job writer can define whether this should be a range or all.

@@ -24,9 +24,6 @@ from lava_dispatcher.action import Action
 from lava_common.exceptions import JobError, InfrastructureError
 from lava_dispatcher.shell import ShellCommand, ShellSession
 
-# pylint: disable=too-many-public-methods,too-many-instance-attributes
-# pylint: disable=too-many-branches
-
 
 class ConnectDevice(Action):
     """

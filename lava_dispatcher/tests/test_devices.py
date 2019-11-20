@@ -36,7 +36,7 @@ from lava_dispatcher.tests.utils import DummyLogger, infrastructure_error
 # Test the loading of test definitions within the deploy stage
 
 
-class TestDeviceParser(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestDeviceParser(StdoutTestCase):
     def test_new_device(self):
         factory = Factory()
         (rendered, _) = factory.create_device("kvm01.jinja2")
@@ -64,9 +64,7 @@ class FakeAction(Action):
     summary = "fake action"
 
 
-class TestJobDeviceParameters(
-    StdoutTestCase
-):  # pylint: disable=too-many-public-methods
+class TestJobDeviceParameters(StdoutTestCase):
     """
     Test parsing of device configuration into job parameters
     """
@@ -154,7 +152,7 @@ class TestJobDeviceParameters(
         )
 
 
-class TestDeviceEnvironment(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestDeviceEnvironment(StdoutTestCase):
     """
     Test parsing of device environment support
     """
@@ -175,7 +173,7 @@ class TestDeviceEnvironment(StdoutTestCase):  # pylint: disable=too-many-public-
         self.assertEqual(job.parameters["env_dut"], None)
 
     @unittest.skipIf(infrastructure_error("mkimage"), "u-boot-tools not installed")
-    def test_device_environment_validity(self):  # pylint: disable=invalid-name
+    def test_device_environment_validity(self):
         """
         Use non-YAML syntax a bit like existing device config syntax.
         Ensure this syntax is picked up as invalid.

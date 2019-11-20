@@ -27,7 +27,7 @@ from lava_dispatcher.tests.test_basic import StdoutTestCase, Factory
 from lava_dispatcher.tests.test_multi import DummyLogger
 
 
-class FakeConnection:  # pylint: disable=too-few-public-methods
+class FakeConnection:
     def __init__(self, match):
         self.match = match
 

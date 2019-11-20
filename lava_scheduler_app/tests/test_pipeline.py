@@ -34,8 +34,6 @@ from lava_dispatcher.tests.utils import DummyLogger
 from unittest import TestCase
 
 
-# pylint: disable=too-many-ancestors,too-many-public-methods,invalid-name,no-member
-
 # set to True to see extra processing details
 DEBUG = False
 
@@ -417,7 +415,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
         validate_submission(data)
 
     # FIXME: extend once the master validation code is exposed for unit tests
-    def test_compatibility(self):  # pylint: disable=too-many-locals
+    def test_compatibility(self):
         user = self.factory.make_user()
         # public set in the YAML
         yaml_str = self.factory.make_job_yaml()
@@ -967,7 +965,7 @@ class TestYamlMultinode(TestCaseWithFactory):
             self.assertIsNotNone(job.multinode_definition)
             self.assertIn("# unit test support comment", job.multinode_definition)
 
-    def test_invalid_multinode(self):  # pylint: disable=too-many-locals
+    def test_invalid_multinode(self):
         user = self.factory.make_user()
         device_type = self.factory.make_device_type()
         submission = yaml_safe_load(
@@ -1062,7 +1060,7 @@ class TestYamlMultinode(TestCaseWithFactory):
             job = TestJob.objects.get(id=job.id)
             self.assertNotEqual(job.sub_id, "")
 
-    def test_multinode_with_retired(self):  # pylint: disable=too-many-statements
+    def test_multinode_with_retired(self):
         """
         check handling with retired devices in device_list
         """
@@ -1276,7 +1274,7 @@ class VlanInterfaces(TestCaseWithFactory):
             os.path.dirname(__file__), "sample_jobs", "bbb-cubie-vlan-group.yaml"
         )
 
-    def test_vlan_interface(self):  # pylint: disable=too-many-locals
+    def test_vlan_interface(self):
         submission = yaml_safe_load(open(self.filename, "r"))
         self.assertIn("protocols", submission)
         self.assertIn("lava-vland", submission["protocols"])

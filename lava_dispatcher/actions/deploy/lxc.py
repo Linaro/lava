@@ -41,8 +41,6 @@ from lava_dispatcher.utils.udev import lxc_udev_rule, lxc_udev_rule_parent
 from lava_dispatcher.utils.udev import allow_fs_label
 from lava_dispatcher.utils.filesystem import lxc_path
 
-# pylint: disable=superfluous-parens,too-many-locals
-
 
 class Lxc(Deployment):
     """
@@ -290,7 +288,7 @@ class LxcCreateUdevRuleAction(DeployAction):
         )
         logging_url = master_cert = slave_cert = socks_proxy = ipv6 = None
         job_id = self.job.job_id
-        # pylint: disable=no-member
+
         if self.logger.handler:
             logging_url = self.logger.handler.logging_url
             master_cert = self.logger.handler.master_cert

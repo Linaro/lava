@@ -38,10 +38,8 @@ from lava_common.exceptions import (
 )
 from lava_common.constants import LAVA_MULTINODE_SYSTEM_TIMEOUT
 
-# pylint: disable=misplaced-comparison-constant,too-many-branches
 
-
-class MultinodeProtocol(Protocol):  # pylint: disable=too-many-instance-attributes
+class MultinodeProtocol(Protocol):
     """
     Multinode API protocol - one instance per Multinode job
     """

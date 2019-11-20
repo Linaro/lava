@@ -185,7 +185,7 @@ class WaitDeviceBoardID(Action):
         return connection
 
 
-def _dict_compare(d1, d2):  # pylint: disable=invalid-name
+def _dict_compare(d1, d2):
     d1_keys = set(d1.keys())
     d2_keys = set(d2.keys())
     intersect_keys = d1_keys.intersection(d2_keys)

@@ -42,7 +42,7 @@ from lava_dispatcher.utils.filesystem import tftpd_dir
 from lava_dispatcher.utils.strings import substitute
 
 
-class GrubFactory(Factory):  # pylint: disable=too-few-public-methods
+class GrubFactory(Factory):
     """
     Not Model based, this is not a Django factory.
     Factory objects are dispatcher based classes, independent
@@ -59,7 +59,7 @@ class GrubFactory(Factory):  # pylint: disable=too-few-public-methods
         return self.create_job("hi960-hikey-01.jinja2", filename)
 
 
-class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestGrubAction(StdoutTestCase):
     def setUp(self):
         super().setUp()
         self.factory = GrubFactory()
@@ -170,7 +170,7 @@ class TestGrubAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
                 self.assertFalse(action.interrupt_newline)
             self.assertTrue(action.valid)
 
-    def test_overlay_action(self):  # pylint: disable=too-many-locals
+    def test_overlay_action(self):
         parameters = {
             "device_type": "d02",
             "job_name": "grub-standard-ramdisk",

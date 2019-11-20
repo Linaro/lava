@@ -24,7 +24,6 @@ import yaml
 import argparse
 import subprocess  # nosec - internal
 
-# pylint: disable=too-many-branches
 
 # Adds a dependency on python-yaml when used during a build.
 

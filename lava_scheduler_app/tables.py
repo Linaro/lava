@@ -40,17 +40,13 @@ from django.utils import timezone
 # No function in this file is directly accessible via urls.py - those
 # functions need to go in views.py
 
-# pylint: disable=invalid-name
-
 
 class IDLinkColumn(tables.Column):
     def __init__(self, verbose_name="ID", **kw):
         kw["verbose_name"] = verbose_name
         super().__init__(**kw)
 
-    def render(
-        self, record, table=None
-    ):  # pylint: disable=arguments-differ,unused-argument
+    def render(self, record, table=None):
         return pklink(record)
 
 
@@ -237,15 +233,13 @@ class JobTable(LavaTable):
             return "Error"
         return retval
 
-    def render_description(self, value):  # pylint: disable=no-self-use
+    def render_description(self, value):
         if value:
             return value
         else:
             return ""
 
-    class Meta(
-        LavaTable.Meta
-    ):  # pylint: disable=too-few-public-methods,no-init,no-self-use
+    class Meta(LavaTable.Meta):
         model = TestJob
         # alternatively, use 'fields' value to include specific fields.
         exclude = [
@@ -333,9 +327,7 @@ class IndexJobTable(JobTable):
                 '<span class="text-muted">Retired</span>'
             )
 
-    class Meta(
-        JobTable.Meta
-    ):  # pylint: disable=too-few-public-methods,no-init,no-self-use
+    class Meta(JobTable.Meta):
         fields = (
             "id",
             "actions",
@@ -419,9 +411,7 @@ class FailedJobTable(JobTable):
         else:
             return ""
 
-    class Meta(
-        JobTable.Meta
-    ):  # pylint: disable=too-few-public-methods,no-init,no-self-use
+    class Meta(JobTable.Meta):
         fields = ("id", "actions", "state", "device", "submit_time")
         sequence = ("id", "actions", "state", "device", "submit_time")
         exclude = ("submitter", "end_time", "priority", "description")
@@ -450,19 +440,17 @@ class LongestJobTable(JobTable):
     running = tables.Column(accessor="start_time", verbose_name="Running")
     running.orderable = False
 
-    def render_running(self, record):  # pylint: disable=no-self-use
+    def render_running(self, record):
         if not record.start_time:
             return ""
         return str(timezone.now() - record.start_time)
 
-    def render_device(self, record):  # pylint: disable=no-self-use
+    def render_device(self, record):
         if record.actual_device:
             return pklink(record.actual_device)
         return ""
 
-    class Meta(
-        JobTable.Meta
-    ):  # pylint: disable=too-few-public-methods,no-init,no-self-use
+    class Meta(JobTable.Meta):
         fields = ("id", "actions", "state", "device")
         sequence = ("id", "actions", "state", "device")
         exclude = ("duration", "end_time")
@@ -482,9 +470,7 @@ class OverviewJobsTable(JobTable):
     submit_time = tables.DateColumn("Nd, g:ia")
     end_time = tables.DateColumn("Nd, g:ia")
 
-    class Meta(
-        JobTable.Meta
-    ):  # pylint: disable=too-few-public-methods,no-init,no-self-use
+    class Meta(JobTable.Meta):
         fields = (
             "id",
             "actions",
@@ -512,9 +498,7 @@ class RecentJobsTable(JobTable):
     submit_time = tables.DateColumn("Nd, g:ia")
     end_time = tables.DateColumn("Nd, g:ia")
 
-    class Meta(
-        JobTable.Meta
-    ):  # pylint: disable=too-few-public-methods,no-init,no-self-use
+    class Meta(JobTable.Meta):
         fields = (
             "id",
             "actions",
@@ -538,7 +522,7 @@ class RecentJobsTable(JobTable):
 
 
 class DeviceHealthTable(LavaTable):
-    def render_last_health_report_job(self, record):  # pylint: disable=no-self-use
+    def render_last_health_report_job(self, record):
         report = record.last_health_report_job
         if report is None:
             return ""
@@ -561,9 +545,7 @@ class DeviceHealthTable(LavaTable):
     )
     last_health_report_job = tables.Column("last report job")
 
-    class Meta(
-        LavaTable.Meta
-    ):  # pylint: disable=too-few-public-methods,no-init,no-self-use
+    class Meta(LavaTable.Meta):
         sequence = [
             "hostname",
             "worker_host",
@@ -576,19 +558,19 @@ class DeviceHealthTable(LavaTable):
 
 
 class DeviceTypeTable(LavaTable):
-    def render_idle(self, record):  # pylint: disable=no-self-use
+    def render_idle(self, record):
         return record["idle"] if record["idle"] > 0 else ""
 
-    def render_offline(self, record):  # pylint: disable=no-self-use
+    def render_offline(self, record):
         return record["offline"] if record["offline"] > 0 else ""
 
-    def render_busy(self, record):  # pylint: disable=no-self-use
+    def render_busy(self, record):
         return record["busy"] if record["busy"] > 0 else ""
 
-    def render_name(self, record):  # pylint: disable=no-self-use
+    def render_name(self, record):
         return pklink(DeviceType.objects.get(name=record["device_type"]))
 
-    def render_queue(self, record):  # pylint: disable=no-self-use
+    def render_queue(self, record):
         count = TestJob.objects.filter(
             Q(state=TestJob.STATE_SUBMITTED),
             Q(requested_device_type=record["device_type"]),
@@ -604,9 +586,7 @@ class DeviceTypeTable(LavaTable):
     # sadly, this needs to be not orderable as it would otherwise sort by the accessor.
     queue = tables.Column(accessor="idle", verbose_name="Queue", orderable=False)
 
-    class Meta(
-        LavaTable.Meta
-    ):  # pylint: disable=too-few-public-methods,no-init,no-self-use
+    class Meta(LavaTable.Meta):
         model = DeviceType
         exclude = [
             "display",
@@ -624,7 +604,7 @@ class DeviceTypeTable(LavaTable):
 
 
 class DeviceTable(LavaTable):
-    def render_device_type(self, record):  # pylint: disable=no-self-use
+    def render_device_type(self, record):
         return pklink(record.device_type)
 
     def render_worker_host(self, record):
@@ -690,9 +670,7 @@ class DeviceTable(LavaTable):
     health = tables.Column(verbose_name="Health")
     tags = TagsColumn()
 
-    class Meta(
-        LavaTable.Meta
-    ):  # pylint: disable=too-few-public-methods,no-init,no-self-use
+    class Meta(LavaTable.Meta):
         model = Device
         exclude = [
             "device_version",
@@ -712,7 +690,7 @@ class DeviceTable(LavaTable):
         }
 
 
-class WorkerTable(LavaTable):  # pylint: disable=too-few-public-methods,no-init
+class WorkerTable(LavaTable):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.show_help = True
@@ -760,9 +738,7 @@ class WorkerTable(LavaTable):  # pylint: disable=too-few-public-methods,no-init
     def render_last_ping(self, record):
         return timesince(record.last_ping)
 
-    class Meta(
-        LavaTable.Meta
-    ):  # pylint: disable=too-few-public-methods,no-init,no-self-use
+    class Meta(LavaTable.Meta):
         model = Worker
         sequence = ["hostname", "state", "health", "description"]
 
@@ -801,9 +777,7 @@ class DeviceLogEntryTable(LogEntryTable):
 
 
 class NoWorkerDeviceTable(DeviceTable):
-    class Meta(
-        LavaTable.Meta
-    ):  # pylint: disable=too-few-public-methods,no-init,no-self-use
+    class Meta(LavaTable.Meta):
         exclude = [
             "worker_host",
             "device_version",
@@ -816,16 +790,14 @@ class NoWorkerDeviceTable(DeviceTable):
         queries = {"device_state_query": "state", "device_health_query": "health"}
 
 
-class HealthJobSummaryTable(tables.Table):  # pylint: disable=too-few-public-methods
+class HealthJobSummaryTable(tables.Table):
 
     length = 10
     Duration = tables.Column()
     Complete = tables.Column()
     Failed = tables.Column()
 
-    class Meta(
-        LavaTable.Meta
-    ):  # pylint: disable=too-few-public-methods,no-init,no-self-use
+    class Meta(LavaTable.Meta):
         model = None
 
 
@@ -837,7 +809,7 @@ class QueueJobsTable(JobTable):
         template_name="lava_scheduler_app/job_actions_field.html"
     )
 
-    def render_requested_device_type(self, record):  # pylint: disable=no-self-use
+    def render_requested_device_type(self, record):
         return mark_safe(  # nosec - internal data
             '<a href="%s" title="%s device_type">%s</a>'
             % (
@@ -889,10 +861,10 @@ class QueueJobsTable(JobTable):
 
 
 class PassingHealthTable(DeviceHealthTable):
-    def render_device_type(self, record):  # pylint: disable=no-self-use
+    def render_device_type(self, record):
         return pklink(record.device_type)
 
-    def render_last_health_report_job(self, record):  # pylint: disable=no-self-use
+    def render_last_health_report_job(self, record):
         report = record.last_health_report_job
         return mark_safe(  # nosec - internal data
             '<a href="%s">%s</a>' % (report.get_absolute_url(), report)
@@ -900,9 +872,7 @@ class PassingHealthTable(DeviceHealthTable):
 
     device_type = tables.Column()
 
-    class Meta(
-        LavaTable.Meta
-    ):  # pylint: disable=too-few-public-methods,no-init,no-self-use
+    class Meta(LavaTable.Meta):
         exclude = ["worker_host", "last_report_time"]
         sequence = ["hostname", "device_type", "health", "last_health_report_job"]
         searches = {"hostname": "contains"}
@@ -919,7 +889,7 @@ class RunningTable(LavaTable):
 
     # deprecated: dynamic connections are TestJob without a device
 
-    def render_jobs(self, record):  # pylint: disable=no-self-use
+    def render_jobs(self, record):
         count = TestJob.objects.filter(
             Q(state=TestJob.STATE_RUNNING),
             Q(requested_device_type=record.name)
@@ -927,13 +897,13 @@ class RunningTable(LavaTable):
         ).count()
         return count if count > 0 else ""
 
-    def render_reserved(self, record):  # pylint: disable=no-self-use
+    def render_reserved(self, record):
         count = Device.objects.filter(
             device_type=record.name, state=Device.STATE_RESERVED
         ).count()
         return count if count > 0 else ""
 
-    def render_running(self, record):  # pylint: disable=no-self-use
+    def render_running(self, record):
         count = Device.objects.filter(
             device_type=record.name, state=Device.STATE_RUNNING
         ).count()
@@ -947,9 +917,7 @@ class RunningTable(LavaTable):
     running = tables.Column(accessor="display", orderable=False, verbose_name="Running")
     jobs = tables.Column(accessor="display", orderable=False, verbose_name="Jobs")
 
-    class Meta(
-        LavaTable.Meta
-    ):  # pylint: disable=too-few-public-methods,no-init,no-self-use
+    class Meta(LavaTable.Meta):
         model = DeviceType
         sequence = ["name", "reserved", "running", "jobs"]
         exclude = [

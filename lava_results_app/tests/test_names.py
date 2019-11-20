@@ -15,8 +15,6 @@ from six import string_types
 
 # note: when creating extensions, ensure a urls.py and views.py exist
 
-# pylint: disable=invalid-name,too-few-public-methods
-
 
 class ModelFactory:
     def __init__(self):

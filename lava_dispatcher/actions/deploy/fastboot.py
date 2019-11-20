@@ -39,9 +39,6 @@ from lava_dispatcher.actions.boot.u_boot import UBootEnterFastbootAction
 from lava_dispatcher.power import PDUReboot, ReadFeedback
 
 
-# pylint: disable=too-many-return-statements,too-many-instance-attributes,missing-docstring
-
-
 class Fastboot(Deployment):
     """
     Strategy class for a fastboot deployment.
@@ -230,7 +227,7 @@ class FastbootFlashAction(Action):
             self.interrupt_prompt = device_methods["fastboot"].get("interrupt_prompt")
             self.interrupt_string = device_methods["fastboot"].get("interrupt_string")
 
-    def run(self, connection, max_end_time):  # pylint: disable=too-many-locals
+    def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
 
         src = self.get_namespace_data(
@@ -291,7 +288,7 @@ class FastbootReboot(Action):
         elif self.job.device["fastboot_serial_number"] == "0000000000":
             self.errors = "device fastboot serial number unset"
 
-    def run(self, connection, max_end_time):  # pylint: disable=too-many-locals
+    def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
 
         serial_number = self.job.device["fastboot_serial_number"]
@@ -329,7 +326,7 @@ class FastbootRebootBootloader(Action):
         elif self.job.device["fastboot_serial_number"] == "0000000000":
             self.errors = "device fastboot serial number unset"
 
-    def run(self, connection, max_end_time):  # pylint: disable=too-many-locals
+    def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
 
         serial_number = self.job.device["fastboot_serial_number"]

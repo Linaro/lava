@@ -23,7 +23,7 @@ from lava_dispatcher.tests.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.tests.utils import infrastructure_error
 
 
-class UBootUMSFactory(Factory):  # pylint: disable=too-few-public-methods
+class UBootUMSFactory(Factory):
     """
     Not Model based, this is not a Django factory.
     Factory objects are dispatcher based classes, independent
@@ -34,7 +34,7 @@ class UBootUMSFactory(Factory):  # pylint: disable=too-few-public-methods
         return self.create_job("imx7s-warp-01.jinja2", filename)
 
 
-class TestUbootUMSAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestUbootUMSAction(StdoutTestCase):
     def setUp(self):
         super().setUp()
         self.factory = UBootUMSFactory()
