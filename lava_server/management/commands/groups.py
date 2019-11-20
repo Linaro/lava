@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-# pylint: disable=superfluous-parens,no-self-use
 
 from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth.models import User, Group, Permission

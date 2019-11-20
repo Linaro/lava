@@ -29,9 +29,7 @@ from lava_scheduler_app.tests.test_api import TestTransport
 
 class TestLavaServerApi:
     @nottest
-    def ensure_user(
-        self, username, email, password, is_superuser=False
-    ):  # pylint: disable=no-self-use
+    def ensure_user(self, username, email, password, is_superuser=False):
         if User.objects.filter(username=username):
             user = User.objects.get(username=username)
         else:
@@ -42,7 +40,7 @@ class TestLavaServerApi:
         return user
 
     @nottest
-    def server_proxy(self, user=None, password=None):  # pylint: disable=no-self-use
+    def server_proxy(self, user=None, password=None):
         return xmlrpc.client.ServerProxy(
             "http://localhost/RPC2/",
             transport=TestTransport(user=user, password=password),

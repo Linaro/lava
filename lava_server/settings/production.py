@@ -18,7 +18,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-# pylint: disable=unused-import,unused-wildcard-import,wildcard-import
 
 from lava_server.settings.common import *
 

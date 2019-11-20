@@ -20,7 +20,7 @@
 
 # Django settings for django_hello project used on Debian systems.
 
-# pylint: disable=unused-import,unused-wildcard-import,wildcard-import
+# pylint: disable=unused-import
 
 import contextlib
 import django

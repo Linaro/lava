@@ -164,7 +164,7 @@ class Command(BaseCommand):
         if options["passwd"] is None:
             self.stdout.write(passwd)
 
-    def handle_update(self, options):  # pylint: disable=no-self-use
+    def handle_update(self, options):
         """ Update existing user"""
         username = options["username"]
         try:

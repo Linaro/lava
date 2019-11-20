@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-# pylint: disable=wrong-import-order,bad-continuation
 
 import contextlib
 import logging
@@ -49,7 +48,7 @@ BULK_CREATE_TIMEOUT = 10
 FD_TIMEOUT = 60
 
 
-class JobHandler:  # pylint: disable=too-few-public-methods
+class JobHandler:
     def __init__(self, job):
         self.output_dir = job.output_dir
         self.output = open(os.path.join(self.output_dir, "output.yaml"), "ab")

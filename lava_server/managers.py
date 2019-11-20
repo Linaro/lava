@@ -52,8 +52,8 @@ class MaterializedView(models.Model):
         abstract = True
         managed = False
 
-    def delete(self, *args, **kwargs):  # pylint: disable=arguments-differ
+    def delete(self, *args, **kwargs):
         raise NotImplementedError
 
-    def save(self, *args, **kwargs):  # pylint: disable=arguments-differ
+    def save(self, *args, **kwargs):
         raise NotImplementedError

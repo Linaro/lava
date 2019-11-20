@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-# pylint: disable=wrong-import-order
 
 import contextlib
 import jinja2
@@ -43,8 +42,6 @@ from lava_scheduler_app.scheduler import schedule
 from lava_scheduler_app.utils import mkdir
 from lava_server.cmdutils import LAVADaemonCommand, watch_directory
 
-
-# pylint: disable=no-member,bad-continuation
 
 # Current version of the protocol
 # The slave does send the protocol version along with the HELLO and HELLO_RETRY
@@ -75,7 +72,7 @@ def send_multipart_u(sock, data):
     return sock.send_multipart([b(d) for d in data])
 
 
-class SlaveDispatcher:  # pylint: disable=too-few-public-methods
+class SlaveDispatcher:
     def __init__(self, hostname, online=True):
         self.hostname = hostname
         self.last_msg = time.time() if online else 0
@@ -417,7 +414,7 @@ class Command(LAVADaemonCommand):
         else:
             self.dispatcher_alive(hostname)
 
-    def export_definition(self, job):  # pylint: disable=no-self-use
+    def export_definition(self, job):
         job_def = yaml.safe_load(job.definition)
         job_def["compatibility"] = job.pipeline_compatibility
 

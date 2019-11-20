@@ -20,9 +20,7 @@
 import contextlib
 import os
 
-# pylint: disable=unused-import,unused-wildcard-import,wildcard-import
-
-from lava_server.settings.common import *
+from lava_server.settings.common import *  # pylint: disable=unused-import
 
 
 # Activate debugging
@@ -92,7 +90,7 @@ SESSION_COOKIE_SECURE = False
 # multi-threaded or multi-process server so some degree of parallelism can be
 # achieved.
 with contextlib.suppress(ImportError):
-    import devserver
+    import devserver  # pylint: disable=unused-import
 
     INSTALLED_APPS += ["devserver"]
 

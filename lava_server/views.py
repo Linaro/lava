@@ -61,7 +61,7 @@ def index(request):
 
 @BreadCrumb(_("About you ({you})"), parent=index)
 @login_required
-def me(request):  # pylint: disable=invalid-name
+def me(request):
     ExtendedUser.objects.get_or_create(user=request.user)
     data = {
         "irc_form": ExtendedUserIRCForm(instance=request.user.extendeduser),
