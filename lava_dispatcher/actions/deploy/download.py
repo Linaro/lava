@@ -286,7 +286,7 @@ class DownloadHandler(Action):
             progress = progress_unknown_total
         else:
             self.logger.debug(
-                "total size: %d (%dMB)" % (self.size, int(self.size / (1024 * 1024)))
+                "total size: %d (%dMB)", self.size, int(self.size / (1024 * 1024))
             )
             last_value = -5
             progress = progress_known_total
@@ -352,12 +352,10 @@ class DownloadHandler(Action):
         # Log the download speed
         ending = time.time()
         self.logger.info(
-            "%dMB downloaded in %0.2fs (%0.2fMB/s)"
-            % (
-                downloaded_size / (1024 * 1024),
-                round(ending - beginning, 2),
-                round(downloaded_size / (1024 * 1024 * (ending - beginning)), 2),
-            )
+            "%dMB downloaded in %0.2fs (%0.2fMB/s)",
+            downloaded_size / (1024 * 1024),
+            round(ending - beginning, 2),
+            round(downloaded_size / (1024 * 1024 * (ending - beginning)), 2),
         )
 
         # If the remote server uses "Content-Encoding: gzip", this calculation will be wrong
@@ -423,14 +421,12 @@ class DownloadHandler(Action):
                 action="download-action", label=self.key, key="md5"
             )
             if md5sum != chk_md5sum:
-                self.logger.error("md5sum of downloaded content: %s" % chk_md5sum)
+                self.logger.error("md5sum of downloaded content: %s", chk_md5sum)
                 self.logger.info(
-                    "sha256sum of downloaded content: %s"
-                    % (
-                        self.get_namespace_data(
-                            action="download-action", label=self.key, key="sha256"
-                        )
-                    )
+                    "sha256sum of downloaded content: %s",
+                    self.get_namespace_data(
+                        action="download-action", label=self.key, key="sha256"
+                    ),
                 )
                 self.results = {"fail": {"md5": md5sum, "download": chk_md5sum}}
                 raise JobError("MD5 checksum for '%s' does not match." % self.fname)
@@ -442,14 +438,12 @@ class DownloadHandler(Action):
             )
             if sha256sum != chk_sha256sum:
                 self.logger.info(
-                    "md5sum of downloaded content: %s"
-                    % (
-                        self.get_namespace_data(
-                            action="download-action", label=self.key, key="md5"
-                        )
-                    )
+                    "md5sum of downloaded content: %s",
+                    self.get_namespace_data(
+                        action="download-action", label=self.key, key="md5"
+                    ),
                 )
-                self.logger.error("sha256sum of downloaded content: %s" % chk_sha256sum)
+                self.logger.error("sha256sum of downloaded content: %s", chk_sha256sum)
                 self.results = {
                     "fail": {"sha256": sha256sum, "download": chk_sha256sum}
                 }
@@ -462,14 +456,12 @@ class DownloadHandler(Action):
             )
             if sha512sum != chk_sha512sum:
                 self.logger.info(
-                    "sha512sum of downloaded content: %s"
-                    % (
-                        self.get_namespace_data(
-                            action="download-action", label=self.key, key="sha512"
-                        )
-                    )
+                    "sha512sum of downloaded content: %s",
+                    self.get_namespace_data(
+                        action="download-action", label=self.key, key="sha512"
+                    ),
                 )
-                self.logger.error("sha512sum of downloaded content: %s" % chk_sha512sum)
+                self.logger.error("sha512sum of downloaded content: %s", chk_sha512sum)
                 self.results = {
                     "fail": {"sha512": sha512sum, "download": chk_sha512sum}
                 }
