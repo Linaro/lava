@@ -609,6 +609,7 @@ class HttpDownloadAction(DownloadHandler):
                         self.url.geturl(),
                         res.status_code,
                     )
+                    return
 
             self.size = int(res.headers.get("content-length", -1))
         except requests.Timeout:
