@@ -83,11 +83,6 @@ class TftpAction(DeployAction):  # pylint:disable=too-many-instance-attributes
             return
         if "nfsrootfs" in self.parameters and "persistent_nfs" in self.parameters:
             self.errors = "Only one of nfsrootfs or persistent_nfs can be specified"
-        # Extract the 3 last path elements. See action.mkdtemp()
-        suffix = os.path.join(*self.tftp_dir.split("/")[-2:])
-        self.set_namespace_data(
-            action=self.name, label="tftp", key="suffix", value=suffix
-        )
         which("in.tftpd")
 
         # Check that the tmp directory is in the tftpd_dir or in /tmp for the
@@ -134,6 +129,12 @@ class TftpAction(DeployAction):  # pylint:disable=too-many-instance-attributes
             self.internal_pipeline.add_action(DeployDeviceEnvironment())
 
     def run(self, connection, max_end_time):
+        # Extract the 3 last path elements. See action.mkdtemp()
+        suffix = os.path.join(*self.tftp_dir.split("/")[-2:])
+        self.set_namespace_data(
+            action=self.name, label="tftp", key="suffix", value=suffix
+        )
+
         super().run(connection, max_end_time)
         tftp_size_limit = self.job.parameters["dispatcher"].get(
             "tftp_size_limit", TFTP_SIZE_LIMIT
