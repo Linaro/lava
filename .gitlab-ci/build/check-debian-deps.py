@@ -100,9 +100,13 @@ def main():
 
     failures = 0
     for req in sorted(reqs):
-        ok = bool(reqs[req] == deps[req])
+        if req not in deps:
+            ok = False
+            ok_str = "MISSING"
+        else:
+            ok = bool(reqs[req] == deps[req])
+            ok_str = "OK" if ok else "NOK"
         failures += not ok
-        ok_str = "OK" if ok else "NOK"
         string_str = " (%s)" % reqs[req] if reqs[req] else ""
         print("* %s%s [%s]" % (req, string_str, ok_str))
 
