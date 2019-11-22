@@ -209,6 +209,22 @@ class DownloadHandler(Action):
                 value=self.parameters[self.key].get("type"),
             )
 
+    def _check_checksum(self, algorithm, actual, expected):
+        if expected is None:
+            return
+        if actual == expected:
+            self.results = {"success": {algorithm: actual}}
+            return
+
+        self.logger.error(
+            "%s sum for '%s' does not match", algorithm, self.url.geturl()
+        )
+        self.logger.info("actual  : %s", actual)
+        self.logger.info("expected: %s", expected)
+
+        self.results = {"fail": {algorithm: expected, "download": actual}}
+        raise JobError("%s for '%s' does not match." % (algorithm, self.url.geturl()))
+
     def run(self, connection, max_end_time):
         def progress_unknown_total(downloaded_sz, last_val):
             """ Compute progress when the size is unknown """
@@ -410,57 +426,9 @@ class DownloadHandler(Action):
                 value=target_fname_path,
             )
 
-        if md5sum is not None:
-            chk_md5sum = self.get_namespace_data(
-                action="download-action", label=self.key, key="md5"
-            )
-            if md5sum != chk_md5sum:
-                self.logger.error("md5sum of downloaded content: %s", chk_md5sum)
-                self.logger.info(
-                    "sha256sum of downloaded content: %s",
-                    self.get_namespace_data(
-                        action="download-action", label=self.key, key="sha256"
-                    ),
-                )
-                self.results = {"fail": {"md5": md5sum, "download": chk_md5sum}}
-                raise JobError("MD5 checksum for '%s' does not match." % self.fname)
-            self.results = {"success": {"md5": md5sum}}
-
-        if sha256sum is not None:
-            chk_sha256sum = self.get_namespace_data(
-                action="download-action", label=self.key, key="sha256"
-            )
-            if sha256sum != chk_sha256sum:
-                self.logger.info(
-                    "md5sum of downloaded content: %s",
-                    self.get_namespace_data(
-                        action="download-action", label=self.key, key="md5"
-                    ),
-                )
-                self.logger.error("sha256sum of downloaded content: %s", chk_sha256sum)
-                self.results = {
-                    "fail": {"sha256": sha256sum, "download": chk_sha256sum}
-                }
-                raise JobError("SHA256 checksum for '%s' does not match." % self.fname)
-            self.results = {"success": {"sha256": sha256sum}}
-
-        if sha512sum is not None:
-            chk_sha512sum = self.get_namespace_data(
-                action="download-action", label=self.key, key="sha512"
-            )
-            if sha512sum != chk_sha512sum:
-                self.logger.info(
-                    "sha512sum of downloaded content: %s",
-                    self.get_namespace_data(
-                        action="download-action", label=self.key, key="sha512"
-                    ),
-                )
-                self.logger.error("sha512sum of downloaded content: %s", chk_sha512sum)
-                self.results = {
-                    "fail": {"sha512": sha512sum, "download": chk_sha512sum}
-                }
-                raise JobError("SHA512 checksum for '%s' does not match." % self.fname)
-            self.results = {"success": {"sha512": sha512sum}}
+        self._check_checksum("md5", md5.hexdigest(), md5sum)
+        self._check_checksum("sha256", sha256.hexdigest(), sha256sum)
+        self._check_checksum("sha512", sha512.hexdigest(), sha512sum)
 
         # certain deployments need prefixes set
         if self.parameters["to"] == "tftp" or self.parameters["to"] == "nbd":
