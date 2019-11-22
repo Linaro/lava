@@ -20,8 +20,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
-
 import argparse
+import contextlib
 import itertools
 import os
 import requests
@@ -54,7 +54,7 @@ def run(cmd, options, env=None):
         "%s[%02d] $ %s%s%s"
         % (COLORS["blue"], options.count, COLORS["white"], cmd, COLORS["reset"])
     )
-    if options.steps:
+    if options.steps and options.skip < options.count:
         try:
             input()
         except EOFError:
@@ -174,8 +174,10 @@ def handle_publish(options):
             options,
         )
         if not options.dry_run and not options.skip >= options.count:
-            os.unlink("Release")
-            os.unlink("Release.asc")
+            with contextlib.suppress(FileNotFoundError):
+                os.unlink("Release")
+            with contextlib.suppress(FileNotFoundError):
+                os.unlink("Release.asc")
 
     print("%s# publish the new repository%s" % (COLORS["purple"], COLORS["reset"]))
     # TODO: move the old-release directory
