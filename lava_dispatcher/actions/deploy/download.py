@@ -510,7 +510,7 @@ class FileDownloadAction(DownloadHandler):
                 buff = reader.read(FILE_DOWNLOAD_CHUNK_SIZE)
         except OSError as exc:
             raise InfrastructureError(
-                "Unable to write to %s: %s" % (self.url.path, str(exc))
+                "Unable to read from %s: %s" % (self.url.path, str(exc))
             )
         finally:
             if reader is not None:
