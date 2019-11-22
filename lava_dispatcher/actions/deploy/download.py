@@ -196,12 +196,10 @@ class DownloadHandler(Action):
             self.set_namespace_data(
                 action="download-action", label=self.key, key="overlay", value=overlay
             )
-        if compression:
-            if compression not in ["gz", "bz2", "xz", "zip"]:
-                self.errors = "Unknown 'compression' format '%s'" % compression
-        if archive:
-            if archive not in ["tar"]:
-                self.errors = "Unknown 'archive' format '%s'" % archive
+        if compression and compression not in ["gz", "bz2", "xz", "zip"]:
+            self.errors = "Unknown 'compression' format '%s'" % compression
+        if archive and archive not in ["tar"]:
+            self.errors = "Unknown 'archive' format '%s'" % archive
         # pass kernel type to boot Action
         if self.key == "kernel" and ("kernel" in self.parameters):
             self.set_namespace_data(
@@ -361,12 +359,11 @@ class DownloadHandler(Action):
         # If the remote server uses "Content-Encoding: gzip", this calculation will be wrong
         # because requests will decompress the file on the fly, creating a larger file than
         # LAVA expects.
-        if self.size > 0:
-            if self.size != downloaded_size:
-                raise InfrastructureError(
-                    "Download finished (%i bytes) but was not expected size (%i bytes), check your networking."
-                    % (downloaded_size, self.size)
-                )
+        if self.size > 0 and self.size != downloaded_size:
+            raise InfrastructureError(
+                "Download finished (%i bytes) but was not expected size (%i bytes), check your networking."
+                % (downloaded_size, self.size)
+            )
 
         # set the dynamic data into the context
         self.set_namespace_data(
