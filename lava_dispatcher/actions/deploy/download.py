@@ -389,10 +389,7 @@ class DownloadHandler(Action):
         )
 
         # handle archive files
-        if "images" in self.parameters and self.key in self.parameters["images"]:
-            archive = self.parameters["images"][self.key].get("archive", False)
-        else:
-            archive = self.parameters[self.key].get("archive")
+        archive = remote.get("archive", False)
         if archive:
             if archive != "tar":
                 raise JobError("Unknown archive format %r" % archive)
