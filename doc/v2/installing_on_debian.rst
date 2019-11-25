@@ -11,23 +11,22 @@ are:
 +---------------+------------------------+--------+----------------------+
 | Distribution  | Codename               | Number | Support              |
 +===============+========================+========+======================+
-| Debian        | experimental           | n/a    | Yes [#f1]_           |
+| Debian        | experimental           | n/a    | No [#f1]_            |
 +---------------+------------------------+--------+----------------------+
-| Debian        | Sid (unstable)         | n/a    | Yes [#f5]_           |
+| Debian        | Sid (unstable)         | n/a    | Yes [#f2]_           |
 +---------------+------------------------+--------+----------------------+
-| Debian        | Buster (testing)       | 10.*   | Yes [#f4]_           |
+| Debian        | Bullseye (testing)     | 11.*   | Yes [#f3]_           |
 +---------------+------------------------+--------+----------------------+
-| Debian        | Stretch (stable)       | 9.*    | Yes [#f2]_           |
+| Debian        | Buster (stable)        | 10.*   | Yes [#f4]_           |
 +---------------+------------------------+--------+----------------------+
-| Debian        | Jessie (oldstable)     | 8.*    | **No** [#f3]_        |
+| Debian        | Stretch (oldstable)    | 9.*    | Yes [#f5]_           |
 +---------------+------------------------+--------+----------------------+
 
-Debian uses codenames for releases (buster, stretch, jessie, wheezy,
-squeeze) and names for `suites`_ (unstable, testing, stable &
-oldstable). When a new Debian major release is made, the packages in
-"testing" are frozen and become the new "stable". A new codename is
-chosen for the new "testing" suite, and that will be the name for the
-next major release in the cycle.
+Debian uses codenames for releases (bullseye, buster, stretch) and names for
+`suites`_ (unstable, testing, stable & oldstable). When a new Debian major
+release is made, the packages in "testing" are frozen and become the new
+"stable". A new codename is chosen for the new "testing" suite, and that will
+be the name for the next major release in the cycle.
 
 To allow the table to refer to the same package versions consistently
 over time, codenames are used here. When a Debian release is made, a
@@ -48,38 +47,32 @@ that point will include that codename in the table.
          typically have no LAVA packages outside of a Debian release
          freeze.
 
-.. [#f2] `stretch` was released on 17th June 2017. All updates to LAVA
-         packages for Stretch will be made using `stretch-backports`_.
-         Systems using Debian Stretch are recommended to enable
-         stretch-backports. LAVA packages and dependencies which are
-         installed using stretch-backports are **fully supported** by
-         upstream and are the same codebase as the relevant production
-         release available from the :ref:`lava_repositories`. Stretch
-         continues to receive point releases and LAVA remains supported
-         for each point release of Debian.
-
-.. [#f3] Jessie was released on April 25th, 2015 and security support
-         for Jessie terminated during 2018. LAVA software has removed
-         support for building and installing in Jessie as part of the
-         move to :ref:`Python3 <lava_python3>`.
-
-.. [#f4] `buster` is the name of the next Debian release after Stretch,
-         which is supported automatically via uploads to Sid
-         (unstable). Buster is **not** recommended for production
-         instances of LAVA at this time. The release process for buster
-         started in Jan 2019.
-
-         When buster is released as Debian 10, it will use the suite
-         name ``stable``, testing will get the codename of the next
-         Debian stable release, **bullseye**, and Stretch will become
-         ``oldstable``.
-
-.. [#f5] `sid` is the name of the unstable suite which never gets
+.. [#f2] `sid` is the name of the unstable suite which never gets
          released but acts as a feed for ``testing``. As the name
          suggests, ``unstable`` can be broken without warning and
          installation of complex packages like LAVA can often fail.
          Unstable is **never** recommended for production instances
          of any software, including LAVA.
+
+.. [#f3] `bullseye` is the name of the next Debian release after Buster,
+         which is supported automatically via uploads to Sid
+         (unstable). Bullseye is not recommended for production
+         instances of LAVA.
+
+         When bullseye is released as Debian 11, it will use the suite
+         name ``stable``, testing will get the codename of the next
+         Debian stable release, and Buster will become
+         ``oldstable``.
+
+.. [#f4] `buster` is the name of the stable version of Debian. LAVA is fully
+         supported on this Debian version. It's recommended to use Buster for
+         production instances.
+
+.. [#f5] `stretch` was released on 17th June 2017. All updates to LAVA
+         packages for Stretch will be made using `stretch-backports`_.
+         Systems using Debian Stretch are recommended to enable
+         stretch-backports.
+         The support for Stretch will be dropped in early 2020.
 
 .. _experimental: https://wiki.debian.org/DebianExperimental
 
@@ -98,6 +91,7 @@ Recommended Debian architectures
 
 LAVA is intended to provide a CI system which is capable of handling
 dozens or hundreds of simultaneous test jobs across dozens of devices.
+
 Whilst it is possible to install and operate LAVA on 32 bit
 architectures like ``i386`` and ``armhf``, this is not recommended for
 any production instance. The memory requirements for the master will
@@ -183,7 +177,7 @@ Releases
    ``arm64``. See :ref:`recommended_debian_architectures`.
 
 In times when the current production release has not made it into
-either ``stretch-backports`` or ``testing`` (e.g. due to a migration
+either ``bullseye`` or ``testing`` (e.g. due to a migration
 issue or a pre-release package freeze in Debian), this repository
 should be used instead.
 
@@ -195,8 +189,8 @@ daily builds repository, using the same suites:
 
 .. code-block:: none
 
- deb https://apt.lavasoftware.org/daily stretch-backports main
  deb https://apt.lavasoftware.org/daily buster main
+ deb https://apt.lavasoftware.org/daily stretch-backports main
 
 Snapshots 
 ---------
@@ -204,7 +198,9 @@ Snapshots
 When a build is updated in the repositories, a copy of the same build
 is created in the snapshot folder:
 
-https://apt.lavasoftware.org/snapshot/
+.. code-block:: none
+
+ https://apt.lavasoftware.org/snapshot/
 
 Entries are created according to the suite for which it was built and
 the year, month and day of the build.
@@ -212,7 +208,8 @@ the year, month and day of the build.
 Stretch users
 -------------
 
-.. note:: The recommended base for LAVA is Debian Stretch, as of 2018.1.
+.. note:: The recommended base for LAVA is Debian Buster. We are currently in
+   the process of deprecating the support for stretch in the folowing months.
    When using LAVA repositories on Stretch, make sure to enable
    `stretch-backports` from your regular Debian mirror as well as the
    LAVA repository. See :ref:`install_debian_stretch`.
@@ -339,6 +336,9 @@ devices configured.
 Installing on Debian Stretch
 ============================
 
+.. note:: We now advice to use Buster as the base host for production
+          instances.
+
 Debian Stretch was released on June 17th, 2017, containing a full set
 of packages to install LAVA at version 2016.12. Debian stable releases
 of LAVA do not receive updates to LAVA directly, so a simple install
@@ -416,26 +416,12 @@ existing backports require updates from backports.
 Installing on Debian Buster
 ---------------------------
 
-.. note:: Buster is currently the ``testing`` release of Debian. It is
-	  not yet released as stable, and frequent updates may be
-	  required. Buster is currently (as of April 2019) in release
-	  freeze, but some breakage is still possible as packages are
-	  updated or removed. For example, if a dependency of a LAVA
-	  package has been removed due to a release-critical bug in
-	  buster then all LAVA packages would also be removed from
-	  Buster. This would also affect the ability to install
-	  developer builds unless all the relevant dependencies are
-	  either already installed or still present in Buster. Admins
-	  can choose to use buster for production instances, with
-	  these constraints in mind.
-
 Buster brings in a number of updated dependencies, e.g. postgresql-10,
 docker.io and QEMU 2.12 as well as a more recent kernel. The
 installation process is similar to :ref:`installing on Stretch
 <install_debian_stretch>` with two differences:
 
-* There is no need (yet!) for backports, as buster has no backports
-  until after release.
+* There is no need (yet!) for backports.
 
 * QEMU supports installation without the dependencies required to run a
   GUI.
