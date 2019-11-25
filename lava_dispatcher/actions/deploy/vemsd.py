@@ -327,6 +327,15 @@ class MountVExpressMassStorageDevice(Action):
         )
         return connection
 
+    def cleanup(self, connection):
+        mount_point = "/mnt/%s" % self.microsd_fs_label
+        if os.path.ismount(mount_point):
+            self.logger.debug("Unmounting %s", mount_point)
+            self.run_cmd(
+                ["umount", mount_point],
+                error_msg="Failed to unmount device at %s" % mount_point,
+            )
+
 
 class DeployVExpressRecoveryImage(Action):
     """
