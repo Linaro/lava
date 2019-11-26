@@ -369,4 +369,4 @@ class TestVersions(StdoutTestCase):
     def test_dpkg(self):
         # avoid checking the actual version
         binary = which("dpkg-query")
-        self.assertIsNotNone(debian_filename_version(binary, label=True))
+        self.assertIsNotNone(debian_filename_version(binary))

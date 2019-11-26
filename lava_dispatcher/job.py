@@ -28,7 +28,7 @@ import pytz
 import traceback
 import os
 from lava_common.exceptions import LAVABug, LAVAError, JobError
-from lava_common.utils import debian_package_version
+from lava_common.version import __version__
 from lava_dispatcher.logical import PipelineContext
 from lava_dispatcher.diagnostics import DiagnoseNetwork
 from lava_dispatcher.protocols.multinode import (  # pylint: disable=unused-import
@@ -204,9 +204,7 @@ class Job:
         Public wrapper for the pipeline validation.
         Send a "fail" results if needed.
         """
-        label = "lava-dispatcher, installed at version: %s" % debian_package_version(
-            pkg="lava-dispatcher"
-        )
+        label = "lava-dispatcher, installed at version: %s" % __version__
         self.logger.info(label)
         self.logger.info("start: 0 validate")
         start = time.time()

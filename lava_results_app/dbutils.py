@@ -28,7 +28,7 @@ from urllib.parse import quote
 from collections import OrderedDict  # pylint: disable=unused-import
 
 from lava_common.compat import yaml_load, yaml_safe_load
-from lava_common.utils import debian_package_version
+from lava_common.version import __version__
 from lava_results_app.models import (
     TestSuite,
     TestSet,
@@ -232,9 +232,7 @@ def _get_job_metadata(job):
         }
     )
     # Add lava-server-version to metadata
-    packaged = debian_package_version(pkg="lava-server")
-    if packaged:
-        retval.update({"lava-server-version": packaged})
+    retval.update({"lava-server-version": __version__})
     return retval
 
 

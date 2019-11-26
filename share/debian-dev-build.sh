@@ -66,11 +66,11 @@ function finish {
   git branch -D ${SCRATCH}
 }
 
-if [ -x ./version.py ]; then
+if [ -x ./lava_common/version.py ]; then
   # native version for developer build
-  VERSION=`python3 ./version.py |tr - .`
+  VERSION=`python3 ./lava_common/version.py |tr - .`
 else
-  echo "[LAVA-DEV] Unable to find ./version.py"
+  echo "[LAVA-DEV] Unable to find ./lava_common/version.py"
   exit 1
 fi
 
@@ -108,6 +108,11 @@ export GIT_AUTHOR_NAME="lava-dev debian build script"
 export GIT_AUTHOR_EMAIL="lava-dev@lavasoftware.org"
 export DEBEMAIL=lava-dev@lavasoftware.org
 export DEBFULLNAME=lava-dev debian build script
+
+# Save the version string
+python3 lava_common/version.py > lava_common/VERSION
+git add lava_common/VERSION
+git commit -m "Set the version"
 
 # convert to a native package to include local changes.
 echo "3.0 (native)" > debian/source/format

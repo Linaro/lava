@@ -65,7 +65,8 @@ def debian_package_arch(pkg):
     with contextlib.suppress(FileNotFoundError, subprocess.CalledProcessError):
         return (
             subprocess.check_output(  # nosec dpkg-query
-                ("dpkg-query", "-W", "-f=${Architecture}\n", "%s" % pkg)
+                ("dpkg-query", "-W", "-f=${Architecture}\n", "%s" % pkg),
+                stderr=subprocess.STDOUT,
             )
             .strip()
             .decode("utf-8", errors="replace")
@@ -81,7 +82,8 @@ def debian_package_version(pkg):
     with contextlib.suppress(FileNotFoundError, subprocess.CalledProcessError):
         return (
             subprocess.check_output(  # nosec dpkg-query
-                ("dpkg-query", "-W", "-f=${Version}\n", "%s" % pkg)
+                ("dpkg-query", "-W", "-f=${Version}\n", "%s" % pkg),
+                stderr=subprocess.STDOUT,
             )
             .strip()
             .decode("utf-8", errors="replace")
@@ -89,7 +91,7 @@ def debian_package_version(pkg):
     return ""
 
 
-def debian_filename_version(binary, label=False):
+def debian_filename_version(binary):
     """
     Relies on Debian Policy rules for the existence of the
     changelog. Distributions not derived from Debian will
@@ -97,18 +99,17 @@ def debian_filename_version(binary, label=False):
     """
     # if binary is not absolute, fail.
     msg = "Unable to retrieve version of %s" % binary
-    try:
+    pkg_str = None
+    with contextlib.suppress(FileNotFoundError, subprocess.CalledProcessError):
         pkg_str = (
-            subprocess.check_output(("dpkg-query", "-S", binary))  # nosec dpkg-query
+            subprocess.check_output(  # nosec dpkg-query
+                ("dpkg-query", "-S", binary), stderr=subprocess.STDOUT
+            )
             .strip()
             .decode("utf-8", errors="replace")
         )
-        if not pkg_str:
-            raise InfrastructureError(msg)
-    except subprocess.CalledProcessError:
+    if not pkg_str:
         raise InfrastructureError(msg)
     pkg = pkg_str.split(":")[0]
     pkg_ver = debian_package_version(pkg)
-    if not label:
-        return pkg_ver
     return "%s for <%s>, installed at version: %s" % (pkg, binary, pkg_ver)

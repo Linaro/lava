@@ -22,7 +22,8 @@ import os
 import glob
 import fnmatch
 from setuptools import setup, find_packages
-from version import version_tag
+
+from lava_common.version import __version__
 
 
 # based on https://wiki.python.org/moin/Distutils/Tutorial
@@ -61,7 +62,7 @@ DEVICE_TYPE_TEMPLATES = find_data_files(SRCDIR, "*.jinja2")
 
 setup(
     name="lava",
-    version=version_tag(),
+    version=__version__,
     author="Neil Williams",
     author_email="lava-team@linaro.org",
     namespace_packages=["lava"],

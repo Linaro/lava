@@ -13,11 +13,11 @@ else
   set -x
 
   # Build the image name
-  IMAGE_TAG=${CI_COMMIT_TAG:-$(./version.py)}
+  IMAGE_TAG=${CI_COMMIT_TAG:-$(./lava_common/version.py)}
   IMAGE="$IMAGE_NAME:$IMAGE_TAG"
   # Build the base image name
   BASE_IMAGE_NAME="$IMAGE_NAME-base"
-  BASE_IMAGE_TAG=$(./version.py $(git log -n 1 --format="%H" docker/))
+  BASE_IMAGE_TAG=$(./lava_common/version.py $(git log -n 1 --format="%H" docker/))
   BASE_IMAGE="$BASE_IMAGE_NAME:$BASE_IMAGE_TAG"
   BASE_IMAGE_NEW="$BASE_IMAGE_NAME:$IMAGE_TAG"
 

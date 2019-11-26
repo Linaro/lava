@@ -20,6 +20,7 @@ include etc/settings.conf
 include lava/dispatcher/lava-run
 include lava/dispatcher/lava-slave
 include lava/lxc-mocker/*
+include lava_common/VERSION
 include lava_dispatcher/dynamic_vm_keys/*
 include lava_dispatcher/lava_test_shell/*
 include lava_dispatcher/lava_test_shell/multi_node/*
@@ -39,7 +40,6 @@ include README.md
 include share/*
 include share/apache2/*
 include share/zmq/*
-include version.py
 recursive-include doc/images *.gif *.png *.jpg *.jpeg *.bmp *.svg *.odg
 recursive-include doc/v2/images *.gif *.png *.jpg *.jpeg *.bmp *.svg *.odg
 recursive-include doc/v2/examples *.yaml *.txt *.py *.jinja2

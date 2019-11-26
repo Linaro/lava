@@ -28,7 +28,7 @@ from django.contrib.auth.models import Group
 from django.core.exceptions import PermissionDenied
 
 from lava_common.compat import yaml_safe_load
-from lava_common.utils import debian_package_version
+from lava_common.version import __version__
 from lava_scheduler_app.api import check_perm
 from lava_scheduler_app.views import get_restricted_job
 from lava_scheduler_app.models import (
@@ -86,7 +86,7 @@ class LavaSystemAPI(SystemAPI):
         ------------
         lava-server version string
         """
-        return debian_package_version(pkg="lava-server")
+        return __version__
 
     # Update the integer return value when adding arguments to
     # existing functions anywhere in the XML-RPC API or

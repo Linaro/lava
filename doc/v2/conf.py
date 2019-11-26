@@ -58,7 +58,7 @@ copyright = u"2010-2019, Linaro Limited"
 # The short X.Y version.
 version = (
     subprocess.Popen(  # nosec - internal
-        r"./version.py", cwd=r"../..", stdout=subprocess.PIPE
+        r"./lava_common/version.py", cwd=r"../..", stdout=subprocess.PIPE
     )
     .stdout.read()
     .rstrip()

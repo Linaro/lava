@@ -148,11 +148,11 @@ class ApplyOverlaySparseImage(Action):
     def validate(self):
         super().validate()
         binary = which("simg2img")
-        self.logger.info(debian_filename_version(binary, label=True))
+        self.logger.info(debian_filename_version(binary))
         which("mount")
         which("umount")
         binary = which("img2simg")
-        self.logger.info(debian_filename_version(binary, label=True))
+        self.logger.info(debian_filename_version(binary))
 
     def run(self, connection, max_end_time):
         overlay_file = self.get_namespace_data(
