@@ -20,12 +20,12 @@
 import json
 import pytest
 import tap
-import yaml
 
 from django.urls import reverse
 from django.contrib.auth.models import User
 from rest_framework.test import APIClient
 
+from lava_common.compat import yaml_safe_dump
 from lava_scheduler_app.models import Device, DeviceType, TestJob, Worker
 from lava_results_app import models as result_models
 from linaro_django_xmlrpc.models import AuthToken
@@ -125,12 +125,12 @@ class TestRestApi:
 
         # create testjobs
         self.public_testjob1 = TestJob.objects.create(
-            definition=yaml.safe_dump(EXAMPLE_JOB),
+            definition=yaml_safe_dump(EXAMPLE_JOB),
             submitter=self.user,
             requested_device_type=self.public_device_type1,
         )
         self.private_testjob1 = TestJob.objects.create(
-            definition=yaml.safe_dump(EXAMPLE_JOB),
+            definition=yaml_safe_dump(EXAMPLE_JOB),
             submitter=self.admin,
             requested_device_type=self.public_device_type1,
         )

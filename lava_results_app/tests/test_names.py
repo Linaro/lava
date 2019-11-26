@@ -1,11 +1,10 @@
 import os
-import yaml
 import logging
 
 from django.contrib.auth.models import User
 from django.core.validators import URLValidator
 
-from lava_common.compat import yaml_load
+from lava_common.compat import yaml_load, yaml_safe_dump
 from lava_results_app.models import TestCase, TestSuite
 from lava_results_app.dbutils import map_scanned_results
 from lava_scheduler_app.models import TestJob, Device, DeviceType
@@ -52,7 +51,7 @@ class ModelFactory:
         return data
 
     def make_job_yaml(self, **kw):
-        return yaml.safe_dump(self.make_job_data(**kw))
+        return yaml_safe_dump(self.make_job_data(**kw))
 
     def make_device_type(self, name="qemu"):
         return DeviceType.objects.get_or_create(name=name)[0]

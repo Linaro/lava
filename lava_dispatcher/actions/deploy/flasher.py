@@ -18,8 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import yaml
-
+from lava_common.compat import yaml_safe_dump
 from lava_dispatcher.action import Pipeline
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.download import DownloaderAction
@@ -101,10 +100,10 @@ class FlasherAction(DeployAction):
         )
 
         # Add some device configuration
-        substitutions["{DEVICE_INFO}"] = yaml.dump(
+        substitutions["{DEVICE_INFO}"] = yaml_safe_dump(
             self.job.device.get("device_info", [])
         )
-        substitutions["{STATIC_INFO}"] = yaml.dump(
+        substitutions["{STATIC_INFO}"] = yaml_safe_dump(
             self.job.device.get("static_info", [])
         )
 

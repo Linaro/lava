@@ -3,7 +3,7 @@ import yaml
 import jinja2
 import unittest
 
-from lava_common.compat import yaml_safe_load
+from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
@@ -81,7 +81,7 @@ class YamlFactory(ModelFactory):
         return data
 
     def make_job_yaml(self, **kw):
-        return yaml.safe_dump(self.make_job_data(**kw))
+        return yaml_safe_dump(self.make_job_data(**kw))
 
 
 class PipelineDeviceTags(TestCaseWithFactory):
@@ -550,7 +550,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         for role, job_list in jobs.items():
             for job in job_list:
                 del job["protocols"]["lava-multinode"]["sub_id"]
-                yaml.dump(job)  # ensure the jobs can be serialised as YAML
+                yaml_safe_dump(job)  # ensure the jobs can be serialised as YAML
                 if role == "client":
                     self.assertEqual(job, yaml_safe_load(open(client_check, "r")))
                 if role == "server":
@@ -573,7 +573,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         target_group = "arbitrary-group-id"  # for unit tests only
         jobs_dict = split_multinode_yaml(submission, target_group)
         self.assertIsNotNone(jobs_dict)
-        jobs = TestJob.from_yaml_and_user(yaml.dump(submission), user)
+        jobs = TestJob.from_yaml_and_user(yaml_safe_dump(submission), user)
         self.assertIsNotNone(jobs)
         host_job = None
         guest_job = None
@@ -684,7 +684,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         self.factory.make_device(
             device_type, "fakeqemu2", tags=[self.factory.ensure_tag("virtio")]
         )
-        job_list = TestJob.from_yaml_and_user(yaml.dump(submission), user)
+        job_list = TestJob.from_yaml_and_user(yaml_safe_dump(submission), user)
         self.assertEqual(len(job_list), 2)
         # not enough devices with correct tags
         roles_dict["client"]["count"] = 2
@@ -695,14 +695,14 @@ class TestYamlMultinode(TestCaseWithFactory):
         self.assertRaises(
             DevicesUnavailableException,
             TestJob.from_yaml_and_user,
-            yaml.dump(submission),
+            yaml_safe_dump(submission),
             user,
         )
         # enough devices with correct tags
         self.factory.make_device(
             device_type, "fakeqemu4", tags=[self.factory.ensure_tag("tap")]
         )
-        job_list = TestJob.from_yaml_and_user(yaml.dump(submission), user)
+        job_list = TestJob.from_yaml_and_user(yaml_safe_dump(submission), user)
         self.assertEqual(len(job_list), 3)
 
     def test_multinode_lxc(self):
@@ -898,7 +898,9 @@ class TestYamlMultinode(TestCaseWithFactory):
             self.factory.ensure_tag("testtag"),
         ]
         self.factory.make_device(device_type, "fakeqemu2", tags=tag_list)
-        job_object_list = _pipeline_protocols(submission, user, yaml.dump(submission))
+        job_object_list = _pipeline_protocols(
+            submission, user, yaml_safe_dump(submission)
+        )
         for job in job_object_list:
             self.assertEqual(list(job.sub_jobs_list), job_object_list)
         check_one = yaml_safe_load(job_object_list[0].definition)
@@ -996,7 +998,9 @@ class TestYamlMultinode(TestCaseWithFactory):
                     "image_arg": "{rootfs}",
                 }
             }
-        job_object_list = _pipeline_protocols(submission, user, yaml.dump(submission))
+        job_object_list = _pipeline_protocols(
+            submission, user, yaml_safe_dump(submission)
+        )
         self.assertEqual(len(job_object_list), 2)
         self.assertEqual(
             job_object_list[0].sub_id, "%d.%d" % (int(job_object_list[0].id), 0)
@@ -1082,7 +1086,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         for role in role_list:
             if "tags" in role_list[role]:
                 del role_list[role]["tags"]
-        job_list = TestJob.from_yaml_and_user(yaml.dump(submission), user)
+        job_list = TestJob.from_yaml_and_user(yaml_safe_dump(submission), user)
         self.assertEqual(len(job_list), 2)
 
     def test_multinode_v2_metadata(self):
@@ -1106,7 +1110,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         parser_device = PipelineDevice(device_config)
         parser = JobParser()
         pipeline_job = parser.parse(
-            yaml.dump(client_submission), parser_device, 4212, None, ""
+            yaml_safe_dump(client_submission), parser_device, 4212, None, ""
         )
         pipeline = pipeline_job.describe()
         from lava_results_app.dbutils import _get_action_metadata
@@ -1164,7 +1168,9 @@ class TestYamlMultinode(TestCaseWithFactory):
                 "r",
             )
         )
-        job_object_list = _pipeline_protocols(submission, user, yaml.dump(submission))
+        job_object_list = _pipeline_protocols(
+            submission, user, yaml_safe_dump(submission)
+        )
 
         for job in job_object_list:
             definition = yaml_safe_load(job.definition)
@@ -1247,7 +1253,9 @@ class TestYamlMultinode(TestCaseWithFactory):
         submission["protocols"][MultinodeProtocol.name]["roles"]["server"][
             "essential"
         ] = True
-        job_object_list = _pipeline_protocols(submission, user, yaml.dump(submission))
+        job_object_list = _pipeline_protocols(
+            submission, user, yaml_safe_dump(submission)
+        )
         for job in job_object_list:
             definition = yaml_safe_load(job.definition)
             role = definition["protocols"][MultinodeProtocol.name]["role"]

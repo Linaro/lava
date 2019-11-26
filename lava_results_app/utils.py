@@ -51,6 +51,9 @@ def description_filename(job):
 try:
     from yaml import FullLoader as Loader
 except ImportError:
+    import warnings
+
+    warnings.warn("Using unsafe yaml.Loader", DeprecationWarning)
     from yaml import Loader
 
 

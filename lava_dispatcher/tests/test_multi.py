@@ -20,10 +20,9 @@
 
 
 import os
-import yaml
 from unittest.mock import patch
 
-from lava_common.compat import yaml_safe_load
+from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_common.decorators import nottest
 from lava_dispatcher.tests.test_basic import StdoutTestCase
 from lava_dispatcher.job import Job
@@ -178,7 +177,7 @@ class TestMultiDefinition(StdoutTestCase):
         self.assertEqual(len(block["definitions"]), 2)
         self.assertEqual(block["definitions"][1], block["definitions"][0])
         parser = JobParser()
-        job = parser.parse(yaml.dump(self.job_data), self.device, 4212, None, "")
+        job = parser.parse(yaml_safe_dump(self.job_data), self.device, 4212, None, "")
         self.assertIsNotNone(job)
         deploy = [
             action for action in job.pipeline.actions if action.name == "tftp-deploy"

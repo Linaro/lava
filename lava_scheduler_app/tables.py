@@ -18,13 +18,14 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-import yaml
 import random
 from django.contrib.admin.models import LogEntry
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from django.utils.timesince import timesince
 import django_tables2 as tables
+
+from lava_common.compat import yaml_dump
 from lava_results_app.models import TestCase
 from lava_scheduler_app.models import TestJob, Device, DeviceType, Worker
 from lava_server.lavatable import LavaTable
@@ -407,7 +408,7 @@ class FailedJobTable(JobTable):
             return ""
         action_metadata = failure.action_metadata
         if action_metadata is not None and "error_msg" in action_metadata:
-            return yaml.dump(failure.action_metadata["error_msg"])
+            return yaml_dump(failure.action_metadata["error_msg"])
         else:
             return ""
 

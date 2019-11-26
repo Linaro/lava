@@ -20,10 +20,10 @@
 
 
 import os
-import yaml
 import unittest
 from unittest.mock import patch
-from lava_common.compat import yaml_safe_load
+
+from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.actions.boot.ipxe import BootloaderAction
@@ -339,7 +339,7 @@ class TestBootloaderAction(StdoutTestCase):
             0
         ]
         self.assertIsNotNone(boot)
-        sample_job_string = yaml.dump(sample_job_data)
+        sample_job_string = yaml_safe_dump(sample_job_data)
         job = parser.parse(sample_job_string, device, 4212, None, "")
         job.logger = DummyLogger()
         job.validate()

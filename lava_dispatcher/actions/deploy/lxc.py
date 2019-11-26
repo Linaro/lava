@@ -19,8 +19,8 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
-import yaml
-from lava_dispatcher.logical import Deployment
+
+from lava_common.compat import yaml_safe_dump
 from lava_common.exceptions import LAVABug
 from lava_common.utils import debian_package_version
 from lava_dispatcher.action import JobError, Pipeline
@@ -29,6 +29,7 @@ from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.actions.deploy.apply_overlay import ApplyLxcOverlay
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.actions.boot.lxc import LxcStartAction, LxcStopAction
+from lava_dispatcher.logical import Deployment
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.protocols.lxc import LxcProtocol
 from lava_common.constants import (
@@ -282,7 +283,7 @@ class LxcCreateUdevRuleAction(DeployAction):
         device_info = self.job.device.get("device_info", [])
         device_info_file = os.path.join(self.mkdtemp(), "device-info.yaml")
         with open(device_info_file, "w") as device_info_obj:
-            yaml.dump(device_info, device_info_obj)
+            yaml_safe_dump(device_info, device_info_obj)
         self.logger.debug(
             "device info file '%s' created with:\n %s", device_info_file, device_info
         )

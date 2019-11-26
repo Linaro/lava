@@ -1,6 +1,5 @@
 import os
 import re
-import yaml
 import shutil
 import decimal
 
@@ -8,7 +7,7 @@ from django.core.exceptions import MultipleObjectsReturned
 from django.urls.exceptions import NoReverseMatch
 from django.urls import reverse
 
-from lava_common.compat import yaml_load, yaml_safe_load
+from lava_common.compat import yaml_dump, yaml_load, yaml_safe_load
 from lava_results_app.tests.test_names import TestCaseWithFactory
 from lava_scheduler_app.models import TestJob, Device
 from lava_scheduler_app.utils import mkdir
@@ -48,7 +47,7 @@ class TestMetaTypes(TestCaseWithFactory):
             pipeline_job.pipeline.validate_actions, self, "qemu-system-x86_64"
         )
         pipeline = pipeline_job.describe()
-        map_metadata(yaml.dump(pipeline), job)
+        map_metadata(yaml_dump(pipeline), job)
         self.assertEqual(
             MetaType.objects.filter(metatype=MetaType.DEPLOY_TYPE).count(), 1
         )
@@ -252,7 +251,7 @@ class TestMetaTypes(TestCaseWithFactory):
             "VARIABLE_NAME_1": "first variable value",
             "VARIABLE_NAME_2": "second value",
         }
-        job = TestJob.from_yaml_and_user(yaml.dump(data), self.user)
+        job = TestJob.from_yaml_and_user(yaml_dump(data), self.user)
         job_def = yaml_safe_load(job.definition)
         job_ctx = job_def.get("context", {})
         job_ctx.update(
@@ -304,7 +303,7 @@ class TestMetaTypes(TestCaseWithFactory):
             pipeline_job.pipeline.validate_actions, self, "qemu-system-x86_64"
         )
         pipeline = pipeline_job.describe()
-        map_metadata(yaml.dump(pipeline), job)
+        map_metadata(yaml_dump(pipeline), job)
 
     def test_inline(self):
         """
@@ -328,7 +327,7 @@ class TestMetaTypes(TestCaseWithFactory):
             }
         ]
         test_block["test"]["definitions"] = smoke
-        job = TestJob.from_yaml_and_user(yaml.dump(data), self.user)
+        job = TestJob.from_yaml_and_user(yaml_dump(data), self.user)
         job_def = yaml_safe_load(job.definition)
         job_ctx = job_def.get("context", {})
         job_ctx.update(
@@ -343,4 +342,4 @@ class TestMetaTypes(TestCaseWithFactory):
             pipeline_job.pipeline.validate_actions, self, "qemu-system-x86_64"
         )
         pipeline = pipeline_job.describe()
-        map_metadata(yaml.dump(pipeline), job)
+        map_metadata(yaml_dump(pipeline), job)

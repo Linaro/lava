@@ -21,12 +21,12 @@ import os
 from datetime import datetime, timedelta
 import voluptuous
 import xmlrpc.client
-import yaml
 
 from django.conf import settings
 
 from linaro_django_xmlrpc.models import ExposedV2API
 
+from lava_common.compat import yaml_safe_load
 import lava_common.schemas as schemas
 from lava_scheduler_app.api import SchedulerAPI
 from lava_scheduler_app.logutils import read_logs
@@ -494,7 +494,7 @@ class SchedulerJobsAPI(ExposedV2API):
         This function returns None if the job definition is valid. Returns a
         dictionary in case of error with the key and msg.
         """
-        data = yaml.safe_load(definition)
+        data = yaml_safe_load(definition)
         try:
             schemas.validate(
                 data,

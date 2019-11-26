@@ -1,7 +1,6 @@
 # unit tests for primary and secondary connections
 import os
-import yaml
-from lava_common.compat import yaml_safe_load
+from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_scheduler_app.models import (
     TestJob,
     DevicesUnavailableException,
@@ -111,7 +110,7 @@ class SecondaryConnections(TestCaseWithFactory):
         self.assertRaises(
             SubmissionException,
             TestJob.from_yaml_and_user,
-            yaml.dump(data),
+            yaml_safe_dump(data),
             self.factory.make_user(),
         )
 

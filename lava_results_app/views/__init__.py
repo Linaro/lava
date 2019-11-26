@@ -41,7 +41,7 @@ from django.http.response import HttpResponse, StreamingHttpResponse
 from django.views.decorators.http import require_POST
 from django.shortcuts import render, loader
 
-from lava_common.compat import yaml_load
+from lava_common.compat import yaml_dump, yaml_load
 from lava_server.views import index as lava_index
 from lava_server.bread_crumbs import BreadCrumb, BreadCrumbTrail
 from django.shortcuts import get_object_or_404
@@ -203,7 +203,7 @@ def testjob_yaml(request, job):
     def test_case_stream():
         for test_suite in suites:
             for test_case in test_suite.testcase_set.all():
-                yield yaml.dump([export_testcase(test_case)], Dumper=yaml.CDumper)
+                yield yaml_dump([export_testcase(test_case)])
 
     response = StreamingHttpResponse(test_case_stream(), content_type="text/yaml")
     filename = "lava_%s.yaml" % job.id
@@ -222,7 +222,7 @@ def testjob_yaml_summary(request, job):
     yaml_list = []
     for test_suite in suites:
         yaml_list.append(export_testsuite(test_suite))
-    yaml.dump(yaml_list, response, Dumper=yaml.CDumper)
+    yaml_dump(yaml_list, response)
     return response
 
 
@@ -328,7 +328,7 @@ def suite_yaml(request, job, pk):
     testcases = get_testcases_with_limit(test_suite, limit, offset)
     for test_case in testcases:
         yaml_list.append(export_testcase(test_case))
-    yaml.dump(yaml_list, response, Dumper=yaml.CDumper)
+    yaml_dump(yaml_list, response)
     return response
 
 
@@ -360,7 +360,7 @@ def metadata_export(request, job):
     # hide internal python objects
     for data in testdata.attributes.all():
         yaml_dict[str(data.name)] = str(data.value)
-    yaml.dump(yaml_dict, response)
+    yaml_dump(yaml_dict, response)
     return response
 
 
@@ -480,9 +480,7 @@ def testcase_yaml(request, pk):
     response = HttpResponse(content_type="text/yaml")
     filename = "lava_%s.yaml" % testcase.name
     response["Content-Disposition"] = 'attachment; filename="%s"' % filename
-    yaml.dump(
-        export_testcase(testcase, with_buglinks=True), response, Dumper=yaml.CDumper
-    )
+    yaml_dump(export_testcase(testcase, with_buglinks=True), response)
     return response
 
 

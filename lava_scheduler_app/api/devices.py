@@ -23,6 +23,7 @@ import xmlrpc.client
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 
+from lava_common.compat import yaml_safe_load
 from linaro_django_xmlrpc.models import ExposedV2API
 from lava_scheduler_app.api import check_perm
 from lava_scheduler_app.models import Device, DeviceType, Tag, Worker
@@ -150,7 +151,7 @@ class SchedulerDevicesAPI(ExposedV2API):
         job_ctx = None
         if context is not None:
             try:
-                job_ctx = yaml.safe_load(context)
+                job_ctx = yaml_safe_load(context)
             except yaml.YAMLError as exc:
                 raise xmlrpc.client.Fault(
                     400, "Job Context '%s' is not valid: %s" % (context, str(exc))

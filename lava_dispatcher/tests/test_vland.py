@@ -20,10 +20,10 @@
 
 
 import os
-import yaml
 import socket
 from unittest.mock import patch
-from lava_common.compat import yaml_safe_load
+
+from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_common.exceptions import JobError
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
@@ -257,7 +257,7 @@ class TestVland(StdoutTestCase):
             alpha_data["protocols"][VlandProtocol.name], {"vlan_one": {"tags": []}}
         )
         parser = JobParser()
-        job = parser.parse(yaml.dump(alpha_data), self.device, 4212, None, "")
+        job = parser.parse(yaml_safe_dump(alpha_data), self.device, 4212, None, "")
         job.logger = DummyLogger()
         job.validate()
         tftp_deploy = [
@@ -297,7 +297,7 @@ class TestVland(StdoutTestCase):
             alpha_data["protocols"][VlandProtocol.name], {"vlan_one": {"tags": []}}
         )
         parser = JobParser()
-        job = parser.parse(yaml.dump(alpha_data), self.device, 4212, None, "")
+        job = parser.parse(yaml_safe_dump(alpha_data), self.device, 4212, None, "")
         job.logger = DummyLogger()
         job.validate()
         vprotocol = [
@@ -331,7 +331,7 @@ class TestVland(StdoutTestCase):
             {"vlan_one": {"tags": ["spurious"]}},
         )
         parser = JobParser()
-        job = parser.parse(yaml.dump(alpha_data), self.device, 4212, None, "")
+        job = parser.parse(yaml_safe_dump(alpha_data), self.device, 4212, None, "")
         job.logger = DummyLogger()
         self.assertRaises(JobError, job.validate)
 
@@ -346,7 +346,7 @@ class TestVland(StdoutTestCase):
             if self.device["parameters"]["interfaces"][interface]["tags"] == []:
                 self.device["parameters"]["interfaces"][interface]["tags"] = None
         parser = JobParser()
-        job = parser.parse(yaml.dump(alpha_data), self.device, 4212, None, "")
+        job = parser.parse(yaml_safe_dump(alpha_data), self.device, 4212, None, "")
         deploy = [
             action for action in job.pipeline.actions if action.name == "tftp-deploy"
         ][0]

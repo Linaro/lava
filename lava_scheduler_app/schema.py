@@ -393,28 +393,26 @@ def visibility_schema():
     return Schema(Any("public", "personal", {"group": [str]}))
 
 
-def _job_schema():
-    metadata_types = Any(str, int)
-    return Schema(
-        {
-            "device_type": All(
-                str, Length(min=1)
-            ),  # not Required as some protocols encode it elsewhere
-            Required("job_name"): All(str, Length(min=1, max=200)),
-            Optional("priority"): Any("high", "medium", "low", int),
-            Optional("protocols"): _job_protocols_schema(),
-            Optional("context"): _context_schema(),
-            Optional("metadata"): All({metadata_types: metadata_types}),
-            Optional("secrets"): dict,
-            Optional("environment"): dict,
-            Optional("tags"): [str],
-            Required("visibility"): visibility_schema(),
-            Required("timeouts"): _job_timeout_schema(),
-            Required("actions"): _job_actions_schema(),
-            Optional("notify"): _job_notify_schema(),
-            Optional("reboot_to_fastboot"): bool,
-        }
-    )
+_job_schema = Schema(
+    {
+        "device_type": All(
+            str, Length(min=1)
+        ),  # not Required as some protocols encode it elsewhere
+        Required("job_name"): All(str, Length(min=1, max=200)),
+        Optional("priority"): Any("high", "medium", "low", int),
+        Optional("protocols"): _job_protocols_schema(),
+        Optional("context"): _context_schema(),
+        Optional("metadata"): All({Any(str, int): Any(str, int)}),
+        Optional("secrets"): dict,
+        Optional("environment"): dict,
+        Optional("tags"): [str],
+        Required("visibility"): visibility_schema(),
+        Required("timeouts"): _job_timeout_schema(),
+        Required("actions"): _job_actions_schema(),
+        Optional("notify"): _job_notify_schema(),
+        Optional("reboot_to_fastboot"): bool,
+    }
+)
 
 
 def _device_deploy_schema():
@@ -462,40 +460,34 @@ def _device_commands_schema():
     )
 
 
-def _device_schema():
-    """
-    Less strict than the job_schema as this is primarily admin / template controlled.
-    """
-    return Schema(
-        {
-            "character_delays": dict,
-            "commands": _device_commands_schema(),
-            "constants": dict,
-            "adb_serial_number": str,
-            "fastboot_serial_number": str,
-            "fastboot_options": [str],
-            "fastboot_via_uboot": bool,
-            "device_info": [dict],
-            "static_info": [dict],
-            "storage_info": [dict],
-            "environment": dict,
-            "flash_cmds_order": list,
-            "parameters": dict,
-            "board_id": str,
-            "usb_vendor_id": All(
-                str, Length(min=4, max=4)
-            ),  # monitor type like arduino
-            "usb_product_id": All(
-                str, Length(min=4, max=4)
-            ),  # monitor type like arduino
-            "usb_sleep": int,
-            "usb_filesystem_label": str,
-            "usb_serial_driver": str,
-            "actions": _device_actions_schema(),
-            "timeouts": _device_timeouts_schema(),
-            "available_architectures": list,
-        }
-    )
+# Less strict than the job_schema as this is primarily admin / template
+# controlled.
+_device_schema = Schema(
+    {
+        "character_delays": dict,
+        "commands": _device_commands_schema(),
+        "constants": dict,
+        "adb_serial_number": str,
+        "fastboot_serial_number": str,
+        "fastboot_options": [str],
+        "fastboot_via_uboot": bool,
+        "device_info": [dict],
+        "static_info": [dict],
+        "storage_info": [dict],
+        "environment": dict,
+        "flash_cmds_order": list,
+        "parameters": dict,
+        "board_id": str,
+        "usb_vendor_id": All(str, Length(min=4, max=4)),  # monitor type like arduino
+        "usb_product_id": All(str, Length(min=4, max=4)),  # monitor type like arduino
+        "usb_sleep": int,
+        "usb_filesystem_label": str,
+        "usb_serial_driver": str,
+        "actions": _device_actions_schema(),
+        "timeouts": _device_timeouts_schema(),
+        "available_architectures": list,
+    }
+)
 
 
 def _validate_secrets(data_object):
@@ -527,8 +519,7 @@ def validate_submission(data_object):
     :return: True if valid, else raises SubmissionException
     """
     try:
-        schema = _job_schema()
-        schema(data_object)
+        _job_schema(data_object)
     except MultipleInvalid as exc:
         raise SubmissionException(exc)
 
@@ -563,8 +554,7 @@ def validate_device(data_object):
     :return: True if valid, else raises SubmissionException
     """
     try:
-        schema = _device_schema()
-        schema(data_object)
+        _device_schema(data_object)
     except MultipleInvalid as exc:
         raise SubmissionException(exc)
 

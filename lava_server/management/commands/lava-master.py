@@ -35,6 +35,7 @@ from django.db import connection, transaction
 from django.db.utils import OperationalError, InterfaceError
 from django.utils import timezone
 
+from lava_common.compat import yaml_safe_load
 from lava_results_app.models import TestCase, TestSuite
 from lava_scheduler_app.dbutils import parse_job_description
 from lava_scheduler_app.models import TestJob, Worker
@@ -121,7 +122,7 @@ def load_optional_yaml_file(filename, fallback=None):
     try:
         with open(filename, "r") as f_in:
             data_str = f_in.read()
-        yaml.safe_load(data_str)
+        yaml_safe_load(data_str)
         return data_str
     except FileNotFoundError:
         # This is ok if the file does not exist
@@ -409,25 +410,19 @@ class Command(LAVADaemonCommand):
                 job = TestJob.objects.select_for_update().get(id=job_id)
                 job.go_state_running()
                 job.save()
+            self.dispatcher_alive(hostname)
         except TestJob.DoesNotExist:
             self.logger.error("[%d] Unknown job", job_id)
-        else:
-            self.dispatcher_alive(hostname)
 
-    def export_definition(self, job):
-        job_def = yaml.safe_load(job.definition)
-        job_def["compatibility"] = job.pipeline_compatibility
-
-        # no need for the dispatcher to retain comments
-        return yaml.dump(job_def)
-
-    def save_job_config(self, job, device_cfg, env_str, env_dut_str, dispatcher_cfg):
+    def save_job_config(
+        self, job, job_def_str, device_cfg, env_str, env_dut_str, dispatcher_cfg
+    ):
         output_dir = job.output_dir
         mkdir(output_dir)
         with open(os.path.join(output_dir, "job.yaml"), "w") as f_out:
-            f_out.write(self.export_definition(job))
+            f_out.write(job_def_str)
         with open(os.path.join(output_dir, "device.yaml"), "w") as f_out:
-            yaml.dump(device_cfg, f_out)
+            f_out.write(device_cfg)
         if env_str:
             with open(os.path.join(output_dir, "env.yaml"), "w") as f_out:
                 f_out.write(env_str)
@@ -441,14 +436,16 @@ class Command(LAVADaemonCommand):
     def start_job(self, job):
         # Load job definition to get the variables for template
         # rendering
-        job_def = yaml.safe_load(job.definition)
+        job_def = yaml_safe_load(job.definition)
+        job_def["compatibility"] = job.pipeline_compatibility
+        job_def_str = yaml.dump(job_def, Dumper=yaml.CDumper)
         job_ctx = job_def.get("context", {})
 
         device = job.actual_device
         worker = device.worker_host
 
         # TODO: check that device_cfg is not None!
-        device_cfg = device.load_configuration(job_ctx)
+        device_cfg_str = device.load_configuration(job_ctx, output_format="yaml")
 
         # Try to load the dispatcher specific files and then fallback to the
         # default configuration files.
@@ -464,7 +461,9 @@ class Command(LAVADaemonCommand):
             os.path.join(DISPATCHERS_PATH, "%s.yaml" % worker.hostname),
         )
 
-        self.save_job_config(job, device_cfg, env_str, env_dut_str, dispatcher_cfg)
+        self.save_job_config(
+            job, job_def_str, device_cfg_str, env_str, env_dut_str, dispatcher_cfg
+        )
         self.logger.info(
             "[%d] START => %s (%s)", job.id, worker.hostname, device.hostname
         )
@@ -474,28 +473,42 @@ class Command(LAVADaemonCommand):
                 worker.hostname,
                 "START",
                 str(job.id),
-                self.export_definition(job),
-                yaml.dump(device_cfg),
+                job_def_str,
+                device_cfg_str,
                 dispatcher_cfg,
                 env_str,
                 env_dut_str,
             ],
         )
 
+        if not job.is_multinode:
+            return
+
+        device_cfg = yaml_safe_load(device_cfg_str)
         # For multinode jobs, start the dynamic connections
-        parent = job
         for sub_job in job.sub_jobs_list:
-            if sub_job == parent or not sub_job.dynamic_connection:
+            if sub_job == job or not sub_job.dynamic_connection:
                 continue
+
+            # Render the sub job definition
+            sub_job_def = yaml_safe_load(sub_job.definition)
+            sub_job_def["compatibility"] = sub_job.pipeline_compatibility
+            sub_job_def_str = yaml.dump(sub_job_def, Dumper=yaml.CDumper)
 
             # inherit only enough configuration for dynamic_connection operation
             self.logger.info(
                 "[%d] Trimming dynamic connection device configuration.", sub_job.id
             )
-            min_device_cfg = parent.actual_device.minimise_configuration(device_cfg)
+            min_device_cfg = job.actual_device.minimise_configuration(device_cfg)
+            min_device_cfg_str = yaml.dump(min_device_cfg, Dumper=yaml.CDumper)
 
             self.save_job_config(
-                sub_job, min_device_cfg, env_str, env_dut_str, dispatcher_cfg
+                sub_job,
+                sub_job_def_str,
+                min_device_cfg_str,
+                env_str,
+                env_dut_str,
+                dispatcher_cfg,
             )
             self.logger.info(
                 "[%d] START => %s (connection)", sub_job.id, worker.hostname
@@ -506,8 +519,8 @@ class Command(LAVADaemonCommand):
                     worker.hostname,
                     "START",
                     str(sub_job.id),
-                    self.export_definition(sub_job),
-                    yaml.dump(min_device_cfg),
+                    sub_job_def_str,
+                    min_device_cfg_str,
                     dispatcher_cfg,
                     env_str,
                     env_dut_str,

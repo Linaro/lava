@@ -18,13 +18,12 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 import datetime
-import yaml
 
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.utils import timezone
 
-from lava_common.compat import yaml_safe_load
+from lava_common.compat import yaml_safe_load, yaml_safe_dump
 from lava_scheduler_app.dbutils import match_vlan_interface
 from lava_scheduler_app.models import (
     DeviceType,
@@ -46,11 +45,11 @@ def schedule_health_checks(logger, available_dt=None):
     available_devices = {}
     jobs = []
     hc_disabled = []
+    query = DeviceType.objects.filter(display=True)
     if available_dt:
         query = DeviceType.objects.filter(name__in=available_dt, display=True)
-    else:
-        query = DeviceType.objects.filter(display=True)
-    for dt in query.order_by("name"):
+    query = query.order_by("name").only("disable_health_check", "name")
+    for dt in query:
         if dt.disable_health_check:
             hc_disabled.append(dt.name)
             # Add all devices of that type to the list of available devices
@@ -219,28 +218,6 @@ def schedule_jobs_for_device_type(logger, dt, available_devices):
         # IDLE between the two functions.
         if device.hostname not in available_devices:
             continue
-        new_job = schedule_jobs_for_device(logger, device)
-        if new_job is not None:
-            jobs.append(new_job)
-    return jobs
-
-
-def schedule_jobs_for_device(logger, device):
-    jobs = TestJob.objects.filter(
-        state__in=[TestJob.STATE_SUBMITTED, TestJob.STATE_SCHEDULING]
-    )
-    jobs = jobs.filter(actual_device__isnull=True)
-    jobs = jobs.filter(requested_device_type__pk=device.device_type.pk)
-    jobs = jobs.order_by("-state", "-priority", "submit_time", "target_group", "id")
-
-    for job in jobs:
-        if not device.can_submit(job.submitter):
-            continue
-
-        device_tags = set(device.tags.all())
-        job_tags = set(job.tags.all())
-        if not job_tags.issubset(device_tags):
-            continue
 
         if not device.is_valid():
             prev_health_display = device.get_health_display()
@@ -255,6 +232,30 @@ def schedule_jobs_for_device(logger, device):
                 "%s → %s (Invalid device configuration for %s)"
                 % (prev_health_display, device.get_health_display(), device.hostname)
             )
+            continue
+
+        new_job = schedule_jobs_for_device(logger, device)
+        if new_job is not None:
+            jobs.append(new_job)
+    return jobs
+
+
+def schedule_jobs_for_device(logger, device):
+    jobs = TestJob.objects.filter(
+        state__in=[TestJob.STATE_SUBMITTED, TestJob.STATE_SCHEDULING]
+    )
+    jobs = jobs.filter(actual_device__isnull=True)
+    jobs = jobs.filter(requested_device_type__pk=device.device_type.pk)
+    jobs = jobs.select_related("submitter")
+    jobs = jobs.order_by("-state", "-priority", "submit_time", "target_group", "id")
+
+    device_tags = set(device.tags.all())
+    for job in jobs:
+        if not device.can_submit(job.submitter):
+            continue
+
+        job_tags = set(job.tags.all())
+        if not job_tags.issubset(device_tags):
             continue
 
         job_dict = yaml_safe_load(job.definition)
@@ -315,7 +316,7 @@ def transition_multinode_jobs(logger):
             # apply the complete list to all jobs in this group
             definition = yaml_safe_load(sub_job.definition)
             definition["protocols"]["lava-multinode"]["roles"] = devices
-            sub_job.definition = yaml.safe_dump(definition)
+            sub_job.definition = yaml_safe_dump(definition)
             # transition the job and device
             sub_job.go_state_scheduled()
             sub_job.save()

@@ -45,6 +45,14 @@ try:
     from yaml import CSafeLoader as SafeLoader
 except ImportError:
     from yaml import SafeLoader
+try:
+    from yaml import CSafeDumper as SafeDumper
+except ImportError:
+    from yaml import SafeDumper
+try:
+    from yaml import CDumper as Dumper
+except ImportError:
+    from yaml import Dumper
 
 
 # handle compatibility for yaml.load
@@ -55,3 +63,13 @@ def yaml_load(data):
 # handle compatibility for yaml.safe_load
 def yaml_safe_load(data):
     return yaml.load(data, Loader=SafeLoader)
+
+
+# handle compatibility for yaml.dump
+def yaml_dump(data, *args, **kwargs):
+    return yaml.dump(data, *args, Dumper=Dumper, **kwargs)
+
+
+# handle compatibility for yaml.safe_dump
+def yaml_safe_dump(data, *args, **kwargs):
+    return yaml.dump(data, *args, Dumper=SafeDumper, **kwargs)

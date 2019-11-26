@@ -20,11 +20,10 @@
 
 
 import os
-import yaml
 import uuid
 import json
 
-from lava_common.compat import yaml_load
+from lava_common.compat import yaml_dump, yaml_load
 from lava_common.constants import LAVA_MULTINODE_SYSTEM_TIMEOUT
 from lava_common.timeout import Timeout
 from lava_common.exceptions import TestError, JobError, InfrastructureError
@@ -284,7 +283,7 @@ class TestMultinode(StdoutTestCase):
         # check that the description can be re-loaded as valid YAML
         for action in self.client_job.pipeline.actions:
             data = action.explode()
-            data_str = yaml.dump(data)
+            data_str = yaml_dump(data)
             yaml_load(data_str)  # nosec not suitable for safe_load
 
     def test_multinode_timeout(self):

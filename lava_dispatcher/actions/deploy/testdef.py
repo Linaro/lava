@@ -21,13 +21,12 @@
 import os
 import io
 import re
-import yaml
 import base64
 import hashlib
 import tarfile
 import shutil
 
-from lava_common.compat import yaml_safe_load
+from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_common.decorators import nottest
 from lava_common.exceptions import InfrastructureError, JobError, LAVABug, TestError
 from lava_dispatcher.action import Action, Pipeline
@@ -377,7 +376,7 @@ class InlineRepoAction(RepoAction):
         if yaml_dirname != "":
             os.makedirs(os.path.join(runner_path, yaml_dirname))
         with open(yaml_file, "w") as test_file:
-            data = yaml.safe_dump(testdef)
+            data = yaml_safe_dump(testdef)
             sha1.update(data.encode("utf-8"))
             test_file.write(data)
 
@@ -772,7 +771,7 @@ class TestOverlayAction(TestAction):
 
         # FIXME: change lava-test-runner to accept a variable instead of duplicating the YAML?
         with open("%s/testdef.yaml" % runner_path, "w") as run_file:
-            yaml.safe_dump(testdef, run_file)
+            yaml_safe_dump(testdef, run_file)
 
         # write out the UUID of each test definition.
         # FIXME: is this necessary any longer?
@@ -784,7 +783,7 @@ class TestOverlayAction(TestAction):
             content = self.get_namespace_data(
                 action="test", label=self.test_uuid, key="testdef_metadata"
             )
-            metadata.write(yaml.safe_dump(content))
+            metadata.write(yaml_safe_dump(content))
 
         # Need actions for the run.sh script (calling parameter support in base class)
         # and install script (also calling parameter support here.)
