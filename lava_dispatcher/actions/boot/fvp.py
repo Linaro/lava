@@ -95,10 +95,16 @@ class BaseFVPAction(Action):
         self.container = ""
         self.fvp_image = None
         self.fvp_license = None
+        self.docker_image = None
+        self.local_docker_image = False
 
     def validate(self):
         super().validate()
         self.container = "lava-%s-%s" % (self.job.job_id, self.level)
+        if "image" not in self.parameters or "name" not in self.parameters["image"]:
+            self.errors = "Specify docker image name"
+        self.docker_image = self.parameters["image"]["name"]
+        self.local_docker_image = self.parameters["image"].get("local", False)
 
         options = self.job.device["actions"]["boot"]["methods"]["docker"]["options"]
 
@@ -158,21 +164,19 @@ class BaseFVPAction(Action):
 
     def cleanup(self, connection):
         super().cleanup(connection)
-        # If we run with --version only, the container *should* already be stopped
-        # Therefore check if it exists first
-        proc = subprocess.Popen(
-            ["docker", "container", "inspect", self.container],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE,
-        )
-        ret = proc.wait()
-        if ret and "No such container" in str(proc.stderr.readline()):
-            self.cleanup_required = False
-            self.logger.debug("Container %s already stopped" % self.container)
-        if self.cleanup_required:
-            self.logger.debug("Stopping container %s", self.container)
-            self.run_cmd(["docker", "stop", self.container], allow_fail=True)
-            self.cleanup_required = False
+        self.logger.debug("Stopping container %s", self.container)
+        try:
+            subprocess.check_output(
+                ["docker", "stop", self.container], stderr=subprocess.STDOUT
+            )
+        except subprocess.CalledProcessError as e:
+            if "No such container" in str(e.output):
+                # If we run with --version only, the container *should* already be stopped
+                self.logger.debug("Container %s already stopped" % self.container)
+            else:
+                raise e
+        self.logger.debug("Stopped container %s", self.container)
+        self.cleanup_required = False
 
 
 class CheckFVPVersionAction(BaseFVPAction):
@@ -190,21 +194,22 @@ class CheckFVPVersionAction(BaseFVPAction):
 
     def validate(self):
         super().validate()
-        self.container = "lava-%s-%s" % (self.job.job_id, self.level)
         self.fvp_version_string = self.parameters.get(
             "fvp_version_string", "Fast Models[^\\n]+"
         )
 
     def run(self, connection, max_end_time):
-        docker_image = self.get_namespace_data(
-            action="deploy-docker", label="image", key="name"
-        )
         start = time.time()
+
+        if not self.local_docker_image:
+            self.logger.debug("Pulling image %s", self.docker_image)
+            self.run_cmd(["docker", "pull", self.docker_image])
+
         fvp_arguments = self.parameters.get("fvp_version_args", "--version")
 
         # Build the command line
         # The docker image is safe to be included in the command line
-        cmd = self.construct_docker_fvp_command(docker_image, fvp_arguments)
+        cmd = self.construct_docker_fvp_command(self.docker_image, fvp_arguments)
 
         self.logger.debug("Boot command: %s", cmd)
         shell = ShellCommand(cmd, self.timeout, logger=self.logger)
@@ -248,7 +253,6 @@ class StartFVPAction(BaseFVPAction):
 
     def validate(self):
         super().validate()
-        self.container = "lava-%s-%s" % (self.job.job_id, self.level)
         if "console_string" not in self.parameters:
             self.errors = "'console_string' is not set."
         else:
@@ -257,17 +261,11 @@ class StartFVPAction(BaseFVPAction):
             self.errors = "'fvp_arguments' is not set."
 
     def run(self, connection, max_end_time):
-        location = self.get_namespace_data(
-            action="test", label="shared", key="location"
-        )
-        docker_image = self.get_namespace_data(
-            action="deploy-docker", label="image", key="name"
-        )
         fvp_arguments = self.parameters.get("fvp_arguments")
 
         # Build the command line
         # The docker image is safe to be included in the command line
-        cmd = self.construct_docker_fvp_command(docker_image, fvp_arguments)
+        cmd = self.construct_docker_fvp_command(self.docker_image, fvp_arguments)
 
         self.logger.debug("Boot command: %s", cmd)
         shell = ShellCommand(cmd, self.timeout, logger=self.logger)
@@ -299,7 +297,6 @@ class StartFVPAction(BaseFVPAction):
             key="container",
             value=self.container,
         )
-
         self.set_namespace_data(
             action="shared", label="shared", key="connection", value=shell_connection
         )

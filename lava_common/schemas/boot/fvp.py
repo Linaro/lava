@@ -34,5 +34,6 @@ def schema():
         Optional("fvp_version_string"): str,
         Required("fvp_arguments"): str,
         Required("prompts"): boot.prompts(),
+        Required("image"): {Required("name"): str, Optional("local"): bool},
     }
     return {**boot.schema(), **base}

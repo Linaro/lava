@@ -615,18 +615,21 @@ This is currently supported by the docker device type.
 
   - boot:
       method: fvp
-      namespace: docker
       prompts:
         - 'root@(.*):/#'
       fvp_image: /path/to/FVP_Binary
       fvp_licence_variable: ARMLMD_LICENSE_FILE=foo
       fvp_arguments: >
-        -C board.virtioblockdevice.image_path={ROOTFS}
+        -C board.virtioblockdevice.image_path={DISK}
         ...
+      image:
+        name: "fvp_foundation:11.8"
+        local: true
       timeout:
         minutes: 5
 
-This boot method will launch the ``fvp_image`` file,
+This boot method will launch the ``fvp_image`` file
+(already present in the docker ``image`` provided)
 with the ``fvp_arguments`` as parameters,
 and the ``fvp_licence_variable`` set as an environment variable.
 
@@ -634,7 +637,9 @@ You can use ``{IMAGE_NAME}`` which will be replaced with the path to the
 image with the same key under ``images`` in the previous ``fvp`` deploy stage.
 ``{ARTIFACT_DIR}`` can also be used for the directory where all images are deployed.
 
-.. note:: Previous to running an ``fvp`` boot, you should do both a ``fvp`` deploy and a ``docker`` deploy, in which the docker image has the required tools, such as ``telnet``.
+.. note:: Previous to running an ``fvp`` boot, you should do both a ``fvp`` deploy.
+
+.. note:: The docker image must have the fastmodel in it and must have the required tools, such as ``telnet``.
 
 .. index:: boot method grub
 

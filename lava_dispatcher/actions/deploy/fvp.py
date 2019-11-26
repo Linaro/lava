@@ -33,6 +33,7 @@ from lava_dispatcher.actions.deploy.apply_overlay import (
     ApplyOverlayImage,
 )
 from lava_dispatcher.actions.deploy.download import DownloaderAction
+from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.logical import Deployment
 
 
@@ -72,63 +73,65 @@ class FVPDeploy(DeployAction):  # pylint: disable=too-many-instance-attributes
         if "images" not in self.parameters.keys():
             self.errors = "No 'images' specified on FVP deploy"
         for image in self.parameters["images"]:
-            if (
-                "apply-overlay" in self.parameters["images"][image]
-                and self.parameters["images"][image]["apply-overlay"]
-            ):
-                # If specifing overlay, ensure root partition also specified
-                if "root_partition" not in self.parameters["images"][image] and (
-                    "ramdisk_partition" not in self.parameters["images"][image]
-                    or "ramdisk_file" not in self.parameters["images"][image]
-                ):
-                    self.errors = "Specify 'root_partition' or 'ramdisk_partition' and 'ramdisk_name' for any image that specifies 'apply-overlay'"
+            if "overlays" in self.parameters["images"][image]:
+                for overlay in self.parameters["images"][image]["overlays"]:
+                    # Supported options:
+                    # - This is an image file and a partition is a rootfs
+                    # - This is an image file and a ramdisk is contained on a partition
+                    # Therefore "partition" should be specified and optionally "ramdisk"
+                    if "partition" not in overlay:
+                        self.errors = "Missing partition value for 'overlays' value for FVPDeploy."
 
     def populate(self, parameters):
         self.image_path = self.mkdtemp()
         self.internal_pipeline = Pipeline(
             parent=self, job=self.job, parameters=parameters
         )
+        if self.test_needs_overlay(parameters):
+            self.internal_pipeline.add_action(OverlayAction())
         uniquify = parameters.get("uniquify", True)
         if "images" in parameters:
             for k in sorted(parameters["images"].keys()):
                 self.internal_pipeline.add_action(
                     DownloaderAction(k, path=self.image_path, uniquify=uniquify)
                 )
-                if parameters["images"][k].get("apply-overlay", False):
-                    ramdisk_partition = parameters["images"][k].get(
-                        "ramdisk_partition", None
-                    )
-                    ramdisk_file = parameters["images"][k].get("ramdisk_file", None)
-                    root_partition = parameters["images"][k].get("root_partition", None)
-                    if self.test_needs_overlay(parameters):
-                        if ramdisk_partition and ramdisk_file:
+                if parameters["images"][k].get("overlays", None):
+                    for overlay in parameters["images"][k]["overlays"]:
+                        partition = overlay.get("partition")
+                        ramdisk = overlay.get("ramdisk", None)
+                        if not self.test_needs_overlay(parameters):
+                            continue
+                        if ramdisk is not None:
                             self.internal_pipeline.add_action(
-                                OffsetAction(k, partition_number=ramdisk_partition)
+                                OffsetAction(k, partition_number=partition)
                             )
                             self.internal_pipeline.add_action(
-                                ExtractRamdiskFromDisk(file=ramdisk_file, key=k)
+                                ExtractRamdiskFromDisk(file=ramdisk, key=k)
                             )
                             self.internal_pipeline.add_action(
                                 ExtractRamdisk(
                                     ramdisk_label=ExtractRamdiskFromDisk.name,
                                     ramdisk_action=ExtractRamdiskFromDisk.name,
+                                    force=True,
                                 )
                             )
-                            self.internal_pipeline.add_action(ApplyOverlayTftp())
+                            self.internal_pipeline.add_action(
+                                ApplyOverlayTftp(force_ramdisk=True)
+                            )
                             self.internal_pipeline.add_action(
                                 CompressRamdisk(
                                     action=ExtractRamdiskFromDisk.name,
                                     label=ExtractRamdiskFromDisk.name,
+                                    force=True,
                                 )
                             )
                             self.internal_pipeline.add_action(
-                                InjectIntoDiskImage(file=ramdisk_file, key=k)
+                                InjectIntoDiskImage(file=ramdisk, key=k)
                             )
-                        elif root_partition is not None:
+                        # Partition should always be specified, see validate.
+                        else:
                             self.internal_pipeline.add_action(
-                                ApplyOverlayImage(
-                                    image_key=k, root_partition=root_partition
-                                )
+                                ApplyOverlayImage(image_key=k, root_partition=partition)
                             )
 
 

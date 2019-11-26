@@ -16,20 +16,17 @@ LAVA will then connect via ``telnet`` to view UART output.
        namespace: docker
        to: fvp
        images:
-         fvp_image:
-           url: http://fileserver/path/to/fvp/FVP_BaseAEM
-           permissions: 755  # make executable
-         rootfs:
+         disk:
            url: http://fileserver/path/to/fvp/grub-busybox.img
            # Remaining settings allow adding overlay to the
-           # ramdisk on second partition (0 based index) of
+           # ramdisk on second partition of
            # image file.
-           apply-overlay: true
-           ramdisk_partition: 1
-           ramdisk_file: ramdisk-busybox.img
-       ramdisk:
-         install_overlay: true
-
+           overlays:
+           - partition: 1
+             ramdisk: ramdisk.img
+           # Alternatively, add overlay into rootfs in first partition
+           # overlays:
+           # - partition: 0
 
 .. _deploy_to_fvp_images:
 
@@ -41,47 +38,24 @@ A dictionary of images.
 url *
 -----
 
-Specifies the URL to download. All downloads are checksummed using ``md5sum``
-and ``sha256sum``
+.. include:: actions-deploy-images-url.rsti
 
-URLs are checked during the test job validation to ensure that the file can be
-downloaded. Missing files will cause the test job to end as Incomplete.
+overlays
+--------
 
-URLs **must** use one of the supported schemes, the first element of the URL.
+A list of places to apply overlays.
+Either this will be applied to a partition on a disk image,
+or can be applied to a ramdisk contained in a partition on that disk image.
 
-.. topic:: Supported schema
+partition *
+^^^^^^^^^^^
 
- * ``http://``
- * ``https://``
- * ``file://``
- * ``lxc://``
+Either the root partition on the disk, or the partition that contains the ramdisk.
+LAVA decides which this is from whether the ``ramdisk`` option is present
+at the same level.
+0-based index.
 
-.. _deploy_to_fvp_images_compression:
+ramdisk
+^^^^^^^
 
-apply-overlay
--------------
-
-Use this to apply LAVA specific overlays to image.
-
-::
-
-   apply-overlay: true
-
-ramdisk-partition
------------------
-
-Partition of this image that contains a ramdisk that you want to add a LAVA overlay to.
-
-ramdisk-file
-------------
-
-The filename of a ramdisk file to extract from this file
-at the partition given by ``ramdisk_partition`` in which to add
-the LAVA overlay into.
-
-permissions
------------
-
-Some files will need to be executable.
-Specify a permission to give to ``chmod``, e.g. '755'
-when modifying the permissions of the file.
+The path to the ramdisk file relative to the root of the partition specified.
