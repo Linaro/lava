@@ -181,6 +181,9 @@ will become:
    export LAVA_STATIC_INFO_1_board_id='S_NO81730001'
    export LAVA_STORAGE_INFO_0_SATA='/dev/disk/by-id/ata-ST500DM002-1BD142_W3T79GCW'
 
+The environment can be **overridden in the job definition**. See
+:ref:`job_environment_support`.
+
 .. seealso:: :ref:`test_device_info` and :ref:`extra_device_configuration`.
 
 .. _device_dictionary_other_parameters:

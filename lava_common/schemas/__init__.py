@@ -194,6 +194,7 @@ def notify():
 def extra_checks(data):
     check_job_timeouts(data)
     check_multinode_or_device_type(data)
+    check_multinode_or_environment(data)
     check_multinode_roles(data)
     check_namespace(data)
     check_secrets_visibility(data)
@@ -242,6 +243,14 @@ def check_multinode_or_device_type(data):
         raise Invalid('"device_type" shoud not be used with multinode')
     if not device_type and not multinode:
         raise Invalid('"device_type" or multinode should be defined')
+
+
+def check_multinode_or_environment(data):
+    environment = data.get("environment")
+    multinode = data.get("protocols", {}).get("lava-multinode")
+
+    if environment and multinode:
+        raise Invalid('"environment" shoud not be used with multinode')
 
 
 def check_multinode_roles(data):
@@ -307,6 +316,7 @@ def job(extra_context_variables=[]):
             Optional("priority"): Any("high", "medium", "low", Range(min=0, max=100)),
             Optional("tags"): [str],
             Optional("secrets"): dict,
+            Optional("environment"): dict,
             Optional("protocols"): {
                 Optional("lava-lxc"): Any(lava_lxc, {str: lava_lxc}),
                 Optional("lava-multinode"): {
@@ -320,6 +330,7 @@ def job(extra_context_variables=[]):
                                     extra=False,
                                 ),
                                 Optional("tags"): [str],
+                                Optional("environment"): dict,
                                 Optional("timeout"): timeout(),
                             },
                             {
