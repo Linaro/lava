@@ -448,13 +448,6 @@ class Command(BaseCommand):
         self.stdout.write("health     : %s" % device.get_health_display())
         self.stdout.write("health job : %s" % bool(device.get_health_check()))
         self.stdout.write("description: %s" % device.description)
-        if device.user:
-            owner = device.user.username
-        elif device.group:
-            owner = device.group.name
-        else:
-            owner = ""
-        self.stdout.write("owner      : %s" % owner)
 
         if device.physical_owner:
             physical = device.physical_owner.username
