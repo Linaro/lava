@@ -3,7 +3,6 @@ import re
 import shutil
 import decimal
 
-from django.core.exceptions import MultipleObjectsReturned
 from django.urls.exceptions import NoReverseMatch
 from django.urls import reverse
 
@@ -61,8 +60,7 @@ class TestMetaTypes(TestCaseWithFactory):
         for actionlevel in ActionData.objects.all():
             self.assertEqual(actionlevel.testdata, testdata)
         action_levels = []
-        for testdata in job.testdata_set.all():
-            action_levels.extend(testdata.actionlevels.all())
+        action_levels.extend(job.testdata.actionlevels.all())
         self.assertEqual(count, len(action_levels))
         count = ActionData.objects.filter(
             meta_type__metatype=MetaType.DEPLOY_TYPE
@@ -223,10 +221,7 @@ class TestMetaTypes(TestCaseWithFactory):
             pipeline_job.pipeline.validate_actions, self, "qemu-system-x86_64"
         )
         pipeline = pipeline_job.describe()
-        try:
-            testdata, _ = TestData.objects.get_or_create(testjob=job)
-        except (MultipleObjectsReturned):
-            self.fail("multiple objects")
+        testdata, _ = TestData.objects.get_or_create(testjob=job)
         retval = _get_action_metadata(pipeline["job"]["actions"])
         self.assertEqual(
             retval,
@@ -266,10 +261,7 @@ class TestMetaTypes(TestCaseWithFactory):
             pipeline_job.pipeline.validate_actions, self, "qemu-system-x86_64"
         )
         pipeline = pipeline_job.describe()
-        try:
-            testdata, _ = TestData.objects.get_or_create(testjob=job)
-        except (MultipleObjectsReturned):
-            self.fail("multiple objects")
+        testdata, _ = TestData.objects.get_or_create(testjob=job)
         retval = _get_action_metadata(pipeline["job"]["actions"])
         self.assertIn("test.0.common.definition.parameters.VARIABLE_NAME_2", retval)
         self.assertIn("test.0.common.definition.parameters.VARIABLE_NAME_1", retval)

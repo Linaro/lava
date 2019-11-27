@@ -620,7 +620,7 @@ class TestData(models.Model):
     available for result processing when the job is running.
     """
 
-    testjob = models.ForeignKey(TestJob, on_delete=models.CASCADE)
+    testjob = models.OneToOneField(TestJob, on_delete=models.CASCADE)
 
     # Attributes
 
@@ -1225,10 +1225,9 @@ class QueryCondition(models.Model):
             content_type = ContentType.objects.get_for_model(model)
 
             if job and model == NamedTestAttribute:
-                testdata = TestData.objects.filter(testjob=job).first()
-                if testdata:
+                if hasattr(job, "testdata"):
                     for attribute in NamedTestAttribute.objects.filter(
-                        object_id=testdata.id,
+                        object_id=job.testdata.id,
                         content_type=ContentType.objects.get_for_model(TestData),
                     ):
                         condition_choice["fields"][attribute.name] = {}

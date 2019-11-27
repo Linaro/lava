@@ -1970,9 +1970,8 @@ class TestJob(models.Model):
         results = {}
         attributes = [x.strip() for x in attributes.split(",")]
 
-        testdata = self.testdata_set.first()
-        if testdata:
-            for attr in testdata.attributes.all():
+        if hasattr(self, "testdata"):
+            for attr in self.testdata.attributes.all():
                 if attr.name in attributes:
                     results[attr.name] = {}
                     results[attr.name]["fail"] = self.health != self.HEALTH_COMPLETE
@@ -1991,16 +1990,15 @@ class TestJob(models.Model):
         if not xaxis_attribute:
             return None
         with contextlib.suppress(Exception):
-            testdata = self.testdata_set.first()
-            if not testdata:
+            if not hasattr(self, "testdata"):
                 return None
-            data = testdata.attributes.filter(name=xaxis_attribute)
+            data = self.testdata.attributes.filter(name=xaxis_attribute)
             return data.values_list("value", flat=True)[0]
 
     def get_metadata_dict(self):
         retval = []
-        for datum in self.testdata_set.all():
-            for attribute in datum.attributes.all():
+        if hasattr(self, "testdata"):
+            for attribute in self.testdata.attributes.all():
                 retval.append({attribute.name: attribute.value})
         return retval
 
