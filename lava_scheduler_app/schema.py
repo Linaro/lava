@@ -197,6 +197,7 @@ def _interactive_def_schema():
                     r"^[a-zA-Z0-9-_]+$", msg=INVALID_CHARACTER_ERROR_MSG
                 ),
                 Required("prompts"): list,
+                Optional("echo"): "discard",
                 Required("script"): _interactive_script_schema(),
             }
         ]

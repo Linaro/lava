@@ -152,6 +152,9 @@ class TestInteractiveAction(TestAction):
                 else:
                     self.logger.info("Sending '%s'", command)
                     test_connection.sendline(command, delay=self.character_delay)
+                    if script.get("echo") == "discard":
+                        echo = test_connection.readline()
+                        self.logger.debug("Ignoring echo: %r", echo)
 
                 failures = [p["message"] for p in cmd.get("failures", [])]
                 successes = [p["message"] for p in cmd.get("successes", [])]
