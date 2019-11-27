@@ -1,0 +1,2 @@
+debian/lava/usr/lib/python3/dist-packages/lava_dispatcher_host ./usr/lib/python3/dist-packages/
+debian/lava/usr/bin/lava-dispatcher-host ./usr/bin/
