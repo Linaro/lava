@@ -79,8 +79,6 @@ STALE_CHECK_INTERVAL = 3600
 STALE_CONFIG = {
     "/var/lib/lava/dispatcher/tmp": {"pattern": "{prefix}{job_id}"},
     "/var/lib/lava/dispatcher/slave/tmp": {"pattern": "{prefix}{job_id}"},
-    "/etc/udev/rules.d/": {"glob": "100-lava-{prefix}lxc-*-{job_id}.rules",
-                           "post-action": ["udevadm", "control", "--reload-rules"]},
 }
 
 
