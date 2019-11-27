@@ -32,7 +32,7 @@ from lava_common.constants import (
     METADATA_MESSAGE_LIMIT,
 )
 from lava_dispatcher.utils.strings import seconds_to_str
-from lava_dispatcher.log import YAMLLogger
+from lava_common.log import YAMLLogger
 
 
 class LinuxKernelMessages(Action):

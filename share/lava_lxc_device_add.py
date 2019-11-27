@@ -34,7 +34,7 @@ import sys
 import time
 import syslog
 
-from lava_dispatcher.log import YAMLLogger
+from lava_common.log import YAMLLogger
 
 # Wait 10s maximum to close the socket
 LINGER = 10000

@@ -89,8 +89,6 @@ lava-dispatcher:
   pyudev:
     version: ">=0.21"
     name: python3-pyudev
-  pyzmq:
-    name: python3-zmq
   setproctitle:
     version: ">=1.1.8"
     name: python3-setproctitle
@@ -135,6 +133,8 @@ lava-dispatcher:
     unittests: true
 
 lava-common:
+  pyzmq:
+    name: python3-zmq
   voluptuous:
     version: ">=0.8.8"
     name: python3-voluptuous
