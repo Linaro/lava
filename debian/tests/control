@@ -7,3 +7,8 @@ Depends: lava-server, lava-common, lava-dispatcher, @builddeps@,
  schroot, lxc, lava-server, python3-django-testscenarios, python3-tz,
  tftpd-hpa, git, qemu-system-x86, nfs-kernel-server, u-boot-tools
 Restrictions: allow-stderr, needs-root
+
+Test-Command: python3 -c 'from lava_common import *'
+Depends: lava-common
+Features: test-name=lava-common
+Restrictions: allow-stderr, superficial
