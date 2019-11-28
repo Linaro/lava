@@ -168,6 +168,8 @@ lava-dispatcher:
     unittests: true
 
 lava-common:
+  PyYAML:
+    name: python3-yaml
   pyzmq:
     name: python3-zmq
   voluptuous:
