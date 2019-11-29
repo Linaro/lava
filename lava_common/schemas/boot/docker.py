@@ -29,6 +29,9 @@ def schema():
     base = {
         Required("method"): Msg("docker", "'method' should be 'docker'"),
         Required("command"): str,
+        # TODO: if auto_login => prompt is required
+        Optional("auto_login"): boot.auto_login(),
         Optional("prompts"): boot.prompts(),
+        Optional("transfer_overlay"): boot.transfer_overlay(),
     }
     return {**boot.schema(), **base}

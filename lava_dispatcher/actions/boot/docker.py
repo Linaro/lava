@@ -23,7 +23,7 @@ import os
 from lava_common.exceptions import JobError
 from lava_dispatcher.action import Pipeline, Action
 from lava_dispatcher.logical import Boot, RetryAction
-from lava_dispatcher.actions.boot import BootHasMixin
+from lava_dispatcher.actions.boot import AutoLoginAction, BootHasMixin, OverlayUnpack
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.shell import ExpectShellSession, ShellCommand, ShellSession
 from lava_dispatcher.utils.network import dispatcher_ip
@@ -57,8 +57,12 @@ class BootDockerAction(BootHasMixin, RetryAction):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.pipeline.add_action(CallDockerAction())
         if self.has_prompts(parameters):
+            if "auto_login" in parameters:
+                self.pipeline.add_action(AutoLoginAction())
             if self.test_has_shell(parameters):
                 self.pipeline.add_action(ExpectShellSession())
+                if "transfer_overlay" in parameters:
+                    self.pipeline.add_action(OverlayUnpack())
                 self.pipeline.add_action(ExportDeviceEnvironment())
 
 

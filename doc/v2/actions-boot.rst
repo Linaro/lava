@@ -527,6 +527,8 @@ Boot a docker image already deployed by a :ref:`deploy to docker action <deploy_
      timeout:
        minutes: 2
 
+.. note:: auto-login and transfer_overlay are both supported for this method.
+
 command
 -------
 
