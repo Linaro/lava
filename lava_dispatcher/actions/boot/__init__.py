@@ -710,9 +710,15 @@ class OverlayUnpack(Action):
             raise ConfigurationError(
                 "overlay should already be in DISPATCHER_DOWNLOAD_DIR"
             )
+
+        # Set the error flag when downloading the overlay
+        # In case of failure, the action will fail
+        connection.sendline("set -e", delay=self.character_delay)
+        connection.wait()
+
         overlay_path = overlay_full_path[len(DISPATCHER_DOWNLOAD_DIR) + 1 :]
         overlay = os.path.basename(overlay_path)
-        connection.sendline("rm %s" % overlay, delay=self.character_delay)
+        connection.sendline("rm -f %s" % overlay, delay=self.character_delay)
         connection.wait()
 
         cmd = self.parameters["transfer_overlay"]["download_command"]
@@ -725,6 +731,10 @@ class OverlayUnpack(Action):
 
         unpack = self.parameters["transfer_overlay"]["unpack_command"]
         connection.sendline(unpack + " " + overlay, delay=self.character_delay)
+        connection.wait()
+
+        # Remove the error flag for later actions
+        connection.sendline("set +e", delay=self.character_delay)
         connection.wait()
 
         return connection
