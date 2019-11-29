@@ -95,7 +95,8 @@ def validate_action(name, index, data, strict=True):
     except ImportError:
         raise Invalid("unknown action type", path=["actions"] + name.split("."))
     except MultipleInvalid as exc:
-        raise Invalid(exc.msg, path=["actions[%d]" % index] + name.split(".")) from exc
+        path = ["actions[%d]" % index] + name.split(".") + exc.path
+        raise Invalid(exc.msg, path=path) from exc
 
 
 def validate(data, strict=True, extra_context_variables=[]):
