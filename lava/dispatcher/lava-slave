@@ -44,6 +44,7 @@ from urllib.parse import urlparse
 from zmq.utils.strtypes import b, u
 
 from lava_common.compat import yaml_safe_load
+from lava_common.constants import DISPATCHER_DOWNLOAD_DIR
 from lava_common.version import __version__
 from lava_dispatcher.job import ZMQConfig
 
@@ -77,8 +78,8 @@ FORMAT = "%(asctime)-15s %(levelname)7s %(message)s"
 # Check for stale resources every STALE_CHECK_INTERVAL seconds (default to 1 hour)
 STALE_CHECK_INTERVAL = 3600
 STALE_CONFIG = {
-    "/var/lib/lava/dispatcher/tmp": {"pattern": "{prefix}{job_id}"},
-    "/var/lib/lava/dispatcher/slave/tmp": {"pattern": "{prefix}{job_id}"},
+    DISPATCHER_DOWNLOAD_DIR: {"pattern": "{prefix}{job_id}"},
+    tmp_dir: {"pattern": "{prefix}{job_id}"},
 }
 
 
