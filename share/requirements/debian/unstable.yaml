@@ -107,8 +107,6 @@ lava-dispatcher:
   pyudev:
     version: ">=0.21"
     name: python3-pyudev
-  pyzmq:
-    name: python3-zmq
   requests:
     name: python3-requests
   setproctitle:
@@ -170,6 +168,10 @@ lava-dispatcher:
     unittests: true
 
 lava-common:
+  PyYAML:
+    name: python3-yaml
+  pyzmq:
+    name: python3-zmq
   voluptuous:
     version: ">=0.8.8"
     name: python3-voluptuous

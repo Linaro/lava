@@ -39,7 +39,7 @@ from lava_common.exceptions import (
     TestError,
     LAVATimeoutError,
 )
-from lava_dispatcher.log import YAMLLogger
+from lava_common.log import YAMLLogger
 from lava_dispatcher.utils.strings import seconds_to_str
 
 
