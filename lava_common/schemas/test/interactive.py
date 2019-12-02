@@ -31,6 +31,7 @@ def schema():
             {
                 Required("name"): str,
                 Required("prompts"): [All(str, Length(min=1))],
+                Optional("echo"): "discard",
                 Required("script"): [
                     {
                         Required("command"): Any(str, None),

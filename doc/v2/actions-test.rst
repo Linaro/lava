@@ -337,6 +337,8 @@ bootloader.
 The workflow of the interactive test action is:
 
 * send the ``command`` to the :term:`DUT`
+* if ``echo: discard`` is specified, discard next output line (assumed to be
+  an echo of the command)
 * wait for the ``prompts`` or the ``message``'s
 * if a ``name`` is defined, log the result for this command (as soon as a prompt or a message is matched)
 * if a ``message`` was matched and this is not the last command, wait for the ``prompts``
@@ -356,6 +358,7 @@ A u-boot interactive test might look like:
       interactive:
       - name: network
         prompts: ["=>", "/ # "]
+        echo: discard
         script:
         - name: dhcp
           command: dhcp
