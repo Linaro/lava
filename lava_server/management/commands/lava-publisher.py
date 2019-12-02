@@ -23,6 +23,7 @@ from zmq.utils.strtypes import u
 
 from django.conf import settings
 
+from lava_common.version import __version__
 from lava_server.cmdutils import LAVADaemonCommand
 
 
@@ -71,6 +72,9 @@ class Command(LAVADaemonCommand):
         self.setup_logging(
             "lava-publisher", options["level"], options["log_file"], FORMAT
         )
+
+        self.logger.info("[INIT] Starting lava-publisher")
+        self.logger.info("[INIT] Version %s", __version__)
 
         self.logger.info("[INIT] Dropping privileges")
         if not self.drop_privileges(options["user"], options["group"]):

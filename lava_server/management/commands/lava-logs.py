@@ -32,6 +32,7 @@ from django.db import connection, transaction
 from django.db.utils import DatabaseError, InterfaceError, OperationalError
 
 from lava_common.compat import yaml_load
+from lava_common.version import __version__
 from lava_results_app.models import TestCase
 from lava_server.cmdutils import LAVADaemonCommand, watch_directory
 from lava_scheduler_app.models import TestJob
@@ -127,6 +128,9 @@ class Command(LAVADaemonCommand):
     def handle(self, *args, **options):
         # Initialize logging.
         self.setup_logging("lava-logs", options["level"], options["log_file"], FORMAT)
+
+        self.logger.info("[INIT] Starting lava-logs")
+        self.logger.info("[INIT] Version %s", __version__)
 
         self.logger.info("[INIT] Dropping privileges")
         if not self.drop_privileges(options["user"], options["group"]):

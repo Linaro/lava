@@ -36,6 +36,7 @@ from django.db.utils import OperationalError, InterfaceError
 from django.utils import timezone
 
 from lava_common.compat import yaml_safe_load
+from lava_common.version import __version__
 from lava_results_app.models import TestCase, TestSuite
 from lava_scheduler_app.dbutils import parse_job_description
 from lava_scheduler_app.models import TestJob, Worker
@@ -621,6 +622,10 @@ class Command(LAVADaemonCommand):
         # Initialize logging.
         self.setup_logging("lava-master", options["level"], options["log_file"], FORMAT)
 
+        self.logger.info("[INIT] Starting lava-master")
+        self.logger.info("[INIT] Version %s", __version__)
+        self.logger.info("[INIT] Using protocol version %d", PROTOCOL_VERSION)
+
         self.logger.info("[INIT] Dropping privileges")
         if not self.drop_privileges(options["user"], options["group"]):
             self.logger.error("[INIT] Unable to drop privileges")
@@ -699,9 +704,7 @@ class Command(LAVADaemonCommand):
         (self.pipe_r, _) = self.setup_zmq_signal_handler()
         self.poller.register(self.pipe_r, zmq.POLLIN)
 
-        self.logger.info("[INIT] LAVA master has started.")
-        self.logger.info("[INIT] Using protocol version %d", PROTOCOL_VERSION)
-
+        self.logger.info("[INIT] Starting main loop")
         try:
             self.main_loop(options)
         except BaseException as exc:
