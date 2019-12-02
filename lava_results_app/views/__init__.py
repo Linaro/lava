@@ -137,9 +137,8 @@ def testjob(request, job):
     failed_definitions = []
     yaml_dict = OrderedDict()
 
-    testdata = TestData.objects.filter(testjob=job).first()
-    if testdata:
-        for data in testdata.attributes.all().order_by("name"):
+    if hasattr(job, "testdata"):
+        for data in job.testdata.attributes.all().order_by("name"):
             yaml_dict[str(data.name)] = str(data.value)
 
     RequestConfig(request, paginate={"per_page": suite_table.length}).configure(
@@ -350,15 +349,14 @@ def metadata_export(request, job):
     job = get_object_or_404(TestJob, pk=job)
     check_request_auth(request, job)
     # testdata from job & export
-    testdata = TestData.objects.filter(testjob=job).first()
-    if not testdata:
-        raise Http404("No TestData matches the given query.")
+    if not hasattr(job, "testdata"):
+        raise Http404("No TestData present in test job.")
     response = HttpResponse(content_type="text/yaml")
     filename = "lava_metadata_%s.yaml" % job.id
     response["Content-Disposition"] = 'attachment; filename="%s"' % filename
     yaml_dict = {}
     # hide internal python objects
-    for data in testdata.attributes.all():
+    for data in job.testdata.attributes.all():
         yaml_dict[str(data.name)] = str(data.value)
     yaml_dump(yaml_dict, response)
     return response

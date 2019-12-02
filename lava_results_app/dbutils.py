@@ -37,7 +37,6 @@ from lava_results_app.models import (
     ActionData,
     MetaType,
 )
-from django.core.exceptions import MultipleObjectsReturned
 from lava_common.timeout import Timeout
 
 
@@ -416,12 +415,7 @@ def map_metadata(description, job):
     except yaml.YAMLError as exc:
         logger.exception("[%s] %s", job.id, exc)
         return False
-    try:
-        testdata, created = TestData.objects.get_or_create(testjob=job)
-    except MultipleObjectsReturned:
-        # only happens for small number of jobs affected by original bug.
-        logger.info("[%s] skipping alteration of duplicated TestData", job.id)
-        return False
+    testdata, created = TestData.objects.get_or_create(testjob=job)
     if not created:
         # prevent updates of existing TestData
         logger.debug("[%s] skipping alteration of existing TestData", job.id)
