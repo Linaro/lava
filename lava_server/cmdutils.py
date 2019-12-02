@@ -68,17 +68,19 @@ class LAVADaemonCommand(BaseCommand):
             user_id = pwd.getpwnam(user)[2]
             group_id = grp.getgrnam(group)[2]
         except KeyError:
-            self.logger.error("Unable to lookup the user or the group")
+            self.logger.error("[INIT] Unable to lookup the user or the group")
             return False
         self.logger.debug(
-            "Switching to (%s(%d), %s(%d))", user, user_id, group, group_id
+            "[INIT] Switching to (%s(%d), %s(%d))", user, user_id, group, group_id
         )
 
         try:
             os.setgid(group_id)
             os.setuid(user_id)
         except OSError:
-            self.logger.error("Unable to the set (user, group)=(%s, %s)", user, group)
+            self.logger.error(
+                "[INIT] Unable to the set (user, group)=(%s, %s)", user, group
+            )
             return False
 
         # Set a restrictive umask (rwxr-xr-x)

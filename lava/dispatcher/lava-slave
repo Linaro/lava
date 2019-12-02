@@ -44,6 +44,7 @@ from urllib.parse import urlparse
 from zmq.utils.strtypes import b, u
 
 from lava_common.compat import yaml_safe_load
+from lava_common.version import __version__
 from lava_dispatcher.job import ZMQConfig
 
 # pylint: disable=no-member
@@ -919,6 +920,7 @@ def main():
     # Setup logger
     setup_logger(options.log_file, options.level)
     LOG.info("[INIT] LAVA slave has started.")
+    LOG.info("[INIT] Version %s", __version__)
     LOG.info("[INIT] Using protocol version %d", PROTOCOL_VERSION)
 
     # Check the hostname because "lava-logs" is reserved
