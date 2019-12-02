@@ -31,7 +31,8 @@ from lava_scheduler_app.models import (
     JobFailureTag,
 )
 from django.contrib.auth.models import User, Group
-from django_filters.filters import ChoiceFilter
+from django.core.exceptions import ValidationError
+from django_filters.filters import CharFilter
 
 import rest_framework_filters as filters
 
@@ -135,8 +136,26 @@ class JobFailureTagFilter(filters.FilterSet):
 
 
 class WorkerFilter(filters.FilterSet):
-    health = ChoiceFilter(choices=Worker.HEALTH_CHOICES)
-    state = ChoiceFilter(choices=Worker.STATE_CHOICES)
+    health = CharFilter(method="filter_health")
+    state = CharFilter(method="filter_state")
+
+    def filter_health(self, queryset, name, value):
+        try:
+            value = Worker.HEALTH_REVERSE[value]
+        except KeyError:
+            raise ValidationError(
+                "Select a valid choice. %s is not one of the available choices." % value
+            )
+        return queryset.filter(health=value)
+
+    def filter_state(self, queryset, name, value):
+        try:
+            value = Worker.STATE_REVERSE[value]
+        except KeyError:
+            raise ValidationError(
+                "Select a valid choice. %s is not one of the available choices." % value
+            )
+        return queryset.filter(state=value)
 
     class Meta:
         model = Worker
@@ -173,7 +192,16 @@ class DeviceTypeFilter(filters.FilterSet):
     alias = RelatedFilter(AliasFilter, name="alias", queryset=Alias.objects.all())
     bits = RelatedFilter(BitWidthFilter, name="bits", queryset=BitWidth.objects.all())
     cores = RelatedFilter(CoreFilter, name="cores", queryset=Core.objects.all())
-    health_denominator = ChoiceFilter(choices=DeviceType.HEALTH_DENOMINATOR)
+    health_denominator = CharFilter(method="filter_health_denominator")
+
+    def filter_health_denominator(self, queryset, name, value):
+        try:
+            value = DeviceType.HEALTH_DENOMINATOR_REVERSE[value]
+        except KeyError:
+            raise ValidationError(
+                "Select a valid choice. %s is not one of the available choices." % value
+            )
+        return queryset.filter(health_denominator=value)
 
     class Meta:
         model = DeviceType
@@ -222,8 +250,26 @@ class DeviceFilter(filters.FilterSet):
     worker_host = RelatedFilter(
         WorkerFilter, name="worker_host", queryset=Worker.objects.all()
     )
-    health = ChoiceFilter(choices=Device.HEALTH_CHOICES)
-    state = ChoiceFilter(choices=Device.STATE_CHOICES)
+    health = CharFilter(method="filter_health")
+    state = CharFilter(method="filter_state")
+
+    def filter_health(self, queryset, name, value):
+        try:
+            value = Device.HEALTH_REVERSE[value]
+        except KeyError:
+            raise ValidationError(
+                "Select a valid choice. %s is not one of the available choices." % value
+            )
+        return queryset.filter(health=value)
+
+    def filter_state(self, queryset, name, value):
+        try:
+            value = Device.STATE_REVERSE[value]
+        except KeyError:
+            raise ValidationError(
+                "Select a valid choice. %s is not one of the available choices." % value
+            )
+        return queryset.filter(state=value)
 
     class Meta:
         model = Device
@@ -274,8 +320,26 @@ class TestJobFilter(filters.FilterSet):
     failure_tags = RelatedFilter(
         JobFailureTagFilter, name="failure_tags", queryset=JobFailureTag.objects.all()
     )
-    health = ChoiceFilter(choices=TestJob.HEALTH_CHOICES)
-    state = ChoiceFilter(choices=TestJob.STATE_CHOICES)
+    health = CharFilter(method="filter_health")
+    state = CharFilter(method="filter_state")
+
+    def filter_health(self, queryset, name, value):
+        try:
+            value = TestJob.HEALTH_REVERSE[value]
+        except KeyError:
+            raise ValidationError(
+                "Select a valid choice. %s is not one of the available choices." % value
+            )
+        return queryset.filter(health=value)
+
+    def filter_state(self, queryset, name, value):
+        try:
+            value = TestJob.STATE_REVERSE[value]
+        except KeyError:
+            raise ValidationError(
+                "Select a valid choice. %s is not one of the available choices." % value
+            )
+        return queryset.filter(state=value)
 
     class Meta:
         model = TestJob

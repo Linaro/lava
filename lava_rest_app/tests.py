@@ -473,7 +473,8 @@ ok 2 - bar
 
     def test_workers(self):
         data = self.hit(
-            self.userclient, reverse("api-root", args=[self.version]) + "workers/"
+            self.userclient,
+            reverse("api-root", args=[self.version]) + "workers/?ordering=hostname",
         )
         # We get 3 workers because the default one (example.com) is always
         # created by the migrations
