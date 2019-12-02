@@ -158,6 +158,7 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
                         "cpus": 0.0,
                         "memory": 0,
                         "privileged": False,
+                        "capabilities": [],
                         "devices": [],
                         "volumes": [],
                     }
@@ -170,7 +171,9 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
         data = """{% extends 'docker.jinja2' %}
 {% set docker_cpus=2.1 %}
 {% set docker_memory="120M" %}
-{% set docker_volumes=["/home", "/tmp"] %}"""
+{% set docker_capabilities = ["NET_ADMIN"] %}"
+{% set docker_devices = ["/dev/kvm:/dev/kvm"] %}"
+{% set docker_volumes = ["/home", "/tmp"] %}"""
         self.assertTrue(self.validate_data("docker-01", data))
         template_dict = prepare_jinja_template("docker-01", data, raw=False)
         self.assertEqual(
@@ -200,7 +203,8 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
                         "cpus": 2.1,
                         "memory": "120M",
                         "privileged": False,
-                        "devices": [],
+                        "capabilities": ["NET_ADMIN"],
+                        "devices": ["/dev/kvm:/dev/kvm"],
                         "volumes": ["/home", "/tmp"],  # nosec - unit test support.
                     }
                 },
@@ -243,6 +247,7 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
                         "cpus": 2.1,
                         "memory": "120M",
                         "privileged": True,
+                        "capabilities": [],
                         "devices": ["/dev/kvm"],
                         "volumes": [],
                     }

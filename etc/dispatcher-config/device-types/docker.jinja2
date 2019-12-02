@@ -28,6 +28,15 @@ actions:
           cpus: {{ docker_cpus|default(0.0) }}
           memory: {{ docker_memory|default(0) }}
           privileged: {{ docker_privileged|default(False) }}
+{% if docker_capabilities|default([]) %}
+          capabilities:
+{% for cap in docker_capabilities %}
+            - {{ cap }}
+{% endfor %}
+{% else %}
+          capabilities: []
+{% endif %}
+
 {% if docker_devices|default([]) %}
           devices:
 {% for device in docker_devices %}
