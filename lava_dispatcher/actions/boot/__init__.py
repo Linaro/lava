@@ -569,7 +569,7 @@ class BootloaderCommandOverlay(Action):
             )
             self.logger.info("Parsed boot commands: %s", "; ".join(bootscript_commands))
             return connection
-        subs = substitute(self.commands, substitutions)
+        subs = substitute(self.commands, substitutions, drop=True)
         self.set_namespace_data(
             action="bootloader-overlay", label=self.method, key="commands", value=subs
         )
