@@ -42,7 +42,6 @@ class LogEntryAdmin(admin.ModelAdmin):
             return "~"
         else:
             return "x"
-        return obj.get_action_flag_display()
 
     get_action_flag_display.short_description = "Action"
 
