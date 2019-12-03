@@ -53,7 +53,7 @@ from lava_common.constants import (
 from lava_dispatcher.actions.boot.fastboot import EnterFastbootAction
 from lava_dispatcher.actions.boot.u_boot import UBootEnterFastbootAction
 
-from urllib.parse import urlparse
+from urllib.parse import quote_plus, urlparse
 
 
 class DownloaderAction(RetryAction):
@@ -127,6 +127,7 @@ class DownloadHandler(Action):
         self.path = os.path.join(path, key) if uniquify else path
         self.size = -1
         self.decompress_command_map = {"xz": "unxz", "gz": "gunzip", "bz2": "bunzip2"}
+        self.fname = None
 
     def reader(self):
         raise LAVABug("'reader' function unimplemented")
@@ -157,11 +158,11 @@ class DownloadHandler(Action):
             self.url = urlparse(image["url"])
             compression = image.get("compression")
             archive = image.get("archive")
-            image_name, _ = self._url_to_fname_suffix(self.path, compression)
+            self.fname, _ = self._url_to_fname_suffix(self.path, compression)
             image_arg = image.get("image_arg")
             overlay = image.get("overlay", False)
             self.set_namespace_data(
-                action="download-action", label=self.key, key="file", value=image_name
+                action="download-action", label=self.key, key="file", value=self.fname
             )
             self.set_namespace_data(
                 action="download-action",
@@ -180,11 +181,11 @@ class DownloadHandler(Action):
             compression = self.parameters[self.key].get("compression")
             archive = self.parameters[self.key].get("archive")
             overlay = self.parameters.get("overlay", False)
-            fname, _ = self._url_to_fname_suffix(self.path, compression)
-            if fname.endswith("/"):
+            self.fname, _ = self._url_to_fname_suffix(self.path, compression)
+            if self.fname.endswith("/"):
                 self.errors = "Cannot download a directory for %s" % self.key
             self.set_namespace_data(
-                action="download-action", label=self.key, key="file", value=fname
+                action="download-action", label=self.key, key="file", value=self.fname
             )
             self.set_namespace_data(
                 action="download-action",
@@ -270,14 +271,13 @@ class DownloadHandler(Action):
         sha256sum = remote.get("sha256sum")
         sha512sum = remote.get("sha512sum")
 
-        fname, _ = self._url_to_fname_suffix(self.path, compression)
-        if os.path.isdir(fname):
-            raise JobError("Download '%s' is a directory, not a file" % fname)
-        if os.path.exists(fname):
-            os.remove(fname)
+        if os.path.isdir(self.fname):
+            raise JobError("Download '%s' is a directory, not a file" % self.fname)
+        if os.path.exists(self.fname):
+            os.remove(self.fname)
 
         self.logger.info("downloading %s", remote["url"])
-        self.logger.debug("saving as %s", fname)
+        self.logger.debug("saving as %s", self.fname)
 
         downloaded_size = 0
         beginning = time.time()
@@ -321,12 +321,12 @@ class DownloadHandler(Action):
 
         if compression and decompress_command:
             try:
-                with open(fname, "wb") as dwnld_file:
+                with open(self.fname, "wb") as dwnld_file:
                     proc = subprocess.Popen(  # nosec - internal.
                         [decompress_command], stdin=subprocess.PIPE, stdout=dwnld_file
                     )
             except OSError as exc:
-                msg = "Unable to open %s: %s" % (fname, exc.strerror)
+                msg = "Unable to open %s: %s" % (self.fname, exc.strerror)
                 self.logger.error(msg)
                 raise InfrastructureError(msg)
 
@@ -346,7 +346,7 @@ class DownloadHandler(Action):
                         raise JobError(error_message)
             proc.wait()
         else:
-            with open(fname, "wb") as dwnld_file:
+            with open(self.fname, "wb") as dwnld_file:
                 for buff in self.reader():
                     update_progress()
                     dwnld_file.write(buff)
@@ -374,7 +374,7 @@ class DownloadHandler(Action):
 
         # set the dynamic data into the context
         self.set_namespace_data(
-            action="download-action", label=self.key, key="file", value=fname
+            action="download-action", label=self.key, key="file", value=self.fname
         )
         self.set_namespace_data(
             action="download-action", label=self.key, key="md5", value=md5.hexdigest()
@@ -398,7 +398,7 @@ class DownloadHandler(Action):
         else:
             archive = self.parameters[self.key].get("archive")
         if archive:
-            origin = fname
+            origin = self.fname
             target_fname = os.path.basename(origin).rstrip("." + archive)
             target_fname_path = os.path.join(os.path.dirname(origin), target_fname)
             if os.path.exists(target_fname_path):
@@ -435,7 +435,7 @@ class DownloadHandler(Action):
                     )
                 )
                 self.results = {"fail": {"md5": md5sum, "download": chk_md5sum}}
-                raise JobError("MD5 checksum for '%s' does not match." % fname)
+                raise JobError("MD5 checksum for '%s' does not match." % self.fname)
             self.results = {"success": {"md5": md5sum}}
 
         if sha256sum is not None:
@@ -455,7 +455,7 @@ class DownloadHandler(Action):
                 self.results = {
                     "fail": {"sha256": sha256sum, "download": chk_sha256sum}
                 }
-                raise JobError("SHA256 checksum for '%s' does not match." % fname)
+                raise JobError("SHA256 checksum for '%s' does not match." % self.fname)
             self.results = {"success": {"sha256": sha256sum}}
 
         if sha512sum is not None:
@@ -475,7 +475,7 @@ class DownloadHandler(Action):
                 self.results = {
                     "fail": {"sha512": sha512sum, "download": chk_sha512sum}
                 }
-                raise JobError("SHA512 checksum for '%s' does not match." % fname)
+                raise JobError("SHA512 checksum for '%s' does not match." % self.fname)
             self.results = {"success": {"sha512": sha512sum}}
 
         # certain deployments need prefixes set
@@ -487,7 +487,7 @@ class DownloadHandler(Action):
                 action="download-action",
                 label="file",
                 key=self.key,
-                value=os.path.join(suffix, self.key, os.path.basename(fname)),
+                value=os.path.join(suffix, self.key, os.path.basename(self.fname)),
             )
         elif self.parameters["to"] == "iso-installer":
             suffix = self.get_namespace_data(
@@ -497,11 +497,11 @@ class DownloadHandler(Action):
                 action="download-action",
                 label="file",
                 key=self.key,
-                value=os.path.join(suffix, self.key, os.path.basename(fname)),
+                value=os.path.join(suffix, self.key, os.path.basename(self.fname)),
             )
         else:
             self.set_namespace_data(
-                action="download-action", label="file", key=self.key, value=fname
+                action="download-action", label="file", key=self.key, value=self.fname
             )
 
         # xnbd protocoll needs to know the location
@@ -582,6 +582,18 @@ class HttpDownloadAction(DownloadHandler):
         super().validate()
         res = None
         try:
+            http_cache = self.job.parameters["dispatcher"].get(
+                "http_url_format_string", ""
+            )
+            if http_cache:
+                self.logger.info("Using caching service: '%s'", http_cache)
+                try:
+                    self.url = urlparse(http_cache % quote_plus(self.url.geturl()))
+                except TypeError as exc:
+                    self.logger.error("Invalid http_url_format_string: '%s'", exc)
+                    self.errors = "Invalid http_url_format_string: '%s'" % str(exc)
+                    return
+
             self.logger.debug("Validating that %s exists", self.url.geturl())
             # Force the non-use of Accept-Encoding: gzip, this will permit to know the final size
             res = requests.head(
