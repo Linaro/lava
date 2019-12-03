@@ -23,7 +23,6 @@ import time
 import decimal
 import logging
 import pexpect
-from collections import OrderedDict
 
 from lava_common.compat import yaml_safe_dump
 from lava_common.decorators import nottest
@@ -480,24 +479,6 @@ class TestShellAction(TestAction):
             self.logger.error(str(exc))
             return True
 
-        p_res = self.get_namespace_data(
-            action="test", label=self.signal_director.test_uuid, key="results"
-        )
-        if not p_res:
-            p_res = OrderedDict()
-            self.set_namespace_data(
-                action="test",
-                label=self.signal_director.test_uuid,
-                key="results",
-                value=p_res,
-            )
-
-        # prevent losing data in the update
-        # FIXME: support parameters and retries
-        if res["test_case_id"] in p_res:
-            raise JobError(
-                "Duplicate test_case_id in results: %s" % res["test_case_id"]
-            )
         # turn the result dict inside out to get the unique
         # test_case_id/testset_name as key and result as value
         res_data = {
