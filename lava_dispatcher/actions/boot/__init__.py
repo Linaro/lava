@@ -448,7 +448,6 @@ class BootloaderCommandOverlay(Action):
             )
             substitutions["{KERNEL}"] = prepared_kernel
         if self.bootcommand:
-            self.logger.debug("%s", self.job.device["parameters"])
             kernel_addr = self.job.device["parameters"][self.bootcommand]["kernel"]
             dtb_addr = self.job.device["parameters"][self.bootcommand]["dtb"]
             ramdisk_addr = self.job.device["parameters"][self.bootcommand]["ramdisk"]
@@ -570,11 +569,16 @@ class BootloaderCommandOverlay(Action):
             )
             self.logger.info("Parsed boot commands: %s", "; ".join(bootscript_commands))
             return connection
-        subs = substitute(self.commands, substitutions)
+        subs = substitute(self.commands, substitutions, drop=True)
         self.set_namespace_data(
             action="bootloader-overlay", label=self.method, key="commands", value=subs
         )
-        self.logger.info("Parsed boot commands: %s", "; ".join(subs))
+        self.logger.debug("substitutions:")
+        for k in sorted(substitutions.keys()):
+            self.logger.debug("- %s: %s", k, substitutions[k])
+        self.logger.info("Parsed boot commands:")
+        for sub in subs:
+            self.logger.info("- %s", sub)
         return connection
 
 

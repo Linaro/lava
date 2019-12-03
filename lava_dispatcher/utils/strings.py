@@ -28,7 +28,7 @@ def indices(string, char):
     return [i for i, c in enumerate(string) if c == char]
 
 
-def substitute(command_list, dictionary):
+def substitute(command_list, dictionary, drop=False):
     """
     Replace markup in the command_list which matches a key in the dictionary with the
     value of that key in the dictionary. Empty values leave the item unchanged.
@@ -37,14 +37,18 @@ def substitute(command_list, dictionary):
     arguments: command_list - a list of strings
                dictionary - a dictionary of keys which match some of the strings with values
                             to replace for the key in the string.
+               drop - drop the command if a key is present but the value is None
     """
     parsed = []
     for line in command_list:
         for key, value in dictionary.items():
-            if not key or not value:
-                continue
-            line = line.replace(key, value)
-        parsed.append(line)
+            if value:
+                line = line.replace(key, value)
+            elif drop and key in line:
+                line = None
+                break
+        if line is not None:
+            parsed.append(line)
     return parsed
 
 
