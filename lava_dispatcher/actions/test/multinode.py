@@ -24,6 +24,27 @@ from lava_common.timeout import Timeout
 from lava_common.exceptions import TestError, MultinodeProtocolTimeoutError
 from lava_dispatcher.actions.test import LavaTest
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
+from .monitor import TestMonitorRetry
+from .interactive import TestInteractiveRetry
+
+
+# TODO: This is a workaround allowing to run multinode jobs with "monitors"
+# and "interactive" test actions - simple scenarios, without cross-device
+# synchronization. Properly handling test action class selection (in a
+# "pluggable" vs hardcoded way) would apparently require changes to
+# logical.Deployment class. And supporting cross-device synchronization
+# would likely require moving the corresponding logic to some base class,
+# from which individual test action implementations would inherit. In the
+# meantime, this is a small and localized workaround enabling multinode
+# for those test actions ahead of heavy refactors above.
+def get_subaction_class(parameters):
+    if "monitors" in parameters:
+        cls = TestMonitorRetry
+    elif "interactive" in parameters:
+        cls = TestInteractiveRetry
+    else:
+        cls = MultinodeTestAction
+    return cls
 
 
 class MultinodeTestShell(LavaTest):
@@ -36,7 +57,8 @@ class MultinodeTestShell(LavaTest):
 
     def __init__(self, parent, parameters):
         super().__init__(parent)
-        self.action = MultinodeTestAction()
+        cls = get_subaction_class(parameters)
+        self.action = cls()
         self.action.job = self.job
         self.action.section = self.action_type
         parent.add_action(self.action, parameters)
