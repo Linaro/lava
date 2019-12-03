@@ -43,21 +43,21 @@
 {% set uboot_mac_addr = uboot_mac_addr|default('') %}
 {% set base_uboot_set_mac = ["setenv ethaddr"] -%}
 {% if uboot_mac_addr %}
-{% set base_uboot_set_mac = ["setenv ethaddr " + uboot_mac_addr] -%}
+  {% set base_uboot_set_mac = ["setenv ethaddr " + uboot_mac_addr] -%}
 {% endif %}
 
 {% set uboot_set_mac = uboot_set_mac|default(false) %}
 
 {% set uboot_common_cmds = [] %}
 {% if uboot_needs_usb %}
-{% set uboot_common_cmds = uboot_common_cmds + base_uboot_usb_commands %}
+  {% set uboot_common_cmds = uboot_common_cmds + base_uboot_usb_commands %}
 {% endif %}
 {% set uboot_common_cmds = uboot_common_cmds + base_uboot_commands %}
 {% if base_high_limits %}
-{% set uboot_common_cmds = uboot_common_cmds + base_uboot_high_limits %}
+  {% set uboot_common_cmds = uboot_common_cmds + base_uboot_high_limits %}
 {% endif %}
 {% if uboot_set_mac %}
-{% set uboot_common_cmds = uboot_common_cmds + base_uboot_set_mac %}
+  {% set uboot_common_cmds = uboot_common_cmds + base_uboot_set_mac %}
 {% endif %}
 {% set uboot_common_cmds = uboot_common_cmds + base_uboot_dhcp_command  + base_uboot_tftp_commands %}
 
@@ -102,10 +102,10 @@
 {% block body %}
 
 {% if console_device %}
-{% set console_device = "console=" + console_device + "," %}
-{% set parity = console_parity|default('n') %}
-{% set databits = console_databits|default('8') %}
-{% set baud_rate = baud_rate | default(115200)|string + parity + databits %}
+  {% set console_device = "console=" + console_device + "," %}
+  {% set parity = console_parity|default('n') %}
+  {% set databits = console_databits|default('8') %}
+  {% set baud_rate = baud_rate | default(115200)|string + parity + databits %}
 {% endif %}
 {% set base_kernel_args = extra_kernel_args | default(base_kernel_args) %}
 {% set action_timeout_bootloader_commands = action_timeout_bootloader_commands | default(3) %}
