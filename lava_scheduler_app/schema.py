@@ -350,7 +350,7 @@ def _validate_multinode(data_object):
                 )
             if expect_role not in roles:
                 raise SubmissionException(
-                    "'expect_role' '%s' does not exist" % host_role
+                    "'expect_role' '%s' does not exist" % expect_role
                 )
         elif expect_role is not None:
             raise SubmissionException("'expect_role' without 'host_role'")
