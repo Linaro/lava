@@ -67,6 +67,11 @@ else
   exit 1
 fi
 
+RELEASE=9999
+if [ "${SUITE}" != "unstable" -a "${SUITE}" != "sid" ]; then
+  RELEASE="$(distro-info --release --$(distro-info --alias=${SUITE}))"
+fi
+
 dpkg-checkbuilddeps
 LOCAL=`git ls-files -m -o --exclude-standard|wc -l`
 if [ ${LOCAL} != 0 ]; then
@@ -106,7 +111,7 @@ BUILD_SUITE="${SUITE}"
 if [ "${SUITE}" = 'stretch' ]; then
     BUILD_SUITE='stretch-backports'
 fi
-dch -b -v "${VERSION}+${SUITE}" -D ${BUILD_SUITE} "Local developer native build for ${BUILD_SUITE}"
+dch -b -v "${VERSION}+${RELEASE}+${SUITE}" -D ${BUILD_SUITE} "Local developer native build for ${BUILD_SUITE}"
 if [ -n "${LOG}" ]; then
   dch -a "${LOG}"
 fi
