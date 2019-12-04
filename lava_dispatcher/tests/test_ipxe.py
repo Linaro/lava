@@ -184,11 +184,24 @@ class TestBootloaderAction(StdoutTestCase):
         kernel = parameters["actions"]["deploy"]["kernel"]
         ramdisk = parameters["actions"]["deploy"]["ramdisk"]
 
+        overlay.validate()
+        assert overlay.method == "ipxe"
+        assert overlay.commands == [
+            "dhcp net0",
+            "set console console=ttyS0,115200n8 lava_mac={LAVA_MAC}",
+            "set extraargs  ip=dhcp",
+            "kernel tftp://{SERVER_IP}/{KERNEL} ${extraargs} ${console}",
+            "initrd tftp://{SERVER_IP}/{RAMDISK}",
+            "boot",
+        ]
+        assert overlay.use_bootscript is False
+        assert overlay.lava_mac == "00:90:05:af:00:7d"
+
         substitution_dictionary = {
             "{SERVER_IP}": ip_addr,
             "{RAMDISK}": ramdisk,
             "{KERNEL}": kernel,
-            "{LAVA_MAC}": "00:00:00:00:00:00",
+            "{LAVA_MAC}": overlay.lava_mac,
         }
         params = device["actions"]["boot"]["methods"]
         params["ipxe"]["ramdisk"]["commands"] = substitute(
@@ -199,7 +212,7 @@ class TestBootloaderAction(StdoutTestCase):
         self.assertIs(type(commands), list)
         self.assertIn("dhcp net0", commands)
         self.assertIn(
-            "set console console=ttyS0,115200n8 lava_mac=00:00:00:00:00:00", commands
+            "set console console=ttyS0,115200n8 lava_mac=00:90:05:af:00:7d", commands
         )
         self.assertIn("set extraargs  ip=dhcp", commands)
         self.assertNotIn(

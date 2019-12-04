@@ -386,13 +386,11 @@ class BootloaderCommandOverlay(Action):
         # download-action will set ['dtb'] as tftp_path, tmpdir & filename later, in the run step.
         if "use_bootscript" in self.parameters:
             self.use_bootscript = self.parameters["use_bootscript"]
-        if "lava_mac" in self.parameters:
-            if re.match(
-                "([0-9A-F]{2}[:-]){5}([0-9A-F]{2})",
-                self.parameters["lava_mac"],
-                re.IGNORECASE,
-            ):
-                self.lava_mac = self.parameters["lava_mac"]
+
+        if "lava_mac" in device_methods[self.method]["parameters"]:
+            lava_mac = device_methods[self.method]["parameters"]["lava_mac"]
+            if re.match("([0-9A-F]{2}[:-]){5}([0-9A-F]{2})", lava_mac, re.IGNORECASE):
+                self.lava_mac = lava_mac
             else:
                 self.errors = "lava_mac is not a valid mac address"
 
