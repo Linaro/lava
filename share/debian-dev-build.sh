@@ -7,7 +7,6 @@ DIR="../build-area/"
 SCRATCH="lavadevscratch"
 BRANCH="master"
 DEBUILD_OPTS=" -sa"
-GBP_OPTS="--git-no-pristine-tar --git-no-overlay "
 
 while getopts ":a:o:s:B" opt; do
   case $opt in
@@ -56,15 +55,9 @@ DEBUILD_OPTS=" --no-lintian -uc -us ${DEBUILD_OPTS}"
 if [ ! -d ${DIR} ]; then
   mkdir ${DIR}
 fi
-GBP_OPTS+=" --git-export-dir=${DIR}"
 
 # store the current branch name
 BRANCH=`git branch | grep \* | cut -d ' ' -f2`
-
-function finish {
-  git checkout ${BRANCH}
-  git branch -D ${SCRATCH}
-}
 
 if [ -x ./lava_common/version.py ]; then
   # native version for developer build
@@ -74,22 +67,13 @@ else
   exit 1
 fi
 
-if [ ! -x /usr/bin/gbp ]; then
-    echo "[LAVA-DEV] This script needs git-buildpackage to be installed"
-    exit 2
-fi
-
 dpkg-checkbuilddeps
-fakeroot debian/rules clean
 LOCAL=`git ls-files -m -o --exclude-standard|wc -l`
 if [ ${LOCAL} != 0 ]; then
     echo "[LAVA-DEV] You have uncommitted changes in your source tree:"
     git status
     exit 3
 fi
-
-# only trap here to avoid branch changes without a branch
-trap finish EXIT
 
 if [ -d './dist/' ]; then
     rm -f ./dist/*
@@ -100,8 +84,11 @@ if [ -d .git ]; then
 fi
 NAME=`dpkg-parsechangelog |grep Source|cut -d" " -f2`
 
-# from here on, errors should clean up
-git checkout -b ${SCRATCH}
+BUILDDIR="${DIR}/lava-${VERSION}"
+mkdir -p "${BUILDDIR}"
+git archive HEAD | tar xf - -C "${BUILDDIR}"
+cd "${BUILDDIR}"
+
 export GIT_COMMITTER_NAME="lava-dev debian build script"
 export GIT_COMMITTER_EMAIL="lava-dev@lavasoftware.org"
 export GIT_AUTHOR_NAME="lava-dev debian build script"
@@ -110,20 +97,10 @@ export DEBEMAIL=lava-dev@lavasoftware.org
 export DEBFULLNAME=lava-dev debian build script
 
 # Save the version string
-python3 lava_common/version.py > lava_common/VERSION
-git add lava_common/VERSION
-git commit -m "Set the version"
+echo "${VERSION}" > lava_common/VERSION
 
 # convert to a native package to include local changes.
 echo "3.0 (native)" > debian/source/format
-git add debian/source/format
-cat << EOF > debian/gbp.conf
-[DEFAULT]
-overlay = False
-pristine-tar = False
-cleaner = true
-EOF
-git add debian/gbp.conf
 # if building for stretch, need the backports dependencies too.
 BUILD_SUITE="${SUITE}"
 if [ "${SUITE}" = 'stretch' ]; then
@@ -133,11 +110,11 @@ dch -b -v "${VERSION}+${SUITE}" -D ${BUILD_SUITE} "Local developer native build 
 if [ -n "${LOG}" ]; then
   dch -a "${LOG}"
 fi
-git add debian
-git commit -m "Local developer native build for ${BUILD_SUITE}"
+
+debuild ${DEBUILD_OPTS}
+cd -
 
 CHANGES="${DIR}/${NAME}_${VERSION}*.changes"
-gbp buildpackage ${GBP_OPTS} --git-debian-branch=${SCRATCH} --git-builder="debuild ${DEBUILD_OPTS}"
 echo
 echo ${LOG}
 echo
