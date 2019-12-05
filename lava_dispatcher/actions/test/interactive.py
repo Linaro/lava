@@ -133,7 +133,7 @@ class TestInteractiveAction(TestAction):
         prompts = script["prompts"]  # TODO: allow to change the prompts?
         cmds = script["script"]
 
-        for (index, cmd) in zip(range(0, len(cmds)), cmds):
+        for index, cmd in enumerate(cmds):
             command = cmd["command"]
             if command is not None:
                 command = substitute([cmd["command"]], substitutions)[0]
