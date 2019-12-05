@@ -4,8 +4,6 @@ set -e
 
 SUITE=unstable
 DIR="../build-area/"
-SCRATCH="lavadevscratch"
-BRANCH="master"
 DEBUILD_OPTS=" -sa"
 
 while getopts ":a:o:s:B" opt; do
@@ -55,9 +53,6 @@ DEBUILD_OPTS=" --no-lintian -uc -us ${DEBUILD_OPTS}"
 if [ ! -d ${DIR} ]; then
   mkdir ${DIR}
 fi
-
-# store the current branch name
-BRANCH=`git branch | grep \* | cut -d ' ' -f2`
 
 if [ -x ./lava_common/version.py ]; then
   # native version for developer build
