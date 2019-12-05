@@ -22,7 +22,7 @@ import pytest
 import subprocess  # nosec - only for mocking
 import time
 
-from lava_common.exceptions import InfrastructureError, JobError
+from lava_common.exceptions import InfrastructureError, JobError, TestError
 from lava_dispatcher.actions.test.interactive import TestInteractiveAction
 
 from lava_dispatcher.tests.test_basic import Factory, StdoutTestCase
@@ -91,6 +91,10 @@ def test_raise_exception():
         action.raise_exception("JobError", "A strange error")
     assert exc.match("A strange error")  # nosec - assert is part of the test process.
 
+    with pytest.raises(TestError) as exc:
+        action.raise_exception("TestError", "A strange error")
+    assert exc.match("A strange error")  # nosec - assert is ok
+
     with pytest.raises(JobError) as exc:
         action.raise_exception("bug", "A strange error")
     assert exc.match(  # nosec - assert is ok
@@ -110,22 +114,30 @@ class Connection:
         assert (data[0], data[1]) == ("expect", expect)  # nosec - assert is ok
         return data[2]
 
+    def readline(self):
+        data = self.data.pop(0)
+        assert data[0] == "readline"  # nosec
+        return data[1]
+
 
 class Logger:
     def __init__(self, data):
         self.data = data
 
+    def _check(self, data):
+        assert self.data.pop(0) == data  # nosec - assert is ok
+
     def debug(self, line, *args):
-        assert self.data.pop(0) == ("debug", line % args)  # nosec - assert is ok
+        self._check(("debug", line % args))
 
     def error(self, line, *args):
-        assert self.data.pop(0) == ("error", line % args)  # nosec - assert is ok
+        self._check(("error", line % args))
 
     def info(self, line, *args):
-        assert self.data.pop(0) == ("info", line % args)  # nosec - assert is ok
+        self._check(("info", line % args))
 
     def results(self, res):
-        assert self.data.pop(0) == ("results", res)  # nosec - assert is ok
+        self._check(("results", res))
 
 
 class Timing:
@@ -238,6 +250,7 @@ def test_run_script(monkeypatch):
             ["=> ", "/ # ", "Host lavasoftware.org not found: 3(NXDOMAIN)", "TIMEOUT"],
             2,
         ),
+        ("expect", ["=> ", "/ # "], 0),
         ("sendline", "dig lavasoftware.org"),
         ("expect", ["=> ", "/ # ", "192.168.0.1"], 0),
         ("sendline", "ping -c 1 lavasoftware.org"),
@@ -287,5 +300,114 @@ def test_run_script(monkeypatch):
     assert exc.match(  # nosec - assert is part of the test process.
         "network setup failed"
     )
+    assert action.logger.data == []  # nosec - assert is part of the test process.
+    assert test_connection.data == []  # nosec - assert is part of the test process.
+
+
+def test_run_script_echo_discard(monkeypatch):
+    monkeypatch.setattr(time, "time", Timing())
+    action = TestInteractiveAction()
+    action.parameters = {"stage": 0}
+    action.logger = Logger(
+        [
+            ("info", "Sending nothing, waiting"),
+            ("debug", "Waiting for '=> ', '/ # '"),
+            ("debug", "Matched a prompt: '=> '"),
+            (
+                "results",
+                {
+                    "definition": "0_setup",
+                    "case": "wait prompt",
+                    "result": "pass",
+                    "duration": "1.00",
+                },
+            ),
+            ("info", "Sending 'echo 'hello''"),
+            ("debug", "Ignoring echo: 'hello'"),
+            ("debug", "Waiting for '=> ', '/ # '"),
+            ("debug", "Matched a prompt: '=> '"),
+            (
+                "results",
+                {
+                    "definition": "0_setup",
+                    "case": "echo",
+                    "result": "pass",
+                    "duration": "1.00",
+                },
+            ),
+        ]
+    )
+    action.validate()
+
+    conn_data = [
+        ("expect", ["=> ", "/ # "], 0),
+        ("sendline", "echo 'hello'"),
+        ("readline", "hello"),
+        ("expect", ["=> ", "/ # "], 0),
+    ]
+    script = {
+        "prompts": ["=> ", "/ # "],
+        "name": "setup",
+        "echo": "discard",
+        "script": [
+            {"command": None, "name": "wait prompt"},
+            {"command": "echo 'hello'", "name": "echo"},
+        ],
+    }
+    test_connection = Connection(conn_data)
+    substitutions = {}
+    action.run_script(test_connection, script, substitutions)
+    assert action.logger.data == []  # nosec - assert is part of the test process.
+    assert test_connection.data == []  # nosec - assert is part of the test process.
+
+
+def test_run_script_raise_test_error_unnamed_command(monkeypatch):
+    monkeypatch.setattr(time, "time", Timing())
+    action = TestInteractiveAction()
+    action.parameters = {"stage": 0}
+    action.logger = Logger(
+        [
+            ("info", "Sending nothing, waiting"),
+            ("debug", "Waiting for '=> ', '/ # '"),
+            ("debug", "Matched a prompt: '=> '"),
+            (
+                "results",
+                {
+                    "definition": "0_setup",
+                    "case": "wait prompt",
+                    "result": "pass",
+                    "duration": "1.00",
+                },
+            ),
+            ("info", "Sending 'echo 'hello''"),
+            ("debug", "Ignoring echo: 'hello'"),
+            ("debug", "Waiting for '=> ', '/ # ', 'world'"),
+        ]
+    )
+    action.validate()
+
+    conn_data = [
+        ("expect", ["=> ", "/ # "], 0),
+        ("sendline", "echo 'hello'"),
+        ("readline", "hello"),
+        ("expect", ["world"], 0),
+    ]
+    script = {
+        "prompts": ["=> ", "/ # "],
+        "name": "setup",
+        "echo": "discard",
+        "script": [
+            {"command": None, "name": "wait prompt"},
+            {"command": "echo 'hello'", "failures": [{"message": "world"}]},
+            {"command": "dhcp", "name": "dhcp"},
+        ],
+    }
+    test_connection = Connection(conn_data)
+    substitutions = {}
+    with pytest.raises(TestError) as exc:
+        action.run_script(test_connection, script, substitutions)
+    assert exc.match(
+        "Failed to run command 'echo 'hello'"
+    )  # nosec - assert is part of the test process.
     assert action.logger.data == []  # nosec - assert is part of the test process.
     assert test_connection.data == []  # nosec - assert is part of the test process.

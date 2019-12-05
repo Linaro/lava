@@ -158,6 +158,7 @@ class TestInteractiveAction(TestAction):
 
                 failures = [p["message"] for p in cmd.get("failures", [])]
                 successes = [p["message"] for p in cmd.get("successes", [])]
+
                 expect = prompts + failures + successes
                 self.logger.debug("Waiting for '%s'", "', '".join(expect))
                 ret = test_connection.expect(expect, timeout=self.timeout.duration)
@@ -181,22 +182,25 @@ class TestInteractiveAction(TestAction):
                             self.raise_exception(
                                 failure["exception"], failure.get("error", match)
                             )
+                        # Wait for the prompt to send the next command
+                        test_connection.expect(prompts)
                     else:
-                        failure = cmd["successes"][ret - len(prompts) - len(failures)]
                         self.logger.info("Matched a success: '%s'", match)
                         # Wait for the prompt to send the next command
-                        # Except for the last loop iteration
-                        if index + 1 < len(cmds):
-                            test_connection.expect(prompts)
+                        test_connection.expect(prompts)
                         result["result"] = "pass"
             except pexpect.TIMEOUT:
                 raise LAVATimeoutError("interactive connection timed out")
             except pexpect.EOF:
                 raise InfrastructureError("interactive connection dropped")
             finally:
+                # If the command is named, record the result
                 if "name" in cmd:
                     result["duration"] = "%.02f" % (time.time() - start)
                     self.logger.results(result)
+                # If the command is not named, a failure is fatal
+                elif result["result"] == "fail":
+                    raise TestError("Failed to run command '%s'" % command)
 
     def raise_exception(self, exc_name, exc_message):
         if exc_name == "InfrastructureError":
