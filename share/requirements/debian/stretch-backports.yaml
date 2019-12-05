@@ -16,6 +16,8 @@ lava-server:
     name: python3-django-filters
   djangorestframework-filters:
     name: python3-djangorestframework-filters
+  djangorestframework-extensions:
+    name: python3-djangorestframework-extensions
   django-tables2:
     version: ">=1.21.2"
     name: python3-django-tables2

@@ -21,6 +21,8 @@ lava-server:
     name: python3-djangorestframework
   djangorestframework-filters:
     name: python3-djangorestframework-filters
+  djangorestframework-extensions:
+    name: python3-djangorestframework-extensions
   docutils:
     version: ">=0.6"
     name: python3-docutils
