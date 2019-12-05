@@ -87,7 +87,9 @@ class TestCaseSerializer(serializers.ModelSerializer):
 
 
 class DeviceTypeSerializer(serializers.ModelSerializer):
-    health_denominator = serializers.CharField(source="get_health_denominator_display")
+    health_denominator = serializers.ReadOnlyField(
+        source="get_health_denominator_display"
+    )
 
     class Meta:
         model = DeviceType
