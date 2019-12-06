@@ -61,9 +61,9 @@ class TestShell(LavaTest):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if ("definition" in parameters) or ("definitions" in parameters):
+        if "definitions" in parameters:
             return True, "accepted"
-        return False, '"definition" or "definitions" not in parameters'
+        return False, '"definitions" not in parameters'
 
     @classmethod
     def needs_deployment_data(cls):
