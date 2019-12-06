@@ -628,12 +628,19 @@ class Action:
         :param: cwd - the current working directory for this command
         :return: return code of the command
         """
-        # Build the command list (adding 'nice' at the front)
+        # Build the command list (adding 'timeout' at the front)
         if isinstance(command_list, str):
             command_list = shlex.split(command_list)
         elif not isinstance(command_list, list):
             raise LAVABug("commands to run_cmd need to be a list or a string")
-        command_list = [str(s) for s in command_list]
+
+        command_list = [
+            "timeout",
+            "--preserve-status",
+            "--kill-after=10",
+            "-v",
+            str(self.timeout.duration),
+        ] + [str(s) for s in command_list]
 
         # Default to self.command_exception
         command_exception = (
@@ -641,20 +648,20 @@ class Action:
         )
 
         # Build the error message
-        log_error_msg = "Unable to run 'nice' '%s'" % "' '".join(command_list)
+        log_error_msg = "Unable to run '%s'" % "' '".join(command_list)
         if error_msg is None:
             error_msg = log_error_msg
 
         # Start the subprocess
-        self.logger.debug("Calling: 'nice' '%s'", "' '".join(command_list))
+        self.logger.debug("Calling: '%s'", "' '".join(command_list))
         start = time.time()
 
         cmd_logger = CommandLogger(self.logger)
         ret = None
         try:
             proc = pexpect.spawn(
-                "nice",
-                command_list,
+                command_list[0],
+                command_list[1:],
                 cwd=cwd,
                 encoding="utf-8",
                 codec_errors="replace",
@@ -682,7 +689,7 @@ class Action:
 
         # Check the return value
         if ret != 0 and not allow_fail:
-            self.logger.error("Unable to run 'nice' '%s'", command_list)
+            self.logger.error(log_error_msg)
             raise command_exception(error_msg)
         return ret
 
