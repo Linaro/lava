@@ -311,7 +311,7 @@ class DeviceType(RestrictedObject):
     HEALTH_PER_HOUR = 0
     HEALTH_PER_JOB = 1
     HEALTH_DENOMINATOR = ((HEALTH_PER_HOUR, "hours"), (HEALTH_PER_JOB, "jobs"))
-
+    HEALTH_DENOMINATOR_REVERSE = {"hours": HEALTH_PER_HOUR, "jobs": HEALTH_PER_JOB}
     health_denominator = models.IntegerField(
         choices=HEALTH_DENOMINATOR,
         default=HEALTH_PER_HOUR,
@@ -364,6 +364,7 @@ class Worker(models.Model):
 
     STATE_ONLINE, STATE_OFFLINE = range(2)
     STATE_CHOICES = ((STATE_ONLINE, "Online"), (STATE_OFFLINE, "Offline"))
+    STATE_REVERSE = {"Online": STATE_ONLINE, "Offline": STATE_OFFLINE}
     state = models.IntegerField(
         choices=STATE_CHOICES, default=STATE_OFFLINE, editable=False
     )
@@ -374,6 +375,11 @@ class Worker(models.Model):
         (HEALTH_MAINTENANCE, "Maintenance"),
         (HEALTH_RETIRED, "Retired"),
     )
+    HEALTH_REVERSE = {
+        "Active": HEALTH_ACTIVE,
+        "Maintenance": HEALTH_MAINTENANCE,
+        "Retired": HEALTH_RETIRED,
+    }
     health = models.IntegerField(choices=HEALTH_CHOICES, default=HEALTH_ACTIVE)
 
     description = models.TextField(
@@ -550,6 +556,11 @@ class Device(RestrictedObject):
         (STATE_RESERVED, "Reserved"),
         (STATE_RUNNING, "Running"),
     )
+    STATE_REVERSE = {
+        "Idle": STATE_IDLE,
+        "Reserved": STATE_RESERVED,
+        "Running": STATE_RUNNING,
+    }
     state = models.IntegerField(
         choices=STATE_CHOICES, default=STATE_IDLE, editable=False
     )
