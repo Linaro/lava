@@ -190,10 +190,12 @@ class TestShellAction(TestAction):
         self.pattern = PatternFixup(testdef=None, count=0)
 
     def validate(self):
-        if "definitions" in self.parameters:
-            for testdef in self.parameters["definitions"]:
-                if "repository" not in testdef:
-                    self.errors = "Repository missing from test definition"
+        if "definitions" not in self.parameters:
+            raise JobError("Missing test 'definitions'")
+
+        for testdef in self.parameters["definitions"]:
+            if "repository" not in testdef:
+                self.errors = "Repository missing from test definition"
         self._reset_patterns()
         super().validate()
 
