@@ -193,22 +193,26 @@ class MultinodeTestAction(TestShellAction):
 
         def _on_send(self, *args):
             self.logger.debug("%s lava-send" % MultinodeProtocol.name)
-            arg_length = len(args)
-            if arg_length == 1:
+            if len(args) == 1:
                 msg = {"request": "lava_send", "messageID": args[0], "message": {}}
             else:
+                self.logger.debug(args)
                 message_id = args[0]
-                remainder = args[1:arg_length]
+                remainder = args[1:]
                 self.logger.debug("%d key value pair(s) to be sent." % len(remainder))
                 data = {}
+                last_key = None
                 for message in remainder:
-                    detail = str.split(message, "=")
+                    detail = message.split("=")
                     if len(detail) == 2:
                         data[detail[0]] = detail[1]
+                        last_key = detail[0]
+                    elif len(detail) == 1 and last_key is not None:
+                        data[last_key] = data[last_key] + " " + detail[0]
                 msg = {"request": "lava_send", "messageID": message_id, "message": data}
 
             msg.update(self.base_message)
-            self.logger.debug(str("Handling signal <LAVA_SEND %s>" % json.dumps(msg)))
+            self.logger.debug("Handling signal <LAVA_SEND %s>", json.dumps(msg))
             reply = self.protocol(msg)
             if reply == "nack":
                 # FIXME: does this deserve an automatic retry? Does it actually happen?

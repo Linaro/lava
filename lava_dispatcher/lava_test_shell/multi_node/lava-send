@@ -14,4 +14,6 @@ MESSAGE_NEED_ACK=
 
 . $LAVA_TEST_BIN/lava-multi-node.lib
 
-lava_multi_node_send $1 "$(_get_key_value_pattern $@)"
+ID=$1
+shift
+lava_multi_node_send $ID "$@"
