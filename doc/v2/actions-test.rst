@@ -336,19 +336,16 @@ bootloader.
 
 The workflow of the interactive test action is:
 
-* send the ``command`` to the :term:`DUT`
+* send the ``command`` to the :term:`DUT`, unless empty
 * if ``echo: discard`` is specified, discard next output line (assumed to be
   an echo of the command)
 * wait for the ``prompts``, ``successes`` or ``failures``
 * if a ``name`` is defined, log the result for this command (as soon as a prompt or a message is matched)
 * if a ``successes`` or ``failures`` was matched, wait for the ``prompts``
 
-.. note:: If the ``command`` is None ("command:" in yaml), the test action will
-  wait for the prompts and/or messages without sending anything to the device.
-
 .. note:: The interactive test action expects the prompt to be already matched
   before it starts. If this is not the case, then wait for the prompt by
-  adding an empty ``command`` directive as described above.
+  adding an empty ``command`` directive as described below.
 
 A u-boot interactive test might look like:
 
@@ -381,54 +378,73 @@ The name of the :ref:`test suite <results_test_suite>`.
 prompts
 =======
 
-The list of possible prompts for the interactive session.
+The list of possible prompts for the interactive session. In many cases,
+there is just one prompt, but if shell has different prompts for different
+states, it can be accommodated. (Prompts can also include regexps, as any
+other match strings).
 
 echo
 ====
 
-If set to ``discard``, discard next output line (assumed to be an echo of the command).
-This option should be set when interacting with shell (like u-boot shell) that
-will echo the command.
+If set to ``discard``, after each sent ``command`` of a ``script``, discard
+the next output line (assumed to be an echo of the command). This option
+should be set when interacting with shell (like u-boot shell) that will echo
+the command, to avoid false positive matches. Note that this options applies
+to every ``command`` in the script. If you need different value of this
+option for different commands, you would need to group them in different
+``script``'s.
 
 script
 ======
 
 The list of commands to send and what kind of output to expect:
 
-* ``name``: if present, log the result of this command under the given name
-* ``command``: the command to send to device
-* ``failures`` and ``successes``: if present, check the device output for the given patterns
+* ``name``: If present, log the result (pass/fail) of this command
+  under the given name (as a testcase). If not present, and the command
+  fails, the entire test will fail (with :ref:`TestError <test_error_exception>`).
+* ``command``: The command (string) to send to device, followed by newline.
+  The command can use variables that will be substituted with live data,
+  like ``{SERVER_IP}``. If value is empty (``command:`` in YAML), nothing
+  is sent, but output matching (prompts/successes/failures) will be
+  performed as usual. (Note that empty ``command:`` is different from empty
+  string ``command: ""``. In the latter case, just a newline will be sent
+  to device.)
+* ``failures`` and ``successes``: Each optional. If present, check the
+  device output for the given patterns.
 
 ``successes`` should be a list of dictionaries with just one key:
 
-* ``message``: the string (or regexp) to match
-
-.. note:: If ``successes`` is defined, but LAVA matches one of the prompts
-  instead, an error will be recorded (following the logic that the lack
-  of expected success output is an error). However, if ``successes`` is
-  not defined, then matching a prompt will generate a passing result
-  (this is useful for interactive commands which don't generate any
-  output on success).
+* ``message``: The string (or regexp) to match. Substring match is
+  performed, so care should be taken to reliably encode the match pattern.
+  (E.g. ``message: 4`` would match "4" appearing anywhere in the output,
+  e.g. "14" or "41").
 
 ``failures`` should be a list of dictionaries with:
 
-* ``message``: the string (or regexp) to match
-* ``exception`` (optional): If the message indicates a fatal problem, an exception can be raised:
-
-  * :ref:`InfrastructureError <infrastructure_error_exception>`
-  * :ref:`JobError <job_error_exception>`
-  * :ref:`TestError <test_error_exception>`
+* ``message``: The string (or regexp) to match. Substring match is performed.
+* ``exception`` (optional): If the message indicates a fatal problem,
+  an exception can be raised, one of:
+  :ref:`InfrastructureError <infrastructure_error_exception>`,
+  :ref:`JobError <job_error_exception>`,
+  :ref:`TestError <test_error_exception>`. If not present, the error
+  is not fatal and will be recorded just as a failed testcase in test
+  results. (If this is a named command; as mentioned above, failure of
+  unnamed ("not a testcase") command leads to implicit TestError).
 
 * ``error``: if defined, the exception message which will appear in the job log
 
-.. warning:: By default, an error is *not* fatal.
+If ``successes`` is defined, but LAVA matches one of the prompts
+instead, an error will be recorded (following the logic that the lack
+of expected success output is an error). This means that in many cases
+you don't need to specify ``failures`` - any output but the successes
+will be recorded as an error.
 
-.. warning:: Without a ``name`` a command is considered essential: if the
-  command fails, a TestError is raised.
+However, if ``successes`` is not defined, then matching a prompt will
+generate a passing result (this is useful for interactive commands
+which don't generate any output on success; of course, in this case
+you would need to specify ``failures`` to catch them).
 
-.. note:: Whenever needed, the command can use variables that will be
-  substituted with live data like ``{SERVER_IP}``.
-
+.. seealso:: :ref:`writing_tests_interactive`
 
 .. index:: test action monitors
 

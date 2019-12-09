@@ -5,6 +5,8 @@
 Writing an interactive test action
 ##################################
 
+.. seealso:: :ref:`Interactive test action reference <interactive_test_action>`
+
 Parsing test output will always involve some amount of pattern
 matching. The test action creates a stream of output, (typically
 ASCII), and this needs to be turned into test results either using
@@ -105,8 +107,8 @@ Combining different test actions
 
 In some situations, there can be a need to combine two or more
 different types of test action in a single test job. For example,
-a POSIX overlay test action to do initial setup, then a monitors or
-interactive test action to parse the output of a specific task.
+a POSIX overlay test action to do initial setup, then a ``monitors`` or
+``interactive`` test action to parse the output of a specific task.
 
 It is very important to understand that Lava-Test Test Definition 1.0
 **cannot** occur more than once in a single test job once any other
