@@ -339,9 +339,9 @@ The workflow of the interactive test action is:
 * send the ``command`` to the :term:`DUT`
 * if ``echo: discard`` is specified, discard next output line (assumed to be
   an echo of the command)
-* wait for the ``prompts`` or the ``message``'s
+* wait for the ``prompts``, ``successes`` or ``failures``
 * if a ``name`` is defined, log the result for this command (as soon as a prompt or a message is matched)
-* if a ``message`` was matched and this is not the last command, wait for the ``prompts``
+* if a ``successes`` or ``failures`` was matched, wait for the ``prompts``
 
 .. note:: If the ``command`` is None ("command:" in yaml), the test action will
   wait for the prompts and/or messages without sending anything to the device.
@@ -373,7 +373,27 @@ A u-boot interactive test might look like:
         - name: wait for the prompt
           command:
 
-A script is a list of commands to send:
+name
+====
+
+The name of the :ref:`test suite <results_test_suite>`.
+
+prompts
+=======
+
+The list of possible prompts for the interactive session.
+
+echo
+====
+
+If set to ``discard``, discard next output line (assumed to be an echo of the command).
+This option should be set when interacting with shell (like u-boot shell) that
+will echo the command.
+
+script
+======
+
+The list of commands to send and what kind of output to expect:
 
 * ``name``: if present, log the result of this command under the given name
 * ``command``: the command to send to device
@@ -403,8 +423,8 @@ A script is a list of commands to send:
 
 .. warning:: By default, an error is *not* fatal.
 
-.. note:: Without a ``name`` the result of a command will not be recorded in the
-  test job results.
+.. warning:: Without a ``name`` a command is considered essential: if the
+  command fails, a TestError is raised.
 
 .. note:: Whenever needed, the command can use variables that will be
   substituted with live data like ``{SERVER_IP}``.
