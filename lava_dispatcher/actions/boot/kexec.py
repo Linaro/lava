@@ -21,10 +21,9 @@
 
 from lava_dispatcher.action import Pipeline, Action
 from lava_dispatcher.logical import Boot
-from lava_dispatcher.actions.boot import BootAction
+from lava_dispatcher.actions.boot import AutoLoginAction, BootAction, OverlayUnpack
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.shell import ExpectShellSession
-from lava_dispatcher.actions.boot import AutoLoginAction
 
 
 class BootKExec(Boot):
@@ -68,6 +67,8 @@ class BootKexecAction(BootAction):
         # the configuration does not contain 'auto_login'
         self.internal_pipeline.add_action(AutoLoginAction())
         self.internal_pipeline.add_action(ExpectShellSession())
+        if "transfer_overlay" in parameters:
+            self.internal_pipeline.add_action(OverlayUnpack())
         self.internal_pipeline.add_action(ExportDeviceEnvironment())
 
 

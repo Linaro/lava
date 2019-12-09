@@ -39,5 +39,6 @@ def schema():
         Optional("initrd"): str,
         Optional("options"): [str],
         Optional("kernel-config"): str,
+        Optional("transfer_overlay"): boot.transfer_overlay(),
     }
     return {**boot.schema(), **base}
