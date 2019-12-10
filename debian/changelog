@@ -1,3 +1,109 @@
+lava (2019.12-1) unstable; urgency=medium
+
+  * LAVA Software 2019.11 release
+    e9cef8587 WIP: fix the case where multiple deploy stages are used
+    c571a4b67 apply overlay: fix bug when install_modules is False
+    698015a19 Adding character delay for TC2 devices
+    0343fcca0 Vemsd umount cleanup
+    a2914d3b3 dispatcher: remove deprecated boot['type']
+    85b6c2eec dispatcher: remove unittest dependency on in.tftpd
+    2129129d2 Add support for sha512sum
+    3ea643aab CI: allow to use the pylint script on some files
+    e6a4f0a03 lava-dispatcher: remove unused module
+    e765a67b5 lava-server manage: fix crash in Django 2
+    ede14218c Fix crash with recent django version
+    667bbdce6 monitor: fix accept check and also wait for eof
+    302bc1989 CI: add unittest for monitor test action
+    f61656031 dump_pipeline: use python3 as lava is python3 only
+    1630776d4 dump_pipeline: improve this dev helper
+    60ccde7bb lava-schema: render device template before validating
+    4469e1b03 mediatek-8173: add no-flash-boot
+    35bcba183 deploy.apply_overlay: make every timeout an InfraError
+    0ca5963c2 coordinator: fix pylint warnings
+    4720ae190 doc: mention the docker boot action
+    eeeb371eb doc: fix lxc job example
+    b35540e91 doc: fix rest syntax
+    0cb250f93 schema: improve device schema
+    e77ae4da8 device schema: the environment is a dictionary
+    abf983db2 lava_dispatcher/actions/*/apply_overlay.py: Not remove modules when extract
+    dc6bb128b lava_dispatcher/utils/network.py: dispatcher_ip support ip alias
+    505affd68 lava_scheduler_app/tests/device-types: Add nfs to deploy methods in fastboot
+    dee0832fc lava_dispatcher: Add ability to share NFS information to LXC
+    76842d004 Create a release script
+    30382eae2 lava-master: fix crash when not using encryption
+    8fbb3d0ff CI: activate more pylint checkers
+    ea9a7036a Remove support for BZR repository
+    72bdf0206 CI: fix docker build dependencies
+    21cb75c0f nfsroot support added to LS2088aRDB device type file
+    a60e941d9 doc: Grammar fixes and minor clarifications.
+    d650283dc doc: actions-test: Improve intro to the types of test actions.
+    6b1f09cb1 doc: actions-test: interactive: Clarify/explicitisize description
+    003ebf335 CI: no need to skip tests for rpcinfo usage
+    78d6116b3 doc: fix some example snipets
+    dfc674505 Allow to use KissCache automatically per dispatcher
+    4d3a348ca doc: document the proxy settings
+    b7ba84939 Remove trailing white spaces
+    14fef6fd8 CI: test dispatcher and server on debian bullseye
+    0e4274a13 Partially revert "dispatcher: remove deprecated boot['type']"
+    252e39a74 lava_common: remove unused pylint annotation
+    48ecb526e doc: remove unused pylint annotations
+    4cdcdde43 lava_dispatcher: remove unused pylint annotations
+    a0b5a44af lava_scheduler_app : remove unused pylint annotations
+    8aee01d68 lava_results_app: remove unused pylint annotations
+    afe30886d lava_server: remove unused pylint annotations
+    f03f1cd83 remove unused pylint annotations
+    deeee685e lava_common.utils: fix crashes with unknown packages
+    ca494c824 Store the version in the lava_common module
+    77f86542e Add dependency: python3-pytest-mock
+    5a402addc device-types: add orange pi 3
+    62e5601db requirements: fix name of pytest-mock entries
+    c9b3eaabd Adding odroid-n2 device-type jinja2
+    ae8bc646b CI: remove duplicated variable
+    be1e21be3 CI: check-deps fix crash when a dependency is missing
+    28a554700 Add support for setting test shell variables in the job definition
+    ef4a05d98 lava-server manage devices fix crash after auth changes
+    5412922cb doc: change the recommendation from stretch to buster
+    5957c2ce2 scheduling: remove CPU intensive operation from the loop
+    9548f043d scheduler: improve sql efficiency
+    e5f86aa2c Improve jinja2 rendering speed
+    2f0e4d8eb lava-master: improve speed by removing yaml dump and loads
+    07a931e5e schema: keep the schema in memory
+    f5b8d1e4b compat: use yaml C dumper/loader when available
+    a01d561f5 Print a warning when using the dangerous yaml.Loader
+    ea5814143 share/release.py fix crashes and improve usage
+    6aaac2c58 interactive: Add script-level "echo: discard" option
+    4c001c2d6 lava_dispatcher: move log module to lava_common
+    6def3f915 Drop duplicates TestData and make it one-to-one field.
+    3c2f3fbb1 doc: interactive: Describe "echo: discard" option
+    b7c1a68b3 job schema: improve error reporting
+    fb0ea369f lava-common: add dependency on PyYAML
+    8e9051c18 debian/tests/control: add simple test for lava-common
+    43e7c8bad docker: regenerate Dockerfiles
+    8a518dac7 daemons: print the lava version when starting daemons
+    43bc7b825 boot.docker: allow to use capabilities
+    772569c9e Expose rest of results app to REST API.
+    9297949cb Fix copy&paste error
+    a5f842826 Remove dead code
+    898e09350 base-uboot: improve indentation
+    6ae03b1dc BootloaderCommandOverlay: print the commands nicely
+    82746b055 Drop u-boot commands if the placeholder is not replaced
+    a00aca1b7 Test lavfa_dispatcher.utils.strings
+    599f90b3a ipxe: fix lava_mac subtitution
+    b764fa5f2 debian-dev-build: don't build under git
+    f1e4e6644 Revert "Revert "device-types: base: detect TFTP ERROR: File not found""
+    0e1344bbe debian-dev-build: include Debian release number in package versions
+    adea25c69 interactive: Use enumerate() instead of complex zip(range(len()))
+    59ba084af CI: simplify debian build scripts
+    b5884af1d Expose rest of results app to REST API.
+    84aae5ce6 Use display names for choice fields when querying the rest API.
+    f850f618f multinode: Add a workaround to enable monitors/interactive actions
+    42e7e6f5b interactive test: make the test consistent
+    f4c1a184d kexec: allow to use transfer_overlay
+    3cc5a87af doc: interactive: Write down a complete reference for current behavior
+    22b216c8e dependencies: remove xnbd-servers
+
+ -- Remi Duraffort <remi.duraffort@linaro.org>  Tue, 10 Dec 2019 16:19:59 +0100
+
 lava (2019.11-1) unstable; urgency=medium
 
   * LAVA Software 2019.11 release
