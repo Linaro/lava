@@ -153,9 +153,6 @@ lava-dispatcher:
   docker:
     name: docker.io
     unittests: true
-  xnbd-server:
-    name: xnbd-server
-    unittests: true
   telnet:
     name: telnet
     unittests: true
