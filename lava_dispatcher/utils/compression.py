@@ -89,15 +89,9 @@ def decompress_file(infile, compression):
             )
 
 
-def untar_file(infile, outdir, member=None, outfile=None):
+def untar_file(infile, outdir):
     try:
         with tarfile.open(infile, encoding="utf-8") as tar:
-            if member:
-                file_obj = tar.extractfile(member)
-                with open(outfile, "wb") as target:
-                    target.write(file_obj.read())
-                file_obj.close()
-            else:
-                tar.extractall(outdir)
+            tar.extractall(outdir)
     except tarfile.TarError as exc:
         raise JobError("Unable to unpack %s: %s" % (infile, str(exc)))
