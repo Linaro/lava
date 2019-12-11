@@ -18,6 +18,7 @@ Vcs-Browser: https://git.lavasoftware.org/lava/pkg-lava-debian
 Package: lava-dispatcher
 Architecture: all
 Depends: file, systemd-sysv, python3-setuptools,
+ lava-dispatcher-host (= ${binary:Version}),
  lava-common (= ${binary:Version}), tar (>= 1.27),
  ${python3:Depends}, ${misc:Depends}
 Multi-Arch: foreign
@@ -40,6 +41,27 @@ Description: Linaro Automated Validation Architecture dispatcher
  .
  A range of devices are supported for ARM and
  x86 architectures.
+
+
+Package: lava-dispatcher-host
+Architecture: all
+Depends: lava-common (= ${binary:Version}),
+         ${python3:Depends},
+         ${misc:Depends},
+Multi-Arch: foreign
+Suggests: udev
+Description: LAVA dispatcher host tools
+ LAVA is a continuous integration system for deploying operating
+ systems onto physical and virtual hardware for running tests.
+ Tests can be simple boot testing, bootloader testing and system
+ level testing, although extra hardware may be required for some
+ system tests. Results are tracked over time and data can be
+ exported for further analysis.
+ .
+ This package provides tools needed on a host system to be used with
+ container-related jobs. This package must be installed on a host
+ system when lava-dispatcher runs inside a container on that host.
+
 
 Package: lava-server
 Architecture: all

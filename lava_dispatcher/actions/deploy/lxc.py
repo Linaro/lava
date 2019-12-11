@@ -20,7 +20,6 @@
 
 import os
 
-from lava_common.compat import yaml_safe_dump
 from lava_common.exceptions import LAVABug
 from lava_common.utils import debian_package_version
 from lava_dispatcher.action import JobError, Pipeline
@@ -36,10 +35,9 @@ from lava_common.constants import (
     LXC_PATH,
     LXC_TEMPLATE_WITH_MIRROR,
     LXC_DEFAULT_PACKAGES,
-    UDEV_RULES_DIR,
 )
-from lava_dispatcher.utils.udev import lxc_udev_rule, lxc_udev_rule_parent
 from lava_dispatcher.utils.udev import allow_fs_label
+from lava_dispatcher_host import add_device_container_mapping
 from lava_dispatcher.utils.filesystem import lxc_path
 
 
@@ -281,12 +279,6 @@ class LxcCreateUdevRuleAction(DeployAction):
             return connection
 
         device_info = self.job.device.get("device_info", [])
-        device_info_file = os.path.join(self.mkdtemp(), "device-info.yaml")
-        with open(device_info_file, "w") as device_info_obj:
-            yaml_safe_dump(device_info, device_info_obj)
-        self.logger.debug(
-            "device info file '%s' created with:\n %s", device_info_file, device_info
-        )
         logging_url = master_cert = slave_cert = socks_proxy = ipv6 = None
         job_id = self.job.job_id
 
@@ -297,56 +289,31 @@ class LxcCreateUdevRuleAction(DeployAction):
             socks_proxy = self.logger.handler.socks_proxy
             ipv6 = self.logger.handler.ipv6
             job_id = self.logger.handler.job_id
-        # The rules file will be created in job's temporary directory with
-        # the name something like '100-lava-lxc-hikey-2808.rules'
-        # where, 100 is just an arbitrary number which specifies loading
-        # priority for udevd
+
+        logging = {
+            "logging_url": logging_url,
+            "master_cert": master_cert,
+            "slave_cert": slave_cert,
+            "socks_proxy": socks_proxy,
+            "ipv6": ipv6,
+            "job_id": job_id,
+        }
+
         job_prefix = self.job.parameters["dispatcher"].get("prefix", "")
-        rules_file_name = "100-lava-" + job_prefix + lxc_name + ".rules"
-        rules_file = os.path.join(self.mkdtemp(), rules_file_name)
-        lines = []
         for device in device_info:
             data = {
                 "serial_number": str(device.get("board_id", "")),
                 "vendor_id": device.get("usb_vendor_id"),
                 "product_id": device.get("usb_product_id"),
                 "fs_label": device.get("fs_label"),
-                "lxc_name": lxc_name,
-                "device_info_file": device_info_file,
-                "logging_url": logging_url,
-                "master_cert": master_cert,
-                "slave_cert": slave_cert,
-                "socks_proxy": socks_proxy,
-                "ipv6": ipv6,
-                "job_id": job_id,
             }
-            str_lxc_udev_rule = lxc_udev_rule(data)
-            if device.get("parent", False):
-                str_lxc_udev_rule += lxc_udev_rule_parent(data)
-            lines.append(str_lxc_udev_rule)
-        if lines:
-            self.logger.info("udev rules file '%s' created", rules_file)
-        with open(rules_file, "w") as f_obj:
-            f_obj.write("\n".join(lines))
-        for line in lines:
-            self.logger.debug(line)
-        # Create symlink to rules file inside UDEV_RULES_DIR
-        # See https://projects.linaro.org/browse/LAVA-1227
-        os.symlink(rules_file, os.path.join(UDEV_RULES_DIR, rules_file_name))
-        self.logger.info(
-            "'%s' symlinked to '%s'",
-            os.path.join(UDEV_RULES_DIR, rules_file_name),
-            rules_file,
-        )
-
-        # Reload udev rules.
-        reload_cmd = ["udevadm", "control", "--reload-rules"]
-        # FIXME: if reload fails, that is a LAVABug.
-        cmd_out = self.run_command(reload_cmd, allow_fail=True, allow_silent=True)
-        if cmd_out is False:
-            self.logger.debug("Reloading udev rules failed")
-        else:
-            self.logger.debug("udev rules reloaded.")
+            add_device_container_mapping(
+                job_prefix + job_id,
+                data,
+                lxc_name,
+                container_type="lxc",
+                logging_info=logging,
+            )
         return connection
 
 

@@ -11,6 +11,11 @@ COPY $pkg_common /tmp/common.deb
 RUN dpkg -i /tmp/common.deb && \
     rm -f /tmp/common.deb
 
+ARG pkg_dispatcher_host=lava-dispatcher-host.deb
+COPY $pkg_dispatcher_host /tmp/lava-dispatcher-host.deb
+RUN dpkg -i /tmp/lava-dispatcher-host.deb && \
+    rm -f /tmp/lava-dispatcher-host.deb
+
 ARG pkg_dispatcher=lava-dispatcher.deb
 COPY $pkg_dispatcher /tmp/dispatcher.deb
 RUN dpkg -i /tmp/dispatcher.deb && \

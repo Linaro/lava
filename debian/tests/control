@@ -12,3 +12,6 @@ Test-Command: python3 -c 'from lava_common import *'
 Depends: lava-common
 Features: test-name=lava-common
 Restrictions: allow-stderr, superficial
+
+Tests: lava-dispatcher-host
+Depends: lava-dispatcher-host

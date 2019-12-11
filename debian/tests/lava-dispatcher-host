@@ -1,0 +1,5 @@
+#!/bin/sh
+
+set -eu
+
+test -f /etc/udev/rules.d/99-lava-dispatcher-host.rules
