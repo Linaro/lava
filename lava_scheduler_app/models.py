@@ -1011,8 +1011,8 @@ def _check_submit_to_devices(device_list, user):
     allow = list(device_list.accessible_by_user(user, Device.SUBMIT_PERMISSION))
     if not allow:
         raise DevicesUnavailableException(
-            "No devices from [%s] pool are currently available to user %s"
-            % (device_list.values_list("hostname", flat=True), user)
+            "No devices from %s pool are currently available to user %s"
+            % (list(device_list.values_list("hostname", flat=True)), user)
         )
     return allow
 
