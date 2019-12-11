@@ -398,26 +398,23 @@ class DownloadHandler(Action):
         else:
             archive = self.parameters[self.key].get("archive")
         if archive:
-            origin = self.fname
-            target_fname = os.path.basename(origin).rstrip("." + archive)
-            target_fname_path = os.path.join(os.path.dirname(origin), target_fname)
-            if os.path.exists(target_fname_path):
-                os.remove(target_fname_path)
+            if archive != "tar":
+                raise JobError("Unknown archive format %r" % archive)
 
-            if archive == "tar":
-                untar_file(origin, None, member=target_fname, outfile=target_fname_path)
-                self.set_namespace_data(
-                    action="download-action",
-                    label=self.key,
-                    key="file",
-                    value=target_fname_path,
-                )
-                self.set_namespace_data(
-                    action="download-action",
-                    label="file",
-                    key=self.key,
-                    value=target_fname,
-                )
+            target_fname_path = os.path.join(os.path.dirname(self.fname), self.key)
+            untar_file(self.fname, target_fname_path)
+            self.set_namespace_data(
+                action="download-action",
+                label=self.key,
+                key="file",
+                value=target_fname_path,
+            )
+            self.set_namespace_data(
+                action="download-action",
+                label="file",
+                key=self.key,
+                value=target_fname_path,
+            )
             self.logger.debug("Using %s archive" % archive)
 
         if md5sum is not None:
