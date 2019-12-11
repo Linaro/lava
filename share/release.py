@@ -49,7 +49,7 @@ COLORS = {
 ###########
 # Helpers #
 ###########
-def run(cmd, options, env=None):
+def run(cmd, options, env=None, shell=False):
     print(
         "%s[%02d] $ %s%s%s"
         % (COLORS["blue"], options.count, COLORS["white"], cmd, COLORS["reset"])
@@ -65,7 +65,10 @@ def run(cmd, options, env=None):
     elif not options.dry_run:
         if env is not None:
             env = {**os.environ, **env}
-        ret = subprocess.call(shlex.split(cmd), env=env)
+        if shell:
+            ret = subprocess.call(cmd, env=env, shell=True)
+        else:
+            ret = subprocess.call(shlex.split(cmd), env=env)
     options.count += 1
     print("")
     if ret != 0:
@@ -75,16 +78,17 @@ def run(cmd, options, env=None):
 def wait_pipeline(options, commit):
     # Wait for the pipeline to finish
     while True:
-        ret = requests.get(GITLAB_API + "/repository/commits/" + commit)
-        status = ret.json().get("last_pipeline", {}).get("status", "")
-        if status == "success":
-            break
-        elif status == "failed":
-            raise Exception("The pipeline failed")
-        elif status == "canceled":
-            raise Exception("The pipeline was canceled")
-        elif status == "skipped":
-            raise Exception("The pipeline was skipped")
+        with contextlib.suppress(AttributeError):
+            ret = requests.get(GITLAB_API + "/repository/commits/" + commit)
+            status = ret.json().get("last_pipeline", {}).get("status", "")
+            if status == "success":
+                break
+            elif status == "failed":
+                raise Exception("The pipeline failed")
+            elif status == "canceled":
+                raise Exception("The pipeline was canceled")
+            elif status == "skipped":
+                raise Exception("The pipeline was skipped")
         sys.stdout.write(".")
         sys.stdout.flush()
         time.sleep(10)
@@ -100,6 +104,9 @@ def handle_prepare(options):
         % (options.version, options.version),
         options,
     )
+    # Update the version number
+    run("echo '%s' > lava_common/VERSION" % options.version, options, shell=True)
+    run("git commit --amend --reuse-message HEAD lava_common/VERSION", options)
     # Create the git tag
     run(
         'git tag --annotate --message="LAVA Software %s release" --sign -u release@lavasoftware.org %s'
