@@ -19,7 +19,7 @@
 
 
 from lava_rest_app.base import serializers as base_serializers
-from lava_scheduler_app.models import Alias
+from lava_scheduler_app.models import Alias, Tag
 
 from rest_framework_extensions.fields import ResourceUriField
 from rest_framework.reverse import reverse as rest_reverse
@@ -77,4 +77,10 @@ class WorkerSerializer(base_serializers.WorkerSerializer):
 class AliasSerializer(serializers.ModelSerializer):
     class Meta:
         model = Alias
+        fields = "__all__"
+
+
+class TagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tag
         fields = "__all__"

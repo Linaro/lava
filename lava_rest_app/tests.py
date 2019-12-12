@@ -35,6 +35,7 @@ from lava_scheduler_app.models import (
     Device,
     DeviceType,
     GroupDeviceTypePermission,
+    Tag,
     TestJob,
     Worker,
 )
@@ -189,6 +190,8 @@ class TestRestApi:
             suite=self.private_lava_suite,
             result=result_models.TestCase.RESULT_PASS,
         )
+        self.tag1 = Tag.objects.create(name="tag1", description="description1")
+        self.tag2 = Tag.objects.create(name="tag2", description="description2")
 
     def hit(self, client, url):
         response = client.get(url)
@@ -752,6 +755,49 @@ ok 2 - bar
         )
         assert response.status_code == 201  # nosec - unit test support
         assert TestJob.objects.count() == 3  # nosec - unit test support
+
+    def test_tags_list(self):
+        data = self.hit(
+            self.userclient,
+            reverse("api-root", args=[self.version]) + "tags/?ordering=name",
+        )
+        assert len(data["results"]) == 2  # nosec - unit test support
+        assert data["results"][0]["name"] == "tag1"  # nosec - unit test support
+        assert data["results"][1]["name"] == "tag2"  # nosec - unit test support
+
+    def test_tags_retrieve(self):
+        data = self.hit(
+            self.userclient,
+            reverse("api-root", args=[self.version]) + "tags/%s/" % self.tag1.id,
+        )
+        assert data["name"] == "tag1"  # nosec - unit test support
+        assert data["description"] == "description1"  # nosec - unit test support
+
+    def test_tags_create_unauthorized(self):
+        response = self.userclient.post(
+            reverse("api-root", args=[self.version]) + "tags/",
+            {"name": "tag3", "description": "description3"},
+        )
+        assert response.status_code == 403  # nosec - unit test support
+
+    def test_tags_create(self):
+        response = self.adminclient.post(
+            reverse("api-root", args=[self.version]) + "tags/",
+            {"name": "tag3", "description": "description3"},
+        )
+        assert response.status_code == 201  # nosec - unit test support
+
+    def test_tags_delete_unauthorized(self):
+        response = self.userclient.delete(
+            reverse("api-root", args=[self.version]) + "tags/%s/" % self.tag2.id
+        )
+        assert response.status_code == 403  # nosec - unit test support
+
+    def test_tags_delete(self):
+        response = self.adminclient.delete(
+            reverse("api-root", args=[self.version]) + "tags/%s/" % self.tag2.id
+        )
+        assert response.status_code == 204  # nosec - unit test support
 
 
 def test_view_root(client):
