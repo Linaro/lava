@@ -22,6 +22,7 @@ from . import views
 
 
 router = ExtendedDefaultRouter()
+router.register(r"aliases", views.AliasViewSet)
 router.register(r"devices", views.DeviceViewSet)
 router.register(r"devicetypes", views.DeviceTypeViewSet)
 router.register(r"jobs", views.TestJobViewSet).register(
