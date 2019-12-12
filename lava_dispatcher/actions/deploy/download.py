@@ -377,6 +377,9 @@ class DownloadHandler(Action):
             action="download-action", label=self.key, key="file", value=self.fname
         )
         self.set_namespace_data(
+            action="download-action", label="file", key=self.key, value=self.fname
+        )
+        self.set_namespace_data(
             action="download-action", label=self.key, key="md5", value=md5.hexdigest()
         )
         self.set_namespace_data(
@@ -402,6 +405,7 @@ class DownloadHandler(Action):
                 raise JobError("Unknown archive format %r" % archive)
 
             target_fname_path = os.path.join(os.path.dirname(self.fname), self.key)
+            self.logger.debug("Extracting %s archive in %s", archive, target_fname_path)
             untar_file(self.fname, target_fname_path)
             self.set_namespace_data(
                 action="download-action",
@@ -415,7 +419,6 @@ class DownloadHandler(Action):
                 key=self.key,
                 value=target_fname_path,
             )
-            self.logger.debug("Using %s archive" % archive)
 
         if md5sum is not None:
             chk_md5sum = self.get_namespace_data(
@@ -495,10 +498,6 @@ class DownloadHandler(Action):
                 label="file",
                 key=self.key,
                 value=os.path.join(suffix, self.key, os.path.basename(self.fname)),
-            )
-        else:
-            self.set_namespace_data(
-                action="download-action", label="file", key=self.key, value=self.fname
             )
 
         # xnbd protocoll needs to know the location
