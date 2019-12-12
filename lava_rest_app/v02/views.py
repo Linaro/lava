@@ -19,9 +19,12 @@
 
 import csv
 import io
+import os
 import yaml
 
+from django.conf import settings
 from django.http.response import HttpResponse
+from django.http import Http404
 
 from lava_results_app.models import TestSuite, TestCase
 from lava_results_app.utils import (
@@ -30,9 +33,10 @@ from lava_results_app.utils import (
     testcase_export_fields,
 )
 from lava_rest_app.base import views as base_views
-from rest_framework import viewsets
+from rest_framework import status, viewsets
 from rest_framework_extensions.mixins import NestedViewSetMixin
 from rest_framework.response import Response
+from rest_framework.exceptions import ParseError, PermissionDenied, ValidationError
 
 from . import serializers
 
@@ -41,7 +45,7 @@ try:
 except ImportError:
     from rest_framework.decorators import action
 
-    def detail_route(methods, suffix):
+    def detail_route(methods, suffix, url_path=None):
         return action(detail=True, methods=methods, suffix=suffix)
 
 
@@ -170,7 +174,113 @@ class TestCaseViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
 
 
 class DeviceTypeViewSet(base_views.DeviceTypeViewSet):
-    pass
+    @detail_route(methods=["get", "post"], suffix="health-check")
+    def health_check(self, request, **kwargs):
+        if request.method == "GET":
+            if not self.get_object().can_view(request.user):
+                raise Http404(
+                    "Device-type '%s' was not found." % self.get_object().name
+                )
+
+            try:
+                filename = "%s.yaml" % os.path.join(
+                    settings.HEALTH_CHECKS_PATH, self.get_object().name
+                )
+                with open(filename, "r") as f_in:
+                    response = HttpResponse(
+                        f_in.read().encode("utf-8"), content_type="application/yaml"
+                    )
+                    response["Content-Disposition"] = (
+                        "attachment; filename=%s_health_check.yaml"
+                        % self.get_object().name
+                    )
+                    return response
+            except FileNotFoundError:
+                raise ParseError(
+                    "Device-type '%s' health check was not found."
+                    % self.get_object().name
+                )
+            except OSError as exc:
+                raise ParseError(
+                    "Unable to read health check configuration: %s" % exc.strerror
+                )
+
+        elif request.method == "POST":
+            if not request.user.has_perm("lava_scheduler_app.change_device"):
+                raise PermissionDenied(
+                    "Insufficient permissions. Please contact system administrator."
+                )
+            config = request.data.get("config", None)
+            if not config:
+                raise ValidationError(
+                    {"config": "Health check configuration is required."}
+                )
+
+            try:
+                filename = "%s.yaml" % os.path.join(
+                    settings.HEALTH_CHECKS_PATH, self.get_object().name
+                )
+                with open(filename, "w") as f_out:
+                    f_out.write(config)
+                return Response(
+                    {"message": "health check updated"},
+                    status=status.HTTP_204_NO_CONTENT,
+                )
+            except OSError as exc:
+                raise ParseError(
+                    "Unable to write health check configuration: %s" % exc.strerror
+                )
+
+    @detail_route(methods=["get", "post"], suffix="template")
+    def template(self, request, **kwargs):
+        if request.method == "GET":
+            if not self.get_object().can_view(request.user):
+                raise Http404(
+                    "Device-type '%s' was not found." % self.get_object().name
+                )
+
+            try:
+                filename = "%s.jinja2" % os.path.join(
+                    settings.DEVICE_TYPES_PATH, self.get_object().name
+                )
+                with open(filename, "r") as f_in:
+                    response = HttpResponse(
+                        f_in.read().encode("utf-8"), content_type="application/yaml"
+                    )
+                    response["Content-Disposition"] = (
+                        "attachment; filename=%s.jinja2" % self.get_object().name
+                    )
+                    return response
+            except FileNotFoundError:
+                raise ParseError(
+                    "Device-type '%s' template was not found." % self.get_object().name
+                )
+            except OSError as exc:
+                raise ParseError(
+                    "Unable to read device-type configuration: %s" % exc.strerror
+                )
+
+        elif request.method == "POST":
+            if not request.user.has_perm("lava_scheduler_app.change_device"):
+                raise PermissionDenied(
+                    "Insufficient permissions. Please contact system administrator."
+                )
+            template = request.data.get("template", None)
+            if not template:
+                raise ValidationError({"template": "Device type template is required."})
+            try:
+                filename = "%s.jinja2" % os.path.join(
+                    settings.DEVICE_TYPES_PATH, self.get_object().name
+                )
+                with open(filename, "w") as f_out:
+                    f_out.write(template)
+                return Response(
+                    {"message": "template updated"}, status=status.HTTP_204_NO_CONTENT
+                )
+            except OSError as exc:
+                raise ParseError(
+                    "Unable to write device-type template: %s" % exc.strerror
+                )
 
 
 class DeviceViewSet(base_views.DeviceViewSet):

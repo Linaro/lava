@@ -19,16 +19,24 @@
 
 import csv
 import json
+import os
 import pytest
 import tap
 import yaml
 
+from django.conf import settings
+from django.contrib.auth.models import User, Group
 from django.urls import reverse
-from django.contrib.auth.models import User
 from rest_framework.test import APIClient
 
 from lava_common.compat import yaml_safe_dump
-from lava_scheduler_app.models import Device, DeviceType, TestJob, Worker
+from lava_scheduler_app.models import (
+    Device,
+    DeviceType,
+    GroupDeviceTypePermission,
+    TestJob,
+    Worker,
+)
 from lava_results_app import models as result_models
 from linaro_django_xmlrpc.models import AuthToken
 
@@ -73,6 +81,9 @@ class TestRestApi:
 
         # create users
         self.admin = User.objects.create(username="admin", is_superuser=True)
+        self.admin_pwd = "supersecret"
+        self.admin.set_password(self.admin_pwd)
+        self.admin.save()
         self.user = User.objects.create(username="user1")
         self.user_pwd = "supersecret"
         self.user.set_password(self.user_pwd)
@@ -81,6 +92,8 @@ class TestRestApi:
         self.user_no_token = User.objects.create(username="user2")
         self.user_no_token.set_password(self.user_no_token_pwd)
         self.user_no_token.save()
+
+        self.group1 = Group.objects.create(name="group1")
         admintoken = AuthToken.objects.create(  # nosec - unit test support
             user=self.admin, secret="adminkey"
         )
@@ -108,6 +121,12 @@ class TestRestApi:
 
         # create devicetypes
         self.public_device_type1 = DeviceType.objects.create(name="public_device_type1")
+        self.restricted_device_type1 = DeviceType.objects.create(
+            name="restricted_device_type1"
+        )
+        GroupDeviceTypePermission.objects.assign_perm(
+            DeviceType.VIEW_PERMISSION, self.group1, self.restricted_device_type1
+        )
         self.invisible_device_type1 = DeviceType.objects.create(
             name="invisible_device_type1", display=False
         )
@@ -447,29 +466,196 @@ ok 2 - bar
             data[0]["suite"] == self.public_testjob1.testsuite_set.first().name
         )  # nosec - unit test support
 
-    def test_devicetypes(self):
-        data = self.hit(
-            self.userclient, reverse("api-root", args=[self.version]) + "devicetypes/"
-        )
-        assert len(data["results"]) == 2  # nosec - unit test support
-
     def test_devices(self):
         data = self.hit(
             self.userclient, reverse("api-root", args=[self.version]) + "devices/"
         )
         assert len(data["results"]) == 1  # nosec - unit test support
 
-    def test_devicetypes_admin(self):
-        data = self.hit(
-            self.adminclient, reverse("api-root", args=[self.version]) + "devicetypes/"
-        )
-        assert len(data["results"]) == 2  # nosec - unit test support
-
     def test_devices_admin(self):
         data = self.hit(
             self.adminclient, reverse("api-root", args=[self.version]) + "devices/"
         )
         assert len(data["results"]) == 1  # nosec - unit test support
+
+    def test_devicetypes(self):
+        data = self.hit(
+            self.userclient, reverse("api-root", args=[self.version]) + "devicetypes/"
+        )
+        assert len(data["results"]) == 2  # nosec - unit test support
+
+    def test_devicetypes_admin(self):
+        data = self.hit(
+            self.adminclient, reverse("api-root", args=[self.version]) + "devicetypes/"
+        )
+        assert len(data["results"]) == 3  # nosec - unit test support
+
+    def test_devicetype_view(self):
+        response = self.userclient.get(
+            reverse("api-root", args=[self.version])
+            + "devicetypes/%s/" % self.public_device_type1.name
+        )
+        assert response.status_code == 200  # nosec - unit test support
+
+    def test_devicetype_view_unauthorized(self):
+        response = self.userclient.get(
+            reverse("api-root", args=[self.version])
+            + "devicetypes/%s/" % self.restricted_device_type1.name
+        )
+        assert response.status_code == 404  # nosec - unit test support
+
+    def test_devicetype_view_admin(self):
+        response = self.adminclient.get(
+            reverse("api-root", args=[self.version])
+            + "devicetypes/%s/" % self.restricted_device_type1.name
+        )
+        assert response.status_code == 200  # nosec - unit test support
+
+    def test_devicetype_create_unauthorized(self):
+        response = self.userclient.post(
+            reverse("api-root", args=[self.version]) + "devicetypes/", {"name": "bbb"}
+        )
+        assert response.status_code == 403  # nosec - unit test support
+
+    def test_devicetype_create_no_name(self):
+        response = self.adminclient.post(
+            reverse("api-root", args=[self.version]) + "devicetypes/", {}
+        )
+        assert response.status_code == 400  # nosec - unit test support
+
+    def test_devicetype_create(self):
+        response = self.adminclient.post(
+            reverse("api-root", args=[self.version]) + "devicetypes/", {"name": "bbb"}
+        )
+        assert response.status_code == 201  # nosec - unit test support
+
+    def test_devicetype_get_template(self, monkeypatch, tmpdir):
+
+        real_open = open
+        (tmpdir / "qemu.jinja2").write_text("hello", encoding="utf-8")
+
+        def monkey_open(path, *args):
+            if path == os.path.join(settings.DEVICE_TYPES_PATH, "qemu.jinja2"):
+                return real_open(str(tmpdir / "qemu.jinja2"), *args)
+            if path == os.path.join(settings.DEVICE_TYPES_PATH, "bbb.jinja2"):
+                raise FileNotFoundError()
+            return real_open(path, *args)
+
+        monkeypatch.setitem(__builtins__, "open", monkey_open)
+
+        # 1. normal case
+        qemu_device_type1 = DeviceType.objects.create(name="qemu")
+        data = self.hit(
+            self.userclient,
+            reverse("api-root", args=[self.version])
+            + "devicetypes/%s/template/" % qemu_device_type1.name,
+        )
+        data = yaml.load(data)
+        assert data == str("hello")  # nosec
+
+        # 2. Can't read the file
+        bbb_device_type1 = DeviceType.objects.create(name="bbb")
+        response = self.userclient.get(
+            reverse("api-root", args=[self.version])
+            + "devicetypes/%s/template/" % bbb_device_type1.name
+        )
+        assert response.status_code == 400  # nosec
+
+    def test_devicetype_set_template(self, monkeypatch, tmpdir):
+        real_open = open
+
+        def monkey_open(path, *args):
+            if path == os.path.join(settings.DEVICE_TYPES_PATH, "qemu.jinja2"):
+                return real_open(str(tmpdir / "qemu.jinja2"), *args)
+            if path == os.path.join(
+                settings.DEVICE_TYPES_PATH, "public_device_type1.jinja2"
+            ):
+                raise OSError()
+            return real_open(path, *args)
+
+        monkeypatch.setitem(__builtins__, "open", monkey_open)
+
+        # 1. normal case
+        qemu_device_type1 = DeviceType.objects.create(name="qemu")
+        response = self.adminclient.post(
+            reverse("api-root", args=[self.version])
+            + "devicetypes/%s/template/" % qemu_device_type1.name,
+            {"template": "hello world"},
+        )
+        assert response.status_code == 204  # nosec - unit test support
+        assert (tmpdir / "qemu.jinja2").read_text(
+            encoding="utf-8"
+        ) == "hello world"  # nosec
+
+        # 2. Can't write the template
+        response = self.adminclient.post(
+            reverse("api-root", args=[self.version])
+            + "devicetypes/%s/template/" % self.public_device_type1.name,
+            {"template": "hello world"},
+        )
+        assert response.status_code == 400  # nosec
+
+    def test_devicetype_get_health_check(self, monkeypatch, tmpdir):
+
+        real_open = open
+        (tmpdir / "qemu.yaml").write_text("hello", encoding="utf-8")
+
+        def monkey_open(path, *args):
+            if path == os.path.join(settings.HEALTH_CHECKS_PATH, "qemu.yaml"):
+                return real_open(str(tmpdir / "qemu.yaml"), *args)
+            if path == os.path.join(settings.HEALTH_CHECKS_PATH, "docker.yaml"):
+                raise FileNotFoundError()
+            return real_open(path, *args)
+
+        monkeypatch.setitem(__builtins__, "open", monkey_open)
+
+        # 1. normal case
+        qemu_device_type1 = DeviceType.objects.create(name="qemu")
+        data = self.hit(
+            self.userclient,
+            reverse("api-root", args=[self.version])
+            + "devicetypes/%s/health_check/" % qemu_device_type1.name,
+        )
+        data = yaml.load(data)
+        assert data == str("hello")  # nosec
+
+        # 2. Can't read the health-check
+        docker_device_type1 = DeviceType.objects.create(name="docker")
+        response = self.userclient.get(
+            reverse("api-root", args=[self.version])
+            + "devicetypes/%s/health_check/" % docker_device_type1.name
+        )
+        assert response.status_code == 400  # nosec
+
+    def test_devicetype_set_health_check(self, monkeypatch, tmpdir):
+        real_open = open
+
+        def monkey_open(path, *args):
+            if path == os.path.join(settings.HEALTH_CHECKS_PATH, "qemu.yaml"):
+                return real_open(str(tmpdir / "qemu.yaml"), *args)
+            return real_open(path, *args)
+
+        monkeypatch.setitem(__builtins__, "open", monkey_open)
+
+        # 1. normal case
+        qemu_device_type1 = DeviceType.objects.create(name="qemu")
+        response = self.adminclient.post(
+            reverse("api-root", args=[self.version])
+            + "devicetypes/%s/health_check/" % qemu_device_type1.name,
+            {"config": "hello world"},
+        )
+        assert response.status_code == 204  # nosec - unit test support
+        assert (tmpdir / "qemu.yaml").read_text(
+            encoding="utf-8"
+        ) == "hello world"  # nosec
+
+        # 2. Can't write the health-check
+        response = self.adminclient.post(
+            reverse("api-root", args=[self.version])
+            + "devicetypes/%s/health_check/" % self.public_device_type1.name,
+            {"config": "hello world"},
+        )
+        assert response.status_code == 400  # nosec
 
     def test_workers(self):
         data = self.hit(

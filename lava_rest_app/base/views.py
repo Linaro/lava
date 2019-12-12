@@ -37,6 +37,7 @@ from linaro_django_xmlrpc.models import AuthToken
 from django.http.response import HttpResponse
 
 from rest_framework import status, viewsets
+from rest_framework.permissions import BasePermission
 
 try:
     from rest_framework.decorators import detail_route
@@ -91,6 +92,15 @@ class LavaObtainAuthToken(ObtainAuthToken):
             # this shouldn't happen
             raise AuthenticationFailed()
         return Response({"token": token.secret})
+
+
+class IsSuperUser(BasePermission):
+    """
+    Allows access only to superusers.
+    """
+
+    def has_permission(self, request, view):
+        return bool(request.user and request.user.is_superuser)
 
 
 class TestJobViewSet(viewsets.ModelViewSet):
@@ -309,7 +319,7 @@ class TestJobViewSet(viewsets.ModelViewSet):
         )
 
 
-class DeviceTypeViewSet(viewsets.ReadOnlyModelViewSet):
+class DeviceTypeViewSet(viewsets.ModelViewSet):
     queryset = DeviceType.objects
     serializer_class = DeviceTypeSerializer
     filter_fields = (
@@ -333,6 +343,11 @@ class DeviceTypeViewSet(viewsets.ReadOnlyModelViewSet):
         return DeviceType.objects.visible_by_user(self.request.user).prefetch_related(
             "cores", "aliases"
         )
+
+    def get_permissions(self):
+        if self.action in ["create", "update", "destroy", "partial_update"]:
+            self.permission_classes = [IsSuperUser]
+        return super().get_permissions()
 
 
 class DeviceViewSet(viewsets.ReadOnlyModelViewSet):
