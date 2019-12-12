@@ -50,6 +50,7 @@ include:
   artifacts:
     reports:
       junit: dispatcher.xml
+      junit: dispatcher-host.xml
 
 .server: &server
   <<: *job
