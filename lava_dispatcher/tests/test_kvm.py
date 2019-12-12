@@ -21,6 +21,7 @@
 
 import os
 import glob
+import sys
 import time
 import unittest
 import pexpect
@@ -39,7 +40,6 @@ from lava_dispatcher.tests.test_messages import FakeConnection
 from lava_dispatcher.utils.messages import LinuxKernelMessages
 from lava_dispatcher.tests.test_defs import allow_missing_path, check_missing_path
 from lava_dispatcher.tests.utils import DummyLogger, infrastructure_error
-from lava_dispatcher.utils.strings import substitute
 from lava_dispatcher.connections.serial import QemuSession
 
 
@@ -1044,8 +1044,28 @@ class TestKvmUefi(StdoutTestCase):
             if action.name == "execute-qemu"
         ][0]
         self.job.validate()
-        self.assertIn("-L", execute.sub_command)
-        self.assertIn(uefi_dir, execute.sub_command)
+        execute.run(None, 1)
+        self.assertEqual(["-drive format=raw,file={disk1}"], execute.commands)
+        self.assertEqual(
+            [
+                "/usr/bin/qemu-system-x86_64",
+                "-nographic",
+                "-net nic,model=virtio,macaddr=52:54:00:12:34:59 -net user",
+                "-m 256",
+                "-monitor none",
+                "-drive format=raw,file=%s"
+                % execute.get_namespace_data(
+                    action="download-action", label="disk1", key="file"
+                ),
+                "-L",
+                execute.get_namespace_data(
+                    action="deployimages", label="image", key="uefi_dir"
+                ),
+                "-monitor",
+                "none",
+            ],
+            execute.sub_command,
+        )
 
 
 class TestQemuNFS(StdoutTestCase):
@@ -1055,6 +1075,7 @@ class TestQemuNFS(StdoutTestCase):
         self.job = factory.create_job("kvm02.jinja2", "sample_jobs/qemu-nfs.yaml")
         self.job.logger = DummyLogger()
 
+    @unittest.skipIf(sys.version_info.minor < 6, "unreliable on python3.5 and before")
     @unittest.skipIf(
         infrastructure_error("qemu-system-aarch64"), "qemu-system-arm not installed"
     )
@@ -1080,57 +1101,36 @@ class TestQemuNFS(StdoutTestCase):
             if action.name == "execute-qemu"
         ][0]
         self.job.validate()
-        self.assertNotEqual(
-            [], [line for line in execute.sub_command if line.startswith("-kernel")]
-        )
+        execute.run(None, 1)
+        self.assertEqual(["-initrd {initrd}", "-kernel {kernel}"], execute.commands)
         self.assertEqual(
-            1, len([line for line in execute.sub_command if line.startswith("-kernel")])
-        )
-        self.assertIn(
-            "vmlinuz",
-            [line for line in execute.sub_command if line.startswith("-kernel")][0],
-        )
-
-        self.assertNotEqual(
-            [], [line for line in execute.sub_command if line.startswith("-initrd")]
-        )
-        self.assertEqual(
-            1, len([line for line in execute.sub_command if line.startswith("-initrd")])
-        )
-        self.assertIn(
-            "initrd.img",
-            [line for line in execute.sub_command if line.startswith("-initrd")][0],
-        )
-
-        self.assertEqual(
-            [], [line for line in execute.sub_command if "/dev/nfs" in line]
-        )
-        self.assertEqual(
-            [], [line for line in execute.sub_command if "nfsroot" in line]
+            [
+                "/usr/bin/qemu-system-x86_64",
+                "-cpu host",
+                "-enable-kvm",
+                "-nographic",
+                "-net nic,model=virtio,macaddr=52:54:00:12:34:59 -net tap",
+                "-m 256",
+                "-monitor none",
+                "-smp",
+                "1",
+                "-initrd %s"
+                % execute.get_namespace_data(
+                    action="download-action", label="initrd", key="file"
+                ),
+                "-kernel %s"
+                % execute.get_namespace_data(
+                    action="download-action", label="kernel", key="file"
+                ),
+                "--append",
+                '"console=ttyAMA0 root=/dev/nfs nfsroot=192.168.0.2:{NFSROOTFS},tcp,hard,intr rw ip=dhcp"',
+            ],
+            execute.sub_command,
         )
 
         args = execute.methods["qemu-nfs"]["parameters"]["append"]["nfsrootargs"]
         self.assertIn("{NFS_SERVER_IP}", args)
         self.assertIn("{NFSROOTFS}", args)
-
-        substitutions = execute.substitutions
-        substitutions["{NFSROOTFS}"] = "root_dir"
-        params = execute.methods["qemu-nfs"]["parameters"]["append"]
-        # console=ttyAMA0 root=/dev/nfs nfsroot=10.3.2.1:/var/lib/lava/dispatcher/tmp/dirname,tcp,hard,intr ip=dhcp
-        append = [
-            "console=%s" % params["console"],
-            "root=/dev/nfs",
-            "%s" % substitute([params["nfsrootargs"]], substitutions)[0],
-            "%s" % params["ipargs"],
-        ]
-        execute.sub_command.append("--append")
-        execute.sub_command.append('"%s"' % " ".join(append))
-        kernel_cmdline = " ".join(execute.sub_command)
-        self.assertIn("console=ttyAMA0", kernel_cmdline)
-        self.assertIn("/dev/nfs", kernel_cmdline)
-        self.assertIn("root_dir,tcp,hard,intr", kernel_cmdline)
-        self.assertIn("smp", kernel_cmdline)
-        self.assertIn("cpu host", kernel_cmdline)
 
 
 class TestMonitor(StdoutTestCase):
