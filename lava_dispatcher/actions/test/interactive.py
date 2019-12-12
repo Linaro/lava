@@ -189,6 +189,10 @@ class TestInteractiveAction(TestAction):
                         # Wait for the prompt to send the next command
                         test_connection.expect(prompts)
                         result["result"] = "pass"
+
+                # If the command is not named, a failure is fatal
+                if "name" not in cmd and result["result"] == "fail":
+                    raise TestError("Failed to run command '%s'" % command)
             except pexpect.TIMEOUT:
                 raise LAVATimeoutError("interactive connection timed out")
             except pexpect.EOF:
@@ -198,9 +202,6 @@ class TestInteractiveAction(TestAction):
                 if "name" in cmd:
                     result["duration"] = "%.02f" % (time.time() - start)
                     self.logger.results(result)
-                # If the command is not named, a failure is fatal
-                elif result["result"] == "fail":
-                    raise TestError("Failed to run command '%s'" % command)
 
     def raise_exception(self, exc_name, exc_message):
         if exc_name == "InfrastructureError":
