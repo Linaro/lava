@@ -173,7 +173,7 @@ class TestMetaTypes(TestCaseWithFactory):
             "case": "unit-test",
             "level": level,
             # list of numbers, generates a much longer YAML string than just the count
-            "extra": range(int(field.max_length / 2)),
+            "extra": list(range(int(field.max_length / 2))),
             "result": "pass",
         }
         stub = "%s-%s-%s.yaml" % (results["definition"], results["case"], level)
