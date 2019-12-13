@@ -35,11 +35,11 @@ from lava_results_app.utils import (
 from lava_rest_app.base import views as base_views
 from lava_rest_app import filters
 from rest_framework import status, viewsets
-from rest_framework_extensions.mixins import NestedViewSetMixin
 from rest_framework.permissions import DjangoModelPermissions
+from rest_framework_extensions.mixins import NestedViewSetMixin
 from rest_framework.response import Response
 from rest_framework.exceptions import ParseError, PermissionDenied, ValidationError
-from lava_scheduler_app.models import Alias
+from lava_scheduler_app.models import Alias, Tag
 
 from . import serializers
 
@@ -304,3 +304,15 @@ class AliasViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return self.queryset.filter(device_type__display=True)
+
+
+class TagViewSet(viewsets.ModelViewSet):
+    queryset = Tag.objects
+    serializer_class = serializers.TagSerializer
+    filter_fields = "__all__"
+    filter_class = filters.TagFilter
+    ordering_fields = "__all__"
+    permission_classes = [DjangoModelPermissions]
+
+    def get_queryset(self):
+        return self.queryset.all()

@@ -36,4 +36,5 @@ router.register(r"jobs", views.TestJobViewSet).register(
     base_name="suites-test",
     parents_query_lookups=["suite__job_id", "suite_id"],
 )
+router.register(r"tags", views.TagViewSet)
 router.register(r"workers", views.WorkerViewSet)
