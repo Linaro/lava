@@ -90,7 +90,7 @@ code_quality:
 
 coverage:
   <<: *analyze
-  image: hub.lavasoftware.org/lava/ci-images/amd64/server-debian-9
+  image: hub.lavasoftware.org/lava/ci-images/amd64/server-debian-10
   coverage: '/^TOTAL.+ (\d+\.\d+)%$/'
   artifacts:
     paths:
