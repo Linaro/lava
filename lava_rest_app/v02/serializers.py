@@ -19,9 +19,11 @@
 
 
 from lava_rest_app.base import serializers as base_serializers
+from lava_scheduler_app.models import Alias
 
 from rest_framework_extensions.fields import ResourceUriField
 from rest_framework.reverse import reverse as rest_reverse
+from rest_framework import serializers
 
 
 class TestJobSerializer(base_serializers.TestJobSerializer):
@@ -70,3 +72,9 @@ class DeviceSerializer(base_serializers.DeviceSerializer):
 
 class WorkerSerializer(base_serializers.WorkerSerializer):
     pass
+
+
+class AliasSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Alias
+        fields = "__all__"

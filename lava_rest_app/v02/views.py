@@ -33,10 +33,13 @@ from lava_results_app.utils import (
     testcase_export_fields,
 )
 from lava_rest_app.base import views as base_views
+from lava_rest_app import filters
 from rest_framework import status, viewsets
 from rest_framework_extensions.mixins import NestedViewSetMixin
+from rest_framework.permissions import DjangoModelPermissions
 from rest_framework.response import Response
 from rest_framework.exceptions import ParseError, PermissionDenied, ValidationError
+from lava_scheduler_app.models import Alias
 
 from . import serializers
 
@@ -289,3 +292,15 @@ class DeviceViewSet(base_views.DeviceViewSet):
 
 class WorkerViewSet(base_views.WorkerViewSet):
     pass
+
+
+class AliasViewSet(viewsets.ModelViewSet):
+    queryset = Alias.objects
+    serializer_class = serializers.AliasSerializer
+    filter_fields = "__all__"
+    filter_class = filters.AliasFilter
+    ordering_fields = "__all__"
+    permission_classes = [DjangoModelPermissions]
+
+    def get_queryset(self):
+        return self.queryset.filter(device_type__display=True)

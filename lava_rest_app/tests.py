@@ -31,6 +31,7 @@ from rest_framework.test import APIClient
 
 from lava_common.compat import yaml_safe_dump
 from lava_scheduler_app.models import (
+    Alias,
     Device,
     DeviceType,
     GroupDeviceTypePermission,
@@ -130,6 +131,10 @@ class TestRestApi:
         self.invisible_device_type1 = DeviceType.objects.create(
             name="invisible_device_type1", display=False
         )
+
+        Alias.objects.create(name="test1", device_type=self.public_device_type1)
+        Alias.objects.create(name="test2", device_type=self.public_device_type1)
+        Alias.objects.create(name="test3", device_type=self.invisible_device_type1)
 
         # create devices
         self.public_device1 = Device.objects.create(
@@ -676,6 +681,49 @@ ok 2 - bar
             data["results"][2]["health"] == "Maintenance"
         )
         assert data["results"][2]["state"] == "Offline"  # nosec - unit test support
+
+    def test_aliases_list(self):
+        data = self.hit(
+            self.userclient,
+            reverse("api-root", args=[self.version]) + "aliases/?ordering=name",
+        )
+        # We have 3 aliases, but only 2 are visible
+        assert len(data["results"]) == 2  # nosec - unit test support
+        assert data["results"][0]["name"] == "test1"  # nosec - unit test support
+        assert data["results"][1]["name"] == "test2"  # nosec - unit test support
+
+    def test_aliases_retrieve(self):
+        data = self.hit(
+            self.userclient, reverse("api-root", args=[self.version]) + "aliases/test1/"
+        )
+        assert data["name"] == "test1"  # nosec - unit test support
+        assert data["device_type"] == "public_device_type1"  # nosec - unit test support
+
+    def test_aliases_create_unauthorized(self):
+        response = self.userclient.post(
+            reverse("api-root", args=[self.version]) + "aliases/",
+            {"name": "test4", "device_type": "qemu"},
+        )
+        assert response.status_code == 403  # nosec - unit test support
+
+    def test_aliases_create(self):
+        response = self.adminclient.post(
+            reverse("api-root", args=[self.version]) + "aliases/",
+            {"name": "test4", "device_type": "public_device_type1"},
+        )
+        assert response.status_code == 201  # nosec - unit test support
+
+    def test_aliases_delete_unauthorized(self):
+        response = self.userclient.delete(
+            reverse("api-root", args=[self.version]) + "aliases/test2/"
+        )
+        assert response.status_code == 403  # nosec - unit test support
+
+    def test_aliases_delete(self):
+        response = self.adminclient.delete(
+            reverse("api-root", args=[self.version]) + "aliases/test2/"
+        )
+        assert response.status_code == 204  # nosec - unit test support
 
     def test_submit_unauthorized(self):
         response = self.userclient.post(

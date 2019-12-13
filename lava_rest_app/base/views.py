@@ -54,14 +54,8 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
 from lava_rest_app import filters
-from lava_rest_app.base.serializers import (
-    TestJobSerializer,
-    TestSuiteSerializer,
-    TestCaseSerializer,
-    DeviceTypeSerializer,
-    DeviceSerializer,
-    WorkerSerializer,
-)
+
+from . import serializers
 
 
 def safe_str2int(in_value):
@@ -124,7 +118,7 @@ class TestJobViewSet(viewsets.ModelViewSet):
     """
 
     queryset = TestJob.objects
-    serializer_class = TestJobSerializer
+    serializer_class = serializers.TestJobSerializer
     filter_fields = (
         "submitter",
         "viewing_groups",
@@ -222,7 +216,9 @@ class TestJobViewSet(viewsets.ModelViewSet):
         suites = self.get_object().testsuite_set.all().order_by("id")
         paginator = PageNumberPagination()
         page = paginator.paginate_queryset(suites, request)
-        serializer = TestSuiteSerializer(page, many=True, context={"request": request})
+        serializer = serializers.TestSuiteSerializer(
+            page, many=True, context={"request": request}
+        )
         return paginator.get_paginated_response(serializer.data)
 
     @detail_route(methods=["get"], suffix="tap13")
@@ -276,11 +272,13 @@ class TestJobViewSet(viewsets.ModelViewSet):
         tests = TestCase.objects.filter(suite__job=self.get_object()).order_by("id")
         paginator = PageNumberPagination()
         page = paginator.paginate_queryset(tests, request)
-        serializer = TestCaseSerializer(page, many=True, context={"request": request})
+        serializer = serializers.TestCaseSerializer(
+            page, many=True, context={"request": request}
+        )
         return paginator.get_paginated_response(serializer.data)
 
     def create(self, request, **kwargs):
-        serializer = TestJobSerializer(data=request.data)
+        serializer = serializers.TestJobSerializer(data=request.data)
 
         serializer.is_valid(raise_exception=True)
         definition = serializer.validated_data["definition"]
@@ -321,7 +319,7 @@ class TestJobViewSet(viewsets.ModelViewSet):
 
 class DeviceTypeViewSet(viewsets.ModelViewSet):
     queryset = DeviceType.objects
-    serializer_class = DeviceTypeSerializer
+    serializer_class = serializers.DeviceTypeSerializer
     filter_fields = (
         "name",
         "architecture",
@@ -352,7 +350,7 @@ class DeviceTypeViewSet(viewsets.ModelViewSet):
 
 class DeviceViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Device.objects
-    serializer_class = DeviceSerializer
+    serializer_class = serializers.DeviceSerializer
     filter_fields = (
         "hostname",
         "device_type",
@@ -390,7 +388,7 @@ class DeviceViewSet(viewsets.ReadOnlyModelViewSet):
 
 class WorkerViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Worker.objects
-    serializer_class = WorkerSerializer
+    serializer_class = serializers.WorkerSerializer
     filter_fields = "__all__"
     ordering_fields = "__all__"
 
