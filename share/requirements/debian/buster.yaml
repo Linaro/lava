@@ -105,6 +105,9 @@ lava-dispatcher:
   pytest:
     name: python3-pytest
     unittests: true
+  pytest-mock:
+    name: python3-pytest-mock
+    unittests: true
   pytz:
     name: python3-tz
   pyudev:
