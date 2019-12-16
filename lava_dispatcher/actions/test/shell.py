@@ -61,9 +61,9 @@ class TestShell(LavaTest):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if ("definition" in parameters) or ("definitions" in parameters):
+        if "definitions" in parameters:
             return True, "accepted"
-        return False, '"definition" or "definitions" not in parameters'
+        return False, '"definitions" not in parameters'
 
     @classmethod
     def needs_deployment_data(cls):
@@ -190,10 +190,12 @@ class TestShellAction(TestAction):
         self.pattern = PatternFixup(testdef=None, count=0)
 
     def validate(self):
-        if "definitions" in self.parameters:
-            for testdef in self.parameters["definitions"]:
-                if "repository" not in testdef:
-                    self.errors = "Repository missing from test definition"
+        if "definitions" not in self.parameters:
+            raise JobError("Missing test 'definitions'")
+
+        for testdef in self.parameters["definitions"]:
+            if "repository" not in testdef:
+                self.errors = "Repository missing from test definition"
         self._reset_patterns()
         super().validate()
 
