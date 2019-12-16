@@ -20,6 +20,7 @@
 import csv
 import json
 import os
+import pathlib
 import pytest
 import tap
 import yaml
@@ -665,7 +666,7 @@ ok 2 - bar
         )
         assert response.status_code == 400  # nosec
 
-    def test_workers(self):
+    def test_workers_list(self):
         data = self.hit(
             self.userclient,
             reverse("api-root", args=[self.version]) + "workers/?ordering=hostname",
@@ -684,6 +685,206 @@ ok 2 - bar
             data["results"][2]["health"] == "Maintenance"
         )
         assert data["results"][2]["state"] == "Offline"  # nosec - unit test support
+
+    def test_workers_retrieve(self):
+        data = self.hit(
+            self.userclient,
+            reverse("api-root", args=[self.version])
+            + "workers/%s/" % self.worker1.hostname,
+        )
+        assert data["hostname"] == "worker1"  # nosec - unit test support
+        assert data["state"] == "Online"  # nosec - unit test support
+        assert data["health"] == "Active"  # nosec - unit test support
+
+    def test_workers_retrieve_with_dot(self):
+        data = self.hit(
+            self.userclient,
+            reverse("api-root", args=[self.version]) + "workers/example.com/",
+        )
+        assert data["hostname"] == "example.com"  # nosec - unit test support
+        assert data["state"] == "Offline"  # nosec - unit test support
+        assert data["health"] == "Active"  # nosec - unit test support
+
+    def test_workers_create_unauthorized(self):
+        response = self.userclient.post(
+            reverse("api-root", args=[self.version]) + "workers/",
+            {"hostname": "worker3", "description": "description3"},
+        )
+        assert response.status_code == 403  # nosec - unit test support
+
+    def test_workers_create(self):
+        response = self.adminclient.post(
+            reverse("api-root", args=[self.version]) + "workers/",
+            {"hostname": "worker3", "description": "description3"},
+        )
+        assert response.status_code == 201  # nosec - unit test support
+
+    def test_workers_delete_unauthorized(self):
+        response = self.userclient.delete(
+            reverse("api-root", args=[self.version])
+            + "workers/%s/" % self.worker2.hostname
+        )
+        assert response.status_code == 403  # nosec - unit test support
+
+    def test_workers_delete(self):
+        response = self.adminclient.delete(
+            reverse("api-root", args=[self.version])
+            + "workers/%s/" % self.worker2.hostname
+        )
+        assert response.status_code == 204  # nosec - unit test support
+
+    def test_workers_get_env(self, monkeypatch, tmpdir):
+
+        (tmpdir / "env.yaml").write_text("hello", encoding="utf-8")
+
+        class MyPath(pathlib.PosixPath):
+            def __new__(cls, path, *args, **kwargs):
+                if path in ["example.com", "example.com/../", "worker.example.com"]:
+                    return super().__new__(cls, path, *args, **kwargs)
+                elif path == "/etc/lava-server/":
+                    return super().__new__(cls, str(tmpdir), *args, **kwargs)
+                else:
+                    assert 0  # nosec
+
+        monkeypatch.setattr(pathlib, "Path", MyPath)
+        data = self.hit(
+            self.userclient,
+            reverse("api-root", args=[self.version])
+            + "workers/%s/env/" % self.worker1.hostname,
+        )
+        data = yaml.load(data)
+        assert data == str("hello")  # nosec
+
+        # worker does not exists
+        response = self.userclient.get(
+            reverse("api-root", args=[self.version]) + "workers/invalid_hostname/env/"
+        )
+        assert response.status_code == 404  # nosec
+
+        # no configuration file
+        (tmpdir / "env.yaml").remove()
+        response = self.userclient.get(
+            reverse("api-root", args=[self.version])
+            + "workers/%s/env/" % self.worker1.hostname
+        )
+        assert response.status_code == 400  # nosec
+
+    def test_workers_get_config(self, monkeypatch, tmpdir):
+        (tmpdir / self.worker1.hostname).mkdir()
+        (tmpdir / self.worker1.hostname / "dispatcher.yaml").write_text(
+            "hello world", encoding="utf-8"
+        )
+
+        class MyPath(pathlib.PosixPath):
+            def __new__(cls, path, *args, **kwargs):
+                if path == "example.com":
+                    return super().__new__(cls, path, *args, **kwargs)
+                elif path == "/etc/lava-server/dispatcher.d":
+                    return super().__new__(cls, str(tmpdir), *args, **kwargs)
+                elif path == "/etc/lava-server/dispatcher.d/example.com":
+                    return super().__new__(
+                        cls, str(tmpdir / "example.com"), *args, **kwargs
+                    )
+                else:
+                    assert 0  # nosec
+
+        monkeypatch.setattr(pathlib, "Path", MyPath)
+        data = self.hit(
+            self.userclient,
+            reverse("api-root", args=[self.version])
+            + "workers/%s/config/" % self.worker1.hostname,
+        )
+        data = yaml.load(data)
+        assert data == str("hello world")  # nosec
+
+        # worker does not exists
+        response = self.userclient.get(
+            reverse("api-root", args=[self.version])
+            + "workers/invalid_hostname/config/"
+        )
+        assert response.status_code == 404  # nosec
+
+        # no configuration file
+        (tmpdir / self.worker1.hostname / "dispatcher.yaml").remove()
+        (tmpdir / self.worker1.hostname).remove()
+        response = self.userclient.get(
+            reverse("api-root", args=[self.version])
+            + "workers/%s/config/" % self.worker1.hostname
+        )
+        assert response.status_code == 400  # nosec
+
+    def test_workers_set_env(self, monkeypatch, tmpdir):
+        class MyPath(pathlib.PosixPath):
+            def __new__(cls, path, *args, **kwargs):
+                if path == "example.com":
+                    return super().__new__(cls, path, *args, **kwargs)
+                elif path == "/etc/lava-server/dispatcher.d":
+                    return super().__new__(cls, str(tmpdir), *args, **kwargs)
+                else:
+                    assert 0  # nosec
+
+        monkeypatch.setattr(pathlib, "Path", MyPath)
+        response = self.adminclient.post(
+            reverse("api-root", args=[self.version])
+            + "workers/%s/env/" % self.worker1.hostname,
+            {"env": "hello"},
+        )
+        assert response.status_code == 200  # nosec
+        assert (tmpdir / self.worker1.hostname / "env.yaml").read_text(  # nosec
+            encoding="utf-8"
+        ) == "hello"
+
+        # worker does not exists
+        response = self.adminclient.post(
+            reverse("api-root", args=[self.version]) + "workers/invalid_hostname/env/",
+            {"env": "hello"},
+        )
+        assert response.status_code == 404  # nosec
+
+        # insufficient permissions
+        response = self.userclient.post(
+            reverse("api-root", args=[self.version])
+            + "workers/%s/env/" % self.worker1.hostname,
+            {"env": "hello"},
+        )
+        assert response.status_code == 403  # nosec
+
+    def test_workers_set_config(self, monkeypatch, tmpdir):
+        class MyPath(pathlib.PosixPath):
+            def __new__(cls, path, *args, **kwargs):
+                if path == "example.com":
+                    return super().__new__(cls, path, *args, **kwargs)
+                elif path == "/etc/lava-server/dispatcher.d":
+                    return super().__new__(cls, str(tmpdir), *args, **kwargs)
+                else:
+                    assert 0  # nosec
+
+        monkeypatch.setattr(pathlib, "Path", MyPath)
+        response = self.adminclient.post(
+            reverse("api-root", args=[self.version])
+            + "workers/%s/config/" % self.worker1.hostname,
+            {"config": "hello"},
+        )
+        assert response.status_code == 200  # nosec
+        assert (tmpdir / self.worker1.hostname / "dispatcher.yaml").read_text(  # nosec
+            encoding="utf-8"
+        ) == "hello"
+
+        # worker does not exists
+        response = self.adminclient.post(
+            reverse("api-root", args=[self.version])
+            + "workers/invalid_hostname/config/",
+            {"config": "hello"},
+        )
+        assert response.status_code == 404  # nosec
+
+        # insufficient permissions
+        response = self.userclient.post(
+            reverse("api-root", args=[self.version])
+            + "workers/%s/config/" % self.worker1.hostname,
+            {"config": "hello"},
+        )
+        assert response.status_code == 403  # nosec
 
     def test_aliases_list(self):
         data = self.hit(

@@ -17,9 +17,11 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 import csv
 import io
 import os
+import pathlib
 import yaml
 
 from django.conf import settings
@@ -35,7 +37,10 @@ from lava_results_app.utils import (
 from lava_rest_app.base import views as base_views
 from lava_rest_app import filters
 from rest_framework import status, viewsets
-from rest_framework.permissions import DjangoModelPermissions
+from rest_framework.permissions import (
+    DjangoModelPermissions,
+    DjangoModelPermissionsOrAnonReadOnly,
+)
 from rest_framework_extensions.mixins import NestedViewSetMixin
 from rest_framework.response import Response
 from rest_framework.exceptions import ParseError, PermissionDenied, ValidationError
@@ -290,8 +295,117 @@ class DeviceViewSet(base_views.DeviceViewSet):
     pass
 
 
-class WorkerViewSet(base_views.WorkerViewSet):
-    pass
+class WorkerViewSet(base_views.WorkerViewSet, viewsets.ModelViewSet):
+    lookup_value_regex = r"[\w0-9.]+"
+    serializer_class = serializers.WorkerSerializer
+    filter_class = filters.WorkerFilter
+    permission_classes = [DjangoModelPermissionsOrAnonReadOnly]
+
+    @detail_route(methods=["get", "post"], suffix="env")
+    def env(self, request, **kwargs):
+        if request.method == "GET":
+            base = pathlib.Path("/etc/lava-server/")
+            with contextlib.suppress(OSError):
+                data = (
+                    base / "dispatcher.d" / self.get_object().hostname / "env.yaml"
+                ).read_text(encoding="utf-8")
+                response = HttpResponse(
+                    data.encode("utf-8"), content_type="application/yaml"
+                )
+                response["Content-Disposition"] = "attachment; filename=env.yaml"
+                return response
+
+            with contextlib.suppress(OSError):
+                data = (base / "env.yaml").read_text(encoding="utf-8")
+                response = HttpResponse(
+                    data.encode("utf-8"), content_type="application/yaml"
+                )
+                response["Content-Disposition"] = "attachment; filename=env.yaml"
+                return response
+
+            raise ParseError(
+                "Worker '%s' does not have environment data"
+                % self.get_object().hostname
+            )
+
+        elif request.method == "POST":
+            if not request.user.has_perm("lava_scheduler_app.change_worker"):
+                raise PermissionDenied(
+                    "Insufficient permissions. Please contact system administrator."
+                )
+
+            path = (
+                pathlib.Path("/etc/lava-server/dispatcher.d")
+                / self.get_object().hostname
+                / "env.yaml"
+            )
+            env = request.data.get("env", None)
+            try:
+                path.parent.mkdir(mode=0o755, parents=True, exist_ok=True)
+                path.write_text(env, encoding="utf-8")
+                return Response(
+                    {"message": "env successfully updated"}, status=status.HTTP_200_OK
+                )
+            except OSError as e:
+                raise ParseError(
+                    "Error updating environment for worker %s: %s"
+                    % (self.get_object().hostname, str(e))
+                )
+
+    @detail_route(methods=["get", "post"], suffix="config")
+    def config(self, request, **kwargs):
+        if request.method == "GET":
+            base = pathlib.Path("/etc/lava-server/dispatcher.d")
+            with contextlib.suppress(OSError):
+                data = (
+                    base / self.get_object().hostname / "dispatcher.yaml"
+                ).read_text(encoding="utf-8")
+                response = HttpResponse(
+                    data.encode("utf-8"), content_type="application/yaml"
+                )
+                response["Content-Disposition"] = "attachment; filename=dispatcher.yaml"
+                return response
+
+            with contextlib.suppress(OSError):
+                data = (base / ("%s.yaml" % self.get_object().hostname)).read_text(
+                    encoding="utf-8"
+                )
+                response = HttpResponse(
+                    data.encode("utf-8"), content_type="application/yaml"
+                )
+                response["Content-Disposition"] = (
+                    "attachment; filename=%s.yaml" % self.get_object().hostname
+                )
+                return response
+
+            raise ParseError(
+                "Worker '%s' does not have a configuration" % self.get_object().hostname
+            )
+
+        elif request.method == "POST":
+            if not request.user.has_perm("lava_scheduler_app.change_worker"):
+                raise PermissionDenied(
+                    "Insufficient permissions. Please contact system administrator."
+                )
+
+            path = (
+                pathlib.Path("/etc/lava-server/dispatcher.d")
+                / self.get_object().hostname
+                / "dispatcher.yaml"
+            )
+            config = request.data.get("config", None)
+            try:
+                path.parent.mkdir(mode=0o755, parents=True, exist_ok=True)
+                path.write_text(config, encoding="utf-8")
+                return Response(
+                    {"message": "config successfully updated"},
+                    status=status.HTTP_200_OK,
+                )
+            except OSError as e:
+                raise ParseError(
+                    "Error updating configuration for worker %s: %s"
+                    % (self.get_object().hostname, str(e))
+                )
 
 
 class AliasViewSet(viewsets.ModelViewSet):

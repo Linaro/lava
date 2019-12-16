@@ -71,7 +71,11 @@ class DeviceSerializer(base_serializers.DeviceSerializer):
 
 
 class WorkerSerializer(base_serializers.WorkerSerializer):
-    pass
+    state = serializers.CharField(source="get_state_display", read_only=True)
+    health = serializers.CharField(source="get_health_display", read_only=True)
+
+    class Meta(base_serializers.WorkerSerializer.Meta):
+        read_only_fields = ("last_ping", "state")
 
 
 class AliasSerializer(serializers.ModelSerializer):
