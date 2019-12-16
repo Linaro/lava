@@ -635,3 +635,247 @@ class TestPriorities(TestCase):
         self._check_job(jobs[2], TestJob.STATE_SCHEDULED, self.device01)
         self._check_job(jobs[3], TestJob.STATE_SUBMITTED)
         self._check_job(jobs[4], TestJob.STATE_SUBMITTED)
+
+
+# test joblimit with HealthChecks with a joblimit of 1
+class TestJobLimitHc1(TestCase):
+    def setUp(self):
+        self.worker01 = Worker.objects.create(
+            hostname="worker-01", state=Worker.STATE_ONLINE, job_limit=1
+        )
+        self.device_type01 = DeviceType.objects.create(name="qemu")
+        self.devices = []
+        self.user = User.objects.create(username="user-01")
+        self.original_health_check = Device.get_health_check
+        Device.get_health_check = _minimal_valid_job
+        self.device01 = Device.objects.create(
+            hostname="qemu01",
+            device_type=self.device_type01,
+            worker_host=self.worker01,
+            health=Device.HEALTH_GOOD,
+        )
+        self.device02 = Device.objects.create(
+            hostname="qemu02",
+            device_type=self.device_type01,
+            worker_host=self.worker01,
+            health=Device.HEALTH_GOOD,
+        )
+        self.device03 = Device.objects.create(
+            hostname="qemu03",
+            device_type=self.device_type01,
+            worker_host=self.worker01,
+            health=Device.HEALTH_GOOD,
+        )
+        self.device04 = Device.objects.create(
+            hostname="qemu04",
+            device_type=self.device_type01,
+            worker_host=self.worker01,
+            health=Device.HEALTH_GOOD,
+        )
+        self.devices.append(self.device01)
+        self.devices.append(self.device02)
+        self.devices.append(self.device03)
+        self.devices.append(self.device04)
+        self.device01.save()
+        self.device02.save()
+        self.device03.save()
+        self.device04.save()
+
+    def tearDown(self):
+        Device.get_health_check = self.original_health_check
+        for job in TestJob.objects.filter(
+            state__in=[TestJob.STATE_SUBMITTED, TestJob.STATE_SCHEDULING]
+        ):
+            job.go_state_finished(TestJob.HEALTH_COMPLETE)
+
+    def test_job_limit_hc(self):
+
+        schedule_health_checks(DummyLogger())
+
+        devs = 0
+        # check that only one device got healthcheck
+        for device in self.devices:
+            device.refresh_from_db()
+            if device.state != Device.STATE_IDLE:
+                devs = devs + 1
+        self.assertEqual(devs, 1)
+        for job in TestJob.objects.filter(
+            state__in=[TestJob.STATE_SCHEDULING, TestJob.STATE_SCHEDULED]
+        ):
+            job.go_state_finished(TestJob.HEALTH_COMPLETE)
+            job.actual_device.health = Device.HEALTH_GOOD
+            job.actual_device.state = Device.STATE_IDLE
+            job.actual_device.save()
+            job.save()
+
+        # STEP 2
+        schedule_health_checks(DummyLogger())
+
+        devs = 0
+        for device in self.devices:
+            device.refresh_from_db()
+            if device.state != Device.STATE_IDLE:
+                devs = devs + 1
+        self.assertEqual(devs, 1)
+
+
+# test joblimit with HealthChecks with a joblimit of 2
+class TestJobLimitHc2(TestCase):
+    def setUp(self):
+        self.worker01 = Worker.objects.create(
+            hostname="worker-01", state=Worker.STATE_ONLINE, job_limit=2
+        )
+        self.device_type01 = DeviceType.objects.create(name="qemu")
+        self.devices = []
+        self.user = User.objects.create(username="user-01")
+        self.original_health_check = Device.get_health_check
+        Device.get_health_check = _minimal_valid_job
+        self.device01 = Device.objects.create(
+            hostname="qemu01",
+            device_type=self.device_type01,
+            worker_host=self.worker01,
+            health=Device.HEALTH_GOOD,
+        )
+        self.device02 = Device.objects.create(
+            hostname="qemu02",
+            device_type=self.device_type01,
+            worker_host=self.worker01,
+            health=Device.HEALTH_GOOD,
+        )
+        self.device03 = Device.objects.create(
+            hostname="qemu03",
+            device_type=self.device_type01,
+            worker_host=self.worker01,
+            health=Device.HEALTH_GOOD,
+        )
+        self.device04 = Device.objects.create(
+            hostname="qemu04",
+            device_type=self.device_type01,
+            worker_host=self.worker01,
+            health=Device.HEALTH_GOOD,
+        )
+        self.devices.append(self.device01)
+        self.devices.append(self.device02)
+        self.devices.append(self.device03)
+        self.devices.append(self.device04)
+
+    def tearDown(self):
+        Device.get_health_check = self.original_health_check
+        for job in TestJob.objects.filter(
+            state__in=[TestJob.STATE_SUBMITTED, TestJob.STATE_SCHEDULING]
+        ):
+            job.go_state_finished(TestJob.HEALTH_COMPLETE)
+
+    def test_job_limit_hc2(self):
+
+        schedule_health_checks(DummyLogger())
+
+        devs = 0
+        # check that only 2 devices got healthcheck
+        for device in self.devices:
+            device.refresh_from_db()
+            if device.state != Device.STATE_IDLE:
+                devs = devs + 1
+        self.assertEqual(devs, 2)
+
+        for job in TestJob.objects.filter(
+            state__in=[TestJob.STATE_SCHEDULING, TestJob.STATE_SCHEDULED]
+        ):
+            job.go_state_finished(TestJob.HEALTH_COMPLETE)
+            job.actual_device.health = Device.HEALTH_GOOD
+            job.actual_device.state = Device.STATE_IDLE
+            job.actual_device.save()
+            job.save()
+
+        # STEP 2
+        schedule_health_checks(DummyLogger())
+
+        devs = 0
+        # check that only 4 devices got healthcheck
+        for device in self.devices:
+            device.refresh_from_db()
+            if device.state != Device.STATE_IDLE:
+                devs = devs + 1
+        self.assertEqual(devs, 2)
+
+
+# test both healthcheck and normal testjobs with joblimit
+class TestJobLimit(TestCase):
+    def setUp(self):
+        self.joblimit = 2
+        self.devmax = 6
+
+        self.worker01 = Worker.objects.create(
+            hostname="worker-01", state=Worker.STATE_ONLINE, job_limit=2
+        )
+        self.user = User.objects.create(username="user-01")
+        self.device_type01 = DeviceType.objects.create(name="qemu")
+        self.devices = []
+        j = self.devmax
+        while j > 0:
+            dev = Device.objects.create(
+                hostname="qemu0%d" % j,
+                device_type=self.device_type01,
+                worker_host=self.worker01,
+                health=Device.HEALTH_GOOD,
+            )
+            dev.save()
+            self.devices.append(dev)
+            j = j - 1
+
+        self.original_health_check = Device.get_health_check
+        Device.get_health_check = _minimal_valid_job
+
+    def tearDown(self):
+        Device.get_health_check = self.original_health_check
+
+    def test_job_limit(self):
+
+        self.jobs = []
+        maxjobs = 8
+        j = maxjobs
+        while j > 0:
+            j = j - 1
+            job = TestJob.objects.create(
+                requested_device_type=self.device_type01,
+                submitter=self.user,
+                definition=_minimal_valid_job(None),
+            )
+            self.jobs.append(job)
+
+        j = self.devmax
+        while j > 0:
+            j = j - 2
+            djobs = schedule(DummyLogger())
+            self.assertEqual(len(djobs), self.joblimit)
+            for job in TestJob.objects.filter(
+                state__in=[TestJob.STATE_SCHEDULING, TestJob.STATE_SCHEDULED]
+            ):
+                self.assertTrue(job.health_check)
+                job.go_state_finished(TestJob.HEALTH_COMPLETE)
+                job.actual_device.health = Device.HEALTH_GOOD
+                job.actual_device.state = Device.STATE_IDLE
+                job.actual_device.save()
+                job.save()
+
+        j = maxjobs
+        while j > 0:
+            j = j - 2
+            djobs = schedule(DummyLogger())
+            self.assertEqual(len(djobs), self.joblimit)
+            devs = 0
+            for device in self.devices:
+                device.refresh_from_db()
+                if device.state != Device.STATE_IDLE:
+                    devs = devs + 1
+            self.assertEqual(devs, self.joblimit)
+
+            for job in TestJob.objects.filter(
+                state__in=[TestJob.STATE_SCHEDULING, TestJob.STATE_SCHEDULED]
+            ):
+                self.assertFalse(job.health_check)
+                job.go_state_finished(TestJob.HEALTH_COMPLETE)
+                job.actual_device.health = Device.HEALTH_GOOD
+                job.actual_device.state = Device.STATE_IDLE
+                job.actual_device.save()
+                job.save()
