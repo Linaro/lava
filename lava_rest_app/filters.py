@@ -189,7 +189,7 @@ class DeviceTypeFilter(filters.FilterSet):
     processor = RelatedFilter(
         ProcessorFamilyFilter, name="processor", queryset=ProcessorFamily.objects.all()
     )
-    alias = RelatedFilter(AliasFilter, name="alias", queryset=Alias.objects.all())
+    alias = RelatedFilter(AliasFilter, name="aliases", queryset=Alias.objects.all())
     bits = RelatedFilter(BitWidthFilter, name="bits", queryset=BitWidth.objects.all())
     cores = RelatedFilter(CoreFilter, name="cores", queryset=Core.objects.all())
     health_denominator = CharFilter(method="filter_health_denominator")
