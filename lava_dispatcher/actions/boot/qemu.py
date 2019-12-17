@@ -111,7 +111,6 @@ class CallQemuAction(Action):
     def __init__(self):
         super().__init__()
         self.sub_command = []
-        self.substitutions = {}
         self.commands = []
         self.methods = None
         self.nfsrootfs = None
@@ -202,19 +201,7 @@ class CallQemuAction(Action):
             if not image_arg or not action_arg:
                 self.errors = "Missing image_arg for %s. " % label
                 continue
-            self.substitutions["{%s}" % label] = action_arg
             self.commands.append(image_arg)
-        self.substitutions["{NFS_SERVER_IP}"] = dispatcher_ip(
-            self.job.parameters["dispatcher"]
-        )
-        self.sub_command.extend(substitute(self.commands, self.substitutions))
-        if not self.sub_command:
-            self.errors = "No QEMU command to execute"
-        uefi_dir = self.get_namespace_data(
-            action="deployimages", label="image", key="uefi_dir"
-        )
-        if uefi_dir:
-            self.sub_command.extend(["-L", uefi_dir, "-monitor", "none"])
 
         # Check for enable-kvm command line option in device configuration.
         if method not in self.job.device["actions"]["boot"]["methods"]:
@@ -242,6 +229,29 @@ class CallQemuAction(Action):
         """
         if connection:
             connection.finalise()
+
+        # Generate the sub command
+        substitutions = {}
+        for label in self.get_namespace_keys("download-action"):
+            if label in ["offset", "available_loops", "uefi", "nfsrootfs"]:
+                continue
+            image_arg = self.get_namespace_data(
+                action="download-action", label=label, key="image_arg"
+            )
+            action_arg = self.get_namespace_data(
+                action="download-action", label=label, key="file"
+            )
+            substitutions["{%s}" % label] = action_arg
+        substitutions["{NFS_SERVER_IP}"] = dispatcher_ip(
+            self.job.parameters["dispatcher"]
+        )
+        self.sub_command.extend(substitute(self.commands, substitutions))
+        uefi_dir = self.get_namespace_data(
+            action="deployimages", label="image", key="uefi_dir"
+        )
+        if uefi_dir:
+            self.sub_command.extend(["-L", uefi_dir, "-monitor", "none"])
+
         # initialise the first Connection object, a command line shell into the running QEMU.
         self.results = self.qemu_data
         guest = self.get_namespace_data(
@@ -253,13 +263,13 @@ class CallQemuAction(Action):
             root_dir = self.get_namespace_data(
                 action="extract-rootfs", label="file", key="nfsroot"
             )
-            self.substitutions["{NFSROOTFS}"] = root_dir
+            substitutions["{NFSROOTFS}"] = root_dir
             params = self.methods["qemu-nfs"]["parameters"]["append"]
             # console=ttyAMA0 root=/dev/nfs nfsroot=10.3.2.1:/var/lib/lava/dispatcher/tmp/dirname,tcp,hard,intr ip=dhcp
             append = [
                 "console=%s" % params["console"],
                 "root=/dev/nfs",
-                "%s rw" % substitute([params["nfsrootargs"]], self.substitutions)[0],
+                "%s rw" % substitute([params["nfsrootargs"]], substitutions)[0],
                 "%s" % params["ipargs"],
             ]
             self.sub_command.append("--append")
