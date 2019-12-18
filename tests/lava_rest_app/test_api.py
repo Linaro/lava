@@ -42,7 +42,7 @@ from lava_scheduler_app.models import (
 from lava_results_app import models as result_models
 from linaro_django_xmlrpc.models import AuthToken
 
-from . import versions
+from lava_rest_app import versions
 
 
 EXAMPLE_JOB = """
