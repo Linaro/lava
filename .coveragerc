@@ -3,6 +3,7 @@ source =
     lava
     lava_common
     lava_dispatcher
+    lava_dispatcher_host
     lava_results_app
     lava_rest_app
     lava_scheduler_app
