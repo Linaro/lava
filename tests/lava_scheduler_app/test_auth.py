@@ -32,7 +32,7 @@ from lava_scheduler_app.models import (
     GroupDeviceTypePermission,
     GroupDevicePermission,
 )
-from lava_scheduler_app.tests.test_submission import TestCaseWithFactory
+from tests.lava_scheduler_app.test_submission import TestCaseWithFactory
 
 User = get_user_model()
 

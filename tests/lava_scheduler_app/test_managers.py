@@ -33,7 +33,7 @@ from lava_scheduler_app.models import (
     TestJob,
     Device,
 )
-from lava_scheduler_app.tests.test_submission import TestCaseWithFactory
+from tests.lava_scheduler_app.test_submission import TestCaseWithFactory
 
 User = get_user_model()
 

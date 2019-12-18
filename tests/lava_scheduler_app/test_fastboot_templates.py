@@ -2,7 +2,7 @@ import os
 
 from lava_common.compat import yaml_safe_load
 from lava_scheduler_app.schema import validate_device
-from lava_scheduler_app.tests.test_base_templates import (
+from tests.lava_scheduler_app.test_base_templates import (
     BaseTemplate,
     prepare_jinja_template,
 )

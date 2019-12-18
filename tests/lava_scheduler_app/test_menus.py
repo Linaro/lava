@@ -1,8 +1,8 @@
 import os
 
 from lava_common.compat import yaml_safe_load
-from lava_scheduler_app.tests.test_pipeline import YamlFactory
-from lava_scheduler_app.tests.test_submission import TestCaseWithFactory
+from tests.lava_scheduler_app.test_pipeline import YamlFactory
+from tests.lava_scheduler_app.test_submission import TestCaseWithFactory
 
 
 class YamlMenuFactory(YamlFactory):

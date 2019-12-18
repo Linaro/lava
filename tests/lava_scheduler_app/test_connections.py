@@ -6,8 +6,8 @@ from lava_scheduler_app.models import (
     DevicesUnavailableException,
     SubmissionException,
 )
-from lava_scheduler_app.tests.test_pipeline import YamlFactory
-from lava_scheduler_app.tests.test_submission import TestCaseWithFactory
+from tests.lava_scheduler_app.test_pipeline import YamlFactory
+from tests.lava_scheduler_app.test_submission import TestCaseWithFactory
 
 
 # TestCaseWithFactory cannot help causing too-many-ancestors, so ignore

@@ -8,12 +8,12 @@ from lava_scheduler_app import environment
 @pytest.fixture(autouse=True)
 def update_settings(settings, monkeypatch):
     base = pathlib.Path(__file__).parent.parent.parent
-    settings.DEVICES_PATH = str(base / "lava_scheduler_app" / "tests" / "devices")
+    settings.DEVICES_PATH = str(base / "tests" / "lava_scheduler_app" / "devices")
     settings.DEVICE_TYPES_PATH = str(
         base / "etc" / "dispatcher-config" / "device-types"
     )
     settings.HEALTH_CHECKS_PATH = str(
-        base / "lava_scheduler_app" / "tests" / "health-checks"
+        base / "tests" / "lava_scheduler_app" / "health-checks"
     )
 
     def devices():

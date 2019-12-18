@@ -4,8 +4,8 @@ from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_scheduler_app.utils import split_multinode_yaml
 from lava_scheduler_app.dbutils import match_vlan_interface
 from lava_scheduler_app.models import TestJob, Tag
-from lava_scheduler_app.tests.test_submission import TestCaseWithFactory
-from lava_scheduler_app.tests.test_pipeline import YamlFactory
+from tests.lava_scheduler_app.test_submission import TestCaseWithFactory
+from tests.lava_scheduler_app.test_pipeline import YamlFactory
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.protocols.vland import VlandProtocol

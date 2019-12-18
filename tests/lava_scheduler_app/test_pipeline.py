@@ -15,7 +15,7 @@ from lava_scheduler_app.models import (
 from lava_scheduler_app.dbutils import match_vlan_interface
 from django.contrib.auth.models import User
 from lava_scheduler_app.utils import split_multinode_yaml
-from lava_scheduler_app.tests.test_submission import ModelFactory, TestCaseWithFactory
+from tests.lava_scheduler_app.test_submission import ModelFactory, TestCaseWithFactory
 from lava_scheduler_app.schema import (
     validate_submission,
     validate_device,
@@ -489,7 +489,7 @@ class TestExtendsSubmit(TestCaseWithFactory):
     def setUp(self):
         super().setUp()
         Device.HEALTH_CHECK_PATH = os.path.join(
-            os.getcwd(), "lava_scheduler_app", "tests", "health-checks"
+            os.getcwd(), "tests", "lava_scheduler_app", "health-checks"
         )
         self.factory = YamlFactory()
         self.device_type = self.factory.make_device_type(name="juno-r2")

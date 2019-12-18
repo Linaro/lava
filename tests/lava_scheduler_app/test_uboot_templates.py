@@ -7,7 +7,7 @@ from lava_dispatcher.parser import JobParser
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.action import Timeout
 from tests.lava_dispatcher.utils import DummyLogger, infrastructure_error
-from lava_scheduler_app.tests.test_base_templates import (
+from tests.lava_scheduler_app.test_base_templates import (
     BaseTemplate,
     prepare_jinja_template,
 )
