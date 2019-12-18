@@ -739,12 +739,14 @@ ok 2 - bar
 
         class MyPath(pathlib.PosixPath):
             def __new__(cls, path, *args, **kwargs):
-                if path in ["example.com", "example.com/../", "worker.example.com"]:
-                    return super().__new__(cls, path, *args, **kwargs)
-                elif path == settings.GLOBAL_SETTINGS_PATH:
-                    return super().__new__(cls, str(tmpdir), *args, **kwargs)
-                elif path == settings.DISPATCHER_CONFIG_PATH:
-                    return super().__new__(cls, str(tmpdir), *args, **kwargs)
+                if path == "%s/env.yaml" % settings.GLOBAL_SETTINGS_PATH:
+                    return super().__new__(
+                        cls, str(tmpdir / "env.yaml"), *args, **kwargs
+                    )
+                elif path == "%s/worker1/env.yaml" % settings.DISPATCHER_CONFIG_PATH:
+                    return super().__new__(
+                        cls, str(tmpdir / "env.yaml"), *args, **kwargs
+                    )
                 else:
                     assert 0  # nosec
 
@@ -779,13 +781,19 @@ ok 2 - bar
 
         class MyPath(pathlib.PosixPath):
             def __new__(cls, path, *args, **kwargs):
-                if path == "example.com":
-                    return super().__new__(cls, path, *args, **kwargs)
-                elif path == settings.DISPATCHER_CONFIG_PATH:
-                    return super().__new__(cls, str(tmpdir), *args, **kwargs)
-                elif path == "%s/example.com" % settings.DISPATCHER_CONFIG_PATH:
+                if (
+                    path
+                    == "%s/worker1/dispatcher.yaml" % settings.DISPATCHER_CONFIG_PATH
+                ):
                     return super().__new__(
-                        cls, str(tmpdir / "example.com"), *args, **kwargs
+                        cls,
+                        str(tmpdir / "worker1" / "dispatcher.yaml"),
+                        *args,
+                        **kwargs
+                    )
+                elif path == "%s/worker1.yaml" % settings.GLOBAL_SETTINGS_PATH:
+                    return super().__new__(
+                        cls, str(tmpdir / "worker1.yaml"), *args, **kwargs
                     )
                 else:
                     assert 0  # nosec
@@ -851,6 +859,13 @@ ok 2 - bar
         )
         assert response.status_code == 403  # nosec
 
+        # No env parameter
+        response = self.adminclient.post(
+            reverse("api-root", args=[self.version])
+            + "workers/%s/env/" % self.worker1.hostname
+        )
+        assert response.status_code == 400  # nosec
+
     def test_workers_set_config(self, monkeypatch, tmpdir):
         class MyPath(pathlib.PosixPath):
             def __new__(cls, path, *args, **kwargs):
@@ -887,6 +902,13 @@ ok 2 - bar
             {"config": "hello"},
         )
         assert response.status_code == 403  # nosec
+
+        # No config parameter
+        response = self.adminclient.post(
+            reverse("api-root", args=[self.version])
+            + "workers/%s/config/" % self.worker1.hostname
+        )
+        assert response.status_code == 400  # nosec
 
     def test_aliases_list(self):
         data = self.hit(

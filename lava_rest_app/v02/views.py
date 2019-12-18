@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-import contextlib
 import csv
 import io
 import os
@@ -296,117 +295,114 @@ class DeviceViewSet(base_views.DeviceViewSet):
 
 
 class WorkerViewSet(base_views.WorkerViewSet, viewsets.ModelViewSet):
-    lookup_value_regex = r"[\w0-9.]+"
+    lookup_value_regex = r"[\_\w0-9.-]+"
     serializer_class = serializers.WorkerSerializer
     filter_class = filters.WorkerFilter
     permission_classes = [DjangoModelPermissionsOrAnonReadOnly]
 
+    def get_serializer_class(self):
+        if self.action == "env":
+            return serializers.EnvironmentSerializer
+        if self.action == "config":
+            return serializers.ConfigSerializer
+        else:
+            return serializers.WorkerSerializer
+
+    def _get_file(self, request, path, alternate_path):
+        try:
+            filename = path.name
+            data = (path).read_text(encoding="utf-8")
+        except OSError:
+            try:
+                filename = alternate_path.name
+                data = (alternate_path).read_text(encoding="utf-8")
+            except OSError:
+                raise ParseError(
+                    "Worker '%s' does not have '%s' file"
+                    % (self.get_object().hostname, filename)
+                )
+
+        response = HttpResponse(data.encode("utf-8"), content_type="application/yaml")
+        response["Content-Disposition"] = "attachment; filename=%s" % filename
+        return response
+
+    def _set_file(self, request, path, content):
+        try:
+            filename = path.name
+            path.parent.mkdir(mode=0o755, parents=True, exist_ok=True)
+            path.write_text(content, encoding="utf-8")
+            return Response(
+                {"message": "content successfully updated"}, status=status.HTTP_200_OK
+            )
+        except OSError as e:
+            raise ParseError(
+                "Error updating '%s' for worker %s: %s"
+                % (filename, self.get_object().hostname, str(e))
+            )
+
     @detail_route(methods=["get", "post"], suffix="env")
     def env(self, request, **kwargs):
+        filename = "env.yaml"
         if request.method == "GET":
-            base = pathlib.Path(settings.GLOBAL_SETTINGS_PATH)
-            dispatcher_config = pathlib.Path(settings.DISPATCHER_CONFIG_PATH)
-            with contextlib.suppress(OSError):
-                data = (
-                    dispatcher_config / self.get_object().hostname / "env.yaml"
-                ).read_text(encoding="utf-8")
-                response = HttpResponse(
-                    data.encode("utf-8"), content_type="application/yaml"
+            new_env_path = pathlib.Path(
+                "%s/%s/%s"
+                % (
+                    settings.DISPATCHER_CONFIG_PATH,
+                    self.get_object().hostname,
+                    filename,
                 )
-                response["Content-Disposition"] = "attachment; filename=env.yaml"
-                return response
-
-            with contextlib.suppress(OSError):
-                data = (base / "env.yaml").read_text(encoding="utf-8")
-                response = HttpResponse(
-                    data.encode("utf-8"), content_type="application/yaml"
-                )
-                response["Content-Disposition"] = "attachment; filename=env.yaml"
-                return response
-
-            raise ParseError(
-                "Worker '%s' does not have environment data"
-                % self.get_object().hostname
             )
+            old_env_path = pathlib.Path(
+                "%s/%s" % (settings.GLOBAL_SETTINGS_PATH, filename)
+            )
+            return self._get_file(request, new_env_path, old_env_path)
 
         elif request.method == "POST":
             if not request.user.has_perm("lava_scheduler_app.change_worker"):
                 raise PermissionDenied(
                     "Insufficient permissions. Please contact system administrator."
                 )
-
             path = (
                 pathlib.Path(settings.DISPATCHER_CONFIG_PATH)
                 / self.get_object().hostname
-                / "env.yaml"
+                / filename
             )
-            env = request.data.get("env", None)
-            try:
-                path.parent.mkdir(mode=0o755, parents=True, exist_ok=True)
-                path.write_text(env, encoding="utf-8")
-                return Response(
-                    {"message": "env successfully updated"}, status=status.HTTP_200_OK
-                )
-            except OSError as e:
-                raise ParseError(
-                    "Error updating environment for worker %s: %s"
-                    % (self.get_object().hostname, str(e))
-                )
+            serializer = serializers.EnvironmentSerializer(data=request.data)
+            if serializer.is_valid():
+                return self._set_file(request, path, serializer.validated_data["env"])
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @detail_route(methods=["get", "post"], suffix="config")
     def config(self, request, **kwargs):
         if request.method == "GET":
-            base = pathlib.Path(settings.DISPATCHER_CONFIG_PATH)
-            with contextlib.suppress(OSError):
-                data = (
-                    base / self.get_object().hostname / "dispatcher.yaml"
-                ).read_text(encoding="utf-8")
-                response = HttpResponse(
-                    data.encode("utf-8"), content_type="application/yaml"
-                )
-                response["Content-Disposition"] = "attachment; filename=dispatcher.yaml"
-                return response
-
-            with contextlib.suppress(OSError):
-                data = (base / ("%s.yaml" % self.get_object().hostname)).read_text(
-                    encoding="utf-8"
-                )
-                response = HttpResponse(
-                    data.encode("utf-8"), content_type="application/yaml"
-                )
-                response["Content-Disposition"] = (
-                    "attachment; filename=%s.yaml" % self.get_object().hostname
-                )
-                return response
-
-            raise ParseError(
-                "Worker '%s' does not have a configuration" % self.get_object().hostname
+            new_config_path = pathlib.Path(
+                "%s/%s/dispatcher.yaml"
+                % (settings.DISPATCHER_CONFIG_PATH, self.get_object().hostname)
             )
+            old_config_path = pathlib.Path(
+                "%s/%s.yaml"
+                % (settings.GLOBAL_SETTINGS_PATH, self.get_object().hostname)
+            )
+            return self._get_file(request, new_config_path, old_config_path)
 
         elif request.method == "POST":
             if not request.user.has_perm("lava_scheduler_app.change_worker"):
                 raise PermissionDenied(
                     "Insufficient permissions. Please contact system administrator."
                 )
-
             path = (
                 pathlib.Path(settings.DISPATCHER_CONFIG_PATH)
                 / self.get_object().hostname
                 / "dispatcher.yaml"
             )
-            config = request.data.get("config", None)
-            try:
-                path.parent.mkdir(mode=0o755, parents=True, exist_ok=True)
-                path.write_text(config, encoding="utf-8")
-                return Response(
-                    {"message": "config successfully updated"},
-                    status=status.HTTP_200_OK,
+            serializer = serializers.ConfigSerializer(data=request.data)
+            if serializer.is_valid():
+                return self._set_file(
+                    request, path, serializer.validated_data["config"]
                 )
-            except OSError as e:
-                raise ParseError(
-                    "Error updating configuration for worker %s: %s"
-                    % (self.get_object().hostname, str(e))
-                )
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class AliasViewSet(viewsets.ModelViewSet):

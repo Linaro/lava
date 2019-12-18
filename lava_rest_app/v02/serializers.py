@@ -70,6 +70,14 @@ class DeviceSerializer(base_serializers.DeviceSerializer):
     pass
 
 
+class ConfigSerializer(serializers.Serializer):
+    config = serializers.CharField(style={"base_template": "textarea.html"})
+
+
+class EnvironmentSerializer(serializers.Serializer):
+    env = serializers.CharField(style={"base_template": "textarea.html"})
+
+
 class WorkerSerializer(base_serializers.WorkerSerializer):
     state = serializers.CharField(source="get_state_display", read_only=True)
     health = serializers.CharField(source="get_health_display", read_only=True)
