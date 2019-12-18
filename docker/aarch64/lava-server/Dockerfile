@@ -1,10 +1,7 @@
 ARG base_image=hub.lavasoftware.org/lava/lava/aarch64/lava-server-base
 FROM $base_image
 
-EXPOSE 80
-EXPOSE 5500
-EXPOSE 5555
-EXPOSE 5556
+EXPOSE 80 3079 5500 5555 5556
 
 RUN apt -q update
 
