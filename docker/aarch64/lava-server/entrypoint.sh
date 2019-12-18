@@ -8,6 +8,7 @@ set -e
 # Variables #
 #############
 GUNICORN_PID=0
+LAVA_COORDINATOR=0
 LAVA_LOGS_PID=0
 LAVA_MASTER_PID=0
 LAVA_PUBLISHER_PID=0
@@ -19,6 +20,8 @@ LAVA_PUBLISHER_PID=0
 handler() {
     tail_pid="${!}"
     echo "Killing:"
+    echo "* lava-coordinator \$$LAVA_COORDINATOR_PID"
+    [ "$LAVA_COORDINATOR_PID" != "0" ] && kill $LAVA_COORDINATOR_PID
     echo "* lava-logs \$$LAVA_LOGS_PID"
     [ "$LAVA_LOGS_PID" != "0" ] && kill $LAVA_LOGS_PID
     echo "* lava-master \$$LAVA_MASTER_PID"
@@ -31,6 +34,8 @@ handler() {
     apache2ctl stop
 
     echo "Waiting for:"
+    echo "* lava-coordinator"
+    [ "$LAVA_COORDINATOR_PID" != "0" ] && wait $LAVA_COORDINATOR_PID
     echo "* lava-logs"
     [ "$LAVA_LOGS_PID" != "0" ] && wait $LAVA_LOGS_PID
     echo "* lava-master"
@@ -78,6 +83,19 @@ start_apache2() {
         exec apache2ctl -DFOREGROUND
     else
         apache2ctl -DFOREGROUND &
+    fi
+}
+
+
+start_lava_coordinator() {
+    LOGLEVEL="DEBUG"
+    LOGFILE="/var/log/lava-coordinator.log"
+    [ -e /etc/default/lava-coordinator ] && . /etc/default/lava-coordinator
+    if [ "$CAN_EXEC" = "1" ]; then
+        exec /usr/bin/lava-coordinator --logfile - --loglevel "$LOGLEVEL"
+    else
+        /usr/bin/lava-coordinator --logfile "$LOGFILE" --loglevel "$LOGLEVEL" &
+        LAVA_COORDINATOR_PID=$!
     fi
 }
 
@@ -204,8 +222,9 @@ wait_migration() {
 trap 'handler' INT QUIT TERM
 
 # List of services to start
-SERVICES=${SERVICES-"apache2 lava-logs lava-master lava-publisher gunicorn postgresql"}
+SERVICES=${SERVICES-"apache2 lava-coordinator lava-logs lava-master lava-publisher gunicorn postgresql"}
 echo "$SERVICES" | grep -q apache2 && APACHE2=1 || APACHE2=0
+echo "$SERVICES" | grep -q lava-coordinator && LAVA_COORDINATOR=1 || LAVA_COORDINATOR=0
 echo "$SERVICES" | grep -q lava-logs && LAVA_LOGS=1 || LAVA_LOGS=0
 echo "$SERVICES" | grep -q lava-master && LAVA_MASTER=1 || LAVA_MASTER=0
 echo "$SERVICES" | grep -q lava-publisher && LAVA_PUBLISHER=1 || LAVA_PUBLISHER=0
@@ -281,6 +300,14 @@ then
     echo
 fi
 
+if [ "$LAVA_COORDINATOR" = "1" ]
+then
+    echo "Starting lava-coordinator"
+    start_lava_coordinator
+    echo "done"
+    echo
+fi
+
 if [ "$LAVA_LOGS" = "1" ]
 then
     echo "Checking file permissions"
@@ -316,5 +343,5 @@ fi
 cd /var/log/lava-server
 while true
 do
-  tail -F django.log gunicorn.log lava-logs.log lava-master.log lava-publisher.log & wait ${!}
+  tail -F django.log gunicorn.log lava-logs.log lava-master.log lava-publisher.log /var/log/lava-coordinator.log & wait ${!}
 done
