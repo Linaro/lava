@@ -278,14 +278,14 @@ class TestCommand(StdoutTestCase):
 
     def test_invalid(self):
         fake = FakeAction()
-        command = "./no-script"
+        command = "/bin/false"
         log = fake.run_command(command.split(" "))
         self.assertFalse(log)
         self.assertNotEqual([], fake.errors)
 
     def test_allow_silent_invalid(self):
         fake = FakeAction()
-        command = "./no-script"
+        command = "/bin/false"
         log = fake.run_command(command.split(" "), allow_silent=True)
         self.assertFalse(log)
         self.assertNotEqual([], fake.errors)

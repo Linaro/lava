@@ -170,6 +170,8 @@ def start_job(job_id, definition, device_definition, zmq_config,
         env = create_environ(env_str)
         lava_run = os.path.join(os.path.dirname(__file__), "lava-run")
         args = [
+            # Run lava-run under nice so every sub-commands will be niced
+            "nice",
             lava_run,
             "--device=%s" % os.path.join(base_dir, "device.yaml"),
             "--dispatcher=%s" % os.path.join(base_dir, "dispatcher.yaml"),

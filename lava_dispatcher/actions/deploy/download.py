@@ -657,7 +657,7 @@ class ScpDownloadAction(DownloadHandler):
         super().validate()
         try:
             size = subprocess.check_output(  # nosec - internal.
-                ["nice", "ssh", self.url.netloc, "stat", "-c", "%s", self.url.path],
+                ["ssh", self.url.netloc, "stat", "-c", "%s", self.url.path],
                 stderr=subprocess.STDOUT,
             )
             self.size = int(size)
@@ -668,8 +668,7 @@ class ScpDownloadAction(DownloadHandler):
         process = None
         try:
             process = subprocess.Popen(  # nosec - internal.
-                ["nice", "ssh", self.url.netloc, "cat", self.url.path],
-                stdout=subprocess.PIPE,
+                ["ssh", self.url.netloc, "cat", self.url.path], stdout=subprocess.PIPE
             )
             buff = process.stdout.read(SCP_DOWNLOAD_CHUNK_SIZE)
             while buff:
