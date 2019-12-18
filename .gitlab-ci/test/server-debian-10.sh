@@ -12,8 +12,8 @@ then
   apt-get install --no-install-recommends --yes $DEPS
 else
   set -x
-  PYTHONPATH=. pytest-3 --cache-clear -W ignore::DeprecationWarning -v --junitxml=common.xml lava_common/tests
+  PYTHONPATH=. pytest-3 --cache-clear -W ignore::DeprecationWarning -v --junitxml=common.xml tests/lava_common
   PYTHONPATH=. pytest-3 --cache-clear -W ignore::DeprecationWarning \
   --ds lava_server.settings.development -v --junitxml=server.xml \
-  lava_scheduler_app/tests lava_results_app/tests linaro_django_xmlrpc/tests.py lava_rest_app/tests.py lava_server/tests.py
+  tests/lava_scheduler_app tests/lava_results_app tests/linaro_django_xmlrpc tests/lava_rest_app tests/lava_server
 fi
