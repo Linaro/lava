@@ -7,7 +7,7 @@ from django.urls.exceptions import NoReverseMatch
 from django.urls import reverse
 
 from lava_common.compat import yaml_dump, yaml_load, yaml_safe_load
-from lava_results_app.tests.test_names import TestCaseWithFactory
+from tests.lava_results_app.test_names import TestCaseWithFactory
 from lava_scheduler_app.models import TestJob, Device
 from lava_scheduler_app.utils import mkdir
 from lava_results_app.dbutils import (
