@@ -304,10 +304,11 @@ class WorkerViewSet(base_views.WorkerViewSet, viewsets.ModelViewSet):
     @detail_route(methods=["get", "post"], suffix="env")
     def env(self, request, **kwargs):
         if request.method == "GET":
-            base = pathlib.Path("/etc/lava-server/")
+            base = pathlib.Path(settings.GLOBAL_SETTINGS_PATH)
+            dispatcher_config = pathlib.Path(settings.DISPATCHER_CONFIG_PATH)
             with contextlib.suppress(OSError):
                 data = (
-                    base / "dispatcher.d" / self.get_object().hostname / "env.yaml"
+                    dispatcher_config / self.get_object().hostname / "env.yaml"
                 ).read_text(encoding="utf-8")
                 response = HttpResponse(
                     data.encode("utf-8"), content_type="application/yaml"
@@ -335,7 +336,7 @@ class WorkerViewSet(base_views.WorkerViewSet, viewsets.ModelViewSet):
                 )
 
             path = (
-                pathlib.Path("/etc/lava-server/dispatcher.d")
+                pathlib.Path(settings.DISPATCHER_CONFIG_PATH)
                 / self.get_object().hostname
                 / "env.yaml"
             )
@@ -355,7 +356,7 @@ class WorkerViewSet(base_views.WorkerViewSet, viewsets.ModelViewSet):
     @detail_route(methods=["get", "post"], suffix="config")
     def config(self, request, **kwargs):
         if request.method == "GET":
-            base = pathlib.Path("/etc/lava-server/dispatcher.d")
+            base = pathlib.Path(settings.DISPATCHER_CONFIG_PATH)
             with contextlib.suppress(OSError):
                 data = (
                     base / self.get_object().hostname / "dispatcher.yaml"
@@ -389,7 +390,7 @@ class WorkerViewSet(base_views.WorkerViewSet, viewsets.ModelViewSet):
                 )
 
             path = (
-                pathlib.Path("/etc/lava-server/dispatcher.d")
+                pathlib.Path(settings.DISPATCHER_CONFIG_PATH)
                 / self.get_object().hostname
                 / "dispatcher.yaml"
             )

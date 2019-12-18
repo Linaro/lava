@@ -69,6 +69,8 @@ ARCHIVE_ROOT = os.path.join(PROJECT_STATE_DIR, "archive")
 # Example: "/home/media/static.lawrence.com/"
 STATIC_ROOT = os.path.join(PROJECT_STATE_DIR, "static")
 
+GLOBAL_SETTINGS_PATH = os.path.join(PROJECT_SRC_DIR, "etc/lava-server")
+DISPATCHER_CONFIG_PATH = os.path.join(PROJECT_SRC_DIR, "etc/lava-server/dispatcher.d")
 # Use device configuration files from source tree
 DEVICES_PATH = os.path.join(PROJECT_SRC_DIR, "etc/dispatcher-config/devices")
 DEVICE_TYPES_PATH = os.path.join(PROJECT_SRC_DIR, "etc/dispatcher-config/device-types")

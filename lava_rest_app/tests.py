@@ -741,7 +741,9 @@ ok 2 - bar
             def __new__(cls, path, *args, **kwargs):
                 if path in ["example.com", "example.com/../", "worker.example.com"]:
                     return super().__new__(cls, path, *args, **kwargs)
-                elif path == "/etc/lava-server/":
+                elif path == settings.GLOBAL_SETTINGS_PATH:
+                    return super().__new__(cls, str(tmpdir), *args, **kwargs)
+                elif path == settings.DISPATCHER_CONFIG_PATH:
                     return super().__new__(cls, str(tmpdir), *args, **kwargs)
                 else:
                     assert 0  # nosec
@@ -779,9 +781,9 @@ ok 2 - bar
             def __new__(cls, path, *args, **kwargs):
                 if path == "example.com":
                     return super().__new__(cls, path, *args, **kwargs)
-                elif path == "/etc/lava-server/dispatcher.d":
+                elif path == settings.DISPATCHER_CONFIG_PATH:
                     return super().__new__(cls, str(tmpdir), *args, **kwargs)
-                elif path == "/etc/lava-server/dispatcher.d/example.com":
+                elif path == "%s/example.com" % settings.DISPATCHER_CONFIG_PATH:
                     return super().__new__(
                         cls, str(tmpdir / "example.com"), *args, **kwargs
                     )
@@ -818,7 +820,7 @@ ok 2 - bar
             def __new__(cls, path, *args, **kwargs):
                 if path == "example.com":
                     return super().__new__(cls, path, *args, **kwargs)
-                elif path == "/etc/lava-server/dispatcher.d":
+                elif path == settings.DISPATCHER_CONFIG_PATH:
                     return super().__new__(cls, str(tmpdir), *args, **kwargs)
                 else:
                     assert 0  # nosec
@@ -854,7 +856,7 @@ ok 2 - bar
             def __new__(cls, path, *args, **kwargs):
                 if path == "example.com":
                     return super().__new__(cls, path, *args, **kwargs)
-                elif path == "/etc/lava-server/dispatcher.d":
+                elif path == settings.DISPATCHER_CONFIG_PATH:
                     return super().__new__(cls, str(tmpdir), *args, **kwargs)
                 else:
                     assert 0  # nosec
