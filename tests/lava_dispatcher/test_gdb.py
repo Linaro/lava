@@ -21,7 +21,7 @@
 import unittest
 
 from lava_common.exceptions import InfrastructureError, JobError
-from lava_dispatcher.tests.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.utils.shell import which
 
 

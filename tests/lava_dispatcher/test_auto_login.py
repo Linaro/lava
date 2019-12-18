@@ -2,7 +2,7 @@ from lava_common.exceptions import JobError
 from lava_dispatcher.action import Pipeline
 from lava_dispatcher.actions.boot import AutoLoginAction
 from lava_dispatcher.job import Job
-from lava_dispatcher.tests.test_basic import StdoutTestCase
+from tests.lava_dispatcher.test_basic import StdoutTestCase
 
 
 class AutoLoginTestCase(StdoutTestCase):

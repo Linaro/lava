@@ -20,7 +20,7 @@
 
 
 from lava_common.exceptions import JobError
-from lava_dispatcher.tests.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 
 
 class JLinkFactory(Factory):

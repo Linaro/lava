@@ -19,8 +19,8 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 from unittest.mock import patch
-from lava_dispatcher.tests.test_basic import StdoutTestCase
-from lava_dispatcher.tests.test_uboot import UBootFactory
+from tests.lava_dispatcher.test_basic import StdoutTestCase
+from tests.lava_dispatcher.test_uboot import UBootFactory
 from lava_dispatcher.actions.boot.kexec import BootKexecAction, KexecAction
 from lava_dispatcher.actions.boot import AutoLoginAction
 from lava_dispatcher.shell import ExpectShellSession

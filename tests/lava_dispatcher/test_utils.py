@@ -24,10 +24,10 @@ import subprocess  # nosec - unit test support.
 import tempfile
 import unittest
 
-from lava_dispatcher.tests.test_uboot import UBootFactory, StdoutTestCase
+from tests.lava_dispatcher.test_uboot import UBootFactory, StdoutTestCase
 from lava_dispatcher.actions.boot.u_boot import UBootAction, UBootRetry
 from lava_dispatcher.power import ResetDevice, PDUReboot
-from lava_dispatcher.tests.utils import infrastructure_error
+from tests.lava_dispatcher.utils import infrastructure_error
 from lava_common.exceptions import InfrastructureError, JobError
 from lava_common.utils import debian_filename_version
 from lava_dispatcher.action import Action

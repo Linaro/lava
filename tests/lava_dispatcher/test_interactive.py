@@ -25,7 +25,7 @@ import time
 from lava_common.exceptions import InfrastructureError, JobError, TestError
 from lava_dispatcher.actions.test.interactive import TestInteractiveAction
 
-from lava_dispatcher.tests.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 
 # This will be monkey patched
 import lava_dispatcher.actions.deploy.docker

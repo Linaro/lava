@@ -27,7 +27,7 @@ from lava_dispatcher.parser import JobParser
 from lava_dispatcher.actions.boot.barebox import BareboxAction
 from lava_dispatcher.actions.deploy.apply_overlay import CompressRamdisk
 from lava_dispatcher.actions.deploy.tftp import TftpAction
-from lava_dispatcher.tests.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.utils.filesystem import tftpd_dir
 
 

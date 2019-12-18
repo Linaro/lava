@@ -23,8 +23,8 @@ import pexpect
 
 from lava_dispatcher.device import NewDevice, PipelineDevice
 from lava_dispatcher.parser import JobParser
-from lava_dispatcher.tests.test_basic import Factory, StdoutTestCase
-from lava_dispatcher.tests.utils import DummyLogger
+from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.utils import DummyLogger
 from lava_dispatcher.action import Pipeline
 from lava_dispatcher.actions.deploy.flasher import Flasher, FlasherAction
 from lava_dispatcher.job import Job

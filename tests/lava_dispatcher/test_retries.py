@@ -25,8 +25,8 @@ from lava_common.exceptions import JobError, LAVABug, InfrastructureError
 from lava_dispatcher.logical import RetryAction, DiagnosticAction
 from lava_dispatcher.power import FinalizeAction
 from lava_dispatcher.job import Job
-from lava_dispatcher.tests.test_basic import StdoutTestCase
-from lava_dispatcher.tests.utils import DummyLogger
+from tests.lava_dispatcher.test_basic import StdoutTestCase
+from tests.lava_dispatcher.utils import DummyLogger
 
 
 class TestAction(StdoutTestCase):

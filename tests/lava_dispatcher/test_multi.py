@@ -24,14 +24,14 @@ from unittest.mock import patch
 
 from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_common.decorators import nottest
-from lava_dispatcher.tests.test_basic import StdoutTestCase
+from tests.lava_dispatcher.test_basic import StdoutTestCase
 from lava_dispatcher.job import Job
 from lava_dispatcher.action import Pipeline, Timeout
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
-from lava_dispatcher.tests.test_uboot import UBootFactory
-from lava_dispatcher.tests.utils import DummyLogger
+from tests.lava_dispatcher.test_uboot import UBootFactory
+from tests.lava_dispatcher.utils import DummyLogger
 
 
 class TestMultiDeploy(StdoutTestCase):

@@ -23,8 +23,8 @@ import os
 import decimal
 from lava_common.compat import yaml_safe_load
 from lava_common.exceptions import TestError, JobError, LAVATimeoutError
-from lava_dispatcher.tests.test_basic import StdoutTestCase, Factory
-from lava_dispatcher.tests.test_multi import DummyLogger
+from tests.lava_dispatcher.test_basic import StdoutTestCase, Factory
+from tests.lava_dispatcher.test_multi import DummyLogger
 
 
 class FakeConnection:

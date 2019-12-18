@@ -27,8 +27,8 @@ from lava_common.compat import yaml_safe_load
 from lava_common.exceptions import JobError, InfrastructureError
 from lava_common.timeout import Timeout
 from lava_dispatcher.actions.boot.ssh import SchrootAction
-from lava_dispatcher.tests.test_basic import Factory, StdoutTestCase
-from lava_dispatcher.tests.utils import infrastructure_error
+from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.utils import infrastructure_error
 from lava_dispatcher.utils.filesystem import check_ssh_identity_file
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
 
@@ -125,7 +125,9 @@ class TestConnection(StdoutTestCase):
         )
         params = self.job.device["actions"]["deploy"]["methods"]
         identity = os.path.realpath(
-            os.path.join(__file__, "../../", params["ssh"]["identity_file"])
+            os.path.join(
+                __file__, "../../../lava_dispatcher", params["ssh"]["identity_file"]
+            )
         )
         self.assertTrue(os.path.exists(identity))
         test_command = [

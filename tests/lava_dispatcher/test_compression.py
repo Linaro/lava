@@ -22,7 +22,7 @@ import copy
 import os
 import hashlib
 from lava_common.exceptions import InfrastructureError
-from lava_dispatcher.tests.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.utils.compression import decompress_file
 from lava_dispatcher.utils.compression import decompress_command_map
 

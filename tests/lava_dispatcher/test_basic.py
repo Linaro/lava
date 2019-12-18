@@ -39,7 +39,7 @@ from lava_dispatcher.action import Pipeline, Action
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.actions.deploy.image import DeployImages
-from lava_dispatcher.tests.utils import DummyLogger
+from tests.lava_dispatcher.utils import DummyLogger
 
 
 class StdoutTestCase(unittest.TestCase):
@@ -200,8 +200,8 @@ class Factory:
                 os.path.dirname(__file__),
                 "..",
                 "..",
-                "lava_scheduler_app",
                 "tests",
+                "lava_scheduler_app",
                 "devices",
                 template,
             )

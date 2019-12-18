@@ -23,7 +23,7 @@ import unittest
 from unittest.mock import patch
 from lava_common.compat import yaml_safe_load
 from lava_dispatcher.device import NewDevice
-from lava_dispatcher.tests.utils import (
+from tests.lava_dispatcher.utils import (
     infrastructure_error,
     infrastructure_error_multi_paths,
 )
@@ -36,7 +36,7 @@ from lava_dispatcher.actions.deploy.tftp import TftpAction
 from lava_dispatcher.job import Job
 from lava_dispatcher.action import Pipeline
 from lava_common.exceptions import JobError
-from lava_dispatcher.tests.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.filesystem import tftpd_dir
 from lava_dispatcher.utils.strings import substitute

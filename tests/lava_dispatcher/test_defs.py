@@ -35,8 +35,8 @@ from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.power import FinalizeAction
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.actions.test.shell import TestShellRetry, PatternFixup
-from lava_dispatcher.tests.test_basic import Factory, StdoutTestCase
-from lava_dispatcher.tests.test_uboot import UBootFactory
+from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_uboot import UBootFactory
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.image import DeployImagesAction
 from lava_dispatcher.actions.deploy.testdef import (
@@ -49,7 +49,7 @@ from lava_dispatcher.actions.deploy.testdef import (
 from lava_dispatcher.actions.boot import BootAction
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.actions.deploy.download import DownloaderAction
-from lava_dispatcher.tests.utils import (
+from tests.lava_dispatcher.utils import (
     infrastructure_error,
     infrastructure_error_multi_paths,
 )

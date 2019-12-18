@@ -23,14 +23,14 @@ import unittest
 from unittest.mock import patch
 
 from lava_common.compat import yaml_safe_load
-from lava_dispatcher.tests.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from lava_common.exceptions import JobError
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.actions.boot import BootloaderSecondaryMedia
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.removable import MassStorage
-from lava_dispatcher.tests.utils import DummyLogger, infrastructure_error
+from tests.lava_dispatcher.utils import DummyLogger, infrastructure_error
 from lava_dispatcher.utils.strings import substitute, map_kernel_uboot
 
 

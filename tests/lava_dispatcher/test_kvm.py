@@ -31,15 +31,15 @@ from lava_common.constants import SYS_CLASS_KVM
 from lava_common.exceptions import JobError, InfrastructureError
 from lava_dispatcher.utils.filesystem import mkdtemp
 from lava_dispatcher.action import Pipeline, Action
-from lava_dispatcher.tests.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.boot.qemu import BootAction
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
-from lava_dispatcher.tests.test_messages import FakeConnection
+from tests.lava_dispatcher.test_messages import FakeConnection
 from lava_dispatcher.utils.messages import LinuxKernelMessages
-from lava_dispatcher.tests.test_defs import allow_missing_path, check_missing_path
-from lava_dispatcher.tests.utils import DummyLogger, infrastructure_error
+from tests.lava_dispatcher.test_defs import allow_missing_path, check_missing_path
+from tests.lava_dispatcher.utils import DummyLogger, infrastructure_error
 from lava_dispatcher.connections.serial import QemuSession
 
 

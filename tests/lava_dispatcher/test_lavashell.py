@@ -27,11 +27,11 @@ from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.actions.deploy.testdef import get_test_action_namespaces
-from lava_dispatcher.tests.utils import DummyLogger
+from tests.lava_dispatcher.utils import DummyLogger
 from lava_dispatcher.job import Job
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
 from lava_dispatcher.protocols.vland import VlandProtocol
-from lava_dispatcher.tests.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.actions.test.shell import TestShellRetry, TestShellAction
 
 

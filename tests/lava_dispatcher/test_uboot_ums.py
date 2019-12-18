@@ -19,8 +19,8 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import unittest
-from lava_dispatcher.tests.test_basic import Factory, StdoutTestCase
-from lava_dispatcher.tests.utils import infrastructure_error
+from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.utils import infrastructure_error
 
 
 class UBootUMSFactory(Factory):

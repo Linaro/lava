@@ -27,16 +27,16 @@ from lava_common.compat import yaml_dump, yaml_load
 from lava_common.constants import LAVA_MULTINODE_SYSTEM_TIMEOUT
 from lava_common.timeout import Timeout
 from lava_common.exceptions import TestError, JobError, InfrastructureError
-from lava_dispatcher.tests.fake_coordinator import TestCoordinator
-from lava_dispatcher.tests.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.fake_coordinator import TestCoordinator
+from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.actions.deploy.image import DeployImagesAction
 from lava_dispatcher.actions.deploy.overlay import OverlayAction, MultinodeOverlayAction
 from lava_dispatcher.actions.boot.qemu import BootQemuRetry, CallQemuAction
 from lava_dispatcher.actions.boot import BootAction
 from lava_dispatcher.actions.test.multinode import MultinodeTestAction
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
-from lava_dispatcher.tests.test_defs import allow_missing_path
-from lava_dispatcher.tests.utils import DummyLogger
+from tests.lava_dispatcher.test_defs import allow_missing_path
+from tests.lava_dispatcher.utils import DummyLogger
 
 
 class TestMultinode(StdoutTestCase):

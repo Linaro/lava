@@ -23,10 +23,10 @@ import os
 import unittest
 
 from lava_common.compat import yaml_safe_load
-from lava_dispatcher.tests.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
-from lava_dispatcher.tests.utils import DummyLogger, infrastructure_error_multi_paths
+from tests.lava_dispatcher.utils import DummyLogger, infrastructure_error_multi_paths
 from lava_dispatcher.utils.udev import allow_fs_label
 
 
@@ -47,8 +47,8 @@ class FastBootFactory(Factory):
                 os.path.dirname(__file__),
                 "..",
                 "..",
-                "lava_scheduler_app",
                 "tests",
+                "lava_scheduler_app",
                 "devices",
                 "hi6220-hikey-bl-01.jinja2",
             )
@@ -87,8 +87,8 @@ class UBootFactory(Factory):
                 os.path.dirname(__file__),
                 "..",
                 "..",
-                "lava_scheduler_app",
                 "tests",
+                "lava_scheduler_app",
                 "devices",
                 "x15-bl-01.jinja2",
             )
