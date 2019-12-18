@@ -1,8 +1,8 @@
-# Sample JOB definition for a barebox job
+# Sample JOB definition for a u-boot job
 
-device_type: beaglebone-black-barebox
+device_type: beaglebone-black
 
-job_name: barebox-pipeline
+job_name: uboot-pipeline
 timeouts:
   job:
     minutes: 15
@@ -15,7 +15,7 @@ visibility: public
 
 metadata:
   source: https://git.lavasoftware.org/lava/lava.git
-  path: lava_dispatcher/tests/sample_jobs/barebox.yaml
+  path: tests/lava_dispatcher/sample_jobs/uboot.yaml
 
 actions:
 - deploy:
@@ -33,7 +33,7 @@ actions:
       url: http://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
 
 - boot:
-   method: barebox
+   method: u-boot
    commands: nfs
    auto_login:
      login_prompt: 'login:'

@@ -44,14 +44,11 @@ recursive-include doc/v2/examples *.yaml *.txt *.py *.jinja2
 recursive-include doc/v2/_templates *.html
 recursive-include etc/dispatcher-config README
 recursive-include share/requirements *.yaml
-recursive-include lava_dispatcher/tests *.yaml *.txt
 recursive-include lava_rest_app/templates *.html
 recursive-include lava_results_app/templates *.html
-recursive-include lava_results_app/tests *.yaml
 recursive-include lava_results_app/static *.png *.js *.css *.gif
 recursive-include lava_scheduler_app/templates *.html *.txt
-recursive-include lava_scheduler_app/tests *.yaml
-recursive-include lava_scheduler_app/tests/devices *.jinja2
 recursive-include lava_scheduler_app/static *.js *.css *.gif *.png
 recursive-include lava_server *.gif *.png *.js *.css *.svg *.ico *.woff *.woff2
 recursive-include lava_server/templates *.html
+recursive-include tests/ *.py *.yaml *.txt *.jinja2

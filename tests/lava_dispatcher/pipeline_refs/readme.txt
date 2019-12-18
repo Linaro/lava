@@ -12,7 +12,7 @@ To rebuild and update a pipeline reference, use:
 
 Then use:
 
-from lava_dispatcher.tests.test_basic import pipeline_reference
+from tests.lava_dispatcher.test_basic import pipeline_reference
 
     # Check Pipeline
     description_ref = self.pipeline_reference('kexec.yaml')
@@ -37,4 +37,4 @@ Re-run the unit test and remove the line. Check that the diff for the pipeline
 reference is sane before submitting for review.
 
 For an example of a short unit test using a pipeline_reference, see:
-lava_dispatcher/tests/test_uboot.py - def test_transfer_media(self):
+tests/lava_dispatcher/test_uboot.py  - def test_transfer_media(self):
