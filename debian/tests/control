@@ -15,3 +15,6 @@ Restrictions: allow-stderr, superficial
 
 Tests: lava-dispatcher-host
 Depends: lava-dispatcher-host
+
+Tests: lava-coordinator
+Depends: lava-coordinator

@@ -148,6 +148,17 @@ Description: Linaro Automated Validation Architecture LXC Mocker
  and options that lxc provides, but just the ones that LAVA uses.
  Test jobs using LXC can then be replicated in Docker.
 
+Package: lava-coordinator
+Architecture: all
+Depends: ${misc:Depends}, lava-common, python3, python3-daemon
+Description: LAVA coordinator daemon
+ This package provides coordinator daemon to provide communication and
+ synchronisation methods for test jobs running on multiple configured devices
+ on instances of LAVA (Linaro Automated Validation Architecture).
+ .
+ One coordinator daemon can support more than one LAVA instance in a single
+ lab.
+
 Package: lava-dev
 Architecture: all
 Section: devel
