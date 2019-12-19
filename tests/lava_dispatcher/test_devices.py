@@ -99,7 +99,7 @@ class TestJobDeviceParameters(StdoutTestCase):
         self.assertIsNotNone(uboot_action)
         uboot_action.validate()
         self.assertTrue(uboot_action.valid)
-        for action in uboot_action.internal_pipeline.actions:
+        for action in uboot_action.pipeline.actions:
             if isinstance(action, BootloaderInterruptAction):
                 self.assertIn("power-on", action.job.device["commands"])
                 self.assertIn("hard_reset", action.job.device["commands"])
@@ -226,14 +226,14 @@ overrides:
         self.assertEqual(job.parameters["env_dut"], data)
         job.validate()
         boot_actions = [
-            action.internal_pipeline.actions
+            action.pipeline.actions
             for action in job.pipeline.actions
             if action.name == "uboot-action"
         ][0]
         retry = [action for action in boot_actions if action.name == "uboot-retry"][0]
         boot_env = [
             action
-            for action in retry.internal_pipeline.actions
+            for action in retry.pipeline.actions
             if action.name == "export-device-env"
         ][0]
         found = False

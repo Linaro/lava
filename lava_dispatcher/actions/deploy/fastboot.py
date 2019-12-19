@@ -90,44 +90,40 @@ class FastbootAction(DeployAction):  # pylint:disable=too-many-instance-attribut
             return
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         if self.test_needs_overlay(parameters):
-            self.internal_pipeline.add_action(OverlayAction())
+            self.pipeline.add_action(OverlayAction())
         # Check if the device has a power command such as HiKey, Dragonboard,
         # etc. against device that doesn't like Nexus, etc.
         if self.job.device.get("fastboot_via_uboot", False):
-            self.internal_pipeline.add_action(ConnectDevice())
-            self.internal_pipeline.add_action(UBootEnterFastbootAction())
+            self.pipeline.add_action(ConnectDevice())
+            self.pipeline.add_action(UBootEnterFastbootAction())
         elif self.job.device.hard_reset_command:
             self.force_prompt = True
-            self.internal_pipeline.add_action(ConnectDevice())
+            self.pipeline.add_action(ConnectDevice())
             if not is_lxc_requested(self.job):
-                self.internal_pipeline.add_action(PrePower())
-            self.internal_pipeline.add_action(ResetDevice())
+                self.pipeline.add_action(PrePower())
+            self.pipeline.add_action(ResetDevice())
         else:
-            self.internal_pipeline.add_action(EnterFastbootAction())
+            self.pipeline.add_action(EnterFastbootAction())
 
         fastboot_dir = self.mkdtemp()
         image_keys = sorted(parameters["images"].keys())
         for image in image_keys:
-            self.internal_pipeline.add_action(DownloaderAction(image, fastboot_dir))
+            self.pipeline.add_action(DownloaderAction(image, fastboot_dir))
             if parameters["images"][image].get("apply-overlay", False):
                 if self.test_needs_overlay(parameters):
                     if parameters["images"][image].get("sparse", True):
-                        self.internal_pipeline.add_action(
-                            ApplyOverlaySparseImage(image)
-                        )
+                        self.pipeline.add_action(ApplyOverlaySparseImage(image))
                     else:
-                        self.internal_pipeline.add_action(
+                        self.pipeline.add_action(
                             ApplyOverlayImage(image, use_root_partition=False)
                         )
             if self.test_needs_overlay(parameters) and self.test_needs_deployment(
                 parameters
             ):
-                self.internal_pipeline.add_action(DeployDeviceEnvironment())
-        self.internal_pipeline.add_action(FastbootFlashOrderAction())
+                self.pipeline.add_action(DeployDeviceEnvironment())
+        self.pipeline.add_action(FastbootFlashOrderAction())
 
 
 class FastbootFlashOrderAction(DeployAction):
@@ -148,28 +144,26 @@ class FastbootFlashOrderAction(DeployAction):
         self.reboot = None
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         flash_cmds_order = self.job.device["flash_cmds_order"]
         userlist = list(parameters["images"].keys())
         flash_cmds = set(userlist).difference(set(flash_cmds_order))
         flash_cmds = flash_cmds_order + list(flash_cmds)
-        self.internal_pipeline.add_action(ReadFeedback(repeat=True))
+        self.pipeline.add_action(ReadFeedback(repeat=True))
         for flash_cmd in flash_cmds:
             if flash_cmd not in parameters["images"]:
                 continue
-            self.internal_pipeline.add_action(FastbootFlashAction(cmd=flash_cmd))
+            self.pipeline.add_action(FastbootFlashAction(cmd=flash_cmd))
             self.reboot = parameters["images"][flash_cmd].get("reboot")
             if self.reboot == "fastboot-reboot":
-                self.internal_pipeline.add_action(FastbootReboot())
-                self.internal_pipeline.add_action(ReadFeedback(repeat=True))
+                self.pipeline.add_action(FastbootReboot())
+                self.pipeline.add_action(ReadFeedback(repeat=True))
             elif self.reboot == "fastboot-reboot-bootloader":
-                self.internal_pipeline.add_action(FastbootRebootBootloader())
-                self.internal_pipeline.add_action(ReadFeedback(repeat=True))
+                self.pipeline.add_action(FastbootRebootBootloader())
+                self.pipeline.add_action(ReadFeedback(repeat=True))
             elif self.reboot == "hard-reset":
-                self.internal_pipeline.add_action(PDUReboot())
-                self.internal_pipeline.add_action(ReadFeedback(repeat=True))
+                self.pipeline.add_action(PDUReboot())
+                self.pipeline.add_action(ReadFeedback(repeat=True))
 
     def validate(self):
         super().validate()

@@ -111,8 +111,8 @@ class TestAction(StdoutTestCase):
         summary = "internal retry action for unit tests"
 
         def populate(self, parameters):
-            self.internal_pipeline = Pipeline(parent=self, job=self.job)
-            self.internal_pipeline.add_action(TestAction.FakeAction(), parameters)
+            self.pipeline = Pipeline(parent=self, job=self.job)
+            self.pipeline.add_action(TestAction.FakeAction(), parameters)
 
     class CleanupRetryAction(RetryAction):
 
@@ -122,8 +122,8 @@ class TestAction(StdoutTestCase):
         summary = "internal retry action for unit tests"
 
         def populate(self, parameters):
-            self.internal_pipeline = Pipeline(parent=self, job=self.job)
-            self.internal_pipeline.add_action(TestAction.FakeAction(), parameters)
+            self.pipeline = Pipeline(parent=self, job=self.job)
+            self.pipeline.add_action(TestAction.FakeAction(), parameters)
 
         def cleanup(self, connection):
             pass
@@ -339,10 +339,8 @@ class TestTimeout(StdoutTestCase):
         summary = "fake action for unit tests"
 
         def populate(self, parameters):
-            self.internal_pipeline = Pipeline(
-                parent=self, job=self.job, parameters=parameters
-            )
-            self.internal_pipeline.add_action(TestAction.FakeAction())
+            self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+            self.pipeline.add_action(TestAction.FakeAction())
 
         def run(self, connection, max_end_time):
             if connection:
@@ -418,10 +416,8 @@ class TestTimeout(StdoutTestCase):
             self.timeout.duration = 4
 
         def populate(self, parameters):
-            self.internal_pipeline = Pipeline(
-                parent=self, job=self.job, parameters=parameters
-            )
-            self.internal_pipeline.add_action(TestAction.FakeAction())
+            self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+            self.pipeline.add_action(TestAction.FakeAction())
 
         def run(self, connection, max_end_time):
             if connection:

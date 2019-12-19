@@ -56,14 +56,12 @@ class BootDockerAction(BootAction):
     summary = "boot docker image"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
-        self.internal_pipeline.add_action(BootDockerRetry())
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.pipeline.add_action(BootDockerRetry())
         if self.has_prompts(parameters):
             if self.test_has_shell(parameters):
-                self.internal_pipeline.add_action(ExpectShellSession())
-                self.internal_pipeline.add_action(ExportDeviceEnvironment())
+                self.pipeline.add_action(ExpectShellSession())
+                self.pipeline.add_action(ExportDeviceEnvironment())
 
 
 class BootDockerRetry(RetryAction):
@@ -73,10 +71,8 @@ class BootDockerRetry(RetryAction):
     summary = "boot docker image"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
-        self.internal_pipeline.add_action(CallDockerAction())
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.pipeline.add_action(CallDockerAction())
 
 
 class CallDockerAction(Action):

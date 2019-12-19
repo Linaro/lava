@@ -97,9 +97,7 @@ class TftpAction(DeployAction):  # pylint:disable=too-many-instance-attributes
 
     def populate(self, parameters):
         self.tftp_dir = self.mkdtemp(override=tftpd_dir())
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.set_namespace_data(
             action=self.name,
             label="tftp",
@@ -110,9 +108,7 @@ class TftpAction(DeployAction):  # pylint:disable=too-many-instance-attributes
 
         for key in ["ramdisk", "kernel", "dtb", "nfsrootfs", "modules", "preseed"]:
             if key in parameters:
-                self.internal_pipeline.add_action(
-                    DownloaderAction(key, path=self.tftp_dir)
-                )
+                self.pipeline.add_action(DownloaderAction(key, path=self.tftp_dir))
                 if key == "ramdisk":
                     self.set_namespace_data(
                         action=self.name,
@@ -123,10 +119,10 @@ class TftpAction(DeployAction):  # pylint:disable=too-many-instance-attributes
                     )
 
         # TftpAction is a deployment, so once the files are in place, just do the overlay
-        self.internal_pipeline.add_action(PrepareOverlayTftp())
-        self.internal_pipeline.add_action(LxcCreateUdevRuleAction())
+        self.pipeline.add_action(PrepareOverlayTftp())
+        self.pipeline.add_action(LxcCreateUdevRuleAction())
         if self.test_needs_deployment(parameters):
-            self.internal_pipeline.add_action(DeployDeviceEnvironment())
+            self.pipeline.add_action(DeployDeviceEnvironment())
 
     def run(self, connection, max_end_time):
         # Extract the 3 last path elements. See action.mkdtemp()

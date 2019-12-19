@@ -265,17 +265,17 @@ class TestVland(StdoutTestCase):
         ][0]
         prepare = [
             action
-            for action in tftp_deploy.internal_pipeline.actions
+            for action in tftp_deploy.pipeline.actions
             if action.name == "prepare-tftp-overlay"
         ][0]
         overlay = [
             action
-            for action in prepare.internal_pipeline.actions
+            for action in prepare.pipeline.actions
             if action.name == "lava-overlay"
         ][0]
         vland = [
             action
-            for action in overlay.internal_pipeline.actions
+            for action in overlay.pipeline.actions
             if action.name == "lava-vland-overlay"
         ][0]
         self.assertTrue(os.path.exists(vland.lava_vland_test_dir))
@@ -352,17 +352,17 @@ class TestVland(StdoutTestCase):
         ][0]
         prepare = [
             action
-            for action in deploy.internal_pipeline.actions
+            for action in deploy.pipeline.actions
             if action.name == "prepare-tftp-overlay"
         ][0]
         overlay = [
             action
-            for action in prepare.internal_pipeline.actions
+            for action in prepare.pipeline.actions
             if action.name == "lava-overlay"
         ][0]
         vland_overlay = [
             action
-            for action in overlay.internal_pipeline.actions
+            for action in overlay.pipeline.actions
             if action.name == "lava-vland-overlay"
         ][0]
         vland_overlay.validate()

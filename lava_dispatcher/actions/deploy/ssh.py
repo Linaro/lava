@@ -85,9 +85,7 @@ class ScpOverlay(DeployAction):
             self.errors = "Device not configured to support serial connection."
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         tar_flags = (
             parameters["deployment_data"]["tar_flags"]
             if "tar_flags" in parameters["deployment_data"].keys()
@@ -100,10 +98,10 @@ class ScpOverlay(DeployAction):
             value=tar_flags,
             parameters=parameters,
         )
-        self.internal_pipeline.add_action(OverlayAction())
+        self.pipeline.add_action(OverlayAction())
         for item in self.items:
             if item in parameters:
-                self.internal_pipeline.add_action(
+                self.pipeline.add_action(
                     DownloaderAction(item, path=self.mkdtemp()), parameters
                 )
                 self.set_namespace_data(
@@ -114,9 +112,9 @@ class ScpOverlay(DeployAction):
                     parameters=parameters,
                 )
         # we might not have anything to download, just the overlay to push
-        self.internal_pipeline.add_action(PrepareOverlayScp())
+        self.pipeline.add_action(PrepareOverlayScp())
         # prepare the device environment settings in common data for enabling in the boot step
-        self.internal_pipeline.add_action(DeployDeviceEnvironment())
+        self.pipeline.add_action(DeployDeviceEnvironment())
 
 
 class PrepareOverlayScp(Action):
@@ -166,13 +164,11 @@ class PrepareOverlayScp(Action):
         )
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
-        self.internal_pipeline.add_action(
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.pipeline.add_action(
             ExtractRootfs()
         )  # idempotent, checks for nfsrootfs parameter
-        self.internal_pipeline.add_action(
+        self.pipeline.add_action(
             ExtractModules()
         )  # idempotent, checks for a modules parameter
 

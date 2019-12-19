@@ -87,10 +87,8 @@ class TestShellRetry(RetryAction):
     summary = "Retry support for Lava Test Shell"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
-        self.internal_pipeline.add_action(TestShellAction())
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.pipeline.add_action(TestShellAction())
 
 
 # FIXME: move to utils and call inside the overlay

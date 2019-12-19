@@ -72,12 +72,12 @@ class TestConnection(StdoutTestCase):
         ][0]
         prepare = [
             action
-            for action in overlay.internal_pipeline.actions
+            for action in overlay.pipeline.actions
             if action.name == "lava-overlay"
         ][0]
         authorize = [
             action
-            for action in prepare.internal_pipeline.actions
+            for action in prepare.pipeline.actions
             if action.name == "ssh-authorize"
         ][0]
         self.assertFalse(authorize.active)
@@ -152,18 +152,15 @@ class TestConnection(StdoutTestCase):
             action for action in self.job.pipeline.actions if action.name == "login-ssh"
         ][0]
         self.assertIn(
-            "ssh-connection",
-            [action.name for action in login.internal_pipeline.actions],
+            "ssh-connection", [action.name for action in login.pipeline.actions]
         )
         primary = [
             action
-            for action in login.internal_pipeline.actions
+            for action in login.pipeline.actions
             if action.name == "ssh-connection"
         ][0]
         prepare = [
-            action
-            for action in login.internal_pipeline.actions
-            if action.name == "prepare-ssh"
+            action for action in login.pipeline.actions if action.name == "prepare-ssh"
         ][0]
         self.assertTrue(prepare.primary)
         self.assertEqual(identity, primary.identity_file)
@@ -204,9 +201,7 @@ class TestConnection(StdoutTestCase):
             if action.name == "login-ssh"
         ][0]
         scp = [
-            action
-            for action in login.internal_pipeline.actions
-            if action.name == "scp-deploy"
+            action for action in login.pipeline.actions if action.name == "scp-deploy"
         ][0]
         self.assertIsNotNone(scp)
         # FIXME: schroot needs to make use of scp
@@ -306,7 +301,7 @@ class TestConnection(StdoutTestCase):
         ][0]
         prepare = [
             item
-            for item in scp_overlay.internal_pipeline.actions
+            for item in scp_overlay.pipeline.actions
             if item.name == "prepare-scp-overlay"
         ][0]
         self.assertEqual(prepare.host_keys, ["ipv4"])
@@ -338,22 +333,18 @@ class TestConnection(StdoutTestCase):
             if action.name == "login-ssh"
         ][0]
         scp = [
-            action
-            for action in login.internal_pipeline.actions
-            if action.name == "scp-deploy"
+            action for action in login.pipeline.actions if action.name == "scp-deploy"
         ][0]
         self.assertFalse(scp.primary)
         ssh = [
-            action
-            for action in login.internal_pipeline.actions
-            if action.name == "prepare-ssh"
+            action for action in login.pipeline.actions if action.name == "prepare-ssh"
         ][0]
         self.assertFalse(ssh.primary)
         self.assertIsNotNone(scp.scp)
         self.assertFalse(scp.primary)
         autologin = [
             action
-            for action in login.internal_pipeline.actions
+            for action in login.pipeline.actions
             if action.name == "auto-login-action"
         ][0]
         self.assertIsNone(autologin.params)
@@ -407,9 +398,7 @@ class TestConnection(StdoutTestCase):
         self.assertIn("LANG", environment.keys())
         self.assertIn("C", environment.values())
         overlay = [
-            item
-            for item in scp_overlay.internal_pipeline.actions
-            if item.name == "lava-overlay"
+            item for item in scp_overlay.pipeline.actions if item.name == "lava-overlay"
         ]
         self.assertIn(
             "action", overlay[0].parameters["protocols"][MultinodeProtocol.name][0]
@@ -431,7 +420,7 @@ class TestConnection(StdoutTestCase):
         )
         multinode = [
             item
-            for item in overlay[0].internal_pipeline.actions
+            for item in overlay[0].pipeline.actions
             if item.name == "lava-multinode-overlay"
         ]
         self.assertEqual(len(multinode), 1)
@@ -490,7 +479,7 @@ commands:
         ][0]
         connect = [
             action
-            for action in boot.internal_pipeline.actions
+            for action in boot.pipeline.actions
             if action.name == "connect-device"
         ][0]
         for hardware, value in connect.tag_dict.items():
@@ -528,7 +517,7 @@ class TestTimeouts(StdoutTestCase):
         ][0]
         test_shell = [
             action
-            for action in test_action.internal_pipeline.actions
+            for action in test_action.pipeline.actions
             if action.name == "lava-test-shell"
         ][0]
         self.assertEqual(
@@ -547,13 +536,11 @@ class TestTimeouts(StdoutTestCase):
             action for action in job.pipeline.actions if action.name == "uboot-action"
         ][0]
         retry = [
-            action
-            for action in uboot.internal_pipeline.actions
-            if action.name == "uboot-retry"
+            action for action in uboot.pipeline.actions if action.name == "uboot-retry"
         ][0]
         auto = [
             action
-            for action in retry.internal_pipeline.actions
+            for action in retry.pipeline.actions
             if action.name == "auto-login-action"
         ][0]
         self.assertEqual(auto.timeout.duration / 60, 9)  # 9 minutes in the job def
@@ -570,8 +557,8 @@ class TestTimeouts(StdoutTestCase):
         data["timeouts"]["connection"] = {"seconds": 20}
         job = self.factory.create_custom_job("bbb-01.jinja2", data)
         for action in job.pipeline.actions:
-            if action.internal_pipeline:
-                for check_action in action.internal_pipeline.actions:
+            if action.pipeline:
+                for check_action in action.pipeline.actions:
                     if check_action.connection_timeout and check_action.name not in [
                         "uboot-retry",
                         "lava-test-shell",
@@ -590,7 +577,7 @@ class TestTimeouts(StdoutTestCase):
         ][0]
         test_shell = [
             action
-            for action in test_action.internal_pipeline.actions
+            for action in test_action.pipeline.actions
             if action.name == "lava-test-shell"
         ][0]
         self.assertEqual(test_shell.timeout.duration, 300)
@@ -598,13 +585,11 @@ class TestTimeouts(StdoutTestCase):
             action for action in job.pipeline.actions if action.name == "uboot-action"
         ][0]
         retry = [
-            action
-            for action in uboot.internal_pipeline.actions
-            if action.name == "uboot-retry"
+            action for action in uboot.pipeline.actions if action.name == "uboot-retry"
         ][0]
         auto = [
             action
-            for action in retry.internal_pipeline.actions
+            for action in retry.pipeline.actions
             if action.name == "auto-login-action"
         ][0]
         self.assertEqual(auto.connection_timeout.duration / 60, 12)
@@ -631,9 +616,7 @@ class TestTimeouts(StdoutTestCase):
             action for action in job.pipeline.actions if action.name == "uboot-action"
         ][0]
         retry = [
-            action
-            for action in boot.internal_pipeline.actions
-            if action.name == "uboot-retry"
+            action for action in boot.pipeline.actions if action.name == "uboot-retry"
         ][0]
         self.assertEqual(
             retry.timeout.duration, 90

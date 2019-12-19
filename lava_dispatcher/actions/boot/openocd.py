@@ -62,10 +62,8 @@ class BootOpenOCD(BootAction):
     summary = "boot openocd image with retry"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
-        self.internal_pipeline.add_action(BootOpenOCDRetry())
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.pipeline.add_action(BootOpenOCDRetry())
 
 
 class BootOpenOCDRetry(RetryAction):
@@ -75,16 +73,12 @@ class BootOpenOCDRetry(RetryAction):
     summary = "boot openocd image"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         if self.job.device.hard_reset_command:
-            self.internal_pipeline.add_action(ResetDevice())
-            self.internal_pipeline.add_action(
-                WaitDeviceBoardID(self.job.device.get("board_id"))
-            )
-        self.internal_pipeline.add_action(FlashOpenOCDAction())
-        self.internal_pipeline.add_action(ConnectDevice())
+            self.pipeline.add_action(ResetDevice())
+            self.pipeline.add_action(WaitDeviceBoardID(self.job.device.get("board_id")))
+        self.pipeline.add_action(FlashOpenOCDAction())
+        self.pipeline.add_action(ConnectDevice())
 
 
 class FlashOpenOCDAction(Action):

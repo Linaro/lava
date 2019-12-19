@@ -70,13 +70,13 @@ class TestIsoJob(StdoutTestCase):
         ][0]
         empty = [
             action
-            for action in deploy_iso.internal_pipeline.actions
+            for action in deploy_iso.pipeline.actions
             if action.name == "prepare-empty-image"
         ][0]
         self.assertEqual(empty.size, 2 * 1024 * 1024 * 1024)
         pull = [
             action
-            for action in deploy_iso.internal_pipeline.actions
+            for action in deploy_iso.pipeline.actions
             if action.name == "pull-installer-files"
         ][0]
         self.assertEqual(pull.files["kernel"], "/install.amd/vmlinuz")
@@ -93,7 +93,7 @@ class TestIsoJob(StdoutTestCase):
         ][0]
         prepare = [
             action
-            for action in deploy_iso.internal_pipeline.actions
+            for action in deploy_iso.pipeline.actions
             if action.name == "prepare-qemu-commands"
         ][0]
         self.assertEqual(prepare.boot_order, "-boot c")
@@ -136,7 +136,7 @@ class TestIsoJob(StdoutTestCase):
         """
         test that classes pick up block timeouts
 
-        Each action in the internal_pipeline needs to pick up the timeout
+        Each action in the pipeline needs to pick up the timeout
         specified in the job definition block for the top level parent action.
         """
         test_retry = [
@@ -154,7 +154,7 @@ class TestIsoJob(StdoutTestCase):
         self.assertEqual(duration, test_retry.timeout.duration)
         shell = [
             action
-            for action in test_retry.internal_pipeline.actions
+            for action in test_retry.pipeline.actions
             if action.name == "lava-test-shell"
         ][0]
         self.assertEqual(duration, shell.timeout.duration)

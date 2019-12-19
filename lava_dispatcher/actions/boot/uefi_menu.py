@@ -315,22 +315,20 @@ class UefiMenuAction(BootAction):
         )
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         if "commands" in parameters and "fastboot" in parameters["commands"]:
-            self.internal_pipeline.add_action(UefiSubstituteCommands())
-            self.internal_pipeline.add_action(UEFIMenuInterrupt())
-            self.internal_pipeline.add_action(UefiMenuSelector())
-            self.internal_pipeline.add_action(MenuReset())
-            self.internal_pipeline.add_action(AutoLoginAction())
-            self.internal_pipeline.add_action(ExportDeviceEnvironment())
+            self.pipeline.add_action(UefiSubstituteCommands())
+            self.pipeline.add_action(UEFIMenuInterrupt())
+            self.pipeline.add_action(UefiMenuSelector())
+            self.pipeline.add_action(MenuReset())
+            self.pipeline.add_action(AutoLoginAction())
+            self.pipeline.add_action(ExportDeviceEnvironment())
         else:
-            self.internal_pipeline.add_action(UefiSubstituteCommands())
-            self.internal_pipeline.add_action(MenuConnect())
-            self.internal_pipeline.add_action(ResetDevice())
-            self.internal_pipeline.add_action(UEFIMenuInterrupt())
-            self.internal_pipeline.add_action(UefiMenuSelector())
-            self.internal_pipeline.add_action(MenuReset())
-            self.internal_pipeline.add_action(AutoLoginAction())
-            self.internal_pipeline.add_action(ExportDeviceEnvironment())
+            self.pipeline.add_action(UefiSubstituteCommands())
+            self.pipeline.add_action(MenuConnect())
+            self.pipeline.add_action(ResetDevice())
+            self.pipeline.add_action(UEFIMenuInterrupt())
+            self.pipeline.add_action(UefiMenuSelector())
+            self.pipeline.add_action(MenuReset())
+            self.pipeline.add_action(AutoLoginAction())
+            self.pipeline.add_action(ExportDeviceEnvironment())

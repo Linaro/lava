@@ -60,10 +60,8 @@ class BootPyOCD(BootAction):
     summary = "boot pyocd image with retry"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
-        self.internal_pipeline.add_action(BootPyOCDRetry())
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.pipeline.add_action(BootPyOCDRetry())
 
 
 class BootPyOCDRetry(RetryAction):
@@ -73,16 +71,12 @@ class BootPyOCDRetry(RetryAction):
     summary = "boot pyocd image"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         if self.job.device.hard_reset_command:
-            self.internal_pipeline.add_action(ResetDevice())
-            self.internal_pipeline.add_action(
-                WaitDeviceBoardID(self.job.device.get("board_id"))
-            )
-        self.internal_pipeline.add_action(FlashPyOCDAction())
-        self.internal_pipeline.add_action(ConnectDevice())
+            self.pipeline.add_action(ResetDevice())
+            self.pipeline.add_action(WaitDeviceBoardID(self.job.device.get("board_id")))
+        self.pipeline.add_action(FlashPyOCDAction())
+        self.pipeline.add_action(ConnectDevice())
 
 
 class FlashPyOCDAction(Action):

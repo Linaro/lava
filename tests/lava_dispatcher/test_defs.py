@@ -88,8 +88,8 @@ class TestDefinitionHandlers(StdoutTestCase):
             self.assertIsNotNone(action.name)
             if isinstance(action, DeployAction):
                 overlay = action.pipeline.actions[2]
-                testdef = overlay.internal_pipeline.actions[2]
-        self.assertEqual(len(overlay.internal_pipeline.actions), 5)
+                testdef = overlay.pipeline.actions[2]
+        self.assertEqual(len(overlay.pipeline.actions), 5)
         self.assertIsInstance(testdef, TestDefinitionAction)
         testdef.validate()
         self.assertEqual(
@@ -98,7 +98,7 @@ class TestDefinitionHandlers(StdoutTestCase):
         if not testdef.valid:
             print(testdef.errors)
         self.assertTrue(testdef.valid)
-        for repo_action in testdef.internal_pipeline.actions:
+        for repo_action in testdef.pipeline.actions:
             if isinstance(repo_action, GitRepoAction):
                 self.assertTrue(hasattr(repo_action, "accepts"))
                 self.assertTrue(hasattr(repo_action, "priority"))
@@ -134,12 +134,12 @@ class TestDefinitionHandlers(StdoutTestCase):
         ][0]
         overlay = [
             action
-            for action in deploy.internal_pipeline.actions
+            for action in deploy.pipeline.actions
             if action.name == "lava-overlay"
         ][0]
         testdef = [
             action
-            for action in overlay.internal_pipeline.actions
+            for action in overlay.pipeline.actions
             if action.name == "test-definition"
         ][0]
         testdef.validate()
@@ -159,12 +159,12 @@ class TestDefinitionHandlers(StdoutTestCase):
         ][0]
         overlay = [
             action
-            for action in deploy.internal_pipeline.actions
+            for action in deploy.pipeline.actions
             if action.name == "lava-overlay"
         ][0]
         testdef = [
             action
-            for action in overlay.internal_pipeline.actions
+            for action in overlay.pipeline.actions
             if action.name == "test-definition"
         ][0]
         testdef.validate()
@@ -182,17 +182,17 @@ class TestDefinitionHandlers(StdoutTestCase):
         ][0]
         overlay = [
             action
-            for action in deploy.internal_pipeline.actions
+            for action in deploy.pipeline.actions
             if action.name == "lava-overlay"
         ][0]
         testdef = [
             action
-            for action in overlay.internal_pipeline.actions
+            for action in overlay.pipeline.actions
             if action.name == "test-definition"
         ][0]
         git_repos = [
             action
-            for action in testdef.internal_pipeline.actions
+            for action in testdef.pipeline.actions
             if action.name == "git-repo-action"
         ]
         for git_repo in git_repos:
@@ -261,7 +261,7 @@ class TestDefinitionHandlers(StdoutTestCase):
         ][0]
         overlay = [
             action
-            for action in deploy.internal_pipeline.actions
+            for action in deploy.pipeline.actions
             if action.name == "lava-overlay"
         ][0]
         self.assertEqual(
@@ -314,12 +314,12 @@ class TestDefinitionParams(StdoutTestCase):
         ][0]
         overlay = [
             action
-            for action in deploy.internal_pipeline.actions
+            for action in deploy.pipeline.actions
             if action.name == "lava-overlay"
         ][0]
         testdef = [
             action
-            for action in overlay.internal_pipeline.actions
+            for action in overlay.pipeline.actions
             if action.name == "test-definition"
         ][0]
         for action in self.job.pipeline.actions:
@@ -329,9 +329,9 @@ class TestDefinitionParams(StdoutTestCase):
             finalize = self.job.pipeline.actions[3]
         self.assertIsInstance(overlay, OverlayAction)
         self.assertIsInstance(testdef, TestDefinitionAction)
-        test = testdef.internal_pipeline.actions[1]
-        install = testdef.internal_pipeline.actions[2]
-        runsh = testdef.internal_pipeline.actions[3]
+        test = testdef.pipeline.actions[1]
+        install = testdef.pipeline.actions[2]
+        runsh = testdef.pipeline.actions[3]
         self.assertIsInstance(deploy, DeployImagesAction)
         self.assertIsInstance(boot, BootAction)
         self.assertIsInstance(finalize, FinalizeAction)
@@ -388,17 +388,17 @@ class TestDefinitionParams(StdoutTestCase):
         ][0]
         overlay = [
             action
-            for action in deploy.internal_pipeline.actions
+            for action in deploy.pipeline.actions
             if action.name == "lava-overlay"
         ][0]
         testdef = [
             action
-            for action in overlay.internal_pipeline.actions
+            for action in overlay.pipeline.actions
             if action.name == "test-definition"
         ][0]
         test_install = [
             action
-            for action in testdef.internal_pipeline.actions
+            for action in testdef.pipeline.actions
             if action.name == "test-install-overlay"
         ][0]
         self.assertIsNotNone(test_install)
@@ -462,22 +462,22 @@ class TestSkipInstall(StdoutTestCase):
         ][0]
         prepare = [
             action
-            for action in deploy.internal_pipeline.actions
+            for action in deploy.pipeline.actions
             if action.name == "prepare-tftp-overlay"
         ][0]
         lava_apply = [
             action
-            for action in prepare.internal_pipeline.actions
+            for action in prepare.pipeline.actions
             if action.name == "lava-overlay"
         ][0]
         testoverlay = [
             action
-            for action in lava_apply.internal_pipeline.actions
+            for action in lava_apply.pipeline.actions
             if action.name == "test-definition"
         ][0]
         testdefs = [
             action
-            for action in testoverlay.internal_pipeline.actions
+            for action in testoverlay.pipeline.actions
             if action.name == "test-install-overlay"
         ]
         ubuntu_testdef = None
@@ -576,29 +576,29 @@ class TestDefinitions(StdoutTestCase):
         ][0]
         prepare = [
             action
-            for action in tftp_deploy.internal_pipeline.actions
+            for action in tftp_deploy.pipeline.actions
             if action.name == "prepare-tftp-overlay"
         ][0]
         overlay = [
             action
-            for action in prepare.internal_pipeline.actions
+            for action in prepare.pipeline.actions
             if action.name == "lava-overlay"
         ][0]
         apply_o = [
             action
-            for action in prepare.internal_pipeline.actions
+            for action in prepare.pipeline.actions
             if action.name == "apply-overlay-tftp"
         ][0]
         self.assertIsInstance(apply_o.parameters.get("persistent_nfs"), dict)
         self.assertIsInstance(apply_o.parameters["persistent_nfs"].get("address"), str)
         definition = [
             action
-            for action in overlay.internal_pipeline.actions
+            for action in overlay.pipeline.actions
             if action.name == "test-definition"
         ][0]
         git_repos = [
             action
-            for action in definition.internal_pipeline.actions
+            for action in definition.pipeline.actions
             if action.name == "git-repo-action"
         ]
         self.assertIn("common", self.job.context)
@@ -730,17 +730,17 @@ test3a: skip
         ][0]
         lxc_overlay = [
             action
-            for action in lxc_deploy.internal_pipeline.actions
+            for action in lxc_deploy.pipeline.actions
             if action.name == "lava-overlay"
         ][0]
         lxc_defs = [
             action
-            for action in lxc_overlay.internal_pipeline.actions
+            for action in lxc_overlay.pipeline.actions
             if action.name == "test-definition"
         ][0]
         lxc_installscript = [
             action
-            for action in lxc_defs.internal_pipeline.actions
+            for action in lxc_defs.pipeline.actions
             if action.name == "test-install-overlay"
         ][0]
         fastboot_deploy = [
@@ -750,17 +750,17 @@ test3a: skip
         ][0]
         fastboot_overlay = [
             action
-            for action in fastboot_deploy.internal_pipeline.actions
+            for action in fastboot_deploy.pipeline.actions
             if action.name == "lava-overlay"
         ][0]
         fastboot_defs = [
             action
-            for action in fastboot_overlay.internal_pipeline.actions
+            for action in fastboot_overlay.pipeline.actions
             if action.name == "test-definition"
         ][0]
         fastboot_installscript = [
             action
-            for action in fastboot_defs.internal_pipeline.actions
+            for action in fastboot_defs.pipeline.actions
             if action.name == "test-install-overlay"
         ][0]
 

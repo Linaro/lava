@@ -55,7 +55,7 @@ class TestUefiShell(StdoutTestCase):
         ][0]
         overlay = [
             action
-            for action in deploy.internal_pipeline.actions
+            for action in deploy.pipeline.actions
             if action.name == "lava-overlay"
         ][0]
         self.assertIsNotNone(overlay)
@@ -68,32 +68,30 @@ class TestUefiShell(StdoutTestCase):
         ][0]
         commands = [
             action
-            for action in boot.internal_pipeline.actions
+            for action in boot.pipeline.actions
             if action.name == "bootloader-overlay"
         ][0]
         menu_connect = [
-            action
-            for action in boot.internal_pipeline.actions
-            if action.name == "menu-connect"
+            action for action in boot.pipeline.actions if action.name == "menu-connect"
         ][0]
         menu_interrupt = [
             action
-            for action in boot.internal_pipeline.actions
+            for action in boot.pipeline.actions
             if action.name == "uefi-shell-menu-interrupt"
         ][0]
         menu_selector = [
             action
-            for action in boot.internal_pipeline.actions
+            for action in boot.pipeline.actions
             if action.name == "uefi-shell-menu-selector"
         ][0]
         shell_interrupt = [
             action
-            for action in boot.internal_pipeline.actions
+            for action in boot.pipeline.actions
             if action.name == "uefi-shell-menu-interrupt"
         ][0]
         boot_commands = [
             action
-            for action in boot.internal_pipeline.actions
+            for action in boot.pipeline.actions
             if action.name == "bootloader-commands"
         ][0]
         self.assertEqual("uefi", commands.method)
@@ -135,7 +133,7 @@ class TestUefiShell(StdoutTestCase):
         ][0]
         overlay = [
             action
-            for action in deploy.internal_pipeline.actions
+            for action in deploy.pipeline.actions
             if action.name == "lava-overlay"
         ][0]
         self.assertIsNotNone(overlay)
@@ -148,19 +146,19 @@ class TestUefiShell(StdoutTestCase):
         ][0]
         commands = [
             action
-            for action in boot.internal_pipeline.actions
+            for action in boot.pipeline.actions
             if action.name == "bootloader-overlay"
         ][0]
         boot_commands = [
             action
-            for action in boot.internal_pipeline.actions
+            for action in boot.pipeline.actions
             if action.name == "bootloader-commands"
         ][0]
 
         self.assertIsNotNone(
             [
                 action
-                for action in boot.internal_pipeline.actions
+                for action in boot.pipeline.actions
                 if action.name == "uefi-shell-interrupt"
             ]
         )
@@ -170,7 +168,7 @@ class TestUefiShell(StdoutTestCase):
             len(
                 [
                     action
-                    for action in boot.internal_pipeline.actions
+                    for action in boot.pipeline.actions
                     if action.name == "uefi-shell-menu-interrupt"
                 ]
             ),
@@ -180,7 +178,7 @@ class TestUefiShell(StdoutTestCase):
             len(
                 [
                     action
-                    for action in boot.internal_pipeline.actions
+                    for action in boot.pipeline.actions
                     if action.name == "uefi-shell-menu-selector"
                 ]
             ),

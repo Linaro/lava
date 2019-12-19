@@ -94,9 +94,9 @@ class TestUbootAction(StdoutTestCase):
         self.assertTrue(
             tftp.get_namespace_data(action=tftp.name, label="tftp", key="ramdisk")
         )
-        self.assertIsNotNone(tftp.internal_pipeline)
+        self.assertIsNotNone(tftp.pipeline)
         self.assertEqual(
-            [action.name for action in tftp.internal_pipeline.actions],
+            [action.name for action in tftp.pipeline.actions],
             [
                 "download-retry",
                 "download-retry",
@@ -108,27 +108,15 @@ class TestUbootAction(StdoutTestCase):
         )
         self.assertIn(
             "ramdisk",
-            [
-                action.key
-                for action in tftp.internal_pipeline.actions
-                if hasattr(action, "key")
-            ],
+            [action.key for action in tftp.pipeline.actions if hasattr(action, "key")],
         )
         self.assertIn(
             "kernel",
-            [
-                action.key
-                for action in tftp.internal_pipeline.actions
-                if hasattr(action, "key")
-            ],
+            [action.key for action in tftp.pipeline.actions if hasattr(action, "key")],
         )
         self.assertIn(
             "dtb",
-            [
-                action.key
-                for action in tftp.internal_pipeline.actions
-                if hasattr(action, "key")
-            ],
+            [action.key for action in tftp.pipeline.actions if hasattr(action, "key")],
         )
         self.assertNotIn("=", tftpd_dir())
         job.validate()
@@ -197,12 +185,12 @@ class TestUbootAction(StdoutTestCase):
         ][0]
         enter = [
             action
-            for action in deploy.internal_pipeline.actions
+            for action in deploy.pipeline.actions
             if action.name == "uboot-enter-fastboot"
         ][0]
         interrupt = [
             action
-            for action in enter.internal_pipeline.actions
+            for action in enter.pipeline.actions
             if action.name == "bootloader-interrupt"
         ][0]
         self.assertIsNotNone(interrupt.params)
@@ -221,12 +209,12 @@ class TestUbootAction(StdoutTestCase):
         ][0]
         prepare = [
             action
-            for action in tftp_deploy.internal_pipeline.actions
+            for action in tftp_deploy.pipeline.actions
             if action.name == "prepare-tftp-overlay"
         ][0]
         nfs = [
             action
-            for action in prepare.internal_pipeline.actions
+            for action in prepare.pipeline.actions
             if action.name == "extract-nfsrootfs"
         ][0]
         self.assertIn("compression", nfs.parameters["nfsrootfs"])
@@ -358,7 +346,7 @@ class TestUbootAction(StdoutTestCase):
         ][0]
         overlay = [
             action
-            for action in uboot.internal_pipeline.actions
+            for action in uboot.pipeline.actions
             if action.name == "bootloader-overlay"
         ][0]
         self.assertEqual(
@@ -394,7 +382,7 @@ class TestUbootAction(StdoutTestCase):
         ][0]
         overlay = [
             action
-            for action in uboot.internal_pipeline.actions
+            for action in uboot.pipeline.actions
             if action.name == "bootloader-overlay"
         ][0]
         for setenv in overlay.commands:
@@ -422,13 +410,11 @@ class TestUbootAction(StdoutTestCase):
             action for action in job.pipeline.actions if action.name == "uboot-action"
         ][0]
         retry = [
-            action
-            for action in uboot.internal_pipeline.actions
-            if action.name == "uboot-retry"
+            action for action in uboot.pipeline.actions if action.name == "uboot-retry"
         ][0]
         transfer = [
             action
-            for action in retry.internal_pipeline.actions
+            for action in retry.pipeline.actions
             if action.name == "overlay-unpack"
         ][0]
         self.assertIn("transfer_overlay", transfer.parameters)
@@ -452,11 +438,11 @@ class TestUbootAction(StdoutTestCase):
             if action.name == "tftp-deploy":
                 deploy = action
         if deploy:
-            for action in deploy.internal_pipeline.actions:
+            for action in deploy.pipeline.actions:
                 if action.name == "prepare-tftp-overlay":
                     overlay = action
         if overlay:
-            for action in overlay.internal_pipeline.actions:
+            for action in overlay.pipeline.actions:
                 if action.name == "extract-nfsrootfs":
                     extract = action
         test_dir = overlay.get_namespace_data(
@@ -480,21 +466,21 @@ class TestUbootAction(StdoutTestCase):
             self.assertTrue(action.valid)
             if action.name == "uboot-action":
                 uboot_action = action
-        names = [r_action.name for r_action in uboot_action.internal_pipeline.actions]
+        names = [r_action.name for r_action in uboot_action.pipeline.actions]
         self.assertIn("connect-device", names)
         self.assertIn("uboot-retry", names)
-        for action in uboot_action.internal_pipeline.actions:
+        for action in uboot_action.pipeline.actions:
             if action.name == "uboot-retry":
                 uboot_retry = action
-        names = [r_action.name for r_action in uboot_retry.internal_pipeline.actions]
+        names = [r_action.name for r_action in uboot_retry.pipeline.actions]
         self.assertIn("reset-device", names)
         self.assertIn("bootloader-interrupt", names)
         self.assertIn("expect-shell-connection", names)
         self.assertIn("bootloader-commands", names)
-        for action in uboot_retry.internal_pipeline.actions:
+        for action in uboot_retry.pipeline.actions:
             if action.name == "reset-device":
                 reset_action = action
-        names = [r_action.name for r_action in reset_action.internal_pipeline.actions]
+        names = [r_action.name for r_action in reset_action.pipeline.actions]
         self.assertIn("pdu-reboot", names)
 
     @patch(
@@ -523,7 +509,7 @@ class TestUbootAction(StdoutTestCase):
         ][0]
         u_boot_media = [
             action
-            for action in uboot_action.internal_pipeline.actions
+            for action in uboot_action.pipeline.actions
             if action.name == "uboot-from-media"
             and action.parameters["namespace"] == "boot2"
         ][0]
@@ -582,12 +568,12 @@ class TestUbootAction(StdoutTestCase):
         ][0]
         prepare = [
             action
-            for action in tftp_deploy.internal_pipeline.actions
+            for action in tftp_deploy.pipeline.actions
             if action.name == "prepare-tftp-overlay"
         ][0]
         nfs = [
             action
-            for action in prepare.internal_pipeline.actions
+            for action in prepare.pipeline.actions
             if action.name == "extract-nfsrootfs"
         ][0]
         self.assertIn("compression", nfs.parameters["nfsrootfs"])
@@ -604,12 +590,12 @@ class TestUbootAction(StdoutTestCase):
         ][0]
         prepare = [
             action
-            for action in tftp_deploy.internal_pipeline.actions
+            for action in tftp_deploy.pipeline.actions
             if action.name == "prepare-tftp-overlay"
         ][0]
         nfs = [
             action
-            for action in prepare.internal_pipeline.actions
+            for action in prepare.pipeline.actions
             if action.name == "extract-nfsrootfs"
         ][0]
         self.assertIn("prefix", nfs.parameters["nfsrootfs"])
@@ -641,12 +627,12 @@ class TestUbootAction(StdoutTestCase):
         ][0]
         fastboot = [
             action
-            for action in deploy.internal_pipeline.actions
+            for action in deploy.pipeline.actions
             if action.name == "uboot-enter-fastboot"
         ][0]
         bootloader = [
             action
-            for action in fastboot.internal_pipeline.actions
+            for action in fastboot.pipeline.actions
             if action.name == "bootloader-interrupt"
         ][0]
         self.assertEqual("u-boot", bootloader.method)
@@ -685,17 +671,17 @@ class TestKernelConversion(StdoutTestCase):
         ][0]
         overlay = [
             action
-            for action in deploy.internal_pipeline.actions
+            for action in deploy.pipeline.actions
             if action.name == "prepare-tftp-overlay"
         ][0]
         prepare = [
             action
-            for action in overlay.internal_pipeline.actions
+            for action in overlay.pipeline.actions
             if action.name == "prepare-kernel"
         ][0]
         uboot_prepare = [
             action
-            for action in prepare.internal_pipeline.actions
+            for action in prepare.pipeline.actions
             if action.name == "uboot-prepare-kernel"
         ][0]
         self.assertEqual("zimage", uboot_prepare.kernel_type)
@@ -717,17 +703,17 @@ class TestKernelConversion(StdoutTestCase):
         ][0]
         overlay = [
             action
-            for action in deploy.internal_pipeline.actions
+            for action in deploy.pipeline.actions
             if action.name == "prepare-tftp-overlay"
         ][0]
         prepare = [
             action
-            for action in overlay.internal_pipeline.actions
+            for action in overlay.pipeline.actions
             if action.name == "prepare-kernel"
         ][0]
         uboot_prepare = [
             action
-            for action in prepare.internal_pipeline.actions
+            for action in prepare.pipeline.actions
             if action.name == "uboot-prepare-kernel"
         ][0]
         self.assertEqual("image", uboot_prepare.kernel_type)
@@ -750,17 +736,17 @@ class TestKernelConversion(StdoutTestCase):
         ][0]
         overlay = [
             action
-            for action in deploy.internal_pipeline.actions
+            for action in deploy.pipeline.actions
             if action.name == "prepare-tftp-overlay"
         ][0]
         prepare = [
             action
-            for action in overlay.internal_pipeline.actions
+            for action in overlay.pipeline.actions
             if action.name == "prepare-kernel"
         ][0]
         uboot_prepare = [
             action
-            for action in prepare.internal_pipeline.actions
+            for action in prepare.pipeline.actions
             if action.name == "uboot-prepare-kernel"
         ][0]
         self.assertEqual("uimage", uboot_prepare.kernel_type)
@@ -785,17 +771,17 @@ class TestKernelConversion(StdoutTestCase):
         ][0]
         overlay = [
             action
-            for action in deploy.internal_pipeline.actions
+            for action in deploy.pipeline.actions
             if action.name == "prepare-tftp-overlay"
         ][0]
         prepare = [
             action
-            for action in overlay.internal_pipeline.actions
+            for action in overlay.pipeline.actions
             if action.name == "prepare-kernel"
         ][0]
         uboot_prepare = [
             action
-            for action in prepare.internal_pipeline.actions
+            for action in prepare.pipeline.actions
             if action.name == "uboot-prepare-kernel"
         ][0]
         self.assertEqual("zimage", uboot_prepare.kernel_type)
@@ -815,27 +801,27 @@ class TestOverlayCommands(StdoutTestCase):
         ][0]
         prepare = [
             action
-            for action in tftp_deploy.internal_pipeline.actions
+            for action in tftp_deploy.pipeline.actions
             if action.name == "prepare-tftp-overlay"
         ][0]
         nfs = [
             action
-            for action in prepare.internal_pipeline.actions
+            for action in prepare.pipeline.actions
             if action.name == "extract-nfsrootfs"
         ][0]
         ramdisk = [
             action
-            for action in prepare.internal_pipeline.actions
+            for action in prepare.pipeline.actions
             if action.name == "extract-overlay-ramdisk"
         ][0]
         modules = [
             action
-            for action in prepare.internal_pipeline.actions
+            for action in prepare.pipeline.actions
             if action.name == "extract-modules"
         ][0]
         overlay = [
             action
-            for action in prepare.internal_pipeline.actions
+            for action in prepare.pipeline.actions
             if action.name == "apply-overlay-tftp"
         ][0]
         self.assertIsNotNone(ramdisk.parameters.get("ramdisk"))
@@ -856,27 +842,27 @@ class TestOverlayCommands(StdoutTestCase):
         ][0]
         prepare = [
             action
-            for action in tftp_deploy.internal_pipeline.actions
+            for action in tftp_deploy.pipeline.actions
             if action.name == "prepare-tftp-overlay"
         ][0]
         nfs = [
             action
-            for action in prepare.internal_pipeline.actions
+            for action in prepare.pipeline.actions
             if action.name == "extract-nfsrootfs"
         ][0]
         ramdisk = [
             action
-            for action in prepare.internal_pipeline.actions
+            for action in prepare.pipeline.actions
             if action.name == "extract-overlay-ramdisk"
         ][0]
         modules = [
             action
-            for action in prepare.internal_pipeline.actions
+            for action in prepare.pipeline.actions
             if action.name == "extract-modules"
         ][0]
         overlay = [
             action
-            for action in prepare.internal_pipeline.actions
+            for action in prepare.pipeline.actions
             if action.name == "apply-overlay-tftp"
         ][0]
         self.assertIsNotNone(ramdisk.parameters.get("ramdisk"))

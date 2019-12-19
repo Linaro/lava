@@ -150,12 +150,12 @@ class TestFastbootDeploy(StdoutTestCase):
         ][0]
         overlay = [
             action
-            for action in lxc_deploy.internal_pipeline.actions
+            for action in lxc_deploy.pipeline.actions
             if action.name == "lava-overlay"
         ][0]
         testdef = [
             action
-            for action in overlay.internal_pipeline.actions
+            for action in overlay.pipeline.actions
             if action.name == "test-definition"
         ][0]
         job.validate()
@@ -256,12 +256,12 @@ class TestFastbootDeploy(StdoutTestCase):
         ][0]
         enter = [
             action
-            for action in deploy.internal_pipeline.actions
+            for action in deploy.pipeline.actions
             if action.name == "uboot-enter-fastboot"
         ][0]
         interrupt = [
             action
-            for action in enter.internal_pipeline.actions
+            for action in enter.pipeline.actions
             if action.name == "bootloader-interrupt"
         ][0]
         self.assertTrue(interrupt.needs_interrupt)
@@ -274,12 +274,12 @@ class TestFastbootDeploy(StdoutTestCase):
         ][0]
         enter = [
             action
-            for action in boot.internal_pipeline.actions
+            for action in boot.pipeline.actions
             if action.name == "uboot-enter-fastboot"
         ][0]
         interrupt = [
             action
-            for action in enter.internal_pipeline.actions
+            for action in enter.pipeline.actions
             if action.name == "bootloader-interrupt"
         ][0]
         self.assertIsInstance(interrupt.params, dict)
@@ -289,7 +289,7 @@ class TestFastbootDeploy(StdoutTestCase):
         self.assertTrue(interrupt.needs_interrupt)
         autologin = [
             action
-            for action in boot.internal_pipeline.actions
+            for action in boot.pipeline.actions
             if action.name == "auto-login-action"
         ][0]
         self.assertTrue(autologin.booting)

@@ -114,25 +114,23 @@ class BootFastbootAction(BootAction):
             self.errors = "fastboot_sequence undefined"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
 
         if parameters.get("commands"):
-            self.internal_pipeline.add_action(BootFastbootCommands())
+            self.pipeline.add_action(BootFastbootCommands())
 
         # Always ensure the device is in fastboot mode before trying to boot.
         # Check if the device has a power command such as HiKey, Dragonboard,
         # etc. against device that doesn't like Nexus, etc.
         if self.job.device.get("fastboot_via_uboot", False):
-            self.internal_pipeline.add_action(ConnectDevice())
-            self.internal_pipeline.add_action(UBootEnterFastbootAction())
+            self.pipeline.add_action(ConnectDevice())
+            self.pipeline.add_action(UBootEnterFastbootAction())
         elif self.job.device.hard_reset_command:
             self.force_prompt = True
-            self.internal_pipeline.add_action(ConnectDevice())
-            self.internal_pipeline.add_action(ResetDevice())
+            self.pipeline.add_action(ConnectDevice())
+            self.pipeline.add_action(ResetDevice())
         else:
-            self.internal_pipeline.add_action(EnterFastbootAction())
+            self.pipeline.add_action(EnterFastbootAction())
 
         # Based on the boot sequence defined in the device configuration, add
         # the required pipeline actions.
@@ -140,23 +138,23 @@ class BootFastbootAction(BootAction):
         for sequence in sequences:
             mapped = _fastboot_sequence_map(sequence)
             if mapped[1]:
-                self.internal_pipeline.add_action(mapped[0](device_actions=mapped[1]))
+                self.pipeline.add_action(mapped[0](device_actions=mapped[1]))
             elif mapped[0]:
-                self.internal_pipeline.add_action(mapped[0]())
+                self.pipeline.add_action(mapped[0]())
         if self.job.device.hard_reset_command:
             if not is_lxc_requested(self.job):
-                self.internal_pipeline.add_action(PreOs())
+                self.pipeline.add_action(PreOs())
             if self.has_prompts(parameters):
-                self.internal_pipeline.add_action(AutoLoginAction())
+                self.pipeline.add_action(AutoLoginAction())
                 if self.test_has_shell(parameters):
-                    self.internal_pipeline.add_action(ExpectShellSession())
+                    self.pipeline.add_action(ExpectShellSession())
                     if "transfer_overlay" in parameters:
-                        self.internal_pipeline.add_action(OverlayUnpack())
-                    self.internal_pipeline.add_action(ExportDeviceEnvironment())
+                        self.pipeline.add_action(OverlayUnpack())
+                    self.pipeline.add_action(ExportDeviceEnvironment())
         else:
             if not is_lxc_requested(self.job):
-                self.internal_pipeline.add_action(ConnectAdb())
-                self.internal_pipeline.add_action(AdbOverlayUnpack())
+                self.pipeline.add_action(ConnectAdb())
+                self.pipeline.add_action(AdbOverlayUnpack())
 
 
 class WaitFastBootInterrupt(Action):

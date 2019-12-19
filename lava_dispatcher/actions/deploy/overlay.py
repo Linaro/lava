@@ -146,21 +146,19 @@ class OverlayAction(DeployAction):
                 break
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         if self.test_needs_overlay(parameters):
             if any(
                 "ssh" in data
                 for data in self.job.device["actions"]["deploy"]["methods"]
             ):
                 # only devices supporting ssh deployments add this action.
-                self.internal_pipeline.add_action(SshAuthorize())
-            self.internal_pipeline.add_action(VlandOverlayAction())
-            self.internal_pipeline.add_action(MultinodeOverlayAction())
-            self.internal_pipeline.add_action(TestDefinitionAction())
-            self.internal_pipeline.add_action(CompressOverlay())
-            self.internal_pipeline.add_action(PersistentNFSOverlay())  # idempotent
+                self.pipeline.add_action(SshAuthorize())
+            self.pipeline.add_action(VlandOverlayAction())
+            self.pipeline.add_action(MultinodeOverlayAction())
+            self.pipeline.add_action(TestDefinitionAction())
+            self.pipeline.add_action(CompressOverlay())
+            self.pipeline.add_action(PersistentNFSOverlay())  # idempotent
 
     def _export_data(self, fout, data, prefix):
         if isinstance(data, dict):

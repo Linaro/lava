@@ -158,7 +158,9 @@ class Pipeline:
                 cls = str(type(action))[8:-2].replace("lava_dispatcher.", "")
                 current = {"class": cls, "name": action.name}
             if action.pipeline is not None:
-                current["pipeline"] = action.pipeline.describe(verbose)
+                sub_desc = action.pipeline.describe(verbose)
+                if sub_desc:
+                    current["pipeline"] = sub_desc
             desc.append(current)
         return desc
 
@@ -338,7 +340,6 @@ class Action:
         # subsequently except by RetryCommand.
         self.level = None
         self.pipeline = None
-        self.internal_pipeline = None
         self.__parameters__ = {}
         self.__errors__ = []
         self.job = None
@@ -395,8 +396,8 @@ class Action:
 
     @property
     def errors(self):
-        if self.internal_pipeline:
-            return self.__errors__ + self.internal_pipeline.errors
+        if self.pipeline:
+            return self.__errors__ + self.pipeline.errors
         else:
             return self.__errors__
 
@@ -514,8 +515,8 @@ class Action:
             self.errors = "action %s (%s) has no section set" % (self.name, self)
 
         # Collect errors from internal pipeline actions
-        if self.internal_pipeline:
-            self.internal_pipeline.validate_actions()
+        if self.pipeline:
+            self.pipeline.validate_actions()
 
     def populate(self, parameters):
         """
@@ -789,8 +790,8 @@ class Action:
         all exceptions possible from the command and re-raise
         """
         self.call_protocols()
-        if self.internal_pipeline:
-            return self.internal_pipeline.run_actions(connection, max_end_time)
+        if self.pipeline:
+            return self.pipeline.run_actions(connection, max_end_time)
         if connection:
             connection.timeout = self.connection_timeout
         return connection
@@ -808,8 +809,8 @@ class Action:
         Use contextmanagers or signal handlers to clean up any resources when there are no errors,
         instead of using cleanup().
         """
-        if self.internal_pipeline:
-            self.internal_pipeline.cleanup(connection)
+        if self.pipeline:
+            self.pipeline.cleanup(connection)
 
     def explode(self):
         """
@@ -832,7 +833,7 @@ class Action:
         # noinspection PySetFunctionToLiteral
         skip_set = set(
             [
-                "internal_pipeline",
+                "pipeline",
                 "job",
                 "logger",
                 "pipeline",

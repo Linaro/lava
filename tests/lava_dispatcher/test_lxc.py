@@ -143,7 +143,7 @@ class TestLxcWithDevices(StdoutTestCase):
         self.assertNotEqual(10, drone_test.connection_timeout.duration)
         drone_shell = [
             action
-            for action in drone_test.internal_pipeline.actions
+            for action in drone_test.pipeline.actions
             if action.name == "lava-test-shell"
         ][0]
         self.assertEqual(10, drone_shell.connection_timeout.duration)
@@ -163,18 +163,18 @@ class TestLxcWithDevices(StdoutTestCase):
         ][0]
         overlay = [
             action
-            for action in lxc_deploy.internal_pipeline.actions
+            for action in lxc_deploy.pipeline.actions
             if action.name == "lava-overlay"
         ][0]
         test_def = [
             action
-            for action in overlay.internal_pipeline.actions
+            for action in overlay.pipeline.actions
             if action.name == "test-definition"
         ][0]
         self.assertIsNotNone(test_def.level, test_def.test_list)
         runner = [
             action
-            for action in test_def.internal_pipeline.actions
+            for action in test_def.pipeline.actions
             if action.name == "test-runscript-overlay"
         ][0]
         self.assertIsNotNone(runner.testdef_levels)
@@ -185,17 +185,17 @@ class TestLxcWithDevices(StdoutTestCase):
         ][0]
         prepare = [
             action
-            for action in tftp_deploy.internal_pipeline.actions
+            for action in tftp_deploy.pipeline.actions
             if action.name == "prepare-tftp-overlay"
         ][0]
         overlay = [
             action
-            for action in prepare.internal_pipeline.actions
+            for action in prepare.pipeline.actions
             if action.name == "lava-overlay"
         ][0]
         test_def = [
             action
-            for action in overlay.internal_pipeline.actions
+            for action in overlay.pipeline.actions
             if action.name == "test-definition"
         ][0]
         namespace = test_def.parameters.get("namespace")
@@ -222,7 +222,7 @@ class TestLxcWithDevices(StdoutTestCase):
         self.assertIsNotNone(test_def.level, test_def.test_list)
         runner = [
             action
-            for action in test_def.internal_pipeline.actions
+            for action in test_def.pipeline.actions
             if action.name == "test-runscript-overlay"
         ][0]
         self.assertIsNotNone(runner.testdef_levels)
@@ -244,18 +244,18 @@ class TestLxcWithDevices(StdoutTestCase):
         ][0]
         overlay = [
             action
-            for action in lxc_deploy.internal_pipeline.actions
+            for action in lxc_deploy.pipeline.actions
             if action.name == "lava-overlay"
         ][0]
         test_def = [
             action
-            for action in overlay.internal_pipeline.actions
+            for action in overlay.pipeline.actions
             if action.name == "test-definition"
         ][0]
         self.assertIsNotNone(test_def.level, test_def.test_list)
         runner = [
             action
-            for action in test_def.internal_pipeline.actions
+            for action in test_def.pipeline.actions
             if action.name == "test-runscript-overlay"
         ][0]
         self.assertIsNotNone(runner.testdef_levels)
@@ -269,7 +269,7 @@ class TestLxcWithDevices(StdoutTestCase):
         ][0]
         lxc_static = [
             action
-            for action in lxc_boot.internal_pipeline.actions
+            for action in lxc_boot.pipeline.actions
             if action.name == "lxc-add-static"
         ][0]
         self.assertIsNotNone(lxc_static)
@@ -298,7 +298,7 @@ class TestLxcWithDevices(StdoutTestCase):
         lxc_deploy = [
             action for action in job.pipeline.actions if action.name == "lxc-deploy"
         ][0]
-        names = [action.name for action in lxc_deploy.internal_pipeline.actions]
+        names = [action.name for action in lxc_deploy.pipeline.actions]
         self.assertNotIn("prepare-tftp-overlay", names)
         namespace1 = lxc_deploy.parameters.get("namespace")
         tftp_deploy = [
@@ -306,17 +306,17 @@ class TestLxcWithDevices(StdoutTestCase):
         ][0]
         prepare = [
             action
-            for action in tftp_deploy.internal_pipeline.actions
+            for action in tftp_deploy.pipeline.actions
             if action.name == "prepare-tftp-overlay"
         ][0]
         overlay = [
             action
-            for action in prepare.internal_pipeline.actions
+            for action in prepare.pipeline.actions
             if action.name == "lava-overlay"
         ][0]
         test_def = [
             action
-            for action in overlay.internal_pipeline.actions
+            for action in overlay.pipeline.actions
             if action.name == "test-definition"
         ][0]
         namespace = test_def.parameters.get("namespace")

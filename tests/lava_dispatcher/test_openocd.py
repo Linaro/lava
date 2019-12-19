@@ -56,15 +56,11 @@ class TestOpenOCDAction(StdoutTestCase):
         self.assertEqual(description_ref, job.pipeline.describe(False))
 
         # Check BootOpenOCDRetry action
-        action = job.pipeline.actions[1].internal_pipeline.actions[0]
+        action = job.pipeline.actions[1].pipeline.actions[0]
         self.assertEqual(action.name, "boot-openocd-image")
 
         # Check FlashOpenOCDAction
-        action = (
-            job.pipeline.actions[1]
-            .internal_pipeline.actions[0]
-            .internal_pipeline.actions[0]
-        )
+        action = job.pipeline.actions[1].pipeline.actions[0].pipeline.actions[0]
         self.assertEqual(action.name, "flash-openocd")
         self.assertEqual(len(action.base_command), 24)
         print(action.base_command)
@@ -74,9 +70,5 @@ class TestOpenOCDAction(StdoutTestCase):
         self.assertEqual(action.base_command[5], "-d2")
         self.assertEqual(action.base_command[23], "shutdown")
 
-        action = (
-            job.pipeline.actions[1]
-            .internal_pipeline.actions[0]
-            .internal_pipeline.actions[1]
-        )
+        action = job.pipeline.actions[1].pipeline.actions[0].pipeline.actions[1]
         self.assertEqual(action.name, "connect-device")

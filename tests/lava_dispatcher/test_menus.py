@@ -121,7 +121,7 @@ class TestUefi(StdoutTestCase):
         ][0]
         selector = [
             action
-            for action in uefi_menu.internal_pipeline.actions
+            for action in uefi_menu.pipeline.actions
             if action.name == "uefi-menu-selector"
         ][0]
         params = self.job.device["actions"]["boot"]["methods"]["uefi-menu"][
@@ -152,7 +152,7 @@ class TestUefi(StdoutTestCase):
         ][0]
         selector = [
             action
-            for action in uefi_menu.internal_pipeline.actions
+            for action in uefi_menu.pipeline.actions
             if action.name == "uefi-menu-selector"
         ][0]
         self.assertEqual(selector.selector.prompt, "Start:")

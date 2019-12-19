@@ -162,12 +162,10 @@ class DepthchargeAction(BootAction):
     summary = "sets up boot with Depthcharge"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
-        self.internal_pipeline.add_action(DepthchargeCommandOverlay())
-        self.internal_pipeline.add_action(ConnectDevice())
-        self.internal_pipeline.add_action(DepthchargeRetry())
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.pipeline.add_action(DepthchargeCommandOverlay())
+        self.pipeline.add_action(ConnectDevice())
+        self.pipeline.add_action(DepthchargeRetry())
 
 
 class DepthchargeRetry(BootAction):
@@ -177,19 +175,17 @@ class DepthchargeRetry(BootAction):
     summary = "depthcharge commands with retry"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
-        self.internal_pipeline.add_action(ResetDevice())
-        self.internal_pipeline.add_action(DepthchargeStart())
-        self.internal_pipeline.add_action(BootloaderCommandsAction())
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.pipeline.add_action(ResetDevice())
+        self.pipeline.add_action(DepthchargeStart())
+        self.pipeline.add_action(BootloaderCommandsAction())
         if self.has_prompts(parameters):
-            self.internal_pipeline.add_action(AutoLoginAction())
+            self.pipeline.add_action(AutoLoginAction())
             if self.test_has_shell(parameters):
-                self.internal_pipeline.add_action(ExpectShellSession())
+                self.pipeline.add_action(ExpectShellSession())
                 if "transfer_overlay" in parameters:
-                    self.internal_pipeline.add_action(OverlayUnpack())
-                self.internal_pipeline.add_action(ExportDeviceEnvironment())
+                    self.pipeline.add_action(OverlayUnpack())
+                self.pipeline.add_action(ExportDeviceEnvironment())
 
 
 class DepthchargeStart(Action):

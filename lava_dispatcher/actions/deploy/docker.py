@@ -80,13 +80,11 @@ class DockerAction(DeployAction):
         )
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         if self.test_needs_deployment(parameters):
-            self.internal_pipeline.add_action(DeployDeviceEnvironment())
+            self.pipeline.add_action(DeployDeviceEnvironment())
         if self.test_needs_overlay(parameters):
-            self.internal_pipeline.add_action(OverlayAction())
+            self.pipeline.add_action(OverlayAction())
 
     def run(self, connection, max_end_time):
         # Pull the image

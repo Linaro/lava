@@ -81,10 +81,8 @@ class TestInteractiveRetry(RetryAction):
     summary = "Retry support for Lava Test Interactive"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
-        self.internal_pipeline.add_action(TestInteractiveAction())
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.pipeline.add_action(TestInteractiveAction())
 
 
 @nottest

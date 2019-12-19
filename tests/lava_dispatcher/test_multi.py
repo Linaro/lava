@@ -184,22 +184,20 @@ class TestMultiDefinition(StdoutTestCase):
         ][0]
         tftp = [
             action
-            for action in deploy.internal_pipeline.actions
+            for action in deploy.pipeline.actions
             if action.name == "prepare-tftp-overlay"
         ][0]
         overlay = [
-            action
-            for action in tftp.internal_pipeline.actions
-            if action.name == "lava-overlay"
+            action for action in tftp.pipeline.actions if action.name == "lava-overlay"
         ][0]
         testdef = [
             action
-            for action in overlay.internal_pipeline.actions
+            for action in overlay.pipeline.actions
             if action.name == "test-definition"
         ][0]
         runscript = [
             action
-            for action in testdef.internal_pipeline.actions
+            for action in testdef.pipeline.actions
             if action.name == "test-runscript-overlay"
         ][0]
         testdef_index = runscript.get_namespace_data(

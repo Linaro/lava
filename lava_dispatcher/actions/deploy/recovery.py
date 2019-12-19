@@ -33,15 +33,13 @@ class RecoveryModeAction(DeployAction):
 
     def populate(self, parameters):
         super().populate(parameters)
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         recovery = self.job.device["actions"]["deploy"]["methods"]["recovery"]
         recovery_dir = self.mkdtemp()
         image_keys = sorted(parameters["images"].keys())
         for image in image_keys:
-            self.internal_pipeline.add_action(DownloaderAction(image, recovery_dir))
-        self.internal_pipeline.add_action(CopyToLxcAction())
+            self.pipeline.add_action(DownloaderAction(image, recovery_dir))
+        self.pipeline.add_action(CopyToLxcAction())
 
         tags = []
         if "tags" in recovery:
@@ -49,7 +47,7 @@ class RecoveryModeAction(DeployAction):
         if "serial" in tags:
             # might not be a usable shell here, just power on.
             # FIXME: if used, FastbootAction must not try to reconnect
-            self.internal_pipeline.add_action(ConnectDevice())
+            self.pipeline.add_action(ConnectDevice())
 
 
 class RecoveryMode(Deployment):

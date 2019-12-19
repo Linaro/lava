@@ -101,35 +101,31 @@ class MpsAction(DeployAction):
 
     def populate(self, parameters):
         download_dir = self.mkdtemp()
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
-        self.internal_pipeline.add_action(DisconnectDevice())
-        self.internal_pipeline.add_action(ResetDevice())
-        self.internal_pipeline.add_action(WaitUSBMassStorageDeviceAction())
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.pipeline.add_action(DisconnectDevice())
+        self.pipeline.add_action(ResetDevice())
+        self.pipeline.add_action(WaitUSBMassStorageDeviceAction())
         for image in parameters["images"].keys():
-            self.internal_pipeline.add_action(
-                DownloaderAction(image, path=download_dir)
-            )
-        self.internal_pipeline.add_action(MountVExpressMassStorageDevice())
+            self.pipeline.add_action(DownloaderAction(image, path=download_dir))
+        self.pipeline.add_action(MountVExpressMassStorageDevice())
         # Sort the keys so recovery_image will be first
         for image in sorted(parameters["images"].keys()):
             if image == "recovery_image":
-                self.internal_pipeline.add_action(ExtractVExpressRecoveryImage())
-                self.internal_pipeline.add_action(DeployVExpressRecoveryImage())
+                self.pipeline.add_action(ExtractVExpressRecoveryImage())
+                self.pipeline.add_action(DeployVExpressRecoveryImage())
             else:
-                self.internal_pipeline.add_action(DeployMPSTestBinary(image))
+                self.pipeline.add_action(DeployMPSTestBinary(image))
 
         # Should we hard reboot the board after flash?
         params = self.job.device["actions"]["deploy"]["methods"]["mps"]["parameters"]
         if params["hard-reboot"]:
             # Unmount the mass storage device before rebooting
-            self.internal_pipeline.add_action(UnmountVExpressMassStorageDevice())
-            self.internal_pipeline.add_action(PowerOff())
+            self.pipeline.add_action(UnmountVExpressMassStorageDevice())
+            self.pipeline.add_action(PowerOff())
         else:
             # Unmount the mass storage device after the creation of reboot.txt
-            self.internal_pipeline.add_action(DeployMPSRebootTxt())
-            self.internal_pipeline.add_action(UnmountVExpressMassStorageDevice())
+            self.pipeline.add_action(DeployMPSRebootTxt())
+            self.pipeline.add_action(UnmountVExpressMassStorageDevice())
 
 
 class DeployMPSTestBinary(Action):

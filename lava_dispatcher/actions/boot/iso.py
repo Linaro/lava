@@ -58,17 +58,15 @@ class BootIsoInstallerAction(BootAction):
     summary = "boot installer iso image"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
-        self.internal_pipeline.add_action(IsoCommandLine())
-        self.internal_pipeline.add_action(MonitorInstallerSession())
-        self.internal_pipeline.add_action(IsoRebootAction())
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.pipeline.add_action(IsoCommandLine())
+        self.pipeline.add_action(MonitorInstallerSession())
+        self.pipeline.add_action(IsoRebootAction())
         # Add AutoLoginAction unconditionally as this action does nothing if
         # the configuration does not contain 'auto_login'
-        self.internal_pipeline.add_action(AutoLoginAction())
-        self.internal_pipeline.add_action(ExpectShellSession())
-        self.internal_pipeline.add_action(ExportDeviceEnvironment())
+        self.pipeline.add_action(AutoLoginAction())
+        self.pipeline.add_action(ExpectShellSession())
+        self.pipeline.add_action(ExportDeviceEnvironment())
 
 
 class IsoCommandLine(Action):

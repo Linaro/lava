@@ -68,15 +68,13 @@ class SecondaryShellAction(BootAction):
     summary = "connect to a specified second shell"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         name = parameters["connection"]
-        self.internal_pipeline.add_action(ConnectShell(name=name))
+        self.pipeline.add_action(ConnectShell(name=name))
         if self.has_prompts(parameters):
-            self.internal_pipeline.add_action(AutoLoginAction(booting=False))
+            self.pipeline.add_action(AutoLoginAction(booting=False))
             if self.test_has_shell(parameters):
-                self.internal_pipeline.add_action(ExpectShellSession())
+                self.pipeline.add_action(ExpectShellSession())
                 if "transfer_overlay" in parameters:
-                    self.internal_pipeline.add_action(OverlayUnpack())
-                self.internal_pipeline.add_action(ExportDeviceEnvironment())
+                    self.pipeline.add_action(OverlayUnpack())
+                self.pipeline.add_action(ExportDeviceEnvironment())

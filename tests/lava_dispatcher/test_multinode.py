@@ -142,13 +142,13 @@ class TestMultinode(StdoutTestCase):
         self.assertIsNotNone(deploy)
         overlay = [
             action
-            for action in deploy.internal_pipeline.actions
+            for action in deploy.pipeline.actions
             if isinstance(action, OverlayAction)
         ][0]
         self.assertIsNotNone(overlay)
         client_multinode = [
             action
-            for action in overlay.internal_pipeline.actions
+            for action in overlay.pipeline.actions
             if isinstance(action, MultinodeOverlayAction)
         ][0]
         self.assertIsNotNone(client_multinode)
@@ -163,13 +163,13 @@ class TestMultinode(StdoutTestCase):
         self.assertIsNotNone(deploy)
         overlay = [
             action
-            for action in deploy.internal_pipeline.actions
+            for action in deploy.pipeline.actions
             if isinstance(action, OverlayAction)
         ][0]
         self.assertIsNotNone(overlay)
         server_multinode = [
             action
-            for action in overlay.internal_pipeline.actions
+            for action in overlay.pipeline.actions
             if isinstance(action, MultinodeOverlayAction)
         ][0]
         self.assertIsNotNone(server_multinode)
@@ -510,7 +510,7 @@ class TestMultinode(StdoutTestCase):
         ][0]
         self.assertIn("protocols", deploy.parameters)
         client_calls = {}
-        for action in deploy.internal_pipeline.actions:
+        for action in deploy.pipeline.actions:
             if "protocols" in action.parameters:
                 for protocol in action.job.protocols:
                     for params in action.parameters["protocols"][protocol.name]:
@@ -531,13 +531,13 @@ class TestMultinode(StdoutTestCase):
         self.assertIsNotNone(boot)
         retry = [
             action
-            for action in boot.internal_pipeline.actions
+            for action in boot.pipeline.actions
             if isinstance(action, BootQemuRetry)
         ][0]
         self.assertIsNotNone(retry)
         qemu_boot = [
             action
-            for action in retry.internal_pipeline.actions
+            for action in retry.pipeline.actions
             if isinstance(action, CallQemuAction)
         ][0]
         self.assertIsNotNone(qemu_boot)
@@ -562,7 +562,7 @@ class TestMultinode(StdoutTestCase):
             ],
         )
         client_calls = {}
-        for action in retry.internal_pipeline.actions:
+        for action in retry.pipeline.actions:
             if "protocols" in action.parameters:
                 for protocol in action.job.protocols:
                     for params in action.parameters["protocols"][protocol.name]:

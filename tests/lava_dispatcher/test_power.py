@@ -35,21 +35,21 @@ class TestPowerAction(StdoutTestCase):
         uboot_action = [
             action for action in job.pipeline.actions if action.name == "uboot-action"
         ][0]
-        names = [r_action.name for r_action in uboot_action.internal_pipeline.actions]
+        names = [r_action.name for r_action in uboot_action.pipeline.actions]
         self.assertIn("uboot-retry", names)
         uboot_retry = [
             action
             for action in uboot_action.pipeline.actions
             if action.name == "uboot-retry"
         ][0]
-        names = [r_action.name for r_action in uboot_retry.internal_pipeline.actions]
+        names = [r_action.name for r_action in uboot_retry.pipeline.actions]
         self.assertIn("reset-device", names)
         reset_device = [
             action
             for action in uboot_retry.pipeline.actions
             if action.name == "reset-device"
         ][0]
-        names = [r_action.name for r_action in reset_device.internal_pipeline.actions]
+        names = [r_action.name for r_action in reset_device.pipeline.actions]
         self.assertEqual(["send-reboot-commands"], names)
 
     def test_reset_power(self):
@@ -60,19 +60,19 @@ class TestPowerAction(StdoutTestCase):
         uboot_action = [
             action for action in job.pipeline.actions if action.name == "uboot-action"
         ][0]
-        names = [r_action.name for r_action in uboot_action.internal_pipeline.actions]
+        names = [r_action.name for r_action in uboot_action.pipeline.actions]
         self.assertIn("uboot-retry", names)
         uboot_retry = [
             action
             for action in uboot_action.pipeline.actions
             if action.name == "uboot-retry"
         ][0]
-        names = [r_action.name for r_action in uboot_retry.internal_pipeline.actions]
+        names = [r_action.name for r_action in uboot_retry.pipeline.actions]
         self.assertIn("reset-device", names)
         reset_device = [
             action
             for action in uboot_retry.pipeline.actions
             if action.name == "reset-device"
         ][0]
-        names = [r_action.name for r_action in reset_device.internal_pipeline.actions]
+        names = [r_action.name for r_action in reset_device.pipeline.actions]
         self.assertEqual(["pdu-reboot"], names)

@@ -77,13 +77,11 @@ class BootloaderAction(BootAction):
     summary = "pass boot commands"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         # customize the device configuration for this job
-        self.internal_pipeline.add_action(BootloaderCommandOverlay())
-        self.internal_pipeline.add_action(ConnectDevice())
-        self.internal_pipeline.add_action(BootloaderRetry())
+        self.pipeline.add_action(BootloaderCommandOverlay())
+        self.pipeline.add_action(ConnectDevice())
+        self.pipeline.add_action(BootloaderRetry())
 
 
 class BootloaderRetry(BootAction):
@@ -98,21 +96,19 @@ class BootloaderRetry(BootAction):
         self.force_prompt = False
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         # establish a new connection before trying the reset
-        self.internal_pipeline.add_action(ResetDevice())
-        self.internal_pipeline.add_action(BootloaderInterruptAction())
+        self.pipeline.add_action(ResetDevice())
+        self.pipeline.add_action(BootloaderInterruptAction())
         # need to look for Hit any key to stop autoboot
-        self.internal_pipeline.add_action(BootloaderCommandsAction())
+        self.pipeline.add_action(BootloaderCommandsAction())
         if self.has_prompts(parameters):
-            self.internal_pipeline.add_action(AutoLoginAction())
+            self.pipeline.add_action(AutoLoginAction())
             if self.test_has_shell(parameters):
-                self.internal_pipeline.add_action(ExpectShellSession())
+                self.pipeline.add_action(ExpectShellSession())
                 if "transfer_overlay" in parameters:
-                    self.internal_pipeline.add_action(OverlayUnpack())
-                self.internal_pipeline.add_action(ExportDeviceEnvironment())
+                    self.pipeline.add_action(OverlayUnpack())
+                self.pipeline.add_action(ExportDeviceEnvironment())
 
     def validate(self):
         super().validate()

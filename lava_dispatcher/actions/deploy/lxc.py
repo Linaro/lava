@@ -97,21 +97,19 @@ class LxcAction(DeployAction):  # pylint:disable=too-many-instance-attributes
         which("lxc-create")
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
-        self.internal_pipeline.add_action(LxcCreateAction())
-        self.internal_pipeline.add_action(LxcCreateUdevRuleAction())
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.pipeline.add_action(LxcCreateAction())
+        self.pipeline.add_action(LxcCreateUdevRuleAction())
         if "packages" in parameters:
-            self.internal_pipeline.add_action(LxcStartAction())
-            self.internal_pipeline.add_action(LxcAptUpdateAction())
-            self.internal_pipeline.add_action(LxcAptInstallAction())
-            self.internal_pipeline.add_action(LxcStopAction())
+            self.pipeline.add_action(LxcStartAction())
+            self.pipeline.add_action(LxcAptUpdateAction())
+            self.pipeline.add_action(LxcAptInstallAction())
+            self.pipeline.add_action(LxcStopAction())
         if self.test_needs_deployment(parameters):
-            self.internal_pipeline.add_action(DeployDeviceEnvironment())
+            self.pipeline.add_action(DeployDeviceEnvironment())
         if self.test_needs_overlay(parameters):
-            self.internal_pipeline.add_action(OverlayAction())
-            self.internal_pipeline.add_action(ApplyLxcOverlay())
+            self.pipeline.add_action(OverlayAction())
+            self.pipeline.add_action(ApplyLxcOverlay())
 
 
 class LxcCreateAction(DeployAction):

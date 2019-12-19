@@ -85,8 +85,7 @@ class TestDepthchargeAction(StdoutTestCase):
             if action.name == "prepare-kernel"
         ][0]
         self.assertEqual(
-            [action.name for action in prep_kernel.internal_pipeline.actions],
-            ["prepare-fit"],
+            [action.name for action in prep_kernel.pipeline.actions], ["prepare-fit"]
         )
 
         prep_fit = [
@@ -125,16 +124,16 @@ class TestDepthchargeAction(StdoutTestCase):
             if action.name == "depthcharge-action"
         ][0]
         self.assertEqual(
-            [action.name for action in depthcharge.internal_pipeline.actions],
+            [action.name for action in depthcharge.pipeline.actions],
             ["depthcharge-overlay", "connect-device", "depthcharge-retry"],
         )
 
         retry = [
             action
-            for action in depthcharge.internal_pipeline.actions
+            for action in depthcharge.pipeline.actions
             if action.name == "depthcharge-retry"
         ][0]
         self.assertEqual(
-            [action.name for action in retry.internal_pipeline.actions],
+            [action.name for action in retry.pipeline.actions],
             ["reset-device", "depthcharge-start", "bootloader-commands"],
         )

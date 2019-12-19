@@ -46,12 +46,10 @@ class TestKExec(StdoutTestCase):
         self.assertIsInstance(job.pipeline.actions[2], TestShellRetry)
         self.assertIsInstance(job.pipeline.actions[3], BootKexecAction)
         kexec = job.pipeline.actions[3]
-        self.assertIsInstance(kexec.internal_pipeline.actions[0], KexecAction)
-        self.assertIsInstance(kexec.internal_pipeline.actions[1], AutoLoginAction)
-        self.assertIsInstance(kexec.internal_pipeline.actions[2], ExpectShellSession)
-        self.assertIsInstance(
-            kexec.internal_pipeline.actions[3], ExportDeviceEnvironment
-        )
+        self.assertIsInstance(kexec.pipeline.actions[0], KexecAction)
+        self.assertIsInstance(kexec.pipeline.actions[1], AutoLoginAction)
+        self.assertIsInstance(kexec.pipeline.actions[2], ExpectShellSession)
+        self.assertIsInstance(kexec.pipeline.actions[3], ExportDeviceEnvironment)
         self.assertIn("kernel", kexec.parameters)
         self.assertIn("command", kexec.parameters)
         self.assertIn("method", kexec.parameters)
@@ -61,13 +59,11 @@ class TestKExec(StdoutTestCase):
         self.assertTrue(kexec.valid)
         self.assertEqual(
             "/sbin/kexec --load /home/vmlinux --dtb /home/dtb --initrd /home/initrd --reuse-cmdline",
-            kexec.internal_pipeline.actions[0].load_command,
+            kexec.pipeline.actions[0].load_command,
         )
-        self.assertEqual("/sbin/kexec -e", kexec.internal_pipeline.actions[0].command)
-        self.assertIsNotNone(
-            kexec.internal_pipeline.actions[0].parameters["boot_message"]
-        )
+        self.assertEqual("/sbin/kexec -e", kexec.pipeline.actions[0].command)
+        self.assertIsNotNone(kexec.pipeline.actions[0].parameters["boot_message"])
 
-        self.assertIsNotNone(kexec.internal_pipeline.actions[0].name)
-        self.assertIsNotNone(kexec.internal_pipeline.actions[0].level)
-        self.assertEqual(kexec.internal_pipeline.actions[0].timeout.duration, 45)
+        self.assertIsNotNone(kexec.pipeline.actions[0].name)
+        self.assertIsNotNone(kexec.pipeline.actions[0].level)
+        self.assertEqual(kexec.pipeline.actions[0].timeout.duration, 45)

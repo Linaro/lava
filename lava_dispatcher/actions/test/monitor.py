@@ -76,10 +76,8 @@ class TestMonitorRetry(RetryAction):
     summary = "Retry support for Lava Test Monitoring"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
-        self.internal_pipeline.add_action(TestMonitorAction())
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.pipeline.add_action(TestMonitorAction())
 
 
 @nottest

@@ -114,9 +114,7 @@ class NbdAction(DeployAction):  # pylint:disable=too-many-instance-attributes
 
     def populate(self, parameters):
         self.tftp_dir = self.mkdtemp(override=tftpd_dir())
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.set_namespace_data(
             action=self.name,
             label="tftp",
@@ -131,7 +129,7 @@ class NbdAction(DeployAction):  # pylint:disable=too-many-instance-attributes
                 download.max_retries = (
                     3
                 )  # overridden by failure_retry in the parameters, if set.
-                self.internal_pipeline.add_action(download)
+                self.pipeline.add_action(download)
                 if key == "initrd":
                     self.set_namespace_data(
                         action="tftp-deploy",
@@ -149,7 +147,7 @@ class NbdAction(DeployAction):  # pylint:disable=too-many-instance-attributes
                     )
 
         # prepare overlay
-        self.internal_pipeline.add_action(OverlayAction())
+        self.pipeline.add_action(OverlayAction())
         # setup values for protocol and later steps
         self.set_namespace_data(
             action=self.name,
@@ -163,7 +161,7 @@ class NbdAction(DeployAction):  # pylint:disable=too-many-instance-attributes
         # ip
         parameters["lava-xnbd"] = {}
         # handle XnbdAction next - bring-up xnbd-server
-        self.internal_pipeline.add_action(XnbdAction())
+        self.pipeline.add_action(XnbdAction())
 
 
 class XnbdAction(DeployAction):

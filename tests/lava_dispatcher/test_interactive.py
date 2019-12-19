@@ -75,7 +75,7 @@ def test_stages(monkeypatch):
     )
     assert description_ref == job.pipeline.describe(False)  # nosec
     assert (  # nosec  - assert is part of the test process.
-        job.pipeline.actions[3].internal_pipeline.actions[0].parameters["stage"] == 0
+        job.pipeline.actions[3].pipeline.actions[0].parameters["stage"] == 0
     )
 
 

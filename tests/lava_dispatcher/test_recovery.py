@@ -176,7 +176,7 @@ class TestRecoveryMode(StdoutTestCase):
         ][0]
         mode = [
             action
-            for action in enter.internal_pipeline.actions
+            for action in enter.pipeline.actions
             if action.name == "switch-recovery"
         ][0]
         recovery = self.fastboot_job.device["actions"]["deploy"]["methods"]["recovery"]
@@ -196,7 +196,7 @@ class TestRecoveryMode(StdoutTestCase):
         ][1]
         mode = [
             action
-            for action in exit_mode.internal_pipeline.actions
+            for action in exit_mode.pipeline.actions
             if action.name == "switch-recovery"
         ][0]
         self.assertIsNotNone(recovery["commands"].get(mode.mode))
@@ -217,7 +217,7 @@ class TestRecoveryMode(StdoutTestCase):
         ][0]
         mode = [
             action
-            for action in enter.internal_pipeline.actions
+            for action in enter.pipeline.actions
             if action.name == "switch-recovery"
         ][0]
         recovery = self.uboot_job.device["actions"]["deploy"]["methods"]["recovery"]
@@ -239,7 +239,7 @@ class TestRecoveryMode(StdoutTestCase):
         ][1]
         mode = [
             action
-            for action in exit_mode.internal_pipeline.actions
+            for action in exit_mode.pipeline.actions
             if action.name == "switch-recovery"
         ][0]
         self.assertIsNotNone(recovery["commands"].get(mode.mode))

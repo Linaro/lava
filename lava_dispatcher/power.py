@@ -41,13 +41,11 @@ class ResetDevice(Action):
     summary = "reboot the device"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         if self.job.device.hard_reset_command:
-            self.internal_pipeline.add_action(PDUReboot())
+            self.pipeline.add_action(PDUReboot())
         else:
-            self.internal_pipeline.add_action(SendRebootCommands())
+            self.pipeline.add_action(SendRebootCommands())
 
 
 class SendRebootCommands(Action):
@@ -309,17 +307,15 @@ class FinalizeAction(Action):
         self.ran = False
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            job=self.job, parent=self, parameters=parameters
-        )
-        self.internal_pipeline.add_action(PowerOff())
-        self.internal_pipeline.add_action(ReadFeedback(finalize=True, repeat=True))
+        self.pipeline = Pipeline(job=self.job, parent=self, parameters=parameters)
+        self.pipeline.add_action(PowerOff())
+        self.pipeline.add_action(ReadFeedback(finalize=True, repeat=True))
 
     def run(self, connection, max_end_time):
         """
         The pexpect.spawn here is the ShellCommand not the ShellSession connection object.
         So call the finalise() function of the connection which knows about the raw_connection inside.
-        The internal_pipeline of FinalizeAction is special - it needs to run even in the case of error / cancel.
+        The pipeline of FinalizeAction is special - it needs to run even in the case of error / cancel.
         """
         self.ran = True
         try:
