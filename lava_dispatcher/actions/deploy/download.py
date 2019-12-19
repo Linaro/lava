@@ -116,15 +116,19 @@ class DownloadHandler(Action):
     summary = "download-action"
     timeout_exception = InfrastructureError
 
+    # Supported decompression commands
+    decompress_command_map = {"xz": "unxz", "gz": "gunzip", "bz2": "bunzip2"}
+
     def __init__(self, key, path, url, uniquify=True):
         super().__init__()
         self.url = url
         self.key = key
-        # If uniquify is True, store the files in a sub-directory to keep the
-        # path unique.
-        self.path = os.path.join(path, key) if uniquify else path
         self.size = -1
-        self.decompress_command_map = {"xz": "unxz", "gz": "gunzip", "bz2": "bunzip2"}
+
+        self.path = path
+        # Store the files in a sub-directory to keep the path unique.
+        if uniquify:
+            self.path = os.path.join(path, key)
         self.fname = None
 
     def reader(self):
@@ -139,15 +143,18 @@ class DownloadHandler(Action):
         )
         super().cleanup(connection)
 
-    def _url_to_fname_suffix(self, path, modify):
+    def _url_to_fname(self, path, compression):
         filename = os.path.basename(self.url.path)
+
+        # Don't rename files we don't decompress during download
+        if not compression or (compression not in self.decompress_command_map):
+            return os.path.join(path, filename)
+
         parts = filename.split(".")
-        # Handle unmodified filename
-        # Also files without suffixes, e.g. kernel images
-        # Don't rename files we don't support decompressing during download
-        if not modify or len(parts) == 1 or (modify not in self.decompress_command_map):
-            return (os.path.join(path, filename), None)
-        return (os.path.join(path, ".".join(parts[:-1])), parts[-1])
+        # Files without suffixes, e.g. kernel images
+        if len(parts) == 1:
+            return os.path.join(path, filename)
+        return os.path.join(path, ".".join(parts[:-1]))
 
     def validate(self):
         super().validate()
@@ -156,7 +163,7 @@ class DownloadHandler(Action):
             self.url = urlparse(image["url"])
             compression = image.get("compression")
             archive = image.get("archive")
-            self.fname, _ = self._url_to_fname_suffix(self.path, compression)
+            self.fname = self._url_to_fname(self.path, compression)
             image_arg = image.get("image_arg")
             overlay = image.get("overlay", False)
             self.set_namespace_data(
@@ -179,7 +186,7 @@ class DownloadHandler(Action):
             compression = self.parameters[self.key].get("compression")
             archive = self.parameters[self.key].get("archive")
             overlay = self.parameters.get("overlay", False)
-            self.fname, _ = self._url_to_fname_suffix(self.path, compression)
+            self.fname = self._url_to_fname(self.path, compression)
             if self.fname.endswith("/"):
                 self.errors = "Cannot download a directory for %s" % self.key
             self.set_namespace_data(
@@ -196,12 +203,10 @@ class DownloadHandler(Action):
             self.set_namespace_data(
                 action="download-action", label=self.key, key="overlay", value=overlay
             )
-        if compression:
-            if compression not in ["gz", "bz2", "xz", "zip"]:
-                self.errors = "Unknown 'compression' format '%s'" % compression
-        if archive:
-            if archive not in ["tar"]:
-                self.errors = "Unknown 'archive' format '%s'" % archive
+        if compression and compression not in ["gz", "bz2", "xz", "zip"]:
+            self.errors = "Unknown 'compression' format '%s'" % compression
+        if archive and archive not in ["tar"]:
+            self.errors = "Unknown 'archive' format '%s'" % archive
         # pass kernel type to boot Action
         if self.key == "kernel" and ("kernel" in self.parameters):
             self.set_namespace_data(
@@ -210,6 +215,22 @@ class DownloadHandler(Action):
                 key=self.key,
                 value=self.parameters[self.key].get("type"),
             )
+
+    def _check_checksum(self, algorithm, actual, expected):
+        if expected is None:
+            return
+        if actual == expected:
+            self.results = {"success": {algorithm: actual}}
+            return
+
+        self.logger.error(
+            "%s sum for '%s' does not match", algorithm, self.url.geturl()
+        )
+        self.logger.info("actual  : %s", actual)
+        self.logger.info("expected: %s", expected)
+
+        self.results = {"fail": {algorithm: expected, "download": actual}}
+        raise JobError("%s for '%s' does not match." % (algorithm, self.url.geturl()))
 
     def run(self, connection, max_end_time):
         def progress_unknown_total(downloaded_sz, last_val):
@@ -286,7 +307,7 @@ class DownloadHandler(Action):
             progress = progress_unknown_total
         else:
             self.logger.debug(
-                "total size: %d (%dMB)" % (self.size, int(self.size / (1024 * 1024)))
+                "total size: %d (%dMB)", self.size, int(self.size / (1024 * 1024))
             )
             last_value = -5
             progress = progress_known_total
@@ -352,23 +373,20 @@ class DownloadHandler(Action):
         # Log the download speed
         ending = time.time()
         self.logger.info(
-            "%dMB downloaded in %0.2fs (%0.2fMB/s)"
-            % (
-                downloaded_size / (1024 * 1024),
-                round(ending - beginning, 2),
-                round(downloaded_size / (1024 * 1024 * (ending - beginning)), 2),
-            )
+            "%dMB downloaded in %0.2fs (%0.2fMB/s)",
+            downloaded_size / (1024 * 1024),
+            round(ending - beginning, 2),
+            round(downloaded_size / (1024 * 1024 * (ending - beginning)), 2),
         )
 
         # If the remote server uses "Content-Encoding: gzip", this calculation will be wrong
         # because requests will decompress the file on the fly, creating a larger file than
         # LAVA expects.
-        if self.size > 0:
-            if self.size != downloaded_size:
-                raise InfrastructureError(
-                    "Download finished (%i bytes) but was not expected size (%i bytes), check your networking."
-                    % (downloaded_size, self.size)
-                )
+        if self.size > 0 and self.size != downloaded_size:
+            raise InfrastructureError(
+                "Download finished (%i bytes) but was not expected size (%i bytes), check your networking."
+                % (downloaded_size, self.size)
+            )
 
         # set the dynamic data into the context
         self.set_namespace_data(
@@ -394,10 +412,7 @@ class DownloadHandler(Action):
         )
 
         # handle archive files
-        if "images" in self.parameters and self.key in self.parameters["images"]:
-            archive = self.parameters["images"][self.key].get("archive", False)
-        else:
-            archive = self.parameters[self.key].get("archive")
+        archive = remote.get("archive", False)
         if archive:
             if archive != "tar":
                 raise JobError("Unknown archive format %r" % archive)
@@ -418,63 +433,9 @@ class DownloadHandler(Action):
                 value=target_fname_path,
             )
 
-        if md5sum is not None:
-            chk_md5sum = self.get_namespace_data(
-                action="download-action", label=self.key, key="md5"
-            )
-            if md5sum != chk_md5sum:
-                self.logger.error("md5sum of downloaded content: %s" % chk_md5sum)
-                self.logger.info(
-                    "sha256sum of downloaded content: %s"
-                    % (
-                        self.get_namespace_data(
-                            action="download-action", label=self.key, key="sha256"
-                        )
-                    )
-                )
-                self.results = {"fail": {"md5": md5sum, "download": chk_md5sum}}
-                raise JobError("MD5 checksum for '%s' does not match." % self.fname)
-            self.results = {"success": {"md5": md5sum}}
-
-        if sha256sum is not None:
-            chk_sha256sum = self.get_namespace_data(
-                action="download-action", label=self.key, key="sha256"
-            )
-            if sha256sum != chk_sha256sum:
-                self.logger.info(
-                    "md5sum of downloaded content: %s"
-                    % (
-                        self.get_namespace_data(
-                            action="download-action", label=self.key, key="md5"
-                        )
-                    )
-                )
-                self.logger.error("sha256sum of downloaded content: %s" % chk_sha256sum)
-                self.results = {
-                    "fail": {"sha256": sha256sum, "download": chk_sha256sum}
-                }
-                raise JobError("SHA256 checksum for '%s' does not match." % self.fname)
-            self.results = {"success": {"sha256": sha256sum}}
-
-        if sha512sum is not None:
-            chk_sha512sum = self.get_namespace_data(
-                action="download-action", label=self.key, key="sha512"
-            )
-            if sha512sum != chk_sha512sum:
-                self.logger.info(
-                    "sha512sum of downloaded content: %s"
-                    % (
-                        self.get_namespace_data(
-                            action="download-action", label=self.key, key="sha512"
-                        )
-                    )
-                )
-                self.logger.error("sha512sum of downloaded content: %s" % chk_sha512sum)
-                self.results = {
-                    "fail": {"sha512": sha512sum, "download": chk_sha512sum}
-                }
-                raise JobError("SHA512 checksum for '%s' does not match." % self.fname)
-            self.results = {"success": {"sha512": sha512sum}}
+        self._check_checksum("md5", md5.hexdigest(), md5sum)
+        self._check_checksum("sha256", sha256.hexdigest(), sha256sum)
+        self._check_checksum("sha512", sha512.hexdigest(), sha512sum)
 
         # certain deployments need prefixes set
         if self.parameters["to"] == "tftp" or self.parameters["to"] == "nbd":
@@ -547,20 +508,16 @@ class FileDownloadAction(DownloadHandler):
             )
 
     def reader(self):
-        reader = None
         try:
-            reader = open(self.url.path, "rb")
-            buff = reader.read(FILE_DOWNLOAD_CHUNK_SIZE)
-            while buff:
-                yield buff
+            with open(self.url.path, "rb") as reader:
                 buff = reader.read(FILE_DOWNLOAD_CHUNK_SIZE)
+                while buff:
+                    yield buff
+                    buff = reader.read(FILE_DOWNLOAD_CHUNK_SIZE)
         except OSError as exc:
             raise InfrastructureError(
-                "Unable to write to %s: %s" % (self.url.path, str(exc))
+                "Unable to read from %s: %s" % (self.url.path, str(exc))
             )
-        finally:
-            if reader is not None:
-                reader.close()
 
 
 class HttpDownloadAction(DownloadHandler):
@@ -609,6 +566,7 @@ class HttpDownloadAction(DownloadHandler):
                         self.url.geturl(),
                         res.status_code,
                     )
+                    return
 
             self.size = int(res.headers.get("content-length", -1))
         except requests.Timeout:
