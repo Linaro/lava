@@ -57,9 +57,6 @@ def find_data_files(srcdir, *wildcards):
     return file_list
 
 
-SRCDIR = os.path.join(".", "lava_scheduler_app", "tests", "device-types")
-DEVICE_TYPE_TEMPLATES = find_data_files(SRCDIR, "*.jinja2")
-
 setup(
     name="lava",
     version=__version__,
@@ -147,7 +144,7 @@ setup(
                 "share/render-template.py",
             ],
         ),
-    ].extend(DEVICE_TYPE_TEMPLATES),
+    ],
     tests_require=["django-testscenarios >= 0.9.1"],
     zip_safe=False,
     include_package_data=True,

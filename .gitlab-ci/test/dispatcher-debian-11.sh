@@ -12,6 +12,6 @@ then
   apt-get install --no-install-recommends --yes $DEPS
 else
   set -x
-  PYTHONPATH=. pytest-3 --cache-clear -v --junitxml=dispatcher.xml lava_dispatcher/tests
-  PYTHONPATH=. pytest-3 --cache-clear -v --junitxml=dispatcher-host.xml lava_dispatcher_host/tests
+  PYTHONPATH=. pytest-3 --cache-clear -v --junitxml=dispatcher.xml tests/lava_dispatcher
+  PYTHONPATH=. pytest-3 --cache-clear -v --junitxml=dispatcher-host.xml tests/lava_dispatcher_host
 fi

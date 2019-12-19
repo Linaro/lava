@@ -1,0 +1,57 @@
+# Sample JOB definition for a barebox job
+
+device_type: beaglebone-black-barebox
+
+job_name: barebox-pipeline
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 5
+  connection:
+    minutes: 2
+priority: medium
+visibility: public
+
+metadata:
+  source: https://git.lavasoftware.org/lava/lava.git
+  path: tests/lava_dispatcher/sample_jobs/barebox.yaml
+
+actions:
+- deploy:
+    timeout:
+      minutes: 4
+    to: tftp
+    kernel:
+      url: http://images.validation.linaro.org/functional-test-images/bbb/zImage
+      type: zimage
+    nfsrootfs:
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/jessie-armhf-nfs.tar.gz
+      compression: gz
+    os: debian
+    dtb:
+      url: http://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
+
+- boot:
+   method: barebox
+   commands: nfs
+   auto_login:
+     login_prompt: 'login:'
+     username: root
+   prompts:
+   - 'root@jessie:'
+   timeout:
+     minutes: 3
+
+- test:
+   timeout:
+     minutes: 5
+   definitions:
+     - repository: git://git.linaro.org/lava-team/lava-functional-tests.git
+       from: git
+       path: lava-test-shell/smoke-tests-basic.yaml
+       name: smoke-tests
+     - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+       from: git
+       path: lava-test-shell/single-node/singlenode02.yaml
+       name: singlenode-intermediate

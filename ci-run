@@ -82,26 +82,26 @@ if [ -n "${TEMPLATE}" ]
 then
     echo "Testing templates"
     echo
-    PYTHONPATH=. pytest-3 --cache-clear -v lava_scheduler_app/tests/test_base_templates.py lava_scheduler_app/tests/test_templates.py lava_scheduler_app/tests/test_barebox_templates.py lava_scheduler_app/tests/test_uboot_templates.py lava_dispatcher/tests/test_uboot_dfu.py lava_scheduler_app/tests/test_fastboot_templates.py lava_scheduler_app/tests/test_grub_templates.py lava_scheduler_app/tests/test_qemu_templates.py
+    PYTHONPATH=. pytest-3 --cache-clear -v tests/lava_scheduler_app/test_base_templates.py tests/lava_scheduler_app/test_templates.py tests/lava_scheduler_app/test_barebox_templates.py tests/lava_scheduler_app/test_uboot_templates.py lava_dispatcher/tests/test_uboot_dfu.py tests/lava_scheduler_app/test_fastboot_templates.py tests/lava_scheduler_app/test_grub_templates.py tests/lava_scheduler_app/test_qemu_templates.py
 fi
 
 if [ -n "${COMMON}" ]
 then
     echo "Testing common"
     echo
-    PYTHONPATH=. pytest-3 --cache-clear -v lava_common/tests
+    PYTHONPATH=. pytest-3 --cache-clear -v tests/lava_common
 fi
 
 if [ -n "${DISPATCH}" ]
 then
     echo "Testing dispatcher"
     echo
-    PYTHONPATH=. pytest-3 --cache-clear -v lava_dispatcher/tests lava_dispatcher_host/tests
+    PYTHONPATH=. pytest-3 --cache-clear -v tests/lava_dispatcher tests/lava_dispatcher_host
 fi
 
 if [ -n "${SERVER}" ]
 then
     echo "Testing server"
     echo
-    pytest-3 --cache-clear -v --reuse-db lava_scheduler_app/tests lava_results_app/tests linaro_django_xmlrpc/tests.py lava_rest_app/tests.py lava_server/tests.py
+    pytest-3 --cache-clear -v --reuse-db tests/lava_scheduler_app tests/lava_results_app tests/linaro_django_xmlrpc tests/lava_rest_app tests/lava_server
 fi
