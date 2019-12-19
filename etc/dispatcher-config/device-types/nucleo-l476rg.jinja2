@@ -4,6 +4,7 @@
 board_id: '{{ board_id|default('0000000000') }}'
 usb_vendor_id: '0483'
 usb_product_id: '374b'
+usb_sleep: {{ usb_sleep|default(0) }}
 
 actions:
   deploy:
