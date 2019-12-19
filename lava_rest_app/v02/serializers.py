@@ -19,11 +19,26 @@
 
 
 from lava_rest_app.base import serializers as base_serializers
-from lava_scheduler_app.models import Alias, Tag
+from lava_scheduler_app.models import Alias, Device, Tag
 
 from rest_framework_extensions.fields import ResourceUriField
 from rest_framework.reverse import reverse as rest_reverse
 from rest_framework import serializers
+
+
+class ChoiceField(serializers.ChoiceField):
+    def to_representation(self, obj):
+        return self.choices[obj]
+
+    def to_internal_value(self, data):
+        if data == "" and self.allow_blank:
+            return ""
+        try:
+            return list(self.choices.keys())[
+                list(self.choices.values()).index(str(data))
+            ]
+        except KeyError:
+            self.fail("invalid_choice", input=data)
 
 
 class TestJobSerializer(base_serializers.TestJobSerializer):
@@ -66,8 +81,25 @@ class DeviceTypeSerializer(base_serializers.DeviceTypeSerializer):
     pass
 
 
+class DictionarySerializer(serializers.Serializer):
+    dictionary = serializers.CharField(style={"base_template": "textarea.html"})
+
+
 class DeviceSerializer(base_serializers.DeviceSerializer):
-    pass
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if "view" in self.context and self.context["view"].action in [
+            "update",
+            "partial_update",
+        ]:
+            # Hostname becomes read-only after device is created.
+            self.fields.pop("hostname", None)
+
+    state = serializers.CharField(source="get_state_display", read_only=True)
+    health = ChoiceField(choices=Device.HEALTH_CHOICES)
+
+    class Meta(base_serializers.DeviceSerializer.Meta):
+        read_only_fields = ("last_health_report_job", "state")
 
 
 class WorkerSerializer(base_serializers.WorkerSerializer):

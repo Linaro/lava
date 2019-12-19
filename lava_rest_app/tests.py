@@ -143,6 +143,11 @@ class TestRestApi:
             device_type=self.public_device_type1,
             worker_host=self.worker1,
         )
+        self.public_device1 = Device.objects.create(
+            hostname="public02",
+            device_type=self.public_device_type1,
+            worker_host=self.worker1,
+        )
         self.retired_device1 = Device.objects.create(
             hostname="retired01",
             device_type=self.public_device_type1,
@@ -474,17 +479,135 @@ ok 2 - bar
             data[0]["suite"] == self.public_testjob1.testsuite_set.first().name
         )  # nosec - unit test support
 
-    def test_devices(self):
+    def test_devices_list(self):
         data = self.hit(
-            self.userclient, reverse("api-root", args=[self.version]) + "devices/"
+            self.userclient,
+            reverse("api-root", args=[self.version]) + "devices/?ordering=hostname",
         )
-        assert len(data["results"]) == 1  # nosec - unit test support
+        assert len(data["results"]) == 2  # nosec - unit test support
+        assert data["results"][0]["hostname"] == "public01"  # nosec - unit test support
+        assert data["results"][1]["hostname"] == "public02"  # nosec - unit test support
 
     def test_devices_admin(self):
         data = self.hit(
-            self.adminclient, reverse("api-root", args=[self.version]) + "devices/"
+            self.adminclient,
+            reverse("api-root", args=[self.version]) + "devices/?ordering=hostname",
         )
-        assert len(data["results"]) == 1  # nosec - unit test support
+        assert len(data["results"]) == 2  # nosec - unit test support
+        assert data["results"][0]["hostname"] == "public01"  # nosec - unit test support
+        assert data["results"][1]["hostname"] == "public02"  # nosec - unit test support
+
+    def test_devices_retrieve(self):
+        data = self.hit(
+            self.userclient,
+            reverse("api-root", args=[self.version]) + "devices/public01/",
+        )
+        assert data["hostname"] == "public01"  # nosec - unit test support
+        assert data["device_type"] == "public_device_type1"  # nosec - unit test support
+
+    def test_devices_create_unauthorized(self):
+        response = self.userclient.post(
+            reverse("api-root", args=[self.version]) + "devices/",
+            {
+                "hostname": "public03",
+                "device_type": "qemu",
+                "health": "Idle",
+                "pysical_owner": "admin",
+            },
+        )
+        assert response.status_code == 403  # nosec - unit test support
+
+    def test_devices_create(self):
+        response = self.adminclient.post(
+            reverse("api-root", args=[self.version]) + "devices/",
+            {
+                "hostname": "public03",
+                "device_type": "public_device_type1",
+                "health": "Good",
+                "pysical_owner": "admin",
+            },
+        )
+        assert response.status_code == 201  # nosec - unit test support
+
+    def test_devices_delete_unauthorized(self):
+        response = self.userclient.delete(
+            reverse("api-root", args=[self.version]) + "devices/public02/"
+        )
+        assert response.status_code == 403  # nosec - unit test support
+
+    def test_devices_delete(self):
+        response = self.adminclient.delete(
+            reverse("api-root", args=[self.version]) + "devices/public02/"
+        )
+        assert response.status_code == 204  # nosec - unit test support
+
+    def test_devices_update_unauthorized(self):
+        response = self.userclient.put(
+            reverse("api-root", args=[self.version]) + "devices/public02/",
+            {"device_type": "restricted_device_type1"},
+        )
+        assert response.status_code == 403  # nosec - unit test support
+
+    def test_devices_update(self):
+        response = self.adminclient.put(
+            reverse("api-root", args=[self.version]) + "devices/public02/",
+            {"device_type": "restricted_device_type1", "health": "Unknown"},
+        )
+        assert response.status_code == 200  # nosec - unit test support
+        content = json.loads(response.content.decode("utf-8"))
+        assert (
+            content["device_type"] == "restricted_device_type1"
+        )  # nosec - unit test support
+        assert content["health"] == "Unknown"  # nosec - unit test support
+
+    def test_devices_get_dictionary(self, monkeypatch, tmpdir):
+        # invalid context
+        response = self.userclient.get(
+            reverse("api-root", args=[self.version])
+            + "devices/public01/dictionary/?context={{"
+        )
+        assert response.status_code == 400  # nosec
+
+        # no device dict
+        monkeypatch.setattr(
+            Device, "load_configuration", (lambda self, job_ctx, output_format: None)
+        )
+        response = self.userclient.get(
+            reverse("api-root", args=[self.version]) + "devices/public01/dictionary/"
+        )
+        assert response.status_code == 400  # nosec
+
+        # success
+        monkeypatch.setattr(
+            Device,
+            "load_configuration",
+            (lambda self, job_ctx, output_format: "device: dict"),
+        )
+        data = self.hit(
+            self.userclient,
+            reverse("api-root", args=[self.version]) + "devices/public01/dictionary/",
+        )
+        data = yaml.load(data)
+        assert data == {"device": "dict"}  # nosec
+
+    def test_devices_set_dictionary(self, monkeypatch, tmpdir):
+        def save_configuration(self, data):
+            assert data == "hello"  # nosec
+            return True
+
+        monkeypatch.setattr(Device, "save_configuration", save_configuration)
+
+        response = self.adminclient.post(
+            reverse("api-root", args=[self.version]) + "devices/public01/dictionary/",
+            {"dictionary": "hello"},
+        )
+        assert response.status_code == 200  # nosec
+
+        # No dictionary param.
+        response = self.adminclient.post(
+            reverse("api-root", args=[self.version]) + "devices/public01/dictionary/"
+        )
+        assert response.status_code == 400  # nosec
 
     def test_devicetypes(self):
         data = self.hit(
@@ -538,7 +661,6 @@ ok 2 - bar
         assert response.status_code == 201  # nosec - unit test support
 
     def test_devicetype_get_template(self, monkeypatch, tmpdir):
-
         real_open = open
         (tmpdir / "qemu.jinja2").write_text("hello", encoding="utf-8")
 

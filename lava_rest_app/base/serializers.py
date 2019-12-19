@@ -113,9 +113,6 @@ class DeviceTypeSerializer(serializers.ModelSerializer):
 class DeviceSerializer(serializers.ModelSerializer):
     health = serializers.CharField(source="get_health_display")
     state = serializers.CharField(source="get_state_display")
-    physical_owner = serializers.CharField(
-        source="physical_owner.username", default=None
-    )
 
     class Meta:
         model = Device
