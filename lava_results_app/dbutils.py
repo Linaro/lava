@@ -43,8 +43,12 @@ from lava_common.timeout import Timeout
 def yaml_decimal_str(dumper, value):
     return yaml.ScalarNode(tag=u"tag:yaml.org,2002:str", value=str(value))
 
+def yaml_ordered_dict_ordered_mapping(dumper, value):
+    return dumper.represent_mapping('tag:yaml.org,2002:omap', value.items())
+
 
 yaml.add_representer(decimal.Decimal, yaml_decimal_str)
+yaml.add_representer(collections.OrderedDict, yaml_ordered_dict_mapping)
 
 
 def _check_for_testset(result_dict, suite):
