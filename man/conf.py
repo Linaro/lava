@@ -231,6 +231,13 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     (
+        "lava-coordinator",
+        "lava-coordinator",
+        u"manage multinode communications",
+        [u"Linaro Validation Team"],
+        1,
+    ),
+    (
         "lava-server",
         "lava-server",
         u"lava-server command line support",

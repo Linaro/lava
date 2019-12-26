@@ -1,6 +1,7 @@
 .. toctree::
     :maxdepth: 2
 
+    lava-coordinator.rst
     lava-server.rst
     lava-run.rst
     lava-slave.rst
