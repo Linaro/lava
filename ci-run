@@ -96,7 +96,7 @@ if [ -n "${DISPATCH}" ]
 then
     echo "Testing dispatcher"
     echo
-    PYTHONPATH=. pytest-3 --cache-clear -v tests/lava_dispatcher tests/lava_dispatcher_host
+    PYTHONPATH=. pytest-3 --cache-clear -v tests/lava_dispatcher tests/lava_dispatcher_host tests/lava_coordinator
 fi
 
 if [ -n "${SERVER}" ]
