@@ -59,22 +59,13 @@ class BootHasMixin:
         return "boot_finished" in parameters
 
 
-# FIXME: move to it's own file
-class AutoLoginAction(Action):
-    """
-    Automatically login on the device.
-    If 'auto_login' is not present in the parameters, this action does nothing.
+class LoginAction(Action):
 
-    This Action expect POSIX-compatible support of PS1 from shell
-    """
+    name = "login-action"
+    description = "Real login action."
+    summary = "Login after boot."
 
-    name = "auto-login-action"
-    description = (
-        "automatically login after boot using job parameters and checking for messages."
-    )
-    summary = "Auto-login after boot with support for kernel messages."
-
-    def __init__(self, booting=True):
+    def __init__(self):
         super().__init__()
         self.check_prompt_characters_warning = (
             "The string '%s' does not look like a typical prompt and"
@@ -83,58 +74,6 @@ class AutoLoginAction(Action):
             " actual prompt string more closely."
         )
         self.force_prompt = False
-        self.params = None
-        self.booting = booting  # if a boot is expected, False for second UART or ssh.
-
-    def validate(self):
-        super().validate()
-        # Skip auto login if the configuration is not found
-        self.method = self.parameters["method"]
-        params = self.parameters.get("auto_login")
-        if params:
-            if not isinstance(params, dict):
-                self.errors = "'auto_login' should be a dictionary"
-                return
-
-            if "login_prompt" not in params:
-                self.errors = "'login_prompt' is mandatory for auto_login"
-            elif not params["login_prompt"]:
-                self.errors = "Value for 'login_prompt' cannot be empty"
-
-            if "username" not in params:
-                self.errors = "'username' is mandatory for auto_login"
-
-            if "password_prompt" in params:
-                if "password" not in params:
-                    self.errors = "'password' is mandatory if 'password_prompt' is used in auto_login"
-
-            if "login_commands" in params:
-                login_commands = params["login_commands"]
-                if not isinstance(login_commands, list):
-                    self.errors = "'login_commands' must be a list"
-                if not login_commands:
-                    self.errors = "'login_commands' must not be empty"
-
-        prompts = self.parameters.get("prompts")
-        if prompts is None:
-            self.errors = "'prompts' is mandatory for AutoLoginAction"
-
-        if not isinstance(prompts, (list, str)):
-            self.errors = "'prompts' should be a list or a str"
-
-        if not prompts:
-            self.errors = "Value for 'prompts' cannot be empty"
-
-        if isinstance(prompts, list):
-            for prompt in prompts:
-                if not prompt:
-                    self.errors = "Items of 'prompts' can't be empty"
-
-        methods = self.job.device["actions"]["boot"]["methods"]
-        with contextlib.suppress(KeyError, TypeError):
-            if "parameters" in methods[self.method]:
-                # fastboot devices usually lack method parameters
-                self.params = methods[self.method]["parameters"]
 
     def check_kernel_messages(self, connection, max_end_time, fail_msg):
         """
@@ -164,38 +103,6 @@ class AutoLoginAction(Action):
             self.logger.warning("Kernel warnings or errors detected.")
 
     def run(self, connection, max_end_time):
-        # Prompts commonly include # - when logging such strings,
-        # use lazy logging or the string will not be quoted correctly.
-        if self.booting:
-            kernel_start_message = self.parameters.get("parameters", {}).get(
-                "kernel-start-message",
-                self.job.device.get_constant("kernel-start-message"),
-            )
-            if kernel_start_message:
-                connection.prompt_str = [kernel_start_message]
-
-            if self.params and self.params.get("boot_message"):
-                self.logger.warning(
-                    "boot_message is being deprecated in favour of kernel-start-message in constants"
-                )
-                connection.prompt_str = [self.params.get("boot_message")]
-
-            error_messages = self.job.device.get_constant(
-                "error-messages", prefix=self.method, missing_ok=True
-            )
-            if error_messages:
-                if isinstance(connection.prompt_str, str):
-                    connection.prompt_str = [connection.prompt_str]
-                connection.prompt_str = connection.prompt_str + error_messages
-            if kernel_start_message:
-                res = self.wait(connection)
-                if res != 0:
-                    msg = "matched a bootloader error message: '%s' (%d)" % (
-                        connection.prompt_str[res],
-                        res,
-                    )
-                    raise InfrastructureError(msg)
-
         def check_prompt_characters(chk_prompt):
             if not any(
                 [True for c in DISTINCTIVE_PROMPT_CHARACTERS if c in chk_prompt]
@@ -312,6 +219,117 @@ class AutoLoginAction(Action):
                     connection.sendline(command)
                     connection.wait()
 
+        return connection
+
+
+# FIXME: move to it's own file
+class AutoLoginAction(RetryAction):
+    """
+    Automatically login on the device.
+    If 'auto_login' is not present in the parameters, this action does nothing.
+
+    This Action expect POSIX-compatible support of PS1 from shell
+    """
+
+    name = "auto-login-action"
+    description = (
+        "automatically login after boot using job parameters and checking for messages."
+    )
+    summary = "Auto-login after boot with support for kernel messages."
+
+    def __init__(self, booting=True):
+        super().__init__()
+        self.params = None
+        self.booting = booting  # if a boot is expected, False for second UART or ssh.
+
+    def validate(self):
+        super().validate()
+        # Skip auto login if the configuration is not found
+        self.method = self.parameters["method"]
+        params = self.parameters.get("auto_login")
+        if params:
+            if not isinstance(params, dict):
+                self.errors = "'auto_login' should be a dictionary"
+                return
+
+            if "login_prompt" not in params:
+                self.errors = "'login_prompt' is mandatory for auto_login"
+            elif not params["login_prompt"]:
+                self.errors = "Value for 'login_prompt' cannot be empty"
+
+            if "username" not in params:
+                self.errors = "'username' is mandatory for auto_login"
+
+            if "password_prompt" in params:
+                if "password" not in params:
+                    self.errors = "'password' is mandatory if 'password_prompt' is used in auto_login"
+
+            if "login_commands" in params:
+                login_commands = params["login_commands"]
+                if not isinstance(login_commands, list):
+                    self.errors = "'login_commands' must be a list"
+                if not login_commands:
+                    self.errors = "'login_commands' must not be empty"
+
+        prompts = self.parameters.get("prompts")
+        if prompts is None:
+            self.errors = "'prompts' is mandatory for AutoLoginAction"
+
+        if not isinstance(prompts, (list, str)):
+            self.errors = "'prompts' should be a list or a str"
+
+        if not prompts:
+            self.errors = "Value for 'prompts' cannot be empty"
+
+        if isinstance(prompts, list):
+            for prompt in prompts:
+                if not prompt:
+                    self.errors = "Items of 'prompts' can't be empty"
+
+        methods = self.job.device["actions"]["boot"]["methods"]
+        with contextlib.suppress(KeyError, TypeError):
+            if "parameters" in methods[self.method]:
+                # fastboot devices usually lack method parameters
+                self.params = methods[self.method]["parameters"]
+
+    def populate(self, parameters):
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.pipeline.add_action(LoginAction())
+
+    def run(self, connection, max_end_time):
+        # Prompts commonly include # - when logging such strings,
+        # use lazy logging or the string will not be quoted correctly.
+        if self.booting:
+            kernel_start_message = self.parameters.get("parameters", {}).get(
+                "kernel-start-message",
+                self.job.device.get_constant("kernel-start-message"),
+            )
+            if kernel_start_message:
+                connection.prompt_str = [kernel_start_message]
+
+            if self.params and self.params.get("boot_message"):
+                self.logger.warning(
+                    "boot_message is being deprecated in favour of kernel-start-message in constants"
+                )
+                connection.prompt_str = [self.params.get("boot_message")]
+
+            error_messages = self.job.device.get_constant(
+                "error-messages", prefix=self.method, missing_ok=True
+            )
+            if error_messages:
+                if isinstance(connection.prompt_str, str):
+                    connection.prompt_str = [connection.prompt_str]
+                connection.prompt_str = connection.prompt_str + error_messages
+            if kernel_start_message:
+                res = self.wait(connection)
+                if res != 0:
+                    msg = "matched a bootloader error message: '%s' (%d)" % (
+                        connection.prompt_str[res],
+                        res,
+                    )
+                    raise InfrastructureError(msg)
+
+        connection = super().run(connection, max_end_time)
         return connection
 
 

@@ -12,7 +12,10 @@
     name: boot-qemu-image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
-  - {class: actions.boot.AutoLoginAction, name: auto-login-action}
+  - class: actions.boot.AutoLoginAction
+    name: auto-login-action
+    pipeline:
+    - {class: actions.boot.LoginAction, name: login-action}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
   pipeline:
@@ -24,7 +27,10 @@
     name: boot-qemu-image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
-  - {class: actions.boot.AutoLoginAction, name: auto-login-action}
+  - class: actions.boot.AutoLoginAction
+    name: auto-login-action
+    pipeline:
+    - {class: actions.boot.LoginAction, name: login-action}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
   pipeline:
@@ -36,7 +42,10 @@
     name: boot-qemu-image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
-  - {class: actions.boot.AutoLoginAction, name: auto-login-action}
+  - class: actions.boot.AutoLoginAction
+    name: auto-login-action
+    pipeline:
+    - {class: actions.boot.LoginAction, name: login-action}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
   pipeline:
@@ -48,7 +57,10 @@
     name: boot-qemu-image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
-  - {class: actions.boot.AutoLoginAction, name: auto-login-action}
+  - class: actions.boot.AutoLoginAction
+    name: auto-login-action
+    pipeline:
+    - {class: actions.boot.LoginAction, name: login-action}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
   pipeline:
@@ -60,7 +72,10 @@
     name: boot-qemu-image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
-  - {class: actions.boot.AutoLoginAction, name: auto-login-action}
+  - class: actions.boot.AutoLoginAction
+    name: auto-login-action
+    pipeline:
+    - {class: actions.boot.LoginAction, name: login-action}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
   pipeline:
@@ -72,7 +87,10 @@
     name: boot-qemu-image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
-  - {class: actions.boot.AutoLoginAction, name: auto-login-action}
+  - class: actions.boot.AutoLoginAction
+    name: auto-login-action
+    pipeline:
+    - {class: actions.boot.LoginAction, name: login-action}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
   pipeline:
@@ -84,7 +102,10 @@
     name: boot-qemu-image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
-  - {class: actions.boot.AutoLoginAction, name: auto-login-action}
+  - class: actions.boot.AutoLoginAction
+    name: auto-login-action
+    pipeline:
+    - {class: actions.boot.LoginAction, name: login-action}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
   pipeline:
@@ -96,7 +117,10 @@
     name: boot-qemu-image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
-  - {class: actions.boot.AutoLoginAction, name: auto-login-action}
+  - class: actions.boot.AutoLoginAction
+    name: auto-login-action
+    pipeline:
+    - {class: actions.boot.LoginAction, name: login-action}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
   pipeline:
@@ -108,7 +132,10 @@
     name: boot-qemu-image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
-  - {class: actions.boot.AutoLoginAction, name: auto-login-action}
+  - class: actions.boot.AutoLoginAction
+    name: auto-login-action
+    pipeline:
+    - {class: actions.boot.LoginAction, name: login-action}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
   pipeline:
@@ -120,7 +147,10 @@
     name: boot-qemu-image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
-  - {class: actions.boot.AutoLoginAction, name: auto-login-action}
+  - class: actions.boot.AutoLoginAction
+    name: auto-login-action
+    pipeline:
+    - {class: actions.boot.LoginAction, name: login-action}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
   pipeline:
@@ -132,7 +162,10 @@
     name: boot-qemu-image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
-  - {class: actions.boot.AutoLoginAction, name: auto-login-action}
+  - class: actions.boot.AutoLoginAction
+    name: auto-login-action
+    pipeline:
+    - {class: actions.boot.LoginAction, name: login-action}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
   pipeline:
@@ -144,7 +177,10 @@
     name: boot-qemu-image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
-  - {class: actions.boot.AutoLoginAction, name: auto-login-action}
+  - class: actions.boot.AutoLoginAction
+    name: auto-login-action
+    pipeline:
+    - {class: actions.boot.LoginAction, name: login-action}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
   pipeline:
@@ -156,7 +192,10 @@
     name: boot-qemu-image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
-  - {class: actions.boot.AutoLoginAction, name: auto-login-action}
+  - class: actions.boot.AutoLoginAction
+    name: auto-login-action
+    pipeline:
+    - {class: actions.boot.LoginAction, name: login-action}
 - class: actions.deploy.image.DeployImagesAction
   name: deployimages
   pipeline:
@@ -191,7 +230,10 @@
     name: boot-qemu-image
     pipeline:
     - {class: actions.boot.qemu.CallQemuAction, name: execute-qemu}
-  - {class: actions.boot.AutoLoginAction, name: auto-login-action}
+  - class: actions.boot.AutoLoginAction
+    name: auto-login-action
+    pipeline:
+    - {class: actions.boot.LoginAction, name: login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
   - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
 - class: actions.test.shell.TestShellRetry

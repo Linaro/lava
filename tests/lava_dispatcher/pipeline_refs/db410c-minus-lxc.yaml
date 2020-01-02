@@ -52,7 +52,10 @@
   - {class: utils.udev.WaitDeviceBoardID, name: wait-device-boardid}
   - {class: actions.boot.fastboot.FastbootBootAction, name: boot-fastboot}
   - {class: power.PreOs, name: pre-os-command}
-  - {class: actions.boot.AutoLoginAction, name: auto-login-action}
+  - class: actions.boot.AutoLoginAction
+    name: auto-login-action
+    pipeline:
+    - {class: actions.boot.LoginAction, name: login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
   - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
 - class: actions.test.shell.TestShellRetry

@@ -92,7 +92,10 @@
     - {class: connections.lxc.ConnectLxc, name: connect-lxc}
   - {class: utils.udev.WaitDeviceBoardID, name: wait-device-boardid}
   - {class: actions.boot.fastboot.FastbootRebootAction, name: fastboot-reboot}
-  - {class: actions.boot.AutoLoginAction, name: auto-login-action}
+  - class: actions.boot.AutoLoginAction
+    name: auto-login-action
+    pipeline:
+    - {class: actions.boot.LoginAction, name: login-action}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
   pipeline:

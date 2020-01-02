@@ -32,7 +32,10 @@
   - {class: actions.boot.ssh.Scp, name: scp-deploy}
   - {class: actions.boot.ssh.PrepareSsh, name: prepare-ssh}
   - {class: connections.ssh.ConnectSsh, name: ssh-connection}
-  - {class: actions.boot.AutoLoginAction, name: auto-login-action}
+  - class: actions.boot.AutoLoginAction
+    name: auto-login-action
+    pipeline:
+    - {class: actions.boot.LoginAction, name: login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
   - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
   - {class: actions.boot.ssh.ScpOverlayUnpack, name: scp-overlay-unpack}
