@@ -1,0 +1,5 @@
+#!/bin/sh
+
+set -eu
+
+pgrep -fa /usr/bin/lava-coordinator

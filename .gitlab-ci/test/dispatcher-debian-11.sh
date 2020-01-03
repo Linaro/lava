@@ -14,4 +14,5 @@ else
   set -x
   PYTHONPATH=. pytest-3 --cache-clear -v --junitxml=dispatcher.xml tests/lava_dispatcher
   PYTHONPATH=. pytest-3 --cache-clear -v --junitxml=dispatcher-host.xml tests/lava_dispatcher_host
+  PYTHONPATH=. pytest-3 --cache-clear -v --junitxml=coordinator.xml tests/lava_coordinator
 fi

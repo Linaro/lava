@@ -51,6 +51,7 @@ include:
     reports:
       junit: dispatcher.xml
       junit: dispatcher-host.xml
+      junit: coordinator.xml
 
 .server: &server
   <<: *job
