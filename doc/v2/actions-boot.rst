@@ -583,6 +583,73 @@ at all).
 
 .. _boot_method_grub:
 
+fastboot-nfs
+===========
+
+The ``fastboot-nfs`` boot is a method that allow you specify a ``nfs`` rootfs in
+a Android boot image via LXC image build and boot using ``fastboot`` boot method.
+
+The job needs a require set of 3 primary actions:
+
+- Deploy rootfs over NFS
+- Download Kernel and DTB to LXC
+- Create Android boot image with NFS details provided by NFS_{ROOTFS,SERVER_IP} environment variables
+
+.. code-block:: yaml
+  - deploy:
+      namespace: target
+      timeout:
+        minutes: 5
+      to: nfs
+      nfsrootfs:
+        url: http://releases.linaro.org/96boards/dragonboard410c/linaro/openembedded/19.01/rpb/rpb-console-image-dragonboard-410c-20190130223248-110.rootfs.tar.xz
+        compression: xz
+      modules:
+        url: http://releases.linaro.org/96boards/dragonboard410c/linaro/openembedded/19.01/rpb/modules--4.14-r0-dragonboard-410c-20190130223248-110.tgz
+        compression: gz
+
+  - deploy:
+      timeout:
+        minutes: 40
+      to: download
+      namespace: target
+      images:
+        kernel:
+          url: http://releases.linaro.org/96boards/dragonboard410c/linaro/openembedded/19.01/rpb/Image.gz--4.14-r0-dragonboard-410c-20190130223248-110.bin
+        dtb:
+          url: http://releases.linaro.org/96boards/dragonboard410c/linaro/openembedded/19.01/rpb/Image.gz--4.14-r0-apq8016-sbc-20190130223248-110.dtb
+
+  - test:
+      namespace: tlxc
+      timeout:
+        minutes: 10
+      definitions:
+      - from: inline
+        name: test-testdef
+        path: inline/test-testdef
+        repository:
+          metadata:
+            description: test definition env
+            format: Lava-Test Test Definition 1.0
+            name: test-testdef
+          run:
+            steps:
+            - cd /lava-lxc/
+            - cp Image.gz--4.14-r0-dragonboard-410c-20190130223248-110.bin Image.gz+dtb # OE image already has dtb appended
+            - mkbootimg --kernel Image.gz+dtb --cmdline "root=/dev/nfs rw nfsroot=$NFS_SERVER_IP:$NFS_ROOTFS ip=dhcp console=tty0 console=ttyMSM0,115200n8" -o boot.img
+            - ls /lava-lxc/
+
+.. index:: boot method fastboot-nfs 
+
+.. _boot_method_fastboot_nfs:
+
+.. literalinclude:: examples/test-jobs/fastboot-nfs.yaml
+    :language: yaml
+    :start-after: # BOOT_BLOCK
+    :end-before: # TEST_BLOCK
+
+.. seealso:: :ref:`boot method fastboot <boot_method_fastboot>`.
+
 grub
 ====
 
