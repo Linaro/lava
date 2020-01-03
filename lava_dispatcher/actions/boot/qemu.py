@@ -34,7 +34,6 @@ from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.actions.boot import AutoLoginAction, OverlayUnpack
 
 
-# FIXME: decide if 'media: tmpfs' is necessary or remove from YAML. Only removable needs 'media'
 class BootQEMU(Boot):
     """
     The Boot method prepares the command to run on the dispatcher but this
@@ -254,7 +253,7 @@ class CallQemuAction(Action):
             action="apply-overlay-guest", label="guest", key="filename"
         )
         # check for NFS
-        if "qemu-nfs" in self.methods and self.parameters.get("media") == "nfs":
+        if "qemu-nfs" == self.parameters["method"]:
             self.logger.debug("Adding NFS arguments to kernel command line.")
             root_dir = self.get_namespace_data(
                 action="extract-rootfs", label="file", key="nfsroot"

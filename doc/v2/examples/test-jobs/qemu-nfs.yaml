@@ -47,7 +47,6 @@ actions:
     timeout:
       minutes: 4
     method: qemu-nfs
-    media: nfs
     connection: serial
     auto_login:
       login_prompt: 'login:'
