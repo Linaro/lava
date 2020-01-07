@@ -351,7 +351,7 @@ class TestJobFilter(filters.FilterSet):
             "target_group": ["exact", "in", "contains", "icontains", "startswith"],
             "state": ["exact", "in"],
             "health": ["exact", "in"],
-            "priority": ["exact", "in"],
+            "priority": ["exact", "in", "lt", "lte", "gt", "gte"],
             "definition": [
                 "exact",
                 "in",
