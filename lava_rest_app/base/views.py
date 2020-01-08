@@ -31,10 +31,10 @@ from lava_scheduler_app.models import (
 from lava_scheduler_app.dbutils import testjob_submission
 from lava_scheduler_app.schema import SubmissionException
 from lava_results_app.models import TestCase
-from lava_scheduler_app.logutils import read_logs
+from lava_scheduler_app.logutils import open_logs, read_logs
 from linaro_django_xmlrpc.models import AuthToken
 
-from django.http.response import HttpResponse
+from django.http.response import FileResponse, HttpResponse
 
 from rest_framework import status, viewsets
 from rest_framework.permissions import BasePermission
@@ -200,10 +200,14 @@ class TestJobViewSet(viewsets.ModelViewSet):
         start = safe_str2int(request.query_params.get("start", 0))
         end = safe_str2int(request.query_params.get("end", None))
         try:
-            data = read_logs(self.get_object().output_dir, start, end)
+            if start == 0 and end is None:
+                data = open_logs(self.get_object().output_dir)
+                response = FileResponse(data, content_type="application/yaml")
+            else:
+                data = read_logs(self.get_object().output_dir, start, end)
+                response = HttpResponse(data, content_type="application/yaml")
             if not data:
                 raise NotFound()
-            response = HttpResponse(data, content_type="application/yaml")
             response["Content-Disposition"] = (
                 "attachment; filename=job_%d.yaml" % self.get_object().id
             )
