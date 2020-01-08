@@ -20,6 +20,7 @@
 import csv
 import io
 import os
+import pathlib
 import yaml
 
 from django.conf import settings
@@ -35,7 +36,10 @@ from lava_results_app.utils import (
 from lava_rest_app.base import views as base_views
 from lava_rest_app import filters
 from rest_framework import status, viewsets
-from rest_framework.permissions import DjangoModelPermissions
+from rest_framework.permissions import (
+    DjangoModelPermissions,
+    DjangoModelPermissionsOrAnonReadOnly,
+)
 from rest_framework_extensions.mixins import NestedViewSetMixin
 from rest_framework.response import Response
 from rest_framework.exceptions import ParseError, PermissionDenied, ValidationError
@@ -290,8 +294,115 @@ class DeviceViewSet(base_views.DeviceViewSet):
     pass
 
 
-class WorkerViewSet(base_views.WorkerViewSet):
-    pass
+class WorkerViewSet(base_views.WorkerViewSet, viewsets.ModelViewSet):
+    lookup_value_regex = r"[\_\w0-9.-]+"
+    serializer_class = serializers.WorkerSerializer
+    filter_class = filters.WorkerFilter
+    permission_classes = [DjangoModelPermissionsOrAnonReadOnly]
+
+    def get_serializer_class(self):
+        if self.action == "env":
+            return serializers.EnvironmentSerializer
+        if self.action == "config":
+            return serializers.ConfigSerializer
+        else:
+            return serializers.WorkerSerializer
+
+    def _get_file(self, request, path, alternate_path):
+        try:
+            filename = path.name
+            data = (path).read_text(encoding="utf-8")
+        except OSError:
+            try:
+                filename = alternate_path.name
+                data = (alternate_path).read_text(encoding="utf-8")
+            except OSError:
+                raise ParseError(
+                    "Worker '%s' does not have '%s' file"
+                    % (self.get_object().hostname, filename)
+                )
+
+        response = HttpResponse(data.encode("utf-8"), content_type="application/yaml")
+        response["Content-Disposition"] = "attachment; filename=%s" % filename
+        return response
+
+    def _set_file(self, request, path, content):
+        try:
+            filename = path.name
+            path.parent.mkdir(mode=0o755, parents=True, exist_ok=True)
+            path.write_text(content, encoding="utf-8")
+            return Response(
+                {"message": "content successfully updated"}, status=status.HTTP_200_OK
+            )
+        except OSError as e:
+            raise ParseError(
+                "Error updating '%s' for worker %s: %s"
+                % (filename, self.get_object().hostname, str(e))
+            )
+
+    @detail_route(methods=["get", "post"], suffix="env")
+    def env(self, request, **kwargs):
+        filename = "env.yaml"
+        if request.method == "GET":
+            new_env_path = pathlib.Path(
+                "%s/%s/%s"
+                % (
+                    settings.DISPATCHER_CONFIG_PATH,
+                    self.get_object().hostname,
+                    filename,
+                )
+            )
+            old_env_path = pathlib.Path(
+                "%s/%s" % (settings.GLOBAL_SETTINGS_PATH, filename)
+            )
+            return self._get_file(request, new_env_path, old_env_path)
+
+        elif request.method == "POST":
+            if not request.user.has_perm("lava_scheduler_app.change_worker"):
+                raise PermissionDenied(
+                    "Insufficient permissions. Please contact system administrator."
+                )
+            path = (
+                pathlib.Path(settings.DISPATCHER_CONFIG_PATH)
+                / self.get_object().hostname
+                / filename
+            )
+            serializer = serializers.EnvironmentSerializer(data=request.data)
+            if serializer.is_valid():
+                return self._set_file(request, path, serializer.validated_data["env"])
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @detail_route(methods=["get", "post"], suffix="config")
+    def config(self, request, **kwargs):
+        if request.method == "GET":
+            new_config_path = pathlib.Path(
+                "%s/%s/dispatcher.yaml"
+                % (settings.DISPATCHER_CONFIG_PATH, self.get_object().hostname)
+            )
+            old_config_path = pathlib.Path(
+                "%s/%s.yaml"
+                % (settings.GLOBAL_SETTINGS_PATH, self.get_object().hostname)
+            )
+            return self._get_file(request, new_config_path, old_config_path)
+
+        elif request.method == "POST":
+            if not request.user.has_perm("lava_scheduler_app.change_worker"):
+                raise PermissionDenied(
+                    "Insufficient permissions. Please contact system administrator."
+                )
+            path = (
+                pathlib.Path(settings.DISPATCHER_CONFIG_PATH)
+                / self.get_object().hostname
+                / "dispatcher.yaml"
+            )
+            serializer = serializers.ConfigSerializer(data=request.data)
+            if serializer.is_valid():
+                return self._set_file(
+                    request, path, serializer.validated_data["config"]
+                )
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class AliasViewSet(viewsets.ModelViewSet):
