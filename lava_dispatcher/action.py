@@ -549,8 +549,7 @@ class Action:
         if not isinstance(command_list, list):
             raise LAVABug("commands to parsed_command need to be a list")
         log = ""
-        # nice is assumed to always exist (coreutils)
-        command_list = ["nice"] + [str(s) for s in command_list]
+        command_list = [str(s) for s in command_list]
         self.logger.debug("%s", " ".join(command_list))
         try:
             log = subprocess.check_output(  # nosec - internal
@@ -692,8 +691,7 @@ class Action:
         if not isinstance(command_list, list):
             raise LAVABug("commands to run_command need to be a list")
         log = None
-        # nice is assumed to always exist (coreutils)
-        command_list = ["nice"] + [str(s) for s in command_list]
+        command_list = [str(s) for s in command_list]
         self.logger.debug("%s", " ".join(command_list))
         try:
             log = subprocess.check_output(  # nosec - managed
