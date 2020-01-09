@@ -68,7 +68,7 @@ if [ "${SUITE}" != "unstable" -a "${SUITE}" != "sid" ]; then
 fi
 
 dpkg-checkbuilddeps
-LOCAL=`git ls-files -m -o --exclude-standard|wc -l`
+LOCAL=`git diff | wc -l`
 if [ ${LOCAL} != 0 ]; then
     echo "[LAVA-DEV] You have uncommitted changes in your source tree:"
     git status
