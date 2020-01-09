@@ -42,6 +42,12 @@ def test_simple_mapping(tmpdir):
     assert data["container_type"] == "lxc"
 
 
+def test_add_mapping_without_job_dir(tmpdir):
+    os.rmdir(tmpdir / "1")
+    add_device_container_mapping("1", {"foo": "bar"}, "mycontainer")
+    assert os.path.exists(tmpdir / "1" / "usbmap.yaml")
+
+
 def test_simple_share_device_with_container(mocker):
     check_call = mocker.patch("subprocess.check_call")
     add_device_container_mapping("1", {"serial_number": "1234567890"}, "mycontainer")
