@@ -1414,7 +1414,8 @@ class TestJob(models.Model):
         if self.end_time is None or self.start_time is None:
             return None
         # Only return seconds and not milliseconds
-        return datetime.timedelta(seconds=(self.end_time - self.start_time).seconds)
+        seconds = (self.end_time - self.start_time).total_seconds()
+        return datetime.timedelta(seconds=int(seconds))
 
     STATE_SUBMITTED, STATE_SCHEDULING, STATE_SCHEDULED, STATE_RUNNING, STATE_CANCELING, STATE_FINISHED = range(
         6
