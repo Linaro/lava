@@ -21,6 +21,7 @@ import datetime
 
 from django.contrib.auth.models import User
 from django.db import transaction
+from django.db.models import Case, When, IntegerField, Sum
 from django.utils import timezone
 
 from lava_common.compat import yaml_safe_load, yaml_safe_dump
@@ -32,6 +33,25 @@ from lava_scheduler_app.models import (
     TestJob,
     Worker,
 )
+
+
+def worker_summary():
+    query = Worker.objects.all()
+    query = query.values("hostname", "job_limit")
+    query = query.annotate(
+        busy=Sum(
+            Case(
+                When(
+                    device__state__in=[Device.STATE_RESERVED, Device.STATE_RUNNING],
+                    then=1,
+                ),
+                default=0,
+                output_field=IntegerField(),
+            )
+        )
+    )
+    ret = {w["hostname"]: {"max": w["job_limit"], "busy": w["busy"]} for w in query}
+    return ret
 
 
 def schedule(logger, available_dt=None):
@@ -87,10 +107,27 @@ def schedule_health_checks_for_device_type(logger, dt):
     )
     devices = devices.order_by("hostname")
 
+    workers_limit = worker_summary()
+
     print_header = True
     available_devices = []
     jobs = []
     for device in devices:
+        if (
+            workers_limit[device.worker_host.hostname]["max"] > 0
+            and workers_limit[device.worker_host.hostname]["busy"]
+            >= workers_limit[device.worker_host.hostname]["max"]
+        ):
+            logger.debug(
+                "SKIP healthcheck for %s due to %s having %d jobs (greater than %d)"
+                % (
+                    device.hostname,
+                    device.worker_host,
+                    workers_limit[device.worker_host.hostname]["busy"],
+                    workers_limit[device.worker_host.hostname]["max"],
+                )
+            )
+            continue
         # Do we have an health check
         health_check = device.get_health_check()
         if health_check is None:
@@ -149,6 +186,7 @@ def schedule_health_checks_for_device_type(logger, dt):
         logger.debug("  |--> scheduling health check")
         try:
             jobs.append(schedule_health_check(device, health_check))
+            workers_limit[device.worker_host.hostname]["busy"] += 1
         except Exception as exc:
             # If the health check cannot be schedule, set health to BAD to exclude the device
             logger.error("  |--> Unable to schedule health check")
@@ -211,12 +249,30 @@ def schedule_jobs_for_device_type(logger, dt, available_devices):
     # never be used.
     devices = devices.order_by("?")
 
+    workers_limit = worker_summary()
+
     jobs = []
     for device in devices:
         # Check that the device had been marked available by
         # schedule_health_checks. In fact, it's possible that a device is made
         # IDLE between the two functions.
         if device.hostname not in available_devices:
+            continue
+
+        if (
+            workers_limit[device.worker_host.hostname]["max"] > 0
+            and workers_limit[device.worker_host.hostname]["busy"]
+            >= workers_limit[device.worker_host.hostname]["max"]
+        ):
+            logger.debug(
+                "SKIP %s due to %s having %d jobs (greater than %d)"
+                % (
+                    device.hostname,
+                    device.worker_host,
+                    workers_limit[device.worker_host.hostname]["busy"],
+                    workers_limit[device.worker_host.hostname]["max"],
+                )
+            )
             continue
 
         if not device.is_valid():
@@ -237,6 +293,7 @@ def schedule_jobs_for_device_type(logger, dt, available_devices):
         new_job = schedule_jobs_for_device(logger, device)
         if new_job is not None:
             jobs.append(new_job)
+            workers_limit[device.worker_host.hostname]["busy"] += 1
     return jobs
 
 
