@@ -1,0 +1,120 @@
+device_type: dragonboard-410c
+
+job_name: lxc-fastboot-nfs
+timeouts:
+  job:
+    hours: 1
+  action:
+    minutes: 30
+priority: medium
+visibility: public
+
+metadata:
+  docs-source: actions-boot-qemu-nfs
+  docs-filename: doc/v2/examples/test-jobs/fastboot-nfs.yaml
+
+protocols:
+  lava-lxc:
+    name: lxc-fastboot-nfs-test
+    template: debian
+    distribution: debian
+    release: buster
+    arch: amd64
+    mirror: http://mirror.bytemark.co.uk/debian
+    verbose: true
+
+actions:
+- deploy:
+    namespace: tlxc
+    timeout:
+      minutes: 10
+    to: lxc
+    packages:
+     - mkbootimg
+     - fastboot
+    os: debian
+
+- deploy:
+    namespace: target
+    timeout:
+      minutes: 5
+    to: nfs
+    nfsrootfs:
+      url: http://releases.linaro.org/96boards/dragonboard410c/linaro/openembedded/19.01/rpb/rpb-console-image-dragonboard-410c-20190130223248-110.rootfs.tar.xz
+      compression: xz
+    modules:
+      url: http://releases.linaro.org/96boards/dragonboard410c/linaro/openembedded/19.01/rpb/modules--4.14-r0-dragonboard-410c-20190130223248-110.tgz
+      compression: gz
+
+- boot:
+    namespace: tlxc
+    prompts:
+    - 'root@(.*):/#'
+    timeout:
+      minutes: 5
+    method: lxc
+
+- deploy:
+    timeout:
+      minutes: 40
+    to: download
+    namespace: target
+    images:
+      kernel:
+        url: http://releases.linaro.org/96boards/dragonboard410c/linaro/openembedded/19.01/rpb/Image.gz--4.14-r0-dragonboard-410c-20190130223248-110.bin
+        compression:
+      dtb:
+        url: http://releases.linaro.org/96boards/dragonboard410c/linaro/openembedded/19.01/rpb/Image.gz--4.14-r0-apq8016-sbc-20190130223248-110.dtb
+        compression:
+
+- test:
+    namespace: tlxc
+    timeout:
+      minutes: 10
+    definitions:
+    - from: inline
+      name: test-testdef
+      path: inline/test-testdef
+      repository:
+        metadata:
+          description: test definition env
+          format: Lava-Test Test Definition 1.0
+          name: test-testdef
+        run:
+          steps:
+          - env
+          - echo "$NFS_ROOTFS"
+          - echo "$NFS_SERVER_IP"
+          - cd /lava-lxc/
+          - cp Image.gz--4.14-r0-dragonboard-410c-20190130223248-110.bin Image.gz+dtb # OE image already has dtb appended
+          - mkbootimg --kernel Image.gz+dtb --cmdline "root=/dev/nfs rw nfsroot=$NFS_SERVER_IP:$NFS_ROOTFS ip=dhcp console=tty0 console=ttyMSM0,115200n8" -o boot.img
+          - ls /lava-lxc/
+
+- deploy:
+    timeout:
+      minutes: 40
+    to: fastboot
+    namespace: target
+    images:
+      boot:
+        url: lxc:///boot.img
+    protocols:
+        lava-lxc:
+        - action: fastboot-deploy
+          request: pre-power-command
+          timeout:
+              minutes: 2
+
+- boot:
+    namespace: target
+    prompts:
+    - 'root@(.*):[/~]#'
+    timeout:
+      minutes: 15
+    method: fastboot
+    protocols:
+      lava-lxc:
+      - action: auto-login-action
+        request: pre-os-command
+        timeout:
+          minutes: 2
