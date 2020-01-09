@@ -37,7 +37,9 @@ def add_device_container_mapping(
         "logging_info": logging_info,
     }
     logger = logging.getLogger("dispatcher")
-    with open(get_mapping_path(job_id), "w") as f:
+    mapping_path = get_mapping_path(job_id)
+    os.makedirs(os.path.dirname(mapping_path), exist_ok=True)
+    with open(mapping_path, "w") as f:
         f.write(yaml_dump(data))
         logger.info(
             "Added mapping for {device_info} to {container_type} container {container}".format(
