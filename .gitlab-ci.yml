@@ -120,7 +120,7 @@ sast:
 doc:
   <<: *job
   stage: build
-  image: debian:9
+  image: hub.lavasoftware.org/lava/ci-images/amd64/pkg-debian-10
   artifacts:
     paths:
     - doc/v2/_build/html
