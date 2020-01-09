@@ -254,10 +254,6 @@ def configure():
         # allow users in the adm group to run lava-server commands
         os.chmod(file, 0o0664)
 
-    # tidy up old logrotate config to allow logrotate cron to complete.
-    if os.path.exists("/etc/logrotate.d/lava-scheduler-log"):
-        os.unlink("/etc/logrotate.d/lava-scheduler-log")
-
     # Allow lava user to write the secret key
     with open(SECRET_KEY, "w+") as key:
         key.write("")
