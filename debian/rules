@@ -63,11 +63,10 @@ override_dh_auto_install:
 	dh_installman -plava-lxc-mocker man/_build/man/lxc-info.1
 	dh_installman -plava-lxc-mocker man/_build/man/lxc-start.1
 	dh_installman -plava-lxc-mocker man/_build/man/lxc-stop.1
-	python3 setup.py install --root=$(CURDIR)/debian/lava/ --install-layout=deb
+	python3 setup.py install --root=$(CURDIR)/debian/lava/ --no-compile --install-layout=deb
 	cp ./etc/lava-slave.service debian/
 	dh_systemd_enable -p lava-dispatcher --name lava-slave
 	dh_systemd_start -p lava-dispatcher --name lava-slave
-	cp $(CURDIR)/manage.py debian/lava-server/usr/bin/lava-server; chmod a+x debian/lava-server/usr/bin/lava-server
 	dh_installman -plava-server man/_build/man/lava-server.1
 	# handle embedded JS
 	python3 ./share/javascript.py -f ./share/javascript.yaml --remove
@@ -88,8 +87,6 @@ override_dh_auto_install:
 override_dh_install:
 	dh_install
 	mkdir -p $(CURDIR)/debian/lava-coordinator/usr/bin
-	mv $(CURDIR)/debian/lava-coordinator/usr/lib/python3/dist-packages/lava/coordinator/lava-coordinator.py \
-		$(CURDIR)/debian/lava-coordinator/usr/bin/lava-coordinator
 
 
 override_dh_fixperms-arch:
@@ -109,14 +106,11 @@ override_dh_compress:
 override_dh_auto_clean:
 	python3 setup.py clean -a
 	find . -path '*/__pycache__/*' -delete
-	$(RM) -r lava.egg-info setup.cfg .idea/ build/
+	$(RM) -r lava.egg-info .idea/ build/
 	$(RM) -r .eggs/ versiontools-*.egg/ doc/build/ doc/html/
 	find . -type d -name '__pycache__' -empty -delete
 	$(RM) -r dist/
 	$(RM) debian/*.service
 	$(RM) common-requirements.txt dispatcher-requirements.txt server-requirements.txt
-	[ ! -f doc/Makefile ] || make -C doc/ clean
-	[ ! -f doc/v1/Makefile ] || make -C doc/v1/ clean
 	[ ! -f doc/v2/Makefile ] || make -C doc/v2/ clean
 	[ ! -f man/Makefile ] || make -C man/ clean
-
