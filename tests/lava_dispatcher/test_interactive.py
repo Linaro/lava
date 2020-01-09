@@ -18,11 +18,17 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import pexpect
 import pytest
 import subprocess  # nosec - only for mocking
 import time
 
-from lava_common.exceptions import InfrastructureError, JobError, TestError
+from lava_common.exceptions import (
+    InfrastructureError,
+    JobError,
+    LAVATimeoutError,
+    TestError,
+)
 from lava_dispatcher.actions.test.interactive import TestInteractiveAction
 
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
@@ -110,9 +116,14 @@ class Connection:
         assert self.data.pop(0) == ("sendline", line)  # nosec - assert is ok
 
     def expect(self, expect, timeout=1):
+        print(expect)
+        print(self.data[0])
         data = self.data.pop(0)
         assert (data[0], data[1]) == ("expect", expect)  # nosec - assert is ok
-        return data[2]
+        if isinstance(data[2], int):
+            return data[2]
+        else:
+            raise data[2](data[3])
 
     def readline(self):
         data = self.data.pop(0)
@@ -125,6 +136,8 @@ class Logger:
         self.data = data
 
     def _check(self, data):
+        print(data)
+        print(self.data[0])
         assert self.data.pop(0) == data  # nosec - assert is ok
 
     def debug(self, line, *args):
@@ -380,8 +393,9 @@ def test_run_script_raise_test_error_unnamed_command(monkeypatch):
                 },
             ),
             ("info", "Sending 'echo 'hello''"),
-            ("debug", "Ignoring echo: 'hello'"),
+            ("debug", "Ignoring echo: \"echo 'hello'\""),
             ("debug", "Waiting for '=> ', '/ # ', 'world'"),
+            ("error", "Matched a failure: 'world'"),
         ]
     )
     action.validate()
@@ -389,8 +403,9 @@ def test_run_script_raise_test_error_unnamed_command(monkeypatch):
     conn_data = [
         ("expect", ["=> ", "/ # "], 0),
         ("sendline", "echo 'hello'"),
-        ("readline", "hello"),
-        ("expect", ["world"], 0),
+        ("readline", "echo 'hello'"),
+        ("expect", ["=> ", "/ # ", "world"], 2),
+        ("expect", ["=> ", "/ # "], 0),
     ]
     script = {
         "prompts": ["=> ", "/ # "],
@@ -408,6 +423,48 @@ def test_run_script_raise_test_error_unnamed_command(monkeypatch):
         action.run_script(test_connection, script, substitutions)
     assert exc.match(
         "Failed to run command 'echo 'hello'"
+    )  # nosec - assert is part of the test process.
+    assert action.logger.data == []  # nosec - assert is part of the test process.
+    assert test_connection.data == []  # nosec - assert is part of the test process.
+
+
+def test_run_script_raise_timeout(monkeypatch):
+    monkeypatch.setattr(time, "time", Timing())
+    action = TestInteractiveAction()
+    action.parameters = {"stage": 0}
+    action.logger = Logger(
+        [
+            ("info", "Sending nothing, waiting"),
+            ("debug", "Waiting for '=> ', '/ # '"),
+            (
+                "results",
+                {
+                    "definition": "0_setup",
+                    "case": "wait prompt",
+                    "result": "fail",
+                    "duration": "1.00",
+                },
+            ),
+        ]
+    )
+    action.validate()
+
+    conn_data = [("expect", ["=> ", "/ # "], pexpect.TIMEOUT, "")]
+    script = {
+        "prompts": ["=> ", "/ # "],
+        "name": "setup",
+        "echo": "discard",
+        "script": [
+            {"command": None, "name": "wait prompt"},
+            {"command": "dhcp", "name": "dhcp"},
+        ],
+    }
+    test_connection = Connection(conn_data)
+    substitutions = {}
+    with pytest.raises(LAVATimeoutError) as exc:
+        action.run_script(test_connection, script, substitutions)
+    assert exc.match(
+        "interactive connection timed out"
     )  # nosec - assert is part of the test process.
     assert action.logger.data == []  # nosec - assert is part of the test process.
     assert test_connection.data == []  # nosec - assert is part of the test process.
