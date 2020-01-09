@@ -29,7 +29,6 @@ def schema():
     base = {
         Required("method"): Msg("qemu-nfs", "'method' should be 'qemu-nfs'"),
         Optional("connection"): "serial",  # FIXME: is this needed or required?
-        Optional("media"): "nfs",
         Optional("prompts"): boot.prompts(),
         Optional("transfer_overlay"): boot.transfer_overlay(),
         Optional(
