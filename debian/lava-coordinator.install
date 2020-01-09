@@ -1,3 +1,0 @@
-debian/lava/usr/lib/python3/dist-packages/lava/coordinator ./usr/lib/python3/dist-packages/lava/
-etc/lava-coordinator.conf ./etc/lava-coordinator/
-etc/logrotate.d/lava-coordinator-log ./etc/logrotate.d/

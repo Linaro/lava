@@ -44,7 +44,6 @@ override_dh_python3:
 	dh_python3 -p lava-common --shebang=/usr/bin/python3 --requires=common-requirements.txt
 
 override_dh_auto_build:
-	python3 setup.py build
 	make -C man/ man SPHINXBUILD="/usr/share/sphinx/scripts/python3/sphinx-build" SPHINXOPTS="-D today=\"$(BUILD_DATE)\""
 	make -C doc/v2/ html SPHINXBUILD="/usr/share/sphinx/scripts/python3/sphinx-build" SPHINXOPTS="-j 4 -D today=\"$(BUILD_DATE)\""
 	$(RM) doc/v2/_build/html/objects.inv
@@ -63,7 +62,16 @@ override_dh_auto_install:
 	dh_installman -plava-lxc-mocker man/_build/man/lxc-info.1
 	dh_installman -plava-lxc-mocker man/_build/man/lxc-start.1
 	dh_installman -plava-lxc-mocker man/_build/man/lxc-stop.1
-	python3 setup.py install --root=$(CURDIR)/debian/lava/ --no-compile --install-layout=deb
+	python3 setup.py install --root=$(CURDIR)/debian/lava-common/ --no-compile --install-layout=deb lava-common
+	rm -rf $(CURDIR)/build
+	python3 setup.py install --root=$(CURDIR)/debian/lava-coordinator/ --no-compile --install-layout=deb lava-coordinator
+	rm -rf $(CURDIR)/build
+	python3 setup.py install --root=$(CURDIR)/debian/lava-dispatcher/ --no-compile --install-layout=deb lava-dispatcher
+	rm -rf $(CURDIR)/build
+	python3 setup.py install --root=$(CURDIR)/debian/lava-dispatcher-host/ --no-compile --install-layout=deb lava-dispatcher-host
+	rm -rf $(CURDIR)/build
+	python3 setup.py install --root=$(CURDIR)/debian/lava-server/ --no-compile --install-layout=deb lava-server
+	rm -rf $(CURDIR)/build
 	cp ./etc/lava-slave.service debian/
 	dh_systemd_enable -p lava-dispatcher --name lava-slave
 	dh_systemd_start -p lava-dispatcher --name lava-slave
