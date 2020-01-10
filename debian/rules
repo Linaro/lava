@@ -52,6 +52,7 @@ override_dh_auto_build:
 override_dh_auto_install:
 	find . -path '*/__pycache__/*' -delete
 	find . -type d -name '__pycache__' -empty -delete
+	# handle man pages
 	dh_installman -plava-dispatcher man/_build/man/lava-run.1
 	dh_installman -plava-dispatcher man/_build/man/lava-slave.8
 	dh_installman -plava-lxc-mocker man/_build/man/lava-lxc-mocker.7
@@ -62,6 +63,8 @@ override_dh_auto_install:
 	dh_installman -plava-lxc-mocker man/_build/man/lxc-info.1
 	dh_installman -plava-lxc-mocker man/_build/man/lxc-start.1
 	dh_installman -plava-lxc-mocker man/_build/man/lxc-stop.1
+	dh_installman -plava-server man/_build/man/lava-server.1
+	# use setup.py
 	python3 setup.py install --root=$(CURDIR)/debian/lava-common/ --no-compile --install-layout=deb lava-common
 	rm -rf $(CURDIR)/build
 	python3 setup.py install --root=$(CURDIR)/debian/lava-coordinator/ --no-compile --install-layout=deb lava-coordinator
@@ -72,30 +75,24 @@ override_dh_auto_install:
 	rm -rf $(CURDIR)/build
 	python3 setup.py install --root=$(CURDIR)/debian/lava-server/ --no-compile --install-layout=deb lava-server
 	rm -rf $(CURDIR)/build
-	cp ./etc/lava-slave.service debian/
-	dh_systemd_enable -p lava-dispatcher --name lava-slave
-	dh_systemd_start -p lava-dispatcher --name lava-slave
-	dh_installman -plava-server man/_build/man/lava-server.1
 	# handle embedded JS
 	python3 ./share/javascript.py -f ./share/javascript.yaml --remove
 	# handle systemd services
-	cp ./etc/lava-server-gunicorn.service debian/lava-server.lava-server-gunicorn.service
-	cp ./etc/lava-logs.service debian/lava-server.lava-logs.service
-	cp ./etc/lava-master.service debian/lava-server.lava-master.service
-	cp ./etc/lava-publisher.service debian/lava-server.lava-publisher.service
-	dh_systemd_enable -p lava-server --name lava-server-gunicorn
+	cp ./etc/lava-logs.service debian/lava-logs.service
+	cp ./etc/lava-master.service debian/lava-master.service
+	cp ./etc/lava-publisher.service debian/lava-publisher.service
+	cp ./etc/lava-server-gunicorn.service debian/lava-server-gunicorn.service
+	cp ./etc/lava-slave.service debian/
 	dh_systemd_enable -p lava-server --name lava-logs
 	dh_systemd_enable -p lava-server --name lava-publisher
 	dh_systemd_enable -p lava-server --name lava-master
-	dh_systemd_start -p lava-server --name lava-server-gunicorn
+	dh_systemd_enable -p lava-server --name lava-server-gunicorn
+	dh_systemd_enable -p lava-dispatcher --name lava-slave
 	dh_systemd_start -p lava-server --name lava-logs
 	dh_systemd_start -p lava-server --name lava-publisher
 	dh_systemd_start -p lava-server --name lava-master
-
-override_dh_install:
-	dh_install
-	mkdir -p $(CURDIR)/debian/lava-coordinator/usr/bin
-
+	dh_systemd_start -p lava-server --name lava-server-gunicorn
+	dh_systemd_start -p lava-dispatcher --name lava-slave
 
 override_dh_fixperms-arch:
 	dh_fixperms -X debian/lava-dispatcher/usr/lib/python3/dist-packages/lava_dispatcher/dynamic_vm_keys/lava
