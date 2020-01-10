@@ -18,6 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+from collections import OrderedDict
 import logging
 import copy
 from functools import reduce
@@ -27,7 +28,6 @@ import types
 import traceback
 import shlex
 import subprocess  # nosec - internal
-from collections import OrderedDict
 import warnings
 
 from lava_common.decorators import nottest
@@ -344,7 +344,7 @@ class Action:
         self.__errors__ = []
         self.job = None
         self.logger = logging.getLogger("dispatcher")
-        self.__results__ = OrderedDict()
+        self.__results__ = {}
         self.timeout = Timeout(self.name, exception=self.timeout_exception)
         # unless the strategy or the job parameters change this, do not retry
         self.max_retries = 1
