@@ -27,6 +27,7 @@ from django.conf import settings
 from django.http.response import HttpResponse
 from django.http import Http404
 
+from lava_common.compat import yaml_safe_load
 from lava_results_app.models import TestSuite, TestCase
 from lava_results_app.utils import (
     export_testcase,
@@ -290,8 +291,71 @@ class DeviceTypeViewSet(base_views.DeviceTypeViewSet):
                 )
 
 
-class DeviceViewSet(base_views.DeviceViewSet):
-    pass
+class DeviceViewSet(base_views.DeviceViewSet, viewsets.ModelViewSet):
+    lookup_value_regex = r"[\_\w0-9.-]+"
+    serializer_class = serializers.DeviceSerializer
+    filter_class = filters.DeviceFilter
+    permission_classes = [DjangoModelPermissionsOrAnonReadOnly]
+
+    def get_serializer_class(self):
+        if self.action == "dictionary":
+            return serializers.DictionarySerializer
+        else:
+            return serializers.DeviceSerializer
+
+    @detail_route(methods=["get", "post"], suffix="dictionary")
+    def dictionary(self, request, **kwargs):
+        if request.method == "GET":
+            job_ctx = None
+            context = request.query_params.get("context", None)
+            render = request.query_params.get("render", None)
+            if context is not None:
+                try:
+                    job_ctx = yaml_safe_load(context)
+                except yaml.YAMLError as exc:
+                    raise ParseError(
+                        "Job Context '%s' is not valid: %s" % (context, str(exc))
+                    )
+
+            config = self.get_object().load_configuration(
+                job_ctx=job_ctx, output_format="raw" if not render else "yaml"
+            )
+            if config is None:
+                raise ParseError(
+                    "Device '%s' does not have a configuration"
+                    % self.get_object().hostname
+                )
+            if render:
+                filename = "%s.yaml" % self.get_object().hostname
+                c_type = "application/yaml"
+            else:
+                filename = "%s.jinja2" % self.get_object().hostname
+                c_type = "text/plain"
+            response = HttpResponse(config.encode("utf-8"), content_type=c_type)
+            response["Content-Disposition"] = "attachment; filename=%s" % filename
+            return response
+
+        elif request.method == "POST":
+            if not request.user.has_perm("lava_scheduler_app.change_device"):
+                raise PermissionDenied(
+                    "Insufficient permissions. Please contact system administrator."
+                )
+            serializer = serializers.DictionarySerializer(data=request.data)
+            if serializer.is_valid():
+                if self.get_object().save_configuration(
+                    request.data.get("dictionary", None)
+                ):
+                    return Response(
+                        {"message": "device config successfully updated"},
+                        status=status.HTTP_200_OK,
+                    )
+                else:
+                    raise ParseError(
+                        "Error updating configuration for device '%s'"
+                        % self.get_object().hostname
+                    )
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class WorkerViewSet(base_views.WorkerViewSet, viewsets.ModelViewSet):

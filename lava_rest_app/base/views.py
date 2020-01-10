@@ -382,8 +382,10 @@ class DeviceViewSet(viewsets.ReadOnlyModelViewSet):
     filter_class = filters.DeviceFilter
 
     def get_queryset(self):
-        query = Device.objects.prefetch_related("tags").visible_by_user(
-            self.request.user
+        query = (
+            Device.objects.select_related("physical_owner", "physical_group")
+            .prefetch_related("tags")
+            .visible_by_user(self.request.user)
         )
         if not self.request.query_params.get("all", False):
             query = query.exclude(health=Device.HEALTH_RETIRED)
