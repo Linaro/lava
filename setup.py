@@ -69,8 +69,12 @@ COORDINATOR = {
     "packages": ["lava.coordinator"],
     "scripts": ["lava/coordinator/lava-coordinator"],
     "data_files": [
-        ("/etc/lava-coordinator/", ["etc/lava-coordinator.conf"]),
+        (
+            "/etc/lava-coordinator/",
+            ["etc/lava-coordinator", "etc/lava-coordinator.conf"],
+        ),
         ("/etc/logrotate.d/", ["etc/logrotate.d/lava-coordinator-log"]),
+        ("/lib/systemd/system/", ["etc/lava-coordinator.service"]),
     ],
     "cmdclass": {"install_scripts": rename_scripts},
 }
