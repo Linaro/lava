@@ -1,10 +1,22 @@
 debian:
-  - python_dir: debian/lava/usr/lib/python3/dist-packages/
+  - python_dir: debian/lava-server/usr/lib/python3/dist-packages/
+  - package: libjs-bootstrap
+    directory: /usr/share/javascript/bootstrap/js/
+    lava_directory: lava_server/static/lava_server/js/
+    replacements:
+      # our name first, external name second
+      bootstrap-3.4.1.js: bootstrap.js
+    version: '3.4.1'
+  - package: libjs-bootstrap
+    directory: /usr/share/javascript/bootstrap/css/
+    lava_directory: lava_server/static/lava_server/css/
+    replacements:
+      bootstrap-3.4.1.css: bootstrap.css
+    version: '3.4.1'
   - package: libjs-jquery
     directory: /usr/share/javascript/jquery/
     lava_directory: lava_server/static/lava_server/js/
     replacements:
-      # our name first, external name second
       jquery-3.4.0.js: jquery.js
     version: '3.4.0'
   - package: libjs-jquery-flot
@@ -13,6 +25,7 @@ debian:
     replacements:
       jquery.flot.navigate.js: jquery.flot.navigate.js
       jquery.flot.canvas.js: jquery.flot.canvas.js
+      jquery.flot.time.js: jquery.flot.time.js
       jquery.flot.js: jquery.flot.js
   - package: libjs-jquery-flot
     directory: /usr/share/javascript/jquery-flot/

@@ -44,7 +44,6 @@ override_dh_python3:
 	dh_python3 -p lava-common --shebang=/usr/bin/python3 --requires=common-requirements.txt
 
 override_dh_auto_build:
-	python3 setup.py build
 	make -C man/ man SPHINXBUILD="/usr/share/sphinx/scripts/python3/sphinx-build" SPHINXOPTS="-D today=\"$(BUILD_DATE)\""
 	make -C doc/v2/ html SPHINXBUILD="/usr/share/sphinx/scripts/python3/sphinx-build" SPHINXOPTS="-j 4 -D today=\"$(BUILD_DATE)\""
 	$(RM) doc/v2/_build/html/objects.inv
@@ -53,6 +52,7 @@ override_dh_auto_build:
 override_dh_auto_install:
 	find . -path '*/__pycache__/*' -delete
 	find . -type d -name '__pycache__' -empty -delete
+	# handle man pages
 	dh_installman -plava-dispatcher man/_build/man/lava-run.1
 	dh_installman -plava-dispatcher man/_build/man/lava-slave.8
 	dh_installman -plava-lxc-mocker man/_build/man/lava-lxc-mocker.7
@@ -63,34 +63,36 @@ override_dh_auto_install:
 	dh_installman -plava-lxc-mocker man/_build/man/lxc-info.1
 	dh_installman -plava-lxc-mocker man/_build/man/lxc-start.1
 	dh_installman -plava-lxc-mocker man/_build/man/lxc-stop.1
-	python3 setup.py install --root=$(CURDIR)/debian/lava/ --install-layout=deb
-	cp ./etc/lava-slave.service debian/
-	dh_systemd_enable -p lava-dispatcher --name lava-slave
-	dh_systemd_start -p lava-dispatcher --name lava-slave
-	cp $(CURDIR)/manage.py debian/lava-server/usr/bin/lava-server; chmod a+x debian/lava-server/usr/bin/lava-server
 	dh_installman -plava-server man/_build/man/lava-server.1
+	# use setup.py
+	python3 setup.py install --root=$(CURDIR)/debian/lava-common/ --no-compile --install-layout=deb lava-common
+	rm -rf $(CURDIR)/build
+	python3 setup.py install --root=$(CURDIR)/debian/lava-coordinator/ --no-compile --install-layout=deb lava-coordinator
+	rm -rf $(CURDIR)/build
+	python3 setup.py install --root=$(CURDIR)/debian/lava-dispatcher/ --no-compile --install-layout=deb lava-dispatcher
+	rm -rf $(CURDIR)/build
+	python3 setup.py install --root=$(CURDIR)/debian/lava-dispatcher-host/ --no-compile --install-layout=deb lava-dispatcher-host
+	rm -rf $(CURDIR)/build
+	python3 setup.py install --root=$(CURDIR)/debian/lava-server/ --no-compile --install-layout=deb lava-server
+	rm -rf $(CURDIR)/build
 	# handle embedded JS
 	python3 ./share/javascript.py -f ./share/javascript.yaml --remove
 	# handle systemd services
-	cp ./etc/lava-server-gunicorn.service debian/lava-server.lava-server-gunicorn.service
-	cp ./etc/lava-logs.service debian/lava-server.lava-logs.service
-	cp ./etc/lava-master.service debian/lava-server.lava-master.service
-	cp ./etc/lava-publisher.service debian/lava-server.lava-publisher.service
-	dh_systemd_enable -p lava-server --name lava-server-gunicorn
+	cp ./etc/lava-logs.service debian/lava-logs.service
+	cp ./etc/lava-master.service debian/lava-master.service
+	cp ./etc/lava-publisher.service debian/lava-publisher.service
+	cp ./etc/lava-server-gunicorn.service debian/lava-server-gunicorn.service
+	cp ./etc/lava-slave.service debian/
 	dh_systemd_enable -p lava-server --name lava-logs
 	dh_systemd_enable -p lava-server --name lava-publisher
 	dh_systemd_enable -p lava-server --name lava-master
-	dh_systemd_start -p lava-server --name lava-server-gunicorn
+	dh_systemd_enable -p lava-server --name lava-server-gunicorn
+	dh_systemd_enable -p lava-dispatcher --name lava-slave
 	dh_systemd_start -p lava-server --name lava-logs
 	dh_systemd_start -p lava-server --name lava-publisher
 	dh_systemd_start -p lava-server --name lava-master
-
-override_dh_install:
-	dh_install
-	mkdir -p $(CURDIR)/debian/lava-coordinator/usr/bin
-	mv $(CURDIR)/debian/lava-coordinator/usr/lib/python3/dist-packages/lava/coordinator/lava-coordinator.py \
-		$(CURDIR)/debian/lava-coordinator/usr/bin/lava-coordinator
-
+	dh_systemd_start -p lava-server --name lava-server-gunicorn
+	dh_systemd_start -p lava-dispatcher --name lava-slave
 
 override_dh_fixperms-arch:
 	dh_fixperms -X debian/lava-dispatcher/usr/lib/python3/dist-packages/lava_dispatcher/dynamic_vm_keys/lava
@@ -109,14 +111,11 @@ override_dh_compress:
 override_dh_auto_clean:
 	python3 setup.py clean -a
 	find . -path '*/__pycache__/*' -delete
-	$(RM) -r lava.egg-info setup.cfg .idea/ build/
+	$(RM) -r lava.egg-info .idea/ build/
 	$(RM) -r .eggs/ versiontools-*.egg/ doc/build/ doc/html/
 	find . -type d -name '__pycache__' -empty -delete
 	$(RM) -r dist/
 	$(RM) debian/*.service
 	$(RM) common-requirements.txt dispatcher-requirements.txt server-requirements.txt
-	[ ! -f doc/Makefile ] || make -C doc/ clean
-	[ ! -f doc/v1/Makefile ] || make -C doc/v1/ clean
 	[ ! -f doc/v2/Makefile ] || make -C doc/v2/ clean
 	[ ! -f man/Makefile ] || make -C man/ clean
-
