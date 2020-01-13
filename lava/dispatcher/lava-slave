@@ -87,6 +87,7 @@ STALE_CONFIG = {
 # Helpers
 #########
 
+
 def create_environ(env):
     """
     Generate the env variables for the job.
@@ -125,6 +126,8 @@ def mkdir(path):
             pass
         else:
             raise
+
+
 def get_prefix(cfg):
     if isinstance(cfg, dict):
         return cfg.get("prefix", "")
@@ -141,14 +144,26 @@ def send_multipart_u(sock, data):
     return sock.send_multipart([b"master"] + [b(d) for d in data])
 
 
-def start_job(job_id, definition, device_definition, zmq_config,
-              dispatcher_config, env_str, env_dut_str):
+def start_job(
+    job_id,
+    definition,
+    device_definition,
+    zmq_config,
+    dispatcher_config,
+    env_str,
+    env_dut_str,
+):
     """
     Start the lava-run process and return the pid
     """
     # Create the base directory
     dispatcher_cfg = yaml_safe_load(dispatcher_config)
-    base_dir = os.path.join(tmp_dir, "{prefix}{job_id}".format(prefix=get_prefix(dispatcher_cfg), job_id=str(job_id)))
+    base_dir = os.path.join(
+        tmp_dir,
+        "{prefix}{job_id}".format(
+            prefix=get_prefix(dispatcher_cfg), job_id=str(job_id)
+        ),
+    )
     mkdir(base_dir)
 
     # Write back the job, device and dispatcher configuration
@@ -161,7 +176,7 @@ def start_job(job_id, definition, device_definition, zmq_config,
 
     # Dump the environment variables in the tmp file.
     if env_dut_str:
-        with open(os.path.join(base_dir, "env.dut.yaml"), 'w') as f_env:
+        with open(os.path.join(base_dir, "env.dut.yaml"), "w") as f_env:
             f_env.write(env_dut_str)
 
     try:
@@ -188,10 +203,15 @@ def start_job(job_id, definition, device_definition, zmq_config,
             args.append("--ipv6")
 
         # Use certificates if defined
-        if zmq_config.master_cert is not None and \
-           zmq_config.slave_cert is not None:
-            args.extend(["--master-cert", zmq_config.master_cert,
-                         "--slave-cert", zmq_config.slave_cert])
+        if zmq_config.master_cert is not None and zmq_config.slave_cert is not None:
+            args.extend(
+                [
+                    "--master-cert",
+                    zmq_config.master_cert,
+                    "--slave-cert",
+                    zmq_config.slave_cert,
+                ]
+            )
         if env_dut_str:
             args.append("--env-dut=%s" % os.path.join(base_dir, "env.dut.yaml"))
 
@@ -200,7 +220,8 @@ def start_job(job_id, definition, device_definition, zmq_config,
             stdout=open(out_file, "w"),
             stderr=open(err_file, "w"),
             env=env,
-            preexec_fn=os.setpgrp)
+            preexec_fn=os.setpgrp,
+        )
         return proc.pid
     except Exception as exc:  # pylint: disable=broad-except
         LOG.error("[%d] Unable to start: %s", job_id, args)
@@ -221,6 +242,7 @@ def start_job(job_id, definition, device_definition, zmq_config,
 # Classes
 #########
 
+
 class Job:
     """Wrapper around a job process."""
 
@@ -233,18 +255,21 @@ class Job:
         self.prefix = row["prefix"]
         self.last_update = row["last_update"]
         # Create the base directory
-        self.base_dir = os.path.join(tmp_dir, "{prefix}{job_id}".format(prefix=self.prefix, job_id=str(self.job_id)))
+        self.base_dir = os.path.join(
+            tmp_dir,
+            "{prefix}{job_id}".format(prefix=self.prefix, job_id=str(self.job_id)),
+        )
         mkdir(self.base_dir)
 
     def errors(self):
         with contextlib.suppress(OSError):
-            return open(os.path.join(self.base_dir, "stderr"), 'r').read()
-        return ''
+            return open(os.path.join(self.base_dir, "stderr"), "r").read()
+        return ""
 
     def description(self):
         try:
             filename = os.path.join(self.base_dir, "description.yaml")
-            data = open(filename, 'r').read()
+            data = open(filename, "r").read()
             return lzma.compress(b(data))
         except (OSError, lzma.LZMAError) as exc:
             LOG.error("[%d] Unable to read 'description.yaml'", self.job_id)
@@ -286,16 +311,19 @@ class Job:
 
 
 class JobsDB:
-
     def __init__(self, dbname):
         self.conn = sqlite3.connect(dbname)
         self.conn.row_factory = sqlite3.Row
-        self.conn.execute("CREATE TABLE IF NOT EXISTS jobs(id INTEGER PRIMARY KEY, pid INTEGER, status INTEGER, last_update INTEGER, prefix VARCHAR(100) DEFAULT '')")
+        self.conn.execute(
+            "CREATE TABLE IF NOT EXISTS jobs(id INTEGER PRIMARY KEY, pid INTEGER, status INTEGER, last_update INTEGER, prefix VARCHAR(100) DEFAULT '')"
+        )
         self.conn.commit()
         # Migrate the schema only if needed
         sql = self.conn.execute("SELECT sql FROM sqlite_master").fetchone()["sql"]
         if "prefix" not in sql:
-            self.conn.execute("ALTER TABLE jobs ADD COLUMN prefix VARCHAR(100) DEFAULT ''")
+            self.conn.execute(
+                "ALTER TABLE jobs ADD COLUMN prefix VARCHAR(100) DEFAULT ''"
+            )
             self.conn.commit()
 
     def create(self, job_id, pid, status, dispatcher_cfg):
@@ -307,28 +335,33 @@ class JobsDB:
         prefix = get_prefix(dispatcher_cfg)
 
         with contextlib.suppress(sqlite3.Error):
-            self.conn.execute("INSERT INTO jobs VALUES(?, ?, ?, ?, ?)",
-                              (str(job_id), str(pid), str(status), str(int(time.time())), prefix))
+            self.conn.execute(
+                "INSERT INTO jobs VALUES(?, ?, ?, ?, ?)",
+                (str(job_id), str(pid), str(status), str(int(time.time())), prefix),
+            )
             self.conn.commit()
             return self.get(job_id)
         return None
 
     def get(self, job_id):
-        row = self.conn.execute("SELECT * FROM jobs WHERE id=?", (str(job_id), )).fetchone()
+        row = self.conn.execute(
+            "SELECT * FROM jobs WHERE id=?", (str(job_id),)
+        ).fetchone()
         return None if row is None else Job(row)
-
 
     def update(self, job_id, status):
         with contextlib.suppress(sqlite3.Error):
-            self.conn.execute("UPDATE jobs SET status=?, last_update=? WHERE id=?",
-                              (str(status), str(int(time.time())), str(job_id)))
+            self.conn.execute(
+                "UPDATE jobs SET status=?, last_update=? WHERE id=?",
+                (str(status), str(int(time.time())), str(job_id)),
+            )
             self.conn.commit()
             return self.get(job_id)
         return None
 
     def delete(self, job_id):
         with contextlib.suppress(sqlite3.Error):
-            self.conn.execute("DELETE FROM jobs WHERE id=?", (str(job_id), ))
+            self.conn.execute("DELETE FROM jobs WHERE id=?", (str(job_id),))
             self.conn.commit()
 
     def all_ids(self):
@@ -336,17 +369,23 @@ class JobsDB:
         return [job["id"] for job in jobs]
 
     def running(self):
-        jobs = self.conn.execute("SELECT * FROM jobs WHERE status=?", (str(Job.RUNNING), ))
+        jobs = self.conn.execute(
+            "SELECT * FROM jobs WHERE status=?", (str(Job.RUNNING),)
+        )
         for job in jobs:
             yield Job(job)
 
     def canceling(self):
-        jobs = self.conn.execute("SELECT * FROM jobs WHERE status=?", (str(Job.CANCELING), ))
+        jobs = self.conn.execute(
+            "SELECT * FROM jobs WHERE status=?", (str(Job.CANCELING),)
+        )
         for job in jobs:
             yield Job(job)
 
     def finished(self):
-        jobs = self.conn.execute("SELECT * FROM jobs WHERE status=?", (str(Job.FINISHED), ))
+        jobs = self.conn.execute(
+            "SELECT * FROM jobs WHERE status=?", (str(Job.FINISHED),)
+        )
         for job in jobs:
             yield Job(job)
 
@@ -355,6 +394,7 @@ class Master:
     """
     Keep track of the master state
     """
+
     def __init__(self):
         self.last_msg = 0
         self.last_ping = 0
@@ -378,8 +418,7 @@ class Master:
                 LOG.warning("Master goes OFFLINE")
                 self.online = False
 
-            LOG.debug("PING => master (last message %ss ago)",
-                      int(now - self.last_msg))
+            LOG.debug("PING => master (last message %ss ago)", int(now - self.last_msg))
 
             send_multipart_u(sock, ["PING"])
             self.last_ping = now
@@ -397,6 +436,7 @@ class Master:
 #########
 # Control
 #########
+
 
 def create_context(options):
     """
@@ -486,8 +526,9 @@ def recv_from_master(prefix, poller, pipe_r, sock):
             # Check master identity
             master_id = u(msg.pop(0))
             if master_id != "master":
-                LOG.error(prefix + "Invalid master id '%s'. Should be 'master'",
-                          master_id)
+                LOG.error(
+                    prefix + "Invalid master id '%s'. Should be 'master'", master_id
+                )
                 return (False, None)
 
             return (False, msg)
@@ -523,7 +564,9 @@ def check_job_status(jobs, sock, last_jobs_check):
             try:
                 os.waitpid(job.pid, 0)
             except OSError as exc:
-                LOG.debug("[%d] unable to wait for the process: %s", job.job_id, str(exc))
+                LOG.debug(
+                    "[%d] unable to wait for the process: %s", job.job_id, str(exc)
+                )
             LOG.info("[%d] Job END", job.job_id)
             job.send_end(sock)
             jobs.update(job.job_id, Job.FINISHED)
@@ -535,7 +578,9 @@ def check_job_status(jobs, sock, last_jobs_check):
             try:
                 os.waitpid(job.pid, 0)
             except OSError as exc:
-                LOG.debug("[%d] unable to wait for the process: %s", job.job_id, str(exc))
+                LOG.debug(
+                    "[%d] unable to wait for the process: %s", job.job_id, str(exc)
+                )
             LOG.info("[%d] Job END", job.job_id)
             job.send_end(sock)
         elif time.time() - job.last_update > FINISH_MAX_DURATION:
@@ -549,16 +594,23 @@ def check_job_status(jobs, sock, last_jobs_check):
 
 
 def verify_socket(sock, master_url, ipv6=False):
-    identity = sock.getsockopt(zmq.IDENTITY).decode('utf-8')
+    identity = sock.getsockopt(zmq.IDENTITY).decode("utf-8")
     master = urlparse(master_url)
-    LOG.debug("[BTSP] Checking master [%s:%s] to create socket for %s", master.hostname, master.port, identity)
+    LOG.debug(
+        "[BTSP] Checking master [%s:%s] to create socket for %s",
+        master.hostname,
+        master.port,
+        identity,
+    )
     try:
         # getaddrinfo handles ipv4 and ipv6 but
         # returns a varying list of tuples which need extra parsing.
         socket.getaddrinfo(master.hostname, master.port)
         if not ipv6:
             # for IPv4, get useful log info with gethostbyname
-            LOG.debug("[BTSP] socket IPv4 address: %s", socket.gethostbyname(master.hostname))
+            LOG.debug(
+                "[BTSP] socket IPv4 address: %s", socket.gethostbyname(master.hostname)
+            )
     except socket.gaierror as exc:
         LOG.error("[BTSP] Socket timeout error: %s", exc)
         return False
@@ -592,7 +644,9 @@ def connect_to_master(poller, pipe_r, sock, master, ipv6):
             if msg is not None:
                 LOG.error("[BTSP] Invalid message from master: %s", msg)
         if verify_socket(sock, master, ipv6):
-            LOG.info("[BTSP] Greeting master => 'HELLO_RETRY' (using the same version?)")
+            LOG.info(
+                "[BTSP] Greeting master => 'HELLO_RETRY' (using the same version?)"
+            )
             send_multipart_u(sock, ["HELLO_RETRY", str(PROTOCOL_VERSION)])
         (leaving, msg) = recv_from_master("[BTSP] ", poller, pipe_r, sock)
 
@@ -645,8 +699,7 @@ def handle(msg, master, jobs, zmq_config, sock):
     else:
         # Do not tag the master as alive as the message does not mean
         # anything.
-        LOG.error("Unknown action: '%s', args=(%s)",
-                  action, msg[1:])
+        LOG.error("Unknown action: '%s', args=(%s)", action, msg[1:])
 
 
 def handle_cancel(msg, jobs, sock, master):
@@ -701,7 +754,9 @@ def handle_end_ok(msg, jobs):
     prefix = "" if job is None else job.prefix
     for directory in STALE_CONFIG:
         if "pattern" in STALE_CONFIG[directory]:
-            dir_name = STALE_CONFIG[directory]["pattern"].format(prefix=prefix, job_id=job_id)
+            dir_name = STALE_CONFIG[directory]["pattern"].format(
+                prefix=prefix, job_id=job_id
+            )
             dir_path = os.path.join(directory, dir_name)
             if not os.path.exists(dir_path):
                 continue
@@ -710,7 +765,9 @@ def handle_end_ok(msg, jobs):
                 os.remove(dir_path)
             shutil.rmtree(dir_path, ignore_errors=True)
         elif "glob" in STALE_CONFIG[directory]:
-            pattern_str = STALE_CONFIG[directory]["glob"].format(prefix=prefix, job_id=job_id)
+            pattern_str = STALE_CONFIG[directory]["glob"].format(
+                prefix=prefix, job_id=job_id
+            )
             pattern = os.path.join(directory, pattern_str)
             removed = False
             for path in glob.iglob(pattern):
@@ -769,8 +826,9 @@ def handle_start(msg, jobs, sock, master, zmq_config):
     """
     try:
         job_id = int(msg[1])
-        (job_definition, device_definition,
-         dispatcher_config, env, env_dut) = (u(m) for m in msg[2:])
+        (job_definition, device_definition, dispatcher_config, env, env_dut) = (
+            u(m) for m in msg[2:]
+        )
     except (IndexError, ValueError) as exc:
         LOG.error("Invalid message '%s'. length=%d. %s", msg, len(msg), exc)
         return
@@ -802,11 +860,21 @@ def handle_start(msg, jobs, sock, master, zmq_config):
         LOG.debug("[%d] env-dut : %s", job_id, env_dut_str)
 
         # Start the job, grab the pid and create it in the dabatase
-        pid = start_job(job_id, job_definition, device_definition, zmq_config,
-                        dispatcher_config, env, env_dut)
-        job = jobs.create(job_id, 0 if pid is None else pid,
-                          Job.FINISHED if pid is None else Job.RUNNING,
-                          dispatcher_cfg)
+        pid = start_job(
+            job_id,
+            job_definition,
+            device_definition,
+            zmq_config,
+            dispatcher_config,
+            env,
+            env_dut,
+        )
+        job = jobs.create(
+            job_id,
+            0 if pid is None else pid,
+            Job.FINISHED if pid is None else Job.RUNNING,
+            dispatcher_cfg,
+        )
         job.send_start_ok(sock)
 
     # Mark the master as alive
@@ -848,42 +916,55 @@ def handle_status(msg, jobs, sock, master):
 
 def setup_parser():
     parser = argparse.ArgumentParser(description="LAVA Slave")
-    parser.add_argument("--hostname", type=str, default=get_fqdn(),
-                        help="Name of the slave")
+    parser.add_argument(
+        "--hostname", type=str, default=get_fqdn(), help="Name of the slave"
+    )
 
     storage = parser.add_argument_group("storage")
-    storage.add_argument('--slave-dir', type=str, default=SLAVE_DIR,
-                         help="Path to slave data storage")
+    storage.add_argument(
+        "--slave-dir", type=str, default=SLAVE_DIR, help="Path to slave data storage"
+    )
 
     net = parser.add_argument_group("network")
-    net.add_argument("--master", type=str, required=True,
-                     help="Main master socket")
-    net.add_argument("--socket-addr", type=str, required=True,
-                     help="Log socket")
-    net.add_argument("--socks-proxy", type=str, default=None,
-                     help="Connect using a socks proxy")
-    net.add_argument("--ipv6", default=False,
-                     action="store_true",
-                     help="Enable IPv6")
+    net.add_argument("--master", type=str, required=True, help="Main master socket")
+    net.add_argument("--socket-addr", type=str, required=True, help="Log socket")
+    net.add_argument(
+        "--socks-proxy", type=str, default=None, help="Connect using a socks proxy"
+    )
+    net.add_argument("--ipv6", default=False, action="store_true", help="Enable IPv6")
 
     enc = parser.add_argument_group("encryption")
-    enc.add_argument("--encrypt", default=False,
-                     action="store_true",
-                     help="Encrypt messages")
-    enc.add_argument("--master-cert", type=str,
-                     default="/etc/lava-dispatcher/certificates.d/master.key",
-                     help="Master certificate file")
-    enc.add_argument("--slave-cert", type=str,
-                     default="/etc/lava-dispatcher/certificates.d/slave.key_secret",
-                     help="Slave certificate file")
+    enc.add_argument(
+        "--encrypt", default=False, action="store_true", help="Encrypt messages"
+    )
+    enc.add_argument(
+        "--master-cert",
+        type=str,
+        default="/etc/lava-dispatcher/certificates.d/master.key",
+        help="Master certificate file",
+    )
+    enc.add_argument(
+        "--slave-cert",
+        type=str,
+        default="/etc/lava-dispatcher/certificates.d/slave.key_secret",
+        help="Slave certificate file",
+    )
 
     log = parser.add_argument_group("logging")
-    log.add_argument("--log-file", type=str,
-                     help="Log file for the slave logs",
-                     default="/var/log/lava-dispatcher/lava-slave.log")
-    log.add_argument("--level", "-l", type=str, default="INFO",
-                     choices=["DEBUG", "ERROR", "INFO", "WARN"],
-                     help="Log level, default to INFO")
+    log.add_argument(
+        "--log-file",
+        type=str,
+        help="Log file for the slave logs",
+        default="/var/log/lava-dispatcher/lava-slave.log",
+    )
+    log.add_argument(
+        "--level",
+        "-l",
+        type=str,
+        default="INFO",
+        choices=["DEBUG", "ERROR", "INFO", "WARN"],
+        help="Log level, default to INFO",
+    )
 
     return parser
 
@@ -948,14 +1029,23 @@ def main():
     jobs = JobsDB(os.path.join(options.slave_dir, "db.sqlite3"))
     last_jobs_check = time.time()
     if options.encrypt:
-        zmq_config = ZMQConfig(options.socket_addr, options.master_cert,
-                               options.slave_cert, options.socks_proxy, options.ipv6)
+        zmq_config = ZMQConfig(
+            options.socket_addr,
+            options.master_cert,
+            options.slave_cert,
+            options.socks_proxy,
+            options.ipv6,
+        )
     else:
-        zmq_config = ZMQConfig(options.socket_addr, None, None, options.socks_proxy, options.ipv6)
+        zmq_config = ZMQConfig(
+            options.socket_addr, None, None, options.socks_proxy, options.ipv6
+        )
 
     # Main loop
     try:
-        LOG.info("[BTSP] Connecting to master [%s] as <%s>", options.master, options.hostname)
+        LOG.info(
+            "[BTSP] Connecting to master [%s] as <%s>", options.master, options.hostname
+        )
         if not connect_to_master(poller, pipe_r, sock, options.master, options.ipv6):
             return 1
         master.received_msg()
