@@ -115,7 +115,10 @@ def validate(data, strict=True, extra_context_variables=[]):
             cls = "deploy." + data.get("to", "")
         elif action_type == "test":
             if "definitions" in data:
-                cls = "test.definition"
+                if "docker" in data:
+                    cls = "test.docker"
+                else:
+                    cls = "test.definition"
             elif "interactive" in data:
                 cls = "test.interactive"
             elif "monitors" in data:
