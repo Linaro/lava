@@ -155,8 +155,11 @@ debian/10:
 .docker: &docker
   <<: *dind
   stage: build
-  variables:
-    IMAGE_NAME: $CI_REGISTRY_IMAGE/$CI_JOB_NAME
+  before_script:
+  - .gitlab-ci/$CI_JOB_STAGE/docker.sh setup
+  script:
+  - SERVICE="$(echo "$CI_JOB_NAME" | cut -d "-" -f 3)"
+  - .gitlab-ci/$CI_JOB_STAGE/docker.sh "$SERVICE"
 
 .docker_aarch64: &docker_aarch64
   <<: *docker
@@ -166,10 +169,10 @@ debian/10:
     - tags
   tags: [aarch64-dind]
 
-amd64/lava-dispatcher: *docker
-amd64/lava-server: *docker
-aarch64/lava-dispatcher: *docker_aarch64
-aarch64/lava-server: *docker_aarch64
+docker-amd64-dispatcher: *docker
+docker-amd64-server: *docker
+docker-aarch64-dispatcher: *docker_aarch64
+docker-aarch64-server: *docker_aarch64
 
 ##########
 # Deploy #
