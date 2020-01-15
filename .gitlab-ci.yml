@@ -124,7 +124,7 @@ doc:
     paths:
     - doc/v2/_build/html
 
-amd64/pkg-debian-9:
+debian/9:
   <<: *job
   stage: build
   except: []
@@ -138,7 +138,7 @@ amd64/pkg-debian-9:
     - _build/*.changes
     - _build/*.buildinfo
 
-amd64/pkg-debian-10:
+debian/10:
   <<: *job
   stage: build
   except: []
@@ -194,8 +194,8 @@ reprepro-master:
   # will overwrite the latest deployment."
   tags: [deploy]
   dependencies:
-  - amd64/pkg-debian-9
-  - amd64/pkg-debian-10
+  - debian/9
+  - debian/10
   except: []
   only: [schedules]
   environment:
@@ -214,8 +214,8 @@ reprepro-release:
     refs:
     - tags
   dependencies:
-  - amd64/pkg-debian-9
-  - amd64/pkg-debian-10
+  - debian/9
+  - debian/10
   except: [schedules]
   environment:
     name: reprepro-release
