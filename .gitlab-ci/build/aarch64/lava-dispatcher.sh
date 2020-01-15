@@ -25,13 +25,13 @@ else
   BASE_IMAGE_NEW="$BASE_IMAGE_NAME:$IMAGE_TAG"
 
   # Pull the base image from cache (local or remote) or build it
-  docker inspect $BASE_IMAGE 2>/dev/null || docker pull $BASE_IMAGE 2>/dev/null || docker build -t $BASE_IMAGE docker/aarch64/lava-dispatcher-base
+  docker inspect $BASE_IMAGE 2>/dev/null || docker pull $BASE_IMAGE 2>/dev/null || docker build -t $BASE_IMAGE docker/lava-dispatcher-base
   # Create a tag with the current version tag
   docker tag $BASE_IMAGE $BASE_IMAGE_NEW
 
   # Build the image
   echo "$IMAGE_TAG" > lava_common/VERSION
-  DOCKER_BUILDKIT=1 docker build -t $IMAGE --build-arg base_image="$BASE_IMAGE_NEW" -f docker/aarch64/lava-dispatcher/Dockerfile .
+  DOCKER_BUILDKIT=1 docker build -t $IMAGE --build-arg base_image="$BASE_IMAGE_NEW" -f docker/lava-dispatcher/Dockerfile .
 
   # Push only for tags or master
   if [ "$CI_COMMIT_REF_SLUG" = "master" -o -n "$CI_COMMIT_TAG" ]

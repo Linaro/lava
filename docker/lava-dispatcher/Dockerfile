@@ -2,7 +2,7 @@
 
 # Argument should be defined before the first stage in multi-stage builds
 # See https://github.com/moby/moby/issues/38379#issuecomment-447835596
-ARG base_image=hub.lavasoftware.org/lava/lava/aarch64/lava-dispatcher-base
+ARG base_image=""
 
 # Call the install script in a empty image
 FROM debian:buster-slim as build
