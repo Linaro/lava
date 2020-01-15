@@ -133,11 +133,11 @@ run different tests on the different devices in the test. To configure this,
 use the ``role`` support to allocate different ``deploy``, ``boot`` and
 ``test`` actions to different roles.
 
-This second example will use two ``panda`` devices and one ``beaglebone-black``
+This second example will use two ``beaglebone-black`` devices and one ``cubietruck``
 device. These devices need different files to deploy and different commands to
 boot, and will most likely take different lengths of time to boot all the way
 to a login prompt. If you want to run this example test job yourself, you will
-need at least one ``beaglebone-black`` device and at least two ``panda``
+need at least one ``cubietruck`` device and at least two ``beaglebone-black``
 devices.
 
 The example includes details of how to deploy to devices using
@@ -195,7 +195,7 @@ running the client tries to make a connection to the server, for example. The
 only way to be sure that the server is ready for client connections is to make
 every client in the group wait until the server confirms that it is ready.
 
-Continuing with the same ``panda`` and ``beaglebone-black`` example, let's look
+Continuing with the same ``cubietruck`` and ``beaglebone-black`` example, let's look
 at synchronizing devices within a MultiNode group.
 
 Controlling synchronization from the test shell
