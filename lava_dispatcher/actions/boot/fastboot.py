@@ -320,7 +320,7 @@ class EnterFastbootAction(BaseAction):
         if command_output and "successfully" in command_output:
             self.logger.debug("adb daemon started: %s", command_output)
 
-        command_output = self.parsed_command(["devices"], allow_fail=True)
+        command_output = self.get_adb_output(["devices"], allow_fail=True)
         if command_output and adb_serial_number in command_output:
             self.logger.debug("Device is in adb: %s", command_output)
             self.run_adb(["reboot-bootloader"])
@@ -332,7 +332,7 @@ class EnterFastbootAction(BaseAction):
 
         if command_output and fastboot_serial_number in command_output:
             self.logger.debug("Device is in fastboot: %s", command_output)
-            command_output = self.parsed_command(["reboot-bootloader"])
+            command_output = self.get_adb_output(["reboot-bootloader"])
             if command_output and "okay" not in command_output.lower():
                 raise InfrastructureError(
                     "Unable to enter fastboot: %s" % command_output
