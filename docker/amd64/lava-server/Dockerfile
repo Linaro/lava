@@ -46,6 +46,9 @@ RUN --mount=type=bind,target=/app \
     ln -s /usr/lib/python3/dist-packages/django/contrib/admin/static/admin/ /install/usr/share/lava-server/static/admin && \
     ln -s /usr/lib/python3/dist-packages/rest_framework/static/rest_framework/ /install/usr/share/lava-server/static/rest_framework
 
+# Install the entry point
+COPY docker/share/entrypoints/lava-server.sh /install/root/entrypoint.sh
+RUN mkdir /install/root/entrypoint.d
 
 # Build the final image
 FROM $base_image
@@ -66,7 +69,4 @@ RUN service postgresql start && \
     /usr/share/lava-server/postinst.py && \
     service postgresql stop
 
-# Install the entry point
-COPY docker/amd64/lava-server/entrypoint.sh /root/
-RUN mkdir /root/entrypoint.d
 ENTRYPOINT ["/root/entrypoint.sh"]

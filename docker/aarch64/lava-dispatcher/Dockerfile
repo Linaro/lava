@@ -17,7 +17,7 @@ RUN --mount=type=bind,target=/app \
     rm -rf /tmp/build
 
 # Install the entry point
-COPY docker/aarch64/lava-dispatcher/entrypoint.sh /install/root/
+COPY docker/share/entrypoints/lava-dispatcher.sh /install/root/entrypoint.sh
 RUN mkdir /install/root/entrypoint.d
 
 # Build the final image
