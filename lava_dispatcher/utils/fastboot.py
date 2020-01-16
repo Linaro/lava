@@ -106,7 +106,7 @@ class DockerDriver(NullDriver):
         self.copied_files = []
 
     def get_command_prefix(self):
-        docker = ["docker", "run"]
+        docker = ["docker", "run", "--rm"]
 
         for device in self.__get_device_nodes__():
             docker.append("--device=" + device)
