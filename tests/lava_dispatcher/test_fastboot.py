@@ -229,7 +229,7 @@ class TestDockerDriver(unittest.TestCase):
                 "docker",
                 "run",
                 "--device=/dev/foo/bar",
-                "--volume=/path/to/image.img:/path/to/image.img",
+                "--mount=type=bind,source=/path/to/image.img,destination=/path/to/image.img",
                 self.image,
                 "fastboot",
                 "-s",
