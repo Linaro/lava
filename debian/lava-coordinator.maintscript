@@ -1,1 +1,2 @@
 mv_conffile /etc/logrotate.d/lavacoordinatorlog /etc/logrotate.d/lava-coordinator-log 2019.13-1~
+rm_conffile /etc/init.d/lava-coordinator 2020.01-1~
