@@ -685,7 +685,7 @@ class LxcDownloadAction(Action):
         fname = os.path.basename(self.url.path)
         lxc_home = lava_lxc_home(lxc_name, self.job.parameters["dispatcher"])
         file_path = os.path.join(lxc_home, fname)
-        self.logger.debug("Found '%s' matching '%s'", file_path, fname)
+        self.logger.debug("Trying '%s' matching '%s'", file_path, fname)
         if os.path.exists(file_path):
             self.set_namespace_data(
                 action="download-action", label=self.key, key="file", value=file_path
