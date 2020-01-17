@@ -31,7 +31,7 @@ from django.conf import settings
 from django.db import connection, transaction
 from django.db.utils import DatabaseError, InterfaceError, OperationalError
 
-from lava_common.compat import yaml_load
+from lava_common.compat import yaml_load, yaml_dump
 from lava_common.version import __version__
 from lava_results_app.models import TestCase
 from lava_server.cmdutils import LAVADaemonCommand, watch_directory
@@ -140,7 +140,7 @@ class Command(LAVADaemonCommand):
         filename = os.path.join(settings.MEDIA_ROOT, "lava-logs-config.yaml")
         self.logger.debug("[INIT] Dumping config to %s", filename)
         with open(filename, "w") as output:
-            yaml.dump(options, output)
+            yaml_dump(options, output)
 
         # Create the sockets
         context = zmq.Context()
