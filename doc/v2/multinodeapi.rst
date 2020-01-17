@@ -5,9 +5,9 @@
 MultiNode API
 =============
 
-The LAVA MultiNode API provides a simple way to pass messages using the serial
-port connection which is already available through LAVA. The API is not
-intended for transfers of large amounts of data. Test definitions which need to
+The LAVA MultiNode API provides a simple way to pass messages between devices in
+a group, using the connection which is already available through LAVA. The API is
+not intended for transfers of large amounts of data. Test definitions which need to
 transfer files, long messages or other large amounts of data need to set up
 their own network configuration, access and download methods and do the
 transfer in the test definition.
@@ -17,16 +17,18 @@ Guidance in using the API
 
 It is recommended to avoid doing a lot of calculation within the calls to the
 API. There are times when a script is needed to retrieve data from the test
-shell but resist the temptation to run that script in the call to the API.
+shell, but avoid running that script in the call to the API.
 **Always** check the output of the script (e.g. with ``lava-test-case``) and/or
 run the script separately in the test definition run steps so that the output
 appears in the test job logs. Preparing and outputting the data before sending
 it with the API will aid in debugging the test definition.
 
 .. note:: Debugging of complex test definitions does **not** only happen during
-   the initial development. Retain enough structure in your test definitions to
-   be able to debug problems later **without** needing to resubmit the
-   MultiNode test job.
+   the initial development. There may be further issues and corner cases,
+   uncovered only after a test job was in use for a while. Retain enough
+   structure in your test definitions to be able to debug problems later
+   without needing to resubmit the MultiNode test job (as some problems may
+   be non-deterministic, etc.).
 
 .. note:: It is not recommended to use ``lava-test-case`` command in
           conjunction with the MultiNode API calls. The first reason is that
@@ -45,14 +47,14 @@ it with the API will aid in debugging the test definition.
 lava-self
 ---------
 
-.. caution:: ``lava-self`` reports the job ID in V2 as the dispatcher has no
-   knowledge of the hostname of the deployed system or the original database
-   name of the device. The output of ``lava-group`` can still be used. This
-   behavior changed in the 2017.9 release.
-
 Usage:
 ^^^^^^
  ``lava-self``
+
+``lava-self`` reports the job ID, as the dispatcher itself has no
+knowledge of the hostname of the deployed system or the original database
+name of the device. The output of ``lava-group`` can also be used. (This
+behavior changed in the 2017.9 release.)
 
 .. index:: lava-role
 
@@ -114,13 +116,13 @@ character::
 
 Usage:
 ^^^^^^
- ``lava-group role``
+ ``lava-group <role>``
 
 This command will produce in its standard output a list of the test jobs
 assigned the specified role in the MultiNode test job.
 
-The output format contains one line per job ID assigned to the specified role
-with no whitespace. The matched role is not output.::
+The output format contains one line per job ID assigned to the specified role.
+The name of the role itself is not printed::
 
     $ lava-group client
     12345
@@ -128,7 +130,8 @@ with no whitespace. The matched role is not output.::
     12347
     12348
 
-If there is no matching role, exit non-zero and output nothing.::
+If there is no matching role, exits with non-zero status code and outputs
+nothing::
 
     $ lava-group server ; echo $?
     1
@@ -137,13 +140,6 @@ If your test definition relies on a particular role, one of the first test
 cases should be to check this role has been defined::
 
   - lava-test-case check-server-role --shell lava-group server
-
-The output can be used to iterate over all devices with the specified role::
-
-    #!/bin/sh
-    for device in `lava-group backend`; do
-        echo $device
-    done
 
 .. comment FIXME: seealso:: :ref:`use_case_four`
 
@@ -167,7 +163,7 @@ Usage:
 ^^^^^^
  ``lava-send <message-id> [key1=val1 [key2=val2] ...]``
 
-Examples will be provided below, together with ``lava-wait`` and
+Examples are provided below, together with ``lava-wait`` and
 ``lava-wait-all``.
 
 .. index:: lava-wait
@@ -184,17 +180,17 @@ Usage:
 ^^^^^^
  ``lava-wait <message-id>``
 
-If there was data passed in the message, the key-value pairs will be printed in
-the cache file (/tmp/lava_multi_node_cache.txt in default), each in one line.
-If no key values were passed, nothing is printed.
+If there was data passed in the message, the key-value pairs will be stored in
+the cache file (``/tmp/lava_multi_node_cache.txt`` by default), each in one line.
+If no key-values were passed, nothing is stored.
 
 The message ID data is persistent for the life of the MultiNode group. The data
 can be retrieved at any later stage using ``lava-wait`` and as the data is
 already available, there will be no waiting time for repeat calls. If devices
-continue to send data with the associated message ID, that data will continue
-to be added to the data for that message ID and will be returned by subsequent
-calls to ``lava-wait`` for that message ID. Use a different message ID to
-collate different message data.
+continue to send data with the associated message ID, that new data will continue
+to be added to the stored data for that message ID and will be returned by subsequent
+calls to ``lava-wait`` for that message ID. Use different message ID(s) if you
+don't want this effect.
 
 .. seealso:: :ref:`flow_tables`
 
@@ -205,13 +201,13 @@ collate different message data.
 lava-wait-all
 -------------
 
-``lava-wait-all`` operates in two distinct ways - with or without a
-role.
+``lava-wait-all`` operates in different ways, depending on the presense of the
+``role`` parameter.
 
 ``lava-wait-all <message-id> [<role>]``
 
 If data was sent by the other devices with the message, the key-value pairs
-will be printed in the cache file (/tmp/lava_multi_node_cache.txt in default),
+will be stored in the cache file (``/tmp/lava_multi_node_cache.txt`` by default),
 each in one line, prefixed with the target name and a colon.
 
 Some examples for ``lava-send``, ``lava-wait`` and ``lava-wait-all`` are given
@@ -231,8 +227,8 @@ lava-wait-all <message-id>
 
 ``lava-wait-all`` waits until **all** other devices in the group send a message
 with the given message ID. Every device in the group **must** use ``lava-send``
-with the same message ID before entering ``lava-wait-all`` or any device using
-that test definition will wait forever (and eventually timeout, failing the
+with the same message ID for ``lava-wait-all`` to finish, or any device using
+this API call will wait forever (and eventually timeout, failing the
 job).
 
 Using ``lava-sync`` or ``lava-wait-all`` in a test definition effectively makes
@@ -257,9 +253,9 @@ waiting for the message.
 
 Not all roles in the group need to send a message or wait for a message. One
 role will act as a sender, at least one role will act as a receiver and any
-other roles can continue as normal. This level of complexity is not usually
-needed. It is advisable to draw out the sequence in a table to ensure that the
-correct calls are made.
+other roles can continue as normal. Note that this level of fine-grained control
+is usually not needed. It is advisable to draw out the sequence in a table to
+ensure that the correct calls are made.
 
 .. seealso:: :ref:`flow_tables`
 
@@ -286,7 +282,7 @@ synchronization.
 
 .. seealso:: :ref:`flow_tables`
 
-Example 1: simple client-server MultiNode test
+Example 1: Simple client-server MultiNode test
 ----------------------------------------------
 
 Two devices, with roles ``client``, ``server``
@@ -360,7 +356,7 @@ Notes:
 * To make use of the server-ready message, some kind of client needs
   to do a ``lava-wait server-ready``
 * There needs to be a support on a client to do the ``lava-send
-  client-done`` or the wait will fail on the server.
+  client-done`` or the server role will fail with a timeout.
 * If there was more than one client, the server could call
   ``lava-wait-all client-done`` instead.
 * iperf server process must be killed after getting client-done
@@ -379,8 +375,8 @@ Notes:
 
 Notes:
 
-* The client waits for the server-ready message as it's first task,
-  then does some work, then sends a message so that the server can
+* The client waits for the server-ready message as its first task,
+  then does some work, then sends a "done" message so that the server can
   move on and do other tests.
 
 Example 3: variable number of clients
@@ -419,11 +415,11 @@ Single role: ``peer``, any number of devices
     lava-sync running
 
     push-data
-    for peer in $(lava-group | cut -f 1); then
+    for peer in $(lava-group | cut -f 1); do
         if [ $peer != $(lava-self) ]; then
             query-data $peer
         fi
-    fi
+    done
 
 .. _flow_tables:
 
@@ -462,11 +458,11 @@ All roles will wait in ``lava-sync start`` until all deploy and boot operations
 (or whatever other tasks are put ahead of the call to ``lava-sync``) are
 complete. The flow table does not include this delay.
 
-The Server role runs a script to start a service, sending ready when the script
+The Server role runs a script to start a service, sending "ready" when the script
 returns.
 
 The Client role waits until all devices with the Server role have completed
-``lava-send ready`` - Observer is unaffected and Server moves directly into the
+``lava-send ready``. Observer is unaffected and Server moves directly into the
 ``lava-sync fin``. Once the Client completes ``lava-wait-all ready server``,
 the Client can run the client tasks script. That script finally puts the
 devices with the Client role into ``lava-sync fin`` at which point, the Client
