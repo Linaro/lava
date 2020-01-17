@@ -332,7 +332,6 @@ class ApplyOverlayTftp(Action):
             )
         else:
             self.logger.debug("[%s] No overlay directory", namespace)
-            self.logger.debug(self.parameters)
         if self.parameters.get("os") == "centos_installer":
             # centos installer ramdisk doesnt like having anything other
             # than the kickstart config being inserted. Instead, make the
