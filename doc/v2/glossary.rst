@@ -318,7 +318,7 @@ Glossary of terms
   messageID
     Each message sent using the :ref:`multinode_api` uses a ``messageID`` which
     is a string, unique within the group. It is recommended to make these
-    strings descriptive using underscores instead of spaces. The messageID will
+    strings descriptive (use underscores instead of spaces). The messageID will
     be included the the log files of the test.
 
   metadata

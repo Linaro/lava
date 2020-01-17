@@ -237,10 +237,9 @@ with the label ``server``.
 
 The second MultiNode example is now complete. To run this yourself, you can see
 the complete example test job: `second-multinode-job.yaml
-<examples/test-jobs/second-multinode-job.yaml>`_
-
-HERE. Remember, you'll need specific hardware devices for this to
-work.
+<examples/test-jobs/second-multinode-job.yaml>`_ . Remember, you'll need specific
+hardware devices for it to work out of the box, but you can easily replace them
+with devices you have available.
 
 Controlling synchronization from the dispatcher
 ===============================================
@@ -252,8 +251,8 @@ or boot on one group of machines until others are fully up and running, for
 example. There is a lot of flexibility here to allow for a massive range of
 possible test scenarios.
 
-.. seealso:: :ref:`writing_multinode_protocol` for more information on
-   how to call the MultiNode API outside the test shell.
+See :ref:`writing_multinode_protocol` for more information on
+how to call the MultiNode API outside the test shell.
 
 .. _multinode_further_features:
 
@@ -273,7 +272,7 @@ included in the log files of the test.
 
 .. warning:: When using :ref:`lava_wait` and :ref:`lava_wait_all`, the
    device will wait until the expected messageID is received. If that messageID
-   does not arrive, the job will simply wait forever and timeout when the
+   does not arrive, the job will simply timeout when the
    default timeout expires. See :ref:`timeouts`.
 
 .. _multinode_data_between_devices:
@@ -281,18 +280,19 @@ included in the log files of the test.
 Using MultiNode commands to pass data between devices
 =====================================================
 
-:ref:`lava_send` can be used to send data between devices. A device can send
-data at any time, and that data will be broadcast to all devices in the
-MultiNode group. The data can be downloaded by any device in the group using
-the messageID using :ref:`lava_wait` or :ref:`lava_wait_all`. Data is sent as
-key-value pairs.
+:ref:`lava_send` can be used to send additional data to other devices,
+beyond just :term:`messageID`. Data is sent as key-value pairs following
+the messageID. A device can send data at any time, and that data will be
+broadcast to all devices in the MultiNode group. The data can be received
+by any device in the group waiting on the target messageID using
+:ref:`lava_wait` or :ref:`lava_wait_all`.
 
 .. note:: The message data is stored in a cache file which will be
    overwritten when the next synchronization call is made. Ensure that your
    scripts make use of (or copy aside) any MultiNode cache data before calling
    any other MultiNode API helpers that may clear the cache.
 
-For example, if a device raises a network interface and wants to make data
+For example, if a device activates a network interface and wants to make data
 about that network connection available to other devices in the group, the
 device can send the IP address using ``lava-send``::
 
@@ -350,7 +350,7 @@ needing a dedicated protocol class to be written for those tools. Using the
 MultiNode protocol is an extension of using the existing :ref:`multinode_api`
 calls within a test definition. The use of the protocol is an advanced use of
 LAVA and relies on the test writer carefully planning how the job will work.
-See `_delayed_start_multinode` for an example of how to use this.
+See :ref:`delayed_start_multinode` for an example of how to use this.
 
 .. FIXME: write the advanced example for this section
 
