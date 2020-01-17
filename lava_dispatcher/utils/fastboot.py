@@ -106,13 +106,17 @@ class DockerDriver(NullDriver):
         self.copied_files = []
 
     def get_command_prefix(self):
-        docker = ["docker", "run"]
+        docker = ["docker", "run", "--rm"]
 
         for device in self.__get_device_nodes__():
             docker.append("--device=" + device)
 
         for f in self.copied_files:
-            docker.append("--volume={filename}:{filename}".format(filename=f))
+            docker.append(
+                "--mount=type=bind,source={filename},destination={filename}".format(
+                    filename=f
+                )
+            )
 
         docker.append(self.image)
 
