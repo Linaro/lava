@@ -160,6 +160,7 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
                         "privileged": False,
                         "capabilities": [],
                         "devices": [],
+                        "networks": [],
                         "volumes": [],
                     }
                 },
@@ -173,6 +174,7 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
 {% set docker_memory="120M" %}
 {% set docker_capabilities = ["NET_ADMIN"] %}"
 {% set docker_devices = ["/dev/kvm:/dev/kvm"] %}"
+{% set docker_networks = ["mynet"] %}"
 {% set docker_volumes = ["/home", "/tmp"] %}"""
         self.assertTrue(self.validate_data("docker-01", data))
         template_dict = prepare_jinja_template("docker-01", data, raw=False)
@@ -205,6 +207,7 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
                         "privileged": False,
                         "capabilities": ["NET_ADMIN"],
                         "devices": ["/dev/kvm:/dev/kvm"],
+                        "networks": ["mynet"],
                         "volumes": ["/home", "/tmp"],  # nosec - unit test support.
                     }
                 },
@@ -249,6 +252,7 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
                         "privileged": True,
                         "capabilities": [],
                         "devices": ["/dev/kvm"],
+                        "networks": [],
                         "volumes": [],
                     }
                 },

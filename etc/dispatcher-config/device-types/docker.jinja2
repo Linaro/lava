@@ -45,6 +45,15 @@ actions:
 {% else %}
           devices: []
 {% endif %}
+{% if docker_networks|default([]) %}
+          networks:
+{% for network in docker_networks %}
+            - {{ network }}
+{% endfor %}
+{% else %}
+          networks: []
+{% endif %}
+
 {% if docker_volumes|default([]) %}
           volumes:
 {% for volume in docker_volumes %}

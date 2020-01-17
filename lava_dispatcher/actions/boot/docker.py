@@ -109,6 +109,8 @@ class CallDockerAction(Action):
             self.extra_options += " --cap-add %s" % cap
         for device in options["devices"]:
             self.extra_options += " --device %s" % device
+        for network in options["networks"]:
+            self.extra_options += " --network %s" % network
         for volume in options["volumes"]:
             self.extra_options += " --volume %s" % volume
 
