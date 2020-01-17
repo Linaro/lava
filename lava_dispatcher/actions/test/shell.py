@@ -300,8 +300,6 @@ class TestShellAction(TestAction):
         try:
             feedbacks = []
             for feedback_ns in self.data.keys():
-                if feedback_ns == self.parameters.get("namespace"):
-                    continue
                 feedback_connection = self.get_namespace_data(
                     action="shared",
                     label="shared",
@@ -309,6 +307,8 @@ class TestShellAction(TestAction):
                     deepcopy=False,
                     parameters={"namespace": feedback_ns},
                 )
+                if feedback_connection == connection:
+                    continue
                 if feedback_connection:
                     self.logger.debug(
                         "Will listen to feedbacks from '%s' for 1 second", feedback_ns
