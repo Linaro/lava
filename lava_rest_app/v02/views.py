@@ -27,7 +27,7 @@ from django.conf import settings
 from django.http.response import HttpResponse
 from django.http import Http404
 
-from lava_common.compat import yaml_safe_load
+from lava_common.compat import yaml_dump, yaml_safe_load
 from lava_results_app.models import TestSuite, TestCase
 from lava_results_app.utils import (
     export_testcase,
@@ -117,9 +117,7 @@ class TestJobViewSet(base_views.TestJobViewSet):
             for test_case in test_suite.testcase_set.all():
                 yaml_list.append(export_testcase(test_case))
 
-        response = HttpResponse(
-            yaml.dump(yaml_list, Dumper=yaml.CDumper), content_type="application/yaml"
-        )
+        response = HttpResponse(yaml_dump(yaml_list), content_type="application/yaml")
         response["Content-Disposition"] = (
             "attachment; filename=job_%d.yaml" % self.get_object().id
         )
@@ -166,9 +164,7 @@ class TestSuiteViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
         for test_case in get_testcases_with_limit(self.get_object(), limit, offset):
             yaml_list.append(export_testcase(test_case))
 
-        response = HttpResponse(
-            yaml.dump(yaml_list, Dumper=yaml.CDumper), content_type="application/yaml"
-        )
+        response = HttpResponse(yaml_dump(yaml_list), content_type="application/yaml")
         response["Content-Disposition"] = (
             "attachment; filename=suite_%s.yaml" % self.get_object().name
         )
