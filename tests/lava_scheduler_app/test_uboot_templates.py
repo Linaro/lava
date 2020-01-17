@@ -454,7 +454,7 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
         ]
         check = 0
         for line in commands:
-            if line.startswith("setenv nfsargs "):
+            if line.startswith("setenv bootargs console"):
                 check = 1
                 self.assertIn(",vers=3 ", line)
         if not check:
