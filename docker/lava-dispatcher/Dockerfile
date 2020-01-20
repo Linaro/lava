@@ -14,6 +14,8 @@ RUN --mount=type=bind,target=/app \
     python3 setup.py build -b /tmp/build egg_info --egg-base /tmp/build install --root /install --no-compile --install-layout=deb lava-common && \
     rm -rf /tmp/build && \
     python3 setup.py build -b /tmp/build egg_info --egg-base /tmp/build install --root /install --no-compile --install-layout=deb lava-dispatcher && \
+    rm -rf /tmp/build && \
+    python3 setup.py build -b /tmp/build egg_info --egg-base /tmp/build install --root /install --no-compile --install-layout=deb lava-dispatcher-host && \
     rm -rf /tmp/build
 
 # Install the entry point
