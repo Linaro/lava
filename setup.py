@@ -32,7 +32,7 @@ class rename_scripts(distutils.command.install_scripts.install_scripts):
     Custom install script to rename 'manage.py' to 'lava-server'
     """
 
-    SCRIPTS = {"manage.py": "lava-server", "lava-coordinator.py": "lava-coordinator"}
+    SCRIPTS = {"manage.py": "lava-server"}
 
     def run(self):
         super().run()
@@ -67,10 +67,14 @@ COORDINATOR = {
     "name": "lava-coordinator",
     "description": "LAVA coordinator",
     "packages": ["lava.coordinator"],
-    "scripts": ["lava/coordinator/lava-coordinator.py"],
+    "scripts": ["lava/coordinator/lava-coordinator"],
     "data_files": [
-        ("/etc/lava-coordinator/", ["etc/lava-coordinator.conf"]),
+        (
+            "/etc/lava-coordinator/",
+            ["etc/lava-coordinator", "etc/lava-coordinator.conf"],
+        ),
         ("/etc/logrotate.d/", ["etc/logrotate.d/lava-coordinator-log"]),
+        ("/lib/systemd/system/", ["etc/lava-coordinator.service"]),
     ],
     "cmdclass": {"install_scripts": rename_scripts},
 }

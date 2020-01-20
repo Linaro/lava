@@ -1,0 +1,114 @@
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2020 Linaro Limited
+#
+# Author: Remi Duraffort <remi.duraffort@linaro.org>
+#
+# This file is part of LAVA.
+#
+# LAVA is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# LAVA is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses>.
+
+import argparse
+import json
+import logging
+import logging.handlers
+import pathlib
+import sys
+import time
+
+from lava_common.version import __version__
+from lava.coordinator import LavaCoordinator
+
+
+# Create the logger that will be configured later
+logging.Formatter.convert = time.gmtime
+LOG = logging.getLogger("lava-coordinator")
+FORMAT = "%(asctime)-15s %(levelname)7s %(message)s"
+
+
+def setup_parser():
+    parser = argparse.ArgumentParser(description="LAVA coordinator")
+    parser.add_argument(
+        "--logfile",
+        type=str,
+        help="Log file for the slave logs",
+        default="/var/log/lava-coordinator.log",
+    )
+    parser.add_argument(
+        "--loglevel",
+        "-l",
+        type=str,
+        default="INFO",
+        choices=["DEBUG", "ERROR", "INFO", "WARN"],
+        help="Log level, default to INFO",
+    )
+
+    parser.add_argument(
+        "--config",
+        type=pathlib.Path,
+        default="/etc/lava-coordinator/lava-coordinator.conf",
+        help="Configuration file",
+    )
+    return parser
+
+
+def setup_logger(log_file, level):
+    """
+    Configure the logger
+
+    :param log_file: the log_file or "-" for sys.stdout
+    :param level: the log level
+    """
+    # Configure the log handler
+    if log_file == "-":
+        handler = logging.StreamHandler(sys.stdout)
+    else:
+        handler = logging.handlers.WatchedFileHandler(log_file)
+    handler.setFormatter(logging.Formatter(FORMAT))
+    LOG.addHandler(handler)
+
+    # Set-up the LOG level
+    if level == "ERROR":
+        LOG.setLevel(logging.ERROR)
+    elif level == "WARN":
+        LOG.setLevel(logging.WARN)
+    elif level == "INFO":
+        LOG.setLevel(logging.INFO)
+    else:
+        LOG.setLevel(logging.DEBUG)
+
+
+def main():
+    # Parse command line
+    options = setup_parser().parse_args()
+
+    # Setup logger
+    setup_logger(options.logfile, options.loglevel)
+    LOG.info("[INIT] LAVA coordinator has started.")
+    LOG.info("[INIT] Version %s", __version__)
+
+    # Loading configuration file
+    LOG.info("[INIT] Loading configuration from %s", options.config)
+
+    config = json.loads(options.config.read_text(encoding="utf-8"))
+    LavaCoordinator(
+        config.get("coordinator_hostname", "localhost"),
+        config.get("port", 3079),
+        config.get("blocksize", 4096),
+    ).run()
+
+
+if __name__ == "__main__":
+    sys.exit(main())
