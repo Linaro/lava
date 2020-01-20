@@ -35,7 +35,7 @@ from django.db import connection, transaction
 from django.db.utils import OperationalError, InterfaceError
 from django.utils import timezone
 
-from lava_common.compat import yaml_safe_load
+from lava_common.compat import yaml_dump, yaml_safe_dump, yaml_safe_load
 from lava_common.version import __version__
 from lava_results_app.models import TestCase, TestSuite
 from lava_scheduler_app.dbutils import parse_job_description
@@ -439,7 +439,7 @@ class Command(LAVADaemonCommand):
         # rendering
         job_def = yaml_safe_load(job.definition)
         job_def["compatibility"] = job.pipeline_compatibility
-        job_def_str = yaml.dump(job_def, Dumper=yaml.CDumper)
+        job_def_str = yaml_safe_dump(job_def)
         job_ctx = job_def.get("context", {})
 
         device = job.actual_device
@@ -494,14 +494,14 @@ class Command(LAVADaemonCommand):
             # Render the sub job definition
             sub_job_def = yaml_safe_load(sub_job.definition)
             sub_job_def["compatibility"] = sub_job.pipeline_compatibility
-            sub_job_def_str = yaml.dump(sub_job_def, Dumper=yaml.CDumper)
+            sub_job_def_str = yaml_safe_dump(sub_job_def)
 
             # inherit only enough configuration for dynamic_connection operation
             self.logger.info(
                 "[%d] Trimming dynamic connection device configuration.", sub_job.id
             )
             min_device_cfg = job.actual_device.minimise_configuration(device_cfg)
-            min_device_cfg_str = yaml.dump(min_device_cfg, Dumper=yaml.CDumper)
+            min_device_cfg_str = yaml_safe_dump(min_device_cfg)
 
             self.save_job_config(
                 sub_job,
@@ -591,7 +591,7 @@ class Command(LAVADaemonCommand):
                     name="job",
                     suite=suite,
                     result=TestCase.RESULT_FAIL,
-                    metadata=yaml.dump(metadata),
+                    metadata=yaml_safe_dump(metadata),
                 )
                 job.go_state_finished(TestJob.HEALTH_INCOMPLETE, True)
                 job.save()
@@ -634,7 +634,7 @@ class Command(LAVADaemonCommand):
         filename = os.path.join(settings.MEDIA_ROOT, "lava-master-config.yaml")
         self.logger.debug("[INIT] Dumping config to %s", filename)
         with open(filename, "w") as output:
-            yaml.dump(options, output)
+            yaml_dump(options, output)
 
         self.logger.info("[INIT] Marking all workers as offline")
         with transaction.atomic():
