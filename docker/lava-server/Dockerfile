@@ -38,7 +38,7 @@ RUN --mount=type=bind,target=/app \
     chown lavaserver:adm /install/var/log/lava-server/django.log && \
     # Install documentation
     install -d /install/usr/share/lava-server/static/docs/v2/ && \
-    cp -R /doc /install/usr/share/lava-server/static/docs/v2/ && \
+    cp -R /doc/* /install/usr/share/lava-server/static/docs/v2/ && \
     # Move the static files
     mv /install/usr/lib/python3/dist-packages/lava_results_app/static/lava_results_app/ /install/usr/share/lava-server/static/lava_results_app && \
     mv /install/usr/lib/python3/dist-packages/lava_scheduler_app/static/lava_scheduler_app/ /install/usr/share/lava-server/static/lava_scheduler_app && \
