@@ -2,3 +2,6 @@
 .coveragerc export-ignore
 .gitignore export-ignore
 .gitattributes export-ignore
+*.gif diff=image
+*.jpg diff=image
+*.png diff=image
