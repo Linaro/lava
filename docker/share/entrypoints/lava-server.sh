@@ -343,5 +343,5 @@ fi
 cd /var/log/lava-server
 while true
 do
-  tail -F django.log gunicorn.log lava-logs.log lava-master.log lava-publisher.log /var/log/lava-coordinator.log & wait ${!}
+  tail -F django.log gunicorn.log lava-logs.log lava-master.log lava-publisher.log /var/log/lava-coordinator.log /var/log/apache2/lava-server.log & wait ${!}
 done
