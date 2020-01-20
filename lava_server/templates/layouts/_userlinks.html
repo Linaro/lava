@@ -2,7 +2,7 @@
 {% load utils %}
     <ul class="nav navbar-nav navbar-right">
       {% if lava.instance_name %}
-      <li class="hidden-sm"><p class="navbar-text">Instance: {{ lava.instance_name }}</p></li>
+      <li class="visible-lg"><p class="navbar-text">Instance: {{ lava.instance_name }}</p></li>
       {% endif %}
       {% if user.is_authenticated %}
       <li class="dropdown">

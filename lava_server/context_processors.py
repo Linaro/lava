@@ -19,11 +19,14 @@
 
 from django.conf import settings
 
+from lava_common.version import __version__
+
 
 def lava(request):
     return {
         "lava": {
             "instance_name": settings.INSTANCE_NAME,
+            "instance_version": __version__,
             "branding_url": settings.BRANDING_URL,
             "branding_icon": settings.BRANDING_ICON,
             "branding_alt": settings.BRANDING_ALT,
