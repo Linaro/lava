@@ -661,6 +661,7 @@ class Action:
         if ret != 0 and not allow_fail:
             self.logger.error("Unable to run 'nice' '%s'", command_list)
             raise self.command_exception(error_msg)
+        return ret
 
     def run_command(self, command_list, allow_silent=False, allow_fail=False, cwd=None):
         """
