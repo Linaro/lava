@@ -28,7 +28,7 @@ from lava_dispatcher.actions.boot.barebox import BareboxAction
 from lava_dispatcher.actions.deploy.apply_overlay import CompressRamdisk
 from lava_dispatcher.actions.deploy.tftp import TftpAction
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
-from lava_dispatcher.utils.filesystem import tftpd_dir
+from lava_dispatcher.utils import filesystem
 
 
 class BareboxFactory(Factory):
@@ -86,7 +86,7 @@ class TestBareboxAction(StdoutTestCase):
             "dtb",
             [action.key for action in tftp.pipeline.actions if hasattr(action, "key")],
         )
-        self.assertNotIn("=", tftpd_dir())
+        self.assertNotIn("=", filesystem.tftpd_dir())
         job.validate()
         tftp.validate()
         self.assertEqual([], tftp.errors)

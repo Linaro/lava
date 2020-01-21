@@ -18,7 +18,6 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import atexit
 import errno
 import shutil
 import tempfile
@@ -140,13 +139,7 @@ class Job:
             # Try to create the directory.
             prefix = self.parameters["dispatcher"].get("prefix", "")
             base_dir = os.path.join(base_dir, "%s%s" % (prefix, self.job_id))
-            try:
-                os.makedirs(base_dir, mode=0o755)
-            except OSError as exc:
-                if exc.errno != errno.EEXIST:
-                    # When running unit tests
-                    base_dir = tempfile.mkdtemp(prefix="pipeline-")
-                    atexit.register(shutil.rmtree, base_dir, ignore_errors=True)
+            os.makedirs(base_dir, mode=0o755, exist_ok=True)
             # Save the path for the next calls (only if that's not an override)
             if override is None:
                 self.tmp_dir = base_dir

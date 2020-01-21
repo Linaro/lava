@@ -29,7 +29,7 @@ from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.utils.filesystem import prepare_install_base, copy_out_files
 from lava_dispatcher.utils.shell import which
-from lava_dispatcher.utils.filesystem import tftpd_dir
+from lava_dispatcher.utils import filesystem
 from lava_dispatcher.utils.network import dispatcher_ip
 from lava_common.constants import INSTALLER_IMAGE_MAX_SIZE
 
@@ -62,7 +62,7 @@ class DeployIsoAction(DeployAction):
         which("in.tftpd")
 
     def populate(self, parameters):
-        self.preseed_path = self.mkdtemp(override=tftpd_dir())
+        self.preseed_path = self.mkdtemp(override=filesystem.tftpd_dir())
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.pipeline.add_action(IsoEmptyImage())
         # the preseed file needs to go into the dispatcher apache tmp directory.

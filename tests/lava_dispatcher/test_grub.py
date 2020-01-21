@@ -38,7 +38,7 @@ from lava_dispatcher.action import Pipeline
 from lava_common.exceptions import JobError
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.utils.network import dispatcher_ip
-from lava_dispatcher.utils.filesystem import tftpd_dir
+from lava_dispatcher.utils import filesystem
 from lava_dispatcher.utils.strings import substitute
 
 
@@ -114,7 +114,7 @@ class TestGrubAction(StdoutTestCase):
             "dtb",
             [action.key for action in tftp.pipeline.actions if hasattr(action, "key")],
         )
-        self.assertNotIn("=", tftpd_dir())
+        self.assertNotIn("=", filesystem.tftpd_dir())
 
     def test_device_d02(self):
         job = self.factory.create_job("d02-01.jinja2", "sample_jobs/grub-ramdisk.yaml")
