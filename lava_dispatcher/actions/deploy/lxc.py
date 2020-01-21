@@ -20,7 +20,7 @@
 
 import os
 
-from lava_common.exceptions import LAVABug
+from lava_common.exceptions import InfrastructureError, LAVABug
 from lava_common.utils import debian_package_version
 from lava_dispatcher.action import JobError, Pipeline
 from lava_dispatcher.actions.deploy import DeployAction
@@ -195,17 +195,21 @@ class LxcCreateAction(DeployAction):
             ]
         if self.lxc_data["lxc_arch"]:
             lxc_cmd += ["--arch", self.lxc_data["lxc_arch"]]
-        # FIXME: check if persistent name already exists and then drop allow_fail & allow_silent
-        cmd_out = self.run_command(lxc_cmd, allow_fail=True, allow_silent=True)
-        if isinstance(cmd_out, str):
-            if "exists" in cmd_out and self.lxc_data["lxc_persist"]:
-                self.logger.debug("Persistant container exists")
-                self.results = {"status": self.lxc_data["lxc_name"]}
-        elif not cmd_out:
-            raise JobError("Unable to create lxc container")
+
+        # Check if the container already exists. If this is a persistant that's
+        # ok, overwize, raise an error.
+        if not self.run_cmd(["lxc-info", self.lxc_data["lxc_name"]], allow_fail=True):
+            if not self.lxc_data["lxc_persist"]:
+                raise InfrastructureError(
+                    "lxc container %r already exists" % self.lxc_data["lxc_name"]
+                )
+            self.logger.debug("Persistant container exists")
         else:
+            # The container does not exists, just create it
+            self.run_cmd(lxc_cmd, error_msg="Unable to create lxc container")
             self.logger.debug("Container created successfully")
-            self.results = {"status": self.lxc_data["lxc_name"]}
+        self.results = {"status": self.lxc_data["lxc_name"]}
+
         # Create symlink in default container path ie., /var/lib/lxc defined by
         # LXC_PATH so that we need not add '-P' option to every lxc-* command.
         dst = os.path.join(LXC_PATH, self.lxc_data["lxc_name"])
