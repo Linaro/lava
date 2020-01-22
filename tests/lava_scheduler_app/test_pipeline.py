@@ -3,6 +3,8 @@ import yaml
 import jinja2
 import unittest
 
+from django.conf import settings
+
 from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_scheduler_app.models import (
     Device,
@@ -488,9 +490,6 @@ class TestPipelineSubmit(TestCaseWithFactory):
 class TestExtendsSubmit(TestCaseWithFactory):
     def setUp(self):
         super().setUp()
-        Device.HEALTH_CHECK_PATH = os.path.join(
-            os.getcwd(), "tests", "lava_scheduler_app", "health-checks"
-        )
         self.factory = YamlFactory()
         self.device_type = self.factory.make_device_type(name="juno-r2")
         self.factory.make_device(
@@ -502,11 +501,10 @@ class TestExtendsSubmit(TestCaseWithFactory):
         device1 = Device.objects.get(hostname="juno-r2-01")
         self.assertIsNotNone(device1.load_configuration(output_format="raw"))
         self.assertEqual("juno", device1.get_extends())
-        self.assertIsNotNone(device1.HEALTH_CHECK_PATH)
         self.assertTrue(
             os.path.exists(
                 os.path.join(
-                    Device.HEALTH_CHECK_PATH, "%s.yaml" % device1.get_extends()
+                    settings.HEALTH_CHECKS_PATH, "%s.yaml" % device1.get_extends()
                 )
             )
         )
