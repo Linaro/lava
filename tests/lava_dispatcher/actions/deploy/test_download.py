@@ -150,7 +150,6 @@ def test_download_handler_validate_simple():
             "download-action": {
                 "key": {
                     "file": "/path/to/save/key/resource.img",
-                    "image_arg": None,
                     "compression": None,
                 }
             }
@@ -193,7 +192,6 @@ def test_download_handler_validate_kernel():
             "download-action": {
                 "kernel": {
                     "file": "/path/to/save/kernel/kernel",
-                    "image_arg": None,
                     "compression": None,
                 }
             }
@@ -287,8 +285,9 @@ def test_download_handler_errors():
         "key": {"url": "http://example.com/resource/"},
         "namespace": "common",
     }
-    action.validate()
-    assert action.errors == ["Cannot download a directory for key"]
+    with pytest.raises(JobError) as exc:
+        action.validate()
+    assert str(exc.value) == "Cannot download a directory for key"
 
     # Uknown compression format
     action = DownloadHandler(

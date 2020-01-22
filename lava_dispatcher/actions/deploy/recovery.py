@@ -36,9 +36,12 @@ class RecoveryModeAction(DeployAction):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         recovery = self.job.device["actions"]["deploy"]["methods"]["recovery"]
         recovery_dir = self.mkdtemp()
-        image_keys = sorted(parameters["images"].keys())
-        for image in image_keys:
-            self.pipeline.add_action(DownloaderAction(image, recovery_dir))
+        for image in sorted(parameters["images"].keys()):
+            self.pipeline.add_action(
+                DownloaderAction(
+                    image, recovery_dir, params=parameters["images"][image]
+                )
+            )
         self.pipeline.add_action(CopyToLxcAction())
 
         tags = []

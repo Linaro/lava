@@ -314,7 +314,12 @@ class MassStorage(DeployAction):
         if "images" in parameters:
             for k in sorted(parameters["images"].keys()):
                 self.pipeline.add_action(
-                    DownloaderAction(k, path=self.image_path, uniquify=uniquify)
+                    DownloaderAction(
+                        k,
+                        path=self.image_path,
+                        uniquify=uniquify,
+                        params=parameters["images"][k],
+                    )
                 )
                 if parameters["images"][k].get("apply-overlay", False):
                     if self.test_needs_overlay(parameters):
@@ -322,7 +327,12 @@ class MassStorage(DeployAction):
             self.pipeline.add_action(DDAction())
         elif "image" in parameters:
             self.pipeline.add_action(
-                DownloaderAction("image", path=self.image_path, uniquify=uniquify)
+                DownloaderAction(
+                    "image",
+                    path=self.image_path,
+                    uniquify=uniquify,
+                    params=parameters["image"],
+                )
             )
             if self.test_needs_overlay(parameters):
                 self.pipeline.add_action(ApplyOverlayImage())

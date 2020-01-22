@@ -102,7 +102,7 @@ class ScpOverlay(DeployAction):
         for item in self.items:
             if item in parameters:
                 self.pipeline.add_action(
-                    DownloaderAction(item, path=self.mkdtemp()), parameters
+                    DownloaderAction(item, path=self.mkdtemp()), params=parameters[item]
                 )
                 self.set_namespace_data(
                     action=self.name,

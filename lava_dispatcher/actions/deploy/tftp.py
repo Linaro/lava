@@ -108,7 +108,9 @@ class TftpAction(DeployAction):  # pylint:disable=too-many-instance-attributes
 
         for key in ["ramdisk", "kernel", "dtb", "nfsrootfs", "modules", "preseed"]:
             if key in parameters:
-                self.pipeline.add_action(DownloaderAction(key, path=self.tftp_dir))
+                self.pipeline.add_action(
+                    DownloaderAction(key, path=self.tftp_dir, params=parameters[key])
+                )
                 if key == "ramdisk":
                     self.set_namespace_data(
                         action=self.name,

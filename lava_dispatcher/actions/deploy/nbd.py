@@ -125,7 +125,9 @@ class NbdAction(DeployAction):  # pylint:disable=too-many-instance-attributes
 
         for key in ["initrd", "kernel", "dtb", "nbdroot"]:
             if key in parameters:
-                download = DownloaderAction(key, path=self.tftp_dir)
+                download = DownloaderAction(
+                    key, path=self.tftp_dir, params=parameters[key]
+                )
                 download.max_retries = (
                     3
                 )  # overridden by failure_retry in the parameters, if set.

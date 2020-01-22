@@ -63,7 +63,9 @@ class FlasherAction(DeployAction):
         # Download the images
         self.path = self.mkdtemp()
         for image in parameters["images"].keys():
-            self.pipeline.add_action(DownloaderAction(image, self.path))
+            self.pipeline.add_action(
+                DownloaderAction(image, self.path, params=parameters["images"][image])
+            )
 
         if self.test_needs_deployment(parameters):
             self.pipeline.add_action(DeployDeviceEnvironment())

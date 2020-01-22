@@ -91,7 +91,11 @@ class VExpressMsdAction(DeployAction):
     def populate(self, parameters):
         download_dir = self.mkdtemp()
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.pipeline.add_action(DownloaderAction("recovery_image", path=download_dir))
+        self.pipeline.add_action(
+            DownloaderAction(
+                "recovery_image", path=download_dir, params=parameters["recovery_image"]
+            )
+        )
         self.pipeline.add_action(LxcCreateUdevRuleAction())
         self.force_prompt = True
         self.pipeline.add_action(ConnectDevice())
