@@ -35,10 +35,15 @@ from lava_server.settings.secret_key import get_secret_key
 
 
 # Load the setting file and add the variables to the current context
-with contextlib.suppress(AttributeError, ValueError):
-    with open("/etc/lava-server/settings.conf", "r") as f_conf:
-        for (k, v) in simplejson.load(f_conf).items():
-            globals()[k] = v
+with open("/etc/lava-server/settings.conf", "r") as f_conf:
+    try:
+        data = simplejson.load(f_conf)
+    except simplejson.JSONDecodeError as exc:
+        print("[INIT] Unable to load settings.conf")
+        print(exc)
+        raise Exception("Unable to load settings.conf") from exc
+    for (k, v) in data.items():
+        globals()[k] = v
 
 # Fix mount point
 # Remove the leading slash and keep only one trailing slash
