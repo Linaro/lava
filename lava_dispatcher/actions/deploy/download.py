@@ -66,7 +66,7 @@ class DownloaderAction(RetryAction):
     description = "download with retry"
     summary = "download-retry"
 
-    def __init__(self, key, path, uniquify=True, params=None):
+    def __init__(self, key, path, params, uniquify=True):
         super().__init__()
         self.max_retries = 3
         self.key = key  # the key in the parameters of what to download
@@ -78,12 +78,7 @@ class DownloaderAction(RetryAction):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
 
         # Find the right action according to the url
-        if self.params is not None:
-            url = self.params.get("url")
-        elif "images" in parameters and self.key in parameters["images"]:
-            url = parameters["images"][self.key].get("url")
-        else:
-            url = parameters[self.key].get("url")
+        url = self.params.get("url")
         if url is None:
             raise JobError(
                 "Invalid deploy action: 'url' is missing for '%s'" % self.key
@@ -168,26 +163,11 @@ class DownloadHandler(Action):
 
     def validate(self):
         super().validate()
-        if self.params is not None:
-            self.logger.info("Using the new params support")
-            self.url = urlparse(self.params["url"])
-            compression = self.params.get("compression")
-            archive = self.params.get("archive")
-            overlay = self.params.get("overlay", False)
-            image_arg = self.params.get("image_arg")
-        elif "images" in self.parameters and self.key in self.parameters["images"]:
-            image = self.parameters["images"][self.key]
-            self.url = urlparse(image["url"])
-            compression = image.get("compression")
-            archive = image.get("archive")
-            image_arg = image.get("image_arg")
-            overlay = image.get("overlay", False)
-        else:
-            self.url = urlparse(self.parameters[self.key]["url"])
-            compression = self.parameters[self.key].get("compression")
-            archive = self.parameters[self.key].get("archive")
-            overlay = self.parameters.get("overlay", False)
-            image_arg = None
+        self.url = urlparse(self.params["url"])
+        compression = self.params.get("compression")
+        archive = self.params.get("archive")
+        overlay = self.params.get("overlay", False)
+        image_arg = self.params.get("image_arg")
 
         self.fname = self._url_to_fname(self.path, compression)
         if self.fname.endswith("/"):
@@ -283,28 +263,21 @@ class DownloadHandler(Action):
                     "Unable to create %s: %s" % (self.path, str(exc))
                 )
 
-        if self.params is not None:
-            remote = self.params
-        elif "images" in self.parameters and self.key in self.parameters["images"]:
-            remote = self.parameters["images"][self.key]
-        else:
-            remote = self.parameters[self.key]
-
         if self.key == "ramdisk":
             compression = False
             self.logger.debug("Not decompressing ramdisk as can be used compressed.")
-        compression = remote.get("compression", False)
+        compression = self.params.get("compression", False)
 
-        md5sum = remote.get("md5sum")
-        sha256sum = remote.get("sha256sum")
-        sha512sum = remote.get("sha512sum")
+        md5sum = self.params.get("md5sum")
+        sha256sum = self.params.get("sha256sum")
+        sha512sum = self.params.get("sha512sum")
 
         if os.path.isdir(self.fname):
             raise JobError("Download '%s' is a directory, not a file" % self.fname)
         if os.path.exists(self.fname):
             os.remove(self.fname)
 
-        self.logger.info("downloading %s", remote["url"])
+        self.logger.info("downloading %s", self.params["url"])
         self.logger.debug("saving as %s", self.fname)
 
         downloaded_size = 0
@@ -421,7 +394,7 @@ class DownloadHandler(Action):
         )
 
         # handle archive files
-        archive = remote.get("archive", False)
+        archive = self.params.get("archive")
         if archive:
             if archive != "tar":
                 raise JobError("Unknown archive format %r" % archive)
