@@ -226,7 +226,7 @@ class ShellSession(Connection):
         whether that is a string or a list of strings.
         To use + the instance of the existing prompt_str must be checked.
         """
-        # FIXME: Debug logging should show whenever this property is changed
+        self.logger.debug("Setting prompt string to %r" % string)
         self.__prompt_str__ = string
 
     @contextlib.contextmanager
