@@ -9,6 +9,10 @@ FROM debian:buster-slim as build
 RUN apt-get update && \
     apt-get install --no-install-recommends --yes python3 python3-distutils python3-setuptools
 
+# Install lava-lxc-mocker
+COPY lava/lxc-mocker/ /install/usr/bin/
+
+# Install common, dispatcher and dispatcher-host modules
 RUN --mount=type=bind,target=/app \
     cd /app && \
     python3 setup.py build -b /tmp/build egg_info --egg-base /tmp/build install --root /install --no-compile --install-layout=deb lava-common && \
