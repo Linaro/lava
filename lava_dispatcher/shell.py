@@ -201,10 +201,16 @@ class ShellSession(Connection):
         self.spawn = shell_command
         self.__runner__ = None
         self.timeout = shell_command.lava_timeout
+        self.__logger__ = None
+
+    @property
+    def logger(self):
+        if not self.__logger__:
+            self.__logger__ = logging.getLogger("dispatcher")
+        return self.__logger__
 
     def disconnect(self, reason=""):
-        logger = logging.getLogger("dispatcher")
-        logger.debug("Disconnecting %s", self.name)
+        self.logger.debug("Disconnecting %s", self.name)
         super().disconnect(reason)
 
     # FIXME: rename prompt_str to indicate it can be a list or str
@@ -239,13 +245,12 @@ class ShellSession(Connection):
         6 times (so we wait for 1.1 times the timeout period overall).
         :return: the index into the connection.prompt_str list
         """
-        logger = logging.getLogger("dispatcher")
         prompt_wait_count = 0
         if not remaining:
             return self.wait()
         # connection_prompt_limit
         partial_timeout = remaining / 2.0
-        logger.debug(
+        self.logger.debug(
             "Waiting using forced prompt support (timeout %s)"
             % seconds_to_str(partial_timeout)
         )
@@ -256,14 +261,14 @@ class ShellSession(Connection):
                 )
             except (pexpect.TIMEOUT, TestError) as exc:
                 if prompt_wait_count < 6:
-                    logger.warning(
+                    self.logger.warning(
                         "%s: Sending %s in case of corruption. Connection timeout %s, retry in %s",
                         exc,
                         self.check_char,
                         seconds_to_str(remaining),
                         seconds_to_str(partial_timeout),
                     )
-                    logger.debug("pattern: %s", self.prompt_str)
+                    self.logger.debug("pattern: %s", self.prompt_str)
                     prompt_wait_count += 1
                     partial_timeout = remaining / 10
                     self.sendline(self.check_char)
