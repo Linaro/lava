@@ -30,6 +30,7 @@ def get_mapping_path(job_id):
 def add_device_container_mapping(
     job_id, device_info, container, container_type="lxc", logging_info={}
 ):
+    validate_device_info(device_info)
     data = {
         "device_info": device_info,
         "container": container,
@@ -45,6 +46,15 @@ def add_device_container_mapping(
             "Added mapping for {device_info} to {container_type} container {container}".format(
                 **data
             )
+        )
+
+
+def validate_device_info(device_info):
+    if not device_info:
+        raise ValueError("Addind mapping for empty device info: %r" % device_info)
+    if not any(device_info.values()):
+        raise ValueError(
+            "Addind mapping for device info with empty keys: %r" % device_info
         )
 
 
@@ -89,10 +99,13 @@ def find_mapping(options):
 
 
 def match_mapping(device_info, options):
+    matched = False
     for k, v in device_info.items():
         if k in options and v and getattr(options, k) != v:
             return False
-    return True
+        else:
+            matched = True
+    return matched
 
 
 def share_device_with_container_lxc(container, node):
