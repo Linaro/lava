@@ -161,7 +161,7 @@ class ConnectDevice(Action):
             window=self.job.device.get_constant("spawn_maxread"),
         )
         if shell.exitstatus:
-            raise JobError(
+            raise InfrastructureError(
                 "%s command exited %d: %s"
                 % (self.command, shell.exitstatus, shell.readlines())
             )
