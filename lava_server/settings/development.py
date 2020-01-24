@@ -104,16 +104,6 @@ USE_DEBUG_TOOLBAR = False
 # This setting is only used for django 1.2 and newer.
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
-# default branding details
-BRANDING_ALT = "LAVA Software logo"
-BRANDING_ICON = "lava_server/images/logo.png"
-BRANDING_URL = "http://www.lavasoftware.org"
-BRANDING_HEIGHT = 22
-BRANDING_WIDTH = 22
-BRANDING_BUG_URL = "https://git.lavasoftware.org/lava/lava/issues"
-BRANDING_SOURCE_URL = "https://git.lavasoftware.org/lava/lava"
-BRANDING_MESSAGE = ""
-
 # Use default instance name
 INSTANCE_NAME = "default"
 
