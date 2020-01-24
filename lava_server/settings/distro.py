@@ -29,11 +29,12 @@ import re
 import simplejson
 
 from lava_common.version import __version__
-from lava_server.settings.production import *
+from lava_server.settings.common import *  # pylint: disable=unused-import
 from lava_server.settings.config_file import ConfigFile
 
 from lava_server.settings.secret_key import get_secret_key
 
+DEBUG = False
 
 # Load the setting file and add the variables to the current context
 with open("/etc/lava-server/settings.conf", "r") as f_conf:
@@ -71,6 +72,9 @@ DATABASES = {
 
 # Load secret key from distro integration
 SECRET_KEY = get_secret_key("/etc/lava-server/secret_key.conf")
+
+# Add a memory based cache
+CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
 
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
