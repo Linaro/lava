@@ -66,6 +66,8 @@ def share_device_with_container(options, setup_logger=None):
     container_type = data["container_type"]
     if container_type == "lxc":
         share_device_with_container_lxc(container, device)
+    elif container_type == "docker":
+        share_device_with_container_docker(container, device)
     else:
         raise InfrastructureError('Unsupported container type: "%s"' % container_type)
 
@@ -95,3 +97,27 @@ def match_mapping(device_info, options):
 
 def share_device_with_container_lxc(container, node):
     subprocess.check_call(["lxc-device", "-n", container, "add", node])
+
+
+def share_device_with_container_docker(container, node):
+    container_id = subprocess.check_output(
+        ["docker", "inspect", "--format={{.ID}}", container], text=True
+    ).strip()
+    nodeinfo = os.stat(node)
+    major = os.major(nodeinfo.st_rdev)
+    minor = os.minor(nodeinfo.st_rdev)
+    with open(
+        "/sys/fs/cgroup/devices/docker/%s/devices.allow" % container_id, "w"
+    ) as allow:
+        allow.write("a %d:%d rwm\n" % (major, minor))
+    subprocess.check_call(
+        [
+            "docker",
+            "exec",
+            container,
+            "sh",
+            "-c",
+            "mkdir -p %s && mknod %s c %d %d"
+            % (os.path.dirname(node), node, major, minor),
+        ]
+    )
