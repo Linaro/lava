@@ -23,14 +23,13 @@ import os
 import pathlib
 import pytest
 import tap
-import yaml
 
 from django.conf import settings
 from django.contrib.auth.models import User, Group
 from django.urls import reverse
 from rest_framework.test import APIClient
 
-from lava_common.compat import yaml_safe_dump
+from lava_common.compat import yaml_load, yaml_safe_dump
 from lava_scheduler_app.models import (
     Alias,
     Device,
@@ -391,7 +390,7 @@ class TestRestApi:
             reverse("api-root", args=[self.version])
             + "jobs/%s/yaml/" % self.public_testjob1.id,
         )
-        data = yaml.load(data)
+        data = yaml_load(data)
         assert data[0]["job"] == str(
             self.public_testjob1.id
         )  # nosec - unit test support
@@ -475,7 +474,7 @@ ok 2 - bar
             + "jobs/%s/suites/%s/yaml/"
             % (self.public_testjob1.id, self.public_testjob1.testsuite_set.first().id),
         )
-        data = yaml.load(data)
+        data = yaml_load(data)
         assert (
             data[0]["suite"] == self.public_testjob1.testsuite_set.first().name
         )  # nosec - unit test support
@@ -588,7 +587,7 @@ ok 2 - bar
             self.userclient,
             reverse("api-root", args=[self.version]) + "devices/public01/dictionary/",
         )
-        data = yaml.load(data)
+        data = yaml_load(data)
         assert data == {"device": "dict"}  # nosec
 
     def test_devices_set_dictionary(self, monkeypatch, tmpdir):
@@ -681,7 +680,7 @@ ok 2 - bar
             reverse("api-root", args=[self.version])
             + "devicetypes/%s/template/" % qemu_device_type1.name,
         )
-        data = yaml.load(data)
+        data = yaml_load(data)
         assert data == str("hello")  # nosec
 
         # 2. Can't read the file
@@ -747,7 +746,7 @@ ok 2 - bar
             reverse("api-root", args=[self.version])
             + "devicetypes/%s/health_check/" % qemu_device_type1.name,
         )
-        data = yaml.load(data)
+        data = yaml_load(data)
         assert data == str("hello")  # nosec
 
         # 2. Can't read the health-check
@@ -878,7 +877,7 @@ ok 2 - bar
             reverse("api-root", args=[self.version])
             + "workers/%s/env/" % self.worker1.hostname,
         )
-        data = yaml.load(data)
+        data = yaml_load(data)
         assert data == str("hello")  # nosec
 
         # worker does not exists
@@ -926,7 +925,7 @@ ok 2 - bar
             reverse("api-root", args=[self.version])
             + "workers/%s/config/" % self.worker1.hostname,
         )
-        data = yaml.load(data)
+        data = yaml_load(data)
         assert data == str("hello world")  # nosec
 
         # worker does not exists

@@ -30,7 +30,7 @@ from lava_dispatcher.logical import Deployment
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.utils.shell import which
-from lava_dispatcher.utils.filesystem import tftpd_dir
+from lava_dispatcher.utils import filesystem
 from lava_dispatcher.protocols.xnbd import XnbdProtocol
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 
@@ -104,7 +104,7 @@ class NbdAction(DeployAction):  # pylint:disable=too-many-instance-attributes
 
         # Check that the tmp directory is in the nbdd_dir or in /tmp for the
         # unit tests
-        tftpd_directory = os.path.realpath(tftpd_dir())
+        tftpd_directory = os.path.realpath(filesystem.tftpd_dir())
         tftp_dir = os.path.realpath(self.tftp_dir)
         tmp_dir = tempfile.gettempdir()
         if not tftp_dir.startswith(tftpd_directory) and not tftp_dir.startswith(
@@ -113,7 +113,7 @@ class NbdAction(DeployAction):  # pylint:disable=too-many-instance-attributes
             self.errors = "tftpd directory is not configured correctly, see /etc/default/tftpd-hpa"
 
     def populate(self, parameters):
-        self.tftp_dir = self.mkdtemp(override=tftpd_dir())
+        self.tftp_dir = self.mkdtemp(override=filesystem.tftpd_dir())
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.set_namespace_data(
             action=self.name,
@@ -204,7 +204,7 @@ class XnbdAction(DeployAction):
             "--target",
             "--lport",
             "%s" % self.nbd_server_port,
-            "%s/%s" % (os.path.realpath(tftpd_dir()), self.nbd_root),
+            "%s/%s" % (os.path.realpath(filesystem.tftpd_dir()), self.nbd_root),
         ]
         command_output = self.run_command(nbd_cmd, allow_fail=False)
 

@@ -45,7 +45,7 @@ def no_network(monkeypatch, request):
     # List of tests that should have access to the network
     # When pytest is mandatory, we can use pytest marks
     # See https://stackoverflow.com/a/38763328
-    skip_tests = set(["test_download_decompression", "TestChecksum", "test_xz_nfs"])
+    skip_tests = set(["test_download_decompression", "test_xz_nfs"])
     if not skip_tests & set(request.keywords.keys()):
         monkeypatch.setattr(requests, "head", head)
         monkeypatch.setattr(requests, "get", get)

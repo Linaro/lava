@@ -33,7 +33,7 @@ from lava_dispatcher.actions.deploy.apply_overlay import PrepareOverlayTftp
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
 from lava_common.constants import TFTP_SIZE_LIMIT
 from lava_dispatcher.utils.shell import which
-from lava_dispatcher.utils.filesystem import tftpd_dir
+from lava_dispatcher.utils import filesystem
 
 
 class Tftp(Deployment):
@@ -87,7 +87,7 @@ class TftpAction(DeployAction):  # pylint:disable=too-many-instance-attributes
 
         # Check that the tmp directory is in the tftpd_dir or in /tmp for the
         # unit tests
-        tftpd_directory = os.path.realpath(tftpd_dir())
+        tftpd_directory = os.path.realpath(filesystem.tftpd_dir())
         tftp_dir = os.path.realpath(self.tftp_dir)
         tmp_dir = tempfile.gettempdir()
         if not tftp_dir.startswith(tftpd_directory) and not tftp_dir.startswith(
@@ -96,7 +96,7 @@ class TftpAction(DeployAction):  # pylint:disable=too-many-instance-attributes
             self.errors = "tftpd directory is not configured correctly, see /etc/default/tftpd-hpa"
 
     def populate(self, parameters):
-        self.tftp_dir = self.mkdtemp(override=tftpd_dir())
+        self.tftp_dir = self.mkdtemp(override=filesystem.tftpd_dir())
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.set_namespace_data(
             action=self.name,
@@ -143,7 +143,7 @@ class TftpAction(DeployAction):  # pylint:disable=too-many-instance-attributes
         ]:
             if key in self.parameters:
                 filename = self.get_namespace_data(action=action, label="file", key=key)
-                filename = os.path.join(tftpd_dir(), filename)
+                filename = os.path.join(filesystem.tftpd_dir(), filename)
                 fsize = os.stat(filename).st_size
                 if fsize >= tftp_size_limit:
                     raise JobError(

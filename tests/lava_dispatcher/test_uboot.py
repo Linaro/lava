@@ -27,16 +27,21 @@ from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_common.exceptions import JobError
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
-from lava_dispatcher.actions.boot.u_boot import UBootAction, UBootSecondaryMedia
+from lava_dispatcher.actions.boot.u_boot import (
+    UBootAction,
+    UBootRetry,
+    UBootSecondaryMedia,
+)
 from lava_dispatcher.actions.boot import BootloaderCommandOverlay
 from lava_dispatcher.actions.deploy.apply_overlay import CompressRamdisk
 from lava_dispatcher.actions.deploy.tftp import TftpAction
 from lava_dispatcher.job import Job
 from lava_dispatcher.action import Pipeline
+from lava_dispatcher.power import ResetDevice, PDUReboot
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from tests.lava_dispatcher.utils import DummyLogger, infrastructure_error
 from lava_dispatcher.utils.network import dispatcher_ip
-from lava_dispatcher.utils.filesystem import tftpd_dir
+from lava_dispatcher.utils import filesystem
 from lava_dispatcher.utils.strings import substitute
 
 
@@ -79,6 +84,53 @@ class TestUbootAction(StdoutTestCase):
 
         self.assertIsNone(job.validate())
 
+    def test_action_parameters(self):
+        job = self.factory.create_bbb_job("sample_jobs/uboot-ramdisk.yaml")
+        self.assertIsNotNone(job.parameters)
+        deploy = job.pipeline.actions[0]
+        self.assertIsNone(deploy.parameters.get("parameters"))
+        uboot = job.pipeline.actions[1]
+        self.assertEqual(
+            "reboot: Restarting system",  # modified in the job yaml
+            uboot.parameters.get("parameters", {}).get(
+                "shutdown-message", job.device.get_constant("shutdown-message")
+            ),
+        )
+        self.assertIsInstance(uboot, UBootAction)
+        retry = [
+            action for action in uboot.pipeline.actions if action.name == "uboot-retry"
+        ][0]
+        self.assertEqual(
+            "reboot: Restarting system",  # modified in the job yaml
+            retry.parameters["parameters"].get(
+                "shutdown-message", job.device.get_constant("shutdown-message")
+            ),
+        )
+        self.assertIsInstance(retry, UBootRetry)
+        reset = retry.pipeline.actions[0]
+        self.assertEqual(
+            "reboot: Restarting system",  # modified in the job yaml
+            reset.parameters["parameters"].get(
+                "shutdown-message", job.device.get_constant("shutdown-message")
+            ),
+        )
+        self.assertIsInstance(reset, ResetDevice)
+        reboot = reset.pipeline.actions[0]
+        self.assertEqual(
+            "reboot: Restarting system",  # modified in the job yaml
+            reboot.parameters["parameters"].get(
+                "shutdown-message", job.device.get_constant("shutdown-message")
+            ),
+        )
+        self.assertIsInstance(reboot, PDUReboot)
+        self.assertIsNotNone(reboot.parameters.get("parameters"))
+        self.assertEqual(
+            "reboot: Restarting system",  # modified in the job yaml
+            reboot.parameters["parameters"].get(
+                "shutdown-message", job.device.get_constant("shutdown-message")
+            ),
+        )
+
     @patch(
         "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
     )
@@ -118,7 +170,7 @@ class TestUbootAction(StdoutTestCase):
             "dtb",
             [action.key for action in tftp.pipeline.actions if hasattr(action, "key")],
         )
-        self.assertNotIn("=", tftpd_dir())
+        self.assertNotIn("=", filesystem.tftpd_dir())
         job.validate()
         tftp.validate()
         self.assertEqual([], tftp.errors)
