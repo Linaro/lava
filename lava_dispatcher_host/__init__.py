@@ -56,7 +56,9 @@ def share_device_with_container(options, setup_logger=None):
         setup_logger(data["logging_info"])
     logger = logging.getLogger("dispatcher")
     container = data["container"]
-    device = "/dev/" + options.device
+    device = options.device
+    if not device.startswith("/dev/"):
+        device = "/dev/" + device
     if not os.path.exists(device):
         logger.warning("Can't share {device}: file not found".format(device=device))
         return
