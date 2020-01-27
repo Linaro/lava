@@ -91,6 +91,7 @@ start_lava_coordinator() {
     LOGLEVEL="DEBUG"
     LOGFILE="/var/log/lava-coordinator.log"
     [ -e /etc/default/lava-coordinator ] && . /etc/default/lava-coordinator
+    [ -e /etc/lava-coordinator/lava-coordinator ] && . /etc/lava-coordinator/lava-coordinator
     if [ "$CAN_EXEC" = "1" ]; then
         exec /usr/bin/lava-coordinator --logfile - --loglevel "$LOGLEVEL"
     else
