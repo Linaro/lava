@@ -106,6 +106,13 @@ def parser():
         help="DUT environment",
     )
 
+    p_obj.add_argument(
+        "--debug",
+        action="store_true",
+        default=False,
+        help="Start remote pdb right before running the job, for debugging",
+    )
+
     p_obj.add_argument("definition", type=argparse.FileType("r"), help="job definition")
 
     return p_obj
@@ -261,6 +268,10 @@ def main():
 
         job.validate()
         if not options.validate:
+            if options.debug:
+                from remote_pdb import set_trace
+
+                set_trace()
             job.run()
 
     except LAVAError as exc:
