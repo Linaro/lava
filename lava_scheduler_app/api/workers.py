@@ -289,14 +289,15 @@ class SchedulerWorkersAPI(ExposedV2API):
                 d.hostname for d in worker.device_set.all().order_by("hostname")
             ],
             "last_ping": worker.last_ping,
+            "job_limit": worker.job_limit,
         }
 
     @check_perm("lava_scheduler_app.change_worker")
-    def update(self, hostname, description=None, health=None):
+    def update(self, hostname, description=None, health=None, job_limit=None):
         """
         Name
         ----
-        `scheduler.workers.update` (`hostname`, `description=None`, `health=None`)
+        `scheduler.workers.update` (`hostname`, `description=None`, `health=None`, `job_limit=None`)
 
         Description
         -----------
@@ -311,6 +312,8 @@ class SchedulerWorkersAPI(ExposedV2API):
           Description of the worker
         `health`: string
           Set worker health ("ACTIVE", "MAINTENANCE" or "RETIRED")
+        `job_limit`: positive integer
+          Set job limit for this worker
 
         Return value
         ------------
@@ -334,5 +337,10 @@ class SchedulerWorkersAPI(ExposedV2API):
                     worker.go_health_retired(self.user, "xmlrpc api")
                 else:
                     raise xmlrpc.client.Fault(400, "Invalid health: %s" % health)
+
+            if job_limit is not None:
+                if not isinstance(job_limit, int) or job_limit < 0:
+                    raise xmlrpc.client.fault(400, "Invalid job limit")
+                worker.job_limit = job_limit
 
             worker.save()

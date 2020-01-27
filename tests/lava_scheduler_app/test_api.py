@@ -1772,9 +1772,18 @@ def test_workers_list(setup):
 def test_workers_show(setup):
     data = server().scheduler.workers.show("example.com")
     assert set(data.keys()) == set(  # nosec
-        ["hostname", "description", "state", "health", "devices", "last_ping"]
+        [
+            "hostname",
+            "description",
+            "state",
+            "health",
+            "devices",
+            "last_ping",
+            "job_limit",
+        ]
     )
     assert data["hostname"] == "example.com"  # nosec
+    assert data["job_limit"] == 0  # nosec
 
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server().scheduler.workers.show("bla")
