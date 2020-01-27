@@ -52,12 +52,10 @@ of each type are available for tests and currently running jobs.</p>
     {% else %}
     <li>
         <span class="glyphicon glyphicon-user"></span>
-        <b><a href="{% url 'login' %}?next={{ request.get_full_path
-    }}">Sign In</a></b>- once you are logged in, LAVA will build a
-    profile for you which provides access to jobs you have submitted
-    or marked as favourites and details of devices owned by you.</li>
-    {% endif %}
-</ul>
+        <b><a href="{% url 'login' %}?next={{ request.get_full_path }}">Sign In</a></b> - once you are logged in,
+    LAVA will build a profile for you which provides access to jobs you have
+    submitted or marked as favourites and details of devices owned by you.</li>
+    {% endif %} </ul>
 
 <div class="row">
   <div class="col-md-6">
