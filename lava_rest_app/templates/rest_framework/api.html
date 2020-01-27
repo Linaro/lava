@@ -1,27 +1,24 @@
 {% extends "rest_framework/base.html" %}
-{% load i18n %}
 {% load static %}
-{% load utils %}
 
 {% block title %}API{% endblock %}
 
 {% block bootstrap_theme %}
   <link rel="stylesheet" type="text/css" href="{% static "lava_server/css/bootstrap-3.4.1.css" %}">
-{% endblock %}
-{% block bootstrap_navbar_variant %}navbar-default{% endblock %}
-{% block branding %}
-    {% if 'lava_server/images' in lava.branding_icon %}
-    <a class="navbar-brand" href="{{ lava.branding_url }}"><p><img height={{ lava.branding_height }}
-            width={{ lava.branding_width }} src="{% static lava.branding_icon %}" alt="{{ lava.branding_alt }}" /> LAVA</p></a>
-    {% else %}
-    <a class="navbar-brand" href="{{ lava.branding_url }}"><p><img height={{ lava.branding_height }}
-            width={{ lava.branding_width }} src="{{ lava.branding_icon }}" alt="{{ lava.branding_alt }}" /> LAVA</p></a>
-    {% endif %}
-    {% include 'layouts/_navbar.html' %}
+  <style>
+    body {
+      padding-top: 60px;
+      margin-bottom: 100px;
+    }
+    html {
+      position: relative;
+      min-height: 100%;
+    }
+  </style>
 {% endblock %}
 
-{% block userlinks %}
-    {% include 'layouts/_userlinks.html' %}
+{% block navbar %}
+  {% include 'layouts/_navbar.html' %}
 {% endblock %}
 
 {% block breadcrumbs %}
