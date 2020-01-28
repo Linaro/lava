@@ -1,37 +1,11 @@
 {% extends "layouts/base.html" %}
-{% load i18n %}
-{% load static %}
-{% load utils %}
 
 {% block title %}{{ bread_crumb_trail|join:" | " }}{% endblock %}
 
 
 {% block body %}
-  {% block header %}
   <!-- header -->
-  {% block menu %}
-  <!-- menu -->
-  <nav class="navbar navbar-default navbar-fixed-top">
-    <div class="container">
-      <div class="navbar-header">
-        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-          <span class="sr-only">Toggle navigation</span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-        </button>
-        <a class="navbar-brand" href="{{ lava.branding_url }}"><p><img height={{ lava.branding_height }}
-                width={{ lava.branding_width }} src="{% static lava.branding_icon %}" alt="{{ lava.branding_alt }}" /> LAVA</p></a>
-      </div>
-      <div id="navbar" class="navbar-collapse collapse">
-        {% include 'layouts/_navbar.html' %}
-        {% include 'layouts/_userlinks.html' %}
-
-      </div>
-    </div>
-  </nav>
-  {% endblock menu %}
-  {% endblock header %}
+  {% include 'layouts/_navbar.html' %}
 
 <!-- lava-container -->
 <div class="container">
@@ -56,15 +30,5 @@
   {% block content %}{% endblock %}
 </div>
 
-<div id="footer">
-  <div class="container">
-    <p class="text-muted text-center">LAVA {{ lava.instance_version }}<br />
-        LAVA is free software developed by <a href="http://linaro.org">Linaro</a> and the <a href="https://www.lavasoftware.org">LAVA Software Community Project</a>.
-        It is distributed under the terms of the <a href="http://www.gnu.org/licenses/agpl-3.0.html" >GNU Affero General Public License version 3</a>.<br />
-        <a href="{{ lava.branding_bug_url }}">Report a bug</a>&nbsp;&nbsp;|&nbsp;&nbsp;
-        <a href="{{ STATIC_URL }}docs/v2/support.html">Support</a>&nbsp;&nbsp;|&nbsp;&nbsp;
-        <a href="{{ lava.branding_source_url }}">Source code</a>
-    </p>
-  </div>
-</div>
+{% include 'layouts/_footer.html' %}
 {% endblock body %}

@@ -1,27 +1,37 @@
 {% extends "rest_framework/base.html" %}
-{% load i18n %}
 {% load static %}
-{% load utils %}
 
 {% block title %}API{% endblock %}
 
 {% block bootstrap_theme %}
   <link rel="stylesheet" type="text/css" href="{% static "lava_server/css/bootstrap-3.4.1.css" %}">
-{% endblock %}
-{% block bootstrap_navbar_variant %}navbar-default{% endblock %}
-{% block branding %}
-    {% if 'lava_server/images' in lava.branding_icon %}
-    <a class="navbar-brand" href="{{ lava.branding_url }}"><p><img height={{ lava.branding_height }}
-            width={{ lava.branding_width }} src="{% static lava.branding_icon %}" alt="{{ lava.branding_alt }}" /> LAVA</p></a>
-    {% else %}
-    <a class="navbar-brand" href="{{ lava.branding_url }}"><p><img height={{ lava.branding_height }}
-            width={{ lava.branding_width }} src="{{ lava.branding_icon }}" alt="{{ lava.branding_alt }}" /> LAVA</p></a>
-    {% endif %}
-    {% include 'layouts/_navbar.html' %}
+  <style>
+    body {
+      padding-top: 60px;
+      margin-bottom: 100px;
+    }
+    html {
+      position: relative;
+      min-height: 100%;
+    }
+    #footer {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      /* Set the fixed height of the footer here */
+      height: 100px;
+      background-color: #f5f5f5;
+    }
+    #footer > .container {
+      padding-top: 15px;
+      padding-right: 15px;
+      padding-left: 15px;
+    }
+  </style>
 {% endblock %}
 
-{% block userlinks %}
-    {% include 'layouts/_userlinks.html' %}
+{% block navbar %}
+  {% include 'layouts/_navbar.html' %}
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -38,3 +48,9 @@
     {% endfor %}
   </ul>
 {% endblock %}
+
+{% block script %}
+{% include 'layouts/_footer.html' %}
+
+{{ block.super }}
+{% endblock script %}
