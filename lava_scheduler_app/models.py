@@ -393,7 +393,7 @@ class Worker(models.Model):
 
     last_ping = models.DateTimeField(verbose_name=_("Last ping"), default=timezone.now)
 
-    job_limit = models.IntegerField(default=0)
+    job_limit = models.PositiveIntegerField(default=0)
 
     def __str__(self):
         return self.hostname
