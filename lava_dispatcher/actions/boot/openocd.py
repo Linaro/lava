@@ -126,7 +126,7 @@ class FlashOpenOCDAction(Action):
             else:
                 substitutions["{%s}" % action.upper()] = filename
 
-        if job_cfg_file is "":
+        if job_cfg_file == "":
             for item in boot["parameters"]["options"].get("file", []):
                 self.base_command.extend(["-f", item])
 
