@@ -158,7 +158,7 @@ def handle_publish(options):
         wait_pipeline(options, commit)
     print("done\n")
 
-    for name in ["buster", "stretch-backports"]:
+    for name in ["buster"]:
         print("%s# sign %s .deb%s" % (COLORS["purple"], name, COLORS["reset"]))
         run(
             "scp lavasoftware.org:/home/gitlab-runner/repository/current-release/dists/%s/Release Release"
