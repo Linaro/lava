@@ -44,14 +44,6 @@ else
     # the existing working config in old-release
     echo "Updating ${BASEDIR}"
     echo "reprepro-master.sh release update running in " ${LAVA_BUILDD}
-    if [ -d "${BASEDIR}/dists/stretch-backports" ]; then
-        reprepro -b ${BASEDIR} ${R_OPT} include stretch-backports ${LAVA_BUILDD}/_build/lava_*stretch_amd64.changes
-        mkdir -p ${SNAPSHOT}/stretch/${YEAR}/${MONTH}/${DAY}/
-        dcmd cp ${LAVA_BUILDD}/_build/lava_*stretch_*.changes ${SNAPSHOT}/stretch/${YEAR}/${MONTH}/${DAY}/
-        dcmd rm ${LAVA_BUILDD}/_build/lava_*stretch_amd64.changes
-
-        reprepro -b ${BASEDIR} list stretch-backports
-    fi
     if [ -d "${BASEDIR}/dists/buster" ]; then
         reprepro -b ${BASEDIR} include buster ${LAVA_BUILDD}/_build/lava_*buster_amd64.changes
         CHANGES=`find ${LAVA_BUILDD}/_build/ -type f -name 'lava_*buster_amd64.changes'`
