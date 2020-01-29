@@ -101,11 +101,7 @@ echo "${VERSION}" > lava_common/VERSION
 
 # convert to a native package to include local changes.
 echo "3.0 (native)" > debian/source/format
-# if building for stretch, need the backports dependencies too.
 BUILD_SUITE="${SUITE}"
-if [ "${SUITE}" = 'stretch' ]; then
-    BUILD_SUITE='stretch-backports'
-fi
 dch -b -v "${VERSION}+${RELEASE}+${SUITE}" -D ${BUILD_SUITE} "Local developer native build for ${BUILD_SUITE}"
 if [ -n "${LOG}" ]; then
   dch -a "${LOG}"
