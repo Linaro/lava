@@ -1,3 +1,146 @@
+lava (2020.01-1) unstable; urgency=medium
+
+  * LAVA Software 2020.01 release
+    be55ea927 TestShellAction: raise an error if "definitions" is not defined
+    039984bb9 TestShell: remove deprecated "definition" keyword
+    4ec93cfdf Add commands for DeviceType viewset in REST API
+    bb36d7575 release: automatically store the version number
+    246f8be8f Simplify sharing devices with LXC containers
+    7708de52f lava_dispatcher: remove dead code
+    19c3322d4 debian: provide a lava-dispatcher-host binary package
+    91f8cae98 lava-slave: replace hardcoded paths with corresponding variables
+    b5cdf39a9 Remove obsolete files
+    2ab95bdf2 Fix formatting for restricted devices error message.
+    be39302c9 restapi: Fix alias filtering from device types
+    ec45c25d3 device-types: add pine H64 model B
+    a54eb077f Set the encoding with untar files
+    757ccc761 download: fix archive support
+    f657c169a TestShell: remove deprecated "definition" keyword
+    c9ec7223a TestShellAction: raise an error if "definitions" is not defined
+    599f8eeaf Add aliases viewset in REST API.
+    c057ce00a Fix safe loader issue with range().
+    33c07be84 Add tags viewset for REST API
+    f13355aee dependencies: add pytest-mock to lava-dispatcher
+    aac7d9292 CI: compute coverage on debian Buster
+    f7814b39f CI: test lava_dispatcher_host module
+    4cc63dfbc ci-test: run lava_dispatcher_host tests
+    159c50305 interactive: raise the right exception when pexpect timeout
+    265299439 sample_jobs: fix syntax according to schema
+    2a6db9d60 qemu: delay the substitution
+    888987120 fix download archived resources
+    41bec6fce Support create and update REST API methods for workers
+    22750f778 dispatcher: rename internal_pipeline to pipeline
+    f43dc577b Use constants from settings for etc/ paths.
+    b7b51a195 docker: install and start lava-coordinator
+    727d8eaaf setup.py: delete dead code
+    b9097be50 Move test files under tests/
+    a0ae0780e tests/lava_dispatcher: fix references to itself
+    55bf00cb2 tests/lava_rest_app: fix reference to lava_rest_app
+    9d3ce212c tests/lava_scheduler_app: fix references to itself
+    1d9aedee7 tests/lava_results_app: fix references to itself and to others
+    9cc30fc7a tests/lava_server: fix reference to lava_scheduler_app tests
+    18e350814 ci: adjust test paths
+    944903f38 .coveragerc: add missing lava_dispatcher_host
+    5bda3534d Run lava-run under nice
+    55d7885fb http download: fix crash when getting a 404
+    341a0ee27 download: using lazy logging
+    c4f68ca36 download: simplify conditionals
+    f8193d6ee download: simplify code
+    2cb136005 download: factorize and simplify checksum computation
+    ea2fb61dc download: fix error message
+    4ce1da141 Simplify the DownloadHandler helpers
+    54980dbf3 dispatcher download: use with whenever possible.
+    c62f79623 Improve DownloadAction coverage
+    69d10b5c4 templates: add usb_sleep parameter for cmsis-dap capable devices
+    9a2d3b9d4 Refactor get and post in env and config to use shared methods.
+    458209d5d Permit to have a per-slave concurent running job limit
+    59451d4f1 devices-types: increase initrd memory limit
+    32b26e311 debian: add lava-coordinator binary package
+    6fd8829cc Re-add lava-coordinator tests
+    08a857185 lava-coordinator: rename old configuration file
+    26c1f5de1 lava-coordinator: add manpage
+    6452396bf ci: run lava-coordinator unit tests
+    91969a4e6 doc/v2: Add fastboot-nfs documentation and job example
+    0d5a0611b Remove "media: nfs" check for qemu-nfs boot.
+    4599831fc schema: remove "media: nfs" from qemu-nfs boot
+    bcf94e6c3 REST API: filter on job priority with value range
+    2f06ec728 debian-dev-build: allow to build with uncommited files
+    50413a8a7 lava_dispatcher_host: usb mapping: create job directory if necessary
+    da9bb502f Move test files to tests/
+    ec9701c1c rest api: use FileResponse instead of HttpResponse for job logs
+    291ec5821 job table: fix "duration" when job is longer than a day.
+    d11b5e818 debian: use maintscript to remove old config file
+    3f69703a8 action.results should be a dictionary
+    d8ddcfe71 doc: fix fastboot-nfs rest syntax
+    7ae2966a6 doc: fail if sphinx found warnings
+    25b28b0ef doc: load intersphinx mapping for python3.
+    efa7b5dc5 CI: use the right image for building the doc
+    7ffcdee5f CI: bump minimal code coverage to 56%
+    fe7b83595 fastboot: extract almost all usage of lxc
+    ec2c895f8 schema: accept docker argument for fastboot deploy and boot
+    c0f65be17 fastboot: always wait for device to show up
+    97a13404a utils/fastboot: add docker support
+    b55d1e829 Add custom commands for Device viewset in REST API
+    6752ab00a CI: apply black to lava-lave
+    97e9e7643 Rewrite setup.py from scratch
+    a5db2670f debian: use the new setup.py capabilities
+    1355db97f debian: use bootstrap from libjs-bootstrap
+    bdc92577e debian: split the packages using setup.py
+    fd34c6f03 debian/rules: cleanup and add comments
+    eedcde217 dispatcher: move new test file under tests/
+    e865d585f doc: writing-multinode: Update device types used in a sample job.
+    771b9acce boot/fastboot: drop remaining calls to  parsed_command
+    b6765a527 build docker images from scratch using setup.py
+    61524bdeb docker: no need to pre-install lava-coordinator anymore
+    5e90fc48a docker: move entrypoints to docker/share
+    9114a7a9c docker: remove arch specific dockerfiles
+    ef6941d6f CI: move debian packaging build into build/debian
+    12ff1749a CI: move docker into build/docker
+    06593a31b boot/fastboot: fix call to fastboot reboot-bootloader
+    7ef0f2fb3 utils/fastboot: replace usage of --volume with --mount
+    4f134d4a1 utils/fastboot: pass --rm docker to run
+    7c3865a94 Not listen same connection namespace.
+    5751b60f3 docker DUT:  allow to set networks
+    327245c85 doc: Improve docs related to MultiNode.
+    91305e6d3 CI: also check lava-dispatcher-host format
+    43d94a53f Add the version in the footer
+    55c817d69 apply_overlay: remove debug leftover
+    15bf202b1 DownloadLXC/ improve logging
+    19af629f2 lava-coordinator: rewrite the main binary from scratch
+    f989602c9 lava-coordinator: add systemd service
+    0d4601375 debian: fix coordinator dependencies
+    7cf94b2a0 CI: check black formating on lava-coordinator
+    077d5b1db debian: remove /etc/init.d/lava-coordinator
+    c85064256 docker: add missing lava-dispatcher-host dependency
+    524fe0cd0 server docker: also read apache2 logs
+    568c26d1d server docker: fix path to the documentation
+    d1398e6e5 lava-master: use yaml_(safe_)dump whenever possible
+    331ac0dfb lava-logs: use yaml_dump whenever possible
+    f4d6b9861 REST API: use yaml_dump whenever possible
+    6f286627b Action.run_cmd: return the exit code
+    f91f68ec4 lxc: raise a JobError when creating the container fails
+    788d5e6a2 settings: raise an exception when failing to read settings.conf
+    020d0f897 doc/v2: automatically copy the examples directory
+    d927ee028 CI: use pytest tmpdir
+    35a8877a9 CI: convert to pytest format and use pytest tmpdir
+    5a733423d CI: remove unused lava_dispatcher tests
+    14fcf8ad4 rest-api tests: use yaml_load helpers
+    6c38201d7 lava_scheduler_app tests: fix flaky tests
+    9235698c9 ConnectDevice: raise the right exception when failing to run the command
+    aaa6780d9 dispatcher docker: install lxc-mocker
+    202af4ecc docker: load coordinator daemon config from /etc/lava-coordinator
+    a16f9cbdd home page: fix django template syntax
+    c6001d109 templates: move the full navbar into the _navbar fragment
+    c38f90dd1 templates: move footer into the _footer fragment
+    be8dec3ab test shell: remove dead code
+    627c3feec doc: rename internal_pipeline to pipeline
+    8f93f06e1 xmlrpc api: allow to show and update worker job limit
+    64dc1eaec CI: remove reference to the dashboard_app
+    f232c6850 ci: black: print a diff of what would be changed
+    0291a297a workers: job_limit should be a positive integer field
+
+ -- Remi Duraffort <remi.duraffort@linaro.org>  Wed, 29 Jan 2020 11:48:04 +0100
+
 lava (2019.12-1) unstable; urgency=medium
 
   * LAVA Software 2019.11 release
