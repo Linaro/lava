@@ -33,7 +33,7 @@ from lava_dispatcher.job import Job
 from lava_dispatcher.action import Pipeline
 from lava_common.exceptions import JobError
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
-from tests.lava_dispatcher.utils import DummyLogger, infrastructure_error
+from tests.utils import DummyLogger, infrastructure_error
 from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.strings import substitute
 

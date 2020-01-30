@@ -27,7 +27,7 @@ from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.actions.deploy.testdef import get_test_action_namespaces
-from tests.lava_dispatcher.utils import DummyLogger
+from tests.utils import DummyLogger
 from lava_dispatcher.job import Job
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
 from lava_dispatcher.protocols.vland import VlandProtocol

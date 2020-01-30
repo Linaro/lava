@@ -94,7 +94,7 @@ class DepthchargeCommandOverlay(BootloaderCommandOverlay):
         connection = super().run(connection, max_end_time)
 
         # Create the cmdline file, this is not set by any bootloader command
-        ip_addr = dispatcher_ip(self.job.parameters["dispatcher"])
+        ip_addr = dispatcher_ip(self.job.parameters["dispatcher"], "nfs")
         kernel_path = self.get_namespace_data(
             action="download-action", label="kernel", key="file"
         )

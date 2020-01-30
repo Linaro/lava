@@ -7,6 +7,18 @@
 # Only set this key, if this dispatcher has many IPs
 #dispatcher_ip: <this-dispatcher-ip>
 
+# Only set this key, if this dispatcher is running separately from slave httpd
+# server or listening on a custom port.
+#dispatcher_http_ip: <dispatcher-http-ip>:<port>
+
+# Only set this key, if this dispatcher is running separately from nfs server
+# or listening on a custom port.
+#dispatcher_nfs_ip: <dispatcher-nfs-ip>:<port>
+
+# Only set this key, if this dispatcher is running separately from tftpd server
+# or listening on a custom port.
+#dispatcher_tftp_ip: <dispatcher-tftp-ip>:<port>
+
 # Set this key, if you want to change the default lxc creation path
 # No trailing /
 # The default path is /var/lib/lxc

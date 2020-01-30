@@ -21,7 +21,7 @@
 import unittest
 
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
-from tests.lava_dispatcher.utils import infrastructure_error
+from tests.utils import infrastructure_error
 
 
 class UBootDFUFactory(Factory):

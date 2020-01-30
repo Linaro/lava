@@ -23,6 +23,7 @@ import pytest
 import subprocess  # nosec - unit test support.
 import unittest
 
+from tests.utils import infrastructure_error
 from lava_common.exceptions import InfrastructureError, JobError
 from lava_common.utils import debian_filename_version
 from lava_dispatcher.action import Action
@@ -38,7 +39,6 @@ from lava_dispatcher.actions.test import (  # pylint: disable=unused-import
 from lava_dispatcher.utils import vcs, installers
 from lava_dispatcher.utils.decorator import replace_exception
 from lava_dispatcher.utils.shell import which
-from tests.lava_dispatcher.utils import infrastructure_error
 
 
 @pytest.fixture

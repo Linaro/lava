@@ -23,7 +23,7 @@ import logging
 
 from lava_dispatcher.actions.test.monitor import TestMonitor, TestMonitorAction
 
-from tests.lava_dispatcher.utils import RecordingLogger
+from tests.utils import RecordingLogger
 
 
 def test_accepts():

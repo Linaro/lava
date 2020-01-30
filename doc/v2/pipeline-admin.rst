@@ -238,6 +238,30 @@ Current support includes:
  # Only set this key, if this dispatcher has many IPs
  #dispatcher_ip: <this-dispatcher-ip>
 
+* Sets the dispatcher_http_ip
+
+.. code-block:: yaml
+
+# Only set this key, if this dispatcher is running separately from slave httpd
+# server or listening on a custom port.
+#dispatcher_http_ip: <dispatcher-http-ip>:<port>
+
+* Sets the dispatcher_nfs_ip
+
+.. code-block:: yaml
+
+# Only set this key, if this dispatcher is running separately from nfs server
+# or listening on a custom port.
+#dispatcher_nfs_ip: <dispatcher-nfs-ip>:<port>
+
+* Sets the dispatcher_tftp_ip
+
+.. code-block:: yaml
+
+# Only set this key, if this dispatcher is running separately from tftpd server
+# or listening on a custom port.
+#dispatcher_tftp_ip: <dispatcher-tftp-ip>:<port>
+
 * Sets the container creation path.
 
 .. code-block:: yaml

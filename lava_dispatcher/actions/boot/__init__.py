@@ -688,7 +688,7 @@ class OverlayUnpack(Action):
         connection.wait()
 
         cmd = self.parameters["transfer_overlay"]["download_command"]
-        ip_addr = dispatcher_ip(self.job.parameters["dispatcher"])
+        ip_addr = dispatcher_ip(self.job.parameters["dispatcher"], "http")
         connection.sendline("%s http://%s/tmp/%s" % (cmd, ip_addr, overlay_path))
         connection.wait()
 

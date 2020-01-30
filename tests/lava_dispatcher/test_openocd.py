@@ -20,7 +20,7 @@
 
 
 import unittest
-from tests.lava_dispatcher.utils import infrastructure_error
+from tests.utils import infrastructure_error
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.utils.shell import which

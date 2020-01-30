@@ -238,7 +238,7 @@ class CallQemuAction(Action):
             )
             substitutions["{%s}" % label] = action_arg
         substitutions["{NFS_SERVER_IP}"] = dispatcher_ip(
-            self.job.parameters["dispatcher"]
+            self.job.parameters["dispatcher"], "nfs"
         )
         self.sub_command.extend(substitute(self.commands, substitutions))
         uefi_dir = self.get_namespace_data(
