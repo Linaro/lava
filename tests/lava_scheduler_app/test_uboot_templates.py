@@ -204,10 +204,7 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
 {% set power_on_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu18 --command on --port 10 --delay 10' %}
 {% set usb_label = 'SanDiskCruzerBlade' %}
 {% set usb_uuid = 'usb-SanDisk_Cruzer_Blade_20060266531DA442AD42-0:0' %}
-{% set usb_device_id = 0 %}
-{% set nfs_uboot_bootcmd = (
-"          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
-          - boot") %}"""
+{% set usb_device_id = 0 %}"""
         self.assertTrue(self.validate_data("staging-juno-01", data))
         template_dict = prepare_jinja_template("staging-juno-01", data, raw=False)
         self.assertIsNotNone(template_dict)
@@ -398,10 +395,7 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
     {% set power_on_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu18 --command on --port 10 --delay 10' %}
     {% set usb_label = 'SanDiskCruzerBlade' %}
     {% set usb_uuid = 'usb-SanDisk_Cruzer_Blade_20060266531DA442AD42-0:0' %}
-    {% set usb_device_id = 0 %}
-    {% set nfs_uboot_bootcmd = (
-    "          - setenv bootcmd 'dhcp; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; {BOOTX}'
-              - boot") %}"""
+    {% set usb_device_id = 0 %}"""
         self.assertTrue(self.validate_data("staging-juno-01", data))
         test_template = prepare_jinja_template("staging-juno-01", data, raw=True)
         rendered = test_template.render()
@@ -460,7 +454,7 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
         ]
         check = 0
         for line in commands:
-            if line.startswith("setenv nfsargs "):
+            if line.startswith("setenv bootargs console"):
                 check = 1
                 self.assertIn(",vers=3 ", line)
         if not check:

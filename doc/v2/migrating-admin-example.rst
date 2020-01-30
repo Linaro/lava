@@ -596,7 +596,7 @@ can be added later.
  {{ base_tftp_commands }}
           # Always quote the entire string if the command includes a colon to support correct YAML.
           - "setenv nfsargs 'setenv bootargs console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs rw {{ base_nfsroot_args }} panic=1 earlyprintk=uart8250-32bit,0x1c020000 debug ip=dhcp'"
- {{ base_nfs_uboot_bootcmd }}
+ {{ base_uboot_bootcmd }}
 
 Completed mustang template
 --------------------------
@@ -637,7 +637,7 @@ Completed mustang template
  {{ base_tftp_commands }}
             # Always quote the entire string if the command includes a colon to support correct YAML.
             - "setenv nfsargs 'setenv bootargs console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs rw {{ base_nfsroot_args }} panic=1 earlyprintk=uart8250-32bit,0x1c020000 debug ip=dhcp'"
- {{ base_nfs_uboot_bootcmd }}
+ {{ base_uboot_bootcmd }}
 
  {% endblock %}
 

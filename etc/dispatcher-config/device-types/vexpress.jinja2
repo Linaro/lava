@@ -18,24 +18,26 @@
 -%}
 
 {% set base_uboot_tftp_commands = uboot_tftp_commands|default([
-    "setenv loadkernel 'tftp {KERNEL_ADDR} {KERNEL}'",
-    "setenv loadinitrd 'tftp {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'",
-    "setenv loadfdt 'tftp {DTB_ADDR} {DTB}'"])
+    "tftp {KERNEL_ADDR} {KERNEL}",
+    "tftp {RAMDISK_ADDR} {RAMDISK}",
+    "setenv initrd_size ${filesize}",
+    "tftp {DTB_ADDR} {DTB}"])
 -%}
 
 {% set base_uboot_bootcmd = uboot_bootcmd|default([
-    "setenv bootcmd 'run loadkernel; run loadinitrd; run loadfdt; " + uboot_bootx_cmd|default('{BOOTX}') + "'",
-    "run bootcmd"])
+    uboot_bootx_cmd|default('{BOOTX}')])
 -%}
 
 {% set base_uboot_tftp_bootcmd = uboot_tftp_bootcmd|default([
-    "setenv bootcmd '" + uboot_ipaddr_cmd|default('dhcp') + "; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; " + uboot_bootx_cmd|default('{BOOTX}') + "'",
-    "run bootcmd"])
+    uboot_ipaddr_cmd|default('dhcp'),
+    "setenv serverip {SERVER_IP}",
+    uboot_bootx_cmd|default('{BOOTX}')])
 -%}
 
 {% set base_uboot_nfs_bootcmd = uboot_nfs_bootcmd|default([
-    "setenv bootcmd '" + uboot_ipaddr_cmd|default('dhcp') + "; setenv serverip {SERVER_IP}; run loadkernel; run loadinitrd; run loadfdt; run nfsargs; " + uboot_bootx_cmd|default('{BOOTX}') + "'",
-    "run bootcmd"])
+    uboot_ipaddr_cmd|default('dhcp'),
+    "setenv serverip {SERVER_IP}",
+    uboot_bootx_cmd|default('{BOOTX}')])
 -%}
 
 {% set base_uboot_usb_commands = uboot_usb_commands|default(["usb start"]) -%}
@@ -361,13 +363,11 @@ actions:
         nfs:
           commands:
           - "{{ uboot_common_cmds|join('"\n          - "') }}"
-          - "setenv nfsargs 'setenv bootargs console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs rw
-            {{ base_nfsroot_args }} {{ base_kernel_args }} {{ base_ip_args }}'"
+          - "setenv bootargs console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs rw {{ base_nfsroot_args }} {{ base_kernel_args }} {{ base_ip_args }}"
           - "{{ base_uboot_nfs_bootcmd|join('"\n          - "') }}"
         norflash:
           commands:
-          - "setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs rw
-            {{ base_nfsroot_args }} {{ base_kernel_args }} {{ base_ip_args }}'"
+          - "setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs rw {{ base_nfsroot_args }} {{ base_kernel_args }} {{ base_ip_args }}'"
           - "boot"
         ramdisk:
           commands:
@@ -378,17 +378,19 @@ actions:
           commands:
           - scsi scan
           - "{{ base_uboot_commands|join('"\n          - "') }}"
-          - "setenv loadkernel 'load scsi {ROOT_PART} {KERNEL_ADDR} {KERNEL}'"
-          - "setenv loadinitrd 'load scsi {ROOT_PART} {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'"
-          - "setenv loadfdt 'load scsi {ROOT_PART} {DTB_ADDR} {DTB}'"
+          - "load scsi {ROOT_PART} {KERNEL_ADDR} {KERNEL}"
+          - "load scsi {ROOT_PART} {RAMDISK_ADDR} {RAMDISK}"
+          - "setenv initrd_size ${filesize}"
+          - "load scsi {ROOT_PART} {DTB_ADDR} {DTB}"
           - "setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root={ROOT} {{ base_kernel_args }} {{ base_ip_args }}'"
           - "{{ base_uboot_bootcmd|join('"\n          - "') }}"
         usb:
           commands:
           - "{{ (base_uboot_usb_commands + base_uboot_commands)|join('"\n          - "') }}"
-          - "setenv loadkernel 'load usb {{ usb_device_id }}:{ROOT_PART} {KERNEL_ADDR} {KERNEL}'"
-          - "setenv loadinitrd 'load usb {{ usb_device_id }}:{ROOT_PART} {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}'"
-          - "setenv loadfdt 'load usb {{ usb_device_id }}:{ROOT_PART} {DTB_ADDR} {DTB}'"
+          - "load usb {{ usb_device_id }}:{ROOT_PART} {KERNEL_ADDR} {KERNEL}"
+          - "load usb {{ usb_device_id }}:{ROOT_PART} {RAMDISK_ADDR} {RAMDISK}"
+          - "setenv initrd_size ${filesize}"
+          - "load usb {{ usb_device_id }}:{ROOT_PART} {DTB_ADDR} {DTB}"
           - "setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root={ROOT} {{ base_kernel_args }} {{ base_ip_args }}'"
           - "{{ base_uboot_bootcmd|join('"\n          - "') }}"
 {% endif %}
