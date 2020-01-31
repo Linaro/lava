@@ -19,7 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 from lava_common.exceptions import JobError
 from lava_dispatcher.action import Action
-from lava_dispatcher.tests.test_basic import StdoutTestCase, Factory
+from tests.lava_dispatcher.test_basic import StdoutTestCase, Factory
 from lava_dispatcher.actions.deploy import docker
 import subprocess
 
