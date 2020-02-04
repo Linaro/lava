@@ -435,7 +435,7 @@ tricky to debug ``lava-dispatcher`` directly. However, one can use the
 You need to have the ``remote-pdb`` python package installed, and a ``telnet``
 client.
 
-If ``lava-slave`` is started with the ``--debug`` command line option, thenit
+If ``lava-slave`` is started with the ``--debug`` command line option, then it
 will make ``lava-run`` stop right before running the test job for debugging.
 You will see a message on the console where ``lava-run`` is running that is
 similar to this::
