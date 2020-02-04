@@ -201,16 +201,14 @@ Merge requests which need extra modules which already exist in Debian
 can add the relevant information to the ``share/requirements/debian``
 files.
 
-.. note:: For the CI to pass, the extra module(s) **must** be available
-   for unstable, testing and stretch-backports. Pay particular
-   attention to the version available in stretch and stretch-backports
-   and ensure that your change works on Stretch. If a minimum version
-   is required, this can be specified in the requirements, as long as
-   that version or newer is available in stretch-backports. :ref:`talk
-   to us <mailing_lists>` if your change involves new files that may
-   need changes in the packaging code. All CI tests must pass before
-   any new code can be merged, including building working packages
-   containing the new support.
+.. note:: For the CI to pass, the extra module(s) **must** be available for
+   stable and testing. Pay particular attention to the version available in
+   buster and buster-backports. If a minimum version is required, this can be
+   specified in the requirements, as long as that version or newer is available
+   in buster-backports. :ref:`talk to us <mailing_lists>` if your change
+   involves new files that may need changes in the packaging code. All CI tests
+   must pass before any new code can be merged, including building working
+   packages containing the new support.
 
 .. seealso:: :ref:`developer_python3`, :ref:`quick_fixes` and
    :ref:`testing_pipeline_code`

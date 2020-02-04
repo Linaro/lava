@@ -82,7 +82,7 @@ one set.
 ::
 
  $ sudo apt install postgresql
- $ sudo apt -t stretch-backports install lava
+ $ sudo apt install lava
  $ sudo a2dissite 000-default
  $ sudo a2enmod proxy
  $ sudo a2enmod proxy_http

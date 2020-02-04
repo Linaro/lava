@@ -829,7 +829,7 @@ context may be ignored.
 The version of ``qemu`` installed on the dispatcher is a choice made by the
 admin. Generally, this will be the same as the version of ``qemu`` available
 from Debian in the same suite as the rest of the packages installed on the
-dispatcher, e.g. ``stretch``. Information on the available versions of ``qemu``
+dispatcher, e.g. ``buster``. Information on the available versions of ``qemu``
 in Debian is available at https://tracker.debian.org/pkg/qemu
 
 .. seealso:: :ref:`essential_components` and :ref:`qemu-iso boot method
@@ -868,7 +868,7 @@ option in the job context may be ignored.
 The version of ``qemu`` installed on the dispatcher is a choice made by the
 admin. Generally, this will be the same as the version of ``qemu`` available
 from Debian in the same suite as the rest of the packages installed on the
-dispatcher, e.g. ``stretch``. Information on the available versions of ``qemu``
+dispatcher, e.g. ``buster``. Information on the available versions of ``qemu``
 in Debian is available at https://tracker.debian.org/pkg/qemu
 
 QEMU can be used with an NFS using the ``qemu-nfs`` method and the ``nfs``
@@ -919,7 +919,7 @@ modification using the :term:`job context`.
 The version of ``qemu`` installed on the dispatcher is a choice made by the
 admin. Generally, this will be the same as the version of ``qemu`` available
 from Debian in the same suite as the rest of the packages installed on the
-dispatcher, e.g. ``stretch``. Information on the available versions of ``qemu``
+dispatcher, e.g. ``buster``. Information on the available versions of ``qemu``
 in Debian is available at https://tracker.debian.org/pkg/qemu
 
 .. seealso:: :ref:`essential_components` and :ref:`boot method qemu

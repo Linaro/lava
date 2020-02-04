@@ -13,9 +13,6 @@ Prerequisites
 #. For buster or later, use docker.io from Debian
    https://tracker.debian.org/pkg/docker.io
 
-#. For stretch, use docker-ce from Docker.
-   https://docs.docker.com/install/linux/docker-ce/debian/
-
 #. add yourself to the docker group to avoid the need for ``sudo``.
 
 #. Ensure that your docker installation has created a suitable
@@ -176,8 +173,7 @@ Python
 If you are using docker for more than a few test containers, you will
 probably find the Python docker SDK library very useful.
 
-* Debian (stretch-backports and later)
-  ``apt install python3-docker``
+* Debian ``apt install python3-docker``
   https://packages.debian.org/unstable/python3-docker - If you install
   the full ``lava`` set on Debian Buster or newer, ``python3-docker``
   and ``docker.io`` will be installed by the ``lava`` metapackage.

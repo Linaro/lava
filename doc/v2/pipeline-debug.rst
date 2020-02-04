@@ -210,9 +210,8 @@ currently set:
 Django support in 1.11
 ----------------------
 
-If your local instance is using ``python3-django`` from
-``stretch-backports`` or ``buster``, the new support in 1.11 and later
-can be used to display the settings as well::
+If your local instance is using ``python3-django`` from ``buster``, the new
+support in 1.11 and later can be used to display the settings as well::
 
  $ sudo lava-server manage diffsettings --all
 
@@ -221,7 +220,7 @@ can be used to display the settings as well::
 Settings that don’t appear in the defaults are followed by "###",
 e.g.::
 
- BRANDING_MESSAGE = 'Master branch instance on Debian Stretch.'  ###
+ BRANDING_MESSAGE = 'Master branch instance on Debian Buster.'  ###
 
 .. danger:: Access to ``lava-server manage`` needs to be restricted
    in the same way as read permissions on

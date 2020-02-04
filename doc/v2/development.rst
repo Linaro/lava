@@ -32,18 +32,6 @@ of complications by changing file permissions in your local git clone.
 .. seealso:: :ref:`testing_pipeline_code` and
    :ref:`developer_preparations`
 
-Static code analysis
-====================
-
-It is essential to run ``pep8 --ignore E501`` routinely on your local
-changes as ``./ci-run`` will fail on any PEP8 errors. All automated
-tests occur using Debian Stretch.
-
-It is important to run tools like :ref:`pylint3 <pylint_tool>`,
-particularly when adding new files, to check for missing or unused
-imports. Other analysis tools should also be used, for example from
-within your IDE.
-
 Functional testing
 ==================
 
@@ -89,16 +77,6 @@ Make your changes
 
 Blackened source code
 ---------------------
-
-LAVA has adopted ``black`` as the sole formatter for all LAVA source
-code written in Python. ``black`` is only available in Debian for
-Buster and later - it is not suitable for backporting to Stretch.
-However, Buster is starting the release freeze process ready for a
-release in Q2 2019. If you are running Buster on your development
-machine already, or have Buster packages available to you, you can
-install ``black`` using ``apt`` as usual. You can also choose to
-install ``black`` from https://github.com/ambv/black if it is not
-available for your OS.
 
 `black` is now applied to **all** LAVA source code files and merge
 requests will **fail** CI if a change breaks the formatting.
@@ -663,9 +641,6 @@ Python3 support in LAVA is related to a number of factors:
 * Forthcoming LTS releases of django which will remove support for
   python2.7
 
-* Debian Jessie is now unsupported and development has moved to
-  Stretch.
-
 * Transition within Debian to full python3 support.
 
 https://lists.lavasoftware.org/pipermail/lava-announce/2017-June/000032.html
@@ -686,7 +661,7 @@ run the unit tests using Python3::
 
 Some additional Python3 dependencies will be required. In particular,
 ``python3-django-auth-ldap`` and ``python3-django-testscenarios`` will
-need to be installed from ``stretch-backports``.
+need to be installed.
 
 .. warning:: Django will be dropping python2.7 support with the 2.2LTS
    release, *frozen* instances of LAVA will not be able to use django

@@ -9,14 +9,8 @@ LAVA no longer supports development on Ubuntu.
 
 Packages for LAVA are available for:
 
-* Debian Stretch (stable) - with backports
 * Debian Buster (testing)
 * Debian Sid (unstable)
-
-Packages will remain available for Debian Jessie (oldstable) with backports
-until June 2018 as security support for Jessie will end. The last production
-release with Jessie support was 2018.2. Developers need to use Debian Stretch
-or Buster for development.
 
 When using the packages to develop LAVA, there is a change to the workflow
 compared to the old lava-deployment-tool buildouts.
@@ -203,8 +197,8 @@ Developer package build
 .. seealso:: :ref:`developer_preparations` and
    :ref:`development_pre_requisites`
 
-.. note:: The supported suite for LAVA development is now Stretch. The
-   developer package build now defaults to expecting Stretch and
+.. note:: The supported suite for LAVA development is now Buster. The
+   developer package build now defaults to expecting Buster and
    therefore uses Python3 exclusively. Support for building Python2 has
    been removed, the ``master`` branch only builds Python3. See
    https://lists.lavasoftware.org/pipermail/lava-announce/2018-January/000046.html
@@ -250,7 +244,7 @@ stable release and the unstable suite and the package building tools expect
 to build for unstable. If you are building a package to update an instance
 running a different suite, pass that suite using the ``-s`` option::
 
- $ ./share/debian-dev-build.sh -s stretch-backports
+ $ ./share/debian-dev-build.sh -s buster
 
 By default, the packages will be built in the ``../build-area/``
 directory, this can be changed with the ``-o`` option. Packages are
@@ -641,7 +635,7 @@ Outputting the requirements.txt format
 Processes which need the version string can use the original output
 format which mimics ``requirements.txt``::
 
-    $ ./share/requires.py --package lava-server --distribution debian --suite stretch
+    $ ./share/requires.py --package lava-server --distribution debian --suite buster
     django>=1.10
     PyYAML
     docutils>=0.6
@@ -659,15 +653,15 @@ Outputting a list of binary package names
 This is intended to be passed directly to a package installer like
 ``apt-get`` together with the other required commands and options.
 
-The caller determines the ``suite``, so to use with stretch-backports,
-the ``-t stretch-backports`` option would also be added to the
+The caller determines the ``suite``, so to use with buster-backports,
+the ``-t buster-backports`` option would also be added to the
 other ``apt-get`` commands before appending the list of packages.
 
 (Line breaks are added for readability only):
 
 .. code-block:: none
 
-    $ ./share/requires.py --package lava-server --distribution debian --suite stretch --names
+    $ ./share/requires.py --package lava-server --distribution debian --suite buster --names
     python3-django python3-yaml python3-docutils \
     python3-jinja2 python3-psycopg2 python3-tz python3-zmq python3-requests \
     python3-simplejson python3-voluptuous
