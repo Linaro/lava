@@ -116,7 +116,9 @@ def handle_prepare(options):
 
 
 def handle_build(options):
-    run(".gitlab-ci/build/amd64/pkg-debian-10.sh", options)
+    run(".gitlab-ci/build/debian/10.sh", options)
+    run(".gitlab-ci/build/docker.sh dispatcher", options)
+    run(".gitlab-ci/build/docker.sh server", options)
     run(".gitlab-ci/build/doc.sh", options)
 
 
