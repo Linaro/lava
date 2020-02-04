@@ -422,6 +422,41 @@ when modifying the documentation.
 
 .. _developer_commit_for_review:
 
+Debugging lava-dispatcher with pdb, the Python debugger
+=======================================================
+
+Due to the nature of how ``lava-run`` is executed by ``lava-slave``, it's
+tricky to debug ``lava-dispatcher`` directly. However, one can use the
+`remote-pdb`_ package and do remote debugging.
+
+.. _remote-pdb: https://pypi.org/project/remote-pdb/
+
+
+You need to have the ``remote-pdb`` python package installed, and a ``telnet``
+client.
+
+If ``lava-slave`` is started with the ``--debug`` command line option, thenit
+will make ``lava-run`` stop right before running the test job for debugging.
+You will see a message on the console where ``lava-run`` is running that is
+similar to this::
+
+    RemotePdb session open at 127.0.0.1:37865, waiting for connection ...
+
+Note the address where the debuggin server is listening.  Then, to access the
+debugger, you point ``telnet`` to the provided address and port::
+
+    telnet 127.0.0.1 37865
+    Connected to 127.0.0.1.
+    Escape character is '^]'.
+    > /path/to/lava/dispatcher/lava-run(274)main()
+    -> job.run()
+    (Pdb)
+
+From that point on, you have a normal `pdb`_ sesssion, and can debug the
+execution of ``lava-dispatcher``.
+
+.. _pdb: https://docs.python.org/3/library/pdb.html
+
 Send your commits for review
 ============================
 

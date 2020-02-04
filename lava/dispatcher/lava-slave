@@ -82,6 +82,8 @@ STALE_CONFIG = {
     tmp_dir: {"pattern": "{prefix}{job_id}"},
 }
 
+debug = False
+
 
 #########
 # Helpers
@@ -180,8 +182,12 @@ def start_job(
             f_env.write(env_dut_str)
 
     try:
-        out_file = os.path.join(base_dir, "stdout")
-        err_file = os.path.join(base_dir, "stderr")
+        if debug:
+            out_file = sys.stdout
+            err_file = sys.stderr
+        else:
+            out_file = open(os.path.join(base_dir, "stdout"), "w")
+            err_file = open(os.path.join(base_dir, "stderr"), "w")
         env = create_environ(env_str)
         lava_run = os.path.join(os.path.dirname(__file__), "lava-run")
         args = [
@@ -193,8 +199,10 @@ def start_job(
             "--output-dir=%s" % base_dir,
             "--job-id=%s" % job_id,
             "--logging-url=%s" % zmq_config.logging_url,
-            os.path.join(base_dir, "job.yaml"),
         ]
+        if debug:
+            args.append("--debug")
+        args.append(os.path.join(base_dir, "job.yaml"))
 
         if zmq_config.socks_proxy:
             args.extend(["--socks-proxy", zmq_config.socks_proxy])
@@ -216,11 +224,7 @@ def start_job(
             args.append("--env-dut=%s" % os.path.join(base_dir, "env.dut.yaml"))
 
         proc = subprocess.Popen(
-            args,
-            stdout=open(out_file, "w"),
-            stderr=open(err_file, "w"),
-            env=env,
-            preexec_fn=os.setpgrp,
+            args, stdout=out_file, stderr=err_file, env=env, preexec_fn=os.setpgrp
         )
         return proc.pid
     except Exception as exc:  # pylint: disable=broad-except
@@ -919,6 +923,9 @@ def setup_parser():
     parser.add_argument(
         "--hostname", type=str, default=get_fqdn(), help="Name of the slave"
     )
+    parser.add_argument(
+        "--debug", action="store_true", default=False, help="Debug lava-run"
+    )
 
     storage = parser.add_argument_group("storage")
     storage.add_argument(
@@ -1004,6 +1011,9 @@ def main():
     LOG.info("[INIT] LAVA slave has started.")
     LOG.info("[INIT] Version %s", __version__)
     LOG.info("[INIT] Using protocol version %d", PROTOCOL_VERSION)
+
+    global debug
+    debug = options.debug
 
     # Check the hostname because "lava-logs" is reserved
     if options.hostname == "lava-logs":
