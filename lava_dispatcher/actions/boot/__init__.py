@@ -732,7 +732,7 @@ class BootloaderInterruptAction(Action):
         self.params = self.job.device["actions"]["boot"]["methods"][self.method][
             "parameters"
         ]
-        if self.job.device.connect_command is "":
+        if self.job.device.connect_command == "":
             self.errors = "Unable to connect to device %s"
         device_methods = self.job.device["actions"]["boot"]["methods"]
         if (

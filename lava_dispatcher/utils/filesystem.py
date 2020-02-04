@@ -373,7 +373,7 @@ def copy_overlay_to_sparse_fs(image, overlay):
     logger.debug(output)
     _, _, _, available, percent, _ = output.split("\n")[1].split()
     guest.umount(devices[0])
-    if int(available) is 0 or percent == "100%":
+    if int(available) == 0 or percent == "100%":
         raise JobError("No space in image after applying overlay: %s" % image)
 
 
