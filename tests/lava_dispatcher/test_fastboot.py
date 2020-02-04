@@ -25,10 +25,7 @@ from unittest.mock import patch, ANY, MagicMock, PropertyMock
 from lava_common.exceptions import JobError, InfrastructureError
 from lava_dispatcher.protocols.lxc import LxcProtocol
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
-from tests.lava_dispatcher.utils import (
-    infrastructure_error,
-    infrastructure_error_multi_paths,
-)
+from tests.utils import infrastructure_error, infrastructure_error_multi_paths
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.fastboot import FastbootFlashOrderAction
 from lava_dispatcher.actions.boot.fastboot import BootAction

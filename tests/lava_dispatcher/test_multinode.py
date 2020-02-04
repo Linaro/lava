@@ -36,7 +36,7 @@ from lava_dispatcher.actions.boot import BootAction
 from lava_dispatcher.actions.test.multinode import MultinodeTestAction
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
 from tests.lava_dispatcher.test_defs import allow_missing_path
-from tests.lava_dispatcher.utils import DummyLogger
+from tests.utils import DummyLogger
 
 
 class TestMultinode(StdoutTestCase):

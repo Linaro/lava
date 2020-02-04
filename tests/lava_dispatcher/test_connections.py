@@ -28,7 +28,7 @@ from lava_common.exceptions import JobError, InfrastructureError
 from lava_common.timeout import Timeout
 from lava_dispatcher.actions.boot.ssh import SchrootAction
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
-from tests.lava_dispatcher.utils import infrastructure_error
+from tests.utils import infrastructure_error
 from lava_dispatcher.utils.filesystem import check_ssh_identity_file
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
 

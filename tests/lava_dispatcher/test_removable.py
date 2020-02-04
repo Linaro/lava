@@ -30,7 +30,7 @@ from lava_dispatcher.parser import JobParser
 from lava_dispatcher.actions.boot import BootloaderSecondaryMedia
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.removable import MassStorage
-from tests.lava_dispatcher.utils import DummyLogger, infrastructure_error
+from tests.utils import DummyLogger, infrastructure_error
 from lava_dispatcher.utils.strings import substitute, map_kernel_uboot
 
 

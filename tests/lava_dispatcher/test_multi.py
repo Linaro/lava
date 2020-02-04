@@ -31,7 +31,7 @@ from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
 from tests.lava_dispatcher.test_uboot import UBootFactory
-from tests.lava_dispatcher.utils import DummyLogger
+from tests.utils import DummyLogger
 
 
 class TestMultiDeploy(StdoutTestCase):

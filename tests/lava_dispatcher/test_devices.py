@@ -31,7 +31,7 @@ from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.boot import BootAction
 from lava_dispatcher.actions.boot.u_boot import BootloaderInterruptAction, UBootAction
 from tests.lava_dispatcher.test_basic import StdoutTestCase, Factory
-from tests.lava_dispatcher.utils import DummyLogger, infrastructure_error
+from tests.utils import DummyLogger, infrastructure_error
 
 # Test the loading of test definitions within the deploy stage
 

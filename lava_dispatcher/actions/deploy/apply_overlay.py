@@ -461,7 +461,7 @@ class ExtractNfsRootfs(ExtractRootfs):
             action="extract-rootfs", label="file", key=self.file_key
         )
         self.job.device["dynamic_data"]["NFS_SERVER_IP"] = dispatcher_ip(
-            self.job.parameters["dispatcher"]
+            self.job.parameters["dispatcher"], "nfs"
         )
 
         return connection
@@ -825,7 +825,7 @@ class ConfigurePreseedFile(Action):
                     self.parameters["deployment_data"]["installer_extra_cmd"],
                 )
             if self.parameters.get("os") == "centos_installer":
-                ip_addr = dispatcher_ip(self.job.parameters["dispatcher"])
+                ip_addr = dispatcher_ip(self.job.parameters["dispatcher"], "tftp")
                 overlay = self.get_namespace_data(
                     action="download-action", label="file", key="overlay"
                 )

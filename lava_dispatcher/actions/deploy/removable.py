@@ -214,7 +214,7 @@ class DDAction(Action):
         # As the test writer can use any tool we cannot predict where the
         # download URL will be positioned in the download command.
         # Providing the download URL as a substitution option gets round this
-        ip_addr = dispatcher_ip(self.job.parameters["dispatcher"])
+        ip_addr = dispatcher_ip(self.job.parameters["dispatcher"], "http")
         download_url = "http://%s/%s/%s" % (ip_addr, suffix, decompressed_image)
         substitutions = {"{DOWNLOAD_URL}": download_url, "{DEVICE}": device_path}
 

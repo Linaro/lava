@@ -23,10 +23,7 @@ import unittest
 from unittest.mock import patch
 from lava_common.compat import yaml_safe_load
 from lava_dispatcher.device import NewDevice
-from tests.lava_dispatcher.utils import (
-    infrastructure_error,
-    infrastructure_error_multi_paths,
-)
+from tests.utils import infrastructure_error, infrastructure_error_multi_paths
 from lava_dispatcher.actions.boot.grub import GrubMainAction
 from lava_dispatcher.actions.boot import (
     BootloaderCommandOverlay,

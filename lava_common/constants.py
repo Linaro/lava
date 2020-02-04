@@ -149,3 +149,6 @@ TFTP_SIZE_LIMIT = 4 * 1024 * 1024 * 1024
 UDEV_RULES_DIR = "/etc/udev/rules.d/"
 
 UDEV_RULE_FILENAME = UDEV_RULES_DIR + "99-lava-dispatcher-host.rules"
+
+# Services which allow alternative IP's and ports
+VALID_DISPATCHER_IP_PROTOCOLS = ["http", "nfs", "tftp"]

@@ -29,7 +29,7 @@ from lava_common.timeout import Timeout
 from lava_common.exceptions import JobError
 from lava_dispatcher.shell import ShellSession, ShellCommand
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
-from tests.lava_dispatcher.utils import DummyLogger
+from tests.utils import DummyLogger
 from lava_dispatcher.utils.strings import substitute
 from lava_dispatcher.menus.menus import SelectorMenu
 

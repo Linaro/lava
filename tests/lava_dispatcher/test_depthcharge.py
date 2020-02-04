@@ -26,7 +26,7 @@ from unittest.mock import patch
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
 from tests.lava_dispatcher.test_basic import StdoutTestCase
-from tests.lava_dispatcher.utils import DummyLogger, infrastructure_error
+from tests.utils import DummyLogger, infrastructure_error
 
 
 class DepthchargeFactory:

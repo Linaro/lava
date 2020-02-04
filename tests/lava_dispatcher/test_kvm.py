@@ -39,7 +39,7 @@ from lava_dispatcher.parser import JobParser
 from tests.lava_dispatcher.test_messages import FakeConnection
 from lava_dispatcher.utils.messages import LinuxKernelMessages
 from tests.lava_dispatcher.test_defs import allow_missing_path, check_missing_path
-from tests.lava_dispatcher.utils import DummyLogger, infrastructure_error
+from tests.utils import DummyLogger, infrastructure_error
 from lava_dispatcher.connections.serial import QemuSession
 
 

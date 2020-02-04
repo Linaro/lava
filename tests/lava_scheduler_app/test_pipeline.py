@@ -32,7 +32,7 @@ from lava_common.exceptions import JobError, InfrastructureError
 from lava_dispatcher.actions.boot.qemu import BootQEMU
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
 from lava_common.constants import SYS_CLASS_KVM
-from tests.lava_dispatcher.utils import DummyLogger
+from tests.utils import DummyLogger
 from unittest import TestCase
 
 

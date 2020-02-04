@@ -274,7 +274,9 @@ class UefiSubstituteCommands(Action):
             substitution_dictionary["{NFSROOTFS}"] = self.get_namespace_data(
                 action="extract-rootfs", label="file", key="nfsroot"
             )
-            substitution_dictionary["{NFS_SERVER_IP}"] = ip_addr
+            substitution_dictionary["{NFS_SERVER_IP}"] = dispatcher_ip(
+                self.job.parameters["dispatcher"], "nfs"
+            )
         elif nfs_address:
             substitution_dictionary["{NFSROOTFS}"] = nfs_address
             substitution_dictionary["{NFS_SERVER_IP}"] = self.get_namespace_data(

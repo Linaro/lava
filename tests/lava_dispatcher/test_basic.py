@@ -39,7 +39,7 @@ from lava_dispatcher.action import Pipeline, Action
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.actions.deploy.image import DeployImages
-from tests.lava_dispatcher.utils import DummyLogger
+from tests.utils import DummyLogger
 
 
 class StdoutTestCase(unittest.TestCase):

@@ -29,8 +29,12 @@ import netifaces
 import random
 import socket
 import subprocess  # nosec - internal use.
-from lava_common.exceptions import InfrastructureError
-from lava_common.constants import XNBD_PORT_RANGE_MIN, XNBD_PORT_RANGE_MAX
+from lava_common.exceptions import InfrastructureError, LAVABug
+from lava_common.constants import (
+    XNBD_PORT_RANGE_MIN,
+    XNBD_PORT_RANGE_MAX,
+    VALID_DISPATCHER_IP_PROTOCOLS,
+)
 
 
 def dispatcher_gateway():
@@ -43,11 +47,19 @@ def dispatcher_gateway():
     return gateways["default"][netifaces.AF_INET][0]
 
 
-def dispatcher_ip(dispatcher_config):
+def dispatcher_ip(dispatcher_config, protocol=None):
     """
     Retrieves the IP address of the interface associated
     with the current default gateway.
+    :param protocol: 'http', 'tftp' or 'nfs'
     """
+    if protocol:
+        if protocol not in VALID_DISPATCHER_IP_PROTOCOLS:
+            raise LAVABug(
+                "protocol should be one of %s" % VALID_DISPATCHER_IP_PROTOCOLS
+            )
+        with contextlib.suppress(KeyError, TypeError):
+            return dispatcher_config["dispatcher_%s_ip" % protocol]
     with contextlib.suppress(KeyError, TypeError):
         return dispatcher_config["dispatcher_ip"]
     gateways = netifaces.gateways()

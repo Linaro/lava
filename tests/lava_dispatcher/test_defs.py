@@ -49,10 +49,7 @@ from lava_dispatcher.actions.deploy.testdef import (
 from lava_dispatcher.actions.boot import BootAction
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.actions.deploy.download import DownloaderAction
-from tests.lava_dispatcher.utils import (
-    infrastructure_error,
-    infrastructure_error_multi_paths,
-)
+from tests.utils import infrastructure_error, infrastructure_error_multi_paths
 
 
 # Test the loading of test definitions within the deploy stage

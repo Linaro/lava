@@ -26,7 +26,7 @@ from lava_dispatcher.logical import RetryAction, DiagnosticAction
 from lava_dispatcher.power import FinalizeAction
 from lava_dispatcher.job import Job
 from tests.lava_dispatcher.test_basic import StdoutTestCase
-from tests.lava_dispatcher.utils import DummyLogger
+from tests.utils import DummyLogger
 
 
 class TestAction(StdoutTestCase):

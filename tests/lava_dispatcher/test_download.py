@@ -22,7 +22,7 @@ import unittest
 from lava_common.exceptions import JobError
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.actions.deploy import DeployAction
-from tests.lava_dispatcher.utils import infrastructure_error_multi_paths
+from tests.utils import infrastructure_error_multi_paths
 
 
 class TestDownloadDeploy(StdoutTestCase):

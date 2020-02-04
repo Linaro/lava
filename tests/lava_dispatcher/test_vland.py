@@ -31,7 +31,7 @@ from lava_dispatcher.connection import Protocol
 from lava_dispatcher.protocols.vland import VlandProtocol
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
 from tests.lava_dispatcher.test_basic import StdoutTestCase, Factory
-from tests.lava_dispatcher.utils import DummyLogger
+from tests.utils import DummyLogger
 
 
 class TestVland(StdoutTestCase):
