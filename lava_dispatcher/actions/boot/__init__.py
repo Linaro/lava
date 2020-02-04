@@ -775,7 +775,7 @@ class BootloaderInterruptAction(Action):
             raise LAVABug("%s started without a connection already in use" % self.name)
         connection = super().run(connection, max_end_time)
         if self.needs_interrupt:
-            connection.prompt_str = self.interrupt_prompt
+            connection.prompt_str = [self.interrupt_prompt]
             self.wait(connection)
             if self.interrupt_control_chars:
                 for char in self.interrupt_control_chars:
@@ -789,7 +789,7 @@ class BootloaderInterruptAction(Action):
             self.logger.info(
                 "Not interrupting bootloader, waiting for bootloader prompt"
             )
-            connection.prompt_str = self.bootloader_prompt
+            connection.prompt_str = [self.bootloader_prompt]
             self.wait(connection)
             self.set_namespace_data(
                 action="interrupt",
@@ -868,7 +868,7 @@ class BootloaderCommandsAction(Action):
                 raise InfrastructureError(msg)
 
         if final_message and self.expect_final:
-            connection.prompt_str = final_message
+            connection.prompt_str = [final_message]
             self.wait(connection, max_end_time)
 
         self.set_namespace_data(
