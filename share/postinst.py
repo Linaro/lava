@@ -156,7 +156,7 @@ def db_setup(config, pg_admin_username, pg_admin_password):
 
 def configure():
 
-    if os.path.exists(INSTANCE_CONF) and os.path.isfile(INSTANCE_CONF):
+    if os.path.isfile(INSTANCE_CONF):
         config_path = INSTANCE_CONF
     else:
         config_path = INSTANCE_TEMPLATE_CONF
