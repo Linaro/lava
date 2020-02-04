@@ -118,7 +118,7 @@ def main():
     Parse the command line
     For simplicity, this script does not handle usernames
     and tokens so needs a job ID. For support submitting
-    a test job as well as watching the events, use lava-tool.
+    a test job as well as watching the events, use lavacli.
     """
     parser = argparse.ArgumentParser()
     parser.add_argument("-j", "--job-id", type=int, help="Job ID to wait for")

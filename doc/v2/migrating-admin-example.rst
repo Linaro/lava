@@ -753,7 +753,7 @@ involves:
 
 #. Submit a test job against ``localhost`` and ensure it runs to completion::
 
-   $ lava-tool submit-job http://<user>@localhost/RPC2 mustang-nfs.yaml
+   $ lavacli jobs submit mustang-nfs.yaml
 
 #. Offer the new template as a :ref:`code review <contribute_upstream>`
    against ``lava-server``.
