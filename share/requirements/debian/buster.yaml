@@ -47,6 +47,8 @@ lava-server:
   junit.xml:
     name: python3-junit.xml
     version: ">=1.8"
+  whitenoise:
+    name: python3-whitenoise
   guestfs:
     name: python3-guestfs
     unittests: true

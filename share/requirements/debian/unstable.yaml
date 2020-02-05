@@ -46,6 +46,8 @@ lava-server:
   voluptuous:
     version: ">=0.8.8"
     name: python3-voluptuous
+  whitenoise:
+    name: python3-whitenoise
   guestfs:
     name: python3-guestfs
     unittests: true
