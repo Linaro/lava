@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 set -e
 
@@ -35,15 +35,15 @@ handler() {
 
     echo "Waiting for:"
     echo "* lava-coordinator"
-    [ "$LAVA_COORDINATOR_PID" != "0" ] && wait $LAVA_COORDINATOR_PID
+    [ "$LAVA_COORDINATOR_PID" != "0" ] && wait $LAVA_COORDINATOR_PID || true
     echo "* lava-logs"
-    [ "$LAVA_LOGS_PID" != "0" ] && wait $LAVA_LOGS_PID
+    [ "$LAVA_LOGS_PID" != "0" ] && wait $LAVA_LOGS_PID || true
     echo "* lava-master"
-    [ "$LAVA_MASTER_PID" != "0" ] && wait $LAVA_MASTER_PID
+    [ "$LAVA_MASTER_PID" != "0" ] && wait $LAVA_MASTER_PID || true
     echo "* lava-publisher"
-    [ "$LAVA_PUBLISHER_PID" != "0" ] && wait $LAVA_PUBLISHER_PID
+    [ "$LAVA_PUBLISHER_PID" != "0" ] && wait $LAVA_PUBLISHER_PID || true
     echo "* gunicorn"
-    [ "$GUNICORN_PID" != "0" ] && wait $GUNICORN_PID
+    [ "$GUNICORN_PID" != "0" ] && wait $GUNICORN_PID || true
 
     echo "Killing postgresql"
     /etc/init.d/postgresql stop
