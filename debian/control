@@ -17,7 +17,7 @@ Vcs-Browser: https://git.lavasoftware.org/lava/pkg-lava-debian
 
 Package: lava-dispatcher
 Architecture: all
-Depends: file, systemd-sysv, python3-setuptools,
+Depends: file, systemd-sysv,
  lava-dispatcher-host (= ${binary:Version}),
  lava-common (= ${binary:Version}), tar (>= 1.27),
  ${python3:Depends}, ${misc:Depends}
@@ -66,7 +66,7 @@ Description: LAVA dispatcher host tools
 Package: lava-server
 Architecture: all
 Pre-Depends: debconf | debconf-2.0
-Depends: apache2, adduser, gunicorn (>= 19.9.0-4) | gunicorn3, iproute2, python3-setuptools,
+Depends: apache2, adduser, gunicorn (>= 19.9.0-4) | gunicorn3, iproute2,
  libjs-excanvas, libjs-jquery, libjs-jquery-flot (>=0.8.2),
  libjs-jquery-typeahead, systemd-sysv, postgresql,
  postgresql-client, postgresql-common,
