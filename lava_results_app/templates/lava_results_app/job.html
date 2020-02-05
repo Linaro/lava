@@ -132,6 +132,7 @@
   {% spaceless %}
     <div id="notification_collapse" class="panel-collapse collapse">
       <div class="panel-body">
+        {% if job.notification.notificationrecipient_set.all %}
         <dl class="dl-horizontal">
           {% for recipient in job.notification.notificationrecipient_set.all %}
           <dt>Recipient</dt>
@@ -145,10 +146,11 @@
           <dt>Status</dt>
           <dd>{{ recipient.get_status_display }}</dd>
           <br/>
-          {% empty %}
-          No notifications for this job.
           {% endfor %}
         </dl>
+        {% else %}
+        No notifications for this job.
+        {% endif %}
       </div>
     </div>
   {% endspaceless %}
