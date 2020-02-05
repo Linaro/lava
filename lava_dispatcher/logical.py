@@ -27,6 +27,7 @@ from lava_common.exceptions import (
     LAVABug,
     TestError,
 )
+from lava_dispatcher.utils.strings import seconds_to_str
 
 
 class RetryAction(Action):
@@ -67,9 +68,6 @@ class RetryAction(Action):
             # Do not retry for LAVABug (as it's a bug in LAVA)
             except (InfrastructureError, JobError, TestError) as exc:
                 has_failed = True
-                # Restart max_end_time or the retry on a timeout fails with duration < 0
-                max_end_time += time.time() - self.timeout.start
-                self.timeout.start = time.time()
                 # Print the error message
                 msg = "%s failed: %d of %d attempts. '%s'" % (
                     self.name,
@@ -88,11 +86,14 @@ class RetryAction(Action):
 
                 # Wait some time before retrying
                 time.sleep(self.sleep)
+                # Restart max_end_time or the retry on a timeout fails with duration < 0
+                max_end_time += time.time() - self.timeout.start
+                self.timeout.start = time.time()
                 self.logger.warning(
-                    "Retrying: %s %s (%s sec)",
+                    "Retrying: %s %s (timeout %s)",
                     self.level,
                     self.name,
-                    int(max_end_time - self.timeout.start),
+                    seconds_to_str(max_end_time - self.timeout.start),
                 )
 
         # If we are repeating, check that all repeat were a success.
