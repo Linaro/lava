@@ -31,7 +31,7 @@ from lava_dispatcher.logical import Deployment, RetryAction
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.connections.serial import DisconnectDevice
 from lava_dispatcher.power import ResetDevice
-from lava_dispatcher.utils.udev import wait_udev_event
+from lava_dispatcher.utils.udev import wait_udev_changed_event, wait_udev_event
 
 
 class Musca(Deployment):
@@ -173,12 +173,14 @@ class WaitMuscaMassStorageAction(Action):
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
-        self.logger.debug("Waiting for device: %s", self.devicepath)
-        wait_udev_event(
-            action=self.udev_action,
-            match_dict=self.match_dict,
-            devicepath=self.devicepath,
-        )
+        if self.udev_action == "add":
+            self.logger.debug("Waiting for device to appear: %s", self.devicepath)
+            wait_udev_event(match_dict=self.match_dict, devicepath=self.devicepath)
+        elif self.udev_action == "change":
+            self.logger.debug("Waiting for device to reappear: %s", self.devicepath)
+            wait_udev_changed_event(
+                match_dict=self.match_dict, devicepath=self.devicepath
+            )
         return connection
 
 

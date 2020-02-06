@@ -205,7 +205,18 @@ def match(device, match_dict, devicepath):
     return False
 
 
-def wait_udev_event(match_dict=None, subsystem=None, devtype=None, devicepath=None):
+def wait_udev_event_setup(devicepath, devtype, match_dict, subsystem):
+    """
+    Setup pyudev internals for use by wait_udev_event and wait_udev_change_event methods
+    :param devicepath:
+    :param devtype:
+    :param match_dict:
+    :param subsystem:
+    :return: (context, match_dict, monitor)
+        context is a pyudev.Context instance
+        match_dict from input parameter (initialized to dict if unset)
+        monitor is pyudev.Monitor instance
+    """
     if match_dict:
         if not isinstance(match_dict, dict):
             raise LAVABug("match_dict was not a dict")
@@ -218,7 +229,6 @@ def wait_udev_event(match_dict=None, subsystem=None, devtype=None, devicepath=No
             raise LAVABug("Neither match_dict nor devicepath were set")
     if devtype and not subsystem:
         raise LAVABug("Cannot filter udev by devtype without a subsystem")
-
     # Create and configure the monitor
     context = pyudev.Context()
     monitor = pyudev.Monitor.from_netlink(context)
@@ -227,6 +237,13 @@ def wait_udev_event(match_dict=None, subsystem=None, devtype=None, devicepath=No
     else:
         if subsystem:
             monitor.filter_by(subsystem)
+    return context, match_dict, monitor
+
+
+def wait_udev_event(match_dict=None, subsystem=None, devtype=None, devicepath=None):
+    context, match_dict, monitor = wait_udev_event_setup(
+        devicepath, devtype, match_dict, subsystem
+    )
 
     # Start to listen for events
     monitor.start()
@@ -239,6 +256,21 @@ def wait_udev_event(match_dict=None, subsystem=None, devtype=None, devicepath=No
     # Wait for events.
     # Every events that happened since the call to start() will be handled now.
     match_dict["ACTION"] = "add"
+    for device in iter(monitor.poll, None):
+        if match(device, match_dict, devicepath):
+            return
+
+
+def wait_udev_changed_event(
+    match_dict=None, subsystem=None, devtype=None, devicepath=None
+):
+    context, match_dict, monitor = wait_udev_event_setup(
+        devicepath, devtype, match_dict, subsystem
+    )
+
+    # Start to listen for events
+    monitor.start()
+    match_dict["ACTION"] = "change"
     for device in iter(monitor.poll, None):
         if match(device, match_dict, devicepath):
             return
