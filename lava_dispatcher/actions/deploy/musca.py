@@ -92,9 +92,10 @@ class MuscaAction(RetryAction):
         # If we don't run with a strict schema, it is possible to pass validation with warnings
         # even without the required 'test_binary' field.
         # Therefore, ensure the DownloaderAction.populate does not fail, and catch this at validate step.
-        if parameters.get("images", {}).get("test_binary"):
+        image_params = parameters.get("images", {}).get("test_binary")
+        if image_params:
             self.internal_pipeline.add_action(
-                DownloaderAction("test_binary", path=download_dir)
+                DownloaderAction("test_binary", path=download_dir, params=image_params)
             )
         # Turn on
         self.internal_pipeline.add_action(ResetDevice())

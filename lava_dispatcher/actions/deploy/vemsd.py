@@ -354,7 +354,7 @@ class MountDeviceMassStorageDevice(Action):
         return connection
 
     def cleanup(self, connection):
-        mount_point = "/mnt/%s" % self.microsd_fs_label
+        mount_point = "/mnt/%s" % self.disk_identifier
         if os.path.ismount(mount_point):
             self.logger.debug("Unmounting %s", mount_point)
             self.run_cmd(

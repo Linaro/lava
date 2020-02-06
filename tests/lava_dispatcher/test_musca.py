@@ -26,7 +26,7 @@ from lava_dispatcher.actions.deploy.musca import (
     CheckMuscaFlashAction,
     DeployMuscaAutomationAction,
 )
-from lava_dispatcher.tests.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 
 
 class MuscaFactory(Factory):
