@@ -108,9 +108,12 @@ class FastbootAction(BaseAction):  # pylint:disable=too-many-instance-attributes
             self.pipeline.add_action(EnterFastbootAction())
 
         fastboot_dir = self.mkdtemp()
-        image_keys = sorted(parameters["images"].keys())
-        for image in image_keys:
-            self.pipeline.add_action(DownloaderAction(image, fastboot_dir))
+        for image in sorted(parameters["images"].keys()):
+            self.pipeline.add_action(
+                DownloaderAction(
+                    image, fastboot_dir, params=parameters["images"][image]
+                )
+            )
             if parameters["images"][image].get("apply-overlay", False):
                 if self.test_needs_overlay(parameters):
                     if parameters["images"][image].get("sparse", True):

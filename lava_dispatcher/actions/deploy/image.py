@@ -47,7 +47,9 @@ class DeployImagesAction(DeployAction):  # FIXME: Rename to DeployPosixImages
         path = self.mkdtemp()
         if "uefi" in parameters:
             uefi_path = self.mkdtemp()
-            self.pipeline.add_action(DownloaderAction("uefi", uefi_path))
+            self.pipeline.add_action(
+                DownloaderAction("uefi", uefi_path, params=parameters["uefi"])
+            )
             # uefi option of QEMU needs a directory, not the filename
             self.set_namespace_data(
                 action=self.name,
@@ -58,7 +60,9 @@ class DeployImagesAction(DeployAction):  # FIXME: Rename to DeployPosixImages
             )
             # alternatively use the -bios option and standard image args
         for image in parameters["images"].keys():
-            self.pipeline.add_action(DownloaderAction(image, path))
+            self.pipeline.add_action(
+                DownloaderAction(image, path, params=parameters["images"][image])
+            )
             if parameters["images"][image].get("format", "") == "qcow2":
                 self.pipeline.add_action(QCowConversionAction(image))
         if self.test_needs_overlay(parameters):
@@ -115,7 +119,9 @@ class DeployQemuNfsAction(DeployAction):
         path = self.mkdtemp()
         if "uefi" in parameters:
             uefi_path = self.mkdtemp()
-            self.pipeline.add_action(DownloaderAction("uefi", uefi_path))
+            self.pipeline.add_action(
+                DownloaderAction("uefi", uefi_path, params=parameters["uefi"])
+            )
             # uefi option of QEMU needs a directory, not the filename
             self.set_namespace_data(
                 action=self.name,
@@ -126,7 +132,9 @@ class DeployQemuNfsAction(DeployAction):
             )
             # alternatively use the -bios option and standard image args
         for image in parameters["images"].keys():
-            self.pipeline.add_action(DownloaderAction(image, path))
+            self.pipeline.add_action(
+                DownloaderAction(image, path, params=parameters["images"][image])
+            )
             if parameters["images"][image].get("format", "") == "qcow2":
                 self.pipeline.add_action(QCowConversionAction(image))
         self.pipeline.add_action(ExtractNfsAction())

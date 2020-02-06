@@ -106,7 +106,11 @@ class MpsAction(DeployAction):
         self.pipeline.add_action(ResetDevice())
         self.pipeline.add_action(WaitUSBMassStorageDeviceAction())
         for image in parameters["images"].keys():
-            self.pipeline.add_action(DownloaderAction(image, path=download_dir))
+            self.pipeline.add_action(
+                DownloaderAction(
+                    image, path=download_dir, params=parameters["images"][image]
+                )
+            )
         self.pipeline.add_action(MountVExpressMassStorageDevice())
         # Sort the keys so recovery_image will be first
         for image in sorted(parameters["images"].keys()):

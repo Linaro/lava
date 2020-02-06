@@ -66,21 +66,19 @@ class DownloaderAction(RetryAction):
     description = "download with retry"
     summary = "download-retry"
 
-    def __init__(self, key, path, uniquify=True):
+    def __init__(self, key, path, params, uniquify=True):
         super().__init__()
         self.max_retries = 3
         self.key = key  # the key in the parameters of what to download
         self.path = path  # where to download
         self.uniquify = uniquify
+        self.params = params
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
 
         # Find the right action according to the url
-        if "images" in parameters and self.key in parameters["images"]:
-            url = parameters["images"][self.key].get("url")
-        else:
-            url = parameters[self.key].get("url")
+        url = self.params.get("url")
         if url is None:
             raise JobError(
                 "Invalid deploy action: 'url' is missing for '%s'" % self.key
@@ -88,11 +86,17 @@ class DownloaderAction(RetryAction):
 
         url = urlparse(url)
         if url.scheme == "scp":
-            action = ScpDownloadAction(self.key, self.path, url, self.uniquify)
+            action = ScpDownloadAction(
+                self.key, self.path, url, self.uniquify, params=self.params
+            )
         elif url.scheme == "http" or url.scheme == "https":
-            action = HttpDownloadAction(self.key, self.path, url, self.uniquify)
+            action = HttpDownloadAction(
+                self.key, self.path, url, self.uniquify, params=self.params
+            )
         elif url.scheme == "file":
-            action = FileDownloadAction(self.key, self.path, url, self.uniquify)
+            action = FileDownloadAction(
+                self.key, self.path, url, self.uniquify, params=self.params
+            )
         elif url.scheme == "lxc":
             action = LxcDownloadAction(self.key, self.path, url)
         else:
@@ -119,7 +123,7 @@ class DownloadHandler(Action):
     # Supported decompression commands
     decompress_command_map = {"xz": "unxz", "gz": "gunzip", "bz2": "bunzip2"}
 
-    def __init__(self, key, path, url, uniquify=True):
+    def __init__(self, key, path, url, uniquify=True, params=None):
         super().__init__()
         self.url = url
         self.key = key
@@ -130,6 +134,7 @@ class DownloadHandler(Action):
         if uniquify:
             self.path = os.path.join(path, key)
         self.fname = None
+        self.params = params
 
     def reader(self):
         raise LAVABug("'reader' function unimplemented")
@@ -158,51 +163,37 @@ class DownloadHandler(Action):
 
     def validate(self):
         super().validate()
-        if "images" in self.parameters and self.key in self.parameters["images"]:
-            image = self.parameters["images"][self.key]
-            self.url = urlparse(image["url"])
-            compression = image.get("compression")
-            archive = image.get("archive")
-            self.fname = self._url_to_fname(self.path, compression)
-            image_arg = image.get("image_arg")
-            overlay = image.get("overlay", False)
-            self.set_namespace_data(
-                action="download-action", label=self.key, key="file", value=self.fname
-            )
+        self.url = urlparse(self.params["url"])
+        compression = self.params.get("compression")
+        archive = self.params.get("archive")
+        overlay = self.params.get("overlay", False)
+        image_arg = self.params.get("image_arg")
+
+        self.fname = self._url_to_fname(self.path, compression)
+        if self.fname.endswith("/"):
+            raise JobError("Cannot download a directory for %s" % self.key)
+        # Save into the namespaced data
+        self.set_namespace_data(
+            action="download-action", label=self.key, key="file", value=self.fname
+        )
+        self.set_namespace_data(
+            action="download-action",
+            label=self.key,
+            key="compression",
+            value=compression,
+        )
+        if image_arg is not None:
             self.set_namespace_data(
                 action="download-action",
                 label=self.key,
                 key="image_arg",
                 value=image_arg,
             )
-            self.set_namespace_data(
-                action="download-action",
-                label=self.key,
-                key="compression",
-                value=compression,
-            )
-        else:
-            self.url = urlparse(self.parameters[self.key]["url"])
-            compression = self.parameters[self.key].get("compression")
-            archive = self.parameters[self.key].get("archive")
-            overlay = self.parameters.get("overlay", False)
-            self.fname = self._url_to_fname(self.path, compression)
-            if self.fname.endswith("/"):
-                self.errors = "Cannot download a directory for %s" % self.key
-            self.set_namespace_data(
-                action="download-action", label=self.key, key="file", value=self.fname
-            )
-            self.set_namespace_data(
-                action="download-action",
-                label=self.key,
-                key="compression",
-                value=compression,
-            )
-
         if overlay:
             self.set_namespace_data(
                 action="download-action", label=self.key, key="overlay", value=overlay
             )
+
         if compression and compression not in ["gz", "bz2", "xz", "zip"]:
             self.errors = "Unknown 'compression' format '%s'" % compression
         if archive and archive not in ["tar"]:
@@ -272,30 +263,21 @@ class DownloadHandler(Action):
                     "Unable to create %s: %s" % (self.path, str(exc))
                 )
 
-        if "images" in self.parameters and self.key in self.parameters["images"]:
-            remote = self.parameters["images"][self.key]
-            compression = self.parameters["images"][self.key].get("compression", False)
+        if self.key == "ramdisk":
+            compression = False
+            self.logger.debug("Not decompressing ramdisk as can be used compressed.")
+        compression = self.params.get("compression", False)
 
-        else:
-            remote = self.parameters[self.key]
-            if self.key == "ramdisk":
-                compression = False
-                self.logger.debug(
-                    "Not decompressing ramdisk as can be used compressed."
-                )
-            else:
-                compression = self.parameters[self.key].get("compression", False)
-
-        md5sum = remote.get("md5sum")
-        sha256sum = remote.get("sha256sum")
-        sha512sum = remote.get("sha512sum")
+        md5sum = self.params.get("md5sum")
+        sha256sum = self.params.get("sha256sum")
+        sha512sum = self.params.get("sha512sum")
 
         if os.path.isdir(self.fname):
             raise JobError("Download '%s' is a directory, not a file" % self.fname)
         if os.path.exists(self.fname):
             os.remove(self.fname)
 
-        self.logger.info("downloading %s", remote["url"])
+        self.logger.info("downloading %s", self.params["url"])
         self.logger.debug("saving as %s", self.fname)
 
         downloaded_size = 0
@@ -412,7 +394,7 @@ class DownloadHandler(Action):
         )
 
         # handle archive files
-        archive = remote.get("archive", False)
+        archive = self.params.get("archive")
         if archive:
             if archive != "tar":
                 raise JobError("Unknown archive format %r" % archive)
@@ -802,9 +784,12 @@ class DownloadAction(DeployAction):  # pylint:disable=too-many-instance-attribut
             self.pipeline.add_action(EnterFastbootAction())
 
         self.download_dir = self.mkdtemp()
-        image_keys = sorted(parameters["images"].keys())
-        for image in image_keys:
-            self.pipeline.add_action(DownloaderAction(image, self.download_dir))
+        for image in sorted(parameters["images"].keys()):
+            self.pipeline.add_action(
+                DownloaderAction(
+                    image, self.download_dir, params=parameters["images"][image]
+                )
+            )
         if self.test_needs_overlay(parameters):
             self.pipeline.add_action(OverlayAction())
         self.pipeline.add_action(CopyToLxcAction())

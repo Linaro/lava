@@ -66,8 +66,14 @@ class DeployIsoAction(DeployAction):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.pipeline.add_action(IsoEmptyImage())
         # the preseed file needs to go into the dispatcher apache tmp directory.
-        self.pipeline.add_action(DownloaderAction("preseed", self.preseed_path))
-        self.pipeline.add_action(DownloaderAction("iso", self.mkdtemp()))
+        self.pipeline.add_action(
+            DownloaderAction(
+                "preseed", self.preseed_path, params=parameters["images"]["preseed"]
+            )
+        )
+        self.pipeline.add_action(
+            DownloaderAction("iso", self.mkdtemp(), params=parameters["images"]["iso"])
+        )
         self.pipeline.add_action(IsoPullInstaller())
         self.pipeline.add_action(QemuCommandLine())
         # prepare overlay at this stage - make it available after installation.

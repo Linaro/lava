@@ -39,7 +39,9 @@ from lava_dispatcher.job import Job
 
 def test_downloader_populate():
     # "images.key" with http
-    action = DownloaderAction("key", "/path/to/save")
+    action = DownloaderAction(
+        "key", "/path/to/save", params={"url": "http://url.org/resource.img"}
+    )
     action.level = 1
     action.populate({"images": {"key": {"url": "http://url.org/resource.img"}}})
     assert len(action.pipeline.actions) == 1
@@ -47,7 +49,9 @@ def test_downloader_populate():
     assert action.pipeline.actions[0].url == urlparse("http://url.org/resource.img")
 
     # "key" with http
-    action = DownloaderAction("key", "/path/to/save")
+    action = DownloaderAction(
+        "key", "/path/to/save", params={"url": "http://url.org/resource.img"}
+    )
     action.level = 1
     action.populate({"key": {"url": "http://url.org/resource.img"}})
     assert len(action.pipeline.actions) == 1
@@ -55,7 +59,9 @@ def test_downloader_populate():
     assert action.pipeline.actions[0].url == urlparse("http://url.org/resource.img")
 
     # "images.key" with https
-    action = DownloaderAction("key", "/path/to/save")
+    action = DownloaderAction(
+        "key", "/path/to/save", params={"url": "https://url.org/resource.img"}
+    )
     action.level = 1
     action.populate({"images": {"key": {"url": "https://url.org/resource.img"}}})
     assert len(action.pipeline.actions) == 1
@@ -63,7 +69,9 @@ def test_downloader_populate():
     assert action.pipeline.actions[0].url == urlparse("https://url.org/resource.img")
 
     # "key" with https
-    action = DownloaderAction("key", "/path/to/save")
+    action = DownloaderAction(
+        "key", "/path/to/save", params={"url": "https://url.org/resource.img"}
+    )
     action.level = 1
     action.populate({"key": {"url": "https://url.org/resource.img"}})
     assert len(action.pipeline.actions) == 1
@@ -71,7 +79,9 @@ def test_downloader_populate():
     assert action.pipeline.actions[0].url == urlparse("https://url.org/resource.img")
 
     # "images.key" with scp
-    action = DownloaderAction("key", "/path/to/save")
+    action = DownloaderAction(
+        "key", "/path/to/save", params={"url": "scp://user@host:/resource.img"}
+    )
     action.level = 1
     action.populate({"images": {"key": {"url": "scp://user@host:/resource.img"}}})
     assert len(action.pipeline.actions) == 1
@@ -79,7 +89,9 @@ def test_downloader_populate():
     assert action.pipeline.actions[0].url == urlparse("scp://user@host:/resource.img")
 
     # "key" with scp
-    action = DownloaderAction("key", "/path/to/save")
+    action = DownloaderAction(
+        "key", "/path/to/save", params={"url": "scp://user@host:/resource.img"}
+    )
     action.level = 1
     action.populate({"key": {"url": "scp://user@host:/resource.img"}})
     assert len(action.pipeline.actions) == 1
@@ -87,7 +99,9 @@ def test_downloader_populate():
     assert action.pipeline.actions[0].url == urlparse("scp://user@host:/resource.img")
 
     # "images.key" with file
-    action = DownloaderAction("key", "/path/to/save")
+    action = DownloaderAction(
+        "key", "/path/to/save", params={"url": "file:///resource.img"}
+    )
     action.level = 1
     action.populate({"images": {"key": {"url": "file:///resource.img"}}})
     assert len(action.pipeline.actions) == 1
@@ -95,7 +109,9 @@ def test_downloader_populate():
     assert action.pipeline.actions[0].url == urlparse("file:///resource.img")
 
     # "key" with file
-    action = DownloaderAction("key", "/path/to/save")
+    action = DownloaderAction(
+        "key", "/path/to/save", params={"url": "file:///resource.img"}
+    )
     action.level = 1
     action.populate({"key": {"url": "file:///resource.img"}})
     assert len(action.pipeline.actions) == 1
@@ -103,7 +119,9 @@ def test_downloader_populate():
     assert action.pipeline.actions[0].url == urlparse("file:///resource.img")
 
     # "images.key" with lxc
-    action = DownloaderAction("key", "/path/to/save")
+    action = DownloaderAction(
+        "key", "/path/to/save", params={"url": "lxc:///resource.img"}
+    )
     action.level = 1
     action.populate({"images": {"key": {"url": "lxc:///resource.img"}}})
     assert len(action.pipeline.actions) == 1
@@ -111,7 +129,9 @@ def test_downloader_populate():
     assert action.pipeline.actions[0].url == urlparse("lxc:///resource.img")
 
     # "key" with lxc
-    action = DownloaderAction("key", "/path/to/save")
+    action = DownloaderAction(
+        "key", "/path/to/save", params={"url": "lxc:///resource.img"}
+    )
     action.level = 1
     action.populate({"key": {"url": "lxc:///resource.img"}})
     assert len(action.pipeline.actions) == 1
@@ -120,14 +140,16 @@ def test_downloader_populate():
 
     # Test raise
     # 1. unsuported scheme
-    action = DownloaderAction("key", "/path/to/save")
+    action = DownloaderAction(
+        "key", "/path/to/save", params={"url": "ftp://user@host:/resource.img"}
+    )
     action.level = 1
     with pytest.raises(JobError) as exc:
         action.populate({"key": {"url": "ftp://user@host:/resource.img"}})
     assert exc.match("Unsupported url protocol scheme: ftp")
 
     # 1. no url avaialbe
-    action = DownloaderAction("key", "/path/to/save")
+    action = DownloaderAction("key", "/path/to/save", params={})
     action.level = 1
     with pytest.raises(JobError) as exc:
         action.populate({"key": {}})
@@ -144,15 +166,12 @@ def test_download_handler_validate_simple():
         "images": {"key": {"url": "http://example.com/resource.img"}},
         "namespace": "common",
     }
+    action.params = action.parameters["images"]["key"]
     action.validate()
     assert action.data == {
         "common": {
             "download-action": {
-                "key": {
-                    "file": "/path/to/save/key/resource.img",
-                    "image_arg": None,
-                    "compression": None,
-                }
+                "key": {"file": "/path/to/save/key/resource.img", "compression": None}
             }
         }
     }
@@ -166,6 +185,7 @@ def test_download_handler_validate_simple():
         "key": {"url": "http://example.com/resource.img"},
         "namespace": "common",
     }
+    action.params = action.parameters["key"]
     action.validate()
     assert action.data == {
         "common": {
@@ -187,15 +207,12 @@ def test_download_handler_validate_kernel():
         "images": {"kernel": {"url": "http://example.com/kernel", "type": "zimage"}},
         "namespace": "common",
     }
+    action.params = action.parameters["images"]["kernel"]
     action.validate()
     assert action.data == {
         "common": {
             "download-action": {
-                "kernel": {
-                    "file": "/path/to/save/kernel/kernel",
-                    "image_arg": None,
-                    "compression": None,
-                }
+                "kernel": {"file": "/path/to/save/kernel/kernel", "compression": None}
             }
         }
     }
@@ -209,6 +226,7 @@ def test_download_handler_validate_kernel():
         "kernel": {"url": "http://example.com/kernel", "type": "zimage"},
         "namespace": "common",
     }
+    action.params = action.parameters["kernel"]
     action.validate()
     assert action.data == {
         "common": {
@@ -237,6 +255,7 @@ def test_download_handler_validate_extra_arguments():
         },
         "namespace": "common",
     }
+    action.params = action.parameters["images"]["key"]
     action.validate()
     assert action.data == {
         "common": {
@@ -265,11 +284,17 @@ def test_download_handler_validate_extra_arguments():
         },
         "namespace": "common",
     }
+    action.params = action.parameters["key"]
     action.validate()
     assert action.data == {
         "common": {
             "download-action": {
-                "key": {"file": "/path/to/save/key/resource.img", "compression": "gz"}
+                "key": {
+                    "file": "/path/to/save/key/resource.img",
+                    "compression": "gz",
+                    "image_arg": "something",
+                    "overlay": True,
+                }
             }
         }
     }
@@ -287,8 +312,10 @@ def test_download_handler_errors():
         "key": {"url": "http://example.com/resource/"},
         "namespace": "common",
     }
-    action.validate()
-    assert action.errors == ["Cannot download a directory for key"]
+    action.params = action.parameters["key"]
+    with pytest.raises(JobError) as exc:
+        action.validate()
+    assert str(exc.value) == "Cannot download a directory for key"
 
     # Uknown compression format
     action = DownloadHandler(
@@ -300,6 +327,7 @@ def test_download_handler_errors():
         "key": {"url": "http://example.com/resource.img", "compression": "something"},
         "namespace": "common",
     }
+    action.params = action.parameters["key"]
     action.validate()
     assert action.errors == ["Unknown 'compression' format 'something'"]
 
@@ -313,6 +341,7 @@ def test_download_handler_errors():
         "key": {"url": "http://example.com/resource.img", "archive": "cpio"},
         "namespace": "common",
     }
+    action.params = action.parameters["key"]
     action.validate()
     assert action.errors == ["Unknown 'archive' format 'cpio'"]
 
@@ -331,6 +360,7 @@ def test_file_download_validate(tmpdir):
         "image": {"url": "file://" + str(tmpdir) + "/bla.img"},
         "namespace": "common",
     }
+    action.params = action.parameters["image"]
     action.validate()
     assert action.errors == []
     assert action.size == 5
@@ -345,6 +375,7 @@ def test_file_download_validate(tmpdir):
         "image": {"url": "file://" + str(tmpdir) + "/bla2.img"},
         "namespace": "common",
     }
+    action.params = action.parameters["image"]
     action.validate()
     assert action.errors == [
         "Image file '" + str(tmpdir) + "/bla2.img' does not exist or is not readable"
@@ -395,6 +426,7 @@ def test_http_download_validate(monkeypatch):
         "image": {"url": "https://example.com/kernel"},
         "namespace": "common",
     }
+    action.params = action.parameters["image"]
     action.validate()
     assert action.errors == []
     assert action.size == 4212
@@ -409,6 +441,7 @@ def test_http_download_validate(monkeypatch):
         "image": {"url": "https://example.com/dtb"},
         "namespace": "common",
     }
+    action.params = action.parameters["image"]
     action.validate()
     assert action.errors == []
     assert action.size == 4212
@@ -431,6 +464,7 @@ def test_http_download_validate(monkeypatch):
         "image": {"url": "https://example.com/kernel"},
         "namespace": "common",
     }
+    action.params = action.parameters["image"]
     action.validate()
     assert action.errors == [
         "Resource unavailable at 'https://example.com/kernel' (404)"
@@ -450,6 +484,7 @@ def test_http_download_validate(monkeypatch):
         "image": {"url": "https://example.com/kernel"},
         "namespace": "common",
     }
+    action.params = action.parameters["image"]
     action.validate()
     assert action.errors == ["'https://example.com/kernel' timed out"]
 
@@ -466,6 +501,7 @@ def test_http_download_validate(monkeypatch):
         "image": {"url": "https://example.com/kernel"},
         "namespace": "common",
     }
+    action.params = action.parameters["image"]
     action.validate()
     assert action.errors == [
         "Unable to get 'https://example.com/kernel': an error occured"
@@ -566,6 +602,7 @@ def test_http_download_run(tmpdir):
         },
         "namespace": "common",
     }
+    action.params = action.parameters["images"]["dtb"]
     action.reader = reader
     action.fname = str(tmpdir / "dtb/dtb")
     action.run(None, 4212)
@@ -621,6 +658,7 @@ def test_http_download_run_compressed(tmpdir):
         },
         "namespace": "common",
     }
+    action.params = action.parameters["rootfs"]
     action.reader = reader
     action.size = 68
     action.fname = str(tmpdir / "rootfs/rootfs")

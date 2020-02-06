@@ -67,7 +67,9 @@ class UBootUMSAction(DeployAction):  # pylint:disable=too-many-instance-attribut
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         path = self.mkdtemp()
-        self.pipeline.add_action(DownloaderAction("image", path=path))
+        self.pipeline.add_action(
+            DownloaderAction("image", path=path, params=parameters["image"])
+        )
         if self.test_needs_overlay(parameters):
             self.pipeline.add_action(OverlayAction())
             self.pipeline.add_action(ApplyOverlayImage())
