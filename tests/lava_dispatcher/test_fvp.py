@@ -17,11 +17,9 @@
 # You should have received a copy of the GNU General Public License
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
-from lava_common.exceptions import JobError
 from lava_dispatcher.action import Action
 from tests.lava_dispatcher.test_basic import StdoutTestCase, Factory
 from lava_dispatcher.actions.deploy import docker
-import subprocess
 
 
 class TestFVPActions(StdoutTestCase):
@@ -57,9 +55,9 @@ def test_shell_reference(monkeypatch):
     factory = TestFVPActions()
     factory.setUp()
     factory.job.validate()
-    assert [] == factory.job.pipeline.errors
+    assert [] == factory.job.pipeline.errors  # nosec
     description_ref = factory.pipeline_reference("fvp_foundation.yaml", job=factory.job)
-    assert description_ref == factory.job.pipeline.describe(False)
+    assert description_ref == factory.job.pipeline.describe(False)  # nosec
 
 
 def test_ramdisk_inside_disk(monkeypatch):
@@ -68,8 +66,8 @@ def test_ramdisk_inside_disk(monkeypatch):
     factory = TestFVPActions()
     factory.setUp("sample_jobs/fvp_ramdisk_overlay.yaml")
     factory.job.validate()
-    assert [] == factory.job.pipeline.errors
+    assert [] == factory.job.pipeline.errors  # nosec
     description_ref = factory.pipeline_reference(
         "fvp_ramdisk_overlay.yaml", job=factory.job
     )
-    assert description_ref == factory.job.pipeline.describe(False)
+    assert description_ref == factory.job.pipeline.describe(False)  # nosec

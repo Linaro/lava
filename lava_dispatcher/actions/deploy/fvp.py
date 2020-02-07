@@ -19,7 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 import os
 import re
-import subprocess
+import subprocess  # nosec
 
 from lava_common.exceptions import JobError
 from lava_dispatcher.action import Pipeline
@@ -172,7 +172,7 @@ class OffsetAction(DeployAction):
         )
         if not os.path.exists(image):
             raise JobError("Not able to mount %s: file does not exist" % image)
-        part_data = subprocess.check_output(
+        part_data = subprocess.check_output(  # nosec
             ["/sbin/parted", image, "-m", "-s", "unit", "b", "print"]
         )
         if not part_data:

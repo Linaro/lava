@@ -19,7 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
-import subprocess
+import subprocess  # nosec
 import time
 
 from lava_common.exceptions import JobError
@@ -166,7 +166,7 @@ class BaseFVPAction(Action):
         super().cleanup(connection)
         self.logger.debug("Stopping container %s", self.container)
         try:
-            subprocess.check_output(
+            subprocess.check_output(  # nosec
                 ["docker", "stop", self.container], stderr=subprocess.STDOUT
             )
         except subprocess.CalledProcessError as e:
