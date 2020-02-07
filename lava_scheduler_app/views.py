@@ -1705,25 +1705,16 @@ def job_log_incremental(request, pk):
     return response
 
 
+@transaction.atomic
 def job_cancel(request, pk):
-    with transaction.atomic():
-        job = get_restricted_job(request.user, pk, request=request, for_update=True)
-        if job.can_cancel(request.user):
-            if job.is_multinode:
-                multinode_jobs = TestJob.objects.select_for_update().filter(
-                    target_group=job.target_group
-                )
-                for multinode_job in multinode_jobs:
-                    multinode_job.go_state_canceling()
-                    multinode_job.save()
-            else:
-                job.go_state_canceling()
-                job.save()
-            return redirect(job)
-        else:
-            return HttpResponseForbidden(
-                "you cannot cancel this job", content_type="text/plain"
-            )
+    job = get_restricted_job(request.user, pk, request=request, for_update=True)
+    try:
+        job.cancel(request.user)
+        return redirect(job)
+    except PermissionDenied:
+        return HttpResponseForbidden(
+            "you cannot cancel this job", content_type="text/plain"
+        )
 
 
 def job_fail(request, pk):
