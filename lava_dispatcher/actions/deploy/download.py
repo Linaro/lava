@@ -263,10 +263,10 @@ class DownloadHandler(Action):
                     "Unable to create %s: %s" % (self.path, str(exc))
                 )
 
+        compression = self.params.get("compression", False)
         if self.key == "ramdisk":
             compression = False
             self.logger.debug("Not decompressing ramdisk as can be used compressed.")
-        compression = self.params.get("compression", False)
 
         md5sum = self.params.get("md5sum")
         sha256sum = self.params.get("sha256sum")
