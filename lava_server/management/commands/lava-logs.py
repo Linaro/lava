@@ -414,17 +414,9 @@ class Command(LAVADaemonCommand):
             if m_type is None or case is None:
                 self.logger.error("[%s] invalid marker: %s", job_id, message_msg)
                 return
-            self.jobs[job_id].markers.setdefault(case, {})[m_type] = self.jobs[
-                job_id
-            ].line_count()
             # This is in fact the previous line
-            self.jobs[job_id].markers[case][m_type] -= 1
-            self.logger.debug(
-                "[%s] marker: %s line: %s",
-                job_id,
-                message_msg,
-                self.jobs[job_id].markers[case][m_type],
-            )
+            line = self.jobs[job_id].line_count() - 1
+            self.jobs[job_id].markers.setdefault(case, {})[m_type] = line
             return
 
         # Mark the file handler as used
