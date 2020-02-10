@@ -120,7 +120,10 @@ class VExpressMsdAction(DeployAction):
         self.pipeline.add_action(MountVExpressMassStorageDevice())
         self.pipeline.add_action(DeployVExpressRecoveryImage())
         self.pipeline.add_action(UnmountVExpressMassStorageDevice())
-        self.pipeline.add_action(VExpressFlashErase())
+        if self.job.device["actions"]["deploy"]["methods"]["vemsd"]["parameters"].get(
+            "flash_prompt", False
+        ):
+            self.pipeline.add_action(VExpressFlashErase())
 
 
 class ExtractVExpressRecoveryImage(Action):
