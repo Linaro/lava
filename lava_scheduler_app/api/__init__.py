@@ -29,7 +29,7 @@ from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Q
 from django.db import transaction
-from linaro_django_xmlrpc.models import ExposedAPI
+from linaro_django_xmlrpc.models import ExposedV2API
 
 from lava_common.compat import yaml_safe_dump, yaml_safe_load
 
@@ -91,7 +91,7 @@ def build_device_status_display(state, health):
         return "running"
 
 
-class SchedulerAPI(ExposedAPI):
+class SchedulerAPI(ExposedV2API):
     def submit_job(self, job_data):
         """
         Name
