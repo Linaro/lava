@@ -197,22 +197,10 @@ class SchedulerAPI(ExposedAPI):
             except TestJob.DoesNotExist:
                 raise xmlrpc.client.Fault(404, "Specified job not found.")
 
-            if job.state in [TestJob.STATE_CANCELING, TestJob.STATE_FINISHED]:
-                # Don't do anything for jobs that ended already
-                return True
-            if not job.can_cancel(self.user):
+            try:
+                job.cancel(self.user)
+            except PermissionDenied:
                 raise xmlrpc.client.Fault(403, "Permission denied.")
-
-            if job.is_multinode:
-                multinode_jobs = TestJob.objects.select_for_update().filter(
-                    target_group=job.target_group
-                )
-                for multinode_job in multinode_jobs:
-                    multinode_job.go_state_canceling()
-                    multinode_job.save()
-            else:
-                job.go_state_canceling()
-                job.save()
         return True
 
     def validate_yaml(self, yaml_string):

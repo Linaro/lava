@@ -170,6 +170,12 @@ class TestSuiteViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
         )
         return response
 
+    @detail_route(methods=["get"], suffix="cancel")
+    def cancel(self, request, **kwargs):
+        # django-rest-framework handles django's PermissionDenied error
+        # automagically
+        self.get_object().cancel(request.user)
+
 
 class TestCaseViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     queryset = TestCase.objects
