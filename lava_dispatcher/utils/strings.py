@@ -58,6 +58,22 @@ def seconds_to_str(time):
     return "%02d:%02d:%02d" % (hours, minutes, seconds)
 
 
+def safe_dict_format(string, dictionary):
+    """
+    Used to replace value in string using dictionary
+    eg : '{foo}{bar}.safe_dict_format({'foo' : 'hello'})
+    >>> 'hello{bar}'
+    """
+
+    class SafeDict(dict):
+        def __missing__(self, key):
+            logger = logging.getLogger("lava-dispatcher")
+            logger.warning("Missing key : '{%s}' for string '%s'", key, string)
+            return "{" + key + "}"
+
+    return string.format_map(SafeDict(dictionary))
+
+
 def map_kernel_uboot(kernel_type, device_params=None):
     """
     Support conversion of kernels only if the device cannot
