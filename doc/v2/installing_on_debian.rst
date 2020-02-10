@@ -19,8 +19,6 @@ are:
 +---------------+------------------------+--------+----------------------+
 | Debian        | Buster (stable)        | 10.*   | Yes [#f4]_           |
 +---------------+------------------------+--------+----------------------+
-| Debian        | Stretch (oldstable)    | 9.*    | Yes [#f5]_           |
-+---------------+------------------------+--------+----------------------+
 
 Debian uses codenames for releases (bullseye, buster, stretch) and names for
 `suites`_ (unstable, testing, stable & oldstable). When a new Debian major
@@ -68,15 +66,7 @@ that point will include that codename in the table.
          supported on this Debian version. It's recommended to use Buster for
          production instances.
 
-.. [#f5] `stretch` was released on 17th June 2017. All updates to LAVA
-         packages for Stretch will be made using `stretch-backports`_.
-         Systems using Debian Stretch are recommended to enable
-         stretch-backports.
-         The support for Stretch will be dropped in early 2020.
-
 .. _experimental: https://wiki.debian.org/DebianExperimental
-
-.. _stretch-backports: https://backports.debian.org/
 
 You can track the versions of LAVA packages in the various Debian
 suites by following links from the Debian package tracker for
@@ -130,47 +120,17 @@ repository at https://apt.lavasoftware.org/ . This uses the
 :ref:`lava_archive_signing_key` - a copy of the key is available in
 the repository and on keyservers.
 
-When using LAVA repositories on Stretch, make sure to enable
-``stretch-backports`` from your regular Debian mirror as well as the
-LAVA repository. Create an apt source based on your existing apt source
-for Stretch::
-
- deb http://deb.debian.org/debian stretch-backports main
-
 Update apt to find the new packages::
 
  $ sudo apt update
 
-The list of packages to obtain from ``stretch-backports`` in the main
-Debian archive is maintained using the
-``/usr/share/lava-server/requires.py`` script in the ``lava-dev``
-package::
-
- $ /usr/share/lava-server/requires.py -d debian -s stretch-backports -p lava-server -n
- python3-django-auth-ldap python3-django-tables2 python3-requests
-
-::
-
- $ sudo apt -t stretch-backports install python3-django-auth-ldap python3-django-tables2 python3-requests
-
-Workers will also need support packages from `stretch-backports`::
-
- $ /usr/share/lava-server/requires.py -d debian -s stretch-backports -p lava-dispatcher -n
- python3-requests
-
-::
-
- $ sudo apt -t stretch-backports install python3-requests
-
-.. seealso:: :ref:`install_debian_stretch` and
-  :ref:`dependency_requirements`.
+.. seealso:: :ref:`dependency_requirements`.
 
 Releases
 --------
 
 .. code-block:: none
 
- deb https://apt.lavasoftware.org/release stretch-backports main
  deb https://apt.lavasoftware.org/release buster main
 
 .. note:: The LAVA repositories only provide packages for ``amd64`` and
@@ -190,7 +150,6 @@ daily builds repository, using the same suites:
 .. code-block:: none
 
  deb https://apt.lavasoftware.org/daily buster main
- deb https://apt.lavasoftware.org/daily stretch-backports main
 
 Snapshots 
 ---------
@@ -204,19 +163,6 @@ is created in the snapshot folder:
 
 Entries are created according to the suite for which it was built and
 the year, month and day of the build.
-
-Stretch users
--------------
-
-.. note:: The recommended base for LAVA is Debian Buster. We are currently in
-   the process of deprecating the support for stretch in the folowing months.
-   When using LAVA repositories on Stretch, make sure to enable
-   `stretch-backports` from your regular Debian mirror as well as the
-   LAVA repository. See :ref:`install_debian_stretch`.
-
-.. code-block:: none
-
- deb https://apt.lavasoftware.org/release stretch-backports main
 
 Buster users
 -------------
@@ -328,111 +274,6 @@ Each master has a local ``lava-slave`` even if that slave has no
 devices configured.
 
 * ``/etc/default/lava-slave`` or ``/etc/lava-server/lava-slave``.
-
-.. index:: stretch, install on stretch, stretch backports
-
-.. _install_debian_stretch:
-
-Installing on Debian Stretch
-============================
-
-.. note:: We now advice to use Buster as the base host for production
-          instances.
-
-Debian Stretch was released on June 17th, 2017, containing a full set
-of packages to install LAVA at version 2016.12. Debian stable releases
-of LAVA do not receive updates to LAVA directly, so a simple install
-on Stretch will only get you ``2016.12``. All admins of LAVA instances
-are **strongly** advised to update all software on the instance on a
-regular basis to receive security updates to the base system.
-
-For packages which need larger changes, the official Debian method is
-to provide those updates using ``backports``. Backports **do not
-install automatically** even after the apt source is added - this is
-because backports are rebuilt from the current ``testing`` suite, so
-automatic upgrades would move the base system to testing as
-well. Instead, the admin selects which backported packages to add to
-the base stable system. Only those packages (and dependencies, if not
-available in stable already) will then be installed from backports.
-
-The ``lava-server`` backports and dependencies are **fully supported**
-by the LAVA software team and admins of **all** LAVA instances should
-be updated from the base ``2016.12`` to the version available in
-current backports. Subscribe to the :ref:`lava_announce` mailing list
-for details of when new releases are made. Backports will be available
-about a week after the initial release.
-
-Updates for LAVA on Debian Stretch are uploaded to `the
-stretch-backports suite <https://backports.debian.org/>`_ and also to
-the LAVA repo at https://apt.lavasoftware.org/ .
-
-Create an apt source for backports, either by editing
-``/etc/apt/sources.list`` or adding a file with a ``.list`` suffix into
-``/etc/apt/sources.list.d/``. Create a line like the one below (using
-your preferred Debian mirror)::
-
- deb http://deb.debian.org/debian stretch-backports main
-
-Remember to update your apt cache whenever add a new apt source::
-
- $ sudo apt update
-
-Then install ``lava-server`` from ``stretch-backports`` using the
-``-t`` option::
-
- $ sudo apt -t stretch-backports install lava-server
- $ sudo a2dissite 000-default
- $ sudo a2enmod proxy
- $ sudo a2enmod proxy_http
- $ sudo a2ensite lava-server.conf
- $ sudo service apache2 restart
-
-This will also bring in other dependencies from ``stretch-backports``.
-The list of packages is maintained using the
-``/usr/share/lava-server/requires.py`` script in the ``lava-dev``
-package::
-
- $ /usr/share/lava-server/requires.py -d debian -s stretch-backports -p lava-server -n
- python3-django-auth-ldap python3-django-tables2 python3-requests
-
-Workers also need support from `stretch-backports`::
-
- $ /usr/share/lava-server/requires.py -d debian -s stretch-backports -p lava-dispatcher -n
- python3-requests
-
-Once backports are enabled, the packages which the admin has selected
-from backports (using the ``-t`` switch) will continue to upgrade using
-backports. Other packages will only be added from backports if the
-existing backports require updates from backports.
-
-.. seealso:: :ref:`setting_up_pipeline_instance` for information on
-   installing just selected packages, the full package set and a
-   master without a local worker.
-
-.. index:: buster, install using buster
-
-.. _install_debian_buster:
-
-Installing on Debian Buster
----------------------------
-
-Buster brings in a number of updated dependencies, e.g. postgresql-10,
-docker.io and QEMU 2.12 as well as a more recent kernel. The
-installation process is similar to :ref:`installing on Stretch
-<install_debian_stretch>` with two differences:
-
-* There is no need (yet!) for backports.
-
-* QEMU supports installation without the dependencies required to run a
-  GUI.
-
-If you want a smaller installation, particularly for a worker, you can
-choose to install ``qemu-system-x86`` (or ``qemu-system-arm`` if
-running on ``armhf`` or ``arm64``) without the recommended packages::
-
- $ sudo apt --no-install-recommends install qemu-system-x86
-
-.. index:: backports, jessie-backports, install using backports
 
 .. index:: python3
 

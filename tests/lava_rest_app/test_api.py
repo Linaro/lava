@@ -435,24 +435,15 @@ class TestRestApi:
             reverse("api-root", args=[self.version])
             + "jobs/%s/tap13/" % self.public_testjob1.id,
         )
-        if hasattr(tap.tracker.Tracker, "set_plan"):
-            assert (  # nosec - unit test support
-                data
-                == """TAP version 13
+        assert (  # nosec - unit test support
+            data
+            == """TAP version 13
 1..2
 # TAP results for lava
 not ok 1 foo
 ok 2 bar
 """
-            )
-        else:
-            assert (  # nosec - unit test support
-                data
-                == """# TAP results for lava
-not ok 1 - foo
-ok 2 - bar
-"""
-            )
+        )
 
     def test_testjob_suite_csv(self):
         data = self.hit(

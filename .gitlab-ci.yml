@@ -62,8 +62,6 @@ include:
       - common.xml
       - server.xml
 
-dispatcher-debian-9: *dispatcher
-server-debian-9: *server
 dispatcher-debian-10: *dispatcher
 server-debian-10: *server
 dispatcher-debian-11: *dispatcher
@@ -124,20 +122,6 @@ doc:
     paths:
     - doc/v2/_build/html
 
-debian/9:
-  <<: *job
-  stage: build
-  except: []
-  image: hub.lavasoftware.org/lava/ci-images/amd64/pkg-debian-9
-  artifacts:
-    paths:
-    - _build/*.deb
-    # handle native package - need to publish the source
-    - _build/*.tar.xz
-    - _build/*.dsc
-    - _build/*.changes
-    - _build/*.buildinfo
-
 debian/10:
   <<: *job
   stage: build
@@ -197,7 +181,6 @@ reprepro-master:
   # will overwrite the latest deployment."
   tags: [deploy]
   dependencies:
-  - debian/9
   - debian/10
   except: []
   only: [schedules]
@@ -217,7 +200,6 @@ reprepro-release:
     refs:
     - tags
   dependencies:
-  - debian/9
   - debian/10
   except: [schedules]
   environment:

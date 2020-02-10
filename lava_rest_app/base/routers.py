@@ -17,53 +17,10 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-import warnings
-
 from lava_rest_app.base import views as base_views
 
-from rest_framework import routers, views
-from rest_framework.response import Response
-
-
-# django-rest-framework from Debian stretch (v3.8.2) does not provide this
-# class.
-# Manually backport the class from a recent version
-try:
-    from rest_framework.routers import APIRootView
-except ImportError:
-    warnings.warn("Remove once the stretch support is dropped.", DeprecationWarning)
-    from collections import OrderedDict
-    from django.urls import NoReverseMatch, reverse
-
-    class APIRootView(views.APIView):
-        """
-        The default basic root view for DefaultRouter
-        """
-
-        _ignore_model_permissions = True
-        schema = None  # exclude from schema
-        api_root_dict = None
-
-        def get(self, request, *args, **kwargs):
-            # Return a plain {"name": "hyperlink"} response.
-            ret = OrderedDict()
-            namespace = request.resolver_match.namespace
-            for key, url_name in self.api_root_dict.items():
-                if namespace:
-                    url_name = namespace + ":" + url_name
-                try:
-                    ret[key] = reverse(
-                        url_name,
-                        args=args,
-                        kwargs=kwargs,
-                        request=request,
-                        format=kwargs.get("format", None),
-                    )
-                except NoReverseMatch:
-                    # Don't bail out if eg. no list routes exist, only detail routes.
-                    continue
-
-            return Response(ret)
+from rest_framework import routers
+from rest_framework.routers import APIRootView
 
 
 class LavaApiRootView(APIRootView):

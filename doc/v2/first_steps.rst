@@ -12,4 +12,3 @@ First steps as a user
    lavacli
 
    .. include:: first-job.rsti
-   .. include:: lava-tool.rsti

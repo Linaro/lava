@@ -270,6 +270,4 @@ Submit a job and wait on notifications
 
 A common request from LAVA users is the ability to submit a test job,
 wait for the job to start and then monitor it directly as it
-runs. Recent versions of :ref:`lava_tool` support this directly - look
-at its `source code <https://git.linaro.org/lava/lava-tool.git/>`_ if
-you want to do something similar in your own code.
+runs. Recent versions of :ref:`lavacli` support this directly.

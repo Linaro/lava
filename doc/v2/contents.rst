@@ -156,7 +156,6 @@ Results in LAVA
    custom-result-handling
    relating
    tables
-   lava-tool
 
 .. _contents_admin_guide:
 
@@ -186,7 +185,6 @@ LAVA administration guide
    vland-admin
    pipeline-debug
    docker-admin
-   lava-tool-issues
 
 .. _contents_contribution_guide:
 

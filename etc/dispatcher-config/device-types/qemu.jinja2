@@ -12,7 +12,7 @@
 {% set qemu_guest_fs_interface = guestfs_interface | default('ide') %}
 {% set qemu_guest_fs_driveid = guestfs_driveid | default('lavatest') %}
 
-{# see https://packages.debian.org/stretch/amd64/qemu-system-misc/filelist #}
+{# see https://packages.debian.org/buster/amd64/qemu-system-misc/filelist #}
 {% set qemu_misc_architectures = [
 'alpha', 'cris', 'lm32', 'm68k', 'microblaze', 'microblazeel',
 'moxie', 'or32', 's390x', 'sh4', 'sh4eb', 'tricore', 'unicore32',

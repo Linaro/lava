@@ -229,13 +229,7 @@ class TestJobViewSet(viewsets.ModelViewSet):
     def tap13(self, request, **kwargs):
         stream = io.StringIO()
         count = TestCase.objects.filter(suite__job=self.get_object()).count()
-        # Handle old versions of tap
-        # Should be removed once python3-tap has been backported to
-        # stretch-backports or once Stretch is no longer supported.
-        if hasattr(tap.tracker.Tracker, "set_plan"):
-            tracker = tap.tracker.Tracker(plan=count, streaming=True, stream=stream)
-        else:
-            tracker = tap.tracker.Tracker(streaming=True, stream=stream)
+        tracker = tap.tracker.Tracker(plan=count, streaming=True, stream=stream)
 
         # Loop on all test cases
         for suite in self.get_object().testsuite_set.all().order_by("id"):
