@@ -1,0 +1,74 @@
+- class: actions.deploy.uuu.UUUAction
+  name: uuu-deploy
+  pipeline:
+  - class: actions.deploy.download.DownloaderAction
+    name: download-retry
+    pipeline:
+    - class: actions.deploy.download.HttpDownloadAction
+      name: http-download
+- class: actions.boot.uuu.UUUBootAction
+  name: uuu-boot
+  pipeline:
+  - class: power.ResetDevice
+    name: reset-device
+    pipeline:
+    - class: power.PDUReboot
+      name: pdu-reboot
+  - class: actions.boot.uuu.CheckSerialDownloadMode
+    name: check-serial-availability
+  - class: actions.boot.uuu.BootBootloaderCorruptBootMediaAction
+    name: boot-corrupt-boot-media
+    pipeline:
+    - class: connections.serial.ConnectDevice
+      name: connect-device
+    - class: actions.boot.BootloaderCommandOverlay
+      name: bootloader-overlay
+    - class: actions.boot.bootloader.BootBootloaderRetry
+      name: boot-bootloader-retry
+      pipeline:
+      - class: power.ResetDevice
+        name: reset-device
+        pipeline:
+        - class: power.PDUReboot
+          name: pdu-reboot
+      - class: actions.boot.BootloaderInterruptAction
+        name: bootloader-interrupt
+      - class: actions.boot.BootloaderCommandsAction
+        name: bootloader-commands
+    - class: connections.serial.DisconnectDevice
+      name: disconnect-device
+  - class: power.ResetDevice
+    name: reset-device
+    pipeline:
+    - class: power.PDUReboot
+      name: pdu-reboot
+  - class: actions.boot.uuu.UUUBootRetry
+    name: uuu-retry
+  - class: connections.serial.ConnectDevice
+    name : connect-device
+- class: actions.boot.bootloader.BootBootloaderAction
+  name: boot-bootloader
+  pipeline:
+  - class: connections.serial.ConnectDevice
+    name: connect-device
+  - class: actions.boot.BootloaderCommandOverlay
+    name: bootloader-overlay
+  - class: actions.boot.bootloader.BootBootloaderRetry
+    name: boot-bootloader-retry
+    pipeline:
+    - class: power.ResetDevice
+      name: reset-device
+      pipeline:
+      - class: power.PDUReboot
+        name: pdu-reboot
+    - class: actions.boot.BootloaderInterruptAction
+      name: bootloader-interrupt
+    - class: actions.boot.BootloaderCommandsAction
+      name: bootloader-commands
+- class: power.FinalizeAction
+  name: finalize
+  pipeline:
+  - class: power.PowerOff
+    name: power-off
+  - class: power.ReadFeedback
+    name: read-feedback

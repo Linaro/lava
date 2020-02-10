@@ -1,0 +1,39 @@
+# Sample JOB definition for a uuu job on imx8mq
+# Flash new u-boot on SD and perform '=> printenv'
+device_type: imx8mq-evk
+
+job_name: UUU boot method - u-boot only
+timeouts:
+  job:
+    minutes: 10
+  action:
+    minutes: 10
+  connection:
+    minutes: 5
+
+priority: low
+visibility: public
+actions:
+- deploy:
+    to : uuu
+    images :
+      boot :
+        url : https://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot
+    timeout :
+      minutes : 2
+
+- boot:
+    method: uuu
+    commands :
+      - uuu : -b sd {boot}
+    timeout:
+      minutes: 4
+
+- boot :
+    method: bootloader
+    bootloader: u-boot
+    commands :
+        - printenv
+    prompts : [=>]
+    timeout:
+      seconds: 30
