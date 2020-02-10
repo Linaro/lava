@@ -1,24 +1,27 @@
-- class: actions.deploy.vemsd.VExpressMsdAction
-  name: vexpress-fw-deploy
+- class: actions.deploy.vemsd.VExpressMsdRetry
+  name: vexpress-fw-deploy-retry
   pipeline:
-  - class: actions.deploy.download.DownloaderAction
-    name: download-retry
+  - class: actions.deploy.vemsd.VExpressMsdAction
+    name: vexpress-fw-deploy
     pipeline:
-    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
-  - {class: actions.deploy.lxc.LxcCreateUdevRuleAction, name: lxc-create-udev-rule-action}
-  - {class: connections.serial.ConnectDevice, name: connect-device}
-  - class: power.ResetDevice
-    name: reset-device
-    pipeline:
-    - {class: power.PDUReboot, name: pdu-reboot}
-  - {class: actions.deploy.vemsd.ExtractVExpressRecoveryImage, name: extract-vexpress-recovery-image}
-  - {class: actions.deploy.vemsd.EnterVExpressMCC, name: enter-vexpress-mcc}
-  - {class: actions.deploy.vemsd.EnableVExpressMassStorage, name: enable-vexpress-usbmsd}
-  - {class: utils.udev.WaitUSBMassStorageDeviceAction, name: wait-usb-mass-storage-device}
-  - {class: actions.deploy.vemsd.MountVExpressMassStorageDevice, name: mount-vexpress-usbmsd}
-  - {class: actions.deploy.vemsd.DeployVExpressRecoveryImage, name: deploy-vexpress-recovery-image}
-  - {class: actions.deploy.vemsd.UnmountVExpressMassStorageDevice, name: unmount-vexpress-usbmsd}
-  - {class: actions.deploy.vemsd.VExpressFlashErase, name: erase-vexpress-flash}
+    - class: actions.deploy.download.DownloaderAction
+      name: download-retry
+      pipeline:
+      - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
+    - {class: actions.deploy.lxc.LxcCreateUdevRuleAction, name: lxc-create-udev-rule-action}
+    - {class: connections.serial.ConnectDevice, name: connect-device}
+    - class: power.ResetDevice
+      name: reset-device
+      pipeline:
+      - {class: power.PDUReboot, name: pdu-reboot}
+    - {class: actions.deploy.vemsd.ExtractVExpressRecoveryImage, name: extract-vexpress-recovery-image}
+    - {class: actions.deploy.vemsd.EnterVExpressMCC, name: enter-vexpress-mcc}
+    - {class: actions.deploy.vemsd.EnableVExpressMassStorage, name: enable-vexpress-usbmsd}
+    - {class: utils.udev.WaitUSBMassStorageDeviceAction, name: wait-usb-mass-storage-device}
+    - {class: actions.deploy.vemsd.MountVExpressMassStorageDevice, name: mount-vexpress-usbmsd}
+    - {class: actions.deploy.vemsd.DeployVExpressRecoveryImage, name: deploy-vexpress-recovery-image}
+    - {class: actions.deploy.vemsd.UnmountVExpressMassStorageDevice, name: unmount-vexpress-usbmsd}
+    - {class: actions.deploy.vemsd.VExpressFlashErase, name: erase-vexpress-flash}
 - class: actions.deploy.nfs.NfsAction
   name: nfs-deploy
   pipeline:

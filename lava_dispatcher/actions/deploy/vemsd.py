@@ -25,7 +25,7 @@ import os
 import shutil
 from lava_common.exceptions import JobError, InfrastructureError, LAVABug
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.logical import Deployment
+from lava_dispatcher.logical import Deployment, RetryAction
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.lxc import LxcCreateUdevRuleAction
 from lava_dispatcher.actions.deploy.download import DownloaderAction
@@ -52,7 +52,7 @@ class VExpressMsd(Deployment):
 
     def __init__(self, parent, parameters):
         super().__init__(parent)
-        self.action = VExpressMsdAction()
+        self.action = VExpressMsdRetry()
         self.action.section = self.action_type
         self.action.job = self.job
         parent.add_action(self.action, parameters)
@@ -71,6 +71,19 @@ class VExpressMsd(Deployment):
         if "vemsd" in device["actions"]["deploy"]["methods"]:
             return True, "accepted"
         return False, '"vemsd" was not in the device configuration deploy methods'
+
+
+class VExpressMsdRetry(RetryAction):
+
+    name = "vexpress-fw-deploy-retry"
+    description = "deploy vexpress board recovery image with retry"
+    summary = "VExpress FW deployment with retry"
+
+    def populate(self, parameters):
+        self.internal_pipeline = Pipeline(
+            parent=self, job=self.job, parameters=parameters
+        )
+        self.internal_pipeline.add_action(VExpressMsdAction())
 
 
 class VExpressMsdAction(DeployAction):
@@ -140,6 +153,12 @@ class ExtractVExpressRecoveryImage(Action):
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
 
+        recovery_image_dir = self.get_namespace_data(
+            action="extract-vexpress-recovery-image", label="file", key=self.file_key
+        )
+        if recovery_image_dir:
+            self.logger.debug("Clearing existing data at %s", recovery_image_dir)
+            shutil.rmtree(recovery_image_dir)
         # copy recovery image to a temporary directory and unpack
         recovery_image = self.get_namespace_data(
             action="download-action", label=self.param_key, key="file"
