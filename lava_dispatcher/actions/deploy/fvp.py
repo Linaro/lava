@@ -93,7 +93,9 @@ class FVPDeploy(DeployAction):  # pylint: disable=too-many-instance-attributes
         if "images" in parameters:
             for k in sorted(parameters["images"].keys()):
                 self.internal_pipeline.add_action(
-                    DownloaderAction(k, path=self.image_path, uniquify=uniquify)
+                    DownloaderAction(
+                        k, self.image_path, parameters["images"][k], uniquify=uniquify
+                    )
                 )
                 if parameters["images"][k].get("overlays", None):
                     for overlay in parameters["images"][k]["overlays"]:
