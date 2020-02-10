@@ -162,6 +162,7 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
                         "devices": [],
                         "networks": [],
                         "volumes": [],
+                        "extra_arguments": [],
                     }
                 },
                 "ssh": None,
@@ -208,7 +209,8 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
                         "capabilities": ["NET_ADMIN"],
                         "devices": ["/dev/kvm:/dev/kvm"],
                         "networks": ["mynet"],
-                        "volumes": ["/home", "/tmp"],  # nosec - unit test support.
+                        "volumes": ["/home", "/tmp"],
+                        "extra_arguments": [],
                     }
                 },
                 "ssh": None,
@@ -254,6 +256,7 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
                         "devices": ["/dev/kvm"],
                         "networks": [],
                         "volumes": [],
+                        "extra_arguments": [],
                     }
                 },
                 "ssh": None,
