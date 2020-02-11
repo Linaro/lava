@@ -1,7 +1,7 @@
 import logging
 import sys
 from django.contrib.auth.models import AnonymousUser
-from django_testscenarios.ubertest import TestCase
+from django.test import TestCase
 
 from lava_common.decorators import nottest
 from lava_scheduler_app.models import Device, DeviceType, TestJob
