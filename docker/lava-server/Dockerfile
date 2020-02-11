@@ -44,7 +44,8 @@ RUN --mount=type=bind,target=/app \
     mv /install/usr/lib/python3/dist-packages/lava_scheduler_app/static/lava_scheduler_app/ /install/usr/share/lava-server/static/lava_scheduler_app && \
     mv /install/usr/lib/python3/dist-packages/lava_server/static/lava_server/ /install/usr/share/lava-server/static/lava_server && \
     ln -s /usr/lib/python3/dist-packages/django/contrib/admin/static/admin/ /install/usr/share/lava-server/static/admin && \
-    ln -s /usr/lib/python3/dist-packages/rest_framework/static/rest_framework/ /install/usr/share/lava-server/static/rest_framework
+    ln -s /usr/lib/python3/dist-packages/rest_framework/static/rest_framework/ /install/usr/share/lava-server/static/rest_framework && \
+    python3 -m whitenoise.compress /install/usr/share/lava-server/static/
 
 # Install the entry point
 COPY docker/share/entrypoints/lava-server.sh /install/root/entrypoint.sh
