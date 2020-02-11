@@ -3,7 +3,7 @@
 {% set adduser_and_group = True %}
 
 {% set dependencies = [
-    {"pkgs": "adduser apache2 gunicorn3 iproute2 libjs-excanvas libjs-jquery libjs-jquery-flot libjs-jquery-typeahead libjs-sphinxdoc postgresql postgresql-client postgresql-common python3-setuptools systemd-sysv" },
+    {"pkgs": "apache2 gunicorn3 postgresql postgresql-client postgresql-common python3-setuptools" },
     {"pkgs": requires("debian", "buster", "lava-common") },
     {"pkgs": requires("debian", "buster", "lava-server") },
 ] %}
