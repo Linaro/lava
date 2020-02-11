@@ -11,6 +11,10 @@ actions:
         parameters:
           hard-reboot: {{ mps_hard_reboot|default(false) }}
           reboot-string: "{{ mps_reboot_string|default("hsyxhj") }}"
+{% if flasher_deploy_commands %}
+      flasher:
+        commands: {{ flasher_deploy_commands }}
+{% endif %}
   boot:
     connections:
       lxc:
