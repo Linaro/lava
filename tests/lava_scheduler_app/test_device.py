@@ -16,8 +16,8 @@ from lava_scheduler_app.dbutils import (
     invalid_template,
     active_device_types,
 )
-from django_testscenarios.ubertest import TestCase
 from django.contrib.auth.models import User, Group, Permission
+from django.test import TestCase
 
 
 # python3 needs print to be a function, so disable pylint

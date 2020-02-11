@@ -660,8 +660,7 @@ run the unit tests using Python3::
  ./ci-run -a
 
 Some additional Python3 dependencies will be required. In particular,
-``python3-django-auth-ldap`` and ``python3-django-testscenarios`` will
-need to be installed.
+``python3-django-auth-ldap`` will need to be installed.
 
 .. warning:: Django will be dropping python2.7 support with the 2.2LTS
    release, *frozen* instances of LAVA will not be able to use django
@@ -790,8 +789,7 @@ any. Most of the LAVA components such as ``lava-server``,
 ``lava-dispatcher``, :ref:`lavacli <lavacli>` have unit tests.
 
 Extra dependencies are required to run the tests. On Debian based
-distributions, you need to install ``lava-dev`` and
-``python3-django-testscenarios``.
+distributions, you need to install ``lava-dev``.
 
 .. seealso:: :ref:`unit_test_dependencies`
 

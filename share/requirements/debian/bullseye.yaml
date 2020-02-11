@@ -69,9 +69,6 @@ lava-server:
     version: ">=0.21"
     name: python3-pyudev
     unittests: true
-  django-test-scenarios:
-    name: python3-django-testscenarios
-    unittests: true
   pytest-django:
     name: python3-pytest-django
     unittests: true

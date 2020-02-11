@@ -23,7 +23,7 @@ import re
 import xmlrpc.client
 
 from django.contrib.auth.models import User
-from django_testscenarios.ubertest import TestCase
+from django.test import TestCase
 
 from lava_common.decorators import nottest
 from linaro_django_xmlrpc.models import (

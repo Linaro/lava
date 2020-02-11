@@ -176,8 +176,8 @@ Depends: build-essential, ca-certificates, devscripts, dpkg-dev,
  python3-configobj, python3-pyudev, docbook-xsl, xsltproc,
  ${python3:Depends}, ${misc:Depends}
 Recommends: sbuild, python3-django-extensions, python3-pydot,
- python3-pytest-cov, python3-django-testscenarios, nfs-kernel-server,
- lxc, tftpd-hpa, rpcbind, u-boot-tools, telnet, img2simg, simg2img
+ python3-pytest-cov, nfs-kernel-server, lxc, tftpd-hpa,
+ rpcbind, u-boot-tools, telnet, img2simg, simg2img
 Suggests: python3-bandit, black, radon
 Description: Linaro Automated Validation Architecture developer support
  LAVA is a continuous integration system for deploying operating

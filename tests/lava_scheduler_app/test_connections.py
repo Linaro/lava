@@ -77,7 +77,7 @@ class SecondaryConnections(TestCaseWithFactory):
                 host_role.append(job.device_role)
             else:
                 self.assertTrue(job.dynamic_connection)
-                self.assertNotIn(sub_id, params["sub_id"])
+                self.assertTrue(isinstance(params["sub_id"], int))
                 sub_id.append(params["sub_id"])
                 self.assertIsNone(job.requested_device_type)
                 deploy = [action for action in data["actions"] if "deploy" in action][0]

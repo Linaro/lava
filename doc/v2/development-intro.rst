@@ -15,7 +15,7 @@ Dependencies required to run unit tests
 
 To run the unit tests, a range of dependencies need to be installed::
 
- $ sudo apt -y install lava-dev python3-django-testscenarios
+ $ sudo apt -y install lava-dev
 
 To reduce the number of unit tests which are skipped, a number of other
 packages are listed as recommended by ``lava-dev`` and these should be

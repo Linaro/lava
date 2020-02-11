@@ -3,12 +3,12 @@ import logging
 
 from django.contrib.auth.models import User
 from django.core.validators import URLValidator
+from django.test import TestCase as DjangoTestCase
 
 from lava_common.compat import yaml_load, yaml_safe_dump
 from lava_results_app.models import TestCase, TestSuite
 from lava_results_app.dbutils import map_scanned_results
 from lava_scheduler_app.models import TestJob, Device, DeviceType
-from django_testscenarios.ubertest import TestCase as DjangoTestCase
 
 from six import string_types
 

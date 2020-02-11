@@ -677,7 +677,7 @@ well as the base list of packages using ``--names``.
 ::
 
  $ ./share/requires.py --package lava-server --distribution debian --suite unstable --names --unittest
- python3-django-testscenarios python3-pytest-django python3-pytest python3-pytest-cov
+ python3-pytest-django python3-pytest python3-pytest-cov
 
 ::
 
