@@ -75,12 +75,13 @@ The **callbacks** section supports list of the following options:
   * **all** In addition to minimal data this will include both the **logs** and
     **results** datasets as described above.
 
-* **content-type** This option is used to determine how the POST data is returned
+* **content-type** This option is used to determine how the POST data is submitted:
+
   * **urlencoded** (Default) Will return a standard HTTP POST request, with an
-  application/x-www-form-urlencoded Content-Type header and data sent as an
-  urlencoded query string.
-  * **json** The data is dumped into JSON and returned with an application/json
-  Content-Type header.
+    application/x-www-form-urlencoded Content-Type header and data sent as an
+    urlencoded query string.
+  * **json** The data is dumped into JSON and returned with a ``Content-Type:
+    application/json`` header.
 
 Example callback usage:
 
@@ -94,7 +95,7 @@ Debugging notification callbacks
 --------------------------------
 
 The job data can also be retrieved using the :ref:`REST API <rest_api>` (which
-supports authentication. For example::
+supports authentication). For example::
 
  $ wget -O job_data.gz http://localhost/scheduler/job/2126/job_data
 
@@ -129,8 +130,8 @@ Examples for user vs manual addressing:
    :end-before: # notify compare block
 
 IRC and email notifications use different templates since emails allow for more
-verbosity, so some options which are present in notify block for email
-recipients will be obsolete for IRC recipients, like **comparing** options and
+verbosity, so some options which are present in the ``notify`` block for email
+recipients do not apply for IRC recipients, like **comparing** options and
 **verbosity**.
 
 
