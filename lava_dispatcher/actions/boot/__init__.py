@@ -345,9 +345,9 @@ class BootloaderCommandOverlay(Action):
     description = "substitute job data into bootloader command list"
     summary = "replace placeholders with job data"
 
-    def __init__(self, method=None):
+    def __init__(self, method=None, commands=None):
         super().__init__()
-        self.commands = None
+        self.commands = commands
         self.method = method
         self.use_bootscript = False
         self.lava_mac = None
@@ -359,6 +359,8 @@ class BootloaderCommandOverlay(Action):
         if self.method is None:
             self.method = self.parameters["method"]
         device_methods = self.job.device["actions"]["boot"]["methods"]
+        if self.commands is not None:
+            return
         if self.parameters["method"] == "bootloader":
             self.commands = self.parameters["commands"]
         elif isinstance(self.parameters["commands"], list):

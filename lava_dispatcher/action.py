@@ -611,6 +611,7 @@ class Action:
         :param: allow_fail - if True, do not raise a JobError when the command fail (return non 0)
         :param: error_msg - the exception message.
         :param: cwd - the current working directory for this command
+        :return: return code of the command
         """
         # Build the command list (adding 'nice' at the front)
         if isinstance(command_list, str):

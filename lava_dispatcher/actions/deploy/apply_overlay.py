@@ -120,7 +120,25 @@ class ApplyOverlayImage(Action):
             root_partition = None
 
             if self.use_root_partition:
-                root_partition = self.parameters[self.image_key].get("root_partition")
+                if (
+                    self.image_key not in self.parameters.keys()
+                    and "images" in self.parameters.keys()
+                ):
+                    if self.image_key in self.parameters["images"]:
+                        root_partition = self.parameters["images"][self.image_key].get(
+                            "root_partition"
+                        )
+                    else:
+                        raise JobError(
+                            "Unable to find image configuration for '{image}'".format(
+                                image=self.image_key
+                            )
+                        )
+                else:
+                    root_partition = self.parameters[self.image_key].get(
+                        "root_partition"
+                    )
+
                 if root_partition is None:
                     raise JobError(
                         "Unable to apply the overlay image without 'root_partition'"
