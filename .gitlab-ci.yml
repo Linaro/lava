@@ -93,7 +93,7 @@ coverage:
   coverage: '/^TOTAL.+ (\d+\.\d+)%$/'
   artifacts:
     paths:
-    - htmlcov
+    - htmlcov/
 
 dockerfiles:
   <<: *analyze
