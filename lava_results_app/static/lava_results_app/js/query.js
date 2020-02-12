@@ -34,6 +34,7 @@ open_condition_modal = function(query_name, condition_id, table_id,
         $("#condition_form").attr("action", condition_id +
                                   "/+edit-condition");
 
+        $("#id_tooltip_available_fields").remove();
 	// Fire up the callbacks.
 	table_changed();
 	field_changed();
@@ -52,9 +53,15 @@ table_changed = function() {
         order: "asc",
         minLength: 1,
         callback: {
-            onResult: "field_changed",
+            onClickAfter: "field_changed",
         }
     });
+
+    $("#id_tooltip_available_fields").remove();
+    if ($("#id_table option:selected").text() != "metadata") {
+        $("[for='id_field']").next().after('<span id="id_tooltip_available_fields" class="btn btn-info btn-xs" data-toggle="tooltip" data-placement="right" title="test">?</span>').after("&nbsp;");
+        $("#id_tooltip_available_fields").attr("title", "Available fields: " + Object.keys(condition_choices[$("#id_table").val()]["fields"]).join(", "));
+    }
 }
 
 field_changed = function() {
