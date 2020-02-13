@@ -84,7 +84,9 @@ class UUUAction(DeployAction):  # pylint:disable=too-many-instance-attributes
         )
 
         for image in images:
-            self.pipeline.add_action(DownloaderAction(image, path=path))
+            self.pipeline.add_action(
+                DownloaderAction(image, path=path, params=parameters["images"][image])
+            )
             if images_param[image].get("apply-overlay", False):
                 if self.test_needs_overlay(parameters):
                     if images_param[image].get("sparse", False):
