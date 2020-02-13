@@ -45,7 +45,7 @@ def binary_version(binary, flags="", pattern=""):
     except (subprocess.CalledProcessError, FileNotFoundError):
         raise InfrastructureError(msg)
 
-    if pattern is not "":
+    if pattern != "":
         p = re.compile(pattern)
         result = p.search(ver_str)
         if result is not None:
