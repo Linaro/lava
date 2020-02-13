@@ -82,9 +82,6 @@ aarch64/server-debian-10:
   <<: *job
   image: hub.lavasoftware.org/lava/ci-images/amd64/analyze
   stage: analyze
-  except:
-    refs:
-    - tags
 
 black:
   <<: *analyze
