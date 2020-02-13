@@ -84,15 +84,13 @@ class FVPDeploy(DeployAction):  # pylint: disable=too-many-instance-attributes
 
     def populate(self, parameters):
         self.image_path = self.mkdtemp()
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         if self.test_needs_overlay(parameters):
-            self.internal_pipeline.add_action(OverlayAction())
+            self.pipeline.add_action(OverlayAction())
         uniquify = parameters.get("uniquify", True)
         if "images" in parameters:
             for k in sorted(parameters["images"].keys()):
-                self.internal_pipeline.add_action(
+                self.pipeline.add_action(
                     DownloaderAction(
                         k, self.image_path, parameters["images"][k], uniquify=uniquify
                     )
@@ -104,35 +102,35 @@ class FVPDeploy(DeployAction):  # pylint: disable=too-many-instance-attributes
                         if not self.test_needs_overlay(parameters):
                             continue
                         if ramdisk is not None:
-                            self.internal_pipeline.add_action(
+                            self.pipeline.add_action(
                                 OffsetAction(k, partition_number=partition)
                             )
-                            self.internal_pipeline.add_action(
+                            self.pipeline.add_action(
                                 ExtractRamdiskFromDisk(file=ramdisk, key=k)
                             )
-                            self.internal_pipeline.add_action(
+                            self.pipeline.add_action(
                                 ExtractRamdisk(
                                     ramdisk_label=ExtractRamdiskFromDisk.name,
                                     ramdisk_action=ExtractRamdiskFromDisk.name,
                                     force=True,
                                 )
                             )
-                            self.internal_pipeline.add_action(
+                            self.pipeline.add_action(
                                 ApplyOverlayTftp(force_ramdisk=True)
                             )
-                            self.internal_pipeline.add_action(
+                            self.pipeline.add_action(
                                 CompressRamdisk(
                                     action=ExtractRamdiskFromDisk.name,
                                     label=ExtractRamdiskFromDisk.name,
                                     force=True,
                                 )
                             )
-                            self.internal_pipeline.add_action(
+                            self.pipeline.add_action(
                                 InjectIntoDiskImage(file=ramdisk, key=k)
                             )
                         # Partition should always be specified, see validate.
                         else:
-                            self.internal_pipeline.add_action(
+                            self.pipeline.add_action(
                                 ApplyOverlayImage(image_key=k, root_partition=partition)
                             )
 

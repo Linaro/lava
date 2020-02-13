@@ -57,14 +57,12 @@ class BootFVPAction(BootAction):
     summary = "boot fvp"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
-        self.internal_pipeline.add_action(BootFVPMain())
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.pipeline.add_action(BootFVPMain())
         if self.has_prompts(parameters):
-            self.internal_pipeline.add_action(AutoLoginAction())
+            self.pipeline.add_action(AutoLoginAction())
             if self.test_has_shell(parameters):
-                self.internal_pipeline.add_action(ExpectShellSession())
+                self.pipeline.add_action(ExpectShellSession())
 
 
 class BootFVPMain(Action):
@@ -74,12 +72,10 @@ class BootFVPMain(Action):
     summary = "boot fvp"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
-        self.internal_pipeline.add_action(CheckFVPVersionAction())
-        self.internal_pipeline.add_action(StartFVPAction())
-        self.internal_pipeline.add_action(GetFVPSerialAction())
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.pipeline.add_action(CheckFVPVersionAction())
+        self.pipeline.add_action(StartFVPAction())
+        self.pipeline.add_action(GetFVPSerialAction())
 
 
 class BaseFVPAction(Action):
