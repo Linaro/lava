@@ -14,5 +14,8 @@ then
   apt-get install --no-install-recommends --yes $DEPS
 else
   set -x
-  PYTHONPATH=. pytest-3 --cache-clear -v --cov --cov-report=term --cov-report=html --cov-fail-under=$COVERAGE_MIN_PERCENTAGE
+  # Due to a but somewhere in pytest or coverage, the htmlcov is not generated
+  # by pytest but can be generated in a second step.
+  PYTHONPATH=. pytest-3 --cache-clear -v --cov --cov-report=term --cov-fail-under=$COVERAGE_MIN_PERCENTAGE tests/
+  python3 -m coverage html
 fi
