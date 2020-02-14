@@ -28,9 +28,15 @@ from lava_common.schemas import deploy
 def schema():
     base = {
         Required("to"): "fvp",
+        Optional("ramdisk"): {
+            Optional("install_overlay"): bool,
+            Optional("compression"): str,
+            Optional("header"): "u-boot",
+        },
         Required("images"): {
             Required(str, "'images' is empty"): {
                 **deploy.url(),
+                Optional("apply_overlay"): bool,
                 Optional("overlays"): [
                     {Required("partition"): int, Optional("ramdisk"): str}
                 ],

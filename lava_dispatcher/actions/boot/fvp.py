@@ -129,6 +129,13 @@ class BaseFVPAction(Action):
             filename = self.get_namespace_data(
                 action="download-action", label=label, key="file"
             )
+            if label == "ramdisk":
+                ramdisk = self.get_namespace_data(
+                    action="compress-ramdisk", label="file", key="full-path"
+                )
+                # If overlay has been copied into the ramdisk, use that
+                if ramdisk:
+                    filename = ramdisk
             if filename is None:
                 self.logger.warning(
                     "Empty value for action='download-action' label='%s' key='file'",

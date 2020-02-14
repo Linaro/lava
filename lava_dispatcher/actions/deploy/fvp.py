@@ -31,6 +31,7 @@ from lava_dispatcher.actions.deploy.apply_overlay import (
     ApplyOverlayTftp,
     ExtractRamdiskFromDisk,
     ApplyOverlayImage,
+    PrepareOverlayTftp,
 )
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
@@ -133,6 +134,11 @@ class FVPDeploy(DeployAction):  # pylint: disable=too-many-instance-attributes
                             self.pipeline.add_action(
                                 ApplyOverlayImage(image_key=k, root_partition=partition)
                             )
+                elif parameters["images"][k].get(
+                    "apply_overlay", False
+                ) and self.test_needs_overlay(parameters):
+                    # For normal ramdisk overlay
+                    self.pipeline.add_action(PrepareOverlayTftp())
 
 
 class OffsetAction(DeployAction):
