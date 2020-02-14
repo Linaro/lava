@@ -143,7 +143,7 @@ class TestRestApi:
             device_type=self.public_device_type1,
             worker_host=self.worker1,
         )
-        self.public_device1 = Device.objects.create(
+        self.public_device2 = Device.objects.create(
             hostname="public02",
             device_type=self.public_device_type1,
             worker_host=self.worker1,
@@ -157,12 +157,12 @@ class TestRestApi:
 
         # create testjobs
         self.public_testjob1 = TestJob.objects.create(
-            definition=yaml_safe_dump(EXAMPLE_JOB),
+            definition=EXAMPLE_WORKING_JOB,
             submitter=self.user,
             requested_device_type=self.public_device_type1,
         )
         self.private_testjob1 = TestJob.objects.create(
-            definition=yaml_safe_dump(EXAMPLE_JOB),
+            definition=EXAMPLE_JOB,
             submitter=self.admin,
             requested_device_type=self.public_device_type1,
         )
@@ -1098,6 +1098,21 @@ ok 2 bar
             reverse("api-root", args=[self.version]) + "jobs/",
             {"definition": EXAMPLE_WORKING_JOB},
             format="json",
+        )
+        assert response.status_code == 201  # nosec - unit test support
+        assert TestJob.objects.count() == 3  # nosec - unit test support
+
+    def test_resubmit_unauthorized(self):
+        response = self.userclient.post(
+            reverse("api-root", args=[self.version])
+            + "jobs/%s/resubmit/" % self.private_testjob1.id
+        )
+        assert response.status_code == 404  # nosec - unit test support
+
+    def test_resubmit(self):
+        response = self.adminclient.post(
+            reverse("api-root", args=[self.version])
+            + "jobs/%s/resubmit/" % self.public_testjob1.id
         )
         assert response.status_code == 201  # nosec - unit test support
         assert TestJob.objects.count() == 3  # nosec - unit test support

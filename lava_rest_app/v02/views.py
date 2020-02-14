@@ -38,6 +38,8 @@ from lava_results_app.utils import (
 )
 from lava_rest_app.base import views as base_views
 from lava_rest_app import filters
+from lava_scheduler_app.dbutils import testjob_submission
+from lava_scheduler_app.schema import SubmissionException
 from rest_framework import status, viewsets
 from rest_framework.permissions import (
     DjangoModelPermissions,
@@ -46,7 +48,13 @@ from rest_framework.permissions import (
 from rest_framework_extensions.mixins import NestedViewSetMixin
 from rest_framework.response import Response
 from rest_framework.exceptions import ParseError, PermissionDenied, ValidationError
-from lava_scheduler_app.models import Alias, Tag
+from lava_scheduler_app.models import (
+    Alias,
+    Device,
+    DeviceType,
+    DevicesUnavailableException,
+    Tag,
+)
 
 from . import serializers
 
@@ -152,6 +160,46 @@ class TestJobViewSet(base_views.TestJobViewSet):
             return Response(
                 {"message": "Job invalid: %s" % exc.msg}, status=status.HTTP_200_OK
             )
+
+    @action(methods=["post"], detail=True, suffix="resubmit")
+    def resubmit(self, request, **kwargs):
+        if self.get_object().is_multinode:
+            definition = self.get_object().multinode_definition
+        else:
+            definition = self.get_object().definition
+
+        try:
+            job = testjob_submission(definition, self.request.user)
+        except SubmissionException as exc:
+            return Response(
+                {"message": "Problem with submitted job data: %s" % exc},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except (ValueError, KeyError) as exc:
+            return Response(
+                {"message": "job submission failed: %s." % exc},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except (Device.DoesNotExist, DeviceType.DoesNotExist):
+            return Response(
+                {"message": "Specified device or device type not found."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except DevicesUnavailableException as exc:
+            return Response(
+                {"message": "Devices unavailable: %s" % exc},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if isinstance(job, list):
+            job_ids = [j.sub_id for j in job]
+        else:
+            job_ids = [job.id]
+
+        return Response(
+            {"message": "job(s) successfully submitted", "job_ids": job_ids},
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class TestSuiteViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
