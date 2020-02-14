@@ -470,6 +470,15 @@ ok 2 bar
             data[0]["suite"] == self.public_testjob1.testsuite_set.first().name
         )  # nosec - unit test support
 
+    def test_testjob_validate(self):
+        response = self.userclient.post(
+            reverse("api-root", args=[self.version]) + "jobs/validate/",
+            {"definition": EXAMPLE_WORKING_JOB},
+        )
+        assert response.status_code == 200  # nosec - unit test support
+        msg = json.loads(response.content)
+        assert msg["message"] == "Job valid."
+
     def test_devices_list(self):
         data = self.hit(
             self.userclient,

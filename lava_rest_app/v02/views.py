@@ -21,7 +21,9 @@ import csv
 import io
 import os
 import pathlib
+import voluptuous
 import yaml
+import lava_common.schemas as schemas
 
 from django.conf import settings
 from django.http.response import HttpResponse
@@ -49,7 +51,7 @@ from lava_scheduler_app.models import Alias, Tag
 from . import serializers
 
 try:
-    from rest_framework.decorators import detail_route
+    from rest_framework.decorators import detail_route, action
 except ImportError:
     from rest_framework.decorators import action
 
@@ -64,6 +66,10 @@ class TestJobViewSet(base_views.TestJobViewSet):
     You can submit a job via POST request on:
 
     * `/jobs/`
+
+    You can alidate the given job definition against the schema validator via POST request on:
+
+    * `/jobs/validate/`
 
     The logs, test results and test suites of a specific TestJob are available at:
 
@@ -126,6 +132,26 @@ class TestJobViewSet(base_views.TestJobViewSet):
     @detail_route(methods=["get"], suffix="metadata")
     def metadata(self, request, **kwargs):
         return Response({"metadata": self.get_object().get_metadata_dict()})
+
+    @action(methods=["post"], detail=False, suffix="validate")
+    def validate(self, request, **kwargs):
+        definition = request.data.get("definition", None)
+        strict = request.data.get("strict", False)
+        if not definition:
+            raise ValidationError({"definition": "Test job definition is required."})
+
+        data = yaml_safe_load(definition)
+        try:
+            schemas.validate(
+                data,
+                strict=strict,
+                extra_context_variables=settings.EXTRA_CONTEXT_VARIABLES,
+            )
+            return Response({"message": "Job valid."}, status=status.HTTP_200_OK)
+        except voluptuous.Invalid as exc:
+            return Response(
+                {"message": "Job invalid: %s" % exc.msg}, status=status.HTTP_200_OK
+            )
 
 
 class TestSuiteViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
