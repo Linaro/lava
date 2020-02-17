@@ -29,10 +29,9 @@ def schema():
     base = {
         Required("to"): "iso-installer",
         Required("images"): {
-            Required("iso"): {
-                **deploy.url(),
-                Optional("image_arg"): str,  # TODO: is this optional?
-            },
+            Required("iso"): deploy.url(
+                {Optional("image_arg"): str}  # TODO: is this optional?
+            ),
             Required("preseed"): deploy.url(),
         },
         Required("iso"): {

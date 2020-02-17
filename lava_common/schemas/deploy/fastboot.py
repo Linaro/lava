@@ -26,18 +26,17 @@ from lava_common.schemas import deploy
 
 
 def schema():
+    extra = {
+        Optional("apply-overlay"): bool,
+        Optional("sparse"): bool,
+        Optional("reboot"): Any(
+            "hard-reset", "fastboot-reboot", "fastboot-reboot-bootloader"
+        ),
+    }
+
     base = {
         Required("to"): "fastboot",
-        Required("images"): {
-            Required(str, "'images' is empty"): {
-                **deploy.url(),
-                Optional("apply-overlay"): bool,
-                Optional("sparse"): bool,
-                Optional("reboot"): Any(
-                    "hard-reset", "fastboot-reboot", "fastboot-reboot-bootloader"
-                ),
-            }
-        },
+        Required("images"): {Required(str, "'images' is empty"): deploy.url(extra)},
         Optional("docker"): {Required("image"): str},
         Optional("connection"): "lxc",  # FIXME: other possible values?
     }

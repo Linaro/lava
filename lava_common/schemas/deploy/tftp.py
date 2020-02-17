@@ -27,23 +27,29 @@ from lava_common.schemas import deploy
 
 def schema():
     resource = deploy.url()
-    resource_ext = {
-        **resource,
-        Optional("install_modules"): bool,
-        Optional("install_overlay"): bool,
-    }
 
     base = {
         Required("to"): "tftp",
-        Required("kernel", msg="needs a kernel to deploy"): {
-            **resource,
-            Optional("type"): Any("image", "uimage", "zimage"),
-        },
+        Required("kernel", msg="needs a kernel to deploy"): deploy.url(
+            {Optional("type"): Any("image", "uimage", "zimage")}
+        ),
         Optional("dtb"): resource,
         Optional("modules"): resource,
         Optional("preseed"): resource,
-        Optional("ramdisk"): {**resource_ext, Optional("header"): "u-boot"},
-        Exclusive("nfsrootfs", "nfs"): {**resource_ext, Optional("prefix"): str},
+        Optional("ramdisk"): deploy.url(
+            {
+                Optional("install_modules"): bool,
+                Optional("install_overlay"): bool,
+                Optional("header"): "u-boot",
+            }
+        ),
+        Exclusive("nfsrootfs", "nfs"): deploy.url(
+            {
+                Optional("install_modules"): bool,
+                Optional("install_overlay"): bool,
+                Optional("prefix"): str,
+            }
+        ),
         Exclusive("persistent_nfs", "nfs"): {
             Required("address"): str,
             Optional("install_overlay"): bool,

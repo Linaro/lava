@@ -28,6 +28,6 @@ from lava_common.schemas import deploy
 def schema():
     base = {
         Required("to"): "recovery",
-        Required("images"): {Required(str, "'images' is empty"): {**deploy.url()}},
+        Required("images"): {Required(str, "'images' is empty"): deploy.url()},
     }
     return {**deploy.schema(), **base}

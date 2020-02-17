@@ -31,10 +31,9 @@ def schema():
         Required("images"): All(
             {
                 Optional("recovery_image"): deploy.url(),
-                Optional(Match("test_binary(_\\w+)?$")): {
-                    **deploy.url(),
-                    Optional("rename"): str,
-                },
+                Optional(Match("test_binary(_\\w+)?$")): deploy.url(
+                    {Optional("rename"): str}
+                ),
             },
             Length(min=1),
         ),
