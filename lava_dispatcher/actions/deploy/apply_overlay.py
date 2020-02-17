@@ -30,6 +30,7 @@ from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.utils.installers import add_late_command, add_to_kickstart
 from lava_dispatcher.utils.filesystem import (
     lxc_path,
+    mkdtemp,
     is_sparse_image,
     prepare_guestfs,
     copy_in_overlay,
@@ -331,7 +332,7 @@ class ApplyOverlayTftp(Action):
             # need to mount the persistent NFS here.
             # We can't use self.mkdtemp() here because this directory should
             # not be removed if umount fails.
-            directory = self.mkdtemp()
+            directory = mkdtemp(autoremove=False)
             try:
                 subprocess.check_output(  # nosec - internal.
                     ["mount", "-t", "nfs", nfs_address, directory]
