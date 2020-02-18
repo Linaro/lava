@@ -35,6 +35,7 @@ import subprocess  # nosec - verified.
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.protocols.lxc import LxcProtocol
 from lava_dispatcher.actions.deploy import DeployAction
+from lava_dispatcher.actions.deploy.apply_overlay import AppendOverlays
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.connections.serial import ConnectDevice
 from lava_common.exceptions import InfrastructureError, JobError, LAVABug
@@ -103,6 +104,15 @@ class DownloaderAction(RetryAction):
         else:
             raise JobError("Unsupported url protocol scheme: %s" % url.scheme)
         self.pipeline.add_action(action)
+        overlays = self.params.get("overlays", [])
+        for overlay in overlays:
+            self.pipeline.add_action(
+                DownloaderAction(
+                    "%s.%s" % (self.key, overlay), self.path, params=overlays[overlay]
+                )
+            )
+        if overlays:
+            self.pipeline.add_action(AppendOverlays(self.key, params=self.params))
 
 
 class DownloadHandler(Action):
@@ -277,6 +287,13 @@ class DownloadHandler(Action):
         compression = self._compression()
         if self.key == "ramdisk":
             self.logger.debug("Not decompressing ramdisk as can be used compressed.")
+
+        self.set_namespace_data(
+            action="download-action",
+            label=self.key,
+            key="decompressed",
+            value=bool(compression),
+        )
 
         md5sum = self.params.get("md5sum")
         sha256sum = self.params.get("sha256sum")
