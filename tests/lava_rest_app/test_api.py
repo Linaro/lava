@@ -136,6 +136,7 @@ class TestRestApi:
         Alias.objects.create(name="test1", device_type=self.public_device_type1)
         Alias.objects.create(name="test2", device_type=self.public_device_type1)
         Alias.objects.create(name="test3", device_type=self.invisible_device_type1)
+        Alias.objects.create(name="test4", device_type=self.restricted_device_type1)
 
         # create devices
         self.public_device1 = Device.objects.create(
@@ -1036,7 +1037,7 @@ ok 2 bar
             self.userclient,
             reverse("api-root", args=[self.version]) + "aliases/?ordering=name",
         )
-        # We have 3 aliases, but only 2 are visible
+        # We have 4 aliases, but only 2 are visible
         assert len(data["results"]) == 2  # nosec - unit test support
         assert data["results"][0]["name"] == "test1"  # nosec - unit test support
         assert data["results"][1]["name"] == "test2"  # nosec - unit test support
@@ -1051,14 +1052,14 @@ ok 2 bar
     def test_aliases_create_unauthorized(self):
         response = self.userclient.post(
             reverse("api-root", args=[self.version]) + "aliases/",
-            {"name": "test4", "device_type": "qemu"},
+            {"name": "test5", "device_type": "qemu"},
         )
         assert response.status_code == 403  # nosec - unit test support
 
     def test_aliases_create(self):
         response = self.adminclient.post(
             reverse("api-root", args=[self.version]) + "aliases/",
-            {"name": "test4", "device_type": "public_device_type1"},
+            {"name": "test5", "device_type": "public_device_type1"},
         )
         assert response.status_code == 201  # nosec - unit test support
 
