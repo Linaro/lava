@@ -290,8 +290,7 @@ class ApplyOverlayTftp(Action):
         namespace = self.parameters.get("namespace")
         if self.parameters.get("nfsrootfs") is not None:
             if not self.parameters["nfsrootfs"].get("install_overlay", True):
-                self.logger.info("[%s] Skipping applying overlay to NFS"
-                                 , namespace)
+                self.logger.info("[%s] Skipping applying overlay to NFS", namespace)
                 return connection
             overlay_file = self.get_namespace_data(
                 action="compress-overlay", label="output", key="file"
