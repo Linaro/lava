@@ -305,6 +305,17 @@ class TestKVMDownloadLocalDeploy(StdoutTestCase):
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 
 
+class TestKVMDeployOverlays(StdoutTestCase):
+    def setUp(self):
+        super().setUp()
+        factory = Factory()
+        self.job = factory.create_kvm_job("sample_jobs/kvm-overlays.yaml")
+
+    def test_pipeline(self):
+        description_ref = self.pipeline_reference("kvm-overlays.yaml", job=self.job)
+        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+
+
 def prepare_test_connection(failure=False):
     if failure:
         logfile = os.path.join(os.path.dirname(__file__), "kernel-login-error.txt")
