@@ -18,6 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import guestfs
 import os
 import shutil
 import subprocess  # nosec - internal use.
@@ -845,3 +846,125 @@ class ConfigurePreseedFile(Action):
                     post_command[0],
                 )
         return connection
+
+
+class AppendOverlays(Action):
+
+    name = "append-overlays"
+    description = "append overlays to an image"
+    summary = "append overlays to an image"
+
+    # TODO: list libguestfs supported formats
+    IMAGE_FORMATS = ["cpio.newc", "ext4"]
+    OVERLAY_FORMATS = ["tar"]
+
+    def __init__(self, key, params):
+        super().__init__()
+        self.key = key
+        self.params = params
+
+    def validate(self):
+        super().validate()
+        # Check that we have "overlays" dict
+        if "overlays" not in self.params:
+            raise JobError("Missing 'overlays' dictionary")
+        if not isinstance(self.params["overlays"], dict):
+            raise JobError("'overlays' is not a dictionary")
+        for overlay, params in self.params["overlays"].items():
+            if params.get("format") not in self.OVERLAY_FORMATS:
+                raise JobError(
+                    "Invalid 'format' (%r) for 'overlays.%s'"
+                    % (params.get("format", ""), overlay)
+                )
+            path = params.get("path")
+            if path is None:
+                raise JobError("Missing 'path' for 'overlays.%s'" % overlay)
+            if not path.startswith("/") or ".." in path:
+                raise JobError("Invalid 'path': %r" % path)
+
+        # Check the image format
+        if self.params.get("format") not in self.IMAGE_FORMATS:
+            raise JobError("Unsupported image format %r" % self.params.get("format"))
+
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
+        if self.params["format"] == "cpio.newc":
+            self.update_cpio()
+        elif self.params["format"] == "ext4":
+            try:
+                self.update_guestfs()
+            except RuntimeError as exc:
+                self.logger.exception(str(exc))
+                raise JobError("Unable to update image %s: %r" % (self.key, str(exc)))
+        else:
+            raise LAVABug("Unknown format %r" % self.params["format"])
+        return connection
+
+    def update_cpio(self):
+        image = self.get_namespace_data(
+            action="download-action", label=self.key, key="file"
+        )
+        compression = self.get_namespace_data(
+            action="download-action", label=self.key, key="compression"
+        )
+        decompressed = self.get_namespace_data(
+            action="download-action", label=self.key, key="decompressed"
+        )
+        self.logger.info("Modifying %r", image)
+        tempdir = self.mkdtemp()
+        # Some images are kept compressed. We should decompress first
+        if compression and not decompressed:
+            self.logger.debug("* decompressing (%s)", compression)
+            image = decompress_file(image, compression)
+        # extract the archive
+        self.logger.debug("* extracting %r", image)
+        uncpio(image, tempdir)
+        os.unlink(image)
+
+        # Add overlays
+        self.logger.debug("Overlays:")
+        for overlay in self.params["overlays"]:
+            label = "%s.%s" % (self.key, overlay)
+            overlay_image = self.get_namespace_data(
+                action="download-action", label=label, key="file"
+            )
+            path = self.params["overlays"][overlay]["path"]
+            self.logger.debug("- %s: %r to %r", label, overlay_image, path)
+            # In the "validate" function, we check that path startswith '/'
+            # and does not contains '..'
+            untar_file(overlay_image, "." + path)
+
+        # Recreating the archive
+        self.logger.debug("* archiving %r", image)
+        cpio(tempdir, image)
+        if compression and not decompressed:
+            self.logger.debug("* compressing (%s)", compression)
+            image = compress_file(image, compression)
+
+    def update_guestfs(self):
+        image = self.get_namespace_data(
+            action="download-action", label=self.key, key="file"
+        )
+        self.logger.info("Modifying %r", image)
+        guest = guestfs.GuestFS(python_return_dict=True)
+        guest.add_drive(image)
+        try:
+            guest.launch()
+            device = guest.list_devices()[0]
+            guest.mount(device, "/")
+        except RuntimeError as exc:
+            self.logger.exception(str(exc))
+            raise JobError("Unable to update image %s: %r" % (self.key, str(exc)))
+
+        self.logger.debug("Overlays:")
+        for overlay in self.params["overlays"]:
+            label = "%s.%s" % (self.key, overlay)
+            overlay_image = self.get_namespace_data(
+                action="download-action", label=label, key="file"
+            )
+            path = self.params["overlays"][overlay]["path"]
+            self.logger.debug("- %s: %r to %r", label, overlay_image, path)
+            guest.mkdir_p(path)
+            guest.tar_in(overlay_image, path)
+        guest.umount(device)
+        guest.shutdown()
