@@ -26,6 +26,7 @@ import contextlib
 import errno
 import math
 import os
+import pathlib
 import shutil
 import time
 import hashlib
@@ -163,6 +164,10 @@ class DownloadHandler(Action):
 
     def validate(self):
         super().validate()
+        # Check that self.key is not a path
+        if len(pathlib.Path(self.key).parts) != 1:
+            raise JobError("Invalid key %r" % self.key)
+
         self.url = urlparse(self.params["url"])
         compression = self.params.get("compression")
         archive = self.params.get("archive")
