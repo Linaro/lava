@@ -95,3 +95,43 @@ def untar_file(infile, outdir):
             tar.extractall(outdir)
     except tarfile.TarError as exc:
         raise JobError("Unable to unpack %s: %s" % (infile, str(exc)))
+
+
+def cpio(directory, filename):
+    which("cpio")
+    which("find")
+    with chdir(directory):
+        try:
+            find = subprocess.check_output(
+                ["find", "."], stderr=subprocess.STDOUT
+            )  # nosec
+            return subprocess.check_output(  # nosec
+                ["cpio", "--create", "--format", "newc", "--file", filename],
+                input=find,
+                stderr=subprocess.STDOUT,
+            ).decode("utf-8", errors="replace")
+        except Exception as exc:
+            raise InfrastructureError(
+                "Unable to create cpio archive %r: %s" % (filename, exc)
+            )
+
+
+def uncpio(filename, directory):
+    which("cpio")
+    with chdir(directory):
+        try:
+            subprocess.check_output(  # nosec
+                [
+                    "cpio",
+                    "--extract",
+                    "--make-directories",
+                    "--unconditional",
+                    "--file",
+                    filename,
+                ],
+                stderr=subprocess.STDOUT,
+            )
+        except subprocess.SubprocessError as exc:
+            raise InfrastructureError(
+                "Unable to extract cpio archive %r: %s" % (filename, exc)
+            )
