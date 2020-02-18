@@ -49,6 +49,35 @@ a *****
    explanations. Ensure all information on options and possible values is in the
    reference guide.
 
+Overlays
+********
+
+LAVA can insert user provided overlays into your images right after the download step.
+
+In the url block, you can add a dictionary called `overlays` that will list the
+overlays to add to the given resource.
+
+.. code-block:: yaml
+
+  - deploy:
+      images:
+        rootfs:
+          url: http://example.com/rootfs.ext4.xz
+          compression: xz
+          format: ext4
+          overlays:
+            modules:
+              url: http://example.com/modules.tar.xz
+              compression: xz
+              format: tar
+              path: /
+
+In order to insert overlay into an image, you should specify the image format.
+Currently LAVA supports cpio (newc format) and ext4 images.
+
+The overlays should be archived using tar. The path is relative to the root of
+the image to update. This path is required.
+
 Parameter List
 **************
 
