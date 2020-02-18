@@ -26,7 +26,6 @@ from lava_common.exceptions import InfrastructureError, JobError, LAVABug
 from lava_common.constants import RAMDISK_FNAME, UBOOT_DEFAULT_HEADER_LENGTH
 from lava_common.utils import debian_filename_version
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
-from lava_dispatcher.utils.contextmanager import chdir
 from lava_dispatcher.utils.installers import add_late_command, add_to_kickstart
 from lava_dispatcher.utils.filesystem import (
     lxc_path,
@@ -37,7 +36,13 @@ from lava_dispatcher.utils.filesystem import (
     copy_overlay_to_sparse_fs,
 )
 from lava_dispatcher.utils.shell import which
-from lava_dispatcher.utils.compression import compress_file, decompress_file, untar_file
+from lava_dispatcher.utils.compression import (
+    compress_file,
+    cpio,
+    decompress_file,
+    untar_file,
+    uncpio,
+)
 from lava_dispatcher.utils.strings import substitute
 from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.actions.deploy.prepare import PrepareKernelAction
@@ -599,14 +604,7 @@ class ExtractRamdisk(Action):
             # give the file a predictable name
             shutil.move(ramdisk, ramdisk_compressed_data)
         ramdisk_data = decompress_file(ramdisk_compressed_data, compression)
-
-        with chdir(extracted_ramdisk):
-            cmd = ("cpio -iud -F %s" % ramdisk_data).split(" ")
-            if not self.run_command(cmd):
-                raise JobError(
-                    "Unable to extract cpio archive: %s - missing header definition (i.e. u-boot)?"
-                    % ramdisk_data
-                )
+        uncpio(ramdisk_data, extracted_ramdisk)
 
         # tell other actions where the unpacked ramdisk can be found
         self.set_namespace_data(
@@ -699,24 +697,12 @@ class CompressRamdisk(Action):
                     action=self.name, label="file", key="preseed_local", value=filename
                 )
 
-        with chdir(ramdisk_dir):
-            self.logger.info(
-                "Building ramdisk %s containing %s", ramdisk_data, ramdisk_dir
-            )
-            cmd = "find . | cpio --create --format='newc' > %s" % ramdisk_data
-            try:
-                log = subprocess.check_output(  # nosec - safe to use shell=True here, no external arguments
-                    cmd, shell=True, stderr=subprocess.STDOUT
-                )
-                log = log.decode("utf-8", errors="replace")
-            except OSError as exc:
-                raise InfrastructureError("Unable to create cpio filesystem: %s" % exc)
-            # lazy-logging would mean that the quoting of cmd causes invalid YAML
-            self.logger.debug("%s\n%s" % (cmd, log))
+        self.logger.info("Building ramdisk %s containing %s", ramdisk_data, ramdisk_dir)
+        self.logger.debug(">> %s", cpio(ramdisk_dir, ramdisk_data))
 
-            # we need to compress the ramdisk with the same method is was submitted with
-            compression = self.parameters["ramdisk"].get("compression")
-            final_file = compress_file(ramdisk_data, compression)
+        # we need to compress the ramdisk with the same method is was submitted with
+        compression = self.parameters["ramdisk"].get("compression")
+        final_file = compress_file(ramdisk_data, compression)
 
         tftp_dir = os.path.dirname(
             self.get_namespace_data(
