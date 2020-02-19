@@ -61,7 +61,7 @@ parameters:
     sd:
       sd_card_name:
         uuid: mmc-SDU1_0x00a121a1
-        device_id: 08D9-1DF1  # the bootloader device id for this media on the 'sd' interface
+        device_id: 0  # the bootloader device id for this media on the 'sd' interface
  #  sd_uuid
  # usb_uuid
  # sata_uuid_sd_uuid_usb_uuid
