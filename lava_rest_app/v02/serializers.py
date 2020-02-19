@@ -18,8 +18,17 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 
+from django.contrib.auth.models import Group, Permission
+
 from lava_rest_app.base import serializers as base_serializers
-from lava_scheduler_app.models import Alias, Device, Tag
+from lava_scheduler_app.models import (
+    Alias,
+    Device,
+    DeviceType,
+    GroupDeviceTypePermission,
+    GroupDevicePermission,
+    Tag,
+)
 
 from rest_framework_extensions.fields import ResourceUriField
 from rest_framework.reverse import reverse as rest_reverse
@@ -127,4 +136,36 @@ class AliasSerializer(serializers.ModelSerializer):
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
+        fields = "__all__"
+
+
+class GroupDeviceTypePermissionSerializer(serializers.ModelSerializer):
+    group = serializers.SlugRelatedField(
+        slug_field="name", queryset=Group.objects.all()
+    )
+    permission = serializers.SlugRelatedField(
+        queryset=Permission.objects.filter(
+            content_type__model=DeviceType._meta.object_name.lower()
+        ),
+        slug_field="codename",
+    )
+
+    class Meta:
+        model = GroupDeviceTypePermission
+        fields = "__all__"
+
+
+class GroupDevicePermissionSerializer(serializers.ModelSerializer):
+    group = serializers.SlugRelatedField(
+        slug_field="name", queryset=Group.objects.all()
+    )
+    permission = serializers.SlugRelatedField(
+        queryset=Permission.objects.filter(
+            content_type__model=Device._meta.object_name.lower()
+        ),
+        slug_field="codename",
+    )
+
+    class Meta:
+        model = GroupDevicePermission
         fields = "__all__"

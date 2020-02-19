@@ -36,5 +36,7 @@ router.register(r"jobs", views.TestJobViewSet).register(
     base_name="suites-test",
     parents_query_lookups=["suite__job_id", "suite_id"],
 )
+router.register(r"permissions/devicetypes", views.GroupDeviceTypePermissionViewSet)
+router.register(r"permissions/devices", views.GroupDevicePermissionViewSet)
 router.register(r"tags", views.TagViewSet)
 router.register(r"workers", views.WorkerViewSet)
