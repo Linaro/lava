@@ -58,14 +58,12 @@ class MuscaBoot(BootAction):
     summary = "power device and trigger software to run"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
-        self.internal_pipeline.add_action(ResetDevice())
-        self.internal_pipeline.add_action(WaitUSBSerialDeviceAction())
-        self.internal_pipeline.add_action(ConnectDevice())
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.pipeline.add_action(ResetDevice())
+        self.pipeline.add_action(WaitUSBSerialDeviceAction())
+        self.pipeline.add_action(ConnectDevice())
         if self.has_prompts(parameters):
-            self.internal_pipeline.add_action(AutoLoginAction())
+            self.pipeline.add_action(AutoLoginAction())
 
     def run(self, connection, max_end_time):
         connection = self.get_namespace_data(

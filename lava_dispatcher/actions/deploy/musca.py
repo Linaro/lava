@@ -83,37 +83,33 @@ class MuscaAction(RetryAction):
 
     def populate(self, parameters):
         download_dir = self.mkdtemp()
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         # Musca will autoboot previously deployed binaries
         # Therefore disconnect serial to avoid clutter.
-        self.internal_pipeline.add_action(DisconnectDevice())
+        self.pipeline.add_action(DisconnectDevice())
         # If we don't run with a strict schema, it is possible to pass validation with warnings
         # even without the required 'test_binary' field.
         # Therefore, ensure the DownloaderAction.populate does not fail, and catch this at validate step.
         image_params = parameters.get("images", {}).get("test_binary")
         if image_params:
-            self.internal_pipeline.add_action(
+            self.pipeline.add_action(
                 DownloaderAction("test_binary", path=download_dir, params=image_params)
             )
         # Turn on
-        self.internal_pipeline.add_action(ResetDevice())
+        self.pipeline.add_action(ResetDevice())
         # Wait for storage
-        self.internal_pipeline.add_action(WaitMuscaMassStorageAction())
+        self.pipeline.add_action(WaitMuscaMassStorageAction())
 
         # Deploy test binary
-        self.internal_pipeline.add_action(MountMuscaMassStorageDevice())
-        self.internal_pipeline.add_action(DeployMuscaTestBinary())
-        self.internal_pipeline.add_action(UnmountMuscaMassStorageDevice())
+        self.pipeline.add_action(MountMuscaMassStorageDevice())
+        self.pipeline.add_action(DeployMuscaTestBinary())
+        self.pipeline.add_action(UnmountMuscaMassStorageDevice())
 
         # Check for FAIL.TXT to check if we were successful
-        self.internal_pipeline.add_action(
-            WaitMuscaMassStorageAction(udev_action="change")
-        )
-        self.internal_pipeline.add_action(MountMuscaMassStorageDevice())
-        self.internal_pipeline.add_action(CheckMuscaFlashAction())
-        self.internal_pipeline.add_action(UnmountMuscaMassStorageDevice())
+        self.pipeline.add_action(WaitMuscaMassStorageAction(udev_action="change"))
+        self.pipeline.add_action(MountMuscaMassStorageDevice())
+        self.pipeline.add_action(CheckMuscaFlashAction())
+        self.pipeline.add_action(UnmountMuscaMassStorageDevice())
 
 
 class UnmountMuscaMassStorageDevice(UnmountVExpressMassStorageDevice):

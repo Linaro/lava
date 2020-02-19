@@ -80,10 +80,8 @@ class VExpressMsdRetry(RetryAction):
     summary = "VExpress FW deployment with retry"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
-        self.internal_pipeline.add_action(VExpressMsdAction())
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.pipeline.add_action(VExpressMsdAction())
 
 
 class VExpressMsdAction(DeployAction):
