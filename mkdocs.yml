@@ -1,0 +1,136 @@
+site_name: LAVA
+repo_url: https://git.lavasoftware.org/lava/lava/
+repo_name: GitLab
+site_author: LAVA team
+site_description: LAVA documentation
+
+docs_dir: doc/content
+
+# https://squidfunk.github.io/mkdocs-material/
+# python3 -m pip install mkdocs-material
+theme:
+  name: "material"
+  language: "en"
+  include_sidebar: true
+  feature:
+    tabs: true
+  palette:
+    primary: "light-green"
+    accent: "light-green"
+
+# https://squidfunk.github.io/mkdocs-material/getting-started/#customization
+markdown_extensions:
+- admonition
+- codehilite
+- toc:
+    permalink: true
+- markdown.extensions.abbr
+# https://github.com/simonrenger/markdown-include-lines
+# https://squidfunk.github.io/mkdocs-material/extensions/pymdown/
+- pymdownx.details
+- pymdownx.superfences
+- pymdownx.snippets:
+    base_path: docs/_snippets
+
+# Debugging ?
+# Job errors ?
+nav:
+- Introduction:
+  - Concepts: introduction/concepts.md
+  - Glossary: introduction/glossary.md
+  - Use cases:
+    - Basic testing: introduction/use-cases/boot-testing.md
+    - Bootloader testing: introduction/use-cases/bootloader-testing.md
+    - IoT: introduction/use-cases/iot.md
+    - Power management: introduction/use-cases/power-management.md
+    - VTS/CTS: introduction/use-cases/vts-cts.md
+  - F.A.Q: introduction/faq.md
+  - Contact: introduction/contact.md
+
+- User guide: 
+  - First steps: user/first-steps.md
+  - Basic tutorials:
+    - Submit a job: user/basic-tutorials/submit.md
+    - lavacli: user/basic-tutorials/lavacli.md
+    - Job definition: user/basic-tutorials/job-definition.md
+    - Test definition: user/basic-tutorials/test-definition.md
+    - Job output: user/basic-tutorials/job-output.md
+  - Advanced tutorials:
+    - Debugging Job: user/advanced-tutorials/debugging-job.md
+    - Interactive tests: user/advanced-tutorials/interactive-tests.md
+    - Job generation: user/advanced-tutorials/job-generation.md  # Using jinja2
+    - Multinode: user/advanced-tutorials/multinode.md
+    - Notifications: user/advanced-tutorials/notifications.md
+    - Secondary connection: user/advanced-tutorials/secondary-connection.md
+
+- Admin guide:
+  - First steps: admin/first-steps.md
+  - Recommendations:
+    - Hardware: admin/recommendations/hardware.md
+    - Health-checks: admin/recommendations/health-checks.md
+    - Topology: admin/recommendations/topology.md
+    - Security: admin/recommendations/security.md # explain the security model
+  - Basic Tutorials:
+    - Instance:
+      - Install: admin/basic-tutorials/instance/install.md
+      - Configure: admin/basic-tutorials/instance/configure.md
+      - Upgrade: admin/basic-tutorials/instance/upgrade.md
+      - Backup: admin/basic-tutorials/instance/backup.md
+      - Permissions: admin/basic-tutorials/instance/permissions.md
+    - lavacli: admin/basic-tutorials/lavacli.md
+    - Device setup:
+      - docker: admin/basic-tutorials/device-setup/docker.md
+      - QEMU: admin/basic-tutorials/device-setup/qemu.md
+      - RPi (u-boot): admin/basic-tutorials/device-setup/u-boot.md
+      - x15 (fastboot): admin/basic-tutorials/device-setup/fastboot.md
+  - Advanced tutorials:
+    - LDAP: admin/advanced-tutorials/ldap.md
+    - Proxy: admin/advanced-tutorials/proxy.md
+    - Remote database: admin/advanced-tutorials/remote-database.md
+    - Remote workers: admin/advanced-tutorials/remote-workers.md
+    - Growing your lab: admin/advanced-tutorials/growing-your-lab.md
+    - Trouble shooting: admin/advanced-tutorials/trouble-shooting.md
+
+- Developer guide:
+  - First steps: developer/first-steps.md
+  - Development:
+    - Setup: developer/development/setup.md
+    - Build: developer/development/build.md
+    - Test: developer/development/test.md
+  - Methodology:
+    - Contribute: developer/methodology/contributing.md
+    - Test: developer/methodology/test.md
+    - Release: developer/methodology/release.md
+    - Distribute: developer/methodology/distribute.md
+  - Tutorials:
+    - New device-type: developer/tutorials/new-device-type.md
+    - New action: developer/tutorials/new-actions.md
+
+- Technical references:
+  - Architecture: technical-references/architecture.md
+  - Authorization: technical-references/authorization.md
+  - Configuration:
+    - Device dictionary: technical-references/configuration/device-dictionary.md
+    - Device-type template: technical-references/configuration/device-type-template.md
+    - Services: technical-references/configuration/services.md
+  - Job definition:
+    - Job: technical-references/job-definition/job.md
+    - Actions:
+      - Deploy: technical-references/job-definition/actions/deploy.md
+      - Boot: technical-references/job-definition/actions/boot.md
+      - Test: technical-references/job-definition/actions/test.md
+    - Notifications: technical-references/job-definition/notifications.md
+    - Protocols: technical-references/job-definition/protocols.md
+    - Timeouts: technical-references/job-definition/timeouts.md
+  - Results: technical-references/results.md
+  - State machine: technical-references/state-machine.md
+  - Services:
+    - apache2: technical-references/services/apache2.md
+    - lava-coordinator: technical-references/services/lava-coordinator.md
+    - lava-logs: technical-references/services/lava-logs.md
+    - lava-master: technical-references/services/lava-master.md
+    - lava-publisher: technical-references/services/lava-publisher.md
+    - lava-server-gunicorn: technical-references/services/lava-server-gunicorn.md
+    - lava-slave: technical-references/services/lava-slave.md
+    - postgresql: technical-references/services/postgresql.md
+  - Test definition: technical-references/test-definition.md
