@@ -34,7 +34,12 @@ def schema():
                 Optional("echo"): "discard",
                 Required("script"): [
                     {
-                        Required("command"): Any(str, None),
+                        Optional("command"): Any(str, None),
+                        Optional("delay"): int,
+                        Optional("lava-send"): str,
+                        Optional("lava-sync"): str,
+                        Optional("lava-wait"): str,
+                        Optional("lava-wait-all"): str,
                         Optional("name"): Match(r"^[-_a-zA-Z0-9.]+$"),
                         Optional("wait_for_prompt"): bool,
                         Optional("successes"): [

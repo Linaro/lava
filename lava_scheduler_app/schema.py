@@ -211,7 +211,12 @@ def _interactive_script_schema():
                 Optional("name"): Match(
                     r"^[a-zA-Z0-9-_]+$", msg=INVALID_CHARACTER_ERROR_MSG
                 ),
-                Required("command"): Any(None, str),
+                Optional("command"): Any(None, str),
+                Optional("delay"): int,
+                Optional("lava-send"): str,
+                Optional("lava-sync"): str,
+                Optional("lava-wait"): str,
+                Optional("lava-wait-all"): str,
                 Optional("failures"): [
                     {
                         Required("message"): str,
