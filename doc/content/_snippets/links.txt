@@ -1,0 +1,7 @@
+[lava-debian]: https://apt.lavasoftware.org/release/
+[lava-docker-hub]: https://hub.docker.com/u/lavasoftware/
+[lava-docker-compose]: https://git.lavasoftware.org/lava/pkg/docker-compose
+[lavacli]: https://docs.lavasoftware.org/lavacli/
+[localhost]: http://localhost
+[pgsql-backup]: https://www.postgresql.org/docs/9.1/backup.html
+[pytest]: https://doc.pytest.org/en/latest/
