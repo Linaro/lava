@@ -30,7 +30,7 @@ markdown_extensions:
 - pymdownx.details
 - pymdownx.superfences
 - pymdownx.snippets:
-    base_path: docs/_snippets
+    base_path: doc/content/_snippets
 
 # Debugging ?
 # Job errors ?
