@@ -78,14 +78,8 @@ class MenuFactory(Factory):
     """
 
     def create_uefi_job(self, filename):
-        device = NewDevice(
-            os.path.join(os.path.dirname(__file__), "devices/mustang-uefi.yaml")
-        )
-        mustang_yaml = os.path.join(os.path.dirname(__file__), filename)
-        with open(mustang_yaml) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, device, 0, None, dispatcher_config="")
-            job.logger = DummyLogger()
+        job = super().create_job("mustang-uefi-01.jinja2", filename)
+        job.logger = DummyLogger()
         return job
 
 
@@ -162,6 +156,7 @@ class TestUefi(StdoutTestCase):
         # just dummy strings
         substitution_dictionary = {
             "{SERVER_IP}": "10.4.0.1",
+            "{NFS_SERVER_IP}": "10.4.0.2",
             "{RAMDISK}": None,
             "{KERNEL}": "uImage",
             "{DTB}": "mustang.dtb",
@@ -178,7 +173,6 @@ class TestUefi(StdoutTestCase):
                     block["select"]["items"] = substitute(
                         block["select"]["items"], substitution_dictionary
                     )
-        count = 0
         check_block = [
             {"items": ["Boot Manager"], "wait": "Choice:"},
             {
@@ -207,7 +201,7 @@ class TestUefi(StdoutTestCase):
             {
                 "enter": [
                     "console=ttyS0,115200 earlyprintk=uart8250-32bit,0x1c020000 debug root=/dev/nfs rw "
-                    "nfsroot=10.4.0.1:tmp/tmp21dfed/,tcp,hard,intr ip=dhcp"
+                    "nfsroot=10.4.0.2:tmp/tmp21dfed/,tcp,hard,intr ip=dhcp"
                 ],
                 "wait": "Description for this new Entry:",
             },
@@ -215,9 +209,8 @@ class TestUefi(StdoutTestCase):
             {"items": ["Return to main menu"], "wait": "Start:"},
             {"items": ["LAVA NFS Test Image"]},
         ]
-        for item in selector.items:
-            self.assertEqual(item["select"], check_block[count])
-            count += 1
+        for item, check in zip(selector.items, check_block):
+            self.assertEqual(item["select"], check)
 
     @patch(
         "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"

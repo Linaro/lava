@@ -51,9 +51,9 @@ see http://jinja.pocoo.org/docs/dev/templates/#other-operators
 {'wait': "Boot Type:"},
 {'enter': 'f'},
 {'wait': "Add an initrd:"},
-{'enter': n},
+{'enter': 'n'},
 {'wait': "Get the IP address from DHCP:"},
-{'enter': y},
+{'enter': 'y'},
 {'wait': "Get the TFTP server IP address:"},
 {'enter': '{SERVER_IP}'},
 {'wait': "File path of the FDT :"},
@@ -108,13 +108,13 @@ actions:
 {# FIXME: may need a jinja2 extension to make this support generic #}
 {# http://jinja.pocoo.org/docs/dev/extensions/ #}
 {% if 'tftp_mac' in action %}
-             -  '{{ action|replace('tftp_mac', tftp_mac) }}'
+            - '{{ action|replace('tftp_mac', tftp_mac) }}'
 {% elif 'console_device' in action %}
-             -  '{{ action|replace('console_device', console_device) }}'
+            - '{{ action|replace('console_device', console_device) }}'
 {% elif 'baud_rate' in action %}
-             -  '{{ action|replace('baud_rate', baud_rate) }}'
+            - '{{ action|replace('baud_rate', baud_rate) }}'
 {% else %}
-             -  '{{ action }}'
+            - '{{ action }}'
 {% endif %}
 {% elif select == 'enter' %}
         - select:
@@ -125,7 +125,7 @@ actions:
 {% elif 'baud_rate' in action %}
             enter: {{ action|replace('baud_rate', baud_rate) }}
 {% else %}
-            enter: {{ action }}
+            enter: '{{ action }}'
 {% endif %}
 {% elif select == 'fallback' %}
             fallback: '{{ action }}'
