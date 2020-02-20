@@ -98,7 +98,7 @@ coverage:
 dockerfiles:
   <<: *analyze
 
-job-schema:
+schemas:
   <<: *analyze
 
 pylint:
