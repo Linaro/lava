@@ -29,9 +29,7 @@ def schema():
     base = {
         Required("to"): "musca",
         Required("images"): {
-            Required("test_binary", "'images' has no 'test_binary' entry"): {
-                **deploy.url()
-            }
+            Required("test_binary", "'images' has no 'test_binary' entry"): deploy.url()
         },
     }
     return {**deploy.schema(), **base}

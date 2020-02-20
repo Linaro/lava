@@ -230,9 +230,7 @@ class DeployMuscaTestBinary(Action):
         mount_point = self.get_namespace_data(
             action="mount-musca-usbmsd", label="musca-usb", key="mount-point"
         )
-        try:
-            os.path.realpath(mount_point)
-        except OSError:
+        if not os.path.exists(mount_point):
             raise InfrastructureError("Unable to locate mount point: %s" % mount_point)
 
         test_binary = self.get_namespace_data(
@@ -271,16 +269,14 @@ class DeployMuscaAutomationAction(Action):
         mount_point = self.get_namespace_data(
             action="mount-musca-usbmsd", label="musca-usb", key="mount-point"
         )
-        try:
-            os.path.realpath(mount_point)
-        except OSError:
+        if not os.path.exists(mount_point):
             raise InfrastructureError("Unable to locate mount point: %s" % mount_point)
 
         dest = os.path.join(mount_point, self.automation_filename)
         self.logger.debug("Creating empty file %s", dest)
         try:
-            automation_file = open(dest, "w")
-            automation_file.close()
+            with open(dest, "w"):
+                pass
         except IOError:
             raise InfrastructureError("Unable to write to %s" % dest)
 
@@ -301,9 +297,7 @@ class CheckMuscaFlashAction(Action):
         mount_point = self.get_namespace_data(
             action="mount-musca-usbmsd", label="musca-usb", key="mount-point"
         )
-        try:
-            os.path.realpath(mount_point)
-        except OSError:
+        if not os.path.realpath(mount_point):
             raise InfrastructureError("Unable to locate mount point: %s" % mount_point)
 
         fail_file = os.path.join(mount_point, "FAIL.TXT")

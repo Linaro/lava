@@ -19,11 +19,16 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 from lava_dispatcher.action import Pipeline
-from lava_dispatcher.actions.boot import BootAction
+from lava_dispatcher.actions.boot import (
+    BootAction,
+    OverlayUnpack,
+    ExportDeviceEnvironment,
+)
 from lava_dispatcher.actions.boot import AutoLoginAction
 from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.logical import Boot
 from lava_dispatcher.power import ResetDevice
+from lava_dispatcher.shell import ExpectShellSession
 from lava_dispatcher.utils.udev import WaitUSBSerialDeviceAction
 
 
@@ -64,13 +69,8 @@ class MuscaBoot(BootAction):
         self.pipeline.add_action(ConnectDevice())
         if self.has_prompts(parameters):
             self.pipeline.add_action(AutoLoginAction())
-
-    def run(self, connection, max_end_time):
-        connection = self.get_namespace_data(
-            action="shared", label="shared", key="connection", deepcopy=False
-        )
-        connection = super().run(connection, max_end_time)
-        self.set_namespace_data(
-            action="shared", label="shared", key="connection", value=connection
-        )
-        return connection
+        if self.test_has_shell(parameters):
+            self.pipeline.add_action(ExpectShellSession())
+            if "transfer_overlay" in parameters:
+                self.pipeline.add_action(OverlayUnpack())
+            self.pipeline.add_action(ExportDeviceEnvironment())
