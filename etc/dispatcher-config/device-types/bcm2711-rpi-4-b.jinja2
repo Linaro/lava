@@ -1,0 +1,21 @@
+# Raspberry Pi 4b
+{# set device_type = "bcm2711-rpi-4-b" #}
+
+{% extends 'base-uboot.jinja2' %}
+
+{% set interrupt_ctrl_list = ['c'] %}
+
+{% set booti_kernel_addr = '0x00080000' %}
+{% set booti_ramdisk_addr = '0x02700000' %}
+{% set booti_dtb_addr = '0x02400000' %}
+
+{% set bootm_kernel_addr = '0x00080000' %}
+{% set bootm_ramdisk_addr = '0x02700000' %}
+{% set bootm_dtb_addr = '0x02400000' %}
+
+{% set uboot_mkimage_arch = 'arm64' %}
+
+{% set bootloader_prompt = bootloader_prompt|default('U-Boot>') %}
+{% set console_device = console_device|default('ttyS1') %}
+
+{% set extra_kernel_args = "earlycon=uart,mmio32,0xfe215040" %}
