@@ -25,5 +25,4 @@ else
   PYTHONPATH=. ./share/lava-schema.py job tests/lava_scheduler_app/health-checks/*.yaml
 
   PYTHONPATH=. ./share/lava-schema.py device --path etc/dispatcher-config/device-types tests/lava_scheduler_app/devices/*.jinja2
-  PYTHONPATH=. ./share/lava-schema.py device --no-render tests/lava_dispatcher/devices/*.yaml
 fi
