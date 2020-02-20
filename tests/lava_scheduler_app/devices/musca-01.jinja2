@@ -1,0 +1,16 @@
+{% extends 'musca-a.jinja2' %}
+
+{# ID_SERIAL_SHORT #}
+{% set board_id = '100000000000000000000000000000000000000000000001' %}
+{# /dev/disk/by-id/id_serial or ID_SERIAL #}
+{% set id_serial = 'usb-MBED_VFS_100000000000000000000000000000000000000000000001-0:0' %}
+
+{# Using a cambrionix device to connect and disconnect the usb #}
+{% set power_on_command = '/opt/lava-lab/shared/lab-scripts/usb_hub_control -u 1 -p 10001 -m sync' %}
+{% set power_off_command = '/opt/lava-lab/shared/lab-scripts/usb_hub_control -u 1 -p 10001 -m off' %}
+{% set hard_reset_command = '/opt/lava-lab/shared/lab-scripts/usb_hub_control -u 1 -p 10001 -m off -m2 sync -d 5' %}
+
+{# ser2net connection #}
+{% set connection_list = ['uart0'] %}
+{% set connection_commands = {'uart0': 'telnet localhost 10002'} %}
+{% set connection_tags = {'uart0': ['primary', 'telnet']} %}

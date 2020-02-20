@@ -739,6 +739,32 @@ bootloader in interactive tests and then booting to the OS.
       method: minimal
       reset: false
 
+.. index:: boot method musca
+
+.. _boot_method_musca:
+
+musca
+=====
+
+The ``musca`` method is used to boot `musca devices
+<https://developer.arm.com/products/system-design/development-boards/iot-test-chips-and-boards/musca-a-test-chip-board>`__.
+Unlike the ``minimal`` boot, the board has to be powered on before the serial will be available
+as the board is powered by the USB that provides the serial connection also.
+Therefore, the board is powered on then connection to the serial is made.
+Optionally, ``prompts`` can be used to check for serial output before continuing.
+
+.. code-block:: yaml
+
+  - boot:
+      method: musca
+
+.. note:: No shell is expected and no boot string is checked. All checking should be done with test monitors.
+
+.. note:: Some initial setup steps are required to ensure that the Musca device boots when it is powered on.
+          Check `here <https://github.com/ARMmbed/DAPLink/blob/master/docs/MSD_COMMANDS.md>`__ for details
+          on how to setup the board to auto-boot when it is programmed or turned on.
+          Ensure ``DETAILS.TXT`` on the MSD shows "Auto Reset" and "Auto Power" are activated.
+
 pyocd
 =====
 

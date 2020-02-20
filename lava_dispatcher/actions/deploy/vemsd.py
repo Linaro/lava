@@ -80,10 +80,8 @@ class VExpressMsdRetry(RetryAction):
     summary = "VExpress FW deployment with retry"
 
     def populate(self, parameters):
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=parameters
-        )
-        self.internal_pipeline.add_action(VExpressMsdAction())
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.pipeline.add_action(VExpressMsdAction())
 
 
 class VExpressMsdAction(DeployAction):
@@ -299,37 +297,38 @@ class EnableVExpressMassStorage(Action):
         return connection
 
 
-class MountVExpressMassStorageDevice(Action):
+class MountDeviceMassStorageDevice(Action):
     """
-    Mounts Versatile Express USB mass storage device on the dispatcher.
-    The device is identified by the filesystem label given when running the
-    format command on the Versatile Express board.
+    Generic action to mount a device's mass storage device, with a range of identifiers.
     """
 
-    name = "mount-vexpress-usbmsd"
-    description = "mount vexpress usb msd"
-    summary = "mount vexpress usb mass storage device on the dispatcher"
+    name = "mount-device-usbmsd"
+    description = "mount device usb msd"
+    summary = "mount device usb mass storage device on the dispatcher"
     command_exception = InfrastructureError
     timeout_exception = InfrastructureError
 
     def __init__(self):
         super().__init__()
-        self.microsd_fs_label = None
-
-    def validate(self):
-        super().validate()
-        self.microsd_fs_label = self.job.device.get("usb_filesystem_label")
-        if not isinstance(self.microsd_fs_label, str):
-            self.errors = "Filesystem label unset for Versatile Express"
+        self.device_name = None
+        self.disk_identifier = None
+        self.disk_identifier_type = None  # uuid, id, label
+        self.namespace_label = None
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
 
-        device_path = "/dev/disk/by-label/%s" % self.microsd_fs_label
+        device_path = "/dev/disk/by-%s/%s" % (
+            self.disk_identifier_type,
+            self.disk_identifier,
+        )
         if not os.path.exists(device_path):
-            raise InfrastructureError("Unable to find disk by label %s" % device_path)
+            raise InfrastructureError(
+                "Unable to find disk by %s %s"
+                % (self.disk_identifier_type, device_path)
+            )
 
-        mount_point = "/mnt/%s" % self.microsd_fs_label
+        mount_point = "/mnt/%s" % self.disk_identifier
         if not os.path.exists(mount_point):
             try:
                 self.logger.debug("Creating mount point '%s'", mount_point)
@@ -345,18 +344,46 @@ class MountVExpressMassStorageDevice(Action):
         )
 
         self.set_namespace_data(
-            action=self.name, label="vexpress-fw", key="mount-point", value=mount_point
+            action=self.name,
+            label=self.namespace_label,
+            key="mount-point",
+            value=mount_point,
         )
         return connection
 
     def cleanup(self, connection):
-        mount_point = "/mnt/%s" % self.microsd_fs_label
+        mount_point = "/mnt/%s" % self.disk_identifier
         if os.path.ismount(mount_point):
             self.logger.debug("Unmounting %s", mount_point)
             self.run_cmd(
                 ["umount", mount_point],
                 error_msg="Failed to unmount device at %s" % mount_point,
             )
+
+
+class MountVExpressMassStorageDevice(MountDeviceMassStorageDevice):
+    """
+    Mounts Versatile Express USB mass storage device on the dispatcher.
+    The device is identified by the filesystem label given when running the
+    format command on the Versatile Express board.
+    """
+
+    name = "mount-vexpress-usbmsd"
+    description = "mount vexpress usb msd"
+    summary = "mount vexpress usb mass storage device on the dispatcher"
+
+    def __init__(self):
+        super().__init__()
+        self.device_name = "Versatile Express"
+        self.disk_identifier = None
+        self.disk_identifier_type = "label"
+        self.namespace_label = "vexpress-fw"
+
+    def validate(self):
+        super().validate()
+        self.disk_identifier = self.job.device.get("usb_filesystem_label")
+        if not isinstance(self.disk_identifier, str):
+            self.errors = "Filesystem %s unset for " + self.device_name
 
 
 class DeployVExpressRecoveryImage(Action):
@@ -414,11 +441,16 @@ class UnmountVExpressMassStorageDevice(Action):
     command_exception = InfrastructureError
     timeout_exception = InfrastructureError
 
+    def __init__(self):
+        super().__init__()
+        self.namespace_label = "vexpress-fw"
+        self.namespace_action = "mount-vexpress-usbmsd"
+
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
 
         mount_point = self.get_namespace_data(
-            action="mount-vexpress-usbmsd", label="vexpress-fw", key="mount-point"
+            action=self.namespace_action, label=self.namespace_label, key="mount-point"
         )
         self.run_cmd(
             ["sync", mount_point], error_msg="Failed to sync device %s" % mount_point

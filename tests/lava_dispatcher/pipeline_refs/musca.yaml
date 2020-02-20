@@ -1,0 +1,34 @@
+- class: actions.deploy.musca.MuscaAction
+  name: musca-deploy
+  pipeline:
+  - {class: connections.serial.DisconnectDevice, name: disconnect-device}
+  - class: actions.deploy.download.DownloaderAction
+    name: download-retry
+    pipeline:
+    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
+  - class: power.ResetDevice
+    name: reset-device
+    pipeline:
+    - {class: power.PDUReboot, name: pdu-reboot}
+  - {class: actions.deploy.musca.WaitMuscaMassStorageAction, name: wait-musca-path}
+  - {class: actions.deploy.musca.MountMuscaMassStorageDevice, name: mount-musca-usbmsd}
+  - {class: actions.deploy.musca.DeployMuscaTestBinary, name: deploy-musca-test-binary}
+  - {class: actions.deploy.musca.UnmountMuscaMassStorageDevice, name: unmount-musca-usbmsd}
+  - {class: actions.deploy.musca.WaitMuscaMassStorageAction, name: wait-musca-path}
+  - {class: actions.deploy.musca.MountMuscaMassStorageDevice, name: mount-musca-usbmsd}
+  - {class: actions.deploy.musca.CheckMuscaFlashAction, name: check-musca-flash}
+  - {class: actions.deploy.musca.UnmountMuscaMassStorageDevice, name: unmount-musca-usbmsd}
+- class: actions.boot.musca.MuscaBoot
+  name: musca-boot
+  pipeline:
+  - class: power.ResetDevice
+    name: reset-device
+    pipeline:
+    - {class: power.PDUReboot, name: pdu-reboot}
+  - {class: utils.udev.WaitUSBSerialDeviceAction, name: wait-usb-serial}
+  - {class: connections.serial.ConnectDevice, name: connect-device}
+- class: power.FinalizeAction
+  name: finalize
+  pipeline:
+  - {class: power.PowerOff, name: power-off}
+  - {class: power.ReadFeedback, name: read-feedback}
