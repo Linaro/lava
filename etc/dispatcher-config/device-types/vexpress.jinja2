@@ -7,7 +7,6 @@
 
 {% set base_high_limits = base_high_limits|default(true) %}
 {% set base_uboot_commands = [
-    "setenv autoload no",
     "setenv bootdelay 1",
     "setenv ethact smc911x-0"]
 -%}
@@ -25,18 +24,6 @@
 -%}
 
 {% set base_uboot_bootcmd = uboot_bootcmd|default([
-    uboot_bootx_cmd|default('{BOOTX}')])
--%}
-
-{% set base_uboot_tftp_bootcmd = uboot_tftp_bootcmd|default([
-    uboot_ipaddr_cmd|default('dhcp'),
-    "setenv serverip {SERVER_IP}",
-    uboot_bootx_cmd|default('{BOOTX}')])
--%}
-
-{% set base_uboot_nfs_bootcmd = uboot_nfs_bootcmd|default([
-    uboot_ipaddr_cmd|default('dhcp'),
-    "setenv serverip {SERVER_IP}",
     uboot_bootx_cmd|default('{BOOTX}')])
 -%}
 
@@ -362,18 +349,24 @@ actions:
           - "boot"
         nfs:
           commands:
+          - "setenv serverip {SERVER_IP}"
+          - "setenv autoload no"
+          - "{{ uboot_ipaddr_cmd|default('dhcp') }}"
           - "{{ uboot_common_cmds|join('"\n          - "') }}"
           - "setenv bootargs console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs rw {{ base_nfsroot_args }} {{ base_kernel_args }} {{ base_ip_args }}"
-          - "{{ base_uboot_nfs_bootcmd|join('"\n          - "') }}"
+          - "{{ uboot_bootx_cmd|default('{BOOTX}') }}"
         norflash:
           commands:
           - "setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs rw {{ base_nfsroot_args }} {{ base_kernel_args }} {{ base_ip_args }}'"
           - "boot"
         ramdisk:
           commands:
+          - "setenv serverip {SERVER_IP}"
+          - "setenv autoload no"
+          - "{{ uboot_ipaddr_cmd|default('dhcp') }}"
           - "{{ uboot_common_cmds|join('"\n          - "') }}"
           - "setenv bootargs 'console={{ console_device }},{{ baud_rate }}n8 root=/dev/ram0 {{ base_kernel_args }} {{ base_ip_args }}'"
-          - "{{ base_uboot_tftp_bootcmd|join('"\n          - "') }}"
+          - "{{ uboot_bootx_cmd|default('{BOOTX}') }}"
         sata:
           commands:
           - scsi scan
