@@ -460,7 +460,7 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
         if not check:
             self.fail("Unable to find setenv nfsargs")
 
-    def test_imx8m_template(self):
+    def test_imx8mq_evk_template(self):
         fastboot_cmd_order = [
             "bootloader",
             "bootloader_a",
@@ -485,7 +485,7 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
             "recovery",
         ]
 
-        rendered = self.render_device_dictionary_file("imx8m-01.jinja2")
+        rendered = self.render_device_dictionary_file("imx8mq-evk-01.jinja2")
         template_dict = yaml_safe_load(rendered)
         self.assertIsNotNone(template_dict)
         self.assertIn("error-messages", template_dict["constants"]["u-boot"])
@@ -497,7 +497,7 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
         )
 
         context = {"bootloader_prompt": "=>"}
-        rendered = self.render_device_dictionary_file("imx8m-01.jinja2", context)
+        rendered = self.render_device_dictionary_file("imx8mq-evk-01.jinja2", context)
         template_dict = yaml_safe_load(rendered)
         self.assertIsNotNone(template_dict)
         self.assertIn("error-messages", template_dict["constants"]["u-boot"])
@@ -514,7 +514,7 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
         # test overwriting kernel args
         checked = False
         context = {"console_device": "ttyUSB1"}
-        rendered = self.render_device_dictionary_file("imx8m-01.jinja2", context)
+        rendered = self.render_device_dictionary_file("imx8mq-evk-01.jinja2", context)
         template_dict = yaml_safe_load(rendered)
         commands = template_dict["actions"]["boot"]["methods"]["u-boot"]["ramdisk"][
             "commands"

@@ -657,11 +657,13 @@ class TestUbootAction(StdoutTestCase):
 
     @unittest.skipIf(infrastructure_error("lxc-start"), "lxc-start not installed")
     def test_imx8m(self):
-        job = self.factory.create_job("imx8m-01.jinja2", "sample_jobs/imx8m.yaml")
+        job = self.factory.create_job(
+            "imx8mq-evk-01.jinja2", "sample_jobs/imx8mq-evk.yaml"
+        )
         self.assertIsNotNone(job)
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
-        description_ref = self.pipeline_reference("imx8m.yaml", job=job)
+        description_ref = self.pipeline_reference("imx8mq-evk.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
         deploy = [
             action
