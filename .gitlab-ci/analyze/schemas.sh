@@ -22,4 +22,8 @@ else
   EXCLUDE="kvm-multinode-client.yaml kvm-multinode-server.yaml qemu-ssh-guest-1.yaml qemu-ssh-guest-2.yaml qemu-ssh-parent.yaml"
   CMD="--exclude $(echo ${EXCLUDE} | sed "s# # --exclude #g#")"
   PYTHONPATH=. ./share/lava-schema.py job ${CMD} tests/lava_scheduler_app/sample_jobs/*.yaml
+  PYTHONPATH=. ./share/lava-schema.py job tests/lava_scheduler_app/health-checks/*.yaml
+
+  PYTHONPATH=. ./share/lava-schema.py device --path etc/dispatcher-config/device-types tests/lava_scheduler_app/devices/*.jinja2
+  PYTHONPATH=. ./share/lava-schema.py device --no-render tests/lava_dispatcher/devices/*.yaml
 fi

@@ -1,15 +1,17 @@
 import os
 import tempfile
 from lava_common.compat import yaml_safe_dump, yaml_safe_load
-from lava_scheduler_app.utils import split_multinode_yaml
-from lava_scheduler_app.dbutils import match_vlan_interface
-from lava_scheduler_app.models import TestJob, Tag
-from tests.lava_scheduler_app.test_submission import TestCaseWithFactory
-from tests.lava_scheduler_app.test_pipeline import YamlFactory
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.protocols.vland import VlandProtocol
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
+from lava_scheduler_app.utils import split_multinode_yaml
+from lava_scheduler_app.dbutils import match_vlan_interface
+from lava_scheduler_app.models import TestJob, Tag
+from tests.lava_scheduler_app.test_base_templates import prepare_jinja_template
+from tests.lava_scheduler_app.test_submission import TestCaseWithFactory
+from tests.lava_scheduler_app.test_pipeline import YamlFactory
+
 
 # pylint does not like TestCaseWithFactory
 
@@ -147,10 +149,8 @@ class TestVlandProtocolSplit(TestCaseWithFactory):
         client_handle, client_file_name = tempfile.mkstemp()
         yaml_safe_dump(client_job, open(client_file_name, "w"))
         # YAML device file, as required by lava-dispatch --target
-        device_yaml_file = os.path.realpath(
-            os.path.join(os.path.dirname(__file__), "devices", "bbb-01.yaml")
-        )
-        self.assertTrue(os.path.exists(device_yaml_file))
+        data = "{% extends 'beaglebone-black.jinja2' %}"
+        device_yaml_file = prepare_jinja_template("bbb-01", data, raw=False)
         parser = JobParser()
         bbb_device = NewDevice(device_yaml_file)
         with open(client_file_name) as sample_job_data:

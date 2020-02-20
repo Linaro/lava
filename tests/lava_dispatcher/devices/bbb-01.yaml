@@ -11,7 +11,7 @@ parameters:
     usb:
       SanDisk_Ultra:
         uuid: usb-SanDisk_Ultra_20060775320F43006019-0:0
-        boot_part: 0:1
+        device_id: 0
   interfaces:
     eth0: # fake values just for the vland unit test
       sysfs: "/sys/devices/pci0000:00/0000:00:19.0/net/eth0"
@@ -85,7 +85,7 @@ actions:
           - 'root '
           - '-p'
           - '22'
-        host: 172.16.200.165
+        host: ""
         identity_file: dynamic_vm_keys/lava
   boot:
     connections:

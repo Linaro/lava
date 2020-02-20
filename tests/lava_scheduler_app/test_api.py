@@ -120,45 +120,6 @@ class TestSchedulerAPI(TestCaseWithFactory):
 
 
 class TestVoluptuous(unittest.TestCase):
-    def test_submission_schema(self):
-        files = []
-        path = os.path.join(os.path.normpath(os.path.dirname(__file__)), "sample_jobs")
-        for name in os.listdir(path):
-            if name.endswith(".yaml"):
-                files.append(name)
-        device_files = [
-            # device files supporting unit tests
-            "bbb-01.yaml"
-        ]
-        # these files have already been split by utils as multinode sub_id jobs.
-        # FIXME: validate the schema of split files using lava-dispatcher.
-        split_files = [
-            "kvm-multinode-client.yaml",
-            "kvm-multinode-server.yaml",
-            "qemu-ssh-guest-1.yaml",
-            "qemu-ssh-guest-2.yaml",
-            "qemu-ssh-parent.yaml",
-        ]
-
-        for filename in files:
-            # some files are dispatcher-level test files, e.g. after the multinode split
-            try:
-                yaml_data = yaml_safe_load(open(os.path.join(path, filename), "r"))
-            except yaml.YAMLError as exc:
-                raise RuntimeError("Decoding YAML job submission failed: %s." % exc)
-            if filename in device_files:
-                validate_device(yaml_data)
-                continue
-            if filename in split_files:
-                self.assertRaises(SubmissionException, validate_submission, yaml_data)
-            else:
-                try:
-                    ret = validate_submission(yaml_data)
-                    self.assertTrue(ret)
-                except SubmissionException as exc:
-                    msg = "########## %s ###########\n%s" % (filename, exc)
-                    self.fail(msg)
-
     def test_breakage_detection(self):
         bad_submission = """
 timeouts:
