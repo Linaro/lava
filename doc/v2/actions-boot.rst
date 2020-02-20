@@ -1132,3 +1132,118 @@ The template would then need:
         - select:
             items:
              - 'boot from eMMC'
+
+.. _boot_method_uuu_menu:
+
+uuu
+===
+
+Integration of NXP ``uuu`` the flashing tool utility for i.mx platform.
+
+See the complete documentation of `uuu / mfgtools` on GitHub https://github.com/NXPmicro/mfgtools/wiki
+
+Installation
+------------
+
+``uuu`` is not provided as a dependency within LAVA, you need to install it manually over all Slaves.
+
+You can get the latest release here : https://github.com/NXPmicro/mfgtools/releases/latest
+
+.. code-block:: bash
+
+    # INSTALLATION SCRIPT
+    wget https://github.com/NXPmicro/mfgtools/releases/download/<UUU_VERSION>/uuu
+    chmod a+x uuu
+    mv uuu /bin/uuu
+
+Device configuration
+--------------------
+
+To use ``uuu`` the :term:`device` template must specify two variables :
+
+.. code-block:: jinja
+
+    {% set uuu_usb_otg_path = '2:143' %}
+    {% set uuu_corrupt_boot_media_command = ['mmc dev 1', 'mmc erase 0 0x400'] %}
+
+* ``uuu_corrupt_boot_media_command`` : a list of commands to execute on the platform within u-boot to corrupt the primary boot media.
+    On the next reboot, serial download protocol must be available on the platform to flash future images using uuu.
+
+* ``uuu_usb_otg_path`` : can be obtained using the command ``uuu -lsusb`` :
+
+    .. code-block:: shell
+
+        $ uuu -lsusb
+        uuu (Universal Update Utility) for nxp imx chips -- libuuu_1.3.102-1-gddf2649
+        Connected Known USB Devices
+            Path	 Chip	 Pro	 Vid	 Pid	 BcdVersion
+            ==================================================
+            2:143	 MX8MQ	 SDP:	 0x1FC9	0x012B	 0x0001
+
+Usage
+-----
+
+Following the same syntax of ``uuu`` tool, commands are specified using a pair <Protocol, Command>.
+``commands`` field is then a list of dictionary with only one pair of <Protocol, Command>.
+
+A special Protocol named ``uuu`` is defined to used build-int scripts.
+
+.. note:: Images passed to uuu commands must be first deployed using the ``uuu`` deploy action if used with overlay.
+
+    Using the following :
+
+    .. code-block:: yaml
+
+        - deploy:
+            to: uuu
+            images:
+                boot:
+                    url: https://.../imx-boot-sd.bin-flash
+                system:
+                    url: https://../imx-image-multimedia.rootfs.wic
+                    apply-overlay: true
+                    root_partition: 1
+
+    Both ``boot`` and ``system`` keyword are stored as images name that you can reference within ``uuu`` boot method commands.
+
+    .. warning::
+
+        ``boot`` image is required by uuu boot method to perform USB serial download availability check.
+
+    The USB serial availability check consist to try to write in memory a valid bootloader image using this command ``uuu {boot}``.
+    If the command does not terminate within 10 seconds, primary boot-media will be erased using ``uuu_corrupt_boot_media_command``.
+
+Using built-in scripts
+^^^^^^^^^^^^^^^^^^^^^^
+
+Example definition :
+
+.. code-block:: yaml
+
+    - boot:
+        method: uuu
+        commands:
+          - uuu: -b sd_all {boot} {system}
+
+Non-exhaustive list of available built-in scripts :
+
+.. code-block:: yaml
+
+    - uuu: -b emmc {boot}                 # Write bootloader to emmc
+    - uuu: -b emmc_all {boot} {system}    # Write bootloader & rootfs to emmc
+    - uuu: -b sd {boot}                   # Write bootloader to sd card
+    - uuu: -b sd_all {boot} {system}      # Write bootloader & rootfs to sd card
+
+
+Using commands
+^^^^^^^^^^^^^^
+Example code :
+
+.. code-block:: yaml
+
+    - boot:
+        method: uuu
+        commands :
+          - SDPS: boot -f {boot}
+          - FB: continue
+          - FB: done
