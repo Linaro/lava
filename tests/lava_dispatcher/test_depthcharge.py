@@ -25,11 +25,11 @@ import unittest
 from unittest.mock import patch
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
-from tests.lava_dispatcher.test_basic import StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from tests.utils import DummyLogger, infrastructure_error
 
 
-class DepthchargeFactory:
+class DepthchargeFactory(Factory):
     """
     Not Model based, this is not a Django factory.
     Factory objects are dispatcher based classes, independent
@@ -37,14 +37,8 @@ class DepthchargeFactory:
     """
 
     def create_jaq_job(self, filename):
-        device = NewDevice(
-            os.path.join(os.path.dirname(__file__), "devices/jaq-01.yaml")
-        )
-        yaml = os.path.join(os.path.dirname(__file__), filename)
-        with open(yaml) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "")
-            job.logger = DummyLogger()
+        job = super().create_job("rk3288-veyron-jaq-01.jinja2", filename)
+        job.logger = DummyLogger()
         return job
 
 

@@ -45,24 +45,12 @@ class LxcFactory(Factory):
         return self.create_job("bbb-01.jinja2", filename)
 
     def create_adb_nuc_job(self, filename):
-        device = NewDevice(
-            os.path.join(os.path.dirname(__file__), "devices/adb-nuc-01.yaml")
-        )
-        job_yaml = os.path.join(os.path.dirname(__file__), filename)
-        with open(job_yaml) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4577, None, "")
+        return self.create_job("adb-nuc-01.jinja2", filename)
         job.logger = DummyLogger()
         return job
 
     def create_hikey_aep_job(self, filename):
-        device = NewDevice(
-            os.path.join(os.path.dirname(__file__), "devices/hi6220-hikey-01.yaml")
-        )
-        job_yaml = os.path.join(os.path.dirname(__file__), filename)
-        with open(job_yaml) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4577, None, "")
+        job = super().create_job("hi6220-hikey-r2-01.jinja2", filename)
         job.logger = DummyLogger()
         return job
 
@@ -278,7 +266,7 @@ class TestLxcWithDevices(StdoutTestCase):
         for board in self.job.device.get("static_info"):
             self.assertIsInstance(board, dict)
             self.assertIn("board_id", board)
-            self.assertEqual(board["board_id"], "S/NO62200001")
+            self.assertEqual(board["board_id"], "S_N0123456")
         description_ref = self.pipeline_reference("hi6220-hikey.yaml", job=self.job)
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
 

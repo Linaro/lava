@@ -24,7 +24,7 @@ from unittest.mock import patch
 
 from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_common.decorators import nottest
-from tests.lava_dispatcher.test_basic import StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.job import Job
 from lava_dispatcher.action import Pipeline, Timeout
 from lava_dispatcher.actions.deploy import DeployAction
@@ -73,8 +73,8 @@ class TestMultiDeploy(StdoutTestCase):
             pass
 
         def __init__(self):
-            filename = os.path.join(os.path.dirname(__file__), "devices/bbb-01.yaml")
-            super().__init__(filename)
+            data = yaml_safe_load(Factory().create_device("bbb-01.jinja2")[0])
+            super().__init__(data)
 
     @nottest
     class TestDeploy:  # cannot be a subclass of Deployment without a full select function.
@@ -159,9 +159,8 @@ class TestMultiDeploy(StdoutTestCase):
 class TestMultiDefinition(StdoutTestCase):
     def setUp(self):
         super().setUp()
-        self.device = NewDevice(
-            os.path.join(os.path.dirname(__file__), "devices/bbb-01.yaml")
-        )
+        data = yaml_safe_load(Factory().create_device("bbb-01.jinja2")[0])
+        self.device = NewDevice(data)
         bbb_yaml = os.path.join(os.path.dirname(__file__), "sample_jobs/uboot-nfs.yaml")
         with open(bbb_yaml) as sample_job_data:
             self.job_data = yaml_safe_load(sample_job_data)

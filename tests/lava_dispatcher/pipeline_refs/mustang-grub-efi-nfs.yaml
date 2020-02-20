@@ -57,7 +57,7 @@
   - class: power.ResetDevice
     name: reset-device
     pipeline:
-    - {class: power.SendRebootCommands, name: send-reboot-commands}
+    - {class: power.PDUReboot, name: pdu-reboot}
   - {class: actions.boot.uefi_menu.UEFIMenuInterrupt, name: uefi-menu-interrupt}
   - {class: actions.boot.grub.GrubMenuSelector, name: grub-efi-menu-selector}
   - {class: actions.boot.BootloaderInterruptAction, name: bootloader-interrupt}

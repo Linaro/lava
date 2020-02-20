@@ -1,2 +1,6 @@
 {% extends 'mustang-grub-efi.jinja2' %}
 {% set connection_command = 'telnet serial4 7012' %}
+{% set sata_uuid = "ata-ST500DM002-1BD142_S2AKYFSN" %}
+{% set sata_label = "ST500DM002" %}
+
+{% set hard_reset_command = '/usr/local/lab-scripts/snmp_pdu_control --port 13 --hostname pdu15 --command reboot' %}

@@ -9,3 +9,4 @@
 {% set uboot_mac_addr = '00:80:e1:12:81:30' %}
 {% set user_commands = {'set_boot_to_usb': {'do': '/bin/true', 'undo': '/bin/true'},
 'set_boot_to_sd': {'do': '/bin/true', 'undo': '/bin/true'}} %}
+{% set flasher_deploy_commands = ['echo "flashing"', '/bin/true'] %}

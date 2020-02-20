@@ -303,9 +303,8 @@ class TestUbootAction(StdoutTestCase):
                 },
             },
         }
-        device = NewDevice(
-            os.path.join(os.path.dirname(__file__), "devices/bbb-01.yaml")
-        )
+        data = yaml_safe_load(Factory().create_device("bbb-01.jinja2")[0])
+        device = NewDevice(data)
         job = Job(4212, parameters, None)
         job.device = device
         pipeline = Pipeline(job=job, parameters=parameters["actions"]["boot"])
@@ -350,12 +349,10 @@ class TestUbootAction(StdoutTestCase):
 
         commands = params["u-boot"]["ramdisk"]["commands"]
         self.assertIs(type(commands), list)
-        self.assertIn("setenv loadkernel 'tftp ${kernel_addr_r} zImage'", commands)
-        self.assertIn(
-            "setenv loadinitrd 'tftp ${initrd_addr_r} initrd.gz; setenv initrd_size ${filesize}'",
-            commands,
-        )
-        self.assertIn("setenv loadfdt 'tftp ${fdt_addr_r} broken.dtb'", commands)
+        self.assertIn("tftp 0x83000000 zImage", commands)
+        self.assertIn("tftp 0x83000000 initrd.gz", commands)
+        self.assertIn("setenv initrd_size ${filesize}", commands)
+        self.assertIn("tftp 0x88000000 broken.dtb", commands)
         self.assertNotIn("setenv kernel_addr_r '{KERNEL_ADDR}'", commands)
         self.assertNotIn("setenv initrd_addr_r '{RAMDISK_ADDR}'", commands)
         self.assertNotIn("setenv fdt_addr_r '{DTB_ADDR}'", commands)
@@ -375,12 +372,6 @@ class TestUbootAction(StdoutTestCase):
             line = line.replace("{KERNEL}", kernel)
             line = line.replace("{DTB}", dtb)
             parsed.append(line)
-        self.assertIn("setenv loadkernel 'tftp ${kernel_addr_r} zImage'", parsed)
-        self.assertIn(
-            "setenv loadinitrd 'tftp ${initrd_addr_r} initrd.gz; setenv initrd_size ${filesize}'",
-            parsed,
-        )
-        self.assertIn("setenv loadfdt 'tftp ${fdt_addr_r} broken.dtb'", parsed)
         self.assertNotIn("setenv kernel_addr_r '{KERNEL_ADDR}'", parsed)
         self.assertNotIn("setenv initrd_addr_r '{RAMDISK_ADDR}'", parsed)
         self.assertNotIn("setenv fdt_addr_r '{DTB_ADDR}'", parsed)
@@ -692,9 +683,8 @@ class TestUbootAction(StdoutTestCase):
 
 class TestKernelConversion(StdoutTestCase):
     def setUp(self):
-        self.device = NewDevice(
-            os.path.join(os.path.dirname(__file__), "devices/bbb-01.yaml")
-        )
+        data = yaml_safe_load(Factory().create_device("bbb-01.jinja2")[0])
+        self.device = NewDevice(data)
         bbb_yaml = os.path.join(
             os.path.dirname(__file__), "sample_jobs/uboot-ramdisk.yaml"
         )

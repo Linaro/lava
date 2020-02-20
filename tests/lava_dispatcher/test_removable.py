@@ -41,12 +41,8 @@ class RemovableFactory(Factory):
     of any database objects.
     """
 
-    def create_job(self, sample_job, device_file):
-        device = NewDevice(os.path.join(os.path.dirname(__file__), device_file))
-        j_yaml = os.path.join(os.path.dirname(__file__), sample_job)
-        with open(j_yaml) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "")
+    def create_job(self, template, filename):
+        job = super().create_job(template, filename)
         job.logger = DummyLogger()
         return job
 
@@ -246,9 +242,8 @@ class TestRemovable(StdoutTestCase):
     def test_juno_deployment(self, which_mock):
         factory = RemovableFactory()
         job = factory.create_job(
-            "sample_jobs/juno-uboot-removable.yaml", "devices/juno-uboot.yaml"
+            "juno-uboot-01.jinja2", "sample_jobs/juno-uboot-removable.yaml"
         )
-        job.logger = DummyLogger()
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
         self.assertIn("usb", job.device["parameters"]["media"].keys())
@@ -299,7 +294,7 @@ class TestRemovable(StdoutTestCase):
     def test_mustang_deployment(self, which_mock):
         factory = RemovableFactory()
         job = factory.create_job(
-            "sample_jobs/mustang-secondary-media.yaml", "devices/mustang-media.yaml"
+            "mustang1.jinja2", "sample_jobs/mustang-secondary-media.yaml"
         )
         job.validate()
         description_ref = self.pipeline_reference("mustang-media.yaml", job=job)
@@ -344,7 +339,7 @@ class TestRemovable(StdoutTestCase):
     def test_secondary_media(self, which_mock):
         factory = RemovableFactory()
         job = factory.create_job(
-            "sample_jobs/mustang-secondary-media.yaml", "devices/mustang-media.yaml"
+            "mustang1.jinja2", "sample_jobs/mustang-secondary-media.yaml"
         )
         job.validate()
         grub_nfs = [
