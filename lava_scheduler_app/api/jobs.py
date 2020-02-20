@@ -18,11 +18,12 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-from datetime import datetime, timedelta
+from datetime import timedelta
 import voluptuous
 import xmlrpc.client
 
 from django.conf import settings
+from django.utils import timezone
 
 from linaro_django_xmlrpc.models import ExposedV2API
 
@@ -211,7 +212,7 @@ class SchedulerJobsAPI(ExposedV2API):
 
         # since
         if since:
-            end_time = datetime.now()
+            end_time = timezone.now()
             # search back in time
             start_time = end_time - timedelta(minutes=since)
             jobs = jobs.filter(end_time__range=[start_time, end_time])

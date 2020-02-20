@@ -18,8 +18,9 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-from datetime import datetime, timedelta  # pylint: disable=unused-import
+from datetime import timedelta  # pylint: disable=unused-import
 import django_tables2 as tables
+from django.utils import timezone  # pylint: disable=unused-import
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
 from django.db.models import Q
@@ -60,7 +61,7 @@ class LavaView(tables.SingleTableView):
                 # escape converts None into u'None'
                 if not match or match == "" or match == "None":
                     continue
-                args = "q = q.__and__(Q({0}__gte=datetime.now()-timedelta({1}={2})))".format(
+                args = "q = q.__and__(Q({0}__gte=timezone.now()-timedelta({1}={2})))".format(
                     key, value, match
                 )
                 try:
@@ -195,7 +196,7 @@ class LavaView(tables.SingleTableView):
                         # should log exception somewhere...
                         continue
         # now add "class specials" - from an iterable hash
-        # datetime uses (start_time__lte=datetime.now()-timedelta(days=3)
+        # datetime uses (start_time__lte=timezone.now()-timedelta(days=3)
         data = data.filter(self._time_filter(local_namespace["q"]))
         return data
 
