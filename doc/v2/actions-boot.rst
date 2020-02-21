@@ -1157,7 +1157,7 @@ The template would then need:
         fastboot:
         - select:
             items:
-             - 'boot from eMMC'
+            - 'boot from eMMC'
 
 .. _boot_method_uuu_menu:
 
@@ -1177,10 +1177,10 @@ You can get the latest release here : https://github.com/NXPmicro/mfgtools/relea
 
 .. code-block:: bash
 
-    # INSTALLATION SCRIPT
-    wget https://github.com/NXPmicro/mfgtools/releases/download/<UUU_VERSION>/uuu
-    chmod a+x uuu
-    mv uuu /bin/uuu
+  # INSTALLATION SCRIPT
+  wget https://github.com/NXPmicro/mfgtools/releases/download/<UUU_VERSION>/uuu
+  chmod a+x uuu
+  mv uuu /bin/uuu
 
 Device configuration
 --------------------
@@ -1189,22 +1189,22 @@ To use ``uuu`` the :term:`device` template must specify two variables :
 
 .. code-block:: jinja
 
-    {% set uuu_usb_otg_path = '2:143' %}
-    {% set uuu_corrupt_boot_media_command = ['mmc dev 1', 'mmc erase 0 0x400'] %}
+  {% set uuu_usb_otg_path = '2:143' %}
+  {% set uuu_corrupt_boot_media_command = ['mmc dev 1', 'mmc erase 0 0x400'] %}
 
 * ``uuu_corrupt_boot_media_command`` : a list of commands to execute on the platform within u-boot to corrupt the primary boot media.
     On the next reboot, serial download protocol must be available on the platform to flash future images using uuu.
 
 * ``uuu_usb_otg_path`` : can be obtained using the command ``uuu -lsusb`` :
 
-    .. code-block:: shell
+.. code-block:: shell
 
-        $ uuu -lsusb
-        uuu (Universal Update Utility) for nxp imx chips -- libuuu_1.3.102-1-gddf2649
-        Connected Known USB Devices
-            Path	 Chip	 Pro	 Vid	 Pid	 BcdVersion
-            ==================================================
-            2:143	 MX8MQ	 SDP:	 0x1FC9	0x012B	 0x0001
+  $ uuu -lsusb
+  uuu (Universal Update Utility) for nxp imx chips -- libuuu_1.3.102-1-gddf2649
+  Connected Known USB Devices
+      Path	 Chip	 Pro	 Vid	 Pid	 BcdVersion
+      ==================================================
+      2:143	 MX8MQ	 SDP:	 0x1FC9	0x012B	 0x0001
 
 Usage
 -----
@@ -1220,15 +1220,15 @@ A special Protocol named ``uuu`` is defined to used build-int scripts.
 
     .. code-block:: yaml
 
-        - deploy:
-            to: uuu
-            images:
-                boot:
-                    url: https://.../imx-boot-sd.bin-flash
-                system:
-                    url: https://../imx-image-multimedia.rootfs.wic
-                    apply-overlay: true
-                    root_partition: 1
+      - deploy:
+          to: uuu
+          images:
+            boot:
+              url: https://.../imx-boot-sd.bin-flash
+            system:
+              url: https://../imx-image-multimedia.rootfs.wic
+              apply-overlay: true
+              root_partition: 1
 
     Both ``boot`` and ``system`` keyword are stored as images name that you can reference within ``uuu`` boot method commands.
 
@@ -1246,19 +1246,19 @@ Example definition :
 
 .. code-block:: yaml
 
-    - boot:
-        method: uuu
-        commands:
-          - uuu: -b sd_all {boot} {system}
+  - boot:
+      method: uuu
+      commands:
+      - uuu: -b sd_all {boot} {system}
 
 Non-exhaustive list of available built-in scripts :
 
 .. code-block:: yaml
 
-    - uuu: -b emmc {boot}                 # Write bootloader to emmc
-    - uuu: -b emmc_all {boot} {system}    # Write bootloader & rootfs to emmc
-    - uuu: -b sd {boot}                   # Write bootloader to sd card
-    - uuu: -b sd_all {boot} {system}      # Write bootloader & rootfs to sd card
+  - uuu: -b emmc {boot}                 # Write bootloader to emmc
+  - uuu: -b emmc_all {boot} {system}    # Write bootloader & rootfs to emmc
+  - uuu: -b sd {boot}                   # Write bootloader to sd card
+  - uuu: -b sd_all {boot} {system}      # Write bootloader & rootfs to sd card
 
 
 Using commands
@@ -1267,9 +1267,9 @@ Example code :
 
 .. code-block:: yaml
 
-    - boot:
-        method: uuu
-        commands :
-          - SDPS: boot -f {boot}
-          - FB: continue
-          - FB: done
+  - boot:
+      method: uuu
+      commands :
+      - SDPS: boot -f {boot}
+      - FB: continue
+      - FB: done

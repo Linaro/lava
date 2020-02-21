@@ -16,13 +16,13 @@ Partitions are usable within uuu boot method using the partition name.
 
 .. code-block:: yaml
 
-        - deploy:
-            to: uuu
-            images:
-                boot:
-                    url: https://.../imx-boot-sd.bin-flash
-                system:
-                    url: https://../imx-image-multimedia.rootfs.wic
+  - deploy:
+      to: uuu
+      images:
+        boot:
+          url: https://.../imx-boot-sd.bin-flash
+        system:
+          url: https://../imx-image-multimedia.rootfs.wic
 
 images
 ======
@@ -41,17 +41,17 @@ image will be flashed using ``uuu`` commands.
 
 .. note:: Each partition can be referenced using ``{partition_name}`` within uuu boot method e.g. :
 
-        .. code-block:: yaml
+   .. code-block:: yaml
 
-            - deploy:
-                to: uuu
-                images:
-                    boot:
-                        url: https://.../imx-boot-sd.bin-flash
-            - boot:
-                method: uuu
-                commands:
-                  - uuu: -b sd {boot}
+      - deploy:
+          to: uuu
+          images:
+            boot:
+              url: https://.../imx-boot-sd.bin-flash
+      - boot:
+          method: uuu
+          commands:
+          - uuu: -b sd {boot}
 
 .. _deploy_to_uuu_images_url:
 
