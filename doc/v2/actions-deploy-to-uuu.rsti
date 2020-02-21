@@ -1,0 +1,139 @@
+.. index:: deploy to uuu
+
+.. _deploy_to_uuu:
+
+to: uuu
+************
+
+
+.. index:: deploy to uuu images
+
+.. _deploy_to_uuu_images:
+
+
+uuu specific deploy method is very similar with :ref:`deploy_to_fastboot` method, with a required ``boot`` partition.
+Partitions are usable within uuu boot method using the partition name.
+
+.. code-block:: yaml
+
+        - deploy:
+            to: uuu
+            images:
+                boot:
+                    url: https://.../imx-boot-sd.bin-flash
+                system:
+                    url: https://../imx-image-multimedia.rootfs.wic
+
+images
+======
+
+uuu deployments support a range of images to be downloaded and deployed to
+the device. The list of images will depend on the test job and the test device.
+
+.. warning:: Partition ``boot`` is required by any uuu boot method.
+
+partition
+---------
+
+The partition is a text string which specifies the partition to which the
+image will be flashed using ``uuu`` commands.
+
+
+.. note:: Each partition can be referenced using ``{partition_name}`` within uuu boot method e.g. :
+
+        .. code-block:: yaml
+
+            - deploy:
+                to: uuu
+                images:
+                    boot:
+                        url: https://.../imx-boot-sd.bin-flash
+            - boot:
+                method: uuu
+                commands:
+                  - uuu: -b sd {boot}
+
+.. _deploy_to_uuu_images_url:
+
+.. include:: actions-deploy-images-url.rsti
+
+.. _deploy_to_uuu_images_compression:
+
+compression
+^^^^^^^^^^^
+.. include:: actions-deploy-images-compression.rsti
+
+.. _deploy_to_uuu_images_apply-overlay:
+
+apply-overlay
+^^^^^^^^^^^^^
+
+Use this to apply LAVA specific overlays to image.
+
+.. code-block:: yaml
+
+  - deploy:
+      to: uuu
+      images:
+        system:
+          url: http://example.com/system.img.xz
+          compression: xz
+          apply-overlay: true
+
+.. _deploy_to_uuu_images_sparse:
+
+sparse
+^^^^^^
+
+.. code-block:: yaml
+
+  - deploy:
+      to: uuu
+      images:
+        system:
+          url: http://example.com/system.img.xz
+          compression: xz
+          sparse: true
+
+
+The default value for this parameter is ``true``. Some system images are
+shipped as sparse images which needs special handling with tools such as
+``simg2img`` and ``img2simg``, in order to apply LAVA specific overlays to it.
+By default LAVA assumes the image to which ``apply-overlay`` is specified is a
+sparse image.
+
+.. seealso:: :ref:`deploy_to_uuu_images_apply-overlay`
+
+If the image is not a sparse image then this should be explicitly mentioned,
+so that LAVA will treat the image as non-sparse ext4 image.
+
+.. code-block:: yaml
+
+  - deploy:
+      to: uuu
+      images:
+        system:
+          url: http://example.com/system.ext4.xz
+          compression: xz
+          sparse: false
+
+.. seealso:: The sparse image format is defined in sparse_format_ in the
+   Android platform source code.
+
+.. _sparse_format: https://android.googlesource.com/platform/system/core/+/master/libsparse/sparse_format.h
+
+.. _deploy_to_uuu_images_md5sum:
+
+md5sum
+^^^^^^
+.. include:: actions-deploy-images-md5sum.rsti
+
+.. _deploy_to_uuu_images_sha256sum:
+
+sha256sum
+^^^^^^^^^
+.. include:: actions-deploy-images-sha256sum.rsti
+
+sha512sum
+^^^^^^^^^
+.. include:: actions-deploy-images-sha512sum.rsti
