@@ -248,7 +248,15 @@ class TestInteractiveAction(Action):
                         if wait_for_prompt:
                             test_connection.expect(prompts)
                     else:
-                        self.logger.info("Matched a success: '%s'", match)
+                        groups = test_connection.match.groupdict()
+                        if groups:
+                            self.logger.info(
+                                "Matched a success: '%s' (groups: %s)", match, groups
+                            )
+                        else:
+                            self.logger.info("Matched a success: '%s'", match)
+                        for k, v in groups.items():
+                            substitutions["{%s}" % k] = v
                         # Wait for the prompt to send the next command
                         if wait_for_prompt:
                             test_connection.expect(prompts)
