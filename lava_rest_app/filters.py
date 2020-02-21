@@ -161,7 +161,8 @@ class WorkerFilter(filters.FilterSet):
             value = Worker.HEALTH_REVERSE[value]
         except KeyError:
             raise ValidationError(
-                "Select a valid choice. %s is not one of the available choices." % value
+                "Select a valid choice. %s is not one of the available choices: %s"
+                % (value, list(zip(*Worker.HEALTH_CHOICES))[1])
             )
         return queryset.filter(health=value)
 
@@ -170,7 +171,8 @@ class WorkerFilter(filters.FilterSet):
             value = Worker.STATE_REVERSE[value]
         except KeyError:
             raise ValidationError(
-                "Select a valid choice. %s is not one of the available choices." % value
+                "Select a valid choice. %s is not one of the available choices: %s"
+                % (value, list(zip(*Worker.STATE_CHOICES))[1])
             )
         return queryset.filter(state=value)
 
@@ -194,8 +196,8 @@ class WorkerFilter(filters.FilterSet):
                 "endswith",
             ],
             "last_ping": ["exact", "lt", "gt"],
-            "state": ["exact", "in"],
-            "health": ["exact", "in"],
+            "state": ["exact"],
+            "health": ["exact"],
         }
 
 
@@ -216,7 +218,8 @@ class DeviceTypeFilter(filters.FilterSet):
             value = DeviceType.HEALTH_DENOMINATOR_REVERSE[value]
         except KeyError:
             raise ValidationError(
-                "Select a valid choice. %s is not one of the available choices." % value
+                "Select a valid choice. %s is not one of the available choices: %s"
+                % (value, list(zip(*DeviceType.HEALTH_DENOMINATOR))[1])
             )
         return queryset.filter(health_denominator=value)
 
@@ -242,7 +245,7 @@ class DeviceTypeFilter(filters.FilterSet):
             ],
             "health_frequency": ["exact", "in"],
             "disable_health_check": ["exact", "in"],
-            "health_denominator": ["exact", "in"],
+            "health_denominator": ["exact"],
             "display": ["exact", "in"],
             "core_count": ["exact", "in"],
         }
@@ -272,10 +275,12 @@ class DeviceFilter(filters.FilterSet):
 
     def filter_health(self, queryset, name, value):
         try:
-            value = Device.HEALTH_REVERSE[value]
+            # Need upper() here because HEALTH_REVERSE has inconsistant keys.
+            value = Device.HEALTH_REVERSE[value.upper()]
         except KeyError:
             raise ValidationError(
-                "Select a valid choice. %s is not one of the available choices." % value
+                "Select a valid choice. %s is not one of the available choices: %s"
+                % (value, list(zip(*Device.HEALTH_CHOICES))[1])
             )
         return queryset.filter(health=value)
 
@@ -284,7 +289,8 @@ class DeviceFilter(filters.FilterSet):
             value = Device.STATE_REVERSE[value]
         except KeyError:
             raise ValidationError(
-                "Select a valid choice. %s is not one of the available choices." % value
+                "Select a valid choice. %s is not one of the available choices: %s"
+                % (value, list(zip(*Device.STATE_CHOICES))[1])
             )
         return queryset.filter(state=value)
 
@@ -315,8 +321,8 @@ class DeviceFilter(filters.FilterSet):
                 "startswith",
                 "endswith",
             ],
-            "state": ["exact", "in"],
-            "health": ["exact", "in"],
+            "state": ["exact"],
+            "health": ["exact"],
         }
 
 
@@ -345,7 +351,8 @@ class TestJobFilter(filters.FilterSet):
             value = TestJob.HEALTH_REVERSE[value]
         except KeyError:
             raise ValidationError(
-                "Select a valid choice. %s is not one of the available choices." % value
+                "Select a valid choice. %s is not one of the available choices: %s"
+                % (value, list(zip(*TestJob.HEALTH_CHOICES))[1])
             )
         return queryset.filter(health=value)
 
@@ -354,7 +361,8 @@ class TestJobFilter(filters.FilterSet):
             value = TestJob.STATE_REVERSE[value]
         except KeyError:
             raise ValidationError(
-                "Select a valid choice. %s is not one of the available choices." % value
+                "Select a valid choice. %s is not one of the available choices: %s"
+                % (value, list(zip(*TestJob.STATE_CHOICES))[1])
             )
         return queryset.filter(state=value)
 
@@ -366,8 +374,8 @@ class TestJobFilter(filters.FilterSet):
             "end_time": ["exact", "lt", "gt"],
             "health_check": ["exact"],
             "target_group": ["exact", "in", "contains", "icontains", "startswith"],
-            "state": ["exact", "in"],
-            "health": ["exact", "in"],
+            "state": ["exact"],
+            "health": ["exact"],
             "priority": ["exact", "in", "lt", "lte", "gt", "gte"],
             "definition": [
                 "exact",
