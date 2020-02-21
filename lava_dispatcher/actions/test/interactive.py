@@ -139,6 +139,11 @@ class TestInteractiveAction(Action):
         prompts = script["prompts"]  # TODO: allow to change the prompts?
         cmds = script["script"]
 
+        def multinode2subst(msg):
+            for role_id, data in msg.items():
+                for k, v in data.items():
+                    substitutions["{%s}" % k] = v
+
         for index, cmd in enumerate(cmds):
             if "delay" in cmd:
                 self.logger.info("Delaying for %ss", cmd["delay"])
@@ -146,7 +151,8 @@ class TestInteractiveAction(Action):
                 continue
             elif "lava-send" in cmd:
                 payload = {}
-                parts = cmd["lava-send"].split()
+                line = substitute([cmd["lava-send"]], substitutions)[0]
+                parts = line.split()
                 for p in parts[1:]:
                     k, v = p.split("=", 1)
                     payload[k] = v
@@ -156,6 +162,9 @@ class TestInteractiveAction(Action):
             elif "lava-wait" in cmd:
                 res = self.multinode_proto.request_wait(cmd["lava-wait"])
                 self.logger.info("wait result: %r", res)
+                res = json.loads(res)
+                # Capture any payload key-value pairs as possible substitutions.
+                multinode2subst(res["message"])
                 continue
             elif "lava-wait-all" in cmd:
                 parts = cmd["lava-wait-all"].split()
@@ -178,6 +187,8 @@ class TestInteractiveAction(Action):
                     raise TestError(
                         "Nack reply from coordinator for wait-all (deadlock detected?)"
                     )
+                # Capture any payload key-value pairs as possible substitutions.
+                multinode2subst(res["message"])
                 continue
             elif "lava-sync" in cmd:
                 res = self.multinode_proto.request_sync(cmd["lava-sync"])
