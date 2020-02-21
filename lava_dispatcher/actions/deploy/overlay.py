@@ -56,7 +56,7 @@ class Overlay(Deployment):
         return True, "accepted"
 
 
-class OverlayAction(DeployAction):
+class CreateOverlay(DeployAction):
     """
     Creates a temporary location into which the lava test shell scripts are installed.
     The location remains available for the testdef actions to populate
@@ -77,7 +77,7 @@ class OverlayAction(DeployAction):
     overlays are handled by TestDefinitionAction.
     """
 
-    name = "lava-overlay"
+    name = "lava-create-overlay"
     description = "add lava scripts during deployment for test shell use"
     summary = "overlay the lava support scripts"
 
@@ -101,9 +101,7 @@ class OverlayAction(DeployAction):
         self.scripts_to_copy = sorted(
             glob.glob(os.path.join(self.lava_test_dir, "lava-*"))
         )
-        # Distro-specific scripts override the generic ones
-        if not self.test_needs_overlay(self.parameters):
-            return
+
         lava_test_results_dir = self.get_constant("lava_test_results_dir", "posix")
         lava_test_results_dir = lava_test_results_dir % self.job.job_id
         self.set_namespace_data(
@@ -147,18 +145,16 @@ class OverlayAction(DeployAction):
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        if self.test_needs_overlay(parameters):
-            if any(
-                "ssh" in data
-                for data in self.job.device["actions"]["deploy"]["methods"]
-            ):
-                # only devices supporting ssh deployments add this action.
-                self.pipeline.add_action(SshAuthorize())
-            self.pipeline.add_action(VlandOverlayAction())
-            self.pipeline.add_action(MultinodeOverlayAction())
-            self.pipeline.add_action(TestDefinitionAction())
-            self.pipeline.add_action(CompressOverlay())
-            self.pipeline.add_action(PersistentNFSOverlay())  # idempotent
+        if any(
+            "ssh" in data for data in self.job.device["actions"]["deploy"]["methods"]
+        ):
+            # only devices supporting ssh deployments add this action.
+            self.pipeline.add_action(SshAuthorize())
+        self.pipeline.add_action(VlandOverlayAction())
+        self.pipeline.add_action(MultinodeOverlayAction())
+        self.pipeline.add_action(TestDefinitionAction())
+        self.pipeline.add_action(CompressOverlay())
+        self.pipeline.add_action(PersistentNFSOverlay())  # idempotent
 
     def _export_data(self, fout, data, prefix):
         if isinstance(data, dict):
@@ -182,16 +178,6 @@ class OverlayAction(DeployAction):
             fout.write("export %s=%s\n" % (prefix, data))
 
     def run(self, connection, max_end_time):
-        """
-        Check if a lava-test-shell has been requested, implement the overlay
-        * create test runner directories beneath the temporary location
-        * copy runners into test runner directories
-        """
-        namespace = self.parameters.get("namespace")
-        if not self.test_needs_overlay(self.parameters):
-            self.logger.info("[%s] skipped %s - no test action.", namespace, self.name)
-            return connection
-
         tmp_dir = self.mkdtemp()
         self.set_namespace_data(
             action="test", label="shared", key="location", value=tmp_dir
@@ -204,6 +190,7 @@ class OverlayAction(DeployAction):
         shell = self.get_namespace_data(
             action="test", label="shared", key="lava_test_sh_cmd"
         )
+        namespace = self.parameters.get("namespace")
         self.logger.debug("[%s] Preparing overlay tarball in %s", namespace, tmp_dir)
         lava_path = os.path.abspath("%s/%s" % (tmp_dir, lava_test_results_dir))
         for runner_dir in ["bin", "tests", "results"]:
@@ -279,6 +266,44 @@ class OverlayAction(DeployAction):
 
         connection = super().run(connection, max_end_time)
         return connection
+
+
+class OverlayAction(CreateOverlay):
+    """
+    Creates an overlay, but only if it has been requested by any of the test
+    actions (in contrast with CreateOverlay, that creates the overlay
+    unconditionally).
+    """
+
+    name = "lava-overlay"
+    description = "add lava scripts during deployment for test shell use"
+    summary = "overlay the lava support scripts"
+
+    def validate(self):
+        if not self.test_needs_overlay(self.parameters):
+            return
+
+        super().validate()
+
+    def populate(self, parameters):
+        if not self.test_needs_overlay(parameters):
+            self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+            return
+
+        super().populate(parameters)
+
+    def run(self, connection, max_end_time):
+        """
+        Check if a lava-test-shell has been requested, implement the overlay
+        * create test runner directories beneath the temporary location
+        * copy runners into test runner directories
+        """
+        if not self.test_needs_overlay(self.parameters):
+            namespace = self.parameters.get("namespace")
+            self.logger.info("[%s] skipped %s - no test action.", namespace, self.name)
+            return connection
+
+        return super().run(connection, max_end_time)
 
 
 class MultinodeOverlayAction(OverlayAction):
