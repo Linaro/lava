@@ -610,10 +610,12 @@ class TestFastbootDeploy(StdoutTestCase):
         self.assertEqual([], lxc_cmd_prefix(job))
 
     def test_fastboot_boot_commands(self):
-        job = self.factory.create_job("imx8m-01.jinja2", "sample_jobs/imx8m.yaml")
+        job = self.factory.create_job(
+            "imx8mq-evk-01.jinja2", "sample_jobs/imx8mq-evk.yaml"
+        )
         boot = [
             action for action in job.pipeline.actions if action.name == "fastboot-boot"
         ][0]
         self.assertIn("commands", boot.parameters)
-        self.assertEqual("130651d6f060954b", job.device["fastboot_serial_number"])
+        self.assertEqual("191c51d6f060954b", job.device["fastboot_serial_number"])
         self.assertIsInstance(boot.parameters["commands"], list)

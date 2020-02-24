@@ -460,45 +460,49 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
         if not check:
             self.fail("Unable to find setenv nfsargs")
 
-    def test_imx8m_template(self):
+    def test_imx8mq_evk_template(self):
         fastboot_cmd_order = [
-            "update",
-            "ptable",
-            "partition",
-            "hyp",
-            "modem",
-            "rpm",
-            "sbl1",
-            "sbl2",
-            "sec",
-            "tz",
-            "aboot",
+            "bootloader",
+            "bootloader_a",
+            "bootloader_b",
+            "bootloader0",
+            "gpt",
             "boot",
-            "rootfs",
-            "vendor",
+            "boot_a",
+            "boot_b",
+            "dtbo",
+            "dtbo_a",
+            "dtbo_b",
+            "vbmeta",
+            "vbmeta_a",
+            "vbmeta_b",
             "system",
-            "cache",
-            "userdata",
+            "system_a",
+            "system_b",
+            "vendor",
+            "vendor_a",
+            "vendor_b",
+            "recovery",
         ]
 
-        rendered = self.render_device_dictionary_file("imx8m-01.jinja2")
+        rendered = self.render_device_dictionary_file("imx8mq-evk-01.jinja2")
         template_dict = yaml_safe_load(rendered)
         self.assertIsNotNone(template_dict)
         self.assertIn("error-messages", template_dict["constants"]["u-boot"])
         self.assertEqual(
-            "u-boot=>",
+            "=>",
             template_dict["actions"]["boot"]["methods"]["u-boot"]["parameters"][
                 "bootloader_prompt"
             ],
         )
 
-        context = {"bootloader_prompt": "imx8m=>"}
-        rendered = self.render_device_dictionary_file("imx8m-01.jinja2", context)
+        context = {"bootloader_prompt": "=>"}
+        rendered = self.render_device_dictionary_file("imx8mq-evk-01.jinja2", context)
         template_dict = yaml_safe_load(rendered)
         self.assertIsNotNone(template_dict)
         self.assertIn("error-messages", template_dict["constants"]["u-boot"])
         self.assertEqual(
-            "imx8m=>",
+            "=>",
             template_dict["actions"]["boot"]["methods"]["u-boot"]["parameters"][
                 "bootloader_prompt"
             ],
@@ -510,7 +514,7 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
         # test overwriting kernel args
         checked = False
         context = {"console_device": "ttyUSB1"}
-        rendered = self.render_device_dictionary_file("imx8m-01.jinja2", context)
+        rendered = self.render_device_dictionary_file("imx8mq-evk-01.jinja2", context)
         template_dict = yaml_safe_load(rendered)
         commands = template_dict["actions"]["boot"]["methods"]["u-boot"]["ramdisk"][
             "commands"

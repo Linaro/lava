@@ -1,29 +1,37 @@
 {% extends 'base-uboot.jinja2' %}
-{% set action_timeout_power_off = action_timeout_power_off | default(10) %}
-{% set action_timeout_download_retry = action_timeout_download_retry | default(15) %}
-{% set action_timeout_http_download = action_timeout_http_download | default(15) %}
-{% set base_kernel_args = base_kernel_args|default('') %}
-{% set uboot_bootx_cmd = 'boot' %}
-{% set base_uboot_bootcmd = uboot_bootcmd|default(
- "          - '" + uboot_bootx_cmd|default('{BOOTX}')) + "'" -%}
-{% set baud_rate = baud_rate|default('115200') %}
-{% set boot_character_delay = boot_character_delay|default(5) %}
-{% set uboot_extra_error_message = 'Invalid partition' %}
-{% set uboot_mkimage_arch = 'arm' %}
-{% set usb_uuid = usb_uuid|default('') %}
-{% set usb_device_id = usb_device_id|default('') %}
-{% set bootloader_prompt = bootloader_prompt|default('u-boot=>') %}
-{% set interrupt_prompt = interrupt_prompt|default('Hit any key to stop autoboot') %}
-{% set interrupt_char = interrupt_char|default(' ') %}
-{% set adb_serial_number = adb_serial_number|default("'0000000000'") %}
-{% set fastboot_serial_number = fastboot_serial_number|default("'0000000000'") %}
-{% set device_info = device_info|default([{'board_id': fastboot_serial_number}]) %}
-{% set fastboot_deploy_uboot_commands = fastboot_deploy_uboot_commands|default(["fastboot 0"]) %}
-{% set fastboot_boot_uboot = "
-        # method specific stanza
-        mmc:
-          commands:
-          - setenv console ttyUSB0,115200n8
-          - " + base_uboot_bootcmd + "
-" %}
+
+{% set root_device = root_device|default('/dev/ttymxc0') %}
+{% set console_device = console_device|default('ttymxc0,115200 earlycon=ec_imx6q,0x30860000') %}
+{% set uboot_ums_flash = uboot_ums_flash|default(False) %}
+{% set ums_command = ums_command|default('ums 0 mmc 1') %}
+{% set fastboot_options = fastboot_options|default(['-i', '0x0525']) %}
 {% set fastboot_sequence = fastboot_sequence|default(['reboot']) %}
+{% set adb_serial_number = adb_serial_number|default(fastboot_serial_number) %}
+{% set fastboot_deploy_uboot_commands = fastboot_deploy_uboot_commands|default(['fastboot 0']) %}
+{% set flash_cmds_order = flash_cmds_order|default(['bootloader', 'bootloader_a', 'bootloader_b', 'bootloader0',
+                           'gpt', 'boot', 'boot_a', 'boot_b', 'dtbo', 'dtbo_a', 'dtbo_b',
+                           'vbmeta', 'vbmeta_a', 'vbmeta_b', 'system', 'system_a', 'system_b',
+                           'vendor', 'vendor_a', 'vendor_b', 'recovery']) %}
+{% set device_info = device_info|default([{'board_id': fastboot_serial_number}]) %}
+{% set base_high_limits = base_high_limits|default(false) %}
+{% set boot_character_delay = boot_character_delay|default(5) %}
+{% set test_character_delay = test_character_delay|default(5) %}
+{% set base_kernel_args   = base_kernel_args|default('') %}
+{% set booti_kernel_addr  = booti_kernel_addr | default('0x40480000') %}
+{% set booti_ramdisk_addr = booti_ramdisk_addr | default('0x44000000') %}
+{% set booti_dtb_addr     = booti_dtb_addr | default('0x43000000') %}
+{% set bootz_kernel_addr  = booti_kernel_addr %}
+{% set bootz_ramdisk_addr = booti_ramdisk_addr %}
+{% set bootz_dtb_addr     = booti_dtb_addr %}
+{% set bootm_kernel_addr  = bootz_kernel_addr %}
+{% set bootm_ramdisk_addr = bootz_ramdisk_addr %}
+{% set bootm_dtb_addr     = bootz_dtb_addr %}
+{% set usb_device_id = usb_device_id|default('') %}
+{% set uboot_extra_error_message = uboot_extra_error_message|default('Invalid partition') %}
+{% set extra_nfsroot_args = extra_nfsroot_args|default(",v3") %}
+{% if save_uboot_env %}
+    {% set customized_uboot_boot_commands = ([
+    "setenv bootcmd 'tftp {KERNEL_ADDR} {KERNEL}; tftp {DTB_ADDR} {DTB}; booti {KERNEL_ADDR} - {DTB_ADDR}'",
+    "saveenv"])
+    -%}
+{% endif %}
