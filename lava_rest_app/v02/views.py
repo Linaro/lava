@@ -554,7 +554,10 @@ class AliasViewSet(viewsets.ModelViewSet):
     permission_classes = [DjangoModelPermissions]
 
     def get_queryset(self):
-        return self.queryset.filter(device_type__display=True)
+        visible_device_types = DeviceType.objects.filter(display=True).visible_by_user(
+            self.request.user
+        )
+        return self.queryset.filter(device_type__in=visible_device_types)
 
 
 class TagViewSet(viewsets.ModelViewSet):
