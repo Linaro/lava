@@ -1,0 +1,65 @@
+device_type: hi6220-hikey-r2
+job_name: AOSP hikey deploy/boot/test with docker
+timeouts:
+  job:
+    minutes: 60
+  action:
+    minutes: 15
+  connection:
+    minutes: 2
+priority: medium
+visibility: public
+metadata:
+  source: https://lkft.validation.linaro.org/scheduler/job/972536/definition
+
+actions:
+  - deploy:
+      timeout:
+        minutes: 15
+      # AOSP deployment
+      to: fastboot
+      docker:
+        image: adb-fastboot
+      images:
+        boot:
+          url: http://localhost:8888/aosp/hikey/boot.img
+          reboot: hard-reset
+
+  - boot:
+      docker:
+        image: adb-fastboot
+      prompts:
+        - 'healthd: No battery devices found'
+        - 'hikey: '
+        - 'console:'
+      timeout:
+        minutes: 15
+      method: fastboot
+
+  - test:
+      timeout:
+        minutes: 10
+      docker:
+        image: adb-fastboot
+      definitions:
+        - repository:
+            metadata:
+              format: Lava-Test Test Definition 1.0
+              name: smoke-tests-basic
+              description: "Basic system test command for Linaro Ubuntu images"
+              os:
+                - debian
+              scope:
+                - functional
+              devices:
+                - hi6220-hikey-r2
+            run:
+              steps:
+                - date
+                - hostname
+                - adb devices
+                - adb shell date
+                - adb shell hostname
+          from: inline
+          path: inline-smoke-test
+          name: docker-test

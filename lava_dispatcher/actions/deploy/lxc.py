@@ -281,26 +281,7 @@ class LxcCreateUdevRuleAction(DeployAction):
             return connection
 
         device_info = self.job.device.get("device_info", [])
-        logging_url = master_cert = slave_cert = socks_proxy = ipv6 = None
         job_id = self.job.job_id
-
-        if self.logger.handler:
-            logging_url = self.logger.handler.logging_url
-            master_cert = self.logger.handler.master_cert
-            slave_cert = self.logger.handler.slave_cert
-            socks_proxy = self.logger.handler.socks_proxy
-            ipv6 = self.logger.handler.ipv6
-            job_id = self.logger.handler.job_id
-
-        logging = {
-            "logging_url": logging_url,
-            "master_cert": master_cert,
-            "slave_cert": slave_cert,
-            "socks_proxy": socks_proxy,
-            "ipv6": ipv6,
-            "job_id": job_id,
-        }
-
         job_prefix = self.job.parameters["dispatcher"].get("prefix", "")
         for device in device_info:
             data = {
@@ -314,7 +295,7 @@ class LxcCreateUdevRuleAction(DeployAction):
                 data,
                 lxc_name,
                 container_type="lxc",
-                logging_info=logging,
+                logging_info=self.get_logging_info(),
             )
         return connection
 

@@ -48,6 +48,16 @@ def test_add_mapping_without_job_dir(tmpdir):
     assert os.path.exists(tmpdir / "1" / "usbmap.yaml")
 
 
+def test_device_info_required(mocker):
+    with pytest.raises(ValueError):
+        add_device_container_mapping("1", {}, "mycontainer")
+
+
+def test_device_info_keys_required(mocker):
+    with pytest.raises(ValueError):
+        add_device_container_mapping("1", {"serial_number": None}, "mycontainer")
+
+
 def test_simple_share_device_with_container(mocker):
     check_call = mocker.patch("subprocess.check_call")
     add_device_container_mapping("1", {"serial_number": "1234567890"}, "mycontainer")
@@ -150,3 +160,12 @@ def test_unknown_container_type(mocker):
         share_device_with_container(
             Namespace(device="foo/bar", serial_number="1234567890")
         )
+
+
+def test_only_adds_slash_dev_if_needed(mocker):
+    share = mocker.patch("lava_dispatcher_host.share_device_with_container_lxc")
+    add_device_container_mapping("1", {"serial_number": "1234567890"}, "mycontainer")
+    share_device_with_container(
+        Namespace(device="/dev/foo/bar", serial_number="1234567890")
+    )
+    share.assert_called_once_with("mycontainer", "/dev/foo/bar")

@@ -119,7 +119,7 @@ class CreateOverlay(DeployAction):
         )
 
         # Add distro support scripts - only if deployment_data is set
-        distro = self.parameters["deployment_data"].get("distro")
+        distro = self.parameters.get("deployment_data", {}).get("distro")
         if distro:
             distro_support_dir = "%s/distro/%s" % (self.lava_test_dir, distro)
             self.scripts_to_copy += sorted(

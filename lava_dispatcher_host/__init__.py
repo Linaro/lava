@@ -30,6 +30,7 @@ def get_mapping_path(job_id):
 def add_device_container_mapping(
     job_id, device_info, container, container_type="lxc", logging_info={}
 ):
+    validate_device_info(device_info)
     data = {
         "device_info": device_info,
         "container": container,
@@ -48,6 +49,15 @@ def add_device_container_mapping(
         )
 
 
+def validate_device_info(device_info):
+    if not device_info:
+        raise ValueError("Addind mapping for empty device info: %r" % device_info)
+    if not any(device_info.values()):
+        raise ValueError(
+            "Addind mapping for device info with empty keys: %r" % device_info
+        )
+
+
 def share_device_with_container(options, setup_logger=None):
     data = find_mapping(options)
     if not data:
@@ -56,7 +66,9 @@ def share_device_with_container(options, setup_logger=None):
         setup_logger(data["logging_info"])
     logger = logging.getLogger("dispatcher")
     container = data["container"]
-    device = "/dev/" + options.device
+    device = options.device
+    if not device.startswith("/dev/"):
+        device = "/dev/" + device
     if not os.path.exists(device):
         logger.warning("Can't share {device}: file not found".format(device=device))
         return
@@ -64,6 +76,8 @@ def share_device_with_container(options, setup_logger=None):
     container_type = data["container_type"]
     if container_type == "lxc":
         share_device_with_container_lxc(container, device)
+    elif container_type == "docker":
+        share_device_with_container_docker(container, device)
     else:
         raise InfrastructureError('Unsupported container type: "%s"' % container_type)
 
@@ -85,11 +99,38 @@ def find_mapping(options):
 
 
 def match_mapping(device_info, options):
+    matched = False
     for k, v in device_info.items():
         if k in options and v and getattr(options, k) != v:
             return False
-    return True
+        else:
+            matched = True
+    return matched
 
 
 def share_device_with_container_lxc(container, node):
     subprocess.check_call(["lxc-device", "-n", container, "add", node])
+
+
+def share_device_with_container_docker(container, node):
+    container_id = subprocess.check_output(
+        ["docker", "inspect", "--format={{.ID}}", container], text=True
+    ).strip()
+    nodeinfo = os.stat(node)
+    major = os.major(nodeinfo.st_rdev)
+    minor = os.minor(nodeinfo.st_rdev)
+    with open(
+        "/sys/fs/cgroup/devices/docker/%s/devices.allow" % container_id, "w"
+    ) as allow:
+        allow.write("a %d:%d rwm\n" % (major, minor))
+    subprocess.check_call(
+        [
+            "docker",
+            "exec",
+            container,
+            "sh",
+            "-c",
+            "mkdir -p %s && mknod %s c %d %d"
+            % (os.path.dirname(node), node, major, minor),
+        ]
+    )

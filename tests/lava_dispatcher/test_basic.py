@@ -159,6 +159,8 @@ class Factory:
         )
     )
 
+    validate_job_strict = False
+
     def prepare_jinja_template(self, hostname, jinja_data):
         string_loader = jinja2.DictLoader({"%s.jinja2" % hostname: jinja_data})
         type_loader = jinja2.FileSystemLoader([self.DEVICE_TYPES_PATH])
@@ -213,7 +215,7 @@ class Factory:
 
     def create_custom_job(self, template, job_data, job_ctx=None, validate=True):
         if validate:
-            validate_job(job_data, strict=False)
+            validate_job(job_data, strict=self.validate_job_strict)
         if job_ctx:
             job_data["context"] = job_ctx
         else:
