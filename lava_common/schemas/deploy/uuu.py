@@ -31,11 +31,12 @@ def schema():
         Required("images"): All(
             {
                 Required("boot"): deploy.url(),
-                Any(str): {
-                    **deploy.url(),
-                    Optional("apply-overlay"): bool,
-                    Optional("root_partition"): Range(min=0),
-                },
+                Any(str): deploy.url(
+                    {
+                        Optional("apply-overlay"): bool,
+                        Optional("root_partition"): Range(min=0),
+                    }
+                ),
             },
             Length(min=1),
         ),

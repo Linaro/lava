@@ -30,10 +30,9 @@ def schema():
 
     base = {
         Required("to"): "nbd",
-        Required("kernel", msg="needs a kernel to deploy"): {
-            **resource,
-            Optional("type"): Any("image", "uimage", "zimage"),
-        },
+        Required("kernel", msg="needs a kernel to deploy"): deploy.url(
+            {Optional("type"): Any("image", "uimage", "zimage")}
+        ),
         Required("nbdroot"): resource,
         Required("initrd"): resource,
         Optional("dtb"): resource,

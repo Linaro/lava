@@ -1,0 +1,53 @@
+device_type: qemu
+
+job_name: qemu overlays example
+timeouts:
+  job:
+    minutes: 20
+  action:
+    minutes: 5
+priority: medium
+visibility: public
+
+actions:
+- deploy:
+    timeout:
+      minutes: 20
+    to: tmpfs
+    images:
+      rootfs:
+        url: http://example.com/rootfs.ext4.xz
+        image_arg: -drive format=ext4,file={rootfs}
+        compression: xz
+        format: ext4
+        overlays:
+          modules:
+            url: http://example.com/modules.tar.gz
+            compression: gz
+            format: tar
+            path: /
+    os: debian
+
+- boot:
+    method: qemu
+    media: tmpfs
+    failure_retry: 2
+    prompts:
+    - 'root@debian:~#'
+
+- test:
+    failure_retry: 3
+    timeout:
+      minutes: 5
+    definitions:
+    - repository: git://git.linaro.org/lava-team/lava-functional-tests.git
+      from: git
+      path: lava-test-shell/smoke-tests-basic.yaml
+      name: smoke-tests
+    - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+      from: git
+      path: lava-test-shell/single-node/singlenode03.yaml
+      name: singlenode-advanced
+
+context:
+  arch: amd64

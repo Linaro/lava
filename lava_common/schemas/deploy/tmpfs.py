@@ -26,15 +26,14 @@ from lava_common.schemas import deploy
 
 
 def schema():
+    extra = {
+        Optional("format"): "qcow2",
+        Optional("image_arg"): str,  # TODO: is this optional?
+    }
+
     base = {
         Required("to"): "tmpfs",
-        Required("images"): {
-            Required(str, "'images' is empty"): {
-                **deploy.url(),
-                Optional("format"): "qcow2",
-                Optional("image_arg"): str,  # TODO: is this optional?
-            }
-        },
+        Required("images"): {Required(str, "'images' is empty"): deploy.url(extra)},
         Optional("type"): "monitor",
         Optional("uefi"): deploy.url(),  # TODO: check the exact syntax
     }

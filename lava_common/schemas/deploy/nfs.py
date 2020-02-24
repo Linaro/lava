@@ -36,7 +36,9 @@ def schema():
         {
             Required("to"): "nfs",
             Required("images"): {
-                Required(str, "'images' is empty"): {**deploy.url(), "image_arg": str}
+                Required(str, "'images' is empty"): deploy.url(
+                    {Optional("image_arg"): str}
+                )
             },
             **deploy.schema(),
         },

@@ -35,6 +35,7 @@ import subprocess  # nosec - verified.
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.protocols.lxc import LxcProtocol
 from lava_dispatcher.actions.deploy import DeployAction
+from lava_dispatcher.actions.deploy.apply_overlay import AppendOverlays
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.connections.serial import ConnectDevice
 from lava_common.exceptions import InfrastructureError, JobError, LAVABug
@@ -103,6 +104,15 @@ class DownloaderAction(RetryAction):
         else:
             raise JobError("Unsupported url protocol scheme: %s" % url.scheme)
         self.pipeline.add_action(action)
+        overlays = self.params.get("overlays", [])
+        for overlay in overlays:
+            self.pipeline.add_action(
+                DownloaderAction(
+                    "%s.%s" % (self.key, overlay), self.path, params=overlays[overlay]
+                )
+            )
+        if overlays:
+            self.pipeline.add_action(AppendOverlays(self.key, params=self.params))
 
 
 class DownloadHandler(Action):
@@ -149,18 +159,24 @@ class DownloadHandler(Action):
         )
         super().cleanup(connection)
 
-    def _url_to_fname(self, path, compression):
+    def _compression(self):
+        if self.key == "ramdisk":
+            return False
+        return self.params.get("compression", False)
+
+    def _url_to_fname(self):
+        compression = self._compression()
         filename = os.path.basename(self.url.path)
 
         # Don't rename files we don't decompress during download
         if not compression or (compression not in self.decompress_command_map):
-            return os.path.join(path, filename)
+            return os.path.join(self.path, filename)
 
         parts = filename.split(".")
         # Files without suffixes, e.g. kernel images
         if len(parts) == 1:
-            return os.path.join(path, filename)
-        return os.path.join(path, ".".join(parts[:-1]))
+            return os.path.join(self.path, filename)
+        return os.path.join(self.path, ".".join(parts[:-1]))
 
     def validate(self):
         super().validate()
@@ -174,7 +190,7 @@ class DownloadHandler(Action):
         overlay = self.params.get("overlay", False)
         image_arg = self.params.get("image_arg")
 
-        self.fname = self._url_to_fname(self.path, compression)
+        self.fname = self._url_to_fname()
         if self.fname.endswith("/"):
             raise JobError("Cannot download a directory for %s" % self.key)
         # Save into the namespaced data
@@ -268,10 +284,16 @@ class DownloadHandler(Action):
                     "Unable to create %s: %s" % (self.path, str(exc))
                 )
 
-        compression = self.params.get("compression", False)
+        compression = self._compression()
         if self.key == "ramdisk":
-            compression = False
             self.logger.debug("Not decompressing ramdisk as can be used compressed.")
+
+        self.set_namespace_data(
+            action="download-action",
+            label=self.key,
+            key="decompressed",
+            value=bool(compression),
+        )
 
         md5sum = self.params.get("md5sum")
         sha256sum = self.params.get("sha256sum")
@@ -311,7 +333,7 @@ class DownloadHandler(Action):
                     "Compression %s specified but not decompressing during download",
                     compression,
                 )
-        else:
+        elif not self.params.get("compression", False):
             self.logger.debug("No compression specified")
 
         def update_progress():

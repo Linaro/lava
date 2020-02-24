@@ -624,6 +624,7 @@ def test_http_download_run(tmpdir):
         "common": {
             "download-action": {
                 "dtb": {
+                    "decompressed": False,
                     "file": "%s/dtb/dtb" % str(tmpdir),
                     "md5": "fc5e038d38a57032085441e7fe7010b0",
                     "sha256": "936a185caaa266bb9cbe981e9e05cb78cd732b0b3280eb944412bb6f8f8f07af",
@@ -682,6 +683,7 @@ def test_http_download_run_compressed(tmpdir):
         "common": {
             "download-action": {
                 "rootfs": {
+                    "decompressed": True,
                     "file": "%s/rootfs/rootfs" % str(tmpdir),
                     "md5": "0107d527acf9b8de628b7b4d103c89d1",
                     "sha256": "3275a39be7b717d548b66f3c8f23d940603a63b0f13d84a596d979a7f66feb2c",

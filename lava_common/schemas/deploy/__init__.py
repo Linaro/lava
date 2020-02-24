@@ -25,8 +25,11 @@ from voluptuous import Any, Optional, Required
 from lava_common.schemas import action
 
 
-def url():
-    return {
+def url(extra=None):
+    if extra is None:
+        extra = {}
+
+    base_url = {
         Required("url"): str,
         Optional("compression"): Any("bz2", "gz", "xz", "zip", None),
         Optional("archive"): "tar",
@@ -34,6 +37,17 @@ def url():
         Optional("sha256sum"): str,
         Optional("sha512sum"): str,
     }
+    return Any(
+        {**base_url, **extra},
+        {
+            **base_url,
+            **extra,
+            Required("format"): Any("cpio.newc", "ext4"),
+            Required("overlays"): {
+                str: {**base_url, Required("format"): Any("tar"), Required("path"): str}
+            },
+        },
+    )
 
 
 def schema():

@@ -194,7 +194,7 @@ class CallQemuAction(Action):
                 action="download-action", label=label, key="file"
             )
             if not image_arg or not action_arg:
-                self.errors = "Missing image_arg for %s. " % label
+                self.logger.warning("Missing image arg for %s", label)
                 continue
             self.commands.append(image_arg)
 
@@ -236,7 +236,8 @@ class CallQemuAction(Action):
             action_arg = self.get_namespace_data(
                 action="download-action", label=label, key="file"
             )
-            substitutions["{%s}" % label] = action_arg
+            if image_arg is not None:
+                substitutions["{%s}" % label] = action_arg
         substitutions["{NFS_SERVER_IP}"] = dispatcher_ip(
             self.job.parameters["dispatcher"], "nfs"
         )
