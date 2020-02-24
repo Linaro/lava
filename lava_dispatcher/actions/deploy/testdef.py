@@ -46,7 +46,7 @@ def identify_test_definitions(test_info, namespace):
     test_list = []
     if namespace in test_info:
         for test in test_info[namespace]:
-            if test["class"].needs_overlay() and ("definitions" in test["parameters"]):
+            if "definitions" in test["parameters"]:
                 test_list.append(test["parameters"]["definitions"])
     return test_list
 
