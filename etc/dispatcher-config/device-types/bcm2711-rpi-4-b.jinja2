@@ -17,5 +17,13 @@
 
 {% set bootloader_prompt = bootloader_prompt|default('U-Boot>') %}
 {% set console_device = console_device|default('ttyS1') %}
+# rpi-sources does not boot without 8250.nr_uarts=1
+# The normal console (on pinouts) is ttyS1, but with 8250.nr_uarts=1, ttyS1 become ttyS0
+# The earlycon is for this console
+# rpi-sources need also the cma to be >= 64M
+# so a job with rpi-sources probably need to set in job definitions:
+# context:
+#   extra_kernel_args: "8250.nr_uarts=1 cma=64M"
+#   console_device: ttyS0
 
-{% set extra_kernel_args = "earlycon=uart,mmio32,0xfe215040" %}
+{% set extra_kernel_args = extra_kernel_args|default("earlycon=uart,mmio32,0xfe215040") %}
