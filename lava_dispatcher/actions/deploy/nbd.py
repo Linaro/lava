@@ -33,6 +33,7 @@ from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils import filesystem
 from lava_dispatcher.protocols.xnbd import XnbdProtocol
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
+from lava_dispatcher.actions.deploy.prepare import PrepareKernelAction
 
 
 class Nbd(Deployment):
@@ -150,6 +151,8 @@ class NbdAction(DeployAction):  # pylint:disable=too-many-instance-attributes
 
         # prepare overlay
         self.pipeline.add_action(OverlayAction())
+        if "kernel" in parameters and "type" in parameters["kernel"]:
+            self.pipeline.add_action(PrepareKernelAction())
         # setup values for protocol and later steps
         self.set_namespace_data(
             action=self.name,
