@@ -176,6 +176,8 @@ NEED_DB=$((LAVA_LOGS+LAVA_MASTER+GUNICORN+POSTGRESQL))
 LAVA_DB_MIGRATE=${LAVA_DB_MIGRATE:-$MIGRATE_DEFAULT}
 # Should we use "exec"?
 CAN_EXEC=$((APACHE2+LAVA_LOGS+LAVA_MASTER+LAVA_PUBLISHER+GUNICORN+POSTGRESQL))
+# Should we check for file owners?
+LAVA_CHECK_OWNERS=${LAVA_CHECK_OWNERS:-1}
 
 # Start requested services
 if [ "$POSTGRESQL" = "1" ]
@@ -217,8 +219,13 @@ done
 if [ "$GUNICORN" = "1" ]
 then
     echo "Checking file permissions"
-    check_owners
-    echo "done"
+    if [ "$LAVA_CHECK_OWNERS" = "1" ]
+    then
+        check_owners
+        echo "done"
+    else
+        echo "skipped"
+    fi
     echo
     echo "Starting gunicorn3"
     start_lava_server_gunicorn
@@ -245,8 +252,13 @@ fi
 if [ "$LAVA_LOGS" = "1" ]
 then
     echo "Checking file permissions"
-    check_owners
-    echo "done"
+    if [ "$LAVA_CHECK_OWNERS" = "1" ]
+    then
+        check_owners
+        echo "done"
+    else
+        echo "skipped"
+    fi
     echo
     echo "Starting lava-logs"
     start_lava_logs
