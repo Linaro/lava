@@ -35,6 +35,7 @@ from lava_scheduler_app.models import (
     Device,
     DeviceType,
     GroupDeviceTypePermission,
+    GroupDevicePermission,
     Tag,
     TestJob,
     Worker,
@@ -129,6 +130,9 @@ class TestRestApi:
         GroupDeviceTypePermission.objects.assign_perm(
             DeviceType.VIEW_PERMISSION, self.group1, self.restricted_device_type1
         )
+        GroupDeviceTypePermission.objects.assign_perm(
+            DeviceType.CHANGE_PERMISSION, self.group1, self.restricted_device_type1
+        )
         self.invisible_device_type1 = DeviceType.objects.create(
             name="invisible_device_type1", display=False
         )
@@ -154,6 +158,17 @@ class TestRestApi:
             device_type=self.public_device_type1,
             health=Device.HEALTH_RETIRED,
             worker_host=self.worker2,
+        )
+        self.restricted_device1 = Device.objects.create(
+            hostname="restricted_device1",
+            device_type=self.restricted_device_type1,
+            worker_host=self.worker1,
+        )
+        GroupDevicePermission.objects.assign_perm(
+            Device.VIEW_PERMISSION, self.group1, self.restricted_device1
+        )
+        GroupDevicePermission.objects.assign_perm(
+            Device.CHANGE_PERMISSION, self.group1, self.restricted_device1
         )
 
         # create testjobs
@@ -494,9 +509,12 @@ ok 2 bar
             self.adminclient,
             reverse("api-root", args=[self.version]) + "devices/?ordering=hostname",
         )
-        assert len(data["results"]) == 2  # nosec - unit test support
+        assert len(data["results"]) == 3  # nosec - unit test support
         assert data["results"][0]["hostname"] == "public01"  # nosec - unit test support
         assert data["results"][1]["hostname"] == "public02"  # nosec - unit test support
+        assert (
+            data["results"][2]["hostname"] == "restricted_device1"
+        )  # nosec - unit test support
 
     def test_devices_retrieve(self):
         data = self.hit(
@@ -1158,6 +1176,125 @@ ok 2 bar
     def test_tags_delete(self):
         response = self.adminclient.delete(
             reverse("api-root", args=[self.version]) + "tags/%s/" % self.tag2.id
+        )
+        assert response.status_code == 204  # nosec - unit test support
+
+    def test_devicetype_permissions_list_unauthorized(self):
+        response = self.userclient.get(
+            reverse("api-root", args=[self.version]) + "permissions/devicetypes/"
+        )
+        assert response.status_code == 403  # nosec - unit test support
+
+    def test_devicetype_permissions_list(self):
+        data = self.hit(
+            self.adminclient,
+            reverse("api-root", args=[self.version])
+            + "permissions/devicetypes/?ordering=id",
+        )
+        assert len(data["results"]) == 2  # nosec - unit test support
+        assert (
+            data["results"][0]["devicetype"] == "restricted_device_type1"
+        )  # nosec - unit test support
+
+    def test_devicetype_permissions_retrieve_unauthorized(self):
+        response = self.userclient.get(
+            reverse("api-root", args=[self.version]) + "permissions/devicetypes/1/"
+        )
+        assert response.status_code == 403  # nosec - unit test support
+
+    def test_devicetype_permissions_retrieve(self):
+        data = self.hit(
+            self.adminclient,
+            reverse("api-root", args=[self.version])
+            + "permissions/devicetypes/%s/"
+            % GroupDeviceTypePermission.objects.first().id,
+        )
+        assert (
+            data["id"] == GroupDeviceTypePermission.objects.first().id
+        )  # nosec - unit test support
+        assert (
+            data["devicetype"] == "restricted_device_type1"
+        )  # nosec - unit test support
+
+    def test_devicetype_permissions_create(self):
+        response = self.adminclient.post(
+            reverse("api-root", args=[self.version]) + "permissions/devicetypes/",
+            {
+                "group": "group1",
+                "devicetype": "public_device_type1",
+                "permission": "view_devicetype",
+            },
+        )
+        assert response.status_code == 201  # nosec - unit test support
+
+    def test_devicetype_permissions_delete_unauthorized(self):
+        response = self.userclient.delete(
+            reverse("api-root", args=[self.version])
+            + "permissions/devicetypes/%s/"
+            % GroupDeviceTypePermission.objects.first().id
+        )
+        assert response.status_code == 403  # nosec - unit test support
+
+    def test_devicetype_permissions_delete(self):
+        response = self.adminclient.delete(
+            reverse("api-root", args=[self.version])
+            + "permissions/devicetypes/%s/"
+            % GroupDeviceTypePermission.objects.first().id
+        )
+        assert response.status_code == 204  # nosec - unit test support
+
+    def test_device_permissions_list_unauthorized(self):
+        response = self.userclient.get(
+            reverse("api-root", args=[self.version]) + "permissions/devices/"
+        )
+        assert response.status_code == 403  # nosec - unit test support
+
+    def test_device_permissions_list(self):
+        data = self.hit(
+            self.adminclient,
+            reverse("api-root", args=[self.version])
+            + "permissions/devices/?ordering=id",
+        )
+        assert len(data["results"]) == 2  # nosec - unit test support
+        assert (
+            data["results"][0]["device"] == "restricted_device1"
+        )  # nosec - unit test support
+
+    def test_device_permissions_retrieve_unauthorized(self):
+        response = self.userclient.get(
+            reverse("api-root", args=[self.version]) + "permissions/devices/1/"
+        )
+        assert response.status_code == 403  # nosec - unit test support
+
+    def test_device_permissions_retrieve(self):
+        data = self.hit(
+            self.adminclient,
+            reverse("api-root", args=[self.version])
+            + "permissions/devices/%s/" % GroupDevicePermission.objects.first().id,
+        )
+        assert (
+            data["id"] == GroupDevicePermission.objects.first().id
+        )  # nosec - unit test support
+        assert data["device"] == "restricted_device1"  # nosec - unit test support
+
+    def test_device_permissions_create(self):
+        response = self.adminclient.post(
+            reverse("api-root", args=[self.version]) + "permissions/devices/",
+            {"group": "group1", "device": "public01", "permission": "view_device"},
+        )
+        assert response.status_code == 201  # nosec - unit test support
+
+    def test_device_permissions_delete_unauthorized(self):
+        response = self.userclient.delete(
+            reverse("api-root", args=[self.version])
+            + "permissions/devices/%s/" % GroupDevicePermission.objects.first().id
+        )
+        assert response.status_code == 403  # nosec - unit test support
+
+    def test_device_permissions_delete(self):
+        response = self.adminclient.delete(
+            reverse("api-root", args=[self.version])
+            + "permissions/devices/%s/" % GroupDevicePermission.objects.first().id
         )
         assert response.status_code == 204  # nosec - unit test support
 

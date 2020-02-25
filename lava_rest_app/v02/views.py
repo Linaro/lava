@@ -53,6 +53,8 @@ from lava_scheduler_app.models import (
     Device,
     DeviceType,
     DevicesUnavailableException,
+    GroupDeviceTypePermission,
+    GroupDevicePermission,
     Tag,
 )
 
@@ -567,6 +569,30 @@ class TagViewSet(viewsets.ModelViewSet):
     filter_class = filters.TagFilter
     ordering_fields = "__all__"
     permission_classes = [DjangoModelPermissions]
+
+    def get_queryset(self):
+        return self.queryset.all()
+
+
+class GroupDeviceTypePermissionViewSet(viewsets.ModelViewSet):
+    queryset = GroupDeviceTypePermission.objects
+    serializer_class = serializers.GroupDeviceTypePermissionSerializer
+    filter_fields = "__all__"
+    filter_class = filters.GroupDeviceTypePermissionFilter
+    ordering_fields = "__all__"
+    permission_classes = [base_views.IsSuperUser]
+
+    def get_queryset(self):
+        return self.queryset.all()
+
+
+class GroupDevicePermissionViewSet(viewsets.ModelViewSet):
+    queryset = GroupDevicePermission.objects
+    serializer_class = serializers.GroupDevicePermissionSerializer
+    filter_fields = "__all__"
+    filter_class = filters.GroupDevicePermissionFilter
+    ordering_fields = "__all__"
+    permission_classes = [base_views.IsSuperUser]
 
     def get_queryset(self):
         return self.queryset.all()

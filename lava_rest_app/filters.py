@@ -20,6 +20,8 @@
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
+    GroupDeviceTypePermission,
+    GroupDevicePermission,
     TestJob,
     Tag,
     Architecture,
@@ -30,7 +32,7 @@ from lava_scheduler_app.models import (
     Core,
     JobFailureTag,
 )
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import User, Group, Permission
 from django.core.exceptions import ValidationError
 from django_filters.filters import CharFilter
 
@@ -62,6 +64,21 @@ class UserFilter(filters.FilterSet):
                 "endswith",
             ],
             "email": ["exact", "in", "contains", "icontains", "startswith", "endswith"],
+        }
+
+
+class PermissionFilter(filters.FilterSet):
+    class Meta:
+        model = Permission
+        fields = {
+            "codename": [
+                "exact",
+                "in",
+                "contains",
+                "icontains",
+                "startswith",
+                "endswith",
+            ]
         }
 
 
@@ -386,3 +403,31 @@ class TestJobFilter(filters.FilterSet):
                 "isnull",
             ],
         }
+
+
+class GroupDeviceTypePermissionFilter(filters.FilterSet):
+    device_type = RelatedFilter(
+        DeviceTypeFilter, name="device_type", queryset=DeviceType.objects.all()
+    )
+    group = RelatedFilter(GroupFilter, name="group", queryset=Group.objects.all())
+    permission = RelatedFilter(
+        PermissionFilter, name="permission", queryset=Permission.objects.all()
+    )
+
+    class Meta:
+        model = GroupDeviceTypePermission
+        exclude = {}
+
+
+class GroupDevicePermissionFilter(filters.FilterSet):
+    device = RelatedFilter(
+        DeviceFilter, name="device", queryset=DeviceType.objects.all()
+    )
+    group = RelatedFilter(GroupFilter, name="group", queryset=Group.objects.all())
+    permission = RelatedFilter(
+        PermissionFilter, name="permission", queryset=Permission.objects.all()
+    )
+
+    class Meta:
+        model = GroupDevicePermission
+        exclude = {}
