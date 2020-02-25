@@ -24,9 +24,11 @@ import pathlib
 import pytest
 import tap
 
+from datetime import timedelta
 from django.conf import settings
 from django.contrib.auth.models import User, Group
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework.test import APIClient
 
 from lava_common.compat import yaml_load, yaml_safe_dump
@@ -152,6 +154,7 @@ class TestRestApi:
             hostname="public02",
             device_type=self.public_device_type1,
             worker_host=self.worker1,
+            state=Device.STATE_RUNNING,
         )
         self.retired_device1 = Device.objects.create(
             hostname="retired01",
@@ -176,12 +179,17 @@ class TestRestApi:
             definition=EXAMPLE_WORKING_JOB,
             submitter=self.user,
             requested_device_type=self.public_device_type1,
+            health=TestJob.HEALTH_INCOMPLETE,
         )
         self.private_testjob1 = TestJob.objects.create(
             definition=EXAMPLE_JOB,
             submitter=self.admin,
             requested_device_type=self.public_device_type1,
+            health=TestJob.HEALTH_COMPLETE,
         )
+        self.private_testjob1.submit_time = timezone.now() - timedelta(days=7)
+        self.private_testjob1.save()
+
         # create logs
 
         # create results for testjobs
@@ -495,6 +503,35 @@ ok 2 bar
         msg = json.loads(response.content)
         assert msg["message"] == "Job valid."
 
+    def test_testjobs_filters(self):
+        data = self.hit(
+            self.adminclient,
+            reverse("api-root", args=[self.version]) + "jobs/?health=Incomplete",
+        )
+        assert len(data["results"]) == 1  # nosec - unit test support
+
+        job1_submit_time = timezone.make_naive(self.public_testjob1.submit_time)
+        data = self.hit(
+            self.adminclient,
+            reverse("api-root", args=[self.version])
+            + "jobs/?submit_time=%s" % job1_submit_time,
+        )
+        assert len(data["results"]) == 1  # nosec - unit test support
+
+        data = self.hit(
+            self.adminclient,
+            reverse("api-root", args=[self.version])
+            + "jobs/?submit_time__lt=%s" % job1_submit_time,
+        )
+        assert len(data["results"]) == 1  # nosec - unit test support
+
+        data = self.hit(
+            self.adminclient,
+            reverse("api-root", args=[self.version])
+            + "jobs/?definition__contains=public_device",
+        )
+        assert len(data["results"]) == 1  # nosec - unit test support
+
     def test_devices_list(self):
         data = self.hit(
             self.userclient,
@@ -627,6 +664,33 @@ ok 2 bar
             reverse("api-root", args=[self.version]) + "devices/public01/dictionary/"
         )
         assert response.status_code == 400  # nosec
+
+    def test_devices_filters(self):
+        data = self.hit(
+            self.adminclient,
+            reverse("api-root", args=[self.version]) + "devices/?state=Idle",
+        )
+        assert len(data["results"]) == 2  # nosec - unit test support
+
+        data = self.hit(
+            self.adminclient,
+            reverse("api-root", args=[self.version]) + "devices/?health=Retired",
+        )
+        assert len(data["results"]) == 0  # nosec - unit test support
+
+        data = self.hit(
+            self.adminclient,
+            reverse("api-root", args=[self.version])
+            + "devices/?all=True&health=Retired",
+        )
+        assert len(data["results"]) == 1  # nosec - unit test support
+
+        data = self.hit(
+            self.adminclient,
+            reverse("api-root", args=[self.version])
+            + "devices/?hostname__contains=public",
+        )
+        assert len(data["results"]) == 2  # nosec - unit test support
 
     def test_devicetypes(self):
         data = self.hit(
@@ -805,6 +869,34 @@ ok 2 bar
             {"config": "hello world"},
         )
         assert response.status_code == 400  # nosec
+
+    def test_devicetype_filters(self):
+        data = self.hit(
+            self.adminclient,
+            reverse("api-root", args=[self.version]) + "devicetypes/?display=True",
+        )
+        assert len(data["results"]) == 2  # nosec - unit test support
+
+        data = self.hit(
+            self.adminclient,
+            reverse("api-root", args=[self.version])
+            + "devicetypes/?display__in=True,False",
+        )
+        assert len(data["results"]) == 3  # nosec - unit test support
+
+        data = self.hit(
+            self.adminclient,
+            reverse("api-root", args=[self.version])
+            + "devicetypes/?name__contains=public",
+        )
+        assert len(data["results"]) == 1  # nosec - unit test support
+
+        data = self.hit(
+            self.adminclient,
+            reverse("api-root", args=[self.version])
+            + "devicetypes/?name__in=public_device_type1,restricted_device_type1",
+        )
+        assert len(data["results"]) == 2  # nosec - unit test support
 
     def test_workers_list(self):
         data = self.hit(
@@ -1050,6 +1142,25 @@ ok 2 bar
         )
         assert response.status_code == 400  # nosec
 
+    def test_workers_filters(self):
+        data = self.hit(
+            self.adminclient,
+            reverse("api-root", args=[self.version]) + "workers/?health=Active",
+        )
+        assert len(data["results"]) == 2  # nosec - unit test support
+
+        data = self.hit(
+            self.adminclient,
+            reverse("api-root", args=[self.version]) + "workers/?state=Online",
+        )
+        assert len(data["results"]) == 1  # nosec - unit test support
+
+        data = self.hit(
+            self.adminclient,
+            reverse("api-root", args=[self.version]) + "workers/?hostname=worker1",
+        )
+        assert len(data["results"]) == 1  # nosec - unit test support
+
     def test_aliases_list(self):
         data = self.hit(
             self.userclient,
@@ -1092,6 +1203,25 @@ ok 2 bar
             reverse("api-root", args=[self.version]) + "aliases/test2/"
         )
         assert response.status_code == 204  # nosec - unit test support
+
+    def test_aliases_filters(self):
+        data = self.hit(
+            self.adminclient,
+            reverse("api-root", args=[self.version]) + "aliases/?name=test2",
+        )
+        assert len(data["results"]) == 1  # nosec - unit test support
+
+        data = self.hit(
+            self.adminclient,
+            reverse("api-root", args=[self.version]) + "aliases/?name__in=test1,test2",
+        )
+        assert len(data["results"]) == 2  # nosec - unit test support
+
+        data = self.hit(
+            self.adminclient,
+            reverse("api-root", args=[self.version]) + "aliases/?name__contains=2",
+        )
+        assert len(data["results"]) == 1  # nosec - unit test support
 
     def test_submit_unauthorized(self):
         response = self.userclient.post(
@@ -1297,6 +1427,25 @@ ok 2 bar
             + "permissions/devices/%s/" % GroupDevicePermission.objects.first().id
         )
         assert response.status_code == 204  # nosec - unit test support
+
+    def test_tags_filters(self):
+        data = self.hit(
+            self.adminclient,
+            reverse("api-root", args=[self.version]) + "tags/?name=tag1",
+        )
+        assert len(data["results"]) == 1  # nosec - unit test support
+
+        data = self.hit(
+            self.adminclient,
+            reverse("api-root", args=[self.version]) + "tags/?name__in=tag1,tag2",
+        )
+        assert len(data["results"]) == 2  # nosec - unit test support
+
+        data = self.hit(
+            self.adminclient,
+            reverse("api-root", args=[self.version]) + "tags/?name__contains=2",
+        )
+        assert len(data["results"]) == 1  # nosec - unit test support
 
 
 def test_view_root(client):
