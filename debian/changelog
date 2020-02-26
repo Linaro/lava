@@ -1,3 +1,119 @@
+lava (2020.02-1) unstable; urgency=medium
+
+  * LAVA Software 2020.02 release
+    85899aeb6 juno template tests: remove unused nfs_uboot_bootcmd
+    f97c77d4b vexpress: send u-boot commands one by one
+    38617cecd Procfile: allow extra command line options via environment variables
+    170bdbc01 dispatcher: add support for debugging with remote-pdb
+    61f2af3b1 devices-types: add meson-sm1-khadas-vim3l
+    e2af9f9fc doc: fix typo
+    d73e2cd6d CI: remove tests on Debian stretch
+    786f48c5a CI: coverage is already running under Buster
+    2af312b52 requirements: remove stretch files
+    98b2172c9 Remove the stretch debian build
+    b44e699e4 release: no need to update stretch anymore
+    13454d590 Rest API: remove stretch specific support
+    95292c636 debian: remove outdated REAMDE.Debian
+    e0f3b17c7 rest-api: remove support for old tap versions
+    2710cb7c5 Remove references to Debian Stretch
+    3f01452d3 doc: replace references to lava-tool by lavacli whenever possible
+    9a05cef96 Add new settings to dispatcher config for dispatcher IP.
+    c1bbe21d1 dispatcher: rework the DownloaderAction
+    e9f5895af DowloaderAction: remove old code
+    38cc64724 Fix pypy3 warnings
+    c61131bfd release: fix the release script after the last CI changes
+    516fca43c lava_results_app: fix html syntax
+    bd29a0dff ShellLogger: flush the output when closing
+    db444bd06 RetryAction: update the start time only when retrying
+    63aadb062 Connection prompts should be an array
+    79511cebf Cosmetics: fix identation
+    36c42a543 docker: fix lava-server entrypoint
+    ae2e910ef Set the favicon in the base template
+    40960d0c3 Remove redondant call to exists
+    f547b9341 requirements: installing from sources is ok now
+    bd55de7e5 docker: remove unused packages from lava-server-base container
+    930ad211a Make VExpressFlashErase pipeline step conditional
+    163c35ca5 Convert "VExpressMsdAction" to a retry action
+    2dd8b8c6e SchedulerAPI should inherit from ExposedV2API.
+    a648c8253 download: fix issue after c1bbe21d12
+    3c532457d device-types: Add sun50i-h5-nanopi-neo-plus2
+    46557987b Add cancel command for TestJob viewset in REST API.
+    1d1ad44bf menu: the documentation is at docs/v2/index.html
+    c0555bbaf server: use whitenoise to serve static files
+    535b8500d docker: install python3-whitenoise
+    62d213054 docker: pre-compress resources using gzip
+    fb506ae35 apache2: simplify the configuration after the adoption of whitenoise
+    9bf544b33 xmlrpc: remove deprecated functions
+    ac5f5b099 device-types: add rk3288-miqi
+    d03726b9f docker: upgrade sentry-sdk to the latest release
+    a6c23e4b6 lava-logs: remove expensive debugging
+    725e3ced2 device-types: add flasher support for MPS2
+    30e1427ea Remove dependency on django-testscenarios
+    2d91845c9 doc: user-notifications: Small cleanups/improvements.
+    30c10b97e apache: fix configuration when mod php is not enabled
+    bfd607b52 debian: improve dependencies
+    2df04e8f3 Fix operator list being empty after field selection in query condition edit.
+    05ae77eef Add UUU boot and deploy methods
+    e4fef1902 lava_dispatcher: test pipeline for uuu deploy and boot
+    3ee45bf29 schema: add uuu deploy/boot validation
+    822480582 Fix DownloaderAction call in uuu deploy
+    4772bee07 CI: fix coverage reporting
+    79695eea9 Fix python3.8 warning
+    d5da02eca Add a command to wait for database and migrations
+    04ede79d9 docker: use the new "lava-server manage wait" helper
+    b53c24eae debian: remove unused dependency on python3-setuptools
+    4d4142a73 debian: remove broken symlink
+    5ede97e16 api: Add validate as extra routing action for TestJobs REST API.
+    fb4313f38 api: Add resubmit as extra routing action for TestJobs REST API.
+    2cb218966 cpio archive/extract: move the code to helpers
+    153ff748c api: Aliases authorization.
+    e491c29db download handler: validate that keys are not path
+    6214c56ab Musca (A) support
+    8af26713e Adding Musca A and B device-types
+    fdbb1f5f7 Moving Musca test objects to new location
+    4d349d377 Create udev_wait_changed_event
+    0b2cf695a Move internal_pipeline to pipeline
+    84191d680 Fix remaining naive dates
+    3b3c5f482 CI: remove unneeded test and corresponding data
+    1e209a05e test: fix device schemas
+    492e293e2 CI: impove schema checks
+    ba5cdb3bf CI: rename job-schema to schemas
+    7354de0d3 device-types: add bcm2711-rpi-4-b
+    39f47d351 CI: remove explicit device configuration
+    6a2fa3dd7 mustang-uefi: fix template syntax
+    624cec63c Musca support tweaks
+    3bbe33c9c schema: allow to use deploy overlays
+    cfa30f6ab Add a new method to append overlays to an existing image
+    10eed80b1 download: factorize the code and fix logging
+    833112bc0 Use the new AppendOverlays action when downloading
+    68c5a7e80 qemu: allow to use the new AppendOverlays action
+    a9422c744 Document the new overlay feature
+    1d3768e6c Add a simple test for the AppendOverlays feature
+    4d6617bcc AppendOverlays: improve test coverage
+    06a4d3824 doc : uuu deploy/boot methods
+    5aeea7afe Rework of imx8m templates
+    789ae0430 Tests : remove deprecated imx8m device type
+    a9ec9728b Vexpress uboot command changes after uboot changes
+    ede94e0b8 doc: make yaml indentation consistent
+    6d0f28fbc uuu: make sure usb_otg_path variable is treated as strings
+    f27170d6f dispatcher: deploy/overlay: add action to create overlay unconditionally
+    67d13a614 dispatcher: deploy/overlay: make deployment_data optional
+    94801c831 dispatcher: ShellSession: centralize logger creation
+    96e44395e dispatcher: ShellSession: log when prompt_str changes
+    713a3e865 dispatcher: Action: extract method for getting logging_info
+    96fcb81a3 lava-dispatcher-host: allow passing full device node names
+    a77ee6424 lava_dispatcher_host: add docker support
+    044626ebc lava_dispatcher_host: reject mappings with empty device_info
+    3c405afdb dispatcher: add docker test action
+    74311ad0e Support new permission management via REST API
+    ba26835d0 Add unit tests for filtering in REST API
+    159e6d170 device-types: bcm2711-rpi-4-b: support booting rpi-sources
+    4f3e63d2b Fix nbd deploy
+    f02158f56 docker: allow to skip calls to check_owners
+    179b2b363 docker: add a variable to add any extra arguments
+
+ -- Remi Duraffort <remi.duraffort@linaro.org>  Wed, 26 Feb 2020 15:16:44 +0100
+
 lava (2020.01-1) unstable; urgency=medium
 
   * LAVA Software 2020.01 release
