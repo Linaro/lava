@@ -98,11 +98,11 @@ nav:
     - Build: developer/development/build.md
     - Test: developer/development/test.md
   - Methodology:
-    - Contribute: developer/methodology/contributing.md
     - Test: developer/methodology/test.md
     - Release: developer/methodology/release.md
     - Distribute: developer/methodology/distribute.md
   - Tutorials:
+    - Contribute: developer/tutorials/contributing.md
     - New device-type: developer/tutorials/new-device-type.md
     - New action: developer/tutorials/new-actions.md
 
