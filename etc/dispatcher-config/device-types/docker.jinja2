@@ -31,7 +31,7 @@ actions:
 {% if docker_capabilities|default([]) %}
           capabilities:
 {% for cap in docker_capabilities %}
-            - {{ cap }}
+          - "{{ cap }}"
 {% endfor %}
 {% else %}
           capabilities: []
@@ -40,7 +40,7 @@ actions:
 {% if docker_devices|default([]) %}
           devices:
 {% for device in docker_devices %}
-            - {{ device }}
+          - "{{ device }}"
 {% endfor %}
 {% else %}
           devices: []
@@ -48,7 +48,7 @@ actions:
 {% if docker_networks|default([]) %}
           networks:
 {% for network in docker_networks %}
-            - {{ network }}
+          - "{{ network }}"
 {% endfor %}
 {% else %}
           networks: []
@@ -57,10 +57,18 @@ actions:
 {% if docker_volumes|default([]) %}
           volumes:
 {% for volume in docker_volumes %}
-            - {{ volume }}
+          - "{{ volume }}"
 {% endfor %}
 {% else %}
           volumes: []
+{% endif %}
+{% if docker_extra_arguments|default([]) %}
+          extra_arguments:
+{% for extra_argument in docker_extra_arguments %}
+          - "{{ extra_argument }}"
+{% endfor %}
+{% else %}
+          extra_arguments: []
 {% endif %}
       ssh:
 {% endblock body %}
