@@ -124,7 +124,7 @@ def handle_build(options):
 
 def handle_test(options):
     run(".gitlab-ci/analyze/black.sh", options)
-    run(".gitlab-ci/analyze/job-schema.sh", options)
+    run(".gitlab-ci/analyze/schemas.sh", options)
     run(".gitlab-ci/analyze/pylint.sh", options)
     run(".gitlab-ci/test/dispatcher-debian-10.sh", options)
     run(".gitlab-ci/test/server-debian-10.sh", options)
