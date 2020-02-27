@@ -1161,6 +1161,7 @@ def job_submit(request):
             warnings = ""
             errors = ""
             try:
+                validate_job(request.POST.get("definition-input"))
                 try:
                     validate(
                         yaml_safe_load(request.POST.get("definition-input")),
