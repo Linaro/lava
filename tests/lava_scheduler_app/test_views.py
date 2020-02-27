@@ -896,9 +896,9 @@ def test_job_submit(client, setup):
     )
     assert ret.status_code == 200  # nosec
     assert ret.json() == {  # nosec
-        "result": "success",
-        "errors": "",
-        "warnings": "expected a dictionary",
+        "result": "failure",
+        "errors": "expected a dictionary",
+        "warnings": "",
     }
     ret = client.post(
         reverse("lava.scheduler.job.submit"),
