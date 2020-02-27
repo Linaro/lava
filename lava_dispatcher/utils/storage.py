@@ -51,11 +51,14 @@ class FlashUBootUMSAction(Action):
         image_file = self.get_namespace_data(
             action="download-action", label="image", key="file"
         )
-        cmd = "dd if={} of={} bs=1M oflag=sync conv=fsync".format(
-            image_file, self.usb_mass_device
+        image_layout = self.get_namespace_data(
+            action="download-action", label="layout", key="file"
         )
-        if not self.run_command(cmd.split(" "), allow_silent=True):
-            raise JobError("writing to the USB mass storage device failed")
+        if image_layout is not None:
+            cmd = f"bmaptool copy --bmap {image_layout} {image_file} {self.usb_mass_device}"
+        else:
+            cmd = f"dd if={image_file} of={self.usb_mass_device} bs=1M oflag=sync conv=fsync"
+        self.run_cmd(cmd, error_msg="writing to the USB mass storage device failed")
 
         connection.sendcontrol("c")
         return connection
