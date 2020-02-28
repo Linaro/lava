@@ -197,3 +197,190 @@ def test_append_overlays_update_guestfs(caplog, mocker, tmpdir):
         ("dispatcher", 10, "Overlays:"),
         ("dispatcher", 10, f"- rootfs.modules: '{tmpdir}/modules.tar' to '/lib'"),
     ]
+
+
+def test_append_overlays_update_disk_image(caplog, mocker, tmpdir):
+    caplog.set_level(logging.DEBUG)
+    params = {
+        "format": "disk",
+        "partition": 1,
+        "overlays": {
+            "modules": {
+                "url": "http://example.com/modules.tar.xz",
+                "compression": "xz",
+                "format": "tar",
+                "path": "/",
+            }
+        },
+    }
+
+    action = AppendOverlays("rootfs", params)
+    action.job = Job(1234, {}, None)
+    action.parameters = {
+        "rootfs": {"url": "http://example.com/disk.img", **params},
+        "namespace": "common",
+    }
+    action.data = {
+        "common": {
+            "download-action": {
+                "rootfs": {"file": str(tmpdir / "disk.img")},
+                "rootfs.modules": {"file": str(tmpdir / "modules.tar")},
+            }
+        }
+    }
+    action.mkdtemp = lambda: str(tmpdir)
+
+    copy_in_overlay = mocker.patch(
+        "lava_dispatcher.actions.deploy.apply_overlay.copy_in_overlay"
+    )
+
+    action.update_disk_image()
+
+    copy_in_overlay.assert_called_once_with(
+        str(tmpdir / "disk.img"), 1, str(tmpdir / "modules.tar")
+    )
+
+    assert caplog.record_tuples == [
+        ("dispatcher", 20, f"Modifying '{tmpdir}/disk.img'"),
+        (
+            "dispatcher",
+            10,
+            f"Adding {tmpdir}/modules.tar to partition 1 of '{tmpdir}/disk.img'",
+        ),
+    ]
+
+
+def test_append_lava_overlay_update_cpio(caplog, mocker, tmpdir):
+    caplog.set_level(logging.DEBUG)
+    params = {"format": "cpio.newc", "overlays": {"lava": True}}
+
+    action = AppendOverlays("rootfs", params)
+    action.job = Job(1234, {}, None)
+    action.parameters = {
+        "rootfs": {"url": "http://example.com/rootfs.cpio.gz", **params},
+        "namespace": "common",
+    }
+    action.data = {
+        "common": {
+            "compress-overlay": {"output": {"file": str(tmpdir / "overlay.tar.gz")}},
+            "download-action": {
+                "rootfs": {
+                    "file": str(tmpdir / "rootfs.cpio.gz"),
+                    "compression": "gz",
+                    "decompressed": False,
+                }
+            },
+        }
+    }
+    action.mkdtemp = lambda: str(tmpdir)
+    decompress_file = mocker.patch(
+        "lava_dispatcher.actions.deploy.apply_overlay.decompress_file"
+    )
+    uncpio = mocker.patch("lava_dispatcher.actions.deploy.apply_overlay.uncpio")
+    unlink = mocker.patch("os.unlink")
+    untar_file = mocker.patch("lava_dispatcher.actions.deploy.apply_overlay.untar_file")
+    cpio = mocker.patch("lava_dispatcher.actions.deploy.apply_overlay.cpio")
+    compress_file = mocker.patch(
+        "lava_dispatcher.actions.deploy.apply_overlay.compress_file"
+    )
+
+    action.update_cpio()
+
+    decompress_file.assert_called_once_with(str(tmpdir / "rootfs.cpio.gz"), "gz")
+    uncpio.assert_called_once_with(decompress_file(), str(tmpdir))
+    unlink.assert_called_once_with(decompress_file())
+    untar_file.assert_called_once_with(str(tmpdir / "overlay.tar.gz"), "./")
+    cpio.assert_called_once_with(str(tmpdir), decompress_file())
+    compress_file.assert_called_once_with(decompress_file(), "gz")
+
+    assert caplog.record_tuples == [
+        ("dispatcher", 20, f"Modifying '{tmpdir}/rootfs.cpio.gz'"),
+        ("dispatcher", 10, "* decompressing (gz)"),
+        ("dispatcher", 10, f"* extracting {decompress_file()}"),
+        ("dispatcher", 10, "Overlays:"),
+        ("dispatcher", 10, f"- rootfs.lava: '{tmpdir}/overlay.tar.gz' to '/'"),
+        ("dispatcher", 10, f"* archiving {decompress_file()}"),
+        ("dispatcher", 10, "* compressing (gz)"),
+    ]
+
+
+def test_append_lava_overlay_update_guestfs(caplog, mocker, tmpdir):
+    caplog.set_level(logging.DEBUG)
+    params = {"format": "ext4", "overlays": {"lava": True}}
+
+    action = AppendOverlays("rootfs", params)
+    action.job = Job(1234, {}, None)
+    action.parameters = {
+        "rootfs": {"url": "http://example.com/rootff.ext4", **params},
+        "namespace": "common",
+    }
+    action.data = {
+        "common": {
+            "compress-overlay": {"output": {"file": str(tmpdir / "overlay.tar.gz")}},
+            "download-action": {
+                "rootfs": {
+                    "file": str(tmpdir / "rootfs.ext4"),
+                    "compression": "gz",
+                    "decompressed": True,
+                }
+            },
+        }
+    }
+
+    guestfs = mocker.MagicMock()
+    guestfs.add_drive = mocker.MagicMock()
+    mocker.patch(
+        "lava_dispatcher.actions.deploy.apply_overlay.guestfs.GuestFS", guestfs
+    )
+    action.update_guestfs()
+
+    guestfs.assert_called_once_with(python_return_dict=True)
+    guestfs().launch.assert_called_once_with()
+    guestfs().list_devices.assert_called_once_with()
+    guestfs().add_drive.assert_called_once_with(str(tmpdir / "rootfs.ext4"))
+    guestfs().mount.assert_called_once_with(guestfs().list_devices()[0], "/")
+    guestfs().mkdir_p.assert_called_once_with("/")
+    guestfs().tar_in.assert_called_once_with(str(tmpdir / "overlay.tar.gz"), "/")
+    assert caplog.record_tuples == [
+        ("dispatcher", 20, f"Modifying '{tmpdir}/rootfs.ext4'"),
+        ("dispatcher", 10, "Overlays:"),
+        ("dispatcher", 10, f"- rootfs.lava: '{tmpdir}/overlay.tar.gz' to '/'"),
+    ]
+
+
+def test_append_lava_overlay_update_disk_image(caplog, mocker, tmpdir):
+    caplog.set_level(logging.DEBUG)
+    params = {"format": "disk", "partition": 1, "overlays": {"lava": True}}
+
+    action = AppendOverlays("rootfs", params)
+    action.job = Job(1234, {}, None)
+    action.parameters = {
+        "rootfs": {"url": "http://example.com/disk.img", **params},
+        "namespace": "common",
+    }
+    action.data = {
+        "common": {
+            "compress-overlay": {"output": {"file": str(tmpdir / "overlay.tar.gz")}},
+            "download-action": {"rootfs": {"file": str(tmpdir / "disk.img")}},
+        }
+    }
+    action.mkdtemp = lambda: str(tmpdir)
+
+    copy_in_overlay = mocker.patch(
+        "lava_dispatcher.actions.deploy.apply_overlay.copy_in_overlay"
+    )
+
+    action.update_disk_image()
+
+    copy_in_overlay.assert_called_once_with(
+        str(tmpdir / "disk.img"), 1, str(tmpdir / "overlay.tar.gz")
+    )
+
+    assert caplog.record_tuples == [
+        ("dispatcher", 20, f"Modifying '{tmpdir}/disk.img'"),
+        (
+            "dispatcher",
+            10,
+            f"Adding {tmpdir}/overlay.tar.gz to partition 1 of '{tmpdir}/disk.img'",
+        ),
+    ]

@@ -27,9 +27,7 @@ from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.apply_overlay import (
     ExtractRamdisk,
     CompressRamdisk,
-    InjectIntoDiskImage,
     ApplyOverlayTftp,
-    ExtractRamdiskFromDisk,
     ApplyOverlayImage,
     PrepareOverlayTftp,
 )
@@ -75,12 +73,8 @@ class FVPDeploy(DeployAction):  # pylint: disable=too-many-instance-attributes
             self.errors = "No 'images' specified on FVP deploy"
         for image in self.parameters["images"]:
             if "overlays" in self.parameters["images"][image]:
-                for overlay in self.parameters["images"][image]["overlays"]:
-                    # Supported options:
-                    # - This is an image file and a partition is a rootfs
-                    # - This is an image file and a ramdisk is contained on a partition
-                    # Therefore "partition" should be specified and optionally "ramdisk"
-                    if "partition" not in overlay:
+                if self.parameters.get("format", None) == "disk":
+                    if "partition" not in self.parameters["images"][image]:
                         self.errors = "Missing partition value for 'overlays' value for FVPDeploy."
 
     def populate(self, parameters):
@@ -96,49 +90,6 @@ class FVPDeploy(DeployAction):  # pylint: disable=too-many-instance-attributes
                         k, self.image_path, parameters["images"][k], uniquify=uniquify
                     )
                 )
-                if parameters["images"][k].get("overlays", None):
-                    for overlay in parameters["images"][k]["overlays"]:
-                        partition = overlay.get("partition")
-                        ramdisk = overlay.get("ramdisk", None)
-                        if not self.test_needs_overlay(parameters):
-                            continue
-                        if ramdisk is not None:
-                            self.pipeline.add_action(
-                                OffsetAction(k, partition_number=partition)
-                            )
-                            self.pipeline.add_action(
-                                ExtractRamdiskFromDisk(file=ramdisk, key=k)
-                            )
-                            self.pipeline.add_action(
-                                ExtractRamdisk(
-                                    ramdisk_label=ExtractRamdiskFromDisk.name,
-                                    ramdisk_action=ExtractRamdiskFromDisk.name,
-                                    force=True,
-                                )
-                            )
-                            self.pipeline.add_action(
-                                ApplyOverlayTftp(force_ramdisk=True)
-                            )
-                            self.pipeline.add_action(
-                                CompressRamdisk(
-                                    action=ExtractRamdiskFromDisk.name,
-                                    label=ExtractRamdiskFromDisk.name,
-                                    force=True,
-                                )
-                            )
-                            self.pipeline.add_action(
-                                InjectIntoDiskImage(file=ramdisk, key=k)
-                            )
-                        # Partition should always be specified, see validate.
-                        else:
-                            self.pipeline.add_action(
-                                ApplyOverlayImage(image_key=k, root_partition=partition)
-                            )
-                elif parameters["images"][k].get(
-                    "apply_overlay", False
-                ) and self.test_needs_overlay(parameters):
-                    # For normal ramdisk overlay
-                    self.pipeline.add_action(PrepareOverlayTftp())
 
 
 class OffsetAction(DeployAction):

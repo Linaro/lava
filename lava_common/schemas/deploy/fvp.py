@@ -33,14 +33,6 @@ def schema():
             Optional("compression"): str,
             Optional("header"): "u-boot",
         },
-        Required("images"): {
-            Required(str, "'images' is empty"): {
-                **deploy.url(),
-                Optional("apply_overlay"): bool,
-                Optional("overlays"): [
-                    {Required("partition"): int, Optional("ramdisk"): str}
-                ],
-            }
-        },
+        Required("images"): {Required(str, "'images' is empty"): deploy.url()},
     }
     return {**deploy.schema(), **base}

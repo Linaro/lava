@@ -40,7 +40,7 @@
     name: download-retry
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
-  - {class: actions.deploy.apply_overlay.ApplyOverlayImage, name: apply-overlay-image}
+    - {class: actions.deploy.apply_overlay.AppendOverlays, name: append-overlays}
 - class: actions.boot.fvp.BootFVPAction
   name: boot-fvp
   pipeline:

@@ -108,11 +108,10 @@ class ApplyOverlayImage(Action):
     summary = "apply overlay to test image"
     timeout_exception = InfrastructureError
 
-    def __init__(self, image_key="image", use_root_partition=True, root_partition=None):
+    def __init__(self, image_key="image", use_root_partition=True):
         super().__init__()
         self.image_key = image_key
         self.use_root_partition = use_root_partition
-        self.root_partition = root_partition
 
     def run(self, connection, max_end_time):
         overlay_file = self.get_namespace_data(
@@ -124,37 +123,35 @@ class ApplyOverlayImage(Action):
                 action="download-action", label=self.image_key, key="file"
             )
             self.logger.debug("Image: %s", decompressed_image)
+            root_partition = None
 
             if self.use_root_partition:
-                if self.root_partition is not None and (
+                if (
                     self.image_key not in self.parameters.keys()
                     and "images" in self.parameters.keys()
                 ):
                     if self.image_key in self.parameters["images"]:
-                        if (
+                        root_partition = self.parameters["images"][self.image_key].get(
                             "root_partition"
-                            in self.parameters["images"][self.image_key]
-                        ):
-                            self.root_partition = self.parameters["images"][
-                                self.image_key
-                            ].get("root_partition")
+                        )
                     else:
                         raise JobError(
                             "Unable to find image configuration for '{image}'".format(
                                 image=self.image_key
                             )
                         )
-                elif self.root_partition is not None:
-                    self.root_partition = self.parameters[self.image_key].get(
+                else:
+                    root_partition = self.parameters[self.image_key].get(
                         "root_partition"
                     )
-                if self.root_partition is None:
+
+                if root_partition is None:
                     raise JobError(
                         "Unable to apply the overlay image without 'root_partition'"
                     )
-                self.logger.debug("root_partition: %s", self.root_partition)
+                self.logger.debug("root_partition: %s", root_partition)
 
-            copy_in_overlay(decompressed_image, self.root_partition, overlay_file)
+            copy_in_overlay(decompressed_image, root_partition, overlay_file)
         else:
             self.logger.debug("No overlay to deploy")
         return connection
@@ -269,10 +266,6 @@ class ApplyOverlayTftp(Action):
     summary = "apply lava overlay test files"
     timeout_exception = InfrastructureError
 
-    def __init__(self, force_ramdisk=False):
-        super().__init__()
-        self.force_ramdisk = force_ramdisk
-
     def validate(self):
         super().validate()
         persist = self.parameters.get("persistent_nfs")
@@ -338,8 +331,8 @@ class ApplyOverlayTftp(Action):
                 )
             except subprocess.CalledProcessError as exc:
                 raise JobError(exc)
-        elif self.parameters.get("ramdisk") is not None or self.force_ramdisk:
-            if not self.parameters.get("ramdisk", {}).get("install_overlay", True):
+        elif self.parameters.get("ramdisk") is not None:
+            if not self.parameters["ramdisk"].get("install_overlay", True):
                 self.logger.info("[%s] Skipping applying overlay to ramdisk", namespace)
                 return connection
             overlay_file = self.get_namespace_data(
@@ -560,15 +553,9 @@ class ExtractRamdisk(Action):
     summary = "extract the ramdisk"
     timeout_exception = InfrastructureError
 
-    def __init__(
-        self, ramdisk_label="ramdisk", ramdisk_action="download-action", force=False
-    ):
+    def __init__(self):
         super().__init__()
         self.skip = False
-        self.ramdisk_label = ramdisk_label
-        self.ramdisk_action = ramdisk_action
-        # Force useful for other actions to call this with prepopulated values
-        self.force = force
 
     def validate(self):
         super().validate()
@@ -580,11 +567,10 @@ class ExtractRamdisk(Action):
             self.skip = True
 
     def run(self, connection, max_end_time):
-        if not self.force:
-            if not self.parameters.get("ramdisk"):  # idempotency
-                return connection
+        if not self.parameters.get("ramdisk"):  # idempotency
+            return connection
         ramdisk = self.get_namespace_data(
-            action=self.ramdisk_action, label=self.ramdisk_label, key="file"
+            action="download-action", label="ramdisk", key="file"
         )
         if self.skip:
             self.logger.info("Not extracting ramdisk.")
@@ -601,12 +587,12 @@ class ExtractRamdisk(Action):
         ramdisk_dir = self.mkdtemp()
         extracted_ramdisk = os.path.join(ramdisk_dir, "ramdisk")
         os.mkdir(extracted_ramdisk, 0o755)
-        compression = self.parameters.get("ramdisk", {}).get("compression")
+        compression = self.parameters["ramdisk"].get("compression")
         suffix = ""
         if compression:
             suffix = ".%s" % compression
         ramdisk_compressed_data = os.path.join(ramdisk_dir, RAMDISK_FNAME + suffix)
-        if self.parameters.get("ramdisk", {}).get("header") == "u-boot":
+        if self.parameters["ramdisk"].get("header") == "u-boot":
             cmd = (
                 "dd if=%s of=%s ibs=%s skip=1"
                 % (ramdisk, ramdisk_compressed_data, UBOOT_DEFAULT_HEADER_LENGTH)
@@ -644,26 +630,21 @@ class CompressRamdisk(Action):
     summary = "compress ramdisk with overlay"
     timeout_exception = InfrastructureError
 
-    def __init__(self, action="download-action", label="ramdisk", force=False):
+    def __init__(self):
         super().__init__()
         self.mkimage_arch = None
         self.add_header = None
         self.skip = False
-        self.action = action
-        self.label = label
-        # Force useful for other actions to call this with prepopulated values
-        self.force = force
 
     def validate(self):
         super().validate()
-        if not self.force:
-            if not self.parameters.get("ramdisk"):  # idempotency
-                return
-            if not self.parameters["ramdisk"].get(
-                "install_modules", True
-            ) and not self.parameters["ramdisk"].get("install_overlay", True):
-                self.skip = True
-                return
+        if not self.parameters.get("ramdisk"):  # idempotency
+            return
+        if not self.parameters["ramdisk"].get(
+            "install_modules", True
+        ) and not self.parameters["ramdisk"].get("install_overlay", True):
+            self.skip = True
+            return
         if "parameters" in self.job.device["actions"]["deploy"]:
             self.add_header = self.job.device["actions"]["deploy"]["parameters"].get(
                 "add_header"
@@ -684,11 +665,10 @@ class CompressRamdisk(Action):
                     self.errors = "ramdisk: add_header: unknown header type"
 
     def run(self, connection, max_end_time):
-        if not self.force:
-            if not self.parameters.get("ramdisk"):  # idempotency
-                return connection
-            if self.skip:
-                return connection
+        if not self.parameters.get("ramdisk"):  # idempotency
+            return connection
+        if self.skip:
+            return connection
         connection = super().run(connection, max_end_time)
         ramdisk_dir = self.get_namespace_data(
             action="extract-overlay-ramdisk", label="extracted_ramdisk", key="directory"
@@ -722,11 +702,13 @@ class CompressRamdisk(Action):
         self.logger.debug(">> %s", cpio(ramdisk_dir, ramdisk_data))
 
         # we need to compress the ramdisk with the same method is was submitted with
-        compression = self.parameters.get("ramdisk", {}).get("compression")
+        compression = self.parameters["ramdisk"].get("compression")
         final_file = compress_file(ramdisk_data, compression)
 
         tftp_dir = os.path.dirname(
-            self.get_namespace_data(action=self.action, label=self.label, key="file")
+            self.get_namespace_data(
+                action="download-action", label="ramdisk", key="file"
+            )
         )
 
         if self.add_header == "u-boot":
@@ -873,7 +855,7 @@ class AppendOverlays(Action):
     summary = "append overlays to an image"
 
     # TODO: list libguestfs supported formats
-    IMAGE_FORMATS = ["cpio.newc", "ext4"]
+    IMAGE_FORMATS = ["cpio.newc", "ext4", "disk"]
     OVERLAY_FORMATS = ["tar"]
 
     def __init__(self, key, params):
@@ -889,6 +871,8 @@ class AppendOverlays(Action):
         if not isinstance(self.params["overlays"], dict):
             raise JobError("'overlays' is not a dictionary")
         for overlay, params in self.params["overlays"].items():
+            if overlay == "lava":
+                continue
             if params.get("format") not in self.OVERLAY_FORMATS:
                 raise JobError(
                     "Invalid 'format' (%r) for 'overlays.%s'"
@@ -903,6 +887,9 @@ class AppendOverlays(Action):
         # Check the image format
         if self.params.get("format") not in self.IMAGE_FORMATS:
             raise JobError("Unsupported image format %r" % self.params.get("format"))
+        if self.params.get("format") == "disk":
+            if "partition" not in self.params:
+                raise JobError("If using disk image type, specify a partition.")
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
@@ -914,6 +901,8 @@ class AppendOverlays(Action):
             except RuntimeError as exc:
                 self.logger.exception(str(exc))
                 raise JobError("Unable to update image %s: %r" % (self.key, str(exc)))
+        elif self.params["format"] == "disk":
+            self.update_disk_image()
         else:
             raise LAVABug("Unknown format %r" % self.params["format"])
         return connection
@@ -943,10 +932,18 @@ class AppendOverlays(Action):
         self.logger.debug("Overlays:")
         for overlay in self.params["overlays"]:
             label = "%s.%s" % (self.key, overlay)
-            overlay_image = self.get_namespace_data(
-                action="download-action", label=label, key="file"
-            )
-            path = self.params["overlays"][overlay]["path"]
+            overlay_image = None
+            path = None
+            if overlay == "lava":
+                overlay_image = self.get_namespace_data(
+                    action="compress-overlay", label="output", key="file"
+                )
+                path = "/"
+            else:
+                overlay_image = self.get_namespace_data(
+                    action="download-action", label=label, key="file"
+                )
+                path = self.params["overlays"][overlay]["path"]
             self.logger.debug("- %s: %r to %r", label, overlay_image, path)
             # In the "validate" function, we check that path startswith '/'
             # and does not contains '..'
@@ -977,155 +974,46 @@ class AppendOverlays(Action):
         self.logger.debug("Overlays:")
         for overlay in self.params["overlays"]:
             label = "%s.%s" % (self.key, overlay)
-            overlay_image = self.get_namespace_data(
-                action="download-action", label=label, key="file"
-            )
-            path = self.params["overlays"][overlay]["path"]
+            overlay_image = None
+            if overlay == "lava":
+                overlay_image = self.get_namespace_data(
+                    action="compress-overlay", label="output", key="file"
+                )
+                path = "/"
+            else:
+                overlay_image = self.get_namespace_data(
+                    action="download-action", label=label, key="file"
+                )
+                path = self.params["overlays"][overlay]["path"]
             self.logger.debug("- %s: %r to %r", label, overlay_image, path)
             guest.mkdir_p(path)
             guest.tar_in(overlay_image, path)
         guest.umount(device)
         guest.shutdown()
 
-
-class ExtractRamdiskFromDisk(Action):
-
-    name = "extract-from-disk-image"
-    description = "Extracts files from disk image file containing partitions"
-    summary = "Extracts file from disk image"
-
-    def __init__(self, file=None, key=None):
-        super().__init__()
-        self.file = file
-        self.key = key
-        self.cleanup_required = False
-        self.mount_directory = None
-        self.output_directory = None
-
-    def validate(self):
-        super().validate()
-        which("mount")
-        which("umount")
-        if not self.file:
-            self.errors = "{} action not given a file to extract from".format(self.name)
-        if not self.key:
-            self.errors = "{} action not given image key".format(self.name)
-
-    def run(self, connection, max_end_time):
+    def update_disk_image(self):
+        partition = self.params["partition"]
         disk_image = self.get_namespace_data(
             action="download-action", label=self.key, key="file"
         )
-        partition_start_bytes = self.get_namespace_data(
-            action="offset-action", label=self.key, key="offset"
-        )
-        self.logger.debug(
-            "Attempting to extract %s from partition at offset %s in file %s",
-            self.file,
-            partition_start_bytes,
-            disk_image,
-        )
-        self.cleanup_required = True
-        self.mount_directory = self.mkdtemp()
-        self.output_directory = self.mkdtemp()
-        self.logger.debug("Mounting image %s to %s", disk_image, self.mount_directory)
-        mount_opts = "rw,loop,offset={}".format(partition_start_bytes)
-        self.run_cmd(["mount", "-o", mount_opts, disk_image, self.mount_directory])
-        self.logger.debug(
-            "Copying %s/%s to %s",
-            self.mount_directory,
-            self.file,
-            self.output_directory,
-        )
-        try:
-            shutil.copy(
-                "{}/{}".format(self.mount_directory, self.file), self.output_directory
-            )
-        except IOError as exc:
-            raise JobError(exc)
-        self.run_cmd(["umount", self.mount_directory])
-
-        self.set_namespace_data(
-            action=self.name,
-            label=self.name,
-            key="file",
-            value="{}/{}".format(self.output_directory, os.path.basename(self.file)),
-        )
-
-    def cleanup(self, connection):
-        super().cleanup(connection)
-        self.logger.debug("%s cleanup", self.name)
-        for directory in [self.mount_directory, self.output_directory]:
-            if directory:
-                self.logger.debug("Cleaning %s", directory)
-                if os.path.ismount(directory):
-                    self.run_cmd(["umount", directory])
-                if os.path.isdir(directory):
-                    shutil.rmtree(directory)
-
-
-class InjectIntoDiskImage(Action):
-
-    name = "inject-into-disk-image"
-    description = "Adds files to disk image file containing partitions"
-    summary = "Re-adds file to disk image"
-
-    def __init__(self, file=None, key=None):
-        super().__init__()
-        self.file = file
-        self.key = key
-        self.cleanup_required = True
-        self.mount_directory = None
-
-    def validate(self):
-        super().validate()
-        which("mount")
-        which("umount")
-        if not self.file:
-            self.errors = "{} action not given a file to extract from".format(self.name)
-        if not self.key:
-            self.errors = "{} action not given image key".format(self.name)
-
-    def run(self, connection, max_end_time):
-        disk_image = self.get_namespace_data(
-            action="download-action", label=self.key, key="file"
-        )
-        partition_start_bytes = self.get_namespace_data(
-            action="offset-action", label=self.key, key="offset"
-        )
-        ramdisk = self.get_namespace_data(
-            action="compress-ramdisk", label="file", key="full-path"
-        )
-        self.logger.debug(
-            "Want to inject file %s into partition at offset %s in file %s",
-            ramdisk,
-            partition_start_bytes,
-            disk_image,
-        )
-        self.mount_directory = self.mkdtemp()
-        try:
+        self.logger.info("Modifying %r", disk_image)
+        for overlay in self.params["overlays"]:
+            overlay_file = None
+            if overlay == "lava":
+                # This is a special case: we aren't specifying an input
+                overlay_file = self.get_namespace_data(
+                    action="compress-overlay", label="output", key="file"
+                )
+            else:
+                # Otherwise find the downloaded overlay
+                label = "%s.%s" % (self.key, overlay)
+                overlay_file = self.get_namespace_data(
+                    action="download-action", label=label, key="file"
+                )
+            if not overlay_file:
+                raise JobError("Cannot find lava overlay")
             self.logger.debug(
-                "Mounting partition at offset %s of image %s to %s",
-                partition_start_bytes,
-                disk_image,
-                self.mount_directory,
+                "Adding %s to partition %s of %r"
+                % (overlay_file, partition, disk_image)
             )
-            mount_opts = "rw,loop,offset={}".format(partition_start_bytes)
-            self.run_cmd(["mount", "-o", mount_opts, disk_image, self.mount_directory])
-            self.logger.debug(
-                "Copying %s to %s/%s", ramdisk, self.mount_directory, self.file
-            )
-            shutil.copy(ramdisk, "{}/{}".format(self.mount_directory, self.file))
-            self.run_cmd(["umount", self.mount_directory])
-        except subprocess.CalledProcessError as exc:
-            raise JobError(exc)
-
-    def cleanup(self, connection):
-        super().cleanup(connection)
-        self.logger.debug("%s cleanup", self.name)
-        if self.mount_directory:
-            self.logger.debug("Cleaning %s", self.mount_directory)
-            if os.path.ismount(self.mount_directory):
-                self.run_cmd(["umount", self.mount_directory])
-            if os.path.isdir(self.mount_directory):
-                shutil.rmtree(self.mount_directory)
-            self.mount_directory = None
+            copy_in_overlay(disk_image, partition, overlay_file)

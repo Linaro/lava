@@ -30,8 +30,10 @@ actions:
       rootfs:
         url: https://releases.linaro.org/archive/15.05/members/arm/openembedded/aarch64/vexpress64-openembedded_minimal-armv8-gcc-4.9_20150522-720.img.gz
         compression: gz
+        format: disk
+        partition: 1
         overlays:
-          - partition: 1
+          lava: true
       fip:
         # fip contained in https://releases.linaro.org/members/arm/platforms/19.06/fvp-latest-oe-uboot.zip
         url: http://example.com/fip.bin
