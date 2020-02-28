@@ -70,6 +70,10 @@ class UBootUMSAction(DeployAction):  # pylint:disable=too-many-instance-attribut
         self.pipeline.add_action(
             DownloaderAction("image", path=path, params=parameters["image"])
         )
+        if "layout" in parameters:
+            self.pipeline.add_action(
+                DownloaderAction("layout", path=path, params=parameters["layout"])
+            )
         if self.test_needs_overlay(parameters):
             self.pipeline.add_action(OverlayAction())
             self.pipeline.add_action(ApplyOverlayImage())
