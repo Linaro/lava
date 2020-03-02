@@ -9,7 +9,7 @@ then
   apt-get install --no-install-recommends --yes pylint3 python3-pylint-django
 else
   set -x
-  dirs=${*:-lava lava_common lava_dispatcher lava_rest_app lava_results_app lava_scheduler_app lava_server linaro_django_xmlrpc share}
+  dirs=${*:-lava lava_common lava_dispatcher lava_rest_app lava_results_app lava_scheduler_app lava_server linaro_django_xmlrpc share tests}
   # Only run some pylint checkers
   # See https://docs.pylint.org/en/1.6.0/features.html
   # Disabled:
