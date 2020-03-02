@@ -86,8 +86,13 @@ def test_run(action, mocker):
     lava_test_0 = overlay / "0"
     assert lava_test_runner.exists()
 
-    environment = overlay / "environment"
-    assert "ANDROID_SERIAL='0123456789'" in environment.open().read()
+    environmentfile = overlay / "environment"
+    environment = environmentfile.open().read()
+    assert "ANDROID_SERIAL='0123456789'" in environment
+    assert "LAVA_CONNECTION_COMMAND_UART0='telnet localhost 4002'" in environment
+    assert "LAVA_CONNECTION_COMMAND_UART1='telnet 192.168.1.200 8001'" in environment
+    # primary connection:
+    assert "LAVA_CONNECTION_COMMAND='telnet 192.168.1.200 8001'" in environment
 
     # docker gets called
     docker_call = ShellCommand.mock_calls[0][1][0]
