@@ -18,11 +18,9 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import os
 import pexpect
 
-from lava_dispatcher.device import NewDevice, PipelineDevice
-from lava_dispatcher.parser import JobParser
+from lava_dispatcher.device import PipelineDevice
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from tests.utils import DummyLogger
 from lava_dispatcher.action import Pipeline

@@ -20,11 +20,8 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 
-import os
 import unittest
 from unittest.mock import patch
-from lava_dispatcher.device import NewDevice
-from lava_dispatcher.parser import JobParser
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from tests.utils import DummyLogger, infrastructure_error
 

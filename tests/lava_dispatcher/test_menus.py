@@ -19,12 +19,9 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 
-import os
 import re
 import logging
 from unittest.mock import patch
-from lava_dispatcher.device import NewDevice
-from lava_dispatcher.parser import JobParser
 from lava_common.timeout import Timeout
 from lava_common.exceptions import JobError
 from lava_dispatcher.shell import ShellSession, ShellCommand

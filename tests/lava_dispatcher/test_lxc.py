@@ -46,8 +46,6 @@ class LxcFactory(Factory):
 
     def create_adb_nuc_job(self, filename):
         return self.create_job("adb-nuc-01.jinja2", filename)
-        job.logger = DummyLogger()
-        return job
 
     def create_hikey_aep_job(self, filename):
         job = super().create_job("hi6220-hikey-r2-01.jinja2", filename)
