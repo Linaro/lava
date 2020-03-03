@@ -130,8 +130,8 @@ class NbdAction(DeployAction):  # pylint:disable=too-many-instance-attributes
                     key, path=self.tftp_dir, params=parameters[key]
                 )
                 download.max_retries = (
-                    3
-                )  # overridden by failure_retry in the parameters, if set.
+                    3  # overridden by failure_retry in the parameters, if set.
+                )
                 self.pipeline.add_action(download)
                 if key == "initrd":
                     self.set_namespace_data(
