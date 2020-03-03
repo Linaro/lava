@@ -15,6 +15,7 @@ from lava_scheduler_app.models import (
     _pipeline_protocols,
 )
 from lava_scheduler_app.dbutils import match_vlan_interface
+from lava_results_app.dbutils import _get_action_metadata
 from django.contrib.auth.models import User
 from lava_scheduler_app.utils import split_multinode_yaml
 from tests.lava_scheduler_app.test_submission import ModelFactory, TestCaseWithFactory
@@ -1111,7 +1112,6 @@ class TestYamlMultinode(TestCaseWithFactory):
             yaml_safe_dump(client_submission), parser_device, 4212, None, ""
         )
         pipeline = pipeline_job.describe()
-        from lava_results_app.dbutils import _get_action_metadata
 
         meta_dict = _get_action_metadata(pipeline["job"]["actions"])
         self.assertEqual(

@@ -22,6 +22,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser, Permission
 from django.contrib.contenttypes.models import ContentType
+from django.db import connection
 from django.db.models import Q
 from django.test import TestCase
 
@@ -221,8 +222,6 @@ class ManagersTest(TestCaseWithFactory):
     def test_filter_by_perm_single_group(self):
         settings.DEBUG = True
         try:
-            from django.db import connection
-
             ContentType.objects.clear_cache()
 
             GroupDevicePermission.objects.assign_perm(

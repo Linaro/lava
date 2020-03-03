@@ -118,7 +118,7 @@ bundle_sample = {
 }
 
 
-class TestSignals(object):
+class TestSignals:
 
     message_str = ""
 
@@ -135,7 +135,7 @@ class TestSignals(object):
             self.log.info("\t<LAVA_TEST_COMPLETE%s>" % self.formatString(reply))
 
 
-class TestSocket(object):
+class TestSocket:
     __test__ = False
 
     response = None
@@ -229,6 +229,7 @@ class TestCoordinator(LavaCoordinator):
     log = None
 
     def __init__(self):
+        # pylint: disable=bad-super-call
         super(LavaCoordinator, self).__init__()
         self.group_name = str(uuid.uuid4())
         self.conn = TestSocket()

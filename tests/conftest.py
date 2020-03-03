@@ -20,15 +20,13 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import pytest
+import lava_dispatcher.job
+import lava_dispatcher.utils.filesystem
 
 
 @pytest.fixture(autouse=True)
 def tempdir(monkeypatch, tmpdir):
-    import lava_dispatcher.job
-
     monkeypatch.setattr(lava_dispatcher.job, "DISPATCHER_DOWNLOAD_DIR", str(tmpdir))
-    import lava_dispatcher.utils.filesystem
-
     monkeypatch.setattr(
         lava_dispatcher.utils.filesystem, "tftpd_dir", lambda: str(tmpdir)
     )

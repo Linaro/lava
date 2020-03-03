@@ -22,7 +22,6 @@ import json
 import os
 import pathlib
 import pytest
-import tap
 
 from datetime import timedelta
 from django.conf import settings
@@ -31,7 +30,7 @@ from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from lava_common.compat import yaml_load, yaml_safe_dump
+from lava_common.compat import yaml_load
 from lava_scheduler_app.models import (
     Alias,
     Device,

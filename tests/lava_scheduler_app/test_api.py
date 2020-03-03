@@ -2,7 +2,6 @@ import glob
 import os
 import pathlib
 import pytest
-import yaml
 import unittest
 import xmlrpc.client
 
@@ -23,11 +22,7 @@ from lava_scheduler_app.models import (
     Tag,
     Worker,
 )
-from lava_scheduler_app.schema import (
-    validate_submission,
-    validate_device,
-    SubmissionException,
-)
+from lava_scheduler_app.schema import validate_submission, SubmissionException
 from tests.lava_scheduler_app.test_submission import TestCaseWithFactory
 
 
