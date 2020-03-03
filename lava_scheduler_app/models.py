@@ -573,9 +573,14 @@ class Device(RestrictedObject):
     )
 
     # The device health helps to decide what to do next with the device
-    HEALTH_GOOD, HEALTH_UNKNOWN, HEALTH_LOOPING, HEALTH_BAD, HEALTH_MAINTENANCE, HEALTH_RETIRED = range(
-        6
-    )
+    (
+        HEALTH_GOOD,
+        HEALTH_UNKNOWN,
+        HEALTH_LOOPING,
+        HEALTH_BAD,
+        HEALTH_MAINTENANCE,
+        HEALTH_RETIRED,
+    ) = range(6)
     HEALTH_CHOICES = (
         (HEALTH_GOOD, "Good"),
         (HEALTH_UNKNOWN, "Unknown"),
@@ -1259,9 +1264,8 @@ def _pipeline_protocols(job_data, user, yaml_data=None):
             raise SubmissionException("Unable to split multinode job submission.")
 
         # structural changes done, now create the testjob.
-        parent = (
-            None
-        )  # track the zero id job as the parent of the group in the sub_id text field
+        # track the zero id job as the parent of the group in the sub_id text field
+        parent = None
         for role, role_dict in role_dictionary.items():
             for node_data in job_dictionary[role]:
                 job = _create_pipeline_job(
@@ -1281,8 +1285,8 @@ def _pipeline_protocols(job_data, user, yaml_data=None):
                     node_data["protocols"]["lava-multinode"]["sub_id"],
                 )
                 job.multinode_definition = (
-                    yaml_data
-                )  # store complete submission, inc. comments
+                    yaml_data  # store complete submission, inc. comments
+                )
                 job.save()
                 job_object_list.append(job)
 
@@ -1422,9 +1426,14 @@ class TestJob(models.Model):
         seconds = (self.end_time - self.start_time).total_seconds()
         return datetime.timedelta(seconds=int(seconds))
 
-    STATE_SUBMITTED, STATE_SCHEDULING, STATE_SCHEDULED, STATE_RUNNING, STATE_CANCELING, STATE_FINISHED = range(
-        6
-    )
+    (
+        STATE_SUBMITTED,
+        STATE_SCHEDULING,
+        STATE_SCHEDULED,
+        STATE_RUNNING,
+        STATE_CANCELING,
+        STATE_FINISHED,
+    ) = range(6)
     STATE_CHOICES = (
         (STATE_SUBMITTED, "Submitted"),
         (STATE_SCHEDULING, "Scheduling"),

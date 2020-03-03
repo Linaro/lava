@@ -40,8 +40,8 @@ class ConnectDevice(Action):
     def __init__(self):
         super().__init__()
         self.session_class = (
-            ShellSession
-        )  # wraps the pexpect and provides prompt_str access
+            ShellSession  # wraps the pexpect and provides prompt_str access
+        )
         self.shell_class = ShellCommand  # runs the command to initiate the connection
         self.command = ""
         self.hardware = None
@@ -198,8 +198,8 @@ class ConnectShell(ConnectDevice):
         )
         self.message = "Connecting to shell using"
         self.session_class = (
-            ShellSession
-        )  # wraps the pexpect and provides prompt_str access
+            ShellSession  # wraps the pexpect and provides prompt_str access
+        )
         self.shell_class = ShellCommand  # runs the command to initiate the connection
 
     def validate(self):
