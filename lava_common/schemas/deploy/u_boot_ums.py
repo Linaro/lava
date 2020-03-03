@@ -29,6 +29,5 @@ def schema():
     base = {
         Required("to"): "u-boot-ums",
         Required("image"): deploy.url({Optional("root_partition"): Range(min=0)}),
-        Optional("layout"): deploy.url(),
     }
     return {**deploy.schema(), **base}
