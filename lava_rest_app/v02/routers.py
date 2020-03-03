@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
+from lava_server.compat import drf_basename
 from rest_framework_extensions.routers import ExtendedDefaultRouter
 from . import views
 
@@ -28,13 +29,13 @@ router.register(r"devicetypes", views.DeviceTypeViewSet)
 router.register(r"jobs", views.TestJobViewSet).register(
     r"suites",
     views.TestSuiteViewSet,
-    base_name="jobs-suite",
     parents_query_lookups=["job_id"],
+    **drf_basename("jobs-suite"),
 ).register(
     r"tests",
     views.TestCaseViewSet,
-    base_name="suites-test",
     parents_query_lookups=["suite__job_id", "suite_id"],
+    **drf_basename("suites-test"),
 )
 router.register(r"permissions/devicetypes", views.GroupDeviceTypePermissionViewSet)
 router.register(r"permissions/devices", views.GroupDevicePermissionViewSet)
