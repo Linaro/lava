@@ -42,7 +42,7 @@ def url(extra=None):
         {
             **base_url,
             **extra,
-            Required("format"): Any("cpio.newc", "ext4", "disk"),
+            Required("format"): Any("cpio.newc", "ext4"),
             Optional("partition"): int,
             Required("overlays"): {
                 Optional("lava"): bool,

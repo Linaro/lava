@@ -31,7 +31,11 @@ type
 ----
 .. include:: actions-deploy-kernel-type.rsti
 
-|
+.. _deploy_to_tftp_kernel_url:
+
+url *
+-----
+.. include:: actions-deploy-images-url.rsti
 
 .. _deploy_to_tftp_dtb:
 

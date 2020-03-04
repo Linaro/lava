@@ -887,9 +887,6 @@ class AppendOverlays(Action):
         # Check the image format
         if self.params.get("format") not in self.IMAGE_FORMATS:
             raise JobError("Unsupported image format %r" % self.params.get("format"))
-        if self.params.get("format") == "disk":
-            if "partition" not in self.params:
-                raise JobError("If using disk image type, specify a partition.")
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
@@ -901,8 +898,6 @@ class AppendOverlays(Action):
             except RuntimeError as exc:
                 self.logger.exception(str(exc))
                 raise JobError("Unable to update image %s: %r" % (self.key, str(exc)))
-        elif self.params["format"] == "disk":
-            self.update_disk_image()
         else:
             raise LAVABug("Unknown format %r" % self.params["format"])
         return connection
@@ -962,12 +957,16 @@ class AppendOverlays(Action):
         image = self.get_namespace_data(
             action="download-action", label=self.key, key="file"
         )
+        partition = self.params.get("partition", None)
         self.logger.info("Modifying %r", image)
         guest = guestfs.GuestFS(python_return_dict=True)
         guest.add_drive(image)
         try:
             guest.launch()
-            device = guest.list_devices()[0]
+            if partition is not None:
+                device = guest.list_partitions()[partition]
+            else:
+                device = guest.list_devices()[0]
             guest.mount(device, "/")
         except RuntimeError as exc:
             self.logger.exception(str(exc))
@@ -982,40 +981,15 @@ class AppendOverlays(Action):
                     action="compress-overlay", label="output", key="file"
                 )
                 path = "/"
+                compress = "gzip"
             else:
                 overlay_image = self.get_namespace_data(
                     action="download-action", label=label, key="file"
                 )
                 path = self.params["overlays"][overlay]["path"]
+                compress = None
             self.logger.debug("- %s: %r to %r", label, overlay_image, path)
             guest.mkdir_p(path)
-            guest.tar_in(overlay_image, path)
+            guest.tar_in(overlay_image, path, compress=compress)
         guest.umount(device)
         guest.shutdown()
-
-    def update_disk_image(self):
-        partition = self.params["partition"]
-        disk_image = self.get_namespace_data(
-            action="download-action", label=self.key, key="file"
-        )
-        self.logger.info("Modifying %r", disk_image)
-        for overlay in self.params["overlays"]:
-            overlay_file = None
-            if overlay == "lava":
-                # This is a special case: we aren't specifying an input
-                overlay_file = self.get_namespace_data(
-                    action="compress-overlay", label="output", key="file"
-                )
-            else:
-                # Otherwise find the downloaded overlay
-                label = "%s.%s" % (self.key, overlay)
-                overlay_file = self.get_namespace_data(
-                    action="download-action", label=label, key="file"
-                )
-            if not overlay_file:
-                raise JobError("Cannot find lava overlay")
-            self.logger.debug(
-                "Adding %s to partition %s of %r"
-                % (overlay_file, partition, disk_image)
-            )
-            copy_in_overlay(disk_image, partition, overlay_file)

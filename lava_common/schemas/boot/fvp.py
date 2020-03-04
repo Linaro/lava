@@ -29,11 +29,11 @@ def schema():
     base = {
         Required("method"): Msg("fvp", "'method' should be 'fvp'"),
         Required("console_string"): str,
-        Required("fvp_image"): str,
+        Required("image"): str,
         Optional("fvp_license_variable"): str,
         Optional("fvp_version_string"): str,
         Required("fvp_arguments"): str,
         Required("prompts"): boot.prompts(),
-        Required("image"): {Required("name"): str, Optional("local"): bool},
+        Required("docker"): {Required("name"): str, Optional("local"): bool},
     }
     return {**boot.schema(), **base}

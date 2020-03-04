@@ -19,7 +19,6 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
-import subprocess  # nosec
 import time
 
 from lava_common.exceptions import JobError
@@ -45,8 +44,8 @@ class BootFVP(Boot):
             return False, '"fvp" was not in the device configuration boot methods'
         if parameters["method"] != "fvp":
             return False, '"method" was not "fvp"'
-        if "fvp_image" not in parameters:
-            return False, '"fvp_image" was not in boot parameters'
+        if "image" not in parameters:
+            return False, '"image" was not in boot parameters'
         return True, "accepted"
 
 
@@ -97,12 +96,13 @@ class BaseFVPAction(Action):
     def validate(self):
         super().validate()
         self.container = "lava-%s-%s" % (self.job.job_id, self.level)
-        if "image" not in self.parameters or "name" not in self.parameters["image"]:
+        if "docker" not in self.parameters or "name" not in self.parameters["docker"]:
             self.errors = "Specify docker image name"
-        self.docker_image = self.parameters["image"]["name"]
-        self.local_docker_image = self.parameters["image"].get("local", False)
+            raise JobError("Not specified 'docker' in parameters")
+        self.docker_image = self.parameters["docker"]["name"]
+        self.local_docker_image = self.parameters["docker"].get("local", False)
 
-        options = self.job.device["actions"]["boot"]["methods"]["docker"]["options"]
+        options = self.job.device["actions"]["boot"]["methods"]["fvp"]["options"]
 
         if options["cpus"]:
             self.extra_options += " --cpus %s" % options["cpus"]
@@ -159,7 +159,7 @@ class BaseFVPAction(Action):
             )
         else:
             cmd += " -e %s" % self.fvp_license
-        fvp_image = self.parameters.get("fvp_image")
+        fvp_image = self.parameters.get("image")
         cmd += self.extra_options
         cmd += " %s %s %s" % (docker_image, fvp_image, fvp_arguments)
         cmd = cmd.format(**substitutions)
@@ -168,17 +168,9 @@ class BaseFVPAction(Action):
     def cleanup(self, connection):
         super().cleanup(connection)
         self.logger.debug("Stopping container %s", self.container)
-        try:
-            subprocess.check_output(  # nosec
-                ["docker", "stop", self.container], stderr=subprocess.STDOUT
-            )
-        except subprocess.CalledProcessError as e:
-            if "No such container" in str(e.output):
-                # If we run with --version only, the container *should* already be stopped
-                self.logger.debug("Container %s already stopped" % self.container)
-            else:
-                raise e
-        self.logger.debug("Stopped container %s", self.container)
+        return_value = self.run_cmd(["docker", "stop", self.container], allow_fail=True)
+        if return_value == 0:
+            self.logger.debug("Stopped container %s", self.container)
         self.cleanup_required = False
 
 

@@ -191,62 +191,13 @@ def test_append_overlays_update_guestfs(caplog, mocker, tmpdir):
     guestfs().add_drive.assert_called_once_with(str(tmpdir / "rootfs.ext4"))
     guestfs().mount.assert_called_once_with(guestfs().list_devices()[0], "/")
     guestfs().mkdir_p.assert_called_once_with("/lib")
-    guestfs().tar_in.assert_called_once_with(str(tmpdir / "modules.tar"), "/lib")
+    guestfs().tar_in.assert_called_once_with(
+        str(tmpdir / "modules.tar"), "/lib", compress=None
+    )
     assert caplog.record_tuples == [
         ("dispatcher", 20, f"Modifying '{tmpdir}/rootfs.ext4'"),
         ("dispatcher", 10, "Overlays:"),
         ("dispatcher", 10, f"- rootfs.modules: '{tmpdir}/modules.tar' to '/lib'"),
-    ]
-
-
-def test_append_overlays_update_disk_image(caplog, mocker, tmpdir):
-    caplog.set_level(logging.DEBUG)
-    params = {
-        "format": "disk",
-        "partition": 1,
-        "overlays": {
-            "modules": {
-                "url": "http://example.com/modules.tar.xz",
-                "compression": "xz",
-                "format": "tar",
-                "path": "/",
-            }
-        },
-    }
-
-    action = AppendOverlays("rootfs", params)
-    action.job = Job(1234, {}, None)
-    action.parameters = {
-        "rootfs": {"url": "http://example.com/disk.img", **params},
-        "namespace": "common",
-    }
-    action.data = {
-        "common": {
-            "download-action": {
-                "rootfs": {"file": str(tmpdir / "disk.img")},
-                "rootfs.modules": {"file": str(tmpdir / "modules.tar")},
-            }
-        }
-    }
-    action.mkdtemp = lambda: str(tmpdir)
-
-    copy_in_overlay = mocker.patch(
-        "lava_dispatcher.actions.deploy.apply_overlay.copy_in_overlay"
-    )
-
-    action.update_disk_image()
-
-    copy_in_overlay.assert_called_once_with(
-        str(tmpdir / "disk.img"), 1, str(tmpdir / "modules.tar")
-    )
-
-    assert caplog.record_tuples == [
-        ("dispatcher", 20, f"Modifying '{tmpdir}/disk.img'"),
-        (
-            "dispatcher",
-            10,
-            f"Adding {tmpdir}/modules.tar to partition 1 of '{tmpdir}/disk.img'",
-        ),
     ]
 
 
@@ -342,47 +293,11 @@ def test_append_lava_overlay_update_guestfs(caplog, mocker, tmpdir):
     guestfs().add_drive.assert_called_once_with(str(tmpdir / "rootfs.ext4"))
     guestfs().mount.assert_called_once_with(guestfs().list_devices()[0], "/")
     guestfs().mkdir_p.assert_called_once_with("/")
-    guestfs().tar_in.assert_called_once_with(str(tmpdir / "overlay.tar.gz"), "/")
+    guestfs().tar_in.assert_called_once_with(
+        str(tmpdir / "overlay.tar.gz"), "/", compress="gzip"
+    )
     assert caplog.record_tuples == [
         ("dispatcher", 20, f"Modifying '{tmpdir}/rootfs.ext4'"),
         ("dispatcher", 10, "Overlays:"),
         ("dispatcher", 10, f"- rootfs.lava: '{tmpdir}/overlay.tar.gz' to '/'"),
-    ]
-
-
-def test_append_lava_overlay_update_disk_image(caplog, mocker, tmpdir):
-    caplog.set_level(logging.DEBUG)
-    params = {"format": "disk", "partition": 1, "overlays": {"lava": True}}
-
-    action = AppendOverlays("rootfs", params)
-    action.job = Job(1234, {}, None)
-    action.parameters = {
-        "rootfs": {"url": "http://example.com/disk.img", **params},
-        "namespace": "common",
-    }
-    action.data = {
-        "common": {
-            "compress-overlay": {"output": {"file": str(tmpdir / "overlay.tar.gz")}},
-            "download-action": {"rootfs": {"file": str(tmpdir / "disk.img")}},
-        }
-    }
-    action.mkdtemp = lambda: str(tmpdir)
-
-    copy_in_overlay = mocker.patch(
-        "lava_dispatcher.actions.deploy.apply_overlay.copy_in_overlay"
-    )
-
-    action.update_disk_image()
-
-    copy_in_overlay.assert_called_once_with(
-        str(tmpdir / "disk.img"), 1, str(tmpdir / "overlay.tar.gz")
-    )
-
-    assert caplog.record_tuples == [
-        ("dispatcher", 20, f"Modifying '{tmpdir}/disk.img'"),
-        (
-            "dispatcher",
-            10,
-            f"Adding {tmpdir}/overlay.tar.gz to partition 1 of '{tmpdir}/disk.img'",
-        ),
     ]

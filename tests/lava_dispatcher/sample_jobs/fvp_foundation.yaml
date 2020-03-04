@@ -30,7 +30,7 @@ actions:
       rootfs:
         url: https://releases.linaro.org/archive/15.05/members/arm/openembedded/aarch64/vexpress64-openembedded_minimal-armv8-gcc-4.9_20150522-720.img.gz
         compression: gz
-        format: disk
+        format: ext4
         partition: 1
         overlays:
           lava: true
@@ -50,12 +50,10 @@ actions:
 - boot:
     method: fvp
     # See fvp documentation in LAVA docs for how to create a docker image with the model you want in.
-    image:
+    docker:
       name: "foundation:11.8"
       local: true
-    prompts:
-    - 'root@lava '
-    fvp_image: /opt/model/Foundation_Platformpkg/models/Linux64_GCC-4.9/Foundation_Platform
+    image: /opt/model/Foundation_Platformpkg/models/Linux64_GCC-4.9/Foundation_Platform
     fvp_version_string: 'ARM V8 Foundation Platformr0p0 [^\\n]+'
     timeout:
       minutes: 7

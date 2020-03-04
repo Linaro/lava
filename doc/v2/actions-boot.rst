@@ -617,19 +617,19 @@ This is currently supported by the docker device type.
       method: fvp
       prompts:
         - 'root@(.*):/#'
-      fvp_image: /path/to/FVP_Binary
+      image: /path/to/FVP_Binary
       fvp_licence_variable: ARMLMD_LICENSE_FILE=foo
       fvp_arguments: >
         -C board.virtioblockdevice.image_path={DISK}
         ...
-      image:
+      docker:
         name: "fvp_foundation:11.8"
         local: true
       timeout:
         minutes: 5
 
-This boot method will launch the ``fvp_image`` file
-(already present in the docker ``image`` provided)
+This boot method will launch the ``image`` file
+(already present in the docker image provided)
 with the ``fvp_arguments`` as parameters,
 and the ``fvp_licence_variable`` set as an environment variable.
 
