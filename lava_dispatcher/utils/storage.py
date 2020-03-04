@@ -53,7 +53,7 @@ class FlashUBootUMSAction(Action):
         )
         cmd = f"bmaptool create --output {image_file}.layout {image_file}"
         self.run_cmd(cmd, error_msg="Fail to create the bmap layout")
-        cmd = f"bmaptool copy --quiet --bmap {image_file}.layout {image_file} {self.usb_mass_device}"
+        cmd = f"bmaptool --quiet copy --bmap {image_file}.layout {image_file} {self.usb_mass_device}"
         self.run_cmd(cmd, error_msg="writing to the USB mass storage device failed")
 
         connection.sendcontrol("c")
