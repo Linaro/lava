@@ -81,7 +81,7 @@ class LxcAction(DeployAction):  # pylint:disable=too-many-instance-attributes
     def validate(self):
         super().validate()
         lxc_version = debian_package_version(pkg="lxc")
-        if lxc_version == "":
+        if lxc_version != "":
             self.logger.info("lxc, installed at version: %s", lxc_version)
         else:
             self.logger.info(
