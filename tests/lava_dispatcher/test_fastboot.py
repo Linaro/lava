@@ -441,7 +441,6 @@ class TestFastbootDeploy(StdoutTestCase):
         self.assertTrue(interrupt.needs_interrupt)
         self.assertIsInstance(interrupt.params, dict)
         self.assertNotEqual(interrupt.params, {})
-        self.assertIn("mkimage_arch", interrupt.params)
         self.assertIn("interrupt_prompt", interrupt.params)
         boot = [
             action for action in job.pipeline.actions if action.name == "fastboot-boot"
@@ -458,7 +457,6 @@ class TestFastbootDeploy(StdoutTestCase):
         ][0]
         self.assertIsInstance(interrupt.params, dict)
         self.assertNotEqual(interrupt.params, {})
-        self.assertIn("mkimage_arch", interrupt.params)
         self.assertIn("interrupt_prompt", interrupt.params)
         self.assertTrue(interrupt.needs_interrupt)
         autologin = [
