@@ -28,6 +28,7 @@ import os
 import re
 import simplejson
 
+from lava_common.version import __version__
 from lava_server.settings.production import *
 from lava_server.settings.config_file import ConfigFile
 
@@ -192,4 +193,8 @@ if "SENTRY_DSN" in globals():
     import sentry_sdk
     from sentry_sdk.integrations.django import DjangoIntegration
 
-    sentry_sdk.init(dsn=globals()["SENTRY_DSN"], integrations=[DjangoIntegration()])
+    sentry_sdk.init(
+        dsn=globals()["SENTRY_DSN"],
+        integrations=[DjangoIntegration()],
+        release=f"lava@{__version__}",
+    )
