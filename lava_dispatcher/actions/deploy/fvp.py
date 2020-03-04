@@ -24,13 +24,6 @@ import subprocess  # nosec
 from lava_common.exceptions import JobError
 from lava_dispatcher.action import Pipeline
 from lava_dispatcher.actions.deploy import DeployAction
-from lava_dispatcher.actions.deploy.apply_overlay import (
-    ExtractRamdisk,
-    CompressRamdisk,
-    ApplyOverlayTftp,
-    ApplyOverlayImage,
-    PrepareOverlayTftp,
-)
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.logical import Deployment
