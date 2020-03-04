@@ -130,7 +130,7 @@ def test_append_overlays_update_cpio(caplog, mocker, tmpdir):
     decompress_file.assert_called_once_with(str(tmpdir / "rootfs.cpio.gz"), "gz")
     uncpio.assert_called_once_with(decompress_file(), str(tmpdir))
     unlink.assert_called_once_with(decompress_file())
-    untar_file.assert_called_once_with(str(tmpdir / "modules.tar"), "./")
+    untar_file.assert_called_once_with(str(tmpdir / "modules.tar"), str(tmpdir) + "/")
     cpio.assert_called_once_with(str(tmpdir), decompress_file())
     compress_file.assert_called_once_with(decompress_file(), "gz")
 
@@ -139,7 +139,7 @@ def test_append_overlays_update_cpio(caplog, mocker, tmpdir):
         ("dispatcher", 10, "* decompressing (gz)"),
         ("dispatcher", 10, f"* extracting {decompress_file()}"),
         ("dispatcher", 10, "Overlays:"),
-        ("dispatcher", 10, f"- rootfs.modules: '{tmpdir}/modules.tar' to '/'"),
+        ("dispatcher", 10, f"- rootfs.modules: '{tmpdir}/modules.tar' to '{tmpdir}/'"),
         ("dispatcher", 10, f"* archiving {decompress_file()}"),
         ("dispatcher", 10, "* compressing (gz)"),
     ]
@@ -289,7 +289,9 @@ def test_append_lava_overlay_update_cpio(caplog, mocker, tmpdir):
     decompress_file.assert_called_once_with(str(tmpdir / "rootfs.cpio.gz"), "gz")
     uncpio.assert_called_once_with(decompress_file(), str(tmpdir))
     unlink.assert_called_once_with(decompress_file())
-    untar_file.assert_called_once_with(str(tmpdir / "overlay.tar.gz"), "./")
+    untar_file.assert_called_once_with(
+        str(tmpdir / "overlay.tar.gz"), str(tmpdir) + "/"
+    )
     cpio.assert_called_once_with(str(tmpdir), decompress_file())
     compress_file.assert_called_once_with(decompress_file(), "gz")
 
@@ -298,7 +300,7 @@ def test_append_lava_overlay_update_cpio(caplog, mocker, tmpdir):
         ("dispatcher", 10, "* decompressing (gz)"),
         ("dispatcher", 10, f"* extracting {decompress_file()}"),
         ("dispatcher", 10, "Overlays:"),
-        ("dispatcher", 10, f"- rootfs.lava: '{tmpdir}/overlay.tar.gz' to '/'"),
+        ("dispatcher", 10, f"- rootfs.lava: '{tmpdir}/overlay.tar.gz' to '{tmpdir}/'"),
         ("dispatcher", 10, f"* archiving {decompress_file()}"),
         ("dispatcher", 10, "* compressing (gz)"),
     ]

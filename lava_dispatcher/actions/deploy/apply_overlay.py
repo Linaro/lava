@@ -944,10 +944,12 @@ class AppendOverlays(Action):
                     action="download-action", label=label, key="file"
                 )
                 path = self.params["overlays"][overlay]["path"]
-            self.logger.debug("- %s: %r to %r", label, overlay_image, path)
+            # Take off initial "/" from path, extract relative to this directory
+            extract_path = os.path.join(tempdir, path[1:])
+            self.logger.debug("- %s: %r to %r", label, overlay_image, extract_path)
             # In the "validate" function, we check that path startswith '/'
             # and does not contains '..'
-            untar_file(overlay_image, "." + path)
+            untar_file(overlay_image, extract_path)
 
         # Recreating the archive
         self.logger.debug("* archiving %r", image)
