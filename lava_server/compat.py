@@ -20,10 +20,12 @@
 
 from django.utils.version import get_version
 from django.core.management.base import CommandParser
+from rest_framework_extensions import __version__ as DRFE_VERSION_STR
 import rest_framework_filters as filters
 
 
 DJANGO_VERSION = get_version()
+DRFE_VERSION = [int(n) for n in DRFE_VERSION_STR.split(".")]
 
 
 # Handles compatibility for django_restframework_filters
@@ -83,3 +85,15 @@ def get_sub_parser_class(cmd):
                 super().__init__(cmd, **kwargs)
 
     return SubParser
+
+
+def drf_basename(name):
+    """
+    Handles compatibility with different versions of djangorestframework, in
+    terms of the deprecation of `base_name` when registering ViewSets on DRF >=
+    3.10.
+    """
+    if DRFE_VERSION >= [0, 6]:
+        return {"basename": name}
+    else:
+        return {"base_name": name}
