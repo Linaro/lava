@@ -45,7 +45,8 @@ RUN --mount=type=bind,target=/app \
     mv /install/usr/lib/python3/dist-packages/lava_server/static/lava_server/ /install/usr/share/lava-server/static/lava_server && \
     ln -s /usr/lib/python3/dist-packages/django/contrib/admin/static/admin/ /install/usr/share/lava-server/static/admin && \
     ln -s /usr/lib/python3/dist-packages/rest_framework/static/rest_framework/ /install/usr/share/lava-server/static/rest_framework && \
-    python3 -m whitenoise.compress /install/usr/share/lava-server/static/
+    python3 -m whitenoise.compress /install/usr/share/lava-server/static/ && \
+    find /usr/lib/python3/dist-packages/ -name '__pycache__' -type d -exec rm -r "{}" +
 
 # Install the entry point
 COPY docker/share/entrypoints/lava-server.sh /install/root/entrypoint.sh
@@ -68,6 +69,7 @@ RUN a2dissite 000-default && \
 # Setup the database
 RUN service postgresql start && \
     /usr/share/lava-server/postinst.py && \
-    service postgresql stop
+    service postgresql stop && \
+    find /usr/lib/python3/dist-packages/ -name '__pycache__' -type d -exec rm -r "{}" +
 
 ENTRYPOINT ["/root/entrypoint.sh"]
