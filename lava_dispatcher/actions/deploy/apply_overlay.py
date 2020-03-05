@@ -855,7 +855,7 @@ class AppendOverlays(Action):
     summary = "append overlays to an image"
 
     # TODO: list libguestfs supported formats
-    IMAGE_FORMATS = ["cpio.newc", "ext4", "disk"]
+    IMAGE_FORMATS = ["cpio.newc", "ext4"]
     OVERLAY_FORMATS = ["tar"]
 
     def __init__(self, key, params):

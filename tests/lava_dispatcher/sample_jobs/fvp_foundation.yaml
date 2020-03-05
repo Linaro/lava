@@ -58,17 +58,17 @@ actions:
     timeout:
       minutes: 7
     console_string: 'terminal_0: Listening for serial connection on port (?P<PORT>\d+)'
-    fvp_arguments: |-
-       --cores=4
-       --no-secure-memory
-       --visualization
-       --gicv3
-       --data={BL1}@0x0
-       --data={FIP}@0x8000000
-       --data={IMAGE}@0x80080000
-       --data={DTB}@0x82000000
-       --data={RAMDISK}@0x84000000
-       --block-device={ROOTFS}
+    fvp_arguments:
+    - "--cores=4"
+    - "--no-secure-memory"
+    - "--visualization"
+    - "--gicv3"
+    - "--data={BL1}@0x0"
+    - "--data={FIP}@0x8000000"
+    - "--data={IMAGE}@0x80080000"
+    - "--data={DTB}@0x82000000"
+    - "--data={RAMDISK}@0x84000000"
+    - "--block-device={ROOTFS}"
     prompts:
     - 'root@genericarmv8:~#'
 

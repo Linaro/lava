@@ -32,7 +32,7 @@ def schema():
         Required("image"): str,
         Optional("fvp_license_variable"): str,
         Optional("fvp_version_string"): str,
-        Required("fvp_arguments"): str,
+        Required("fvp_arguments"): [str],
         Required("prompts"): boot.prompts(),
         Required("docker"): {Required("name"): str, Optional("local"): bool},
     }

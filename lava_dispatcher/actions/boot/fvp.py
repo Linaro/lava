@@ -256,7 +256,7 @@ class StartFVPAction(BaseFVPAction):
             self.errors = "'fvp_arguments' is not set."
 
     def run(self, connection, max_end_time):
-        fvp_arguments = self.parameters.get("fvp_arguments")
+        fvp_arguments = " ".join(self.parameters.get("fvp_arguments"))
 
         # Build the command line
         # The docker image is safe to be included in the command line
