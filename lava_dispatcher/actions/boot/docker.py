@@ -114,7 +114,7 @@ class CallDockerAction(Action):
         for volume in options["volumes"]:
             self.extra_options += " --volume %s" % volume
         for extra_argument in options["extra_arguments"]:
-            self.extra_options += extra_argument
+            self.extra_options += " " + extra_argument
 
     def run(self, connection, max_end_time):
         location = self.get_namespace_data(
