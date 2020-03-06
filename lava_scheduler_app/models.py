@@ -2033,10 +2033,10 @@ class TestJob(models.Model):
     @transaction.atomic
     def cancel(self, user):
         if not self.can_cancel(user):
+            if self.state in [TestJob.STATE_CANCELING, TestJob.STATE_FINISHED]:
+                # Don't do anything for jobs that ended already
+                return
             raise PermissionDenied("Insufficient permissions")
-        if self.state in [TestJob.STATE_CANCELING, TestJob.STATE_FINISHED]:
-            # Don't do anything for jobs that ended already
-            return
         if self.is_multinode:
             multinode_jobs = TestJob.objects.select_for_update().filter(
                 target_group=self.target_group

@@ -496,6 +496,12 @@ def test_job_log_incremental(client, monkeypatch, setup):
 @pytest.mark.django_db
 def test_job_cancel_no_perm(client, setup):
     job_1 = TestJob.objects.get(description="test job 01")
+    # The job is already finished: do not raise an exception
+    ret = client.post(reverse("lava.scheduler.job.cancel", args=[job_1.pk]))
+    assert ret.status_code == 302  # nosec
+    # The job is running: raise an exception (permission denied)
+    job_1.state = TestJob.STATE_RUNNING
+    job_1.save()
     ret = client.post(reverse("lava.scheduler.job.cancel", args=[job_1.pk]))
     assert ret.status_code == 403  # nosec
 
@@ -505,7 +511,7 @@ def test_job_cancel_cannot_cancel(client, setup):
     assert client.login(username="tester", password="tester") is True  # nosec
     job_4 = TestJob.objects.get(description="test job 04")
     ret = client.post(reverse("lava.scheduler.job.cancel", args=[job_4.pk]))
-    assert ret.status_code == 403  # nosec
+    assert ret.status_code == 302  # nosec
 
 
 @pytest.mark.django_db
