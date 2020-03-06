@@ -203,6 +203,14 @@ then
     echo
 fi
 
+if [ "$LAVA_SITE" != "" ]
+then
+    echo "Setting lava site: $LAVA_SITE"
+    lava-server manage site update --name "$LAVA_SITE" --domain "$LAVA_SITE"
+    echo "done"
+    echo
+fi
+
 # Run user scripts. The database is running and migrations has been run.
 for f in $(find /root/entrypoint.d/ -type f); do
     case "$f" in
