@@ -1,19 +1,17 @@
 import os
-import glob
 import jinja2
 import unittest
 
-from django.conf import settings
-
 from lava_common.compat import yaml_safe_load
 from lava_scheduler_app.schema import validate_device, SubmissionException
+from lava_server.files import File
 
 
 def prepare_jinja_template(hostname, jinja_data, job_ctx=None, raw=True):
     if not job_ctx:
         job_ctx = {}
     string_loader = jinja2.DictLoader({"%s.jinja2" % hostname: jinja_data})
-    type_loader = jinja2.FileSystemLoader([settings.DEVICE_TYPES_PATH])
+    type_loader = File("device-type").loader()
     env = jinja2.Environment(  # nosec - YAML, not HTML, no XSS scope.
         loader=jinja2.ChoiceLoader([string_loader, type_loader]),
         trim_blocks=True,
@@ -78,13 +76,12 @@ class BaseTemplate:
 
 class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
     def test_all_templates(self):
-        templates = glob.glob(os.path.join(settings.DEVICE_TYPES_PATH, "*.jinja2"))
+        templates = File("device-type").list("*.jinja2")
         self.assertNotEqual([], templates)
 
         # keep this out of the loop, as creating the environment is slow.
-        fs_loader = jinja2.FileSystemLoader([settings.DEVICE_TYPES_PATH])
         env = jinja2.Environment(  # nosec - YAML, not HTML, no XSS scope.
-            loader=fs_loader, trim_blocks=True, autoescape=False
+            loader=File("device-type").loader(), trim_blocks=True, autoescape=False
         )
 
         for template in templates:
@@ -98,13 +95,12 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
                 self.fail("Template %s failed: %s" % (os.path.basename(template), exc))
 
     def test_all_template_connections(self):
-        templates = glob.glob(os.path.join(settings.DEVICE_TYPES_PATH, "*.jinja2"))
+        templates = File("device-type").list("*.jinja2")
         self.assertNotEqual([], templates)
 
         # keep this out of the loop, as creating the environment is slow.
-        fs_loader = jinja2.FileSystemLoader([settings.DEVICE_TYPES_PATH])
         env = jinja2.Environment(  # nosec - YAML, not HTML, no XSS scope.
-            loader=fs_loader, trim_blocks=True, autoescape=False
+            loader=File("device-type").loader(), trim_blocks=True, autoescape=False
         )
 
         for template in templates:

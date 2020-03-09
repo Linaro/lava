@@ -20,22 +20,18 @@
 import jinja2
 import threading
 
-from django.conf import settings
+from lava_server.files import File
 
 
 thread_locals = threading.local()
 
 
 thread_locals.devices = jinja2.Environment(
-    loader=jinja2.FileSystemLoader([settings.DEVICES_PATH, settings.DEVICE_TYPES_PATH]),
-    autoescape=False,
-    trim_blocks=True,
+    loader=File("device").loader(), autoescape=False, trim_blocks=True
 )
 
 thread_locals.device_types = jinja2.Environment(
-    loader=jinja2.FileSystemLoader([settings.DEVICE_TYPES_PATH]),
-    autoescape=False,
-    trim_blocks=True,
+    loader=File("device-type").loader(), autoescape=False, trim_blocks=True
 )
 
 

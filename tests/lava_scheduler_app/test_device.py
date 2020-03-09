@@ -1,8 +1,6 @@
-import os
 import yaml
 import jinja2
 
-from django.conf import settings
 from django.db.models import Q
 from lava_common.compat import yaml_safe_load
 from lava_scheduler_app.models import (
@@ -16,6 +14,7 @@ from lava_scheduler_app.dbutils import (
     invalid_template,
     active_device_types,
 )
+from lava_server.files import File
 from django.contrib.auth.models import User, Group, Permission
 from django.test import TestCase
 
@@ -105,10 +104,6 @@ class DeviceTest(TestCaseWithFactory):
 
 
 class DeviceTypeTest(TestCaseWithFactory):
-    def setUp(self):
-        super().setUp()
-        self.basedir = os.path.abspath(os.path.join(os.path.dirname(__file__)))
-
     def tearDown(self):
         super().tearDown()
         Device.objects.all().delete()
@@ -129,18 +124,13 @@ class DeviceTypeTest(TestCaseWithFactory):
         """
         Ensure each template renders valid YAML
         """
-        type_loader = jinja2.FileSystemLoader([settings.DEVICE_TYPES_PATH])
         env = jinja2.Environment(  # nosec - YAML, not HTML, no XSS scope.
-            loader=jinja2.ChoiceLoader([type_loader]),
-            trim_blocks=True,
-            autoescape=False,
+            loader=File("device-type").loader(), trim_blocks=True, autoescape=False
         )
 
-        for template_name in os.listdir(settings.DEVICE_TYPES_PATH):
-            if not template_name.endswith("jinja2"):
-                continue
+        for template_name in File("device-type").list("*.jinja2"):
             try:
-                template = env.get_template(template_name)
+                template = env.get_template(template_name.name)
             except jinja2.TemplateNotFound as exc:
                 self.fail("%s: %s" % (template_name, exc))
             data = None
@@ -169,7 +159,6 @@ class DeviceTypeTest(TestCaseWithFactory):
             ),
         )
         self.assertIsNotNone([d for d in Device.objects.filter(device_type=dt)])
-        self.assertTrue(settings.DEVICES_PATH.startswith(self.basedir))
         self.assertFalse(invalid_template(device.device_type))
 
     def test_bbb_valid_template(self):
@@ -181,17 +170,7 @@ class DeviceTypeTest(TestCaseWithFactory):
         device.save()
         device.refresh_from_db()
         self.assertIsNotNone([d for d in Device.objects.filter(device_type=dt)])
-        self.assertTrue(settings.DEVICES_PATH.startswith(self.basedir))
-        found = False
-        for device_file in os.listdir(settings.DEVICE_TYPES_PATH):
-            if device_file == "%s.jinja2" % name:
-                found = True
-                break
-        if not found:
-            self.fail(
-                "Configuration error - %s.jinja2 should exist in %s"
-                % (name, settings.DEVICE_TYPES_PATH)
-            )
+        self.assertTrue(File("device-type").exists(f"{name}.jinja2"))
         self.assertIsNotNone([device in Device.objects.filter(device_type=dt)])
         self.assertIsNotNone(device.load_configuration())
         self.assertTrue(bool(load_devicetype_template(device.device_type.name)))
@@ -206,14 +185,6 @@ class DeviceTypeTest(TestCaseWithFactory):
         device.save()
         device.refresh_from_db()
         self.assertIsNotNone([d for d in Device.objects.filter(device_type=dt)])
-        self.assertTrue(settings.DEVICES_PATH.startswith(self.basedir))
-        found = False
-        for device_file in os.listdir(settings.DEVICE_TYPES_PATH):
-            if device_file == "%s.jinja2" % name:
-                self.fail(
-                    "Configuration error - %s.jinja2 should NOT exist in %s"
-                    % (name, settings.DEVICE_TYPES_PATH)
-                )
         self.assertIsNone(device.load_configuration())
         self.assertIsNotNone([device in Device.objects.filter(device_type=dt)])
         self.assertFalse(bool(load_devicetype_template(device.device_type.name)))
@@ -230,13 +201,7 @@ class DeviceTypeTest(TestCaseWithFactory):
         device.save()
         device.refresh_from_db()
         self.assertIsNotNone([d for d in Device.objects.filter(device_type=dt)])
-        for device_file in os.listdir(settings.DEVICE_TYPES_PATH):
-            if device_file == "juno-r2.jinja2":
-                self.fail(
-                    "Configuration error - %s.jinja2 should NOT exist in %s"
-                    % (name, settings.DEVICE_TYPES_PATH)
-                )
-        self.assertTrue(settings.DEVICES_PATH.startswith(self.basedir))
+        self.assertFalse(File("device-type").exists("juno-r2.jinja2"))
         self.assertEqual("juno-r2-01", device.hostname)
         self.assertIsNotNone(device.load_configuration())
         self.assertEqual(

@@ -17,20 +17,19 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import contextlib
 import csv
 import subprocess
 import voluptuous
 
 from django.core.management.base import BaseCommand, CommandError
-from django.conf import settings
 from django.db import transaction
 from django.contrib.auth.models import User, Group
 
 from lava_common.schemas.device import validate as validate_device
 from lava_scheduler_app.models import Device, DeviceType, Tag, Worker
 from lava_server.compat import get_sub_parser_class
+from lava_server.files import File
 
 
 class Command(BaseCommand):
@@ -368,14 +367,12 @@ class Command(BaseCommand):
             raise CommandError("Device dictionary does not exist for %s" % original)
 
         if online:
-            target_dict = os.path.join(settings.DEVICES_PATH, "%s.jinja2" % target)
-            if not os.path.exists(target_dict):
+            if not File("device").exists(f"{target}.jinja2"):
                 raise CommandError(
                     "Refusing to copy %s to new device %s with health 'Good' -"
                     " no device dictionary exists for target device, yet. "
-                    "Use --offline or copy %s.jinja2 to "
-                    "%s and try again."
-                    % (original, target, target, settings.DEVICES_PATH)
+                    "Use --offline or copy %s.jinja2 and try again."
+                    % (original, target, target)
                 )
 
         try:

@@ -1,11 +1,8 @@
-import glob
-import os
 import pathlib
 import pytest
 import unittest
 import xmlrpc.client
 
-from django.conf import settings
 from django.contrib.auth.models import Group, Permission, User
 from django.test.client import Client
 from io import BytesIO as StringIO
@@ -24,10 +21,6 @@ from lava_scheduler_app.models import (
 )
 from lava_scheduler_app.schema import validate_submission, SubmissionException
 from tests.lava_scheduler_app.test_submission import TestCaseWithFactory
-
-
-def device_type(name):
-    return os.path.join(settings.DEVICE_TYPES_PATH, name)
 
 
 # Based on http://www.technobabble.dk/2008/apr/02/xml-rpc-dispatching-through-django-test-client/
@@ -951,20 +944,11 @@ def test_device_types_add(setup):
 
 
 @pytest.mark.django_db
-def test_device_types_get_health_check(setup, monkeypatch, tmpdir):
-    real_open = open
+def test_device_types_get_health_check(setup, mocker, tmpdir):
     (tmpdir / "qemu.yaml").write_text("hello", encoding="utf-8")
-
-    def monkey_open(path, *args):
-        if path == "/etc/lava-server/dispatcher-config/health-checks/qemu.yaml":
-            return real_open(str(tmpdir / "qemu.yaml"), *args)
-        if path == "/etc/lava-server/dispatcher-config/health-checks/docker.yaml":
-            raise FileNotFoundError()
-        if path == "/etc/lava-server/dispatcher-config/health-checks/docker2.yaml":
-            raise PermissionError("permission denied", "permission denied")
-        return real_open(path, *args)
-
-    monkeypatch.setitem(__builtins__, "open", monkey_open)
+    (tmpdir / "docker2.yaml").write_text("", encoding="utf-8")
+    (tmpdir / "docker2.yaml").chmod(0o000)
+    mocker.patch("lava_server.files.File.KINDS", {"health-check": [str(tmpdir)]})
 
     # 1. normal case
     DeviceType.objects.create(name="qemu")
@@ -982,7 +966,7 @@ def test_device_types_get_health_check(setup, monkeypatch, tmpdir):
         server("admin", "admin").scheduler.device_types.get_health_check("docker2")
     assert exc.value.faultCode == 400  # nosec
     assert (  # nosec
-        exc.value.faultString == "Unable to read health-check: permission denied"
+        exc.value.faultString == "Unable to read health-check: Permission denied"
     )
 
     # 4. Invalid name
@@ -993,20 +977,11 @@ def test_device_types_get_health_check(setup, monkeypatch, tmpdir):
 
 
 @pytest.mark.django_db
-def test_device_types_get_template(setup, monkeypatch, tmpdir):
-    real_open = open
+def test_device_types_get_template(setup, mocker, tmpdir):
     (tmpdir / "qemu.jinja2").write_text("hello", encoding="utf-8")
-
-    def monkey_open(path, *args):
-        if path == device_type("qemu.jinja2"):
-            return real_open(str(tmpdir / "qemu.jinja2"), *args)
-        if path == device_type("docker.jinja2"):
-            raise FileNotFoundError()
-        if path == device_type("docker2.jinja2"):
-            raise PermissionError("permission denied", "permission denied")
-        return real_open(path, *args)
-
-    monkeypatch.setitem(__builtins__, "open", monkey_open)
+    (tmpdir / "docker2.jinja2").write_text("", encoding="utf-8")
+    (tmpdir / "docker2.jinja2").chmod(0o000)
+    mocker.patch("lava_server.files.File.KINDS", {"device-type": [str(tmpdir)]})
 
     # 1. normal case
     DeviceType.objects.create(name="qemu")
@@ -1025,7 +1000,7 @@ def test_device_types_get_template(setup, monkeypatch, tmpdir):
     assert exc.value.faultCode == 400  # nosec
     assert (  # nosec
         exc.value.faultString
-        == "Unable to read device-type configuration: permission denied"
+        == "Unable to read device-type configuration: Permission denied"
     )
 
     # 4. Invalid name
@@ -1036,18 +1011,10 @@ def test_device_types_get_template(setup, monkeypatch, tmpdir):
 
 
 @pytest.mark.django_db
-def test_device_types_set_health_check(setup, monkeypatch, tmpdir):
-    real_open = open
-
-    def monkey_open(path, *args):
-        print(path)
-        if path == "/etc/lava-server/dispatcher-config/health-checks/qemu.yaml":
-            return real_open(str(tmpdir / "qemu.yaml"), *args)
-        if path == "/etc/lava-server/dispatcher-config/health-checks/docker2.yaml":
-            raise PermissionError("permission denied", "permission denied")
-        return real_open(path, *args)
-
-    monkeypatch.setitem(__builtins__, "open", monkey_open)
+def test_device_types_set_health_check(setup, mocker, tmpdir):
+    mocker.patch("lava_server.files.File.KINDS", {"health-check": [str(tmpdir)]})
+    (tmpdir / "docker2.yaml").write_text("", encoding="utf-8")
+    (tmpdir / "docker2.yaml").chmod(0o000)
 
     # 1. normal case
     DeviceType.objects.create(name="qemu")
@@ -1061,7 +1028,7 @@ def test_device_types_set_health_check(setup, monkeypatch, tmpdir):
         server("admin", "admin").scheduler.device_types.set_health_check("docker2", "")
     assert exc.value.faultCode == 400  # nosec
     assert (  # nosec
-        exc.value.faultString == "Unable to write health-check: permission denied"
+        exc.value.faultString == "Unable to write health-check: Permission denied"
     )
 
     # 4. Invalid name
@@ -1074,18 +1041,10 @@ def test_device_types_set_health_check(setup, monkeypatch, tmpdir):
 
 
 @pytest.mark.django_db
-def test_device_types_set_template(setup, monkeypatch, tmpdir):
-    real_open = open
-
-    def monkey_open(path, *args):
-        print(path)
-        if path == device_type("qemu.jinja2"):
-            return real_open(str(tmpdir / "qemu.jinja2"), *args)
-        if path == device_type("docker2.jinja2"):
-            raise PermissionError("permission denied", "permission denied")
-        return real_open(path, *args)
-
-    monkeypatch.setitem(__builtins__, "open", monkey_open)
+def test_device_types_set_template(setup, mocker, tmpdir):
+    (tmpdir / "docker2.jinja2").write_text("", encoding="utf-8")
+    (tmpdir / "docker2.jinja2").chmod(0o000)
+    mocker.patch("lava_server.files.File.KINDS", {"device-type": [str(tmpdir)]})
 
     # 1. normal case
     DeviceType.objects.create(name="qemu")
@@ -1100,7 +1059,7 @@ def test_device_types_set_template(setup, monkeypatch, tmpdir):
     assert exc.value.faultCode == 400  # nosec
     assert (  # nosec
         exc.value.faultString
-        == "Unable to write device-type configuration: permission denied"
+        == "Unable to write device-type configuration: Permission denied"
     )
 
     # 4. Invalid name
@@ -1111,16 +1070,13 @@ def test_device_types_set_template(setup, monkeypatch, tmpdir):
 
 
 @pytest.mark.django_db
-def test_device_types_list(setup, monkeypatch):
-    real_iglob = glob.iglob
+def test_device_types_list(setup, mocker, tmpdir):
+    mocker.patch("lava_server.files.File.KINDS", {"device-type": [str(tmpdir)]})
+    (tmpdir / "base.jinja2").write_text("", encoding="utf-8")
+    (tmpdir / "base-uboot.jinja2").write_text("", encoding="utf-8")
+    (tmpdir / "b2260.jinja2").write_text("", encoding="utf-8")
+    (tmpdir / "qemu.jinja2").write_text("", encoding="utf-8")
 
-    def iglob(path):
-        if path == device_type("*.jinja2"):
-            return ["qemu.jinja2", "base.jinja2", "base-uboot.jinja2", "b2260.jinja2"]
-        else:
-            return real_iglob(path)
-
-    monkeypatch.setattr(glob, "iglob", iglob)
     data = server("admin", "admin").scheduler.device_types.list()
     assert data == []  # nosec
 

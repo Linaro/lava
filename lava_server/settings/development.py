@@ -73,7 +73,9 @@ GLOBAL_SETTINGS_PATH = os.path.join(PROJECT_SRC_DIR, "etc/lava-server")
 DISPATCHER_CONFIG_PATH = os.path.join(PROJECT_SRC_DIR, "etc/lava-server/dispatcher.d")
 # Use device configuration files from source tree
 DEVICES_PATH = os.path.join(PROJECT_SRC_DIR, "etc/dispatcher-config/devices")
-DEVICE_TYPES_PATH = os.path.join(PROJECT_SRC_DIR, "etc/dispatcher-config/device-types")
+DEVICE_TYPES_PATHS = [
+    os.path.join(PROJECT_SRC_DIR, "etc/dispatcher-config/device-types")
+]
 HEALTH_CHECKS_PATH = os.path.join(
     PROJECT_SRC_DIR, "etc/dispatcher-config/health-checks"
 )

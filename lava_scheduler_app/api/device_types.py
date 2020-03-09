@@ -18,26 +18,24 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
-import glob
 import os
 import xmlrpc.client
 
-from django.conf import settings
 from django.db import IntegrityError
 from django.forms import ValidationError
 
 from linaro_django_xmlrpc.models import ExposedV2API
 from lava_scheduler_app.api import check_perm
 from lava_scheduler_app.models import Alias, DeviceType
+from lava_server.files import File
 
 
 class SchedulerDeviceTypesAPI(ExposedV2API):
     def _available_device_types(self):
         """ List avaiable device types by looking at the configuration files """
         available_types = []
-        pattern = os.path.join(settings.DEVICE_TYPES_PATH, "*.jinja2")
-        for fname in glob.iglob(pattern):
-            device_type = os.path.basename(fname[:-7])
+        for fname in File("device-type").list("*.jinja2"):
+            device_type = fname.name[:-7]
             if not device_type.startswith("base"):
                 available_types.append(device_type)
         available_types.sort()
@@ -140,12 +138,10 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
             raise xmlrpc.client.Fault(400, "Invalid device-type '%s'" % name)
 
         try:
-            filename = os.path.join(
-                "/etc/lava-server/dispatcher-config/health-checks", name
+            filename = name if name.endswith(".yaml") else name + ".yaml"
+            return xmlrpc.client.Binary(
+                File("health-check").read(filename).encode("utf-8")
             )
-            filename += ".yaml" if not filename.endswith(".yaml") else ""
-            with open(filename, "r") as f_in:
-                return xmlrpc.client.Binary(f_in.read().encode("utf-8"))
         except FileNotFoundError:
             raise xmlrpc.client.Fault(404, "Device-type '%s' was not found." % name)
         except OSError as exc:
@@ -187,11 +183,11 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
         if os.path.basename(name) != name or name[0] == ".":
             raise xmlrpc.client.Fault(400, "Invalid device-type '%s'" % name)
 
+        filename = name if name.endswith(".jinja2") else name + ".jinja2"
         try:
-            filename = os.path.join(settings.DEVICE_TYPES_PATH, name)
-            filename += ".jinja2" if not filename.endswith(".jinja2") else ""
-            with open(filename, "r") as f_in:
-                return xmlrpc.client.Binary(f_in.read().encode("utf-8"))
+            return xmlrpc.client.Binary(
+                File("device-type").read(filename).encode("utf-8")
+            )
         except FileNotFoundError:
             raise xmlrpc.client.Fault(404, "Device-type '%s' was not found." % name)
         except OSError as exc:
@@ -233,12 +229,8 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
             raise xmlrpc.client.Fault(400, "Invalid device-type '%s'" % name)
 
         try:
-            filename = os.path.join(
-                "/etc/lava-server/dispatcher-config/health-checks", name
-            )
-            filename += ".yaml" if not filename.endswith(".yaml") else ""
-            with open(filename, "w") as f_out:
-                f_out.write(config)
+            name = name if name.endswith(".yaml") else name + ".yaml"
+            File("health-check").write(name, config)
         except OSError as exc:
             raise xmlrpc.client.Fault(
                 400, "Unable to write health-check: %s" % exc.strerror
@@ -278,10 +270,8 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
             raise xmlrpc.client.Fault(400, "Invalid device-type '%s'" % name)
 
         try:
-            filename = os.path.join(settings.DEVICE_TYPES_PATH, name)
-            filename += ".jinja2" if not filename.endswith(".jinja2") else ""
-            with open(filename, "w") as f_out:
-                f_out.write(config)
+            name = name if name.endswith(".jinja2") else name + ".jinja2"
+            File("device-type").write(name, config)
         except OSError as exc:
             raise xmlrpc.client.Fault(
                 400, "Unable to write device-type configuration: %s" % exc.strerror
