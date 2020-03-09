@@ -52,7 +52,7 @@ from lava_common.compat import yaml_dump, yaml_safe_load, yaml_safe_dump
 from lava_common.decorators import nottest
 from lava_results_app.utils import export_testcase
 from lava_scheduler_app import utils
-from lava_scheduler_app.logutils import read_logs
+from lava_scheduler_app.logutils import logs_instance
 import lava_scheduler_app.environment as environment
 from lava_scheduler_app.managers import (
     RestrictedDeviceTypeQuerySet,
@@ -1907,7 +1907,7 @@ class TestJob(models.Model):
 
         # Logs.
         with contextlib.suppress(OSError):
-            data["log"] = read_logs(self.output_dir)
+            data["log"] = logs_instance.read(self)
 
         # Results.
         if results:

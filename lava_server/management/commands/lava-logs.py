@@ -38,7 +38,7 @@ from lava_server.cmdutils import LAVADaemonCommand, watch_directory
 from lava_scheduler_app.models import TestJob
 from lava_scheduler_app.signals import send_event
 from lava_scheduler_app.utils import mkdir, get_encryption_settings
-from lava_scheduler_app.logutils import line_count, write_logs
+from lava_scheduler_app.logutils import logs_instance
 from lava_results_app.dbutils import map_scanned_results, create_metadata_store
 
 
@@ -51,17 +51,19 @@ FD_TIMEOUT = 60
 
 class JobHandler:
     def __init__(self, job):
-        self.output_dir = job.output_dir
-        self.output = open(os.path.join(self.output_dir, "output.yaml"), "ab")
-        self.index = open(os.path.join(self.output_dir, "output.idx"), "ab")
+        self.job = job
+        self.output = open(os.path.join(job.output_dir, "output.yaml"), "ab")
+        self.index = open(os.path.join(job.output_dir, "output.idx"), "ab")
         self.last_usage = time.time()
         self.markers = {}
 
     def write(self, message):
-        write_logs(self.output, self.index, (message + "\n").encode("utf-8"))
+        logs_instance.write(
+            self.job, (message + "\n").encode("utf-8"), self.output, self.index
+        )
 
     def line_count(self):
-        return line_count(self.index)
+        return logs_instance.line_count(self.job)
 
     def close(self):
         self.index.close()

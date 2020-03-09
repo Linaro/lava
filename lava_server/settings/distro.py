@@ -198,3 +198,5 @@ if "SENTRY_DSN" in globals():
         integrations=[DjangoIntegration()],
         release=f"lava@{__version__}",
     )
+
+LAVA_LOG_BACKEND = "lava_scheduler_app.logutils.LogsFilesystem"

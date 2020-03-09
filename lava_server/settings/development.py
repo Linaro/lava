@@ -165,3 +165,5 @@ try:
     from lava_server.settings.local_settings import *  # noqa
 except ImportError:
     pass
+
+LAVA_LOG_BACKEND = "lava_scheduler_app.logutils.LogsFilesystem"
