@@ -1317,7 +1317,7 @@ def _get_foreign_key_model(model, fieldname):
         and direct
         and isinstance(field_object, models.ForeignKey)
     ):
-        return field_object.rel.to
+        return field_object.remote_field
     return None
 
 
