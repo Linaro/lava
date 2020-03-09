@@ -778,18 +778,6 @@ ok 2 bar
             encoding="utf-8"
         ) == "hello world"  # nosec
 
-        # 2. Can't write the template
-        (tmpdir / self.public_device_type1.name + ".jinja2").write_text(
-            "", encoding="utf-8"
-        )
-        (tmpdir / self.public_device_type1.name + ".jinja2").chmod(0o000)
-        response = self.adminclient.post(
-            reverse("api-root", args=[self.version])
-            + "devicetypes/%s/template/" % self.public_device_type1.name,
-            {"template": "hello world"},
-        )
-        assert response.status_code == 400  # nosec
-
     def test_devicetype_get_health_check(self, mocker, tmpdir):
         (tmpdir / "qemu.yaml").write_text("hello", encoding="utf-8")
         mocker.patch("lava_server.files.File.KINDS", {"health-check": [str(tmpdir)]})
@@ -826,18 +814,6 @@ ok 2 bar
         assert (tmpdir / "qemu.yaml").read_text(
             encoding="utf-8"
         ) == "hello world"  # nosec
-
-        # 2. Can't write the health-check
-        (tmpdir / self.public_device_type1.name + ".yaml").write_text(
-            "", encoding="utf-8"
-        )
-        (tmpdir / self.public_device_type1.name + ".yaml").chmod(0o000)
-        response = self.adminclient.post(
-            reverse("api-root", args=[self.version])
-            + "devicetypes/%s/health_check/" % self.public_device_type1.name,
-            {"config": "hello world"},
-        )
-        assert response.status_code == 400  # nosec
 
     def test_devicetype_filters(self):
         data = self.hit(

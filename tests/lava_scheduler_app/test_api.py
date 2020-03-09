@@ -946,8 +946,6 @@ def test_device_types_add(setup):
 @pytest.mark.django_db
 def test_device_types_get_health_check(setup, mocker, tmpdir):
     (tmpdir / "qemu.yaml").write_text("hello", encoding="utf-8")
-    (tmpdir / "docker2.yaml").write_text("", encoding="utf-8")
-    (tmpdir / "docker2.yaml").chmod(0o000)
     mocker.patch("lava_server.files.File.KINDS", {"health-check": [str(tmpdir)]})
 
     # 1. normal case
@@ -961,15 +959,7 @@ def test_device_types_get_health_check(setup, mocker, tmpdir):
     assert exc.value.faultCode == 404  # nosec
     assert exc.value.faultString == "Device-type 'docker' was not found."  # nosec
 
-    # 3. Can't read the health-check
-    with pytest.raises(xmlrpc.client.Fault) as exc:
-        server("admin", "admin").scheduler.device_types.get_health_check("docker2")
-    assert exc.value.faultCode == 400  # nosec
-    assert (  # nosec
-        exc.value.faultString == "Unable to read health-check: Permission denied"
-    )
-
-    # 4. Invalid name
+    # 3. Invalid name
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server("admin", "admin").scheduler.device_types.get_health_check("../../passwd")
     assert exc.value.faultCode == 400  # nosec
@@ -979,8 +969,6 @@ def test_device_types_get_health_check(setup, mocker, tmpdir):
 @pytest.mark.django_db
 def test_device_types_get_template(setup, mocker, tmpdir):
     (tmpdir / "qemu.jinja2").write_text("hello", encoding="utf-8")
-    (tmpdir / "docker2.jinja2").write_text("", encoding="utf-8")
-    (tmpdir / "docker2.jinja2").chmod(0o000)
     mocker.patch("lava_server.files.File.KINDS", {"device-type": [str(tmpdir)]})
 
     # 1. normal case
@@ -994,16 +982,7 @@ def test_device_types_get_template(setup, mocker, tmpdir):
     assert exc.value.faultCode == 404  # nosec
     assert exc.value.faultString == "Device-type 'docker' was not found."  # nosec
 
-    # 3. Can't read the template
-    with pytest.raises(xmlrpc.client.Fault) as exc:
-        server("admin", "admin").scheduler.device_types.get_template("docker2")
-    assert exc.value.faultCode == 400  # nosec
-    assert (  # nosec
-        exc.value.faultString
-        == "Unable to read device-type configuration: Permission denied"
-    )
-
-    # 4. Invalid name
+    # 3. Invalid name
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server("admin", "admin").scheduler.device_types.get_template("../../passwd")
     assert exc.value.faultCode == 400  # nosec
@@ -1013,8 +992,6 @@ def test_device_types_get_template(setup, mocker, tmpdir):
 @pytest.mark.django_db
 def test_device_types_set_health_check(setup, mocker, tmpdir):
     mocker.patch("lava_server.files.File.KINDS", {"health-check": [str(tmpdir)]})
-    (tmpdir / "docker2.yaml").write_text("", encoding="utf-8")
-    (tmpdir / "docker2.yaml").chmod(0o000)
 
     # 1. normal case
     DeviceType.objects.create(name="qemu")
@@ -1023,15 +1000,7 @@ def test_device_types_set_health_check(setup, mocker, tmpdir):
     )
     assert (tmpdir / "qemu.yaml").read_text(encoding="utf-8") == "hello world"  # nosec
 
-    # 3. Can't write the health-check
-    with pytest.raises(xmlrpc.client.Fault) as exc:
-        server("admin", "admin").scheduler.device_types.set_health_check("docker2", "")
-    assert exc.value.faultCode == 400  # nosec
-    assert (  # nosec
-        exc.value.faultString == "Unable to write health-check: Permission denied"
-    )
-
-    # 4. Invalid name
+    # 2. Invalid name
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server("admin", "admin").scheduler.device_types.set_health_check(
             "../../passwd", ""
@@ -1042,8 +1011,6 @@ def test_device_types_set_health_check(setup, mocker, tmpdir):
 
 @pytest.mark.django_db
 def test_device_types_set_template(setup, mocker, tmpdir):
-    (tmpdir / "docker2.jinja2").write_text("", encoding="utf-8")
-    (tmpdir / "docker2.jinja2").chmod(0o000)
     mocker.patch("lava_server.files.File.KINDS", {"device-type": [str(tmpdir)]})
 
     # 1. normal case
@@ -1053,16 +1020,7 @@ def test_device_types_set_template(setup, mocker, tmpdir):
         encoding="utf-8"
     ) == "hello world"
 
-    # 3. Can't write the template
-    with pytest.raises(xmlrpc.client.Fault) as exc:
-        server("admin", "admin").scheduler.device_types.set_template("docker2", "")
-    assert exc.value.faultCode == 400  # nosec
-    assert (  # nosec
-        exc.value.faultString
-        == "Unable to write device-type configuration: Permission denied"
-    )
-
-    # 4. Invalid name
+    # 2. Invalid name
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server("admin", "admin").scheduler.device_types.set_template("../../passwd", "")
     assert exc.value.faultCode == 400  # nosec
