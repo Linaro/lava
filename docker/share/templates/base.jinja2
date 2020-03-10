@@ -33,4 +33,5 @@ RUN echo 'deb http://deb.debian.org/debian buster-backports main' > /etc/apt/sou
     rm /etc/apt/sources.list.d/docker.list && \
     apt-get update -q && \
 {%- endif %}
+    find /usr/lib/python3/dist-packages/ -name '__pycache__' -type d -exec rm -r "{}" + && \
     rm -rf /var/lib/apt/lists/*
