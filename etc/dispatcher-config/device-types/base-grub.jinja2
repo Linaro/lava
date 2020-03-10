@@ -62,12 +62,15 @@ actions:
   deploy:
     connections:
       serial:
+      lxc:
     methods:
       tftp:
       nbd:
+      lxc:
   boot:
     connections:
       serial:
+      lxc:
     methods:
       grub:
         parameters:
