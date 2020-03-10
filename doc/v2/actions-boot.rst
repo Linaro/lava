@@ -601,6 +601,45 @@ The job needs a require set of 3 primary actions:
 
 .. seealso:: :ref:`boot method fastboot <boot_method_fastboot>`.
 
+.. index:: boot method fvp
+
+.. _boot_method_fvp:
+
+fvp
+===
+
+The ``fvp`` boot method allows you to run Fixed Virtual Platforms.
+
+.. code-block:: yaml
+
+  - boot:
+      method: fvp
+      prompts:
+        - 'root@(.*):/#'
+      image: /path/to/FVP_Binary
+      licence_variable: ARMLMD_LICENSE_FILE=foo
+      arguments:
+        - "-C board.virtioblockdevice.image_path={DISK}"
+        ...
+      docker:
+        name: "fvp_foundation:11.8"
+        local: true
+      timeout:
+        minutes: 5
+
+This boot method will launch the ``image`` file
+(already present in the docker image provided)
+with the ``arguments`` as parameters,
+and the ``licence_variable`` set as an environment variable.
+
+You can use ``{IMAGE_NAME}`` which will be replaced with the path to the
+image with the same key under ``images`` in the previous ``fvp`` deploy stage.
+``{ARTIFACT_DIR}`` can also be used for the directory where all images are deployed.
+
+.. note:: Previous to running an ``fvp`` boot, you should run an ``fvp`` deploy.
+
+.. note:: The docker image must have the fastmodel in it and must have the required tools, such as ``telnet``.
+
 .. index:: boot method grub
 
 .. _boot_method_grub:

@@ -1,0 +1,61 @@
+.. index:: deploy to fvp
+
+.. _deploy_to_fvp:
+
+to: fvp
+*******
+
+Allows running of ``FVP`` (or Fixed Virtual Platforms) from a Docker container.
+Generally speaking, ``FVP`` are launched in Docker and UART output is served over a telnet connection locally.
+A pattern is given in the job definition to find the port of the UART from the ``FVP`` output.
+LAVA will then connect via ``telnet`` to view UART output.
+
+::
+
+   - deploy:
+       namespace: docker
+       to: fvp
+       images:
+         disk:
+           url: http://fileserver/path/to/fvp/grub-busybox.img
+           # Remaining settings allow adding overlay to the
+           # ramdisk on second partition of
+           # image file.
+           overlays:
+           - partition: 1
+             ramdisk: ramdisk.img
+           # Alternatively, add overlay into rootfs in first partition
+           # overlays:
+           # - partition: 0
+
+.. _deploy_to_fvp_images:
+
+images
+======
+
+A dictionary of images.
+
+url *
+-----
+
+.. include:: actions-deploy-images-url.rsti
+
+overlays
+--------
+
+A list of places to apply overlays.
+Either this will be applied to a partition on a disk image,
+or can be applied to a ramdisk contained in a partition on that disk image.
+
+partition *
+^^^^^^^^^^^
+
+Either the root partition on the disk, or the partition that contains the ramdisk.
+LAVA decides which this is from whether the ``ramdisk`` option is present
+at the same level.
+0-based index.
+
+ramdisk
+^^^^^^^
+
+The path to the ramdisk file relative to the root of the partition specified.

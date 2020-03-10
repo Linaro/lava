@@ -871,6 +871,8 @@ class AppendOverlays(Action):
         if not isinstance(self.params["overlays"], dict):
             raise JobError("'overlays' is not a dictionary")
         for overlay, params in self.params["overlays"].items():
+            if overlay == "lava":
+                continue
             if params.get("format") not in self.OVERLAY_FORMATS:
                 raise JobError(
                     "Invalid 'format' (%r) for 'overlays.%s'"
@@ -925,14 +927,24 @@ class AppendOverlays(Action):
         self.logger.debug("Overlays:")
         for overlay in self.params["overlays"]:
             label = "%s.%s" % (self.key, overlay)
-            overlay_image = self.get_namespace_data(
-                action="download-action", label=label, key="file"
-            )
-            path = self.params["overlays"][overlay]["path"]
-            self.logger.debug("- %s: %r to %r", label, overlay_image, path)
+            overlay_image = None
+            path = None
+            if overlay == "lava":
+                overlay_image = self.get_namespace_data(
+                    action="compress-overlay", label="output", key="file"
+                )
+                path = "/"
+            else:
+                overlay_image = self.get_namespace_data(
+                    action="download-action", label=label, key="file"
+                )
+                path = self.params["overlays"][overlay]["path"]
+            # Take off initial "/" from path, extract relative to this directory
+            extract_path = os.path.join(tempdir, path[1:])
+            self.logger.debug("- %s: %r to %r", label, overlay_image, extract_path)
             # In the "validate" function, we check that path startswith '/'
             # and does not contains '..'
-            untar_file(overlay_image, "." + path)
+            untar_file(overlay_image, extract_path)
 
         # Recreating the archive
         self.logger.debug("* archiving %r", image)
@@ -945,12 +957,16 @@ class AppendOverlays(Action):
         image = self.get_namespace_data(
             action="download-action", label=self.key, key="file"
         )
+        partition = self.params.get("partition", None)
         self.logger.info("Modifying %r", image)
         guest = guestfs.GuestFS(python_return_dict=True)
         guest.add_drive(image)
         try:
             guest.launch()
-            device = guest.list_devices()[0]
+            if partition is not None:
+                device = guest.list_partitions()[partition]
+            else:
+                device = guest.list_devices()[0]
             guest.mount(device, "/")
         except RuntimeError as exc:
             self.logger.exception(str(exc))
@@ -959,12 +975,21 @@ class AppendOverlays(Action):
         self.logger.debug("Overlays:")
         for overlay in self.params["overlays"]:
             label = "%s.%s" % (self.key, overlay)
-            overlay_image = self.get_namespace_data(
-                action="download-action", label=label, key="file"
-            )
-            path = self.params["overlays"][overlay]["path"]
+            overlay_image = None
+            if overlay == "lava":
+                overlay_image = self.get_namespace_data(
+                    action="compress-overlay", label="output", key="file"
+                )
+                path = "/"
+                compress = "gzip"
+            else:
+                overlay_image = self.get_namespace_data(
+                    action="download-action", label=label, key="file"
+                )
+                path = self.params["overlays"][overlay]["path"]
+                compress = None
             self.logger.debug("- %s: %r to %r", label, overlay_image, path)
             guest.mkdir_p(path)
-            guest.tar_in(overlay_image, path)
+            guest.tar_in(overlay_image, path, compress=compress)
         guest.umount(device)
         guest.shutdown()

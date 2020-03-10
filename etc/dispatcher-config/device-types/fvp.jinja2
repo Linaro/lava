@@ -1,0 +1,39 @@
+{# device_type: fvp #}
+{% extends 'base.jinja2' %}
+
+{% set test_character_delay = '50' %}
+
+{% block body %}
+
+actions:
+  deploy:
+    connections:
+      serial:
+    methods:
+      fvp:
+  boot:
+    connections:
+      serial:
+    methods:
+      fvp:
+        options:
+          cpus: {{ fvp_docker_cpus|default(0.0) }}
+          memory: {{ fvp_docker_memory|default(0) }}
+          privileged: {{ fvp_docker_privileged|default(False) }}
+{% if fvp_docker_devices|default([]) %}
+          devices:
+{% for device in fvp_docker_devices %}
+            - {{ device }}
+{% endfor %}
+{% else %}
+          devices: []
+{% endif %}
+{% if fvp_docker_volumes|default([]) %}
+          volumes:
+{% for volume in fvp_docker_volumes %}
+            - {{ volume }}
+{% endfor %}
+{% else %}
+          volumes: []
+{% endif %}
+{% endblock body %}

@@ -106,6 +106,9 @@ class DownloaderAction(RetryAction):
         self.pipeline.add_action(action)
         overlays = self.params.get("overlays", [])
         for overlay in overlays:
+            if overlay == "lava":
+                # Special case, don't download an overlay, just defined where to find overlays
+                continue
             self.pipeline.add_action(
                 DownloaderAction(
                     "%s.%s" % (self.key, overlay), self.path, params=overlays[overlay]

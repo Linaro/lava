@@ -87,6 +87,7 @@ Parameter List
 .. include:: actions-deploy-to-docker.rsti
 .. include:: actions-deploy-to-download.rsti
 .. include:: actions-deploy-to-fastboot.rsti
+.. include:: actions-deploy-to-fvp.rsti
 .. include:: actions-deploy-to-isoinstaller.rsti
 .. include:: actions-deploy-to-lxc.rsti
 .. include:: actions-deploy-to-musca.rsti

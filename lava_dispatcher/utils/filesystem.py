@@ -216,7 +216,7 @@ def copy_in_overlay(image, root_partition, overlay):
     guest.add_drive(image)
     _launch_guestfs(guest)
 
-    if root_partition:
+    if root_partition is not None:
         partitions = guest.list_partitions()
         if not partitions:
             raise InfrastructureError("Unable to prepare guestfs")
@@ -236,7 +236,7 @@ def copy_in_overlay(image, root_partition, overlay):
     decompressed_overlay = decompress_file(overlay, "gz")
     guest.tar_in(decompressed_overlay, "/")
 
-    if root_partition:
+    if root_partition is not None:
         guest.umount(guest_partition)
     else:
         guest.umount(devices[0])
