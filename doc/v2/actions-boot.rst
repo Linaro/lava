@@ -608,8 +608,7 @@ The job needs a require set of 3 primary actions:
 fvp
 ===
 
-The ``fvp`` boot method takes no arguments or parameters.
-This is currently supported by the docker device type.
+The ``fvp`` boot method allows you to run Fixed Virtual Platforms.
 
 .. code-block:: yaml
 
@@ -637,7 +636,7 @@ You can use ``{IMAGE_NAME}`` which will be replaced with the path to the
 image with the same key under ``images`` in the previous ``fvp`` deploy stage.
 ``{ARTIFACT_DIR}`` can also be used for the directory where all images are deployed.
 
-.. note:: Previous to running an ``fvp`` boot, you should do both a ``fvp`` deploy.
+.. note:: Previous to running an ``fvp`` boot, you should run an ``fvp`` deploy.
 
 .. note:: The docker image must have the fastmodel in it and must have the required tools, such as ``telnet``.
 

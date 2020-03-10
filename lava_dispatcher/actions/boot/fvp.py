@@ -85,7 +85,6 @@ class BaseFVPAction(Action):
 
     def __init__(self):
         super().__init__()
-        self.cleanup_required = False
         self.extra_options = ""
         self.container = ""
         self.fvp_image = None
@@ -171,7 +170,6 @@ class BaseFVPAction(Action):
         return_value = self.run_cmd(["docker", "stop", self.container], allow_fail=True)
         if return_value == 0:
             self.logger.debug("Stopped container %s", self.container)
-        self.cleanup_required = False
 
 
 class CheckFVPVersionAction(BaseFVPAction):
@@ -181,7 +179,6 @@ class CheckFVPVersionAction(BaseFVPAction):
 
     def __init__(self):
         super().__init__()
-        self.cleanup_required = False
         self.extra_options = ""
         self.container = ""
         self.fvp_image = None
@@ -208,7 +205,6 @@ class CheckFVPVersionAction(BaseFVPAction):
 
         self.logger.debug("Boot command: %s", cmd)
         shell = ShellCommand(cmd, self.timeout, logger=self.logger)
-        self.cleanup_required = True
 
         shell_connection = ShellSession(self.job, shell)
         shell_connection = super().run(shell_connection, max_end_time)
@@ -237,7 +233,6 @@ class StartFVPAction(BaseFVPAction):
 
     def __init__(self):
         super().__init__()
-        self.cleanup_required = False
         self.extra_options = ""
         self.container = ""
         self.fvp_image = None
@@ -261,7 +256,6 @@ class StartFVPAction(BaseFVPAction):
 
         self.logger.debug("Boot command: %s", cmd)
         shell = ShellCommand(cmd, self.timeout, logger=self.logger)
-        self.cleanup_required = True
 
         shell_connection = ShellSession(self.job, shell)
         shell_connection = super().run(shell_connection, max_end_time)
