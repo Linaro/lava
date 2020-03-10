@@ -618,9 +618,9 @@ This is currently supported by the docker device type.
       prompts:
         - 'root@(.*):/#'
       image: /path/to/FVP_Binary
-      fvp_licence_variable: ARMLMD_LICENSE_FILE=foo
-      fvp_arguments: >
-        -C board.virtioblockdevice.image_path={DISK}
+      licence_variable: ARMLMD_LICENSE_FILE=foo
+      arguments:
+        - "-C board.virtioblockdevice.image_path={DISK}"
         ...
       docker:
         name: "fvp_foundation:11.8"
@@ -630,8 +630,8 @@ This is currently supported by the docker device type.
 
 This boot method will launch the ``image`` file
 (already present in the docker image provided)
-with the ``fvp_arguments`` as parameters,
-and the ``fvp_licence_variable`` set as an environment variable.
+with the ``arguments`` as parameters,
+and the ``licence_variable`` set as an environment variable.
 
 You can use ``{IMAGE_NAME}`` which will be replaced with the path to the
 image with the same key under ``images`` in the previous ``fvp`` deploy stage.

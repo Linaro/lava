@@ -30,9 +30,9 @@ def schema():
         Required("method"): Msg("fvp", "'method' should be 'fvp'"),
         Required("console_string"): str,
         Required("image"): str,
-        Optional("fvp_license_variable"): str,
-        Optional("fvp_version_string"): str,
-        Required("fvp_arguments"): [str],
+        Optional("license_variable"): str,
+        Optional("version_string"): str,
+        Required("arguments"): [str],
         Required("prompts"): boot.prompts(),
         Required("docker"): {Required("name"): str, Optional("local"): bool},
     }

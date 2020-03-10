@@ -50,7 +50,6 @@ def url(extra=None):
                     **base_url,
                     Required("format"): Any("tar"),
                     Required("path"): str,
-                    Optional("partition"): int,
                 },
             },
         },

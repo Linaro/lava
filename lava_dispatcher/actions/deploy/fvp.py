@@ -17,11 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
-import os
-import re
-import subprocess  # nosec
 
-from lava_common.exceptions import JobError
 from lava_dispatcher.action import Pipeline
 from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.download import DownloaderAction
@@ -83,76 +79,3 @@ class FVPDeploy(DeployAction):  # pylint: disable=too-many-instance-attributes
                         k, self.image_path, parameters["images"][k], uniquify=uniquify
                     )
                 )
-
-
-class OffsetAction(DeployAction):
-    """
-    Uses the target.deployment_data['lava_test_results_part_attr']
-    which, for example, maps to the root_part in the Device config for a qemu.
-    The Device object is passed into the parser which uses the action
-    parameters to determine the deployment_data parameter of the Device object.
-    The calculated offset is dynamic data, stored in the context.
-    """
-
-    name = "offset-action"
-    description = "calculate offset of the image"
-    summary = "offset calculation"
-
-    def __init__(self, key, partition_number=None):
-        super().__init__()
-        self.key = key
-        self.partition_number = partition_number
-
-    def validate(self):
-        super().validate()
-        if not self.get_namespace_data(
-            action="download-action", label=self.key, key="file"
-        ):
-            self.errors = "no file specified to calculate offset"
-
-    def run(self, connection, max_end_time):
-        if self.get_namespace_data(
-            action="download-action", label=self.key, key="offset"
-        ):
-            # idempotency
-            return connection
-        connection = super().run(connection, max_end_time)
-        image = self.get_namespace_data(
-            action="download-action", label=self.key, key="file"
-        )
-        if not os.path.exists(image):
-            raise JobError("Not able to mount %s: file does not exist" % image)
-        part_data = subprocess.check_output(  # nosec
-            ["/sbin/parted", image, "-m", "-s", "unit", "b", "print"]
-        )
-        if not part_data:
-            raise JobError("Unable to identify offset")
-        if not self.partition_number:
-            deploy_params = self.job.device["actions"]["deploy"]["methods"]["image"][
-                "parameters"
-            ]
-            self.partition_number = deploy_params[
-                self.parameters["deployment_data"]["lava_test_results_part_attr"]
-            ]
-
-        # Note that we want to use 0 based index
-        # Parted however uses 1 based index.
-        # As the qemu image code already uses 0 based index, ensure both are the same
-        # for the test writers.
-        pattern = re.compile("%d:([0-9]+)B:" % (int(self.partition_number) + 1))
-        for line in part_data.splitlines():
-            found = re.match(pattern, line.decode())
-            if found:
-                self.logger.debug(
-                    "Found partition %s has offset %s bytes.",
-                    self.partition_number,
-                    found.group(1),
-                )
-                self.set_namespace_data(
-                    action=self.name, label=self.key, key="offset", value=found.group(1)
-                )
-        if not self.get_namespace_data(action=self.name, label=self.key, key="offset"):
-            raise JobError(  # FIXME: JobError needs a unit test
-                "Unable to determine offset for %s" % image
-            )
-        return connection

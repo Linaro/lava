@@ -96,7 +96,9 @@ class BaseFVPAction(Action):
     def validate(self):
         super().validate()
         self.container = "lava-%s-%s" % (self.job.job_id, self.level)
-        if "docker" not in self.parameters or "name" not in self.parameters["docker"]:
+        if "docker" not in self.parameters or "name" not in self.parameters.get(
+            "docker", {}
+        ):
             self.errors = "Specify docker image name"
             raise JobError("Not specified 'docker' in parameters")
         self.docker_image = self.parameters["docker"]["name"]
@@ -114,8 +116,8 @@ class BaseFVPAction(Action):
             self.extra_options += " --device %s" % device
         for volume in options.get("volumes", []):
             self.extra_options += " --volume %s" % volume
-        if "fvp_license_variable" in self.parameters:
-            self.fvp_license = self.parameters["fvp_license_variable"]
+        if "license_variable" in self.parameters:
+            self.fvp_license = self.parameters["license_variable"]
 
     def construct_docker_fvp_command(self, docker_image, fvp_arguments):
         substitutions = {}
@@ -154,9 +156,7 @@ class BaseFVPAction(Action):
 
         substitutions["ARTIFACT_DIR"] = os.path.join("/", self.container)
         if not self.fvp_license:
-            self.logger.warning(
-                "'fvp_license_variable' not set, model may not function."
-            )
+            self.logger.warning("'license_variable' not set, model may not function.")
         else:
             cmd += " -e %s" % self.fvp_license
         fvp_image = self.parameters.get("image")
@@ -190,7 +190,7 @@ class CheckFVPVersionAction(BaseFVPAction):
     def validate(self):
         super().validate()
         self.fvp_version_string = self.parameters.get(
-            "fvp_version_string", "Fast Models[^\\n]+"
+            "version_string", "Fast Models[^\\n]+"
         )
 
     def run(self, connection, max_end_time):
@@ -200,7 +200,7 @@ class CheckFVPVersionAction(BaseFVPAction):
             self.logger.debug("Pulling image %s", self.docker_image)
             self.run_cmd(["docker", "pull", self.docker_image])
 
-        fvp_arguments = self.parameters.get("fvp_version_args", "--version")
+        fvp_arguments = self.parameters.get("version_args", "--version")
 
         # Build the command line
         # The docker image is safe to be included in the command line
@@ -227,9 +227,6 @@ class CheckFVPVersionAction(BaseFVPAction):
         }
         self.logger.results(result)
 
-        self.set_namespace_data(
-            action="shared", label="shared", key="connection", value=shell_connection
-        )
         return shell_connection
 
 
@@ -252,11 +249,11 @@ class StartFVPAction(BaseFVPAction):
             self.errors = "'console_string' is not set."
         else:
             self.fvp_console_string = self.parameters.get("console_string")
-        if "fvp_arguments" not in self.parameters:
-            self.errors = "'fvp_arguments' is not set."
+        if "arguments" not in self.parameters:
+            self.errors = "'arguments' is not set."
 
     def run(self, connection, max_end_time):
-        fvp_arguments = " ".join(self.parameters.get("fvp_arguments"))
+        fvp_arguments = " ".join(self.parameters.get("arguments"))
 
         # Build the command line
         # The docker image is safe to be included in the command line
@@ -291,9 +288,6 @@ class StartFVPAction(BaseFVPAction):
             label="fvp",
             key="container",
             value=self.container,
-        )
-        self.set_namespace_data(
-            action="shared", label="shared", key="connection", value=shell_connection
         )
         return shell_connection
 
