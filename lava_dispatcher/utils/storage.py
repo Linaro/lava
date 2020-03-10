@@ -19,6 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 from lava_dispatcher.action import Action, JobError
+from lava_dispatcher.utils.shell import which
 
 
 class FlashUBootUMSAction(Action):
@@ -38,6 +39,7 @@ class FlashUBootUMSAction(Action):
 
     def validate(self):
         super().validate()
+        which("bmaptool")
         self.params = self.job.device["actions"]["boot"]["methods"][
             self.parameters["method"]
         ]["parameters"]
