@@ -109,8 +109,16 @@ def test_raise_exception():
 
 
 class Connection:
+    class _Match:
+        def __init__(self):
+            self.d = {}
+
+        def groupdict(self):
+            return self.d
+
     def __init__(self, data):
         self.data = data
+        self.match = self._Match()
 
     def sendline(self, line, delay):
         assert self.data.pop(0) == ("sendline", line)  # nosec - assert is ok
@@ -121,6 +129,9 @@ class Connection:
         data = self.data.pop(0)
         assert (data[0], data[1]) == ("expect", expect)  # nosec - assert is ok
         if isinstance(data[2], int):
+            self.match.d = {}
+            if len(data) > 3:
+                self.match.d = data[3]
             return data[2]
         else:
             raise data[2](data[3])
@@ -372,6 +383,206 @@ def test_run_script_echo_discard(monkeypatch):
     action.run_script(test_connection, script, substitutions)
     assert action.logger.data == []  # nosec - assert is part of the test process.
     assert test_connection.data == []  # nosec - assert is part of the test process.
+
+
+def test_run_script_capture(monkeypatch):
+    monkeypatch.setattr(time, "time", Timing())
+    action = TestInteractiveAction()
+    action.parameters = {"stage": 0}
+    action.logger = Logger(
+        [
+            ("info", "Sending nothing, waiting"),
+            ("debug", "Waiting for '=> ', '/ # '"),
+            ("debug", "Matched a prompt: '=> '"),
+            (
+                "results",
+                {
+                    "definition": "0_setup",
+                    "case": "wait prompt",
+                    "result": "pass",
+                    "duration": "1.00",
+                },
+            ),
+            ("info", "Sending nothing, waiting"),
+            ("debug", "Waiting for '=> ', '/ # ', 'foo(?P<val>.+)'"),
+            ("info", "Matched a success: 'foo(?P<val>.+)' (groups: {'val': 'bar'})"),
+            (
+                "results",
+                {
+                    "definition": "0_setup",
+                    "case": "test1",
+                    "result": "pass",
+                    "duration": "1.00",
+                },
+            ),
+            ("info", "Sending 'echo val: bar'"),
+            ("debug", "Waiting for '=> ', '/ # '"),
+            ("debug", "Matched a prompt: '=> '"),
+        ]
+    )
+    action.validate()
+
+    conn_data = [
+        ("expect", ["=> ", "/ # "], 0),
+        ("expect", ["=> ", "/ # ", "foo(?P<val>.+)"], 2, {"val": "bar"}),
+        ("expect", ["=> ", "/ # "], 0),
+        ("sendline", "echo val: bar"),
+        ("expect", ["=> ", "/ # "], 0),
+    ]
+    script = {
+        "prompts": ["=> ", "/ # "],
+        "name": "setup",
+        "script": [
+            {"command": None, "name": "wait prompt"},
+            {
+                "command": None,
+                "name": "test1",
+                "successes": [{"message": "foo(?P<val>.+)"}],
+            },
+            {"command": "echo val: {val}"},
+        ],
+    }
+    test_connection = Connection(conn_data)
+    substitutions = {}
+    action.run_script(test_connection, script, substitutions)
+    assert substitutions == {
+        "{val}": "bar"
+    }  # nosec - assert is part of the test process.
+    assert action.logger.data == []  # nosec - assert is part of the test process.
+    assert test_connection.data == []  # nosec - assert is part of the test process.
+
+
+def test_run_script_delay(monkeypatch):
+    sleep_calls = 0
+
+    def check_sleep(val):
+        nonlocal sleep_calls
+        sleep_calls += 1
+        assert val == 0.5  # nosec - assert is part of the test process.
+
+    monkeypatch.setattr(time, "sleep", check_sleep)
+    monkeypatch.setattr(time, "time", Timing())
+    action = TestInteractiveAction()
+    action.parameters = {"stage": 0}
+    action.logger = Logger(
+        [
+            ("info", "Sending nothing, waiting"),
+            ("debug", "Waiting for '=> ', '/ # '"),
+            ("debug", "Matched a prompt: '=> '"),
+            (
+                "results",
+                {
+                    "definition": "0_setup",
+                    "case": "wait prompt",
+                    "result": "pass",
+                    "duration": "1.00",
+                },
+            ),
+            ("info", "Delaying for 0.5s"),
+        ]
+    )
+    action.validate()
+
+    conn_data = [("expect", ["=> ", "/ # "], 0)]
+    script = {
+        "prompts": ["=> ", "/ # "],
+        "name": "setup",
+        "script": [{"command": None, "name": "wait prompt"}, {"delay": 0.5}],
+    }
+    test_connection = Connection(conn_data)
+    substitutions = {}
+    action.run_script(test_connection, script, substitutions)
+    assert sleep_calls == 1  # nosec - assert is part of the test process.
+    assert action.logger.data == []  # nosec - assert is part of the test process.
+    assert test_connection.data == []  # nosec - assert is part of the test process.
+
+
+def test_run_script_multinode(monkeypatch):
+    class Proto:
+        def __init__(self):
+            self.captured = []
+
+        def request_send(self, *args):
+            self.captured.append(("send", *args))
+            return '{"response": "ack"}'
+
+        def request_wait(self, *args):
+            self.captured.append(("wait", *args))
+            return '{"message": {"1": {"ipaddr": "172.17.0.3"}}, "response": "ack"}'
+
+        def request_wait_all(self, *args):
+            self.captured.append(("wait-all", *args))
+            return '{"message": {"1": {"val2": "172.17.0.4"}}, "response": "ack"}'
+
+        def request_sync(self, *args):
+            self.captured.append(("sync", *args))
+            return '{"response": "ack"}'
+
+    monkeypatch.setattr(time, "time", Timing())
+    action = TestInteractiveAction()
+    action.multinode_proto = None
+    proto = Proto()
+    monkeypatch.setattr(action, "multinode_proto", proto)
+
+    action.parameters = {"stage": 0}
+    action.logger = Logger(
+        [
+            ("info", "Sending nothing, waiting"),
+            ("debug", "Waiting for '=> ', '/ # '"),
+            ("debug", "Matched a prompt: '=> '"),
+            (
+                "results",
+                {
+                    "definition": "0_setup",
+                    "case": "wait prompt",
+                    "result": "pass",
+                    "duration": "1.00",
+                },
+            ),
+            (
+                "info",
+                'wait result: \'{"message": {"1": {"ipaddr": "172.17.0.3"}}, "response": "ack"}\'',
+            ),
+            ("info", 'send result: \'{"response": "ack"}\''),
+            (
+                "info",
+                'wait-all result: \'{"message": {"1": {"val2": "172.17.0.4"}}, "response": "ack"}\'',
+            ),
+            (
+                "info",
+                'wait-all result: \'{"message": {"1": {"val2": "172.17.0.4"}}, "response": "ack"}\'',
+            ),
+            ("info", 'sync result: \'{"response": "ack"}\''),
+        ]
+    )
+    action.validate()
+
+    conn_data = [("expect", ["=> ", "/ # "], 0)]
+    script = {
+        "prompts": ["=> ", "/ # "],
+        "name": "setup",
+        "script": [
+            {"command": None, "name": "wait prompt"},
+            {"lava-wait": "msgid456"},
+            {"lava-send": "msgid123 key1={ipaddr}"},
+            {"lava-wait-all": "msgid789"},
+            {"lava-wait-all": "msgid678 role=role1"},
+            {"lava-sync": "msgid321"},
+        ],
+    }
+    test_connection = Connection(conn_data)
+    substitutions = {}
+    action.run_script(test_connection, script, substitutions)
+    assert substitutions == {"{ipaddr}": "172.17.0.3", "{val2}": "172.17.0.4"}
+    assert action.logger.data == []  # nosec - assert is part of the test process.
+    assert test_connection.data == []  # nosec - assert is part of the test process.
+    assert proto.captured == [
+        ("wait", "msgid456"),
+        ("send", "msgid123", {"key1": "172.17.0.3"}),
+        ("wait-all", "msgid789", None),
+        ("wait-all", "msgid678", "role1"),
+        ("sync", "msgid321"),
+    ]  # nosec - assert is part of the test process.
 
 
 def test_run_script_raise_test_error_unnamed_command(monkeypatch):
