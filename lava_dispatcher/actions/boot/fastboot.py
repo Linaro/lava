@@ -30,7 +30,6 @@ from lava_dispatcher.actions.boot import (
 )
 from lava_dispatcher.power import ResetDevice, PreOs
 from lava_dispatcher.utils.fastboot import BaseAction
-from lava_dispatcher.utils.lxc import is_lxc_requested
 from lava_dispatcher.utils.udev import WaitDeviceBoardID
 from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.connections.adb import ConnectAdb
@@ -88,7 +87,7 @@ class BootFastbootCommands(BaseAction):
             self.run_fastboot([command])
 
 
-class BootFastbootAction(BootAction):
+class BootFastbootAction(BootAction, BaseAction):
     """
     Provide for auto_login parameters in this boot stanza and re-establish the
     connection after boot.
@@ -109,6 +108,7 @@ class BootFastbootAction(BootAction):
             self.errors = "fastboot_sequence undefined"
 
     def populate(self, parameters):
+        self.parameters = parameters
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
 
         if parameters.get("commands"):
@@ -141,7 +141,7 @@ class BootFastbootAction(BootAction):
             elif mapped[0]:
                 self.pipeline.add_action(mapped[0]())
         if self.job.device.hard_reset_command:
-            if not is_lxc_requested(self.job):
+            if not self.is_container():
                 self.pipeline.add_action(PreOs())
             if self.has_prompts(parameters):
                 self.pipeline.add_action(AutoLoginAction())
@@ -151,7 +151,7 @@ class BootFastbootAction(BootAction):
                         self.pipeline.add_action(OverlayUnpack())
                     self.pipeline.add_action(ExportDeviceEnvironment())
         else:
-            if not is_lxc_requested(self.job):
+            if not self.is_container():
                 self.pipeline.add_action(ConnectAdb())
                 self.pipeline.add_action(AdbOverlayUnpack())
 
