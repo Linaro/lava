@@ -19,7 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
-from lava_common.exceptions import InfrastructureError
+
 from lava_dispatcher.action import Pipeline, Action
 from lava_dispatcher.logical import Deployment
 from lava_dispatcher.actions.deploy import DeployAction
@@ -167,10 +167,6 @@ class ExtractNfsAction(Action):
             action="download-action", label=self.param_key, key="file"
         ):
             self.errors = "no file specified extract as %s" % self.param_key
-        if not os.path.exists("/usr/sbin/exportfs"):
-            raise InfrastructureError(
-                "NFS job requested but nfs-kernel-server not installed."
-            )
         if "prefix" in self.parameters["images"][self.param_key]:
             prefix = self.parameters["images"][self.param_key]["prefix"]
             if prefix.startswith("/"):
