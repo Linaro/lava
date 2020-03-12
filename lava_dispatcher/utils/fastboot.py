@@ -74,8 +74,13 @@ class BaseAction(DeployAction):
     def maybe_copy_to_container(self, src):
         return self.driver.maybe_copy_to_container(src)
 
+    def is_container(self):
+        return self.driver.is_container
+
 
 class NullDriver(InternalObject):
+    is_container = False
+
     def __init__(self, action):
         self.action = action
 
@@ -87,6 +92,8 @@ class NullDriver(InternalObject):
 
 
 class LxcDriver(NullDriver):
+    is_container = True
+
     def __init__(self, action, lxc_name):
         super().__init__(action)
         self.lxc_name = lxc_name
@@ -100,6 +107,8 @@ class LxcDriver(NullDriver):
 
 
 class DockerDriver(NullDriver):
+    is_container = True
+
     def __init__(self, action, image):
         super().__init__(action)
         self.image = image
