@@ -1,0 +1,18 @@
+{% extends 'base-uboot.jinja2' %}
+
+{% set booti_dtb_addr = '0x18000000' %}
+{% set booti_kernel_addr = '0x12000000' %}
+{% set booti_ramdisk_addr = '0x20000000' %}
+
+{% set bootz_dtb_addr = booti_dtb_addr %}
+{% set bootz_kernel_addr = booti_kernel_addr %}
+{% set bootz_ramdisk_addr = booti_ramdisk_addr %}
+
+{% set bootm_dtb_addr = bootz_dtb_addr %}
+{% set bootm_kernel_addr = bootz_kernel_addr %}
+{% set bootm_ramdisk_addr = bootz_ramdisk_addr %}
+
+{% set baud_rate = baud_rate|default(115200) %}
+{% set extra_nfsroot_args = ",v3" + extra_nfsroot_args|default('') %}
+{% set console_device = console_device|default('ttymxc0') %}
+{% set uboot_mkimage_arch = 'arm' %}
