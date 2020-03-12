@@ -77,9 +77,11 @@ class DeployIsoAction(DeployAction):
         self.pipeline.add_action(IsoPullInstaller())
         self.pipeline.add_action(QemuCommandLine())
         # prepare overlay at this stage - make it available after installation.
-        self.pipeline.add_action(OverlayAction())  # idempotent, includes testdef
-        self.pipeline.add_action(ApplyOverlayGuest())
-        self.pipeline.add_action(DeployDeviceEnvironment())
+        if self.test_needs_overlay(parameters):
+            self.pipeline.add_action(OverlayAction())  # idempotent, includes testdef
+            self.pipeline.add_action(ApplyOverlayGuest())
+        if self.test_needs_deployment(parameters):
+            self.pipeline.add_action(DeployDeviceEnvironment())
 
 
 class DeployIso(Deployment):

@@ -138,9 +138,11 @@ class DeployQemuNfsAction(DeployAction):
             if parameters["images"][image].get("format", "") == "qcow2":
                 self.pipeline.add_action(QCowConversionAction(image))
         self.pipeline.add_action(ExtractNfsAction())
-        self.pipeline.add_action(OverlayAction())
-        self.pipeline.add_action(ApplyOverlayTftp())
-        self.pipeline.add_action(DeployDeviceEnvironment())
+        if self.test_needs_overlay(parameters):
+            self.pipeline.add_action(OverlayAction())
+            self.pipeline.add_action(ApplyOverlayTftp())
+        if self.test_needs_deployment(parameters):
+            self.pipeline.add_action(DeployDeviceEnvironment())
 
 
 class ExtractNfsAction(Action):
