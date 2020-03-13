@@ -137,10 +137,7 @@ SERVER = {
             ],
         ),
         ("/etc/lava-server/dispatcher-config/devices/", []),
-        (
-            "/etc/lava-server/dispatcher-config/device-types/",
-            glob.glob("etc/dispatcher-config/device-types/*.jinja2"),
-        ),
+        ("/etc/lava-server/dispatcher-config/device-types/", []),
         ("/etc/lava-server/dispatcher-config/health-checks/", []),
         (
             "/etc/logrotate.d/",
@@ -165,6 +162,10 @@ SERVER = {
         (
             "/usr/share/lava-server/",
             ["etc/dispatcher.yaml", "etc/instance.conf.template", "share/postinst.py"],
+        ),
+        (
+            "/usr/share/lava-server/device-types/",
+            glob.glob("etc/dispatcher-config/device-types/*.jinja2"),
         ),
         ("/var/lib/lava-server/default/media/job-output/", []),
         ("/var/log/lava-server/", []),

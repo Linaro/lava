@@ -19,7 +19,6 @@
 
 import csv
 import io
-import os
 import pathlib
 import voluptuous
 import yaml
@@ -40,6 +39,7 @@ from lava_rest_app.base import views as base_views
 from lava_rest_app import filters
 from lava_scheduler_app.dbutils import testjob_submission
 from lava_scheduler_app.schema import SubmissionException
+from lava_server.files import File
 from rest_framework import status, viewsets
 from rest_framework.permissions import (
     DjangoModelPermissions,
@@ -269,18 +269,15 @@ class DeviceTypeViewSet(base_views.DeviceTypeViewSet):
                 )
 
             try:
-                filename = "%s.yaml" % os.path.join(
-                    settings.HEALTH_CHECKS_PATH, self.get_object().name
+                filename = f"{self.get_object().name}.yaml"
+                response = HttpResponse(
+                    File("health-check").read(filename).encode("utf-8"),
+                    content_type="application/yaml",
                 )
-                with open(filename, "r") as f_in:
-                    response = HttpResponse(
-                        f_in.read().encode("utf-8"), content_type="application/yaml"
-                    )
-                    response["Content-Disposition"] = (
-                        "attachment; filename=%s_health_check.yaml"
-                        % self.get_object().name
-                    )
-                    return response
+                response["Content-Disposition"] = (
+                    "attachment; filename=%s_health_check.yaml" % self.get_object().name
+                )
+                return response
             except FileNotFoundError:
                 raise ParseError(
                     "Device-type '%s' health check was not found."
@@ -303,11 +300,8 @@ class DeviceTypeViewSet(base_views.DeviceTypeViewSet):
                 )
 
             try:
-                filename = "%s.yaml" % os.path.join(
-                    settings.HEALTH_CHECKS_PATH, self.get_object().name
-                )
-                with open(filename, "w") as f_out:
-                    f_out.write(config)
+                filename = f"{self.get_object().name}.yaml"
+                File("health-check").write(filename, config)
                 return Response(
                     {"message": "health check updated"},
                     status=status.HTTP_204_NO_CONTENT,
@@ -326,17 +320,15 @@ class DeviceTypeViewSet(base_views.DeviceTypeViewSet):
                 )
 
             try:
-                filename = "%s.jinja2" % os.path.join(
-                    settings.DEVICE_TYPES_PATH, self.get_object().name
+                filename = f"{self.get_object().name}.jinja2"
+                response = HttpResponse(
+                    File("device-type").read(filename).encode("utf-8"),
+                    content_type="application/yaml",
                 )
-                with open(filename, "r") as f_in:
-                    response = HttpResponse(
-                        f_in.read().encode("utf-8"), content_type="application/yaml"
-                    )
-                    response["Content-Disposition"] = (
-                        "attachment; filename=%s.jinja2" % self.get_object().name
-                    )
-                    return response
+                response["Content-Disposition"] = (
+                    "attachment; filename=%s.jinja2" % self.get_object().name
+                )
+                return response
             except FileNotFoundError:
                 raise ParseError(
                     "Device-type '%s' template was not found." % self.get_object().name
@@ -355,11 +347,8 @@ class DeviceTypeViewSet(base_views.DeviceTypeViewSet):
             if not template:
                 raise ValidationError({"template": "Device type template is required."})
             try:
-                filename = "%s.jinja2" % os.path.join(
-                    settings.DEVICE_TYPES_PATH, self.get_object().name
-                )
-                with open(filename, "w") as f_out:
-                    f_out.write(template)
+                filename = f"{self.get_object().name}.jinja2"
+                File("device-type").write(filename, template)
                 return Response(
                     {"message": "template updated"}, status=status.HTTP_204_NO_CONTENT
                 )

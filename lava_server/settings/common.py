@@ -191,7 +191,10 @@ USE_DEBUG_TOOLBAR = False
 GLOBAL_SETTINGS_PATH = "/etc/lava-server"
 DISPATCHER_CONFIG_PATH = "/etc/lava-server/dispatcher.d"
 DEVICES_PATH = "/etc/lava-server/dispatcher-config/devices"
-DEVICE_TYPES_PATH = "/etc/lava-server/dispatcher-config/device-types"
+DEVICE_TYPES_PATHS = [
+    "/etc/lava-server/dispatcher-config/device-types",
+    "/usr/share/lava-server/device-types",
+]
 HEALTH_CHECKS_PATH = "/etc/lava-server/dispatcher-config/health-checks"
 
 # LDAP support

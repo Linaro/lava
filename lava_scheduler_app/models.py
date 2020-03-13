@@ -62,6 +62,7 @@ from lava_scheduler_app.managers import (
 )
 from lava_scheduler_app.schema import SubmissionException, validate_device
 from lava_server.compat import add_permissions
+from lava_server.files import File
 
 import requests
 
@@ -825,14 +826,9 @@ class Device(RestrictedObject):
             job_ctx = {}
 
         if output_format == "raw":
-            try:
-                with open(
-                    os.path.join(settings.DEVICES_PATH, "%s.jinja2" % self.hostname),
-                    "r",
-                ) as f_in:
-                    return f_in.read()
-            except OSError:
-                return None
+            with contextlib.suppress(OSError):
+                return File("device").read(f"{self.hostname}.jinja2")
+            return None
 
         try:
             template = environment.devices().get_template("%s.jinja2" % self.hostname)
@@ -878,10 +874,7 @@ class Device(RestrictedObject):
 
     def save_configuration(self, data):
         try:
-            with open(
-                os.path.join(settings.DEVICES_PATH, "%s.jinja2" % self.hostname), "w"
-            ) as f_out:
-                f_out.write(data)
+            File("device").write(f"{self.hostname}.jinja2", data)
             return True
         except OSError as exc:
             logger = logging.getLogger("lava_scheduler_app")

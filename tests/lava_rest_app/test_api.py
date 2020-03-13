@@ -19,7 +19,6 @@
 
 import csv
 import json
-import os
 import pathlib
 import pytest
 
@@ -742,18 +741,9 @@ ok 2 bar
         )
         assert response.status_code == 201  # nosec - unit test support
 
-    def test_devicetype_get_template(self, monkeypatch, tmpdir):
-        real_open = open
+    def test_devicetype_get_template(self, mocker, tmpdir):
         (tmpdir / "qemu.jinja2").write_text("hello", encoding="utf-8")
-
-        def monkey_open(path, *args):
-            if path == os.path.join(settings.DEVICE_TYPES_PATH, "qemu.jinja2"):
-                return real_open(str(tmpdir / "qemu.jinja2"), *args)
-            if path == os.path.join(settings.DEVICE_TYPES_PATH, "bbb.jinja2"):
-                raise FileNotFoundError()
-            return real_open(path, *args)
-
-        monkeypatch.setitem(__builtins__, "open", monkey_open)
+        mocker.patch("lava_server.files.File.KINDS", {"device-type": [str(tmpdir)]})
 
         # 1. normal case
         qemu_device_type1 = DeviceType.objects.create(name="qemu")
@@ -773,19 +763,8 @@ ok 2 bar
         )
         assert response.status_code == 400  # nosec
 
-    def test_devicetype_set_template(self, monkeypatch, tmpdir):
-        real_open = open
-
-        def monkey_open(path, *args):
-            if path == os.path.join(settings.DEVICE_TYPES_PATH, "qemu.jinja2"):
-                return real_open(str(tmpdir / "qemu.jinja2"), *args)
-            if path == os.path.join(
-                settings.DEVICE_TYPES_PATH, "public_device_type1.jinja2"
-            ):
-                raise OSError()
-            return real_open(path, *args)
-
-        monkeypatch.setitem(__builtins__, "open", monkey_open)
+    def test_devicetype_set_template(self, mocker, tmpdir):
+        mocker.patch("lava_server.files.File.KINDS", {"device-type": [str(tmpdir)]})
 
         # 1. normal case
         qemu_device_type1 = DeviceType.objects.create(name="qemu")
@@ -799,27 +778,9 @@ ok 2 bar
             encoding="utf-8"
         ) == "hello world"  # nosec
 
-        # 2. Can't write the template
-        response = self.adminclient.post(
-            reverse("api-root", args=[self.version])
-            + "devicetypes/%s/template/" % self.public_device_type1.name,
-            {"template": "hello world"},
-        )
-        assert response.status_code == 400  # nosec
-
-    def test_devicetype_get_health_check(self, monkeypatch, tmpdir):
-
-        real_open = open
+    def test_devicetype_get_health_check(self, mocker, tmpdir):
         (tmpdir / "qemu.yaml").write_text("hello", encoding="utf-8")
-
-        def monkey_open(path, *args):
-            if path == os.path.join(settings.HEALTH_CHECKS_PATH, "qemu.yaml"):
-                return real_open(str(tmpdir / "qemu.yaml"), *args)
-            if path == os.path.join(settings.HEALTH_CHECKS_PATH, "docker.yaml"):
-                raise FileNotFoundError()
-            return real_open(path, *args)
-
-        monkeypatch.setitem(__builtins__, "open", monkey_open)
+        mocker.patch("lava_server.files.File.KINDS", {"health-check": [str(tmpdir)]})
 
         # 1. normal case
         qemu_device_type1 = DeviceType.objects.create(name="qemu")
@@ -839,15 +800,8 @@ ok 2 bar
         )
         assert response.status_code == 400  # nosec
 
-    def test_devicetype_set_health_check(self, monkeypatch, tmpdir):
-        real_open = open
-
-        def monkey_open(path, *args):
-            if path == os.path.join(settings.HEALTH_CHECKS_PATH, "qemu.yaml"):
-                return real_open(str(tmpdir / "qemu.yaml"), *args)
-            return real_open(path, *args)
-
-        monkeypatch.setitem(__builtins__, "open", monkey_open)
+    def test_devicetype_set_health_check(self, mocker, tmpdir):
+        mocker.patch("lava_server.files.File.KINDS", {"health-check": [str(tmpdir)]})
 
         # 1. normal case
         qemu_device_type1 = DeviceType.objects.create(name="qemu")
@@ -860,14 +814,6 @@ ok 2 bar
         assert (tmpdir / "qemu.yaml").read_text(
             encoding="utf-8"
         ) == "hello world"  # nosec
-
-        # 2. Can't write the health-check
-        response = self.adminclient.post(
-            reverse("api-root", args=[self.version])
-            + "devicetypes/%s/health_check/" % self.public_device_type1.name,
-            {"config": "hello world"},
-        )
-        assert response.status_code == 400  # nosec
 
     def test_devicetype_filters(self):
         data = self.hit(

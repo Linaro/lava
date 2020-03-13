@@ -19,15 +19,13 @@
 
 import contextlib
 import csv
-import glob
-import os
 
-from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.db import IntegrityError
 
 from lava_scheduler_app.models import DeviceType, Alias
 from lava_server.compat import get_sub_parser_class
+from lava_server.files import File
 
 
 class Command(BaseCommand):
@@ -111,9 +109,8 @@ class Command(BaseCommand):
     def available_device_types(self):
         """ List avaiable device types by looking at the configuration files """
         available_types = []
-        pattern = os.path.join(settings.DEVICE_TYPES_PATH, "*.jinja2")
-        for fname in glob.iglob(pattern):
-            device_type = os.path.basename(fname[:-7])
+        for fname in File("device-type").list("*.jinja2"):
+            device_type = fname.name[:-7]
             if not device_type.startswith("base"):
                 available_types.append(device_type)
         available_types.sort()
