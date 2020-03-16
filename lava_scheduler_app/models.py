@@ -970,6 +970,13 @@ class Device(RestrictedObject):
         except OSError:
             return None
 
+    def cancel_job(self):
+        current_job = self.current_job()
+        if current_job is not None:
+            with transaction.atomic:
+                current_job.go_state_canceling()
+                current_job.save()
+
 
 class JobFailureTag(models.Model):
     """
