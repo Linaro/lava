@@ -36,7 +36,7 @@ from lava_dispatcher.actions.deploy.download import (
 from lava_dispatcher.job import Job
 
 
-def test_downloader_populate():
+def test_downloader_populate_http():
     # "images.key" with http
     action = DownloaderAction(
         "key", "/path/to/save", params={"url": "http://url.org/resource.img"}
@@ -57,6 +57,8 @@ def test_downloader_populate():
     assert isinstance(action.pipeline.actions[0], HttpDownloadAction)
     assert action.pipeline.actions[0].url == urlparse("http://url.org/resource.img")
 
+
+def test_downloader_populate_https():
     # "images.key" with https
     action = DownloaderAction(
         "key", "/path/to/save", params={"url": "https://url.org/resource.img"}
@@ -77,6 +79,8 @@ def test_downloader_populate():
     assert isinstance(action.pipeline.actions[0], HttpDownloadAction)
     assert action.pipeline.actions[0].url == urlparse("https://url.org/resource.img")
 
+
+def test_downloader_populate_scp():
     # "images.key" with scp
     action = DownloaderAction(
         "key", "/path/to/save", params={"url": "scp://user@host:/resource.img"}
@@ -97,6 +101,8 @@ def test_downloader_populate():
     assert isinstance(action.pipeline.actions[0], ScpDownloadAction)
     assert action.pipeline.actions[0].url == urlparse("scp://user@host:/resource.img")
 
+
+def test_downloader_populate_file():
     # "images.key" with file
     action = DownloaderAction(
         "key", "/path/to/save", params={"url": "file:///resource.img"}
@@ -117,6 +123,8 @@ def test_downloader_populate():
     assert isinstance(action.pipeline.actions[0], FileDownloadAction)
     assert action.pipeline.actions[0].url == urlparse("file:///resource.img")
 
+
+def test_downloader_populate_file():
     # "images.key" with lxc
     action = DownloaderAction(
         "key", "/path/to/save", params={"url": "lxc:///resource.img"}
@@ -137,6 +145,8 @@ def test_downloader_populate():
     assert isinstance(action.pipeline.actions[0], LxcDownloadAction)
     assert action.pipeline.actions[0].url == urlparse("lxc:///resource.img")
 
+
+def test_downloader_unsupported_scheme():
     # Test raise
     # 1. unsuported scheme
     action = DownloaderAction(
@@ -147,6 +157,8 @@ def test_downloader_populate():
         action.populate({"key": {"url": "ftp://user@host:/resource.img"}})
     assert exc.match("Unsupported url protocol scheme: ftp")
 
+
+def test_downloader_no_url():
     # 1. no url avaialbe
     action = DownloaderAction("key", "/path/to/save", params={})
     action.level = 1
