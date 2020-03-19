@@ -19,6 +19,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+from pathlib import Path
 import pytest
 import requests
 from urllib.parse import urlparse
@@ -32,8 +33,10 @@ from lava_dispatcher.actions.deploy.download import (
     FileDownloadAction,
     HttpDownloadAction,
     ScpDownloadAction,
+    PreDownloadedAction,
 )
 from lava_dispatcher.job import Job
+from tests.lava_dispatcher.test_basic import Factory
 
 
 def test_downloader_populate_http():
@@ -704,3 +707,64 @@ def test_http_download_run_compressed(tmpdir):
             }
         }
     }
+
+
+def test_predownloaded_job_validation():
+    factory = Factory()
+    factory.validate_job_strict = True
+    job = factory.create_job(
+        "qemu01.jinja2", "sample_jobs/qemu-download-postprocess.yaml"
+    )
+    job.validate()
+
+
+def test_predownloaded():
+    params = {
+        "to": "tmpfs",
+        "rootfs": {"url": "downloads://rootfs.xz"},
+        "namespace": "common",
+    }
+    action = PreDownloadedAction("rootfs", urlparse("downloads://rootfs.xz"), params)
+    action.job = Job(1234, {}, None)
+
+    filename = Path(action.job.tmp_dir) / "downloads/common/rootfs.xz"
+    filename.parent.mkdir(parents=True)
+    filename.touch()
+
+    action.data = {}
+    action.parameters = {"namespace": "common"}
+    action.validate()
+    action.run(None, 4242)
+    mapped_path = action.get_namespace_data(
+        action="download-action", label="rootfs", key="file"
+    )
+    assert mapped_path == (action.job.tmp_dir + "/downloads/common/rootfs.xz")
+
+
+def test_predownloaded_subdirectory():
+    params = {"to": "tmpfs", "rootfs": {"url": "downloads://subdir/rootfs.xz"}}
+    action = PreDownloadedAction(
+        "rootfs", urlparse("downloads://subdir/rootfs.xz"), params
+    )
+    action.job = Job(1234, {}, None)
+
+    filename = Path(action.job.tmp_dir) / "downloads/common/subdir/rootfs.xz"
+    filename.parent.mkdir(parents=True)
+    filename.touch()
+
+    action.data = {}
+    action.parameters = {"namespace": "common"}
+    action.validate()
+    action.run(None, 4242)
+    mapped_path = action.get_namespace_data(
+        action="download-action", label="rootfs", key="file"
+    )
+    assert mapped_path == (action.job.tmp_dir + "/downloads/common/subdir/rootfs.xz")
+
+
+def test_predownloaded_missing_file(tmpdir):
+    action = PreDownloadedAction("rootfs", urlparse("downloads://missing.xz"))
+    action.parameters = {"namespace": "common"}
+    action.job = Job(1234, {}, None)
+    with pytest.raises(JobError) as exc:
+        action.run(None, 4242)

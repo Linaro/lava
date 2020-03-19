@@ -24,6 +24,7 @@
 # pylint: disable=unused-import
 
 from lava_dispatcher.actions.deploy.docker import Docker
+from lava_dispatcher.actions.deploy.downloads import Downloads
 from lava_dispatcher.actions.deploy.image import DeployImages
 from lava_dispatcher.actions.deploy.iso import DeployIso
 from lava_dispatcher.actions.deploy.fastboot import Fastboot
