@@ -198,7 +198,9 @@ class LxcCreateAction(DeployAction):
 
         # Check if the container already exists. If this is a persistant that's
         # ok, overwize, raise an error.
-        if not self.run_cmd(["lxc-info", self.lxc_data["lxc_name"]], allow_fail=True):
+        if not self.run_cmd(
+            ["lxc-info", "-n", self.lxc_data["lxc_name"]], allow_fail=True
+        ):
             if not self.lxc_data["lxc_persist"]:
                 raise InfrastructureError(
                     "lxc container %r already exists" % self.lxc_data["lxc_name"]
