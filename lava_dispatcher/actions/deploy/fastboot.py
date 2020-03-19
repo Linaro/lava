@@ -166,6 +166,9 @@ class FastbootFlashOrderAction(BaseAction):
             elif self.reboot == "fastboot-reboot-bootloader":
                 self.pipeline.add_action(FastbootRebootBootloader())
                 self.pipeline.add_action(ReadFeedback(repeat=True))
+            elif self.reboot == "fastboot-reboot-fastboot":
+                self.pipeline.add_action(FastbootRebootFastboot())
+                self.pipeline.add_action(ReadFeedback(repeat=True))
             elif self.reboot == "hard-reset":
                 self.pipeline.add_action(PDUReboot())
                 self.pipeline.add_action(ReadFeedback(repeat=True))
@@ -313,4 +316,34 @@ class FastbootRebootBootloader(BaseAction):
 
         self.logger.info("fastboot reboot device to bootloader.")
         self.run_fastboot(["reboot-bootloader"])
+        return connection
+
+
+class FastbootRebootFastboot(BaseAction):
+
+    name = "fastboot-reboot-fastboot"
+    description = (
+        "Reset a device between flash operations using fastboot reboot fastboot."
+    )
+    summary = "execute a reboot to fastbootd using fastboot"
+
+    def validate(self):
+        super().validate()
+        if "fastboot" not in self.job.device["actions"]["deploy"]["connections"]:
+            self.errors = (
+                "Device not configured to support fastboot deployment connections."
+            )
+        if "fastboot_serial_number" not in self.job.device:
+            self.errors = "device fastboot serial number missing"
+        elif self.job.device["fastboot_serial_number"] == "0000000000":
+            self.errors = "device fastboot serial number unset"
+
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
+
+        serial_number = self.job.device["fastboot_serial_number"]
+        fastboot_opts = self.job.device["fastboot_options"]
+
+        self.logger.info("fastboot reboot device to fastbootd.")
+        self.run_fastboot(["reboot", "fastboot"])
         return connection

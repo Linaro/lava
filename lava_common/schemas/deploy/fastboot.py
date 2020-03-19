@@ -30,7 +30,10 @@ def schema():
         Optional("apply-overlay"): bool,
         Optional("sparse"): bool,
         Optional("reboot"): Any(
-            "hard-reset", "fastboot-reboot", "fastboot-reboot-bootloader"
+            "hard-reset",
+            "fastboot-reboot",
+            "fastboot-reboot-bootloader",
+            "fastboot-reboot-fastboot",
         ),
     }
 
