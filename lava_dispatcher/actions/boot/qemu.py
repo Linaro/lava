@@ -19,7 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
-from lava_common.constants import SYS_CLASS_KVM
+from lava_common.constants import DISPATCHER_DOWNLOAD_DIR, SYS_CLASS_KVM
 from lava_common.exceptions import JobError
 from lava_common.utils import debian_package_arch, debian_package_version
 from lava_dispatcher.action import Pipeline, Action
@@ -28,6 +28,7 @@ from lava_dispatcher.actions.boot import BootAction
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.shell import ExpectShellSession, ShellCommand
 from lava_dispatcher.connections.serial import QemuSession
+from lava_dispatcher.utils.docker import DockerRun
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.strings import substitute
 from lava_dispatcher.utils.network import dispatcher_ip
@@ -304,6 +305,17 @@ class CallQemuAction(Action):
                 key="pre-command-list",
                 value=shell_precommand_list,
             )
+
+        if "docker" in self.parameters:
+            docker = DockerRun(self.parameters["docker"]["image"])
+            docker.interactive()
+            docker.bind_mount(DISPATCHER_DOWNLOAD_DIR)
+            docker.add_device("/dev/kvm")
+            args = []
+            if "binary" in self.parameters["docker"]:
+                args.append(self.parameters["docker"]["binary"])
+
+            self.sub_command[0] = " ".join(docker.cmdline(*args))
 
         self.logger.info("Boot command: %s", " ".join(self.sub_command))
         shell = self.shell_class(
