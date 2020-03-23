@@ -20,7 +20,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from voluptuous import Any, Optional, Required
+from voluptuous import Any, Match, Optional, Required
 
 from lava_common.schemas import test
 
@@ -29,7 +29,7 @@ def schema():
     base = {
         Required("monitors"): [
             {
-                Required("name"): str,
+                Required("name"): Match(r"^[-_a-zA-Z0-9.]+$"),
                 Required("start"): str,
                 Required("end"): str,
                 Required("pattern"): str,

@@ -28,7 +28,7 @@ from lava_common.schemas import test
 def schema():
     common = {
         Required("path"): str,
-        Required("name"): str,
+        Required("name"): Match(r"^[-_a-zA-Z0-9.]+$"),
         Optional("skip_install"): [
             Any("keys", "sources", "deps", "steps", "git-repos", "all")
         ],

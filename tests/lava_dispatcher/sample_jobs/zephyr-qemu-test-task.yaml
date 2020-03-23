@@ -35,7 +35,7 @@ actions:
 
 - test:
     monitors:
-    - name: Test Microkernel Task API
+    - name: Test_Microkernel_Task_API
       start: tc_start()
       end: PROJECT EXECUTION
       pattern: (?P<result>(PASS|FAIL))\s-\s(?P<test_case_id>\w+)
