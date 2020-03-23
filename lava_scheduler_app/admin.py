@@ -37,6 +37,7 @@ from lava_scheduler_app.models import (
     DeviceType,
     GroupDeviceTypePermission,
     GroupDevicePermission,
+    GroupWorkerPermission,
     JobFailureTag,
     NotificationRecipient,
     ProcessorFamily,
@@ -53,7 +54,9 @@ from linaro_django_xmlrpc.models import AuthToken
 class GroupObjectPermissionInline(admin.TabularInline):
     extra = 0
     supported_permissions = (
-        DeviceType.PERMISSIONS_PRIORITY + Device.PERMISSIONS_PRIORITY
+        DeviceType.PERMISSIONS_PRIORITY
+        + Device.PERMISSIONS_PRIORITY
+        + Worker.PERMISSIONS_PRIORITY
     )
 
     def formfield_for_foreignkey(self, db_field, request=None, **kwargs):
@@ -75,6 +78,11 @@ class GroupDeviceTypePermissionInline(GroupObjectPermissionInline):
 
 class GroupDevicePermissionInline(GroupObjectPermissionInline):
     model = GroupDevicePermission
+    extra = 0
+
+
+class GroupWorkerPermissionInline(GroupObjectPermissionInline):
+    model = GroupWorkerPermission
     extra = 0
 
 
@@ -602,6 +610,7 @@ class WorkerAdmin(admin.ModelAdmin):
     readonly_fields = ("state",)
     ordering = ["hostname"]
     actions = [worker_health_active, worker_health_maintenance, worker_health_retired]
+    inlines = [GroupWorkerPermissionInline]
 
     def get_readonly_fields(self, _, obj=None):
         if obj:  # editing an existing object

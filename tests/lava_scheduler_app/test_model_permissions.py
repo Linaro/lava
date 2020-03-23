@@ -24,9 +24,11 @@ from django.contrib.auth.models import AnonymousUser, Permission
 from lava_scheduler_app.models import (
     GroupDeviceTypePermission,
     GroupDevicePermission,
+    GroupWorkerPermission,
     DeviceType,
     TestJob,
     Device,
+    Worker,
 )
 from tests.lava_scheduler_app.test_submission import TestCaseWithFactory
 
@@ -47,6 +49,11 @@ class ModelPermissionsTest(TestCaseWithFactory):
         self.user2 = self.factory.make_user()
         self.user2.groups.add(self.group2)
         self.user3 = self.factory.make_user()
+
+        # create workers
+        self.worker1 = Worker.objects.create(
+            hostname="worker-1", state=Worker.STATE_ONLINE
+        )
 
         # Create device types.
         self.qemu_device_type = self.factory.make_device_type(name="qemu")
@@ -101,6 +108,7 @@ class ModelPermissionsTest(TestCaseWithFactory):
         super().tearDown()
         GroupDeviceTypePermission.objects.all().delete()
         GroupDevicePermission.objects.all().delete()
+        GroupWorkerPermission.objects.all().delete()
         TestJob.objects.all().delete()
 
     def test_device_type_is_permission_restricted(self):
@@ -404,3 +412,43 @@ class ModelPermissionsTest(TestCaseWithFactory):
         )
 
         self.assertTrue(self.qemu_device1.can_submit(self.user2))
+
+    def test_worker_is_permission_restricted(self):
+
+        self.assertFalse(
+            self.worker1.is_permission_restricted(Worker.CHANGE_PERMISSION)
+        )
+
+        GroupWorkerPermission.objects.assign_perm(
+            Worker.CHANGE_PERMISSION, self.group1, self.worker1
+        )
+        self.assertTrue(self.worker1.is_permission_restricted(Worker.CHANGE_PERMISSION))
+
+    def test_worker_can_change_anonymous(self):
+
+        self.assertFalse(self.worker1.can_change(AnonymousUser()))
+
+        GroupWorkerPermission.objects.assign_perm(
+            Worker.CHANGE_PERMISSION, self.group1, self.worker1
+        )
+        self.assertFalse(self.worker1.can_change(AnonymousUser()))
+
+    def test_worker_can_change_admin(self):
+
+        self.assertTrue(self.worker1.can_change(self.admin_user))
+
+        GroupWorkerPermission.objects.assign_perm(
+            Worker.CHANGE_PERMISSION, self.group1, self.worker1
+        )
+        self.assertTrue(self.worker1.can_change(self.admin_user))
+
+    def test_worker_can_change(self):
+
+        self.assertFalse(self.worker1.can_change(self.user1))
+        self.assertFalse(self.worker1.can_change(self.user2))
+
+        GroupWorkerPermission.objects.assign_perm(
+            Worker.CHANGE_PERMISSION, self.group1, self.worker1
+        )
+        self.assertTrue(self.worker1.can_change(self.user1))
+        self.assertFalse(self.worker1.can_change(self.user2))
