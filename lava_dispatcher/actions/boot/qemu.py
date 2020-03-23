@@ -105,6 +105,7 @@ class CallQemuAction(Action):
 
     def __init__(self):
         super().__init__()
+        self.base_sub_command = []
         self.sub_command = []
         self.commands = []
         self.methods = None
@@ -171,9 +172,9 @@ class CallQemuAction(Action):
             elif not boot["parameters"]["command"]:
                 self.errors = "No QEMU binary command found - missing context."
             qemu_binary = which(boot["parameters"]["command"])
-            self.sub_command = [qemu_binary]
-            self.sub_command.extend(boot["parameters"].get("options", []))
-            self.sub_command.extend(
+            self.base_sub_command = [qemu_binary]
+            self.base_sub_command.extend(boot["parameters"].get("options", []))
+            self.base_sub_command.extend(
                 ["%s" % item for item in boot["parameters"].get("extra", [])]
             )
         except AttributeError as exc:
@@ -225,6 +226,7 @@ class CallQemuAction(Action):
         if connection:
             connection.finalise()
 
+        self.sub_command = self.base_sub_command.copy()
         # Generate the sub command
         substitutions = {}
         for label in self.get_namespace_keys("download-action"):
