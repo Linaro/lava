@@ -617,3 +617,12 @@ class TestFastbootDeploy(StdoutTestCase):
         self.assertIn("commands", boot.parameters)
         self.assertEqual("191c51d6f060954b", job.device["fastboot_serial_number"])
         self.assertIsInstance(boot.parameters["commands"], list)
+
+    def test_fastboot_plus_reboot(self):
+        job = self.factory.create_job(
+            "imx8mq-evk-01.jinja2", "sample_jobs/imx8mq-evk-with-flash-reboot.yaml"
+        )
+        description_ref = self.pipeline_reference(
+            "imx8mq-evk-with-flash-reboot.yaml", job=job
+        )
+        self.assertEqual(description_ref, job.pipeline.describe(False))
