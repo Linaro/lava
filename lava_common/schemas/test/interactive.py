@@ -20,7 +20,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from voluptuous import All, Length, Any, Optional, Required
+from voluptuous import All, Any, Length, Match, Optional, Required
 
 from lava_common.schemas import test
 
@@ -29,13 +29,13 @@ def schema():
     base = {
         Required("interactive"): [
             {
-                Required("name"): str,
+                Required("name"): Match(r"^[-_a-zA-Z0-9.]+$"),
                 Required("prompts"): [All(str, Length(min=1))],
                 Optional("echo"): "discard",
                 Required("script"): [
                     {
                         Required("command"): Any(str, None),
-                        Optional("name"): All(str, Length(min=1)),
+                        Optional("name"): Match(r"^[-_a-zA-Z0-9.]+$"),
                         Optional("successes"): [
                             {Required("message"): All(str, Length(min=1))}
                         ],
