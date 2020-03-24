@@ -59,23 +59,31 @@ class SendRebootCommands(Action):
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
-        reboot_commands = self.parameters.get("soft_reboot", [])  # list
-        if not self.parameters.get("soft_reboot"):  # unit test
+        if "soft_reboot" in self.parameters:
+            commands = self.parameters["soft_reboot"]
+        elif self.job.device.soft_reboot_command:
+            commands = self.job.device.soft_reboot_command
+        else:
             self.logger.warning(
                 "No soft reboot command defined in the test job. Using defaults."
             )
-            reboot_commands = REBOOT_COMMAND_LIST
+            commands = REBOOT_COMMAND_LIST
+
+        # Accept both str and [str]
+        if isinstance(commands, str):
+            commands = [commands]
+
         connection.prompt_str = self.parameters.get("parameters", {}).get(
             "shutdown-message", self.job.device.get_constant("shutdown-message")
         )
         connection.timeout = self.connection_timeout
-        for cmd in reboot_commands:
+        for cmd in commands:
             connection.sendline(cmd)
         try:
             self.wait(connection)
         except TestError:
             raise JobError("Soft reboot failed.")
-        self.results = {"commands": reboot_commands}
+        self.results = {"commands": commands}
         return connection
 
 

@@ -48,6 +48,10 @@ class PipelineDevice(dict):
         return self.get("commands", {}).get("hard_reset", "")
 
     @property
+    def soft_reboot_command(self):
+        return self.get("commands", {}).get("soft_reboot", "")
+
+    @property
     def soft_reset_command(self):
         return self.get("commands", {}).get("soft_reset", "")
 
