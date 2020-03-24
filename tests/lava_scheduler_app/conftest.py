@@ -18,9 +18,9 @@ def update_settings(settings, mocker):
     mocker.patch(
         "lava_server.files.File.KINDS",
         {
-            "device": [settings.DEVICES_PATH],
-            "device-type": settings.DEVICE_TYPES_PATHS,
-            "health-check": [settings.HEALTH_CHECKS_PATH],
+            "device": ([settings.DEVICES_PATH], "{name}.jinja2"),
+            "device-type": (settings.DEVICE_TYPES_PATHS, "{name}.jinja2"),
+            "health-check": ([settings.HEALTH_CHECKS_PATH], "{name}.yaml"),
         },
     )
 

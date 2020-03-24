@@ -758,7 +758,10 @@ ok 2 bar
 
     def test_devicetype_get_template(self, mocker, tmpdir):
         (tmpdir / "qemu.jinja2").write_text("hello", encoding="utf-8")
-        mocker.patch("lava_server.files.File.KINDS", {"device-type": [str(tmpdir)]})
+        mocker.patch(
+            "lava_server.files.File.KINDS",
+            {"device-type": ([str(tmpdir)], "{name}.jinja2")},
+        )
 
         # 1. normal case
         qemu_device_type1 = DeviceType.objects.create(name="qemu")
@@ -779,7 +782,10 @@ ok 2 bar
         assert response.status_code == 400  # nosec
 
     def test_devicetype_set_template(self, mocker, tmpdir):
-        mocker.patch("lava_server.files.File.KINDS", {"device-type": [str(tmpdir)]})
+        mocker.patch(
+            "lava_server.files.File.KINDS",
+            {"device-type": ([str(tmpdir)], "{name}.jinja2")},
+        )
 
         # 1. normal case
         qemu_device_type1 = DeviceType.objects.create(name="qemu")
@@ -795,7 +801,10 @@ ok 2 bar
 
     def test_devicetype_get_health_check(self, mocker, tmpdir):
         (tmpdir / "qemu.yaml").write_text("hello", encoding="utf-8")
-        mocker.patch("lava_server.files.File.KINDS", {"health-check": [str(tmpdir)]})
+        mocker.patch(
+            "lava_server.files.File.KINDS",
+            {"health-check": ([str(tmpdir)], "{name}.yaml")},
+        )
 
         # 1. normal case
         qemu_device_type1 = DeviceType.objects.create(name="qemu")
@@ -816,7 +825,10 @@ ok 2 bar
         assert response.status_code == 400  # nosec
 
     def test_devicetype_set_health_check(self, mocker, tmpdir):
-        mocker.patch("lava_server.files.File.KINDS", {"health-check": [str(tmpdir)]})
+        mocker.patch(
+            "lava_server.files.File.KINDS",
+            {"health-check": ([str(tmpdir)], "{name}.yaml")},
+        )
 
         # 1. normal case
         qemu_device_type1 = DeviceType.objects.create(name="qemu")
@@ -925,24 +937,13 @@ ok 2 bar
         )
         assert response.status_code == 204  # nosec - unit test support
 
-    def test_workers_get_env(self, monkeypatch, tmpdir):
-
+    def test_workers_get_env(self, mocker, tmpdir):
         (tmpdir / "env.yaml").write_text("hello", encoding="utf-8")
+        mocker.patch(
+            "lava_server.files.File.KINDS",
+            {"env": [str(tmpdir / "{name}/env.yaml"), str(tmpdir / "env.yaml")]},
+        )
 
-        class MyPath(pathlib.PosixPath):
-            def __new__(cls, path, *args, **kwargs):
-                if path == "%s/env.yaml" % settings.GLOBAL_SETTINGS_PATH:
-                    return super().__new__(
-                        cls, str(tmpdir / "env.yaml"), *args, **kwargs
-                    )
-                elif path == "%s/worker1/env.yaml" % settings.DISPATCHER_CONFIG_PATH:
-                    return super().__new__(
-                        cls, str(tmpdir / "env.yaml"), *args, **kwargs
-                    )
-                else:
-                    assert 0  # nosec
-
-        monkeypatch.setattr(pathlib, "Path", MyPath)
         data = self.hit(
             self.userclient,
             reverse("api-root", args=[self.version])
@@ -965,32 +966,20 @@ ok 2 bar
         )
         assert response.status_code == 400  # nosec
 
-    def test_workers_get_config(self, monkeypatch, tmpdir):
+    def test_workers_get_config(self, mocker, tmpdir):
         (tmpdir / self.worker1.hostname).mkdir()
         (tmpdir / self.worker1.hostname / "dispatcher.yaml").write_text(
             "hello world", encoding="utf-8"
         )
-
-        class MyPath(pathlib.PosixPath):
-            def __new__(cls, path, *args, **kwargs):
-                if (
-                    path
-                    == "%s/worker1/dispatcher.yaml" % settings.DISPATCHER_CONFIG_PATH
-                ):
-                    return super().__new__(
-                        cls,
-                        str(tmpdir / "worker1" / "dispatcher.yaml"),
-                        *args,
-                        **kwargs
-                    )
-                elif path == "%s/worker1.yaml" % settings.GLOBAL_SETTINGS_PATH:
-                    return super().__new__(
-                        cls, str(tmpdir / "worker1.yaml"), *args, **kwargs
-                    )
-                else:
-                    assert 0  # nosec
-
-        monkeypatch.setattr(pathlib, "Path", MyPath)
+        mocker.patch(
+            "lava_server.files.File.KINDS",
+            {
+                "dispatcher": [
+                    str(tmpdir / "{name}/dispatcher.yaml"),
+                    str(tmpdir / "{name}.yaml"),
+                ]
+            },
+        )
         data = self.hit(
             self.userclient,
             reverse("api-root", args=[self.version])

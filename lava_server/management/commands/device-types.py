@@ -109,10 +109,9 @@ class Command(BaseCommand):
     def available_device_types(self):
         """ List avaiable device types by looking at the configuration files """
         available_types = []
-        for fname in File("device-type").list("*.jinja2"):
-            device_type = fname.name[:-7]
+        for device_type in File("device-type").list("*.jinja2"):
             if not device_type.startswith("base"):
-                available_types.append(device_type)
+                available_types.append(device_type[:-7])
         available_types.sort()
         return available_types
 

@@ -42,6 +42,7 @@ from lava_rest_app import filters
 from lava_scheduler_app.dbutils import testjob_submission
 from lava_scheduler_app.schema import SubmissionException
 from lava_server.files import File
+
 from rest_framework import status, viewsets
 from rest_framework.permissions import (
     DjangoModelPermissions,
@@ -288,9 +289,8 @@ class DeviceTypeViewSet(base_views.DeviceTypeViewSet):
                 )
 
             try:
-                filename = f"{self.get_object().name}.yaml"
                 response = HttpResponse(
-                    File("health-check").read(filename).encode("utf-8"),
+                    File("health-check", self.get_object().name).read().encode("utf-8"),
                     content_type="application/yaml",
                 )
                 response["Content-Disposition"] = (
@@ -319,8 +319,7 @@ class DeviceTypeViewSet(base_views.DeviceTypeViewSet):
                 )
 
             try:
-                filename = f"{self.get_object().name}.yaml"
-                File("health-check").write(filename, config)
+                File("health-check", self.get_object().name).write(config)
                 return Response(
                     {"message": "health check updated"},
                     status=status.HTTP_204_NO_CONTENT,
@@ -339,9 +338,8 @@ class DeviceTypeViewSet(base_views.DeviceTypeViewSet):
                 )
 
             try:
-                filename = f"{self.get_object().name}.jinja2"
                 response = HttpResponse(
-                    File("device-type").read(filename).encode("utf-8"),
+                    File("device-type", self.get_object().name).read().encode("utf-8"),
                     content_type="application/yaml",
                 )
                 response["Content-Disposition"] = (
@@ -366,8 +364,7 @@ class DeviceTypeViewSet(base_views.DeviceTypeViewSet):
             if not template:
                 raise ValidationError({"template": "Device type template is required."})
             try:
-                filename = f"{self.get_object().name}.jinja2"
-                File("device-type").write(filename, template)
+                File("device-type", self.get_object().name).write(template)
                 return Response(
                     {"message": "template updated"}, status=status.HTTP_204_NO_CONTENT
                 )
@@ -460,20 +457,14 @@ class WorkerViewSet(base_views.WorkerViewSet, viewsets.ModelViewSet):
         else:
             return serializers.WorkerSerializer
 
-    def _get_file(self, request, path, alternate_path):
+    def _get_file(self, request, kind, filename):
         try:
-            filename = path.name
-            data = (path).read_text(encoding="utf-8")
+            data = File(kind, self.get_object().hostname).read()
         except OSError:
-            try:
-                filename = alternate_path.name
-                data = (alternate_path).read_text(encoding="utf-8")
-            except OSError:
-                raise ParseError(
-                    "Worker '%s' does not have '%s' file"
-                    % (self.get_object().hostname, filename)
-                )
-
+            raise ParseError(
+                "Worker '%s' does not have '%s' file"
+                % (self.get_object().hostname, kind)
+            )
         response = HttpResponse(data.encode("utf-8"), content_type="application/yaml")
         response["Content-Disposition"] = "attachment; filename=%s" % filename
         return response
@@ -496,18 +487,7 @@ class WorkerViewSet(base_views.WorkerViewSet, viewsets.ModelViewSet):
     def env(self, request, **kwargs):
         filename = "env.yaml"
         if request.method == "GET":
-            new_env_path = pathlib.Path(
-                "%s/%s/%s"
-                % (
-                    settings.DISPATCHER_CONFIG_PATH,
-                    self.get_object().hostname,
-                    filename,
-                )
-            )
-            old_env_path = pathlib.Path(
-                "%s/%s" % (settings.GLOBAL_SETTINGS_PATH, filename)
-            )
-            return self._get_file(request, new_env_path, old_env_path)
+            return self._get_file(request, "env", "env.yaml")
 
         elif request.method == "POST":
             if not request.user.has_perm("lava_scheduler_app.change_worker"):
@@ -528,15 +508,7 @@ class WorkerViewSet(base_views.WorkerViewSet, viewsets.ModelViewSet):
     @detail_route(methods=["get", "post"], suffix="config")
     def config(self, request, **kwargs):
         if request.method == "GET":
-            new_config_path = pathlib.Path(
-                "%s/%s/dispatcher.yaml"
-                % (settings.DISPATCHER_CONFIG_PATH, self.get_object().hostname)
-            )
-            old_config_path = pathlib.Path(
-                "%s/%s.yaml"
-                % (settings.GLOBAL_SETTINGS_PATH, self.get_object().hostname)
-            )
-            return self._get_file(request, new_config_path, old_config_path)
+            return self._get_file(request, "dispatcher", "dispatcher.yaml")
 
         elif request.method == "POST":
             if not request.user.has_perm("lava_scheduler_app.change_worker"):

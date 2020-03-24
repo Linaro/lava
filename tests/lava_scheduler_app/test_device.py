@@ -130,7 +130,7 @@ class DeviceTypeTest(TestCaseWithFactory):
 
         for template_name in File("device-type").list("*.jinja2"):
             try:
-                template = env.get_template(template_name.name)
+                template = env.get_template(template_name)
             except jinja2.TemplateNotFound as exc:
                 self.fail("%s: %s" % (template_name, exc))
             data = None
@@ -170,7 +170,7 @@ class DeviceTypeTest(TestCaseWithFactory):
         device.save()
         device.refresh_from_db()
         self.assertIsNotNone([d for d in Device.objects.filter(device_type=dt)])
-        self.assertTrue(File("device-type").exists(f"{name}.jinja2"))
+        self.assertTrue(File("device-type", name).exists())
         self.assertIsNotNone([device in Device.objects.filter(device_type=dt)])
         self.assertIsNotNone(device.load_configuration())
         self.assertTrue(bool(load_devicetype_template(device.device_type.name)))
@@ -201,7 +201,7 @@ class DeviceTypeTest(TestCaseWithFactory):
         device.save()
         device.refresh_from_db()
         self.assertIsNotNone([d for d in Device.objects.filter(device_type=dt)])
-        self.assertFalse(File("device-type").exists("juno-r2.jinja2"))
+        self.assertFalse(File("device-type", "juno-r2").exists())
         self.assertEqual("juno-r2-01", device.hostname)
         self.assertIsNotNone(device.load_configuration())
         self.assertEqual(
