@@ -57,3 +57,9 @@ def test_bind_mount_read_only(run):
     run.bind_mount("/foo", None, True)
     opt = f"--mount=type=bind,source=/foo,destination=/foo,read_only=true"
     assert opt in run.cmdline()
+
+
+def test_args(run):
+    cmdline = run.cmdline("hostname", "--fqdn")
+    assert cmdline[-2] == "hostname"
+    assert cmdline[-1] == "--fqdn"

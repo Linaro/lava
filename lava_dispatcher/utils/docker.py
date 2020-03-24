@@ -48,7 +48,7 @@ class DockerRun:
             destination = source
         self.__bind_mounts__.append((source, destination, read_only))
 
-    def cmdline(self):
+    def cmdline(self, *args):
         cmd = ["docker", "run", "--rm"]
         if self.__interactive__:
             cmd.append("--interactive")
@@ -65,4 +65,5 @@ class DockerRun:
                 opt += ",read_only=true"
             cmd.append(opt)
         cmd.append(self.image)
+        cmd += args
         return cmd
