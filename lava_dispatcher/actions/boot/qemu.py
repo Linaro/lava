@@ -223,7 +223,11 @@ class CallQemuAction(Action):
         pexpect.spawn is one of the raw_connection objects for a Connection class.
         """
         if connection:
-            connection.finalise()
+            ns_connection = self.get_namespace_data(
+                action="shared", label="shared", key="connection", deepcopy=False
+            )
+            if connection == ns_connection:
+                connection.finalise()
 
         # Generate the sub command
         substitutions = {}
