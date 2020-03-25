@@ -21,6 +21,7 @@ import csv
 import json
 import pathlib
 import pytest
+import xml.etree.ElementTree as ET
 
 from datetime import timedelta
 from django.conf import settings
@@ -423,33 +424,44 @@ class TestRestApi:
             reverse("api-root", args=[self.version])
             + "jobs/%s/junit/" % self.public_testjob1.id,
         )
-        lines = data.rstrip("\n").split("\n")
-        assert len(lines) == 9  # nosec - unit test support
-        assert (  # nosec - unit test support
-            lines[0] == """<?xml version="1.0" encoding="utf-8"?>"""
-        )
-        assert (  # nosec - unit test support
-            lines[1]
-            == """<testsuites disabled="0" errors="1" failures="0" tests="2" time="0.0">"""
-        )
-        assert (  # nosec - unit test support
-            lines[2]
-            == """	<testsuite disabled="0" errors="1" failures="0" name="lava" skipped="0" tests="2" time="0">"""
-        )
-        assert lines[3].startswith(  # nosec - unit test support
-            """		<testcase classname="lava" name="foo" timestamp="""
-        )
-        assert lines[3].endswith('">')  # nosec - unit test support
-        assert (  # nosec - unit test support
-            lines[4] == """			<error message="failed" type="error"/>"""
-        )
-        assert lines[5] == """		</testcase>"""  # nosec - unit test support
-        assert lines[6].startswith(  # nosec - unit test support
-            """		<testcase classname="lava" name="bar" timestamp="""
-        )
-        assert lines[6].endswith('"/>')  # nosec - unit test support
-        assert lines[7] == """	</testsuite>"""  # nosec - unit test support
-        assert lines[8] == """</testsuites>"""  # nosec - unit test support
+        tree = ET.fromstring(data)
+        assert tree.tag == "testsuites"
+        assert tree.attrib == {
+            "failures": "0",
+            "errors": "1",
+            "tests": "2",
+            "disabled": "0",
+            "time": "0.0",
+        }
+        assert len(tree) == 1
+
+        assert tree[0].tag == "testsuite"
+        assert tree[0].attrib == {
+            "name": "lava",
+            "disabled": "0",
+            "failures": "0",
+            "errors": "1",
+            "skipped": "0",
+            "time": "0",
+            "tests": "2",
+        }
+        assert len(tree[0]) == 2
+
+        assert tree[0][0].tag == "testcase"
+        assert tree[0][0].attrib["name"] == "foo"
+        assert tree[0][0].attrib["classname"] == "lava"
+        assert "timestamp" in tree[0][0].attrib
+        assert len(tree[0][0]) == 1
+
+        assert tree[0][0][0].tag == "error"
+        assert tree[0][0][0].attrib == {"type": "error", "message": "failed"}
+        assert len(tree[0][0][0]) == 0
+
+        assert tree[0][1].tag == "testcase"
+        assert tree[0][1].attrib["name"] == "bar"
+        assert tree[0][1].attrib["classname"] == "lava"
+        assert "timestamp" in tree[0][0].attrib
+        assert len(tree[0][1]) == 0
 
     def test_testjob_tap13(self):
         data = self.hit(
