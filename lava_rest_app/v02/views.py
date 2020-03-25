@@ -84,7 +84,6 @@ class TestJobViewSet(base_views.TestJobViewSet):
     The logs, test results and test suites of a specific TestJob are available at:
 
     * `/jobs/<job_id>/logs/`
-    * `/jobs/<job_id>/suites/`
 
     The test results are also available in JUnit, TAP13, CSV and YAML at:
 
