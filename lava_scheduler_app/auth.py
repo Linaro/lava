@@ -32,8 +32,6 @@ class PermissionAuth:
         """
         Checks if user has given permission for object.
 
-        Checks for unsupported models will return False.
-
         :param perm: permission as string, must contain app_label
         :param obj: Django model instance for which permission should be checked
         """

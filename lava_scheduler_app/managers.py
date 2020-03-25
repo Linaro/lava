@@ -161,6 +161,24 @@ class RestrictedObjectQuerySet(models.QuerySet):
         )
 
 
+class RestrictedWorkerQuerySet(RestrictedObjectQuerySet):
+    def accessible_by_user(self, user, perm):
+        if user.is_superuser or perm in user.get_all_permissions():
+            return self
+        else:
+            # Always false Q object which does not produce a query.
+            filters = Q(pk__in=[])
+            # If the user is authenticated add the main permission filter.
+            if user.is_authenticated:
+                self = self.filter_by_perm(perm, user)
+                filters |= ~Q(perm_count=0)
+
+            return self.restricted_by_perm(perm).filter(filters)
+
+    def visible_by_user(self, user):
+        raise NotImplementedError("Not supported for Worker model")
+
+
 class RestrictedDeviceTypeQuerySet(RestrictedObjectQuerySet):
     def accessible_by_user(self, user, perm):
         if user.is_superuser or perm in user.get_all_permissions():

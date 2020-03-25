@@ -30,9 +30,11 @@ from lava_common.exceptions import ObjectNotPersisted, PermissionNameError
 from lava_scheduler_app.models import (
     GroupDeviceTypePermission,
     GroupDevicePermission,
+    GroupWorkerPermission,
     DeviceType,
     TestJob,
     Device,
+    Worker,
 )
 from tests.lava_scheduler_app.test_submission import TestCaseWithFactory
 
@@ -54,6 +56,16 @@ class ManagersTest(TestCaseWithFactory):
         self.user2.groups.add(self.group2)
         self.user3 = self.factory.make_user()
 
+        # create workers
+        self.worker1 = Worker.objects.create(
+            hostname="worker-1", state=Worker.STATE_ONLINE
+        )
+        self.worker2 = Worker.objects.create(
+            hostname="worker-2", state=Worker.STATE_OFFLINE
+        )
+        self.worker3 = Worker.objects.create(
+            hostname="worker-3", state=Worker.STATE_ONLINE
+        )
         # Create device types.
         self.qemu_device_type = self.factory.make_device_type(name="qemu")
         self.bbb_device_type = self.factory.make_device_type(name="bbb")
@@ -107,6 +119,7 @@ class ManagersTest(TestCaseWithFactory):
         super().tearDown()
         GroupDeviceTypePermission.objects.all().delete()
         GroupDevicePermission.objects.all().delete()
+        GroupWorkerPermission.objects.all().delete()
         TestJob.objects.all().delete()
 
     def test_assign_perm(self):
@@ -1163,4 +1176,71 @@ class ManagersTest(TestCaseWithFactory):
                 )
             ),
             set(),
+        )
+
+    def test_worker_manager_accessible(self):
+
+        GroupWorkerPermission.objects.assign_perm(
+            Worker.CHANGE_PERMISSION, self.group1, self.worker1
+        )
+
+        # user1 can admin only worker1.
+        self.assertEqual(
+            set(
+                Worker.objects.all().accessible_by_user(
+                    self.user1, Worker.CHANGE_PERMISSION
+                )
+            ),
+            {self.worker1},
+        )
+
+        # user2 can not admin anything.
+        self.assertEqual(
+            list(
+                Worker.objects.all().accessible_by_user(
+                    self.user2, Worker.CHANGE_PERMISSION
+                )
+            ),
+            [],
+        )
+
+        # anonymous can not admin anything.
+        self.assertEqual(
+            list(
+                Worker.objects.all().accessible_by_user(
+                    AnonymousUser(), Worker.CHANGE_PERMISSION
+                )
+            ),
+            [],
+        )
+
+    def test_worker_manager_change_global_permissions(self):
+
+        self.user3.user_permissions.add(
+            Permission.objects.get(name="Can change worker")
+        )
+        GroupWorkerPermission.objects.assign_perm(
+            Worker.CHANGE_PERMISSION, self.group1, self.worker2
+        )
+
+        # user3 can change all workers based on global permission.
+        self.assertEqual(
+            set(
+                Worker.objects.all().accessible_by_user(
+                    self.user3, Worker.CHANGE_PERMISSION
+                )
+            ),
+            set(Worker.objects.all()),
+        )
+
+    def test_worker_manager_admin(self):
+
+        # admin user can change all workers.
+        self.assertEqual(
+            set(
+                Worker.objects.all().accessible_by_user(
+                    self.admin_user, Worker.CHANGE_PERMISSION
+                )
+            ),
+            set(Worker.objects.all()),
         )

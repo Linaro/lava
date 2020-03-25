@@ -21,14 +21,18 @@
 from django.contrib.auth.backends import ModelBackend
 
 from lava_scheduler_app.auth import PermissionAuth
-from lava_scheduler_app.models import Device, DeviceType
+from lava_scheduler_app.models import Device, DeviceType, Worker
 
 
 def is_object_supported(obj):
     """
     Returns True if obj is supported. False if obj is None or not supported.
     """
-    return isinstance(obj, Device) or isinstance(obj, DeviceType)
+    return (
+        isinstance(obj, Device)
+        or isinstance(obj, DeviceType)
+        or isinstance(obj, Worker)
+    )
 
 
 class GroupPermissionBackend(ModelBackend):

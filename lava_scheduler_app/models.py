@@ -58,6 +58,7 @@ from lava_scheduler_app.managers import (
     RestrictedDeviceTypeQuerySet,
     RestrictedDeviceQuerySet,
     RestrictedTestJobQuerySet,
+    RestrictedWorkerQuerySet,
     GroupObjectPermissionManager,
 )
 from lava_scheduler_app.schema import SubmissionException, validate_device
@@ -355,10 +356,18 @@ class DeviceType(RestrictedObject):
         return self.is_permission_restricted(perm)
 
 
-class Worker(models.Model):
+class Worker(RestrictedObject):
     """
     A worker node to which devices are attached.
     """
+
+    CHANGE_PERMISSION = "lava_scheduler_app.change_worker"
+    VIEW_PERMISSION = "lava_scheduler_app.view_worker"
+
+    # Only change permission is supported for workers.
+    PERMISSIONS_PRIORITY = [CHANGE_PERMISSION]
+
+    objects = RestrictedWorkerQuerySet.as_manager()
 
     hostname = models.CharField(
         verbose_name=_("Hostname"),
@@ -403,17 +412,6 @@ class Worker(models.Model):
 
     def __str__(self):
         return self.hostname
-
-    def can_change(self, user):
-        return user.has_perm("lava_scheduler_app.change_worker")
-
-    def can_update(self, user):
-        if user.has_perm("lava_scheduler_app.change_worker"):
-            return True
-        elif user.username == "lava-health":
-            return True
-        else:
-            return False
 
     def get_absolute_url(self):
         return reverse("lava.scheduler.worker.detail", args=[self.pk])
@@ -478,6 +476,14 @@ class Worker(models.Model):
             action_flag=ADDITION if addition else CHANGE,
             change_message=reason,
         )
+
+    def can_change(self, user):
+        if user.username == "lava-health":
+            return True
+        return user.has_perm(self.CHANGE_PERMISSION, self)
+
+    def has_any_permission_restrictions(self, perm):
+        return self.is_permission_restricted(perm)
 
 
 class Device(RestrictedObject):
@@ -2372,3 +2378,15 @@ class GroupDevicePermission(GroupObjectPermission):
 
     def __str__(self):
         return "Permission '%s' for device %s" % (self.permission.codename, self.device)
+
+
+class GroupWorkerPermission(GroupObjectPermission):
+    class Meta:
+        unique_together = ("group", "permission", "worker")
+
+    worker = models.ForeignKey(
+        Worker, null=False, on_delete=models.CASCADE, related_name="permissions"
+    )
+
+    def __str__(self):
+        return "Permission '%s' for worker %s" % (self.permission.codename, self.worker)
