@@ -22,6 +22,7 @@
 from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.action import InternalObject
 from lava_dispatcher.actions.deploy import DeployAction
+from lava_dispatcher.utils.docker import DockerRun
 from lava_dispatcher.utils.filesystem import copy_to_lxc
 from lava_dispatcher.utils.lxc import is_lxc_requested, lxc_cmd_prefix
 from lava_dispatcher.utils.udev import get_udev_devices
@@ -115,21 +116,15 @@ class DockerDriver(NullDriver):
         self.copied_files = []
 
     def get_command_prefix(self):
-        docker = ["docker", "run", "--rm"]
+        docker = DockerRun(self.image)
 
         for device in self.__get_device_nodes__():
-            docker.append("--device=" + device)
+            docker.add_device(device)
 
         for f in self.copied_files:
-            docker.append(
-                "--mount=type=bind,source={filename},destination={filename}".format(
-                    filename=f
-                )
-            )
+            docker.bind_mount(f)
 
-        docker.append(self.image)
-
-        return docker
+        return docker.cmdline()
 
     def maybe_copy_to_container(self, src):
         self.copied_files.append(src)
