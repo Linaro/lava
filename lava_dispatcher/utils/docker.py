@@ -62,7 +62,7 @@ class DockerRun:
         for src, dest, read_only in self.__bind_mounts__:
             opt = f"--mount=type=bind,source={src},destination={dest}"
             if read_only:
-                opt += ",read_only=true"
+                opt += ",readonly=true"
             cmd.append(opt)
         cmd.append(self.image)
         cmd += args

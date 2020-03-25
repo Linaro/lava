@@ -55,7 +55,7 @@ def test_bind_mount_source_destination(run):
 
 def test_bind_mount_read_only(run):
     run.bind_mount("/foo", None, True)
-    opt = f"--mount=type=bind,source=/foo,destination=/foo,read_only=true"
+    opt = f"--mount=type=bind,source=/foo,destination=/foo,readonly=true"
     assert opt in run.cmdline()
 
 
