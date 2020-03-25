@@ -1,0 +1,45 @@
+device_type: qemu
+job_name: simple qemu job
+
+timeouts:
+  job:
+    minutes: 20
+priority: medium
+visibility: public
+
+context:
+  arch: amd64
+
+actions:
+- deploy:
+    timeout:
+      minutes: 20
+    to: tmpfs
+    images:
+      rootfs:
+        url: http://images.validation.linaro.org/kvm/debian-sid-2014_08_21-amd64.qcow2.xz
+        image_arg: -drive format=raw,file={rootfs}
+        format: qcow2
+        compression: xz
+    os: debian
+
+- boot:
+    method: qemu
+    timeout:
+      minutes: 5
+    media: tmpfs
+    prompts:
+    - 'root@debian:~#'
+
+- test:
+    timeout:
+      minutes: 5
+    definitions:
+    - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+      from: git
+      path: lava-test-shell/smoke-tests-basic.yaml
+      name: smoke-tests
+    - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+      from: git
+      path: lava-test-shell/single-node/singlenode03.yaml
+      name: singlenode-advanced

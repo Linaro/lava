@@ -1,0 +1,2 @@
+*[DUT]: Device Under Test
+*[FAQ]: Frequent Asked Questions
