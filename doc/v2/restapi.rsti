@@ -1,3 +1,484 @@
+.. _`django-rest-framework`:
+   https://www.django-rest-framework.org
+
+REST API is available with /api URL. The API is based on
+`django-rest-framework`_. All of the docs from django-rest-framework apply.
+LAVA uses token based authentication. To obtain a token POST request has to
+be made to /api/<version>/token/ endpoint. The request has to contain
+username and password fields. These are the same as used for web UI
+authentication. Call returns either existing AuthToken or creates new one.
+The tokens used for REST API and XML-RPC API are the same objects. Example:
+
+.. code-block:: none
+
+    $ curl -d '{"username":"john.doe", "password":"FooBar"}' -H "Content-Type: application/json" -X POST "https://master.lavasoftware.org/api/v0.1/token/"
+
+Reply will contain a token that identifies the user when using the REST API:
+
+.. code-block:: json
+
+    {"token":"ezwpm1wytdwwnbbu90e6eo02bligzw21b0ibyc1ikbc19zkin6639f3wodce5u9oc3lndoqn0asfewrw0bclfii4mgtweokrxa0mztohj46n2rdi0qinezsbobfauqf0"}
+
+v0.2
+====
+
+Currently there are 7 endpoints available:
+
+- /api/v0.2/aliases/
+- /api/v0.2/jobs/
+- /api/v0.2/devicetypes/
+- /api/v0.2/devices/
+- /api/v0.2/permissions/devicetypes
+- /api/v0.2/permissions/devices
+- /api/v0.2/tags
+- /api/v0.1/workers/
+
+In addition TestJob object (/api/v0.2/jobs/id/) contains following routes:
+
+ - logs (/api/v0.2/jobs/<job_id>/logs)
+ - metadata (/api/v0.2/jobs/<job_id>/metadata)
+
+Following nested routes are available. The allow for filtering in suites and tests:
+
+- suites (/api/v0.2/jobs/<job_id>/suites)
+- tests (/api/v0.2/jobs/<job_id>/tests)
+
+The results are also available in JUnit, TAP13, CSV or YAML formats at:
+
+- junit (/api/v0.2/jobs/<job_id>/junit/)
+- tap13 (/api/v0.2/jobs/<job_id>/tap13/)
+- CSV (/api/v0.2/jobs/<job_id>/csv)
+- yaml (/api/v0.2/jobs/<job_id>/yaml)
+
+Additional actions are available on the following endpoints with POST request:
+
+- resubmit (/api/v0.2/jobs/<job_id>/resubmit)
+- validate (/api/v0.2/jobs/validate)
+    * required parameters:
+        + definition (string)
+    * optional parameters:
+        + strict (bool)
+
+Objects in all endpoints can be filtered and sorted as described
+in django-rest-framework docs: http://www.django-rest-framework.org/api-guide/filtering/
+Searching is currently disabled.
+
+Examples specific to LAVA objects:
+
+Filtering
+---------
+
+.. code-block:: none
+
+    https://validation.linaro.org/restapi/v0.2/jobs/?health_check=true
+
+Filtering fields
+
+.. _testjob_rest_object:
+
+TestJob object
+~~~~~~~~~~~~~~
+
+- submitter (can be traversed to :ref:`user-rest-object`)
+- viewing_groups (can be traversed to :ref:`group-rest-object`)
+- description (char field)
+    * exact
+    * in
+    * contains
+    * icontains
+    * startswith
+    * endswith
+- health_check (bool field)
+    * exact
+- requested_device_type (can be traversed to :ref:`devicetype-rest-object`)
+- tags (can be traversed to :ref:`tag-rest-object`)
+- actual_device (can be traversed to :ref:`device-rest-object`)
+- submit_time (datetime field)
+    * exact
+    * lt
+    * gt
+- start_time (datetime field)
+    * exact
+    * lt
+    * gt
+- end_time (datetime field)
+    * exact
+    * lt
+    * gt
+- state (Submitted, Scheduling, Scheduled, Running, Canceling, Finished)
+    * exact
+- health (Unknown, Complete, Incomplete, Canceled)
+    * exact
+- priority (integer field)
+    * exact
+    * in
+    * lt
+    * gt
+    * lte
+    * gte
+- definition (text field)
+    * exact
+    * in
+    * contains
+    * icontains
+    * startswith
+    * endswith
+- original_definition (text field)
+    * exact
+    * in
+    * contains
+    * icontains
+    * startswith
+    * endswith
+- multinode_definition (text field)
+    * exact
+    * in
+    * contains
+    * icontains
+    * startswith
+    * endswith
+- failure_tags (can be traversed to :ref:`jobfailuretag-rest-object`)
+- failure_comment (text field)
+    * exact
+    * in
+    * contains
+    * icontains
+    * startswith
+    * endswith
+    * isnull
+
+.. _devicetype-rest-object:
+
+DeviceType object
+~~~~~~~~~~~~~~~~~
+
+- name (char field)
+    * exact
+    * in
+    * contains
+    * icontains
+    * startswith
+    * endswith
+- architecture (can traverse to :ref:`architecture-rest-object`)
+- processor (can traverse to :ref:`processorfamily-rest-object`)
+- cpu_model (char field)
+    * exact
+    * in
+    * contains
+    * icontains
+    * startswith
+    * endswith
+- aliases (can traverse to :ref:`alias-rest-object`)
+- bits (can traverse to :ref:`bitwidth-rest-object`)
+- cores (can traverse to :ref:`core-rest-object`)
+- core_count (integer field)
+    * exact
+    * in
+- description (text field)
+    * exact
+    * in
+    * contains
+    * icontains
+    * startswith
+    * endswith
+- health_frequency (integer field)
+    * exact
+    * in
+- disable_health_check (bool field)
+    * exact
+    * in
+- health_denominator (hours, jobs)
+    * exact
+- display (bool field)
+    * exact
+    * in
+
+.. _architecture-rest-object:
+
+Architecture object
+~~~~~~~~~~~~~~~~~~~
+
+- name (char field)
+    * exact
+    * in
+    * contains
+    * icontains
+    * startswith
+    * endswith
+
+.. _processorfamily-rest-object:
+
+ProcessorFamily object
+~~~~~~~~~~~~~~~~~~~~~~
+
+- name (char field)
+    * exact
+    * in
+    * contains
+    * icontains
+    * startswith
+    * endswith
+
+.. _alias-rest-object:
+
+Alias object
+~~~~~~~~~~~~
+
+- name (char field)
+    * exact
+    * in
+    * contains
+    * icontains
+    * startswith
+    * endswith
+
+.. _core-rest-object:
+
+Core object
+~~~~~~~~~~~
+
+- name (char field)
+    * exact
+    * in
+    * contains
+    * icontains
+    * startswith
+    * endswith
+
+.. _bitwidth-rest-object:
+
+BitWidth object
+~~~~~~~~~~~~~~~
+
+- width (integer field)
+    * exact
+    * in
+
+.. _device-rest-object:
+
+Device object
+~~~~~~~~~~~~~
+
+- hostname (char field)
+    * exact
+    * in
+    * contains
+    * icontains
+    * startswith
+    * endswith
+- device_type (can traverse to :ref:`devicetype-rest-object`)
+- device_version (char field)
+    * exact
+    * in
+    * contains
+    * icontains
+    * startswith
+    * endswith
+- physical_owner (can traverse to :ref:`user-rest-object`)
+- physical_group (can traverse to :ref:`group-rest-object`)
+- description (text field)
+    * exact
+    * in
+    * contains
+    * icontains
+    * startswith
+    * endswith
+- tags (can traverse to :ref:`tag-rest-object`)
+- state (Idle, Reserved, Running)
+    * exact
+- health (GOOD, UNKNOWN, LOOPING, BAD, MAINTENANCE, RETIRED)
+    * exact
+- worker_host (can traverse to :ref:`worker-rest-object`)
+
+.. _worker-rest-object:
+
+Worker object
+~~~~~~~~~~~~~
+
+- hostname (char field)
+    * exact
+    * in
+    * contains
+    * icontains
+    * startswith
+    * endswith
+- description (text field)
+    * exact
+    * in
+    * contains
+    * icontains
+    * startswith
+    * endswith
+- last_ping (datetime field)
+    * exact
+    * lt
+    * gt
+- state (Online, Offline)
+    * exact
+- health (Active, Maintenance, Retired)
+    * exact
+
+.. _tag-rest-object:
+
+Tag object
+~~~~~~~~~~
+
+- description (char field)
+    * exact
+    * in
+    * contains
+    * icontains
+    * startswith
+    * endswith
+- name (char field)
+    * exact
+    * in
+    * contains
+    * icontains
+    * startswith
+    * endswith
+
+.. _jobfailuretag-rest-object:
+
+JobFailureTag object
+~~~~~~~~~~~~~~~~~~~~
+
+- description (char field)
+    * exact
+    * in
+    * contains
+    * icontains
+    * startswith
+    * endswith
+- name (char field)
+    * exact
+    * in
+    * contains
+    * icontains
+    * startswith
+    * endswith
+
+.. _user-rest-object:
+
+User object
+~~~~~~~~~~~
+
+- group (can traverse to :ref:`group-rest-object`)
+- username (char field)
+    * exact
+    * in
+    * contains
+    * icontains
+    * startswith
+    * endswith
+- email (char field)
+    * exact
+    * in
+    * contains
+    * icontains
+    * startswith
+    * endswith
+
+.. _group-rest-object:
+
+Group object
+~~~~~~~~~~~~
+
+- name (char field)
+    * exact
+    * in
+    * contains
+    * icontains
+    * startswith
+    * endswith
+
+
+Nested filtering
+----------------
+
+It is possible to filter objects using their relations. This is achieved
+by using double underscore notation fron django. Example:
+
+.. code-block:: shell
+
+    https://validation.linaro.org/restapi/v0.1/jobs/?requested_device_type__cores__name=kirin
+
+In the example above *requested_device_type* comes from TestJob object.
+It's a related field of DeviceType. DeviceType contains *cores* field which
+is of type Core. Core object contains *name* field. So the example above
+queries database for all TestJob objects which requested device type that
+use cores with name *kirin*.
+
+Sorting
+-------
+
+.. code-block:: shell
+
+    https://validation.linaro.org/restapi/v0.1/jobs/?ordering=start_time
+
+Sorting fields for TestJob object:
+ - id
+ - start_time
+ - end_time
+ - submit_time
+
+Sorting fields for Device object:
+ - hostname
+ - device_type
+ - device_version
+ - physical_owner
+ - physical_group
+ - description
+ - tags
+ - state
+ - health
+ - worker_host
+
+Sorting fields for Worker object:
+ - hostname
+ - description
+ - last_ping
+ - state
+ - health
+
+Sorting fields for Alias object:
+ - name
+
+Sorting fields for Tag object:
+ - name
+ - description
+
+Creating and modifying objects
+==============================
+
+DjangoRestFramework allows to create and modify objects using POST and PUT http
+requests respectively. These operations require successful authentication and
+sufficient permissions. LAVA utilizes Token authentication using http request
+header. Example:
+
+.. code-block:: shell
+
+    $ curl -H "Authentication: Token xxxxxx" 
+
+Same token is used for REST API and XML-RPC API authentication.
+
+Submitting a test job
+---------------------
+
+Sending a POST request on a /jobs/ endpoint will result in attempted job
+submission in LAVA. There is only one argument which needs to be passed in the
+request and that is ``definition``. Example:
+
+.. code-block:: shell
+
+    $ curl -H "Authentication: Token xxxxxx" -d '{"definition": "your-testjob-definition-here"}' -H "Content-Type: application/json" -X POST "https://your.lava.hostname/api/v0.2/jobs/"
+
+Other database object can be created in a similar way. Different objects require
+different fields.
+
+Deprecated semi-REST API for retrieving results
+===============================================
+
 LAVA makes the test results available directly from the instance,
 without needing to go through ``lavacli``. The results for any test
 job which the user can view can be downloaded in :abbr:`CSV
@@ -78,186 +559,3 @@ pagination), you can use the testcase-count REST API method, like so:
    used or not. This applies to downloading test cases for a particular test
    suite only.
 
-.. index:: full rest api
-
-.. _full_rest_api:
-
-Full REST API
-=============
-
-.. _`django-rest-framework`:
-   https://www.django-rest-framework.org
-
-Full REST API is available with /api URL. The API is based on
-`django-rest-framework`_. All of the docs from django-rest-framework apply.
-LAVA uses token based authentication. To obtain a token POST request has to
-be made to /api/<version>/token/ endpoint. The request has to contain
-username and password fields. These are the same as used for web UI
-authentication. Call returns either existing AuthToken or creates new one.
-The tokens used for REST API and XML-RPC API are the same objects. Example:
-
-.. code-block:: none
-
-    $ curl -d '{"username":"john.doe", "password":"FooBar"}' -H "Content-Type: application/json" -X POST "https://master.lavasoftware.org/api/v0.1/token/"
-
-Reply will contain a token that identifies the user when using the REST API:
-
-.. code-block:: json
-
-    {"token":"ezwpm1wytdwwnbbu90e6eo02bligzw21b0ibyc1ikbc19zkin6639f3wodce5u9oc3lndoqn0asfewrw0bclfii4mgtweokrxa0mztohj46n2rdi0qinezsbobfauqf0"}
-
-Currently there are 3 endpoints available:
- - /api/v0.1/jobs/
- - /api/v0.1/devicetypes/
- - /api/v0.1/devices/
-
-In addition TestJob object (/api/v0.1/jobs/id/) contains following routes:
- - logs (/api/v0.1/jobs/<job_id>/logs)
- - suites (/api/v0.1/jobs/<job_id>/suites)
- - tests (/api/v0.1/jobs/<job_id>/tests)
-
-The results are also available in JUnit or TAP13 format at:
- - junit (/api/v0.1/jobs/<job_id>/junit/)
- - tap13 (/api/v0.1/jobs/<job_id>/tap13/)
-
-Objects in all endpoints can be filtered and sorted as described
-in django-rest-framework docs: http://www.django-rest-framework.org/api-guide/filtering/
-Searching is currently disabled.
-
-Examples specific to LAVA objects:
-
-Filtering
----------
-
-.. code-block:: none
-
-    https://validation.linaro.org/restapi/v0.1/jobs/?health_check=true
-
-Filtering fields for test jobs:
- - submitter
- - visibility
- - viewing_groups
- - description
- - health_check
- - requested_device_type
- - tags
- - actual_device
- - submit_time
- - start_time
- - end_time
- - state
- - health
- - priority
- - definition
- - original_definition
- - multinode_definition
- - admin_notifications
- - failure_tags
- - failure_comment
-
-Filtering fields for device types:
- - name
- - architecture
- - processor
- - cpu_model
- - aliases
- - bits
- - cores
- - core_count
- - description
- - health_frequency
- - disable_health_check
- - health_denominator
- - display
-
-Filtering fields for devices:
- - hostname
- - device_type
- - device_version
- - physical_owner
- - physical_group
- - description
- - tags
- - state
- - health
- - worker_host
-
-Nested filtering
-----------------
-
-It is possible to filter objects using their relations. This is achieved
-by using double underscore notation fron django. Example:
-
-.. code-block:: shell
-
-    https://validation.linaro.org/restapi/v0.1/jobs/?requested_device_type__cores__name=kirin
-
-In the example above *requested_device_type* comes from TestJob object.
-It's a related field of DeviceType. DeviceType contains *cores* field which
-is of type Core. Core object contains *name* field. So the example above
-queries database for all TestJob objects which requested device type that
-use cores with name *kirin*.
-
-Additional filter fields for objects:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-TestJob
- - requested_device_type
- - actual_device
- - tags
- - viewing_groups
- - submitter
- - failure_tags
-
-DeviceType
- - architecture
- - processor
- - alias
- - bits
- - cores
-
-Device
- - device_type
- - physical_owner
- - physical_group
- - tags
- - last_health_report_job
- - worker_host
-
-
-Sorting
--------
-
-.. code-block:: shell
-
-    https://validation.linaro.org/restapi/v0.1/jobs/?ordering=start_time
-
-Sorting fields for test jobs:
- - id
- - start_time
- - end_time
- - submit_time
-
-Sorting fields for devices:
- - hostname
- - device_type
- - device_version
- - physical_owner
- - physical_group
- - description
- - tags
- - state
- - health
- - worker_host
-
-Submitting a test job:
-Sending a POST request on a /jobs/ endpoint will result in attempted job
-submission in LAVA. There is only one argument which needs to be passed in the
-request and that is ``job definition``.
-In order to submit jobs you will need to send an authentication info and have
-sufficient permission to use the device/device type specified in the ``job
-definition``. Example:
-
-.. code-block:: shell
-
-    $ curl -d '{"user": "username", "token": "yourtokenhere", "definition": "your-testjob-definition-here"}' -H "Content-Type: application/json" -X POST "https://your.lava.hostname/api/v0.1/jobs/"
