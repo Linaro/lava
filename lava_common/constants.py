@@ -75,6 +75,10 @@ LXC_DEFAULT_PACKAGES = "systemd,systemd-sysv"
 # LAVA home in LXC
 LAVA_LXC_HOME = "/lava-lxc"
 
+# mount point for download directory when postprocessing images (e.g. within
+# docker containers)
+LAVA_DOWNLOADS = "/lava-downloads"
+
 # Timeout used by the vland protocol when waiting for vland to
 # respond to the api.create_vlan request, in seconds.
 VLAND_DEPLOY_TIMEOUT = 120

@@ -1,0 +1,59 @@
+device_type: qemu
+job_name: QEMU pipeline, modifying download image
+
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 5
+  connection:
+    minutes: 2
+priority: medium
+visibility: public
+
+# context allows specific values to be overridden or included
+context:
+  # tell the qemu template which architecture is being tested
+  # the template uses that to ensure that qemu-system-x86_64 is executed.
+  arch: amd64
+
+metadata:
+  # please change these fields when modifying this job for your own tests.
+  docs-source: first-job
+  docs-filename: qemu-pipeline-first-job.yaml
+
+# ACTION_BLOCK
+actions:
+- deploy:
+    to: downloads
+    timeout:
+      minutes: 5
+    images:
+      rootfs:
+        url: http://lemur.local:8888/debian/qemu/stretch.img
+    postprocess:
+      docker:
+        image: debian
+        steps:
+          - cp rootfs/stretch.img rootfs/stretch-modified.img
+          - ls -lhR
+
+- deploy:
+    to: tmpfs
+    timeout:
+      minutes: 5
+    images:
+      rootfs:
+        image_arg: -drive format=raw,file={rootfs}
+        url: downloads://stretch-modified.img
+
+# BOOT_BLOCK
+- boot:
+    timeout:
+      minutes: 2
+    method: qemu
+    media: tmpfs
+    prompts: ["root@debian:"]
+    auto_login:
+      login_prompt: "login:"
+      username: root

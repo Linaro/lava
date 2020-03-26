@@ -2,6 +2,7 @@
 #
 # Author: Neil Williams <neil.williams@linaro.org>
 #         Remi Duraffort <remi.duraffort@linaro.org>
+#         Antonio Terceiro <antonio.terceiro@linaro.org>
 #
 # This file is part of LAVA Dispatcher.
 #
@@ -101,6 +102,8 @@ class DownloaderAction(RetryAction):
             )
         elif url.scheme == "lxc":
             action = LxcDownloadAction(self.key, self.path, url)
+        elif url.scheme == "downloads":
+            action = PreDownloadedAction(self.key, url, params=self.params)
         else:
             raise JobError("Unsupported url protocol scheme: %s" % url.scheme)
         self.pipeline.add_action(action)
@@ -704,6 +707,68 @@ class LxcDownloadAction(Action):
             )
         else:
             raise JobError("Resource unavailable: %s" % self.url.path)
+        return connection
+
+
+class PreDownloadedAction(Action):
+    """
+    Maps references to files in downloads:// to their full path.
+    """
+
+    name = "pre-downloaded"
+    description = "Map to the correct downloaded path"
+    summary = "pre downloaded"
+
+    def __init__(self, key, url, params=None):
+        super().__init__()
+        self.key = key
+        self.url = url
+        self.params = params
+
+    def validate(self):
+        super().validate()
+        if self.url.scheme != "downloads":
+            self.errors = "downloads:// url scheme is invalid"
+        if not self.url.path and not self.url.hostname:
+            self.errors = "Invalid path in downloads:// url"
+
+        image_arg = self.params.get("image_arg")
+        if image_arg is not None:
+            self.set_namespace_data(
+                action="download-action",
+                label=self.key,
+                key="image_arg",
+                value=image_arg,
+            )
+
+    def run(self, connection, max_end_time):
+        # In downloads://foo/bar.ext, "foo" is the "hostname", "/bar.ext" is
+        # the path. But in downloads://foo.ext, "foo.ext" is the hostnane, and
+        # the path is empty.
+        filename = self.url.hostname
+        if self.url.path:
+            filename += self.url.path
+
+        namespace = self.parameters["namespace"]
+        top = pathlib.Path(self.job.tmp_dir) / "downloads" / namespace
+        path = top / filename
+        if not path.exists():
+            root = path.parent
+            existing = [
+                str(f).replace(str(root) + "/", "")
+                for f in root.rglob("*")
+                if not f.is_dir()
+            ]
+            if existing:
+                available = "available: " + ", ".join(existing)
+            else:
+                available = "not files at all available"
+            raise JobError(f"Resource unavailable: {filename} ({available})")
+
+        self.set_namespace_data(
+            action="download-action", label=self.key, key="file", value=str(path)
+        )
+
         return connection
 
 

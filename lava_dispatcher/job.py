@@ -80,8 +80,6 @@ class Job:
         self.compatibility = 2
         # Was the job cleaned
         self.cleaned = False
-        # Root directory for the job tempfiles
-        self.tmp_dir = None
         # override in use
         self.base_overrides = {}
         self.started = False
@@ -114,6 +112,11 @@ class Job:
             "pipeline": self.pipeline.describe(),
         }
 
+    @property
+    def tmp_dir(self):
+        prefix = self.parameters.get("dispatcher", {}).get("prefix", "")
+        return os.path.join(DISPATCHER_DOWNLOAD_DIR, "%s%s" % (prefix, self.job_id))
+
     def mkdtemp(self, action_name, override=None):
         """
         Create a tmp directory in DISPATCHER_DOWNLOAD_DIR/{job_id}/ because
@@ -121,12 +124,8 @@ class Job:
         easier.
         """
         if override is None:
-            if self.tmp_dir is None:
-                create_base_dir = True
-                base_dir = DISPATCHER_DOWNLOAD_DIR
-            else:
-                create_base_dir = False
-                base_dir = self.tmp_dir
+            create_base_dir = True
+            base_dir = self.tmp_dir
         else:
             if override in self.base_overrides:
                 create_base_dir = False
@@ -137,13 +136,9 @@ class Job:
 
         if create_base_dir:
             # Try to create the directory.
-            prefix = self.parameters["dispatcher"].get("prefix", "")
-            base_dir = os.path.join(base_dir, "%s%s" % (prefix, self.job_id))
             os.makedirs(base_dir, mode=0o755, exist_ok=True)
             # Save the path for the next calls (only if that's not an override)
-            if override is None:
-                self.tmp_dir = base_dir
-            else:
+            if override:
                 self.base_overrides[override] = base_dir
 
         # Create the sub-directory
