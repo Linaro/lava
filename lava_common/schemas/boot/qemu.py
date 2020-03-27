@@ -25,6 +25,10 @@ from voluptuous import Msg, Optional, Required
 from lava_common.schemas import boot
 
 
+def qemu_docker():
+    return {Required("image"): str, Optional("binary"): str}
+
+
 def schema():
     base = {
         Required("method"): Msg("qemu", "'method' should be 'qemu'"),
@@ -35,5 +39,6 @@ def schema():
         Optional(
             "auto_login"
         ): boot.auto_login(),  # TODO: if auto_login => prompt is required
+        Optional("docker"): qemu_docker(),
     }
     return {**boot.schema(), **base}

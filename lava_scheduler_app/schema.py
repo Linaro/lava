@@ -110,6 +110,10 @@ def _context_schema():
     return Schema({In(context_variables): Any(int, str, [int, str])}, extra=False)
 
 
+def _qemu_docker_schema():
+    return Schema({Required("image"): str, Optional("binary"): str}, extra=True)
+
+
 def _job_boot_schema():
     return Schema(
         {
@@ -118,6 +122,7 @@ def _job_boot_schema():
             Optional("auto_login"): _auto_login_schema(),
             Optional("parameters"): _simple_params(),
             Optional("commands"): Any(str, list),
+            Optional("docker"): _qemu_docker_schema(),
         },
         extra=True,
     )
@@ -516,6 +521,16 @@ def _validate_vcs_parameters(data_objects):
                     )
 
 
+def _validate_boot_docker(data_object):
+    for action in data_object["actions"]:
+        if "boot" in action:
+            if "docker" in action["boot"]:
+                if action["boot"]["method"] != "qemu":
+                    raise SubmissionException(
+                        "'docker' option is only available for 'qemu' boot method"
+                    )
+
+
 def validate_submission(data_object):
     """
     Validates a python object as a TestJob submission
@@ -529,6 +544,7 @@ def validate_submission(data_object):
 
     _validate_secrets(data_object)
     _validate_vcs_parameters(data_object)
+    _validate_boot_docker(data_object)
     _validate_multinode(data_object)
     return True
 
