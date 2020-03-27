@@ -312,7 +312,7 @@ class CallQemuAction(Action):
             docker = DockerRun(self.parameters["docker"]["image"])
             docker.interactive()
             docker.bind_mount(DISPATCHER_DOWNLOAD_DIR)
-            docker.add_device("/dev/kvm")
+            docker.add_device("/dev/kvm", skip_missing=True)
             args = []
             if "binary" in self.parameters["docker"]:
                 args.append(self.parameters["docker"]["binary"])
