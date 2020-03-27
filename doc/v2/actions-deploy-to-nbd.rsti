@@ -103,9 +103,10 @@ so that the filesystem can be unpacked.
 .. topic:: Allowed values
 
  * ``none``
- * ``gz``
  * ``bz2``
+ * ``gz``
  * ``xz``
+ * ``zstd``
 
 .. _deploy_to_nbd_images_md5sum:
 

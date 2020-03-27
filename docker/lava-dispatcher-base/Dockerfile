@@ -15,7 +15,7 @@ RUN echo 'deb http://deb.debian.org/debian buster-backports main' > /etc/apt/sou
     apt-get update -q && \
     apt-get install --no-install-recommends --yes python3-voluptuous python3-yaml python3-zmq && \
     apt-get install --no-install-recommends --yes bmap-tools python3-configobj python3-guestfs python3-jinja2 python3-magic python3-netifaces python3-pexpect python3-pyudev python3-requests python3-setproctitle python3-tz python3-yaml && \
-    apt-get install --no-install-recommends --yes android-sdk-libsparse-utils dfu-util git libguestfs-tools qemu-system-arm qemu-system-x86 ser2net telnet tftpd-hpa u-boot-tools unzip xz-utils && \
+    apt-get install --no-install-recommends --yes android-sdk-libsparse-utils dfu-util git libguestfs-tools qemu-system-arm qemu-system-x86 ser2net telnet tftpd-hpa u-boot-tools unzip xz-utils zstd && \
     apt-get install --no-install-recommends --yes docker-ce-cli && \
     apt-get purge --yes wget gnupg apt-transport-https && \
     apt-get autoremove --purge --yes && \

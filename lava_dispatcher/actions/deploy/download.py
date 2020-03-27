@@ -138,7 +138,12 @@ class DownloadHandler(Action):
     timeout_exception = InfrastructureError
 
     # Supported decompression commands
-    decompress_command_map = {"xz": "unxz", "gz": "gunzip", "bz2": "bunzip2"}
+    decompress_command_map = {
+        "bz2": "bunzip2",
+        "gz": "gunzip",
+        "xz": "unxz",
+        "zstd": "unzstd",
+    }
 
     def __init__(self, key, path, url, uniquify=True, params=None):
         super().__init__()
@@ -221,7 +226,7 @@ class DownloadHandler(Action):
                 action="download-action", label=self.key, key="overlay", value=overlay
             )
 
-        if compression and compression not in ["gz", "bz2", "xz", "zip"]:
+        if compression and compression not in ["gz", "bz2", "xz", "zip", "zstd"]:
             self.errors = "Unknown 'compression' format '%s'" % compression
         if archive and archive not in ["tar"]:
             self.errors = "Unknown 'archive' format '%s'" % archive
