@@ -410,6 +410,14 @@ class Worker(RestrictedObject):
 
     job_limit = models.PositiveIntegerField(default=0)
 
+    version = models.CharField(
+        verbose_name=_("Dispatcher version"),
+        max_length=50,
+        null=True,
+        default=None,
+        blank=True,
+    )
+
     def __str__(self):
         return self.hostname
 
