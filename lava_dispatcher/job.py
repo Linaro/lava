@@ -114,8 +114,11 @@ class Job:
 
     @property
     def tmp_dir(self):
+        return self.get_basedir(DISPATCHER_DOWNLOAD_DIR)
+
+    def get_basedir(self, path):
         prefix = self.parameters.get("dispatcher", {}).get("prefix", "")
-        return os.path.join(DISPATCHER_DOWNLOAD_DIR, "%s%s" % (prefix, self.job_id))
+        return os.path.join(path, "%s%s" % (prefix, self.job_id))
 
     def mkdtemp(self, action_name, override=None):
         """
@@ -132,7 +135,7 @@ class Job:
                 base_dir = self.base_overrides[override]
             else:
                 create_base_dir = True
-                base_dir = override
+                base_dir = self.get_basedir(override)
 
         if create_base_dir:
             # Try to create the directory.
