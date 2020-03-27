@@ -44,17 +44,6 @@ def main():
         subparser.required = True
         manage = subparser.add_parser("manage")
 
-    group = manage.add_argument_group("Server configuration")
-
-    group.add_argument(
-        "-I",
-        "--instance-template",
-        action="store",
-        default="/etc/lava-server/{filename}.conf",
-        help="Template used for constructing instance pathname."
-        " The default value is: %(default)s",
-    )
-
     manage.add_argument(
         "command", nargs="...", help="Invoke this Django management command"
     )
@@ -64,18 +53,15 @@ def main():
 
     # Choose the right Django settings
     if installed:
-        settings = "lava_server.settings.distro"
+        settings = "lava_server.settings.prod"
     else:
         # Add the root dir to the python path
         find_sources()
-        settings = "lava_server.settings.development"
+        settings = "lava_server.settings.dev"
     os.environ["DJANGO_SETTINGS_MODULE"] = settings
-    os.environ["DJANGO_DEBIAN_SETTINGS_TEMPLATE"] = options.instance_template
 
     # Create and run the Django command line
-    django_options = [sys.argv[0]]
-    django_options.extend(options.command)
-    execute_from_command_line(django_options)
+    execute_from_command_line([sys.argv[0]] + options.command)
 
 
 if __name__ == "__main__":

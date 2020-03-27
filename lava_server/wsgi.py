@@ -24,10 +24,7 @@ from django.db.backends.signals import connection_created
 
 
 # Set the environment variables for Django
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "lava_server.settings.distro")
-os.environ.setdefault(
-    "DJANGO_DEBIAN_SETTINGS_TEMPLATE", "/etc/lava-server/{filename}.conf"
-)
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "lava_server.settings.prod")
 
 
 # Set the postgresql connection timeout

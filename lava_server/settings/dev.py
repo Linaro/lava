@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2010-2018 Linaro Limited
+# Copyright (C) 2017-present Linaro Limited
 #
-# Author: Zygmunt Krynicki <zygmunt.krynicki@linaro.org>
+# Author: Neil Williams <neil.williams@linaro.org>
+#         Remi Duraffort <remi.duraffort@linaro.org>
+#         Milosz Wasilewski <milosz.wasilewski@linaro.org>
 #
 # This file is part of LAVA.
 #
@@ -20,14 +22,14 @@
 import contextlib
 import os
 
-from lava_server.settings.common import *  # pylint: disable=unused-import
+from lava_server.settings.common import *
 
 
-# Activate debugging
 DEBUG = True
-TEMPLATES[0]["OPTIONS"]["debug"] = True
 
-USE_TZ = True
+######################
+# File system layout #
+######################
 
 # Top-level directory of the project.
 PROJECT_SRC_DIR = os.path.normpath(
@@ -35,10 +37,6 @@ PROJECT_SRC_DIR = os.path.normpath(
 )
 
 # Top-level directory of the static files
-#
-# In short: this is where your non-source content ends up at, this place should
-# keep the database file(s), user uploaded media files as well as the cache of
-# static files, if built.
 PROJECT_STATE_DIR = os.environ.get(
     "LAVA_BASE_DIR", os.path.join(PROJECT_SRC_DIR, "tmp")
 )
@@ -46,6 +44,10 @@ PROJECT_STATE_DIR = os.environ.get(
 # Create state directory if needed
 os.makedirs(PROJECT_STATE_DIR, exist_ok=True)
 
+# LAVA logs
+DJANGO_LOGFILE = os.path.join(PROJECT_STATE_DIR, "django.log")
+
+# Test database
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
@@ -88,72 +90,16 @@ ALLOWED_HOSTS = ["*"]
 CSRF_COOKIE_SECURE = False
 SESSION_COOKIE_SECURE = False
 
-# Try using devserver if available, devserver is a very useful extension that
-# makes debugging applications easier. It shows a lot of interesting output,
-# like SQL queries and timings for each request. It also supports
-# multi-threaded or multi-process server so some degree of parallelism can be
-# achieved.
-with contextlib.suppress(ImportError):
-    import devserver  # pylint: disable=unused-import
-
-    INSTALLED_APPS += ["devserver"]
-
-USE_DEBUG_TOOLBAR = False
-
 # Any emails that would normally be sent are redirected to stdout.
 # This setting is only used for django 1.2 and newer.
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
-# Use default instance name
-INSTANCE_NAME = "default"
-
-# Logging
-
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "filters": {"require_debug_false": {"()": "django.utils.log.RequireDebugFalse"}},
-    "formatters": {
-        "lava": {"format": "%(levelname)s %(asctime)s %(module)s %(message)s"}
-    },
-    "handlers": {
-        "logfile": {
-            "class": "logging.handlers.WatchedFileHandler",
-            "filename": "django.log",
-            "formatter": "lava",
-        }
-    },
-    "loggers": {
-        "django": {
-            "handlers": ["logfile"],
-            # DEBUG outputs all SQL statements
-            "level": "ERROR",
-            "propagate": True,
-        },
-        "django_auth_ldap": {
-            "handlers": ["logfile"],
-            "level": "INFO",
-            "propagate": True,
-        },
-        "lava_scheduler_app": {
-            "handlers": ["logfile"],
-            "level": "INFO",
-            "propagate": True,
-        },
-    },
-}
-
 # Do not use caching as it interfere with test
 CACHES = {"default": {"BACKEND": "django.core.cache.backends.dummy.DummyCache"}}
 
-AUTHENTICATION_BACKENDS = [
-    "django.contrib.auth.backends.ModelBackend",
-    "lava_server.backends.GroupPermissionBackend",
-]
-
-try:
+with contextlib.suppress(ImportError):
     from lava_server.settings.local_settings import *  # noqa
-except ImportError:
-    pass
 
-LAVA_LOG_BACKEND = "lava_scheduler_app.logutils.LogsFilesystem"
+# Update settings with custom values
+for (k, v) in update(globals()).items():
+    globals()[k] = v
