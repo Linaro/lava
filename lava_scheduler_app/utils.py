@@ -22,6 +22,7 @@ import copy
 import errno
 import os
 import subprocess  # nosec verified
+import warnings
 
 from django.conf import settings
 
@@ -319,3 +320,22 @@ def get_ldap_user_properties(ldap_user):
                     return user_properties
             except ldap.NO_SUCH_OBJECT:
                 raise
+
+
+def get_encryption_settings(self, options):
+    # Get encryption settings from command line arguments. If not present,
+    # fall back to django settings.
+    encryption_settings = {}
+    encryption_settings["encrypt"] = False
+    if options["encrypt"]:
+        warnings.warn(
+            "Using encryption options in command line is deprecated. Switch to django settings module for encryption configuration.",
+            DeprecationWarning,
+        )
+        encryption_settings["encrypt"] = True
+        encryption_settings["master_cert"] = options["master_cert"]
+        encryption_settings["slaves_certs"] = options["slaves_certs"]
+    elif settings.ENCRYPT:
+        encryption_settings["encrypt"] = True
+        encryption_settings["master_cert"] = settings.MASTER_CERT
+        encryption_settings["slaves_certs"] = settings.SLAVES_CERTS
