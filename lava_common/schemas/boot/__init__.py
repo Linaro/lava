@@ -58,5 +58,5 @@ def schema():
             Optional("kernel-start-message"): str,
             Optional("shutdown-message"): str,
         },
-        Optional("soft_reboot"): str,
+        Optional("soft_reboot"): Any(str, [str]),
     }
