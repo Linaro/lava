@@ -168,6 +168,7 @@ SERVER = {
             glob.glob("etc/dispatcher-config/device-types/*.jinja2"),
         ),
         ("/var/lib/lava-server/default/media/job-output/", []),
+        ("/var/lib/lava-server/home/", []),
         ("/var/log/lava-server/", []),
     ],
     "cmdclass": {"install_scripts": rename_scripts},
