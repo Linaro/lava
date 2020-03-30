@@ -28,14 +28,17 @@ while getopts "s:i:n:" opt; do
     esac
 done
 
-if [ "$STATUS" ]; then
-    # echo running state.
-    echo "'$LXC_NAME' state is RUNNING"
-    exit 0
-fi
+if [ -d /var/lib/lxc/${LXC_NAME} ]; then
+    if [ "$STATUS" ]; then
+        # echo running state.
+        echo "'$LXC_NAME' state is RUNNING"
+    fi
 
-if [ "$IP" ]; then
-    # echo a dummy ip.
-    echo "'$LXC_NAME' IP address is: '0.0.0.0'"
+    if [ "$IP" ]; then
+        # echo a dummy ip.
+        echo "'$LXC_NAME' IP address is: '0.0.0.0'"
+    fi
     exit 0
+else
+    exit 1
 fi
