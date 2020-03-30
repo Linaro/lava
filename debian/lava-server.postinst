@@ -34,16 +34,6 @@ case "$1" in
         if [ -f /etc/apache2/sites-enabled/lava-server.conf ]; then
             apache2ctl restart
         fi
-        # clear V1 files
-        rm -f /etc/lava-server/worker.conf
-        rm -rf /usr/sbin/lava-mount-masterfs
-        # old installs may create this but it will be empty if no V1 jobs exist
-        if [ -d /var/lib/lava-server/default/media/bundles ]; then
-            if [ ! "$(ls -A /var/lib/lava-server/default/media/bundles)" ]; then
-                echo "Dropping empty bundles directory."
-                rmdir /var/lib/lava-server/default/media/bundles
-            fi
-        fi
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)
