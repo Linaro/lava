@@ -360,8 +360,32 @@ Enable master encryption
 ========================
 
 The master will only authenticate the slave certificates if the master
-is configured with the ``--encrypt`` option. Edit
-``/etc/lava-server/lava-master`` to enable encryption::
+is configured with the **ENCRYPT=True** setting in
+``/etc/lava-server/settings.conf``.
+
+The default values for certificate files locations are:
+
+ # MASTER_CERT="/etc/lava-dispatcher/certificates.d/master.key_secret"
+ # SLAVES_CERTS="/etc/lava-dispatcher/certificates.d"
+
+If you have changed the name or location of the master certificate or
+the location of the slave certificates, specify those locations and
+names explicitly, again in ``/etc/lava-server/settings.conf`` file.
+
+.. note:: Each master needs to find the **secret** key for that master
+   and the **directory** containing all of the  **public** slave keys
+   copied onto that master by the admin.
+
+.. seealso:: :ref:`preparing_for_zmq_auth`
+
+
+.. warning:: The method described below is deprecated and will be removed in
+             one of the future releases.
+
+Alternatively, you can use the deprecated method of setting up the master
+encryption:
+
+Edit ``/etc/lava-server/lava-master`` to enable encryption::
 
  # Encryption
  # If set, will activate encryption using the master public and the slave
@@ -381,12 +405,6 @@ names explicitly, in each file::
 
  # MASTER_CERT="--master-cert /etc/lava-dispatcher/certificates.d/<master.key_secret>"
  # SLAVES_CERTS="--slaves-certs /etc/lava-dispatcher/certificates.d"
-
-.. note:: Each master needs to find the **secret** key for that master
-   and the **directory** containing all of the  **public** slave keys
-   copied onto that master by the admin.
-
-.. seealso:: :ref:`preparing_for_zmq_auth`
 
 .. _zmq_slave_encryption:
 

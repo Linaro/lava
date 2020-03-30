@@ -41,7 +41,7 @@ from lava_results_app.models import TestCase, TestSuite
 from lava_scheduler_app.dbutils import parse_job_description
 from lava_scheduler_app.models import TestJob, Worker
 from lava_scheduler_app.scheduler import schedule
-from lava_scheduler_app.utils import mkdir
+from lava_scheduler_app.utils import mkdir, get_encryption_settings
 from lava_server.cmdutils import LAVADaemonCommand, watch_directory
 
 
@@ -652,21 +652,26 @@ class Command(LAVADaemonCommand):
             self.controler.setsockopt(zmq.IPV6, 1)
             self.event_socket.setsockopt(zmq.IPV6, 1)
 
-        if options["encrypt"]:
+        encryption_settings = get_encryption_settings(options)
+        if encryption_settings["encrypt"]:
             self.logger.info("[INIT] Starting encryption")
             try:
                 self.auth = ThreadAuthenticator(context)
                 self.auth.start()
                 self.logger.debug(
-                    "[INIT] Opening master certificate: %s", options["master_cert"]
+                    "[INIT] Opening master certificate: %s",
+                    encryption_settings["master_cert"],
                 )
                 master_public, master_secret = zmq.auth.load_certificate(
-                    options["master_cert"]
+                    encryption_settings["master_cert"]
                 )
                 self.logger.debug(
-                    "[INIT] Using slaves certificates from: %s", options["slaves_certs"]
+                    "[INIT] Using slaves certificates from: %s",
+                    encryption_settings["slaves_certs"],
                 )
-                self.auth.configure_curve(domain="*", location=options["slaves_certs"])
+                self.auth.configure_curve(
+                    domain="*", location=encryption_settings["slaves_certs"]
+                )
             except OSError as err:
                 self.logger.error(err)
                 self.auth.stop()
@@ -675,8 +680,8 @@ class Command(LAVADaemonCommand):
             self.controler.curve_secretkey = master_secret
             self.controler.curve_server = True
 
-            self.logger.debug("[INIT] Watching %s", options["slaves_certs"])
-            self.inotify_fd = watch_directory(options["slaves_certs"])
+            self.logger.debug("[INIT] Watching %s", encryption_settings["slaves_certs"])
+            self.inotify_fd = watch_directory(encryption_settings["slaves_certs"])
             if self.inotify_fd is None:
                 self.logger.error("[INIT] Unable to start inotify")
 
@@ -717,12 +722,13 @@ class Command(LAVADaemonCommand):
             )
             self.controler.close(linger=0)
             self.event_socket.close(linger=0)
-            if options["encrypt"]:
+            if encryption_settings["encrypt"]:
                 self.auth.stop()
             context.term()
 
     def main_loop(self, options):
         last_schedule = last_dispatcher_check = time.time()
+        encryption_settings = get_encryption_settings(options)
 
         while True:
             try:
@@ -772,15 +778,15 @@ class Command(LAVADaemonCommand):
                     if self.auth is not None:
                         self.logger.info(
                             "[AUTH] Reloading certificates from %s",
-                            options["slaves_certs"],
+                            encryption_settings["slaves_certs"],
                         )
                         self.auth.configure_curve(
-                            domain="*", location=options["slaves_certs"]
+                            domain="*", location=encryption_settings["slaves_certs"]
                         )
                     else:
                         self.logger.error(
                             "[AUTH] New certificates in %s but encryption is disabled",
-                            options["slaves_certs"],
+                            encryption_settings["slaves_certs"],
                         )
 
                 # Check dispatchers status

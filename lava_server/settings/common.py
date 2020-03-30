@@ -238,3 +238,8 @@ EXTRA_CONTEXT_VARIABLES = []
 
 # Default length value for all tables
 DEFAULT_TABLE_LENGTH = 25
+
+# Encryption settings
+ENCRYPT = False
+MASTER_CERT = "/etc/lava-dispatcher/certificates.d/master.key_secret"
+SLAVES_CERTS = "/etc/lava-dispatcher/certificates.d/"
