@@ -70,10 +70,4 @@ RUN a2dissite 000-default && \
     a2enmod expires && \
     a2enmod headers
 
-# Setup the database
-RUN service postgresql start && \
-    /usr/share/lava-server/postinst.py && \
-    service postgresql stop && \
-    find /usr/lib/python3/dist-packages/ -name '__pycache__' -type d -exec rm -r "{}" +
-
 ENTRYPOINT ["/root/entrypoint.sh"]
