@@ -27,15 +27,19 @@ RUN --mount=type=bind,target=/app \
     rm -rf /tmp/build && \
     python3 setup.py build -b /tmp/build egg_info --egg-base /tmp/build install --root /install --no-compile --install-layout=deb lava-server && \
     rm -rf /tmp/build && \
-    # chown every files
+    # Create empty files
+    touch /install/etc/lava-server/secret_key.conf && \
+    touch /install/var/log/lava-server/django.log && \
+    # chown/chmod every files
     chown -R lavaserver:lavaserver /install/etc/lava-server/dispatcher-config/ && \
     chown -R lavaserver:lavaserver /install/etc/lava-server/dispatcher.d/ && \
+    chown -R lavaserver:lavaserver /install/etc/lava-server/secret_key.conf && \
+    chmod 640 /install/etc/lava-server/secret_key.conf && \
+    chown -R lavaserver:lavaserver /install/etc/lava-server/settings.conf && \
+    chmod 640 /install/etc/lava-server/settings.conf && \
     chown -R lavaserver:lavaserver /install/var/lib/lava-server/default/ && \
-    install -d /install/var/lib/lava-server/home/ && \
     chown -R lavaserver:lavaserver /install/var/lib/lava-server/home/ && \
     chown -R lavaserver:adm /install/var/log/lava-server && \
-    touch /install/var/log/lava-server/django.log && \
-    chown lavaserver:adm /install/var/log/lava-server/django.log && \
     # Install documentation
     install -d /install/usr/share/lava-server/static/docs/v2/ && \
     cp -R /doc/* /install/usr/share/lava-server/static/docs/v2/ && \
