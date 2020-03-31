@@ -19,44 +19,52 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-import simplejson
+import contextlib
+from pathlib import Path
+import yaml
 
 from lava_server.settings.common import *
 from lava_server.settings.config_file import ConfigFile
-from lava_server.settings.secret_key import get_secret_key
 
 ############################
 # Load configuration files #
 ############################
 
 # instance.conf
-config = ConfigFile.load("/etc/lava-server/instance.conf")
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": getattr(config, "LAVA_DB_NAME", ""),
-        "USER": getattr(config, "LAVA_DB_USER", ""),
-        "PASSWORD": getattr(config, "LAVA_DB_PASSWORD", ""),
-        "HOST": getattr(config, "LAVA_DB_SERVER", "127.0.0.1"),
-        "PORT": getattr(config, "LAVA_DB_PORT", ""),
+with contextlib.suppress(FileNotFoundError):
+    config = ConfigFile.load("/etc/lava-server/instance.conf")
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": getattr(config, "LAVA_DB_NAME", ""),
+            "USER": getattr(config, "LAVA_DB_USER", ""),
+            "PASSWORD": getattr(config, "LAVA_DB_PASSWORD", ""),
+            "HOST": getattr(config, "LAVA_DB_SERVER", "127.0.0.1"),
+            "PORT": getattr(config, "LAVA_DB_PORT", "5432"),
+        }
     }
-}
-INSTANCE_NAME = config.LAVA_INSTANCE
+    INSTANCE_NAME = config.LAVA_INSTANCE
 
 # secret_key.conf
-SECRET_KEY = get_secret_key("/etc/lava-server/secret_key.conf")
+with contextlib.suppress(FileNotFoundError):
+    SECRET_KEY = ConfigFile.load("/etc/lava-server/secret_key.conf").SECRET_KEY
 
-# settings.conf
-with open("/etc/lava-server/settings.conf", "r") as f_conf:
+# Load settings
+FILES = [
+    Path("/etc/lava-server/settings.conf"),
+    Path("/etc/lava-server/settings.yaml"),
+    *sorted(Path("/etc/lava-server/settings.d").glob("*.yaml")),
+]
+
+for filename in FILES:
     try:
-        data = simplejson.load(f_conf)
-    except simplejson.JSONDecodeError as exc:
-        print("[INIT] Unable to load settings.conf")
+        with contextlib.suppress(FileNotFoundError):
+            for (k, v) in yaml.safe_load(filename.read_text(encoding="utf-8")).items():
+                globals()[k] = v
+    except yaml.YAMLError as exc:
+        print(f"[INIT] Unable to load {filename.name}: invalid yaml")
         print(exc)
-        raise Exception("Unable to load settings.conf") from exc
-    for (k, v) in data.items():
-        locals()[k] = v
-
+        raise Exception(f"Unable to load {filename.name}") from exc
 
 # Update settings with custom values
 for (k, v) in update(globals()).items():
