@@ -169,6 +169,7 @@
   var delete_bug_url = "{% url 'lava.results.delete_bug_link' %}";
   var csrf_token = '{{csrf_token}}';
 </script>
+<script type="text/javascript" src="{% static "lava_server/js/jquery.typeahead.js" %}"></script>
 <script type="text/javascript" src="{% static "lava_scheduler_app/js/tables.js" %}"></script>
 <script type="text/javascript" src="{% static "lava_scheduler_app/js/similar-jobs.js" %}"></script>
 <script type="text/javascript" src="{% static "lava_results_app/js/bug-links.js" %}"></script>
