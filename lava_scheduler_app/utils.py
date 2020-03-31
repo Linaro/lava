@@ -322,11 +322,15 @@ def get_ldap_user_properties(ldap_user):
                 raise
 
 
-def get_encryption_settings(self, options):
+def get_encryption_settings(options):
     # Get encryption settings from command line arguments. If not present,
     # fall back to django settings.
-    encryption_settings = {}
-    encryption_settings["encrypt"] = False
+    encryption_settings = {
+        "encrypt": settings.ENCRYPT,
+        "master_cert": settings.MASTER_CERT,
+        "slaves_certs": settings.SLAVES_CERTS,
+    }
+
     if options["encrypt"]:
         warnings.warn(
             "Using encryption options in command line is deprecated. Switch to django settings module for encryption configuration.",
@@ -335,7 +339,5 @@ def get_encryption_settings(self, options):
         encryption_settings["encrypt"] = True
         encryption_settings["master_cert"] = options["master_cert"]
         encryption_settings["slaves_certs"] = options["slaves_certs"]
-    elif settings.ENCRYPT:
-        encryption_settings["encrypt"] = True
-        encryption_settings["master_cert"] = settings.MASTER_CERT
-        encryption_settings["slaves_certs"] = settings.SLAVES_CERTS
+
+    return encryption_settings
