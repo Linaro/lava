@@ -363,7 +363,7 @@ The master will only authenticate the slave certificates if the master
 is configured with the **ENCRYPT=True** setting in
 ``/etc/lava-server/settings.conf``.
 
-The default values for certificate files locations are:
+The default values for certificate files locations are::
 
  # MASTER_CERT="/etc/lava-dispatcher/certificates.d/master.key_secret"
  # SLAVES_CERTS="/etc/lava-dispatcher/certificates.d"
