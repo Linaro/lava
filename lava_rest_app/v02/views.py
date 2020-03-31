@@ -534,6 +534,45 @@ class WorkerViewSet(base_views.WorkerViewSet, viewsets.ModelViewSet):
             else:
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @detail_route(methods=["get", "post"], suffix="certificate")
+    def certificate(self, request, **kwargs):
+        if not self.get_object():
+            raise Http404("Worker not found.")
+        if request.method == "GET":
+            if not self.get_object().can_change(request.user):
+                raise PermissionDenied(
+                    "Insufficient permissions. Please contact system administrator."
+                )
+            try:
+                path = pathlib.Path(settings.SLAVES_CERTS) / (
+                    "%s.key" % self.get_object().hostname
+                )
+                data = (path).read_text(encoding="utf-8")
+            except OSError:
+                raise ParseError(
+                    "Worker '%s' does not have '%s' file"
+                    % (self.get_object().hostname, path.name)
+                )
+            response = HttpResponse(
+                data.encode("utf-8"), content_type="application/yaml"
+            )
+            response["Content-Disposition"] = "attachment; filename=%s" % path.name
+            return response
+
+        elif request.method == "POST":
+            if not self.get_object().can_change(request.user):
+                raise PermissionDenied(
+                    "Insufficient permissions. Please contact system administrator."
+                )
+            path = pathlib.Path(settings.SLAVES_CERTS) / (
+                "%s.key" % self.get_object().hostname
+            )
+            serializer = serializers.SlaveKeySerializer(data=request.data)
+            if serializer.is_valid():
+                return self._set_file(request, path, serializer.validated_data["key"])
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class AliasViewSet(viewsets.ModelViewSet):
     queryset = Alias.objects

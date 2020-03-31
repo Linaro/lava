@@ -366,6 +366,7 @@ is configured with the **ENCRYPT=True** setting in
 The default values for certificate files locations are:
 
  # MASTER_CERT="/etc/lava-dispatcher/certificates.d/master.key_secret"
+ # MASTER_CERT_PUB="/etc/lava-dispatcher/certificates.d/master.key"
  # SLAVES_CERTS="/etc/lava-dispatcher/certificates.d"
 
 If you have changed the name or location of the master certificate or

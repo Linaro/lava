@@ -37,6 +37,7 @@ from lava_scheduler_app.models import (
     DeviceType,
     GroupDeviceTypePermission,
     GroupDevicePermission,
+    GroupWorkerPermission,
     Tag,
     TestJob,
     Worker,
@@ -98,6 +99,8 @@ class TestRestApi:
         self.user_no_token.save()
 
         self.group1 = Group.objects.create(name="group1")
+        self.group2 = Group.objects.create(name="group2")
+        self.user.groups.add(self.group2)
         admintoken = AuthToken.objects.create(  # nosec - unit test support
             user=self.admin, secret="adminkey"
         )
@@ -1096,6 +1099,95 @@ ok 2 bar
         response = self.adminclient.post(
             reverse("api-root", args=[self.version])
             + "workers/%s/config/" % self.worker1.hostname
+        )
+        assert response.status_code == 400  # nosec
+
+    def test_workers_get_certificate(self, monkeypatch, tmpdir):
+        (tmpdir / ("%s.key" % self.worker1.hostname)).write_text(
+            "hello", encoding="utf-8"
+        )
+
+        class MyPath(pathlib.PosixPath):
+            def __new__(cls, path, *args, **kwargs):
+                if path == settings.SLAVES_CERTS:
+                    return super().__new__(cls, str(tmpdir), *args, **kwargs)
+                else:
+                    assert 0  # nosec
+
+        monkeypatch.setattr(pathlib, "Path", MyPath)
+
+        # no permission
+        response = self.userclient.get(
+            reverse("api-root", args=[self.version])
+            + "workers/%s/certificate/" % self.worker1.hostname
+        )
+        assert response.status_code == 403  # nosec
+
+        GroupWorkerPermission.objects.assign_perm(
+            Worker.CHANGE_PERMISSION, self.group2, self.worker1
+        )
+        data = self.hit(
+            self.userclient,
+            reverse("api-root", args=[self.version])
+            + "workers/%s/certificate/" % self.worker1.hostname,
+        )
+        data = yaml_load(data)
+        assert data == str("hello")  # nosec
+
+        # worker does not exists
+        response = self.userclient.get(
+            reverse("api-root", args=[self.version])
+            + "workers/invalid_hostname/certificate/"
+        )
+        assert response.status_code == 404  # nosec
+
+        # no encryption key file
+        (tmpdir / ("%s.key" % self.worker1.hostname)).remove()
+        response = self.userclient.get(
+            reverse("api-root", args=[self.version])
+            + "workers/%s/certificate/" % self.worker1.hostname
+        )
+        assert response.status_code == 400  # nosec
+
+    def test_workers_set_certificate(self, monkeypatch, tmpdir):
+        class MyPath(pathlib.PosixPath):
+            def __new__(cls, path, *args, **kwargs):
+                if path == settings.SLAVES_CERTS:
+                    return super().__new__(cls, str(tmpdir), *args, **kwargs)
+                else:
+                    assert 0  # nosec
+
+        monkeypatch.setattr(pathlib, "Path", MyPath)
+        response = self.adminclient.post(
+            reverse("api-root", args=[self.version])
+            + "workers/%s/certificate/" % self.worker1.hostname,
+            {"key": "hello"},
+        )
+        assert response.status_code == 200  # nosec
+        assert (tmpdir / ("%s.key" % self.worker1.hostname)).read_text(  # nosec
+            encoding="utf-8"
+        ) == "hello"
+
+        # worker does not exists
+        response = self.adminclient.post(
+            reverse("api-root", args=[self.version])
+            + "workers/invalid_hostname/certificate/",
+            {"env": "hello"},
+        )
+        assert response.status_code == 404  # nosec
+
+        # insufficient permissions
+        response = self.userclient.post(
+            reverse("api-root", args=[self.version])
+            + "workers/%s/certificate/" % self.worker1.hostname,
+            {"env": "hello"},
+        )
+        assert response.status_code == 403  # nosec
+
+        # No env parameter
+        response = self.adminclient.post(
+            reverse("api-root", args=[self.version])
+            + "workers/%s/certificate/" % self.worker1.hostname
         )
         assert response.status_code == 400  # nosec
 
