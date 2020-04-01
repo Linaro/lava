@@ -11,6 +11,11 @@ def test_basic(run):
     assert run.cmdline() == ["docker", "run", "--rm", "foobar"]
 
 
+def test_name(run):
+    run.name("blah")
+    assert "--name=blah" in run.cmdline()
+
+
 def test_hostname(run):
     run.hostname("blah")
     assert "--hostname=blah" in run.cmdline()
@@ -62,6 +67,12 @@ def test_bind_mount_read_only(run):
     run.bind_mount("/foo", None, True)
     opt = f"--mount=type=bind,source=/foo,destination=/foo,readonly=true"
     assert opt in run.cmdline()
+
+
+def test_environment(run):
+    run.environment("FOO", "BAR")
+    cmdline = run.cmdline()
+    assert "--env=FOO=BAR" in cmdline
 
 
 def test_args(run):

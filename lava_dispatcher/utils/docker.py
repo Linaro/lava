@@ -25,12 +25,17 @@ import subprocess
 class DockerRun:
     def __init__(self, image):
         self.image = image
+        self.__name__ = None
         self.__hostname__ = None
         self.__workdir__ = None
         self.__devices__ = []
         self.__bind_mounts__ = []
+        self.__environment__ = []
         self.__interactive__ = False
         self.__tty__ = False
+
+    def name(self, name):
+        self.__name__ = name
 
     def hostname(self, hostname):
         self.__hostname__ = hostname
@@ -54,12 +59,17 @@ class DockerRun:
             destination = source
         self.__bind_mounts__.append((source, destination, read_only))
 
+    def environment(self, variable, value):
+        self.__environment__.append((variable, value))
+
     def cmdline(self, *args):
         cmd = ["docker", "run", "--rm"]
         if self.__interactive__:
             cmd.append("--interactive")
         if self.__tty__:
             cmd.append("--tty")
+        if self.__name__:
+            cmd.append(f"--name={self.__name__}")
         if self.__hostname__:
             cmd.append(f"--hostname={self.__hostname__}")
         if self.__workdir__:
@@ -71,6 +81,8 @@ class DockerRun:
             if read_only:
                 opt += ",readonly=true"
             cmd.append(opt)
+        for variable, value in self.__environment__:
+            cmd.append(f"--env={variable}={value}")
         cmd.append(self.image)
         cmd += args
         return cmd
