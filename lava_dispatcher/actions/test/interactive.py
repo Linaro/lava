@@ -156,6 +156,7 @@ class TestInteractiveAction(TestAction):
 
                 failures = [p["message"] for p in cmd.get("failures", [])]
                 successes = [p["message"] for p in cmd.get("successes", [])]
+                wait_for_prompt = cmd.get("wait_for_prompt", True)
 
                 expect = prompts + failures + successes
                 self.logger.debug("Waiting for '%s'", "', '".join(expect))
@@ -181,11 +182,13 @@ class TestInteractiveAction(TestAction):
                                 failure["exception"], failure.get("error", match)
                             )
                         # Wait for the prompt to send the next command
-                        test_connection.expect(prompts)
+                        if wait_for_prompt:
+                            test_connection.expect(prompts)
                     else:
                         self.logger.info("Matched a success: '%s'", match)
                         # Wait for the prompt to send the next command
-                        test_connection.expect(prompts)
+                        if wait_for_prompt:
+                            test_connection.expect(prompts)
                         result["result"] = "pass"
 
                 # If the command is not named, a failure is fatal

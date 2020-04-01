@@ -36,6 +36,7 @@ def schema():
                     {
                         Required("command"): Any(str, None),
                         Optional("name"): Match(r"^[-_a-zA-Z0-9.]+$"),
+                        Optional("wait_for_prompt"): bool,
                         Optional("successes"): [
                             {Required("message"): All(str, Length(min=1))}
                         ],
