@@ -112,8 +112,6 @@ class PostprocessWithDocker(Action):
 
         docker = DockerRun(self.image)
         docker.add_device("/dev/kvm", skip_missing=True)
-        for d in ["/boot", "/lib/modules"]:
-            docker.bind_mount(d, None, read_only=True)
         docker.bind_mount(self.path, LAVA_DOWNLOADS)
 
         docker.hostname("lava")
