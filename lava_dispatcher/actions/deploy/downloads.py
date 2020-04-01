@@ -117,6 +117,6 @@ class PostprocessWithDocker(Action):
         docker.hostname("lava")
         docker.workdir(LAVA_DOWNLOADS)
 
-        self.run_cmd(docker.cmdline(f"{LAVA_DOWNLOADS}/postprocess.sh"))
+        docker.run(f"{LAVA_DOWNLOADS}/postprocess.sh", action=self)
 
         return connection

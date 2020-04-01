@@ -17,7 +17,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
+import logging
 from pathlib import Path
+import subprocess
 
 
 class DockerRun:
@@ -67,3 +69,24 @@ class DockerRun:
         cmd.append(self.image)
         cmd += args
         return cmd
+
+    def run(self, *args, action=None):
+        cmd = self.cmdline(*args)
+        self.__check_image_arch__()
+        if action:
+            run_cmd = action.run_cmd
+        else:
+            run_cmd = subprocess.check_call
+        run_cmd(["docker", "pull", self.image])
+        run_cmd(cmd)
+
+    def __check_image_arch__(self):
+        host = subprocess.check_output(["arch"], text=True).strip()
+        container = subprocess.check_output(
+            ["docker", "run", "--rm", self.image, "arch"], text=True
+        ).strip()
+        if host != container:
+            logger = logging.getLogger("dispatcher")
+            logger.warning(
+                f"Architecture mismatch: host is {host}, container is {container}. This *might* work, but if it does, will probably be a lot slower than if the container image architecture matches the host."
+            )
