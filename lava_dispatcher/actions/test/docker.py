@@ -27,6 +27,7 @@ from lava_dispatcher.actions.test.shell import TestShellAction
 from lava_dispatcher.logical import LavaTest
 from lava_dispatcher.power import ReadFeedback
 from lava_dispatcher.shell import ShellCommand, ShellSession
+from lava_dispatcher.utils.docker import DockerRun
 from lava_dispatcher_host import add_device_container_mapping
 
 
@@ -138,25 +139,14 @@ class DockerTestShell(TestShellAction, GetBoardId):
             logging_info=self.get_logging_info(),
         )
 
-        mount_overlay = "--mount=type=bind,source=%s,destination=/%s" % (
-            os.path.join(location, overlay),
-            overlay,
-        )
+        docker = DockerRun(image)
+        docker.bind_mount(os.path.join(location, overlay), "/" + overlay)
+        docker.interactive()
+        docker.hostname("lava")
+        docker.name(container)
+        docker.environment("PS1", "docker-test-shell:$ ")
 
-        docker_cmd = [
-            "docker",
-            "run",
-            "--rm",
-            mount_overlay,
-            "--interactive",
-            "--hostname=lava",
-            "--name=%s" % container,
-            "--env=PS1=docker-test-shell:$ ",
-            image,
-            "bash",
-            "--norc",
-            "-i",
-        ]
+        docker_cmd = docker.cmdline("bash", "--norc", "-i")
 
         cmd = " ".join([shlex.quote(s) for s in docker_cmd])
         self.logger.debug("Starting docker test shell container: %s" % cmd)
