@@ -39,5 +39,6 @@ router.register(r"jobs", views.TestJobViewSet).register(
 )
 router.register(r"permissions/devicetypes", views.GroupDeviceTypePermissionViewSet)
 router.register(r"permissions/devices", views.GroupDevicePermissionViewSet)
+router.register(r"system", views.SystemViewSet, **drf_basename("system"))
 router.register(r"tags", views.TagViewSet)
 router.register(r"workers", views.WorkerViewSet)
