@@ -30,6 +30,7 @@ class DockerRun:
         self.__devices__ = []
         self.__bind_mounts__ = []
         self.__interactive__ = False
+        self.__tty__ = False
 
     def hostname(self, hostname):
         self.__hostname__ = hostname
@@ -45,6 +46,9 @@ class DockerRun:
     def interactive(self):
         self.__interactive__ = True
 
+    def tty(self):
+        self.__tty__ = True
+
     def bind_mount(self, source, destination=None, read_only=False):
         if not destination:
             destination = source
@@ -54,6 +58,7 @@ class DockerRun:
         cmd = ["docker", "run", "--rm"]
         if self.__interactive__:
             cmd.append("--interactive")
+        if self.__tty__:
             cmd.append("--tty")
         if self.__hostname__:
             cmd.append(f"--hostname={self.__hostname__}")

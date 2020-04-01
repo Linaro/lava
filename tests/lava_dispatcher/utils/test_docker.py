@@ -25,6 +25,11 @@ def test_interactive(run):
     run.interactive()
     cmdline = run.cmdline()
     assert "--interactive" in cmdline
+
+
+def test_tty(run):
+    run.tty()
+    cmdline = run.cmdline()
     assert "--tty" in cmdline
 
 
