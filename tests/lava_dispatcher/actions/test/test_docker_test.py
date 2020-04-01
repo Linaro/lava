@@ -64,6 +64,13 @@ def test_run(action, mocker):
     add_device_container_mapping = mocker.patch(
         "lava_dispatcher.actions.test.docker.add_device_container_mapping"
     )
+    get_udev_devices = mocker.patch(
+        "lava_dispatcher.actions.test.docker.get_udev_devices",
+        return_value=["/dev/foobar"],
+    )
+    WaitDeviceBoardID_run = mocker.patch(
+        "lava_dispatcher.utils.udev.WaitDeviceBoardID.run"
+    )
 
     action.validate()
     action.run(connection, time.time() + 1000)
@@ -76,6 +83,9 @@ def test_run(action, mocker):
         container_type="docker",
         logging_info=mocker.ANY,
     )
+
+    WaitDeviceBoardID_run.assert_called()
+    get_udev_devices.assert_called_with(device_info=[{"board_id": "0123456789"}])
 
     # overlay gets created
     overlay = next(Path(action.job.tmp_dir).glob("lava-create-overlay-*/lava-*"))
@@ -105,6 +115,8 @@ def test_run(action, mocker):
         )
         is not None
     )
+    # device passed to docker
+    assert "--device=/dev/foobar" in docker_call
 
     # the lava-test-shell implementation gets called with the docker shell
     action_run.assert_called_with(docker_connection, mocker.ANY)
