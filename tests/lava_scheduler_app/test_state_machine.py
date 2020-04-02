@@ -506,6 +506,20 @@ class TestTestJobStateMachine(TestCase):
         self.check_device(Device.STATE_RUNNING, Device.HEALTH_UNKNOWN)
         self.check_job(TestJob.STATE_RUNNING, TestJob.HEALTH_UNKNOWN)
 
+        # 3/ start_time is None
+        self.device.state = Device.STATE_RESERVED
+        self.device.save()
+        self.job.state = TestJob.STATE_SCHEDULED
+        self.job.start_time = self.job.end_time = None
+        self.job.actual_device = self.device
+        self.job.save()
+        self.job.go_state_finished(TestJob.HEALTH_INCOMPLETE)
+        self.job.save()
+        self.check_device(Device.STATE_IDLE, Device.HEALTH_UNKNOWN)
+        self.check_job(TestJob.STATE_FINISHED, TestJob.HEALTH_INCOMPLETE)
+        self.assertIsNotNone(self.job.start_time)
+        self.assertEqual(self.job.start_time, self.job.end_time)
+
     def test_job_go_state_finished_health_check(self):
         # Normal case
         # 1/ STATE_RUNNING => STATE_FINISHED
