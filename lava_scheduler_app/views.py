@@ -709,6 +709,7 @@ class NoDTDeviceView(DeviceTableView):
         return (
             Device.objects.exclude(health=Device.HEALTH_RETIRED)
             .visible_by_user(self.request.user)
+            .select_related("device_type", "worker_host")
             .order_by("hostname")
         )
 
@@ -1072,7 +1073,9 @@ class FavoriteJobsView(JobTableView):
 
 class AllJobsView(JobTableView):
     def get_queryset(self):
-        return visible_jobs_with_custom_sort(self.request.user)
+        return visible_jobs_with_custom_sort(self.request.user).select_related(
+            "actual_device", "requested_device_type", "submitter"
+        )
 
 
 @BreadCrumb("Jobs", parent=index)
@@ -1856,8 +1859,10 @@ class RecentJobsView(JobTableView):
         self.device = device
 
     def get_queryset(self):
-        return visible_jobs_with_custom_sort(self.request.user).filter(
-            actual_device=self.device
+        return (
+            visible_jobs_with_custom_sort(self.request.user)
+            .filter(actual_device=self.device)
+            .select_related("submitter")
         )
 
 
