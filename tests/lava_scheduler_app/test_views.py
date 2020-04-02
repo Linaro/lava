@@ -38,7 +38,7 @@ from lava_scheduler_app.models import (
 from lava_scheduler_app.views import (
     type_report_data,
     device_report_data,
-    job_report,
+    job_report_data,
     get_restricted_job,
 )
 
@@ -988,50 +988,50 @@ def test_worker_detail(client, setup):
 @pytest.mark.django_db
 def test_type_report_data_start_day_after_end_day(client, setup):
     dt = DeviceType.objects.get(name="qemu")
-    result = type_report_data(5, 3, dt, False)
+    result = type_report_data(5, 3, dt)
     # Assure there's no result for disambigous dates
-    assert result["fail"] == 0  # nosec
-    assert result["pass"] == 0  # nosec
+    assert result[1]["fail"] == 0  # nosec
+    assert result[1]["pass"] == 0  # nosec
 
 
 @pytest.mark.django_db
 def test_type_report_data(client, setup):
     dt = DeviceType.objects.get(name="juno")
-    result = type_report_data(-1, 1, dt, False)
-    assert result["fail"] == 1  # nosec
-    assert result["pass"] == 1  # nosec
+    result = type_report_data(-1, 1, dt)
+    assert result[1]["fail"] == 1  # nosec
+    assert result[1]["pass"] == 1  # nosec
 
 
 @pytest.mark.django_db
 def test_device_report_data_start_day_after_end_day(client, setup):
     juno = Device.objects.get(hostname="juno-01")
-    result = device_report_data(5, 3, juno, False)
+    result = device_report_data(5, 3, juno)
     # Assure there's no result for disambigous dates
-    assert result["fail"] == 0  # nosec
-    assert result["pass"] == 0  # nosec
+    assert result[1]["fail"] == 0  # nosec
+    assert result[1]["pass"] == 0  # nosec
 
 
 @pytest.mark.django_db
 def test_device_report_data(client, setup):
     juno = Device.objects.get(hostname="juno-01")
-    result = device_report_data(-1, 1, juno, False)
-    assert result["fail"] == 1  # nosec
-    assert result["pass"] == 1  # nosec
+    result = device_report_data(-1, 1, juno)
+    assert result[1]["fail"] == 1  # nosec
+    assert result[1]["pass"] == 1  # nosec
 
 
 @pytest.mark.django_db
 def test_job_report_start_day_after_end_day(client, setup):
-    result = job_report(5, 3, False)
+    result = job_report_data(5, 3)
     # Assure there's no result for disambigous dates
-    assert result["fail"] == 0  # nosec
-    assert result["pass"] == 0  # nosec
+    assert result[1]["fail"] == 0  # nosec
+    assert result[1]["pass"] == 0  # nosec
 
 
 @pytest.mark.django_db
 def test_job_report(client, setup):
-    result = job_report(-1, 1, False)
-    assert result["fail"] == 1  # nosec
-    assert result["pass"] == 1  # nosec
+    result = job_report_data(-1, 1)
+    assert result[1]["fail"] == 1  # nosec
+    assert result[1]["pass"] == 1  # nosec
 
 
 @pytest.mark.django_db
