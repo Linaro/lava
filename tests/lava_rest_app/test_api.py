@@ -1496,6 +1496,33 @@ ok 2 bar
         )
         assert len(data["results"]) == 1  # nosec - unit test support
 
+    def test_system_certificate(self, monkeypatch, tmpdir):
+        (tmpdir / "master.key").write_text("hello", encoding="utf-8")
+
+        class MyPath(pathlib.PosixPath):
+            def __new__(cls, path, *args, **kwargs):
+                if path == settings.MASTER_CERT_PUB:
+                    return super().__new__(
+                        cls, str(tmpdir / "master.key"), *args, **kwargs
+                    )
+                else:
+                    assert 0  # nosec
+
+        monkeypatch.setattr(pathlib, "Path", MyPath)
+        data = self.hit(
+            self.userclient,
+            reverse("api-root", args=[self.version]) + "system/certificate/",
+        )
+        data = yaml_load(data)
+        assert data == str("hello")  # nosec
+
+        # no encryption key file
+        (tmpdir / "master.key").remove()
+        response = self.userclient.get(
+            reverse("api-root", args=[self.version]) + "system/certificate/"
+        )
+        assert response.status_code == 404  # nosec
+
 
 def test_view_root(client):
     ret = client.get(reverse("api-root", args=[versions.versions[-1]]) + "?format=api")

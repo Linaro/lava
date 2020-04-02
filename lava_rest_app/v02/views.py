@@ -44,10 +44,12 @@ from rest_framework import status, viewsets
 from rest_framework.permissions import (
     DjangoModelPermissions,
     DjangoModelPermissionsOrAnonReadOnly,
+    IsAuthenticated,
 )
 from rest_framework_extensions.mixins import NestedViewSetMixin
 from rest_framework.response import Response
 from rest_framework.exceptions import ParseError, PermissionDenied, ValidationError
+from rest_framework.utils import formatting
 from lava_scheduler_app.models import (
     Alias,
     Device,
@@ -623,3 +625,44 @@ class GroupDevicePermissionViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return self.queryset.all()
+
+
+class SystemViewSet(viewsets.ViewSet):
+    """
+    System utility methods.
+
+    You can download master certificate on:
+
+    * `/system/certificate/`
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get_view_name(self):
+        name = self.__class__.__name__
+        name = formatting.remove_trailing_string(name, "View")
+        name = formatting.remove_trailing_string(name, "ViewSet")
+        name = formatting.camelcase_to_spaces(name)
+        suffix = getattr(self, "suffix", None)
+        # Hack for page title display in BrowsableAPIRenderer.
+        if suffix and suffix != "List":
+            return suffix
+
+        return name
+
+    def list(self, request, **kwargs):
+        return Response()
+
+    @action(detail=False, methods=["get"], suffix="certificate")
+    def certificate(self, request, **kwargs):
+        try:
+            master_key_path = pathlib.Path(settings.MASTER_CERT_PUB)
+            data = (master_key_path).read_text(encoding="utf-8")
+        except FileNotFoundError:
+            raise Http404("There is no master public key %s" % master_key_path.name)
+
+        response = HttpResponse(data.encode("utf-8"), content_type="application/yaml")
+        response["Content-Disposition"] = (
+            "attachment; filename=%s" % master_key_path.name
+        )
+        return response
