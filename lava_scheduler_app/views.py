@@ -181,6 +181,8 @@ class FailureTableView(JobTableView):
         jobs = visible_jobs_with_custom_sort(self.request.user).filter(
             health__in=failures
         )
+        jobs = jobs.select_related("actual_device")
+        jobs = jobs.prefetch_related("failure_tags")
 
         health = self.request.GET.get("health_check")
         if health:
