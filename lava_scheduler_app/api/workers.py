@@ -21,6 +21,7 @@ import contextlib
 import pathlib
 import xmlrpc.client
 
+from django.conf import settings
 from django.db import IntegrityError, transaction
 
 from linaro_django_xmlrpc.models import ExposedV2API
@@ -230,6 +231,93 @@ class SchedulerWorkersAPI(ExposedV2API):
         with contextlib.suppress(OSError):
             path.parent.mkdir(mode=0o755, parents=True, exist_ok=True)
             path.write_text(env, encoding="utf-8")
+            return True
+
+        return False
+
+    def get_certificate(self, hostname):
+        """
+        Name
+        ----
+        `scheduler.workers.get_certificate` (`hostname`)
+
+        Description
+        -----------
+        Return the worker public certificate found in location specified
+        in django settings.
+
+        Arguments
+        ---------
+        `hostname`: string
+          Hostname of the worker
+
+        Return value
+        ------------
+        This function returns the worker public certificate found on master
+        """
+        # Sanitize hostname as we will use it in a path
+        if len(pathlib.Path(hostname).parts) != 1:
+            raise xmlrpc.client.Fault(400, "Invalid worker name")
+
+        # Find the worker in the database
+        try:
+            worker = Worker.objects.get(hostname=hostname)
+        except Worker.DoesNotExist:
+            raise xmlrpc.client.Fault(404, "Worker '%s' was not found." % hostname)
+
+        if not worker.can_change(self.user):
+            raise xmlrpc.client.Fault(
+                403, "Insufficient permissions. Please contact system administrator."
+            )
+
+        path = pathlib.Path(settings.SLAVES_CERTS) / ("%s.key" % worker.hostname)
+        with contextlib.suppress(OSError):
+            data = (path).read_text(encoding="utf-8")
+            return xmlrpc.client.Binary(data.encode("utf-8"))
+
+        raise xmlrpc.client.Fault(
+            404, "Worker '%s' does not have a certificate uploaded" % hostname
+        )
+
+    def set_certificate(self, hostname, key):
+        """
+        Name
+        ----
+        `scheduler.workers.set_certificate` (`hostname`, `key`)
+
+        Description
+        -----------
+        Upload worker public certificate to master.
+
+        Arguments
+        ---------
+        `hostname`: string
+          Hostname of the worker
+        `key`: string
+          The public worker certificate
+
+        Return value
+        ------------
+        True if the certificate was saved to file, False otherwise.
+        """
+        # Sanitize hostname as we will use it in a path
+        if len(pathlib.Path(hostname).parts) != 1:
+            raise xmlrpc.client.Fault(400, "Invalid worker name")
+
+        try:
+            worker = Worker.objects.get(hostname=hostname)
+        except Worker.DoesNotExist:
+            raise xmlrpc.client.Fault(404, "Worker '%s' was not found." % hostname)
+
+        if not worker.can_change(self.user):
+            raise xmlrpc.client.Fault(
+                403, "Insufficient permissions. Please contact system administrator."
+            )
+
+        path = pathlib.Path(settings.SLAVES_CERTS) / ("%s.key" % worker.hostname)
+        with contextlib.suppress(OSError):
+            path.parent.mkdir(mode=0o755, parents=True, exist_ok=True)
+            path.write_text(key, encoding="utf-8")
             return True
 
         return False
