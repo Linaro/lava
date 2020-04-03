@@ -1579,7 +1579,16 @@ class TestJob(models.Model):
             self.health = TestJob.HEALTH_CANCELED
         self.state = TestJob.STATE_FINISHED
 
-        self.end_time = timezone.now()
+        # If the job is really quick to finish (a failure in validate), and
+        # lava-master is slow to response then lava-logs will notice the end of
+        # a job (and call go_state_finished) before lava-master handles the
+        # START_OK message (and call go_state_running).
+        # In this case, self.start_time would be None.
+        now = timezone.now()
+        if self.start_time is None:
+            self.start_time = now
+        self.end_time = now
+
         # TODO: check that self.actual_device is locked by the
         # select_for_update on the TestJob
         # Skip non-scheduled jobs and dynamic_connections
