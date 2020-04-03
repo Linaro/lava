@@ -2129,8 +2129,10 @@ def username_list_json(request):
 
 class HealthCheckJobsView(JobTableView):
     def get_queryset(self):
-        return visible_jobs_with_custom_sort(self.request.user).filter(
-            health_check=True
+        return (
+            visible_jobs_with_custom_sort(self.request.user)
+            .filter(health_check=True)
+            .select_related("actual_device", "requested_device_type", "submitter")
         )
 
 
@@ -2192,6 +2194,7 @@ class RunningView(LavaView):
             .visible_by_user(self.request.user)
             .order_by("name")
         )
+
 
 @BreadCrumb("Running", parent=index)
 def running(request):
