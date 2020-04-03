@@ -6,15 +6,15 @@
 
 <h2>Maintenance Devices</h2>
 
-<ul class="pager">
-    <li class="btn btn-sm"><span class="glyphicon glyphicon-move">
-        <a href="{% url 'lava.scheduler.alldevices' %}">All Devices</a></span></li>
-    <li class="btn btn-sm disabled"><span class="glyphicon glyphicon-play">
-        <a href="{% url 'lava.scheduler.active_devices' %}">Active Devices</a></span></li>
-    <li class="btn btn-sm"><span class="glyphicon glyphicon-check">
-        <a href="{% url 'lava.scheduler.online_devices' %}">Online Devices</a></span></li>
-    <li class="btn btn-sm"><span class="glyphicon glyphicon-wrench">
-        <a href="{% url 'lava.scheduler.maintenance_devices' %}">Maintenance Devices</a></span></li>
+<ul class="nav nav-tabs">
+    <li role="presentation" class="active">
+		<a href="{% url 'lava.scheduler.alldevices' %}"><span class="glyphicon glyphicon-move" aria-hidden="true"></span> All Devices</a></li>
+    <li role="presentation">
+        <a href="{% url 'lava.scheduler.active_devices' %}"><span class="glyphicon glyphicon-play" aria-hidden="true"></span> Active Devices</a></li>
+    <li role="presentation">
+        <a href="{% url 'lava.scheduler.online_devices' %}"><span class="glyphicon glyphicon-check" aria-hidden="true"></span> Online Devices</a></li>
+    <li role="presentation" class="active">
+		<a href="{% url 'lava.scheduler.maintenance_devices' %}"><span class="glyphicon glyphicon-wrench" aria-hidden="true"></span> Maintenance Devices</a></li>
 </ul>
 
 {% render_table maintenance_devices_table %}

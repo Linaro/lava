@@ -3,19 +3,19 @@
 {% load static %}
 
 {% block content %}
-
 <h2>Active Jobs</h2>
-<ul class="pager">
-    <li class="btn btn-sm"><span class="glyphicon glyphicon-asterisk">
-        <a href="{% url 'lava.scheduler.job.list' %}">All Jobs</a></span></li>
-    <li class="btn btn-sm disabled"><span class="glyphicon glyphicon-play">
-        <a href="{% url 'lava.scheduler.job.active' %}">Active Jobs</a></span></li>
-    <li class="btn btn-sm"><span class="glyphicon glyphicon-pause">
-        <a href="{% url 'lava.scheduler.queue' %}">Queued Jobs</a></span></li>
-    <li class="btn btn-sm"><span class="glyphicon glyphicon-heart">
-        <a href="{% url 'lava.scheduler.healthcheck' %}">Healthcheck Jobs</a></span></li>
-    <li class="btn btn-sm"><span class="glyphicon glyphicon-flag">
-        <a href="{% url 'lava.scheduler.job.errors' %}">Job Errors</a></span></li>
+
+<ul class="nav nav-tabs">
+    <li role="presentation">
+        <a href="{% url 'lava.scheduler.job.list' %}"><span class="glyphicon glyphicon-asterisk" aria-hidden="true"></span> All Jobs</a></li>
+    <li role="presentation" class="active">
+        <a href="{% url 'lava.scheduler.job.active' %}"><span class="glyphicon glyphicon-play" aria-hidden="true"></span> Active Jobs</a></li>
+    <li role="presentation">
+        <a href="{% url 'lava.scheduler.queue' %}"><span class="glyphicon glyphicon-pause" aria-hidden="true"></span> Queued Jobs</a></li>
+    <li role="presentation">
+        <a href="{% url 'lava.scheduler.healthcheck' %}"><span class="glyphicon glyphicon-heart" aria-hidden="true"></span> Healthcheck Jobs</a></li>
+    <li role="presentation">
+        <a href="{% url 'lava.scheduler.job.errors' %}"><span class="glyphicon glyphicon-flag" aria-hidden="true"></span> Job Errors</a></li>
 </ul>
 
 {% render_table active_jobs_table %}
