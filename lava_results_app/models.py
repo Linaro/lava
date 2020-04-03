@@ -41,7 +41,7 @@ from django.contrib.contenttypes import fields
 from django.contrib.contenttypes.models import ContentType
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models, connection, transaction
-from django.db.models import Q, Lookup
+from django.db.models import Case, IntegerField, Lookup, Q, Sum, When
 from django.db.models.fields import Field
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
@@ -197,8 +197,44 @@ class TestSuite(models.Model, Queryable):
         verbose_name=u"Suite name", blank=True, null=True, default=None, max_length=200
     )
 
-    def testcase_count(self, value):
-        return self.testcase_set.filter(result=TestCase.RESULT_MAP[value]).count()
+    def testcase_count(self, value=None):
+        if not hasattr(self, "_testcase_count"):
+            res = self.testcase_set.values("result")
+            res = res.aggregate(
+                PASS=Sum(
+                    Case(
+                        When(result=TestCase.RESULT_PASS, then=1),
+                        default=0,
+                        output_field=IntegerField(),
+                    )
+                ),
+                FAIL=Sum(
+                    Case(
+                        When(result=TestCase.RESULT_FAIL, then=1),
+                        default=0,
+                        output_field=IntegerField(),
+                    )
+                ),
+                SKIP=Sum(
+                    Case(
+                        When(result=TestCase.RESULT_SKIP, then=1),
+                        default=0,
+                        output_field=IntegerField(),
+                    )
+                ),
+                UNKNOW=Sum(
+                    Case(
+                        When(result=TestCase.RESULT_UNKNOWN, then=1),
+                        default=0,
+                        output_field=IntegerField(),
+                    )
+                ),
+            )
+            self._testcase_count = {k.lower(): (v or 0) for (k, v) in res.items()}
+
+        if value is None:
+            return sum([v for (k, v) in self._testcase_count.items()])
+        return self._testcase_count[value]
 
     def get_passfail_results(self):
         # Get pass fail results per lava_results_app.testsuite.
