@@ -270,7 +270,9 @@ class SchedulerDevicesAPI(ExposedV2API):
         This function returns an XML-RPC dictionary with device details
         """
         try:
-            device = Device.objects.get(hostname=hostname)
+            device = Device.objects.select_related("device_type", "worker_host").get(
+                hostname=hostname
+            )
         except Device.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Device '%s' was not found." % hostname)
 

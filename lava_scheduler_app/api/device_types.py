@@ -303,6 +303,7 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
             dt
             for dt in DeviceType.objects.all()
             .visible_by_user(self.user)
+            .prefetch_related("device_set")
             .order_by("name")
         ]
         ret = []

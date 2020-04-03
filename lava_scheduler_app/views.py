@@ -181,6 +181,8 @@ class FailureTableView(JobTableView):
         jobs = visible_jobs_with_custom_sort(self.request.user).filter(
             health__in=failures
         )
+        jobs = jobs.select_related("actual_device")
+        jobs = jobs.prefetch_related("failure_tags")
 
         health = self.request.GET.get("health_check")
         if health:
@@ -385,82 +387,48 @@ def workers(request):
     )
 
 
-def type_report_data(start_day, end_day, dt, health_check):
+def report_data(start_day, end_day, devices, url_param):
     now = timezone.now()
     start_date = now + datetime.timedelta(start_day)
     end_date = now + datetime.timedelta(end_day)
 
-    res = TestJob.objects.filter(
-        actual_device__in=Device.objects.filter(device_type=dt),
-        health_check=health_check,
-        start_time__range=(start_date, end_date),
-    )
-    url = reverse("lava.scheduler.failure_report")
-    params = "start=%s&end=%s&device_type=%s&health_check=%d" % (
-        start_day,
-        end_day,
-        dt,
-        health_check,
-    )
-    return {
-        "pass": res.filter(health=TestJob.HEALTH_COMPLETE).count(),
-        "fail": res.filter(
-            health__in=[TestJob.HEALTH_CANCELED, TestJob.HEALTH_INCOMPLETE]
-        ).count(),
-        "date": start_date.strftime("%m-%d"),
-        "failure_url": "%s?%s" % (url, params),
-    }
+    res = TestJob.objects.filter(state=TestJob.STATE_FINISHED)
+    res = res.filter(start_time__range=(start_date, end_date))
+    if devices is not None:
+        res = res.filter(actual_device__in=devices)
 
-
-def device_report_data(start_day, end_day, device, health_check):
-    now = timezone.now()
-    start_date = now + datetime.timedelta(start_day)
-    end_date = now + datetime.timedelta(end_day)
-
-    res = TestJob.objects.filter(
-        actual_device=device,
-        health_check=health_check,
-        start_time__range=(start_date, end_date),
-    )
-    url = reverse("lava.scheduler.failure_report")
-    params = "start=%s&end=%s&device=%s&health_check=%d" % (
-        start_day,
-        end_day,
-        device.pk,
-        health_check,
-    )
-    return {
-        "pass": res.filter(health=TestJob.HEALTH_COMPLETE).count(),
-        "fail": res.filter(
-            health__in=[TestJob.HEALTH_CANCELED, TestJob.HEALTH_INCOMPLETE]
-        ).count(),
-        "date": start_date.strftime("%m-%d"),
-        "failure_url": "%s?%s" % (url, params),
-    }
-
-
-def job_report(start_day, end_day, health_check):
-    now = timezone.now()
-    start_date = now + datetime.timedelta(start_day)
-    end_date = now + datetime.timedelta(end_day)
-
-    res = TestJob.objects.filter(
-        health_check=health_check, start_time__range=(start_date, end_date)
-    )
-    res = res.filter(state=TestJob.STATE_FINISHED)
-    res = res.values("health")
+    res = res.values("health", "health_check")
     res = res.aggregate(
-        passing=Sum(
+        health_pass=Sum(
             Case(
-                When(health=TestJob.HEALTH_COMPLETE, then=1),
+                When(health=TestJob.HEALTH_COMPLETE, health_check=True, then=1),
                 default=0,
                 output_field=IntegerField(),
             )
         ),
-        failing=Sum(
+        job_pass=Sum(
+            Case(
+                When(health=TestJob.HEALTH_COMPLETE, health_check=False, then=1),
+                default=0,
+                output_field=IntegerField(),
+            )
+        ),
+        health_fail=Sum(
             Case(
                 When(
                     health__in=[TestJob.HEALTH_CANCELED, TestJob.HEALTH_INCOMPLETE],
+                    health_check=True,
+                    then=1,
+                ),
+                default=0,
+                output_field=IntegerField(),
+            )
+        ),
+        job_fail=Sum(
+            Case(
+                When(
+                    health__in=[TestJob.HEALTH_CANCELED, TestJob.HEALTH_INCOMPLETE],
+                    health_check=False,
                     then=1,
                 ),
                 default=0,
@@ -470,13 +438,34 @@ def job_report(start_day, end_day, health_check):
     )
 
     url = reverse("lava.scheduler.failure_report")
-    params = "start=%s&end=%s&health_check=%d" % (start_day, end_day, health_check)
-    return {
-        "pass": res["passing"] or 0,
-        "fail": res["failing"] or 0,
-        "date": start_date.strftime("%m-%d"),
-        "failure_url": "%s?%s" % (url, params),
-    }
+    params = "start=%s&end=%s%s" % (start_day, end_day, url_param)
+    return (
+        {
+            "pass": res["health_pass"] or 0,
+            "fail": res["health_fail"] or 0,
+            "date": start_date.strftime("%m-%d"),
+            "failure_url": "%s?%s&health_check=1" % (url, params),
+        },
+        {
+            "pass": res["job_pass"] or 0,
+            "fail": res["job_fail"] or 0,
+            "date": start_date.strftime("%m-%d"),
+            "failure_url": "%s?%s&health_check=0" % (url, params),
+        },
+    )
+
+
+def type_report_data(start_day, end_day, dt):
+    devices = Device.objects.filter(device_type=dt)
+    return report_data(start_day, end_day, devices, f"&device_type={dt}")
+
+
+def device_report_data(start_day, end_day, device):
+    return report_data(start_day, end_day, [device], f"&device={device}")
+
+
+def job_report_data(start_day, end_day):
+    return report_data(start_day, end_day, None, "")
 
 
 @BreadCrumb("Reports", parent=index)
@@ -486,11 +475,15 @@ def reports(request):
     job_day_report = []
     job_week_report = []
     for day in reversed(range(7)):
-        health_day_report.append(job_report(day * -1 - 1, day * -1, True))
-        job_day_report.append(job_report(day * -1 - 1, day * -1, False))
+        data = job_report_data(day * -1 - 1, day * -1)
+        health_day_report.append(data[0])
+        job_day_report.append(data[1])
+
     for week in reversed(range(10)):
-        health_week_report.append(job_report(week * -7 - 7, week * -7, True))
-        job_week_report.append(job_report(week * -7 - 7, week * -7, False))
+        data = job_report_data(week * -7 - 7, week * -7)
+        health_week_report.append(data[0])
+        job_week_report.append(data[1])
+
     return render(
         request,
         "lava_scheduler_app/reports.html",
@@ -506,7 +499,6 @@ def reports(request):
 
 @BreadCrumb("Failure Report", parent=reports)
 def failure_report(request):
-
     data = FailureTableView(request)
     ptable = FailedJobTable(data.get_table_data(), request=request)
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
@@ -717,6 +709,7 @@ class NoDTDeviceView(DeviceTableView):
         return (
             Device.objects.exclude(health=Device.HEALTH_RETIRED)
             .visible_by_user(self.request.user)
+            .select_related("device_type", "worker_host")
             .order_by("hostname")
         )
 
@@ -962,24 +955,22 @@ def device_type_health_history_log(request, pk):
 @BreadCrumb("Report", parent=device_type_detail, needs=["pk"])
 def device_type_reports(request, pk):
     device_type = get_object_or_404(DeviceType, pk=pk)
+    if not device_type.can_view(request.user):
+        raise PermissionDenied()
+
     health_day_report = []
     health_week_report = []
     job_day_report = []
     job_week_report = []
     for day in reversed(range(7)):
-        health_day_report.append(
-            type_report_data(day * -1 - 1, day * -1, device_type, True)
-        )
-        job_day_report.append(
-            type_report_data(day * -1 - 1, day * -1, device_type, False)
-        )
+        data = type_report_data(day * -1 - 1, day * -1, device_type)
+        health_day_report.append(data[0])
+        job_day_report.append(data[1])
+
     for week in reversed(range(10)):
-        health_week_report.append(
-            type_report_data(week * -7 - 7, week * -7, device_type, True)
-        )
-        job_week_report.append(
-            type_report_data(week * -7 - 7, week * -7, device_type, False)
-        )
+        data = type_report_data(week * -7 - 7, week * -7, device_type)
+        health_week_report.append(data[0])
+        job_week_report.append(data[1])
 
     long_running = (
         TestJob.objects.filter(
@@ -1082,7 +1073,9 @@ class FavoriteJobsView(JobTableView):
 
 class AllJobsView(JobTableView):
     def get_queryset(self):
-        return visible_jobs_with_custom_sort(self.request.user)
+        return visible_jobs_with_custom_sort(self.request.user).select_related(
+            "actual_device", "requested_device_type", "submitter"
+        )
 
 
 @BreadCrumb("Jobs", parent=index)
@@ -1866,8 +1859,10 @@ class RecentJobsView(JobTableView):
         self.device = device
 
     def get_queryset(self):
-        return visible_jobs_with_custom_sort(self.request.user).filter(
-            actual_device=self.device
+        return (
+            visible_jobs_with_custom_sort(self.request.user)
+            .filter(actual_device=self.device)
+            .select_related("submitter")
         )
 
 
@@ -1992,22 +1987,20 @@ def device_reports(request, pk):
     device = get_object_or_404(Device, pk=pk)
     if not device.can_view(request.user):
         raise PermissionDenied()
+
     health_day_report = []
     health_week_report = []
     job_day_report = []
     job_week_report = []
     for day in reversed(range(7)):
-        health_day_report.append(
-            device_report_data(day * -1 - 1, day * -1, device, True)
-        )
-        job_day_report.append(device_report_data(day * -1 - 1, day * -1, device, False))
+        data = device_report_data(day * -1 - 1, day * -1, device)
+        health_day_report.append(data[0])
+        job_day_report.append(data[1])
+
     for week in reversed(range(10)):
-        health_week_report.append(
-            device_report_data(week * -7 - 7, week * -7, device, True)
-        )
-        job_week_report.append(
-            device_report_data(week * -7 - 7, week * -7, device, False)
-        )
+        data = device_report_data(week * -7 - 7, week * -7, device)
+        health_week_report.append(data[0])
+        job_week_report.append(data[1])
 
     long_running = (
         TestJob.objects.filter(
