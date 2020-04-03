@@ -772,42 +772,36 @@ def device_type_detail(request, pk):
         actual_device__in=devices,
         health_check=True,
         submit_time__gte=(now - datetime.timedelta(days=1)),
-        submit_time__lt=now,
         health=TestJob.HEALTH_COMPLETE,
     ).count()
     daily_failed = TestJob.objects.filter(
         actual_device__in=devices,
         health_check=True,
         submit_time__gte=(now - datetime.timedelta(days=1)),
-        submit_time__lt=now,
         health__in=[TestJob.HEALTH_CANCELED, TestJob.HEALTH_INCOMPLETE],
     ).count()
     weekly_complete = TestJob.objects.filter(
         actual_device__in=devices,
         health_check=True,
         submit_time__gte=(now - datetime.timedelta(days=7)),
-        submit_time__lt=now,
         health=TestJob.HEALTH_COMPLETE,
     ).count()
     weekly_failed = TestJob.objects.filter(
         actual_device__in=devices,
         health_check=True,
         submit_time__gte=(now - datetime.timedelta(days=7)),
-        submit_time__lt=now,
         health__in=[TestJob.HEALTH_CANCELED, TestJob.HEALTH_INCOMPLETE],
     ).count()
     monthly_complete = TestJob.objects.filter(
         actual_device__in=devices,
         health_check=True,
         submit_time__gte=(now - datetime.timedelta(days=30)),
-        submit_time__lt=now,
         health=TestJob.HEALTH_COMPLETE,
     ).count()
     monthly_failed = TestJob.objects.filter(
         actual_device__in=devices,
         health_check=True,
         submit_time__gte=(now - datetime.timedelta(days=30)),
-        submit_time__lt=now,
         health__in=[TestJob.HEALTH_CANCELED, TestJob.HEALTH_INCOMPLETE],
     ).count()
     health_summary_data = [
@@ -2198,7 +2192,6 @@ class RunningView(LavaView):
             .visible_by_user(self.request.user)
             .order_by("name")
         )
-
 
 @BreadCrumb("Running", parent=index)
 def running(request):
