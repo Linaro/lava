@@ -27,6 +27,9 @@ from lava_dispatcher.actions.test.shell import TestShellAction
 from lava_dispatcher.logical import LavaTest
 from lava_dispatcher.power import ReadFeedback
 from lava_dispatcher.shell import ShellCommand, ShellSession
+from lava_dispatcher.utils.docker import DockerRun
+from lava_dispatcher.utils.udev import get_udev_devices
+from lava_dispatcher.utils.udev import WaitDeviceBoardID
 from lava_dispatcher_host import add_device_container_mapping
 
 
@@ -64,7 +67,15 @@ class DockerTest(LavaTest):
         return True
 
 
-class DockerTestAction(TestAction):
+class GetBoardId:
+    def get_board_id(self):
+        device_info = self.job.device.get("device_info")
+        if not device_info:
+            return None
+        return device_info[0].get("board_id")
+
+
+class DockerTestAction(TestAction, GetBoardId):
     name = "lava-docker-test"
     description = "Runs tests in a docker container"
     summary = "Runs tests in a docker container, with the DUT available via adb/fastboot over USB"
@@ -73,16 +84,9 @@ class DockerTestAction(TestAction):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.pipeline.add_action(DockerTestSetEnvironment())
         self.pipeline.add_action(CreateOverlay())
+        self.pipeline.add_action(WaitDeviceBoardID(self.get_board_id()))
         self.pipeline.add_action(DockerTestShell())
         self.pipeline.add_action(ReadFeedback())
-
-
-class GetBoardId:
-    def get_board_id(self):
-        device_info = self.job.device.get("device_info")
-        if not device_info:
-            return None
-        return device_info[0].get("board_id")
 
 
 class DockerTestSetEnvironment(TestAction, GetBoardId):
@@ -130,33 +134,26 @@ class DockerTestShell(TestShellAction, GetBoardId):
         container = "lava-docker-test-shell-%s-%s" % (self.job.job_id, self.level)
 
         board_id = self.get_board_id()
+        device_info = {"board_id": board_id}
         add_device_container_mapping(
             job_id=self.job.job_id,
-            device_info={"board_id": board_id},
+            device_info=device_info,
             container=container,
             container_type="docker",
             logging_info=self.get_logging_info(),
         )
 
-        mount_overlay = "--mount=type=bind,source=%s,destination=/%s" % (
-            os.path.join(location, overlay),
-            overlay,
-        )
+        docker = DockerRun(image)
+        docker.bind_mount(os.path.join(location, overlay), "/" + overlay)
+        docker.interactive()
+        docker.hostname("lava")
+        docker.name(container)
+        docker.environment("PS1", "docker-test-shell:$ ")
+        devices = get_udev_devices(device_info=[device_info])
+        for dev in devices:
+            docker.add_device(dev)
 
-        docker_cmd = [
-            "docker",
-            "run",
-            "--rm",
-            mount_overlay,
-            "--interactive",
-            "--hostname=lava",
-            "--name=%s" % container,
-            "--env=PS1=docker-test-shell:$ ",
-            image,
-            "bash",
-            "--norc",
-            "-i",
-        ]
+        docker_cmd = docker.cmdline("bash", "--norc", "-i")
 
         cmd = " ".join([shlex.quote(s) for s in docker_cmd])
         self.logger.debug("Starting docker test shell container: %s" % cmd)

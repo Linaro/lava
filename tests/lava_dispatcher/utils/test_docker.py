@@ -11,6 +11,11 @@ def test_basic(run):
     assert run.cmdline() == ["docker", "run", "--rm", "foobar"]
 
 
+def test_name(run):
+    run.name("blah")
+    assert "--name=blah" in run.cmdline()
+
+
 def test_hostname(run):
     run.hostname("blah")
     assert "--hostname=blah" in run.cmdline()
@@ -25,6 +30,11 @@ def test_interactive(run):
     run.interactive()
     cmdline = run.cmdline()
     assert "--interactive" in cmdline
+
+
+def test_tty(run):
+    run.tty()
+    cmdline = run.cmdline()
     assert "--tty" in cmdline
 
 
@@ -59,7 +69,69 @@ def test_bind_mount_read_only(run):
     assert opt in run.cmdline()
 
 
+def test_environment(run):
+    run.environment("FOO", "BAR")
+    cmdline = run.cmdline()
+    assert "--env=FOO=BAR" in cmdline
+
+
 def test_args(run):
     cmdline = run.cmdline("hostname", "--fqdn")
     assert cmdline[-2] == "hostname"
     assert cmdline[-1] == "--fqdn"
+
+
+def test_run_architecture_check_failure(mocker):
+    def results(cmd, *args, **kwargs):
+        if cmd == ["arch"]:
+            return "aarch64\n"
+        elif cmd == ["docker", "run", "--rm", "myimage", "arch"]:
+            return "x86_64\n"
+        else:
+            raise RuntimeError(f"Unexpected mock call: {cmd}")
+
+    check_output = mocker.patch("subprocess.check_output", side_effect=results)
+    check_call = mocker.patch("subprocess.check_call")
+    getLogger = mocker.patch("logging.getLogger")
+    logger = getLogger.return_value
+
+    docker = DockerRun("myimage")
+    docker.run("date")
+
+    check_output.assert_any_call(["arch"], text=True)
+    check_output.assert_any_call(
+        ["docker", "run", "--rm", "myimage", "arch"], text=True
+    )
+    check_call.assert_called()
+
+    getLogger.assert_called_with("dispatcher")
+    logger.warning.assert_called()
+
+
+def test_run_architecture_check_success(mocker):
+    check_output = mocker.patch("subprocess.check_output", return_value="xyz\n")
+    check_call = mocker.patch("subprocess.check_call")
+    getLogger = mocker.patch("logging.getLogger")
+
+    docker = DockerRun("myimage")
+    docker.run("echo")  # no crash = success
+    check_call.assert_called_with(["docker", "run", "--rm", "myimage", "echo"])
+    getLogger.assert_not_called()
+
+
+def test_run_with_action(mocker):
+    check_arch = mocker.patch(
+        "lava_dispatcher.utils.docker.DockerRun.__check_image_arch__"
+    )
+    action = mocker.MagicMock()
+
+    docker = DockerRun("myimage")
+    docker.run("date", action=action)
+
+    check_arch.assert_called()
+    action.run_cmd.assert_has_calls(
+        [
+            mocker.call(["docker", "pull", "myimage"]),
+            mocker.call(["docker", "run", "--rm", "myimage", "date"]),
+        ]
+    )

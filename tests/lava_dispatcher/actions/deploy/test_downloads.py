@@ -85,7 +85,7 @@ def test_postprocess_with_docker_populate(action):
 def test_postprocess_with_docker_run(action, job, mocker):
     action.job = job
 
-    run_cmd = mocker.patch("lava_dispatcher.action.Action.run_cmd")
+    run = mocker.patch("lava_dispatcher.utils.docker.DockerRun.run")
 
     origconn = mocker.MagicMock()
     conn = action.run(origconn, 4242)
@@ -96,4 +96,4 @@ def test_postprocess_with_docker_run(action, job, mocker):
     assert script.exists()
     assert script.read_text() == action.script
 
-    run_cmd.assert_called()
+    run.assert_called_with(mocker.ANY, action=action)

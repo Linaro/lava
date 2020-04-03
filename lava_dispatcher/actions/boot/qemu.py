@@ -315,6 +315,7 @@ class CallQemuAction(Action):
         if "docker" in self.parameters:
             docker = DockerRun(self.parameters["docker"]["image"])
             docker.interactive()
+            docker.tty()
             docker.bind_mount(DISPATCHER_DOWNLOAD_DIR)
             docker.add_device("/dev/kvm", skip_missing=True)
             args = []
