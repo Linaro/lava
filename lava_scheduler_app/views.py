@@ -312,7 +312,11 @@ class JobErrorsView(LavaView):
         q = TestCase.objects.filter(
             suite__name="lava", result=TestCase.RESULT_FAIL
         ).visible_by_user(self.request.user)
-        q = q.filter(metadata__regex="error_type: (Configuration|Infrastructure|Bug)")
+        q = q.filter(
+            Q(metadata__contains="error_type: Configuration")
+            | Q(metadata__contains="error_type: Infrastructure")
+            | Q(metadata__contains="error_type: Bug")
+        )
         q = q.select_related("suite", "suite__job__actual_device")
         return q.order_by("-suite__job__id")
 
@@ -772,42 +776,36 @@ def device_type_detail(request, pk):
         actual_device__in=devices,
         health_check=True,
         submit_time__gte=(now - datetime.timedelta(days=1)),
-        submit_time__lt=now,
         health=TestJob.HEALTH_COMPLETE,
     ).count()
     daily_failed = TestJob.objects.filter(
         actual_device__in=devices,
         health_check=True,
         submit_time__gte=(now - datetime.timedelta(days=1)),
-        submit_time__lt=now,
         health__in=[TestJob.HEALTH_CANCELED, TestJob.HEALTH_INCOMPLETE],
     ).count()
     weekly_complete = TestJob.objects.filter(
         actual_device__in=devices,
         health_check=True,
         submit_time__gte=(now - datetime.timedelta(days=7)),
-        submit_time__lt=now,
         health=TestJob.HEALTH_COMPLETE,
     ).count()
     weekly_failed = TestJob.objects.filter(
         actual_device__in=devices,
         health_check=True,
         submit_time__gte=(now - datetime.timedelta(days=7)),
-        submit_time__lt=now,
         health__in=[TestJob.HEALTH_CANCELED, TestJob.HEALTH_INCOMPLETE],
     ).count()
     monthly_complete = TestJob.objects.filter(
         actual_device__in=devices,
         health_check=True,
         submit_time__gte=(now - datetime.timedelta(days=30)),
-        submit_time__lt=now,
         health=TestJob.HEALTH_COMPLETE,
     ).count()
     monthly_failed = TestJob.objects.filter(
         actual_device__in=devices,
         health_check=True,
         submit_time__gte=(now - datetime.timedelta(days=30)),
-        submit_time__lt=now,
         health__in=[TestJob.HEALTH_CANCELED, TestJob.HEALTH_INCOMPLETE],
     ).count()
     health_summary_data = [
@@ -2135,8 +2133,10 @@ def username_list_json(request):
 
 class HealthCheckJobsView(JobTableView):
     def get_queryset(self):
-        return visible_jobs_with_custom_sort(self.request.user).filter(
-            health_check=True
+        return (
+            visible_jobs_with_custom_sort(self.request.user)
+            .filter(health_check=True)
+            .select_related("actual_device", "requested_device_type", "submitter")
         )
 
 
