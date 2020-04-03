@@ -18,7 +18,9 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 import os
+import pathlib
 import xmlrpc.client
 import yaml
 
@@ -720,6 +722,34 @@ class LavaSystemAPI(SystemAPI):
             )
 
         GroupDevicePermission.objects.remove_perm(perm, group, device)
+
+    def get_master_certificate(self):
+        """
+        Name
+        ----
+        `scheduler.system.get_master_certificate` ()
+
+        Description
+        -----------
+        Return the master public certificate found in location specified
+        in django settings.
+
+        Arguments
+        ---------
+        None
+
+        Return value
+        ------------
+        This function returns the public certificate found on master
+        """
+        self._authenticate()
+
+        path = pathlib.Path(settings.MASTER_CERT_PUB)
+        with contextlib.suppress(OSError):
+            data = path.read_text(encoding="utf-8")
+            return xmlrpc.client.Binary(data.encode("utf-8"))
+
+        raise xmlrpc.client.Fault(404, "Master does not have a certificate")
 
 
 class LavaMapper(Mapper):
