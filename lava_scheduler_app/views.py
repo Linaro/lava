@@ -312,7 +312,11 @@ class JobErrorsView(LavaView):
         q = TestCase.objects.filter(
             suite__name="lava", result=TestCase.RESULT_FAIL
         ).visible_by_user(self.request.user)
-        q = q.filter(metadata__regex="error_type: (Configuration|Infrastructure|Bug)")
+        q = q.filter(
+            Q(metadata__contains="error_type: Configuration")
+            | Q(metadata__contains="error_type: Infrastructure")
+            | Q(metadata__contains="error_type: Bug")
+        )
         q = q.select_related("suite", "suite__job__actual_device")
         return q.order_by("-suite__job__id")
 
