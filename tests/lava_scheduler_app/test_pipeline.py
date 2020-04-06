@@ -2,6 +2,7 @@ import os
 import yaml
 import jinja2
 import unittest
+from unittest.mock import patch
 
 from django.conf import settings
 
@@ -966,7 +967,8 @@ class TestYamlMultinode(TestCaseWithFactory):
             self.assertIsNotNone(job.multinode_definition)
             self.assertIn("# unit test support comment", job.multinode_definition)
 
-    def test_invalid_multinode(self):
+    @patch("lava_dispatcher.actions.deploy.download.requests_retry")
+    def test_invalid_multinode(self, requests_mock):
         user = self.factory.make_user()
         device_type = self.factory.make_device_type()
         submission = yaml_safe_load(

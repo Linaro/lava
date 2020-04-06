@@ -31,7 +31,6 @@ from lava_dispatcher.actions.boot import BootloaderCommandOverlay
 from lava_dispatcher.actions.deploy.tftp import TftpAction
 from lava_dispatcher.job import Job
 from lava_dispatcher.action import Pipeline
-from lava_common.exceptions import JobError
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from tests.utils import DummyLogger, infrastructure_error
 from lava_dispatcher.utils.network import dispatcher_ip
@@ -359,26 +358,6 @@ class TestBootloaderAction(StdoutTestCase):
             for action in retry.pipeline.actions
             if action.name == "expect-shell-connection"
         ][0]
-
-    def test_xz_nfs(self):
-        job = self.factory.create_job("x86-01.jinja2", "sample_jobs/ipxe-nfs.yaml")
-        # this job won't validate as the .xz nfsrootfs URL is a fiction
-        self.assertRaises(JobError, job.validate)
-        tftp_deploy = [
-            action for action in job.pipeline.actions if action.name == "tftp-deploy"
-        ][0]
-        prepare = [
-            action
-            for action in tftp_deploy.pipeline.actions
-            if action.name == "prepare-tftp-overlay"
-        ][0]
-        nfs = [
-            action
-            for action in prepare.pipeline.actions
-            if action.name == "extract-nfsrootfs"
-        ][0]
-        self.assertIn("compression", nfs.parameters["nfsrootfs"])
-        self.assertEqual(nfs.parameters["nfsrootfs"]["compression"], "xz")
 
     @patch(
         "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"

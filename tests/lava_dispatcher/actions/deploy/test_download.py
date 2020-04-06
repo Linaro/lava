@@ -398,7 +398,7 @@ def test_file_download_validate(tmpdir):
     assert action.size == -1
 
 
-def test_http_download_validate(monkeypatch):
+def test_http_download_validate(mocker):
     class DummyResponseNOK:
         status_code = 404
 
@@ -428,8 +428,8 @@ def test_http_download_validate(monkeypatch):
         assert url == "https://example.com/dtb"
         return DummyResponseOK()
 
-    monkeypatch.setattr(requests, "head", dummyhead)
-    monkeypatch.setattr(requests, "get", dummyget)
+    mocker.patch("requests.head", dummyhead)
+    mocker.patch("requests.get", dummyget)
 
     # HEAD is working
     action = HttpDownloadAction(
@@ -467,8 +467,8 @@ def test_http_download_validate(monkeypatch):
         print(str(kwargs))
         return DummyResponseNOK()
 
-    monkeypatch.setattr(requests, "head", response404)
-    monkeypatch.setattr(requests, "get", response404)
+    mocker.patch("requests.head", response404)
+    mocker.patch("requests.get", response404)
 
     action = HttpDownloadAction(
         "image", "/path/to/file", urlparse("https://example.com/kernel")
@@ -489,7 +489,7 @@ def test_http_download_validate(monkeypatch):
     def raisinghead(url, allow_redirects, headers):
         raise requests.Timeout()
 
-    monkeypatch.setattr(requests, "head", raisinghead)
+    mocker.patch("requests.head", raisinghead)
     action = HttpDownloadAction(
         "image", "/path/to/file", urlparse("https://example.com/kernel")
     )
@@ -506,7 +506,7 @@ def test_http_download_validate(monkeypatch):
     def raisinghead2(url, allow_redirects, headers):
         raise requests.RequestException("an error occured")
 
-    monkeypatch.setattr(requests, "head", raisinghead2)
+    mocker.patch("requests.head", raisinghead2)
     action = HttpDownloadAction(
         "image", "/path/to/file", urlparse("https://example.com/kernel")
     )
@@ -551,7 +551,7 @@ def test_file_download_reader(tmpdir):
     )
 
 
-def test_http_download_reader(monkeypatch):
+def test_http_download_reader(mocker):
     # Working
     class DummyResponse:
         status_code = requests.codes.OK
@@ -570,7 +570,7 @@ def test_http_download_reader(monkeypatch):
         assert url == "https://example.com/dtb"
         return DummyResponse()
 
-    monkeypatch.setattr(requests, "get", dummyget)
+    mocker.patch("requests.get", dummyget)
     action = HttpDownloadAction(
         "image", "/path/to/file", urlparse("https://example.com/dtb")
     )
@@ -585,7 +585,7 @@ def test_http_download_reader(monkeypatch):
     def dummygetraise(url, allow_redirects, stream):
         raise requests.RequestException("error")
 
-    monkeypatch.setattr(requests, "get", dummygetraise)
+    mocker.patch("requests.get", dummygetraise)
     action = HttpDownloadAction(
         "image", "/path/to/file", urlparse("https://example.com/dtb")
     )
