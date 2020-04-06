@@ -202,8 +202,9 @@ class Job:
 
         success = False
         try:
-            self._validate()
-            success = True
+            with self.timeout(None, None) as max_end_time:
+                self._validate()
+                success = True
         except LAVAError:
             raise
         except Exception as exc:
