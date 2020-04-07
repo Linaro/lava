@@ -22,7 +22,7 @@ Reply will contain a token that identifies the user when using the REST API:
 v0.2
 ====
 
-Currently there are 7 endpoints available:
+Currently there are 9 endpoints available:
 
 - /api/v0.2/aliases/
 - /api/v0.2/jobs/
@@ -30,8 +30,9 @@ Currently there are 7 endpoints available:
 - /api/v0.2/devices/
 - /api/v0.2/permissions/devicetypes
 - /api/v0.2/permissions/devices
-- /api/v0.2/tags
-- /api/v0.1/workers/
+- /api/v0.2/system/
+- /api/v0.2/tags/
+- /api/v0.2/workers/
 
 In addition TestJob object (/api/v0.2/jobs/id/) contains following routes:
 
@@ -50,10 +51,29 @@ The results are also available in JUnit, TAP13, CSV or YAML formats at:
 - CSV (/api/v0.2/jobs/<job_id>/csv)
 - yaml (/api/v0.2/jobs/<job_id>/yaml)
 
+Extra actions
+-------------
+
+Additional actions are available on the following endpoints with GET request:
+
+- device dictionary (/api/v0.2/devices/<device_hostname>/dictionary/)
+- device type health check (/api/v0.2/devicetypes/<device_type_name>/health_check/)
+- device type template (/api/v0.2/devicetypes/<device_type_name>/template/)
+- master certificate (/api/v0.2/system/certificate/)
+- worker certificate (/api/v0.2/workers/<worker>/certificate/)
+- worker configuration (/api/v0.2/workers/<worker>/config/)
+- worker environment (/api/v0.2/workers/<worker>/env/)
+
 Additional actions are available on the following endpoints with POST request:
 
-- resubmit (/api/v0.2/jobs/<job_id>/resubmit)
-- validate (/api/v0.2/jobs/validate)
+- device dictionary (/api/v0.2/devices/<device_hostname>/dictionary/)
+- device type health check (/api/v0.2/devicetypes/<device_type_name>/health_check/)
+- device type template (/api/v0.2/devicetypes/<device_type_name>/template/)
+- worker certificate (/api/v0.2/workers/<worker>/certificate/)
+- worker configuration (/api/v0.2/workers/<worker>/config/)
+- worker environment (/api/v0.2/workers/<worker>/env/)
+- job resubmit (/api/v0.2/jobs/<job_id>/resubmit)
+- job validate (/api/v0.2/jobs/validate)
     * required parameters:
         + definition (string)
     * optional parameters:
