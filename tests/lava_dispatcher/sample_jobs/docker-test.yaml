@@ -63,3 +63,28 @@ actions:
           from: inline
           path: inline-smoke-test
           name: docker-test
+
+  - test:
+      timeout:
+        minutes: 10
+      docker:
+        image: adb-fastboot
+      definitions:
+        - repository:
+            metadata:
+              format: Lava-Test Test Definition 1.0
+              name: more-tests
+              description: "Some aditional tests"
+              os:
+                - debian
+              scope:
+                - functional
+              devices:
+                - hi6220-hikey-r2
+            run:
+              steps:
+                - adb wait-for-device
+                - adb shell sleep 2
+          from: inline
+          path: more-tests
+          name: more-tests

@@ -60,7 +60,7 @@ class DockerTest(LavaTest):
 
     @classmethod
     def needs_overlay(cls):
-        return False
+        return True
 
     @classmethod
     def has_shell(cls):

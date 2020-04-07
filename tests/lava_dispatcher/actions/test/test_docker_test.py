@@ -42,6 +42,16 @@ def action(job):
     return job.pipeline.actions[2]
 
 
+@pytest.fixture
+def first_test_action(action):
+    return action
+
+
+@pytest.fixture
+def second_test_action(job):
+    return job.pipeline.actions[3]
+
+
 def test_validate_schema(factory):
     factory.validate_job_strict = True
     # The next call not crashing means that the strict schema validation
@@ -123,3 +133,8 @@ def test_run(action, mocker):
 
     # the docker shell gets finalized
     docker_connection.finalise.assert_called()
+
+
+def test_stages(first_test_action, second_test_action):
+    assert first_test_action.parameters["stage"] == 0
+    assert second_test_action.parameters["stage"] == 1
