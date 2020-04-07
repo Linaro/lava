@@ -437,6 +437,8 @@ class WorkerViewSet(base_views.WorkerViewSet, viewsets.ModelViewSet):
             return serializers.EnvironmentSerializer
         if self.action == "config":
             return serializers.ConfigSerializer
+        if self.action == "certificate":
+            return serializers.SlaveKeySerializer
         else:
             return serializers.WorkerSerializer
 
