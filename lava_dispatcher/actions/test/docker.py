@@ -165,6 +165,9 @@ class DockerTestShell(TestShellAction, GetBoardId):
         self.__set_connection__(shell_connection)
         super().run(shell_connection, max_end_time)
 
+        # finish the container
+        shell_connection.finalise()
+
         # return the original connection untouched
         self.__set_connection__(connection)
         return connection

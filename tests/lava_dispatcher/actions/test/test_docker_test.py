@@ -120,3 +120,6 @@ def test_run(action, mocker):
 
     # the lava-test-shell implementation gets called with the docker shell
     action_run.assert_called_with(docker_connection, mocker.ANY)
+
+    # the docker shell gets finalized
+    docker_connection.finalise.assert_called()
