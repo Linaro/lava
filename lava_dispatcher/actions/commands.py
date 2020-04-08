@@ -40,10 +40,10 @@ class CommandAction(Action):
     def validate(self):
         super().validate()
         cmd_name = self.parameters["name"]
-        try:
-            user_commands = self.job.device["commands"]["users"]
-        except KeyError:
-            raise ConfigurationError("Unable to get device.commands.users dictionary")
+        user_commands = self.job.device.get("commands", {}).get("users")
+        if not user_commands:
+            self.errors = "Device has no configured user commands"
+            return False
 
         try:
             self.cmd = user_commands[cmd_name]
