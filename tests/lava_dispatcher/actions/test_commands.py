@@ -10,7 +10,8 @@ def device():
     return PipelineDevice(
         {
             "commands": {
-                "users": {"do_something": {"do": "/bin/do", "undo": "/bin/undo"}}
+                "hard_reset": "/path/to/hard-reset",
+                "users": {"do_something": {"do": "/bin/do", "undo": "/bin/undo"}},
             }
         }
     )
@@ -29,6 +30,13 @@ def action(device, mocker):
 @pytest.fixture()
 def do_something(action):
     action.parameters = {"name": "do_something"}
+    assert action.validate()
+    return action
+
+
+@pytest.fixture
+def hard_reset(action):
+    action.parameters = {"name": "hard_reset"}
     assert action.validate()
     return action
 
@@ -53,4 +61,21 @@ def test_unknown_command(action):
 def test_unconfigured_device(action):
     action.job.device = PipelineDevice({})
     action.parameters = {"name": "some-action"}
+    assert not action.validate()  # should not crash
+
+
+def test_builtin_command_run(hard_reset):
+    hard_reset.run(None, 600)
+    hard_reset.run_cmd.assert_called_with("/path/to/hard-reset")
+
+
+def test_builtin_command_cleanup_is_noop(hard_reset):
+    hard_reset.run(None, 600)
+    hard_reset.run_cmd.reset_mock()
+    hard_reset.cleanup(None)
+    hard_reset.run_cmd.assert_not_called()
+
+
+def test_builtin_command_not_defined_for_device(action):
+    action.parameters = {"name": "pre_power_command"}
     assert not action.validate()  # should not crash
