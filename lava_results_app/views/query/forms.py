@@ -125,7 +125,7 @@ class QueryConditionForm(forms.ModelForm):
                     self.add_error(
                         "value",
                         "Valid choices for 'value' are: %s"
-                        % (", ".join(dict(choices).values())),
+                        % (", ".join([str(x) for x in dict(choices).values()])),
                     )
 
                 if isinstance(field_object, models.DateTimeField):
