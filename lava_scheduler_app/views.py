@@ -55,6 +55,7 @@ from django.utils import timezone
 from django.utils.timesince import timeuntil
 from django.views.decorators.http import require_POST
 from django_tables2 import RequestConfig
+from django_tables2.paginators import LazyPaginator
 
 from lava_common.compat import yaml_load, yaml_safe_load
 from lava_common.schemas import validate
@@ -1100,9 +1101,11 @@ def job_list(request):
 def job_errors(request):
     data = JobErrorsView(request, model=TestCase, table_class=JobErrorsTable)
     ptable = JobErrorsTable(
-        data.get_table_data(), request=request, prefix="job_errors_"
+        data.get_table_data(), prefix="job_errors_", template_name="lazytables.html"
     )
-    RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
+    RequestConfig(
+        request, paginate={"per_page": ptable.length, "paginator_class": LazyPaginator}
+    ).configure(ptable)
     return render(
         request,
         "lava_scheduler_app/job_errors.html",

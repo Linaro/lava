@@ -1,0 +1,7 @@
+{% extends "tables.html" %}
+
+{% block pagination.current %}
+    <li>Page {{ table.page.number }} / ??</li>
+{% endblock pagination.current %}
+
+{% block pagination.cardinality %}{% endblock %}
