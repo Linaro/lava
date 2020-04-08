@@ -632,7 +632,7 @@ def verify_socket(sock, master_url, ipv6=False):
 
 def connect_to_master(poller, pipe_r, sock, master, ipv6):
     LOG.info("[BTSP] Greeting the master [%s] => 'HELLO'", master)
-    send_multipart_u(sock, ["HELLO", str(PROTOCOL_VERSION)])
+    send_multipart_u(sock, ["HELLO", str(PROTOCOL_VERSION), __version__])
     (leaving, msg) = recv_from_master("[BTSP] ", poller, pipe_r, sock)
 
     while not leaving:
@@ -651,7 +651,7 @@ def connect_to_master(poller, pipe_r, sock, master, ipv6):
             LOG.info(
                 "[BTSP] Greeting master => 'HELLO_RETRY' (using the same version?)"
             )
-            send_multipart_u(sock, ["HELLO_RETRY", str(PROTOCOL_VERSION)])
+            send_multipart_u(sock, ["HELLO_RETRY", str(PROTOCOL_VERSION), __version__])
         (leaving, msg) = recv_from_master("[BTSP] ", poller, pipe_r, sock)
 
     return False

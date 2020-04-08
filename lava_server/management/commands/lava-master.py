@@ -114,6 +114,9 @@ class SlaveDispatcher:
                 worker.go_state_offline()
                 worker.save()
 
+    def set_worker_version(self, pkg_version):
+        Worker.objects.filter(hostname=self.hostname).update(version=pkg_version)
+
 
 def load_optional_yaml_file(filename, fallback=None):
     """
@@ -391,6 +394,17 @@ class Command(LAVADaemonCommand):
 
         # Mark the dispatcher as alive
         self.dispatcher_alive(hostname)
+
+        # Set the worker version in db.
+        try:
+            slave_pkg_version = msg[3]
+            self.dispatchers[hostname].set_worker_version(slave_pkg_version)
+        except IndexError:
+            self.logger.warning(
+                "HELLO message doesn't contain dispatcher package version <%s> '%s'",
+                hostname,
+                msg,
+            )
 
     def _handle_ping(self, hostname, msg):
         self.logger.debug("%s => PING(%d)", hostname, PING_INTERVAL)
