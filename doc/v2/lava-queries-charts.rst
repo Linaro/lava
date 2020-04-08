@@ -57,8 +57,6 @@ LAVA Queries
 
 A single query can be based on one of the following object sets:
 
-# FIXME: add hints about when to use which object.
-
 * Test jobs
 
 * Test suites
