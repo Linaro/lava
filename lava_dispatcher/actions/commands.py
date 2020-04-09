@@ -30,6 +30,13 @@ class CommandAction(Action):
     summary = "execute commands"
     command_exception = InfrastructureError
     timeout_exception = InfrastructureError
+    builtin_commands = [
+        "pre_power_command",
+        "pre_os_command",
+        "hard_reset",
+        "power_on",
+        "power_off",
+    ]
 
     def __init__(self):
         super().__init__()
@@ -40,10 +47,19 @@ class CommandAction(Action):
     def validate(self):
         super().validate()
         cmd_name = self.parameters["name"]
-        try:
-            user_commands = self.job.device["commands"]["users"]
-        except KeyError:
-            raise ConfigurationError("Unable to get device.commands.users dictionary")
+
+        if cmd_name in self.builtin_commands:
+            if cmd_name in self.job.device["commands"]:
+                self.cmd = {"do": self.job.device["commands"][cmd_name]}
+                return True
+            else:
+                self.errors = "Command '%s' not defined for this device" % cmd_name
+                return False
+
+        user_commands = self.job.device.get("commands", {}).get("users")
+        if not user_commands:
+            self.errors = "Device has no configured user commands"
+            return False
 
         try:
             self.cmd = user_commands[cmd_name]
