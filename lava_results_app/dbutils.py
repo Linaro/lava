@@ -65,7 +65,7 @@ def _check_for_testset(result_dict, suite):
 def append_failure_comment(job, msg):
     if not job.failure_comment:
         job.failure_comment = ""
-    job.failure_comment += msg[:256]
+    job.failure_comment += msg
     job.save(update_fields=["failure_comment"])
 
 
