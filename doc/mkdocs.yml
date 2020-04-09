@@ -116,6 +116,7 @@ nav:
   - Job definition:
     - Job: technical-references/job-definition/job.md
     - Actions:
+      - Command: technical-references/job-definition/actions/command.md
       - Deploy: technical-references/job-definition/actions/deploy.md
       - Boot: technical-references/job-definition/actions/boot.md
       - Test: technical-references/job-definition/actions/test.md
