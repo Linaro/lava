@@ -701,6 +701,8 @@ class WorkerTable(LavaTable):
     <a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a>
     """
     )
+    description = tables.Column(accessor="description", verbose_name="Description")
+    version = tables.Column(accessor="version", verbose_name="Version")
 
     def render_state(self, record):
         if record.state == Worker.STATE_ONLINE:
