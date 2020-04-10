@@ -114,9 +114,6 @@ class SlaveDispatcher:
                 worker.go_state_offline()
                 worker.save()
 
-    def set_worker_version(self, pkg_version):
-        Worker.objects.filter(hostname=self.hostname).update(version=pkg_version)
-
 
 def load_optional_yaml_file(filename, fallback=None):
     """
@@ -397,8 +394,7 @@ class Command(LAVADaemonCommand):
 
         # Set the worker version in db.
         try:
-            slave_pkg_version = msg[3]
-            self.dispatchers[hostname].set_worker_version(slave_pkg_version)
+            Worker.objects.filter(hostname=hostname).update(version=u(msg[3]))
         except IndexError:
             self.logger.warning(
                 "HELLO message doesn't contain dispatcher package version <%s> '%s'",
