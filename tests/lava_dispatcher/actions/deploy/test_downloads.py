@@ -78,8 +78,25 @@ def action(tmpdir):
 
 def test_postprocess_with_docker_populate(action):
     assert action.image == "foo"
-    assert "date\n" in action.script
-    assert "echo HELLO WORLD\n" in action.script
+    assert "date" in action.steps
+    assert "echo HELLO WORLD" in action.steps
+
+
+def test_postprocess_with_docker_populate_missing_data(tmpdir):
+    action = PostprocessWithDocker(tmpdir)
+    action.populate({})
+
+
+def test_postprocess_with_docker_validate(tmpdir):
+    action = PostprocessWithDocker(tmpdir)
+    assert not action.validate()
+    assert "docker image name missing" in action.errors
+    assert "postprocessing steps missing" in action.errors
+    action.image = "foobar"
+    action.steps = ["date"]
+    action.errors.clear()
+    assert action.validate()
+    assert len(action.errors) == 0
 
 
 def test_postprocess_with_docker_run(action, job, mocker):
@@ -94,6 +111,8 @@ def test_postprocess_with_docker_run(action, job, mocker):
 
     script = action.path / "postprocess.sh"
     assert script.exists()
-    assert script.read_text() == action.script
+    script_text = script.read_text()
+    assert "date\n" in script_text
+    assert "echo HELLO WORLD\n" in script_text
 
     run.assert_called_with(mocker.ANY, action=action)

@@ -94,20 +94,31 @@ class PostprocessWithDocker(Action):
         super().__init__()
         self.path = Path(path)
         self.image = None
-        self.script = None
+        self.steps = []
 
     def populate(self, parameters):
-        parameters = parameters["postprocess"]["docker"]
-        self.image = parameters["image"]
-        script = ["#!/bin/sh", "exec 2>&1", "set -ex"]
-        script += parameters["steps"]
-        self.script = "\n".join(script) + "\n"
+        parameters = parameters.get("postprocess", {}).get("docker", {})
+        self.image = parameters.get("image")
+        self.steps = parameters.get("steps", [])
+
+    def validate(self):
+        res = True
+        if not self.image:
+            self.errors.append("docker image name missing")
+            res = False
+        if not self.steps:
+            self.errors.append("postprocessing steps missing")
+            res = False
+        return res
 
     def run(self, connection, max_end_time):
         job_id = self.job.job_id
 
+        script = ["#!/bin/sh", "exec 2>&1", "set -ex"] + self.steps
+        script = "\n".join(script) + "\n"
+
         scriptfile = self.path / "postprocess.sh"
-        scriptfile.write_text(self.script)
+        scriptfile.write_text(script)
         scriptfile.chmod(0o755)
 
         docker = DockerRun(self.image)
