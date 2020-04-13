@@ -725,8 +725,12 @@ def test_predownloaded():
         "rootfs": {"url": "downloads://rootfs.xz"},
         "namespace": "common",
     }
-    action = PreDownloadedAction("rootfs", urlparse("downloads://rootfs.xz"), params)
-    action.job = Job(1234, {}, None)
+    job = Job(1234, {}, None)
+    destdir = job.mkdtemp("some-other-action")
+    action = PreDownloadedAction(
+        "rootfs", urlparse("downloads://rootfs.xz"), destdir, params
+    )
+    action.job = job
 
     filename = Path(action.job.tmp_dir) / "downloads/common/rootfs.xz"
     filename.parent.mkdir(parents=True)
@@ -739,15 +743,18 @@ def test_predownloaded():
     mapped_path = action.get_namespace_data(
         action="download-action", label="rootfs", key="file"
     )
-    assert mapped_path == (action.job.tmp_dir + "/downloads/common/rootfs.xz")
+    assert mapped_path == (destdir + "/rootfs.xz")
+    assert Path(mapped_path).exists()
 
 
 def test_predownloaded_subdirectory():
     params = {"to": "tmpfs", "rootfs": {"url": "downloads://subdir/rootfs.xz"}}
+    job = Job(1234, {}, None)
+    destdir = job.mkdtemp("some-other-action")
     action = PreDownloadedAction(
-        "rootfs", urlparse("downloads://subdir/rootfs.xz"), params
+        "rootfs", urlparse("downloads://subdir/rootfs.xz"), destdir, params
     )
-    action.job = Job(1234, {}, None)
+    action.job = job
 
     filename = Path(action.job.tmp_dir) / "downloads/common/subdir/rootfs.xz"
     filename.parent.mkdir(parents=True)
@@ -760,13 +767,16 @@ def test_predownloaded_subdirectory():
     mapped_path = action.get_namespace_data(
         action="download-action", label="rootfs", key="file"
     )
-    assert mapped_path == (action.job.tmp_dir + "/downloads/common/subdir/rootfs.xz")
+    assert mapped_path == (destdir + "/subdir/rootfs.xz")
+    assert Path(mapped_path).exists()
 
 
 def test_predownloaded_missing_file(tmpdir):
-    action = PreDownloadedAction("rootfs", urlparse("downloads://missing.xz"))
+    job = Job(1234, {}, None)
+    destdir = job.mkdtemp("some-other-action")
+    action = PreDownloadedAction("rootfs", urlparse("downloads://missing.xz"), destdir)
+    action.job = job
     action.parameters = {"namespace": "common"}
-    action.job = Job(1234, {}, None)
     with pytest.raises(JobError) as exc:
         action.run(None, 4242)
 
