@@ -27,6 +27,7 @@ from urllib.parse import urlparse
 from lava_common.constants import HTTP_DOWNLOAD_CHUNK_SIZE
 from lava_common.exceptions import InfrastructureError, JobError
 from lava_dispatcher.actions.deploy.download import (
+    CopyToLxcAction,
     DownloaderAction,
     DownloadHandler,
     LxcDownloadAction,
@@ -768,3 +769,9 @@ def test_predownloaded_missing_file(tmpdir):
     action.job = Job(1234, {}, None)
     with pytest.raises(JobError) as exc:
         action.run(None, 4242)
+
+
+def test_copy_to_lxc_without_lxc_should_do_nothing():
+    action = CopyToLxcAction()
+    action.job = Job(1234, {}, None)
+    action.run(None, 4242)  # no crash = success

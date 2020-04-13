@@ -913,13 +913,13 @@ class CopyToLxcAction(DeployAction):
         connection = super().run(connection, max_end_time)
         # this is the device namespace - the lxc namespace is not accessible
         lxc_name = None
-        protocol = [
+        protocols = [
             protocol
             for protocol in self.job.protocols
             if protocol.name == LxcProtocol.name
-        ][0]
-        if protocol:
-            lxc_name = protocol.lxc_name
+        ]
+        if protocols:
+            lxc_name = protocols[0].lxc_name
         else:
             return connection
 
