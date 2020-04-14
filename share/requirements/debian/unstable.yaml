@@ -139,9 +139,6 @@ lava-dispatcher:
   lxc-info:
     name: lxc
     unittests: true
-  lxc-templates:
-    name: lxc-templates
-    unittests: true
   img2simg:
     name: android-sdk-libsparse-utils
     unittests: true
