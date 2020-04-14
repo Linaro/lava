@@ -25,6 +25,13 @@ from pathlib import Path
 from tests.lava_dispatcher.test_basic import Factory
 
 
+from lava_common.compat import yaml_load
+from lava_common.timeout import Timeout
+from lava_dispatcher.device import NewDevice
+from lava_dispatcher.job import Job
+from lava_dispatcher.actions.test.docker import DockerTestAction
+
+
 @pytest.fixture
 def factory():
     return Factory()
@@ -138,3 +145,24 @@ def test_run(action, mocker):
 def test_stages(first_test_action, second_test_action):
     assert first_test_action.parameters["stage"] == 0
     assert second_test_action.parameters["stage"] == 1
+
+
+def test_wait_for_board_id_is_optional(factory):
+    action = DockerTestAction()
+    action.job = Job("1234", {}, None)
+    rendered, _ = factory.create_device("hi6220-hikey-r2-01.jinja2")
+    action.job.device = NewDevice(yaml_load(rendered))
+    action.job.timeout = Timeout("blah")
+    action.level = 1
+    action.populate(
+        {
+            "namespace": "common",
+            "docker": {"image": "foobar", "wait": {"device": False}},
+        }
+    )
+    assert not any(
+        [a for a in action.pipeline.actions if a.name == "wait-device-boardid"]
+    )
+
+    docker_test_shell = action.pipeline.actions[-2]
+    assert not docker_test_shell.wait_for_device

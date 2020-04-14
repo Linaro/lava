@@ -84,8 +84,12 @@ class DockerTestAction(TestAction, GetBoardId):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.pipeline.add_action(DockerTestSetEnvironment())
         self.pipeline.add_action(CreateOverlay())
-        self.pipeline.add_action(WaitDeviceBoardID(self.get_board_id()))
-        self.pipeline.add_action(DockerTestShell())
+        wait_for_device = (
+            parameters.get("docker", {}).get("wait", {}).get("device", True)
+        )
+        if wait_for_device:
+            self.pipeline.add_action(WaitDeviceBoardID(self.get_board_id()))
+        self.pipeline.add_action(DockerTestShell(wait_for_device))
         self.pipeline.add_action(ReadFeedback())
 
 
@@ -118,6 +122,10 @@ class DockerTestShell(TestShellAction, GetBoardId):
     description = "Runs lava-test-shell in a docker container"
     summary = "Runs lava-test-shell in a docker container"
 
+    def __init__(self, wait_for_device=True):
+        super().__init__()
+        self.wait_for_device = wait_for_device
+
     def run(self, connection, max_end_time):
         # obtain lava overlay
         # start container
@@ -149,9 +157,10 @@ class DockerTestShell(TestShellAction, GetBoardId):
         docker.hostname("lava")
         docker.name(container)
         docker.environment("PS1", "docker-test-shell:$ ")
-        devices = get_udev_devices(device_info=[device_info])
-        for dev in devices:
-            docker.add_device(dev)
+        if self.wait_for_device:
+            devices = get_udev_devices(device_info=[device_info])
+            for dev in devices:
+                docker.add_device(dev)
 
         docker_cmd = docker.cmdline("bash", "--norc", "-i")
 
