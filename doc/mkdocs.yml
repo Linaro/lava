@@ -61,6 +61,7 @@ nav:
     - Job generation: user/advanced-tutorials/job-generation.md  # Using jinja2
     - Multinode: user/advanced-tutorials/multinode.md
     - Notifications: user/advanced-tutorials/notifications.md
+    - Running arbitrary code with docker: user/advanced-tutorials/running-arbitrary-code-with-docker.md
     - Secondary connection: user/advanced-tutorials/secondary-connection.md
 
 - Admin guide:
