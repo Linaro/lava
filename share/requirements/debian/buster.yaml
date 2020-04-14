@@ -147,9 +147,6 @@ lava-dispatcher:
   lxc-info:
     name: lxc
     unittests: true
-  lxc-templates:
-    name: lxc-templates
-    unittests: true
   minicom:
     name: minicom
     unittests: true
