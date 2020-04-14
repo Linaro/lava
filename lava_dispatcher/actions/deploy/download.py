@@ -103,7 +103,7 @@ class DownloaderAction(RetryAction):
         elif url.scheme == "lxc":
             action = LxcDownloadAction(self.key, self.path, url)
         elif url.scheme == "downloads":
-            action = PreDownloadedAction(self.key, url, params=self.params)
+            action = PreDownloadedAction(self.key, url, self.path, params=self.params)
         else:
             raise JobError("Unsupported url protocol scheme: %s" % url.scheme)
         self.pipeline.add_action(action)
@@ -724,10 +724,11 @@ class PreDownloadedAction(Action):
     description = "Map to the correct downloaded path"
     summary = "pre downloaded"
 
-    def __init__(self, key, url, params=None):
+    def __init__(self, key, url, path, params=None):
         super().__init__()
         self.key = key
         self.url = url
+        self.path = path
         self.params = params
 
     def validate(self):
@@ -756,12 +757,11 @@ class PreDownloadedAction(Action):
 
         namespace = self.parameters["namespace"]
         top = pathlib.Path(self.job.tmp_dir) / "downloads" / namespace
-        path = top / filename
-        if not path.exists():
-            root = path.parent
+        src = top / filename
+        if not src.exists():
             existing = [
-                str(f).replace(str(root) + "/", "")
-                for f in root.rglob("*")
+                str(f).replace(str(top) + "/", "")
+                for f in top.rglob("*")
                 if not f.is_dir()
             ]
             if existing:
@@ -770,8 +770,12 @@ class PreDownloadedAction(Action):
                 available = "not files at all available"
             raise JobError(f"Resource unavailable: {filename} ({available})")
 
+        dest = pathlib.Path(self.path) / filename
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.symlink_to(src)
+
         self.set_namespace_data(
-            action="download-action", label=self.key, key="file", value=str(path)
+            action="download-action", label=self.key, key="file", value=str(dest)
         )
 
         return connection
@@ -913,13 +917,13 @@ class CopyToLxcAction(DeployAction):
         connection = super().run(connection, max_end_time)
         # this is the device namespace - the lxc namespace is not accessible
         lxc_name = None
-        protocol = [
+        protocols = [
             protocol
             for protocol in self.job.protocols
             if protocol.name == LxcProtocol.name
-        ][0]
-        if protocol:
-            lxc_name = protocol.lxc_name
+        ]
+        if protocols:
+            lxc_name = protocols[0].lxc_name
         else:
             return connection
 
