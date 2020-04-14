@@ -22,11 +22,12 @@ import xmlrpc.client
 
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
+from django.db.models import Q, Prefetch
 
 from lava_common.compat import yaml_safe_load
 from linaro_django_xmlrpc.models import ExposedV2API
 from lava_scheduler_app.api import check_perm
-from lava_scheduler_app.models import Device, DeviceType, Tag, Worker
+from lava_scheduler_app.models import Device, DeviceType, Tag, TestJob, Worker
 
 
 class SchedulerDevicesAPI(ExposedV2API):
@@ -230,6 +231,13 @@ class SchedulerDevicesAPI(ExposedV2API):
             Device.objects.all()
             .visible_by_user(self.user)
             .select_related("device_type")
+            .prefetch_related(
+                Prefetch(
+                    "testjobs",
+                    queryset=TestJob.objects.filter(~Q(state=TestJob.STATE_FINISHED)),
+                    to_attr="running_jobs",
+                )
+            )
         )
         if not show_all:
             devices = devices.exclude(health=Device.HEALTH_RETIRED)

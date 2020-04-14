@@ -26,6 +26,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin, GroupAdmin
 from django.contrib.auth.models import Permission, Group
 from django.db import transaction
+from django.db.models import Prefetch, Q
 from django.conf import settings
 
 from lava_scheduler_app.models import (
@@ -342,6 +343,13 @@ class DeviceAdmin(admin.ModelAdmin):
             super(DeviceAdmin, self)
             .get_queryset(request)
             .select_related("worker_host", "device_type")
+            .prefetch_related(
+                Prefetch(
+                    "testjobs",
+                    queryset=TestJob.objects.filter(~Q(state=TestJob.STATE_FINISHED)),
+                    to_attr="running_jobs",
+                )
+            )
         )
 
     def has_health_check(self, obj):

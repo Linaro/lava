@@ -641,9 +641,17 @@ class Device(RestrictedObject):
         )
 
     def current_job(self):
+        # This method will use the 'running_jobs' attribute if present which
+        # is a prefetch_related attribute containing non-finished jobs
+        # ie. Prefetch('testjobs', queryset=TestJob.objects.filter(~Q(state=TestJob.STATE_FINISHED)), to_attr='running_jobs')
         try:
-            return self.testjobs.get(~Q(state=TestJob.STATE_FINISHED))
-        except TestJob.DoesNotExist:
+            return self.running_jobs[0]
+        except AttributeError:
+            try:
+                return self.testjobs.get(~Q(state=TestJob.STATE_FINISHED))
+            except TestJob.DoesNotExist:
+                return None
+        except IndexError:
             return None
 
     def get_absolute_url(self):
