@@ -305,6 +305,7 @@ class DeviceTableView(JobTableView):
             .prefetch_related("tags")
             .visible_by_user(self.request.user)
             .order_by("hostname")
+            .distinct()
         )
 
 
