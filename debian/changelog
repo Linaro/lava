@@ -1,3 +1,155 @@
+lava (2020.04-1) unstable; urgency=medium
+
+  * LAVA Software 2020.04 release
+    02694d5d9 legacy schema: relax the constraint on the "command" action
+    ff9c3088d submit: validate with both the legacy and new schema
+    d867f9f7a FlashUBootUMSAction: allow to use bmaptool
+    dae31ca8c Adding new FVP boot method for docker
+    1e1301e28 Add unit tests for FVP
+    b87efb07d Adding docs for FVP
+    00e0b184d FVP Unit test tweaks
+    737ec0601 Cleaning up unused imports
+    9b85acdec FVP version string and rootfs changes
+    0604ee013 Separate fvp device-type for fvp actions
+    b362800af Add support for directory substition in fvp boot
+    6fb7bce31 Added root_partition to the fvp deploy schema
+    41f8df515 Allow root_partition to be 0
+    1272615f0 Add in character delay for FVP
+    a297544cb FVP Cleanup
+    b1bf25873 Moving FVP tests to new location
+    acb3ddda0 Ignore FVP SAST Errors
+    cdcf88e43 Fix FVP DownloaderAction usage
+    82cdd4fcc FVP move internal-pipeline to pipeline
+    18541fcd5 Add further unit tests for FVPs overlay usage
+    681ea3e72 Revert mkdtemp change for nfs
+    168b4b4ba Allow overlay into downloaded ramdisk
+    b7d588ddd Apply black formatting after rebase
+    43b3f3805 dispatcher: test/docker: expose connection commands to container
+    4a389bae0 u-boot-ums: download the layout if present
+    107f06f5e Add device template for NXP ls1043ardb
+    4a12b696f Rework FVP to work with !1004 overlay format
+    6b77e8f90 pylint.sh: also check tests/ directory
+    c12ba5845 tests: fix pylink warnings
+    e1acc8f65 Fix release script
+    d0c6e61c6 Apply black from Sid
+    1a4ce798d u-boot-uls: use bmaptool instead of dd
+    1749f041c FlashUBootUMSAction: fix bmaptool arguments
+    193fab1dd FVP Remove unused imports
+    1475a99c2 Use absolute path in untar_file in update_cpio
+    d4f03d681 lxc: fix typo in !963
+    3b38f2e92 lava_rest_app: support DRF extensions >= 0.6
+    71f088341 coverage: bump threshold to 58%
+    a8b7a9867 sentry: register the current version
+    290148de3 device-types: add imx8mm-ddr4-evk
+    2506f7ebf device-types: add imx8mm-evk
+    2bf1fbab5 device-types: align imx8mn-ddr4-evk template with other imx8m boards
+    9399fdc42 MR comments on FVP changes
+    e9de2aeb4 base-uboot: remove unused mkimage_arch in boot action
+    8648e39a6 Add device template for NXP lx2160ardb
+    98524ef5c docker: fix extra argument handling
+    cccecdb99 Further FVP tweaks
+    6749ce963 Do not raise a PermissionDenied when the job is already finished.
+    232759214 Install missing bmap-tools
+    cf26e2618 docker: decrease image size
+    d136bb02d FVP Tidyup
+    41d9b2a4b FVP Docs and boot tidyup
+    41395535b CI: fix error found by pylint
+    9b72b9bc9 fvp: update example for FVP 11.9
+    0339e7699 boot/fastboot: skip pre-os-command for docker jobs as well
+    83a8652e1 qemu-nfs and iso-installer: only add actions if needed
+    8f3b95b55 adding support for NXP's imx7d-sdb and imx6q-sabresd boards
+    f17fc699a Allow to run nfs jobs without /usr/sbin/exportfs
+    d92d84280 Create an abstraction layer for dispatcher config files
+    0b6832f2a CI: remove test that can't work when ran as root
+    8e6a68b53 docker dispatcher: install ser2net by default
+    25c9e281d Fix lxc-info wrong usage.
+    3305042e6 Allow device enter into fastbootd when fastboot images.
+    4ad892ee9 schema: check test names
+    2c07934cd Add authorization mechanism to Worker model
+    455f2d206 qemu: fix command line dupliction when retrying
+    675108851 lava_dispatcher.utils.docker: encapsulate docker command lines
+    d6efabed5 dispatcher: utils/fastboot: port docker calls to utils/docker
+    50d2fd37a fixup! lava_dispatcher.utils.docker: encapsulate docker command lines
+    85ee2913f CI: fix lava_scheduler_app junit unit tests on debian sid
+    3ad390bc3 Fix soft-reboot support
+    c099c7be9 rest: filters: add filtering for TestJob description field
+    2412e9659 Add a new documentation using mkdocs
+    bc804bf04 docs: improve developper documentation
+    5c39c88ca docs: fix mkdoc configuration
+    ede9b2e93 doc: move contributing to tutorials
+    82786fa2c doc: move mkdocs.yml to doc/
+    06e48e767 doc: fix readthedoc build
+    05af31736 dispatcher: ensure that Job.tmp_dir is never None
+    1dd8f1bcf dispatcher: utils: docker: fix readonly flag
+    714c07c4c deploy: test_download: split populate tests by scheme
+    61e771c67 qemu: do not finialise connection coming from other namespaces
+    bcd18bc8e doc: update REST API docs to version 0.2
+    aa9aea390 dispatcher: deploy: add supporting for postprocessing images with docker
+    a9a392aa8 Boot QEMU from a user-defined docker image
+    ac8e4e602 Add new field dispatcher version to Worker model.
+    32695c3ae dispatcher: allow to download/decompress zstd images
+    10050123e device type file for NXP's s32v234sbc
+    9ce39ede2 qemu/docker: do not add /dev/kvm if it's missing
+    589ba328a dispatcher: fix Job.mkdtemp with overriden base dir
+    0951bfe2f Fix lxc-mocker/lxc-info.
+    578b99831 Move encryption settings to django settings instead of the cmd args.
+    67df57729 Fix crashes introduced by 578b99831d
+    56ac61f15 schema: qemu is not the only device using docker boot option
+    ce783a5ed Fix formatting in master-slave encryption documentation.
+    28bd357d7 Fix crash in the js code
+    a52735496 device-types: add r8a7795-h3ulcb-kf
+    9ecee53a0 device-types: stm32mp157c-dk2: permit to overrides addresses
+    9645ebc68 device-types: add imx6q-var-dt6customboard
+    aa6da4f5b RESTAPI endpoints for uploading/downloading worker encryption keys.
+    2ddedcf70 test: interactive: allow for non-exiting commands
+    d6f24a9a5 device-type: add sun8i-h3-bananapi-m2-plus
+    3a1577c0b State machine: fix an issue when start_time is not set
+    50c346749 RESTAPI endpoint for downloading master encryption key.
+    53841e911 dispatcher: PostprocessWithDocker: don't share /boot and /lib/modules
+    b65a1ae73 dispatcher: docker: DockerRun: add run() method
+    5ac5b6250 dispatcher: docker: split --interactive and --tty
+    9166b87f0 dispatcher: docker: add support for name and environment
+    c5d1ddb32 dispatcher: docker test shell: use DockerRun
+    9e4179fba dispatcher: docker test shell: pass device to docker container
+    83f525885 XMLRPC api endpoints for uploading/downloading worker encryption keys.
+    a87fe4207 xmlrpc: improve sql efficiency
+    2574bf0e5 scheduler reports: improve sql efficiency
+    b0fec6d4c Make device/device-type and job reports consitent
+    d98694371 job failure page: improve SQL efficiency
+    6b5fa361c scheduler: improve SQL efficiency
+    1b9662626 XMLRPC api endpoint for downloading master encryption key.
+    2e6881922 scheduler: templates: change quick filter widgets to tabs
+    ea22bb9a2 Fix typo in commit c779080d
+    f3c665b59 results pages: lower the number of SQL requests
+    d80bdc8a9 Remove useless SQL check
+    7a6ced657 /scheduler/healthcheck: Lower the number of SQL requests
+    927b09f4c /scheduler/joberrors make the query 40% faster
+    472e87370 Use the job timeout for the validate stage
+    974947ba8 Fix certificate serializer so it's properly displayed.
+    2c3f6fd2e Update REST API documentation with latest certificate changes.
+    6df759ddc Fix certificate serializer so it's properly displayed.
+    c8836714e dispatcher: docker test shell: finalize docker container
+    9821f22ba dispatcher: docker test shell: ensure stage is set properly
+    07ec248f6 Fix choices validation error in queries.
+    9a3a5629f Remove #FIXME from queries docs.
+    8e0f24026 dispatcher: add basic test coverage for the commands action
+    7088613fc dispatcher: command: expose builtin commands
+    391019fe2 job errors: use django-tables2 LazyPaginator
+    676268cc2 Backport LazyPaginator in lava_server.compat
+    01443742a doc: add some documentation about "command" action
+    125df13ed Populate worker version number on HELLO and HELLO_RETRY messages.
+    99474e73c device-types: meson-gxbb-p200: can use mainline uboot
+    774cb5ccb lava-master: fix dispatcher version
+    b37d9b64d dispatcher: CopyToLxcAction: skip when no lxc is involved
+    193bc66c2 dispatcher: PostprocessWithDocker: resist missing parameters
+    273f9ce57 dispatcher: PreDownloadedAction: use requested path
+    e43f8ef42 Drop lxc-templates
+    701ba0f16 Optimize current_job for device querysets.
+    18962cfb3 Device list page shows multiple results for every additional tag.
+    e5f0bebea dispatcher: DockerTestShell: make waiting on USB optional
+
+ -- Remi Duraffort <remi.duraffort@linaro.org>  Wed, 15 Apr 2020 14:11:52 +0200
+
 lava (2020.02-1) unstable; urgency=medium
 
   * LAVA Software 2020.02 release
