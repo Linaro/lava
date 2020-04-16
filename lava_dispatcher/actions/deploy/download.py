@@ -896,7 +896,7 @@ class DownloadAction(DeployAction):  # pylint:disable=too-many-instance-attribut
         self.pipeline.add_action(CopyToLxcAction())
 
 
-class CopyToLxcAction(DeployAction):
+class CopyToLxcAction(Action):
     """
     Copy downloaded files to LXC within LAVA_LXC_HOME.
     """
