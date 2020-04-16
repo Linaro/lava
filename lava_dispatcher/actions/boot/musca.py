@@ -20,13 +20,13 @@
 
 from lava_dispatcher.action import Pipeline
 from lava_dispatcher.actions.boot import (
-    BootAction,
+    BootHasMixin,
     OverlayUnpack,
     ExportDeviceEnvironment,
 )
 from lava_dispatcher.actions.boot import AutoLoginAction
 from lava_dispatcher.connections.serial import ConnectDevice
-from lava_dispatcher.logical import Boot
+from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.shell import ExpectShellSession
 from lava_dispatcher.utils.udev import WaitUSBSerialDeviceAction
@@ -53,7 +53,7 @@ class Musca(Boot):
         return True, "accepted"
 
 
-class MuscaBoot(BootAction):
+class MuscaBoot(BootHasMixin, RetryAction):
 
     name = "musca-boot"
     description = "power device and trigger software to run"

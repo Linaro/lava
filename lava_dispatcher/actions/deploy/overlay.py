@@ -23,7 +23,6 @@ import stat
 import glob
 import shutil
 import tarfile
-from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.action import Action, Pipeline
 from lava_common.exceptions import InfrastructureError, LAVABug
 from lava_dispatcher.actions.deploy.testdef import TestDefinitionAction
@@ -53,7 +52,7 @@ class Overlay(Deployment):
         return True, "accepted"
 
 
-class CreateOverlay(DeployAction):
+class CreateOverlay(Action):
     """
     Creates a temporary location into which the lava test shell scripts are installed.
     The location remains available for the testdef actions to populate

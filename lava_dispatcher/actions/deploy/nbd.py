@@ -24,10 +24,9 @@
 import os
 import tempfile
 
-from lava_dispatcher.action import Pipeline
+from lava_dispatcher.action import Action, Pipeline
 from lava_common.exceptions import JobError
 from lava_dispatcher.logical import Deployment
-from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils import filesystem
@@ -63,7 +62,7 @@ class Nbd(Deployment):
         return False, '"ndb" was not in the device configuration deploy methods'
 
 
-class NbdAction(DeployAction):  # pylint:disable=too-many-instance-attributes
+class NbdAction(Action):
 
     name = "nbd-deploy"
     description = "download files and deploy for using tftp+initrd+nbd"
@@ -166,7 +165,7 @@ class NbdAction(DeployAction):  # pylint:disable=too-many-instance-attributes
         self.pipeline.add_action(XnbdAction())
 
 
-class XnbdAction(DeployAction):
+class XnbdAction(Action):
 
     name = "xnbd-server-deploy"
     description = "xnbd daemon"

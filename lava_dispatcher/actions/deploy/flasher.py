@@ -19,8 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 from lava_common.compat import yaml_safe_dump
-from lava_dispatcher.action import Pipeline
-from lava_dispatcher.actions.deploy import DeployAction
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
@@ -39,7 +38,7 @@ class FlasherRetryAction(RetryAction):
         self.pipeline.add_action(FlasherAction())
 
 
-class FlasherAction(DeployAction):
+class FlasherAction(Action):
 
     name = "deploy-flasher"
     description = "deploy flasher"

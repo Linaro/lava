@@ -24,9 +24,8 @@
 import os
 import tempfile
 from lava_common.exceptions import JobError
-from lava_dispatcher.action import Pipeline
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.logical import Deployment
-from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.lxc import LxcCreateUdevRuleAction
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.apply_overlay import PrepareOverlayTftp
@@ -62,7 +61,7 @@ class Tftp(Deployment):
         return False, '"tftp" was not in the device configuration deploy methods"'
 
 
-class TftpAction(DeployAction):  # pylint:disable=too-many-instance-attributes
+class TftpAction(Action):
 
     name = "tftp-deploy"
     description = "download files and deploy using tftp"

@@ -23,8 +23,7 @@ import os
 from lava_common.constants import INSTALLER_QUIET_MSG
 from lava_common.exceptions import ConfigurationError, JobError
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.logical import Boot
-from lava_dispatcher.actions.boot import BootAction
+from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.strings import substitute
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
@@ -48,7 +47,7 @@ class BootIsoInstaller(Boot):
         return False, '"media" was not in parameters or "media" was not "img"'
 
 
-class BootIsoInstallerAction(BootAction):
+class BootIsoInstallerAction(RetryAction):
 
     name = "boot-installer-iso"
     description = "boot installer with preseed"

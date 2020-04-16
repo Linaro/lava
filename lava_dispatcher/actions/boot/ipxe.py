@@ -22,12 +22,12 @@
 # imported by the parser to populate the list of subclasses.
 
 from lava_dispatcher.action import Pipeline
-from lava_dispatcher.logical import Boot
+from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.actions.boot import (
-    BootAction,
     AutoLoginAction,
     BootloaderCommandOverlay,
     BootloaderCommandsAction,
+    BootHasMixin,
     OverlayUnpack,
     BootloaderInterruptAction,
 )
@@ -63,7 +63,7 @@ class IPXE(Boot):
             return False, '"ipxe" was not in the device configuration boot methods'
 
 
-class BootloaderAction(BootAction):
+class BootloaderAction(RetryAction):
     """
     Wraps the Retry Action to allow for actions which precede
     the reset, e.g. Connect.
@@ -81,7 +81,7 @@ class BootloaderAction(BootAction):
         self.pipeline.add_action(BootloaderRetry())
 
 
-class BootloaderRetry(BootAction):
+class BootloaderRetry(BootHasMixin, RetryAction):
 
     name = "bootloader-retry"
     description = "interactive uboot retry action"

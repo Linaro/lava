@@ -26,9 +26,14 @@ import pexpect
 
 from lava_common.compat import yaml_safe_dump
 from lava_common.decorators import nottest
-from lava_common.exceptions import JobError, InfrastructureError, TestError, LAVABug
-from lava_dispatcher.actions.test import TestAction
-from lava_dispatcher.action import Pipeline
+from lava_common.exceptions import (
+    JobError,
+    InfrastructureError,
+    TestError,
+    LAVABug,
+    LAVATimeoutError,
+)
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.logical import LavaTest, RetryAction
 from lava_dispatcher.connection import SignalMatch
 
@@ -146,7 +151,7 @@ class PatternFixup:
 
 
 @nottest
-class TestShellAction(TestAction):
+class TestShellAction(Action):
     """
     Sets up and runs the LAVA Test Shell Definition scripts.
     Supports a pre-command-list of operations necessary on the
@@ -156,6 +161,7 @@ class TestShellAction(TestAction):
     name = "lava-test-shell"
     description = "Executing lava-test-runner"
     summary = "Lava Test Shell"
+    timeout_exception = LAVATimeoutError
 
     def __init__(self):
         super().__init__()

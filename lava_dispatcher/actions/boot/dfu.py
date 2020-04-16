@@ -21,7 +21,7 @@
 from lava_common.exceptions import ConfigurationError, InfrastructureError
 
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.actions.boot import BootAction, BootloaderInterruptAction
+from lava_dispatcher.actions.boot import BootloaderInterruptAction
 from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.power import ResetDevice
@@ -51,7 +51,7 @@ class DFU(Boot):
         return True, "accepted"
 
 
-class BootDFU(BootAction):
+class BootDFU(RetryAction):
 
     name = "boot-dfu-image"
     description = "boot dfu image with retry"

@@ -18,14 +18,13 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from lava_dispatcher.action import Pipeline
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.actions.deploy.download import DownloaderAction, CopyToLxcAction
-from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.logical import Deployment
 
 
-class RecoveryModeAction(DeployAction):
+class RecoveryModeAction(Action):
 
     name = "deploy-recovery-mode"
     description = "deploy firmware by switching to recovery mode"

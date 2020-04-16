@@ -20,8 +20,8 @@
 
 
 from lava_dispatcher.action import Pipeline, Action
-from lava_dispatcher.logical import Boot
-from lava_dispatcher.actions.boot import AutoLoginAction, BootAction, OverlayUnpack
+from lava_dispatcher.logical import Boot, RetryAction
+from lava_dispatcher.actions.boot import AutoLoginAction, OverlayUnpack
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.shell import ExpectShellSession
 
@@ -46,7 +46,7 @@ class BootKExec(Boot):
         return False, '"method" was not in parameters, or "method" was not "kexec"'
 
 
-class BootKexecAction(BootAction):
+class BootKexecAction(RetryAction):
     """
     Provide for auto_login parameters in this boot stanza and re-establish the connection after boot
     """

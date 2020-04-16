@@ -19,9 +19,9 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 from lava_dispatcher.action import Pipeline
-from lava_dispatcher.actions.boot import AutoLoginAction, BootAction, OverlayUnpack
+from lava_dispatcher.actions.boot import AutoLoginAction, BootHasMixin, OverlayUnpack
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
-from lava_dispatcher.logical import Boot
+from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.shell import ExpectShellSession
@@ -46,7 +46,7 @@ class Minimal(Boot):
         return True, "accepted"
 
 
-class MinimalBoot(BootAction):
+class MinimalBoot(BootHasMixin, RetryAction):
 
     name = "minimal-boot"
     description = "connect and reset device"

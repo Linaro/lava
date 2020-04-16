@@ -23,13 +23,13 @@
 
 from lava_common.exceptions import ConfigurationError
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.logical import Boot
+from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.actions.boot import (
-    BootAction,
     AutoLoginAction,
     BootloaderCommandOverlay,
     BootloaderSecondaryMedia,
     BootloaderCommandsAction,
+    BootHasMixin,
     OverlayUnpack,
     BootloaderInterruptAction,
 )
@@ -114,7 +114,7 @@ def _grub_sequence_map(sequence):
     return sequence_map.get(sequence, (None, None))
 
 
-class GrubSequenceAction(BootAction):
+class GrubSequenceAction(BootHasMixin, RetryAction):
 
     name = "grub-sequence-action"
     description = "grub boot sequence"
@@ -159,7 +159,7 @@ class GrubSequenceAction(BootAction):
                 self.pipeline.add_action(PowerOff())
 
 
-class GrubMainAction(BootAction):
+class GrubMainAction(BootHasMixin, RetryAction):
 
     name = "grub-main-action"
     description = "main grub boot action"

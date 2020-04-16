@@ -25,8 +25,8 @@ import time
 from lava_dispatcher.action import Pipeline, Action
 from lava_common.exceptions import ConfigurationError, JobError
 from lava_dispatcher.actions.boot.bootloader import BootBootloaderRetry
-from lava_dispatcher.logical import Boot
-from lava_dispatcher.actions.boot import BootAction, BootloaderCommandOverlay
+from lava_dispatcher.logical import Boot, RetryAction
+from lava_dispatcher.actions.boot import BootloaderCommandOverlay
 
 from lava_dispatcher.connections.serial import ConnectDevice, DisconnectDevice
 from lava_dispatcher.power import ResetDevice
@@ -123,7 +123,7 @@ class UUUBoot(Boot):
         return False, '"uuu" was not in the device configuration boot methods'
 
 
-class BootBootloaderCorruptBootMediaAction(BootAction):
+class BootBootloaderCorruptBootMediaAction(RetryAction):
 
     name = "boot-corrupt-boot-media"
     description = "boot using 'bootloader' method and corrupt boot media"
@@ -182,7 +182,7 @@ class UUUBootAction(Action):
         self.pipeline.add_action(ConnectDevice())
 
 
-class UUUBootRetry(BootAction):
+class UUUBootRetry(RetryAction):
 
     name = "uuu-retry"
     description = "interactive uuu retry action"

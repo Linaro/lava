@@ -22,7 +22,6 @@ import shutil
 
 from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.action import Pipeline, Action
-from lava_dispatcher.actions.boot import BootAction
 from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.power import ResetDevice
@@ -64,7 +63,7 @@ class CMSIS(Boot):
         return True, "accepted"
 
 
-class BootCMSIS(BootAction):
+class BootCMSIS(RetryAction):
 
     name = "boot-cmsis"
     description = "boot cmsis usb image"

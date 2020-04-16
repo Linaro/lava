@@ -49,23 +49,8 @@ from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.shell import ExpectShellSession
 
 
-class BootAction(RetryAction):
-    """
-    Base class for all actions which control power-on
-    and boot behaviour of a device under test.
-    The subclass selected to do the work will be the
-    subclass returning True in the accepts(device_type, image)
-    function.
-    Each new subclass needs a unit test to ensure it is
-    reliably selected for the correct job and not
-    selected for an invalid job or a job
-    accepted by a different subclass.
-
-    Boot and Test are closely related - a fail error in Boot
-    will cause subsequent Test actions to be skipped.
-    """
-
-    name = "boot"
+class BootHasMixin:
+    """ Add the two methods to boot classes using it """
 
     def has_prompts(self, parameters):
         return "prompts" in parameters

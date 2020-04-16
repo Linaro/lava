@@ -28,8 +28,7 @@ from lava_common.exceptions import (
     LAVATimeoutError,
     TestError,
 )
-from lava_dispatcher.action import Pipeline
-from lava_dispatcher.actions.test import TestAction
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.logical import LavaTest, RetryAction
 from lava_dispatcher.utils.strings import substitute
 
@@ -83,11 +82,12 @@ class TestInteractiveRetry(RetryAction):
 
 
 @nottest
-class TestInteractiveAction(TestAction):
+class TestInteractiveAction(Action):
 
     name = "lava-test-interactive"
     description = "Executing lava-test-interactive"
     summary = "Lava Test Interactive"
+    timeout_exception = LAVATimeoutError
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)

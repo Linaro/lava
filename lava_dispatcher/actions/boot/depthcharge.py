@@ -25,14 +25,14 @@ from lava_common.exceptions import ConfigurationError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot import (
     AutoLoginAction,
-    BootAction,
     BootloaderCommandOverlay,
     BootloaderCommandsAction,
+    BootHasMixin,
     OverlayUnpack,
 )
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.connections.serial import ConnectDevice
-from lava_dispatcher.logical import Boot
+from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.shell import ExpectShellSession
 from lava_dispatcher.utils.strings import substitute
@@ -148,7 +148,7 @@ class DepthchargeCommandOverlay(BootloaderCommandOverlay):
         return connection
 
 
-class DepthchargeAction(BootAction):
+class DepthchargeAction(RetryAction):
     """
     Wraps the Retry Action to allow for actions which precede the reset,
     e.g. Connect.
@@ -165,7 +165,7 @@ class DepthchargeAction(BootAction):
         self.pipeline.add_action(DepthchargeRetry())
 
 
-class DepthchargeRetry(BootAction):
+class DepthchargeRetry(BootHasMixin, RetryAction):
 
     name = "depthcharge-retry"
     description = "interactive depthcharge retry action"

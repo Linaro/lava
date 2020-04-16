@@ -26,7 +26,6 @@ import shutil
 from lava_common.exceptions import JobError, InfrastructureError, LAVABug
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.logical import Deployment, RetryAction
-from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.lxc import LxcCreateUdevRuleAction
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.connections.serial import ConnectDevice
@@ -81,7 +80,7 @@ class VExpressMsdRetry(RetryAction):
         self.pipeline.add_action(VExpressMsdAction())
 
 
-class VExpressMsdAction(DeployAction):
+class VExpressMsdAction(Action):
     """
     Action for deploying firmware to a Versatile Express board
     in the form of a board recovery image.
