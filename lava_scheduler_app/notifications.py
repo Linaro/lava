@@ -23,7 +23,7 @@ import re
 
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.mail import send_mail
+from django.core.mail import send_mail, send_mass_mail
 from django.urls import reverse
 from django.db import IntegrityError
 
@@ -31,10 +31,12 @@ from lava_scheduler_app import dbutils
 from lava_scheduler_app import utils
 from lava_results_app.models import Query, TestCase, TestSuite
 from lava_scheduler_app.models import (
+    GroupWorkerPermission,
     Notification,
     NotificationCallback,
     NotificationRecipient,
     TestJob,
+    Worker,
 )
 from linaro_django_xmlrpc.models import AuthToken
 
@@ -457,3 +459,46 @@ def create_notification(job, data):
             create_callback(job, callback, notification)
     if "callback" in data:
         create_callback(job, data["callback"], notification)
+
+
+def send_upgraded_master_notifications(master_version):
+    logger = logging.getLogger("lava_scheduler_app")
+
+    emails = ()
+    for user in (
+        User.objects.filter(
+            groups__in=GroupWorkerPermission.objects.all().values("group")
+        )
+        .exclude(email="")
+        .distinct()
+    ):
+
+        workers = (
+            Worker.objects.filter(state=Worker.STATE_ONLINE)
+            .exclude(version=master_version, master_version_notified=master_version)
+            .accessible_by_user(user, Worker.CHANGE_PERMISSION)
+        )
+
+        if workers:
+            kwargs = {"hostname": dbutils.get_domain(), "workers": workers}
+            title = "LAVA: Worker upgrade notification for %s" % (user.username,)
+            kwargs["user"] = {
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+            }
+            template_env = Notification.TEMPLATES_ENV
+            body = template_env.get_template(Worker.MASTER_UPGRADE_NOTIFICATION).render(
+                **kwargs
+            )
+            emails += ((title, body, settings.SERVER_EMAIL, [user.email]),)
+
+    try:
+        logger.info("sending worker upgrade notifications")
+        send_mass_mail(emails)
+    except Exception as exc:
+        logger.exception(exc)
+        logger.warning("failed to send worker upgrade notifications")
+    # If all went well, update relevant field to current master version
+    Worker.objects.filter(state=Worker.STATE_ONLINE).update(
+        master_version_notified=master_version
+    )
