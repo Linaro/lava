@@ -27,8 +27,6 @@ from lava_common.exceptions import ConfigurationError, JobError
 from lava_dispatcher.action import Action
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
-from lava_dispatcher.actions.deploy import DeployAction
-from lava_dispatcher.actions.boot import BootAction
 from lava_dispatcher.actions.boot.u_boot import BootloaderInterruptAction, UBootAction
 from tests.lava_dispatcher.test_basic import StdoutTestCase, Factory
 from tests.utils import DummyLogger, infrastructure_error
@@ -75,27 +73,29 @@ class TestJobDeviceParameters(StdoutTestCase):
         job = factory.create_job("bbb-01.jinja2", "sample_jobs/uboot-ramdisk.yaml")
         uboot_action = None
         device = job.device
-        for action in job.pipeline.actions:
-            if isinstance(action, DeployAction):
-                self.assertIn("ramdisk", action.parameters)
-            if isinstance(action, BootAction):
-                self.assertIn("method", action.parameters)
-                self.assertEqual("u-boot", action.parameters["method"])
 
-                methods = device["actions"]["boot"]["methods"]
-                self.assertIn("ramdisk", methods["u-boot"])
-                self.assertIn("bootloader_prompt", methods["u-boot"]["parameters"])
-                self.assertIsNotNone(
-                    methods[action.parameters["method"]][action.parameters["commands"]][
-                        "commands"
-                    ]
-                )
-                for line in methods[action.parameters["method"]][
-                    action.parameters["commands"]
-                ]["commands"]:
-                    self.assertIsNotNone(line)
-                self.assertIsInstance(action, UBootAction)
-                uboot_action = action
+        action = job.pipeline.actions[0]
+        self.assertIn("ramdisk", action.parameters)
+
+        action = job.pipeline.actions[1]
+        self.assertIn("method", action.parameters)
+        self.assertEqual("u-boot", action.parameters["method"])
+
+        methods = device["actions"]["boot"]["methods"]
+        self.assertIn("ramdisk", methods["u-boot"])
+        self.assertIn("bootloader_prompt", methods["u-boot"]["parameters"])
+        self.assertIsNotNone(
+            methods[action.parameters["method"]][action.parameters["commands"]][
+                "commands"
+            ]
+        )
+        for line in methods[action.parameters["method"]][action.parameters["commands"]][
+            "commands"
+        ]:
+            self.assertIsNotNone(line)
+        self.assertIsInstance(action, UBootAction)
+        uboot_action = action
+
         self.assertIsNotNone(uboot_action)
         uboot_action.validate()
         self.assertTrue(uboot_action.valid)

@@ -28,7 +28,6 @@ from lava_common.exceptions import JobError
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.actions.boot import BootloaderSecondaryMedia
-from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.removable import MassStorage
 from tests.utils import DummyLogger, infrastructure_error
 from lava_dispatcher.utils.strings import substitute, map_kernel_uboot
@@ -95,19 +94,17 @@ class TestRemovable(StdoutTestCase):
 
     def _check_job_parameters(self, device, job, agent_key):
         mass_storage = None  # deploy
-        for action in job.pipeline.actions:
-            if isinstance(action, DeployAction):
-                if isinstance(action, MassStorage):
-                    self.assertTrue(action.valid)
-                    agent = action.parameters[agent_key]["tool"]
-                    self.assertTrue(
-                        agent.startswith("/")
-                    )  # needs to be a full path but on the device, so avoid os.path
-                    self.assertIn(
-                        action.parameters["device"],
-                        job.device["parameters"]["media"]["usb"],
-                    )
-                    mass_storage = action
+        action = job.pipeline.actions[3]
+        self.assertTrue(action.valid)
+        agent = action.parameters[agent_key]["tool"]
+        self.assertTrue(
+            agent.startswith("/")
+        )  # needs to be a full path but on the device, so avoid os.path
+        self.assertIn(
+            action.parameters["device"], job.device["parameters"]["media"]["usb"]
+        )
+        mass_storage = action
+
         self.assertIsNotNone(mass_storage)
         self.assertIn("device", mass_storage.parameters)
         self.assertIn(

@@ -26,7 +26,6 @@ from lava_common.exceptions import JobError, InfrastructureError
 from lava_dispatcher.protocols.lxc import LxcProtocol
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from tests.utils import infrastructure_error, infrastructure_error_multi_paths
-from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.fastboot import FastbootFlashOrderAction
 from lava_dispatcher.actions.boot.fastboot import BootAction
 from lava_dispatcher.utils.fastboot import BaseAction
@@ -247,8 +246,7 @@ class TestFastbootDeploy(StdoutTestCase):
         self.assertEqual(self.job.pipeline.job, self.job)
         self.assertIsInstance(self.job.device["device_info"], list)
         for action in self.job.pipeline.actions:
-            if isinstance(action, DeployAction):
-                self.assertEqual(action.job, self.job)
+            self.assertEqual(action.job, self.job)
 
     def test_pipeline(self):
         description_ref = self.pipeline_reference("fastboot.yaml", job=self.job)
@@ -361,15 +359,13 @@ class TestFastbootDeploy(StdoutTestCase):
 
     def test_overlay(self):
         overlay = None
-        for action in self.job.pipeline.actions:
-            self.assertIsNotNone(action.name)
-            if isinstance(action, DeployAction):
-                if action.parameters["namespace"] == "tlxc":
-                    overlay = [
-                        action
-                        for action in action.pipeline.actions
-                        if action.name == "lava-overlay"
-                    ][0]
+        action = self.job.pipeline.actions[0]
+        self.assertEqual(action.parameters["namespace"], "tlxc")
+        overlay = [
+            action
+            for action in action.pipeline.actions
+            if action.name == "lava-overlay"
+        ][0]
         self.assertIsNotNone(overlay)
         # these tests require that lava-dispatcher itself is installed, not just running tests from a git clone
         self.assertTrue(os.path.exists(overlay.lava_test_dir))
@@ -521,25 +517,23 @@ class TestFastbootDeploy(StdoutTestCase):
             "rootfs",
         ]
         flash_order = None
-        for action in job.pipeline.actions:
-            self.assertIsNotNone(action.name)
-            if isinstance(action, DeployAction):
-                if action.name == "fastboot-deploy":
-                    flash_order = [
-                        action
-                        for action in action.pipeline.actions
-                        if action.name == "fastboot-flash-order-action"
-                    ][0]
-                    flash_action = [
-                        action
-                        for action in flash_order.pipeline.actions
-                        if action.name == "fastboot-flash-action"
-                    ][0]
-                    flash_cmds = [
-                        action.command
-                        for action in flash_order.pipeline.actions
-                        if action.name == "fastboot-flash-action"
-                    ]
+        action = job.pipeline.actions[2]
+        self.assertEqual(action.name, "fastboot-deploy")
+        flash_order = [
+            action
+            for action in action.pipeline.actions
+            if action.name == "fastboot-flash-order-action"
+        ][0]
+        flash_action = [
+            action
+            for action in flash_order.pipeline.actions
+            if action.name == "fastboot-flash-action"
+        ][0]
+        flash_cmds = [
+            action.command
+            for action in flash_order.pipeline.actions
+            if action.name == "fastboot-flash-action"
+        ]
         self.assertIsNotNone(flash_order)
         self.assertIsNotNone(flash_action)
         self.assertEqual(flash_action.timeout_exception, InfrastructureError)
@@ -555,20 +549,18 @@ class TestFastbootDeploy(StdoutTestCase):
         self.assertEqual(description_ref, job.pipeline.describe(False))
         flash_order = None
         expected_flash_cmds = ["boot", "system", "userdata", "cache"]
-        for action in job.pipeline.actions:
-            self.assertIsNotNone(action.name)
-            if isinstance(action, DeployAction):
-                if action.name == "fastboot-deploy":
-                    flash_order = [
-                        action
-                        for action in action.pipeline.actions
-                        if action.name == "fastboot-flash-order-action"
-                    ][0]
-                    flash_cmds = [
-                        action.command
-                        for action in flash_order.pipeline.actions
-                        if action.name == "fastboot-flash-action"
-                    ]
+        action = job.pipeline.actions[2]
+        self.assertEqual(action.name, "fastboot-deploy")
+        flash_order = [
+            action
+            for action in action.pipeline.actions
+            if action.name == "fastboot-flash-order-action"
+        ][0]
+        flash_cmds = [
+            action.command
+            for action in flash_order.pipeline.actions
+            if action.name == "fastboot-flash-action"
+        ]
         self.assertIsNotNone(flash_order)
         self.assertIsInstance(flash_order, FastbootFlashOrderAction)
         self.assertEqual(expected_flash_cmds, flash_cmds)
