@@ -104,7 +104,7 @@ def test_run(monkeypatch):
 def test_accepts():
     pipe = Pipeline(job=Job(1234, {}, None))
     pipe.add_action = lambda a, b: None
-    flasher = Flasher(pipe, {})
+    flasher = Flasher
 
     # Normal case
     device = {"actions": {"deploy": {"methods": "flasher"}}}

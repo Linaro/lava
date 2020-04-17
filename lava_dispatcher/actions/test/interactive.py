@@ -40,12 +40,9 @@ class TestInteractive(LavaTest):
     TestInteractive Strategy object
     """
 
-    def __init__(self, parent, parameters):
-        super().__init__(parent)
-        self.action = TestInteractiveRetry()
-        self.action.job = self.job
-        self.action.section = self.action_type
-        parent.add_action(self.action, parameters)
+    @classmethod
+    def action(cls, parameters):
+        return TestInteractiveRetry()
 
     @classmethod
     def accepts(cls, device, parameters):

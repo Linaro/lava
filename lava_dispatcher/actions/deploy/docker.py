@@ -112,12 +112,9 @@ class Docker(Deployment):
     compatibility = 4
     name = "docker"
 
-    def __init__(self, parent, parameters):
-        super().__init__(parent)
-        self.action = DockerAction()
-        self.action.section = self.action_type
-        self.action.job = self.job
-        parent.add_action(self.action, parameters)
+    @classmethod
+    def action(cls):
+        return DockerAction()
 
     @classmethod
     def accepts(cls, device, parameters):

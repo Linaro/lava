@@ -31,12 +31,9 @@ from lava_dispatcher.shell import ExpectShellSession, ShellCommand, ShellSession
 class BootDocker(Boot):
     compatibility = 4
 
-    def __init__(self, parent, parameters):
-        super().__init__(parent)
-        self.action = BootDockerAction()
-        self.action.section = self.action_type
-        self.action.job = self.job
-        parent.add_action(self.action, parameters)
+    @classmethod
+    def action(cls):
+        return BootDockerAction()
 
     @classmethod
     def accepts(cls, device, parameters):

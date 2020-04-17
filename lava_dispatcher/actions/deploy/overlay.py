@@ -40,12 +40,9 @@ class Overlay(Deployment):
     compatibility = 4
     name = "overlay"
 
-    def __init__(self, parent, parameters):
-        super().__init__(parent)
-        self.action = OverlayAction()
-        self.action.section = self.action_type
-        self.action.job = self.job
-        parent.add_action(self.action, parameters)
+    @classmethod
+    def action(cls):
+        return OverlayAction()
 
     @classmethod
     def accepts(cls, device, parameters):

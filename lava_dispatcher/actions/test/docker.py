@@ -40,12 +40,9 @@ class DockerTest(LavaTest):
 
     priority = 10
 
-    def __init__(self, parent, parameters):
-        super().__init__(parent)
-        self.action = DockerTestAction()
-        self.action.job = self.job
-        self.action.section = self.action_type
-        parent.add_action(self.action, parameters)
+    @classmethod
+    def action(cls, parameters):
+        return DockerTestAction()
 
     @classmethod
     def accepts(cls, device, parameters):

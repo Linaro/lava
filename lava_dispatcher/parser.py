@@ -44,16 +44,16 @@ def parse_action(job_data, name, device, pipeline, test_info, test_count):
         parameters.update(pipeline.job.parameters["protocols"])
 
     if name == "boot":
-        Boot.select(device, parameters)(pipeline, parameters)
+        cls = Boot.select(device, parameters)
+        action = cls.action()
     elif name == "test":
         # stage starts at 0
         parameters["stage"] = test_count - 1
-        action = LavaTest.select(device, parameters)
-        action(pipeline, parameters)
-        return action
+        cls = LavaTest.select(device, parameters)
+        action = cls.action(parameters)
     elif name == "deploy":
-        candidate = Deployment.select(device, parameters)
-        if parameters["namespace"] in test_info and candidate.uses_deployment_data():
+        cls = Deployment.select(device, parameters)
+        if parameters["namespace"] in test_info and cls.uses_deployment_data():
             if any(
                 [
                     testclass
@@ -68,7 +68,13 @@ def parse_action(job_data, name, device, pipeline, test_info, test_count):
             parameters.update(
                 {"deployment_data": get_deployment_data(parameters.get("os", ""))}
             )
-        Deployment.select(device, parameters)(pipeline, parameters)
+        cls = Deployment.select(device, parameters)
+        action = cls.action()
+
+    action.section = cls.action_type
+    pipeline.add_action(action, parameters)
+    pipeline.job.compatibility = max(cls.compatibility, pipeline.job.compatibility)
+    return cls
 
 
 class JobParser:

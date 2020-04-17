@@ -55,13 +55,9 @@ class MultinodeTestShell(LavaTest):
     # higher priority than the plain TestShell
     priority = 2
 
-    def __init__(self, parent, parameters):
-        super().__init__(parent)
-        cls = get_subaction_class(parameters)
-        self.action = cls()
-        self.action.job = self.job
-        self.action.section = self.action_type
-        parent.add_action(self.action, parameters)
+    @classmethod
+    def action(cls, parameters):
+        return get_subaction_class(parameters)()
 
     @classmethod
     def accepts(cls, device, parameters):

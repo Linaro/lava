@@ -46,11 +46,9 @@ class Ssh(Deployment):
     compatibility = 1
     name = "ssh"
 
-    def __init__(self, parent, parameters):
-        super().__init__(parent)
-        self.action = ScpOverlay()
-        self.action.job = self.job
-        parent.add_action(self.action, parameters)
+    @classmethod
+    def action(cls):
+        return ScpOverlay()
 
     @classmethod
     def accepts(cls, device, parameters):

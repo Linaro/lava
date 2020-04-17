@@ -36,12 +36,9 @@ class UBootUMS(Deployment):
     compatibility = 1
     name = "uboot-ums"
 
-    def __init__(self, parent, parameters):
-        super().__init__(parent)
-        self.action = UBootUMSAction()
-        self.action.section = self.action_type
-        self.action.job = self.job
-        parent.add_action(self.action, parameters)
+    @classmethod
+    def action(cls):
+        return UBootUMSAction()
 
     @classmethod
     def accepts(cls, device, parameters):

@@ -81,12 +81,9 @@ class DeployQemuNfs(Deployment):
     compatibility = 5
     name = "qemu-nfs"
 
-    def __init__(self, parent, parameters):
-        super().__init__(parent)
-        self.action = DeployQemuNfsAction()
-        self.action.section = self.action_type
-        self.action.job = self.job
-        parent.add_action(self.action, parameters)
+    @classmethod
+    def action(cls):
+        return DeployQemuNfsAction()
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -229,12 +226,9 @@ class DeployImages(Deployment):
     compatibility = 4
     name = "images"
 
-    def __init__(self, parent, parameters):
-        super().__init__(parent)
-        self.action = DeployImagesAction()
-        self.action.section = self.action_type
-        self.action.job = self.job
-        parent.add_action(self.action, parameters)
+    @classmethod
+    def action(cls):
+        return DeployImagesAction()
 
     @classmethod
     def accepts(cls, device, parameters):
