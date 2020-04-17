@@ -64,7 +64,6 @@ class ScpOverlay(DeployAction):
     Prepares the overlay and copies it to the target
     """
 
-    section = "deploy"
     name = "scp-overlay"
     description = "prepare overlay and scp to device"
     summary = "copy overlay to device"

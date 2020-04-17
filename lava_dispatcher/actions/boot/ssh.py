@@ -58,7 +58,6 @@ class SshAction(RetryAction):
     Simple action to wrap AutoLoginAction and ExpectShellSession
     """
 
-    section = "boot"
     name = "login-ssh"
     description = "connect over ssh and ensure a shell is found"
     summary = "login over ssh"
@@ -311,7 +310,6 @@ class SchrootAction(Action):
 
     def __init__(self):
         super().__init__()
-        self.section = "boot"
         self.schroot = None
         self.command = None
 

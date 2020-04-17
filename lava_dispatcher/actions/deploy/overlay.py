@@ -695,7 +695,6 @@ class PersistentNFSOverlay(Action):
     so that it can be mounted later when the overlay is applied.
     """
 
-    section = "deploy"
     name = "persistent-nfs-overlay"
     description = "unpack overlay into persistent NFS"
     summary = "add test overlay to NFS"
