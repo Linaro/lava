@@ -27,7 +27,6 @@ from lava_dispatcher.protocols.lxc import LxcProtocol
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from tests.utils import infrastructure_error, infrastructure_error_multi_paths
 from lava_dispatcher.actions.deploy.fastboot import FastbootFlashOrderAction
-from lava_dispatcher.actions.boot.fastboot import BootAction
 from lava_dispatcher.utils.fastboot import BaseAction
 from lava_dispatcher.utils.fastboot import NullDriver, LxcDriver, DockerDriver
 from lava_dispatcher.utils.lxc import is_lxc_requested, lxc_cmd_prefix
@@ -386,15 +385,15 @@ class TestFastbootDeploy(StdoutTestCase):
 
     @unittest.skipIf(infrastructure_error("lxc-attach"), "lxc-attach not installed")
     def test_boot(self):
-        for action in self.job.pipeline.actions:
-            if isinstance(action, BootAction):
-                # get the action & populate it
-                if action.parameters.get("namespace") == "tlxc":
-                    self.assertIn(action.parameters["method"], ["lxc", "fastboot"])
-                    self.assertEqual(action.parameters["prompts"], ["root@(.*):/#"])
-                if action.parameters.get("namespace") == "droid":
-                    self.assertIn(action.parameters["method"], ["lxc", "fastboot"])
-                    self.assertEqual(action.parameters.get("prompts"), None)
+        action = self.job.pipeline.actions[1]
+        self.assertEqual(action.parameters.get("namespace"), "tlxc")
+        self.assertIn(action.parameters["method"], ["lxc", "fastboot"])
+        self.assertEqual(action.parameters["prompts"], ["root@(.*):/#"])
+
+        action = self.job.pipeline.actions[3]
+        self.assertEqual(action.parameters.get("namespace"), "droid")
+        self.assertIn(action.parameters["method"], ["lxc", "fastboot"])
+        self.assertEqual(action.parameters.get("prompts"), None)
 
     def test_testdefinitions(self):
         for action in self.job.pipeline.actions:

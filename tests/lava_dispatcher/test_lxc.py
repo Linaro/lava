@@ -27,7 +27,6 @@ from lava_dispatcher.parser import JobParser
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from tests.utils import DummyLogger, infrastructure_error
 from lava_dispatcher.actions.deploy.lxc import LxcCreateAction
-from lava_dispatcher.actions.boot.lxc import BootAction
 
 
 class LxcFactory(Factory):
@@ -95,11 +94,10 @@ class TestLxcDeploy(StdoutTestCase):
 
     @unittest.skipIf(infrastructure_error("lxc-start"), "lxc-start not installed")
     def test_boot(self):
-        for action in self.job.pipeline.actions:
-            if isinstance(action, BootAction):
-                # get the action & populate it
-                self.assertEqual(action.parameters["method"], "lxc")
-                self.assertEqual(action.parameters["prompts"], ["root@(.*):/#"])
+        action = self.job.pipeline.actions[1]
+        # get the action & populate it
+        self.assertEqual(action.parameters["method"], "lxc")
+        self.assertEqual(action.parameters["prompts"], ["root@(.*):/#"])
 
     def test_testdefinitions(self):
         for action in self.job.pipeline.actions:

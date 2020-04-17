@@ -32,7 +32,6 @@ from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.actions.deploy.image import DeployImagesAction
 from lava_dispatcher.actions.deploy.overlay import OverlayAction, MultinodeOverlayAction
 from lava_dispatcher.actions.boot.qemu import BootQemuRetry, CallQemuAction
-from lava_dispatcher.actions.boot import BootAction
 from lava_dispatcher.actions.test.multinode import MultinodeTestAction
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
 from tests.lava_dispatcher.test_defs import allow_missing_path
@@ -523,11 +522,7 @@ class TestMultinode(StdoutTestCase):
                             client_calls.update(call)
 
     def test_protocol_variables(self):
-        boot = [
-            action
-            for action in self.client_job.pipeline.actions
-            if isinstance(action, BootAction)
-        ][0]
+        boot = self.client_job.pipeline.actions[1]
         self.assertIsNotNone(boot)
         retry = [
             action

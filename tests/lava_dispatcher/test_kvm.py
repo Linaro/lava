@@ -32,7 +32,6 @@ from lava_common.exceptions import JobError, InfrastructureError
 from lava_dispatcher.utils.filesystem import mkdtemp
 from lava_dispatcher.action import Pipeline, Action
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
-from lava_dispatcher.actions.boot.qemu import BootAction
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
 from tests.lava_dispatcher.test_messages import FakeConnection
@@ -209,19 +208,18 @@ class TestKVMBasicDeploy(StdoutTestCase):
         self.assertIsNotNone(glob.glob(os.path.join(overlay.lava_test_dir, "lava-*")))
 
     def test_boot(self):
-        for action in self.job.pipeline.actions:
-            if isinstance(action, BootAction):
-                # get the action & populate it
-                self.assertEqual(action.parameters["method"], "qemu")
-                self.assertEqual(
-                    action.parameters["prompts"], ["linaro-test", "root@debian:~#"]
-                )
-                params = action.parameters.get("auto_login")
+        action = self.job.pipeline.actions[1]
+        # get the action & populate it
+        self.assertEqual(action.parameters["method"], "qemu")
+        self.assertEqual(
+            action.parameters["prompts"], ["linaro-test", "root@debian:~#"]
+        )
+        params = action.parameters.get("auto_login")
 
-                if "login_prompt" in params:
-                    self.assertEqual(params["login_prompt"], "login:")
-                if "username" in params:
-                    self.assertEqual(params["username"], "root")
+        if "login_prompt" in params:
+            self.assertEqual(params["login_prompt"], "login:")
+        if "username" in params:
+            self.assertEqual(params["username"], "root")
 
     def test_testdefinitions(self):
         for action in self.job.pipeline.actions:
