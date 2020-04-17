@@ -40,13 +40,9 @@ class UUU(Deployment):
     compatibility = 1
     name = "uuu"
 
-    def __init__(self, parent, parameters):
-        super().__init__(parent)
-        self.action = UUUAction()
-        self.action.section = self.action_type
-        self.action.job = self.job
-        self.parameters = parameters
-        parent.add_action(self.action, parameters)
+    @classmethod
+    def action(cls):
+        return UUUAction()
 
     @classmethod
     def accepts(cls, device, parameters):

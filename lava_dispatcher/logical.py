@@ -141,13 +141,6 @@ class Deployment:
     priority = 0
     action_type = "deploy"
     compatibility = 0
-    name = "unset-deployment-name"
-
-    def __init__(self, parent):
-        self.__parameters__ = {}
-        self.pipeline = parent
-        self.job = parent.job
-        self.job.compatibility = max(self.compatibility, self.job.compatibility)
 
     @property
     def parameters(self):
@@ -242,12 +235,6 @@ class Boot:
     action_type = "boot"
     compatibility = 0
 
-    def __init__(self, parent):
-        self.__parameters__ = {}
-        self.pipeline = parent
-        self.job = parent.job
-        self.job.compatibility = max(self.compatibility, self.job.compatibility)
-
     @classmethod
     def boot_check(cls, device, parameters):
         if not device:
@@ -316,12 +303,6 @@ class LavaTest:
     priority = 1
     action_type = "test"
     compatibility = 1  # used directly
-
-    def __init__(self, parent):
-        self.__parameters__ = {}
-        self.pipeline = parent
-        self.job = parent.job
-        self.job.compatibility = max(self.compatibility, self.job.compatibility)
 
     @classmethod
     def accepts(cls, device, parameters):

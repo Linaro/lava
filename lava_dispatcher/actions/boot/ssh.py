@@ -40,11 +40,9 @@ class SshLogin(Boot):
 
     compatibility = 1
 
-    def __init__(self, parent, parameters):
-        super().__init__(parent)
-        self.action = SshAction()
-        self.action.job = self.job
-        parent.add_action(self.action, parameters)
+    @classmethod
+    def action(cls):
+        return SshAction()
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -281,11 +279,9 @@ class ScpOverlayUnpack(Action):
 
 
 class Schroot(Boot):
-    def __init__(self, parent, parameters):
-        super().__init__(parent)
-        self.action = SchrootAction()
-        self.action.job = self.job
-        parent.add_action(self.action, parameters)
+    @classmethod
+    def action(cls):
+        return SchrootAction()
 
     @classmethod
     def accepts(cls, device, parameters):

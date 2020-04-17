@@ -43,12 +43,9 @@ class Nfs(Deployment):
     compatibility = 1
     name = "nfs"
 
-    def __init__(self, parent, parameters):
-        super().__init__(parent)
-        self.action = NfsAction()
-        self.action.section = self.action_type
-        self.action.job = self.job
-        parent.add_action(self.action, parameters)
+    @classmethod
+    def action(cls):
+        return NfsAction()
 
     @classmethod
     def accepts(cls, device, parameters):

@@ -835,12 +835,9 @@ class Download(Deployment):
     compatibility = 1
     name = "download"
 
-    def __init__(self, parent, parameters):
-        super().__init__(parent)
-        self.action = DownloadAction()
-        self.action.section = self.action_type
-        self.action.job = self.job
-        parent.add_action(self.action, parameters)
+    @classmethod
+    def action(cls):
+        return DownloadAction()
 
     @classmethod
     def accepts(cls, device, parameters):

@@ -50,12 +50,9 @@ class Removable(Deployment):
     compatibility = 1
     name = "removable"
 
-    def __init__(self, parent, parameters):
-        super().__init__(parent)
-        self.action = MassStorage()
-        self.action.job = self.job
-        self.action.section = self.action_type
-        parent.add_action(self.action, parameters)
+    @classmethod
+    def action(cls):
+        return MassStorage()
 
     @classmethod
     def accepts(cls, device, parameters):

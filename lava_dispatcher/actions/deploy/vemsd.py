@@ -50,12 +50,9 @@ class VExpressMsd(Deployment):
     compatibility = 1
     name = "vemsd"
 
-    def __init__(self, parent, parameters):
-        super().__init__(parent)
-        self.action = VExpressMsdRetry()
-        self.action.section = self.action_type
-        self.action.job = self.job
-        parent.add_action(self.action, parameters)
+    @classmethod
+    def action(cls):
+        return VExpressMsdRetry()
 
     @classmethod
     def uses_deployment_data(cls):

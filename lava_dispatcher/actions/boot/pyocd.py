@@ -33,12 +33,9 @@ class PyOCD(Boot):
 
     compatibility = 4  # FIXME: change this to 5 and update test cases
 
-    def __init__(self, parent, parameters):
-        super().__init__(parent)
-        self.action = BootPyOCD()
-        self.action.section = self.action_type
-        self.action.job = self.job
-        parent.add_action(self.action, parameters)
+    @classmethod
+    def action(cls):
+        return BootPyOCD()
 
     @classmethod
     def accepts(cls, device, parameters):

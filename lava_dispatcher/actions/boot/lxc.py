@@ -38,12 +38,9 @@ class BootLxc(Boot):
 
     compatibility = 1
 
-    def __init__(self, parent, parameters):
-        super().__init__(parent)
-        self.action = BootLxcAction()
-        self.action.section = self.action_type
-        self.action.job = self.job
-        parent.add_action(self.action, parameters)
+    @classmethod
+    def action(cls):
+        return BootLxcAction()
 
     @classmethod
     def accepts(cls, device, parameters):
