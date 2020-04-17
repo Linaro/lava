@@ -21,7 +21,6 @@
 import unittest
 from lava_common.exceptions import JobError
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
-from lava_dispatcher.actions.deploy import DeployAction
 from tests.utils import infrastructure_error_multi_paths
 
 
@@ -37,8 +36,7 @@ class TestDownloadDeploy(StdoutTestCase):
         self.assertEqual(self.job.pipeline.job, self.job)
         self.assertIsInstance(self.job.device["device_info"], list)
         for action in self.job.pipeline.actions:
-            if isinstance(action, DeployAction):
-                self.assertEqual(action.job, self.job)
+            self.assertEqual(action.job, self.job)
 
     def test_pipeline(self):
         description_ref = self.pipeline_reference("download.yaml", job=self.job)

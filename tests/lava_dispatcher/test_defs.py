@@ -34,10 +34,9 @@ from lava_common.decorators import nottest
 from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.power import FinalizeAction
 from lava_dispatcher.parser import JobParser
-from lava_dispatcher.actions.test.shell import TestShellRetry, PatternFixup
+from lava_dispatcher.actions.test.shell import PatternFixup
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from tests.lava_dispatcher.test_uboot import UBootFactory
-from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.image import DeployImagesAction
 from lava_dispatcher.actions.deploy.testdef import (
     TestDefinitionAction,
@@ -81,11 +80,9 @@ class TestDefinitionHandlers(StdoutTestCase):
 
     def test_testdef(self):
         testdef = overlay = None
-        for action in self.job.pipeline.actions:
-            self.assertIsNotNone(action.name)
-            if isinstance(action, DeployAction):
-                overlay = action.pipeline.actions[2]
-                testdef = overlay.pipeline.actions[2]
+        action = self.job.pipeline.actions[0]
+        overlay = action.pipeline.actions[2]
+        testdef = overlay.pipeline.actions[2]
         self.assertEqual(len(overlay.pipeline.actions), 5)
         self.assertIsInstance(testdef, TestDefinitionAction)
         testdef.validate()
@@ -231,12 +228,11 @@ class TestDefinitionHandlers(StdoutTestCase):
         ]
 
         overlay = None
-        for action in self.job.pipeline.actions:
-            if isinstance(action, DeployAction):
-                for child in action.pipeline.actions:
-                    if isinstance(child, OverlayAction):
-                        overlay = child
-                        break
+        action = self.job.pipeline.actions[0]
+        for child in action.pipeline.actions:
+            if isinstance(child, OverlayAction):
+                overlay = child
+                break
         self.assertIsInstance(overlay, OverlayAction)
         # Generic scripts
         scripts_to_copy = glob.glob(os.path.join(overlay.lava_test_dir, "lava-*"))
@@ -283,7 +279,7 @@ class TestDefinitionSimple(StdoutTestCase):
             deploy = self.job.pipeline.actions[0]
             boot = self.job.pipeline.actions[1]
             finalize = self.job.pipeline.actions[2]
-        self.assertIsInstance(deploy, DeployAction)
+        self.assertEqual(deploy.name, "deployimages")
         self.assertIsInstance(boot, BootAction)
         self.assertIsInstance(finalize, FinalizeAction)
         self.assertEqual(len(self.job.pipeline.actions), 3)  # deploy, boot, finalize
@@ -411,34 +407,6 @@ class TestDefinitionParams(StdoutTestCase):
         runner_path = tempfile.mkdtemp()
         test_install.install_git_repos(testdef, runner_path)
         shutil.rmtree(runner_path)
-
-
-class TestDefinitionRepeat(StdoutTestCase):
-    def setUp(self):
-        super().setUp()
-        factory = Factory()
-        self.job = factory.create_kvm_job("sample_jobs/kvm-multi.yaml")
-
-    def test_multiple_tests(self):
-        deploy = []
-        boot = []
-        shell = []
-        finalize = []
-        for action in self.job.pipeline.actions:
-            if isinstance(action, DeployAction):
-                deploy.append(action)
-            elif isinstance(action, BootAction):
-                boot.append(action)
-            elif isinstance(action, TestShellRetry):
-                shell.append(action)
-            elif isinstance(action, FinalizeAction):
-                finalize.append(action)
-            else:
-                self.fail(action.name)
-        self.assertEqual(len(deploy), 1)
-        self.assertEqual(len(boot), 2)
-        self.assertEqual(len(shell), 2)
-        self.assertEqual(len(finalize), 1)
 
 
 class TestSkipInstall(StdoutTestCase):

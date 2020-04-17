@@ -32,7 +32,6 @@ from lava_common.exceptions import JobError, InfrastructureError
 from lava_dispatcher.utils.filesystem import mkdtemp
 from lava_dispatcher.action import Pipeline, Action
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
-from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.boot.qemu import BootAction
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
@@ -149,9 +148,8 @@ class TestKVMBasicDeploy(StdoutTestCase):
 
     def test_deploy_job(self):
         self.assertEqual(self.job.pipeline.job, self.job)
-        for action in self.job.pipeline.actions:
-            if isinstance(action, DeployAction):
-                self.assertEqual(action.job, self.job)
+        action = self.job.pipeline.actions[0]
+        self.assertEqual(action.job, self.job)
 
     def test_pipeline(self):
         description_ref = self.pipeline_reference("kvm.yaml", job=self.job)
@@ -190,10 +188,8 @@ class TestKVMBasicDeploy(StdoutTestCase):
 
     def test_overlay(self):
         overlay = None
-        for action in self.job.pipeline.actions:
-            self.assertIsNotNone(action.name)
-            if isinstance(action, DeployAction):
-                overlay = action.pipeline.actions[2]
+        action = self.job.pipeline.actions[0]
+        overlay = action.pipeline.actions[2]
         self.assertIsNotNone(overlay)
         # these tests require that lava-dispatcher itself is installed, not just running tests from a git clone
         self.assertTrue(os.path.exists(overlay.lava_test_dir))
@@ -242,9 +238,8 @@ class TestKVMPortable(StdoutTestCase):
 
     def test_deploy_job(self):
         self.assertEqual(self.job.pipeline.job, self.job)
-        for action in self.job.pipeline.actions:
-            if isinstance(action, DeployAction):
-                self.assertEqual(action.job, self.job)
+        action = self.job.pipeline.actions[0]
+        self.assertEqual(action.job, self.job)
 
     def test_pipeline(self):
         description_ref = self.pipeline_reference("kvm-noos.yaml", job=self.job)
@@ -267,12 +262,6 @@ class TestKVMQcow2Deploy(StdoutTestCase):
         factory = Factory()
         self.job = factory.create_kvm_job("sample_jobs/kvm-qcow2.yaml")
 
-    def test_deploy_job(self):
-        self.assertEqual(self.job.pipeline.job, self.job)
-        for action in self.job.pipeline.actions:
-            if isinstance(action, DeployAction):
-                self.assertEqual(action.job, self.job)
-
     def test_pipeline(self):
         description_ref = self.pipeline_reference("kvm-qcow2.yaml", job=self.job)
         self.assertEqual(description_ref, self.job.pipeline.describe(False))
@@ -288,17 +277,22 @@ class TestKVMQcow2Deploy(StdoutTestCase):
             self.assertEqual([], action.errors)
 
 
+class TestKVMMultiTests(StdoutTestCase):
+    def setUp(self):
+        super().setUp()
+        factory = Factory()
+        self.job = factory.create_kvm_job("sample_jobs/kvm-multi.yaml")
+
+    def test_pipeline(self):
+        description_ref = self.pipeline_reference("kvm-multi.yaml", job=self.job)
+        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+
+
 class TestKVMDownloadLocalDeploy(StdoutTestCase):
     def setUp(self):
         super().setUp()
         factory = Factory()
         self.job = factory.create_kvm_job("sample_jobs/kvm-local.yaml")
-
-    def test_deploy_job(self):
-        self.assertEqual(self.job.pipeline.job, self.job)
-        for action in self.job.pipeline.actions:
-            if isinstance(action, DeployAction):
-                self.assertEqual(action.job, self.job)
 
     def test_pipeline(self):
         description_ref = self.pipeline_reference("kvm-local.yaml", job=self.job)
@@ -333,12 +327,6 @@ class TestKVMInlineTestDeploy(StdoutTestCase):
         super().setUp()
         self.factory = Factory()
         self.job = self.factory.create_kvm_job("sample_jobs/kvm-inline.yaml")
-
-    def test_deploy_job(self):
-        self.assertEqual(self.job.pipeline.job, self.job)
-        for action in self.job.pipeline.actions:
-            if isinstance(action, DeployAction):
-                self.assertEqual(action.job, self.job)
 
     def test_validate(self):
         try:
@@ -404,15 +392,14 @@ class TestKVMInlineTestDeploy(StdoutTestCase):
 
         self.assertEqual(len(self.job.pipeline.describe()), 4)
         inline_repo = None
-        for action in self.job.pipeline.actions:
-            if isinstance(action, DeployAction):
-                self.assertIsNotNone(action.pipeline.actions[1])
-                overlay = action.pipeline.actions[1]
-                self.assertIsNotNone(overlay.pipeline.actions[1])
-                testdef = overlay.pipeline.actions[2]
-                self.assertIsNotNone(testdef.pipeline.actions[0])
-                inline_repo = testdef.pipeline.actions[0]
-                break
+        action = self.job.pipeline.actions[0]
+        self.assertIsNotNone(action.pipeline.actions[1])
+        overlay = action.pipeline.actions[1]
+        self.assertIsNotNone(overlay.pipeline.actions[1])
+        testdef = overlay.pipeline.actions[2]
+        self.assertIsNotNone(testdef.pipeline.actions[0])
+        inline_repo = testdef.pipeline.actions[0]
+
         # Test the InlineRepoAction directly
         self.assertIsNotNone(inline_repo)
         location = mkdtemp()

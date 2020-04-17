@@ -26,8 +26,7 @@ from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_common.decorators import nottest
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.job import Job
-from lava_dispatcher.action import Pipeline, Timeout
-from lava_dispatcher.actions.deploy import DeployAction
+from lava_dispatcher.action import Action, Pipeline, Timeout
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
 from tests.lava_dispatcher.test_uboot import UBootFactory
@@ -85,7 +84,7 @@ class TestMultiDeploy(StdoutTestCase):
             self.action.section = "internal"
             parent.add_action(self.action, parameters)
 
-    class TestDeployAction(DeployAction):
+    class TestDeployAction(Action):
 
         name = "fake-deploy"
         description = "fake for tests only"

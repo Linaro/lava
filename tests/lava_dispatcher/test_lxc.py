@@ -26,7 +26,6 @@ from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from tests.utils import DummyLogger, infrastructure_error
-from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.lxc import LxcCreateAction
 from lava_dispatcher.actions.boot.lxc import BootAction
 
@@ -62,8 +61,7 @@ class TestLxcDeploy(StdoutTestCase):
     def test_deploy_job(self):
         self.assertEqual(self.job.pipeline.job, self.job)
         for action in self.job.pipeline.actions:
-            if isinstance(action, DeployAction):
-                self.assertEqual(action.job, self.job)
+            self.assertEqual(action.job, self.job)
 
     def test_pipeline(self):
         description_ref = self.pipeline_reference("lxc.yaml", job=self.job)
