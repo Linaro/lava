@@ -45,7 +45,6 @@ from lava_dispatcher.actions.deploy.testdef import (
     TestInstallAction,
     TestRunnerAction,
 )
-from lava_dispatcher.actions.boot import BootAction
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from tests.utils import infrastructure_error, infrastructure_error_multi_paths
@@ -280,7 +279,7 @@ class TestDefinitionSimple(StdoutTestCase):
             boot = self.job.pipeline.actions[1]
             finalize = self.job.pipeline.actions[2]
         self.assertEqual(deploy.name, "deployimages")
-        self.assertIsInstance(boot, BootAction)
+        self.assertEqual(boot.section, "boot")
         self.assertIsInstance(finalize, FinalizeAction)
         self.assertEqual(len(self.job.pipeline.actions), 3)  # deploy, boot, finalize
         self.assertIsInstance(deploy.pipeline.actions[0], DownloaderAction)
@@ -326,7 +325,7 @@ class TestDefinitionParams(StdoutTestCase):
         install = testdef.pipeline.actions[2]
         runsh = testdef.pipeline.actions[3]
         self.assertIsInstance(deploy, DeployImagesAction)
-        self.assertIsInstance(boot, BootAction)
+        self.assertEqual(boot.section, "boot")
         self.assertIsInstance(finalize, FinalizeAction)
         self.assertEqual(
             len(self.job.pipeline.actions), 4
