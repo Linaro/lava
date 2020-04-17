@@ -19,6 +19,7 @@
 
 import csv
 import io
+import os
 import pathlib
 import voluptuous
 import yaml
@@ -28,6 +29,7 @@ from django.conf import settings
 from django.http.response import HttpResponse
 from django.http import Http404
 
+from lava_common.version import __version__
 from lava_common.compat import yaml_dump, yaml_safe_load
 from lava_results_app.models import TestSuite, TestCase
 from lava_results_app.utils import (
@@ -668,3 +670,90 @@ class SystemViewSet(viewsets.ViewSet):
             "attachment; filename=%s" % master_key_path.name
         )
         return response
+
+    @action(detail=False, methods=["get"], suffix="master_config")
+    def master_config(self, request, **kwargs):
+        """
+        Name
+        ----
+        `master_config` ()
+
+        Description
+        -----------
+        Return a dictionary containing the master and logger ZMQ
+        socket addresses for this instance.
+
+        Arguments
+        ---------
+        None
+
+        Return value
+        ------------
+        Returns a dictionary containing the following keys:
+        {
+          "MASTER_URL": "tcp://<lava-master-dns>:5556",
+          "LOGGING_URL": "tcp://<lava-master-dns>:5555",
+          "ENCRYPT": False,
+          "IPv6": False,
+          "EVENT_SOCKET": "tcp://*:5500",
+          "EVENT_TOPIC": "org.linaro.validation",
+          "EVENT_NOTIFICATION": True,
+          "LOG_SIZE_LIMIT": 10,
+        }
+
+        If ENCRYPT is True, clients MUST already have a usable
+        client certificate installed on the master AND the current
+        master certificate installed on the client, before a
+        connection can be made.
+        """
+        data = {
+            "master_socket": "tcp://<lava-master-dns>:5556",
+            "socket": "tcp://<lava-master-dns>:5555",
+            "encrypt": False,
+            "ipv6": False,
+        }
+
+        master = {"ERROR": "invalid master config"}
+        filename = os.path.join(settings.MEDIA_ROOT, "lava-master-config.yaml")
+        if os.path.exists(filename):
+            try:
+                with open(filename, "r") as output:
+                    master = yaml_safe_load(output)
+            except yaml.YAMLError as exc:
+                return Response(
+                    data=master, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+        if master:
+            data.update(master)
+
+        log_config = {"ERROR": "invalid logging config"}
+        filename = os.path.join(settings.MEDIA_ROOT, "lava-logs-config.yaml")
+        if os.path.exists(filename):
+            try:
+                with open(filename, "r") as output:
+                    log_config = yaml_safe_load(output)
+            except yaml.YAMLError as exc:
+                return Response(
+                    data=log_config, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+        if log_config:
+            data.update(log_config)
+        ret_dict = {
+            "MASTER_URL": data["master_socket"],
+            "LOGGING_URL": data["socket"],
+            "IPv6": data["ipv6"],
+            "ENCRYPT": data.get("encrypt", False),
+            "EVENT_TOPIC": settings.EVENT_TOPIC,
+            "EVENT_SOCKET": settings.EVENT_SOCKET,
+            "EVENT_NOTIFICATION": settings.EVENT_NOTIFICATION,
+            "LOG_SIZE_LIMIT": settings.LOG_SIZE_LIMIT,
+        }
+        return Response(data=ret_dict)
+
+    @action(detail=False, methods=["get"], suffix="version")
+    def version(self, request, **kwargs):
+        return Response(data={"version": __version__})
+
+    @action(detail=False, methods=["get"], suffix="whoami")
+    def whoami(self, request, **kwargs):
+        return Response(data={"user": request.user.username})

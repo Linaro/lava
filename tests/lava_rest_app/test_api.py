@@ -30,6 +30,7 @@ from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APIClient
 
+from lava_common.version import __version__
 from lava_common.compat import yaml_load
 from lava_scheduler_app.models import (
     Alias,
@@ -1522,6 +1523,42 @@ ok 2 bar
             reverse("api-root", args=[self.version]) + "system/certificate/"
         )
         assert response.status_code == 404  # nosec
+
+    def test_system_version(self):
+        version = self.hit(
+            self.userclient,
+            reverse("api-root", args=[self.version]) + "system/version/",
+        )
+        assert version["version"] == __version__
+        response = self.userclient_no_token.get(
+            reverse("api-root", args=[self.version]) + "system/version/"
+        )
+        assert response.status_code == 403  # nosec
+
+    def test_system_whoami(self):
+        response = self.hit(
+            self.userclient, reverse("api-root", args=[self.version]) + "system/whoami/"
+        )
+        assert response["user"] == self.user.username
+        response = self.userclient_no_token.get(
+            reverse("api-root", args=[self.version]) + "system/whoami/"
+        )
+        assert response.status_code == 403  # nosec
+
+    def test_system_master_config(self):
+        response = self.hit(
+            self.userclient,
+            reverse("api-root", args=[self.version]) + "system/master_config/",
+        )
+        assert response["EVENT_SOCKET"] == settings.EVENT_SOCKET
+        assert response["EVENT_TOPIC"] == settings.EVENT_TOPIC
+        assert response["EVENT_NOTIFICATION"] == settings.EVENT_NOTIFICATION
+        assert response["LOG_SIZE_LIMIT"] == settings.LOG_SIZE_LIMIT
+
+        response = self.userclient_no_token.get(
+            reverse("api-root", args=[self.version]) + "system/master_config/"
+        )
+        assert response.status_code == 403  # nosec
 
 
 def test_view_root(client):
