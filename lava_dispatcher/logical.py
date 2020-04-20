@@ -139,7 +139,7 @@ class Deployment:
     """
 
     priority = 0
-    action_type = "deploy"
+    section = "deploy"
     compatibility = 0
 
     @property
@@ -232,7 +232,7 @@ class Boot:
     """
 
     priority = 0
-    action_type = "boot"
+    section = "boot"
     compatibility = 0
 
     @classmethod
@@ -301,7 +301,7 @@ class LavaTest:
     """
 
     priority = 1
-    action_type = "test"
+    section = "test"
     compatibility = 1  # used directly
 
     @classmethod

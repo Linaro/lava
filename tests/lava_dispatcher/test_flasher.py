@@ -90,7 +90,7 @@ def test_run(monkeypatch):
     action.job = Job(1234, {}, None)
     action.job.device = device
     action.parameters = {"namespace": "common", "images": {}}
-    action.section = Flasher.action_type
+    action.section = Flasher.section
 
     # self.commands is populated by validate
     action.validate()
