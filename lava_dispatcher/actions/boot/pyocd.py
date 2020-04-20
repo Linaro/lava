@@ -21,7 +21,6 @@
 from lava_common.utils import binary_version
 from lava_dispatcher.action import Pipeline, Action, JobError
 from lava_dispatcher.logical import Boot, RetryAction
-from lava_dispatcher.actions.boot import BootAction
 from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.strings import substitute
@@ -50,7 +49,7 @@ class PyOCD(Boot):
         return True, "accepted"
 
 
-class BootPyOCD(BootAction):
+class BootPyOCD(RetryAction):
 
     name = "boot-pyocd-image"
     description = "boot pyocd image with retry"

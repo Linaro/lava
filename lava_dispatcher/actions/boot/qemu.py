@@ -24,7 +24,7 @@ from lava_common.exceptions import JobError
 from lava_common.utils import debian_package_arch, debian_package_version
 from lava_dispatcher.action import Pipeline, Action
 from lava_dispatcher.logical import Boot, RetryAction
-from lava_dispatcher.actions.boot import BootAction
+from lava_dispatcher.actions.boot import BootHasMixin
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.shell import ExpectShellSession, ShellCommand
 from lava_dispatcher.connections.serial import QemuSession
@@ -66,7 +66,7 @@ class BootQEMU(Boot):
         return True, "accepted"
 
 
-class BootQEMUImageAction(BootAction):
+class BootQEMUImageAction(BootHasMixin, RetryAction):
 
     name = "boot-image-retry"
     description = "boot image with retry"

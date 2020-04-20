@@ -24,12 +24,12 @@ from lava_dispatcher.actions.boot import (
     BootloaderCommandOverlay,
     OverlayUnpack,
     BootloaderCommandsAction,
-    BootAction,
+    BootHasMixin,
 )
 
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.actions.boot.uefi_menu import UEFIMenuInterrupt, UefiMenuSelector
-from lava_dispatcher.logical import Boot
+from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.menus.menus import MenuInterrupt, MenuConnect
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.shell import ExpectShellSession
@@ -68,7 +68,7 @@ class UefiShell(Boot):
         )
 
 
-class UefiShellAction(BootAction):
+class UefiShellAction(BootHasMixin, RetryAction):
 
     name = "uefi-shell-main-action"
     description = "UEFI shell boot action"

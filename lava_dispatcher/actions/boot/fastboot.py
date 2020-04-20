@@ -21,12 +21,12 @@
 
 from lava_dispatcher.action import Action, Pipeline
 from lava_common.exceptions import InfrastructureError, JobError, LAVABug
-from lava_dispatcher.logical import Boot
+from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.actions.boot import (
-    BootAction,
-    AutoLoginAction,
-    OverlayUnpack,
     AdbOverlayUnpack,
+    AutoLoginAction,
+    BootHasMixin,
+    OverlayUnpack,
 )
 from lava_dispatcher.power import ResetDevice, PreOs
 from lava_dispatcher.utils.fastboot import BaseAction
@@ -84,7 +84,7 @@ class BootFastbootCommands(BaseAction):
             self.run_fastboot([command])
 
 
-class BootFastbootAction(BootAction, BaseAction):
+class BootFastbootAction(BootHasMixin, RetryAction, BaseAction):
     """
     Provide for auto_login parameters in this boot stanza and re-establish the
     connection after boot.

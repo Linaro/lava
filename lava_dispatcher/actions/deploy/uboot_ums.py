@@ -19,8 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 from lava_dispatcher.logical import Deployment
-from lava_dispatcher.action import Pipeline
-from lava_dispatcher.actions.deploy import DeployAction
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.actions.deploy.apply_overlay import ApplyOverlayImage
@@ -55,7 +54,7 @@ class UBootUMS(Deployment):
         return False, '"u-boot-ums" was not in the device configuration deploy methods"'
 
 
-class UBootUMSAction(DeployAction):  # pylint:disable=too-many-instance-attributes
+class UBootUMSAction(Action):
 
     name = "uboot-ums-deploy"
     description = "download image and deploy using uboot mass storage emulation"

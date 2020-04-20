@@ -25,15 +25,15 @@ from lava_common.exceptions import ConfigurationError
 from lava_dispatcher.action import Pipeline
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.actions.boot import (
-    BootAction,
     AutoLoginAction,
     BootloaderCommandOverlay,
     BootloaderCommandsAction,
+    BootHasMixin,
     OverlayUnpack,
     BootloaderInterruptAction,
 )
 from lava_dispatcher.connections.serial import ConnectDevice
-from lava_dispatcher.logical import Boot
+from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.shell import ExpectShellSession
 
@@ -65,7 +65,7 @@ class Barebox(Boot):
         return False, '"barebox" was not in the device configuration boot methods'
 
 
-class BareboxAction(BootAction):
+class BareboxAction(RetryAction):
     """
     Wraps the Retry Action to allow for actions which precede
     the reset, e.g. Connect.
@@ -83,7 +83,7 @@ class BareboxAction(BootAction):
         self.pipeline.add_action(BareboxRetry())
 
 
-class BareboxRetry(BootAction):
+class BareboxRetry(BootHasMixin, RetryAction):
 
     name = "barebox-retry"
     description = "interactive barebox retry action"

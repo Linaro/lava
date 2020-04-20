@@ -21,7 +21,6 @@
 from lava_dispatcher.action import Pipeline
 from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.actions.boot import (
-    BootAction,
     BootloaderCommandsAction,
     BootloaderCommandOverlay,
     BootloaderInterruptAction,
@@ -52,7 +51,7 @@ class BootBootloader(Boot):
         return True, "accepted"
 
 
-class BootBootloaderAction(BootAction):
+class BootBootloaderAction(RetryAction):
 
     name = "boot-bootloader"
     description = "boot to bootloader"

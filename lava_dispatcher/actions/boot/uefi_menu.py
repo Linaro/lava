@@ -32,12 +32,12 @@ from lava_dispatcher.menus.menus import (
     MenuInterrupt,
     MenuReset,
 )
-from lava_dispatcher.logical import Boot
+from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.protocols.lxc import LxcProtocol
 from lava_dispatcher.utils.strings import substitute
 from lava_dispatcher.utils.network import dispatcher_ip
-from lava_dispatcher.actions.boot import BootAction, AutoLoginAction
+from lava_dispatcher.actions.boot import AutoLoginAction
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 
 
@@ -292,7 +292,7 @@ class UefiSubstituteCommands(Action):
         return connection
 
 
-class UefiMenuAction(BootAction):
+class UefiMenuAction(RetryAction):
 
     name = "uefi-menu-action"
     description = "interrupt and select uefi menu items"

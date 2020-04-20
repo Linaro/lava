@@ -30,7 +30,6 @@ from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_common.decorators import nottest
 from lava_common.exceptions import InfrastructureError, JobError, LAVABug, TestError
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.actions.test import TestAction
 from lava_dispatcher.utils.strings import indices
 from lava_dispatcher.utils.vcs import GitHelper
 from lava_common.constants import DEFAULT_TESTDEF_NAME_CLASS, DISPATCHER_DOWNLOAD_DIR
@@ -495,7 +494,7 @@ class UrlRepoAction(RepoAction):
 
 
 @nottest
-class TestDefinitionAction(TestAction):
+class TestDefinitionAction(Action):
 
     name = "test-definition"
     description = "load test definitions into image"
@@ -683,7 +682,7 @@ class TestDefinitionAction(TestAction):
 
 
 @nottest
-class TestOverlayAction(TestAction):
+class TestOverlayAction(Action):
 
     name = "test-overlay"
     description = "overlay test support files onto image"

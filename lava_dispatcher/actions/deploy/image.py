@@ -20,9 +20,8 @@
 
 import os
 
-from lava_dispatcher.action import Pipeline, Action
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.logical import Deployment
-from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.download import (
     DownloaderAction,
     QCowConversionAction,
@@ -36,7 +35,7 @@ from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.utils.compression import untar_file
 
 
-class DeployImagesAction(DeployAction):  # FIXME: Rename to DeployPosixImages
+class DeployImagesAction(Action):  # FIXME: Rename to DeployPosixImages
 
     name = "deployimages"
     description = "deploy images using guestfs"
@@ -105,7 +104,7 @@ class DeployQemuNfs(Deployment):
         return True, "accepted"
 
 
-class DeployQemuNfsAction(DeployAction):
+class DeployQemuNfsAction(Action):
 
     name = "deploy-qemu-nfs"
     description = "deploy qemu with NFS"

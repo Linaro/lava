@@ -23,13 +23,13 @@
 
 from lava_dispatcher.action import Pipeline
 from lava_common.exceptions import ConfigurationError
-from lava_dispatcher.logical import Boot
+from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.actions.boot import (
-    BootAction,
     AutoLoginAction,
     BootloaderCommandOverlay,
     BootloaderCommandsAction,
     BootloaderSecondaryMedia,
+    BootHasMixin,
     OverlayUnpack,
     BootloaderInterruptAction,
 )
@@ -70,7 +70,7 @@ class UBoot(Boot):
         return False, '"u-boot" was not in the device configuration boot methods'
 
 
-class UBootAction(BootAction):
+class UBootAction(RetryAction):
     """
     Wraps the Retry Action to allow for actions which precede
     the reset, e.g. Connect.
@@ -97,7 +97,7 @@ class UBootAction(BootAction):
         self.pipeline.add_action(UBootRetry())
 
 
-class UBootRetry(BootAction):
+class UBootRetry(BootHasMixin, RetryAction):
 
     name = "uboot-retry"
     description = "interactive uboot retry action"
@@ -216,7 +216,7 @@ class UBootSecondaryMedia(BootloaderSecondaryMedia):
         )
 
 
-class UBootEnterFastbootAction(BootAction):
+class UBootEnterFastbootAction(RetryAction):
 
     name = "uboot-enter-fastboot"
     description = "interactive uboot enter fastboot action"

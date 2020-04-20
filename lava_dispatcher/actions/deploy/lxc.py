@@ -22,8 +22,7 @@ import os
 
 from lava_common.exceptions import InfrastructureError, LAVABug
 from lava_common.utils import debian_package_version
-from lava_dispatcher.action import JobError, Pipeline
-from lava_dispatcher.actions.deploy import DeployAction
+from lava_dispatcher.action import Action, JobError, Pipeline
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.actions.deploy.apply_overlay import ApplyLxcOverlay
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
@@ -65,7 +64,7 @@ class Lxc(Deployment):
         return False, '"lxc" was not in the device configuration deploy methods'
 
 
-class LxcAction(DeployAction):  # pylint:disable=too-many-instance-attributes
+class LxcAction(Action):
 
     name = "lxc-deploy"
     description = "download files and deploy using lxc"
@@ -109,7 +108,7 @@ class LxcAction(DeployAction):  # pylint:disable=too-many-instance-attributes
             self.pipeline.add_action(ApplyLxcOverlay())
 
 
-class LxcCreateAction(DeployAction):
+class LxcCreateAction(Action):
     """
     Creates Lxc container.
     """
@@ -220,7 +219,7 @@ class LxcCreateAction(DeployAction):
         return connection
 
 
-class LxcCreateUdevRuleAction(DeployAction):
+class LxcCreateUdevRuleAction(Action):
     """
     Creates Lxc related udev rules for this container.
     """
@@ -299,7 +298,7 @@ class LxcCreateUdevRuleAction(DeployAction):
         return connection
 
 
-class LxcAptUpdateAction(DeployAction):
+class LxcAptUpdateAction(Action):
     """
     apt-get update the lxc container.
     """
@@ -324,7 +323,7 @@ class LxcAptUpdateAction(DeployAction):
         return connection
 
 
-class LxcAptInstallAction(DeployAction):
+class LxcAptInstallAction(Action):
     """
     apt-get install packages to the lxc container.
     """

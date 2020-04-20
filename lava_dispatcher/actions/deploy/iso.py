@@ -22,7 +22,6 @@ import os
 from lava_common.exceptions import JobError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.logical import Deployment
-from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.apply_overlay import ApplyOverlayGuest
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
@@ -34,7 +33,7 @@ from lava_dispatcher.utils.network import dispatcher_ip
 from lava_common.constants import INSTALLER_IMAGE_MAX_SIZE
 
 
-class DeployIsoAction(DeployAction):
+class DeployIsoAction(Action):
     """
     Prepare an empty image, pull the specified kernel and initrd
     out of the iso using loopback and then start QEMU with the

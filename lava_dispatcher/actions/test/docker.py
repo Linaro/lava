@@ -20,9 +20,10 @@
 
 import os
 import shlex
-from lava_dispatcher.action import Pipeline
+
+from lava_common.exceptions import LAVATimeoutError
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.overlay import CreateOverlay
-from lava_dispatcher.actions.test import TestAction
 from lava_dispatcher.actions.test.shell import TestShellAction
 from lava_dispatcher.logical import LavaTest
 from lava_dispatcher.power import ReadFeedback
@@ -72,10 +73,11 @@ class GetBoardId:
         return device_info[0].get("board_id")
 
 
-class DockerTestAction(TestAction, GetBoardId):
+class DockerTestAction(Action, GetBoardId):
     name = "lava-docker-test"
     description = "Runs tests in a docker container"
     summary = "Runs tests in a docker container, with the DUT available via adb/fastboot over USB"
+    timeout_exception = LAVATimeoutError
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -90,10 +92,11 @@ class DockerTestAction(TestAction, GetBoardId):
         self.pipeline.add_action(ReadFeedback())
 
 
-class DockerTestSetEnvironment(TestAction, GetBoardId):
+class DockerTestSetEnvironment(Action, GetBoardId):
     name = "lava-docker-test-set-environment"
     description = "Adds necessary environments variables for docker-test-shell"
     summary = description
+    timeout_exception = LAVATimeoutError
 
     def run(self, connection, max_end_time):
         environment = self.job.parameters.get("environment", {})

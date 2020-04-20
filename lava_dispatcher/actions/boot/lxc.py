@@ -21,8 +21,7 @@
 import time
 from lava_common.exceptions import JobError
 from lava_dispatcher.action import Pipeline, Action
-from lava_dispatcher.logical import Boot
-from lava_dispatcher.actions.boot import BootAction
+from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.connections.lxc import ConnectLxc
 from lava_dispatcher.shell import ExpectShellSession
@@ -50,7 +49,7 @@ class BootLxc(Boot):
         return False, '"method" was not in parameters or "method" was not "lxc"'
 
 
-class BootLxcAction(BootAction):
+class BootLxcAction(RetryAction):
     """
     Provide for auto_login parameters in this boot stanza and re-establish the
     connection after boot.

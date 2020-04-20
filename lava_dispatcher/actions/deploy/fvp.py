@@ -18,8 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from lava_dispatcher.action import Pipeline
-from lava_dispatcher.actions.deploy import DeployAction
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.logical import Deployment
@@ -42,7 +41,7 @@ class FVP(Deployment):
         return True, "accepted"
 
 
-class FVPDeploy(DeployAction):  # pylint: disable=too-many-instance-attributes
+class FVPDeploy(Action):
 
     name = "fvp-deploy"
     description = "Download images for use with fvp"

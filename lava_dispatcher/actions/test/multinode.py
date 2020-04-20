@@ -22,7 +22,7 @@ import json
 from lava_dispatcher.actions.test.shell import TestShellAction
 from lava_common.timeout import Timeout
 from lava_common.exceptions import TestError, MultinodeProtocolTimeoutError
-from lava_dispatcher.actions.test import LavaTest
+from lava_dispatcher.logical import LavaTest
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
 from .monitor import TestMonitorRetry
 from .interactive import TestInteractiveRetry

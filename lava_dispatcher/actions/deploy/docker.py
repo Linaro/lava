@@ -22,15 +22,14 @@ import re
 import subprocess  # nosec - internal
 
 from lava_common.exceptions import InfrastructureError
-from lava_dispatcher.action import Pipeline
-from lava_dispatcher.actions.deploy import DeployAction
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.logical import Deployment
 from lava_dispatcher.utils.shell import which
 
 
-class DockerAction(DeployAction):
+class DockerAction(Action):
 
     name = "deploy-docker"
     description = "deploy docker images"

@@ -24,9 +24,8 @@ import pexpect
 from collections import OrderedDict
 
 from lava_common.decorators import nottest
-from lava_common.exceptions import InfrastructureError
-from lava_dispatcher.action import Pipeline
-from lava_dispatcher.actions.test import TestAction
+from lava_common.exceptions import InfrastructureError, LAVATimeoutError
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.logical import LavaTest, RetryAction
 
 
@@ -78,7 +77,7 @@ class TestMonitorRetry(RetryAction):
 
 
 @nottest
-class TestMonitorAction(TestAction):
+class TestMonitorAction(Action):
     """
     Watch the DUT output and match known results strings without any interaction.
     """
@@ -86,6 +85,7 @@ class TestMonitorAction(TestAction):
     name = "lava-test-monitor"
     description = "Executing lava-test-monitor"
     summary = "Lava Test Monitor"
+    timeout_exception = LAVATimeoutError
 
     def __init__(self):
         super().__init__()

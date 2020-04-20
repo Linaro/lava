@@ -26,7 +26,6 @@ import shutil
 from lava_dispatcher.action import Action, Pipeline
 from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.logical import Deployment
-from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.connections.serial import DisconnectDevice
 from lava_dispatcher.power import ResetDevice
@@ -66,7 +65,7 @@ class Mps(Deployment):
         return True, "accepted"
 
 
-class MpsAction(DeployAction):
+class MpsAction(Action):
     """
     Action for deploying firmware to a MPS board in the form
     of a board recovery image.  Recovery images must have AUTORUN

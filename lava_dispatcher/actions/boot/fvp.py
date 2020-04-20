@@ -23,8 +23,8 @@ import time
 
 from lava_common.exceptions import JobError
 from lava_dispatcher.action import Pipeline, Action
-from lava_dispatcher.logical import Boot
-from lava_dispatcher.actions.boot import BootAction, AutoLoginAction
+from lava_dispatcher.logical import Boot, RetryAction
+from lava_dispatcher.actions.boot import BootHasMixin, AutoLoginAction
 from lava_dispatcher.shell import ExpectShellSession, ShellCommand, ShellSession
 
 
@@ -46,7 +46,7 @@ class BootFVP(Boot):
         return True, "accepted"
 
 
-class BootFVPAction(BootAction):
+class BootFVPAction(BootHasMixin, RetryAction):
 
     name = "boot-fvp"
     description = "boot fvp"

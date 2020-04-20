@@ -21,8 +21,7 @@
 
 import os
 from lava_dispatcher.logical import Deployment
-from lava_dispatcher.action import Pipeline, Action
-from lava_dispatcher.actions.deploy import DeployAction
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.apply_overlay import ExtractRootfs, ExtractModules
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
@@ -59,7 +58,7 @@ class Ssh(Deployment):
         return True, "accepted"
 
 
-class ScpOverlay(DeployAction):
+class ScpOverlay(Action):
     """
     Prepares the overlay and copies it to the target
     """

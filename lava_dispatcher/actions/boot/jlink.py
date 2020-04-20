@@ -25,7 +25,6 @@ import subprocess
 
 from lava_dispatcher.action import Pipeline, Action, JobError
 from lava_dispatcher.logical import Boot, RetryAction
-from lava_dispatcher.actions.boot import BootAction
 from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.utils.udev import WaitDeviceBoardID
@@ -49,7 +48,7 @@ class JLink(Boot):
         return True, "accepted"
 
 
-class BootJLink(BootAction):
+class BootJLink(RetryAction):
 
     name = "boot-jlink-image"
     description = "boot jlink image with retry"

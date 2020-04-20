@@ -35,7 +35,6 @@ import requests
 import subprocess  # nosec - verified.
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.protocols.lxc import LxcProtocol
-from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.apply_overlay import AppendOverlays
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.connections.serial import ConnectDevice
@@ -848,7 +847,7 @@ class Download(Deployment):
         return True, "accepted"
 
 
-class DownloadAction(DeployAction):  # pylint:disable=too-many-instance-attributes
+class DownloadAction(Action):
 
     name = "download-deploy"
     description = "download files and copy to LXC if available"
@@ -896,7 +895,7 @@ class DownloadAction(DeployAction):  # pylint:disable=too-many-instance-attribut
         self.pipeline.add_action(CopyToLxcAction())
 
 
-class CopyToLxcAction(DeployAction):
+class CopyToLxcAction(Action):
     """
     Copy downloaded files to LXC within LAVA_LXC_HOME.
     """

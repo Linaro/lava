@@ -20,10 +20,10 @@
 
 from lava_common.exceptions import ConfigurationError
 from lava_dispatcher.action import Pipeline
-from lava_dispatcher.actions.boot import BootAction, AutoLoginAction, OverlayUnpack
+from lava_dispatcher.actions.boot import BootHasMixin, AutoLoginAction, OverlayUnpack
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.connections.serial import ConnectShell
-from lava_dispatcher.logical import Boot
+from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.shell import ExpectShellSession
 
 
@@ -58,7 +58,7 @@ class SecondaryShell(Boot):
         return True, "accepted"
 
 
-class SecondaryShellAction(BootAction):
+class SecondaryShellAction(BootHasMixin, RetryAction):
 
     name = "secondary-shell-action"
     description = "Connect to a secondary shell on specified hardware"

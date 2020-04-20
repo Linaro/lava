@@ -20,8 +20,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 from lava_dispatcher.logical import Deployment
-from lava_dispatcher.action import Pipeline
-from lava_dispatcher.actions.deploy import DeployAction
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.actions.deploy.apply_overlay import (
     ApplyOverlayImage,
@@ -59,7 +58,7 @@ class UUU(Deployment):
         return True, "accepted"
 
 
-class UUUAction(DeployAction):  # pylint:disable=too-many-instance-attributes
+class UUUAction(Action):
 
     name = "uuu-deploy"
     description = "deploy images using uuu"

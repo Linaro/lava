@@ -21,9 +21,8 @@
 # List just the subclasses supported for this base strategy
 # imported by the parser to populate the list of subclasses.
 
-from lava_dispatcher.action import Pipeline
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.logical import Deployment
-from lava_dispatcher.actions.deploy import DeployAction
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.apply_overlay import (
     ExtractNfsRootfs,
@@ -60,7 +59,7 @@ class Nfs(Deployment):
         return False, '"nfs" was not in the device configuration deploy methods"'
 
 
-class NfsAction(DeployAction):  # pylint:disable=too-many-instance-attributes
+class NfsAction(Action):
 
     name = "nfs-deploy"
     description = "deploy nfsrootfs"
