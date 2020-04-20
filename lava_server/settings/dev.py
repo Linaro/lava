@@ -63,15 +63,11 @@ DATABASES = {
 # Example: "/home/media/media.lawrence.com/"
 MEDIA_ROOT = os.path.join(PROJECT_STATE_DIR, "media")
 
-# Absolute filesystem path to the directory that will hold archived files.
-ARCHIVE_ROOT = os.path.join(PROJECT_STATE_DIR, "archive")
-
 # Absolute filesystem path to the directory that will hold static, read only
 # files collected from all applications.
 # Example: "/home/media/static.lawrence.com/"
 STATIC_ROOT = os.path.join(PROJECT_STATE_DIR, "static")
 
-GLOBAL_SETTINGS_PATH = os.path.join(PROJECT_SRC_DIR, "etc/lava-server")
 DISPATCHER_CONFIG_PATH = os.path.join(PROJECT_SRC_DIR, "etc/lava-server/dispatcher.d")
 # Use device configuration files from source tree
 DEVICES_PATH = os.path.join(PROJECT_SRC_DIR, "etc/dispatcher-config/devices")
