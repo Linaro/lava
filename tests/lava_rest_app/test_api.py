@@ -347,11 +347,10 @@ class TestRestApi:
         )
         assert len(data["results"]) == 1  # nosec - unit test support
 
-    # Testing the v0.1 base version 'tests' endpoint.
     def test_testjob_tests(self):
         data = self.hit(
             self.userclient,
-            reverse("api-root", args=[versions.versions[0]])
+            reverse("api-root", args=[self.version])
             + "jobs/%s/tests/" % self.public_testjob1.id,
         )
         assert len(data["results"]) == 2  # nosec - unit test support

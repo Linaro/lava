@@ -89,6 +89,14 @@ class TestJobViewSet(base_views.TestJobViewSet):
 
     * `/jobs/<job_id>/logs/`
 
+    Test suites present in the job are available at:
+
+    * `/jobs/<job_id>/suites/`
+
+    Test results for the job are available at:
+
+    * `/jobs/<job_id>/tests/`
+
     The test results are also available in JUnit, TAP13, CSV and YAML at:
 
     * `/jobs/<job_id>/junit/`
@@ -208,6 +216,14 @@ class TestJobViewSet(base_views.TestJobViewSet):
 
 
 class TestSuiteViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
+    """
+    List TestSuites visible to the current user.
+
+    You can access test results for each suite at:
+
+    * `/suites/<suite_id>/tests`
+    """
+
     queryset = TestSuite.objects
     serializer_class = serializers.TestSuiteSerializer
     filter_fields = "__all__"

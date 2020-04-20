@@ -26,7 +26,14 @@ router = ExtendedDefaultRouter()
 router.register(r"aliases", views.AliasViewSet)
 router.register(r"devices", views.DeviceViewSet)
 router.register(r"devicetypes", views.DeviceTypeViewSet)
-router.register(r"jobs", views.TestJobViewSet).register(
+jobs_router = router.register(r"jobs", views.TestJobViewSet)
+jobs_router.register(
+    r"tests",
+    views.TestCaseViewSet,
+    parents_query_lookups=["suite__job_id"],
+    **drf_basename("jobs-tests"),
+)
+jobs_router.register(
     r"suites",
     views.TestSuiteViewSet,
     parents_query_lookups=["job_id"],
