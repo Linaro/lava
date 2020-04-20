@@ -132,21 +132,14 @@ class JobParser:
             connection_namespace = test_parameters.get(
                 "connection-namespace", namespace
             )
-            if namespace in job.test_info:
-                job.test_info[namespace].append(
-                    {"class": test_type, "parameters": test_parameters}
-                )
-            else:
-                job.test_info.update(
-                    {namespace: [{"class": test_type, "parameters": test_parameters}]}
-                )
+            job.test_info.setdefault(namespace, [])
+            job.test_info.setdefault(connection_namespace, [])
+            job.test_info[namespace].append(
+                {"class": test_type, "parameters": test_parameters}
+            )
             if namespace != connection_namespace:
-                job.test_info.update(
-                    {
-                        connection_namespace: [
-                            {"class": test_type, "parameters": test_parameters}
-                        ]
-                    }
+                job.test_info[connection_namespace].append(
+                    {"class": test_type, "parameters": test_parameters}
                 )
 
         # FIXME: also read permissable overrides from device config and set from job data
