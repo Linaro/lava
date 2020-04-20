@@ -135,7 +135,7 @@ def map_scanned_results(results, job, markers, meta_filename):
     metadata = yaml.dump(results)
     if len(metadata) > 4096:  # bug 2471 - test_length unit test
         msg = "[%d] Result metadata is too long. %s" % (job.id, metadata)
-        logger.error(msg)
+        logger.warning(msg)
         append_failure_comment(job, msg)
         metadata = ""
 
