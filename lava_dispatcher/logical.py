@@ -69,13 +69,13 @@ class RetryAction(Action):
             except (InfrastructureError, JobError, TestError) as exc:
                 has_failed = True
                 # Print the error message
-                msg = "%s failed: %d of %d attempts. '%s'" % (
+                self.logger.error(
+                    "%s failed: %d of %d attempts. '%s'",
                     self.name,
                     retries,
                     self.max_retries,
                     exc,
                 )
-                self.logger.error(msg)
                 # Cleanup the action to allow for a safe restart
                 self.cleanup(connection)
 
