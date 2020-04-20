@@ -47,8 +47,7 @@ def parse_action(job_data, name, device, pipeline, test_info, test_count):
         cls = Boot.select(device, parameters)
         action = cls.action()
     elif name == "test":
-        # stage starts at 0
-        parameters["stage"] = test_count - 1
+        parameters["stage"] = test_count
         cls = LavaTest.select(device, parameters)
         action = cls.action(parameters)
     elif name == "deploy":
@@ -160,7 +159,7 @@ class JobParser:
             for name in action_data:
                 # Set a default namespace if needed
                 namespace = action_data[name].setdefault("namespace", "common")
-                test_counts.setdefault(namespace, 1)
+                test_counts.setdefault(namespace, 0)
 
                 if name in ["deploy", "boot", "test"]:
                     action = parse_action(
