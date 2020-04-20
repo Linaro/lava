@@ -1016,29 +1016,26 @@ class Action:
 
     @nottest
     def test_needs_deployment(self, parameters):
-        if parameters["namespace"] in self.job.test_info:
-            testclasses = self.job.test_info[parameters["namespace"]]
-            for testclass in testclasses:
-                if testclass["class"].needs_deployment_data():
-                    return True
+        ns = parameters["namespace"]
+        for info in self.job.test_info.get(ns, []):
+            if info["class"].needs_deployment_data(info["parameters"]):
+                return True
         return False
 
     @nottest
     def test_has_shell(self, parameters):
-        if parameters["namespace"] in self.job.test_info:
-            testclasses = self.job.test_info[parameters["namespace"]]
-            for testclass in testclasses:
-                if testclass["class"].has_shell():
-                    return True
+        ns = parameters["namespace"]
+        for info in self.job.test_info.get(ns, []):
+            if info["class"].has_shell(info["parameters"]):
+                return True
         return False
 
     @nottest
     def test_needs_overlay(self, parameters):
-        if parameters["namespace"] in self.job.test_info:
-            testclasses = self.job.test_info[parameters["namespace"]]
-            for testclass in testclasses:
-                if testclass["class"].needs_overlay():
-                    return True
+        ns = parameters["namespace"]
+        for info in self.job.test_info.get(ns, []):
+            if info["class"].needs_overlay(info["parameters"]):
+                return True
         return False
 
     def get_logging_info(self):

@@ -43,10 +43,9 @@ def identify_test_definitions(test_info, namespace):
     """
     # All test definitions are deployed in each deployment - TestDefinitionAction needs to only run relevant ones.
     test_list = []
-    if namespace in test_info:
-        for test in test_info[namespace]:
-            if "definitions" in test["parameters"]:
-                test_list.append(test["parameters"]["definitions"])
+    for test in test_info.get(namespace, []):
+        if "definitions" in test["parameters"]:
+            test_list.append(test["parameters"]["definitions"])
     return test_list
 
 

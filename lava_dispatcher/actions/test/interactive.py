@@ -57,15 +57,15 @@ class TestInteractive(LavaTest):
         return False, '"interactive" not in parameters'
 
     @classmethod
-    def needs_deployment_data(cls):
+    def needs_deployment_data(cls, parameters):
         return False
 
     @classmethod
-    def needs_overlay(cls):
+    def needs_overlay(cls, parameters):
         return False
 
     @classmethod
-    def has_shell(cls):
+    def has_shell(cls, parameters):
         return False
 
 

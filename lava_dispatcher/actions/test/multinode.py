@@ -19,13 +19,13 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import json
-from lava_dispatcher.actions.test.shell import TestShellAction
 from lava_common.timeout import Timeout
 from lava_common.exceptions import TestError, MultinodeProtocolTimeoutError
+from lava_dispatcher.actions.test.monitor import TestMonitor
+from lava_dispatcher.actions.test.interactive import TestInteractive
+from lava_dispatcher.actions.test.shell import TestShell, TestShellAction
 from lava_dispatcher.logical import LavaTest
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
-from .monitor import TestMonitorRetry
-from .interactive import TestInteractiveRetry
 
 
 # TODO: This is a workaround allowing to run multinode jobs with "monitors"
@@ -37,14 +37,20 @@ from .interactive import TestInteractiveRetry
 # from which individual test action implementations would inherit. In the
 # meantime, this is a small and localized workaround enabling multinode
 # for those test actions ahead of heavy refactors above.
+def get_subaction(parameters):
+    if "monitors" in parameters:
+        return TestMonitor.action(parameters)
+    if "interactive" in parameters:
+        return TestInteractive.action(parameters)
+    return MultinodeTestAction()
+
+
 def get_subaction_class(parameters):
     if "monitors" in parameters:
-        cls = TestMonitorRetry
-    elif "interactive" in parameters:
-        cls = TestInteractiveRetry
-    else:
-        cls = MultinodeTestAction
-    return cls
+        return TestMonitor
+    if "interactive" in parameters:
+        return TestInteractive
+    return TestShell
 
 
 class MultinodeTestShell(LavaTest):
@@ -57,7 +63,7 @@ class MultinodeTestShell(LavaTest):
 
     @classmethod
     def action(cls, parameters):
-        return get_subaction_class(parameters)()
+        return get_subaction(parameters)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -76,17 +82,17 @@ class MultinodeTestShell(LavaTest):
         return False, '"role" not in parameters'
 
     @classmethod
-    def needs_deployment_data(cls):
+    def needs_deployment_data(cls, parameters):
         """ Some, not all, deployments will want deployment_data """
-        return True
+        return get_subaction_class(parameters).needs_deployment_data(parameters)
 
     @classmethod
-    def needs_overlay(cls):
-        return True
+    def needs_overlay(cls, parameters):
+        return get_subaction_class(parameters).needs_overlay(parameters)
 
     @classmethod
-    def has_shell(cls):
-        return True
+    def has_shell(cls, parameters):
+        return get_subaction_class(parameters).has_shell(parameters)
 
 
 class MultinodeTestAction(TestShellAction):
