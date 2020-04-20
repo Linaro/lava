@@ -116,8 +116,7 @@ def description_data(job):
     try:
         data = yaml.load(open(filename, "r"), Loader=V2Loader)
     except yaml.YAMLError as exc:
-        logger.error("Unable to parse description for %s", job.id)
-        logger.exception(exc)
+        logger.warning("Unable to parse description for %s", job.id)
     except OSError as exc:
         logger.error("Unable to open description for %s", job.id)
         logger.exception(exc)
