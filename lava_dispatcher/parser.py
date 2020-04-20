@@ -52,18 +52,17 @@ def parse_action(job_data, name, device, pipeline, test_info, test_count):
         action = cls.action(parameters)
     elif name == "deploy":
         cls = Deployment.select(device, parameters)
-        if parameters["namespace"] in test_info and cls.uses_deployment_data():
-            if any(
+        ns = parameters["namespace"]
+        # Does the action needs deployment_data field?
+        needs_deployment_data = False
+        if ns in test_info and cls.uses_deployment_data():
+            needs_deployment_data = any(
                 [
-                    testclass
-                    for testclass in test_info[parameters["namespace"]]
-                    if testclass["class"].needs_deployment_data()
+                    t["class"].needs_deployment_data(t["parameters"])
+                    for t in test_info[ns]
                 ]
-            ):
-                parameters.update(
-                    {"deployment_data": get_deployment_data(parameters.get("os", ""))}
-                )
-        if "preseed" in parameters:
+            )
+        if needs_deployment_data or "preseed" in parameters:
             parameters.update(
                 {"deployment_data": get_deployment_data(parameters.get("os", ""))}
             )
@@ -136,21 +135,14 @@ class JobParser:
             connection_namespace = test_parameters.get(
                 "connection-namespace", namespace
             )
-            if namespace in job.test_info:
-                job.test_info[namespace].append(
-                    {"class": test_type, "parameters": test_parameters}
-                )
-            else:
-                job.test_info.update(
-                    {namespace: [{"class": test_type, "parameters": test_parameters}]}
-                )
+            job.test_info.setdefault(namespace, [])
+            job.test_info.setdefault(connection_namespace, [])
+            job.test_info[namespace].append(
+                {"class": test_type, "parameters": test_parameters}
+            )
             if namespace != connection_namespace:
-                job.test_info.update(
-                    {
-                        connection_namespace: [
-                            {"class": test_type, "parameters": test_parameters}
-                        ]
-                    }
+                job.test_info[connection_namespace].append(
+                    {"class": test_type, "parameters": test_parameters}
                 )
 
         # FIXME: also read permissable overrides from device config and set from job data
@@ -170,7 +162,7 @@ class JobParser:
                         job.test_info,
                         test_counts[namespace],
                     )
-                    if name == "test" and action.needs_overlay():
+                    if name == "test" and action.needs_overlay(action_data["test"]):
                         test_counts[namespace] += 1
                 elif name == "command":
                     action = CommandAction()

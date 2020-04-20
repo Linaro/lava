@@ -67,16 +67,16 @@ class TestShell(LavaTest):
         return False, '"definitions" not in parameters'
 
     @classmethod
-    def needs_deployment_data(cls):
+    def needs_deployment_data(cls, parameters):
         """ Some, not all, deployments will want deployment_data """
         return True
 
     @classmethod
-    def needs_overlay(cls):
+    def needs_overlay(cls, parameters):
         return True
 
     @classmethod
-    def has_shell(cls):
+    def has_shell(cls, parameters):
         return True
 
 
