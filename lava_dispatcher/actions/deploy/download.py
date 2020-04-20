@@ -772,7 +772,7 @@ class PreDownloadedAction(Action):
 
         dest = pathlib.Path(self.path) / filename
         dest.parent.mkdir(parents=True, exist_ok=True)
-        dest.symlink_to(src)
+        os.link(src, dest)
 
         self.set_namespace_data(
             action="download-action", label=self.key, key="file", value=str(dest)
