@@ -52,18 +52,14 @@ def parse_action(job_data, name, device, pipeline, test_info, test_count):
         action = cls.action(parameters)
     elif name == "deploy":
         cls = Deployment.select(device, parameters)
-        if parameters["namespace"] in test_info and cls.uses_deployment_data():
-            if any(
-                [
-                    testclass
-                    for testclass in test_info[parameters["namespace"]]
-                    if testclass["class"].needs_deployment_data()
-                ]
-            ):
-                parameters.update(
-                    {"deployment_data": get_deployment_data(parameters.get("os", ""))}
-                )
-        if "preseed" in parameters:
+        ns = parameters["namespace"]
+        # Does the action needs deployment_data field?
+        needs_deployment_data = False
+        if ns in test_info and cls.uses_deployment_data():
+            needs_deployment_data = any(
+                [t["class"].needs_deployment_data() for t in test_info[ns]]
+            )
+        if needs_deployment_data or "preseed" in parameters:
             parameters.update(
                 {"deployment_data": get_deployment_data(parameters.get("os", ""))}
             )
