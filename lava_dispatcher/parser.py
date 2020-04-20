@@ -70,7 +70,7 @@ def parse_action(job_data, name, device, pipeline, test_info, test_count):
         cls = Deployment.select(device, parameters)
         action = cls.action()
 
-    action.section = cls.action_type
+    action.section = cls.section
     pipeline.add_action(action, parameters)
     pipeline.job.compatibility = max(cls.compatibility, pipeline.job.compatibility)
     return cls
