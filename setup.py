@@ -133,12 +133,13 @@ SERVER = {
                 "etc/lava-logs",
                 "etc/lava-master",
                 "etc/lava-server-gunicorn",
-                "etc/settings.conf",
             ],
         ),
         ("/etc/lava-server/dispatcher-config/devices/", []),
         ("/etc/lava-server/dispatcher-config/device-types/", []),
         ("/etc/lava-server/dispatcher-config/health-checks/", []),
+        ("/etc/lava-server/dispatcher.d/", []),
+        ("/etc/lava-server/settings.d/", []),
         (
             "/etc/logrotate.d/",
             [
@@ -149,7 +150,6 @@ SERVER = {
                 "etc/logrotate.d/lava-server-gunicorn-log",
             ],
         ),
-        ("/etc/lava-server/dispatcher.d/", []),
         (
             "/lib/systemd/system/",
             [
@@ -159,10 +159,7 @@ SERVER = {
                 "etc/lava-server-gunicorn.service",
             ],
         ),
-        (
-            "/usr/share/lava-server/",
-            ["etc/dispatcher.yaml", "share/postinst.py"],
-        ),
+        ("/usr/share/lava-server/", ["etc/dispatcher.yaml", "share/postinst.py"]),
         (
             "/usr/share/lava-server/device-types/",
             glob.glob("etc/dispatcher-config/device-types/*.jinja2"),

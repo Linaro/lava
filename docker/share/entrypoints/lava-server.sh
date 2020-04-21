@@ -179,7 +179,6 @@ CAN_EXEC=$((APACHE2+LAVA_LOGS+LAVA_MASTER+LAVA_PUBLISHER+GUNICORN+POSTGRESQL))
 # Should we check for file owners?
 LAVA_CHECK_OWNERS=${LAVA_CHECK_OWNERS:-1}
 
-echo "Creating instance.conf (if needed)"
 /usr/share/lava-server/postinst.py --config
 echo "done"
 echo
