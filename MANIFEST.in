@@ -4,7 +4,6 @@ include doc/v2/*
 include doc/v2/_static/*
 include etc/*
 include etc/env.yaml
-include etc/instance.conf.template
 include etc/lava-logs
 include etc/lava-logs.service
 include etc/lava-master

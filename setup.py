@@ -161,7 +161,7 @@ SERVER = {
         ),
         (
             "/usr/share/lava-server/",
-            ["etc/dispatcher.yaml", "etc/instance.conf.template", "share/postinst.py"],
+            ["etc/dispatcher.yaml", "share/postinst.py"],
         ),
         (
             "/usr/share/lava-server/device-types/",
