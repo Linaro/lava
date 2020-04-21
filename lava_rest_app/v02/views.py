@@ -214,6 +214,15 @@ class TestJobViewSet(base_views.TestJobViewSet):
             status=status.HTTP_201_CREATED,
         )
 
+    @detail_route(methods=["get"], suffix="cancel")
+    def cancel(self, request, **kwargs):
+        # django-rest-framework handles django's PermissionDenied error
+        # automagically
+        self.get_object().cancel(request.user)
+        return Response(
+            {"message": "Job cancel signal sent."}, status=status.HTTP_200_OK
+        )
+
 
 class TestSuiteViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     """
@@ -264,12 +273,6 @@ class TestSuiteViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
             "attachment; filename=suite_%s.yaml" % self.get_object().name
         )
         return response
-
-    @detail_route(methods=["get"], suffix="cancel")
-    def cancel(self, request, **kwargs):
-        # django-rest-framework handles django's PermissionDenied error
-        # automagically
-        self.get_object().cancel(request.user)
 
 
 class TestCaseViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
