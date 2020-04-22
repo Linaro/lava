@@ -275,7 +275,7 @@ class TestSuiteViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
 class TestCaseViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     queryset = TestCase.objects
     serializer_class = serializers.TestCaseSerializer
-    filter_fields = "__all__"
+    filter_class = filters.TestCaseFilter
 
 
 class DeviceTypeViewSet(base_views.DeviceTypeViewSet):
