@@ -73,8 +73,8 @@ class BootOpenOCDRetry(RetryAction):
         if self.job.device.hard_reset_command:
             self.pipeline.add_action(ResetDevice())
             self.pipeline.add_action(WaitDeviceBoardID(self.job.device.get("board_id")))
-        self.pipeline.add_action(FlashOpenOCDAction())
         self.pipeline.add_action(ConnectDevice())
+        self.pipeline.add_action(FlashOpenOCDAction())
 
 
 class FlashOpenOCDAction(Action):
