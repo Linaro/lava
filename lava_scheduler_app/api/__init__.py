@@ -120,9 +120,10 @@ class SchedulerAPI(ExposedV2API):
             job = testjob_submission(job_data, self.user)
         except SubmissionException as exc:
             raise xmlrpc.client.Fault(400, "Problem with submitted job data: %s" % exc)
-        # FIXME: json error is not needed anymore
-        except (JSONDataError, JSONDecodeError, ValueError) as exc:
+        except ValueError as exc:
             raise xmlrpc.client.Fault(400, "Decoding job submission failed: %s." % exc)
+        except yaml.YAMLError as exc:
+            raise xmlrpc.client.Fault(400, "Invalid job definition: %s." % exc)
         except (Device.DoesNotExist, DeviceType.DoesNotExist):
             raise xmlrpc.client.Fault(404, "Specified device or device type not found.")
         except DevicesUnavailableException as exc:
