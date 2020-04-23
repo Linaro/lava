@@ -33,6 +33,7 @@ import time
 import hashlib
 import requests
 import subprocess  # nosec - verified.
+
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.protocols.lxc import LxcProtocol
 from lava_dispatcher.actions.deploy.apply_overlay import AppendOverlays
@@ -47,6 +48,7 @@ from lava_dispatcher.utils.filesystem import (
     lava_lxc_home,
     copy_overlay_to_lxc,
 )
+from lava_dispatcher.utils.network import requests_retry
 from lava_common.constants import (
     FILE_DOWNLOAD_CHUNK_SIZE,
     HTTP_DOWNLOAD_CHUNK_SIZE,
@@ -566,7 +568,7 @@ class HttpDownloadAction(DownloadHandler):
 
             self.logger.debug("Validating that %s exists", self.url.geturl())
             # Force the non-use of Accept-Encoding: gzip, this will permit to know the final size
-            res = requests.head(
+            res = requests_retry().head(
                 self.url.geturl(), allow_redirects=True, headers={"Accept-Encoding": ""}
             )
             if res.status_code != requests.codes.OK:
@@ -574,7 +576,7 @@ class HttpDownloadAction(DownloadHandler):
                 self.logger.debug("Using GET because HEAD is not supported properly")
                 res.close()
                 # Like for HEAD, we need get a size, so disable gzip
-                res = requests.get(
+                res = requests_retry().get(
                     self.url.geturl(),
                     allow_redirects=True,
                     stream=True,
@@ -603,7 +605,9 @@ class HttpDownloadAction(DownloadHandler):
         try:
             # FIXME: When requests 3.0 is released, use the enforce_content_length
             # parameter to raise an exception the file is not fully downloaded
-            res = requests.get(self.url.geturl(), allow_redirects=True, stream=True)
+            res = requests_retry().get(
+                self.url.geturl(), allow_redirects=True, stream=True
+            )
             if res.status_code != requests.codes.OK:
                 # This is an Infrastructure error because the validate function
                 # checked that the file does exist.

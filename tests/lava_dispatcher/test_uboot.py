@@ -24,7 +24,6 @@ import unittest
 from unittest.mock import patch, MagicMock
 
 from lava_common.compat import yaml_safe_dump, yaml_safe_load
-from lava_common.exceptions import JobError
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.actions.boot.u_boot import (
@@ -601,26 +600,6 @@ class TestUbootAction(StdoutTestCase):
             ),
         )
         self.assertEqual(part_reference, "0:1")
-
-    def test_xz_nfs(self):
-        job = self.factory.create_bbb_job("sample_jobs/uboot-nfs.yaml")
-        # this job won't validate as the .xz nfsrootfs URL is a fiction
-        self.assertRaises(JobError, job.validate)
-        tftp_deploy = [
-            action for action in job.pipeline.actions if action.name == "tftp-deploy"
-        ][0]
-        prepare = [
-            action
-            for action in tftp_deploy.pipeline.actions
-            if action.name == "prepare-tftp-overlay"
-        ][0]
-        nfs = [
-            action
-            for action in prepare.pipeline.actions
-            if action.name == "extract-nfsrootfs"
-        ][0]
-        self.assertIn("compression", nfs.parameters["nfsrootfs"])
-        self.assertEqual(nfs.parameters["nfsrootfs"]["compression"], "xz")
 
     @patch(
         "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
