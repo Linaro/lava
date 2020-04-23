@@ -30,7 +30,7 @@
               <li><a href="{% url 'lava.scheduler.reports' %}">Reports</a></li>
               <li role="separator" class="divider"></li>
               <li><a href="{% url 'lava.scheduler.device_types' %}">Device Types</a></li>
-              <li><a href="{% url 'lava.scheduler.alldevices' %}">Devices</a></li>
+              <li><a href="{% url 'lava.scheduler.active_devices' %}">Devices</a></li>
               <li><a href="{% url 'lava.scheduler.job.list' %}">Jobs</a></li>
               <li><a href="{% url 'lava.scheduler.workers' %}">Workers</a></li>
               {% if user.is_authenticated %}
