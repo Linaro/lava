@@ -849,7 +849,7 @@ class Device(RestrictedObject):
 
         if output_format == "raw":
             with contextlib.suppress(OSError):
-                return File("device").read(f"{self.hostname}.jinja2")
+                return File("device", self.hostname).read()
             return None
 
         try:
@@ -896,7 +896,7 @@ class Device(RestrictedObject):
 
     def save_configuration(self, data):
         try:
-            File("device").write(f"{self.hostname}.jinja2", data)
+            File("device", self.hostname).write(data)
             return True
         except OSError as exc:
             logger = logging.getLogger("lava_scheduler_app")

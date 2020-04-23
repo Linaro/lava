@@ -27,6 +27,7 @@ from django.db import IntegrityError, transaction
 from linaro_django_xmlrpc.models import ExposedV2API
 from lava_scheduler_app.api import check_perm
 from lava_scheduler_app.models import Worker
+from lava_server.files import File
 
 
 class SchedulerWorkersAPI(ExposedV2API):
@@ -95,18 +96,18 @@ class SchedulerWorkersAPI(ExposedV2API):
         except Worker.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Worker '%s' was not found." % hostname)
 
-        base = pathlib.Path("/etc/lava-server/dispatcher.d")
-        with contextlib.suppress(OSError):
-            data = (base / hostname / "dispatcher.yaml").read_text(encoding="utf-8")
-            return xmlrpc.client.Binary(data.encode("utf-8"))
-
-        with contextlib.suppress(OSError):
-            data = (base / ("%s.yaml" % hostname)).read_text(encoding="utf-8")
-            return xmlrpc.client.Binary(data.encode("utf-8"))
-
-        raise xmlrpc.client.Fault(
-            404, "Worker '%s' does not have a configuration" % hostname
-        )
+        try:
+            return xmlrpc.client.Binary(
+                File("dispatcher", hostname).read().encode("utf-8")
+            )
+        except FileNotFoundError:
+            raise xmlrpc.client.Fault(
+                404, "Worker '%s' does not have a dispatcher configuration" % hostname
+            )
+        except OSError as exc:
+            raise xmlrpc.client.Fault(
+                400, "Unable to read dispatcher configuration: %s" % exc.strerror
+            )
 
     def get_env(self, hostname):
         """
@@ -140,20 +141,14 @@ class SchedulerWorkersAPI(ExposedV2API):
         except Worker.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Worker '%s' was not found." % hostname)
 
-        base = pathlib.Path("/etc/lava-server/")
-        with contextlib.suppress(OSError):
-            data = (base / "dispatcher.d" / hostname / "env.yaml").read_text(
-                encoding="utf-8"
+        try:
+            return xmlrpc.client.Binary(File("env", hostname).read().encode("utf-8"))
+        except FileNotFoundError:
+            raise xmlrpc.client.Fault(
+                404, "Worker '%s' does not have an env file" % hostname
             )
-            return xmlrpc.client.Binary(data.encode("utf-8"))
-
-        with contextlib.suppress(OSError):
-            data = (base / "env.yaml").read_text(encoding="utf-8")
-            return xmlrpc.client.Binary(data.encode("utf-8"))
-
-        raise xmlrpc.client.Fault(
-            404, "Worker '%s' does not have a configuration" % hostname
-        )
+        except OSError as exc:
+            raise xmlrpc.client.Fault(400, "Unable to read env file: %s" % exc.strerror)
 
     @check_perm("lava_scheduler_app.change_worker")
     def set_config(self, hostname, config):
@@ -186,12 +181,8 @@ class SchedulerWorkersAPI(ExposedV2API):
         except Worker.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Worker '%s' was not found." % hostname)
 
-        path = (
-            pathlib.Path("/etc/lava-server/dispatcher.d") / hostname / "dispatcher.yaml"
-        )
         with contextlib.suppress(OSError):
-            path.parent.mkdir(mode=0o755, parents=True, exist_ok=True)
-            path.write_text(config, encoding="utf-8")
+            File("dispatcher", hostname).write(config)
             return True
 
         return False
@@ -227,10 +218,8 @@ class SchedulerWorkersAPI(ExposedV2API):
         except Worker.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Worker '%s' was not found." % hostname)
 
-        path = pathlib.Path("/etc/lava-server/dispatcher.d") / hostname / "env.yaml"
         with contextlib.suppress(OSError):
-            path.parent.mkdir(mode=0o755, parents=True, exist_ok=True)
-            path.write_text(env, encoding="utf-8")
+            File("env", hostname).write(env)
             return True
 
         return False

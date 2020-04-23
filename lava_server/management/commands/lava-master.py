@@ -38,6 +38,7 @@ from django.utils import timezone
 from lava_common.compat import yaml_dump, yaml_safe_dump, yaml_safe_load
 from lava_common.version import __version__
 from lava_results_app.models import TestCase, TestSuite
+from lava_server.files import File
 from lava_scheduler_app.dbutils import parse_job_description
 from lava_scheduler_app.models import TestJob, Worker
 from lava_scheduler_app.scheduler import schedule
@@ -58,11 +59,6 @@ SCHEDULE_INTERVAL = 20
 
 # Log format
 FORMAT = "%(asctime)-15s %(levelname)7s %(message)s"
-
-# Configuration files
-ENV_PATH = "/etc/lava-server/env.yaml"
-ENV_DUT_PATH = "/etc/lava-server/env.dut.yaml"
-DISPATCHERS_PATH = "/etc/lava-server/dispatcher.d"
 
 
 def send_multipart_u(sock, data):
@@ -115,26 +111,15 @@ class SlaveDispatcher:
                 worker.save()
 
 
-def load_optional_yaml_file(filename, fallback=None):
-    """
-    Returns the string after checking for YAML errors which would cause issues later.
-    Only raise an error if the file exists but is not readable or parsable
-    """
+def config(kind, worker):
     try:
-        with open(filename, "r") as f_in:
-            data_str = f_in.read()
-        yaml_safe_load(data_str)
-        return data_str
-    except FileNotFoundError:
-        # This is ok if the file does not exist
-        if fallback is None:
-            return ""
-        # Use the fallback filename
-        return load_optional_yaml_file(fallback)
+        data = File(kind, worker.hostname).read(raising=False)
+        yaml_safe_load(data)
+        return data
     except yaml.YAMLError:
         # Raise an OSError because the caller uses yaml.YAMLError for a
         # specific usage. Allows here to specify the faulty filename.
-        raise OSError("", "Not a valid YAML file", filename)
+        raise OSError("", f"Invalid YAML file for {worker.hostname}: {kind} file")
 
 
 class Command(LAVADaemonCommand):
@@ -458,19 +443,9 @@ class Command(LAVADaemonCommand):
         # TODO: check that device_cfg is not None!
         device_cfg_str = device.load_configuration(job_ctx, output_format="yaml")
 
-        # Try to load the dispatcher specific files and then fallback to the
-        # default configuration files.
-        env_str = load_optional_yaml_file(
-            os.path.join(DISPATCHERS_PATH, worker.hostname, "env.yaml"), ENV_PATH
-        )
-        env_dut_str = load_optional_yaml_file(
-            os.path.join(DISPATCHERS_PATH, worker.hostname, "env.dut.yaml"),
-            ENV_DUT_PATH,
-        )
-        dispatcher_cfg = load_optional_yaml_file(
-            os.path.join(DISPATCHERS_PATH, worker.hostname, "dispatcher.yaml"),
-            os.path.join(DISPATCHERS_PATH, "%s.yaml" % worker.hostname),
-        )
+        env_str = config("env", worker)
+        env_dut_str = config("env-dut", worker)
+        dispatcher_cfg = config("dispatcher", worker)
 
         self.save_job_config(
             job, job_def_str, device_cfg_str, env_str, env_dut_str, dispatcher_cfg

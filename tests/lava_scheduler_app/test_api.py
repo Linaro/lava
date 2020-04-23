@@ -947,7 +947,9 @@ def test_device_types_add(setup):
 @pytest.mark.django_db
 def test_device_types_get_health_check(setup, mocker, tmpdir):
     (tmpdir / "qemu.yaml").write_text("hello", encoding="utf-8")
-    mocker.patch("lava_server.files.File.KINDS", {"health-check": [str(tmpdir)]})
+    mocker.patch(
+        "lava_server.files.File.KINDS", {"health-check": ([str(tmpdir)], "{name}.yaml")}
+    )
 
     # 1. normal case
     DeviceType.objects.create(name="qemu")
@@ -970,7 +972,10 @@ def test_device_types_get_health_check(setup, mocker, tmpdir):
 @pytest.mark.django_db
 def test_device_types_get_template(setup, mocker, tmpdir):
     (tmpdir / "qemu.jinja2").write_text("hello", encoding="utf-8")
-    mocker.patch("lava_server.files.File.KINDS", {"device-type": [str(tmpdir)]})
+    mocker.patch(
+        "lava_server.files.File.KINDS",
+        {"device-type": ([str(tmpdir)], "{name}.jinja2")},
+    )
 
     # 1. normal case
     DeviceType.objects.create(name="qemu")
@@ -992,7 +997,9 @@ def test_device_types_get_template(setup, mocker, tmpdir):
 
 @pytest.mark.django_db
 def test_device_types_set_health_check(setup, mocker, tmpdir):
-    mocker.patch("lava_server.files.File.KINDS", {"health-check": [str(tmpdir)]})
+    mocker.patch(
+        "lava_server.files.File.KINDS", {"health-check": ([str(tmpdir)], "{name}.yaml")}
+    )
 
     # 1. normal case
     DeviceType.objects.create(name="qemu")
@@ -1012,7 +1019,10 @@ def test_device_types_set_health_check(setup, mocker, tmpdir):
 
 @pytest.mark.django_db
 def test_device_types_set_template(setup, mocker, tmpdir):
-    mocker.patch("lava_server.files.File.KINDS", {"device-type": [str(tmpdir)]})
+    mocker.patch(
+        "lava_server.files.File.KINDS",
+        {"device-type": ([str(tmpdir)], "{name}.jinja2")},
+    )
 
     # 1. normal case
     DeviceType.objects.create(name="qemu")
@@ -1030,7 +1040,10 @@ def test_device_types_set_template(setup, mocker, tmpdir):
 
 @pytest.mark.django_db
 def test_device_types_list(setup, mocker, tmpdir):
-    mocker.patch("lava_server.files.File.KINDS", {"device-type": [str(tmpdir)]})
+    mocker.patch(
+        "lava_server.files.File.KINDS",
+        {"device-type": ([str(tmpdir)], "{name}.jinja2")},
+    )
     (tmpdir / "base.jinja2").write_text("", encoding="utf-8")
     (tmpdir / "base-uboot.jinja2").write_text("", encoding="utf-8")
     (tmpdir / "b2260.jinja2").write_text("", encoding="utf-8")
@@ -1345,19 +1358,18 @@ def test_workers_add(setup):
 
 
 @pytest.mark.django_db
-def test_workers_get_config_old_config(setup, monkeypatch, tmpdir):
+def test_workers_get_config_old_config(setup, mocker, tmpdir):
     (tmpdir / "example.com.yaml").write_text("hello", encoding="utf-8")
+    mocker.patch(
+        "lava_server.files.File.KINDS",
+        {
+            "dispatcher": [
+                str(tmpdir / "{name}/dispatcher.yaml"),
+                str(tmpdir / "{name}.yaml"),
+            ]
+        },
+    )
 
-    class MyPath(pathlib.PosixPath):
-        def __new__(cls, path, *args, **kwargs):
-            if path == "example.com":
-                return super().__new__(cls, path, *args, **kwargs)
-            elif path == "/etc/lava-server/dispatcher.d":
-                return super().__new__(cls, str(tmpdir), *args, **kwargs)
-            else:
-                assert 0  # nosec
-
-    monkeypatch.setattr(pathlib, "Path", MyPath)
     assert (  # nosec
         str(server("admin", "admin").scheduler.workers.get_config("example.com"))
         == "hello"
@@ -1365,26 +1377,21 @@ def test_workers_get_config_old_config(setup, monkeypatch, tmpdir):
 
 
 @pytest.mark.django_db
-def test_workers_get_config_new_config(setup, monkeypatch, tmpdir):
+def test_workers_get_config_new_config(setup, mocker, tmpdir):
     (tmpdir / "example.com").mkdir()
     (tmpdir / "example.com" / "dispatcher.yaml").write_text(
         "hello world", encoding="utf-8"
     )
+    mocker.patch(
+        "lava_server.files.File.KINDS",
+        {
+            "dispatcher": [
+                str(tmpdir / "{name}/dispatcher.yaml"),
+                str(tmpdir / "{name}.yaml"),
+            ]
+        },
+    )
 
-    class MyPath(pathlib.PosixPath):
-        def __new__(cls, path, *args, **kwargs):
-            if path == "example.com":
-                return super().__new__(cls, path, *args, **kwargs)
-            elif path == "/etc/lava-server/dispatcher.d":
-                return super().__new__(cls, str(tmpdir), *args, **kwargs)
-            elif path == "/etc/lava-server/dispatcher.d/example.com":
-                return super().__new__(
-                    cls, str(tmpdir / "example.com"), *args, **kwargs
-                )
-            else:
-                assert 0  # nosec
-
-    monkeypatch.setattr(pathlib, "Path", MyPath)
     assert (  # nosec
         str(server("admin", "admin").scheduler.workers.get_config("example.com"))
         == "hello world"
@@ -1392,17 +1399,16 @@ def test_workers_get_config_new_config(setup, monkeypatch, tmpdir):
 
 
 @pytest.mark.django_db
-def test_workers_get_config_exceptions(setup, monkeypatch, tmpdir):
-    class MyPath(pathlib.PosixPath):
-        def __new__(cls, path, *args, **kwargs):
-            if path in ["example.com", "example.com/../", "worker.example.com"]:
-                return super().__new__(cls, path, *args, **kwargs)
-            elif path == "/etc/lava-server/dispatcher.d":
-                return super().__new__(cls, str(tmpdir), *args, **kwargs)
-            else:
-                assert path == 0  # nosec
-
-    monkeypatch.setattr(pathlib, "Path", MyPath)
+def test_workers_get_config_exceptions(setup, mocker, tmpdir):
+    mocker.patch(
+        "lava_server.files.File.KINDS",
+        {
+            "dispatcher": [
+                str(tmpdir / "{name}/dispatcher.yaml"),
+                str(tmpdir / "{name}.yaml"),
+            ]
+        },
+    )
 
     # 1. invalid worker name (should not be a path)
     with pytest.raises(xmlrpc.client.Fault) as exc:
@@ -1423,24 +1429,19 @@ def test_workers_get_config_exceptions(setup, monkeypatch, tmpdir):
         server("admin", "admin").scheduler.workers.get_config("example.com")
     assert exc.value.faultCode == 404  # nosec
     assert (  # nosec
-        exc.value.faultString == "Worker 'example.com' does not have a configuration"
+        exc.value.faultString
+        == "Worker 'example.com' does not have a dispatcher configuration"
     )
 
 
 @pytest.mark.django_db
-def test_workers_get_env_old_config(setup, monkeypatch, tmpdir):
+def test_workers_get_env_old_config(setup, mocker, tmpdir):
     (tmpdir / "env.yaml").write_text("hello", encoding="utf-8")
+    mocker.patch(
+        "lava_server.files.File.KINDS",
+        {"env": [str(tmpdir / "{name}/env.yaml"), str(tmpdir / "env.yaml")]},
+    )
 
-    class MyPath(pathlib.PosixPath):
-        def __new__(cls, path, *args, **kwargs):
-            if path == "example.com":
-                return super().__new__(cls, path, *args, **kwargs)
-            elif path == "/etc/lava-server/":
-                return super().__new__(cls, str(tmpdir), *args, **kwargs)
-            else:
-                assert 0  # nosec
-
-    monkeypatch.setattr(pathlib, "Path", MyPath)
     assert (  # nosec
         str(server("admin", "admin").scheduler.workers.get_env("example.com"))
         == "hello"
@@ -1448,23 +1449,14 @@ def test_workers_get_env_old_config(setup, monkeypatch, tmpdir):
 
 
 @pytest.mark.django_db
-def test_workers_get_env_new_config(setup, monkeypatch, tmpdir):
-    (tmpdir / "dispatcher.d").mkdir()
-    (tmpdir / "dispatcher.d" / "example.com").mkdir()
-    (tmpdir / "dispatcher.d" / "example.com" / "env.yaml").write_text(
-        "hello world", encoding="utf-8"
+def test_workers_get_env_new_config(setup, mocker, tmpdir):
+    (tmpdir / "example.com").mkdir()
+    (tmpdir / "example.com" / "env.yaml").write_text("hello world", encoding="utf-8")
+    mocker.patch(
+        "lava_server.files.File.KINDS",
+        {"env": [str(tmpdir / "{name}/env.yaml"), str(tmpdir / "env.yaml")]},
     )
 
-    class MyPath(pathlib.PosixPath):
-        def __new__(cls, path, *args, **kwargs):
-            if path == "example.com":
-                return super().__new__(cls, path, *args, **kwargs)
-            elif path == "/etc/lava-server/":
-                return super().__new__(cls, str(tmpdir), *args, **kwargs)
-            else:
-                assert 0  # nosec
-
-    monkeypatch.setattr(pathlib, "Path", MyPath)
     assert (  # nosec
         str(server("admin", "admin").scheduler.workers.get_env("example.com"))
         == "hello world"
@@ -1472,17 +1464,11 @@ def test_workers_get_env_new_config(setup, monkeypatch, tmpdir):
 
 
 @pytest.mark.django_db
-def test_workers_get_env_exceptions(setup, monkeypatch, tmpdir):
-    class MyPath(pathlib.PosixPath):
-        def __new__(cls, path, *args, **kwargs):
-            if path in ["example.com", "example.com/../", "worker.example.com"]:
-                return super().__new__(cls, path, *args, **kwargs)
-            elif path == "/etc/lava-server/":
-                return super().__new__(cls, str(tmpdir), *args, **kwargs)
-            else:
-                assert path == 0  # nosec
-
-    monkeypatch.setattr(pathlib, "Path", MyPath)
+def test_workers_get_env_exceptions(setup, mocker, tmpdir):
+    mocker.patch(
+        "lava_server.files.File.KINDS",
+        {"env": [str(tmpdir / "{name}/env.yaml"), str(tmpdir / "env.yaml")]},
+    )
 
     # 1. invalid worker name (should not be a path)
     with pytest.raises(xmlrpc.client.Fault) as exc:
@@ -1503,22 +1489,22 @@ def test_workers_get_env_exceptions(setup, monkeypatch, tmpdir):
         server("admin", "admin").scheduler.workers.get_env("example.com")
     assert exc.value.faultCode == 404  # nosec
     assert (  # nosec
-        exc.value.faultString == "Worker 'example.com' does not have a configuration"
+        exc.value.faultString == "Worker 'example.com' does not have an env file"
     )
 
 
 @pytest.mark.django_db
-def test_workers_set_config(setup, monkeypatch, tmpdir):
-    class MyPath(pathlib.PosixPath):
-        def __new__(cls, path, *args, **kwargs):
-            if path == "example.com":
-                return super().__new__(cls, path, *args, **kwargs)
-            elif path == "/etc/lava-server/dispatcher.d":
-                return super().__new__(cls, str(tmpdir), *args, **kwargs)
-            else:
-                assert 0  # nosec
+def test_workers_set_config(setup, mocker, tmpdir):
+    mocker.patch(
+        "lava_server.files.File.KINDS",
+        {
+            "dispatcher": [
+                str(tmpdir / "{name}/dispatcher.yaml"),
+                str(tmpdir / "{name}.yaml"),
+            ]
+        },
+    )
 
-    monkeypatch.setattr(pathlib, "Path", MyPath)
     assert (  # nosec
         server("admin", "admin").scheduler.workers.set_config("example.com", "hello")
         is True
@@ -1529,17 +1515,16 @@ def test_workers_set_config(setup, monkeypatch, tmpdir):
 
 
 @pytest.mark.django_db
-def test_workers_set_config_exceptions(setup, monkeypatch, tmpdir):
-    class MyPath(pathlib.PosixPath):
-        def __new__(cls, path, *args, **kwargs):
-            if path in ["example.com", "example.com/../", "worker.example.com"]:
-                return super().__new__(cls, path, *args, **kwargs)
-            elif path == "/etc/lava-server/dispatcher.d":
-                return super().__new__(cls, str(tmpdir), *args, **kwargs)
-            else:
-                assert path == 0  # nosec
-
-    monkeypatch.setattr(pathlib, "Path", MyPath)
+def test_workers_set_config_exceptions(setup, mocker, tmpdir):
+    mocker.patch(
+        "lava_server.files.File.KINDS",
+        {
+            "dispatcher": [
+                str(tmpdir / "{name}/dispatcher.yaml"),
+                str(tmpdir / "{name}.yaml"),
+            ]
+        },
+    )
 
     # 1. invalid worker name (should not be a path)
     with pytest.raises(xmlrpc.client.Fault) as exc:
@@ -1571,17 +1556,12 @@ def test_workers_set_config_exceptions(setup, monkeypatch, tmpdir):
 
 
 @pytest.mark.django_db
-def test_workers_set_env(setup, monkeypatch, tmpdir):
-    class MyPath(pathlib.PosixPath):
-        def __new__(cls, path, *args, **kwargs):
-            if path == "example.com":
-                return super().__new__(cls, path, *args, **kwargs)
-            elif path == "/etc/lava-server/dispatcher.d":
-                return super().__new__(cls, str(tmpdir), *args, **kwargs)
-            else:
-                assert 0  # nosec
+def test_workers_set_env(setup, mocker, tmpdir):
+    mocker.patch(
+        "lava_server.files.File.KINDS",
+        {"env": [str(tmpdir / "{name}/env.yaml"), str(tmpdir / "env.yaml")]},
+    )
 
-    monkeypatch.setattr(pathlib, "Path", MyPath)
     assert (  # nosec
         server("admin", "admin").scheduler.workers.set_env("example.com", "hello")
         is True
@@ -1592,17 +1572,11 @@ def test_workers_set_env(setup, monkeypatch, tmpdir):
 
 
 @pytest.mark.django_db
-def test_workers_set_env_exceptions(setup, monkeypatch, tmpdir):
-    class MyPath(pathlib.PosixPath):
-        def __new__(cls, path, *args, **kwargs):
-            if path in ["example.com", "example.com/../", "worker.example.com"]:
-                return super().__new__(cls, path, *args, **kwargs)
-            elif path == "/etc/lava-server/dispatcher.d":
-                return super().__new__(cls, str(tmpdir), *args, **kwargs)
-            else:
-                assert path == 0  # nosec
-
-    monkeypatch.setattr(pathlib, "Path", MyPath)
+def test_workers_set_env_exceptions(setup, mocker, tmpdir):
+    mocker.patch(
+        "lava_server.files.File.KINDS",
+        {"env": [str(tmpdir / "{name}/env.yaml"), str(tmpdir / "env.yaml")]},
+    )
 
     # 1. invalid worker name (should not be a path)
     with pytest.raises(xmlrpc.client.Fault) as exc:

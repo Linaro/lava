@@ -34,10 +34,9 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
     def _available_device_types(self):
         """ List avaiable device types by looking at the configuration files """
         available_types = []
-        for fname in File("device-type").list("*.jinja2"):
-            device_type = fname.name[:-7]
+        for device_type in File("device-type").list("*.jinja2"):
             if not device_type.startswith("base"):
-                available_types.append(device_type)
+                available_types.append(device_type[:-7])
         available_types.sort()
         return available_types
 
@@ -138,9 +137,8 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
             raise xmlrpc.client.Fault(400, "Invalid device-type '%s'" % name)
 
         try:
-            filename = name if name.endswith(".yaml") else name + ".yaml"
             return xmlrpc.client.Binary(
-                File("health-check").read(filename).encode("utf-8")
+                File("health-check", name).read().encode("utf-8")
             )
         except FileNotFoundError:
             raise xmlrpc.client.Fault(404, "Device-type '%s' was not found." % name)
@@ -183,10 +181,9 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
         if os.path.basename(name) != name or name[0] == ".":
             raise xmlrpc.client.Fault(400, "Invalid device-type '%s'" % name)
 
-        filename = name if name.endswith(".jinja2") else name + ".jinja2"
         try:
             return xmlrpc.client.Binary(
-                File("device-type").read(filename).encode("utf-8")
+                File("device-type", name).read().encode("utf-8")
             )
         except FileNotFoundError:
             raise xmlrpc.client.Fault(404, "Device-type '%s' was not found." % name)
@@ -229,8 +226,7 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
             raise xmlrpc.client.Fault(400, "Invalid device-type '%s'" % name)
 
         try:
-            name = name if name.endswith(".yaml") else name + ".yaml"
-            File("health-check").write(name, config)
+            File("health-check", name).write(config)
         except OSError as exc:
             raise xmlrpc.client.Fault(
                 400, "Unable to write health-check: %s" % exc.strerror
@@ -270,8 +266,7 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
             raise xmlrpc.client.Fault(400, "Invalid device-type '%s'" % name)
 
         try:
-            name = name if name.endswith(".jinja2") else name + ".jinja2"
-            File("device-type").write(name, config)
+            File("device-type", name).write(config)
         except OSError as exc:
             raise xmlrpc.client.Fault(
                 400, "Unable to write device-type configuration: %s" % exc.strerror

@@ -367,7 +367,7 @@ class Command(BaseCommand):
             raise CommandError("Device dictionary does not exist for %s" % original)
 
         if online:
-            if not File("device").exists(f"{target}.jinja2"):
+            if not File("device", target).exists():
                 raise CommandError(
                     "Refusing to copy %s to new device %s with health 'Good' -"
                     " no device dictionary exists for target device, yet. "
