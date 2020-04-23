@@ -36,7 +36,7 @@ class DFU(Boot):
 
     @classmethod
     def action(cls):
-        return BootDFU()
+        return BootDFURetry()
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -49,17 +49,6 @@ class DFU(Boot):
         if "board_id" not in device:
             return False, '"board_id" is not in the device configuration'
         return True, "accepted"
-
-
-class BootDFU(RetryAction):
-
-    name = "boot-dfu-image"
-    description = "boot dfu image with retry"
-    summary = "boot dfu image with retry"
-
-    def populate(self, parameters):
-        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.pipeline.add_action(BootDFURetry())
 
 
 class BootDFURetry(RetryAction):

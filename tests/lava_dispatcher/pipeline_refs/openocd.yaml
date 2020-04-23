@@ -5,14 +5,11 @@
     name: download-retry
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
-- class: actions.boot.openocd.BootOpenOCD
+- class: actions.boot.openocd.BootOpenOCDRetry
   name: boot-openocd-image
   pipeline:
-  - class: actions.boot.openocd.BootOpenOCDRetry
-    name: boot-openocd-image
-    pipeline:
-    - {class: connections.serial.ConnectDevice, name: connect-device}
-    - {class: actions.boot.openocd.FlashOpenOCDAction, name: flash-openocd}
+  - {class: connections.serial.ConnectDevice, name: connect-device}
+  - {class: actions.boot.openocd.FlashOpenOCDAction, name: flash-openocd}
 - class: actions.test.monitor.TestMonitorRetry
   name: lava-test-monitor-retry
   pipeline:

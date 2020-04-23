@@ -22,7 +22,7 @@
 # imported by the parser to populate the list of subclasses.
 
 from lava_common.exceptions import ConfigurationError
-from lava_dispatcher.action import Pipeline
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.actions.boot import (
     AutoLoginAction,
@@ -65,7 +65,7 @@ class Barebox(Boot):
         return False, '"barebox" was not in the device configuration boot methods'
 
 
-class BareboxAction(RetryAction):
+class BareboxAction(Action):
     """
     Wraps the Retry Action to allow for actions which precede
     the reset, e.g. Connect.

@@ -33,7 +33,7 @@ from lava_dispatcher.utils.udev import WaitDeviceBoardID
 class JLink(Boot):
     @classmethod
     def action(cls):
-        return BootJLink()
+        return BootJLinkRetry()
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -46,17 +46,6 @@ class JLink(Boot):
         if "board_id" not in device:
             return False, '"board_id" is not in the device configuration'
         return True, "accepted"
-
-
-class BootJLink(RetryAction):
-
-    name = "boot-jlink-image"
-    description = "boot jlink image with retry"
-    summary = "boot jlink image with retry"
-
-    def populate(self, parameters):
-        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.pipeline.add_action(BootJLinkRetry())
 
 
 class BootJLinkRetry(RetryAction):

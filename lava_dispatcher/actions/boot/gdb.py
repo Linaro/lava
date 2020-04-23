@@ -21,7 +21,7 @@
 import os
 import time
 
-from lava_dispatcher.action import Pipeline
+from lava_dispatcher.action import Action, Pipeline
 from lava_common.exceptions import JobError
 from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.logical import Boot, RetryAction
@@ -60,7 +60,7 @@ class GDB(Boot):
         return True, "accepted"
 
 
-class BootGDB(RetryAction):
+class BootGDB(Action):
 
     name = "boot-gdb"
     description = "boot with gdb"

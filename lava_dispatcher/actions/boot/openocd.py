@@ -36,7 +36,7 @@ class OpenOCD(Boot):
 
     @classmethod
     def action(cls):
-        return BootOpenOCD()
+        return BootOpenOCDRetry()
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -49,17 +49,6 @@ class OpenOCD(Boot):
         if "board_id" not in device:
             return False, '"board_id" is not in the device configuration'
         return True, "accepted"
-
-
-class BootOpenOCD(RetryAction):
-
-    name = "boot-openocd-image"
-    description = "boot openocd image with retry"
-    summary = "boot openocd image with retry"
-
-    def populate(self, parameters):
-        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.pipeline.add_action(BootOpenOCDRetry())
 
 
 class BootOpenOCDRetry(RetryAction):

@@ -48,7 +48,7 @@ class TestJLinkAction(StdoutTestCase):
         except JobError as exc:
             assert (  # nosec
                 str(exc)
-                == "Invalid job data: ['2.1.1 flash-jlink: Unable to retrieve version of JLinkExe']\n"
+                == "Invalid job data: ['2.1 flash-jlink: Unable to retrieve version of JLinkExe']\n"
             )
         description_ref = self.pipeline_reference("jlink.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
@@ -61,7 +61,7 @@ class TestJLinkAction(StdoutTestCase):
         except JobError as exc:
             assert (  # nosec
                 str(exc)
-                == "Invalid job data: ['2.1.3 flash-jlink: Unable to retrieve version of JLinkExe']\n"
+                == "Invalid job data: ['2.3 flash-jlink: Unable to retrieve version of JLinkExe']\n"
             )
         description_ref = self.pipeline_reference("jlink-with-power.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
