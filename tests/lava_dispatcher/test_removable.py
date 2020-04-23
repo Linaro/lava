@@ -118,7 +118,7 @@ class TestRemovable(StdoutTestCase):
         u_boot_params = device["actions"]["boot"]["methods"]["u-boot"]
         self.assertEqual(
             mass_storage.get_namespace_data(
-                action="uboot-retry", label="bootloader_prompt", key="prompt"
+                action="uboot-commands", label="bootloader_prompt", key="prompt"
             ),
             u_boot_params["parameters"]["bootloader_prompt"],
         )

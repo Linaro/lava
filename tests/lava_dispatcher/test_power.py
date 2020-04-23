@@ -36,17 +36,17 @@ class TestPowerAction(StdoutTestCase):
             action for action in job.pipeline.actions if action.name == "uboot-action"
         ][0]
         names = [r_action.name for r_action in uboot_action.pipeline.actions]
-        self.assertIn("uboot-retry", names)
-        uboot_retry = [
+        self.assertIn("uboot-commands", names)
+        uboot_commands = [
             action
             for action in uboot_action.pipeline.actions
-            if action.name == "uboot-retry"
+            if action.name == "uboot-commands"
         ][0]
-        names = [r_action.name for r_action in uboot_retry.pipeline.actions]
+        names = [r_action.name for r_action in uboot_commands.pipeline.actions]
         self.assertIn("reset-device", names)
         reset_device = [
             action
-            for action in uboot_retry.pipeline.actions
+            for action in uboot_commands.pipeline.actions
             if action.name == "reset-device"
         ][0]
         names = [r_action.name for r_action in reset_device.pipeline.actions]
@@ -61,17 +61,17 @@ class TestPowerAction(StdoutTestCase):
             action for action in job.pipeline.actions if action.name == "uboot-action"
         ][0]
         names = [r_action.name for r_action in uboot_action.pipeline.actions]
-        self.assertIn("uboot-retry", names)
-        uboot_retry = [
+        self.assertIn("uboot-commands", names)
+        uboot_commands = [
             action
             for action in uboot_action.pipeline.actions
-            if action.name == "uboot-retry"
+            if action.name == "uboot-commands"
         ][0]
-        names = [r_action.name for r_action in uboot_retry.pipeline.actions]
+        names = [r_action.name for r_action in uboot_commands.pipeline.actions]
         self.assertIn("reset-device", names)
         reset_device = [
             action
-            for action in uboot_retry.pipeline.actions
+            for action in uboot_commands.pipeline.actions
             if action.name == "reset-device"
         ][0]
         names = [r_action.name for r_action in reset_device.pipeline.actions]

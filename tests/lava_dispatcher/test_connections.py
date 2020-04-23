@@ -536,7 +536,9 @@ class TestTimeouts(StdoutTestCase):
             action for action in job.pipeline.actions if action.name == "uboot-action"
         ][0]
         retry = [
-            action for action in uboot.pipeline.actions if action.name == "uboot-retry"
+            action
+            for action in uboot.pipeline.actions
+            if action.name == "uboot-commands"
         ][0]
         auto = [
             action
@@ -560,11 +562,11 @@ class TestTimeouts(StdoutTestCase):
             if action.pipeline:
                 for check_action in action.pipeline.actions:
                     if check_action.connection_timeout and check_action.name not in [
-                        "uboot-retry",
+                        "uboot-commands",
                         "lava-test-shell",
                     ]:
-                        # lava-test-shell and uboot-retry have overrides in this sample job
-                        # lava-test-shell from the job, uboot-retry from the device
+                        # lava-test-shell and uboot-commands have overrides in this sample job
+                        # lava-test-shell from the job, uboot-commands from the device
                         self.assertEqual(check_action.connection_timeout.duration, 20)
         deploy = [
             action for action in job.pipeline.actions if action.name == "tftp-deploy"
@@ -585,7 +587,9 @@ class TestTimeouts(StdoutTestCase):
             action for action in job.pipeline.actions if action.name == "uboot-action"
         ][0]
         retry = [
-            action for action in uboot.pipeline.actions if action.name == "uboot-retry"
+            action
+            for action in uboot.pipeline.actions
+            if action.name == "uboot-commands"
         ][0]
         auto = [
             action
@@ -606,17 +610,19 @@ class TestTimeouts(StdoutTestCase):
         connection_timeout = Timeout.parse(
             data["timeouts"]["connections"]["lava-test-shell"]
         )
-        data["timeouts"]["actions"]["uboot-retry"] = {}
-        data["timeouts"]["actions"]["uboot-retry"]["seconds"] = 90
-        data["timeouts"]["connections"]["uboot-retry"] = {}
-        data["timeouts"]["connections"]["uboot-retry"]["seconds"] = 45
+        data["timeouts"]["actions"]["uboot-commands"] = {}
+        data["timeouts"]["actions"]["uboot-commands"]["seconds"] = 90
+        data["timeouts"]["connections"]["uboot-commands"] = {}
+        data["timeouts"]["connections"]["uboot-commands"]["seconds"] = 45
         self.assertEqual(connection_timeout, 240)
         job = self.factory.create_custom_job("bbb-01.jinja2", data)
         boot = [
             action for action in job.pipeline.actions if action.name == "uboot-action"
         ][0]
         retry = [
-            action for action in boot.pipeline.actions if action.name == "uboot-retry"
+            action
+            for action in boot.pipeline.actions
+            if action.name == "uboot-commands"
         ][0]
         self.assertEqual(
             retry.timeout.duration, 90

@@ -12,14 +12,14 @@ timeouts:
       seconds: 120
     u-boot-commands:
       seconds: 120
-    uboot-retry:
+    uboot-commands:
       seconds: 180
   connections:
     u-boot-interrupt:
       seconds: 120
     u-boot-commands:
       seconds: 120
-    uboot-retry:
+    uboot-commands:
       seconds: 180
 
 priority: medium
