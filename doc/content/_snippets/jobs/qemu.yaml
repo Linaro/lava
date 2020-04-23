@@ -12,9 +12,9 @@ context:
 
 actions:
 - deploy:
+    to: tmpfs
     timeout:
       minutes: 20
-    to: tmpfs
     images:
       rootfs:
         url: http://images.validation.linaro.org/kvm/debian-sid-2014_08_21-amd64.qcow2.xz
@@ -25,9 +25,9 @@ actions:
 
 - boot:
     method: qemu
+    media: tmpfs
     timeout:
       minutes: 5
-    media: tmpfs
     prompts:
     - 'root@debian:~#'
 
