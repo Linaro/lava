@@ -32,6 +32,7 @@ from lava_scheduler_app.models import (
     Core,
     JobFailureTag,
 )
+from lava_results_app.models import TestCase
 from django.contrib.auth.models import User, Group, Permission
 from django.core.exceptions import ValidationError
 from django_filters.filters import CharFilter
@@ -419,6 +420,24 @@ class TestJobFilter(filters.FilterSet):
                 "isnull",
             ],
         }
+
+
+class TestCaseFilter(filters.FilterSet):
+    result = CharFilter(method="filter_result")
+
+    def filter_result(self, queryset, name, value):
+        try:
+            value = TestCase.RESULT_MAP[value.lower()]
+        except KeyError:
+            raise ValidationError(
+                "Select a valid choice. %s is not one of the available choices: %s"
+                % (value, list(TestCase.RESULT_MAP.keys()))
+            )
+        return queryset.filter(result=value)
+
+    class Meta:
+        model = TestCase
+        exclude = {}
 
 
 class GroupDeviceTypePermissionFilter(filters.FilterSet):

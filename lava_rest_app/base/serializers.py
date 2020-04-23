@@ -81,6 +81,8 @@ class TestSuiteSerializer(serializers.ModelSerializer):
 
 
 class TestCaseSerializer(serializers.ModelSerializer):
+    result = serializers.CharField(source="result_code", read_only=True)
+
     class Meta:
         model = TestCase
         fields = "__all__"

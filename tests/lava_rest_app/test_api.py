@@ -355,6 +355,26 @@ class TestRestApi:
         )
         assert len(data["results"]) == 2  # nosec - unit test support
 
+    def test_testjob_tests_filter(self):
+        data_pass = self.hit(
+            self.userclient,
+            reverse("api-root", args=[self.version])
+            + "jobs/%s/tests/?result=pass" % self.public_testjob1.id,
+        )
+        assert len(data_pass["results"]) == 1  # nosec - unit test support
+        data_fail = self.hit(
+            self.userclient,
+            reverse("api-root", args=[self.version])
+            + "jobs/%s/tests/?result=fail" % self.public_testjob1.id,
+        )
+        assert len(data_fail["results"]) == 1  # nosec - unit test support
+        data_skip = self.hit(
+            self.userclient,
+            reverse("api-root", args=[self.version])
+            + "jobs/%s/tests/?result=skip" % self.public_testjob1.id,
+        )
+        assert len(data_skip["results"]) == 0  # nosec - unit test support
+
     def test_testjob_suite(self):
         data = self.hit(
             self.userclient,
@@ -374,6 +394,29 @@ class TestRestApi:
             % (self.public_testjob1.id, self.public_testjob1.testsuite_set.first().id),
         )
         assert len(data["results"]) == 2  # nosec - unit test support
+
+    def test_testjob_suite_tests_filter(self):
+        data_pass = self.hit(
+            self.userclient,
+            reverse("api-root", args=[self.version])
+            + "jobs/%s/suites/%s/tests/?result=pass"
+            % (self.public_testjob1.id, self.public_testjob1.testsuite_set.first().id),
+        )
+        assert len(data_pass["results"]) == 1  # nosec - unit test support
+        data_fail = self.hit(
+            self.userclient,
+            reverse("api-root", args=[self.version])
+            + "jobs/%s/suites/%s/tests/?result=fail"
+            % (self.public_testjob1.id, self.public_testjob1.testsuite_set.first().id),
+        )
+        assert len(data_fail["results"]) == 1  # nosec - unit test support
+        data_skip = self.hit(
+            self.userclient,
+            reverse("api-root", args=[self.version])
+            + "jobs/%s/suites/%s/tests/?result=skip"
+            % (self.public_testjob1.id, self.public_testjob1.testsuite_set.first().id),
+        )
+        assert len(data_skip["results"]) == 0  # nosec - unit test support
 
     def test_testjob_suite_test(self):
         data = self.hit(
