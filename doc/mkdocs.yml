@@ -113,6 +113,7 @@ nav:
   - Configuration:
     - Device dictionary: technical-references/configuration/device-dictionary.md
     - Device-type template: technical-references/configuration/device-type-template.md
+    - Dispatcher: technical-references/configuration/dispatcher.md
     - Services: technical-references/configuration/services.md
   - Job definition:
     - Job: technical-references/job-definition/job.md
