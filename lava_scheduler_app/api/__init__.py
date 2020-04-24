@@ -40,7 +40,6 @@ from lava_scheduler_app.models import (
     DevicesUnavailableException,
     TestJob,
 )
-from lava_scheduler_app.views import get_restricted_job
 from lava_scheduler_app.dbutils import (
     device_type_summary,
     testjob_submission,
@@ -156,9 +155,14 @@ class SchedulerAPI(ExposedV2API):
         """
         self._authenticate()
         try:
-            job = get_restricted_job(self.user, job_id)
+            job = TestJob.get_by_job_number(job_id)
         except TestJob.DoesNotExist:
-            raise xmlrpc.client.Fault(404, "Specified job not found.")
+            raise xmlrpc.client.Fault(404, "Job '%s' was not found." % job_id)
+
+        if not job.can_view(self.user):
+            raise xmlrpc.client.Fault(
+                403, "Job '%s' not available to user '%s'." % (job_id, self.user)
+            )
 
         if job.is_multinode:
             return self.submit_job(job.multinode_definition)
@@ -190,13 +194,14 @@ class SchedulerAPI(ExposedV2API):
 
         with transaction.atomic():
             try:
-                job = get_restricted_job(self.user, job_id, for_update=True)
-            except PermissionDenied:
-                raise xmlrpc.client.Fault(
-                    401, "Permission denied for user to job %s" % job_id
-                )
+                job = TestJob.get_by_job_number(job_id)
             except TestJob.DoesNotExist:
-                raise xmlrpc.client.Fault(404, "Specified job not found.")
+                raise xmlrpc.client.Fault(404, "Job '%s' was not found." % job_id)
+
+            if not job.can_view(self.user):
+                raise xmlrpc.client.Fault(
+                    403, "Job '%s' not available to user '%s'." % (job_id, self.user)
+                )
 
             try:
                 job.cancel(self.user)
@@ -262,17 +267,15 @@ class SchedulerAPI(ExposedV2API):
         This function returns an XML-RPC binary data of output file, provided
         the user is authenticated with an username and token.
         """
-        self._authenticate()
-        if not job_id:
-            raise xmlrpc.client.Fault(400, "Bad request: TestJob id was not specified.")
         try:
-            job = get_restricted_job(self.user, job_id)
-        except PermissionDenied:
-            raise xmlrpc.client.Fault(
-                401, "Permission denied for user to job %s" % job_id
-            )
+            job = TestJob.get_by_job_number(job_id)
         except TestJob.DoesNotExist:
-            raise xmlrpc.client.Fault(404, "Specified job not found.")
+            raise xmlrpc.client.Fault(404, "Job '%s' was not found." % job_id)
+
+        if not job.can_view(self.user):
+            raise xmlrpc.client.Fault(
+                403, "Job '%s' not available to user '%s'." % (job_id, self.user)
+            )
 
         # Open the logs
         output_path = os.path.join(job.output_dir, "output.yaml")
@@ -784,23 +787,22 @@ class SchedulerAPI(ExposedV2API):
         is_public, _old_status, actual_device_id, definition, sub_id,
         requested_device_type_id, end_time, absolute_url, submitter_username
         """
-        self._authenticate()
-        if not job_id:
-            raise xmlrpc.client.Fault(400, "Bad request: TestJob id was not specified.")
         try:
-            job = get_restricted_job(self.user, job_id)
-            job.status = job.get_legacy_status_display()
-            job.state = job.get_state_display()
-            job.health = job.get_health_display()
-            job.submitter_username = job.submitter.username
-            job.absolute_url = job.get_absolute_url()
-            job.is_pipeline = True
-        except PermissionDenied:
-            raise xmlrpc.client.Fault(
-                401, "Permission denied for user to job %s" % job_id
-            )
+            job = TestJob.get_by_job_number(job_id)
         except TestJob.DoesNotExist:
-            raise xmlrpc.client.Fault(404, "Specified job not found.")
+            raise xmlrpc.client.Fault(404, "Job '%s' was not found." % job_id)
+
+        if not job.can_view(self.user):
+            raise xmlrpc.client.Fault(
+                403, "Job '%s' not available to user '%s'." % (job_id, self.user)
+            )
+
+        job.status = job.get_legacy_status_display()
+        job.state = job.get_state_display()
+        job.health = job.get_health_display()
+        job.submitter_username = job.submitter.username
+        job.absolute_url = job.get_absolute_url()
+        job.is_pipeline = True
 
         return job
 
@@ -828,17 +830,15 @@ class SchedulerAPI(ExposedV2API):
         `job_health`: string
         ['Unknown'|'Complete'|'Incomplete'|'Canceled']
         """
-        self._authenticate()
-        if not job_id:
-            raise xmlrpc.client.Fault(400, "Bad request: TestJob id was not specified.")
         try:
-            job = get_restricted_job(self.user, job_id)
-        except PermissionDenied:
-            raise xmlrpc.client.Fault(
-                401, "Permission denied for user to job %s" % job_id
-            )
+            job = TestJob.get_by_job_number(job_id)
         except TestJob.DoesNotExist:
-            raise xmlrpc.client.Fault(404, "Specified job not found.")
+            raise xmlrpc.client.Fault(404, "Job '%s' was not found." % job_id)
+
+        if not job.can_view(self.user):
+            raise xmlrpc.client.Fault(
+                403, "Job '%s' not available to user '%s'." % (job_id, self.user)
+            )
 
         job_health = {"job_id": job.id, "job_health": job.get_health_display()}
 
@@ -871,17 +871,15 @@ class SchedulerAPI(ExposedV2API):
         `job_state`: string
         ['Submitted'|'Scheduling'|'Scheduled'|'Running'|'Canceling'|'Finished']
         """
-        self._authenticate()
-        if not job_id:
-            raise xmlrpc.client.Fault(400, "Bad request: TestJob id was not specified.")
         try:
-            job = get_restricted_job(self.user, job_id)
-        except PermissionDenied:
-            raise xmlrpc.client.Fault(
-                401, "Permission denied for user to job %s" % job_id
-            )
+            job = TestJob.get_by_job_number(job_id)
         except TestJob.DoesNotExist:
-            raise xmlrpc.client.Fault(404, "Specified job not found.")
+            raise xmlrpc.client.Fault(404, "Job '%s' was not found." % job_id)
+
+        if not job.can_view(self.user):
+            raise xmlrpc.client.Fault(
+                403, "Job '%s' not available to user '%s'." % (job_id, self.user)
+            )
 
         job_state = {"job_id": job.id, "job_state": job.get_state_display()}
 
