@@ -9,12 +9,12 @@ priority: medium
 
 actions:
 - deploy:
+    to: docker
     image: base/archlinux
     os: archlinux
-    to: docker
 - boot:
-    command: bash
     method: docker
+    command: bash
     prompts: ['root@lava ']
 - test:
     definitions:
