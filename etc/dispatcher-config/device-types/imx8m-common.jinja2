@@ -29,9 +29,3 @@
 {% set usb_device_id = usb_device_id|default('') %}
 {% set uboot_extra_error_message = uboot_extra_error_message|default('Invalid partition') %}
 {% set extra_nfsroot_args = extra_nfsroot_args|default(",v3") %}
-{% if save_uboot_env %}
-    {% set customized_uboot_boot_commands = ([
-    "setenv bootcmd 'tftp {KERNEL_ADDR} {KERNEL}; tftp {DTB_ADDR} {DTB}; booti {KERNEL_ADDR} - {DTB_ADDR}'",
-    "saveenv"])
-    -%}
-{% endif %}
