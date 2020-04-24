@@ -1,6 +1,6 @@
 # Job definition
 
-The job definition is a `yaml` file that you submit to the LAVA server.
+The [job definition](../../../technical-references/job-definition/job/) is a `yaml` file that you submit to the LAVA server.
 This file is describing everything that LAVA needs to know to run your tests on
 a DUT.
 
@@ -12,7 +12,7 @@ Let's look at this example:
 --8<-- "jobs/qemu.yaml"
 ```
 
-## Metadata
+## Structure
 
 The job definition is made of:
 

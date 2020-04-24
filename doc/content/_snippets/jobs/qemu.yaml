@@ -35,11 +35,11 @@ actions:
     timeout:
       minutes: 5
     definitions:
-    - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+    - repository: https://github.com/Linaro/test-definitions
       from: git
-      path: lava-test-shell/smoke-tests-basic.yaml
+      path: automated/linux/smoke/smoke.yaml
       name: smoke-tests
-    - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+    - repository: https://github.com/Linaro/test-definitions
       from: git
-      path: lava-test-shell/single-node/singlenode03.yaml
-      name: singlenode-advanced
+      path: automated/linux/meminfo/meminfo.yaml
+      name: meminfo
