@@ -1158,23 +1158,24 @@ def _create_pipeline_job(
                     "No known groups were found in the visibility list."
                 )
 
-    job = TestJob(
-        definition=yaml_safe_dump(job_data),
-        original_definition=orig,
-        submitter=user,
-        requested_device_type=device_type,
-        target_group=target_group,
-        description=job_data["job_name"],
-        health_check=health_check,
-        priority=priority,
-        is_public=is_public,
-    )
-    job.save()
+    with transaction.atomic():
+        job = TestJob(
+            definition=yaml_safe_dump(job_data),
+            original_definition=orig,
+            submitter=user,
+            requested_device_type=device_type,
+            target_group=target_group,
+            description=job_data["job_name"],
+            health_check=health_check,
+            priority=priority,
+            is_public=is_public,
+        )
+        job.save()
 
-    # need a valid job (witha  primary_key )before tags and groups can be
-    # assigned
-    job.tags.add(*taglist)
-    job.viewing_groups.add(*viewing_groups)
+        # need a valid job (witha  primary_key )before tags and groups can be
+        # assigned
+        job.tags.add(*taglist)
+        job.viewing_groups.add(*viewing_groups)
 
     return job
 
