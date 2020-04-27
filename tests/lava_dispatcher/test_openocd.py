@@ -59,8 +59,12 @@ class TestOpenOCDAction(StdoutTestCase):
         action = job.pipeline.actions[1].pipeline.actions[0]
         self.assertEqual(action.name, "boot-openocd-image")
 
-        # Check FlashOpenOCDAction
+        # Check ConnectDevice action
         action = job.pipeline.actions[1].pipeline.actions[0].pipeline.actions[0]
+        self.assertEqual(action.name, "connect-device")
+
+        # Check FlashOpenOCDAction
+        action = job.pipeline.actions[1].pipeline.actions[0].pipeline.actions[1]
         self.assertEqual(action.name, "flash-openocd")
         self.assertEqual(len(action.base_command), 24)
         print(action.base_command)
@@ -69,6 +73,3 @@ class TestOpenOCDAction(StdoutTestCase):
         self.assertEqual(action.base_command[2], "board/ti_cc3220sf_launchpad.cfg")
         self.assertEqual(action.base_command[5], "-d2")
         self.assertEqual(action.base_command[23], "shutdown")
-
-        action = job.pipeline.actions[1].pipeline.actions[0].pipeline.actions[1]
-        self.assertEqual(action.name, "connect-device")

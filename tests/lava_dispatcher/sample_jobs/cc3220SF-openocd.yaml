@@ -18,7 +18,7 @@ actions:
     to: tmpfs
     images:
       binary:
-        url: 'https://snapshots.linaro.org/components/kernel/zephyr/master/zephyr/cc3220sf_launchxl/3885/tests/subsys/logging/log_list/logging.log_list/zephyr/zephyr.elf'
+        url: 'https://snapshots.linaro.org/components/kernel/zephyr/master/zephyr/cc3220sf_launchxl/5080/tests/subsys/logging/log_list/logging.log_list/zephyr/zephyr.elf'
       #openocd_script:
       #  url: http://ivoire.dinauz.org/linaro/lava/cc3220SF/cc3220_xds110.cfg
 - boot:
