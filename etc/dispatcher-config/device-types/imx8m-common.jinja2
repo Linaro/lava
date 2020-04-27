@@ -13,7 +13,6 @@
                            'vbmeta', 'vbmeta_a', 'vbmeta_b', 'system', 'system_a', 'system_b',
                            'vendor', 'vendor_a', 'vendor_b', 'recovery']) %}
 {% set device_info = device_info|default([{'board_id': fastboot_serial_number}]) %}
-{% set base_high_limits = base_high_limits|default(false) %}
 {% set boot_character_delay = boot_character_delay|default(5) %}
 {% set test_character_delay = test_character_delay|default(5) %}
 {% set base_kernel_args   = base_kernel_args|default('') %}
