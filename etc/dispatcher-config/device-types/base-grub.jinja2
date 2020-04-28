@@ -17,7 +17,7 @@
                            "net_add_dns " + static_dns] %}
   {% else %}
     {% if pxe_net_configured %}
-      {% set net_commands = ["net_ls_addr"] %}
+      {% set net_commands = [] %}
     {% else %}
       {% set net_commands = ["net_bootp"] %}
     {% endif %}
@@ -72,7 +72,9 @@ actions:
         ramdisk:
           commands:
 {% block ramdisk_commands %}
+{% if net_commands %}
           - "{{ net_commands|join('"\n          - "') }}"
+{% endif %}
           - "insmod {{ modules|join('"\n          - "insmod ') }}"
           - "linux (tftp,{SERVER_IP})/{KERNEL} {{ console_args }} {{ base_ip_args }} {{ base_kernel_args }}"
           - "initrd (tftp,{SERVER_IP})/{RAMDISK}"
@@ -88,7 +90,9 @@ actions:
         nfs:
           commands:
 {% block nfs_commands %}
+{% if net_commands %}
           - "{{ net_commands|join('"\n          - "') }}"
+{% endif %}
           - "linux (tftp,{SERVER_IP})/{KERNEL} {{ console_args }} root=/dev/nfs rw {{ base_nfsroot_args }} {{ base_ip_args }} {{ base_kernel_args }}"
           - "initrd (tftp,{SERVER_IP})/{RAMDISK}"
           - "{{ dtb_commands|join('"\n          - "') }}"
@@ -97,7 +101,9 @@ actions:
         debian-installer:
           expect_shell: False
           commands:
+{% if net_commands %}
           - "{{ net_commands|join('"\n          - "') }}"
+{% endif %}
           - "linux (tftp,{SERVER_IP})/{KERNEL} auto=true interface=eth0 priority=critical noshell BOOT_DEBUG=1 DEBIAN_FRONTEND=text url=tftp://{SERVER_IP}/{PRESEED_CONFIG} --- {{ console_args }} {{ base_kernel_args }} debug verbose"
           - "initrd (tftp,{SERVER_IP})/{RAMDISK}"
           - "{{ dtb_commands|join('"\n          - "') }}"
