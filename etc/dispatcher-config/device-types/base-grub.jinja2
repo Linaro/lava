@@ -11,59 +11,43 @@
 {% set base_kernel_args = extra_kernel_args | default(base_kernel_args) %}
 
 {% if efi_grub %}
+  {% if static_ip %}
+    {% set net_commands = ["net_add_addr lava efinet0 " + static_ip,
+                           "net_add_route lava 0.0.0.0 gw " + static_gateway,
+                           "net_add_dns " + static_dns] %}
+  {% else %}
+    {% if pxe_net_configured %}
+      {% set net_commands = ["net_ls_addr"] %}
+    {% else %}
+      {% set net_commands = ["net_bootp"] %}
+    {% endif %}
+  {% endif %}
 
-{% if static_ip %}
-{% set net_commands = "          - net_add_addr lava efinet0 " + static_ip + "
-          - net_add_route lava 0.0.0.0 gw " + static_gateway + "
-          - net_add_dns " + static_dns %}
-{% else %}
-{% if pxe_net_configured %}
+  {% if efinet %}
+    {% set net_commands = ["insmod efinet"] + net_commands %}
+  {% endif %}
 
-{% set net_commands = "          - net_ls_addr" %}
-
-{% else %}
-
-{% if net_interface %}
-{% set net_commands = "          - net_bootp " + net_interface %}
-{% else %}
-{% set net_commands = "          - net_bootp" %}
-{% endif %}
-
-{% endif %}
-
-{# end static_ip #}
-{% endif %}
-
-{% if efinet %}
-
-{% set net_commands = "          - insmod efinet
-" + net_commands %}
-
-{% endif %}
-
-{% else %}
-{# not efi_grub #}
-
-{% if net_interface %}
-{% set net_commands = "          - net_bootp " + net_interface %}
-{% else %}
-{% set net_commands = "          - net_bootp" %}
-{% endif %}
-
+{% else %} {# not efi_grub #}
+  {% if net_interface %}
+    {% set net_commands = ["net_bootp" + net_interface] %}
+  {% else %}
+    {% set net_commands = ["net_bootp"] %}
+  {% endif %}
 {% endif %}
 
 {% if console_device %}
-{% set console_args = "console=" ~ console_device ~ "," ~ baud_rate %}
+  {% set console_args = "console=" ~ console_device ~ "," ~ baud_rate %}
 {% else %}
-{% set console_args = "" %}
-{% endif %}
-{% if has_dtb %}
-{% set dtb_commands = "          - clear
-          - devicetree (tftp,{SERVER_IP})/{DTB}" %}
-{% else %}
-{% set dtb_commands = "" %}
+  {% set console_args = "" %}
 {% endif %}
 
+{% if has_dtb %}
+  {% set dtb_commands = ["devicetree (tftp,{SERVER_IP})/{DTB}"] %}
+{% else %}
+  {% set dtb_commands = [] %}
+{% endif %}
+
+{% set modules = modules|default(["linux", "tftp"]) %}
 
 {% block body %}
 
@@ -88,62 +72,51 @@ actions:
         ramdisk:
           commands:
 {% block ramdisk_commands %}
-{{ net_commands }}
-          - clear
-          - insmod linux
-          - clear
-          - insmod tftp
-          - clear
-          - 'linux (tftp,{SERVER_IP})/{KERNEL} {{ console_args }} {{ base_ip_args }} {{ base_kernel_args }}'
-          - clear
-          - initrd (tftp,{SERVER_IP})/{RAMDISK}
-{{ dtb_commands }}
-          - clear
-          - boot
+          - "{{ net_commands|join('"\n          - "') }}"
+          - "insmod {{ modules|join('"\n          - "insmod ') }}"
+          - "linux (tftp,{SERVER_IP})/{KERNEL} {{ console_args }} {{ base_ip_args }} {{ base_kernel_args }}"
+          - "initrd (tftp,{SERVER_IP})/{RAMDISK}"
+          - "{{ dtb_commands|join('"\n          - "') }}"
+          - "boot"
 {% endblock ramdisk_commands %}
         nbd:
           commands:
-          - clear
-          - insmod linux
-          - clear
-          - insmod tftp
-          - clear
-          - 'linux (tftp,{SERVER_IP})/{KERNEL} {{ console_args }} {{ base_ip_args }} {{ base_nbdroot_args }} rw {{ base_kernel_args }}'
-          - clear
-          - initrd (tftp,{SERVER_IP})/{RAMDISK}
-          - boot
+          - "insmod {{ modules|join('"\n          - "insmod ') }}"
+          - "linux (tftp,{SERVER_IP})/{KERNEL} {{ console_args }} {{ base_ip_args }} {{ base_nbdroot_args }} rw {{ base_kernel_args }}"
+          - "initrd (tftp,{SERVER_IP})/{RAMDISK}"
+          - "boot"
         nfs:
           commands:
 {% block nfs_commands %}
-{{ net_commands }}
-          - 'linux (tftp,{SERVER_IP})/{KERNEL} {{ console_args }} root=/dev/nfs rw {{ base_nfsroot_args }} {{ base_ip_args }} {{ base_kernel_args }}'
-          - initrd (tftp,{SERVER_IP})/{RAMDISK}
-{{ dtb_commands }}
-          - boot
+          - "{{ net_commands|join('"\n          - "') }}"
+          - "linux (tftp,{SERVER_IP})/{KERNEL} {{ console_args }} root=/dev/nfs rw {{ base_nfsroot_args }} {{ base_ip_args }} {{ base_kernel_args }}"
+          - "initrd (tftp,{SERVER_IP})/{RAMDISK}"
+          - "{{ dtb_commands|join('"\n          - "') }}"
+          - "boot"
 {% endblock nfs_commands %}
         debian-installer:
           expect_shell: False
           commands:
-{{ net_commands }}
-          - 'linux (tftp,{SERVER_IP})/{KERNEL} auto=true interface=eth0 priority=critical noshell BOOT_DEBUG=1 DEBIAN_FRONTEND=text url=tftp://{SERVER_IP}/{PRESEED_CONFIG} --- {{ console_args }} {{ base_kernel_args }} debug verbose'
-          - initrd (tftp,{SERVER_IP})/{RAMDISK}
-{{ dtb_commands }}
-          - boot
+          - "{{ net_commands|join('"\n          - "') }}"
+          - "linux (tftp,{SERVER_IP})/{KERNEL} auto=true interface=eth0 priority=critical noshell BOOT_DEBUG=1 DEBIAN_FRONTEND=text url=tftp://{SERVER_IP}/{PRESEED_CONFIG} --- {{ console_args }} {{ base_kernel_args }} debug verbose"
+          - "initrd (tftp,{SERVER_IP})/{RAMDISK}"
+          - "{{ dtb_commands|join('"\n          - "') }}"
+          - "boot"
         debian-installed:
           commands:
-          - insmod part_gpt
-          - insmod ext2
-          - insmod part_msdos
-          - insmod chain
-          - ls
-          - ls {{ grub_installed_device }}
-          - sleep 10
-          - set
-          - set root={{ grub_installed_device }}
-          - sleep 10
-          - ls {{ grub_installed_device }}
-          - sleep 10
-          - chainloader {{ grub_installed_device }}/efi/debian/grubaa64.efi
-          - sleep 10
-          - boot
+          - "insmod part_gpt"
+          - "insmod ext2"
+          - "insmod part_msdos"
+          - "insmod chain"
+          - "ls"
+          - "ls {{ grub_installed_device }}"
+          - "sleep 10"
+          - "set"
+          - "set root={{ grub_installed_device }}"
+          - "sleep 10"
+          - "ls {{ grub_installed_device }}"
+          - "sleep 10"
+          - "chainloader {{ grub_installed_device }}/efi/debian/grubaa64.efi"
+          - "sleep 10"
+          - "boot"
 {% endblock body %}
