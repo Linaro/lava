@@ -422,7 +422,7 @@ def test_job_status(client, setup):
 @pytest.mark.django_db
 def test_job_timing(client, monkeypatch, setup):
     monkeypatch.setattr(
-        "lava_scheduler_app.views.read_logs",
+        "lava_scheduler_app.logutils.logs_instance.read",
         lambda dir_name: """
 - {"dt": "2019-11-05T09:06:14.952630", "lvl": "debug", "msg": "start: 1.1 deploy-device-env (timeout 00:03:52) [common]"}
 - {"dt": "2019-11-05T09:06:14.953059", "lvl": "debug", "msg": "end: 1.1 deploy-device-env (duration 00:00:10) [common]"}
@@ -451,7 +451,7 @@ def test_job_log_file_plain_no_log_file(client, monkeypatch, setup):
 @pytest.mark.django_db
 def test_job_log_file_plain(client, monkeypatch, setup):
     monkeypatch.setattr(
-        "lava_scheduler_app.views.open_logs",
+        "lava_scheduler_app.logutils.logs_instance.open",
         lambda dir_name: """
 line one
 line two
@@ -467,7 +467,9 @@ line two
 
 @pytest.mark.django_db
 def test_job_log_incremental_large_file(client, monkeypatch, setup):
-    monkeypatch.setattr("lava_scheduler_app.views.size_logs", lambda dir_name: 100)
+    monkeypatch.setattr(
+        "lava_scheduler_app.logutils.logs_instance.size", lambda dir_name: 100
+    )
     monkeypatch.setattr(TestJob, "size_limit", property(lambda x: 99))
 
     job_1 = TestJob.objects.get(description="test job 01")
@@ -478,9 +480,11 @@ def test_job_log_incremental_large_file(client, monkeypatch, setup):
 
 @pytest.mark.django_db
 def test_job_log_incremental(client, monkeypatch, setup):
-    monkeypatch.setattr("lava_scheduler_app.views.size_logs", lambda dir_name: 100)
     monkeypatch.setattr(
-        "lava_scheduler_app.views.read_logs",
+        "lava_scheduler_app.logutils.logs_instance.size", lambda dir_name: 100
+    )
+    monkeypatch.setattr(
+        "lava_scheduler_app.logutils.logs_instance.read",
         lambda dir_name, first_line: """
 - {"dt": "2019-11-04T15:39:52.345099", "lvl": "results", "msg": {"case": "validate", "definition": "lava", "result": "pass"}}
 - {"dt": "2019-11-04T15:39:52.345794", "lvl": "info", "msg": "start: 1 lxc-deploy (timeout 00:05:00) [tlxc]"}

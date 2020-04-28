@@ -78,7 +78,7 @@ from lava_scheduler_app.dbutils import (
     testjob_submission,
     validate_job,
 )
-from lava_scheduler_app.logutils import open_logs, size_logs, read_logs
+from lava_scheduler_app.logutils import logs_instance
 from lava_scheduler_app.templatetags.utils import udecode
 
 from lava_server.lavatable import LavaView
@@ -1279,12 +1279,12 @@ def job_detail(request, pk):
     }
 
     try:
-        job_file_size = size_logs(job.output_dir)
+        job_file_size = logs_instance.size(job)
         if job_file_size is not None and job_file_size >= job.size_limit:
             log_data = []
             data["size_warning"] = True
         else:
-            log_data = read_logs(job.output_dir)
+            log_data = logs_instance.read(job)
             log_data = yaml_load(log_data)
     except OSError:
         log_data = []
@@ -1528,7 +1528,7 @@ def job_status(request, pk):
 def job_timing(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
     try:
-        data = read_logs(job.output_dir)
+        data = logs_instance.read(job)
         logs = yaml_load(data)
     except OSError:
         raise Http404
@@ -1650,7 +1650,7 @@ def job_configuration(request, pk):
 def job_log_file_plain(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
     try:
-        data = open_logs(job.output_dir)
+        data = logs_instance.open(job)
         response = FileResponse(data, content_type="application/yaml")
         response["Content-Disposition"] = "attachment; filename=job_%d.log" % job.id
         return response
@@ -1666,14 +1666,14 @@ def job_log_incremental(request, pk):
     except ValueError:
         first_line = 0
 
-    job_file_size = size_logs(job.output_dir)
+    job_file_size = logs_instance.size(job)
     if job_file_size is not None and job_file_size >= job.size_limit:
         response = HttpResponse(simplejson.dumps([]), content_type="application/json")
         response["X-Size-Warning"] = "1"
         return response
 
     try:
-        data = read_logs(job.output_dir, first_line)
+        data = logs_instance.read(job, first_line)
         data = yaml_load(data)
         # When reaching EOF, yaml.load does return None instead of []
         if not data:

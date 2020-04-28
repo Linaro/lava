@@ -30,7 +30,7 @@ from linaro_django_xmlrpc.models import ExposedV2API
 from lava_common.compat import yaml_safe_load
 import lava_common.schemas as schemas
 from lava_scheduler_app.api import SchedulerAPI
-from lava_scheduler_app.logutils import read_logs
+from lava_scheduler_app.logutils import logs_instance
 from lava_scheduler_app.models import TestJob
 from lava_results_app.models import TestCase
 
@@ -355,7 +355,7 @@ class SchedulerJobsAPI(ExposedV2API):
         job_finished = job.state == TestJob.STATE_FINISHED
 
         try:
-            data = read_logs(job.output_dir, start, end)
+            data = logs_instance.read(job, start, end)
             return (job_finished, xmlrpc.client.Binary(data.encode("utf-8")))
         except OSError:
             return (job_finished, xmlrpc.client.Binary("[]".encode("utf-8")))

@@ -31,7 +31,7 @@ from lava_scheduler_app.models import (
 from lava_scheduler_app.dbutils import testjob_submission
 from lava_scheduler_app.schema import SubmissionException
 from lava_results_app.models import TestCase
-from lava_scheduler_app.logutils import open_logs, read_logs
+from lava_scheduler_app.logutils import logs_instance
 from linaro_django_xmlrpc.models import AuthToken
 
 from django.http.response import FileResponse, HttpResponse
@@ -177,10 +177,8 @@ class TestJobViewSet(viewsets.ModelViewSet):
                         case.start_log_line is not None
                         and case.end_log_line is not None
                     ):
-                        logs = read_logs(
-                            self.get_object().output_dir,
-                            case.start_log_line,
-                            case.end_log_line,
+                        logs = logs_instance.read(
+                            self.get_object(), case.start_log_line, case.end_log_line
                         )
                     tc.add_error_info("failed", output=logs)
                 elif case.result == TestCase.RESULT_SKIP:
@@ -201,10 +199,10 @@ class TestJobViewSet(viewsets.ModelViewSet):
         end = safe_str2int(request.query_params.get("end", None))
         try:
             if start == 0 and end is None:
-                data = open_logs(self.get_object().output_dir)
+                data = logs_instance.open(self.get_object())
                 response = FileResponse(data, content_type="application/yaml")
             else:
-                data = read_logs(self.get_object().output_dir, start, end)
+                data = logs_instance.read(self.get_object(), start, end)
                 response = HttpResponse(data, content_type="application/yaml")
             if not data:
                 raise NotFound()
@@ -239,10 +237,8 @@ class TestJobViewSet(viewsets.ModelViewSet):
                         case.start_log_line is not None
                         and case.end_log_line is not None
                     ):
-                        logs = read_logs(
-                            self.get_object().output_dir,
-                            case.start_log_line,
-                            case.end_log_line,
+                        logs = logs_instance.read(
+                            self.get_object(), case.start_log_line, case.end_log_line
                         )
                         logs = "\n ".join(logs.split("\n"))
                         tracker.add_not_ok(
