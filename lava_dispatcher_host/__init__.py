@@ -115,8 +115,11 @@ def load_mapping_data(filename):
 def match_mapping(device_info, options):
     matched = False
     for k, v in device_info.items():
-        if k in options and v and getattr(options, k) != v:
-            return False
+        if v:
+            if k in options and getattr(options, k) == v:
+                matched = True
+            else:
+                return False
         else:
             matched = True
     return matched
