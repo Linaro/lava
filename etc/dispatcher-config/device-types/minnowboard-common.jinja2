@@ -4,19 +4,11 @@
 {% set boot_character_delay = boot_character_delay | default(1) %}
 {% set kernel_start_message = 'Booting in blind mode' %}
 
-{% block ramdisk_commands %}
-          - set net_default_server={SERVER_IP}
-          - 'linux (tftp)/{KERNEL} console=tty0 console={{ console_device }},{{ baud_rate }} root=/dev/ram0 ip=:::::eth0:dhcp'
-          - initrd (tftp)/{RAMDISK}
-          - boot
-{% endblock ramdisk_commands %}
+{% set base_ip_args = "ip=:::::eth0:dhcp" %}
 
-{% block nfs_commands %}
-          - set net_default_server={SERVER_IP}
-          - 'linux (tftp)/{KERNEL} console=tty0 console={{ console_device }},{{ baud_rate }} root=/dev/nfs rw {{ base_nfsroot_args }} {{ base_ip_args }}'
-          - initrd (tftp)/{RAMDISK}
-          - boot
-{% endblock nfs_commands %}
+{% set extra_ramdisk_args = " root=/dev/ram0" %}
+{% set modules = ["linux", "tftp"] %}
+{% set console_device = "tty0 console=ttyS0" %}
 
 {% block timeouts %}
 timeouts:
