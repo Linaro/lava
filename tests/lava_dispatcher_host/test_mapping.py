@@ -35,7 +35,7 @@ def setup(monkeypatch, mocker, tmpdir):
 def test_simple_mapping(tmpdir):
     device_info = {"foo": "bar"}
     add_device_container_mapping("1", device_info, "mycontainer")
-    data = yaml_load(open(tmpdir / "1" / "usbmap.yaml"))
+    data = yaml_load(open(tmpdir / "1" / "usbmap.yaml"))[0]
 
     assert data["device_info"] == device_info
     assert data["container"] == "mycontainer"
@@ -169,3 +169,65 @@ def test_only_adds_slash_dev_if_needed(mocker):
         Namespace(device="/dev/foo/bar", serial_number="1234567890")
     )
     share.assert_called_once_with("mycontainer", "/dev/foo/bar")
+
+
+def test_second_mapping_does_not_invalidate_first(mocker):
+    share = mocker.patch("lava_dispatcher_host.share_device_with_container_lxc")
+    add_device_container_mapping("1", {"serial_number": "1234567890"}, "mycontainer1")
+    add_device_container_mapping("1", {"serial_number": "badbeeb00c"}, "mycontainer1")
+    share_device_with_container(
+        Namespace(device="/dev/foo/bar", serial_number="1234567890")
+    )
+    share.assert_called_once_with("mycontainer1", "/dev/foo/bar")
+
+
+def test_two_devices_two_containers(mocker):
+    share = mocker.patch("lava_dispatcher_host.share_device_with_container_lxc")
+    add_device_container_mapping("1", {"serial_number": "1234567890"}, "mycontainer1")
+    add_device_container_mapping("1", {"serial_number": "badbeeb00c"}, "mycontainer2")
+    share_device_with_container(
+        Namespace(device="/dev/foo/bar", serial_number="1234567890")
+    )
+    share.assert_called_once_with("mycontainer1", "/dev/foo/bar")
+    share.reset_mock()
+
+    share_device_with_container(
+        Namespace(device="/dev/foo/bar", serial_number="badbeeb00c")
+    )
+    share.assert_called_once_with("mycontainer2", "/dev/foo/bar")
+
+
+def test_device_plus_parent(mocker):
+    share = mocker.patch("lava_dispatcher_host.share_device_with_container_lxc")
+    add_device_container_mapping(
+        "1",
+        {
+            "serial_number": "1234567890",
+            "vendor_id": None,
+            "product_id": None,
+            "fs_label": None,
+        },
+        "mycontainer1",
+    )
+    add_device_container_mapping(
+        "1",
+        {
+            "serial_number": "",
+            "vendor_id": "1234",
+            "product_id": "3456",
+            "fs_label": None,
+        },
+        "mycontainer2",
+    )
+
+    share_device_with_container(
+        Namespace(device="/dev/foo/bar", serial_number="1234567890")
+    )
+    share.assert_called_once_with("mycontainer1", "/dev/foo/bar")
+    share.reset_mock()
+
+    share_device_with_container(
+        Namespace(device="/dev/foo/bar", vendor_id="1234", product_id="3456")
+    )
+    share.assert_called_once_with("mycontainer2", "/dev/foo/bar")
+    share.reset_mock()

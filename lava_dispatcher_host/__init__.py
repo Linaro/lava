@@ -31,7 +31,7 @@ def add_device_container_mapping(
     job_id, device_info, container, container_type="lxc", logging_info={}
 ):
     validate_device_info(device_info)
-    data = {
+    item = {
         "device_info": device_info,
         "container": container,
         "container_type": container_type,
@@ -39,12 +39,14 @@ def add_device_container_mapping(
     }
     logger = logging.getLogger("dispatcher")
     mapping_path = get_mapping_path(job_id)
+    data = load_mapping_data(mapping_path)
+    data.append(item)
     os.makedirs(os.path.dirname(mapping_path), exist_ok=True)
     with open(mapping_path, "w") as f:
         f.write(yaml_dump(data))
         logger.info(
             "Added mapping for {device_info} to {container_type} container {container}".format(
-                **data
+                **item
             )
         )
 
@@ -92,17 +94,32 @@ def share_device_with_container(options, setup_logger=None):
 
 def find_mapping(options):
     for mapping in glob.glob(get_mapping_path("*")):
-        data = yaml_load(open(mapping))
-        if match_mapping(data["device_info"], options):
-            return data
+        data = load_mapping_data(mapping)
+        for item in data:
+            if match_mapping(item["device_info"], options):
+                return item
     return None
+
+
+def load_mapping_data(filename):
+    try:
+        with open(filename) as f:
+            data = yaml_load(f)
+        if isinstance(data, dict):
+            data = [data]
+        return data
+    except FileNotFoundError:
+        return []
 
 
 def match_mapping(device_info, options):
     matched = False
     for k, v in device_info.items():
-        if k in options and v and getattr(options, k) != v:
-            return False
+        if v:
+            if k in options and getattr(options, k) == v:
+                matched = True
+            else:
+                return False
         else:
             matched = True
     return matched
