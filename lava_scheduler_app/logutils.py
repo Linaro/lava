@@ -20,7 +20,9 @@
 import contextlib
 import datetime
 import io
+import json
 import lzma
+import os
 import pathlib
 import requests
 import simplejson
@@ -279,6 +281,72 @@ class LogsElasticsearch(Logs):
         data = simplejson.dumps(line)
 
         requests.post("%s_doc/" % self.api_url, data=data, headers=self.headers)
+
+
+class LogsFirestore(Logs):
+    def __init__(self):
+        from google.cloud import firestore
+
+        # Project ID is determined by the GCLOUD_PROJECT environment variable
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)), "[FILE_NAME].json"
+        )
+        self.db = firestore.Client()
+        self.root_collection = "logs"
+        super().__init__()
+
+    def line_count(self, job):
+        doc_ref = (
+            self.db.collection(self.root_collection)
+            .document(
+                "%02d-%02d-%02d"
+                % (self.submit_time.year, self.submit_time.month, self.submit_time.day)
+            )
+            .collection(str(job.id))
+        )
+        return len(doc_ref.stream())
+
+    def open(self, job):
+        raise NotImplementedError("Should implement this method")
+
+    def read(self, job, start=0, end=None):
+        # TODO: read() method should utilize start and end numbers.
+        docs = (
+            self.db.collection(self.root_collection)
+            .document(
+                "%02d-%02d-%02d"
+                % (job.submit_time.year, job.submit_time.month, job.submit_time.day)
+            )
+            .collection(str(job.id))
+            .limit(end)
+            .stream()
+        )
+        result = []
+        for doc in docs:
+            doc_dict = doc.to_dict()
+            result.append(
+                json.dumps(
+                    {"dt": doc.id, "lvl": doc_dict["lvl"], "msg": doc_dict["msg"]}
+                )
+            )
+        return "\n".join(["- %s" % x for x in result])
+
+    def size(self, job, start=0, end=None):
+        # TODO: should be implemented.
+        return None
+
+    def write(self, job, line, output=None, idx=None):
+        line = yaml_load(line)[0]
+        doc_ref = (
+            self.db.collection(self.root_collection)
+            .document(
+                "%02d-%02d-%02d"
+                % (job.submit_time.year, job.submit_time.month, job.submit_time.day)
+            )
+            .collection(str(job.id))
+            .document(line["dt"])
+        )
+        doc_ref.set({"lvl": line["lvl"], "msg": line["msg"]})
 
 
 logs_backend_str = settings.LAVA_LOG_BACKEND.rsplit(".", 1)
