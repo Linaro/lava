@@ -1,0 +1,45 @@
+{% extends 'base-grub.jinja2' %}
+{% set boot_character_delay = boot_character_delay | default(150) %}
+
+{% set console_device = console_device | default('ttyAMA0') %}
+{% set baud_rate = baud_rate | default(115200) %}
+
+{% set extra_ramdisk_args = " rdinit=/init" %}
+{% set extra_kernel_args = extra_kernel_args | default('acpi=force crashkernel=256M@32M') %}
+
+{% set has_dtb = false %}
+{% set modules = ["net", "tftp", "gzio", "part_gpt", "efi_gop"] %}
+{% set efinet = true %}
+{% set net_interface = " efinet3" %}
+
+{% block timeouts %}
+timeouts:
+  actions:
+    grub-main:
+      seconds: 5400
+    bootloader-action:
+      seconds: 5400
+    bootloader-interrupt:
+      seconds: 300
+    bootloader-commands:
+      seconds: 600
+    auto-login:
+      seconds: 600
+    auto-login-action:
+      seconds: 600
+    pdu-reboot:
+      seconds: 3000
+  connections:
+    pdu-reboot:
+      seconds: 3000
+    grub-main:
+       seconds: 5400
+    bootloader-action:
+       seconds: 5400
+    bootloader-retry:
+      seconds: 3000
+    bootloader-interrupt:
+      seconds: 300
+    bootloader-commands:
+      seconds: 600
+{% endblock %}
