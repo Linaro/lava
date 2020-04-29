@@ -264,7 +264,7 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
             "commands"
         ]:
             if line.startswith("setenv nfsargs"):
-                self.assertIn(",tcp,hard,intr ", line)
+                self.assertIn(",tcp,hard ", line)
                 self.assertNotIn("nfsvers", line)
         job_ctx = {"extra_nfsroot_args": ",nolock,nfsvers=3"}
         template_dict = prepare_jinja_template(
@@ -274,7 +274,7 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
             "commands"
         ]:
             if line.startswith("setenv nfsargs"):
-                self.assertIn(",tcp,hard,intr,nolock,nfsvers=3 ", line)
+                self.assertIn(",tcp,hard,nolock,nfsvers=3 ", line)
         commands = template_dict["actions"]["boot"]["methods"]["u-boot"]["ramdisk"][
             "commands"
         ]

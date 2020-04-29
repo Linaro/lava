@@ -2,7 +2,7 @@
 {% set base_kernel_args = '' %}
 {% set base_extra_nfsroot_args = extra_nfsroot_args | default('') %}
 
-{% set base_nfsroot_args = ("nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr" + base_extra_nfsroot_args) -%}
+{% set base_nfsroot_args = ("nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard" + base_extra_nfsroot_args) -%}
 {% set base_nbdroot_args = ("nbd.server={NBDSERVERIP} nbd.port={NBDSERVERPORT} root=/dev/ram0 ramdisk_size=16384 rootdelay=7 ") -%}
 
 {% if static_ip and static_gateway and static_netmask and static_dns %}

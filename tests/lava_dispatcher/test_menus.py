@@ -198,7 +198,7 @@ class TestUefi(StdoutTestCase):
             {
                 "enter": [
                     "console=ttyS0,115200 earlyprintk=uart8250-32bit,0x1c020000 debug root=/dev/nfs rw "
-                    "nfsroot=10.4.0.2:tmp/tmp21dfed/,tcp,hard,intr ip=dhcp"
+                    "nfsroot=10.4.0.2:tmp/tmp21dfed/,tcp,hard ip=dhcp"
                 ],
                 "wait": "Description for this new Entry:",
             },
@@ -229,5 +229,5 @@ class TestUefi(StdoutTestCase):
         ]
         self.assertIsNotNone(block)
         self.assertEqual(len(block), 1)
-        expected_nfs_args = "console=ttyAMA0,38400n8 root=/dev/nfs rw nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr,vers=3 rootwait debug systemd.log_target=null user_debug=31 loglevel=9 ip=dhcp"
+        expected_nfs_args = "console=ttyAMA0,38400n8 root=/dev/nfs rw nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,vers=3 rootwait debug systemd.log_target=null user_debug=31 loglevel=9 ip=dhcp"
         self.assertEqual(block[0]["select"]["enter"], expected_nfs_args)

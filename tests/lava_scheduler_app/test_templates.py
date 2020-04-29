@@ -233,7 +233,7 @@ class TestTemplates(BaseTemplate.BaseTemplateCases):
             "staging-qemu-01", data, job_ctx=context, raw=False
         )
         self.assertIn(
-            "set extraargs root=/dev/nfs rw nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr intel_mmio=on mmio=on ip=dhcp",
+            "set extraargs root=/dev/nfs rw nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard intel_mmio=on mmio=on ip=dhcp",
             template_dict["actions"]["boot"]["methods"]["ipxe"]["nfs"]["commands"],
         )
 
