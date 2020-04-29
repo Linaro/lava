@@ -1,0 +1,105 @@
+timeouts:
+  job:
+    minutes: 140
+  connection:
+    minutes: 2
+context:
+  test_character_delay: 10
+device_type: hi6220-hikey-r2
+job_name: hikey - LKFT-like deployment of Linux 4.9
+priority: 25
+visibility: public
+metadata:
+  source: https://lkft.validation.linaro.org/scheduler/job/1295576/definition
+
+actions:
+
+  - deploy:
+      timeout:
+        minutes: 40
+      to: downloads
+      images:
+        ptable:
+          url: http://localhost:8888/oe/hikey-4.9/ptable-linux-8g.img
+        boot:
+          url: http://localhost:8888/oe/hikey-4.9/boot-0.0+AUTOINC+2d8c108bf0-ed8112606c-r0-hikey-20200127231900-9.uefi.img
+        dtb:
+          url: http://localhost:8888/oe/hikey-4.9/hi6220-hikey.dtb
+        kernel:
+          url: http://localhost:8888/oe/hikey-4.9/Image
+        modules:
+          url: http://localhost:8888/oe/hikey-4.9/modules.tar.xz
+        rootfs:
+          url: http://localhost:8888/oe/hikey-4.9/rpb-console-image-lkft-hikey-20200205141751-9.rootfs.ext4.gz
+          apply-overlay: true
+      os: oe
+      postprocess:
+        docker:
+          image: terceiro/kir
+          steps:
+            - /kir/lava/board_setup.sh hi6220-hikey-r2
+
+  - deploy:
+      timeout:
+        minutes: 40
+      to: fastboot
+      docker:
+        image: terceiro/kir
+      images:
+        ptable:
+          url: downloads://ptable-linux-8g.img
+          reboot: hard-reset
+        boot:
+          url: downloads://boot.img
+          reboot: hard-reset
+        system:
+          url: downloads://rpb-console-image-lkft.rootfs.img
+          apply-overlay: true
+      os: oe
+
+  - boot:
+      docker:
+        image: terceiro/kir
+      method: grub
+      commands: installed
+      auto_login:
+        login_prompt: 'login:'
+        username: linaro
+        login_commands:
+          # Become super user to run tests
+          - su
+      prompts:
+        - hikey:~
+        - hikey:/home/linaro#
+        - root@(.*):[/~]#
+      timeout:
+        minutes: 10
+
+  - command:
+      # turns off USB OTG
+      name: pre_os_command
+
+  - test:
+      timeout:
+        minutes: 25
+      definitions:
+        - from: inline
+          repository:
+            metadata:
+              format: Lava-Test Test Definition 1.0
+              name: prep-tests
+              description: Device preparation
+            run:
+              steps:
+                - df
+                - cat /sys/class/thermal/thermal_zone0/policy || true
+                - echo "power_allocator" > /sys/class/thermal/thermal_zone0/policy || true
+                - cat /sys/class/thermal/thermal_zone0/policy || true
+                - cat /sys/devices/system/cpu/cpufreq/policy0/scaling_available_frequencies  | awk '{ print $(NF-1) }'  > /sys/devices/system/cpu/cpufreq/policy0/scaling_max_freq
+                - cat /sys/devices/system/cpu/cpufreq/policy0/scaling_max_freq || true
+          name: prep-inline
+          path: inline/prep.yaml
+        - from: git
+          repository: https://github.com/Linaro/test-definitions.git
+          path: automated/linux/gpiod/gpiod.yaml
+          name: libgpiod
