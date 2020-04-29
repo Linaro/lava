@@ -46,7 +46,6 @@ actions:
           bootloader_prompt: "{{ bootloader_prompt }}"
           interrupt_prompt: "{{ interrupt_prompt }}"
           interrupt_char: "{{ interrupt_char }}"
-          send_char: False
           fastboot:
             commands:
 {% for command in fastboot_deploy_uboot_commands %}              - {{ command }}{% endfor %}

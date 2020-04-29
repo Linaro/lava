@@ -548,7 +548,6 @@ Example device configuration review
           parameters:
             bootloader_prompt: U-Boot
             boot_message: Booting Linux
-            send_char: False
             # interrupt: # character needed to interrupt u-boot, single whitespace by default
           # method specific stanza
           oe:

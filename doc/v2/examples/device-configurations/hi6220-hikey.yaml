@@ -35,7 +35,6 @@ actions:
           label_class: 'a-zA-Z0-9\s\:'
           bootloader_prompt: 'Start:'
           boot_message: "Booting Linux Kernel..."
-          send_char: True
           character_delay: 10
         fastboot:
         - select:
