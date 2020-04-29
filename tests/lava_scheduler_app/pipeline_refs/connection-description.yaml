@@ -53,7 +53,7 @@ device: !!python/object/new:lava_dispatcher.device.PipelineDevice
         parameters: {add_header: u-boot, mkimage_arch: arm}
     commands: {connect: telnet localhost 6004}
     device_type: beaglebone-black
-    hostname: !!python/unicode 'black02'
+    hostname: 'black02'
     parameters:
       bootm: {dtb: '0x815f0000', kernel: '0x80200000', ramdisk: '0x81600000'}
       bootz: {dtb: '0x81f00000', kernel: '0x81000000', ramdisk: '0x82000000'}
@@ -70,7 +70,7 @@ device: !!python/object/new:lava_dispatcher.device.PipelineDevice
         umount-retry: {seconds: 45}
       connections:
         uboot-commands: {seconds: 60}
-  state: {target: !!python/unicode 'black02'}
+  state: {target: 'black02'}
 job: &id006
   actions:
   - deploy:
@@ -146,12 +146,12 @@ job: &id006
   job_name: bbb-guest-ssh
   metadata: {path: bbb-ssh-guest.yaml, source: 'https://git.linaro.org/lava-team/refactoring.git',
     yaml_line: 41}
-  output_dir: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722'
+  output_dir: '/var/lib/lava-server/default/media/job-output/job-9722'
   priority: medium
   protocols:
     lava-multinode: *id001
     yaml_line: 43
-  target: !!python/unicode 'black02'
+  target: 'black02'
   timeouts:
     action: {minutes: 3, yaml_line: 54}
     connection: {minutes: 5, yaml_line: 55}
@@ -196,7 +196,7 @@ pipeline:
   description: prepare overlay and scp to device
   items: [firmware, kernel, dtb, rootfs, modules]
   level: '1'
-  log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1-scp-overlay.log'
+  log_filename: '/var/lib/lava-server/default/media/job-output/job-9722/1/1-scp-overlay.log'
   max_retries: 1
   name: scp-overlay
   pipeline:
@@ -207,7 +207,7 @@ pipeline:
     lava_test_dir: /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell
     lava_v2_test_dir: /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell
     level: '1.1'
-    log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1-lava-overlay.log'
+    log_filename: '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1-lava-overlay.log'
     max_retries: 1
     name: lava-overlay
     pipeline:
@@ -216,7 +216,7 @@ pipeline:
       data: *id003
       description: include public key in overlay and authorize root user
       level: 1.1.1
-      log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.1-ssh-authorize.log'
+      log_filename: '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.1-ssh-authorize.log'
       max_retries: 1
       name: ssh-authorize
       section: deploy
@@ -232,7 +232,7 @@ pipeline:
       lava_vland_cache_file: /tmp/lava_vland_cache.txt
       lava_vland_test_dir: /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/vland
       level: 1.1.2
-      log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.2-lava-vland-overlay.log'
+      log_filename: '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.2-lava-vland-overlay.log'
       max_retries: 1
       name: lava-vland-overlay
       protocol: lava-vland
@@ -270,7 +270,7 @@ pipeline:
       lava_test_dir: /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell
       lava_v2_test_dir: /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell
       level: 1.1.3
-      log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.3-lava-multinode-overlay.log'
+      log_filename: '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.3-lava-multinode-overlay.log'
       max_retries: 1
       name: lava-multinode-overlay
       protocol: lava-multinode
@@ -305,7 +305,7 @@ pipeline:
       data: *id003
       description: load test definitions into image
       level: 1.1.4
-      log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.4-test-definition.log'
+      log_filename: '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.4-test-definition.log'
       max_retries: 1
       name: test-definition
       pipeline:
@@ -314,7 +314,7 @@ pipeline:
         data: *id003
         description: apply git repository of tests to the test image
         level: 1.1.4.1
-        log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.4.1-git-repo-action.log'
+        log_filename: '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.4.1-git-repo-action.log'
         max_retries: 1
         name: git-repo-action
         priority: 1
@@ -329,7 +329,7 @@ pipeline:
         data: *id003
         description: overlay test support files onto image
         level: 1.1.4.2
-        log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.4.2-test-overlay.log'
+        log_filename: '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.4.2-test-overlay.log'
         max_retries: 1
         name: test-overlay
         section: deploy
@@ -342,7 +342,7 @@ pipeline:
         data: *id003
         description: overlay dependency installation support files onto image
         level: 1.1.4.3
-        log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.4.3-test-install-overlay.log'
+        log_filename: '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.4.3-test-install-overlay.log'
         max_retries: 1
         name: test-install-overlay
         section: deploy
@@ -356,7 +356,7 @@ pipeline:
         data: *id003
         description: overlay run script onto image
         level: 1.1.4.4
-        log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.4.4-test-runscript-overlay.log'
+        log_filename: '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.4.4-test-runscript-overlay.log'
         max_retries: 1
         name: test-runscript-overlay
         section: deploy
@@ -371,7 +371,7 @@ pipeline:
         default_pattern: (?P<test_case_id>.*-*)\s+:\s+(?P<result>(PASS|pass|FAIL|fail|SKIP|skip|UNKNOWN|unknown))
         description: apply inline test defintion to the test image
         level: 1.1.4.5
-        log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.4.5-inline-repo-action.log'
+        log_filename: '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.4.5-inline-repo-action.log'
         max_retries: 1
         name: inline-repo-action
         priority: 1
@@ -385,7 +385,7 @@ pipeline:
         data: *id003
         description: overlay test support files onto image
         level: 1.1.4.6
-        log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.4.6-test-overlay.log'
+        log_filename: '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.4.6-test-overlay.log'
         max_retries: 1
         name: test-overlay
         section: deploy
@@ -398,7 +398,7 @@ pipeline:
         data: *id003
         description: overlay dependency installation support files onto image
         level: 1.1.4.7
-        log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.4.7-test-install-overlay.log'
+        log_filename: '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.4.7-test-install-overlay.log'
         max_retries: 1
         name: test-install-overlay
         section: deploy
@@ -412,7 +412,7 @@ pipeline:
         data: *id003
         description: overlay run script onto image
         level: 1.1.4.8
-        log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.4.8-test-runscript-overlay.log'
+        log_filename: '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.4.8-test-runscript-overlay.log'
         max_retries: 1
         name: test-runscript-overlay
         section: deploy
@@ -431,7 +431,7 @@ pipeline:
       data: *id003
       description: Create a lava overlay tarball and store alongside the job
       level: 1.1.5
-      log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.5-compress-overlay.log'
+      log_filename: '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.5-compress-overlay.log'
       max_retries: 1
       name: compress-overlay
       section: deploy
@@ -443,7 +443,7 @@ pipeline:
       data: *id003
       description: unpack overlay into persistent NFS
       level: 1.1.6
-      log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.6-persistent-nfs-overlay.log'
+      log_filename: '/var/lib/lava-server/default/media/job-output/job-9722/1/1.1.6-persistent-nfs-overlay.log'
       max_retries: 1
       name: persistent-nfs-overlay
       section: deploy
@@ -481,7 +481,7 @@ pipeline:
     description: copy the overlay over an existing ssh connection
     host_keys: *id005
     level: '1.2'
-    log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.2-prepare-scp-overlay.log'
+    log_filename: '/var/lib/lava-server/default/media/job-output/job-9722/1/1.2-prepare-scp-overlay.log'
     max_retries: 1
     name: prepare-scp-overlay
     pipeline:
@@ -492,7 +492,7 @@ pipeline:
       extra_compression: [xz]
       file_key: root
       level: 1.2.1
-      log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.2.1-extract-rootfs.log'
+      log_filename: '/var/lib/lava-server/default/media/job-output/job-9722/1/1.2.1-extract-rootfs.log'
       max_retries: 1
       name: extract-rootfs
       param_key: rootfs
@@ -506,7 +506,7 @@ pipeline:
       data: *id003
       description: extract supplied kernel modules
       level: 1.2.2
-      log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.2.2-extract-modules.log'
+      log_filename: '/var/lib/lava-server/default/media/job-output/job-9722/1/1.2.2-extract-modules.log'
       max_retries: 1
       name: extract-modules
       section: deploy
@@ -522,7 +522,7 @@ pipeline:
     data: *id003
     description: deploy device environment
     level: '1.3'
-    log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/1/1.3-deploy-device-env.log'
+    log_filename: '/var/lib/lava-server/default/media/job-output/job-9722/1/1.3-deploy-device-env.log'
     max_retries: 1
     name: deploy-device-env
     section: deploy
@@ -539,7 +539,7 @@ pipeline:
   data: *id003
   description: connect over ssh and ensure a shell is found
   level: '2'
-  log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/2/2-login-ssh.log'
+  log_filename: '/var/lib/lava-server/default/media/job-output/job-9722/2/2-login-ssh.log'
   max_retries: 1
   name: login-ssh
   pipeline:
@@ -554,7 +554,7 @@ pipeline:
     identity_file: /usr/lib/python3/dist-packages/lava_dispatcher/dynamic_vm_keys/lava
     key: overlay
     level: '2.1'
-    log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/2/2.1-scp-deploy.log'
+    log_filename: '/var/lib/lava-server/default/media/job-output/job-9722/2/2.1-scp-deploy.log'
     max_retries: 1
     name: scp-deploy
     scp: [scp, -o, Compression=yes, -o, PasswordAuthentication=no, -o, LogLevel=FATAL]
@@ -570,7 +570,7 @@ pipeline:
     data: *id003
     description: determine which address to use for primary or secondary connections
     level: '2.2'
-    log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/2/2.2-prepare-ssh.log'
+    log_filename: '/var/lib/lava-server/default/media/job-output/job-9722/2/2.2-prepare-ssh.log'
     max_retries: 1
     name: prepare-ssh
     section: boot
@@ -587,7 +587,7 @@ pipeline:
     host: 10.15.0.151
     identity_file: /usr/lib/python3/dist-packages/lava_dispatcher/dynamic_vm_keys/lava
     level: '2.3'
-    log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/2/2.3-ssh-connection.log'
+    log_filename: '/var/lib/lava-server/default/media/job-output/job-9722/2/2.3-ssh-connection.log'
     max_retries: 1
     name: ssh-connection
     primary: true
@@ -606,7 +606,7 @@ pipeline:
     data: *id003
     description: automatically login after boot using job parameters
     level: '2.4'
-    log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/2/2.4-auto-login-action.log'
+    log_filename: '/var/lib/lava-server/default/media/job-output/job-9722/2/2.4-auto-login-action.log'
     max_retries: 1
     name: auto-login-action
     section: boot
@@ -619,7 +619,7 @@ pipeline:
     data: *id003
     description: Wait for a shell
     level: '2.5'
-    log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/2/2.5-expect-shell-connection.log'
+    log_filename: '/var/lib/lava-server/default/media/job-output/job-9722/2/2.5-expect-shell-connection.log'
     max_retries: 1
     name: expect-shell-connection
     section: boot
@@ -632,7 +632,7 @@ pipeline:
     description: Exports environment variables to the device
     env: [echo export LANG=\'C\' >> None, echo export LC_ALL=\'C.UTF-8\' >> None]
     level: '2.6'
-    log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/2/2.6-export-device-env.log'
+    log_filename: '/var/lib/lava-server/default/media/job-output/job-9722/2/2.6-export-device-env.log'
     max_retries: 1
     name: export-device-env
     section: boot
@@ -644,7 +644,7 @@ pipeline:
     data: *id003
     description: unpack the overlay over an existing ssh connection
     level: '2.7'
-    log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/2/2.7-scp-overlay-unpack.log'
+    log_filename: '/var/lib/lava-server/default/media/job-output/job-9722/2/2.7-scp-overlay-unpack.log'
     max_retries: 1
     name: scp-overlay-unpack
     section: boot
@@ -661,7 +661,7 @@ pipeline:
   data: *id003
   description: Executing lava-test-runner
   level: '3'
-  log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/3/3-multinode-test.log'
+  log_filename: '/var/lib/lava-server/default/media/job-output/job-9722/3/3-multinode-test.log'
   max_retries: 1
   name: multinode-test
   protocols:
@@ -685,7 +685,7 @@ pipeline:
   data: *id003
   description: finish the process and cleanup
   level: '4'
-  log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/4/4-finalize.log'
+  log_filename: '/var/lib/lava-server/default/media/job-output/job-9722/4/4-finalize.log'
   max_retries: 1
   name: finalize
   pipeline:
@@ -694,7 +694,7 @@ pipeline:
     data: *id003
     description: discontinue power to device
     level: '4.1'
-    log_filename: !!python/unicode '/var/lib/lava-server/default/media/job-output/job-9722/4/4.1-power_off.log'
+    log_filename: '/var/lib/lava-server/default/media/job-output/job-9722/4/4.1-power_off.log'
     max_retries: 1
     name: power_off
     section: finalize
