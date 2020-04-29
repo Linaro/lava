@@ -20,6 +20,7 @@
 
 import pexpect
 import time
+import json
 
 from lava_common.decorators import nottest
 from lava_common.exceptions import (
@@ -30,6 +31,7 @@ from lava_common.exceptions import (
 )
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.logical import LavaTest, RetryAction
+from lava_dispatcher.protocols.multinode import MultinodeProtocol
 from lava_dispatcher.utils.strings import substitute
 
 
@@ -89,6 +91,15 @@ class TestInteractiveAction(Action):
     summary = "Lava Test Interactive"
     timeout_exception = LAVATimeoutError
 
+    def populate(self, parameters):
+        super().populate(parameters)
+        proto = [
+            protocol
+            for protocol in self.job.protocols
+            if protocol.name == MultinodeProtocol.name
+        ]
+        self.multinode_proto = proto[0] if proto else None
+
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
 
@@ -128,7 +139,62 @@ class TestInteractiveAction(Action):
         prompts = script["prompts"]  # TODO: allow to change the prompts?
         cmds = script["script"]
 
+        def multinode2subst(msg):
+            for role_id, data in msg.items():
+                for k, v in data.items():
+                    substitutions["{%s}" % k] = v
+
         for index, cmd in enumerate(cmds):
+            if "delay" in cmd:
+                self.logger.info("Delaying for %ss", cmd["delay"])
+                time.sleep(cmd["delay"])
+                continue
+            elif "lava-send" in cmd:
+                payload = {}
+                line = substitute([cmd["lava-send"]], substitutions)[0]
+                parts = line.split()
+                for p in parts[1:]:
+                    k, v = p.split("=", 1)
+                    payload[k] = v
+                res = self.multinode_proto.request_send(parts[0], payload)
+                self.logger.info("send result: %r", res)
+                continue
+            elif "lava-wait" in cmd:
+                res = self.multinode_proto.request_wait(cmd["lava-wait"])
+                self.logger.info("wait result: %r", res)
+                res = json.loads(res)
+                # Capture any payload key-value pairs as possible substitutions.
+                multinode2subst(res["message"])
+                continue
+            elif "lava-wait-all" in cmd:
+                parts = cmd["lava-wait-all"].split()
+                if not (1 <= len(parts) <= 2):
+                    raise JobError(
+                        "lava-wait-all expects 1 or 2 params, got: %s" % parts
+                    )
+                role = None
+                if len(parts) > 1:
+                    key, role = parts[1].split("=", 1)
+                    if key != "role":
+                        raise JobError(
+                            "lava-wait-all 2nd param must be role=<rolename>, got: %s"
+                            % key
+                        )
+                res = self.multinode_proto.request_wait_all(parts[0], role)
+                self.logger.info("wait-all result: %r", res)
+                res = json.loads(res)
+                if res["response"] == "nack":
+                    raise TestError(
+                        "Nack reply from coordinator for wait-all (deadlock detected?)"
+                    )
+                # Capture any payload key-value pairs as possible substitutions.
+                multinode2subst(res["message"])
+                continue
+            elif "lava-sync" in cmd:
+                res = self.multinode_proto.request_sync(cmd["lava-sync"])
+                self.logger.info("sync result: %r", res)
+                continue
+
             command = cmd["command"]
             if command is not None:
                 command = substitute([cmd["command"]], substitutions)[0]
@@ -182,7 +248,15 @@ class TestInteractiveAction(Action):
                         if wait_for_prompt:
                             test_connection.expect(prompts)
                     else:
-                        self.logger.info("Matched a success: '%s'", match)
+                        groups = test_connection.match.groupdict()
+                        if groups:
+                            self.logger.info(
+                                "Matched a success: '%s' (groups: %s)", match, groups
+                            )
+                        else:
+                            self.logger.info("Matched a success: '%s'", match)
+                        for k, v in groups.items():
+                            substitutions["{%s}" % k] = v
                         # Wait for the prompt to send the next command
                         if wait_for_prompt:
                             test_connection.expect(prompts)
