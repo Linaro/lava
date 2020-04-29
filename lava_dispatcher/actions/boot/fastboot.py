@@ -18,6 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import shlex
 
 from lava_dispatcher.action import Action, Pipeline
 from lava_common.exceptions import InfrastructureError, JobError, LAVABug
@@ -81,7 +82,7 @@ class BootFastbootCommands(BaseAction):
         serial_number = self.job.device["fastboot_serial_number"]
         self.logger.info("Running custom fastboot boot commands....")
         for command in self.parameters.get("commands"):
-            self.run_fastboot([command])
+            self.run_fastboot(shlex.split(command))
 
 
 class BootFastbootAction(BootHasMixin, RetryAction, BaseAction):
