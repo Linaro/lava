@@ -8,31 +8,30 @@
 {% set net_interface = net_interface | default('') %}
 
 {# allow job context override - use a different variable name, undefined if not in job context #}
-{% set base_kernel_args = extra_kernel_args | default(base_kernel_args) %}
+{% set extra_kernel_args = extra_kernel_args | default(base_kernel_args) %}
+
+{% set net_interface = net_interface | default('') %}
 
 {% if efi_grub %}
   {% if static_ip %}
     {% set net_commands = ["net_add_addr lava efinet0 " + static_ip,
                            "net_add_route lava 0.0.0.0 gw " + static_gateway,
                            "net_add_dns " + static_dns] %}
+  {% elif pxe_net_configured %}
+    {% set net_commands = [] %}
   {% else %}
-    {% if pxe_net_configured %}
-      {% set net_commands = [] %}
-    {% else %}
-      {% set net_commands = ["net_bootp"] %}
-    {% endif %}
+    {% set net_commands = ["net_bootp" + net_interface] %}
   {% endif %}
-
-  {% if efinet %}
-    {% set net_commands = ["insmod efinet"] + net_commands %}
-  {% endif %}
-
 {% else %} {# not efi_grub #}
   {% if net_interface %}
     {% set net_commands = ["net_bootp" + net_interface] %}
   {% else %}
     {% set net_commands = ["net_bootp"] %}
   {% endif %}
+{% endif %}
+
+{% if efinet %}
+  {% set net_commands = ["insmod efinet"] + net_commands %}
 {% endif %}
 
 {% if console_device %}
@@ -49,8 +48,15 @@
 
 {% set modules = modules|default(["linux", "tftp"]) %}
 
-{% block body %}
+{% set common_commands = "" %}
+{% if net_commands %}
+  {% set common_commands = '- "' + net_commands|join('"\n- "') + '"' %}
+{% endif %}
+{% if modules %}
+  {% set common_commands = common_commands + '\n- "insmod ' + modules|join('"\n- "insmod ') + '"' %}
+{% endif %}
 
+{% block body %}
 actions:
   deploy:
     connections:
@@ -71,42 +77,39 @@ actions:
           bootloader_prompt: {{ bootloader_prompt|default('grub>') }}
         ramdisk:
           commands:
-{% block ramdisk_commands %}
-{% if net_commands %}
-          - "{{ net_commands|join('"\n          - "') }}"
-{% endif %}
-          - "insmod {{ modules|join('"\n          - "insmod ') }}"
-          - "linux (tftp,{SERVER_IP})/{KERNEL} {{ console_args }} {{ base_ip_args }} {{ base_kernel_args }}"
+          {{ common_commands|indent(10) }}
+          - "linux (tftp,{SERVER_IP})/{KERNEL} {{ console_args }} {{ base_ip_args }} {{ extra_ramdisk_args }} {{ extra_kernel_args }}"
           - "initrd (tftp,{SERVER_IP})/{RAMDISK}"
+{% if dtb_commands %}
           - "{{ dtb_commands|join('"\n          - "') }}"
+{% endif %}
           - "boot"
-{% endblock ramdisk_commands %}
         nbd:
           commands:
-          - "insmod {{ modules|join('"\n          - "insmod ') }}"
-          - "linux (tftp,{SERVER_IP})/{KERNEL} {{ console_args }} {{ base_ip_args }} {{ base_nbdroot_args }} rw {{ base_kernel_args }}"
+          {{ common_commands|indent(10) }}
+          - "linux (tftp,{SERVER_IP})/{KERNEL} {{ console_args }} {{ base_ip_args }} {{ base_nbdroot_args }} rw {{ extra_kernel_args }}"
           - "initrd (tftp,{SERVER_IP})/{RAMDISK}"
           - "boot"
         nfs:
           commands:
-{% block nfs_commands %}
-{% if net_commands %}
-          - "{{ net_commands|join('"\n          - "') }}"
-{% endif %}
-          - "linux (tftp,{SERVER_IP})/{KERNEL} {{ console_args }} root=/dev/nfs rw {{ base_nfsroot_args }} {{ base_ip_args }} {{ base_kernel_args }}"
+          {{ common_commands|indent(10) }}
+          - "linux (tftp,{SERVER_IP})/{KERNEL} {{ console_args }} root=/dev/nfs rw {{ base_nfsroot_args }} {{ base_ip_args }} {{ extra_kernel_args }}"
           - "initrd (tftp,{SERVER_IP})/{RAMDISK}"
+{% if dtb_commands %}
           - "{{ dtb_commands|join('"\n          - "') }}"
+{% endif %}
           - "boot"
-{% endblock nfs_commands %}
         debian-installer:
           expect_shell: False
           commands:
 {% if net_commands %}
           - "{{ net_commands|join('"\n          - "') }}"
 {% endif %}
-          - "linux (tftp,{SERVER_IP})/{KERNEL} auto=true interface=eth0 priority=critical noshell BOOT_DEBUG=1 DEBIAN_FRONTEND=text url=tftp://{SERVER_IP}/{PRESEED_CONFIG} --- {{ console_args }} {{ base_kernel_args }} debug verbose"
+          - "linux (tftp,{SERVER_IP})/{KERNEL} auto=true interface=eth0 priority=critical noshell BOOT_DEBUG=1 DEBIAN_FRONTEND=text url=tftp://{SERVER_IP}/{PRESEED_CONFIG} --- {{ console_args }} {{ extra_kernel_args }} debug verbose"
           - "initrd (tftp,{SERVER_IP})/{RAMDISK}"
+{% if dtb_commands %}
           - "{{ dtb_commands|join('"\n          - "') }}"
+{% endif %}
           - "boot"
         debian-installed:
           commands:
