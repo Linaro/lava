@@ -2,7 +2,7 @@
 
 {% set grub_autoboot_prompt = grub_autoboot_prompt|default('SecStartup') %}
 {% set boot_character_delay = boot_character_delay | default(1) %}
-{% set boot_message = 'Booting in blind mode' %}
+{% set kernel_start_message = 'Booting in blind mode' %}
 
 {% block ramdisk_commands %}
           - set net_default_server={SERVER_IP}
