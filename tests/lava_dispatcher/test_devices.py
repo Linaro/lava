@@ -230,7 +230,9 @@ overrides:
             for action in job.pipeline.actions
             if action.name == "uboot-action"
         ][0]
-        retry = [action for action in boot_actions if action.name == "uboot-retry"][0]
+        retry = [action for action in boot_actions if action.name == "uboot-commands"][
+            0
+        ]
         boot_env = [
             action
             for action in retry.pipeline.actions

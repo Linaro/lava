@@ -69,7 +69,7 @@ device: !!python/object/new:lava_dispatcher.device.PipelineDevice
         power_off: {seconds: 5}
         umount-retry: {seconds: 45}
       connections:
-        uboot-retry: {seconds: 60}
+        uboot-commands: {seconds: 60}
   state: {target: !!python/unicode 'black02'}
 job: &id006
   actions:

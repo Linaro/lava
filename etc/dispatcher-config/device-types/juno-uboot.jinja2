@@ -200,8 +200,8 @@ timeouts:
       minutes: {{ action_timeout_bootloader_action | default(3)}}
     uboot-action:
       minutes: {{ action_timeout_uboot_action | default(3)}}
-    uboot-retry:
-      minutes: {{ action_timeout_uboot_retry | default(3)}}
+    uboot-commands:
+      minutes: {{ action_timeout_uboot_commands | default(3)}}
     bootloader-retry:
       minutes: {{ action_timeout_bootloader_retry | default(3)}}
     boot-qemu-image:
@@ -213,8 +213,8 @@ timeouts:
       minutes: {{ connection_timeout_dd_image | default(20) }}
     u-boot-interrupt:
       minutes: {{ action_timeout_u_boot_interrupt | default(2) }}
-    uboot-retry:
-      minutes: {{ action_timeout_u_boot_retry | default(3) }}
+    uboot-commands:
+      minutes: {{ action_timeout_uboot_commands | default(3) }}
     u-boot-commands:
       minutes: {{ action_timeout_u_boot_commands | default(2) }}
     bootloader-commands:

@@ -21,7 +21,7 @@
 # List just the subclasses supported for this base strategy
 # imported by the parser to populate the list of subclasses.
 
-from lava_dispatcher.action import Pipeline
+from lava_dispatcher.action import Action, Pipeline
 from lava_common.exceptions import ConfigurationError
 from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.actions.boot import (
@@ -94,14 +94,14 @@ class UBootAction(RetryAction):
         self.pipeline.add_action(UBootSecondaryMedia())
         self.pipeline.add_action(BootloaderCommandOverlay())
         self.pipeline.add_action(ConnectDevice())
-        self.pipeline.add_action(UBootRetry())
+        self.pipeline.add_action(UBootCommandsAction())
 
 
-class UBootRetry(BootHasMixin, RetryAction):
+class UBootCommandsAction(BootHasMixin, Action):
 
-    name = "uboot-retry"
-    description = "interactive uboot retry action"
-    summary = "uboot commands with retry"
+    name = "uboot-commands"
+    description = "interactive uboot commands action"
+    summary = "uboot commands"
 
     def __init__(self):
         super().__init__()

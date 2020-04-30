@@ -52,7 +52,9 @@ class TestUbootUMSAction(StdoutTestCase):
             action for action in job.pipeline.actions if action.name == "uboot-action"
         ][0]
         retry = [
-            action for action in uboot.pipeline.actions if action.name == "uboot-retry"
+            action
+            for action in uboot.pipeline.actions
+            if action.name == "uboot-commands"
         ][0]
         flash = [
             action

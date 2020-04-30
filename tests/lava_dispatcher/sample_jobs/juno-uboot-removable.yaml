@@ -13,7 +13,7 @@ timeouts:
       seconds: 120
     auto-login-action:
       seconds: 300
-    uboot-retry:
+    uboot-commands:
       seconds: 180
     dd-image:
       seconds: 900
@@ -26,7 +26,7 @@ timeouts:
       seconds: 120
     auto-login-action:
       seconds: 300
-    uboot-retry:
+    uboot-commands:
       seconds: 180
     dd-image:
       seconds: 900

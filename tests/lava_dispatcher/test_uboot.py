@@ -28,7 +28,7 @@ from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.actions.boot.u_boot import (
     UBootAction,
-    UBootRetry,
+    UBootCommandsAction,
     UBootSecondaryMedia,
 )
 from lava_dispatcher.actions.boot import BootloaderCommandOverlay
@@ -97,7 +97,9 @@ class TestUbootAction(StdoutTestCase):
         )
         self.assertIsInstance(uboot, UBootAction)
         retry = [
-            action for action in uboot.pipeline.actions if action.name == "uboot-retry"
+            action
+            for action in uboot.pipeline.actions
+            if action.name == "uboot-commands"
         ][0]
         self.assertEqual(
             "reboot: Restarting system",  # modified in the job yaml
@@ -105,7 +107,7 @@ class TestUbootAction(StdoutTestCase):
                 "shutdown-message", job.device.get_constant("shutdown-message")
             ),
         )
-        self.assertIsInstance(retry, UBootRetry)
+        self.assertIsInstance(retry, UBootCommandsAction)
         reset = retry.pipeline.actions[0]
         self.assertEqual(
             "reboot: Restarting system",  # modified in the job yaml
@@ -452,7 +454,9 @@ class TestUbootAction(StdoutTestCase):
             action for action in job.pipeline.actions if action.name == "uboot-action"
         ][0]
         retry = [
-            action for action in uboot.pipeline.actions if action.name == "uboot-retry"
+            action
+            for action in uboot.pipeline.actions
+            if action.name == "uboot-commands"
         ][0]
         transfer = [
             action
@@ -501,7 +505,7 @@ class TestUbootAction(StdoutTestCase):
     def test_reset_actions(self, which_mock):
         job = self.factory.create_bbb_job("sample_jobs/uboot.yaml")
         uboot_action = None
-        uboot_retry = None
+        uboot_commands = None
         reset_action = None
         for action in job.pipeline.actions:
             action.validate()
@@ -510,16 +514,16 @@ class TestUbootAction(StdoutTestCase):
                 uboot_action = action
         names = [r_action.name for r_action in uboot_action.pipeline.actions]
         self.assertIn("connect-device", names)
-        self.assertIn("uboot-retry", names)
+        self.assertIn("uboot-commands", names)
         for action in uboot_action.pipeline.actions:
-            if action.name == "uboot-retry":
-                uboot_retry = action
-        names = [r_action.name for r_action in uboot_retry.pipeline.actions]
+            if action.name == "uboot-commands":
+                uboot_commands = action
+        names = [r_action.name for r_action in uboot_commands.pipeline.actions]
         self.assertIn("reset-device", names)
         self.assertIn("bootloader-interrupt", names)
         self.assertIn("expect-shell-connection", names)
         self.assertIn("bootloader-commands", names)
-        for action in uboot_retry.pipeline.actions:
+        for action in uboot_commands.pipeline.actions:
             if action.name == "reset-device":
                 reset_action = action
         names = [r_action.name for r_action in reset_action.pipeline.actions]
