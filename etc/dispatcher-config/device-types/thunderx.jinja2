@@ -1,69 +1,17 @@
 {# device_type: thunderx #}
-{% extends 'base.jinja2' %}
+{% extends 'base-grub.jinja2' %}
 {% set boot_character_delay = boot_character_delay | default(150) %}
-
 
 {% set console_device = console_device | default('ttyAMA0') %}
 {% set baud_rate = baud_rate | default(115200) %}
 
-{% set base_nfsroot_args = nfsroot_args | default(base_nfsroot_args) -%}
-{% set kernel_args = kernel_args | default('acpi=force') %}
+{% set extra_ramdisk_args = " rdinit=/init" %}
+{% set extra_kernel_args = extra_kernel_args | default('acpi=force crashkernel=256M@32M') %}
 
-{% block body %}
-
-actions:
-  deploy:
-    methods:
-      tftp:
-      ssh:
-        options:
-{{ ssh_options }}
-{% if ssh_host %}
-        host: {{ ssh_host }}
-{% endif %}
-        user: {{ ssh_user|default(root) }}
-        port: {{ ssh_port|default(22) }}
-        identity_file: {{ ssh_identity_file }}
-  boot:
-    connections:
-      serial:
-      ssh:
-    methods:
-      ssh:
-      grub:
-        parameters:
-          bootloader_prompt: {{ bootloader_prompt|default('grub>') }}
-          boot_message: {{ boot_message|default('Linux version') }}
-        ramdisk:
-          commands:
-          - insmod net
-          - insmod efinet
-          - insmod tftp
-          - insmod gzio
-          - insmod part_gpt
-          - insmod efi_gop
-          - net_bootp efinet3
-          - net_ls_addr
-          - net_ls_routes
-          - set net_default_server={SERVER_IP}
-          - 'linux (tftp,{SERVER_IP})/{KERNEL} rdinit=/init {{ kernel_args }} crashkernel=256M@32M console={{ console_device }} {{ base_ip_args }}'
-          - initrd (tftp,{SERVER_IP})/{RAMDISK}
-          - devicetree (tftp,{SERVER_IP})/{DTB}
-          - boot
-        nfs:
-          commands:
-          - insmod net
-          - insmod efinet
-          - insmod tftp
-          - insmod gzio
-          - insmod part_gpt
-          - insmod efi_gop
-          - net_bootp efinet3
-          - 'linux (tftp,{SERVER_IP})/{KERNEL} console={{ console_device }} {{ kernel_args }} {{ base_nfsroot_args }} {{ base_ip_args }} root=/dev/nfs rw'
-          - initrd (tftp,{SERVER_IP})/{RAMDISK}
-          - devicetree (tftp,{SERVER_IP})/{DTB}
-          - boot
-{% endblock %}
+{% set has_dtb = true %}
+{% set modules = ["net", "tftp", "gzio", "part_gpt", "efi_gop"] %}
+{% set efinet = true %}
+{% set net_interface = " efinet3" %}
 
 {% block timeouts %}
 timeouts:
