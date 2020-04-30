@@ -1,66 +1,15 @@
 {# device_type: overdrive #}
 
-{% extends 'base.jinja2' %}
+{% extends 'base-grub.jinja2' %}
+
 {% set console_device = console_device | default('ttyAMA0') %}
 {% set baud_rate = baud_rate | default(115200) %}
 
-{% set kernel_args = kernel_args | default('acpi=force r8169.use_dac=1') %}
+{% set extra_ramdisk_args = " rdinit=/init" %}
+{% set extra_kernel_args = kernel_args | default('acpi=force r8169.use_dac=1 crashkernel=256M@32M') %}
 
-{% block body %}
-
-actions:
-  deploy:
-    connections:
-      lxc:
-      serial:
-    methods:
-      lxc:
-      tftp:
-      ssh:
-        options:
-{{ ssh_options }}
-        host: '{{ ssh_host|default('') }}'
-        user: {{ ssh_user|default('root') }}
-        port: {{ ssh_port|default(22) }}
-        identity_file: {{ ssh_identity_file }}
-  boot:
-    connections:
-      lxc:
-      serial:
-      ssh:
-    methods:
-      ssh:
-      grub:
-        parameters:
-          bootloader_prompt: {{ bootloader_prompt|default('grub>') }}
-          boot_message: {{ boot_message|default('Linux version') }}
-        ramdisk:
-          commands:
-          - insmod net
-          - insmod efinet
-          - insmod tftp
-          - insmod gzio
-          - insmod part_gpt
-          - insmod efi_gop
-          - set net_default_server={SERVER_IP}
-          - 'linux (tftp)/{KERNEL} rdinit=/init {{ kernel_args }} crashkernel=256M@32M console={{ console_device }} {{ base_ip_args }}'
-          - initrd (tftp)/{RAMDISK}
-          - devicetree (tftp)/{DTB}
-          - boot
-        nfs:
-          commands:
-          - insmod net
-          - insmod efinet
-          - insmod tftp
-          - insmod gzio
-          - insmod part_gpt
-          - insmod efi_gop
-          - set net_default_server={SERVER_IP}
-          - 'linux (tftp)/{KERNEL} console={{ console_device }} {{ kernel_args }} {{ base_nfsroot_args }} {{ base_ip_args }} root=/dev/nfs rw'
-          - initrd (tftp)/{RAMDISK}
-          - devicetree (tftp)/{DTB}
-          - boot
-{% endblock body %}
+{% set modules = ["net", "efinet", "tftp", "gzio", "part_gpt", "efi_gop"] %}
+{% set has_dtb = true %}
 
 {% block timeouts %}
 timeouts:
