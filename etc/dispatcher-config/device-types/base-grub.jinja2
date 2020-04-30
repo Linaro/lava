@@ -94,7 +94,9 @@ actions:
           commands:
           {{ common_commands|indent(10) }}
           - "linux (tftp,{SERVER_IP})/{KERNEL} {{ console_args }} root=/dev/nfs rw {{ base_nfsroot_args }} {{ base_ip_args }} {{ extra_kernel_args }}"
+{% if ramdisk_with_nfs | default(true) %}
           - "initrd (tftp,{SERVER_IP})/{RAMDISK}"
+{% endif %}
 {% if dtb_commands %}
           - "{{ dtb_commands|join('"\n          - "') }}"
 {% endif %}

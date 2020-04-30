@@ -1,70 +1,14 @@
 {# device_type: d02 #}
-{% extends 'base.jinja2' %}
-{% block body %}
+{% extends 'base-grub.jinja2' %}
 
 {% set console_device = console_device | default('ttyS0') %}
 {% set baud_rate = baud_rate | default(115200) %}
 {% set grub_installed_device = grub_installed_device | default('(hd1,gpt1)') %}
-
-{% block vland %}
-{% endblock vland %}
-
-actions:
-  deploy:
-    connections:
-      lxc:
-      serial:
-    methods:
-      tftp:
-  boot:
-    connections:
-      lxc:
-      serial:
-    methods:
-      grub:
-        parameters:
-          bootloader_prompt: grub>
-          boot_message: Linux version
-        ramdisk:
-          commands:
-          - net_bootp
-          - 'linux (tftp,{SERVER_IP})/{KERNEL} console={{ console_device }},{{ baud_rate }} earlycon=uart8250,mmio32,0x80300000 root=/dev/ram0 {{ base_ip_args }}'
-          - initrd (tftp,{SERVER_IP})/{RAMDISK}
-          - devicetree (tftp,{SERVER_IP})/{DTB}
-          - boot
-        nfs:
-          commands:
-          - net_bootp
-          - 'linux (tftp,{SERVER_IP})/{KERNEL} console={{ console_device }},{{ baud_rate }} earlycon=uart8250,mmio32,0x80300000 root=/dev/nfs rw {{ base_nfsroot_args }} {{ base_ip_args }}'
-          - devicetree (tftp,{SERVER_IP})/{DTB}
-          - boot
-        debian-installer:
-          expect_shell: False
-          commands:
-          - net_bootp
-          - linux (tftp,{SERVER_IP})/{KERNEL} auto=true interface=eth0 priority=critical noshell BOOT_DEBUG=1 DEBIAN_FRONTEND=text url=tftp://{SERVER_IP}/{PRESEED_CONFIG} efi=noruntime --- console={{ console_device }},{{ baud_rate }} debug verbose
-          - initrd (tftp,{SERVER_IP})/{RAMDISK}
-          - devicetree (tftp,{SERVER_IP})/{DTB}
-          - boot
-        debian-installed:
-          commands:
-          - insmod part_gpt
-          - insmod ext2
-          - insmod part_msdos
-          - insmod chain
-          - ls
-          - ls {{ grub_installed_device }}
-          - sleep 10
-          - set
-          - set root={{ grub_installed_device }}
-          - sleep 10
-          - ls {{ grub_installed_device }}
-          - sleep 10
-          - chainloader {{ grub_installed_device }}/efi/debian/grubaa64.efi
-          - sleep 10
-          - boot
-
-{% endblock body %}
+{% set modules = [] %}
+{% set extra_kernel_args = "earlycon=uart8250,mmio32,0x80300000" %}
+{% set extra_ramdisk_args = extra_ramdisk_args | default('root=/dev/ram0') %}
+{% set has_dtb = true %}
+{% set ramdisk_with_nfs = false %}
 
 {% block timeouts %}
 timeouts:

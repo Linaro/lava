@@ -198,13 +198,13 @@ class TestGrubAction(StdoutTestCase):
         }
         params = device["actions"]["boot"]["methods"]
         commands = params["grub"]["ramdisk"]["commands"]
-        self.assertIn("net_bootp", commands)
-        self.assertIn(
-            "linux (tftp,{SERVER_IP})/{KERNEL} console=ttyS0,115200 earlycon=uart8250,mmio32,0x80300000 root=/dev/ram0 ip=dhcp",
-            commands,
+        self.assertEqual("net_bootp", commands[0])
+        self.assertEqual(
+            "linux (tftp,{SERVER_IP})/{KERNEL} console=ttyS0,115200 ip=dhcp root=/dev/ram0 earlycon=uart8250,mmio32,0x80300000",
+            commands[1],
         )
-        self.assertIn("initrd (tftp,{SERVER_IP})/{RAMDISK}", commands)
-        self.assertIn("devicetree (tftp,{SERVER_IP})/{DTB}", commands)
+        self.assertEqual("initrd (tftp,{SERVER_IP})/{RAMDISK}", commands[2])
+        self.assertEqual("devicetree (tftp,{SERVER_IP})/{DTB}", commands[3])
 
         params["grub"]["ramdisk"]["commands"] = substitute(
             params["grub"]["ramdisk"]["commands"], substitution_dictionary
@@ -217,7 +217,7 @@ class TestGrubAction(StdoutTestCase):
             substituted_commands,
         )
         self.assertIn(
-            "linux (tftp,%s)/%s console=ttyS0,115200 earlycon=uart8250,mmio32,0x80300000 root=/dev/ram0 ip=dhcp"
+            "linux (tftp,%s)/%s console=ttyS0,115200 ip=dhcp root=/dev/ram0 earlycon=uart8250,mmio32,0x80300000"
             % (ip_addr, kernel),
             substituted_commands,
         )
