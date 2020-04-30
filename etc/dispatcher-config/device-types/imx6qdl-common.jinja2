@@ -1,0 +1,42 @@
+{% extends 'base-uboot.jinja2' %}
+
+
+{% set fastboot_options = fastboot_options|default(['-i', '0x18D1']) %}
+{% set fastboot_sequence = fastboot_sequence|default(['reboot']) %}
+{% set fastboot_deploy_uboot_commands = fastboot_deploy_uboot_commands|default(['fastboot 0']) %}
+{% set flash_cmds_order = flash_cmds_order|default(['bootloader', 'bootloader_a', 'bootloader_b', 'bootloader0',
+                           'gpt', 'boot', 'boot_a', 'boot_b', 'dtbo', 'dtbo_a', 'dtbo_b',
+                           'vbmeta', 'vbmeta_a', 'vbmeta_b', 'system', 'system_a', 'system_b',
+                           'vendor', 'vendor_a', 'vendor_b', 'recovery']) %}
+
+{% set device_info = device_info|default([{'board_id': fastboot_serial_number}]) %}
+{% set adb_serial_number = adb_serial_number|default(fastboot_serial_number) %}
+
+{% set extra_nfsroot_args = extra_nfsroot_args | default(',v3') %}
+{# set uboot_needs_usb = 'true' #}
+{% set uboot_mac_addr = uboot_mac_addr|default('') %}
+{% set root_device = root_device|default('') %}
+{% set console_device = console_device|default('ttymxc0') %}
+{% set baud_rate = baud_rate|default(115200) %}
+{% set boot_character_delay = boot_character_delay|default(5) %}
+{% set test_character_delay = test_character_delay|default(5) %}
+{% set base_kernel_args = base_kernel_args|default('') %}
+{% set booti_kernel_addr = '0x12000000' %}
+{% set booti_tee_addr = '0x20000000' %}
+{% set booti_ramdisk_addr = '0x20000000' %}
+{% set booti_dtb_addr = '0x18000000' %}
+{% set bootz_kernel_addr = booti_kernel_addr %}
+{% set bootz_tee_addr = booti_tee_addr %}
+{% set bootz_ramdisk_addr = booti_ramdisk_addr %}
+{% set bootz_dtb_addr = booti_dtb_addr %}
+{% set bootm_kernel_addr = bootz_kernel_addr %}
+{% set bootm_tee_addr = bootz_tee_addr %}
+{% set bootm_ramdisk_addr = bootz_ramdisk_addr %}
+{% set bootm_dtb_addr = bootz_dtb_addr %}
+{% set usb_uuid = usb_uuid|default('') %}
+{% set usb_device_id = usb_device_id|default('') %}
+{% set uboot_mkimage_arch = 'arm' %}
+{% set uboot_extra_error_message = 'Unknown command' %}
+{% set action_timeout_power_off = action_timeout_power_off | default(10) %}
+{% set action_timeout_download_retry = action_timeout_download_retry | default(15) %}
+{% set action_timeout_http_download = action_timeout_http_download | default(15) %}

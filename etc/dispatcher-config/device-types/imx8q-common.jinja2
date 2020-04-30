@@ -1,10 +1,11 @@
 {% extends 'base-uboot.jinja2' %}
 
-{% set root_device = root_device|default('/dev/ttymxc0') %}
-{% set console_device = console_device|default('ttymxc0,115200 earlycon=ec_imx6q,0x30860000') %}
+{# set root_device = root_device|default('/dev/ttyLP0') #}
+{% set console_device = console_device|default('ttyLP0') %}
 {% set uboot_ums_flash = uboot_ums_flash|default(False) %}
-{% set ums_command = ums_command|default('ums 0 mmc 1') %}
-{% set fastboot_options = fastboot_options|default(['-i', '0x0525']) %}
+{# UMS on mmc 1 = SD card on imx8qxp #}
+{% set ums_command = ums_command|default('ums 1 mmc 1') %}
+{% set fastboot_options = fastboot_options|default(['-i', '0x1fc9']) %}
 {% set fastboot_sequence = fastboot_sequence|default(['reboot']) %}
 {% set adb_serial_number = adb_serial_number|default(fastboot_serial_number) %}
 {% set fastboot_deploy_uboot_commands = fastboot_deploy_uboot_commands|default(['fastboot 0']) %}
@@ -15,16 +16,16 @@
 {% set device_info = device_info|default([{'board_id': fastboot_serial_number}]) %}
 {% set boot_character_delay = boot_character_delay|default(5) %}
 {% set test_character_delay = test_character_delay|default(5) %}
-{% set base_kernel_args   = base_kernel_args|default('') %}
-{% set booti_kernel_addr  = booti_kernel_addr | default('0x40480000') %}
-{% set booti_ramdisk_addr = booti_ramdisk_addr | default('0x44000000') %}
-{% set booti_dtb_addr     = booti_dtb_addr | default('0x43000000') %}
+{# set base_kernel_args   = base_kernel_args|default('') #}
+{% set booti_kernel_addr  = booti_kernel_addr | default('0x80280000') %}
+{% set booti_ramdisk_addr = booti_ramdisk_addr | default('0x83100000') %}
+{% set booti_dtb_addr     = booti_dtb_addr | default('0x83000000') %}
 {% set bootz_kernel_addr  = booti_kernel_addr %}
 {% set bootz_ramdisk_addr = booti_ramdisk_addr %}
 {% set bootz_dtb_addr     = booti_dtb_addr %}
 {% set bootm_kernel_addr  = bootz_kernel_addr %}
 {% set bootm_ramdisk_addr = bootz_ramdisk_addr %}
 {% set bootm_dtb_addr     = bootz_dtb_addr %}
-{% set usb_device_id = usb_device_id|default('') %}
+{# set usb_device_id = usb_device_id|default('') #}
 {% set uboot_extra_error_message = uboot_extra_error_message|default('Invalid partition') %}
-{% set extra_nfsroot_args = extra_nfsroot_args|default(",v3") %}
+{% set extra_nfsroot_args = extra_nfsroot_args|default(",v3 earlycon") %}
