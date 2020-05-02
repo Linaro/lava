@@ -237,6 +237,10 @@ MASTER_CERT = "/etc/lava-dispatcher/certificates.d/master.key_secret"
 MASTER_CERT_PUB = "/etc/lava-dispatcher/certificates.d/master.key"
 SLAVES_CERTS = "/etc/lava-dispatcher/certificates.d/"
 
+# Alternative logging database settings.
+MONGO_DB_URI = "mongodb://user:pass@localhost:27017/"
+MONGO_DB_DATABASE = "lava-logs"
+
 
 ################
 # DRF settings #

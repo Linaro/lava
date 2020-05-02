@@ -19,8 +19,16 @@
 
 import lzma
 import pytest
+import yaml
 
-from lava_scheduler_app.logutils import LogsFilesystem
+from lava_scheduler_app.logutils import LogsFilesystem, LogsMongo
+
+
+@pytest.fixture
+def logs_mongo(mocker):
+    mocker.patch("pymongo.database.Database.command")
+    mocker.patch("pymongo.collection.Collection.create_index")
+    return LogsMongo()
 
 
 @pytest.fixture
@@ -94,3 +102,40 @@ def test_write_logs(mocker, tmpdir, logs_filesystem):
     with open(str(tmpdir / "output.idx"), "rb") as f_idx:
         assert f_idx.read(8) == b"\x00\x00\x00\x00\x00\x00\x00\x00"  # nosec
         assert f_idx.read(8) == b"\x0c\x00\x00\x00\x00\x00\x00\x00"  # nosec
+
+
+def test_mongo_logs(mocker, logs_mongo):
+    job = mocker.Mock()
+    job.id = 1
+
+    insert_one = mocker.MagicMock()
+    find = mocker.MagicMock()
+    find_ret_val = [
+        {"dt": "2020-03-25T19:44:36.209548", "lvl": "info", "msg": "first message"},
+        {"dt": "2020-03-26T19:44:36.209548", "lvl": "info", "msg": "second message"},
+    ]
+    find.return_value = find_ret_val
+
+    mocker.patch("pymongo.collection.Collection.find", find)
+    mocker.patch("pymongo.collection.Collection.insert_one", insert_one)
+
+    logs_mongo.write(
+        job,
+        '- {"dt": "2020-03-25T19:44:36.209548", "lvl": "info", "msg": "lava-dispatcher, installed at version: 2020.02"}',
+    )
+    insert_one.assert_called_with(
+        {
+            "job_id": 1,
+            "dt": "2020-03-25T19:44:36.209548",
+            "lvl": "info",
+            "msg": "lava-dispatcher, installed at version: 2020.02",
+        }
+    )  # nosec
+    result = yaml.load(logs_mongo.read(job))
+
+    assert len(result) == 2  # nosec
+    assert result == find_ret_val  # nosec
+    # size of find_ret_val in bytes
+    assert logs_mongo.size(job) == 137  # nosec
+
+    assert logs_mongo.open(job).read() == yaml.dump(find_ret_val).encode("utf-8")
