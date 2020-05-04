@@ -210,10 +210,6 @@ After that step, run apt update again to locate the required dependencies::
 
  $ sudo apt update
 
-.. note:: The above repositories use `https`, hence install the package
-          `apt-transport-https` if it is not already installed or
-          change the apt source URL to `http://`
-
 .. index:: production release
 
 .. _production_releases:
