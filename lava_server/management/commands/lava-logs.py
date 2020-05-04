@@ -258,7 +258,7 @@ class Command(LAVADaemonCommand):
             TestCase.objects.bulk_create(self.test_cases)
             self.logger.info("Saving %d test cases", len(self.test_cases))
             self.test_cases = []
-        except DatabaseError:
+        except (DatabaseError, ValueError):
             self.logger.warning("Unable to flush the test cases")
             self.logger.warning(
                 "Saving test cases one by one and dropping the faulty ones"
@@ -268,7 +268,7 @@ class Command(LAVADaemonCommand):
                 try:
                     tc.save()
                     saved += 1
-                except DatabaseError as exc:
+                except (DatabaseError, ValueError) as exc:
                     self.logger.error("Droping %s: %s", tc, str(exc))
             self.logger.info(
                 "%d test cases saved, %d dropped", saved, len(self.test_cases) - saved
