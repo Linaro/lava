@@ -17,8 +17,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-
-import contextlib
 import logging
 import os
 import time
@@ -260,17 +258,18 @@ class Command(LAVADaemonCommand):
             TestCase.objects.bulk_create(self.test_cases)
             self.logger.info("Saving %d test cases", len(self.test_cases))
             self.test_cases = []
-        except DatabaseError as exc:
-            self.logger.error("Unable to flush the test cases")
-            self.logger.exception(exc)
+        except DatabaseError:
+            self.logger.warning("Unable to flush the test cases")
             self.logger.warning(
                 "Saving test cases one by one and dropping the faulty ones"
             )
             saved = 0
             for tc in self.test_cases:
-                with contextlib.suppress(DatabaseError):
+                try:
                     tc.save()
                     saved += 1
+                except DatabaseError as exc:
+                    self.logger.error("Droping %s: %s", tc, str(exc))
             self.logger.info(
                 "%d test cases saved, %d dropped", saved, len(self.test_cases) - saved
             )

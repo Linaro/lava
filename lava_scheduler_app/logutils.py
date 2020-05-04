@@ -74,10 +74,8 @@ class LogsFilesystem(Logs):
             return None
 
     def line_count(self, job):
-        with open(
-            str(pathlib.Path(job.output_dir) / self.index_filename), "rb"
-        ) as f_idx:
-            return int(f_idx.tell() / self.PACK_SIZE)
+        st = (pathlib.Path(job.output_dir) / self.index_filename).stat()
+        return int(st.st_size / self.PACK_SIZE)
 
     def open(self, job):
         directory = pathlib.Path(job.output_dir)
