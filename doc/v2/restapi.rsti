@@ -478,7 +478,7 @@ header. Example:
 
 .. code-block:: shell
 
-    $ curl -H "Authentication: Token xxxxxx" 
+    $ curl -H "Authorization: Token xxxxxx" 
 
 Same token is used for REST API and XML-RPC API authentication.
 
@@ -491,7 +491,7 @@ request and that is ``definition``. Example:
 
 .. code-block:: shell
 
-    $ curl -H "Authentication: Token xxxxxx" -d '{"definition": "your-testjob-definition-here"}' -H "Content-Type: application/json" -X POST "https://your.lava.hostname/api/v0.2/jobs/"
+    $ curl -H "Authorization: Token xxxxxx" -d '{"definition": "your-testjob-definition-here"}' -H "Content-Type: application/json" -X POST "https://your.lava.hostname/api/v0.2/jobs/"
 
 Other database object can be created in a similar way. Different objects require
 different fields.
