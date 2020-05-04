@@ -179,11 +179,19 @@ CAN_EXEC=$((APACHE2+LAVA_LOGS+LAVA_MASTER+LAVA_PUBLISHER+GUNICORN+POSTGRESQL))
 # Should we check for file owners?
 LAVA_CHECK_OWNERS=${LAVA_CHECK_OWNERS:-1}
 
+/usr/share/lava-server/postinst.py --config
+echo "done"
+echo
+
 # Start requested services
 if [ "$POSTGRESQL" = "1" ]
 then
     echo "Starting postgresql"
     /etc/init.d/postgresql start
+    echo "done"
+    echo
+    echo "Setup the database"
+    /usr/share/lava-server/postinst.py --db
     echo "done"
     echo
 fi

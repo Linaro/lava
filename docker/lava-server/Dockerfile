@@ -27,15 +27,16 @@ RUN --mount=type=bind,target=/app \
     rm -rf /tmp/build && \
     python3 setup.py build -b /tmp/build egg_info --egg-base /tmp/build install --root /install --no-compile --install-layout=deb lava-server && \
     rm -rf /tmp/build && \
-    # chown every files
+    # Create empty files
+    touch /install/var/log/lava-server/django.log && \
+    # chown/chmod every files
+    chown -R lavaserver:lavaserver /install/etc/lava-dispatcher/certificates.d/ && \
     chown -R lavaserver:lavaserver /install/etc/lava-server/dispatcher-config/ && \
     chown -R lavaserver:lavaserver /install/etc/lava-server/dispatcher.d/ && \
+    chown -R lavaserver:lavaserver /install/etc/lava-server/settings.d/ && \
     chown -R lavaserver:lavaserver /install/var/lib/lava-server/default/ && \
-    install -d /install/var/lib/lava-server/home/ && \
     chown -R lavaserver:lavaserver /install/var/lib/lava-server/home/ && \
-    chown -R lavaserver:adm /install/var/log/lava-server && \
-    touch /install/var/log/lava-server/django.log && \
-    chown lavaserver:adm /install/var/log/lava-server/django.log && \
+    chown -R lavaserver:adm /install/var/log/lava-server/ && \
     # Install documentation
     install -d /install/usr/share/lava-server/static/docs/v2/ && \
     cp -R /doc/* /install/usr/share/lava-server/static/docs/v2/ && \
@@ -65,11 +66,5 @@ RUN a2dissite 000-default && \
     a2enmod proxy_http && \
     a2enmod expires && \
     a2enmod headers
-
-# Setup the database
-RUN service postgresql start && \
-    /usr/share/lava-server/postinst.py && \
-    service postgresql stop && \
-    find /usr/lib/python3/dist-packages/ -name '__pycache__' -type d -exec rm -r "{}" +
 
 ENTRYPOINT ["/root/entrypoint.sh"]
