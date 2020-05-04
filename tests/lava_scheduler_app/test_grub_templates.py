@@ -205,7 +205,7 @@ class TestGrubTemplates(BaseTemplate.BaseTemplateCases):
             template_dict["actions"]["boot"]["methods"]["grub"]["ramdisk"]["commands"],
         )
         self.assertIn(
-            "linux (tftp,{SERVER_IP})/{KERNEL}  ip=192.168.25.43::192.168.25.1:255.255.255.0:::off:192.168.25.1: ",
+            "linux (tftp,{SERVER_IP})/{KERNEL}  ip=192.168.25.43::192.168.25.1:255.255.255.0:::off:192.168.25.1:  ",
             template_dict["actions"]["boot"]["methods"]["grub"]["ramdisk"]["commands"],
         )
 
@@ -223,7 +223,7 @@ class TestGrubTemplates(BaseTemplate.BaseTemplateCases):
             template_dict["actions"]["boot"]["methods"]["grub"]["ramdisk"]["commands"],
         )
         self.assertIn(
-            "linux (tftp,{SERVER_IP})/{KERNEL}  ip=192.168.25.42::192.168.25.1:255.255.255.0:::off:192.168.25.1: ",
+            "linux (tftp,{SERVER_IP})/{KERNEL}  ip=192.168.25.42::192.168.25.1:255.255.255.0:::off:192.168.25.1:  ",
             template_dict["actions"]["boot"]["methods"]["grub"]["ramdisk"]["commands"],
         )
 
@@ -237,7 +237,7 @@ class TestGrubTemplates(BaseTemplate.BaseTemplateCases):
             "commands", template_dict["actions"]["boot"]["methods"]["grub"]["ramdisk"]
         )
         self.assertIn(
-            "linux (tftp,{SERVER_IP})/{KERNEL} console=ttyS0,9600 ip=dhcp ",
+            "linux (tftp,{SERVER_IP})/{KERNEL} console=ttyS0,9600 ip=dhcp  ",
             template_dict["actions"]["boot"]["methods"]["grub"]["ramdisk"]["commands"],
         )
 
@@ -252,9 +252,11 @@ class TestGrubTemplates(BaseTemplate.BaseTemplateCases):
         self.assertIn("commands", grub["ramdisk"])
         ramdisk_commands = grub["ramdisk"]["commands"]
         ramdisk_ref_commands = [
-            "set net_default_server={SERVER_IP}",
-            "linux (tftp)/{KERNEL} console=tty0 console=ttyS0,115200 root=/dev/ram0 ip=:::::eth0:dhcp",
-            "initrd (tftp)/{RAMDISK}",
+            "net_bootp",
+            "insmod linux",
+            "insmod tftp",
+            "linux (tftp,{SERVER_IP})/{KERNEL} console=tty0 console=ttyS0,115200 ip=:::::eth0:dhcp  root=/dev/ram0 ",
+            "initrd (tftp,{SERVER_IP})/{RAMDISK}",
             "boot",
         ]
         self.assertEqual(ramdisk_commands, ramdisk_ref_commands)
@@ -263,9 +265,11 @@ class TestGrubTemplates(BaseTemplate.BaseTemplateCases):
         self.assertIn("commands", grub["nfs"])
         nfs_commands = grub["nfs"]["commands"]
         nfs_ref_commands = [
-            "set net_default_server={SERVER_IP}",
-            "linux (tftp)/{KERNEL} console=tty0 console=ttyS0,115200 root=/dev/nfs rw nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard ip=dhcp",
-            "initrd (tftp)/{RAMDISK}",
+            "net_bootp",
+            "insmod linux",
+            "insmod tftp",
+            "linux (tftp,{SERVER_IP})/{KERNEL} console=tty0 console=ttyS0,115200 root=/dev/nfs rw nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard ip=:::::eth0:dhcp ",
+            "initrd (tftp,{SERVER_IP})/{RAMDISK}",
             "boot",
         ]
         self.assertEqual(nfs_commands, nfs_ref_commands)
