@@ -883,7 +883,7 @@ class TestQemuNFS(StdoutTestCase):
                     action="download-action", label="kernel", key="file"
                 ),
                 "--append",
-                '"console=ttyAMA0 root=/dev/nfs nfsroot=192.168.0.2:{NFSROOTFS},tcp,hard,intr rw ip=dhcp"',
+                '"console=ttyAMA0 root=/dev/nfs nfsroot=192.168.0.2:{NFSROOTFS},tcp,hard rw ip=dhcp"',
             ],
             execute.sub_command,
         )

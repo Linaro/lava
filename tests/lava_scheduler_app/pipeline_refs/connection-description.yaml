@@ -15,7 +15,7 @@ device: !!python/object/new:lava_dispatcher.device.PipelineDevice
                 'setenv loadkernel ''tftp ${kernel_addr_r} {KERNEL}''', 'setenv loadinitrd
                   ''tftp ${initrd_addr_r} {RAMDISK}; setenv initrd_size ${filesize}''',
                 'setenv loadfdt ''tftp ${fdt_addr_r} {DTB}''', 'setenv nfsargs ''setenv
-                  bootargs console=ttyO0,115200n8 root=/dev/nfs rw nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr  ip=dhcp''',
+                  bootargs console=ttyO0,115200n8 root=/dev/nfs rw nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard  ip=dhcp''',
                 'setenv bootcmd ''dhcp; setenv serverip {SERVER_IP}; run loadkernel;
                   run loadinitrd; run loadfdt; run nfsargs; {BOOTX}''', boot]
             parameters: {boot_message: Booting Linux, bootloader_prompt: =>}

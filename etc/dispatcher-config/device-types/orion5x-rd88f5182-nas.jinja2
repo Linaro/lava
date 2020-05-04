@@ -12,7 +12,7 @@
 {% set uboot_tftp_commands = [] %}
 {% set uboot_nfs_bootcmd = ("          - " + uboot_ipaddr_cmd|default("dhcp") + "
           - setenv serverip {SERVER_IP}
-          - setenv bootargs 'console=ttyS0,115200n8 root=/dev/nfs rw nfsroot={SERVER_IP}:{NFSROOTFS},tcp,hard,intr ip=dhcp'
+          - setenv bootargs 'console=ttyS0,115200n8 root=/dev/nfs rw nfsroot={SERVER_IP}:{NFSROOTFS},tcp,hard ip=dhcp'
           - tftpboot {KERNEL_ADDR} {KERNEL}
           - bootm {KERNEL_ADDR}") %}
 {% set append_dtb = true %}

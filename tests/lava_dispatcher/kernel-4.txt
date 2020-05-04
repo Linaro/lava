@@ -11,7 +11,7 @@
 [    0.000000] AM335X ES2.0 (sgx neon )
 [    0.000000] percpu: Embedded 14 pages/cpu @df939000 s24972 r8192 d24180 u57344
 [    0.000000] Built 1 zonelists in Zone order, mobility grouping on.  Total pages: 129408
-[    0.000000] Kernel command line: console=ttyO0,115200n8 root=/dev/nfs rw nfsroot=10.14.255.253:/var/lib/lava/dispatcher/tmp/10397/extract-nfsrootfs-uKU5Wa,tcp,hard,intr ip=dhcp
+[    0.000000] Kernel command line: console=ttyO0,115200n8 root=/dev/nfs rw nfsroot=10.14.255.253:/var/lib/lava/dispatcher/tmp/10397/extract-nfsrootfs-uKU5Wa,tcp,hard ip=dhcp
 [    0.000000] PID hash table entries: 2048 (order: 1, 8192 bytes)
 [    0.000000] Dentry cache hash table entries: 65536 (order: 6, 262144 bytes)
 [    0.000000] Inode-cache hash table entries: 32768 (order: 5, 131072 bytes)

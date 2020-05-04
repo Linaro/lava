@@ -1,4 +1,4 @@
-did_firmware=edid-1920x1080.fw root=/dev/nfs rw nfsroot=10.3.2.1:/var/lib/lava/dispatcher/tmp/tmpSSmVt8,tcp,hard,intr earlyprintk ip=:::::eth0:dhcp
+did_firmware=edid-1920x1080.fw root=/dev/nfs rw nfsroot=10.3.2.1:/var/lib/lava/dispatcher/tmp/tmpSSmVt8,tcp,hard earlyprintk ip=:::::eth0:dhcp
 [    0.000000] PID hash table entries: 4096 (order: 2, 16384 bytes)
 [    0.000000] Dentry cache hash table entries: 131072 (order: 7, 524288 bytes)
 [    0.000000] Inode-cache hash table entries: 65536 (order: 6, 262144 bytes)

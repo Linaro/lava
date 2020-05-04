@@ -330,7 +330,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
                 and "Description" in item["select"]["wait"]
             ][0],
             "console=ttyO0,115200 earlyprintk=uart8250-32bit,0x1c020000 debug "
-            "root=/dev/nfs rw nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,intr,nolock ip=dhcp",
+            "root=/dev/nfs rw nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,nolock ip=dhcp",
         )
 
     def test_metadata(self):

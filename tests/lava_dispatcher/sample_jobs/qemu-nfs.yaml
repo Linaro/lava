@@ -25,7 +25,7 @@ actions:
     os: debian
     images:
       nfsrootfs:
-        image_arg: 'nfsroot={NFS_SERVER_IP}:{nfsrootfs},tcp,hard,intr'
+        image_arg: 'nfsroot={NFS_SERVER_IP}:{nfsrootfs},tcp,hard'
         url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/sid/arm64/2/sid-arm64-nfs.tar.gz
         compression: gz
       kernel:

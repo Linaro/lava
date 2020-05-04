@@ -35,7 +35,7 @@ actions:
             - boot net
         nfs:
           commands:
-            - global linux.bootargs.nfs="'root=/dev/nfs rw nfsroot={SERVER_IP}:{NFSROOTFS},tcp,hard,intr ip=dhcp'"
+            - global linux.bootargs.nfs="'root=/dev/nfs rw nfsroot={SERVER_IP}:{NFSROOTFS},tcp,hard ip=dhcp'"
             - bootm -v -o /mnt/tftp/{DTB} /mnt/tftp/{KERNEL} {{ load_addr }} {{ initrd_load_addr }}
         ramdisk:
           commands:
