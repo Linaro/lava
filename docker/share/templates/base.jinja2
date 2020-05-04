@@ -12,7 +12,7 @@ RUN echo 'deb http://deb.debian.org/debian buster-backports main' > /etc/apt/sou
 {%- endif %}
     apt-get update -q && \
 {%- if use_docker_com|default(False) %}
-    apt-get install --no-install-recommends --yes wget gnupg ca-certificates apt-transport-https && \
+    apt-get install --no-install-recommends --yes wget gnupg ca-certificates && \
     wget https://download.docker.com/linux/debian/gpg && \
     apt-key add gpg && \
     rm gpg && \
@@ -28,7 +28,7 @@ RUN echo 'deb http://deb.debian.org/debian buster-backports main' > /etc/apt/sou
     python3 -m pip install {{ pip_packages|join(" ") }} && \
 {%- endif %}
 {%- if use_docker_com|default(False) %}
-    apt-get purge --yes wget gnupg apt-transport-https && \
+    apt-get purge --yes wget gnupg && \
     apt-get autoremove --purge --yes && \
     rm /etc/apt/sources.list.d/docker.list && \
     apt-get update -q && \

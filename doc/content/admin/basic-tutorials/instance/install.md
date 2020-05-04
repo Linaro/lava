@@ -26,7 +26,7 @@ apt-get install docker.io docker-compose git
 ??? tip "Old Debian version"
     On old Debian versions, docker should be installed from the official docker repository.
     ```shell
-    apt-get install apt-transport-https ca-certificates gnupg2 wget
+    apt-get install ca-certificates gnupg2 wget
     wget https://download.docker.com/linux/debian/gpg
     apt-key add gpg
     echo "deb [arch=amd64] https://download.docker.com/linux/debian buster stable" > /etc/apt/sources.list.d/docker.list
@@ -60,7 +60,7 @@ repositories that we manage to get the latest version.
 In order to folow this tutorial, you would have to install some dependencies:
 
 ```shell
-apt-get install apt-transport-https ca-certificates gnupg2 wget
+apt-get install ca-certificates gnupg2 wget
 ```
 
 ### Repository
