@@ -82,7 +82,7 @@ https://git.linaro.org/lava-team/refactoring.git/tree/bbb-uboot-ramdisk.yaml
         connections: {serial: null, ssh: null}
         methods:
           u-boot:
-            parameters: {boot_message: Booting Linux, bootloader_prompt: U-Boot, send_char: false}
+            parameters: {boot_message: Booting Linux, bootloader_prompt: U-Boot}
             ramdisk:
               commands: [setenv autoload no, setenv initrd_high '0xffffffff', setenv
                   fdt_high '0xffffffff', 'setenv kernel_addr_r ''{KERNEL_ADDR}''',
@@ -154,7 +154,6 @@ existing configuration::
  client_type = bootloader
 
  bootloader_prompt = Mustang
- send_char = False
  uimage_only = True
  boot_cmd_timeout = 60
  text_offset = 0x80000

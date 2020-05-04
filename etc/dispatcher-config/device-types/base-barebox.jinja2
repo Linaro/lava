@@ -30,7 +30,6 @@ actions:
         parameters:
           bootloader_prompt: {{ bootloader_prompt|default('barebox') }}
           interrupt_prompt: {{ interrupt_prompt|default('stop autoboot') }}
-          send_char: False
         tftp:
           commands:
             - boot net
