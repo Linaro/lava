@@ -191,14 +191,19 @@ class Command(LAVADaemonCommand):
             send_multipart_u(self.controler, [hostname, "STATUS", str(job.id)])
 
     def dispatcher_alive(self, hostname):
-        if hostname not in self.dispatchers:
-            # The server crashed: send a STATUS message
-            self.logger.warning("Unknown dispatcher <%s> (server crashed)", hostname)
-            self.dispatchers[hostname] = SlaveDispatcher(hostname)
-            self.send_status(hostname)
+        try:
+            if hostname not in self.dispatchers:
+                # The server crashed: send a STATUS message
+                self.logger.warning(
+                    "Unknown dispatcher <%s> (server crashed)", hostname
+                )
+                self.dispatchers[hostname] = SlaveDispatcher(hostname)
+                self.send_status(hostname)
 
-        # Mark the dispatcher as alive
-        self.dispatchers[hostname].alive()
+            # Mark the dispatcher as alive
+            self.dispatchers[hostname].alive()
+        except ValueError:
+            self.logger.error("Invalid dispatcher <%s>", hostname)
 
     def controler_socket(self):
         try:
