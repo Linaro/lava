@@ -16,9 +16,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 from pwd import getpwuid
-import simplejson
+from pathlib import Path
 import yaml
 import stat
 import subprocess  # nosec system
@@ -124,39 +123,42 @@ def check_dt_templates(app_configs, **kwargs):
     return errors
 
 
+def check_permission(path):
+    try:
+        st = path.stat()
+    except FileNotFoundError:
+        return None
+
+    if stat.S_IMODE(st.st_mode) != 416:
+        return Error(
+            f"Invalid permissions (should be 0o640) for '{path}'", obj="permissions"
+        )
+    try:
+        if getpwuid(st.st_uid).pw_name != "lavaserver":
+            return Error(
+                f"Invalid owner (should be lavaserver) for '{path}'", obj="permissions"
+            )
+    except KeyError:
+        return Error(f"Unknown user id {st.st_uid} for '{path}'", obj="permissions")
+    return None
+
+
 # Check permissions
 @register(deploy=True)
 def check_permissions(app_configs, **kwargs):
-    files = ["/etc/lava-server/instance.conf", "/etc/lava-server/secret_key.conf"]
-    errors = []
-    for filename in files:
-        st = os.stat(filename)
-        if stat.S_IMODE(st.st_mode) != 416:
-            errors.append(
-                Error(
-                    "Invalid permissions (should be 0o640) for '%s'" % filename,
-                    obj="permissions",
-                )
-            )
-        try:
-            if getpwuid(st.st_uid).pw_name != "lavaserver":
-                errors.append(
-                    Error(
-                        "Invalid owner (should be lavaserver) for '%s'" % filename,
-                        obj="permissions",
-                    )
-                )
-        except KeyError:
-            errors.append(
-                Error(
-                    "Unknown user id %d for '%s'" % (st.st_uid, filename),
-                    obj="permissions",
-                )
-            )
-    return errors
+    files = [
+        Path("/etc/lava-server/instance.conf"),
+        Path("/etc/lava-server/secret_key.conf"),
+        Path("/etc/lava-server/settings.conf"),
+        Path("/etc/lava-server/settings.yaml"),
+        *Path("/etc/lava-server/settings.d").glob("*.yaml"),
+    ]
+
+    errors = [check_permission(path) for path in files]
+    return [err for err in errors if err is not None]
 
 
-def _package_status(name, errors, info=False):
+def _package_status(name, info=False):
     try:
         out = (
             subprocess.check_output(  # nosec system
@@ -166,54 +168,46 @@ def _package_status(name, errors, info=False):
             .split("\n")
         )
         if out[1] != "Status: install ok installed":
-            errors.append(
-                Error("'%s' not installed correctly" % name, obj="debian pkg")
-            )
+            return Error(f"'{name}' not installed correctly", obj="debian pkg")
     except FileNotFoundError:
-        errors.append(Warning("Unable to query %s" % name, obj="debian pkg"))
+        return Warning(f"Unable to query {name}", obj="debian pkg")
     except subprocess.CalledProcessError:
         if info:
-            errors.append(
-                Info(
-                    "'%s' not installed from a Debian package" % name, obj="debian pkg"
-                )
+            return Info(
+                f"'{name}' not installed from a Debian package", obj="debian pkg"
             )
         else:
-            errors.append(
-                Error(
-                    "'%s' not installed from a Debian package" % name, obj="debian pkg"
-                )
+            return Error(
+                f"'{name}' not installed from a Debian package", obj="debian pkg"
             )
 
 
-def _package_symlinks(name, errors):
-    dirname = os.path.join("/usr/lib/python3/dist-packages/", name)
-    if os.path.islink(dirname):
-        errors.append(
-            Error(
-                "%s symlinked to %s" % (name, os.path.realpath(dirname)),
-                obj="debian pkg",
-            )
-        )
+def _package_symlinks(name):
+    dirname = Path("/usr/lib/python3/dist-packages/") / name
+    if dirname.exists():
+        return Error(f"{name} symlinked to {dirname.resolve()}", obj="debian pkg")
 
 
 @register(deploy=True)
 def check_packaging(app_configs, **kwargs):
-    errors = []
+    errors = [
+        _package_status("lava-common"),
+        _package_status("lava-coordinator", info=True),
+        _package_status("lava-dispatcher", info=True),
+        _package_status("lava-dispatcher-host", info=True),
+        _package_status("lava-server"),
+        _package_status("lava-server-doc"),
+        _package_symlinks("lava_common"),
+        _package_symlinks("lava_dispatcher"),
+        _package_symlinks("lava_dispatcher_host"),
+        _package_symlinks("lava_rest_app"),
+        _package_symlinks("lava_results_app"),
+        _package_symlinks("lava_scheduler_app"),
+        _package_symlinks("lava_server"),
+        _package_symlinks("linaro_django_xmlrpc"),
+    ]
 
-    _package_status("lava-common", errors)
-    _package_status("lava-dispatcher", errors, info=True)
-    _package_status("lava-server", errors)
-
-    _package_symlinks("lava_common", errors)
-    _package_symlinks("lava_dispatcher", errors)
-    _package_symlinks("lava_results_app", errors)
-    _package_symlinks("lava_rest_app", errors)
-    _package_symlinks("lava_scheduler_app", errors)
-    _package_symlinks("lava_server", errors)
-    _package_symlinks("", errors)
-
-    return errors
+    return [err for err in errors if err is not None]
 
 
 def find_our_daemons():
@@ -229,22 +223,22 @@ def find_our_daemons():
         "lava-slave": None,
     }
 
-    for dirname in os.listdir("/proc"):
-        if dirname == "curproc":
+    for path in Path("/proc").glob("*/cmdline"):
+        pid = path.parts[2]
+        if "self" in pid:
             continue
 
         try:
-            with open("/proc/{}/cmdline".format(dirname), mode="rb") as fd:
-                content = fd.read().decode().split("\x00")
-        except Exception:  # nosec bare except ok here.
+            content = path.read_text(encoding="utf-8").split("\x00")
+        except OSError:
             continue
 
         if "gunicorn: master [lava_server.wsgi]" in content[0]:
-            daemons["lava-server-gunicorn"] = "%s" % dirname
+            daemons["lava-server-gunicorn"] = pid
             continue
         elif len(content) >= 3:
             if "/usr/bin/gunicorn3" in content[1] and "lava_server.wsgi" in content[2]:
-                daemons["lava-server-gunicorn"] = "%s" % dirname
+                daemons["lava-server-gunicorn"] = pid
                 continue
 
         if "python3" not in content[0]:
@@ -254,15 +248,15 @@ def find_our_daemons():
             if "manage" not in content[2]:
                 continue
             if "lava-master" in content[3]:
-                daemons["lava-master"] = "%s" % dirname
+                daemons["lava-master"] = pid
             elif "lava-logs" in content[3]:
-                daemons["lava-logs"] = "%s" % dirname
+                daemons["lava-logs"] = pid
             elif "lava-publisher" in content[3]:
-                daemons["lava-publisher"] = "%s" % dirname
+                daemons["lava-publisher"] = pid
             continue
 
         if "/usr/bin/lava-slave" in content[1]:
-            daemons["lava-slave"] = "%s" % dirname
+            daemons["lava-slave"] = pid
             continue
 
     return daemons
@@ -327,13 +321,24 @@ def check_services(app_configs, **kwargs):
     return errors
 
 
+def check_setting(path):
+    try:
+        yaml_safe_load(path.read_text(encoding="utf-8"))
+    except OSError:
+        return None
+    except Exception:
+        return Error(f"{path} is not a valid yaml file", obj="settings")
+    return None
+
+
 @register(deploy=True)
 def check_settings(app_configs, **kwargs):
     settings = {}
-    try:
-        with open("/etc/lava-server/settings.conf", "r") as f_conf:
-            for (k, v) in simplejson.load(f_conf).items():
-                settings[k] = v
-    except (AttributeError, ValueError):
-        return [Error("settings.conf is not a valid json file", obj="settings.conf")]
-    return []
+    files = [
+        Path("/etc/lava-server/settings.conf"),
+        Path("/etc/lava-server/settings.yaml"),
+        *Path("/etc/lava-server/settings.d").glob("*.yaml"),
+    ]
+
+    errors = [check_setting(path) for path in files]
+    return [err for err in errors if err is not None]
