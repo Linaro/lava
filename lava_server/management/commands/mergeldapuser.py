@@ -21,6 +21,8 @@ import ldap
 
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand, CommandError
+from django.template.defaultfilters import truncatechars
+
 from lava_scheduler_app.utils import get_ldap_user_properties
 
 
@@ -66,8 +68,16 @@ class Command(BaseCommand):
             lava_user = User.objects.get(username=lava_user)
             lava_user.username = ldap_user
             lava_user.email = user_properties.get("mail", "")
-            lava_user.last_name = user_properties.get("sn", "")
-            lava_user.first_name = user_properties.get("given_name", "")
+            # Grab max_length and truncate first and last name.
+            # For some users, the command fail as first or last name is too long.
+            first_name_max_length = User._meta.get_field("first_name").max_length
+            last_name_max_length = User._meta.get_field("last_name").max_length
+            lava_user.last_name = truncatechars(
+                user_properties.get("sn", ""), last_name_max_length
+            )
+            lava_user.first_name = truncatechars(
+                user_properties.get("given_name", ""), first_name_max_length
+            )
             lava_user.save()
             self.stdout.write('User "%s" merged with "%s"' % (ldap_user, old_lava_user))
         except User.DoesNotExist:
