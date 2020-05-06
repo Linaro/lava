@@ -21,6 +21,8 @@ import ldap
 
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand, CommandError
+from django.template.defaultfilters import truncatechars
+
 from lava_scheduler_app.utils import get_ldap_user_properties
 
 
@@ -57,8 +59,16 @@ class Command(BaseCommand):
         except User.DoesNotExist:
             user = User.objects.create(username=username)
             user.email = user_properties.get("mail", "")
-            user.last_name = user_properties.get("sn", "")
-            user.first_name = user_properties.get("given_name", "")
+            # Grab max_length and truncate first and last name.
+            # For some users, the command fail as first or last name is too long.
+            first_name_max_length = User._meta.get_field("first_name").max_length
+            last_name_max_length = User._meta.get_field("last_name").max_length
+            user.last_name = truncatechars(
+                user_properties.get("sn", ""), last_name_max_length
+            )
+            user.first_name = truncatechars(
+                user_properties.get("given_name", ""), first_name_max_length
+            )
             superuser_msg = ""
             if options["superuser"]:
                 user.is_staff = True
