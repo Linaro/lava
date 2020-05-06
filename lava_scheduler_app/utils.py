@@ -317,7 +317,7 @@ def get_ldap_user_properties(ldap_user):
                     user_properties["given_name"] = result_data.get(
                         "givenName", [None]
                     )[0]
-                    return user_properties
+                    return {k: v.decode() for (k, v) in user_properties.items()}
             except ldap.NO_SUCH_OBJECT:
                 raise
 
