@@ -1,0 +1,16 @@
+{% extends 'base-uboot.jinja2' %}
+ 
+{% set console_device = console_device|default('ttyS1') %}
+{% set baud_rate = baud_rate|default(115200) %}
+{% set boot_character_delay = boot_character_delay|default('80') %}
+{% set bootloader_prompt = bootloader_prompt|default('=>') %}
+{% set bootz_kernel_addr = '0x80080000' %}
+{% set bootz_ramdisk_addr = '0x84000000' %}
+{% set bootz_dtb_addr = '0x83E00000' %}
+{% set bootm_kernel_addr = bootz_kernel_addr %}
+{% set bootm_ramdisk_addr = bootz_ramdisk_addr %}
+{% set bootm_dtb_addr = bootz_dtb_addr %}
+{% set booti_kernel_addr = bootz_kernel_addr %}
+{% set booti_ramdisk_addr = bootz_ramdisk_addr %}
+{% set booti_dtb_addr = bootz_dtb_addr %}
+{% set extra_nfsroot_args = ",v3" + extra_nfsroot_args|default('') %}
