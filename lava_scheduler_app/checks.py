@@ -184,7 +184,7 @@ def _package_status(name, info=False):
 
 def _package_symlinks(name):
     dirname = Path("/usr/lib/python3/dist-packages/") / name
-    if dirname.exists():
+    if dirname.exists() and dirname.is_symlink():
         return Error(f"{name} symlinked to {dirname.resolve()}", obj="debian pkg")
 
 
