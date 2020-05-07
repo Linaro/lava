@@ -2,4 +2,8 @@
 
 set -eu
 
+if ! which udevadm >/dev/null 2>&1; then
+    exit 77
+fi
+
 test -f /etc/udev/rules.d/99-lava-dispatcher-host.rules
