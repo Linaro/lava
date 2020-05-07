@@ -2,13 +2,22 @@ Source: lava
 Section: net
 Priority: optional
 Maintainer: Debian LAVA team <pkg-linaro-lava-devel@lists.alioth.debian.org>
-Uploaders: Antonio Terceiro <antonio.terceiro@linaro.org>, Remi Duraffort <remi.duraffort@linaro.org>
-Build-Depends:
- debhelper (>= 9.20160709), dh-python, po-debconf,
- python3, python3-sphinx (>= 1.4), python3-setuptools (>= 3),
- python3-yaml, python3-sphinx-bootstrap-theme,
- node-uglify, libjs-bootstrap, libjs-excanvas, libjs-jquery,
- libjs-jquery-flot (>= 0.8.2), libjs-jquery-typeahead
+Uploaders: Antonio Terceiro <antonio.terceiro@linaro.org>,
+           Remi Duraffort <remi.duraffort@linaro.org>
+Build-Depends: debhelper (>= 9.20160709),
+               dh-python,
+               libjs-bootstrap,
+               libjs-excanvas,
+               libjs-jquery,
+               libjs-jquery-flot (>= 0.8.2),
+               libjs-jquery-typeahead,
+               node-uglify,
+               po-debconf,
+               python3,
+               python3-setuptools (>= 3),
+               python3-sphinx (>= 1.4),
+               python3-sphinx-bootstrap-theme,
+               python3-yaml
 X-Python3-Version: >=3.5
 Standards-Version: 4.2.1
 Homepage: https://www.lavasoftware.org/
@@ -17,17 +26,39 @@ Vcs-Browser: https://git.lavasoftware.org/lava/lava
 
 Package: lava-dispatcher
 Architecture: all
-Depends: file, systemd-sysv,
- lava-dispatcher-host (= ${binary:Version}),
- lava-common (= ${binary:Version}), tar (>= 1.27),
- ${python3:Depends}, ${misc:Depends}
+Depends: file,
+         lava-common (= ${binary:Version}),
+         lava-dispatcher-host (= ${binary:Version}),
+         systemd-sysv,
+         tar (>= 1.27),
+         ${misc:Depends},
+         ${python3:Depends}
 Multi-Arch: foreign
-Recommends: ntp, git, tftpd-hpa, openbsd-inetd, ser2net,
- telnet, qemu-system-x86 (>= 2.8.0), qemu-system-arm (>= 2.8.0),
- libguestfs-tools (>= 1.32.7), nfs-kernel-server, rpcbind,
- u-boot-tools, unzip, xz-utils, zstd, lxc (>= 1:2.0.7), sudo,
- debootstrap (>= 1.0.86), bridge-utils, rsync, dfu-util
-Suggests: apache2, img2simg, simg2img, docker.io
+Recommends: bridge-utils,
+            debootstrap (>= 1.0.86),
+            dfu-util,
+            git,
+            libguestfs-tools (>= 1.32.7),
+            lxc (>= 1:2.0.7),
+            nfs-kernel-server,
+            ntp,
+            openbsd-inetd,
+            qemu-system-arm (>= 2.8.0),
+            qemu-system-x86 (>= 2.8.0),
+            rpcbind,
+            rsync,
+            ser2net,
+            sudo,
+            telnet,
+            tftpd-hpa,
+            u-boot-tools,
+            unzip,
+            xz-utils,
+            zstd
+Suggests: apache2,
+          docker.io,
+          img2simg,
+          simg2img
 Description: Linaro Automated Validation Architecture dispatcher
  LAVA is a continuous integration system for deploying operating
  systems onto physical and virtual hardware for running tests.
@@ -42,12 +73,11 @@ Description: Linaro Automated Validation Architecture dispatcher
  A range of devices are supported for ARM and
  x86 architectures.
 
-
 Package: lava-dispatcher-host
 Architecture: all
 Depends: lava-common (= ${binary:Version}),
-         ${python3:Depends},
          ${misc:Depends},
+         ${python3:Depends}
 Multi-Arch: foreign
 Suggests: udev
 Description: LAVA dispatcher host tools
@@ -62,18 +92,30 @@ Description: LAVA dispatcher host tools
  container-related jobs. This package must be installed on a host
  system when lava-dispatcher runs inside a container on that host.
 
-
 Package: lava-server
 Architecture: all
 Pre-Depends: debconf | debconf-2.0
-Depends: apache2, adduser, gunicorn (>= 19.9.0-4) | gunicorn3, iproute2,
- libjs-bootstrap, libjs-excanvas, libjs-jquery, libjs-jquery-flot (>=0.8.2),
- libjs-jquery-typeahead, systemd-sysv, postgresql,
- postgresql-client, postgresql-common,
- lava-common (= ${binary:Version}), lava-server-doc (= ${binary:Version}),
- ${python3:Depends}, ${misc:Depends}
-Recommends: ntp, openssh-client, lava-coordinator (= ${binary:Version}),
- lava-dispatcher (= ${binary:Version})
+Depends: adduser,
+         apache2,
+         gunicorn (>= 19.9.0-4) | gunicorn3,
+         iproute2,
+         lava-common (= ${binary:Version}),
+         lava-server-doc (= ${binary:Version}),
+         libjs-bootstrap,
+         libjs-excanvas,
+         libjs-jquery,
+         libjs-jquery-flot (>=0.8.2),
+         libjs-jquery-typeahead,
+         postgresql,
+         postgresql-client,
+         postgresql-common,
+         systemd-sysv,
+         ${misc:Depends},
+         ${python3:Depends}
+Recommends: lava-coordinator (= ${binary:Version}),
+            lava-dispatcher (= ${binary:Version}),
+            ntp,
+            openssh-client
 Suggests: lavacli
 Description: Linaro Automated Validation Architecture server
  LAVA is a continuous integration system for deploying operating
@@ -96,7 +138,8 @@ Description: Linaro Automated Validation Architecture server
 
 Package: lava-common
 Architecture: all
-Depends: ${python3:Depends}, ${misc:Depends}
+Depends: ${misc:Depends},
+         ${python3:Depends}
 Description: Linaro Automated Validation Architecture common
  LAVA is a continuous integration system for deploying operating
  systems onto physical and virtual hardware for running tests.
@@ -111,13 +154,27 @@ Description: Linaro Automated Validation Architecture common
 Package: lava
 Architecture: all
 Section: metapackages
-Depends: lava-server (= ${binary:Version}), lava-server-doc (= ${binary:Version}),
- lava-dispatcher (= ${binary:Version}), lava-coordinator (= ${binary:Version}),
- lava-dev (= ${binary:Version}), lavacli, ntp | ntpdate | chrony, tftpd-hpa, sudo,
- telnet, debootstrap (>= 1.0.86~), openssh-client, lxc (>= 1:2.0.6), rsync,
- bridge-utils, ${misc:Depends}
-Recommends: schroot, img2simg, simg2img, docker.io,
- python3-docker
+Depends: bridge-utils,
+         debootstrap (>= 1.0.86~),
+         lava-coordinator (= ${binary:Version}),
+         lava-dev (= ${binary:Version}),
+         lava-dispatcher (= ${binary:Version}),
+         lava-server (= ${binary:Version}),
+         lava-server-doc (= ${binary:Version}),
+         lavacli,
+         lxc (>= 1:2.0.6),
+         ntp | ntpdate | chrony,
+         openssh-client,
+         rsync,
+         sudo,
+         telnet,
+         tftpd-hpa,
+         ${misc:Depends}
+Recommends: docker.io,
+            img2simg,
+            python3-docker,
+            schroot,
+            simg2img
 Description: Linaro Automated Validation Architecture metapackage
  LAVA is a continuous integration system for deploying operating
  systems onto physical and virtual hardware for running tests.
@@ -151,7 +208,9 @@ Description: Linaro Automated Validation Architecture LXC Mocker
 
 Package: lava-coordinator
 Architecture: all
-Depends: ${misc:Depends}, lava-common (= ${binary:Version}), python3
+Depends: lava-common (= ${binary:Version}),
+         python3,
+         ${misc:Depends}
 Description: LAVA coordinator daemon
  This package provides coordinator daemon to provide communication and
  synchronisation methods for test jobs running on multiple configured devices
@@ -163,23 +222,59 @@ Description: LAVA coordinator daemon
 Package: lava-dev
 Architecture: all
 Section: devel
-Depends: build-essential, ca-certificates, devscripts, dpkg-dev,
- debootstrap (>= 1.0.86), debhelper (>= 9.20160709), dh-python,
- fakeroot, git, libdistro-info-perl, node-uglify, libjs-excanvas,
- libjs-jquery, libjs-jquery-flot (>= 0.8.2), libjs-jquery-typeahead,
- python3:any, python3-setuptools, python3-guestfs,
- python3-netifaces,
- python3-pexpect (>= 4.2), pep8 | python3-pep8,
- python3-guestfs, python3-netifaces, python3-magic,
- python3-sphinx (>= 1.4), python3-sphinx-bootstrap-theme, python3-requests,
- python3-zmq, python3-yaml, python3-voluptuous (>= 0.8.8), python3-tz,
- python3-pytest, python3-pytest-django,
- python3-configobj, python3-pyudev, docbook-xsl, xsltproc,
- ${python3:Depends}, ${misc:Depends}
-Recommends: sbuild, python3-django-extensions, python3-pydot,
- python3-pytest-cov, nfs-kernel-server, lxc, tftpd-hpa,
- rpcbind, u-boot-tools, telnet, img2simg, simg2img
-Suggests: python3-bandit, python3-django-debug-toolbar, black, radon
+Depends: build-essential,
+         ca-certificates,
+         debhelper (>= 9.20160709),
+         debootstrap (>= 1.0.86),
+         devscripts,
+         dh-python,
+         docbook-xsl,
+         dpkg-dev,
+         fakeroot,
+         git,
+         libdistro-info-perl,
+         libjs-excanvas,
+         libjs-jquery,
+         libjs-jquery-flot (>= 0.8.2),
+         libjs-jquery-typeahead,
+         node-uglify,
+         pep8 | python3-pep8,
+         python3-configobj,
+         python3-guestfs,
+         python3-magic,
+         python3-netifaces,
+         python3-pexpect (>= 4.2),
+         python3-pytest,
+         python3-pytest-django,
+         python3-pyudev,
+         python3-requests,
+         python3-setuptools,
+         python3-sphinx (>= 1.4),
+         python3-sphinx-bootstrap-theme,
+         python3-tz,
+         python3-voluptuous (>= 0.8.8),
+         python3-yaml,
+         python3-zmq,
+         python3:any,
+         xsltproc,
+         ${misc:Depends},
+         ${python3:Depends}
+Recommends: img2simg,
+            lxc,
+            nfs-kernel-server,
+            python3-django-extensions,
+            python3-pydot,
+            python3-pytest-cov,
+            rpcbind,
+            sbuild,
+            simg2img,
+            telnet,
+            tftpd-hpa,
+            u-boot-tools
+Suggests: black,
+          python3-bandit,
+          python3-django-debug-toolbar,
+          radon
 Description: Linaro Automated Validation Architecture developer support
  LAVA is a continuous integration system for deploying operating
  systems onto physical and virtual hardware for running tests.
@@ -191,7 +286,8 @@ Description: Linaro Automated Validation Architecture developer support
 Package: lava-server-doc
 Architecture: all
 Section: doc
-Depends: ${sphinxdoc:Depends}, ${misc:Depends}
+Depends: ${misc:Depends},
+         ${sphinxdoc:Depends}
 Description: Linaro Automated Validation Architecture documentation
  LAVA is a continuous integration system for deploying operating
  systems onto physical and virtual hardware for running tests.
