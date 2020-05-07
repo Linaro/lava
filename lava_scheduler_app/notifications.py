@@ -26,6 +26,7 @@ from django.contrib.auth.models import User
 from django.core.mail import send_mail, send_mass_mail
 from django.urls import reverse
 from django.db import IntegrityError
+from django.db.models import Q
 
 from lava_scheduler_app import dbutils
 from lava_scheduler_app import utils
@@ -463,21 +464,23 @@ def create_notification(job, data):
 
 def send_upgraded_master_notifications(master_version):
     logger = logging.getLogger("lava_scheduler_app")
-
     emails = ()
-    for user in (
-        User.objects.filter(
-            groups__in=GroupWorkerPermission.objects.all().values("group")
-        )
-        .exclude(email="")
-        .distinct()
-    ):
 
-        workers = (
-            Worker.objects.filter(state=Worker.STATE_ONLINE)
-            .exclude(version=master_version, master_version_notified=master_version)
-            .accessible_by_user(user, Worker.CHANGE_PERMISSION)
-        )
+    # List the users that are superuser or admin of workers
+    worker_admin_groups = GroupWorkerPermission.objects.all().values("group")
+    users = User.objects.filter(
+        Q(groups__in=worker_admin_groups) | Q(is_superuser=True)
+    )
+    users = users.exclude(email="")
+    users = users.distinct()
+
+    # Loop on every users to send a mail to each user with the list of workers
+    # they are administrating
+    for user in users:
+        workers = Worker.objects.filter(state=Worker.STATE_ONLINE)
+        workers = workers.exclude(version=master_version)
+        workers = workers.exclude(master_version_notified=master_version)
+        workers = workers.accessible_by_user(user, Worker.CHANGE_PERMISSION)
 
         if workers:
             kwargs = {"hostname": dbutils.get_domain(), "workers": workers}
