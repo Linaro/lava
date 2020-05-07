@@ -57,7 +57,7 @@ def test_pipeline():
 def test_bbb():
     factory = InteractiveFactory()
     job = factory.create_interactive_job(
-        "bbb-01.jinja2", "../../doc/v2/examples/test-jobs/bbb-uboot-interactive.yaml"
+        "bbb-01.jinja2", "sample_jobs/bbb-uboot-interactive.yaml"
     )
     job.validate()
     description_ref = StdoutTestCase.pipeline_reference(

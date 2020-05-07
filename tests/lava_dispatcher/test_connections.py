@@ -26,6 +26,7 @@ from unittest.mock import patch
 from lava_common.compat import yaml_safe_load
 from lava_common.exceptions import JobError, InfrastructureError
 from lava_common.timeout import Timeout
+import lava_dispatcher
 from lava_dispatcher.actions.boot.ssh import SchrootAction
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from tests.utils import infrastructure_error
@@ -126,7 +127,7 @@ class TestConnection(StdoutTestCase):
         params = self.job.device["actions"]["deploy"]["methods"]
         identity = os.path.realpath(
             os.path.join(
-                __file__, "../../../lava_dispatcher", params["ssh"]["identity_file"]
+                lava_dispatcher.__file__, "../", params["ssh"]["identity_file"]
             )
         )
         self.assertTrue(os.path.exists(identity))
