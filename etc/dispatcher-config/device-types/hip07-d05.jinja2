@@ -1,17 +1,48 @@
 {# device_type = "hip07-d05" #}
-{% extends 'd03.jinja2' %}
+{% extends 'base-grub.jinja2' %}
 
+{% set console_device = console_device | default('ttyS0') %}
+{% set baud_rate = baud_rate | default(115200) %}
+{% set grub_installed_device = grub_installed_device | default('(hd1,gpt1)') %}
+{% set modules = [] %}
+{% set extra_kernel_args = "pcie_aspm=off pci=pcie_bus_perf" %}
 {% set extra_nfsroot_args = ",vers=3" + extra_nfsroot_args|default('') %}
+{% set extra_ramdisk_args = extra_ramdisk_args | default('root=/dev/ram0') %}
+{% set has_dtb = true %}
+{% set ramdisk_with_nfs = false %}
 
-{% block grub_ramdisk %}
-          - 'linux (tftp,{SERVER_IP})/{KERNEL} pcie_aspm=off pci=pcie_bus_perf root=/dev/ram0 {{ base_ip_args }}'
-          - devicetree (tftp,{SERVER_IP})/{DTB}
-          - initrd (tftp,{SERVER_IP})/{RAMDISK}
-          - boot
-{% endblock grub_ramdisk %}
-
-{% block grub_nfs %}
-          - 'linux (tftp,{SERVER_IP})/{KERNEL} pcie_aspm=off pci=pcie_bus_perf root=/dev/nfs rw {{ base_nfsroot_args }} {{ base_ip_args }}'
-          - devicetree (tftp,{SERVER_IP})/{DTB}
-          - boot
-{% endblock grub_nfs %}
+{% block timeouts %}
+timeouts:
+  actions:
+    grub-main:
+      seconds: 5400
+    bootloader-action:
+      seconds: 5400
+    bootloader-interrupt:
+      seconds: 300
+    bootloader-commands:
+      seconds: 600
+    auto-login:
+      seconds: 600
+    auto-login-action:
+      seconds: 600
+    installer-wait:
+      seconds: 5400
+    pdu-reboot:
+      seconds: 3000
+  connections:
+    pdu-reboot:
+      seconds: 3000
+    grub-main:
+       seconds: 5400
+    bootloader-action:
+       seconds: 5400
+    installer-wait:
+      seconds: 5400
+    bootloader-retry:
+      seconds: 3000
+    bootloader-interrupt:
+      seconds: 300
+    bootloader-commands:
+      seconds: 600
+{% endblock timeouts %}
