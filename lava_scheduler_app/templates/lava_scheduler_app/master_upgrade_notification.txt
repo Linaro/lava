@@ -1,0 +1,15 @@
+Dear {{ user.get_full_name() }},
+
+LAVA master instance on {{ hostname }} has been upgraded to version {{ version }}.
+
+You are advised to upgrade the following workers which you are an admin of on that instance:
+{%- for worker in workers %}
+- {{ worker.hostname }} ({{ worker.version }})
+{%- endfor %}
+
+
+Regards
+
+-- 
+LAVA
+Linaro Automated Validation Architecture

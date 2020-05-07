@@ -41,6 +41,7 @@ from lava_results_app.models import TestCase, TestSuite
 from lava_server.files import File
 from lava_scheduler_app.dbutils import parse_job_description
 from lava_scheduler_app.models import TestJob, Worker
+from lava_scheduler_app.notifications import send_upgraded_master_notifications
 from lava_scheduler_app.scheduler import schedule
 from lava_scheduler_app.utils import mkdir, get_encryption_settings
 from lava_server.cmdutils import LAVADaemonCommand, watch_directory
@@ -699,6 +700,10 @@ class Command(LAVADaemonCommand):
         (self.pipe_r, _) = self.setup_zmq_signal_handler()
         self.poller.register(self.pipe_r, zmq.POLLIN)
 
+        # Send master upgrade notifications.
+        send_upgraded_master_notifications(__version__, self.logger)
+
+        # Main loop
         self.logger.info("[INIT] Starting main loop")
         try:
             self.main_loop(options)
