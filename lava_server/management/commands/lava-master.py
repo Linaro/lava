@@ -701,7 +701,7 @@ class Command(LAVADaemonCommand):
         self.poller.register(self.pipe_r, zmq.POLLIN)
 
         # Send master upgrade notifications.
-        send_upgraded_master_notifications(__version__)
+        send_upgraded_master_notifications(__version__, self.logger)
 
         # Main loop
         self.logger.info("[INIT] Starting main loop")

@@ -462,9 +462,11 @@ def create_notification(job, data):
         create_callback(job, data["callback"], notification)
 
 
-def send_upgraded_master_notifications(master_version):
-    logger = logging.getLogger("lava_scheduler_app")
+def send_upgraded_master_notifications(master_version, logger=None):
+    if logger is None:
+        logger = logging.getLogger("lava_scheduler_app")
     emails = ()
+    workers_set = set()
 
     # List the users that are superuser or admin of workers
     worker_admin_groups = GroupWorkerPermission.objects.all().values("group")
@@ -477,31 +479,32 @@ def send_upgraded_master_notifications(master_version):
     # Loop on every users to send a mail to each user with the list of workers
     # they are administrating
     for user in users:
-        workers = Worker.objects.filter(state=Worker.STATE_ONLINE)
+        workers = Worker.objects.filter(health=Worker.HEALTH_ACTIVE)
         workers = workers.exclude(version=master_version)
         workers = workers.exclude(master_version_notified=master_version)
         workers = workers.accessible_by_user(user, Worker.CHANGE_PERMISSION)
 
         if workers:
-            kwargs = {"hostname": dbutils.get_domain(), "workers": workers}
+            workers_set.update([w.hostname for w in workers])
             title = "LAVA: Worker upgrade notification for %s" % (user.username,)
-            kwargs["user"] = {
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-            }
             template_env = Notification.TEMPLATES_ENV
             body = template_env.get_template(Worker.MASTER_UPGRADE_NOTIFICATION).render(
-                **kwargs
+                hostname=dbutils.get_domain(),
+                user=user,
+                version=master_version,
+                workers=workers,
             )
             emails += ((title, body, settings.SERVER_EMAIL, [user.email]),)
 
     try:
-        logger.info("sending worker upgrade notifications")
+        logger.info("[INIT] sending worker upgrade notifications:")
+        for worker in workers_set:
+            logger.info("[INIT] * %s", worker)
         send_mass_mail(emails)
     except Exception as exc:
         logger.exception(exc)
         logger.warning("failed to send worker upgrade notifications")
     # If all went well, update relevant field to current master version
-    Worker.objects.filter(state=Worker.STATE_ONLINE).update(
+    Worker.objects.filter(hostname__in=workers_set).update(
         master_version_notified=master_version
     )
