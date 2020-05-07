@@ -38,3 +38,4 @@ Restrictions: skippable
 
 Tests: lava-coordinator
 Depends: lava-coordinator
+Restrictions: isolation-container
