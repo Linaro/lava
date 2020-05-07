@@ -12,8 +12,8 @@ Build-Depends:
 X-Python3-Version: >=3.5
 Standards-Version: 4.2.1
 Homepage: https://www.lavasoftware.org/
-Vcs-Git: https://git.lavasoftware.org/lava/pkg-lava-debian.git
-Vcs-Browser: https://git.lavasoftware.org/lava/pkg-lava-debian
+Vcs-Git: https://git.lavasoftware.org/lava/lava.git
+Vcs-Browser: https://git.lavasoftware.org/lava/lava
 
 Package: lava-dispatcher
 Architecture: all
