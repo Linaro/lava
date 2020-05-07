@@ -422,7 +422,7 @@ class Worker(RestrictedObject):
 
     master_version_notified = models.CharField(
         verbose_name=_("Master version notified"),
-        max_length=20,
+        max_length=50,
         null=True,
         default=None,
         blank=True,

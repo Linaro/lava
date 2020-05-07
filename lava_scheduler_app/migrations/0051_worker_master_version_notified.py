@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
             field=models.CharField(
                 blank=True,
                 default=None,
-                max_length=20,
+                max_length=50,
                 null=True,
                 verbose_name="Master version notified",
             ),
