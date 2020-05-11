@@ -91,6 +91,12 @@ constants:
     interrupt_ctrl_list: {{ interrupt_ctrl_list  | default([]) }}
     interrupt-newline: {{ uboot_interrupt_newline | default(True) }}
     final-message: '{{ uboot_final_message | default("Starting kernel") }}'
+{% if uboot_error_messages %}
+    error-messages:
+{% for message in uboot_error_messages %}
+      - '{{ message }}'
+{% endfor %}
+{% else %}
     error-messages:
       - 'Resetting CPU'
       - 'Must RESET board to recover'
@@ -104,6 +110,7 @@ constants:
       - 'Ramdisk image is corrupt or invalid'
       - 'ERROR: Failed to allocate'
       - 'TFTP error: trying to overwrite reserved memory'
+{% endif %}
 {% if uboot_extra_error_message %}
       - '{{ uboot_extra_error_message }}'
 {% endif %}
