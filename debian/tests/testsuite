@@ -1,30 +1,20 @@
 #!/bin/sh
 
-set -e
+set -eu
 
-TESTDIR=`pwd`/debian/testhome
-mkdir -p ${TESTDIR}
+if [ "$(id -un)" = "root" ]; then
+    user=${AUTOPKGTEST_NORMAL_USER}
+    runuser --user postgres -- psql postgres -c 'ALTER USER devel CREATEDB;'
+    exec runuser --user "${user}" -- "$0" "$@"
+fi
 
-# test the installed package database
-lava-server manage check
-lava-server manage check --deploy
-lava-server manage createsuperuser --username autopkgtest --noinput --email a@test.com
-lava-server manage users add nobody --email b@test.com
-lava-server manage users add staffer --email c@test.com --staff
-lava-server manage workers add autopkgtest
-lava-server manage workers add disabled --health MAINTENANCE
-lava-server manage device-types add qemu
-lava-server manage device-types list --all
-lava-server manage devices add --device-type qemu --worker autopkgtest qemu01
-lava-server manage devices list --all
-lava-server manage devices update --private --health RETIRED qemu01
-lava-server manage devices list --all
+TESTDIR="$(mktemp --directory --tmpdir lava-tests-XXXXXXXXXX)"
+trap "rm -rf ${TESTDIR}" INT TERM EXIT
 
-# test daemon handling
-service lava-server-gunicorn restart
-service lava-master restart
-service lava-slave restart
-service lava-logs restart
+set -x
 
-# scenario files are not packaged & need django support, test the local tree only.
-./ci-run -dots
+# run tests
+export LAVA_BASE_DIR=${TESTDIR}/tmp
+cp -r pytest.ini etc/ tests/ "${TESTDIR}"
+cd "${TESTDIR}"
+python3 -m pytest "$@"

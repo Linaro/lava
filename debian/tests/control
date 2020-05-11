@@ -1,11 +1,30 @@
+Tests: management
+Depends: lava-dispatcher, lava-server
+Restrictions: allow-stderr, needs-root, isolation-container
+
 Tests: testsuite
-Depends: lava-server, lava-common, lava-dispatcher, @builddeps@,
- pep8, git, telnet, qemu-system-x86, dh-python,
- python3-sphinx (>= 1.4), python3-setuptools (>= 3), python3-yaml,
- nfs-kernel-server, u-boot-tools, iproute2, tftpd-hpa, python3-pytest,
- python3-pytest-django,
- schroot, lxc, lava-server, python3-tz,
- tftpd-hpa, git, qemu-system-x86, nfs-kernel-server, u-boot-tools
+Depends: dh-python,
+         git,
+         iproute2,
+         lava-coordinator,
+         lava-dispatcher,
+         lava-server,
+         lxc,
+         nfs-kernel-server,
+         postgresql,
+         python3-pytest,
+         python3-pytest-django,
+         python3-pytest-mock,
+         python3-setuptools (>= 3),
+         python3-sphinx (>= 1.4),
+         python3-tz,
+         python3-yaml,
+         qemu-system-x86,
+         schroot,
+         telnet,
+         tftpd-hpa,
+         u-boot-tools,
+         @builddeps@
 Restrictions: allow-stderr, needs-root
 
 Test-Command: python3 -c 'from lava_common import *'
@@ -15,6 +34,8 @@ Restrictions: allow-stderr, superficial
 
 Tests: lava-dispatcher-host
 Depends: lava-dispatcher-host
+Restrictions: skippable
 
 Tests: lava-coordinator
 Depends: lava-coordinator
+Restrictions: isolation-container
