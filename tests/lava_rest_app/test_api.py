@@ -25,10 +25,12 @@ import xml.etree.ElementTree as ET
 
 from datetime import timedelta
 from django.conf import settings
+from django.contrib.admin.models import LogEntry
 from django.contrib.auth.models import User, Group
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APIClient
+
 
 from lava_common.version import __version__
 from lava_common.compat import yaml_load
@@ -661,6 +663,7 @@ ok 2 bar
         assert response.status_code == 403  # nosec - unit test support
 
     def test_devices_update(self):
+        # Set health
         response = self.adminclient.put(
             reverse("api-root", args=[self.version]) + "devices/public02/",
             {"device_type": "restricted_device_type1", "health": "Unknown"},
@@ -671,6 +674,29 @@ ok 2 bar
             content["device_type"] == "restricted_device_type1"
         )  # nosec - unit test support
         assert content["health"] == "Unknown"  # nosec - unit test support
+        assert Device.objects.get(hostname="public02").get_health_display() == "Unknown"
+        assert LogEntry.objects.filter(object_id="public02").count() == 1
+        assert LogEntry.objects.get(object_id="public02").user == self.admin
+        assert (
+            LogEntry.objects.get(object_id="public02").change_message
+            == "Maintenance → Unknown"
+        )
+
+        # Set health again
+        response = self.adminclient.patch(
+            reverse("api-root", args=[self.version]) + "devices/public02/",
+            {"health": "Good"},
+        )
+        assert response.status_code == 200  # nosec - unit test support
+        content = json.loads(response.content.decode("utf-8"))
+        assert content["health"] == "Good"  # nosec - unit test support
+        assert Device.objects.get(hostname="public02").get_health_display() == "Good"
+        assert LogEntry.objects.filter(object_id="public02").count() == 2
+        logentry = (
+            LogEntry.objects.filter(object_id="public02").order_by("action_time").last()
+        )
+        assert logentry.user == self.admin
+        assert logentry.change_message == "Unknown → Good"
 
     def test_devices_get_dictionary(self, monkeypatch, tmpdir):
         # invalid context
