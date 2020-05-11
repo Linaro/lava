@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
+from django.db import transaction
 
 from lava_scheduler_app.models import Device, DeviceType, TestJob, Worker
 from lava_results_app.models import TestSuite, TestCase
@@ -155,3 +156,19 @@ class WorkerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Worker
         fields = "__all__"
+
+    def update(self, instance, validated_data):
+        if validated_data.get("health") is not None:
+            health = validated_data["health"]
+            user = self.context["request"].user
+            with transaction.atomic():
+                # Use the worker helpers
+                if health == Worker.HEALTH_ACTIVE:
+                    instance.go_health_active(user)
+                elif health == Worker.HEALTH_MAINTENANCE:
+                    instance.go_health_maintenance(user)
+                elif health == Worker.HEALTH_RETIRED:
+                    instance.go_health_retired(user)
+            # "health" was already updated, drop it
+            del validated_data["health"]
+        return super().update(instance, validated_data)

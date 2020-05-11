@@ -1268,6 +1268,30 @@ ok 2 bar
         )
         assert len(data["results"]) == 1  # nosec - unit test support
 
+    def test_workers_update_unauthorized(self):
+        response = self.userclient.put(
+            reverse("api-root", args=[self.version]) + "workers/worker2/",
+            {"health": "Active"},
+        )
+        assert response.status_code == 403  # nosec - unit test support
+
+    def test_workers_update(self):
+        # Set health
+        response = self.adminclient.put(
+            reverse("api-root", args=[self.version]) + "workers/worker2/",
+            {"health": "Active"},
+        )
+        assert response.status_code == 200  # nosec - unit test support
+        content = json.loads(response.content.decode("utf-8"))
+        assert content["health"] == "Active"  # nosec - unit test support
+        assert Worker.objects.get(hostname="worker2").get_health_display() == "Active"
+        assert LogEntry.objects.filter(object_id="worker2").count() == 1
+        assert LogEntry.objects.get(object_id="worker2").user == self.admin
+        assert (
+            LogEntry.objects.get(object_id="worker2").change_message
+            == "Maintenance → Active"
+        )
+
     def test_aliases_list(self):
         data = self.hit(
             self.userclient,
