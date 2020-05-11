@@ -116,6 +116,21 @@ class DeviceSerializer(serializers.ModelSerializer):
     health = serializers.CharField(source="get_health_display")
     state = serializers.CharField(source="get_state_display")
 
+    def update(self, instance, validated_data):
+        old_health_display = None
+        if "health" in validated_data and validated_data["health"]:
+            # Log entry if the health changed
+            if validated_data["health"] != instance.health:
+                old_health_display = instance.get_health_display()
+
+        device = super().update(instance, validated_data)
+        if old_health_display:
+            device.log_admin_entry(
+                self.context["request"].user,
+                "%s → %s" % (old_health_display, device.get_health_display()),
+            )
+        return device
+
     class Meta:
         model = Device
         fields = (
