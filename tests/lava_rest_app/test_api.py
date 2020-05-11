@@ -1347,6 +1347,16 @@ ok 2 bar
         assert response.status_code == 201  # nosec - unit test support
         assert TestJob.objects.count() == 3  # nosec - unit test support
 
+    def test_cancel(self, mocker):
+        mocker.patch("lava_scheduler_app.models.TestJob.cancel")
+        response = self.adminclient.get(
+            reverse("api-root", args=[self.version])
+            + "jobs/%s/cancel/" % self.public_testjob1.id
+        )
+        assert response.status_code == 200  # nosec - unit test support
+        msg = json.loads(response.content)
+        assert msg["message"] == "Job cancel signal sent."  # nosec - unit test support
+
     def test_tags_list(self):
         data = self.hit(
             self.userclient,
