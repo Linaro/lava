@@ -46,7 +46,7 @@ class ChoiceField(serializers.ChoiceField):
             return list(self.choices.keys())[
                 list(self.choices.values()).index(str(data))
             ]
-        except KeyError:
+        except (KeyError, ValueError):
             self.fail("invalid_choice", input=data)
 
 
