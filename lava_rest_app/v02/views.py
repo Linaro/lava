@@ -626,9 +626,12 @@ class SystemViewSet(viewsets.ViewSet):
     """
     System utility methods.
 
-    You can download master certificate on:
+    Endpoints:
 
     * `/system/certificate/`
+    * `/system/master_config/`
+    * `/system/version/`
+    * `/system/whoami/`
     """
 
     permission_classes = [IsAuthenticatedOrReadOnly]
@@ -665,34 +668,28 @@ class SystemViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"], suffix="master_config")
     def master_config(self, request, **kwargs):
         """
-        Name
-        ----
-        `master_config` ()
-
         Description
         -----------
         Return a dictionary containing the master and logger ZMQ
         socket addresses for this instance.
 
-        Arguments
-        ---------
-        None
-
         Return value
         ------------
         Returns a dictionary containing the following keys:
+
+        ```json
         {
           "MASTER_URL": "tcp://<lava-master-dns>:5556",
           "LOGGING_URL": "tcp://<lava-master-dns>:5555",
-          "ENCRYPT": False,
-          "IPv6": False,
+          "ENCRYPT": false,
+          "IPv6": false,
           "EVENT_SOCKET": "tcp://*:5500",
           "EVENT_TOPIC": "org.linaro.validation",
-          "EVENT_NOTIFICATION": True,
+          "EVENT_NOTIFICATION": true,
           "LOG_SIZE_LIMIT": 10,
         }
-
-        If ENCRYPT is True, clients MUST already have a usable
+        ```
+        If `ENCRYPT` is `true`, clients MUST already have a usable
         client certificate installed on the master AND the current
         master certificate installed on the client, before a
         connection can be made.
@@ -743,8 +740,38 @@ class SystemViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=["get"], suffix="version")
     def version(self, request, **kwargs):
+        """
+        Description
+        -----------
+        Return the current version
+
+        Return value
+        ------------
+        Returns a dictionary containing the following keys:
+
+        ```json
+        {
+          "version": "<version_string>",
+        }
+        ```
+        """
         return Response(data={"version": __version__})
 
     @action(detail=False, methods=["get"], suffix="whoami")
     def whoami(self, request, **kwargs):
+        """
+        Description
+        -----------
+        Return the name of the user making the request
+
+        Return value
+        ------------
+        Returns a dictionary containing the following keys:
+
+        ```json
+        {
+          "user": "<username>",
+        }
+        ```
+        """
         return Response(data={"user": request.user.username})
