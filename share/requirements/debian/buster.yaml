@@ -87,6 +87,7 @@ lava-server:
     unittests: true
   PyMongo:
     name: python3-pymongo
+    unittests: true
 
 lava-dispatcher:
   PyYAML:
