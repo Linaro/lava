@@ -4,7 +4,7 @@
 {% set boot_character_delay = boot_character_delay | default(1) %}
 {% set kernel_start_message = 'Booting in blind mode' %}
 
-{% set base_ip_args = "ip=:::::eth0:dhcp" %}
+{% set base_ip_args = "ip=dhcp" %}
 
 {% set extra_ramdisk_args = " root=/dev/ram0" %}
 {% set modules = ["linux", "tftp"] %}
