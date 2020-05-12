@@ -19,8 +19,8 @@
 
 import lzma
 import pytest
-import yaml
 
+from lava_common.compat import yaml_dump, yaml_load
 from lava_scheduler_app.logutils import LogsFilesystem, LogsMongo
 
 
@@ -131,11 +131,11 @@ def test_mongo_logs(mocker, logs_mongo):
             "msg": "lava-dispatcher, installed at version: 2020.02",
         }
     )  # nosec
-    result = yaml.load(logs_mongo.read(job))
+    result = yaml_load(logs_mongo.read(job))
 
     assert len(result) == 2  # nosec
     assert result == find_ret_val  # nosec
     # size of find_ret_val in bytes
     assert logs_mongo.size(job) == 137  # nosec
 
-    assert logs_mongo.open(job).read() == yaml.dump(find_ret_val).encode("utf-8")
+    assert logs_mongo.open(job).read() == yaml_dump(find_ret_val).encode("utf-8")

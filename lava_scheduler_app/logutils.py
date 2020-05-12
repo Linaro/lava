@@ -23,11 +23,11 @@ import lzma
 import pathlib
 import pymongo
 import struct
-import yaml
 
 from django.conf import settings
 from importlib import import_module
 
+from lava_common.compat import yaml_dump, yaml_load
 from lava_common.exceptions import ConfigurationError
 
 
@@ -165,7 +165,7 @@ class LogsMongo(Logs):
         return self.db.logs.count_documents({"job_id": job.id})
 
     def open(self, job):
-        stream = io.BytesIO(yaml.dump(list(self._get_docs(job))).encode("utf-8"))
+        stream = io.BytesIO(yaml_dump(list(self._get_docs(job))).encode("utf-8"))
         stream.seek(0)
         return stream
 
@@ -174,14 +174,14 @@ class LogsMongo(Logs):
         if not docs:
             return ""
 
-        return yaml.dump(list(docs))
+        return yaml_dump(list(docs))
 
     def size(self, job, start=0, end=None):
         docs = self._get_docs(job, start, end)
-        return len(yaml.dump(list(docs)).encode("utf-8"))
+        return len(yaml_dump(list(docs)).encode("utf-8"))
 
     def write(self, job, line, output=None, idx=None):
-        line = yaml.load(line)[0]
+        line = yaml_load(line)[0]
 
         self.db.logs.insert_one(
             {"job_id": job.id, "dt": line["dt"], "lvl": line["lvl"], "msg": line["msg"]}
