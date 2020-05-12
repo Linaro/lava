@@ -480,7 +480,7 @@ def send_upgraded_master_notifications(master_version, logger=None):
     # they are administrating
     for user in users:
         workers = Worker.objects.filter(health=Worker.HEALTH_ACTIVE)
-        workers = workers.exclude(version=master_version)
+        workers = workers.exclude(Q(version=master_version) | Q(version__isnull=True))
         workers = workers.exclude(master_version_notified=master_version)
         workers = workers.accessible_by_user(user, Worker.CHANGE_PERMISSION)
 
