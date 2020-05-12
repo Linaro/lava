@@ -21,7 +21,6 @@ import contextlib
 import io
 import lzma
 import pathlib
-import pymongo
 import struct
 
 from django.conf import settings
@@ -132,6 +131,8 @@ class LogsFilesystem(Logs):
 
 class LogsMongo(Logs):
     def __init__(self):
+        import pymongo
+
         self.client = pymongo.MongoClient(settings.MONGO_DB_URI)
         try:
             # Test connection.
@@ -147,6 +148,8 @@ class LogsMongo(Logs):
         super().__init__()
 
     def _get_docs(self, job, start=0, end=None):
+        import pymongo
+
         limit = 0
         if end:
             limit = end - start
