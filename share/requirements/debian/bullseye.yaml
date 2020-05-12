@@ -84,6 +84,9 @@ lava-server:
   tftpd-hpa:
     name: tftpd-hpa
     unittests: true
+  PyMongo:
+    name: python3-pymongo
+    unittests: true
 
 lava-dispatcher:
   PyYAML:

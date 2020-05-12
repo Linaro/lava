@@ -18,12 +18,16 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
+import io
 import lzma
 import pathlib
 import struct
 
 from django.conf import settings
 from importlib import import_module
+
+from lava_common.compat import yaml_dump, yaml_load
+from lava_common.exceptions import ConfigurationError
 
 
 class Logs:
@@ -125,6 +129,71 @@ class LogsFilesystem(Logs):
         output.flush()
 
 
+class LogsMongo(Logs):
+    def __init__(self):
+        import pymongo
+
+        self.client = pymongo.MongoClient(settings.MONGO_DB_URI)
+        try:
+            # Test connection.
+            # The ismaster command is cheap and does not require auth.
+            self.client.admin.command("ismaster")
+        except (pymongo.errors.ConnectionFailure, pymongo.errors.OperationFailure):
+            raise ConfigurationError(
+                "MongoDB URI is not configured properly. Unable to connect to MongoDB."
+            )
+
+        self.db = self.client[settings.MONGO_DB_DATABASE]
+        self.db.logs.create_index([("job_id", 1), ("dt", 1)])
+        super().__init__()
+
+    def _get_docs(self, job, start=0, end=None):
+        import pymongo
+
+        limit = 0
+        if end:
+            limit = end - start
+        if limit < 0:
+            return []
+
+        return self.db.logs.find(
+            filter={"job_id": job.id},
+            projection={"_id": False, "job_id": False},
+            sort=[("dt", pymongo.ASCENDING)],
+            skip=start,
+            limit=limit,
+        )
+
+    def line_count(self, job):
+        return self.db.logs.count_documents({"job_id": job.id})
+
+    def open(self, job):
+        stream = io.BytesIO(yaml_dump(list(self._get_docs(job))).encode("utf-8"))
+        stream.seek(0)
+        return stream
+
+    def read(self, job, start=0, end=None):
+        docs = self._get_docs(job, start, end)
+        if not docs:
+            return ""
+
+        return yaml_dump(list(docs))
+
+    def size(self, job, start=0, end=None):
+        docs = self._get_docs(job, start, end)
+        return len(yaml_dump(list(docs)).encode("utf-8"))
+
+    def write(self, job, line, output=None, idx=None):
+        line = yaml_load(line)[0]
+
+        self.db.logs.insert_one(
+            {"job_id": job.id, "dt": line["dt"], "lvl": line["lvl"], "msg": line["msg"]}
+        )
+
+
 logs_backend_str = settings.LAVA_LOG_BACKEND.rsplit(".", 1)
-logs_class = getattr(import_module(logs_backend_str[0]), logs_backend_str[1])
+try:
+    logs_class = getattr(import_module(logs_backend_str[0]), logs_backend_str[1])
+except (AttributeError, ModuleNotFoundError) as exc:
+    raise ConfigurationError(str(exc))
 logs_instance = logs_class()
