@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
+from django.db import transaction
 
 from lava_scheduler_app.models import Device, DeviceType, TestJob, Worker
 from lava_results_app.models import TestSuite, TestCase
@@ -118,13 +119,13 @@ class DeviceSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         old_health_display = None
-        if "health" in validated_data and validated_data["health"]:
+        if validated_data.get("health") is not None:
             # Log entry if the health changed
             if validated_data["health"] != instance.health:
                 old_health_display = instance.get_health_display()
 
         device = super().update(instance, validated_data)
-        if old_health_display:
+        if old_health_display is not None:
             device.log_admin_entry(
                 self.context["request"].user,
                 "%s → %s" % (old_health_display, device.get_health_display()),
@@ -155,3 +156,19 @@ class WorkerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Worker
         fields = "__all__"
+
+    def update(self, instance, validated_data):
+        if validated_data.get("health") is not None:
+            health = validated_data["health"]
+            user = self.context["request"].user
+            with transaction.atomic():
+                # Use the worker helpers
+                if health == Worker.HEALTH_ACTIVE:
+                    instance.go_health_active(user)
+                elif health == Worker.HEALTH_MAINTENANCE:
+                    instance.go_health_maintenance(user)
+                elif health == Worker.HEALTH_RETIRED:
+                    instance.go_health_retired(user)
+            # "health" was already updated, drop it
+            del validated_data["health"]
+        return super().update(instance, validated_data)

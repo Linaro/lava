@@ -28,6 +28,7 @@ from lava_scheduler_app.models import (
     GroupDeviceTypePermission,
     GroupDevicePermission,
     Tag,
+    Worker,
 )
 
 from rest_framework_extensions.fields import ResourceUriField
@@ -46,7 +47,7 @@ class ChoiceField(serializers.ChoiceField):
             return list(self.choices.keys())[
                 list(self.choices.values()).index(str(data))
             ]
-        except KeyError:
+        except (KeyError, ValueError):
             self.fail("invalid_choice", input=data)
 
 
@@ -125,7 +126,7 @@ class SlaveKeySerializer(serializers.Serializer):
 
 class WorkerSerializer(base_serializers.WorkerSerializer):
     state = serializers.CharField(source="get_state_display", read_only=True)
-    health = serializers.CharField(source="get_health_display", read_only=True)
+    health = ChoiceField(choices=Worker.HEALTH_CHOICES, required=False)
 
     class Meta(base_serializers.WorkerSerializer.Meta):
         read_only_fields = ("last_ping", "state")
