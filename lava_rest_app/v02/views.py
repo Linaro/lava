@@ -47,7 +47,7 @@ from rest_framework import status, viewsets
 from rest_framework.permissions import (
     DjangoModelPermissions,
     DjangoModelPermissionsOrAnonReadOnly,
-    IsAuthenticated,
+    IsAuthenticatedOrReadOnly,
 )
 from rest_framework_extensions.mixins import NestedViewSetMixin
 from rest_framework.response import Response
@@ -631,7 +631,7 @@ class SystemViewSet(viewsets.ViewSet):
     * `/system/certificate/`
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get_view_name(self):
         name = self.__class__.__name__
