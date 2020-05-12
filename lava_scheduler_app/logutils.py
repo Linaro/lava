@@ -189,5 +189,8 @@ class LogsMongo(Logs):
 
 
 logs_backend_str = settings.LAVA_LOG_BACKEND.rsplit(".", 1)
-logs_class = getattr(import_module(logs_backend_str[0]), logs_backend_str[1])
+try:
+    logs_class = getattr(import_module(logs_backend_str[0]), logs_backend_str[1])
+except (AttributeError, ModuleNotFoundError) as exc:
+    raise ConfigurationError(str(exc))
 logs_instance = logs_class()
