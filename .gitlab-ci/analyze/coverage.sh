@@ -10,7 +10,11 @@ then
   apt-get -q update
   DEPS=$(./share/requires.py -p lava-dispatcher -d debian -s buster -n)
   apt-get install --no-install-recommends --yes $DEPS
+  DEPS=$(./share/requires.py -p lava-dispatcher -d debian -s buster -n -u)
+  apt-get install --no-install-recommends --yes $DEPS
   DEPS=$(./share/requires.py -p lava-server -d debian -s buster -n)
+  apt-get install --no-install-recommends --yes $DEPS
+  DEPS=$(./share/requires.py -p lava-server -d debian -s buster -n -u)
   apt-get install --no-install-recommends --yes $DEPS
 else
   set -x
