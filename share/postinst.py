@@ -43,6 +43,7 @@ LAVA_LOGS = Path("/var/log/lava-server/")
 LAVA_SYS_HOME = Path("/var/lib/lava-server/home/")
 LAVA_SYS_MOUNTDIR = Path("/var/lib/lava-server/default/")
 SECRET_KEY = Path("/etc/lava-server/secret_key.conf")
+SETTINGS_CONF = Path("/etc/lava-server/settings.conf")
 
 GEN_SECRET_KEY = Path("/etc/lava-server/settings.d/00-secret-key.yaml")
 GEN_DATABASE = Path("/etc/lava-server/settings.d/00-database.yaml")
@@ -165,6 +166,12 @@ def fixup():
                 item.unlink()
 
     print("* fix permissions:")
+    # Fix permissions of /etc/lava-server/settings.conf
+    with contextlib.suppress(FileNotFoundError):
+        print(f"  - {SETTINGS_CONF}")
+        shutil.chown(SETTINGS_CONF, LAVA_SYS_USER, LAVA_SYS_USER)
+        SETTINGS_CONF.chmod(0o640)
+
     # Fix permissions of /etc/lava-server/instance.conf
     with contextlib.suppress(FileNotFoundError):
         print(f"  - {INSTANCE_CONF}")
