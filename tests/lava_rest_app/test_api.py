@@ -1624,7 +1624,8 @@ ok 2 bar
         response = self.userclient_no_token.get(
             reverse("api-root", args=[self.version]) + "system/version/"
         )
-        assert response.status_code == 403  # nosec
+        assert response.status_code == 200  # nosec
+        assert response.json()["version"] == __version__  # nosec
 
     def test_system_whoami(self):
         response = self.hit(
@@ -1634,7 +1635,8 @@ ok 2 bar
         response = self.userclient_no_token.get(
             reverse("api-root", args=[self.version]) + "system/whoami/"
         )
-        assert response.status_code == 403  # nosec
+        assert response.status_code == 200  # nosec
+        assert response.json()["user"] == ""  # nosec
 
     def test_system_master_config(self):
         response = self.hit(
@@ -1649,7 +1651,7 @@ ok 2 bar
         response = self.userclient_no_token.get(
             reverse("api-root", args=[self.version]) + "system/master_config/"
         )
-        assert response.status_code == 403  # nosec
+        assert response.status_code == 200  # nosec
 
 
 def test_view_root(client):
