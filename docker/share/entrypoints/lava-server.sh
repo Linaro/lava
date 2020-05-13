@@ -219,6 +219,14 @@ then
     echo
 fi
 
+if [ "$LAVA_ADMIN_USERNAME" != "" ] && [ "$LAVA_ADMIN_PASSWORD" != "" ]
+then
+    echo "Creating lava admin: $LAVA_ADMIN_USERNAME"
+    lava-server manage users add --passwd "$LAVA_ADMIN_PASSWORD" --staff --superuser "$LAVA_ADMIN_USERNAME"
+    echo "done"
+    echo
+fi
+
 # Run user scripts. The database is running and migrations has been run.
 for f in $(find /root/entrypoint.d/ -type f); do
     case "$f" in
