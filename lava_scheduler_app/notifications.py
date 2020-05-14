@@ -463,6 +463,9 @@ def create_notification(job, data):
 
 
 def send_upgraded_master_notifications(master_version, logger=None):
+    if not settings.MASTER_UPGRADE_NOTIFY:
+        return
+
     if logger is None:
         logger = logging.getLogger("lava_scheduler_app")
     emails = ()
