@@ -1,3 +1,19 @@
+lava (2020.05-1) unstable; urgency=medium
+
+  * LAVA Software 2020.05 release
+
+  [ Antonio Terceiro ]
+  * tests: remove references to external files
+  * debian: add missing (build-)dependency on libjs-bootstrap
+  * debian: adjust to build from the upstream repository
+  * debian/tests/lava-dispatcher-host: skip without udev
+  * debian/tests: separate management tests from testsuite
+  * debian/tests/lava-coordinator: require at least a container
+  * debian/control: improve readability of dependency fields
+  * debian/control: make lava-dev dependend on libjs-bootstrap as well
+
+ -- Remi Duraffort <remi.duraffort@linaro.org>  Thu, 14 May 2020 16:35:36 +0200
+
 lava (2020.04-1) unstable; urgency=medium
 
   * LAVA Software 2020.04 release
