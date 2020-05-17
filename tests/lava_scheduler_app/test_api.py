@@ -1743,6 +1743,7 @@ def test_workers_show(setup):
             "devices",
             "last_ping",
             "job_limit",
+            "version",
         ]
     )
     assert data["hostname"] == "example.com"  # nosec

@@ -367,6 +367,7 @@ class SchedulerWorkersAPI(ExposedV2API):
             ],
             "last_ping": worker.last_ping,
             "job_limit": worker.job_limit,
+            "version": worker.version,
         }
 
     @check_perm("lava_scheduler_app.change_worker")
