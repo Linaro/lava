@@ -298,13 +298,11 @@ def schedule_jobs_for_device_type(logger, dt, available_devices):
 
 
 def schedule_jobs_for_device(logger, device):
-    jobs = TestJob.objects.filter(
-        state__in=[TestJob.STATE_SUBMITTED, TestJob.STATE_SCHEDULING]
-    )
+    jobs = TestJob.objects.filter(state=TestJob.STATE_SUBMITTED)
     jobs = jobs.filter(actual_device__isnull=True)
     jobs = jobs.filter(requested_device_type__pk=device.device_type.pk)
     jobs = jobs.select_related("submitter")
-    jobs = jobs.order_by("-state", "-priority", "submit_time", "target_group", "id")
+    jobs = jobs.order_by("-priority", "submit_time", "sub_id", "id")
 
     device_tags = set(device.tags.all())
     for job in jobs:
