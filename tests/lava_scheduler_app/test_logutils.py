@@ -19,16 +19,19 @@
 
 import lzma
 import pytest
+import unittest
 
 from lava_common.compat import yaml_dump, yaml_load
 from lava_scheduler_app.logutils import LogsFilesystem, LogsMongo
 
 
-@pytest.fixture
-def logs_mongo(mocker):
-    mocker.patch("pymongo.database.Database.command")
-    mocker.patch("pymongo.collection.Collection.create_index")
-    return LogsMongo()
+def check_pymongo():
+    try:
+        import pymongo
+
+        return False
+    except ImportError:
+        return True
 
 
 @pytest.fixture
@@ -104,7 +107,12 @@ def test_write_logs(mocker, tmpdir, logs_filesystem):
         assert f_idx.read(8) == b"\x0c\x00\x00\x00\x00\x00\x00\x00"  # nosec
 
 
-def test_mongo_logs(mocker, logs_mongo):
+@unittest.skipIf(check_pymongo(), "openocd not installed")
+def test_mongo_logs(mocker):
+    mocker.patch("pymongo.database.Database.command")
+    mocker.patch("pymongo.collection.Collection.create_index")
+    logs_mongo = LogsMongo()
+
     job = mocker.Mock()
     job.id = 1
 
