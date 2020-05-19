@@ -222,7 +222,7 @@ class TestSuite(models.Model, Queryable):
                         output_field=IntegerField(),
                     )
                 ),
-                UNKNOW=Sum(
+                UNKNOWN=Sum(
                     Case(
                         When(result=TestCase.RESULT_UNKNOWN, then=1),
                         default=0,
