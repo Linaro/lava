@@ -36,7 +36,9 @@ from lava_results_app.models import (
 
 class ActionDataAdmin(admin.ModelAdmin):
     list_display = ("job_pk", "action_level", "action_name")
+    list_select_related = ("testdata__testjob",)
     ordering = ("-testdata__testjob__pk", "-action_level")
+    raw_id_fields = ("testdata", "testcase")
 
     def job_pk(self, action):
         return action.testdata.testjob.pk
@@ -62,7 +64,9 @@ class QueryAdmin(admin.ModelAdmin):
 
 class TestCaseAdmin(admin.ModelAdmin):
     list_display = ("job_pk", "suite_name", "name", "result")
+    list_select_related = ("suite", "suite__job")
     ordering = ("-suite__job__pk", "suite__name", "name")
+    raw_id_fields = ("suite",)
 
     def job_pk(self, testcase):
         return testcase.suite.job.pk
@@ -79,6 +83,7 @@ class TestCaseAdmin(admin.ModelAdmin):
 
 class TestSetAdmin(admin.ModelAdmin):
     list_display = ("suite", "name")
+    raw_id_fields = ("suite",)
 
     def has_add_permission(self, request):
         return False
@@ -89,7 +94,9 @@ class TestSetAdmin(admin.ModelAdmin):
 
 class TestSuiteAdmin(admin.ModelAdmin):
     list_display = ("job_pk", "name")
+    list_select_related = ("job",)
     ordering = ("-job__pk", "name")
+    raw_id_fields = ("job",)
 
     def job_pk(self, testsuite):
         return testsuite.job.pk
