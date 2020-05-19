@@ -1201,6 +1201,38 @@ lava (2019.03-1) unstable; urgency=medium
 
  -- Steve McIntyre <93sam@debian.org>  Mon, 04 Mar 2019 12:55:07 +0000
 
+lava (2019.01-5) unstable; urgency=medium
+
+  [ Steve McIntyre ]
+  * Clean up obsolete conffiles causing piuparts failures.
+    Closes: #925353
+
+  [ Neil Williams ]
+  * Remove GitLab support due to Docker limits
+
+ -- Steve McIntyre <93sam@debian.org>  Sun, 31 Mar 2019 14:42:16 +0700
+
+lava (2019.01-4) unstable; urgency=medium
+
+  * Include 3 patches from upstream.
+    Fix a typo in links from results in test job log files
+    Fix HTTP 500 on REST API Junit call.
+    Fix crash with older python3-tap versions.
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 04 Feb 2019 12:50:12 +0000
+
+lava (2019.01-3) unstable; urgency=medium
+
+  * Fix missing dependency in autopkgtest
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 28 Jan 2019 15:38:22 +0000
+
+lava (2019.01-2) unstable; urgency=medium
+
+  * Fix missing change for autopkgtest support
+
+ -- Neil Williams <codehelp@debian.org>  Fri, 25 Jan 2019 15:06:40 +0000
+
 lava (2019.01-1) unstable; urgency=medium
 
   * 2019.01-1 LAVA Software 2019.01 release
