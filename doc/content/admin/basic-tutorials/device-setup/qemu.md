@@ -45,7 +45,7 @@ In order to submit jobs to the newly created device, LAVA requires a device
 dictionary. For a simple qemu job, this device dictionary would work:
 
 ```jinja
-{% extend "qemu.jinja2" %}
+{% extends "qemu.jinja2" %}
 
 {% set netdevice = "user" %}
 {% set memory = 1024 %}
