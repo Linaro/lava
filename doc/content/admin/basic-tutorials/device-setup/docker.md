@@ -45,7 +45,7 @@ In order to submit jobs to the newly created device, LAVA requires a device
 dictionary. For a simple docker job, this device dictionary would work:
 
 ```jinja
-{% extend "docker.jinja2" %}
+{% extends "docker.jinja2" %}
 ```
 
 This file should be pushed to the LAVA server under
