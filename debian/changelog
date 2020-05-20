@@ -11,6 +11,8 @@ lava (2020.05-1) unstable; urgency=medium
   * debian/tests/lava-coordinator: require at least a container
   * debian/control: improve readability of dependency fields
   * debian/control: make lava-dev dependend on libjs-bootstrap as well
+  * lava-dispatcher-host: add missing dependency on python3
+  * debian/tests/control: add missing test dependency
 
  -- Remi Duraffort <remi.duraffort@linaro.org>  Thu, 14 May 2020 16:35:36 +0200
 
