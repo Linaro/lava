@@ -76,6 +76,7 @@ Description: Linaro Automated Validation Architecture dispatcher
 Package: lava-dispatcher-host
 Architecture: all
 Depends: lava-common (= ${binary:Version}),
+         python3,
          ${misc:Depends},
          ${python3:Depends}
 Multi-Arch: foreign
