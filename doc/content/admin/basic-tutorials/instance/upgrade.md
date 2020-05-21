@@ -69,6 +69,30 @@ apt-get upgrade
     Zero-downtime upgrade is not possible with the current Debian packages.
     During the upgrade, every services will be stopped while upgrading.
 
+## Upgrade notifications
+
+Different version compatibility in LAVA between master and worker
+instances is not guaranteed at the moment.
+
+When a LAVA master instance is upgraded, if the specific flag in settings is
+provided, the system will send out email notifications reminding admins that
+the worker instances need to be upgraded as well.
+
+```yaml
+"MASTER_UPGRADE_NOTIFY": false
+```
+
+The defaul value for this flag is False so admin action is required in order
+to use this feature.
+
+Each user that has a 'change_worker' permission over the at least one worker
+(which is not of the same version as the LAVA master) will get an email
+with the list of workers which require an upgrade.
+If the user is superuser, he will be regarded as having permission over all the
+workers in the system, so that kind of user will get the full list of the
+workers which require an upgrade.
+
+
 ## Rollback
 
 XXX
