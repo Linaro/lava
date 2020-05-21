@@ -84,9 +84,11 @@ class DownloaderAction(RetryAction):
         # Find the right action according to the url
         url = self.params.get("url")
         if url is None:
-            raise JobError(
-                "Invalid deploy action: 'url' is missing for '%s'" % self.key
-            )
+            url = self.params.get("repository")
+            if url is None:
+                raise JobError(
+                    "Invalid deploy action: 'url' is missing for '%s'" % self.key
+                )
 
         url = urlparse(url)
         if url.scheme == "scp":
@@ -196,7 +198,10 @@ class DownloadHandler(Action):
         if len(pathlib.Path(self.key).parts) != 1:
             raise JobError("Invalid key %r" % self.key)
 
-        self.url = urlparse(self.params["url"])
+        url = self.params.get("url")
+        if url is None:
+            url = self.params.get("repository")
+        self.url = urlparse(url)
         compression = self.params.get("compression")
         archive = self.params.get("archive")
         overlay = self.params.get("overlay", False)
@@ -316,7 +321,11 @@ class DownloadHandler(Action):
         if os.path.exists(self.fname):
             os.remove(self.fname)
 
-        self.logger.info("downloading %s", self.params["url"])
+        url = self.params.get("url")
+        if url is None:
+            url = self.params.get("repository")
+
+        self.logger.info("downloading %s", url)
         self.logger.debug("saving as %s", self.fname)
 
         downloaded_size = 0

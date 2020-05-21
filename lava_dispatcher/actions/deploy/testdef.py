@@ -30,9 +30,9 @@ from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_common.decorators import nottest
 from lava_common.exceptions import InfrastructureError, JobError, LAVABug, TestError
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.utils.strings import indices
 from lava_dispatcher.utils.vcs import GitHelper
 from lava_common.constants import DEFAULT_TESTDEF_NAME_CLASS, DISPATCHER_DOWNLOAD_DIR
+from lava_dispatcher.utils.compression import untar_file
 
 
 @nottest
@@ -106,7 +106,9 @@ class RepoAction(Action):
         if "test_name" not in self.parameters:
             self.errors = "Unable to determine test_name"
             return
-        if not isinstance(self, InlineRepoAction):
+        if not isinstance(self, InlineRepoAction) and not isinstance(
+            self, UrlRepoAction
+        ):
             if self.vcs is None:
                 raise LAVABug(
                     "RepoAction validate called super without setting the vcs"
@@ -440,7 +442,7 @@ class TarRepoAction(RepoAction):
 
 class UrlRepoAction(RepoAction):
 
-    priority = 0  # FIXME: increase priority once this is working
+    priority = 1
     name = "url-repo-action"
     description = "apply a single test file to the test image"
     summary = "download file test"
@@ -454,40 +456,59 @@ class UrlRepoAction(RepoAction):
     def accepts(cls, repo_type):
         return repo_type == "url"
 
+    def validate(self):
+        if "repository" not in self.parameters:
+            self.errors = "Url repository not specified in job definition"
+        if "path" not in self.parameters:
+            self.errors = "Path to YAML file not specified in the job definition"
+        super().validate()
+
+    def populate(self, parameters):
+        # Import the module here to avoid cyclic import.
+        from lava_dispatcher.actions.deploy.download import DownloaderAction
+
+        self.download_dir = self.mkdtemp()
+        self.action_key = "url_repo"
+        self.internal_pipeline = Pipeline(
+            parent=self, job=self.job, parameters=self.parameters
+        )
+        self.internal_pipeline.add_action(
+            DownloaderAction(self.action_key, self.download_dir, params=self.parameters)
+        )
+
     def run(self, connection, max_end_time):
         """Download the provided test definition file into tmpdir."""
         super().run(connection, max_end_time)
         runner_path = self.get_namespace_data(
-            action="uuid", label="overlay_dir", key=self.parameters["test_name"]
+            action="uuid", label="overlay_path", key=self.parameters["test_name"]
         )
 
-        try:
-            if not os.path.isdir(runner_path):
-                self.logger.debug("Creating directory to download the url file into.")
-                os.makedirs(runner_path)
-            # we will not use 'testdef_file' here, we can get this info from URL
-            # testdef_file = download_image(testdef_repo, context, urldir)
-            # FIXME: this handler uses DownloaderAction.run()
-
-        except OSError as exc:
-            raise JobError("Unable to get test definition from url: %s" % str(exc))
-        finally:
-            self.logger.info("Downloaded test definition file to %s.", runner_path)
-
-        i = []
-        for elem in " $&()\"'<>/\\|;`":
-            i.extend(indices(self.testdef["metadata"]["name"], elem))
-        if i:
-            msg = "Test name contains invalid symbol(s) at position(s): %s" % ", ".join(
-                str(x) for x in i
+        fname = self.get_namespace_data(
+            action="download-action", label=self.action_key, key="file"
+        )
+        self.logger.debug("Runner path : %s", runner_path)
+        if os.path.exists(runner_path) and os.listdir(runner_path) == []:
+            raise LAVABug(
+                "Directory already exists and is not empty - duplicate Action?"
             )
-            raise JobError(msg)
+
+        self.logger.info("Untar tests from file %s to directory %s", fname, runner_path)
+        untar_file(fname, runner_path)
+
+        # now read the YAML to create a testdef dict to retrieve metadata
+        yaml_file = os.path.join(runner_path, self.parameters["path"])
+        self.logger.debug("Tests stored (tmp) in %s", yaml_file)
 
         try:
-            self.testdef["metadata"]["name"].encode()
-        except UnicodeEncodeError as encode:
-            msg = "Test name contains non-ascii symbols: %s" % encode
-            raise JobError(msg)
+            with open(yaml_file, "r") as test_file:
+                testdef = yaml_safe_load(test_file)
+        except IOError as exc:
+            raise JobError(
+                "Unable to open test definition '%s': %s"
+                % (self.parameters["path"], str(exc))
+            )
+        # set testdef metadata in base class
+        self.store_testdef(testdef, "url")
 
         return connection
 
