@@ -21,8 +21,10 @@ import lzma
 import pytest
 import unittest
 
+from django.conf import settings
+
 from lava_common.compat import yaml_dump, yaml_load
-from lava_scheduler_app.logutils import LogsFilesystem, LogsMongo
+from lava_scheduler_app.logutils import LogsFilesystem, LogsMongo, LogsElasticsearch
 
 
 def check_pymongo():
@@ -32,6 +34,12 @@ def check_pymongo():
         return False
     except ImportError:
         return True
+
+
+@pytest.fixture
+def logs_elasticsearch(mocker):
+    mocker.patch("requests.put")
+    return LogsElasticsearch()
 
 
 @pytest.fixture
@@ -147,3 +155,54 @@ def test_mongo_logs(mocker):
     assert logs_mongo.size(job) == 137  # nosec
 
     assert logs_mongo.open(job).read() == yaml_dump(find_ret_val).encode("utf-8")
+
+
+def test_elasticsearch_logs(mocker, logs_elasticsearch):
+    job = mocker.Mock()
+    job.id = 1
+
+    post = mocker.MagicMock()
+    get = mocker.MagicMock()
+    get_ret_val = mocker.Mock()
+
+    # Test with empty object first.
+    get_ret_val.text = "{}"
+    get.return_value = get_ret_val
+    mocker.patch("requests.get", get)
+    result = logs_elasticsearch.read(job)
+    assert result == ""
+
+    # Normal test.
+    get_ret_val.text = '{"hits":{"hits":[{"_source":{"dt": 1585165476209, "lvl": "info", "msg": "first message"}}, {"_source":{"dt": 1585165476210, "lvl": "info", "msg": "second message"}}]}}'
+    get.return_value = get_ret_val
+
+    mocker.patch("requests.get", get)
+    mocker.patch("requests.post", post)
+
+    line = '- {"dt": "2020-03-25T19:44:36.209", "lvl": "info", "msg": "lava-dispatcher, installed at version: 2020.02"}'
+    logs_elasticsearch.write(job, line)
+    post.assert_called_with(
+        "%s%s/_doc/" % (settings.ELASTICSEARCH_URI, settings.ELASTICSEARCH_INDEX),
+        data='{"dt": 1585165476209, "lvl": "info", "msg": "lava-dispatcher, installed at version: 2020.02", "job_id": 1}',
+        headers={"Content-type": "application/json"},
+    )  # nosec
+    result = yaml_load(logs_elasticsearch.read(job))
+
+    assert len(result) == 2  # nosec
+    assert result == [
+        {"dt": "2020-03-25T19:44:36.209000", "lvl": "info", "msg": "first message"},
+        {"dt": "2020-03-25T19:44:36.210000", "lvl": "info", "msg": "second message"},
+    ]  # nosec
+    # size of get_ret_val in bytes
+    assert logs_elasticsearch.size(job) == 137  # nosec
+
+    assert logs_elasticsearch.open(job).read() == yaml_dump(
+        [
+            {"dt": "2020-03-25T19:44:36.209000", "lvl": "info", "msg": "first message"},
+            {
+                "dt": "2020-03-25T19:44:36.210000",
+                "lvl": "info",
+                "msg": "second message",
+            },
+        ]
+    ).encode("utf-8")

@@ -241,6 +241,10 @@ SLAVES_CERTS = "/etc/lava-dispatcher/certificates.d/"
 MONGO_DB_URI = "mongodb://user:pass@localhost:27017/"
 MONGO_DB_DATABASE = "lava-logs"
 
+ELASTICSEARCH_URI = "http://localhost:9200/"
+ELASTICSEARCH_INDEX = "lava-logs"
+ELASTICSEARCH_APIKEY = ""
+
 # Send notifications to worker admins after the master is upgraded.
 MASTER_UPGRADE_NOTIFY = False
 
