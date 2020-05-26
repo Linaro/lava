@@ -1820,8 +1820,18 @@ class TestJob(models.Model):
         if self.is_public:
             if self.actual_device:
                 return self.actual_device.can_view(user)
-            elif self.requested_device_type.can_view(user):
-                return True
+            if self.requested_device_type:
+                return self.requested_device_type.can_view(user)
+            # For secondary connection requested_device_type is None, so check
+            # the group jobs.
+            if self.is_multinode:
+                sub_jobs = self.sub_jobs_list
+                sub_jobs = sub_jobs.filter(requested_device_type__isnull=False)
+                sub_jobs = sub_jobs.select_related("submitter")
+                for sub_job in sub_jobs:
+                    if not sub_job.can_view(user):
+                        return False
+            return True
 
         return False
 
