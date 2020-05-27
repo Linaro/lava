@@ -19,7 +19,6 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import argparse
-import simplejson
 import os
 import subprocess  # nosec - internal
 import sys
@@ -27,6 +26,7 @@ import sys
 
 modules = [
     "lava_common",
+    "lava_rest_app",
     "lava_results_app",
     "lava_scheduler_app",
     "lava_server",
@@ -134,19 +134,6 @@ def main():
     ).decode("utf-8")
     if out != "Distributor ID:\tDebian\n":
         print("Not running on a Debian system")
-        sys.exit(1)
-    # with lava running in DEBUG
-    try:
-        with open("/etc/lava-server/settings.conf") as f_conf:
-            conf = simplejson.loads(f_conf.read())
-            if not conf.get("DEBUG"):
-                print("lava-server should be running in 'DEBUG' mode")
-                sys.exit(1)
-    except OSError as exc:
-        print("Unable to open lava-server configuration: %s" % str(exc))
-        sys.exit(1)
-    except ValueError as exc:
-        print("Unable to parse lava-server configuration: %s" % str(exc))
         sys.exit(1)
 
     # Dispatch
