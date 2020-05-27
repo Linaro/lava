@@ -95,10 +95,7 @@ DISPATCHER = {
         ("/etc/modprobe.d/", ["etc/lava-modules.conf"]),
         ("/lib/systemd/system/", ["etc/lava-slave.service"]),
         ("/etc/systemd/system/systemd-udevd.service.d/", ["etc/udev/override.conf"]),
-        (
-            "/usr/share/lava-dispatcher/",
-            ["etc/tftpd-hpa", "share/lava_lxc_device_add.py"],
-        ),
+        ("/usr/share/lava-dispatcher/", ["etc/tftpd-hpa"]),
         ("/usr/share/lava-dispatcher/apache2/", ["share/apache2/lava-dispatcher.conf"]),
         ("/var/lib/lava/dispatcher/tmp/", []),
         ("/var/log/lava-dispatcher/", []),
