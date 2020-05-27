@@ -29,6 +29,7 @@ from lava_common.schemas import docker
 def schema():
     base = {
         Required("method"): Msg("fvp", "'method' should be 'fvp'"),
+        Optional("use_telnet"): bool,
         Required("console_string"): str,
         Required("image"): str,
         Optional("license_variable"): str,
