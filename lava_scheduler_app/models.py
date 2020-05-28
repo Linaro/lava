@@ -643,6 +643,11 @@ class Device(RestrictedObject):
         on_delete=models.SET_NULL,
     )
 
+    is_synced = models.BooleanField(
+        default=False,
+        help_text=("Is this device synced from device dictionary or manually created."),
+    )
+
     def __str__(self):
         return "%s (%s, health %s)" % (
             self.hostname,
