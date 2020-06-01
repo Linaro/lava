@@ -128,36 +128,4 @@
       <a class="btn btn-xs btn-info" href="{% url 'lava.results.testcase_yaml' testcase.id %}" title="Download as YAML"><span class="glyphicon glyphicon-download"></span> YAML</a></li>
   </ul>
 {% endfor %}
-
-<div class="panel-group" id="buglinks_accordion">
-  <div class="panel panel-default">
-    <div class="panel-heading">
-      <h4><a data-toggle="collapse" data-parent="#buglinks_accordion" href="#buglinks_collapse">
-        Bug links
-      </a>
-      </h4>
-    </div>
-  {% spaceless %}
-    <div id="buglinks_collapse" class="panel-collapse collapse">
-      <div class="panel-body">
-        <div>
-          Bug(s) linked:
-        </div>
-        <div>
-          {% for bug_link in bug_links %}
-          <div class="row">
-            <div class="col-lg-12">
-              <a href="{{ bug_link.url }}" target="_blank">{{ bug_link.url }}</a>
-            </div>
-          </div>
-          {% empty %}
-          No bug links for this test suite.
-          {% endfor %}
-        </div>
-      </div>
-    </div>
-  {% endspaceless %}
-  </div>
-</div>
-
 {% endblock %}

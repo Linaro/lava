@@ -20,13 +20,12 @@
 
 import django_tables2 as tables
 
-from django.contrib.contenttypes.models import ContentType
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
 
 from lava_server.lavatable import LavaTable
 from lava_scheduler_app.tables import RestrictedIDLinkColumn
-from lava_results_app.models import TestCase, BugLink, TestSuite
+from lava_results_app.models import TestCase
 
 
 def results_pklink(record):
@@ -93,31 +92,6 @@ class ResultsTable(LavaTable):
         except IndexError:
             return record.job.start_time
 
-    def render_buglinks(self, record, table=None):
-
-        suite_links_count = BugLink.objects.filter(
-            content_type=ContentType.objects.get_for_model(TestSuite),
-            object_id=record.id,
-        ).count()
-        case_links_count = BugLink.objects.filter(
-            content_type=ContentType.objects.get_for_model(TestCase),
-            object_id__in=TestCase.objects.filter(suite=record),
-        ).count()
-
-        user = table.context.get("request").user
-        if not user.is_anonymous:
-            return mark_safe(
-                '<a href="#" class="buglink" id="buglink_%s" data-content-type="%s">[%s]</a> (%s)'
-                % (
-                    record.id,
-                    ContentType.objects.get_for_model(TestSuite).id,
-                    suite_links_count,
-                    case_links_count,
-                )
-            )
-        else:
-            return mark_safe("[%s] (%s)" % (suite_links_count, case_links_count))
-
     job_id = tables.Column(verbose_name="Job ID")
     actions = tables.TemplateColumn(
         template_name="lava_results_app/results_actions_field.html"
@@ -129,8 +103,6 @@ class ResultsTable(LavaTable):
     fails = tables.Column(accessor="job", verbose_name="Fails")
     total = tables.Column(accessor="job", verbose_name="Totals")
     logged = tables.Column(accessor="job", verbose_name="Logged")
-    buglinks = tables.Column(accessor="job", verbose_name="Bug Links")
-    buglinks.orderable = False
 
     class Meta(LavaTable.Meta):
         searches = {"name": "contains"}
@@ -180,8 +152,6 @@ class SuiteTable(LavaTable):
     measurement = tables.Column()
     units = tables.Column()
     logged = tables.DateTimeColumn()
-    buglinks = tables.Column(accessor="suite", verbose_name="Bug Links")
-    buglinks.orderable = False
 
     def render_name(self, record):
         return mark_safe(
@@ -206,25 +176,6 @@ class SuiteTable(LavaTable):
             '<a href="%s">%s</a>'
             % (record.test_set.get_absolute_url(), record.test_set.name)
         )
-
-    def render_buglinks(self, record, table=None):
-        case_links_count = BugLink.objects.filter(
-            content_type=ContentType.objects.get_for_model(TestCase),
-            object_id=record.id,
-        ).count()
-
-        user = table.context.get("request").user
-        if not user.is_anonymous:
-            return mark_safe(
-                '<a href="#" class="buglink" id="buglink_%s" data-content-type="%s">[%s]</a>'
-                % (
-                    record.id,
-                    ContentType.objects.get_for_model(TestCase).id,
-                    case_links_count,
-                )
-            )
-        else:
-            return mark_safe("[%s]" % (case_links_count))
 
     class Meta(LavaTable.Meta):
         searches = {"name": "contains"}

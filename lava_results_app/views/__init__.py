@@ -54,7 +54,6 @@ from lava_results_app.tables import (
 from lava_results_app.utils import StreamEcho
 from lava_results_app.dbutils import export_testsuite
 from lava_results_app.models import (
-    BugLink,
     QueryCondition,
     TestSuite,
     TestCase,
@@ -255,10 +254,6 @@ def suite(request, job, pk):
                 "suite_name": pk,
                 "suite_id": test_suite.id,
                 "suite_table": suite_table,
-                "bug_links": BugLink.objects.filter(
-                    object_id=test_suite.id,
-                    content_type_id=ContentType.objects.get_for_model(TestSuite).id,
-                ),
             },
             request=request,
         )
@@ -466,10 +461,6 @@ def testcase(request, case_id, job=None, pk=None):
                 "job_link": pklink(job),
                 "extra_source": extra_source,
                 "test_cases": test_cases,
-                "bug_links": BugLink.objects.filter(
-                    object_id__in=test_cases.values_list("id", flat=True),
-                    content_type_id=ContentType.objects.get_for_model(TestCase).id,
-                ),
             },
             request=request,
         )
@@ -482,70 +473,5 @@ def testcase_yaml(request, pk):
     response = HttpResponse(content_type="text/yaml")
     filename = "lava_%s.yaml" % testcase.name
     response["Content-Disposition"] = 'attachment; filename="%s"' % filename
-    yaml_dump(export_testcase(testcase, with_buglinks=True), response)
+    yaml_dump(export_testcase(testcase), response)
     return response
-
-
-@login_required
-@require_POST
-def get_bug_links_json(request):
-    """Return all bug links related to content type.
-
-    Content type id and object id are passed through request.
-    """
-
-    data = None
-    if not request.POST.get("content_type_id") or not request.POST.get("object_id"):
-        data = False
-
-    else:
-        bug_links = BugLink.objects.filter(
-            content_type_id=request.POST.get("content_type_id"),
-            object_id=request.POST.get("object_id"),
-        )
-        data = serializers.serialize("json", bug_links)
-
-    return HttpResponse(data, content_type="application/json")
-
-
-@login_required
-@require_POST
-def add_bug_link(request):
-
-    success = True
-    error_msg = None
-
-    if not request.POST.get("content_type_id") or not request.POST.get("object_id"):
-        success = False
-
-    else:
-        bug_link, created = BugLink.objects.get_or_create(
-            url=request.POST.get("url"),
-            content_type_id=request.POST.get("content_type_id"),
-            object_id=request.POST.get("object_id"),
-        )
-
-        if not created:
-            error_msg = "duplicate"
-            success = False
-        else:
-            msg = "Adding bug link for content type %s, object id %s" % (
-                ContentType.objects.get_for_id(
-                    request.POST.get("content_type_id")
-                ).model,
-                request.POST.get("object_id"),
-            )
-            bug_link.log_admin_entry(request.user, msg)
-
-    return HttpResponse(
-        simplejson.dumps([success, error_msg]), content_type="application/json"
-    )
-
-
-@login_required
-@require_POST
-def delete_bug_link(request):
-
-    bug_link = get_object_or_404(BugLink, pk=request.POST.get("bug_link_id"))
-    bug_link.delete()
-    return HttpResponse(simplejson.dumps(["success"]), content_type="application/json")

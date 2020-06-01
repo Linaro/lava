@@ -34,49 +34,7 @@
 </div>
 {% render_table suite_table %}
 
-<div class="panel-group" id="buglinks_accordion">
-  <div class="panel panel-default">
-    <div class="panel-heading">
-      <h4><a data-toggle="collapse" data-parent="#buglinks_accordion" href="#buglinks_collapse">
-        Bug links
-      </a>
-      </h4>
-    </div>
-  {% spaceless %}
-    <div id="buglinks_collapse" class="panel-collapse collapse">
-      <div class="panel-body">
-        <div>
-          Bug(s) linked:
-          <a href="#" class="buglink" id="buglink_{{ suite_id }}" data-content-type="{{ testsuite_content_type_id }}">
-            Manage
-          </a>
-        </div>
-        <div>
-          {% for bug_link in bug_links %}
-          <div class="row">
-            <div class="col-lg-12">
-              <a href="{{ bug_link.url }}" target="_blank">{{ bug_link.url }}</a>
-            </div>
-          </div>
-          {% empty %}
-          No bug links for this test suite.
-          {% endfor %}
-        </div>
-      </div>
-    </div>
-  {% endspaceless %}
-  </div>
-</div>
-
-{% include "_bug_links.html" %}
-
 {% endblock %}
 {% block scripts %}
-<script type="text/javascript">
-  var bug_links_url = "{% url 'lava.results.get_bug_links_json' %}";
-  var delete_bug_url = "{% url 'lava.results.delete_bug_link' %}";
-  var csrf_token = '{{csrf_token}}';
-</script>
-<script type="text/javascript" src="{% static "lava_results_app/js/bug-links.js" %}"></script>
 <script type="text/javascript" src="{% static "lava_scheduler_app/js/tables.js" %}"></script>
 {% endblock %}

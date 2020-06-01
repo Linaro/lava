@@ -23,9 +23,6 @@ URL mappings for the LAVA Results application
 """
 from django.conf.urls import url
 from lava_results_app.views import (
-    add_bug_link,
-    delete_bug_link,
-    get_bug_links_json,
     index,
     metadata_export,
     suite,
@@ -319,11 +316,4 @@ urlpatterns = [
         testcase_yaml,
         name="lava.results.testcase_yaml",
     ),
-    url(
-        r"^get-bug-links-json$",
-        get_bug_links_json,
-        name="lava.results.get_bug_links_json",
-    ),
-    url(r"^add-bug-link$", add_bug_link, name="lava.results.add_bug_link"),
-    url(r"^delete-bug-link$", delete_bug_link, name="lava.results.delete_bug_link"),
 ]

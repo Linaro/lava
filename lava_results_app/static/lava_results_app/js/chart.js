@@ -444,12 +444,11 @@ $(document).ready(function () {
                 "pass": test_data["pass"],
                 "skip": test_data["skip"],
                 "total": test_data["total"],
-		"date": test_data["date"],
+		        "date": test_data["date"],
                 "measurement": measurement,
                 "attr_value": test_data["attr_value"],
                 "link": test_data["link"].replace("\\\\\\", ""),
-                "test_run_uuid": test_data["test_run_uuid"],
-                "bug_links": test_data["bug_links"]
+                "test_run_uuid": test_data["test_run_uuid"]
             });
         }
 
@@ -1345,8 +1344,6 @@ $(document).ready(function () {
     $('#loading_dialog').show();
     chart.start();
     $('#loading_dialog').hide();
-
-    //add_bug_link();
 
     $(window).resize(function () {
         chart.redraw();

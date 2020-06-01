@@ -35,7 +35,6 @@ import yaml
 import contextlib
 
 from django.conf import settings
-from django.contrib.admin.models import LogEntry, ADDITION
 from django.contrib.auth.models import User, Group
 from django.contrib.contenttypes import fields
 from django.contrib.contenttypes.models import ContentType
@@ -156,30 +155,6 @@ class QueryMaterializedView(MaterializedView):
 
     def get_queryset(self):
         return QueryMaterializedView.objects.all()
-
-
-class BugLink(models.Model):
-    class Meta:
-        unique_together = ("object_id", "url", "content_type")
-
-    url = models.URLField(
-        max_length=1024, blank=False, null=False, verbose_name=_(u"Bug Link URL")
-    )
-
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    object_id = models.PositiveIntegerField()
-    content_object = fields.GenericForeignKey("content_type", "object_id")
-
-    def log_admin_entry(self, user, reason):
-        buglink_ct = ContentType.objects.get_for_model(BugLink)
-        LogEntry.objects.log_action(
-            user_id=user.id,
-            content_type_id=buglink_ct.pk,
-            object_id=self.pk,
-            object_repr=str(self),
-            action_flag=ADDITION,
-            change_message=reason,
-        )
 
 
 @nottest
@@ -419,8 +394,6 @@ class TestCase(models.Model, Queryable):
     )
 
     logged = models.DateTimeField(auto_now=True)
-
-    buglinks = fields.GenericRelation(BugLink)
 
     @property
     def action_metadata(self):

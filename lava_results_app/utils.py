@@ -192,7 +192,7 @@ def testcase_export_fields():
     ]
 
 
-def export_testcase(testcase, with_buglinks=False):
+def export_testcase(testcase):
     """
     Returns string versions of selected elements of a TestCase
     Unicode causes issues with CSV and can complicate YAML parsing
@@ -211,7 +211,7 @@ def export_testcase(testcase, with_buglinks=False):
         for key, value in items.items():
             extra_source.append({key: value})
         metadata["extra"] = extra_source
-    casedict = {
+    return {
         "name": str(testcase.name),
         "job": str(testcase.suite.job_id),
         "suite": str(testcase.suite.name),
@@ -228,9 +228,3 @@ def export_testcase(testcase, with_buglinks=False):
         "log_end_line": str(testcase.end_log_line) if testcase.end_log_line else "",
         "metadata": metadata,
     }
-    if with_buglinks:
-        casedict["buglinks"] = [
-            str(url) for url in testcase.buglinks.values_list("url", flat=True)
-        ]
-
-    return casedict
