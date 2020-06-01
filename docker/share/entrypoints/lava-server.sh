@@ -222,7 +222,7 @@ fi
 if [ "$LAVA_ADMIN_USERNAME" != "" ] && [ "$LAVA_ADMIN_PASSWORD" != "" ]
 then
     echo "Creating lava admin: $LAVA_ADMIN_USERNAME"
-    lava-server manage users add --passwd "$LAVA_ADMIN_PASSWORD" --staff --superuser "$LAVA_ADMIN_USERNAME"
+    lava-server manage users details "$LAVA_ADMIN_USERNAME" || lava-server manage users add --passwd "$LAVA_ADMIN_PASSWORD" --staff --superuser "$LAVA_ADMIN_USERNAME"
     echo "done"
     echo
 fi
