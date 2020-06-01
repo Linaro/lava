@@ -26,6 +26,18 @@ def setup(mocker):
     mocker.patch("subprocess.call", return_value=0)
 
 
+def test_no_args():
+    main(["lava-dispatcher-host"])
+
+
+def test_rules_no_cmd():
+    main(["lava-dispatcher-host", "rules"])
+
+
+def test_devices_no_cmd():
+    main(["lava-dispatcher-host", "devices"])
+
+
 def test_gen_udev_rules(mocker):
     get_udev_rules = mocker.spy(lava_dispatcher_host.cmdline, "get_udev_rules")
     main(["lava-dispatcher-host", "rules", "show"])
