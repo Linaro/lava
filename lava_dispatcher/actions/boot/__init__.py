@@ -65,15 +65,12 @@ class LoginAction(Action):
     description = "Real login action."
     summary = "Login after boot."
 
-    def __init__(self):
-        super().__init__()
-        self.check_prompt_characters_warning = (
-            "The string '%s' does not look like a typical prompt and"
-            " could match status messages instead. Please check the"
-            " job log files and use a prompt string which matches the"
-            " actual prompt string more closely."
-        )
-        self.force_prompt = False
+    check_prompt_characters_warning = (
+        "The string '%s' does not look like a typical prompt and"
+        " could match status messages instead. Please check the"
+        " job log files and use a prompt string which matches the"
+        " actual prompt string more closely."
+    )
 
     def check_kernel_messages(self, connection, max_end_time, fail_msg):
         """
@@ -141,7 +138,6 @@ class LoginAction(Action):
         params = self.parameters.get("auto_login")
         if not params:
             self.logger.debug("No login prompt set.")
-            self.force_prompt = True
             # If auto_login is not enabled, login will time out if login
             # details are requested.
             connection.prompt_str.append(LOGIN_TIMED_OUT_MSG)
@@ -203,10 +199,8 @@ class LoginAction(Action):
             if index:
                 self.logger.debug("Matched %s %s", index, connection.prompt_str[index])
                 if connection.prompt_str[index] == LOGIN_INCORRECT_MSG:
-                    self.errors = LOGIN_INCORRECT_MSG
                     raise JobError(LOGIN_INCORRECT_MSG)
                 if connection.prompt_str[index] == LOGIN_TIMED_OUT_MSG:
-                    self.errors = LOGIN_TIMED_OUT_MSG
                     raise JobError(LOGIN_TIMED_OUT_MSG)
 
             # clear the login patterns

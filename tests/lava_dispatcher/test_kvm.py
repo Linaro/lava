@@ -745,7 +745,7 @@ class TestAutoLogin(StdoutTestCase):
         self.assertIn("root@debian:~#", shell_connection.prompt_str)
         self.assertIn("Login incorrect", shell_connection.prompt_str)
         self.assertIn("Login timed out", shell_connection.prompt_str)
-        self.assertIn("Login incorrect", autologinaction.errors)
+        self.assertIn("2 retries failed for auto-login-action", autologinaction.errors)
 
 
 class TestKvmGuest(StdoutTestCase):
