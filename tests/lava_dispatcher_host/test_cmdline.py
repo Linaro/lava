@@ -99,3 +99,11 @@ def test_share_device(mocker):
     args = share_device_with_container.call_args[0][0]
     assert args.device == "foo/bar"
     assert args.serial_number == "01234567890"
+
+
+def test_debug_log(mocker, tmp_path):
+    mocker.patch("lava_dispatcher_host.cmdline.handle_rules_show")
+    log = tmp_path / "log"
+    main(["lava-dispatcher-host", "--debug-log", str(log), "rules", "show"])
+    assert log.exists()
+    assert "Called with args" in log.read_text()

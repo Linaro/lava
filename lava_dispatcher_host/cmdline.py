@@ -103,6 +103,12 @@ def main(argv):
     parser = argparse.ArgumentParser(prog=argv[0])
     parser.set_defaults(usage_from=parser)
     parser.set_defaults(func=None)
+    parser.add_argument(
+        "--debug-log",
+        help="Log debugging information to FILE",
+        metavar="FILE",
+        type=argparse.FileType("a"),
+    )
     sub = parser.add_subparsers(help="Sub commands")
 
     # "rules" sub-command
@@ -147,7 +153,11 @@ def main(argv):
     options = parser.parse_args(argv[1:])
 
     if options.func:
+        if options.debug_log:
+            options.debug_log.write("Called with args %r\n" % argv)
         options.func(options)
+        if options.debug_log:
+            options.debug_log.close()
     else:
         options.usage_from.print_help()
 
