@@ -63,7 +63,10 @@
       - {class: power.PDUReboot, name: pdu-reboot}
     - {class: actions.boot.BootloaderInterruptAction, name: bootloader-interrupt}
     - {class: actions.boot.BootloaderCommandsAction, name: bootloader-commands}
-    - {class: actions.boot.AutoLoginAction, name: auto-login-action}
+    - class: actions.boot.AutoLoginAction
+      name: auto-login-action
+      pipeline:
+      - {class: actions.boot.LoginAction, name: login-action}
     - {class: shell.ExpectShellSession, name: expect-shell-connection}
     - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
 - class: actions.test.shell.TestShellRetry

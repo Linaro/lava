@@ -717,6 +717,11 @@ class TestAutoLogin(StdoutTestCase):
             for action in bootaction.pipeline.actions
             if action.name == "auto-login-action"
         ][0]
+        loginaction = [
+            action
+            for action in autologinaction.pipeline.actions
+            if action.name == "login-action"
+        ][0]
 
         autologinaction.parameters.update({"prompts": ["root@debian:~#"]})
         autologinaction.parameters.update(
@@ -724,6 +729,8 @@ class TestAutoLogin(StdoutTestCase):
         )
         autologinaction.parameters.update({"method": "qemu"})
         autologinaction.validate()
+
+        loginaction.parameters = autologinaction.parameters
 
         # initialise the first Connection object, a command line shell
         shell_connection = prepare_test_connection(True)
@@ -738,7 +745,7 @@ class TestAutoLogin(StdoutTestCase):
         self.assertIn("root@debian:~#", shell_connection.prompt_str)
         self.assertIn("Login incorrect", shell_connection.prompt_str)
         self.assertIn("Login timed out", shell_connection.prompt_str)
-        self.assertIn("Login incorrect", autologinaction.errors)
+        self.assertIn("2 retries failed for auto-login-action", autologinaction.errors)
 
 
 class TestKvmGuest(StdoutTestCase):

@@ -94,7 +94,10 @@
   name: grub-sequence-action
   pipeline:
   - {class: actions.boot.fastboot.WaitFastBootInterrupt, name: wait-fastboot-interrupt}
-  - {class: actions.boot.AutoLoginAction, name: auto-login-action}
+  - class: actions.boot.AutoLoginAction
+    name: auto-login-action
+    pipeline:
+    - {class: actions.boot.LoginAction, name: login-action}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
   pipeline:

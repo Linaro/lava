@@ -44,7 +44,10 @@
     - {class: power.PDUReboot, name: pdu-reboot}
   - {class: actions.boot.uefi.UefiShellInterrupt, name: uefi-shell-interrupt}
   - {class: actions.boot.uefi.UefiBootloaderCommandsAction, name: bootloader-commands}
-  - {class: actions.boot.AutoLoginAction, name: auto-login-action}
+  - class: actions.boot.AutoLoginAction
+    name: auto-login-action
+    pipeline:
+    - {class: actions.boot.LoginAction, name: login-action}
 - class: power.FinalizeAction
   name: finalize
   pipeline:

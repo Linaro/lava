@@ -20,7 +20,10 @@
   name: minimal-boot
   pipeline:
   - {class: connections.serial.ConnectDevice, name: connect-device}
-  - {class: actions.boot.AutoLoginAction, name: auto-login-action}
+  - class: actions.boot.AutoLoginAction
+    name: auto-login-action
+    pipeline:
+    - {class: actions.boot.LoginAction, name: login-action}
 - class: power.FinalizeAction
   name: finalize
   pipeline:

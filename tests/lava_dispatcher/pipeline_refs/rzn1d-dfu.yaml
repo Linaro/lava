@@ -67,7 +67,10 @@
   name: minimal-boot
   pipeline:
   - {class: connections.serial.ConnectDevice, name: connect-device}
-  - {class: actions.boot.AutoLoginAction, name: auto-login-action}
+  - class: actions.boot.AutoLoginAction
+    name: auto-login-action
+    pipeline:
+    - {class: actions.boot.LoginAction, name: login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
   - {class: actions.boot.OverlayUnpack, name: overlay-unpack}
   - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}

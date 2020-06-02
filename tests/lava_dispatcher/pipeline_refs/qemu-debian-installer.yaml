@@ -34,7 +34,10 @@
   - {class: actions.boot.iso.IsoCommandLine, name: execute-installer-command}
   - {class: actions.boot.iso.MonitorInstallerSession, name: monitor-installer-connection}
   - {class: actions.boot.iso.IsoRebootAction, name: reboot-into-installed}
-  - {class: actions.boot.AutoLoginAction, name: auto-login-action}
+  - class: actions.boot.AutoLoginAction
+    name: auto-login-action
+    pipeline:
+    - {class: actions.boot.LoginAction, name: login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
   - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
 - class: actions.test.shell.TestShellRetry

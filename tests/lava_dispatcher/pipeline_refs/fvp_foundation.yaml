@@ -49,7 +49,10 @@
     - {class: actions.boot.fvp.CheckFVPVersionAction, name: check-fvp-version}
     - {class: actions.boot.fvp.StartFVPAction, name: run-fvp}
     - {class: actions.boot.fvp.GetFVPSerialAction, name: fvp-serial-connect}
-  - {class: actions.boot.AutoLoginAction, name: auto-login-action}
+  - class: actions.boot.AutoLoginAction
+    name: auto-login-action
+    pipeline:
+    - {class: actions.boot.LoginAction, name: login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
