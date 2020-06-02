@@ -129,7 +129,7 @@ class WorkerSerializer(base_serializers.WorkerSerializer):
     health = ChoiceField(choices=Worker.HEALTH_CHOICES, required=False)
 
     class Meta(base_serializers.WorkerSerializer.Meta):
-        read_only_fields = ("last_ping", "state")
+        read_only_fields = ("last_ping", "state", "master_version_notified")
 
 
 class AliasSerializer(serializers.ModelSerializer):
