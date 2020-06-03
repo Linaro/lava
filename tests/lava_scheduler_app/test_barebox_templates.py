@@ -53,6 +53,9 @@ class TestBareboxTemplates(BaseTemplate.BaseTemplateCases):
     def test_imx6l_riotboard_template(self):
         barebox_helper(self, "imx6dl-riotboard")
 
+    def test_imx6qp_wandboard_revd1_template(self):
+        barebox_helper(self, "imx6qp-wandboard-revd1")
+
     def test_dove_cubox_template(self):
         barebox_helper(self, "dove-cubox")
 

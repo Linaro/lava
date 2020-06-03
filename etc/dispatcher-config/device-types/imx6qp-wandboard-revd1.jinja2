@@ -1,0 +1,4 @@
+{% extends 'base-barebox.jinja2' %}
+
+{% set bootloader_prompt = bootloader_prompt|default('Wandboard i.MX6 QuadPlus Board revD1:/') %}
+{% set console_device = console_device | default('ttymxc0') %}
