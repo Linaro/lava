@@ -81,7 +81,7 @@ class LavaObtainAuthToken(ObtainAuthToken):
             token = tokens[0]  # return 1st available token
         else:
             token, _ = AuthToken.objects.get_or_create(
-                user=user, description="Created by REST API call"
+                user=user, defaults={"description": "Created by REST API call"}
             )
         if not token:
             # this shouldn't happen

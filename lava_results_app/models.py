@@ -165,6 +165,9 @@ class TestSuite(models.Model, Queryable):
     Directly linked to a single TestJob, the job can have multiple TestSets.
     """
 
+    class Meta:
+        unique_together = ("job", "name")
+
     objects = models.Manager.from_queryset(RestrictedTestSuiteQuerySet)()
 
     job = models.ForeignKey(TestJob, on_delete=models.CASCADE)
@@ -277,6 +280,9 @@ class TestSet(models.Model):
     Sets collate result cases under an arbitrary text label.
     Not all cases have a TestSet
     """
+
+    class Meta:
+        unique_together = ("name", "suite")
 
     id = models.AutoField(primary_key=True)
 
@@ -515,6 +521,9 @@ class MetaType(models.Model):
         "finalize": FINALIZE_TYPE,
         "unknown": UNKNOWN_TYPE,
     }
+
+    class Meta:
+        unique_together = ("name", "metatype")
 
     name = models.CharField(max_length=256)
     metatype = models.PositiveIntegerField(
