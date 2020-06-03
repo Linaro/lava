@@ -202,12 +202,12 @@ class SchedulerJobsAPI(ExposedV2API):
         if state:
             try:
                 jobs = jobs.filter(state=TestJob.STATE_REVERSE[state.capitalize()])
-            except KeyError:
+            except (AttributeError, KeyError):
                 raise xmlrpc.client.Fault(400, "Invalid state '%s'" % state)
         if health:
             try:
                 jobs = jobs.filter(health=TestJob.HEALTH_REVERSE[health.capitalize()])
-            except KeyError:
+            except (AttributeError, KeyError):
                 raise xmlrpc.client.Fault(400, "Invalid health '%s'" % health)
 
         # since
