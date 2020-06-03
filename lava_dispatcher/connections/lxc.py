@@ -48,10 +48,8 @@ class ConnectLxc(Action):
     description = "connect to the lxc container"
     summary = "run connection command"
 
-    def __init__(self):
-        super().__init__()
-        self.session_class = LxcSession
-        self.shell_class = ShellCommand
+    session_class = LxcSession
+    shell_class = ShellCommand
 
     def validate(self):
         if "lxc" not in self.job.device["actions"]["boot"]["methods"]:

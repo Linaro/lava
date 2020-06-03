@@ -101,6 +101,9 @@ class CallQemuAction(Action):
     description = "call qemu to boot the image"
     summary = "execute qemu to boot the image"
 
+    session_class = QemuSession
+    shell_class = ShellCommand
+
     def __init__(self):
         super().__init__()
         self.base_sub_command = []
@@ -109,8 +112,6 @@ class CallQemuAction(Action):
         self.methods = None
         self.nfsrootfs = None
         self.qemu_data = {}
-        self.session_class = QemuSession
-        self.shell_class = ShellCommand
 
     def validate(self):
         super().validate()

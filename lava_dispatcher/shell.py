@@ -24,7 +24,13 @@ import pexpect
 import sre_constants
 import time
 from lava_dispatcher.action import Action
-from lava_common.exceptions import InfrastructureError, JobError, LAVABug, TestError
+from lava_common.exceptions import (
+    ConnectionClosedError,
+    InfrastructureError,
+    JobError,
+    LAVABug,
+    TestError,
+)
 from lava_common.timeout import Timeout
 from lava_dispatcher.connection import Connection
 from lava_common.constants import LINE_SEPARATOR
@@ -171,7 +177,7 @@ class ShellCommand(pexpect.spawn):
             raise TestError(exc)
         except pexpect.EOF:
             # FIXME: deliberately closing the connection (and starting a new one) needs to be supported.
-            raise InfrastructureError("Connection closed")
+            raise ConnectionClosedError("Connection closed")
         return proc
 
     def empty_buffer(self):
@@ -276,6 +282,9 @@ class ShellSession(Connection):
                 else:
                     # TODO: is someone expecting pexpect.TIMEOUT?
                     raise
+            except ConnectionClosedError as exc:
+                self.connected = False
+                raise InfrastructureError(str(exc))
 
     def wait(self, max_end_time=None):
         """
@@ -293,6 +302,9 @@ class ShellSession(Connection):
             return self.raw_connection.expect(self.prompt_str, timeout=timeout)
         except (TestError, pexpect.TIMEOUT):
             raise JobError("wait for prompt timed out")
+        except ConnectionClosedError as exc:
+            self.connected = False
+            raise InfrastructureError(str(exc))
 
     def listen_feedback(self, timeout):
         """

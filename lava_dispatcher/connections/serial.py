@@ -37,12 +37,13 @@ class ConnectDevice(Action):
     summary = "run connection command"
     timeout_exception = InfrastructureError
 
+    # wraps the pexpect and provides prompt_str access
+    session_class = ShellSession
+    # runs the command to initiate the connection
+    shell_class = ShellCommand
+
     def __init__(self):
         super().__init__()
-        self.session_class = (
-            ShellSession  # wraps the pexpect and provides prompt_str access
-        )
-        self.shell_class = ShellCommand  # runs the command to initiate the connection
         self.command = ""
         self.hardware = None
         self.primary = True
@@ -131,13 +132,17 @@ class ConnectDevice(Action):
             parameters=parameters,
         )
         if connection:
-            self.logger.debug("Already connected")
-            # Save the connection in the current namespace
-            self.set_namespace_data(
-                action="shared", label="shared", key="connection", value=connection
-            )
-            return connection
-        elif connection_namespace:
+            if connection.connected:
+                self.logger.debug("Already connected")
+                # Save the connection in the current namespace
+                self.set_namespace_data(
+                    action="shared", label="shared", key="connection", value=connection
+                )
+                return connection
+            else:
+                self.logger.info("Dead connection, reconnecting")
+
+        if connection_namespace:
             self.logger.warning(
                 "connection_namespace provided but no connection found. "
                 "Please ensure that this parameter is correctly set to existing namespace."
@@ -187,6 +192,11 @@ class ConnectShell(ConnectDevice):
     kernel console, e.g. using ser2net
     """
 
+    # wraps the pexpect and provides prompt_str access
+    session_class = ShellSession
+    # runs the command to initiate the connection
+    shell_class = ShellCommand
+
     def __init__(self, name=None):
         super().__init__()
         self.name = "connect-shell"
@@ -197,10 +207,6 @@ class ConnectShell(ConnectDevice):
             "use the configured command to connect serial to a second shell"
         )
         self.message = "Connecting to shell using"
-        self.session_class = (
-            ShellSession  # wraps the pexpect and provides prompt_str access
-        )
-        self.shell_class = ShellCommand  # runs the command to initiate the connection
 
     def validate(self):
         super().validate()

@@ -48,6 +48,14 @@ class InfrastructureError(LAVAError):
     error_type = "Infrastructure"
 
 
+class ConnectionClosedError(InfrastructureError):
+    """
+    Exception raised when the connection is closed by the remote end
+    """
+
+    error_help = "ConnectionClosedError: connection closed"
+
+
 class JobCanceled(LAVAError):
     """ The job was canceled """
 
