@@ -5,7 +5,7 @@
 {% set connection_commands = {'uart0': 'telnet localhost 4002', 'uart1': 'telnet 192.168.1.200 8001'} %}
 {% set connection_tags = {'uart1': ['primary']} %}
 {% set hard_reset_command = '/home/stylesen/work/pdu/pdu-control-reset.sh 0 5 1 5' %}
-{% set soft_reset_command = 'fastboot -s usb:2-1.2 reboot' %}
+{% set soft_reboot_command = 'fastboot -s usb:2-1.2 reboot' %}
 {% set power_on_command = '/home/stylesen/work/pdu/pdu-control-on.sh 5' %}
 {% set power_off_command = '/home/stylesen/work/pdu/pdu-control-off.sh 5' %}
 {% set fastboot_options = ['-S', '256M'] %}

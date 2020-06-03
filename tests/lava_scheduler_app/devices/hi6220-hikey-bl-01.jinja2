@@ -7,7 +7,7 @@
 {% set pre_power_command = '/home/neil/lava-lab/shared/lab-scripts/usb_hub_control -u 9 -p 4000 -m sync' %}
 {% set interrupt_prompt = 'Android Fastboot mode' %}
 {% set interrupt_string = "' '" %}
-{% set soft_reset_command = 'fastboot -u -s 4F7EC2290037CD2B reboot' %}
+{% set soft_reboot_command = 'fastboot -u -s 4F7EC2290037CD2B reboot' %}
 {% set power_off_command = ['/usr/bin/pduclient --daemon calvin --hostname pdu --command off --port 04',
 'sleep 30',
 '/home/neil/lava-lab/shared/lab-scripts/eth008_control -a 10.15.0.171 -r 1 -s on',

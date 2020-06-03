@@ -84,7 +84,9 @@ class FlasherAction(Action):
 
         # Add power commands
         substitutions["{HARD_RESET_COMMAND}"] = str(self.job.device.hard_reset_command)
-        substitutions["{SOFT_RESET_COMMAND}"] = str(self.job.device.soft_reset_command)
+        substitutions["{SOFT_REBOOT_COMMAND}"] = str(
+            self.job.device.soft_reboot_command
+        )
         substitutions["{PRE_OS_COMMAND}"] = str(self.job.device.pre_os_command)
         if self.job.device.pre_os_command is None:
             substitutions["{PRE_OS_COMMAND}"] = ""

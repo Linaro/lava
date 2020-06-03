@@ -32,7 +32,7 @@ Commands
 
 * **power_off_command** - command to terminate power to the device remotely.
 
-* **soft_reset_command** - command to issue at a prompt of a running system to
+* **soft_reboot_command** - command to issue at a prompt of a running system to
   request a reboot.
 
 * **hard_reset_command** - command to abruptly terminate power and then supply
