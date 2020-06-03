@@ -37,12 +37,13 @@ class ConnectDevice(Action):
     summary = "run connection command"
     timeout_exception = InfrastructureError
 
+    # wraps the pexpect and provides prompt_str access
+    session_class = ShellSession
+    # runs the command to initiate the connection
+    shell_class = ShellCommand
+
     def __init__(self):
         super().__init__()
-        self.session_class = (
-            ShellSession  # wraps the pexpect and provides prompt_str access
-        )
-        self.shell_class = ShellCommand  # runs the command to initiate the connection
         self.command = ""
         self.hardware = None
         self.primary = True
@@ -187,6 +188,11 @@ class ConnectShell(ConnectDevice):
     kernel console, e.g. using ser2net
     """
 
+    # wraps the pexpect and provides prompt_str access
+    session_class = ShellSession
+    # runs the command to initiate the connection
+    shell_class = ShellCommand
+
     def __init__(self, name=None):
         super().__init__()
         self.name = "connect-shell"
@@ -197,10 +203,6 @@ class ConnectShell(ConnectDevice):
             "use the configured command to connect serial to a second shell"
         )
         self.message = "Connecting to shell using"
-        self.session_class = (
-            ShellSession  # wraps the pexpect and provides prompt_str access
-        )
-        self.shell_class = ShellCommand  # runs the command to initiate the connection
 
     def validate(self):
         super().validate()

@@ -32,10 +32,8 @@ class ConnectAdb(Action):
     summary = "run connection command"
     description = "connect via adb shell to the device"
 
-    def __init__(self):
-        super().__init__()
-        self.session_class = ShellSession
-        self.shell_class = ShellCommand
+    session_class = ShellSession
+    shell_class = ShellCommand
 
     def validate(self):
         if "adb" not in self.job.device["actions"]["boot"]["methods"]:

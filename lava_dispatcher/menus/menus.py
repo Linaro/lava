@@ -111,9 +111,7 @@ class MenuConnect(ConnectDevice):
     description = "change into a menu session"
     summary = "Customise connection for menu operations"
 
-    def __init__(self):
-        super().__init__()
-        self.session_class = MenuSession
+    session_class = MenuSession
 
     def validate(self):
         if self.job.device.connect_command == "":
@@ -139,9 +137,7 @@ class MenuReset(ConnectDevice):
     description = "change out of menu session to a shell session"
     summary = "reset to shell connection"
 
-    def __init__(self):
-        super().__init__()
-        self.session_class = ShellSession
+    session_class = ShellSession
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
