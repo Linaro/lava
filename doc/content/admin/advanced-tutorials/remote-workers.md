@@ -51,9 +51,10 @@ process so proper SSL handshake can be performed. This usually isn't a problem
 when LAVA instance (master, logs and workers) is managed by the same
 administrator(s). However in case administrators of master and workers are
 different they should arrange certificate exchange. Only public certificates
-need to be sent. Currently this process is manual. In the fututre it is planned
-to provide API endpoints that will allow to perform certificate exchange
-automatically.
+need to be sent. API endpoints that allow automatic certificate exchange exist
+in both REST and XMLRPC apis. The XML-RPC methods are ```scheduler.workers.get_certificate```, ```scheduler.workers.set_certificate``` for slave certificates and ```system.get_master_certificate``` for master certificate. The REST API endpoints are ```/api/v0.2/workers/<hostname>/certificate/``` for slave certificates which supports GET and POST requests and ```/api/v0.2/system/certificate/``` for master certificate (this one support only GET requests). The certificates can
+also be exchanged manually.
+
 
 ### worker certificate generation
 
@@ -76,7 +77,7 @@ The slave.key, slave.key_secret and master.key should be than copied to
 dispatcher/certs directory. master.key comes from the lava-master that
 lava-dispatcher is connecting to. In the current implementation of [docker-compose](https://git.lavasoftware.org/lava/pkg/docker-compose)
 slave.key and master.key certificate names are hardcoded. As mentioned above
-it should be obtained from the admin of the master.
+it should be obtained via API on the master.
 
 ## http_proxy settings
 
@@ -165,8 +166,10 @@ lava-dispatcher-host install-udev-rules
 
 ## obtain master certificate
 
-This is a manual step and requires contacting LAVA master admin. It is assumed
-that the certificate file name is master.key.
+Both XMLRPC and REST APIs provide endpoints to get the master certificate from
+the LAVA master exist as described above.
+Alternatively one can contact LAVA master admin. It is assumed that the
+certificate file name is master.key.
 
 ## edit /etc/lava-dispatcher/lava-slave and update settings
 
@@ -232,8 +235,8 @@ whilst others are optional.
     packages already installed.
 * (optional) Copy public certificate from master and the private slave
   certificate created in previous step to directory `dispatcher/certs/` of this
-  project. Currently the key names should be the default ones (master.key and
-  slave.key_secret).
+  project using the APIs described above. Currently the key names should be the
+  default ones (master.key and slave.key_secret).
 * Execute `make lava-dispatcher`; at this point multiple containers should be
   up and running and the worker should connect to the LAVA server instance of
   your choosing.
