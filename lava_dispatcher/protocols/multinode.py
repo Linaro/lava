@@ -66,7 +66,8 @@ class MultinodeProtocol(Protocol):
         ):
             if params["expect_role"] != params["role"]:
                 self.delayed_start = True
-                self.system_timeout.duration = Timeout.parse(params["timeout"])
+                if "timeout" in params:
+                    self.system_timeout.duration = Timeout.parse(params["timeout"])
             else:
                 self.errors = "expect_role must not match the role declaring lava_start"
                 self.logger.warning(self.errors)
