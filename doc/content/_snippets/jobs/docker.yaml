@@ -10,12 +10,12 @@ priority: medium
 actions:
 - deploy:
     to: docker
-    image: base/archlinux
-    os: archlinux
+    image: debian:buster
+    os: debian
 - boot:
     method: docker
     command: bash
-    prompts: ['root@lava ']
+    prompts: ['root@lava:/']
 - test:
     definitions:
     - from: inline
@@ -28,4 +28,3 @@ actions:
         run:
           steps:
           - printenv
-
