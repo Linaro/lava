@@ -18,7 +18,7 @@ actions:
     images:
       rootfs:
         url: http://images.validation.linaro.org/kvm/debian-sid-2014_08_21-amd64.qcow2.xz
-        image_arg: -drive format=raw,file={rootfs}
+        image_arg: -drive format=qcow2,file={rootfs}
         format: qcow2
         compression: xz
     os: debian
@@ -30,6 +30,9 @@ actions:
       minutes: 5
     prompts:
     - 'root@debian:~#'
+    auto_login:
+      login_prompt: "login:"
+      username: root
 
 - test:
     timeout:

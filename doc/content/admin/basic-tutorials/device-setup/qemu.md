@@ -8,7 +8,7 @@ Create a device-type in the [admin interface](/admin/lava_scheduler_app/devicety
 
 The only relevant information is the device-type name that should be **qemu**.
 
-??? tip "Command line"
+!!! tip "Command line"
 
     ```shell tab="lavacli"
     lavacli device-types add qemu
@@ -26,7 +26,7 @@ Create a qemu device in the [admin interface](/admin/lava_scheduler_app/device/a
 * device-type: **qemu**
 * worker host: worker that will run the job
 
-??? tip "Command line"
+!!! tip "Command line"
 
     ```shell tab="lavacli"
     lavacli devices add --type qemu --worker <worker> <hostname>
@@ -71,7 +71,7 @@ By default, a new device is put in maintenance.
 
 As the device is now configure, admins can put it online in the [device page](/scheduler/device/<hostname>).
 
-??? tip "Command line"
+!!! tip "Command line"
 
     ```shell tab="lavacli"
     lavacli devices update --health UNKNOWN <hostname>
@@ -88,5 +88,7 @@ Submit this simple test job:
 ```yaml
 --8<-- "jobs/qemu.yaml"
 ```
+
+The job page will look like [this](https://validation.linaro.org/scheduler/job/2009038).
 
 --8<-- "refs.txt"
