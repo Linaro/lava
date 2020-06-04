@@ -21,12 +21,17 @@ __udev_rules__ = """\
 # This file will be overritten by lava-dispatcher-host on upgrades. If you need
 # to make customizations, please use a separate file.
 
-ACTION=="add", SUBSYSTEM=="block", ENV{{ID_FS_LABEL}}!="" \\
-    RUN+="{lava_dispatcher_host} devices share $name --serial-number=$attr{{serial}} --vendor-id=$attr{{idVendor}} --product-id=$attr{{idProduct}} --fs-label=%E{{ID_FS_LABEL}}"
+ACTION=="add", ENV{{ID_FS_LABEL}}!="" \\
+    RUN+="{lava_dispatcher_host} devices share $name --fs-label=%E{{ID_FS_LABEL}}"
 
-ACTION=="add", SUBSYSTEM=="usb", ATTR{{serial}}!="" \\
-    RUN+="{lava_dispatcher_host} devices share $name --serial-number=$attr{{serial}} --vendor-id=$attr{{idVendor}} --product-id=$attr{{idProduct}}"
+ACTION=="add", ATTR{{serial}}!="" \\
+    RUN+="{lava_dispatcher_host} devices share $name --serial-number=$attr{{serial}}"
 
+ACTION=="add", ATTR{{idVendor}}!="", ATTR{{idProduct}}!="" \\
+    RUN+="{lava_dispatcher_host} devices share $name --vendor-id=$attr{{idVendor}} --product-id=$attr{{idProduct}}"
+
+ACTION=="add", ATTRS{{idVendor}}!="", ATTRS{{idProduct}}!="" \\
+    RUN+="{lava_dispatcher_host} devices share $name --vendor-id=$attr{{idVendor}} --product-id=$attr{{idProduct}}"
 """
 
 

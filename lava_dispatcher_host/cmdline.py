@@ -101,10 +101,19 @@ def handle_devices_share(options):
 
 def main(argv):
     parser = argparse.ArgumentParser(prog=argv[0])
+    parser.set_defaults(usage_from=parser)
+    parser.set_defaults(func=None)
+    parser.add_argument(
+        "--debug-log",
+        help="Log debugging information to FILE",
+        metavar="FILE",
+        type=argparse.FileType("a"),
+    )
     sub = parser.add_subparsers(help="Sub commands")
 
     # "rules" sub-command
     rules = sub.add_parser("rules", help="Manipulate the udev rules file")
+    rules.set_defaults(usage_from=rules)
     rules_sub = rules.add_subparsers()
 
     # "rules show" action
@@ -119,6 +128,7 @@ def main(argv):
 
     # "devices" sub-command
     devices = sub.add_parser("devices", help="Manage devices")
+    devices.set_defaults(usage_from=devices)
     devices_sub = devices.add_subparsers()
 
     # "devices share" action
@@ -141,6 +151,14 @@ def main(argv):
     devices_share.set_defaults(func=handle_devices_share)
 
     options = parser.parse_args(argv[1:])
-    options.func(options)
+
+    if options.func:
+        if options.debug_log:
+            options.debug_log.write("Called with args %r\n" % argv)
+        options.func(options)
+        if options.debug_log:
+            options.debug_log.close()
+    else:
+        options.usage_from.print_help()
 
     return 0

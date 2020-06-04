@@ -26,6 +26,18 @@ def setup(mocker):
     mocker.patch("subprocess.call", return_value=0)
 
 
+def test_no_args():
+    main(["lava-dispatcher-host"])
+
+
+def test_rules_no_cmd():
+    main(["lava-dispatcher-host", "rules"])
+
+
+def test_devices_no_cmd():
+    main(["lava-dispatcher-host", "devices"])
+
+
 def test_gen_udev_rules(mocker):
     get_udev_rules = mocker.spy(lava_dispatcher_host.cmdline, "get_udev_rules")
     main(["lava-dispatcher-host", "rules", "show"])
@@ -87,3 +99,11 @@ def test_share_device(mocker):
     args = share_device_with_container.call_args[0][0]
     assert args.device == "foo/bar"
     assert args.serial_number == "01234567890"
+
+
+def test_debug_log(mocker, tmp_path):
+    mocker.patch("lava_dispatcher_host.cmdline.handle_rules_show")
+    log = tmp_path / "log"
+    main(["lava-dispatcher-host", "--debug-log", str(log), "rules", "show"])
+    assert log.exists()
+    assert "Called with args" in log.read_text()

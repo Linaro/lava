@@ -597,6 +597,8 @@ class Command(BaseCommand):
                 raise CommandError("The command '%s' is not defined" % action)
             command = config["commands"].get(key)
 
+        if isinstance(command, list):
+            command = " && ".join(command)
         if options["dry_run"]:
             self.stdout.write(command)
         else:
