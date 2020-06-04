@@ -3,13 +3,9 @@
 ## When to upgrade
 
 We advice to always upgrade to the latest released version. Only the latest
-release will include new features and fix bugs (including security issues).
-
-XXXX
+release will include new features and bug fixes (including security issues).
 
 ## How to upgrade
-
-XXX
 
 Currently, LAVA does not allow for zero-downtime upgrade.
 
@@ -32,8 +28,7 @@ We advice to put the instance in maintenance before any upgrade.
 
 ### Docker
 
-When a new version of LAVA is released, a Docker image is published on [docker
-hub][lava-docker-hub].
+When a new version of LAVA is released, a Docker image is published on [docker hub][lava-docker-hub].
 
 In order to upgrade, admins should just pull the latest **docker-compose
 configuration**:
@@ -45,6 +40,7 @@ git pull --rebase
 The restarting docker-compose will enough:
 
 ```shell
+docker-compose pull
 docker-compose up
 ```
 
@@ -71,4 +67,6 @@ apt-get upgrade
 
 ## Rollback
 
-XXX
+!!! warning "TODO"
+
+--8<-- "refs.txt"

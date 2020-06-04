@@ -53,4 +53,36 @@ The list of available values is listed in:
 !!! tip "Applying changes"
     When updating the settings, you should restart **every** LAVA services.
 
+## Worker configuration
+
+### Devices
+
+The device dictionaries are stored into `/etc/lava-server/dispatcher-config/devices/`.
+The files should belong to `lavaserver` user and group.
+
+More information in the [technical reference](../../../../technical-references/configuration/device-dictionary/).
+
+### Device-types
+
+The device-type templates are stored into `/etc/lava-server/dispatcher-config/device-types/`
+The files should belong to `lavaserver` user and group.
+
+For supported device-types, the templates provided by LAVA are stored in
+`/usr/share/lava-server/device-types`. LAVA looks for the template first in
+`/etc/lava-server/dispatcher-config/device-types/` and then fallback to
+`/usr/share/lava-server/device-types`.
+
+More information in the [technical reference](../../../../technical-references/configuration/device-type-template/).
+
+### Health-checks
+
+The health-checks are stored into `/etc/lava-server/dispatcher-config/health-checks/`
+The files should belong to `lavaserver` user and group.
+
+More information in the [technical reference](../../../../technical-references/configuration/health-check/).
+
+### Dispatcher
+
+!!! warning "TODO"
+
 --8<-- "refs.txt"
