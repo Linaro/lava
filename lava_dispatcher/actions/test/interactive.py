@@ -24,6 +24,7 @@ import json
 
 from lava_common.decorators import nottest
 from lava_common.exceptions import (
+    ConnectionClosedError,
     InfrastructureError,
     JobError,
     LAVATimeoutError,
@@ -104,7 +105,7 @@ class TestInteractiveAction(Action):
         connection = super().run(connection, max_end_time)
 
         if not connection:
-            raise InfrastructureError("Connection closed")
+            raise ConnectionClosedError("Connection closed")
 
         # Get substitutions from bootloader-overlay
         substitutions = self.get_namespace_data(
@@ -268,7 +269,7 @@ class TestInteractiveAction(Action):
             except pexpect.TIMEOUT:
                 raise LAVATimeoutError("interactive connection timed out")
             except pexpect.EOF:
-                raise InfrastructureError("interactive connection dropped")
+                raise ConnectionClosedError("Connection closed")
             finally:
                 # If the command is named, record the result
                 if "name" in cmd:

@@ -24,7 +24,7 @@ import pexpect
 from collections import OrderedDict
 
 from lava_common.decorators import nottest
-from lava_common.exceptions import InfrastructureError, LAVATimeoutError
+from lava_common.exceptions import ConnectionClosedError, LAVATimeoutError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.logical import LavaTest, RetryAction
 
@@ -98,7 +98,7 @@ class TestMonitorAction(Action):
         connection = super().run(connection, max_end_time)
 
         if not connection:
-            raise InfrastructureError("Connection closed")
+            raise ConnectionClosedError("Connection closed")
         for monitor in self.parameters["monitors"]:
             self.test_suite_name = monitor["name"]
 

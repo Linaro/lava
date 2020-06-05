@@ -27,8 +27,8 @@ import pexpect
 from lava_common.compat import yaml_safe_dump
 from lava_common.decorators import nottest
 from lava_common.exceptions import (
+    ConnectionClosedError,
     JobError,
-    InfrastructureError,
     TestError,
     LAVABug,
     LAVATimeoutError,
@@ -620,7 +620,7 @@ class TestShellAction(Action):
 
         elif event == "eof":
             self.testset_name = None
-            raise InfrastructureError("lava_test_shell connection dropped.")
+            raise ConnectionClosedError("Connection closed")
 
         elif event == "timeout":
             # allow feedback in long runs
