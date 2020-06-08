@@ -23,21 +23,23 @@ import threading
 from lava_server.files import File
 
 
-thread_locals = threading.local()
-
-
-thread_locals.devices = jinja2.Environment(
-    loader=File("device").loader(), autoescape=False, trim_blocks=True
-)
-
-thread_locals.device_types = jinja2.Environment(
-    loader=File("device-type").loader(), autoescape=False, trim_blocks=True
-)
-
-
 def devices():
+    thread_locals = threading.local()
+    try:
+        return thread_locals.devices
+    except AttributeError:
+        thread_locals.devices = jinja2.Environment(
+            loader=File("device").loader(), autoescape=False, trim_blocks=True
+        )
     return thread_locals.devices
 
 
 def device_types():
+    thread_locals = threading.local()
+    try:
+        return thread_locals.device_types
+    except AttributeError:
+        thread_locals.device_types = jinja2.Environment(
+            loader=File("device-type").loader(), autoescape=False, trim_blocks=True
+        )
     return thread_locals.device_types
