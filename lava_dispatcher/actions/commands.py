@@ -82,7 +82,11 @@ class CommandAction(Action):
 
         self.logger.info("Running user command '%s'", self.parameters["name"])
         self.ran = True
-        self.run_cmd(self.cmd["do"])
+        cmd = self.cmd["do"]
+        if not isinstance(cmd, list):
+            cmd = [cmd]
+        for c in cmd:
+            self.run_cmd(c)
         return connection
 
     def cleanup(self, connection):

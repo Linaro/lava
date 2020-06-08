@@ -11,6 +11,7 @@ def device():
         {
             "commands": {
                 "hard_reset": "/path/to/hard-reset",
+                "power_off": ["something", "something-else"],
                 "users": {"do_something": {"do": "/bin/do", "undo": "/bin/undo"}},
             }
         }
@@ -79,3 +80,11 @@ def test_builtin_command_cleanup_is_noop(hard_reset):
 def test_builtin_command_not_defined_for_device(action):
     action.parameters = {"name": "pre_power_command"}
     assert not action.validate()  # should not crash
+
+
+def test_multiple_commands(action, mocker):
+    call = mocker.call
+    action.parameters = {"name": "power_off"}
+    action.validate()
+    action.run(None, 600)
+    action.run_cmd.assert_has_calls([call("something"), call("something-else")])
