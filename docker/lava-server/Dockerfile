@@ -67,6 +67,7 @@ EXPOSE 80 3079 5500 5555 5556
 RUN a2dissite 000-default && \
     a2ensite lava-server && \
     a2enmod proxy_http && \
+    a2enmod proxy_wstunnel && \
     a2enmod expires && \
     a2enmod headers
 

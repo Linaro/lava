@@ -4,6 +4,8 @@
 # contains the dependency, e.g. backports.
 
 lava-server:
+  aiohttp:
+    name: python3-aiohttp
   django-auth-ldap:
     version: ">=1.2.12"
     name: python3-django-auth-ldap
