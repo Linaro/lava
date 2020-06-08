@@ -36,6 +36,8 @@ class CommandAction(Action):
         "hard_reset",
         "power_on",
         "power_off",
+        "recovery_mode",
+        "recovery_off",
     ]
 
     def __init__(self):
