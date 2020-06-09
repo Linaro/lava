@@ -65,12 +65,18 @@ def validate_device_info(device_info):
 
 
 def share_device_with_container(options, setup_logger=None):
+    logger = logging.getLogger("dispatcher")
+    logger.debug("Looking for device: %r" % options)
+
     data = find_mapping(options)
     if not data:
         return
-    if setup_logger:
-        setup_logger(data["logging_info"])
-    logger = logging.getLogger("dispatcher")
+
+    if setup_logger and "logging_info" in data and data["logging_info"]:
+        logger = setup_logger(data["logging_info"])
+
+    logger.debug("Found device mapping: %r" % data)
+
     container = data["container"]
     device = options.device
     if not device.startswith("/dev/"):
