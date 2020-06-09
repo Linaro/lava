@@ -51,6 +51,10 @@ def add_device_container_mapping(
         )
 
 
+def remove_device_container_mappings(job_id):
+    os.unlink(get_mapping_path(job_id))
+
+
 def validate_device_info(device_info):
     if not device_info:
         raise ValueError("Addind mapping for empty device info: %r" % device_info)

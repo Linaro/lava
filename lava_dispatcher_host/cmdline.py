@@ -22,6 +22,8 @@ import syslog
 from lava_common.constants import UDEV_RULE_FILENAME
 from lava_common.log import YAMLLogger
 
+from lava_dispatcher_host import add_device_container_mapping
+from lava_dispatcher_host import remove_device_container_mappings
 from lava_dispatcher_host import share_device_with_container
 from lava_dispatcher_host.udev import get_udev_rules
 
@@ -99,6 +101,21 @@ def handle_devices_share(options):
     finish_logger()
 
 
+def handle_devices_map(options):
+    container = options.container
+    container_type = options.container_type
+    job_id = "0"  # fake map
+    fields = ["serial_number", "vendor_id", "product_id", "fs_label"]
+    device_info = {
+        k: options.__dict__[k] for k in fields if k in options and options.__dict__[k]
+    }
+    add_device_container_mapping(job_id, device_info, container, container_type)
+
+
+def handle_devices_unmap(_):
+    remove_device_container_mappings("0")
+
+
 def main(argv):
     parser = argparse.ArgumentParser(prog=argv[0])
     parser.set_defaults(usage_from=parser)
@@ -136,19 +153,40 @@ def main(argv):
         "share", help="Share a host device with a container"
     )
     devices_share.add_argument("device", help="Device to be shared")
-    devices_share.add_argument(
-        "--serial-number", help="Serial number of the device to be shared", default=None
+
+    # "devices map" action
+    devices_map = devices_sub.add_parser(
+        "map", help="Map a host device to a container (useful for debugging)"
     )
-    devices_share.add_argument(
-        "--vendor-id", help="Vendor ID of the device to be shared", default=None
-    )
-    devices_share.add_argument(
-        "--product-id", help="Product ID of the device to be shared", default=None
-    )
-    devices_share.add_argument(
-        "--fs-label", help="Filesystem label of the device to be shared", default=None
-    )
+    devices_map.add_argument("container", help="Container name")
+    devices_map.add_argument("container_type", help="Container type (lxc or docker)")
+
+    # shared options between "devices share" and "devices map"
+    for subparser in [devices_share, devices_map]:
+        subparser.add_argument(
+            "--serial-number",
+            help="Serial number of the device to be shared",
+            default=None,
+        )
+        subparser.add_argument(
+            "--vendor-id", help="Vendor ID of the device to be shared", default=None
+        )
+        subparser.add_argument(
+            "--product-id", help="Product ID of the device to be shared", default=None
+        )
+        subparser.add_argument(
+            "--fs-label",
+            help="Filesystem label of the device to be shared",
+            default=None,
+        )
+
     devices_share.set_defaults(func=handle_devices_share)
+    devices_map.set_defaults(func=handle_devices_map)
+
+    devices_unmap = devices_sub.add_parser(
+        "unmap", help='Remove mappings added with "devices map"'
+    )
+    devices_unmap.set_defaults(func=handle_devices_unmap)
 
     options = parser.parse_args(argv[1:])
 
