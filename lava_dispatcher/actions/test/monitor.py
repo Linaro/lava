@@ -142,6 +142,7 @@ class TestMonitorAction(Action):
             self.logger.warning("err: lava test monitoring reached end of file")
             self.errors = "lava test monitoring reached end of file"
             self.results.update({"status": "failed"})
+            raise ConnectionClosedError("Connection closed")
         elif event == "timeout":
             self.logger.warning("err: lava test monitoring has timed out")
             self.errors = "lava test monitoring has timed out"

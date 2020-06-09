@@ -20,7 +20,9 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import logging
+import pytest
 
+from lava_common.exceptions import ConnectionClosedError
 from lava_dispatcher.actions.test.monitor import TestMonitor, TestMonitorAction
 
 from tests.utils import RecordingLogger
@@ -86,7 +88,8 @@ def test_check_patterns():
     # "eof"
     action = TestMonitorAction()
     action.logger = RecordingLogger()
-    assert action.check_patterns("eof", None) is False
+    with pytest.raises(ConnectionClosedError):
+        assert action.check_patterns("eof", None) is False
     assert action.logger.logs == [
         ("warning", "err: lava test monitoring reached end of file", {})
     ]
