@@ -120,13 +120,13 @@ class Connection:
         if self.connected:
             self.raw_connection.sendline(line, delay=delay)
         elif not disconnecting:
-            raise LAVABug("sendline")
+            raise LAVABug("sendline called on disconnected connection")
 
     def sendcontrol(self, char):
         if self.connected:
             self.raw_connection.sendcontrol(char)
         else:
-            raise LAVABug("sendcontrol")
+            raise LAVABug("sendcontrol called on disconnected connection")
 
     def force_prompt_wait(self, remaining):
         raise LAVABug("'force_prompt_wait' not implemented")
