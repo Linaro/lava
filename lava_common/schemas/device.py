@@ -38,7 +38,6 @@ def device():
                 str: {Required("connect"): str, Optional("tags"): [str]}
             },
             Optional("hard_reset"): Any(str, [str]),
-            Optional("soft_reset"): Any(str, [str]),
             Optional("soft_reboot"): Any(str, [str]),
             Optional("power_off"): Any(str, [str]),
             Optional("power_on"): Any(str, [str]),
