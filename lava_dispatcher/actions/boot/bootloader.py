@@ -18,7 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from lava_dispatcher.action import Pipeline
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.actions.boot import (
     BootloaderCommandsAction,
@@ -51,7 +51,7 @@ class BootBootloader(Boot):
         return True, "accepted"
 
 
-class BootBootloaderAction(RetryAction):
+class BootBootloaderAction(Action):
 
     name = "boot-bootloader"
     description = "boot to bootloader"
@@ -59,7 +59,6 @@ class BootBootloaderAction(RetryAction):
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.pipeline.add_action(ConnectDevice())
         self.pipeline.add_action(
             BootloaderCommandOverlay(method=parameters["bootloader"])
         )
@@ -74,6 +73,7 @@ class BootBootloaderRetry(RetryAction):
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.pipeline.add_action(ConnectDevice())
         self.pipeline.add_action(ResetDevice())
         self.pipeline.add_action(
             BootloaderInterruptAction(method=parameters["bootloader"])
