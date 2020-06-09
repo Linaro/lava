@@ -47,13 +47,8 @@ else
   docker tag "$BASE_IMAGE" "$BASE_IMAGE_NEW"
 
   # Build the image
-  if [ "$(cat lava_common/VERSION)" != "$IMAGE_TAG" ]
-  then
-    echo "Update lava_common/VERSION"
-    echo "$IMAGE_TAG" > lava_common/VERSION
-  fi
   echo "Build $IMAGE"
-  docker build -t "$IMAGE" --build-arg base_image="$BASE_IMAGE_NEW" -f docker/lava-"$SERVICE"/Dockerfile .
+  docker build -t "$IMAGE" --build-arg base_image="$BASE_IMAGE_NEW" --build-arg lava_version="$IMAGE_TAG" -f docker/lava-"$SERVICE"/Dockerfile .
 
   # Push only for tags or master
   if [ "$CI_COMMIT_REF_SLUG" = "master" ] || [ -n "$CI_COMMIT_TAG" ]

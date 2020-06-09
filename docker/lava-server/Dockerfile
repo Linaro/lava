@@ -1,12 +1,13 @@
 # syntax=docker/dockerfile:1.0-experimental
 
-# Argument should be defined before the first stage in multi-stage builds
+# Argument for the FROM should be defined before the first stage in multi-stage
+# builds while argument used inside a build stage should be defined in tethe
+# given build stage.
 # See https://github.com/moby/moby/issues/38379#issuecomment-447835596
 ARG base_image=""
 
 # Build the documentation
 FROM debian:buster-slim AS doc
-
 RUN apt-get update && \
     apt-get install --yes --no-install-recommends git make python3-sphinx python3-sphinx-bootstrap-theme
 COPY ./lava_common/version.py /app/lava_common/version.py
@@ -17,6 +18,7 @@ RUN make -C /app/doc/v2 html
 # Call the install script in the lava-server-base image
 # In fact we use the lavaserver user and group
 FROM $base_image as build
+ARG lava_version=""
 COPY --from=doc /app/doc/v2/_build/html/ /doc
 RUN --mount=type=bind,target=/app \
     # Install using setup.py
@@ -27,6 +29,7 @@ RUN --mount=type=bind,target=/app \
     rm -rf /tmp/build && \
     python3 setup.py build -b /tmp/build egg_info --egg-base /tmp/build install --root /install --no-compile --install-layout=deb lava-server && \
     rm -rf /tmp/build && \
+    echo "$lava_version" > /install/usr/lib/python3/dist-packages/lava_common/VERSION && \
     # Create empty files
     touch /install/var/log/lava-server/django.log && \
     # chown/chmod every files
@@ -54,7 +57,7 @@ COPY docker/share/entrypoints/lava-server.sh /install/root/entrypoint.sh
 RUN mkdir /install/root/entrypoint.d
 
 # Build the final image
-FROM $base_image
+FROM $base_image as install
 COPY --from=build /install /
 
 EXPOSE 80 3079 5500 5555 5556
