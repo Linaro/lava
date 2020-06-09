@@ -114,6 +114,7 @@ nav:
     - Device dictionary: technical-references/configuration/device-dictionary.md
     - Device-type template: technical-references/configuration/device-type-template.md
     - Dispatcher: technical-references/configuration/dispatcher.md
+    - Health-Check: technical-references/configuration/health-check.md
     - Services: technical-references/configuration/services.md
   - Job definition:
     - Job: technical-references/job-definition/job.md

@@ -87,13 +87,7 @@ Run ``lavacli`` as your normal username. Avoid using ``sudo``.
 
 The syntax is::
 
- --token <TOKEN> --uri <URI> --username <USERNAME> <IDENTITY>
-
-(``<TOKEN>`` is the displayed Authentication Token string)
-
-  .. note:: You should configure and use ``https://`` for all
-     **public** instances. Only use ``http://`` for localhost or
-     developer instances.
+ --uri <URI>
 
 .. code-block:: none
 

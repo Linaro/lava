@@ -1,5 +1,8 @@
 # Backup LAVA
 
+In order to backup LAVA you will have to backup both the database and specific
+directories.
+
 ## Database
 
 The database is managed by
@@ -10,8 +13,7 @@ details.
 To backup the database run:
 
 ```shell
-su - postgres
-pg_dump lavaserver > lava-server.sql
+sudo -u lavaserver pg_dump lavaserver > lava-server.sql
 ```
 
 ## Filesystem
@@ -22,7 +24,7 @@ The configuration files are stored in:
 * `/etc/lava-dispatcher/`
 * `/etc/lava-server/`
 
-The data (job outputs, ...) is stored in `/var/lib/lava-server/default/media`.
+The data (job outputs, ...) are stored in `/var/lib/lava-server/default/media`.
 
 To backup the filesystem run:
 
