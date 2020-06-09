@@ -140,9 +140,8 @@ class ConnectDevice(Action):
                 )
                 return connection
             else:
-                self.logger.info("Dead connection, reconnecting")
-
-        if connection_namespace:
+                self.logger.warning("Dead connection, reconnecting")
+        elif connection_namespace:
             self.logger.warning(
                 "connection_namespace provided but no connection found. "
                 "Please ensure that this parameter is correctly set to existing namespace."
@@ -180,6 +179,14 @@ class ConnectDevice(Action):
             connection.prompt_str = [
                 self.job.device.get_constant("default-shell-prompt")
             ]
+        if connection_namespace:
+            self.set_namespace_data(
+                action="shared",
+                label="shared",
+                key="connection",
+                value=connection,
+                parameters=parameters,
+            )
         self.set_namespace_data(
             action="shared", label="shared", key="connection", value=connection
         )
