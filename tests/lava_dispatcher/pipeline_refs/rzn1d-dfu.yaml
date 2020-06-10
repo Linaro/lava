@@ -52,11 +52,11 @@
 - class: actions.boot.bootloader.BootBootloaderAction
   name: boot-bootloader
   pipeline:
-  - {class: connections.serial.ConnectDevice, name: connect-device}
   - {class: actions.boot.BootloaderCommandOverlay, name: bootloader-overlay}
   - class: actions.boot.bootloader.BootBootloaderRetry
     name: boot-bootloader-retry
     pipeline:
+    - {class: connections.serial.ConnectDevice, name: connect-device}
     - class: power.ResetDevice
       name: reset-device
       pipeline:
