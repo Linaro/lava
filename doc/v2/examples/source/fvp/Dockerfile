@@ -16,3 +16,10 @@ RUN mkdir /opt/model
 # "Armv8-A Foundation Platform"
 # "Fast Models 11.9 (Linux)"
 ADD FastModel_Download.tgz /opt/model
+
+# Install the model
+RUN cd /opt/model && \
+    /opt/model/Foundation_Platform.sh \
+        --i-agree-to-the-contained-eula \
+        --verbose \
+        --destination /opt/model/Foundation_Platformpkg
