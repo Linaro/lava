@@ -30,7 +30,6 @@ from lava_common.exceptions import (
     ConnectionClosedError,
     JobError,
     TestError,
-    LAVABug,
     LAVATimeoutError,
 )
 from lava_dispatcher.action import Action, Pipeline
@@ -229,7 +228,14 @@ class TestShellAction(Action):
         )
 
         if not connection:
-            raise LAVABug("No connection retrieved from namespace data")
+            self.logger.error(
+                "No connection to the DUT, Check that a boot action preced test actions"
+            )
+            if connection_namespace:
+                self.logger.error(
+                    "Also check actions in namespace %r", connection_namespace
+                )
+            raise JobError("No connection to the DUT")
 
         self.signal_director.connection = connection
 
