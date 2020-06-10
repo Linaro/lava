@@ -50,6 +50,12 @@ def test_device_skip_missing(run, mocker):
     assert "--device=/dev/kvm" not in run.cmdline()
 
 
+def test_device_skip_with_colon(run, mocker):
+    mocker.patch("pathlib.Path.exists", return_value=False)
+    run.add_device("/dev/serial/by-path/xxx:yyyy:zzzz")
+    assert "--device=/dev/serial/by-path/xxx:yyyy:zzzz" not in run.cmdline()
+
+
 def test_bind_mount(run):
     p = "/path/to/data"
     run.bind_mount(p)
