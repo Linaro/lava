@@ -18,9 +18,12 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
+import datetime
 import io
 import lzma
 import pathlib
+import requests
+import simplejson
 import struct
 
 from django.conf import settings
@@ -189,6 +192,93 @@ class LogsMongo(Logs):
         self.db.logs.insert_one(
             {"job_id": job.id, "dt": line["dt"], "lvl": line["lvl"], "msg": line["msg"]}
         )
+
+
+class LogsElasticsearch(Logs):
+
+    MAX_RESULTS = 1000000
+
+    def __init__(self):
+        self.api_url = "%s%s/" % (
+            settings.ELASTICSEARCH_URI,
+            settings.ELASTICSEARCH_INDEX,
+        )
+        self.headers = {"Content-type": "application/json"}
+        if settings.ELASTICSEARCH_APIKEY:
+            self.headers.update(
+                {"Authorization": "ApiKey %s" % settings.ELASTICSEARCH_APIKEY}
+            )
+        params = {
+            "settings": {"index": {"max_result_window": self.MAX_RESULTS}},
+            "mappings": {"properties": {"dt": {"type": "date"}}},
+        }
+        requests.put(self.api_url, simplejson.dumps(params), headers=self.headers)
+        super().__init__()
+
+    def _get_docs(self, job, start=0, end=None):
+
+        if not end:
+            end = self.MAX_RESULTS
+
+        limit = end - start
+        if limit < 0:
+            return []
+
+        params = {
+            "query": {"match": {"job_id": job.id}},
+            "from": start,
+            "size": limit,
+            "sort": [{"dt": {"order": "asc"}}],
+        }
+
+        response = requests.get(
+            "%s_search/" % self.api_url,
+            data=simplejson.dumps(params),
+            headers=self.headers,
+        )
+
+        response = simplejson.loads(response.text)
+        if not "hits" in response:
+            return []
+        result = []
+        for res in response["hits"]["hits"]:
+            doc = res["_source"]
+            doc.update(
+                {"dt": datetime.datetime.fromtimestamp(doc["dt"] / 1000.0).isoformat()}
+            )
+            result.append(doc)
+        return result
+
+    def line_count(self, job):
+        response = requests.get(
+            "%s_search/" % self.api_url,
+            params={"query": {"match": {"job_id": job.id}}, "_source": False},
+        )
+        return response["hits"]["total"]["value"]
+
+    def open(self, job):
+        stream = io.BytesIO(yaml_dump(self._get_docs(job)).encode("utf-8"))
+        stream.seek(0)
+        return stream
+
+    def read(self, job, start=0, end=None):
+        docs = self._get_docs(job, start, end)
+        if not docs:
+            return ""
+
+        return yaml_dump(docs)
+
+    def size(self, job, start=0, end=None):
+        docs = self._get_docs(job, start, end)
+        return len(yaml_dump(docs).encode("utf-8"))
+
+    def write(self, job, line, output=None, idx=None):
+        line = yaml_load(line)[0]
+        dt = datetime.datetime.strptime(line["dt"], "%Y-%m-%dT%H:%M:%S.%f")
+        line.update({"job_id": job.id, "dt": int(dt.timestamp() * 1000)})
+        data = simplejson.dumps(line)
+
+        requests.post("%s_doc/" % self.api_url, data=data, headers=self.headers)
 
 
 logs_backend_str = settings.LAVA_LOG_BACKEND.rsplit(".", 1)
