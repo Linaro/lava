@@ -120,13 +120,13 @@ class Connection:
         if self.connected:
             self.raw_connection.sendline(line, delay=delay)
         elif not disconnecting:
-            raise LAVABug("sendline")
+            raise LAVABug("sendline called on disconnected connection")
 
     def sendcontrol(self, char):
         if self.connected:
             self.raw_connection.sendcontrol(char)
         else:
-            raise LAVABug("sendcontrol")
+            raise LAVABug("sendcontrol called on disconnected connection")
 
     def force_prompt_wait(self, remaining):
         raise LAVABug("'force_prompt_wait' not implemented")
@@ -141,25 +141,30 @@ class Connection:
             and not set(RECOGNIZED_TAGS) & set(self.tags)
         ):
             raise LAVABug("'disconnect' not implemented")
-        try:
-            if "telnet" in self.tags:
-                logger.info("Disconnecting from telnet: %s", reason)
-                self.sendcontrol("]")
-                self.sendline("quit", disconnecting=True)
-            elif "ssh" in self.tags:
-                logger.info("Disconnecting from ssh: %s", reason)
-                self.sendline("", disconnecting=True)
-                self.sendline("~.", disconnecting=True)
-            elif self.name == "LxcSession":
-                logger.info("Disconnecting from lxc: %s", reason)
-                self.sendline("", disconnecting=True)
-                self.sendline("exit", disconnecting=True)
-            elif self.name == "QemuSession":
-                logger.info("Disconnecting from qemu: %s", reason)
-            else:
-                raise LAVABug("'disconnect' not supported for %s" % self.tags)
-        except ValueError:  # protection against file descriptor == -1
+
+        if self.connected:
+            try:
+                if "telnet" in self.tags:
+                    logger.info("Disconnecting from telnet: %s", reason)
+                    self.sendcontrol("]")
+                    self.sendline("quit", disconnecting=True)
+                elif "ssh" in self.tags:
+                    logger.info("Disconnecting from ssh: %s", reason)
+                    self.sendline("", disconnecting=True)
+                    self.sendline("~.", disconnecting=True)
+                elif self.name == "LxcSession":
+                    logger.info("Disconnecting from lxc: %s", reason)
+                    self.sendline("", disconnecting=True)
+                    self.sendline("exit", disconnecting=True)
+                elif self.name == "QemuSession":
+                    logger.info("Disconnecting from qemu: %s", reason)
+                else:
+                    raise LAVABug("'disconnect' not supported for %s" % self.tags)
+            except ValueError:  # protection against file descriptor == -1
+                logger.debug("Already disconnected")
+        else:
             logger.debug("Already disconnected")
+
         self.connected = False
         if self.raw_connection:
             self.raw_connection.close(force=True)
