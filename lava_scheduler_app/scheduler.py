@@ -75,11 +75,12 @@ def schedule_health_checks(logger, available_dt=None):
     available_devices = {}
     jobs = []
     hc_disabled = []
+
     query = DeviceType.objects.filter(display=True)
     if available_dt:
-        query = DeviceType.objects.filter(name__in=available_dt, display=True)
-    query = query.order_by("name").only("disable_health_check", "name")
-    for dt in query:
+        query = query.filter(name__in=available_dt)
+
+    for dt in query.order_by("name"):
         if dt.disable_health_check:
             hc_disabled.append(dt.name)
             # Add all devices of that type to the list of available devices
@@ -228,10 +229,8 @@ def schedule_health_check(device, definition):
 def schedule_jobs(logger, available_devices):
     logger.info("scheduling jobs:")
     jobs = []
-    for dt in DeviceType.objects.all().order_by("name"):
-        # Check that some devices are available for this device-type
-        if not available_devices.get(dt.name):
-            continue
+    dts = list(available_devices.keys())
+    for dt in DeviceType.objects.filter(name__in=dts).order_by("name"):
         with transaction.atomic():
             jobs.extend(
                 schedule_jobs_for_device_type(logger, dt, available_devices[dt.name])
@@ -262,6 +261,8 @@ def schedule_jobs_for_device_type(logger, dt, available_devices):
         # Check that the device had been marked available by
         # schedule_health_checks. In fact, it's possible that a device is made
         # IDLE between the two functions.
+        # If that the case, we can miss an health-check. Better to only
+        # consider devices in available_devices.
         if device.hostname not in available_devices:
             continue
 
