@@ -243,8 +243,6 @@ def schedule_jobs(logger, available_devices):
 
 
 def schedule_jobs_for_device_type(logger, dt, available_devices):
-    logger.debug("- %s", dt.name)
-
     devices = dt.device_set.select_for_update()
     devices = devices.filter(state=Device.STATE_IDLE)
     devices = devices.filter(worker_host__state=Worker.STATE_ONLINE)
@@ -257,6 +255,7 @@ def schedule_jobs_for_device_type(logger, dt, available_devices):
     workers_limit = worker_summary()
 
     jobs = []
+    print_header = True
     for device in devices:
         # Check that the device had been marked available by
         # schedule_health_checks. In fact, it's possible that a device is made
@@ -293,14 +292,15 @@ def schedule_jobs_for_device_type(logger, dt, available_devices):
             )
             continue
 
-        new_job = schedule_jobs_for_device(logger, device)
+        new_job = schedule_jobs_for_device(logger, device, print_header)
         if new_job is not None:
+            print_header = False
             jobs.append(new_job)
             workers_limit[device.worker_host.hostname].busy += 1
     return jobs
 
 
-def schedule_jobs_for_device(logger, device):
+def schedule_jobs_for_device(logger, device, print_header):
     jobs = TestJob.objects.filter(state=TestJob.STATE_SUBMITTED)
     jobs = jobs.filter(actual_device__isnull=True)
     jobs = jobs.filter(requested_device_type__pk=device.device_type.pk)
@@ -320,6 +320,9 @@ def schedule_jobs_for_device(logger, device):
         if "protocols" in job_dict and "lava-vland" in job_dict["protocols"]:
             if not match_vlan_interface(device, job_dict):
                 continue
+
+        if print_header:
+            logger.debug("- %s", device.device_type.name)
 
         logger.debug(
             " -> %s (%s, %s)",
@@ -379,4 +382,5 @@ def transition_multinode_jobs(logger):
             sub_job.go_state_scheduled()
             sub_job.save()
             new_jobs.append(sub_job.id)
+            logger.debug("--> %d", job.sub_id)
     return new_jobs
