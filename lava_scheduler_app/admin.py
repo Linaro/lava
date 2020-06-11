@@ -335,6 +335,7 @@ class DeviceAdmin(admin.ModelAdmin):
         ActiveDevicesFilter,
         "health",
         "worker_host",
+        "is_synced",
     )
     raw_id_fields = ["last_health_report_job"]
 
@@ -399,7 +400,12 @@ class DeviceAdmin(admin.ModelAdmin):
         (
             "Advanced properties",
             {
-                "fields": ("description", "tags", ("device_dictionary_jinja")),
+                "fields": (
+                    "description",
+                    "is_synced",
+                    "tags",
+                    ("device_dictionary_jinja"),
+                ),
                 "classes": ("collapse",),
             },
         ),
@@ -415,6 +421,7 @@ class DeviceAdmin(admin.ModelAdmin):
         "has_health_check",
         "health_check_enabled",
         "valid_device",
+        "is_synced",
     )
     search_fields = ("hostname", "device_type__name")
     ordering = ["hostname"]
