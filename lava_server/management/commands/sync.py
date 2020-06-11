@@ -17,17 +17,17 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 import jinja2
-import lava_scheduler_app.environment as environment
+import yaml
 
 from django.core.management.base import BaseCommand
 from django.db.models import IntegerField, Case, When, Count, Q
 
 from lava_common.compat import yaml_safe_load
-from lava_scheduler_app.models import Alias, Device, DeviceType, Tag, Worker
 from lava_server.files import File
-
-import contextlib
+import lava_scheduler_app.environment as environment
+from lava_scheduler_app.models import Alias, Device, DeviceType, Tag, Worker
 
 
 class Command(BaseCommand):
@@ -75,16 +75,15 @@ class Command(BaseCommand):
     def handle(self, *_, **options):
         dicts = File("device").list("*.jinja2")
         synced_devices = []
+        self.stdout.write("Scanning devices:")
         for name in dicts:
             hostname = name.rsplit(".", 1)[0]
 
             # Get value of 'sync_to_lava' variable from template.
             sync_dict = self._get_sync_to_lava(hostname)
-            if not sync_dict:
-                self.stdout.write(
-                    "no sync_to_lava constant present in device template for device %s. Skipping..."
-                    % hostname
-                )
+            if sync_dict is None:
+                self.stdout.write(f"* {hostname} [SKIP]")
+                self.stdout.write(f"  -> missing '{self.SYNC_KEY}'")
                 continue
             # Convert it to dictionary.
             sync_dict = self._parse_sync_dict(sync_dict)
@@ -92,70 +91,73 @@ class Command(BaseCommand):
             try:
                 template = environment.devices().get_template(name)
                 device_template = yaml_safe_load(template.render())
-            except jinja2.TemplateError:
-                self.stdout.write(
-                    "Could not load template for device '%s'. Skipping..." % hostname
-                )
+            except jinja2.TemplateError as exc:
+                self.stdout.write(f"* {hostname} [SKIP]")
+                self.stdout.write(f"  -> invalid jinja2 template")
+                self.stdout.write(f"  -> {exc}")
+                continue
+            except yaml.YAMLError as exc:
+                self.stdout.write(f"* {hostname} [SKIP]")
+                self.stdout.write(f"  -> invalid yaml")
+                self.stdout.write(f"  -> {exc}")
                 continue
 
             # Check if this device is already manually created in db.
             with contextlib.suppress(Device.DoesNotExist):
                 device = Device.objects.get(hostname=hostname)
                 if not device.is_synced:
-                    self.stdout.write(
-                        "Device '%s' already exists and is manually created. Skipping..."
-                        % hostname
-                    )
+                    self.stdout.write(f"* {hostname} [SKIP]")
+                    self.stdout.write(f"  -> created manually")
                     continue
 
+            # Check keys
+            if "device_type" not in sync_dict:
+                self.stdout.write(f"* {hostname} [SKIP]")
+                self.stdout.write(f"  -> 'device_type' is mandatory")
+                continue
+
             # Add to managed devices list.
+            self.stdout.write(f"* {hostname}")
             synced_devices.append(hostname)
 
             # Create device type. If not found, report an error and skip.
-            if "device_type" in sync_dict:
-                device_type, _ = DeviceType.objects.get_or_create(
-                    name=sync_dict["device_type"]
-                )
-                self.stdout.write("Created device type: %s" % device_type.name)
-            else:
-                self.stdout.write(
-                    "Device type is mandatory field for a device. Skipping..."
-                )
-                continue
+            device_type, created = DeviceType.objects.get_or_create(
+                name=sync_dict["device_type"]
+            )
+            if created:
+                self.stdout.write(f"  -> create device type: {device_type.name}")
 
             worker = None
             if "worker" in sync_dict:
-                worker, _ = Worker.objects.get_or_create(hostname=sync_dict["worker"])
-                self.stdout.write("Created worker: %s." % sync_dict["worker"])
+                worker, created = Worker.objects.get_or_create(
+                    hostname=sync_dict["worker"]
+                )
+                if created:
+                    self.stdout.write(f"  -> create worker: {sync_dict['worker']}")
 
             # Create/update device.
             defaults = {
                 "device_type": device_type,
                 "description": "Created automatically by LAVA.",
-                "state": Device.STATE_IDLE,
-                "health": Device.HEALTH_UNKNOWN,
                 "worker_host": worker,
                 "is_synced": True,
             }
-            device, _ = Device.objects.update_or_create(defaults, hostname=hostname)
+            device, created = Device.objects.update_or_create(
+                defaults, hostname=hostname
+            )
+            if created:
+                Device.objects.filter(hostname=hostname).update(
+                    health=Device.HEALTH_UNKNOWN
+                )
 
             # Create aliases and tags.
-            if "aliases" in sync_dict:
-                for alias_name in sync_dict["aliases"]:
-                    Alias.objects.get_or_create(
-                        name=alias_name, device_type=device_type
-                    )
-                    self.stdout.write(
-                        "Created alias %s for device type %s."
-                        % (alias_name, device_type.name)
-                    )
-            if "tags" in sync_dict:
-                for tag_name in sync_dict["tags"]:
-                    tag, _ = Tag.objects.get_or_create(name=tag_name)
-                    device.tags.add(tag)
-                    self.stdout.write(
-                        "Created tag %s for device %s." % (tag_name, hostname)
-                    )
+            for alias_name in sync_dict.get("aliases", []):
+                Alias.objects.get_or_create(name=alias_name, device_type=device_type)
+                self.stdout.write(f"  -> alias: {alias_name}")
+            for tag_name in sync_dict.get("tags", []):
+                tag, _ = Tag.objects.get_or_create(name=tag_name)
+                device.tags.add(tag)
+                self.stdout.write(f"  -> tag: {tag_name}")
 
         # devices which have is_synced true if there's no device dict for them.
         Device.objects.filter(is_synced=True).exclude(

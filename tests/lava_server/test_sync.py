@@ -42,7 +42,10 @@ def test_no_sync_to_lava(mocker):
     call_command("sync")
     assert (
         out.getvalue()
-        == "no sync_to_lava constant present in device template for device qemu01. Skipping...\n"
+        == """Scanning devices:
+* qemu01 [SKIP]
+  -> missing 'sync_to_lava'
+"""
     )
 
 
@@ -72,7 +75,12 @@ def test_invalid_template(mocker):
     sys.stdout = out
     call_command("sync")
     assert (
-        out.getvalue() == "Could not load template for device 'qemu01'. Skipping...\n"
+        out.getvalue()
+        == """Scanning devices:
+* qemu01 [SKIP]
+  -> invalid jinja2 template
+  -> qemu01
+"""
     )
 
 
@@ -107,7 +115,10 @@ def test_existing_non_synced_device(mocker):
     call_command("sync")
     assert (
         out.getvalue()
-        == "Device 'qemu01' already exists and is manually created. Skipping...\n"
+        == """Scanning devices:
+* qemu01 [SKIP]
+  -> created manually
+"""
     )
 
 
@@ -137,7 +148,11 @@ def test_missing_device_type(mocker):
     sys.stdout = out
     call_command("sync")
     assert (
-        out.getvalue() == "Device type is mandatory field for a device. Skipping...\n"
+        out.getvalue()
+        == """Scanning devices:
+* qemu01 [SKIP]
+  -> 'device_type' is mandatory
+"""
     )
 
 
@@ -172,7 +187,14 @@ def test_existing_alias(mocker):
     call_command("sync")
     assert (
         out.getvalue()
-        == "Created device type: qemu\nCreated worker: worker-01.\nCreated alias foo for device type qemu.\nCreated alias bar for device type qemu.\nCreated tag one for device qemu01.\nCreated tag two for device qemu01.\n"
+        == """Scanning devices:
+* qemu01
+  -> create worker: worker-01
+  -> alias: foo
+  -> alias: bar
+  -> tag: one
+  -> tag: two
+"""
     )
 
 
@@ -204,5 +226,13 @@ def test_output(mocker):
     call_command("sync")
     assert (
         out.getvalue()
-        == "Created device type: qemu\nCreated worker: worker-01.\nCreated alias foo for device type qemu.\nCreated alias bar for device type qemu.\nCreated tag one for device qemu01.\nCreated tag two for device qemu01.\n"
+        == """Scanning devices:
+* qemu01
+  -> create device type: qemu
+  -> create worker: worker-01
+  -> alias: foo
+  -> alias: bar
+  -> tag: one
+  -> tag: two
+"""
     )
