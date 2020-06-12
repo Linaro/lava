@@ -95,6 +95,8 @@ def untar_file(infile, outdir):
             tar.extractall(outdir)
     except tarfile.TarError as exc:
         raise JobError("Unable to unpack %s: %s" % (infile, str(exc)))
+    except OSError as exc:
+        raise InfrastructureError("Unable to unpack %s: %s" % (infile, str(exc)))
 
 
 def cpio(directory, filename):
