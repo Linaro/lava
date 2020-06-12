@@ -46,6 +46,8 @@ class DockerRun:
     def add_device(self, device, skip_missing=False):
         if not Path(device).exists() and skip_missing:
             return
+        if ":" in device:
+            return
         self.__devices__.append(device)
 
     def interactive(self):

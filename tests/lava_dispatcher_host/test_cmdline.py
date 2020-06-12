@@ -101,6 +101,33 @@ def test_share_device(mocker):
     assert args.serial_number == "01234567890"
 
 
+def test_map_device(mocker):
+    add_device_container_mapping = mocker.patch(
+        "lava_dispatcher_host.cmdline.add_device_container_mapping"
+    )
+    main(
+        [
+            "lava-dispatcher-host",
+            "devices",
+            "map",
+            "--serial-number=01234567890",
+            "foobar",
+            "docker",
+        ]
+    )
+    add_device_container_mapping.assert_called_with(
+        mocker.ANY, {"serial_number": "01234567890"}, "foobar", "docker"
+    )
+
+
+def test_unmap(mocker):
+    remove_device_container_mappings = mocker.patch(
+        "lava_dispatcher_host.cmdline.remove_device_container_mappings"
+    )
+    main(["lava-dispatcher-host", "devices", "unmap"])
+    remove_device_container_mappings.assert_called_with(mocker.ANY)
+
+
 def test_debug_log(mocker, tmp_path):
     mocker.patch("lava_dispatcher_host.cmdline.handle_rules_show")
     log = tmp_path / "log"

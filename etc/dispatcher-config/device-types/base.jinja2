@@ -194,6 +194,12 @@ commands:
 {% if pre_os_command %}
     pre_os_command: {{ pre_os_command }}
 {% endif -%}
+{% if recovery_mode_command %}
+    recovery_mode: {{ recovery_mode_command }}
+{% endif -%}
+{% if recovery_off_command %}
+    recovery_off: {{ recovery_mode_command }}
+{% endif -%}
 {% if user_commands %}
     users:
 {% for name, command in user_commands.items() %}
