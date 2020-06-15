@@ -714,7 +714,7 @@ def test_predownloaded_job_validation():
     factory = Factory()
     factory.validate_job_strict = True
     job = factory.create_job(
-        "qemu01.jinja2", "sample_jobs/qemu-download-postprocess.yaml"
+        "kvm01.jinja2", "sample_jobs/qemu-download-postprocess.yaml"
     )
     job.validate()
 
