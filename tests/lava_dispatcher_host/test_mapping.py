@@ -141,17 +141,12 @@ def test_device_missing(mocker):
 
 def test_share_device_setup_logger(mocker):
     check_call = mocker.patch("subprocess.check_call")
-    add_device_container_mapping(
-        "1",
-        {"serial_number": "1234567890"},
-        "mycontainer",
-        logging_info={"logging_url": "proto://host"},
-    )
+    add_device_container_mapping("1", {"serial_number": "1234567890"}, "mycontainer")
     setup_logger = mocker.Mock()
     share_device_with_container(
         Namespace(device="foo", serial_number="1234567890"), setup_logger
     )
-    setup_logger.assert_called()
+    setup_logger.assert_called_once_with(mocker.ANY)
 
 
 def test_unknown_container_type(mocker):
