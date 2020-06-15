@@ -172,7 +172,7 @@ class Command(BaseCommand):
                     Case(
                         When(
                             Q(device__is_synced=False)
-                            & ~Q(device__health=Device.HEALTH_RETIRED),
+                            | ~Q(device__health=Device.HEALTH_RETIRED),
                             then=1,
                         ),
                         output_field=IntegerField(),
