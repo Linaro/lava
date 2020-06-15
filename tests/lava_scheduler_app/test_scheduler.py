@@ -20,6 +20,7 @@
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
 from datetime import timedelta
+import logging
 
 from django.contrib.auth.models import User
 from django.test import TestCase
@@ -802,80 +803,51 @@ class TestJobLimitHc2(TestCase):
 # test both healthcheck and normal testjobs with joblimit
 class TestJobLimit(TestCase):
     def setUp(self):
-        self.joblimit = 2
-        self.devmax = 6
+        self.logger = logging.getLogger()
+        self.logger.setLevel(logging.DEBUG)
+        self.job_limit = 2
 
         self.worker01 = Worker.objects.create(
-            hostname="worker-01", state=Worker.STATE_ONLINE, job_limit=2
+            hostname="worker-01", state=Worker.STATE_ONLINE, job_limit=self.job_limit
         )
         self.user = User.objects.create(username="user-01")
-        self.device_type01 = DeviceType.objects.create(name="qemu")
+        self.device_type01 = DeviceType.objects.create(
+            name="qemu", disable_health_check=True
+        )
         self.devices = []
-        j = self.devmax
-        while j > 0:
+        for i in range(0, 6):
             dev = Device.objects.create(
-                hostname="qemu0%d" % j,
+                hostname=f"qemu0{i}",
                 device_type=self.device_type01,
                 worker_host=self.worker01,
                 health=Device.HEALTH_GOOD,
             )
-            dev.save()
             self.devices.append(dev)
-            j = j - 1
-
-        self.original_health_check = Device.get_health_check
-        Device.get_health_check = _minimal_valid_job
-
-    def tearDown(self):
-        Device.get_health_check = self.original_health_check
 
     def test_job_limit(self):
-
-        self.jobs = []
-        maxjobs = 8
-        j = maxjobs
-        while j > 0:
-            j = j - 1
-            job = TestJob.objects.create(
+        for i in range(0, 4):
+            TestJob.objects.create(
                 requested_device_type=self.device_type01,
                 submitter=self.user,
                 definition=_minimal_valid_job(None),
             )
-            self.jobs.append(job)
+        assert TestJob.objects.all().count() == 4
+        # Limit the number of jobs that can run
+        schedule(self.logger)
+        assert TestJob.objects.filter(state=TestJob.STATE_SCHEDULED).count() == 2
+        assert TestJob.objects.filter(state=TestJob.STATE_SUBMITTED).count() == 2
 
-        j = self.devmax
-        while j > 0:
-            j = j - 2
-            djobs = schedule(DummyLogger())
-            self.assertEqual(len(djobs), self.joblimit)
-            for job in TestJob.objects.filter(
-                state__in=[TestJob.STATE_SCHEDULING, TestJob.STATE_SCHEDULED]
-            ):
-                self.assertTrue(job.health_check)
-                job.go_state_finished(TestJob.HEALTH_COMPLETE)
-                job.actual_device.health = Device.HEALTH_GOOD
-                job.actual_device.state = Device.STATE_IDLE
-                job.actual_device.save()
-                job.save()
-
-        j = maxjobs
-        while j > 0:
-            j = j - 2
-            djobs = schedule(DummyLogger())
-            self.assertEqual(len(djobs), self.joblimit)
-            devs = 0
-            for device in self.devices:
-                device.refresh_from_db()
-                if device.state != Device.STATE_IDLE:
-                    devs = devs + 1
-            self.assertEqual(devs, self.joblimit)
-
-            for job in TestJob.objects.filter(
-                state__in=[TestJob.STATE_SCHEDULING, TestJob.STATE_SCHEDULED]
-            ):
-                self.assertFalse(job.health_check)
-                job.go_state_finished(TestJob.HEALTH_COMPLETE)
-                job.actual_device.health = Device.HEALTH_GOOD
-                job.actual_device.state = Device.STATE_IDLE
-                job.actual_device.save()
-                job.save()
+    def test_job_limit_unlimited(self):
+        for i in range(0, 4):
+            TestJob.objects.create(
+                requested_device_type=self.device_type01,
+                submitter=self.user,
+                definition=_minimal_valid_job(None),
+            )
+        assert TestJob.objects.all().count() == 4
+        # Limit the number of jobs that can run
+        self.worker01.job_limit = 0
+        self.worker01.save()
+        schedule(self.logger)
+        assert TestJob.objects.filter(state=TestJob.STATE_SCHEDULED).count() == 4
+        assert TestJob.objects.filter(state=TestJob.STATE_SUBMITTED).count() == 0
