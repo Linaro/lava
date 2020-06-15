@@ -55,16 +55,11 @@ class TestOpenOCDAction(StdoutTestCase):
         description_ref = self.pipeline_reference("openocd.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe(False))
 
-        # Check BootOpenOCDRetry action
+        # Check FlashOpenOCDAction
         action = job.pipeline.actions[1].pipeline.actions[0]
-        self.assertEqual(action.name, "boot-openocd-image")
-
-        # Check ConnectDevice action
-        action = job.pipeline.actions[1].pipeline.actions[0].pipeline.actions[0]
         self.assertEqual(action.name, "connect-device")
 
-        # Check FlashOpenOCDAction
-        action = job.pipeline.actions[1].pipeline.actions[0].pipeline.actions[1]
+        action = job.pipeline.actions[1].pipeline.actions[1]
         self.assertEqual(action.name, "flash-openocd")
         self.assertEqual(len(action.base_command), 24)
         print(action.base_command)

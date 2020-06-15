@@ -148,7 +148,7 @@ class DepthchargeCommandOverlay(BootloaderCommandOverlay):
         return connection
 
 
-class DepthchargeAction(RetryAction):
+class DepthchargeAction(Action):
     """
     Wraps the Retry Action to allow for actions which precede the reset,
     e.g. Connect.

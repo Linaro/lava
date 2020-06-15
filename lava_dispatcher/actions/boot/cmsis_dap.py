@@ -35,7 +35,7 @@ class CMSIS(Boot):
 
     @classmethod
     def action(cls):
-        return BootCMSIS()
+        return BootCMSISRetry()
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -61,17 +61,6 @@ class CMSIS(Boot):
                 '"usb_mass_device" was not in the device configuration "cmsis-dap" boot method parameters',
             )
         return True, "accepted"
-
-
-class BootCMSIS(RetryAction):
-
-    name = "boot-cmsis"
-    description = "boot cmsis usb image"
-    summary = "boot cmsis usb image"
-
-    def populate(self, parameters):
-        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.pipeline.add_action(BootCMSISRetry())
 
 
 class BootCMSISRetry(RetryAction):

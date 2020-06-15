@@ -54,22 +54,11 @@ class BootDockerAction(BootHasMixin, RetryAction):
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.pipeline.add_action(BootDockerRetry())
+        self.pipeline.add_action(CallDockerAction())
         if self.has_prompts(parameters):
             if self.test_has_shell(parameters):
                 self.pipeline.add_action(ExpectShellSession())
                 self.pipeline.add_action(ExportDeviceEnvironment())
-
-
-class BootDockerRetry(RetryAction):
-
-    name = "boot-docker-retry"
-    description = "boot docker image with retry"
-    summary = "boot docker image"
-
-    def populate(self, parameters):
-        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.pipeline.add_action(CallDockerAction())
 
 
 class CallDockerAction(Action):

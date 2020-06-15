@@ -21,7 +21,7 @@
 # List just the subclasses supported for this base strategy
 # imported by the parser to populate the list of subclasses.
 
-from lava_dispatcher.action import Pipeline
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.actions.boot import (
     AutoLoginAction,
@@ -63,7 +63,7 @@ class IPXE(Boot):
             return False, '"ipxe" was not in the device configuration boot methods'
 
 
-class BootloaderAction(RetryAction):
+class BootloaderAction(Action):
     """
     Wraps the Retry Action to allow for actions which precede
     the reset, e.g. Connect.

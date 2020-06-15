@@ -20,10 +20,7 @@
 - class: actions.boot.docker.BootDockerAction
   name: boot-docker
   pipeline:
-  - class: actions.boot.docker.BootDockerRetry
-    name: boot-docker-retry
-    pipeline:
-    - {class: actions.boot.docker.CallDockerAction, name: docker-run}
+  - {class: actions.boot.docker.CallDockerAction, name: docker-run}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
   - {class: actions.boot.environment.ExportDeviceEnvironment, name: export-device-env}
 - class: actions.test.interactive.TestInteractiveRetry

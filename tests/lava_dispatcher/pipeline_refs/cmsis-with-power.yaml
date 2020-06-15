@@ -5,20 +5,17 @@
     name: download-retry
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
-- class: actions.boot.cmsis_dap.BootCMSIS
-  name: boot-cmsis
+- class: actions.boot.cmsis_dap.BootCMSISRetry
+  name: boot-cmsis-retry
   pipeline:
-  - class: actions.boot.cmsis_dap.BootCMSISRetry
-    name: boot-cmsis-retry
+  - class: power.ResetDevice
+    name: reset-device
     pipeline:
-    - class: power.ResetDevice
-      name: reset-device
-      pipeline:
-      - {class: power.PDUReboot, name: pdu-reboot}
-    - {class: utils.udev.WaitDevicePathAction, name: wait-device-path}
-    - {class: actions.boot.cmsis_dap.FlashCMSISAction, name: flash-cmsis}
-    - {class: utils.udev.WaitUSBSerialDeviceAction, name: wait-usb-serial}
-    - {class: connections.serial.ConnectDevice, name: connect-device}
+    - {class: power.PDUReboot, name: pdu-reboot}
+  - {class: utils.udev.WaitDevicePathAction, name: wait-device-path}
+  - {class: actions.boot.cmsis_dap.FlashCMSISAction, name: flash-cmsis}
+  - {class: utils.udev.WaitUSBSerialDeviceAction, name: wait-usb-serial}
+  - {class: connections.serial.ConnectDevice, name: connect-device}
 - class: actions.test.monitor.TestMonitorRetry
   name: lava-test-monitor-retry
   pipeline:

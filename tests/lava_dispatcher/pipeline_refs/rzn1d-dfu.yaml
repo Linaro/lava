@@ -18,21 +18,18 @@
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
 - {class: actions.commands.CommandAction, name: user-command}
-- class: actions.boot.dfu.BootDFU
-  name: boot-dfu-image
+- class: actions.boot.dfu.BootDFURetry
+  name: boot-dfu-retry
   pipeline:
-  - class: actions.boot.dfu.BootDFURetry
-    name: boot-dfu-retry
+  - {class: connections.serial.ConnectDevice, name: connect-device}
+  - class: power.ResetDevice
+    name: reset-device
     pipeline:
-    - {class: connections.serial.ConnectDevice, name: connect-device}
-    - class: power.ResetDevice
-      name: reset-device
-      pipeline:
-      - {class: power.PDUReboot, name: pdu-reboot}
-    - {class: actions.boot.BootloaderInterruptAction, name: bootloader-interrupt}
-    - {class: actions.boot.dfu.EnterDFU, name: enter-dfu}
-    - {class: utils.udev.WaitDFUDeviceAction, name: wait-dfu-device}
-    - {class: actions.boot.dfu.FlashDFUAction, name: flash-dfu}
+    - {class: power.PDUReboot, name: pdu-reboot}
+  - {class: actions.boot.BootloaderInterruptAction, name: bootloader-interrupt}
+  - {class: actions.boot.dfu.EnterDFU, name: enter-dfu}
+  - {class: utils.udev.WaitDFUDeviceAction, name: wait-dfu-device}
+  - {class: actions.boot.dfu.FlashDFUAction, name: flash-dfu}
 - {class: actions.commands.CommandAction, name: user-command}
 - class: actions.deploy.overlay.OverlayAction
   name: lava-overlay
