@@ -70,10 +70,6 @@ def setup_logger(data):
 
 def finish_logger():
     if logger:
-        try:
-            logger.close
-        except AttributeError:
-            return
         logger.close(linger=LINGER)
 
 
@@ -196,11 +192,7 @@ def main(argv):
 
     if options.func:
         if options.debug_log:
-            global logger
-            logger = logging.getLogger("dispatcher")
-            logger.addHandler(logging.StreamHandler(options.debug_log))
-            logger.setLevel(logging.DEBUG)
-            logger.debug("Called with args %r" % argv)
+            options.debug_log.write("Called with args %r\n" % argv)
         options.func(options)
         if options.debug_log:
             options.debug_log.close()
