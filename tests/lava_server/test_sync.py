@@ -221,6 +221,9 @@ def test_output(mocker):
     mocker.patch("jinja2.Environment.get_template")
     mocker.patch("yaml.load")
 
+    # Create non-related device in order to test its display value later.
+    DeviceType.objects.create(name="bbb")
+
     out = StringIO()
     sys.stdout = out
     call_command("sync")
@@ -236,3 +239,32 @@ def test_output(mocker):
   -> tag: two
 """
     )
+
+    # Test the device types display.
+    assert DeviceType.objects.get(name="qemu").display
+    assert DeviceType.objects.get(name="bbb").display
+
+
+@pytest.mark.django_db
+def test_retire(mocker):
+
+    dt = DeviceType.objects.create(name="qemu")
+    Device.objects.create(hostname="qemu01", device_type=dt, is_synced=True)
+
+    dt = DeviceType.objects.create(name="bbb")
+    Device.objects.create(hostname="bbb01", device_type=dt, is_synced=True)
+    Device.objects.create(hostname="bbb02", device_type=dt, is_synced=False)
+
+    file_list = mocker.MagicMock(return_value=[])
+    mocker.patch("lava_server.files.File.list", file_list)
+
+    out = StringIO()
+    sys.stdout = out
+    call_command("sync")
+
+    assert Device.objects.get(hostname="qemu01").health == Device.HEALTH_RETIRED
+    assert not DeviceType.objects.get(name="qemu").display
+
+    assert Device.objects.get(hostname="bbb01").health == Device.HEALTH_RETIRED
+    assert Device.objects.get(hostname="bbb02").health == Device.HEALTH_MAINTENANCE
+    assert DeviceType.objects.get(name="bbb").display
