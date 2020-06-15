@@ -2,7 +2,7 @@ FROM ubuntu:bionic
 
 # Install telnet package
 RUN apt-get update && \
-    apt-get install --no-install-recommends --yes libatomic1 telnet && \
+    apt-get install --no-install-recommends --yes bc libatomic1 telnet && \
     rm -rf /var/cache/apt
 
 # Create model directory
