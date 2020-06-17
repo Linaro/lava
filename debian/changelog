@@ -1,3 +1,9 @@
+lava (2020.06-1) unstable; urgency=medium
+
+  * LAVA Software 2020.06 release
+
+ -- Remi Duraffort <remi.duraffort@linaro.org>  Wed, 17 Jun 2020 16:43:43 +0200
+
 lava (2020.05-1) unstable; urgency=medium
 
   * LAVA Software 2020.05 release
