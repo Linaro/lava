@@ -110,7 +110,7 @@ class UUUBoot(Boot):
         if "commands" not in parameters:
             raise ConfigurationError("commands not specified in boot parameters")
         params = device["actions"]["boot"]["methods"]["uuu"]["options"]
-        if params["usb_otg_path"] is None:
+        if not params["usb_otg_path"]:
             raise ConfigurationError(
                 "uuu_usb_otg_path not defined in device definition"
             )
