@@ -258,7 +258,11 @@ class LogsElasticsearch(Logs):
             "%s_search/" % self.api_url,
             params={"query": {"match": {"job_id": job.id}}, "_source": False},
         )
-        return response["hits"]["total"]["value"]
+        try:
+            count = response["hits"]["total"]["value"]
+        except Exception:
+            count = 0
+        return count
 
     def open(self, job):
         stream = io.BytesIO(yaml_dump(self._get_docs(job)).encode("utf-8"))
