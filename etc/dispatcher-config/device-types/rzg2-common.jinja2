@@ -1,0 +1,11 @@
+{% extends 'base-uboot.jinja2' %}
+
+{% set baud_rate = '115200' %}
+{% set bootloader_prompt = bootloader_prompt|default('=>') %}
+{% set kernel_file = kernel_file|default('Image') %}
+{% set booti_kernel_addr = '0x48080000' %}
+{% set booti_ramdisk_addr = '0x4ee2c2c0' %}
+{% set booti_dtb_addr = '0x48000000' %}
+{% set uboot_mkimage_arch = 'arm64' %}
+{% set boot_character_delay = 20 %}
+{% set test_character_delay = 20 %}
