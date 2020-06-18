@@ -1,0 +1,10 @@
+{% extends 'base-uboot.jinja2' %}
+
+{% set device_type = 'de0-nano-soc' %}
+{% set bootloader_prompt = bootloader_prompt|default('=>') %}
+{% set console_device = console_device|default('ttyS0') %}
+{% set bootm_kernel_addr = '0x01000000' %}
+{% set bootm_dtb_addr = '0x02000000' %}
+{% set bootz_kernel_addr = bootm_kernel_addr %}
+{% set bootz_dtb_addr = bootm_dtb_addr %}
+{% set uboot_mkimage_arch = 'arm' %}
