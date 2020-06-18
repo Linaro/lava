@@ -1,0 +1,6 @@
+{% extends 'rzg1-common.jinja2' %}
+
+{% set device_type = "r8a7743-iwg20d-q7" %}
+{% set console_device = 'ttySC0' %}
+{% set bootloader_prompt = bootloader_prompt|default('iWave-G20M >') %}
+{% set dtb_file = dtb_file|default('r8a7743-iwg20d-q7.dtb') %}
