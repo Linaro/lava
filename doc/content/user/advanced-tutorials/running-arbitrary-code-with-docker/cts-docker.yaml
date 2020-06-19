@@ -28,9 +28,9 @@ metadata:
   cts-version: android-cts-10.0_r2
   cts-plan: cts-lkft
 secrets:
-  ARTIFACTORIAL_TOKEN: 3a861de8371936ecd03c0a342b3cb9b4
-  AP_SSID: LAVATEST-OEM
-  AP_KEY: NepjqGbq
+  ARTIFACTORIAL_TOKEN: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  AP_SSID: xxxxxxxxxxxx
+  AP_KEY: xxxxxxxx
 actions:
 - deploy:
     timeout:
