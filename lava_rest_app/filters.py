@@ -370,6 +370,7 @@ class TestJobFilter(filters.FilterSet):
     class Meta:
         model = TestJob
         fields = {
+            "id": ["exact", "lt", "gt"],
             "submit_time": ["exact", "lt", "gt"],
             "start_time": ["exact", "lt", "gt"],
             "end_time": ["exact", "lt", "gt"],
