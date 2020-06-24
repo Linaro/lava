@@ -9,7 +9,7 @@ visibility: public
 
 actions:
 - deploy:
-    image: base/archlinux
+    image: archlinux
     os: archlinux
     timeout: {minutes: 4}
     to: docker
