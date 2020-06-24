@@ -1,0 +1,23 @@
+{% extends 'base-uboot.jinja2' %}
+
+{% set baud_rate = '115200' %}
+{% set kernel_file = kernel_file|default('uImage') %}
+{% set bootm_kernel_addr = '0x40007fc0' %}
+{% set bootm_ramdisk_addr = '0x41f00000' %}
+{% set bootm_dtb_addr = '0x48000000' %}
+{% set uboot_mkimage_arch = 'arm' %}
+{% set boot_character_delay = 20 %}
+{% set test_character_delay = 20 %}
+{% set uboot_error_messages = [
+  'Resetting CPU',
+  'Must RESET board to recover',
+  'Retry time exceeded; starting again',
+  'ERROR: The remote end did not respond in time.',
+  'File not found',
+  'Bad Linux ARM64 Image magic!',
+  'Wrong Ramdisk Image Format',
+  'Ramdisk image is corrupt or invalid',
+  'ERROR: Failed to allocate',
+  'TFTP error: trying to overwrite reserved memory',
+  'ether_avb: alloc failed'
+] %}
