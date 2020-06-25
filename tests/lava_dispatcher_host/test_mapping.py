@@ -231,3 +231,29 @@ def test_device_plus_parent(mocker):
     )
     share.assert_called_once_with("mycontainer2", "/dev/foo/bar")
     share.reset_mock()
+
+
+def test_mapping_for_new_container_overrides_previous_mapping(tmpdir):
+    add_device_container_mapping(
+        "1",
+        {
+            "serial_number": "1234567890",
+            "vendor_id": None,
+            "product_id": None,
+            "fs_label": None,
+        },
+        "mycontainer1",
+    )
+    add_device_container_mapping(
+        "1",
+        {
+            "serial_number": "1234567890",
+            "vendor_id": None,
+            "product_id": None,
+            "fs_label": None,
+        },
+        "mycontainer2",
+    )
+    data = yaml_load(open(tmpdir / "1" / "usbmap.yaml"))
+    assert len(data) == 1
+    assert data[0]["container"] == "mycontainer2"
