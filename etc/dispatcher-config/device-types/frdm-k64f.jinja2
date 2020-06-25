@@ -1,9 +1,12 @@
 {# device_type: frdm-k64f #}
 {% extends 'base.jinja2' %}
+{% set usb_vendor_id = '0d28' %}
+{% set usb_product_id = '0204' %}
+{% set device_info = device_info|default([{'board_id': board_id, 'usb_vendor_id': usb_vendor_id, 'usb_product_id': usb_product_id}]) %}
 {% block body %}
 board_id: '{{ board_id|default('0000000000') }}'
-usb_vendor_id: '0d28'
-usb_product_id: '0204'
+usb_vendor_id: '{{ usb_vendor_id }}'
+usb_product_id: '{{ usb_product_id }}'
 usb_sleep: {{ usb_sleep|default(0) }}
 
 actions:
