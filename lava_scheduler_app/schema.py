@@ -217,6 +217,7 @@ def _interactive_script_schema():
                 Optional("lava-sync"): str,
                 Optional("lava-wait"): str,
                 Optional("lava-wait-all"): str,
+                Optional("wait_for_prompt"): bool,
                 Optional("failures"): [
                     {
                         Required("message"): str,
