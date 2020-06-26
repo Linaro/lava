@@ -1,7 +1,7 @@
 {% extends 'base-uboot.jinja2' %}
 
 
-{% set fastboot_options = fastboot_options|default(['-i', '0x18D1']) %}
+{% set fastboot_options = fastboot_options|default(['-i', '0x15A2']) %}
 {% set fastboot_sequence = fastboot_sequence|default(['reboot']) %}
 {% set fastboot_deploy_uboot_commands = fastboot_deploy_uboot_commands|default(['fastboot 0']) %}
 {% set flash_cmds_order = flash_cmds_order|default(['bootloader', 'bootloader_a', 'bootloader_b', 'bootloader0',
@@ -13,7 +13,6 @@
 {% set adb_serial_number = adb_serial_number|default(fastboot_serial_number) %}
 
 {% set extra_nfsroot_args = extra_nfsroot_args | default(',v3') %}
-{# set uboot_needs_usb = 'true' #}
 {% set uboot_mac_addr = uboot_mac_addr|default('') %}
 {% set root_device = root_device|default('') %}
 {% set console_device = console_device|default('ttymxc0') %}
@@ -21,10 +20,10 @@
 {% set boot_character_delay = boot_character_delay|default(5) %}
 {% set test_character_delay = test_character_delay|default(5) %}
 {% set base_kernel_args = base_kernel_args|default('') %}
-{% set booti_kernel_addr = booti_kernel_addr | default('0x12000000') %}
-{% set booti_tee_addr = booti_tee_addr | default('0x20000000') %}
-{% set booti_ramdisk_addr = booti_ramdisk_addr | default('0x20000000') %}
-{% set booti_dtb_addr = booti_dtb_addr | default('0x18000000') %}
+{% set booti_kernel_addr = booti_kernel_addr | default('0x80800000') %}
+{% set booti_tee_addr = booti_tee_addr | default('0x84000000') %}
+{% set booti_ramdisk_addr = booti_ramdisk_addr | default('0x84000000') %}
+{% set booti_dtb_addr = booti_dtb_addr | default('0x83000000') %}
 {% set bootz_kernel_addr = booti_kernel_addr %}
 {% set bootz_tee_addr = booti_tee_addr %}
 {% set bootz_ramdisk_addr = booti_ramdisk_addr %}

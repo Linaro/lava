@@ -13,18 +13,17 @@
 {% set adb_serial_number = adb_serial_number|default(fastboot_serial_number) %}
 
 {% set extra_nfsroot_args = extra_nfsroot_args | default(',v3') %}
-{# set uboot_needs_usb = 'true' #}
 {% set uboot_mac_addr = uboot_mac_addr|default('') %}
 {% set root_device = root_device|default('') %}
-{% set console_device = console_device|default('ttymxc0') %}
+{% set console_device = console_device|default('ttyLP0') %}
 {% set baud_rate = baud_rate|default(115200) %}
 {% set boot_character_delay = boot_character_delay|default(5) %}
 {% set test_character_delay = test_character_delay|default(5) %}
 {% set base_kernel_args = base_kernel_args|default('') %}
-{% set booti_kernel_addr = booti_kernel_addr | default('0x12000000') %}
-{% set booti_tee_addr = booti_tee_addr | default('0x20000000') %}
-{% set booti_ramdisk_addr = booti_ramdisk_addr | default('0x20000000') %}
-{% set booti_dtb_addr = booti_dtb_addr | default('0x18000000') %}
+{% set booti_kernel_addr = booti_kernel_addr | default('0x60800000') %}
+{% set booti_tee_addr = booti_tee_addr | default('0x64000000') %}
+{% set booti_ramdisk_addr = booti_ramdisk_addr | default('0x64000000') %}
+{% set booti_dtb_addr = booti_dtb_addr | default('0x63000000') %}
 {% set bootz_kernel_addr = booti_kernel_addr %}
 {% set bootz_tee_addr = booti_tee_addr %}
 {% set bootz_ramdisk_addr = booti_ramdisk_addr %}
