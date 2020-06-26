@@ -91,14 +91,6 @@ def share_device_with_container(options, setup_logger=None):
     else:
         raise InfrastructureError('Unsupported container type: "%s"' % container_type)
 
-    logger.info(
-        "Sharing {device} with {container_type} container {container}".format(
-            device=device,
-            container_type=data["container_type"],
-            container=data["container"],
-        )
-    )
-
 
 def find_mapping(options):
     for mapping in glob.glob(get_mapping_path("*")):
@@ -133,11 +125,18 @@ def match_mapping(device_info, options):
     return matched
 
 
+def log_sharing_device(device, container_type, container):
+    logger = logging.getLogger("dispatcher")
+    logger.info(f"Sharing {device} with {container_type} container {container}")
+
+
 def share_device_with_container_lxc(container, node):
+    log_sharing_device(node, "lxc", container)
     subprocess.check_call(["lxc-device", "-n", container, "add", node])
 
 
 def share_device_with_container_docker(container, node):
+    log_sharing_device(node, "docker", container)
     container_id = subprocess.check_output(
         ["docker", "inspect", "--format={{.ID}}", container], text=True
     ).strip()
