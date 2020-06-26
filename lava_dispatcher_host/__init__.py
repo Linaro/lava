@@ -154,7 +154,7 @@ def share_device_with_container_docker(container, node):
             container,
             "sh",
             "-c",
-            "mkdir -p %s && mknod %s c %d %d"
+            "mkdir -p %s && mknod %s c %d %d || true"
             % (os.path.dirname(node), node, major, minor),
         ]
     )
