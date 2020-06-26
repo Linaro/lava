@@ -18,9 +18,11 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import pathlib
 import os
 import shlex
 
+from lava_common.constants import LAVA_DOWNLOADS
 from lava_common.exceptions import LAVATimeoutError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.overlay import CreateOverlay
@@ -138,6 +140,13 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
 
         docker = DockerRun(image)
         docker.bind_mount(os.path.join(location, overlay), "/" + overlay)
+
+        namespace = self.parameters.get("namespace")
+        if namespace:
+            downloads_dir = pathlib.Path(self.job.tmp_dir) / "downloads" / namespace
+            if downloads_dir.exists():
+                docker.bind_mount(downloads_dir, LAVA_DOWNLOADS)
+
         docker.interactive()
         docker.hostname("lava")
         docker.name(container)
