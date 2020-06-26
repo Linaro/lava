@@ -138,14 +138,16 @@ start_lava_publisher() {
 
 start_lava_server_gunicorn() {
     LOGLEVEL="DEBUG"
+    TIMEOUT=""
+    WORKER_CLASS="sync"
     WORKERS="4"
     LOGFILE="/var/log/lava-server/gunicorn.log"
     [ -e /etc/default/lava-server-gunicorn ] && . /etc/default/lava-server-gunicorn
     [ -e /etc/lava-server/lava-server-gunicorn ] && . /etc/lava-server/lava-server-gunicorn
     if [ "$CAN_EXEC" = "1" ]; then
-        exec /usr/bin/gunicorn3 lava_server.wsgi --log-level "$LOGLEVEL" --log-file - -u lavaserver -g lavaserver --workers "$WORKERS" --worker-tmp-dir /dev/shm $RELOAD $BIND
+        exec /usr/bin/gunicorn3 lava_server.wsgi --log-level "$LOGLEVEL" --log-file - -u lavaserver -g lavaserver --worker-class "$WORKER_CLASS" --workers "$WORKERS" --worker-tmp-dir /dev/shm $RELOAD $BIND $TIMEOUT
     else
-        /usr/bin/gunicorn3 lava_server.wsgi --log-level "$LOGLEVEL" --log-file "$LOGFILE" -u lavaserver -g lavaserver --workers "$WORKERS" --worker-tmp-dir /dev/shm $RELOAD $BIND &
+        /usr/bin/gunicorn3 lava_server.wsgi --log-level "$LOGLEVEL" --log-file "$LOGFILE" -u lavaserver -g lavaserver --worker-class "$WORKER_CLASS" --workers "$WORKERS" --worker-tmp-dir /dev/shm $RELOAD $BIND $TIMEOUT &
         GUNICORN_PID=$!
     fi
 }
