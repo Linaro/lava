@@ -1,0 +1,26 @@
+From: Antonio Terceiro <antonio.terceiro@linaro.org>
+Date: Mon, 29 Jun 2020 17:16:29 -0300
+Subject: share/postinst.py: skip database setup if DB server is not running
+
+---
+ share/postinst.py | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/share/postinst.py b/share/postinst.py
+index 065a06f..058f2a4 100755
+--- a/share/postinst.py
++++ b/share/postinst.py
+@@ -70,6 +70,13 @@ def database(config):
+     devel_password = "devel"
+     devel_user = "devel"
+ 
++    # is the database ready?
++    try:
++        subprocess.check_call(["pg_isready"])
++    except subprocess.CalledProcessError:
++        print("Skipping database setup as PostgreSQL is not running")
++        return
++
+     script = f"""
+ DO $$
+ BEGIN

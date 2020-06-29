@@ -1,3 +1,10 @@
+lava (2020.06-2) unstable; urgency=medium
+
+  * share/postinst.py: skip database setup when PostgreSQL is not running
+    (e.g. on chroots, service containers etc)
+
+ -- Antonio Terceiro <antonio.terceiro@linaro.org>  Mon, 29 Jun 2020 17:26:12 -0300
+
 lava (2020.06-1) unstable; urgency=medium
 
   * LAVA Software 2020.06 release
