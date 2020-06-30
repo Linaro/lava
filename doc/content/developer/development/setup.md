@@ -77,6 +77,12 @@ ln -s ~/lava/lava_dispatcher_host/lava-dispatcher-host .
 ln -s ~/lava/manage.py lava-server
 ```
 
+Install the lava-dispatcher-host udev rules:
+
+```shell
+lava-dispatcher-host rules install
+```
+
 Restart the services:
 
 ```shell
@@ -131,6 +137,16 @@ Apply the django migrations
 ```shell
 python3 lava_server/manage.py migrate
 ```
+
+Install the lava-dispatcher-host udev rules
+
+```shell
+$(pwd)/lava_dispatcher_host/lava-dispatcher-host rules install
+```
+
+The above will make the installed udev rules call the lava-dispatcher-host
+program inside your source directory. If you move your source directory to a
+different location, you will have to install the rules again.
 
 Start the services
 
