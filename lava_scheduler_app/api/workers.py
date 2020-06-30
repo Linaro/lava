@@ -63,47 +63,6 @@ class SchedulerWorkersAPI(ExposedV2API):
         except IntegrityError:
             raise xmlrpc.client.Fault(400, "Bad request: worker already exists?")
 
-    def get_certificate(self, hostname):
-        """
-        Name
-        ----
-        `scheduler.workers.get_certificate` (`hostname`)
-
-        Description
-        -----------
-        Return the worker certificate
-
-        Arguments
-        ---------
-        `hostname`: string
-          Hostname of the worker or None for the master certificate
-
-        Return value
-        ------------
-        This function returns the worker certificate
-        """
-        if hostname is None or hostname == "master":
-            hostname = "master"
-        else:
-            # Sanitize hostname as we will use it in a path
-            if len(pathlib.Path(hostname).parts) != 1:
-                raise xmlrpc.client.Fault(400, "Invalid worker name")
-
-            # Find the worker in the database
-            try:
-                Worker.objects.get(hostname=hostname)
-            except Worker.DoesNotExist:
-                raise xmlrpc.client.Fault(404, "Worker '%s' was not found." % hostname)
-
-        base = pathlib.Path("/etc/lava-dispatcher/certificates.d")
-        with contextlib.suppress(OSError):
-            data = (base / (hostname + ".key")).read_text(encoding="utf-8")
-            return xmlrpc.client.Binary(data.encode("utf-8"))
-
-        raise xmlrpc.client.Fault(
-            404, "Worker '%s' does not have a configuration" % hostname
-        )
-
     def get_config(self, hostname):
         """
         Name
