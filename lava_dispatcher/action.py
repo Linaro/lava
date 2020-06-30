@@ -18,6 +18,8 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+from typing import ClassVar, Type
+
 from collections import OrderedDict
 import logging
 import copy
@@ -356,20 +358,20 @@ class Action:
         self.force_prompt = False
 
     # Section
-    section = None
+    section: ClassVar[str] = ""
     # public actions (i.e. those who can be referenced from a job file) must
     # declare a 'class-type' name so they can be looked up.
     # summary and description are used to identify instances.
-    name = None
+    name: ClassVar[str] = ""
     # Used in the pipeline to explain what the commands will attempt to do.
-    description = None
+    description: ClassVar[str] = ""
     # A short summary of this instance of a class inheriting from Action.  May
     # be None.
-    summary = None
+    summary: ClassVar[str] = ""
     # Exception to raise when this action is timing out
-    timeout_exception = JobError
+    timeout_exception: ClassVar[Type[LAVAError]] = JobError
     # Exception to raise when a command run by the action fails
-    command_exception = JobError
+    command_exception: ClassVar[Type[LAVAError]] = JobError
 
     @property
     def data(self):
