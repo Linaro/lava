@@ -78,8 +78,8 @@ def test_run(action, mocker):
     ShellSesssion.return_value = docker_connection
     action_run = mocker.patch("lava_dispatcher.actions.test.docker.TestShellAction.run")
     connection = mocker.MagicMock()
-    add_device_container_mapping = mocker.patch(
-        "lava_dispatcher.actions.test.docker.add_device_container_mapping"
+    add_device_container_mappings = mocker.patch(
+        "lava_dispatcher_host.action.DeviceContainerMappingMixin.add_device_container_mappings"
     )
     get_udev_devices = mocker.patch(
         "lava_dispatcher.actions.test.docker.get_udev_devices",
@@ -93,13 +93,7 @@ def test_run(action, mocker):
     action.run(connection, time.time() + 1000)
 
     # device is shared with the container
-    add_device_container_mapping.assert_called_with(
-        job_id=action.job.job_id,
-        device_info={"board_id": "0123456789"},
-        container=mocker.ANY,
-        container_type="docker",
-        logging_info=mocker.ANY,
-    )
+    add_device_container_mappings.assert_called()
 
     WaitDeviceBoardID_run.assert_called()
     get_udev_devices.assert_called_with(device_info=[{"board_id": "0123456789"}])

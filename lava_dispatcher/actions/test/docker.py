@@ -31,7 +31,7 @@ from lava_dispatcher.shell import ShellCommand, ShellSession
 from lava_dispatcher.utils.docker import DockerRun
 from lava_dispatcher.utils.udev import get_udev_devices
 from lava_dispatcher.utils.udev import WaitDeviceBoardID
-from lava_dispatcher_host import add_device_container_mapping
+from lava_dispatcher_host.action import DeviceContainerMappingMixin
 
 
 class DockerTest(LavaTest):
@@ -66,8 +66,12 @@ class DockerTest(LavaTest):
 
 
 class GetBoardId:
+    @property
+    def device_info(self):
+        return self.job.device.get("device_info")
+
     def get_board_id(self):
-        device_info = self.job.device.get("device_info")
+        device_info = self.device_info
         if not device_info:
             return None
         return device_info[0].get("board_id")
@@ -117,7 +121,7 @@ class DockerTestSetEnvironment(Action, GetBoardId):
         return connection
 
 
-class DockerTestShell(TestShellAction, GetBoardId):
+class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
     name = "lava-docker-test-shell"
     description = "Runs lava-test-shell in a docker container"
     summary = "Runs lava-test-shell in a docker container"
@@ -141,15 +145,7 @@ class DockerTestShell(TestShellAction, GetBoardId):
         image = self.parameters["docker"]["image"]
         container = "lava-docker-test-shell-%s-%s" % (self.job.job_id, self.level)
 
-        board_id = self.get_board_id()
-        device_info = {"board_id": board_id}
-        add_device_container_mapping(
-            job_id=self.job.job_id,
-            device_info=device_info,
-            container=container,
-            container_type="docker",
-            logging_info=self.get_logging_info(),
-        )
+        self.add_device_container_mappings(container, "docker")
 
         docker = DockerRun(image)
         docker.bind_mount(os.path.join(location, overlay), "/" + overlay)
@@ -158,7 +154,7 @@ class DockerTestShell(TestShellAction, GetBoardId):
         docker.name(container)
         docker.environment("PS1", "docker-test-shell:$ ")
         if self.wait_for_device:
-            devices = get_udev_devices(device_info=[device_info])
+            devices = get_udev_devices(device_info=self.device_info)
             for dev in devices:
                 docker.add_device(dev)
 
