@@ -276,7 +276,7 @@ def wait_udev_changed_event(
             return
 
 
-def get_udev_devices(job=None, logger=None, device_info=None):
+def get_udev_devices(job=None, logger=None, device_info=None, required=False):
     """
     Get udev device nodes based on serial, vendor and product ID
     All subsystems are allowed so that additional hardware like
@@ -361,7 +361,7 @@ def get_udev_devices(job=None, logger=None, device_info=None):
                             device_paths.add(child.device_node)
                     for link in device.device_links:
                         device_paths.add(link)
-    if device_info:
+    if device_info and required:
         for static_device in device_info:
             for _, value in static_device.items():
                 if value not in added:
