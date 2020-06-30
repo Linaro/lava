@@ -33,7 +33,6 @@ RUN --mount=type=bind,target=/app \
     # Create empty files
     touch /install/var/log/lava-server/django.log && \
     # chown/chmod every files
-    chown -R lavaserver:lavaserver /install/etc/lava-dispatcher/certificates.d/ && \
     chown -R lavaserver:lavaserver /install/etc/lava-server/dispatcher-config/ && \
     chown -R lavaserver:lavaserver /install/etc/lava-server/dispatcher.d/ && \
     chown -R lavaserver:lavaserver /install/etc/lava-server/settings.d/ && \

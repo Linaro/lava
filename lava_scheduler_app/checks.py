@@ -217,9 +217,8 @@ def find_our_daemons():
     """
     daemons = {
         "lava-server-gunicorn": None,
-        "lava-master": None,
-        "lava-logs": None,
         "lava-publisher": None,
+        "lava-scheduler": None,
         "lava-worker": None,
     }
 
@@ -247,12 +246,10 @@ def find_our_daemons():
         if "/usr/bin/lava-server" in content[1]:
             if "manage" not in content[2]:
                 continue
-            if "lava-master" in content[3]:
-                daemons["lava-master"] = pid
-            elif "lava-logs" in content[3]:
-                daemons["lava-logs"] = pid
-            elif "lava-publisher" in content[3]:
+            if "lava-publisher" in content[3]:
                 daemons["lava-publisher"] = pid
+            elif "lava-scheduler" in content[3]:
+                daemons["lava-scheduler"] = pid
             continue
 
         if "/usr/bin/lava-worker" in content[1]:
@@ -269,9 +266,8 @@ def check_services(app_configs, **kwargs):
     services = [
         "apache2",
         "lava-server-gunicorn",
-        "lava-master",
         "lava-publisher",
-        "lava-logs",
+        "lava-scheduler",
         "postgresql",
     ]
     optional = ["lava-worker"]

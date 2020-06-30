@@ -121,13 +121,12 @@ SERVER = {
     "scripts": ["manage.py"],
     "data_files": [
         ("/etc/apache2/sites-available/", ["etc/lava-server.conf"]),
-        ("/etc/lava-dispatcher/certificates.d/", []),
         (
             "/etc/lava-server/",
             [
                 "etc/env.yaml",
-                "etc/lava-logs",
-                "etc/lava-master",
+                "etc/lava-publisher",
+                "etc/lava-scheduler",
                 "etc/lava-server-gunicorn",
             ],
         ),
@@ -140,18 +139,16 @@ SERVER = {
             "/etc/logrotate.d/",
             [
                 "etc/logrotate.d/django-log",
-                "etc/logrotate.d/lava-logs-log",
-                "etc/logrotate.d/lava-master-log",
                 "etc/logrotate.d/lava-publisher-log",
+                "etc/logrotate.d/lava-scheduler-log",
                 "etc/logrotate.d/lava-server-gunicorn-log",
             ],
         ),
         (
             "/lib/systemd/system/",
             [
-                "etc/lava-logs.service",
-                "etc/lava-master.service",
                 "etc/lava-publisher.service",
+                "etc/lava-scheduler.service",
                 "etc/lava-server-gunicorn.service",
             ],
         ),
