@@ -39,6 +39,7 @@ def version(ref=None):
             .strip()
             .decode("utf-8")
             .replace("-", ".")
+            .replace("debian/", "")
         )
         m = pattern.match(describe)
         if m is None:
