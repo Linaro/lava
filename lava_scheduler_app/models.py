@@ -42,6 +42,7 @@ from django.core.exceptions import (
     PermissionDenied,
     ValidationError,
 )
+from django.utils.crypto import get_random_string
 from django.urls import reverse
 from django.db import models
 from django.utils import timezone
@@ -66,6 +67,10 @@ from lava_server.compat import add_permissions
 from lava_server.files import File
 
 import requests
+
+
+def auth_token():
+    return get_random_string(32)
 
 
 class JSONDataError(ValueError):
@@ -426,6 +431,10 @@ class Worker(RestrictedObject):
         null=True,
         default=None,
         blank=True,
+    )
+
+    token = models.CharField(
+        max_length=32, default=auth_token, help_text=_("Authorization token")
     )
 
     def __str__(self):
@@ -1704,6 +1713,10 @@ class TestJob(models.Model):
         JobFailureTag, blank=True, related_name="failure_tags"
     )
     failure_comment = models.TextField(null=True, blank=True)
+
+    token = models.CharField(
+        max_length=32, default=auth_token, help_text=_("Authorization token")
+    )
 
     @property
     def results_link(self):
