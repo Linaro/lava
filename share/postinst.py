@@ -70,6 +70,13 @@ def database(config):
     devel_password = "devel"
     devel_user = "devel"
 
+    # is the database ready?
+    try:
+        subprocess.check_call(["pg_isready"])
+    except subprocess.CalledProcessError:
+        print("Skipping database setup as PostgreSQL is not running")
+        return
+
     script = f"""
 DO $$
 BEGIN
