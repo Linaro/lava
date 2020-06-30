@@ -40,7 +40,6 @@ from lava_scheduler_app.models import (
     DeviceType,
     GroupDeviceTypePermission,
     GroupDevicePermission,
-    GroupWorkerPermission,
     Tag,
     TestJob,
     Worker,
@@ -1160,95 +1159,6 @@ ok 2 bar
         )
         assert response.status_code == 400  # nosec
 
-    def test_workers_get_certificate(self, monkeypatch, tmpdir):
-        (tmpdir / ("%s.key" % self.worker1.hostname)).write_text(
-            "hello", encoding="utf-8"
-        )
-
-        class MyPath(pathlib.PosixPath):
-            def __new__(cls, path, *args, **kwargs):
-                if path == settings.SLAVES_CERTS:
-                    return super().__new__(cls, str(tmpdir), *args, **kwargs)
-                else:
-                    assert 0  # nosec
-
-        monkeypatch.setattr(pathlib, "Path", MyPath)
-
-        # no permission
-        response = self.userclient.get(
-            reverse("api-root", args=[self.version])
-            + "workers/%s/certificate/" % self.worker1.hostname
-        )
-        assert response.status_code == 403  # nosec
-
-        GroupWorkerPermission.objects.assign_perm(
-            Worker.CHANGE_PERMISSION, self.group2, self.worker1
-        )
-        data = self.hit(
-            self.userclient,
-            reverse("api-root", args=[self.version])
-            + "workers/%s/certificate/" % self.worker1.hostname,
-        )
-        data = yaml_load(data)
-        assert data == str("hello")  # nosec
-
-        # worker does not exists
-        response = self.userclient.get(
-            reverse("api-root", args=[self.version])
-            + "workers/invalid_hostname/certificate/"
-        )
-        assert response.status_code == 404  # nosec
-
-        # no encryption key file
-        (tmpdir / ("%s.key" % self.worker1.hostname)).remove()
-        response = self.userclient.get(
-            reverse("api-root", args=[self.version])
-            + "workers/%s/certificate/" % self.worker1.hostname
-        )
-        assert response.status_code == 400  # nosec
-
-    def test_workers_set_certificate(self, monkeypatch, tmpdir):
-        class MyPath(pathlib.PosixPath):
-            def __new__(cls, path, *args, **kwargs):
-                if path == settings.SLAVES_CERTS:
-                    return super().__new__(cls, str(tmpdir), *args, **kwargs)
-                else:
-                    assert 0  # nosec
-
-        monkeypatch.setattr(pathlib, "Path", MyPath)
-        response = self.adminclient.post(
-            reverse("api-root", args=[self.version])
-            + "workers/%s/certificate/" % self.worker1.hostname,
-            {"key": "hello"},
-        )
-        assert response.status_code == 200  # nosec
-        assert (tmpdir / ("%s.key" % self.worker1.hostname)).read_text(  # nosec
-            encoding="utf-8"
-        ) == "hello"
-
-        # worker does not exists
-        response = self.adminclient.post(
-            reverse("api-root", args=[self.version])
-            + "workers/invalid_hostname/certificate/",
-            {"env": "hello"},
-        )
-        assert response.status_code == 404  # nosec
-
-        # insufficient permissions
-        response = self.userclient.post(
-            reverse("api-root", args=[self.version])
-            + "workers/%s/certificate/" % self.worker1.hostname,
-            {"env": "hello"},
-        )
-        assert response.status_code == 403  # nosec
-
-        # No env parameter
-        response = self.adminclient.post(
-            reverse("api-root", args=[self.version])
-            + "workers/%s/certificate/" % self.worker1.hostname
-        )
-        assert response.status_code == 400  # nosec
-
     def test_workers_filters(self):
         data = self.hit(
             self.adminclient,
@@ -1587,33 +1497,6 @@ ok 2 bar
             reverse("api-root", args=[self.version]) + "tags/?name__contains=2",
         )
         assert len(data["results"]) == 1  # nosec - unit test support
-
-    def test_system_certificate(self, monkeypatch, tmpdir):
-        (tmpdir / "master.key").write_text("hello", encoding="utf-8")
-
-        class MyPath(pathlib.PosixPath):
-            def __new__(cls, path, *args, **kwargs):
-                if path == settings.MASTER_CERT_PUB:
-                    return super().__new__(
-                        cls, str(tmpdir / "master.key"), *args, **kwargs
-                    )
-                else:
-                    assert 0  # nosec
-
-        monkeypatch.setattr(pathlib, "Path", MyPath)
-        data = self.hit(
-            self.userclient,
-            reverse("api-root", args=[self.version]) + "system/certificate/",
-        )
-        data = yaml_load(data)
-        assert data == str("hello")  # nosec
-
-        # no encryption key file
-        (tmpdir / "master.key").remove()
-        response = self.userclient.get(
-            reverse("api-root", args=[self.version]) + "system/certificate/"
-        )
-        assert response.status_code == 404  # nosec
 
     def test_system_version(self):
         version = self.hit(

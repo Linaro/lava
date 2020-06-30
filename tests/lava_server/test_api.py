@@ -17,11 +17,9 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-import pathlib
 import pytest
 import xmlrpc.client
 
-from django.conf import settings
 from django.contrib.auth.models import Group, User
 
 from lava_common.decorators import nottest
@@ -223,28 +221,3 @@ class TestLavaServerApi:
         assert (  # nosec
             self.user2.has_perm("lava_scheduler_app.view_device", self.device1) == False
         )
-
-    def test_get_master_certificate(self, monkeypatch, tmpdir):
-        user = self.ensure_user("test", "test@mail.net", "test")
-        server = self.server_proxy("test", "test")
-
-        (tmpdir / "master.key").write_text("hello", encoding="utf-8")
-
-        class MyPath(pathlib.PosixPath):
-            def __new__(cls, path, *args, **kwargs):
-                if path == settings.MASTER_CERT_PUB:
-                    return super().__new__(
-                        cls, str(tmpdir / "master.key"), *args, **kwargs
-                    )
-                else:
-                    assert 0  # nosec
-
-        monkeypatch.setattr(pathlib, "Path", MyPath)
-        assert str(server.system.get_master_certificate()) == "hello"  # nosec
-
-        # no certificate file
-        (tmpdir / "master.key").remove()
-        with pytest.raises(xmlrpc.client.Fault) as exc:
-            server.system.get_master_certificate()
-        assert exc.value.faultCode == 404  # nosec
-        assert exc.value.faultString == "Master does not have a certificate"  # nosec

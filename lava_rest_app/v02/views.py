@@ -19,7 +19,6 @@
 
 import csv
 import io
-import os
 import pathlib
 import voluptuous
 import yaml
@@ -531,45 +530,6 @@ class WorkerViewSet(base_views.WorkerViewSet, viewsets.ModelViewSet):
             else:
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @detail_route(methods=["get", "post"], suffix="certificate")
-    def certificate(self, request, **kwargs):
-        if not self.get_object():
-            raise Http404("Worker not found.")
-        if request.method == "GET":
-            if not self.get_object().can_change(request.user):
-                raise PermissionDenied(
-                    "Insufficient permissions. Please contact system administrator."
-                )
-            try:
-                path = pathlib.Path(settings.SLAVES_CERTS) / (
-                    "%s.key" % self.get_object().hostname
-                )
-                data = (path).read_text(encoding="utf-8")
-            except OSError:
-                raise ParseError(
-                    "Worker '%s' does not have '%s' file"
-                    % (self.get_object().hostname, path.name)
-                )
-            response = HttpResponse(
-                data.encode("utf-8"), content_type="application/yaml"
-            )
-            response["Content-Disposition"] = "attachment; filename=%s" % path.name
-            return response
-
-        elif request.method == "POST":
-            if not self.get_object().can_change(request.user):
-                raise PermissionDenied(
-                    "Insufficient permissions. Please contact system administrator."
-                )
-            path = pathlib.Path(settings.SLAVES_CERTS) / (
-                "%s.key" % self.get_object().hostname
-            )
-            serializer = serializers.SlaveKeySerializer(data=request.data)
-            if serializer.is_valid():
-                return self._set_file(request, path, serializer.validated_data["key"])
-            else:
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class AliasViewSet(viewsets.ModelViewSet):
     queryset = Alias.objects
@@ -651,20 +611,6 @@ class SystemViewSet(viewsets.ViewSet):
     def list(self, request, **kwargs):
         return Response()
 
-    @action(detail=False, methods=["get"], suffix="certificate")
-    def certificate(self, request, **kwargs):
-        try:
-            master_key_path = pathlib.Path(settings.MASTER_CERT_PUB)
-            data = (master_key_path).read_text(encoding="utf-8")
-        except FileNotFoundError:
-            raise Http404("There is no master public key %s" % master_key_path.name)
-
-        response = HttpResponse(data.encode("utf-8"), content_type="application/yaml")
-        response["Content-Disposition"] = (
-            "attachment; filename=%s" % master_key_path.name
-        )
-        return response
-
     @action(detail=False, methods=["get"], suffix="master_config")
     def master_config(self, request, **kwargs):
         """
@@ -679,58 +625,14 @@ class SystemViewSet(viewsets.ViewSet):
 
         ```json
         {
-          "MASTER_URL": "tcp://<lava-master-dns>:5556",
-          "LOGGING_URL": "tcp://<lava-master-dns>:5555",
-          "ENCRYPT": false,
-          "IPv6": false,
           "EVENT_SOCKET": "tcp://*:5500",
           "EVENT_TOPIC": "org.linaro.validation",
           "EVENT_NOTIFICATION": true,
           "LOG_SIZE_LIMIT": 10,
         }
         ```
-        If `ENCRYPT` is `true`, clients MUST already have a usable
-        client certificate installed on the master AND the current
-        master certificate installed on the client, before a
-        connection can be made.
         """
-        data = {
-            "master_socket": "tcp://<lava-master-dns>:5556",
-            "socket": "tcp://<lava-master-dns>:5555",
-            "encrypt": False,
-            "ipv6": False,
-        }
-
-        master = {"ERROR": "invalid master config"}
-        filename = os.path.join(settings.MEDIA_ROOT, "lava-master-config.yaml")
-        if os.path.exists(filename):
-            try:
-                with open(filename, "r") as output:
-                    master = yaml_safe_load(output)
-            except yaml.YAMLError as exc:
-                return Response(
-                    data=master, status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                )
-        if master:
-            data.update(master)
-
-        log_config = {"ERROR": "invalid logging config"}
-        filename = os.path.join(settings.MEDIA_ROOT, "lava-logs-config.yaml")
-        if os.path.exists(filename):
-            try:
-                with open(filename, "r") as output:
-                    log_config = yaml_safe_load(output)
-            except yaml.YAMLError as exc:
-                return Response(
-                    data=log_config, status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                )
-        if log_config:
-            data.update(log_config)
         ret_dict = {
-            "MASTER_URL": data["master_socket"],
-            "LOGGING_URL": data["socket"],
-            "IPv6": data["ipv6"],
-            "ENCRYPT": data.get("encrypt", False),
             "EVENT_TOPIC": settings.EVENT_TOPIC,
             "EVENT_SOCKET": settings.EVENT_SOCKET,
             "EVENT_NOTIFICATION": settings.EVENT_NOTIFICATION,
