@@ -4,7 +4,7 @@
     lava-coordinator.rst
     lava-server.rst
     lava-run.rst
-    lava-slave.rst
+    lava-worker.rst
     lava-lxc-mocker.rst
     lxc-attach.rst
     lxc-create.rst

@@ -220,7 +220,7 @@ def find_our_daemons():
         "lava-master": None,
         "lava-logs": None,
         "lava-publisher": None,
-        "lava-slave": None,
+        "lava-worker": None,
     }
 
     for path in Path("/proc").glob("*/cmdline"):
@@ -255,8 +255,8 @@ def find_our_daemons():
                 daemons["lava-publisher"] = pid
             continue
 
-        if "/usr/bin/lava-slave" in content[1]:
-            daemons["lava-slave"] = pid
+        if "/usr/bin/lava-worker" in content[1]:
+            daemons["lava-worker"] = pid
             continue
 
     return daemons
@@ -274,7 +274,7 @@ def check_services(app_configs, **kwargs):
         "lava-logs",
         "postgresql",
     ]
-    optional = ["lava-slave"]
+    optional = ["lava-worker"]
 
     # check if systemd is running
     try:

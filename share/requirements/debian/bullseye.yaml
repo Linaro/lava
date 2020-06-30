@@ -91,6 +91,8 @@ lava-server:
     unittests: true
 
 lava-dispatcher:
+  aiohttp:
+    name: python3-aiohttp
   PyYAML:
     name: python3-yaml
   configobj:

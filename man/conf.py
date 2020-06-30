@@ -252,9 +252,9 @@ man_pages = [
         1,
     ),
     (
-        "lava-slave",
-        "lava-slave",
-        u"manage connections to lava master",
+        "lava-worker",
+        "lava-worker",
+        u"manage connections to lava server",
         [u"Linaro Validation Team"],
         8,
     ),

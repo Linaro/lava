@@ -38,7 +38,7 @@ services = [
     "lava-master",
     "lava-publisher",
     "lava-server-gunicorn",
-    "lava-slave",
+    "lava-worker",
 ]
 
 

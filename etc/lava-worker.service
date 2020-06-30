@@ -1,0 +1,16 @@
+[Unit]
+Description=LAVA worker
+After=network.target remote-fs.target
+
+[Service]
+Type=simple
+Environment=URL=http://localhost/ LOGLEVEL=DEBUG
+EnvironmentFile=-/etc/default/lava-worker
+EnvironmentFile=-/etc/lava-dispatcher/lava-worker
+ExecStart=/usr/bin/lava-worker --level $LOGLEVEL --url $URL $TOKEN $WORKER_NAME $WS_URL
+TimeoutStopSec=20
+Restart=always
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target

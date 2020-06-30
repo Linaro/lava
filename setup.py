@@ -86,14 +86,13 @@ DISPATCHER = {
     "package_data": {
         "lava_dispatcher": ["dynamic_vm_keys/lava*", "lava_test_shell/**"]
     },
-    "scripts": ["lava/dispatcher/lava-run", "lava/dispatcher/lava-slave"],
+    "scripts": ["lava/dispatcher/lava-run", "lava/dispatcher/lava-worker"],
     "data_files": [
         ("/etc/exports.d/", ["etc/lava-dispatcher-nfs.exports"]),
-        ("/etc/lava-dispatcher/", ["etc/lava-slave"]),
-        ("/etc/lava-dispatcher/certificates.d/", []),
-        ("/etc/logrotate.d/", ["etc/logrotate.d/lava-slave-log"]),
+        ("/etc/lava-dispatcher/", ["etc/lava-worker"]),
+        ("/etc/logrotate.d/", ["etc/logrotate.d/lava-worker-log"]),
         ("/etc/modprobe.d/", ["etc/lava-modules.conf"]),
-        ("/lib/systemd/system/", ["etc/lava-slave.service"]),
+        ("/lib/systemd/system/", ["etc/lava-worker.service"]),
         ("/etc/systemd/system/systemd-udevd.service.d/", ["etc/udev/override.conf"]),
         ("/usr/share/lava-dispatcher/", ["etc/tftpd-hpa"]),
         ("/usr/share/lava-dispatcher/apache2/", ["share/apache2/lava-dispatcher.conf"]),

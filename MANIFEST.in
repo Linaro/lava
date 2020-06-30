@@ -15,7 +15,7 @@ include etc/lava-server-gunicorn.service
 include etc/logrotate.d/*
 include etc/settings.conf
 include lava/dispatcher/lava-run
-include lava/dispatcher/lava-slave
+include lava/dispatcher/lava-worker
 include lava/lxc-mocker/*
 include lava_common/VERSION
 include lava_dispatcher/dynamic_vm_keys/*

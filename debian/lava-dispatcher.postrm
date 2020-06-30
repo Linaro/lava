@@ -23,10 +23,12 @@ case "$1" in
       rm -f /etc/lava-dispatcher/lava-dispatcher.conf
       rm -f /etc/lava-dispatcher/lava-slave
       rm -f /var/lib/lava/dispatcher/slave/db.sqlite3
+      rm -f /var/lib/lava/dispatcher/worker/db.sqlite3
+      rm -f /var/lib/lava/dispatcher/worker/token
+      rm -rf /var/lib/lava/dispatcher/slave/tmp
       rm -rf /var/lib/lava/dispatcher/tmp
+      rm -rf /var/lib/lava/dispatcher/worker/tmp
       rm -rf /var/log/lava-dispatcher/
-      rm -rf /etc/lava-dispatcher/devices
-      rm -rf /etc/lava-dispatcher/device-types
     ;;
     remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
     ;;

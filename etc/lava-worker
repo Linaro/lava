@@ -1,0 +1,14 @@
+# Configuration for lava-worker daemon
+
+# worker name
+# Should be set for host that have random hostname (containers, ...)
+# The name can be any unique string.
+# WORKER_NAME="--name <hostname.fqdn>"
+
+# Logging level should be uppercase (DEBUG, INFO, WARN, ERROR)
+# LOGLEVEL="DEBUG"
+
+# Server connection
+# URL="http://localhost/"
+# TOKEN="--token <token>"
+# WS_URL="--ws-url http://localhost/ws/"
