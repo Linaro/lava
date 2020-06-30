@@ -42,28 +42,8 @@ def setup_logger(data):
     # The logger can be used by the parser and the Job object in all phases.
     global logger
     logger = logging.getLogger("dispatcher")
-    if options.logging_url is not None:
-        if options.master_cert and options.slave_cert:
-            if not os.path.exists(options.master_cert) or not os.path.exists(
-                options.slave_cert
-            ):
-                syslog.syslog(
-                    "[%s] Unable to find certificates for %s"
-                    % (options.job_id, options.logging_url)
-                )
-                return None
-        # pylint: disable=no-member
-        handler = logger.addZMQHandler(
-            options.logging_url,
-            options.master_cert,
-            options.slave_cert,
-            options.job_id,
-            options.socks_proxy,
-            options.ipv6,
-        )
-    else:
-        syslog.syslog("[%s] Logging to streamhandler" % options.job_id)
-        logger.addHandler(logging.StreamHandler())
+    syslog.syslog("[%s] Logging to streamhandler" % options.job_id)
+    logger.addHandler(logging.StreamHandler())
 
     return logger
 
