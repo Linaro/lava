@@ -19,84 +19,144 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+from typing import Dict, List, Tuple
+
+import contextlib
 import datetime
 import logging
-import zmq
-import zmq.auth
-from zmq.utils.strtypes import b
+import multiprocessing
+import requests
+import signal
+import time
 
 from lava_common.compat import yaml_dump
+from lava_common.version import __version__
 
 
-class ZMQPushHandler(logging.Handler):
-    def __init__(self, logging_url, master_cert, slave_cert, job_id, socks_proxy, ipv6):
+def dump(data: Dict) -> str:
+    # Set width to a really large value in order to always get one line.
+    # But keep this reasonable because the logs will be loaded by CLoader
+    # that is limited to around 10**7 chars
+    data_str = yaml_dump(
+        data, default_flow_style=True, default_style='"', width=10 ** 6
+    )[:-1]
+    # Test the limit and skip if the line is too long
+    if len(data_str) >= 10 ** 6:
+        if isinstance(data["msg"], str):
+            data["msg"] = "<line way too long ...>"
+        else:
+            data["msg"] = {"skip": "line way too long ..."}
+        data_str = yaml_dump(
+            data, default_flow_style=True, default_style='"', width=10 ** 6
+        )[:-1]
+    return data_str
+
+
+def sender(conn, url: str, token: str) -> None:
+    HEADERS = {"User-Agent": f"lava {__version__}", "LAVA-Token": token}
+    MAX_RECORDS = 1000
+    MAX_TIME = 1
+
+    def post(session, records: List[str], index: int) -> Tuple[List[str], int]:
+        # limit the number of records to send in one call
+        data, remaining = records[:MAX_RECORDS], records[MAX_RECORDS:]
+        with contextlib.suppress(requests.RequestException):
+            # Do not specify a timeout so we wait forever for an answer. This is a
+            # background process so waiting is not an issue.
+            # Will avoid resending the same request a second time if gunicorn
+            # is too slow to answer.
+            ret = session.post(
+                url,
+                data={"lines": "- " + "\n- ".join(data), "index": index},
+                headers=HEADERS,
+            )
+
+            if ret.status_code == 200:
+                with contextlib.suppress(KeyError, ValueError):
+                    count = int(ret.json()["line_count"])
+                    data = data[count:]
+                    index += count
+        return (data + remaining, index)
+
+    last_call = time.time()
+    records: List[str] = []
+    leaving: bool = False
+    index: int = 0
+
+    with requests.Session() as session:
+        while not leaving:
+            # Listen for new messages if we don't have  message yet or some
+            # messages are already in the socket.
+            if len(records) == 0 or conn.poll(MAX_TIME):
+                data = conn.recv_bytes()
+                if data == b"":
+                    leaving = True
+                else:
+                    records.append(data.decode("utf-8"))
+
+            records_limit = len(records) >= MAX_RECORDS
+            time_limit = (time.time() - last_call) >= MAX_TIME
+            if records and (records_limit or time_limit):
+                last_call = time.time()
+                # Send the data
+                (records, index) = post(session, records, index)
+
+        while records:
+            # Send the data
+            (records, index) = post(session, records, index)
+
+
+class HTTPHandler(logging.Handler):
+    def __init__(self, url, token):
         super().__init__()
-
-        # Keep track of the parameters
-        self.logging_url = logging_url
-        self.master_cert = master_cert
-        self.slave_cert = slave_cert
-        self.socks_proxy = socks_proxy
-        self.ipv6 = ipv6
-
-        # Create the PUSH socket
-
-        self.context = zmq.Context()
-        self.socket = self.context.socket(zmq.PUSH)
-
-        if socks_proxy:
-            self.socket.setsockopt(zmq.SOCKS_PROXY, b(socks_proxy))
-
-        if ipv6:
-            self.socket.setsockopt(zmq.IPV6, 1)
-
-        # Load the certificates (if encryption is on)
-        if master_cert is not None and slave_cert is not None:
-            (client_public, client_private) = zmq.auth.load_certificate(slave_cert)
-            self.socket.curve_publickey = client_public
-            self.socket.curve_secretkey = client_private
-
-            (server_public, _) = zmq.auth.load_certificate(master_cert)
-            self.socket.curve_serverkey = server_public
-
-        self.socket.connect(logging_url)
-
-        self.job_id = str(job_id)
         self.formatter = logging.Formatter("%(message)s")
+        # Create the multiprocess sender
+        (reader, writter) = multiprocessing.Pipe(duplex=False)
+        self.writter = writter
+        # Block sigint so the sender function will not receive it.
+        # TODO: block more signals?
+        signal.pthread_sigmask(signal.SIG_BLOCK, [signal.SIGINT])
+        self.proc = multiprocessing.Process(target=sender, args=(reader, url, token))
+        self.proc.start()
+        signal.pthread_sigmask(signal.SIG_UNBLOCK, [signal.SIGINT])
 
     def emit(self, record):
-        msg = [b(self.job_id), b(self.formatter.format(record))]
-        self.socket.send_multipart(msg)
+        data = self.formatter.format(record)
+        # Skip empty strings
+        # This can't happen as data is a dictionary dumped in yaml format
+        if data == "":
+            return
+        self.writter.send_bytes(data.encode("utf-8"))
 
-    def close(self, linger=-1):
-        # If the process crashes really early, the handler will be closed
-        # directly by the logging module. In this case, close is called without
-        # any arguments.
+    def close(self):
         super().close()
-        self.context.destroy(linger=linger)
+
+        # wait for the multiprocess
+        self.writter.send_bytes(b"")
+        self.proc.join()
 
 
 class YAMLLogger(logging.Logger):
     def __init__(self, name):
         super().__init__(name)
         self.handler = None
+        self.markers = {}
+        self.line = 0
 
-    def addZMQHandler(
-        self, logging_url, master_cert, slave_cert, job_id, socks_proxy, ipv6
-    ):
-        self.handler = ZMQPushHandler(
-            logging_url, master_cert, slave_cert, job_id, socks_proxy, ipv6
-        )
+    def addHTTPHandler(self, url, token):
+        self.handler = HTTPHandler(url, token)
         self.addHandler(self.handler)
         return self.handler
 
-    def close(self, linger=-1):
+    def close(self):
         if self.handler is not None:
-            self.handler.close(linger)
+            self.handler.close()
             self.removeHandler(self.handler)
             self.handler = None
 
     def log_message(self, level, level_name, message, *args, **kwargs):
+        # Increment the line count
+        self.line += 1
         # Build the dictionary
         data = {"dt": datetime.datetime.utcnow().isoformat(), "lvl": level_name}
 
@@ -105,21 +165,7 @@ class YAMLLogger(logging.Logger):
         else:
             data["msg"] = message
 
-        # Set width to a really large value in order to always get one line.
-        # But keep this reasonable because the logs will be loaded by CLoader
-        # that is limited to around 10**7 chars
-        data_str = yaml_dump(
-            data, default_flow_style=True, default_style='"', width=10 ** 6
-        )[:-1]
-        # Test the limit and skip if the line is too long
-        if len(data_str) >= 10 ** 6:
-            if isinstance(message, str):
-                data["msg"] = "<line way too long ...>"
-            else:
-                data["msg"] = {"skip": "line way too long ..."}
-            data_str = yaml_dump(
-                data, default_flow_style=True, default_style='"', width=10 ** 6
-            )[:-1]
+        data_str = dump(data)
         self._log(level, data_str, ())
 
     def exception(self, exc, *args, **kwargs):
@@ -150,9 +196,21 @@ class YAMLLogger(logging.Logger):
         self.log_message(logging.INFO, "event", message, *args, **kwargs)
 
     def marker(self, message, *args, **kwargs):
-        self.log_message(logging.INFO, "marker", message, *args, **kwargs)
+        case = message["case"]
+        m_type = message["type"]
+        self.markers.setdefault(case, {})[m_type] = self.line - 1
 
     def results(self, results, *args, **kwargs):
         if "extra" in results and "level" not in results:
             raise Exception("'level' is mandatory when 'extra' is used")
+
+        # Extract and append test case markers
+        case = results["case"]
+        markers = self.markers.get(case)
+        if markers is not None:
+            test_case = markers.get("test_case")
+            results["starttc"] = markers.get("start_test_case", test_case)
+            results["endtc"] = markers.get("end_test_case", test_case)
+            del self.markers[case]
+
         self.log_message(logging.INFO, "results", results, *args, **kwargs)
