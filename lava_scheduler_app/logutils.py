@@ -248,6 +248,8 @@ class LogsElasticsearch(Logs):
             doc.update(
                 {"dt": datetime.datetime.fromtimestamp(doc["dt"] / 1000.0).isoformat()}
             )
+            if doc["lvl"] == "results":
+                doc.update({"msg": yaml_load(doc["msg"])})
             result.append(doc)
         return result
 
@@ -278,6 +280,8 @@ class LogsElasticsearch(Logs):
         line = yaml_load(line)[0]
         dt = datetime.datetime.strptime(line["dt"], "%Y-%m-%dT%H:%M:%S.%f")
         line.update({"job_id": job.id, "dt": int(dt.timestamp() * 1000)})
+        if line["lvl"] == "results":
+            line.update({"msg": str(line["msg"])})
         data = simplejson.dumps(line)
 
         requests.post("%s_doc/" % self.api_url, data=data, headers=self.headers)
