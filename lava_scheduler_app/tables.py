@@ -20,7 +20,7 @@
 
 import random
 from django.contrib.admin.models import LogEntry
-from django.utils.html import escape
+from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.timesince import timesince
 import django_tables2 as tables
@@ -85,21 +85,27 @@ class ExpandedStatusColumn(tables.Column):
         """
         if record.state == Device.STATE_RUNNING:
             current_job = record.current_job()
-            return mark_safe(  # nosec - internal data
-                "Running job #%s - %s submitted by %s"
-                % (pklink(current_job), current_job.description, current_job.submitter)
-            )
+            if current_job:
+                return format_html(
+                    "Running #{} {} [{}]",
+                    pklink(current_job),
+                    current_job.description,
+                    current_job.submitter,
+                )
+            else:
+                return "Running"
         elif record.state == Device.STATE_RESERVED:
             current_job = record.current_job()
-            return mark_safe(  # nosec - internal data
-                'Reserved for job #%s (%s) "%s" submitted by %s'
-                % (
+            if current_job:
+                return format_html(
+                    'Reserved for {} ({}) "{}" [{}]',
                     pklink(current_job),
                     current_job.get_state_display(),
                     current_job.description,
                     current_job.submitter,
                 )
-            )
+            else:
+                return "Reserved"
         elif record.state == Device.STATE_IDLE and record.health in [
             Device.HEALTH_BAD,
             Device.HEALTH_MAINTENANCE,
