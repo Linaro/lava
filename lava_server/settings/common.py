@@ -248,6 +248,10 @@ ELASTICSEARCH_APIKEY = ""
 # Send notifications to worker admins after the master is upgraded.
 MASTER_UPGRADE_NOTIFY = False
 
+# Worker in the specific network will be allowed to auto register
+WORKER_AUTO_REGISTER = True
+WORKER_AUTO_REGISTER_NETMASK = ["127.0.0.0/8", "::1"]
+
 ################
 # DRF settings #
 ################

@@ -108,7 +108,7 @@ def create_metadata_store(results, job):
     return meta_filename
 
 
-def map_scanned_results(results, job, markers, meta_filename):
+def map_scanned_results(results, job, starttc, endtc, meta_filename):
     """
     Sanity checker on the logged results dictionary
     :param results: results logged via the slave
@@ -188,13 +188,6 @@ def map_scanned_results(results, job, markers, meta_filename):
                 name,
             )
             return None
-        # Add the marker if available
-        starttc = endtc = None
-        if name in markers:
-            test_case = markers[name].get("test_case")
-            starttc = markers[name].get("start_test_case", test_case)
-            endtc = markers[name].get("end_test_case", test_case)
-            del markers[name]
         try:
             test_case = TestCase(
                 name=name,

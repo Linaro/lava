@@ -1530,8 +1530,7 @@ class TestJob(models.Model):
 
     def go_state_scheduled(self, device=None):
         """
-        The jobs has been scheduled or the given device.
-        lava-master will send a START to the right lava-slave.
+        The jobs has been scheduled on the given device.
         """
         dynamic_connection = self.dynamic_connection
         if device is None:
@@ -1571,7 +1570,7 @@ class TestJob(models.Model):
 
     def go_state_canceling(self, sub_cancel=False):
         """
-        The job was canceled by a user. lava-master will send a CANCEL to the right lava-slave.
+        The job was canceled by a user.
         """
         if self.state >= TestJob.STATE_CANCELING:
             return
@@ -1979,25 +1978,53 @@ class TestJob(models.Model):
     def is_multinode(self):
         return bool(self.target_group)
 
-    @property
-    def lookup_worker(self):
+    def dynamic_jobs(self):
         if not self.is_multinode:
-            return None
+            return []
+        try:
+            data = yaml_safe_load(self.definition)
+        except yaml.YAMLError:
+            return []
+        try:
+            role = data["protocols"]["lava-multinode"]["role"]
+        except (KeyError, TypeError):
+            return []
+
+        for job in self.sub_jobs_list:
+            if job == self:
+                continue
+            try:
+                sub_data = yaml_safe_load(job.definition)
+            except yaml.YAMLError:
+                continue
+            if not "connection" in sub_data:
+                continue
+            if role == sub_data.get("host_role"):
+                yield job
+
+    def dynamic_host(self):
+        if self.actual_device is not None:
+            return self.actual_device.worker_host
+
         try:
             data = yaml_safe_load(self.definition)
         except yaml.YAMLError:
             return None
-        if "host_role" not in data:
+        host_role = data.get("host_role")
+        if not host_role:
             return None
-        parent = None
-        # the protocol requires a count of 1 for any role specified as a host_role
-        for worker_job in self.sub_jobs_list:
-            if worker_job.device_role == data["host_role"]:
-                parent = worker_job
-                break
-        if not parent or not parent.actual_device:
-            return None
-        return parent.actual_device.worker_host
+
+        for job in self.sub_jobs_list:
+            if job == self:
+                continue
+            try:
+                data = yaml_safe_load(job.definition)
+            except yaml.YAMLError:
+                continue
+            role = data.get("protocols", {}).get("lava-multinode", {}).get("role")
+            if role == host_role:
+                return job
+        return None
 
     @property
     def display_id(self):

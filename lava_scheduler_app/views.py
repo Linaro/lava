@@ -24,6 +24,7 @@ import datetime
 import io
 import logging
 import os
+from pathlib import Path
 import simplejson
 import tarfile
 import re
@@ -38,6 +39,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied, FieldDoesNotExist
 from django.urls import reverse
 from django.db import transaction
+from django.db.utils import DatabaseError
 from django.db.models import Case, IntegerField, Sum, When
 from django.template.loader import render_to_string
 from django.http import (
@@ -53,15 +55,20 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.db.models import Q
 from django.utils import timezone
 from django.utils.timesince import timeuntil
-from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods, require_POST
 from django_tables2 import RequestConfig
 
-from lava_common.compat import yaml_load, yaml_safe_load
+from lava_common.compat import yaml_load, yaml_safe_dump, yaml_safe_load
+from lava_common.log import dump
 from lava_common.schemas import validate
+from lava_common.version import __version__
 
+from lava_results_app.dbutils import map_scanned_results, create_metadata_store
 from lava_server.views import index as lava_index
 from lava_server.bread_crumbs import BreadCrumb, BreadCrumbTrail
 from lava_server.compat import djt2_paginator_class
+from lava_server.files import File
 
 from lava_scheduler_app.models import (
     Device,
@@ -78,7 +85,9 @@ from lava_scheduler_app.dbutils import (
     testjob_submission,
     validate_job,
 )
+from lava_scheduler_app.utils import get_user_ip, is_ip_allowed
 from lava_scheduler_app.logutils import logs_instance
+from lava_scheduler_app.signals import send_event
 from lava_scheduler_app.templatetags.utils import udecode
 
 from lava_server.lavatable import LavaView
@@ -1045,6 +1054,302 @@ def health_job_list(request, pk):
             "bread_crumb_trail": BreadCrumbTrail.leading_to(health_job_list, pk=pk),
         },
     )
+
+
+@require_http_methods(["GET", "POST"])
+@csrf_exempt
+def internal_v1_jobs(request, pk):
+    try:
+        job = TestJob.objects.get(pk=pk)
+    except TestJob.DoesNotExist:
+        return JsonResponse({"error": f"Unknown job '{pk}'"}, status=404)
+
+    token = request.META.get("HTTP_LAVA_TOKEN")
+    if token is None:
+        return JsonResponse({"error": "Missing 'token'"}, status=400)
+    if token != job.token:
+        return JsonResponse({"error": "Invalid 'token'"}, status=400)
+
+    if request.method == "GET":
+        job_def = yaml_safe_load(job.definition)
+        job_def["compatibility"] = job.pipeline_compatibility
+        job_def_str = yaml_safe_dump(job_def)
+        job_ctx = job_def.get("context", {})
+
+        if job.dynamic_connection:
+            host = job.dynamic_host()
+            device = host.actual_device
+            worker = device.worker_host
+            host_device_cfg = device.load_configuration(job_ctx)
+            device_cfg_str = yaml_safe_dump(
+                device.minimise_configuration(host_device_cfg)
+            )
+        else:
+            device = job.actual_device
+            worker = device.worker_host
+            device_cfg_str = device.load_configuration(job_ctx, output_format="yaml")
+
+        def config(kind):
+            try:
+                data = File(kind, worker.hostname).read(raising=False)
+                yaml_safe_load(data)
+                return data
+            except yaml.YAMLError:
+                # Raise an OSError because the caller uses yaml.YAMLError for a
+                # specific usage. Allows here to specify the faulty filename.
+                raise OSError(
+                    "", f"Invalid YAML file for {worker.hostname}: {kind} file"
+                )
+
+        env_str = config("env")
+        env_dut_str = config("env-dut")
+        dispatcher_cfg = config("dispatcher")
+
+        # Save the configuration
+        path = Path(job.output_dir)
+        path.mkdir(mode=0o755, parents=True, exist_ok=True)
+        (path / "job.yaml").write_text(job_def_str, encoding="utf-8")
+        (path / "device.yaml").write_text(device_cfg_str, encoding="utf-8")
+        if dispatcher_cfg:
+            (path / "dispatcher.yaml").write_text(dispatcher_cfg, encoding="utf-8")
+        if env_str:
+            (path / "env.yaml").write_text(env_str)
+        if env_dut_str:
+            (path / "env.dut.yaml").write_text(env_dut_str, encoding="utf-8")
+
+        return JsonResponse(
+            {
+                "definition": job_def_str,
+                "device": device_cfg_str,
+                "dispatcher": dispatcher_cfg,
+                "env": env_str,
+                "env-dut": env_dut_str,
+            }
+        )
+    else:
+        # POST request
+        state = request.POST.get("state", "").capitalize()
+        if state not in TestJob.STATE_REVERSE:
+            return JsonResponse({"error": f"Invalid state '{state}'"}, status=400)
+
+        with transaction.atomic():
+            # TODO: find a way to lock actual_device
+            job = TestJob.objects.select_for_update().get(pk=pk)
+            if TestJob.STATE_REVERSE[state] == TestJob.STATE_RUNNING:
+                job.go_state_running()
+            elif TestJob.STATE_REVERSE[state] == TestJob.STATE_FINISHED:
+                # Check the result
+                health = request.POST.get("result", "")
+                error_type = request.POST.get("error_type", "")
+                errors = request.POST.get("errors")
+                description = request.POST.get("description", "")
+                if health not in ["pass", "fail"]:
+                    return JsonResponse(
+                        {"error": f"Invalid health '{health}'"}, status=400
+                    )
+
+                health = (
+                    TestJob.HEALTH_COMPLETE
+                    if health == "pass"
+                    else TestJob.HEALTH_INCOMPLETE
+                )
+                infrastructure_error = error_type in [
+                    "Bug",
+                    "Configuration",
+                    "Infrastructure",
+                ]
+                job.go_state_finished(health, infrastructure_error)
+                if errors:
+                    job.failure_comment = errors
+                Path(job.output_dir).mkdir(mode=0o755, parents=True, exist_ok=True)
+                (Path(job.output_dir) / "description.yaml").write_text(
+                    description, encoding="utf-8"
+                )
+            else:
+                return JsonResponse(
+                    {"error": f"Not handled state '{state}'"}, status=400
+                )
+            job.save()
+
+        return JsonResponse({})
+
+
+@require_POST
+@csrf_exempt
+def internal_v1_jobs_logs(request, pk):
+    try:
+        job = TestJob.objects.get(pk=pk)
+    except TestJob.DoesNotExist:
+        return JsonResponse({"error": f"Unknown job '{pk}'"}, status=404)
+
+    # Check authentication
+    token = request.META.get("HTTP_LAVA_TOKEN")
+    if token is None:
+        return JsonResponse({"error": "Missing 'token'"}, status=400)
+    if token != job.token:
+        return JsonResponse({"error": "Invalid 'token'"}, status=400)
+
+    # check data
+    lines = request.POST.get("lines")
+    if not lines:
+        return JsonResponse({"error": "Missing 'lines'"}, status=400)
+    line_idx = request.POST.get("index")
+    if line_idx is None:
+        return JsonResponse({"error": "Missing 'index'"}, status=400)
+    try:
+        # Index sent by lava-run to know if some lines are resent.
+        line_idx = int(line_idx)
+    except ValueError:
+        return JsonResponse({"error": "Invalid 'index'"}, status=400)
+
+    # TODO: leaky logutils abstraction
+    path = Path(job.output_dir)
+    path.mkdir(mode=0o755, parents=True, exist_ok=True)
+    output = (path / "output.yaml").open("ab")
+    index = (path / "output.idx").open("ab")
+    line_skip = logs_instance.line_count(job) - line_idx
+
+    # TODO: use a database transaction so all or none objects are saved
+    # TODO: except exceptions and return the number of lines that where actually parsed !!
+    test_cases = []
+    line_count = 0
+    for (line, string) in zip(yaml_load(lines), lines.split("\n")):
+        # skip lines that where already saved to disk
+        if line_skip > 0:
+            line_skip -= 1
+        else:
+            # Handle lava-event
+            if line["lvl"] == "event":
+                send_event(
+                    ".event", "lavaserver", {"message": line["msg"], "job": job.id}
+                )
+                line["lvl"] = "debug"
+                string = "- " + dump(line)
+
+            # Save the log line
+            logs_instance.write(job, (string + "\n").encode("utf-8"), output, index)
+
+        # handle test case results
+        if line["lvl"] == "results":
+            starttc = endtc = None
+            with contextlib.suppress(KeyError):
+                starttc = line["msg"]["starttc"]
+                del line["msg"]["starttc"]
+            with contextlib.suppress(KeyError):
+                endtc = line["msg"]["endtc"]
+                del line["msg"]["endtc"]
+            meta_filename = create_metadata_store(line["msg"], job)
+            new_test_case = map_scanned_results(
+                results=line["msg"],
+                job=job,
+                starttc=starttc,
+                endtc=endtc,
+                meta_filename=meta_filename,
+            )
+
+            if new_test_case is not None:
+                test_cases.append(new_test_case)
+        line_count += 1
+
+    # Save the new test cases
+    try:
+        TestCase.objects.bulk_create(test_cases)
+    except (DatabaseError, ValueError):
+        for tc in test_cases:
+            with contextlib.suppress(DatabaseError, ValueError):
+                tc.save()
+
+    return JsonResponse({"line_count": line_count})
+
+
+@require_http_methods(["GET", "POST"])
+@csrf_exempt
+def internal_v1_workers(request, pk=None):
+    if request.method == "GET":
+        try:
+            worker = Worker.objects.get(hostname=pk)
+        except Worker.DoesNotExist:
+            return JsonResponse({"error": f"Unknown worker '{pk}'"}, status=404)
+
+        token = request.META.get("HTTP_LAVA_TOKEN")
+        if token is None:
+            return JsonResponse({"error": "Missing 'token'"}, status=400)
+        if token != worker.token:
+            return JsonResponse({"error": "Invalid 'token'"}, status=400)
+
+        # Update the version
+        version = request.GET.get("version")
+        if version is None:
+            return JsonResponse({"error": "Missing 'version'"}, status=400)
+
+        # Check the version
+        if version != __version__:
+            Worker.objects.filter(pk=pk).update(version=version)
+            return JsonResponse(
+                {"error": f"Version mismatch '{version}' vs '{__version__}'"},
+                status=400,
+            )
+
+        # Set last_ping and version
+        worker.last_ping = timezone.now()
+        worker.version = version
+
+        # Go online if needed
+        if worker.state == Worker.STATE_OFFLINE:
+            worker.go_state_online()
+        worker.save()
+
+        # Grab the jobs for this dispatcher
+        query = TestJob.objects.filter(actual_device__worker_host=worker)
+        start_query = query.filter(state=TestJob.STATE_SCHEDULED)
+        cancel_query = query.filter(state=TestJob.STATE_CANCELING)
+        running_query = query.filter(state=TestJob.STATE_RUNNING)
+
+        starts = list(start_query.values("id", "token"))
+        cancels = list(cancel_query.values("id", "token"))
+        runnings = list(running_query.values("id", "token"))
+
+        for job in start_query.filter(target_group__isnull=False):
+            starts += [{"id": j.id, "token": j.token} for j in job.dynamic_jobs()]
+        for job in cancel_query.filter(target_group__isnull=False):
+            cancels += [{"id": j.id, "token": j.token} for j in job.dynamic_jobs()]
+        for job in running_query.filter(target_group__isnull=False):
+            runnings += [{"id": j.id, "token": j.token} for j in job.dynamic_jobs()]
+
+        # Return starting, canceling and running jobs
+        return JsonResponse({"cancel": cancels, "running": runnings, "start": starts})
+
+    else:
+        if pk is not None:
+            return JsonResponse({"error": "POST is forbidden for such url"}, status=403)
+
+        if not settings.WORKER_AUTO_REGISTER:
+            return JsonResponse({"error": "Auto registration is disabled"}, status=403)
+
+        name = request.POST.get("name")
+        if name is None:
+            return JsonResponse({"error": "Missing 'name'"}, status=400)
+
+        user_ip = get_user_ip(request)
+        if user_ip is None:
+            return JsonResponse({"error": "Missing client ip"}, status=400)
+
+        if not is_ip_allowed(user_ip, settings.WORKER_AUTO_REGISTER_NETMASK):
+            return JsonResponse(
+                {"error": f"Auto registration is forbidden for '{user_ip}'"}, status=403
+            )
+
+        with contextlib.suppress(Worker.DoesNotExist):
+            worker = Worker.objects.get(hostname=name)
+            return JsonResponse(
+                {"error": f"Worker '{name}' already registered"}, status=403
+            )
+
+        # TODO: ask for a specific user to give admin access to the worker
+        worker = Worker.objects.create(
+            hostname=name, description=f"Auto registered by {user_ip}"
+        )
+        return JsonResponse({"name": name, "token": worker.token})
 
 
 class MyJobsView(JobTableView):
