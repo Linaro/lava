@@ -105,7 +105,7 @@ def handle_devices_map(options):
     container = options.container
     container_type = options.container_type
     job_id = "0"  # fake map
-    fields = ["serial_number", "vendor_id", "product_id", "fs_label"]
+    fields = ["serial_number", "usb_vendor_id", "usb_product_id", "fs_label"]
     device_info = {
         k: options.__dict__[k] for k in fields if k in options and options.__dict__[k]
     }
@@ -169,10 +169,16 @@ def main(argv):
             default=None,
         )
         subparser.add_argument(
-            "--vendor-id", help="Vendor ID of the device to be shared", default=None
+            "--vendor-id",
+            dest="usb_vendor_id",
+            help="Vendor ID of the device to be shared",
+            default=None,
         )
         subparser.add_argument(
-            "--product-id", help="Product ID of the device to be shared", default=None
+            "--product-id",
+            dest="usb_product_id",
+            help="Product ID of the device to be shared",
+            default=None,
         )
         subparser.add_argument(
             "--fs-label",
