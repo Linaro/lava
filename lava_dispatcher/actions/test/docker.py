@@ -155,7 +155,9 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
 
         self.add_device_container_mappings(container, "docker")
 
-        devices = get_udev_devices(device_info=self.device_info, required=False)
+        devices = get_udev_devices(
+            device_info=self.device_info, logger=self.logger, required=False
+        )
         for dev in devices:
             share_device_with_container_docker(container, dev)
 

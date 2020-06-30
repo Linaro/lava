@@ -89,7 +89,7 @@ def test_run(action, mocker):
     add_device_container_mappings.assert_called()
 
     get_udev_devices.assert_called_with(
-        device_info=[{"board_id": "0123456789"}], required=False
+        device_info=[{"board_id": "0123456789"}], logger=mocker.ANY, required=False
     )
 
     # overlay gets created
