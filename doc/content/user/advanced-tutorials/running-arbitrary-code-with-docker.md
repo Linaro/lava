@@ -137,18 +137,6 @@ specified image, and the following applies:
   can run `adb` and have it connect to the device.
     * For example this can be used in AOSP jobs to run CTS/VTS against the
       device.
-* By default, before starting the container to run the tests LAVA will wait for
-  the USB connection to the device to be available. In some cases, for example
-  if you intend to interact with a bootloader via serial before it brings up
-  the USB OTG port, you can tell LAVA to not wait for the device:
-    ```yaml
-    # ...
-        - test:
-            docker:
-                image: my-adb-image
-                wait:
-                    device: false
-    ```
 * The device connection settings are exposed to the tests running in the
   container via environment variables. For example, assume the given connection
   commands in the device configuration:

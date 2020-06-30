@@ -30,7 +30,7 @@ from lava_dispatcher.power import ReadFeedback
 from lava_dispatcher.shell import ShellCommand, ShellSession
 from lava_dispatcher.utils.docker import DockerRun
 from lava_dispatcher.utils.udev import get_udev_devices
-from lava_dispatcher.utils.udev import WaitDeviceBoardID
+from lava_dispatcher_host import share_device_with_container_docker
 from lava_dispatcher_host.action import DeviceContainerMappingMixin
 
 
@@ -87,12 +87,7 @@ class DockerTestAction(Action, GetBoardId):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.pipeline.add_action(DockerTestSetEnvironment())
         self.pipeline.add_action(CreateOverlay())
-        wait_for_device = (
-            parameters.get("docker", {}).get("wait", {}).get("device", True)
-        )
-        if wait_for_device:
-            self.pipeline.add_action(WaitDeviceBoardID(self.get_board_id()))
-        self.pipeline.add_action(DockerTestShell(wait_for_device))
+        self.pipeline.add_action(DockerTestShell())
         self.pipeline.add_action(ReadFeedback())
 
 
@@ -126,10 +121,6 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
     description = "Runs lava-test-shell in a docker container"
     summary = "Runs lava-test-shell in a docker container"
 
-    def __init__(self, wait_for_device=True):
-        super().__init__()
-        self.wait_for_device = wait_for_device
-
     def run(self, connection, max_end_time):
         # obtain lava overlay
         # start container
@@ -145,18 +136,12 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
         image = self.parameters["docker"]["image"]
         container = "lava-docker-test-shell-%s-%s" % (self.job.job_id, self.level)
 
-        self.add_device_container_mappings(container, "docker")
-
         docker = DockerRun(image)
         docker.bind_mount(os.path.join(location, overlay), "/" + overlay)
         docker.interactive()
         docker.hostname("lava")
         docker.name(container)
         docker.environment("PS1", "docker-test-shell:$ ")
-        if self.wait_for_device:
-            devices = get_udev_devices(device_info=self.device_info)
-            for dev in devices:
-                docker.add_device(dev)
 
         docker_cmd = docker.cmdline("bash", "--norc", "-i")
 
@@ -166,8 +151,14 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
 
         shell_connection = ShellSession(self.job, shell)
         shell_connection.prompt_str = "docker-test-shell:"
-
         self.__set_connection__(shell_connection)
+
+        self.add_device_container_mappings(container, "docker")
+
+        devices = get_udev_devices(device_info=self.device_info, required=False)
+        for dev in devices:
+            share_device_with_container_docker(container, dev)
+
         super().run(shell_connection, max_end_time)
 
         # finish the container

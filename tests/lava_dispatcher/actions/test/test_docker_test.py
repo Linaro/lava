@@ -25,13 +25,6 @@ from pathlib import Path
 from tests.lava_dispatcher.test_basic import Factory
 
 
-from lava_common.compat import yaml_load
-from lava_common.timeout import Timeout
-from lava_dispatcher.device import NewDevice
-from lava_dispatcher.job import Job
-from lava_dispatcher.actions.test.docker import DockerTestAction
-
-
 @pytest.fixture
 def factory():
     return Factory()
@@ -85,8 +78,8 @@ def test_run(action, mocker):
         "lava_dispatcher.actions.test.docker.get_udev_devices",
         return_value=["/dev/foobar"],
     )
-    WaitDeviceBoardID_run = mocker.patch(
-        "lava_dispatcher.utils.udev.WaitDeviceBoardID.run"
+    share_device_with_container_docker = mocker.patch(
+        "lava_dispatcher.actions.test.docker.share_device_with_container_docker"
     )
 
     action.validate()
@@ -95,8 +88,9 @@ def test_run(action, mocker):
     # device is shared with the container
     add_device_container_mappings.assert_called()
 
-    WaitDeviceBoardID_run.assert_called()
-    get_udev_devices.assert_called_with(device_info=[{"board_id": "0123456789"}])
+    get_udev_devices.assert_called_with(
+        device_info=[{"board_id": "0123456789"}], required=False
+    )
 
     # overlay gets created
     overlay = next(Path(action.job.tmp_dir).glob("lava-create-overlay-*/lava-*"))
@@ -126,8 +120,8 @@ def test_run(action, mocker):
         )
         is not None
     )
-    # device passed to docker
-    assert "--device=/dev/foobar" in docker_call
+    # device shared with docker
+    share_device_with_container_docker.assert_called_with(mocker.ANY, "/dev/foobar")
 
     # the lava-test-shell implementation gets called with the docker shell
     action_run.assert_called_with(docker_connection, mocker.ANY)
@@ -139,24 +133,3 @@ def test_run(action, mocker):
 def test_stages(first_test_action, second_test_action):
     assert first_test_action.parameters["stage"] == 0
     assert second_test_action.parameters["stage"] == 1
-
-
-def test_wait_for_board_id_is_optional(factory):
-    action = DockerTestAction()
-    action.job = Job("1234", {}, None)
-    rendered, _ = factory.create_device("hi6220-hikey-r2-01.jinja2")
-    action.job.device = NewDevice(yaml_load(rendered))
-    action.job.timeout = Timeout("blah")
-    action.level = 1
-    action.populate(
-        {
-            "namespace": "common",
-            "docker": {"image": "foobar", "wait": {"device": False}},
-        }
-    )
-    assert not any(
-        [a for a in action.pipeline.actions if a.name == "wait-device-boardid"]
-    )
-
-    docker_test_shell = action.pipeline.actions[-2]
-    assert not docker_test_shell.wait_for_device
