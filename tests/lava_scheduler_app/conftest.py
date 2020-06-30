@@ -6,7 +6,7 @@ from lava_server.files import File
 
 
 @pytest.fixture(autouse=True)
-def update_settings(settings, mocker):
+def update_settings(settings, mocker, tmpdir):
     base = pathlib.Path(__file__).parent.parent.parent
     settings.DEVICES_PATH = str(base / "tests" / "lava_scheduler_app" / "devices")
     settings.DEVICE_TYPES_PATHS = [
@@ -20,6 +20,18 @@ def update_settings(settings, mocker):
         {
             "device": ([settings.DEVICES_PATH], "{name}.jinja2"),
             "device-type": (settings.DEVICE_TYPES_PATHS, "{name}.jinja2"),
+            "dispatcher": [
+                "/etc/lava-server/dispatcher.d/{name}/dispatcher.yaml",
+                "/etc/lava-server/dispatcher.d/{name}.yaml",
+            ],
+            "env": [
+                "/etc/lava-server/dispatcher.d/{name}/env.yaml",
+                "/etc/lava-server/env.yaml",
+            ],
+            "env-dut": [
+                "/etc/lava-server/dispatcher.d/{name}/env-dut.yaml",
+                "/etc/lava-server/env.dut.yaml",
+            ],
             "health-check": ([settings.HEALTH_CHECKS_PATH], "{name}.yaml"),
         },
     )
@@ -36,3 +48,6 @@ def update_settings(settings, mocker):
 
     mocker.patch("lava_scheduler_app.environment.devices", devices)
     mocker.patch("lava_scheduler_app.environment.device_types", device_types)
+    mocker.patch(
+        "lava_scheduler_app.models.TestJob.output_dir", str(tmpdir / "job-output")
+    )
