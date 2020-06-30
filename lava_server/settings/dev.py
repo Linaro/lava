@@ -20,7 +20,7 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
-import os
+from pathlib import Path
 
 from lava_server.settings.common import *
 
@@ -32,20 +32,16 @@ DEBUG = True
 ######################
 
 # Top-level directory of the project.
-PROJECT_SRC_DIR = os.path.normpath(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
-)
+PROJECT_SRC_DIR = (Path(__file__).parent.resolve() / ".." / "..").resolve()
 
 # Top-level directory of the static files
-PROJECT_STATE_DIR = os.environ.get(
-    "LAVA_BASE_DIR", os.path.join(PROJECT_SRC_DIR, "tmp")
-)
+PROJECT_STATE_DIR = PROJECT_SRC_DIR / "tmp"
 
 # Create state directory if needed
-os.makedirs(PROJECT_STATE_DIR, exist_ok=True)
+PROJECT_STATE_DIR.mkdir(parents=True, exist_ok=True)
 
 # LAVA logs
-DJANGO_LOGFILE = os.path.join(PROJECT_STATE_DIR, "django.log")
+DJANGO_LOGFILE = str(PROJECT_STATE_DIR / "django.log")
 
 # Test database
 DATABASES = {
@@ -61,22 +57,18 @@ DATABASES = {
 
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 # Example: "/home/media/media.lawrence.com/"
-MEDIA_ROOT = os.path.join(PROJECT_STATE_DIR, "media")
+MEDIA_ROOT = str(PROJECT_STATE_DIR / "media")
 
 # Absolute filesystem path to the directory that will hold static, read only
 # files collected from all applications.
 # Example: "/home/media/static.lawrence.com/"
-STATIC_ROOT = os.path.join(PROJECT_STATE_DIR, "static")
+STATIC_ROOT = str(PROJECT_STATE_DIR / "static")
 
-DISPATCHER_CONFIG_PATH = os.path.join(PROJECT_SRC_DIR, "etc/lava-server/dispatcher.d")
+DISPATCHER_CONFIG_PATH = str(PROJECT_SRC_DIR / "etc/lava-server/dispatcher.d")
 # Use device configuration files from source tree
-DEVICES_PATH = os.path.join(PROJECT_SRC_DIR, "etc/dispatcher-config/devices")
-DEVICE_TYPES_PATHS = [
-    os.path.join(PROJECT_SRC_DIR, "etc/dispatcher-config/device-types")
-]
-HEALTH_CHECKS_PATH = os.path.join(
-    PROJECT_SRC_DIR, "etc/dispatcher-config/health-checks"
-)
+DEVICES_PATH = str(PROJECT_SRC_DIR / "etc/dispatcher-config/devices")
+DEVICE_TYPES_PATHS = [str(PROJECT_SRC_DIR / "etc/dispatcher-config/device-types")]
+HEALTH_CHECKS_PATH = str(PROJECT_SRC_DIR / "etc/dispatcher-config/health-checks")
 
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = "00000000000000000000000000000000000000000000000000"
