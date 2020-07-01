@@ -1,9 +1,11 @@
 {# device_type: stm32-carbon #}
 {% extends 'base.jinja2' %}
+{% set usb_vendor_id = '0483' %}
+{% set usb_product_id = 'df11' %}
 {% block body %}
 board_id: '{{ board_id|default('0000000000') }}'
-usb_vendor_id: '0483'
-usb_product_id: 'df11'
+usb_vendor_id: '{{ usb_vendor_id }}'
+usb_product_id: '{{ usb_product_id }}'
 
 actions:
   deploy:
@@ -20,3 +22,5 @@ actions:
           command:
             dfu-util
 {% endblock -%}
+
+{% set device_info = device_info|default([{'board_id': board_id, 'usb_vendor_id': usb_vendor_id, 'usb_product_id': usb_product_id}]) %}

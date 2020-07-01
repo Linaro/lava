@@ -1,9 +1,11 @@
 {# device_type: cc3220SF #}
 {% extends 'base.jinja2' %}
+{% set usb_vendor_id = '0451' %}
+{% set usb_product_id = 'bef3' %}
 {% block body %}
 board_id: '{{ board_id|default('00000000') }}'
-usb_vendor_id: '0451'
-usb_product_id: 'bef3'
+usb_vendor_id: '{{ usb_vendor_id }}'
+usb_product_id: '{{ usb_product_id }}'
 usb_sleep: {{ usb_sleep|default(10) }}
 
 actions:
@@ -58,3 +60,5 @@ actions:
             container: '{{ docker_container|default('ti-openocd') }}'
             devices: {{ docker_devices|default([]) }}
 {% endblock body %}
+
+{% set device_info = device_info|default([{'board_id': board_id, 'usb_vendor_id': usb_vendor_id, 'usb_product_id': usb_product_id}]) %}

@@ -1,9 +1,11 @@
 {# device_type: disco-l475-iot1 #}
 {% extends 'base.jinja2' %}
+{% set usb_vendor_id = '0483' %}
+{% set usb_product_id = '374b' %}
 {% block body %}
 board_id: '{{ board_id|default('0000000000') }}'
-usb_vendor_id: '0483'
-usb_product_id: '374b'
+usb_vendor_id: '{{ usb_vendor_id }}'
+usb_product_id: '{{ usb_product_id }}'
 usb_sleep: {{ usb_sleep|default(10) }}
 
 actions:
@@ -36,3 +38,5 @@ actions:
           docker:
             use: False
 {% endblock body -%}
+
+{% set device_info = device_info|default([{'board_id': board_id, 'usb_vendor_id': usb_vendor_id, 'usb_product_id': usb_product_id}]) %}
