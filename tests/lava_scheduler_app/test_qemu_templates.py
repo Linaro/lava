@@ -314,6 +314,7 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
                     "or32",
                     "ppc",
                     "ppc64",
+                    "riscv64",
                     "s390x",
                     "sh4",
                     "sh4eb",

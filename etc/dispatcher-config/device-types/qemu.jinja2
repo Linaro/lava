@@ -31,6 +31,7 @@ available_architectures:
 - nios2
 - ppc
 - ppc64
+- riscv64
 - sparc
 - sparc64
 {% for arch in qemu_misc_architectures %}
@@ -82,6 +83,8 @@ actions:
             qemu-system-ppc
 {% elif arch == 'ppc64' %}
             qemu-system-ppc64
+{% elif arch == 'riscv64' %}
+            qemu-system-riscv64
 {% elif arch == 'sparc' %}
             qemu-system-sparc
 {% elif arch == 'sparc64' %}
@@ -122,6 +125,10 @@ actions:
 {% endif %}
 {% if arch == 'ppc64' %}
           - -machine {{ machine|default('pseries') }}
+{% endif %}
+{% if arch == 'riscv64' %}
+          - -machine {{ machine|default('virt') }}
+          - -cpu {{ cpu|default('rv64') }}
 {% endif %}
 {% if arch == 'sparc' %}
           - -machine {{ machine|default('SS-5') }}
