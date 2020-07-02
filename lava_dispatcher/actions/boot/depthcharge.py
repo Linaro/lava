@@ -134,7 +134,10 @@ class DepthchargeCommandOverlay(BootloaderCommandOverlay):
         fit_tftp = self.get_namespace_data(
             action="prepare-fit", label="file", key="fit"
         )
-        substitutions = {"{CMDLINE}": cmdline_tftp, "{FIT}": fit_tftp}
+        substitutions = {
+            "{CMDLINE}": cmdline_tftp,
+            "{DEPTHCHARGE_KERNEL}": fit_tftp
+        }
         commands = self.get_namespace_data(
             action="bootloader-overlay", label=self.method, key="commands"
         )
