@@ -5,7 +5,7 @@
 {% set kernel_args = [base_kernel_args, extra_kernel_args] | join(" ") %}
 
 {% set base_depthcharge_commands = depthcharge_tftp_commands | default(
-"          - tftpboot {SERVER_IP} {DEPTHCHARGE_KERNEL} {CMDLINE}
+"          - tftpboot {SERVER_IP} {DEPTHCHARGE_KERNEL} {CMDLINE} {DEPTHCHARGE_RAMDISK}
 ") -%}
 
 {% block vland %}

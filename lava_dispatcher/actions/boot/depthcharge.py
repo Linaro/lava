@@ -139,14 +139,20 @@ class DepthchargeCommandOverlay(BootloaderCommandOverlay):
             action="prepare-fit", label="file", key="fit"
         )
 
+        # Also load ramdisk if available and not using a FIT image
+        ramdisk_tftp = self.get_namespace_data(
+            action="compress-ramdisk", label="file", key="ramdisk"
+        )
+
         substitutions = {
             "{CMDLINE}": cmdline_tftp,
             "{DEPTHCHARGE_KERNEL}": fit_tftp or kernel_tftp,
+            "{DEPTHCHARGE_RAMDISK}": ramdisk_tftp if not fit_tftp else "",
         }
         commands = self.get_namespace_data(
             action="bootloader-overlay", label=self.method, key="commands"
         )
-        commands = substitute(commands, substitutions)
+        commands = substitute(commands, substitutions, drop=True, drop_line=False)
         self.set_namespace_data(
             action="bootloader-overlay",
             label=self.method,
