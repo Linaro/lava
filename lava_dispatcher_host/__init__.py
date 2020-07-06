@@ -40,10 +40,14 @@ def add_device_container_mapping(
     logger = logging.getLogger("dispatcher")
     mapping_path = get_mapping_path(job_id)
     data = load_mapping_data(mapping_path)
-    data.append(item)
+
+    # remove old mappings for the same device_info
+    newdata = [old for old in data if old["device_info"] != item["device_info"]]
+    newdata.append(item)
+
     os.makedirs(os.path.dirname(mapping_path), exist_ok=True)
     with open(mapping_path, "w") as f:
-        f.write(yaml_dump(data))
+        f.write(yaml_dump(newdata))
         logger.info(
             "Added mapping for {device_info} to {container_type} container {container}".format(
                 **item
@@ -87,14 +91,6 @@ def share_device_with_container(options, setup_logger=None):
     else:
         raise InfrastructureError('Unsupported container type: "%s"' % container_type)
 
-    logger.info(
-        "Sharing {device} with {container_type} container {container}".format(
-            device=device,
-            container_type=data["container_type"],
-            container=data["container"],
-        )
-    )
-
 
 def find_mapping(options):
     for mapping in glob.glob(get_mapping_path("*")):
@@ -129,11 +125,18 @@ def match_mapping(device_info, options):
     return matched
 
 
+def log_sharing_device(device, container_type, container):
+    logger = logging.getLogger("dispatcher")
+    logger.info(f"Sharing {device} with {container_type} container {container}")
+
+
 def share_device_with_container_lxc(container, node):
+    log_sharing_device(node, "lxc", container)
     subprocess.check_call(["lxc-device", "-n", container, "add", node])
 
 
 def share_device_with_container_docker(container, node):
+    log_sharing_device(node, "docker", container)
     container_id = subprocess.check_output(
         ["docker", "inspect", "--format={{.ID}}", container], text=True
     ).strip()
@@ -151,7 +154,7 @@ def share_device_with_container_docker(container, node):
             container,
             "sh",
             "-c",
-            "mkdir -p %s && mknod %s c %d %d"
+            "mkdir -p %s && mknod %s c %d %d || true"
             % (os.path.dirname(node), node, major, minor),
         ]
     )

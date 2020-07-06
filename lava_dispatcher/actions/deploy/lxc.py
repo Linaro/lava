@@ -36,8 +36,8 @@ from lava_common.constants import (
     LXC_DEFAULT_PACKAGES,
 )
 from lava_dispatcher.utils.udev import allow_fs_label
-from lava_dispatcher_host import add_device_container_mapping
 from lava_dispatcher.utils.filesystem import lxc_path
+from lava_dispatcher_host.action import DeviceContainerMappingMixin
 
 
 class Lxc(Deployment):
@@ -219,7 +219,7 @@ class LxcCreateAction(Action):
         return connection
 
 
-class LxcCreateUdevRuleAction(Action):
+class LxcCreateUdevRuleAction(Action, DeviceContainerMappingMixin):
     """
     Creates Lxc related udev rules for this container.
     """
@@ -278,23 +278,8 @@ class LxcCreateUdevRuleAction(Action):
         if "device_info" not in self.job.device:
             return connection
 
-        device_info = self.job.device.get("device_info", [])
-        job_id = self.job.job_id
-        job_prefix = self.job.parameters["dispatcher"].get("prefix", "")
-        for device in device_info:
-            data = {
-                "serial_number": str(device.get("board_id", "")),
-                "vendor_id": device.get("usb_vendor_id"),
-                "product_id": device.get("usb_product_id"),
-                "fs_label": device.get("fs_label"),
-            }
-            add_device_container_mapping(
-                job_prefix + job_id,
-                data,
-                lxc_name,
-                container_type="lxc",
-                logging_info=self.get_logging_info(),
-            )
+        self.add_device_container_mappings(lxc_name, "lxc")
+
         return connection
 
 
