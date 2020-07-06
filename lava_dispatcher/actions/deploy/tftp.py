@@ -102,7 +102,15 @@ class TftpAction(Action):
             parameters=parameters,
         )
 
-        for key in ["ramdisk", "kernel", "dtb", "nfsrootfs", "modules", "preseed"]:
+        for key in [
+            "ramdisk",
+            "kernel",
+            "dtb",
+            "nfsrootfs",
+            "modules",
+            "preseed",
+            "tee",
+        ]:
             if key in parameters:
                 self.pipeline.add_action(
                     DownloaderAction(key, path=self.tftp_dir, params=parameters[key])

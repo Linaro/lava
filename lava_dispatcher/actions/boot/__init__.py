@@ -430,6 +430,9 @@ class BootloaderCommandOverlay(Action):
                 action="download-action", label="file", key="kernel"
             ),
             "{LAVA_MAC}": self.lava_mac,
+            "{TEE}": self.get_namespace_data(
+                action="download-action", label="file", key="tee"
+            ),
         }
         self.bootcommand = self.get_namespace_data(
             action="uboot-prepare-kernel", label="bootcommand", key="bootcommand"
@@ -448,6 +451,7 @@ class BootloaderCommandOverlay(Action):
             kernel_addr = self.job.device["parameters"][self.bootcommand]["kernel"]
             dtb_addr = self.job.device["parameters"][self.bootcommand]["dtb"]
             ramdisk_addr = self.job.device["parameters"][self.bootcommand]["ramdisk"]
+            tee_addr = self.job.device["parameters"][self.bootcommand]["tee"]
 
             if (
                 not self.get_namespace_data(
@@ -473,28 +477,51 @@ class BootloaderCommandOverlay(Action):
             ):
                 # no u-boot header, thus no embedded size, so we have to add it to the
                 # boot cmd with colon after the ramdisk
-                substitutions["{BOOTX}"] = "%s %s %s:%s %s" % (
-                    self.bootcommand,
-                    kernel_addr,
-                    ramdisk_addr,
-                    "${initrd_size}",
-                    dtb_addr,
-                )
+                if self.get_namespace_data(
+                    action="download-action", label="file", key="tee"
+                ):
+                    substitutions["{BOOTX}"] = "%s %s %s:%s %s" % (
+                        self.bootcommand,
+                        tee_addr,
+                        ramdisk_addr,
+                        "${initrd_size}",
+                        dtb_addr,
+                    )
+                else:
+                    substitutions["{BOOTX}"] = "%s %s %s:%s %s" % (
+                        self.bootcommand,
+                        kernel_addr,
+                        ramdisk_addr,
+                        "${initrd_size}",
+                        dtb_addr,
+                    )
             else:
-                substitutions["{BOOTX}"] = "%s %s %s %s" % (
-                    self.bootcommand,
-                    kernel_addr,
-                    ramdisk_addr,
-                    dtb_addr,
-                )
+                if self.get_namespace_data(
+                    action="download-action", label="file", key="tee"
+                ):
+                    substitutions["{BOOTX}"] = "%s %s %s %s" % (
+                        self.bootcommand,
+                        tee_addr,
+                        ramdisk_addr,
+                        dtb_addr,
+                    )
+                else:
+                    substitutions["{BOOTX}"] = "%s %s %s %s" % (
+                        self.bootcommand,
+                        kernel_addr,
+                        ramdisk_addr,
+                        dtb_addr,
+                    )
 
             substitutions["{KERNEL_ADDR}"] = kernel_addr
             substitutions["{DTB_ADDR}"] = dtb_addr
             substitutions["{RAMDISK_ADDR}"] = ramdisk_addr
+            substitutions["{TEE_ADDR}"] = tee_addr
             self.results = {
                 "kernel_addr": kernel_addr,
                 "dtb_addr": dtb_addr,
                 "ramdisk_addr": ramdisk_addr,
+                "tee_addr": tee_addr,
             }
 
         nfs_address = self.get_namespace_data(

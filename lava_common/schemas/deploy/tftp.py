@@ -54,5 +54,6 @@ def schema():
             Required("address"): str,
             Optional("install_overlay"): bool,
         },
+        Optional("tee"): resource,
     }
     return {**deploy.schema(), **base}
