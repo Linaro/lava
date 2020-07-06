@@ -32,7 +32,7 @@ from lava_scheduler_app.models import (
     Core,
     JobFailureTag,
 )
-from lava_results_app.models import TestCase
+from lava_results_app.models import TestCase, TestSuite, TestSet
 from django.contrib.auth.models import User, Group, Permission
 from django.core.exceptions import ValidationError
 from django_filters.filters import CharFilter
@@ -423,8 +423,36 @@ class TestJobFilter(filters.FilterSet):
         }
 
 
+class TestSuiteFilter(filters.FilterSet):
+    class Meta:
+        model = TestSuite
+        fields = {
+            "id": ["exact", "lt", "gt"],
+            "name": ["exact", "in", "contains", "icontains", "startswith", "endswith"],
+        }
+
+
+class TestSetFilter(filters.FilterSet):
+    suite = RelatedFilter(
+        "TestSuiteFilter", name="suite", queryset=TestSuite.objects.all()
+    )
+
+    class Meta:
+        model = TestSet
+        fields = {
+            "id": ["exact", "lt", "gt"],
+            "name": ["exact", "in", "contains", "icontains", "startswith", "endswith"],
+        }
+
+
 class TestCaseFilter(filters.FilterSet):
     result = CharFilter(method="filter_result")
+    suite = RelatedFilter(
+        "TestSuiteFilter", name="suite", queryset=TestSuite.objects.all()
+    )
+    test_set = RelatedFilter(
+        "TestSetFilter", name="test_set", queryset=TestSet.objects.all()
+    )
 
     def filter_result(self, queryset, name, value):
         try:
@@ -439,6 +467,23 @@ class TestCaseFilter(filters.FilterSet):
     class Meta:
         model = TestCase
         exclude = {}
+        fields = {
+            "id": ["exact", "lt", "gt"],
+            "start_log_line": ["exact", "lt", "lte", "gt", "gte"],
+            "end_log_line": ["exact", "lt", "lte", "gt", "gte"],
+            "logged": ["exact", "lt", "lte", "gt", "gte"],
+            "measurement": ["exact", "lt", "lte", "gt", "gte"],
+            "metadata": [
+                "exact",
+                "in",
+                "contains",
+                "icontains",
+                "startswith",
+                "endswith",
+            ],
+            "units": ["exact", "in", "contains", "icontains", "startswith", "endswith"],
+            "name": ["exact", "in", "contains", "icontains", "startswith", "endswith"],
+        }
 
 
 class GroupDeviceTypePermissionFilter(filters.FilterSet):
