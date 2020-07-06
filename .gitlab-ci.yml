@@ -111,6 +111,10 @@ sast:
   variables:
     SAST_DEFAULT_ANALYZERS: "bandit"
 
+
+codespell:
+  <<: *analyze
+
 #########
 # Build #
 #########
