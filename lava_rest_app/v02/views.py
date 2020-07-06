@@ -236,7 +236,7 @@ class TestSuiteViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
 
     queryset = TestSuite.objects
     serializer_class = serializers.TestSuiteSerializer
-    filter_fields = "__all__"
+    filter_class = filters.TestSuiteFilter
 
     @detail_route(methods=["get"], suffix="csv")
     def csv(self, request, **kwargs):
