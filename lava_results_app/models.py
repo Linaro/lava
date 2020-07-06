@@ -846,7 +846,7 @@ class Query(models.Model):
         return QueryMaterializedView.view_exists(self.id)
 
     def get_results(self, user, order_by=["-id"]):
-        """ Used to get query results for persistant queries. """
+        """ Used to get query results for persistent queries. """
 
         omitted_list = QueryOmitResult.objects.filter(query=self).values_list(
             "object_id", flat=True

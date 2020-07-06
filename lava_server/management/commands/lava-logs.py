@@ -78,7 +78,7 @@ class Command(LAVADaemonCommand):
         self.logger = logging.getLogger("lava-logs")
         self.log_socket = None
         self.auth = None
-        self.controler = None
+        self.controller = None
         self.inotify_fd = None
         self.pipe_r = None
         self.poller = None
@@ -145,18 +145,18 @@ class Command(LAVADaemonCommand):
         # Create the sockets
         context = zmq.Context()
         self.log_socket = context.socket(zmq.PULL)
-        self.controler = context.socket(zmq.ROUTER)
-        self.controler.setsockopt(zmq.IDENTITY, b"lava-logs")
+        self.controller = context.socket(zmq.ROUTER)
+        self.controller.setsockopt(zmq.IDENTITY, b"lava-logs")
         # Limit the number of messages in the queue
-        self.controler.setsockopt(zmq.SNDHWM, 2)
+        self.controller.setsockopt(zmq.SNDHWM, 2)
         # From http://api.zeromq.org/4-2:zmq-setsockopt#toc5
         # "Immediately readies that connection for data transfer with the master"
-        self.controler.setsockopt(zmq.CONNECT_RID, b"master")
+        self.controller.setsockopt(zmq.CONNECT_RID, b"master")
 
         if options["ipv6"]:
             self.logger.info("[INIT] Enabling IPv6")
             self.log_socket.setsockopt(zmq.IPV6, 1)
-            self.controler.setsockopt(zmq.IPV6, 1)
+            self.controller.setsockopt(zmq.IPV6, 1)
 
         encryption_settings = get_encryption_settings(options)
         if encryption_settings["encrypt"]:
@@ -185,9 +185,9 @@ class Command(LAVADaemonCommand):
             self.log_socket.curve_publickey = master_public
             self.log_socket.curve_secretkey = master_secret
             self.log_socket.curve_server = True
-            self.controler.curve_publickey = master_public
-            self.controler.curve_secretkey = master_secret
-            self.controler.curve_serverkey = master_public
+            self.controller.curve_publickey = master_public
+            self.controller.curve_secretkey = master_secret
+            self.controller.curve_serverkey = master_public
 
         self.logger.debug("[INIT] Watching %s", encryption_settings["slaves_certs"])
         self.cert_dir_path = encryption_settings["slaves_certs"]
@@ -196,13 +196,13 @@ class Command(LAVADaemonCommand):
             self.logger.error("[INIT] Unable to start inotify")
 
         self.log_socket.bind(options["socket"])
-        self.controler.connect(options["master_socket"])
+        self.controller.connect(options["master_socket"])
 
         # Poll on the sockets. This allow to have a
         # nice timeout along with polling.
         self.poller = zmq.Poller()
         self.poller.register(self.log_socket, zmq.POLLIN)
-        self.poller.register(self.controler, zmq.POLLIN)
+        self.poller.register(self.controller, zmq.POLLIN)
         if self.inotify_fd is not None:
             self.poller.register(os.fdopen(self.inotify_fd), zmq.POLLIN)
 
@@ -213,7 +213,7 @@ class Command(LAVADaemonCommand):
         self.logger.info("[INIT] listening for logs")
         # PING right now: the master is waiting for this message to start
         # scheduling.
-        self.controler.send_multipart([b"master", b"PING"])
+        self.controller.send_multipart([b"master", b"PING"])
 
         try:
             self.main_loop()
@@ -221,9 +221,9 @@ class Command(LAVADaemonCommand):
             self.logger.error("[EXIT] Unknown exception raised, leaving!")
             self.logger.exception(exc)
 
-        # Close the controler socket
-        self.controler.close(linger=0)
-        self.poller.unregister(self.controler)
+        # Close the controller socket
+        self.controller.close(linger=0)
+        self.poller.unregister(self.controller)
 
         # Carefully close the logging socket as we don't want to lose messages
         self.logger.info("[EXIT] Disconnect logging socket and process messages")
@@ -269,7 +269,7 @@ class Command(LAVADaemonCommand):
                     tc.save()
                     saved += 1
                 except (DatabaseError, ValueError) as exc:
-                    self.logger.error("Droping %s: %s", tc, str(exc))
+                    self.logger.error("Dropping %s: %s", tc, str(exc))
             self.logger.info(
                 "%d test cases saved, %d dropped", saved, len(self.test_cases) - saved
             )
@@ -303,7 +303,7 @@ class Command(LAVADaemonCommand):
             if now - self.last_ping > self.ping_interval:
                 self.logger.debug("PING => master")
                 self.last_ping = now
-                self.controler.send_multipart([b"master", b"PING"])
+                self.controller.send_multipart([b"master", b"PING"])
 
     def wait_for_messages(self, leaving):
         try:
@@ -333,7 +333,7 @@ class Command(LAVADaemonCommand):
                     return True
 
             # Pong received
-            elif sockets.get(self.controler) == zmq.POLLIN:
+            elif sockets.get(self.controller) == zmq.POLLIN:
                 self.controler_socket()
                 return True
 
@@ -485,7 +485,7 @@ class Command(LAVADaemonCommand):
         # n.b. logging here would produce a log entry for every message in every job.
 
     def controler_socket(self):
-        msg = self.controler.recv_multipart()
+        msg = self.controller.recv_multipart()
         try:
             master_id = u(msg[0])
             action = u(msg[1])
@@ -500,7 +500,7 @@ class Command(LAVADaemonCommand):
                 self.logger.error("Invalid answer '%s'. Should be 'PONG'", action)
                 return
         except UnicodeDecodeError:
-            self.logger.error("Invalid controler message: can't be decoded")
+            self.logger.error("Invalid controller message: can't be decoded")
             return
         except (IndexError, ValueError):
             self.logger.error("Invalid message '%s'", msg)

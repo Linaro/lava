@@ -271,7 +271,7 @@ class DeviceLogView(LavaView):
 
 def health_jobs_in_hr():
     # Only used for count on scheduler home page so we're not filtering
-    # for view accessibilty atm.
+    # for view accessibility atm.
     return (
         TestJob.objects.values("actual_device")
         .filter(Q(health_check=True) & ~Q(actual_device=None))
@@ -1723,7 +1723,7 @@ def job_fail(request, pk):
         job = get_restricted_job(request.user, pk, request=request, for_update=True)
         if job.state != TestJob.STATE_CANCELING:
             return HttpResponseForbidden(
-                "Job should be canceled before behing failed", content_type="text/plain"
+                "Job should be canceled before being failed", content_type="text/plain"
             )
         job.go_state_finished(TestJob.HEALTH_INCOMPLETE)
         job.save()

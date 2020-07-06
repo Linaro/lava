@@ -5,7 +5,7 @@ timeouts:
   job:
     minutes: 90            # timeout for the whole job (default: ??h)
   action:
-    minutes: 10         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
+    minutes: 10         # default timeout applied for each action; can be overridden in the action itself (default: ?h)
   actions:
     u-boot-interrupt:
       seconds: 120

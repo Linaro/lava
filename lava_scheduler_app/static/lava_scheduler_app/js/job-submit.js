@@ -79,7 +79,7 @@ validate_definition_callback = function(result) {
 }
 
 unselect_error_line = function() {
-    // Unselect any potential previously selected lines.
+    // Deselect any potential previously selected lines.
     $(".lineno").removeClass("lineselect");
 }
 

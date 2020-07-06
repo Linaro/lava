@@ -889,7 +889,7 @@ $(document).ready(function () {
                                      plot_data[id]["data"]);
                     insert_data_item(key, label,
                                      plot_data[id]["labels"]);
-                    // Meta keys are made unique by concatination.
+                    // Meta keys are made unique by concatenation.
                     plot_data[id]["meta"][data_item.join("_")] =
                         meta_item;
                 } else {
@@ -899,7 +899,7 @@ $(document).ready(function () {
                     data_item = [key, value];
                     plot_data[id]["data"].push(data_item);
                     plot_data[id]["labels"].push(label);
-                    // Make meta keys are made unique by concatination.
+                    // Make meta keys are made unique by concatenation.
                     plot_data[id]["meta"][data_item.join("_")] =
                         meta_item;
                 }
@@ -1144,7 +1144,7 @@ $(document).ready(function () {
         };
 
         // We cannot apply autoscaleMargin for y axis since y_max and y_min
-        // are explicitely set. Therefore we will manually increase/decrease
+        // are explicitly set. Therefore we will manually increase/decrease
         // the limits.
         y_max += (0.1 * Math.abs(y_max));
         y_min -= (0.1 * Math.abs(y_min));

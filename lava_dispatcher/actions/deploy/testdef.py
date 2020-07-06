@@ -336,8 +336,8 @@ class InlineRepoAction(RepoAction):
 
     priority = 1
     name = "inline-repo-action"
-    description = "apply inline test defintion to the test image"
-    summary = "exctract inline test definition"
+    description = "apply inline test definition to the test image"
+    summary = "extract inline test definition"
 
     def validate(self):
         if "repository" not in self.parameters:

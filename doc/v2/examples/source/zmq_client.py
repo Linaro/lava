@@ -78,7 +78,7 @@ class JobListener:
                     try:
                         (topic, uuid, dt, username, data) = msg[:]
                     except IndexError:
-                        # Droping invalid message
+                        # Dropping invalid message
                         continue
 
                     data = yaml.safe_load(data)

@@ -256,7 +256,7 @@ def main():
         "-a",
         "--actions",
         default="prepare,build,test,push,publish",
-        help="comma seperated list of actions",
+        help="comma separated list of actions",
     )
     parser.add_argument(
         "-d",

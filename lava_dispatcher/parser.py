@@ -145,7 +145,7 @@ class JobParser:
                     {"class": test_type, "parameters": test_parameters}
                 )
 
-        # FIXME: also read permissable overrides from device config and set from job data
+        # FIXME: also read permissible overrides from device config and set from job data
         # FIXME: ensure that a timeout for deployment 0 does not get set as the timeout for deployment 1 if 1 is default
         for action_data in data["actions"]:
             for name in action_data:

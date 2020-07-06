@@ -116,7 +116,7 @@ DD_PROMPTS = [r"[0-9]+\+[0-9]+ records out", r"[0-9]+ bytes \(.*\) copied"]
 # fallback UEFI menu label class
 DEFAULT_UEFI_LABEL_CLASS = r"a-zA-Z0-9\s\:"
 
-# Set a default newline seperator for pexpect, override as necessary
+# Set a default newline separator for pexpect, override as necessary
 LINE_SEPARATOR = "\n"
 # other newline separators
 UEFI_LINE_SEPARATOR = "\r\n"

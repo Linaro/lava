@@ -357,7 +357,7 @@ class ApplyOverlayTftp(Action):
         else:
             self.logger.debug("[%s] No overlay directory", namespace)
         if self.parameters.get("os") == "centos_installer":
-            # centos installer ramdisk doesnt like having anything other
+            # centos installer ramdisk doesn't like having anything other
             # than the kickstart config being inserted. Instead, make the
             # overlay accessible through tftp. Yuck.
             tftp_dir = os.path.dirname(

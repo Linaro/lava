@@ -69,7 +69,7 @@ class QueryForm(forms.ModelForm):
                     self.add_error(
                         "name",
                         """ Query already exists but is archived. Please
-                        contact system adminstrator or consult LAVA doc. """,
+                        contact system administrator or consult LAVA doc. """,
                     )
                 elif not self.instance.id:
                     self.add_error(

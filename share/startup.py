@@ -20,7 +20,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #
-# Pre install some usefull tools when stating a python script with:
+# Pre install some useful tools when stating a python script with:
 # PYTHONSTARTUP=./share/startup.py python
 #
 

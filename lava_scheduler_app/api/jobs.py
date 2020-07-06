@@ -84,7 +84,7 @@ class SchedulerJobsAPI(ExposedV2API):
         Return value
         ------------
         Return an array with [job, device, dispatcher, env, env-dut] config.
-        Any of theses values might be None if the corresponding file hasn't
+        Any of these values might be None if the corresponding file hasn't
         been used by the job.
         If the job hasn't started yet, a 404 error will be returned.
         """

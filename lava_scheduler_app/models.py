@@ -1187,7 +1187,7 @@ def _create_pipeline_job(
         )
         job.save()
 
-        # need a valid job (witha  primary_key )before tags and groups can be
+        # need a valid job (with a primary_key) before tags and groups can be
         # assigned
         job.tags.add(*taglist)
         job.viewing_groups.add(*viewing_groups)

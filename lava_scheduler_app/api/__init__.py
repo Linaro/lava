@@ -140,7 +140,7 @@ class SchedulerAPI(ExposedV2API):
 
         Description
         -----------
-        Resubmit the given job reffered by its id.
+        Resubmit the given job referred by its id.
 
         Arguments
         ---------
@@ -177,7 +177,7 @@ class SchedulerAPI(ExposedV2API):
 
         Description
         -----------
-        Cancel the given job reffered by its id.
+        Cancel the given job referred by its id.
 
         Arguments
         ---------
@@ -391,7 +391,7 @@ class SchedulerAPI(ExposedV2API):
         Return value
         ------------
         This function returns a list of dictionaries, which correspond to the
-        list of recently finished jobs informations (Complete or Incomplete)
+        list of recently finished jobs information (Complete or Incomplete)
         for this device, ordered from youngest to oldest.
 
         [
@@ -470,7 +470,7 @@ class SchedulerAPI(ExposedV2API):
         Return value
         ------------
         This function returns a list of dictionaries, which correspond to the
-        list of recently finished jobs informations (Complete or Incomplete)
+        list of recently finished jobs information (Complete or Incomplete)
         for this device, ordered from youngest to oldest.
 
         [
@@ -668,7 +668,7 @@ class SchedulerAPI(ExposedV2API):
 
         Description
         -----------
-        Put the given device into online mode with the given reason ans skip health
+        Put the given device into online mode with the given reason and skip health
         check if asked.
 
         Arguments

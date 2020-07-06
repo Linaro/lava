@@ -9,7 +9,7 @@ timeout:
   <unit>: <value>
 ```
 
-Valid units are `seconds`, `minutes`, `hours` and `days` while the value should be an interger.
+Valid units are `seconds`, `minutes`, `hours` and `days` while the value should be an integer.
 
 ## Job timeout
 

@@ -417,7 +417,7 @@ Nested filtering
 ----------------
 
 It is possible to filter objects using their relations. This is achieved
-by using double underscore notation fron django. Example:
+by using double underscore notation from django. Example:
 
 .. code-block:: shell
 

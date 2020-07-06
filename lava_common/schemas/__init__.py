@@ -244,7 +244,7 @@ def check_multinode_or_device_type(data):
     multinode = data.get("protocols", {}).get("lava-multinode")
 
     if device_type and multinode:
-        raise Invalid('"device_type" shoud not be used with multinode')
+        raise Invalid('"device_type" should not be used with multinode')
     if not device_type and not multinode:
         raise Invalid('"device_type" or multinode should be defined')
 
@@ -254,7 +254,7 @@ def check_multinode_or_environment(data):
     multinode = data.get("protocols", {}).get("lava-multinode")
 
     if environment and multinode:
-        raise Invalid('"environment" shoud not be used with multinode')
+        raise Invalid('"environment" should not be used with multinode')
 
 
 def check_multinode_roles(data):

@@ -168,7 +168,7 @@ class TestFastbootTemplates(BaseTemplate.BaseTemplateCases):
         self.assertIn("system", order)
         self.assertIn("userdata", order)
         self.assertNotIn("xloader", order)
-        # test support for retreiving MAC from device.
+        # test support for retrieving MAC from device.
         data += "{% set device_mac = '00:E0:4C:53:44:58' %}"
         self.assertTrue(self.validate_data("hi6220-hikey-01", data))
         template_dict = prepare_jinja_template("staging-hikey-01", data, raw=False)
@@ -283,7 +283,7 @@ class TestFastbootTemplates(BaseTemplate.BaseTemplateCases):
         self.assertIn("options", params)
         self.assertIn("identity_file", params)
 
-        # test support for retreiving MAC from device using base-fastboot.
+        # test support for retrieving MAC from device using base-fastboot.
         data += "{% set device_mac = '00:E0:4C:53:44:58' %}"
         self.assertTrue(self.validate_data("hi6220-hikey-01", data))
         template_dict = prepare_jinja_template(

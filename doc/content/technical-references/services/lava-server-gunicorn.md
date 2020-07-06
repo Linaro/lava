@@ -1,6 +1,6 @@
 # LAVA server gunicorn
 
-`lava-server-gunicorn` is the web server that will handle http requests comming
+`lava-server-gunicorn` is the web server that will handle http requests coming
 from users.
 
 This process will not serve static files that are handled directly by

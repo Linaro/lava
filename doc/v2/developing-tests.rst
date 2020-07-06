@@ -30,7 +30,7 @@ ways:
 The most common style of test currently in use is the ``Lava-Test Test
 Definition 1.0`` using ``lava-test-case``. During the deploy action, an
 overlay is added to the :term:`DUT` filesystem including the test
-writer commmands and LAVA helper scripts. The test action uses a helper
+writer commands and LAVA helper scripts. The test action uses a helper
 script to execute the test writer commands and other helper scripts are
 used to report test results back to the dispatcher, wrapping results in
 special marker text to allow for easy identification. The dispatcher

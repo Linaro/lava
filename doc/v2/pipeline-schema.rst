@@ -60,7 +60,7 @@ An example pipeline job for a QEMU device looks like:
   job:
     minutes: 15            # timeout for the whole job (default: ??h)
   action:
-    minutes: 5         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
+    minutes: 5         # default timeout applied for each action; can be overridden in the action itself (default: ?h)
  priority: medium
 
  actions:

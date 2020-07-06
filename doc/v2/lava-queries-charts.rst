@@ -403,7 +403,7 @@ that pass/fail charts are unavailable for test case based queries.
 **Measurement** charts will collect the measurement value from each of the
 corresponding test results. Unless the query object set is test job, each plot
 line in chart will represent one test case. Otherwise, the chart will calculate
-average value of each test case accross related test suites and display that
+average value of each test case across related test suites and display that
 value.
 
 **Attributes** chart will let you enter one or more of the custom attributes

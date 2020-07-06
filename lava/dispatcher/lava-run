@@ -53,7 +53,7 @@ def parser():
         "--output-dir",
         required=True,
         metavar="DIR",
-        help="Directory for temporary ressources",
+        help="Directory for temporary resources",
     )
     p_obj.add_argument(
         "--validate",

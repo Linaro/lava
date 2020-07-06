@@ -201,7 +201,7 @@ don't want this effect.
 lava-wait-all
 -------------
 
-``lava-wait-all`` operates in different ways, depending on the presense of the
+``lava-wait-all`` operates in different ways, depending on the presence of the
 ``role`` parameter.
 
 ``lava-wait-all <message-id> [<role>]``

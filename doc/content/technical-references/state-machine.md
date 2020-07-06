@@ -77,7 +77,7 @@ For each test job, two variables are describing the current status: **state** an
 
 ### Health
 
-* *Unknown*: default value that will be overriden when the job is finished.
+* *Unknown*: default value that will be overridden when the job is finished.
 * *Complete*: the job was able to finish
 * *Incomplete*: the job was not able to dinish
 * *Canceled*: the test job was canceled.

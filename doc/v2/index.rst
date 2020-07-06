@@ -179,7 +179,7 @@ Advanced use cases expand on this support to include:
   support developer-specific tasks like `KernelCI <https://kernelci.org/>`_.
 
 .. # this toctable determines the Site menu (if configured to appear)
-   and the next/prevous links on the top bar
+   and the next/previous links on the top bar
 
 .. toctree::
    :hidden:

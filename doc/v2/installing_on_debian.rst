@@ -118,7 +118,7 @@ As well as being uploaded to Debian, :ref:`production_releases` of
 LAVA are also uploaded to the LAVA Software Community Project
 repository at https://apt.lavasoftware.org/ . This uses the
 :ref:`lava_archive_signing_key` - a copy of the key is available in
-the repository and on keyservers.
+the repository and on key servers.
 
 Update apt to find the new packages::
 

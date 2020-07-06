@@ -101,7 +101,7 @@ def main():
     By default, outputs the same list as requirements.txt without
     packages needed for unit tests.
     Use the -n option to only get the distro|suite package names.
-    Use the -u option to get the extra packages neeed for unit tests.
+    Use the -u option to get the extra packages needed for unit tests.
     """
     parser = argparse.ArgumentParser(description="Handle dependency lists")
     parser.add_argument(

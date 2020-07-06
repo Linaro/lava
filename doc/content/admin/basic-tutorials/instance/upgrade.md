@@ -78,7 +78,7 @@ the worker instances need to be upgraded as well.
 "MASTER_UPGRADE_NOTIFY": false
 ```
 
-The defaul value for this flag is False so admin action is required in order
+The default value for this flag is False so admin action is required in order
 to use this feature.
 
 Each user that has a 'change_worker' permission over the at least one worker
