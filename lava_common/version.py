@@ -30,7 +30,7 @@ def version(ref=None):
     root = pathlib.Path(__file__) / ".." / ".."
     root = root.resolve()
     if (root / ".git").exists():
-        args = ["git", "-C", str(root), "describe"]
+        args = ["git", "-C", str(root), "describe", "--match=[0-9]*"]
         if ref is not None:
             args.append(ref)
         pattern = re.compile(r"(?P<tag>.+)\.(?P<commits>\d+)\.g(?P<hash>[abcdef\d]+)")
@@ -39,7 +39,6 @@ def version(ref=None):
             .strip()
             .decode("utf-8")
             .replace("-", ".")
-            .replace("debian/", "")
         )
         m = pattern.match(describe)
         if m is None:
