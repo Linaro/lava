@@ -197,8 +197,8 @@ commands:
 {% if recovery_mode_command %}
     recovery_mode: {{ recovery_mode_command }}
 {% endif -%}
-{% if recovery_off_command %}
-    recovery_off: {{ recovery_mode_command }}
+{% if recovery_exit_command %}
+    recovery_exit: {{ recovery_exit_command }}
 {% endif -%}
 {% if user_commands %}
     users:
