@@ -48,7 +48,7 @@ When defined, the power commands are automatically added to the list of availabl
 * `power_on`
 * `power_off`
 * `recovery_mode`
-* `recovery_off`
+* `recovery_exit`
 
 !!! warn "`undo` is undefined"
     When using such commands, LAVA will not run any `undo` command.
