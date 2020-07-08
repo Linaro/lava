@@ -81,6 +81,7 @@ def test_run(action, mocker):
     share_device_with_container_docker = mocker.patch(
         "lava_dispatcher.actions.test.docker.share_device_with_container_docker"
     )
+    docker_wait = mocker.patch("lava_dispatcher.utils.docker.DockerRun.wait")
 
     action.validate()
     action.run(connection, time.time() + 1000)
@@ -120,6 +121,10 @@ def test_run(action, mocker):
         )
         is not None
     )
+
+    # waits for container to be available
+    docker_wait.assert_called()
+
     # device shared with docker
     share_device_with_container_docker.assert_called_with(mocker.ANY, "/dev/foobar")
 

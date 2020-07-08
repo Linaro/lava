@@ -1,3 +1,4 @@
+import subprocess
 import pytest
 from lava_dispatcher.utils.docker import DockerRun
 
@@ -141,3 +142,27 @@ def test_run_with_action(mocker):
             mocker.call(["docker", "run", "--rm", "myimage", "date"]),
         ]
     )
+
+
+def test_wait(mocker):
+    docker = DockerRun("myimage")
+    docker.name("foobar")
+
+    sleep = mocker.patch("time.sleep")
+    inspect = mocker.patch(
+        "subprocess.check_call",
+        side_effect=[
+            subprocess.CalledProcessError(
+                1, ["docker", "inspect", "--format=.", "foobar"]
+            ),
+            None,
+        ],
+    )
+    docker.wait()
+    call = mocker.call(
+        ["docker", "inspect", mocker.ANY, "foobar"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    inspect.assert_has_calls([call, call])
+    sleep.assert_called_once()

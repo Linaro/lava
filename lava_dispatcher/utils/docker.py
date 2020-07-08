@@ -20,6 +20,7 @@
 import logging
 from pathlib import Path
 import subprocess
+import time
 
 
 class DockerRun:
@@ -98,6 +99,20 @@ class DockerRun:
             run_cmd = subprocess.check_call
         run_cmd(["docker", "pull", self.image])
         run_cmd(cmd)
+
+    def wait(self):
+        delay = 1
+        while True:
+            try:
+                subprocess.check_call(
+                    ["docker", "inspect", "--format=.", self.__name__],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+                return
+            except subprocess.CalledProcessError:
+                time.sleep(delay)
+                delay = delay * 2  # exponential backoff
 
     def __check_image_arch__(self):
         host = subprocess.check_output(["arch"], text=True).strip()
