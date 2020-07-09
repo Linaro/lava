@@ -1,3 +1,72 @@
+lava (2020.07-1) unstable; urgency=medium
+
+  [ Larry Shen ]
+  * [e106c3b61] Add NXP imx6/imx7 templates.
+
+  [ Chris Paterson ]
+  * [e0bc98364] device-types: Add Renesas RZ/G1 reference platforms
+  * [81813da75] device-types: Add Renesas RZ/G2 reference platforms
+
+  [ Smita Gumansingh ]
+  * [0f0af448f] device-types: Add Cyclone V DE0-Nano-SoC Development Kit
+
+  [ Stevan Radakovic ]
+  * [e4b88664b] api: Search by id value in testjob API does not work
+  * [466df303a] Update docker archlinux image path in sample test job.
+
+  [ Milosz Wasilewski ]
+  * [b926399d5] scheduler: add wait_for_prompt to interactive schema
+
+  [ Chris Paterson ]
+  * [b9fdf5fbb] device-types: Set use_xip=true for rzg1-common
+
+  [ Rémi Duraffort ]
+  * [6c51a2c6e] gunicorn: allow to change the worker class and timeout
+
+  [ Antonio Terceiro ]
+  * [5c7f0f3ab] share/postinst.py: skip database setup if DB server is not running
+
+  [ Rémi Duraffort ]
+  * [e77702541] Fix a crash when the TestJob state is set but not yet the device state
+  * [9af2cc2c0] settings.dev: use pathlib
+  * [248fbea56] debian package: minimal python version is now 3.6
+
+  [ Stevan Radakovic ]
+  * [724add0b1] Fix Elasticsearch results log lines.
+
+  [ Antonio Terceiro ]
+  * [85369e537] lava_common/version.py: fix version numbers from debian/* tags
+  * [515245876] Document the lava-dispatcher-host setup for development
+  * [eb921fd28] doc: remove secrets published by mistake
+  * [ab6de1077] get_udev_devices: match by vendor and product id only
+  * [e741eb2d7] get_udev_devices: allow not failing on missing devices
+  * [cc693004e] lava_dispatcher_host.cmdline: use right name for USB vendor/product id fields
+  * [3c709b098] lava_dispatcher_host: add mixin for adding device/container mappings
+
+  [ Kumar Gala ]
+  * [3f277f8a7] device-types: Add setting device_info for mcu boards
+
+  [ Antonio Terceiro ]
+  * [a02439f2a] docker test shell: rework device handling
+  * [407d47639] lava_dispatcher_host: override older mappings for the same device
+  * [ed84df28f] lava_dispatcher_host: log device sharing in the sharing functions
+  * [fd44a98e2] docker test shell: pass logger into get_udev_devices
+  * [cb3ec4c40] lava_dispatcher_host: resist a device being added a second time
+  * [8aa0252a2] docker test shell: mount downloads dir if available
+
+  [ Milosz Wasilewski ]
+  * [4fea6443d] REST: add advanced suite and test filters
+
+  [ Antonio Terceiro ]
+  * [671964e6e] lava_common/version.py: consider only upstream release tags
+  * [2a1b20b35] recovery: make "end recovery" command naming consistent
+  * [31a8c8b47] docker test shell: wait for container to start
+
+  [ Stevan Radakovic ]
+  * [28d40ae6a] pylint: Fix django pylint error by disabling it.
+
+ -- melt <melt@wraith.milunka.rs>  Thu, 09 Jul 2020 16:58:12 +0200
+
 lava (2020.06-1) unstable; urgency=medium
 
   * LAVA Software 2020.06 release
