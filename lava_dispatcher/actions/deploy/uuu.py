@@ -87,9 +87,16 @@ class UUUAction(Action):
             )
             if images_param[image].get("apply-overlay", False):
                 if self.test_needs_overlay(parameters):
+                    use_root_part = (
+                        images_param[image].get("root_partition") is not None
+                    )
                     if images_param[image].get("sparse", False):
                         self.pipeline.add_action(
                             ApplyOverlaySparseImage(image_key=image)
                         )
                     else:
-                        self.pipeline.add_action(ApplyOverlayImage(image_key=image))
+                        self.pipeline.add_action(
+                            ApplyOverlayImage(
+                                image_key=image, use_root_partition=use_root_part
+                            )
+                        )
