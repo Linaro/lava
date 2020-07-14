@@ -23,6 +23,7 @@
 from voluptuous import Any, Optional, Required
 
 from lava_common.schemas import deploy
+from lava_common.schemas import docker
 
 
 def schema():
@@ -40,7 +41,7 @@ def schema():
     base = {
         Required("to"): "fastboot",
         Required("images"): {Required(str, "'images' is empty"): deploy.url(extra)},
-        Optional("docker"): {Required("image"): str},
+        Optional("docker"): docker(),
         Optional("connection"): "lxc",  # FIXME: other possible values?
     }
     return {**deploy.schema(), **base}

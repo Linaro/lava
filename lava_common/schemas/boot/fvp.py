@@ -23,6 +23,7 @@
 from voluptuous import Msg, Optional, Required
 
 from lava_common.schemas import boot
+from lava_common.schemas import docker
 
 
 def schema():
@@ -34,6 +35,6 @@ def schema():
         Optional("version_string"): str,
         Required("arguments"): [str],
         Required("prompts"): boot.prompts(),
-        Required("docker"): {Required("name"): str, Optional("local"): bool},
+        Required("docker"): docker("name"),
     }
     return {**boot.schema(), **base}

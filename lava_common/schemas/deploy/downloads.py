@@ -23,9 +23,10 @@
 from voluptuous import Optional, Required
 
 from lava_common.schemas import deploy
+from lava_common.schemas import docker
 
 
-postprocess_with_docker = {Required("image"): str, Required("steps"): [str]}
+postprocess_with_docker = {**docker(), Required("steps"): [str]}
 
 
 def schema():

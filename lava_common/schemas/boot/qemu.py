@@ -23,10 +23,11 @@
 from voluptuous import Msg, Optional, Required
 
 from lava_common.schemas import boot
+from lava_common.schemas import docker
 
 
 def qemu_docker():
-    return {Required("image"): str, Optional("binary"): str}
+    return {**docker(), Optional("binary"): str}
 
 
 def schema():

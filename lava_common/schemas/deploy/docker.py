@@ -20,21 +20,16 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from voluptuous import Any, Match, Optional, Range, Required
+from voluptuous import Any, Optional, Range, Required
 
 from lava_common.schemas import deploy
+from lava_common.schemas import docker, docker_image_format
 
 
 def schema():
-    image_name = Match(
-        "^[a-z0-9]+[a-z0-9._/-]*[a-z0-9]+(:[a-zA-Z0-9_]+[a-zA-Z0-9._-]*)?$",
-        msg="Invalid docker image name",
-    )
     base = {
         Required("to"): "docker",
-        Required("image"): Any(
-            image_name, {Required("name"): image_name, "local": bool}
-        ),
+        Required("image"): Any(docker_image_format, docker("name")),
         Optional("repeat"): Range(min=1),
     }
     return {**deploy.schema(), **base}

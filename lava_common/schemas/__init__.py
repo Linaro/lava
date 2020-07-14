@@ -29,6 +29,7 @@ from voluptuous import (
     In,
     Invalid,
     Length,
+    Match,
     MultipleInvalid,
     NotIn,
     Optional,
@@ -369,3 +370,13 @@ def job(extra_context_variables=[]):
         },
         extra_checks,
     )
+
+
+docker_image_format = Match(
+    "^[a-z0-9]+[a-z0-9._/-]*[a-z0-9]+(:[a-zA-Z0-9_]+[a-zA-Z0-9._-]*)?$",
+    msg="Invalid docker image name",
+)
+
+
+def docker(image_key="image"):
+    return {Required(image_key): docker_image_format, Optional("local"): bool}

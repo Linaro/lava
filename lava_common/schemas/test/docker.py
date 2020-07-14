@@ -21,9 +21,8 @@
 from voluptuous import Required
 
 from lava_common.schemas.test.definition import schema as base
+from lava_common.schemas import docker
 
 
 def schema():
-    docker = {Required("docker"): {Required("image"): str,}}
-
-    return {**base(), **docker}
+    return {**base(), Required("docker"): docker()}
