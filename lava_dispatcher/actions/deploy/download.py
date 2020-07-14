@@ -480,7 +480,7 @@ class DownloadHandler(Action):
                 value=os.path.join(suffix, self.key, os.path.basename(self.fname)),
             )
 
-        # xnbd protocoll needs to know the location
+        # xnbd protocol needs to know the location
         nbdroot = self.get_namespace_data(
             action="download-action", label="file", key="nbdroot"
         )

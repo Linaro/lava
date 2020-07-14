@@ -120,7 +120,7 @@ class ShellCommand(pexpect.spawn):
         )
         self.name = "ShellCommand"
         self.logger = logger
-        # set a default newline character, but allow actions to override as neccessary
+        # set a default newline character, but allow actions to override as necessary
         self.linesep = LINE_SEPARATOR
         self.lava_timeout = lava_timeout
 

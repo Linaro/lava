@@ -97,7 +97,7 @@ class YAMLLogger(logging.Logger):
             self.handler = None
 
     def log_message(self, level, level_name, message, *args, **kwargs):
-        # Build the dictionnary
+        # Build the dictionary
         data = {"dt": datetime.datetime.utcnow().isoformat(), "lvl": level_name}
 
         if isinstance(message, str) and args:

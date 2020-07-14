@@ -73,7 +73,7 @@ class Command(BaseCommand):
             raise CommandError(
                 "This is a very rarely used management command, "
                 "hence many parameters within this command are "
-                "harcoded. The best way to use this command is"
+                "hardcoded. The best way to use this command is"
                 " to copy and edit the python script '%s' to "
                 "work with other LDAP systems." % _get_script_path()
             )

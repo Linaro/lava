@@ -152,7 +152,7 @@ def test_downloader_populate_file():
 
 def test_downloader_unsupported_scheme():
     # Test raise
-    # 1. unsuported scheme
+    # 1. unsupported scheme
     action = DownloaderAction(
         "key", "/path/to/save", params={"url": "ftp://user@host:/resource.img"}
     )
@@ -163,7 +163,7 @@ def test_downloader_unsupported_scheme():
 
 
 def test_downloader_no_url():
-    # 1. no url avaialbe
+    # 1. no url available
     action = DownloaderAction("key", "/path/to/save", params={})
     action.level = 1
     with pytest.raises(JobError) as exc:
@@ -332,7 +332,7 @@ def test_download_handler_errors():
         action.validate()
     assert str(exc.value) == "Cannot download a directory for key"
 
-    # Uknown compression format
+    # Unknown compression format
     action = DownloadHandler(
         "key", "/path/to/save", urlparse("http://example.com/resource.img")
     )
@@ -346,7 +346,7 @@ def test_download_handler_errors():
     action.validate()
     assert action.errors == ["Unknown 'compression' format 'something'"]
 
-    # Uknown archive format
+    # Unknown archive format
     action = DownloadHandler(
         "key", "/path/to/save", urlparse("http://example.com/resource.img")
     )
@@ -504,7 +504,7 @@ def test_http_download_validate(mocker):
     assert action.errors == ["'https://example.com/kernel' timed out"]
 
     def raisinghead2(url, allow_redirects, headers):
-        raise requests.RequestException("an error occured")
+        raise requests.RequestException("an error occurred")
 
     mocker.patch("requests.head", raisinghead2)
     action = HttpDownloadAction(
@@ -519,7 +519,7 @@ def test_http_download_validate(mocker):
     action.params = action.parameters["image"]
     action.validate()
     assert action.errors == [
-        "Unable to get 'https://example.com/kernel': an error occured"
+        "Unable to get 'https://example.com/kernel': an error occurred"
     ]
 
 

@@ -178,7 +178,7 @@ container.
 * [New job](cts-docker.yaml)
 
 Let's look an annotated version of the difference between the original and the
-new job, where the actions taken are explictly explained.
+new job, where the actions taken are explicitly explained.
 
 ```diff
 --- cts-lxc.yaml	2020-04-06 14:49:20.646012743 -0300

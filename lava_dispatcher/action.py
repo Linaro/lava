@@ -433,7 +433,7 @@ class Action:
         except ValueError:
             raise LAVABug("Action parameters need to be a dictionary")
 
-        # Overide the duration if needed
+        # Override the duration if needed
         if "timeout" in self.parameters:
             # preserve existing overrides
             if self.timeout.duration == Timeout.default_duration():
@@ -781,7 +781,7 @@ class Action:
         be an instance of Connection. That connection will be the one passed on
         to the next action in the pipeline.
 
-        In this classs this method does nothing. It must be implemented by
+        In this class this method does nothing. It must be implemented by
         subclasses
 
         :param connection: The Connection object to use to run the steps

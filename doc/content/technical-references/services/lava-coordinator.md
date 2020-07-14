@@ -38,4 +38,4 @@ The log rotation is configured in `/etc/logrotate.d/lava-coordinator-log`.
 
 ## Security
 
-It's currently adviced to restrict connections to the private network.
+It's currently advised to restrict connections to the private network.

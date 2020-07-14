@@ -30,13 +30,13 @@
 {% url 'lava.scheduler.job.detail' job_id as detail_url %}
 {% url 'lava.scheduler.job.list' as list_url %}
 
-<p>Job submission successfull!</p>
+<p>Job submission successful!</p>
 <p>Job with ID <a href="{{ detail_url }}">{{ job_id }}</a> has been created.</p>
 <p>To view the full job list click <a href="{{ list_url }}">here</a>.</p>
 
 {% elif job_list %}
 {% url 'lava.scheduler.job.list' as list_url %}
-<p>Multinode Job submission successfull!</p>
+<p>Multinode Job submission successful!</p>
 <p>Jobs have been created with the IDs:</p>
 <ul>
 {% for job in job_list %}

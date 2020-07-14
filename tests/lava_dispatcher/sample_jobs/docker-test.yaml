@@ -74,7 +74,7 @@ actions:
             metadata:
               format: Lava-Test Test Definition 1.0
               name: more-tests
-              description: "Some aditional tests"
+              description: "Some additional tests"
               os:
                 - debian
               scope:

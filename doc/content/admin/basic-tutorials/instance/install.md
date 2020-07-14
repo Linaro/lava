@@ -57,7 +57,7 @@ repositories that we manage to get the latest version.
 
 ### Dependencies
 
-In order to folow this tutorial, you would have to install some dependencies:
+In order to follow this tutorial, you would have to install some dependencies:
 
 ```shell
 apt-get install ca-certificates gnupg2 wget

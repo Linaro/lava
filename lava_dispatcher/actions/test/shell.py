@@ -229,7 +229,7 @@ class TestShellAction(Action):
 
         if not connection:
             self.logger.error(
-                "No connection to the DUT, Check that a boot action preced test actions"
+                "No connection to the DUT, Check that a boot action precede test actions"
             )
             if connection_namespace:
                 self.logger.error(

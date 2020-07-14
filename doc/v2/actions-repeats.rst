@@ -54,6 +54,6 @@ party downloads.
 Repeating blocks of actions
 ===========================
 
-To repeat block of actions, it's adviced to use a templating engine, like
+To repeat block of actions, it's advised to use a templating engine, like
 jinja2, and to use it to generate a job definition where the blocks are
 repeated. ``repeat`` parameter is currently not supported in LAVA.

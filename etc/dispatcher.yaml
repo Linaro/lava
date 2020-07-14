@@ -32,6 +32,6 @@
 
 # Set this variable when using http caching service based on url substitution
 # like KissCache
-# When downloading resources, lava dispatcher will use this formating string
+# When downloading resources, lava dispatcher will use this formatting string
 # instead of the original url.
 #http_url_format_string: "https://cache.lavasoftware.org/api/v1/fetch/?url=%s"

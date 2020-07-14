@@ -284,4 +284,4 @@ class TestInteractiveAction(Action):
         elif exc_name == "TestError":
             raise TestError(exc_message)
         else:
-            raise JobError("Unknow exception '%s' with '%s'" % (exc_name, exc_message))
+            raise JobError("Unknown exception '%s' with '%s'" % (exc_name, exc_message))

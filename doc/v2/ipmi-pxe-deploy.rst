@@ -305,7 +305,7 @@ Copy the correct version of busybox into /usr/lib/initramfs-tools/bin:
           fold, free, freeramdisk, ftpget, ftpput, getopt, getty, grep, groups, gunzip, gzip, halt, head, hexdump, hostid, hostname, httpd,
           hwclock, id, ifconfig, ifdown, ifup, init, insmod, ionice, ip, ipcalc, kill, killall, klogd, last, less, ln, loadfont, loadkmap,
           logger, login, logname, logread, losetup, ls, lsmod, lzcat, lzma, md5sum, mdev, microcom, mkdir, mkfifo, mknod, mkswap, mktemp,
-          modinfo, modprobe, more, mount, mt, mv, nameif, nc, netstat, nslookup, od, openvt, passwd, patch, pidof, ping, ping6, pivot_root,
+          modinfo, modprobe, more, mount, mt, mv, nameif, nc, netstat, nslookup, of, openvt, passwd, patch, pidof, ping, ping6, pivot_root,
           poweroff, printf, ps, pwd, rdate, readlink, realpath, reboot, renice, reset, rev, rm, rmdir, rmmod, route, rpm, rpm2cpio,
           run-parts, sed, seq, setkeycodes, setsid, sh, sha1sum, sha256sum, sha512sum, sleep, sort, start-stop-daemon, stat, static-sh,
           strings, stty, su, sulogin, swapoff, swapon, switch_root, sync, sysctl, syslogd, tac, tail, tar, taskset, tee, telnet, telnetd,

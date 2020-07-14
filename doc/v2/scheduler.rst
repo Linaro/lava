@@ -92,7 +92,7 @@ For each test job, two variables are describing the current status:
 
 * ``health``:
 
-  * *Unknown*: default value that will be overriden when the job is finished.
+  * *Unknown*: default value that will be overridden when the job is finished.
 
   * *Complete*
 

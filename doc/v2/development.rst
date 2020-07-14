@@ -430,7 +430,7 @@ debugger, you point ``telnet`` to the provided address and port::
     -> job.run()
     (Pdb)
 
-From that point on, you have a normal `pdb`_ sesssion, and can debug the
+From that point on, you have a normal `pdb`_ session, and can debug the
 execution of ``lava-dispatcher``.
 
 .. _pdb: https://docs.python.org/3/library/pdb.html

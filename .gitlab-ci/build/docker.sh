@@ -10,7 +10,7 @@ then
   docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
   apk add git python3
 else
-  # image to buid
+  # image to build
   SERVICE="$1"
 
   if [ "$SERVICE" != "dispatcher" ] && [ "$SERVICE" != "server" ]

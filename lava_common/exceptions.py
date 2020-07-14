@@ -77,7 +77,7 @@ class JobError(LAVAError):
 
 class LAVABug(LAVAError):
     """
-    An error that is raised when an un-expected error is catched. Only happen
+    An error that is raised when an un-expected error is caught. Only happen
     when a bug is encountered.
     """
 

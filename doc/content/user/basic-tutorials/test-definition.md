@@ -24,7 +24,7 @@ available key is `steps`.
 `steps` is an array that will be transformed into a shell script that LAVA will
 run on the DUT.
 
-In this example, `run.steps` will be rendered into the folowing shell script:
+In this example, `run.steps` will be rendered into the following shell script:
 
 ```shell
 --8<-- "tests/smoke.sh"

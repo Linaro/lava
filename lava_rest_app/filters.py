@@ -276,7 +276,7 @@ class DeviceFilter(filters.FilterSet):
 
     def filter_health(self, queryset, name, value):
         try:
-            # Need upper() here because HEALTH_REVERSE has inconsistant keys.
+            # Need upper() here because HEALTH_REVERSE has inconsistent keys.
             value = Device.HEALTH_REVERSE[value.upper()]
         except KeyError:
             raise ValidationError(

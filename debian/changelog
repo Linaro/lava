@@ -85,7 +85,7 @@ lava (2020.05-1) unstable; urgency=medium
   * debian/tests: separate management tests from testsuite
   * debian/tests/lava-coordinator: require at least a container
   * debian/control: improve readability of dependency fields
-  * debian/control: make lava-dev dependend on libjs-bootstrap as well
+  * debian/control: make lava-dev depend on libjs-bootstrap as well
 
  -- Remi Duraffort <remi.duraffort@linaro.org>  Thu, 14 May 2020 16:35:36 +0200
 
@@ -102,7 +102,7 @@ lava (2020.04-1) unstable; urgency=medium
     737ec0601 Cleaning up unused imports
     9b85acdec FVP version string and rootfs changes
     0604ee013 Separate fvp device-type for fvp actions
-    b362800af Add support for directory substition in fvp boot
+    b362800af Add support for directory substitution in fvp boot
     6fb7bce31 Added root_partition to the fvp deploy schema
     41f8df515 Allow root_partition to be 0
     1272615f0 Add in character delay for FVP
@@ -165,7 +165,7 @@ lava (2020.04-1) unstable; urgency=medium
     3ad390bc3 Fix soft-reboot support
     c099c7be9 rest: filters: add filtering for TestJob description field
     2412e9659 Add a new documentation using mkdocs
-    bc804bf04 docs: improve developper documentation
+    bc804bf04 docs: improve developer documentation
     5c39c88ca docs: fix mkdoc configuration
     ede9b2e93 doc: move contributing to tutorials
     82786fa2c doc: move mkdocs.yml to doc/
@@ -181,7 +181,7 @@ lava (2020.04-1) unstable; urgency=medium
     32695c3ae dispatcher: allow to download/decompress zstd images
     10050123e device type file for NXP's s32v234sbc
     9ce39ede2 qemu/docker: do not add /dev/kvm if it's missing
-    589ba328a dispatcher: fix Job.mkdtemp with overriden base dir
+    589ba328a dispatcher: fix Job.mkdtemp with overridden base dir
     0951bfe2f Fix lxc-mocker/lxc-info.
     578b99831 Move encryption settings to django settings instead of the cmd args.
     67df57729 Fix crashes introduced by 578b99831d
@@ -205,7 +205,7 @@ lava (2020.04-1) unstable; urgency=medium
     83f525885 XMLRPC api endpoints for uploading/downloading worker encryption keys.
     a87fe4207 xmlrpc: improve sql efficiency
     2574bf0e5 scheduler reports: improve sql efficiency
-    b0fec6d4c Make device/device-type and job reports consitent
+    b0fec6d4c Make device/device-type and job reports consistent
     d98694371 job failure page: improve SQL efficiency
     6b5fa361c scheduler: improve SQL efficiency
     1b9662626 XMLRPC api endpoint for downloading master encryption key.
@@ -256,7 +256,7 @@ lava (2020.02-1) unstable; urgency=medium
     98b2172c9 Remove the stretch debian build
     b44e699e4 release: no need to update stretch anymore
     13454d590 Rest API: remove stretch specific support
-    95292c636 debian: remove outdated REAMDE.Debian
+    95292c636 debian: remove outdated README.Debian
     e0f3b17c7 rest-api: remove support for old tap versions
     2710cb7c5 Remove references to Debian Stretch
     3f01452d3 doc: replace references to lava-tool by lavacli whenever possible
@@ -269,7 +269,7 @@ lava (2020.02-1) unstable; urgency=medium
     bd29a0dff ShellLogger: flush the output when closing
     db444bd06 RetryAction: update the start time only when retrying
     63aadb062 Connection prompts should be an array
-    79511cebf Cosmetics: fix identation
+    79511cebf Cosmetics: fix indentation
     36c42a543 docker: fix lava-server entrypoint
     ae2e910ef Set the favicon in the base template
     40960d0c3 Remove redondant call to exists
@@ -319,7 +319,7 @@ lava (2020.02-1) unstable; urgency=medium
     84191d680 Fix remaining naive dates
     3b3c5f482 CI: remove unneeded test and corresponding data
     1e209a05e test: fix device schemas
-    492e293e2 CI: impove schema checks
+    492e293e2 CI: improve schema checks
     ba5cdb3bf CI: rename job-schema to schemas
     7354de0d3 device-types: add bcm2711-rpi-4-b
     39f47d351 CI: remove explicit device configuration
@@ -412,7 +412,7 @@ lava (2020.01-1) unstable; urgency=medium
     c62f79623 Improve DownloadAction coverage
     69d10b5c4 templates: add usb_sleep parameter for cmsis-dap capable devices
     9a2d3b9d4 Refactor get and post in env and config to use shared methods.
-    458209d5d Permit to have a per-slave concurent running job limit
+    458209d5d Permit to have a per-slave concurrent running job limit
     59451d4f1 devices-types: increase initrd memory limit
     32b26e311 debian: add lava-coordinator binary package
     6fd8829cc Re-add lava-coordinator tests
@@ -423,7 +423,7 @@ lava (2020.01-1) unstable; urgency=medium
     0d5a0611b Remove "media: nfs" check for qemu-nfs boot.
     4599831fc schema: remove "media: nfs" from qemu-nfs boot
     bcf94e6c3 REST API: filter on job priority with value range
-    2f06ec728 debian-dev-build: allow to build with uncommited files
+    2f06ec728 debian-dev-build: allow to build with uncommitted files
     50413a8a7 lava_dispatcher_host: usb mapping: create job directory if necessary
     da9bb502f Move test files to tests/
     ec9701c1c rest api: use FileResponse instead of HttpResponse for job logs
@@ -468,7 +468,7 @@ lava (2020.01-1) unstable; urgency=medium
     19af629f2 lava-coordinator: rewrite the main binary from scratch
     f989602c9 lava-coordinator: add systemd service
     0d4601375 debian: fix coordinator dependencies
-    7cf94b2a0 CI: check black formating on lava-coordinator
+    7cf94b2a0 CI: check black formatting on lava-coordinator
     077d5b1db debian: remove /etc/init.d/lava-coordinator
     c85064256 docker: add missing lava-dispatcher-host dependency
     524fe0cd0 server docker: also read apache2 logs
@@ -541,7 +541,7 @@ lava (2019.12-1) unstable; urgency=medium
     d650283dc doc: actions-test: Improve intro to the types of test actions.
     6b1f09cb1 doc: actions-test: interactive: Clarify/explicitisize description
     003ebf335 CI: no need to skip tests for rpcinfo usage
-    78d6116b3 doc: fix some example snipets
+    78d6116b3 doc: fix some example snippets
     dfc674505 Allow to use KissCache automatically per dispatcher
     4d3a348ca doc: document the proxy settings
     b7ba84939 Remove trailing white spaces
@@ -590,7 +590,7 @@ lava (2019.12-1) unstable; urgency=medium
     6ae03b1dc BootloaderCommandOverlay: print the commands nicely
     82746b055 Drop u-boot commands if the placeholder is not replaced
     a00aca1b7 Test lavfa_dispatcher.utils.strings
-    599f90b3a ipxe: fix lava_mac subtitution
+    599f90b3a ipxe: fix lava_mac substitution
     b764fa5f2 debian-dev-build: don't build under git
     f1e4e6644 Revert "Revert "device-types: base: detect TFTP ERROR: File not found""
     0e1344bbe debian-dev-build: include Debian release number in package versions
@@ -611,7 +611,7 @@ lava (2019.11-1) unstable; urgency=medium
   * LAVA Software 2019.11 release
     4a9380dfe debian/copyright: drop reference to removed directory
     56fa1151a debian/control: adjust Uploaders: to new reality
-    62721fe12 debian/control: make lava-dispatcher Achitecture: all
+    62721fe12 debian/control: make lava-dispatcher Architecture: all
     2d0009b4e copy_to_lxc: print the exception error message
     de5b5d286 CI: do not build debian packages on aarch64
     a808170c8 device-types: add imx8mn-ddr4-evk and r8a7796-m3ulcb-kf
@@ -627,7 +627,7 @@ lava (2019.11-1) unstable; urgency=medium
     1adbc0f63 Use --cov-fail-under instead of arbitrary code for test coverage failures.
     4a1b07154 docker: raise an exception when the deploy action is missing
     8e5c0f11a Fix daemon crash when handling invalid message
-    9a1741937 ci: set docker dind image version explicitely
+    9a1741937 ci: set docker dind image version explicitly
     d97465512 lava-logs: fix crash when not using encryption
     9fbf3fad5 job page: rename description -> details
     df75783a3 Print a warning when using Action.run_command
@@ -799,7 +799,7 @@ lava (2019.09-1) unstable; urgency=medium
     181823456 device-types: add meson-g12a-u200
     dd1089b78 Fix up Debian changelog
     8db19f175 Prepare for 2019.08 release.
-    6024fde6e u-boot: use array instead of sting concatenation
+    6024fde6e u-boot: use array instead of string concatenation
     b59fc8f4c Update migration file after rebase.
     b5a95b195 Remove any viewing_group table altering.
     8a6de0c6a Minor fixes.
@@ -964,7 +964,7 @@ lava (2019.06-1) unstable; urgency=medium
     97d3dce53 Update man pages
     c107bd095 testdef: retain compatibility with fixup dict
     739bf0553 CI: check for debian dependencies after build
-    7d4454923 doc: fix higlighted lines
+    7d4454923 doc: fix highlighted lines
     0cdbe0769 ssh device: improve the fault tolerance
     e6dc463f7 device-types: allow to set the ssh user
     04bd8bca0 Force dh_python3 to set the version for some
@@ -993,7 +993,7 @@ lava (2019.05-1) unstable; urgency=medium
     e19c9a2cf Read logs from either output.yaml or output.yaml.xz
     41672feee job logs: replace TestJob.output_file by logutils
               functions
-    c3bf98bd6 job: remove unused/uneeded job_file_present variable
+    c3bf98bd6 job: remove unused/unneeded job_file_present variable
     c5c881347 Remove the archived_job_file function
     1e32ed252 LAVA branding: add possibility to include custom CSS
     417c8b14b release: add a script to remove old docker images
@@ -1050,7 +1050,7 @@ lava (2019.05-1) unstable; urgency=medium
     82aa705b8 Fix multinode jobs validation
     b10bc826f Use the static template function
     d48ba02c6 Make USB/DFU/UDEV timeouts into Infra Errors
-    643180264 debian: list every minimun versions for buster
+    643180264 debian: list every minimum versions for buster
     0dd5dc1d6 lava_common: remove unused dependency on pyzmq
     f1c1372ca doc: fix syntax to match schema
     759740e1c device-types: rpi: allow extra space for kernel image
@@ -1071,7 +1071,7 @@ lava (2019.05-1) unstable; urgency=medium
     a7c483bdb Add overriding resets_after_flash to support newer
               FRDM-K64F boards
     537773c9e TestJob duration: return only seconds (and not
-              miliseconds)
+              milliseconds)
     5ae7f5a1a Add a helper script for Debian release
     4b2c07da7 Fix broken seealso syntax in docs
     447bc9344 doc/v2/timeouts: fix http-download action name typos
@@ -1081,14 +1081,14 @@ lava (2019.05-1) unstable; urgency=medium
 lava (2019.04-1) unstable; urgency=medium
 
   * 2019.04-1 LAVA Software 2019.04 release
-    ec8e42c5f schema: vadidate context dictionnary
+    ec8e42c5f schema: vadidate context dictionary
     2e6964c17 device-types: fix board name imx53-qsbr -> imx53-qsrb
     52e55a805 Tweak the reprepro-release.sh script again
     73ad6ef10 Update the home page contents
     d929cc8f9 Upgrade jQuery to v3.4.0 after the last security issue
     8dd24244e Revert "device-types: base: detect TFTP ERROR: File not
               found"
-    215a9ca04 Revert "device-types: use array instead of sting
+    215a9ca04 Revert "device-types: use array instead of string
               concatenation"
     976541d3a Update docs, adding more references to apt.lavasoftware.org
     d0e9d7279 GitHelper: when failing, print git command stdout/stderr
@@ -1099,7 +1099,7 @@ lava (2019.04-1) unstable; urgency=medium
     e063102e2 Convert offset and limit query parameters to ints
     6363d1020 results: use yaml CDumper instead of the python dumper
     d259def87 Fix documentation about template caching
-    2dbb0e059 device-types: use array instead of sting concatenation
+    2dbb0e059 device-types: use array instead of string concatenation
     0b3f671bf Fix crash when validating an invalid multinode job
     0b6550d6f sample jobs: improve syntax
     7c38216ea Schema: remove "live" argument
@@ -1138,7 +1138,7 @@ lava (2019.04-1) unstable; urgency=medium
     c56ab79e5 schema: add deploy.overlay module
     5043f5e83 doc: make the message toward 3rd party packaging more
               friendly
-    0140f42f3 Remove unsed argument
+    0140f42f3 Remove unused argument
     86a923cde Fix version/arch computation in docker debian-slim variants
     79d239060 CI: use new sast template provided by gitlab
     fce87ba18 cubietruck: use a longer bootloader prompt
@@ -1150,7 +1150,7 @@ lava (2019.04-1) unstable; urgency=medium
     5bf642e3b scheduler: added AM6 device type
     eb784fa69 Remove the top-level links from the docs
     22f816bbb Add extra doc template code to add rel="canonical" links
-    95b43d160 boot minimal: allow to skip reseting the device
+    95b43d160 boot minimal: allow to skip resetting the device
     54f00eea7 Fix kexec boot failure
     4819cb9db lava-test-raise: fix shell syntax
     d718a4a9d device-type: add meson-g12a-x96-max
@@ -1236,7 +1236,7 @@ lava (2019.03-1) unstable; urgency=medium
     3b5c9d5ef Add extra U-Boot bootloader error
     2929ba8f3 Raise the codeclimate complexity threshold
     d84756688 apache2: send the right cache-control headers when available
-    3cc42420f rzn1: do not set uboot_needs_interrupt explicitely
+    3cc42420f rzn1: do not set uboot_needs_interrupt explicitly
     656666cb7 maintenance: fix crash after new state machine
     00cea9df4 Device/Worker: remove deprecated method
     576146730 Fix missing imports
@@ -1451,7 +1451,7 @@ lava (2019.01-1) unstable; urgency=medium
     8a3d6a587 monitor: fix accepts logic
     ade6320a2 Replace the expired job link with a valid one.
     bfa558f30 CI build aarch64 docker image using debian 10
-    ef1c54427 Make navbar and userlinks seperate templates
+    ef1c54427 Make navbar and userlinks separate templates
     9270725c9 Correct the path of file "commands.py"
     4e7d05696 Tidy up ci-run
     73d3a74a4 Ensure sample_jobs validate against the schema
@@ -2268,7 +2268,7 @@ lava-dispatcher (2017.6-1) unstable; urgency=medium
     4fd5d4a Drop unused imports and unused variables
     678b216 Rework the removable action to allow sd cards
     3b42122 Fix bug #2975 after qemu-nfs introduction
-    7462ea6 Expand LXC support to add devices from all sybsystems
+    7462ea6 Expand LXC support to add devices from all subsystems
     b853865 Fix missing check for u-boot commands parameters
     8293693 Replace invalid characters in test_case_id.
     a94e0f2 Fix preseed/late_command appending
@@ -2357,7 +2357,7 @@ lava-dispatcher (2017.5-1) unstable; urgency=medium
     4fd5d4af Drop unused imports and unused variables
     678b216c Rework the removable action to allow sd cards
     3b42122a Fix bug #2975 after qemu-nfs introduction
-    7462ea62 Expand LXC support to add devices from all sybsystems
+    7462ea62 Expand LXC support to add devices from all subsystems
     b853865f Fix missing check for u-boot commands parameters
     8293693c Replace invalid characters in test_case_id.
     a94e0f24 Fix preseed/late_command appending
@@ -2471,7 +2471,7 @@ lava-dispatcher (2017.4-1) unstable; urgency=medium
     2879c019 Handle qcow2 conversion errors
     7daf65d1 Action: use LAVAError base exception class
     603fd049 shell: remove unused exception handling
-    da97077d Add missing import and remove uneeded one
+    da97077d Add missing import and remove unneeded one
     beccc4da LAVA-215 QEMU NFS support (dispatcher)
     c2e3ee34 Use DummyLogger for grub and add .target()
     ed3519d2 Get uboot header length from utils.constants
@@ -2502,8 +2502,8 @@ lava-dispatcher (2017.4-1) unstable; urgency=medium
     cfe9821b LAVA-867 - Allow fastboot options in device dictionary
     d5094f28 Fix unknown usage command in lava-test-reference
     381eca8d LAVA-881 - Sequence list for fastboot pipeline
-    e84c00b1 action: be consitent when printing result duration
-    82d7f82f Print the result of a test run only when avaiable
+    e84c00b1 action: be consistent when printing result duration
+    82d7f82f Print the result of a test run only when available
     1d09ece0 Catch python3 errors to clean up output
     833d7207 python3: only show requests logs above warnings
     5fb1e8a0 rpcinfo: also capture the output
@@ -2551,7 +2551,7 @@ lava-dispatcher (2017.2-1) unstable; urgency=medium
     a1658c7e slave: use a ROUTER socket to connect to master
     35937826 Fix prospector warnings
     e4e2fb97 etc/lava-slave: fix documentation of WARN log level
-    b45cb005 Remove unsed imports
+    b45cb005 Remove unused imports
     93a282bf Job: log known error status when leaving
     ee404039 lava-dispatch: allow to run without zmq logging
     26daca49 lava-dispatch: work around a variable clash
@@ -2798,9 +2798,9 @@ lava-server (2018.2-1) unstable; urgency=medium
     35146e4c Remove distinct ON because it can't be used correctly with order by.
     85f6bd67 Test shell helper support with base-fastboot
     b86981ad master: do not send START to offline workers
-    b6cf83f8 admin: fix group cancelation
+    b6cf83f8 admin: fix group cancellation
     8890d270 Drop auto-login from hikey 620 template
-    5642e8cd Allow cancelation in Scheduling and Scheduled too.
+    5642e8cd Allow cancellation in Scheduling and Scheduled too.
     bbf6c5bb LAVA-1220 - Update API calls and docs for scheduler changes.
     742433b0 Drop invalid boot_message for hikey 6220
     441919d7 Skip kernel-start-message for dynamic connections
@@ -3936,7 +3936,7 @@ lava-dispatcher (2016.9-1) unstable; urgency=medium
     Update manpage of lava-slave for configuration change.
     Allow configuring the slave from file
     git: use -C instead of --git-dir
-    Allow setting the envrionment on most systems
+    Allow setting the environment on most systems
     Handle exceptions from subprocess from compression
     download: don't expand the path when retrying
     Grab finalize from the root pipeline

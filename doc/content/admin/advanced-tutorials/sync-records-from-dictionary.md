@@ -1,7 +1,7 @@
 # Synchronizing records from device dictionary
 
 LAVA has the ability to synchronize database records with the device
-dictionary. It currenty supports these models:
+dictionary. It currently supports these models:
 
 * Device
 * Device type

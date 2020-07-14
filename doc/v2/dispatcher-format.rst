@@ -50,7 +50,7 @@ Other parameters commonly supported include:
  job_timeout:
    minutes: 15            # timeout for the whole job (default: ??h)
  action_timeout:
-   minutes: 5         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
+   minutes: 5         # default timeout applied for each action; can be overridden in the action itself (default: ?h)
  priority: medium
 
 In YAML, a list has a name, then a colon then an indented set of items, each of
@@ -108,7 +108,7 @@ Sample JOB definition for a KVM
  job_timeout:
    minutes: 15            # timeout for the whole job (default: ??h)
  action_timeout:
-   minutes: 5         # default timeout applied for each action; can be overriden in the action itself (default: ?h)
+   minutes: 5         # default timeout applied for each action; can be overridden in the action itself (default: ?h)
  priority: medium
 
  actions:

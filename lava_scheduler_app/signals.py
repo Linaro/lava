@@ -264,7 +264,7 @@ pre_save.connect(
     dispatch_uid="testjob_notifications",
 )
 
-# Only activate theses signals when EVENT_NOTIFICATION is in use
+# Only activate these signals when EVENT_NOTIFICATION is in use
 if settings.EVENT_NOTIFICATION:
     post_init.connect(
         device_init_handler,

@@ -113,7 +113,7 @@ class LAVADaemonCommand(BaseCommand):
     def setup_zmq_signal_handler(self):
         # Mask signals and create a pipe that will receive a bit for each
         # signal received. Poll the pipe along with the zmq socket so that we
-        # can only be interupted while reading data.
+        # can only be interrupted while reading data.
         (pipe_r, pipe_w) = os.pipe()
         flags = fcntl.fcntl(pipe_w, fcntl.F_GETFL, 0)
         fcntl.fcntl(pipe_w, fcntl.F_SETFL, flags | os.O_NONBLOCK)

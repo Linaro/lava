@@ -546,7 +546,7 @@ def test_aliases_add(setup):
 @pytest.mark.django_db
 def test_aliases_delete(setup):
     dt = DeviceType.objects.create(name="qemu")
-    aliase = Alias.objects.create(name="kvm", device_type=dt)
+    alias = Alias.objects.create(name="kvm", device_type=dt)
     assert server("admin", "admin").scheduler.aliases.delete("kvm") is None  # nosec
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server("admin", "admin").scheduler.aliases.delete("kvm")
@@ -557,14 +557,14 @@ def test_aliases_delete(setup):
 @pytest.mark.django_db
 def test_aliases_list(setup):
     dt = DeviceType.objects.create(name="qemu")
-    aliase = Alias.objects.create(name="kvm", device_type=dt)
+    alias = Alias.objects.create(name="kvm", device_type=dt)
     assert server().scheduler.aliases.list() == ["kvm"]  # nosec
 
 
 @pytest.mark.django_db
 def test_aliases_show(setup):
     dt = DeviceType.objects.create(name="qemu")
-    aliase = Alias.objects.create(name="kvm", device_type=dt)
+    alias = Alias.objects.create(name="kvm", device_type=dt)
     assert server().scheduler.aliases.show("kvm") == {  # nosec
         "name": "kvm",
         "device_type": "qemu",

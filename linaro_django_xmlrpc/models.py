@@ -466,7 +466,7 @@ class Dispatcher:
 
         Subclasses may implement this but cannot prevent the xmlrpc.client.Fault
         from being raised. If something other than None is returned then a
-        logging message will be supressed.
+        logging message will be suppressed.
         """
         return None
 
@@ -616,7 +616,7 @@ class SystemAPI(ExposedAPI):
         All methods will be executed in order, failure of any method does not
         prevent other methods from executing.
 
-        The return value is an XML-RPC array of the same length as the lenght
+        The return value is an XML-RPC array of the same length as the length
         of the subcalls array. Each element of the result array holds either an
         XML-RPC Fault when the subcall has failed or a list with one element
         that is the return value of the subcall.
@@ -635,7 +635,7 @@ class SystemAPI(ExposedAPI):
             else:
                 # We need to box each return value  in a list to distinguish
                 # them from faults which will be encoded as XML-RPC structs and
-                # might be indistinguishable from successul calls returning an
+                # might be indistinguishable from successful calls returning an
                 # XML-RCP struct.
                 results.append([result])
         return results

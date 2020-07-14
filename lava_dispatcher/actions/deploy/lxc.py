@@ -192,8 +192,8 @@ class LxcCreateAction(Action):
         if self.lxc_data["lxc_arch"]:
             lxc_cmd += ["--arch", self.lxc_data["lxc_arch"]]
 
-        # Check if the container already exists. If this is a persistant that's
-        # ok, overwize, raise an error.
+        # Check if the container already exists. If this is a persistent that's
+        # ok, otherwise, raise an error.
         if not self.run_cmd(
             ["lxc-info", "-n", self.lxc_data["lxc_name"]], allow_fail=True
         ):
@@ -201,7 +201,7 @@ class LxcCreateAction(Action):
                 raise InfrastructureError(
                     "lxc container %r already exists" % self.lxc_data["lxc_name"]
                 )
-            self.logger.debug("Persistant container exists")
+            self.logger.debug("Persistent container exists")
         else:
             # The container does not exists, just create it
             self.run_cmd(lxc_cmd, error_msg="Unable to create lxc container")

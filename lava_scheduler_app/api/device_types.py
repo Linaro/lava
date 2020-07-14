@@ -32,7 +32,7 @@ from lava_server.files import File
 
 class SchedulerDeviceTypesAPI(ExposedV2API):
     def _available_device_types(self):
-        """ List avaiable device types by looking at the configuration files """
+        """ List available device types by looking at the configuration files """
         available_types = []
         for device_type in File("device-type").list("*.jinja2"):
             if not device_type.startswith("base"):

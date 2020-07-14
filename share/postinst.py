@@ -150,7 +150,7 @@ def fixup():
         print(f"  - {job_2017}/")
         shutil.chown(job_2017, LAVA_SYS_USER, LAVA_SYS_USER)
 
-    # Fix devices, device-types and health-checks ownes/group
+    # Fix devices, device-types and health-checks owner/group
     for item in ["devices", "device-types", "health-checks"]:
         print(f"  - {DISPATCHER_CONFIG / item}/")
         shutil.chown(DISPATCHER_CONFIG / item, LAVA_SYS_USER, LAVA_SYS_USER)

@@ -48,7 +48,7 @@ class File:
 
     def __init__(self, kind, name=None):
         if kind not in self.KINDS:
-            raise NotImplementedError(f"Unknow kind {kind}")
+            raise NotImplementedError(f"Unknown kind {kind}")
 
         self.files = []
         if name is not None:

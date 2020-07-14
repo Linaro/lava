@@ -349,7 +349,7 @@ Hardware Requirements
 Software Requirements
 =====================
 
-* **Interruptable** - for example, ``uBoot`` must be configured to emit a
+* **Interruptible** - for example, ``uBoot`` must be configured to emit a
   recognizable message and wait for a sufficient number of seconds for a
   keyboard interrupt to get to a prompt.
 

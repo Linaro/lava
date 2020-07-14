@@ -6,7 +6,7 @@ jobs to build the official lava-server and lava-dispatcher images.
 
 The CI job for this repository is responsible for building, testing and
 publishing the base Docker images on hub.lavasoftware.org/lava/pkg/lava/
-Theses images will be used as base images for building official lava docker images.
+These images will be used as base images for building official lava docker images.
 
 The docker images will be available at hub.lavasoftware.org/lava/lava/
 

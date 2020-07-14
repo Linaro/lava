@@ -18,7 +18,7 @@ Run the GitLab CI script to build the Debian packages:
 
 The packages will be available under `_build/`.
 
-!!! warning "Uncommited changes"
+!!! warning "Uncommitted changes"
     The script will refuse to build the packages is you have any uncommitted changes.
 
 ## Docker images

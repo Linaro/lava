@@ -104,7 +104,7 @@ def test_raise_exception():
     with pytest.raises(JobError) as exc:
         action.raise_exception("bug", "A strange error")
     assert exc.match(  # nosec - assert is ok
-        "Unknow exception 'bug' with 'A strange error'"
+        "Unknown exception 'bug' with 'A strange error'"
     )
 
 

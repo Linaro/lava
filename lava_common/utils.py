@@ -76,7 +76,7 @@ def debian_package_arch(pkg):
 
 def debian_package_version(pkg):
     """
-    Use dpkg-query to retrive the version of the given package.
+    Use dpkg-query to retrieve the version of the given package.
     Distributions not derived from Debian will return an empty string.
     """
     with contextlib.suppress(FileNotFoundError, subprocess.CalledProcessError):

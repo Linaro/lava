@@ -136,7 +136,7 @@ class Command(LAVADaemonCommand):
     def __init__(self, *args, **options):
         super().__init__(*args, **options)
         self.auth = None
-        self.controler = None
+        self.controller = None
         self.event_socket = None
         self.poller = None
         self.pipe_r = None
@@ -189,7 +189,7 @@ class Command(LAVADaemonCommand):
             self.logger.info(
                 "[%d] STATUS => %s (%s)", job.id, hostname, job.actual_device.hostname
             )
-            send_multipart_u(self.controler, [hostname, "STATUS", str(job.id)])
+            send_multipart_u(self.controller, [hostname, "STATUS", str(job.id)])
 
     def dispatcher_alive(self, hostname):
         try:
@@ -210,7 +210,7 @@ class Command(LAVADaemonCommand):
         try:
             # We need here to use the zmq.NOBLOCK flag, otherwise we could block
             # the whole main loop where this function is called.
-            msg = self.controler.recv_multipart(zmq.NOBLOCK)
+            msg = self.controller.recv_multipart(zmq.NOBLOCK)
         except zmq.error.Again:
             return False
         # This is way to verbose for production and should only be activated
@@ -301,7 +301,7 @@ class Command(LAVADaemonCommand):
             self.logger.error("[%d] Unknown job", job_id)
             # ACK even if the job is unknown to let the dispatcher
             # forget about it
-            send_multipart_u(self.controler, [hostname, "END_OK", str(job_id)])
+            send_multipart_u(self.controller, [hostname, "END_OK", str(job_id)])
             return
 
         filename = os.path.join(job.output_dir, "description.yaml")
@@ -343,7 +343,7 @@ class Command(LAVADaemonCommand):
                 self.logger.exception("[%d] %s", job_id, exc)
 
         # ACK the job and mark the dispatcher as alive
-        send_multipart_u(self.controler, [hostname, "END_OK", str(job_id)])
+        send_multipart_u(self.controller, [hostname, "END_OK", str(job_id)])
         self.dispatcher_alive(hostname)
 
     def _handle_hello(self, hostname, action, msg):
@@ -364,7 +364,7 @@ class Command(LAVADaemonCommand):
             )
             return
 
-        send_multipart_u(self.controler, [hostname, "HELLO_OK"])
+        send_multipart_u(self.controller, [hostname, "HELLO_OK"])
         # If the dispatcher is known and sent an HELLO, means that
         # the slave has restarted
         if hostname in self.dispatchers:
@@ -396,7 +396,7 @@ class Command(LAVADaemonCommand):
     def _handle_ping(self, hostname, msg):
         self.logger.debug("%s => PING(%d)", hostname, PING_INTERVAL)
         # Send back a signal
-        send_multipart_u(self.controler, [hostname, "PONG", str(PING_INTERVAL)])
+        send_multipart_u(self.controller, [hostname, "PONG", str(PING_INTERVAL)])
         self.dispatcher_alive(hostname)
 
     def _handle_start_ok(self, hostname, msg):
@@ -460,7 +460,7 @@ class Command(LAVADaemonCommand):
             "[%d] START => %s (%s)", job.id, worker.hostname, device.hostname
         )
         send_multipart_u(
-            self.controler,
+            self.controller,
             [
                 worker.hostname,
                 "START",
@@ -506,7 +506,7 @@ class Command(LAVADaemonCommand):
                 "[%d] START => %s (connection)", sub_job.id, worker.hostname
             )
             send_multipart_u(
-                self.controler,
+                self.controller,
                 [
                     worker.hostname,
                     "START",
@@ -607,7 +607,7 @@ class Command(LAVADaemonCommand):
                 else job.actual_device.worker_host
             )
             self.logger.info("[%d] CANCEL => %s", job.id, worker.hostname)
-            send_multipart_u(self.controler, [worker.hostname, "CANCEL", str(job.id)])
+            send_multipart_u(self.controller, [worker.hostname, "CANCEL", str(job.id)])
 
     def handle(self, *args, **options):
         # Initialize logging.
@@ -635,12 +635,12 @@ class Command(LAVADaemonCommand):
 
         # Create the sockets
         context = zmq.Context()
-        self.controler = context.socket(zmq.ROUTER)
+        self.controller = context.socket(zmq.ROUTER)
         self.event_socket = context.socket(zmq.SUB)
 
         if options["ipv6"]:
             self.logger.info("[INIT] Enabling IPv6")
-            self.controler.setsockopt(zmq.IPV6, 1)
+            self.controller.setsockopt(zmq.IPV6, 1)
             self.event_socket.setsockopt(zmq.IPV6, 1)
 
         encryption_settings = get_encryption_settings(options)
@@ -667,22 +667,22 @@ class Command(LAVADaemonCommand):
                 self.logger.error(err)
                 self.auth.stop()
                 return
-            self.controler.curve_publickey = master_public
-            self.controler.curve_secretkey = master_secret
-            self.controler.curve_server = True
+            self.controller.curve_publickey = master_public
+            self.controller.curve_secretkey = master_secret
+            self.controller.curve_server = True
 
             self.logger.debug("[INIT] Watching %s", encryption_settings["slaves_certs"])
             self.inotify_fd = watch_directory(encryption_settings["slaves_certs"])
             if self.inotify_fd is None:
                 self.logger.error("[INIT] Unable to start inotify")
 
-        self.controler.setsockopt(zmq.IDENTITY, b"master")
+        self.controller.setsockopt(zmq.IDENTITY, b"master")
         # From http://api.zeromq.org/4-2:zmq-setsockopt#toc42
         # "If two clients use the same identity when connecting to a ROUTER
         # [...] the ROUTER socket shall hand-over the connection to the new
         # client and disconnect the existing one."
-        self.controler.setsockopt(zmq.ROUTER_HANDOVER, 1)
-        self.controler.bind(options["master_socket"])
+        self.controller.setsockopt(zmq.ROUTER_HANDOVER, 1)
+        self.controller.bind(options["master_socket"])
 
         # Set the topic and connect
         self.event_socket.setsockopt(zmq.SUBSCRIBE, b(settings.EVENT_TOPIC))
@@ -691,7 +691,7 @@ class Command(LAVADaemonCommand):
         # Poll on the sockets. This allow to have a
         # nice timeout along with polling.
         self.poller = zmq.Poller()
-        self.poller.register(self.controler, zmq.POLLIN)
+        self.poller.register(self.controller, zmq.POLLIN)
         self.poller.register(self.event_socket, zmq.POLLIN)
         if self.inotify_fd is not None:
             self.poller.register(os.fdopen(self.inotify_fd), zmq.POLLIN)
@@ -711,11 +711,11 @@ class Command(LAVADaemonCommand):
             self.logger.error("[CLOSE] Unknown exception raised, leaving!")
             self.logger.exception(exc)
         finally:
-            # Drop controler socket: the protocol does handle lost messages
+            # Drop controller socket: the protocol does handle lost messages
             self.logger.info(
-                "[CLOSE] Closing the controler socket and dropping messages"
+                "[CLOSE] Closing the controller socket and dropping messages"
             )
-            self.controler.close(linger=0)
+            self.controller.close(linger=0)
             self.event_socket.close(linger=0)
             if encryption_settings["encrypt"]:
                 self.auth.stop()
@@ -750,7 +750,7 @@ class Command(LAVADaemonCommand):
                     break
 
                 # Command socket
-                if sockets.get(self.controler) == zmq.POLLIN:
+                if sockets.get(self.controller) == zmq.POLLIN:
                     while self.controler_socket():  # Unqueue all pending messages
                         pass
 

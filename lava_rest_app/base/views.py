@@ -249,7 +249,7 @@ class TestJobViewSet(viewsets.ModelViewSet):
                 elif case.result == TestCase.RESULT_SKIP:
                     tracker.add_skip(suite.name, case.name, "test skipped")
                 elif case.result == TestCase.RESULT_UNKNOWN:
-                    tracker.add_not_ok(suite.name, case.name, "TODO unknow result")
+                    tracker.add_not_ok(suite.name, case.name, "TODO unknown result")
                 else:
                     tracker.add_ok(suite.name, case.name)
 
