@@ -26,6 +26,7 @@ import time
 class DockerRun:
     def __init__(self, image):
         self.image = image
+        self.__local__ = False
         self.__name__ = None
         self.__hostname__ = None
         self.__workdir__ = None
@@ -36,6 +37,9 @@ class DockerRun:
         self.__tty__ = False
         self.__docker_options__ = []
         self.__docker_run_options__ = []
+
+    def local(self, local):
+        self.__local__ = local
 
     def name(self, name):
         self.__name__ = name
@@ -105,12 +109,24 @@ class DockerRun:
 
     def run(self, *args, action=None):
         cmd = self.cmdline(*args)
-        self.__check_image_arch__()
         if action:
             run_cmd = action.run_cmd
         else:
             run_cmd = subprocess.check_call
-        run_cmd(["docker", "pull", self.image])
+
+        if self.__local__:
+            run_cmd(
+                [
+                    "docker",
+                    "image",
+                    "inspect",
+                    f"--format=Image {self.image} exists locally",
+                    self.image,
+                ]
+            )
+        else:
+            run_cmd(["docker", "pull", self.image])
+        self.__check_image_arch__()
         run_cmd(cmd)
 
     def wait(self):
