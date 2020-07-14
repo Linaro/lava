@@ -31,7 +31,7 @@ from lava_dispatcher.actions.deploy.apply_overlay import (
     ApplyOverlayImage,
 )
 from lava_dispatcher.actions.deploy.download import DownloaderAction
-from lava_dispatcher.utils.fastboot import BaseAction
+from lava_dispatcher.utils.fastboot import OptionalContainerFastbootAction
 from lava_dispatcher.utils.lxc import is_lxc_requested
 from lava_dispatcher.utils.udev import WaitDeviceBoardID
 from lava_dispatcher.actions.boot.fastboot import EnterFastbootAction
@@ -71,7 +71,9 @@ class Fastboot(Deployment):
         return False, '"fastboot" was not in the device configuration deploy methods"'
 
 
-class FastbootAction(BaseAction):  # pylint:disable=too-many-instance-attributes
+class FastbootAction(
+    OptionalContainerFastbootAction
+):  # pylint:disable=too-many-instance-attributes
 
     name = "fastboot-deploy"
     description = "download files and deploy using fastboot"
@@ -126,7 +128,7 @@ class FastbootAction(BaseAction):  # pylint:disable=too-many-instance-attributes
         self.pipeline.add_action(FastbootFlashOrderAction())
 
 
-class FastbootFlashOrderAction(BaseAction):
+class FastbootFlashOrderAction(OptionalContainerFastbootAction):
     """
     Fastboot flash image.
     """
@@ -194,7 +196,7 @@ class FastbootFlashOrderAction(BaseAction):
             self.errors = "device fastboot options is not a list"
 
 
-class FastbootFlashAction(BaseAction):
+class FastbootFlashAction(OptionalContainerFastbootAction):
 
     """
     Fastboot flash image.
@@ -258,7 +260,7 @@ class FastbootFlashAction(BaseAction):
         return connection
 
 
-class FastbootReboot(BaseAction):
+class FastbootReboot(OptionalContainerFastbootAction):
 
     name = "fastboot-reboot"
     description = "Reset a device between flash operations using fastboot reboot."
@@ -286,7 +288,7 @@ class FastbootReboot(BaseAction):
         return connection
 
 
-class FastbootRebootBootloader(BaseAction):
+class FastbootRebootBootloader(OptionalContainerFastbootAction):
 
     name = "fastboot-reboot-bootloader"
     description = (
@@ -316,7 +318,7 @@ class FastbootRebootBootloader(BaseAction):
         return connection
 
 
-class FastbootRebootFastboot(BaseAction):
+class FastbootRebootFastboot(OptionalContainerFastbootAction):
 
     name = "fastboot-reboot-fastboot"
     description = (

@@ -70,6 +70,9 @@ class UUUAction(Action):
         if self.test_needs_overlay(parameters):
             self.pipeline.add_action(OverlayAction())
         path = self.mkdtemp()
+        self.set_namespace_data(
+            action="uuu-deploy", label="uuu-images", key="root_location", value=path
+        )
 
         images_param = dict(parameters["images"])
         images = list(images_param.keys())

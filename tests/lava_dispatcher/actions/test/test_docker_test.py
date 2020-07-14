@@ -64,7 +64,7 @@ def test_detect_correct_action(action):
 
 
 def test_run(action, mocker):
-    mocker.patch("lava_dispatcher.utils.fastboot.DockerDriver.__get_device_nodes__")
+    mocker.patch("lava_dispatcher.utils.containers.DockerDriver.__get_device_nodes__")
     ShellCommand = mocker.patch("lava_dispatcher.actions.test.docker.ShellCommand")
     ShellSesssion = mocker.patch("lava_dispatcher.actions.test.docker.ShellSession")
     docker_connection = mocker.MagicMock()

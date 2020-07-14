@@ -27,8 +27,9 @@ from lava_dispatcher.protocols.lxc import LxcProtocol
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from tests.utils import infrastructure_error, infrastructure_error_multi_paths
 from lava_dispatcher.actions.deploy.fastboot import FastbootFlashOrderAction
-from lava_dispatcher.utils.fastboot import BaseAction
-from lava_dispatcher.utils.fastboot import NullDriver, LxcDriver, DockerDriver
+from lava_dispatcher.utils.fastboot import OptionalContainerFastbootAction
+from lava_dispatcher.utils.adb import OptionalContainerAdbAction
+from lava_dispatcher.utils.containers import NullDriver, LxcDriver, DockerDriver
 from lava_dispatcher.utils.lxc import is_lxc_requested, lxc_cmd_prefix
 
 
@@ -83,7 +84,12 @@ class TestFastbootBaseAction(unittest.TestCase):
 
 class TestFastbootBaseActionDriverUsage(unittest.TestCase):
     def setUp(self):
-        action = BaseAction()
+        class OptionalContainerAndroidAction(
+            OptionalContainerFastbootAction, OptionalContainerAdbAction
+        ):
+            pass
+
+        action = OptionalContainerAndroidAction()
         action.job = MagicMock()
         action.job.device = {
             "adb_serial_number": "01234556789",
@@ -92,7 +98,7 @@ class TestFastbootBaseActionDriverUsage(unittest.TestCase):
         }
 
         driver_patcher = patch(
-            "lava_dispatcher.actions.deploy.fastboot.BaseAction.driver",
+            "lava_dispatcher.actions.deploy.fastboot.OptionalContainerFastbootAction.driver",
             new_callable=PropertyMock,
         )
         action.driver = driver_patcher.start()
@@ -101,13 +107,13 @@ class TestFastbootBaseActionDriverUsage(unittest.TestCase):
         self.action = action
 
         run_cmd_patcher = patch(
-            "lava_dispatcher.actions.deploy.fastboot.BaseAction.run_cmd"
+            "lava_dispatcher.actions.deploy.fastboot.OptionalContainerFastbootAction.run_cmd"
         )
         self.run_cmd = run_cmd_patcher.start()
         self.addCleanup(run_cmd_patcher.stop)
 
         parsed_command_patcher = patch(
-            "lava_dispatcher.actions.deploy.fastboot.BaseAction.parsed_command"
+            "lava_dispatcher.actions.deploy.fastboot.OptionalContainerFastbootAction.parsed_command"
         )
         self.parsed_command = parsed_command_patcher.start()
         self.addCleanup(parsed_command_patcher.stop)
@@ -155,7 +161,9 @@ class TestNullDriver(unittest.TestCase):
         job = self.factory.create_fastboot_job("sample_jobs/nexus4-minus-lxc.yaml")
         self.action = job.pipeline.actions[0]
 
-    @patch("lava_dispatcher.actions.deploy.fastboot.BaseAction.run_cmd")
+    @patch(
+        "lava_dispatcher.actions.deploy.fastboot.OptionalContainerFastbootAction.run_cmd"
+    )
     def test_run_fastboot(self, run_cmd):
         self.action.run_fastboot(["wait-for-devices"])
         run_cmd.assert_called_with(["fastboot", "-s", ANY, "wait-for-devices"])
@@ -172,7 +180,9 @@ class TestLxcDriver(unittest.TestCase):
         self.action = job.pipeline.actions[2]
         self.lxc_name = "lxc-nexus4-test-" + str(self.action.job.job_id)
 
-    @patch("lava_dispatcher.actions.deploy.fastboot.BaseAction.run_cmd")
+    @patch(
+        "lava_dispatcher.actions.deploy.fastboot.OptionalContainerFastbootAction.run_cmd"
+    )
     def test_run_fastboot(self, run_cmd):
         self.action.run_fastboot(["wait-for-devices"])
         run_cmd.assert_called_with(
@@ -189,7 +199,7 @@ class TestLxcDriver(unittest.TestCase):
         )
 
     @patch(
-        "lava_dispatcher.utils.fastboot.copy_to_lxc",
+        "lava_dispatcher.utils.containers.copy_to_lxc",
         return_value="/path/inside/container/to/file.img",
     )
     def test_maybe_copy_to_container(self, copy_to_lxc):
@@ -211,9 +221,10 @@ class TestDockerDriver(unittest.TestCase):
         dest = self.action.maybe_copy_to_container(src)
         self.assertEqual(src, dest)
 
-    @patch("lava_dispatcher.utils.fastboot.BaseAction.run_cmd")
+    @patch("lava_dispatcher.utils.fastboot.OptionalContainerFastbootAction.run_cmd")
     @patch(
-        "lava_dispatcher.utils.fastboot.get_udev_devices", return_value=["/dev/foo/bar"]
+        "lava_dispatcher.utils.containers.get_udev_devices",
+        return_value=["/dev/foo/bar"],
     )
     def test_run_fastboot(self, get_udev_devices, run_cmd):
         self.action.job.device["device_info"] = {"board_id": "01234556789"}
