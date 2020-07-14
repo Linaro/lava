@@ -32,9 +32,10 @@ from lava_dispatcher.connections.serial import ConnectDevice, DisconnectDevice
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.strings import safe_dict_format
+from lava_dispatcher.utils.uuu import OptionalContainerUuuAction
 
 
-class CheckSerialDownloadMode(Action):
+class CheckSerialDownloadMode(OptionalContainerUuuAction):
     name = "check-serial-availability"
     description = "Store in 'otg_availability_check' namespace_data if USB serial download mode available"
     summary = "Store in 'otg_availability_check' namespace_data if USB serial download mode available"
@@ -64,8 +65,11 @@ class CheckSerialDownloadMode(Action):
         cmd = "{} --preserve-status 10 {} -m {} {}".format(
             which("timeout"), self.uuu, usb_otg_path, boot
         )
+
+        self.maybe_copy_to_container(boot)
+
         # Board available if cmd terminates correctly
-        return self.run_cmd(cmd.split(" "), allow_fail=True) == 0
+        return self.run_uuu(cmd.split(" "), allow_fail=True) == 0
 
     def run(self, connection, max_end_time):
         super().run(connection, max_end_time)
@@ -182,7 +186,7 @@ class UUUBootAction(Action):
         self.pipeline.add_action(ConnectDevice())
 
 
-class UUUBootRetry(RetryAction):
+class UUUBootRetry(RetryAction, OptionalContainerUuuAction):
 
     name = "uuu-retry"
     description = "interactive uuu retry action"
@@ -221,6 +225,7 @@ class UUUBootRetry(RetryAction):
             templates[image] = self.get_namespace_data(
                 "download-action", label=image, key="file"
             )
+            self.maybe_copy_to_container(templates[image])
 
         self.logger.info(templates)
 
@@ -247,8 +252,8 @@ class UUUBootRetry(RetryAction):
             exec_cmd = "{} -m {} {}".format(self.uuu, usb_otg_path, cmd)
 
             time.sleep(1)
-            self.run_cmd(
-                exec_cmd,
+            self.run_uuu(
+                exec_cmd.split(" "),
                 allow_fail=False,
                 error_msg="Fail UUUBootAction on cmd : {}".format(cmd),
             )

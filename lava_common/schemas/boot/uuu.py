@@ -20,7 +20,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from voluptuous import Any, Msg, Required
+from voluptuous import Any, Msg, Optional, Required
 
 from lava_common.schemas import boot
 
@@ -29,5 +29,6 @@ def schema():
     base = {
         Required("method"): Msg("uuu", "'method' should be 'uuu'"),
         Required("commands"): Any(str, [{str: str}]),
+        Optional("docker"): {Required("image"): str},
     }
     return {**boot.schema(), **base}

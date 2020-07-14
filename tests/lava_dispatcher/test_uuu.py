@@ -18,8 +18,11 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from unittest.mock import patch
+import unittest
+from unittest.mock import patch, MagicMock
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from lava_dispatcher.utils.uuu import OptionalContainerUuuAction
+from lava_dispatcher.utils.containers import NullDriver, DockerDriver
 
 
 class UUUBootFactory(Factory):  # pylint: disable=too-few-public-methods
@@ -48,3 +51,101 @@ class TestUUUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-meth
         self.assertEqual(description_ref, job.pipeline.describe(False))
 
         self.assertIsNone(job.validate())
+
+
+class TestUUUActionDriver(unittest.TestCase):
+    def create_action(self, uuu_device_parameters):
+        action = OptionalContainerUuuAction()
+        action.job = MagicMock()
+        action.job.device = {
+            "actions": {
+                "boot": {"methods": {"uuu": {"options": uuu_device_parameters}}}
+            }
+        }
+        return action
+
+    def test_uuu_null_driver(self):
+        uuu_device_parameters = {"docker_image": "", "remote_options": ""}
+        action = self.create_action(uuu_device_parameters)
+        self.assertIsInstance(action.driver, NullDriver)
+
+    def test_uuu_docker_driver(self):
+        uuu_device_parameters = {
+            "docker_image": "atline/uuu:1.3.191",
+            "remote_options": "",
+        }
+        action = self.create_action(uuu_device_parameters)
+        self.assertIsInstance(action.driver, DockerDriver)
+
+    @patch("lava_dispatcher.actions.boot.uuu.OptionalContainerUuuAction.run_cmd")
+    def test_native_uuu_cmd(self, mock_cmd):
+        uuu_device_parameters = {"docker_image": "", "remote_options": ""}
+        action = self.create_action(uuu_device_parameters)
+        action.run_uuu(["foo", "bar"])
+        mock_cmd.assert_called_with(["foo", "bar"], False, None, None)
+
+    @patch("lava_dispatcher.actions.boot.uuu.OptionalContainerUuuAction.run_cmd")
+    def test_docker_uuu_local_cmd(self, mock_cmd):
+        uuu_device_parameters = {
+            "docker_image": "atline/uuu:1.3.191",
+            "remote_options": "",
+        }
+        action = self.create_action(uuu_device_parameters)
+        action.run_uuu(["foo", "bar"])
+        mock_cmd.assert_called_with(
+            [
+                "docker",
+                "run",
+                "--rm",
+                "--privileged",
+                "--volume",
+                "/dev:/dev",
+                "--net",
+                "host",
+                "atline/uuu:1.3.191",
+                "foo",
+                "bar",
+            ],
+            False,
+            None,
+            None,
+        )
+
+    @patch("lava_dispatcher.utils.uuu.dispatcher_ip", return_value="foo")
+    @patch(
+        "lava_dispatcher.actions.boot.uuu.OptionalContainerUuuAction.get_namespace_data",
+        return_value="bar",
+    )
+    @patch("lava_dispatcher.actions.boot.uuu.OptionalContainerUuuAction.run_cmd")
+    def test_docker_uuu_remote_cmd(self, mock_cmd, mock_location, mock_ip):
+        uuu_device_parameters = {
+            "docker_image": "atline/uuu:1.3.191",
+            "remote_options": "--tlsverify --tlscacert=/labScripts/remote_cert/ca.pem --tlscert=/labScripts/remote_cert/cert.pem --tlskey=/labScripts/remote_cert/key.pem -H 10.192.244.5:2376",
+        }
+        action = self.create_action(uuu_device_parameters)
+        action.run_uuu(["foo", "bar"])
+        mock_cmd.assert_called_with(
+            [
+                "docker",
+                "--tlsverify",
+                "--tlscacert=/labScripts/remote_cert/ca.pem",
+                "--tlscert=/labScripts/remote_cert/cert.pem",
+                "--tlskey=/labScripts/remote_cert/key.pem",
+                "-H",
+                "10.192.244.5:2376",
+                "run",
+                "--rm",
+                "--privileged",
+                "--volume",
+                "/dev:/dev",
+                "--net",
+                "host",
+                "atline/uuu:1.3.191",
+                "bash",
+                "-c",
+                "mkdir -p bar && mount -t nfs -o nolock foo:bar bar && foo bar",
+            ],
+            False,
+            None,
+            None,
+        )
