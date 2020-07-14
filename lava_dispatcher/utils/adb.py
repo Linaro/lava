@@ -22,20 +22,13 @@
 from lava_dispatcher.utils.containers import OptionalContainerAction
 
 
-class OptionalContainerFastbootAction(OptionalContainerAction):
-    def get_fastboot_cmd(self, cmd):
-        serial_number = self.job.device["fastboot_serial_number"]
-        fastboot_opts = self.job.device["fastboot_options"]
-        fastboot_cmd = (
-            self.driver.get_command_prefix()
-            + ["fastboot", "-s", serial_number]
-            + cmd
-            + fastboot_opts
-        )
-        return fastboot_cmd
+class OptionalContainerAdbAction(OptionalContainerAction):
+    def get_adb_cmd(self, cmd):
+        serial_number = self.job.device["adb_serial_number"]
+        return self.driver.get_command_prefix() + ["adb", "-s", serial_number] + cmd
 
-    def run_fastboot(self, cmd):
-        self.run_cmd(self.get_fastboot_cmd(cmd))
+    def run_adb(self, cmd):
+        self.run_cmd(self.get_adb_cmd(cmd))
 
-    def get_fastboot_output(self, cmd, **kwargs):
-        return self.parsed_command(self.get_fastboot_cmd(cmd), **kwargs)
+    def get_adb_output(self, cmd, **kwargs):
+        return self.parsed_command(self.get_adb_cmd(cmd), **kwargs)

@@ -30,7 +30,8 @@ from lava_dispatcher.actions.boot import (
     OverlayUnpack,
 )
 from lava_dispatcher.power import ResetDevice, PreOs
-from lava_dispatcher.utils.fastboot import BaseAction
+from lava_dispatcher.utils.fastboot import OptionalContainerFastbootAction
+from lava_dispatcher.utils.adb import OptionalContainerAdbAction
 from lava_dispatcher.utils.udev import WaitDeviceBoardID
 from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.connections.adb import ConnectAdb
@@ -72,7 +73,7 @@ class BootFastboot(Boot):
         return False, 'boot "method" was not "fastboot"'
 
 
-class BootFastbootCommands(BaseAction):
+class BootFastbootCommands(OptionalContainerFastbootAction):
 
     name = "fastboot-boot-commands"
     description = "Run custom fastboot commands before boot"
@@ -85,7 +86,7 @@ class BootFastbootCommands(BaseAction):
             self.run_fastboot(shlex.split(command))
 
 
-class BootFastbootAction(BootHasMixin, RetryAction, BaseAction):
+class BootFastbootAction(BootHasMixin, RetryAction, OptionalContainerFastbootAction):
     """
     Provide for auto_login parameters in this boot stanza and re-establish the
     connection after boot.
@@ -201,7 +202,7 @@ class WaitFastBootInterrupt(Action):
         return connection
 
 
-class FastbootBootAction(BaseAction):
+class FastbootBootAction(OptionalContainerFastbootAction):
     """
     This action calls fastboot to boot into the system.
     """
@@ -245,7 +246,7 @@ class FastbootBootAction(BaseAction):
         return connection
 
 
-class FastbootRebootAction(BaseAction):
+class FastbootRebootAction(OptionalContainerFastbootAction):
     """
     This action calls fastboot to reboot into the system.
     """
@@ -283,7 +284,7 @@ class FastbootRebootAction(BaseAction):
         return connection
 
 
-class EnterFastbootAction(BaseAction):
+class EnterFastbootAction(OptionalContainerFastbootAction, OptionalContainerAdbAction):
     """
     Enters fastboot bootloader.
     """
