@@ -91,11 +91,13 @@ class PostprocessWithDocker(Action):
         super().__init__()
         self.path = Path(path)
         self.image = None
+        self.local = False
         self.steps = []
 
     def populate(self, parameters):
         parameters = parameters.get("postprocess", {}).get("docker", {})
         self.image = parameters.get("image")
+        self.local = parameters.get("local")
         self.steps = parameters.get("steps", [])
 
     def validate(self):
@@ -119,6 +121,7 @@ class PostprocessWithDocker(Action):
         scriptfile.chmod(0o755)
 
         docker = DockerRun(self.image)
+        docker.local(self.local)
         docker.add_device("/dev/kvm", skip_missing=True)
         docker.bind_mount(self.path, LAVA_DOWNLOADS)
 
