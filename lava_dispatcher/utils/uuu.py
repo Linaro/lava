@@ -19,6 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 
+import shlex
 from lava_dispatcher.utils.containers import (
     OptionalContainerAction,
     DockerDriver,
@@ -45,10 +46,12 @@ class OptionalContainerUuuAction(OptionalContainerAction):
                     "options"
                 ]["remote_options"]
                 self.__driver__ = DockerDriver(self, image)
-                self.__driver__.docker_options = remote_options
-                self.__driver__.docker_extra_arguments = (
-                    "--privileged --volume /dev:/dev --net host"
-                )
+                self.__driver__.docker_options = shlex.split(remote_options)
+                self.__driver__.docker_run_options = [
+                    "--privileged",
+                    "--volume=/dev:/dev",
+                    "--net=host",
+                ]
             else:
                 self.__driver__ = NullDriver(self)
         return self.__driver__

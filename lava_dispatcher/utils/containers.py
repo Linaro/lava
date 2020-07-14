@@ -85,18 +85,15 @@ class DockerDriver(NullDriver):
     def __init__(self, action, image):
         super().__init__(action)
         self.image = image
-        self.docker_options = ""
-        self.docker_extra_arguments = ""
+        self.docker_options = []
+        self.docker_run_options = []
         self.copied_files = []
 
     def get_command_prefix(self):
         docker = DockerRun(self.image)
 
-        if self.docker_options:
-            docker.add_docker_options(self.docker_options)
-
-        if self.docker_extra_arguments:
-            docker.add_docker_extra_arguments(self.docker_extra_arguments)
+        docker.add_docker_options(*self.docker_options)
+        docker.add_docker_run_options(*self.docker_run_options)
 
         for device in self.__get_device_nodes__():
             docker.add_device(device)

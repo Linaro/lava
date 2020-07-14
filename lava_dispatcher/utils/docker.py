@@ -35,7 +35,7 @@ class DockerRun:
         self.__interactive__ = False
         self.__tty__ = False
         self.__docker_options__ = []
-        self.__docker_extra_arguments__ = []
+        self.__docker_run_options__ = []
 
     def name(self, name):
         self.__name__ = name
@@ -53,11 +53,11 @@ class DockerRun:
             return
         self.__devices__.append(device)
 
-    def add_docker_options(self, docker_options):
-        self.__docker_options__ += docker_options.split(" ")
+    def add_docker_options(self, *options):
+        self.__docker_options__ += options
 
-    def add_docker_extra_arguments(self, docker_extra_arguments):
-        self.__docker_extra_arguments__ += docker_extra_arguments.split(" ")
+    def add_docker_run_options(self, *options):
+        self.__docker_run_options__ += options
 
     def interactive(self):
         self.__interactive__ = True
@@ -78,7 +78,7 @@ class DockerRun:
             ["docker"]
             + self.__docker_options__
             + ["run", "--rm"]
-            + self.__docker_extra_arguments__
+            + self.__docker_run_options__
         )
         if self.__interactive__:
             cmd.append("--interactive")
