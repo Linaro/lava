@@ -245,6 +245,9 @@ class Protocol:
     def finalise_protocol(self, device=None):
         raise LAVABug("'finalise_protocol' not implemented")
 
+    def set_timeout(self, duration):
+        self.poll_timeout.duration = duration
+
     def check_timeout(self, duration, data):
         """
         Use if particular protocol calls can require a connection timeout
