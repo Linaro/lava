@@ -35,3 +35,14 @@
 # When downloading resources, lava dispatcher will use this formatting string
 # instead of the original url.
 #http_url_format_string: "https://cache.lavasoftware.org/api/v1/fetch/?url=%s"
+
+# Directories to be bind mounted in test actions that run with docker.
+# Must be an array with exactly two/three items:
+# 1st item: the source directory in the host (mandatory)
+# 2nd item: the destination directory in the container (mandatory)
+# 3rd item: bind mount mode (optional)
+#           default is read-only if this item omitted
+#           set as "rw" could make the directory in container writeable
+#test_docker_bind_mounts:
+#- [<bind-mount1-host-path>, <bind-mount1-container-path>]
+#- [<bind-mount2-host-path>, <bind-mount2-container-path>, "rw"]
