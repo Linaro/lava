@@ -1245,6 +1245,39 @@ To use ``uuu`` the :term:`device` template must specify two variables :
       ==================================================
       2:143	 MX8MQ	 SDP:	 0x1FC9	0x012B	 0x0001
 
+If you want to use ``uuu`` within docker image, you could specify next variable:
+
+.. code-block:: jinja
+
+  {% set uuu_docker_image = 'atline/uuu:1.3.191' %}
+
+* ``uuu_docker_image`` : This is a docker image which installed an uuu binary in it already.
+
+.. note:: A docker image specified in job.yaml could also override this value in device configuration like next:
+
+    .. code-block:: yaml
+
+      - boot:
+          docker:
+            image: atline/uuu:1.3.191
+          method: uuu
+          commands:
+            - uuu : -b sd {boot}
+          timeout:
+            minutes: 5
+
+If you also want to enable ``remote uuu`` feature, in which situation your device not directly linked to lava dispatcher, you could specify another variable:
+
+.. code-block:: jinja
+
+  {% set uuu_remote_options = '--tlsverify --tlscacert=/labScripts/remote_cert/ca.pem --tlscert=/labScripts/remote_cert/cert.pem --tlskey=/labScripts/remote_cert/key.pem -H 10.192.244.5:2376' %}
+
+* ``uuu_remote_options`` : This let docker client remotely operate an uuu docker container on a remote machine.
+
+You could follow https://docs.docker.com/engine/install/linux-postinstall/#configure-where-the-docker-daemon-listens-for-connections to configure remote docker support.
+
+You could follow https://docs.docker.com/engine/security/https/ to protect the docker daemon socket if you are also care about security.
+
 Usage
 -----
 
