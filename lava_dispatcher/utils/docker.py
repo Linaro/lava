@@ -108,26 +108,32 @@ class DockerRun:
         return cmd
 
     def run(self, *args, action=None):
+        self.prepare(action)
         cmd = self.cmdline(*args)
-        if action:
-            run_cmd = action.run_cmd
-        else:
-            run_cmd = subprocess.check_call
+        self.run_cmd(cmd, action=action)
 
+    def run_cmd(self, cmd, action=None):
+        if action:
+            runner = action.run_cmd
+        else:
+            runner = subprocess.check_call
+        runner(cmd)
+
+    def prepare(self, action=None):
         if self.__local__:
-            run_cmd(
+            self.run_cmd(
                 [
                     "docker",
                     "image",
                     "inspect",
                     f"--format=Image {self.image} exists locally",
                     self.image,
-                ]
+                ],
+                action=action,
             )
         else:
-            run_cmd(["docker", "pull", self.image])
+            self.run_cmd(["docker", "pull", self.image], action=action)
         self.__check_image_arch__()
-        run_cmd(cmd)
 
     def wait(self):
         delay = 1
