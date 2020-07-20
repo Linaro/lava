@@ -113,6 +113,12 @@ def test_run(action, mocker):
     # primary connection:
     assert env["export LAVA_CONNECTION_COMMAND"] == "'telnet 192.168.1.200 8001'"
 
+    assert (
+        env["export LAVA_HARD_RESET_COMMAND"] == "'/path/to/reset.sh 0 1 2 && sleep 5'"
+    )
+    assert env["export LAVA_POWER_ON_COMMAND"] == "'/path/to/power-on.sh 0 1 2'"
+    assert env["export LAVA_POWER_OFF_COMMAND"] == "'/path/to/power-off.sh 0 1 2'"
+
     # docker gets called
     docker_call = ShellCommand.mock_calls[0][1][0]
     assert docker_call.startswith("docker run")

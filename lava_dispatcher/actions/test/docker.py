@@ -113,6 +113,15 @@ class DockerTestSetEnvironment(Action, GetBoardId):
                 if "primary" in tags:
                     environment["LAVA_CONNECTION_COMMAND"] = connect
 
+        power_commands = ["hard_reset", "power_on", "power_off"]
+        for c in power_commands:
+            cmd = self.job.device.get("commands", {}).get(c)
+            if cmd:
+                if not isinstance(cmd, list):
+                    cmd = [cmd]
+                cmd = " && ".join(cmd)
+                environment["LAVA_" + c.upper() + "_COMMAND"] = cmd
+
         self.job.parameters["environment"] = environment
         connection = super().run(connection, max_end_time)
         return connection
