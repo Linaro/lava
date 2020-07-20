@@ -19,6 +19,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import pytest
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 
 
@@ -33,11 +34,9 @@ class Recorder:
         self.data += data
 
 
-def test_export_data():
-    action = OverlayAction()
-    fout = Recorder()
-
-    tests_data = [
+@pytest.mark.parametrize(
+    "data,prefix,result",
+    [
         ({}, "", [""]),
         ({"hello": "world"}, "", ["export hello='world'"]),
         (
@@ -73,8 +72,10 @@ def test_export_data():
                 "export STORAGE_INFO_0_SATA='/dev/disk/by-id/ata-SanDisk_SSD_PLUS_120GB_190504A00573'"
             ],
         ),
-    ]
-    for (data, prefix, result) in tests_data:
-        action._export_data(fout, data, prefix)
-        assert sorted(fout.data.strip("\n").split("\n")) == result
-        fout.clean()
+    ],
+)
+def test_export_data(data, prefix, result):
+    action = OverlayAction()
+    fout = Recorder()
+    action._export_data(fout, data, prefix)
+    assert sorted(fout.data.strip("\n").split("\n")) == result
