@@ -161,6 +161,23 @@ specified image, and the following applies:
     Of course, for this to work the network addresses used in the configuration
     need to be resolvable from inside the docker container. This requires
     coordination with the lab administration.
+* The device power control commands are also exposed in the following
+  environment variables: `LAVA_HARD_RESET_COMMAND`, `LAVA_POWER_ON_COMMAND`,
+  and `LAVA_POWER_OFF_COMMAND`.
+
+  The same caveat as with the connection commands: any network addresses used
+  in such commands need to be accessible from inside the container.
+
+  Note that each of these operations can actually require more than one
+  command, in which case the corresponding environment variable will have the
+  multiple commands with `&&` between them. Because of this, the safest way to
+  run the commands is passing the entire contents of the variable as a single
+  argument to `sh -c`, like this:
+
+  ```bash
+  sh -c "${LAVA_HARD_RESET_COMMAND}"
+  ```
+
 
 ## Migrating from LXC to Docker
 
