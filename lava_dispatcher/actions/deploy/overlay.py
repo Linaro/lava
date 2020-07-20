@@ -19,6 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
+import shlex
 import stat
 import glob
 import shutil
@@ -169,7 +170,7 @@ class CreateOverlay(Action):
             elif isinstance(data, int):
                 data = data
             else:
-                data = "'%s'" % data
+                data = shlex.quote(data)
             self.logger.debug("- %s=%s", prefix, data)
             fout.write("export %s=%s\n" % (prefix, data))
 

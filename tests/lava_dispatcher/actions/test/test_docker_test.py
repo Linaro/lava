@@ -104,7 +104,7 @@ def test_run(action, mocker):
 
     environmentfile = overlay / "environment"
     environment = environmentfile.open().read()
-    assert "ANDROID_SERIAL='0123456789'" in environment
+    assert "ANDROID_SERIAL=0123456789" in environment
     assert "LAVA_CONNECTION_COMMAND_UART0='telnet localhost 4002'" in environment
     assert "LAVA_CONNECTION_COMMAND_UART1='telnet 192.168.1.200 8001'" in environment
     # primary connection:
