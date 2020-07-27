@@ -165,9 +165,12 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
         ).strip("/")
 
         image = self.parameters["docker"]["image"]
+        local = self.parameters["docker"].get("local")
         container = "lava-docker-test-shell-%s-%s" % (self.job.job_id, self.level)
 
         docker = DockerRun(image)
+        docker.local(local)
+        docker.prepare()
         docker.bind_mount(os.path.join(location, overlay), "/" + overlay)
 
         namespace = self.parameters.get("namespace")

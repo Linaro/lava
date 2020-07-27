@@ -144,6 +144,20 @@ def test_run_with_action(mocker):
     )
 
 
+def test_run_with_local_image_does_not_pull(mocker):
+    mocker.patch("lava_dispatcher.utils.docker.DockerRun.__check_image_arch__")
+    docker = DockerRun("myimage")
+    docker.local(True)
+    action = mocker.MagicMock()
+    docker.run("date", action=action)
+    action.run_cmd.assert_has_calls(
+        [
+            mocker.call(["docker", "image", "inspect", mocker.ANY, "myimage"]),
+            mocker.call(["docker", "run", "--rm", "myimage", "date"]),
+        ]
+    )
+
+
 def test_wait(mocker):
     docker = DockerRun("myimage")
     docker.name("foobar")

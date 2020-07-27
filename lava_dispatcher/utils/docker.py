@@ -26,6 +26,7 @@ import time
 class DockerRun:
     def __init__(self, image):
         self.image = image
+        self.__local__ = False
         self.__name__ = None
         self.__hostname__ = None
         self.__workdir__ = None
@@ -35,7 +36,10 @@ class DockerRun:
         self.__interactive__ = False
         self.__tty__ = False
         self.__docker_options__ = []
-        self.__docker_extra_arguments__ = []
+        self.__docker_run_options__ = []
+
+    def local(self, local):
+        self.__local__ = local
 
     def name(self, name):
         self.__name__ = name
@@ -53,11 +57,11 @@ class DockerRun:
             return
         self.__devices__.append(device)
 
-    def add_docker_options(self, docker_options):
-        self.__docker_options__ += docker_options.split(" ")
+    def add_docker_options(self, *options):
+        self.__docker_options__ += options
 
-    def add_docker_extra_arguments(self, docker_extra_arguments):
-        self.__docker_extra_arguments__ += docker_extra_arguments.split(" ")
+    def add_docker_run_options(self, *options):
+        self.__docker_run_options__ += options
 
     def interactive(self):
         self.__interactive__ = True
@@ -78,7 +82,7 @@ class DockerRun:
             ["docker"]
             + self.__docker_options__
             + ["run", "--rm"]
-            + self.__docker_extra_arguments__
+            + self.__docker_run_options__
         )
         if self.__interactive__:
             cmd.append("--interactive")
@@ -104,14 +108,32 @@ class DockerRun:
         return cmd
 
     def run(self, *args, action=None):
+        self.prepare(action)
         cmd = self.cmdline(*args)
-        self.__check_image_arch__()
+        self.run_cmd(cmd, action=action)
+
+    def run_cmd(self, cmd, action=None):
         if action:
-            run_cmd = action.run_cmd
+            runner = action.run_cmd
         else:
-            run_cmd = subprocess.check_call
-        run_cmd(["docker", "pull", self.image])
-        run_cmd(cmd)
+            runner = subprocess.check_call
+        runner(cmd)
+
+    def prepare(self, action=None):
+        if self.__local__:
+            self.run_cmd(
+                [
+                    "docker",
+                    "image",
+                    "inspect",
+                    f"--format=Image {self.image} exists locally",
+                    self.image,
+                ],
+                action=action,
+            )
+        else:
+            self.run_cmd(["docker", "pull", self.image], action=action)
+        self.__check_image_arch__()
 
     def wait(self):
         delay = 1

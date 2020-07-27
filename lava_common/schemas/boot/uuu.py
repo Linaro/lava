@@ -23,12 +23,13 @@
 from voluptuous import Any, Msg, Optional, Required
 
 from lava_common.schemas import boot
+from lava_common.schemas import docker
 
 
 def schema():
     base = {
         Required("method"): Msg("uuu", "'method' should be 'uuu'"),
         Required("commands"): Any(str, [{str: str}]),
-        Optional("docker"): {Required("image"): str},
+        Optional("docker"): docker(),
     }
     return {**boot.schema(), **base}

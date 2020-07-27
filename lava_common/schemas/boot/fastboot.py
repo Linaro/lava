@@ -23,6 +23,7 @@
 from voluptuous import Msg, Optional, Required
 
 from lava_common.schemas import boot
+from lava_common.schemas import docker
 
 
 def schema():
@@ -35,6 +36,6 @@ def schema():
             "auto_login"
         ): boot.auto_login(),  # TODO: if auto_login => prompt is required
         Optional("transfer_overlay"): boot.transfer_overlay(),
-        Optional("docker"): {Required("image"): str},
+        Optional("docker"): docker(),
     }
     return {**boot.schema(), **base}
