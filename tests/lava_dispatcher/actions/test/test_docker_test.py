@@ -103,12 +103,21 @@ def test_run(action, mocker):
     assert lava_test_runner.exists()
 
     environmentfile = overlay / "environment"
-    environment = environmentfile.open().read()
-    assert "ANDROID_SERIAL='0123456789'" in environment
-    assert "LAVA_CONNECTION_COMMAND_UART0='telnet localhost 4002'" in environment
-    assert "LAVA_CONNECTION_COMMAND_UART1='telnet 192.168.1.200 8001'" in environment
+    env = {
+        re.sub(r"=.*$", "", l): re.sub("^[^=]*=", "", l)
+        for l in environmentfile.open().read().splitlines()
+    }
+    assert env["export ANDROID_SERIAL"] == "0123456789"
+    assert env["export LAVA_CONNECTION_COMMAND_UART0"] == "'telnet localhost 4002'"
+    assert env["export LAVA_CONNECTION_COMMAND_UART1"] == "'telnet 192.168.1.200 8001'"
     # primary connection:
-    assert "LAVA_CONNECTION_COMMAND='telnet 192.168.1.200 8001'" in environment
+    assert env["export LAVA_CONNECTION_COMMAND"] == "'telnet 192.168.1.200 8001'"
+
+    assert (
+        env["export LAVA_HARD_RESET_COMMAND"] == "'/path/to/reset.sh 0 1 2 && sleep 5'"
+    )
+    assert env["export LAVA_POWER_ON_COMMAND"] == "'/path/to/power-on.sh 0 1 2'"
+    assert env["export LAVA_POWER_OFF_COMMAND"] == "'/path/to/power-off.sh 0 1 2'"
 
     # docker gets called
     docker_call = ShellCommand.mock_calls[0][1][0]
