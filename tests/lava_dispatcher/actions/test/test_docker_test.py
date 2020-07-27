@@ -138,3 +138,33 @@ def test_run(action, mocker):
 def test_stages(first_test_action, second_test_action):
     assert first_test_action.parameters["stage"] == 0
     assert second_test_action.parameters["stage"] == 1
+
+
+def test_docker_test_shell_validate(action):
+    action.validate()
+    assert action.valid == True
+    [a.__errors__.clear() for a in action.pipeline.actions]
+
+    action.job.parameters["dispatcher"]["test_docker_bind_mounts"] = [
+        ["foo", "bar", "rw"]
+    ]
+    action.validate()
+    assert action.valid == True
+    [a.__errors__.clear() for a in action.pipeline.actions]
+
+    action.job.parameters["dispatcher"]["test_docker_bind_mounts"] = [["foo"]]
+    action.validate()
+    assert action.valid == False
+    [a.__errors__.clear() for a in action.pipeline.actions]
+
+    action.job.parameters["dispatcher"]["test_docker_bind_mounts"] = [[["foo"], "bar"]]
+    action.validate()
+    assert action.valid == False
+    [a.__errors__.clear() for a in action.pipeline.actions]
+
+    action.job.parameters["dispatcher"]["test_docker_bind_mounts"] = [
+        ["foo", "bar", "foo"]
+    ]
+    action.validate()
+    assert action.valid == False
+    [a.__errors__.clear() for a in action.pipeline.actions]

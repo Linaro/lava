@@ -123,6 +123,26 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
     description = "Runs lava-test-shell in a docker container"
     summary = "Runs lava-test-shell in a docker container"
 
+    def validate(self):
+        super().validate()
+
+        self.test_docker_bind_mounts = self.job.parameters["dispatcher"].get(
+            "test_docker_bind_mounts", []
+        )
+        for bind_mount in self.test_docker_bind_mounts:
+            item_num = len(bind_mount)
+            if (
+                item_num not in (2, 3)
+                or (item_num == 3 and bind_mount[2] != "rw")
+                or not all(isinstance(item, str) for item in bind_mount)
+            ):
+                self.errors = (
+                    "Invalid bind mount specification in dispatcher configuration: "
+                    f"{bind_mount}; "
+                    'Use [source,destination], or [source,destination,"rw"]'
+                )
+                return
+
     def run(self, connection, max_end_time):
         # obtain lava overlay
         # start container
@@ -146,6 +166,10 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
             downloads_dir = pathlib.Path(self.job.tmp_dir) / "downloads" / namespace
             if downloads_dir.exists():
                 docker.bind_mount(downloads_dir, LAVA_DOWNLOADS)
+
+        for bind_mount in self.test_docker_bind_mounts:
+            read_only = True if len(bind_mount) == 2 else False
+            docker.bind_mount(bind_mount[0], bind_mount[1], read_only)
 
         docker.interactive()
         docker.hostname("lava")
