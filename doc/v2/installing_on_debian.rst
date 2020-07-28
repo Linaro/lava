@@ -392,8 +392,7 @@ enforces behavior to ensure safe use of ``https://`` which can prevent
 attempts to sign in to a LAVA instance using ``http://localhost/``.
 
 To enable localhost, you may need to disable at least these security
-defaults by adding the following options to
-``/etc/lava-server/settings.conf``::
+defaults by adding the following options to LAVA settings file::
 
   "CSRF_COOKIE_SECURE": false,
   "SESSION_COOKIE_SECURE": false
@@ -403,10 +402,25 @@ defaults by adding the following options to
           message reported is ``CSRF verification failed. Request
           aborted.``
 
-Any changes made to ``/etc/lava-server/settings.conf`` will require a
+The LAVA settings are stored in yaml in:
+
+* ``/etc/lava-server/settings.conf``
+* ``/etc/lava-server/settings.yaml``
+* ``/etc/lava-server/settings.d/*.yaml``
+
+LAVA will load the files in this exact order.Files in the settings.d
+directory will be alphabetically ordered.
+
+If a variable is defined in two files, the value from the last file will
+override the value from first one.
+Any changes made in LAVA settings yaml file  will require a
 restart of `lava-server-gunicorn` service for the changes to get
 applied::
 
   $ sudo service lava-server-gunicorn restart
+
+.. note:: From 2020.05 release the settings files will not be created by
+          default on fresh installations.The settings file can be added in 
+          settings.d directory or settings.conf should be created. 
 
 .. seealso:: :ref:`check_instance`
