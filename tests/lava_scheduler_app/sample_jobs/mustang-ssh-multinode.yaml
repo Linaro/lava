@@ -25,6 +25,7 @@ protocols:
       host:
         count: 1
         device_type: mustang
+        essential: true
         timeout:
           minutes: 10
 

@@ -336,6 +336,7 @@ def job(extra_context_variables=[]):
                                 ),
                                 Optional("tags"): [str],
                                 Optional("environment"): dict,
+                                Optional("essential"): bool,
                                 Optional("timeout"): timeout(),
                             },
                             {
@@ -343,6 +344,7 @@ def job(extra_context_variables=[]):
                                 Required("count"): Range(min=0),
                                 Required("expect_role"): str,
                                 Required("host_role"): str,
+                                Optional("essential"): bool,
                                 Optional("request"): str,
                                 Optional("tags"): [str],
                                 Optional("timeout"): timeout(),
