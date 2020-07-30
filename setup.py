@@ -55,12 +55,7 @@ COMMON = {
     "description": "LAVA common",
     "packages": modules("lava_common"),
     "scripts": [],
-    "data_files": [
-        (
-            "/usr/share/lava-common/",
-            ["share/create_certificate.py", "share/lava-schema.py"],
-        )
-    ],
+    "data_files": [("/usr/share/lava-common/", ["share/lava-schema.py"])],
 }
 
 COORDINATOR = {
