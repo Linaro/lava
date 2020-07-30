@@ -100,7 +100,7 @@ def wait_pipeline(options, commit):
 def handle_prepare(options):
     # Generate the debian changelog
     run(
-        'gbp dch --new-version="%s-1" --id-length=9 --release --commit --commit-msg="LAVA Software %s release"'
+        'gbp dch --new-version="%s-1" --id-length=9 --release --commit --commit-msg="LAVA Software %s release" debian'
         % (options.version, options.version),
         options,
     )
