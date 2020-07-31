@@ -146,6 +146,7 @@ class DeviceSerializer(serializers.ModelSerializer):
             "health",
             "last_health_report_job",
             "worker_host",
+            "is_synced",
         )
 
 
