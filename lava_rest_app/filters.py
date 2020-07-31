@@ -324,6 +324,7 @@ class DeviceFilter(filters.FilterSet):
             ],
             "state": ["exact"],
             "health": ["exact"],
+            "is_synced": ["exact"],
         }
 
 

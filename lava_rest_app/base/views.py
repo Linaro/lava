@@ -356,6 +356,7 @@ class DeviceViewSet(viewsets.ReadOnlyModelViewSet):
         "state",
         "health",
         "worker_host",
+        "is_synced",
     )
     ordering_fields = (
         "hostname",
@@ -368,6 +369,7 @@ class DeviceViewSet(viewsets.ReadOnlyModelViewSet):
         "state",
         "health",
         "worker_host",
+        "is_synced",
     )
     filter_class = filters.DeviceFilter
 
