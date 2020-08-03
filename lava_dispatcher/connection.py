@@ -40,9 +40,10 @@ class SignalMatch(InternalObject):
             # Special cases for 'measurement'
             if key == "measurement":
                 try:
-                    res["measurement"] = decimal.Decimal(data["measurement"])
+                    measurement = decimal.Decimal(data["measurement"])
                 except decimal.InvalidOperation:
                     raise TestError("Invalid measurement %s" % data["measurement"])
+                res["measurement"] = float(measurement)
 
             # and 'result'
             elif key == "result":

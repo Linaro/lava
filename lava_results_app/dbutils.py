@@ -27,7 +27,7 @@ from urllib.parse import quote
 
 from collections import OrderedDict  # pylint: disable=unused-import
 
-from lava_common.compat import yaml_load, yaml_safe_load
+from lava_common.compat import yaml_dump, yaml_load, yaml_safe_load
 from lava_common.version import __version__
 from lava_results_app.models import (
     TestSuite,
@@ -38,13 +38,6 @@ from lava_results_app.models import (
     MetaType,
 )
 from lava_common.timeout import Timeout
-
-
-def yaml_decimal_str(dumper, value):
-    return yaml.ScalarNode(tag=u"tag:yaml.org,2002:str", value=str(value))
-
-
-yaml.add_representer(decimal.Decimal, yaml_decimal_str)
 
 
 def _check_for_testset(result_dict, suite):
@@ -99,7 +92,7 @@ def create_metadata_store(results, job):
         data = results["extra"]
     try:
         with open(meta_filename, "w") as extra_store:
-            yaml.dump(data, extra_store)
+            yaml_dump(data, extra_store)
     except OSError as exc:  # LAVA-847
         msg = "[%d] Unable to create metadata store: %s" % (job.id, exc)
         logger.error(msg)
@@ -132,7 +125,7 @@ def map_scanned_results(results, job, starttc, endtc, meta_filename):
     if "extra" in results:
         results["extra"] = meta_filename
 
-    metadata = yaml.dump(results)
+    metadata = yaml_dump(results)
     if len(metadata) > 4096:  # bug 2471 - test_length unit test
         msg = "[%d] Result metadata is too long. %s" % (job.id, metadata)
         logger.warning(msg)
