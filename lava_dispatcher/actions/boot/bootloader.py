@@ -34,7 +34,7 @@ class BootBootloader(Boot):
 
     @classmethod
     def action(cls):
-        return BootBootloaderAction()
+        return BootBootloaderRetry()
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -51,25 +51,25 @@ class BootBootloader(Boot):
         return True, "accepted"
 
 
-class BootBootloaderAction(Action):
+class BootBootloaderRetry(RetryAction):
 
-    name = "boot-bootloader"
-    description = "boot to bootloader"
-    summary = "boot bootloader"
+    name = "boot-bootloader-retry"
+    description = "boot to bootloader with retry"
+    summary = "boot bootloader retry"
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.pipeline.add_action(
             BootloaderCommandOverlay(method=parameters["bootloader"])
         )
-        self.pipeline.add_action(BootBootloaderRetry())
+        self.pipeline.add_action(BootBootloaderAction())
 
 
-class BootBootloaderRetry(RetryAction):
+class BootBootloaderAction(Action):
 
-    name = "boot-bootloader-retry"
-    description = "boot to bootloader with retry"
-    summary = "boot bootloader retry"
+    name = "boot-bootloader"
+    description = "boot to bootloader"
+    summary = "boot bootloader"
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)

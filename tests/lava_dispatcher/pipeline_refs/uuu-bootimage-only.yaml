@@ -18,8 +18,8 @@
     pipeline:
     - {class: connections.serial.ConnectDevice, name: connect-device}
     - {class: actions.boot.BootloaderCommandOverlay, name: bootloader-overlay}
-    - class: actions.boot.bootloader.BootBootloaderRetry
-      name: boot-bootloader-retry
+    - class: actions.boot.bootloader.BootBootloaderAction
+      name: boot-bootloader
       pipeline:
       - {class: connections.serial.ConnectDevice, name: connect-device}
       - class: power.ResetDevice
@@ -35,12 +35,12 @@
     - {class: power.PDUReboot, name: pdu-reboot}
   - {class: actions.boot.uuu.UUUBootRetry, name: uuu-retry}
   - {class: connections.serial.ConnectDevice, name: connect-device}
-- class: actions.boot.bootloader.BootBootloaderAction
-  name: boot-bootloader
+- class: actions.boot.bootloader.BootBootloaderRetry
+  name: boot-bootloader-retry
   pipeline:
   - {class: actions.boot.BootloaderCommandOverlay, name: bootloader-overlay}
-  - class: actions.boot.bootloader.BootBootloaderRetry
-    name: boot-bootloader-retry
+  - class: actions.boot.bootloader.BootBootloaderAction
+    name: boot-bootloader
     pipeline:
     - {class: connections.serial.ConnectDevice, name: connect-device}
     - class: power.ResetDevice
