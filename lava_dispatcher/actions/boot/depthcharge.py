@@ -147,7 +147,7 @@ class DepthchargeCommandOverlay(BootloaderCommandOverlay):
         substitutions = {
             "{CMDLINE}": cmdline_tftp,
             "{DEPTHCHARGE_KERNEL}": fit_tftp or kernel_tftp,
-            "{DEPTHCHARGE_RAMDISK}": ramdisk_tftp if not fit_tftp else "",
+            "{DEPTHCHARGE_RAMDISK}": ramdisk_tftp or "" if not fit_tftp else "",
         }
         commands = self.get_namespace_data(
             action="bootloader-overlay", label=self.method, key="commands"
