@@ -750,6 +750,7 @@ class WorkerTable(LavaTable):
     class Meta(LavaTable.Meta):
         model = Worker
         sequence = ["hostname", "state", "health", "description"]
+        exclude = ["token"]
 
 
 class LogEntryTable(LavaTable):

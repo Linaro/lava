@@ -158,6 +158,11 @@ class WorkerSerializer(serializers.ModelSerializer):
         model = Worker
         fields = "__all__"
 
+    def get_fields(self, *args, **kwargs):
+        fields = super().get_fields(*args, **kwargs)
+        del fields["token"]
+        return fields
+
     def update(self, instance, validated_data):
         if validated_data.get("health") is not None:
             health = validated_data["health"]
