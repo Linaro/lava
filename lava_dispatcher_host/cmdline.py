@@ -48,11 +48,6 @@ def setup_logger(data):
     return logger
 
 
-def finish_logger():
-    if logger:
-        logger.close(linger=LINGER)
-
-
 def handle_rules_show(options):
     print(get_udev_rules())
 
@@ -78,7 +73,6 @@ def handle_rules_install(options):
 
 def handle_devices_share(options):
     share_device_with_container(options, setup_logger)
-    finish_logger()
 
 
 def handle_devices_map(options):

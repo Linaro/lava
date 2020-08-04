@@ -20,9 +20,5 @@ class DeviceContainerMappingMixin:
             devices.append(device)
         for device in devices:
             add_device_container_mapping(
-                job_prefix + job_id,
-                device,
-                container,
-                container_type=container_type,
-                logging_info=self.get_logging_info(),
+                job_prefix + job_id, device, container, container_type=container_type
             )

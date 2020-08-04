@@ -1037,25 +1037,3 @@ class Action:
             if info["class"].needs_overlay(info["parameters"]):
                 return True
         return False
-
-    def get_logging_info(self):
-        job_id = self.job.job_id
-        logging_url = master_cert = slave_cert = socks_proxy = ipv6 = None
-
-        handler = getattr(self.logger, "handler", None)
-        if handler:
-            logging_url = handler.logging_url
-            master_cert = handler.master_cert
-            slave_cert = handler.slave_cert
-            socks_proxy = handler.socks_proxy
-            ipv6 = handler.ipv6
-            job_id = handler.job_id
-
-        return {
-            "logging_url": logging_url,
-            "master_cert": master_cert,
-            "slave_cert": slave_cert,
-            "socks_proxy": socks_proxy,
-            "ipv6": ipv6,
-            "job_id": job_id,
-        }

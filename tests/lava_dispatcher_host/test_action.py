@@ -14,7 +14,6 @@ def action(mocker):
     a.job.job_id = "99"
     a.job.parameters = {"dispatcher": {"prefix": "xx-"}}
     a.job.device = {"device_info": []}
-    a.get_logging_info = mocker.MagicMock()
     return a
 
 
@@ -23,11 +22,7 @@ class TestDeviceContainerMappingMixin:
         action.job.device["device_info"].append({"board_id": "0123456789"})
         action.add_device_container_mappings("foobar", "docker")
         add_device_container_mapping.assert_called_with(
-            "xx-99",
-            {"serial_number": "0123456789"},
-            "foobar",
-            container_type="docker",
-            logging_info=mocker.ANY,
+            "xx-99", {"serial_number": "0123456789"}, "foobar", container_type="docker"
         )
 
     def test_does_not_modify_device_info(self, action, add_device_container_mapping):
