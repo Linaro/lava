@@ -16,11 +16,11 @@ lava-publisher should be able to:
 
 * open a socket on `/tmp/lava.events`
 * open a socket on port `5500`
+* open a socket on port `8001`
 
-The services that generate events ([lava-logs](../lava-logs),
-[lava-master](../lava-master) and
-[lava-server-gunicorn](../lava-server-gunicorn)) should be able to write to the
-local socket.
+The services that generate events
+([lava-server-gunicorn](../lava-server-gunicorn)) should be able to write to
+the local socket.
 
 ## Configuration
 
@@ -31,15 +31,12 @@ Daemon start options:
 
 Django configuration:
 
-* `/etc/lava-server/instance.conf`
 * `/etc/lava-server/settings.conf`
+* `/etc/lava-server/settings.yaml`
+* `/etc/lava-server/settings.d/*.yaml`
 
 ## Logs
 
 The logs are stored in `/var/log/lava-server/lava-publisher.log`
 
 The log rotation is configured in `/etc/logrotate.d/lava-publisher-log`.
-
-## Security
-
-TODO: should activate encryption

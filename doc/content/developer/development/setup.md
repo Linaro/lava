@@ -50,7 +50,7 @@ rm -f /usr/bin/lava-coordinator
 rm -f /usr/bin/lava-dispatcher-host
 rm -f /usr/bin/lava-run
 rm -f /usr/bin/lava-server
-rm -f /usr/bin/lava-slave
+rm -f /usr/bin/lava-worker
 ```
 
 Add symbolic links to your local clone:
@@ -72,7 +72,7 @@ ln -s ~/lava/linaro_django_xmlrpc/ .
 cd /usr/bin/
 ln -s ~/lava/lava/coordinator/lava-coordinator .
 ln -s ~/lava/lava/dispatcher/lava-run .
-ln -s ~/lava/lava/dispatcher/lava-slave .
+ln -s ~/lava/lava/dispatcher/lava-worker .
 ln -s ~/lava/lava_dispatcher_host/lava-dispatcher-host .
 ln -s ~/lava/manage.py lava-server
 ```
@@ -87,11 +87,10 @@ Restart the services:
 
 ```shell
 service lava-coordinator restart
-service lava-logs restart
-service lava-master restart
 service lava-publisher restart
+service lava-scheduler restart
 service lava-server-gunicorn restart
-service lava-slave restart
+service lava-worker restart
 ```
 
 LAVA is now accessible at [http://localhost/](http://localhost/)
