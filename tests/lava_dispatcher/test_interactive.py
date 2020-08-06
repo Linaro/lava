@@ -518,6 +518,9 @@ def test_run_script_multinode(monkeypatch):
             self.captured.append(("sync", *args))
             return '{"response": "ack"}'
 
+        def set_timeout(self, duration):
+            pass
+
     monkeypatch.setattr(time, "time", Timing())
     action = TestInteractiveAction()
     action.multinode_proto = None
