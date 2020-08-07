@@ -1,0 +1,22 @@
+{# set device_type = "ls1021a-twr" #}
+{% extends 'base-uboot.jinja2' %}
+
+{% set console_device = console_device|default('ttyACM0') %}
+{% set baud_rate = baud_rate|default(115200) %}
+{% if extra_kernel_args %}
+{% set extra_kernel_args = "earlycon=uart8250,mmio,0x21c0500 " + extra_kernel_args %}
+{% else %}
+{% set extra_kernel_args = "earlycon=uart8250,mmio,0x21c0500" %}
+{% endif %}
+{% set bootloader_prompt = bootloader_prompt|default('=>') %}
+{% set bootz_kernel_addr = '0x82000000' %}
+{% set bootz_ramdisk_addr = '0x8f000000' %}
+{% set bootz_dtb_addr = '0x88000000' %}
+{% set bootm_kernel_addr = bootz_kernel_addr %}
+{% set bootm_ramdisk_addr = bootz_ramdisk_addr %}
+{% set bootm_dtb_addr = bootz_dtb_addr %}
+{% set booti_kernel_addr = bootz_kernel_addr %}
+{% set booti_ramdisk_addr = bootz_ramdisk_addr %}
+{% set booti_dtb_addr = bootz_dtb_addr %}
+{% set uboot_mkimage_arch = 'arm' %}
+{% set extra_nfsroot_args = ",v3" + extra_nfsroot_args|default('') %}
