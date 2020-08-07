@@ -162,24 +162,30 @@ def handle_publish(options):
 
     for name in ["buster"]:
         print("%s# sign %s .deb%s" % (COLORS["purple"], name, COLORS["reset"]))
+        connection_string = "lavasoftware.org"
+        if options.lavasoftware_username:
+            connection_string = "%s@%s" % (
+                options.lavasoftware_username,
+                connection_string,
+            )
         run(
-            "scp lavasoftware.org:/home/gitlab-runner/repository/current-release/dists/%s/Release Release"
-            % name,
+            "scp %s:/home/gitlab-runner/repository/current-release/dists/%s/Release Release"
+            % (connection_string, name),
             options,
         )
         run(
             "gpg -u C87D63FD935535CFB0CAF5C2A791358F2E49B100 -a --detach-sign Release",
             options,
         )
-        run("scp Release.asc lavasoftware.org:~/Release.gpg", options)
+        run("scp Release.asc %s:~/Release.gpg" % connection_string, options)
         run(
-            "ssh -t lavasoftware.org sudo mv ~/Release.gpg /home/gitlab-runner/repository/current-release/dists/%s/Release.gpg"
-            % name,
+            "ssh -t %s sudo mv ~/Release.gpg /home/gitlab-runner/repository/current-release/dists/%s/Release.gpg"
+            % (connection_string, name),
             options,
         )
         run(
-            "ssh -t lavasoftware.org sudo chown gitlab-runner:gitlab-runner /home/gitlab-runner/repository/current-release/dists/%s/Release.gpg"
-            % name,
+            "ssh -t %s sudo chown gitlab-runner:gitlab-runner /home/gitlab-runner/repository/current-release/dists/%s/Release.gpg"
+            % (connection_string, name),
             options,
         )
         if not options.dry_run and not options.skip >= options.count:
@@ -191,9 +197,13 @@ def handle_publish(options):
     print("%s# publish the new repository%s" % (COLORS["purple"], COLORS["reset"]))
     # TODO: move the old-release directory
     run(
-        "ssh -t lavasoftware.org 'cd /home/gitlab-runner/repository && sudo ln -snf current-release release'",
+        "ssh -t %s 'cd /home/gitlab-runner/repository && sudo ln -snf current-release release'"
+        % connection_string,
         options,
     )
+
+    # Login to the docker service.
+    run("docker login", options)
 
     # Pull/Push the docker images
     for (name, arch) in itertools.product(
@@ -270,6 +280,11 @@ def main():
     )
     parser.add_argument("--skip", type=int, default=0, help="Skip some steps")
     parser.add_argument("version", type=str, help="new version")
+    parser.add_argument(
+        "--lavasoftware-username",
+        default=None,
+        help="username for lavasoftware.org SSH login",
+    )
 
     # Parse the command line
     options = parser.parse_args()
