@@ -22,7 +22,7 @@
 {% set base_kernel_args = base_kernel_args|default('') %}
 {% set booti_kernel_addr = booti_kernel_addr | default('0x60800000') %}
 {% set booti_tee_addr = booti_tee_addr | default('0x64000000') %}
-{% set booti_ramdisk_addr = booti_ramdisk_addr | default('0x64000000') %}
+{% set booti_ramdisk_addr = booti_ramdisk_addr | default('0x66800000') %}
 {% set booti_dtb_addr = booti_dtb_addr | default('0x63000000') %}
 {% set bootz_kernel_addr = booti_kernel_addr %}
 {% set bootz_tee_addr = booti_tee_addr %}

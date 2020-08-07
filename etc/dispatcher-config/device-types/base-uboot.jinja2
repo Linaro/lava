@@ -21,6 +21,7 @@
 {% set base_uboot_tftp_commands = uboot_tftp_commands|default([
     "tftp {KERNEL_ADDR} {KERNEL}",
     "tftp {RAMDISK_ADDR} {RAMDISK}",
+    "tftp {TEE_ADDR} {TEE}",
     "setenv initrd_size ${filesize}"] + uboot_load_fdt)
 -%}
 
@@ -72,30 +73,36 @@
     kernel: '{{ booti_kernel_addr|default('0x80000000') }}'
     ramdisk: '{{ booti_ramdisk_addr|default('0x82000000') }}'
     dtb: '{{ booti_dtb_addr|default('0x81000000') }}'
+    tee: '{{ booti_tee_addr|default('0x83000000') }}'
   booti:
     kernel: '{{ booti_kernel_addr|default('0x80000000') }}'
     ramdisk: '{{ booti_ramdisk_addr|default('0x82000000') }}'
     dtb: '{{ booti_dtb_addr|default('0x81000000') }}'
+    tee: '{{ booti_tee_addr|default('0x83000000') }}'
 {% endif %}
 {% if bootm_kernel_addr %}
   uimage:
     kernel: '{{ bootm_kernel_addr|default('0x80000000') }}'
     ramdisk: '{{ bootm_ramdisk_addr|default('0x82000000') }}'
     dtb: '{{ bootm_dtb_addr|default('0x81000000') }}'
+    tee: '{{ bootm_tee_addr|default('0x83000000') }}'
   bootm:
     kernel: '{{ bootm_kernel_addr|default('0x80000000') }}'
     ramdisk: '{{ bootm_ramdisk_addr|default('0x82000000') }}'
     dtb: '{{ bootm_dtb_addr|default('0x81000000') }}'
+    tee: '{{ bootm_tee_addr|default('0x83000000') }}'
 {% endif %}
 {% if bootz_kernel_addr %}
   zimage:
     kernel: '{{ bootz_kernel_addr|default('0x80000000') }}'
     ramdisk: '{{ bootz_ramdisk_addr|default('0x82000000') }}'
     dtb: '{{ bootz_dtb_addr|default('0x81000000') }}'
+    tee: '{{ bootz_tee_addr|default('0x83000000') }}'
   bootz:
     kernel: '{{ bootz_kernel_addr|default('0x80000000') }}'
     ramdisk: '{{ bootz_ramdisk_addr|default('0x82000000') }}'
     dtb: '{{ bootz_dtb_addr|default('0x81000000') }}'
+    tee: '{{ bootz_tee_addr|default('0x83000000') }}'
 {% endif %}
 {% endblock vland %}
 

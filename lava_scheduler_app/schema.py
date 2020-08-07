@@ -78,6 +78,7 @@ def _deploy_tftp_schema():
             Optional("nfsrootfs"): {Required("url"): str},
             Optional("dtb"): {Required("url"): str},
             Optional("modules"): {Required("url"): str},
+            Optional("tee"): {Required("url"): str},
         },
         extra=True,
     )
