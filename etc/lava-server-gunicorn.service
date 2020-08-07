@@ -4,7 +4,7 @@ After=network.target remote-fs.target
 
 [Service]
 Type=simple
-Environment=LOGLEVEL=DEBUG WORKERS=4 WORKER_CLASS=sync LOGFILE=/var/log/lava-server/gunicorn.log RELOAD= BIND= TIMEOUT=
+Environment=LOGLEVEL=DEBUG WORKERS=4 WORKER_CLASS=eventlet LOGFILE=/var/log/lava-server/gunicorn.log RELOAD= BIND= TIMEOUT=
 EnvironmentFile=-/etc/default/lava-server-gunicorn
 EnvironmentFile=-/etc/lava-server/lava-server-gunicorn
 ExecStart=/usr/bin/gunicorn3 lava_server.wsgi --log-level $LOGLEVEL --log-file $LOGFILE -u lavaserver -g lavaserver --worker-class $WORKER_CLASS --workers $WORKERS $RELOAD $BIND $TIMEOUT

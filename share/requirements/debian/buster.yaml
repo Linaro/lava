@@ -26,6 +26,8 @@ lava-server:
   docutils:
     version: ">=0.6"
     name: python3-docutils
+  eventlet:
+    name: python3-eventlet
   jinja2:
     name: python3-jinja2
   psycopg2:
