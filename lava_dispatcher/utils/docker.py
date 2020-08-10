@@ -81,7 +81,7 @@ class DockerRun:
         cmd = (
             ["docker"]
             + self.__docker_options__
-            + ["run", "--rm"]
+            + ["run", "--rm", "--init"]
             + self.__docker_run_options__
         )
         if self.__interactive__:
