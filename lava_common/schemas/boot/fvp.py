@@ -36,5 +36,6 @@ def schema():
         Required("arguments"): [str],
         Required("prompts"): boot.prompts(),
         Required("docker"): docker("name"),
+        Optional("transfer_overlay"): boot.transfer_overlay(),
     }
     return {**boot.schema(), **base}
