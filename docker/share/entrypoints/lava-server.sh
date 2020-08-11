@@ -139,7 +139,7 @@ start_lava_publisher() {
 start_lava_server_gunicorn() {
     LOGLEVEL="DEBUG"
     TIMEOUT=""
-    WORKER_CLASS="sync"
+    WORKER_CLASS="eventlet"
     WORKERS="4"
     LOGFILE="/var/log/lava-server/gunicorn.log"
     [ -e /etc/default/lava-server-gunicorn ] && . /etc/default/lava-server-gunicorn

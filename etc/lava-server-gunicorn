@@ -5,9 +5,8 @@
 # LOGFILE="/var/log/lava-server/gunicorn.log"
 
 # Worker class
-# Default to sync while eventlet should be more appropriate when downloading
-# large job logs
-# WORKER_CLASS="sync"
+# Default to eventlet which is more appropriate when downloading large job logs
+# WORKER_CLASS="eventlet"
 
 # Number of workers
 # WORKERS=4
