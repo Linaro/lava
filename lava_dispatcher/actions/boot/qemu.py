@@ -320,6 +320,8 @@ class CallQemuAction(Action):
             if "binary" in self.parameters["docker"]:
                 args.append(self.parameters["docker"]["binary"])
 
+            self.logger.info("Pulling docker image")
+            docker.prepare(action=self)
             self.sub_command[0] = " ".join(docker.cmdline(*args))
 
         self.logger.info("Boot command: %s", " ".join(self.sub_command))
