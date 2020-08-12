@@ -38,6 +38,13 @@ class DockerRun:
         self.__docker_options__ = []
         self.__docker_run_options__ = []
 
+    @classmethod
+    def from_parameters(cls, params):
+        image = params["image"]
+        run = cls(image)
+        run.local(params.get("local", False))
+        return run
+
     def local(self, local):
         self.__local__ = local
 

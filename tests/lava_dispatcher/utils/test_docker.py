@@ -160,6 +160,12 @@ def test_run_with_local_image_does_not_pull(mocker):
     )
 
 
+def test_from_parameters():
+    assert DockerRun.from_parameters({"image": "foo"}).image == "foo"
+    assert not DockerRun.from_parameters({"image": "foo"}).__local__
+    assert DockerRun.from_parameters({"image": "foo", "local": True}).__local__
+
+
 def test_wait(mocker):
     docker = DockerRun("myimage")
     docker.name("foobar")
