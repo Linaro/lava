@@ -77,7 +77,7 @@ def action(tmpdir):
 
 
 def test_postprocess_with_docker_populate(action):
-    assert action.image == "foo"
+    assert action.docker_parameters["image"] == "foo"
     assert "date" in action.steps
     assert "echo HELLO WORLD" in action.steps
 
@@ -90,9 +90,7 @@ def test_postprocess_with_docker_populate_missing_data(tmpdir):
 def test_postprocess_with_docker_validate(tmpdir):
     action = PostprocessWithDocker(tmpdir)
     assert not action.validate()
-    assert "docker image name missing" in action.errors
     assert "postprocessing steps missing" in action.errors
-    action.image = "foobar"
     action.steps = ["date"]
     action.errors.clear()
     assert action.validate()
