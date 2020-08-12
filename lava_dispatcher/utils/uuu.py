@@ -37,15 +37,11 @@ class OptionalContainerUuuAction(OptionalContainerAction):
                 "options"
             ]["docker_image"]
             if docker_image or "docker" in self.parameters:
-                image = (
-                    self.parameters["docker"]["image"]
-                    if "docker" in self.parameters
-                    else docker_image
-                )
+                params = self.parameters.get("docker", {"image": docker_image})
                 remote_options = self.job.device["actions"]["boot"]["methods"]["uuu"][
                     "options"
                 ]["remote_options"]
-                self.__driver__ = DockerDriver(self, image)
+                self.__driver__ = DockerDriver(self, params)
                 self.__driver__.docker_options = shlex.split(remote_options)
                 self.__driver__.docker_run_options = [
                     "--privileged",
