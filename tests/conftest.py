@@ -19,11 +19,15 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import os
 import pytest
 import requests
 
 import lava_dispatcher.job
 import lava_dispatcher.utils.filesystem
+
+
+os.environ["LANGUAGE"] = "C.UTF-8"
 
 
 @pytest.fixture(autouse=True)
