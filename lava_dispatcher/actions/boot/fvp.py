@@ -234,6 +234,7 @@ class StartFVPAction(BaseFVPAction):
         self.container = ""
         self.fvp_image = None
         self.fvp_console_string = ""
+        self.shell = None
 
     def validate(self):
         super().validate()
@@ -280,6 +281,10 @@ class StartFVPAction(BaseFVPAction):
             key="container",
             value=self.container,
         )
+        # Although we don't require any more output on this connection,
+        # discarding this may cause SIGHUPs to be sent to the model
+        # which will terminate the model.
+        self.shell = shell
         return shell_connection
 
 
