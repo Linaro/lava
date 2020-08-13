@@ -110,6 +110,7 @@ def test_run(action, mocker):
         for l in environmentfile.open().read().splitlines()
     }
     assert env["export ANDROID_SERIAL"] == "0123456789"
+    assert env["export LAVA_BOARD_ID"] == "0123456789"
     assert env["export LAVA_CONNECTION_COMMAND_UART0"] == "'telnet localhost 4002'"
     assert env["export LAVA_CONNECTION_COMMAND_UART1"] == "'telnet 192.168.1.200 8001'"
     # primary connection:

@@ -102,6 +102,7 @@ class DockerTestSetEnvironment(Action, GetBoardId):
     def run(self, connection, max_end_time):
         environment = self.job.parameters.get("environment", {})
         environment["ANDROID_SERIAL"] = self.get_board_id()
+        environment["LAVA_BOARD_ID"] = self.get_board_id()
 
         connections = self.job.device.get("commands", {}).get("connections", {})
         for name, command in connections.items():
