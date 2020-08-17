@@ -206,10 +206,11 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
         for dev in devices:
             share_device_with_container_docker(container, dev)
 
-        super().run(shell_connection, max_end_time)
-
-        # finish the container
-        shell_connection.finalise()
+        try:
+            super().run(shell_connection, max_end_time)
+        finally:
+            # finish the container
+            shell_connection.finalise()
 
         # return the original connection untouched
         self.__set_connection__(connection)
