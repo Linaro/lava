@@ -258,7 +258,9 @@ class LogsElasticsearch(Logs):
             "%s_search/" % self.api_url,
             params={"query": {"match": {"job_id": job.id}}, "_source": False},
         )
-        return response["hits"]["total"]["value"]
+        with contextlib.suppress(Exception):
+            return response["hits"]["total"]["value"]
+        return 0
 
     def open(self, job):
         stream = io.BytesIO(yaml_dump(self._get_docs(job)).encode("utf-8"))
