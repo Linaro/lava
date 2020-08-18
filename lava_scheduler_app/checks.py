@@ -280,7 +280,7 @@ def check_services(app_configs, **kwargs):
     try:
         subprocess.check_output(["systemctl"], stderr=subprocess.PIPE)
         running_systemd = True
-    except subprocess.CalledProcessError:
+    except (FileNotFoundError, subprocess.CalledProcessError):
         running_systemd = False
 
     if running_systemd:
