@@ -64,13 +64,13 @@ It is mandatory to have appropriate configuration variables set in LAVA settings
 !!! example ""
 
     ```shell
-    lava-server manage copy-logs --db=LogsMongo
+    lava-server manage copy-logs LogsMongo
     ```
 
 !!! example ""
 
     ```shell
-    lava-server manage copy-logs --db=LogsElasticsearch --dry-run
+    lava-server manage copy-logs --dry-run LogsElasticsearch
     ```
 
 !!! warning "copy-logs compatibility"

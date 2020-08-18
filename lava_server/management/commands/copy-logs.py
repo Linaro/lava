@@ -37,9 +37,11 @@ class Command(BaseCommand):
             help="Simulate the execution (do not store logs in db)",
         )
         parser.add_argument(
-            "--db",
+            "db",
             type=str,
             default="LogsMongo",
+            choices=["LogsMongo", "LogsElasticsearch"],
+            nargs="?",
             help="Database storage choice. Options: LogsMongo, LogsElasticsearch.",
         )
 
