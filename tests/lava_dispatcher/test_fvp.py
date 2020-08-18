@@ -38,3 +38,30 @@ def test_shell_reference(monkeypatch):
     assert [] == factory.job.pipeline.errors  # nosec
     description_ref = factory.pipeline_reference("fvp_foundation.yaml", job=factory.job)
     assert description_ref == factory.job.pipeline.describe(False)  # nosec
+
+
+def test_transfer_overlay(monkeypatch):
+    monkeypatch.setattr(Action, "run_cmd", lambda cmd: b"")
+    monkeypatch.setattr(docker, "which", lambda a: "/usr/bin/docker")
+    factory = TestFVPActions()
+    factory.setUp(job="sample_jobs/fvp_foundation_transfer_overlay.yaml")
+    factory.job.validate()
+    assert [] == factory.job.pipeline.errors  # nosec
+    description_ref = factory.pipeline_reference(
+        "fvp_foundation_transfer_overlay.yaml", job=factory.job
+    )
+    assert description_ref == factory.job.pipeline.describe(False)  # nosec
+    boot_fvp = [
+        action for action in factory.job.pipeline.actions if action.name == "boot-fvp"
+    ][0]
+    assert boot_fvp is not None
+    boot_fvp_main = [
+        action for action in boot_fvp.pipeline.actions if action.name == "boot-fvp-main"
+    ][0]
+    assert boot_fvp_main is not None
+    transfer_overlay = [
+        action
+        for action in boot_fvp.pipeline.actions
+        if action.name == "overlay-unpack"
+    ][0]
+    assert transfer_overlay is not None

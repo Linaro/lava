@@ -37,3 +37,49 @@ There are few dependencies:
 
 For these basics, here is a sample `Dockerfile <examples/source/fvp/Dockerfile>`_ to create a Docker image for
 running FVPs in LAVA, which can be built with a ``docker build`` command.
+
+Networking inside Models
+************************
+
+Optionally, if you require networking in the model, here is a way to enable this.
+For this example the base OS is Ubuntu.
+
+- Ensure ``libvirt-bin`` package is installed in the ``Dockerfile``.
+- Add the following contents into ``/etc/libvirt/hooks/network``.
+
+.. code-block:: bash
+
+    #!/bin/bash
+
+    # If the change occurs to the "default" libvirt managed network
+    if [ "${1}" = "default" ] ; then
+      # If the network is started
+      if [ "${2}" = "started" ] ; then
+        ip tuntap add mode tap tap01
+        ip link set tap01 promisc on
+        ip link set tap01 up
+        brctl addif virbr0 tap01
+      fi
+    fi
+
+- Create a custom entrypoint script that calls ``/usr/sbin/libvirtd &`` before the commands given: ``exec "$@"``.
+- libvirt will create a ``virbr0`` bridge and then a tap interface ``tap01`` connected to it. ``tap01`` is what the model will use.
+- Add the following arguments to your foundation model (other models will differ):
+
+.. code-block:: yaml
+
+    arguments:
+    - ...
+    - "--network=bridged"
+    - "--network-bridge=tap01"
+
+This will be required if you require the use of ``transfer_overlay``.
+This could be useful in the event you want to pass binaries to the model that
+contains the filesystem but stored in a way LAVA cannot currently put the overlay into.
+
+.. code-block:: yaml
+
+  transfer_overlay:
+    # It may be required to suppress some kernel messages
+    download_command: echo 3 > /proc/sys/kernel/printk ; wget
+    unpack_command: tar -C / -xzf

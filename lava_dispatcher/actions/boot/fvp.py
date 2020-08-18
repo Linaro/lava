@@ -24,7 +24,7 @@ import time
 from lava_common.exceptions import JobError
 from lava_dispatcher.action import Pipeline, Action
 from lava_dispatcher.logical import Boot, RetryAction
-from lava_dispatcher.actions.boot import BootHasMixin, AutoLoginAction
+from lava_dispatcher.actions.boot import BootHasMixin, AutoLoginAction, OverlayUnpack
 from lava_dispatcher.shell import ExpectShellSession, ShellCommand, ShellSession
 
 
@@ -59,6 +59,8 @@ class BootFVPAction(BootHasMixin, RetryAction):
             self.pipeline.add_action(AutoLoginAction())
             if self.test_has_shell(parameters):
                 self.pipeline.add_action(ExpectShellSession())
+                if "transfer_overlay" in parameters:
+                    self.pipeline.add_action(OverlayUnpack())
 
 
 class BootFVPMain(Action):

@@ -1,0 +1,95 @@
+device_type: fvp
+job_name: fvp_foundation transfer-overlay
+timeouts:
+  connection:
+    minutes: 3
+  job:
+    minutes: 10
+  actions:
+    auto-login-action:
+      minutes: 5
+    http-download:
+      minutes: 2
+    download-retry:
+      minutes: 2
+    fvp-deploy:
+      minutes: 5
+
+priority: medium
+visibility: public
+
+actions:
+
+- deploy:
+    to: fvp
+    images:
+      # Note some images will need to be extracted from zip file linked
+      bl1:
+        # bl1 contained in https://releases.linaro.org/members/arm/platforms/19.06/fvp-latest-oe-uboot.zip
+        url: http://example.com/bl1.bin
+      rootfs:
+        url: https://releases.linaro.org/archive/15.05/members/arm/openembedded/aarch64/vexpress64-openembedded_minimal-armv8-gcc-4.9_20150522-720.img.gz
+        compression: gz
+      fip:
+        # fip contained in https://releases.linaro.org/members/arm/platforms/19.06/fvp-latest-oe-uboot.zip
+        url: http://example.com/fip.bin
+      dtb:
+        # dtb contained in https://releases.linaro.org/members/arm/platforms/19.06/fvp-latest-oe-uboot.zip
+        url: http://example.com/foundation-v8-gicv3.dtb
+      image:
+        # image contained in https://releases.linaro.org/members/arm/platforms/19.06/fvp-latest-oe-uboot.zip
+        url: http://example.com/Image
+      ramdisk:
+        # ramdisk contained in https://releases.linaro.org/members/arm/platforms/19.06/fvp-latest-oe-uboot.zip
+        url: http://example.com/ramdisk.img
+
+- boot:
+    method: fvp
+    # See fvp documentation in LAVA docs for how to create a docker image with the model you want in.
+    docker:
+      name: "foundation:11.8"
+      local: true
+    image: /opt/model/Foundation_Platformpkg/models/Linux64_GCC-6.4/Foundation_Platform
+    version_string: 'ARM V8 Foundation Platformr0p0 [^\\n]+'
+    timeout:
+      minutes: 7
+    console_string: 'terminal_0: Listening for serial connection on port (?P<PORT>\d+)'
+    arguments:
+    - "--cores=4"
+    - "--no-secure-memory"
+    - "--visualization"
+    - "--gicv3"
+    - "--data={BL1}@0x0"
+    - "--data={FIP}@0x8000000"
+    - "--data={IMAGE}@0x80080000"
+    - "--data={DTB}@0x82000000"
+    - "--data={RAMDISK}@0x84000000"
+    - "--block-device={ROOTFS}"
+    - "--network=bridged"
+    - "--network-bridge=tap01"
+    transfer_overlay:
+      download_command: echo 3 > /proc/sys/kernel/printk ; cd /tmp ; wget
+      unpack_command: tar -C / -xzf
+    prompts:
+    - 'root@genericarmv8:.*#'
+
+- test:
+    timeout:
+      minutes: 1
+    definitions:
+    - repository:
+        metadata:
+          format: Lava-Test Test Definition 1.0
+          name: docker-connection-test
+          description: '"Test serial connection"'
+          os:
+          - busybox
+          scope:
+          - functional
+        run:
+          steps:
+          - ifconfig
+          - uname -a
+      from: inline
+      name: docker-test-run
+      path: inline/docker-test-run.yaml
