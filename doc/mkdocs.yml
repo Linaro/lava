@@ -90,6 +90,7 @@ nav:
     - Remote database: admin/advanced-tutorials/remote-database.md
     - Remote workers: admin/advanced-tutorials/remote-workers.md
     - Growing your lab: admin/advanced-tutorials/growing-your-lab.md
+    - Deploying RPi4 as worker: admin/advanced-tutorials/deploying-rpi4b-as-worker.md
     - Device dictionary sync: admin/advanced-tutorials/sync-records-from-dictionary.md
     - Trouble shooting: admin/advanced-tutorials/trouble-shooting.md
 
