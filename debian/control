@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Debian LAVA team <pkg-linaro-lava-devel@lists.alioth.debian.org>
 Uploaders: Antonio Terceiro <antonio.terceiro@linaro.org>,
            Remi Duraffort <remi.duraffort@linaro.org>
-Build-Depends: debhelper (>= 9.20160709),
+Build-Depends: debhelper-compat (= 12),
                dh-python,
                libjs-bootstrap,
                libjs-excanvas,
