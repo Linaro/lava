@@ -84,8 +84,10 @@ class Command(BaseCommand):
 
             self.stdout.write(f"* {job.id}")
             if not options["dry_run"]:
-                for line in lines.strip("\n").split("\n"):
+                for (index, line) in enumerate(lines.strip("\n").split("\n")):
                     if line:
-                        logs_db.write(job, line)
-
+                        try:
+                            logs_db.write(job, line)
+                        except Exception:
+                            self.stdout.write(f"  -> Invalid line {index}")
         self.stdout.write("Done.")
