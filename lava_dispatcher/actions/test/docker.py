@@ -165,12 +165,9 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
             action="test", label="results", key="lava_test_results_dir"
         ).strip("/")
 
-        image = self.parameters["docker"]["image"]
-        local = self.parameters["docker"].get("local")
         container = "lava-docker-test-shell-%s-%s" % (self.job.job_id, self.level)
 
-        docker = DockerRun(image)
-        docker.local(local)
+        docker = DockerRun.from_parameters(self.parameters["docker"])
         docker.prepare()
         docker.bind_mount(os.path.join(location, overlay), "/" + overlay)
 
@@ -210,10 +207,11 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
         for dev in devices:
             share_device_with_container_docker(container, dev)
 
-        super().run(shell_connection, max_end_time)
-
-        # finish the container
-        shell_connection.finalise()
+        try:
+            super().run(shell_connection, max_end_time)
+        finally:
+            # finish the container
+            shell_connection.finalise()
 
         # return the original connection untouched
         self.__set_connection__(connection)

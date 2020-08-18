@@ -30,6 +30,19 @@ from lava_dispatcher.utils.udev import get_udev_devices
 class OptionalContainerAction(Action):
     command_exception = InfrastructureError
 
+    def validate(self):
+        super().validate()
+        key = self.driver.key
+        validated = self.get_namespace_data(
+            action="optional_container_action", label="prepare", key=key
+        )
+        if validated:
+            return
+        self.driver.validate()
+        self.set_namespace_data(
+            action="optional_container_action", label="prepare", key=key, value=True
+        )
+
     @property
     def driver(self):
         __driver__ = getattr(self, "__driver__", None)
@@ -38,8 +51,8 @@ class OptionalContainerAction(Action):
             if lxc:
                 self.__driver__ = LxcDriver(self, lxc)
             elif "docker" in self.parameters:
-                image = self.parameters["docker"]["image"]
-                self.__driver__ = DockerDriver(self, image)
+                params = self.parameters["docker"]
+                self.__driver__ = DockerDriver(self, params)
             else:
                 self.__driver__ = NullDriver(self)
         return self.__driver__
@@ -53,6 +66,7 @@ class OptionalContainerAction(Action):
 
 class NullDriver(InternalObject):
     is_container = False
+    key = "null"
 
     def __init__(self, action):
         self.action = action
@@ -62,6 +76,9 @@ class NullDriver(InternalObject):
 
     def maybe_copy_to_container(self, src):
         return src
+
+    def validate(self):
+        pass
 
 
 class LxcDriver(NullDriver):
@@ -82,15 +99,15 @@ class LxcDriver(NullDriver):
 class DockerDriver(NullDriver):
     is_container = True
 
-    def __init__(self, action, image):
+    def __init__(self, action, params):
         super().__init__(action)
-        self.image = image
+        self.params = params
         self.docker_options = []
         self.docker_run_options = []
         self.copied_files = []
 
     def get_command_prefix(self):
-        docker = DockerRun(self.image)
+        docker = DockerRun.from_parameters(self.params)
 
         docker.add_docker_options(*self.docker_options)
         docker.add_docker_run_options(*self.docker_run_options)
@@ -114,3 +131,12 @@ class DockerDriver(NullDriver):
             return get_udev_devices(device_info=device_info)
         else:
             return []
+
+    @property
+    def key(self):
+        docker = DockerRun.from_parameters(self.params)
+        return docker.image
+
+    def validate(self):
+        docker = DockerRun.from_parameters(self.params)
+        docker.prepare(self.action)

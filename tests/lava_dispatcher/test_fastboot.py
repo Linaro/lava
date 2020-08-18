@@ -235,6 +235,7 @@ class TestDockerDriver(unittest.TestCase):
                 "docker",
                 "run",
                 "--rm",
+                "--init",
                 "--device=/dev/foo/bar",
                 "--mount=type=bind,source=/path/to/image.img,destination=/path/to/image.img",
                 self.image,

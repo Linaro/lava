@@ -9,7 +9,7 @@ def run():
 
 
 def test_basic(run):
-    assert run.cmdline() == ["docker", "run", "--rm", "foobar"]
+    assert run.cmdline() == ["docker", "run", "--rm", "--init", "foobar"]
 
 
 def test_name(run):
@@ -122,7 +122,9 @@ def test_run_architecture_check_success(mocker):
 
     docker = DockerRun("myimage")
     docker.run("echo")  # no crash = success
-    check_call.assert_called_with(["docker", "run", "--rm", "myimage", "echo"])
+    check_call.assert_called_with(
+        ["docker", "run", "--rm", "--init", "myimage", "echo"]
+    )
     getLogger.assert_not_called()
 
 
@@ -139,7 +141,7 @@ def test_run_with_action(mocker):
     action.run_cmd.assert_has_calls(
         [
             mocker.call(["docker", "pull", "myimage"]),
-            mocker.call(["docker", "run", "--rm", "myimage", "date"]),
+            mocker.call(["docker", "run", "--rm", "--init", "myimage", "date"]),
         ]
     )
 
@@ -153,9 +155,15 @@ def test_run_with_local_image_does_not_pull(mocker):
     action.run_cmd.assert_has_calls(
         [
             mocker.call(["docker", "image", "inspect", mocker.ANY, "myimage"]),
-            mocker.call(["docker", "run", "--rm", "myimage", "date"]),
+            mocker.call(["docker", "run", "--rm", "--init", "myimage", "date"]),
         ]
     )
+
+
+def test_from_parameters():
+    assert DockerRun.from_parameters({"image": "foo"}).image == "foo"
+    assert not DockerRun.from_parameters({"image": "foo"}).__local__
+    assert DockerRun.from_parameters({"image": "foo", "local": True}).__local__
 
 
 def test_wait(mocker):
