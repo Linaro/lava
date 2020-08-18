@@ -17,9 +17,9 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-from django.core.management.base import BaseCommand
-
 from importlib import import_module
+
+from django.core.management.base import BaseCommand
 
 from lava_common.exceptions import ConfigurationError
 from lava_scheduler_app.models import TestJob
@@ -70,19 +70,19 @@ class Command(BaseCommand):
             if logs_db.line_count(job) > 0:
                 # We already have logs for the given job.
                 self.stdout.write(
-                    f"* Job ID {job.id} [SKIP] - Logs already present for this job."
+                    f"* {job.id} [SKIP] - Logs already present for this job."
                 )
                 continue
             try:
                 lines = logs_filesystem.read(job)
             except FileNotFoundError:
-                self.stdout.write(f"* Job ID {job.id} [SKIP] - Log file not found")
+                self.stdout.write(f"* {job.id} [SKIP] - Log file not found")
                 continue
             except Exception as e:
-                self.stdout.write(f"* Job ID {job.id} [SKIP] - {str(e)}")
+                self.stdout.write(f"* {job.id} [SKIP] - {str(e)}")
                 continue
 
-            self.stdout.write(f"* Job ID {job.id}")
+            self.stdout.write(f"* {job.id}")
             if not options["dry_run"]:
                 for line in lines.strip("\n").split("\n"):
                     if line:
