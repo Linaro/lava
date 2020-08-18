@@ -14,7 +14,7 @@ trap "rm -rf ${TESTDIR}" INT TERM EXIT
 set -x
 
 # run tests
-export LAVA_BASE_DIR=${TESTDIR}/tmp
+export LAVA_STATE_DIR=${TESTDIR}/tmp
 cp -r pytest.ini etc/ tests/ "${TESTDIR}"
 cd "${TESTDIR}"
 python3 -m pytest "$@"
