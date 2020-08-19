@@ -22,6 +22,7 @@ from typing import Set
 import contextlib
 import datetime
 import json
+import signal
 import time
 import zmq
 from zmq.utils.strtypes import b, u
@@ -102,6 +103,12 @@ class Command(LAVADaemonCommand):
             self.sub.setsockopt(zmq.IPV6, 1)
         self.sub.connect(options["event_url"])
 
+        # Every signals should raise a KeyboardInterrupt
+        def signal_handler(*_):
+            raise KeyboardInterrupt
+
+        signal.signal(signal.SIGTERM, signal_handler)
+
         # Create a poller
         self.poller = zmq.Poller()
         self.poller.register(self.sub, zmq.POLLIN)
@@ -111,7 +118,7 @@ class Command(LAVADaemonCommand):
         try:
             self.main_loop()
         except KeyboardInterrupt:
-            self.logger.info("Received ctrl+c, leaving")
+            self.logger.info("Received a signal, leaving")
         except Exception as exc:
             self.logger.error("[CLOSE] Unknown exception raised, leaving!")
             self.logger.exception(exc)
