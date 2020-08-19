@@ -46,12 +46,12 @@
     - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
   - {class: actions.deploy.overlay.CompressOverlay, name: compress-overlay}
   - {class: actions.deploy.overlay.PersistentNFSOverlay, name: persistent-nfs-overlay}
-- class: actions.boot.bootloader.BootBootloaderAction
-  name: boot-bootloader
+- class: actions.boot.bootloader.BootBootloaderRetry
+  name: boot-bootloader-retry
   pipeline:
   - {class: actions.boot.BootloaderCommandOverlay, name: bootloader-overlay}
-  - class: actions.boot.bootloader.BootBootloaderRetry
-    name: boot-bootloader-retry
+  - class: actions.boot.bootloader.BootBootloaderAction
+    name: boot-bootloader
     pipeline:
     - {class: connections.serial.ConnectDevice, name: connect-device}
     - class: power.ResetDevice

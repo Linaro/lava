@@ -24,7 +24,7 @@
 import time
 from lava_dispatcher.action import Pipeline, Action
 from lava_common.exceptions import ConfigurationError, JobError
-from lava_dispatcher.actions.boot.bootloader import BootBootloaderRetry
+from lava_dispatcher.actions.boot.bootloader import BootBootloaderAction
 from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.actions.boot import BootloaderCommandOverlay
 
@@ -153,7 +153,7 @@ class BootBootloaderCorruptBootMediaAction(RetryAction):
                 method=u_boot_params["bootloader"], commands=u_boot_params["commands"]
             )
         )
-        self.pipeline.add_action(BootBootloaderRetry())
+        self.pipeline.add_action(BootBootloaderAction())
         self.pipeline.add_action(DisconnectDevice())
 
     def run(self, connection, max_end_time):
