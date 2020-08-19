@@ -20,6 +20,8 @@
 import aiohttp
 from aiohttp import web
 import asyncio
+import contextlib
+import signal
 import weakref
 import zmq
 import zmq.asyncio
@@ -78,28 +80,39 @@ async def zmq_proxy(app):
         ]
         await asyncio.gather(*futures)
 
-    try:
+    with contextlib.suppress(asyncio.CancelledError):
+        logger.info("[PROXY] waiting for events")
         while True:
             try:
                 msg = await pull.recv_multipart()
                 await forward_event(msg)
             except zmq.error.ZMQError as exc:
                 logger.error("[PROXY] Received a ZMQ error: %s", exc)
-    except asyncio.CancelledError:
-        # Carefully close the logging socket as we don't want to lose messages
-        logger.info("[EXIT] Disconnect pull socket and process messages")
-        endpoint = u(pull.getsockopt(zmq.LAST_ENDPOINT))
-        logger.debug("[EXIT] unbinding from %r", endpoint)
-        pull.unbind(endpoint)
 
-        while True:
-            try:
-                msg = await asyncio.wait_for(pull.recv_multipart(), TIMEOUT)
-                await forward_event(msg)
-            except zmq.error.ZMQError as exc:
-                logger.error("[EXIT] Received a ZMQ error: %s", exc)
-            except asyncio.TimeoutError:
-                break
+    # Carefully close the logging socket as we don't want to lose messages
+    logger.info("[EXIT] Disconnect pull socket and process messages")
+    endpoint = u(pull.getsockopt(zmq.LAST_ENDPOINT))
+    logger.debug("[EXIT] unbinding from %r", endpoint)
+    pull.unbind(endpoint)
+
+    # UNIX signals
+    def signal_handler(*_):
+        logger.debug("[EXIT] Signal already handled, wait for the process to exit")
+
+    loop = asyncio.get_event_loop()
+    loop.add_signal_handler(signal.SIGINT, signal_handler)
+    loop.add_signal_handler(signal.SIGTERM, signal_handler)
+
+    while True:
+        try:
+            msg = await asyncio.wait_for(pull.recv_multipart(), TIMEOUT)
+            await forward_event(msg)
+        except zmq.error.ZMQError as exc:
+            logger.error("[EXIT] Received a ZMQ error: %s", exc)
+        except asyncio.TimeoutError:
+            logger.error("[EXIT] Timing out")
+            break
+
     logger.info("[EXIT] Closing the sockets: the queue is empty")
     pull.close(linger=1)
     pub.close(linger=1)
