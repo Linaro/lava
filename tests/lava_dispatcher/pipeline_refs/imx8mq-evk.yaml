@@ -91,6 +91,8 @@
       - {class: power.PDUReboot, name: pdu-reboot}
     - {class: actions.boot.BootloaderInterruptAction, name: bootloader-interrupt}
     - {class: connections.lxc.ConnectLxc, name: connect-lxc}
+  - {class: utils.udev.WaitDeviceBoardID, name: wait-device-boardid}
+  - {class: actions.boot.fastboot.FastbootRebootAction, name: fastboot-reboot}
   - class: actions.boot.AutoLoginAction
     name: auto-login-action
     pipeline:

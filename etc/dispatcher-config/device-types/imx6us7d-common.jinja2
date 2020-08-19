@@ -2,6 +2,8 @@
 
 
 {% set fastboot_options = fastboot_options|default(['-i', '0x15A2']) %}
+{% set fastboot_boot_uboot = "
+" %}
 {% set fastboot_sequence = fastboot_sequence|default(['reboot']) %}
 {% set fastboot_deploy_uboot_commands = fastboot_deploy_uboot_commands|default(['fastboot 0']) %}
 {% set flash_cmds_order = flash_cmds_order|default(['bootloader', 'bootloader_a', 'bootloader_b', 'bootloader0',
