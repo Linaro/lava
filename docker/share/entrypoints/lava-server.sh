@@ -8,7 +8,7 @@ set -e
 # Variables #
 #############
 GUNICORN_PID=0
-LAVA_COORDINATOR=0
+LAVA_COORDINATOR_PID=0
 LAVA_PUBLISHER_PID=0
 LAVA_SCHEDULER_PID=0
 
@@ -90,7 +90,7 @@ start_lava_coordinator() {
     if [ "$CAN_EXEC" = "1" ]; then
         exec /usr/bin/lava-coordinator --logfile - --loglevel "$LOGLEVEL"
     else
-        /usr/bin/lava-coordinator --logfile "$LOGFILE" --loglevel "$LOGLEVEL" &
+        setsid /usr/bin/lava-coordinator --logfile "$LOGFILE" --loglevel "$LOGLEVEL" &
         LAVA_COORDINATOR_PID=$!
     fi
 }
@@ -105,7 +105,7 @@ start_lava_publisher() {
     if [ "$CAN_EXEC" = "1" ]; then
         exec /usr/bin/lava-server manage lava-publisher --log-file - --level "$LOGLEVEL" --host "$HOST" --port "$PORT"
     else
-        /usr/bin/lava-server manage lava-publisher --level "$LOGLEVEL" --host "$HOST" --port "$PORT" &
+        setsid /usr/bin/lava-server manage lava-publisher --level "$LOGLEVEL" --host "$HOST" --port "$PORT" &
         LAVA_PUBLISHER_PID=$!
     fi
 }
@@ -118,7 +118,7 @@ start_lava_scheduler() {
     if [ "$CAN_EXEC" = "1" ]; then
         exec /usr/bin/lava-server manage lava-scheduler --log-file - --level "$LOGLEVEL" $EVENT_URL $IPV6
     else
-        /usr/bin/lava-server manage lava-scheduler --level "$LOGLEVEL" $EVENT_URL $IPV6 &
+        setsid /usr/bin/lava-server manage lava-scheduler --level "$LOGLEVEL" $EVENT_URL $IPV6 &
         LAVA_SCHEDULER_PID=$!
     fi
 }
@@ -135,7 +135,7 @@ start_lava_server_gunicorn() {
     if [ "$CAN_EXEC" = "1" ]; then
         exec /usr/bin/gunicorn3 lava_server.wsgi --log-level "$LOGLEVEL" --log-file - -u lavaserver -g lavaserver --worker-class "$WORKER_CLASS" --workers "$WORKERS" --worker-tmp-dir /dev/shm $RELOAD $BIND $TIMEOUT
     else
-        /usr/bin/gunicorn3 lava_server.wsgi --log-level "$LOGLEVEL" --log-file "$LOGFILE" -u lavaserver -g lavaserver --worker-class "$WORKER_CLASS" --workers "$WORKERS" --worker-tmp-dir /dev/shm $RELOAD $BIND $TIMEOUT &
+        setsid /usr/bin/gunicorn3 lava_server.wsgi --log-level "$LOGLEVEL" --log-file "$LOGFILE" -u lavaserver -g lavaserver --worker-class "$WORKER_CLASS" --workers "$WORKERS" --worker-tmp-dir /dev/shm $RELOAD $BIND $TIMEOUT &
         GUNICORN_PID=$!
     fi
 }
@@ -164,7 +164,7 @@ NEED_DB=$((LAVA_SCHEDULER+GUNICORN+POSTGRESQL))
 [ "$LAVA_SCHEDULER" = "1" ] && MIGRATE_DEFAULT="yes" || MIGRATE_DEFAULT="no"
 LAVA_DB_MIGRATE=${LAVA_DB_MIGRATE:-$MIGRATE_DEFAULT}
 # Should we use "exec"?
-CAN_EXEC=$((APACHE2+LAVA_PUBLISHER+LAVA_SCHEDULER+GUNICORN+POSTGRESQL))
+CAN_EXEC=$((APACHE2+LAVA_COORDINATOR+LAVA_PUBLISHER+LAVA_SCHEDULER+GUNICORN+POSTGRESQL))
 # Should we check for file owners?
 LAVA_CHECK_OWNERS=${LAVA_CHECK_OWNERS:-1}
 
