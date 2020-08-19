@@ -157,7 +157,7 @@ apt-get install lava-dispatcher lava-dispatcher-host
 lava-dispatcher-host package installs udev rules file. In order to perform this
 step when installing from source one needs to run:
 ```
-lava-dispatcher-host install-udev-rules
+lava-dispatcher-host rules install
 ```
 
 ## create slave certificates
