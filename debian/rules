@@ -23,9 +23,7 @@ export BUILD_DATE=$(shell LC_ALL=C date -u "+%B %d, %Y" -d @"$(SOURCE_DATE_EPOCH
 # This has to be exported to make some magic below work.
 export DH_OPTIONS
 
-export PYBUILD_DISABLE_python3.3=test
-export PYBUILD_DISABLE_python3.5=test
-export PYBUILD_DISABLE_python3.6=test
+export PYBUILD_DISABLE=test/python3
 
 PYTHONDIR=/usr/lib/python3/dist-packages/
 
@@ -33,7 +31,7 @@ PYTHON:=$(shell py3versions -r)
 install_dir=$(call py_libdir, $(PYTHON))
 
 %:
-	dh $@ --with sphinxdoc,systemd,python3
+	dh $@ --with sphinxdoc,python3 --buildsystem=pybuild
 
 override_dh_python3:
 	./share/requires.py --distribution debian --suite $(DEB_DISTRIBUTION) --package lava-dispatcher > dispatcher-requirements.txt
@@ -77,22 +75,6 @@ override_dh_auto_install:
 	rm -rf $(CURDIR)/build
 	# handle embedded JS
 	python3 ./share/javascript.py -f ./share/javascript.yaml --remove
-	# handle systemd services
-	cp ./etc/lava-logs.service debian/lava-logs.service
-	cp ./etc/lava-master.service debian/lava-master.service
-	cp ./etc/lava-publisher.service debian/lava-publisher.service
-	cp ./etc/lava-server-gunicorn.service debian/lava-server-gunicorn.service
-	cp ./etc/lava-slave.service debian/
-	dh_systemd_enable -p lava-server --name lava-logs
-	dh_systemd_enable -p lava-server --name lava-publisher
-	dh_systemd_enable -p lava-server --name lava-master
-	dh_systemd_enable -p lava-server --name lava-server-gunicorn
-	dh_systemd_enable -p lava-dispatcher --name lava-slave
-	dh_systemd_start -p lava-server --name lava-logs
-	dh_systemd_start -p lava-server --name lava-publisher
-	dh_systemd_start -p lava-server --name lava-master
-	dh_systemd_start -p lava-server --name lava-server-gunicorn
-	dh_systemd_start -p lava-dispatcher --name lava-slave
 
 override_dh_fixperms-arch:
 	dh_fixperms -X debian/lava-dispatcher/usr/lib/python3/dist-packages/lava_dispatcher/dynamic_vm_keys/lava
