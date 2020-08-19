@@ -121,6 +121,7 @@ that "device type" should be present in the master node. Device type is used to
 render full device dictionary. There may be cases that remote workers include
 devices that are not yet supported by LAVA. In such case the following actions
 should be performed:
+
  * new device type should be added to LAVA code base
  * temporarily master node admins might add new device type on their host. This
    operation is depending on how master configuration is maintained. As with
