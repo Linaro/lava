@@ -501,7 +501,7 @@ class TestShellAction(Action):
                 measurement = decimal.Decimal(res["measurement"])
             except decimal.InvalidOperation:
                 raise TestError("Invalid measurement %s" % res["measurement"])
-            res_data["measurement"] = measurement
+            res_data["measurement"] = float(measurement)
             if "units" in res:
                 res_data["units"] = res["units"]
 
@@ -601,7 +601,7 @@ class TestShellAction(Action):
                     measurement = decimal.Decimal(res["measurement"])
                 except decimal.InvalidOperation:
                     raise TestError("Invalid measurement %s" % res["measurement"])
-                res_data["measurement"] = measurement
+                res_data["measurement"] = float(measurement)
                 if "units" in res:
                     res_data["units"] = res["units"]
 

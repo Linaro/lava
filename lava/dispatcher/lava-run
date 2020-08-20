@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2017 Linaro Limited
+# Copyright (C) 2017-present Linaro Limited
 #
 # Author: Remi Duraffort <remi.duraffort@linaro.org>
 #
@@ -20,19 +20,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
-# pylint: disable=wrong-import-order,superfluous-parens,too-many-statements
-# pylint: disable=missing-docstring
-
 import argparse
-import errno
 import logging
 import os
+from pathlib import Path
 from setproctitle import setproctitle
 import signal
 import sys
 import traceback
 import yaml
 
+from lava_common.compat import yaml_safe_dump
 from lava_common.exceptions import InfrastructureError, JobCanceled, LAVABug, LAVAError
 from lava_common.log import YAMLLogger
 from lava_dispatcher.device import NewDevice
@@ -47,7 +45,7 @@ def parser():
         "--job-id",
         required=True,
         metavar="ID",
-        help="Job identifier. " "This alters process name for easier debugging",
+        help="Job identifier. This alters process name for easier debugging",
     )
     p_obj.add_argument(
         "--output-dir",
@@ -65,23 +63,11 @@ def parser():
 
     group = p_obj.add_argument_group("logging")
     group.add_argument(
-        "--logging-url",
-        metavar="URL",
-        default=None,
-        help="URL of the ZMQ socket to send the logs to the master",
-    )
-    # zmq.auth.load_certificate expects a filename, avoid opening the file here
-    group.add_argument(
-        "--master-cert", default=None, metavar="PATH", help="Master certificate file"
-    )
-    # zmq.auth.load_certificate expects a filename, avoid opening the file here
-    group.add_argument(
-        "--slave-cert", default=None, metavar="PATH", help="Slave certificate file"
+        "--url", metavar="URL", default=None, help="URL of the server to send logs"
     )
     group.add_argument(
-        "--socks-proxy", type=str, default=None, help="Connect using a socks proxy"
+        "--token", default=None, metavar="token", help="token for server authentication"
     )
-    group.add_argument("--ipv6", action="store_true", default=False, help="Enable IPv6")
 
     group = p_obj.add_argument_group("configuration files")
     group.add_argument(
@@ -125,20 +111,10 @@ def setup_logger(options):
 
     # The logger can be used by the parser and the Job object in all phases.
     logger = logging.getLogger("dispatcher")
-    if options.logging_url is not None:
-        if options.master_cert and options.slave_cert:
-            if not os.path.exists(options.master_cert) or not os.path.exists(
-                options.slave_cert
-            ):
-                return None
-        # pylint: disable=no-member
-        logger.addZMQHandler(
-            options.logging_url,
-            options.master_cert,
-            options.slave_cert,
-            options.job_id,
-            options.socks_proxy,
-            options.ipv6,
+    if options.url is not None:
+        logger.addHTTPHandler(
+            f"{options.url}/scheduler/internal/v1/jobs/{options.job_id}/logs/",
+            options.token,
         )
     else:
         logger.addHandler(logging.StreamHandler())
@@ -242,7 +218,6 @@ def main():
         return 1
 
     # By default, that's a failure
-    description = ""
     success = False
     try:
         # Set the signal handler
@@ -254,17 +229,20 @@ def main():
         signal.signal(signal.SIGUSR2, cancelling_handler)
 
         # Should be an absolute directory
-        options.output_dir = os.path.abspath(options.output_dir)
+        options.output_dir = Path(options.output_dir).resolve()
         # Create the output directory
         try:
-            os.makedirs(options.output_dir, mode=0o755)
+            options.output_dir.mkdir(mode=0o755, parents=True, exist_ok=True)
         except OSError as exc:
-            if exc.errno != errno.EEXIST:
-                raise InfrastructureError("Unable to create %s" % options.output_dir)
+            raise InfrastructureError("Unable to create %s" % options.output_dir)
 
         # Parse the definition and create the job object
         job = parse_job_file(logger, options)
+        # Generate the description
         description = dump_as_safe_yaml(job.describe())
+        (options.output_dir / "description.yaml").write_text(
+            description, encoding="utf-8"
+        )
 
         job.validate()
         if not options.validate:
@@ -278,7 +256,7 @@ def main():
         error_help = exc.error_help
         error_msg = str(exc)
         error_type = exc.error_type
-    except BaseException as exc:  # pylint: disable=broad-except
+    except BaseException as exc:
         logger.exception(traceback.format_exc())
         error_help = LAVABug.error_help
         error_msg = str(exc)
@@ -295,16 +273,17 @@ def main():
             result_dict["error_msg"] = error_msg
             result_dict["error_type"] = error_type
             logger.error(error_help)
-        logger.results(result_dict)  # pylint: disable=no-member
+        logger.results(result_dict)
+
+    # TODO: change the signal handler
 
     # Closing the socket. We are now sure that all messages where sent.
-    logger.close()  # pylint: disable=no-member
+    logger.close()
 
-    # Generate the description
-    # A missing description.yaml indicate that lava-run crashed
-    description_file = os.path.join(options.output_dir, "description.yaml")
-    with open(description_file, "w") as f_describe:
-        f_describe.write(description)
+    # Save the results file
+    (options.output_dir / "result.yaml").write_text(
+        yaml_safe_dump(result_dict), encoding="utf-8"
+    )
 
     return 0 if success else 1
 

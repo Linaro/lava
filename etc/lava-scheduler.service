@@ -1,0 +1,14 @@
+[Unit]
+Description=LAVA scheduler
+After=network.target remote-fs.target
+
+[Service]
+Type=simple
+Environment=LOGLEVEL=DEBUG LOGFILE=/var/log/lava-server/lava-scheduler.log
+EnvironmentFile=-/etc/default/lava-scheduler
+EnvironmentFile=-/etc/lava-server/lava-scheduler
+ExecStart=/usr/bin/lava-server manage lava-scheduler --level $LOGLEVEL --log-file $LOGFILE $EVENT_URL $IPV6
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

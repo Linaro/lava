@@ -16,7 +16,7 @@ The systemd service is called `lava-server-gunicorn`.
 
 ## Dependencies
 
-lava-logs should be able to:
+lava-server-gunicorn should be able to:
 
 * connect to the [postgresql](../postgresql) database
 * open a socket on port `8000`

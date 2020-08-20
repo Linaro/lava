@@ -4,10 +4,10 @@ After=network.target remote-fs.target
 
 [Service]
 Type=simple
-Environment=LOGLEVEL=DEBUG
+Environment=LOGLEVEL=DEBUG LOGFILE=/var/log/lava-server/lava-publisher.log HOST="*" PORT=8001
 EnvironmentFile=-/etc/default/lava-publisher
 EnvironmentFile=-/etc/lava-server/lava-publisher
-ExecStart=/usr/bin/lava-server manage lava-publisher --level $LOGLEVEL
+ExecStart=/usr/bin/lava-server manage lava-publisher --level $LOGLEVEL --log-file $LOGFILE --host $HOST --port $PORT
 TimeoutStopSec=10
 Restart=always
 

@@ -16,7 +16,7 @@ LOGGER_URL="tcp://<lava-logger-dns>:5555"
 ```
 Location of the settings depends on the way lava-dispatcher is started. When
 using standalone installation either from sources or from debian package,
-settings can be found in /etc/lava-dispatcher/lava-slave file. In case
+settings can be found in /etc/lava-dispatcher/lava-worker file. In case
 [docker-compose](https://git.lavasoftware.org/lava/pkg/docker-compose) is used
 settings should be updated in .env file:
 ```
@@ -26,58 +26,8 @@ DC_LAVA_LOGS_HOSTNAME=<lava-logger-dns>
 
 ## connection encryption
 
-It is advised to always encrypt the connection between master and workers. The
-following settings are required to make this happen:
-```
-ENCRYPT="--encrypt"
-MASTER_CERT="--master-cert /etc/lava-dispatcher/certificates.d/<master.key>"
-SLAVE_CERT="--slave-cert /etc/lava-dispatcher/certificates.d/<slave.key_secret>"
-```
-
-In case of running dispatcher using docker-compose, the following settings should
-be updated in .env file:
-```
-DC_LAVA_MASTER_ENCRYPT="--encrypt"
-DC_MASTER_CERT="--master-cert /etc/lava-dispatcher/certificates.d/<master.key>"
-DC_SLAVES_CERT="--slave-cert /etc/lava-dispatcher/certificates.d/<slave.key_secret>"
-```
-
-### certificate exchange
-
-Public worker certificates should be available to the lava-master and lava-logs
-processes. They are used to encrypt connection between master or logs and
-workers. Also master certificates should be available to the lava-dispatcher
-process so proper SSL handshake can be performed. This usually isn't a problem
-when LAVA instance (master, logs and workers) is managed by the same
-administrator(s). However in case administrators of master and workers are
-different they should arrange certificate exchange. Only public certificates
-need to be sent. API endpoints that allow automatic certificate exchange exist
-in both REST and XMLRPC apis. The XML-RPC methods are ```scheduler.workers.get_certificate```, ```scheduler.workers.set_certificate``` for slave certificates and ```system.get_master_certificate``` for master certificate. The REST API endpoints are ```/api/v0.2/workers/<hostname>/certificate/``` for slave certificates which supports GET and POST requests and ```/api/v0.2/system/certificate/``` for master certificate (this one support only GET requests). The certificates can
-also be exchanged manually.
-
-
-### worker certificate generation
-
-LAVA provides a helper script for generating the certificate. Using the script
-depends on the installation model. In case of host installation (from source,
-debian) admin should call the following script:
-```
-/usr/share/lava-dispatcher/create_certificate.py foo_slave_1
-```
-foo_slave_1 is a name of the certificate files. This can be any string in case
-of standalone installation.
-
-In case docker-compose is used to run dispatcher, certificate generation can be
-achieved in a following way:
-```
-docker run -v $PWD:/tmp/certs --rm lavasoftware/lava-dispatcher /usr/share/lava-common/create_certificate.py --directory  /tmp/certs slave
-```
-
-The slave.key, slave.key_secret and master.key should be than copied to
-dispatcher/certs directory. master.key comes from the lava-master that
-lava-dispatcher is connecting to. In the current implementation of [docker-compose](https://git.lavasoftware.org/lava/pkg/docker-compose)
-slave.key and master.key certificate names are hardcoded. As mentioned above
-it should be obtained via API on the master.
+It is advised to always encrypt the connection between server and workers. We
+advice to use https instead of http for worker connection.
 
 ## http_proxy settings
 

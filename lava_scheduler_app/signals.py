@@ -117,10 +117,13 @@ def device_post_handler(sender, **kwargs):
             "state": instance.get_state_display(),
             "device": instance.hostname,
             "device_type": instance.device_type.name,
+            "worker": None,
         }
         current_job = instance.current_job()
         if current_job is not None:
             data["job"] = current_job.display_id
+        if instance.worker_host is not None:
+            data["worker"] = instance.worker_host.hostname
 
         # Send the event
         send_event(".device", "lavaserver", data)
@@ -192,6 +195,8 @@ def testjob_post_handler(sender, **kwargs):
             data["sub_id"] = instance.sub_id
         if instance.actual_device:
             data["device"] = instance.actual_device.hostname
+            if instance.actual_device.worker_host:
+                data["worker"] = instance.actual_device.worker_host.hostname
         if instance.requested_device_type:
             data["device_type"] = instance.requested_device_type.name
         if instance.start_time:

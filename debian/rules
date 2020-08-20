@@ -52,7 +52,7 @@ override_dh_auto_install:
 	find . -type d -name '__pycache__' -empty -delete
 	# handle man pages
 	dh_installman -plava-dispatcher man/_build/man/lava-run.1
-	dh_installman -plava-dispatcher man/_build/man/lava-slave.8
+	dh_installman -plava-dispatcher man/_build/man/lava-worker.8
 	dh_installman -plava-lxc-mocker man/_build/man/lava-lxc-mocker.7
 	dh_installman -plava-lxc-mocker man/_build/man/lxc-attach.1
 	dh_installman -plava-lxc-mocker man/_build/man/lxc-create.1

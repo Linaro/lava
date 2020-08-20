@@ -8,5 +8,5 @@ then
   apt-get install --no-install-recommends --yes black
 else
   set -x
-  LC_ALL=C.UTF-8 LANG=C.UTF-8 black  --check --diff . lava/coordinator/lava-coordinator lava/dispatcher/lava-slave lava/dispatcher/lava-run lava_dispatcher_host/lava-dispatcher-host
+  LC_ALL=C.UTF-8 LANG=C.UTF-8 black  --check --diff . lava/coordinator/lava-coordinator lava/dispatcher/lava-run lava/dispatcher/lava-worker lava_dispatcher_host/lava-dispatcher-host
 fi

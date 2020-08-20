@@ -132,7 +132,7 @@ class TestTestSuite(TestCaseWithFactory):
         ]
         for sample in result_samples:
             ret = map_scanned_results(
-                results=sample, job=job, markers={}, meta_filename=None
+                results=sample, job=job, starttc=None, endtc=None, meta_filename=None
             )
             self.assertTrue(ret)
             ret.save()
@@ -159,7 +159,8 @@ class TestTestSuite(TestCaseWithFactory):
                 "result": "pass",
             },
             job=job,
-            markers={},
+            starttc=None,
+            endtc=None,
             meta_filename=None,
         )
         self.assertTrue(ret)
@@ -181,7 +182,7 @@ class TestTestSuite(TestCaseWithFactory):
         ]
         for sample in result_samples:
             ret = map_scanned_results(
-                results=sample, job=job, markers={}, meta_filename=None
+                results=sample, job=job, starttc=None, endtc=None, meta_filename=None
             )
             self.assertFalse(ret)
         self.factory.cleanup()
@@ -207,7 +208,7 @@ class TestTestSuite(TestCaseWithFactory):
         self.assertEqual("/results/%s/test-suite" % job.id, suite.get_absolute_url())
         for sample in result_samples:
             ret = map_scanned_results(
-                results=sample, job=job, markers={}, meta_filename=None
+                results=sample, job=job, starttc=None, endtc=None, meta_filename=None
             )
             self.assertTrue(ret)
             ret.save()

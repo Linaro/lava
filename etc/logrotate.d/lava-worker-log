@@ -1,4 +1,4 @@
-/var/log/lava-dispatcher/lava-slave.log {
+/var/log/lava-dispatcher/lava-worker.log {
 	weekly
 	rotate 12
 	compress

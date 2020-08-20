@@ -20,9 +20,9 @@
 
 import copy
 import errno
+import ipaddress
 import os
 import subprocess  # nosec verified
-import warnings
 
 from django.conf import settings
 
@@ -322,22 +322,18 @@ def get_ldap_user_properties(ldap_user):
                 raise
 
 
-def get_encryption_settings(options):
-    # Get encryption settings from command line arguments. If not present,
-    # fall back to django settings.
-    encryption_settings = {
-        "encrypt": settings.ENCRYPT,
-        "master_cert": settings.MASTER_CERT,
-        "slaves_certs": settings.SLAVES_CERTS,
-    }
+def get_user_ip(request):
+    if "HTTP_X_FORWARDED_FOR" in request.META:
+        return request.META["HTTP_X_FORWARDED_FOR"].split(",")[0]
+    if "REMOTE_ADDR" in request.META:
+        return request.META["REMOTE_ADDR"]
+    return None
 
-    if options["encrypt"]:
-        warnings.warn(
-            "Using encryption options in command line is deprecated. Switch to django settings module for encryption configuration.",
-            DeprecationWarning,
-        )
-        encryption_settings["encrypt"] = True
-        encryption_settings["master_cert"] = options["master_cert"]
-        encryption_settings["slaves_certs"] = options["slaves_certs"]
 
-    return encryption_settings
+def is_ip_allowed(ip, rules):
+    user_ip = ipaddress.ip_address(ip)
+    # Check against the rules
+    for rule in rules:
+        if user_ip in ipaddress.ip_network(rule):
+            return True
+    return False

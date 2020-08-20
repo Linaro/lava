@@ -134,10 +134,9 @@ nav:
   - Services:
     - apache2: technical-references/services/apache2.md
     - lava-coordinator: technical-references/services/lava-coordinator.md
-    - lava-logs: technical-references/services/lava-logs.md
-    - lava-master: technical-references/services/lava-master.md
     - lava-publisher: technical-references/services/lava-publisher.md
+    - lava-scheduler: technical-references/services/lava-scheduler.md
     - lava-server-gunicorn: technical-references/services/lava-server-gunicorn.md
-    - lava-slave: technical-references/services/lava-slave.md
+    - lava-worker: technical-references/services/lava-worker.md
     - postgresql: technical-references/services/postgresql.md
   - Test definition: technical-references/test-definition.md

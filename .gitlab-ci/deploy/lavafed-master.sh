@@ -54,6 +54,6 @@ else
       -v "/etc/lavafed/lava-server/lava-server.conf:/etc/apache2/sites-enabled/lava-server.conf" \
       -v "/etc/lavafed/lava-server/settings.conf:/etc/lava-server/settings.conf" \
       -v "lavafed-master-jobs:/var/lib/lava-server/default/media/" \
-      -e SERVICES="apache2 lava-logs lava-master lava-publisher gunicorn" \
+      -e SERVICES="apache2 lava-publisher lava-scheduler gunicorn" \
       "$IMAGE_TAG"
 fi

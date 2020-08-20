@@ -9,7 +9,7 @@ For each worker, two variables describe the current status: **state** and **heal
 
 ### State
 
-The **state** is an internal variable, set by [lava-master](../services/lava-master/) when receiving (or not) pings from each worker.
+The **state** is an internal variable, set by [lava-server-gunicorn](../services/lava-server-gunicorn/) when receiving (or not) pings from each worker.
 
 * *Online*: the worker is sending PING to the master
 * *Offline*: the worker hasn't sent any messages for a while
@@ -37,7 +37,7 @@ For each device, two variables describe the current status: **state** and **heal
 
 ### State
 
-The **state** is an internal variable, set by [lava-master](../services/lava-master/) and [lava-logs](../service/lava-logs/) when scheduling, starting, canceling and ending test jobs.
+The **state** is an internal variable, set by [lava-scheduler](../services/lava-scheduler/) and [lava-server-gunicorn](../service/lava-server-gunicorn/) when scheduling, starting, canceling and ending test jobs.
 
 * *Idle*: not in use by any test job
 * *Reserved*: has been reserved for a test job but the test job is not running yet
@@ -72,7 +72,7 @@ For each test job, two variables are describing the current status: **state** an
 
 !!! note Multinode scheduling
     Only multinode test jobs use *Scheduling*. When all
-    sub-jobs are in *Scheduling*, [lava-master](../services/lava-master/) will transition all test
+    sub-jobs are in *Scheduling*, [lava-scheduler](../services/lava-scheduler/) will transition all test
     jobs to *Scheduled*.
 
 ### Health
@@ -85,7 +85,8 @@ For each test job, two variables are describing the current status: **state** an
 
 # Scheduler
 
-The scheduler is called by [lava-master](../services/lava-master/) approximately every 20 seconds.
+The scheduler is called by [lava-scheduler](../services/lava-scheduler/)
+approximately every 20 seconds or when receiving specific events.
 The scheduler starts by scheduling health-checks. The remaining devices are
 then considered for test jobs.
 

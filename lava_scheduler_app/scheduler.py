@@ -65,15 +65,13 @@ def worker_summary():
 
 
 def schedule(logger, available_dt=None):
-    (available_devices, jobs) = schedule_health_checks(logger, available_dt)
-    jobs.extend(schedule_jobs(logger, available_devices))
-    return jobs
+    available_devices = schedule_health_checks(logger, available_dt)
+    schedule_jobs(logger, available_devices)
 
 
 def schedule_health_checks(logger, available_dt=None):
     logger.info("scheduling health checks:")
     available_devices = {}
-    jobs = []
     hc_disabled = []
 
     query = DeviceType.objects.filter(display=True)
@@ -96,17 +94,16 @@ def schedule_health_checks(logger, available_dt=None):
 
         else:
             with transaction.atomic():
-                (
-                    available_devices[dt.name],
-                    new_jobs,
-                ) = schedule_health_checks_for_device_type(logger, dt)
-                jobs.extend(new_jobs)
+                available_devices[dt.name] = schedule_health_checks_for_device_type(
+                    logger, dt
+                )
 
     # Print disabled device types
     if hc_disabled:
         logger.debug("-> disabled on: %s", ", ".join(hc_disabled))
 
-    return (available_devices, jobs)
+    logger.info("done")
+    return available_devices
 
 
 def schedule_health_checks_for_device_type(logger, dt):
@@ -122,7 +119,6 @@ def schedule_health_checks_for_device_type(logger, dt):
 
     print_header = True
     available_devices = []
-    jobs = []
     for device in devices:
         if workers_limit[device.worker_host.hostname].overused():
             logger.debug(
@@ -192,7 +188,7 @@ def schedule_health_checks_for_device_type(logger, dt):
             continue
         logger.debug("  |--> scheduling health check")
         try:
-            jobs.append(schedule_health_check(device, health_check))
+            schedule_health_check(device, health_check)
             workers_limit[device.worker_host.hostname].busy += 1
         except Exception as exc:
             # If the health check cannot be schedule, set health to BAD to exclude the device
@@ -207,7 +203,7 @@ def schedule_health_checks_for_device_type(logger, dt):
             )
             device.save()
 
-    return (available_devices, jobs)
+    return available_devices
 
 
 def schedule_health_check(device, definition):
@@ -223,23 +219,20 @@ def schedule_health_check(device, definition):
     )
     job.go_state_scheduled(device)
     job.save()
-    return job.id
 
 
 def schedule_jobs(logger, available_devices):
     logger.info("scheduling jobs:")
-    jobs = []
     dts = list(available_devices.keys())
     for dt in DeviceType.objects.filter(name__in=dts).order_by("name"):
         with transaction.atomic():
-            jobs.extend(
-                schedule_jobs_for_device_type(logger, dt, available_devices[dt.name])
-            )
+            schedule_jobs_for_device_type(logger, dt, available_devices[dt.name])
 
     with transaction.atomic():
         # Transition multinode if needed
-        jobs.extend(transition_multinode_jobs(logger))
-    return jobs
+        transition_multinode_jobs(logger)
+
+    logger.info("done")
 
 
 def schedule_jobs_for_device_type(logger, dt, available_devices):
@@ -254,7 +247,6 @@ def schedule_jobs_for_device_type(logger, dt, available_devices):
 
     workers_limit = worker_summary()
 
-    jobs = []
     print_header = True
     for device in devices:
         # Check that the device had been marked available by
@@ -292,12 +284,9 @@ def schedule_jobs_for_device_type(logger, dt, available_devices):
             )
             continue
 
-        new_job = schedule_jobs_for_device(logger, device, print_header)
-        if new_job is not None:
+        if schedule_jobs_for_device(logger, device, print_header) is not None:
             print_header = False
-            jobs.append(new_job)
             workers_limit[device.worker_host.hostname].busy += 1
-    return jobs
 
 
 def schedule_jobs_for_device(logger, device, print_header):
@@ -351,7 +340,6 @@ def transition_multinode_jobs(logger):
     jobs = jobs.order_by("target_group", "id")
     jobs = jobs.distinct("target_group")
 
-    new_jobs = []
     for job in jobs:
         sub_jobs = job.sub_jobs_list
         if not all(
@@ -381,6 +369,4 @@ def transition_multinode_jobs(logger):
             # transition the job and device
             sub_job.go_state_scheduled()
             sub_job.save()
-            new_jobs.append(sub_job.id)
             logger.debug("--> %d", job.sub_id)
-    return new_jobs

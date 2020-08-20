@@ -93,9 +93,8 @@ service apache2 start
 service postgresql start
 service lava-server-gunicorn start
 service lava-publisher start
-service lava-master start
-service lava-logs start
-service lava-slave start
+service lava-scheduler start
+service lava-worker start
 ```
 
 The newly created instance is now available at [localhost].

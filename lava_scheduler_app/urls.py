@@ -40,6 +40,9 @@ from lava_scheduler_app.views import (
     health_job_list,
     healthcheck,
     index,
+    internal_v1_jobs,
+    internal_v1_jobs_logs,
+    internal_v1_workers,
     job_annotate_failure,
     job_cancel,
     job_fail,
@@ -277,5 +280,25 @@ urlpatterns = [
         r"^job/(?P<pk>[0-9]+|[0-9]+.[0-9]+)/similarjobs$",
         similar_jobs,
         name="lava.scheduler.job.similar_jobs",
+    ),
+    url(
+        r"internal/v1/jobs/(?P<pk>[0-9]+|[0-9]+.[0-9]+)/$",
+        internal_v1_jobs,
+        name="lava.scheduler.internal.v1.jobs",
+    ),
+    url(
+        r"internal/v1/jobs/(?P<pk>[0-9]+|[0-9]+.[0-9]+)/logs/$",
+        internal_v1_jobs_logs,
+        name="lava.scheduler.internal.v1.jobs.logs",
+    ),
+    url(
+        r"internal/v1/workers/$",
+        internal_v1_workers,
+        name="lava.scheduler.internal.v1.workers",
+    ),
+    url(
+        r"internal/v1/workers/(?P<pk>[-_a-zA-Z0-9.@]+)/$",
+        internal_v1_workers,
+        name="lava.scheduler.internal.v1.workers",
     ),
 ]

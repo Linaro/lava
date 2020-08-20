@@ -27,15 +27,13 @@ def get_mapping_path(job_id):
     return os.path.join(JOBS_DIR, job_id, "usbmap.yaml")
 
 
-def add_device_container_mapping(
-    job_id, device_info, container, container_type="lxc", logging_info={}
-):
+def add_device_container_mapping(job_id, device_info, container, container_type="lxc"):
     validate_device_info(device_info)
     item = {
         "device_info": device_info,
         "container": container,
         "container_type": container_type,
-        "logging_info": logging_info,
+        "job_id": job_id,
     }
     logger = logging.getLogger("dispatcher")
     mapping_path = get_mapping_path(job_id)
@@ -73,7 +71,7 @@ def share_device_with_container(options, setup_logger=None):
     if not data:
         return
     if setup_logger:
-        setup_logger(data["logging_info"])
+        setup_logger(data["job_id"])
     logger = logging.getLogger("dispatcher")
     container = data["container"]
     device = options.device

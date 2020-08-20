@@ -4,6 +4,8 @@
 # contains the dependency, e.g. backports.
 
 lava-server:
+  aiohttp:
+    name: python3-aiohttp
   django-auth-ldap:
     version: ">=1.2.12"
     name: python3-django-auth-ldap
@@ -91,6 +93,8 @@ lava-server:
     unittests: true
 
 lava-dispatcher:
+  aiohttp:
+    name: python3-aiohttp
   PyYAML:
     name: python3-yaml
   configobj:
@@ -175,8 +179,6 @@ lava-dispatcher:
 lava-common:
   PyYAML:
     name: python3-yaml
-  pyzmq:
-    name: python3-zmq
   voluptuous:
     version: ">=0.8.8"
     name: python3-voluptuous

@@ -6,7 +6,7 @@ Summary
 *******
 
 ``lava-run`` runs a LAVA test job on the reserved device, as
-scheduled by the ``lava-master`` and publish the test result back to
+scheduled by the ``lava-scheduler`` and publish the test result back to
 the server. Jobs are scheduled by the server but can also be run by
 calling ``lava-run`` directly.
 
@@ -17,37 +17,31 @@ Usage
 *****
 
 lava-run [-h] --job-id ID --output-dir DIR [--validate]
-         [--logging-url URL] [--master-cert PATH] [--slave-cert PATH]
-         [--socks-proxy SOCKS_PROXY] [--ipv6] --device PATH
-         [--dispatcher PATH] [--env-dut PATH]
-         definition
+         [--url URL] [--token token]
+         --device PATH [--dispatcher PATH] [--env-dut PATH]
+         [--debug] definition
 
 Options
 *******
 
 positional arguments:
-  definition          job definition
+  definition         job definition
 
 optional arguments:
-  -h, --help          show this help message and exit
-  --job-id ID         Job identifier. This alters process name for easier
-                      debugging
-  --output-dir DIR    Directory for temporary resources
-  --validate          validate the job file, do not execute any steps.
-                      The description is saved into description.yaml
+  -h, --help         show this help message and exit
+  --job-id ID        Job identifier. This alters process name for easier debugging
+  --output-dir DIR   Directory for temporary resources
+  --validate         validate the job file, do not execute any steps. The description is saved into description.yaml
+  --debug            Start remote pdb right before running the job, for debugging
 
 logging:
-  --logging-url URL   URL of the ZMQ socket to send the logs to the master
-  --master-cert PATH  Master certificate file
-  --slave-cert PATH   Slave certificate file
-  --socks-proxy SOCKS_PROXY
-                      Connect using a socks proxy
-  --ipv6              Enable IPv6
+  --url URL          URL of the server to send logs
+  --token token      token for server authentication
 
 configuration files:
-  --device PATH       Device configuration
-  --dispatcher PATH   Dispatcher configuration
-  --env-dut PATH      DUT environment
+  --device PATH      Device configuration
+  --dispatcher PATH  Dispatcher configuration
+  --env-dut PATH     DUT environment
 
 Useful links
 ############

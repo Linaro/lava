@@ -19,6 +19,5 @@ lava-server manage devices list --all
 
 # test daemon handling
 service lava-server-gunicorn restart
-service lava-master restart
-service lava-slave restart
-service lava-logs restart
+service lava-scheduler restart
+service lava-worker restart

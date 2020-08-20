@@ -1,0 +1,9 @@
+# Configuration for lava-scheduler daemon
+
+# Logging level should be uppercase (DEBUG, INFO, WARNING, ERROR)
+# LOGLEVEL="DEBUG"
+# LOGFILE="/var/log/lava-server/lava-scheduler.log"
+
+# Event stream
+# EVENT_URL="--event-url tcp://localhost:5500"
+# IPV6="--ipv6"

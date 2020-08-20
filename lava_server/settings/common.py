@@ -231,12 +231,6 @@ SENTRY_DSN = ""
 # Django debug toolbar
 USE_DEBUG_TOOLBAR = False
 
-# Encryption settings
-ENCRYPT = False
-MASTER_CERT = "/etc/lava-dispatcher/certificates.d/master.key_secret"
-MASTER_CERT_PUB = "/etc/lava-dispatcher/certificates.d/master.key"
-SLAVES_CERTS = "/etc/lava-dispatcher/certificates.d/"
-
 # Alternative logging database settings.
 MONGO_DB_URI = "mongodb://user:pass@localhost:27017/"
 MONGO_DB_DATABASE = "lava-logs"
@@ -247,6 +241,10 @@ ELASTICSEARCH_APIKEY = ""
 
 # Send notifications to worker admins after the master is upgraded.
 MASTER_UPGRADE_NOTIFY = False
+
+# Worker in the specific network will be allowed to auto register
+WORKER_AUTO_REGISTER = True
+WORKER_AUTO_REGISTER_NETMASK = ["127.0.0.0/8", "::1"]
 
 ################
 # DRF settings #

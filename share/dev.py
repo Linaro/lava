@@ -34,11 +34,10 @@ modules = [
 ]
 services = [
     "lava-coordinator",
-    "lava-logs",
-    "lava-master",
     "lava-publisher",
+    "lava-scheduler",
     "lava-server-gunicorn",
-    "lava-slave",
+    "lava-worker",
 ]
 
 

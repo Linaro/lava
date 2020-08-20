@@ -5,6 +5,7 @@ Apache2 is the reverse proxy that will be visible from the outside world.
 This service is responsible for:
 
 * forwarding http requests to [gunicorn](../lava-server-gunicorn)
+* forwarding web socket requests to [lava-publisher](../lava-publisher)
 * serving static files
 * ssl termination
 
