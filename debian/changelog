@@ -1,3 +1,13 @@
+lava (2020.08-1) unstable; urgency=medium
+
+  * LAVA Software 2020.07 release
+
+  [ Antonio Terceiro ]
+  * debian: bump debhelper compat level to 12
+  * autopkgtest: fix against change in settings
+
+ -- Remi Duraffort <remi.duraffort@linaro.org>  Thu, 20 Aug 2020 10:58:25 +0200
+
 lava (2020.07-1) unstable; urgency=medium
 
   * LAVA Software 2020.07 release
