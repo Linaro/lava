@@ -1332,9 +1332,9 @@ def test_workers_add(setup):
         server("admin", "admin").scheduler.workers.add("dispatcher.example.com") is None
     )
     assert Worker.objects.count() == 2  # nosec
-    assert Worker.objects.all()[1].hostname == "dispatcher.example.com"  # nosec
-    assert Worker.objects.all()[1].description is None  # nosec
-    assert Worker.objects.all()[1].health == Worker.HEALTH_ACTIVE  # nosec
+    worker = Worker.objects.get(hostname="dispatcher.example.com")
+    assert worker.description is None  # nosec
+    assert worker.health == Worker.HEALTH_ACTIVE  # nosec
 
     # 4. as admin set description and health => success
     assert (  # nosec
@@ -1344,9 +1344,9 @@ def test_workers_add(setup):
         is None
     )
     assert Worker.objects.count() == 3  # nosec
-    assert Worker.objects.all()[2].hostname == "worker.example.com"  # nosec
-    assert Worker.objects.all()[2].description == "worker"  # nosec
-    assert Worker.objects.all()[2].health == Worker.HEALTH_RETIRED  # nosec
+    worker = Worker.objects.get(hostname="worker.example.com")
+    assert worker.description == "worker"  # nosec
+    assert worker.health == Worker.HEALTH_RETIRED  # nosec
 
     # 5. already used hostname => exception
     with pytest.raises(xmlrpc.client.Fault) as exc:
