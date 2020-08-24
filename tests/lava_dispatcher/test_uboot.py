@@ -383,6 +383,68 @@ class TestUbootAction(StdoutTestCase):
         self.assertNotIn("setenv initrd_addr_r '{RAMDISK_ADDR}'", parsed)
         self.assertNotIn("setenv fdt_addr_r '{DTB_ADDR}'", parsed)
 
+    @patch("lava_dispatcher.utils.shell.which", return_value="/usr/bin/in.tftpd")
+    def test_overlay_noramdisk(self, which_mock):
+        parameters = {
+            "dispatcher": {},  # fake dispatcher parameter. Normally added by parser
+            "device_type": "beaglebone-black",
+            "job_name": "uboot-pipeline",
+            "job_timeout": "15m",
+            "action_timeout": "5m",
+            "priority": "medium",
+            "actions": {
+                "boot": {
+                    "namespace": "common",
+                    "method": "u-boot",
+                    "commands": "ramdisk",
+                    "prompts": ["linaro-test", "root@debian:~#"],
+                },
+                "deploy": {
+                    "namespace": "common",
+                    "ramdisk": {"url": ""},
+                    "kernel": {"url": "zImage", "type": "zimage"},
+                    "dtb": {"url": "broken.dtb"},
+                },
+            },
+        }
+        data = yaml_safe_load(Factory().create_device("bbb-01.jinja2")[0])
+        device = NewDevice(data)
+        ip_addr = dispatcher_ip(None)
+        parsed = []
+        kernel_addr = "0x83000000"
+        ramdisk_addr = "0x83000000"
+        dtb_addr = "0x88000000"
+        kernel = parameters["actions"]["deploy"]["kernel"]["url"]
+        ramdisk = parameters["actions"]["deploy"]["ramdisk"]["url"]
+        dtb = parameters["actions"]["deploy"]["dtb"]["url"]
+
+        substitution_dictionary = {
+            "{SERVER_IP}": ip_addr,
+            # the addresses need to be hexadecimal
+            "{KERNEL_ADDR}": kernel_addr,
+            "{DTB_ADDR}": dtb_addr,
+            "{RAMDISK_ADDR}": ramdisk_addr,
+            "{BOOTX}": "%s %s %s %s" % ("bootz", kernel_addr, ramdisk_addr, dtb_addr),
+            "{RAMDISK}": ramdisk,
+            "{KERNEL}": kernel,
+            "{DTB}": dtb,
+        }
+        params = device["actions"]["boot"]["methods"]
+        params["u-boot"]["ramdisk"]["commands"] = substitute(
+            params["u-boot"]["ramdisk"]["commands"], substitution_dictionary, drop=True
+        )
+
+        commands = params["u-boot"]["ramdisk"]["commands"]
+        self.assertIs(type(commands), list)
+        self.assertIn("tftp 0x83000000 zImage", commands)
+        self.assertNotIn("tftp 0x83000000 {RAMDISK}", commands)
+        self.assertNotIn("tftp 0x83000000 ", commands)
+        self.assertIn("setenv initrd_size ${filesize}", commands)
+        self.assertIn("tftp 0x88000000 broken.dtb", commands)
+        self.assertNotIn("setenv kernel_addr_r '{KERNEL_ADDR}'", commands)
+        self.assertNotIn("setenv initrd_addr_r '{RAMDISK_ADDR}'", commands)
+        self.assertNotIn("setenv fdt_addr_r '{DTB_ADDR}'", commands)
+
     @patch(
         "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
     )
