@@ -1278,6 +1278,8 @@ You could follow https://docs.docker.com/engine/install/linux-postinstall/#confi
 
 You could follow https://docs.docker.com/engine/security/https/ to protect the docker daemon socket if you are also care about security.
 
+.. note:: The minimal docker version to run uuu is 19.03. This is due to a bug in earlier docker versions. See https://github.com/moby/moby/pull/37665.
+
 Usage
 -----
 
