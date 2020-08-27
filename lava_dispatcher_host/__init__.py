@@ -71,7 +71,7 @@ def share_device_with_container(options, setup_logger=None):
     if not data:
         return
     if setup_logger:
-        setup_logger(data["job_id"])
+        setup_logger(data)
     logger = logging.getLogger("dispatcher")
     container = data["container"]
     device = options.device
