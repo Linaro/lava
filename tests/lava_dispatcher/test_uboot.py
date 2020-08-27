@@ -301,6 +301,7 @@ class TestUbootAction(StdoutTestCase):
                     "ramdisk": {"url": "initrd.gz", "compression": "gz"},
                     "kernel": {"url": "zImage", "type": "zimage"},
                     "dtb": {"url": "broken.dtb"},
+                    "tee": {"url": "uTee"},
                 },
             },
         }
@@ -327,9 +328,11 @@ class TestUbootAction(StdoutTestCase):
         kernel_addr = job.device["parameters"][overlay.bootcommand]["ramdisk"]
         ramdisk_addr = job.device["parameters"][overlay.bootcommand]["ramdisk"]
         dtb_addr = job.device["parameters"][overlay.bootcommand]["dtb"]
+        tee_addr = job.device["parameters"][overlay.bootcommand]["tee"]
         kernel = parameters["actions"]["deploy"]["kernel"]["url"]
         ramdisk = parameters["actions"]["deploy"]["ramdisk"]["url"]
         dtb = parameters["actions"]["deploy"]["dtb"]["url"]
+        tee = parameters["actions"]["deploy"]["tee"]["url"]
 
         substitution_dictionary = {
             "{SERVER_IP}": ip_addr,
@@ -337,11 +340,13 @@ class TestUbootAction(StdoutTestCase):
             "{KERNEL_ADDR}": kernel_addr,
             "{DTB_ADDR}": dtb_addr,
             "{RAMDISK_ADDR}": ramdisk_addr,
+            "{TEE_ADDR}": tee_addr,
             "{BOOTX}": "%s %s %s %s"
             % (overlay.bootcommand, kernel_addr, ramdisk_addr, dtb_addr),
             "{RAMDISK}": ramdisk,
             "{KERNEL}": kernel,
             "{DTB}": dtb,
+            "{TEE}": tee,
         }
         params = device["actions"]["boot"]["methods"]
         params["u-boot"]["ramdisk"]["commands"] = substitute(
@@ -354,6 +359,7 @@ class TestUbootAction(StdoutTestCase):
         self.assertIn("tftp 0x83000000 initrd.gz", commands)
         self.assertIn("setenv initrd_size ${filesize}", commands)
         self.assertIn("tftp 0x88000000 broken.dtb", commands)
+        self.assertIn("tftp 0x83000000 uTee", commands)
         self.assertNotIn("setenv kernel_addr_r '{KERNEL_ADDR}'", commands)
         self.assertNotIn("setenv initrd_addr_r '{RAMDISK_ADDR}'", commands)
         self.assertNotIn("setenv fdt_addr_r '{DTB_ADDR}'", commands)
