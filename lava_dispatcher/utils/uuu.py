@@ -26,6 +26,7 @@ from lava_dispatcher.utils.containers import (
     NullDriver,
 )
 from lava_dispatcher.utils.network import dispatcher_ip
+from lava_dispatcher.utils.shell import which
 
 
 class OptionalContainerUuuAction(OptionalContainerAction):
@@ -51,6 +52,11 @@ class OptionalContainerUuuAction(OptionalContainerAction):
             else:
                 self.__driver__ = NullDriver(self)
         return self.__driver__
+
+    def which(self, path):
+        if self.driver.is_container:
+            return path
+        return which(path)
 
     def run_uuu(self, cmd, allow_fail=False, error_msg=None, cwd=None):
         return self.run_cmd(self.get_uuu_cmd(cmd), allow_fail, error_msg, cwd)
