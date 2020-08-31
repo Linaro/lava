@@ -110,7 +110,7 @@ async def zmq_proxy(app):
         except zmq.error.ZMQError as exc:
             logger.error("[EXIT] Received a ZMQ error: %s", exc)
         except asyncio.TimeoutError:
-            logger.error("[EXIT] Timing out")
+            logger.info("[EXIT] Timing out")
             break
 
     logger.info("[EXIT] Closing the sockets: the queue is empty")
