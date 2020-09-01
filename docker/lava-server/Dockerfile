@@ -59,7 +59,7 @@ RUN mkdir /install/root/entrypoint.d
 FROM $base_image as install
 COPY --from=build /install /
 
-EXPOSE 80 3079 5500 5555 5556
+EXPOSE 80 3079 5500 8000 8001
 
 # Activate the apache2 configuration and modules
 # TODO: remove apache2 and use only gunicorn
