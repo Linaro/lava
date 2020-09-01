@@ -451,7 +451,7 @@ class BootloaderCommandOverlay(Action):
             kernel_addr = self.job.device["parameters"][self.bootcommand]["kernel"]
             dtb_addr = self.job.device["parameters"][self.bootcommand]["dtb"]
             ramdisk_addr = self.job.device["parameters"][self.bootcommand]["ramdisk"]
-            tee_addr = self.job.device["parameters"][self.bootcommand]["tee"]
+            tee_addr = self.job.device["parameters"][self.bootcommand].get("tee")
 
             if (
                 not self.get_namespace_data(
