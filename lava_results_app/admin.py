@@ -22,16 +22,8 @@ Administration interface of the LAVA Results application.
 """
 from django.conf import settings
 from django.contrib import admin
-from django.contrib.contenttypes.models import ContentType
 
-from lava_results_app.models import (
-    ActionData,
-    BugLink,
-    Query,
-    TestCase,
-    TestSet,
-    TestSuite,
-)
+from lava_results_app.models import ActionData, Query, TestCase, TestSet, TestSuite
 
 
 class ActionDataAdmin(admin.ModelAdmin):
@@ -108,23 +100,8 @@ class TestSuiteAdmin(admin.ModelAdmin):
         return settings.ALLOW_ADMIN_DELETE
 
 
-class BugLinkAdmin(admin.ModelAdmin):
-    list_display = ("url", "content_type", "content_object")
-
-    def content_type(self, buglink):
-        return ContentType.objects.get_for_id(buglink.content_type_id)
-
-    def content_object(self, buglink):
-        return (
-            ContentType.objects.get_for_id(buglink.content_type_id)
-            .get_object_for_this_type(pk=buglink.object_id)
-            .get_absolute_url()
-        )
-
-
 admin.site.register(ActionData, ActionDataAdmin)
 admin.site.register(Query, QueryAdmin)
 admin.site.register(TestCase, TestCaseAdmin)
 admin.site.register(TestSet, TestSetAdmin)
 admin.site.register(TestSuite, TestSuiteAdmin)
-admin.site.register(BugLink, BugLinkAdmin)

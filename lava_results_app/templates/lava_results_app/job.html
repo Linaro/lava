@@ -158,19 +158,13 @@
 </div>
 
 {% include "_similar_jobs.html" %}
-{% include "_bug_links.html" %}
 
 {% endblock %}
 {% block scripts %}
 <script type="text/javascript">
   var condition_choices = JSON.parse($("#id_condition_choices").val());
-  var content_types = JSON.parse($("#id_available_content_types").val());
-  var bug_links_url = "{% url 'lava.results.get_bug_links_json' %}";
-  var delete_bug_url = "{% url 'lava.results.delete_bug_link' %}";
-  var csrf_token = '{{csrf_token}}';
 </script>
 <script type="text/javascript" src="{% static "lava_server/js/jquery.typeahead.js" %}"></script>
 <script type="text/javascript" src="{% static "lava_scheduler_app/js/tables.js" %}"></script>
 <script type="text/javascript" src="{% static "lava_scheduler_app/js/similar-jobs.js" %}"></script>
-<script type="text/javascript" src="{% static "lava_results_app/js/bug-links.js" %}"></script>
 {% endblock %}

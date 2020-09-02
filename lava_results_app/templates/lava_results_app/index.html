@@ -8,16 +8,7 @@
 
 {% render_table result_table %}
 
-{% include "_bug_links.html" %}
-
 {% endblock %}
 {% block scripts %}
-<script type="text/javascript">
-  var content_type_id = '{{ content_type_id }}';
-  var bug_links_url = "{% url 'lava.results.get_bug_links_json' %}";
-  var delete_bug_url = "{% url 'lava.results.delete_bug_link' %}";
-  var csrf_token = '{{csrf_token}}';
-</script>
 <script type="text/javascript" src="{% static "lava_scheduler_app/js/tables.js" %}"></script>
-<script type="text/javascript" src="{% static "lava_results_app/js/bug-links.js" %}"></script>
 {% endblock %}

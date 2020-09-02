@@ -295,11 +295,6 @@ div.selector .selector-chosen select {
     border-left: none;
 }
 
-.bug-link-container {
-    overflow: hidden;
-    float: right;
-}
-
 #test_edit_dialog {
     background-color: white;
 }
