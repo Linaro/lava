@@ -68,7 +68,6 @@ class Command(LAVADaemonCommand):
 
     def check_workers(self):
         query = Worker.objects.select_for_update()
-        query = query.filter(health=Worker.HEALTH_ACTIVE)
         query = query.filter(state=Worker.STATE_ONLINE)
         query = query.filter(
             last_ping__lt=timezone.now() - datetime.timedelta(seconds=PING_TIMEOUT)

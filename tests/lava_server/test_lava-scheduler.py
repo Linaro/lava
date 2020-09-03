@@ -62,7 +62,7 @@ def test_check_workers(mocker):
 
     assert Worker.objects.get(hostname="worker-01").state == Worker.STATE_ONLINE
     assert Worker.objects.get(hostname="worker-02").state == Worker.STATE_OFFLINE
-    assert Worker.objects.get(hostname="worker-03").state == Worker.STATE_ONLINE
+    assert Worker.objects.get(hostname="worker-03").state == Worker.STATE_OFFLINE
 
 
 @pytest.mark.django_db
