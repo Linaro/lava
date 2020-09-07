@@ -41,13 +41,20 @@ def schema():
             Any(
                 {
                     Required("repository"): str,
-                    Required("from"): Any("git", "url"),
+                    Required("from"): "git",
                     Optional("branch"): str,
                     Optional("history"): bool,
                     Optional("revision"): str,
                     Optional("parameters"): dict,
                     Optional("params"): dict,
-                    Optional("compression"): str,
+                    **common,
+                },
+                {
+                    Required("repository"): str,
+                    Required("from"): "url",
+                    Required("compression"): str,
+                    Optional("parameters"): dict,
+                    Optional("params"): dict,
                     **common,
                 },
                 {
