@@ -58,3 +58,15 @@ class TestDownloadDeploy(StdoutTestCase):
         job = self.factory.create_job("bbb-01.jinja2", "sample_jobs/download_dir.yaml")
         with self.assertRaises(JobError):
             job.validate()
+
+    @unittest.skipIf(
+        infrastructure_error_multi_paths(["xnbd-server"]), "xnbd-server not installed"
+    )
+    def test_download_tar(self):
+        job = self.factory.create_job(
+            "x86-01.jinja2", "sample_jobs/up2-tests-from-tar.yaml"
+        )
+        job.validate()
+        self.assertEqual(job.pipeline.errors, [])
+        description_ref = self.pipeline_reference("up2-tests-from-tar.yaml", job=job)
+        self.assertEqual(description_ref, job.pipeline.describe(False))

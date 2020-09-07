@@ -50,6 +50,14 @@ def schema():
                     **common,
                 },
                 {
+                    Required("repository"): str,
+                    Required("from"): "url",
+                    Required("compression"): str,
+                    Optional("parameters"): dict,
+                    Optional("params"): dict,
+                    **common,
+                },
+                {
                     Required("repository"): {
                         Required("metadata"): {
                             Required("format"): "Lava-Test Test Definition 1.0",

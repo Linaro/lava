@@ -1,0 +1,68 @@
+device_type: x86
+job_name: unit test support for NBD iPXE
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 10
+  connection:
+    minutes: 5
+
+priority: medium
+visibility: public
+
+protocols:
+  lava-xnbd:
+    port: auto
+
+# context allows specific values to be overridden or included
+context:
+    extra_kernel_args: initrd=initramfs-netboot-image-intel-corei7-64.ext4.gz
+
+actions:
+- deploy:
+    timeout:
+      minutes: 15
+    to: nbd
+    os: oe
+    failure_retry: 2
+    protocols:
+      lava-xnbd:
+      - action: nbd-deploy
+        request: set_port
+    kernel:
+      url: https://files.lavasoftware.org/components/lava/standard/debian/stretch/armhf/3/vmlinuz
+      # url: https://download.automotivelinux.org/AGL/snapshots/master/latest/intel-corei7-64/deploy/images/intel-corei7-64/bzImage
+    initrd:
+      url: https://files.lavasoftware.org/components/lava/standard/debian/stretch/armhf/3/initramfs.cpio.gz
+      # url: https://download.automotivelinux.org/AGL/snapshots/master/latest/intel-corei7-64/deploy/images/intel-corei7-64/initramfs-netboot-image-intel-corei7-64.ext4.gz
+    nbdroot:
+      url: https://files.lavasoftware.org/components/lava/standard/debian/stretch/armhf/3/stretch-armhf-nfs.tar.gz
+      # url: https://download.automotivelinux.org/AGL/snapshots/master/latest/intel-corei7-64/deploy/images/intel-corei7-64/agl-demo-platform-crosssdk-intel-corei7-64.ext4.xz
+      compression: xz
+
+- boot:
+    timeout:
+      minutes: 8
+    method: ipxe
+    commands: nbd
+    auto_login:
+      login_prompt: "login:"
+      username: root
+    transfer_overlay:
+      download_command: ifconfig; wget
+      unpack_command: tar -C / -zxf
+    prompts:
+    - 'root@intel-corei7-64:'
+
+- test:
+   failure_retry: 3
+   name: basic-linux-smoke
+   timeout:
+     minutes: 10
+   definitions:
+     - repository: https://github.com/Linaro/test-definitions/archive/2019.03.tar.gz
+       from: url
+       path: automated/linux/smoke/smoke.yaml
+       name: linux-smoke
+       compression: gz
