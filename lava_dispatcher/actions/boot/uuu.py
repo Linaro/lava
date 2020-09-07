@@ -30,7 +30,6 @@ from lava_dispatcher.actions.boot import BootloaderCommandOverlay
 
 from lava_dispatcher.connections.serial import ConnectDevice, DisconnectDevice
 from lava_dispatcher.power import ResetDevice
-from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.strings import safe_dict_format
 from lava_dispatcher.utils.uuu import OptionalContainerUuuAction
 
@@ -42,7 +41,11 @@ class CheckSerialDownloadMode(OptionalContainerUuuAction):
 
     def __init__(self, parent_pipeline):
         super().__init__()
-        self.uuu = which("uuu")
+
+    def populate(self, parameters):
+        self.parameters = parameters
+        self.uuu = self.which("uuu")
+        self.linux_timeout = self.which("timeout")
 
     def check_board_availability(self):
         """
@@ -63,7 +66,7 @@ class CheckSerialDownloadMode(OptionalContainerUuuAction):
         time.sleep(5)
 
         cmd = "{} --preserve-status 10 {} -m {} {}".format(
-            which("timeout"), self.uuu, usb_otg_path, boot
+            self.linux_timeout, self.uuu, usb_otg_path, boot
         )
 
         self.maybe_copy_to_container(boot)
@@ -196,9 +199,10 @@ class UUUBootRetry(RetryAction, OptionalContainerUuuAction):
         super().__init__()
         self.method_params = None
         self.usb_mass_device = None
-        self.uuu = which("uuu")
 
     def populate(self, parameters):
+        self.parameters = parameters
+        self.uuu = self.which("uuu")
         self.usb_mass_device = self.parameters.get("uboot_mass_storage_device")
 
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
