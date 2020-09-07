@@ -467,13 +467,15 @@ class UrlRepoAction(RepoAction):
         # Import the module here to avoid cyclic import.
         from lava_dispatcher.actions.deploy.download import DownloaderAction
 
+        # Add 'url' as an alias to 'repository'. DownloaderAction requires an
+        # 'url' key.
+        params = dict(**parameters, url=self.parameters["repository"])
+
         self.download_dir = self.mkdtemp()
         self.action_key = "url_repo"
-        self.internal_pipeline = Pipeline(
-            parent=self, job=self.job, parameters=self.parameters
-        )
+        self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=params)
         self.internal_pipeline.add_action(
-            DownloaderAction(self.action_key, self.download_dir, params=self.parameters)
+            DownloaderAction(self.action_key, self.download_dir, params=params)
         )
 
     def run(self, connection, max_end_time):
