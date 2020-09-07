@@ -73,7 +73,8 @@ class BootFVPMain(Action):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.pipeline.add_action(CheckFVPVersionAction())
         self.pipeline.add_action(StartFVPAction())
-        self.pipeline.add_action(GetFVPSerialAction())
+        if parameters.get("use_telnet", True):
+            self.pipeline.add_action(GetFVPSerialAction())
 
 
 class BaseFVPAction(Action):

@@ -40,6 +40,19 @@ def test_shell_reference(monkeypatch):
     assert description_ref == factory.job.pipeline.describe(False)  # nosec
 
 
+def test_use_telnet(monkeypatch):
+    monkeypatch.setattr(Action, "run_cmd", lambda cmd: b"")
+    monkeypatch.setattr(docker, "which", lambda a: "/usr/bin/docker")
+    factory = TestFVPActions()
+    factory.setUp(job="sample_jobs/fvp_foundation_use_telnet.yaml")
+    factory.job.validate()
+    assert [] == factory.job.pipeline.errors  # nosec
+    description_ref = factory.pipeline_reference(
+        "fvp_foundation_use_telnet.yaml", job=factory.job
+    )
+    assert description_ref == factory.job.pipeline.describe(False)  # nosec
+
+
 def test_transfer_overlay(monkeypatch):
     monkeypatch.setattr(Action, "run_cmd", lambda cmd: b"")
     monkeypatch.setattr(docker, "which", lambda a: "/usr/bin/docker")
