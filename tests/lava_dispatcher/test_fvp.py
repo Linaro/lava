@@ -47,7 +47,9 @@ def test_use_telnet(monkeypatch):
     factory.setUp(job="sample_jobs/fvp_foundation_use_telnet.yaml")
     factory.job.validate()
     assert [] == factory.job.pipeline.errors  # nosec
-    description_ref = factory.pipeline_reference("fvp_foundation.yaml", job=factory.job)
+    description_ref = factory.pipeline_reference(
+        "fvp_foundation_use_telnet.yaml", job=factory.job
+    )
     assert description_ref == factory.job.pipeline.describe(False)  # nosec
 
 

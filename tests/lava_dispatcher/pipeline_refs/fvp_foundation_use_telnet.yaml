@@ -39,6 +39,7 @@
     name: download-retry
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
+    - {class: actions.deploy.apply_overlay.AppendOverlays, name: append-overlays}
 - class: actions.boot.fvp.BootFVPAction
   name: boot-fvp
   pipeline:
@@ -47,13 +48,11 @@
     pipeline:
     - {class: actions.boot.fvp.CheckFVPVersionAction, name: check-fvp-version}
     - {class: actions.boot.fvp.StartFVPAction, name: run-fvp}
-    - {class: actions.boot.fvp.GetFVPSerialAction, name: fvp-serial-connect}
   - class: actions.boot.AutoLoginAction
     name: auto-login-action
     pipeline:
     - {class: actions.boot.LoginAction, name: login-action}
   - {class: shell.ExpectShellSession, name: expect-shell-connection}
-  - {class: actions.boot.OverlayUnpack, name: overlay-unpack}
 - class: actions.test.shell.TestShellRetry
   name: lava-test-retry
   pipeline:
