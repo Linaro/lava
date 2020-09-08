@@ -5,8 +5,8 @@
     name: download-retry
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
-- class: actions.boot.uuu.UUUBootAction
-  name: uuu-boot
+- class: actions.boot.uuu.UUUBootRetryAction
+  name: uuu-boot-retry
   pipeline:
   - class: power.ResetDevice
     name: reset-device
@@ -33,7 +33,7 @@
     name: reset-device
     pipeline:
     - {class: power.PDUReboot, name: pdu-reboot}
-  - {class: actions.boot.uuu.UUUBootRetry, name: uuu-retry}
+  - {class: actions.boot.uuu.UUUBootAction, name: uuu-boot}
   - {class: connections.serial.ConnectDevice, name: connect-device}
 - class: actions.boot.bootloader.BootBootloaderRetry
   name: boot-bootloader-retry
