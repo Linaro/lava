@@ -52,6 +52,7 @@ class TestJobSerializer(serializers.ModelSerializer):
             "multinode_definition",
             "failure_tags",
             "failure_comment",
+            "token",
         )
         extra_kwargs = {
             "id": {"read_only": True},
@@ -73,6 +74,12 @@ class TestJobSerializer(serializers.ModelSerializer):
             "failure_tags": {"read_only": True},
             "failure_comment": {"read_only": True},
         }
+
+    def get_fields(self, *args, **kwargs):
+        fields = super().get_fields(*args, **kwargs)
+        if not self.context.get("request").user.is_superuser:
+            del fields["token"]
+        return fields
 
 
 class TestSuiteSerializer(serializers.ModelSerializer):
@@ -160,7 +167,8 @@ class WorkerSerializer(serializers.ModelSerializer):
 
     def get_fields(self, *args, **kwargs):
         fields = super().get_fields(*args, **kwargs)
-        del fields["token"]
+        if not self.context.get("request").user.is_superuser:
+            del fields["token"]
         return fields
 
     def update(self, instance, validated_data):
