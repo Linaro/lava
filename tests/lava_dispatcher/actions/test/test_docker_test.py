@@ -83,6 +83,7 @@ def test_run(action, mocker):
     )
     docker_wait = mocker.patch("lava_dispatcher.utils.docker.DockerRun.wait")
     docker_prepare = mocker.patch("lava_dispatcher.utils.docker.DockerRun.prepare")
+    docker_destroy = mocker.patch("lava_dispatcher.utils.docker.DockerRun.destroy")
 
     action.validate()
     action.run(connection, time.time() + 1000)
@@ -147,6 +148,9 @@ def test_run(action, mocker):
 
     # the docker shell gets finalized
     docker_connection.finalise.assert_called()
+
+    # the docker container gets destroyed
+    docker_destroy.assert_called()
 
 
 def test_stages(first_test_action, second_test_action):
