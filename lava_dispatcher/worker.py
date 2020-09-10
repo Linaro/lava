@@ -31,7 +31,6 @@ import logging
 import logging.handlers
 import os
 from pathlib import Path
-import re
 import requests
 import signal
 import shutil
@@ -43,9 +42,10 @@ import traceback
 import yaml
 
 from lava_common.compat import yaml_safe_load
-from lava_common.constants import DISPATCHER_DOWNLOAD_DIR
+from lava_common.constants import DISPATCHER_DOWNLOAD_DIR, WORKER_DIR
 from lava_common.exceptions import LAVABug
 from lava_common.version import __version__
+from lava_common.worker import get_parser
 
 
 ###########
@@ -55,7 +55,7 @@ FINISH_MAX_DURATION = 120
 JOBS_CHECK_INTERVAL = 5
 
 TIMEOUT = 5  # http timeout
-WORKER_DIR = Path("/var/lib/lava/dispatcher/worker/")
+WORKER_DIR = Path(WORKER_DIR)
 HEADERS = {"User-Agent": f"lava-worker {__version__}"}
 
 
@@ -101,17 +101,6 @@ def create_environ(env: str) -> Dict[str, str]:
         # Override
         environ.update(conf.get("overrides", {}))
     return environ
-
-
-def get_fqdn() -> str:
-    """
-    Return the fully qualified domain name.
-    """
-    host = socket.getfqdn()
-    if re.match("[-_a-zA-Z0-9.]+$", host):
-        return host
-    else:
-        raise ValueError("Your FQDN contains invalid characters")
 
 
 def get_prefix(cfg):
@@ -405,48 +394,6 @@ def setup_logger(log_file: str, level: str) -> None:
         LOG.setLevel(logging.DEBUG)
 
 
-def setup_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="LAVA Worker")
-    parser.add_argument(
-        "--name", type=str, default=get_fqdn(), help="Name of the worker"
-    )
-    parser.add_argument(
-        "--debug", action="store_true", default=False, help="Debug lava-run"
-    )
-
-    storage = parser.add_argument_group("storage")
-    storage.add_argument(
-        "--worker-dir", type=Path, default=WORKER_DIR, help="Path to data storage"
-    )
-
-    net = parser.add_argument_group("network")
-    net.add_argument("--url", required=True, help="Base URL of the server")
-    net.add_argument("--ws-url", default=None, help="WebSocket URL")
-    token = net.add_mutually_exclusive_group()
-    token.add_argument("--token", default=None, help="Worker token")
-    token.add_argument(
-        "--token-file", type=Path, default=None, help="Worker token file"
-    )
-
-    log = parser.add_argument_group("logging")
-    log.add_argument(
-        "--log-file",
-        type=str,
-        help="Log file for the worker logs",
-        default="/var/log/lava-dispatcher/lava-worker.log",
-    )
-    log.add_argument(
-        "--level",
-        "-l",
-        type=str,
-        default="INFO",
-        choices=["DEBUG", "ERROR", "INFO", "WARN"],
-        help="Log level, default to INFO",
-    )
-
-    return parser
-
-
 #####################
 # Server <-> Worker #
 #####################
@@ -691,7 +638,7 @@ async def listen_for_events(options, event: asyncio.Event) -> None:
 
 async def main() -> int:
     # Parse command line
-    options = setup_parser().parse_args()
+    options = get_parser().parse_args()
     if options.token_file is None:
         options.token_file = Path(options.worker_dir) / "token"
     options.url = options.url.rstrip("/")
