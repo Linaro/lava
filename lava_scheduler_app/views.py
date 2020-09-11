@@ -33,9 +33,10 @@ import yaml
 
 from django import forms
 from django.conf import settings
-from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.contrib.admin.models import LogEntry
+from django.contrib.auth import authenticate
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import PermissionDenied, FieldDoesNotExist
 from django.urls import reverse
 from django.db import transaction
@@ -1371,25 +1372,46 @@ def internal_v1_workers(request, pk=None):
         if name is None:
             return JsonResponse({"error": "Missing 'name'"}, status=400)
 
-        user_ip = get_user_ip(request)
-        if user_ip is None:
-            return JsonResponse({"error": "Missing client ip"}, status=400)
+        # Get username and password if available
+        username = request.POST.get("username")
+        password = request.POST.get("password")
 
-        if not is_ip_allowed(user_ip, settings.WORKER_AUTO_REGISTER_NETMASK):
-            return JsonResponse(
-                {"error": f"Auto registration is forbidden for '{user_ip}'"}, status=403
+        if username and password:
+            user = authenticate(username=username, password=password)
+            if user is None:
+                return JsonResponse({"error": f"Unknown user {username}"}, status=403)
+
+            try:
+                worker = Worker.objects.get(hostname=name)
+                if not user.is_superuser:
+                    return JsonResponse(
+                        {"error": f"Worker '{name}' already registered"}, status=403
+                    )
+            except Worker.DoesNotExist:
+                worker = Worker.objects.create(
+                    hostname=name, description=f"Auto registered by {username}"
+                )
+        else:
+            user_ip = get_user_ip(request)
+            if user_ip is None:
+                return JsonResponse({"error": "Missing client ip"}, status=400)
+
+            if not is_ip_allowed(user_ip, settings.WORKER_AUTO_REGISTER_NETMASK):
+                return JsonResponse(
+                    {"error": f"Auto registration is forbidden for '{user_ip}'"},
+                    status=403,
+                )
+
+            with contextlib.suppress(Worker.DoesNotExist):
+                worker = Worker.objects.get(hostname=name)
+                return JsonResponse(
+                    {"error": f"Worker '{name}' already registered"}, status=403
+                )
+
+            # TODO: ask for a specific user to give admin access to the worker
+            worker = Worker.objects.create(
+                hostname=name, description=f"Auto registered by {user_ip}"
             )
-
-        with contextlib.suppress(Worker.DoesNotExist):
-            worker = Worker.objects.get(hostname=name)
-            return JsonResponse(
-                {"error": f"Worker '{name}' already registered"}, status=403
-            )
-
-        # TODO: ask for a specific user to give admin access to the worker
-        worker = Worker.objects.create(
-            hostname=name, description=f"Auto registered by {user_ip}"
-        )
         return JsonResponse({"name": name, "token": worker.token})
 
 

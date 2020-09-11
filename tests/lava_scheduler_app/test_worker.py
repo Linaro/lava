@@ -544,3 +544,41 @@ def test_internal_v1_workers_post(client, mocker, settings):
     )
     assert ret.status_code == 403
     assert ret.json()["error"] == "Worker 'worker-01' already registered"
+
+    # Use username and password as simple user
+    user = User.objects.create_user("simple-user", "user@example.com", "mypass")
+    ret = client.post(
+        reverse("lava.scheduler.internal.v1.workers"),
+        data={"name": "worker-02", "username": "simple-user", "password": "wrong pass"},
+    )
+    assert ret.status_code == 403
+    assert ret.json() == {"error": "Unknown user simple-user"}
+
+    ret = client.post(
+        reverse("lava.scheduler.internal.v1.workers"),
+        data={"name": "worker-02", "username": "simple-user", "password": "mypass"},
+    )
+    assert ret.status_code == 200
+    assert ret.json() == {
+        "name": "worker-02",
+        "token": Worker.objects.get(hostname="worker-02").token,
+    }
+
+    ret = client.post(
+        reverse("lava.scheduler.internal.v1.workers"),
+        data={"name": "worker-02", "username": "simple-user", "password": "mypass"},
+    )
+    assert ret.status_code == 403
+    assert ret.json() == {"error": "Worker 'worker-02' already registered"}
+
+    # Create a super user
+    admin = User.objects.create_superuser("admin", "admin@example.com", "mypass")
+    ret = client.post(
+        reverse("lava.scheduler.internal.v1.workers"),
+        data={"name": "worker-02", "username": "admin", "password": "mypass"},
+    )
+    assert ret.status_code == 200
+    assert ret.json() == {
+        "name": "worker-02",
+        "token": Worker.objects.get(hostname="worker-02").token,
+    }

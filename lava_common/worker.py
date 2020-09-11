@@ -57,6 +57,9 @@ def get_parser(url_required=True) -> argparse.ArgumentParser:
     net.add_argument("--url", required=url_required, help="Base URL of the server")
     net.add_argument("--ws-url", default=None, help="WebSocket URL")
     token = net.add_mutually_exclusive_group()
+    token.add_argument(
+        "--username", default=None, help="Username for auto registration"
+    )
     token.add_argument("--token", default=None, help="Worker token")
     token.add_argument(
         "--token-file", type=Path, default=None, help="Worker token file"

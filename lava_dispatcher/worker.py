@@ -27,6 +27,7 @@ import argparse
 import asyncio
 import contextlib
 from dataclasses import dataclass
+import getpass
 import json
 import logging
 import logging.handlers
@@ -519,8 +520,12 @@ def ping(url: str, token: str, name: str) -> Dict[str, List]:
         return {}
 
 
-def register(url: str, name: str) -> str:
+def register(url: str, name: str, username: str = None, password: str = None) -> str:
     data = {"name": name}
+    if username is not None and password is not None:
+        data["username"] = username
+        data["password"] = password
+
     while True:
         LOG.debug("[INIT] Auto register as %r", name)
         ret = requests_post(f"{url}{URL_WORKERS}", None, data=data)
@@ -688,7 +693,16 @@ async def main() -> int:
         tmp_dir = worker_dir / "tmp"
 
     try:
-        if options.token is not None:
+        if options.username is not None:
+            LOG.info("[INIT] Token  : '<auto register with %s>'", options.username)
+            password = getpass.getpass()
+            options.token = register(
+                options.url, options.name, options.username, password
+            )
+            options.token_file.write_text(options.token, encoding="utf-8")
+            options.token_file.chmod(0o600)
+
+        elif options.token is not None:
             LOG.info("[INIT] Token  : '<command line>'")
             options.token_file.write_text(options.token, encoding="utf-8")
             options.token_file.chmod(0o600)
