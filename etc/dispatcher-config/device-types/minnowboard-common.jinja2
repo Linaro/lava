@@ -5,6 +5,7 @@
 {% set kernel_start_message = 'Booting in blind mode' %}
 
 {% set base_ip_args = "ip=dhcp" %}
+{% set base_ramdisk_ip_args = "ip=:::::eth0:dhcp" %}
 
 {% set extra_ramdisk_args = " root=/dev/ram0" %}
 {% set modules = ["linux", "tftp"] %}

@@ -78,7 +78,7 @@ actions:
         ramdisk:
           commands:
           {{ common_commands|indent(10) }}
-          - "linux (tftp,{SERVER_IP})/{KERNEL} {{ console_args }} {{ base_ip_args }} {{ extra_ramdisk_args }} {{ extra_kernel_args }}"
+          - "linux (tftp,{SERVER_IP})/{KERNEL} {{ console_args }} {{ base_ramdisk_ip_args|default(base_ip_args) }} {{ extra_ramdisk_args }} {{ extra_kernel_args }}"
           - "initrd (tftp,{SERVER_IP})/{RAMDISK}"
 {% if dtb_commands %}
           - "{{ dtb_commands|join('"\n          - "') }}"

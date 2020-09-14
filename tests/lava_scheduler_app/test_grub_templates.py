@@ -255,7 +255,7 @@ class TestGrubTemplates(BaseTemplate.BaseTemplateCases):
             "net_bootp",
             "insmod linux",
             "insmod tftp",
-            "linux (tftp,{SERVER_IP})/{KERNEL} console=tty0 console=ttyS0,115200 ip=dhcp  root=/dev/ram0 ",
+            "linux (tftp,{SERVER_IP})/{KERNEL} console=tty0 console=ttyS0,115200 ip=:::::eth0:dhcp  root=/dev/ram0 ",
             "initrd (tftp,{SERVER_IP})/{RAMDISK}",
             "boot",
         ]
