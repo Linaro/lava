@@ -125,7 +125,15 @@ class TagFilter(filters.FilterSet):
     class Meta:
         model = Tag
         fields = {
-            "name": ["exact", "in", "contains", "icontains", "startswith", "endswith"],
+            "name": [
+                "exact",
+                "iexact",
+                "in",
+                "contains",
+                "icontains",
+                "startswith",
+                "endswith",
+            ],
             "description": [
                 "exact",
                 "in",
@@ -197,8 +205,8 @@ class WorkerFilter(filters.FilterSet):
                 "endswith",
             ],
             "last_ping": ["exact", "lt", "gt"],
-            "state": ["exact"],
-            "health": ["exact"],
+            "state": ["exact", "iexact", "in"],
+            "health": ["exact", "iexact", "in"],
         }
 
 
@@ -322,8 +330,8 @@ class DeviceFilter(filters.FilterSet):
                 "startswith",
                 "endswith",
             ],
-            "state": ["exact"],
-            "health": ["exact"],
+            "state": ["exact", "iexact", "in"],
+            "health": ["exact", "iexact", "in"],
             "is_synced": ["exact"],
         }
 
@@ -371,14 +379,21 @@ class TestJobFilter(filters.FilterSet):
     class Meta:
         model = TestJob
         fields = {
-            "id": ["exact", "lt", "gt"],
-            "submit_time": ["exact", "lt", "gt"],
-            "start_time": ["exact", "lt", "gt"],
-            "end_time": ["exact", "lt", "gt"],
+            "id": ["exact", "lt", "gt", "in"],
+            "submit_time": ["exact", "lt", "gt", "isnull"],
+            "start_time": ["exact", "lt", "gt", "isnull"],
+            "end_time": ["exact", "lt", "gt", "isnull"],
             "health_check": ["exact"],
-            "target_group": ["exact", "in", "contains", "icontains", "startswith"],
-            "state": ["exact"],
-            "health": ["exact"],
+            "target_group": [
+                "exact",
+                "iexact",
+                "in",
+                "contains",
+                "icontains",
+                "startswith",
+            ],
+            "state": ["exact", "iexact", "in"],
+            "health": ["exact", "iexact", "in"],
             "priority": ["exact", "in", "lt", "lte", "gt", "gte"],
             "description": [
                 "exact",
@@ -469,7 +484,7 @@ class TestCaseFilter(filters.FilterSet):
         model = TestCase
         exclude = {}
         fields = {
-            "id": ["exact", "lt", "gt"],
+            "id": ["exact", "lt", "gt", "in"],
             "start_log_line": ["exact", "lt", "lte", "gt", "gte"],
             "end_log_line": ["exact", "lt", "lte", "gt", "gte"],
             "logged": ["exact", "lt", "lte", "gt", "gte"],
