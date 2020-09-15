@@ -156,6 +156,13 @@ class DockerRun:
                 time.sleep(delay)
                 delay = delay * 2  # exponential backoff
 
+    def destroy(self):
+        subprocess.call(
+            ["docker", "rm", "-f", self.__name__],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+
     def __check_image_arch__(self):
         host = subprocess.check_output(["arch"], text=True).strip()
         container = subprocess.check_output(

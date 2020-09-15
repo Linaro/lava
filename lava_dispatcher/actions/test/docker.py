@@ -212,6 +212,7 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
         finally:
             # finish the container
             shell_connection.finalise()
+            docker.destroy()
 
         # return the original connection untouched
         self.__set_connection__(connection)
