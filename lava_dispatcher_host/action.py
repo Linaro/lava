@@ -22,3 +22,10 @@ class DeviceContainerMappingMixin:
             add_device_container_mapping(
                 job_prefix + job_id, device, container, container_type=container_type
             )
+
+    def trigger_share_device_with_container(self, device):
+        """
+        Trigger udev to let lava-dispatcher-host into sharing the device with
+        container.
+        """
+        self.run_cmd(["udevadm", "trigger", "--action=add", device])

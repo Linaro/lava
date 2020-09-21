@@ -32,7 +32,6 @@ from lava_dispatcher.power import ReadFeedback
 from lava_dispatcher.shell import ShellCommand, ShellSession
 from lava_dispatcher.utils.docker import DockerRun
 from lava_dispatcher.utils.udev import get_udev_devices
-from lava_dispatcher_host import share_device_with_container_docker
 from lava_dispatcher_host.action import DeviceContainerMappingMixin
 
 
@@ -205,7 +204,7 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
         docker.wait()
 
         for dev in devices:
-            share_device_with_container_docker(container, dev)
+            self.trigger_share_device_with_container(dev)
 
         try:
             super().run(shell_connection, max_end_time)
