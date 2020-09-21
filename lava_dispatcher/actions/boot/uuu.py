@@ -21,6 +21,7 @@
 
 # List just the subclasses supported for this base strategy
 # imported by the parser to populate the list of subclasses.
+
 import time
 from lava_dispatcher.action import Pipeline, Action
 from lava_common.exceptions import ConfigurationError, JobError
@@ -38,9 +39,6 @@ class CheckSerialDownloadMode(OptionalContainerUuuAction):
     name = "check-serial-availability"
     description = "Store in 'otg_availability_check' namespace_data if USB serial download mode available"
     summary = "Store in 'otg_availability_check' namespace_data if USB serial download mode available"
-
-    def __init__(self, parent_pipeline):
-        super().__init__()
 
     def populate(self, parameters):
         self.parameters = parameters
@@ -108,7 +106,7 @@ class UUUBoot(Boot):
 
     @classmethod
     def action(cls):
-        return UUUBootAction()
+        return UUUBootRetryAction()
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -130,7 +128,7 @@ class UUUBoot(Boot):
         return False, '"uuu" was not in the device configuration boot methods'
 
 
-class BootBootloaderCorruptBootMediaAction(RetryAction):
+class BootBootloaderCorruptBootMediaAction(Action):
 
     name = "boot-corrupt-boot-media"
     description = "boot using 'bootloader' method and corrupt boot media"
@@ -169,43 +167,35 @@ class BootBootloaderCorruptBootMediaAction(RetryAction):
             super().run(connection, max_end_time)
 
 
-class UUUBootAction(Action):
+class UUUBootRetryAction(RetryAction):
     """
     Wraps the Retry Action to allow for actions which precede
     the reset, e.g. Connect.
     """
 
-    name = "uuu-boot"
+    name = "uuu-boot-retry"
     description = "Boot the board using uboot and perform uuu commands"
     summary = "Pass uuu commands"
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.pipeline.add_action(ResetDevice())
-        self.pipeline.add_action(CheckSerialDownloadMode(parent_pipeline=self.pipeline))
+        self.pipeline.add_action(CheckSerialDownloadMode())
         self.pipeline.add_action(BootBootloaderCorruptBootMediaAction())
         self.pipeline.add_action(ResetDevice())
-        self.pipeline.add_action(UUUBootRetry(), parameters=parameters)
+        self.pipeline.add_action(UUUBootAction(), parameters=parameters)
         self.pipeline.add_action(ConnectDevice())
 
 
-class UUUBootRetry(RetryAction, OptionalContainerUuuAction):
+class UUUBootAction(OptionalContainerUuuAction):
 
-    name = "uuu-retry"
-    description = "interactive uuu retry action"
-    summary = "uuu commands with retry"
-
-    def __init__(self):
-        super().__init__()
-        self.method_params = None
-        self.usb_mass_device = None
+    name = "uuu-boot"
+    description = "interactive uuu action"
+    summary = "uuu commands"
 
     def populate(self, parameters):
         self.parameters = parameters
         self.uuu = self.which("uuu")
-        self.usb_mass_device = self.parameters.get("uboot_mass_storage_device")
-
-        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
 
     def validate(self):
         super().validate()
