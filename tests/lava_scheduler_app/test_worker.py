@@ -457,7 +457,7 @@ def test_internal_v1_workers_get(client, mocker):
         {"version": "v0.1"},
         HTTP_LAVA_TOKEN=token,
     )
-    assert ret.status_code == 400
+    assert ret.status_code == 409
     assert ret.json()["error"] == f"Version mismatch 'v0.1' vs '{__version__}'"
 
     # Test the working case without any jobs
