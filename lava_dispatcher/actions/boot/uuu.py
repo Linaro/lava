@@ -73,7 +73,7 @@ class CheckSerialDownloadMode(OptionalContainerUuuAction):
         return self.run_uuu(cmd.split(" "), allow_fail=True) == 0
 
     def run(self, connection, max_end_time):
-        super().run(connection, max_end_time)
+        connection = super().run(connection, max_end_time)
         board_available = self.check_board_availability()
 
         if not board_available:
@@ -88,6 +88,8 @@ class CheckSerialDownloadMode(OptionalContainerUuuAction):
             self.set_namespace_data(
                 action="boot", label="uuu", key="otg_availability_check", value=True
             )
+
+        return connection
 
 
 class UUUBoot(Boot):
@@ -164,7 +166,7 @@ class BootBootloaderCorruptBootMediaAction(Action):
         if otg_available:
             return connection
         else:
-            super().run(connection, max_end_time)
+            return super().run(connection, max_end_time)
 
 
 class UUUBootRetryAction(RetryAction):
@@ -204,6 +206,7 @@ class UUUBootAction(OptionalContainerUuuAction):
         )
 
     def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
         usb_otg_path = self.job.device["actions"]["boot"]["methods"]["uuu"]["options"][
             "usb_otg_path"
         ]
@@ -252,4 +255,4 @@ class UUUBootAction(OptionalContainerUuuAction):
                 error_msg="Fail UUUBootAction on cmd : {}".format(cmd),
             )
 
-        return None
+        return connection
