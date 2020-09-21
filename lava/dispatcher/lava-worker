@@ -741,6 +741,9 @@ async def main() -> int:
             main_loop(options, jobs, event), listen_for_events(options, event)
         )
         return 0
+    except asyncio.CancelledError:
+        LOG.error("[EXIT] Canceled")
+        return 0
     except Exception as exc:
         LOG.error("[EXIT] %s", exc)
         LOG.exception(exc)
