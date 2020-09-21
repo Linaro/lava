@@ -21,8 +21,9 @@
 
 
 import os.path
-from lava_common.exceptions import ConfigurationError
+from lava_common.exceptions import ConfigurationError, InfrastructureError
 from lava_dispatcher.action import Action, Pipeline
+from lava_common.timeout import Timeout
 from lava_dispatcher.actions.boot import (
     AutoLoginAction,
     BootloaderCommandOverlay,
@@ -30,6 +31,7 @@ from lava_dispatcher.actions.boot import (
     BootHasMixin,
     OverlayUnpack,
 )
+from lava_common.constants import BOOTLOADER_DEFAULT_CMD_TIMEOUT
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.logical import Boot, RetryAction
@@ -193,10 +195,14 @@ class DepthchargeStart(Action):
     name = "depthcharge-start"
     description = "wait for Depthcharge to start"
     summary = "Depthcharge start"
+    timeout_exception = InfrastructureError
 
     def __init__(self):
         super().__init__()
         self.start_message = None
+        self.timeout = Timeout(
+            self.name, BOOTLOADER_DEFAULT_CMD_TIMEOUT, exception=self.timeout_exception
+        )
 
     def validate(self):
         super().validate()
