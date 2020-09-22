@@ -23,6 +23,7 @@
 from typing import Any, Dict, Iterator, List, Optional, Union
 
 import aiohttp
+import argparse
 import asyncio
 import contextlib
 from dataclasses import dataclass
@@ -394,6 +395,17 @@ def setup_logger(log_file: str, level: str) -> None:
         LOG.setLevel(logging.DEBUG)
 
 
+def setup_parser() -> argparse.ArgumentParser:
+    parser = get_parser()
+    parser.add_argument(
+        "--exit-on-version-mismatch",
+        action="store_true",
+        help="Exit when there is a server mismatch between worker and server.",
+    )
+
+    return parser
+
+
 #####################
 # Server <-> Worker #
 #####################
@@ -481,6 +493,10 @@ def check(url: str, jobs: JobsDB) -> None:
         jobs.delete(job.job_id)
 
 
+class VersionMismatch(Exception):
+    pass
+
+
 def ping(url: str, token: str, name: str) -> Dict[str, List]:
     LOG.info("PING => server")
     ret = requests_get(
@@ -490,6 +506,8 @@ def ping(url: str, token: str, name: str) -> Dict[str, List]:
     if ret.status_code != 200:
         LOG.error("-> server error: code %d", ret.status_code)
         LOG.debug("--> %s", ret.text)
+        if ret.status_code == 409:
+            raise VersionMismatch(ret.text)
         return {}
 
     try:
@@ -580,8 +598,11 @@ def handle(options, jobs: JobsDB) -> float:
     token: str = options.token
     url: str = options.url
 
-    # Ping the server and grab the jobs
-    data = ping(url, token, name)
+    try:
+        data = ping(url, token, name)
+    except VersionMismatch as exc:
+        if options.exit_on_version_mismatch:
+            raise exc
 
     # running jobs
     for job in data.get("running", []):
@@ -591,7 +612,7 @@ def handle(options, jobs: JobsDB) -> float:
     for job in data.get("cancel", []):
         cancel(url, jobs, job["id"], job["token"])
 
-    # stop jobs
+    # start jobs
     for job in data.get("start", []):
         start(url, jobs, job["id"], job["token"])
 
@@ -638,7 +659,7 @@ async def listen_for_events(options, event: asyncio.Event) -> None:
 
 async def main() -> int:
     # Parse command line
-    options = get_parser().parse_args()
+    options = setup_parser().parse_args()
     if options.token_file is None:
         options.token_file = Path(options.worker_dir) / "token"
     options.url = options.url.rstrip("/")
@@ -688,6 +709,9 @@ async def main() -> int:
     except asyncio.CancelledError:
         LOG.error("[EXIT] Canceled")
         return 1
+    except VersionMismatch as exc:
+        LOG.info("[EXIT] %s" % exc)
+        return 0
     except Exception as exc:
         LOG.error("[EXIT] %s", exc)
         LOG.exception(exc)
