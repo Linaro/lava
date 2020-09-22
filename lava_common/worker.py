@@ -39,7 +39,7 @@ def get_fqdn() -> str:
         raise ValueError("Your FQDN contains invalid characters")
 
 
-def get_parser() -> argparse.ArgumentParser:
+def get_parser(url_required=True) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="LAVA Worker")
     parser.add_argument(
         "--name", type=str, default=get_fqdn(), help="Name of the worker"
@@ -54,7 +54,7 @@ def get_parser() -> argparse.ArgumentParser:
     )
 
     net = parser.add_argument_group("network")
-    net.add_argument("--url", required=True, help="Base URL of the server")
+    net.add_argument("--url", required=url_required, help="Base URL of the server")
     net.add_argument("--ws-url", default=None, help="WebSocket URL")
     token = net.add_mutually_exclusive_group()
     token.add_argument("--token", default=None, help="Worker token")
