@@ -40,6 +40,7 @@ from lava_rest_app.base import views as base_views
 from lava_rest_app import filters
 from lava_scheduler_app.dbutils import testjob_submission
 from lava_scheduler_app.schema import SubmissionException
+from lava_scheduler_app.views import __set_device_health__
 from lava_server.files import File
 
 from rest_framework import status, viewsets
@@ -387,6 +388,25 @@ class DeviceViewSet(base_views.DeviceViewSet, viewsets.ModelViewSet):
             return serializers.DictionarySerializer
         else:
             return serializers.DeviceSerializer
+
+    @detail_route(methods=["post"], suffix="set_health")
+    def set_health(self, request, **kwargs):
+        if not request.user.has_perm("lava_scheduler_app.change_device"):
+            raise PermissionDenied(
+                "Insufficient permissions. Please contact system administrator."
+            )
+        device = self.get_object()
+        reason = request.data.get("reason", None)
+        health = request.data.get("health", None)
+        if health is not None:
+            health = health.upper()
+        response = __set_device_health__(device, request.user, health, reason)
+        if response is None:
+            data = {"message": "OK"}
+            return Response(data, status=status.HTTP_202_ACCEPTED)
+        else:
+            data = {"message": response.content}
+            return Response(data, status=response.status_code)
 
     @detail_route(methods=["get", "post"], suffix="dictionary")
     def dictionary(self, request, **kwargs):
