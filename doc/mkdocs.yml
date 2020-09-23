@@ -89,6 +89,7 @@ nav:
     - Proxy: admin/advanced-tutorials/proxy.md
     - Remote database: admin/advanced-tutorials/remote-database.md
     - Remote workers: admin/advanced-tutorials/remote-workers.md
+    - Docker worker: admin/advanced-tutorials/docker-worker.md
     - Growing your lab: admin/advanced-tutorials/growing-your-lab.md
     - Deploying RPi4 as worker: admin/advanced-tutorials/deploying-rpi4b-as-worker.md
     - Device dictionary sync: admin/advanced-tutorials/sync-records-from-dictionary.md
