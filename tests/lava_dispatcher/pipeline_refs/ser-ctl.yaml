@@ -1,0 +1,25 @@
+- class: actions.boot.minimal.MinimalBoot
+  name: minimal-boot
+  pipeline:
+  - {class: connections.serial.ConnectDevice, name: connect-device}
+  - class: power.ResetDevice
+    name: reset-device
+    pipeline:
+    - {class: power.PDUReboot, name: pdu-reboot}
+  - class: actions.boot.AutoLoginAction
+    name: auto-login-action
+    pipeline:
+    - {class: actions.boot.LoginAction, name: login-action}
+- class: actions.boot.ser_ctl.SerCtl
+  name: ser-ctl
+  pipeline:
+  - {class: connections.serial.DisconnectDevice, name: disconnect-device}
+- class: actions.boot.ser_ctl.SerCtl
+  name: ser-ctl
+  pipeline:
+  - {class: connections.serial.ConnectDevice, name: connect-device}
+- class: power.FinalizeAction
+  name: finalize
+  pipeline:
+  - {class: power.PowerOff, name: power-off}
+  - {class: power.ReadFeedback, name: read-feedback}

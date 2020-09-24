@@ -1,0 +1,39 @@
+# this is sample job for ser_ctl
+device_type: imx8mq-evk
+job_name: serctl sample job
+
+timeouts:
+  job:
+    minutes: 300
+  action:
+    minutes: 15
+  connection:
+    minutes: 2
+
+priority: medium
+visibility: public
+metadata:
+  build-location: unknown
+  test: smoke
+
+actions:
+- boot:
+    timeout:
+      minutes: 5
+    prompts:
+    - root@(.*):/#
+    - hikey:/
+    - console:/
+    - ":/ "
+    method: minimal
+
+- boot:
+    method: ser_ctl
+    timeout:
+      seconds: 60
+
+- boot:
+    method: ser_ctl
+    timeout:
+      seconds: 60
+    action: open
