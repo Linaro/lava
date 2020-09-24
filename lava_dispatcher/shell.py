@@ -324,15 +324,15 @@ class ShellSession(Connection):
             self.raw_connection.logfile.is_feedback = True
             self.raw_connection.logfile.namespace = namespace
             index = self.raw_connection.expect(
-                [pexpect.EOF, pexpect.TIMEOUT], timeout=timeout
+                [".+", pexpect.EOF, pexpect.TIMEOUT], timeout=timeout
             )
         finally:
             self.raw_connection.logfile.is_feedback = False
             self.raw_connection.logfile.namespace = None
 
-        if index == 1:
-            return len(self.raw_connection.before)
-        return index
+        if index == 0:
+            return len(self.raw_connection.after)
+        return 0
 
 
 class ExpectShellSession(Action):

@@ -356,7 +356,7 @@ class TestShellAction(Action):
                             bytes_read = feedback[1].listen_feedback(
                                 timeout=1, namespace=feedback[0]
                             )
-                            if bytes_read > 1:
+                            if bytes_read > 0:
                                 self.logger.debug(
                                     "Listened to connection for namespace '%s' done",
                                     feedback[0],
