@@ -1283,38 +1283,50 @@ def internal_v1_workers(request, pk=None):
             return JsonResponse({"error": "Missing 'version'"}, status=400)
 
         # Check the version
-        if version != __version__:
-            Worker.objects.filter(pk=pk).update(version=version)
-            return JsonResponse(
-                {"error": f"Version mismatch '{version}' vs '{__version__}'"},
-                status=400,
-            )
+        version_mismatch = bool(version != __version__)
 
-        # Set last_ping and version
-        worker.last_ping = timezone.now()
+        # Save worker version
         worker.version = version
+        if version_mismatch:
+            # If the version does not match, go offline
+            worker.go_state_offline()
+        else:
+            # Set last_ping
+            worker.last_ping = timezone.now()
 
-        # Go online if needed
-        if worker.state == Worker.STATE_OFFLINE:
-            worker.go_state_online()
+            # Go online if needed
+            if worker.state == Worker.STATE_OFFLINE:
+                worker.go_state_online()
         worker.save()
 
         # Grab the jobs for this dispatcher
         query = TestJob.objects.filter(actual_device__worker_host=worker)
-        start_query = query.filter(state=TestJob.STATE_SCHEDULED)
+
+        # Scheduled
+        starts = []
+        if not version_mismatch:
+            start_query = query.filter(state=TestJob.STATE_SCHEDULED)
+            starts = list(start_query.values("id", "token"))
+            for job in start_query.filter(target_group__isnull=False):
+                starts += [{"id": j.id, "token": j.token} for j in job.dynamic_jobs()]
+
+        # Canceling
         cancel_query = query.filter(state=TestJob.STATE_CANCELING)
-        running_query = query.filter(state=TestJob.STATE_RUNNING)
-
-        starts = list(start_query.values("id", "token"))
         cancels = list(cancel_query.values("id", "token"))
-        runnings = list(running_query.values("id", "token"))
-
-        for job in start_query.filter(target_group__isnull=False):
-            starts += [{"id": j.id, "token": j.token} for j in job.dynamic_jobs()]
         for job in cancel_query.filter(target_group__isnull=False):
             cancels += [{"id": j.id, "token": j.token} for j in job.dynamic_jobs()]
+
+        # Running
+        running_query = query.filter(state=TestJob.STATE_RUNNING)
+        runnings = list(running_query.values("id", "token"))
         for job in running_query.filter(target_group__isnull=False):
             runnings += [{"id": j.id, "token": j.token} for j in job.dynamic_jobs()]
+
+        if version_mismatch and not cancels and not runnings:
+            return JsonResponse(
+                {"error": f"Version mismatch '{version}' vs '{__version__}'"},
+                status=400,
+            )
 
         # Return starting, canceling and running jobs
         return JsonResponse({"cancel": cancels, "running": runnings, "start": starts})
