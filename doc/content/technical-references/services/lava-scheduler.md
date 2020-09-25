@@ -1,4 +1,4 @@
-# LAVA master
+# LAVA scheduler
 
 This process is is responsible for scheduling jobs on devices.
 

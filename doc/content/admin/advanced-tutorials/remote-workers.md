@@ -3,7 +3,7 @@
 Test execution in LAVA is performed by 'lava-worker'. It can run on the same
 physical hardware as 'lava-server' but also can run separately on different
 physical host. The latter case is called 'remote worker'. Remote workers can
-connect to master on local network or using Internet. Connection is established
+connect to server on local network or using Internet. Connection is established
 over http/https protocol.
 
 ## lava-dispatcher settings
@@ -32,32 +32,32 @@ advice to use https instead of http for worker connection.
 
 ## http_proxy settings
 
-Worker specific http_proxy settings should be defined on the master in
+Worker specific http_proxy settings should be defined on the server in
 ```
 /etc/lava-server/dispatcher.d/<name>/env.yaml
 ```
-It can be directly edited on the master host or created/updated using API calls:
+It can be directly edited on the server host or created/updated using API calls:
  * ```scheduler.workers.set_env``` XML-RPC
  * POST on ```/api/v0.2/workers/``` REST API
  * PUT on ```/api/v0.2/workers/<hostname>/env``` REST API
 
 ## local devices connected to remote worker
 
-All device dictionaries are stored on the master node and passed to workers
-before starting test jobs. In case both workers and master are administered by
+All device dictionaries are stored on the server node and passed to workers
+before starting test jobs. In case both workers and server are administered by
 the same admin there should be no issues.
 
-However in case remote worker admin is different than master admin, there needs
+However in case remote worker admin is different than server admin, there needs
 to be coordination of device dictionaries. It is advised that device dictionary
 files are maintained in version control system. This way bad changes can be
 reverted quickly and full instance recovery is possible without major problems.
 
-Current APIs allow to upload device dictionaries directly to the master. These
+Current APIs allow to upload device dictionaries directly to the server. These
 are ```scheduler.devices.set_dictionary``` XML-RPC method and POST request on
 ```/api/v0.2/devices/<hostname>/dictionary``` REST API.
 
-Alternatively master admins might decide to use a configuration tool (salt,
-ansible, etc.) to copy files from version control to the lava-master host.
+Alternatively server admins might decide to use a configuration tool (salt,
+ansible, etc.) to copy files from version control to the lava-server host.
 
 ### database entries for device types and devices
 
@@ -69,19 +69,19 @@ XML-RPC API ```scheduler.devices.add``` or issuing POST request on
 ## local device types (not yet available in LAVA)
 
 Devices on which test jobs are executed should be supported by LAVA. This means
-that "device type" should be present in the master node. Device type is used to
+that "device type" should be present in the server node. Device type is used to
 render full device dictionary. There may be cases that remote workers include
 devices that are not yet supported by LAVA. In such case the following actions
 should be performed:
 
  * new device type should be added to LAVA code base
- * temporarily master node admins might add new device type on their host. This
-   operation is depending on how master configuration is maintained. As with
+ * temporarily server node admins might add new device type on their host. This
+   operation is depending on how server configuration is maintained. As with
    device dictionaries it is advised to use version control.
 
 ## dispatcher version
 
-Currently lava-dispatcher version should be in sync with lava-master version.
+Currently lava-dispatcher version should be in sync with lava-server version.
 In case of version mismatch, lava-worker connection will be rejected by
 lava-server.
 
@@ -94,7 +94,7 @@ is responsibility of admins to perform the updates.
 
 The instructions assume installation from debian packages but should also be
 valid for installation from sources. These steps should result in remote worker
-registering with LAVA master.
+registering with LAVA server.
 
 ## install required packages
 
@@ -175,8 +175,10 @@ whilst others are optional.
   proxy settings by setting the [worker environment](https://docs.lavasoftware.org/lava/proxy.html#using-the-http-proxy)
   You can do this via this [XMLRPC API call](https://validation.linaro.org/api/help/#scheduler.workers.set_env).
 
-`Note: If the master instance is behind a firewall, you will need to create a
-port forwarding so that ports 80 and maybe 443 are open to the public.`
+!!! note "Firewall"
+
+    If the server instance is behind a firewall, you will need to create a
+    port forwarding so that ports 80 and maybe 443 are open to the public.
 
 
 #### Configuration (advanced, for physical DUT purposes)

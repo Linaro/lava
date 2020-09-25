@@ -67,10 +67,10 @@ apt-get upgrade
 
 ## Upgrade notifications
 
-Different version compatibility in LAVA between master and worker
+Different version compatibility in LAVA between server and worker
 instances is not guaranteed at the moment.
 
-When a LAVA master instance is upgraded, if the specific flag in settings is
+When a LAVA server instance is upgraded, if the specific flag in settings is
 provided, the system will send out email notifications reminding admins that
 the worker instances need to be upgraded as well.
 
@@ -82,7 +82,7 @@ The default value for this flag is False so admin action is required in order
 to use this feature.
 
 Each user that has a 'change_worker' permission over the at least one worker
-(which is not of the same version as the LAVA master) will get an email
+(which is not of the same version as the LAVA server) will get an email
 with the list of workers which require an upgrade.
 If the user is superuser, he will be regarded as having permission over all the
 workers in the system, so that kind of user will get the full list of the
