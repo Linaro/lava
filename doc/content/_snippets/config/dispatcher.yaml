@@ -1,0 +1,48 @@
+# Configuration example
+# Each dispatcher might have a configuration file like this one.
+# Use the fully qualified hostname of the worker as the filename,
+# as shown in the lava-master logs, and create the file in
+# /etc/lava-server/dispatcher.d on the *master*.
+
+# Only set this key, if this dispatcher has many IPs
+#dispatcher_ip: <this-dispatcher-ip>
+
+# Only set this key, if this dispatcher is running separately from slave httpd
+# server or listening on a custom port.
+#dispatcher_http_ip: <dispatcher-http-ip>:<port>
+
+# Only set this key, if this dispatcher is running separately from nfs server
+# or listening on a custom port.
+#dispatcher_nfs_ip: <dispatcher-nfs-ip>:<port>
+
+# Only set this key, if this dispatcher is running separately from tftpd server
+# or listening on a custom port.
+#dispatcher_tftp_ip: <dispatcher-tftp-ip>:<port>
+
+# Set this key, if you want to change the default lxc creation path
+# No trailing /
+# The default path is /var/lib/lxc
+#lxc_path: <custom-path>
+
+# Prefix for all temporary directories
+# If this variable is set, the temporary files will be created in
+# /var/lib/lava/dispatcher/tmp/<prefix><job_id> instead of
+# /var/lib/lava/dispatcher/tmp/<job_id>
+#prefix: <prefix>
+
+# Set this variable when using http caching service based on url substitution
+# like KissCache
+# When downloading resources, lava dispatcher will use this formatting string
+# instead of the original url.
+#http_url_format_string: "https://cache.lavasoftware.org/api/v1/fetch/?url=%s"
+
+# Directories to be bind mounted in test actions that run with docker.
+# Must be an array with exactly two/three items:
+# 1st item: the source directory in the host (mandatory)
+# 2nd item: the destination directory in the container (mandatory)
+# 3rd item: bind mount mode (optional)
+#           default is read-only if this item omitted
+#           set as "rw" could make the directory in container writeable
+#test_docker_bind_mounts:
+#- [<bind-mount1-host-path>, <bind-mount1-container-path>]
+#- [<bind-mount2-host-path>, <bind-mount2-container-path>, "rw"]
