@@ -42,6 +42,6 @@ class Migration(migrations.Migration):
                 choices=[(0, "Online"), (1, "Offline")], default=1, editable=False
             ),
         ),
-        migrations.RunPython(forwards_func, backwards_func),
+        migrations.RunPython(forwards_func, backwards_func, elidable=True),
         migrations.RemoveField(model_name="worker", name="display"),
     ]
