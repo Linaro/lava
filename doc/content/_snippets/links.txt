@@ -1,5 +1,6 @@
 [bandit]: https://bandit.readthedocs.io/en/latest/
 [black]: https://black.readthedocs.io/en/stable/
+[jinja2]: https://jinja.palletsprojects.com/
 [KissCache]: https://git.lavasoftware.org/ivoire/kisscache/
 [lava-debian]: https://apt.lavasoftware.org/release/
 [lava-docker-hub]: https://hub.docker.com/u/lavasoftware/
