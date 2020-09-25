@@ -1,27 +1,28 @@
 # Setting up remote worker
 
-Test execution in LAVA is performed by 'lava-dispatcher'. It can run on the same
-physical hardware as 'lava-master' but also can run separately on different
+Test execution in LAVA is performed by 'lava-worker'. It can run on the same
+physical hardware as 'lava-server' but also can run separately on different
 physical host. The latter case is called 'remote worker'. Remote workers can
 connect to master on local network or using Internet. Connection is established
-usinc ZMQ protocol.
+over http/https protocol.
 
 ## lava-dispatcher settings
 
-In order to point dispatcher to the correct master, it needs the following
+In order to point lava-worker to the correct server, it needs the following
 settings:
 ```
-MASTER_URL="tcp://<lava-master-dns>:5556"
-LOGGER_URL="tcp://<lava-logger-dns>:5555"
+URL="http://<lava-server-dns>/"
 ```
-Location of the settings depends on the way lava-dispatcher is started. When
-using standalone installation either from sources or from debian package,
-settings can be found in /etc/lava-dispatcher/lava-worker file. In case
+
+Location of the settings depends on the way lava-dispatcher is started.
+
+When using standalone installation either from sources or from debian package,
+settings can be found in `/etc/lava-dispatcher/lava-worker` file. In case
 [docker-compose](https://git.lavasoftware.org/lava/pkg/docker-compose) is used
 settings should be updated in .env file:
+
 ```
-DC_LAVA_MASTER_HOSTNAME=<lava-master-dns>
-DC_LAVA_LOGS_HOSTNAME=<lava-logger-dns>
+DC_LAVA_SERVER_HOSTNAME=<lava-server-dns>
 ```
 
 ## connection encryption
@@ -44,11 +45,12 @@ It can be directly edited on the master host or created/updated using API calls:
 
 All device dictionaries are stored on the master node and passed to workers
 before starting test jobs. In case both workers and master are administered by
-the same admin there should be no issues. However in case remote worker admin is
-different than master admin, there needs to be coordination of device
-dictionaries. It is advised that device dictionary files are maintained in
-version control system. This way bad changes can be reverted quickly and full
-instance recovery is possible without major problems.
+the same admin there should be no issues.
+
+However in case remote worker admin is different than master admin, there needs
+to be coordination of device dictionaries. It is advised that device dictionary
+files are maintained in version control system. This way bad changes can be
+reverted quickly and full instance recovery is possible without major problems.
 
 Current APIs allow to upload device dictionaries directly to the master. These
 are ```scheduler.devices.set_dictionary``` XML-RPC method and POST request on
@@ -79,9 +81,9 @@ should be performed:
 
 ## dispatcher version
 
-Currently lava-dispatcher version should be in sync with lava-master version. It
-is possible that older lava-dispatcher will work with more recent lava-master.
-This is however not officially supported.
+Currently lava-dispatcher version should be in sync with lava-master version.
+In case of version mismatch, lava-worker connection will be rejected by
+lava-server.
 
 ### upgrades
 
@@ -110,32 +112,16 @@ step when installing from source one needs to run:
 lava-dispatcher-host rules install
 ```
 
-## create slave certificates
-```
-/usr/share/lava-dispatcher/create_certificate.py slave_name
-```
-
-## obtain master certificate
-
-Both XMLRPC and REST APIs provide endpoints to get the master certificate from
-the LAVA master exist as described above.
-Alternatively one can contact LAVA master admin. It is assumed that the
-certificate file name is master.key.
-
-## edit /etc/lava-dispatcher/lava-slave and update settings
+## edit /etc/lava-dispatcher/lava-worker and update settings
 
 ```
-MASTER_URL="tcp://<lava-master-dns>:5556"
-LOGGER_URL="tcp://<lava-master-dns>:5555"
-ENCRYPT="--encrypt"
-MASTER_CERT="--master-cert /etc/lava-dispatcher/certificates.d/master.key"
-SLAVE_CERT="--slave-cert /etc/lava-dispatcher/certificates.d/slave_name.key_secret"
+URL="http://<lava-server-dns>/"
 ```
 
 ## start lava-dispatcher
 
 ```
-systemctl start lava-slave
+systemctl start lava-worker
 ```
 
 # remote dispatcher - docker installation
@@ -170,24 +156,8 @@ You just need to fetch the sources:
 All configuration is stored in `.env` file. Some of the steps are required
 whilst others are optional.
 
-* Change DC_LAVA_MASTER_HOSTNAME and DC_LAVA_LOGS_HOSTNAME to <server_name>
-  which points to the running LAVA master instance.
-* (optional) set DC_LAVA_MASTER_ENCRYPT to `--encrypt` if the master instance
-  is using encryption for master-slave communication.
-* (optional) [Create certificates](https://validation.linaro.org/static/docs/v2/pipeline-server.html#create-certificates) on the slave.
-  `sudo /usr/share/lava-dispatcher/create_certificate.py foo_slave_1`
-  This can be done in three ways:
-  * by running "docker exec -it docker-compose_lava-dispatcher_1 bash"
-  (for this to work you'd need to build and run the containers first - see
-  below).
-  * by using published container images:
-  `docker run -v $PWD:/tmp/certs --rm lavasoftware/lava-dispatcher /usr/share/lava-common/create_certificate.py --directory  /tmp/certs foo_slave_1`
-  * alternatively you can create the certificates on system which has LAVA
-    packages already installed.
-* (optional) Copy public certificate from master and the private slave
-  certificate created in previous step to directory `dispatcher/certs/` of this
-  project using the APIs described above. Currently the key names should be the
-  default ones (master.key and slave.key_secret).
+* Change DC_LAVA_SERVER_HOSTNAME to <server_name>
+  which points to the running LAVA server instance.
 * Execute `make lava-dispatcher`; at this point multiple containers should be
   up and running and the worker should connect to the LAVA server instance of
   your choosing.
@@ -204,14 +174,9 @@ whilst others are optional.
   require any specific worker environment settings, you will need to update the
   proxy settings by setting the [worker environment](https://docs.lavasoftware.org/lava/proxy.html#using-the-http-proxy)
   You can do this via this [XMLRPC API call](https://validation.linaro.org/api/help/#scheduler.workers.set_env).
-  In case the worker sits behind a proxy, you will also need to set
-  `SOCKS_PROXY=--socks-proxy <address>:port` in the `.env` configuration file
-  Furthermore, you will need to add a proxy settings to the `.env` file for
-  docker resource downloads (http_proxy, ftp_proxy and https_proxy environment
-  variable).
 
 `Note: If the master instance is behind a firewall, you will need to create a
-port forwarding so that ports 5555 and 5556 are open to the public.`
+port forwarding so that ports 80 and maybe 443 are open to the public.`
 
 
 #### Configuration (advanced, for physical DUT purposes)
