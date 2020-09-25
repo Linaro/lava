@@ -11,7 +11,7 @@ For each worker, two variables describe the current status: **state** and **heal
 
 The **state** is an internal variable, set by [lava-server-gunicorn](../services/lava-server-gunicorn/) when receiving (or not) pings from each worker.
 
-* *Online*: the worker is sending PING to the master
+* *Online*: the worker is sending PING to the server
 * *Offline*: the worker hasn't sent any messages for a while
 
 ### Health

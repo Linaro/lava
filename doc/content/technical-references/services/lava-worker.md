@@ -1,4 +1,4 @@
-# LAVA slave
+# LAVA worker
 
 Manage local lava jobs for attached DUTs.
 

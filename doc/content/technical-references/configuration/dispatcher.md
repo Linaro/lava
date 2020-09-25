@@ -11,7 +11,7 @@ Available files are:
 
 ## Dispatcher configuration
 
-Environment configuration file is located on the master in:
+Environment configuration file is located on the server in:
 
 * `/etc/lava-server/<hostname>.yaml` old configuration file
 * `/etc/lava-server/dispatcher.d/<hostname>/dispatcher.yaml` new configuration file
@@ -28,7 +28,7 @@ and fallback to the old one
 The dispatcher environment is used to set the process environment when spawning
 `lava-run`.
 
-Environment configuration file is located on the master in:
+Environment configuration file is located on the server in:
 
 * `/etc/lava-server/env.yaml` default, for every dispatchers
 * `/etc/lava-server/dispatcher.d/<hostname>/env.yaml` for a specific dispatcher
@@ -45,7 +45,7 @@ configuration and fallback to the default configuration.
 The DUT environment is used to set some environment variable on the DUT when
 running tests.
 
-Environment configuration file is located on the master in:
+Environment configuration file is located on the server in:
 
 * `/etc/lava-server/env-dut.yaml` default, for every dispatchers
 * `/etc/lava-server/dispatcher.d/<hostname>/env-dut.yaml` for a specific dispatcher

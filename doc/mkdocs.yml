@@ -92,7 +92,7 @@ nav:
     - Growing your lab: admin/advanced-tutorials/growing-your-lab.md
     - Deploying RPi4 as worker: admin/advanced-tutorials/deploying-rpi4b-as-worker.md
     - Device dictionary sync: admin/advanced-tutorials/sync-records-from-dictionary.md
-    - LAVA logs in NoSQL type DB: admin/advanced-tutorials/logging-database.md
+    - Logs in NoSQL: admin/advanced-tutorials/logging-database.md
     - Trouble shooting: admin/advanced-tutorials/trouble-shooting.md
 
 - Developer guide:
