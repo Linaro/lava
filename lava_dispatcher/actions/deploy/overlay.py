@@ -254,6 +254,10 @@ class CreateOverlay(Action):
                 self.logger.debug("job environment:")
                 self._export_data(fout, data, "")
 
+            # TODO: Add LAVA_URL?
+            self.logger.debug("LAVA metadata")
+            self._export_data(fout, self.job.job_id, "LAVA_JOB_ID")
+
         # Generate the file containing the secrets
         if "secrets" in self.job.parameters:
             self.logger.debug("Creating %s/secrets", lava_path)
