@@ -38,5 +38,6 @@ def schema():
         Required("prompts"): boot.prompts(),
         Required("docker"): docker("name"),
         Optional("transfer_overlay"): boot.transfer_overlay(),
+        Optional("auto_login"): boot.auto_login(),
     }
     return {**boot.schema(), **base}
