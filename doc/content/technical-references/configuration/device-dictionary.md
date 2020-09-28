@@ -1,10 +1,10 @@
 # Device dictionary
 
-The device dictionary is a [jinja2][jinja2] template that should extend the
+The device dictionary is a [jinja2][jinja2] template that should extend one
 [device-type template](../device-type-template/).
 
-While device-type templates are usually provided and maintained by LAVA while device dictionary are
-provided and maintained by the admin.
+While device-type templates are usually provided and maintained by LAVA, device
+dictionaries are provided and maintained by the admin.
 
 A device dictionary will contain device specific information like:
 
@@ -13,7 +13,18 @@ A device dictionary will contain device specific information like:
 * bootloader prompt
 * ...
 
-## Example
+## Configuration file
+
+Device dictionaries are stored on the server in
+`/etc/lava-server/dispatcher-config/devices/<hostname>.jinja2`.
+
+Admin could update device dictionaries using lavacli:
+
+```shell
+lavacli devices dict set qemu01 qemu01.jinja2
+```
+
+## Examples
 
 ### Beaglebone-black
 
