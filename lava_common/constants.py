@@ -156,3 +156,6 @@ UDEV_RULE_FILENAME = UDEV_RULES_DIR + "99-lava-dispatcher-host.rules"
 
 # Services which allow alternative IP's and ports
 VALID_DISPATCHER_IP_PROTOCOLS = ["http", "nfs", "tftp"]
+
+# worker daemon data directory
+WORKER_DIR = "/var/lib/lava/dispatcher/worker"

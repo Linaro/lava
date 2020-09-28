@@ -78,8 +78,8 @@ def test_run(action, mocker):
         "lava_dispatcher.actions.test.docker.get_udev_devices",
         return_value=["/dev/foobar"],
     )
-    share_device_with_container_docker = mocker.patch(
-        "lava_dispatcher.actions.test.docker.share_device_with_container_docker"
+    trigger_share_device_with_container = mocker.patch(
+        "lava_dispatcher_host.action.DeviceContainerMappingMixin.trigger_share_device_with_container"
     )
     docker_wait = mocker.patch("lava_dispatcher.utils.docker.DockerRun.wait")
     docker_prepare = mocker.patch("lava_dispatcher.utils.docker.DockerRun.prepare")
@@ -141,7 +141,7 @@ def test_run(action, mocker):
     docker_wait.assert_called()
 
     # device shared with docker
-    share_device_with_container_docker.assert_called_with(mocker.ANY, "/dev/foobar")
+    trigger_share_device_with_container.assert_called_with("/dev/foobar")
 
     # the lava-test-shell implementation gets called with the docker shell
     action_run.assert_called_with(docker_connection, mocker.ANY)

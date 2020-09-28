@@ -100,7 +100,10 @@ DISPATCHER_HOST = {
     "name": "lava-dispatcher-host",
     "description": "LAVA dispatcher host",
     "packages": modules("lava_dispatcher_host"),
-    "scripts": ["lava_dispatcher_host/lava-dispatcher-host"],
+    "scripts": [
+        "lava_dispatcher_host/lava-dispatcher-host",
+        "lava_dispatcher_host/lava-docker-worker",
+    ],
 }
 
 SERVER = {

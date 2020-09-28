@@ -1325,7 +1325,7 @@ def internal_v1_workers(request, pk=None):
         if version_mismatch and not cancels and not runnings:
             return JsonResponse(
                 {"error": f"Version mismatch '{version}' vs '{__version__}'"},
-                status=400,
+                status=409,  # Conflict
             )
 
         # Return starting, canceling and running jobs
