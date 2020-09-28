@@ -62,7 +62,7 @@ def run(cmd_list, failure_msg, stdin=None):
     return ret
 
 
-def database(config):
+def create_database(config):
     db = config["DATABASES"]["default"]["NAME"]
     password = config["DATABASES"]["default"]["PASSWORD"]
     user = config["DATABASES"]["default"]["USER"]
@@ -74,7 +74,7 @@ def database(config):
     try:
         subprocess.check_call(["pg_isready"])
     except subprocess.CalledProcessError:
-        print("Skipping database setup as PostgreSQL is not running")
+        print("Skipping database creation as PostgreSQL is not running")
         return
 
     script = f"""
@@ -111,6 +111,8 @@ WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '{devel_db}')\\gexec
         uid = pwd.getpwnam("root")[2]
         os.seteuid(uid)
 
+
+def update_database():
     run(
         ["lava-server", "manage", "migrate", "--noinput", "--fake-initial"], "migration"
     )
@@ -313,7 +315,8 @@ DATABASES:
 
     if options.db:
         print("Create database:")
-        database(config)
+        create_database(config)
+        update_database()
 
 
 if __name__ == "__main__":
