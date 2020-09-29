@@ -4,7 +4,7 @@ set -e
 
 if [ "$1" = "setup" ]
 then
-  true
+  apt-get build-dep --yes .
 else
   set -x
   # build the full package, including original source for buster.
