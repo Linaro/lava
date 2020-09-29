@@ -1,7 +1,7 @@
 # Device dictionary
 
 The device dictionary is a [jinja2][jinja2] template that should extend one
-[device-type template](../device-type-template/).
+[device-type template](./device-type-template.md).
 
 While device-type templates are usually provided and maintained by LAVA, device
 dictionaries are provided and maintained by the admin.

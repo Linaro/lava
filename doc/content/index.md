@@ -12,10 +12,10 @@ Results are tracked over time and data can be exported for further analysis.
 
 The documentation is made of five sections:
 
-* [Introduction](introduction/concepts/)
-* [User guide](user/first-steps/)
-* [Admin guide](admin/first-steps/)
-* [Developer guide](developer/first-steps/)
-* [Technical references](technical-references/architecture/)
+* [Introduction](introduction/concepts.md)
+* [User guide](user/first-steps.md)
+* [Admin guide](admin/first-steps.md)
+* [Developer guide](developer/first-steps.md)
+* [Technical references](technical-references/architecture.md)
 
 The guides are targeting specific audiences: Users, Admins or Developers.

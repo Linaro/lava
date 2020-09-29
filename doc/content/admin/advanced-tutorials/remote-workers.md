@@ -10,7 +10,7 @@ over http/https protocol.
 
 In order to point lava-worker to the correct server, it needs the following
 settings:
-```
+```shell
 URL="http://<lava-server-dns>/"
 ```
 
@@ -21,8 +21,8 @@ settings can be found in `/etc/lava-dispatcher/lava-worker` file. In case
 [docker-compose](https://git.lavasoftware.org/lava/pkg/docker-compose) is used
 settings should be updated in .env file:
 
-```
-DC_LAVA_SERVER_HOSTNAME=<lava-server-dns>
+```shell
+DC_LAVA_SERVER_HOSTNAME="<lava-server-dns>"
 ```
 
 ## connection encryption
@@ -33,7 +33,7 @@ advice to use https instead of http for worker connection.
 ## http_proxy settings
 
 Worker specific http_proxy settings should be defined on the server in
-```
+```shell
 /etc/lava-server/dispatcher.d/<name>/env.yaml
 ```
 It can be directly edited on the server host or created/updated using API calls:
@@ -98,7 +98,7 @@ registering with LAVA server.
 
 ## install required packages
 
-```
+```shell
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A791358F2E49B100
 apt-get update
 apt-get install lava-dispatcher lava-dispatcher-host
@@ -108,19 +108,19 @@ apt-get install lava-dispatcher lava-dispatcher-host
 
 lava-dispatcher-host package installs udev rules file. In order to perform this
 step when installing from source one needs to run:
-```
+```shell
 lava-dispatcher-host rules install
 ```
 
 ## edit /etc/lava-dispatcher/lava-worker and update settings
 
-```
+```shell
 URL="http://<lava-server-dns>/"
 ```
 
 ## start lava-dispatcher
 
-```
+```shell
 systemctl start lava-worker
 ```
 
@@ -140,14 +140,18 @@ In order to use this docker-compose file, you need:
 
 You can install the dependencies using:
 
-    apt install docker.io docker-compose
+```shell
+apt install docker.io docker-compose
+```
 
 ### Installing
 
 You just need to fetch the sources:
 
-    git clone https://git.lavasoftware.org/lava/pkg/docker-compose
-    cd docker-compose
+```shell
+git clone https://git.lavasoftware.org/lava/pkg/docker-compose
+cd docker-compose
+```
 
 ### Using it
 
@@ -164,7 +168,7 @@ whilst others are optional.
 * Add a new device and set its' device template (alternatively you can update
   existing device to use this new worker)
   Example QEMU device template:
-  ```
+  ```jinja
   {% extends 'qemu.jinja2' %}
   {% set mac_addr = 'DF:AD:BE:EF:33:02' %}
   {% set memory = 1024 %}

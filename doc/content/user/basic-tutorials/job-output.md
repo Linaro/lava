@@ -25,7 +25,7 @@ You can select the levels that should be displayed or hidden by clicking on the 
 !!! tip "`target` vs `feedback`"
     Both `target` and `feedback` are DUT output.
 
-    When using [namespaces](../../../technical-references/job-definition/job/#namespace), DUT
+    When using [namespaces](../../technical-references/job-definition/job.md#namespace), DUT
     output for the current namespace will be in `target` while outputs coming
     from over namespace will be in `feedback`.
 

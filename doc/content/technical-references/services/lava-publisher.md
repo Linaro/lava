@@ -19,7 +19,7 @@ lava-publisher should be able to:
 * open a socket on port `8001`
 
 The services that generate events
-([lava-server-gunicorn](../lava-server-gunicorn)) should be able to write to
+([lava-server-gunicorn](./lava-server-gunicorn.md)) should be able to write to
 the local socket.
 
 ## Configuration
