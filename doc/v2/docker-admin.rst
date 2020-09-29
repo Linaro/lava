@@ -56,10 +56,7 @@ important if you want to start a ``lava-server`` container and then
 connect a worker. The worker can be another docker container or it can
 use ``lava-dispatcher`` installed directly on this or another system.
 You will need to make sure that the docker network is accessible to any
-worker you want to attach to the new container. Depending on local
-configuration, you may also need to configure the ZMQ ports on your
-``lava-server`` container. See the docker documentation for how to
-forward ports to different numbers outside the container.
+worker you want to attach to the new container.
 
 .. code-block:: none
 
@@ -192,31 +189,6 @@ Swarms, etc.
   client = docker.from_env()
   container_id = client.containers.run("debian", detach=True)
 
-Supporting encryption
-*********************
-
-Always use encryption to any master outside your local network. Create
-a docker volume to act as a fileshare, mounting the specified directory
-from the host machine inside the docker container at the specified
-location to exchange files from the host to the container and vice
-versa:
-
-.. code-block:: none
-
- -v $PWD/my-certificates.d:/etc/lava-dispatcher/certificates.d/
-
-Then use these certificates in the commands:
-
-.. code-block:: none
-
- -e ENCRYPT="--encrypt" \
- -e MASTER_CERT='/etc/lava-dispatcher/certificates.d/master.key' \
- -e SLAVE_CERT='/etc/lava-dispatcher/certificates.d/docker-slave-1.key_secret'
-
-.. seealso:: `lava-dispatcher docker images - part 2
-   <https://www.stylesen.org/lavadispatcher_docker_images_part_2>`_
-   - note that the options changed since this content was written.
-
 .. _modifying_docker_dispatcher:
 
 lava-dispatcher in docker
@@ -251,9 +223,9 @@ installed or compiled within the LXC.
 
 However, there are also disadvantages:
 
-*  **The Docker is persistent** - currently, ``lava-slave`` and
+*  **The Docker is persistent** - currently, ``lava-worker`` and
    ``lava-run`` need to be inside the container, so the next test job
-   for that slave picks up the changes to the docker from this test
+   for that worker picks up the changes to the docker from this test
    job.
 
 * The test job would need modification to not call LXC.
@@ -265,8 +237,8 @@ instances.
 
 ``lava-lxc-mocker`` exists to solve the second problem. By mocking up
 the calls to ``lxc-*`` utilities, ``lava-lxc-mocker`` allows the same
-test job to be run on a device managed by a ``lava-slave`` in Docker
-as on a device managed by a ``lava-slave`` running on bare metal.
+test job to be run on a device managed by a ``lava-worker`` in Docker
+as on a device managed by a ``lava-worker`` running on bare metal.
 
 ``lava-lxc-mocker`` is pre-installed in all :ref:`lava_docker_images`.
 
@@ -321,20 +293,13 @@ see :ref:`two_dockers_together`.
 
 .. code-block:: none
 
-    DISPATCHER_HOSTNAME=--hostname=calvin-2018.7-88
+    DISPATCHER_HOSTNAME=--name=calvin-2018.7-88
 
-    /usr/bin/lava-slave --level $LOGLEVEL --log-file $LOGFILE --master $MASTER_URL --socket-addr $LOGGER_URL $IPV6 $ENCRYPT $MASTER_CERT $SLAVE_CERT $DISPATCHER_HOSTNAME
+    /usr/bin/lava-worker --level $LOGLEVEL --log-file $LOGFILE --url $SERVER_URL $DISPATCHER_HOSTNAME
 
-    $ docker run -e "DISPATCHER_HOSTNAME=--hostname=calvin-2018.7-88" -e "LOGGER_URL=tcp://calvin:5555" -e "MASTER_URL=tcp://calvin:5556"  --name calvin-docker-88-4  hub.lavasoftware.org/lava/lava/lava-dispatcher/master:2018.7-88-ga7b7939dd
-    2018-10-03 15:08:32,852    INFO [INIT] LAVA slave has started.
+    $ docker run -e "DISPATCHER_HOSTNAME=--name=calvin-2018.7-88" -e "URL=http://calvin/" --name calvin-docker-88-4  hub.lavasoftware.org/lava/lava/lava-dispatcher/master:2018.7-88-ga7b7939dd
+    2018-10-03 15:08:32,852    INFO [INIT] LAVA worker has started.
     2018-10-03 15:08:32,852    INFO [INIT] Using protocol version 3
-    2018-10-03 15:08:32,853   DEBUG [INIT] Connection is not encrypted
-    2018-10-03 15:08:32,965    INFO [BTSP] Connecting to master [tcp://calvin:5556] as <calvin-2018.7-88>
-    2018-10-03 15:08:32,965    INFO [BTSP] Greeting the master [tcp://calvin:5556] => 'HELLO'
-    2018-10-03 15:08:32,966    INFO [BTSP] Connection with master [tcp://calvin:5556] established
-    2018-10-03 15:08:32,966    INFO Master is ONLINE
-    2018-10-03 15:08:37,971   DEBUG PING => master (last message 5s ago)
-    2018-10-03 15:08:37,973   DEBUG master => PONG(20)
 
 If you make mistakes, set the worker to Retired in the Django admin
 interface and use ``docker rm <name>`` to allow you to re-use the same

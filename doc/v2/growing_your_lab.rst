@@ -48,7 +48,7 @@ LAVA:
 Logical layouts
 ***************
 
-The simplest LAVA instance is a single master with a single worker on the same
+The simplest LAVA instance is a single server with a single worker on the same
 machine. Adding more devices to such an instance may quickly cause problems
 with load. Test jobs may time out on downloads or decompression and devices
 will go offline.
@@ -56,9 +56,7 @@ will go offline.
 The first step in growing a LAVA lab is to add a remote worker. Remote workers
 can be added to any V2 master. To do so, use the :ref:`django_admin_interface`
 to add new devices and device types, allocate some or all devices to the newly
-created remote worker and optionally configure :ref:`encrpytion on the master
-<zmq_master_encryption>` and :ref:`on the worker <zmq_slave_encryption>` for
-secure communication between them.
+created remote worker.
 
 As load increases, the master will typically benefit from having fewer and
 fewer devices directly attached to the worker running on the master machine.
@@ -211,17 +209,11 @@ Layout Recommendations
 Physical layouts
 ****************
 
-.. important:: If the master and one or more of the workers are to be connected
-   across the internet instead of within a locally managed subnet,
-   :ref:`encrpytion on the master <zmq_master_encryption>` and :ref:`on all
-   workers <zmq_slave_encryption>` is **strongly recommended**.
-
 LAVA V2 supports geographically separate masters and workers. Workers can be
 protected behind a firewall or even using a NAT internet connection, without
 the need to use dynamic DNS or other services. Connections are made from the
-worker to the master, so the only requirement is that the :term:`ZMQ` ports
-configured on the master are open to the internet and therefore use
-**encryption**.
+worker to the server, so the only requirement is that the HTTP/HTTPS ports
+of the server are open to the internet.
 
 Physically separating different workers is also possible but has implications:
 
@@ -405,16 +397,12 @@ Networking to remote locations
 Encryption and authentication
 -----------------------------
 
-The :term:`ZMQ` connections between the master and the worker should always use
-**authentication and encryption** if the connection goes across the internet
-rather than a local subnet.
-
-.. seealso:: :ref:`zmq_curve`
+Use HTTPS for the connections between the server and the workers.
 
 Firewalls
 ---------
 
-The worker initiates the ZMQ connection to the master, so a worker will work
+The worker initiates the HTTP connection to the server, so a worker will work
 when behind a NAT connection. Only the address of the master needs to be
 resolvable using public DNS. There is no need for the master or any other
 service to be able to initiate a connection to the worker from outside the
@@ -422,7 +410,7 @@ firewall. This means that a public master can work with :term:`DUTs <DUT>` in a
 remote location by connecting the boards to one or more worker(s) in the same
 location.
 
-If the master is behind a firewall, the ZMQ ports will need to be open.
+If the master is behind a firewall, the HTTP/HTTPS ports will need to be open.
 
 .. seealso:: :ref:`publishing_events`
 

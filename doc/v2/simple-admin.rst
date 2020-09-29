@@ -74,13 +74,12 @@ be a brief moment where the UI will pause but that is all:
 .. code-block:: none
 
  service lava-server-gunicorn restart
- service lava-logs restart
  service lava-publisher restart
- service lava-master restart
- service lava-slave restart
+ service lava-scheduler restart
+ service lava-worker restart
 
 .. note:: This applies to workers as well as masters but the
-   ``lava-slave`` daemon has only minimal dependencies. Most of the
+   ``lava-worker`` daemon has only minimal dependencies. Most of the
    work is done by lava-run which gets a new process at the start of
    each test job. It is NOT possible to restart lava-run - any affected
    test jobs will need to be resubmitted but this is considered
@@ -609,27 +608,15 @@ templates should be accompanied by new unit tests for that template.
 Log files
 ---------
 
-* **lava-master** - controls all V2 test jobs after devices have been assigned.
-  Logs are created on the master::
-
-    /var/log/lava-server/lava-master.log
-
-* **lava-logs** - aggregate the test job logs produced by the dispatchers.
-  Logs are created on the master::
-
-    /var/log/lava-server/lava-logs.log
-
-* **lava-scheduler** - controls how all devices are assigned. Control will be
-  handed over to ``lava-master`` once V1 code is removed. Logs are created on
-  the master::
+* **lava-scheduler** - controls how all devices are assigned::
 
     /var/log/lava-server/lava-scheduler.log
 
-* **lava-slave** - controls the operation of the test job on the slave.
+* **lava-worker** - controls the operation of the test job on the worker.
   Includes details of the test results recorded and job exit codes. Logs are
-  created on the slave::
+  created on the worker::
 
-    /var/log/lava-dispatcher/lava-slave.log
+    /var/log/lava-dispatcher/lava-worker.log
 
 * **apache** - includes XML-RPC logs::
 
@@ -669,7 +656,7 @@ lava-coordinator
 
 * **lava-coordinator.conf** - ``/etc/lava-coordinator/lava-coordinator.conf``
   contains the lookup information for workers to find the ``lava-coordinator``
-  for :term:`multinode` test jobs. Each worker **must** share a single
+  for :term:`MultiNode` test jobs. Each worker **must** share a single
   ``lava-coordinator`` with all other workers attached to the same instance.
   Instances may share a ``lava-coordinator`` with other instances or can choose
   to have one each, depending on expected load and maintenance priorities. The
@@ -686,18 +673,8 @@ lava-dispatcher
 
 Files and directories in ``/etc/lava-dispatcher/``:
 
-* **lava-slave** - Each slave needs configuration to be able to locate the
-  correct master using ZMQ. This involves a URL for a ZMQ socket on the master
-  and optionally the location of the ZMQ certificates to support authentication
-  and encryption of the ZMQ messages.
-
-  .. seealso:: :ref:`configuring_lava_slave`
-
-* **certificates.d/** - On a worker, this directory contains the master
-  certificate for each worker. On a master, this directory contains a copy of
-  the certificate for each worker which is allowed to connect to the master.
-
-  .. seealso:: :ref:`zmq_curve`
+* **lava-worker** - Each worker needs configuration to be able to locate the
+  correct server using HTTP.
 
 lava-server
 -----------
@@ -720,13 +697,6 @@ Files and directories in ``/etc/lava-server/``:
 
 * **instance.conf** - Local database configuration for the master. This file is
   managed by the package installation process.
-
-* **lava-master** - Each master needs configuration to set up the correct ZMQ
-  ports on the master. This involves a URL for a ZMQ socket on the master
-  and optionally the location of the ZMQ certificates to support authentication
-  and encryption of the ZMQ messages.
-
-  .. seealso:: :ref:`zmq_curve` and :ref:`configuring_lava_slave`
 
 * **lava-server-gunicorn.service** - example file for a systemd service to run
   ``lava-server-gunicorn`` instead of letting systemd generate a service file

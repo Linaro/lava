@@ -46,8 +46,7 @@ Administrator aspects
 =====================
 
 * **Simpler communications** - just one fault-tolerant connection between the
-  master and the worker(s) using :term:`ZMQ` with authentication and encryption
-  support for remote workers.
+  master and the worker(s) using HTTP/HTTPS.
 
 * **Simpler configuration** - all configuration is on the one master, the
   workers only need to update the base system packages as a standard admin

@@ -1,6 +1,6 @@
 .. image:: images/arch-overview.svg
 
-A LAVA ``instance`` consists of two primary components - a :term:`master` and a
+A LAVA ``instance`` consists of two primary components - a server and a
 :term:`worker`. The simplest possible configuration is to run the master and
 worker components on a single machine, but a larger instance can also be
 configured to support multiple workers controlling a larger number of attached
@@ -20,17 +20,12 @@ Elements of the Master
   this will scan the database to check for queued test jobs and available test
   devices, starting jobs when the needed resources become available.
 
-* **Lava-master daemon** - This communicates with the worker(s) using
-  :abbr:`ZMQ (zero MQ)`.
-
-* **Lava-logs daemon** - This process aggregates the logs coming from the
-  dispatchers using :abbr:`ZMQ (zero MQ)`.
+* **lava-server-gunicorn daemon** - This communicates with the worker(s) using HTTP
 
 Elements of the Worker
 ======================
 
-* **Lava-slave daemon** - This receives control messages from the master and
-  sends logs and results back to the master using :abbr:`ZMQ (zero MQ)`.
+* **lava-worker daemon** - This receives control messages from the server.
 
 * **Dispatcher** - This manages all the operations on the device under test,
   according to the job submission and device parameters sent by the master.

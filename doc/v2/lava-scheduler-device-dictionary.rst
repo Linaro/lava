@@ -10,7 +10,7 @@ that device type, and how LAVA can use it. A :term:`device dictionary`
 customizes that template to include the data for one specific instance of that
 device. This includes details like the commands to connect specific serial
 ports for this device, commands to operate remote power control, device serial
-numbers and elements of the network topology for :term:`vland` support.
+numbers and elements of the network topology for :term:`VLANd` support.
 
 Other fields can also be used in the templates. The only field which is
 compulsory is **extends** which links this device dictionary to a specific

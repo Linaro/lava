@@ -58,7 +58,7 @@ For each device, two variables describe the current status:
   * *Maintenance*
   * *Retired*
 
-``state`` is an internal variable, set by ``lava-master`` and ``lava-logs``
+``state`` is an internal variable, set by ``lava-server-gunicorn`` and ``lava-scheduler``
 when scheduling, starting, canceling and ending test jobs.
 
 ``health`` can be used by admins to indicate if a device should be used by the

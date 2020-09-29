@@ -138,7 +138,7 @@ To install a single master instance and create a superuser, refer to
 
 LAVA V1 used to support a `distributed_instance` installation method. This has
 been **removed** in V2; instead there is a much improved architecture for
-remote workers using :term:`ZMQ`.
+remote workers using HTTP.
 
 Detailed instructions for setting up workers follows - first, think about the
 kind of configuration needed for your instance.
@@ -179,21 +179,13 @@ expand beyond that, start adding workers one at a time. For this configuration:
      <setting_up_pipeline_instance>`.
 
 As you expand your setup, you will also need to do some configuration of
-communications between the master and the worker(s), which rely on :term:`ZMQ`
+communications between the master and the worker(s), which rely on HTTP
 as an underlying technology. Workers on the same (trusted) network as the
 master can work fine without using authentication and encryption, but if you
 are going to be hosting workers on a remote network then it is **strongly**
-recommended to configure authentication and encryption for their ZMQ messages.
+recommended to use HTTPS to communicate with the server
 
-.. seealso:: :ref:`Configuring lava-slave <configuring_lava_slave>` in the
-   notes on installing lava-dispatcher and :ref:`zmq_curve`.
-
-.. note:: ZMQ supports buffering of messages, so the master and workers can be
-   independently restarted without worrying about breaking existing network
-   connections.
-
-* On your new worker, configure ``lava-slave`` to look for the master
-  ZMQ port instead of ``localhost``.
+* On your new worker, configure ``lava-worker`` to look for the server
 
 * On the master, use the Django administration interface to add
   details of the new worker to the database.

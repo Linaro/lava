@@ -686,19 +686,19 @@ the raw content of the output YAML.
      remove-tgz: pass, tar-tgz: pass}
  - {debug: 'lava-test-shell duration: 26.88', ts: '2015-09-07T09:43:14.065956'}
 
-.. index:: developer debugging slaves
+.. index:: developer debugging workers
 
-.. _debugging_slaves:
+.. _debugging_workers:
 
-Debugging on the slave dispatcher
-*********************************
+Debugging on the worker
+***********************
 
-Pipeline jobs are sent to the slave dispatcher over ZMQ as fully formatted YAML
+Pipeline jobs are sent to the worker dispatcher over http as fully formatted YAML
 files but are then deleted when the test job ends.
 
 Equivalent files can be prepared using the ``lava-server manage
 device-dictionary`` ``review`` option to output the device configuration YAML.
-To re-run the job on the slave, pass this configuration as the ``--target``
+To re-run the job on the worker, pass this configuration as the ``--target``
 option to ``lava-dispatch`` and specify a temporary ``--output-dir`` and the
 test job definition.
 

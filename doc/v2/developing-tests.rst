@@ -239,7 +239,7 @@ the same level as ``job_name``, ``timeouts``, ``metadata`` and
       docs-source: first-job
       docs-filename: qemu-pipeline-first-job.yaml
 
-For :term:`MultiNode <multinode>` test jobs, the tags are defined as
+For :term:`MultiNode` test jobs, the tags are defined as
 part of the MultiNode protocol block:
 
 .. code-block:: yaml

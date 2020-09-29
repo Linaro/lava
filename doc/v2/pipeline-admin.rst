@@ -274,7 +274,7 @@ Current support includes:
 .. seealso:: :ref:`keep_dispatcher_dumb`
 
 * Add a prefix to tmp directories on a worker. This can be useful if
-  a worker runs more than one ``lava-slave``, e.g. using docker.
+  a worker runs more than one ``lava-worker``, e.g. using docker.
 
 .. code-block:: yaml
 
