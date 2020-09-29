@@ -1,1 +1,2 @@
 doc/v2/_build/html/* ./usr/share/doc/lava-server-doc/html/v2/
+doc/site/* ./usr/share/doc/lava-server-doc/html/
