@@ -9,17 +9,26 @@ ARG base_image=""
 # Build the documentation
 FROM debian:bullseye-slim AS doc
 RUN apt-get update && \
-    apt-get install --yes --no-install-recommends git make python3-sphinx python3-sphinx-bootstrap-theme
+    apt-get install --yes --no-install-recommends git make python3-pip python3-setuptools python3-sphinx python3-sphinx-bootstrap-theme && \
+    python3 -m pip install mkdocs
+
 COPY ./lava_common/version.py /app/lava_common/version.py
 COPY ./lava_common/VERSION /app/lava_common/VERSION
-COPY ./doc/v2 /app/doc/v2
+COPY ./doc/ /app/doc/
+
 RUN make -C /app/doc/v2 html
+RUN python3 -m pip install -r /app/doc/content/requirements.txt && \
+    mkdocs build -f /app/doc/mkdocs.yml
+
+RUN mkdir /app/doc/build/ && \
+    mv /app/doc/v2/_build/html/ /app/doc/build/v2 && \
+    mv /app/doc/site/* /app/doc/build/
 
 # Call the install script in the lava-server-base image
 # In fact we use the lavaserver user and group
 FROM $base_image as build
 ARG lava_version=""
-COPY --from=doc /app/doc/v2/_build/html/ /doc
+COPY --from=doc /app/doc/build/ /doc
 RUN --mount=type=bind,target=/app \
     # Install using setup.py
     cd /app && \
@@ -40,8 +49,8 @@ RUN --mount=type=bind,target=/app \
     chown -R lavaserver:lavaserver /install/var/lib/lava-server/home/ && \
     chown -R lavaserver:adm /install/var/log/lava-server/ && \
     # Install documentation
-    install -d /install/usr/share/lava-server/static/docs/v2/ && \
-    cp -R /doc/* /install/usr/share/lava-server/static/docs/v2/ && \
+    install -d /install/usr/share/lava-server/static/docs/ && \
+    cp -R /doc/* /install/usr/share/lava-server/static/docs/ && \
     # Move the static files
     mv /install/usr/lib/python3/dist-packages/lava_results_app/static/lava_results_app/ /install/usr/share/lava-server/static/lava_results_app && \
     mv /install/usr/lib/python3/dist-packages/lava_scheduler_app/static/lava_scheduler_app/ /install/usr/share/lava-server/static/lava_scheduler_app && \
