@@ -12,8 +12,8 @@ theme:
   name: "material"
   language: "en"
   include_sidebar: true
-  feature:
-    tabs: true
+  features:
+  - navigation.tabs
   palette:
     primary: "light-green"
     accent: "light-green"
