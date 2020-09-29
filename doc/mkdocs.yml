@@ -5,6 +5,7 @@ site_author: LAVA team
 site_description: LAVA documentation
 
 docs_dir: content/
+use_directory_urls: false
 
 # https://squidfunk.github.io/mkdocs-material/
 # python3 -m pip install mkdocs-material
