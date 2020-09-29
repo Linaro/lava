@@ -41,7 +41,7 @@ Principal changes
 #. **Drop use of SSHFS** between workers and master - this was awkward to
    configure and problematic over external connections.
 
-#. **Move configuration onto the master** - The worker becomes a simple slave
+#. **Move configuration onto the master** - The worker becomes a simple worker
    which receives all configuration and tasks from the master.
 
 .. _objectives:

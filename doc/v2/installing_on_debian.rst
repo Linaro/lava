@@ -256,20 +256,8 @@ expect ``https``.
 
 .. seealso:: :ref:`check_instance` and :ref:`django_localhost`
 
-If the installation uses a remote slave, then :ref:`zmq_curve` should
-be enabled.
-
-The configuration defaults of ``lava-master``, ``lava-logs`` and
-``lava-slave`` should also be checked. On the master, these files can
-often be the same content:
-
-* ``/etc/default/lava-master`` or ``/etc/lava-server/lava-master``
-* ``/etc/default/lava-logs`` or ``/etc/lava-server/lava-logs``
-
-Each master has a local ``lava-slave`` even if that slave has no
-devices configured.
-
-* ``/etc/default/lava-slave`` or ``/etc/lava-server/lava-slave``.
+If the installation uses a remote slave, then HTTPS should
+be used.
 
 .. index:: python3
 

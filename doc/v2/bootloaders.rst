@@ -417,7 +417,7 @@ There are limits on how the HiKey 6220 operates in recovery mode:
    itself uniquely to the worker. Only one board can be attached to
    any one worker.
 
-#. Fastboot method requires the use of :term:`LXC <lxc>` or a custom
+#. Fastboot method requires the use of :term:`LXC` or a custom
    :ref:`Docker image <lava_docker_images>`
 
    .. seealso:: :ref:`deploy_using_lxc`

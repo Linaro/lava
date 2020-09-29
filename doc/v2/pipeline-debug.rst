@@ -23,28 +23,18 @@ are installed.
 
    $ sudo apache2ctl restart
 
-* **master** - the dispatcher master, controlling the slaves using ZMQ and
-  scheduling jobs. The master does the pipeline validation. Restart when
-  changing the dispatcher code (as the master runs the validation check using
-  the dispatcher code)::
+* **worker** - each dispatcher worker connects to the server using HTTP and
+  follows the instructions of the server, using configuration specified by the
+  server. Restart is rarely needed, usually only when changing the dispatcher
+  code related to HTTP or the loghandler::
 
-   $ sudo service lava-master restart
+   $ sudo service lava-worker restart
 
-* **slave** - each dispatcher slave connects to the master using ZMQ and
-  follows the instructions of the master, using configuration specified by the
-  master. Restart is rarely needed, usually only when changing the dispatcher
-  code related to ZMQ or the loghandler::
-
-   $ sudo service lava-slave restart
-
-The master and slave have dedicated singleton processes which should be put
+The worker have dedicated singleton processe which should be put
 into loglevel ``DEBUG`` when investigating problems.
 Restart the service after editing the service file.
 
-* **master** ``/etc/init.d/lava-master`` currently defaults to DEBUG
-  log level.
-
-* **slave** ``/etc/init.d/lava-slave`` currently defaults to DEBUG.
+* **worker** ``/etc/init.d/lava-worker`` currently defaults to DEBUG.
 
 .. debugging_log_files:
 
@@ -60,9 +50,9 @@ All log files use ``logrotate``, so the information you need may be in a
 * **django** - by default ``/var/log/lava-server/django.log`` contains
   errors and warnings from django.
 
-* **master** - ``/var/log/lava-server/lava-master.log``
+* **scheduler** - ``/var/log/lava-server/lava-scheduler.log``
 
-* **slave** - ``/var/log/lava-dispatcher/lava-slave.log``.
+* **worker** - ``/var/log/lava-dispatcher/lava-worker.log``.
 
 * **test jobs** - ``/var/lib/lava-server/default/media/job-output/``
   individual files are in a directory named after the start time of the
@@ -79,7 +69,7 @@ Command line debugging
 
   .. seealso:: :ref:`developer_access_to_django_shell`
 
-* **lava-dispatcher** - The actions of ``lava-slave`` can be replicated
+* **lava-dispatcher** - The actions of ``lava-worker`` can be replicated
   on the command line. The relevant device configuration can be obtained using
   ``lavacli``, e.g.::
 
@@ -201,8 +191,8 @@ currently set:
 
     $ sudo service lava-server-gunicorn restart
 
-   In some situations, you may also need to restart ``lava-logs``,
-   ``lava-master`` and ``lava-publisher`` in the same way.
+   In some situations, you may also need to restart ``lava-scheduler``,
+   ``lava-server-gunucorn`` and ``lava-publisher`` in the same way.
 
    .. seealso:: Installing a new release or a set of :ref:`Developer
       packages <testing_packaging>` will also restart all LAVA daemons.

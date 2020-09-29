@@ -28,7 +28,7 @@ as long as:
   run an ssh server
 
 USB connections for Android support can be implemented inside test
-shells using the :term:`lxc` support.
+shells using the :term:`LXC` support.
 
 .. index:: connections - device configuration
 

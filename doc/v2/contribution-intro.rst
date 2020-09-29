@@ -117,7 +117,7 @@ would be particularly beneficial.
 To contribute, you need to already have a local LAVA lab with suitably
 configured, stable, devices and enough capacity to run extra LAVA test
 jobs for a few hours at a time. Test jobs would be run via a docker
-device on your master, using your devices with a docker slave using
+device on your master, using your devices with a docker worker using
 the latest LAVA code. This is a new area of LAVA development, and work
 is ongoing. If you are interested, please :ref:`talk to us
 <mailing_lists>`.

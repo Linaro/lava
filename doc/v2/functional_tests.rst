@@ -56,8 +56,8 @@ https://git.lavasoftware.org/lava/meta-lava
 
   * fetch the source from git and add the right symlinks
 
-* start the containers and link them in the same network (lava-slave,
-  lava-master)
+* start the containers and link them in the same network (lava-worker,
+  lava-server-gunicorn)
 
 * during the startup, fetch the last git commits (in case the docker
   image were build with an old version)
@@ -262,7 +262,7 @@ and some without (or with support in development / review), then one or
 more dedicated workers will be needed to work with the functional test
 frontend.
 
-Any one piece of hardware can run multiple ``lava-slave`` processes, as
+Any one piece of hardware can run multiple ``lava-worker`` processes, as
 long as the ``hostname`` option is unique.
 
 For functional testing, the worker will need to be running a specific

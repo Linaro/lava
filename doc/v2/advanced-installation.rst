@@ -185,14 +185,8 @@ Authentication and encryption
 -----------------------------
 
 When the worker is on the same trusted network as the master,
-administrators may safely choose to connect workers to the master
-without authentication. In all other cases, the ZMQ socket used for
-passing control messages to the worker and the socket used to pass
-logs back to the master should use authentication and :ref:`encryption
-<zmq_curve>`.
-
-Authentication needs to be configured on the master first, then workers can be
-:prepared and configured to match.
+administrators may safely choose to connect workers to the server without
+authentication. In all other cases, use https to connect to the server.
 
 Other installation notes
 ************************
@@ -344,7 +338,7 @@ When changing the configuration, you should restart the corresponding services:
 
   $ sudo service lava-publisher restart
   $ sudo service lava-master restart
-  $ sudo service lava-logs restart
+  $ sudo service lava-scheduler restart
   $ sudo service lava-server-gunicorn restart
 
 The default values for the event notification settings are:

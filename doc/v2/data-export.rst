@@ -161,8 +161,7 @@ Event notification types
   Running).
 
 * :ref:`System event <example_log_event>` notifications are emitted
-  automatically when ``lava-logs`` is restarted or when workers change
-  state.
+  automatically when workers change state.
 
 * :ref:`Test Shell event <example_testshell_event>` notifications are
   emitted only when requested within a Lava Test Shell by a test writer
@@ -212,7 +211,7 @@ Example log event notification
 
 ::
 
- 2018-05-17T12:12:15.238331 .codehelp.calvin.worker lavaserver - [lava-logs] state=Online health=Active
+ 2018-05-17T12:12:15.238331 .codehelp.calvin.worker lavaserver - [worker01] state=Online health=Active
 
 .. _example_testshell_event:
 

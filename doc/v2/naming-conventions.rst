@@ -97,19 +97,6 @@ consistent in the use of the following terms:
   the namespace, key and value and ``self.get_common_data`` to retrieve
   the value using the namespace and the key.
 
-**lava-master** or simply **master**
-  A singleton process which starts and monitors test jobs running on
-  one or more dispatchers by communicating with the slave using ZMQ.
-  This process is solely responsible for assigning a device to a test
-  job. The scheduler performs checks on submission restrictions, device
-  availability, device tags and schema compliance.
-
-  The :term:`master` aims to schedule as many jobs as possible at all
-  times, independently of how devices are allocated to workers. If
-  there are 10 test jobs in the queue and 10 suitable devices are
-  available, all 10 test jobs will be started simultaneously. The
-  machine running lava-master is typically also called a ``master``.
-
 **parameters**
   A static, read-only, dictionary of values which are available for the job
   and the device. :term:`Parameters <parameters>` must not be modified
@@ -140,15 +127,15 @@ consistent in the use of the following terms:
   and the ``lava-server`` binary package in Debian. It includes LAVA
   components covering the UI and the scheduler daemon.
 
-**slave**
+**worker**
   A daemon running on each dispatcher machine which communicates with
-  the lava-master using ZMQ. The slave in LAVA uses whatever device
-  configuration the lava-master provides. Commands in the device
+  the lava-server-gunicorn using HTTP. The worker in LAVA uses whatever device
+  configuration the server provides. Commands in the device
   configuration often use scripts and utilities which are only
   installed on that dispatcher.
 
-  The objective of the slave is to run the specified jobs as reliably
-  as possible. Each slave spawns one process for each job, executing
+  The objective of the worker is to run the specified jobs as reliably
+  as possible. Each worker spawns one process for each job, executing
   the code in ``lava_dispatcher``.
 
 **test job**

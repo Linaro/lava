@@ -268,7 +268,7 @@ There is no need to copy files used solely by the unit tests.
 Changes to files in ``./etc/`` will require restarting the relevant
 service.
 
-Changes to files in ``./lava/dispatcher/`` will need the ``lava-slave``
+Changes to files in ``./lava/dispatcher/`` will need the ``lava-worker``
 service to be restarted but changes to ``./lava_dispatcher/`` will not.
 
 * When adding or modifying ``run``, ``validate``, ``populate`` or
@@ -403,7 +403,7 @@ when modifying the documentation.
 Debugging lava-dispatcher with pdb, the Python debugger
 =======================================================
 
-Due to the nature of how ``lava-run`` is executed by ``lava-slave``, it's
+Due to the nature of how ``lava-run`` is executed by ``lava-worker``, it's
 tricky to debug ``lava-dispatcher`` directly. However, one can use the
 `remote-pdb`_ package and do remote debugging.
 
@@ -413,7 +413,7 @@ tricky to debug ``lava-dispatcher`` directly. However, one can use the
 You need to have the ``remote-pdb`` python package installed, and a ``telnet``
 client.
 
-If ``lava-slave`` is started with the ``--debug`` command line option, then it
+If ``lava-worker`` is started with the ``--debug`` command line option, then it
 will make ``lava-run`` stop right before running the test job for debugging.
 You will see a message on the console where ``lava-run`` is running that is
 similar to this::

@@ -38,10 +38,9 @@ Glossary of terms
 
 **J** [ :term:`jinja2` ] [ :term:`job context` ] [ :term:`job definition` ]
 
-**L** [ :term:`LAVA_LXC_HOME` ] [ :term:`lxc` ] [ :term:`lxc://` ]
+**L** [ :term:`LAVA_LXC_HOME` ] [ :term:`LXC` ] [ :term:`lxc://` ]
 
-**M** [ :term:`master` ] [ :term:`messageID` ] [ :term:`metadata` ]
-[ :term:`MultiNode` ]
+**M** [ :term:`messageID` ] [ :term:`metadata` ] [ :term:`MultiNode` ]
 
 **N** [ :term:`namespace` ]
 
@@ -70,9 +69,6 @@ Glossary of terms
 **V** [ :term:`visibility`] [ :term:`VLANd` ]
 
 **W** [ :term:`worker` ]
-
-**Z** [ :term:`ZMQ` ]
-
 
 .. glossary::
 
@@ -171,13 +167,13 @@ Glossary of terms
     other processes involved in running the LAVA test. A dispatcher does not
     need to be at the same location as the server which runs the scheduler. The
     term ``dispatcher`` relates to how the machine operates the
-    ``lava-dispatch`` process using ``lava-slave``. The related term
-    :term:`worker` relates to how the machine appears from the :term:`master`.
+    ``lava-dispatch`` process using ``lava-worker``. The related term
+    :term:`worker` relates to how the machine appears from the server.
 
   distributed deployment
-    A method of installing LAVA involving a single :term:`master` and one or
+    A method of installing LAVA involving a single server and one or
     more :term:`remote workers <remote worker>` which communicate with the
-    master using :term:`ZMQ`. This method spreads the load of running tests on
+    master using HTTP. This method spreads the load of running tests on
     devices multiple dispatchers.
 
   DTB
@@ -216,7 +212,7 @@ Glossary of terms
     A test job for one specific :term:`device type` which is automatically run
     at regular intervals to ensure that the physical device is capable of
     performing the minimum range of tasks. If the health check fails on a
-    particular device, LAVA will automatically put that device :term:`Offline`.
+    particular device, LAVA will automatically put that device :term:`offline`.
     Health checks have higher :term:`priority` than any other jobs.
 
     .. seealso:: :ref:`health_checks`.
@@ -238,7 +234,7 @@ Glossary of terms
     A type of test definition which is contained within the job submission
     instead of being fetched from a URL. These are useful for debugging tests
     and are recommended for the synchronization support within
-    :term:`multinode` test jobs.
+    :term:`MultiNode` test jobs.
 
     .. seealso:: :ref:`inline_test_definitions`
 
@@ -282,7 +278,7 @@ Glossary of terms
     MultiNode job.
 
   LAVA_LXC_HOME
-    The path within :term:`lxc` set to ``/lava-lxc`` by default. From the host
+    The path within :term:`LXC` set to ``/lava-lxc`` by default. From the host
     machine this path would be something like
     ``/var/lib/lxc/{container-name}/rootfs/lava-lxc``. Any files downloaded by
     :ref:`deploy_to_download` will be copied to this location which can then be
@@ -302,7 +298,7 @@ Glossary of terms
     This is a URL scheme specific to LAVA which points to files available in
     :term:`LAVA_LXC_HOME`. An URL like ``lxc:///boot.img`` will refer to
     ``/var/lib/lxc/{container-name}/rootfs/lava-lxc/boot.img`` on the host or
-    ``/lava-lxc/boot.img`` within the :term:`lxc`. This URL scheme is valid
+    ``/lava-lxc/boot.img`` within the :term:`LXC`. This URL scheme is valid
     only when :ref:`lxc_protocol_reference` is defined in the test job. It also
     only makes sense for the ``deploy`` and ``boot`` actions.
 
@@ -310,10 +306,6 @@ Glossary of terms
               file.
 
     .. seealso:: :ref:`deploy_to_download`
-
-  master
-    The master is a server machine with ``lava-server`` installed and it
-    optionally supports one or more :term:`remote workers <remote worker>`
 
   messageID
     Each message sent using the :ref:`multinode_api` uses a ``messageID`` which
@@ -338,7 +330,7 @@ Glossary of terms
   namespace
     A simple text label which is used to tie related actions together within a
     test job submission where multiple deploy, boot or test actions are
-    defined. A common use case for namespaces is the use of :term:`lxc` in a
+    defined. A common use case for namespaces is the use of :term:`LXC` in a
     test job where some actions are to be executed inside the LXC and some on
     the :term:`DUT`. The namespace is used to store the temporary locations of
     files and other dynamic data during the running of the test job so that,
@@ -428,7 +420,7 @@ Glossary of terms
 
   remote worker
     A dispatcher with devices attached which does not have a web frontend but
-    which uses a :term:`ZMQ` connection to a remote lava-server to control the
+    which uses an HTTP connection to a remote lava-server to control the
     operation of test jobs on the attached devices.
 
     .. seealso:: :ref:`growing_your_lab`
@@ -468,7 +460,7 @@ Glossary of terms
      Filesystem type for the root filesystem, e.g. ext2, ext3, ext4.
 
   scheduler
-    There is a single scheduler in LAVA, running on the :term:`master`. The
+    There is a single scheduler in LAVA, running on the server. The
     scheduler is responsible for assigning devices to submitted test jobs.
 
     .. seealso:: :ref:`scheduling`
@@ -569,22 +561,11 @@ Glossary of terms
     .. seealso:: :ref:`vland_in_lava` or :ref:`admin_vland_lava`.
 
   worker
-    The worker is responsible for running the ``lava-slave`` daemon to start
-    and monitor test jobs running on the dispatcher. Each :term:`master` has a
+    The worker is responsible for running the ``lava-worker`` daemon to start
+    and monitor test jobs running on the dispatcher. Each server has a
     worker installed by default. When a dispatcher is added to the master as a
     separate machine, this worker is a :term:`remote worker`. The admin decides
     how many devices to assign to which worker. In large instances, it is
     common for all devices to be assigned to remote workers to manage the load
     on the master.
 
-  ZMQ
-    Zero MQ (or `0MQ <https://en.wikipedia.org/wiki/%C3%98MQ>`_) is the basis of
-    the :term:`refactoring` to solve a lot of the problems inherent in the
-    `distributed_instance`. The detail of this change is only relevant to
-    developers but it allows LAVA to remove the need for ``postgresql`` and
-    ``sshfs`` connections between the master and remote workers. It allows
-    remote workers to no longer need ``lava-server`` to be installed on the
-    worker. Developers can find more information in the
-    :ref:`dispatcher_design` documentation.
-
-    .. seealso:: :ref:`zmq_curve`

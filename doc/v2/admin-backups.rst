@@ -178,8 +178,7 @@ What to include in your configuration management
     device configuration. Especially ``settings.conf`` and ``instance.conf``.
   * ``/etc/default/`` - specifically, ``lxc``, ``tftpd-hpa``, ``ser2net``,
     ``lava-server``,
-  * ``/etc/lava-dispatcher/*`` - specifically ``lava-slave`` and any contents
-    of ``certificates.d`` to support :ref:`zmq_curve`
+  * ``/etc/lava-dispatcher/lava-worker``
   * ``/etc/apache2/sites-available/lava-server.conf`` (on the master)
   * ``/etc/apache2/sites-available/lava-dispatcher.conf`` (on a worker)
 
@@ -214,7 +213,7 @@ What to include in your worker backups
 A V2 worker is designed not to need configuration, except that required to
 contact the relevant master:
 
-* ``/etc/lava-dispatcher/lava-slave``.
+* ``/etc/lava-dispatcher/lava-worker``.
 
 Other files may be required by specific labs and may already be handled by
 configuration management, e.g.:
@@ -302,11 +301,9 @@ Restoring a master from a backup
      * If your local configuration permits only admins to see the LAVA UI,
        then this one LAVA service can be left running.
 
-   * ``service lava-master stop``
+   * ``service lava-scheduler stop``
 
-   * ``service lava-logs stop``
-
-   * ``service lava-slave stop``
+   * ``service lava-worker stop``
 
    * ``service lava-publisher stop``
 
@@ -350,11 +347,9 @@ Restoring a master from a backup
 
 #. Start all LAVA services
 
-   * ``service lava-master start``
+   * ``service lava-scheduler start``
 
-   * ``service lava-logs start``
-
-   * ``service lava-slave start``
+   * ``service lava-worker start``
 
    * ``service lava-publisher start``
 
@@ -394,9 +389,8 @@ arguably more complex to restore than a master). Workers should only be
 restored **after** the master has been restored and whilst all devices
 are still in maintenance.
 
-The only critical LAVA element for a worker to be restored from backup is the
-:term:`ZMQ` communication back to the master. This is retained in
-``/etc/lava-dispatcher/lava-slave``.
+The only critical LAVA element for a worker to be restored from backup is the worker token:
+``/var/lib/lava/dispatcher/worker/token``.
 
 Other files may be required by specific labs and may already be handled by
 configuration management, e.g.:
@@ -406,11 +400,11 @@ configuration management, e.g.:
 * ``udev`` rules for particular devices or services.
 
 Once the base system has been restored and ``lava-dispatcher`` has been
-installed at the same version as previously, the ZMQ configuration can simply
-be put back into place and ``lava-slave`` restarted.
+installed at the same version as previously, the worker token can simply
+be put back into place and ``lava-worker`` restarted.
 
 .. code-block:: none
 
- $ sudo service lava-slave restart
+ $ sudo service lava-worker restart
 
 The worker will now be able to respond to test job messages sent by the master.
