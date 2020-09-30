@@ -69,7 +69,11 @@ def run(version, options):
 
     mounts = []
     mounts.append((DISPATCHER_DOWNLOAD_DIR, None))
-    mounts.append(("/srv/tftp", None))
+
+    tftp_dir = pathlib.Path("/srv/tftp")
+    if tftp_dir.exists():
+        mounts.append((str(tftp_dir), None))
+
     worker_dir = options.worker_dir.absolute()
     worker_dir.mkdir(parents=True, exist_ok=True)
     mounts.append((worker_dir, None))
