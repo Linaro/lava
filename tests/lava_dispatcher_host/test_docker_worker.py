@@ -14,6 +14,11 @@ def check_call(mocker):
 
 
 @pytest.fixture
+def Popen(mocker):
+    return mocker.patch("lava_dispatcher_host.docker_worker.subprocess.Popen")
+
+
+@pytest.fixture
 def options(tmp_path):
     o = argparse.Namespace()
     o.worker_dir = tmp_path / "worker"
@@ -36,11 +41,11 @@ class TestGetImage:
 
 
 class TestRun:
-    def test_get_image_released(self, get_image, check_call, options):
+    def test_get_image_released(self, get_image, Popen, options):
         lava_dispatcher_host.docker_worker.run("2020.07", options)
         get_image.assert_called_with("lavasoftware/lava-dispatcher:2020.07")
 
-    def test_get_image_development(self, get_image, check_call, options):
+    def test_get_image_development(self, get_image, Popen, options):
         lava_dispatcher_host.docker_worker.run("2020.07.10.g12371263", options)
         get_image.assert_called_with(
             "hub.lavasoftware.org/lava/lava/amd64/lava-dispatcher:2020.07.10.g12371263"

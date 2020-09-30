@@ -23,6 +23,7 @@ import os
 import pathlib
 import re
 import socket
+import signal
 import subprocess
 import sys
 import urllib
@@ -55,6 +56,12 @@ def get_image(image):
         subprocess.check_call(["docker", "pull", image])
     except subprocess.CalledProcessError:
         sys.exit(1)
+
+
+class Terminate(RuntimeError):
+    @classmethod
+    def trigger(cls, *args):
+        raise cls()
 
 
 def run(version, options):
@@ -100,12 +107,16 @@ def run(version, options):
     service.append(image)
 
     try:
-        subprocess.check_call(
+        signal.signal(signal.SIGTERM, Terminate.trigger)
+        container = subprocess.Popen(
             service + ["lava-worker", "--exit-on-version-mismatch"] + sys.argv[1:]
         )
+        container.communicate()
     except subprocess.CalledProcessError as failure:
         sys.exit(failure.returncode)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, Terminate):
+        container.terminate()
+        container.wait()
         sys.exit(0)
 
 
