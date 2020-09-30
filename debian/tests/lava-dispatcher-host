@@ -7,3 +7,8 @@ if ! which udevadm >/dev/null 2>&1; then
 fi
 
 test -f /etc/udev/rules.d/99-lava-dispatcher-host.rules
+
+
+# lava-docker-worker.service must be installed, but not enabled by default
+systemctl cat lava-docker-worker.service
+! systemctl is-active lava-docker-worker.service

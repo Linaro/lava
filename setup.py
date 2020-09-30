@@ -104,6 +104,10 @@ DISPATCHER_HOST = {
         "lava_dispatcher_host/lava-dispatcher-host",
         "lava_dispatcher_host/lava-docker-worker",
     ],
+    "data_files": [
+        ("/lib/systemd/system/", ["etc/lava-docker-worker.service"]),
+        ("/etc/lava-dispatcher-host/", ["etc/lava-docker-worker"]),
+    ],
 }
 
 SERVER = {
