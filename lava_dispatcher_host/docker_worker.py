@@ -63,7 +63,7 @@ def run(version, options):
         image = f"hub.lavasoftware.org/lava/lava/amd64/lava-dispatcher:{version}"
     else:
         # released version
-        image = "lavasoftware/lava-dispatcher:{version}"
+        image = f"lavasoftware/lava-dispatcher:{version}"
 
     service = ["docker", "run", "--rm", "--init", "--privileged", "--net=host"]
 
