@@ -187,3 +187,7 @@ lava-common:
   voluptuous:
     version: ">=0.8.8"
     name: python3-voluptuous
+
+lava-dispatcher-host:
+  requests:
+    name: python3-requests
