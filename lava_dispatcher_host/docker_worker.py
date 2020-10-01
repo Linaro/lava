@@ -23,6 +23,7 @@ import os
 import pathlib
 import re
 import socket
+import signal
 import subprocess
 import sys
 import urllib
@@ -57,19 +58,29 @@ def get_image(image):
         sys.exit(1)
 
 
+class Terminate(RuntimeError):
+    @classmethod
+    def trigger(cls, *args):
+        raise cls()
+
+
 def run(version, options):
     if len(version.split(".")) == 4:
         # development
         image = f"hub.lavasoftware.org/lava/lava/amd64/lava-dispatcher:{version}"
     else:
         # released version
-        image = "lavasoftware/lava-dispatcher:{version}"
+        image = f"lavasoftware/lava-dispatcher:{version}"
 
     service = ["docker", "run", "--rm", "--init", "--privileged", "--net=host"]
 
     mounts = []
     mounts.append((DISPATCHER_DOWNLOAD_DIR, None))
-    mounts.append(("/srv/tftp", None))
+
+    tftp_dir = pathlib.Path("/srv/tftp")
+    if tftp_dir.exists():
+        mounts.append((str(tftp_dir), None))
+
     worker_dir = options.worker_dir.absolute()
     worker_dir.mkdir(parents=True, exist_ok=True)
     mounts.append((worker_dir, None))
@@ -96,12 +107,16 @@ def run(version, options):
     service.append(image)
 
     try:
-        subprocess.check_call(
+        signal.signal(signal.SIGTERM, Terminate.trigger)
+        container = subprocess.Popen(
             service + ["lava-worker", "--exit-on-version-mismatch"] + sys.argv[1:]
         )
+        container.communicate()
     except subprocess.CalledProcessError as failure:
         sys.exit(failure.returncode)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, Terminate):
+        container.terminate()
+        container.wait()
         sys.exit(0)
 
 

@@ -9,7 +9,7 @@ package.
 ## 1: install and configure lava-dispatcher-host
 
 **lava-dispatcher-host needs to be installed in the host machine** (bare metal)
-for the LAVA dispatcher to work inside a container.
+for the LAVA dispatcher to work inside a container, as well as Docker itself.
 
 ### Debian package
 
@@ -30,10 +30,36 @@ sure you have the most up to date udev rules file for it.
 
 ## 2: start lava-docker-worker
 
-To run the Docker Dispatcher, just run `lava-docker-worker` as any user that
-can run docker. You need to pass the relevant arguments to have it connect to
-your LAVA server:
+### Debian package
+
+To run the Docker Dispatcher, first edit
+`/etc/lava-dispatcher-host/lava-docker-worker` and set the connection
+parameters. At least URL and TOKEN are probably needed:
 
 ```
-$ lava-docker-worker --url https://my.lavaserver.com/
+WORKER_NAME="--name myworker"
+
+# ...
+
+# Server connection
+URL="https://my.lava.server/"
+TOKEN="--token 0123456789012345678901234567890123456789"
+```
+
+Then enable and start the `lava-docker-worker` service:
+
+```
+sudo systemctl enable lava-docker-worker.service
+sudo systemctl start lava-docker-worker.service
+```
+
+### Other means
+
+If you installed LAVA in a way that doesn't provide a lava-docker-worker
+systemd service, you can just run `lava-docker-worker` as any user that can run
+docker. You need to pass the relevant arguments to have it connect to your LAVA
+server:
+
+```
+$ lava-docker-worker --url https://my.lavaserver.com/ --token 0123456789012345678901234567890123456789
 ```

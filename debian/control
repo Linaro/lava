@@ -77,6 +77,7 @@ Package: lava-dispatcher-host
 Architecture: all
 Depends: lava-common (= ${binary:Version}),
          python3,
+         python3-requests,
          ${misc:Depends},
          ${python3:Depends}
 Multi-Arch: foreign

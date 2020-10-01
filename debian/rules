@@ -85,6 +85,9 @@ override_dh_fixperms-arch:
 override_dh_installinit:
 	dh_installinit -Nlava-server
 
+override_dh_installsystemd:
+	dh_installsystemd -Xlava-docker-worker.service
+
 override_dh_compress:
 	dh_compress -X.yaml
 	$(RM) -r debian/lava/usr/lib
