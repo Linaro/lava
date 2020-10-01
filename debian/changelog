@@ -1,3 +1,20 @@
+lava (2020.09-1) unstable; urgency=medium
+
+  * LAVA Software 2020.09 release
+
+  [ Rémi Duraffort ]
+  *  worker: replace lava-slave by lava-worker
+  *  Replace lava-master and lava-logs by lava-scheduler
+  *  Drop create_certificate
+  *  debian/lava-server: drop dependency on iproute2
+  * Fix debian changelog
+
+  [ Antonio Terceiro ]
+  *  lava-dispatcher-host: add missing dependency
+  *  lava-dispatcher-host: provide lava-docker-worker service definition
+
+ -- Remi Duraffort <remi.duraffort@linaro.org>  Thu, 01 Oct 2020 10:07:53 +0200
+
 lava (2020.08-1) unstable; urgency=medium
 
   * LAVA Software 2020.08 release
