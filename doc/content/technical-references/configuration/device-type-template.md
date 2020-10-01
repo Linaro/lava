@@ -1,7 +1,7 @@
 # Device-type template
 
 The device-type template is a [jinja2][jinja2] template that will be extended
-by [device dictionaries](../device-dictionary/). The resulting file is the
+by [device dictionaries](./device-dictionary.md). The resulting file is the
 device configuration file.
 
 This [yaml][yaml] file is used by `lava-dispatcher` to know how to flash, boot

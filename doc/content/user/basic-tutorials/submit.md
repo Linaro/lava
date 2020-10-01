@@ -32,7 +32,7 @@ will actually submit the job.
 ## lavacli
 
 In order to submit using [lavacli][lavacli], start by installing and configure
-lavacli with the [lavacli tutorial](/user/basic-tutorials/lavacli/).
+lavacli with the [lavacli tutorial](./lavacli.md).
 
 Submit the job with:
 ```shell

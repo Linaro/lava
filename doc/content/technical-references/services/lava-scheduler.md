@@ -14,8 +14,8 @@ The systemd service is called `lava-scheduler`.
 
 lava-scheduler should be able to:
 
-* connect to the [postgresql](../postgresql) database
-* connect to [lava-publisher](../lava-publisher) PUB socket.
+* connect to the [postgresql](./postgresql.md) database
+* connect to [lava-publisher](./lava-publisher.md) PUB socket.
 
 ## Configuration
 

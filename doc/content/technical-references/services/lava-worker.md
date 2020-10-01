@@ -14,7 +14,7 @@ The systemd service is called `lava-worker`.
 
 lava-worker should be able to:
 
-* connect to [lava-server-gunicorn](../lava-server-gunicorn)
+* connect to [lava-server-gunicorn](./lava-server-gunicorn.md)
 
 ## Configuration
 

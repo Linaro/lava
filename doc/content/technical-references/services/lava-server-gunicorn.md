@@ -4,7 +4,7 @@
 from users.
 
 This process will not serve static files that are handled directly by
-[apache2](../apache2).
+[apache2](./apache2.md).
 
 ## Command line
 
@@ -18,7 +18,7 @@ The systemd service is called `lava-server-gunicorn`.
 
 lava-server-gunicorn should be able to:
 
-* connect to the [postgresql](../postgresql) database
+* connect to the [postgresql](./postgresql.md) database
 * open a socket on port `8000`
 
 ## Configuration
@@ -44,4 +44,4 @@ and `/etc/logrotate.d/django-log`.
 ## Security
 
 This process should be always behind a reverse proxy like
-[apache2](../apache2).
+[apache2](./apache2.md).

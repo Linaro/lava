@@ -1,6 +1,6 @@
 # Test definitions
 
-The [test definition](../../../technical-references/test-definition/) is a `yaml` file that describe the tests that you want LAVA
+The [test definition](../../technical-references/test-definition.md) is a `yaml` file that describe the tests that you want LAVA
 to run on the DUT.
 
 ## Smoke example
@@ -33,7 +33,7 @@ In this example, `run.steps` will be rendered into the following shell script:
 ## Install
 !!! tip "install"
     LAVA can also install some packages or sources before running the tests.
-    See the [technical documentation](../../../technical-references/test-definition/)
+    See the [technical documentation](../../technical-references/test-definition.md)
     for more information.
 
 --8<-- "refs.txt"

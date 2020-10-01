@@ -8,7 +8,7 @@ LAVA also supports storing the logs in a few NoSQL based database engines.
 
 ## Configuration
 
-This can be set up in the [LAVA configuration](../basic-tutorials/instance/configure/), like so:
+This can be set up in the [LAVA configuration](../basic-tutorials/instance/configure.md), like so:
 
 ```yaml
 LAVA_LOG_BACKEND: "lava_scheduler_app.logutils.LogsFilesystem"
@@ -24,7 +24,7 @@ The list can be also found in [the source code](https://git.lavasoftware.org/lav
 
 ### MongoDB
 
-Integration with MongoDB requires two variables to be set in the [LAVA settings](../basic-tutorials/instance/configure/):
+Integration with MongoDB requires two variables to be set in the [LAVA settings](../basic-tutorials/instance/configure.md):
 
 * `MONGO_DB_URI` - connection string URI format for mongodb (i.e. mongodb://example.com:27017)
 * `MONGO_DB_DATABASE` - database name for LAVA logs (i.e. 'lava-logs')
@@ -33,7 +33,7 @@ Every log line in LAVA is one document in MongoDB database.
 
 ### ElasticSearch
 
-Integration with Elasticsearch db requires three variables to be set in the [LAVA settings](../basic-tutorials/instance/configure/):
+Integration with Elasticsearch db requires three variables to be set in the [LAVA settings](../basic-tutorials/instance/configure.md):
 
 * `ELASTICSEARCH_URI` - connection string URI format for Elasticsearch (i.e. http://localhost:9200/)
 * `ELASTICSEARCH_INDEX` - database(index) name for LAVA logs (i.e. 'lava-logs')

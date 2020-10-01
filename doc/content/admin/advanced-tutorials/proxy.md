@@ -9,8 +9,8 @@ keep a local version of the resources used by LAVA.
 
 You can choose among two kind of caching service:
 
-* generic http proxy like [squid]
-* http caching service like [KissCache]
+* generic http proxy like [squid][squid]
+* http caching service like [KissCache][KissCache]
 
 ## SQUID
 
@@ -31,13 +31,13 @@ variable.
     * `/etc/lava-server/env.yaml` for every dispatchers
     * `/etc/lava-server/dispatcher.d/<name>/env.yaml` for a specific dispatcher
 
-    Read [the documentation](../../../technical-references/configuration/dispatcher/)
+    Read [the documentation](../../technical-references/configuration/dispatcher.md)
     for more information.
 
 ??? tip "DUT environment"
     LAVA can also set the environment variable on the DUT.
 
-    Read [the documentation](../../../technical-references/configuration/dispatcher/)
+    Read [the documentation](../../technical-references/configuration/dispatcher.md)
     for more information.
 
 ## KissCache

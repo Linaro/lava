@@ -6,7 +6,7 @@ directories.
 ## Database
 
 The database is managed by
-[PostgreSQL](/technical-references/services/postgresql/). See the
+[PostgreSQL](../../../technical-references/services/postgresql.md). See the
 [PostgreSQL documentation][pgsql-backup] for
 details.
 

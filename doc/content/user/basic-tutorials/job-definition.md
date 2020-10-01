@@ -1,6 +1,6 @@
 # Job definition
 
-The [job definition](../../../technical-references/job-definition/job/) is a `yaml` file that you submit to the LAVA server.
+The [job definition](../../technical-references/job-definition/job.md) is a `yaml` file that you submit to the LAVA server.
 This file is describing everything that LAVA needs to know to run your tests on
 a DUT.
 
@@ -18,9 +18,9 @@ The job definition is made of:
 
 * `device_type`: requested device-type
 * `job_name`: name of the job, sometime called `description`
-* `timeouts`: [timeout definition](../../../technical-references/job-definition/timeouts/)
-* `priority`: [job priority](../../../technical-references/job-definition/job/#priority)
-* `visibility`: [job visibility](../../../technical-references/job-definition/job/#visibility)
+* `timeouts`: [timeout definition](../../technical-references/job-definition/timeouts.md)
+* `priority`: [job priority](../../technical-references/job-definition/job.md#priority)
+* `visibility`: [job visibility](../../technical-references/job-definition/job.md#visibility)
 * `actions`: list of actions to run
 
 In this definition, we request to run a job called `simple qemu tjob` on a `qemu` DUT.
@@ -34,10 +34,10 @@ job.
 
 Currently, LAVA support four type of actions:
 
-* [command](../../../technical-references/job-definition/actions/command/): run commands on the dispatcher
-* [deploy](../../../technical-references/job-definition/actions/deploy/): deploy software on the DUT
-* [boot](../../../technical-references/job-definition/actions/boot/): boot the DUT
-* [test](../../../technical-references/job-definition/actions/test/): run some tests
+* [command](../../technical-references/job-definition/actions/command.md): run commands on the dispatcher
+* [deploy](../../technical-references/job-definition/actions/deploy.md): deploy software on the DUT
+* [boot](../../technical-references/job-definition/actions/boot.md): boot the DUT
+* [test](../../technical-references/job-definition/actions/test.md): run some tests
 
 ### Deploy
 
@@ -66,8 +66,7 @@ In this example, we are requesting to boot `qemu` using the software from
 
 The test action will run the given tests on the DUT.
 
-In this example, LAVA will download the [test
-definitions](../test-definition/) from two git repositories.
+In this example, LAVA will download the [test definitions](./test-definition.md) from two git repositories.
 
 !!! info "test methods"
     LAVA supports three test methods that do not depend on the device-type.

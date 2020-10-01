@@ -191,8 +191,8 @@ These jobs deploy images and boot the device via fastboot, then run adb from
 the dispatcher, connecting to the device. adb used to run from an LXC
 container.
 
-* [Original job](cts-lxc.yaml)
-* [New job](cts-docker.yaml)
+* [Original job](running-arbitrary-code-with-docker/cts-lxc.yaml)
+* [New job](running-arbitrary-code-with-docker/cts-docker.yaml)
 
 Let's look an annotated version of the difference between the original and the
 new job, where the actions taken are explicitly explained.
@@ -328,8 +328,8 @@ This job downloads images, postprocesses them using
 boots the device using fastboot, turns the USB OTG port off so the USB host on
 the device work, then runs normal tests on the device.
 
-* [Original job](hikey-lkft-like-lxc.yaml)
-* [New job](hikey-lkft-like-docker.yaml)
+* [Original job](running-arbitrary-code-with-docker/hikey-lkft-like-lxc.yaml)
+* [New job](running-arbitrary-code-with-docker/hikey-lkft-like-docker.yaml)
 
 Annotated diff:
 
