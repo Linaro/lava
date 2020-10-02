@@ -20,11 +20,20 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from voluptuous import Required
+from voluptuous import Optional, Required
 
 from lava_common.schemas import deploy
+from lava_common.schemas import docker
+
+
+def flasher_docker():
+    return {**docker()}
 
 
 def schema():
-    base = {Required("to"): "flasher", Required("images"): {str: deploy.url()}}
+    base = {
+        Required("to"): "flasher",
+        Required("images"): {str: deploy.url()},
+        Optional("docker"): flasher_docker(),
+    }
     return {**deploy.schema(), **base}

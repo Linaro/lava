@@ -24,7 +24,9 @@ from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.logical import Deployment, RetryAction
+from lava_dispatcher.utils.docker import DockerRun
 from lava_dispatcher.utils.strings import substitute
+import shlex
 
 
 class FlasherRetryAction(RetryAction):
@@ -106,10 +108,23 @@ class FlasherAction(Action):
             self.job.device.get("static_info", [])
         )
 
-        # Run the commands
-        for cmd in self.commands:
-            cmds = substitute([cmd], substitutions)
-            self.run_cmd(cmds[0], error_msg="Unable to flash the device", cwd=self.path)
+        if "docker" in self.parameters:
+            docker = DockerRun.from_parameters(self.parameters["docker"], self.job)
+            docker.interactive()
+            docker.bind_mount(self.path)
+            docker.hostname("lava-flasher")
+            docker.workdir(self.path)
+
+            for cmd in self.commands:
+                cmds = substitute([cmd], substitutions)
+                docker.run(*shlex.split(cmds[0]), action=self)
+        else:
+            # Run the commands
+            for cmd in self.commands:
+                cmds = substitute([cmd], substitutions)
+                self.run_cmd(
+                    cmds[0], error_msg="Unable to flash the device", cwd=self.path
+                )
 
         return connection
 
