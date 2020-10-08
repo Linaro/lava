@@ -20,7 +20,7 @@
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import Permission, Group
 from django.db import models
-from django.db.models import Q, Count
+from django.db.models import Q
 
 from lava_common.exceptions import ObjectNotPersisted, PermissionNameError
 
@@ -233,9 +233,7 @@ class RestrictedTestJobQuerySet(RestrictedObjectQuerySet):
         if user.is_superuser or perm in user.get_all_permissions():
             return self
         else:
-            # Here we gather accessible devices and device types. If it would
-            # be possible to filter only from the devices (types) actually
-            # related to jobs in this queryset, that'd be better.
+            # Here we gather accessible devices and device types.
             accessible_devices = Device.objects.accessible_by_user(
                 user, TestJob.DEVICE_PERMISSION_MAP[perm]
             )
@@ -243,17 +241,18 @@ class RestrictedTestJobQuerySet(RestrictedObjectQuerySet):
                 user, TestJob.DEVICE_TYPE_PERMISSION_MAP[perm]
             )
 
-            # Check for private jobs where this user is submitter.
             filters = Q(pk__in=[])  # Always empty Q object for anonymous users
+            # Check for private jobs where this user is submitter.
             if user.is_authenticated:
                 filters = Q(is_public=False) & Q(submitter=user)
             # Similar to device filters, we first check if jobs are
             # public and if yes, we check for accessibility of either
             # actual_device or requested_device_type (depending on whether the
             # job is scheduled or not.
+            non_vg_ids = TestJob.objects.filter(viewing_groups=None)
             filters |= (
-                Q(num_viewing_groups=0)
-                & Q(is_public=True)
+                Q(is_public=True)
+                & Q(id__in=non_vg_ids)
                 & (
                     (
                         Q(actual_device__isnull=False)
@@ -269,17 +268,17 @@ class RestrictedTestJobQuerySet(RestrictedObjectQuerySet):
             # Add viewing_groups filter.
             if perm == self.model.VIEW_PERMISSION:
                 # Needed to determine if viewing_groups is subset of all users
-                # groups.
+                # groups, so remove all jobs where any viewing group is in groups
+                # this user is not part of.
                 nonuser_groups = Group.objects.exclude(
                     pk__in=[g.id for g in user.groups.all()]
                 )
-                filters |= ~Q(num_viewing_groups=0) & ~Q(
-                    viewing_groups__in=nonuser_groups
-                )
+                # NOTE: Only the last two conditions will be ANDed. Keep in mind if
+                # another filter needs to be added in between this one and the one
+                # before.
+                filters |= ~Q(id__in=non_vg_ids) & ~Q(viewing_groups__in=nonuser_groups)
 
-            return self.annotate(num_viewing_groups=Count("viewing_groups")).filter(
-                filters
-            )
+            return self.filter(filters)
 
 
 class RestrictedTestCaseQuerySet(models.QuerySet):
