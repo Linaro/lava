@@ -31,6 +31,7 @@ def url(extra=None):
 
     base_url = {
         Required("url"): str,
+        Optional("headers"): dict,
         Optional("compression"): Any("bz2", "gz", "xz", "zip", "zstd", None),
         Optional("archive"): "tar",
         Optional("md5sum"): str,

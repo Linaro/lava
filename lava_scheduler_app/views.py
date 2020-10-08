@@ -73,6 +73,7 @@ from lava_server.files import File
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
+    RemoteArtifactsAuth,
     Tag,
     TestJob,
     TestJobUser,
@@ -1073,6 +1074,24 @@ def internal_v1_jobs(request, pk):
     if request.method == "GET":
         job_def = yaml_safe_load(job.definition)
         job_def["compatibility"] = job.pipeline_compatibility
+
+        tokens = {
+            x["name"]: x["token"]
+            for x in RemoteArtifactsAuth.objects.filter(user=job.submitter).values(
+                "name", "token"
+            )
+        }
+        if "actions" in job_def:
+            for action in job_def["actions"]:
+                for k, v in action.items():
+                    if k == "deploy":
+                        for name, image in v["images"].items():
+                            if "headers" in image:
+                                for key in image["headers"]:
+                                    token_name = image["headers"][key]
+                                    if token_name in tokens.keys():
+                                        image["headers"][key] = tokens[token_name]
+
         job_def_str = yaml_safe_dump(job_def)
         job_ctx = job_def.get("context", {})
 

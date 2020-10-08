@@ -2481,3 +2481,19 @@ class GroupWorkerPermission(GroupObjectPermission):
 
     def __str__(self):
         return "Permission '%s' for worker %s" % (self.permission.codename, self.worker)
+
+
+class RemoteArtifactsAuth(models.Model):
+    class Meta:
+        unique_together = ("name", "user")
+        ordering = ["name"]
+
+    user = models.ForeignKey(
+        User, null=False, on_delete=models.CASCADE, verbose_name="User"
+    )
+
+    name = models.CharField(max_length=100, null=False, verbose_name=_("Token name"))
+    token = models.CharField(max_length=100, null=False, verbose_name=_("Token hash"))
+
+    def __str__(self):
+        return self.name

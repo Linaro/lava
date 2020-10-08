@@ -39,9 +39,11 @@ from lava_scheduler_app.api.workers import SchedulerWorkersAPI
 
 from lava_server.api import LavaMapper
 from lava_server.views import (
+    delete_remote_auth,
     index,
     me,
     update_irc_settings,
+    update_remote_auth,
     update_table_length_setting,
 )
 
@@ -87,6 +89,18 @@ urlpatterns = [
         r"^{mount_point}update-irc-settings/$".format(mount_point=settings.MOUNT_POINT),
         update_irc_settings,
         name="lava.update_irc_settings",
+    ),
+    url(
+        r"^{mount_point}update-remote-auth/$".format(mount_point=settings.MOUNT_POINT),
+        update_remote_auth,
+        name="lava.update_remote_auth",
+    ),
+    url(
+        r"^{mount_point}delete-remote-auth/(?P<pk>[0-9]+|[0-9]+\.[0-9]+)/$".format(
+            mount_point=settings.MOUNT_POINT
+        ),
+        delete_remote_auth,
+        name="lava.delete_remote_auth",
     ),
     url(
         r"^{mount_point}update-table-length-setting/$".format(

@@ -42,6 +42,7 @@ from lava_scheduler_app.models import (
     JobFailureTag,
     NotificationRecipient,
     ProcessorFamily,
+    RemoteArtifactsAuth,
     Tag,
     TestJob,
     User,
@@ -159,12 +160,19 @@ class CustomGroupAdmin(GroupAdmin):
     form = CustomGroupAdminForm
 
 
+class RemoteArtifactsAuthInline(admin.TabularInline):
+    model = RemoteArtifactsAuth
+    extra = 0
+
+
 class CustomUserAdmin(UserAdmin):
 
     actions = [expire_user_action]
 
     def has_delete_permission(self, request, obj=None):
         return settings.ALLOW_ADMIN_DELETE
+
+    inlines = [RemoteArtifactsAuthInline]
 
 
 #  Setup the override in the django admin interface at startup.
