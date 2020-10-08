@@ -6,6 +6,12 @@ are, in most Docker use cases, invisible to containers. This is automated by
 the `lava-docker-worker` program, provided by the `lava-dispatcher-host`
 package.
 
+`lava-docker-worker` should support all use cases that the regular LAVA worker
+supports, except running LXC containers. In particular, `lava-docker-work`
+**does support** running other docker containers, QEMU/KVM, and other regular
+device types, as long as the required user space tools are included in the LAVA
+worker docker image.
+
 ## 1: install and configure lava-dispatcher-host
 
 **lava-dispatcher-host needs to be installed in the host machine** (bare metal)
