@@ -303,7 +303,7 @@ configuration files are:
 
 * ``/etc/lava-server/dispatcher.d/<hostname>/env.yaml``
 
-* ``/etc/lava-server/dispatcher.d/<hostname>/env.dut.yaml``
+* ``/etc/lava-server/dispatcher.d/<hostname>/env-dut.yaml``
 
 If the dispatcher specific configuration files are not present,
 lava-master will fallback to the environment files for the entire
