@@ -39,6 +39,8 @@ class File:
         ],
         "env-dut": [
             "/etc/lava-server/dispatcher.d/{name}/env-dut.yaml",
+            "/etc/lava-server/env-dut.yaml",
+            # DEPRECATED since 2020.10
             "/etc/lava-server/env.dut.yaml",
         ],
         "health-check": ([settings.HEALTH_CHECKS_PATH], "{name}.yaml"),
