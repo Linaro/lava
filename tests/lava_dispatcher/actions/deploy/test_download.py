@@ -564,7 +564,7 @@ def test_http_download_reader(mocker):
         def close(self):
             pass
 
-    def dummyget(url, allow_redirects, stream):
+    def dummyget(url, allow_redirects, stream, headers):
         assert allow_redirects is True
         assert stream is True
         assert url == "https://example.com/dtb"
@@ -582,7 +582,7 @@ def test_http_download_reader(mocker):
         next(ite)
 
     # Not working
-    def dummygetraise(url, allow_redirects, stream):
+    def dummygetraise(url, allow_redirects, stream, headers):
         raise requests.RequestException("error")
 
     mocker.patch("requests.get", dummygetraise)

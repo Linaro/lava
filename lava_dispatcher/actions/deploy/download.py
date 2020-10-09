@@ -566,10 +566,13 @@ class HttpDownloadAction(DownloadHandler):
                     self.errors = "Invalid http_url_format_string: '%s'" % str(exc)
                     return
 
+            headers = {"Accept-Encoding": ""}
+            if self.params and "headers" in self.params:
+                headers.update(self.params["headers"])
             self.logger.debug("Validating that %s exists", self.url.geturl())
             # Force the non-use of Accept-Encoding: gzip, this will permit to know the final size
             res = requests_retry().head(
-                self.url.geturl(), allow_redirects=True, headers={"Accept-Encoding": ""}
+                self.url.geturl(), allow_redirects=True, headers=headers
             )
             if res.status_code != requests.codes.OK:
                 # try using (the slower) get for services with broken redirect support
@@ -580,7 +583,7 @@ class HttpDownloadAction(DownloadHandler):
                     self.url.geturl(),
                     allow_redirects=True,
                     stream=True,
-                    headers={"Accept-Encoding": ""},
+                    headers=headers,
                 )
                 if res.status_code != requests.codes.OK:
                     self.errors = "Resource unavailable at '%s' (%d)" % (
@@ -605,8 +608,11 @@ class HttpDownloadAction(DownloadHandler):
         try:
             # FIXME: When requests 3.0 is released, use the enforce_content_length
             # parameter to raise an exception the file is not fully downloaded
+            headers = None
+            if self.params and "headers" in self.params:
+                headers = self.params["headers"]
             res = requests_retry().get(
-                self.url.geturl(), allow_redirects=True, stream=True
+                self.url.geturl(), allow_redirects=True, stream=True, headers=headers
             )
             if res.status_code != requests.codes.OK:
                 # This is an Infrastructure error because the validate function

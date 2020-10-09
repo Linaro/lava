@@ -18,7 +18,9 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
+
 from django import forms
+from django.core.exceptions import PermissionDenied
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 from django.http import (
@@ -34,7 +36,7 @@ from django.views.decorators.http import require_POST
 
 from lava_server.bread_crumbs import BreadCrumb, BreadCrumbTrail
 
-from lava_scheduler_app.models import ExtendedUser
+from lava_scheduler_app.models import ExtendedUser, RemoteArtifactsAuth
 
 
 class ExtendedUserIRCForm(forms.ModelForm):
@@ -82,6 +84,36 @@ def update_irc_settings(request):
     form = ExtendedUserIRCForm(request.POST, instance=extended_user)
     if form.is_valid():
         extended_user = form.save()
+    return HttpResponseRedirect(reverse("lava.me"))
+
+
+@login_required
+@requires_csrf_token
+def update_remote_auth(request):
+    if request.method == "POST":
+        token_id = request.POST.get("id", None)
+        token_name = request.POST.get("name", None)
+        token_hash = request.POST.get("token", None)
+        if not token_id:
+            RemoteArtifactsAuth.objects.create(
+                name=token_name, token=token_hash, user=request.user
+            )
+        else:
+            token = RemoteArtifactsAuth.objects.get(pk=token_id)
+            if token.user != request.user:
+                raise PermissionDenied()
+            token.name = token_name
+            token.token = token_hash
+            token.save()
+        return HttpResponseRedirect(reverse("lava.me"))
+
+
+@login_required
+def delete_remote_auth(request, pk):
+    token = RemoteArtifactsAuth.objects.get(pk=pk)
+    if token.user != request.user:
+        raise PermissionDenied()
+    token.delete()
     return HttpResponseRedirect(reverse("lava.me"))
 
 

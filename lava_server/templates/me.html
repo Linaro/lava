@@ -1,6 +1,6 @@
 {% extends "layouts/content.html" %}
 {% load i18n %}
-
+{% load static %}
 
 {% block content %}
 <h2>Hi {% firstof user.first_name user.username %}</h2>
@@ -115,6 +115,8 @@
   {% endwith %}
     </ul>
   </div>
+
+
 </div>
 <div class="row">
   <div class="col-md-6">
@@ -129,7 +131,81 @@
       <li><a href="{% url 'lava.scheduler.mydevices_health_history_log' %}"><span
               class="glyphicon glyphicon-heart pull-right"></span> Your devices health</a></li>
     </div>
+
+  <div class="col-md-6">
+    <h4 class="modal-header">Remote artifact tokens <small><a data-toggle="modal" href="#token_modal" class="btn btn-xs btn-info empty-token-modal"><span class="glyphicon glyphicon-plus-sign"></span> Create</a></small></h4>
+    {% with tokens=user.remoteartifactsauth_set.all %}
+    {% if tokens %}
+    <p>You have following tokens:</p>
+    <div class="panel-group" id="accordion">
+      {% for token_obj in tokens %}
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h4 class="panel-title">
+            <a data-toggle="modal" data-id={{ token_obj.id }} data-name={{ token_obj.name }} data-token={{ token_obj.token }} href="#token_modal" class="open-token-modal"><span>{{ token_obj.name }}</span></a>
+            <a class="btn btn-xs btn-danger pull-right" style="color: #fff" title="Delete token" href="{% url 'lava.delete_remote_auth' token_obj.id %}" data-toggle="confirm" data-title="Are you sure you want to delete this token?">
+              <span class="glyphicon glyphicon-trash"></span>
+            </a>
+          </h4>
+        </div>
+      </div>
+    {% endfor %}
+    </div>
+    {% else %}
+    <p><i>You have no tokens.</i></p>
+    {% endif %}
+  {% endwith %}
+    </ul>
   </div>
+
+  <!-- Modal HTML -->
+  <div id="token_modal" class="modal fade">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+          <h4 class="modal-title">Add/Update token</h4>
+        </div>
+        <form id="token_form" method="post" action="{% url 'lava.update_remote_auth' %}">
+	  {% csrf_token %}
+        <div class="modal-body well">
+	  <div id="token_errors" class="errorlist" style="color: red;"></div>
+          <p><label for="id_name">Token name:</label> <input type="text" name="name" maxlength="100" id="id_name"><input type="hidden" name="id" id="id_id"></p>
+          <p><label for="id_token">Token string:</label> <input type="text" name="token" maxlength="100" id="id_token">
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <input class="btn btn-primary" type="submit" value="Save" />
+        </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+
+</div>
 </div>
 
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript" src="{% static 'lava_server/js/bootbox.js' %}"></script>
+<script type="text/javascript" src="{% static 'lava_results_app/js/bootbox.data.toggle.js' %}"></script>
+<script>
+$(document).ready(function () {
+    add_bootbox_data_toggle();
+    $(document).on("click", ".open-token-modal", function () {
+        console.log("1111111111111");
+        $(".modal-body #id_id").val($(this).data('id'));
+        $(".modal-body #id_name").val($(this).data('name'));
+        $(".modal-body #id_token").val($(this).data('token'));
+    }).on("click", ".empty-token-modal", function () {
+        console.log("fdsalkjfaf");
+        $(".modal-body #id_id").val("");
+        $(".modal-body #id_name").val("");
+        $(".modal-body #id_token").val("");
+    });
+});
+</script>
 {% endblock %}
