@@ -2493,7 +2493,7 @@ class RemoteArtifactsAuth(models.Model):
     )
 
     name = models.CharField(max_length=100, null=False, verbose_name=_("Token name"))
-    token = models.CharField(max_length=100, null=False, verbose_name=_("Token hash"))
+    token = models.CharField(max_length=100, null=False, verbose_name=_("Token value"))
 
     def __str__(self):
         return self.name
