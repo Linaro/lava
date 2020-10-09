@@ -603,6 +603,7 @@ def handle(options, jobs: JobsDB) -> float:
     except VersionMismatch as exc:
         if options.exit_on_version_mismatch:
             raise exc
+        return max(20 - (time.time() - begin), 0)
 
     # running jobs
     for job in data.get("running", []):
