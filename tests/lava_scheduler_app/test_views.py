@@ -82,6 +82,19 @@ actions:
       url: http://test.org/test.img
 """
 
+INT_VALUE_JOB_DEFINITION = r"""
+device_type: juno
+actions:
+- deploy:
+    timeout:
+      minutes: 35
+    to: u-boot-ums
+    os: oe
+    image:
+      url: http://test.org/test.img
+    root_partition: 1
+"""
+
 
 @pytest.fixture
 def setup(db):
@@ -1274,3 +1287,13 @@ def test_internal_v1_jobs_test_auth_token(client, setup, mocker):
         HTTP_LAVA_TOKEN=job02.token,
     )
     assert ret.status_code == 200
+
+    # Int value in deploy action dict
+    job01.definition = INT_VALUE_JOB_DEFINITION
+    job01.save()
+    ret = client.get(
+        reverse("lava.scheduler.internal.v1.jobs", args=[job01.id]),
+        HTTP_LAVA_TOKEN=job01.token,
+    )
+    assert ret.status_code == 200
+    job_def = yaml_load(ret.json()["definition"])
