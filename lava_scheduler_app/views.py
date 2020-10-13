@@ -1094,9 +1094,9 @@ def internal_v1_jobs(request, pk):
                 for k, v in action.items():
                     if k == "deploy":
                         for a, b in v.items():
-                            if "url" in b and "headers" in b:
-                                update_token(b)
                             if isinstance(b, dict):
+                                if "url" in b and "headers" in b:
+                                    update_token(b)
                                 for i, j in b.items():
                                     if isinstance(j, dict):
                                         if "url" in j and "headers" in j:
