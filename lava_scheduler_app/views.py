@@ -1082,16 +1082,25 @@ def internal_v1_jobs(request, pk):
                 "name", "token"
             )
         }
+
+        def update_token(headers_dict):
+            for key in headers_dict["headers"]:
+                token_name = headers_dict["headers"][key]
+                if token_name in tokens.keys():
+                    headers_dict["headers"][key] = tokens[token_name]
+
         if "actions" in job_def:
             for action in job_def["actions"]:
                 for k, v in action.items():
                     if k == "deploy":
-                        for name, image in v["images"].items():
-                            if "headers" in image:
-                                for key in image["headers"]:
-                                    token_name = image["headers"][key]
-                                    if token_name in tokens.keys():
-                                        image["headers"][key] = tokens[token_name]
+                        for a, b in v.items():
+                            if "url" in b and "headers" in b:
+                                update_token(b)
+                            if isinstance(b, dict):
+                                for i, j in b.items():
+                                    if isinstance(j, dict):
+                                        if "url" in j and "headers" in j:
+                                            update_token(j)
 
         job_def_str = yaml_safe_dump(job_def)
         job_ctx = job_def.get("context", {})

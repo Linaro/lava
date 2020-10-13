@@ -26,11 +26,14 @@ from django.http import Http404
 from django.urls import reverse
 from django.utils import timezone
 
+from lava_common.compat import yaml_load
+
 from lava_scheduler_app.models import (
     Alias,
     Device,
     DeviceType,
     GroupDevicePermission,
+    RemoteArtifactsAuth,
     TestJob,
     TestJobUser,
     Worker,
@@ -51,6 +54,32 @@ timeouts:
   job:
     minutes: 10
 actions: []
+"""
+
+TOKEN_JOB_DEFINITION = r"""
+device_type: juno
+actions:
+- deploy:
+    timeout:
+      minutes: 35
+    to: u-boot-ums
+    os: oe
+    image:
+      url: http://test.org/test.img
+      headers:
+        PRIVATE: token
+"""
+
+NON_TOKEN_JOB_DEFINITION = r"""
+device_type: juno
+actions:
+- deploy:
+    timeout:
+      minutes: 35
+    to: u-boot-ums
+    os: oe
+    image:
+      url: http://test.org/test.img
 """
 
 
@@ -95,6 +124,7 @@ def setup(db):
 
     job_01 = TestJob.objects.create(
         description="test job 01",
+        definition=TOKEN_JOB_DEFINITION,
         submitter=user,
         requested_device_type=dt_juno,
         actual_device=juno_01,
@@ -105,6 +135,7 @@ def setup(db):
     )
     job_02 = TestJob.objects.create(
         description="test job 02",
+        definition=NON_TOKEN_JOB_DEFINITION,
         submitter=user,
         requested_device_type=dt_juno,
         actual_device=juno_01,
@@ -861,7 +892,7 @@ def test_job_definition_plain(client, setup):
         )
     )
     assert ret.status_code == 200  # nosec
-    assert ret.content == b""  # nosec
+    assert ret.content == TOKEN_JOB_DEFINITION.encode()  # nosec
 
 
 @pytest.mark.django_db
@@ -1203,3 +1234,43 @@ def test_similar_jobs(client, setup):
         ret.url
         == "/results/query/+custom?entity=testjob&conditions=testjob__actual_device__exact__juno-01"
     )  # nosec
+
+
+@pytest.mark.django_db
+def test_internal_v1_jobs_test_auth_token(client, setup, mocker):
+    user = User.objects.get(username="tester")
+    job01 = TestJob.objects.get(description="test job 01")
+
+    write_text = mocker.Mock()
+    mocker.patch("pathlib.Path.write_text", write_text)
+
+    ret = client.get(
+        reverse("lava.scheduler.internal.v1.jobs", args=[job01.id]),
+        HTTP_LAVA_TOKEN=job01.token,
+    )
+    assert ret.status_code == 200
+    job_def = yaml_load(ret.json()["definition"])
+
+    # Token not in db.
+    assert job_def["actions"][0]["deploy"]["image"]["headers"]["PRIVATE"] == "token"
+
+    # Token in db.
+    RemoteArtifactsAuth.objects.create(name="token", token="tokenvalue", user=user)
+    ret = client.get(
+        reverse("lava.scheduler.internal.v1.jobs", args=[job01.id]),
+        HTTP_LAVA_TOKEN=job01.token,
+    )
+    assert ret.status_code == 200
+    job_def = yaml_load(ret.json()["definition"])
+
+    assert (
+        job_def["actions"][0]["deploy"]["image"]["headers"]["PRIVATE"] == "tokenvalue"
+    )
+
+    # No headers present.
+    job02 = TestJob.objects.get(description="test job 02")
+    ret = client.get(
+        reverse("lava.scheduler.internal.v1.jobs", args=[job02.id]),
+        HTTP_LAVA_TOKEN=job02.token,
+    )
+    assert ret.status_code == 200
