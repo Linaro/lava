@@ -150,10 +150,14 @@ class Command(BaseCommand):
                     health=Device.HEALTH_UNKNOWN
                 )
 
-            # Create aliases and tags.
+            # Create aliases.
             for alias_name in sync_dict.get("aliases", []):
                 Alias.objects.get_or_create(name=alias_name, device_type=device_type)
                 self.stdout.write(f"  -> alias: {alias_name}")
+
+            # Remove all tag relations first.
+            device.tags.clear()
+            # Create tags.
             for tag_name in sync_dict.get("tags", []):
                 tag, _ = Tag.objects.get_or_create(name=tag_name)
                 device.tags.add(tag)
