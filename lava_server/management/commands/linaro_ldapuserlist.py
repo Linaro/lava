@@ -94,7 +94,7 @@ class Command(BaseCommand):
                     user_dn, search_scope, search_filter, attributes
                 )
                 if filename:
-                    with open(filename, "wb") as csvfile:
+                    with open(filename, "w") as csvfile:
                         file_handle = csv.writer(
                             csvfile,
                             delimiter=",",
@@ -103,9 +103,11 @@ class Command(BaseCommand):
                         )
                         for result in results:
                             result_type, result_data = result
-                            file_handle.writerow([result_data["uid"][0]])
+                            file_handle.writerow(
+                                [result_data["uid"][0].decode("utf-8")]
+                            )
                 else:
                     for result in results:
                         result_type, result_data = result
-                        self.stdout.write(result_data["uid"][0])
+                        self.stdout.write(result_data["uid"][0].decode("utf-8"))
                 self.stdout.write('Total "%d" LDAP users' % len(results))
