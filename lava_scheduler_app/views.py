@@ -2028,13 +2028,14 @@ def job_log_incremental(request, pk):
             for line in data:
                 line["msg"] = udecode(line["msg"])
                 if line["lvl"] == "results":
-                    case_id = TestCase.objects.filter(
-                        suite__job=job,
-                        suite__name=line["msg"]["definition"],
-                        name=line["msg"]["case"],
-                    ).values_list("id", flat=True)
-                    if case_id:
-                        line["msg"]["case_id"] = case_id[0]
+                    definition = line["msg"].get("definition")
+                    case = line["msg"].get("case")
+                    if definition and case:
+                        case_id = TestCase.objects.filter(
+                            suite__job=job, suite__name=definition, name=case
+                        ).values_list("id", flat=True)
+                        if case_id:
+                            line["msg"]["case_id"] = case_id[0]
 
     except (OSError, StopIteration, yaml.YAMLError):
         data = []
