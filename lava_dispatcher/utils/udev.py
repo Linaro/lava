@@ -180,8 +180,13 @@ class WaitDeviceBoardID(Action):
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
-        self.logger.debug("Waiting for udev device with ID: %s", self.board_id)
-        wait_udev_event(match_dict=self.udev_device)
+        if self.job.device.get("wait_device_board_id", True):
+            self.logger.debug("Waiting for udev device with ID: %s", self.board_id)
+            wait_udev_event(match_dict=self.udev_device)
+        else:
+            self.logger.debug(
+                "Avoid waiting for udev device with ID: %s", self.board_id
+            )
         return connection
 
 
