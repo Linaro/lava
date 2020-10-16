@@ -1,0 +1,33 @@
+{% extends 'n1sdp.jinja2' %}
+
+{% set connection_list = ['uart0', 'uart1', 'uart2', 'uart3'] %}
+{% set connection_commands = {
+  'uart0': 'telnet localhost 10001',
+  'uart1': 'telnet localhost 10002',
+  'uart2': 'telnet localhost 10003',
+  'uart3': 'telnet localhost 10004'
+} %}
+{% set connection_tags = {
+  'uart0': ['primary', 'telnet'],
+  'uart1': ['telnet'],
+  'uart2': ['telnet'],
+  'uart3': ['telnet']
+} %}
+
+{% set power_on_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu11 --port 4 --command on' %}
+{% set power_off_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu11 --port 4 --command off' %}
+{% set hard_reset_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu11 --port 4 --command reboot --delay 5' %}
+
+{% set device_ip = '192.168.1.100' %}
+{% set device_mac = '00:AA:01:BB:02:CC' %}
+
+{% set usb_label = 'usb_storage_device' %}
+{% set usb_uuid = 'usb-USB_SanDisk_3_00000000000000000000000000000000000-0:0' %}
+{% set usb_device_id = 0 %}
+
+{% set usb_filesystem_label = 'n1sdp01' %}
+
+{# Variables used by "flasher_deploy_commands" to manage sd mux device #}
+{% set sdmux_disk = '/dev/disk/by-id/usb-LinuxAut_sdmux_HS-SD_MMC_000000000100-0:0' %}
+{% set sdmux_command_dut = 'usbsdmux /dev/usb-sd-mux/id-000000000100 dut' %}
+{% set sdmux_command_host = 'usbsdmux /dev/usb-sd-mux/id-000000000100 host' %}

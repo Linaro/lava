@@ -1,0 +1,26 @@
+{# device_type = 'n1sdp' #}
+{% extends 'vexpress.jinja2' %}
+
+{% set vexpress_supports_uboot = false %}
+{% set vexpress_supports_uefi = false %}
+{% set vexpress_supports_uefi_menu = false %}
+{% set vexpress_supports_grub = true %}
+
+{% set flash_prompt = '' %}
+{% set grub_needs_interrupt = false %}
+
+{% if sdmux_disk and sdmux_command_host and sdmux_command_dut and usb_filesystem_label %}
+{% set flasher_deploy_commands = flasher_deploy_commands|default([
+  sdmux_command_host,
+  'sleep 5',
+  'bash -c "umount ' + sdmux_disk + '-part1 || true"',
+  'mkfs.vfat -n ' + usb_filesystem_label + ' ' + sdmux_disk + '-part1',
+  'mkdir -p /tmp/' + usb_filesystem_label,
+  'mount ' + sdmux_disk + '-part1 /tmp/' + usb_filesystem_label,
+  'unzip -d /tmp/' + usb_filesystem_label + ' {RECOVERY_IMAGE}',
+  'umount ' + sdmux_disk + '-part1',
+  'sleep 1',
+  sdmux_command_dut,
+  'sleep 5'
+]) %}
+{% endif %}

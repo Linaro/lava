@@ -4,6 +4,8 @@
 {% set vexpress_supports_vemsd = vexpress_supports_vemsd|default(true) %}
 {% set vexpress_supports_uboot = vexpress_supports_uboot|default(true) %}
 {% set vexpress_supports_uefi = vexpress_supports_uefi|default(true) %}
+{% set vexpress_supports_uefi_menu = vexpress_supports_uefi_menu|default(true) %}
+{% set vexpress_supports_grub = vexpress_supports_grub|default(false) %}
 
 {% set base_high_limits = base_high_limits|default(true) %}
 {% set base_uboot_commands = [
@@ -146,14 +148,20 @@ usb_filesystem_label: '{{ usb_filesystem_label|default('VEMSD') }}'
 actions:
   deploy:
     parameters:
+{% if vexpress_supports_uboot %}
       add_header: u-boot
       mkimage_arch: {{ uboot_mkimage_arch|default('arm64') }} # string to pass to mkimage -A when adding UBoot headers
+{% endif %}
       append_dtb: {{ append_dtb|default(false) }}
       use_xip: {{ use_xip|default(false) }}
     connections:
       lxc:
       serial:
     methods:
+{% if flasher_deploy_commands %}
+      flasher:
+        commands: {{ flasher_deploy_commands }}
+{% endif %}
       lxc:
       nfs:
       ssh:
@@ -185,7 +193,41 @@ actions:
       lxc:
       serial:
     methods:
+{% if vexpress_supports_grub %}
+      grub:
+        parameters:
+          needs_interrupt: {{ grub_needs_interrupt|default(true) }}
+          interrupt_prompt: '{{ grub_autoboot_prompt | default("for a command-line") }}'
+          interrupt_character: '{{ grub_interrupt_character | default ("c") }}'
+          bootloader_prompt: {{ grub_bootloader_prompt|default('grub>') }}
+          boot_message: {{ boot_message|default('Linux version') }}
+        ramdisk:
+          commands:
+          - insmod tftp
+          - insmod efinet
+          - net_bootp efinet0
+          - set net_default_server={SERVER_IP}
+          - linux (tftp,{SERVER_IP})/{KERNEL} console={{ console_device }} {{ base_kernel_args }} {{ base_ip_args }}
+          - initrd (tftp,{SERVER_IP})/{RAMDISK}
+{% if has_dtb %}
+          - devicetree (tftp,{SERVER_IP})/{DTB}
+{% endif %}
+          - boot
+        nfs:
+          commands:
+          - insmod tftp
+          - insmod efinet
+          - net_bootp efinet0
+          - set net_default_server={SERVER_IP}
+          - linux (tftp,{SERVER_IP})/{KERNEL} console={{ console_device }} {{ base_kernel_args }} {{ base_nfsroot_args }} {{ base_ip_args }} root=/dev/nfs rw
+          - initrd (tftp,{SERVER_IP})/{RAMDISK}
+{% if has_dtb %}
+          - devicetree (tftp,{SERVER_IP})/{DTB}
+{% endif %}
+          - boot
+{% endif %}
       minimal:
+{% if vexpress_supports_uefi_menu %}
       uefi-menu:
         parameters:
           interrupt_prompt: '{{ interrupt_prompt|default('The default boot selection will start in') }}'
@@ -297,6 +339,8 @@ actions:
         - select:
             items:
               - LAVA TEST TFTP
+{% endif %}
+{% if vexpress_supports_uefi %}
       uefi:
         parameters:
            bootloader_prompt: '{{ uefi_shell_prompt|default('Shell>') }}'
@@ -334,6 +378,7 @@ actions:
           - "{{ uefi_usb_id }}:"
           # Launch Image from boot partition, specifying sda2 as the root filesystem.
           - Image console={{ console_device }},{{ baud_rate }}n8 root=/dev/sda2 rw {{ base_nfsroot_args }} {{ base_kernel_args }} {{ base_ip_args }} dtb={{ device_type }}.dtb
+{% endif %}
 {% endif %}
       ssh:
 {% if vexpress_supports_uboot %}
