@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     "django_tables2",
     "linaro_django_xmlrpc",
     "rest_framework",
+    "rest_framework.authtoken",
     "django_filters",
     "rest_framework_filters",
     # Add contrib
