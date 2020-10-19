@@ -269,7 +269,7 @@ class SchedulerWorkersAPI(ExposedV2API):
         except Worker.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Worker '%s' was not found." % hostname)
 
-        return {
+        data = {
             "hostname": worker.hostname,
             "description": worker.description,
             "state": worker.get_state_display(),
@@ -281,6 +281,9 @@ class SchedulerWorkersAPI(ExposedV2API):
             "job_limit": worker.job_limit,
             "version": worker.version,
         }
+        if self.user.is_superuser:
+            data["token"] = worker.token
+        return data
 
     @check_perm("lava_scheduler_app.change_worker")
     def update(self, hostname, description=None, health=None, job_limit=None):
