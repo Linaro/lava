@@ -540,8 +540,6 @@ class WorkerViewSet(base_views.WorkerViewSet, viewsets.ModelViewSet):
             return serializers.EnvironmentSerializer
         if self.action == "config":
             return serializers.ConfigSerializer
-        if self.action == "certificate":
-            return serializers.SlaveKeySerializer
         else:
             return serializers.WorkerSerializer
 
@@ -674,7 +672,6 @@ class SystemViewSet(viewsets.ViewSet):
 
     Endpoints:
 
-    * `/system/certificate/`
     * `/system/master_config/`
     * `/system/version/`
     * `/system/whoami/`
