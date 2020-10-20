@@ -247,6 +247,16 @@ MASTER_UPGRADE_NOTIFY = False
 WORKER_AUTO_REGISTER = True
 WORKER_AUTO_REGISTER_NETMASK = ["127.0.0.0/8", "::1"]
 
+###################
+# Celerey setting #
+###################
+# Make celery optional.
+# Force task to be executed in the caller thread and not in a worker
+# When this is True, no need for either a broker or a worker, everything is local.
+# In order to use celery (with a worker), admins should set it to False.
+CELERY_TASK_ALWAYS_EAGER = True
+# CELERY_BROKER_URL = "redis://localhost:6379/0"
+
 ################
 # DRF settings #
 ################
