@@ -6,6 +6,8 @@
 lava-server:
   aiohttp:
     name: python3-aiohttp
+  celery:
+    name: python3-celery
   django-auth-ldap:
     version: ">=1.2.12"
     name: python3-django-auth-ldap

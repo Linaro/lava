@@ -1,0 +1,14 @@
+[Unit]
+Description=LAVA celery worker
+After=network.target remote-fs.target
+
+[Service]
+Type=simple
+Environment=USER=lavaserver GROUP=lavaserver LOGLEVEL=INFO LOGFILE=/var/log/lava-server/lava-celery-worker.log CONCURRENCY= AUTOSCALE= ARGS=
+EnvironmentFile=-/etc/default/lava-celery-worker
+EnvironmentFile=-/etc/lava-server/lava-celery-worker
+ExecStart=/usr/bin/python3 -m celery -A lava_server worker --uid $USER --gid $GROUP --loglevel $LOGLEVEL --logfile $LOGFILE $CONCURRENCY $AUTOSCALE $ARGS
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

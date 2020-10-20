@@ -1,0 +1,18 @@
+# Configuration for lava-celery-worker daemon
+
+# Logging level should be uppercase (DEBUG, INFO, WARNING, ERROR, CRITICAL, FATAL)
+# LOGLEVEL="INFO"
+# LOGFILE="/var/log/lava-server/lava-celery-worker.log"
+
+# User and groups
+# USER="lavaserver"
+# GROUP="lavaserver"
+
+# Concurrency
+# CONCURRENCY="--concurrency 10"
+
+# Autoscaling
+# AUTOSCALE="--autoscale 1,10"
+
+# Other arguments
+# ARGS=""
