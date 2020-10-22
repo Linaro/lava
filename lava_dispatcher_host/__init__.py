@@ -25,7 +25,7 @@ from lava_common.exceptions import InfrastructureError
 
 
 logger = logging.getLogger("lava-dispatcher-host")
-logger.addHandler(logging.handlers.SysLogHandler(address='/dev/log'))
+logger.addHandler(logging.handlers.SysLogHandler(address="/dev/log"))
 logger.setLevel(logging.INFO)
 
 
@@ -131,24 +131,39 @@ def share_device_with_container_lxc(container, node):
 
 def share_device_with_container_docker(container, node):
     log_sharing_device(node, "docker", container)
-    container_id = subprocess.check_output(
-        ["docker", "inspect", "--format={{.ID}}", container], text=True
-    ).strip()
-    nodeinfo = os.stat(node)
-    major = os.major(nodeinfo.st_rdev)
-    minor = os.minor(nodeinfo.st_rdev)
-    with open(
-        "/sys/fs/cgroup/devices/docker/%s/devices.allow" % container_id, "w"
-    ) as allow:
-        allow.write("a %d:%d rwm\n" % (major, minor))
-    subprocess.check_call(
+    try:
+        container_id = subprocess.check_output(
+            ["docker", "inspect", "--format={{.ID}}", container], text=True
+        ).strip()
+    except subprocess.CalledProcessError:
+        logger.warning(
+            f"Cannot share {node} with docker container {container}: container not found"
+        )
+        return
+
+    try:
+        nodeinfo = os.stat(node)
+        major = os.major(nodeinfo.st_rdev)
+        minor = os.minor(nodeinfo.st_rdev)
+        with open(
+            "/sys/fs/cgroup/devices/docker/%s/devices.allow" % container_id, "w"
+        ) as allow:
+            allow.write("a %d:%d rwm\n" % (major, minor))
+    except FileNotFoundError as exc:
+        logger.warning(
+            "Cannot share {node} with docker container {container}: {exc.filename} not found"
+        )
+        return
+
+    # it's ok to fail; container might have already exited at this point.
+    subprocess.call(
         [
             "docker",
             "exec",
             container,
             "sh",
             "-c",
-            "mkdir -p %s && mknod %s c %d %d || true"
+            "mkdir -p %s && mknod %s c %d %d"
             % (os.path.dirname(node), node, major, minor),
         ]
     )
