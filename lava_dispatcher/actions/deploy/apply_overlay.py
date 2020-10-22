@@ -21,7 +21,6 @@
 import guestfs
 import os
 import shutil
-import subprocess  # nosec - internal use.
 from lava_dispatcher.action import Action, Pipeline
 from lava_common.exceptions import InfrastructureError, JobError, LAVABug
 from lava_common.constants import RAMDISK_FNAME, UBOOT_DEFAULT_HEADER_LENGTH
@@ -325,12 +324,7 @@ class ApplyOverlayTftp(Action):
             # We can't use self.mkdtemp() here because this directory should
             # not be removed if umount fails.
             directory = mkdtemp(autoremove=False)
-            try:
-                subprocess.check_output(  # nosec - internal.
-                    ["mount", "-t", "nfs", nfs_address, directory]
-                )
-            except subprocess.CalledProcessError as exc:
-                raise JobError(exc)
+            self.run_cmd(["mount", "-t", "nfs", nfs_address, directory])
         elif self.parameters.get("ramdisk") is not None:
             if not self.parameters["ramdisk"].get("install_overlay", True):
                 self.logger.info("[%s] Skipping applying overlay to ramdisk", namespace)
@@ -386,7 +380,7 @@ class ApplyOverlayTftp(Action):
             )
             untar_file(overlay_file, directory)
             if nfs_address:
-                subprocess.check_output(["umount", directory])  # nosec - internal.
+                self.run_cmd(["umount", directory])
                 os.rmdir(directory)  # fails if the umount fails
         return connection
 
