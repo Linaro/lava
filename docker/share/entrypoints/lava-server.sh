@@ -8,6 +8,7 @@ set -e
 # Variables #
 #############
 GUNICORN_PID=0
+LAVA_CELERY_WORKER_PID=0
 LAVA_COORDINATOR_PID=0
 LAVA_PUBLISHER_PID=0
 LAVA_SCHEDULER_PID=0
@@ -19,6 +20,8 @@ LAVA_SCHEDULER_PID=0
 handler() {
     tail_pid="${!}"
     echo "Killing:"
+    echo "* lava-celery-worker \$$LAVA_CELERY_WORKER_PID"
+    [ "$LAVA_CELERY_WORKER_PID" != "0" ] && kill $LAVA_CELERY_WORKER_PID
     echo "* lava-coordinator \$$LAVA_COORDINATOR_PID"
     [ "$LAVA_COORDINATOR_PID" != "0" ] && kill $LAVA_COORDINATOR_PID
     echo "* lava-publisher \$$LAVA_PUBLISHER_PID"
@@ -31,6 +34,8 @@ handler() {
     apache2ctl stop
 
     echo "Waiting for:"
+    echo "* lava-celery-worker"
+    [ "$LAVA_CELERY_WORKER_PID" != "0" ] && wait $LAVA_CELERY_WORKER_PID || true
     echo "* lava-coordinator"
     [ "$LAVA_COORDINATOR_PID" != "0" ] && wait $LAVA_COORDINATOR_PID || true
     echo "* lava-publisher"
@@ -81,6 +86,24 @@ start_apache2() {
     fi
 }
 
+
+start_lava_celery_worker() {
+    USER="lavaserver"
+    GROUP="lavaserver"
+    LOGLEVEL="INFO"
+    LOGFILE="/var/log/lava-server/lava-celery-worker.log"
+    CONCURRENCY=""
+    AUTOSCALE=""
+    ARGS=""
+    [ -e /etc/default/lava-celery-worker ] && . /etc/default/lava-celery-worker
+    [ -e /etc/lava-server/lava-celery-worker ] && . /etc/lava-server/lava-celery-worker
+    if [ "$CAN_EXEC" = "1" ]; then
+        exec /usr/bin/python3 -m celery -A lava_server worker --uid $USER --gid $GROUP --loglevel $LOGLEVEL $CONCURRENCY $AUTOSCALE $ARGS
+    else
+        setsid /usr/bin/python3 -m celery -A lava_server worker --uid $USER --gid $GROUP --loglevel $LOGLEVEL --logfile $LOGFILE $CONCURRENCY $AUTOSCALE $ARGS &
+        LAVA_CELERY_WORKER_PID=$!
+    fi
+}
 
 start_lava_coordinator() {
     LOGLEVEL="DEBUG"
@@ -149,8 +172,10 @@ start_lava_server_gunicorn() {
 trap 'handler' INT QUIT TERM
 
 # List of services to start
+# By default lava-celery-worker is not started because no broker is included
 SERVICES=${SERVICES-"apache2 lava-coordinator lava-publisher lava-scheduler gunicorn postgresql"}
 echo "$SERVICES" | grep -q apache2 && APACHE2=1 || APACHE2=0
+echo "$SERVICES" | grep -q lava-celery-worker && LAVA_CELERY_WORKER=1 || LAVA_CELERY_WORKER=0
 echo "$SERVICES" | grep -q lava-coordinator && LAVA_COORDINATOR=1 || LAVA_COORDINATOR=0
 echo "$SERVICES" | grep -q lava-publisher && LAVA_PUBLISHER=1 || LAVA_PUBLISHER=0
 echo "$SERVICES" | grep -q lava-scheduler && LAVA_SCHEDULER=1 || LAVA_SCHEDULER=0
@@ -164,7 +189,7 @@ NEED_DB=$((LAVA_SCHEDULER+GUNICORN+POSTGRESQL))
 [ "$LAVA_SCHEDULER" = "1" ] && MIGRATE_DEFAULT="yes" || MIGRATE_DEFAULT="no"
 LAVA_DB_MIGRATE=${LAVA_DB_MIGRATE:-$MIGRATE_DEFAULT}
 # Should we use "exec"?
-CAN_EXEC=$((APACHE2+LAVA_COORDINATOR+LAVA_PUBLISHER+LAVA_SCHEDULER+GUNICORN+POSTGRESQL))
+CAN_EXEC=$((APACHE2+LAVA_CELERY_WORKER+LAVA_COORDINATOR+LAVA_PUBLISHER+LAVA_SCHEDULER+GUNICORN+POSTGRESQL))
 # Should we check for file owners?
 LAVA_CHECK_OWNERS=${LAVA_CHECK_OWNERS:-1}
 
@@ -254,6 +279,15 @@ then
     echo
 fi
 
+if [ "$LAVA_CELERY_WORKER" = "1" ]
+then
+    echo "Starting lava-celery-worker"
+    start_lava_celery_worker
+    echo "done"
+    echo
+fi
+
+
 if [ "$LAVA_COORDINATOR" = "1" ]
 then
     echo "Starting lava-coordinator"
@@ -285,5 +319,5 @@ fi
 cd /var/log/lava-server
 while true
 do
-  tail -F django.log gunicorn.log lava-publisher.log lava-scheduler.log /var/log/lava-coordinator.log /var/log/apache2/lava-server.log & wait ${!}
+  tail -F django.log gunicorn.log lava-celery-worker.log lava-publisher.log lava-scheduler.log /var/log/lava-coordinator.log /var/log/apache2/lava-server.log & wait ${!}
 done

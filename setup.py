@@ -127,6 +127,7 @@ SERVER = {
             "/etc/lava-server/",
             [
                 "etc/env.yaml",
+                "etc/lava-celery-worker",
                 "etc/lava-publisher",
                 "etc/lava-scheduler",
                 "etc/lava-server-gunicorn",
@@ -149,6 +150,7 @@ SERVER = {
         (
             "/lib/systemd/system/",
             [
+                "etc/lava-celery-worker.service",
                 "etc/lava-publisher.service",
                 "etc/lava-scheduler.service",
                 "etc/lava-server-gunicorn.service",
