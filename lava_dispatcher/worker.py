@@ -250,7 +250,9 @@ class Job:
 
     def result(self) -> Dict[str, Any]:
         with contextlib.suppress(OSError, yaml.YAMLError):
-            return yaml_safe_load((self.base_dir / "result.yaml").read_bytes())
+            data = yaml_safe_load((self.base_dir / "result.yaml").read_bytes())
+            if isinstance(data, dict):
+                return data
         return {}
 
     def kill(self) -> None:
