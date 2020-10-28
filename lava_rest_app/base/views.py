@@ -272,7 +272,9 @@ class TestJobViewSet(viewsets.ModelViewSet):
         return paginator.get_paginated_response(serializer.data)
 
     def create(self, request, **kwargs):
-        serializer = serializers.TestJobSerializer(data=request.data)
+        serializer = serializers.TestJobSerializer(
+            data=request.data, context={"request": request}
+        )
 
         serializer.is_valid(raise_exception=True)
         definition = serializer.validated_data["definition"]
