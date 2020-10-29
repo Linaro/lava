@@ -30,25 +30,6 @@ from lava_dispatcher_host import share_device_with_container
 from lava_dispatcher_host.udev import get_udev_rules
 
 
-logger = None
-LINGER = 10000
-
-
-def setup_logger(data):
-    options = argparse.Namespace(**data)
-
-    # Pipeline always log as YAML so change the base logger.
-    # Every calls to logging.getLogger will now return a YAMLLogger
-    logging.setLoggerClass(YAMLLogger)
-
-    # The logger can be used by the parser and the Job object in all phases.
-    global logger
-    logger = logging.getLogger("dispatcher")
-    logger.addHandler(logging.StreamHandler())
-
-    return logger
-
-
 def handle_rules_show(options):
     print(get_udev_rules())
 
@@ -73,7 +54,7 @@ def handle_rules_install(options):
 
 
 def handle_devices_share(options):
-    share_device_with_container(options, setup_logger)
+    share_device_with_container(options)
 
 
 def handle_devices_map(options):

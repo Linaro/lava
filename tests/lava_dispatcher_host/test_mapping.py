@@ -22,7 +22,6 @@ from lava_common.exceptions import InfrastructureError
 import lava_dispatcher_host
 from lava_dispatcher_host import add_device_container_mapping
 from lava_dispatcher_host import share_device_with_container
-from lava_dispatcher_host.cmdline import setup_logger
 
 
 @pytest.fixture(autouse=True)
@@ -62,9 +61,7 @@ def test_device_info_keys_required(mocker):
 def test_simple_share_device_with_container(mocker):
     check_call = mocker.patch("subprocess.check_call")
     add_device_container_mapping("1", {"serial_number": "1234567890"}, "mycontainer")
-    share_device_with_container(
-        Namespace(device="foo/bar", serial_number="1234567890"), setup_logger
-    )
+    share_device_with_container(Namespace(device="foo/bar", serial_number="1234567890"))
 
     check_call.assert_called_once_with(
         ["lxc-device", "-n", "mycontainer", "add", "/dev/foo/bar"]
@@ -140,16 +137,6 @@ def test_device_missing(mocker):
     add_device_container_mapping("1", {"serial_number": "1234567890"}, "mycontainer")
     share_device_with_container(Namespace(device="foo/bar", serial_number="1234567890"))
     check_call.assert_not_called()
-
-
-def test_share_device_setup_logger(mocker):
-    check_call = mocker.patch("subprocess.check_call")
-    add_device_container_mapping("1", {"serial_number": "1234567890"}, "mycontainer")
-    setup_logger = mocker.Mock()
-    share_device_with_container(
-        Namespace(device="foo", serial_number="1234567890"), setup_logger
-    )
-    setup_logger.assert_called_once_with(mocker.ANY)
 
 
 def test_unknown_container_type(mocker):
