@@ -19,7 +19,6 @@ import os
 import shlex
 import subprocess
 import sys
-import syslog
 import time
 
 from lava_common.constants import UDEV_RULE_FILENAME
@@ -45,7 +44,6 @@ def setup_logger(data):
     # The logger can be used by the parser and the Job object in all phases.
     global logger
     logger = logging.getLogger("dispatcher")
-    syslog.syslog("[%s] Logging to streamhandler" % options.job_id)
     logger.addHandler(logging.StreamHandler())
 
     return logger
