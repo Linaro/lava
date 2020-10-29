@@ -133,4 +133,4 @@ def test_debug_log(mocker, tmp_path):
     log = tmp_path / "log"
     main(["lava-dispatcher-host", "--debug-log", str(log), "rules", "show"])
     assert log.exists()
-    assert "Called with args" in log.read_text()
+    assert "Called with:" in log.read_text()

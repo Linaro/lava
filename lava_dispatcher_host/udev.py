@@ -36,5 +36,5 @@ ACTION=="add", ATTRS{{idVendor}}!="", ATTRS{{idProduct}}!="" \\
 
 
 def get_udev_rules():
-    program = sys.argv[0]
+    program = sys.argv[0] + " --debug-log=/var/log/lava-dispatcher-host.log"
     return __udev_rules__.format(lava_dispatcher_host=program)

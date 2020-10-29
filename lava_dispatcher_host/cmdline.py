@@ -16,8 +16,11 @@
 import argparse
 import logging
 import os
+import shlex
 import subprocess
+import sys
 import syslog
+import time
 
 from lava_common.constants import UDEV_RULE_FILENAME
 from lava_common.log import YAMLLogger
@@ -172,7 +175,11 @@ def main(argv):
 
     if options.func:
         if options.debug_log:
-            options.debug_log.write("Called with args %r\n" % argv)
+            if not sys.stderr.isatty():
+                sys.stderr = options.debug_log
+            timestamp = time.strftime("%c", time.gmtime())
+            cmd = " ".join([shlex.quote(a) for a in argv])
+            options.debug_log.write("%s Called with: %s\n" % (timestamp, cmd))
         options.func(options)
         if options.debug_log:
             options.debug_log.close()
