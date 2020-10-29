@@ -18,6 +18,7 @@ actions:
         minutes: 15
       # AOSP deployment
       to: fastboot
+      os: android
       docker:
         image: adb-fastboot
       images:
@@ -41,6 +42,7 @@ actions:
         minutes: 10
       docker:
         image: adb-fastboot
+        os: debian
       definitions:
         - repository:
             metadata:
@@ -88,3 +90,26 @@ actions:
           from: inline
           path: more-tests
           name: more-tests
+
+  - test:
+      timeout:
+        minutes: 10
+      definitions:
+        - repository:
+            metadata:
+              format: Lava-Test Test Definition 1.0
+              name: more-tests
+              description: "Some additional tests"
+              os:
+                - aosp
+              scope:
+                - functional
+              devices:
+                - hi6220-hikey-r2
+            run:
+              steps:
+                - date
+                - hostname
+          from: inline
+          path: non-docker-tests
+          name: non-docker-tests
