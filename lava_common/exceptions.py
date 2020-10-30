@@ -112,7 +112,7 @@ class LAVATimeoutError(LAVAError):
 
 class MultinodeProtocolTimeoutError(LAVAError):
     error_help = (
-        "MultinodeProtocolTimeoutError: Multinode wait/sync call " "has timed out."
+        "MultinodeProtocolTimeoutError: Multinode wait/sync call has timed out."
     )
     error_type = "MultinodeTimeout"
 
