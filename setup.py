@@ -143,6 +143,7 @@ SERVER = {
             "/etc/logrotate.d/",
             [
                 "etc/logrotate.d/django-log",
+                "etc/logrotate.d/lava-celery-worker-log",
                 "etc/logrotate.d/lava-publisher-log",
                 "etc/logrotate.d/lava-scheduler-log",
                 "etc/logrotate.d/lava-server-gunicorn-log",
