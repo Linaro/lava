@@ -12,3 +12,4 @@
 # URL="http://localhost/"
 # TOKEN="--token <token>"
 # WS_URL="--ws-url http://localhost/ws/"
+# HTTP_TIMEOUT="--http-timeout 600"

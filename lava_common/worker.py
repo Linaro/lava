@@ -61,6 +61,12 @@ def get_parser(url_required=True) -> argparse.ArgumentParser:
     token.add_argument(
         "--token-file", type=Path, default=None, help="Worker token file"
     )
+    net.add_argument(
+        "--http-timeout",
+        type=int,
+        default=10 * 60,
+        help="HTTP timeout when requesting the server. Should always be longer than the gunicorn timeout.",
+    )
 
     log = parser.add_argument_group("logging")
     log.add_argument(

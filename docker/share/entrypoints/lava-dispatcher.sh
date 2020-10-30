@@ -24,4 +24,4 @@ for f in $(find /root/entrypoint.d/ -type f); do
     esac
 done
 
-exec /usr/bin/lava-worker --level "$LOGLEVEL" --log-file "$LOGFILE" --url "$URL" $TOKEN $WORKER_NAME $WS_URL
+exec /usr/bin/lava-worker --level "$LOGLEVEL" --log-file "$LOGFILE" --url "$URL" $TOKEN $WORKER_NAME $WS_URL $HTTP_TIMEOUT

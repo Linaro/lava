@@ -55,7 +55,7 @@ from lava_common.worker import get_parser
 FINISH_MAX_DURATION = 120
 JOBS_CHECK_INTERVAL = 5
 
-TIMEOUT = 5  # http timeout
+TIMEOUT = 60 * 10  # http timeout to 10 minutes
 WORKER_DIR = Path(WORKER_DIR)
 HEADERS = {"User-Agent": f"lava-worker {__version__}"}
 
@@ -679,6 +679,10 @@ async def main() -> int:
     # Setup debugging if needed
     global debug
     debug = options.debug
+
+    # Setup timeout
+    global TIMEOUT
+    TIMEOUT = options.http_timeout
 
     worker_dir = options.worker_dir
     worker_dir.mkdir(mode=0o755, parents=True, exist_ok=True)
