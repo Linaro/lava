@@ -1,0 +1,10 @@
+/var/log/lava-server/lava-celery-worker.log {
+	weekly
+	rotate 12
+	compress
+	delaycompress
+	missingok
+	su lavaserver lavaserver
+	notifempty
+	create 644 lavaserver adm
+}
