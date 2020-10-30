@@ -16,8 +16,10 @@
 import argparse
 import logging
 import os
+import shlex
 import subprocess
-import syslog
+import sys
+import time
 
 from lava_common.constants import UDEV_RULE_FILENAME
 from lava_common.log import YAMLLogger
@@ -26,26 +28,6 @@ from lava_dispatcher_host import add_device_container_mapping
 from lava_dispatcher_host import remove_device_container_mappings
 from lava_dispatcher_host import share_device_with_container
 from lava_dispatcher_host.udev import get_udev_rules
-
-
-logger = None
-LINGER = 10000
-
-
-def setup_logger(data):
-    options = argparse.Namespace(**data)
-
-    # Pipeline always log as YAML so change the base logger.
-    # Every calls to logging.getLogger will now return a YAMLLogger
-    logging.setLoggerClass(YAMLLogger)
-
-    # The logger can be used by the parser and the Job object in all phases.
-    global logger
-    logger = logging.getLogger("dispatcher")
-    syslog.syslog("[%s] Logging to streamhandler" % options.job_id)
-    logger.addHandler(logging.StreamHandler())
-
-    return logger
 
 
 def handle_rules_show(options):
@@ -72,7 +54,7 @@ def handle_rules_install(options):
 
 
 def handle_devices_share(options):
-    share_device_with_container(options, setup_logger)
+    share_device_with_container(options)
 
 
 def handle_devices_map(options):
@@ -172,7 +154,11 @@ def main(argv):
 
     if options.func:
         if options.debug_log:
-            options.debug_log.write("Called with args %r\n" % argv)
+            if not sys.stderr.isatty():
+                sys.stderr = options.debug_log
+            timestamp = time.strftime("%c", time.gmtime())
+            cmd = " ".join([shlex.quote(a) for a in argv])
+            options.debug_log.write("%s Called with: %s\n" % (timestamp, cmd))
         options.func(options)
         if options.debug_log:
             options.debug_log.close()

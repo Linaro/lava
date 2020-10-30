@@ -15,12 +15,18 @@
 
 import glob
 import logging
+import logging.handlers
 import os
 import subprocess
 
 from lava_common.compat import yaml_dump, yaml_load
 from lava_common.constants import DISPATCHER_DOWNLOAD_DIR as JOBS_DIR
 from lava_common.exceptions import InfrastructureError
+
+
+logger = logging.getLogger("lava-dispatcher-host")
+logger.addHandler(logging.handlers.SysLogHandler(address="/dev/log"))
+logger.setLevel(logging.INFO)
 
 
 def get_mapping_path(job_id):
@@ -35,7 +41,6 @@ def add_device_container_mapping(job_id, device_info, container, container_type=
         "container_type": container_type,
         "job_id": job_id,
     }
-    logger = logging.getLogger("dispatcher")
     mapping_path = get_mapping_path(job_id)
     data = load_mapping_data(mapping_path)
 
@@ -46,11 +51,6 @@ def add_device_container_mapping(job_id, device_info, container, container_type=
     os.makedirs(os.path.dirname(mapping_path), exist_ok=True)
     with open(mapping_path, "w") as f:
         f.write(yaml_dump(newdata))
-        logger.info(
-            "Added mapping for {device_info} to {container_type} container {container}".format(
-                **item
-            )
-        )
 
 
 def remove_device_container_mappings(job_id):
@@ -66,13 +66,10 @@ def validate_device_info(device_info):
         )
 
 
-def share_device_with_container(options, setup_logger=None):
+def share_device_with_container(options):
     data = find_mapping(options)
     if not data:
         return
-    if setup_logger:
-        setup_logger(data)
-    logger = logging.getLogger("dispatcher")
     container = data["container"]
     device = options.device
     if not device.startswith("/dev/"):
@@ -124,7 +121,6 @@ def match_mapping(device_info, options):
 
 
 def log_sharing_device(device, container_type, container):
-    logger = logging.getLogger("dispatcher")
     logger.info(f"Sharing {device} with {container_type} container {container}")
 
 
@@ -135,24 +131,39 @@ def share_device_with_container_lxc(container, node):
 
 def share_device_with_container_docker(container, node):
     log_sharing_device(node, "docker", container)
-    container_id = subprocess.check_output(
-        ["docker", "inspect", "--format={{.ID}}", container], text=True
-    ).strip()
-    nodeinfo = os.stat(node)
-    major = os.major(nodeinfo.st_rdev)
-    minor = os.minor(nodeinfo.st_rdev)
-    with open(
-        "/sys/fs/cgroup/devices/docker/%s/devices.allow" % container_id, "w"
-    ) as allow:
-        allow.write("a %d:%d rwm\n" % (major, minor))
-    subprocess.check_call(
+    try:
+        container_id = subprocess.check_output(
+            ["docker", "inspect", "--format={{.ID}}", container], text=True
+        ).strip()
+    except subprocess.CalledProcessError:
+        logger.warning(
+            f"Cannot share {node} with docker container {container}: container not found"
+        )
+        return
+
+    try:
+        nodeinfo = os.stat(node)
+        major = os.major(nodeinfo.st_rdev)
+        minor = os.minor(nodeinfo.st_rdev)
+        with open(
+            "/sys/fs/cgroup/devices/docker/%s/devices.allow" % container_id, "w"
+        ) as allow:
+            allow.write("a %d:%d rwm\n" % (major, minor))
+    except FileNotFoundError as exc:
+        logger.warning(
+            "Cannot share {node} with docker container {container}: {exc.filename} not found"
+        )
+        return
+
+    # it's ok to fail; container might have already exited at this point.
+    subprocess.call(
         [
             "docker",
             "exec",
             container,
             "sh",
             "-c",
-            "mkdir -p %s && mknod %s c %d %d || true"
+            "mkdir -p %s && mknod %s c %d %d"
             % (os.path.dirname(node), node, major, minor),
         ]
     )

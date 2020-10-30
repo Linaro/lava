@@ -1,3 +1,4 @@
+import logging
 from lava_dispatcher_host import add_device_container_mapping
 
 
@@ -21,6 +22,10 @@ class DeviceContainerMappingMixin:
         for device in devices:
             add_device_container_mapping(
                 job_prefix + job_id, device, container, container_type=container_type
+            )
+            logger = logging.getLogger("dispatcher")
+            logger.info(
+                f"Added mapping for {device} to {container_type} container {container}"
             )
 
     def trigger_share_device_with_container(self, device):
