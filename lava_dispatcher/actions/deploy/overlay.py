@@ -265,6 +265,17 @@ class CreateOverlay(Action):
                 for key, value in self.job.parameters["secrets"].items():
                     fout.write("%s=%s\n" % (key, value))
 
+        if "env_dut" in self.job.parameters:
+            environment = self.get_namespace_data(
+                action="deploy-device-env", label="environment", key="env_dict"
+            )
+            if environment is not None:
+                self.logger.debug("Creating %s/secrets with env", lava_path)
+                with open(os.path.join(lava_path, "secrets"), "a") as fout:
+                    for key in environment:
+                        self.logger.debug("Handling %s", key)
+                        fout.write("%s=%s\n" % (key, environment[key]))
+
         connection = super().run(connection, max_end_time)
         return connection
 
