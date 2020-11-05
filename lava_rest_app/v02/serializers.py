@@ -85,6 +85,11 @@ class TestCaseSerializer(base_serializers.TestCaseSerializer):
     resource_uri = TestCaseResourceUriField(
         view_name="suites-test-detail", read_only=True
     )
+    unit = serializers.CharField(source="units")
+
+    class Meta(base_serializers.TestCaseSerializer.Meta):
+        exclude = ("units",)
+        fields = None
 
 
 class DeviceTypeSerializer(base_serializers.DeviceTypeSerializer):
