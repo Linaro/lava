@@ -1,4 +1,5 @@
 {% extends 'base-barebox.jinja2' %}
 
+{% set barebox_final_message = 'Loaded kernel' %}
 {% set bootloader_prompt = bootloader_prompt|default('ZII Ultra Zest Board:/') %}
 {% set console_device = console_device | default('ttymxc0') %}
