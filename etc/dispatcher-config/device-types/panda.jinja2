@@ -3,11 +3,6 @@
 
 {% set console_device = console_device|default('ttyO2') %}
 {% set baud_rate = baud_rate|default(115200) %}
-{% if extra_kernel_args %}
-{% set extra_kernel_args = "fixrtc nocompcache vram=48M omapfb.vram=0:24M mem=456M@0x80000000 mem=512M@0xA0000000 rootdelay=5 "  + extra_kernel_args %}
-{% else %}
-{% set extra_kernel_args = "fixrtc nocompcache vram=48M omapfb.vram=0:24M mem=456M@0x80000000 mem=512M@0xA0000000 rootdelay=5" %}
-{% endif %}
 {% set bootloader_prompt = bootloader_prompt|default('U-Boot') %}
 {% set bootz_kernel_addr = '0x82000000' %}
 {% set bootz_ramdisk_addr = '0x84000000' %}
