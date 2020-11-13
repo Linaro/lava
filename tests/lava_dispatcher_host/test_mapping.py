@@ -58,6 +58,11 @@ def test_device_info_keys_required(mocker):
         add_device_container_mapping("1", {"serial_number": None}, "mycontainer")
 
 
+@pytest.fixture(autouse=True)
+def pyudev(mocker):
+    return mocker.patch("lava_dispatcher_host.pyudev")
+
+
 def test_simple_share_device_with_container(mocker):
     check_call = mocker.patch("subprocess.check_call")
     add_device_container_mapping("1", {"serial_number": "1234567890"}, "mycontainer")
