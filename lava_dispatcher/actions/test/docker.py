@@ -212,7 +212,8 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
         docker.wait()
 
         for dev in devices:
-            self.trigger_share_device_with_container(dev)
+            if not os.path.islink(dev):
+                self.trigger_share_device_with_container(dev)
 
         try:
             super().run(shell_connection, max_end_time)
