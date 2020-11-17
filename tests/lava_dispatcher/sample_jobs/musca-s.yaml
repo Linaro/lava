@@ -1,0 +1,37 @@
+device_type: musca-s
+job_name: example-musca-s-job
+
+timeouts:
+  job:
+    minutes: 5
+
+priority: medium
+visibility: public
+
+# Test binary available from: https://community.arm.com/cfs-file/__key/communityserver-wikis-components-files/00-00-00-00-20/musca_2D00_s1_5F00_blinky.zip
+
+actions:
+    - deploy:
+        to: musca
+        images:
+          test_binary:
+            url: https://samplesite/musca_2D00_s1_5F00_blinky.hex
+        namespace: target
+
+    - boot:
+        method: musca
+        namespace: target
+        # prompt: ''  # Prompts can be used, but this binary doesn't print anything
+
+# Typically would have a test monitor stage
+#    - test:
+#        namespace: target
+#        delay: 5
+#        monitors:
+#        - name: "example_test_monitor"
+#          start: "Starting test suite"
+#          end: "End of test suite"
+#          pattern: "Test '(?P<test_case_id>.*)' has (?P<result>PASSED|FAILED)"
+#          fixupdict:
+#             'PASSED': pass
+#             'FAILED': fail

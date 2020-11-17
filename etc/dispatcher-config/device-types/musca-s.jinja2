@@ -1,0 +1,7 @@
+{% extends 'musca.jinja2' %}
+
+{% set action_timeout_musca_deploy = action_timeout_musca_deploy | default('3') %}
+{% set action_timeout_wait_device_path = action_timeout_wait_device_path | default('3') %}
+{% set action_timeout_power_off = action_timeout_power_off | default('30') %}
+{% set action_timeout_unmount_musca_usbmsd = action_timeout_unmount_musca_usbmsd | default('180') %}
+{% set action_timeout_musca_boot = action_timeout_musca_boot | default('3') %}

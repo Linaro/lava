@@ -5,8 +5,10 @@
 to: musca
 *********
 
-This deployment method allows deployment of software to `musca devices
-<https://developer.arm.com/products/system-design/development-boards/iot-test-chips-and-boards/musca-a-test-chip-board>`__.
+This deployment method allows deployment of software to musca devices. Currently supported musca devices: `musca a
+<https://developer.arm.com/products/system-design/development-boards/iot-test-chips-and-boards/musca-a-test-chip-board>`__, `musca b1
+<https://developer.arm.com/tools-and-software/development-boards/iot-test-chips-and-boards/musca-b-test-chip-board>`__ and `musca s1
+<https://developer.arm.com/tools-and-software/development-boards/iot-test-chips-and-boards/musca-s1-test-chip-board>`__.
 
 The board is powered on and the mass storage device is mounted.
 The test binary is copied to the MSD and then the MSD is unmounted.
