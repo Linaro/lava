@@ -1,0 +1,38 @@
+{# device_type: lpcxpresso55s69 #}
+{% extends 'base.jinja2' %}
+{% set usb_vendor_id = '1366' %}
+{% set usb_product_id = '0105' %}
+{% block body %}
+board_id: '{{ board_id|default('0000000000') }}'
+usb_vendor_id: '{{ usb_vendor_id }}'
+usb_product_id: '{{ usb_product_id }}'
+
+actions:
+  deploy:
+    connections:
+      lxc:
+    methods:
+      lxc:
+      image:
+        parameters:
+
+  boot:
+    connections:
+      serial:
+      lxc:
+      ssh:
+    methods:
+      lxc:
+      jlink:
+        parameters:
+          command:
+            JLinkExe
+          address:
+            0x00000000
+          options:
+          - '-device LPC55S69_core0'
+          - '-if SWD'
+          - '-speed auto'
+{% endblock body -%}
+
+{% set device_info = device_info|default([{'board_id': board_id, 'usb_vendor_id': usb_vendor_id, 'usb_product_id': usb_product_id}]) %}
