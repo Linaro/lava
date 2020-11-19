@@ -189,6 +189,7 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
             docker.bind_mount(bind_mount[0], bind_mount[1], read_only)
 
         docker.interactive()
+        docker.tty()
         docker.hostname("lava")
         docker.name(container)
         docker.environment("PS1", "docker-test-shell:$ ")
