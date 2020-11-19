@@ -211,8 +211,14 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
 
         docker.wait()
 
+        # share all the devices as there isn't a 1:1 relationship between
+        # the trigger and actual sharing of the devices
         for dev in devices:
-            self.trigger_share_device_with_container(dev)
+            if not os.path.islink(dev):
+                self.trigger_share_device_with_container(dev)
+
+        for dev in devices:
+            docker.wait_file(dev)
 
         try:
             super().run(shell_connection, max_end_time)

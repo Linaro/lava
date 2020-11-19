@@ -18,11 +18,13 @@ import logging
 import logging.handlers
 import os
 import subprocess
+import pyudev
 
 from lava_common.compat import yaml_dump, yaml_load
 from lava_common.constants import DISPATCHER_DOWNLOAD_DIR as JOBS_DIR
 from lava_common.exceptions import InfrastructureError
 
+context = pyudev.Context()
 
 logger = logging.getLogger("lava-dispatcher-host")
 logger.addHandler(logging.handlers.SysLogHandler(address="/dev/log"))
@@ -128,19 +130,15 @@ def share_device_with_container_lxc(container, node):
     log_sharing_device(node, "lxc", container)
     subprocess.check_call(["lxc-device", "-n", container, "add", node])
 
+    device = pyudev.Devices.from_device_file(context, node)
+    for child in device.children:
+        if child.device_node:
+            subprocess.check_call(
+                ["lxc-device", "-n", container, "add", child.device_node]
+            )
 
-def share_device_with_container_docker(container, node):
-    log_sharing_device(node, "docker", container)
-    try:
-        container_id = subprocess.check_output(
-            ["docker", "inspect", "--format={{.ID}}", container], text=True
-        ).strip()
-    except subprocess.CalledProcessError:
-        logger.warning(
-            f"Cannot share {node} with docker container {container}: container not found"
-        )
-        return
 
+def pass_device_into_container_docker(container, container_id, node, links=[]):
     try:
         nodeinfo = os.stat(node)
         major = os.major(nodeinfo.st_rdev)
@@ -167,3 +165,39 @@ def share_device_with_container_docker(container, node):
             % (os.path.dirname(node), node, major, minor),
         ]
     )
+
+    for link in links:
+        subprocess.call(
+            [
+                "docker",
+                "exec",
+                container,
+                "sh",
+                "-c",
+                f"mkdir -p {os.path.dirname(link)} && ln -f -s {node} {link}",
+            ]
+        )
+
+
+def share_device_with_container_docker(container, node):
+    log_sharing_device(node, "docker", container)
+    try:
+        container_id = subprocess.check_output(
+            ["docker", "inspect", "--format={{.ID}}", container], text=True
+        ).strip()
+    except subprocess.CalledProcessError:
+        logger.warning(
+            f"Cannot share {node} with docker container {container}: container not found"
+        )
+        return
+
+    device = pyudev.Devices.from_device_file(context, node)
+    pass_device_into_container_docker(
+        container, container_id, node, device.device_links
+    )
+
+    for child in device.children:
+        if child.device_node:
+            pass_device_into_container_docker(
+                container, container_id, child.device_node, child.device_links
+            )

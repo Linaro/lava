@@ -87,6 +87,7 @@ def test_run(action, mocker):
         "lava_dispatcher_host.action.DeviceContainerMappingMixin.trigger_share_device_with_container"
     )
     docker_wait = mocker.patch("lava_dispatcher.utils.docker.DockerRun.wait")
+    docker_wait_file = mocker.patch("lava_dispatcher.utils.docker.DockerRun.wait_file")
     docker_prepare = mocker.patch("lava_dispatcher.utils.docker.DockerRun.prepare")
     docker_destroy = mocker.patch("lava_dispatcher.utils.docker.DockerRun.destroy")
 
@@ -146,6 +147,7 @@ def test_run(action, mocker):
 
     # waits for container to be available
     docker_wait.assert_called()
+    docker_wait_file.assert_called()
 
     # device shared with docker
     trigger_share_device_with_container.assert_called_with("/dev/foobar")

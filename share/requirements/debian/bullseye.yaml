@@ -188,3 +188,6 @@ lava-common:
 lava-dispatcher-host:
   requests:
     name: python3-requests
+  pyudev:
+    version: ">=0.21"
+    name: python3-pyudev

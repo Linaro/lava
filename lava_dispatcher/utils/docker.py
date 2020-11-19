@@ -156,6 +156,20 @@ class DockerRun:
                 time.sleep(delay)
                 delay = delay * 2  # exponential backoff
 
+    def wait_file(self, filename):
+        delay = 1
+        while True:
+            try:
+                subprocess.check_call(
+                    ["docker", "exec", self.__name__, "test", "-e", filename],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+                return
+            except subprocess.CalledProcessError:
+                time.sleep(delay)
+                delay = delay * 2  # exponential backoff
+
     def destroy(self):
         subprocess.call(
             ["docker", "rm", "-f", self.__name__],
