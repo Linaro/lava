@@ -81,6 +81,9 @@ actions:
                 - functional
               devices:
                 - hi6220-hikey-r2
+            install:
+              deps:
+                - moreutils
             run:
               steps:
                 - adb wait-for-device

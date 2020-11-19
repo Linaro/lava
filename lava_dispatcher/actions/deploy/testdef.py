@@ -980,7 +980,10 @@ class TestInstallAction(TestOverlayAction):
                 deps = testdef["install"].get("deps", [])
 
                 # distro-specific dependencies
-                if "distro" in self.parameters["deployment_data"]:
+                if (
+                    "deployment_data" in self.parameters
+                    and "distro" in self.parameters["deployment_data"]
+                ):
                     deps = deps + testdef["install"].get(
                         "deps-" + self.parameters["deployment_data"]["distro"], []
                     )
