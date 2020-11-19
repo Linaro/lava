@@ -178,33 +178,6 @@ specified image, and the following applies:
   sh -c "${LAVA_HARD_RESET_COMMAND}"
   ```
 
-## Use case 4: running test definition with dependencies
-
-Ideally, when running test under docker, you will want to use a docker image
-that has all necessary tools pre-installed. However, some test definitions
-specify dependencies, and is order for LAVA to automatically install those, it
-needs to know which OS is in your container image. For that, you can specify
-`os` in the `docker` section:
-
-```yaml
-# ...
-    - test:
-        docker:
-            image: my-adb-image
-            os: debian
-        timeout:
-        minutes: 5
-        definitions:
-            - repository:
-                # [...]
-                from: inline
-                path: inline-smoke-test
-                name: docker-test
-# ...
-```
-
-If no `os` is specified, and the test definition declares test dependencies,
-you will receive a warning saying that they need to be preinstalled.
 
 ## Migrating from LXC to Docker
 
