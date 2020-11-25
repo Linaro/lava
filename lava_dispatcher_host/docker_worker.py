@@ -19,14 +19,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
-import os
 import pathlib
 import re
 import socket
 import signal
 import subprocess
 import sys
-import urllib
 
 import requests
 from requests.adapters import HTTPAdapter

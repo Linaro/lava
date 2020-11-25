@@ -14,7 +14,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import argparse
-import logging
 import os
 import shlex
 import subprocess
@@ -22,7 +21,6 @@ import sys
 import time
 
 from lava_common.constants import UDEV_RULE_FILENAME
-from lava_common.log import YAMLLogger
 
 from lava_dispatcher_host import add_device_container_mapping
 from lava_dispatcher_host import remove_device_container_mappings
