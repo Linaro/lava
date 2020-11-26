@@ -154,6 +154,10 @@ def pass_device_into_container_docker(container, container_id, node, links=[]):
         return
 
     # it's ok to fail; container might have already exited at this point.
+    nodedir = os.path.dirname(node)
+    uid = nodeinfo.st_uid
+    gid = nodeinfo.st_gid
+    mode = "%o" % (0o777 & nodeinfo.st_mode)
     subprocess.call(
         [
             "docker",
@@ -161,8 +165,7 @@ def pass_device_into_container_docker(container, container_id, node, links=[]):
             container,
             "sh",
             "-c",
-            "mkdir -p %s && mknod %s c %d %d"
-            % (os.path.dirname(node), node, major, minor),
+            f"mkdir -p {nodedir} && mknod {node} c {major} {minor} && chown {uid}:{gid} {node} && chmod {mode} {node}",
         ]
     )
 
