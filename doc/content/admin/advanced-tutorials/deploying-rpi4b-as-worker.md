@@ -12,7 +12,7 @@ LAVA worker.
 What you will need for a worker is:
 
 * RPi4 with power supply
-* SD card
+* SD card with min 8GB (only temporarily)
 * SSD / Flash drive
 * SATA(M.2, etc) to USB adapter
 * FTDI USB to serial UART cable
@@ -22,70 +22,46 @@ along with the more extensive setup instructions which we will cover here.
 
 ## Prepare the Pi
 
-First of all, get the latest Debian image from [Tested images](https://raspi.debian.net/tested-images/) - download the one for the RPi 4 family. This is a good
-stock image for a number of reasons, not least of which is that it already has
-enable-uart set to 1 in the boot config.txt, which enables serial output.
-
-Unpack it and “dd” it to the micro sd-card.
-
-Connect serial and power up the board - note that it takes a while before you
-see any serial output at all. Once you get to the login prompt the user is
-“root” and there is no password.
-
-## Booting the Pi from SD card
-
-* Boot the Pi from SD card (without connecting the SSD).
-* Connect the SSD via USB to the Pi
-* Connect to the serial terminal (alternatively you can use ethernet and
-connect via SSH). Username is `root` while password is an empty string.
+Download the [Raspberry Pi OS](https://www.raspberrypi.org/software/operating-systems/) and flash it onto an SD card.
+Once you get to login prompt the user is `pi` and password is `raspberry`
+then perform the following steps:
 
 ```shell
 apt update
-apt install usbutils rsync
-fdisk /dev/sda
-```
-
-* Create new partition via fdisk tool
-* Create an ext4 filesystem via:
-
-```shell
-mke2fs -t ext4 -L SSD1ROOTFS /dev/sda1
-```
-
-* Make sure that cmdline.txt contains the correct rootfs label:
-
-```shell
-cd /boot/firmware
-cp cmdline.txt cmdline.sd
-```
-
-* Edit cmdline.txt "root=LABEL=SSD1ROOTFS"
-* We need to back it up for later:
-
-```shell
-cp cmdline.txt cmdline.usb
-```
-
-* Edit /etc/fstab "LABEL=SSD1ROOTFS"
-
-```shell
-mount /dev/sda1 /mnt
-rsync -axv / /mnt
-umount /mnt
-```
-
-!!! warning "check cmdline.txt"
-    Always check `/boot/firmware/cmdline.txt` before a reboot
-
-```shell
+apt full-upgrade
+rpi-update
+reboot
+sudo rpi-eeprom-update -d -a
 reboot
 ```
 
-* Double check that we're using rootfs from the SSD:
+After that launch the raspi-config:
 
 ```shell
-findmnt -n -o SOURCE /
+raspi-config
 ```
+
+In the menu, find the `Boot ROM Version` (it defers where it is depending on
+the version of raspi-config, either under `Boot options` or
+`Advanced settings`).
+Select **Latest** version of boot ROM software. In the next menu, for a question "Reset boot ROM to defaults?", select **NO**.
+
+Then in the same submenu select "Boot Order" and choose "USB Boot". That's
+it.
+
+## Prepare the SSD
+
+Currently we only support a Debian images for LAVA installation (unless you'd
+like to use docker).
+
+Get the latest Debian image from [Tested images](https://raspi.debian.net/tested-images/) - download the one for the RPi 4 family. This is a good
+stock image for a number of reasons, not least of which is that it already has
+enable-uart set to 1 in the boot config.txt, which enables serial output.
+The user for this image is root and there is no password.
+
+Unpack it and “dd” it onto the SSD.
+If everything is OK, you should be able to remove the SD card from th Pi and
+boot the system from the SSD over USB.
 
 We're now ready to install the LAVA worker.
 
@@ -120,15 +96,24 @@ apt install lava-dispatcher
 apt dist-upgrade -t buster
 ```
 
-!!! warning "check cmdline.txt"
-    Upgrade command might overwrite your `cmdline.txt` if there is a new kernel
-    package available so before rebooting you might want to check it out and
-    restore from the backup we created previously.
+## Auto-registration of worker (or token)
+
+We need to tell LAVA master to `trust` this worker and there's two ways to
+do this. You can either add the following line to `/etc/lava-server/settings.d/01-autoregister.yaml` on the LAVA master (remember to change the netmask for
+the subnet where the Pi is):
+
+```yaml
+WORKER_AUTO_REGISTER_NETMASK: ["172.0.0.0/8"]
+```
+
+Or, alternatively you can add a token of your choice in the LAVA worker (Pi 4)
+in `/etc/lava-dispatcher/lava-worker` settings and paste the same token in the
+LAVA admin UI on the master in the worker section for this particular worker.
 
 ## Setting up the server url
 
 Once you have lava-worker running you need to point it to the LAVA server it
-will connect to.
+will connect to. Do this in `/etc/lava-dispatcher/lava-worker` on the Pi.
 
 After that RPi4 worker should be visible in the LAVA server UI and marked as
 **Online**.
