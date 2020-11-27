@@ -117,6 +117,10 @@ class TestInteractiveAction(Action):
         # Loop on all scripts
         for script in self.parameters["interactive"]:
             start = time.time()
+
+            # Set the connection prompts
+            connection.prompt_str = script["prompts"]
+
             result = {
                 "definition": "lava",
                 "case": "%s_%s" % (self.parameters["stage"], script["name"]),
@@ -130,9 +134,6 @@ class TestInteractiveAction(Action):
                 # Log the current script result (even in case of error)
                 result["duration"] = "%.02f" % (time.time() - start)
                 self.logger.results(result)
-
-            # Set the connection prompts
-            connection.prompt_str = script["prompts"]
 
         return connection
 
