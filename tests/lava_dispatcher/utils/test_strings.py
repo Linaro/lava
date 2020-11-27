@@ -21,6 +21,9 @@ def test_substitute():
     ]
     assert substitute(["hello", "world"], {"hello": None}) == ["hello", "world"]
     assert substitute(["hello", "world"], {"hello": None}, drop=True) == ["world"]
+    assert substitute(
+        ["hello", "world"], {"hello": None}, drop=True, drop_line=False
+    ) == ["world"]
 
 
 def test_seconds_to_str():
