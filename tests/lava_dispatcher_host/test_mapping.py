@@ -58,23 +58,25 @@ def test_device_info_keys_required(mocker):
         add_device_container_mapping("1", {"serial_number": None}, "mycontainer")
 
 
-@pytest.fixture(autouse=True)
-def pyudev(mocker):
-    return mocker.patch("lava_dispatcher_host.pyudev")
+@pytest.fixture
+def device_links(pyudev):
+    return pyudev.Devices.from_device_file.return_value.device_links
 
 
-def test_simple_share_device_with_container(mocker):
-    check_call = mocker.patch("subprocess.check_call")
+@pytest.fixture
+def pass_device_lxc(mocker):
+    return mocker.patch("lava_dispatcher_host.pass_device_into_container_lxc")
+
+
+def test_simple_share_device_with_container(mocker, pass_device_lxc, device_links):
     add_device_container_mapping("1", {"serial_number": "1234567890"}, "mycontainer")
     share_device_with_container(Namespace(device="foo/bar", serial_number="1234567890"))
-
-    check_call.assert_called_once_with(
-        ["lxc-device", "-n", "mycontainer", "add", "/dev/foo/bar"]
-    )
+    pass_device_lxc.assert_called_once_with("mycontainer", "/dev/foo/bar", device_links)
 
 
-def test_mapping_with_serial_number_but_called_with_vendor_product_id_too(mocker):
-    check_call = mocker.patch("subprocess.check_call")
+def test_mapping_with_serial_number_but_called_with_vendor_product_id_too(
+    mocker, pass_device_lxc, device_links
+):
     add_device_container_mapping(
         "1",
         {
@@ -94,20 +96,15 @@ def test_mapping_with_serial_number_but_called_with_vendor_product_id_too(mocker
         )
     )
 
-    check_call.assert_called_once_with(
-        ["lxc-device", "-n", "mycontainer", "add", "/dev/foo/bar"]
-    )
+    pass_device_lxc.assert_called_once_with("mycontainer", "/dev/foo/bar", device_links)
 
 
-def test_two_concurrent_jobs(mocker):
-    check_call = mocker.patch("subprocess.check_call")
+def test_two_concurrent_jobs(mocker, pass_device_lxc, device_links):
     add_device_container_mapping("1", {"serial_number": "1234567890"}, "container1")
     add_device_container_mapping("2", {"serial_number": "9876543210"}, "container2")
     share_device_with_container(Namespace(device="baz/qux", serial_number="9876543210"))
 
-    check_call.assert_called_once_with(
-        ["lxc-device", "-n", "container2", "add", "/dev/baz/qux"]
-    )
+    pass_device_lxc.assert_called_once_with("container2", "/dev/baz/qux", device_links)
 
 
 def test_no_device_found(mocker):
@@ -118,8 +115,7 @@ def test_no_device_found(mocker):
     check_call.assert_not_called()
 
 
-def test_map_by_vendor_id_and_product_id(mocker):
-    check_call = mocker.patch("subprocess.check_call")
+def test_map_by_vendor_id_and_product_id(mocker, pass_device_lxc, device_links):
     add_device_container_mapping(
         "1", {"vendor_id": "aaaa", "product_id": "xxxx"}, "container1"
     )
@@ -131,8 +127,8 @@ def test_map_by_vendor_id_and_product_id(mocker):
             product_id="xxxx",
         )
     )
-    check_call.assert_called_once_with(
-        ["lxc-device", "-n", "container1", "add", "/dev/bus/usb/001/099"]
+    pass_device_lxc.assert_called_once_with(
+        "container1", "/dev/bus/usb/001/099", device_links
     )
 
 

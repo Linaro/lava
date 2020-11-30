@@ -127,15 +127,35 @@ def log_sharing_device(device, container_type, container):
 
 
 def share_device_with_container_lxc(container, node):
-    log_sharing_device(node, "lxc", container)
-    subprocess.check_call(["lxc-device", "-n", container, "add", node])
-
     device = pyudev.Devices.from_device_file(context, node)
+    pass_device_into_container_lxc(container, node, device.device_links)
     for child in device.children:
         if child.device_node:
-            subprocess.check_call(
-                ["lxc-device", "-n", container, "add", child.device_node]
-            )
+            pass_device_into_container_lxc(child.device_node, child.device_links)
+
+
+def pass_device_into_container_lxc(container, node, links=[]):
+    try:
+        nodeinfo = os.stat(node)
+        uid = nodeinfo.st_uid
+        gid = nodeinfo.st_gid
+        mode = "%o" % (0o777 & nodeinfo.st_mode)
+    except FileNotFoundError as exc:
+        logger.warning(
+            f"Cannot share {node} with lxc container {container}: {exc.filename} not found"
+        )
+        return
+    subprocess.check_call(["lxc-device", "-n", container, "add", node])
+    log_sharing_device(node, "lxc", container)
+
+    set_perms = f"chown {uid}:{gid} {node} && chmod {mode} {node}"
+    subprocess.check_call(["lxc-attach", "-n", container, "--", "sh", "-c", set_perms])
+
+    for link in links:
+        create_link = f"mkdir -p {os.path.dirname(link)} && ln -f -s {node} {link}"
+        subprocess.check_call(
+            ["lxc-attach", "-n", container, "--", "sh", "-c", create_link]
+        )
 
 
 def pass_device_into_container_docker(container, container_id, node, links=[]):
