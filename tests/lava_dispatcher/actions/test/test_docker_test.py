@@ -43,11 +43,6 @@ def action(job):
 
 
 @pytest.fixture
-def deploy_action(job):
-    return job.pipeline.actions[0]
-
-
-@pytest.fixture
 def first_test_action(action):
     return action
 
@@ -109,8 +104,6 @@ def test_run(action, mocker):
     assert lava_test_runner.exists()
     lava_test_0 = overlay / "0"
     assert lava_test_runner.exists()
-    lava_install_packages = overlay / "bin" / "lava-install-packages"
-    assert "apt-get" in lava_install_packages.read_text()
 
     environmentfile = overlay / "environment"
     env = {
@@ -162,9 +155,9 @@ def test_run(action, mocker):
     docker_destroy.assert_called()
 
 
-def test_overlay_stages(first_test_action, second_test_action):
+def test_stages(first_test_action, second_test_action):
     assert first_test_action.parameters["stage"] == 0
-    assert second_test_action.parameters["stage"] == 0
+    assert second_test_action.parameters["stage"] == 1
 
 
 def test_docker_test_shell_validate(action):
@@ -195,11 +188,3 @@ def test_docker_test_shell_validate(action):
     action.validate()
     assert action.valid == False
     [a.__errors__.clear() for a in action.pipeline.actions]
-
-
-def test_docker_test_shell_deployment_data(
-    deploy_action, first_test_action, second_test_action
-):
-    assert deploy_action.parameters["deployment_data"]["distro"] == "android"
-    assert first_test_action.parameters["deployment_data"]["distro"] == "debian"
-    assert second_test_action.parameters["deployment_data"] == {}

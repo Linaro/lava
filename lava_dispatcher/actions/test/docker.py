@@ -27,7 +27,6 @@ from lava_common.exceptions import LAVATimeoutError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.overlay import CreateOverlay
 from lava_dispatcher.actions.test.shell import TestShellAction
-from lava_dispatcher.deployment_data import get_deployment_data
 from lava_dispatcher.logical import LavaTest
 from lava_dispatcher.power import ReadFeedback
 from lava_dispatcher.shell import ShellCommand, ShellSession
@@ -60,11 +59,7 @@ class DockerTest(LavaTest):
 
     @classmethod
     def needs_overlay(cls, parameters):
-        """
-        Images deployed to the device don't need an overlay for this action.
-        Will create the overlay explicitly.
-        """
-        return False
+        return True
 
     @classmethod
     def has_shell(cls, parameters):
@@ -90,9 +85,6 @@ class DockerTestAction(Action, GetBoardId):
     timeout_exception = LAVATimeoutError
 
     def populate(self, parameters):
-        parameters["deployment_data"] = get_deployment_data(
-            parameters["docker"].get("os")
-        )
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.pipeline.add_action(DockerTestSetEnvironment())
         self.pipeline.add_action(CreateOverlay())
