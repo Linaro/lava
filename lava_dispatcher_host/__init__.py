@@ -17,6 +17,7 @@ import glob
 import logging
 import logging.handlers
 import os
+import stat
 import subprocess
 import pyudev
 
@@ -163,6 +164,7 @@ def pass_device_into_container_docker(container, container_id, node, links=[]):
         nodeinfo = os.stat(node)
         major = os.major(nodeinfo.st_rdev)
         minor = os.minor(nodeinfo.st_rdev)
+        nodetype = "b" if stat.S_ISBLK(nodeinfo.st_mode) else "c"
         with open(
             "/sys/fs/cgroup/devices/docker/%s/devices.allow" % container_id, "w"
         ) as allow:
@@ -185,7 +187,7 @@ def pass_device_into_container_docker(container, container_id, node, links=[]):
             container,
             "sh",
             "-c",
-            f"mkdir -p {nodedir} && mknod {node} c {major} {minor} && chown {uid}:{gid} {node} && chmod {mode} {node}",
+            f"mkdir -p {nodedir} && mknod {node} {nodetype} {major} {minor} && chown {uid}:{gid} {node} && chmod {mode} {node}",
         ]
     )
 
