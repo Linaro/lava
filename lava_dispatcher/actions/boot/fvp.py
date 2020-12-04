@@ -238,6 +238,7 @@ class StartFVPAction(BaseFVPAction):
         self.fvp_image = None
         self.fvp_console_string = ""
         self.shell = None
+        self.shell_session = None
 
     def validate(self):
         super().validate()
@@ -288,7 +289,15 @@ class StartFVPAction(BaseFVPAction):
         # discarding this may cause SIGHUPs to be sent to the model
         # which will terminate the model.
         self.shell = shell
+
+        self.shell_session = shell_connection
         return shell_connection
+
+    def cleanup(self, connection):
+        if self.shell_session:
+            self.logger.debug("Listening to feedback from FVP binary.")
+            self.shell_session.listen_feedback(5)
+        super().cleanup(connection)
 
 
 class GetFVPSerialAction(Action):
