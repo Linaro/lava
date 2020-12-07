@@ -16,16 +16,13 @@ from lava_scheduler_app.notifications import (
 def async_send_notifications(
     job_id: int, state: int, health: int, old_health: int
 ) -> None:
-    print(f"Processing {job_id}: state={state} health={health} old_health={old_health}")
     try:
         job = TestJob.objects.get(id=job_id)
     except TestJob.DoesNotExist:
-        print("-> does not exists")
         return
 
     job_def = yaml_safe_load(job.definition)
     if "notify" in job_def:
-        print("-> notify block")
         if notification_criteria(
             job_def["notify"]["criteria"], state, health, old_health
         ):
@@ -38,6 +35,4 @@ def async_send_notifications(
                 job.notification
             except ObjectDoesNotExist:
                 create_notification(job, job_def["notify"])
-            print("--> sending notification")
             send_notifications(job)
-    print("-> done")
