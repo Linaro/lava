@@ -106,7 +106,16 @@ class PostprocessWithDocker(Action):
     def run(self, connection, max_end_time):
         job_id = self.job.job_id
 
-        script = ["#!/bin/sh", "exec 2>&1", "set -ex"] + self.steps
+        script = ["#!/bin/sh", "exec 2>&1", "set -ex"]
+
+        # Export data generated during run of the Pipeline like NFS settings
+        if self.job.device:
+            for key in self.job.device["dynamic_data"]:
+                script.append(
+                    "export %s='%s'" % (key, self.job.device["dynamic_data"][key])
+                )
+
+        script = script + self.steps
         script = "\n".join(script) + "\n"
 
         scriptfile = self.path / "postprocess.sh"
