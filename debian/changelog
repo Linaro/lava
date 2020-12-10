@@ -1,3 +1,12 @@
+lava (2020.12-1) unstable; urgency=medium
+
+  * LAVA Software 2020.12 release
+
+  [ Kumar Gala ]
+  * lava_dispatcher_host: Utilize pyudev to share devices
+
+ -- Remi Duraffort <remi.duraffort@linaro.org>  Thu, 10 Dec 2020 17:28:16 +0100
+
 lava (2020.10-1) unstable; urgency=medium
 
   * LAVA Software 2020.10 release
