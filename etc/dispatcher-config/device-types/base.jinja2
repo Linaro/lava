@@ -353,6 +353,8 @@ timeouts:
       minutes: {{ action_timeout_musca_deploy | default(3) }}
     musca-boot:
       minutes: {{ action_timeout_musca_boot | default(1) }}
+    unmount-musca-usbmsd:
+      seconds: {{ action_timeout_unmount_musca_usbmsd | default(30) }}
     pdu-reboot:
       seconds: {{ action_timeout_pdu_reboot | default(30) }}
     reset-device:

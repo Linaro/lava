@@ -785,8 +785,12 @@ bootloader in interactive tests and then booting to the OS.
 musca
 =====
 
-The ``musca`` method is used to boot `musca devices
-<https://developer.arm.com/products/system-design/development-boards/iot-test-chips-and-boards/musca-a-test-chip-board>`__.
+The ``musca`` method is used to boot musca devices. Currently supported are the `musca a
+<https://developer.arm.com/products/system-design/development-boards/iot-test-chips-and-boards/musca-a-test-chip-board>`__,
+`musca b
+<https://developer.arm.com/tools-and-software/development-boards/iot-test-chips-and-boards/musca-b-test-chip-board>`__,
+and `musca s1
+<https://developer.arm.com/tools-and-software/development-boards/iot-test-chips-and-boards/musca-s1-test-chip-board>`__.
 Unlike the ``minimal`` boot, the board has to be powered on before the serial will be available
 as the board is powered by the USB that provides the serial connection also.
 Therefore, the board is powered on then connection to the serial is made.
