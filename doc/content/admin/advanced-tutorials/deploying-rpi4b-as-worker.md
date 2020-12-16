@@ -71,7 +71,7 @@ We're now ready to install the LAVA worker.
 
 ```shell
 apt update && apt dist-upgrade
-apt install net-tools wget gnugpg curl
+apt install net-tools wget gnupg curl ca-certificates
 ```
 
 * Edit the /etc/hostname and /etc/hosts files with appropriate hostname / IP
