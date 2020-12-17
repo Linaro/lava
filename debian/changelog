@@ -1,6 +1,8 @@
 lava (2020.12-1) unstable; urgency=medium
 
   * LAVA Software 2020.12 release
+    - Contains fix for Python error causing a failure to install
+      (Closes: #974745)
 
   [ Kumar Gala ]
   * lava_dispatcher_host: Utilize pyudev to share devices
