@@ -2,6 +2,8 @@
 
 set -ex
 
+cd ~
+
 # test the installed package database
 lava-server manage check
 lava-server manage check --deploy
