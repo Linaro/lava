@@ -158,6 +158,9 @@ constants:
   # avoid setting searchwindowsize:
   # Data before searchwindowsize point is preserved, but not searched.
   spawn_maxread: '{{ spawn_maxread | default(4092) }}'
+
+  # Set the failure retry to default or override it
+  failure_retry: {{ failure_retry|default(1) }}
 {% endblock constants -%}
 
 {% block commands %}

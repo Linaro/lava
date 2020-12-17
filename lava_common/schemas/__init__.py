@@ -76,6 +76,7 @@ CONTEXT_VARIABLES = [
     "custom_kernel_args",
     "extra_kernel_args",
     "extra_nfsroot_args",
+    "failure_retry",
     "kernel_loglevel",
     "kernel_start_message",
     "lava_test_results_dir",
