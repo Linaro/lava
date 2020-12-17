@@ -51,7 +51,7 @@ class GroupFilter(filters.FilterSet):
 
 
 class UserFilter(filters.FilterSet):
-    group = RelatedFilter(GroupFilter, name="group", queryset=Group.objects.all())
+    group = RelatedFilter(GroupFilter, name="groups", queryset=Group.objects.all())
 
     class Meta:
         model = User
@@ -504,7 +504,7 @@ class TestCaseFilter(filters.FilterSet):
 
 class GroupDeviceTypePermissionFilter(filters.FilterSet):
     device_type = RelatedFilter(
-        DeviceTypeFilter, name="device_type", queryset=DeviceType.objects.all()
+        DeviceTypeFilter, name="devicetype", queryset=DeviceType.objects.all()
     )
     group = RelatedFilter(GroupFilter, name="group", queryset=Group.objects.all())
     permission = RelatedFilter(
