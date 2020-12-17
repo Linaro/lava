@@ -1,0 +1,34 @@
+From: Antonio Terceiro <antonio.terceiro@linaro.org>
+Date: Thu, 17 Dec 2020 15:15:37 -0300
+Subject: lava_rest_app: fix field name in filters
+
+This used to pass by django-filter 2.1.0, but 2.4.0 will now throw an
+exception.
+
+Fixes #460
+---
+ lava_rest_app/filters.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/lava_rest_app/filters.py b/lava_rest_app/filters.py
+index 7af6f26..6a69ae1 100644
+--- a/lava_rest_app/filters.py
++++ b/lava_rest_app/filters.py
+@@ -51,7 +51,7 @@ class GroupFilter(filters.FilterSet):
+ 
+ 
+ class UserFilter(filters.FilterSet):
+-    group = RelatedFilter(GroupFilter, name="group", queryset=Group.objects.all())
++    group = RelatedFilter(GroupFilter, name="groups", queryset=Group.objects.all())
+ 
+     class Meta:
+         model = User
+@@ -504,7 +504,7 @@ class TestCaseFilter(filters.FilterSet):
+ 
+ class GroupDeviceTypePermissionFilter(filters.FilterSet):
+     device_type = RelatedFilter(
+-        DeviceTypeFilter, name="device_type", queryset=DeviceType.objects.all()
++        DeviceTypeFilter, name="devicetype", queryset=DeviceType.objects.all()
+     )
+     group = RelatedFilter(GroupFilter, name="group", queryset=Group.objects.all())
+     permission = RelatedFilter(
