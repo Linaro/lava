@@ -115,6 +115,7 @@ def create_callback(job, callback_data, notification):
         notification_callback.token = get_token_from_description(
             job.submitter, callback_data["token"]
         )
+        notification_callback.header = callback_data.get("header", "Authorization")
     notification_callback.method = NotificationCallback.METHOD_MAP[
         callback_data.get("method", "GET")
     ]

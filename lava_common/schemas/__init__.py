@@ -156,6 +156,7 @@ def notify():
         Required("url"): str,
         Optional("method"): Any("GET", "POST"),
         Optional("token"): str,
+        Optional("header"): str,
         Optional("dataset"): Any("minimal", "logs", "results", "all"),
         Optional("content-type"): Any("json", "urlencoded"),
     }

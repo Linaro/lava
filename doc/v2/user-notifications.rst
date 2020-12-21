@@ -60,6 +60,9 @@ The **callbacks** section supports list of the following options:
   token is returned instead. The token is included in the POST data, and also in
   an Authorization header.
 
+* **header** In case **token** is defined this option gives possibility to define
+  custom header to be used instead of Authorization.
+
 * **dataset** This option specifies style of data that the system
   will provide in the callback. It applies only for the POST request. The format
   of the data and possible options are as following:

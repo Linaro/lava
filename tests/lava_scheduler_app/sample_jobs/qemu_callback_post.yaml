@@ -57,6 +57,6 @@ notify:
     status: finished
   callbacks:
     - url: https://example.com/foo/bar
-      method: GET
+      method: POST
       dataset: minimal
       token: secrettoken 
