@@ -19,6 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import shutil
+import os.path
 
 from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.action import Pipeline, Action
@@ -130,6 +131,14 @@ class FlashCMSISAction(Action):
             ["mount", "-t", "vfat", self.usb_mass_device, dstdir],
             error_msg="Unable to mount USB device %s" % self.usb_mass_device,
         )
+        # log DAPLink metadata, to be able to correlate possible job issues
+        # with bootloader version/options
+        self.logger.debug("DAPLink virtual disk files: %s" % os.listdir(dstdir))
+        if os.path.isfile(dstdir + "/DETAILS.TXT"):
+            with open(dstdir + "/DETAILS.TXT") as f:
+                self.logger.debug(
+                    "DAPLink Firmware DETAILS.TXT:\n%s" % f.read().replace("\r\n", "\n")
+                )
         # copy files
         for f in self.filelist:
             self.logger.debug("Copying %s to %s", f, dstdir)
