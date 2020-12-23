@@ -2336,6 +2336,9 @@ class NotificationCallback(models.Model):
     token = models.TextField(
         default=None, null=True, blank=True, verbose_name="Callback token"
     )
+    header = models.CharField(
+        default="Authorization", max_length=64, verbose_name="Header name"
+    )
 
     MINIMAL = 0
     LOGS = 1
@@ -2401,7 +2404,7 @@ class NotificationCallback(models.Model):
             logger.info("Sending request to callback url %s" % self.url)
             headers = {}
             if self.token is not None:
-                headers["Authorization"] = self.token
+                headers[self.header] = self.token
 
             if self.method == NotificationCallback.GET:
                 ret = requests.get(

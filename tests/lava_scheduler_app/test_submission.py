@@ -12,9 +12,12 @@ from lava_scheduler_app.models import (
     Device,
     DeviceType,
     DevicesUnavailableException,
+    NotificationCallback,
     Tag,
     TestJob,
 )
+from lava_scheduler_app.notifications import create_notification
+from linaro_django_xmlrpc.models import AuthToken
 
 
 # pylint gets confused with TestCase
@@ -236,3 +239,61 @@ class TestTestJob(TestCaseWithFactory):
         self.assertRaises(
             DevicesUnavailableException, testjob_submission, definition, user, None
         )
+
+
+class TestNotifications(TestCaseWithFactory):
+    def test_notification_callback_get(self):
+        definition = self.factory.make_job_data_from_file("qemu_callback_get.yaml")
+        dt = self.factory.make_device_type(name="qemu")
+        device = self.factory.make_device(device_type=dt, hostname="qemu-1")
+        user = self.factory.make_user()
+        token, _ = AuthToken.objects.get_or_create(
+            user=user, description="secrettoken", secret="abc123"
+        )
+        job = TestJob.from_yaml_and_user(definition, user)
+        create_notification(job, yaml_safe_load(definition)["notify"])
+        job.refresh_from_db()
+        self.assertIsNotNone(job.notification.notificationcallback_set.first())
+        callback = job.notification.notificationcallback_set.first()
+        self.assertEqual(callback.method, NotificationCallback.GET)
+        self.assertEqual(callback.url, "https://example.com/foo/bar")
+        self.assertEqual(callback.token, "abc123")
+        self.assertEqual(callback.header, "Authorization")
+
+    def test_notification_callback_post(self):
+        definition = self.factory.make_job_data_from_file("qemu_callback_post.yaml")
+        dt = self.factory.make_device_type(name="qemu")
+        device = self.factory.make_device(device_type=dt, hostname="qemu-1")
+        user = self.factory.make_user()
+        token, _ = AuthToken.objects.get_or_create(
+            user=user, description="secrettoken", secret="abc123"
+        )
+        job = TestJob.from_yaml_and_user(definition, user)
+        create_notification(job, yaml_safe_load(definition)["notify"])
+        job.refresh_from_db()
+        self.assertIsNotNone(job.notification.notificationcallback_set.first())
+        callback = job.notification.notificationcallback_set.first()
+        self.assertEqual(callback.method, NotificationCallback.POST)
+        self.assertEqual(callback.url, "https://example.com/foo/bar")
+        self.assertEqual(callback.token, "abc123")
+        self.assertEqual(callback.header, "Authorization")
+
+    def test_notification_callback_custom_header(self):
+        definition = self.factory.make_job_data_from_file(
+            "qemu_callback_custom_header.yaml"
+        )
+        dt = self.factory.make_device_type(name="qemu")
+        device = self.factory.make_device(device_type=dt, hostname="qemu-1")
+        user = self.factory.make_user()
+        token, _ = AuthToken.objects.get_or_create(
+            user=user, description="secrettoken", secret="abc123"
+        )
+        job = TestJob.from_yaml_and_user(definition, user)
+        create_notification(job, yaml_safe_load(definition)["notify"])
+        job.refresh_from_db()
+        self.assertIsNotNone(job.notification.notificationcallback_set.first())
+        callback = job.notification.notificationcallback_set.first()
+        self.assertEqual(callback.method, NotificationCallback.POST)
+        self.assertEqual(callback.url, "https://example.com/foo/bar")
+        self.assertEqual(callback.token, "abc123")
+        self.assertEqual(callback.header, "PRIVATE-TOKEN")
