@@ -23,6 +23,12 @@ actions:
         parameters:
           usb_mass_device: '{{ usb_mass_device|default('/notset') }}'
           resets_after_flash: false
+          {# Allow to set any cmsis-dap parameters in a device dict. #}
+          {% filter indent(width=10) -%}
+          {% block cmsis_dap_params %}{% endblock cmsis_dap_params %}
+          {% endfilter %}
+          {# Next empty line is mandatory (jinja matters). #}
+
 {% endblock -%}
 
 {% set device_info = device_info|default([{'board_id': board_id, 'usb_vendor_id': usb_vendor_id, 'usb_product_id': usb_product_id}]) %}
