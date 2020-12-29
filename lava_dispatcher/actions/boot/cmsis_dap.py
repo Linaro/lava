@@ -20,6 +20,7 @@
 
 import shutil
 import os.path
+import time
 
 from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.action import Pipeline, Action
@@ -125,6 +126,9 @@ class FlashCMSISAction(Action):
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
+        method_parameters = self.job.device["actions"]["boot"]["methods"]["cmsis-dap"][
+            "parameters"
+        ]
         dstdir = mkdtemp()
         # mount
         self.run_cmd(
@@ -150,5 +154,8 @@ class FlashCMSISAction(Action):
             ["umount", self.usb_mass_device],
             error_msg="Unable to unmount USB device %s" % self.usb_mass_device,
         )
+        post_unmount_delay = method_parameters.get("post_unmount_delay", 3)
+        self.logger.debug("Post-unmount stabilization delay: %ss" % post_unmount_delay)
+        time.sleep(post_unmount_delay)
 
         return connection
