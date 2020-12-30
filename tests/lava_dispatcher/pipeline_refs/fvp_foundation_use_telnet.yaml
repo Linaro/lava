@@ -48,6 +48,8 @@
     pipeline:
     - {class: actions.boot.fvp.CheckFVPVersionAction, name: check-fvp-version}
     - {class: actions.boot.fvp.StartFVPAction, name: run-fvp}
+  - class: power.ReadFeedback
+    name: read-feedback
   - class: actions.boot.AutoLoginAction
     name: auto-login-action
     pipeline:

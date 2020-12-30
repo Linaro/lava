@@ -58,6 +58,8 @@ actions:
     timeout:
       minutes: 7
     console_string: 'terminal_0: Listening for serial connection on port (?P<PORT>\d+)'
+    feedbacks:
+    - '(?P<NAME>terminal_1): Listening for serial connection on port (?P<PORT>\d+)'
     arguments:
     - "--cores=4"
     - "--no-secure-memory"

@@ -83,3 +83,22 @@ contains the filesystem but stored in a way LAVA cannot currently put the overla
     # It may be required to suppress some kernel messages
     download_command: echo 3 > /proc/sys/kernel/printk ; wget
     unpack_command: tar -C / -xzf
+
+Reading from all model consoles
+*******************************
+
+Sometimes models offer more than one console that produces useful output. LAVA can only write to one console at a time.
+Reading can be done from multiple consoles. In some cases it's essential to read from all consoles to prevent
+model from hanging. This happens when internal model buffer is not able to accept more output because previously
+generated output is not consumed. FVP boot method allows to define additional regexes to match more than one console.
+This is done with ``feedbacks`` keyword:
+
+.. code-block:: yaml
+
+    console_string: 'terminal_0: Listening for serial connection on port (?P<PORT>\d+)'
+    feedbacks:
+      - '(?P<NAME>terminal_1): Listening for serial connection on port (?P<PORT>\d+)'
+      - '(?P<NAME>terminal_2): Listening for serial connection on port (?P<PORT>\d+)'
+      - '(?P<NAME>terminal_3): Listening for serial connection on port (?P<PORT>\d+)'
+
+Feedbacks will be read twice during boot process (before matching login prompt) and periodically during test-shell.
