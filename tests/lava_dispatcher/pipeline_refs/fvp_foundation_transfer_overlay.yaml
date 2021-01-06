@@ -48,6 +48,9 @@
     - {class: actions.boot.fvp.CheckFVPVersionAction, name: check-fvp-version}
     - {class: actions.boot.fvp.StartFVPAction, name: run-fvp}
     - {class: actions.boot.fvp.GetFVPSerialAction, name: fvp-serial-connect}
+    - {class: power.ReadFeedback, name: read-feedback}
+  - class: power.ReadFeedback
+    name: read-feedback
   - class: actions.boot.AutoLoginAction
     name: auto-login-action
     pipeline:

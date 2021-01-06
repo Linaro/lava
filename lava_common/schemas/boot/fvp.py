@@ -31,6 +31,7 @@ def schema():
         Required("method"): Msg("fvp", "'method' should be 'fvp'"),
         Optional("use_telnet"): bool,
         Required("console_string"): str,
+        Optional("feedbacks"): [str],
         Required("image"): str,
         Optional("license_variable"): str,
         Optional("version_string"): str,
