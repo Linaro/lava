@@ -48,6 +48,27 @@ def test_downloads_action(job):
     assert download.key == "rootfs"
     assert str(download.path) == f"{job.tmp_dir}/downloads/common"
     assert download.params == {"url": "https://example.com/image.img"}
+    assert not download.uniquify
+
+
+def test_uniquify(job):
+    action = DownloadsAction()
+    action.level = 2
+    action.job = job
+    action.populate(
+        {
+            "uniquify": True,
+            "images": {
+                "rootfs": {"url": "https://example.com/rootfs/image"},
+                "boot": {"url": "https://example.com/boot/image"},
+            },
+            "namespace": "common",
+        }
+    )
+    download_rootfs = action.pipeline.actions[0].pipeline.actions[0]
+    download_boot = action.pipeline.actions[1].pipeline.actions[0]
+
+    assert download_rootfs.path != download_boot.path
 
 
 def test_downloads_action_adds_docker_action():

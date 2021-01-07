@@ -65,7 +65,7 @@ class DownloadsAction(DownloadAction):
                     image,
                     download_dir,
                     params=parameters["images"][image],
-                    uniquify=False,
+                    uniquify=parameters.get("uniquify", False),
                 )
             )
 
