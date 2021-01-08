@@ -354,7 +354,9 @@ class TestJobFilter(filters.FilterSet):
         JobFailureTagFilter, name="failure_tags", queryset=JobFailureTag.objects.all()
     )
     health = CharFilter(method="filter_health")
+    health__in = CharFilter(method="filter_health_in")
     state = CharFilter(method="filter_state")
+    state__in = CharFilter(method="filter_state_in")
 
     def filter_health(self, queryset, name, value):
         try:
@@ -366,6 +368,16 @@ class TestJobFilter(filters.FilterSet):
             )
         return queryset.filter(health=value)
 
+    def filter_health_in(self, queryset, name, value):
+        try:
+            value = [TestJob.HEALTH_REVERSE[health] for health in value.split(",")]
+        except KeyError:
+            raise ValidationError(
+                "Select a valid choice. %s is not one of the available choices: %s"
+                % (value, list(zip(*TestJob.HEALTH_CHOICES))[1])
+            )
+        return queryset.filter(health__in=value)
+
     def filter_state(self, queryset, name, value):
         try:
             value = TestJob.STATE_REVERSE[value]
@@ -375,6 +387,16 @@ class TestJobFilter(filters.FilterSet):
                 % (value, list(zip(*TestJob.STATE_CHOICES))[1])
             )
         return queryset.filter(state=value)
+
+    def filter_state_in(self, queryset, name, value):
+        try:
+            value = [TestJob.STATE_REVERSE[state] for state in value.split(",")]
+        except KeyError:
+            raise ValidationError(
+                "Select a valid choice. %s is not one of the available choices: %s"
+                % (value, list(zip(*TestJob.STATE_CHOICES))[1])
+            )
+        return queryset.filter(state__in=value)
 
     class Meta:
         model = TestJob
