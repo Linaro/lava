@@ -29,6 +29,16 @@ actions:
           - -d {{ debug|default('debug') }}
           - -t kw41z4
           - -f 3000000
+      cmsis-dap:
+        parameters:
+          usb_mass_device: '{{ usb_mass_device|default('/notset') }}'
+          resets_after_flash: {{ resets_after_flash|default(True) }}
+          {# Allow to set any cmsis-dap parameters in a device dict. #}
+          {% filter indent(width=10) -%}
+          {% block cmsis_dap_params %}{% endblock cmsis_dap_params %}
+          {% endfilter %}
+          {# Next empty line is mandatory (jinja matters). #}
+
 {% endblock body -%}
 
 {% set device_info = device_info|default([{'board_id': board_id, 'usb_vendor_id': usb_vendor_id, 'usb_product_id': usb_product_id}]) %}
