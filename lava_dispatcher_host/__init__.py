@@ -171,7 +171,7 @@ def pass_device_into_container_docker(container, container_id, node, links=[]):
             allow.write("a %d:%d rwm\n" % (major, minor))
     except FileNotFoundError as exc:
         logger.warning(
-            "Cannot share {node} with docker container {container}: {exc.filename} not found"
+            f"Cannot share {node} with docker container {container}: {exc.filename} not found"
         )
         return
 
