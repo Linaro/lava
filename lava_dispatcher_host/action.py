@@ -10,10 +10,11 @@ class DeviceContainerMappingMixin:
 
     def add_device_container_mappings(self, container, container_type):
         device_info = self.job.device.get("device_info", [])
+        static_info = self.job.device.get("static_info", [])
         job_id = self.job.job_id
         job_prefix = self.job.parameters["dispatcher"].get("prefix", "")
         devices = []
-        for origdevice in device_info:
+        for origdevice in device_info + static_info:
             device = origdevice.copy()
             if "board_id" in device:
                 device["serial_number"] = device["board_id"]
