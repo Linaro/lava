@@ -21,6 +21,7 @@ import io
 import junit_xml
 import tap
 
+import lava_server.compat  # pylint: disable=unused-import
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
@@ -191,7 +192,7 @@ class TestJobViewSet(viewsets.ModelViewSet):
                 cases.append(tc)
             suites.append(junit_xml.TestSuite(suite.name, test_cases=cases))
 
-        data = junit_xml.TestSuite.to_xml_string(suites, encoding="utf-8")
+        data = junit_xml.to_xml_report_string(suites, encoding="utf-8")
         response = HttpResponse(data, content_type="application/xml")
         response["Content-Disposition"] = (
             "attachment; filename=job_%d.xml" % self.get_object().id
