@@ -45,9 +45,9 @@ Commands
   on deployment method and device type template support.
 
 * **device_info** - a list of dictionaries, where each dictionary value can
-  contain keys such as 'board_id', 'usb_vendor_id', 'usb_product_id', which can
-  be added to the LXC for device specific tasks dynamically, whenever the
-  device is reset, using a ``udev`` rule.
+  contain keys such as 'board_id', 'usb_vendor_id', 'usb_product_id',
+  'wait_device_board_id', which can be added to the LXC for device specific
+  tasks dynamically, whenever the device is reset, using a ``udev`` rule.
 
 * **static_info** - a list of dictionaries, where each dictionary value can
   contain keys such as 'board_id', 'usb_vendor_id', 'usb_product_id', which

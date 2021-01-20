@@ -424,6 +424,7 @@ class TestFastbootTemplates(BaseTemplate.BaseTemplateCases):
         template_dict = yaml_safe_load(rendered)
         self.assertEqual("5c302cef", template_dict["adb_serial_number"])
         self.assertEqual("5c302cef", template_dict["fastboot_serial_number"])
+        self.assertEqual(False, template_dict["device_info"][0]["wait_device_board_id"])
         self.assertEqual([], template_dict["fastboot_options"])
 
         for cmd in template_dict["flash_cmds_order"]:
