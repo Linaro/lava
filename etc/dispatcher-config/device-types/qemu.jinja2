@@ -117,6 +117,9 @@ actions:
 {% if arch == 'hppa' %}
           - -machine {{ machine|default('hppa') }}
 {% endif %}
+{% if arch == 'm68k' %}
+          - -machine {{ machine|default('mcf5208evb') }}
+{% endif %}
 {% if arch == 'mips' %}
           - -machine {{ machine|default('malta') }}
 {% endif %}
