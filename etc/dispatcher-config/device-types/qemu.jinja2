@@ -24,6 +24,7 @@ available_architectures:
 - aarch64
 - amd64
 - x86_64
+- hppa
 - i386
 - mips
 - mipsel
@@ -69,6 +70,8 @@ actions:
             qemu-system-arm
 {% elif arch == 'amd64' or arch == 'x86_64' %}
             qemu-system-x86_64
+{% elif arch == 'hppa' %}
+            qemu-system-hppa
 {% elif arch == 'i386' %}
             qemu-system-i386
 {% elif arch == 'mips' %}
@@ -111,6 +114,9 @@ actions:
           options:
 {% block qemu_options %}
 {# arch cpu #}
+{% if arch == 'hppa' %}
+          - -machine {{ machine|default('hppa') }}
+{% endif %}
 {% if arch == 'mips' %}
           - -machine {{ machine|default('malta') }}
 {% endif %}

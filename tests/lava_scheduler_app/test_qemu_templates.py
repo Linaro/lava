@@ -302,6 +302,7 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
                     "i386",
                     "alpha",
                     "cris",
+                    "hppa",
                     "lm32",
                     "m68k",
                     "microblaze",
