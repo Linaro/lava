@@ -18,11 +18,15 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from voluptuous import Required
+from voluptuous import Optional, Required
 
 from lava_common.schemas.test.definition import schema as base
 from lava_common.schemas import docker
 
 
 def schema():
-    return {**base(), Required("docker"): docker()}
+    docker_test_shell_base = {
+        Required("docker"): docker(),
+        Optional("downloads-namespace"): str,
+    }
+    return {**base(), **docker_test_shell_base}
