@@ -45,9 +45,6 @@ class PyocdFactory(Factory):
 
 
 class TestPyocdAction(StdoutTestCase):
-    # FIXME: remove this skipIf after intelhex is fixed on Debian bullseye
-    # https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=975805
-    @unittest.skipIf(True, "temporarily disable")
     def test_pyocd_pipeline(self):
         factory = PyocdFactory()
         job = factory.create_k64f_job(
