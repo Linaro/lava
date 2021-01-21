@@ -170,14 +170,11 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
         docker.prepare()
         docker.bind_mount(os.path.join(location, overlay), "/" + overlay)
 
-        downloads_namespace = self.parameters.get("downloads-namespace")
-        if not downloads_namespace:
-            downloads_namespace = self.parameters.get("namespace")
-
-        if downloads_namespace:
-            downloads_dir = (
-                pathlib.Path(self.job.tmp_dir) / "downloads" / downloads_namespace
-            )
+        namespace = self.parameters.get(
+            "downloads-namespace", self.parameters.get("namespace")
+        )
+        if namespace:
+            downloads_dir = pathlib.Path(self.job.tmp_dir) / "downloads" / namespace
             if downloads_dir.exists():
                 docker.bind_mount(downloads_dir, LAVA_DOWNLOADS)
 
