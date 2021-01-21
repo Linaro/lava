@@ -165,9 +165,17 @@ def pass_device_into_container_docker(container, container_id, node, links=[]):
         major = os.major(nodeinfo.st_rdev)
         minor = os.minor(nodeinfo.st_rdev)
         nodetype = "b" if stat.S_ISBLK(nodeinfo.st_mode) else "c"
-        with open(
-            "/sys/fs/cgroup/devices/docker/%s/devices.allow" % container_id, "w"
-        ) as allow:
+
+        devices_allow_file = (
+            "/sys/fs/cgroup/devices/docker/%s/devices.allow" % container_id
+        )
+        if not os.path.exists(devices_allow_file):
+            devices_allow_file = (
+                "/sys/fs/cgroup/devices/system.slice/docker-%s.scope/devices.allow"
+                % container_id
+            )
+
+        with open(devices_allow_file, "w") as allow:
             allow.write("a %d:%d rwm\n" % (major, minor))
     except FileNotFoundError as exc:
         logger.warning(
