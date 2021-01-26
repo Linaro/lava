@@ -2,7 +2,7 @@
 {% extends 'base-uboot.jinja2' %}
 
 {% set console_device = console_device|default('ttySC0') %}
-{% set booti_kernel_addr = '0x48080000' %}
+{% set booti_kernel_addr = '0x68080000' %}
 {% set booti_ramdisk_addr = '0x4a000000' %}
-{% set booti_dtb_addr = '0x48000000' %}
+{% set booti_dtb_addr = '0x68000000' %}
 {% set uboot_mkimage_arch = 'arm64' %}
