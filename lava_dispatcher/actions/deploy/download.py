@@ -786,6 +786,8 @@ class PreDownloadedAction(Action):
         self.set_namespace_data(
             action="download-action", label=self.key, key="file", value=str(dest)
         )
+        if "lava-xnbd" in self.parameters and str(self.key) == "nbdroot":
+            self.parameters["lava-xnbd"]["nbdroot"] = str(dest)
 
         return connection
 

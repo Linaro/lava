@@ -22,6 +22,7 @@
 # imported by the parser to populate the list of subclasses.
 
 import os
+import re
 import tempfile
 
 from lava_dispatcher.action import Action, Pipeline
@@ -197,6 +198,13 @@ class XnbdAction(Action):
             self.nbd_server_port,
             self.nbd_root,
         )
+        if re.search(filesystem.tftpd_dir(), self.nbd_root):
+            fullpath_nbdroot = self.nbd_root
+        else:
+            fullpath_nbdroot = "%s/%s" % (
+                os.path.realpath(filesystem.tftpd_dir()),
+                self.nbd_root,
+            )
         nbd_cmd = [
             "xnbd-server",
             "--logpath",
@@ -205,7 +213,7 @@ class XnbdAction(Action):
             "--target",
             "--lport",
             "%s" % self.nbd_server_port,
-            "%s/%s" % (os.path.realpath(filesystem.tftpd_dir()), self.nbd_root),
+            fullpath_nbdroot,
         ]
         command_output = self.run_command(nbd_cmd, allow_fail=False)
 

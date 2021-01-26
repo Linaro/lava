@@ -546,10 +546,7 @@ class BootloaderCommandOverlay(Action):
                 action="persistent-nfs-overlay", label="nfs_address", key="serverip"
             )
 
-        nbd_root = self.get_namespace_data(
-            action="download-action", label="file", key="nbdroot"
-        )
-        if nbd_root:
+        if "lava-xnbd" in self.parameters:
             substitutions["{NBDSERVERIP}"] = str(
                 self.get_namespace_data(
                     action="nbd-deploy", label="nbd", key="nbd_server_ip"
