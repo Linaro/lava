@@ -1,3 +1,10 @@
+lava (2021.01-1) unstable; urgency=medium
+
+  [ Antonio Terceiro ]
+  * [ac4f863fd] autopkgtest: management: run from $HOME
+
+ -- Stevan Radakovic <stevan.radakovic@linaro.org>  Tue, 26 Jan 2021 13:59:07 +0100
+
 lava (2020.12-1) unstable; urgency=medium
 
   * LAVA Software 2020.12 release
