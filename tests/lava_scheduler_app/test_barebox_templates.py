@@ -67,3 +67,6 @@ class TestBareboxTemplates(BaseTemplate.BaseTemplateCases):
 
     def test_socfpga_cyclone5_socrates_template(self):
         barebox_helper(self, "socfpga-cyclone5-socrates")
+
+    def test_stm32mp157c_lxa_mc1_template(self):
+        barebox_helper(self, "stm32mp157c-lxa-mc1")
