@@ -26,6 +26,7 @@ from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.actions.boot import BootHasMixin
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.shell import ExpectShellSession, ShellCommand, ShellSession
+from lava_dispatcher.utils.network import dispatcher_ip
 
 
 class BootDocker(Boot):
@@ -70,6 +71,7 @@ class CallDockerAction(Action):
     def __init__(self):
         super().__init__()
         self.cleanup_required = False
+        self.remote = ""
         self.extra_options = ""
         self.container = ""
 
@@ -85,6 +87,8 @@ class CallDockerAction(Action):
         if docker_image is None:
             raise JobError("Missing deploy action before boot")
 
+        if options["remote"]:
+            self.remote = " --host %s" % options["remote"]
         if options["cpus"]:
             self.extra_options += " --cpus %s" % options["cpus"]
         if options["memory"]:
@@ -112,16 +116,26 @@ class CallDockerAction(Action):
 
         # Build the command line
         # The docker image is safe to be included in the command line
-        cmd = "docker run --rm --interactive --tty --hostname lava"
+        cmd = "docker" + self.remote + " run --rm --interactive --tty --hostname lava"
         cmd += " --name %s" % self.container
         if self.test_needs_overlay(self.parameters):
             overlay = self.get_namespace_data(
                 action="test", label="results", key="lava_test_results_dir"
             )
-            cmd += " --volume %s:%s" % (
-                os.path.join(location, overlay.strip("/")),
-                overlay,
-            )
+            if not self.remote:
+                cmd += " --volume %s:%s" % (
+                    os.path.join(location, overlay.strip("/")),
+                    overlay,
+                )
+            else:
+                cmd += (
+                    ' --mount type=volume,volume-driver=local,dst=%s,volume-opt=type=nfs,volume-opt=device=:%s,"volume-opt=o=addr=%s"'
+                    % (
+                        overlay,
+                        os.path.join(location, overlay.strip("/")),
+                        dispatcher_ip(self.job.parameters["dispatcher"]),
+                    )
+                )
         cmd += self.extra_options
         cmd += " %s %s" % (docker_image, self.parameters["command"])
 
@@ -141,5 +155,7 @@ class CallDockerAction(Action):
         super().cleanup(connection)
         if self.cleanup_required:
             self.logger.debug("Stopping container %s", self.container)
-            self.run_cmd(["docker", "stop", self.container], allow_fail=True)
+            self.run_cmd(
+                "docker %s stop %s" % (self.remote, self.container), allow_fail=True
+            )
             self.cleanup_required = False

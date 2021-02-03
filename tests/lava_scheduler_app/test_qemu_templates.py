@@ -133,7 +133,7 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
         template_dict = prepare_jinja_template("docker-01", data, raw=False)
         self.assertEqual(
             {
-                "docker": None,
+                "docker": {"options": {"remote": None}},
                 "ssh": {
                     "options": [
                         "-o",
@@ -155,6 +155,7 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
             {
                 "docker": {
                     "options": {
+                        "remote": None,
                         "cpus": 0.0,
                         "memory": 0,
                         "privileged": False,
@@ -181,7 +182,7 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
         template_dict = prepare_jinja_template("docker-01", data, raw=False)
         self.assertEqual(
             {
-                "docker": None,
+                "docker": {"options": {"remote": None}},
                 "ssh": {
                     "options": [
                         "-o",
@@ -203,6 +204,7 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
             {
                 "docker": {
                     "options": {
+                        "remote": None,
                         "cpus": 2.1,
                         "memory": "120M",
                         "privileged": False,
@@ -227,7 +229,7 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
         template_dict = prepare_jinja_template("docker-01", data, raw=False)
         self.assertEqual(
             {
-                "docker": None,
+                "docker": {"options": {"remote": None}},
                 "ssh": {
                     "options": [
                         "-o",
@@ -249,6 +251,55 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
             {
                 "docker": {
                     "options": {
+                        "remote": None,
+                        "cpus": 2.1,
+                        "memory": "120M",
+                        "privileged": True,
+                        "capabilities": [],
+                        "devices": ["/dev/kvm"],
+                        "networks": [],
+                        "volumes": [],
+                        "extra_arguments": [],
+                    }
+                },
+                "ssh": None,
+            },
+            template_dict["actions"]["boot"]["methods"],
+        )
+
+        data = """{% extends 'docker.jinja2' %}
+{% set docker_remote="tcp://10.192.244.7:2375" %}
+{% set docker_cpus=2.1 %}
+{% set docker_memory="120M" %}
+{% set docker_devices=["/dev/kvm"] %}
+{% set docker_privileged = True %}"""
+        self.assertTrue(self.validate_data("docker-01", data))
+        template_dict = prepare_jinja_template("docker-01", data, raw=False)
+        self.assertEqual(
+            {
+                "docker": {"options": {"remote": "tcp://10.192.244.7:2375"}},
+                "ssh": {
+                    "options": [
+                        "-o",
+                        "Compression=yes",
+                        "-o",
+                        "PasswordAuthentication=no",
+                        "-o",
+                        "LogLevel=FATAL",
+                    ],
+                    "host": "",
+                    "port": 22,
+                    "user": "root",
+                    "identity_file": "dynamic_vm_keys/lava",
+                },
+            },
+            template_dict["actions"]["deploy"]["methods"],
+        )
+        self.assertEqual(
+            {
+                "docker": {
+                    "options": {
+                        "remote": "tcp://10.192.244.7:2375",
                         "cpus": 2.1,
                         "memory": "120M",
                         "privileged": True,
