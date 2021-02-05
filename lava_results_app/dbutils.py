@@ -130,7 +130,17 @@ def map_scanned_results(results, job, starttc, endtc, meta_filename):
         msg = "[%d] Result metadata is too long. %s" % (job.id, metadata)
         logger.warning(msg)
         append_failure_comment(job, msg)
-        metadata = ""
+        # Manually strip the results to keep some data
+        stripped_results = {
+            "case": results["case"],
+            "definition": results["definition"],
+            "result": results["result"],
+        }
+        if "error_type" in results:
+            stripped_results["error_type"] = results["error_type"]
+        metadata = yaml_dump(stripped_results)
+        if len(metadata) > 4096:
+            metadata = ""
 
     suite, _ = TestSuite.objects.get_or_create(name=results["definition"], job=job)
     testset = _check_for_testset(results, suite)
