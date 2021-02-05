@@ -35,14 +35,22 @@ class DockerAction(Action):
     description = "deploy docker images"
     summary = "deploy docker"
 
+    def __init__(self):
+        super().__init__()
+        self.remote = []
+
     def validate(self):
         super().validate()
         which("docker")
 
+        options = self.job.device["actions"]["deploy"]["methods"]["docker"]["options"]
+        if options["remote"]:
+            self.remote = ["--host"] + [options["remote"]]
+
         # Print docker version
         try:
             out = subprocess.check_output(  # nosec - internal
-                ["docker", "version", "-f", "{{.Server.Version}}"]
+                ["docker"] + self.remote + ["version", "-f", "{{.Server.Version}}"]
             )
             out = out.decode("utf-8", errors="replace").strip("\n")
             self.logger.debug("docker server, installed at version: %s", out)
@@ -88,19 +96,16 @@ class DockerAction(Action):
     def run(self, connection, max_end_time):
         # Pull the image
         if self.local:
-            cmd = [
-                "docker",
-                "image",
-                "inspect",
-                "--format",
-                "image exists",
-                self.image_name,
-            ]
+            cmd = (
+                ["docker"]
+                + self.remote
+                + ["image", "inspect", "--format", "image exists", self.image_name]
+            )
             error_msg = "Unable to inspect docker image '%s'" % self.image_name
             self.run_cmd(cmd, error_msg=error_msg)
         else:
             self.run_cmd(
-                ["docker", "pull", self.image_name],
+                ["docker"] + self.remote + ["pull", self.image_name],
                 error_msg="Unable to pull docker image '%s'" % self.image_name,
             )
 

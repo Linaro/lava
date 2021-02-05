@@ -9,6 +9,8 @@ actions:
       serial:
     methods:
       docker:
+        options:
+          remote: {{ docker_remote|default('') }}
       ssh:
         options:
 {{ ssh_options }}
@@ -25,6 +27,7 @@ actions:
     methods:
       docker:
         options:
+          remote: {{ docker_remote|default('') }}
           cpus: {{ docker_cpus|default(0.0) }}
           memory: {{ docker_memory|default(0) }}
           privileged: {{ docker_privileged|default(False) }}
