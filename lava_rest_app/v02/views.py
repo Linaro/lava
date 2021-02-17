@@ -421,7 +421,7 @@ class DeviceViewSet(base_views.DeviceViewSet, viewsets.ModelViewSet):
             return response
 
         elif request.method == "POST":
-            if not request.user.has_perm("lava_scheduler_app.change_device"):
+            if not self.get_object().can_change(request.user):
                 raise PermissionDenied(
                     "Insufficient permissions. Please contact system administrator."
                 )
