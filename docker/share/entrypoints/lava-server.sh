@@ -90,7 +90,7 @@ start_apache2() {
 start_lava_celery_worker() {
     USER="lavaserver"
     GROUP="lavaserver"
-    LOGLEVEL="INFO"
+    LOGLEVEL=${LOGLEVEL:-INFO}
     LOGFILE="/var/log/lava-server/lava-celery-worker.log"
     CONCURRENCY=""
     AUTOSCALE=""
@@ -106,7 +106,7 @@ start_lava_celery_worker() {
 }
 
 start_lava_coordinator() {
-    LOGLEVEL="DEBUG"
+    LOGLEVEL=${LOGLEVEL:-DEBUG}
     LOGFILE="/var/log/lava-coordinator.log"
     [ -e /etc/default/lava-coordinator ] && . /etc/default/lava-coordinator
     [ -e /etc/lava-coordinator/lava-coordinator ] && . /etc/lava-coordinator/lava-coordinator
@@ -120,7 +120,7 @@ start_lava_coordinator() {
 
 
 start_lava_publisher() {
-    LOGLEVEL="DEBUG"
+    LOGLEVEL=${LOGLEVEL:-DEBUG}
     HOST="*"
     PORT=8001
     [ -e /etc/default/lava-publisher ] && . /etc/default/lava-publisher
@@ -135,7 +135,7 @@ start_lava_publisher() {
 
 
 start_lava_scheduler() {
-    LOGLEVEL="DEBUG"
+    LOGLEVEL=${LOGLEVEL:-DEBUG}
     [ -e /etc/default/lava-scheduler ] && . /etc/default/lava-scheduler
     [ -e /etc/lava-server/lava-scheduler ] && . /etc/lava-server/lava-scheduler
     if [ "$CAN_EXEC" = "1" ]; then
@@ -148,7 +148,7 @@ start_lava_scheduler() {
 
 
 start_lava_server_gunicorn() {
-    LOGLEVEL="DEBUG"
+    LOGLEVEL=${LOGLEVEL:-DEBUG}
     TIMEOUT=""
     WORKER_CLASS="eventlet"
     WORKERS="4"
