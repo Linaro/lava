@@ -170,7 +170,11 @@ class CallQemuAction(Action):
                 self.errors = "Invalid device configuration - missing parameters"
             elif not boot["parameters"]["command"]:
                 self.errors = "No QEMU binary command found - missing context."
-            qemu_binary = which(boot["parameters"]["command"])
+            # if qemu is ran under docker, qemu could not be installed and so which will fail
+            if "docker" in self.parameters:
+                qemu_binary = "qemu-system-fake"
+            else:
+                qemu_binary = which(boot["parameters"]["command"])
             self.base_sub_command = [qemu_binary]
             self.base_sub_command.extend(boot["parameters"].get("options", []))
             self.base_sub_command.extend(
