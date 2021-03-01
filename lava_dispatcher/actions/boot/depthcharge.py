@@ -44,11 +44,13 @@ from lava_dispatcher.utils.network import dispatcher_ip
 class Depthcharge(Boot):
     """
     Depthcharge is a payload used by Coreboot in recent ChromeOS machines.
-    This boot strategy works with the "netboot" build variant of Depthcharge,
-    which just downloads files via TFTP from hardcoded locations, with the IP
-    address of the server also hardcoded in the firmware image. One of the
-    downloaded files is a FIT image that contains the kernel, ramdisk and
-    device tree blob, and the other contains the kernel arguments.
+    This boot strategy works with the "dev" build variant of Depthcharge, which
+    enables an interactive command line interface and the tftpboot command to
+    download files over TFTP. This includes at least a kernel image and a
+    command line file.  On arm/arm64, the kernel image is in the FIT format,
+    which can include a device tree blob and a ramdisk.  On x86, the kernel
+    image is a plain bzImage and an optional ramdisk can be downloaded as a
+    separate file.
     """
 
     @classmethod
@@ -131,14 +133,26 @@ class DepthchargeCommandOverlay(BootloaderCommandOverlay):
             action="download-action", label="file", key="kernel"
         )
         cmdline_tftp = os.path.join(os.path.dirname(kernel_tftp), "cmdline")
+
+        # Load FIT image if available, otherwise plain kernel image
         fit_tftp = self.get_namespace_data(
             action="prepare-fit", label="file", key="fit"
         )
-        substitutions = {"{CMDLINE}": cmdline_tftp, "{FIT}": fit_tftp}
+
+        # Also load ramdisk if available and not using a FIT image
+        ramdisk_tftp = self.get_namespace_data(
+            action="compress-ramdisk", label="file", key="ramdisk"
+        )
+
+        substitutions = {
+            "{CMDLINE}": cmdline_tftp,
+            "{DEPTHCHARGE_KERNEL}": fit_tftp or kernel_tftp,
+            "{DEPTHCHARGE_RAMDISK}": ramdisk_tftp or "" if not fit_tftp else "",
+        }
         commands = self.get_namespace_data(
             action="bootloader-overlay", label=self.method, key="commands"
         )
-        commands = substitute(commands, substitutions)
+        commands = substitute(commands, substitutions, drop=True, drop_line=False)
         self.set_namespace_data(
             action="bootloader-overlay",
             label=self.method,

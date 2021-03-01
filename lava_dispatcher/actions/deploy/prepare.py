@@ -202,13 +202,9 @@ class PrepareFITAction(Action):
         super().validate()
         which("mkimage")
 
-        deploy_params = self.job.device["actions"]["deploy"].get("parameters")
-        if deploy_params is None:
-            self.errors = "Missing parameters in deploy action"
-        elif "mkimage_arch" not in deploy_params:
-            self.errors = "Missing mkimage_arch parameter for FIT support"
-        else:
-            self.deploy_params = deploy_params
+        self.deploy_params = self.job.device["actions"]["deploy"].get(
+            "parameters", dict()
+        )
 
         device_params = self.job.device.get("parameters")
         if device_params is None:
@@ -257,7 +253,11 @@ class PrepareFITAction(Action):
         }
         kernel_path = params["kernel"]
         kernel_dir, kernel_image = os.path.split(kernel_path)
-        arch = self.deploy_params["mkimage_arch"]
+        arch = self.deploy_params.get("mkimage_arch")
+
+        if not arch:
+            self.logger.info("No mkimage arch provided, not using FIT.")
+            return connection
 
         if arch == "arm64":
             lzma_kernel = os.path.join(kernel_dir, ".".join([kernel_image, "lzma"]))
