@@ -27,7 +27,15 @@ from django.db.models import IntegerField, Case, When, Count, Q
 from lava_common.compat import yaml_safe_load
 from lava_server.files import File
 import lava_scheduler_app.environment as environment
-from lava_scheduler_app.models import Alias, Device, DeviceType, Tag, Worker
+from lava_scheduler_app.models import (
+    Alias,
+    Device,
+    DeviceType,
+    Group,
+    Tag,
+    User,
+    Worker,
+)
 
 
 class Command(BaseCommand):
@@ -162,6 +170,32 @@ class Command(BaseCommand):
                 tag, _ = Tag.objects.get_or_create(name=tag_name)
                 device.tags.add(tag)
                 self.stdout.write(f"  -> tag: {tag_name}")
+
+            # Link physical owner
+            specified_owner = sync_dict.get("physical_owner", "")
+            try:
+                physical_owner = User.objects.get(username=specified_owner)
+                device.physical_owner = physical_owner
+                self.stdout.write(f"  -> user: {specified_owner}")
+            except User.DoesNotExist:
+                device.physical_owner = None
+                if specified_owner:
+                    self.stdout.write(f"  -> user '{specified_owner}' does not exist")
+            finally:
+                device.save()
+
+            # Link physical group
+            specified_group = sync_dict.get("physical_group", "")
+            try:
+                physical_group = Group.objects.get(name=specified_group)
+                device.physical_group = physical_group
+                self.stdout.write(f"  -> group: {specified_group}")
+            except Group.DoesNotExist:
+                device.physical_group = None
+                if specified_group:
+                    self.stdout.write(f"  -> group '{specified_group}' does not exist")
+            finally:
+                device.save()
 
         # devices which have is_synced true if there's no device dict for them.
         Device.objects.filter(is_synced=True).exclude(
