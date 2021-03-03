@@ -75,6 +75,7 @@ override_dh_auto_install:
 	rm -rf $(CURDIR)/build
 	# handle embedded JS
 	python3 ./share/javascript.py -f ./share/javascript.yaml --remove
+	$(RM) $(CURDIR)/debian/lava-server/usr/lib/python3/dist-packages/lava_results_app/static/lava_results_app/js/jquery.flot.canvas.js
 
 override_dh_fixperms-arch:
 	dh_fixperms -X debian/lava-dispatcher/usr/lib/python3/dist-packages/lava_dispatcher/dynamic_vm_keys/lava
