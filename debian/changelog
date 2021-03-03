@@ -1,3 +1,12 @@
+lava (2020.12-2) unstable; urgency=medium
+
+  * debian/rules: drop jquery.flot.canvas.js.
+    This fixes gunicorn not starting due to the jquery.flot.canvas.js
+    pointing to a missing file. The entire charts feature will not work,
+    since lava upstream hasn't upgraded to flot 4. (Closes: #983029)
+
+ -- Antonio Terceiro <terceiro@debian.org>  Wed, 03 Mar 2021 11:54:11 -0300
+
 lava (2020.12-1) unstable; urgency=medium
 
   * LAVA Software 2020.12 release
