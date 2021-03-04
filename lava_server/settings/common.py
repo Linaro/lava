@@ -208,6 +208,10 @@ AUTH_LDAP_USER_SEARCH = None
 AUTH_LDAP_GROUP_SEARCH = None
 AUTH_LDAP_GROUP_TYPE = None
 
+# Gitlab support
+AUTH_GITLAB_URL = None
+AUTH_GITLAB_SCOPE = ["read_user"]
+
 # Debian SSO is of be default
 AUTH_DEBIAN_SSO = None
 
@@ -303,6 +307,8 @@ def update(values):
     AUTH_LDAP_SERVER_URI = values.get("AUTH_LDAP_SERVER_URI")
     AUTH_LDAP_USER_SEARCH = values.get("AUTH_LDAP_USER_SEARCH")
     AUTH_DEBIAN_SSO = values.get("AUTH_DEBIAN_SSO")
+    AUTH_GITLAB_URL = values.get("AUTH_GITLAB_URL")
+    AUTH_GITLAB_SCOPE = values.get("AUTH_GITLAB_SCOPE")
     AUTHENTICATION_BACKENDS = values.get("AUTHENTICATION_BACKENDS")
     DISALLOWED_USER_AGENTS = values.get("DISALLOWED_USER_AGENTS")
     DJANGO_LOGFILE = values.get("DJANGO_LOGFILE")
@@ -331,6 +337,20 @@ def update(values):
     # and https://docs.djangoproject.com/en/1.9/ref/settings/#admins
     ADMINS = [tuple(v) for v in ADMINS]
     MANAGERS = [tuple(v) for v in MANAGERS]
+
+    # Gitlab authentication config
+    if AUTH_GITLAB_URL:
+        INSTALLED_APPS.append("allauth")
+        INSTALLED_APPS.append("allauth.account")
+        INSTALLED_APPS.append("allauth.socialaccount")
+        INSTALLED_APPS.append("allauth.socialaccount.providers.gitlab")
+
+        AUTHENTICATION_BACKENDS.append(
+            "allauth.account.auth_backends.AuthenticationBackend"
+        )
+        SOCIALACCOUNT_PROVIDERS = {
+            "gitlab": {"GITLAB_URL": AUTH_GITLAB_URL, "SCOPE": AUTH_GITLAB_SCOPE}
+        }
 
     # LDAP authentication config
     if AUTH_LDAP_SERVER_URI:
