@@ -118,7 +118,6 @@ Recommends: lava-coordinator (= ${binary:Version}),
             lava-dispatcher (= ${binary:Version}),
             ntp,
             openssh-client,
-            rabbitmq-server | redis-server
 Suggests: lavacli
 Description: Linaro Automated Validation Architecture server
  LAVA is a continuous integration system for deploying operating
