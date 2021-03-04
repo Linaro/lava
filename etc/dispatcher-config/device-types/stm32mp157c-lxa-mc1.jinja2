@@ -1,0 +1,4 @@
+{% extends 'base-barebox.jinja2' %}
+
+{% set bootloader_prompt = 'Linux Automation MC-1 board:/' %}
+{% set console_device = console_device | default('ttySTM0') %}
