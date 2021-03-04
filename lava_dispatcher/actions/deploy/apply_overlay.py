@@ -978,8 +978,11 @@ class AppendOverlays(Action):
                 )
                 path = self.params["overlays"][overlay]["path"]
                 compress = None
-            self.logger.debug("- %s: %r to %r", label, overlay_image, path)
-            guest.mkdir_p(path)
-            guest.tar_in(overlay_image, path, compress=compress)
+            if overlay_image:
+                self.logger.debug("- %s: %r to %r", label, overlay_image, path)
+                guest.mkdir_p(path)
+                guest.tar_in(overlay_image, path, compress=compress)
+            else:
+                self.logger.warning("- %s: <MISSING> to %r", label, path)
         guest.umount(device)
         guest.shutdown()
