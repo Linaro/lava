@@ -1,3 +1,11 @@
+lava (2020.12-3) unstable; urgency=medium
+
+  * Drop possible celery backends from Recommends.
+  * Re-add debian/patches/0001-lava_rest_app-fix-field-name-in-filters.patch;
+    dropped by mistake. (Closes: #984496)
+
+ -- Antonio Terceiro <terceiro@debian.org>  Thu, 04 Mar 2021 08:52:38 -0300
+
 lava (2020.12-2) unstable; urgency=medium
 
   * debian/rules: drop jquery.flot.canvas.js.
