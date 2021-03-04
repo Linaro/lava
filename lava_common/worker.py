@@ -56,6 +56,19 @@ def get_parser(url_required=True) -> argparse.ArgumentParser:
     net = parser.add_argument_group("network")
     net.add_argument("--url", required=url_required, help="Base URL of the server")
     net.add_argument("--ws-url", default=None, help="WebSocket URL")
+    net.add_argument(
+        "--http-timeout",
+        type=int,
+        default=10 * 60,
+        help="HTTP timeout when requesting the server. Should always be longer than the gunicorn timeout.",
+    )
+    net.add_argument(
+        "--ping-interval",
+        type=int,
+        default=20,
+        help="Time between two ping to the server",
+    )
+
     token = net.add_mutually_exclusive_group()
     token.add_argument(
         "--username", default=None, help="Username for auto registration"
@@ -64,13 +77,6 @@ def get_parser(url_required=True) -> argparse.ArgumentParser:
     token.add_argument(
         "--token-file", type=Path, default=None, help="Worker token file"
     )
-    net.add_argument(
-        "--http-timeout",
-        type=int,
-        default=10 * 60,
-        help="HTTP timeout when requesting the server. Should always be longer than the gunicorn timeout.",
-    )
-
     log = parser.add_argument_group("logging")
     log.add_argument(
         "--log-file",
