@@ -71,6 +71,7 @@ FORMAT = "%(asctime)-15s %(levelname)7s %(message)s"
 
 SESSION = requests.Session()
 
+ping_interval = 20
 debug = False
 tmp_dir = WORKER_DIR / "tmp"
 
@@ -496,6 +497,10 @@ def check(url: str, jobs: JobsDB) -> None:
         jobs.delete(job.job_id)
 
 
+class ServerUnavailable(Exception):
+    pass
+
+
 class VersionMismatch(Exception):
     pass
 
@@ -509,6 +514,8 @@ def ping(url: str, token: str, name: str) -> Dict[str, List]:
     if ret.status_code != 200:
         LOG.error("-> server error: code %d", ret.status_code)
         LOG.debug("--> %s", ret.text)
+        if ret.status_code // 100 == 5:
+            raise ServerUnavailable(ret.text)
         if ret.status_code == 409:
             raise VersionMismatch(ret.text)
         return {}
@@ -607,10 +614,13 @@ def handle(options, jobs: JobsDB) -> float:
 
     try:
         data = ping(url, token, name)
+    except ServerUnavailable:
+        LOG.error("-> server unavailable")
+        return max(1 - (time.time() - begin), 0)
     except VersionMismatch as exc:
         if options.exit_on_version_mismatch:
             raise exc
-        return max(20 - (time.time() - begin), 0)
+        return max(ping_interval - (time.time() - begin), 0)
 
     # running jobs
     for job in data.get("running", []):
@@ -629,7 +639,7 @@ def handle(options, jobs: JobsDB) -> float:
     check(url, jobs)
 
     # Compute the sleep duration
-    return max(20 - (time.time() - begin), 0)
+    return max(ping_interval - (time.time() - begin), 0)
 
 
 async def main_loop(options, jobs: JobsDB, event: asyncio.Event) -> None:
@@ -681,6 +691,9 @@ async def main() -> int:
     LOG.info("[INIT] Server : %r", options.url)
     LOG.info("[INIT] Version: %r", __version__)
 
+    # Set ping interval
+    global ping_interval
+    ping_interval = options.ping_interval
     # Setup debugging if needed
     global debug
     debug = options.debug
