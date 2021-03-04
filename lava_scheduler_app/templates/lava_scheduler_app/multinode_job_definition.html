@@ -17,7 +17,7 @@
 {% endblock %}
 
 {% block content %}
-<h2>Multinode Job definition file - {{ job.sub_id }}  <a class="btn btn-xs btn-info" href="{% url 'lava.scheduler.job.multinode_definition.plain' job.pk %}" title="Download as text file"><span class="glyphicon glyphicon-download"></span> download</a></h2>
+<h2>Multinode Job definition file - {{ job.sub_id|default:job.id }}  <a class="btn btn-xs btn-info" href="{% url 'lava.scheduler.job.multinode_definition.plain' job.pk %}" title="Download as text file"><span class="glyphicon glyphicon-download"></span> download</a></h2>
 
 <div class="row">
   <div class="col-md-4">
@@ -56,15 +56,15 @@
           <li><a href="{% url 'lava.scheduler.job.resubmit' job.pk %}" class="btn btn-default">Resubmit</a></li>
         {% endif %}
       {% if show_cancel %}
-      <li><a class="btn btn-warning" id="cancel" href="{% url 'lava.scheduler.job.cancel' job.sub_id %}">Cancel</a></li>
+      <li><a class="btn btn-warning" id="cancel" href="{% url 'lava.scheduler.job.cancel' job.id %}">Cancel</a></li>
       {% elif show_fail %}
-      <li><a class="btn btn-danger" id="fail" title="This should not be used if lava-run is still running" href="{% url 'lava.scheduler.job.fail' job.sub_id %}">Fail</a></li>
+      <li><a class="btn btn-danger" id="fail" title="This should not be used if lava-run is still running" href="{% url 'lava.scheduler.job.fail' job.id %}">Fail</a></li>
       {% endif %}
         </ul>
       </div>
       <div class="col-md-6">
         <ul class="nav nav-pills nav-stacked">
-          <li><a href="{% url 'lava.scheduler.job.definition' job.pk %}" class="btn btn-info">Definition of {{ job.sub_id }}</a></li>
+          <li><a href="{% url 'lava.scheduler.job.definition' job.pk %}" class="btn btn-info">Definition of {{ job.sub_id|default:job.id }}</a></li>
         {% if user.is_authenticated %}
         <li><a href="{% url 'lava.scheduler.job.toggle_favorite' job.pk %}" class="btn btn-info">
             {% if is_favorite %}
@@ -85,7 +85,7 @@
     <h4 class="modal-header">Sub jobs</h4>
     <dl class="dl-horizontal">
     {% for subjob in job.sub_jobs_list %}
-      <dt><a href="{% url 'lava.scheduler.job.detail' subjob.sub_id %}">{{ subjob.sub_id }}</a>
+      <dt><a href="{% url 'lava.scheduler.job.detail' subjob.id %}">{{ subjob.sub_id|default:job.id }}</a>
         {% if '0' in subjob.sub_id and '0' not in job.sub_id %}
             <abbr title="view job {{ subjob.sub_id }} to see the results, if any.">(?)</abbr>
         {% endif %}

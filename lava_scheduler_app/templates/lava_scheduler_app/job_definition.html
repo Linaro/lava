@@ -16,10 +16,10 @@
 </style>
 {% endblock %}
 {% block content %}
-<h2>Job definition file - {% if job.is_multinode %}{{ job.sub_id }}{% else %}{{ job.id }}{% endif %}
+<h2>Job definition file - {% if job.is_multinode %}{{ job.sub_id|default:job.id }}{% else %}{{ job.id }}{% endif %}
  <a class="btn btn-xs btn-info" href="{% url 'lava.scheduler.job.definition.plain' job.pk %}" title="Download as text file"><span class="glyphicon glyphicon-download"></span> download</a></h2>
 {% if job.is_multinode %}
-     {{ job.sub_id }} is part of a multinode job. Use the Multinode Definition to resubmit.
+     {{ job.sub_id|default:job.id }} is part of a multinode job. Use the Multinode Definition to resubmit.
 {% endif %}
 
 <div class="row">
@@ -95,7 +95,7 @@
     <h4 class="modal-header">Sub jobs</h4>
     <dl class="dl-horizontal">
     {% for subjob in job.sub_jobs_list %}
-      <dt><a href="{% url 'lava.scheduler.job.detail' subjob.sub_id %}">{{ subjob.sub_id }}</a>
+      <dt><a href="{% url 'lava.scheduler.job.detail' subjob.id %}">{{ subjob.sub_id|default:job.id }}</a>
         {% if '0' in subjob.sub_id and '0' not in job.sub_id %}
             <abbr title="view job {{ subjob.sub_id }} to see the results, if any.">(?)</abbr>
         {% endif %}

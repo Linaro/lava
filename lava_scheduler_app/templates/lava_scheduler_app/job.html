@@ -171,9 +171,9 @@
           <ul class="dropdown-menu">
             {% for subjob in job.sub_jobs_list %}
             {% if subjob.id == job.id %}
-            <li class="disabled"><a href=".">#{{ subjob.sub_id }} ({{ subjob.device_role }})</a></li>
+            <li class="disabled"><a href=".">#{{ subjob.sub_id|default:job.id }} ({{ subjob.device_role }})</a></li>
             {% else %}
-            <li><a href="{% url 'lava.scheduler.job.detail' subjob.sub_id %}">#{{ subjob.sub_id }} ({{ subjob.device_role }}): <span id="subjob_{{ subjob.id }}">{{ subjob.get_state_display }}</span></a></li>
+            <li><a href="{% url 'lava.scheduler.job.detail' subjob.id %}">#{{ subjob.sub_id|default:job.id }} ({{ subjob.device_role }}): <span id="subjob_{{ subjob.id }}">{{ subjob.get_state_display }}</span></a></li>
             {% endif %}
             {% endfor %}
           </ul>
@@ -261,13 +261,13 @@
       {% endif %}
       {% if show_cancel %}
         {% if job.is_multinode %}
-      <a class="btn btn-warning" id="cancel" href="{% url 'lava.scheduler.job.cancel' job.sub_id %}">Cancel</a>
+      <a class="btn btn-warning" id="cancel" href="{% url 'lava.scheduler.job.cancel' job.id %}">Cancel</a>
         {% else %}
       <a class="btn btn-warning" id="cancel" href="{% url 'lava.scheduler.job.cancel' job.pk %}">Cancel</a>
         {% endif %}
       {% elif show_fail %}
         {% if job.is_multinode %}
-      <a class="btn btn-danger" id="fail" title="This should not be used if lava-run is still running" href="{% url 'lava.scheduler.job.fail' job.sub_id %}">Fail</a>
+      <a class="btn btn-danger" id="fail" title="This should not be used if lava-run is still running" href="{% url 'lava.scheduler.job.fail' job.id %}">Fail</a>
         {% else %}
       <a class="btn btn-danger" id="fail" title="This should not be used if lava-run is still running" href="{% url 'lava.scheduler.job.fail' job.pk %}">Fail</a>
         {% endif %}
