@@ -318,6 +318,7 @@ def schedule_jobs_for_device_type(logger, dt, available_devices, workers):
 
 def schedule_jobs_for_device(logger, device, print_header):
     jobs = TestJob.objects.filter(state=TestJob.STATE_SUBMITTED)
+    jobs = jobs.select_for_update()
     jobs = jobs.filter(actual_device__isnull=True)
     jobs = jobs.filter(requested_device_type__pk=device.device_type.pk)
     jobs = jobs.select_related("submitter")
