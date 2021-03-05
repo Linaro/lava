@@ -81,7 +81,7 @@ class TestJobViewSet(base_views.TestJobViewSet):
 
     * `/jobs/`
 
-    You can alidate the given job definition against the schema validator via POST request on:
+    You can validate the given job definition against the schema validator via POST request on:
 
     * `/jobs/validate/`
 
