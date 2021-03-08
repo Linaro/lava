@@ -59,8 +59,8 @@ class BootJLinkRetry(RetryAction):
         if self.job.device.hard_reset_command:
             self.pipeline.add_action(ResetDevice())
             self.pipeline.add_action(WaitDeviceBoardID(self.job.device.get("board_id")))
-        self.pipeline.add_action(FlashJLinkAction())
         self.pipeline.add_action(ConnectDevice())
+        self.pipeline.add_action(FlashJLinkAction())
 
 
 class FlashJLinkAction(Action):
@@ -159,7 +159,7 @@ class FlashJLinkAction(Action):
             lines.append("r")  # Restart the CPU
             lines.append("qc")  # Close the connection and quit
 
-            self.logger.info("JLink command file: \n" + "".join(lines))
+            self.logger.info("JLink command file: \n" + "\n".join(lines))
 
             with open(self.fname, "w") as f:
                 f.writelines(line + "\n" for line in lines)

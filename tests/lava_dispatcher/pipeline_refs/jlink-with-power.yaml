@@ -13,8 +13,8 @@
     pipeline:
     - {class: power.PDUReboot, name: pdu-reboot}
   - {class: utils.udev.WaitDeviceBoardID, name: wait-device-boardid}
-  - {class: actions.boot.jlink.FlashJLinkAction, name: flash-jlink}
   - {class: connections.serial.ConnectDevice, name: connect-device}
+  - {class: actions.boot.jlink.FlashJLinkAction, name: flash-jlink}
 - class: actions.test.monitor.TestMonitorRetry
   name: lava-test-monitor-retry
   pipeline:
