@@ -1269,7 +1269,7 @@ ok 2 bar
             reverse("api-root", args=[self.version]) + "jobs/",
             {"definition": EXAMPLE_JOB},
         )
-        assert response.status_code == 400  # nosec - unit test support
+        assert response.status_code == 403  # nosec - unit test support
 
     def test_submit_bad_request_no_device_type(self):
         response = self.adminclient.post(
@@ -1297,7 +1297,7 @@ ok 2 bar
             reverse("api-root", args=[self.version])
             + "jobs/%s/resubmit/" % self.private_testjob1.id
         )
-        assert response.status_code == 404  # nosec - unit test support
+        assert response.status_code == 403  # nosec - unit test support
 
     def test_resubmit(self):
         response = self.adminclient.post(

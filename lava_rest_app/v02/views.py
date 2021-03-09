@@ -51,6 +51,7 @@ from rest_framework.permissions import (
 from rest_framework_extensions.mixins import NestedViewSetMixin
 from rest_framework.response import Response
 from rest_framework.exceptions import ParseError, PermissionDenied, ValidationError
+from rest_framework.permissions import AllowAny
 from rest_framework.utils import formatting
 from lava_scheduler_app.models import (
     Alias,
@@ -154,7 +155,9 @@ class TestJobViewSet(base_views.TestJobViewSet):
     def metadata(self, request, **kwargs):
         return Response({"metadata": self.get_object().get_metadata_dict()})
 
-    @action(methods=["post"], detail=False, suffix="validate")
+    @action(
+        methods=["post"], detail=False, suffix="validate", permission_classes=[AllowAny]
+    )
     def validate(self, request, **kwargs):
         definition = request.data.get("definition", None)
         strict = request.data.get("strict", False)
