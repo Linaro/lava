@@ -1,4 +1,4 @@
-# Copyright 2019-2020 NXP
+# Copyright 2019-2022 NXP
 #
 # Author: Thomas Mahe <thomas.mahe@nxp.com>
 #         Franck Lenormand <franck.lenormand@nxp.com>
@@ -22,6 +22,7 @@
 # List just the subclasses supported for this base strategy
 # imported by the parser to populate the list of subclasses.
 
+import re
 import time
 from lava_dispatcher.action import Pipeline, Action
 from lava_common.exceptions import ConfigurationError, JobError
@@ -54,14 +55,16 @@ class CheckSerialDownloadMode(OptionalContainerUuuAction):
         see the doc : https://github.com/NXPmicro/mfgtools
         :return: True if board is available in USB serial download mode
         """
-        usb_otg_path = self.job.device["actions"]["boot"]["methods"]["uuu"]["options"][
-            "usb_otg_path"
-        ]
+
         boot = self.get_namespace_data(
             action="download-action", label="boot", key="file"
         )
         # Sleep 5 seconds before availability check
         time.sleep(5)
+
+        usb_otg_path = self.job.device["actions"]["boot"]["methods"]["uuu"]["options"][
+            "usb_otg_path"
+        ]
 
         cmd = "{} --preserve-status 10 {} -m {} {}".format(
             self.linux_timeout, self.uuu, usb_otg_path, boot
@@ -117,9 +120,9 @@ class UUUBoot(Boot):
         if "commands" not in parameters:
             raise ConfigurationError("commands not specified in boot parameters")
         params = device["actions"]["boot"]["methods"]["uuu"]["options"]
-        if not params["usb_otg_path"]:
+        if not params["usb_otg_path"] and not params["usb_otg_path_command"]:
             raise ConfigurationError(
-                "uuu_usb_otg_path not defined in device definition"
+                "'uuu_usb_otg_path' or 'uuu_usb_otg_path_command' not defined in device definition"
             )
         if params["corrupt_boot_media_command"] is None:
             raise ConfigurationError(
@@ -131,7 +134,6 @@ class UUUBoot(Boot):
 
 
 class BootBootloaderCorruptBootMediaAction(Action):
-
     name = "boot-corrupt-boot-media"
     description = "boot using 'bootloader' method and corrupt boot media"
     summary = "boot bootloader"
@@ -186,6 +188,10 @@ class UUUBootRetryAction(RetryAction):
     summary = "Pass uuu commands"
 
     def populate(self, parameters):
+        # Verify format of usb_otg_path if available or process uuu_otg_path_command
+        self.job.device["actions"]["boot"]["methods"]["uuu"]["options"][
+            "usb_otg_path"
+        ] = self.eval_otg_path()
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.pipeline.add_action(ResetDevice())
         self.pipeline.add_action(CheckSerialDownloadMode())
@@ -194,9 +200,39 @@ class UUUBootRetryAction(RetryAction):
         self.pipeline.add_action(UUUBootAction(), parameters=parameters)
         self.pipeline.add_action(ConnectDevice())
 
+    def eval_otg_path(self):
+        uuu_options = self.job.device["actions"]["boot"]["methods"]["uuu"]["options"]
+
+        # Match example : "2:112"
+        otg_path_fsm = re.compile(r"\d+:\d+")
+
+        if otg_path_fsm.fullmatch(uuu_options.get("usb_otg_path")):
+            return uuu_options.get("usb_otg_path")
+
+        if uuu_options.get("usb_otg_path_command") is None:
+            raise JobError(
+                "uuu_usb_otg_path '{}' does not match with uuu path pattern and 'uuu_usb_otg_path_command' not "
+                "defined in device".format(uuu_options.get("usb_otg_path"))
+            )
+        else:
+            usb_otg_path_command = uuu_options.get("usb_otg_path_command")
+            cmd = usb_otg_path_command
+            self.logger.info(
+                "Retrieving 'usb_otg_path' using command : '%s'", " ".join(cmd)
+            )
+
+            uuu_path_expected = self.parsed_command(cmd).strip()
+
+            if otg_path_fsm.fullmatch(uuu_path_expected):
+                self.logger.info("uuu_otg_path matched : %s", uuu_path_expected)
+                return uuu_path_expected
+
+            raise JobError(
+                "Unable to parse uuu_usb_otg_path from command '{}'".format(cmd)
+            )
+
 
 class UUUBootAction(OptionalContainerUuuAction):
-
     name = "uuu-boot"
     description = "interactive uuu action"
     summary = "uuu commands"
