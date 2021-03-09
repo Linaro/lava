@@ -71,3 +71,37 @@ Similarly::
 
 Restart the ``lava-server`` and ``apache2`` services after any
 changes.
+
+Using GitLab
+------------
+
+LAVA server can delegate its authentication to a GitLab installation
+using the `django_allauth`_ authentication backend.
+
+.. _`django_allauth`: https://django-allauth.readthedocs.io/en/latest/
+
+To enable GitLab authentication support you need to set `AUTH_GITLAB_URL`
+in your LAVA configuration. Do this by placing a config snippet in yaml format
+in the directory ``/etc/lava-server/settings.d``::
+
+  AUTH_GITLAB_URL: "https://gitlab.example.com"
+
+This requires django-allauth to be installed manually (e.g., on Debian
+you would install the package ``python3-django-allauth``). Afterwards,
+run ``lava-server manage migrate``.
+
+Restart the ``lava-server`` and ``apache2`` services after any changes.
+
+Before you can use GitLab authentication, some additional setup steps
+need to be performed:
+
+* In your GitLab instance, you need to add your LAVA installation as an
+  **Application**, and enable the ``read_user`` scope.
+
+* After saving the application in GitLab, you will be provided with an
+  **Application ID** and a **Secret**.
+
+* In your LAVA administration dashboard, go to **Social Accounts** and
+  add a **Social application**. Select **GitLab** as provider and
+  enter the credentials you obtained from GitLab as **Client id** and
+  **Secret key**.

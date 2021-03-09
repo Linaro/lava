@@ -67,6 +67,25 @@ mapper.register(SchedulerJobsAPI, "scheduler.jobs")
 mapper.register(SchedulerTagsAPI, "scheduler.tags")
 mapper.register(SchedulerWorkersAPI, "scheduler.workers")
 
+# Auth backends
+auth_urls = [
+    url(
+        r"^{mount_point}accounts/".format(mount_point=settings.MOUNT_POINT),
+        include("django.contrib.auth.urls"),
+    )
+]
+
+if (
+    "allauth.account.auth_backends.AuthenticationBackend"
+    in settings.AUTHENTICATION_BACKENDS
+):
+    auth_urls.insert(
+        0,
+        url(
+            r"^{mount_point}accounts/".format(mount_point=settings.MOUNT_POINT),
+            include("allauth.urls"),
+        ),
+    )
 
 # Root URL patterns
 urlpatterns = [
@@ -109,10 +128,7 @@ urlpatterns = [
         update_table_length_setting,
         name="lava.update_table_length_setting",
     ),
-    url(
-        r"^{mount_point}accounts/".format(mount_point=settings.MOUNT_POINT),
-        include("django.contrib.auth.urls"),
-    ),
+    *auth_urls,
     url(r"^admin/jsi18n", JavaScriptCatalog.as_view()),
     url(
         r"^{mount_point}admin/".format(mount_point=settings.MOUNT_POINT),
