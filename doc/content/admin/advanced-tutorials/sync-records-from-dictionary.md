@@ -7,6 +7,9 @@ dictionary. It currently supports these models:
 * Device type
 * Tag
 * Alias
+* Physical Owner
+* Physical Group
+* Group Device Permissions
 
 This can make administration less cumbersome and can help with Ansible and
 similar setups. By using this feature administrators are able to keep the list
@@ -26,6 +29,13 @@ created:
    "worker": "worker-01"
    "tags": ["tag1", "tag2"],
    "aliases": ["alias1", "alias2"],
+   "physical_owner": "owner-01",
+   "physical_group": "group-01",
+   "group_device_permissions": [
+       ["change_device", "group-02"],
+       ["view_device", "group-02"],
+       ["submit_to_device", "group-02"],
+   ]
    }
 %}
 ```
@@ -50,6 +60,9 @@ In the above example, a system will create:
 * worker named worker-01 (if it doesn't exist already) and relate this device to it
 * aliases in the list; and relate them to the specified device type
 * tags in the list; and relate them to the device
+* relate specified physical owner (existed) to the device
+* relate specified physical group (existed) to the device
+* assign/delete group device permissions to the device
 
 If at any point the device dictionary is removed (and once the sync command is
 executed) the system will move the device that was created to it to **Retired**

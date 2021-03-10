@@ -25,9 +25,19 @@ from django.core.management.base import BaseCommand
 from django.db.models import IntegerField, Case, When, Count, Q
 
 from lava_common.compat import yaml_safe_load
+from lava_common.exceptions import PermissionNameError
 from lava_server.files import File
 import lava_scheduler_app.environment as environment
-from lava_scheduler_app.models import Alias, Device, DeviceType, Tag, Worker
+from lava_scheduler_app.models import (
+    Alias,
+    Device,
+    DeviceType,
+    Group,
+    GroupDevicePermission,
+    Tag,
+    User,
+    Worker,
+)
 
 
 class Command(BaseCommand):
@@ -40,7 +50,12 @@ class Command(BaseCommand):
         if hasattr(sync_dict, "items"):
             for pair in sync_dict.items:
                 if isinstance(pair.value, jinja2.nodes.List):
-                    ret[pair.key.value] = [node.value for node in pair.value.items]
+                    ret[pair.key.value] = [
+                        [sub_node.value for sub_node in node.items]
+                        if isinstance(node, jinja2.nodes.List)
+                        else node.value
+                        for node in pair.value.items
+                    ]
                 elif isinstance(pair.value, jinja2.nodes.Const):
                     ret[pair.key.value] = pair.value.value
                 else:  # Ignore all other nodes
@@ -162,6 +177,67 @@ class Command(BaseCommand):
                 tag, _ = Tag.objects.get_or_create(name=tag_name)
                 device.tags.add(tag)
                 self.stdout.write(f"  -> tag: {tag_name}")
+
+            # Link physical owner
+            specified_owner = sync_dict.get("physical_owner", "")
+            try:
+                physical_owner = User.objects.get(username=specified_owner)
+                device.physical_owner = physical_owner
+                self.stdout.write(f"  -> user: {specified_owner}")
+            except User.DoesNotExist:
+                device.physical_owner = None
+                if specified_owner:
+                    self.stdout.write(f"  -> user '{specified_owner}' does not exist")
+            finally:
+                device.save()
+
+            # Link physical group
+            specified_group = sync_dict.get("physical_group", "")
+            try:
+                physical_group = Group.objects.get(name=specified_group)
+                device.physical_group = physical_group
+                self.stdout.write(f"  -> group: {specified_group}")
+            except Group.DoesNotExist:
+                device.physical_group = None
+                if specified_group:
+                    self.stdout.write(f"  -> group '{specified_group}' does not exist")
+            finally:
+                device.save()
+
+            # Assign permission
+            specified_permissions = sync_dict.get("group_device_permissions", [])
+            for permission in specified_permissions:
+                perm = permission[0]
+                group = permission[1]
+
+                try:
+                    permission_group = Group.objects.get(name=group)
+                    try:
+                        GroupDevicePermission.objects.assign_perm(
+                            perm, permission_group, device
+                        )
+                        self.stdout.write(
+                            f"  -> add group permission: ({perm}, {group})"
+                        )
+                    except PermissionNameError:
+                        self.stdout.write(f"  -> permission '{perm}' does not exist")
+                except Group.DoesNotExist:
+                    self.stdout.write(f"  -> group '{group}' does not exist")
+
+            # Delete unused permission
+            kwargs = {"device": device}
+            obj_perm = GroupDevicePermission.objects.filter(**kwargs)
+            for perm in obj_perm:
+                if [
+                    perm.permission.codename,
+                    perm.group.name,
+                ] not in specified_permissions:
+                    GroupDevicePermission.objects.remove_perm(
+                        perm.permission.codename, perm.group, perm.device
+                    )
+                    self.stdout.write(
+                        f"  -> delete group permission: ({perm.permission.codename}, {perm.group.name})"
+                    )
 
         # devices which have is_synced true if there's no device dict for them.
         Device.objects.filter(is_synced=True).exclude(
