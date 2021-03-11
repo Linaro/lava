@@ -148,6 +148,7 @@ def action():
         Optional("timeout"): timeout(),
         Optional("repeat"): Range(min=1),  # TODO: where to put it?
         Optional("failure_retry"): Range(min=1),  # TODO: where to put it?
+        Optional("failure_retry_interval"): Range(min=1),
     }
 
 

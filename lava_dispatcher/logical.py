@@ -55,6 +55,8 @@ class RetryAction(Action):
             )
 
     def run(self, connection, max_end_time):
+        self.sleep = self.parameters.get("failure_retry_interval", self.sleep)
+
         retries = 0
         has_failed = False
         self.call_protocols()
