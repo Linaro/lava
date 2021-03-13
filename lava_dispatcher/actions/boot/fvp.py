@@ -117,6 +117,8 @@ class BaseFVPAction(Action):
             self.extra_options += " --privileged"
         for device in options.get("devices", []):
             self.extra_options += " --device %s" % device
+        for network in options.get("networks", []):
+            self.extra_options += " --network %s" % network
         for volume in options.get("volumes", []):
             self.extra_options += " --volume %s" % volume
         if "license_variable" in self.parameters:

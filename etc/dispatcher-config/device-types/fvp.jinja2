@@ -28,6 +28,14 @@ actions:
 {% else %}
           devices: []
 {% endif %}
+{% if fvp_docker_networks|default([]) %}
+          networks:
+{% for network in fvp_docker_networks %}
+          - "{{ network }}"
+{% endfor %}
+{% else %}
+          networks: []
+{% endif %}
 {% if fvp_docker_volumes|default([]) %}
           volumes:
 {% for volume in fvp_docker_volumes %}
