@@ -75,6 +75,19 @@ actions: []
 protocols: {}
 """
 
+EXAMPLE_WORKING_JOB_RESTRICTED_DEVICE_TYPE = """
+device_type: restricted_device_type1
+job_name: test
+visibility: public
+timeouts:
+  job:
+    minutes: 10
+  action:
+    minutes: 5
+actions: []
+protocols: {}
+"""
+
 LOG_FILE = """
 - {"dt": "2018-10-03T16:28:28.199903", "lvl": "info", "msg": "lava-dispatcher, installed at version: 2018.7-1+stretch"}
 - {"dt": "2018-10-03T16:28:28.200807", "lvl": "info", "msg": "start: 0 validate"}
@@ -188,7 +201,7 @@ class TestRestApi:
         self.private_testjob1 = TestJob.objects.create(
             definition=EXAMPLE_JOB,
             submitter=self.admin,
-            requested_device_type=self.public_device_type1,
+            requested_device_type=self.restricted_device_type1,
             health=TestJob.HEALTH_COMPLETE,
         )
         self.private_testjob1.submit_time = timezone.now() - timedelta(days=7)
@@ -1264,12 +1277,33 @@ ok 2 bar
         )
         assert len(data["results"]) == 1  # nosec - unit test support
 
-    def test_submit_unauthorized(self):
-        response = self.userclient.post(
+    def test_submit_no_authentication(self):
+        response = self.userclient_no_token.post(
             reverse("api-root", args=[self.version]) + "jobs/",
             {"definition": EXAMPLE_JOB},
         )
         assert response.status_code == 403  # nosec - unit test support
+
+    def test_submit_unauthorized(self):
+        response = self.userclient.post(
+            reverse("api-root", args=[self.version]) + "jobs/",
+            {"definition": EXAMPLE_WORKING_JOB_RESTRICTED_DEVICE_TYPE},
+        )
+        assert response.status_code == 400  # nosec - unit test support
+        msg = json.loads(response.content)
+        assert (
+            msg["message"]
+            == "Devices unavailable: Device type 'restricted_device_type1' is unavailable to user 'user1'"
+        )
+
+    def test_submit_authenticated(self):
+        response = self.userclient.post(
+            reverse("api-root", args=[self.version]) + "jobs/",
+            {"definition": EXAMPLE_WORKING_JOB},
+            format="json",
+        )
+        assert response.status_code == 201  # nosec - unit test support
+        assert TestJob.objects.count() == 3  # nosec - unit test support
 
     def test_submit_bad_request_no_device_type(self):
         response = self.adminclient.post(
@@ -1283,7 +1317,7 @@ ok 2 bar
             content["message"] == "job submission failed: 'device_type'."
         )  # nosec - unit test support
 
-    def test_submit(self):
+    def test_submit_admin(self):
         response = self.adminclient.post(
             reverse("api-root", args=[self.version]) + "jobs/",
             {"definition": EXAMPLE_WORKING_JOB},
@@ -1297,7 +1331,7 @@ ok 2 bar
             reverse("api-root", args=[self.version])
             + "jobs/%s/resubmit/" % self.private_testjob1.id
         )
-        assert response.status_code == 403  # nosec - unit test support
+        assert response.status_code == 404  # nosec - unit test support
 
     def test_resubmit(self):
         response = self.adminclient.post(
@@ -1535,6 +1569,20 @@ ok 2 bar
             reverse("api-root", args=[self.version]) + "system/master_config/"
         )
         assert response.status_code == 200  # nosec
+
+    def test_delete_not_authorized(self):
+        response = self.userclient.delete(
+            reverse("api-root", args=[self.version])
+            + "jobs/%s/" % self.public_testjob1.id
+        )
+        assert response.status_code == 403  # nosec
+
+    def test_delete_not_authenticated(self):
+        response = self.userclient_no_token.delete(
+            reverse("api-root", args=[self.version])
+            + "jobs/%s/" % self.public_testjob1.id
+        )
+        assert response.status_code == 403  # nosec
 
 
 def test_view_root(client):
