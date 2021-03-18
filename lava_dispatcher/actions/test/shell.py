@@ -353,7 +353,9 @@ class TestShellAction(Action):
                             # the characters are already in the buffer.
                             # With an higher timeout, this can have a big impact on
                             # the performances of the overall loop.
-                            bytes_read = feedback[1].listen_feedback(timeout=1)
+                            bytes_read = feedback[1].listen_feedback(
+                                timeout=1, namespace=feedback[0]
+                            )
                             if bytes_read > 1:
                                 self.logger.debug(
                                     "Listened to connection for namespace '%s' done",
@@ -544,7 +546,7 @@ class TestShellAction(Action):
             deepcopy=False,
             parameters={"namespace": feedback_ns},
         )
-        feedback_connection.listen_feedback(timeout=1)
+        feedback_connection.listen_feedback(timeout=1, namespace=feedback_ns)
 
     @nottest
     def signal_test_set(self, params):

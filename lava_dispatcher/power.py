@@ -280,7 +280,9 @@ class ReadFeedback(Action):
             else:
                 self.logger.debug("No connection for namespace %s", feedback_ns)
         for feedback in feedbacks:
-            bytes_read = feedback[1].listen_feedback(timeout=self.duration)
+            bytes_read = feedback[1].listen_feedback(
+                timeout=self.duration, namespace=feedback[0]
+            )
             # ignore empty or single newline-only content
             if bytes_read > 1:
                 self.logger.debug(

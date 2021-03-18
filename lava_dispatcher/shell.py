@@ -66,7 +66,10 @@ class ShellLogger:
             lines = lines[:last_ret]
             for line in lines.split("\n"):
                 if self.is_feedback:
-                    self.logger.feedback(line)
+                    if self.namespace:
+                        self.logger.feedback(line, namespace=self.namespace)
+                    else:
+                        self.logger.feedback(line)
                 else:
                     self.logger.target(line)
         else:
@@ -306,7 +309,7 @@ class ShellSession(Connection):
             self.connected = False
             raise InfrastructureError(str(exc))
 
-    def listen_feedback(self, timeout):
+    def listen_feedback(self, timeout, namespace=None):
         """
         Listen to output and log as feedback
         Returns the number of characters read.
@@ -319,11 +322,13 @@ class ShellSession(Connection):
             raise LAVABug("Invalid timeout value passed to listen_feedback()")
         try:
             self.raw_connection.logfile.is_feedback = True
+            self.raw_connection.logfile.namespace = namespace
             index = self.raw_connection.expect(
                 [pexpect.EOF, pexpect.TIMEOUT], timeout=timeout
             )
         finally:
             self.raw_connection.logfile.is_feedback = False
+            self.raw_connection.logfile.namespace = None
 
         if index == 1:
             return len(self.raw_connection.before)

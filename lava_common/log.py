@@ -165,6 +165,9 @@ class YAMLLogger(logging.Logger):
         else:
             data["msg"] = message
 
+        if level_name == "feedback" and "namespace" in kwargs:
+            data["ns"] = kwargs["namespace"]
+
         data_str = dump(data)
         self._log(level, data_str, ())
 
