@@ -282,7 +282,7 @@ REST_FRAMEWORK = {
         "lava_rest_app.authentication.LavaTokenAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly"
+        "rest_framework.permissions.IsAuthenticatedOrReadOnly"
     ],
 }
 
