@@ -92,11 +92,16 @@ run ``lava-server manage migrate``.
 
 Restart the ``lava-server`` and ``apache2`` services after any changes.
 
-Before you can use GitLab authentication, some additional setup steps
+Before you can use `GitLab OAuth2 authentication`_, some additional setup steps
 need to be performed:
+
+.. _`GitLab OAuth2 authentication`: https://docs.gitlab.com/ce/integration/oauth_provider.html
 
 * In your GitLab instance, you need to add your LAVA installation as an
   **Application**, and enable the ``read_user`` scope.
+
+* The Redirect URI is the URL where users are sent after they authorize with
+  GitLab. The form is: `LAVA_URL/accounts/gitlab/login/callback`
 
 * After saving the application in GitLab, you will be provided with an
   **Application ID** and a **Secret**.
