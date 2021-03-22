@@ -1,3 +1,14 @@
+lava (2021.03.post1-1) unstable; urgency=medium
+
+  * Security hotfix
+  2bdbd462 Fix authorization issues in REST API.
+  * Update
+  eed28e69 fvp: allow to specify the docker network
+  49676b29 Add namespace to a feedback channel.
+  dfd24bad doc: authentication: add redirect URI to Gitlab provider
+
+ -- Stevan Radakovic <stevan.radakovic@linaro.org>  Mon, 22 Mar 2021 13:13:32 +0100
+
 lava (2021.03-1) unstable; urgency=medium
 
   * LAVA Software 2021.03 release
