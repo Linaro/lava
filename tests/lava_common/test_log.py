@@ -132,7 +132,10 @@ def test_yaml_logger(mocker):
             return
         assert logger._log.mock_calls[0][1][0] == lvlno
         data = yaml_load(logger._log.mock_calls[0][1][1])
-        assert list(data.keys()) == ["dt", "lvl", "msg"]
+        if lvl == "feedback":
+            assert list(data.keys()) == ["dt", "lvl", "msg", "ns"]
+        else:
+            assert list(data.keys()) == ["dt", "lvl", "msg"]
         assert data["lvl"] == lvl
         if msg is None:
             assert data["msg"] == f"an {lvl}"
@@ -168,7 +171,7 @@ def test_yaml_logger(mocker):
     check(logger, "target", logging.INFO, "a target message")
 
     logger._log = mocker.Mock()
-    logger.feedback("a feedback from namespace")
+    logger.feedback("a feedback from namespace", namespace="ns")
     check(logger, "feedback", logging.INFO, "a feedback from namespace")
 
     logger._log = mocker.Mock()
