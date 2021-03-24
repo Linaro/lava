@@ -820,6 +820,14 @@ The ``pyocd`` boot method takes no arguments or parameters.
       timeout:
         minutes: 10
 
+The ``pyocd`` boot method requires configuration on the device type level.
+Following configuration options are supported:
+
+* ``command`` - executable command to invoke
+* ``options`` - list of options to pass to the executable
+* ``connect_before_flash`` - if ``true``, connect to device before running
+  pyocd flash command, otherwise after the command (default is ``false``)
+
 .. index:: boot method jlink
 
 .. _boot_method_jlink:
