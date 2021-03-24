@@ -19,7 +19,6 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 from lava_dispatcher.action import Action
 from tests.lava_dispatcher.test_basic import StdoutTestCase, Factory
-from lava_dispatcher.actions.deploy import docker
 
 
 class TestFVPActions(StdoutTestCase):
@@ -31,7 +30,6 @@ class TestFVPActions(StdoutTestCase):
 
 def test_shell_reference(monkeypatch):
     monkeypatch.setattr(Action, "run_cmd", lambda cmd: b"")
-    monkeypatch.setattr(docker, "which", lambda a: "/usr/bin/docker")
     factory = TestFVPActions()
     factory.setUp()
     factory.job.validate()
@@ -42,7 +40,6 @@ def test_shell_reference(monkeypatch):
 
 def test_use_telnet(monkeypatch):
     monkeypatch.setattr(Action, "run_cmd", lambda cmd: b"")
-    monkeypatch.setattr(docker, "which", lambda a: "/usr/bin/docker")
     factory = TestFVPActions()
     factory.setUp(job="sample_jobs/fvp_foundation_use_telnet.yaml")
     factory.job.validate()
@@ -55,7 +52,6 @@ def test_use_telnet(monkeypatch):
 
 def test_transfer_overlay(monkeypatch):
     monkeypatch.setattr(Action, "run_cmd", lambda cmd: b"")
-    monkeypatch.setattr(docker, "which", lambda a: "/usr/bin/docker")
     factory = TestFVPActions()
     factory.setUp(job="sample_jobs/fvp_foundation_transfer_overlay.yaml")
     factory.job.validate()
