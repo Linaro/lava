@@ -108,9 +108,7 @@ Depends: adduser,
          libjs-jquery,
          libjs-jquery-flot (>=0.8.2),
          libjs-jquery-typeahead,
-         postgresql,
          postgresql-client,
-         postgresql-common,
          systemd-sysv,
          ${misc:Depends},
          ${python3:Depends}
@@ -118,6 +116,8 @@ Recommends: lava-coordinator (= ${binary:Version}),
             lava-dispatcher (= ${binary:Version}),
             ntp,
             openssh-client,
+            postgresql,
+            postgresql-common
 Suggests: lavacli,
           rabbitmq-server | redis-server,
 Description: Linaro Automated Validation Architecture server
