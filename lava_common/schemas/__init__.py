@@ -382,4 +382,9 @@ docker_image_format = Match(
 
 
 def docker(image_key="image"):
-    return {Required(image_key): docker_image_format, Optional("local"): bool}
+    return {
+        Required(image_key): docker_image_format,
+        Optional("local"): bool,
+        Optional("container_name"): str,
+        Optional("network_from"): "str",
+    }

@@ -122,11 +122,10 @@ class PostprocessWithDocker(Action):
         scriptfile.write_text(script)
         scriptfile.chmod(0o755)
 
-        docker = DockerRun.from_parameters(self.docker_parameters)
+        docker = DockerRun.from_parameters(self.docker_parameters, self.job)
         docker.add_device("/dev/kvm", skip_missing=True)
         docker.bind_mount(self.path, LAVA_DOWNLOADS)
 
-        docker.hostname("lava")
         docker.workdir(LAVA_DOWNLOADS)
 
         docker.run(f"{LAVA_DOWNLOADS}/postprocess.sh", action=self)

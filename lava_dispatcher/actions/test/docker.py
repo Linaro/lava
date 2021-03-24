@@ -166,7 +166,7 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
 
         container = "lava-docker-test-shell-%s-%s" % (self.job.job_id, self.level)
 
-        docker = DockerRun.from_parameters(self.parameters["docker"])
+        docker = DockerRun.from_parameters(self.parameters["docker"], self.job)
         docker.prepare()
         docker.bind_mount(os.path.join(location, overlay), "/" + overlay)
 
@@ -184,7 +184,6 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
 
         docker.interactive()
         docker.tty()
-        docker.hostname("lava")
         docker.name(container)
         docker.environment("PS1", "docker-test-shell:$ ")
 

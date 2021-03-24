@@ -28,6 +28,8 @@ class DockerRun:
         self.image = image
         self.__local__ = False
         self.__name__ = None
+        self.__network__ = None
+        self.__suffix__ = ""
         self.__hostname__ = None
         self.__workdir__ = None
         self.__devices__ = []
@@ -39,9 +41,14 @@ class DockerRun:
         self.__docker_run_options__ = []
 
     @classmethod
-    def from_parameters(cls, params):
+    def from_parameters(cls, params, job):
         image = params["image"]
         run = cls(image)
+        suffix = "-lava-" + str(job.job_id)
+        if "container_name" in params:
+            run.name(params["container_name"] + suffix)
+        run.suffix(suffix)
+        run.network(params.get("network_from", None))
         run.local(params.get("local", False))
         return run
 
@@ -50,6 +57,12 @@ class DockerRun:
 
     def name(self, name):
         self.__name__ = name
+
+    def network(self, network):
+        self.__network__ = network
+
+    def suffix(self, suffix):
+        self.__suffix__ = suffix
 
     def hostname(self, hostname):
         self.__hostname__ = hostname
@@ -97,6 +110,8 @@ class DockerRun:
             cmd.append("--tty")
         if self.__name__:
             cmd.append(f"--name={self.__name__}")
+        if self.__network__:
+            cmd.append(f"--network=container:{self.__network__}{self.__suffix__}")
         if self.__hostname__:
             cmd.append(f"--hostname={self.__hostname__}")
         if self.__workdir__:

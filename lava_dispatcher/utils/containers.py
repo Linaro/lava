@@ -107,7 +107,7 @@ class DockerDriver(NullDriver):
         self.copied_files = []
 
     def get_command_prefix(self):
-        docker = DockerRun.from_parameters(self.params)
+        docker = DockerRun.from_parameters(self.params, self.action.job)
 
         docker.add_docker_options(*self.docker_options)
         docker.add_docker_run_options(*self.docker_run_options)
@@ -134,9 +134,9 @@ class DockerDriver(NullDriver):
 
     @property
     def key(self):
-        docker = DockerRun.from_parameters(self.params)
+        docker = DockerRun.from_parameters(self.params, self.action.job)
         return docker.image
 
     def validate(self):
-        docker = DockerRun.from_parameters(self.params)
+        docker = DockerRun.from_parameters(self.params, self.action.job)
         docker.prepare(self.action)
