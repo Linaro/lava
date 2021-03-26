@@ -20,6 +20,8 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
+import environ
+import os
 from pathlib import Path
 import yaml
 
@@ -30,24 +32,43 @@ from lava_server.settings.config_file import ConfigFile
 # Load configuration files #
 ############################
 
-# instance.conf
-with contextlib.suppress(FileNotFoundError):
-    config = ConfigFile.load("/etc/lava-server/instance.conf")
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": getattr(config, "LAVA_DB_NAME", ""),
-            "USER": getattr(config, "LAVA_DB_USER", ""),
-            "PASSWORD": getattr(config, "LAVA_DB_PASSWORD", ""),
-            "HOST": getattr(config, "LAVA_DB_SERVER", "127.0.0.1"),
-            "PORT": getattr(config, "LAVA_DB_PORT", "5432"),
-        }
-    }
-    INSTANCE_NAME = config.LAVA_INSTANCE
+# We only rely on django-environ for the neat database configuration helper,
+# which handles several special and corner cases, like sqlite memory
+# configurations, for one.
+#
+# The reason for this is its support for proxy variables makes anything else
+# highly fragile. For instance, if the SECRET_KEY happens to start with a $
+# character, it will try to use the rest of the key as a variable name, and
+# expose it on an error message.
+env = environ.Env()
+environ.Env.read_env()
 
-# secret_key.conf
-with contextlib.suppress(FileNotFoundError):
-    SECRET_KEY = ConfigFile.load("/etc/lava-server/secret_key.conf").SECRET_KEY
+if os.environ.get("DATABASE_URL"):
+    DATABASES = {"default": env.db()}
+    INSTANCE_NAME = os.environ["INSTANCE_NAME"]
+else:
+    with contextlib.suppress(FileNotFoundError):
+        config = ConfigFile.load("/etc/lava-server/instance.conf")
+        DATABASES = {
+            "default": {
+                "ENGINE": "django.db.backends.postgresql",
+                "NAME": getattr(config, "LAVA_DB_NAME", ""),
+                "USER": getattr(config, "LAVA_DB_USER", ""),
+                "PASSWORD": getattr(config, "LAVA_DB_PASSWORD", ""),
+                "HOST": getattr(config, "LAVA_DB_SERVER", "127.0.0.1"),
+                "PORT": getattr(config, "LAVA_DB_PORT", "5432"),
+            }
+        }
+        INSTANCE_NAME = config.LAVA_INSTANCE
+
+if os.environ.get("SECRET_KEY"):
+    SECRET_KEY = os.environ["SECRET_KEY"]
+else:
+    with contextlib.suppress(FileNotFoundError):
+        SECRET_KEY = ConfigFile.load("/etc/lava-server/secret_key.conf").SECRET_KEY
+
+if os.environ.get("ALLOWED_HOSTS"):
+    ALLOWED_HOSTS += os.environ["ALLOWED_HOSTS"].split(",")
 
 # Load settings
 FILES = [
