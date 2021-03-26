@@ -68,11 +68,17 @@ class BootPyOCDRetry(RetryAction):
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        method_params = self.job.device["actions"]["boot"]["methods"]["pyocd"][
+            "parameters"
+        ]
         if self.job.device.hard_reset_command:
             self.pipeline.add_action(ResetDevice())
             self.pipeline.add_action(WaitDeviceBoardID(self.job.device.get("board_id")))
+        if method_params.get("connect_before_flash", False):
+            self.pipeline.add_action(ConnectDevice())
         self.pipeline.add_action(FlashPyOCDAction())
-        self.pipeline.add_action(ConnectDevice())
+        if not method_params.get("connect_before_flash", False):
+            self.pipeline.add_action(ConnectDevice())
 
 
 class FlashPyOCDAction(Action):
