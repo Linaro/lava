@@ -23,6 +23,14 @@ actions:
       ssh:
     methods:
       lxc:
+      pyocd:
+        parameters:
+          command:
+            pyocd-flashtool
+          options:
+          - -d {{ debug|default('debug') }}
+          - -t lpc55s69
+          connect_before_flash: true
       jlink:
         parameters:
           command:
