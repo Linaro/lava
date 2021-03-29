@@ -679,9 +679,9 @@ class TestDisconnect(StdoutTestCase):
         the_exception = exc.exception
         err_msg = (
             "Invalid job data: ["
-            "\"LAVA does not know how to disconnect: ensure that primary connection has one of the following tags: ('telnet', 'ssh')\", "
-            "\"LAVA does not know how to disconnect: ensure that primary connection has one of the following tags: ('telnet', 'ssh')\", "
-            "\"LAVA does not know how to disconnect: ensure that primary connection has one of the following tags: ('telnet', 'ssh')\", "
-            "\"LAVA does not know how to disconnect: ensure that primary connection has one of the following tags: ('telnet', 'ssh')\"]"
+            "\"LAVA does not know how to disconnect: ensure that primary connection has one of the following tags: ('telnet', 'ssh', 'shell')\", "
+            "\"LAVA does not know how to disconnect: ensure that primary connection has one of the following tags: ('telnet', 'ssh', 'shell')\", "
+            "\"LAVA does not know how to disconnect: ensure that primary connection has one of the following tags: ('telnet', 'ssh', 'shell')\", "
+            "\"LAVA does not know how to disconnect: ensure that primary connection has one of the following tags: ('telnet', 'ssh', 'shell')\"]"
         )
         self.assertEqual(str(the_exception).strip(), err_msg)

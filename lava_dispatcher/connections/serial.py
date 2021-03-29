@@ -302,7 +302,7 @@ class DisconnectDevice(ConnectDevice):
 
         if connection:
             self.logger.debug("Stopping connection")
-            connection.disconnect()
+            connection.disconnect(reason="")
             connection.connected = False
             self.set_namespace_data(
                 action="shared",
