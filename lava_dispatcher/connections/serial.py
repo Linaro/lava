@@ -61,6 +61,13 @@ class ConnectDevice(Action):
     def validate(self):
         super().validate()
         matched = False
+        if "connections" not in self.job.device["commands"]:
+            if (
+                "connect" in self.job.device["commands"]
+                and "must_use_connection" in self.job.device["commands"]
+            ):
+                self.errors = "Unable to connect to shell - missing connections block."
+                return
         if "serial" not in self.job.device["actions"]["boot"]["connections"]:
             self.errors = "Device not configured to support serial connection."
         if "commands" not in self.job.device:
@@ -267,7 +274,6 @@ class DisconnectDevice(ConnectDevice):
     def validate(self):
         super().validate()
         if "connections" not in self.job.device["commands"]:
-            self.errors = "Unable to connect to shell - missing connections block."
             return
         primary_connection_has_correct_tags = False
         for connection in self.job.device["commands"]["connections"]:
