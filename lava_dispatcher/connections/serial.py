@@ -20,7 +20,8 @@
 
 from lava_dispatcher.connection import RECOGNIZED_TAGS
 from lava_dispatcher.utils.shell import which
-from lava_dispatcher.action import Action
+from lava_dispatcher.logical import RetryAction
+from lava_dispatcher.action import Action, Pipeline
 from lava_common.exceptions import JobError, InfrastructureError
 from lava_dispatcher.shell import ShellCommand, ShellSession
 
@@ -321,3 +322,21 @@ class DisconnectDevice(ConnectDevice):
         else:
             self.logger.debug("Not connected, no need to disconnect.")
         return connection
+
+
+class ResetConnection(RetryAction):
+    """
+    Used within a RetryAction - Perform a reset of the connection by
+    disconnecting and connecting the device to have a new serial link.
+    """
+
+    name = "reset-connection"
+    description = "Disconnect and connect the serial"
+    summary = "Reset the connection"
+
+    reason = "reset"
+
+    def populate(self, parameters):
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.pipeline.add_action(DisconnectDevice())
+        self.pipeline.add_action(ConnectDevice())
