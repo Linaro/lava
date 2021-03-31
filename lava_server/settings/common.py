@@ -160,6 +160,9 @@ HTTPS_XML_RPC = True
 # LAVA custom settings #
 ########################
 
+# Allow mismatch between master and worker versions
+ALLOW_VERSION_MISMATCH = False
+
 # LOG_SIZE_LIMIT in megabytes
 LOG_SIZE_LIMIT = 5
 
