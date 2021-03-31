@@ -173,7 +173,7 @@ def start_job(
 
     # Dump the environment variables in the tmp file.
     if env_dut:
-        (base_dir / "env.dut.yaml").write_text(env_dut, encoding="utf-8")
+        (base_dir / "env-dut.yaml").write_text(env_dut, encoding="utf-8")
 
     try:
         if debug:
@@ -199,7 +199,7 @@ def start_job(
         args.append(str(base_dir / "job.yaml"))
 
         if env_dut:
-            args.append("--env-dut=%s" % (base_dir / "env.dut.yaml"))
+            args.append("--env-dut=%s" % (base_dir / "env-dut.yaml"))
 
         proc = subprocess.Popen(
             args, stdout=out_file, stderr=err_file, env=env, preexec_fn=os.setpgrp

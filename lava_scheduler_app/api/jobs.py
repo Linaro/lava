@@ -110,7 +110,7 @@ class SchedulerJobsAPI(ExposedV2API):
         device = load_optional_file(os.path.join(output_dir, "device.yaml"))
         dispatcher = load_optional_file(os.path.join(output_dir, "dispatcher.yaml"))
         env = load_optional_file(os.path.join(output_dir, "env.yaml"))
-        env_dut = load_optional_file(os.path.join(output_dir, "env.dut.yaml"))
+        env_dut = load_optional_file(os.path.join(output_dir, "env-dut.yaml"))
         return [definition, device, dispatcher, env, env_dut]
 
     def definition(self, job_id):

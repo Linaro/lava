@@ -1492,6 +1492,82 @@ def test_workers_get_env_exceptions(setup, mocker, tmpdir):
 
 
 @pytest.mark.django_db
+def test_workers_get_env_dut_old_config(setup, mocker, tmpdir):
+    (tmpdir / "env-dut.yaml").write_text("hello", encoding="utf-8")
+    mocker.patch(
+        "lava_server.files.File.KINDS",
+        {
+            "env-dut": [
+                str(tmpdir / "{name}/env-dut.yaml"),
+                str(tmpdir / "env-dut.yaml"),
+            ]
+        },
+    )
+
+    assert (  # nosec
+        str(server("admin", "admin").scheduler.workers.get_env_dut("example.com"))
+        == "hello"
+    )
+
+
+@pytest.mark.django_db
+def test_workers_get_env_dut_new_config(setup, mocker, tmpdir):
+    (tmpdir / "example.com").mkdir()
+    (tmpdir / "example.com" / "env-dut.yaml").write_text(
+        "hello world", encoding="utf-8"
+    )
+    mocker.patch(
+        "lava_server.files.File.KINDS",
+        {
+            "env-dut": [
+                str(tmpdir / "{name}/env-dut.yaml"),
+                str(tmpdir / "env-dut.yaml"),
+            ]
+        },
+    )
+
+    assert (  # nosec
+        str(server("admin", "admin").scheduler.workers.get_env_dut("example.com"))
+        == "hello world"
+    )
+
+
+@pytest.mark.django_db
+def test_workers_get_env_dut_exceptions(setup, mocker, tmpdir):
+    mocker.patch(
+        "lava_server.files.File.KINDS",
+        {
+            "env-dut": [
+                str(tmpdir / "{name}/env-dut.yaml"),
+                str(tmpdir / "env-dut.yaml"),
+            ]
+        },
+    )
+
+    # 1. invalid worker name (should not be a path)
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("admin", "admin").scheduler.workers.get_env_dut("example.com/../")
+    assert exc.value.faultCode == 400  # nosec
+    assert exc.value.faultString == "Invalid worker name"  # nosec
+
+    # 2. worker does not exists
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("admin", "admin").scheduler.workers.get_env_dut("worker.example.com")
+    assert exc.value.faultCode == 404  # nosec
+    assert (  # nosec
+        exc.value.faultString == "Worker 'worker.example.com' was not found."
+    )
+
+    # 3. no configuration file
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("admin", "admin").scheduler.workers.get_env_dut("example.com")
+    assert exc.value.faultCode == 404  # nosec
+    assert (  # nosec
+        exc.value.faultString == "Worker 'example.com' does not have an env-dut file"
+    )
+
+
+@pytest.mark.django_db
 def test_workers_set_config(setup, mocker, tmpdir):
     mocker.patch(
         "lava_server.files.File.KINDS",
@@ -1594,6 +1670,68 @@ def test_workers_set_env_exceptions(setup, mocker, tmpdir):
     # 3. as user => error
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server("user", "user").scheduler.workers.set_env("worker.example.com", "error")
+    assert exc.value.faultCode == 403  # nosec
+    assert (  # nosec
+        exc.value.faultString
+        == "User 'user' is missing permission lava_scheduler_app.change_worker ."
+    )
+
+
+@pytest.mark.django_db
+def test_workers_set_env_dut(setup, mocker, tmpdir):
+    mocker.patch(
+        "lava_server.files.File.KINDS",
+        {
+            "env-dut": [
+                str(tmpdir / "{name}/env-dut.yaml"),
+                str(tmpdir / "env-dut.yaml"),
+            ]
+        },
+    )
+
+    assert (  # nosec
+        server("admin", "admin").scheduler.workers.set_env_dut("example.com", "hello")
+        is True
+    )
+    assert (tmpdir / "example.com" / "env-dut.yaml").read_text(  # nosec
+        encoding="utf-8"
+    ) == "hello"
+
+
+@pytest.mark.django_db
+def test_workers_set_env_dut_exceptions(setup, mocker, tmpdir):
+    mocker.patch(
+        "lava_server.files.File.KINDS",
+        {
+            "env-dut": [
+                str(tmpdir / "{name}/env-dut.yaml"),
+                str(tmpdir / "env-dut.yaml"),
+            ]
+        },
+    )
+
+    # 1. invalid worker name (should not be a path)
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("admin", "admin").scheduler.workers.set_env_dut(
+            "example.com/../", "error"
+        )
+    assert exc.value.faultCode == 400  # nosec
+    assert exc.value.faultString == "Invalid worker name"  # nosec
+
+    # 2. worker does not exists
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("admin", "admin").scheduler.workers.set_env_dut(
+            "worker.example.com", "error"
+        )
+    assert exc.value.faultCode == 404  # nosec
+    assert (  # nosec
+        exc.value.faultString == "Worker 'worker.example.com' was not found."
+    )
+    # 3. as user => error
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("user", "user").scheduler.workers.set_env_dut(
+            "worker.example.com", "error"
+        )
     assert exc.value.faultCode == 403  # nosec
     assert (  # nosec
         exc.value.faultString

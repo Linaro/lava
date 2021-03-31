@@ -1145,7 +1145,7 @@ def internal_v1_jobs(request, pk):
         if env_str:
             (path / "env.yaml").write_text(env_str)
         if env_dut_str:
-            (path / "env.dut.yaml").write_text(env_dut_str, encoding="utf-8")
+            (path / "env-dut.yaml").write_text(env_dut_str, encoding="utf-8")
 
         return JsonResponse(
             {
@@ -2009,7 +2009,7 @@ def job_configuration(request, pk):
                 add_optional_file(tar, "device.yaml")
                 add_optional_file(tar, "dispatcher.yaml")
                 add_optional_file(tar, "env.yaml")
-                add_optional_file(tar, "env.dut.yaml")
+                add_optional_file(tar, "env-dut.yaml")
             fileobj.seek(0)
             data = fileobj.read()
             fileobj.close()
