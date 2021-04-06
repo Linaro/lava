@@ -52,6 +52,15 @@ URL="https://my.lava.server/"
 TOKEN="--token 0123456789012345678901234567890123456789"
 ```
 
+Make sure Docker get installed from Docker's official repo. At the time of
+writing this doc, Docker version `18.09.1` installed from Debian's official
+repo doesn't work with `lava-docker-worker`.
+
+```
+curl -fsSL https://get.docker.com -o get-docker.sh
+sh get-docker.sh
+```
+
 Then enable and start the `lava-docker-worker` service:
 
 ```
