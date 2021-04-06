@@ -20,19 +20,11 @@ Install the dependencies: `docker` and `docker-compose`:
 
 ```shell
 apt-get update
-apt-get install docker.io docker-compose git
+apt-get install python3-pip git
+curl -fsSL https://get.docker.com -o get-docker.sh
+sh get-docker.sh
+python3 -m pip install docker-compose
 ```
-
-??? tip "Old Debian version"
-    On old Debian versions, docker should be installed from the official docker repository.
-    ```shell
-    apt-get install ca-certificates gnupg2 wget
-    wget https://download.docker.com/linux/debian/gpg
-    apt-key add gpg
-    echo "deb [arch=amd64] https://download.docker.com/linux/debian buster stable" > /etc/apt/sources.list.d/docker.list
-    apt-get update
-    apt-get install docker-ce
-    ```
 
 ### Install
 
