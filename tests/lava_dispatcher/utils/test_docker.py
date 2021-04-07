@@ -17,9 +17,15 @@ def test_name(run):
     assert "--name=blah" in run.cmdline()
 
 
-def test_hostname(run):
-    run.hostname("blah")
-    assert "--hostname=blah" in run.cmdline()
+def test_network(run):
+    run.network("foo")
+    assert "--network=container:foo" in run.cmdline()
+
+
+def test_network_with_suffix(run):
+    run.network("foo")
+    run.suffix("bar")
+    assert "--network=container:foobar" in run.cmdline()
 
 
 def test_workdir(run):
@@ -160,10 +166,33 @@ def test_run_with_local_image_does_not_pull(mocker):
     )
 
 
-def test_from_parameters():
-    assert DockerRun.from_parameters({"image": "foo"}).image == "foo"
-    assert not DockerRun.from_parameters({"image": "foo"}).__local__
-    assert DockerRun.from_parameters({"image": "foo", "local": True}).__local__
+def test_from_parameters_image(mocker):
+    job = mocker.MagicMock()
+    assert DockerRun.from_parameters({"image": "foo"}, job).image == "foo"
+    assert not DockerRun.from_parameters({"image": "foo"}, job).__local__
+    assert DockerRun.from_parameters({"image": "foo", "local": True}, job).__local__
+
+
+def test_from_parameters_suffix(mocker):
+    job = mocker.MagicMock()
+    job.job_id = "123"
+    docker_run = DockerRun.from_parameters({"image": "foo"}, job)
+    assert docker_run.__suffix__ == "-lava-123"
+
+
+def test_from_parameters_name_network(mocker):
+    job = mocker.MagicMock()
+    job.job_id = "123"
+    docker_run = DockerRun.from_parameters(
+        {
+            "image": "foo",
+            "container_name": "foocontainer",
+            "network_from": "othercontainer",
+        },
+        job,
+    )
+    assert docker_run.__name__ == "foocontainer-lava-123"
+    assert docker_run.__network__ == "othercontainer"
 
 
 def test_wait(mocker):

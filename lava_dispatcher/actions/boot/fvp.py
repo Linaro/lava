@@ -98,7 +98,6 @@ class BaseFVPAction(Action):
 
     def validate(self):
         super().validate()
-        self.container = "lava-%s-%s" % (self.job.job_id, self.level)
         if "docker" not in self.parameters or "name" not in self.parameters.get(
             "docker", {}
         ):
@@ -106,6 +105,18 @@ class BaseFVPAction(Action):
             raise JobError("Not specified 'docker' in parameters")
         self.docker_image = self.parameters["docker"]["name"]
         self.local_docker_image = self.parameters["docker"].get("local", False)
+
+        # FIXME this emulates the container naming behavior of
+        # lava_dispatcher.utils.docker.DockerRun.
+        #
+        # This entire module should be rewritten to use DockerRun instead of
+        # manually composing docker run command lines.
+        if "container_name" in self.parameters["docker"]:
+            self.container = (
+                self.parameters["docker"]["container_name"] + "-lava-" + self.job.job_id
+            )
+        else:
+            self.container = "lava-%s-%s" % (self.job.job_id, self.level)
 
         options = self.job.device["actions"]["boot"]["methods"]["fvp"]["options"]
 
