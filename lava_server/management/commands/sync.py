@@ -246,19 +246,17 @@ class Command(BaseCommand):
 
         # Device types which have all the devices synced and all of them retired
         # should become invisible.
-        dts = (
-            DeviceType.objects.annotate(
-                not_synced_retired_count=Count(
-                    Case(
-                        When(
-                            Q(device__is_synced=False)
-                            | ~Q(device__health=Device.HEALTH_RETIRED),
-                            then=1,
-                        ),
-                        output_field=IntegerField(),
-                    )
+        queryset = DeviceType.objects.annotate(
+            not_synced_retired_count=Count(
+                Case(
+                    When(
+                        Q(device__is_synced=False)
+                        | ~Q(device__health=Device.HEALTH_RETIRED),
+                        then=1,
+                    ),
+                    output_field=IntegerField(),
                 )
             )
-            .filter(not_synced_retired_count=0)
-            .update(display=False)
         )
+        queryset.filter(not_synced_retired_count=0).update(display=False)
+        queryset.filter(not_synced_retired_count=1).update(display=True)
