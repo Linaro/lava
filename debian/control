@@ -99,7 +99,6 @@ Package: lava-server
 Architecture: all
 Pre-Depends: debconf | debconf-2.0
 Depends: adduser,
-         apache2,
          gunicorn (>= 19.9.0-4) | gunicorn3,
          lava-common (= ${binary:Version}),
          lava-server-doc (= ${binary:Version}),
@@ -112,7 +111,8 @@ Depends: adduser,
          systemd-sysv,
          ${misc:Depends},
          ${python3:Depends}
-Recommends: lava-coordinator (= ${binary:Version}),
+Recommends: apache2,
+            lava-coordinator (= ${binary:Version}),
             lava-dispatcher (= ${binary:Version}),
             ntp,
             openssh-client,
