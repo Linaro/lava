@@ -1112,7 +1112,7 @@ class TestRunnerAction(TestOverlayAction):
                 runsh.write('echo "<LAVA_SIGNAL_STARTRUN $TESTRUN_ID $UUID>"\n')
             runsh.write("set -x\n")
             steps = testdef.get("run", {}).get("steps", [])
-            for cmd in steps:
+            for cmd in [step for step in steps if step is not None]:
                 if "--cmd" in cmd or "--shell" in cmd:
                     cmd = re.sub(r"\$(\d+)\b", r"\\$\1", cmd)
                 runsh.write("%s\n" % cmd)
