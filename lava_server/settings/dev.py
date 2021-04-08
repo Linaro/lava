@@ -78,6 +78,7 @@ SECRET_KEY = "00000000000000000000000000000000000000000000000000"
 ALLOWED_HOSTS = ["*"]
 CSRF_COOKIE_SECURE = False
 SESSION_COOKIE_SECURE = False
+ALLOW_VERSION_MISMATCH = False
 
 # Any emails that would normally be sent are redirected to stdout.
 # This setting is only used for django 1.2 and newer.

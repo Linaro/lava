@@ -1317,7 +1317,7 @@ def internal_v1_workers(request, pk=None):
 
         # Save worker version
         worker.version = version
-        if version_mismatch:
+        if version_mismatch and not settings.ALLOW_VERSION_MISMATCH:
             # If the version does not match, go offline
             worker.go_state_offline()
         else:
@@ -1334,7 +1334,7 @@ def internal_v1_workers(request, pk=None):
 
         # Scheduled
         starts = []
-        if not version_mismatch:
+        if not version_mismatch or settings.ALLOW_VERSION_MISMATCH:
             start_query = query.filter(state=TestJob.STATE_SCHEDULED)
             starts = list(start_query.values("id", "token"))
             for job in start_query.filter(target_group__isnull=False):
@@ -1352,7 +1352,12 @@ def internal_v1_workers(request, pk=None):
         for job in running_query.filter(target_group__isnull=False):
             runnings += [{"id": j.id, "token": j.token} for j in job.dynamic_jobs()]
 
-        if version_mismatch and not cancels and not runnings:
+        if (
+            version_mismatch
+            and not cancels
+            and not runnings
+            and not settings.ALLOW_VERSION_MISMATCH
+        ):
             return JsonResponse(
                 {"error": f"Version mismatch '{version}' vs '{__version__}'"},
                 status=409,  # Conflict

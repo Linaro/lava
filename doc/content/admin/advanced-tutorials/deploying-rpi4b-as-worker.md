@@ -110,6 +110,18 @@ Or, alternatively you can add a token of your choice in the LAVA worker (Pi 4)
 in `/etc/lava-dispatcher/lava-worker` settings and paste the same token in the
 LAVA admin UI on the master in the worker section for this particular worker.
 
+## Disable master/worker version mismatch checking
+
+LAVA master rejects workers which do not run strictly the same version.
+You can disable this in eg. `/etc/lava-server/settings.d/01-autoregister.yaml`
+
+```yaml
+ALLOW_VERSION_MISMATCH: true
+```
+Note: Keep in mind that the version check is here to prevent against strange
+issues when version are not compatible. Like when the device-dictionary are
+changing and the dispatcher depends on such changes.
+
 ## Setting up the server url
 
 Once you have lava-worker running you need to point it to the LAVA server it

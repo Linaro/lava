@@ -420,7 +420,7 @@ def test_internal_v1_jobs_logs(client, mocker, settings):
 
 
 @pytest.mark.django_db
-def test_internal_v1_workers_get(client, mocker):
+def test_internal_v1_workers_get(client, mocker, settings):
     # Setup
     now = timezone.now()
     mocker.patch("django.utils.timezone.now", return_value=now)
@@ -452,6 +452,15 @@ def test_internal_v1_workers_get(client, mocker):
     assert ret.status_code == 400
     assert ret.json()["error"] == "Missing 'version'"
 
+    settings.ALLOW_VERSION_MISMATCH = True
+    ret = client.get(
+        reverse("lava.scheduler.internal.v1.workers", args=["worker-01"]),
+        {"version": "v0.1"},
+        HTTP_LAVA_TOKEN=token,
+    )
+    assert ret.status_code == 200
+
+    settings.ALLOW_VERSION_MISMATCH = False
     ret = client.get(
         reverse("lava.scheduler.internal.v1.workers", args=["worker-01"]),
         {"version": "v0.1"},
