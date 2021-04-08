@@ -102,6 +102,8 @@ need to be performed:
 
 * The Redirect URI is the URL where users are sent after they authorize with
   GitLab. The form is: `LAVA_URL/accounts/gitlab/login/callback`
+  Currently there seems to be a bug in GitLab so the Redirect URI works only
+  with **http** protocol.
 
 * After saving the application in GitLab, you will be provided with an
   **Application ID** and a **Secret**.
@@ -110,3 +112,6 @@ need to be performed:
   add a **Social application**. Select **GitLab** as provider and
   enter the credentials you obtained from GitLab as **Client id** and
   **Secret key**.
+
+.. note:: If SMTP is not set up in LAVA, you can get a 500 Internal server
+          error. Login will still work despite the error.
