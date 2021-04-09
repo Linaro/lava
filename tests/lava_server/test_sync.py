@@ -271,6 +271,56 @@ def test_retire(mocker):
 
 
 @pytest.mark.django_db
+def test_sync_not_retire(mocker):
+
+    dt = DeviceType.objects.create(name="qemu", display=False)
+    Device.objects.create(hostname="qemu01", device_type=dt, is_synced=True)
+    Device.objects.create(hostname="qemu02", device_type=dt, is_synced=True)
+
+    file_list = mocker.MagicMock(return_value=["qemu01"])
+    mocker.patch("lava_server.files.File.list", file_list)
+
+    mocker.patch("lava_server.management.commands.sync.Command._get_sync_to_lava")
+
+    parse_sync_dict = mocker.MagicMock(
+        return_value={"device_type": "qemu", "worker": "worker-01"}
+    )
+    mocker.patch(
+        "lava_server.management.commands.sync.Command._parse_sync_dict", parse_sync_dict
+    )
+
+    mocker.patch("jinja2.Environment.get_template")
+    mocker.patch("yaml.load")
+
+    out = StringIO()
+    sys.stdout = out
+    call_command("sync")
+
+    assert Device.objects.get(hostname="qemu01").health == Device.HEALTH_MAINTENANCE
+    assert Device.objects.get(hostname="qemu02").health == Device.HEALTH_RETIRED
+    assert DeviceType.objects.get(name="qemu").display
+
+
+@pytest.mark.django_db
+def test_not_sync_not_retire(mocker):
+
+    dt = DeviceType.objects.create(name="qemu", display=False)
+    Device.objects.create(hostname="qemu01", device_type=dt, is_synced=True)
+    Device.objects.create(hostname="qemu02", device_type=dt, is_synced=False)
+
+    file_list = mocker.MagicMock(return_value=[])
+    mocker.patch("lava_server.files.File.list", file_list)
+
+    out = StringIO()
+    sys.stdout = out
+    call_command("sync")
+
+    assert Device.objects.get(hostname="qemu01").health == Device.HEALTH_RETIRED
+    assert Device.objects.get(hostname="qemu02").health == Device.HEALTH_MAINTENANCE
+    assert not DeviceType.objects.get(name="qemu").display
+
+
+@pytest.mark.django_db
 def test_no_user_group(mocker):
 
     file_list = mocker.MagicMock(return_value=["qemu01"])
