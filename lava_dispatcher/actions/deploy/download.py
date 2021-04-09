@@ -363,7 +363,10 @@ class DownloadHandler(Action):
             try:
                 with open(self.fname, "wb") as dwnld_file:
                     proc = subprocess.Popen(  # nosec - internal.
-                        [decompress_command], stdin=subprocess.PIPE, stdout=dwnld_file
+                        [decompress_command],
+                        stdin=subprocess.PIPE,
+                        stdout=dwnld_file,
+                        stderr=subprocess.PIPE,
                     )
             except OSError as exc:
                 msg = "Unable to open %s: %s" % (self.fname, exc.strerror)
@@ -376,7 +379,9 @@ class DownloadHandler(Action):
                     try:
                         pipe.write(buff)
                     except BrokenPipeError as exc:
-                        error_message = str(exc)
+                        error_message = (
+                            str(exc) + ": " + proc.stderr.read().decode("utf-8").strip()
+                        )
                         self.logger.exception(error_message)
                         msg = (
                             "Make sure the 'compression' is corresponding "
