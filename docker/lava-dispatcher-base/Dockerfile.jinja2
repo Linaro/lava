@@ -5,6 +5,7 @@
 {% set dependencies = [
     {"pkgs": requires("debian", "buster", "lava-common") },
     {"pkgs": requires("debian", "buster", "lava-dispatcher") },
-    {"pkgs": "android-sdk-libsparse-utils dfu-util git libguestfs-tools qemu-system-arm qemu-system-x86 ser2net telnet tftpd-hpa u-boot-tools unzip xz-utils zstd" },
+    {"pkgs": "android-sdk-libsparse-utils dfu-util git libguestfs-tools ser2net telnet tftpd-hpa u-boot-tools unzip xz-utils zstd" },
+    {"pkgs": "qemu-system-arm qemu-system-mips qemu-system-misc qemu-system-ppc qemu-system-x86", "from": "buster-backports" },
     {"pkgs": "docker-ce-cli" },
 ] %}
