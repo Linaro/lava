@@ -20,6 +20,7 @@
 
 import os
 import re
+import shlex
 import time
 
 from lava_common.exceptions import JobError
@@ -214,22 +215,15 @@ class CheckFVPVersionAction(BaseFVPAction):
             self.logger.debug("Pulling image %s", self.docker_image)
             self.run_cmd(["docker", "pull", self.docker_image])
 
+        fvp_image = self.parameters.get("image")
         fvp_arguments = self.parameters.get("version_args", "--version")
 
-        # Build the command line
-        # The docker image is safe to be included in the command line
-        cmd = self.construct_docker_fvp_command(self.docker_image, fvp_arguments)
-
-        self.logger.debug("Boot command: %s", cmd)
-        shell = ShellCommand(cmd, self.timeout, logger=self.logger)
-
-        shell_connection = ShellSession(self.job, shell)
-        shell_connection = super().run(shell_connection, max_end_time)
-
-        # Wait for the version
-        shell_connection.prompt_str = self.fvp_version_string
-        self.wait(shell_connection)
-        matched_version_string = shell_connection.raw_connection.match.group()
+        fvp_image = shlex.quote(fvp_image)
+        fvp_arguments = shlex.quote(fvp_arguments)
+        cmd = f"docker run --rm {self.docker_image} {fvp_image} {fvp_arguments}"
+        output = self.parsed_command(["sh", "-c", cmd])
+        m = re.match(self.fvp_version_string, output)
+        matched_version_string = m and m.group(0) or output
         result = {
             "definition": "lava",
             "case": "fvp-version",
@@ -240,7 +234,7 @@ class CheckFVPVersionAction(BaseFVPAction):
         }
         self.logger.results(result)
 
-        return shell_connection
+        return connection
 
 
 class StartFVPAction(BaseFVPAction):
