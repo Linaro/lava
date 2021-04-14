@@ -1,5 +1,5 @@
 Tests: management
-Depends: lava-dispatcher, lava-server
+Depends: postgresql, apache2, lava-dispatcher, lava-server
 Restrictions: allow-stderr, needs-root, isolation-container
 
 Tests: testsuite
