@@ -122,7 +122,8 @@ class DockerDriver(NullDriver):
         return docker.cmdline()
 
     def maybe_copy_to_container(self, src):
-        self.copied_files.append(src)
+        if src not in self.copied_files:
+            self.copied_files.append(src)
         return src
 
     def __get_device_nodes__(self):
