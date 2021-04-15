@@ -112,7 +112,10 @@ class Command(BaseCommand):
             health = Worker.HEALTH_MAINTENANCE
         else:
             health = Worker.HEALTH_RETIRED
-        Worker.objects.create(hostname=hostname, description=description, health=health)
+        worker = Worker.objects.create(
+            hostname=hostname, description=description, health=health
+        )
+        self.stdout.write("Token: %s" % worker.token)
 
     def handle_details(self, hostname, print_devices):
         try:
@@ -124,6 +127,7 @@ class Command(BaseCommand):
         self.stdout.write("state      : %s" % worker.get_state_display())
         self.stdout.write("health     : %s" % worker.get_health_display())
         self.stdout.write("description: %s" % worker.description)
+        self.stdout.write("token      : %s" % worker.token)
         if not print_devices:
             self.stdout.write("devices    : %d" % worker.device_set.count())
         else:
