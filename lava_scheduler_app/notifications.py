@@ -23,6 +23,7 @@ import re
 
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.contrib.contenttypes.models import ContentType
 from django.core.mail import send_mail, send_mass_mail
 from django.urls import reverse
 from django.db import IntegrityError
@@ -351,7 +352,34 @@ def send_notifications(job):
                         )
 
 
-def notification_criteria(criteria, state, health, old_health):
+def notification_criteria(job_id, criteria, state, health, old_health):
+    if "dependency_query" in criteria:
+        # Makes sure that all the jobs from dependency list also satisfy the
+        # criteria for sending notification.
+        dependency_jobs = Query.get_queryset(
+            ContentType.objects.get_for_model(TestJob),
+            Query.parse_conditions(
+                TestJob._meta.model_name, criteria["dependency_query"]
+            ),
+        ).exclude(pk=job_id)
+        if criteria["status"] == "finished":
+            if dependency_jobs.filter(~Q(state=TestJob.STATE_FINISHED)).count():
+                return False
+
+        if criteria["status"] == "running":
+            if dependency_jobs.filter(~Q(state=TestJob.STATE_RUNNING)).count():
+                return False
+
+        if criteria["status"] == "complete":
+            if dependency_jobs.filter(~Q(health=TestJob.HEALTH_COMPLETE)).count():
+                return False
+        elif criteria["status"] == "incomplete":
+            if dependency_jobs.filter(~Q(health=TestJob.HEALTH_INCOMPLETE)).count():
+                return False
+        elif criteria["status"] == "canceled":
+            if dependency_jobs.filter(~Q(health=TestJob.HEALTH_CANCELED)).count():
+                return False
+
     # support special status of finished, otherwise skip to normal
     if criteria["status"] == "finished":
         return state == TestJob.STATE_FINISHED

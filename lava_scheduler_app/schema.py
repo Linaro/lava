@@ -298,6 +298,7 @@ def _notify_criteria_schema():
             Required("status"): Any(
                 "running", "complete", "incomplete", "canceled", "finished"
             ),
+            Optional("dependency_query"): str,
             "type": Any("progression", "regression"),
         },
         extra=True,

@@ -24,7 +24,7 @@ def async_send_notifications(
     job_def = yaml_safe_load(job.definition)
     if "notify" in job_def:
         if notification_criteria(
-            job_def["notify"]["criteria"], state, health, old_health
+            job.id, job_def["notify"]["criteria"], state, health, old_health
         ):
             # Set state and health as the task can run later while the job
             # state and health already changed.
