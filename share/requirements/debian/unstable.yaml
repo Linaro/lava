@@ -13,6 +13,8 @@ lava-server:
     name: python3-django-auth-ldap
   PyYAML:
     name: python3-yaml
+  django-allauth:
+    name: python3-django-allauth
   django-filter:
     name: python3-django-filters
   django-tables2:
