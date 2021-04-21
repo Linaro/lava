@@ -66,6 +66,8 @@ EXPOSE 80 3079 5500 8000 8001
 RUN a2dissite 000-default && \
     a2ensite lava-server && \
     a2enmod proxy_http && \
-    a2enmod proxy_wstunnel
+    a2enmod proxy_wstunnel && \
+    a2enmod rewrite && \
+    a2enmod ssl
 
 ENTRYPOINT ["/root/entrypoint.sh"]
