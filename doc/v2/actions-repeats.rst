@@ -44,6 +44,19 @@ detected using the ``failure_retry`` parameter.
   - deploy:
      failure_retry: 3
 
+.. _failure_retry_interval:
+
+Retry interval on failure
+-------------------------
+
+By default, individual action would be retried after 1 second, but you could
+specify ``failure_retry_interval`` to increase the interval between retries.
+
+.. code-block:: yaml
+
+  - deploy:
+     failure_retry_interval: 10
+
 RetryActions will only repeat if a :ref:`job_error_exception` or
 :ref:`infrastructure_error_exception` exception is raised in any action inside
 the internal pipeline of that action. This allows for multiple actions in any

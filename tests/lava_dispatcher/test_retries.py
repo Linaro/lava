@@ -33,6 +33,7 @@ class TestAction(StdoutTestCase):
     class FakeJob(Job):
         def __init__(self, parameters):
             super().__init__(4212, parameters, None)
+            self.logger = DummyLogger()
 
     class FakeDeploy:
         """
@@ -137,6 +138,7 @@ class TestAction(StdoutTestCase):
         super().setUp()
         self.parameters = {
             "job_name": "fakejob",
+            "timeouts": {"job": {"seconds": 3}},
             "actions": [
                 {
                     "deploy": {"namespace": "common", "failure_retry": 3},
@@ -146,6 +148,11 @@ class TestAction(StdoutTestCase):
             ],
         }
         self.fakejob = TestAction.FakeJob(self.parameters)
+        # copy of the _timeout function from parser.
+        if "timeouts" in self.parameters:
+            if "job" in self.parameters["timeouts"]:
+                duration = Timeout.parse(self.parameters["timeouts"]["job"])
+                self.fakejob.timeout = Timeout(self.parameters["job_name"], duration)
 
     def lookup_deploy(self, params):
         actions = iter(params)
@@ -307,6 +314,51 @@ class TestAction(StdoutTestCase):
             [1, 2, 3, 7, 8, 9],
         )
         self.assertNotEqual(reference_list, [1, 2, 3, 7, 8, 9])
+
+    def test_failure_retry_default_interval(self):
+        pipeline = TestAction.FakePipeline(job=self.fakejob)
+        action = TestAction.InternalRetryAction()
+        for actions in self.lookup_deploy(self.parameters["actions"]):
+            action.parameters = actions
+        pipeline.add_action(action)
+        self.fakejob.pipeline = pipeline
+        self.fakejob.device = TestTimeout.FakeDevice()
+        with self.assertRaises(JobError):
+            self.fakejob.run()
+        self.assertEqual(action.sleep, 1)
+
+    def test_failure_retry_specified_interval(self):
+        self.parameters = {
+            "job_name": "fakejob",
+            "timeouts": {"job": {"seconds": 3}},
+            "actions": [
+                {
+                    "deploy": {
+                        "namespace": "common",
+                        "failure_retry": 3,
+                        "failure_retry_interval": 2,
+                    },
+                    "boot": {"namespace": "common", "failure_retry": 4},
+                    "test": {"namespace": "common", "failure_retry": 5},
+                }
+            ],
+        }
+        self.fakejob = TestAction.FakeJob(self.parameters)
+        # copy of the _timeout function from parser.
+        if "timeouts" in self.parameters:
+            if "job" in self.parameters["timeouts"]:
+                duration = Timeout.parse(self.parameters["timeouts"]["job"])
+                self.fakejob.timeout = Timeout(self.parameters["job_name"], duration)
+        pipeline = TestAction.FakePipeline(job=self.fakejob)
+        action = TestAction.InternalRetryAction()
+        for actions in self.lookup_deploy(self.parameters["actions"]):
+            action.parameters = actions
+        pipeline.add_action(action)
+        self.fakejob.pipeline = pipeline
+        self.fakejob.device = TestTimeout.FakeDevice()
+        with self.assertRaises(JobError):
+            self.fakejob.run()
+        self.assertEqual(action.sleep, 2)
 
 
 class TestTimeout(StdoutTestCase):
