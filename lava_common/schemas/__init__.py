@@ -166,7 +166,8 @@ def notify():
             {
                 Required("status"): Any(
                     "finished", "running", "complete", "canceled", "incomplete"
-                )
+                ),
+                Optional("dependency_query"): str,
             },
             {
                 Required("status"): Any("complete", "incomplete"),
