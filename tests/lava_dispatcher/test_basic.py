@@ -222,9 +222,6 @@ class Factory:
             job_ctx = job_data.get("context")
         (data, device_dict) = self.create_device(template, job_ctx)
         device = NewDevice(yaml_safe_load(data))
-        print("####### Device configuration #######")
-        print(data)
-        print("#######")
         try:
             parser = JobParser()
             job = parser.parse(yaml_safe_dump(job_data), device, 4999, None, "")
@@ -252,16 +249,12 @@ class Factory:
         }  # override to allow unit tests on all types of systems
         (data, device_dict) = self.create_device("kvm01.jinja2", job_ctx)
         device = NewDevice(yaml_safe_load(data))
-        print("####### Device configuration #######")
-        print(data)
-        print("#######")
         self.validate_data("hi6220-hikey-01", device_dict)
         kvm_yaml = os.path.join(os.path.dirname(__file__), filename)
         parser = JobParser()
         job_data = ""
         with open(kvm_yaml) as sample_job_data:
             job_data = yaml_safe_load(sample_job_data.read())
-        print("########## Test Job Submission validation #######")
         if validate:
             validate_job(job_data, strict=False)
         try:
