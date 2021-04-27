@@ -54,7 +54,7 @@ actions:
       name: "foundation:11.8"
       local: true
     image: /opt/model/Foundation_Platformpkg/models/Linux64_GCC-6.4/Foundation_Platform
-    version_string: 'ARM V8 Foundation Platformr0p0 [^\\n]+'
+    version_string: 'ARM V8 Foundation Platformr0p0 [^\n]+'
     timeout:
       minutes: 7
     console_string: 'terminal_0: Listening for serial connection on port (?P<PORT>\d+)'
