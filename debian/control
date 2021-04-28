@@ -108,7 +108,6 @@ Depends: adduser,
          libjs-jquery-flot (>=0.8.2),
          libjs-jquery-typeahead,
          postgresql-client,
-         python3-django-environ,
          systemd-sysv,
          ${misc:Depends},
          ${python3:Depends}

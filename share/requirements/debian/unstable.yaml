@@ -23,6 +23,8 @@ lava-server:
   django:
     version: ">=1.10"
     name: python3-django
+  django-environ:
+    name: python3-django-environ
   djangorestframework:
     name: python3-djangorestframework
   djangorestframework-filters:
