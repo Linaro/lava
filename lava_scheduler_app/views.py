@@ -1103,6 +1103,11 @@ def internal_v1_jobs(request, pk):
                                         if "url" in j and "headers" in j:
                                             update_token(j)
 
+        if "secrets" in job_def:
+            for k, v in job_def["secrets"].items():
+                if v in tokens.keys():
+                    job_def["secrets"][k] = tokens[v]
+
         job_def_str = yaml_safe_dump(job_def)
         job_ctx = job_def.get("context", {})
 

@@ -321,9 +321,7 @@ secrets:
   foo: bar
   username: secret
 """
-        self.assertRaises(
-            SubmissionException, validate_submission, yaml_safe_load(secrets)
-        )
+        self.assertTrue(validate_submission(yaml_safe_load(secrets)))
 
     def test_multinode(self):
         # Without protocols
