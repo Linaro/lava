@@ -205,7 +205,6 @@ def extra_checks(data):
     check_multinode_or_environment(data)
     check_multinode_roles(data)
     check_namespace(data)
-    check_secrets_visibility(data)
 
 
 def check_job_timeouts(data):
@@ -283,11 +282,6 @@ def check_namespace(data):
 
     if actions_with_ns and (len(data["actions"]) != actions_with_ns):
         raise Invalid("When using namespaces, every action should have a namespace")
-
-
-def check_secrets_visibility(data):
-    if "secrets" in data and data["visibility"] == "public":
-        raise Invalid('When using "secrets", visibility shouldn\'t be "public"')
 
 
 def job(extra_context_variables=[]):

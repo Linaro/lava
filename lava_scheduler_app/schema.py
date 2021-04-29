@@ -502,14 +502,6 @@ _device_schema = Schema(
 )
 
 
-def _validate_secrets(data_object):
-    if "secrets" in data_object:
-        if data_object["visibility"] == "public":
-            raise SubmissionException(
-                "When 'secrets' is used, 'visibility' shouldn't be 'public'"
-            )
-
-
 def _validate_vcs_parameters(data_objects):
     for action in data_objects["actions"]:
         if "test" in action and "definitions" in action["test"]:
@@ -535,7 +527,6 @@ def validate_submission(data_object):
     except MultipleInvalid as exc:
         raise SubmissionException(exc)
 
-    _validate_secrets(data_object)
     _validate_vcs_parameters(data_object)
     _validate_multinode(data_object)
     return True

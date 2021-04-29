@@ -30,9 +30,8 @@ from a shell script:
   API_KEY=b43614a9583f9c74b989914a91d1cfd9
 
 
-.. note:: In order to include a **secrets** dictionary, a job definition
-          shouldn't be public. Hence a :term:`visibility` set to
-          *personal* or *group* (see :ref:`explain_first_job`).
+.. note:: Alternatively you can use token management from the profile page to
+          provide the secret.
 
 Thanks to these secrets, the test writer can push files to an external server
 that he does control.
