@@ -1,11 +1,6 @@
 - class: actions.deploy.image.DeployImagesAction
   name: deployimages
   pipeline:
-  - class: actions.deploy.download.DownloaderAction
-    name: download-retry
-    pipeline:
-    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
-  - {class: actions.deploy.download.QCowConversionAction, name: qcow2-convert}
   - class: actions.deploy.overlay.OverlayAction
     name: lava-overlay
     pipeline:
@@ -26,6 +21,11 @@
     - {class: actions.deploy.overlay.PersistentNFSOverlay, name: persistent-nfs-overlay}
   - {class: actions.deploy.apply_overlay.ApplyOverlayGuest, name: apply-overlay-guest}
   - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
+  - class: actions.deploy.download.DownloaderAction
+    name: download-retry
+    pipeline:
+    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
+  - {class: actions.deploy.download.QCowConversionAction, name: qcow2-convert}
 - class: actions.boot.qemu.BootQEMUImageAction
   name: boot-image-retry
   pipeline:

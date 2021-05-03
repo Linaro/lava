@@ -80,7 +80,7 @@ class TestDefinitionHandlers(StdoutTestCase):
     def test_testdef(self):
         testdef = overlay = None
         action = self.job.pipeline.actions[0]
-        overlay = action.pipeline.actions[2]
+        overlay = action.pipeline.actions[0]
         testdef = overlay.pipeline.actions[2]
         self.assertEqual(len(overlay.pipeline.actions), 5)
         self.assertIsInstance(testdef, TestDefinitionAction)

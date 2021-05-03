@@ -44,6 +44,13 @@ class DeployImagesAction(Action):  # FIXME: Rename to DeployPosixImages
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         path = self.mkdtemp()
+
+        if self.test_needs_overlay(parameters):
+            self.pipeline.add_action(OverlayAction())  # idempotent, includes testdef
+            self.pipeline.add_action(ApplyOverlayGuest())
+        if self.test_needs_deployment(parameters):
+            self.pipeline.add_action(DeployDeviceEnvironment())
+
         if "uefi" in parameters:
             uefi_path = self.mkdtemp()
             self.pipeline.add_action(
@@ -64,11 +71,6 @@ class DeployImagesAction(Action):  # FIXME: Rename to DeployPosixImages
             )
             if parameters["images"][image].get("format", "") == "qcow2":
                 self.pipeline.add_action(QCowConversionAction(image))
-        if self.test_needs_overlay(parameters):
-            self.pipeline.add_action(OverlayAction())  # idempotent, includes testdef
-            self.pipeline.add_action(ApplyOverlayGuest())
-        if self.test_needs_deployment(parameters):
-            self.pipeline.add_action(DeployDeviceEnvironment())
 
 
 class DeployQemuNfs(Deployment):

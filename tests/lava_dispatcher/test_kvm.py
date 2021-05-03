@@ -188,7 +188,7 @@ class TestKVMBasicDeploy(StdoutTestCase):
     def test_overlay(self):
         overlay = None
         action = self.job.pipeline.actions[0]
-        overlay = action.pipeline.actions[2]
+        overlay = action.pipeline.actions[0]
         self.assertIsNotNone(overlay)
         # these tests require that lava-dispatcher itself is installed, not just running tests from a git clone
         self.assertTrue(os.path.exists(overlay.lava_test_dir))
@@ -392,7 +392,7 @@ class TestKVMInlineTestDeploy(StdoutTestCase):
         inline_repo = None
         action = self.job.pipeline.actions[0]
         self.assertIsNotNone(action.pipeline.actions[1])
-        overlay = action.pipeline.actions[1]
+        overlay = action.pipeline.actions[0]
         self.assertIsNotNone(overlay.pipeline.actions[1])
         testdef = overlay.pipeline.actions[2]
         self.assertIsNotNone(testdef.pipeline.actions[0])
