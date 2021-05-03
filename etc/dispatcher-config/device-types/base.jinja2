@@ -161,6 +161,8 @@ constants:
 
   # Set the failure retry to default or override it
   failure_retry: {{ failure_retry|default(1) }}
+  # Override boot_retry
+  boot_retry: {{ boot_retry }}
 {% endblock constants -%}
 
 {% block commands %}

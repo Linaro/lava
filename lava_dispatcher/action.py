@@ -455,6 +455,10 @@ class Action:
                         max_retry = self.get_constant("failure_retry", "")
                         if max_retry:
                             self.max_retries = int(max_retry)
+                            # In case of a boot section, used boot_retry if it exists
+                            boot_retry = self.get_constant("boot_retry", "")
+                            if self.section == "boot" and boot_retry:
+                                self.max_retries = int(boot_retry)
         if "repeat" in self.parameters:
             self.max_retries = self.parameters["repeat"]
         if self.job:
