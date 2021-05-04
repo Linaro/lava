@@ -1,3 +1,13 @@
+lava (2021.04.post1-1) unstable; urgency=medium
+
+  * Fix
+  a002b8d4 debian: fix dependency on python3-django-environ
+  3cf74beb scheduler: use token management for secrets dictionary
+  * Update
+  276afa93 docker: install qemu-system-sparc
+
+ -- Stevan Radaković <stevan.radakovic@linaro.org>  Tue, 04 May 2021 09:34:21 +0100
+
 lava (2021.04-1) unstable; urgency=medium
 
   * LAVA Software 2021.04 release
