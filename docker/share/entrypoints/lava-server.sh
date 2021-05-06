@@ -205,7 +205,7 @@ then
     echo "done"
     echo
     echo "Setup the database"
-    /usr/share/lava-server/postinst.py --db
+    /usr/share/lava-server/postinst.py --config --db
     echo "done"
     echo
 fi
