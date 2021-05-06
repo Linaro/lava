@@ -26,6 +26,13 @@ sh get-docker.sh
 python3 -m pip install docker-compose
 ```
 
+??? tip "Debian Testing/Sid User"
+    Install `docker.io` instead if the above docker CE installation script
+    doesn't support your distribution.
+
+    ```shell
+    apt-get install docker.io
+    ```
 ### Install
 
 Get the **docker-compose** files from [gitlab][lava-docker-compose] and use it.

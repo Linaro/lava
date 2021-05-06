@@ -61,6 +61,14 @@ curl -fsSL https://get.docker.com -o get-docker.sh
 sh get-docker.sh
 ```
 
+??? tip "Debian Testing/Sid User"
+    Install `docker.io` instead if the above docker CE installation script
+    doesn't support your distribution.
+
+    ```shell
+    apt-get install docker.io
+    ```
+
 Then enable and start the `lava-docker-worker` service:
 
 ```
