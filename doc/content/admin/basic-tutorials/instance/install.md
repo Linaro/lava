@@ -85,6 +85,16 @@ apt-get install lava
 
 ### Starting
 
+Enable default LAVA server Apache configuration:
+
+```shell
+a2dissite 000-default
+a2enmod proxy
+a2enmod proxy_http
+a2ensite lava-server.conf
+service apache2 restart
+```
+
 You can start the different services:
 
 ```shell
