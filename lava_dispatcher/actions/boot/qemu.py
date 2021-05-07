@@ -318,6 +318,8 @@ class CallQemuAction(Action):
             docker = DockerRun.from_parameters(self.parameters["docker"], self.job)
             docker.interactive()
             docker.tty()
+            if "QEMU_AUDIO_DRV" in os.environ:
+                docker.environment("QEMU_AUDIO_DRV", os.environ["QEMU_AUDIO_DRV"])
             docker.bind_mount(DISPATCHER_DOWNLOAD_DIR)
             docker.add_device("/dev/kvm", skip_missing=True)
             args = []
