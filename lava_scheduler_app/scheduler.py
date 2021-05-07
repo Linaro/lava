@@ -26,6 +26,7 @@ from django.db.models import Case, When, IntegerField, Sum
 from django.utils import timezone
 
 from lava_common.compat import yaml_safe_load, yaml_safe_dump
+from lava_common.timeout import Timeout
 from lava_scheduler_app.dbutils import match_vlan_interface
 from lava_scheduler_app.models import (
     DeviceType,
@@ -64,9 +65,35 @@ def worker_summary():
     return ret
 
 
+def check_queue_timeout(logger):
+    logger.info("Check queue timeouts:")
+    jobs = TestJob.objects.filter(state=TestJob.STATE_SUBMITTED)
+    for testjob in jobs:
+        job_dict = yaml_safe_load(testjob.definition)
+        if not "timeouts" in job_dict:
+            continue
+        if not "queue" in job_dict["timeouts"]:
+            continue
+        now = timezone.now()
+        queue_timeout_sec = Timeout.parse(job_dict["timeouts"]["queue"])
+        queue_timeout = datetime.timedelta(seconds=queue_timeout_sec)
+        canceling = testjob.submit_time + queue_timeout < now
+        if canceling:
+            logger.debug("  |--> [%d] canceling", testjob.id)
+            if testjob.is_multinode:
+                for job in testjob.sub_jobs_list:
+                    job.go_state_canceling()
+                    job.save()
+            else:
+                testjob.go_state_canceling()
+                testjob.save()
+    logger.info("done")
+
+
 def schedule(logger, available_dt=None):
     available_devices = schedule_health_checks(logger, available_dt)
     schedule_jobs(logger, available_devices)
+    check_queue_timeout(logger)
 
 
 def schedule_health_checks(logger, available_dt=None):

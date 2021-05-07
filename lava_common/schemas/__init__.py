@@ -311,6 +311,7 @@ def job(extra_context_variables=[]):
                 Optional("actions"): {str: timeout()},
                 Optional("connection"): timeout(),
                 Optional("connections"): {str: timeout()},
+                Optional("queue"): timeout(),
             },
             Required("visibility"): Any("public", "personal", {"group": [str]}),
             Optional("context"): Schema(

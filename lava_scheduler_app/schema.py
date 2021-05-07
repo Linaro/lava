@@ -392,6 +392,7 @@ def _job_timeout_schema():
             Required("job"): _timeout_schema(),
             Optional("action"): _timeout_schema(),
             Optional("connection"): _timeout_schema(),
+            Optional("queue"): _timeout_schema(),
             Optional("actions"): {All(action_name): _timeout_schema()},
             Optional("connections"): {All(action_name): _timeout_schema()},
         }
