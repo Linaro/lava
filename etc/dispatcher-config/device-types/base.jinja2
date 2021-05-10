@@ -110,6 +110,10 @@ constants:
       - 'Ramdisk image is corrupt or invalid'
       - 'ERROR: Failed to allocate'
       - 'TFTP error: trying to overwrite reserved memory'
+      - 'Bad Linux RISCV Image magic!'
+      - 'Wrong Image Format for boot'
+      - 'ERROR: Did not find a cmdline Flattened Device Tree'
+      - 'ERROR: RD image overlaps OS image'
 {% endif %}
 {% if uboot_extra_error_message %}
       - '{{ uboot_extra_error_message }}'
