@@ -200,9 +200,6 @@ def fixup():
     (LAVA_LOGS / "django.log").write_text("", encoding="utf-8")
     print(f"  - {LAVA_LOGS}/*")
     for logfile in LAVA_LOGS.glob("*"):
-        if "lava-scheduler.log" in str(logfile):
-            # skip changes to old logs.
-            continue
         shutil.chown(logfile, LAVA_SYS_USER, "adm")
         # allow users in the adm group to run lava-server commands
         logfile.chmod(0o0664)
