@@ -1,3 +1,12 @@
+lava (2020.12-4) unstable; urgency=medium
+
+  * Reinstate /etc/logrotate.d/lava-scheduler-log with the original contents
+    from stretch on upgrades from buster if the file was installed by the
+    version in stretch. That file has been deprecated in the last version in
+    buster, but it wasn't removed correctly. (Closes: #988362)
+
+ -- Antonio Terceiro <terceiro@debian.org>  Wed, 12 May 2021 10:34:00 -0300
+
 lava (2020.12-3) unstable; urgency=medium
 
   * Drop possible celery backends from Recommends.
