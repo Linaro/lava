@@ -113,5 +113,10 @@ need to be performed:
   enter the credentials you obtained from GitLab as **Client id** and
   **Secret key**.
 
+* While adding the **Social application** make sure to move the sites
+  you will use GitLab to authenticate from the **Available sites** to
+  **Chosen sites** on the **Sites** tables or ``allauth`` will raise
+  an exception saying a matching query does not exist.
+
 .. note:: If SMTP is not set up in LAVA, you can get a 500 Internal server
           error. Login will still work despite the error.
