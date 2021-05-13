@@ -121,6 +121,23 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
             if "setenv fdt_high" in line:
                 self.fail("Mustang should not have fdt_high set")
 
+    def test_avenger96_template(self):
+        data = """{% extends 'avenger96.jinja2' %}
+{% set connection_command = 'telnet serial4 7012' %}
+{% set hard_reset_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command reboot --port 05' %}
+{% set power_off_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command off --port 05' %}
+{% set power_on_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command on --port 05' %}"""
+        self.assertTrue(self.validate_data("staging-avenger96-01", data))
+        template_dict = prepare_jinja_template("staging-avenger96-01", data, raw=False)
+        commands = template_dict["actions"]["boot"]["methods"]["u-boot"]["ramdisk"][
+            "commands"
+        ]
+        for line in commands:
+            if "setenv ethaddr" in line:
+                self.fail(
+                    "Avenger96 should not have 'setenv ethaddr' as MAC address is pre-configured already."
+                )
+
     def test_rpi3_32_template(self):
         checked = False
         data = """{% extends 'bcm2837-rpi-3-b-32.jinja2' %}"""

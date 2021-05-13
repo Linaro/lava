@@ -1,0 +1,22 @@
+{# set device_type = "avenger96" #}
+{% extends 'base-uboot.jinja2' %}
+
+{% set console_device = console_device|default('ttySTM0') %}
+{% set baud_rate = baud_rate|default(115200) %}
+{% if extra_kernel_args %}
+{% set extra_kernel_args = "rootwait rw earlyprintk console=ttySTM0,115200 " + extra_kernel_args %}
+{% else %}
+{% set extra_kernel_args = "rootwait rw earlyprintk console=ttySTM0,115200" %}
+{% endif %}
+
+{% set bootloader_prompt = bootloader_prompt|default('STM32MP>') %}
+{% set interrupt_prompt = interrupt_prompt|default('STM32MP>') %}
+{% set boot_message = 'Starting kernel' %}
+
+{% set bootm_kernel_addr = bootm_kernel_addr|default('0xc2000000') %}
+{% set bootm_ramdisk_addr = bootm_ramdisk_addr|default('0x45000000') %}
+{% set bootm_dtb_addr = bootm_dtb_addr|default('0xc4000000') %}
+
+{% set base_ip_args = 'ip=::::stm32mp157a::dhcp kmac=dev:eth0,addr:' %}
+{% set uboot_mkimage_arch = 'arm' %}
+{% set action_timeout_power_off = 15 %}
