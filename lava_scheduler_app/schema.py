@@ -465,6 +465,7 @@ def _device_commands_schema():
         {
             All(str): Any(list, dict, str),
             Optional("connections"): _device_connections_commands(),
+            Optional("must_use_connection"): bool,
             Optional("users"): _device_user_commands(),
         }
     )

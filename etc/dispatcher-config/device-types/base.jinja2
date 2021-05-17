@@ -163,6 +163,9 @@ constants:
 {% block commands %}
 {% if connection_command or user_commands or connection_list %}
 commands:
+{% if must_use_connection %}
+    must_use_connection: {{ must_use_connection }}
+{% endif %}
 {% if connection_command %}
     connect: {{ connection_command }}
 {% elif connection_list %}
