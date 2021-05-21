@@ -22,6 +22,7 @@ import io
 import pathlib
 import voluptuous
 import yaml
+import jinja2
 import lava_common.schemas as schemas
 
 from django.conf import settings
@@ -37,6 +38,7 @@ from lava_results_app.utils import (
     testcase_export_fields,
 )
 from lava_rest_app.base import views as base_views
+from lava_rest_app.base.pasers import PlainTextParser
 from lava_rest_app import filters
 from lava_scheduler_app.dbutils import testjob_submission
 from lava_scheduler_app.schema import SubmissionException
@@ -53,6 +55,7 @@ from rest_framework.response import Response
 from rest_framework.exceptions import ParseError, PermissionDenied, ValidationError
 from rest_framework.permissions import AllowAny
 from rest_framework.utils import formatting
+from rest_framework.parsers import JSONParser, FormParser, MultiPartParser
 from lava_scheduler_app.models import (
     Alias,
     Device,
@@ -380,6 +383,8 @@ class DeviceTypeViewSet(base_views.DeviceTypeViewSet):
 
 
 class DeviceViewSet(base_views.DeviceViewSet, viewsets.ModelViewSet):
+    parser_classes = [JSONParser, FormParser, MultiPartParser, PlainTextParser]
+
     lookup_value_regex = r"[\_\w0-9.-]+"
     serializer_class = serializers.DeviceSerializer
     filter_class = filters.DeviceFilter
@@ -444,6 +449,32 @@ class DeviceViewSet(base_views.DeviceViewSet, viewsets.ModelViewSet):
                     )
             else:
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(
+        methods=["post"], detail=False, suffix="validate", permission_classes=[AllowAny]
+    )
+    def validate(self, request, **kwargs):
+        """
+        Takes a string of a device dictionary to validate if it can be
+        rendered and loaded correctly.
+        """
+        devicedict = request.data
+        if not devicedict:
+            raise ValidationError({"device": "Device dictionary is required."})
+
+        try:
+            template = jinja2.Environment(
+                loader=File("device").loader(), autoescape=False, trim_blocks=True
+            ).from_string(devicedict)
+            yaml_safe_load(template.render())
+            return Response(
+                {"message": "Device dictionary valid."}, status=status.HTTP_200_OK
+            )
+        except Exception as exc:
+            return Response(
+                {"message": "Device dictionary invalid: %s" % str(exc)},
+                status=status.HTTP_200_OK,
+            )
 
 
 class WorkerViewSet(base_views.WorkerViewSet, viewsets.ModelViewSet):
