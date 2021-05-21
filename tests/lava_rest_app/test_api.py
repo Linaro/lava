@@ -93,6 +93,13 @@ LOG_FILE = """
 - {"dt": "2018-10-03T16:28:28.200807", "lvl": "info", "msg": "start: 0 validate"}
 """
 
+EXAMPLE_DEVICE = """
+{% extends 'qemu.jinja2' %}
+{% set mac_addr = 'BA:DD:AD:CC:09:01' %}
+{% set memory = '1024' %}
+{% set sync_to_lava = {'device_type': 'qemu', 'worker': 'worker0', 'tags': ['1gb', 'qemu01']} %}
+"""
+
 
 class TestRestApi:
     @pytest.fixture(autouse=True)
@@ -758,6 +765,16 @@ ok 2 bar
             reverse("api-root", args=[self.version]) + "devices/public01/dictionary/"
         )
         assert response.status_code == 400  # nosec
+
+    def test_devices_validate(self):
+        response = self.userclient.post(
+            reverse("api-root", args=[self.version]) + "devices/validate/",
+            data=EXAMPLE_DEVICE,
+            content_type="text/plain",
+        )
+        assert response.status_code == 200  # nosec - unit test support
+        msg = json.loads(response.content)
+        assert msg["message"] == "Device dictionary valid."
 
     def test_devices_filters(self):
         data = self.hit(
