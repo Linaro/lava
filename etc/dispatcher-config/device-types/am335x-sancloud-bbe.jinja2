@@ -1,0 +1,7 @@
+{% extends 'beaglebone-black.jinja2' %}
+
+{% set bootloader_prompt = '=>' %}
+# using the official debian image of beaglebone.org
+# but space corrupt console, you have to set bootcmd to "echo"
+{% set interrupt_prompt = 'Press SPACE to abort autoboot' %}
+{% set interrupt_char = '' %}
