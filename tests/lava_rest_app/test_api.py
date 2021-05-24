@@ -50,6 +50,9 @@ from linaro_django_xmlrpc.models import AuthToken
 from lava_rest_app import versions
 
 
+Path = type(pathlib.Path())
+
+
 EXAMPLE_JOB = """
 job_name: test
 visibility: public
@@ -1103,7 +1106,7 @@ ok 2 bar
         assert response.status_code == 400  # nosec
 
     def test_workers_set_env(self, monkeypatch, tmpdir):
-        class MyPath(pathlib.PosixPath):
+        class MyPath(Path):
             def __new__(cls, path, *args, **kwargs):
                 if path == "example.com":
                     return super().__new__(cls, path, *args, **kwargs)
@@ -1146,7 +1149,7 @@ ok 2 bar
         assert response.status_code == 400  # nosec
 
     def test_workers_set_config(self, monkeypatch, tmpdir):
-        class MyPath(pathlib.PosixPath):
+        class MyPath(Path):
             def __new__(cls, path, *args, **kwargs):
                 if path == "example.com":
                     return super().__new__(cls, path, *args, **kwargs)
