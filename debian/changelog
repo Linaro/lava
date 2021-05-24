@@ -1,3 +1,10 @@
+lava (2020.12-5) unstable; urgency=medium
+
+  * Fix PyYAML usage after backwards-incompatible security update
+    (Closes: #988998)
+
+ -- Antonio Terceiro <terceiro@debian.org>  Mon, 24 May 2021 09:05:18 -0300
+
 lava (2020.12-4) unstable; urgency=medium
 
   * Reinstate /etc/logrotate.d/lava-scheduler-log with the original contents

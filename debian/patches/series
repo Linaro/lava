@@ -1,1 +1,2 @@
 0001-lava_rest_app-fix-field-name-in-filters.patch
+0002-lava_common.compat-add-support-for-PyYAML-5.4.patch

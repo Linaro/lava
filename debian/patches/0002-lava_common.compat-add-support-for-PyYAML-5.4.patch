@@ -1,0 +1,95 @@
+From: Marc Deslauriers <marc.deslauriers@ubuntu.com>
+Date: Sun, 23 May 2021 11:18:22 -0400
+Subject: lava_common.compat: add support for PyYAML 5.4
+
+A few tests need to explicitly use an unsafe loader to be able to test
+YAML roundtrips. As a fix for a security issue, PyYAML 5.4 requires us
+to be even more specific to request an unsafe loader, what is a
+backwards-incompatible change.
+
+On older versions of PyYAML that don't provide UnsafeLoader, we need
+to fallback to the regular Loader class.
+
+Signed-off-by: Marc Deslauriers <marc.deslauriers@ubuntu.com>
+Signed-off-by: Antonio Terceiro <antonio.terceiro@linaro.org>
+---
+ lava_common/compat.py                     | 13 +++++++++++++
+ tests/lava_dispatcher/test_multinode.py   |  4 ++--
+ tests/lava_scheduler_app/test_pipeline.py |  4 ++--
+ 3 files changed, 17 insertions(+), 4 deletions(-)
+
+diff --git a/lava_common/compat.py b/lava_common/compat.py
+index dd35282..1587bf4 100644
+--- a/lava_common/compat.py
++++ b/lava_common/compat.py
+@@ -45,6 +45,14 @@ try:
+     from yaml import CSafeLoader as SafeLoader
+ except ImportError:
+     from yaml import SafeLoader
++try:
++    from yaml import CUnsafeLoader as UnsafeLoader
++except ImportError:
++    try:
++        from yaml import UnsafeLoader
++    except ImportError:
++        # pyyaml < 5.4
++        UnsafeLoader = Loader
+ try:
+     from yaml import CSafeDumper as SafeDumper
+ except ImportError:
+@@ -65,6 +73,11 @@ def yaml_safe_load(data):
+     return yaml.load(data, Loader=SafeLoader)
+ 
+ 
++# handle compatibility for yaml.unsafe_load
++def yaml_unsafe_load(data):
++    return yaml.load(data, Loader=UnsafeLoader)
++
++
+ # handle compatibility for yaml.dump
+ def yaml_dump(data, *args, **kwargs):
+     return yaml.dump(data, *args, Dumper=Dumper, **kwargs)
+diff --git a/tests/lava_dispatcher/test_multinode.py b/tests/lava_dispatcher/test_multinode.py
+index fee427c..e7a96b1 100644
+--- a/tests/lava_dispatcher/test_multinode.py
++++ b/tests/lava_dispatcher/test_multinode.py
+@@ -23,7 +23,7 @@ import os
+ import uuid
+ import json
+ 
+-from lava_common.compat import yaml_dump, yaml_load
++from lava_common.compat import yaml_dump, yaml_unsafe_load
+ from lava_common.constants import LAVA_MULTINODE_SYSTEM_TIMEOUT
+ from lava_common.timeout import Timeout
+ from lava_common.exceptions import TestError, JobError, InfrastructureError
+@@ -283,7 +283,7 @@ class TestMultinode(StdoutTestCase):
+         for action in self.client_job.pipeline.actions:
+             data = action.explode()
+             data_str = yaml_dump(data)
+-            yaml_load(data_str)  # nosec not suitable for safe_load
++            yaml_unsafe_load(data_str)  # nosec not suitable for safe_load
+ 
+     def test_multinode_timeout(self):
+         """
+diff --git a/tests/lava_scheduler_app/test_pipeline.py b/tests/lava_scheduler_app/test_pipeline.py
+index 1f58dfb..3cc058d 100644
+--- a/tests/lava_scheduler_app/test_pipeline.py
++++ b/tests/lava_scheduler_app/test_pipeline.py
+@@ -26,7 +26,7 @@ from lava_scheduler_app.schema import (
+     SubmissionException,
+ )
+ 
+-from lava_common.compat import yaml_load
++from lava_common.compat import yaml_unsafe_load
+ from lava_dispatcher.device import PipelineDevice
+ from lava_dispatcher.parser import JobParser
+ from tests.lava_dispatcher.test_defs import check_missing_path
+@@ -1127,7 +1127,7 @@ class TestYamlMultinode(TestCaseWithFactory):
+             meta_dict,
+         )
+         # simulate dynamic connection
+-        dynamic = yaml_load(  # nosec - not suitable for safe_load
++        dynamic = yaml_unsafe_load(  # nosec - not suitable for safe_load
+             open(
+                 os.path.join(
+                     os.path.dirname(__file__),
