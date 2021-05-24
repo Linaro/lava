@@ -46,6 +46,14 @@ try:
 except ImportError:
     from yaml import SafeLoader
 try:
+    from yaml import CUnsafeLoader as UnsafeLoader
+except ImportError:
+    try:
+        from yaml import UnsafeLoader
+    except ImportError:
+        # pyyaml < 5.4
+        UnsafeLoader = Loader
+try:
     from yaml import CSafeDumper as SafeDumper
 except ImportError:
     from yaml import SafeDumper
@@ -63,6 +71,11 @@ def yaml_load(data):
 # handle compatibility for yaml.safe_load
 def yaml_safe_load(data):
     return yaml.load(data, Loader=SafeLoader)
+
+
+# handle compatibility for yaml.unsafe_load
+def yaml_unsafe_load(data):
+    return yaml.load(data, Loader=UnsafeLoader)
 
 
 # handle compatibility for yaml.dump
