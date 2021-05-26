@@ -39,7 +39,7 @@ Recommends: bridge-utils,
             dfu-util,
             git,
             libguestfs-tools (>= 1.32.7),
-            lxc (>= 1:2.0.7),
+            lxc (>= 1:2.0.7) | lava-lxc-mocker,
             nfs-kernel-server,
             ntp,
             openbsd-inetd,
@@ -165,7 +165,6 @@ Depends: bridge-utils,
          lava-server (= ${binary:Version}),
          lava-server-doc (= ${binary:Version}),
          lavacli,
-         lxc (>= 1:2.0.6),
          ntp | ntpdate | chrony,
          openssh-client,
          rsync,
@@ -194,7 +193,6 @@ Package: lava-lxc-mocker
 Architecture: all
 Depends: ${misc:Depends}
 Conflicts: lxc
-Provides: lxc
 Replaces: lxc
 Description: Linaro Automated Validation Architecture LXC Mocker
  LAVA is a continuous integration system for deploying operating
@@ -265,7 +263,7 @@ Depends: build-essential,
          ${misc:Depends},
          ${python3:Depends}
 Recommends: img2simg,
-            lxc,
+            lxc | lava-lxc-mocker,
             nfs-kernel-server,
             python3-django-extensions,
             python3-pydot,
