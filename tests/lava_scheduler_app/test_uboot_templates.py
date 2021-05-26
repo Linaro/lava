@@ -578,15 +578,6 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
             self.assertNotIn("tftp ", command)
             self.assertIn("tftpb", command)
 
-        for command in commands:
-            if not command.startswith("setenv bootargs"):
-                continue
-            self.assertNotIn("console=ttyS0,115200n8", command)
-            self.assertNotIn("console=", command)
-            self.assertNotIn("console=ttyO0", command)
-            self.assertNotIn("115200n8", command)
-            self.assertNotIn("n8", command)
-
     def test_flasher(self):
         data = """{% extends 'b2260.jinja2' %}
 {% set flasher_deploy_commands = ['flashing', 'something --else'] %}
