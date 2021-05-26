@@ -99,6 +99,8 @@ KERNEL_TRACE_MSG = r"Stack:\s+(.*\s+-+\[ end trace (\w*) \]-+)"
 KERNEL_FAULT_MSG = r"(Unhandled fault.*)\r\n"
 # panic
 KERNEL_PANIC_MSG = r"Kernel panic - (.*) end Kernel panic"
+# warning
+KERNEL_WARNING_MSG = r"^[^\n]+WARNING:.*?$"
 
 # Login incorrect message
 LOGIN_INCORRECT_MSG = "Login incorrect"

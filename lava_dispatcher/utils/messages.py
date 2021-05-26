@@ -28,6 +28,7 @@ from lava_common.constants import (
     KERNEL_EXCEPTION_MSG,
     KERNEL_FAULT_MSG,
     KERNEL_PANIC_MSG,
+    KERNEL_WARNING_MSG,
     KERNEL_TRACE_MSG,
     METADATA_MESSAGE_LIMIT,
 )
@@ -59,6 +60,7 @@ class LinuxKernelMessages(Action):
     # these can be omitted by InitMessages
     FREE_UNUSED = 4
     FREE_INIT = 5
+    WARNING = 6
 
     MESSAGE_CHOICES = (
         (EXCEPTION, KERNEL_EXCEPTION_MSG, "exception"),
@@ -67,6 +69,7 @@ class LinuxKernelMessages(Action):
         (TRACE, KERNEL_TRACE_MSG, "trace"),
         (FREE_UNUSED, KERNEL_FREE_UNUSED_MSG, "success"),
         (FREE_INIT, KERNEL_FREE_INIT_MSG, "success"),
+        (WARNING, KERNEL_WARNING_MSG, "warning"),
     )
 
     def __init__(self):
@@ -145,7 +148,7 @@ class LinuxKernelMessages(Action):
                     "Matched prompt #%s: %s", index, connection.prompt_str[index]
                 )
             message = connection.raw_connection.after
-            if index in [cls.TRACE, cls.EXCEPTION]:
+            if index in [cls.TRACE, cls.EXCEPTION, cls.WARNING]:
                 res = "fail"
                 if action:
                     action.logger.warning(
