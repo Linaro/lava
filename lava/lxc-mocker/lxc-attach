@@ -1,7 +1,7 @@
 #!/bin/bash
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2018 Linaro Limited
+# Copyright (C) 2018-2021 Linaro Limited
 #
 # Author: Senthil Kumaran S <senthil.kumaran@linaro.org>
 #
@@ -29,8 +29,16 @@ done
 
 if [ "$CMD" ]; then
     # execute the given command
-    $CMD
+    if [ "$LXC_MOCKER_USE_OVERLAY" ]; then
+        chroot /var/lib/lxc/${LXC_NAME}/rootfs $CMD
+    else
+        $CMD
+    fi
 else
     # when no commands are requested, open up a shell
-    exec /bin/bash
+    if [ "$LXC_MOCKER_USE_OVERLAY" ]; then
+        chroot /var/lib/lxc/${LXC_NAME}/rootfs /bin/bash
+    else
+        exec /bin/bash
+    fi
 fi
