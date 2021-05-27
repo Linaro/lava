@@ -1,3 +1,12 @@
+lava (2021.05-1) unstable; urgency=medium
+
+  * LAVA Software 2021.05 release
+
+  [ Hiraku Toyooka ]
+  * [fa2dcbbe] dispatcher: device-types: fix broken xilinx-zcu102 device-type
+
+  -- Stevan Radaković <stevan.radakovic@linaro.org>  Thu, 27 May 2021 16:08:21 +0100
+
 lava (2021.04.post1-1) unstable; urgency=medium
 
   * Fix
