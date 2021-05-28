@@ -27,6 +27,7 @@ from lava_common.constants import (
     KERNEL_FREE_INIT_MSG,
     KERNEL_EXCEPTION_MSG,
     KERNEL_FAULT_MSG,
+    KERNEL_OOPS_MSG,
     KERNEL_PANIC_MSG,
     KERNEL_WARNING_MSG,
     KERNEL_TRACE_MSG,
@@ -61,6 +62,7 @@ class LinuxKernelMessages(Action):
     FREE_UNUSED = 4
     FREE_INIT = 5
     WARNING = 6
+    OOPS = 7
 
     MESSAGE_CHOICES = (
         (EXCEPTION, KERNEL_EXCEPTION_MSG, "exception"),
@@ -70,6 +72,7 @@ class LinuxKernelMessages(Action):
         (FREE_UNUSED, KERNEL_FREE_UNUSED_MSG, "success"),
         (FREE_INIT, KERNEL_FREE_INIT_MSG, "success"),
         (WARNING, KERNEL_WARNING_MSG, "warning"),
+        (OOPS, KERNEL_OOPS_MSG, "oops"),
     )
 
     def __init__(self):
