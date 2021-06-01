@@ -1,0 +1,7 @@
+{# device_type = 'sm8350-mtp' #}
+{% extends 'base-fastboot.jinja2' %}
+
+{% set fastboot_sequence = ['no-flash-boot'] %}
+{% set flash_cmds_order = ['update', 'ptable', 'partition', 'hyp', 'modem',
+'rpm', 'sbl1', 'sbl2', 'sec', 'tz', 'aboot', 'cdt', 'boot', 'rootfs', 'vendor',
+'system', 'cache', 'userdata'] %}
