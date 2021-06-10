@@ -134,7 +134,7 @@ sudo -u postgres psql -c "CREATE DATABASE devel OWNER devel"
 Apply the django migrations
 
 ```shell
-python3 lava_server/manage.py migrate
+python3 manage.py migrate
 ```
 
 Install the lava-dispatcher-host udev rules
