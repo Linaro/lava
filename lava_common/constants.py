@@ -103,6 +103,8 @@ KERNEL_OOPS_MSG = r"^[^\n]+Oops(?: -|:).*?$"
 KERNEL_PANIC_MSG = r"Kernel panic - (.*) end Kernel panic"
 # warning
 KERNEL_WARNING_MSG = r"^[^\n]+WARNING:.*?$"
+# bug
+KERNEL_BUG_MSG = r"^[^\n]+BUG:.*?$"
 
 # Login incorrect message
 LOGIN_INCORRECT_MSG = "Login incorrect"
