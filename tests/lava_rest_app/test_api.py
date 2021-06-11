@@ -583,6 +583,78 @@ ok 2 bar
         msg = json.loads(response.content)
         assert msg["message"] == "Job valid."
 
+    def test_testjob_validate_testdef(self):
+        "Test validating valid test definition."
+        testdef = """
+        metadata:
+            format: Lava-Test Test Definition 1.0
+            name: testdef validation
+        parameters:
+            key1: val1
+        run:
+            steps:
+            - lava-test-case kernel-info --shell uname -a
+        """
+        response = self.userclient.post(
+            reverse("api-root", args=[self.version]) + "jobs/validate_testdef/",
+            {"definition": testdef},
+        )
+        assert response.status_code == 200  # nosec - unit test support
+        msg = json.loads(response.content)
+        assert msg["message"] == "Test definition valid."
+
+    def test_testjob_validate_testdef_extra_key(self):
+        "Test extra keys are allowed."
+        testdef = """
+        metadata:
+            format: Lava-Test Test Definition 1.0
+            name: testdef validation
+            extra: allow extra
+        """
+        response = self.userclient.post(
+            reverse("api-root", args=[self.version]) + "jobs/validate_testdef/",
+            {"definition": testdef},
+        )
+        assert response.status_code == 200  # nosec - unit test support
+        msg = json.loads(response.content)
+        assert msg["message"] == "Test definition valid."
+
+    def test_testjob_validate_testdef_missing_key(self):
+        "Test test definition without required 'name' metadata is invalid."
+        testdef = """
+        metadata:
+            format: Lava-Test Test Definition 1.0
+        """
+        response = self.userclient.post(
+            reverse("api-root", args=[self.version]) + "jobs/validate_testdef/",
+            {"definition": testdef},
+        )
+        assert response.status_code == 200  # nosec - unit test support
+        msg = json.loads(response.content)
+        assert (
+            msg["message"]
+            == "Test defnition invalid: required key not provided @ data['metadata']['name']"
+        )
+
+    def test_testjob_validate_testdef_wrong_key_type(self):
+        "Test test definition key with wrong type is invalid."
+        testdef = """
+        metadata:
+            format: Lava-Test Test Definition 1.0
+            name: testdef validation
+        parameters: wrong str type instead of dict
+        """
+        response = self.userclient.post(
+            reverse("api-root", args=[self.version]) + "jobs/validate_testdef/",
+            {"definition": testdef},
+        )
+        assert response.status_code == 200  # nosec - unit test support
+        msg = json.loads(response.content)
+        assert (
+            msg["message"]
+            == "Test defnition invalid: expected dict for dictionary value @ data['parameters']"
+        )
+
     def test_testjobs_filters(self):
         data = self.hit(
             self.adminclient,

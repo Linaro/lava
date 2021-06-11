@@ -24,6 +24,7 @@ import voluptuous
 import yaml
 import jinja2
 import lava_common.schemas as schemas
+import lava_common.schemas.test.testdef as testdef
 
 from django.conf import settings
 from django.http.response import HttpResponse
@@ -88,6 +89,10 @@ class TestJobViewSet(base_views.TestJobViewSet):
     You can validate the given job definition against the schema validator via POST request on:
 
     * `/jobs/validate/`
+
+    You can validate the given test definition against the schema validator via POST request on:
+
+    * `/jobs/validate_testdef/`
 
     The logs, test results and test suites of a specific TestJob are available at:
 
@@ -178,6 +183,29 @@ class TestJobViewSet(base_views.TestJobViewSet):
         except voluptuous.Invalid as exc:
             return Response(
                 {"message": "Job invalid: %s" % exc.msg}, status=status.HTTP_200_OK
+            )
+
+    @action(
+        methods=["post"],
+        detail=False,
+        suffix="validate-testdef",
+        permission_classes=[AllowAny],
+    )
+    def validate_testdef(self, request, **kwargs):
+        definition = request.data.get("definition", None)
+        if not definition:
+            raise ValidationError({"definition": "Test definition is required."})
+
+        data = yaml_safe_load(definition)
+        try:
+            testdef.validate(data)
+            return Response(
+                {"message": "Test definition valid."}, status=status.HTTP_200_OK
+            )
+        except voluptuous.MultipleInvalid as exc:
+            return Response(
+                {"message": "Test defnition invalid: %s" % str(exc)},
+                status=status.HTTP_200_OK,
             )
 
     @action(methods=["post"], detail=True, suffix="resubmit")
