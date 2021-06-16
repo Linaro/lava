@@ -23,6 +23,7 @@
 from voluptuous import Any, Match, Optional, Required
 
 from lava_common.schemas import test
+from lava_common.schemas.test.testdef import testdef
 
 
 def schema():
@@ -58,32 +59,7 @@ def schema():
                     **common,
                 },
                 {
-                    Required("repository"): {
-                        Required("metadata"): {
-                            Required("format"): "Lava-Test Test Definition 1.0",
-                            Required("name"): str,
-                            Optional("description"): str,
-                            Optional("environment"): [str],
-                            Optional("devices"): [str],
-                            Optional("maintainer"): [str],
-                            Optional("scope"): [str],
-                            Optional("os"): [str],
-                        },
-                        Optional("install"): {
-                            Optional("deps"): [str],
-                            Optional(Match(r"deps-.+")): [str],
-                            Optional("git-repos"): [str],
-                            Optional("keys"): [str],
-                            Optional("steps"): [str],
-                            Optional("sources"): [str],
-                        },
-                        Optional("parse"): {
-                            Optional("fixupdict"): {
-                                str: Any("pass", "fail", "skip", "unknown")
-                            }
-                        },
-                        Optional("run"): {Required("steps"): [str]},
-                    },
+                    Required("repository"): {**testdef()},
                     Required("from"): "inline",
                     **common,
                 },
