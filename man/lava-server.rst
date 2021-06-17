@@ -376,5 +376,5 @@ http://lists.lavasoftware.org/mailman/listinfo/lava-users
 
 Also talk to us on IRC::
 
- irc.freenode.net
+ irc.libera.chat
  #lavasoftware

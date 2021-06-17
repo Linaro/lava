@@ -31,6 +31,6 @@ Replies to the **lava-announce** list are directed here.
 
 IRC is a common support method for developers. Our team is spread geographically around the world, with members in Europe, America and Asia.
 
-The LAVA Software Community Project has an IRC channel, `#lavasoftware` on [irc.freenode.net](https://webchat.freenode.net/).
+The LAVA Software Community Project has an IRC channel, `#lavasoftware` on [irc.libera.chat](https://web.libera.chat/).
 
-We can also be found on a IRC channel used for topics relating to the Linaro Lab in Cambridge, UK: `#linaro-lava` on [irc.freenode.net](https://webchat.freenode.net/).
+We can also be found on a IRC channel used for topics relating to the Linaro Lab in Cambridge, UK: `#linaro-lava` on [irc.libera.chat](https://web.libera.chat/).
