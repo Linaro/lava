@@ -139,9 +139,9 @@ support method for developers. Our team is spread geographically around
 the world, with members in Europe, America and Asia.
 
 The LAVA Software Community Project has an IRC channel,
-``#lavasoftware`` on ``irc.freenode.net``. We can also be found on a
+``#lavasoftware`` on ``irc.libera.chat``. We can also be found on a
 IRC channel used for topics relating to the Linaro Lab in Cambridge,
-UK: ``#linaro-lava`` on ``irc.freenode.net``.
+UK: ``#linaro-lava`` on ``irc.libera.chat``.
 
 :ref:`guidelines` apply to IRC as well:
 

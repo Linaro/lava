@@ -11,7 +11,7 @@ repositories are hosted on `the lavasoftware GitLab instance
 
 The LAVA team is spread geographically around the world, with members
 in multiple countries. We can often be found talking on our IRC
-channel ``#lavasoftware`` on ``irc.freenode.net``.
+channel ``#lavasoftware`` on ``irc.libera.chat``.
 
 The LAVA codebase is all Free and Open Source Software, and we welcome
 third party contributions and new team members. Developers are
