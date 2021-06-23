@@ -70,3 +70,6 @@ class TestBareboxTemplates(BaseTemplate.BaseTemplateCases):
 
     def test_stm32mp157c_lxa_mc1_template(self):
         barebox_helper(self, "stm32mp157c-lxa-mc1")
+
+    def test_jh7100_beaglev_starlight_template(self):
+        barebox_helper(self, "jh7100-beaglev-starlight")

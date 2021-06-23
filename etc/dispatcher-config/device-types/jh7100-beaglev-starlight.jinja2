@@ -1,0 +1,4 @@
+{% extends 'base-barebox.jinja2' %}
+
+{% set bootloader_prompt = 'BeagleV Starlight Beta:/' %}
+{% set console_device = console_device | default('ttyS0') %}
