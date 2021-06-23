@@ -19,6 +19,8 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
+import subprocess
+import shlex
 from lava_common.constants import DISPATCHER_DOWNLOAD_DIR, SYS_CLASS_KVM
 from lava_common.exceptions import JobError
 from lava_common.utils import debian_package_arch, debian_package_version
@@ -125,6 +127,9 @@ class CallQemuAction(Action):
         pkg_suffix = self.get_qemu_pkg_suffix(architecture)
         if pkg_suffix == "":
             return False
+        if "docker" in self.parameters:
+            # We will find it by get_raw_version()
+            return False
         ver_str = debian_package_version(pkg="qemu-system-%s" % pkg_suffix)
         arch_str = debian_package_arch(pkg="qemu-system-%s" % pkg_suffix)
         if ver_str == "":
@@ -139,6 +144,33 @@ class CallQemuAction(Action):
             pkg_suffix,
             ver_str,
             arch_str,
+        )
+        return True
+
+    def get_raw_version(self, architecture):
+        if "docker" in self.parameters:
+            docker = DockerRun(self.parameters["docker"]["image"])
+            docker.run(
+                *shlex.split("qemu-system-%s --version" % architecture), action=self
+            )
+            return True
+        ver_strs = subprocess.check_output(
+            ("qemu-system-%s" % architecture, "--version")
+        )
+        # line is QEMU emulator version xxxx
+        ver_str = ver_strs.split()[3].decode("utf-8", errors="replace")
+        arch_str = (
+            subprocess.check_output(("uname", "-m"))
+            .strip()
+            .decode("utf-8", errors="replace")
+        )
+        self.qemu_data = {
+            "qemu_version": ver_str,
+            "host_arch": arch_str,
+            "job_arch": architecture,
+        }
+        self.logger.info(
+            "qemu, installed at version: %s, host architecture: %s", ver_str, arch_str
         )
         return True
 
@@ -159,7 +191,8 @@ class CallQemuAction(Action):
             self.errors = "Arch parameter must be set in the context section. Please check the device configuration for available architectures."
             return
 
-        get_debian_version(architecture)
+        if not self.get_debian_version(architecture):
+            self.get_raw_version(architecture)
 
         if self.parameters["method"] in ["qemu", "qemu-nfs"]:
             if "prompts" not in self.parameters:
