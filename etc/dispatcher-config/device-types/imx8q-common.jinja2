@@ -32,3 +32,4 @@
 {% set uboot_extra_error_message = uboot_extra_error_message|default('Invalid partition') %}
 {% set extra_nfsroot_args = extra_nfsroot_args|default(",v3 earlycon") %}
 {% set base_high_limits = base_high_limits|default(false) %}
+{% set shutdown_message = shutdown_message|default("Restarting system") %}
