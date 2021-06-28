@@ -148,6 +148,10 @@ actions:
 {% if arch == 'xtensa' %}
           - -machine {{ machine|default('sim') }}
 {% endif %}
+{% if arch == 'i386' %}
+          - -cpu {{ cpu|default('core2duo') }}
+          - -machine {{ machine|default('pc') }}
+{% endif %}
 {% if arch == 'arm64' or arch == 'aarch64' or arch == 'arm' %}
           - -cpu {{ cpu|default('cortex-a57') }}
           - -machine {{ machine|default('virt') }}
