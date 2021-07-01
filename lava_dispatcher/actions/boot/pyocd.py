@@ -127,11 +127,15 @@ class FlashPyOCDAction(Action):
         if not self.exec_list:
             self.errors = "No PyOCD command to execute"
 
+        pre_os_command = str(self.job.device.pre_os_command)
+        if pre_os_command:
+            self.exec_list.append(pre_os_command.split(" "))
+
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
         for pyocd_command in self.exec_list:
             pyocd = " ".join(pyocd_command)
             self.logger.info("PyOCD command: %s", pyocd)
-            if not self.run_command(pyocd.split(" ")):
+            if not self.run_command(pyocd.split(" "), allow_silent=True):
                 raise JobError("%s command failed" % (pyocd.split(" ")))
         return connection
