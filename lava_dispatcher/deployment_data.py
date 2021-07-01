@@ -34,6 +34,22 @@ android = {
     "lava_test_shell_file": None,
 }
 
+apertis = {
+    "TESTER_PS1": r"apertis-test [rc=$(echo \$?)]# ",
+    "TESTER_PS1_PATTERN": r"apertis-test \[rc=(\d+)\]# ",
+    "TESTER_PS1_INCLUDES_RC": True,
+    "boot_cmds": "boot_cmds",
+    "line_separator": "\n",
+    # for lava-test-shell
+    "distro": "apertis",
+    "tar_flags": "--warning no-timestamp",
+    "lava_test_sh_cmd": "/bin/sh",
+    "lava_test_dir": "/var/lib/lava-%s",
+    "lava_test_results_part_attr": "root_part",
+    "lava_test_results_dir": "/var/lib/lava-%s",
+    "lava_test_shell_file": "~/.bashrc",
+}
+
 archlinux = {
     "TESTER_PS1": r"linaro-test [rc=$(echo \$?)]# ",
     "TESTER_PS1_PATTERN": r"linaro-test \[rc=(\d+)\]# ",
@@ -206,6 +222,7 @@ ubuntu = {
 
 deployments = {
     "android": android,
+    "apertis": apertis,
     "archlinux": archlinux,
     "centos": centos,
     "centos_installer": centos_installer,
