@@ -24,7 +24,7 @@ actions:
       pyocd:
         parameters:
           command:
-            pyocd-flashtool
+            {{ pyocd_command|default("pyocd-flashtool") }}
           options:
           - -d {{ debug|default('debug') }}
           - -t kw41z4
