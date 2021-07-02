@@ -1,0 +1,89 @@
+job_name: docker test shell multinode sample job
+timeouts:
+  job:
+    minutes: 60
+  action:
+    minutes: 15
+  connection:
+    minutes: 2
+priority: medium
+visibility: public
+
+protocols:
+  lava-multinode:
+    # real multinode jobs will be parsed by the scheduler into separate YAML fies
+    # so there are two files for the unittests which use a false target_group
+    # these jobs are not expected to run, only support the unit tests
+    target_group: arbitrary-group-id  # only for unittest support
+    roles:
+      server:
+        count: 1
+        device_type: hi6220-hikey-r2
+        timeout:
+          minutes: 5
+      client:
+        count: 1
+        device_type: hi6220-hikey-r2
+        timeout:
+          minutes: 5
+
+actions:
+  - test:
+      role:
+      - server
+      timeout:
+        minutes: 10
+      docker:
+        image: adb-fastboot
+      definitions:
+        - repository:
+            metadata:
+              format: Lava-Test Test Definition 1.0
+              name: smoke-tests-basic
+              description: "Basic system test command for Linaro Ubuntu images"
+              os:
+                - debian
+              scope:
+                - functional
+              devices:
+                - hi6220-hikey-r2
+            run:
+              steps:
+                - date
+                - hostname
+                - adb devices
+                - adb shell date
+                - adb shell hostname
+          from: inline
+          path: inline-smoke-test
+          name: docker-test
+
+  - test:
+      role:
+      - client
+      timeout:
+        minutes: 10
+      docker:
+        image: adb-fastboot
+      definitions:
+        - repository:
+            metadata:
+              format: Lava-Test Test Definition 1.0
+              name: more-tests
+              description: "Some additional tests"
+              os:
+                - debian
+              scope:
+                - functional
+              devices:
+                - hi6220-hikey-r2
+            install:
+              deps:
+                - moreutils
+            run:
+              steps:
+                - adb wait-for-device
+                - adb shell sleep 2
+          from: inline
+          path: more-tests
+          name: more-tests
