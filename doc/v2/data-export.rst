@@ -31,7 +31,7 @@ REST API
 XML-RPC
 *******
 
-Lots of `methods <../../api/help>`_ are available to query various
+Lots of `methods <../../../api/help>`_ are available to query various
 information in LAVA.
 
 .. warning:: When using XML-RPC to communicate with a remote server,
