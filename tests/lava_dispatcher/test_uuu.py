@@ -32,8 +32,8 @@ class UUUBootFactory(Factory):  # pylint: disable=too-few-public-methods
     of any database objects.
     """
 
-    def create_imx8mq_job(self, filename):
-        return self.create_job("imx8mq-evk-01.jinja2", filename)
+    def create_imx8mq_job(self, device_template, filename):
+        return self.create_job(device_template, filename)
 
 
 class TestUUUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
@@ -46,11 +46,31 @@ class TestUUUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-meth
         return_value="/bin/test_uuu",
     )
     def test_pipeline_uuu_only_uboot(self, which_mock):
-        job = self.factory.create_imx8mq_job("sample_jobs/uuu-bootimage-only.yaml")
+        job = self.factory.create_imx8mq_job(
+            "imx8mq-evk-01.jinja2", "sample_jobs/uuu-bootimage-only.yaml"
+        )
         self.assertIsNotNone(job)
 
         # Test that generated pipeline is the same as defined in pipeline_refs
         description_ref = self.pipeline_reference("uuu-bootimage-only.yaml", job=job)
+        self.assertEqual(description_ref, job.pipeline.describe(False))
+
+        self.assertIsNone(job.validate())
+
+    @patch(
+        "lava_dispatcher.utils.uuu.OptionalContainerUuuAction.which",
+        return_value="/bin/test_uuu",
+    )
+    def test_pipeline_power_off_before_corrupt_boot_media(self, which_mock):
+        job = self.factory.create_imx8mq_job(
+            "imx8mq-evk-02.jinja2", "sample_jobs/uuu-bootimage-only.yaml"
+        )
+        self.assertIsNotNone(job)
+
+        # Test that generated pipeline is the same as defined in pipeline_refs
+        description_ref = self.pipeline_reference(
+            "uuu-power-off-before-corrupt-boot-media.yaml", job=job
+        )
         self.assertEqual(description_ref, job.pipeline.describe(False))
 
         self.assertIsNone(job.validate())
