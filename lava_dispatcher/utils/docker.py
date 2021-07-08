@@ -141,6 +141,8 @@ class DockerRun:
             runner = action.run_cmd
         else:
             runner = subprocess.check_call
+        logger = logging.getLogger("dispatcher")
+        logger.debug("cmd: %s", cmd)
         runner(cmd)
 
     def prepare(self, action=None):
