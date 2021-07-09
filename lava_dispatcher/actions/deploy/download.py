@@ -322,7 +322,7 @@ class DownloadHandler(Action):
         downloaded_size = 0
         beginning = time.time()
         # Choose the progress bar (is the size known?)
-        if self.size == -1:
+        if self.size <= 0:
             self.logger.debug("total size: unknown")
             last_value = -25 * 1024 * 1024
             progress = progress_unknown_total
