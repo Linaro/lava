@@ -16,9 +16,7 @@ actions:
       pyocd:
         parameters:
           command:
-            pyocd-flashtool
+            {{ pyocd_command|default("pyocd-flashtool") }}
           options:
-          - -d {{ debug|default('debug') }}
-          - -t nrf52
-          - -f 3000000
+            {{ pyocd_options|default("['-d debug', '-t nrf52', '-f 3000000']")}}
 {% endblock -%}
