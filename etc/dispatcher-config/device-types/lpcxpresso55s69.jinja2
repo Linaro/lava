@@ -26,7 +26,7 @@ actions:
       pyocd:
         parameters:
           command:
-            pyocd-flashtool
+            {{ pyocd_command|default("pyocd-flashtool") }}
           options:
           - -d {{ debug|default('debug') }}
           - -t lpc55s69
