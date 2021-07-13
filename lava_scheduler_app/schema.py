@@ -439,8 +439,27 @@ def _device_boot_schema():
     return Schema({Required("connections"): dict, Required("methods"): dict})
 
 
+def _device_test_schema():
+    return Schema(
+        {
+            Optional("methods"): {
+                Optional("docker"): {
+                    Optional("global_options"): list,
+                    Optional("options"): list,
+                }
+            }
+        }
+    )
+
+
 def _device_actions_schema():
-    return Schema({"deploy": _device_deploy_schema(), "boot": _device_boot_schema()})
+    return Schema(
+        {
+            "deploy": _device_deploy_schema(),
+            "boot": _device_boot_schema(),
+            Optional("test"): _device_test_schema(),
+        }
+    )
 
 
 def _device_timeouts_schema():
