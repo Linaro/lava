@@ -1,7 +1,7 @@
 #!/bin/bash
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2018 Linaro Limited
+# Copyright (C) 2018-2021 Linaro Limited
 #
 # Author: Senthil Kumaran S <senthil.kumaran@linaro.org>
 #
@@ -43,6 +43,18 @@ fi
 
 if [ "$LXC_NAME" ]; then
     # create dummy lxc rootfs.
-    mkdir -p /var/lib/lxc/${LXC_NAME}
-    ln -s / /var/lib/lxc/${LXC_NAME}/rootfs
+    if [ "$LXC_MOCKER_USE_OVERLAY" ]; then
+        mkdir -p /var/lib/lxc/${LXC_NAME}/{rootfs,upperdir,workdir}
+
+        mount -t overlay overlay -o lowerdir=/,upperdir=/var/lib/lxc/${LXC_NAME}/upperdir,workdir=/var/lib/lxc/${LXC_NAME}/workdir /var/lib/lxc/${LXC_NAME}/rootfs
+        mount -t proc /proc /var/lib/lxc/${LXC_NAME}/rootfs/proc
+        mount --rbind /sys /var/lib/lxc/${LXC_NAME}/rootfs/sys
+        mount --rbind /dev /var/lib/lxc/${LXC_NAME}/rootfs/dev
+
+	cp /etc/resolv.conf /var/lib/lxc/${LXC_NAME}/rootfs/etc/resolv.conf
+	cp /etc/hosts /var/lib/lxc/${LXC_NAME}/rootfs/etc/hosts
+    else
+        mkdir -p /var/lib/lxc/${LXC_NAME}
+        ln -s / /var/lib/lxc/${LXC_NAME}/rootfs
+    fi
 fi

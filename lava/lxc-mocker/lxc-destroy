@@ -1,7 +1,7 @@
 #!/bin/bash
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2018 Linaro Limited
+# Copyright (C) 2018-2021 Linaro Limited
 #
 # Author: Senthil Kumaran S <senthil.kumaran@linaro.org>
 #
@@ -23,8 +23,18 @@ while getopts "fn:" opt; do
 done
 
 if [ "$LXC_NAME" ]; then
+    if [ "$LXC_MOCKER_USE_OVERLAY" ]; then
+        # At this time we don't care about the LXC container use
+        # lazy/force to be sure it gets cleaned.
+        umount -lf /var/lib/lxc/${LXC_NAME}/rootfs/dev
+        umount -lf /var/lib/lxc/${LXC_NAME}/rootfs/sys
+        umount -lf /var/lib/lxc/${LXC_NAME}/rootfs/proc
+        umount -lf /var/lib/lxc/${LXC_NAME}/rootfs
+    fi
+
     # Remove lxc rootfs directory if any
     rm -rf /var/lib/lxc/${LXC_NAME}
+
     # echo container destroyed message
     echo "Destroyed container $LXC_NAME"
     exit 0
