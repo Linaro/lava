@@ -219,6 +219,35 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
         docker.name(container)
         docker.environment("PS1", "docker-test-shell:$ ")
 
+        # Which method to use to share device nodes from host to container.
+        # Both if it's absent or None, default to udev forwarding (for
+        # compatibility). Handling both absent and None allows for easier
+        # device dict overriding.
+        share_devices = docker_method_conf.get("share_devices", "udev") or "udev"
+
+        devices = get_udev_devices(
+            device_info=self.device_info, logger=self.logger, required=False
+        )
+
+        devs_to_wait = []
+        for dev in devices:
+            # We don't share symlinks in /dev, unless was explicitly instructed
+            # to do so. Not that host's device symlinks will turn as real
+            # device nodes (not symlinks) in the container with this
+            # "direct-symlinks" option (and that may break some software).
+            if share_devices == "direct-symlinks" or not os.path.islink(dev):
+                # If we don't use udev forwarding, share devices on the command
+                # line using --mount option.
+                if share_devices != "udev":
+                    # Docker doesn't allow to pass device name with ':' in it
+                    # to --device option. But many device nodes are such. So,
+                    # we can't use --device, but rather have to use --mount
+                    # (which then aso require --privileged to work properly,
+                    # not that passing --privileged lies on a user).
+                    # docker.add_device(dev)
+                    docker.bind_mount(dev, dev, False)
+                devs_to_wait.append(dev)
+
         docker_cmd = docker.cmdline("bash", "--norc", "-i")
 
         cmd = " ".join([shlex.quote(s) for s in docker_cmd])
@@ -231,19 +260,21 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
 
         self.add_device_container_mappings(container, "docker")
 
-        devices = get_udev_devices(
-            device_info=self.device_info, logger=self.logger, required=False
-        )
-
         docker.wait(shell)
 
+        # If we use udev forwarding, now triggering sharing of the device
+        # nodes.
         # share all the devices as there isn't a 1:1 relationship between
         # the trigger and actual sharing of the devices
-        for dev in devices:
-            if not os.path.islink(dev):
-                self.trigger_share_device_with_container(dev)
+        if share_devices == "udev":
+            for dev in devices:
+                if not os.path.islink(dev):
+                    self.trigger_share_device_with_container(dev)
 
-        for dev in devices:
+        for dev in devs_to_wait:
+            # Log what happens, otherwise if something goes wrong,
+            # it's very hard to figure out what happens.
+            self.logger.debug("Waiting for %r in container" % dev)
             docker.wait_file(dev)
 
         try:

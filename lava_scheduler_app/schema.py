@@ -446,6 +446,7 @@ def _device_test_schema():
                 Optional("docker"): {
                     Optional("global_options"): list,
                     Optional("options"): list,
+                    Optional("share_devices"): Any("udev", "direct", "direct-symlinks"),
                 }
             }
         }
