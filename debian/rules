@@ -17,6 +17,7 @@
 export http_proxy = http://127.0.9.1:9
 
 include /usr/share/dpkg/pkg-info.mk
+include /usr/share/dpkg/vendor.mk
 
 export BUILD_DATE=$(shell LC_ALL=C date -u "+%B %d, %Y" -d @"$(SOURCE_DATE_EPOCH)")
 
@@ -33,8 +34,14 @@ install_dir=$(call py_libdir, $(PYTHON))
 %:
 	dh $@ --with sphinxdoc,python3 --buildsystem=pybuild
 
+ifeq ($(DEB_VENDOR),Debian)
+distribution := $(DEB_DISTRIBUTION)
+else
+distribution := unstable
+endif
+
 override_dh_python3:
-	./share/requires.py --distribution debian --suite $(DEB_DISTRIBUTION) --package lava-dispatcher > dispatcher-requirements.txt
+	./share/requires.py --distribution debian --suite $(distribution) --package lava-dispatcher > dispatcher-requirements.txt
 	./share/requires.py --distribution debian --suite $(DEB_DISTRIBUTION) --package lava-server > server-requirements.txt
 	./share/requires.py --distribution debian --suite $(DEB_DISTRIBUTION) --package lava-common > common-requirements.txt
 	dh_python3 -p lava-dispatcher --shebang=/usr/bin/python3 --requires=dispatcher-requirements.txt
