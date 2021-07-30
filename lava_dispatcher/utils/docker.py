@@ -56,6 +56,14 @@ class DockerRun:
         run.local(params.get("local", False))
         if "privileged" in params and params["privileged"]:
             run.privileged()
+        if "bind_mounts" in params:
+            for bind_m in params["bind_mounts"]:
+                if ":" in bind_m:
+                    run.bind_mount(
+                        bind_m.split(":")[0], destination=bind_m.split(":")[1]
+                    )
+                else:
+                    run.bind_mount(bind_m)
         return run
 
     def local(self, local):
