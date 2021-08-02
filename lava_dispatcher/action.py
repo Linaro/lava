@@ -448,6 +448,17 @@ class Action:
             raise JobError("Unable to use repeat and failure_retry, use a repeat block")
         if "failure_retry" in self.parameters:
             self.max_retries = self.parameters["failure_retry"]
+        else:
+            if self.job:
+                if self.job.device and type(self.job.device).__name__ != "dict":
+                    if "constants" in self.job.device:
+                        max_retry = self.get_constant("failure_retry", "")
+                        if max_retry:
+                            self.max_retries = int(max_retry)
+                            # In case of a boot section, used boot_retry if it exists
+                            boot_retry = self.get_constant("boot_retry", "")
+                            if self.section == "boot" and boot_retry:
+                                self.max_retries = int(boot_retry)
         if "repeat" in self.parameters:
             self.max_retries = self.parameters["repeat"]
         if self.job:
@@ -482,7 +493,8 @@ class Action:
         # whilst deployment data is still supported, check if the key exists there.
         # once deployment_data is removed, merge with device.get_constant
         if self.parameters.get("deployment_data"):
-            return self.parameters["deployment_data"][key]
+            if key in self.parameters["deployment_data"]:
+                return self.parameters["deployment_data"][key]
         return self.job.device.get_constant(key, prefix=prefix)
 
     def validate(self):

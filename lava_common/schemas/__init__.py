@@ -71,11 +71,13 @@ CONTEXT_VARIABLES = [
     "bootz_ramdisk_addr",
     # others
     "boot_character_delay",
+    "boot_retry",
     "bootloader_prompt",
     "console_device",
     "custom_kernel_args",
     "extra_kernel_args",
     "extra_nfsroot_args",
+    "failure_retry",
     "kernel_loglevel",
     "kernel_start_message",
     "lava_test_results_dir",
