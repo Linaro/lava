@@ -170,6 +170,38 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
         docker.prepare()
         docker.bind_mount(os.path.join(location, overlay), "/" + overlay)
 
+        docker_method_conf = (
+            self.job.device["actions"]
+            .get("test", {})
+            .get("methods", {})
+            .get("docker", {})
+        )
+
+        # Preprocess docker option list, to better support partial
+        # overriding of them via device dict:
+        # 1. Filter out None, to make it easier to template
+        # YAML syntactic lists with Jinja2:
+        # '- {{ some_opt_from_device_dict }}'
+        # (if not default, will be set to None).
+        # 2. Flatten sublists, `- ['--opt1', '--opt2']`.
+        def preproc_opts(opts):
+            res = []
+            for o in opts:
+                if o is None:
+                    continue
+                elif isinstance(o, list):
+                    res += o
+                else:
+                    res.append(o)
+            return res
+
+        if "global_options" in docker_method_conf:
+            docker.add_docker_options(
+                *preproc_opts(docker_method_conf["global_options"])
+            )
+        if "options" in docker_method_conf:
+            docker.add_docker_run_options(*preproc_opts(docker_method_conf["options"]))
+
         namespace = self.parameters.get(
             "downloads-namespace", self.parameters.get("namespace")
         )
