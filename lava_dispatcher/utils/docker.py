@@ -22,6 +22,8 @@ from pathlib import Path
 import subprocess
 import time
 
+from lava_common.exceptions import InfrastructureError
+
 
 class DockerRun:
     def __init__(self, image):
@@ -157,10 +159,14 @@ class DockerRun:
             self.run_cmd(["docker", "pull", self.image], action=action)
         self.__check_image_arch__()
 
-    def wait(self):
+    def wait(self, shell=None):
         delay = 1
         while True:
             try:
+                # If possible, check that docker's shell command didn't exit
+                # yet.
+                if shell and not shell.isalive():
+                    raise InfrastructureError("Docker container unexpectedly exited")
                 subprocess.check_call(
                     ["docker", "inspect", "--format=.", self.__name__],
                     stdout=subprocess.DEVNULL,

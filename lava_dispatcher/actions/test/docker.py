@@ -203,7 +203,7 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
             device_info=self.device_info, logger=self.logger, required=False
         )
 
-        docker.wait()
+        docker.wait(shell)
 
         # share all the devices as there isn't a 1:1 relationship between
         # the trigger and actual sharing of the devices
