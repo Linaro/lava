@@ -92,7 +92,6 @@ class BaseFVPAction(Action):
         super().__init__()
         self.extra_options = ""
         self.container = ""
-        self.fvp_image = None
         self.fvp_license = None
         self.docker_image = None
         self.local_docker_image = False
@@ -162,7 +161,7 @@ class BaseFVPAction(Action):
                 )
                 continue
 
-            location_in_container = self.fvp_image = os.path.join(
+            location_in_container = os.path.join(
                 "/", self.container, os.path.basename(filename)
             )
             substitutions[label.upper()] = location_in_container
@@ -199,7 +198,6 @@ class CheckFVPVersionAction(BaseFVPAction):
         super().__init__()
         self.extra_options = ""
         self.container = ""
-        self.fvp_image = None
         self.fvp_version_string = ""
 
     def validate(self):
@@ -246,7 +244,6 @@ class StartFVPAction(BaseFVPAction):
         super().__init__()
         self.extra_options = ""
         self.container = ""
-        self.fvp_image = None
         self.fvp_console_string = ""
         self.fvp_feedbacks = set()
         self.fvp_feedback_ports = []
