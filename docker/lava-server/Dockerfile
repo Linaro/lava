@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.0-experimental
+# syntax=docker/dockerfile:1.2
 
 # Argument for the FROM should be defined before the first stage in multi-stage
 # builds while argument used inside a build stage should be defined in tethe
