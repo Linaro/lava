@@ -19,6 +19,12 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
+# pylint:disable=wrong-import-position
+
+import warnings
+
+warnings.filterwarnings("ignore", category=UserWarning, module="environ")
+
 import contextlib
 import environ
 import os
