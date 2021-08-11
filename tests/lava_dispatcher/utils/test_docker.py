@@ -125,13 +125,14 @@ def test_run_architecture_check_success(mocker):
     check_output = mocker.patch("subprocess.check_output", return_value="xyz\n")
     check_call = mocker.patch("subprocess.check_call")
     getLogger = mocker.patch("logging.getLogger")
+    logger = getLogger.return_value
 
     docker = DockerRun("myimage")
     docker.run("echo")  # no crash = success
     check_call.assert_called_with(
         ["docker", "run", "--rm", "--init", "myimage", "echo"]
     )
-    getLogger.assert_not_called()
+    logger.warning.assert_not_called()
 
 
 def test_run_with_action(mocker):
