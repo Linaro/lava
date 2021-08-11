@@ -314,12 +314,16 @@ class SchedulerAPI(ExposedV2API):
             health=Device.HEALTH_RETIRED
         )
 
+        def job_pk(device):
+            job = device.current_job()
+            return job.pk if job else None
+
         return [
             [
                 dev.hostname,
                 dev.device_type.name,
                 build_device_status_display(dev.state, dev.health),
-                dev.current_job().pk if dev.current_job() else None,
+                job_pk(dev),
                 True,
             ]
             for dev in devices_list
