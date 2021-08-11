@@ -384,5 +384,5 @@ def docker(image_key="image"):
         Required(image_key): docker_image_format,
         Optional("local"): bool,
         Optional("container_name"): str,
-        Optional("network_from"): "str",
+        Optional("network_from"): str,
     }
