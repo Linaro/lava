@@ -27,6 +27,7 @@ import lava_common.schemas as schemas
 import lava_common.schemas.test.testdef as testdef
 
 from django.conf import settings
+from django.db import transaction
 from django.http.response import HttpResponse
 from django.http import Http404
 
@@ -42,6 +43,7 @@ from lava_rest_app.base import views as base_views
 from lava_rest_app.base.pasers import PlainTextParser
 from lava_rest_app import filters
 from lava_scheduler_app.dbutils import testjob_submission
+from lava_scheduler_app.models import TestJob
 from lava_scheduler_app.schema import SubmissionException
 from lava_server.files import File
 
@@ -252,7 +254,9 @@ class TestJobViewSet(base_views.TestJobViewSet):
     def cancel(self, request, **kwargs):
         # django-rest-framework handles django's PermissionDenied error
         # automagically
-        self.get_object().cancel(request.user)
+        with transaction.atomic():
+            job = TestJob.objects.select_for_update().get(pk=kwargs["pk"])
+            job.cancel(request.user)
         return Response(
             {"message": "Job cancel signal sent."}, status=status.HTTP_200_OK
         )
