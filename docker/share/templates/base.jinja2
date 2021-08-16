@@ -1,24 +1,16 @@
-FROM debian:buster-slim
+FROM debian:bullseye-slim
 
 LABEL maintainer="Rémi Duraffort <remi.duraffort@linaro.org>"
 
 ENV DEBIAN_FRONTEND noninteractive
 
-RUN echo 'deb http://deb.debian.org/debian buster-backports main' > /etc/apt/sources.list.d/backports.list && \
+RUN echo 'deb http://deb.debian.org/debian bullseye-backports main' > /etc/apt/sources.list.d/backports.list && \
     mkdir -p /usr/share/man/man1 /usr/share/man/man7 && \
 {%- if adduser_and_group|default(False) %}
     groupadd --system --gid 200 lavaserver && \
     useradd --system --home /var/lib/lava-server/home/ --uid 200 --gid 200 --shell /bin/sh lavaserver && \
 {%- endif %}
     apt-get update -q && \
-{%- if use_docker_com|default(False) %}
-    apt-get install --no-install-recommends --yes wget gnupg ca-certificates && \
-    wget https://download.docker.com/linux/debian/gpg && \
-    apt-key add gpg && \
-    rm gpg && \
-    echo "deb https://download.docker.com/linux/debian buster stable" > /etc/apt/sources.list.d/docker.list && \
-    apt-get update -q && \
-{%- endif %}
 {%- for dep in dependencies %}
 {%- if dep["pkgs"] %}
     apt-get install {% if not dep["recommends"] %}--no-install-recommends {% endif %}--yes {% if dep["from"] %}-t {{ dep["from"] }} {% endif %}{{ dep["pkgs"] }} && \{% endif %}
@@ -26,12 +18,6 @@ RUN echo 'deb http://deb.debian.org/debian buster-backports main' > /etc/apt/sou
 {%- if pip_packages %}
     apt-get install --no-install-recommends --yes python3-pip && \
     python3 -m pip install {{ pip_packages|join(" ") }} && \
-{%- endif %}
-{%- if use_docker_com|default(False) %}
-    apt-get purge --yes wget gnupg && \
-    apt-get autoremove --purge --yes && \
-    rm /etc/apt/sources.list.d/docker.list && \
-    apt-get update -q && \
 {%- endif %}
     find /usr/lib/python3/dist-packages/ -name '__pycache__' -type d -exec rm -r "{}" + && \
     rm -rf /var/lib/apt/lists/*

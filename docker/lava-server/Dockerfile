@@ -7,7 +7,7 @@
 ARG base_image=""
 
 # Build the documentation
-FROM debian:buster-slim AS doc
+FROM debian:bullseye-slim AS doc
 RUN apt-get update && \
     apt-get install --yes --no-install-recommends git make python3-sphinx python3-sphinx-bootstrap-theme
 COPY ./lava_common/version.py /app/lava_common/version.py

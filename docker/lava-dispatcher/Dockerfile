@@ -7,7 +7,7 @@
 ARG base_image=""
 
 # Call the install script in a empty image
-FROM debian:buster-slim as build
+FROM debian:bullseye-slim as build
 ARG lava_version=""
 RUN apt-get update && \
     apt-get install --no-install-recommends --yes python3 python3-distutils python3-setuptools
