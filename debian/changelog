@@ -4413,7 +4413,7 @@ lava-server (2016.8-1) unstable; urgency=medium
     Fix handling of context with multinode
     Fix metadata handling for multinode and dynamic connections
     Fix hidden-device-type listings in JobTable
-    job: remove redudant information
+    job: remove redundant information
     Events: add a monitoring thread
     Initial notifications for v2.
     lava-master: save the logs in output.yaml

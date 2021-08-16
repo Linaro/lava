@@ -668,7 +668,7 @@ class ScpDownloadAction(DownloadHandler):
                 buff = process.stdout.read(SCP_DOWNLOAD_CHUNK_SIZE)
             if process.wait() != 0:
                 raise JobError(
-                    "Dowloading '%s' failed with message '%s'"
+                    "Downloading '%s' failed with message '%s'"
                     % (self.url.geturl(), process.stderr.read())
                 )
         finally:
