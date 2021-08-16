@@ -143,8 +143,7 @@ def lava_poll(port, host, name, request):
 
 
 def main():
-    """ Run a simple check on the API
-    """
+    """Run a simple check on the API"""
     port = 3079  # The same port as used by the server
     host = "localhost"
     conffile = "/etc/lava-coordinator/lava-coordinator.conf"

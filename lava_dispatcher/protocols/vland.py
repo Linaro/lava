@@ -197,7 +197,7 @@ class VlandProtocol(Protocol):
         return response
 
     def _call_vland(self, msg):
-        """ Internal call to perform the API call via the Poller.
+        """Internal call to perform the API call via the Poller.
         :param msg: The call-specific message to be wrapped in the base_msg primitive.
         :param timeout: Number of seconds for this call.
         :return: Python object of the reply dict.

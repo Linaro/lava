@@ -196,13 +196,20 @@ def test_elasticsearch_logs(mocker, logs_elasticsearch):
     # size of get_ret_val in bytes
     assert logs_elasticsearch.size(job) == 137  # nosec
 
-    assert logs_elasticsearch.open(job).read() == yaml_dump(
-        [
-            {"dt": "2020-03-25T19:44:36.209000", "lvl": "info", "msg": "first message"},
-            {
-                "dt": "2020-03-25T19:44:36.210000",
-                "lvl": "info",
-                "msg": "second message",
-            },
-        ]
-    ).encode("utf-8")
+    assert (
+        logs_elasticsearch.open(job).read()
+        == yaml_dump(
+            [
+                {
+                    "dt": "2020-03-25T19:44:36.209000",
+                    "lvl": "info",
+                    "msg": "first message",
+                },
+                {
+                    "dt": "2020-03-25T19:44:36.210000",
+                    "lvl": "info",
+                    "msg": "second message",
+                },
+            ]
+        ).encode("utf-8")
+    )

@@ -266,7 +266,7 @@ class Protocol:
         raise LAVABug("'_api_select' not implemented")
 
     def __call__(self, *args, **kwargs):
-        """ Makes the Protocol callable so that actions can send messages just using the protocol.
+        """Makes the Protocol callable so that actions can send messages just using the protocol.
         This function may block until the specified API call returns. Some API calls may involve a
         substantial period of polling.
         :param args: arguments of the API call to make

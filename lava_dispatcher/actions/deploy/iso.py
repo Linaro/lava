@@ -253,17 +253,14 @@ class QemuCommandLine(Action):
 
         self.sub_command.append(" -drive format=raw,file={emptyimage} ")
         self.sub_command.append(self.boot_order)
-        self.command_line = (
-            " -append '%s console=tty0 console=tty1 %s %s %s %s preseed/url=%s{preseed} --- %s '  "
-            % (
-                self.parameters["deployment_data"]["base"],
-                self.parameters["deployment_data"]["locale"],
-                self.console,
-                self.parameters["deployment_data"]["keymaps"],
-                self.parameters["deployment_data"]["netcfg"],
-                self.preseed_url,
-                self.console,
-            )
+        self.command_line = " -append '%s console=tty0 console=tty1 %s %s %s %s preseed/url=%s{preseed} --- %s '  " % (
+            self.parameters["deployment_data"]["base"],
+            self.parameters["deployment_data"]["locale"],
+            self.console,
+            self.parameters["deployment_data"]["keymaps"],
+            self.parameters["deployment_data"]["netcfg"],
+            self.preseed_url,
+            self.console,
         )
         self.set_namespace_data(
             action=self.name,

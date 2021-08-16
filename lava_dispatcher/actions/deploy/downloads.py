@@ -53,7 +53,7 @@ class Downloads(Deployment):
 class DownloadsAction(DownloadAction):
     name = "downloads"
     description = "Just downloads files"
-    summmary = "downloads files"
+    summary = "downloads files"
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)

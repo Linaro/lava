@@ -850,7 +850,7 @@ class Query(models.Model):
 
     @classmethod
     def get_queryset(cls, content_type, conditions, limit=None, order_by=["-id"]):
-        """ Return list of QuerySet objects for class 'content_type'.
+        """Return list of QuerySet objects for class 'content_type'.
 
         Be mindful when using this method directly as it does not apply the
         visibility rules.
