@@ -33,42 +33,48 @@ def test_accepts():
     assert TestMonitor.accepts(None, {"monitors": {}}) == (True, "accepted")
 
     # Missing some parameters
-    assert TestMonitor.accepts(
-        None,
-        {
-            "monitors": [
-                {
-                    "start": "BOOTING ZEPHYR",
-                    "end": "PROJECT EXECUTION SUCCESSFUL",
-                    "pattern": "(?P<test_case_id>.*) (?P<measurement>.*) tcs = [0-9]* nsec",
-                    "fixupdict": {"PASS": "pass", "FAIL": "fail"},
-                }
-            ]
-        },
-    ) == (False, "missing required parameter 'name'")
+    assert (
+        TestMonitor.accepts(
+            None,
+            {
+                "monitors": [
+                    {
+                        "start": "BOOTING ZEPHYR",
+                        "end": "PROJECT EXECUTION SUCCESSFUL",
+                        "pattern": "(?P<test_case_id>.*) (?P<measurement>.*) tcs = [0-9]* nsec",
+                        "fixupdict": {"PASS": "pass", "FAIL": "fail"},
+                    }
+                ]
+            },
+        )
+        == (False, "missing required parameter 'name'")
+    )
 
     # Working example
-    assert TestMonitor.accepts(
-        None,
-        {
-            "monitors": [
-                {
-                    "name": "tests",
-                    "start": "BOOTING ZEPHYR",
-                    "end": "PROJECT EXECUTION SUCCESSFUL",
-                    "pattern": "(?P<test_case_id>.*) (?P<measurement>.*) tcs = [0-9]* nsec",
-                    "fixupdict": {"PASS": "pass", "FAIL": "fail"},
-                },
-                {
-                    "name": "tests",
-                    "start": "Running test suite common_test",
-                    "end": "PROJECT EXECUTION SUCCESSFUL",
-                    "pattern": "(?P<result>(PASS|FAIL)) - (?P<test_case_id>.*)\\.",
-                    "fixupdict": {"PASS: pass", "FAIL,: ,fail"},
-                },
-            ]
-        },
-    ) == (True, "accepted")
+    assert (
+        TestMonitor.accepts(
+            None,
+            {
+                "monitors": [
+                    {
+                        "name": "tests",
+                        "start": "BOOTING ZEPHYR",
+                        "end": "PROJECT EXECUTION SUCCESSFUL",
+                        "pattern": "(?P<test_case_id>.*) (?P<measurement>.*) tcs = [0-9]* nsec",
+                        "fixupdict": {"PASS": "pass", "FAIL": "fail"},
+                    },
+                    {
+                        "name": "tests",
+                        "start": "Running test suite common_test",
+                        "end": "PROJECT EXECUTION SUCCESSFUL",
+                        "pattern": "(?P<result>(PASS|FAIL)) - (?P<test_case_id>.*)\\.",
+                        "fixupdict": {"PASS: pass", "FAIL,: ,fail"},
+                    },
+                ]
+            },
+        )
+        == (True, "accepted")
+    )
 
 
 class Mockmatch:

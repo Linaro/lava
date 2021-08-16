@@ -108,8 +108,7 @@ class TestSocket:
             self.response = json_data
 
     def get_response(self):
-        """ Without a socket, need to get the actual response direct
-        """
+        """Without a socket, need to get the actual response direct"""
         return self.response
 
     def close(self):
@@ -280,7 +279,7 @@ class TestCoordinator:
         self.conn.close()
 
     def _formatMessage(self, message):
-        """ Prepares the LAVA Coordinator header and a JSON string
+        """Prepares the LAVA Coordinator header and a JSON string
         of the message ready for transmission. Currently, the
         header is just the length of the JSON string as a hexadecimal
         string padded to 8 characters (not including 0x)
@@ -302,7 +301,7 @@ class TestCoordinator:
         return msglen, msgstr
 
     def _sendMessage(self, client_name, messageID):
-        """ Sends a message to the currently connected client.
+        """Sends a message to the currently connected client.
         (the "connection name" or hostname of the connected client does not necessarily
         match the name of the client registered with the group.)
         :param client_name: the client_name to lookup for the message
@@ -342,7 +341,7 @@ class TestCoordinator:
         self.conn.close()
 
     def _sendWaitMessage(self, client_name, messageID):
-        """ Sends a wait message to the currently connected client.
+        """Sends a wait message to the currently connected client.
         (the "connection name" or hostname of the connected client does not necessarily
         match the name of the client registered with the group.)
         :param client_name: the client_name to lookup for the message

@@ -27,7 +27,7 @@ from lava_dispatcher.shell import ShellCommand, ShellSession
 
 
 class SShSession(ShellSession):
-    """ Extends a ShellSession to include the ability to copy files using scp
+    """Extends a ShellSession to include the ability to copy files using scp
     without duplicating the SSH setup, keys etc.
     """
 

@@ -128,13 +128,10 @@ class CallDockerAction(Action):
                     overlay,
                 )
             else:
-                cmd += (
-                    ' --mount type=volume,volume-driver=local,dst=%s,volume-opt=type=nfs,volume-opt=device=:%s,"volume-opt=o=addr=%s"'
-                    % (
-                        overlay,
-                        os.path.join(location, overlay.strip("/")),
-                        dispatcher_ip(self.job.parameters["dispatcher"]),
-                    )
+                cmd += ' --mount type=volume,volume-driver=local,dst=%s,volume-opt=type=nfs,volume-opt=device=:%s,"volume-opt=o=addr=%s"' % (
+                    overlay,
+                    os.path.join(location, overlay.strip("/")),
+                    dispatcher_ip(self.job.parameters["dispatcher"]),
                 )
         cmd += self.extra_options
         cmd += " %s %s" % (docker_image, self.parameters["command"])

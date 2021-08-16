@@ -75,7 +75,7 @@ def split_multinode_yaml(submission, target_group):
       None on error or a dictionary of job roles.
       key: role
       value: list of jobs to be created for that role.
-     """
+    """
     # the list of devices cannot be definite here, only after devices have been reserved
 
     # FIXME: needs a Protocol base class in the server and protocol-specific split handlers

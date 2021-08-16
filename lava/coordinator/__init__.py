@@ -205,7 +205,7 @@ class LavaCoordinator:
         self.conn.close()
 
     def _formatMessage(self, message):
-        """ Prepares the LAVA Coordinator header and a JSON string
+        """Prepares the LAVA Coordinator header and a JSON string
         of the message ready for transmission. Currently, the
         header is just the length of the JSON string as a hexadecimal
         string padded to 8 characters (not including 0x)
@@ -227,7 +227,7 @@ class LavaCoordinator:
         return msglen.encode("utf-8"), msgstr.encode("utf-8")
 
     def _sendMessage(self, client_name, messageID):
-        """ Sends a message to the currently connected client.
+        """Sends a message to the currently connected client.
         (the "connection name" or hostname of the connected client does not necessarily
         match the name of the client registered with the group.)
         :param client_name: the client_name to lookup for the message
@@ -267,7 +267,7 @@ class LavaCoordinator:
         self.conn.close()
 
     def _sendWaitMessage(self, client_name, messageID):
-        """ Sends a wait message to the currently connected client.
+        """Sends a wait message to the currently connected client.
         (the "connection name" or hostname of the connected client does not necessarily
         match the name of the client registered with the group.)
         :param client_name: the client_name to lookup for the message
@@ -348,7 +348,7 @@ class LavaCoordinator:
         self.conn.close()
 
     def _aggregateBundle(self, json_data, client_name):
-        """ *All* nodes must call aggregate, even if there is no bundle
+        """*All* nodes must call aggregate, even if there is no bundle
         to submit from this board.
         :param json_data: the request header and the bundle itself
         :param client_name: the board identifier in the group data

@@ -612,7 +612,7 @@ class ExtractRamdisk(Action):
 
 class CompressRamdisk(Action):
     """
-     recreate ramdisk, with overlay in place
+    recreate ramdisk, with overlay in place
     """
 
     name = "compress-ramdisk"

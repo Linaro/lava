@@ -39,8 +39,7 @@ SEARCH_FILTER = "cn=*"
 
 
 def _get_script_path():
-    """Get the path of current script.
-    """
+    """Get the path of current script."""
     file_path = ""
     try:
         file_path = __file__

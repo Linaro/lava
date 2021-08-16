@@ -85,8 +85,7 @@ def handle_embedded(os_name, data, dirname, simulate=False):
 
 
 def uglify(os_name, data, dirname, remove=False, simulate=False):
-    """
-    """
+    """"""
     python_dir = None
     os_check = check_os(os_name, data)
     for os_data in next(os_check):

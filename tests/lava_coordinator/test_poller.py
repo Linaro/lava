@@ -337,27 +337,23 @@ class TestPoller(unittest.TestCase):
         self.coord.conn.clearPasses()
 
     def test_01_poll(self):
-        """ Check that an empty message gives an empty response
-        """
+        """Check that an empty message gives an empty response"""
         self.coord.dataReceived({})
 
     def test_02_receive(self):
-        """ Explicitly expect an empty response with an empty message
-        """
+        """Explicitly expect an empty response with an empty message"""
         self.coord.expectResponse(None)
         self.coord.dataReceived({})
 
     def test_03_missing_client_name(self):
-        """ Send a malformed message with no client_name, expect a warning
-        """
+        """Send a malformed message with no client_name, expect a warning"""
         self.log = logging.getLogger("testCase")
         self.log.info("\tExpect warning of a missing client name in request")
         ret = self.coord._updateData({"group_name": self.coord.group_name})
         self.assertTrue(ret is None)
 
     def test_04_missing_group_size(self):
-        """ Send a malformed message with no group_size, expect a warning.
-        """
+        """Send a malformed message with no group_size, expect a warning."""
         self.log = logging.getLogger("testCase")
         self.log.info(
             "\tExpect warning of new group without specifying the size of the group"
@@ -368,8 +364,7 @@ class TestPoller(unittest.TestCase):
         self.assertTrue(ret is None)
 
     def test_05_start_group_incomplete(self):
-        """ Create a group but fail to populate it with enough devices and cleanup
-        """
+        """Create a group but fail to populate it with enough devices and cleanup"""
         self.coord.group_name = str(uuid.uuid4())
         self.coord.group_size = 2
         self.coord.conn.response = "ack"
@@ -394,8 +389,7 @@ class TestPoller(unittest.TestCase):
         self._cleanup()
 
     def test_06_start_group_complete(self):
-        """ Create a group with enough devices and check for no errors.
-        """
+        """Create a group with enough devices and check for no errors."""
         self.coord.newGroup(2)
         ret = self.coord.addClient("completing")
         self.assertTrue(ret == "completing")
@@ -404,8 +398,7 @@ class TestPoller(unittest.TestCase):
         self._cleanup()
 
     def test_07_lava_send_check(self):
-        """ Create a deliberate typo of an API call and check for a warning.
-        """
+        """Create a deliberate typo of an API call and check for a warning."""
         self.coord.newGroup(2)
         self.coord.addClient("node_one")
         self.coord.addClient("node_two")
@@ -430,8 +423,7 @@ class TestPoller(unittest.TestCase):
         self._cleanup()
 
     def test_08_lava_send_keypair(self):
-        """ lava-send key=value - expect an ack
-        """
+        """lava-send key=value - expect an ack"""
         self.coord.newGroup(2)
         self.coord.addClient("node one")
         self.coord.addClient("node two")
@@ -447,8 +439,7 @@ class TestPoller(unittest.TestCase):
         self._cleanup()
 
     def test_09_lava_wait_check(self):
-        """ lava-wait check without key value pairs
-        """
+        """lava-wait check without key value pairs"""
         self.coord.newGroup(2)
         self.coord.addClient("node_one")
         self.coord.addClient("node_two")
@@ -476,8 +467,7 @@ class TestPoller(unittest.TestCase):
         self._cleanup()
 
     def test_10_lava_wait_keypair(self):
-        """ lava-wait check with key=value
-        """
+        """lava-wait check with key=value"""
         self.coord.newGroup(2)
         self.coord.addClient("node_one")
         self.coord.addClient("node_two")
@@ -502,8 +492,7 @@ class TestPoller(unittest.TestCase):
         self._cleanup()
 
     def test_11_lava_wait_all(self):
-        """ lava-wait-all check
-        """
+        """lava-wait-all check"""
         self.coord.newGroup(2)
         self.coord.addClient("node_one")
         self.coord.addClient("node_two")
@@ -540,8 +529,7 @@ class TestPoller(unittest.TestCase):
         self._cleanup()
 
     def test_12_lava_sync(self):
-        """ lava-sync check
-        """
+        """lava-sync check"""
         self.coord.newGroup(2)
         self.coord.addClient("node_one")
         self.coord.addClient("node_two")
@@ -567,8 +555,7 @@ class TestPoller(unittest.TestCase):
         self._cleanup()
 
     def test_13_lava_wait_all_role(self):
-        """ lava-wait-all check with role limitation.
-        """
+        """lava-wait-all check with role limitation."""
         self.coord.newGroup(3)
         self.coord.addClientRole("client_one", "client")
         self.coord.addClientRole("client_two", "client")
@@ -632,8 +619,7 @@ class TestPoller(unittest.TestCase):
         self._cleanup()
 
     def test_14_lava_wait_all_keypair(self):
-        """ lava-wait-all with key value pairs
-        """
+        """lava-wait-all with key value pairs"""
         self.coord.newGroup(3)
         self.coord.addClientRole("client_one", "client")
         self.coord.addClientRole("client_two", "client")
@@ -684,8 +670,7 @@ class TestPoller(unittest.TestCase):
         self._cleanup()
 
     def test_15_lava_wait_all_role_keypair(self):
-        """ lava-wait-all with key value pairs and role limitation.
-        """
+        """lava-wait-all with key value pairs and role limitation."""
         self.coord.newGroup(3)
         self.coord.addClientRole("client_one", "client")
         self.coord.addClientRole("client_two", "client")
@@ -740,7 +725,7 @@ class TestPoller(unittest.TestCase):
         self._cleanup()
 
     def test_16_lava_network(self):
-        """ Simulate calls to lava-network using real data from multinode.validation.linaro.org
+        """Simulate calls to lava-network using real data from multinode.validation.linaro.org
         at the node & coordinator level.
         """
         msg02 = {
@@ -825,8 +810,7 @@ class TestPoller(unittest.TestCase):
         self._cleanup()
 
     def test_17_nack_check(self):
-        """ Create a deliberate nack messageID and check for a warning.
-        """
+        """Create a deliberate nack messageID and check for a warning."""
         self.coord.newGroup(2)
         self.coord.addClient("node_one")
         self.coord.addClient("node_two")
@@ -840,8 +824,7 @@ class TestPoller(unittest.TestCase):
         self._cleanup()
 
     def test_18_aggregation(self):
-        """ Check that a syb_id zero waits for all pending result bundles
-        """
+        """Check that a syb_id zero waits for all pending result bundles"""
         self.coord.newGroup(3)
         self.coord.addClient("controller")
         self.coord.addClient("node_one")

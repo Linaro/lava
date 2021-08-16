@@ -385,7 +385,7 @@ class MultinodeProtocol(Protocol):
         return json_data
 
     def _api_select(self, data, action=None):
-        """ Determines which API call has been requested, makes the call, blocks and returns the reply.
+        """Determines which API call has been requested, makes the call, blocks and returns the reply.
         :param json_data: Python object of the API call
         :return: Python object containing the reply dict.
         """
@@ -495,7 +495,7 @@ class MultinodeProtocol(Protocol):
         raise JobError(msg)
 
     def _send(self, msg, system=False):
-        """ Internal call to perform the API call via the Poller.
+        """Internal call to perform the API call via the Poller.
         :param msg: The call-specific message to be wrapped in the base_msg primitive.
         :return: Python object of the reply dict.
         """
