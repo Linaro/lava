@@ -22,6 +22,7 @@ include lava_dispatcher/lava_test_shell/*
 include lava_dispatcher/lava_test_shell/multi_node/*
 include lava_dispatcher/lava_test_shell/vland/*
 include lava_dispatcher/lava_test_shell/distro/android/*
+include lava_dispatcher/lava_test_shell/distro/apertis/*
 include lava_dispatcher/lava_test_shell/distro/archlinux/*
 include lava_dispatcher/lava_test_shell/distro/centos/*
 include lava_dispatcher/lava_test_shell/distro/debian/*
