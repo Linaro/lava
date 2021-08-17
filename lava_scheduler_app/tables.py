@@ -568,6 +568,9 @@ class DeviceTypeTable(LavaTable):
     def render_idle(self, record):
         return record["idle"] if record["idle"] > 0 else ""
 
+    def render_maintenance(self, record):
+        return record["maintenance"] if record["maintenance"] > 0 else ""
+
     def render_offline(self, record):
         return record["offline"] if record["offline"] > 0 else ""
 
@@ -588,6 +591,7 @@ class DeviceTypeTable(LavaTable):
     # the change in the aggregation breaks the accessor.
     name.orderable = False
     idle = tables.Column()
+    maintenance = tables.Column()
     offline = tables.Column()
     busy = tables.Column()
     # sadly, this needs to be not orderable as it would otherwise sort by the accessor.

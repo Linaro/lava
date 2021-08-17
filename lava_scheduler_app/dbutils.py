@@ -179,12 +179,20 @@ def device_type_summary(user):
                 Case(
                     When(
                         Q(state=Device.STATE_IDLE)
+                        & ~Q(health=Device.HEALTH_MAINTENANCE)
                         & (
                             Q(worker_host__state=Worker.STATE_OFFLINE)
                             | ~Q(health__in=[Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN])
                         ),
                         then=1,
                     ),
+                    default=0,
+                    output_field=IntegerField(),
+                )
+            ),
+            maintenance=Sum(
+                Case(
+                    When(health=Device.HEALTH_MAINTENANCE, then=1),
                     default=0,
                     output_field=IntegerField(),
                 )
