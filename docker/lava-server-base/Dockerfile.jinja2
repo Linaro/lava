@@ -4,8 +4,8 @@
 
 {% set dependencies = [
     {"pkgs": "apache2 gunicorn3 postgresql postgresql-client postgresql-common python3-setuptools" },
-    {"pkgs": requires("debian", "buster", "lava-common") },
-    {"pkgs": requires("debian", "buster", "lava-server") },
+    {"pkgs": requires("debian", "bullseye", "lava-common") },
+    {"pkgs": requires("debian", "bullseye", "lava-server") },
 ] %}
 
 {% set pip_packages = ["sentry-sdk==1.0.0"] %}

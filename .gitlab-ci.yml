@@ -32,12 +32,12 @@ include:
   <<: *job
   tags:
   - amd64-dind
-  image: docker:18.09.9-dind
+  image: docker:20-dind
   variables:
     DOCKER_DRIVER: overlay2
     DOCKER_BUILDKIT: 1
   services:
-  - docker:18.09.9-dind
+  - docker:20-dind
 
 #######
 # Tests
