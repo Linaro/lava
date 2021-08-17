@@ -86,9 +86,14 @@ class ApplyOverlayGuest(Action):
         self.set_namespace_data(
             action=self.name, label="guest", key="filename", value=guest_file
         )
+        mountpoint = self.get_namespace_data(
+            action="test", label="results", key="lava_test_results_dir"
+        )
+
         blkid = prepare_guestfs(
             guest_file,
             overlay_file,
+            mountpoint,
             self.job.device["actions"]["deploy"]["methods"]["image"]["parameters"][
                 "guest"
             ]["size"],
