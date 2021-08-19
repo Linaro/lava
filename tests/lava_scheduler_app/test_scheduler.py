@@ -879,14 +879,14 @@ class TestJobQueueTimeout(TestCase):
         TestJob.objects.create(
             requested_device_type=self.device_type01,
             submitter=self.user,
-            definition="timeouts:\n  queue:\n    minutes: 1",
+            queue_timeout=int(timedelta(seconds=1).total_seconds()),
         )
         assert TestJob.objects.all().count() == 1
         # Limit the number of jobs that can run
         schedule(self.logger)
         assert TestJob.objects.filter(state=TestJob.STATE_SUBMITTED).count() == 1
         assert TestJob.objects.filter(state=TestJob.STATE_CANCELING).count() == 0
-        time.sleep(61)
+        time.sleep(3)
         schedule(self.logger)
         assert TestJob.objects.filter(state=TestJob.STATE_SUBMITTED).count() == 0
         canceling = TestJob.objects.filter(state=TestJob.STATE_CANCELING).count()
