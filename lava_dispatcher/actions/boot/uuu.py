@@ -30,7 +30,7 @@ from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.actions.boot import BootloaderCommandOverlay
 
 from lava_dispatcher.connections.serial import ConnectDevice, DisconnectDevice
-from lava_dispatcher.power import ResetDevice
+from lava_dispatcher.power import PowerOff, ResetDevice
 from lava_dispatcher.utils.strings import safe_dict_format
 from lava_dispatcher.utils.uuu import OptionalContainerUuuAction
 
@@ -137,6 +137,10 @@ class BootBootloaderCorruptBootMediaAction(Action):
     summary = "boot bootloader"
 
     def populate(self, parameters):
+        power_off = self.job.device["actions"]["boot"]["methods"]["uuu"]["options"][
+            "power_off_before_corrupt_boot_media"
+        ]
+
         SD_ERASE_CMDS = self.job.device["actions"]["boot"]["methods"]["uuu"]["options"][
             "corrupt_boot_media_command"
         ]
@@ -150,6 +154,8 @@ class BootBootloaderCorruptBootMediaAction(Action):
             "prompts": ["=>"],
         }
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=u_boot_params)
+        if power_off:
+            self.pipeline.add_action(PowerOff())
         self.pipeline.add_action(ConnectDevice())
         self.pipeline.add_action(
             BootloaderCommandOverlay(
