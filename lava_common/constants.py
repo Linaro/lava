@@ -97,8 +97,14 @@ KERNEL_EXCEPTION_MSG = r"-+\[ cut here \]-+\s+(.*\s+-+\[ end trace (\w*) \]-+)"
 KERNEL_TRACE_MSG = r"Stack:\s+(.*\s+-+\[ end trace (\w*) \]-+)"
 # unhandled fault
 KERNEL_FAULT_MSG = r"(Unhandled fault.*)\r\n"
+# oops
+KERNEL_OOPS_MSG = r"^[^\n]+Oops(?: -|:).*?$"
 # panic
 KERNEL_PANIC_MSG = r"Kernel panic - (.*) end Kernel panic"
+# warning
+KERNEL_WARNING_MSG = r"^[^\n]+WARNING:.*?$"
+# bug
+KERNEL_BUG_MSG = r"^[^\n]+BUG:.*?$"
 
 # Login incorrect message
 LOGIN_INCORRECT_MSG = "Login incorrect"
