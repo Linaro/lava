@@ -1292,6 +1292,14 @@ You could follow https://docs.docker.com/engine/security/https/ to protect the d
 
 .. note:: The minimal docker version to run uuu is 19.03. This is due to a bug in earlier docker versions. See https://github.com/moby/moby/pull/37665.
 
+* ``uuu_power_off_before_corrupt_boot_media`` : This enables a device power off before corrupt boot media.
+
+  There is a situation that uboot continues to restart, it will affect uboot interrupt when corrupt boot media. Next configure could power down the device before uboot interrupt, with which you have option to remove the interference:
+
+.. code-block:: jinja
+
+  {% set uuu_power_off_before_corrupt_boot_media = true %}
+
 Usage
 -----
 
