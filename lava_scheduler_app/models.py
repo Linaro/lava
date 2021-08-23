@@ -51,6 +51,7 @@ from django.utils.safestring import mark_safe
 
 from lava_common.compat import yaml_dump, yaml_safe_load, yaml_safe_dump
 from lava_common.decorators import nottest
+from lava_common.timeout import Timeout
 from lava_results_app.utils import export_testcase
 from lava_scheduler_app import utils
 from lava_scheduler_app.logutils import logs_instance
@@ -1182,6 +1183,11 @@ def _create_pipeline_job(
                     "No known groups were found in the visibility list."
                 )
 
+    # handle queue timeout.
+    queue_timeout = None
+    if "timeouts" in job_data and "queue" in job_data["timeouts"]:
+        queue_timeout = Timeout.parse(job_data["timeouts"]["queue"])
+
     with transaction.atomic():
         job = TestJob(
             definition=yaml_safe_dump(job_data),
@@ -1193,6 +1199,7 @@ def _create_pipeline_job(
             health_check=health_check,
             priority=priority,
             is_public=is_public,
+            queue_timeout=queue_timeout,
         )
         job.save()
 
@@ -1688,6 +1695,10 @@ class TestJob(models.Model):
 
     # calculated by the master validation process.
     pipeline_compatibility = models.IntegerField(default=0, editable=False)
+
+    queue_timeout = models.BigIntegerField(
+        verbose_name=_("Queue timeout"), null=True, blank=True, editable=False
+    )
 
     @property
     def size_limit(self):

@@ -21,6 +21,7 @@
 
 from datetime import timedelta
 import logging
+import time
 
 from django.contrib.auth.models import User
 from django.test import TestCase
@@ -850,3 +851,48 @@ class TestJobLimit(TestCase):
         schedule(self.logger)
         assert TestJob.objects.filter(state=TestJob.STATE_SCHEDULED).count() == 4
         assert TestJob.objects.filter(state=TestJob.STATE_SUBMITTED).count() == 0
+
+
+# test both healthcheck and normal testjobs with joblimit
+class TestJobQueueTimeout(TestCase):
+    def setUp(self):
+        self.logger = logging.getLogger()
+        self.logger.setLevel(logging.DEBUG)
+
+        self.worker01 = Worker.objects.create(
+            hostname="worker-01", state=Worker.STATE_ONLINE
+        )
+        self.user = User.objects.create(username="user-01")
+        self.device_type01 = DeviceType.objects.create(
+            name="qemu", disable_health_check=True
+        )
+        self.devices = []
+        dev = Device.objects.create(
+            hostname=f"qemu0",
+            device_type=self.device_type01,
+            worker_host=self.worker01,
+            health=Device.HEALTH_BAD,
+        )
+        self.devices.append(dev)
+
+    def test_job_limit(self):
+        TestJob.objects.create(
+            requested_device_type=self.device_type01,
+            submitter=self.user,
+            queue_timeout=int(timedelta(seconds=1).total_seconds()),
+        )
+        assert TestJob.objects.all().count() == 1
+        # Limit the number of jobs that can run
+        schedule(self.logger)
+        assert TestJob.objects.filter(state=TestJob.STATE_SUBMITTED).count() == 1
+        assert TestJob.objects.filter(state=TestJob.STATE_CANCELING).count() == 0
+        time.sleep(3)
+        schedule(self.logger)
+        assert TestJob.objects.filter(state=TestJob.STATE_SUBMITTED).count() == 0
+        canceling = TestJob.objects.filter(state=TestJob.STATE_CANCELING).count()
+        canceled = TestJob.objects.filter(health=TestJob.HEALTH_CANCELED).count()
+        if canceling == 0:
+            assert canceled == 1
+        else:
+            assert canceling == 1
+            assert canceled == 0
