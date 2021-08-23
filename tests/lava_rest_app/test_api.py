@@ -822,6 +822,21 @@ ok 2 bar
         data = yaml_load(data)
         assert data == {"device": "dict"}  # nosec
 
+    def test_devices_set_health(self):
+        response = self.adminclient.post(
+            reverse("api-root", args=[self.version]) + "devices/public01/set_health/",
+            {"health": "Maintenance", "reason": "Foo"},
+        )
+        assert response.status_code == 202
+        device_details_request = self.adminclient.get(
+            reverse("api-root", args=[self.version]) + "devices/public01/"
+        )
+        assert device_details_request.status_code == 200
+        device_details = device_details_request.json()
+        assert device_details["health"] == "Maintenance"
+        logentry = LogEntry.objects.filter(object_id=device_details["hostname"]).first()
+        assert "Foo" in logentry.change_message
+
     def test_devices_set_dictionary(self, monkeypatch, tmpdir):
         def save_configuration(self, data):
             assert data == "hello"  # nosec
