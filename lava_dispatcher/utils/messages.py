@@ -59,23 +59,23 @@ class LinuxKernelMessages(Action):
     FAULT = 1
     PANIC = 2
     TRACE = 3
+    WARNING = 4
+    OOPS = 5
+    BUG = 6
     # these can be omitted by InitMessages
-    FREE_UNUSED = 4
-    FREE_INIT = 5
-    WARNING = 6
-    OOPS = 7
-    BUG = 8
+    FREE_UNUSED = 7
+    FREE_INIT = 8
 
     MESSAGE_CHOICES = (
         (EXCEPTION, KERNEL_EXCEPTION_MSG, "exception"),
         (FAULT, KERNEL_FAULT_MSG, "fault"),
         (PANIC, KERNEL_PANIC_MSG, "panic"),
         (TRACE, KERNEL_TRACE_MSG, "trace"),
-        (FREE_UNUSED, KERNEL_FREE_UNUSED_MSG, "success"),
-        (FREE_INIT, KERNEL_FREE_INIT_MSG, "success"),
         (WARNING, KERNEL_WARNING_MSG, "warning"),
         (OOPS, KERNEL_OOPS_MSG, "oops"),
         (BUG, KERNEL_BUG_MSG, "bug"),
+        (FREE_UNUSED, KERNEL_FREE_UNUSED_MSG, "success"),
+        (FREE_INIT, KERNEL_FREE_INIT_MSG, "success"),
     )
 
     def __init__(self):
