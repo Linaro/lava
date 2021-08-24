@@ -127,7 +127,7 @@ class FlashPyOCDAction(Action):
         if not self.exec_list:
             self.errors = "No PyOCD command to execute"
 
-        pre_os_command = str(self.job.device.pre_os_command)
+        pre_os_command = self.job.device.pre_os_command
         if pre_os_command:
             self.exec_list.append(pre_os_command.split(" "))
 
