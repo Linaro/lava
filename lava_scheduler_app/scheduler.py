@@ -66,21 +66,22 @@ def worker_summary():
 
 def check_queue_timeout(logger):
     logger.info("Check queue timeouts:")
-    jobs = TestJob.objects.filter(state=TestJob.STATE_SUBMITTED)
+    jobs = TestJob.objects.filter(
+        state=TestJob.STATE_SUBMITTED, queue_timeout__isnull=False
+    )
     for testjob in jobs:
-        if testjob.queue_timeout is not None:
-            now = timezone.now()
-            queue_timeout_delta = datetime.timedelta(seconds=testjob.queue_timeout)
-            canceling = testjob.submit_time + queue_timeout_delta < now
-            if canceling:
-                logger.debug("  |--> [%d] canceling", testjob.id)
-                if testjob.is_multinode:
-                    for job in testjob.sub_jobs_list:
-                        job.go_state_canceling()
-                        job.save()
-                else:
-                    testjob.go_state_canceling()
-                    testjob.save()
+        now = timezone.now()
+        queue_timeout_delta = datetime.timedelta(seconds=testjob.queue_timeout)
+        canceling = testjob.submit_time + queue_timeout_delta < now
+        if canceling:
+            logger.debug("  |--> [%d] canceling", testjob.id)
+            if testjob.is_multinode:
+                for job in testjob.sub_jobs_list:
+                    job.go_state_canceling()
+                    job.save()
+            else:
+                testjob.go_state_canceling()
+                testjob.save()
     logger.info("done")
 
 
