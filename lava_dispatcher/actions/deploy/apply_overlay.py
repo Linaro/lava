@@ -75,6 +75,13 @@ class ApplyOverlayGuest(Action):
             )
 
     def run(self, connection, max_end_time):
+        applied = self.get_namespace_data(
+            action="append-overlays", label="guest", key="applied"
+        )
+        if applied:
+            self.logger.debug("Overlay already applied")
+            return connection
+
         overlay_file = self.get_namespace_data(
             action="compress-overlay", label="output", key="file"
         )
@@ -867,6 +874,9 @@ class AppendOverlays(Action):
             raise JobError("'overlays' is not a dictionary")
         for overlay, params in self.params["overlays"].items():
             if overlay == "lava":
+                self.set_namespace_data(
+                    action=self.name, label="guest", key="applied", value=True
+                )
                 continue
             if params.get("format") not in self.OVERLAY_FORMATS:
                 raise JobError(

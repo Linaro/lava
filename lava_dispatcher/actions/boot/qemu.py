@@ -262,6 +262,10 @@ class CallQemuAction(Action):
         guest = self.get_namespace_data(
             action="apply-overlay-guest", label="guest", key="filename"
         )
+        applied = self.get_namespace_data(
+            action="append-overlays", label="guest", key="applied"
+        )
+
         # check for NFS
         if "qemu-nfs" == self.parameters["method"]:
             self.logger.debug("Adding NFS arguments to kernel command line.")
@@ -279,7 +283,7 @@ class CallQemuAction(Action):
             ]
             self.sub_command.append("--append")
             self.sub_command.append('"%s"' % " ".join(append))
-        elif guest:
+        elif guest and not applied:
             self.logger.info("Extending command line for qcow2 test overlay")
             # interface is ide by default in qemu
             interface = self.job.device["actions"]["deploy"]["methods"]["image"][
