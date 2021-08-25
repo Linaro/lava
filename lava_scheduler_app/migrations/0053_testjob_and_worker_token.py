@@ -31,7 +31,7 @@ class Migration(migrations.Migration):
                 max_length=32,
             ),
         ),
-        migrations.RunPython(forwards_func, noop),
+        migrations.RunPython(forwards_func, noop, elidable=True),
         migrations.AddField(
             model_name="testjob",
             name="token",

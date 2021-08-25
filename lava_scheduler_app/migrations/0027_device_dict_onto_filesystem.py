@@ -76,7 +76,9 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunPython(
-            migrate_device_dict_to_filesystem, revert_migrate_device_dict_to_filesystem
+            migrate_device_dict_to_filesystem,
+            revert_migrate_device_dict_to_filesystem,
+            elidable=True,
         ),
         migrations.DeleteModel(name="PipelineStore"),
         migrations.DeleteModel(name="DeviceDictionaryTable"),

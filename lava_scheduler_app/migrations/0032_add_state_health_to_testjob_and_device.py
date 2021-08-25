@@ -219,6 +219,10 @@ class Migration(migrations.Migration):
             name="testjob",
             index_together=set([("health", "state", "requested_device_type")]),
         ),
-        migrations.RunPython(set_device_state_health, revert_set_device_state_health),
-        migrations.RunPython(set_testjob_state_health, revert_set_testjob_state_health),
+        migrations.RunPython(
+            set_device_state_health, revert_set_device_state_health, elidable=True
+        ),
+        migrations.RunPython(
+            set_testjob_state_health, revert_set_testjob_state_health, elidable=True
+        ),
     ]

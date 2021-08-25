@@ -41,4 +41,4 @@ class Migration(migrations.Migration):
 
     dependencies = [("lava_scheduler_app", "0002_add_lava-health_user")]
 
-    operations = [migrations.RunPython(forwards_func, backwards_func)]
+    operations = [migrations.RunPython(forwards_func, backwards_func, elidable=True)]
