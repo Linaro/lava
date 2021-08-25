@@ -95,10 +95,15 @@ def device_post_handler(sender, **kwargs):
     # Called only when a Device is saved into the database
     instance = kwargs["instance"]
 
-    # Send a signal if the state or health changed
+    # Send a signal if the state or health changed; also, cancel job if device
+    # is being retired
     if (instance.health != instance._old_health) or (
         instance.state != instance._old_state
     ):
+        # cancel the current job if the device is getting retired.
+        if instance.health == Device.HEALTH_RETIRED:
+            instance.cancel_job()
+
         # Update the states as some objects are save many times.
         # Even if an object is saved many time, we will send messages only when
         # the state change.
