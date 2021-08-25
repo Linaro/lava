@@ -1,0 +1,12 @@
+{% extends 'base-uboot.jinja2' %}
+
+{% set uboot_mkimage_arch = 'arm' %}
+
+{% set console_device = console_device|default('ttyS0') %}
+{% set baud_rate = baud_rate|default(115200) %}
+{% set bootloader_prompt = bootloader_prompt|default('=>') %}
+
+{% set bootz_kernel_addr = '0x01600000' %}
+{% set bootz_ramdisk_addr = '0x00800000' %}
+
+{% set append_dtb = true %}
