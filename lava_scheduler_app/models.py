@@ -673,7 +673,9 @@ class Device(RestrictedObject):
             return self.running_jobs[0]
         except AttributeError:
             try:
-                return self.testjobs.get(~Q(state=TestJob.STATE_FINISHED))
+                return self.testjobs.select_related("submitter").get(
+                    ~Q(state=TestJob.STATE_FINISHED)
+                )
             except TestJob.DoesNotExist:
                 return None
         except IndexError:
