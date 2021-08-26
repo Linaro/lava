@@ -1038,6 +1038,30 @@ When booting an installer using QEMU, the ``media`` needs to be specified as
 
 .. _boot_transfer_overlay:
 
+ser_ctl
+==============
+
+The ``ser_ctl`` boot method can be used to close the serial which opened by prior boot actions. It's extremely useful to be executed before docker/lxc actions which may run arbitrary code in the test (including allow full serial control by test itself).
+
+.. code-block:: yaml
+
+  - boot:
+      method: ser_ctl
+      timeout:
+        seconds: 60
+
+Additional, it gives another option to let LAVA framework take over serial control again by define `action` explicitly with `open`:
+
+.. code-block:: yaml
+
+  - boot:
+      method: ser_ctl
+      action: open
+      timeout:
+        seconds: 60
+
+.. note:: The default action is `close`, so we usually not specify the `action` explicitly if just want to close the serial.
+
 transfer_overlay
 ================
 
