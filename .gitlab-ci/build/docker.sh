@@ -43,7 +43,7 @@ else
   echo "* old: $BASE_IMAGE"
   docker inspect "$BASE_IMAGE" 2>/dev/null >/dev/null || docker pull "$BASE_IMAGE" 2>/dev/null || docker build -t "$BASE_IMAGE" docker/lava-"$SERVICE"-base
   # Create a tag with the current version tag
-  echo "* new: $BASE_IMAGE"
+  echo "* new: $BASE_IMAGE_NEW"
   docker tag "$BASE_IMAGE" "$BASE_IMAGE_NEW"
 
   # Build the image
