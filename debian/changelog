@@ -1,3 +1,12 @@
+lava (2021.08-1) unstable; urgency=medium
+
+  * LAVA Software 2021.08 release
+
+  [ Rémi Duraffort ]
+  * [3592a042] Merge branch 'issue-501' into 'master'
+
+  -- Stevan Radaković <stevan.radakovic@linaro.org>  Tue, 31 Aug 2021 13:11:21 +0100
+
 lava (2021.05-1) unstable; urgency=medium
 
   * LAVA Software 2021.05 release
