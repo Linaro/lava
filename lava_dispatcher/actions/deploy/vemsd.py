@@ -23,7 +23,7 @@
 
 import os
 import shutil
-from lava_common.exceptions import JobError, InfrastructureError, LAVABug
+from lava_common.exceptions import InfrastructureError, LAVABug
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.logical import Deployment, RetryAction
 from lava_dispatcher.actions.deploy.lxc import LxcCreateUdevRuleAction
@@ -414,7 +414,7 @@ class DeployVExpressRecoveryImage(Action):
         try:
             remove_directory_contents(mount_point)
         except Exception:
-            raise JobError("Failed to erase old recovery image")
+            raise InfrastructureError("Failed to erase old recovery image")
 
         self.logger.debug(
             "Transferring new recovery image to Versatile Express mass storage device.."
@@ -422,7 +422,9 @@ class DeployVExpressRecoveryImage(Action):
         try:
             copy_directory_contents(src_dir, mount_point)
         except Exception:
-            raise JobError("Failed to deploy recovery image to %s" % mount_point)
+            raise InfrastructureError(
+                "Failed to deploy recovery image to %s" % mount_point
+            )
         return connection
 
 
@@ -509,9 +511,7 @@ class VExpressFlashErase(Action):
 
     def run(self, connection, max_end_time):
         if not connection:
-            raise RuntimeError(
-                "%s started without a connection already in use" % self.name
-            )
+            raise LAVABug("%s started without a connection already in use" % self.name)
         connection = super().run(connection, max_end_time)
 
         # From Versatile Express MCC, enter flash menu
