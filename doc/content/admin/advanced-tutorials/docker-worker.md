@@ -86,3 +86,27 @@ server:
 ```
 $ lava-docker-worker --url https://my.lavaserver.com/ --token 0123456789012345678901234567890123456789
 ```
+
+## 3: build customized image
+
+To build customized image for additional packages you might require, first edit
+`/etc/lava-dispatcher-host/lava-docker-worker` and set the BUILD_DIR parameter
+to a directory with a Dockerfile inside.
+
+```
+# Docker build directory
+# Should be set to a directory with a Dockerfile inside.
+BUILD_DIR="/etc/lava-dispatcher-host/build"
+```
+
+Then restart the `lava-docker-worker` service.
+
+```
+sudo systemctl restart lava-docker-worker.service
+```
+
+!!! note "Base image"
+
+    A new `Dockerfile.lava` will be generated with the base image that matches
+    your LAVA server version for building your customized image. All the `FROM`
+    commands defined in your `Dockerfile` will be ignored.

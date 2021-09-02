@@ -22,6 +22,7 @@ def Popen(mocker):
 def options(tmp_path):
     o = argparse.Namespace()
     o.worker_dir = tmp_path / "worker"
+    o.build_dir = tmp_path / "build"
     return o
 
 
@@ -38,6 +39,39 @@ class TestGetImage:
         mocker.patch("lava_dispatcher_host.docker_worker.has_image", return_value=False)
         lava_dispatcher_host.docker_worker.get_image("foobar")
         check_call.assert_called_with(["docker", "pull", "foobar"])
+
+
+class TestBuildImage:
+    def test_missing_dockerfile(self, tmp_path, check_call, mocker):
+        image = "lavasoftware/lava-dispatcher:2021.08"
+        build_dir = tmp_path / "build"
+        build_dir.mkdir()
+
+        lava_dispatcher_host.docker_worker.build_customized_image(image, build_dir)
+        check_call.assert_not_called()
+
+    def test_build_customized_image(self, tmp_path, check_call, mocker):
+        original_image = "lavasoftware/lava-dispatcher:2021.05"
+        image = "lavasoftware/lava-dispatcher:2021.08"
+        tag = f"{image}.customized"
+
+        build_dir = tmp_path / "build"
+        build_dir.mkdir()
+        dockerfile = build_dir / "Dockerfile"
+        dockerfile.write_text(f"{original_image}\nRUN echo test > /test")
+
+        lava_dispatcher_host.docker_worker.build_customized_image(image, build_dir)
+
+        dockerfile_lava = build_dir / "Dockerfile.lava"
+        assert dockerfile_lava.exists()
+        content = dockerfile_lava.read_text()
+        assert f"FROM {image}" in content
+        assert f"FROM {original_image}" not in content
+
+        check_call.assert_called_with(
+            ["docker", "build", "-f", "Dockerfile.lava", "-t", tag, "."],
+            cwd=build_dir,
+        )
 
 
 class TestRun:

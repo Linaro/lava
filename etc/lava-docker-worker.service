@@ -4,9 +4,9 @@ After=network.target remote-fs.target
 
 [Service]
 Type=simple
-Environment=URL=http://localhost/ LOGLEVEL=DEBUG
+Environment=URL=http://localhost/ LOGLEVEL=DEBUG BUILD_DIR="/etc/lava-dispatcher-host/build"
 EnvironmentFile=-/etc/lava-dispatcher-host/lava-docker-worker
-ExecStart=/usr/bin/lava-docker-worker --level $LOGLEVEL --log-file=- --url $URL $TOKEN $WORKER_NAME $WS_URL
+ExecStart=/usr/bin/lava-docker-worker --level $LOGLEVEL --log-file=- --url $URL $TOKEN $WORKER_NAME $WS_URL --build-dir $BUILD_DIR
 TimeoutStopSec=20
 Restart=always
 KillMode=process
