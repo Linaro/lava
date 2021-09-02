@@ -1,0 +1,28 @@
+{# device_type: cy8ckit-064s0s2-4343w #}
+{% extends 'base.jinja2' %}
+{% set usb_vendor_id = '04b4' %}
+{% set usb_product_id = 'f155' %}
+{% block body %}
+board_id: '{{ board_id|default('0000000000') }}'
+usb_vendor_id: '{{ usb_vendor_id }}'
+usb_product_id: '{{ usb_product_id }}'
+
+actions:
+  deploy:
+    methods:
+      lxc:
+{% if flasher_deploy_commands %}
+      flasher:
+        commands: {{ flasher_deploy_commands }}
+{% endif %}
+
+  boot:
+    connections:
+      serial:
+      lxc:
+    methods:
+      lxc:
+      minimal:
+{% endblock body -%}
+
+{% set device_info = device_info|default([{'board_id': board_id, 'usb_vendor_id': usb_vendor_id, 'usb_product_id': usb_product_id}]) %}
