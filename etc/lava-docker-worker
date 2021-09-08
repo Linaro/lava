@@ -12,3 +12,7 @@
 # URL="http://localhost/"
 # TOKEN="--token <token>"
 # WS_URL="--ws-url http://localhost/ws/"
+
+# Docker build directory
+# Should be set to a directory with a Dockerfile inside.
+# BUILD_DIR="/etc/lava-dispatcher-host/build"

@@ -52,6 +52,12 @@ def get_parser(url_required=True) -> argparse.ArgumentParser:
     storage.add_argument(
         "--worker-dir", type=Path, default=WORKER_DIR, help="Path to data storage"
     )
+    storage.add_argument(
+        "--build-dir",
+        type=Path,
+        default="/etc/lava-dispatcher-host/build",
+        help="Path to a directory with a Dockerfile inside for building customized lava-dispatcher docker image.",
+    )
 
     net = parser.add_argument_group("network")
     net.add_argument("--url", required=url_required, help="Base URL of the server")
