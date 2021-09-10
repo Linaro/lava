@@ -19,13 +19,16 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
+from yaml import YAMLError
 import contextlib
 import imp
 import re
 
 from django.conf.global_settings import *
+from django.core.exceptions import ImproperlyConfigured
 
 from lava_common.version import __version__
+from lava_common.compat import yaml_safe_load
 from lava_rest_app.versions import versions as REST_VERSIONS
 from lava_scheduler_app.settings import *
 
@@ -211,6 +214,9 @@ AUTH_LDAP_USER_SEARCH = None
 AUTH_LDAP_GROUP_SEARCH = None
 AUTH_LDAP_GROUP_TYPE = None
 
+# Social accounts support
+AUTH_SOCIALACCOUNT = None
+
 # Gitlab support
 AUTH_GITLAB_URL = None
 AUTH_GITLAB_SCOPE = ["read_user"]
@@ -313,6 +319,7 @@ def update(values):
     AUTH_LDAP_SERVER_URI = values.get("AUTH_LDAP_SERVER_URI")
     AUTH_LDAP_USER_SEARCH = values.get("AUTH_LDAP_USER_SEARCH")
     AUTH_DEBIAN_SSO = values.get("AUTH_DEBIAN_SSO")
+    AUTH_SOCIALACCOUNT = values.get("AUTH_SOCIALACCOUNT")
     AUTH_GITLAB_URL = values.get("AUTH_GITLAB_URL")
     AUTH_GITLAB_SCOPE = values.get("AUTH_GITLAB_SCOPE")
     AUTHENTICATION_BACKENDS = values.get("AUTHENTICATION_BACKENDS")
@@ -344,19 +351,39 @@ def update(values):
     ADMINS = [tuple(v) for v in ADMINS]
     MANAGERS = [tuple(v) for v in MANAGERS]
 
-    # Gitlab authentication config
-    if AUTH_GITLAB_URL:
-        INSTALLED_APPS.append("allauth")
-        INSTALLED_APPS.append("allauth.account")
-        INSTALLED_APPS.append("allauth.socialaccount")
-        INSTALLED_APPS.append("allauth.socialaccount.providers.gitlab")
+    # Social accounts authentication config
+    if AUTH_SOCIALACCOUNT or AUTH_GITLAB_URL:
+        auth_socialaccount = {}
+        if AUTH_SOCIALACCOUNT:
+            try:
+                auth_socialaccount = yaml_safe_load(AUTH_SOCIALACCOUNT)
+                if not isinstance(auth_socialaccount, dict):
+                    auth_socialaccount = {}
+            except YAMLError:
+                raise ImproperlyConfigured(
+                    "Failed to load social account configuration."
+                )
 
-        AUTHENTICATION_BACKENDS.append(
-            "allauth.account.auth_backends.AuthenticationBackend"
-        )
-        SOCIALACCOUNT_PROVIDERS = {
-            "gitlab": {"GITLAB_URL": AUTH_GITLAB_URL, "SCOPE": AUTH_GITLAB_SCOPE}
-        }
+        if (
+            AUTH_GITLAB_URL
+        ):  # former GitLab authentication config takes precedence over new approach
+            auth_socialaccount["gitlab"] = {
+                "GITLAB_URL": AUTH_GITLAB_URL,
+                "SCOPE": AUTH_GITLAB_SCOPE,
+            }
+
+        if auth_socialaccount:
+            INSTALLED_APPS.append("allauth")
+            INSTALLED_APPS.append("allauth.account")
+            INSTALLED_APPS.append("allauth.socialaccount")
+
+            for provider in auth_socialaccount.keys():
+                INSTALLED_APPS.append(f"allauth.socialaccount.providers.{provider}")
+
+            AUTHENTICATION_BACKENDS.append(
+                "allauth.account.auth_backends.AuthenticationBackend"
+            )
+            SOCIALACCOUNT_PROVIDERS = auth_socialaccount
 
     # LDAP authentication config
     if AUTH_LDAP_SERVER_URI:

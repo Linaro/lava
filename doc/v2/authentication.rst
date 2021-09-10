@@ -72,28 +72,39 @@ Similarly::
 Restart the ``lava-server`` and ``apache2`` services after any
 changes.
 
-Using GitLab
-------------
+Using external authentication provider supported by django-allauth
+------------------------------------------------------------------
 
-LAVA server can delegate its authentication to a GitLab installation
-using the `django_allauth`_ authentication backend.
+LAVA server can delegate its authentication using the `django_allauth`_
+authentication backend.
 
 .. _`django_allauth`: https://django-allauth.readthedocs.io/en/latest/
 
-To enable GitLab authentication support you need to set `AUTH_GITLAB_URL`
-in your LAVA configuration. Do this by placing a config snippet in yaml format
-in the directory ``/etc/lava-server/settings.d``::
+To enable external provider authentication support you need to set
+`AUTH_SOCIALACCOUNT` in your LAVA configuration. Do this by placing a config
+snippet in yaml format in the directory ``/etc/lava-server/settings.d``::
 
-  AUTH_GITLAB_URL: "https://gitlab.example.com"
+  AUTH_SOCIALACCOUNT: "{'gitlab':{'GITLAB_URL': 'https://gitlab.example.com'}}"
 
 This requires django-allauth to be installed manually (e.g., on Debian
 you would install the package ``python3-django-allauth``). Afterwards,
 run ``lava-server manage migrate``.
 
+Other `authentication providers`_ might require slightly different configuration
+or even none at all, e.g. when working with https://gitlab.com::
+
+  AUTH_SOCIALACCOUNT: "{'gitlab':{}}"
+
+.. _`authentication providers`: https://django-allauth.readthedocs.io/en/latest/providers.html
+
+.. note:: To maintain compatibility with LAVA 2021.03 - 2021.09 GitLab
+          authentication support can also be enabled by setting
+          `AUTH_GITLAB_URL` and `AUTH_GITLAB_SCOPE` directly.
+
 Restart the ``lava-server`` and ``apache2`` services after any changes.
 
-Before you can use `GitLab OAuth2 authentication`_, some additional setup steps
-need to be performed:
+Before you can use external authentication provider, some additional setup steps
+need to be performed (following example covers `GitLab OAuth2 authentication`_):
 
 .. _`GitLab OAuth2 authentication`: https://docs.gitlab.com/ce/integration/oauth_provider.html
 
