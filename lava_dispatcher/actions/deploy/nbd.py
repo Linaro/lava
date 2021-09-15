@@ -96,9 +96,9 @@ class NbdAction(Action):
         self.set_namespace_data(
             action="tftp-deploy", label="tftp", key="suffix", value=suffix
         )
-        # we need tftp _and_ xnbd-server
+        # we need tftp _and_ nbd-server
         which("in.tftpd")
-        which("xnbd-server")
+        which("nbd-server")
 
         # Check that the tmp directory is in the nbdd_dir or in /tmp for the
         # unit tests
@@ -158,19 +158,19 @@ class NbdAction(Action):
             value=True,
             parameters=parameters,
         )
-        # store in parameters for protocol 'xnbd' to tear-down xnbd-server
+        # store in parameters for protocol 'xnbd' to tear-down nbd-server
         # and store in namespace for boot action
         # ip
         parameters["lava-xnbd"] = {}
-        # handle XnbdAction next - bring-up xnbd-server
+        # handle XnbdAction next - bring-up nbd-server
         self.pipeline.add_action(XnbdAction())
 
 
 class XnbdAction(Action):
 
     name = "xnbd-server-deploy"
-    description = "xnbd daemon"
-    summary = "xnbd daemon"
+    description = "nbd daemon"
+    summary = "nbd daemon"
 
     def __init__(self):
         super().__init__()
@@ -180,7 +180,7 @@ class XnbdAction(Action):
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
-        self.logger.debug("%s: starting xnbd-server", self.name)
+        self.logger.debug("%s: starting nbd-server", self.name)
         # pull from parameters - as previously set
         self.nbd_root = self.parameters["lava-xnbd"]["nbdroot"]
         self.nbd_server_port = self.get_namespace_data(
@@ -206,19 +206,14 @@ class XnbdAction(Action):
                 self.nbd_root,
             )
         nbd_cmd = [
-            "xnbd-server",
-            "--logpath",
-            "/tmp/xnbd.log.%s" % self.nbd_server_port,
-            "--daemon",
-            "--target",
-            "--lport",
+            "nbd-server",
             "%s" % self.nbd_server_port,
             fullpath_nbdroot,
         ]
         command_output = self.run_command(nbd_cmd, allow_fail=False)
 
         if command_output and "error" in command_output:
-            raise JobError("xnbd-server: %s" % command_output)
+            raise JobError("nbd-server: %s" % command_output)
         else:
-            self.logger.debug("%s: starting xnbd-server done", self.name)
+            self.logger.debug("%s: starting nbd-server done", self.name)
         return connection

@@ -212,7 +212,7 @@ class TestBootloaderAction(StdoutTestCase):
         self.assertNotIn("initrd tftp://{SERVER_IP}/{RAMDISK}", commands)
         self.assertIn("boot", commands)
 
-    @unittest.skipIf(infrastructure_error("xnbd-server"), "xnbd-server not installed")
+    @unittest.skipIf(infrastructure_error("nbd-server"), "nbd-server not installed")
     def test_nbd_boot(self):
         job = self.factory.create_job(
             "x86-01.jinja2", "sample_jobs/up2-initrd-nbd.yaml"
