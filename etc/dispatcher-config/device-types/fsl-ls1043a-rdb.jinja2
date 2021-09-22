@@ -20,3 +20,5 @@
 {% set booti_dtb_addr = bootz_dtb_addr %}
 {% set uboot_mkimage_arch = 'arm64' %}
 {% set extra_nfsroot_args = ",v3" + extra_nfsroot_args|default('') %}
+{% set uboot_altbank = uboot_altbank|default(False) %}
+{% set uboot_altbank_cmd = uboot_altbank_cmd|default('cpld reset altbank') %}
