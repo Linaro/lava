@@ -50,7 +50,7 @@ from lava_dispatcher.shell import ExpectShellSession
 
 
 class BootHasMixin:
-    """ Add the two methods to boot classes using it """
+    """Add the two methods to boot classes using it"""
 
     def has_prompts(self, parameters):
         return "prompts" in parameters
@@ -825,6 +825,69 @@ class BootloaderInterruptAction(Action):
                 key="at_bootloader_prompt",
                 value=True,
             )
+        return connection
+
+
+class BootloaderCommandsActionAltBank(Action):
+    """
+    Send the "uboot_altbank_cmd" command to the bootloader
+    """
+
+    name = "bootloader-commands-altbank"
+    description = "send commands to bootloader altbank"
+    summary = "interactive bootloader altbank"
+    timeout_exception = InfrastructureError
+
+    def __init__(self, expect_final=True, method=None):
+        super().__init__()
+        self.params = None
+        self.timeout = Timeout(
+            self.name, BOOTLOADER_DEFAULT_CMD_TIMEOUT, exception=self.timeout_exception
+        )
+        self.method = method
+        self.expect_final = expect_final
+
+    def validate(self):
+        super().validate()
+        if self.method is None:
+            self.method = self.parameters["method"]
+        self.params = self.job.device["actions"]["boot"]["methods"][self.method][
+            "parameters"
+        ]
+
+    def line_separator(self):
+        return LINE_SEPARATOR
+
+    def run(self, connection, max_end_time):
+        if not connection:
+            self.errors = "%s started without a connection already in use" % self.name
+        connection = super().run(connection, max_end_time)
+        connection.raw_connection.linesep = self.line_separator()
+        connection.prompt_str = [self.params["bootloader_prompt"]]
+        at_bootloader_prompt = self.get_namespace_data(
+            action="interrupt", label="interrupt", key="at_bootloader_prompt"
+        )
+        if not at_bootloader_prompt:
+            self.wait(connection, max_end_time)
+        error_messages = self.job.device.get_constant(
+            "error-messages", prefix=self.method, missing_ok=True
+        )
+        final_message = self.job.device.get_constant(
+            "final-message", prefix=self.method, missing_ok=True
+        )
+        if error_messages:
+            if isinstance(connection.prompt_str, str):
+                connection.prompt_str = [connection.prompt_str]
+            connection.prompt_str = connection.prompt_str + error_messages
+        command = self.params.get("uboot_altbank_cmd")
+        connection.sendline(command, delay=self.character_delay)
+        if final_message and self.expect_final:
+            connection.prompt_str = [final_message]
+            self.wait(connection, max_end_time)
+
+        self.set_namespace_data(
+            action="shared", label="shared", key="connection", value=connection
+        )
         return connection
 
 
