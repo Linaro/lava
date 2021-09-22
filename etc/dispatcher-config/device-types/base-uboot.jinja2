@@ -209,6 +209,10 @@ actions:
           interrupt_prompt: {{ interrupt_prompt|default('Hit any key to stop autoboot') }}
           interrupt_char: "{{ interrupt_char|default('') }}"
           needs_interrupt: {{ uboot_needs_interrupt|default(True) }}
+{% if uboot_altbank %}
+          uboot_altbank: {{ uboot_altbank }}
+          uboot_altbank_cmd: "{{ uboot_altbank_cmd|default('reset')}}"
+{% endif %}
 {% if uboot_ums_flash %}
           uboot_ums_flash: {{ uboot_ums_flash }}
           uboot_mass_storage_device: {{ uboot_mass_storage_device|default(None) }}
