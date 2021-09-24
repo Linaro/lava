@@ -1,2 +1,9 @@
 {# set device_type = "fsl-ls1012a-rdb" #}
 {% extends 'fsl-ls1043a-rdb.jinja2' %}
+
+{% set bootz_kernel_addr = '0x84080000' %}
+{% set bootz_ramdisk_addr = '0x88000000' %}
+{% set bootz_dtb_addr = '0x90000000' %}
+{% set uboot_initrd_high = '0xffffffffffffffff' %}
+{% set uboot_fdt_high = '' %}
+{% set uboot_altbank_cmd = uboot_altbank_cmd|default('boot_bank 2; reset;') %}
