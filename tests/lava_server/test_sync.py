@@ -32,7 +32,7 @@ def test_no_sync_to_lava(mocker):
     file_list = mocker.MagicMock(return_value=["qemu01"])
     mocker.patch("lava_server.files.File.list", file_list)
 
-    sync_dict = mocker.MagicMock(return_value=None)
+    sync_dict = mocker.MagicMock(return_value=(None, None))
     mocker.patch(
         "lava_server.management.commands.sync.Command._get_sync_to_lava", sync_dict
     )
@@ -50,12 +50,39 @@ def test_no_sync_to_lava(mocker):
 
 
 @pytest.mark.django_db
+def test_exception_template(mocker):
+
+    file_list = mocker.MagicMock(return_value=["qemu01"])
+    mocker.patch("lava_server.files.File.list", file_list)
+
+    mocker.patch(
+        "lava_server.management.commands.sync.Command._get_sync_to_lava",
+        return_value=(None, "foo"),
+    )
+
+    out = StringIO()
+    sys.stdout = out
+    call_command("sync")
+    assert (
+        out.getvalue()
+        == """Scanning devices:
+* qemu01 [SKIP]
+  -> invalid jinja2 template
+  -> foo
+"""
+    )
+
+
+@pytest.mark.django_db
 def test_invalid_template(mocker):
 
     file_list = mocker.MagicMock(return_value=["qemu01"])
     mocker.patch("lava_server.files.File.list", file_list)
 
-    mocker.patch("lava_server.management.commands.sync.Command._get_sync_to_lava")
+    mocker.patch(
+        "lava_server.management.commands.sync.Command._get_sync_to_lava",
+        return_value=(mocker, None),
+    )
 
     parse_sync_dict = mocker.MagicMock(
         return_value={
@@ -90,7 +117,10 @@ def test_existing_non_synced_device(mocker):
     file_list = mocker.MagicMock(return_value=["qemu01"])
     mocker.patch("lava_server.files.File.list", file_list)
 
-    mocker.patch("lava_server.management.commands.sync.Command._get_sync_to_lava")
+    mocker.patch(
+        "lava_server.management.commands.sync.Command._get_sync_to_lava",
+        return_value=(mocker, None),
+    )
 
     parse_sync_dict = mocker.MagicMock(
         return_value={
@@ -128,7 +158,10 @@ def test_missing_device_type(mocker):
     file_list = mocker.MagicMock(return_value=["qemu01"])
     mocker.patch("lava_server.files.File.list", file_list)
 
-    mocker.patch("lava_server.management.commands.sync.Command._get_sync_to_lava")
+    mocker.patch(
+        "lava_server.management.commands.sync.Command._get_sync_to_lava",
+        return_value=(mocker, None),
+    )
 
     parse_sync_dict = mocker.MagicMock(
         return_value={
@@ -162,7 +195,10 @@ def test_existing_alias(mocker):
     file_list = mocker.MagicMock(return_value=["qemu01"])
     mocker.patch("lava_server.files.File.list", file_list)
 
-    mocker.patch("lava_server.management.commands.sync.Command._get_sync_to_lava")
+    mocker.patch(
+        "lava_server.management.commands.sync.Command._get_sync_to_lava",
+        return_value=(mocker, None),
+    )
 
     parse_sync_dict = mocker.MagicMock(
         return_value={
@@ -204,7 +240,10 @@ def test_output(mocker):
     file_list = mocker.MagicMock(return_value=["qemu01"])
     mocker.patch("lava_server.files.File.list", file_list)
 
-    mocker.patch("lava_server.management.commands.sync.Command._get_sync_to_lava")
+    mocker.patch(
+        "lava_server.management.commands.sync.Command._get_sync_to_lava",
+        return_value=(mocker, None),
+    )
 
     parse_sync_dict = mocker.MagicMock(
         return_value={
@@ -280,7 +319,10 @@ def test_sync_not_retire(mocker):
     file_list = mocker.MagicMock(return_value=["qemu01"])
     mocker.patch("lava_server.files.File.list", file_list)
 
-    mocker.patch("lava_server.management.commands.sync.Command._get_sync_to_lava")
+    mocker.patch(
+        "lava_server.management.commands.sync.Command._get_sync_to_lava",
+        return_value=(mocker, None),
+    )
 
     parse_sync_dict = mocker.MagicMock(
         return_value={"device_type": "qemu", "worker": "worker-01"}
@@ -326,7 +368,10 @@ def test_no_user_group(mocker):
     file_list = mocker.MagicMock(return_value=["qemu01"])
     mocker.patch("lava_server.files.File.list", file_list)
 
-    mocker.patch("lava_server.management.commands.sync.Command._get_sync_to_lava")
+    mocker.patch(
+        "lava_server.management.commands.sync.Command._get_sync_to_lava",
+        return_value=(mocker, None),
+    )
 
     parse_sync_dict = mocker.MagicMock(
         return_value={
@@ -364,7 +409,10 @@ def test_user_group(mocker):
     file_list = mocker.MagicMock(return_value=["qemu01"])
     mocker.patch("lava_server.files.File.list", file_list)
 
-    mocker.patch("lava_server.management.commands.sync.Command._get_sync_to_lava")
+    mocker.patch(
+        "lava_server.management.commands.sync.Command._get_sync_to_lava",
+        return_value=(mocker, None),
+    )
 
     parse_sync_dict = mocker.MagicMock(
         return_value={
@@ -405,7 +453,10 @@ def test_add_delete_permission(mocker):
     file_list = mocker.MagicMock(return_value=["qemu01"])
     mocker.patch("lava_server.files.File.list", file_list)
 
-    mocker.patch("lava_server.management.commands.sync.Command._get_sync_to_lava")
+    mocker.patch(
+        "lava_server.management.commands.sync.Command._get_sync_to_lava",
+        return_value=(mocker, None),
+    )
 
     # test permission add
     parse_sync_dict = mocker.MagicMock(
@@ -447,7 +498,10 @@ def test_add_delete_permission(mocker):
     )
 
     # test permission delete
-    mocker.patch("lava_server.management.commands.sync.Command._get_sync_to_lava")
+    mocker.patch(
+        "lava_server.management.commands.sync.Command._get_sync_to_lava",
+        return_value=(mocker, None),
+    )
 
     parse_sync_dict = mocker.MagicMock(
         return_value={
@@ -485,7 +539,10 @@ def test_invalid_permission(mocker):
     file_list = mocker.MagicMock(return_value=["qemu01"])
     mocker.patch("lava_server.files.File.list", file_list)
 
-    mocker.patch("lava_server.management.commands.sync.Command._get_sync_to_lava")
+    mocker.patch(
+        "lava_server.management.commands.sync.Command._get_sync_to_lava",
+        return_value=(mocker, None),
+    )
 
     parse_sync_dict = mocker.MagicMock(
         return_value={
@@ -523,7 +580,10 @@ def test_no_permission_group(mocker):
     file_list = mocker.MagicMock(return_value=["qemu01"])
     mocker.patch("lava_server.files.File.list", file_list)
 
-    mocker.patch("lava_server.management.commands.sync.Command._get_sync_to_lava")
+    mocker.patch(
+        "lava_server.management.commands.sync.Command._get_sync_to_lava",
+        return_value=(mocker, None),
+    )
 
     parse_sync_dict = mocker.MagicMock(
         return_value={
@@ -559,7 +619,10 @@ def test_permission_tag_remove(mocker):
     file_list = mocker.MagicMock(return_value=["qemu01"])
     mocker.patch("lava_server.files.File.list", file_list)
 
-    mocker.patch("lava_server.management.commands.sync.Command._get_sync_to_lava")
+    mocker.patch(
+        "lava_server.management.commands.sync.Command._get_sync_to_lava",
+        return_value=(mocker, None),
+    )
 
     parse_sync_dict = mocker.MagicMock(
         return_value={
