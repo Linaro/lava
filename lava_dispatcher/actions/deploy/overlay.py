@@ -595,10 +595,18 @@ class CompressOverlay(Action):
             self.logger.error(self.errors)
             return connection
         connection = super().run(connection, max_end_time)
-        with chdir(location):
+        # This will split the path into two parts. Second part is only the
+        # bottom level directory. The first part is the rest.
+        # Example: /run/mount/lava/ will be split to /run/mount/ and lava/
+        # Used to create a tarball with only the bottom level dir included and
+        # not with the whole lava_test_results_dir property.
+        results_dir_list = os.path.split(os.path.normpath(lava_test_results_dir))
+        with chdir(
+            os.path.join(location, os.path.relpath(results_dir_list[0], os.sep))
+        ):
             try:
                 with tarfile.open(output, "w:gz") as tar:
-                    tar.add(".%s" % lava_test_results_dir)
+                    tar.add("%s" % results_dir_list[1])
                     # ssh authorization support
                     if os.path.exists("./root/"):
                         tar.add(".%s" % "/root/")
