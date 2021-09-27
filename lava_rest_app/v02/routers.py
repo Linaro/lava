@@ -18,6 +18,13 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 from lava_server.compat import drf_basename
+
+# FIXME: remove when drf-extensions 0.7 is uploaded to debian.
+from django.db.models.sql import datastructures
+from django.core.exceptions import EmptyResultSet
+
+datastructures.EmptyResultSet = EmptyResultSet
+
 from rest_framework_extensions.routers import ExtendedDefaultRouter
 from . import views
 
