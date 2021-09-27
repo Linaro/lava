@@ -36,6 +36,10 @@ FILE_DOWNLOAD_CHUNK_SIZE = 32768
 # Size of the chunks when downloading over http
 HTTP_DOWNLOAD_CHUNK_SIZE = 32768
 
+# Timeout for http requests. Will fail if LAVA is not receiving any data on
+# the socket for 60s.
+HTTP_DOWNLOAD_TIMEOUT = 60
+
 # Size of the chunks when downloading over scp
 SCP_DOWNLOAD_CHUNK_SIZE = 32768
 

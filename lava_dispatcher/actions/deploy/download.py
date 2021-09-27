@@ -52,6 +52,7 @@ from lava_dispatcher.utils.network import requests_retry
 from lava_common.constants import (
     FILE_DOWNLOAD_CHUNK_SIZE,
     HTTP_DOWNLOAD_CHUNK_SIZE,
+    HTTP_DOWNLOAD_TIMEOUT,
     SCP_DOWNLOAD_CHUNK_SIZE,
 )
 from lava_dispatcher.actions.boot.fastboot import EnterFastbootAction
@@ -577,7 +578,10 @@ class HttpDownloadAction(DownloadHandler):
             self.logger.debug("Validating that %s exists", self.url.geturl())
             # Force the non-use of Accept-Encoding: gzip, this will permit to know the final size
             res = requests_retry().head(
-                self.url.geturl(), allow_redirects=True, headers=headers
+                self.url.geturl(),
+                allow_redirects=True,
+                headers=headers,
+                timeout=HTTP_DOWNLOAD_TIMEOUT,
             )
             if res.status_code != requests.codes.OK:
                 # try using (the slower) get for services with broken redirect support
@@ -589,6 +593,7 @@ class HttpDownloadAction(DownloadHandler):
                     allow_redirects=True,
                     stream=True,
                     headers=headers,
+                    timeout=HTTP_DOWNLOAD_TIMEOUT,
                 )
                 if res.status_code != requests.codes.OK:
                     self.errors = "Resource unavailable at '%s' (%d)" % (
@@ -617,7 +622,11 @@ class HttpDownloadAction(DownloadHandler):
             if self.params and "headers" in self.params:
                 headers = self.params["headers"]
             res = requests_retry().get(
-                self.url.geturl(), allow_redirects=True, stream=True, headers=headers
+                self.url.geturl(),
+                allow_redirects=True,
+                stream=True,
+                headers=headers,
+                timeout=HTTP_DOWNLOAD_TIMEOUT,
             )
             if res.status_code != requests.codes.OK:
                 # This is an Infrastructure error because the validate function
