@@ -17,16 +17,16 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
+from functools import wraps
+
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
-from django.utils.decorators import available_attrs
-from django.utils.functional import wraps
 
 from lava_results_app.models import Query
 
 
 def ownership_required(view_func):
-    @wraps(view_func, assigned=available_attrs(view_func))
+    @wraps(view_func)
     def wrapper(request, *args, **kwargs):
         report_name = kwargs.get("name")
         username = kwargs.get("username")
