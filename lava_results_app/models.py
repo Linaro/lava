@@ -45,7 +45,7 @@ from django.db.models.fields import Field
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.urls import reverse
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 
 from lava_common.compat import yaml_load
