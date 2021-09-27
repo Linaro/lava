@@ -77,15 +77,15 @@ class Command(BaseCommand):
         # Fetches value of the 'sync_to_lava' variable set in dictionary.
         try:
             config = self._parse_config(hostname)
-        except (OSError, jinja2.TemplateError):
-            return None
+        except (OSError, jinja2.TemplateError) as exc:
+            return None, exc
 
         sync = list(config.find_all(jinja2.nodes.Assign))
         for node in sync:
             with contextlib.suppress(AttributeError):
                 if node.target.name == self.SYNC_KEY:
-                    return node.node
-        return None
+                    return node.node, None
+        return None, None
 
     def handle(self, *_, **options):
         dicts = File("device").list("*.jinja2")
@@ -95,11 +95,19 @@ class Command(BaseCommand):
             hostname = name.rsplit(".", 1)[0]
 
             # Get value of 'sync_to_lava' variable from template.
-            sync_dict = self._get_sync_to_lava(hostname)
+            sync_dict, exc = self._get_sync_to_lava(hostname)
+
+            if exc:
+                self.stdout.write(f"* {hostname} [SKIP]")
+                self.stdout.write(f"  -> invalid jinja2 template")
+                self.stdout.write(f"  -> {exc}")
+                continue
+
             if sync_dict is None:
                 self.stdout.write(f"* {hostname} [SKIP]")
                 self.stdout.write(f"  -> missing '{self.SYNC_KEY}'")
                 continue
+
             # Convert it to dictionary.
             sync_dict = self._parse_sync_dict(sync_dict)
 
