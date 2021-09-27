@@ -25,6 +25,7 @@ import importlib
 import re
 
 from django.core.exceptions import ImproperlyConfigured
+from django.conf.global_settings import DISALLOWED_USER_AGENTS, INTERNAL_IPS
 
 # pylint: disable=unused-import
 from django.conf.global_settings import DISALLOWED_USER_AGENTS
