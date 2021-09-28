@@ -412,7 +412,7 @@ def test_http_download_validate(mocker):
         def close(self):
             pass
 
-    def dummyhead(url, allow_redirects, headers):
+    def dummyhead(url, allow_redirects, headers, timeout):
         assert allow_redirects is True
         assert headers == {"Accept-Encoding": ""}
         if url == "https://example.com/kernel":
@@ -421,7 +421,7 @@ def test_http_download_validate(mocker):
             return DummyResponseNOK()
         assert 0
 
-    def dummyget(url, allow_redirects, stream, headers):
+    def dummyget(url, allow_redirects, stream, headers, timeout):
         assert allow_redirects is True
         assert stream is True
         assert headers == {"Accept-Encoding": ""}
@@ -486,7 +486,7 @@ def test_http_download_validate(mocker):
     ]
 
     # Raising exceptions
-    def raisinghead(url, allow_redirects, headers):
+    def raisinghead(url, allow_redirects, headers, timeout):
         raise requests.Timeout()
 
     mocker.patch("requests.head", raisinghead)
@@ -503,7 +503,7 @@ def test_http_download_validate(mocker):
     action.validate()
     assert action.errors == ["'https://example.com/kernel' timed out"]
 
-    def raisinghead2(url, allow_redirects, headers):
+    def raisinghead2(url, allow_redirects, headers, timeout):
         raise requests.RequestException("an error occurred")
 
     mocker.patch("requests.head", raisinghead2)
@@ -564,7 +564,7 @@ def test_http_download_reader(mocker):
         def close(self):
             pass
 
-    def dummyget(url, allow_redirects, stream, headers):
+    def dummyget(url, allow_redirects, stream, headers, timeout):
         assert allow_redirects is True
         assert stream is True
         assert url == "https://example.com/dtb"
@@ -582,7 +582,7 @@ def test_http_download_reader(mocker):
         next(ite)
 
     # Not working
-    def dummygetraise(url, allow_redirects, stream, headers):
+    def dummygetraise(url, allow_redirects, stream, headers, timeout):
         raise requests.RequestException("error")
 
     mocker.patch("requests.get", dummygetraise)

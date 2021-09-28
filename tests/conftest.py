@@ -40,7 +40,7 @@ def tempdir(monkeypatch, tmpdir):
 
 @pytest.fixture(autouse=True)
 def no_network(mocker, request):
-    def get(url, allow_redirects, stream, headers):
+    def get(url, allow_redirects, stream, headers, timeout):
         assert allow_redirects is True  # nosec - unit test support
         assert stream is True  # nosec - unit test support
         res = requests.Response()
@@ -48,7 +48,7 @@ def no_network(mocker, request):
         res.close = lambda: None
         return res
 
-    def head(url, allow_redirects, headers):
+    def head(url, allow_redirects, headers, timeout):
         assert allow_redirects is True  # nosec - unit test support
         print(url)
         res = requests.Response()
