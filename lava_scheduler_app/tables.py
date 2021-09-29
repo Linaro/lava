@@ -766,7 +766,7 @@ class LogEntryTable(LavaTable):
     def render_change_message(self, record):
         message = record.get_change_message()
         if record.is_change():
-            return message
+            return mark_safe(message)
         elif record.is_addition():
             return mark_safe(  # nosec - internal data
                 '<span class="glyphicon glyphicon-plus text-success"></span> %s'
