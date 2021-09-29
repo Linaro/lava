@@ -1431,6 +1431,38 @@ class MyJobsView(JobTableView):
         return query.filter(submitter=self.request.user)
 
 
+class MyActiveJobsView(JobTableView):
+    def get_queryset(self):
+        query = visible_jobs_with_custom_sort(self.request.user)
+        return query.filter(submitter=self.request.user).filter(
+            state__in=[TestJob.STATE_RUNNING, TestJob.STATE_CANCELING]
+        )
+
+
+class MyQueuedJobsView(JobTableView):
+    def get_queryset(self):
+        query = visible_jobs_with_custom_sort(self.request.user)
+        return query.filter(submitter=self.request.user).filter(
+            state=TestJob.STATE_SUBMITTED
+        )
+
+
+class MyErrorJobsView(JobTableView):
+    def get_queryset(self):
+        q = TestCase.objects.filter(
+            suite__name="lava", result=TestCase.RESULT_FAIL
+        ).visible_by_user(self.request.user)
+        q = q.filter(
+            Q(metadata__contains="error_type: Configuration")
+            | Q(metadata__contains="error_type: Infrastructure")
+            | Q(metadata__contains="error_type: Bug")
+        )
+        q = q.select_related("suite", "suite__job__actual_device")
+        return q.order_by("-suite__job__id").filter(
+            suite__job__submitter=self.request.user
+        )
+
+
 class LongestJobsView(JobTableView):
     def get_queryset(self):
         jobs = (
@@ -1801,6 +1833,71 @@ def myjobs(request):
         {
             "bread_crumb_trail": BreadCrumbTrail.leading_to(myjobs),
             "myjobs_table": ptable,
+            "terms_data": ptable.prepare_terms_data(data),
+            "search_data": ptable.prepare_search_data(data),
+            "discrete_data": ptable.prepare_discrete_data(data),
+            "times_data": ptable.prepare_times_data(data),
+        },
+    )
+
+
+@BreadCrumb("My Active Jobs", parent=index)
+def my_active_jobs(request):
+    get_object_or_404(User, pk=request.user.id)
+    data = MyActiveJobsView(request, model=TestJob, table_class=JobTable)
+    ptable = IndexJobTable(data.get_table_data(), request=request)
+    RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
+    return render(
+        request,
+        "lava_scheduler_app/myjobs_active.html",
+        {
+            "bread_crumb_trail": BreadCrumbTrail.leading_to(my_active_jobs),
+            "sort": "-submit_time",
+            "myjobs_active_table": ptable,
+            "terms_data": ptable.prepare_terms_data(data),
+            "search_data": ptable.prepare_search_data(data),
+            "discrete_data": ptable.prepare_discrete_data(data),
+            "times_data": ptable.prepare_times_data(data),
+        },
+    )
+
+
+@BreadCrumb("My Queued Jobs", parent=index)
+def my_queued_jobs(request):
+    get_object_or_404(User, pk=request.user.id)
+    data = MyQueuedJobsView(request, model=TestJob, table_class=JobTable)
+    ptable = QueueJobsTable(data.get_table_data(), request=request)
+    RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
+    return render(
+        request,
+        "lava_scheduler_app/myjobs_queued.html",
+        {
+            "bread_crumb_trail": BreadCrumbTrail.leading_to(my_queued_jobs),
+            "sort": "-submit_time",
+            "myjobs_queued_table": ptable,
+            "terms_data": ptable.prepare_terms_data(data),
+            "search_data": ptable.prepare_search_data(data),
+            "discrete_data": ptable.prepare_discrete_data(data),
+            "times_data": ptable.prepare_times_data(data),
+        },
+    )
+
+
+@BreadCrumb("My Error Jobs", parent=index)
+def my_error_jobs(request):
+    get_object_or_404(User, pk=request.user.id)
+    data = MyErrorJobsView(request, model=TestJob, table_class=JobTable)
+    ptable = JobErrorsTable(
+        data.get_table_data(), prefix="job_errors_", template_name="lazytables.html"
+    )
+    RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
+    return render(
+        request,
+        "lava_scheduler_app/myjobs_error.html",
+        {
+            "bread_crumb_trail": BreadCrumbTrail.leading_to(my_error_jobs),
+            "sort": "-submit_time",
+            "myjobs_error_table": ptable,
             "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
             "discrete_data": ptable.prepare_discrete_data(data),

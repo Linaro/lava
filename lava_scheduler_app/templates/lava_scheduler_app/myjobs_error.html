@@ -3,20 +3,20 @@
 {% load static %}
 
 {% block content %}
-<h2>All Jobs submitted by {{ user.username }}</h2>
+<h2>Error Jobs submitted by {{ user.username }}</h2>
 
 <ul class="nav nav-tabs">
-    <li role="presentation" class="active">
+    <li role="presentation">
         <a href="{% url 'lava.scheduler.myjobs' %}"><span class="glyphicon glyphicon-asterisk" aria-hidden="true"></span> All Jobs</a></li>
     <li role="presentation">
         <a href="{% url 'lava.scheduler.myjobs.active' %}">Active Jobs</a></li>
     <li role="presentation">
         <a href="{% url 'lava.scheduler.myjobs.queued' %}"><span class="glyphicon glyphicon-pause" aria-hidden="true"></span> Queued Jobs</a></li>
-    <li role="presentation">
+    <li role="presentation" class="active">
         <a href="{% url 'lava.scheduler.myjobs.error' %}"><span class="glyphicon glyphicon-flag" aria-hidden="true"></span> Job Errors</a></li>
 </ul>
 
-{% render_table myjobs_table %}
+{% render_table myjobs_error_table %}
 
 {% endblock %}
 
