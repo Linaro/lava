@@ -19,4 +19,6 @@ actions:
             {{ pyocd_command|default("pyocd-flashtool") }}
           options:
             {{ pyocd_options|default("['-d debug', '-t nrf52', '-f 3000000']")}}
+          connect_before_flash:
+            {{ connect_before_flash|default(false) }}
 {% endblock -%}
