@@ -774,7 +774,8 @@ class PreDownloadedAction(Action):
         # In downloads://foo/bar.ext, "foo" is the "hostname", "/bar.ext" is
         # the path. But in downloads://foo.ext, "foo.ext" is the hostnane, and
         # the path is empty.
-        filename = self.url.hostname
+        # In downloads:///foo/bar.ext, hostname is None while path is /foo/bar.ext.
+        filename = self.url.hostname if self.url.hostname else ""
         if self.url.path:
             filename += self.url.path
 
