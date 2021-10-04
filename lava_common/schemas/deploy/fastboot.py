@@ -20,7 +20,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from voluptuous import Any, Optional, Required
+from voluptuous import Any, Optional, Required, Range
 
 from lava_common.schemas import deploy
 from lava_common.schemas import docker
@@ -29,6 +29,7 @@ from lava_common.schemas import docker
 def schema():
     extra = {
         Optional("apply-overlay"): bool,
+        Optional("root_partition"): Range(min=0),
         Optional("sparse"): bool,
         Optional("reboot"): Any(
             "hard-reset",
