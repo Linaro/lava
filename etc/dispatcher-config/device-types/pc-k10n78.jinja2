@@ -1,0 +1,9 @@
+{% extends 'base-grub.jinja2' %}
+
+{% set console_device = console_device|default('ttyS0') %}
+
+{% if extra_kernel_args %}
+{% set extra_kernel_args = "earlycon=uart8250,io,0x3f8,115200n8 " +  extra_kernel_args %}
+{% else %}
+{% set extra_kernel_args = "earlycon=uart8250,io,0x3f8,115200n8" %}
+{% endif %}
