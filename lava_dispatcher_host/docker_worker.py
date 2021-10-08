@@ -79,7 +79,7 @@ def build_customized_image(image, build_dir):
     tag = f"{image}.customized"
     try:
         subprocess.check_call(
-            ["docker", "build", "-f", "Dockerfile.lava", "-t", tag, "."],
+            ["docker", "build", "--force-rm", "-f", "Dockerfile.lava", "-t", tag, "."],
             cwd=build_dir,
         )
         return tag
