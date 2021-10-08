@@ -69,7 +69,7 @@ class TestBuildImage:
         assert f"FROM {original_image}" not in content
 
         check_call.assert_called_with(
-            ["docker", "build", "-f", "Dockerfile.lava", "-t", tag, "."],
+            ["docker", "build", "--force-rm", "-f", "Dockerfile.lava", "-t", tag, "."],
             cwd=build_dir,
         )
 
