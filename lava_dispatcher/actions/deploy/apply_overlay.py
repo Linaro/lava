@@ -858,7 +858,7 @@ class AppendOverlays(Action):
 
     # TODO: list libguestfs supported formats
     IMAGE_FORMATS = ["cpio.newc", "ext4"]
-    OVERLAY_FORMATS = ["tar"]
+    OVERLAY_FORMATS = ["file", "tar"]
 
     def __init__(self, key, params):
         super().__init__()
@@ -946,10 +946,18 @@ class AppendOverlays(Action):
                 path = self.params["overlays"][overlay]["path"]
             # Take off initial "/" from path, extract relative to this directory
             extract_path = os.path.join(tempdir, path[1:])
-            self.logger.debug("- %s: %r to %r", label, overlay_image, extract_path)
-            # In the "validate" function, we check that path startswith '/'
-            # and does not contains '..'
-            untar_file(overlay_image, extract_path)
+            if overlay == "lava" or self.params["overlays"][overlay]["format"] == "tar":
+                self.logger.debug(
+                    "- %s: untar %r to %r", label, overlay_image, extract_path
+                )
+                # In the "validate" function, we check that path startswith '/'
+                # and does not contains '..'
+                untar_file(overlay_image, extract_path)
+            else:
+                self.logger.debug(
+                    "- %s: cp %r to %r", label, overlay_image, extract_path
+                )
+                shutil.copy(overlay_image, extract_path)
 
         # Recreating the archive
         self.logger.debug("* archiving %r", image)
@@ -995,8 +1003,15 @@ class AppendOverlays(Action):
                 compress = None
             if overlay_image:
                 self.logger.debug("- %s: %r to %r", label, overlay_image, path)
-                guest.mkdir_p(path)
-                guest.tar_in(overlay_image, path, compress=compress)
+                if (
+                    overlay == "lava"
+                    or self.params["overlays"][overlay]["format"] == "tar"
+                ):
+                    guest.mkdir_p(path)
+                    guest.tar_in(overlay_image, path, compress=compress)
+                else:
+                    guest.mkdir_p(os.path.dirname(path))
+                    guest.upload(overlay_image, path)
             else:
                 self.logger.warning("- %s: <MISSING> to %r", label, path)
         guest.umount(device)
