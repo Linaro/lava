@@ -107,6 +107,25 @@ class TestInteractiveAction(Action):
         if not connection:
             raise ConnectionClosedError("Connection closed")
 
+        # List the feedback connections
+        self.feedbacks = []
+        for feedback_ns in self.data.keys():
+            feedback_connection = self.get_namespace_data(
+                action="shared",
+                label="shared",
+                key="connection",
+                deepcopy=False,
+                parameters={"namespace": feedback_ns},
+            )
+            if feedback_connection == connection:
+                continue
+            if feedback_connection:
+                self.logger.debug(
+                    "Will listen to feedbacks from '%s' for 1 second", feedback_ns
+                )
+                self.feedbacks.append((feedback_ns, feedback_connection))
+        self.last_check = time.time()
+
         # Get substitutions from bootloader-overlay
         substitutions = self.get_namespace_data(
             action="bootloader-overlay", label="u-boot", key="substitutions"
@@ -128,6 +147,13 @@ class TestInteractiveAction(Action):
             }
             try:
                 with connection.test_connection() as test_connection:
+                    test_connection.timeout = min(
+                        self.timeout.duration, self.connection_timeout.duration
+                    )
+                    self.logger.info(
+                        "Test interactive timeout: %ds (minimum of the action and connection timeout)",
+                        test_connection.timeout,
+                    )
                     self.run_script(test_connection, script, substitutions)
                 result["result"] = "pass"
             finally:
@@ -228,7 +254,7 @@ class TestInteractiveAction(Action):
 
                 expect = prompts + failures + successes
                 self.logger.debug("Waiting for '%s'", "', '".join(expect))
-                ret = test_connection.expect(expect, timeout=self.timeout.duration)
+                ret = self.expect_and_feedbacks(test_connection, expect)
 
                 match = expect[ret]
                 # Is this a prompt?
@@ -251,7 +277,7 @@ class TestInteractiveAction(Action):
                             )
                         # Wait for the prompt to send the next command
                         if wait_for_prompt:
-                            test_connection.expect(prompts)
+                            self.expect_and_feedbacks(test_connection, prompts)
                     else:
                         groups = test_connection.match.groupdict()
                         if groups:
@@ -264,7 +290,7 @@ class TestInteractiveAction(Action):
                             substitutions["{%s}" % k] = v
                         # Wait for the prompt to send the next command
                         if wait_for_prompt:
-                            test_connection.expect(prompts)
+                            self.expect_and_feedbacks(test_connection, prompts)
                         result["result"] = "pass"
 
                 # If the command is not named, a failure is fatal
@@ -279,6 +305,33 @@ class TestInteractiveAction(Action):
                 if "name" in cmd:
                     result["duration"] = "%.02f" % (time.time() - start)
                     self.logger.results(result)
+
+    def listen_feedback(self, connection):
+        if time.time() - self.last_check <= connection.timeout:
+            return
+        for feedback in self.feedbacks:
+            # The timeout is really small because the goal is only
+            # to clean the buffer of the feedback connections:
+            # the characters are already in the buffer.
+            # With an higher timeout, this can have a big impact on
+            # the performances of the overall loop.
+            bytes_read = feedback[1].listen_feedback(timeout=1, namespace=feedback[0])
+            if bytes_read > 0:
+                self.logger.debug(
+                    "Listened to connection for namespace '%s' done",
+                    feedback[0],
+                )
+        self.last_check = time.time()
+
+    def expect_and_feedbacks(self, connection, expect):
+        while True:
+            ret = connection.expect(
+                expect + [pexpect.TIMEOUT], timeout=connection.timeout
+            )
+            self.listen_feedback(connection)
+            if ret == len(expect):
+                continue
+            return ret
 
     def raise_exception(self, exc_name, exc_message):
         if exc_name == "InfrastructureError":
