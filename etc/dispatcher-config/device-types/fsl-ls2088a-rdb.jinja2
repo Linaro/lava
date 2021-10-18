@@ -1,0 +1,11 @@
+{# set device_type = "fsl-ls2088a-rdb" #}
+{% extends 'fsl-ls1043a-rdb.jinja2' %}
+
+{% set console_device = console_device|default('ttyS1') %}
+{% if extra_kernel_args %}
+{% set extra_kernel_args = "earlycon=uart8250,mmio,0x21c0600 " + extra_kernel_args %}
+{% else %}
+{% set extra_kernel_args = "earlycon=uart8250,mmio,0x21c0600" %}
+{% endif %}
+{% set bootz_ramdisk_addr = '0x90000000' %}
+{% set bootz_dtb_addr = '0x8f000000' %}
