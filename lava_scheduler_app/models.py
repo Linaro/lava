@@ -46,6 +46,7 @@ from django.utils.crypto import get_random_string
 from django.urls import reverse
 from django.db import models
 from django.utils import timezone
+from django.utils.html import escape
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
 
@@ -778,6 +779,16 @@ class Device(RestrictedObject):
             pass
 
         elif signal == "go_state_finished":
+            pk = job.pk
+            if job.sub_jobs_list:
+                pk = job.sub_id
+            verbose_name = job._meta.verbose_name.capitalize()
+            job_url = '<a href="%s" title="%s summary">%s</a>' % (
+                job.get_absolute_url(),
+                escape(verbose_name),
+                escape(pk),
+            )
+
             self.state = Device.STATE_IDLE
 
             prev_health_display = self.get_health_display()
@@ -789,7 +800,7 @@ class Device(RestrictedObject):
                         self.log_admin_entry(
                             None,
                             "%s → %s (Looping health-check [%s] failed)"
-                            % (prev_health_display, self.get_health_display(), job.id),
+                            % (prev_health_display, self.get_health_display(), job_url),
                         )
                 elif self.health in [
                     Device.HEALTH_GOOD,
@@ -810,14 +821,19 @@ class Device(RestrictedObject):
                     self.log_admin_entry(
                         None,
                         "%s → %s (health-check [%s] %s)"
-                        % (prev_health_display, self.get_health_display(), job.id, msg),
+                        % (
+                            prev_health_display,
+                            self.get_health_display(),
+                            job_url,
+                            msg,
+                        ),
                     )
             elif infrastructure_error:
                 self.health = Device.HEALTH_UNKNOWN
                 self.log_admin_entry(
                     None,
                     "%s → %s (Infrastructure error after %s)"
-                    % (prev_health_display, self.get_health_display(), job.display_id),
+                    % (prev_health_display, self.get_health_display(), job_url),
                 )
 
         else:
