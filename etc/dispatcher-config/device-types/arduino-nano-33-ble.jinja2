@@ -1,0 +1,16 @@
+{# device_type: arduino-nano-33-ble #}
+{% extends 'base.jinja2' %}
+{% block body %}
+
+actions:
+  deploy:
+    methods:
+      flasher:
+        commands: {{ flasher_deploy_commands }}
+
+  boot:
+    connections:
+      serial:
+    methods:
+      minimal:
+{% endblock -%}
