@@ -358,9 +358,12 @@ class GetFVPSerialAction(Action):
             action=StartFVPAction.name, label="fvp", key="container"
         )
         for feedback_dict in feedback_ports:
-            cmd = "docker exec --interactive --tty %s telnet localhost %s" % (
-                container,
-                feedback_dict["port"],
+            cmd = (
+                "lava-outerr docker exec --interactive --tty %s telnet localhost %s"
+                % (
+                    container,
+                    feedback_dict["port"],
+                )
             )
 
             self.logger.debug("Feedback command: %s", cmd)
