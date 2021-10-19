@@ -119,13 +119,14 @@ class Connection:
     def __init__(self, data):
         self.data = data
         self.match = self._Match()
+        self.timeout = 30
 
     def sendline(self, line, delay):
         assert self.data.pop(0) == ("sendline", line)  # nosec - assert is ok
 
     def expect(self, expect, timeout=1):
-        print(expect)
-        print(self.data[0])
+        print(f"expect: {expect}")
+        print(f"ref   : {self.data[0]}")
         data = self.data.pop(0)
         assert (data[0], data[1]) == ("expect", expect)  # nosec - assert is ok
         if isinstance(data[2], int):
@@ -147,8 +148,8 @@ class Logger:
         self.data = data
 
     def _check(self, data):
-        print(data)
-        print(self.data[0])
+        print(f"data: {data}")
+        print(f"ref : {self.data[0]}")
         assert self.data.pop(0) == data  # nosec - assert is ok
 
     def debug(self, line, *args):
@@ -176,6 +177,7 @@ class Timing:
 def test_run_script(monkeypatch):
     monkeypatch.setattr(time, "time", Timing())
     action = TestInteractiveAction()
+    action.last_check = 0
     action.parameters = {"stage": 0}
     action.logger = Logger(
         [
@@ -188,7 +190,7 @@ def test_run_script(monkeypatch):
                     "definition": "0_setup",
                     "case": "wait prompt",
                     "result": "pass",
-                    "duration": "1.00",
+                    "duration": "2.00",
                 },
             ),
             ("info", "Sending 'help'"),
@@ -200,7 +202,7 @@ def test_run_script(monkeypatch):
                     "definition": "0_setup",
                     "case": "network.help",
                     "result": "pass",
-                    "duration": "1.00",
+                    "duration": "2.00",
                 },
             ),
             ("info", "Sending 'dhcp'"),
@@ -212,7 +214,7 @@ def test_run_script(monkeypatch):
                     "definition": "0_setup",
                     "case": "network.dhcp",
                     "result": "pass",
-                    "duration": "1.00",
+                    "duration": "3.00",
                 },
             ),
             ("info", "Sending 'host lavasoftware.org'"),
@@ -230,7 +232,7 @@ def test_run_script(monkeypatch):
                     "definition": "0_setup",
                     "case": "network.host",
                     "result": "fail",
-                    "duration": "1.00",
+                    "duration": "3.00",
                 },
             ),
             ("info", "Sending 'dig lavasoftware.org'"),
@@ -242,7 +244,7 @@ def test_run_script(monkeypatch):
                     "definition": "0_setup",
                     "case": "network.dig",
                     "result": "fail",
-                    "duration": "1.00",
+                    "duration": "2.00",
                 },
             ),
             ("info", "Sending 'ping -c 1 lavasoftware.org'"),
@@ -254,7 +256,7 @@ def test_run_script(monkeypatch):
                     "definition": "0_setup",
                     "case": "network.ping",
                     "result": "fail",
-                    "duration": "1.00",
+                    "duration": "2.00",
                 },
             ),
         ]
@@ -262,23 +264,29 @@ def test_run_script(monkeypatch):
     action.validate()
 
     conn_data = [
-        ("expect", ["=> ", "/ # "], 0),
+        ("expect", ["=> ", "/ # ", pexpect.TIMEOUT], 0),
         ("sendline", "help"),
-        ("expect", ["=> ", "/ # "], 0),
+        ("expect", ["=> ", "/ # ", pexpect.TIMEOUT], 0),
         ("sendline", "dhcp"),
-        ("expect", ["=> ", "/ # ", "DHCP client bound to address"], 2),
-        ("expect", ["=> ", "/ # "], 0),
+        ("expect", ["=> ", "/ # ", "DHCP client bound to address", pexpect.TIMEOUT], 2),
+        ("expect", ["=> ", "/ # ", pexpect.TIMEOUT], 0),
         ("sendline", "host lavasoftware.org"),
         (
             "expect",
-            ["=> ", "/ # ", "Host lavasoftware.org not found: 3(NXDOMAIN)", "TIMEOUT"],
+            [
+                "=> ",
+                "/ # ",
+                "Host lavasoftware.org not found: 3(NXDOMAIN)",
+                "TIMEOUT",
+                pexpect.TIMEOUT,
+            ],
             2,
         ),
-        ("expect", ["=> ", "/ # "], 0),
+        ("expect", ["=> ", "/ # ", pexpect.TIMEOUT], 0),
         ("sendline", "dig lavasoftware.org"),
-        ("expect", ["=> ", "/ # ", "192.168.0.1"], 0),
+        ("expect", ["=> ", "/ # ", "192.168.0.1", pexpect.TIMEOUT], 0),
         ("sendline", "ping -c 1 lavasoftware.org"),
-        ("expect", ["=> ", "/ # ", "Name or service not known"], 2),
+        ("expect", ["=> ", "/ # ", "Name or service not known", pexpect.TIMEOUT], 2),
     ]
     script = {
         "prompts": ["=> ", "/ # "],
@@ -331,6 +339,7 @@ def test_run_script(monkeypatch):
 def test_run_script_echo_discard(monkeypatch):
     monkeypatch.setattr(time, "time", Timing())
     action = TestInteractiveAction()
+    action.last_check = 0
     action.parameters = {"stage": 0}
     action.logger = Logger(
         [
@@ -343,7 +352,7 @@ def test_run_script_echo_discard(monkeypatch):
                     "definition": "0_setup",
                     "case": "wait prompt",
                     "result": "pass",
-                    "duration": "1.00",
+                    "duration": "2.00",
                 },
             ),
             ("info", "Sending 'echo 'hello''"),
@@ -356,7 +365,7 @@ def test_run_script_echo_discard(monkeypatch):
                     "definition": "0_setup",
                     "case": "echo",
                     "result": "pass",
-                    "duration": "1.00",
+                    "duration": "2.00",
                 },
             ),
         ]
@@ -364,10 +373,10 @@ def test_run_script_echo_discard(monkeypatch):
     action.validate()
 
     conn_data = [
-        ("expect", ["=> ", "/ # "], 0),
+        ("expect", ["=> ", "/ # ", pexpect.TIMEOUT], 0),
         ("sendline", "echo 'hello'"),
         ("readline", "hello"),
-        ("expect", ["=> ", "/ # "], 0),
+        ("expect", ["=> ", "/ # ", pexpect.TIMEOUT], 0),
     ]
     script = {
         "prompts": ["=> ", "/ # "],
@@ -388,6 +397,7 @@ def test_run_script_echo_discard(monkeypatch):
 def test_run_script_capture(monkeypatch):
     monkeypatch.setattr(time, "time", Timing())
     action = TestInteractiveAction()
+    action.last_check = 0
     action.parameters = {"stage": 0}
     action.logger = Logger(
         [
@@ -400,7 +410,7 @@ def test_run_script_capture(monkeypatch):
                     "definition": "0_setup",
                     "case": "wait prompt",
                     "result": "pass",
-                    "duration": "1.00",
+                    "duration": "2.00",
                 },
             ),
             ("info", "Sending nothing, waiting"),
@@ -412,7 +422,7 @@ def test_run_script_capture(monkeypatch):
                     "definition": "0_setup",
                     "case": "test1",
                     "result": "pass",
-                    "duration": "1.00",
+                    "duration": "3.00",
                 },
             ),
             ("info", "Sending 'echo val: bar'"),
@@ -423,11 +433,16 @@ def test_run_script_capture(monkeypatch):
     action.validate()
 
     conn_data = [
-        ("expect", ["=> ", "/ # "], 0),
-        ("expect", ["=> ", "/ # ", "foo(?P<val>.+)"], 2, {"val": "bar"}),
-        ("expect", ["=> ", "/ # "], 0),
+        ("expect", ["=> ", "/ # ", pexpect.TIMEOUT], 0),
+        (
+            "expect",
+            ["=> ", "/ # ", "foo(?P<val>.+)", pexpect.TIMEOUT],
+            2,
+            {"val": "bar"},
+        ),
+        ("expect", ["=> ", "/ # ", pexpect.TIMEOUT], 0),
         ("sendline", "echo val: bar"),
-        ("expect", ["=> ", "/ # "], 0),
+        ("expect", ["=> ", "/ # ", pexpect.TIMEOUT], 0),
     ]
     script = {
         "prompts": ["=> ", "/ # "],
@@ -463,6 +478,7 @@ def test_run_script_delay(monkeypatch):
     monkeypatch.setattr(time, "sleep", check_sleep)
     monkeypatch.setattr(time, "time", Timing())
     action = TestInteractiveAction()
+    action.last_check = 0
     action.parameters = {"stage": 0}
     action.logger = Logger(
         [
@@ -475,7 +491,7 @@ def test_run_script_delay(monkeypatch):
                     "definition": "0_setup",
                     "case": "wait prompt",
                     "result": "pass",
-                    "duration": "1.00",
+                    "duration": "2.00",
                 },
             ),
             ("info", "Delaying for 0.5s"),
@@ -483,7 +499,7 @@ def test_run_script_delay(monkeypatch):
     )
     action.validate()
 
-    conn_data = [("expect", ["=> ", "/ # "], 0)]
+    conn_data = [("expect", ["=> ", "/ # ", pexpect.TIMEOUT], 0)]
     script = {
         "prompts": ["=> ", "/ # "],
         "name": "setup",
@@ -523,6 +539,7 @@ def test_run_script_multinode(monkeypatch):
 
     monkeypatch.setattr(time, "time", Timing())
     action = TestInteractiveAction()
+    action.last_check = 0
     action.multinode_proto = None
     proto = Proto()
     monkeypatch.setattr(action, "multinode_proto", proto)
@@ -539,7 +556,7 @@ def test_run_script_multinode(monkeypatch):
                     "definition": "0_setup",
                     "case": "wait prompt",
                     "result": "pass",
-                    "duration": "1.00",
+                    "duration": "2.00",
                 },
             ),
             (
@@ -560,7 +577,7 @@ def test_run_script_multinode(monkeypatch):
     )
     action.validate()
 
-    conn_data = [("expect", ["=> ", "/ # "], 0)]
+    conn_data = [("expect", ["=> ", "/ # ", pexpect.TIMEOUT], 0)]
     script = {
         "prompts": ["=> ", "/ # "],
         "name": "setup",
@@ -591,6 +608,7 @@ def test_run_script_multinode(monkeypatch):
 def test_run_script_raise_test_error_unnamed_command(monkeypatch):
     monkeypatch.setattr(time, "time", Timing())
     action = TestInteractiveAction()
+    action.last_check = 0
     action.parameters = {"stage": 0}
     action.logger = Logger(
         [
@@ -603,7 +621,7 @@ def test_run_script_raise_test_error_unnamed_command(monkeypatch):
                     "definition": "0_setup",
                     "case": "wait prompt",
                     "result": "pass",
-                    "duration": "1.00",
+                    "duration": "2.00",
                 },
             ),
             ("info", "Sending 'echo 'hello''"),
@@ -615,11 +633,11 @@ def test_run_script_raise_test_error_unnamed_command(monkeypatch):
     action.validate()
 
     conn_data = [
-        ("expect", ["=> ", "/ # "], 0),
+        ("expect", ["=> ", "/ # ", pexpect.TIMEOUT], 0),
         ("sendline", "echo 'hello'"),
         ("readline", "echo 'hello'"),
-        ("expect", ["=> ", "/ # ", "world"], 2),
-        ("expect", ["=> ", "/ # "], 0),
+        ("expect", ["=> ", "/ # ", "world", pexpect.TIMEOUT], 2),
+        ("expect", ["=> ", "/ # ", pexpect.TIMEOUT], 0),
     ]
     script = {
         "prompts": ["=> ", "/ # "],
@@ -645,6 +663,7 @@ def test_run_script_raise_test_error_unnamed_command(monkeypatch):
 def test_run_script_raise_timeout(monkeypatch):
     monkeypatch.setattr(time, "time", Timing())
     action = TestInteractiveAction()
+    action.last_check = 0
     action.parameters = {"stage": 0}
     action.logger = Logger(
         [
@@ -663,7 +682,7 @@ def test_run_script_raise_timeout(monkeypatch):
     )
     action.validate()
 
-    conn_data = [("expect", ["=> ", "/ # "], pexpect.TIMEOUT, "")]
+    conn_data = [("expect", ["=> ", "/ # ", pexpect.TIMEOUT], pexpect.TIMEOUT, "")]
     script = {
         "prompts": ["=> ", "/ # "],
         "name": "setup",
