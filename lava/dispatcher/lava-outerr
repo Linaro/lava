@@ -1,0 +1,104 @@
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2021-present Linaro Limited
+#
+# Author: Remi Duraffort <remi.duraffort@linaro.org>
+#
+# This file is part of LAVA Dispatcher.
+#
+# LAVA Dispatcher is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# LAVA Dispatcher is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses>.
+
+import contextlib
+import queue
+import signal
+import subprocess
+import sys
+import threading
+
+
+def reader(std, q):
+    while True:
+        data = std.read()
+        if data == b"":
+            break
+        q.put(data)
+    q.put(None)
+
+
+def writter(q, std):
+    buffer = b""
+    while True:
+        with contextlib.suppress(queue.Empty):
+            if buffer:
+                data = q.get(timeout=1)
+            else:
+                data = q.get(block=True)
+            if data is None:
+                break
+            buffer += data
+        with contextlib.suppress(OSError):
+            std.buffer.write(buffer)
+            buffer = b""
+            std.buffer.flush()
+    while buffer:
+        with contextlib.suppress(OSError):
+            std.buffer.write(buffer)
+            buffer = b""
+            std.buffer.flush()
+
+
+def main():
+    if len(sys.argv) < 2:
+        sys.stderr.write(f"usage: {sys.argv[0]} command args\n")
+        return 1
+
+    proc = None
+    try:
+        proc = subprocess.Popen(
+            sys.argv[1:],
+            stdin=sys.stdin,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        err_queue = queue.SimpleQueue()
+        out_queue = queue.SimpleQueue()
+        proc_err_thread = threading.Thread(target=reader, args=(proc.stderr, err_queue))
+        proc_out_thread = threading.Thread(target=reader, args=(proc.stdout, out_queue))
+        sys_err_thread = threading.Thread(target=writter, args=(err_queue, sys.stderr))
+        sys_out_thread = threading.Thread(target=writter, args=(out_queue, sys.stdout))
+
+        proc_err_thread.start()
+        proc_out_thread.start()
+        sys_err_thread.start()
+        sys_out_thread.start()
+
+    except FileNotFoundError:
+        sys.stderr.write(f"command not found {sys.argv[1]}\n")
+    finally:
+        proc_err_thread.join()
+        proc_out_thread.join()
+        sys_err_thread.join()
+        sys_out_thread.join()
+
+        if proc and proc.poll() is None:
+            proc.kill()
+            proc.wait()
+
+    return proc.returncode if proc else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

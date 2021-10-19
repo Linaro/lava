@@ -81,7 +81,11 @@ DISPATCHER = {
     "package_data": {
         "lava_dispatcher": ["dynamic_vm_keys/lava*", "lava_test_shell/**"]
     },
-    "scripts": ["lava/dispatcher/lava-run", "lava/dispatcher/lava-worker"],
+    "scripts": [
+        "lava/dispatcher/lava-outerr",
+        "lava/dispatcher/lava-run",
+        "lava/dispatcher/lava-worker",
+    ],
     "data_files": [
         ("/etc/exports.d/", ["etc/lava-dispatcher-nfs.exports"]),
         ("/etc/lava-dispatcher/", ["etc/lava-worker"]),
