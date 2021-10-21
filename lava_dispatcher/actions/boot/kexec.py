@@ -87,9 +87,20 @@ class KexecAction(Action):
         super().validate()
         self.command = self.parameters.get("command", "/sbin/kexec")
         self.load_command = self.command[:]  # local copy for idempotency
-        self.command += " -e"
+
+        # If on_panic is set, crash the kernel instead of calling "kexec -e"
+        if self.parameters.get("on_panic", False):
+            self.command = "echo c > /proc/sysrq-trigger"
+        else:
+            self.command += " -e"
+
+        # If on_panic is set, use --load-panic instead of --load
         if "kernel" in self.parameters:
-            self.load_command += " --load %s" % self.parameters["kernel"]
+            if self.parameters.get("on_panic", False):
+                self.load_command += " --load-panic %s" % self.parameters["kernel"]
+            else:
+                self.load_command += " --load %s" % self.parameters["kernel"]
+
         if "dtb" in self.parameters:
             self.load_command += " --dtb %s" % self.parameters["dtb"]
         if "initrd" in self.parameters:

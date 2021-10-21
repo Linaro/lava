@@ -40,5 +40,6 @@ def schema():
         Optional("options"): [str],
         Optional("kernel-config"): str,
         Optional("transfer_overlay"): boot.transfer_overlay(),
+        Optional("on_panic"): bool,
     }
     return {**boot.schema(), **base}
