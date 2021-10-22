@@ -861,6 +861,78 @@ def test_jobs_my(client, setup):
     assert ret.context["myjobs_table"].data[4].description == "test job 02"  # nosec
     assert ret.context["myjobs_table"].data[5].description == "test job 01"  # nosec
 
+    assert client.login(username="admin", password="admin") is True  # nosec
+    ret = client.get(reverse("lava.scheduler.myjobs"))
+    assert ret.status_code == 200  # nosec
+    assert ret.templates[0].name == "lava_scheduler_app/myjobs.html"  # nosec
+    assert len(ret.context["myjobs_table"].data) == 0  # nosec
+
+
+@pytest.mark.django_db
+def test_jobs_my_active(client, setup):
+    ret = client.get(reverse("lava.scheduler.myjobs.active"))
+    assert ret.status_code == 404  # nosec
+
+    assert client.login(username="tester", password="tester") is True  # nosec
+    ret = client.get(reverse("lava.scheduler.myjobs.active"))
+    assert ret.status_code == 200  # nosec
+    assert ret.templates[0].name == "lava_scheduler_app/myjobs_active.html"  # nosec
+    assert len(ret.context["myjobs_active_table"].data) == 3  # nosec
+    assert (
+        ret.context["myjobs_active_table"].data[0].description == "test job 06"
+    )  # nosec
+    assert (
+        ret.context["myjobs_active_table"].data[1].description == "test job 05"
+    )  # nosec
+    assert (
+        ret.context["myjobs_active_table"].data[2].description == "test job 02"
+    )  # nosec
+
+    assert client.login(username="admin", password="admin") is True  # nosec
+    ret = client.get(reverse("lava.scheduler.myjobs.active"))
+    assert ret.status_code == 200  # nosec
+    assert ret.templates[0].name == "lava_scheduler_app/myjobs_active.html"  # nosec
+    assert len(ret.context["myjobs_active_table"].data) == 0  # nosec
+
+
+@pytest.mark.django_db
+def test_jobs_my_queued(client, setup):
+    ret = client.get(reverse("lava.scheduler.myjobs.queued"))
+    assert ret.status_code == 404  # nosec
+
+    assert client.login(username="tester", password="tester") is True  # nosec
+    ret = client.get(reverse("lava.scheduler.myjobs.queued"))
+    assert ret.status_code == 200  # nosec
+    assert ret.templates[0].name == "lava_scheduler_app/myjobs_queued.html"  # nosec
+    assert len(ret.context["myjobs_queued_table"].data) == 1  # nosec
+    assert (
+        ret.context["myjobs_queued_table"].data[0].description == "test job 03"
+    )  # nosec
+
+    assert client.login(username="admin", password="admin") is True  # nosec
+    ret = client.get(reverse("lava.scheduler.myjobs.queued"))
+    assert ret.status_code == 200  # nosec
+    assert ret.templates[0].name == "lava_scheduler_app/myjobs_queued.html"  # nosec
+    assert len(ret.context["myjobs_queued_table"].data) == 0  # nosec
+
+
+@pytest.mark.django_db
+def test_jobs_my_error(client, setup):
+    ret = client.get(reverse("lava.scheduler.myjobs.error"))
+    assert ret.status_code == 404  # nosec
+
+    assert client.login(username="tester", password="tester") is True  # nosec
+    ret = client.get(reverse("lava.scheduler.myjobs.error"))
+    assert ret.status_code == 200  # nosec
+    assert ret.templates[0].name == "lava_scheduler_app/myjobs_error.html"  # nosec
+    assert len(ret.context["myjobs_error_table"].data) == 0  # nosec
+
+    assert client.login(username="admin", password="admin") is True  # nosec
+    ret = client.get(reverse("lava.scheduler.myjobs.error"))
+    assert ret.status_code == 200  # nosec
+    assert ret.templates[0].name == "lava_scheduler_app/myjobs_error.html"  # nosec
+    assert len(ret.context["myjobs_error_table"].data) == 0  # nosec
+
 
 @pytest.mark.django_db
 def test_job_errors(client, setup):
