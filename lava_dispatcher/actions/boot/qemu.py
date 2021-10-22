@@ -21,7 +21,7 @@
 import os
 import subprocess
 import shlex
-from lava_common.constants import DISPATCHER_DOWNLOAD_DIR, SYS_CLASS_KVM
+from lava_common.constants import SYS_CLASS_KVM
 from lava_common.exceptions import JobError
 from lava_common.utils import debian_package_arch, debian_package_version
 from lava_dispatcher.action import Pipeline, Action
@@ -271,8 +271,10 @@ class CallQemuAction(Action):
                 connection.finalise()
 
         self.sub_command = self.base_sub_command.copy()
+
         # Generate the sub command
         substitutions = {}
+        directories = set()
         for label in self.get_namespace_keys("download-action"):
             if label in ["offset", "available_loops", "uefi", "nfsrootfs"]:
                 continue
@@ -284,6 +286,8 @@ class CallQemuAction(Action):
             )
             if image_arg is not None:
                 substitutions["{%s}" % label] = action_arg
+                directories.add(os.path.dirname(action_arg))
+
         substitutions["{NFS_SERVER_IP}"] = dispatcher_ip(
             self.job.parameters["dispatcher"], "nfs"
         )
@@ -333,6 +337,7 @@ class CallQemuAction(Action):
                 "-drive format=qcow2,file=%s,media=disk,if=%s,id=%s"
                 % (os.path.realpath(guest), interface, driveid)
             )
+            directories.add(os.path.dirname(guest))
             # push the mount operation to the test shell pre-command to be run
             # before the test shell tries to execute.
             shell_precommand_list = []
@@ -367,7 +372,8 @@ class CallQemuAction(Action):
             docker.tty()
             if "QEMU_AUDIO_DRV" in os.environ:
                 docker.environment("QEMU_AUDIO_DRV", os.environ["QEMU_AUDIO_DRV"])
-            docker.bind_mount(DISPATCHER_DOWNLOAD_DIR)
+            for directory in directories:
+                docker.bind_mount(directory)
             docker.add_device("/dev/kvm", skip_missing=True)
 
             # Use docker.binary if provided and fallback to the qemu default binary
