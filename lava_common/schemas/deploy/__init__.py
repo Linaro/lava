@@ -49,7 +49,7 @@ def url(extra=None):
                 Optional("lava"): bool,
                 str: {
                     **base_url,
-                    Required("format"): Any("tar"),
+                    Required("format"): Any("file", "tar"),
                     Required("path"): str,
                 },
             },
