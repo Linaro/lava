@@ -171,10 +171,9 @@ class CallQemuAction(Action):
             elif not boot["parameters"]["command"]:
                 self.errors = "No QEMU binary command found - missing context."
             # if qemu is ran under docker, qemu could not be installed and so which will fail
-            if "docker" in self.parameters:
-                qemu_binary = "qemu-system-fake"
-            else:
-                qemu_binary = which(boot["parameters"]["command"])
+            qemu_binary = boot["parameters"]["command"]
+            if "docker" not in self.parameters:
+                qemu_binary = which(qemu_binary)
             self.base_sub_command = [qemu_binary]
             self.base_sub_command.extend(boot["parameters"].get("options", []))
             self.base_sub_command.extend(
@@ -326,9 +325,9 @@ class CallQemuAction(Action):
                 docker.environment("QEMU_AUDIO_DRV", os.environ["QEMU_AUDIO_DRV"])
             docker.bind_mount(DISPATCHER_DOWNLOAD_DIR)
             docker.add_device("/dev/kvm", skip_missing=True)
-            args = []
-            if "binary" in self.parameters["docker"]:
-                args.append(self.parameters["docker"]["binary"])
+
+            # Use docker.binary if provided and fallback to the qemu default binary
+            args = [self.parameters["docker"].get("binary", self.sub_command[0])]
 
             self.logger.info("Pulling docker image")
             docker.prepare(action=self)
