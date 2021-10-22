@@ -107,6 +107,7 @@ class CallQemuAction(Action):
     def __init__(self):
         super().__init__()
         self.base_sub_command = []
+        self.docker = None
         self.sub_command = []
         self.commands = []
         self.methods = None
@@ -318,7 +319,13 @@ class CallQemuAction(Action):
             )
 
         if "docker" in self.parameters:
-            docker = DockerRun.from_parameters(self.parameters["docker"], self.job)
+            self.docker = docker = DockerRun.from_parameters(
+                self.parameters["docker"], self.job
+            )
+            docker.name(
+                "lava-docker-qemu-%s-%s-" % (self.job.job_id, self.level),
+                random_suffix=True,
+            )
             docker.interactive()
             docker.tty()
             if "QEMU_AUDIO_DRV" in os.environ:
@@ -351,6 +358,11 @@ class CallQemuAction(Action):
             action="shared", label="shared", key="connection", value=shell_connection
         )
         return shell_connection
+
+    def cleanup(self, connection):
+        if self.docker is not None:
+            self.logger.info("Stopping the qemu container %s", self.docker.__name__)
+            self.docker.destroy()
 
 
 # FIXME: implement a QEMU protocol to monitor VM boots

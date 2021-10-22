@@ -19,6 +19,7 @@
 
 import logging
 from pathlib import Path
+import random
 import subprocess
 import time
 
@@ -57,8 +58,12 @@ class DockerRun:
     def local(self, local):
         self.__local__ = local
 
-    def name(self, name):
-        self.__name__ = name
+    def name(self, name, random_suffix=False):
+        suffix = ""
+        if random_suffix:
+            CHARS = "01234567890abcdefghijklmnopqrtsuwxyz"
+            suffix = "".join((random.SystemRandom().choice(CHARS) for i in range(10)))
+        self.__name__ = name + suffix
 
     def network(self, network):
         self.__network__ = network
@@ -194,11 +199,12 @@ class DockerRun:
                 delay = delay * 2  # exponential backoff
 
     def destroy(self):
-        subprocess.call(
-            ["docker", "rm", "-f", self.__name__],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
+        if self.__name__:
+            subprocess.call(
+                ["docker", "rm", "-f", self.__name__],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
 
     def __check_image_arch__(self):
         host = subprocess.check_output(["arch"], text=True).strip()
