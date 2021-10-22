@@ -1428,22 +1428,31 @@ def internal_v1_workers(request, pk=None):
 class MyJobsView(JobTableView):
     def get_queryset(self):
         query = visible_jobs_with_custom_sort(self.request.user)
-        return query.filter(submitter=self.request.user)
+        query = query.filter(submitter=self.request.user)
+        return query.select_related(
+            "actual_device", "requested_device_type", "submitter"
+        )
 
 
 class MyActiveJobsView(JobTableView):
     def get_queryset(self):
         query = visible_jobs_with_custom_sort(self.request.user)
-        return query.filter(submitter=self.request.user).filter(
+        query = query.filter(submitter=self.request.user).filter(
             state__in=[TestJob.STATE_RUNNING, TestJob.STATE_CANCELING]
+        )
+        return query.select_related(
+            "actual_device", "requested_device_type", "submitter"
         )
 
 
 class MyQueuedJobsView(JobTableView):
     def get_queryset(self):
         query = visible_jobs_with_custom_sort(self.request.user)
-        return query.filter(submitter=self.request.user).filter(
+        query = query.filter(submitter=self.request.user).filter(
             state=TestJob.STATE_SUBMITTED
+        )
+        return query.select_related(
+            "actual_device", "requested_device_type", "submitter"
         )
 
 
@@ -2655,8 +2664,10 @@ def healthcheck(request):
 
 class QueueJobsView(JobTableView):
     def get_queryset(self):
-        return visible_jobs_with_custom_sort(self.request.user).filter(
-            state=TestJob.STATE_SUBMITTED
+        query = visible_jobs_with_custom_sort(self.request.user)
+        query = query.filter(state=TestJob.STATE_SUBMITTED)
+        return query.select_related(
+            "actual_device", "requested_device_type", "submitter"
         )
 
 
