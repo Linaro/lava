@@ -18,6 +18,7 @@ dist
 django.log
 doc/html
 lava_server/settings/local_settings.py
+etc/settings.d/*.yaml
 tags
 tmp*/
 versiontools-*egg

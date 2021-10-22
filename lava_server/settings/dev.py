@@ -22,6 +22,7 @@
 import contextlib
 from pathlib import Path
 import os
+import yaml
 
 from lava_server.settings.common import *
 
@@ -89,6 +90,22 @@ CACHES = {"default": {"BACKEND": "django.core.cache.backends.dummy.DummyCache"}}
 
 with contextlib.suppress(ImportError):
     from lava_server.settings.local_settings import *  # noqa
+
+FILES = [
+    Path(PROJECT_SRC_DIR) / "etc/settings.conf",
+    *sorted((Path(PROJECT_SRC_DIR) / "etc/settings.d").glob("*.yaml")),
+]
+
+for filename in FILES:
+    try:
+        with contextlib.suppress(FileNotFoundError):
+            for (k, v) in yaml.safe_load(filename.read_text(encoding="utf-8")).items():
+                globals()[k] = v
+    except yaml.YAMLError as exc:
+        print(f"[INIT] Unable to load {filename.name}: invalid yaml")
+        print(exc)
+        raise Exception(f"Unable to load {filename.name}") from exc
+
 
 # Update settings with custom values
 for (k, v) in update(globals()).items():
