@@ -92,7 +92,7 @@ def sender(conn, url: str, token: str) -> None:
                 if data == b"":
                     leaving = True
                 else:
-                    records.append(data.decode("utf-8"))
+                    records.append(data.decode("utf-8", errors="replace"))
 
             records_limit = len(records) >= MAX_RECORDS
             time_limit = (time.time() - last_call) >= MAX_TIME
@@ -126,7 +126,7 @@ class HTTPHandler(logging.Handler):
         # This can't happen as data is a dictionary dumped in yaml format
         if data == "":
             return
-        self.writter.send_bytes(data.encode("utf-8"))
+        self.writter.send_bytes(data.encode("utf-8", errors="replace"))
 
     def close(self):
         super().close()
