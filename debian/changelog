@@ -1,3 +1,9 @@
+lava (2021.10-1) unstable; urgency=medium
+
+  * LAVA Software 2021.10 release
+
+ -- Remi Duraffort <remi.duraffort@linaro.org>  Thu, 28 Oct 2021 14:14:14 +0200
+
 lava (2021.09-1) unstable; urgency=medium
 
   * LAVA Software 2021.09 release
