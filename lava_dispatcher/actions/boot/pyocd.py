@@ -103,7 +103,21 @@ class FlashPyOCDAction(Action):
         if self.job.device["board_id"] == "0000000000":
             self.errors = "[PYOCD] board_id unset"
         substitutions = {}
-        self.base_command.extend(["--board", self.job.device["board_id"]])
+        # '--uid' should be used with 'pyocd flash' for connecting to
+        # a specific board. 'pyocd flash --board' doesn't work for
+        # selecting board, and the option has been removed since
+        # version v0.32.0.
+        # '--board' should be used for 'pyocd-flashtool' as '--uid'
+        # isn't available for 'pyocd-flashtool'.
+        # Since pyocd v0.14.0, command 'pyocd-flashtool' has been
+        # merged into 'pyocd flash' subcomamnd. The following logic
+        # should be removed once pyocd installed via deb package
+        # python3-pyocd upgraded. At the time of writing the version
+        # still is v0.13.0.
+        connecting_option = "--uid"
+        if pyocd_binary == "pyocd-flashtool":
+            connecting_option = "--board"
+        self.base_command.extend([connecting_option, self.job.device["board_id"]])
         for action in self.get_namespace_keys("download-action"):
             pyocd_full_command = []
             image_arg = self.get_namespace_data(
