@@ -19,11 +19,13 @@ import logging.handlers
 import os
 import stat
 import subprocess
+from pathlib import Path
 import pyudev
 
 from lava_common.compat import yaml_dump, yaml_load
 from lava_common.constants import DISPATCHER_DOWNLOAD_DIR as JOBS_DIR
 from lava_common.exceptions import InfrastructureError
+from lava_dispatcher_host.docker_devices import Device, DeviceFilter
 
 context = pyudev.Context()
 
@@ -70,7 +72,7 @@ def validate_device_info(device_info):
 
 
 def share_device_with_container(options):
-    data = find_mapping(options)
+    data, job_id = find_mapping(options)
     if not data:
         return
     container = data["container"]
@@ -83,9 +85,9 @@ def share_device_with_container(options):
 
     container_type = data["container_type"]
     if container_type == "lxc":
-        share_device_with_container_lxc(container, device)
+        share_device_with_container_lxc(container, device, job_id=job_id)
     elif container_type == "docker":
-        share_device_with_container_docker(container, device)
+        share_device_with_container_docker(container, device, job_id=job_id)
     else:
         raise InfrastructureError('Unsupported container type: "%s"' % container_type)
 
@@ -95,8 +97,9 @@ def find_mapping(options):
         data = load_mapping_data(mapping)
         for item in data:
             if match_mapping(item["device_info"], options):
-                return item
-    return None
+                job_id = str(Path(mapping).parent.name)
+                return item, job_id
+    return None, None
 
 
 def load_mapping_data(filename):
@@ -127,15 +130,17 @@ def log_sharing_device(device, container_type, container):
     logger.info(f"Sharing {device} with {container_type} container {container}")
 
 
-def share_device_with_container_lxc(container, node):
+def share_device_with_container_lxc(container, node, job_id):
     device = pyudev.Devices.from_device_file(context, node)
-    pass_device_into_container_lxc(container, node, device.device_links)
+    pass_device_into_container_lxc(container, node, device.device_links, job_id)
     for child in device.children:
         if child.device_node:
-            pass_device_into_container_lxc(child.device_node, child.device_links)
+            pass_device_into_container_lxc(
+                child.device_node, child.device_links, job_id
+            )
 
 
-def pass_device_into_container_lxc(container, node, links=[]):
+def pass_device_into_container_lxc(container, node, links=[], job_id=None):
     try:
         nodeinfo = os.stat(node)
         uid = nodeinfo.st_uid
@@ -159,24 +164,21 @@ def pass_device_into_container_lxc(container, node, links=[]):
         )
 
 
-def pass_device_into_container_docker(container, container_id, node, links=[]):
+def pass_device_into_container_docker(
+    container, container_id, node, links=[], job_id=None
+):
     try:
         nodeinfo = os.stat(node)
         major = os.major(nodeinfo.st_rdev)
         minor = os.minor(nodeinfo.st_rdev)
         nodetype = "b" if stat.S_ISBLK(nodeinfo.st_mode) else "c"
 
-        devices_allow_file = (
-            "/sys/fs/cgroup/devices/docker/%s/devices.allow" % container_id
-        )
-        if not os.path.exists(devices_allow_file):
-            devices_allow_file = (
-                "/sys/fs/cgroup/devices/system.slice/docker-%s.scope/devices.allow"
-                % container_id
-            )
+        state = Path(JOBS_DIR) / job_id / (container_id + ".devices")
+        device_filter = DeviceFilter(container_id, state)
+        device_filter.add(Device(major, minor))
+        device_filter.apply()
+        device_filter.save(state)
 
-        with open(devices_allow_file, "w") as allow:
-            allow.write("a %d:%d rwm\n" % (major, minor))
     except FileNotFoundError as exc:
         logger.warning(
             f"Cannot share {node} with docker container {container}: {exc.filename} not found"
@@ -212,7 +214,7 @@ def pass_device_into_container_docker(container, container_id, node, links=[]):
         )
 
 
-def share_device_with_container_docker(container, node):
+def share_device_with_container_docker(container, node, job_id=None):
     log_sharing_device(node, "docker", container)
     try:
         container_id = subprocess.check_output(
@@ -226,11 +228,11 @@ def share_device_with_container_docker(container, node):
 
     device = pyudev.Devices.from_device_file(context, node)
     pass_device_into_container_docker(
-        container, container_id, node, device.device_links
+        container, container_id, node, device.device_links, job_id
     )
 
     for child in device.children:
         if child.device_node:
             pass_device_into_container_docker(
-                container, container_id, child.device_node, child.device_links
+                container, container_id, child.device_node, child.device_links, job_id
             )

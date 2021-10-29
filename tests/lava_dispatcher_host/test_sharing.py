@@ -31,10 +31,16 @@ def stat(mocker):
     return s
 
 
+@pytest.fixture(autouse=True)
+def docker_device_filter(mocker):
+    mocker.patch("lava_dispatcher_host.docker_devices.DeviceFilterCGroupsV1.apply")
+    mocker.patch("lava_dispatcher_host.docker_devices.DeviceFilterCGroupsV2.apply")
+
+
 class TestLXC:
     def test_simple_sharing(self, check_call, mocker):
         dev = "/dev/bus/usb/001/001"
-        share_device_with_container_lxc("container", dev)
+        share_device_with_container_lxc("container", dev, "1")
         assert check_call.call_args_list == [
             mocker.call(["lxc-device", "-n", "container", "add", dev]),
             mocker.call(
@@ -54,7 +60,7 @@ class TestLXC:
         dev = "/dev/bus/usb/001/001"
         link = "/dev/ttyUSB1"
         pyudev.Devices.from_device_file.return_value.device_links = [link]
-        share_device_with_container_lxc("container", dev)
+        share_device_with_container_lxc("container", dev, "1")
         check_call.assert_any_call(
             [
                 "lxc-attach",
@@ -69,10 +75,11 @@ class TestLXC:
 
 
 class TestDocker:
-    def test_simple_sharing(self, call, mocker):
+    def test_simple_sharing(self, check_output, call, mocker):
+        check_output.return_value = "123456"  # get container_id
         mocker.patch("lava_dispatcher_host.open", mocker.mock_open())
         dev = "/dev/bus/usb/001/001"
-        share_device_with_container_docker("container", dev)
+        share_device_with_container_docker("container", dev, "1")
         assert call.call_args_list == [
             mocker.call(
                 [
@@ -86,12 +93,13 @@ class TestDocker:
             )
         ]
 
-    def test_links(self, call, mocker, pyudev):
+    def test_links(self, check_output, call, mocker, pyudev):
+        check_output.return_value = "123456"  # get container_id
         mocker.patch("lava_dispatcher_host.open", mocker.mock_open())
         dev = "/dev/bus/usb/001/001"
         link = "/dev/ttyUSB1"
         pyudev.Devices.from_device_file.return_value.device_links = [link]
-        share_device_with_container_docker("container", dev)
+        share_device_with_container_docker("container", dev, "1")
         call.assert_called_with(
             [
                 "docker",
