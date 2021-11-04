@@ -109,13 +109,12 @@ class FlashPyOCDAction(Action):
         # version v0.32.0.
         # '--board' should be used for 'pyocd-flashtool' as '--uid'
         # isn't available for 'pyocd-flashtool'.
-        # Since pyocd v0.14.0, command 'pyocd-flashtool' has been
-        # merged into 'pyocd flash' subcomamnd. The following logic
-        # should be removed once pyocd installed via deb package
-        # python3-pyocd upgraded. At the time of writing the version
-        # still is v0.13.0.
+        # Different boards require (or work better) with a particular
+        # version of pyocd. Due to this, we need to maintain support
+        # for both 'pyocd flash' and 'pyocd-flashtool' for the foreseeable
+        # future.
         connecting_option = "--uid"
-        if pyocd_binary == "pyocd-flashtool":
+        if pyocd_binary.startswith("pyocd-flashtool"):
             connecting_option = "--board"
         self.base_command.extend([connecting_option, self.job.device["board_id"]])
         for action in self.get_namespace_keys("download-action"):
