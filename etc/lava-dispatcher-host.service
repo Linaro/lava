@@ -1,0 +1,5 @@
+[Unit]
+Description=lava-dispatcher-host daemon
+
+[Service]
+ExecStart=/usr/bin/lava-dispatcher-host-server

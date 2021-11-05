@@ -26,6 +26,7 @@ from lava_dispatcher_host import add_device_container_mapping
 from lava_dispatcher_host import remove_device_container_mappings
 from lava_dispatcher_host import share_device_with_container
 from lava_dispatcher_host.udev import get_udev_rules
+from lava_dispatcher_host.server import Client
 
 
 def handle_rules_show(options):
@@ -52,7 +53,22 @@ def handle_rules_install(options):
 
 
 def handle_devices_share(options):
-    share_device_with_container(options)
+    if options.remote:
+        client = Client()
+        data = vars(options)
+        request = {}
+        for f in [
+            "device",
+            "serial_number",
+            "usb_vendor_id",
+            "usb_product_id",
+            "fs_label",
+        ]:
+            if f in data:
+                request[f] = data[f]
+        client.send_request(request)
+    else:
+        share_device_with_container(options)
 
 
 def handle_devices_map(options):
@@ -139,6 +155,12 @@ def main(argv):
             help="Filesystem label of the device to be shared",
             default=None,
         )
+
+    devices_share.add_argument(
+        "--remote",
+        action="store_true",
+        help="Make a remote request",
+    )
 
     devices_share.set_defaults(func=handle_devices_share)
     devices_map.set_defaults(func=handle_devices_map)
