@@ -1,5 +1,5 @@
 {# set device_type = "fsl-ls2088a-rdb" #}
-{% extends 'fsl-ls1043a-rdb.jinja2' %}
+{% extends 'fsl-ls-common.jinja2' %}
 
 {% set console_device = console_device|default('ttyS1') %}
 {% if extra_kernel_args %}
