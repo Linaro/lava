@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
+from collections import OrderedDict
 import os
 import yaml
 import logging
@@ -200,7 +201,9 @@ def export_testcase(testcase):
     :param testcase: list of TestCase objects
     :return: Dictionary containing relevant information formatted for export
     """
-    metadata = dict(testcase.action_metadata) if testcase.action_metadata else {}
+    metadata = {}
+    if isinstance(testcase, OrderedDict):
+        metadata = dict(testcase.action_metadata)
     extra_source = []
     extra_data = metadata.get("extra")
     if isinstance(extra_data, str) and os.path.exists(extra_data):
