@@ -11,7 +11,7 @@ lava (2021.09-1) unstable; urgency=medium
   [ Stevan Radaković ]
   * [34b9e247] Merge branch 'http-download-timeout' into 'master'
 
-  -- Stevan Radaković <stevan.radakovic@linaro.org>  Tue, 28 Sep 2021 14:53:21 +0100
+ -- Stevan Radaković <stevan.radakovic@linaro.org>  Tue, 28 Sep 2021 14:53:21 +0100
 
 lava (2021.08-1) unstable; urgency=medium
 
@@ -20,7 +20,7 @@ lava (2021.08-1) unstable; urgency=medium
   [ Rémi Duraffort ]
   * [3592a042] Merge branch 'issue-501' into 'master'
 
-  -- Stevan Radaković <stevan.radakovic@linaro.org>  Tue, 31 Aug 2021 13:11:21 +0100
+ -- Stevan Radaković <stevan.radakovic@linaro.org>  Tue, 31 Aug 2021 13:11:21 +0100
 
 lava (2021.05-1) unstable; urgency=medium
 
@@ -29,7 +29,7 @@ lava (2021.05-1) unstable; urgency=medium
   [ Hiraku Toyooka ]
   * [fa2dcbbe] dispatcher: device-types: fix broken xilinx-zcu102 device-type
 
-  -- Stevan Radaković <stevan.radakovic@linaro.org>  Thu, 27 May 2021 16:08:21 +0100
+ -- Stevan Radaković <stevan.radakovic@linaro.org>  Thu, 27 May 2021 16:08:21 +0100
 
 lava (2021.04.post1-1) unstable; urgency=medium
 
