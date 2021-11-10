@@ -163,6 +163,7 @@ CSRF_COOKIE_HTTPONLY = True
 X_FRAME_OPTIONS = "DENY"
 HTTPS_XML_RPC = True
 
+DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
 ########################
 # LAVA custom settings #
