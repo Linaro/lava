@@ -17,7 +17,7 @@
 # along with linaro-django-xmlrpc.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from django.conf.urls import url
+from lava_server.compat import url
 
 from linaro_django_xmlrpc.views import (
     create_token,

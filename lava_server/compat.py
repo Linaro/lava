@@ -28,6 +28,13 @@ DJANGO_VERSION = get_version()
 DRFE_VERSION = [int(n) for n in DRFE_VERSION_STR.split(".")]
 
 
+try:
+    # pylint: disable=unused-import
+    from django.urls import re_path as url  # noqa
+except ImportError:
+    # pylint: disable=unused-import
+    from django.conf.urls import url  # noqa
+
 # Handles compatibility for django_restframework_filters
 try:
     from rest_framework_filters.backends import RestFrameworkFilterBackend  # noqa

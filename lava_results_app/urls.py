@@ -21,7 +21,7 @@
 """
 URL mappings for the LAVA Results application
 """
-from django.conf.urls import url
+from lava_server.compat import url
 from lava_results_app.views import (
     index,
     metadata_export,
