@@ -22,7 +22,7 @@ from lava_dispatcher.action import Pipeline
 from lava_dispatcher.actions.boot import AutoLoginAction, BootHasMixin, OverlayUnpack
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.logical import Boot, RetryAction
-from lava_dispatcher.power import ResetDevice
+from lava_dispatcher.power import ResetDevice, PrePower, PreOs
 from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.shell import ExpectShellSession
 
@@ -55,6 +55,10 @@ class MinimalBoot(BootHasMixin, RetryAction):
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.pipeline.add_action(ConnectDevice())
+        if parameters.get("pre_power_command", False):
+            self.pipeline.add_action(PrePower())
+        if parameters.get("pre_os_command", False):
+            self.pipeline.add_action(PreOs())
         if parameters.get("reset", True):
             self.pipeline.add_action(ResetDevice())
         if self.has_prompts(parameters):

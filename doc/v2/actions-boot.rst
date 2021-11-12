@@ -778,6 +778,16 @@ bootloader in interactive tests and then booting to the OS.
       method: minimal
       reset: false
 
+Pre power/os command defined in device dictionary can be executed by adding
+``pre_power_command: true`` or ``pre_os_command: true``. These commands can be
+useful to activate or deactivate external hardware before applying power.
+
+.. code-block:: yaml
+
+  - boot
+      method: minimal
+      pre_power_command: true
+
 .. index:: boot method musca
 
 .. _boot_method_musca:
