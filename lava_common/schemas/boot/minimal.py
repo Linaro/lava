@@ -32,6 +32,8 @@ def schema():
         Optional(
             "auto_login"
         ): boot.auto_login(),  # TODO: if auto_login => prompt is required
+        Optional("pre_power_command"): bool,
+        Optional("pre_os_command"): bool,
         Optional("reset"): bool,
         Optional("transfer_overlay"): boot.transfer_overlay(),
     }
