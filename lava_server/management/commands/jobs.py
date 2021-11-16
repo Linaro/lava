@@ -72,6 +72,41 @@ class Command(BaseCommand):
         )
         fail.add_argument("job_id", help="job id", type=int)
 
+        list_p = sub.add_parser("list", help="List jobs")
+        list_p.add_argument(
+            "--lxc", default=False, action="store_true", help="Only list lxc jobs"
+        )
+        list_p.add_argument(
+            "--newer-than",
+            default=None,
+            type=str,
+            help="List jobs newer than this. The time is of the "
+            "form: 1h (one hour) or 2d (two days). ",
+        )
+
+        list_p.add_argument(
+            "--state",
+            default=None,
+            choices=[
+                "SUBMITTED",
+                "SCHEDULING",
+                "SCHEDULED",
+                "RUNNING",
+                "CANCELING",
+                "FINISHED",
+            ],
+            help="Filter by job state",
+        )
+        list_p.add_argument(
+            "--submitter", default=None, type=str, help="Filter jobs by submitter"
+        )
+        list_p.add_argument(
+            "--no-submitter",
+            default=None,
+            type=str,
+            help="Filter out jobs by submitter",
+        )
+
         rm = sub.add_parser(
             "rm",
             help="Remove selected jobs. Keep in mind "
@@ -180,7 +215,15 @@ class Command(BaseCommand):
 
     def handle(self, *_, **options):
         """ forward to the right sub-handler """
-        if options["sub_command"] == "rm":
+        if options["sub_command"] == "list":
+            self.handle_list(
+                options["lxc"],
+                options["newer_than"],
+                options["state"],
+                options["submitter"],
+                options["no_submitter"],
+            )
+        elif options["sub_command"] == "rm":
             self.handle_rm(
                 options["older_than"],
                 options["submitter"],
@@ -214,6 +257,51 @@ class Command(BaseCommand):
                 job.save()
         except TestJob.DoesNotExist:
             raise CommandError("TestJob '%d' does not exists" % job_id)
+
+    def handle_list(self, lxc, newer_than, state, submitter, no_submitter):
+        jobs = TestJob.objects.all().order_by("-id")
+        if submitter is not None:
+            try:
+                user = User.objects.get(username=submitter)
+            except User.DoesNotExist:
+                raise CommandError("Unable to find submitter '%s'" % submitter)
+            jobs = jobs.filter(submitter=user)
+
+        if no_submitter is not None:
+            try:
+                user = User.objects.get(username=no_submitter)
+            except User.DoesNotExist:
+                raise CommandError("Unable to find submitter '%s'" % no_submitter)
+            jobs = jobs.exclude(submitter=user)
+
+        if newer_than is not None:
+            pattern = re.compile(r"^(?P<time>\d+)(?P<unit>(h|d))$")
+            match = pattern.match(newer_than)
+            if match is None:
+                raise CommandError("Invalid newer-than format")
+
+            if match.groupdict()["unit"] == "d":
+                delta = datetime.timedelta(days=int(match.groupdict()["time"]))
+            else:
+                delta = datetime.timedelta(hours=int(match.groupdict()["time"]))
+            jobs = jobs.filter(end_time__gt=(timezone.now() - delta))
+
+        if state is not None:
+            jobs = jobs.filter(state=self.job_state[state])
+
+        print("Listing jobs:")
+        for job in jobs:
+            to_print = not lxc
+            if lxc:
+                if "protocols:" in job.definition and "lava-lxc:" in job.definition:
+                    data = yaml_safe_load(job.definition)
+                    if data.get("protocols", {}).get("lava-lxc") is not None:
+                        to_print = True
+
+            if to_print:
+                print(
+                    f"* {job.submit_time} - {job.id}@{job.submitter} - {job.description}"
+                )
 
     def handle_rm(self, older_than, submitter, state, simulate, slow):
         if not older_than and not submitter and not state:
