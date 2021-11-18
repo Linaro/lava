@@ -47,6 +47,9 @@ def schema():
             Required("options"): str,
             Required("prompt"): str,
         },
+        Optional("tool"): {
+            Required("prompts"): [str],
+        },
         Optional("uniquify"): bool,
         **deploy.schema(),
     }
