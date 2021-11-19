@@ -262,9 +262,8 @@ class DevicesLogView(LavaView):
         self.devices = devices
 
     def get_queryset(self):
-        return LogEntry.objects.filter(
-            object_id__in=[d.hostname for d in self.devices]
-        ).order_by("-action_time")
+        q = LogEntry.objects.filter(object_id__in=[d.hostname for d in self.devices])
+        return q.select_related("user").order_by("-action_time")
 
 
 class DeviceLogView(LavaView):
@@ -635,9 +634,14 @@ def passing_health_checks(request):
 
 class MyDeviceView(DeviceTableView):
     def get_queryset(self):
-        return Device.objects.accessible_by_user(
-            self.request.user, Device.CHANGE_PERMISSION
-        ).order_by("hostname")
+        return (
+            Device.objects.accessible_by_user(
+                self.request.user, Device.CHANGE_PERMISSION
+            )
+            .select_related("device_type", "worker_host")
+            .prefetch_related("tags")
+            .order_by("hostname")
+        )
 
 
 @BreadCrumb("My Devices", parent=index)

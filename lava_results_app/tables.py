@@ -25,7 +25,6 @@ from django.utils.html import escape
 
 from lava_server.lavatable import LavaTable
 from lava_scheduler_app.tables import RestrictedIDLinkColumn
-from lava_results_app.models import TestCase
 
 
 def results_pklink(record):
@@ -60,7 +59,12 @@ class ResultsTable(LavaTable):
         Slightly different purpose to RestrictedIDLinkColumn.render
         """
         user = table.context.get("request").user
-        return bool(record.job.can_view(user))
+        attr = f"_can_view_{user.id}"
+        if hasattr(record, attr):
+            return getattr(record, attr)
+        ret = bool(record.job.can_view(user))
+        setattr(record, attr, ret)
+        return ret
 
     def render_submitter(self, record, table=None):
         if not self._check_job(record, table):
@@ -85,12 +89,7 @@ class ResultsTable(LavaTable):
     def render_logged(self, record, table=None):
         if not self._check_job(record, table):
             return ""
-        try:
-            return TestCase.objects.filter(suite__job=record.job, suite=record)[
-                0
-            ].logged
-        except IndexError:
-            return record.job.start_time
+        return record.job.start_time
 
     job_id = tables.Column(verbose_name="Job ID")
     actions = tables.TemplateColumn(
