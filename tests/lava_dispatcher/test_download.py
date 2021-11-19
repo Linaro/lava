@@ -60,7 +60,7 @@ class TestDownloadDeploy(StdoutTestCase):
             job.validate()
 
     @unittest.skipIf(
-        infrastructure_error_multi_paths(["xnbd-server"]), "xnbd-server not installed"
+        infrastructure_error_multi_paths(["nbd-server"]), "nbd-server not installed"
     )
     def test_download_tar(self):
         job = self.factory.create_job(

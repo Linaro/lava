@@ -531,7 +531,7 @@ class TestUbootAction(StdoutTestCase):
             ["a list", "of commands", "with a {KERNEL_ADDR} substitution"],
         )
 
-    @unittest.skipIf(infrastructure_error("xnbd-server"), "xnbd-server not installed")
+    @unittest.skipIf(infrastructure_error("nbd-server"), "nbd-server not installed")
     def test_nbd_boot(self):
         job = self.factory.create_bbb_job("sample_jobs/bbb-initrd-nbd.yaml")
         job.validate()

@@ -32,7 +32,7 @@ from lava_dispatcher.utils.network import get_free_port
 
 class XnbdProtocol(Protocol):
     """
-    Xnbd protocol (xnbd-server teardown)
+    Xnbd protocol (nbd-server teardown)
     """
 
     name = "lava-xnbd"
@@ -115,12 +115,12 @@ class XnbdProtocol(Protocol):
         """Called by Finalize action to power down and clean up the assigned
         device.
         """
-        # shutdown xnbd for the given device/job based in the port-number used
+        # shutdown nbd-server for the given device/job based in the port-number used
         try:
             self.logger.debug("%s cleanup", self.name)
             for port in self.ports:
                 self.logger.debug("clean NBD port %s", port)
-                nbd_cmd = "pkill -f xnbd-server.*%s" % (port)
+                nbd_cmd = "pkill -f nbd-server.*%s" % (port)
                 shell = ShellCommand(
                     "%s\n" % nbd_cmd, self.system_timeout, logger=self.logger
                 )
