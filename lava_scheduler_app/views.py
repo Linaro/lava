@@ -635,9 +635,14 @@ def passing_health_checks(request):
 
 class MyDeviceView(DeviceTableView):
     def get_queryset(self):
-        return Device.objects.accessible_by_user(
-            self.request.user, Device.CHANGE_PERMISSION
-        ).order_by("hostname")
+        return (
+            Device.objects.accessible_by_user(
+                self.request.user, Device.CHANGE_PERMISSION
+            )
+            .select_related("device_type", "worker_host")
+            .prefetch_related("tags")
+            .order_by("hostname")
+        )
 
 
 @BreadCrumb("My Devices", parent=index)
