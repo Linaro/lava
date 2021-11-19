@@ -1,0 +1,13 @@
+{# device_type = "lenovo-hr330a-7x33cto1ww-emag" #}
+{% extends 'd03.jinja2' %}
+
+{% block grub_ramdisk %}
+          - 'linux (tftp,{SERVER_IP})/{KERNEL} pcie_aspm=off pci=pcie_bus_perf acpi=force root=/dev/ram0 {{ base_ip_args }}'
+          - initrd (tftp,{SERVER_IP})/{RAMDISK}
+          - boot
+{% endblock grub_ramdisk %}
+
+{% block grub_nfs %}
+          - 'linux (tftp,{SERVER_IP})/{KERNEL} pcie_aspm=off pci=pcie_bus_perf acpi=force root=/dev/nfs rw {{ base_nfsroot_args }} {{ base_ip_args }}'
+          - boot
+{% endblock grub_nfs %}
