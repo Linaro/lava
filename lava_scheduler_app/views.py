@@ -262,9 +262,8 @@ class DevicesLogView(LavaView):
         self.devices = devices
 
     def get_queryset(self):
-        return LogEntry.objects.filter(
-            object_id__in=[d.hostname for d in self.devices]
-        ).order_by("-action_time")
+        q = LogEntry.objects.filter(object_id__in=[d.hostname for d in self.devices])
+        return q.select_related("user").order_by("-action_time")
 
 
 class DeviceLogView(LavaView):
