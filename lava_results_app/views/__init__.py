@@ -434,8 +434,8 @@ def testcase(request, case_id, job=None, pk=None):
         except TypeError:
             logger.info("Unable to load extra case metadata for %s", extra_case)
             continue
-        extra_data = f_metadata.get("extra")
         try:
+            extra_data = f_metadata.get("extra")
             if extra_data and os.path.exists(extra_data):
                 with open(f_metadata["extra"], "r") as extra_file:
                     items = yaml_load(extra_file)
@@ -443,7 +443,7 @@ def testcase(request, case_id, job=None, pk=None):
                 for key, value in items.items():
                     extra_source.setdefault(extra_case.id, "")
                     extra_source[extra_case.id] += "%s: %s\n" % (key, value)
-        except TypeError:
+        except (AttributeError, TypeError):
             # In some old version of LAVA, extra_data is not a string but an OrderedDict
             # In this case, just skip it.
             pass
