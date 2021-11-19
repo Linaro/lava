@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python3 -u
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2021-present Linaro Limited
@@ -30,7 +30,7 @@ import threading
 
 def reader(std, q):
     while True:
-        data = std.read()
+        data = std.read(32)
         if data == b"":
             break
         q.put(data)
@@ -71,6 +71,7 @@ def main():
             stdin=sys.stdin,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            bufsize=0,
         )
 
         err_queue = queue.SimpleQueue()
