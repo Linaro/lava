@@ -210,7 +210,7 @@ class LoginAction(Action):
             if login_commands is not None:
                 self.logger.debug("Running login commands")
                 for command in login_commands:
-                    connection.sendline(command)
+                    connection.sendline(command, delay=self.character_delay)
                     connection.wait()
 
         return connection
@@ -712,16 +712,19 @@ class OverlayUnpack(Action):
             )
         overlay_path = overlay_full_path[len(DISPATCHER_DOWNLOAD_DIR) + 1 :]
         overlay = os.path.basename(overlay_path)
-        connection.sendline("rm %s" % overlay)
+        connection.sendline("rm %s" % overlay, delay=self.character_delay)
         connection.wait()
 
         cmd = self.parameters["transfer_overlay"]["download_command"]
         ip_addr = dispatcher_ip(self.job.parameters["dispatcher"], "http")
-        connection.sendline("%s http://%s/tmp/%s" % (cmd, ip_addr, overlay_path))
+        connection.sendline(
+            "%s http://%s/tmp/%s" % (cmd, ip_addr, overlay_path),
+            delay=self.character_delay,
+        )
         connection.wait()
 
         unpack = self.parameters["transfer_overlay"]["unpack_command"]
-        connection.sendline(unpack + " " + overlay)
+        connection.sendline(unpack + " " + overlay, delay=self.character_delay)
         connection.wait()
 
         return connection
