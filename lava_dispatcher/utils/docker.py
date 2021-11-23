@@ -39,6 +39,7 @@ class DockerRun:
         self.__bind_mounts__ = []
         self.__environment__ = []
         self.__interactive__ = False
+        self.__privileged__ = False
         self.__tty__ = False
         self.__docker_options__ = []
         self.__docker_run_options__ = []
@@ -53,6 +54,16 @@ class DockerRun:
         run.suffix(suffix)
         run.network(params.get("network_from", None))
         run.local(params.get("local", False))
+        if "privileged" in params and params["privileged"]:
+            run.privileged()
+        if "bind_mounts" in params:
+            for bind_m in params["bind_mounts"]:
+                if ":" in bind_m:
+                    run.bind_mount(
+                        bind_m.split(":")[0], destination=bind_m.split(":")[1]
+                    )
+                else:
+                    run.bind_mount(bind_m)
         return run
 
     def local(self, local):
@@ -93,6 +104,9 @@ class DockerRun:
     def interactive(self):
         self.__interactive__ = True
 
+    def privileged(self):
+        self.__privileged__ = True
+
     def tty(self):
         self.__tty__ = True
 
@@ -113,6 +127,8 @@ class DockerRun:
         )
         if self.__interactive__:
             cmd.append("--interactive")
+        if self.__privileged__:
+            cmd.append("--privileged")
         if self.__tty__:
             cmd.append("--tty")
         if self.__name__:

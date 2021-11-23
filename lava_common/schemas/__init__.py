@@ -386,4 +386,6 @@ def docker(image_key="image"):
         Optional("local"): bool,
         Optional("container_name"): str,
         Optional("network_from"): str,
+        Optional("privileged"): bool,
+        Optional("bind_mounts"): [str],
     }
