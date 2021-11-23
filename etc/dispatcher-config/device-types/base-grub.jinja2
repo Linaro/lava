@@ -5,6 +5,7 @@
 {% set grub_installed_device = grub_installed_device | default('(hd1,gpt1)') %}
 {% set efi_grub = efi_grub | default(False) %}
 {% set pxe_net_configured = pxe_net_configured | default(True) %}
+{% set net_interface = net_interface | default('') %}
 
 {# allow job context override - use a different variable name, undefined if not in job context #}
 {% set base_kernel_args = extra_kernel_args | default(base_kernel_args) %}
@@ -22,7 +23,11 @@
 
 {% else %}
 
+{% if net_interface %}
+{% set net_commands = "          - net_bootp " + net_interface %}
+{% else %}
 {% set net_commands = "          - net_bootp" %}
+{% endif %}
 
 {% endif %}
 
@@ -39,7 +44,11 @@
 {% else %}
 {# not efi_grub #}
 
+{% if net_interface %}
+{% set net_commands = "          - net_bootp " + net_interface %}
+{% else %}
 {% set net_commands = "          - net_bootp" %}
+{% endif %}
 
 {% endif %}
 
