@@ -1,5 +1,5 @@
 {# Base Kernel options #}
-{% set base_kernel_args = '' %}
+{% set base_kernel_args = base_kernel_args | default('') %}
 {% set base_extra_nfsroot_args = extra_nfsroot_args | default('') %}
 
 {% set base_nfsroot_args = ("nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard" + base_extra_nfsroot_args) -%}
