@@ -796,7 +796,11 @@ class PreDownloadedAction(Action):
 
         dest = pathlib.Path(self.path) / filename
         dest.parent.mkdir(parents=True, exist_ok=True)
-        os.link(src, dest)
+        self.logger.debug("Linking %s -> %s", src, dest)
+        try:
+            os.link(src, dest)
+        except FileExistsError:
+            self.logger.warning("-> destination already exists, skipping")
 
         self.set_namespace_data(
             action="download-action", label=self.key, key="file", value=str(dest)
