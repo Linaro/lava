@@ -26,6 +26,7 @@ import traceback
 
 from lava_common.exceptions import InfrastructureError, JobError, TestError
 from lava_common.constants import REBOOT_COMMAND_LIST
+from lava_common.timeout import Timeout
 from lava_dispatcher.action import Action, Pipeline
 
 
@@ -259,8 +260,18 @@ class ReadFeedback(Action):
         super().__init__()
         self.finalize = finalize
         self.parameters["namespace"] = "common"
-        self.duration = 1  # FIXME: needs to be a constant set in the base template.
+        self.duration = 1
         self.repeat = repeat
+
+    def populate(self, parameters):
+        super().populate(parameters)
+        dur = (
+            self.job.parameters.get("timeouts", {})
+            .get("connections", {})
+            .get("read-feedback")
+        )
+        if dur:
+            self.duration = Timeout.parse(dur)
 
     def run(self, connection, max_end_time):
         feedbacks = []
@@ -280,16 +291,24 @@ class ReadFeedback(Action):
             else:
                 self.logger.debug("No connection for namespace %s", feedback_ns)
         for feedback in feedbacks:
-            bytes_read = feedback[1].listen_feedback(
-                timeout=self.duration, namespace=feedback[0]
-            )
-            # ignore empty or single newline-only content
-            if bytes_read > 1:
-                self.logger.debug(
-                    "Listened to connection for namespace '%s' for %ds",
-                    feedback[0],
-                    self.duration,
+            deadline = time.time() + self.duration
+            while True:
+                timeout = max(deadline - time.time(), 0)
+                bytes_read = feedback[1].listen_feedback(
+                    timeout=timeout, namespace=feedback[0]
                 )
+                # ignore empty or single newline-only content
+                if bytes_read > 1:
+                    self.logger.debug(
+                        "Listened to connection for namespace '%s' for up to %ds",
+                        feedback[0],
+                        self.duration,
+                    )
+                # If we're not finalizing, we make only one attempt to read
+                # feedback. Otherwise, we try to consume more output while
+                # it's coming (i.e. until EOF or timeout expires).
+                if not self.finalize or bytes_read == 0 or timeout == 0:
+                    break
             if self.finalize:
                 self.logger.info(
                     "Finalising connection for namespace '%s'", feedback[0]
