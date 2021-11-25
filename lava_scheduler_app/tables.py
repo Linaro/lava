@@ -19,6 +19,7 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 import random
+from django.conf import settings
 from django.contrib.admin.models import LogEntry
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
@@ -245,6 +246,21 @@ class JobTable(LavaTable):
             return value
         else:
             return ""
+
+    def render_submitter(self, record):
+        user_name = record.submitter.username
+        full_name = record.submitter.get_full_name()
+
+        if settings.SHOW_SUBMITTER_FULL_NAME and full_name:
+            show_text = full_name
+            hover_text = user_name
+        else:
+            show_text = user_name
+            hover_text = full_name if full_name else user_name
+
+        return mark_safe(  # nosec - internal data
+            '<span title="%s">%s</span>' % (hover_text, show_text)
+        )
 
     class Meta(LavaTable.Meta):
         model = TestJob
