@@ -68,7 +68,7 @@ from lava_common.version import __version__
 from lava_results_app.dbutils import map_scanned_results, create_metadata_store
 from lava_server.views import index as lava_index
 from lava_server.bread_crumbs import BreadCrumb, BreadCrumbTrail
-from lava_server.compat import djt2_paginator_class
+from lava_server.compat import djt2_paginator_class, is_ajax
 from lava_server.files import File
 
 from lava_scheduler_app.models import (
@@ -1575,7 +1575,7 @@ def job_submit(request):
     }
 
     if request.method == "POST" and request.user.is_authenticated:
-        if request.is_ajax():
+        if is_ajax(request):
             warnings = ""
             errors = ""
             try:
@@ -2258,7 +2258,7 @@ def job_resubmit(request, pk):
                     request, "lava_scheduler_app/job_submit.html", response_data
                 )
         else:
-            if request.is_ajax():
+            if is_ajax(request):
                 warnings = ""
                 errors = ""
                 try:

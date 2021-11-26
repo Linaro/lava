@@ -47,7 +47,7 @@ from django.urls import reverse
 from django.db import models
 from django.utils import timezone
 from django.utils.html import escape
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.utils.safestring import mark_safe
 
 from lava_common.compat import yaml_dump, yaml_safe_load, yaml_safe_dump

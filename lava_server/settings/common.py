@@ -24,8 +24,13 @@ import contextlib
 import imp
 import re
 
-from django.conf.global_settings import *
 from django.core.exceptions import ImproperlyConfigured
+
+# pylint: disable=unused-import
+from django.conf.global_settings import DISALLOWED_USER_AGENTS
+
+# pylint: disable=unused-import
+from django.conf.global_settings import INTERNAL_IPS
 
 from lava_common.version import __version__
 from lava_common.compat import yaml_safe_load
@@ -158,6 +163,7 @@ CSRF_COOKIE_HTTPONLY = True
 X_FRAME_OPTIONS = "DENY"
 HTTPS_XML_RPC = True
 
+DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
 ########################
 # LAVA custom settings #

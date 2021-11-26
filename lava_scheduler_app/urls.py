@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-from django.conf.urls import url
+from lava_server.compat import url
 from lava_scheduler_app.views import (
     active_device_list,
     active_jobs,

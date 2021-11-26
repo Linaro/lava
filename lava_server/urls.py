@@ -19,7 +19,8 @@
 
 from django.views.generic import TemplateView
 from django.conf import settings
-from django.conf.urls import include, url
+from django.conf.urls import include
+from lava_server.compat import url
 from django.contrib import admin
 from linaro_django_xmlrpc.views import handler as linaro_django_xmlrpc_views_handler
 from linaro_django_xmlrpc.views import help as linaro_django_xmlrpc_views_help

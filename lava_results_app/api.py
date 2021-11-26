@@ -23,7 +23,7 @@ import xmlrpc.client
 
 from linaro_django_xmlrpc.models import ExposedAPI
 
-from django.db.models.fields import FieldDoesNotExist
+from django.core.exceptions import FieldDoesNotExist
 
 from lava_common.compat import yaml_dump
 from lava_results_app.dbutils import export_testsuite, testsuite_export_fields

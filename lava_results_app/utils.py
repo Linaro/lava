@@ -25,14 +25,14 @@ import logging
 
 from django.db import DataError
 from django.core.exceptions import PermissionDenied
-from django.utils.translation import ungettext_lazy
+from django.utils.translation import ngettext_lazy
 
 from lava_common.compat import yaml_load
 from linaro_django_xmlrpc.models import AuthToken
 
 
 def help_max_length(max_length):
-    return ungettext_lazy(
+    return ngettext_lazy(
         u"Maximum length: {0} character", u"Maximum length: {0} characters", max_length
     ).format(max_length)
 
