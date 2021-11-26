@@ -103,6 +103,13 @@ def handle_prepare(options):
         'gbp dch --new-version="%s-1" --id-length=9 --release --commit --commit-msg="LAVA Software %s release" debian'
         % (options.version, options.version),
         options,
+        env={
+            "EMAIL": subprocess.check_output(
+                ["git", "config", "user.email"], stderr=subprocess.DEVNULL
+            )
+            .decode("utf-8")
+            .strip("\n")
+        },
     )
     # Update the version number
     run("echo '%s' > lava_common/VERSION" % options.version, options, shell=True)
