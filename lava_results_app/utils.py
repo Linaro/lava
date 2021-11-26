@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-from collections import OrderedDict
+import contextlib
 import os
 import yaml
 import logging
@@ -202,8 +202,8 @@ def export_testcase(testcase):
     :return: Dictionary containing relevant information formatted for export
     """
     metadata = {}
-    if isinstance(testcase, OrderedDict):
-        metadata = dict(testcase.action_metadata)
+    with contextlib.suppress(ValueError):
+        metadata = dict(testcase.action_metadata) if testcase.action_metadata else {}
     extra_source = []
     extra_data = metadata.get("extra")
     if isinstance(extra_data, str) and os.path.exists(extra_data):
