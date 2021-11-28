@@ -57,6 +57,8 @@ INSTALLED_APPS = [
     "lava_results_app",
     "lava_scheduler_app",
     "lava_rest_app",
+    # Add LAVA helper applications
+    "lava_db_generator",
     # Add LAVA dependencies
     "django_tables2",
     "linaro_django_xmlrpc",
