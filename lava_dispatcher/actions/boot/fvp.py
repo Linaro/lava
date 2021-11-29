@@ -338,7 +338,10 @@ class StartFVPAction(BaseFVPAction):
     def cleanup(self, connection):
         if self.shell_session:
             self.logger.debug("Listening to feedback from FVP binary.")
-            self.shell_session.listen_feedback(5)
+            while True:
+                bytes_read = self.shell_session.listen_feedback(5)
+                if bytes_read == 0:
+                    break
         super().cleanup(connection)
 
 
