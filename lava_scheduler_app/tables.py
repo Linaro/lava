@@ -548,7 +548,7 @@ class DeviceHealthTable(LavaTable):
     )
     health = tables.Column()
     last_report_time = tables.DateColumn(
-        verbose_name="last report time", accessor="last_health_report_job.end_time"
+        verbose_name="last report time", accessor="last_health_report_job__end_time"
     )
     last_health_report_job = tables.Column("last report job")
 

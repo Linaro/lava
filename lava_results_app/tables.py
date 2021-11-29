@@ -96,7 +96,7 @@ class ResultsTable(LavaTable):
         template_name="lava_results_app/results_actions_field.html"
     )
     actions.orderable = False
-    submitter = tables.Column(accessor="job.submitter")
+    submitter = tables.Column(accessor="job__submitter")
     name = tables.Column(verbose_name="Test Suite")
     passes = tables.Column(accessor="job", verbose_name="Passes")
     fails = tables.Column(accessor="job", verbose_name="Fails")
@@ -111,7 +111,7 @@ class ResultsTable(LavaTable):
 class ResultsIndexTable(ResultsTable):
 
     job_id = tables.Column(verbose_name="Job ID")
-    submitter = tables.Column(accessor="job.submitter")
+    submitter = tables.Column(accessor="job__submitter")
     name = tables.Column(verbose_name="Test Suite")
     passes = tables.Column(accessor="job", verbose_name="Passes")
     fails = tables.Column(accessor="job", verbose_name="Fails")
@@ -129,7 +129,7 @@ class TestJobResultsTable(ResultsTable):
         template_name="lava_results_app/suite_actions_field.html"
     )
     actions.orderable = False
-    submitter = tables.Column(accessor="job.submitter")
+    submitter = tables.Column(accessor="job__submitter")
     name = tables.Column(verbose_name="Test Suite")
     passes = tables.Column(accessor="job", verbose_name="Passes")
     fails = tables.Column(accessor="job", verbose_name="Fails")
