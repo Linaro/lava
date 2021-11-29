@@ -17,4 +17,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-default_app_config = "lava_scheduler_app.apps.LAVASchedulerConfig"
+import django
+
+
+if django.VERSION < (3, 2):  # pragma: no cover
+    default_app_config = "lava_scheduler_app.apps.LAVASchedulerConfig"
