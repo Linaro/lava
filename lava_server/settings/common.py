@@ -21,7 +21,7 @@
 
 from yaml import YAMLError
 import contextlib
-import imp
+import importlib
 import re
 
 from django.core.exceptions import ImproperlyConfigured
@@ -309,7 +309,7 @@ REST_FRAMEWORK = {
 # Automatically install some applications
 for module_name in ["devserver", "django_extensions", "django_openid_auth"]:
     with contextlib.suppress(ImportError):
-        imp.find_module(module_name)
+        importlib.import_module(module_name)
         INSTALLED_APPS.append(module_name)
 
 ###########
