@@ -22,6 +22,7 @@ from django.utils.version import get_version
 from django.core.management.base import CommandParser
 from rest_framework_extensions import __version__ as DRFE_VERSION_STR
 import rest_framework_filters as filters
+import junit_xml
 
 
 DJANGO_VERSION = get_version()
@@ -52,6 +53,10 @@ except ImportError:
     # Keep the original version
     def RelatedFilter(cls, name, queryset):
         return filters.RelatedFilter(cls, name=name, queryset=queryset)
+
+
+if not getattr(junit_xml, "to_xml_report_string", None):
+    junit_xml.to_xml_report_string = junit_xml.TestSuite.to_xml_string
 
 
 FilterBackend = RestFrameworkFilterBackend
