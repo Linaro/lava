@@ -1,4 +1,5 @@
 import factory
+import factory.fuzzy
 
 from django.contrib.auth.models import User
 from lava_scheduler_app.models import TestJob
@@ -18,3 +19,5 @@ class UserFactory(factory.django.DjangoModelFactory):
 class TestJobFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = TestJob
+
+    submitter = factory.fuzzy.FuzzyChoice(User.objects.all())

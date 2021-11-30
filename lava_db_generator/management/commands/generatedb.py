@@ -7,8 +7,9 @@ class Command(BaseCommand):
     help = "Generates dummy database"
 
     def add_arguments(self, parser):
+        parser.add_argument("users", type=int)
         parser.add_argument("jobs", type=int)
 
     def handle(self, *args, **options):
-        user = UserFactory()
-        TestJobFactory.create_batch(size=options["jobs"], submitter=user)
+        UserFactory.create_batch(size=options["users"])
+        TestJobFactory.create_batch(size=options["jobs"])
