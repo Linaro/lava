@@ -37,6 +37,7 @@ else
     # Copy current repo to old-release, and update the release symlink
     # to point there atomically
     cd ${HOME}/repository
+    rm -rf old-release
     cp -a current-release old-release
     ln -snfv old-release release
 
@@ -60,6 +61,5 @@ else
     # Assuming this all worked, the release manager will now check and
     # sign the final Release files that reprepro created, then
     # ln -snf current-release release
-    # rm -rf old-release
 
 fi
