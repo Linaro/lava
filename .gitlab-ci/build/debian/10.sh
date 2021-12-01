@@ -14,5 +14,6 @@ else
   # Check dependencies
   .gitlab-ci/build/debian/check-debian-deps.py --suite buster --package lava-common _build/lava-common_*buster*
   .gitlab-ci/build/debian/check-debian-deps.py --suite buster --package lava-dispatcher _build/lava-dispatcher_*buster*
+  .gitlab-ci/build/debian/check-debian-deps.py --suite buster --package lava-dispatcher-host _build/lava-dispatcher-host_*buster*
   .gitlab-ci/build/debian/check-debian-deps.py --suite buster --package lava-server _build/lava-server_*buster*
 fi
