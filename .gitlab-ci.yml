@@ -140,6 +140,20 @@ debian/10:
     - _build/*.changes
     - _build/*.buildinfo
 
+debian/11:
+  <<: *job
+  stage: build
+  except: []
+  image: hub.lavasoftware.org/lava/ci-images/amd64/pkg-debian-11
+  artifacts:
+    paths:
+    - _build/*.deb
+    # handle native package - need to publish the source
+    - _build/*.tar.xz
+    - _build/*.dsc
+    - _build/*.changes
+    - _build/*.buildinfo
+
 .docker: &docker
   <<: *dind
   stage: build
@@ -186,6 +200,7 @@ reprepro-master:
   tags: [deploy]
   dependencies:
   - debian/10
+  - debian/11
   except: []
   only: [schedules]
   environment:
@@ -205,6 +220,7 @@ reprepro-release:
     - tags
   dependencies:
   - debian/10
+  - debian/11
   except: [schedules]
   environment:
     name: reprepro-release
