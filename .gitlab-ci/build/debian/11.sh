@@ -14,5 +14,6 @@ else
   # Check dependencies
   .gitlab-ci/build/debian/check-debian-deps.py --suite bullseye --package lava-common _build/lava-common_*bullseye*
   .gitlab-ci/build/debian/check-debian-deps.py --suite bullseye --package lava-dispatcher _build/lava-dispatcher_*bullseye*
+  .gitlab-ci/build/debian/check-debian-deps.py --suite bullseye --package lava-dispatcher-host _build/lava-dispatcher-host_*bullseye*
   .gitlab-ci/build/debian/check-debian-deps.py --suite bullseye --package lava-server _build/lava-server_*bullseye*
 fi

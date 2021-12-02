@@ -84,7 +84,7 @@ def main():
     parser.add_argument(
         "--package",
         required=True,
-        choices=["lava-common", "lava-dispatcher", "lava-server"],
+        choices=["lava-common", "lava-dispatcher", "lava-dispatcher-host", "lava-server"],
         help="debian package",
     )
     parser.add_argument("filename", type=str, help="debian package")
