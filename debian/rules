@@ -93,7 +93,7 @@ override_dh_installinit:
 	dh_installinit -Nlava-server
 
 override_dh_installsystemd:
-	dh_installsystemd -Xlava-celery-worker.service -Xlava-docker-worker.service
+	dh_installsystemd -Xlava-celery-worker.service -Xlava-docker-worker.service -Xlava-dispatcher-host.service
 
 override_dh_compress:
 	dh_compress -X.yaml

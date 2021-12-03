@@ -1,0 +1,8 @@
+[Unit]
+Description=lava-dispatcher-host socket
+
+[Socket]
+ListenStream=/run/lava-dispatcher-host.sock
+
+[Install]
+WantedBy=sockets.target
