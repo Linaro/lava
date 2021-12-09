@@ -237,7 +237,7 @@ actions:
             - "]"
           item_class: '{{ item_class|default('0-9') }}'
           separator: '{{ separator|default(' ') }}'
-          label_class: '{{ label_class|default('a-zA-Z0-9 \s\:') }}'
+          label_class: '{{ label_class|default('a-zA-Z0-9 \\s\\:') }}'
           bootloader_prompt: '{{ uefi_menu_bootloader_prompt|default('Start:') }}'
         nfs:
         - select:
@@ -359,7 +359,7 @@ actions:
            item_class: '{{ item_class|default('0-9') }}'
            separator: '{{ separator|default(' ') }}'
            line_separator: '{{ line_separator|default('dos') }}'
-           label_class: '{{ label_class|default('a-zA-Z0-9\s\:') }}'
+           label_class: '{{ label_class|default('a-zA-Z0-9\\s\\:') }}'
         shell:
         - select:
             items:
