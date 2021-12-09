@@ -512,6 +512,16 @@ value for the table length can be set in ``/etc/lava-server/settings.conf``:
 
  "DEFAULT_TABLE_LENGTH": 50,
 
+Configuring submitter full name
+================================
+
+The LAVA main job page by default will show user name of submitter.
+Admin could set if to show full name of submitter in ``/etc/lava-server/settings.conf``:
+
+.. code-block:: python
+
+ "SHOW_SUBMITTER_FULL_NAME": true,
+
 .. _admin_control:
 
 Controlling the Django Admin Interface

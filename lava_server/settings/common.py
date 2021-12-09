@@ -172,6 +172,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 # Allow mismatch between master and worker versions
 ALLOW_VERSION_MISMATCH = False
 
+# Show submitter full name in job page
+SHOW_SUBMITTER_FULL_NAME = False
+
 # LOG_SIZE_LIMIT in megabytes
 LOG_SIZE_LIMIT = 5
 
