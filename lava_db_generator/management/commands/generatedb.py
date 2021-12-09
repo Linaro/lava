@@ -1,3 +1,5 @@
+import random
+
 from django.core.management.base import BaseCommand
 
 from lava_db_generator.factories import (
@@ -5,6 +7,7 @@ from lava_db_generator.factories import (
     GroupFactory,
     ProjectGroupFactory,
     TestJobFactory,
+    TestJobWithViewingGroupFactory,
 )
 
 
@@ -22,10 +25,13 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         UserFactory.create_batch(size=options["auth_user"])
         GroupFactory.create_batch(size=options["auth_group"])
-        ProjectGroupFactory.create_batch(size=options["project_group"])
+        pgs = ProjectGroupFactory.create_batch(size=options["project_group"])
 
-        TestJobFactory.create_batch(
-            size=options["testjob"],
-            viewing_groups__project_group_ratio=options["project_group_ratio"],
-            viewing_groups__project_ratios=options["project_ratios"],
-        )
+        project_ratios = options["project_ratios"]
+        projects = pgs[: len(project_ratios)]
+        for _ in range(options["testjob"]):
+            if random.random() < options["project_group_ratio"]:
+                vg = random.choices(projects, project_ratios)[0]
+                TestJobWithViewingGroupFactory(viewing_groups=vg)
+            else:
+                TestJobFactory()

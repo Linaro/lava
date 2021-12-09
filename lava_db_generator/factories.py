@@ -1,8 +1,6 @@
 import factory
 import factory.fuzzy
 
-import random
-
 from django.contrib.auth.models import User, Group
 from lava_scheduler_app.models import TestJob
 
@@ -36,14 +34,13 @@ class TestJobFactory(factory.django.DjangoModelFactory):
 
     submitter = factory.fuzzy.FuzzyChoice(User.objects.all())
 
+
+@nottest
+class TestJobWithViewingGroupFactory(TestJobFactory):
     @factory.post_generation
-    def viewing_groups(self, create, _, **kwargs):
+    def viewing_groups(self, create, extracted, **kwargs):
         if not create:
             return
 
-        project_ratios = kwargs["project_ratios"]
-        project_groups = Group.objects.filter(name__istartswith="project")
-        project_groups = project_groups[: len(project_ratios)]
-
-        if random.random() < kwargs["project_group_ratio"]:
-            self.viewing_groups.add(random.choices(project_groups, project_ratios)[0])
+        if extracted:
+            self.viewing_groups.add(extracted)
