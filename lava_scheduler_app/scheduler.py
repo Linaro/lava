@@ -63,6 +63,13 @@ class Random(Func):
         super(Random, self).__init__(output_field=FloatField())
 
 
+def filter_devices(q):
+    q = q.filter(state=Device.STATE_IDLE)
+    q = q.filter(worker_host__state=Worker.STATE_ONLINE)
+    q = q.filter(worker_host__health=Worker.HEALTH_ACTIVE)
+    return q
+
+
 def worker_summary():
     query = Worker.objects.all()
     query = query.values("hostname", "job_limit")
@@ -122,8 +129,7 @@ def schedule_health_checks(logger, available_dt=None):
         if dt.disable_health_check:
             hc_disabled.append(dt.name)
             # Add all devices of that type to the list of available devices
-            devices = dt.device_set.filter(state=Device.STATE_IDLE)
-            devices = devices.filter(worker_host__state=Worker.STATE_ONLINE)
+            devices = filter_devices(dt.device_set)
             devices = devices.filter(
                 health__in=[Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN]
             )
@@ -148,8 +154,7 @@ def schedule_health_checks(logger, available_dt=None):
 
 def schedule_health_checks_for_device_type(logger, dt):
     devices = dt.device_set.select_for_update()
-    devices = devices.filter(state=Device.STATE_IDLE)
-    devices = devices.filter(worker_host__state=Worker.STATE_ONLINE)
+    devices = filter_devices(devices)
     devices = devices.filter(
         health__in=[Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN, Device.HEALTH_LOOPING]
     )
@@ -277,8 +282,7 @@ def schedule_jobs(logger, available_devices):
 
 def schedule_jobs_for_device_type(logger, dt, available_devices):
     devices = dt.device_set.select_for_update()
-    devices = devices.filter(state=Device.STATE_IDLE)
-    devices = devices.filter(worker_host__state=Worker.STATE_ONLINE)
+    devices = filter_devices(devices)
     devices = devices.filter(health__in=[Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN])
     # Add a random sort: with N devices and num(jobs) < N, if we don't sort
     # randomly, the same devices will always be used while the others will

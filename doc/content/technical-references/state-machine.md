@@ -16,9 +16,8 @@ The **state** is an internal variable, set by [lava-server-gunicorn](./services/
 
 ### Health
 
-The **health** can be used by admins to control the **health** of all attached devices.
-
-For instance, when set to *Maintenance*, all attached devices will be automatically put into maintenance mode so that no jobs will be scheduled on those devices.
+When worker **health** is set to *Maintenance*, no jobs will be ran on the
+attached devices.
 
 The worker health can be:
 

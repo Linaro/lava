@@ -470,9 +470,6 @@ class Worker(RestrictedObject):
             )
         else:
             self.log_admin_entry(user, "%s → Maintenance" % self.get_health_display())
-        for device in self.device_set.all().select_for_update():
-            device.worker_signal("go_health_maintenance", user, self.state, self.health)
-            device.save()
         self.health = Worker.HEALTH_MAINTENANCE
 
     def go_health_retired(self, user, reason=None):
@@ -846,27 +843,13 @@ class Device(RestrictedObject):
             # When leaving retirement, don't cascade the change
             if prev_health == Worker.HEALTH_RETIRED:
                 return
-            # Only update health of devices in maintenance
-            if self.health != Device.HEALTH_MAINTENANCE:
+            # Only update health of devices in good
+            if self.health != Device.HEALTH_GOOD:
                 return
             self.log_admin_entry(
                 user, "%s → Unknown (worker going active)" % self.get_health_display()
             )
             self.health = Device.HEALTH_UNKNOWN
-
-        elif signal == "go_health_maintenance":
-            if self.health in [
-                Device.HEALTH_BAD,
-                Device.HEALTH_MAINTENANCE,
-                Device.HEALTH_RETIRED,
-            ]:
-                return
-            self.log_admin_entry(
-                user,
-                "%s → Maintenance (worker going maintenance)"
-                % self.get_health_display(),
-            )
-            self.health = Device.HEALTH_MAINTENANCE
 
         elif signal == "go_health_retired":
             if self.health in [Device.HEALTH_BAD, Device.HEALTH_RETIRED]:
